@@ -148,13 +148,63 @@ Which phases cover which requirements. Populated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (pending roadmap creation) | — | — |
+| TGT-01 | Phase 1 | Pending |
+| TGT-02 | Phase 1 | Pending |
+| TGT-03 | Phase 4 | Pending |
+| TGT-04 | Phase 4 | Pending |
+| TGT-05 | Phase 4 | Pending |
+| TGT-06 | Phase 4 | Pending |
+| TGT-07 | Phase 4 | Pending |
+| TGT-08 | Phase 4 | Pending |
+| DASH-01 | Phase 2 | Pending |
+| DASH-02 | Phase 2 | Pending |
+| DASH-03 | Phase 2 | Pending |
+| DASH-04 | Phase 2 | Pending |
+| ROAD-01 | Phase 2 | Pending |
+| ROAD-02 | Phase 2 | Pending |
+| ROAD-03 | Phase 2 | Pending |
+| ROAD-04 | Phase 2 | Pending |
+| READ-01 | Phase 2 | Pending |
+| READ-02 | Phase 2 | Pending |
+| READ-03 | Phase 2 | Pending |
+| READ-04 | Phase 2 | Pending |
+| READ-05 | Phase 2 | Pending |
+| READ-06 | Phase 2 | Pending |
+| NAV-01 | Phase 3 | Pending |
+| NAV-02 | Phase 2 | Pending |
+| NAV-03 | Phase 2 | Pending |
+| NAV-04 | Phase 2 | Pending |
+| NAV-05 | Phase 3 | Pending |
+| NAV-06 | Phase 2 | Pending |
+| NAV-07 | Phase 1 | Pending |
+| FIND-01 | Phase 3 | Pending |
+| FIND-02 | Phase 3 | Pending |
+| FIND-03 | Phase 3 | Pending |
+| FIND-04 | Phase 3 | Pending |
+| FIND-05 | Phase 3 | Pending |
+| HIST-01 | Phase 2 | Pending |
+| HIST-02 | Phase 2 | Pending |
+| UI-01 | Phase 2 | Pending |
+| UI-02 | Phase 2 | Pending |
+| UI-03 | Phase 2 | Pending |
+| DATA-01 | Phase 1 | Pending |
+| DATA-02 | Phase 1 | Pending |
+| DATA-03 | Phase 1 | Pending |
+| DATA-04 | Phase 1 | Pending |
+| DATA-05 | Phase 1 | Pending |
+| DATA-06 | Phase 1 | Pending |
+
+**Per-phase totals:**
+- Phase 1: 9 requirements
+- Phase 2: 23 requirements
+- Phase 3: 7 requirements
+- Phase 4: 6 requirements
 
 **Coverage:**
 - v1 requirements: 45 total
-- Mapped to phases: 0
-- Unmapped: 45 ⚠️
+- Mapped to phases: 45
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-08-21*
-*Last updated: 2026-08-21 after initial definition*
+*Last updated: 2026-08-21 after roadmap creation (traceability populated)*
