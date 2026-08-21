@@ -60,7 +60,20 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A deliberately corrupted file in a fixture degrades to its raw body plus a recorded warning while every other file parses cleanly — the load produces a snapshot rather than throwing.
   4. The whole snapshot rebuilds through one `refresh()` call, and swapping the filesystem implementation behind the interface requires no change to parsing, assembly, or anything downstream.
   5. The snapshot exposes resolved cross-references — requirement to phase, phase to plans, and a decision ID to the files mentioning it — with unresolvable references present and explicitly marked rather than silently dropped.
-**Plans**: 2 plans
+**Plans**: 4 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Tracer: scaffold the repo and drive one path end-to-end from a project path to normalized snapshot JSON, plus the never-throwing load contract (wave 1)
+- [ ] 01-02-PLAN.md — Fixture corpus: `sparse-started` and the adversarial `dense` tree, with deliberate corruption and a template-traceability ledger (wave 2)
+- [ ] 01-03-PLAN.md — GSD naming grammar, typed handler registry with the generic fallback last, and the milestone-qualified domain graph (wave 2)
+- [ ] 01-04-PLAN.md — Cross-reference resolution, the NAV-07 decision-mention index, and the two-implementation proof with committed goldens (wave 3)
+
+> **Note (D-03):** DATA-06 says "two synthetic test fixtures"; this phase delivers **three** trees.
+> The roadmap describes the sparse fixture two incompatible ways — Phase 1 SC2 says "fresh project,
+> no `ROADMAP.md`, no `phases/`" while Phase 4 SC1 says "one phase, no milestones" — and those are
+> different trees exercising different code paths, so both are built (`sparse-empty` and
+> `sparse-started`) alongside `dense`. Flagged rather than silently satisfying DATA-06's letter with
+> the wrong trees.
 
 ### Phase 2: Situational Awareness & Artifact Reading
 **Goal**: Opening the dashboard on a project answers "where does the work stand" at a glance, and every artifact — plan, summary, research, or a type the tool has never seen — reads as a properly formatted, cross-linked document.
@@ -108,7 +121,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Read Layer & Domain Model | 0/2 | Not started | - |
+| 1. Read Layer & Domain Model | 0/4 | Not started | - |
 | 2. Situational Awareness & Artifact Reading | 0/3 | Not started | - |
 | 3. Search, Browsing & Traceability | 0/2 | Not started | - |
 | 4. Portability & Degradation Hardening | 0/2 | Not started | - |
