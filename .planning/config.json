@@ -21,7 +21,7 @@
     "research": true,
     "plan_check": true,
     "verifier": true,
-    "nyquist_validation": true,
+    "nyquist_validation": false,
     "auto_advance": false,
     "node_repair": true,
     "node_repair_budget": 2,
@@ -49,7 +49,31 @@
     "_auto_chain_active": false
   },
   "ship": {
-    "pr_body_sections": []
+    "pr_body_sections": [
+      {
+        "heading": "User Stories & Acceptance Criteria",
+        "enabled": false,
+        "source": "REQUIREMENTS.md ## User Stories || REQUIREMENTS.md ## Acceptance Criteria",
+        "fallback": "- Acceptance criteria are covered by the linked requirements and verification evidence."
+      },
+      {
+        "heading": "Risks & Dependencies",
+        "enabled": false,
+        "source": "PLAN.md ## Risks || PLAN.md ## Dependencies",
+        "fallback": "- No known high-risk rollout dependencies."
+      },
+      {
+        "heading": "Success Metrics & Release Criteria",
+        "enabled": false,
+        "source": "REQUIREMENTS.md ## Definition of Done || VERIFICATION.md ## Release Criteria",
+        "fallback": "- Release when automated verification and required manual checks pass."
+      },
+      {
+        "heading": "Stakeholder Review & Approval",
+        "enabled": false,
+        "template": "- Product owner approval pending for {phase_name}."
+      }
+    ]
   },
   "hooks": {
     "context_warnings": true
@@ -62,6 +86,6 @@
     "source_grounding": true,
     "source_grounding_authority": "grep"
   },
-  "mode": "interactive",
-  "granularity": "standard"
+  "mode": "yolo",
+  "granularity": "coarse"
 }
