@@ -1,7 +1,7 @@
 // Layer A — Node-backed implementation. This is the ONLY file under src/ permitted to import the
 // Node filesystem module (DATA-01's boundary — enforced by an acceptance-criteria grep, not just
 // convention).
-import { readdirSync, readFileSync, statSync, existsSync, realpathSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync, existsSync, realpathSync, accessSync, constants } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import type { DirEntry, FileRead, FsCapabilities, PlanningFilesystem } from './types.ts';
 
@@ -120,5 +120,27 @@ export function statPathSync(absPath: string): StatOutcome | null {
     return { isDirectory: stat.isDirectory() };
   } catch {
     return null;
+  }
+}
+
+export type AccessOutcome = { ok: true } | { ok: false; code: 'EACCES' | 'EPERM' | 'OTHER' };
+
+/**
+ * Checks read+traverse access on a directory without throwing. `statPathSync`/`realpathSync`
+ * alone are not enough to detect a mode-000 directory: `stat` only needs execute permission on
+ * the *parent*, so a directory whose own permissions were stripped still stats fine and
+ * `existsSync` on a child path just swallows the resulting EACCES and returns false — which a
+ * caller could otherwise misread as "no .planning child" (not-a-gsd-project) instead of
+ * permission-denied. This is the single accessSync call target-path.ts needs to tell the two
+ * apart.
+ */
+export function checkReadAccessSync(absPath: string): AccessOutcome {
+  try {
+    accessSync(absPath, constants.R_OK | constants.X_OK);
+    return { ok: true };
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code;
+    if (code === 'EACCES' || code === 'EPERM') return { ok: false, code };
+    return { ok: false, code: 'OTHER' };
   }
 }

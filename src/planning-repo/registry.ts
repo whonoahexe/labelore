@@ -21,8 +21,12 @@ export async function parseWithRegistry(
   let raw;
   try {
     raw = await fs.read(ref.path);
-  } catch {
-    warnings.add(ref.path, 'read', 'File could not be read', 'nothing readable');
+  } catch (err) {
+    // Use the thrown error's own message (e.g. LocalFsPlanningFilesystem's PathEscapeError names
+    // the escaping relative path and its resolved target) rather than a generic string, so the
+    // warning stays useful without this module importing any concrete PlanningFilesystem.
+    const message = err instanceof Error ? err.message : 'File could not be read';
+    warnings.add(ref.path, 'read', message, 'nothing readable');
     return {
       ref,
       title: ref.path,
