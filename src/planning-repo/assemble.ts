@@ -3,6 +3,12 @@
 // number alone is never used as a key anywhere in this module. Every collection that can be empty
 // is an empty array, never null: an absent milestones/, quick/, research/, or ROADMAP.md is a
 // normal-path state of a real GSD project, not a warning.
+//
+// D-09's dual warning channel: every ParsedArtifact.warnings array this module copies onto an
+// Artifact was produced by registry.ts's single shared WarningCollector (see warnings.ts) during
+// parsing — the same object references also populate the flat `snapshot.warnings` list one layer
+// up in snapshot.ts. This module never re-collects or rebuilds warnings; it only copies references
+// through, which is what keeps the two channels from ever drifting apart.
 import { basename, dirname } from 'node:path';
 import type { Project, Artifact, Phase, Milestone, Plan, PlanSummary, Requirement, QuickTask, PhaseIdentity } from '../domain/model.ts';
 import type { ParsedArtifact, ParseWarning } from './types.ts';
