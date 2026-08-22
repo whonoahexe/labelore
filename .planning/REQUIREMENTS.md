@@ -13,8 +13,8 @@ The "works on any GSD project" requirement. Research ranked overfitting to `~/st
 as the single highest-severity risk in the project, so these are first-class requirements
 rather than defensive polish.
 
-- [ ] **TGT-01**: User starts the dashboard with a project path argument and it renders that project's `.planning/`
-- [ ] **TGT-02**: Path argument accepts relative paths, `~`-prefixed paths, and symlinked paths
+- [x] **TGT-01**: User starts the dashboard with a project path argument and it renders that project's `.planning/`
+- [x] **TGT-02**: Path argument accepts relative paths, `~`-prefixed paths, and symlinked paths
 - [ ] **TGT-03**: Dashboard renders a GSD project correctly regardless of phase count, milestone count, or which config toggles are enabled — including a fresh project with one phase and no milestones
 - [ ] **TGT-04**: A missing optional artifact or directory (`quick/`, `milestones/`, `research/`, `UI-SPEC.md`, `SECURITY.md`) produces an honest empty state in the affected view, never an error page
 - [ ] **TGT-05**: An artifact type the dashboard does not recognize still appears in navigation and renders as plain markdown
@@ -148,8 +148,8 @@ Which phases cover which requirements. Populated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TGT-01 | Phase 1 | Pending |
-| TGT-02 | Phase 1 | Pending |
+| TGT-01 | Phase 1 | Complete |
+| TGT-02 | Phase 1 | Complete |
 | TGT-03 | Phase 4 | Pending |
 | TGT-04 | Phase 4 | Pending |
 | TGT-05 | Phase 4 | Pending |
@@ -195,12 +195,14 @@ Which phases cover which requirements. Populated during roadmap creation.
 | DATA-06 | Phase 1 | Pending |
 
 **Per-phase totals:**
+
 - Phase 1: 9 requirements
 - Phase 2: 23 requirements
 - Phase 3: 7 requirements
 - Phase 4: 6 requirements
 
 **Coverage:**
+
 - v1 requirements: 45 total
 - Mapped to phases: 45
 - Unmapped: 0 ✓

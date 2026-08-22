@@ -64,12 +64,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. The whole snapshot rebuilds through one `refresh()` call, and swapping the filesystem implementation behind the interface requires no change to parsing, assembly, or anything downstream.
   5. The snapshot exposes resolved cross-references — requirement to phase, phase to plans, and a decision ID to the files mentioning it — with unresolvable references present and explicitly marked rather than silently dropped.
 
-**Plans**: 4 plans
+**Plans**: 1/4 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 01-01-PLAN.md — Tracer: scaffold the repo and drive one path end-to-end from a project path to normalized snapshot JSON, plus the never-throwing load contract (wave 1)
+- [x] 01-01-PLAN.md — Tracer: scaffold the repo and drive one path end-to-end from a project path to normalized snapshot JSON, plus the never-throwing load contract (wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -142,7 +142,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Read Layer & Domain Model | 0/4 | Not started | - |
+| 1. Read Layer & Domain Model | 1/4 | In Progress|  |
 | 2. Situational Awareness & Artifact Reading | 0/3 | Not started | - |
 | 3. Search, Browsing & Traceability | 0/2 | Not started | - |
 | 4. Portability & Degradation Hardening | 0/2 | Not started | - |
