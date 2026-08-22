@@ -1,0 +1,51 @@
+{
+  "mode": "yolo",
+  "granularity": "coarse",
+  "project_code": null,
+  "workflow": {
+    "research": true,
+    "verifier": true,
+    "auto_advance": false,
+    "windows_enforce": true,
+    "schema_drift_gate": true,
+    "drift_threshold": 0.2,
+    "drift_action": "warn",
+    "use_worktrees": true
+  },
+  "git": {
+    "branching_strategy": "phase",
+    "create_tag": true,
+    "phase_branch_template": "gsd/phase-{phase}-{slug}"
+  },
+  "features": {
+    "thinking_partner": false,
+    "global_learnings": true
+  },
+  "hooks": {
+    "context_warnings": true
+  },
+  "learnings": {
+    "max_inject": 10
+  },
+  "intel": {
+    "enabled": false
+  },
+  "planning": {
+    "commit_docs": true,
+    "search_gitignored": false
+  },
+  "parallelization": {
+    "enabled": true,
+    "plan_level": true,
+    "task_level": false,
+    "max_concurrent_agents": 3
+  },
+  "vibe_check": true,
+  "experimental_widget_pipeline": true,
+  "telemetry": {
+    "sink": "none",
+    "sampling": {
+      "rate": 0.1
+    }
+  }
+}

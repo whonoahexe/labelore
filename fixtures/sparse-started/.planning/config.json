@@ -1,0 +1,8 @@
+{
+  "mode": "interactive",
+  "granularity": "standard",
+  "workflow": {
+    "research": true,
+    "auto_advance": false
+  }
+}

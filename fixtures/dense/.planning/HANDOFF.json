@@ -1,0 +1,24 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-08-21T18:40:00.000Z",
+  "phase": "02",
+  "phase_name": "transport-layer",
+  "phase_dir": ".planning/phases/02-transport-layer",
+  "plan": 1,
+  "task": 1,
+  "total_tasks": 1,
+  "status": "paused",
+  "completed_tasks": [],
+  "remaining_tasks": [
+    { "id": "02-01-01", "name": "Build the transport tracer", "status": "pending", "wave": 1, "autonomous": true, "tasks": [{ "id": "02-01-01", "name": "Build the transport tracer", "type": "auto" }] }
+  ],
+  "blockers": [],
+  "async_jobs": [],
+  "human_actions_pending": [],
+  "decisions": [
+    { "decision": "Use an in-process function call to stand in for a real network boundary", "rationale": "No real network boundary exists yet in this fixture project", "phase": "02" }
+  ],
+  "uncommitted_files": ["src/transport/client.ts"],
+  "next_action": "/gsd-execute-phase 02",
+  "context_notes": "Paused mid-task-1 to demonstrate the HANDOFF.json artifact type.",
+}
