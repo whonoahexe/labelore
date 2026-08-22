@@ -1,0 +1,63 @@
+{
+  "loadStatus": {
+    "status": "ok"
+  },
+  "readAt": "1970-01-01T00:00:00.000Z",
+  "rootPath": ".",
+  "project": {
+    "rootPath": ".",
+    "name": "Sparse Empty Fixture",
+    "artifacts": {
+      ".planning/PROJECT.md": {
+        "id": ".planning/PROJECT.md",
+        "path": ".planning/PROJECT.md",
+        "kind": "unknown",
+        "frontmatter": {},
+        "title": "Sparse Empty Fixture",
+        "bodyLength": 881,
+        "bodyHash": "cda94a800a64d0c9b4aa4f86f92ae6a239c630d22b32465f0e8c77ffe1e599de",
+        "mtimeMs": 0,
+        "warnings": []
+      },
+      ".planning/REQUIREMENTS.md": {
+        "id": ".planning/REQUIREMENTS.md",
+        "path": ".planning/REQUIREMENTS.md",
+        "kind": "unknown",
+        "frontmatter": {},
+        "title": "Requirements: Sparse Empty Fixture",
+        "bodyLength": 718,
+        "bodyHash": "e5fd98c37373b4ff6ba05d7f320169419cc22a8c0855eaba57fbec4f0aa76dac",
+        "mtimeMs": 0,
+        "warnings": []
+      },
+      ".planning/STATE.md": {
+        "id": ".planning/STATE.md",
+        "path": ".planning/STATE.md",
+        "kind": "unknown",
+        "frontmatter": {
+          "gsd_state_version": "1.0",
+          "status": "planning",
+          "progress": {
+            "total_phases": 0,
+            "completed_phases": 0,
+            "total_plans": 0,
+            "completed_plans": 0,
+            "percent": 0
+          }
+        },
+        "title": "Project State",
+        "bodyLength": 1296,
+        "bodyHash": "5085021fb2c9b8c91b14c8a21632e61a4a2f8c881e0c29ee1c8333c4993db289",
+        "mtimeMs": 0,
+        "warnings": []
+      }
+    },
+    "config": {},
+    "milestones": [],
+    "phases": [],
+    "quickTasks": [],
+    "requirements": []
+  },
+  "warnings": [],
+  "exclusions": []
+}

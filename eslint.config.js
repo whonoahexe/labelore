@@ -1,0 +1,19 @@
+// @ts-check
+import js from '@eslint/js';
+import tseslint from 'typescript-eslint';
+import globals from 'globals';
+
+export default tseslint.config(
+  {
+    ignores: ['node_modules/**', 'fixtures/**', 'test/__golden__/**'],
+  },
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+  {
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+);

@@ -1,0 +1,25 @@
+{
+  "name": "gsd-lore",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "snapshot": "node src/cli/snapshot.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vitest": "4.1.11",
+    "gray-matter": "4.0.3",
+    "@types/node": "22.20.1",
+    "eslint": "10.8.1",
+    "typescript-eslint": "8.67.0",
+    "@eslint/js": "10.0.1",
+    "globals": "17.11.0",
+    "prettier": "3.9.6"
+  }
+}
