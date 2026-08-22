@@ -129,6 +129,26 @@ export function parseQuickDirName(dirName: string): QuickDirNameResult {
   return { matched: true, date: m[1], timeToken: m[2], slug: m[3] };
 }
 
+export interface QuickArtifactNameMatch {
+  matched: true;
+  /** The full `{date}-{timeToken}` id, e.g. '260726-unp'. */
+  quickId: string;
+  /** Open token, e.g. 'PLAN', 'SUMMARY', 'CONTEXT', 'VERIFICATION'. */
+  artifact: string;
+}
+export type QuickArtifactNameResult = QuickArtifactNameMatch | NameNoMatch;
+
+// GSD-DOMAIN.md "quick/<timestamp-slug>/ naming": files inside use the same {token}-ARTIFACT.md
+// grammar as phase artifacts, but keyed on the full quickId (date+time) rather than a phase
+// number — e.g. `260726-unp-PLAN.md`, `260726-unp-CONTEXT.md`.
+const QUICK_ARTIFACT_RE = /^(\d{6}-[0-9a-z]{3})-([A-Z][A-Z-]*)\.md$/;
+
+export function parseQuickArtifactName(fileName: string): QuickArtifactNameResult {
+  const m = fileName.match(QUICK_ARTIFACT_RE);
+  if (!m) return { matched: false };
+  return { matched: true, quickId: m[1], artifact: m[2] };
+}
+
 export interface MilestoneFileNameMatch {
   matched: true;
   /** e.g. 'v1.0' — the version segment, verbatim. */
