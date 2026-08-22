@@ -217,6 +217,22 @@ describe('JsonConfigHandler', () => {
   });
 });
 
+describe('GenericMarkdownHandler — absence is normal-path data, never a warning', () => {
+  it('parses a frontmatter block with no keys as a well-formed empty map, no warning', () => {
+    const result = GenericMarkdownHandler.parse(raw('x', '---\n---\n\nbody text\n'), ref('.planning/NOTES.md'));
+    expect(result.frontmatter).toEqual({});
+    expect(result.warning).toBeUndefined();
+    expect(result.body.trim()).toBe('body text');
+  });
+
+  it('parses a document with frontmatter and no body without a warning', () => {
+    const result = GenericMarkdownHandler.parse(raw('x', '---\ntitle: Only Frontmatter\n---\n'), ref('.planning/NOTES.md'));
+    expect(result.frontmatter.title).toBe('Only Frontmatter');
+    expect(result.warning).toBeUndefined();
+    expect(result.body.trim()).toBe('');
+  });
+});
+
 describe('WindowsHandler', () => {
   it('prefers the fenced JSON block over the markdown table when both are present', () => {
     const content = `---\nschema_version: 1\nopen_count: 1\n---\n\n# Windows\n\n| id | phase | kind |\n|---|---|---|\n| 1 | 01 | stub |\n\n\`\`\`json\n[{"id": 1, "phase": "01", "kind": "deviation"}]\n\`\`\`\n`;
