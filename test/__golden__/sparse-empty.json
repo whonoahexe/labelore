@@ -11,29 +11,89 @@
       ".planning/PROJECT.md": {
         "id": ".planning/PROJECT.md",
         "path": ".planning/PROJECT.md",
-        "kind": "unknown",
+        "kind": "project",
         "frontmatter": {},
         "title": "Sparse Empty Fixture",
         "bodyLength": 881,
         "bodyHash": "cda94a800a64d0c9b4aa4f86f92ae6a239c630d22b32465f0e8c77ffe1e599de",
         "mtimeMs": 0,
-        "warnings": []
+        "warnings": [],
+        "structured": {
+          "sections": [
+            {
+              "heading": "What This Is"
+            },
+            {
+              "heading": "Core Value"
+            },
+            {
+              "heading": "Requirements"
+            },
+            {
+              "heading": "Context"
+            },
+            {
+              "heading": "Constraints"
+            },
+            {
+              "heading": "Key Decisions"
+            }
+          ],
+          "keyDecisions": [
+            {
+              "Decision": "Keep this fixture sparse",
+              "Rationale": "Proves the null-milestone, no-structure code path",
+              "Outcome": "— Pending"
+            }
+          ]
+        }
       },
       ".planning/REQUIREMENTS.md": {
         "id": ".planning/REQUIREMENTS.md",
         "path": ".planning/REQUIREMENTS.md",
-        "kind": "unknown",
+        "kind": "requirements",
         "frontmatter": {},
         "title": "Requirements: Sparse Empty Fixture",
         "bodyLength": 718,
         "bodyHash": "e5fd98c37373b4ff6ba05d7f320169419cc22a8c0855eaba57fbec4f0aa76dac",
         "mtimeMs": 0,
-        "warnings": []
+        "warnings": [],
+        "structured": {
+          "items": [
+            {
+              "id": "FIX-01",
+              "category": "Fixture",
+              "text": "Fixture requirement one",
+              "tier": "v1",
+              "checked": false
+            },
+            {
+              "id": "FIX-02",
+              "category": "Fixture",
+              "text": "Fixture requirement two",
+              "tier": "v2",
+              "checked": null
+            }
+          ],
+          "outOfScope": [
+            {
+              "feature": "Anything beyond one requirement",
+              "reason": "This fixture is deliberately sparse"
+            }
+          ],
+          "traceability": [
+            {
+              "requirementId": "FIX-01",
+              "phase": "Phase 1",
+              "status": "Pending"
+            }
+          ]
+        }
       },
       ".planning/STATE.md": {
         "id": ".planning/STATE.md",
         "path": ".planning/STATE.md",
-        "kind": "unknown",
+        "kind": "state",
         "frontmatter": {
           "gsd_state_version": "1.0",
           "status": "planning",
@@ -49,14 +109,52 @@
         "bodyLength": 1296,
         "bodyHash": "5085021fb2c9b8c91b14c8a21632e61a4a2f8c881e0c29ee1c8333c4993db289",
         "mtimeMs": 0,
-        "warnings": []
+        "warnings": [],
+        "structured": {
+          "sections": [
+            {
+              "heading": "Project Reference"
+            },
+            {
+              "heading": "Current Position"
+            },
+            {
+              "heading": "Performance Metrics"
+            },
+            {
+              "heading": "Accumulated Context"
+            },
+            {
+              "heading": "Deferred Items"
+            },
+            {
+              "heading": "Session Continuity"
+            }
+          ],
+          "quickTasksCompleted": []
+        }
       }
     },
     "config": {},
     "milestones": [],
     "phases": [],
     "quickTasks": [],
-    "requirements": []
+    "requirements": [
+      {
+        "id": "FIX-01",
+        "category": "Fixture",
+        "text": "Fixture requirement one",
+        "tier": "v1",
+        "checked": false
+      },
+      {
+        "id": "FIX-02",
+        "category": "Fixture",
+        "text": "Fixture requirement two",
+        "tier": "v2",
+        "checked": null
+      }
+    ]
   },
   "warnings": [],
   "exclusions": []
