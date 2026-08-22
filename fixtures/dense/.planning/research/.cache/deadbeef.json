@@ -1,0 +1,5 @@
+{
+  "provider": "fixture",
+  "cached_at": "2026-05-20T00:00:00.000Z",
+  "response": "This is a synthetic research-provider cache entry. It proves the discovery walk's exclusion of research/.cache/ is recorded and visible rather than silent."
+}
