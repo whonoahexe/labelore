@@ -64,7 +64,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. The whole snapshot rebuilds through one `refresh()` call, and swapping the filesystem implementation behind the interface requires no change to parsing, assembly, or anything downstream.
   5. The snapshot exposes resolved cross-references — requirement to phase, phase to plans, and a decision ID to the files mentioning it — with unresolvable references present and explicitly marked rather than silently dropped.
 
-**Plans**: 1/4 plans executed
+**Plans**: 3/4 plans executed
 
 Plans:
 **Wave 1**
@@ -73,8 +73,8 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 01-02-PLAN.md — Fixture corpus: `sparse-started` and the adversarial `dense` tree, with deliberate corruption and a template-traceability ledger (wave 2)
-- [ ] 01-03-PLAN.md — GSD naming grammar, typed handler registry with the generic fallback last, and the milestone-qualified domain graph (wave 2)
+- [x] 01-02-PLAN.md — Fixture corpus: `sparse-started` and the adversarial `dense` tree, with deliberate corruption and a template-traceability ledger (wave 2)
+- [x] 01-03-PLAN.md — GSD naming grammar, typed handler registry with the generic fallback last, and the milestone-qualified domain graph (wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -142,7 +142,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Read Layer & Domain Model | 1/4 | In Progress|  |
+| 1. Read Layer & Domain Model | 3/4 | In Progress|  |
 | 2. Situational Awareness & Artifact Reading | 0/3 | Not started | - |
 | 3. Search, Browsing & Traceability | 0/2 | Not started | - |
 | 4. Portability & Degradation Hardening | 0/2 | Not started | - |
