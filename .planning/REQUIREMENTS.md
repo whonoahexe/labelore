@@ -91,7 +91,7 @@ Architectural requirements. They are listed because PROJECT.md names three futur
 because fixture testing is the only real defense against overfitting.
 
 - [ ] **DATA-01**: Filesystem access sits behind an interface that admits a multi-project source, a watcher-backed source, and eventually a writing source, without changes downstream of it
-- [ ] **DATA-02**: Artifact parsing dispatches on filename pattern with a generic markdown handler registered last and matching unconditionally — frontmatter presence is never used as the dispatch signal
+- [x] **DATA-02**: Artifact parsing dispatches on filename pattern with a generic markdown handler registered last and matching unconditionally — frontmatter presence is never used as the dispatch signal
 - [ ] **DATA-03**: `config.json` and the artifact-type set are parsed as open maps; unknown keys and unknown types are preserved rather than dropped
 - [ ] **DATA-04**: The whole project snapshot is rebuildable through a single `refresh()` entry point — the same seam a future file watcher will call
 - [ ] **DATA-05**: A non-UI harness dumps the parsed snapshot as JSON, so parsing can be tested without rendering
@@ -188,7 +188,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 | UI-02 | Phase 2 | Pending |
 | UI-03 | Phase 2 | Pending |
 | DATA-01 | Phase 1 | Pending |
-| DATA-02 | Phase 1 | Pending |
+| DATA-02 | Phase 1 | Complete |
 | DATA-03 | Phase 1 | Pending |
 | DATA-04 | Phase 1 | Pending |
 | DATA-05 | Phase 1 | Pending |
