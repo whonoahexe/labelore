@@ -10,6 +10,7 @@ import {
   parsePlanFileName,
   parsePhaseArtifactName,
   parseQuickDirName,
+  parseQuickArtifactName,
   parseMilestoneFileName,
   parseMilestonePhasesDirName,
   isCanonicalRootFile,
@@ -54,6 +55,9 @@ function deriveKind(fileName: string): string {
 
   const artifact = parsePhaseArtifactName(fileName);
   if (artifact.matched) return artifact.artifact.toLowerCase();
+
+  const quickArtifact = parseQuickArtifactName(fileName);
+  if (quickArtifact.matched) return quickArtifact.artifact.toLowerCase();
 
   return 'unknown';
 }
