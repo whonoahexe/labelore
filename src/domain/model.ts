@@ -27,6 +27,18 @@ export interface Artifact {
 }
 
 /**
+ * A resolved cross-reference (plan 01-04, D-10): the literal token as written, alongside its
+ * resolved target or `null` when dangling. A dangling reference is expected, normal-path data —
+ * a mistyped or deliberately-unlinked id — and is never itself a warning; it is present so a
+ * consumer can render "this reference could not be resolved" without treating it as a parse
+ * failure. Defined here (not in planning-repo/) so this zero-I/O module never imports from it.
+ */
+export interface Reference<T> {
+  raw: string;
+  resolved: T | null;
+}
+
+/**
  * Compound phase identity. Phase number alone is never an identity — the same number can appear
  * both as an active phase and as an archived phase inside a different milestone's archive tree
  * (`milestones/vX.Y-phases/`), and STATE.md's `phase_numbering: restarts-per-milestone` makes this
@@ -54,6 +66,14 @@ export interface Plan {
   frontmatter: Record<string, unknown>;
   /** Null when this plan has not yet been executed (no matching SUMMARY.md on disk). */
   summary: PlanSummary | null;
+  /** Plan 01-04: the same value as `summary`, wrapped as a Reference so plan-to-summary resolution shares one shape with every other cross-reference. `raw` is this plan's own id, since a summary is paired by filename convention rather than a written token. */
+  summaryRef: Reference<PlanSummary>;
+  /**
+   * Plan 01-04: each entry of `frontmatter.depends_on` resolved against this plan's OWN phase's
+   * plan list only — GSD's depends_on convention names sibling plans within the same phase, and a
+   * token that doesn't match one is a dangling reference (`resolved: null`), never a thrown error.
+   */
+  dependsOnRefs: Reference<Plan>[];
 }
 
 export interface Phase {
@@ -67,6 +87,8 @@ export interface Phase {
   /** The `**Depends on**:` line, kept as free text — never parsed into a dependency graph. */
   dependsOnRaw: string | null;
   requirementIds: string[];
+  /** Plan 01-04: `requirementIds` resolved against `Project.requirements`. Absent ids resolve to `resolved: null` and are never a warning (D-10). */
+  requirementRefs: Reference<Requirement>[];
   successCriteria: string[];
   /**
    * Completion state as reported by ROADMAP.md's own plan-checklist checkbox syntax. Null when
@@ -98,6 +120,14 @@ export interface Requirement {
   tier: string;
   /** Null for a v2/future requirement, which carries no checkbox at all. */
   checked: boolean | null;
+  /**
+   * Plan 01-04: `REQUIREMENTS.md`'s Traceability table rows naming this requirement, resolved to
+   * the covering Phase using the milestone-qualified identity — traceability rows name a phase by
+   * number alone with no milestone qualifier, so resolution is scoped to the live (non-archived)
+   * milestone, the one a project-wide, unscoped `REQUIREMENTS.md` document describes. Many-to-many
+   * in principle: a requirement claimed by two rows resolves to both.
+   */
+  coveringPhaseRefs: Reference<Phase>[];
 }
 
 export interface QuickTask {
