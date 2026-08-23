@@ -11,10 +11,12 @@
     "lint": "eslint .",
     "format": "prettier --write ."
   },
+  "dependencies": {
+    "gray-matter": "4.0.3"
+  },
   "devDependencies": {
     "typescript": "5.9.3",
     "vitest": "4.1.11",
-    "gray-matter": "4.0.3",
     "@types/node": "22.20.1",
     "eslint": "10.8.1",
     "typescript-eslint": "8.67.0",
