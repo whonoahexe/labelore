@@ -7,6 +7,7 @@ import type { LoadStatus, ProjectSnapshot } from './types.ts';
 import { discover } from './discovery.ts';
 import { parseWithRegistry } from './registry.ts';
 import { assembleDomainModel } from './assemble.ts';
+import { scanMentions } from './mentions.ts';
 import { WarningCollector } from './warnings.ts';
 
 const PLANNING_DIR = '.planning';
@@ -73,6 +74,10 @@ export class PlanningRepository {
     const { refs, exclusions } = await discover(this.fs);
     const parsed = await Promise.all(refs.map((ref) => parseWithRegistry(this.fs, ref, warnings)));
     const project = assembleDomainModel(parsed, warnings.all(), this.rootPath);
+    // NAV-07 (plan 01-04, D-14): runs after handler dispatch AND after assembly, never alongside
+    // discovery — scanMentions() assigns a brand-new MentionIndex every refresh, it never merges into
+    // a previously returned snapshot's index.
+    project.mentions = scanMentions(parsed);
 
     this.snapshot = {
       loadStatus,

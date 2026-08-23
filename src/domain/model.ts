@@ -38,6 +38,47 @@ export interface Reference<T> {
   resolved: T | null;
 }
 
+/** The four ID schemes the mention scanner recognizes (plan 01-04, D-13) — exactly the set NAV-02, NAV-03, and NAV-07 consume. Every other scheme in GSD's inventory (threat ids, wave numbers, ledger integers) is read only from structured frontmatter, never scanned out of prose. */
+export type IdScheme = 'requirement' | 'decision' | 'plan' | 'phase';
+
+/**
+ * One occurrence of an id-shaped token in prose (D-16): which artifact it was found in (path and the
+ * artifact's own resolved kind, so a later consumer can scope resolution by artifact type per D-14 —
+ * a `D`-prefixed token means something different inside a `CONTEXT.md`-kind artifact than inside a
+ * `SUMMARY.md`-kind one), where in the ORIGINAL unmodified document (one-based line, zero-based
+ * offset — never an offset into the code-stripped scanning copy), and a bounded excerpt of the
+ * surrounding line. Defined here, not in planning-repo/mentions.ts, for the same reason `Reference<T>`
+ * is defined here rather than in crossref.ts: `Project.mentions` needs this type and the zero-I/O
+ * domain module never imports from planning-repo/.
+ */
+export interface Mention {
+  scheme: IdScheme;
+  id: string;
+  artifactPath: string;
+  artifactKind: string;
+  position: { line: number; offset: number };
+  excerpt: string;
+}
+
+/**
+ * The decision-mention index (NAV-07). Keyed on scheme-plus-id together, never on a bare id (D-14) —
+ * `byId`'s keys are the literal string `` `${scheme}:${id}` ``, so a hyphenated single-letter `D`
+ * token and an unrelated requirement id can never share a bucket even if their bare id text ever
+ * coincided. `all` is the same mentions, flattened and sorted deterministically by artifact path then
+ * offset, for consumers that want one ordered list rather than the grouped map.
+ *
+ * This index is not, and must never become, a registry of authored facts about an id. It reports that
+ * an id was mentioned, where, and with what surrounding text — nothing else. GSD has no file-backed
+ * source of truth for a decision beyond the prose that mentions it (see this project's own
+ * ARCHITECTURE.md, "Domain Model" § Decision), so any field added here that carried text beyond what a
+ * mentioning artifact literally wrote would be a record this tool invented, not one it read. Do not
+ * add one.
+ */
+export interface MentionIndex {
+  byId: Record<string, Mention[]>;
+  all: Mention[];
+}
+
 /**
  * Compound phase identity. Phase number alone is never an identity — the same number can appear
  * both as an active phase and as an archived phase inside a different milestone's archive tree
@@ -149,4 +190,6 @@ export interface Project {
   phases: Phase[];
   quickTasks: QuickTask[];
   requirements: Requirement[];
+  /** Plan 01-04 (NAV-07): the whole-corpus decision-mention index, rebuilt from scratch by scanMentions() on every refresh — never merged into a previous one. */
+  mentions: MentionIndex;
 }
