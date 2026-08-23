@@ -305,6 +305,7 @@ export function assembleDomainModel(parsed: ParsedArtifact[], _warnings: ParseWa
     phases,
     quickTasks,
     requirements,
+    mentions: { byId: {}, all: [] }, // filled in by scanMentions() in snapshot.ts, after assembleDomainModel returns — it needs the raw ParsedArtifact[] bodies, which no longer exist on the assembled Plan/PlanSummary shapes
   };
 
   // Cross-reference resolution runs exactly once, here, over the fully-built graph — every

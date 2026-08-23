@@ -12,7 +12,21 @@ export interface FrontmatterResult {
 
 export const tryParseFrontmatter = (content: string): FrontmatterResult => {
   try {
-    const parsed = matter(content);
+    // gray-matter caches its internal `file` object by raw content string BEFORE attempting the
+    // YAML parse, but ONLY when called with no options object (`matter.cache[file.content] = file`
+    // runs unconditionally inside the `if (!options)` branch, ahead of the `parseMatter()` call
+    // that can throw). For malformed YAML this means: the FIRST parse of a given bad content string
+    // throws correctly (this catch block runs), but that pre-parse `file` object is already cached
+    // — so a SECOND parse of the byte-identical content within the same process (a second
+    // refresh(), a second PlanningRepository over the same fixture, this project's own test suite
+    // loading the same fixture from multiple test files) hits the cache and returns the stale
+    // object WITHOUT re-throwing, silently dropping the warning. This directly violates this
+    // project's own refresh-seam guarantee (DATA-04: refresh() must be safe to call repeatedly and
+    // produce byte-identical output for an unchanged tree) and D-11/D-12's "every parse is
+    // wrapped, every failure produces a warning" contract. Passing a (behaviorally identical, per
+    // gray-matter's own defaults()) empty options object bypasses the cache path entirely — see
+    // node_modules/gray-matter/index.js's `if (!options)` guard — so every call re-parses fresh.
+    const parsed = matter(content, {});
     return { data: parsed.data as Record<string, unknown>, body: parsed.content };
   } catch {
     // D-11: stage = 'frontmatter', salvage = 'body intact, frontmatter unavailable'
