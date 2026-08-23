@@ -99,7 +99,13 @@ export function resolveCrossReferences(project: Project): void {
   for (const phase of project.phases) {
     for (const plan of phase.plans) {
       plan.summaryRef = { raw: plan.id, resolved: plan.summary };
-      const dependsOnRaw = ((plan.frontmatter.depends_on as unknown[] | undefined) ?? []).map((v) => String(v));
+      // depends_on is raw, unvalidated YAML frontmatter (PlanHandler applies no schema check) — a
+      // bare string or number is a plausible authoring typo (`depends_on: 01-01` instead of
+      // `depends_on: ["01-01"]`). Anything that isn't actually an array degrades to "no
+      // dependencies" rather than throwing, preserving D-12's "load()/refresh() never throw"
+      // contract for the whole snapshot, not just this one plan.
+      const rawDependsOn = plan.frontmatter.depends_on;
+      const dependsOnRaw = Array.isArray(rawDependsOn) ? rawDependsOn.map((v) => String(v)) : [];
       plan.dependsOnRefs = dependsOnRaw.map((raw) => ({
         raw,
         resolved: phase.plans.find((sibling) => sibling.id === raw) ?? null,
