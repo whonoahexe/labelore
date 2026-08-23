@@ -5,6 +5,7 @@ import { discover } from '../src/planning-repo/discovery.ts';
 import { parseWithRegistry } from '../src/planning-repo/registry.ts';
 import { WarningCollector } from '../src/planning-repo/warnings.ts';
 import { InMemoryPlanningFilesystem } from '../src/planning-fs/in-memory-fs.ts';
+import { PlanningRepository } from '../src/planning-repo/snapshot.ts';
 
 const ROOT = '/project';
 
@@ -132,6 +133,31 @@ describe('resolveCrossReferences — Plan.summaryRef and Plan.dependsOnRefs', ()
     });
     const plan01 = project.phases[0].plans[0];
     expect(plan01.dependsOnRefs).toEqual([{ raw: '01-99', resolved: null }]);
+  });
+
+  // CR-01 regression: a non-array `depends_on` (a plausible authoring typo — a bare string instead
+  // of a YAML list) must degrade to "no dependencies", never throw. Previously
+  // `((plan.frontmatter.depends_on as unknown[] | undefined) ?? []).map(...)` threw
+  // "... .map is not a function" because `?? []` only substitutes for null/undefined, not for a
+  // present-but-wrong-shaped value — crashing the whole PlanningRepository.load()/refresh() call,
+  // in violation of D-12's "load()/refresh() never throw" contract.
+  it('degrades a non-array depends_on (bare string) to an empty dependsOnRefs instead of throwing', async () => {
+    const { project } = await assembleTree({
+      '.planning/phases/01-x/01-01-PLAN.md': '---\nphase: 01\nplan: 01\ndepends_on: "01-99"\n---\n\nbody\n',
+    });
+    const plan01 = project.phases[0].plans[0];
+    expect(plan01.dependsOnRefs).toEqual([]);
+  });
+
+  it('PlanningRepository.load() returns an ok snapshot rather than throwing when a PLAN.md has a non-array depends_on', async () => {
+    const fs = new InMemoryPlanningFilesystem({
+      '.planning/phases/01-x/01-01-PLAN.md': '---\nphase: 01\nplan: 01\ndepends_on: "01-99"\n---\n\nbody\n',
+    });
+    const repo = new PlanningRepository(fs, '/project');
+    const snapshot = await repo.load();
+    expect(snapshot.loadStatus.status).toBe('ok');
+    expect(snapshot.project).not.toBeNull();
+    expect(snapshot.project?.phases[0].plans[0].dependsOnRefs).toEqual([]);
   });
 });
 
