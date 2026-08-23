@@ -263,6 +263,27 @@ describe('WindowsHandler', () => {
     expect(result.structured?.rowSource).toBe('json');
     expect(result.structured?.rows).toEqual([{ id: 1, phase: '01', kind: 'deviation' }]);
   });
+
+  // WR-02 regression: a malformed fenced JSON block — the "authoritative-shaped source" per this
+  // file's own header comment — must surface a warning even though the table fallback silently
+  // produces usable rows. Previously `extractFencedJson` discarded `tryParseJson`'s warning
+  // entirely, so the corruption was invisible in both the artifact's own warnings and the flat
+  // snapshot.warnings list.
+  it('surfaces a structured-extraction warning when the fenced JSON block is malformed, while still falling back to the table', () => {
+    const content = `---\nschema_version: 1\n---\n\n# Windows\n\n| id | phase | kind |\n|---|---|---|\n| 1 | 01 | stub |\n\n\`\`\`json\n[{"id": 1,}]\n\`\`\`\n`;
+    const result = WindowsHandler.parse(raw('.planning/WINDOWS.md', content), ref('.planning/WINDOWS.md', { kind: 'windows' }));
+    expect(result.structured?.rowSource).toBe('table');
+    expect(result.structured?.rows).toEqual([{ id: '1', phase: '01', kind: 'stub' }]);
+    expect(result.warning?.stage).toBe('structured-extraction');
+    expect(result.warning?.message).toBe('JSON failed to parse');
+  });
+
+  it('produces no warning when no fenced JSON block is present at all, falling back to the table', () => {
+    const content = `---\nschema_version: 1\n---\n\n# Windows\n\n| id | phase | kind |\n|---|---|---|\n| 1 | 01 | stub |\n`;
+    const result = WindowsHandler.parse(raw('.planning/WINDOWS.md', content), ref('.planning/WINDOWS.md', { kind: 'windows' }));
+    expect(result.structured?.rowSource).toBe('table');
+    expect(result.warning).toBeUndefined();
+  });
 });
 
 describe('HANDLERS registry', () => {
