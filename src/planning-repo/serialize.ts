@@ -12,6 +12,20 @@ export interface NormalizeOptions {
 const STABLE_TIMESTAMP_PLACEHOLDER = '1970-01-01T00:00:00.000Z';
 
 /**
+ * Every key across the snapshot/domain-model shapes whose value is ever an absolute filesystem
+ * path derived from `rootPath` — never a key that merely SHARES a name with a non-path field
+ * elsewhere (e.g. `Plan.id`/`Requirement.id`/`QuickTask.id` are short tokens like "01-02", never
+ * absolute paths; `Artifact.id` IS a path). The `startsWith(rootPath)` guard below is the second,
+ * load-bearing half of this scoping: a same-named non-path value would never pass it, so listing
+ * `id`/`path` here is safe even though those keys are reused for non-path data elsewhere in the
+ * graph. What this scoping exists to prevent: verbatim artifact `body` text (which this project's
+ * own design explicitly promises to keep byte-for-byte, see `markdown-sections.ts`) silently
+ * having a substring rewritten just because it happens to quote the project's own absolute root
+ * path in prose.
+ */
+const PATH_KEYS = new Set(['rootPath', 'pathChecked', 'rawPath', 'path', 'id', 'dirPath', 'artifactPath']);
+
+/**
  * Plan 01-04's eager cross-reference resolution deliberately produces a graph with genuine object
  * cycles — e.g. `Phase.requirementRefs[].resolved` is a `Requirement`, and that same
  * `Requirement.coveringPhaseRefs[].resolved` can point right back to the same `Phase` object. This
@@ -56,7 +70,7 @@ export function normalizeForGolden(
   const cycleFree = breakCycles(snapshot, new Set());
   return JSON.parse(
     JSON.stringify(cycleFree, (key, value) => {
-      if (typeof value === 'string' && value.startsWith(rootPath)) {
+      if (PATH_KEYS.has(key) && typeof value === 'string' && value.startsWith(rootPath)) {
         const rel = relative(rootPath, value);
         return rel === '' ? '.' : rel;
       }
