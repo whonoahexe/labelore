@@ -118,6 +118,28 @@ describe('RoadmapHandler', () => {
     const livePhases = result.structured?.phases as { number: string }[];
     expect(livePhases.map((p) => p.number)).toEqual(['5']);
   });
+
+  // WR-01 regression: an interior non-`Phase N:` heading (e.g. a hand-authored `#### Notes`
+  // subsection) must NOT close the current phase block — everything up to the NEXT `Phase N:`
+  // heading belongs to the current phase, including fields that appear after the interior heading.
+  it('does not truncate a phase block at an interior non-Phase heading', () => {
+    const content = `### Phase 1: Foundation\n**Goal**: Ship it\n\n#### Notes\nSome ad hoc notes here.\n\n**Requirements**: [AUTH-01]\n**Success Criteria** (what must be TRUE):\n  1. User can sign in\n\nPlans:\n- [x] 01-01: Schema\n`;
+    const result = RoadmapHandler.parse(raw('.planning/ROADMAP.md', content), ref('.planning/ROADMAP.md'));
+    const phases = result.structured?.phases as {
+      number: string;
+      goal: string | null;
+      requirementIds: string[];
+      successCriteria: string[];
+      plans: { id: string }[];
+      roadmapComplete: boolean | null;
+    }[];
+    expect(phases).toHaveLength(1);
+    expect(phases[0].goal).toBe('Ship it');
+    expect(phases[0].requirementIds).toEqual(['AUTH-01']);
+    expect(phases[0].successCriteria).toEqual(['User can sign in']);
+    expect(phases[0].plans).toEqual([{ id: '01-01', description: 'Schema', checked: true }]);
+    expect(phases[0].roadmapComplete).toBe(true);
+  });
 });
 
 describe('RequirementsHandler', () => {
