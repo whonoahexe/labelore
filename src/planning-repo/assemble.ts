@@ -14,6 +14,7 @@ import type { Project, Artifact, Phase, Milestone, Plan, PlanSummary, Requiremen
 import type { ParsedArtifact, ParseWarning } from './types.ts';
 import { parsePlanFileName, comparePhaseNumbers } from './naming.ts';
 import type { RoadmapPhaseBlock } from './handlers/roadmap.ts';
+import { resolveCrossReferences } from './crossref.ts';
 
 const CONFIG_PATH = '.planning/config.json';
 const PROJECT_MD_PATH = '.planning/PROJECT.md';
@@ -88,13 +89,19 @@ function buildPhaseFromGroup(group: PhaseGroupInput, roadmapBlock: RoadmapPhaseB
       const summary: PlanSummary | null = summaryArtifact
         ? { path: summaryArtifact.ref.path, frontmatter: summaryArtifact.frontmatter }
         : null;
+      const id = `${parsedName.phase}-${parsedName.plan}`;
       return {
-        id: `${parsedName.phase}-${parsedName.plan}`,
+        id,
         identity: group.identity,
         planNumber: parsedName.plan,
         path: p.ref.path,
         frontmatter: p.frontmatter,
         summary,
+        // Filled in by resolveCrossReferences() at the end of assembleDomainModel — cross-phase
+        // Plan lookups (dependsOnRefs resolves within THIS phase's own plan list, not built yet
+        // while this map() is still running) are impossible to resolve mid-construction.
+        summaryRef: { raw: id, resolved: summary },
+        dependsOnRefs: [],
       };
     })
     .filter((p): p is Plan => p !== null)
@@ -119,6 +126,7 @@ function buildPhaseFromGroup(group: PhaseGroupInput, roadmapBlock: RoadmapPhaseB
     goal: roadmapBlock?.goal ?? null,
     dependsOnRaw: roadmapBlock?.dependsOnRaw ?? null,
     requirementIds: roadmapBlock?.requirementIds ?? [],
+    requirementRefs: [], // filled in by resolveCrossReferences() at the end of assembleDomainModel
     successCriteria: roadmapBlock?.successCriteria ?? [],
     roadmapComplete: roadmapBlock?.roadmapComplete ?? null,
     diskStatus,
@@ -137,6 +145,7 @@ function buildPhaseFromRoadmapOnly(identity: PhaseIdentity, block: RoadmapPhaseB
     goal: block.goal,
     dependsOnRaw: block.dependsOnRaw,
     requirementIds: block.requirementIds,
+    requirementRefs: [], // filled in by resolveCrossReferences() at the end of assembleDomainModel
     successCriteria: block.successCriteria,
     roadmapComplete: block.roadmapComplete,
     diskStatus: 'no_directory',
@@ -266,6 +275,7 @@ export function assembleDomainModel(parsed: ParsedArtifact[], _warnings: ParseWa
     text: item.text,
     tier: item.tier,
     checked: item.checked,
+    coveringPhaseRefs: [], // filled in by resolveCrossReferences() below
   }));
 
   // --- Quick tasks: grouped by quickTaskId, cross-linked to STATE.md's authoritative status table. ---
@@ -286,7 +296,7 @@ export function assembleDomainModel(parsed: ParsedArtifact[], _warnings: ParseWa
     }))
     .sort((a, b) => a.id.localeCompare(b.id));
 
-  return {
+  const project: Project = {
     rootPath,
     name,
     artifacts,
@@ -296,4 +306,12 @@ export function assembleDomainModel(parsed: ParsedArtifact[], _warnings: ParseWa
     quickTasks,
     requirements,
   };
+
+  // Cross-reference resolution runs exactly once, here, over the fully-built graph — every
+  // Phase/Plan/Requirement it touches already exists in its final shape (ARCHITECTURE.md's eager
+  // resolution rationale: milliseconds-to-low-seconds at this corpus size, and lazy per-render
+  // resolution would just be this same pass re-run on every request).
+  resolveCrossReferences(project);
+
+  return project;
 }
