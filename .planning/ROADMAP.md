@@ -64,7 +64,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. The whole snapshot rebuilds through one `refresh()` call, and swapping the filesystem implementation behind the interface requires no change to parsing, assembly, or anything downstream.
   5. The snapshot exposes resolved cross-references — requirement to phase, phase to plans, and a decision ID to the files mentioning it — with unresolvable references present and explicitly marked rather than silently dropped.
 
-**Plans**: 3/4 plans executed
+**Plans**: 4/4 plans executed
 
 Plans:
 **Wave 1**
@@ -78,7 +78,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 01-04-PLAN.md — Cross-reference resolution, the NAV-07 decision-mention index, and the two-implementation proof with committed goldens (wave 3)
+- [x] 01-04-PLAN.md — Cross-reference resolution, the NAV-07 decision-mention index, and the two-implementation proof with committed goldens (wave 3)
 
 > **Note (D-03):** DATA-06 says "two synthetic test fixtures"; this phase delivers **three** trees.
 > The roadmap describes the sparse fixture two incompatible ways — Phase 1 SC2 says "fresh project,
@@ -142,7 +142,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Read Layer & Domain Model | 3/4 | In Progress|  |
+| 1. Read Layer & Domain Model | 4/4 | In Progress|  |
 | 2. Situational Awareness & Artifact Reading | 0/3 | Not started | - |
 | 3. Search, Browsing & Traceability | 0/2 | Not started | - |
 | 4. Portability & Degradation Hardening | 0/2 | Not started | - |
