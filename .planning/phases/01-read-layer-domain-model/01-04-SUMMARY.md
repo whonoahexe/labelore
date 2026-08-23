@@ -222,3 +222,9 @@ None — no external service configuration required.
 ---
 *Phase: 01-read-layer-domain-model*
 *Completed: 2026-08-24*
+
+## Self-Check: PASSED
+
+- All created files verified present on disk: `src/planning-repo/crossref.ts`, `src/planning-repo/mentions.ts`, `test/crossref.test.ts`, `test/mentions.test.ts`, `test/fs-equivalence.test.ts`, `test/degradation.test.ts`, `test/__golden__/sparse-started.json`, `test/__golden__/dense.json`, this `01-04-SUMMARY.md`.
+- All referenced commits verified present in `git log`: `114f885`, `359138e`, `76137ec`, `c80c4f3`.
+- Full plan-level `<verification>` re-run: `npm test` (128/128 pass), `npx tsc --noEmit` (clean), `npx eslint .` (clean), all three goldens present and stable under a re-run without `-u`.
