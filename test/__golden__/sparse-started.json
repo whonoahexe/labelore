@@ -1,0 +1,1761 @@
+{
+  "loadStatus": {
+    "status": "ok"
+  },
+  "readAt": "1970-01-01T00:00:00.000Z",
+  "rootPath": ".",
+  "project": {
+    "rootPath": ".",
+    "name": "Sparse Started Fixture",
+    "artifacts": {
+      ".planning/config.json": {
+        "id": ".planning/config.json",
+        "path": ".planning/config.json",
+        "kind": "config",
+        "frontmatter": {
+          "mode": "interactive",
+          "granularity": "standard",
+          "workflow": {
+            "research": true,
+            "auto_advance": false
+          }
+        },
+        "title": "config.json",
+        "bodyLength": 126,
+        "bodyHash": "213c21757e7ec3d6619bad6bc833bd93c1060e7635c8972dd4f92491713c748f",
+        "mtimeMs": 0,
+        "warnings": [],
+        "structured": {}
+      },
+      ".planning/PROJECT.md": {
+        "id": ".planning/PROJECT.md",
+        "path": ".planning/PROJECT.md",
+        "kind": "project",
+        "frontmatter": {},
+        "title": "Sparse Started Fixture",
+        "bodyLength": 1362,
+        "bodyHash": "01ffafce6d8ae026699f9d9e4ad173a55998eedceae56d197a05c998be379165",
+        "mtimeMs": 0,
+        "warnings": [],
+        "structured": {
+          "sections": [
+            {
+              "heading": "What This Is"
+            },
+            {
+              "heading": "Core Value"
+            },
+            {
+              "heading": "Requirements"
+            },
+            {
+              "heading": "Context"
+            },
+            {
+              "heading": "Constraints"
+            },
+            {
+              "heading": "Key Decisions"
+            }
+          ],
+          "keyDecisions": [
+            {
+              "Decision": "Keep this fixture at \"structure but no history\"",
+              "Rationale": "Proves `roadmapComplete` and observed disk state can legitimately disagree even when there is no milestone at all",
+              "Outcome": "— Pending"
+            }
+          ]
+        }
+      },
+      ".planning/REQUIREMENTS.md": {
+        "id": ".planning/REQUIREMENTS.md",
+        "path": ".planning/REQUIREMENTS.md",
+        "kind": "requirements",
+        "frontmatter": {},
+        "title": "Requirements: Sparse Started Fixture",
+        "bodyLength": 906,
+        "bodyHash": "79296fc5b818853bc7cc059df65e55ecbf4a51fe19d67a1efe9367eb3705ffc3",
+        "mtimeMs": 0,
+        "warnings": [],
+        "structured": {
+          "items": [
+            {
+              "id": "SLICE-01",
+              "category": "Fixture",
+              "text": "Fixture requirement one",
+              "tier": "v1",
+              "checked": false
+            },
+            {
+              "id": "SLICE-02",
+              "category": "Fixture",
+              "text": "Fixture requirement two",
+              "tier": "v1",
+              "checked": false
+            },
+            {
+              "id": "SLICE-03",
+              "category": "Fixture",
+              "text": "Fixture requirement three",
+              "tier": "v1",
+              "checked": false
+            },
+            {
+              "id": "SLICE-04",
+              "category": "Fixture",
+              "text": "Fixture requirement four, deferred",
+              "tier": "v2",
+              "checked": null
+            }
+          ],
+          "outOfScope": [
+            {
+              "feature": "Anything beyond the first slice",
+              "reason": "This fixture is deliberately sparse-with-structure"
+            }
+          ],
+          "traceability": [
+            {
+              "requirementId": "SLICE-01",
+              "phase": "Phase 1",
+              "status": "Pending"
+            },
+            {
+              "requirementId": "SLICE-02",
+              "phase": "Phase 1",
+              "status": "Pending"
+            },
+            {
+              "requirementId": "SLICE-03",
+              "phase": "Phase 1",
+              "status": "Pending"
+            }
+          ]
+        }
+      },
+      ".planning/ROADMAP.md": {
+        "id": ".planning/ROADMAP.md",
+        "path": ".planning/ROADMAP.md",
+        "kind": "roadmap",
+        "frontmatter": {},
+        "title": "Roadmap: Sparse Started Fixture",
+        "bodyLength": 1603,
+        "bodyHash": "54a7c4435ebb0b7d176b7e6ae3589506b3fb1ab109c2b120afef484ca239fbfb",
+        "mtimeMs": 0,
+        "warnings": [],
+        "structured": {
+          "milestoneGroups": [],
+          "phases": [
+            {
+              "number": "1",
+              "name": "First Slice",
+              "goal": "Deliver the first narrow vertical slice, proving the project's core mechanism end to end",
+              "dependsOnRaw": "Nothing (first phase)",
+              "requirementIds": [
+                "SLICE-01",
+                "SLICE-02",
+                "SLICE-99"
+              ],
+              "successCriteria": [
+                "The first slice runs end to end without a real backend",
+                "A human can observe the slice working before further phases begin"
+              ],
+              "plans": [
+                {
+                  "id": "01-01",
+                  "description": "First slice tracer plan",
+                  "checked": false
+                }
+              ],
+              "roadmapComplete": false
+            }
+          ],
+          "dependencyShape": "Phase 1 (identity) ──► Phase 2 (roles) ──► Phase 3 (admin + revocation)\n                              │\n                              └──────────► Phase 4 (bulk archive)   [∥ Phase 3]"
+        }
+      },
+      ".planning/STATE.md": {
+        "id": ".planning/STATE.md",
+        "path": ".planning/STATE.md",
+        "kind": "state",
+        "frontmatter": {
+          "gsd_state_version": "1.0",
+          "status": "planning",
+          "milestone": "v1.0",
+          "current_phase": 1,
+          "current_phase_name": "First Slice",
+          "last_activity": {},
+          "progress": {
+            "total_phases": 1,
+            "completed_phases": 0,
+            "total_plans": 1,
+            "completed_plans": 0,
+            "percent": 0
+          }
+        },
+        "title": "Project State",
+        "bodyLength": 1356,
+        "bodyHash": "12763f5d9986174192b93c3ac2528238a1c429e78c6189d36af51e1760152d01",
+        "mtimeMs": 0,
+        "warnings": [],
+        "structured": {
+          "sections": [
+            {
+              "heading": "Project Reference"
+            },
+            {
+              "heading": "Current Position"
+            },
+            {
+              "heading": "Performance Metrics"
+            },
+            {
+              "heading": "Accumulated Context"
+            },
+            {
+              "heading": "Deferred Items"
+            },
+            {
+              "heading": "Session Continuity"
+            }
+          ],
+          "quickTasksCompleted": []
+        }
+      }
+    },
+    "config": {
+      "mode": "interactive",
+      "granularity": "standard",
+      "workflow": {
+        "research": true,
+        "auto_advance": false
+      }
+    },
+    "milestones": [
+      {
+        "version": "v1.0",
+        "name": "v1.0",
+        "archived": false,
+        "phases": [
+          {
+            "identity": {
+              "milestoneVersion": "v1.0",
+              "number": "01",
+              "projectCode": null,
+              "slug": "first-slice"
+            },
+            "name": "First Slice",
+            "dirPath": ".planning/phases/01-first-slice",
+            "archived": false,
+            "goal": "Deliver the first narrow vertical slice, proving the project's core mechanism end to end",
+            "dependsOnRaw": "Nothing (first phase)",
+            "requirementIds": [
+              "SLICE-01",
+              "SLICE-02",
+              "SLICE-99"
+            ],
+            "requirementRefs": [
+              {
+                "raw": "SLICE-01",
+                "resolved": {
+                  "id": "SLICE-01",
+                  "category": "Fixture",
+                  "text": "Fixture requirement one",
+                  "tier": "v1",
+                  "checked": false,
+                  "coveringPhaseRefs": [
+                    {
+                      "raw": "Phase 1",
+                      "resolved": {
+                        "$circularRef": "identity",
+                        "identity": {
+                          "milestoneVersion": "v1.0",
+                          "number": "01",
+                          "projectCode": null,
+                          "slug": "first-slice"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "raw": "SLICE-02",
+                "resolved": {
+                  "id": "SLICE-02",
+                  "category": "Fixture",
+                  "text": "Fixture requirement two",
+                  "tier": "v1",
+                  "checked": false,
+                  "coveringPhaseRefs": [
+                    {
+                      "raw": "Phase 1",
+                      "resolved": {
+                        "$circularRef": "identity",
+                        "identity": {
+                          "milestoneVersion": "v1.0",
+                          "number": "01",
+                          "projectCode": null,
+                          "slug": "first-slice"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "raw": "SLICE-99",
+                "resolved": null
+              }
+            ],
+            "successCriteria": [
+              "The first slice runs end to end without a real backend",
+              "A human can observe the slice working before further phases begin"
+            ],
+            "roadmapComplete": false,
+            "diskStatus": "in_progress",
+            "plans": [
+              {
+                "id": "01-01",
+                "identity": {
+                  "milestoneVersion": "v1.0",
+                  "number": "01",
+                  "projectCode": null,
+                  "slug": "first-slice"
+                },
+                "planNumber": "01",
+                "path": ".planning/phases/01-first-slice/01-01-PLAN.md",
+                "frontmatter": {
+                  "phase": "01-first-slice",
+                  "plan": 1,
+                  "type": "execute",
+                  "wave": 1,
+                  "depends_on": [],
+                  "files_modified": [
+                    "src/slice.ts"
+                  ],
+                  "autonomous": true,
+                  "requirements": [
+                    "SLICE-01",
+                    "SLICE-02"
+                  ],
+                  "must_haves": {
+                    "truths": [
+                      "The first slice runs end to end without a real backend",
+                      "A human can observe the slice working before further phases begin"
+                    ],
+                    "artifacts": [
+                      {
+                        "path": "src/slice.ts",
+                        "provides": "The tracer implementation for the fixture's first slice"
+                      }
+                    ],
+                    "key_links": [
+                      {
+                        "from": "src/slice.ts",
+                        "to": "SLICE-01",
+                        "via": "implements the first slice requirement directly"
+                      }
+                    ]
+                  }
+                },
+                "summary": null,
+                "summaryRef": {
+                  "raw": "01-01",
+                  "resolved": null
+                },
+                "dependsOnRefs": []
+              }
+            ],
+            "artifacts": {
+              ".planning/phases/01-first-slice/01-01-PLAN.md": {
+                "id": ".planning/phases/01-first-slice/01-01-PLAN.md",
+                "path": ".planning/phases/01-first-slice/01-01-PLAN.md",
+                "kind": "plan",
+                "frontmatter": {
+                  "phase": "01-first-slice",
+                  "plan": 1,
+                  "type": "execute",
+                  "wave": 1,
+                  "depends_on": [],
+                  "files_modified": [
+                    "src/slice.ts"
+                  ],
+                  "autonomous": true,
+                  "requirements": [
+                    "SLICE-01",
+                    "SLICE-02"
+                  ],
+                  "must_haves": {
+                    "truths": [
+                      "The first slice runs end to end without a real backend",
+                      "A human can observe the slice working before further phases begin"
+                    ],
+                    "artifacts": [
+                      {
+                        "path": "src/slice.ts",
+                        "provides": "The tracer implementation for the fixture's first slice"
+                      }
+                    ],
+                    "key_links": [
+                      {
+                        "from": "src/slice.ts",
+                        "to": "SLICE-01",
+                        "via": "implements the first slice requirement directly"
+                      }
+                    ]
+                  }
+                },
+                "title": ".planning/phases/01-first-slice/01-01-PLAN.md",
+                "bodyLength": 1282,
+                "bodyHash": "9518aa8fbcb565284322278a014129ebe3fc583dfcd16fef48c9f1546ec8deac",
+                "mtimeMs": 0,
+                "warnings": [],
+                "structured": {}
+              },
+              ".planning/phases/01-first-slice/01-CONTEXT.md": {
+                "id": ".planning/phases/01-first-slice/01-CONTEXT.md",
+                "path": ".planning/phases/01-first-slice/01-CONTEXT.md",
+                "kind": "context",
+                "frontmatter": {},
+                "title": "Phase 1: First Slice - Context",
+                "bodyLength": 1696,
+                "bodyHash": "5d5608ca688d7c5b0c0c52ed026341862815944194b732873c2e708346238321",
+                "mtimeMs": 0,
+                "warnings": [],
+                "structured": {
+                  "sections": {
+                    "domain": "## Phase Boundary\n\nDeliver the first narrow vertical slice of the fixture project end to end. This phase produces no\nhistory beyond its own plan — it exists to prove the parser survives a project with structure\n(a roadmap, one phase) but nothing executed yet.",
+                    "decisions": "## Implementation Decisions\n\n### Scope\n- **D-01:** The slice is a single tracer plan, not split into multiple plans — there is nothing to\n  split yet at this fixture's stage.\n\n### Claude's Discretion\nEverything below the phase boundary is open — this is a fixture, not a real implementation target.",
+                    "specifics": "## Specific Ideas\n\nNo specific requirements — open to standard approaches. This CONTEXT.md exists only to exercise the\nfilename-dispatch requirement: it deliberately carries no YAML frontmatter, which is why the parser\nmust dispatch on filename rather than frontmatter shape.",
+                    "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows exactly",
+                    "code_context": "## Existing Code Insights\n\n### Reusable Assets\nNone — this is a synthetic fixture tree with no code.\n\n### Established Patterns\nNone yet — this is the first and only phase in this fixture.\n\n### Integration Points\nNone — the fixture has no downstream phase.",
+                    "deferred": "## Deferred Ideas\n\nNone — discussion stayed within phase scope."
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "phases": [
+      {
+        "identity": {
+          "milestoneVersion": "v1.0",
+          "number": "01",
+          "projectCode": null,
+          "slug": "first-slice"
+        },
+        "name": "First Slice",
+        "dirPath": ".planning/phases/01-first-slice",
+        "archived": false,
+        "goal": "Deliver the first narrow vertical slice, proving the project's core mechanism end to end",
+        "dependsOnRaw": "Nothing (first phase)",
+        "requirementIds": [
+          "SLICE-01",
+          "SLICE-02",
+          "SLICE-99"
+        ],
+        "requirementRefs": [
+          {
+            "raw": "SLICE-01",
+            "resolved": {
+              "id": "SLICE-01",
+              "category": "Fixture",
+              "text": "Fixture requirement one",
+              "tier": "v1",
+              "checked": false,
+              "coveringPhaseRefs": [
+                {
+                  "raw": "Phase 1",
+                  "resolved": {
+                    "$circularRef": "identity",
+                    "identity": {
+                      "milestoneVersion": "v1.0",
+                      "number": "01",
+                      "projectCode": null,
+                      "slug": "first-slice"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": "SLICE-02",
+            "resolved": {
+              "id": "SLICE-02",
+              "category": "Fixture",
+              "text": "Fixture requirement two",
+              "tier": "v1",
+              "checked": false,
+              "coveringPhaseRefs": [
+                {
+                  "raw": "Phase 1",
+                  "resolved": {
+                    "$circularRef": "identity",
+                    "identity": {
+                      "milestoneVersion": "v1.0",
+                      "number": "01",
+                      "projectCode": null,
+                      "slug": "first-slice"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "raw": "SLICE-99",
+            "resolved": null
+          }
+        ],
+        "successCriteria": [
+          "The first slice runs end to end without a real backend",
+          "A human can observe the slice working before further phases begin"
+        ],
+        "roadmapComplete": false,
+        "diskStatus": "in_progress",
+        "plans": [
+          {
+            "id": "01-01",
+            "identity": {
+              "milestoneVersion": "v1.0",
+              "number": "01",
+              "projectCode": null,
+              "slug": "first-slice"
+            },
+            "planNumber": "01",
+            "path": ".planning/phases/01-first-slice/01-01-PLAN.md",
+            "frontmatter": {
+              "phase": "01-first-slice",
+              "plan": 1,
+              "type": "execute",
+              "wave": 1,
+              "depends_on": [],
+              "files_modified": [
+                "src/slice.ts"
+              ],
+              "autonomous": true,
+              "requirements": [
+                "SLICE-01",
+                "SLICE-02"
+              ],
+              "must_haves": {
+                "truths": [
+                  "The first slice runs end to end without a real backend",
+                  "A human can observe the slice working before further phases begin"
+                ],
+                "artifacts": [
+                  {
+                    "path": "src/slice.ts",
+                    "provides": "The tracer implementation for the fixture's first slice"
+                  }
+                ],
+                "key_links": [
+                  {
+                    "from": "src/slice.ts",
+                    "to": "SLICE-01",
+                    "via": "implements the first slice requirement directly"
+                  }
+                ]
+              }
+            },
+            "summary": null,
+            "summaryRef": {
+              "raw": "01-01",
+              "resolved": null
+            },
+            "dependsOnRefs": []
+          }
+        ],
+        "artifacts": {
+          ".planning/phases/01-first-slice/01-01-PLAN.md": {
+            "id": ".planning/phases/01-first-slice/01-01-PLAN.md",
+            "path": ".planning/phases/01-first-slice/01-01-PLAN.md",
+            "kind": "plan",
+            "frontmatter": {
+              "phase": "01-first-slice",
+              "plan": 1,
+              "type": "execute",
+              "wave": 1,
+              "depends_on": [],
+              "files_modified": [
+                "src/slice.ts"
+              ],
+              "autonomous": true,
+              "requirements": [
+                "SLICE-01",
+                "SLICE-02"
+              ],
+              "must_haves": {
+                "truths": [
+                  "The first slice runs end to end without a real backend",
+                  "A human can observe the slice working before further phases begin"
+                ],
+                "artifacts": [
+                  {
+                    "path": "src/slice.ts",
+                    "provides": "The tracer implementation for the fixture's first slice"
+                  }
+                ],
+                "key_links": [
+                  {
+                    "from": "src/slice.ts",
+                    "to": "SLICE-01",
+                    "via": "implements the first slice requirement directly"
+                  }
+                ]
+              }
+            },
+            "title": ".planning/phases/01-first-slice/01-01-PLAN.md",
+            "bodyLength": 1282,
+            "bodyHash": "9518aa8fbcb565284322278a014129ebe3fc583dfcd16fef48c9f1546ec8deac",
+            "mtimeMs": 0,
+            "warnings": [],
+            "structured": {}
+          },
+          ".planning/phases/01-first-slice/01-CONTEXT.md": {
+            "id": ".planning/phases/01-first-slice/01-CONTEXT.md",
+            "path": ".planning/phases/01-first-slice/01-CONTEXT.md",
+            "kind": "context",
+            "frontmatter": {},
+            "title": "Phase 1: First Slice - Context",
+            "bodyLength": 1696,
+            "bodyHash": "5d5608ca688d7c5b0c0c52ed026341862815944194b732873c2e708346238321",
+            "mtimeMs": 0,
+            "warnings": [],
+            "structured": {
+              "sections": {
+                "domain": "## Phase Boundary\n\nDeliver the first narrow vertical slice of the fixture project end to end. This phase produces no\nhistory beyond its own plan — it exists to prove the parser survives a project with structure\n(a roadmap, one phase) but nothing executed yet.",
+                "decisions": "## Implementation Decisions\n\n### Scope\n- **D-01:** The slice is a single tracer plan, not split into multiple plans — there is nothing to\n  split yet at this fixture's stage.\n\n### Claude's Discretion\nEverything below the phase boundary is open — this is a fixture, not a real implementation target.",
+                "specifics": "## Specific Ideas\n\nNo specific requirements — open to standard approaches. This CONTEXT.md exists only to exercise the\nfilename-dispatch requirement: it deliberately carries no YAML frontmatter, which is why the parser\nmust dispatch on filename rather than frontmatter shape.",
+                "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows exactly",
+                "code_context": "## Existing Code Insights\n\n### Reusable Assets\nNone — this is a synthetic fixture tree with no code.\n\n### Established Patterns\nNone yet — this is the first and only phase in this fixture.\n\n### Integration Points\nNone — the fixture has no downstream phase.",
+                "deferred": "## Deferred Ideas\n\nNone — discussion stayed within phase scope."
+              }
+            }
+          }
+        }
+      }
+    ],
+    "quickTasks": [],
+    "requirements": [
+      {
+        "id": "SLICE-01",
+        "category": "Fixture",
+        "text": "Fixture requirement one",
+        "tier": "v1",
+        "checked": false,
+        "coveringPhaseRefs": [
+          {
+            "raw": "Phase 1",
+            "resolved": {
+              "identity": {
+                "milestoneVersion": "v1.0",
+                "number": "01",
+                "projectCode": null,
+                "slug": "first-slice"
+              },
+              "name": "First Slice",
+              "dirPath": ".planning/phases/01-first-slice",
+              "archived": false,
+              "goal": "Deliver the first narrow vertical slice, proving the project's core mechanism end to end",
+              "dependsOnRaw": "Nothing (first phase)",
+              "requirementIds": [
+                "SLICE-01",
+                "SLICE-02",
+                "SLICE-99"
+              ],
+              "requirementRefs": [
+                {
+                  "raw": "SLICE-01",
+                  "resolved": {
+                    "$circularRef": "id",
+                    "id": "SLICE-01"
+                  }
+                },
+                {
+                  "raw": "SLICE-02",
+                  "resolved": {
+                    "id": "SLICE-02",
+                    "category": "Fixture",
+                    "text": "Fixture requirement two",
+                    "tier": "v1",
+                    "checked": false,
+                    "coveringPhaseRefs": [
+                      {
+                        "raw": "Phase 1",
+                        "resolved": {
+                          "$circularRef": "identity",
+                          "identity": {
+                            "milestoneVersion": "v1.0",
+                            "number": "01",
+                            "projectCode": null,
+                            "slug": "first-slice"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "raw": "SLICE-99",
+                  "resolved": null
+                }
+              ],
+              "successCriteria": [
+                "The first slice runs end to end without a real backend",
+                "A human can observe the slice working before further phases begin"
+              ],
+              "roadmapComplete": false,
+              "diskStatus": "in_progress",
+              "plans": [
+                {
+                  "id": "01-01",
+                  "identity": {
+                    "milestoneVersion": "v1.0",
+                    "number": "01",
+                    "projectCode": null,
+                    "slug": "first-slice"
+                  },
+                  "planNumber": "01",
+                  "path": ".planning/phases/01-first-slice/01-01-PLAN.md",
+                  "frontmatter": {
+                    "phase": "01-first-slice",
+                    "plan": 1,
+                    "type": "execute",
+                    "wave": 1,
+                    "depends_on": [],
+                    "files_modified": [
+                      "src/slice.ts"
+                    ],
+                    "autonomous": true,
+                    "requirements": [
+                      "SLICE-01",
+                      "SLICE-02"
+                    ],
+                    "must_haves": {
+                      "truths": [
+                        "The first slice runs end to end without a real backend",
+                        "A human can observe the slice working before further phases begin"
+                      ],
+                      "artifacts": [
+                        {
+                          "path": "src/slice.ts",
+                          "provides": "The tracer implementation for the fixture's first slice"
+                        }
+                      ],
+                      "key_links": [
+                        {
+                          "from": "src/slice.ts",
+                          "to": "SLICE-01",
+                          "via": "implements the first slice requirement directly"
+                        }
+                      ]
+                    }
+                  },
+                  "summary": null,
+                  "summaryRef": {
+                    "raw": "01-01",
+                    "resolved": null
+                  },
+                  "dependsOnRefs": []
+                }
+              ],
+              "artifacts": {
+                ".planning/phases/01-first-slice/01-01-PLAN.md": {
+                  "id": ".planning/phases/01-first-slice/01-01-PLAN.md",
+                  "path": ".planning/phases/01-first-slice/01-01-PLAN.md",
+                  "kind": "plan",
+                  "frontmatter": {
+                    "phase": "01-first-slice",
+                    "plan": 1,
+                    "type": "execute",
+                    "wave": 1,
+                    "depends_on": [],
+                    "files_modified": [
+                      "src/slice.ts"
+                    ],
+                    "autonomous": true,
+                    "requirements": [
+                      "SLICE-01",
+                      "SLICE-02"
+                    ],
+                    "must_haves": {
+                      "truths": [
+                        "The first slice runs end to end without a real backend",
+                        "A human can observe the slice working before further phases begin"
+                      ],
+                      "artifacts": [
+                        {
+                          "path": "src/slice.ts",
+                          "provides": "The tracer implementation for the fixture's first slice"
+                        }
+                      ],
+                      "key_links": [
+                        {
+                          "from": "src/slice.ts",
+                          "to": "SLICE-01",
+                          "via": "implements the first slice requirement directly"
+                        }
+                      ]
+                    }
+                  },
+                  "title": ".planning/phases/01-first-slice/01-01-PLAN.md",
+                  "bodyLength": 1282,
+                  "bodyHash": "9518aa8fbcb565284322278a014129ebe3fc583dfcd16fef48c9f1546ec8deac",
+                  "mtimeMs": 0,
+                  "warnings": [],
+                  "structured": {}
+                },
+                ".planning/phases/01-first-slice/01-CONTEXT.md": {
+                  "id": ".planning/phases/01-first-slice/01-CONTEXT.md",
+                  "path": ".planning/phases/01-first-slice/01-CONTEXT.md",
+                  "kind": "context",
+                  "frontmatter": {},
+                  "title": "Phase 1: First Slice - Context",
+                  "bodyLength": 1696,
+                  "bodyHash": "5d5608ca688d7c5b0c0c52ed026341862815944194b732873c2e708346238321",
+                  "mtimeMs": 0,
+                  "warnings": [],
+                  "structured": {
+                    "sections": {
+                      "domain": "## Phase Boundary\n\nDeliver the first narrow vertical slice of the fixture project end to end. This phase produces no\nhistory beyond its own plan — it exists to prove the parser survives a project with structure\n(a roadmap, one phase) but nothing executed yet.",
+                      "decisions": "## Implementation Decisions\n\n### Scope\n- **D-01:** The slice is a single tracer plan, not split into multiple plans — there is nothing to\n  split yet at this fixture's stage.\n\n### Claude's Discretion\nEverything below the phase boundary is open — this is a fixture, not a real implementation target.",
+                      "specifics": "## Specific Ideas\n\nNo specific requirements — open to standard approaches. This CONTEXT.md exists only to exercise the\nfilename-dispatch requirement: it deliberately carries no YAML frontmatter, which is why the parser\nmust dispatch on filename rather than frontmatter shape.",
+                      "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows exactly",
+                      "code_context": "## Existing Code Insights\n\n### Reusable Assets\nNone — this is a synthetic fixture tree with no code.\n\n### Established Patterns\nNone yet — this is the first and only phase in this fixture.\n\n### Integration Points\nNone — the fixture has no downstream phase.",
+                      "deferred": "## Deferred Ideas\n\nNone — discussion stayed within phase scope."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": "SLICE-02",
+        "category": "Fixture",
+        "text": "Fixture requirement two",
+        "tier": "v1",
+        "checked": false,
+        "coveringPhaseRefs": [
+          {
+            "raw": "Phase 1",
+            "resolved": {
+              "identity": {
+                "milestoneVersion": "v1.0",
+                "number": "01",
+                "projectCode": null,
+                "slug": "first-slice"
+              },
+              "name": "First Slice",
+              "dirPath": ".planning/phases/01-first-slice",
+              "archived": false,
+              "goal": "Deliver the first narrow vertical slice, proving the project's core mechanism end to end",
+              "dependsOnRaw": "Nothing (first phase)",
+              "requirementIds": [
+                "SLICE-01",
+                "SLICE-02",
+                "SLICE-99"
+              ],
+              "requirementRefs": [
+                {
+                  "raw": "SLICE-01",
+                  "resolved": {
+                    "id": "SLICE-01",
+                    "category": "Fixture",
+                    "text": "Fixture requirement one",
+                    "tier": "v1",
+                    "checked": false,
+                    "coveringPhaseRefs": [
+                      {
+                        "raw": "Phase 1",
+                        "resolved": {
+                          "$circularRef": "identity",
+                          "identity": {
+                            "milestoneVersion": "v1.0",
+                            "number": "01",
+                            "projectCode": null,
+                            "slug": "first-slice"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "raw": "SLICE-02",
+                  "resolved": {
+                    "$circularRef": "id",
+                    "id": "SLICE-02"
+                  }
+                },
+                {
+                  "raw": "SLICE-99",
+                  "resolved": null
+                }
+              ],
+              "successCriteria": [
+                "The first slice runs end to end without a real backend",
+                "A human can observe the slice working before further phases begin"
+              ],
+              "roadmapComplete": false,
+              "diskStatus": "in_progress",
+              "plans": [
+                {
+                  "id": "01-01",
+                  "identity": {
+                    "milestoneVersion": "v1.0",
+                    "number": "01",
+                    "projectCode": null,
+                    "slug": "first-slice"
+                  },
+                  "planNumber": "01",
+                  "path": ".planning/phases/01-first-slice/01-01-PLAN.md",
+                  "frontmatter": {
+                    "phase": "01-first-slice",
+                    "plan": 1,
+                    "type": "execute",
+                    "wave": 1,
+                    "depends_on": [],
+                    "files_modified": [
+                      "src/slice.ts"
+                    ],
+                    "autonomous": true,
+                    "requirements": [
+                      "SLICE-01",
+                      "SLICE-02"
+                    ],
+                    "must_haves": {
+                      "truths": [
+                        "The first slice runs end to end without a real backend",
+                        "A human can observe the slice working before further phases begin"
+                      ],
+                      "artifacts": [
+                        {
+                          "path": "src/slice.ts",
+                          "provides": "The tracer implementation for the fixture's first slice"
+                        }
+                      ],
+                      "key_links": [
+                        {
+                          "from": "src/slice.ts",
+                          "to": "SLICE-01",
+                          "via": "implements the first slice requirement directly"
+                        }
+                      ]
+                    }
+                  },
+                  "summary": null,
+                  "summaryRef": {
+                    "raw": "01-01",
+                    "resolved": null
+                  },
+                  "dependsOnRefs": []
+                }
+              ],
+              "artifacts": {
+                ".planning/phases/01-first-slice/01-01-PLAN.md": {
+                  "id": ".planning/phases/01-first-slice/01-01-PLAN.md",
+                  "path": ".planning/phases/01-first-slice/01-01-PLAN.md",
+                  "kind": "plan",
+                  "frontmatter": {
+                    "phase": "01-first-slice",
+                    "plan": 1,
+                    "type": "execute",
+                    "wave": 1,
+                    "depends_on": [],
+                    "files_modified": [
+                      "src/slice.ts"
+                    ],
+                    "autonomous": true,
+                    "requirements": [
+                      "SLICE-01",
+                      "SLICE-02"
+                    ],
+                    "must_haves": {
+                      "truths": [
+                        "The first slice runs end to end without a real backend",
+                        "A human can observe the slice working before further phases begin"
+                      ],
+                      "artifacts": [
+                        {
+                          "path": "src/slice.ts",
+                          "provides": "The tracer implementation for the fixture's first slice"
+                        }
+                      ],
+                      "key_links": [
+                        {
+                          "from": "src/slice.ts",
+                          "to": "SLICE-01",
+                          "via": "implements the first slice requirement directly"
+                        }
+                      ]
+                    }
+                  },
+                  "title": ".planning/phases/01-first-slice/01-01-PLAN.md",
+                  "bodyLength": 1282,
+                  "bodyHash": "9518aa8fbcb565284322278a014129ebe3fc583dfcd16fef48c9f1546ec8deac",
+                  "mtimeMs": 0,
+                  "warnings": [],
+                  "structured": {}
+                },
+                ".planning/phases/01-first-slice/01-CONTEXT.md": {
+                  "id": ".planning/phases/01-first-slice/01-CONTEXT.md",
+                  "path": ".planning/phases/01-first-slice/01-CONTEXT.md",
+                  "kind": "context",
+                  "frontmatter": {},
+                  "title": "Phase 1: First Slice - Context",
+                  "bodyLength": 1696,
+                  "bodyHash": "5d5608ca688d7c5b0c0c52ed026341862815944194b732873c2e708346238321",
+                  "mtimeMs": 0,
+                  "warnings": [],
+                  "structured": {
+                    "sections": {
+                      "domain": "## Phase Boundary\n\nDeliver the first narrow vertical slice of the fixture project end to end. This phase produces no\nhistory beyond its own plan — it exists to prove the parser survives a project with structure\n(a roadmap, one phase) but nothing executed yet.",
+                      "decisions": "## Implementation Decisions\n\n### Scope\n- **D-01:** The slice is a single tracer plan, not split into multiple plans — there is nothing to\n  split yet at this fixture's stage.\n\n### Claude's Discretion\nEverything below the phase boundary is open — this is a fixture, not a real implementation target.",
+                      "specifics": "## Specific Ideas\n\nNo specific requirements — open to standard approaches. This CONTEXT.md exists only to exercise the\nfilename-dispatch requirement: it deliberately carries no YAML frontmatter, which is why the parser\nmust dispatch on filename rather than frontmatter shape.",
+                      "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows exactly",
+                      "code_context": "## Existing Code Insights\n\n### Reusable Assets\nNone — this is a synthetic fixture tree with no code.\n\n### Established Patterns\nNone yet — this is the first and only phase in this fixture.\n\n### Integration Points\nNone — the fixture has no downstream phase.",
+                      "deferred": "## Deferred Ideas\n\nNone — discussion stayed within phase scope."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": "SLICE-03",
+        "category": "Fixture",
+        "text": "Fixture requirement three",
+        "tier": "v1",
+        "checked": false,
+        "coveringPhaseRefs": [
+          {
+            "raw": "Phase 1",
+            "resolved": {
+              "identity": {
+                "milestoneVersion": "v1.0",
+                "number": "01",
+                "projectCode": null,
+                "slug": "first-slice"
+              },
+              "name": "First Slice",
+              "dirPath": ".planning/phases/01-first-slice",
+              "archived": false,
+              "goal": "Deliver the first narrow vertical slice, proving the project's core mechanism end to end",
+              "dependsOnRaw": "Nothing (first phase)",
+              "requirementIds": [
+                "SLICE-01",
+                "SLICE-02",
+                "SLICE-99"
+              ],
+              "requirementRefs": [
+                {
+                  "raw": "SLICE-01",
+                  "resolved": {
+                    "id": "SLICE-01",
+                    "category": "Fixture",
+                    "text": "Fixture requirement one",
+                    "tier": "v1",
+                    "checked": false,
+                    "coveringPhaseRefs": [
+                      {
+                        "raw": "Phase 1",
+                        "resolved": {
+                          "$circularRef": "identity",
+                          "identity": {
+                            "milestoneVersion": "v1.0",
+                            "number": "01",
+                            "projectCode": null,
+                            "slug": "first-slice"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "raw": "SLICE-02",
+                  "resolved": {
+                    "id": "SLICE-02",
+                    "category": "Fixture",
+                    "text": "Fixture requirement two",
+                    "tier": "v1",
+                    "checked": false,
+                    "coveringPhaseRefs": [
+                      {
+                        "raw": "Phase 1",
+                        "resolved": {
+                          "$circularRef": "identity",
+                          "identity": {
+                            "milestoneVersion": "v1.0",
+                            "number": "01",
+                            "projectCode": null,
+                            "slug": "first-slice"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "raw": "SLICE-99",
+                  "resolved": null
+                }
+              ],
+              "successCriteria": [
+                "The first slice runs end to end without a real backend",
+                "A human can observe the slice working before further phases begin"
+              ],
+              "roadmapComplete": false,
+              "diskStatus": "in_progress",
+              "plans": [
+                {
+                  "id": "01-01",
+                  "identity": {
+                    "milestoneVersion": "v1.0",
+                    "number": "01",
+                    "projectCode": null,
+                    "slug": "first-slice"
+                  },
+                  "planNumber": "01",
+                  "path": ".planning/phases/01-first-slice/01-01-PLAN.md",
+                  "frontmatter": {
+                    "phase": "01-first-slice",
+                    "plan": 1,
+                    "type": "execute",
+                    "wave": 1,
+                    "depends_on": [],
+                    "files_modified": [
+                      "src/slice.ts"
+                    ],
+                    "autonomous": true,
+                    "requirements": [
+                      "SLICE-01",
+                      "SLICE-02"
+                    ],
+                    "must_haves": {
+                      "truths": [
+                        "The first slice runs end to end without a real backend",
+                        "A human can observe the slice working before further phases begin"
+                      ],
+                      "artifacts": [
+                        {
+                          "path": "src/slice.ts",
+                          "provides": "The tracer implementation for the fixture's first slice"
+                        }
+                      ],
+                      "key_links": [
+                        {
+                          "from": "src/slice.ts",
+                          "to": "SLICE-01",
+                          "via": "implements the first slice requirement directly"
+                        }
+                      ]
+                    }
+                  },
+                  "summary": null,
+                  "summaryRef": {
+                    "raw": "01-01",
+                    "resolved": null
+                  },
+                  "dependsOnRefs": []
+                }
+              ],
+              "artifacts": {
+                ".planning/phases/01-first-slice/01-01-PLAN.md": {
+                  "id": ".planning/phases/01-first-slice/01-01-PLAN.md",
+                  "path": ".planning/phases/01-first-slice/01-01-PLAN.md",
+                  "kind": "plan",
+                  "frontmatter": {
+                    "phase": "01-first-slice",
+                    "plan": 1,
+                    "type": "execute",
+                    "wave": 1,
+                    "depends_on": [],
+                    "files_modified": [
+                      "src/slice.ts"
+                    ],
+                    "autonomous": true,
+                    "requirements": [
+                      "SLICE-01",
+                      "SLICE-02"
+                    ],
+                    "must_haves": {
+                      "truths": [
+                        "The first slice runs end to end without a real backend",
+                        "A human can observe the slice working before further phases begin"
+                      ],
+                      "artifacts": [
+                        {
+                          "path": "src/slice.ts",
+                          "provides": "The tracer implementation for the fixture's first slice"
+                        }
+                      ],
+                      "key_links": [
+                        {
+                          "from": "src/slice.ts",
+                          "to": "SLICE-01",
+                          "via": "implements the first slice requirement directly"
+                        }
+                      ]
+                    }
+                  },
+                  "title": ".planning/phases/01-first-slice/01-01-PLAN.md",
+                  "bodyLength": 1282,
+                  "bodyHash": "9518aa8fbcb565284322278a014129ebe3fc583dfcd16fef48c9f1546ec8deac",
+                  "mtimeMs": 0,
+                  "warnings": [],
+                  "structured": {}
+                },
+                ".planning/phases/01-first-slice/01-CONTEXT.md": {
+                  "id": ".planning/phases/01-first-slice/01-CONTEXT.md",
+                  "path": ".planning/phases/01-first-slice/01-CONTEXT.md",
+                  "kind": "context",
+                  "frontmatter": {},
+                  "title": "Phase 1: First Slice - Context",
+                  "bodyLength": 1696,
+                  "bodyHash": "5d5608ca688d7c5b0c0c52ed026341862815944194b732873c2e708346238321",
+                  "mtimeMs": 0,
+                  "warnings": [],
+                  "structured": {
+                    "sections": {
+                      "domain": "## Phase Boundary\n\nDeliver the first narrow vertical slice of the fixture project end to end. This phase produces no\nhistory beyond its own plan — it exists to prove the parser survives a project with structure\n(a roadmap, one phase) but nothing executed yet.",
+                      "decisions": "## Implementation Decisions\n\n### Scope\n- **D-01:** The slice is a single tracer plan, not split into multiple plans — there is nothing to\n  split yet at this fixture's stage.\n\n### Claude's Discretion\nEverything below the phase boundary is open — this is a fixture, not a real implementation target.",
+                      "specifics": "## Specific Ideas\n\nNo specific requirements — open to standard approaches. This CONTEXT.md exists only to exercise the\nfilename-dispatch requirement: it deliberately carries no YAML frontmatter, which is why the parser\nmust dispatch on filename rather than frontmatter shape.",
+                      "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows exactly",
+                      "code_context": "## Existing Code Insights\n\n### Reusable Assets\nNone — this is a synthetic fixture tree with no code.\n\n### Established Patterns\nNone yet — this is the first and only phase in this fixture.\n\n### Integration Points\nNone — the fixture has no downstream phase.",
+                      "deferred": "## Deferred Ideas\n\nNone — discussion stayed within phase scope."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": "SLICE-04",
+        "category": "Fixture",
+        "text": "Fixture requirement four, deferred",
+        "tier": "v2",
+        "checked": null,
+        "coveringPhaseRefs": []
+      }
+    ],
+    "mentions": {
+      "byId": {
+        "phase:1": [
+          {
+            "scheme": "phase",
+            "id": "1",
+            "artifactPath": ".planning/phases/01-first-slice/01-CONTEXT.md",
+            "artifactKind": "context",
+            "position": {
+              "line": 1,
+              "offset": 8
+            },
+            "excerpt": "# Phase 1: First Slice - Context"
+          },
+          {
+            "scheme": "phase",
+            "id": "1",
+            "artifactPath": ".planning/REQUIREMENTS.md",
+            "artifactKind": "requirements",
+            "position": {
+              "line": 30,
+              "offset": 656
+            },
+            "excerpt": "| SLICE-01 | Phase 1 | Pending |"
+          },
+          {
+            "scheme": "phase",
+            "id": "1",
+            "artifactPath": ".planning/REQUIREMENTS.md",
+            "artifactKind": "requirements",
+            "position": {
+              "line": 31,
+              "offset": 689
+            },
+            "excerpt": "| SLICE-02 | Phase 1 | Pending |"
+          },
+          {
+            "scheme": "phase",
+            "id": "1",
+            "artifactPath": ".planning/REQUIREMENTS.md",
+            "artifactKind": "requirements",
+            "position": {
+              "line": 32,
+              "offset": 722
+            },
+            "excerpt": "| SLICE-03 | Phase 1 | Pending |"
+          },
+          {
+            "scheme": "phase",
+            "id": "1",
+            "artifactPath": ".planning/ROADMAP.md",
+            "artifactKind": "roadmap",
+            "position": {
+              "line": 25,
+              "offset": 855
+            },
+            "excerpt": "- [ ] **Phase 1: First Slice** - The first narrow vertical slice of the fixture project"
+          },
+          {
+            "scheme": "phase",
+            "id": "1",
+            "artifactPath": ".planning/ROADMAP.md",
+            "artifactKind": "roadmap",
+            "position": {
+              "line": 29,
+              "offset": 958
+            },
+            "excerpt": "### Phase 1: First Slice"
+          },
+          {
+            "scheme": "phase",
+            "id": "1",
+            "artifactPath": ".planning/STATE.md",
+            "artifactKind": "state",
+            "position": {
+              "line": 9,
+              "offset": 200
+            },
+            "excerpt": "**Current focus:** Phase 1 — First Slice"
+          },
+          {
+            "scheme": "phase",
+            "id": "1",
+            "artifactPath": ".planning/STATE.md",
+            "artifactKind": "state",
+            "position": {
+              "line": 16,
+              "offset": 355
+            },
+            "excerpt": "Last activity: 2026-08-22 — Phase 1 planned"
+          },
+          {
+            "scheme": "phase",
+            "id": "1",
+            "artifactPath": ".planning/STATE.md",
+            "artifactKind": "state",
+            "position": {
+              "line": 46,
+              "offset": 859
+            },
+            "excerpt": "- [Phase 1]: Keep this fixture at \"structure but no history\" — one planned phase, no summaries yet."
+          },
+          {
+            "scheme": "phase",
+            "id": "1",
+            "artifactPath": ".planning/STATE.md",
+            "artifactKind": "state",
+            "position": {
+              "line": 67,
+              "offset": 1310
+            },
+            "excerpt": "Stopped at: Phase 1 planned, not yet executed"
+          }
+        ],
+        "decision:D-01": [
+          {
+            "scheme": "decision",
+            "id": "D-01",
+            "artifactPath": ".planning/phases/01-first-slice/01-CONTEXT.md",
+            "artifactKind": "context",
+            "position": {
+              "line": 19,
+              "offset": 427
+            },
+            "excerpt": "- **D-01:** The slice is a single tracer plan, not split into multiple plans — there is nothing to"
+          }
+        ],
+        "requirement:SLICE-01": [
+          {
+            "scheme": "requirement",
+            "id": "SLICE-01",
+            "artifactPath": ".planning/REQUIREMENTS.md",
+            "artifactKind": "requirements",
+            "position": {
+              "line": 10,
+              "offset": 193
+            },
+            "excerpt": "- [ ] **SLICE-01**: Fixture requirement one"
+          },
+          {
+            "scheme": "requirement",
+            "id": "SLICE-01",
+            "artifactPath": ".planning/REQUIREMENTS.md",
+            "artifactKind": "requirements",
+            "position": {
+              "line": 30,
+              "offset": 639
+            },
+            "excerpt": "| SLICE-01 | Phase 1 | Pending |"
+          },
+          {
+            "scheme": "requirement",
+            "id": "SLICE-01",
+            "artifactPath": ".planning/ROADMAP.md",
+            "artifactKind": "roadmap",
+            "position": {
+              "line": 32,
+              "offset": 1128
+            },
+            "excerpt": "**Requirements**: SLICE-01, SLICE-02, SLICE-99"
+          }
+        ],
+        "requirement:SLICE-02": [
+          {
+            "scheme": "requirement",
+            "id": "SLICE-02",
+            "artifactPath": ".planning/REQUIREMENTS.md",
+            "artifactKind": "requirements",
+            "position": {
+              "line": 11,
+              "offset": 237
+            },
+            "excerpt": "- [ ] **SLICE-02**: Fixture requirement two"
+          },
+          {
+            "scheme": "requirement",
+            "id": "SLICE-02",
+            "artifactPath": ".planning/REQUIREMENTS.md",
+            "artifactKind": "requirements",
+            "position": {
+              "line": 31,
+              "offset": 672
+            },
+            "excerpt": "| SLICE-02 | Phase 1 | Pending |"
+          },
+          {
+            "scheme": "requirement",
+            "id": "SLICE-02",
+            "artifactPath": ".planning/ROADMAP.md",
+            "artifactKind": "roadmap",
+            "position": {
+              "line": 32,
+              "offset": 1138
+            },
+            "excerpt": "**Requirements**: SLICE-01, SLICE-02, SLICE-99"
+          }
+        ],
+        "requirement:SLICE-03": [
+          {
+            "scheme": "requirement",
+            "id": "SLICE-03",
+            "artifactPath": ".planning/REQUIREMENTS.md",
+            "artifactKind": "requirements",
+            "position": {
+              "line": 12,
+              "offset": 281
+            },
+            "excerpt": "- [ ] **SLICE-03**: Fixture requirement three"
+          },
+          {
+            "scheme": "requirement",
+            "id": "SLICE-03",
+            "artifactPath": ".planning/REQUIREMENTS.md",
+            "artifactKind": "requirements",
+            "position": {
+              "line": 32,
+              "offset": 705
+            },
+            "excerpt": "| SLICE-03 | Phase 1 | Pending |"
+          }
+        ],
+        "requirement:SLICE-04": [
+          {
+            "scheme": "requirement",
+            "id": "SLICE-04",
+            "artifactPath": ".planning/REQUIREMENTS.md",
+            "artifactKind": "requirements",
+            "position": {
+              "line": 18,
+              "offset": 357
+            },
+            "excerpt": "- **SLICE-04**: Fixture requirement four, deferred"
+          }
+        ],
+        "requirement:SLICE-99": [
+          {
+            "scheme": "requirement",
+            "id": "SLICE-99",
+            "artifactPath": ".planning/ROADMAP.md",
+            "artifactKind": "roadmap",
+            "position": {
+              "line": 32,
+              "offset": 1148
+            },
+            "excerpt": "**Requirements**: SLICE-01, SLICE-02, SLICE-99"
+          }
+        ],
+        "plan:01-01": [
+          {
+            "scheme": "plan",
+            "id": "01-01",
+            "artifactPath": ".planning/ROADMAP.md",
+            "artifactKind": "roadmap",
+            "position": {
+              "line": 39,
+              "offset": 1362
+            },
+            "excerpt": "- [ ] 01-01: First slice tracer plan"
+          }
+        ]
+      },
+      "all": [
+        {
+          "scheme": "phase",
+          "id": "1",
+          "artifactPath": ".planning/phases/01-first-slice/01-CONTEXT.md",
+          "artifactKind": "context",
+          "position": {
+            "line": 1,
+            "offset": 8
+          },
+          "excerpt": "# Phase 1: First Slice - Context"
+        },
+        {
+          "scheme": "decision",
+          "id": "D-01",
+          "artifactPath": ".planning/phases/01-first-slice/01-CONTEXT.md",
+          "artifactKind": "context",
+          "position": {
+            "line": 19,
+            "offset": 427
+          },
+          "excerpt": "- **D-01:** The slice is a single tracer plan, not split into multiple plans — there is nothing to"
+        },
+        {
+          "scheme": "requirement",
+          "id": "SLICE-01",
+          "artifactPath": ".planning/REQUIREMENTS.md",
+          "artifactKind": "requirements",
+          "position": {
+            "line": 10,
+            "offset": 193
+          },
+          "excerpt": "- [ ] **SLICE-01**: Fixture requirement one"
+        },
+        {
+          "scheme": "requirement",
+          "id": "SLICE-02",
+          "artifactPath": ".planning/REQUIREMENTS.md",
+          "artifactKind": "requirements",
+          "position": {
+            "line": 11,
+            "offset": 237
+          },
+          "excerpt": "- [ ] **SLICE-02**: Fixture requirement two"
+        },
+        {
+          "scheme": "requirement",
+          "id": "SLICE-03",
+          "artifactPath": ".planning/REQUIREMENTS.md",
+          "artifactKind": "requirements",
+          "position": {
+            "line": 12,
+            "offset": 281
+          },
+          "excerpt": "- [ ] **SLICE-03**: Fixture requirement three"
+        },
+        {
+          "scheme": "requirement",
+          "id": "SLICE-04",
+          "artifactPath": ".planning/REQUIREMENTS.md",
+          "artifactKind": "requirements",
+          "position": {
+            "line": 18,
+            "offset": 357
+          },
+          "excerpt": "- **SLICE-04**: Fixture requirement four, deferred"
+        },
+        {
+          "scheme": "requirement",
+          "id": "SLICE-01",
+          "artifactPath": ".planning/REQUIREMENTS.md",
+          "artifactKind": "requirements",
+          "position": {
+            "line": 30,
+            "offset": 639
+          },
+          "excerpt": "| SLICE-01 | Phase 1 | Pending |"
+        },
+        {
+          "scheme": "phase",
+          "id": "1",
+          "artifactPath": ".planning/REQUIREMENTS.md",
+          "artifactKind": "requirements",
+          "position": {
+            "line": 30,
+            "offset": 656
+          },
+          "excerpt": "| SLICE-01 | Phase 1 | Pending |"
+        },
+        {
+          "scheme": "requirement",
+          "id": "SLICE-02",
+          "artifactPath": ".planning/REQUIREMENTS.md",
+          "artifactKind": "requirements",
+          "position": {
+            "line": 31,
+            "offset": 672
+          },
+          "excerpt": "| SLICE-02 | Phase 1 | Pending |"
+        },
+        {
+          "scheme": "phase",
+          "id": "1",
+          "artifactPath": ".planning/REQUIREMENTS.md",
+          "artifactKind": "requirements",
+          "position": {
+            "line": 31,
+            "offset": 689
+          },
+          "excerpt": "| SLICE-02 | Phase 1 | Pending |"
+        },
+        {
+          "scheme": "requirement",
+          "id": "SLICE-03",
+          "artifactPath": ".planning/REQUIREMENTS.md",
+          "artifactKind": "requirements",
+          "position": {
+            "line": 32,
+            "offset": 705
+          },
+          "excerpt": "| SLICE-03 | Phase 1 | Pending |"
+        },
+        {
+          "scheme": "phase",
+          "id": "1",
+          "artifactPath": ".planning/REQUIREMENTS.md",
+          "artifactKind": "requirements",
+          "position": {
+            "line": 32,
+            "offset": 722
+          },
+          "excerpt": "| SLICE-03 | Phase 1 | Pending |"
+        },
+        {
+          "scheme": "phase",
+          "id": "1",
+          "artifactPath": ".planning/ROADMAP.md",
+          "artifactKind": "roadmap",
+          "position": {
+            "line": 25,
+            "offset": 855
+          },
+          "excerpt": "- [ ] **Phase 1: First Slice** - The first narrow vertical slice of the fixture project"
+        },
+        {
+          "scheme": "phase",
+          "id": "1",
+          "artifactPath": ".planning/ROADMAP.md",
+          "artifactKind": "roadmap",
+          "position": {
+            "line": 29,
+            "offset": 958
+          },
+          "excerpt": "### Phase 1: First Slice"
+        },
+        {
+          "scheme": "requirement",
+          "id": "SLICE-01",
+          "artifactPath": ".planning/ROADMAP.md",
+          "artifactKind": "roadmap",
+          "position": {
+            "line": 32,
+            "offset": 1128
+          },
+          "excerpt": "**Requirements**: SLICE-01, SLICE-02, SLICE-99"
+        },
+        {
+          "scheme": "requirement",
+          "id": "SLICE-02",
+          "artifactPath": ".planning/ROADMAP.md",
+          "artifactKind": "roadmap",
+          "position": {
+            "line": 32,
+            "offset": 1138
+          },
+          "excerpt": "**Requirements**: SLICE-01, SLICE-02, SLICE-99"
+        },
+        {
+          "scheme": "requirement",
+          "id": "SLICE-99",
+          "artifactPath": ".planning/ROADMAP.md",
+          "artifactKind": "roadmap",
+          "position": {
+            "line": 32,
+            "offset": 1148
+          },
+          "excerpt": "**Requirements**: SLICE-01, SLICE-02, SLICE-99"
+        },
+        {
+          "scheme": "plan",
+          "id": "01-01",
+          "artifactPath": ".planning/ROADMAP.md",
+          "artifactKind": "roadmap",
+          "position": {
+            "line": 39,
+            "offset": 1362
+          },
+          "excerpt": "- [ ] 01-01: First slice tracer plan"
+        },
+        {
+          "scheme": "phase",
+          "id": "1",
+          "artifactPath": ".planning/STATE.md",
+          "artifactKind": "state",
+          "position": {
+            "line": 9,
+            "offset": 200
+          },
+          "excerpt": "**Current focus:** Phase 1 — First Slice"
+        },
+        {
+          "scheme": "phase",
+          "id": "1",
+          "artifactPath": ".planning/STATE.md",
+          "artifactKind": "state",
+          "position": {
+            "line": 16,
+            "offset": 355
+          },
+          "excerpt": "Last activity: 2026-08-22 — Phase 1 planned"
+        },
+        {
+          "scheme": "phase",
+          "id": "1",
+          "artifactPath": ".planning/STATE.md",
+          "artifactKind": "state",
+          "position": {
+            "line": 46,
+            "offset": 859
+          },
+          "excerpt": "- [Phase 1]: Keep this fixture at \"structure but no history\" — one planned phase, no summaries yet."
+        },
+        {
+          "scheme": "phase",
+          "id": "1",
+          "artifactPath": ".planning/STATE.md",
+          "artifactKind": "state",
+          "position": {
+            "line": 67,
+            "offset": 1310
+          },
+          "excerpt": "Stopped at: Phase 1 planned, not yet executed"
+        }
+      ]
+    }
+  },
+  "warnings": [],
+  "exclusions": []
+}
