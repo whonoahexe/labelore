@@ -49,8 +49,12 @@ interface RawPhaseBlock {
 
 /**
  * Line-scans for `### Phase N: {Name}` / `#### Phase N: {Name}` headings at any level 2–6 and
- * captures everything up to the next heading (of any kind) as that phase's body. Never a single
- * whole-document regex (T-01-11) — one linear pass over lines.
+ * captures everything up to the next `Phase N:` heading as that phase's body. An interior heading
+ * that does NOT match the `Phase N:` pattern (e.g. a hand-authored `#### Notes` subsection) is NOT
+ * a block boundary — it is content of the current phase, same as any other line, so a phase's
+ * Requirements / Success Criteria / `Plans:` fields are never silently truncated by an unrelated
+ * heading appearing before them. Never a single whole-document regex (T-01-11) — one linear pass
+ * over lines.
  */
 function extractRawPhaseBlocks(text: string): RawPhaseBlock[] {
   const blocks: RawPhaseBlock[] = [];
@@ -60,12 +64,13 @@ function extractRawPhaseBlocks(text: string): RawPhaseBlock[] {
     const headingMatch = line.match(/^#{2,6}\s+(.*)$/);
     if (headingMatch) {
       const phaseMatch = headingMatch[1].match(/^(?:[^\w]*\s*)?Phase\s+([\w.]+):\s*(.+)$/i);
-      if (current) {
-        blocks.push({ number: current.number, name: current.name, body: current.lines.join('\n') });
-        current = null;
-      }
       if (phaseMatch) {
+        if (current) {
+          blocks.push({ number: current.number, name: current.name, body: current.lines.join('\n') });
+        }
         current = { number: phaseMatch[1], name: phaseMatch[2].trim(), lines: [] };
+      } else if (current) {
+        current.lines.push(line); // non-phase heading is content of the current phase, not a boundary
       }
       continue;
     }
