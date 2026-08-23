@@ -145,16 +145,123 @@
         "category": "Fixture",
         "text": "Fixture requirement one",
         "tier": "v1",
-        "checked": false
+        "checked": false,
+        "coveringPhaseRefs": [
+          {
+            "raw": "Phase 1",
+            "resolved": null
+          }
+        ]
       },
       {
         "id": "FIX-02",
         "category": "Fixture",
         "text": "Fixture requirement two",
         "tier": "v2",
-        "checked": null
+        "checked": null,
+        "coveringPhaseRefs": []
       }
-    ]
+    ],
+    "mentions": {
+      "byId": {
+        "requirement:FIX-01": [
+          {
+            "scheme": "requirement",
+            "id": "FIX-01",
+            "artifactPath": ".planning/REQUIREMENTS.md",
+            "artifactKind": "requirements",
+            "position": {
+              "line": 10,
+              "offset": 193
+            },
+            "excerpt": "- [ ] **FIX-01**: Fixture requirement one"
+          },
+          {
+            "scheme": "requirement",
+            "id": "FIX-01",
+            "artifactPath": ".planning/REQUIREMENTS.md",
+            "artifactKind": "requirements",
+            "position": {
+              "line": 28,
+              "offset": 519
+            },
+            "excerpt": "| FIX-01 | Phase 1 | Pending |"
+          }
+        ],
+        "requirement:FIX-02": [
+          {
+            "scheme": "requirement",
+            "id": "FIX-02",
+            "artifactPath": ".planning/REQUIREMENTS.md",
+            "artifactKind": "requirements",
+            "position": {
+              "line": 16,
+              "offset": 265
+            },
+            "excerpt": "- **FIX-02**: Fixture requirement two"
+          }
+        ],
+        "phase:1": [
+          {
+            "scheme": "phase",
+            "id": "1",
+            "artifactPath": ".planning/REQUIREMENTS.md",
+            "artifactKind": "requirements",
+            "position": {
+              "line": 28,
+              "offset": 534
+            },
+            "excerpt": "| FIX-01 | Phase 1 | Pending |"
+          }
+        ]
+      },
+      "all": [
+        {
+          "scheme": "requirement",
+          "id": "FIX-01",
+          "artifactPath": ".planning/REQUIREMENTS.md",
+          "artifactKind": "requirements",
+          "position": {
+            "line": 10,
+            "offset": 193
+          },
+          "excerpt": "- [ ] **FIX-01**: Fixture requirement one"
+        },
+        {
+          "scheme": "requirement",
+          "id": "FIX-02",
+          "artifactPath": ".planning/REQUIREMENTS.md",
+          "artifactKind": "requirements",
+          "position": {
+            "line": 16,
+            "offset": 265
+          },
+          "excerpt": "- **FIX-02**: Fixture requirement two"
+        },
+        {
+          "scheme": "requirement",
+          "id": "FIX-01",
+          "artifactPath": ".planning/REQUIREMENTS.md",
+          "artifactKind": "requirements",
+          "position": {
+            "line": 28,
+            "offset": 519
+          },
+          "excerpt": "| FIX-01 | Phase 1 | Pending |"
+        },
+        {
+          "scheme": "phase",
+          "id": "1",
+          "artifactPath": ".planning/REQUIREMENTS.md",
+          "artifactKind": "requirements",
+          "position": {
+            "line": 28,
+            "offset": 534
+          },
+          "excerpt": "| FIX-01 | Phase 1 | Pending |"
+        }
+      ]
+    }
   },
   "warnings": [],
   "exclusions": []
