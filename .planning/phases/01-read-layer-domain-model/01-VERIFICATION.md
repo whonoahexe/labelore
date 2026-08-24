@@ -1,11 +1,12 @@
 ---
 phase: 01-read-layer-domain-model
 verified: 2026-08-24T01:45:00Z
-status: human_needed
+status: passed
 score: 5/5 roadmap success criteria verified (39/39 plan-level must-have artifacts/key-links pass; 135/135 tests pass)
 behavior_unverified: 0
 overrides_applied: 0
 human_verification:
+
   - test: "Run `npm run snapshot -- ~/studio-portal --stable > /tmp/sp.json` and confirm it exits 0; `loadStatus.status` is `ok`; the phase list contains both the live milestone's phases and the archived `v1.0` ones with the two 'Phase 1' entries distinct; the warning list is short enough to read and every entry names a real problem rather than a routine unresolved identifier; the mention index shows a decision id appearing across several files with sensible excerpts. Then repeat with a relative path, a `~`-prefixed path, and a symlink to the same directory and confirm all four resolve to the same root."
     expected: "All the above hold against the real, messy, non-fixture project — this is deliberately the only defense against a regression that manifests solely at real-world scale (D-04)."
     why_human: "01-04-PLAN.md's own `<human-check>` block marks this manual smoke test as deliberately unautomated (D-04: no committed assertion may depend on `~/studio-portal`), and this project's `human_verify_mode` is `end-of-phase`, so the executor correctly deferred it rather than running it. The verifier ran the automated half as a sanity check (see notes below) but the qualitative judgment — 'is the warning list short enough to read', 'are the excerpts sensible' — genuinely needs a human."

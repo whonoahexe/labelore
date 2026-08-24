@@ -61,7 +61,7 @@ prose-scanning linkifier — there are no existing links to render.
 - [ ] **NAV-04**: A reference to an ID with no definition renders as plain text, never as a broken link
 - [ ] **NAV-05**: A requirements traceability view shows requirement → phase → status
 - [ ] **NAV-06**: URLs are shareable and bookmarkable, mapping onto milestone → phase → plan → artifact
-- [ ] **NAV-07**: The loaded snapshot exposes a decision-mention index (decision ID → the files mentioning it), verifiable through the data-layer harness — built now so decision linking can be added later without reworking the assembly pass
+- [x] **NAV-07**: The loaded snapshot exposes a decision-mention index (decision ID → the files mentioning it), verifiable through the data-layer harness — built now so decision linking can be added later without reworking the assembly pass
 
 ### Search
 
@@ -90,12 +90,12 @@ Architectural requirements. They are listed because PROJECT.md names three futur
 (multi-project, live watching, write-back) that a reader baked into the UI would block, and
 because fixture testing is the only real defense against overfitting.
 
-- [ ] **DATA-01**: Filesystem access sits behind an interface that admits a multi-project source, a watcher-backed source, and eventually a writing source, without changes downstream of it
+- [x] **DATA-01**: Filesystem access sits behind an interface that admits a multi-project source, a watcher-backed source, and eventually a writing source, without changes downstream of it
 - [x] **DATA-02**: Artifact parsing dispatches on filename pattern with a generic markdown handler registered last and matching unconditionally — frontmatter presence is never used as the dispatch signal
-- [ ] **DATA-03**: `config.json` and the artifact-type set are parsed as open maps; unknown keys and unknown types are preserved rather than dropped
-- [ ] **DATA-04**: The whole project snapshot is rebuildable through a single `refresh()` entry point — the same seam a future file watcher will call
-- [ ] **DATA-05**: A non-UI harness dumps the parsed snapshot as JSON, so parsing can be tested without rendering
-- [ ] **DATA-06**: Two synthetic test fixtures exist — one sparse project and one dense project containing artifact types absent from studio-portal — and the dashboard renders both
+- [x] **DATA-03**: `config.json` and the artifact-type set are parsed as open maps; unknown keys and unknown types are preserved rather than dropped
+- [x] **DATA-04**: The whole project snapshot is rebuildable through a single `refresh()` entry point — the same seam a future file watcher will call
+- [x] **DATA-05**: A non-UI harness dumps the parsed snapshot as JSON, so parsing can be tested without rendering
+- [x] **DATA-06**: Two synthetic test fixtures exist — one sparse project and one dense project containing artifact types absent from studio-portal — and the dashboard renders both
 
 ## v2 Requirements
 
@@ -176,7 +176,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 | NAV-04 | Phase 2 | Pending |
 | NAV-05 | Phase 3 | Pending |
 | NAV-06 | Phase 2 | Pending |
-| NAV-07 | Phase 1 | Pending |
+| NAV-07 | Phase 1 | Complete |
 | FIND-01 | Phase 3 | Pending |
 | FIND-02 | Phase 3 | Pending |
 | FIND-03 | Phase 3 | Pending |
@@ -187,12 +187,12 @@ Which phases cover which requirements. Populated during roadmap creation.
 | UI-01 | Phase 2 | Pending |
 | UI-02 | Phase 2 | Pending |
 | UI-03 | Phase 2 | Pending |
-| DATA-01 | Phase 1 | Pending |
+| DATA-01 | Phase 1 | Complete |
 | DATA-02 | Phase 1 | Complete |
-| DATA-03 | Phase 1 | Pending |
-| DATA-04 | Phase 1 | Pending |
-| DATA-05 | Phase 1 | Pending |
-| DATA-06 | Phase 1 | Pending |
+| DATA-03 | Phase 1 | Complete |
+| DATA-04 | Phase 1 | Complete |
+| DATA-05 | Phase 1 | Complete |
+| DATA-06 | Phase 1 | Complete |
 
 **Per-phase totals:**
 

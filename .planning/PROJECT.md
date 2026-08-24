@@ -147,14 +147,16 @@ style). The tokens are copied; the codebase is not.
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Read-only in v1; no writes to `.planning/` | GSD owns these files' invariants. A viewer that cannot write cannot corrupt planning state. Driving GSD is a named future direction, not v1 scope. | — Pending |
-| One project per run, targeted by path argument | Simplest thing that satisfies "works on any GSD project" without building registry, discovery, or persistence machinery. | — Pending |
+| Read-only in v1; no writes to `.planning/` | GSD owns these files' invariants. A viewer that cannot write cannot corrupt planning state. Driving GSD is a named future direction, not v1 scope. | ✓ Phase 1 established a read-only filesystem boundary with containment checks |
+| One project per run, targeted by path argument | Simplest thing that satisfies "works on any GSD project" without building registry, discovery, or persistence machinery. | ✓ Phase 1 verified absolute, relative, `~`-prefixed, and symlinked targets |
 | Own repository at `~/gsd-lore`, clone-and-run | Chosen over `npx`/global CLI: no packaging or distribution burden for a personal tool. | — Pending |
 | Findability via full-text search *and* navigation/cross-linking | Both were chosen over curated per-type aggregate pages. Search covers the unknown-unknowns; navigation covers walking a structure you already understand. | — Pending |
 | studio-portal is a reference and theme source, nothing more | Explicit user instruction. The dashboard must render any GSD project, so hardcoding to studio-portal would defeat the point. | — Pending |
-| Live file-watching deferred to v2, read layer built to allow it | Watching is real infrastructure (watcher plus transport plus client state). Deferring it is cheap only if the read layer is a seam from day one. | — Pending |
+| Live file-watching deferred to v2, read layer built to allow it | Watching is real infrastructure (watcher plus transport plus client state). Deferring it is cheap only if the read layer is a seam from day one. | ✓ Phase 1 delivered and tested the single `refresh()` seam |
 | Tech stack deferred to research | User declined to pre-commit. A local read-only tool has different pressures than studio-portal's networked app; the theme is portable across candidate stacks. | — Pending |
 | Built for one user, no distribution concerns | Removes onboarding, docs, version-compatibility, and contribution surface from v1 scope. Portability across GSD projects is still required — but for this user's own projects. | — Pending |
+| Keep the domain model independent of filesystem and parser modules | Resolved references and mention indexes are shared downstream contracts; putting their types in the zero-I/O domain layer prevents dependency inversion. | ✓ Phase 1 implemented the one-way `planning-fs → planning-repo → domain` boundary |
+| Treat dangling references as data, not warnings | GSD prose routinely mentions identifiers that are not definitions; warning on each would bury real parse failures. | ✓ Phase 1 preserves `{raw, resolved: null}` and keeps warnings high-signal |
 
 ## Evolution
 
@@ -174,4 +176,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-21 after initialization*
+*Last updated: 2026-08-24 after Phase 1*
