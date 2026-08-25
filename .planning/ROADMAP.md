@@ -104,6 +104,19 @@ Plans:
 **Plans**: 3 plans
 **UI hint**: yes
 
+Plans:
+**Wave 1**
+
+- [ ] 02-01-PLAN.md — Package-vetted delivery tracer plus cycle-free snapshot boundary and canonical milestone-qualified routing
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 02-02-PLAN.md — Current-position dashboard, vertical roadmap/history, and studio-portal-derived light/dark shell
+
+**Wave 3** *(blocked on Waves 1-2 completion)*
+
+- [ ] 02-03-PLAN.md — Safe PLAN-aware artifact rendering, truth-to-coverage pairing, and milestone-aware link previews
+
 ### Phase 3: Search, Browsing & Traceability
 
 **Goal**: Anything buried anywhere in `.planning/` is findable in seconds — by searching for an exact token, by walking the tree to it, or by following a requirement to the phase that covers it.
