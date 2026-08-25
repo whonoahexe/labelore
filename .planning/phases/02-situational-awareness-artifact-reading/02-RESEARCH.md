@@ -408,7 +408,13 @@ For a plan pair, retrieve both full artifacts from `Phase.artifacts` by `Plan.pa
 
 **What:** Coverage rows do not carry a stable pointer to a plan truth. The real corpus has truth strings and independent coverage objects with IDs such as `D1`; order and count can differ. [VERIFIED: `/home/cinedise/studio-portal/.planning/phases/04-bulk-archive-downloads/04-05-PLAN.md:24-41`; `/home/cinedise/studio-portal/.planning/phases/04-bulk-archive-downloads/04-05-SUMMARY.md:55-115`]
 
-Use a conservative matcher: exact normalized text first; otherwise score shared requirement IDs plus normalized significant-token overlap; accept only one-to-one matches above an explicit tested threshold; show all unmatched truths and coverage entries. Label heuristic matches as inferred. Never silently pair by array index. [ASSUMED]
+Use this authoritative conservative matcher: exact normalized text first. For remaining rows, compute
+normalized significant-token Jaccard overlap (`intersection / union`) and require at least `0.60`.
+When both rows carry authored requirement IDs, they must also share at least one ID; a shared ID never
+substitutes for textual evidence. Accept an inferred pair only when it is the unique highest-scoring
+candidate for both rows. Any equal-score tie, competing best candidate, or failure of either predicate
+stays unmatched. Show all unmatched truths and coverage entries, label heuristic matches `inferred`,
+and never pair by array index. This mutual-unique rule is deterministic under array reordering.
 
 ### Pattern 8: Ordered Flow, Not Invented Graph
 
@@ -650,25 +656,24 @@ The final phase gate should additionally run the complete existing suite and a h
 | A1 | The recommended literal route segments, `current` null-milestone token, project-code/phase-number key, and shared-codec consumers are acceptable within D-13's delegated route discretion. | Route codec | Costly bookmark migration if changed after Phase 3 |
 | A2 | “Immediate next” means first dependency-ready incomplete plan, otherwise next incomplete phase. | Dashboard selectors | Landing page may disagree with the user's mental model |
 | A3 | Blockers combine dependency state with authored STATE blocker prose; human waits combine incomplete checkpoint tasks with `coverage.human_judgment`. | Dashboard selectors | Needs-attention list may over/under-report |
-| A4 | Conservative token/requirement similarity with an explicit threshold is acceptable for truth-to-coverage inference. | Coverage matching | False matches would misrepresent execution evidence |
+| A4 | RESOLVED — exact normalized text precedes mutual-unique inferred matches; inference requires significant-token Jaccard >= 0.60, and authored IDs on both rows must overlap in addition to the textual threshold. Ties and competing best candidates remain unmatched. | Coverage matching | The fixed conservative rule prevents a shared requirement ID or array position from being presented as execution evidence. |
 | A5 | Oversized Markdown or Mermaid input should be capped and fail locally with a non-fatal warning. | Security Domain | A limit that is too low hides valid content; no limit risks UI denial of service |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **What is the authoritative semantic rule for truth-to-coverage matching?**
-   - What we know: no stable truth ID is present in the plan; coverage has independent `D1`, `D2`, … IDs, and count/order can differ. [VERIFIED: `/home/cinedise/studio-portal/.planning/phases/04-bulk-archive-downloads/04-05-PLAN.md:15-26`; `/home/cinedise/studio-portal/.planning/phases/04-bulk-archive-downloads/04-05-SUMMARY.md:55-115`]
-   - What's unclear: acceptable similarity threshold and whether requirement overlap should outweigh prose overlap.
-   - Recommendation: implement and test conservative inference with visible “inferred” and “unmatched” states; never claim complete coverage merely because both arrays are non-empty.
+1. **RESOLVED — authoritative truth-to-coverage matching rule.**
+   - No stable truth ID is present in the plan; coverage has independent `D1`, `D2`, … IDs, and count/order can differ. [VERIFIED: `/home/cinedise/studio-portal/.planning/phases/04-bulk-archive-downloads/04-05-PLAN.md:15-26`; `/home/cinedise/studio-portal/.planning/phases/04-bulk-archive-downloads/04-05-SUMMARY.md:55-115`]
+   - Normalize case, whitespace, and punctuation and accept exact text matches first. For remaining rows, require significant-token Jaccard overlap of at least `0.60`. If both rows declare requirement IDs, at least one ID must also be shared; requirement overlap alone is never evidence.
+   - Accept an inferred match only when it is the unique highest-scoring candidate for both the truth and coverage row. Equal-score ties, competing best candidates, or rows below the text threshold remain visibly unmatched. This rule is one-to-one, reorder-invariant, and labels every non-exact match `inferred`.
 
-2. **Which authored sources count as a live blocker or pending human verification?**
-   - What we know: dependencies, checkpoint task types, STATE blocker prose, and summary `human_judgment` all exist. [VERIFIED: `src/domain/model.ts:127-142`; `.planning/phases/01-read-layer-domain-model/01-01-PLAN.md:188-196`; `.planning/STATE.md:80-83`; `.planning/phases/01-read-layer-domain-model/01-04-SUMMARY.md:113-118`]
-   - What's unclear: whether a completed plan's `human_judgment: true` remains pending after UAT/verification artifacts exist.
-   - Recommendation: let verification/UAT completion suppress the corresponding coverage wait only when an explicit structured pass can be linked; otherwise keep it visible with source label.
+2. **RESOLVED — authored blocker and human-verification sources.**
+   - Dependency blocks come from unresolved or incomplete `Plan.dependsOnRefs`. StateHandler uses its existing section/subsection parser to project a dedicated `structured.blockersConcerns` record from the authored `Blockers` or `Blockers/Concerns` subsection; ProjectPresentation consumes that structured field and selectors never grep STATE body text. [VERIFIED: `src/domain/model.ts:127-142`; `src/planning-repo/handlers/state.ts:31-50`]
+   - Pending human verification comes from checkpoint tasks parsed once from each PLAN artifact body and from summary coverage entries carrying `human_judgment: true`. [VERIFIED: `.planning/phases/01-read-layer-domain-model/01-01-PLAN.md:188-196`; `.planning/phases/01-read-layer-domain-model/01-04-SUMMARY.md:113-118`]
+   - A verification/UAT artifact suppresses only the matching wait when a structured result explicitly links the same plan/checkpoint or coverage item and records a passing disposition. Completed-plan state, filename proximity, or unrelated passing UAT never suppresses a wait.
 
-3. **How will browser UAT be run in this environment?**
-   - What we know: no `chromium`, `google-chrome`, or `firefox` command was detected in PATH.
-   - What's unclear: whether a host graphical browser is available outside the shell environment.
-   - Recommendation: planner adds an end-of-phase human browser checkpoint rather than adding a new E2E stack in this phase.
+3. **RESOLVED — browser UAT runs as a blocking end-of-phase human checkpoint.**
+   - No `chromium`, `google-chrome`, or `firefox` command was detected in PATH, so this environment cannot automate the required visual, focus, keyboard, theme, and overflow judgments without adding an unaudited browser stack.
+   - After all automated suites, typecheck, lint, build, and server smoke checks pass, execution pauses at one blocking browser checkpoint. The user opens the host browser against `fixtures/dense` and the read-only studio-portal corpus and verifies desktop/390px layout, both themes, PLAN semantics, plan-summary honesty, preview-before-navigation, focus restoration, deep links, and local overflow before approving the phase.
 
 ## Environment Availability
 
