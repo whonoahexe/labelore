@@ -91,7 +91,10 @@ function dashboardResponse(snapshot: ProjectSnapshot): DashboardResponse {
   };
 }
 
-export function createApp(source: SnapshotSource, production = process.env.NODE_ENV === 'production'): Hono {
+export function createApp(
+  source: SnapshotSource,
+  production = process.env.NODE_ENV === 'production',
+): Hono {
   const app = new Hono();
 
   app.get('/api/dashboard', (c) => c.json(dashboardResponse(source.getSnapshot())));
@@ -147,7 +150,7 @@ export async function startServer(rawPath: string, options: ServerOptions = {}):
       return;
     }
 
-    vite.middlewares(request, response, (error) => {
+    vite.middlewares(request, response, (error?: unknown) => {
       response.statusCode = error ? 500 : 404;
       response.end(error instanceof Error ? error.message : 'Not found');
     });
@@ -207,7 +210,10 @@ async function runCli(): Promise<void> {
 
   if (options.smoke) {
     try {
-      const [dashboard, root] = await Promise.all([fetch(`${baseUrl}/api/dashboard`), fetch(`${baseUrl}/`)]);
+      const [dashboard, root] = await Promise.all([
+        fetch(`${baseUrl}/api/dashboard`),
+        fetch(`${baseUrl}/`),
+      ]);
       const payload = (await dashboard.json()) as DashboardResponse;
       if (!dashboard.ok || !root.ok || !payload.readAt || !payload.loadStatus) {
         throw new Error('Smoke response contract failed');
