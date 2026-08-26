@@ -202,6 +202,7 @@ coverage_results:
     const presentation = await presentationOf({
       '.planning/STATE.md': state('### Blockers\n\nNone'),
       '.planning/REQUIREMENTS.md': `# Requirements\n\n## v1 Requirements\n### Core\n- [ ] **KEY-01**: Keyed\n`,
+      '.planning/ROADMAP.md': `# Roadmap\n\n### Phase 1: Live\n**Goal**: Ship\n\nPlans:\n- [x] 01-01: Done\n- [ ] 01-02: Pending\n`,
       '.planning/phases/01-live/01-01-PLAN.md': plan('', '["01-99"]'),
       '.planning/milestones/v1.0-phases/01-live/01-01-PLAN.md': plan(''),
     });
@@ -212,6 +213,11 @@ coverage_results:
     expect(active?.key).not.toBe(archived?.key);
     expect(active?.plans[0].key).not.toBe(archived?.plans[0].key);
     expect(active?.plans[0].dependsOn).toEqual([{ raw: '01-99', targetPlanKey: null }]);
+    expect(active?.formalPlanProgress).toEqual({
+      completed: 1,
+      total: 2,
+      sourcePath: '.planning/ROADMAP.md',
+    });
   });
 
   it('is cycle-free, retains readAt, and serializes the dense graph without cycle markers', async () => {

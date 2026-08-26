@@ -88,6 +88,11 @@ export interface PhaseDto {
   requirementRefs: { raw: string; targetRequirementId: string | null }[];
   successCriteria: string[];
   roadmapComplete: boolean | null;
+  formalPlanProgress: {
+    completed: number;
+    total: number;
+    sourcePath: string;
+  } | null;
   diskStatus: string;
   plans: PlanDto[];
 }
@@ -142,6 +147,17 @@ interface PassingEvidence {
   checkpoint: string | null;
   checkpointIndex: number | null;
   coverageId: string | null;
+}
+
+interface RoadmapPlanRecord {
+  id: string;
+  description: string;
+  checked: boolean;
+}
+
+interface RoadmapPhaseRecord {
+  number: string;
+  plans: RoadmapPlanRecord[];
 }
 
 function asString(value: unknown): string | null {
@@ -228,6 +244,48 @@ function blockersOf(state: ProjectStateDto | null): ProjectBlockerDto[] {
       heading,
       text,
     }));
+}
+
+function samePhaseNumber(left: string, right: string): boolean {
+  if (left === right) return true;
+  const leftNumber = Number(left);
+  const rightNumber = Number(right);
+  return Number.isFinite(leftNumber) && Number.isFinite(rightNumber) && leftNumber === rightNumber;
+}
+
+function roadmapPhaseRecord(
+  project: Project,
+  identity: PhaseIdentity,
+  archived: boolean,
+): { sourcePath: string; phase: RoadmapPhaseRecord | null } {
+  const roadmap = Object.values(project.artifacts).find((artifact) => artifact.kind === 'roadmap');
+  if (!roadmap) return { sourcePath: '.planning/ROADMAP.md', phase: null };
+  let candidates: unknown = roadmap.structured.phases;
+  if (archived && identity.milestoneVersion !== null) {
+    const groups = roadmap.structured.milestoneGroups;
+    if (Array.isArray(groups)) {
+      const group = groups
+        .map(asRecord)
+        .find((record) => record && asString(record.version) === identity.milestoneVersion);
+      candidates = group?.phases;
+    }
+  }
+  if (!Array.isArray(candidates)) return { sourcePath: roadmap.path, phase: null };
+  for (const candidate of candidates) {
+    const record = asRecord(candidate);
+    const number = record ? asString(record.number) : null;
+    if (!record || !number || !samePhaseNumber(number, identity.number)) continue;
+    const plans = Array.isArray(record.plans)
+      ? record.plans.flatMap((value): RoadmapPlanRecord[] => {
+          const plan = asRecord(value);
+          const id = plan ? asString(plan.id) : null;
+          if (!plan || !id || typeof plan.checked !== 'boolean') return [];
+          return [{ id, description: asString(plan.description) ?? '', checked: plan.checked }];
+        })
+      : [];
+    return { sourcePath: roadmap.path, phase: { number, plans } };
+  }
+  return { sourcePath: roadmap.path, phase: null };
 }
 
 function allArtifacts(project: Project): Artifact[] {
@@ -368,6 +426,7 @@ export function toProjectPresentation(snapshot: ProjectSnapshot): ProjectPresent
     archived: milestone.archived,
     phases: milestone.phases.map((phase) => {
       const phaseKey = phaseKeyOf(phase.identity);
+      const roadmap = roadmapPhaseRecord(project, phase.identity, phase.archived);
       const plans: PlanDto[] = phase.plans.map((plan) => {
         const planKey = buildPlanUrl(phase.identity, plan.id);
         const planArtifact = phase.artifacts[plan.path];
@@ -461,6 +520,14 @@ export function toProjectPresentation(snapshot: ProjectSnapshot): ProjectPresent
         })),
         successCriteria: [...phase.successCriteria],
         roadmapComplete: phase.roadmapComplete,
+        formalPlanProgress:
+          roadmap.phase && roadmap.phase.plans.length > 0
+            ? {
+                completed: roadmap.phase.plans.filter((plan) => plan.checked).length,
+                total: roadmap.phase.plans.length,
+                sourcePath: roadmap.sourcePath,
+              }
+            : null,
         diskStatus: phase.diskStatus,
         plans,
       };
