@@ -500,6 +500,9 @@
               "heading": "Session Continuity"
             }
           ],
+          "blockersConcerns": {
+            "heading": "Blockers/Concerns"
+          },
           "quickTasksCompleted": [
             {
               "#": "1",
