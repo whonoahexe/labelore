@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      (() => {
+        try {
+          const storedTheme = localStorage.getItem('gsd-lore-theme');
+          const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
+          document.documentElement.classList.toggle(
+            'dark',
+            storedTheme === 'dark' || (storedTheme !== 'light' && prefersDark),
+          );
+        } catch {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
+    <style>
+      :root {
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: oklch(0.23 0.018 65);
+        background: oklch(0.975 0.006 75);
+        font-synthesis: none;
+      }
+
+      :root.dark {
+        color: oklch(0.92 0.012 75);
+        background: oklch(0.18 0.012 65);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        min-height: 100vh;
+        background:
+          linear-gradient(135deg, oklch(0.71 0.17 54 / 0.08), transparent 38%),
+          inherit;
+      }
+
+      button,
+      input,
+      textarea,
+      select {
+        font: inherit;
+      }
+
+      .screen {
+        width: min(74rem, 100%);
+        margin: 0 auto;
+        padding: clamp(1.25rem, 4vw, 4rem);
+      }
+
+      .eyebrow {
+        margin: 0 0 0.75rem;
+        color: oklch(0.58 0.16 48);
+        font-size: 0.75rem;
+        font-weight: 750;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        max-width: 18ch;
+        margin: 0;
+        font-size: clamp(2.2rem, 8vw, 5.6rem);
+        font-weight: 560;
+        letter-spacing: -0.06em;
+        line-height: 0.95;
+      }
+
+      .lede {
+        max-width: 44rem;
+        margin: 1.25rem 0 0;
+        color: oklch(0.49 0.02 65);
+        font-size: clamp(1rem, 2vw, 1.25rem);
+        line-height: 1.6;
+      }
+
+      :root.dark .lede,
+      :root.dark .muted {
+        color: oklch(0.7 0.016 70);
+      }
+
+      .position-card,
+      .error-card {
+        margin-top: clamp(2rem, 7vw, 5rem);
+        border: 1px solid oklch(0.82 0.02 68);
+        border-radius: 0;
+        background: oklch(0.995 0.003 70 / 0.9);
+        box-shadow: 0 1.75rem 5rem oklch(0.3 0.03 60 / 0.08);
+      }
+
+      :root.dark .position-card,
+      :root.dark .error-card {
+        border-color: oklch(0.34 0.02 65);
+        background: oklch(0.22 0.014 65 / 0.93);
+        box-shadow: 0 1.75rem 5rem oklch(0.05 0.01 60 / 0.32);
+      }
+
+      .card-heading,
+      .progress-block,
+      .metadata {
+        padding: clamp(1.2rem, 3vw, 2rem);
+      }
+
+      .card-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        border-bottom: 1px solid oklch(0.86 0.014 70);
+      }
+
+      :root.dark .card-heading,
+      :root.dark .progress-block {
+        border-color: oklch(0.33 0.018 65);
+      }
+
+      .card-heading h2 {
+        margin: 0;
+        font-size: clamp(1.3rem, 3vw, 2rem);
+        letter-spacing: -0.03em;
+      }
+
+      .status {
+        flex: none;
+        padding: 0.45rem 0.65rem;
+        border: 1px solid oklch(0.7 0.13 52);
+        color: oklch(0.48 0.16 48);
+        font-size: 0.72rem;
+        font-weight: 760;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .progress-block {
+        border-bottom: 1px solid oklch(0.86 0.014 70);
+      }
+
+      .progress-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 0.8rem;
+      }
+
+      .progress-track {
+        height: 0.55rem;
+        overflow: hidden;
+        background: oklch(0.9 0.014 70);
+      }
+
+      :root.dark .progress-track {
+        background: oklch(0.3 0.016 65);
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: oklch(0.68 0.18 48);
+      }
+
+      .metadata {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+        gap: 1.5rem;
+        margin: 0;
+      }
+
+      .metadata div {
+        min-width: 0;
+      }
+
+      .metadata dt {
+        margin-bottom: 0.35rem;
+        color: oklch(0.58 0.04 60);
+        font-size: 0.7rem;
+        font-weight: 750;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .metadata dd {
+        margin: 0;
+        overflow-wrap: anywhere;
+        font-size: 0.95rem;
+      }
+
+      .error-card {
+        padding: clamp(1.5rem, 4vw, 2.5rem);
+        border-left: 0.35rem solid oklch(0.61 0.19 31);
+      }
+
+      .error-card h2 {
+        margin: 0 0 0.75rem;
+      }
+
+      .muted {
+        color: oklch(0.49 0.02 65);
+      }
+
+      .skeleton {
+        min-height: 15rem;
+        animation: pulse 1.3s ease-in-out infinite alternate;
+      }
+
+      @keyframes pulse {
+        to {
+          opacity: 0.52;
+        }
+      }
+
+      @media (max-width: 36rem) {
+        .card-heading {
+          display: block;
+        }
+
+        .status {
+          display: inline-block;
+          margin-top: 1rem;
+        }
+      }
+    </style>
+    <title>GSD Lore</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/web/main.tsx"></script>
+  </body>
+</html>
