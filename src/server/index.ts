@@ -94,6 +94,7 @@ function dashboardResponse(snapshot: ProjectSnapshot): DashboardResponse {
 export function createApp(
   source: SnapshotSource,
   production = process.env.NODE_ENV === 'production',
+  staticRoot = './dist',
 ): Hono {
   const app = new Hono();
 
@@ -101,8 +102,10 @@ export function createApp(
   app.all('/api/*', (c) => c.json({ error: 'API route not found' }, 404));
 
   if (production) {
-    app.use('*', serveStatic({ root: './dist' }));
-    app.get('*', serveStatic({ root: './dist', path: 'index.html' }));
+    app.use('/assets/*', serveStatic({ root: staticRoot }));
+    app.get('/assets/*', (c) => c.text('Static asset not found', 404));
+    app.use('*', serveStatic({ root: staticRoot }));
+    app.get('*', serveStatic({ root: staticRoot, path: 'index.html' }));
   }
 
   return app;
