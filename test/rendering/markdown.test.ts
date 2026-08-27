@@ -4,6 +4,7 @@ import type { Artifact } from '../../src/domain/model.ts';
 import { InMemoryPlanningFilesystem } from '../../src/planning-fs/in-memory-fs.ts';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
 import { artifactTokenOf } from '../../src/presentation/routes.ts';
+import { buildFrontmatterPanels } from '../../src/rendering/frontmatter-views.ts';
 import { createArtifactRenderer } from '../../src/rendering/markdown.ts';
 import { buildArtifactIndex } from '../../src/server/artifact-index.ts';
 import { createApp } from '../../src/server/index.ts';
@@ -15,6 +16,17 @@ function artifact(body: string, kind = 'markdown'): Pick<Artifact, 'kind' | 'bod
 }
 
 describe('safe Markdown rendering', () => {
+  it('returns an honest empty state and uses the generic Markdown path for open artifact kinds', async () => {
+    const renderer = await createArtifactRenderer();
+    const empty = await renderer.render(artifact('', 'future-kind'));
+    const open = await renderer.render(artifact('## Future body\n\nStill readable.', 'future-kind'));
+
+    expect(empty).toEqual({ html: '', headings: [], warnings: [], empty: true });
+    expect(open.empty).toBe(false);
+    expect(open.html).toContain('<h2 id="future-body">');
+    expect(open.html).toContain('Still readable.');
+  });
+
   it('preserves adjacent GFM blocks and rows in source order with dual-theme highlighting', async () => {
     const renderer = await createArtifactRenderer();
     const rendered = await renderer.render(
@@ -143,6 +155,62 @@ const answer: number = 42
     expect(first.html).toContain('data-heading-id="repeat"');
     expect(first.html).toContain('data-heading-id="repeat-1"');
     expect(first.html).not.toContain('autofocus');
+  });
+});
+
+describe('structured frontmatter views', () => {
+  it('places guarded known panels before an unconditional generic remainder', () => {
+    const panels = buildFrontmatterPanels({
+      phase: '02-reader',
+      must_haves: { truths: ['Body remains visible'], artifacts: [] },
+      coverage: [{ id: 'D1', human_judgment: false }],
+      key_links: [{ from: 'renderer', to: 'mount', via: 'sanitized HTML' }],
+      progress: { completed: 2, total: 4 },
+      future_shape: { nested: ['<script>text only</script>', { enabled: true }] },
+    });
+
+    expect(panels.map((panel) => [panel.key, panel.presentation])).toEqual([
+      ['must_haves', 'known'],
+      ['coverage', 'known'],
+      ['key_links', 'known'],
+      ['progress', 'known'],
+      ['phase', 'generic'],
+      ['future_shape', 'generic'],
+    ]);
+    expect(JSON.stringify(panels)).toContain('<script>text only</script>');
+  });
+
+  it('routes empty and wrong-shaped known values through the generic recursive view', () => {
+    const panels = buildFrontmatterPanels({
+      must_haves: 'future syntax',
+      coverage: [],
+      key_links: null,
+      progress: {},
+    });
+
+    expect(panels).toHaveLength(4);
+    expect(panels.every((panel) => panel.presentation === 'generic')).toBe(true);
+    expect(panels.map((panel) => panel.key)).toEqual([
+      'must_haves',
+      'coverage',
+      'key_links',
+      'progress',
+    ]);
+  });
+});
+
+describe('document-first browser contract', () => {
+  it('keeps one finalized HTML mount and strict manual Mermaid execution activation-only', async () => {
+    const source = await readFile('src/web/pages/artifact-page.tsx', 'utf8');
+
+    expect(source.match(/dangerouslySetInnerHTML/g)).toHaveLength(1);
+    expect(source).toContain('__html: document.html');
+    expect(source).toContain("securityLevel: 'strict'");
+    expect(source).toContain('startOnLoad: false');
+    expect(source).toContain("querySelectorAll<HTMLElement>('[data-mermaid-pending=\"true\"]')");
+    expect(source).toContain("querySelectorAll<HTMLButtonElement>('[data-heading-id]')");
+    expect(source).toContain("addEventListener('click'");
+    expect(source).not.toMatch(/addEventListener\(['"]scroll/);
   });
 });
 
