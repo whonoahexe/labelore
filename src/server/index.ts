@@ -88,7 +88,15 @@ export async function startServer(rawPath: string, options: ServerOptions = {}):
   const app = createApp(source, production);
 
   if (production) {
-    return serve({ fetch: app.fetch, hostname: HOSTNAME, port }) as Server;
+    const server = serve({ fetch: app.fetch, hostname: HOSTNAME, port }) as Server;
+    if (server.listening) return server;
+    return await new Promise((resolve, reject) => {
+      server.once('error', reject);
+      server.once('listening', () => {
+        server.off('error', reject);
+        resolve(server);
+      });
+    });
   }
 
   const { createServer: createViteServer } = await import('vite');
