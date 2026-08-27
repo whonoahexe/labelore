@@ -351,9 +351,7 @@ function coverageEvidence(
   planId: string,
   coverageId: string,
 ): PassingEvidence | null {
-  return (
-    evidence.find((item) => item.planId === planId && item.coverageId === coverageId) ?? null
-  );
+  return evidence.find((item) => item.planId === planId && item.coverageId === coverageId) ?? null;
 }
 
 function projectRequirement(requirement: Requirement): RequirementDto {
@@ -374,7 +372,10 @@ function artifactDtos(project: Project): ArtifactDto[] {
   const context = new Map<string, { identity: PhaseIdentity; phaseKey: string }>();
   for (const phase of project.phases) {
     for (const artifact of Object.values(phase.artifacts)) {
-      context.set(artifact.path, { identity: phase.identity, phaseKey: phaseKeyOf(phase.identity) });
+      context.set(artifact.path, {
+        identity: phase.identity,
+        phaseKey: phaseKeyOf(phase.identity),
+      });
     }
   }
   return allArtifacts(project)

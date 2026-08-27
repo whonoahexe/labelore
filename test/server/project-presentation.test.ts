@@ -110,7 +110,8 @@ describe('structured STATE and PLAN projection', () => {
   it('marks only an explicitly linked passing checkpoint record as passed', async () => {
     const presentation = await presentationOf({
       '.planning/STATE.md': state('### Blockers\n\nNone'),
-      '.planning/phases/01-live/01-01-PLAN.md': plan(`<task type="checkpoint:human-verify" gate="blocking-human">
+      '.planning/phases/01-live/01-01-PLAN.md':
+        plan(`<task type="checkpoint:human-verify" gate="blocking-human">
   <name>Matching approval</name>
 </task>
 <task type="checkpoint:human-verify" gate="blocking-human">

@@ -57,10 +57,7 @@ describe('milestone-qualified presentation route codec', () => {
 
     const cases = [
       [buildMilestoneUrl(milestone), { kind: 'milestone', milestoneVersion: milestone }],
-      [
-        buildPhaseUrl(phase),
-        { kind: 'phase', milestoneVersion: milestone, phaseIdentity: phase },
-      ],
+      [buildPhaseUrl(phase), { kind: 'phase', milestoneVersion: milestone, phaseIdentity: phase }],
       [
         buildPlanUrl(phase, planId, heading),
         { kind: 'plan', milestoneVersion: milestone, phaseIdentity: phase, planId, heading },
