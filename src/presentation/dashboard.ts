@@ -183,7 +183,8 @@ function phaseWork(phase: PhaseDto): NextWorkItem {
     phaseKey: phase.key,
     planKey: null,
     title: phase.name,
-    reason: 'No dependency-ready plan remains in the current phase; this is the next incomplete phase.',
+    reason:
+      'No dependency-ready plan remains in the current phase; this is the next incomplete phase.',
   };
 }
 
@@ -323,7 +324,10 @@ export function buildDashboardViewModel(presentation: ProjectPresentation): Dash
         ),
         completedPlans: stateNumber(completedPlans, `${statePath}#progress.completed_plans`),
         totalPlans: stateNumber(totalPlans, `${statePath}#progress.total_plans`),
-        authoredPercent: stateNumber(state?.progress.percent ?? null, `${statePath}#progress.percent`),
+        authoredPercent: stateNumber(
+          state?.progress.percent ?? null,
+          `${statePath}#progress.percent`,
+        ),
         computedPercent: {
           value: computedPercent,
           display: computedPercent === null ? 'Not recorded' : `${computedPercent}%`,
@@ -333,11 +337,6 @@ export function buildDashboardViewModel(presentation: ProjectPresentation): Dash
     },
     completion: { currentPhaseKey: currentPhase?.key ?? null, ...completion },
     next: nextWork(presentation, currentPhase),
-    attention: attentionItems(
-      presentation,
-      currentPhase,
-      completion.formal,
-      completion.observed,
-    ),
+    attention: attentionItems(presentation, currentPhase, completion.formal, completion.observed),
   };
 }

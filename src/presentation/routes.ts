@@ -18,7 +18,12 @@ export type PresentationRoute =
   | { kind: 'dashboard' }
   | { kind: 'roadmap' }
   | { kind: 'milestone'; milestoneVersion: string | null }
-  | { kind: 'phase'; milestoneVersion: string | null; phaseIdentity: PhaseIdentity; heading?: string }
+  | {
+      kind: 'phase';
+      milestoneVersion: string | null;
+      phaseIdentity: PhaseIdentity;
+      heading?: string;
+    }
   | {
       kind: 'plan';
       milestoneVersion: string | null;
@@ -36,11 +41,7 @@ export type PresentationRoute =
     };
 
 export type PresentationRouteErrorCode =
-  | 'malformed-token'
-  | 'truncated'
-  | 'duplicate-token'
-  | 'empty-token'
-  | 'unsupported-route';
+  'malformed-token' | 'truncated' | 'duplicate-token' | 'empty-token' | 'unsupported-route';
 
 export type PresentationRouteParseResult =
   | { ok: true; route: PresentationRoute }
@@ -171,11 +172,14 @@ export function buildArtifactUrl(
   heading?: string,
 ): string {
   const token = artifactTokenOf(artifactPath);
-  const path = identity === null ? `/artifacts/${token}` : `${buildPhaseUrl(identity)}/artifacts/${token}`;
+  const path =
+    identity === null ? `/artifacts/${token}` : `${buildPhaseUrl(identity)}/artifacts/${token}`;
   return withHeading(path, heading);
 }
 
-function parseHeading(input: string):
+function parseHeading(
+  input: string,
+):
   | { ok: true; path: string; heading: string | null }
   | { ok: false; result: PresentationRouteParseResult } {
   const hashIndex = input.indexOf('#');
@@ -187,7 +191,10 @@ function parseHeading(input: string):
   }
   const heading = decodePart(rawHeading);
   if (heading === null || heading.length === 0) {
-    return { ok: false, result: failure('malformed-token', 'Heading token is malformed', rawHeading) };
+    return {
+      ok: false,
+      result: failure('malformed-token', 'Heading token is malformed', rawHeading),
+    };
   }
   return { ok: true, path, heading };
 }
@@ -215,14 +222,16 @@ export function parsePresentationUrl(input: string): PresentationRouteParseResul
     return failure('empty-token', 'Route contains an empty token');
   }
   const duplicate = duplicateReservedSegment(segments);
-  if (duplicate) return failure('duplicate-token', `Route repeats reserved token: ${duplicate}`, duplicate);
+  if (duplicate)
+    return failure('duplicate-token', `Route repeats reserved token: ${duplicate}`, duplicate);
   if (segments.length === 1 && segments[0] === 'roadmap') {
     return { ok: true, route: { kind: 'roadmap' } };
   }
 
   if (segments[0] === 'artifacts') {
     if (segments.length < 2) return failure('truncated', 'Artifact route is truncated');
-    if (segments.length !== 2) return failure('unsupported-route', 'Artifact route has extra tokens');
+    if (segments.length !== 2)
+      return failure('unsupported-route', 'Artifact route has extra tokens');
     const artifact = artifactPathOf(segments[1]);
     if (!artifact.ok) return failure('malformed-token', 'Artifact token is malformed', segments[1]);
     return {
@@ -256,7 +265,11 @@ export function parsePresentationUrl(input: string): PresentationRouteParseResul
   const phase = phaseIdentityOf(segments[3]);
   if (!phase.ok) return failure('malformed-token', 'Phase token is malformed', segments[3]);
   if (phase.value.milestoneVersion !== milestone.value) {
-    return failure('malformed-token', 'Phase key does not belong to the milestone route', segments[3]);
+    return failure(
+      'malformed-token',
+      'Phase key does not belong to the milestone route',
+      segments[3],
+    );
   }
   if (segments.length === 4) {
     const route: PresentationRoute = {
@@ -268,7 +281,8 @@ export function parsePresentationUrl(input: string): PresentationRouteParseResul
     return { ok: true, route };
   }
   if (segments.length < 6) return failure('truncated', 'Nested phase route is truncated');
-  if (segments.length > 6) return failure('unsupported-route', 'Nested phase route has extra tokens');
+  if (segments.length > 6)
+    return failure('unsupported-route', 'Nested phase route has extra tokens');
 
   if (segments[4] === 'plans') {
     const planId = decodePart(segments[5]);

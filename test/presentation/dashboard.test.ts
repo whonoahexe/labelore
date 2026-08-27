@@ -8,11 +8,7 @@ import type {
 } from '../../src/server/project-presentation.ts';
 import { buildDashboardViewModel } from '../../src/presentation/dashboard.ts';
 
-function plan(
-  id: string,
-  complete: boolean,
-  dependsOn: PlanDto['dependsOn'] = [],
-): PlanDto {
+function plan(id: string, complete: boolean, dependsOn: PlanDto['dependsOn'] = []): PlanDto {
   return {
     key: `plan:${id}`,
     id,
@@ -21,9 +17,7 @@ function plan(
     path: `.planning/phases/01-live/${id}-PLAN.md`,
     frontmatter: {},
     complete,
-    summary: complete
-      ? { key: `summary:${id}`, path: `${id}-SUMMARY.md`, frontmatter: {} }
-      : null,
+    summary: complete ? { key: `summary:${id}`, path: `${id}-SUMMARY.md`, frontmatter: {} } : null,
     dependsOn,
     checkpoints: [],
   };
@@ -154,11 +148,14 @@ describe('buildDashboardViewModel', () => {
 
   it('discrepant: keeps formal roadmap and observed SUMMARY counts separate with provenance', () => {
     const view = buildDashboardViewModel(
-      presentation({}, {
-        roadmapComplete: true,
-        formalPlanProgress: { completed: 2, total: 2, sourcePath: '.planning/ROADMAP.md' },
-        plans: [plan('01-01', true), plan('01-02', false)],
-      }),
+      presentation(
+        {},
+        {
+          roadmapComplete: true,
+          formalPlanProgress: { completed: 2, total: 2, sourcePath: '.planning/ROADMAP.md' },
+          plans: [plan('01-01', true), plan('01-02', false)],
+        },
+      ),
     );
 
     expect(view.completion.formal).toEqual({
@@ -179,27 +176,41 @@ describe('buildDashboardViewModel', () => {
 
   it('zero-plan: retains observed disk status and exact 0/0 without manufacturing completion', () => {
     const view = buildDashboardViewModel(
-      presentation({}, {
-        roadmapComplete: null,
-        formalPlanProgress: null,
-        diskStatus: 'researched',
-        plans: [],
-      }),
+      presentation(
+        {},
+        {
+          roadmapComplete: null,
+          formalPlanProgress: null,
+          diskStatus: 'researched',
+          plans: [],
+        },
+      ),
     );
 
-    expect(view.completion.formal).toMatchObject({ completed: null, total: null, status: 'unknown' });
-    expect(view.completion.observed).toMatchObject({ completed: 0, total: 0, status: 'researched' });
+    expect(view.completion.formal).toMatchObject({
+      completed: null,
+      total: null,
+      status: 'unknown',
+    });
+    expect(view.completion.observed).toMatchObject({
+      completed: 0,
+      total: 0,
+      status: 'researched',
+    });
     expect(view.attention.some((item) => item.type === 'discrepancy')).toBe(false);
   });
 
   it('null-formal: preserves Unknown and never defaults it from observed completion', () => {
     const view = buildDashboardViewModel(
-      presentation({}, {
-        roadmapComplete: null,
-        formalPlanProgress: null,
-        diskStatus: 'complete',
-        plans: [plan('01-01', true)],
-      }),
+      presentation(
+        {},
+        {
+          roadmapComplete: null,
+          formalPlanProgress: null,
+          diskStatus: 'complete',
+          plans: [plan('01-01', true)],
+        },
+      ),
     );
 
     expect(view.completion.formal.status).toBe('unknown');
@@ -242,7 +253,10 @@ describe('buildDashboardViewModel', () => {
       display: 'Unavailable',
       provenance: { kind: 'state', ref: '.planning/STATE.md#milestone' },
     });
-    expect(view.current.progress.totalPlans).toMatchObject({ value: null, display: 'Not recorded' });
+    expect(view.current.progress.totalPlans).toMatchObject({
+      value: null,
+      display: 'Not recorded',
+    });
     expect(view.current.progress.completedPlans).toMatchObject({ value: 0, display: '0' });
     expect(view.current.progress.computedPercent).toMatchObject({
       value: null,
@@ -307,11 +321,21 @@ describe('buildDashboardViewModel', () => {
       presentation({
         checkpoints: [
           pendingCheckpoint,
-          checkpoint({ key: 'checkpoint:other', name: 'Other', status: 'passed', evidenceKey: 'uat:x' }),
+          checkpoint({
+            key: 'checkpoint:other',
+            name: 'Other',
+            status: 'passed',
+            evidenceKey: 'uat:x',
+          }),
         ],
         coverageWaits: [
           pendingCoverage,
-          coverageWait({ key: 'coverage:other', coverageId: 'OTHER', status: 'passed', evidenceKey: 'uat:y' }),
+          coverageWait({
+            key: 'coverage:other',
+            coverageId: 'OTHER',
+            status: 'passed',
+            evidenceKey: 'uat:y',
+          }),
         ],
       }),
     );
@@ -354,9 +378,17 @@ describe('buildDashboardViewModel', () => {
   });
 
   it('returns at most two deterministic quieter previews after the immediate item', () => {
-    const source = presentation({}, {
-      plans: [plan('01-01', false), plan('01-02', false), plan('01-03', false), plan('01-04', false)],
-    });
+    const source = presentation(
+      {},
+      {
+        plans: [
+          plan('01-01', false),
+          plan('01-02', false),
+          plan('01-03', false),
+          plan('01-04', false),
+        ],
+      },
+    );
     const view = buildDashboardViewModel(source);
     expect(view.next.immediate?.key).toBe('plan:01-01');
     expect(view.next.previews.map((item) => item.key)).toEqual(['plan:01-02', 'plan:01-03']);
