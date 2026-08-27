@@ -21,6 +21,23 @@ function findQuickTasksTable(sections: { heading: string; body: string }[]): str
   return null;
 }
 
+function isBlockersHeading(heading: string): boolean {
+  return /^blockers(?:\s*\/\s*concerns)?$/i.test(heading.trim());
+}
+
+function findBlockersConcerns(
+  sections: { heading: string; body: string }[],
+): { heading: string; body: string } | null {
+  for (const section of sections) {
+    if (isBlockersHeading(section.heading)) return section;
+    const subsection = splitSubsections(section.body).find((candidate) =>
+      isBlockersHeading(candidate.heading),
+    );
+    if (subsection) return subsection;
+  }
+  return null;
+}
+
 export const StateHandler: ArtifactHandler = {
   kind: 'state',
   match: (ref) => ref.location === 'root' && basename(ref.path) === 'STATE.md',
@@ -29,6 +46,7 @@ export const StateHandler: ArtifactHandler = {
     const title = deriveTitle(fm.data, fm.body, ref.path);
     const sections = splitSections(fm.body);
     const quickTasksBody = findQuickTasksTable(sections);
+    const blockersConcerns = findBlockersConcerns(sections);
 
     return {
       title,
@@ -37,6 +55,7 @@ export const StateHandler: ArtifactHandler = {
       warning: fm.warning,
       structured: {
         sections,
+        blockersConcerns,
         quickTasksCompleted: quickTasksBody ? parseMarkdownTable(quickTasksBody) : [],
       },
     };
