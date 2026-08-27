@@ -77,8 +77,11 @@ function byKey(left: CoverageStatement, right: CoverageStatement): number {
   return left.key.localeCompare(right.key);
 }
 
-function soleCandidate<T>(candidates: T[]): T | null {
-  return candidates.length === 1 ? candidates[0] : null;
+function uniqueHighest<T extends { score: number }>(candidates: T[]): T | null {
+  if (candidates.length === 0) return null;
+  const highest = Math.max(...candidates.map((candidate) => candidate.score));
+  const winners = candidates.filter((candidate) => candidate.score === highest);
+  return winners.length === 1 ? winners[0] : null;
 }
 
 /** Builds a count-preserving matrix without using input position as pairing evidence. */
@@ -132,13 +135,13 @@ export function buildCoverageMatrix(
   for (const truth of remainingTruths.values()) {
     bestForTruth.set(
       truth.key,
-      soleCandidate(candidates.filter((candidate) => candidate.truth.key === truth.key)),
+      uniqueHighest(candidates.filter((candidate) => candidate.truth.key === truth.key)),
     );
   }
   for (const evidence of remainingCoverage.values()) {
     bestForCoverage.set(
       evidence.key,
-      soleCandidate(candidates.filter((candidate) => candidate.coverage.key === evidence.key)),
+      uniqueHighest(candidates.filter((candidate) => candidate.coverage.key === evidence.key)),
     );
   }
 
