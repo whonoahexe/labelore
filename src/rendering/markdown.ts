@@ -12,6 +12,8 @@ import { createHighlighter, type Highlighter } from 'shiki';
 import { unified, type Processor } from 'unified';
 import type { VFile } from 'vfile';
 import type { Artifact } from '../domain/model.ts';
+import type { ReferencePreviewDto, ReferenceRegistry } from '../presentation/references.ts';
+import { rehypeResolvedReferences } from './linkify.ts';
 import { segmentPlanBody, type PlanSegment } from './plan-segments.ts';
 
 const MAX_MERMAID_SOURCE_BYTES = 256 * 1024;
@@ -31,16 +33,27 @@ export interface RenderedDocument {
   headings: RenderedHeading[];
   warnings: string[];
   empty: boolean;
+  references?: ReferencePreviewDto[];
 }
 
 export interface ArtifactRenderer {
-  render(artifact: Pick<Artifact, 'kind' | 'body'>): Promise<RenderedDocument>;
+  render(
+    artifact: Pick<Artifact, 'kind' | 'body'> & Partial<Pick<Artifact, 'path'>>,
+    options?: ArtifactRenderOptions,
+  ): Promise<RenderedDocument>;
+}
+
+export interface ArtifactRenderOptions {
+  referenceRegistry?: ReferenceRegistry;
 }
 
 interface RenderContext {
   headingCounts: Map<string, number>;
   headings: RenderedHeading[];
   warnings: string[];
+  referenceRegistry?: ReferenceRegistry;
+  referenceArtifactPath?: string;
+  references: Map<string, ReferencePreviewDto>;
 }
 
 interface RenderFileData {
@@ -224,6 +237,7 @@ function createProcessor(highlighter: Highlighter): MarkdownProcessor {
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeRaw)
     .use(rehypeSanitize, schema)
+    .use(rehypeResolvedReferences)
     .use(rehypeSlug)
     .use(trustedEnrichment(highlighter))
     .use(rehypeStringify);
@@ -334,11 +348,17 @@ async function buildRenderer(): Promise<ArtifactRenderer> {
   const processor = createProcessor(highlighter);
 
   return Object.freeze({
-    async render(input: Pick<Artifact, 'kind' | 'body'>): Promise<RenderedDocument> {
+    async render(
+      input: Pick<Artifact, 'kind' | 'body'> & Partial<Pick<Artifact, 'path'>>,
+      options: ArtifactRenderOptions = {},
+    ): Promise<RenderedDocument> {
       const context: RenderContext = {
         headingCounts: new Map(),
         headings: [],
         warnings: [],
+        referenceRegistry: options.referenceRegistry,
+        referenceArtifactPath: input.path,
+        references: new Map(),
       };
       const html =
         input.kind === 'plan'
@@ -351,11 +371,13 @@ async function buildRenderer(): Promise<ArtifactRenderer> {
               context,
             )
           : await renderMarkdownChunk(processor, input.body, context);
+      const references = [...context.references.values()];
       return {
         html,
         headings: context.headings,
         warnings: context.warnings,
         empty: html.trim().length === 0,
+        ...(references.length === 0 ? {} : { references }),
       };
     },
   });
