@@ -8,7 +8,10 @@ import { LocalFsPlanningFilesystem } from '../planning-fs/local-fs.ts';
 import { PlanningRepository } from '../planning-repo/snapshot.ts';
 import { buildDashboardViewModel } from '../presentation/dashboard.ts';
 import { buildRoadmapViewModel } from '../presentation/roadmap.ts';
+import { parsePresentationUrl } from '../presentation/routes.ts';
+import { createArtifactRenderer } from '../rendering/markdown.ts';
 import { resolveTargetPath } from '../cli/target-path.ts';
+import { buildArtifactIndex } from './artifact-index.ts';
 import { toProjectPresentation } from './project-presentation.ts';
 
 const DEFAULT_PORT = 4173;
@@ -29,6 +32,8 @@ export function createApp(
   staticRoot = './dist',
 ): Hono {
   const app = new Hono();
+  const artifactIndex = buildArtifactIndex(source.getSnapshot());
+  const renderer = createArtifactRenderer();
 
   app.get('/api/presentation', (c) => c.json(toProjectPresentation(source.getSnapshot())));
   app.get('/api/dashboard', (c) => {
@@ -47,6 +52,41 @@ export function createApp(
     return c.json({
       readAt: presentation.readAt,
       history: buildRoadmapViewModel(presentation).history,
+    });
+  });
+  app.get('/api/artifacts/*', async (c) => {
+    const pathname = new URL(c.req.url).pathname;
+    const rawToken = pathname.slice('/api/artifacts/'.length);
+    const route = parsePresentationUrl(`/artifacts/${rawToken}`);
+    if (!route.ok || route.route.kind !== 'artifact') {
+      return c.json(
+        {
+          found: false,
+          status: 'not-found' as const,
+          artifactPath: '',
+          warning: route.ok ? 'Artifact token is invalid.' : route.error.message,
+        },
+        404,
+      );
+    }
+
+    const lookup = artifactIndex.lookup(route.route.artifactPath);
+    if (!lookup.found) return c.json(lookup, 404);
+    const document = await (await renderer).render(lookup.artifact);
+    return c.json({
+      found: true,
+      status: 'found' as const,
+      artifact: {
+        id: lookup.artifact.id,
+        path: lookup.artifact.path,
+        kind: lookup.artifact.kind,
+        title: lookup.artifact.title,
+        frontmatter: lookup.artifact.frontmatter,
+        structured: lookup.artifact.structured,
+        warnings: lookup.artifact.warnings,
+      },
+      phaseIdentity: lookup.phaseIdentity,
+      document,
     });
   });
   app.all('/api/*', (c) => c.json({ error: 'API route not found' }, 404));
