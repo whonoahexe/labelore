@@ -1593,3 +1593,149 @@ pre {
 .mermaid-fallback {
   white-space: pre;
 }
+
+.plan-pair-jumps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  font-size: 0.8rem;
+}
+
+.plan-pair-jumps a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.coverage-matrix,
+.plan-pair-document {
+  min-width: 0;
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: clamp(1rem, 2vw, 1.5rem);
+}
+
+.coverage-table-boundary {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.coverage-table-boundary table {
+  width: 100%;
+  min-width: 44rem;
+  border-collapse: collapse;
+}
+
+.coverage-table-boundary :is(th, td) {
+  border: 1px solid var(--border);
+  padding: 0.65rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.document-reference {
+  display: inline;
+  appearance: none;
+  border: 0;
+  border-bottom: 1px dashed currentColor;
+  background: transparent;
+  padding: 0;
+  color: var(--primary);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.document-reference:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.reference-preview {
+  z-index: 60;
+  display: grid;
+  width: min(24rem, calc(100vw - 2rem));
+  gap: 1rem;
+  border: 1px solid var(--border);
+  background: var(--popover);
+  padding: 1rem;
+  color: var(--popover-foreground);
+  box-shadow: 0 1rem 2.5rem color-mix(in oklab, var(--foreground) 18%, transparent);
+  transform-origin: var(--transform-origin);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+}
+
+.reference-preview[data-starting-style],
+.reference-preview[data-ending-style] {
+  opacity: 0;
+  transform: translateY(-0.25rem) scale(0.98);
+}
+
+.reference-preview-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.reference-preview-heading h2 {
+  margin: 0.15rem 0 0;
+  font-size: 1rem;
+}
+
+.reference-preview-close {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.reference-preview-close svg,
+.reference-preview-open svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.reference-preview-facts {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.reference-preview-facts div {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+.reference-preview-facts dt {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.reference-preview-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.reference-preview-open {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  background: var(--primary);
+  padding: 0.6rem 0.9rem;
+  color: var(--primary-foreground);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+}
