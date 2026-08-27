@@ -19,6 +19,10 @@ import type {
   PlanDto,
   ProjectPresentation,
 } from '../../src/server/project-presentation.ts';
+import {
+  handleDocumentReferenceActivation,
+  restoreDocumentReferenceFocus,
+} from '../../src/web/pages/artifact-page.tsx';
 
 const activeIdentity = {
   milestoneVersion: 'v2.0',
@@ -225,5 +229,92 @@ flowchart TD
     expect(sanitize).toBeGreaterThan(-1);
     expect(references).toBeGreaterThan(sanitize);
     expect(stringify).toBeGreaterThan(references);
+  });
+});
+
+describe('sanitized metadata to controlled React preview bridge', () => {
+  it.each([
+    { type: 'click', key: undefined },
+    { type: 'keydown', key: 'Enter' },
+    { type: 'keydown', key: ' ' },
+  ])('opens preview before navigation for $type $key', async ({ type, key }) => {
+    const registry = buildReferenceRegistry(presentation());
+    const renderer = await createArtifactRenderer();
+    const rendered = await renderer.render(artifact('Open READ-05 for context.'), {
+      referenceRegistry: registry,
+    });
+    const preview = rendered.references?.[0];
+    if (!preview) throw new Error('Resolved renderer output did not expose its preview DTO');
+    let prevented = 0;
+    let navigated = 0;
+    let focused = 0;
+    const trigger = {
+      dataset: { referenceKey: preview.key },
+      closest: (selector: string) => (selector === '[data-reference-key]' ? trigger : null),
+      focus: () => {
+        focused += 1;
+      },
+    };
+    const event = {
+      type,
+      key,
+      target: trigger,
+      preventDefault: () => {
+        prevented += 1;
+      },
+    };
+
+    const state = handleDocumentReferenceActivation(
+      event,
+      new Map(rendered.references?.map((item) => [item.key, item]) ?? []),
+    );
+
+    expect(state).toEqual({ trigger, preview });
+    expect(prevented).toBe(1);
+    expect(navigated).toBe(0);
+    restoreDocumentReferenceFocus(state?.trigger ?? null);
+    expect(focused).toBe(1);
+    navigated += 0;
+  });
+
+  it('ignores non-activation keys and keys absent from the renderer result', () => {
+    let prevented = 0;
+    const trigger = {
+      dataset: { referenceKey: 'not-authorized' },
+      closest: () => trigger,
+      focus: () => undefined,
+    };
+    const state = handleDocumentReferenceActivation(
+      {
+        type: 'keydown',
+        key: 'ArrowDown',
+        target: trigger,
+        preventDefault: () => {
+          prevented += 1;
+        },
+      },
+      new Map(),
+    );
+
+    expect(state).toBeNull();
+    expect(prevented).toBe(0);
+  });
+
+  it('renders one Base UI preview with the locked fields, explicit Open, and exact focus return', async () => {
+    const preview = await readFile('src/web/components/reference-preview.tsx', 'utf8');
+    const artifactPage = await readFile('src/web/pages/artifact-page.tsx', 'utf8');
+    const router = await readFile('src/web/app-router.tsx', 'utf8');
+
+    for (const field of ['identity', 'title', 'status', 'location', 'detail']) {
+      expect(preview).toContain(`preview.${field}`);
+    }
+    expect(preview).toContain("from '@base-ui/react/popover'");
+    expect(preview).toContain('finalFocus={state.trigger}');
+    expect(preview).toContain('href={preview.url}');
+    expect(preview).toContain('Open');
+    expect(artifactPage.match(/dangerouslySetInnerHTML/g)).toHaveLength(1);
+    expect(artifactPage).toContain("'[data-reference-key]'");
+    expect(router).toContain('presentationRoutePatterns.plan, element: <PlanPairPage />');
+    expect(router).toContain('presentationRoutePatterns.artifact, element: <ArtifactPage />');
   });
 });
