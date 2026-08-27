@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { createBrowserRouter, isRouteErrorResponse, Link, useRouteError } from 'react-router';
+import { presentationRoutePatterns } from '../presentation/routes.ts';
 
 interface DashboardProgress {
   totalPhases: number | null;
@@ -185,12 +186,29 @@ function NotFound(): React.JSX.Element {
   );
 }
 
+function PlannedRoute(): React.JSX.Element {
+  return (
+    <main className="screen">
+      <p className="eyebrow">GSD Lore</p>
+      <h1>This project view is ready for its presentation layer.</h1>
+    </main>
+  );
+}
+
 export const appRouter = createBrowserRouter([
   {
-    path: '/',
+    path: presentationRoutePatterns.dashboard,
     element: <CurrentPosition />,
     errorElement: <RouteError />,
   },
+  ...[
+    presentationRoutePatterns.roadmap,
+    presentationRoutePatterns.milestone,
+    presentationRoutePatterns.phase,
+    presentationRoutePatterns.plan,
+    presentationRoutePatterns.phaseArtifact,
+    presentationRoutePatterns.artifact,
+  ].map((path) => ({ path, element: <PlannedRoute />, errorElement: <RouteError /> })),
   {
     path: '*',
     element: <NotFound />,
