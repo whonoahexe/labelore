@@ -8,7 +8,10 @@ import { LocalFsPlanningFilesystem } from '../planning-fs/local-fs.ts';
 import { PlanningRepository } from '../planning-repo/snapshot.ts';
 import { buildDashboardViewModel } from '../presentation/dashboard.ts';
 import { buildRoadmapViewModel } from '../presentation/roadmap.ts';
+import { parsePresentationUrl } from '../presentation/routes.ts';
+import { createArtifactRenderer } from '../rendering/markdown.ts';
 import { resolveTargetPath } from '../cli/target-path.ts';
+import { buildArtifactIndex } from './artifact-index.ts';
 import { toProjectPresentation } from './project-presentation.ts';
 
 const DEFAULT_PORT = 4173;
@@ -29,6 +32,28 @@ export function createApp(
   staticRoot = './dist',
 ): Hono {
   const app = new Hono();
+  const artifactIndex = buildArtifactIndex(source.getSnapshot());
+  const renderer = createArtifactRenderer();
+
+  const artifactResponse = async (lookup: ReturnType<typeof artifactIndex.lookup>) => {
+    if (!lookup.found) return lookup;
+    const document = await (await renderer).render(lookup.artifact);
+    return {
+      found: true as const,
+      status: 'found' as const,
+      artifact: {
+        id: lookup.artifact.id,
+        path: lookup.artifact.path,
+        kind: lookup.artifact.kind,
+        title: lookup.artifact.title,
+        frontmatter: lookup.artifact.frontmatter,
+        structured: lookup.artifact.structured,
+        warnings: lookup.artifact.warnings,
+      },
+      phaseIdentity: lookup.phaseIdentity,
+      document,
+    };
+  };
 
   app.get('/api/presentation', (c) => c.json(toProjectPresentation(source.getSnapshot())));
   app.get('/api/dashboard', (c) => {
@@ -48,6 +73,43 @@ export function createApp(
       readAt: presentation.readAt,
       history: buildRoadmapViewModel(presentation).history,
     });
+  });
+  app.get('/api/artifacts/*', async (c) => {
+    const pathname = new URL(c.req.url).pathname;
+    const rawToken = pathname.slice('/api/artifacts/'.length);
+    const route = parsePresentationUrl(`/artifacts/${rawToken}`);
+    if (!route.ok || route.route.kind !== 'artifact') {
+      return c.json(
+        {
+          found: false,
+          status: 'not-found' as const,
+          artifactPath: '',
+          warning: route.ok ? 'Artifact token is invalid.' : route.error.message,
+        },
+        404,
+      );
+    }
+
+    const lookup = artifactIndex.lookup(route.route.artifactPath);
+    if (!lookup.found) return c.json(lookup, 404);
+    return c.json(await artifactResponse(lookup));
+  });
+  app.get('/api/documents', async (c) => {
+    const routeInput = c.req.query('route') ?? '';
+    const route = parsePresentationUrl(routeInput);
+    if (!route.ok || (route.route.kind !== 'artifact' && route.route.kind !== 'plan')) {
+      return c.json(
+        {
+          found: false,
+          status: 'not-found' as const,
+          artifactPath: '',
+          warning: route.ok ? 'Route does not identify a document.' : route.error.message,
+        },
+        404,
+      );
+    }
+    const lookup = artifactIndex.lookupRoute(route.route);
+    return lookup.found ? c.json(await artifactResponse(lookup)) : c.json(lookup, 404);
   });
   app.all('/api/*', (c) => c.json({ error: 'API route not found' }, 404));
 
