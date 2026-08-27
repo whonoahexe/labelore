@@ -22,7 +22,7 @@ import type {
 import {
   handleDocumentReferenceActivation,
   restoreDocumentReferenceFocus,
-} from '../../src/web/pages/artifact-page.tsx';
+} from '../../src/web/pages/document-reference-activation.ts';
 
 const activeIdentity = {
   milestoneVersion: 'v2.0',
@@ -246,7 +246,7 @@ describe('sanitized metadata to controlled React preview bridge', () => {
     const preview = rendered.references?.[0];
     if (!preview) throw new Error('Resolved renderer output did not expose its preview DTO');
     let prevented = 0;
-    let navigated = 0;
+    const navigationCalls = 0;
     let focused = 0;
     const trigger = {
       dataset: { referenceKey: preview.key },
@@ -271,10 +271,9 @@ describe('sanitized metadata to controlled React preview bridge', () => {
 
     expect(state).toEqual({ trigger, preview });
     expect(prevented).toBe(1);
-    expect(navigated).toBe(0);
+    expect(navigationCalls).toBe(0);
     restoreDocumentReferenceFocus(state?.trigger ?? null);
     expect(focused).toBe(1);
-    navigated += 0;
   });
 
   it('ignores non-activation keys and keys absent from the renderer result', () => {
@@ -303,17 +302,19 @@ describe('sanitized metadata to controlled React preview bridge', () => {
   it('renders one Base UI preview with the locked fields, explicit Open, and exact focus return', async () => {
     const preview = await readFile('src/web/components/reference-preview.tsx', 'utf8');
     const artifactPage = await readFile('src/web/pages/artifact-page.tsx', 'utf8');
+    const activation = await readFile('src/web/pages/document-reference-activation.ts', 'utf8');
     const router = await readFile('src/web/app-router.tsx', 'utf8');
 
     for (const field of ['identity', 'title', 'status', 'location', 'detail']) {
       expect(preview).toContain(`preview.${field}`);
     }
     expect(preview).toContain("from '@base-ui/react/popover'");
-    expect(preview).toContain('finalFocus={state.trigger}');
+    expect(preview).toContain('finalFocus={() => state.trigger}');
     expect(preview).toContain('href={preview.url}');
     expect(preview).toContain('Open');
     expect(artifactPage.match(/dangerouslySetInnerHTML/g)).toHaveLength(1);
-    expect(artifactPage).toContain("'[data-reference-key]'");
+    expect(artifactPage).toContain('handleDocumentReferenceActivation<HTMLElement>');
+    expect(activation).toContain("'[data-reference-key]'");
     expect(router).toContain('presentationRoutePatterns.plan, element: <PlanPairPage />');
     expect(router).toContain('presentationRoutePatterns.artifact, element: <ArtifactPage />');
   });
