@@ -69,4 +69,25 @@ describe('production SPA deep-link delivery', () => {
     expect(missingAsset.status).toBe(404);
     expect(await missingAsset.text()).not.toContain('GSD Lore shell');
   });
+
+  it('serves presentation, dashboard, roadmap, and history from the same snapshot identity', async () => {
+    const app = createApp(source, true, staticRoot);
+    const [presentation, dashboard, roadmap, history] = await Promise.all([
+      app.request('/api/presentation'),
+      app.request('/api/dashboard'),
+      app.request('/api/roadmap'),
+      app.request('/api/history'),
+    ]);
+    const payloads = (await Promise.all([
+      presentation.json(),
+      dashboard.json(),
+      roadmap.json(),
+      history.json(),
+    ])) as Array<Record<string, unknown>>;
+
+    expect(payloads.map((payload) => payload.readAt)).toEqual(Array(4).fill(snapshot.readAt));
+    expect(payloads[1]).toMatchObject({ loadStatus: { status: 'ok' }, attention: [] });
+    expect(payloads[2]).toMatchObject({ active: null, history: [] });
+    expect(payloads[3]).toMatchObject({ history: [] });
+  });
 });

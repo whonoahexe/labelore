@@ -8,11 +8,7 @@
       (() => {
         try {
           const storedTheme = localStorage.getItem('gsd-lore-theme');
-          const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
-          document.documentElement.classList.toggle(
-            'dark',
-            storedTheme === 'dark' || (storedTheme !== 'light' && prefersDark),
-          );
+          document.documentElement.classList.toggle('dark', storedTheme !== 'light');
         } catch {
           document.documentElement.classList.add('dark');
         }
