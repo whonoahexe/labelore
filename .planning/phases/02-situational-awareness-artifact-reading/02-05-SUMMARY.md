@@ -20,12 +20,12 @@ affects: [02-06, browser-uat, artifact-reading, cross-linking, security-review]
 actuals:
   tokens: 14363
   tasks: 3
-  commits: 6
+  commits: 7
 
 tech-stack:
   added: []
   patterns:
-    - 'Evidence pairing abstains whenever either row has more than one threshold-qualified candidate; exact normalized pairs are removed first'
+    - 'Evidence pairing accepts only candidates that are the unique highest score for both rows; exact normalized pairs are removed first'
     - 'Sanitized HAST receives opaque reference keys only after milestone-contextual snapshot resolution'
     - 'Delegated inert-HTML activation opens one React-owned Base UI preview; only its explicit Open action navigates'
 
@@ -47,12 +47,12 @@ key-files:
     - src/web/styles/globals.css
 
 key-decisions:
-  - 'Inference is deliberately stricter than greedy best-score matching: any second threshold-qualified claimant makes that row ambiguous and leaves it unmatched.'
+  - 'Inference follows the locked mutual-unique-best rule: lower-scoring eligible candidates do not hide a clear winner, while equal highest-score ties remain unmatched.'
   - 'Reference authority is represented by an opaque registry key emitted after sanitization; raw prose and route-shaped text never become destinations on their own.'
   - 'DocumentView remains the only sanitized HTML mount; a small DOM-free activation seam is re-exported from ArtifactPage so server-side tests can exercise the bridge without a second mount or DOM harness.'
 
 patterns-established:
-  - 'Coverage order: normalized exact one-to-one pairs -> threshold candidates -> mutual sole-candidate inference -> visible unmatched rows'
+  - 'Coverage order: normalized exact one-to-one pairs -> threshold candidates -> mutual unique-highest inference -> visible unmatched rows'
   - 'Reference order: immutable presentation -> contextual registry -> sanitize -> resolved HAST controls -> delegated preview -> explicit canonical Open'
   - 'Popover lifetime: retain trigger state through close animation -> Base UI finalFocus returns to trigger -> clear controlled preview state'
 
@@ -120,12 +120,12 @@ status: complete
 
 ## Accomplishments
 
-- Added deterministic exact-first plan-truth to summary-coverage pairing that labels inferred evidence, rejects shared-ID-only matches, abstains on every tie or competing candidate, preserves input-order independence, and keeps all unmatched rows visible.
+- Added deterministic exact-first plan-truth to summary-coverage pairing that labels inferred evidence, rejects shared-ID-only matches, accepts only mutual unique-highest scores, preserves input-order independence, and keeps all unmatched rows visible.
 - Added a matrix-first PlanPairPage with full stacked plan and summary documents, canonical navigation, jump links, and local wide-content containment.
 - Added one snapshot-built reference registry that resolves requirement, phase, and plan identities within the containing artifact's milestone; root artifacts use only the active milestone.
 - Installed a bounded reference HAST walker after sanitization. It skips links, code, pre, and Mermaid content, preserves Unicode and unresolved text, and emits only opaque application-owned keys.
 - Connected renderer output to the sole DocumentView mount through delegated click/Enter/Space activation and one controlled Base UI preview with identity, title, status, location, one type-specific detail, explicit Open, Escape/outside dismissal, and exact trigger focus return.
-- Passed 17 focused reference tests, all 227 project tests, typecheck, lint, production build, production smoke, formatting, and diff checks.
+- Passed 17 focused reference tests, all 228 project tests, typecheck, lint, production build, production smoke, formatting, and diff checks.
 
 ## Task Commits
 
@@ -135,6 +135,7 @@ status: complete
 4. **Task 2 GREEN: Snapshot registry and post-sanitize enrichment** — `eab2d07` (feat)
 5. **Task 3 RED: Delegated preview interaction contract** — `bc37fcd` (test)
 6. **Task 3 GREEN: Controlled preview-first navigation** — `952d168` (feat)
+7. **Review fix: Locked mutual unique-highest inference semantics** — `67ac84f` (fix)
 
 ## Files Created/Modified
 
@@ -154,20 +155,20 @@ status: complete
 
 ## Decisions Made
 
-Inference uses a mutual sole-candidate rule, not a greedy highest-score rule. This is intentionally conservative: a stronger score does not erase the existence of another threshold-qualified claimant, so ambiguous evidence remains visible instead of becoming a claim. Reference links follow the same authority posture. The renderer emits only keys that the immutable snapshot registry already resolved in the artifact's milestone, and navigation remains impossible until the user selects the explicit canonical Open action in React-owned UI.
+Inference uses the plan's mutual unique-highest rule, never greedy first-match or array position. A pair is accepted only when each row uniquely ranks the other highest; equal highest-score ties remain visible and unmatched. Reference links follow the same authority posture. The renderer emits only keys that the immutable snapshot registry already resolved in the artifact's milestone, and navigation remains impossible until the user selects the explicit canonical Open action in React-owned UI.
 
 ## Deviations from Plan
 
 ### Auto-fixed Issues
 
-**1. [Rule 1 - Bug] Rejected lower-scoring but still eligible competing claimants**
+**1. [Rule 1 - Bug] Restored the locked mutual unique-highest matcher semantics**
 
-- **Found during:** Task 1 continuation verification
-- **Issue:** The interrupted GREEN draft chose a mutual unique highest score even when one row still had another threshold-qualified candidate, causing the committed RED competing-candidate test to fail.
-- **Fix:** Require a sole eligible candidate on both sides after exact pairs are removed; any competition now leaves all affected rows unmatched.
-- **Files modified:** `src/presentation/coverage.ts`
-- **Verification:** Focused seven-test coverage suite, full suite, typecheck, and build pass.
-- **Committed in:** `05d810f`
+- **Found during:** Orchestrator independent plan review
+- **Issue:** The resumed GREEN implementation required each row to have only one threshold-qualified candidate. The plan instead requires the selected pair to be the unique highest score for both rows, so a weaker eligible distractor must not hide a clear mutual winner.
+- **Fix:** Rank eligible candidates per row, accept only a single highest scorer on both sides, keep equal highest-score ties unmatched, and add a weaker-distractor regression.
+- **Files modified:** `src/presentation/coverage.ts`, `test/presentation/coverage.test.ts`
+- **Verification:** Focused eight-test coverage suite, all 228 tests, typecheck, lint, build, and formatting pass.
+- **Committed in:** `67ac84f`
 
 **2. [Rule 2 - Missing Critical] Wired the reference registry into actual document delivery**
 
@@ -217,7 +218,7 @@ None.
 
 ## Self-Check: PASSED
 
-All eight declared output artifacts exist, all six TDD/production commits resolve, the complete 227-test suite and every static/build/smoke/format gate pass, and all five coverage deliverables are backed by passing automated evidence.
+All eight declared output artifacts exist, all seven TDD/production/review commits resolve, the complete 228-test suite and every static/build/smoke/format gate pass, and all five coverage deliverables are backed by passing automated evidence.
 
 ---
 
