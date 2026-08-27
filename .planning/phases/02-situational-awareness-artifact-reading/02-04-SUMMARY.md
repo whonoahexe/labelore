@@ -18,9 +18,9 @@ provides:
 affects: [02-05, 02-06, artifact-linking, browser-uat, security-review]
 
 actuals:
-  tokens: 12357
+  tokens: 12417
   tasks: 2
-  commits: 5
+  commits: 6
 
 tech-stack:
   added: []
@@ -105,7 +105,7 @@ coverage:
         status: pass
     human_judgment: false
 
-duration: 15min
+duration: 17min
 completed: 2026-08-27
 status: complete
 ---
@@ -116,9 +116,9 @@ status: complete
 
 ## Performance
 
-- **Duration:** 15 min
+- **Duration:** 17 min
 - **Started:** 2026-08-27T09:58:25Z
-- **Completed:** 2026-08-27T10:12:49Z
+- **Completed:** 2026-08-27T10:14:59Z
 - **Tasks:** 2
 - **Files modified:** 8
 
@@ -138,6 +138,7 @@ status: complete
 3. **Task 2 RED: Frontmatter and document-canvas suite** — `98edac4` (test)
 4. **Task 2 GREEN: Document-first artifact canvas** — `1fa40a8` (feat)
 5. **Verification fix: Remove modified router placeholder** — `c0fa2e9` (fix)
+6. **Security fix: Validate Mermaid before DOM rendering** — `7e77fdb` (fix)
 
 ## Files Created/Modified
 
@@ -185,9 +186,18 @@ The renderer sanitizes every artifact-authored node before any trusted Shiki or 
 - **Verification:** Typecheck, lint, shell contract, and renderer contract tests pass; the stub scan is clean.
 - **Committed in:** `c0fa2e9`
 
+**4. [Rule 1 - Bug] Validated Mermaid grammar before mutating the browser placeholder**
+
+- **Found during:** Final threat-boundary review
+- **Issue:** `mermaid.run({ suppressErrors: true })` could suppress a grammar error after the server's lightweight diagram-family check, weakening the guarantee that invalid source remains escaped and locally warned.
+- **Fix:** Run strict `mermaid.parse` first with errors enabled, then render only successfully parsed source; the catch path restores the untouched source and adds a local warning.
+- **Files modified:** `src/web/pages/artifact-page.tsx`, `test/rendering/markdown.test.ts`
+- **Verification:** Focused/full tests, typecheck, lint, build, and production smoke pass.
+- **Committed in:** `7e77fdb`
+
 ---
 
-**Total deviations:** 3 auto-fixed missing-critical integration gaps.
+**Total deviations:** 4 auto-fixed (3 missing-critical integration gaps, 1 security-boundary bug).
 **Impact on plan:** All fixes remain inside the planned artifact-to-DOM and route-to-index boundaries; no search, inferred linking, write capability, or theme substitution was introduced.
 
 ## Issues Encountered
@@ -206,7 +216,7 @@ None.
 
 ## Self-Check: PASSED
 
-All five declared artifacts exist, all five TDD/production commits resolve, the complete 203-test suite and every quality gate pass, and the summary coverage is fully automatable.
+All five declared artifacts exist, all six TDD/production commits resolve, the complete 203-test suite and every quality gate pass, and the summary coverage is fully automatable.
 
 ---
 
