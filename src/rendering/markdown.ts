@@ -16,7 +16,8 @@ import { segmentPlanBody, type PlanSegment } from './plan-segments.ts';
 
 const MAX_MERMAID_SOURCE_BYTES = 256 * 1024;
 const PLAN_ATTRIBUTE_NAMES = ['type', 'gate', 'tdd'] as const;
-const MERMAID_START = /^(?:---[\s\S]*?---\s*)?(?:flowchart|graph|sequenceDiagram|classDiagram|stateDiagram(?:-v2)?|erDiagram|journey|gantt|pie|mindmap|timeline|gitGraph|requirementDiagram|quadrantChart|xychart-beta|block-beta|packet-beta|kanban|architecture-beta|sankey-beta)\b/i;
+const MERMAID_START =
+  /^(?:---[\s\S]*?---\s*)?(?:flowchart|graph|sequenceDiagram|classDiagram|stateDiagram(?:-v2)?|erDiagram|journey|gantt|pie|mindmap|timeline|gitGraph|requirementDiagram|quadrantChart|xychart-beta|block-beta|packet-beta|kanban|architecture-beta|sankey-beta)\b/i;
 const HEADING_TAG = /^h([1-6])$/;
 
 export interface RenderedHeading {
@@ -114,11 +115,7 @@ function plainCodeBlock(source: string, rejectedReason: string): Element {
   };
 }
 
-async function enrichTree(
-  root: Root,
-  file: VFile,
-  highlighter: Highlighter,
-): Promise<void> {
+async function enrichTree(root: Root, file: VFile, highlighter: Highlighter): Promise<void> {
   const context = contextOf(file);
 
   async function walk(parent: Root | Element): Promise<void> {
@@ -156,12 +153,14 @@ async function enrichTree(
           const language = languageOf(code);
           const source = textOf(code).replace(/\n$/, '');
           if (language === 'mermaid') {
-            const bytes = Buffer.byteLength(source, 'utf8');
+            const bytes = new TextEncoder().encode(source).byteLength;
             if (bytes > MAX_MERMAID_SOURCE_BYTES) {
               context.warnings.push('Mermaid source exceeds the 256 KiB execution cap.');
               parent.children[index] = plainCodeBlock(source, 'oversized');
             } else if (!isMermaidSourceValid(source)) {
-              context.warnings.push('Mermaid source is not a recognized diagram and was left as code.');
+              context.warnings.push(
+                'Mermaid source is not a recognized diagram and was left as code.',
+              );
               parent.children[index] = plainCodeBlock(source, 'invalid');
             } else {
               parent.children[index] = {
