@@ -6,7 +6,9 @@ import { Hono } from 'hono';
 import type { ProjectSnapshot } from '../planning-repo/types.ts';
 import { LocalFsPlanningFilesystem } from '../planning-fs/local-fs.ts';
 import { PlanningRepository } from '../planning-repo/snapshot.ts';
+import { buildRoadmapViewModel } from '../presentation/roadmap.ts';
 import { resolveTargetPath } from '../cli/target-path.ts';
+import { toProjectPresentation } from './project-presentation.ts';
 
 const DEFAULT_PORT = 4173;
 const HOSTNAME = '127.0.0.1';
@@ -99,6 +101,17 @@ export function createApp(
   const app = new Hono();
 
   app.get('/api/dashboard', (c) => c.json(dashboardResponse(source.getSnapshot())));
+  app.get('/api/roadmap', (c) => {
+    const presentation = toProjectPresentation(source.getSnapshot());
+    return c.json(buildRoadmapViewModel(presentation));
+  });
+  app.get('/api/history', (c) => {
+    const presentation = toProjectPresentation(source.getSnapshot());
+    return c.json({
+      readAt: presentation.readAt,
+      history: buildRoadmapViewModel(presentation).history,
+    });
+  });
   app.all('/api/*', (c) => c.json({ error: 'API route not found' }, 404));
 
   if (production) {
