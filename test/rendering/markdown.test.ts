@@ -213,6 +213,8 @@ describe('document-first browser contract', () => {
     expect(source).toContain('__html: document.html');
     expect(source).toContain("securityLevel: 'strict'");
     expect(source).toContain('startOnLoad: false');
+    expect(source).toContain('mermaid.parse(source, { suppressErrors: false })');
+    expect(source).toContain('mermaid.run({ nodes: [node], suppressErrors: false })');
     expect(source).toContain('querySelectorAll<HTMLElement>(\'[data-mermaid-pending="true"]\')');
     expect(source).toContain("querySelectorAll<HTMLButtonElement>('[data-heading-id]')");
     expect(source).toContain("addEventListener('click'");

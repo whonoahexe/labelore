@@ -120,7 +120,8 @@ export function DocumentView({ document }: { document: RenderedDocument }): Reac
           if (disposed) return;
           const source = node.textContent ?? '';
           try {
-            await mermaid.run({ nodes: [node], suppressErrors: true });
+            await mermaid.parse(source, { suppressErrors: false });
+            await mermaid.run({ nodes: [node], suppressErrors: false });
           } catch {
             node.textContent = source;
             node.classList.remove('mermaid');
