@@ -3,6 +3,7 @@ import { BookOpenText, LayoutDashboard, Map, Radio } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
+import { ThemeToggle } from './theme-toggle.tsx';
 
 async function fetchPresentation(): Promise<ProjectPresentation> {
   const response = await fetch('/api/presentation', { headers: { Accept: 'application/json' } });
@@ -49,20 +50,23 @@ export function AppShell(): React.JSX.Element {
           </NavLink>
         </nav>
 
-        <div className="snapshot-status" aria-live="polite">
-          <Radio aria-hidden="true" />
-          {presentation.isPending ? (
-            <span>Reading snapshot…</span>
-          ) : presentation.isError ? (
-            <span className="snapshot-error">Snapshot metadata unavailable</span>
-          ) : (
-            <span>
-              <small>Snapshot read</small>
-              <time dateTime={presentation.data.readAt}>
-                {formatReadAt(presentation.data.readAt)}
-              </time>
-            </span>
-          )}
+        <div className="shell-controls">
+          <div className="snapshot-status" aria-live="polite">
+            <Radio aria-hidden="true" />
+            {presentation.isPending ? (
+              <span>Reading snapshot…</span>
+            ) : presentation.isError ? (
+              <span className="snapshot-error">Snapshot metadata unavailable</span>
+            ) : (
+              <span>
+                <small>Snapshot read</small>
+                <time dateTime={presentation.data.readAt}>
+                  {formatReadAt(presentation.data.readAt)}
+                </time>
+              </span>
+            )}
+          </div>
+          <ThemeToggle />
         </div>
       </header>
 
