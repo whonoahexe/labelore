@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { createBrowserRouter, isRouteErrorResponse, Link, useRouteError } from 'react-router';
 import { presentationRoutePatterns } from '../presentation/routes.ts';
+import { RoadmapPage } from './pages/roadmap-page.tsx';
 
 interface DashboardProgress {
   totalPhases: number | null;
@@ -201,9 +202,17 @@ export const appRouter = createBrowserRouter([
     element: <CurrentPosition />,
     errorElement: <RouteError />,
   },
+  {
+    path: presentationRoutePatterns.roadmap,
+    element: <RoadmapPage />,
+    errorElement: <RouteError />,
+  },
+  {
+    path: presentationRoutePatterns.milestone,
+    element: <RoadmapPage />,
+    errorElement: <RouteError />,
+  },
   ...[
-    presentationRoutePatterns.roadmap,
-    presentationRoutePatterns.milestone,
     presentationRoutePatterns.phase,
     presentationRoutePatterns.plan,
     presentationRoutePatterns.phaseArtifact,

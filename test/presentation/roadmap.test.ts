@@ -47,9 +47,7 @@ function phase(
   };
   const key = options.key ?? buildPhaseUrl(identity);
   return {
-    key,
     milestoneKey: `milestone:${milestoneVersion ?? 'current'}`,
-    identity,
     name: `Phase ${number}`,
     dirPath: `.planning/phases/${number}-phase`,
     archived: false,
@@ -255,10 +253,14 @@ describe('buildRoadmapViewModel', () => {
       ],
     });
     const row = buildRoadmapViewModel(
-      presentation([milestone('v2.0', false, [phase('02', { plans: [blocked, completed, incomplete] })])]),
+      presentation([
+        milestone('v2.0', false, [phase('02', { plans: [blocked, completed, incomplete] })]),
+      ]),
     ).active?.phases[0];
 
-    const projected = row?.waveBands.flatMap((band) => band.plans).find((entry) => entry.id === '02-03');
+    const projected = row?.waveBands
+      .flatMap((band) => band.plans)
+      .find((entry) => entry.id === '02-03');
     expect(projected?.blockedBy).toEqual(['02-02', '02-99 authored']);
     expect(projected?.url).toBe(buildPlanUrl(identity, '02-03'));
   });
