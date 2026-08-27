@@ -1,5 +1,6 @@
 import type { Artifact, PhaseIdentity } from '../domain/model.ts';
 import type { ProjectSnapshot } from '../planning-repo/types.ts';
+import { buildPlanUrl, type PresentationRoute } from '../presentation/routes.ts';
 
 export interface IndexedArtifact {
   artifact: Artifact;
@@ -18,6 +19,7 @@ export type ArtifactLookupResult =
 export interface ArtifactIndex {
   readonly size: number;
   lookup(artifactPath: string): ArtifactLookupResult;
+  lookupRoute(route: PresentationRoute): ArtifactLookupResult;
 }
 
 const NOT_FOUND_WARNING = 'Artifact is not present in the loaded project snapshot.';
@@ -28,6 +30,7 @@ const NOT_FOUND_WARNING = 'Artifact is not present in the loaded project snapsho
  */
 export function buildArtifactIndex(snapshot: ProjectSnapshot): ArtifactIndex {
   const entries = new Map<string, IndexedArtifact>();
+  const planRoutes = new Map<string, IndexedArtifact>();
   const project = snapshot.project;
 
   if (project) {
@@ -36,10 +39,22 @@ export function buildArtifactIndex(snapshot: ProjectSnapshot): ArtifactIndex {
     }
     for (const phase of project.phases) {
       for (const artifact of Object.values(phase.artifacts)) {
-        entries.set(artifact.path, { artifact, phaseIdentity: phase.identity });
+        const indexed = { artifact, phaseIdentity: phase.identity };
+        entries.set(artifact.path, indexed);
+      }
+      for (const plan of phase.plans) {
+        const indexed = entries.get(plan.path);
+        if (indexed) planRoutes.set(buildPlanUrl(phase.identity, plan.id), indexed);
       }
     }
   }
+
+  const missing = (artifactPath: string): ArtifactLookupResult => ({
+    found: false,
+    status: 'not-found',
+    artifactPath,
+    warning: NOT_FOUND_WARNING,
+  });
 
   return Object.freeze({
     size: entries.size,
@@ -47,12 +62,17 @@ export function buildArtifactIndex(snapshot: ProjectSnapshot): ArtifactIndex {
       const indexed = entries.get(artifactPath);
       return indexed
         ? { found: true, artifact: indexed.artifact, phaseIdentity: indexed.phaseIdentity }
-        : {
-            found: false,
-            status: 'not-found',
-            artifactPath,
-            warning: NOT_FOUND_WARNING,
-          };
+        : missing(artifactPath);
+    },
+    lookupRoute(route: PresentationRoute): ArtifactLookupResult {
+      if (route.kind === 'artifact') return this.lookup(route.artifactPath);
+      if (route.kind === 'plan') {
+        const indexed = planRoutes.get(buildPlanUrl(route.phaseIdentity, route.planId));
+        return indexed
+          ? { found: true, artifact: indexed.artifact, phaseIdentity: indexed.phaseIdentity }
+          : missing(route.planId);
+      }
+      return missing(route.kind);
     },
   });
 }

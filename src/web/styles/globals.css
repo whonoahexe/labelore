@@ -1423,3 +1423,173 @@ pre {
     transition-duration: 0.01ms !important;
   }
 }
+
+.artifact-page {
+  display: grid;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+.artifact-breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+}
+
+.artifact-breadcrumbs a:hover,
+.artifact-breadcrumbs a:focus-visible {
+  color: var(--foreground);
+}
+
+.artifact-heading {
+  display: grid;
+  gap: 0.35rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1.2rem;
+}
+
+.artifact-path {
+  overflow-wrap: anywhere;
+  color: var(--muted-foreground);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.76rem;
+}
+
+.metadata-panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(17rem, 100%), 1fr));
+  gap: 0.75rem;
+}
+
+.metadata-panel {
+  min-width: 0;
+  border: 1px solid var(--border);
+  background: color-mix(in oklch, var(--card) 92%, var(--muted));
+  padding: 0.9rem;
+}
+
+.metadata-panel h2 {
+  margin: 0 0 0.7rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.metadata-panel-generic {
+  border-style: dashed;
+}
+
+.metadata-record,
+.metadata-list {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.metadata-record > div {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.metadata-record dt {
+  color: var(--muted-foreground);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.72rem;
+}
+
+.metadata-record dd {
+  min-width: 0;
+  margin: 0;
+}
+
+.metadata-scalar {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.metadata-empty {
+  color: var(--muted-foreground);
+  font-style: italic;
+}
+
+.artifact-document {
+  min-width: 0;
+  max-width: 100%;
+  color: var(--foreground);
+  line-height: 1.72;
+}
+
+.artifact-document > :first-child {
+  margin-top: 0;
+}
+
+.artifact-document :is(h1, h2, h3, h4, h5, h6) {
+  position: relative;
+  scroll-margin-top: 5rem;
+  margin: 1.8em 0 0.65em;
+  line-height: 1.2;
+}
+
+.heading-copy {
+  margin-left: 0.45rem;
+  border: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  opacity: 0;
+}
+
+.artifact-document :is(h1, h2, h3, h4, h5, h6):hover .heading-copy,
+.heading-copy:focus-visible {
+  opacity: 1;
+}
+
+.artifact-document :is(table, pre, .mermaid, .mermaid-fallback) {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.artifact-document table {
+  width: max-content;
+  min-width: min(100%, 34rem);
+  border-collapse: collapse;
+}
+
+.artifact-document :is(th, td) {
+  border: 1px solid var(--border);
+  padding: 0.45rem 0.65rem;
+  text-align: left;
+}
+
+.artifact-document pre {
+  border: 1px solid var(--border);
+  padding: 0.9rem;
+}
+
+.plan-section {
+  margin: 1rem 0;
+  border-left: 2px solid var(--border);
+  padding: 0.2rem 0 0.2rem 1rem;
+}
+
+.plan-section-label {
+  color: var(--muted-foreground);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.plan-segment-warning,
+.artifact-empty {
+  border: 1px solid color-mix(in oklch, var(--destructive) 45%, var(--border));
+  padding: 0.8rem;
+}
+
+.mermaid-fallback {
+  white-space: pre;
+}

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { Artifact } from '../../src/domain/model.ts';
 import { InMemoryPlanningFilesystem } from '../../src/planning-fs/in-memory-fs.ts';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
-import { artifactTokenOf } from '../../src/presentation/routes.ts';
+import { artifactTokenOf, buildPlanUrl } from '../../src/presentation/routes.ts';
 import { buildFrontmatterPanels } from '../../src/rendering/frontmatter-views.ts';
 import { createArtifactRenderer } from '../../src/rendering/markdown.ts';
 import { buildArtifactIndex } from '../../src/server/artifact-index.ts';
@@ -19,7 +19,9 @@ describe('safe Markdown rendering', () => {
   it('returns an honest empty state and uses the generic Markdown path for open artifact kinds', async () => {
     const renderer = await createArtifactRenderer();
     const empty = await renderer.render(artifact('', 'future-kind'));
-    const open = await renderer.render(artifact('## Future body\n\nStill readable.', 'future-kind'));
+    const open = await renderer.render(
+      artifact('## Future body\n\nStill readable.', 'future-kind'),
+    );
 
     expect(empty).toEqual({ html: '', headings: [], warnings: [], empty: true });
     expect(open.empty).toBe(false);
@@ -45,7 +47,9 @@ const answer: number = 42
     expect(rendered.html).toContain('<table>');
     expect(rendered.html.indexOf('first')).toBeLessThan(rendered.html.indexOf('second'));
     expect(rendered.html.indexOf('</table>')).toBeLessThan(rendered.html.indexOf('task-list-item'));
-    expect(rendered.html.indexOf('task-list-item')).toBeLessThan(rendered.html.indexOf('<blockquote>'));
+    expect(rendered.html.indexOf('task-list-item')).toBeLessThan(
+      rendered.html.indexOf('<blockquote>'),
+    );
     expect(rendered.html.indexOf('<blockquote>')).toBeLessThan(rendered.html.indexOf('shiki'));
     expect(rendered.html).toContain('--shiki-light');
     expect(rendered.html).toContain('--shiki-dark');
@@ -69,10 +73,13 @@ const answer: number = 42
   it('keeps empty wrappers semantic and degrades malformed wrappers locally as literal text', async () => {
     const renderer = await createArtifactRenderer();
     const rendered = await renderer.render(
-      artifact(`<objective></objective>
+      artifact(
+        `<objective></objective>
 <task type="auto"><name>Good task</name></task>
 <verify>broken
-<done>Still visible</done>`, 'plan'),
+<done>Still visible</done>`,
+        'plan',
+      ),
     );
 
     expect(rendered.html).toContain('data-plan-section="objective"');
@@ -85,14 +92,17 @@ const answer: number = 42
   it('preserves Unicode and allowlisted attributes while fenced pseudo-tags remain code', async () => {
     const renderer = await createArtifactRenderer();
     const rendered = await renderer.render(
-      artifact(`<task type="checkpoint:human-verify" gate="blocking-human" tdd="true">
+      artifact(
+        `<task type="checkpoint:human-verify" gate="blocking-human" tdd="true">
 <name>検証 🧭</name>
 **深い** 内容
 </task>
 
 \`\`\`xml
 <task type="auto"><name>not semantic</name></task>
-\`\`\``, 'plan'),
+\`\`\``,
+        'plan',
+      ),
     );
 
     expect(rendered.html).toContain('検証 🧭');
@@ -146,11 +156,7 @@ const answer: number = 42
     const first = await renderer.render(artifact('# Repeat\n\n## Repeat\n\n# Repeat'));
     const second = await renderer.render(artifact('# Repeat\n\n## Repeat\n\n# Repeat'));
 
-    expect(first.headings.map((heading) => heading.id)).toEqual([
-      'repeat',
-      'repeat-1',
-      'repeat-2',
-    ]);
+    expect(first.headings.map((heading) => heading.id)).toEqual(['repeat', 'repeat-1', 'repeat-2']);
     expect(second).toEqual(first);
     expect(first.html).toContain('data-heading-id="repeat"');
     expect(first.html).toContain('data-heading-id="repeat-1"');
@@ -207,7 +213,7 @@ describe('document-first browser contract', () => {
     expect(source).toContain('__html: document.html');
     expect(source).toContain("securityLevel: 'strict'");
     expect(source).toContain('startOnLoad: false');
-    expect(source).toContain("querySelectorAll<HTMLElement>('[data-mermaid-pending=\"true\"]')");
+    expect(source).toContain('querySelectorAll<HTMLElement>(\'[data-mermaid-pending="true"]\')');
     expect(source).toContain("querySelectorAll<HTMLButtonElement>('[data-heading-id]')");
     expect(source).toContain("addEventListener('click'");
     expect(source).not.toMatch(/addEventListener\(['"]scroll/);
@@ -249,8 +255,15 @@ describe('snapshot-only artifact lookup', () => {
     await repository.load();
     const app = createApp(repository);
     const artifactPath = '.planning/phases/01-safe/01-01-PLAN.md';
+    const snapshot = repository.getSnapshot();
+    const phase = snapshot.project?.phases[0];
+    const plan = phase?.plans[0];
+    if (!phase || !plan) throw new Error('Fixture plan was not assembled');
 
     const response = await app.request(`/api/artifacts/${artifactTokenOf(artifactPath)}`);
+    const canonical = await app.request(
+      `/api/documents?route=${encodeURIComponent(buildPlanUrl(phase.identity, plan.id))}`,
+    );
     const missing = await app.request(`/api/artifacts/${artifactTokenOf('../../etc/passwd')}`);
     const malformed = await app.request('/api/artifacts/not-a-token');
 
@@ -259,6 +272,11 @@ describe('snapshot-only artifact lookup', () => {
       status: 'found',
       artifact: { path: artifactPath, kind: 'plan' },
       document: { empty: false },
+    });
+    expect(canonical.status).toBe(200);
+    expect(await canonical.json()).toMatchObject({
+      status: 'found',
+      artifact: { path: artifactPath, kind: 'plan' },
     });
     expect(missing.status).toBe(404);
     expect(await missing.json()).toMatchObject({
