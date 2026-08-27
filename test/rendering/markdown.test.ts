@@ -88,7 +88,8 @@ const answer: number = 42
     expect(rendered.html).toContain('data-plan-type="checkpoint:human-verify"');
     expect(rendered.html).toContain('data-plan-gate="blocking-human"');
     expect(rendered.html.match(/data-plan-section="task"/g)).toHaveLength(1);
-    expect(rendered.html).toContain('&lt;task');
+    expect(rendered.html).toContain('&#x3C;');
+    expect(rendered.html).toContain('not semantic');
   });
 
   it('removes active content and source-authored post-sanitize attributes', async () => {
