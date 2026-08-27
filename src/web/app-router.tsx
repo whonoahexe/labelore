@@ -3,6 +3,7 @@ import { presentationRoutePatterns } from '../presentation/routes.ts';
 import { AppShell } from './components/app-shell.tsx';
 import { DashboardPage } from './pages/dashboard-page.tsx';
 import { RoadmapPage } from './pages/roadmap-page.tsx';
+import { ArtifactPage } from './pages/artifact-page.tsx';
 
 function RouteError(): React.JSX.Element {
   const error = useRouteError();
@@ -38,15 +39,6 @@ function NotFound(): React.JSX.Element {
   );
 }
 
-function PlannedRoute(): React.JSX.Element {
-  return (
-    <main className="page-stack">
-      <p className="eyebrow">Artifact reading</p>
-      <h1>This canonical destination is ready for its document view.</h1>
-    </main>
-  );
-}
-
 export const appRouter = createBrowserRouter([
   {
     element: <AppShell />,
@@ -55,12 +47,10 @@ export const appRouter = createBrowserRouter([
       { path: presentationRoutePatterns.dashboard, element: <DashboardPage /> },
       { path: presentationRoutePatterns.roadmap, element: <RoadmapPage /> },
       { path: presentationRoutePatterns.milestone, element: <RoadmapPage /> },
-      ...[
-        presentationRoutePatterns.phase,
-        presentationRoutePatterns.plan,
-        presentationRoutePatterns.phaseArtifact,
-        presentationRoutePatterns.artifact,
-      ].map((path) => ({ path, element: <PlannedRoute /> })),
+      { path: presentationRoutePatterns.phase, element: <RoadmapPage /> },
+      { path: presentationRoutePatterns.plan, element: <ArtifactPage /> },
+      { path: presentationRoutePatterns.phaseArtifact, element: <ArtifactPage /> },
+      { path: presentationRoutePatterns.artifact, element: <ArtifactPage /> },
       { path: '*', element: <NotFound /> },
     ],
   },
