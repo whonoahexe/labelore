@@ -6,6 +6,7 @@ import { Hono } from 'hono';
 import type { ProjectSnapshot } from '../planning-repo/types.ts';
 import { LocalFsPlanningFilesystem } from '../planning-fs/local-fs.ts';
 import { PlanningRepository } from '../planning-repo/snapshot.ts';
+import { buildDashboardViewModel } from '../presentation/dashboard.ts';
 import { buildRoadmapViewModel } from '../presentation/roadmap.ts';
 import { resolveTargetPath } from '../cli/target-path.ts';
 import { toProjectPresentation } from './project-presentation.ts';
@@ -22,77 +23,6 @@ interface ServerOptions {
   production?: boolean;
 }
 
-interface DashboardProgress {
-  totalPhases: number | null;
-  completedPhases: number | null;
-  totalPlans: number | null;
-  completedPlans: number | null;
-  percent: number | null;
-}
-
-interface DashboardResponse {
-  readAt: string;
-  loadStatus: ProjectSnapshot['loadStatus'];
-  projectName: string | null;
-  current: {
-    milestone: string | null;
-    phaseNumber: string | null;
-    phaseName: string | null;
-    status: string | null;
-    progress: DashboardProgress;
-  } | null;
-}
-
-function asString(value: unknown): string | null {
-  if (typeof value === 'string') return value;
-  if (typeof value === 'number') return String(value);
-  return null;
-}
-
-function asNumber(value: unknown): number | null {
-  return typeof value === 'number' && Number.isFinite(value) ? value : null;
-}
-
-function dashboardResponse(snapshot: ProjectSnapshot): DashboardResponse {
-  if (snapshot.loadStatus.status !== 'ok' || !snapshot.project) {
-    return {
-      readAt: snapshot.readAt,
-      loadStatus: snapshot.loadStatus,
-      projectName: null,
-      current: null,
-    };
-  }
-
-  const state = Object.values(snapshot.project.artifacts).find(
-    (artifact) => artifact.kind === 'state' && artifact.path.endsWith('/STATE.md'),
-  );
-  const frontmatter = state?.frontmatter ?? {};
-  const progressValue = frontmatter.progress;
-  const progress =
-    progressValue && typeof progressValue === 'object' && !Array.isArray(progressValue)
-      ? (progressValue as Record<string, unknown>)
-      : {};
-
-  return {
-    readAt: snapshot.readAt,
-    loadStatus: snapshot.loadStatus,
-    projectName: snapshot.project.name,
-    current: {
-      milestone: asString(frontmatter.milestone),
-      phaseNumber: asString(frontmatter.current_phase),
-      phaseName: asString(frontmatter.current_phase_name),
-      status: asString(frontmatter.status),
-      progress: {
-        totalPhases: asNumber(progress.total_phases),
-        completedPhases: asNumber(progress.completed_phases),
-        totalPlans: asNumber(progress.total_plans),
-        completedPlans: asNumber(progress.completed_plans),
-        percent: asNumber(progress.percent),
-      },
-    },
-  };
-}
-
 export function createApp(
   source: SnapshotSource,
   production = process.env.NODE_ENV === 'production',
@@ -100,7 +30,14 @@ export function createApp(
 ): Hono {
   const app = new Hono();
 
-  app.get('/api/dashboard', (c) => c.json(dashboardResponse(source.getSnapshot())));
+  app.get('/api/presentation', (c) => c.json(toProjectPresentation(source.getSnapshot())));
+  app.get('/api/dashboard', (c) => {
+    const presentation = toProjectPresentation(source.getSnapshot());
+    return c.json({
+      ...buildDashboardViewModel(presentation),
+      loadStatus: presentation.loadStatus,
+    });
+  });
   app.get('/api/roadmap', (c) => {
     const presentation = toProjectPresentation(source.getSnapshot());
     return c.json(buildRoadmapViewModel(presentation));
@@ -230,7 +167,10 @@ async function runCli(): Promise<void> {
         fetch(`${baseUrl}/api/dashboard`),
         fetch(`${baseUrl}/`),
       ]);
-      const payload = (await dashboard.json()) as DashboardResponse;
+      const payload = (await dashboard.json()) as {
+        readAt?: string;
+        loadStatus?: ProjectSnapshot['loadStatus'];
+      };
       if (!dashboard.ok || !root.ok || !payload.readAt || !payload.loadStatus) {
         throw new Error('Smoke response contract failed');
       }
