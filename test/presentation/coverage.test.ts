@@ -1,22 +1,13 @@
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
-import {
-  buildCoverageMatrix,
-  type CoverageStatement,
-} from '../../src/presentation/coverage.ts';
+import { buildCoverageMatrix, type CoverageStatement } from '../../src/presentation/coverage.ts';
 
-function row(
-  key: string,
-  text: string,
-  requirementIds: string[] = [],
-): CoverageStatement {
+function row(key: string, text: string, requirementIds: string[] = []): CoverageStatement {
   return { key, text, requirementIds };
 }
 
 function identities(matrix: ReturnType<typeof buildCoverageMatrix>): string[] {
-  return matrix.matches.map(
-    (match) => `${match.kind}:${match.truth.key}:${match.coverage.key}`,
-  );
+  return matrix.matches.map((match) => `${match.kind}:${match.truth.key}:${match.coverage.key}`);
 }
 
 describe('buildCoverageMatrix', () => {
@@ -58,7 +49,11 @@ describe('buildCoverageMatrix', () => {
     );
 
     expect(matrix.matches).toEqual([
-      expect.objectContaining({ kind: 'inferred', truth: { key: 't1', text: expect.any(String), requirementIds: [] }, coverage: { key: 'c1', text: expect.any(String), requirementIds: [] } }),
+      expect.objectContaining({
+        kind: 'inferred',
+        truth: { key: 't1', text: expect.any(String), requirementIds: [] },
+        coverage: { key: 'c1', text: expect.any(String), requirementIds: [] },
+      }),
     ]);
   });
 

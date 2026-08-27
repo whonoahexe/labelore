@@ -1593,3 +1593,42 @@ pre {
 .mermaid-fallback {
   white-space: pre;
 }
+
+.plan-pair-jumps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  font-size: 0.8rem;
+}
+
+.plan-pair-jumps a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.coverage-matrix,
+.plan-pair-document {
+  min-width: 0;
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: clamp(1rem, 2vw, 1.5rem);
+}
+
+.coverage-table-boundary {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.coverage-table-boundary table {
+  width: 100%;
+  min-width: 44rem;
+  border-collapse: collapse;
+}
+
+.coverage-table-boundary :is(th, td) {
+  border: 1px solid var(--border);
+  padding: 0.65rem;
+  text-align: left;
+  vertical-align: top;
+}
