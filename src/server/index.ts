@@ -8,6 +8,7 @@ import { LocalFsPlanningFilesystem } from '../planning-fs/local-fs.ts';
 import { PlanningRepository } from '../planning-repo/snapshot.ts';
 import { buildDashboardViewModel } from '../presentation/dashboard.ts';
 import { buildRoadmapViewModel } from '../presentation/roadmap.ts';
+import { buildReferenceRegistry } from '../presentation/references.ts';
 import { parsePresentationUrl } from '../presentation/routes.ts';
 import { createArtifactRenderer } from '../rendering/markdown.ts';
 import { resolveTargetPath } from '../cli/target-path.ts';
@@ -34,10 +35,12 @@ export function createApp(
   const app = new Hono();
   const artifactIndex = buildArtifactIndex(source.getSnapshot());
   const renderer = createArtifactRenderer();
+  const presentation = toProjectPresentation(source.getSnapshot());
+  const referenceRegistry = buildReferenceRegistry(presentation);
 
   const artifactResponse = async (lookup: ReturnType<typeof artifactIndex.lookup>) => {
     if (!lookup.found) return lookup;
-    const document = await (await renderer).render(lookup.artifact);
+    const document = await (await renderer).render(lookup.artifact, { referenceRegistry });
     return {
       found: true as const,
       status: 'found' as const,
@@ -55,7 +58,7 @@ export function createApp(
     };
   };
 
-  app.get('/api/presentation', (c) => c.json(toProjectPresentation(source.getSnapshot())));
+  app.get('/api/presentation', (c) => c.json(presentation));
   app.get('/api/dashboard', (c) => {
     const presentation = toProjectPresentation(source.getSnapshot());
     return c.json({

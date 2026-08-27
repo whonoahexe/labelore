@@ -13,6 +13,12 @@ import {
   type FrontmatterValueView,
 } from '../../rendering/frontmatter-views.ts';
 import type { RenderedDocument } from '../../rendering/markdown.ts';
+import { ReferencePreview, type ReferencePreviewState } from '../components/reference-preview.tsx';
+import { handleDocumentReferenceActivation } from './document-reference-activation.ts';
+export {
+  handleDocumentReferenceActivation,
+  restoreDocumentReferenceFocus,
+} from './document-reference-activation.ts';
 
 interface ArtifactDocumentResponse {
   found: true;
@@ -84,12 +90,29 @@ async function copyHeadingUrl(id: string): Promise<void> {
 export function DocumentView({ document }: { document: RenderedDocument }): React.JSX.Element {
   const mountRef = useRef<HTMLDivElement>(null);
   const [runtimeWarnings, setRuntimeWarnings] = useState<string[]>([]);
+  const [referenceState, setReferenceState] = useState<ReferencePreviewState | null>(null);
+  const [referenceOpen, setReferenceOpen] = useState(false);
+  const previews = useMemo(
+    () => new Map((document.references ?? []).map((preview) => [preview.key, preview])),
+    [document.references],
+  );
 
   useEffect(() => {
     const mount = mountRef.current;
     if (!mount || document.empty) return;
     let disposed = false;
     const cleanups: Array<() => void> = [];
+
+    const activateReference = (event: MouseEvent | KeyboardEvent) => {
+      const next = handleDocumentReferenceActivation<HTMLElement>(event, previews);
+      if (!next) return;
+      setReferenceState(next);
+      setReferenceOpen(true);
+    };
+    mount.addEventListener('click', activateReference);
+    mount.addEventListener('keydown', activateReference);
+    cleanups.push(() => mount.removeEventListener('click', activateReference));
+    cleanups.push(() => mount.removeEventListener('keydown', activateReference));
 
     for (const control of mount.querySelectorAll<HTMLButtonElement>('[data-heading-id]')) {
       const activate = () => {
@@ -141,7 +164,7 @@ export function DocumentView({ document }: { document: RenderedDocument }): Reac
       disposed = true;
       cleanups.forEach((cleanup) => cleanup());
     };
-  }, [document]);
+  }, [document, previews]);
 
   if (document.empty) {
     return (
@@ -164,6 +187,12 @@ export function DocumentView({ document }: { document: RenderedDocument }): Reac
           {warning}
         </p>
       ))}
+      <ReferencePreview
+        state={referenceState}
+        open={referenceOpen}
+        onOpenChange={setReferenceOpen}
+        onCloseComplete={() => setReferenceState(null)}
+      />
     </>
   );
 }
