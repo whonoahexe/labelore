@@ -66,7 +66,7 @@ describe('buildCoverageMatrix', () => {
     expect(matrix.matches).toEqual([]);
   });
 
-  it('leaves equal-score ties and competing best candidates unmatched', () => {
+  it('leaves equal-score ties unmatched and accepts only a mutual unique highest pair', () => {
     const tied = buildCoverageMatrix(
       [row('t1', 'alpha beta gamma delta', ['REQ-1'])],
       [
@@ -84,8 +84,33 @@ describe('buildCoverageMatrix', () => {
 
     expect(tied.matches).toEqual([]);
     expect(tied.unmatchedCoverage).toHaveLength(2);
-    expect(competing.matches).toEqual([]);
-    expect(competing.unmatchedTruths).toHaveLength(2);
+    expect(competing.matches).toEqual([
+      expect.objectContaining({
+        kind: 'inferred',
+        truth: expect.objectContaining({ key: 't2' }),
+        coverage: expect.objectContaining({ key: 'c1' }),
+      }),
+    ]);
+    expect(competing.unmatchedTruths.map((item) => item.key)).toEqual(['t1']);
+  });
+
+  it('keeps a clear mutual highest match when a weaker eligible distractor exists', () => {
+    const matrix = buildCoverageMatrix(
+      [row('t1', 'archive download preserves selected frozen source paths', ['REQ-1'])],
+      [
+        row('c-best', 'archive download preserves selected frozen source paths exactly', ['REQ-1']),
+        row('c-weaker', 'archive download preserves selected frozen files', ['REQ-1']),
+      ],
+    );
+
+    expect(matrix.matches).toEqual([
+      expect.objectContaining({
+        kind: 'inferred',
+        truth: expect.objectContaining({ key: 't1' }),
+        coverage: expect.objectContaining({ key: 'c-best' }),
+      }),
+    ]);
+    expect(matrix.unmatchedCoverage.map((item) => item.key)).toEqual(['c-weaker']);
   });
 
   it('keeps pair identity stable when either input order changes', () => {
