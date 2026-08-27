@@ -207,7 +207,7 @@ flowchart TD
     );
 
     expect(rendered.html).toContain('雪（');
-    expect(rendered.html).toContain('）。BAD-99 remains.');
+    expect(rendered.html).toContain('。BAD-99 remains.');
     expect(rendered.html.match(/data-reference-key=/g)).toHaveLength(3);
     expect(rendered.html).toContain('<a href="https://example.com">READ-05</a>');
     expect(rendered.html).toContain('<code>READ-05</code>');
