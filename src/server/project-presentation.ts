@@ -68,6 +68,8 @@ export interface PlanDto {
   phaseKey: string;
   planNumber: string;
   path: string;
+  /** Human-authored ROADMAP description when one exists. */
+  description: string | null;
   frontmatter: Record<string, unknown>;
   complete: boolean;
   summary: { key: string; path: string; frontmatter: Record<string, unknown> } | null;
@@ -487,6 +489,8 @@ export function toProjectPresentation(snapshot: ProjectSnapshot): ProjectPresent
           phaseKey,
           planNumber: plan.planNumber,
           path: plan.path,
+          description:
+            roadmap.phase?.plans.find((entry) => entry.id === plan.id)?.description || null,
           frontmatter: jsonRecord(plan.frontmatter),
           complete: plan.summary !== null,
           summary: plan.summary

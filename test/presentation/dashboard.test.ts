@@ -15,6 +15,7 @@ function plan(id: string, complete: boolean, dependsOn: PlanDto['dependsOn'] = [
     phaseKey: 'phase:01',
     planNumber: id.split('-').at(-1) ?? id,
     path: `.planning/phases/01-live/${id}-PLAN.md`,
+    description: null,
     frontmatter: {},
     complete,
     summary: complete ? { key: `summary:${id}`, path: `${id}-SUMMARY.md`, frontmatter: {} } : null,
@@ -140,7 +141,8 @@ describe('buildDashboardViewModel', () => {
     expect(view.next.immediate).toMatchObject({
       kind: 'plan',
       key: 'plan:01-02',
-      reason: 'First incomplete plan with all sibling dependencies complete.',
+      description: 'Plan 01-02 is ready to begin.',
+      url: 'plan:01-02',
     });
     expect(view.next.previews).toHaveLength(0);
     expect(view.attention).toEqual([]);
@@ -190,7 +192,7 @@ describe('buildDashboardViewModel', () => {
     expect(view.completion.formal).toMatchObject({
       completed: null,
       total: null,
-      status: 'unknown',
+      status: null,
     });
     expect(view.completion.observed).toMatchObject({
       completed: 0,
@@ -200,7 +202,7 @@ describe('buildDashboardViewModel', () => {
     expect(view.attention.some((item) => item.type === 'discrepancy')).toBe(false);
   });
 
-  it('null-formal: preserves Unknown and never defaults it from observed completion', () => {
+  it('null-formal: preserves absence and never defaults it from observed completion', () => {
     const view = buildDashboardViewModel(
       presentation(
         {},
@@ -213,7 +215,7 @@ describe('buildDashboardViewModel', () => {
       ),
     );
 
-    expect(view.completion.formal.status).toBe('unknown');
+    expect(view.completion.formal.status).toBeNull();
     expect(view.completion.observed.status).toBe('complete');
     expect(view.attention).toEqual([]);
   });
@@ -292,6 +294,38 @@ describe('buildDashboardViewModel', () => {
     expect(view.attention.filter((item) => item.type === 'checkpoint')).toEqual([
       expect.objectContaining({ sourceKey: wait.key }),
     ]);
+  });
+
+  it('makes a pending human verification the typed next action ahead of routine plan work', () => {
+    const wait = checkpoint({ name: 'Approve the browser review' });
+    const view = buildDashboardViewModel(presentation({ checkpoints: [wait] }));
+
+    expect(view.next.immediate).toMatchObject({
+      kind: 'human-verification',
+      title: 'Approve the browser review',
+      url: 'plan:01-02',
+    });
+    expect(view.next.previews[0]).toMatchObject({ kind: 'plan', key: 'plan:01-02' });
+  });
+
+  it('uses the authored phase goal as next-phase description', () => {
+    const later = phase({
+      key: 'phase:02',
+      identity: { milestoneVersion: 'v2.0', number: '02', projectCode: null, slug: 'later' },
+      name: 'Later',
+      goal: 'Deliver the authored intent, not a progress diagnosis.',
+      plans: [],
+      diskStatus: 'no_directory',
+      formalPlanProgress: null,
+      roadmapComplete: null,
+    });
+    const source = presentation({}, { plans: [] });
+    source.milestones[0].phases.push(later);
+
+    expect(buildDashboardViewModel(source).next.immediate).toMatchObject({
+      kind: 'phase',
+      description: 'Ship the live phase',
+    });
   });
 
   it('unsatisfied human_judgment: reports the exact pending coverage identity', () => {

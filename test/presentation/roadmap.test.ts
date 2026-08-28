@@ -24,6 +24,7 @@ function plan(
     phaseKey,
     planNumber: id.split('-').at(-1) ?? id,
     path: `.planning/phases/${id}-PLAN.md`,
+    description: `Authored description for ${id}`,
     frontmatter: options.wave === undefined ? {} : { wave: options.wave },
     complete: options.complete ?? false,
     summary: options.complete
@@ -170,7 +171,7 @@ describe('buildRoadmapViewModel', () => {
       observedStatus: 'complete',
       progress: { completed: 2, total: 2, sourcePath: '.planning/ROADMAP.md' },
       successCriteria: ['Criterion 02'],
-      requirementIds: ['REQ-02'],
+      requirements: [{ id: 'REQ-02', text: null, checked: null, url: null }],
     });
   });
 
@@ -195,10 +196,10 @@ describe('buildRoadmapViewModel', () => {
     expect(row).toMatchObject({
       goal: null,
       authoredDependencies: null,
-      formalStatus: 'unknown',
+      formalStatus: null,
       progress: null,
       successCriteria: [],
-      requirementIds: [],
+      requirements: [],
       waveBands: [],
     });
   });
@@ -263,6 +264,42 @@ describe('buildRoadmapViewModel', () => {
       .find((entry) => entry.id === '02-03');
     expect(projected?.blockedBy).toEqual(['02-02', '02-99 authored']);
     expect(projected?.url).toBe(buildPlanUrl(identity, '02-03'));
+    expect(projected?.description).toBe('Authored description for 02-03');
+  });
+
+  it('projects readable requirement definitions with stable REQUIREMENTS artifact anchors', () => {
+    const source = presentation([milestone('v2.0', false, [phase('02')])]);
+    source.requirements = [
+      {
+        id: 'REQ-02',
+        category: 'Reader',
+        text: 'Open the actual authored requirement.',
+        tier: 'v1',
+        checked: false,
+        coveringPhases: [],
+      },
+    ];
+    source.artifacts = [
+      {
+        key: '/artifacts/requirements',
+        path: '.planning/REQUIREMENTS.md',
+        kind: 'requirements',
+        title: 'Requirements',
+        frontmatter: {},
+        structured: {},
+        milestoneKey: null,
+        phaseKey: null,
+      },
+    ];
+
+    expect(buildRoadmapViewModel(source).active?.phases[0].requirements).toEqual([
+      {
+        id: 'REQ-02',
+        text: 'Open the actual authored requirement.',
+        checked: false,
+        url: '/artifacts/requirements#requirement-req-02',
+      },
+    ]);
   });
 
   it('never converts authored phase dependency prose into inferred plan edges', () => {

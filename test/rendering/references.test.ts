@@ -43,6 +43,7 @@ function plan(identity: typeof activeIdentity, path: string): PlanDto {
     phaseKey,
     planNumber: '01',
     path,
+    description: null,
     frontmatter: { wave: 1 },
     complete: identity.milestoneVersion === 'v1.0',
     summary: null,

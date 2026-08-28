@@ -12,6 +12,7 @@ export interface RoadmapPlanRow {
   url: string;
   id: string;
   planNumber: string;
+  description: string | null;
   complete: boolean;
   blockedBy: string[];
 }
@@ -33,11 +34,16 @@ export interface RoadmapPhaseRow {
   archived: boolean;
   goal: string | null;
   authoredDependencies: string | null;
-  formalStatus: string;
+  formalStatus: string | null;
   observedStatus: string;
   progress: PhaseDto['formalPlanProgress'];
   successCriteria: string[];
-  requirementIds: string[];
+  requirements: Array<{
+    id: string;
+    text: string | null;
+    checked: boolean | null;
+    url: string | null;
+  }>;
   waveBands: WaveBand[];
 }
 
@@ -127,6 +133,7 @@ function waveBands(phase: PhaseDto): WaveBand[] {
       url: buildPlanUrl(phase.identity, plan.id),
       id: plan.id,
       planNumber: plan.planNumber,
+      description: plan.description,
       complete: plan.complete,
       blockedBy: blockedBy(plan, siblings),
     });
@@ -149,7 +156,10 @@ function waveBands(phase: PhaseDto): WaveBand[] {
     }));
 }
 
-function phaseRow(phase: PhaseDto): RoadmapPhaseRow {
+function phaseRow(phase: PhaseDto, presentation: ProjectPresentation): RoadmapPhaseRow {
+  const requirementArtifact = presentation.artifacts.find(
+    (artifact) => artifact.kind === 'requirements' && artifact.milestoneKey === null,
+  );
   return {
     key: phase.key,
     url: buildPhaseUrl(phase.identity),
@@ -160,22 +170,30 @@ function phaseRow(phase: PhaseDto): RoadmapPhaseRow {
     goal: phase.goal,
     authoredDependencies: phase.dependsOnRaw,
     formalStatus:
-      phase.roadmapComplete === null
-        ? 'unknown'
-        : phase.roadmapComplete
-          ? 'complete'
-          : 'incomplete',
+      phase.roadmapComplete === null ? null : phase.roadmapComplete ? 'complete' : 'incomplete',
     observedStatus: phase.diskStatus,
     progress: phase.formalPlanProgress ? { ...phase.formalPlanProgress } : null,
     successCriteria: [...phase.successCriteria],
-    requirementIds: [...phase.requirementIds],
+    requirements: phase.requirementIds.map((id) => {
+      const requirement = presentation.requirements.find(
+        (candidate) => candidate.id.toUpperCase() === id.toUpperCase(),
+      );
+      return {
+        id,
+        text: requirement?.text ?? null,
+        checked: requirement?.checked ?? null,
+        url: requirementArtifact
+          ? `${requirementArtifact.key}#requirement-${id.toLowerCase()}`
+          : null,
+      };
+    }),
     waveBands: waveBands(phase),
   };
 }
 
-function milestoneFlow(milestone: MilestoneDto): MilestoneFlow {
+function milestoneFlow(milestone: MilestoneDto, presentation: ProjectPresentation): MilestoneFlow {
   const phases = milestone.phases
-    .map(phaseRow)
+    .map((phase) => phaseRow(phase, presentation))
     .sort((left, right) => comparePhaseNumbers(left.number, right.number));
   return {
     key: milestone.key,
@@ -193,7 +211,9 @@ export function buildRoadmapViewModel(presentation: ProjectPresentation): Roadma
   return {
     readAt: presentation.readAt,
     projectName: presentation.projectName,
-    active: active ? milestoneFlow(active) : null,
-    history: presentation.milestones.filter((milestone) => milestone.archived).map(milestoneFlow),
+    active: active ? milestoneFlow(active, presentation) : null,
+    history: presentation.milestones
+      .filter((milestone) => milestone.archived)
+      .map((milestone) => milestoneFlow(milestone, presentation)),
   };
 }

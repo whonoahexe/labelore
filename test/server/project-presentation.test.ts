@@ -231,5 +231,13 @@ coverage_results:
     expect(presentation.readAt).toBe(snapshot.readAt);
     expect(json).not.toContain('$circularRef');
     expect(JSON.parse(json)).toEqual(presentation);
+    expect(
+      presentation.milestones
+        .find((milestone) => !milestone.archived)
+        ?.phases.map((phase) => phase.formalPlanProgress),
+    ).toEqual([
+      { completed: 0, total: 2, sourcePath: '.planning/ROADMAP.md' },
+      { completed: 0, total: 1, sourcePath: '.planning/ROADMAP.md' },
+    ]);
   });
 });
