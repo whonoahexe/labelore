@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Check, ChevronRight, Circle, History, Link2, Waypoints } from 'lucide-react';
+import { Check, ChevronRight, Circle, ExternalLink, History, Link2, Waypoints } from 'lucide-react';
 import { Link } from 'react-router';
 import type {
   MilestoneFlow,
@@ -15,10 +15,13 @@ async function fetchRoadmap(): Promise<RoadmapViewModel> {
 
 function PhaseFlow({ phase }: { phase: RoadmapPhaseRow }): React.JSX.Element {
   const progress = phase.progress;
+  const displayStatus = phase.formalStatus ?? phase.observedStatus;
+  const statusLabel = displayStatus.replaceAll('_', ' ');
+  const hasFacts = Boolean(progress || phase.authoredDependencies);
   return (
-    <article className="roadmap-phase" data-status={phase.formalStatus}>
+    <article className="roadmap-phase" data-status={displayStatus} data-archived={phase.archived}>
       <div className="roadmap-marker" aria-hidden="true">
-        {phase.formalStatus === 'complete' ? <Check /> : <Circle />}
+        {displayStatus === 'complete' ? <Check /> : <Circle />}
       </div>
       <div className="roadmap-phase-body">
         <header className="roadmap-phase-header">
@@ -27,41 +30,52 @@ function PhaseFlow({ phase }: { phase: RoadmapPhaseRow }): React.JSX.Element {
             <h3>
               <Link to={phase.url}>{phase.name}</Link>
             </h3>
-            <p className="phase-goal">{phase.goal ?? 'No goal authored for this phase.'}</p>
+            {phase.goal ? <p className="phase-goal">{phase.goal}</p> : null}
           </div>
           <div className="phase-statuses" aria-label="Phase status">
-            <span className="status-chip" data-tone={phase.formalStatus}>
-              Roadmap · {phase.formalStatus}
-            </span>
-            <span className="status-chip" data-tone="quiet">
-              Disk · {phase.observedStatus}
+            <span
+              className="status-chip"
+              data-tone={displayStatus === 'complete' ? 'complete' : 'quiet'}
+            >
+              {statusLabel}
             </span>
           </div>
         </header>
 
-        <dl className="phase-facts">
-          <div>
-            <dt>Formal progress</dt>
-            <dd>{progress ? `${progress.completed} / ${progress.total} plans` : 'Not recorded'}</dd>
-          </div>
-          <div>
-            <dt>Authored dependency</dt>
-            <dd>{phase.authoredDependencies ?? 'None authored'}</dd>
-          </div>
-        </dl>
+        {hasFacts ? (
+          <dl className="phase-facts">
+            {progress ? (
+              <div>
+                <dt>Plan completion</dt>
+                <dd>
+                  {progress.completed} of {progress.total} plans
+                </dd>
+              </div>
+            ) : null}
+            {phase.authoredDependencies ? (
+              <div>
+                <dt>Depends on</dt>
+                <dd>{phase.authoredDependencies}</dd>
+              </div>
+            ) : null}
+          </dl>
+        ) : null}
 
         <details className="phase-disclosure">
           <summary>
             <ChevronRight aria-hidden="true" />
-            Criteria, requirements, and plan waves
+            Details and plans
           </summary>
           <div className="phase-detail-grid">
             <section aria-labelledby={`${phase.key}-criteria`}>
               <h4 id={`${phase.key}-criteria`}>Success criteria</h4>
               {phase.successCriteria.length > 0 ? (
-                <ul>
+                <ul className="criteria-list">
                   {phase.successCriteria.map((criterion) => (
-                    <li key={criterion}>{criterion}</li>
+                    <li key={criterion}>
+                      <Check aria-hidden="true" />
+                      <span>{criterion}</span>
+                    </li>
                   ))}
                 </ul>
               ) : (
@@ -70,10 +84,18 @@ function PhaseFlow({ phase }: { phase: RoadmapPhaseRow }): React.JSX.Element {
             </section>
             <section aria-labelledby={`${phase.key}-requirements`}>
               <h4 id={`${phase.key}-requirements`}>Requirements</h4>
-              {phase.requirementIds.length > 0 ? (
-                <ul className="token-list">
-                  {phase.requirementIds.map((requirement) => (
-                    <li key={requirement}>{requirement}</li>
+              {phase.requirements.length > 0 ? (
+                <ul className="requirement-list">
+                  {phase.requirements.map((requirement) => (
+                    <li key={requirement.id}>
+                      <strong>{requirement.id}</strong>
+                      {requirement.text ? <span>{requirement.text}</span> : null}
+                      {requirement.url ? (
+                        <Link to={requirement.url}>
+                          Read requirement <ExternalLink aria-hidden="true" />
+                        </Link>
+                      ) : null}
+                    </li>
                   ))}
                 </ul>
               ) : (
@@ -88,7 +110,9 @@ function PhaseFlow({ phase }: { phase: RoadmapPhaseRow }): React.JSX.Element {
                 <section className="wave-band" key={band.key}>
                   <header>
                     <span>{band.label}</span>
-                    <span>{band.plans.length} plans</span>
+                    <span>
+                      {band.plans.length} {band.plans.length === 1 ? 'plan' : 'plans'}
+                    </span>
                   </header>
                   <ol>
                     {band.plans.map((plan) => (
@@ -99,7 +123,10 @@ function PhaseFlow({ phase }: { phase: RoadmapPhaseRow }): React.JSX.Element {
                           ) : (
                             <Circle aria-hidden="true" />
                           )}
-                          <span>{plan.id}</span>
+                          <span className="wave-plan-copy">
+                            <strong>{plan.id}</strong>
+                            {plan.description ? <small>{plan.description}</small> : null}
+                          </span>
                         </Link>
                         {plan.blockedBy.length > 0 ? (
                           <span className="blocked-by">Blocked by {plan.blockedBy.join(', ')}</span>
@@ -173,8 +200,8 @@ export function RoadmapPage(): React.JSX.Element {
           <p className="eyebrow">Execution narrative</p>
           <h1>Roadmap</h1>
           <p className="lede">
-            Active work leads. Authored dependencies stay visible, while plan waves reveal the order
-            the project can actually move in.
+            Follow each phase from intent to completion. Waves group plans that can be executed at
+            the same stage; their titles come directly from the roadmap.
           </p>
         </div>
         <Link className="text-link" to={view.active?.url ?? '/roadmap'}>
