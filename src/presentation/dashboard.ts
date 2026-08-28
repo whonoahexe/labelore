@@ -22,18 +22,19 @@ export interface AttentionItem {
 }
 
 export interface NextWorkItem {
-  kind: 'plan' | 'phase';
+  kind: 'plan' | 'phase' | 'blocker' | 'human-verification' | 'wait';
   key: string;
   phaseKey: string;
   planKey: string | null;
   title: string;
-  reason: string;
+  description: string;
+  url: string;
 }
 
 export interface CompletionSignal {
   completed: number | null;
   total: number | null;
-  status: string;
+  status: string | null;
   provenance: SourceProvenance;
 }
 
@@ -103,13 +104,13 @@ function completionOf(phase: PhaseDto | null): {
       formal: {
         completed: null,
         total: null,
-        status: 'unknown',
+        status: null,
         provenance: { kind: 'roadmap', ref: '.planning/ROADMAP.md' },
       },
       observed: {
         completed: null,
         total: null,
-        status: 'unknown',
+        status: null,
         provenance: { kind: 'summary', ref: 'current phase unavailable' },
       },
     };
@@ -120,11 +121,7 @@ function completionOf(phase: PhaseDto | null): {
       completed: formal?.completed ?? null,
       total: formal?.total ?? null,
       status:
-        phase.roadmapComplete === null
-          ? 'unknown'
-          : phase.roadmapComplete
-            ? 'complete'
-            : 'incomplete',
+        phase.roadmapComplete === null ? null : phase.roadmapComplete ? 'complete' : 'incomplete',
       provenance: { kind: 'roadmap', ref: formal?.sourcePath ?? '.planning/ROADMAP.md' },
     },
     observed: {
@@ -166,13 +163,20 @@ function ready(plan: PlanDto, plans: Map<string, PlanDto>): boolean {
 }
 
 function planWork(plan: PlanDto, phase: PhaseDto): NextWorkItem {
+  const authoredTitle = plan.frontmatter.title;
+  const title =
+    (typeof authoredTitle === 'string' && authoredTitle.trim()) || plan.description || plan.id;
   return {
     kind: 'plan',
     key: plan.key,
     phaseKey: phase.key,
     planKey: plan.key,
-    title: plan.id,
-    reason: 'First incomplete plan with all sibling dependencies complete.',
+    title,
+    description:
+      plan.description && plan.description !== title
+        ? plan.description
+        : `Plan ${plan.id} is ready to begin.`,
+    url: plan.key,
   };
 }
 
@@ -183,8 +187,48 @@ function phaseWork(phase: PhaseDto): NextWorkItem {
     phaseKey: phase.key,
     planKey: null,
     title: phase.name,
-    reason:
-      'No dependency-ready plan remains in the current phase; this is the next incomplete phase.',
+    description: phase.goal ?? `Phase ${phase.identity.number} is the next planned phase.`,
+    url: phase.key,
+  };
+}
+
+function checkpointWork(
+  presentation: ProjectPresentation,
+  currentPhase: PhaseDto | null,
+): NextWorkItem | null {
+  const checkpoint = presentation.checkpoints.find(
+    (candidate) =>
+      candidate.status === 'pending' && (!currentPhase || candidate.phaseKey === currentPhase.key),
+  );
+  if (!checkpoint) return null;
+  const plan = planIndex(presentation).get(checkpoint.planKey);
+  return {
+    kind: 'human-verification',
+    key: checkpoint.key,
+    phaseKey: checkpoint.phaseKey,
+    planKey: checkpoint.planKey,
+    title: checkpoint.name,
+    description: plan?.description
+      ? `Review is required before completing: ${plan.description}`
+      : `Review is required before Plan ${checkpoint.planId} can complete.`,
+    url: checkpoint.planKey,
+  };
+}
+
+function blockerWork(
+  presentation: ProjectPresentation,
+  currentPhase: PhaseDto | null,
+): NextWorkItem | null {
+  const blocker = presentation.blockers[0];
+  if (!blocker) return null;
+  return {
+    kind: 'blocker',
+    key: `next:${blocker.key}`,
+    phaseKey: currentPhase?.key ?? '',
+    planKey: null,
+    title: 'Resolve the active blocker',
+    description: blocker.text,
+    url: currentPhase?.key ?? '/roadmap',
   };
 }
 
@@ -208,7 +252,12 @@ function nextWork(
     phaseCandidates = phaseCandidates.filter((phase) => phase.key !== currentPhase.key);
   }
   const phaseItems = phaseCandidates.map(phaseWork);
-  const ordered = readyPlans.length > 0 ? [...readyPlans, ...phaseItems] : phaseItems;
+  const interrupt =
+    blockerWork(presentation, currentPhase) ?? checkpointWork(presentation, currentPhase);
+  const ordered = [
+    ...(interrupt ? [interrupt] : []),
+    ...(readyPlans.length > 0 ? [...readyPlans, ...phaseItems] : phaseItems),
+  ];
   return { immediate: ordered[0] ?? null, previews: ordered.slice(1, 3) };
 }
 

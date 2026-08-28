@@ -158,6 +158,18 @@ async function enrichTree(root: Root, file: VFile, highlighter: Highlighter): Pr
         context.headings.push({ id, depth: Number(headingMatch[1]), text });
       }
 
+      // REQUIREMENTS.md definitions are list items, not headings. Add a trusted,
+      // deterministic anchor after sanitization so roadmap previews can deep-link to
+      // the exact authored requirement without building Phase 3 traceability UI.
+      if (child.tagName === 'li') {
+        const requirement = textOf(child)
+          .trim()
+          .match(/^([A-Z][A-Z0-9]+-\d+)\b/u)?.[1];
+        if (requirement && !child.properties.id) {
+          child.properties.id = `requirement-${requirement.toLowerCase()}`;
+        }
+      }
+
       if (child.tagName === 'pre') {
         const code = child.children.find(
           (value): value is Element => value.type === 'element' && value.tagName === 'code',

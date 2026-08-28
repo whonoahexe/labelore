@@ -55,6 +55,16 @@ const answer: number = 42
     expect(rendered.html).toContain('--shiki-dark');
   });
 
+  it('adds stable deep-link anchors to authored requirement definitions', async () => {
+    const renderer = await createArtifactRenderer();
+    const rendered = await renderer.render(
+      artifact('- [ ] **READ-01**: Render the full document\n- **FUTURE-02**: Keep this readable'),
+    );
+
+    expect(rendered.html).toMatch(/<li[^>]*id="requirement-read-01"/);
+    expect(rendered.html).toMatch(/<li[^>]*id="requirement-future-02"/);
+  });
+
   it('renders the real Phase 1 plan as ordered semantic sections with nested Markdown', async () => {
     const renderer = await createArtifactRenderer();
     const body = await readFile(

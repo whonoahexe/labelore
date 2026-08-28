@@ -33,7 +33,10 @@ function raw(path: string, content: string): RawArtifact {
 describe('StateHandler', () => {
   it('parses a STATE.md with only the three template-guaranteed keys', () => {
     const content = `---\ngsd_state_version: '1.0'\nstatus: planning\nprogress:\n  total_phases: 0\n---\n\n# Project State\n`;
-    const result = StateHandler.parse(raw('.planning/STATE.md', content), ref('.planning/STATE.md'));
+    const result = StateHandler.parse(
+      raw('.planning/STATE.md', content),
+      ref('.planning/STATE.md'),
+    );
     expect(result.frontmatter.gsd_state_version).toBe('1.0');
     expect(result.frontmatter.status).toBe('planning');
     expect(result.frontmatter.milestone).toBeUndefined();
@@ -41,7 +44,10 @@ describe('StateHandler', () => {
 
   it('exposes conventional and unknown frontmatter keys unchanged', () => {
     const content = `---\ngsd_state_version: '1.0'\nstatus: executing\nmilestone: v2.0\nphase_numbering: restarts-per-milestone\nsome_future_key: surprise\n---\n\n# Project State\n`;
-    const result = StateHandler.parse(raw('.planning/STATE.md', content), ref('.planning/STATE.md'));
+    const result = StateHandler.parse(
+      raw('.planning/STATE.md', content),
+      ref('.planning/STATE.md'),
+    );
     expect(result.frontmatter.milestone).toBe('v2.0');
     expect(result.frontmatter.phase_numbering).toBe('restarts-per-milestone');
     expect(result.frontmatter.some_future_key).toBe('surprise');
@@ -49,7 +55,10 @@ describe('StateHandler', () => {
 
   it('splits the body into ordered sections and extracts the Quick Tasks Completed table', () => {
     const content = `# Project State\n\n## Current Position\ntext\n\n## Accumulated Context\n\n### Quick Tasks Completed\n\n| # | Description | Status |\n|---|---|---|\n| 1 | Add toggle | Needs Review |\n`;
-    const result = StateHandler.parse(raw('.planning/STATE.md', content), ref('.planning/STATE.md'));
+    const result = StateHandler.parse(
+      raw('.planning/STATE.md', content),
+      ref('.planning/STATE.md'),
+    );
     const sections = result.structured?.sections as { heading: string }[];
     expect(sections.map((s) => s.heading)).toEqual(['Current Position', 'Accumulated Context']);
   });
@@ -59,7 +68,10 @@ describe('RoadmapHandler', () => {
   const roadmap = `# Roadmap: Demo\n\n## Phases\n\n- [ ] **Phase 1: Foundation** - one-liner\n\n## Phase Details\n\n### Phase 1: Foundation\n**Goal**: Ship the base layer\n**Depends on**: Nothing (first phase)\n**Requirements**: [AUTH-01, AUTH-02]\n**Success Criteria** (what must be TRUE):\n  1. User can sign in\n  2. Session persists\n**Plans**: 2 plans\n\nPlans:\n- [x] 01-01: Schema\n- [ ] 01-02: API\n`;
 
   it('extracts number, name, goal, depends-on, requirement ids, success criteria, and plan checklist', () => {
-    const result = RoadmapHandler.parse(raw('.planning/ROADMAP.md', roadmap), ref('.planning/ROADMAP.md'));
+    const result = RoadmapHandler.parse(
+      raw('.planning/ROADMAP.md', roadmap),
+      ref('.planning/ROADMAP.md'),
+    );
     const phases = result.structured?.phases as {
       number: string;
       name: string;
@@ -93,23 +105,35 @@ describe('RoadmapHandler', () => {
       raw('.planning/ROADMAP.md', '### Phase 1: X\n**Requirements**: A-01, A-02\n'),
       ref('.planning/ROADMAP.md'),
     );
-    const bracketedIds = (bracketed.structured?.phases as { requirementIds: string[] }[])[0].requirementIds;
-    const unbracketedIds = (unbracketed.structured?.phases as { requirementIds: string[] }[])[0].requirementIds;
+    const bracketedIds = (bracketed.structured?.phases as { requirementIds: string[] }[])[0]
+      .requirementIds;
+    const unbracketedIds = (unbracketed.structured?.phases as { requirementIds: string[] }[])[0]
+      .requirementIds;
     expect(bracketedIds).toEqual(['A-01', 'A-02']);
     expect(unbracketedIds).toEqual(['A-01', 'A-02']);
   });
 
   it('captures the ASCII dependency-shape block verbatim without deriving a graph', () => {
     const content = `## Phase Details\n\n**Dependency shape:**\n\`\`\`\nPhase 1 --> Phase 2\n              |\n              v\n           Phase 3\n\`\`\`\n`;
-    const result = RoadmapHandler.parse(raw('.planning/ROADMAP.md', content), ref('.planning/ROADMAP.md'));
+    const result = RoadmapHandler.parse(
+      raw('.planning/ROADMAP.md', content),
+      ref('.planning/ROADMAP.md'),
+    );
     expect(result.structured?.dependencyShape).toContain('Phase 1 --> Phase 2');
     expect(typeof result.structured?.dependencyShape).toBe('string');
   });
 
   it('yields one milestone group per <details> block, keyed on its <summary> text', () => {
     const content = `## Phases\n\n<details>\n<summary>✅ v1.0 MVP (Phases 1-4) - SHIPPED 2025-01-01</summary>\n\n### Phase 1: Foundation\n**Goal**: Ship it\n\nPlans:\n- [x] 01-01: Only plan\n\n</details>\n\n### Phase 5: Current\n**Goal**: Next thing\n`;
-    const result = RoadmapHandler.parse(raw('.planning/ROADMAP.md', content), ref('.planning/ROADMAP.md'));
-    const groups = result.structured?.milestoneGroups as { summary: string; version: string | null; phases: { number: string }[] }[];
+    const result = RoadmapHandler.parse(
+      raw('.planning/ROADMAP.md', content),
+      ref('.planning/ROADMAP.md'),
+    );
+    const groups = result.structured?.milestoneGroups as {
+      summary: string;
+      version: string | null;
+      phases: { number: string }[];
+    }[];
     expect(groups).toHaveLength(1);
     expect(groups[0].summary).toContain('v1.0 MVP');
     expect(groups[0].version).toBe('v1.0');
@@ -124,7 +148,10 @@ describe('RoadmapHandler', () => {
   // heading belongs to the current phase, including fields that appear after the interior heading.
   it('does not truncate a phase block at an interior non-Phase heading', () => {
     const content = `### Phase 1: Foundation\n**Goal**: Ship it\n\n#### Notes\nSome ad hoc notes here.\n\n**Requirements**: [AUTH-01]\n**Success Criteria** (what must be TRUE):\n  1. User can sign in\n\nPlans:\n- [x] 01-01: Schema\n`;
-    const result = RoadmapHandler.parse(raw('.planning/ROADMAP.md', content), ref('.planning/ROADMAP.md'));
+    const result = RoadmapHandler.parse(
+      raw('.planning/ROADMAP.md', content),
+      ref('.planning/ROADMAP.md'),
+    );
     const phases = result.structured?.phases as {
       number: string;
       goal: string | null;
@@ -140,25 +167,77 @@ describe('RoadmapHandler', () => {
     expect(phases[0].plans).toEqual([{ id: '01-01', description: 'Schema', checked: true }]);
     expect(phases[0].roadmapComplete).toBe(true);
   });
+
+  it('parses current GSD PLAN.md checklist spelling and preserves its authored description', () => {
+    const content = `### Phase 4: Delivery\n**Goal**: Ship it\n\nPlans:\n\n- [x] 04-01-PLAN.md — Prove the delivery path.\n- [ ] **04-02-PLAN.md** — Finish the reader.\n`;
+    const result = RoadmapHandler.parse(
+      raw('.planning/ROADMAP.md', content),
+      ref('.planning/ROADMAP.md'),
+    );
+    const phases = result.structured?.phases as {
+      plans: { id: string; description: string; checked: boolean }[];
+      roadmapComplete: boolean | null;
+    }[];
+
+    expect(phases[0].plans).toEqual([
+      { id: '04-01', description: 'Prove the delivery path.', checked: true },
+      { id: '04-02', description: 'Finish the reader.', checked: false },
+    ]);
+    expect(phases[0].roadmapComplete).toBe(false);
+  });
 });
 
 describe('RequirementsHandler', () => {
   const content = `# Requirements: Demo\n\n## v1 Requirements\n\n### Authentication\n\n- [ ] **AUTH-01**: User can sign up\n- [x] **AUTH-02**: User can sign in\n\n## v2 Requirements\n\n### Notifications\n\n- **NOTF-01**: User gets notified\n\n## Out of Scope\n\n| Feature | Reason |\n|---|---|\n| Video posts | Too costly |\n\n## Traceability\n\n| Requirement | Phase | Status |\n|---|---|---|\n| AUTH-01 | Phase 1 | Pending |\n`;
 
   it('yields requirement items with id, category, text, tier, and checked state', () => {
-    const result = RequirementsHandler.parse(raw('.planning/REQUIREMENTS.md', content), ref('.planning/REQUIREMENTS.md'));
-    const items = result.structured?.items as { id: string; category: string; text: string; tier: string; checked: boolean | null }[];
+    const result = RequirementsHandler.parse(
+      raw('.planning/REQUIREMENTS.md', content),
+      ref('.planning/REQUIREMENTS.md'),
+    );
+    const items = result.structured?.items as {
+      id: string;
+      category: string;
+      text: string;
+      tier: string;
+      checked: boolean | null;
+    }[];
     expect(items).toEqual([
-      { id: 'AUTH-01', category: 'Authentication', text: 'User can sign up', tier: 'v1', checked: false },
-      { id: 'AUTH-02', category: 'Authentication', text: 'User can sign in', tier: 'v1', checked: true },
-      { id: 'NOTF-01', category: 'Notifications', text: 'User gets notified', tier: 'v2', checked: null },
+      {
+        id: 'AUTH-01',
+        category: 'Authentication',
+        text: 'User can sign up',
+        tier: 'v1',
+        checked: false,
+      },
+      {
+        id: 'AUTH-02',
+        category: 'Authentication',
+        text: 'User can sign in',
+        tier: 'v1',
+        checked: true,
+      },
+      {
+        id: 'NOTF-01',
+        category: 'Notifications',
+        text: 'User gets notified',
+        tier: 'v2',
+        checked: null,
+      },
     ]);
   });
 
   it('yields the out-of-scope table and the traceability table', () => {
-    const result = RequirementsHandler.parse(raw('.planning/REQUIREMENTS.md', content), ref('.planning/REQUIREMENTS.md'));
-    expect(result.structured?.outOfScope).toEqual([{ feature: 'Video posts', reason: 'Too costly' }]);
-    expect(result.structured?.traceability).toEqual([{ requirementId: 'AUTH-01', phase: 'Phase 1', status: 'Pending' }]);
+    const result = RequirementsHandler.parse(
+      raw('.planning/REQUIREMENTS.md', content),
+      ref('.planning/REQUIREMENTS.md'),
+    );
+    expect(result.structured?.outOfScope).toEqual([
+      { feature: 'Video posts', reason: 'Too costly' },
+    ]);
+    expect(result.structured?.traceability).toEqual([
+      { requirementId: 'AUTH-01', phase: 'Phase 1', status: 'Pending' },
+    ]);
   });
 });
 
@@ -191,11 +270,21 @@ describe('SummaryHandler', () => {
 describe('ContextHandler', () => {
   it('parses a CONTEXT.md with no frontmatter and yields its six tag sections', () => {
     const content = `# Phase 1 - Context\n\n<domain>\nBoundary text\n</domain>\n<decisions>\nD-01\n</decisions>\n<specifics>\nNone\n</specifics>\n<canonical_refs>\nrefs\n</canonical_refs>\n<code_context>\ncode\n</code_context>\n<deferred>\nnothing\n</deferred>\n`;
-    const contextRef = ref('.planning/phases/01-x/01-CONTEXT.md', { location: 'phase', kind: 'context' });
+    const contextRef = ref('.planning/phases/01-x/01-CONTEXT.md', {
+      location: 'phase',
+      kind: 'context',
+    });
     const result = ContextHandler.parse(raw(contextRef.path, content), contextRef);
     expect(Object.keys(result.frontmatter)).toHaveLength(0);
     const sections = result.structured?.sections as Record<string, string | null>;
-    expect(Object.keys(sections).sort()).toEqual(['canonical_refs', 'code_context', 'decisions', 'deferred', 'domain', 'specifics']);
+    expect(Object.keys(sections).sort()).toEqual([
+      'canonical_refs',
+      'code_context',
+      'decisions',
+      'deferred',
+      'domain',
+      'specifics',
+    ]);
     expect(sections.domain).toBe('Boundary text');
   });
 });
@@ -203,27 +292,39 @@ describe('ContextHandler', () => {
 describe('JsonConfigHandler', () => {
   it('round-trips a key nested two levels inside an unknown namespace unchanged', () => {
     const content = JSON.stringify({ someFutureNamespace: { nested: { deep: 'value' } } });
-    const result = JsonConfigHandler.parse(raw('.planning/config.json', content), ref('.planning/config.json', { kind: 'config' }));
+    const result = JsonConfigHandler.parse(
+      raw('.planning/config.json', content),
+      ref('.planning/config.json', { kind: 'config' }),
+    );
     const namespace = result.frontmatter.someFutureNamespace as { nested: { deep: string } };
     expect(namespace.nested.deep).toBe('value');
   });
 
   it('preserves a polymorphic parallelization value shaped as an object rather than a boolean', () => {
     const content = JSON.stringify({ parallelization: { enabled: true, maxAgents: 4 } });
-    const result = JsonConfigHandler.parse(raw('.planning/config.json', content), ref('.planning/config.json', { kind: 'config' }));
+    const result = JsonConfigHandler.parse(
+      raw('.planning/config.json', content),
+      ref('.planning/config.json', { kind: 'config' }),
+    );
     expect(result.frontmatter.parallelization).toEqual({ enabled: true, maxAgents: 4 });
   });
 
   it('strips a __proto__-named key without polluting any object prototype', () => {
     const content = '{"__proto__": {"polluted": true}, "safe": 1}';
-    const result = JsonConfigHandler.parse(raw('.planning/config.json', content), ref('.planning/config.json', { kind: 'config' }));
+    const result = JsonConfigHandler.parse(
+      raw('.planning/config.json', content),
+      ref('.planning/config.json', { kind: 'config' }),
+    );
     expect(result.frontmatter.safe).toBe(1);
     expect(Object.prototype.hasOwnProperty.call(result.frontmatter, '__proto__')).toBe(false);
     expect(({} as Record<string, unknown>).polluted).toBeUndefined();
   });
 
   it('parses an empty config object into an empty map with zero warnings', () => {
-    const result = JsonConfigHandler.parse(raw('.planning/config.json', '{}'), ref('.planning/config.json', { kind: 'config' }));
+    const result = JsonConfigHandler.parse(
+      raw('.planning/config.json', '{}'),
+      ref('.planning/config.json', { kind: 'config' }),
+    );
     expect(result.frontmatter).toEqual({});
     expect(result.warning).toBeUndefined();
   });
@@ -231,9 +332,15 @@ describe('JsonConfigHandler', () => {
   it('a HANDOFF.json with a trailing comma yields a structured-extraction warning, retains the raw text, and never throws', () => {
     const content = '{"version": "1.0", "phase": "01",}';
     expect(() =>
-      JsonConfigHandler.parse(raw('.planning/HANDOFF.json', content), ref('.planning/HANDOFF.json', { kind: 'unknown' })),
+      JsonConfigHandler.parse(
+        raw('.planning/HANDOFF.json', content),
+        ref('.planning/HANDOFF.json', { kind: 'unknown' }),
+      ),
     ).not.toThrow();
-    const result = JsonConfigHandler.parse(raw('.planning/HANDOFF.json', content), ref('.planning/HANDOFF.json', { kind: 'unknown' }));
+    const result = JsonConfigHandler.parse(
+      raw('.planning/HANDOFF.json', content),
+      ref('.planning/HANDOFF.json', { kind: 'unknown' }),
+    );
     expect(result.warning?.stage).toBe('structured-extraction');
     expect(result.body).toBe(content);
   });
@@ -241,14 +348,20 @@ describe('JsonConfigHandler', () => {
 
 describe('GenericMarkdownHandler — absence is normal-path data, never a warning', () => {
   it('parses a frontmatter block with no keys as a well-formed empty map, no warning', () => {
-    const result = GenericMarkdownHandler.parse(raw('x', '---\n---\n\nbody text\n'), ref('.planning/NOTES.md'));
+    const result = GenericMarkdownHandler.parse(
+      raw('x', '---\n---\n\nbody text\n'),
+      ref('.planning/NOTES.md'),
+    );
     expect(result.frontmatter).toEqual({});
     expect(result.warning).toBeUndefined();
     expect(result.body.trim()).toBe('body text');
   });
 
   it('parses a document with frontmatter and no body without a warning', () => {
-    const result = GenericMarkdownHandler.parse(raw('x', '---\ntitle: Only Frontmatter\n---\n'), ref('.planning/NOTES.md'));
+    const result = GenericMarkdownHandler.parse(
+      raw('x', '---\ntitle: Only Frontmatter\n---\n'),
+      ref('.planning/NOTES.md'),
+    );
     expect(result.frontmatter.title).toBe('Only Frontmatter');
     expect(result.warning).toBeUndefined();
     expect(result.body.trim()).toBe('');
@@ -258,7 +371,10 @@ describe('GenericMarkdownHandler — absence is normal-path data, never a warnin
 describe('WindowsHandler', () => {
   it('prefers the fenced JSON block over the markdown table when both are present', () => {
     const content = `---\nschema_version: 1\nopen_count: 1\n---\n\n# Windows\n\n| id | phase | kind |\n|---|---|---|\n| 1 | 01 | stub |\n\n\`\`\`json\n[{"id": 1, "phase": "01", "kind": "deviation"}]\n\`\`\`\n`;
-    const result = WindowsHandler.parse(raw('.planning/WINDOWS.md', content), ref('.planning/WINDOWS.md', { kind: 'windows' }));
+    const result = WindowsHandler.parse(
+      raw('.planning/WINDOWS.md', content),
+      ref('.planning/WINDOWS.md', { kind: 'windows' }),
+    );
     expect(result.frontmatter.schema_version).toBe(1);
     expect(result.structured?.rowSource).toBe('json');
     expect(result.structured?.rows).toEqual([{ id: 1, phase: '01', kind: 'deviation' }]);
@@ -271,7 +387,10 @@ describe('WindowsHandler', () => {
   // snapshot.warnings list.
   it('surfaces a structured-extraction warning when the fenced JSON block is malformed, while still falling back to the table', () => {
     const content = `---\nschema_version: 1\n---\n\n# Windows\n\n| id | phase | kind |\n|---|---|---|\n| 1 | 01 | stub |\n\n\`\`\`json\n[{"id": 1,}]\n\`\`\`\n`;
-    const result = WindowsHandler.parse(raw('.planning/WINDOWS.md', content), ref('.planning/WINDOWS.md', { kind: 'windows' }));
+    const result = WindowsHandler.parse(
+      raw('.planning/WINDOWS.md', content),
+      ref('.planning/WINDOWS.md', { kind: 'windows' }),
+    );
     expect(result.structured?.rowSource).toBe('table');
     expect(result.structured?.rows).toEqual([{ id: '1', phase: '01', kind: 'stub' }]);
     expect(result.warning?.stage).toBe('structured-extraction');
@@ -280,7 +399,10 @@ describe('WindowsHandler', () => {
 
   it('produces no warning when no fenced JSON block is present at all, falling back to the table', () => {
     const content = `---\nschema_version: 1\n---\n\n# Windows\n\n| id | phase | kind |\n|---|---|---|\n| 1 | 01 | stub |\n`;
-    const result = WindowsHandler.parse(raw('.planning/WINDOWS.md', content), ref('.planning/WINDOWS.md', { kind: 'windows' }));
+    const result = WindowsHandler.parse(
+      raw('.planning/WINDOWS.md', content),
+      ref('.planning/WINDOWS.md', { kind: 'windows' }),
+    );
     expect(result.structured?.rowSource).toBe('table');
     expect(result.warning).toBeUndefined();
   });
@@ -301,14 +423,18 @@ describe('HANDLERS registry', () => {
     expect(withFrontmatter).toBe(stillWithFrontmatter);
     expect(withFrontmatter).toBe(PlanHandler);
 
-    const contextRef = ref('.planning/phases/01-x/01-CONTEXT.md', { location: 'phase', kind: 'context' });
+    const contextRef = ref('.planning/phases/01-x/01-CONTEXT.md', {
+      location: 'phase',
+      kind: 'context',
+    });
     const contextMatch = HANDLERS.find((h) => h.match(contextRef));
     expect(contextMatch).toBe(ContextHandler);
   });
 
   it('parses a batch of one tab-broken frontmatter file and three healthy files with exactly one warning and three fully-parsed results', async () => {
     const files: Record<string, string> = {
-      '.planning/STATE.md': '---\ngsd_state_version: "1.0"\nstatus: planning\n---\n\n# Project State\n',
+      '.planning/STATE.md':
+        '---\ngsd_state_version: "1.0"\nstatus: planning\n---\n\n# Project State\n',
       '.planning/PROJECT.md': '# Demo\n\n## What This Is\ntext\n',
       '.planning/REQUIREMENTS.md': '# Requirements: Demo\n',
       '.planning/phases/01-x/01-01-PLAN.md': '---\nfoo: "unterminated\n---\n\nbody\n',
@@ -339,9 +465,18 @@ describe('HANDLERS registry', () => {
     // Two refs deliberately sharing the same derived kind (as two ad-hoc-but-identically-keyed
     // artifacts would) but different paths — the pipeline must key by path, never by kind.
     const refA = ref('.planning/phases/01-x/01-CONTEXT.md', { location: 'phase', kind: 'context' });
-    const refB = ref('.planning/phases/01-x/01-CONTEXT-DUPLICATE.md', { location: 'phase', kind: 'context' });
+    const refB = ref('.planning/phases/01-x/01-CONTEXT-DUPLICATE.md', {
+      location: 'phase',
+      kind: 'context',
+    });
     const resultA = await parseWithRegistry(fs, refA, warnings);
-    const resultB = await parseWithRegistry(new InMemoryPlanningFilesystem({ '.planning/phases/01-x/01-CONTEXT-DUPLICATE.md': '<domain>b</domain>' }), refB, warnings);
+    const resultB = await parseWithRegistry(
+      new InMemoryPlanningFilesystem({
+        '.planning/phases/01-x/01-CONTEXT-DUPLICATE.md': '<domain>b</domain>',
+      }),
+      refB,
+      warnings,
+    );
     const byPath: Record<string, unknown> = {};
     for (const r of [resultA, resultB]) byPath[r.ref.path] = r;
     expect(Object.keys(byPath)).toHaveLength(2);

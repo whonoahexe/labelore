@@ -66,7 +66,11 @@ function extractRawPhaseBlocks(text: string): RawPhaseBlock[] {
       const phaseMatch = headingMatch[1].match(/^(?:[^\w]*\s*)?Phase\s+([\w.]+):\s*(.+)$/i);
       if (phaseMatch) {
         if (current) {
-          blocks.push({ number: current.number, name: current.name, body: current.lines.join('\n') });
+          blocks.push({
+            number: current.number,
+            name: current.name,
+            body: current.lines.join('\n'),
+          });
         }
         current = { number: phaseMatch[1], name: phaseMatch[2].trim(), lines: [] };
       } else if (current) {
@@ -76,7 +80,8 @@ function extractRawPhaseBlocks(text: string): RawPhaseBlock[] {
     }
     if (current) current.lines.push(line);
   }
-  if (current) blocks.push({ number: current.number, name: current.name, body: current.lines.join('\n') });
+  if (current)
+    blocks.push({ number: current.number, name: current.name, body: current.lines.join('\n') });
   return blocks;
 }
 
@@ -85,10 +90,17 @@ function parsePhaseBlockFields(raw: RawPhaseBlock): RoadmapPhaseBlock {
   const dependsMatch = raw.body.match(/^\*\*Depends on\*\*:\s*(.+)$/m);
   const reqMatch = raw.body.match(/^\*\*Requirements\*\*:\s*(.+)$/m);
   const successCriteria = [...raw.body.matchAll(/^\s*\d+\.\s*(.+)$/gm)].map((m) => m[1].trim());
-  const plans: RoadmapPlanEntry[] = [...raw.body.matchAll(/^\s*-\s*\[([ xX])\]\s*([\w.]+-\d+):\s*(.*)$/gm)].map((m) => ({
-    id: m[2],
-    description: m[3].trim(),
-    checked: m[1].toLowerCase() === 'x',
+  // GSD roadmaps have used both the early `01-01: Description` spelling and the
+  // current `01-01-PLAN.md — Description` spelling. Treat the filename suffix as
+  // presentation, not identity, and accept either colon or dash separators.
+  const plans: RoadmapPlanEntry[] = [
+    ...raw.body.matchAll(
+      /^\s*-\s*\[([ xX])\]\s*(?:\*\*)?(\d+(?:\.\d+)?-\d+)(?:-PLAN)?(?:\.md)?(?:\*\*)?\s*(?::|[—–-])\s*(.*)$/gm,
+    ),
+  ].map((match) => ({
+    id: match[2],
+    description: match[3].trim(),
+    checked: match[1].toLowerCase() === 'x',
   }));
 
   return {
