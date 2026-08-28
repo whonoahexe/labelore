@@ -2,6 +2,22 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('/fonts/space-grotesk-latin.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/jetbrains-mono-latin.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+}
+
 /* Authorized local adaptation of Studio Portal preset b3Dqcuo4na (base-sera). */
 @custom-variant dark (&:is(.dark *));
 
@@ -1738,4 +1754,577 @@ pre {
   font-size: 0.85rem;
   font-weight: 700;
   text-decoration: none;
+}
+
+/* UAT polish: restrained Studio Portal typography, hierarchy, and reader treatment. */
+:where(a, button, summary):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+.app-shell {
+  background:
+    radial-gradient(
+      circle at 8% 0%,
+      color-mix(in oklch, var(--primary) 7%, transparent),
+      transparent 28rem
+    ),
+    var(--background);
+}
+
+.app-shell::before {
+  display: none;
+}
+
+.page-stack {
+  width: min(86rem, 100%);
+}
+
+.source-link {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklch, currentColor 35%, transparent);
+  text-underline-offset: 0.22em;
+}
+
+.source-link:hover {
+  color: var(--foreground);
+  text-decoration-color: var(--primary);
+}
+
+.progress-empty {
+  max-width: 28rem;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.86rem;
+  line-height: 1.6;
+}
+
+.attention-list li {
+  grid-template-columns: 1.15rem minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: start;
+}
+
+.attention-list svg {
+  margin-top: 0.08rem;
+}
+
+.attention-list .item-kind {
+  line-height: 1.15rem;
+}
+
+.attention-list strong {
+  margin-top: 0.42rem;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.attention-more {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1.25rem;
+  color: var(--muted-foreground);
+  font-size: 0.76rem;
+}
+
+.attention-more button {
+  min-height: 2.35rem;
+  border: 1px solid var(--border);
+  background: var(--background);
+  padding: 0.55rem 0.8rem;
+  color: var(--foreground);
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-size: 0.67rem;
+  text-transform: uppercase;
+}
+
+.attention-more button:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.preview-empty {
+  padding-top: 1.4rem;
+}
+
+.phase-statuses .status-chip {
+  white-space: nowrap;
+}
+
+.criteria-list {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0 !important;
+  list-style: none;
+}
+
+.criteria-list li {
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: start;
+}
+
+.criteria-list svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  margin-top: 0.24rem;
+  color: var(--primary);
+}
+
+.requirement-list {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0 !important;
+  list-style: none;
+}
+
+.requirement-list li {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  color: var(--foreground);
+}
+
+.requirement-list strong {
+  color: var(--primary);
+  font-family: var(--font-heading);
+  font-size: 0.68rem;
+}
+
+.requirement-list span {
+  color: var(--muted-foreground);
+  font-size: 0.77rem;
+  line-height: 1.5;
+}
+
+.requirement-list a {
+  display: inline-flex;
+  width: fit-content;
+  gap: 0.35rem;
+  align-items: center;
+  margin-top: 0.15rem;
+  font-size: 0.7rem;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.requirement-list a:hover {
+  color: var(--primary);
+}
+
+.requirement-list a svg {
+  width: 0.72rem;
+  height: 0.72rem;
+}
+
+.wave-plan-copy {
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.wave-plan-copy strong {
+  color: var(--foreground);
+  font-size: 0.72rem;
+}
+
+.wave-plan-copy small {
+  overflow-wrap: anywhere;
+  color: var(--muted-foreground);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.roadmap-phase[data-archived='true'] .roadmap-phase-body {
+  background: color-mix(in oklch, var(--card) 72%, var(--muted));
+}
+
+.artifact-page {
+  width: min(88rem, 100%);
+  margin: 0 auto;
+  padding: clamp(1.5rem, 4vw, 4.5rem) clamp(1rem, 4vw, 3.5rem) 7rem;
+}
+
+.artifact-breadcrumbs {
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-heading);
+  font-size: 0.68rem;
+}
+
+.artifact-breadcrumbs a {
+  text-decoration: none;
+}
+
+.artifact-heading {
+  gap: 0.75rem;
+  padding: clamp(1.25rem, 3vw, 2.25rem) 0 clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.artifact-heading h1 {
+  max-width: 22ch;
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: clamp(2rem, 6vw, 4.5rem);
+  letter-spacing: -0.065em;
+  line-height: 0.98;
+}
+
+.artifact-path {
+  margin: 0;
+  font-family: var(--font-heading);
+}
+
+.artifact-metadata {
+  border: 1px solid var(--border);
+  background: color-mix(in oklch, var(--card) 94%, transparent);
+}
+
+.artifact-metadata > summary {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.artifact-metadata > summary:hover {
+  background: var(--muted);
+}
+
+.artifact-metadata > summary span {
+  color: var(--muted-foreground);
+  font-size: 0.62rem;
+}
+
+.metadata-panels {
+  grid-template-columns: repeat(auto-fit, minmax(min(19rem, 100%), 1fr));
+  gap: 1px;
+  padding: 1px;
+  border-top: 1px solid var(--border);
+  background: var(--border);
+}
+
+.metadata-panel {
+  border: 0;
+  background: var(--card);
+  padding: 1rem;
+}
+
+.metadata-panel h2 {
+  color: var(--primary);
+  font-size: 0.7rem;
+}
+
+.metadata-record,
+.metadata-list {
+  gap: 0.6rem;
+  padding-left: 1.1rem;
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+.document-reader-layout {
+  display: grid;
+  grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr);
+  gap: clamp(1.25rem, 4vw, 3.5rem);
+  align-items: start;
+  min-width: 0;
+}
+
+.document-outline {
+  position: sticky;
+  top: 5.5rem;
+  max-height: calc(100vh - 7rem);
+  overflow-y: auto;
+  padding-right: 1rem;
+  border-right: 1px solid var(--border);
+}
+
+.document-outline > p {
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.document-outline ol {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.document-outline li[data-depth='3'] {
+  padding-left: 0.8rem;
+}
+
+.document-outline a {
+  display: block;
+  color: var(--muted-foreground);
+  font-size: 0.74rem;
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+.document-outline a:hover {
+  color: var(--primary);
+}
+
+.document-canvas {
+  min-width: 0;
+  max-width: 70rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: clamp(1.1rem, 4vw, 3.5rem);
+  box-shadow: 0.65rem 0.65rem 0 color-mix(in oklch, var(--muted) 55%, transparent);
+}
+
+.artifact-document {
+  font-size: clamp(0.94rem, 1.4vw, 1.02rem);
+  line-height: 1.75;
+}
+
+.artifact-document > :is(p, ul, ol, blockquote) {
+  max-width: 76ch;
+}
+
+.artifact-document :is(h1, h2, h3, h4, h5, h6) {
+  margin-top: 2.3em;
+  margin-bottom: 0.75em;
+  letter-spacing: -0.035em;
+  line-height: 1.25;
+}
+
+.artifact-document h1 {
+  font-size: clamp(1.8rem, 4vw, 2.7rem);
+}
+.artifact-document h2 {
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border);
+  font-size: clamp(1.35rem, 3vw, 2rem);
+}
+.artifact-document h3 {
+  font-size: clamp(1.08rem, 2vw, 1.35rem);
+}
+
+.artifact-document a {
+  color: var(--primary);
+  font-weight: 600;
+  text-underline-offset: 0.2em;
+}
+
+.artifact-document blockquote {
+  margin-inline: 0;
+  padding: 0.3rem 1rem;
+  border-left: 3px solid var(--primary);
+  background: color-mix(in oklch, var(--primary) 5%, transparent);
+  color: var(--muted-foreground);
+}
+
+.artifact-document :is(ul, ol) {
+  padding-left: 1.35rem;
+}
+
+.artifact-document li + li {
+  margin-top: 0.35rem;
+}
+
+.artifact-document li[id^='requirement-'] {
+  scroll-margin-top: 6rem;
+}
+
+.artifact-document .contains-task-list {
+  padding-left: 0;
+  list-style: none;
+}
+
+.artifact-document .task-list-item {
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr);
+  gap: 0.55rem;
+  align-items: baseline;
+}
+
+.artifact-document input[type='checkbox'] {
+  width: 0.9rem;
+  height: 0.9rem;
+  margin: 0;
+  accent-color: var(--primary);
+}
+
+.artifact-document table {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.artifact-document th {
+  position: sticky;
+  top: 0;
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.artifact-document :is(th, td) {
+  padding: 0.7rem 0.8rem;
+  border-color: var(--border);
+  vertical-align: top;
+}
+
+.artifact-document tr:nth-child(even) td {
+  background: color-mix(in oklch, var(--muted) 38%, transparent);
+}
+
+.artifact-document pre {
+  padding: 1.1rem 1.2rem;
+  border: 1px solid var(--border);
+  background: var(--secondary) !important;
+  font-family: var(--font-heading);
+  font-size: 0.82rem;
+  line-height: 1.65;
+}
+
+.artifact-document :not(pre) > code {
+  border: 1px solid var(--border);
+  background: var(--secondary);
+  padding: 0.12rem 0.3rem;
+  color: var(--secondary-foreground);
+  font-family: var(--font-heading);
+  font-size: 0.86em;
+}
+
+.shiki,
+.shiki span {
+  color: var(--shiki-light) !important;
+  background-color: var(--shiki-light-bg) !important;
+}
+
+.dark .shiki,
+.dark .shiki span {
+  color: var(--shiki-dark) !important;
+  background-color: var(--shiki-dark-bg) !important;
+}
+
+.plan-section {
+  margin: 1.5rem 0;
+  padding: 1.15rem 1.25rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  background: color-mix(in oklch, var(--card) 94%, var(--muted));
+}
+
+.plan-section-label {
+  display: inline-flex;
+  margin-bottom: 0.65rem;
+  color: var(--primary);
+  font-family: var(--font-heading);
+  font-weight: 700;
+}
+
+.mermaid,
+.mermaid-fallback {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.mermaid svg {
+  display: block;
+  min-width: min(42rem, 100%);
+  height: auto;
+  margin: 0 auto;
+}
+
+.heading-copy {
+  width: 1.7rem;
+  height: 1.7rem;
+  color: var(--primary);
+  font-family: var(--font-heading);
+}
+
+.plan-pair-page {
+  gap: 2rem;
+}
+
+.plan-open-notice {
+  margin-top: 0;
+  border-left: 3px solid var(--primary);
+}
+
+.plan-open-notice p {
+  margin: 0.45rem 0 0;
+}
+
+.coverage-matrix,
+.plan-pair-document {
+  padding: clamp(1.1rem, 4vw, 2.5rem);
+}
+
+@media (max-width: 58rem) {
+  .document-reader-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .document-outline {
+    position: static;
+    max-height: none;
+    padding: 0 0 1rem;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .document-outline ol {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 42rem) {
+  .artifact-page {
+    padding-top: 1.5rem;
+  }
+
+  .document-canvas {
+    padding: 1rem;
+    box-shadow: none;
+  }
+
+  .document-outline ol {
+    grid-template-columns: 1fr;
+  }
+
+  .attention-more {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .phase-facts > div {
+    padding-inline: 1rem;
+  }
+
+  .phase-detail-grid > section,
+  .wave-stack {
+    padding-inline: 1rem;
+  }
 }

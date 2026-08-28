@@ -61,4 +61,35 @@ describe('authorized Studio Portal shell contract', () => {
     expect(files[2]).toContain('rounded-none');
     expect(files.join('\n')).not.toContain('/home/cinedise/studio-portal');
   });
+
+  it('uses local copies of the same Studio Portal font families', async () => {
+    const css = await source('src/web/styles/globals.css');
+    expect(css).toContain("font-family: 'Space Grotesk'");
+    expect(css).toContain("url('/fonts/space-grotesk-latin.woff2')");
+    expect(css).toContain("font-family: 'JetBrains Mono'");
+    expect(css).toContain("url('/fonts/jetbrains-mono-latin.woff2')");
+  });
+
+  it('keeps provenance secondary and uses plain-language dashboard and roadmap labels', async () => {
+    const dashboard = await source('src/web/pages/dashboard-page.tsx');
+    const roadmap = await source('src/web/pages/roadmap-page.tsx');
+
+    expect(dashboard).toContain('Next up');
+    expect(dashboard).toContain('Plan completion');
+    expect(dashboard).toContain('Show more');
+    expect(dashboard).not.toContain('Primary signal');
+    expect(dashboard).not.toContain('Formal phase progress');
+    expect(dashboard).not.toContain('What moves next');
+    expect(roadmap).not.toContain('Roadmap ·');
+    expect(roadmap).not.toContain('Disk ·');
+    expect(roadmap).not.toContain('No goal authored');
+    expect(roadmap).not.toContain('None authored');
+  });
+
+  it('lets open plans render without manufacturing a missing-summary error', async () => {
+    const pair = await source('src/web/pages/plan-pair-page.tsx');
+    expect(pair).toContain('Outcome not recorded yet');
+    expect(pair).toContain('if (!plan.summary) return { plan: planDocument, summary: null }');
+    expect(pair).not.toContain('does not have a paired summary yet');
+  });
 });

@@ -36,6 +36,23 @@ interface ArtifactDocumentResponse {
   document: RenderedDocument;
 }
 
+function DocumentOutline({ document }: { document: RenderedDocument }): React.JSX.Element | null {
+  const headings = document.headings.filter((heading) => heading.depth <= 3).slice(0, 18);
+  if (headings.length < 2) return null;
+  return (
+    <nav className="document-outline" aria-label="On this page">
+      <p>On this page</p>
+      <ol>
+        {headings.map((heading) => (
+          <li key={heading.id} data-depth={heading.depth}>
+            <a href={`#${encodeURIComponent(heading.id)}`}>{heading.text}</a>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
+}
+
 function ValueView({ value }: { value: FrontmatterValueView }): React.JSX.Element {
   if (value.kind === 'scalar') return <span className="metadata-scalar">{value.value}</span>;
   if (value.kind === 'list') {
@@ -268,11 +285,16 @@ export function ArtifactPage(): React.JSX.Element {
       </header>
 
       {panels.length > 0 ? (
-        <div className="metadata-panels" aria-label="Structured artifact metadata">
-          {panels.map((panel) => (
-            <MetadataPanel key={panel.key} panel={panel} />
-          ))}
-        </div>
+        <details className="artifact-metadata">
+          <summary>
+            Document metadata <span>{panels.length} sections</span>
+          </summary>
+          <div className="metadata-panels" aria-label="Structured artifact metadata">
+            {panels.map((panel) => (
+              <MetadataPanel key={panel.key} panel={panel} />
+            ))}
+          </div>
+        </details>
       ) : null}
 
       {[...artifact.warnings.map(String), ...document.warnings].map((warning) => (
@@ -281,7 +303,12 @@ export function ArtifactPage(): React.JSX.Element {
         </p>
       ))}
 
-      <DocumentView document={document} />
+      <div className="document-reader-layout">
+        <DocumentOutline document={document} />
+        <article className="document-canvas" aria-label={`${artifact.title} document`}>
+          <DocumentView document={document} />
+        </article>
+      </div>
     </main>
   );
 }

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   AlertTriangle,
@@ -8,6 +9,7 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 import { Link } from 'react-router';
+import { buildArtifactUrl } from '../../presentation/routes.ts';
 import type {
   AttentionItem,
   DashboardViewModel,
@@ -39,17 +41,37 @@ function provenanceLabel(provenance: SourceProvenance): string {
   }
 }
 
-function destination(item: NextWorkItem): string {
-  return item.key.startsWith('/') ? item.key : '/roadmap';
+const ATTENTION_PAGE_SIZE = 8;
+
+function kindLabel(kind: NextWorkItem['kind']): string {
+  return kind.replaceAll('-', ' ');
+}
+
+function sourceDestination(provenance: SourceProvenance): string | null {
+  if (!['state', 'roadmap'].includes(provenance.kind)) return null;
+  const [path] = provenance.ref.split('#');
+  return path.endsWith('.md') ? buildArtifactUrl(null, path) : null;
+}
+
+function SourceLink({ provenance, children }: { provenance: SourceProvenance; children?: string }) {
+  const to = sourceDestination(provenance);
+  const label = children ?? `View ${provenanceLabel(provenance).toLowerCase()} source`;
+  return to ? (
+    <Link className="source-note source-link" to={to}>
+      {label}
+    </Link>
+  ) : (
+    <span className="source-note">{label}</span>
+  );
 }
 
 function NextWork({ item, primary = false }: { item: NextWorkItem; primary?: boolean }) {
   return (
-    <Link className={primary ? 'next-primary' : 'next-preview'} to={destination(item)}>
+    <Link className={primary ? 'next-primary' : 'next-preview'} to={item.url}>
       <div>
-        <span className="item-kind">{item.kind}</span>
+        <span className="item-kind">{kindLabel(item.kind)}</span>
         <strong>{item.title}</strong>
-        <p>{item.reason}</p>
+        <p>{item.description}</p>
       </div>
       <ArrowRight aria-hidden="true" />
     </Link>
@@ -80,6 +102,7 @@ function DashboardLoading(): React.JSX.Element {
 
 export function DashboardPage(): React.JSX.Element {
   const dashboard = useQuery({ queryKey: ['dashboard'], queryFn: fetchDashboard });
+  const [attentionLimit, setAttentionLimit] = useState(ATTENTION_PAGE_SIZE);
 
   if (dashboard.isPending) return <DashboardLoading />;
   if (dashboard.isError) {
@@ -127,15 +150,13 @@ export function DashboardPage(): React.JSX.Element {
               <CircleDot aria-hidden="true" />
               {view.current.status.display}
             </span>
-            <span className="source-note">
-              Source · {provenanceLabel(view.current.status.provenance)}
-            </span>
+            <SourceLink provenance={view.current.status.provenance}>View project state</SourceLink>
           </div>
         </div>
 
         <aside className="immediate-work" aria-labelledby="immediate-work-heading">
-          <p className="eyebrow">Immediate work</p>
-          <h2 id="immediate-work-heading">What moves next</h2>
+          <p className="eyebrow">Recommended action</p>
+          <h2 id="immediate-work-heading">Next up</h2>
           {view.next.immediate ? (
             <NextWork item={view.next.immediate} primary />
           ) : (
@@ -147,26 +168,34 @@ export function DashboardPage(): React.JSX.Element {
         </aside>
       </section>
 
-      <section className="progress-panel" aria-labelledby="formal-progress-heading">
+      <section className="progress-panel" aria-labelledby="phase-progress-heading">
         <header>
           <div>
-            <p className="eyebrow">Primary signal · ROADMAP</p>
-            <h2 id="formal-progress-heading">Formal phase progress</h2>
+            <p className="eyebrow">Current phase</p>
+            <h2 id="phase-progress-heading">Plan completion</h2>
           </div>
-          <span className="formal-status">{view.completion.formal.status}</span>
+          {view.completion.formal.status ? (
+            <span className="formal-status">{view.completion.formal.status}</span>
+          ) : null}
         </header>
-        <div className="formal-progress-value">
-          <strong>{view.completion.formal.completed ?? '—'}</strong>
-          <span>/ {view.completion.formal.total ?? '—'} plans</span>
-        </div>
-        <p className="source-note">Source · {view.completion.formal.provenance.ref}</p>
+        {view.completion.formal.completed !== null && view.completion.formal.total !== null ? (
+          <div className="formal-progress-value">
+            <strong>{view.completion.formal.completed}</strong>
+            <span>of {view.completion.formal.total} plans</span>
+          </div>
+        ) : (
+          <p className="progress-empty">
+            The roadmap does not specify a plan checklist for this phase.
+          </p>
+        )}
+        <SourceLink provenance={view.completion.formal.provenance}>Open roadmap</SourceLink>
 
         <div className="observed-progress">
           <span>
-            Observed SUMMARY progress · {view.completion.observed.completed ?? '—'} /{' '}
-            {view.completion.observed.total ?? '—'}
+            Files on disk · {view.completion.observed.completed ?? 0} of{' '}
+            {view.completion.observed.total ?? 0} summaries present
           </span>
-          <span>{view.completion.observed.status}</span>
+          {view.completion.observed.status ? <span>{view.completion.observed.status}</span> : null}
         </div>
         {discrepancy ? (
           <div className="discrepancy-callout" role="status">
@@ -186,22 +215,37 @@ export function DashboardPage(): React.JSX.Element {
               <p className="eyebrow">Prioritized</p>
               <h2 id="attention-heading">Needs attention</h2>
             </div>
-            <span>{view.attention.length}</span>
+            <span aria-label={`${view.attention.length} items`}>{view.attention.length}</span>
           </header>
           {view.attention.length > 0 ? (
-            <ol className="attention-list">
-              {view.attention.map((item) => (
-                <li key={item.key} data-type={item.type}>
-                  <AttentionIcon type={item.type} />
-                  <div>
-                    <span className="item-kind">{item.type}</span>
-                    <strong>{item.title}</strong>
-                    <p>{item.detail}</p>
-                    <small>Source · {provenanceLabel(item.provenance)}</small>
-                  </div>
-                </li>
-              ))}
-            </ol>
+            <>
+              <ol className="attention-list">
+                {view.attention.slice(0, attentionLimit).map((item) => (
+                  <li key={item.key} data-type={item.type}>
+                    <AttentionIcon type={item.type} />
+                    <div>
+                      <span className="item-kind">{item.type}</span>
+                      <strong>{item.title}</strong>
+                      <p>{item.detail}</p>
+                      <SourceLink provenance={item.provenance} />
+                    </div>
+                  </li>
+                ))}
+              </ol>
+              {attentionLimit < view.attention.length ? (
+                <div className="attention-more">
+                  <span>
+                    Showing {attentionLimit} of {view.attention.length}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setAttentionLimit((value) => value + ATTENTION_PAGE_SIZE)}
+                  >
+                    Show more
+                  </button>
+                </div>
+              ) : null}
+            </>
           ) : (
             <div className="quiet-state">
               <CheckCircle2 aria-hidden="true" />
@@ -221,7 +265,9 @@ export function DashboardPage(): React.JSX.Element {
             {view.next.previews.length > 0 ? (
               view.next.previews.map((item) => <NextWork key={item.key} item={item} />)
             ) : (
-              <p className="empty-note">No quieter previews are available.</p>
+              <p className="empty-note preview-empty">
+                No additional work is queued after this item.
+              </p>
             )}
           </div>
         </section>
