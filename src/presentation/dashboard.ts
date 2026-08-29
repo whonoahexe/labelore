@@ -1,4 +1,5 @@
 import type { PhaseDto, PlanDto, ProjectPresentation } from '../server/project-presentation.ts';
+import { buildPhaseUrl } from './routes.ts';
 
 export interface SourceProvenance {
   kind: 'state' | 'roadmap' | 'summary' | 'derived';
@@ -188,7 +189,7 @@ function phaseWork(phase: PhaseDto): NextWorkItem {
     planKey: null,
     title: phase.name,
     description: phase.goal ?? `Phase ${phase.identity.number} is the next planned phase.`,
-    url: phase.key,
+    url: buildPhaseUrl(phase.identity),
   };
 }
 
@@ -228,7 +229,7 @@ function blockerWork(
     planKey: null,
     title: 'Resolve the active blocker',
     description: blocker.text,
-    url: currentPhase?.key ?? '/roadmap',
+    url: currentPhase ? buildPhaseUrl(currentPhase.identity) : '/roadmap',
   };
 }
 
