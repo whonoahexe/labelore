@@ -238,6 +238,17 @@ None - no external service configuration required.
 
 None.
 
+## Self-Check: PASSED
+
+- `src/web/pages/roadmap-deep-link.ts` — FOUND
+- `test/web/roadmap-deep-link.test.ts` — FOUND
+- `.planning/phases/02-situational-awareness-artifact-reading/02-08-SUMMARY.md` — FOUND
+- Commits `ccb08b3`, `7b29aa8` — FOUND in `git log --oneline --all --grep="02-08"`
+- `npm test` — 251 passed (0 failed)
+- `npm run typecheck`, `npm run lint`, `npm run build` — all exit 0
+- `npm run smoke -- fixtures/dense` — passed
+- Live round trip against `node src/server/index.ts /home/cinedise/gsd-lore` — `resolveRoadmapDeepLink` returned a non-null phase target for a real `/api/roadmap` phase url
+
 ---
 *Phase: 02-situational-awareness-artifact-reading*
 *Completed: 2026-08-29*
