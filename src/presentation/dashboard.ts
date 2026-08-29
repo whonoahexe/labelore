@@ -77,6 +77,10 @@ function stateNumber(value: number | null, ref: string): SourcedValue<number> {
   };
 }
 
+function formatPercentDisplay(value: number): string {
+  return `${value.toFixed(1).replace(/\.0$/, '')}%`;
+}
+
 function samePhaseNumber(left: string, right: string): boolean {
   if (left === right) return true;
   const leftNumber = Number(left);
@@ -380,7 +384,7 @@ export function buildDashboardViewModel(presentation: ProjectPresentation): Dash
         ),
         computedPercent: {
           value: computedPercent,
-          display: computedPercent === null ? 'Not recorded' : `${computedPercent}%`,
+          display: computedPercent === null ? 'Not recorded' : formatPercentDisplay(computedPercent),
           provenance: { kind: 'derived', ref: `${statePath}#progress.completed_plans/total_plans` },
         },
       },
