@@ -164,7 +164,7 @@ export const RoadmapHandler: ArtifactHandler = {
         milestoneGroups: groups,
         /** Live/current-milestone phase blocks — outside any collapsed <details> group. */
         phases,
-        dependencyShape: extractDependencyShape(fm.body),
+        dependencyShape: extractDependencyShape(remainder),
       },
     };
   },
