@@ -1,7 +1,7 @@
 ---
 phase: 02
 slug: situational-awareness-artifact-reading
-status: draft
+status: approved
 shadcn_initialized: true
 preset: base-sera (Studio Portal preset b3Dqcuo4na — local adaptation, rsc:false)
 created: 2026-08-29
@@ -138,28 +138,233 @@ constraint — the tool cannot write). The Copywriting Contract below documents 
 
 ## UI Considerations
 
-Applicable state considerations resolved: **13 covered, 0 backstop, 0 unresolved** (retroactive
-capture against implemented code; every state below was verified present in
-`src/web/pages/*.tsx` / `src/web/styles/globals.css`).
+Produced by the `ui-consideration-probe` engine over 14 described surfaces, run post-verification
+against the checker-approved UI-SPEC. Element kinds were confirmed rather than taken from the
+heuristic classifier: the classifier left E3 unclassified and missed the `nav` /
+`interactive-control` kinds on E5, E6, E11, E12 and E14, and its `form` detections on E7/E8 are
+false positives — the app contains zero `<form>`, `<input>`, `<textarea>` or `<select>` elements,
+because the tool is read-only. The confirmed override set raised **95** applicable considerations.
 
-| Category | Element(s) | Status | Resolution / Reason |
-|----------|------------|--------|---------------------|
-| empty | Dashboard "Next up" (list-collection) | ✅ covered | Renders `.quiet-state` with the documented "No dependency-ready work…" copy (see Copywriting Contract) instead of an empty panel |
-| empty | Dashboard "Needs attention" (list-collection) | ✅ covered | Renders `.quiet-state` with "No discrepancy, blocker, dependency wait, or human gate needs attention." |
-| empty | Roadmap phase detail — criteria / requirements / plans (list-collection) | ✅ covered | Each of the three independently renders its own `.empty-note` copy rather than a shared generic placeholder |
-| empty | History / archived milestones (list-collection) | ✅ covered | ".empty-note — No archived milestones are present in this snapshot." |
-| empty | Artifact document body (static-content) | ✅ covered | `document.empty` branch renders a dedicated `.artifact-empty` section with `role="status"` and heading "Empty document" |
-| empty | Frontmatter metadata panels — list/record values (list-collection) | ✅ covered | `.metadata-empty` renders "Empty list" / "Empty object" per field rather than omitting the panel |
-| loading | Dashboard, Roadmap (nav, list-collection) | ✅ covered | `DashboardLoading` (`.dashboard-loading`, pulsing skeleton blocks) and `.roadmap-loading` render on `isPending`, both `aria-hidden` (loading state is not announced as content) |
-| error | Dashboard, Roadmap, project-level load, shell snapshot metadata (nav, list-collection) | ✅ covered | Four independent, differently-scoped error UIs (see Copywriting Contract error row) — a project-load failure does not blank the shell chrome, and a shell metadata failure does not blank page content, satisfying TGT-06's per-view isolation intent even though TGT-06 itself is Phase 4 scope |
-| populated / partial | Dashboard progress panel — formal vs. observed disk completion (list-collection) | ✅ covered | DASH-04's two-signal requirement is rendered as `.formal-progress-value` (primary) + `.observed-progress` (secondary, explicitly labeled) with a separate `.discrepancy-callout` that only renders when the two disagree — the partial/disagreement state has its own distinct visual treatment, not a merged number |
-| overflow | Tables, code blocks, Mermaid diagrams inside `.artifact-document` (static-content) | ✅ covered | UI-03's containment contract: `table`, `pre`, `.mermaid` all get local `overflow-x: auto` + `min-width: 0` ancestors; verified via the `html, body, #root` max-width rule and the explicit `.overflow-x-auto`/`.table-scroll`/`.code-scroll` utility classes |
-| zero-one-many | Document outline / table of contents (nav) | ✅ covered | `headings.length < 2` returns `null` — the outline is omitted entirely below 2 headings rather than rendering a degenerate 1-item TOC |
-| long-text | Artifact titles, paths, brand/project name (static-content) | ✅ covered | `overflow-wrap: anywhere` applied to `.artifact-heading h1`, `.artifact-path`, `.source-note`, `.blocked-by`, `.metadata-scalar`, `.wave-plan-copy small`; brand/project name in the shell header uses `text-overflow: ellipsis` + `white-space: nowrap` in a `min-width: 0` grid cell |
-| long-text | Reference preview popover (interactive-control) | ✅ covered | Fixed-width popover (`width: min(24rem, calc(100vw - 2rem))`) with `overflow-wrap: anywhere` on `.reference-preview-facts dd`, so a long title/location never breaks the popover's anchored layout |
+**Coverage: 95 applicable — 83 resolved (explicit), 0 backstop, 3 dismissed, 9 unresolved.**
 
-No `unclassified` candidates were raised — every interactive/list/static surface built for this phase
-maps cleanly to one of the six element kinds.
+Because Phase 02 is already executed, every `resolved (explicit)` row below is a truth read out of
+the shipped implementation and cited to file and line — not an authored intention. Empty- and
+error-state **copy** is not restated here; it lives in `## Copywriting Contract` above and these
+rows reference it.
+
+### E1 — Dashboard — "Next up"
+
+*Element kinds (confirmed):* `list-collection`
+
+| Consideration | Status | Truth / Reason |
+|---------------|--------|----------------|
+| `empty` | ✅ resolved *(explicit)* | Zero dependency-ready items renders a `.quiet-state` block carrying the domain-worded line "No dependency-ready work is reported in the active milestone." (dashboard-page.tsx:163-165), never a blank panel. |
+| `loading` | ✅ resolved *(explicit)* | `dashboard.isPending` renders `DashboardLoading` — pulsing `.dashboard-loading` skeleton blocks marked `aria-hidden` so the placeholder is not announced as content (dashboard-page.tsx:89-107). |
+| `error` | ✅ resolved *(explicit)* | `dashboard.isError` renders the page-scoped error UI: `.eyebrow` "Connection error" -> headline "The project snapshot did not respond." -> the raw `dashboard.error.message`, never a bare stack trace (dashboard-page.tsx:108-115). |
+| `populated` | ✅ resolved *(explicit)* | The happy path renders the next work item plus its queued successor previews as a `.next-preview` list; `.next-preview strong` carries `overflow-wrap: anywhere` (globals.css:587-589) so a long plan title cannot widen the panel. |
+| `partial` | ✅ resolved *(explicit)* | A next item that exists but has no queued successors is a distinct partial state: the panel still renders the item and appends `.empty-note.preview-empty` "No additional work is queued after this item." (dashboard-page.tsx:265-269) rather than hiding the successor region. |
+| `overflow` | ✅ resolved *(explicit)* | Content wraps inside the panel; the global `html, body, #root` max-width rule plus `min-width: 0` grid cells keep the page body from ever scrolling horizontally (UI-03). |
+| `zero-one-many` | ✅ resolved *(explicit)* | `view.next.previews.length > 0` (dashboard-page.tsx:265) gates the successor list; zero routes to the quiet copy, one and many share the same list shell so spacing does not jump between them. |
+
+### E2 — Dashboard — "Needs attention"
+
+*Element kinds (confirmed):* `list-collection`
+
+| Consideration | Status | Truth / Reason |
+|---------------|--------|----------------|
+| `empty` | ✅ resolved *(explicit)* | Zero attention items renders `.quiet-state` with "No discrepancy, blocker, dependency wait, or human gate needs attention." (dashboard-page.tsx:250-252) — the absence is stated in the domain's own four categories rather than a generic placeholder. |
+| `loading` | ✅ resolved *(explicit)* | Shares the `DashboardLoading` skeleton — the whole dashboard is one query, so the attention panel never renders half-loaded. |
+| `error` | ✅ resolved *(explicit)* | Shares the dashboard page-scoped error boundary (dashboard-page.tsx:108-115). |
+| `populated` | ✅ resolved *(explicit)* | Populated renders attention rows behind a count badge with an accessible label: `aria-label={`${view.attention.length} items`}` (dashboard-page.tsx:218). |
+| `partial` | ✅ resolved *(explicit)* | When the list is capped, `attentionLimit < view.attention.length` renders an explicit "Showing {attentionLimit} of {view.attention.length}" line (dashboard-page.tsx:235-238) so a truncated list is never mistaken for a complete one. |
+| `overflow` | ✅ resolved *(explicit)* | The `attentionLimit` cap plus the "Showing N of M" disclosure IS the overflow contract — the panel bounds its own height by count rather than by scroll. |
+| `zero-one-many` | ✅ resolved *(explicit)* | `view.attention.length > 0` (dashboard-page.tsx:220) splits zero from non-zero, and the count badge makes one-vs-many explicit numerically rather than relying on visual list length. |
+
+### E3 — Dashboard — progress panel (formal vs. observed)
+
+*Element kinds (confirmed):* `static-content, list-collection`
+
+| Consideration | Status | Truth / Reason |
+|---------------|--------|----------------|
+| `empty` | ✅ resolved *(explicit)* | A snapshot with no active milestone is handled upstream of the progress numbers: the roadmap surface renders "No active milestone exists in this snapshot." (roadmap-page.tsx:230) and the position header falls back to "No active milestone reported" (roadmap-page.tsx:218). |
+| `loading` | ✅ resolved *(explicit)* | Shares `DashboardLoading`; the progress figures never render against a partially-read snapshot. |
+| `error` | ✅ resolved *(explicit)* | Shares the dashboard page-scoped error boundary — a failed snapshot read shows the error UI instead of a zeroed progress bar, so 0% is never ambiguous between 'no progress' and 'no data'. |
+| `populated` | ✅ resolved *(explicit)* | DASH-04's two-signal contract: `.formal-progress-value` renders roadmap-declared completion as the primary figure and `.observed-progress` renders disk-observed completion as an explicitly labelled secondary figure (dashboard-page.tsx:182,193) — never collapsed into one number. |
+| `partial` | ✅ resolved *(explicit)* | Disagreement between the two signals is its own visual state: `.discrepancy-callout` with `role="status"` renders ONLY when formal and observed diverge (dashboard-page.tsx:201), making the disagreement visible rather than silently resolved toward either signal. |
+| `overflow` | ✅ resolved *(explicit)* | Progress figures are short numerics in a fixed panel; the global body max-width rule bounds the surface. |
+| `zero-one-many` | ⊘ dismissed | **Not applicable.** Not a variable-length collection: the progress panel renders exactly two signals (formal, observed) plus a conditional discrepancy callout. The count is structurally fixed at two, so there is no zero/one/many layout axis to specify. |
+| `long-text` | ✅ resolved *(explicit)* | The milestone/phase identity above the figures uses `.position-copy h1 { overflow-wrap: anywhere }` (globals.css:470-473), so a long milestone slug wraps instead of widening the panel. |
+
+### E4 — Roadmap — phase detail lists
+
+*Element kinds (confirmed):* `list-collection`
+
+| Consideration | Status | Truth / Reason |
+|---------------|--------|----------------|
+| `empty` | ✅ resolved *(explicit)* | Each of the three lists renders its own distinct `.empty-note` rather than one shared placeholder: "No success criteria authored." (roadmap-page.tsx:82), "No requirements mapped." (:102), "No plans are present for this phase." (:140). |
+| `loading` | ✅ resolved *(explicit)* | `roadmap.isPending` renders `.roadmap-loading`, `aria-hidden` (roadmap-page.tsx:173-178). |
+| `error` | ✅ resolved *(explicit)* | `roadmap.isError` renders "The roadmap could not be loaded." with the `.eyebrow` "Connection error" label and the raw `roadmap.error.message` (roadmap-page.tsx:182-189). |
+| `populated` | ✅ resolved *(explicit)* | Populated renders criteria as an ordered list, requirements as chips each linking to their definition, and plans grouped under wave bands (roadmap-page.tsx:72-140). |
+| `partial` | ✅ resolved *(explicit)* | The three lists are gated independently (`successCriteria.length > 0`, `requirements.length > 0`, `waveBands.length > 0`), so a phase with criteria but no mapped requirements renders one populated list beside one empty note — the partial shape is the normal case, not a fallback. |
+| `overflow` | ✅ resolved *(explicit)* | Phase detail sits inside `<details className="phase-disclosure">` (roadmap-page.tsx:64) — long detail is collapsed by default rather than pushing the phase list off-screen; `.phase-facts dd` wraps via `overflow-wrap: anywhere` (globals.css:970-972). |
+| `zero-one-many` | ✅ resolved *(explicit)* | Plan counts are explicitly pluralised: `{band.plans.length} {band.plans.length === 1 ? 'plan' : 'plans'}` (roadmap-page.tsx:114) — one and many differ in copy, not only in list length. |
+
+### E5 — Roadmap — vertical phase flow
+
+*Element kinds (confirmed):* `list-collection, nav, interactive-control`
+
+| Consideration | Status | Truth / Reason |
+|---------------|--------|----------------|
+| `empty` | ✅ resolved *(explicit)* | A milestone with an authored identity but no phase rows renders its own heading "No phases in {milestone.name}" (roadmap-page.tsx:155) rather than an empty flow column. |
+| `loading` | ✅ resolved *(explicit)* | Shares `.roadmap-loading` (roadmap-page.tsx:173-178). |
+| `error` | ✅ resolved *(explicit)* | Shares the roadmap page-scoped error boundary (roadmap-page.tsx:182-189). |
+| `populated` | ✅ resolved *(explicit)* | Each phase renders as a row with a lucide status marker (`Check` complete, `Circle` pending, `ChevronRight` active) and a milestone-qualified `<Link to={phase.url}>` (roadmap-page.tsx:2,31) — the dependency shape reads as a vertical flow, satisfying ROAD-02's 'legible flow rather than ASCII art'. |
+| `partial` | ✅ resolved *(explicit)* | A plan blocked on unfinished upstream work renders its blockers explicitly via `plan.blockedBy.length > 0` (roadmap-page.tsx:131) rather than showing an undifferentiated pending marker. |
+| `overflow` | ✅ resolved *(explicit)* | Per-phase detail is collapsed behind `<details className="phase-disclosure">` (roadmap-page.tsx:64-143), bounding the flow column's height regardless of phase count; the page scrolls vertically only. |
+| `zero-one-many` | ✅ resolved *(explicit)* | Wave bands carry singular/plural plan counts (roadmap-page.tsx:114); a milestone at zero phases routes to the dedicated empty heading (:155). |
+| `long-text` | ✅ resolved *(explicit)* | `.blocked-by` (globals.css:1125-1127) and `.wave-plan-copy small` (:1938-1939) both carry `overflow-wrap: anywhere`, so long plan filenames and blocker lists wrap inside the flow column. |
+
+### E6 — History — archived milestones
+
+*Element kinds (confirmed):* `list-collection, nav`
+
+| Consideration | Status | Truth / Reason |
+|---------------|--------|----------------|
+| `empty` | ✅ resolved *(explicit)* | `.empty-note` "No archived milestones are present in this snapshot." (roadmap-page.tsx:261) — phrased as a fact about the snapshot, not a failure. |
+| `loading` | ✅ resolved *(explicit)* | History is part of the roadmap query, so it shares `.roadmap-loading` and never renders half-populated. |
+| `error` | ✅ resolved *(explicit)* | Shares the roadmap page-scoped error boundary (roadmap-page.tsx:182-189). |
+| `populated` | ✅ resolved *(explicit)* | Each archived milestone renders as its own collapsed `<details className="history-milestone">` (roadmap-page.tsx:246-257), visually distinct from the active milestone per ROAD-04 and reachable without leaving the roadmap view. |
+| `partial` | ✅ resolved *(explicit)* | An archived milestone with an authored identity but no phase tree still renders its summary row with the documented "This milestone has an authored identity but no phase rows yet." copy rather than being dropped from the list. |
+| `overflow` | ✅ resolved *(explicit)* | Every archived milestone is collapsed by default, so history length never dominates the page; expansion is per-milestone. |
+| `zero-one-many` | ✅ resolved *(explicit)* | `view.history.length > 0` (roadmap-page.tsx:243) gates the section; one and many share the identical `<details>` shell so the layout does not degenerate at one. |
+| `long-text` | ✅ resolved *(explicit)* | Milestone summary rows inherit the `.phase-facts dd` wrap rule (globals.css:970-972); the `<summary>` element wraps at word boundaries within its grid cell. |
+
+### E7 — Artifact — document body
+
+*Element kinds (confirmed):* `list-collection, static-content`
+
+| Consideration | Status | Truth / Reason |
+|---------------|--------|----------------|
+| `empty` | ✅ resolved *(explicit)* | A document whose body is empty renders a dedicated `<section className="artifact-empty" role="status">` with the heading "Empty document" (artifact-page.tsx:188-189) — announced to assistive tech, and distinct from a load failure. |
+| `loading` | ✅ resolved *(explicit)* | `query.isPending` renders an `aria-busy` main with "Loading the document…" (artifact-page.tsx:239-243). |
+| `error` | ✅ resolved *(explicit)* | `query.isError` renders a plain-language headline plus the raw `query.error.message` (artifact-page.tsx:247-253); an unreadable or missing artifact never renders as an empty document. |
+| `populated` | ✅ resolved *(explicit)* | `DocumentView` renders the sanitised pipeline output: literal `<objective>`/`<task>`/`<decision>` tags surface as visible structure with nested markdown intact, headings carry `rehype-slug` anchors, and `rehype-sanitize` runs immediately after `rehype-raw` so no embedded HTML executes (READ-01/READ-03). |
+| `partial` | ✅ resolved *(explicit)* | An artifact type the tool has never seen degrades rather than breaks: `src/planning-repo/handlers/generic.ts` is the fallback handler, and malformed frontmatter is caught in `src/planning-repo/frontmatter.ts:31,76` and returned as body-with-empty-frontmatter instead of throwing. |
+| `overflow` | ✅ resolved *(explicit)* | `.artifact-document :is(table, pre, .mermaid, .mermaid-fallback) { overflow-x: auto }` (globals.css:1567-1569) scopes horizontal scroll to the offending element; the page body never scrolls sideways (UI-03). |
+| `zero-one-many` | ✅ resolved *(explicit)* | Structural affordances are count-gated rather than always-on: the outline is dropped below two headings (artifact-page.tsx:41) and the metadata region below one panel (`panels.length > 0`, :287). |
+| `long-text` | ✅ resolved *(explicit)* | `.artifact-heading h1` (globals.css:1972-1975) and `.artifact-path` (:1469-1470) carry `overflow-wrap: anywhere`, so a long artifact title or deep planning path wraps rather than forcing the canvas wider. |
+
+### E8 — Artifact — frontmatter metadata panels
+
+*Element kinds (confirmed):* `list-collection, static-content`
+
+| Consideration | Status | Truth / Reason |
+|---------------|--------|----------------|
+| `empty` | ✅ resolved *(explicit)* | An empty collection value renders an explicit `.metadata-empty` marker — "Empty list" (artifact-page.tsx:59-60) or "Empty object" (:71-72) — per field, so an authored-but-empty key is distinguishable from an absent key. |
+| `loading` | ✅ resolved *(explicit)* | Frontmatter ships with the document payload, so the panels share the artifact page's `aria-busy` loading state (artifact-page.tsx:239-243); they never render before their values exist. |
+| `error` | ✅ resolved *(explicit)* | Shares the artifact page error boundary (artifact-page.tsx:247-253); a parse failure short-circuits to the malformed-frontmatter fallback below rather than surfacing an error here. |
+| `populated` | ✅ resolved *(explicit)* | Frontmatter renders as structured panels with a count-labelled header — "Document metadata {panels.length} sections" (artifact-page.tsx:287-290) — satisfying READ-02's 'structured panels rather than raw YAML'. |
+| `partial` | ✅ resolved *(explicit)* | Malformed or partial YAML is tolerated by design: `src/planning-repo/frontmatter.ts` wraps every `matter()` call in try/catch (:31, :76) and falls back to whole-file-as-body with empty frontmatter, so a bad header degrades the metadata region rather than blanking the document. |
+| `overflow` | ✅ resolved *(explicit)* | Panels sit inside the document canvas's `min-width: 0` grid; long scalar values wrap rather than scroll. |
+| `zero-one-many` | ✅ resolved *(explicit)* | `panels.length > 0` (artifact-page.tsx:287) gates the whole region, and the section count is rendered numerically so one and many are distinguishable without counting panels. |
+| `long-text` | ✅ resolved *(explicit)* | `.metadata-scalar { overflow-wrap: anywhere }` (globals.css:1525-1526) — a long unbroken value such as a commit SHA or absolute path wraps inside its panel. |
+
+### E9 — Artifact — document outline / TOC
+
+*Element kinds (confirmed):* `list-collection, nav, static-content`
+
+| Consideration | Status | Truth / Reason |
+|---------------|--------|----------------|
+| `empty` | ✅ resolved *(explicit)* | `if (headings.length < 2) return null` (artifact-page.tsx:41) — the outline is omitted entirely rather than rendering an empty nav shell. |
+| `loading` | ✅ resolved *(explicit)* | The outline is derived from the same document payload, so it shares the artifact page's `aria-busy` loading state; it never renders against a partially-parsed heading set. |
+| `error` | ✅ resolved *(explicit)* | Shares the artifact page error boundary — a failed document load renders the error UI in place of both canvas and outline. |
+| `populated` | ✅ resolved *(explicit)* | Renders a sticky ordered list of heading links (`.document-outline`, globals.css:2049-2086) with depth-3 entries indented via `li[data-depth='3']`, each targeting the heading's stable `rehype-slug` anchor (NAV-04). |
+| `partial` | ✅ resolved *(explicit)* | A document with an irregular heading ladder (h2 jumping to h4) still renders every captured heading; only depth-3 gets extra indent, deeper levels fall back to the flat style rather than being dropped. |
+| `overflow` | ✅ resolved *(explicit)* | `.document-outline` is `position: sticky` with `max-height: calc(100vh - 7rem)` and `overflow-y: auto` (globals.css:2049-2055), so a hundred-heading document scrolls inside the outline column instead of stretching the page. |
+| `zero-one-many` | ✅ resolved *(explicit)* | The `< 2` threshold (artifact-page.tsx:41) deliberately treats one heading as equivalent to zero — a degenerate single-entry table of contents is never rendered. |
+| `long-text` | ⚠ **unresolved** | **⚠ unresolved — planner must treat as assumption.** What happens with unusually long text — truncation, wrapping, ellipsis, or reflow? |
+
+### E10 — App shell — header, nav, snapshot status
+
+*Element kinds (confirmed):* `nav, interactive-control`
+
+| Consideration | Status | Truth / Reason |
+|---------------|--------|----------------|
+| `loading` | ✅ resolved *(explicit)* | `presentation.isPending` renders "Reading snapshot…" inside the `aria-live="polite"` `.snapshot-status` region (app-shell.tsx:56-57) — the chrome stays fully navigable while metadata loads. |
+| `error` | ✅ resolved *(explicit)* | Two-level, deliberately scoped: an inline `.snapshot-error` chip "Snapshot metadata unavailable" (app-shell.tsx:58-59) plus a `.shell-notice` `role="alert"` banner explaining that page-level data may also be unavailable (:73-77). A shell metadata failure never blanks page content, and a page load failure never blanks the shell chrome. |
+| `overflow` | ✅ resolved *(explicit)* | `.shell-nav` is a fixed two-link set (Dashboard, Roadmap) with responsive rules at globals.css:1322, 1355 and 1366 collapsing spacing and label treatment at narrow widths; the header grid uses `min-width: 0` cells so nothing forces the body wider. |
+| `long-text` | ✅ resolved *(explicit)* | The target project name is the only unbounded string in the chrome: `.brand small` uses `text-overflow: ellipsis` + `white-space: nowrap` inside a `min-width: 0` grid cell (globals.css:316-322), so a long project directory name truncates rather than displacing the nav. |
+
+### E11 — Reference preview popover
+
+*Element kinds (confirmed):* `interactive-control, static-content`
+
+| Consideration | Status | Truth / Reason |
+|---------------|--------|----------------|
+| `loading` | ⊘ dismissed | **Not applicable.** There is no in-flight state to render. Preview data is not fetched on open — `ReferencePreviewDto` values arrive already materialised in a `ReadonlyMap` alongside the document payload and are read synchronously (`previews.get(key)`, document-reference-activation.ts:32). The popover cannot be open without its data. |
+| `error` | ⊘ dismissed | **Not applicable.** There is no failure path to render. `if (!trigger \|\| !preview) return null` (document-reference-activation.ts:33) and `if (!state) return null` (reference-preview.tsx:24) mean an ID with no resolved definition never becomes a trigger in the first place — it stays plain text, per NAV-06. A broken preview is prevented rather than error-handled. |
+| `overflow` | ✅ resolved *(explicit)* | The popup is width-bounded at `min(24rem, calc(100vw - 2rem))`, so it never exceeds the viewport at any anchor position or window size. |
+| `long-text` | ✅ resolved *(explicit)* | `.reference-preview-facts dd { overflow-wrap: anywhere }` (globals.css:1740-1742) — a long artifact title or path wraps inside the fixed-width popup instead of breaking its anchored layout. |
+
+### E12 — Plan-pair — truth-to-coverage matrix
+
+*Element kinds (confirmed):* `list-collection, static-content`
+
+| Consideration | Status | Truth / Reason |
+|---------------|--------|----------------|
+| `empty` | ✅ resolved *(explicit)* | A plan with no paired summary renders a `.notice.plan-open-notice` `role="status"` reading "Outcome not recorded yet" and explaining the plan is still open, then still renders the full authored plan below (plan-pair-page.tsx:128-137) — absence of the summary never blanks the page. |
+| `loading` | ✅ resolved *(explicit)* | `query.isPending` renders an `aria-busy` main with "Loading plan review…" (plan-pair-page.tsx:98-101). |
+| `error` | ✅ resolved *(explicit)* | `query.isError` renders "This plan pair could not be opened.", the raw message in a `.notice.destructive` `role="alert"`, and a "Return to the roadmap" escape link (plan-pair-page.tsx:104-113) — the only error state in the phase that offers a recovery route, because the URL itself may be wrong. |
+| `populated` | ✅ resolved *(explicit)* | The coverage matrix renders truth-to-coverage rows with a `.status-chip` tone distinguishing `exact` from conservative `inferred` matches, exact matches ordered first (plan-pair-page.tsx:165-180). |
+| `partial` | ✅ resolved *(explicit)* | Partial matching is the load-bearing state, not an edge case: `matrix.unmatchedTruths` and `matrix.unmatchedCoverage` each render their own labelled rows with an em-dash in the empty column (plan-pair-page.tsx:181-195), so a truth with no coverage stays visible rather than being filtered out of the matrix. |
+| `overflow` | ✅ resolved *(explicit)* | `.coverage-table-boundary { max-width: 100%; overflow-x: auto }` wrapping a `min-width: 44rem` table (globals.css:1634-1643) — the three-column matrix keeps its readable minimum and scrolls inside its own boundary, never widening the page. |
+| `zero-one-many` | ✅ resolved *(explicit)* | A matrix with zero matches is not an empty table: unmatched truth and unmatched coverage rows still render, so the zero-match case reads as a real finding about the plan/summary pair rather than as missing data. |
+| `long-text` | ✅ resolved *(explicit)* | `.coverage-table-boundary :is(th, td)` uses `vertical-align: top` (globals.css:1645-1650) so multi-line truth and coverage text aligns at the row top; the scrolling boundary absorbs any cell the text cannot wrap within. |
+
+### E13 — Wide content — tables, code blocks, mermaid
+
+*Element kinds (confirmed):* `static-content`
+
+| Consideration | Status | Truth / Reason |
+|---------------|--------|----------------|
+| `overflow` | ✅ resolved *(explicit)* | UI-03's containment contract, enforced at three layers: the `.overflow-x-auto`/`.table-scroll`/`.code-scroll`/`.mermaid` utility rules (globals.css:1275-1288), the scoped `.artifact-document :is(table, pre, .mermaid, .mermaid-fallback)` rule (:1567-1569), and `min-width: 0` on every ancestor grid cell — so wide content scrolls inside its own container while the page body never scrolls horizontally. |
+| `long-text` | ✅ resolved *(explicit)* | Long unbroken code lines scroll horizontally within their `pre` rather than wrapping (preserving Shiki's tokenised layout), and a diagram that cannot render falls back to `.mermaid-fallback` (globals.css:1609) — the source stays readable as scrollable monospace text instead of vanishing. |
+
+### E14 — Artifact index — browsable artifact listing
+
+*Element kinds (confirmed):* `list-collection, nav`
+
+| Consideration | Status | Truth / Reason |
+|---------------|--------|----------------|
+| `empty` | ⚠ **unresolved** | **⚠ unresolved — planner must treat as assumption.** What is shown when there is no data — zero items, an unfilled form, or absent media? |
+| `loading` | ⚠ **unresolved** | **⚠ unresolved — planner must treat as assumption.** What is shown while data or content is still loading (skeleton, spinner, progressive reveal)? |
+| `error` | ⚠ **unresolved** | **⚠ unresolved — planner must treat as assumption.** What is shown when the load or submit fails (message, retry affordance, partial fallback)? |
+| `populated` | ⚠ **unresolved** | **⚠ unresolved — planner must treat as assumption.** What does the normal populated (happy-path) state look like at a typical volume of content? |
+| `partial` | ⚠ **unresolved** | **⚠ unresolved — planner must treat as assumption.** What is shown for partial or incomplete data — some fields or rows present, others missing? |
+| `overflow` | ⚠ **unresolved** | **⚠ unresolved — planner must treat as assumption.** What happens when content exceeds its container — scroll, clip, wrap, or truncate? |
+| `zero-one-many` | ⚠ **unresolved** | **⚠ unresolved — planner must treat as assumption.** How does the layout read at zero, one, and many items (singular vs plural copy, spacing)? |
+| `long-text` | ⚠ **unresolved** | **⚠ unresolved — planner must treat as assumption.** What happens with unusually long text — truncation, wrapping, ellipsis, or reflow? |
+
+### Open gaps carried forward
+
+Two gaps are recorded as unresolved rather than papered over. A planner picking up work that
+touches either surface must treat these as assumptions, not as settled contract.
+
+1. **E14 — the artifact index has no client surface.** `src/server/artifact-index.ts` resolves a
+   *single* artifact by token; the route table (`src/presentation/routes.ts:13-14`) offers only
+   `/artifacts/:artifactToken` and the phase-scoped equivalent, and `roadmap-page.tsx` contains no
+   artifact references at all. Plans are browsable through the roadmap, but RESEARCH, CONTEXT,
+   SUMMARY and REVIEW artifacts are reachable only via a cross-reference inside another document
+   or by typing the URL. Nothing in the UI answers *what artifacts exist*, which the phase goal
+   ("where any planning artifact lives") asks for. All 8 of its state considerations are
+   consequently unanswerable from shipped code.
+
+2. **E9 `long-text` — the document outline was missed by the wrap pass.** `.document-outline a` is
+   `display: block` with `line-height: 1.4` and neither `overflow-wrap` nor `text-overflow`
+   (`globals.css:2078-2084`). Ten other selectors across the surface carry `overflow-wrap:
+   anywhere`; this one does not. Ordinary prose headings wrap correctly, so the gap is narrow — a
+   heading containing a single unbroken long token (a filesystem path, a long identifier) can
+   overflow the sticky outline column.
 
 ---
 
@@ -179,11 +384,21 @@ in `reference-preview.tsx` — this is a direct npm dependency on an approved pa
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+Verified by `gsd-ui-checker` — **APPROVED**, no blocking issues. Three dimensions returned FLAG:
+each is an honest, documented divergence from the standard contract shape with forward guidance,
+not a defect.
 
-**Approval:** pending
+- [x] Dimension 1 Copywriting: **PASS** — every CTA, empty state and error state uses specific domain vocabulary; no generic labels
+- [x] Dimension 2 Visuals: **FLAG** — hierarchy is declared via the 60/30/10 role split, but no focal point is named per screen
+- [x] Dimension 3 Color: **PASS** — accent tightly reserved to an explicit list; `--destructive` correctly scoped to discrepancy signalling, not delete actions
+- [x] Dimension 4 Typography: **FLAG** — 15+ distinct fluid sizes, documented and collapsed into 4 anchor roles rather than silently normalised
+- [x] Dimension 5 Spacing: **FLAG** — fluid `rem` values rather than a discrete 8-point grid; documented as a deliberate editorial choice with a 7-tier retroactive mapping
+- [x] Dimension 6 Registry Safety: **PASS** — no third-party registries; `@base-ui/react` is a direct npm dependency approved during Phase 02 planning
+
+**Approval:** approved (0 BLOCK, 3 FLAG accepted)
+
+### Non-blocking recommendations
+
+1. **Visuals** — name the focal point explicitly for each primary screen (dashboard, roadmap, artifact, plan-pair). E.g. "Dashboard: the current phase/status position is the primary visual anchor; next work and progress signals follow."
+2. **Typography** — new type sizes in Phase 3+ should map onto one of the four anchor roles (Body, Label, Heading, Display) rather than introducing a fifth tier.
+3. **Spacing** — new spacing values in Phase 3+ should snap to 4px multiples (4, 8, 12, 16, 24, 32, 48, 64) to converge the surface toward the standard scale. Existing Phase 02 CSS is not retroactively rewritten.
