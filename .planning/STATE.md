@@ -4,10 +4,10 @@ milestone: v1.0
 current_phase: 02
 current_phase_name: Situational Awareness & Artifact Reading
 status: executing
-stopped_at: Phase 02 UI-SPEC approved
+stopped_at: Phase 02 UAT gate not approved — 9 gaps in 02-UAT.md
 last_updated: "2026-08-29T13:15:24.585Z"
 last_activity: 2026-08-29
-last_activity_desc: Phase 02 execution started
+last_activity_desc: Wave 7 merged (02-07, 02-08); 02-09 human gate failed
 state_head: 3690131d7d20a3b9ac392187b094545019020fb7
 progress:
   total_phases: 4
