@@ -101,33 +101,33 @@ Plans:
   5. Requirement, phase, and plan IDs mentioned in prose are clickable and land on the right view through a shareable, bookmarkable URL, headings carry stable anchors so a link can target a specific section, and a mention with no definition stays plain text instead of becoming a broken link.
   6. Both light and dark themes render studio-portal's visual language — oklch tokens, `base-sera` components, lucide icons, squared corners — with legible contrast on real long-form artifact content, and wide tables, code blocks, and diagrams scroll inside their own containers while the page body never scrolls horizontally.
 
-**Plans**: 6 plans
+**Plans**: 6/6 plans executed
 **UI hint**: yes
 
 Plans:
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — Package-vetted CLI-path-to-browser current-position tracer and production shell
+- [x] 02-01-PLAN.md — Package-vetted CLI-path-to-browser current-position tracer and production shell
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 02-02-PLAN.md — Canonical route codec, structured STATE/PLAN projection, and truthful dashboard selectors
+- [x] 02-02-PLAN.md — Canonical route codec, structured STATE/PLAN projection, and truthful dashboard selectors
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 02-03-PLAN.md — Current-position dashboard, vertical roadmap/history, and studio-portal-derived light/dark shell
+- [x] 02-03-PLAN.md — Current-position dashboard, vertical roadmap/history, and studio-portal-derived light/dark shell
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 02-04-PLAN.md — Safe PLAN-aware Markdown, structured frontmatter, artifact index, and document canvas
+- [x] 02-04-PLAN.md — Safe PLAN-aware Markdown, structured frontmatter, artifact index, and document canvas
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 02-05-PLAN.md — Conservative plan-summary pairing and milestone-aware preview interaction bridge
+- [x] 02-05-PLAN.md — Conservative plan-summary pairing and milestone-aware preview interaction bridge
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
-- [ ] 02-06-PLAN.md — Blocking end-of-phase browser UAT over dense and real long-form corpora
+- [x] 02-06-PLAN.md — Blocking end-of-phase browser UAT over dense and real long-form corpora
 
 ### Phase 3: Search, Browsing & Traceability
 
@@ -168,6 +168,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Read Layer & Domain Model | 4/4 | Complete    | 2026-08-24 |
-| 2. Situational Awareness & Artifact Reading | 0/6 | Not started | - |
+| 2. Situational Awareness & Artifact Reading | 6/6 | In Progress|  |
 | 3. Search, Browsing & Traceability | 0/2 | Not started | - |
 | 4. Portability & Degradation Hardening | 0/2 | Not started | - |
