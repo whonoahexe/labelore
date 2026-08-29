@@ -153,3 +153,11 @@ None - no external service configuration required.
 ---
 *Phase: 02-situational-awareness-artifact-reading*
 *Completed: 2026-08-29*
+
+## Self-Check: PASSED
+
+- `src/presentation/dashboard.ts` — FOUND
+- `test/presentation/dashboard.test.ts` — FOUND
+- `.planning/phases/02-situational-awareness-artifact-reading/02-07-SUMMARY.md` — FOUND
+- Commits `9f60159`, `c583391`, `bdab04d`, `9ac65e5`, `318d3b4`, `3bb6517` — all FOUND in `git log --oneline --all`
+- Re-ran plan `<verification>`: `npm test` (240 pass, > 236 baseline), `npm run typecheck` (clean), `npm run lint` (clean), `npm run build` (succeeds), live `/api/dashboard` reproduction against `~/gsd-lore` and `~/studio-portal` (both `url` values begin with `/milestones/`), `npm run smoke -- fixtures/dense` (passes)
