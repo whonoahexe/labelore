@@ -101,7 +101,7 @@ Plans:
   5. Requirement, phase, and plan IDs mentioned in prose are clickable and land on the right view through a shareable, bookmarkable URL, headings carry stable anchors so a link can target a specific section, and a mention with no definition stays plain text instead of becoming a broken link.
   6. Both light and dark themes render studio-portal's visual language — oklch tokens, `base-sera` components, lucide icons, squared corners — with legible contrast on real long-form artifact content, and wide tables, code blocks, and diagrams scroll inside their own containers while the page body never scrolls horizontally.
 
-**Plans**: 6/6 plans executed
+**Plans**: 9 plans (6 executed; 3 gap-closure plans pending from 02-VERIFICATION.md)
 **UI hint**: yes
 
 Plans:
@@ -128,6 +128,15 @@ Plans:
 **Wave 6** *(blocked on Wave 5 completion)*
 
 - [x] 02-06-PLAN.md — Blocking end-of-phase browser UAT over dense and real long-form corpora
+
+**Wave 7** *(gap closure — blocked on Wave 6 verification)*
+
+- [ ] 02-07-PLAN.md — Navigable phase and blocker next-work routes, identity-grounded regression fixtures, rounded progress display
+- [ ] 02-08-PLAN.md — Route-aware roadmap that opens and scrolls the deep-linked phase, plus two latent anti-pattern fixes
+
+**Wave 8** *(gap closure — blocked on Wave 7 completion)*
+
+- [ ] 02-09-PLAN.md — Blocking per-surface light/dark contrast gate on real long-form content and the repaired navigation flow
 
 ### Phase 3: Search, Browsing & Traceability
 
