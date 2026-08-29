@@ -1,11 +1,17 @@
+import { useEffect, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Check, ChevronRight, Circle, ExternalLink, History, Link2, Waypoints } from 'lucide-react';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import type {
   MilestoneFlow,
   RoadmapPhaseRow,
   RoadmapViewModel,
 } from '../../presentation/roadmap.ts';
+import {
+  milestoneContainsDeepLink,
+  resolveRoadmapDeepLink,
+  type RoadmapDeepLinkTarget,
+} from './roadmap-deep-link.ts';
 
 async function fetchRoadmap(): Promise<RoadmapViewModel> {
   const response = await fetch('/api/roadmap', { headers: { Accept: 'application/json' } });
@@ -13,13 +19,38 @@ async function fetchRoadmap(): Promise<RoadmapViewModel> {
   return (await response.json()) as RoadmapViewModel;
 }
 
-function PhaseFlow({ phase }: { phase: RoadmapPhaseRow }): React.JSX.Element {
+function PhaseFlow({
+  phase,
+  targeted,
+}: {
+  phase: RoadmapPhaseRow;
+  targeted: boolean;
+}): React.JSX.Element {
   const progress = phase.progress;
   const displayStatus = phase.formalStatus ?? phase.observedStatus;
   const statusLabel = displayStatus.replaceAll('_', ' ');
   const hasFacts = Boolean(progress || phase.authoredDependencies);
+  const articleRef = useRef<HTMLElement | null>(null);
+  const detailsRef = useRef<HTMLDetailsElement | null>(null);
+  const openedRef = useRef(false);
+
+  useEffect(() => {
+    if (!targeted || openedRef.current) return;
+    openedRef.current = true;
+    if (detailsRef.current) detailsRef.current.open = true;
+    requestAnimationFrame(() => {
+      articleRef.current?.scrollIntoView({ block: 'start' });
+    });
+  }, [targeted]);
+
   return (
-    <article className="roadmap-phase" data-status={displayStatus} data-archived={phase.archived}>
+    <article
+      className="roadmap-phase"
+      data-status={displayStatus}
+      data-archived={phase.archived}
+      data-deep-link-target={targeted ? 'true' : undefined}
+      ref={articleRef}
+    >
       <div className="roadmap-marker" aria-hidden="true">
         {displayStatus === 'complete' ? <Check /> : <Circle />}
       </div>
@@ -61,7 +92,7 @@ function PhaseFlow({ phase }: { phase: RoadmapPhaseRow }): React.JSX.Element {
           </dl>
         ) : null}
 
-        <details className="phase-disclosure">
+        <details className="phase-disclosure" ref={detailsRef}>
           <summary>
             <ChevronRight aria-hidden="true" />
             Details and plans
@@ -146,7 +177,13 @@ function PhaseFlow({ phase }: { phase: RoadmapPhaseRow }): React.JSX.Element {
   );
 }
 
-function MilestoneTree({ milestone }: { milestone: MilestoneFlow }): React.JSX.Element {
+function MilestoneTree({
+  milestone,
+  target,
+}: {
+  milestone: MilestoneFlow;
+  target: RoadmapDeepLinkTarget | null;
+}): React.JSX.Element {
   if (milestone.empty) {
     return (
       <div className="empty-flow" role="status">
@@ -158,16 +195,54 @@ function MilestoneTree({ milestone }: { milestone: MilestoneFlow }): React.JSX.E
       </div>
     );
   }
+  const targetIndex = target?.phaseUrl
+    ? milestone.phases.findIndex((phase) => phase.url === target.phaseUrl)
+    : -1;
   return (
     <div className="roadmap-spine">
-      {milestone.phases.map((phase) => (
-        <PhaseFlow key={phase.key} phase={phase} />
+      {milestone.phases.map((phase, index) => (
+        <PhaseFlow key={phase.key} phase={phase} targeted={index === targetIndex} />
       ))}
     </div>
   );
 }
 
+function HistoryMilestone({
+  milestone,
+  target,
+}: {
+  milestone: MilestoneFlow;
+  target: RoadmapDeepLinkTarget | null;
+}): React.JSX.Element {
+  const detailsRef = useRef<HTMLDetailsElement | null>(null);
+  const openedRef = useRef(false);
+  const contained = milestoneContainsDeepLink(milestone, target);
+
+  useEffect(() => {
+    if (!contained || openedRef.current) return;
+    openedRef.current = true;
+    if (detailsRef.current) detailsRef.current.open = true;
+  }, [contained]);
+
+  return (
+    <details className="history-milestone" ref={detailsRef}>
+      <summary>
+        <ChevronRight aria-hidden="true" />
+        <span>
+          <strong>{milestone.name}</strong>
+          <small>{milestone.version ?? 'Unversioned archive'} · Archived</small>
+        </span>
+      </summary>
+      <div className="history-tree">
+        <MilestoneTree milestone={milestone} target={target} />
+      </div>
+    </details>
+  );
+}
+
 export function RoadmapPage(): React.JSX.Element {
+  const { pathname } = useLocation();
+  const target = useMemo(() => resolveRoadmapDeepLink(pathname), [pathname]);
   const roadmap = useQuery({ queryKey: ['roadmap'], queryFn: fetchRoadmap });
 
   if (roadmap.isPending) {
@@ -223,7 +298,7 @@ export function RoadmapPage(): React.JSX.Element {
           ) : null}
         </header>
         {view.active ? (
-          <MilestoneTree milestone={view.active} />
+          <MilestoneTree milestone={view.active} target={target} />
         ) : (
           <div className="empty-flow" role="status">
             <Waypoints aria-hidden="true" />
@@ -243,18 +318,7 @@ export function RoadmapPage(): React.JSX.Element {
         {view.history.length > 0 ? (
           <div className="history-list">
             {view.history.map((milestone) => (
-              <details className="history-milestone" key={milestone.key}>
-                <summary>
-                  <ChevronRight aria-hidden="true" />
-                  <span>
-                    <strong>{milestone.name}</strong>
-                    <small>{milestone.version ?? 'Unversioned archive'} · Archived</small>
-                  </span>
-                </summary>
-                <div className="history-tree">
-                  <MilestoneTree milestone={milestone} />
-                </div>
-              </details>
+              <HistoryMilestone key={milestone.key} milestone={milestone} target={target} />
             ))}
           </div>
         ) : (
