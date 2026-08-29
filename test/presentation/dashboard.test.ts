@@ -150,6 +150,7 @@ describe('buildDashboardViewModel', () => {
     expect(view.current.progress.completedPlans).toMatchObject({ value: 2, display: '2' });
     expect(view.current.progress.totalPlans).toMatchObject({ value: 7, display: '7' });
     expect(view.current.progress.computedPercent.value).toBe((2 / 7) * 100);
+    expect(view.current.progress.computedPercent.display).toBe('28.6%');
     expect(view.next.immediate).toMatchObject({
       kind: 'plan',
       key: 'plan:01-02',
@@ -509,6 +510,52 @@ describe('buildDashboardViewModel', () => {
     const view = buildDashboardViewModel(source);
     expect(view.next.immediate?.key).toBe('plan:01-01');
     expect(view.next.previews.map((item) => item.key)).toEqual(['plan:01-02', 'plan:01-03']);
+  });
+
+  it('computedPercent.display renders at most one decimal place, never a raw float (WR-03)', () => {
+    const evenSource = presentation();
+    if (!evenSource.state) throw new Error('test fixture requires state');
+    evenSource.state = {
+      ...evenSource.state,
+      progress: { ...evenSource.state.progress, completedPlans: 1, totalPlans: 2 },
+    };
+    const evenView = buildDashboardViewModel(evenSource);
+    expect(evenView.current.progress.computedPercent.display).toBe('50%');
+    expect(evenView.current.progress.computedPercent.value).toBe(50);
+
+    const unroundedSource = presentation();
+    if (!unroundedSource.state) throw new Error('test fixture requires state');
+    unroundedSource.state = {
+      ...unroundedSource.state,
+      progress: { ...unroundedSource.state.progress, completedPlans: 2, totalPlans: 7 },
+    };
+    const unroundedView = buildDashboardViewModel(unroundedSource);
+    expect(unroundedView.current.progress.computedPercent.display).toBe('28.6%');
+    expect(unroundedView.current.progress.computedPercent.value).toBe((2 / 7) * 100);
+
+    const nullTotalSource = presentation();
+    if (!nullTotalSource.state) throw new Error('test fixture requires state');
+    nullTotalSource.state = {
+      ...nullTotalSource.state,
+      progress: { ...nullTotalSource.state.progress, completedPlans: 2, totalPlans: null },
+    };
+    const nullTotalView = buildDashboardViewModel(nullTotalSource);
+    expect(nullTotalView.current.progress.computedPercent).toMatchObject({
+      value: null,
+      display: 'Not recorded',
+    });
+
+    const zeroTotalSource = presentation();
+    if (!zeroTotalSource.state) throw new Error('test fixture requires state');
+    zeroTotalSource.state = {
+      ...zeroTotalSource.state,
+      progress: { ...zeroTotalSource.state.progress, completedPlans: 0, totalPlans: 0 },
+    };
+    const zeroTotalView = buildDashboardViewModel(zeroTotalSource);
+    expect(zeroTotalView.current.progress.computedPercent).toMatchObject({
+      value: null,
+      display: 'Not recorded',
+    });
   });
 
   it('old/new snapshot isolation: repeated builds are deterministic and do not mix readAt values', () => {
