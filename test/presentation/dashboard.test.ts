@@ -7,6 +7,7 @@ import type {
   ProjectPresentation,
 } from '../../src/server/project-presentation.ts';
 import { buildDashboardViewModel } from '../../src/presentation/dashboard.ts';
+import { buildPhaseUrl, parsePresentationUrl, phaseKeyOf } from '../../src/presentation/routes.ts';
 
 function plan(id: string, complete: boolean, dependsOn: PlanDto['dependsOn'] = []): PlanDto {
   return {
@@ -286,6 +287,78 @@ describe('buildDashboardViewModel', () => {
     expect(view.attention).toContainEqual(
       expect.objectContaining({ type: 'dependency', sourceKey: 'plan:01-02' }),
     );
+  });
+
+  it('phase-kind next-work url round-trips through the canonical phase-URL builder (CR-01)', () => {
+    const laterIdentity = { milestoneVersion: 'v2.0', number: '02', projectCode: null, slug: 'later' };
+    const later = phase({
+      key: 'phase:02',
+      identity: laterIdentity,
+      name: 'Later',
+      diskStatus: 'no_directory',
+      roadmapComplete: null,
+      formalPlanProgress: null,
+      plans: [],
+    });
+    const source = presentation({}, { plans: [plan('01-01', true), plan('01-02', true)] });
+    source.milestones[0].phases.push(later);
+    const view = buildDashboardViewModel(source);
+
+    expect(view.next.immediate).toMatchObject({ kind: 'phase', key: 'phase:02' });
+    const url = view.next.immediate?.url ?? '';
+    expect(url).toBe(buildPhaseUrl(laterIdentity));
+    const parsed = parsePresentationUrl(url);
+    expect(parsed.ok).toBe(true);
+    if (parsed.ok) {
+      expect(parsed.route.kind).toBe('phase');
+      if (parsed.route.kind === 'phase') {
+        expect(phaseKeyOf(parsed.route.phaseIdentity)).toBe(phaseKeyOf(laterIdentity));
+      }
+    }
+  });
+
+  it('blocker-kind next-work url round-trips to the current phase route when resolvable (CR-01)', () => {
+    const liveIdentity = { milestoneVersion: 'v2.0', number: '01', projectCode: null, slug: 'live' };
+    const view = buildDashboardViewModel(
+      presentation({
+        blockers: [
+          {
+            key: 'state:blocker',
+            sourcePath: '.planning/STATE.md',
+            heading: 'Blockers',
+            text: 'Authored blocker',
+          },
+        ],
+      }),
+    );
+    expect(view.next.immediate).toMatchObject({ kind: 'blocker' });
+    const url = view.next.immediate?.url ?? '';
+    expect(url).toBe(buildPhaseUrl(liveIdentity));
+    const parsed = parsePresentationUrl(url);
+    expect(parsed.ok).toBe(true);
+    if (parsed.ok) expect(parsed.route.kind).toBe('phase');
+  });
+
+  it('blocker-kind next-work url falls back to /roadmap when no current phase is resolvable (CR-01)', () => {
+    const source = presentation({
+      blockers: [
+        {
+          key: 'state:blocker',
+          sourcePath: '.planning/STATE.md',
+          heading: 'Blockers',
+          text: 'Authored blocker',
+        },
+      ],
+    });
+    if (!source.state) throw new Error('test fixture requires state');
+    source.state = { ...source.state, milestone: null, phaseNumber: null };
+    const view = buildDashboardViewModel(source);
+    expect(view.next.immediate).toMatchObject({ kind: 'blocker' });
+    const url = view.next.immediate?.url ?? '';
+    expect(url).toBe('/roadmap');
+    const parsed = parsePresentationUrl(url);
+    expect(parsed.ok).toBe(true);
+    if (parsed.ok) expect(parsed.route.kind).toBe('roadmap');
   });
 
   it('checkpoint wait: reports each pending blocking-human checkpoint once', () => {
