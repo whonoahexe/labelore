@@ -1,7 +1,7 @@
 ---
 phase: 02
 slug: situational-awareness-artifact-reading
-status: draft
+status: approved
 shadcn_initialized: true
 preset: base-sera (Studio Portal preset b3Dqcuo4na — local adaptation, rsc:false)
 created: 2026-08-29
@@ -517,7 +517,11 @@ new gaps this revision addresses above (E11's resting-appearance gap is now clos
 Reference Trigger Resting Appearance section; E9's `long-text` gap and E14's full unresolved set
 remain open exactly as recorded below, since neither was in this UAT's scope).
 
-**Coverage: 95 applicable — 83 resolved (explicit), 0 backstop, 3 dismissed, 9 unresolved.**
+**Coverage: 103 applicable — 89 resolved (explicit), 1 backstop, 4 dismissed, 9 unresolved.**
+
+*(E1–E14: 95 applicable — 83 resolved explicit, 0 backstop, 3 dismissed, 9 unresolved, carried
+forward unchanged. E15, added by this revision's probe run: 8 applicable — 6 resolved explicit,
+1 backstop, 1 dismissed, 0 unresolved.)*
 
 Because Phase 02 is already executed, every `resolved (explicit)` row below is a truth read out of
 the shipped implementation and cited to file and line — not an authored intention. Empty- and
@@ -742,6 +746,34 @@ phase; E9's `long-text` gap remains open and untouched by this revision.
    heading containing a single unbroken long token (a filesystem path, a long identifier) can
    overflow the sticky outline column.
 
+### E15 — Artifact — unrecognised PLAN section (added this revision)
+
+*Element kinds (confirmed):* `static-content, list-collection`
+
+Added by the post-verification probe run for this revision. The `## Artifact Rendering — Unknown
+PLAN Sections` contract above is the highest-priority fix in this pass and had **no state-coverage
+row anywhere in E1–E14** — E7 covers the document body as a whole and E13 covers wide content, but
+neither covers the generic-fallback section shell itself. Rows below are authored against the new
+contract (Phase 02 has not yet implemented it), so they are acceptance criteria to build to, not
+truths read out of shipped code — unlike E1–E14 above.
+
+| Consideration | Status | Truth / Reason |
+|---------------|--------|----------------|
+| `empty` | ✅ resolved *(explicit)* | A syntactically valid wrapper whose extracted body is empty or whitespace-only still renders its label and hairline rule with no body content. It is never collapsed away: the tool's job is to report what the artifact contains, and silently dropping an authored-but-empty section would misreport the file. |
+| `loading` | ⛔ dismissed | Inherited from E7 — the artifact document is one query and the body never renders half-parsed, so a section has no independent loading state. Segmentation is synchronous within an already-resolved document. |
+| `error` | ✅ resolved *(explicit)* | Rule 5 of the contract: malformed wrappers (unclosed, mismatched open/close) keep the existing `.plan-segment-warning` treatment unchanged. The new rule changes the outcome only for syntactically *valid* previously-unrecognised tags, so genuinely broken markup still surfaces as a warning rather than being silently absorbed by the more permissive segmenter. |
+| `populated` | ✅ resolved *(explicit)* | Generic fallback shell: label auto-derived from the tag name via `snake_case`/`kebab-case` → Title Case (`execution_context` → "Execution Context"), rendered in the same `.plan-section-label` typography as a recognised section, plus hairline top rule and no box (per the Structural Nesting Rule). Body text is handed to the normal markdown pipeline, so lists, tables and fenced code inside an unrecognised wrapper render exactly as they would inside a recognised one. |
+| `partial` | ✅ resolved *(explicit)* | A document mixing recognised and unrecognised sections shows **no visual seam** between them — identical label typography, identical rule treatment, identical spacing. A reader must not be able to tell which tags the tool happens to know about; that distinction is an implementation detail and surfacing it would imply the unknown sections are lower-fidelity. |
+| `overflow` | ✅ resolved *(explicit)* | Inherits E13's containment contract and the Structural Nesting Rule: the section shell adds no box, so it contributes no boxed layer, and wide content inside it (tables, `pre`, mermaid) scrolls within its own container while the page body never scrolls horizontally. The `min-width: 0` ancestor chain required by G-10 must hold through the generic section shell as well as the bespoke one. |
+| `zero-one-many` | ✅ resolved *(explicit)* | Zero unrecognised sections renders a document indistinguishable from today's recognised-only output. One and many share the same shell, so inter-section spacing does not change as the count grows — and because segmentation is now unconditional, "many" is the expected steady state for real GSD plans rather than an edge case. |
+| `long-text` | ✅ resolved *(explicit)*, verification: backstop | Two long-text axes. The auto-derived **label** from an unusually long tag name must wrap rather than overflow its column or force horizontal page scroll. The **body** inherits the document body's `overflow-wrap: anywhere` treatment. Held out for visual confirmation because no real GSD tag is currently long enough to exercise the label case — a synthetic fixture is needed. |
+
+**E15 acceptance test** — as specified in the contract section: render
+`/home/cinedise/studio-portal/.planning/phases/01-portal-owned-identity-sessions/01-01-PLAN.md`
+and confirm no literal `<tag>`/`</tag>` text is visible anywhere, `<read_first>` renders a real
+`<ul>`/`<li>` structure rather than a run-on paragraph, and every section — recognised or not —
+carries a labelled header.
+
 ---
 
 ## Revision Considerations (Non-Blocking Observations)
@@ -812,11 +844,26 @@ from the standard contract shape, not defects). That approval covered the docume
 replaces; it does not cover the sections added or changed above. Re-verification is required before
 this revision can be marked approved.
 
-- [ ] Dimension 1 Copywriting: unchanged from prior PASS — re-verify no regression
-- [ ] Dimension 2 Visuals: re-verify against Structural Nesting Rule (G-08) and Tables (G-05)
-- [ ] Dimension 3 Color: re-verify accent/destructive reservation lists still hold after code-theme and badge changes (G-06, G-07)
-- [ ] Dimension 4 Typography: unchanged from prior FLAG (accepted) — re-verify no regression
-- [ ] Dimension 5 Spacing: re-verify Structural Nesting Rule does not reintroduce undocumented spacing values
-- [ ] Dimension 6 Registry Safety: unchanged from prior PASS — re-verify no regression
+**Re-verification result — `gsd-ui-checker`, 2026-08-29: VERIFIED, 6/6 dimensions PASS, 0 BLOCK.**
 
-**Approval:** pending — awaiting `gsd-ui-checker` re-verification of this revision.
+| # | Dimension | Verdict | Notes |
+|---|-----------|---------|-------|
+| 1 | Copywriting | ✅ PASS | Domain-specific CTAs and states; no generic labels. No regression from prior PASS. |
+| 2 | Visuals | ✅ PASS | Structural Nesting Rule formalises hierarchy as a mechanically checkable constraint (max 2 boxed layers on any DOM path from `#root` to leaf). Reference triggers now carry concrete resting/hover/focus specs. |
+| 3 | Color | ✅ PASS | Accent reserved to an explicit element list rather than "all interactive elements"; destructive reserved to degradation/discrepancy signalling only; 60/30/10 split explicit. Badge and code-theme revisions stay inside the existing palette. |
+| 4 | Typography | ✅ PASS | Prior FLAG-accepted divergence from the standard 3–4 size scale (fluid `clamp()`) is unchanged and documented as retroactive. No new font sizes introduced. Four anchor roles now specified. |
+| 5 | Spacing | ✅ PASS | Prior PASS on the retroactive fluid-`rem` contract holds. The Structural Nesting Rule removes borders/shadows only and introduces no new spacing values. Forward guidance for Phase 3+ is explicit. |
+| 6 | Registry Safety | ✅ PASS | No third-party registries in `components.json`. shadcn official (`button`) plus one approved direct npm dependency (`@base-ui/react`). No regression. |
+
+**Carry-forward integrity:** confirmed. Copywriting, the E1–E14 UI Considerations state coverage,
+and Registry Safety survived the revision intact; no still-valid contract language was dropped.
+
+**Post-verification probe:** `ui-consideration-probe` was run against the approved revision and
+surfaced E15 (unrecognised PLAN section) as a described surface with **no** state coverage anywhere
+in E1–E14 — the revision's highest-priority contract had no state/edge rows. E15 was added above:
+8 applicable considerations, 6 resolved explicit, 1 backstop, 1 dismissed, 0 unresolved.
+
+**Approval:** ✅ approved for planning. Dimensions 2, 4 and 5 carry documented, previously accepted
+divergences from the standard GSD contract shape — these are retroactive descriptions of shipped
+Phase 02 styling, not defects, and remain accepted. Three non-blocking recommendations are recorded
+in `## Revision Considerations` and are explicitly **not** requirements of this revision.
