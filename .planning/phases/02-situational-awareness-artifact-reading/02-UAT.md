@@ -117,6 +117,38 @@ Unprompted finding: any `.planning/` path, source-code path, or commit hash appe
 artifact prose should be an in-app link to that document. Currently inert text. This is
 adjacent to NAV-02/NAV-03 but was not in phase 2's scope as written.
 
+### G-10 — Code block content is clipped and unreachable (defect, found on re-inspection)
+
+Found while capturing evidence for G-06, via headless Chromium against the live server.
+Fenced code inside plan sections is **truncated at the right edge with no horizontal
+scrollbar and no wrapping**. Lines end mid-token — `returns 200 and a `Set-Co`,
+`a syntactically valid but unk` — with no affordance to reach the remainder.
+
+This is more severe than the theme objection it was found under: the document is not
+merely ugly, it is *incomplete*, and a reader cannot tell that text is missing. Direct
+hit on the phase's core value ("know where any planning artifact lives without reading a
+single file by hand") — here you must open the file by hand to read it.
+
+### G-11 — Pseudo-tag wrappers destroy markdown list parsing (defect, same root cause as G-01)
+
+`<read_first>` blocks render as one run-on paragraph: `- backend/src/lib.rs (...) -
+backend/src/config.rs (...) - backend/src/db/mod.rs (...)` inline rather than as list
+items. The unrecognised wrapper tag prevents the enclosed markdown from being parsed as a
+list. Fixing G-01 properly (handle unknown sections generically) should resolve this too;
+fixing G-01 by extending the whitelist would not.
+
+### Confirmed visually
+
+- G-01: `</read_first>` and `<scope_note>` render as visible literal text — screenshotted.
+- G-03: DOM query for reference triggers returns **0** elements on a document whose API
+  response carries `references: 5`. Extraction works; rendering does not exist.
+- G-08: four levels of nesting on the artifact page — page canvas → document card →
+  section container → code block box — plus dense inline-code chips that read as a
+  further box layer.
+- Theme default: `localStorage['gsd-lore-theme']`, dark unless the value is exactly
+  `light`. `prefers-color-scheme` is never consulted, so a light-preference OS still
+  opens dark. Not raised by the tester; recorded as an observation, not a gap.
+
 ## Notes
 
 - G-01 through G-04 are defects against what phase 2 already promised.
