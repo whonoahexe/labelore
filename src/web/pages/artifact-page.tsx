@@ -199,8 +199,8 @@ export function DocumentView({ document }: { document: RenderedDocument }): Reac
         className="artifact-document document-overflow-boundary"
         dangerouslySetInnerHTML={{ __html: document.html }}
       />
-      {runtimeWarnings.map((warning) => (
-        <p className="notice warning" role="status" key={warning}>
+      {runtimeWarnings.map((warning, index) => (
+        <p className="notice warning" role="status" key={`runtime-${index}`}>
           {warning}
         </p>
       ))}
@@ -297,8 +297,13 @@ export function ArtifactPage(): React.JSX.Element {
         </details>
       ) : null}
 
-      {[...artifact.warnings.map(String), ...document.warnings].map((warning) => (
-        <p className="notice warning" role="status" key={warning}>
+      {artifact.warnings.map(String).map((warning, index) => (
+        <p className="notice warning" role="status" key={`artifact-${index}`}>
+          {warning}
+        </p>
+      ))}
+      {document.warnings.map((warning, index) => (
+        <p className="notice warning" role="status" key={`document-${index}`}>
           {warning}
         </p>
       ))}

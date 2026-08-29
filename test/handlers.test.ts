@@ -123,6 +123,19 @@ describe('RoadmapHandler', () => {
     expect(typeof result.structured?.dependencyShape).toBe('string');
   });
 
+  // WR-02 regression: an archived milestone's own dependency-shape diagram must never be
+  // surfaced as the live milestone's, even when the archived <details> block appears earlier
+  // in the document than the live phase content.
+  it('surfaces the live dependency shape, not an archived milestone diagram that appears first', () => {
+    const content = `## Phases\n\n<details>\n<summary>✅ v1.0 MVP (Phases 1-4) - SHIPPED 2025-01-01</summary>\n\n### Phase 1: Foundation\n**Goal**: Ship it\n\n**Dependency shape:**\n\`\`\`\nARCHIVED_MARKER Phase 1 --> Phase 2\n\`\`\`\n\nPlans:\n- [x] 01-01: Only plan\n\n</details>\n\n### Phase 5: Current\n**Goal**: Next thing\n\n**Dependency shape:**\n\`\`\`\nLIVE_MARKER Phase 5 --> Phase 6\n\`\`\`\n`;
+    const result = RoadmapHandler.parse(
+      raw('.planning/ROADMAP.md', content),
+      ref('.planning/ROADMAP.md'),
+    );
+    expect(result.structured?.dependencyShape).toContain('LIVE_MARKER');
+    expect(result.structured?.dependencyShape).not.toContain('ARCHIVED_MARKER');
+  });
+
   it('yields one milestone group per <details> block, keyed on its <summary> text', () => {
     const content = `## Phases\n\n<details>\n<summary>✅ v1.0 MVP (Phases 1-4) - SHIPPED 2025-01-01</summary>\n\n### Phase 1: Foundation\n**Goal**: Ship it\n\nPlans:\n- [x] 01-01: Only plan\n\n</details>\n\n### Phase 5: Current\n**Goal**: Next thing\n`;
     const result = RoadmapHandler.parse(
