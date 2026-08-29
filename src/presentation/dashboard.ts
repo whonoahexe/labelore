@@ -1,4 +1,5 @@
 import type { PhaseDto, PlanDto, ProjectPresentation } from '../server/project-presentation.ts';
+import { buildPhaseUrl } from './routes.ts';
 
 export interface SourceProvenance {
   kind: 'state' | 'roadmap' | 'summary' | 'derived';
@@ -74,6 +75,10 @@ function stateNumber(value: number | null, ref: string): SourcedValue<number> {
     display: value === null ? 'Not recorded' : String(value),
     provenance: { kind: 'state', ref },
   };
+}
+
+function formatPercentDisplay(value: number): string {
+  return `${value.toFixed(1).replace(/\.0$/, '')}%`;
 }
 
 function samePhaseNumber(left: string, right: string): boolean {
@@ -188,7 +193,7 @@ function phaseWork(phase: PhaseDto): NextWorkItem {
     planKey: null,
     title: phase.name,
     description: phase.goal ?? `Phase ${phase.identity.number} is the next planned phase.`,
-    url: phase.key,
+    url: buildPhaseUrl(phase.identity),
   };
 }
 
@@ -228,7 +233,7 @@ function blockerWork(
     planKey: null,
     title: 'Resolve the active blocker',
     description: blocker.text,
-    url: currentPhase?.key ?? '/roadmap',
+    url: currentPhase ? buildPhaseUrl(currentPhase.identity) : '/roadmap',
   };
 }
 
@@ -379,7 +384,7 @@ export function buildDashboardViewModel(presentation: ProjectPresentation): Dash
         ),
         computedPercent: {
           value: computedPercent,
-          display: computedPercent === null ? 'Not recorded' : `${computedPercent}%`,
+          display: computedPercent === null ? 'Not recorded' : formatPercentDisplay(computedPercent),
           provenance: { kind: 'derived', ref: `${statePath}#progress.completed_plans/total_plans` },
         },
       },

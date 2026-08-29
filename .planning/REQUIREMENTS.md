@@ -27,8 +27,8 @@ rather than defensive polish.
 The "where am I overall" pain.
 
 - [ ] **DASH-01**: Landing view shows current milestone, current phase number and name, status, and progress, sourced from `STATE.md` frontmatter
-- [ ] **DASH-02**: Landing view shows what comes next and what is blocked
-- [ ] **DASH-03**: Landing view shows work awaiting human verification
+- [x] **DASH-02**: Landing view shows what comes next and what is blocked
+- [x] **DASH-03**: Landing view shows work awaiting human verification
 - [ ] **DASH-04**: Formal completion state (`ROADMAP.md` checkboxes) and observed disk state (presence of `SUMMARY.md` files) are presented as two separate signals, and any disagreement between them is visible rather than collapsed into one number
 
 ### Roadmap & Phases
@@ -157,8 +157,8 @@ Which phases cover which requirements. Populated during roadmap creation.
 | TGT-07 | Phase 4 | Pending |
 | TGT-08 | Phase 4 | Pending |
 | DASH-01 | Phase 2 | Pending |
-| DASH-02 | Phase 2 | Pending |
-| DASH-03 | Phase 2 | Pending |
+| DASH-02 | Phase 2 | Complete |
+| DASH-03 | Phase 2 | Complete |
 | DASH-04 | Phase 2 | Pending |
 | ROAD-01 | Phase 2 | Pending |
 | ROAD-02 | Phase 2 | Pending |
