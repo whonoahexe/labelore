@@ -183,4 +183,48 @@ describe('revised visual contract (G-08, G-10, G-05, G-07, G-03, E9 long-text)',
     const [block] = ruleBlocks(css, '.document-outline a {');
     expect(block).toContain('overflow-wrap: anywhere;');
   });
+
+  it('initializes Mermaid strictly with the app font and semantic root tokens', async () => {
+    const page = await source('src/web/pages/artifact-page.tsx');
+    expect(page).toContain("securityLevel: 'strict'");
+    expect(page).toContain('startOnLoad: false');
+    expect(page).toContain("theme: 'base'");
+    expect(page).toContain("fontFamily: rootStyle.getPropertyValue('--font-sans').trim()");
+    for (const token of ['--background', '--foreground', '--secondary', '--border']) {
+      expect(page).toContain(`rootStyle.getPropertyValue('${token}').trim()`);
+    }
+  });
+
+  it('themes Mermaid output from app tokens and bounds SVGs proportionally', async () => {
+    const css = await source('src/web/styles/globals.css');
+    for (const selector of [
+      '.mermaid svg {',
+      '.mermaid .node :is(rect, circle, ellipse, polygon, path) {',
+      '.mermaid :is(.nodeLabel, .edgeLabel, text) {',
+      '.mermaid :is(.flowchart-link, .edgePath path) {',
+      '.mermaid marker path {',
+    ]) {
+      expect(css).toContain(selector);
+    }
+    const [svg] = ruleBlocks(css, '.mermaid svg {');
+    expect(svg).toContain('width: auto;');
+    expect(svg).toContain('height: auto;');
+    expect(svg).toContain('max-width: 100%;');
+    expect(svg).toContain('max-height: min(70vh, 36rem);');
+    expect(svg).not.toContain('min-width:');
+  });
+
+  it('keeps both valid and browser-rejected Mermaid branches reachable in the dense fixture', async () => {
+    const fixture = await source(
+      'fixtures/dense/.planning/phases/01-identity-slice/01-01-PLAN.md',
+    );
+    expect(fixture.match(/```mermaid/g)).toHaveLength(2);
+    expect(fixture).toContain('flowchart TD\n    A[resolveIdentity] --> B[in-memory map lookup]');
+    expect(fixture).toContain('flowchart TD\n    A[unterminated');
+
+    const page = await source('src/web/pages/artifact-page.tsx');
+    expect(page).toContain("node.classList.add('mermaid-fallback')");
+    expect(page).toContain("node.dataset.mermaidRejected = 'browser-parse'");
+    expect(page).toContain('node.textContent = source');
+  });
 });
