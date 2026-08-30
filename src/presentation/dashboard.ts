@@ -18,7 +18,7 @@ export interface AttentionItem {
   sourceKey: string;
   title: string;
   detail: string;
-  targetKey: string | null;
+  url: string | null;
   provenance: SourceProvenance;
 }
 
@@ -280,7 +280,7 @@ function attentionItems(
       sourceKey: currentPhase.key,
       title: 'Roadmap and observed completion disagree',
       detail: `ROADMAP records ${formal.completed}/${formal.total}; matching SUMMARY files record ${observed.completed}/${observed.total}.`,
-      targetKey: currentPhase.key,
+      url: buildPhaseUrl(currentPhase.identity),
       provenance: { kind: 'derived', ref: presentation.readAt },
     });
   }
@@ -291,7 +291,7 @@ function attentionItems(
       sourceKey: blocker.key,
       title: 'Authored blocker',
       detail: blocker.text,
-      targetKey: null,
+      url: currentPhase ? buildPhaseUrl(currentPhase.identity) : '/roadmap',
       provenance: { kind: 'state', ref: blocker.sourcePath },
     });
   }
@@ -309,7 +309,7 @@ function attentionItems(
           sourceKey: plan.key,
           title: `${plan.id} is dependency-blocked`,
           detail: `Blocked by ${blockers.join(', ')}.`,
-          targetKey: plan.key,
+          url: plan.key,
           provenance: { kind: 'derived', ref: plan.key },
         });
       }
@@ -323,7 +323,7 @@ function attentionItems(
       sourceKey: checkpoint.key,
       title: checkpoint.name,
       detail: `${checkpoint.type}${checkpoint.gate ? ` (${checkpoint.gate})` : ''}`,
-      targetKey: checkpoint.planKey,
+      url: checkpoint.planKey,
       provenance: { kind: 'derived', ref: checkpoint.key },
     });
   }
@@ -335,7 +335,7 @@ function attentionItems(
       sourceKey: coverage.key,
       title: coverage.description,
       detail: `Coverage ${coverage.coverageId} requires human judgment.`,
-      targetKey: coverage.planKey,
+      url: coverage.planKey,
       provenance: { kind: 'derived', ref: coverage.key },
     });
   }
