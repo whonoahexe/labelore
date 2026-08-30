@@ -517,14 +517,19 @@
   padding: 0.38rem 0.55rem;
 }
 
+.status-chip {
+  background: color-mix(in oklch, var(--muted) 55%, transparent);
+}
+
 .status-chip svg {
   width: 0.7rem;
   height: 0.7rem;
+  stroke-width: 2.25;
 }
 
 .status-chip[data-tone='active'],
 .status-chip[data-tone='complete'] {
-  border-color: color-mix(in oklch, var(--primary) 58%, var(--border));
+  border-color: color-mix(in oklch, var(--primary) 65%, var(--border));
   background: color-mix(in oklch, var(--primary) 9%, transparent);
   color: var(--primary);
 }
@@ -779,6 +784,11 @@
   margin: 0.35rem 0;
 }
 
+.attention-action {
+  grid-column: 2;
+  text-decoration: none;
+}
+
 .preview-list {
   display: grid;
 }
@@ -876,6 +886,7 @@
   grid-template-columns: 1.15rem minmax(0, 1fr);
   gap: 1.15rem;
   padding-bottom: 1.5rem;
+  scroll-margin-top: 6rem;
 }
 
 .roadmap-marker {
@@ -1289,6 +1300,11 @@ table,
   scrollbar-width: thin;
 }
 
+.document-overflow-boundary {
+  min-width: 0;
+  max-width: 100%;
+}
+
 table {
   display: block;
   width: max-content;
@@ -1576,9 +1592,14 @@ pre {
 }
 
 .artifact-document :is(th, td) {
-  border: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   padding: 0.45rem 0.65rem;
   text-align: left;
+}
+
+.artifact-document table :is(th, td):first-child {
+  min-width: 8ch;
+  white-space: nowrap;
 }
 
 .artifact-document pre {
@@ -1588,7 +1609,8 @@ pre {
 
 .plan-section {
   margin: 1rem 0;
-  border-left: 2px solid var(--border);
+  min-width: 0;
+  border-top: 1px solid var(--border);
   padding: 0.2rem 0 0.2rem 1rem;
 }
 
@@ -1653,13 +1675,20 @@ pre {
   display: inline;
   appearance: none;
   border: 0;
-  border-bottom: 1px dashed currentColor;
   background: transparent;
   padding: 0;
-  color: var(--primary);
+  color: var(--muted-foreground);
   font: inherit;
-  font-weight: 650;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 0.15em;
   cursor: pointer;
+}
+
+.document-reference:hover,
+.document-reference:focus {
+  color: var(--primary);
+  text-decoration-style: solid;
 }
 
 .document-reference:focus-visible {
@@ -2077,6 +2106,7 @@ pre {
 
 .document-outline a {
   display: block;
+  overflow-wrap: anywhere;
   color: var(--muted-foreground);
   font-size: 0.74rem;
   line-height: 1.4;
@@ -2090,10 +2120,7 @@ pre {
 .document-canvas {
   min-width: 0;
   max-width: 70rem;
-  border: 1px solid var(--border);
-  background: var(--card);
   padding: clamp(1.1rem, 4vw, 3.5rem);
-  box-shadow: 0.65rem 0.65rem 0 color-mix(in oklch, var(--muted) 55%, transparent);
 }
 
 .artifact-document {
@@ -2206,9 +2233,21 @@ pre {
   line-height: 1.65;
 }
 
+.artifact-document pre::-webkit-scrollbar {
+  height: 8px;
+}
+
+.artifact-document pre::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 0;
+}
+
+.artifact-document pre::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
 .artifact-document :not(pre) > code {
-  border: 1px solid var(--border);
-  background: var(--secondary);
+  background: color-mix(in oklch, var(--secondary) 70%, transparent);
   padding: 0.12rem 0.3rem;
   color: var(--secondary-foreground);
   font-family: var(--font-heading);
@@ -2229,10 +2268,9 @@ pre {
 
 .plan-section {
   margin: 1.5rem 0;
+  min-width: 0;
+  border-top: 1px solid var(--border);
   padding: 1.15rem 1.25rem;
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--primary);
-  background: color-mix(in oklch, var(--card) 94%, var(--muted));
 }
 
 .plan-section-label {
@@ -2307,7 +2345,6 @@ pre {
 
   .document-canvas {
     padding: 1rem;
-    box-shadow: none;
   }
 
   .document-outline ol {
