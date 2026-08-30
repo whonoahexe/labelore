@@ -207,7 +207,7 @@ async function enrichTree(root: Root, file: VFile, highlighter: Highlighter): Pr
             : 'text';
           const highlighted = highlighter.codeToHast(source, {
             lang: loadedLanguage,
-            themes: { light: 'github-light', dark: 'github-dark' },
+            themes: { light: 'vitesse-light', dark: 'vitesse-dark' },
             defaultColor: false,
           });
           const highlightedPre = highlighted.children.find(
@@ -359,7 +359,7 @@ async function renderPlanRange(
 
 async function buildRenderer(): Promise<ArtifactRenderer> {
   const highlighter = await createHighlighter({
-    themes: ['github-light', 'github-dark'],
+    themes: ['vitesse-light', 'vitesse-dark'],
     langs: [
       'bash',
       'css',

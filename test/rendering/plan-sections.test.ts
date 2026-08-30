@@ -330,3 +330,21 @@ describe('identifier-edge detection (NAV-04 encoding)', () => {
     expect(rendered.html).toContain('xREAD-05');
   });
 });
+
+describe('locked syntax theme (G-06)', () => {
+  it('loads and emits the vitesse-light / vitesse-dark theme pair, never the rejected github pair', async () => {
+    const source = await readFile('src/rendering/markdown.ts', 'utf8');
+
+    expect(source.match(/vitesse-light/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
+    expect(source.match(/vitesse-dark/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
+    expect(source.match(/github-light|github-dark/g)).toBeNull();
+
+    const renderer = await createArtifactRenderer();
+    const rendered = await renderer.render(
+      artifact('```typescript\nconst answer: number = 42\n```', 'markdown'),
+    );
+
+    expect(rendered.html).toContain('--shiki-light');
+    expect(rendered.html).toContain('--shiki-dark');
+  });
+});
