@@ -92,4 +92,14 @@ describe('revised visual contract (G-08, G-10, G-05, G-07, G-03, E9 long-text)',
     const [roadmapPhase] = ruleBlocks(css, '.roadmap-phase {');
     expect(roadmapPhase).toContain('scroll-margin-top: 6rem;');
   });
+
+  it('keeps a genuinely unbreakable long line in the dense fixture so the overflow fix stays exercised', async () => {
+    const fixture = await source(
+      'fixtures/dense/.planning/phases/01-identity-slice/01-01-PLAN.md',
+    );
+    const longUnbrokenLine = fixture
+      .split('\n')
+      .some((line) => line.length >= 200 && !line.includes(' '));
+    expect(longUnbrokenLine).toBe(true);
+  });
 });
