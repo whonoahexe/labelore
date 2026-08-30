@@ -167,8 +167,21 @@ export function DocumentView({ document }: { document: RenderedDocument }): Reac
       mount.querySelectorAll<HTMLElement>('[data-mermaid-pending="true"]'),
     );
     if (mermaidNodes.length > 0) {
+      const rootStyle = getComputedStyle(window.document.documentElement);
       void import('mermaid').then(async ({ default: mermaid }) => {
-        mermaid.initialize({ securityLevel: 'strict', startOnLoad: false });
+        mermaid.initialize({
+          securityLevel: 'strict',
+          startOnLoad: false,
+          theme: 'base',
+          fontFamily: rootStyle.getPropertyValue('--font-sans').trim(),
+          themeVariables: {
+            background: rootStyle.getPropertyValue('--background').trim(),
+            primaryColor: rootStyle.getPropertyValue('--secondary').trim(),
+            primaryTextColor: rootStyle.getPropertyValue('--foreground').trim(),
+            primaryBorderColor: rootStyle.getPropertyValue('--border').trim(),
+            lineColor: rootStyle.getPropertyValue('--foreground').trim(),
+          },
+        });
         for (const node of mermaidNodes) {
           if (disposed) return;
           const source = node.textContent ?? '';
