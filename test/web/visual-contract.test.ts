@@ -37,7 +37,7 @@ describe('revised visual contract (G-08, G-10, G-05, G-07, G-03, E9 long-text)',
     expect(block).toContain('max-width: 70rem;');
   });
 
-  it('flattens both plan-section shells to a single hairline top rule', async () => {
+  it('keeps one hairline on top-level plan sections', async () => {
     const css = await source('src/web/styles/globals.css');
     const blocks = ruleBlocks(css, '.plan-section {');
     expect(blocks.length).toBeGreaterThanOrEqual(2);
@@ -45,6 +45,16 @@ describe('revised visual contract (G-08, G-10, G-05, G-07, G-03, E9 long-text)',
       expect(block).not.toMatch(/^\s*(border|border-left|border-right|border-bottom|background)\s*:/m);
       expect(block).toContain('border-top: 1px solid var(--border)');
       expect(block).toContain('min-width: 0;');
+    }
+  });
+
+  it('removes recursive separators and horizontal inset from nested plan sections', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const blocks = ruleBlocks(css, '.plan-section .plan-section {');
+    expect(blocks.length).toBeGreaterThanOrEqual(2);
+    for (const block of blocks) {
+      expect(block).toContain('border-top: 0;');
+      expect(block).toContain('padding-inline: 0;');
     }
   });
 
@@ -123,6 +133,23 @@ describe('revised visual contract (G-08, G-10, G-05, G-07, G-03, E9 long-text)',
   it('applies zebra striping to every table inside the artifact document', async () => {
     const css = await source('src/web/styles/globals.css');
     expect(css).toContain('.artifact-document tr:nth-child(even) td');
+  });
+
+  it('uses bottom-only cell rules and zebra striping in the coverage matrix', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [block] = ruleBlocks(css, '.coverage-table-boundary :is(th, td) {');
+    expect(block).toBeDefined();
+    expect(block).not.toMatch(/^\s*border\s*:/m);
+    expect(block).toContain('border-bottom: 1px solid var(--border);');
+    expect(css).toContain('.coverage-table-boundary tbody tr:nth-child(even) td');
+  });
+
+  it('places an attention-row provenance note in the content column', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [block] = ruleBlocks(css, '.attention-list > li > .source-note {');
+    expect(block).toBeDefined();
+    expect(block).toContain('grid-column: 2;');
+    expect(block).toContain('min-width: 0;');
   });
 
   it('fills every status chip as a shape, with active/complete reading more clearly on', async () => {
