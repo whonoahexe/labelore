@@ -102,4 +102,58 @@ describe('revised visual contract (G-08, G-10, G-05, G-07, G-03, E9 long-text)',
       .some((line) => line.length >= 200 && !line.includes(' '));
     expect(longUnbrokenLine).toBe(true);
   });
+
+  it('gives the first table column a floor without fixing the layout', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [block] = ruleBlocks(css, '.artifact-document table :is(th, td):first-child {');
+    expect(block).toBeDefined();
+    expect(block).toContain('min-width: 8ch;');
+    expect(block).toContain('white-space: nowrap;');
+    expect(css).not.toMatch(/^\.artifact-document table \{[^}]*table-layout:\s*fixed/m);
+  });
+
+  it('rules artifact tables horizontally only, with one weight and one color token', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [block] = ruleBlocks(css, '.artifact-document :is(th, td) {');
+    expect(block).toBeDefined();
+    expect(block).not.toMatch(/^\s*border\s*:/m);
+    expect(block).toContain('border-bottom: 1px solid var(--border)');
+  });
+
+  it('applies zebra striping to every table inside the artifact document', async () => {
+    const css = await source('src/web/styles/globals.css');
+    expect(css).toContain('.artifact-document tr:nth-child(even) td');
+  });
+
+  it('fills every status chip as a shape, with active/complete reading more clearly on', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [block] = ruleBlocks(css, '.status-chip {');
+    expect(block).toContain('color-mix(in oklch, var(--muted) 55%, transparent)');
+    const [svgBlock] = ruleBlocks(css, '.status-chip svg {');
+    expect(svgBlock).toContain('stroke-width: 2.25;');
+    expect(css).toContain('color-mix(in oklch, var(--primary) 65%, var(--border))');
+    expect(css).not.toContain('color-mix(in oklch, var(--primary) 58%, var(--border))');
+  });
+
+  it('gives a resolved reference trigger a resting appearance distinct from an authored link', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [block] = ruleBlocks(css, '.document-reference {');
+    expect(block).toBeDefined();
+    expect(block).toContain('var(--muted-foreground)');
+    expect(block).toContain('text-decoration-style: dotted');
+    expect(block).toContain('text-underline-offset: 0.15em');
+    expect(block).toContain('cursor: pointer');
+    expect(block).not.toMatch(/font-weight\s*:/);
+    expect(css).toMatch(/\.document-reference:hover,\s*\n\.document-reference:focus\s*\{[\s\S]*var\(--primary\)[\s\S]*solid/);
+    expect(css).toContain('.document-reference:focus-visible');
+    const [linkBlock] = ruleBlocks(css, '.artifact-document a {');
+    expect(linkBlock).toContain('var(--primary)');
+    expect(linkBlock).toContain('font-weight: 600;');
+  });
+
+  it('wraps a long unbroken outline token instead of overflowing the sticky column', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [block] = ruleBlocks(css, '.document-outline a {');
+    expect(block).toContain('overflow-wrap: anywhere;');
+  });
 });
