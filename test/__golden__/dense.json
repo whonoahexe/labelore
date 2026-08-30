@@ -2369,8 +2369,8 @@
                   }
                 },
                 "title": ".planning/phases/01-identity-slice/01-01-PLAN.md",
-                "bodyLength": 2374,
-                "bodyHash": "788b6eb2fd0765f9052fa81bc0d84cac8d4758d4281c024d1ef05e0f28c6fcf7",
+                "bodyLength": 3351,
+                "bodyHash": "820df2565f8755cf178e44d03e41b8049cc72b3222dc0e6af84d3d31b030e153",
                 "mtimeMs": 0,
                 "warnings": [],
                 "structured": {}
@@ -4664,8 +4664,8 @@
               }
             },
             "title": ".planning/phases/01-identity-slice/01-01-PLAN.md",
-            "bodyLength": 2374,
-            "bodyHash": "788b6eb2fd0765f9052fa81bc0d84cac8d4758d4281c024d1ef05e0f28c6fcf7",
+            "bodyLength": 3351,
+            "bodyHash": "820df2565f8755cf178e44d03e41b8049cc72b3222dc0e6af84d3d31b030e153",
             "mtimeMs": 0,
             "warnings": [],
             "structured": {}
@@ -6048,8 +6048,8 @@
                     }
                   },
                   "title": ".planning/phases/01-identity-slice/01-01-PLAN.md",
-                  "bodyLength": 2374,
-                  "bodyHash": "788b6eb2fd0765f9052fa81bc0d84cac8d4758d4281c024d1ef05e0f28c6fcf7",
+                  "bodyLength": 3351,
+                  "bodyHash": "820df2565f8755cf178e44d03e41b8049cc72b3222dc0e6af84d3d31b030e153",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {}
@@ -7272,8 +7272,8 @@
                     }
                   },
                   "title": ".planning/phases/01-identity-slice/01-01-PLAN.md",
-                  "bodyLength": 2374,
-                  "bodyHash": "788b6eb2fd0765f9052fa81bc0d84cac8d4758d4281c024d1ef05e0f28c6fcf7",
+                  "bodyLength": 3351,
+                  "bodyHash": "820df2565f8755cf178e44d03e41b8049cc72b3222dc0e6af84d3d31b030e153",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {}
@@ -8496,8 +8496,8 @@
                     }
                   },
                   "title": ".planning/phases/01-identity-slice/01-01-PLAN.md",
-                  "bodyLength": 2374,
-                  "bodyHash": "788b6eb2fd0765f9052fa81bc0d84cac8d4758d4281c024d1ef05e0f28c6fcf7",
+                  "bodyLength": 3351,
+                  "bodyHash": "820df2565f8755cf178e44d03e41b8049cc72b3222dc0e6af84d3d31b030e153",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {}
@@ -10085,6 +10085,17 @@
           {
             "scheme": "plan",
             "id": "01-01",
+            "artifactPath": ".planning/phases/01-identity-slice/01-01-PLAN.md",
+            "artifactKind": "plan",
+            "position": {
+              "line": 35,
+              "offset": 1091
+            },
+            "excerpt": "This plan runs after the 01-01 tracer has landed and before any real persistence layer exists."
+          },
+          {
+            "scheme": "plan",
+            "id": "01-01",
             "artifactPath": ".planning/phases/01-identity-slice/01-02-PLAN.md",
             "artifactKind": "plan",
             "position": {
@@ -11428,6 +11439,17 @@
             "offset": 146
           },
           "excerpt": "Purpose: prove the identity mechanism works before hardening it in plan 01-02."
+        },
+        {
+          "scheme": "plan",
+          "id": "01-01",
+          "artifactPath": ".planning/phases/01-identity-slice/01-01-PLAN.md",
+          "artifactKind": "plan",
+          "position": {
+            "line": 35,
+            "offset": 1091
+          },
+          "excerpt": "This plan runs after the 01-01 tracer has landed and before any real persistence layer exists."
         },
         {
           "scheme": "phase",
