@@ -223,12 +223,20 @@ export function DashboardPage(): React.JSX.Element {
                 {view.attention.slice(0, attentionLimit).map((item) => (
                   <li key={item.key} data-type={item.type}>
                     <AttentionIcon type={item.type} />
-                    <div>
-                      <span className="item-kind">{item.type}</span>
-                      <strong>{item.title}</strong>
-                      <p>{item.detail}</p>
-                      <SourceLink provenance={item.provenance} />
-                    </div>
+                    {item.url ? (
+                      <Link className="attention-action" to={item.url}>
+                        <span className="item-kind">{item.type}</span>
+                        <strong>{item.title}</strong>
+                        <p>{item.detail}</p>
+                      </Link>
+                    ) : (
+                      <div>
+                        <span className="item-kind">{item.type}</span>
+                        <strong>{item.title}</strong>
+                        <p>{item.detail}</p>
+                      </div>
+                    )}
+                    <SourceLink provenance={item.provenance} />
                   </li>
                 ))}
               </ol>
