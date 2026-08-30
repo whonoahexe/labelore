@@ -15,6 +15,7 @@ import {
 import type { RenderedDocument } from '../../rendering/markdown.ts';
 import { ReferencePreview, type ReferencePreviewState } from '../components/reference-preview.tsx';
 import { handleDocumentReferenceActivation } from './document-reference-activation.ts';
+import { scrollWhenSettled } from './scroll-settle.ts';
 export {
   handleDocumentReferenceActivation,
   restoreDocumentReferenceFocus,
@@ -143,8 +144,20 @@ export function DocumentView({ document }: { document: RenderedDocument }): Reac
     const rawHeading = window.location.hash.slice(1);
     if (rawHeading) {
       try {
-        const heading = window.document.getElementById(decodeURIComponent(rawHeading));
-        heading?.scrollIntoView({ block: 'start' });
+        const targetId = decodeURIComponent(rawHeading);
+        const disposeHeadingScroll = scrollWhenSettled({
+          measure: () => {
+            const heading = window.document.getElementById(targetId);
+            if (!heading) return null;
+            return heading.getBoundingClientRect().top + window.document.documentElement.scrollHeight;
+          },
+          scroll: () => {
+            window.document.getElementById(targetId)?.scrollIntoView({ block: 'start' });
+          },
+          schedule: (callback) => requestAnimationFrame(callback),
+          cancel: (handle) => cancelAnimationFrame(handle),
+        });
+        cleanups.push(disposeHeadingScroll);
       } catch {
         // A malformed fragment has no matching authored heading and is safely ignored.
       }
