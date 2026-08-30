@@ -1710,8 +1710,11 @@ pre {
   outline-offset: 2px;
 }
 
-.reference-preview {
+.reference-preview-positioner {
   z-index: 60;
+}
+
+.reference-preview {
   display: grid;
   width: min(24rem, calc(100vw - 2rem));
   gap: 1rem;
