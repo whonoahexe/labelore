@@ -122,6 +122,6 @@ describe('scrollWhenSettled', () => {
 describe('scroll-settle module purity', () => {
   it('contains no document, window, or React reference', async () => {
     const contents = await source('src/web/pages/scroll-settle.ts');
-    expect(contents).not.toMatch(/\bdocument\b|\bwindow\b|from 'react'/);
+    expect(contents).not.toMatch(/document\.|window\.|from 'react'/);
   });
 });

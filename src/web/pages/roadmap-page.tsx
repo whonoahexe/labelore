@@ -12,6 +12,7 @@ import {
   resolveRoadmapDeepLink,
   type RoadmapDeepLinkTarget,
 } from './roadmap-deep-link.ts';
+import { scrollWhenSettled } from './scroll-settle.ts';
 
 async function fetchRoadmap(): Promise<RoadmapViewModel> {
   const response = await fetch('/api/roadmap', { headers: { Accept: 'application/json' } });
@@ -38,8 +39,17 @@ function PhaseFlow({
     if (!targeted || openedRef.current) return;
     openedRef.current = true;
     if (detailsRef.current) detailsRef.current.open = true;
-    requestAnimationFrame(() => {
-      articleRef.current?.scrollIntoView({ block: 'start' });
+    return scrollWhenSettled({
+      measure: () => {
+        const element = articleRef.current;
+        if (!element) return null;
+        return element.getBoundingClientRect().top + document.documentElement.scrollHeight;
+      },
+      scroll: () => {
+        articleRef.current?.scrollIntoView({ block: 'start' });
+      },
+      schedule: (callback) => requestAnimationFrame(callback),
+      cancel: (handle) => cancelAnimationFrame(handle),
     });
   }, [targeted]);
 
