@@ -37,7 +37,7 @@ describe('revised visual contract (G-08, G-10, G-05, G-07, G-03, E9 long-text)',
     expect(block).toContain('max-width: 70rem;');
   });
 
-  it('flattens both plan-section shells to a single hairline top rule', async () => {
+  it('keeps one hairline on top-level plan sections', async () => {
     const css = await source('src/web/styles/globals.css');
     const blocks = ruleBlocks(css, '.plan-section {');
     expect(blocks.length).toBeGreaterThanOrEqual(2);
@@ -45,6 +45,16 @@ describe('revised visual contract (G-08, G-10, G-05, G-07, G-03, E9 long-text)',
       expect(block).not.toMatch(/^\s*(border|border-left|border-right|border-bottom|background)\s*:/m);
       expect(block).toContain('border-top: 1px solid var(--border)');
       expect(block).toContain('min-width: 0;');
+    }
+  });
+
+  it('removes recursive separators and horizontal inset from nested plan sections', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const blocks = ruleBlocks(css, '.plan-section .plan-section {');
+    expect(blocks.length).toBeGreaterThanOrEqual(2);
+    for (const block of blocks) {
+      expect(block).toContain('border-top: 0;');
+      expect(block).toContain('padding-inline: 0;');
     }
   });
 
@@ -125,6 +135,23 @@ describe('revised visual contract (G-08, G-10, G-05, G-07, G-03, E9 long-text)',
     expect(css).toContain('.artifact-document tr:nth-child(even) td');
   });
 
+  it('uses bottom-only cell rules and zebra striping in the coverage matrix', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [block] = ruleBlocks(css, '.coverage-table-boundary :is(th, td) {');
+    expect(block).toBeDefined();
+    expect(block).not.toMatch(/^\s*border\s*:/m);
+    expect(block).toContain('border-bottom: 1px solid var(--border);');
+    expect(css).toContain('.coverage-table-boundary tbody tr:nth-child(even) td');
+  });
+
+  it('places an attention-row provenance note in the content column', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [block] = ruleBlocks(css, '.attention-list > li > .source-note {');
+    expect(block).toBeDefined();
+    expect(block).toContain('grid-column: 2;');
+    expect(block).toContain('min-width: 0;');
+  });
+
   it('fills every status chip as a shape, with active/complete reading more clearly on', async () => {
     const css = await source('src/web/styles/globals.css');
     const [block] = ruleBlocks(css, '.status-chip {');
@@ -155,5 +182,49 @@ describe('revised visual contract (G-08, G-10, G-05, G-07, G-03, E9 long-text)',
     const css = await source('src/web/styles/globals.css');
     const [block] = ruleBlocks(css, '.document-outline a {');
     expect(block).toContain('overflow-wrap: anywhere;');
+  });
+
+  it('initializes Mermaid strictly with the app font and semantic root tokens', async () => {
+    const page = await source('src/web/pages/artifact-page.tsx');
+    expect(page).toContain("securityLevel: 'strict'");
+    expect(page).toContain('startOnLoad: false');
+    expect(page).toContain("theme: 'base'");
+    expect(page).toContain("fontFamily: rootStyle.getPropertyValue('--font-sans').trim()");
+    for (const token of ['--background', '--foreground', '--secondary', '--border']) {
+      expect(page).toContain(`rootStyle.getPropertyValue('${token}').trim()`);
+    }
+  });
+
+  it('themes Mermaid output from app tokens and bounds SVGs proportionally', async () => {
+    const css = await source('src/web/styles/globals.css');
+    for (const selector of [
+      '.mermaid svg {',
+      '.mermaid .node :is(rect, circle, ellipse, polygon, path) {',
+      '.mermaid :is(.nodeLabel, .edgeLabel, text) {',
+      '.mermaid :is(.flowchart-link, .edgePath path) {',
+      '.mermaid marker path {',
+    ]) {
+      expect(css).toContain(selector);
+    }
+    const [svg] = ruleBlocks(css, '.mermaid svg {');
+    expect(svg).toContain('width: auto;');
+    expect(svg).toContain('height: auto;');
+    expect(svg).toContain('max-width: 100%;');
+    expect(svg).toContain('max-height: min(70vh, 36rem);');
+    expect(svg).not.toContain('min-width:');
+  });
+
+  it('keeps both valid and browser-rejected Mermaid branches reachable in the dense fixture', async () => {
+    const fixture = await source(
+      'fixtures/dense/.planning/phases/01-identity-slice/01-01-PLAN.md',
+    );
+    expect(fixture.match(/```mermaid/g)).toHaveLength(2);
+    expect(fixture).toContain('flowchart TD\n    A[resolveIdentity] --> B[in-memory map lookup]');
+    expect(fixture).toContain('flowchart TD\n    A[unterminated');
+
+    const page = await source('src/web/pages/artifact-page.tsx');
+    expect(page).toContain("node.classList.add('mermaid-fallback')");
+    expect(page).toContain("node.dataset.mermaidRejected = 'browser-parse'");
+    expect(page).toContain('node.textContent = source');
   });
 });
