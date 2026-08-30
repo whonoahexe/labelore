@@ -517,14 +517,19 @@
   padding: 0.38rem 0.55rem;
 }
 
+.status-chip {
+  background: color-mix(in oklch, var(--muted) 55%, transparent);
+}
+
 .status-chip svg {
   width: 0.7rem;
   height: 0.7rem;
+  stroke-width: 2.25;
 }
 
 .status-chip[data-tone='active'],
 .status-chip[data-tone='complete'] {
-  border-color: color-mix(in oklch, var(--primary) 58%, var(--border));
+  border-color: color-mix(in oklch, var(--primary) 65%, var(--border));
   background: color-mix(in oklch, var(--primary) 9%, transparent);
   color: var(--primary);
 }
@@ -1587,9 +1592,14 @@ pre {
 }
 
 .artifact-document :is(th, td) {
-  border: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   padding: 0.45rem 0.65rem;
   text-align: left;
+}
+
+.artifact-document table :is(th, td):first-child {
+  min-width: 8ch;
+  white-space: nowrap;
 }
 
 .artifact-document pre {
@@ -2096,6 +2106,7 @@ pre {
 
 .document-outline a {
   display: block;
+  overflow-wrap: anywhere;
   color: var(--muted-foreground);
   font-size: 0.74rem;
   line-height: 1.4;
