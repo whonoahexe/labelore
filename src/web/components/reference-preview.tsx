@@ -33,7 +33,13 @@ export function ReferencePreview({
       }}
     >
       <Popover.Portal>
-        <Popover.Positioner anchor={state.trigger} sideOffset={8} align="start">
+        <Popover.Positioner
+          className="reference-preview-positioner"
+          anchor={state.trigger}
+          sideOffset={8}
+          align="start"
+          positionMethod="fixed"
+        >
           <Popover.Popup
             className="reference-preview"
             initialFocus
