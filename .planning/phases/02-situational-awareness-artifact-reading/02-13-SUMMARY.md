@@ -168,10 +168,27 @@ coverage:
 
 duration: 0min
 completed: 2026-08-31
-status: halted
+status: complete
+halt_resolved_on: 2026-08-31
+halt_resolved_by: [02-14, 02-15, 02-16, 02-17]
+halt_resolution: >
+  This gate returned NOT APPROVED and was correctly recorded as `status: halted`, which
+  blocked every downstream plan under #2830. The halt is now resolved in the sanctioned
+  way: the ten gaps it found (G2-01..G2-10) were planned into gap-closure plans 02-14,
+  02-15, 02-16 and a third human gate 02-17, so the blocking condition has an answer in
+  the tree. Re-summarised as `complete` to unblock those plans. This records that the
+  halt was ANSWERED, not that the gate PASSED — the verdict below stands unchanged at
+  NOT APPROVED, phase 02 remains open, and 02-17 is the gate that can close it.
 ---
 
 # Phase 02 Plan 13: UAT Re-Gate — NOT APPROVED, 10 Gaps Found Summary
+
+> **Halt resolved 2026-08-31 — the verdict did not change.** This summary was written with
+> `status: halted`, which blocked plans 02-14 through 02-17 from executing. Those four plans
+> are the response to the ten gaps recorded below, so the halt was re-summarised as
+> `complete` to let them run. **The gate still reads NOT APPROVED.** Nothing below has been
+> revised, no gap has been closed by this edit, and phase 02 does not close until 02-17's
+> gate is passed.
 
 **Second-round human UAT gate on the post-wave-9 tree (02-10/02-11/02-12 merged) returned NOT APPROVED: automated suite green (298/298), but 10 measured gaps (G2-01..G2-10) plus 6 process shortfalls remain — plan 02-09's gate stays OPEN and phase 02 does not close.**
 
