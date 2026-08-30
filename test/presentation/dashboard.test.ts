@@ -9,6 +9,7 @@ import type {
 import { buildDashboardViewModel } from '../../src/presentation/dashboard.ts';
 import {
   buildPhaseUrl,
+  buildPlanUrl,
   milestoneKeyOf,
   parsePresentationUrl,
   phaseKeyOf,
@@ -633,7 +634,12 @@ describe('buildDashboardViewModel', () => {
   });
 
   it('no attention destination is ever a bare phase token, and every non-null destination round-trips through parsePresentationUrl', () => {
-    const blocked = plan('01-02', false, [{ raw: '01-99', targetPlanKey: null }]);
+    // Dependency/checkpoint/coverage destinations are the owning plan's own key, which
+    // production code (project-presentation.ts) always assigns from buildPlanUrl — so this
+    // fixture builds a realistic plan key the same way, instead of the opaque `plan:01-02`
+    // shorthand the other fixtures in this file use for identity-comparison-only tests.
+    const realPlanKey = buildPlanUrl(LIVE_IDENTITY, '01-02');
+    const blocked: PlanDto = { ...plan('01-02', false, [{ raw: '01-99', targetPlanKey: null }]), key: realPlanKey };
     const view = buildDashboardViewModel(
       presentation(
         {
@@ -645,8 +651,8 @@ describe('buildDashboardViewModel', () => {
               text: 'Authored blocker',
             },
           ],
-          checkpoints: [checkpoint()],
-          coverageWaits: [coverageWait()],
+          checkpoints: [checkpoint({ planKey: realPlanKey })],
+          coverageWaits: [coverageWait({ planKey: realPlanKey })],
         },
         {
           roadmapComplete: true,
