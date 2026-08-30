@@ -190,3 +190,31 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 2. Situational Awareness & Artifact Reading | 12/12 | In Progress|  |
 | 3. Search, Browsing & Traceability | 0/2 | Not started | - |
 | 4. Portability & Degradation Hardening | 0/2 | Not started | - |
+
+## Backlog
+
+### Phase 999.1: Rename project from "GSD Lore" to "Labelore" (BACKLOG)
+
+**Goal:** [Captured for future planning]
+**Requirements:** TBD
+**Plans:** 0 plans
+
+Rename the product from **GSD Lore** to **Labelore**. Raised by the user on 2026-08-31
+during the phase 02 UAT re-gate, and deliberately kept out of that gate's scope.
+
+Known surfaces the rename touches — not exhaustive, confirm during planning:
+
+- `.planning/PROJECT.md` — project title and prose
+- `package.json` — `name`, `description`, and the `bin` entry
+- The CLI entrypoint's startup banner (`GSD Lore is reading <path>`)
+- `index.html` `<title>` and any in-app shell heading
+- `README` / docs
+- Fixture corpus names and any test asserting on the old string (the smoke test
+  prints `GSD Lore smoke passed for <corpus>`)
+- The repo directory `~/gsd-lore` and the git remote, if the rename extends that far
+
+Open question for planning: whether the repo/directory name changes too, or only the
+product name. The deployment constraint in PROJECT.md names `~/gsd-lore` explicitly.
+
+Plans:
+- [ ] TBD (promote with /gsd-review-backlog when ready)
