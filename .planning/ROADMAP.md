@@ -101,7 +101,7 @@ Plans:
   5. Requirement, phase, and plan IDs mentioned in prose are clickable and land on the right view through a shareable, bookmarkable URL, headings carry stable anchors so a link can target a specific section, and a mention with no definition stays plain text instead of becoming a broken link.
   6. Both light and dark themes render studio-portal's visual language — oklch tokens, `base-sera` components, lucide icons, squared corners — with legible contrast on real long-form artifact content, and wide tables, code blocks, and diagrams scroll inside their own containers while the page body never scrolls horizontally.
 
-**Plans**: 12/12 plans executed (02-09 superseded by 02-13; 02-13 re-gate run 2026-08-31, NOT APPROVED — 10 gaps recorded in 02-13-SUMMARY.md; gate remains open, phase not closed)
+**Plans**: 12/16 active plans executed (02-09 superseded by 02-13; 02-13 re-gate run 2026-08-31, NOT APPROVED — 10 gaps recorded in 02-13-SUMMARY.md; plans 02-14 through 02-17 close and re-gate those gaps)
 **UI hint**: yes
 
 Plans:
@@ -148,6 +148,19 @@ Plans:
 
 - [x] 02-13-PLAN.md — Blocking re-run of every UAT surface on the post-gap-closure tree, including the two the first gate never reached *(run 2026-08-31, gate NOT approved — 10 gaps recorded in 02-13-SUMMARY.md, G2-01..G2-10; plan 02-09's gate remains open)*
 
+**Wave 11** *(gap closure — blocked on Wave 10 gate failure)*
+
+- [ ] 02-14-PLAN.md — Root-caused nesting, popover, table, Mermaid, and provenance fixes (G2-01, G2-02, G2-04, G2-05, G2-06)
+
+**Wave 12** *(gap closure — blocked on Wave 11 completion)*
+
+- [ ] 02-15-PLAN.md — Registry-backed `.planning` artifact-path previews, with G2-03's source-path prerequisite recorded honestly
+- [ ] 02-16-PLAN.md — Reproduction-first attention routing, bounded Next descriptions, and normalized label/chip tokens (G2-07..G2-10)
+
+**Wave 13** *(gap closure — blocked on Wave 12 completion)*
+
+- [ ] 02-17-PLAN.md — Complete fresh-build human re-gate across themes, viewports, muted surfaces, fallbacks, scrollbar interactions, and destination branches
+
 ### Phase 3: Search, Browsing & Traceability
 
 **Goal**: Anything buried anywhere in `.planning/` is findable in seconds — by searching for an exact token, by walking the tree to it, or by following a requirement to the phase that covers it.
@@ -187,7 +200,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Read Layer & Domain Model | 4/4 | Complete    | 2026-08-24 |
-| 2. Situational Awareness & Artifact Reading | 12/12 | In Progress|  |
+| 2. Situational Awareness & Artifact Reading | 12/16 | In Progress|  |
 | 3. Search, Browsing & Traceability | 0/2 | Not started | - |
 | 4. Portability & Degradation Hardening | 0/2 | Not started | - |
 
@@ -217,4 +230,5 @@ Open question for planning: whether the repo/directory name changes too, or only
 product name. The deployment constraint in PROJECT.md names `~/gsd-lore` explicitly.
 
 Plans:
+
 - [ ] TBD (promote with /gsd-review-backlog when ready)
