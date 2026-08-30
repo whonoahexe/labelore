@@ -14,7 +14,7 @@ import type { VFile } from 'vfile';
 import type { Artifact } from '../domain/model.ts';
 import type { ReferencePreviewDto, ReferenceRegistry } from '../presentation/references.ts';
 import { rehypeResolvedReferences } from './linkify.ts';
-import { segmentPlanBody, type PlanSegment } from './plan-segments.ts';
+import { isRecognizedPlanTag, segmentPlanBody, type PlanSegment } from './plan-segments.ts';
 
 const MAX_MERMAID_SOURCE_BYTES = 256 * 1024;
 const PLAN_ATTRIBUTE_NAMES = ['type', 'gate', 'tdd'] as const;
@@ -269,12 +269,29 @@ function directChildren(segments: PlanSegment[], start: number, end: number): Pl
   );
 }
 
+/**
+ * Converts a PLAN wrapper tag name to a Title Case label — `execution_context` becomes
+ * "Execution Context", `read_first` becomes "Read First". Used for every segment, recognized or
+ * not, so there is no seam in presentation between the bespoke and generic paths.
+ */
+export function planSectionLabel(tag: string): string {
+  return tag
+    .split(/[_-]+/)
+    .filter((word) => word.length > 0)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
 function planSectionOpen(segment: PlanSegment): string {
   const attributes = PLAN_ATTRIBUTE_NAMES.flatMap((name) => {
     const value = segment.attributes[name];
     return value === undefined ? [] : [` data-plan-${name}="${escapeHtml(value)}"`];
   }).join('');
-  return `<section class="plan-section plan-section-${escapeHtml(segment.tag)}" data-plan-section="${escapeHtml(segment.tag)}"${attributes}><div class="plan-section-label">${escapeHtml(segment.tag.replaceAll('-', ' '))}</div>`;
+  // `data-plan-recognized` distinguishes the two paths for tests only — no stylesheet rule may
+  // ever target it (UI-SPEC E15 "partial": no visual seam between recognised and unrecognised
+  // sections).
+  const recognized = isRecognizedPlanTag(segment.tag);
+  return `<section class="plan-section plan-section-${escapeHtml(segment.tag)}" data-plan-section="${escapeHtml(segment.tag)}" data-plan-recognized="${recognized}"${attributes}><div class="plan-section-label">${escapeHtml(planSectionLabel(segment.tag))}</div>`;
 }
 
 async function renderMarkdownChunk(

@@ -1,4 +1,8 @@
-const RECOGNIZED_TAGS = new Set([
+// Bespoke-vs-generic presentation gate for the rendering layer only. Segmentation itself
+// (segmentPlanBody below) never consults this set — recognition decides presentation, never
+// whether a wrapper becomes a section at all (UI-SPEC "Artifact Rendering — Unknown PLAN
+// Sections", G-01 / G-11).
+export const RECOGNIZED_TAGS = new Set([
   'objective',
   'context',
   'decision',
@@ -17,6 +21,65 @@ const RECOGNIZED_TAGS = new Set([
   'verification',
   'success_criteria',
   'output',
+]);
+
+/** True when `tag` (case-insensitive) is on the bespoke-presentation list. */
+export function isRecognizedPlanTag(tag: string): boolean {
+  return RECOGNIZED_TAGS.has(tag.toLowerCase());
+}
+
+// Tags the segmenter must never absorb into its open/close stack: real HTML that GSD prose
+// legitimately authors. HTML's element set is closed and standardised, unlike GSD's open wrapper
+// vocabulary, so denying this closed set (rather than accepting an open one) is the inverse of the
+// G-01/G-11 defect, not a restatement of it. Includes HTML void elements (no closing tag — without
+// this exclusion a bare `<br>` or `<img>` would sit unclosed on the stack and emit a spurious
+// malformed warning at end of body) plus common phrasing/structural elements GSD artifacts author.
+export const HTML_PASSTHROUGH_TAGS = new Set([
+  'area',
+  'base',
+  'br',
+  'col',
+  'embed',
+  'hr',
+  'img',
+  'input',
+  'link',
+  'meta',
+  'source',
+  'track',
+  'wbr',
+  'a',
+  'b',
+  'blockquote',
+  'code',
+  'details',
+  'em',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'i',
+  'kbd',
+  'li',
+  'ol',
+  'p',
+  'pre',
+  's',
+  'small',
+  'span',
+  'strong',
+  'sub',
+  'summary',
+  'sup',
+  'table',
+  'tbody',
+  'td',
+  'th',
+  'thead',
+  'tr',
+  'ul',
 ]);
 const ALLOWED_ATTRIBUTES = new Set(['type', 'gate', 'tdd']);
 const MAX_ATTRIBUTE_SOURCE_LENGTH = 2_048;
@@ -65,6 +128,15 @@ function parseAttributes(source: string): Record<string, string> {
   return attributes;
 }
 
+// Blanks out inline code spans (`` `...` ``, any matching backtick run length) with same-length
+// whitespace so a prose mention like "the `<decisions>` block" or `` `test/__golden__/<fixture>.json` ``
+// never enters the tag scanner as a real wrapper. Length-preserving so match offsets against the
+// original line stay accurate. Triple-backtick fenced blocks are already handled per-line above;
+// this only targets same-line inline spans.
+function maskInlineCode(line: string): string {
+  return line.replace(/(`+)[^`]*?\1/g, (matched) => ' '.repeat(matched.length));
+}
+
 function malformedSegment(body: string, open: OpenTag, end: number, warning: string): PlanSegment {
   return {
     tag: open.tag,
@@ -81,9 +153,12 @@ function malformedSegment(body: string, open: OpenTag, end: number, warning: str
 }
 
 /**
- * Scans the bounded GSD PLAN wrapper grammar in one pass. Recognized tags inside fenced code are
- * ordinary Markdown, and a damaged wrapper becomes a local malformed segment rather than aborting
- * later valid siblings.
+ * Scans the bounded GSD PLAN wrapper grammar in one pass. Segmentation is unconditional: every
+ * syntactically well-formed wrapper outside fenced code becomes a segment regardless of whether its
+ * tag name is on the bespoke-presentation list — recognition decides presentation only, never
+ * whether a wrapper becomes a section at all (see `isRecognizedPlanTag`). Wrappers inside fenced
+ * code are ordinary Markdown, and a damaged wrapper becomes a local malformed segment rather than
+ * aborting later valid siblings.
  */
 export function segmentPlanBody(body: string): PlanSegment[] {
   const segments: PlanSegment[] = [];
@@ -108,11 +183,12 @@ export function segmentPlanBody(body: string): PlanSegment[] {
     }
 
     const tagPattern = /<(\/)?([A-Za-z][\w-]*)([^>]*)>/g;
+    const scanLine = maskInlineCode(line);
     let match: RegExpExecArray | null;
-    while ((match = tagPattern.exec(line)) !== null) {
+    while ((match = tagPattern.exec(scanLine)) !== null) {
       const closing = match[1] === '/';
       const tag = match[2].toLowerCase();
-      if (!RECOGNIZED_TAGS.has(tag)) continue;
+      if (HTML_PASSTHROUGH_TAGS.has(tag)) continue;
       const start = offset + match.index;
       const tokenEnd = start + match[0].length;
 
