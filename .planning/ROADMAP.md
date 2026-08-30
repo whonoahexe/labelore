@@ -101,7 +101,7 @@ Plans:
   5. Requirement, phase, and plan IDs mentioned in prose are clickable and land on the right view through a shareable, bookmarkable URL, headings carry stable anchors so a link can target a specific section, and a mention with no definition stays plain text instead of becoming a broken link.
   6. Both light and dark themes render studio-portal's visual language — oklch tokens, `base-sera` components, lucide icons, squared corners — with legible contrast on real long-form artifact content, and wide tables, code blocks, and diagrams scroll inside their own containers while the page body never scrolls horizontally.
 
-**Plans**: 8/13 plans executed (8 executed; 1 open human gate and 4 gap-closure plans pending from 02-UAT.md)
+**Plans**: 11/12 plans executed (02-09 superseded by 02-13; gap-closure wave 9 complete, 02-13 human gate pending)
 **UI hint**: yes
 
 Plans:
@@ -140,9 +140,9 @@ Plans:
 
 **Wave 9** *(gap closure — blocked on the 02-UAT.md gate failure)*
 
-- [ ] 02-10-PLAN.md — Unconditional PLAN wrapper segmentation with a generic labelled fallback, and the locked warm code theme (G-01, G-11, G-06)
-- [ ] 02-11-PLAN.md — Routable attention-row destinations and a settle-loop deep-link scroll (G-02, G-04)
-- [ ] 02-12-PLAN.md — Flattened nesting, enforced overflow chain with a drawn scrollbar, revised tables, badges and reference-trigger resting appearance (G-08, G-10, G-05, G-07, G-03)
+- [x] 02-10-PLAN.md — Unconditional PLAN wrapper segmentation with a generic labelled fallback, and the locked warm code theme (G-01, G-11, G-06)
+- [x] 02-11-PLAN.md — Routable attention-row destinations and a settle-loop deep-link scroll (G-02, G-04)
+- [x] 02-12-PLAN.md — Flattened nesting, enforced overflow chain with a drawn scrollbar, revised tables, badges and reference-trigger resting appearance (G-08, G-10, G-05, G-07, G-03)
 
 **Wave 10** *(gap closure — blocked on Wave 9 completion)*
 
@@ -187,6 +187,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Read Layer & Domain Model | 4/4 | Complete    | 2026-08-24 |
-| 2. Situational Awareness & Artifact Reading | 8/9 | In Progress|  |
+| 2. Situational Awareness & Artifact Reading | 11/12 | In Progress|  |
 | 3. Search, Browsing & Traceability | 0/2 | Not started | - |
 | 4. Portability & Degradation Hardening | 0/2 | Not started | - |
