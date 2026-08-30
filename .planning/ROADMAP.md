@@ -101,7 +101,7 @@ Plans:
   5. Requirement, phase, and plan IDs mentioned in prose are clickable and land on the right view through a shareable, bookmarkable URL, headings carry stable anchors so a link can target a specific section, and a mention with no definition stays plain text instead of becoming a broken link.
   6. Both light and dark themes render studio-portal's visual language — oklch tokens, `base-sera` components, lucide icons, squared corners — with legible contrast on real long-form artifact content, and wide tables, code blocks, and diagrams scroll inside their own containers while the page body never scrolls horizontally.
 
-**Plans**: 11/12 plans executed (02-09 superseded by 02-13; gap-closure wave 9 complete, 02-13 human gate pending)
+**Plans**: 12/12 plans executed (02-09 superseded by 02-13; 02-13 re-gate run 2026-08-31, NOT APPROVED — 10 gaps recorded in 02-13-SUMMARY.md; gate remains open, phase not closed)
 **UI hint**: yes
 
 Plans:
@@ -146,7 +146,7 @@ Plans:
 
 **Wave 10** *(gap closure — blocked on Wave 9 completion)*
 
-- [ ] 02-13-PLAN.md — Blocking re-run of every UAT surface on the post-gap-closure tree, including the two the first gate never reached
+- [x] 02-13-PLAN.md — Blocking re-run of every UAT surface on the post-gap-closure tree, including the two the first gate never reached *(run 2026-08-31, gate NOT approved — 10 gaps recorded in 02-13-SUMMARY.md, G2-01..G2-10; plan 02-09's gate remains open)*
 
 ### Phase 3: Search, Browsing & Traceability
 
@@ -187,6 +187,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Read Layer & Domain Model | 4/4 | Complete    | 2026-08-24 |
-| 2. Situational Awareness & Artifact Reading | 11/12 | In Progress|  |
+| 2. Situational Awareness & Artifact Reading | 12/12 | In Progress|  |
 | 3. Search, Browsing & Traceability | 0/2 | Not started | - |
 | 4. Portability & Degradation Hardening | 0/2 | Not started | - |
