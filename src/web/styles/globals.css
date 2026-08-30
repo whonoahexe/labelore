@@ -2312,9 +2312,33 @@ pre {
 
 .mermaid svg {
   display: block;
-  min-width: min(42rem, 100%);
+  width: auto;
   height: auto;
+  max-width: 100%;
+  max-height: min(70vh, 36rem);
   margin: 0 auto;
+  background: var(--background);
+  font-family: var(--font-sans);
+}
+
+.mermaid .node :is(rect, circle, ellipse, polygon, path) {
+  fill: var(--secondary) !important;
+  stroke: var(--border) !important;
+}
+
+.mermaid :is(.nodeLabel, .edgeLabel, text) {
+  color: var(--foreground) !important;
+  fill: var(--foreground) !important;
+  font-family: var(--font-sans) !important;
+}
+
+.mermaid :is(.flowchart-link, .edgePath path) {
+  stroke: var(--foreground) !important;
+}
+
+.mermaid marker path {
+  fill: var(--foreground) !important;
+  stroke: var(--foreground) !important;
 }
 
 .heading-copy {
