@@ -45,7 +45,7 @@ The "reviewing plans/output" pain.
 - [ ] **READ-01**: Markdown renders with GFM tables, syntax-highlighted code blocks, task lists, and blockquotes
 - [ ] **READ-02**: YAML frontmatter renders as structured panels — `must_haves`, `coverage`, `key_links`, `progress` presented as tables and badges, not raw YAML
 - [ ] **READ-03**: `PLAN.md`'s literal pseudo-XML tags (`<objective>`, `<task type="...">`, `<decision>`) render as visible structure — never swallowed as HTML blocks, never leaked as garbage text
-- [ ] **READ-04**: Rendered markdown is sanitized, so no HTML embedded in an artifact can execute
+- [x] **READ-04**: Rendered markdown is sanitized, so no HTML embedded in an artifact can execute
 - [ ] **READ-05**: A plan and its summary are readable together, matching the plan's `must_haves.truths` against the summary's `coverage` entries
 - [ ] **READ-06**: Headings in rendered documents carry stable anchors, so search results and cross-references can deep-link to a specific section
 
@@ -58,7 +58,7 @@ prose-scanning linkifier — there are no existing links to render.
 - [ ] **NAV-01**: A tree navigator mirrors `.planning/`'s real structure — root docs, `phases/`, `quick/`, `milestones/`, `research/` — expandable per phase
 - [ ] **NAV-02**: Requirement IDs appearing in prose (`AUTH-01`) become clickable links to the phase covering that requirement
 - [ ] **NAV-03**: Phase and plan references appearing in prose become clickable links to those phases and plans
-- [ ] **NAV-04**: A reference to an ID with no definition renders as plain text, never as a broken link
+- [x] **NAV-04**: A reference to an ID with no definition renders as plain text, never as a broken link
 - [ ] **NAV-05**: A requirements traceability view shows requirement → phase → status
 - [ ] **NAV-06**: URLs are shareable and bookmarkable, mapping onto milestone → phase → plan → artifact
 - [x] **NAV-07**: The loaded snapshot exposes a decision-mention index (decision ID → the files mentioning it), verifiable through the data-layer harness — built now so decision linking can be added later without reworking the assembly pass
@@ -167,13 +167,13 @@ Which phases cover which requirements. Populated during roadmap creation.
 | READ-01 | Phase 2 | Pending |
 | READ-02 | Phase 2 | Pending |
 | READ-03 | Phase 2 | Pending |
-| READ-04 | Phase 2 | Pending |
+| READ-04 | Phase 2 | Complete |
 | READ-05 | Phase 2 | Pending |
 | READ-06 | Phase 2 | Pending |
 | NAV-01 | Phase 3 | Pending |
 | NAV-02 | Phase 2 | Pending |
 | NAV-03 | Phase 2 | Pending |
-| NAV-04 | Phase 2 | Pending |
+| NAV-04 | Phase 2 | Complete |
 | NAV-05 | Phase 3 | Pending |
 | NAV-06 | Phase 2 | Pending |
 | NAV-07 | Phase 1 | Complete |
