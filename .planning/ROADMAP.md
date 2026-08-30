@@ -101,7 +101,7 @@ Plans:
   5. Requirement, phase, and plan IDs mentioned in prose are clickable and land on the right view through a shareable, bookmarkable URL, headings carry stable anchors so a link can target a specific section, and a mention with no definition stays plain text instead of becoming a broken link.
   6. Both light and dark themes render studio-portal's visual language — oklch tokens, `base-sera` components, lucide icons, squared corners — with legible contrast on real long-form artifact content, and wide tables, code blocks, and diagrams scroll inside their own containers while the page body never scrolls horizontally.
 
-**Plans**: 8/9 plans executed (6 executed; 3 gap-closure plans pending from 02-VERIFICATION.md)
+**Plans**: 8/13 plans executed (8 executed; 1 open human gate and 4 gap-closure plans pending from 02-UAT.md)
 **UI hint**: yes
 
 Plans:
@@ -136,7 +136,17 @@ Plans:
 
 **Wave 8** *(gap closure — blocked on Wave 7 completion)*
 
-- [ ] 02-09-PLAN.md — Blocking per-surface light/dark contrast gate on real long-form content and the repaired navigation flow
+- [ ] 02-09-PLAN.md — Blocking per-surface light/dark contrast gate on real long-form content and the repaired navigation flow *(run 2026-08-29, gate NOT approved — 11 gaps recorded in 02-UAT.md; superseded by the re-run gate 02-13)*
+
+**Wave 9** *(gap closure — blocked on the 02-UAT.md gate failure)*
+
+- [ ] 02-10-PLAN.md — Unconditional PLAN wrapper segmentation with a generic labelled fallback, and the locked warm code theme (G-01, G-11, G-06)
+- [ ] 02-11-PLAN.md — Routable attention-row destinations and a settle-loop deep-link scroll (G-02, G-04)
+- [ ] 02-12-PLAN.md — Flattened nesting, enforced overflow chain with a drawn scrollbar, revised tables, badges and reference-trigger resting appearance (G-08, G-10, G-05, G-07, G-03)
+
+**Wave 10** *(gap closure — blocked on Wave 9 completion)*
+
+- [ ] 02-13-PLAN.md — Blocking re-run of every UAT surface on the post-gap-closure tree, including the two the first gate never reached
 
 ### Phase 3: Search, Browsing & Traceability
 
