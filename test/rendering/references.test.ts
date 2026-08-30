@@ -302,6 +302,7 @@ describe('sanitized metadata to controlled React preview bridge', () => {
 
   it('renders one Base UI preview with the locked fields, explicit Open, and exact focus return', async () => {
     const preview = await readFile('src/web/components/reference-preview.tsx', 'utf8');
+    const css = await readFile('src/web/styles/globals.css', 'utf8');
     const artifactPage = await readFile('src/web/pages/artifact-page.tsx', 'utf8');
     const activation = await readFile('src/web/pages/document-reference-activation.ts', 'utf8');
     const router = await readFile('src/web/app-router.tsx', 'utf8');
@@ -310,6 +311,9 @@ describe('sanitized metadata to controlled React preview bridge', () => {
       expect(preview).toContain(`preview.${field}`);
     }
     expect(preview).toContain("from '@base-ui/react/popover'");
+    expect(preview).toMatch(
+      /<Popover\.Positioner[\s\S]*className="reference-preview-positioner"[\s\S]*anchor=\{state\.trigger\}[\s\S]*sideOffset=\{8\}[\s\S]*align="start"[\s\S]*positionMethod="fixed"/,
+    );
     expect(preview).toContain('finalFocus={() => state.trigger}');
     expect(preview).toContain('href={preview.url}');
     expect(preview).toContain('Open');
@@ -318,5 +322,8 @@ describe('sanitized metadata to controlled React preview bridge', () => {
     expect(activation).toContain("'[data-reference-key]'");
     expect(router).toContain('presentationRoutePatterns.plan, element: <PlanPairPage />');
     expect(router).toContain('presentationRoutePatterns.artifact, element: <ArtifactPage />');
+    expect(css).toMatch(/\.reference-preview-positioner\s*\{[^}]*z-index:\s*(?:2[1-9]|[3-9]\d|\d{3,})/s);
+    expect(css).toMatch(/\.reference-preview\s*\{[^}]*width:\s*min\(24rem, calc\(100vw - 2rem\)\)/s);
+    expect(css).not.toMatch(/\.reference-preview\s*\{[^}]*z-index:/s);
   });
 });
