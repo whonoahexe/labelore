@@ -29,14 +29,14 @@ The "where am I overall" pain.
 - [ ] **DASH-01**: Landing view shows current milestone, current phase number and name, status, and progress, sourced from `STATE.md` frontmatter
 - [x] **DASH-02**: Landing view shows what comes next and what is blocked
 - [x] **DASH-03**: Landing view shows work awaiting human verification
-- [ ] **DASH-04**: Formal completion state (`ROADMAP.md` checkboxes) and observed disk state (presence of `SUMMARY.md` files) are presented as two separate signals, and any disagreement between them is visible rather than collapsed into one number
+- [x] **DASH-04**: Formal completion state (`ROADMAP.md` checkboxes) and observed disk state (presence of `SUMMARY.md` files) are presented as two separate signals, and any disagreement between them is visible rather than collapsed into one number
 
 ### Roadmap & Phases
 
 - [ ] **ROAD-01**: Roadmap view renders every phase with its goal, success criteria, mapped requirements, and dependencies
 - [ ] **ROAD-02**: A phase's plans are shown grouped by wave, including which waves are blocked on which
 - [ ] **ROAD-03**: The phase dependency shape renders as a legible flow rather than raw ASCII art
-- [ ] **ROAD-04**: Phase identity is milestone-qualified throughout the app, so v1.0 Phase 1 and v2.0 Phase 1 are never conflated
+- [x] **ROAD-04**: Phase identity is milestone-qualified throughout the app, so v1.0 Phase 1 and v2.0 Phase 1 are never conflated
 
 ### Artifact Reading
 
@@ -159,11 +159,11 @@ Which phases cover which requirements. Populated during roadmap creation.
 | DASH-01 | Phase 2 | Pending |
 | DASH-02 | Phase 2 | Complete |
 | DASH-03 | Phase 2 | Complete |
-| DASH-04 | Phase 2 | Pending |
+| DASH-04 | Phase 2 | Complete |
 | ROAD-01 | Phase 2 | Pending |
 | ROAD-02 | Phase 2 | Pending |
 | ROAD-03 | Phase 2 | Pending |
-| ROAD-04 | Phase 2 | Pending |
+| ROAD-04 | Phase 2 | Complete |
 | READ-01 | Phase 2 | Pending |
 | READ-02 | Phase 2 | Pending |
 | READ-03 | Phase 2 | Pending |
