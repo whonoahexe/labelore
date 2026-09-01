@@ -2219,11 +2219,18 @@ pre {
   list-style: none;
 }
 
+/* Hanging indent, not a 2-column grid: a task item's text after the first inline
+   element is a bare text node, which grid promotes to its own anonymous item and
+   wraps into the 1rem checkbox column — one word per line. Inline flow has no
+   such child-count assumption. */
 .artifact-document .task-list-item {
-  display: grid;
-  grid-template-columns: 1rem minmax(0, 1fr);
-  gap: 0.55rem;
-  align-items: baseline;
+  display: block;
+  padding-left: 1.55rem;
+}
+
+.artifact-document .task-list-item > input[type='checkbox'] {
+  margin-left: -1.55rem;
+  margin-right: 0.55rem;
 }
 
 .artifact-document input[type='checkbox'] {
