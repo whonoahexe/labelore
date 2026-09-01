@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useLocation } from 'react-router';
 import type { PhaseIdentity } from '../../domain/model.ts';
@@ -15,6 +15,7 @@ import {
 import type { RenderedDocument } from '../../rendering/markdown.ts';
 import { ReferencePreview, type ReferencePreviewState } from '../components/reference-preview.tsx';
 import { handleDocumentReferenceActivation } from './document-reference-activation.ts';
+import { toMermaidColor } from './mermaid-theme.ts';
 import { scrollWhenSettled } from './scroll-settle.ts';
 export {
   handleDocumentReferenceActivation,
@@ -111,6 +112,32 @@ async function copyHeadingUrl(id: string): Promise<void> {
   }
 }
 
+/**
+ * Owns the rendered-markdown DOM and nothing else.
+ *
+ * The effect below mutates this subtree in place — mermaid replaces a `<pre>` with an `<svg>`,
+ * and the fallback path rewrites classes on a rejected diagram. React does not know about those
+ * mutations, and re-rendering a node whose children come from a raw HTML string reinstates the
+ * original markup, silently erasing them. Every sibling state change in `DocumentView` (a runtime
+ * warning, opening a reference popover) would otherwise do exactly that. Memoizing on the html
+ * string — which is stable for the life of a document — keeps React away from the node entirely.
+ */
+const DocumentCanvas = memo(function DocumentCanvas({
+  html,
+  mountRef,
+}: {
+  html: string;
+  mountRef: React.RefObject<HTMLDivElement | null>;
+}): React.JSX.Element {
+  return (
+    <div
+      ref={mountRef}
+      className="artifact-document document-overflow-boundary"
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+});
+
 export function DocumentView({ document }: { document: RenderedDocument }): React.JSX.Element {
   const mountRef = useRef<HTMLDivElement>(null);
   const [runtimeWarnings, setRuntimeWarnings] = useState<string[]>([]);
@@ -175,25 +202,41 @@ export function DocumentView({ document }: { document: RenderedDocument }): Reac
     if (mermaidNodes.length > 0) {
       const rootStyle = getComputedStyle(window.document.documentElement);
       void import('mermaid').then(async ({ default: mermaid }) => {
-        mermaid.initialize({
-          securityLevel: 'strict',
+        const baseOptions = {
+          securityLevel: 'strict' as const,
           startOnLoad: false,
-          theme: 'base',
+          theme: 'base' as const,
           fontFamily: rootStyle.getPropertyValue('--font-sans').trim(),
-          themeVariables: {
-            background: rootStyle.getPropertyValue('--background').trim(),
-            primaryColor: rootStyle.getPropertyValue('--secondary').trim(),
-            primaryTextColor: rootStyle.getPropertyValue('--foreground').trim(),
-            primaryBorderColor: rootStyle.getPropertyValue('--border').trim(),
-            lineColor: rootStyle.getPropertyValue('--foreground').trim(),
-          },
-        });
+        };
+        try {
+          mermaid.initialize({
+            ...baseOptions,
+            themeVariables: {
+              background: toMermaidColor(rootStyle.getPropertyValue('--background').trim()),
+              primaryColor: toMermaidColor(rootStyle.getPropertyValue('--secondary').trim()),
+              primaryTextColor: toMermaidColor(rootStyle.getPropertyValue('--foreground').trim()),
+              primaryBorderColor: toMermaidColor(rootStyle.getPropertyValue('--border').trim()),
+              lineColor: toMermaidColor(rootStyle.getPropertyValue('--foreground').trim()),
+            },
+          });
+        } catch {
+          // A theme token mermaid's colour library cannot parse must never take out diagram
+          // rendering — fall back to mermaid's own default theme with no custom colours.
+          try {
+            mermaid.initialize(baseOptions);
+          } catch {
+            // Even the colourless retry can fail in principle; the per-node loop below still
+            // attempts every node and each falls back to readable source independently.
+          }
+        }
         for (const node of mermaidNodes) {
           if (disposed) return;
           const source = node.textContent ?? '';
           try {
             await mermaid.parse(source, { suppressErrors: false });
             await mermaid.run({ nodes: [node], suppressErrors: false });
+            // Clear the marker so a node that already carries an SVG is never queued twice.
+            node.removeAttribute('data-mermaid-pending');
           } catch {
             node.textContent = source;
             node.classList.remove('mermaid');
@@ -226,11 +269,7 @@ export function DocumentView({ document }: { document: RenderedDocument }): Reac
 
   return (
     <>
-      <div
-        ref={mountRef}
-        className="artifact-document document-overflow-boundary"
-        dangerouslySetInnerHTML={{ __html: document.html }}
-      />
+      <DocumentCanvas html={document.html} mountRef={mountRef} />
       {runtimeWarnings.map((warning, index) => (
         <p className="notice warning" role="status" key={`runtime-${index}`}>
           {warning}

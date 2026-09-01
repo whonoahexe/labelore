@@ -220,7 +220,11 @@ describe('document-first browser contract', () => {
     const source = await readFile('src/web/pages/artifact-page.tsx', 'utf8');
 
     expect(source.match(/dangerouslySetInnerHTML/g)).toHaveLength(1);
-    expect(source).toContain('__html: document.html');
+    // The finalized html reaches the mount and is injected verbatim. The read sits one level
+    // above the injection because the mount is memoized — a re-render would otherwise reinstate
+    // the original markup over mermaid's in-place SVG replacement.
+    expect(source).toContain('html={document.html}');
+    expect(source).toContain('__html: html');
     expect(source).toContain("securityLevel: 'strict'");
     expect(source).toContain('startOnLoad: false');
     expect(source).toContain('mermaid.parse(source, { suppressErrors: false })');
