@@ -12,8 +12,12 @@ import type {
   PlanDto,
   ProjectPresentation,
 } from '../../src/server/project-presentation.ts';
-import { buildDashboardViewModel } from '../../src/presentation/dashboard.ts';
-import type { AttentionItem } from '../../src/presentation/dashboard.ts';
+import {
+  buildDashboardViewModel,
+  provenanceLabel,
+  sourceDestination,
+  type AttentionItem,
+} from '../../src/presentation/dashboard.ts';
 import {
   buildPhaseUrl,
   buildPlanUrl,
@@ -21,7 +25,6 @@ import {
   phaseKeyOf,
   milestoneKeyOf,
 } from '../../src/presentation/routes.ts';
-import { provenanceLabel, sourceDestination } from '../../src/web/pages/dashboard-page.tsx';
 
 async function source(path: string): Promise<string> {
   return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
