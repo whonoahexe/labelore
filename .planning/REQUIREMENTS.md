@@ -26,28 +26,28 @@ rather than defensive polish.
 
 The "where am I overall" pain.
 
-- [ ] **DASH-01**: Landing view shows current milestone, current phase number and name, status, and progress, sourced from `STATE.md` frontmatter
+- [x] **DASH-01**: Landing view shows current milestone, current phase number and name, status, and progress, sourced from `STATE.md` frontmatter
 - [x] **DASH-02**: Landing view shows what comes next and what is blocked
 - [x] **DASH-03**: Landing view shows work awaiting human verification
 - [x] **DASH-04**: Formal completion state (`ROADMAP.md` checkboxes) and observed disk state (presence of `SUMMARY.md` files) are presented as two separate signals, and any disagreement between them is visible rather than collapsed into one number
 
 ### Roadmap & Phases
 
-- [ ] **ROAD-01**: Roadmap view renders every phase with its goal, success criteria, mapped requirements, and dependencies
-- [ ] **ROAD-02**: A phase's plans are shown grouped by wave, including which waves are blocked on which
-- [ ] **ROAD-03**: The phase dependency shape renders as a legible flow rather than raw ASCII art
+- [x] **ROAD-01**: Roadmap view renders every phase with its goal, success criteria, mapped requirements, and dependencies
+- [x] **ROAD-02**: A phase's plans are shown grouped by wave, including which waves are blocked on which
+- [x] **ROAD-03**: The phase dependency shape renders as a legible flow rather than raw ASCII art
 - [x] **ROAD-04**: Phase identity is milestone-qualified throughout the app, so v1.0 Phase 1 and v2.0 Phase 1 are never conflated
 
 ### Artifact Reading
 
 The "reviewing plans/output" pain.
 
-- [ ] **READ-01**: Markdown renders with GFM tables, syntax-highlighted code blocks, task lists, and blockquotes
-- [ ] **READ-02**: YAML frontmatter renders as structured panels — `must_haves`, `coverage`, `key_links`, `progress` presented as tables and badges, not raw YAML
-- [ ] **READ-03**: `PLAN.md`'s literal pseudo-XML tags (`<objective>`, `<task type="...">`, `<decision>`) render as visible structure — never swallowed as HTML blocks, never leaked as garbage text
+- [x] **READ-01**: Markdown renders with GFM tables, syntax-highlighted code blocks, task lists, and blockquotes
+- [x] **READ-02**: YAML frontmatter renders as structured panels — `must_haves`, `coverage`, `key_links`, `progress` presented as tables and badges, not raw YAML
+- [x] **READ-03**: `PLAN.md`'s literal pseudo-XML tags (`<objective>`, `<task type="...">`, `<decision>`) render as visible structure — never swallowed as HTML blocks, never leaked as garbage text
 - [x] **READ-04**: Rendered markdown is sanitized, so no HTML embedded in an artifact can execute
-- [ ] **READ-05**: A plan and its summary are readable together, matching the plan's `must_haves.truths` against the summary's `coverage` entries
-- [ ] **READ-06**: Headings in rendered documents carry stable anchors, so search results and cross-references can deep-link to a specific section
+- [x] **READ-05**: A plan and its summary are readable together, matching the plan's `must_haves.truths` against the summary's `coverage` entries
+- [x] **READ-06**: Headings in rendered documents carry stable anchors, so search results and cross-references can deep-link to a specific section
 
 ### Navigation & Cross-Linking
 
@@ -56,11 +56,11 @@ prose mentions, not markdown links, so this requires building an ID registry and
 prose-scanning linkifier — there are no existing links to render.
 
 - [ ] **NAV-01**: A tree navigator mirrors `.planning/`'s real structure — root docs, `phases/`, `quick/`, `milestones/`, `research/` — expandable per phase
-- [ ] **NAV-02**: Requirement IDs appearing in prose (`AUTH-01`) become clickable links to the phase covering that requirement
-- [ ] **NAV-03**: Phase and plan references appearing in prose become clickable links to those phases and plans
+- [x] **NAV-02**: Requirement IDs appearing in prose (`AUTH-01`) become clickable links to the phase covering that requirement
+- [x] **NAV-03**: Phase and plan references appearing in prose become clickable links to those phases and plans
 - [x] **NAV-04**: A reference to an ID with no definition renders as plain text, never as a broken link
 - [ ] **NAV-05**: A requirements traceability view shows requirement → phase → status
-- [ ] **NAV-06**: URLs are shareable and bookmarkable, mapping onto milestone → phase → plan → artifact
+- [x] **NAV-06**: URLs are shareable and bookmarkable, mapping onto milestone → phase → plan → artifact
 - [x] **NAV-07**: The loaded snapshot exposes a decision-mention index (decision ID → the files mentioning it), verifiable through the data-layer harness — built now so decision linking can be added later without reworking the assembly pass
 
 ### Search
@@ -75,14 +75,14 @@ The search half of "finding buried artifacts."
 
 ### Milestone History
 
-- [ ] **HIST-01**: Archived milestones are viewable and visually distinct from the active milestone
-- [ ] **HIST-02**: Archived phase trees under `milestones/` are browsable
+- [x] **HIST-01**: Archived milestones are viewable and visually distinct from the active milestone
+- [x] **HIST-02**: Archived phase trees under `milestones/` are browsable
 
 ### Presentation
 
-- [ ] **UI-01**: The interface uses studio-portal's visual language — its oklch token palette, shadcn `base-sera` component style, lucide icons, and squared-corner convention
-- [ ] **UI-02**: Light and dark themes both render correctly, with contrast verified on real long-form artifact content
-- [ ] **UI-03**: Wide content (tables, code blocks, diagrams) scrolls inside its own container; the page body never scrolls horizontally
+- [x] **UI-01**: The interface uses studio-portal's visual language — its oklch token palette, shadcn `base-sera` component style, lucide icons, and squared-corner convention
+- [x] **UI-02**: Light and dark themes both render correctly, with contrast verified on real long-form artifact content
+- [x] **UI-03**: Wide content (tables, code blocks, diagrams) scrolls inside its own container; the page body never scrolls horizontally
 
 ### Data Layer
 
@@ -156,37 +156,37 @@ Which phases cover which requirements. Populated during roadmap creation.
 | TGT-06 | Phase 4 | Pending |
 | TGT-07 | Phase 4 | Pending |
 | TGT-08 | Phase 4 | Pending |
-| DASH-01 | Phase 2 | Pending |
+| DASH-01 | Phase 2 | Complete |
 | DASH-02 | Phase 2 | Complete |
 | DASH-03 | Phase 2 | Complete |
 | DASH-04 | Phase 2 | Complete |
-| ROAD-01 | Phase 2 | Pending |
-| ROAD-02 | Phase 2 | Pending |
-| ROAD-03 | Phase 2 | Pending |
+| ROAD-01 | Phase 2 | Complete |
+| ROAD-02 | Phase 2 | Complete |
+| ROAD-03 | Phase 2 | Complete |
 | ROAD-04 | Phase 2 | Complete |
-| READ-01 | Phase 2 | Pending |
-| READ-02 | Phase 2 | Pending |
-| READ-03 | Phase 2 | Pending |
+| READ-01 | Phase 2 | Complete |
+| READ-02 | Phase 2 | Complete |
+| READ-03 | Phase 2 | Complete |
 | READ-04 | Phase 2 | Complete |
-| READ-05 | Phase 2 | Pending |
-| READ-06 | Phase 2 | Pending |
+| READ-05 | Phase 2 | Complete |
+| READ-06 | Phase 2 | Complete |
 | NAV-01 | Phase 3 | Pending |
-| NAV-02 | Phase 2 | Pending |
-| NAV-03 | Phase 2 | Pending |
+| NAV-02 | Phase 2 | Complete |
+| NAV-03 | Phase 2 | Complete |
 | NAV-04 | Phase 2 | Complete |
 | NAV-05 | Phase 3 | Pending |
-| NAV-06 | Phase 2 | Pending |
+| NAV-06 | Phase 2 | Complete |
 | NAV-07 | Phase 1 | Complete |
 | FIND-01 | Phase 3 | Pending |
 | FIND-02 | Phase 3 | Pending |
 | FIND-03 | Phase 3 | Pending |
 | FIND-04 | Phase 3 | Pending |
 | FIND-05 | Phase 3 | Pending |
-| HIST-01 | Phase 2 | Pending |
-| HIST-02 | Phase 2 | Pending |
-| UI-01 | Phase 2 | Pending |
-| UI-02 | Phase 2 | Pending |
-| UI-03 | Phase 2 | Pending |
+| HIST-01 | Phase 2 | Complete |
+| HIST-02 | Phase 2 | Complete |
+| UI-01 | Phase 2 | Complete |
+| UI-02 | Phase 2 | Complete |
+| UI-03 | Phase 2 | Complete |
 | DATA-01 | Phase 1 | Complete |
 | DATA-02 | Phase 1 | Complete |
 | DATA-03 | Phase 1 | Complete |

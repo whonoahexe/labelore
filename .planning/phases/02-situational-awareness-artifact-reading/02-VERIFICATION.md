@@ -1,220 +1,179 @@
 ---
 phase: 02-situational-awareness-artifact-reading
-verified: 2026-08-29T14:20:00Z
-status: gaps_found
-score: 4/6 truths verified
-behavior_unverified: 1
+verified: 2026-09-01T17:37:45Z
+status: passed
+score: 6/6 success criteria verified
+behavior_unverified: 0
 overrides_applied: 0
-gaps:
-  - truth: "The landing view's primary 'what comes next' / 'what is blocked' call-to-action navigates to a working destination"
-    status: failed
-    reason: >
-      `phaseWork()` and `blockerWork()` in src/presentation/dashboard.ts set `url: phase.key` /
-      `url: currentPhase?.key ?? '/roadmap'`. `PhaseDto.key` (src/server/project-presentation.ts:431,513)
-      is the bare `phaseKeyOf(identity)` identity segment (e.g. `p~vv1.0~n~v02~vsituational-awareness-artifact-reading`),
-      not a route — the real phase route is `buildPhaseUrl(identity)` = `/milestones/<milestoneKey>/phases/<phaseKeyOf(identity)>`
-      (src/presentation/routes.ts:157-162). No route pattern in src/web/app-router.tsx matches a bare
-      identity segment, so `<Link to={item.url}>` (src/web/pages/dashboard-page.tsx:70, rendered as the
-      `primary` "Next up" CTA at line 161, and reused for every preview and the blocker action) always
-      lands on the app's catch-all NotFound whenever the recommended action is phase- or blocker-kind
-      (not plan-kind). Reproduced live: running the app against this very project
-      (`node src/server/index.ts /home/cinedise/gsd-lore`) and against `/home/cinedise/studio-portal`,
-      `/api/dashboard`'s `next.immediate.url` and both `next.previews[].url` are bare identity keys
-      (`p~vv1.0~n~v02~vsituational-awareness-artifact-reading`, `p~vv1.0~n~v3~v`, `p~vv1.0~n~v4~v`,
-      `p~vv2.0~n~v04~vbulk-archive-downloads`) that the router does not register. This is CR-01 from
-      02-REVIEW.md, filed Critical, and it is unfixed in the tree submitted for this verification —
-      `git grep 'url: phase.key'` and `url: currentPhase?.key` still match dashboard.ts. No test in
-      test/presentation/dashboard.test.ts asserts `.url` for a `kind: 'phase'` or `kind: 'blocker'`
-      NextWorkItem (only `key`, line 285), which is how it shipped and stayed unnoticed through 236
-      passing tests.
-    artifacts:
-      - path: "src/presentation/dashboard.ts"
-        issue: "phaseWork()/blockerWork() build url from the raw identity key instead of buildPhaseUrl(identity)"
-    missing:
-      - "Import buildPhaseUrl in dashboard.ts and use it for phaseWork()'s and blockerWork()'s url fields, per the fix already specified in 02-REVIEW.md CR-01"
-      - "A regression test in test/presentation/dashboard.test.ts that builds a PhaseDto from the real phaseKeyOf/buildPhaseUrl helpers (not the file's opaque 'phase:01' fixture string) and asserts next.immediate.url round-trips through parsePresentationUrl to a phase route"
-  - truth: "A phase or milestone URL (including one produced by clicking a phase/plan ID mentioned in prose, per NAV-02/NAV-03) lands on a view scoped/opened to that specific phase"
-    status: failed
-    reason: >
-      `RoadmapPage` (src/web/pages/roadmap-page.tsx) never calls `useParams()` or reads
-      `useLocation()` even though `presentationRoutePatterns.milestone` and `.phase`
-      (`/milestones/:milestoneKey`, `/milestones/:milestoneKey/phases/:phaseKey`) both route to it
-      with the matched keys available (src/web/app-router.tsx:50-51). Every phase-scoped `<details
-      className="phase-disclosure">` renders collapsed by default (roadmap-page.tsx:64), so visiting
-      any phase-specific URL — including ones this app itself generates via `phasePreview` in
-      references.ts, `phaseRow` in roadmap.ts, and the SourceLink targets used by the prose linkifier
-      (NAV-02/NAV-03) — always renders the identical, fully-collapsed top-of-roadmap view rather than
-      the referenced phase opened or scrolled into view. This is WR-01 from 02-REVIEW.md, unfixed in
-      the tree submitted for this verification (`grep -n useParams src/web/pages/roadmap-page.tsx`
-      returns nothing).
-    artifacts:
-      - path: "src/web/pages/roadmap-page.tsx"
-        issue: "Ignores :milestoneKey/:phaseKey route params; always renders the full collapsed roadmap regardless of the matched route"
-    missing:
-      - "Read the matched phase/milestone key via useParams() (or parse useLocation().pathname with parsePresentationUrl) and, once the view loads, scroll the matching <details> into view and set its open attribute — per the fix specified in 02-REVIEW.md WR-01"
-deferred: []
-behavior_unverified_items:
-  - truth: "Both light and dark themes render legible contrast on real long-form artifact content (Success Criterion 6 / UI-02, coverage D3 in 02-06-SUMMARY.md and 01-03/02-01/02-03/02-06 SUMMARY entries)"
-    test: "Open fixtures/dense and a real long-form PLAN.md (e.g. from /home/cinedise/studio-portal) in a host browser at desktop and 390px, in both light and dark themes, and inspect prose, muted text, links in every state, badges, table chrome, highlighted code, Mermaid output, and reference-preview text/actions for readable foreground/background contrast."
-    expected: "All named surfaces read as legible in both themes on real content, not just synthetic fixtures."
-    why_human: "Contrast on rendered output cannot be derived from static source or grep. 02-06-SUMMARY.md itself records this deliverable (D3) as status: unknown and human_judgment: true — the styling fix (b523070, +589 lines to globals.css) was committed but never re-inspected in a browser afterward, by the executing agent's own account."
+re_verification:
+  previous_status: gaps_found
+  previous_score: 4/6
+  gaps_closed:
+    - "The landing view's primary 'what comes next' / 'what is blocked' call-to-action navigates to a working destination (CR-01)"
+    - "A phase or milestone URL lands on a view scoped/opened to that specific phase (WR-01)"
+  gaps_remaining: []
+  regressions: []
 ---
 
 # Phase 02: Situational Awareness & Artifact Reading Verification Report
 
 **Phase Goal:** Opening the dashboard on a project answers "where does the work stand" at a glance, and every artifact — plan, summary, research, or a type the tool has never seen — reads as a properly formatted, cross-linked document.
-**Verified:** 2026-08-29T14:20:00Z
-**Status:** gaps_found
-**Re-verification:** No — initial verification
+**Verified:** 2026-09-01T17:37:45Z
+**Status:** passed
+**Re-verification:** Yes — the existing `02-VERIFICATION.md` was stale (dated 2026-08-29, `status: gaps_found`, score 4/6). This report supersedes it after re-checking the current tree, including work done after that verification ran: plans 02-10 through 02-16, the human UAT gate 02-17 (approved 2026-09-01, nine defects found and fixed under quick task `260901-ten`), and a post-gate code review (`02-REVIEW.md`, 3 Warnings + 2 Info, resolved in commit `cfaedad`).
+
+## Prior Gaps: Verified Closed
+
+The stale verification's two blocking gaps were re-checked directly against source and confirmed fixed, not merely claimed fixed:
+
+1. **CR-01** ("Next up" CTA / blocker action pointed at a bare identity key, not a route). `src/presentation/dashboard.ts` now imports `buildPhaseUrl` from `./routes.ts` and both `phaseWork()` (line 226) and `blockerWork()` (line 266) call it. Confirmed live in a real browser against `~/studio-portal` (port 4181): clicking `a.next-primary` navigated to `/milestones/m~v2.0/phases/p~vv2.0~n~v04~vbulk-archive-downloads`, a route the roadmap itself registers for that phase. The fallback branch (no current phase) was separately confirmed against the synthetic blocker fixture (port 4182): the primary CTA resolves to `/roadmap` and navigating there works.
+
+2. **WR-01** (`RoadmapPage` never read route params, so every phase/milestone URL rendered the same fully-collapsed roadmap). `src/web/pages/roadmap-page.tsx` now imports `useLocation` from `react-router`, resolves the matched key via `resolveRoadmapDeepLink(pathname)`, and `PhaseFlow`'s `targeted` prop opens the matching `<details>` and scrolls it into view via `scrollWhenSettled`. Confirmed live: clicking the CTA above landed on the roadmap with exactly one `<details open>`, the phase heading read "Bulk Archive Downloads", and its bounding-box top was ~96px (scrolled to view). A hard reload of the resulting URL reproduced the identical state (1 open `<details>`, same targeted heading) — confirming the deep link is not session-dependent.
 
 ## Goal Achievement
 
-### Observable Truths
+### Observable Truths (Success Criteria)
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | Landing view shows current milestone/phase/status/progress from STATE, with formal vs. observed progress as two separate signals (SC1, DASH-01/DASH-04) | ✓ VERIFIED | `buildDashboardViewModel` (src/presentation/dashboard.ts) separately sources `formal.roadmapComplete`/`formal.plans` from ROADMAP.md checkboxes and `observed.plans` from SUMMARY.md presence; live query against this project's own `.planning/` and against studio-portal both return correctly separated `formal`/`observed`/`discrepancy` fields. 236/236 tests pass, including edge cases for null/unknown progress. |
-| 2 | Landing view surfaces "what comes next" and "what is blocked" as content (DASH-02/DASH-03) | ✓ VERIFIED | `nextWork()`/`attentionItems()` correctly select the next dependency-ready plan or phase, and blockers/coverage-human-judgment waits, in deterministic order — confirmed live against two real corpora (this project and studio-portal); attention list correctly surfaced 10 items including an authored STATE blocker and 8 `human_judgment` coverage waits. |
-| 3 | The "what comes next"/"what is blocked" items are actionable — clicking them lands on the named destination (SC1 implied navigability, DASH-02/DASH-03) | ✗ FAILED | See gap 1 (CR-01). Confirmed live: the dashboard's primary "Next up" CTA and every phase/blocker-kind preview 404 to NotFound on both this project and studio-portal. |
-| 4 | Roadmap view shows every phase's goal, success criteria, requirements, and plans grouped by wave, with milestone-qualified identity and archived milestones reachable and visually distinct (SC2, ROAD-01/02/04, HIST-01/02) | ✓ VERIFIED | `RoadmapViewModel`/`PhaseFlow` (roadmap.ts, roadmap-page.tsx) render success criteria, requirements, wave bands with `blockedBy`, and `data-archived` styling (`.roadmap-phase[data-archived='true']` in globals.css) distinguishes archive rows. `phaseKeyOf`/`buildPhaseUrl` correctly milestone-qualify identity (routes.ts). |
-| 5 | The phase dependency shape renders as a legible flow rather than ASCII art (SC2, ROAD-03) | ✓ VERIFIED | Implemented via `phase.authoredDependencies` (roadmap.ts:171) shown per-phase in the vertical spine, not via the ASCII `extractDependencyShape()` parse (which is computed in the handler but not consumed by any production UI — see Anti-Patterns for its own latent bug, WR-02, currently dead code). |
-| 6 | Navigating to a phase/milestone URL — including one reached by clicking a phase/plan reference in prose — opens/scopes the view to that specific phase (SC2/SC5, ROAD-01, NAV-02/03/06) | ✗ FAILED | See gap 2 (WR-01). `RoadmapPage` never reads route params; every phase/milestone URL renders the identical fully-collapsed top-of-roadmap view. |
-| 7 | A real multi-task PLAN.md renders `<objective>`/`<task>`/`<decision>` as visible structure with nested markdown intact, frontmatter as structured panels, GFM/tables/code/task-lists correctly, and no embedded HTML executes (SC3, READ-01/02/03/04) | ✓ VERIFIED | `segmentPlanBody` (plan-segments.ts, 213 lines) projects the recognized-tag allowlist; `rehypeSanitize` runs immediately after `rehypeRaw` and before link-rewrite/slug/Shiki (markdown.ts:250-251, independently confirmed correct ordering by 02-REVIEW.md); `buildFrontmatterPanels` (frontmatter-views.ts) provides guarded known-field panels plus an unconditional generic remainder. Backed by passing security-probing tests per 02-REVIEW.md. |
-| 8 | A plan and its summary read together, with `must_haves.truths` matched against `coverage` entries (SC4, READ-05) | ✓ VERIFIED | `buildCoverageMatrix` (coverage.ts, 167 lines) wired into `PlanPairPage` (plan-pair-page.tsx:117); exact-match-precedes-inference ordering and mutual-unique-tie handling covered by test/presentation/coverage.test.ts. |
-| 9 | Requirement/phase/plan IDs in prose are clickable with anchors and shareable URLs; undefined mentions stay plain text (SC5, NAV-02/03/04/06, READ-06) | ⚠️ Partial (see truth 6) | `references.ts`'s `phasePreview`/`planPreview` correctly build URLs via `buildPhaseUrl`/`buildPlanUrl` (unlike dashboard.ts); `rehypeResolvedReferences` (linkify.ts) only linkifies inside sanitized HTML, never inside code/pre/Mermaid source, per test/rendering/references.test.ts. The generated URL for a phase reference is correct in form but, per truth 6/gap 2, does not open/scope to that phase once followed. |
-| 10 | Both themes render studio-portal's visual language with legible contrast on real long-form content; wide tables/code/diagrams scroll locally while the page body never scrolls horizontally (SC6, UI-01/02/03) | ⚠️ PRESENT_BEHAVIOR_UNVERIFIED | oklch tokens (62 matches), lucide-react icons, and local `.table-scroll`/`.code-scroll`/`overflow-x: auto` containment rules are present and wired (globals.css). Contrast on real rendered content cannot be verified by static inspection — routed to human verification; see `behavior_unverified_items`. |
+| 1 | Landing view answers "where am I" with formal vs. observed as two separate signals (DASH-01/02/03/04) | ✓ VERIFIED | Live `/api/dashboard` on all three servers returns independently-sourced `completion.formal` (ROADMAP.md-derived) and `completion.observed` (SUMMARY.md-derived) fields, each carrying its own `provenance.ref`. On the degraded fallback fixture (port 4182) both correctly render as `null`/"Unavailable" rather than collapsing into a fabricated number. `attention` correctly surfaces both `discrepancy` items (formal vs. observed disagreement, e.g. "ROADMAP records 5/16; matching SUMMARY files record 7/16") and `blocker` items sourced from STATE.md — confirmed with 86 attention rows live against studio-portal. |
+| 2 | Roadmap shows every phase's goal/success-criteria/requirements/plans-by-wave, dependency shape as legible flow, milestone-qualified identity, archived milestones reachable and distinct (ROAD-01/02/03/04, HIST-01/02) | ✓ VERIFIED | Live DOM on `/roadmap` (studio-portal): 135 wave-related elements, 4 `[data-archived="true"]` rows, a `.history-milestone` disclosure that expands to reveal a full archived phase tree with correctly milestone-qualified URLs (`/milestones/m~v1.0/phases/p~vv1.0~n~v01~videntity-persistence-foundation/plans/01-01`, etc.). Dependency shape is rendered via the authored-dependency spine (`phase.authoredDependencies`), not raw ASCII. |
+| 3 | A real multi-task PLAN.md renders `<objective>`/`<task>`/`<decision>` as visible structure with nested markdown intact, frontmatter as structured panels, GFM/tables/code/task-lists render, no embedded HTML executes (READ-01/02/03/04) | ✓ VERIFIED | Live on `~/studio-portal/.planning/phases/01-portal-owned-identity-sessions/01-01-PLAN.md` (5 pseudo-XML tag occurrences in source): rendered DOM has 129 `[class*="plan-section"]` elements and zero literal tag leakage (`<objective>`, `</task>`, `</execution_context>` all absent from rendered text — the exact defect class G-01 from the stale 02-UAT.md, now closed). 3 tables and 8 `<pre>` code blocks render. Frontmatter panels confirmed on a direct artifact URL: 10 `.metadata-panel` elements (1 known, 9 generic remainder), matching `buildFrontmatterPanels`'s known/generic split. No `dialog` events fired (no injected script executed) across all pages visited. |
+| 4 | A plan and its summary read together, `must_haves.truths` matched against summary `coverage` (READ-05) | ✓ VERIFIED | `/plans/01-01` (studio-portal) renders `#coverage-matrix` with 14 rows, built by `buildCoverageMatrix` over live snapshot data — not a static fixture. |
+| 5 | Requirement/phase/plan IDs in prose are clickable to shareable/bookmarkable URLs, headings have stable anchors, undefined mentions stay plain text (NAV-02/03/04/06, READ-06) | ✓ VERIFIED | Live: `.document-reference` buttons render for both requirement IDs (`AUTH-01`, `AUTH-02`, `AUTH-03`) and plan IDs (`01-03`, `01-04`, `01-05`) in a real SUMMARY.md. Clicking one opens a popover with an "Open" link whose `href` (`/milestones/m~v2.0/phases/.../plans/01-03`) correctly resolves — end-to-end trigger→preview→navigate confirmed, not just URL shape. Headings carry `id` attributes (`rehype-slug`). NAV-04 (undefined mentions stay plain text) is covered by passing `references.test.ts` assertions for empty/malformed/definition-less cases — this is the one truth not independently re-driven live in this pass, since it requires constructing a fixture with a deliberately undefined ID; the existing automated coverage plus consistent linkify.ts behavior (confirmed correctly linkifying only defined IDs above) is accepted as sufficient. |
+| 6 | Both themes render studio-portal's visual language with legible contrast on real content; wide tables/code/diagrams scroll in their own containers, page body never scrolls horizontally (UI-01/02/03) | ✓ VERIFIED | Mermaid: 0 pending nodes, 1 rendered SVG, in both light and dark on the dense fixture's real diagram (closing the F1 defect fixed under `260901-ten`, re-confirmed live here, not just re-read from the summary). Contrast: live-measured `.document-reference` at 4.74:1 (light) / 7.66:1 (dark), matching the 02-17 gate's own instrumented numbers exactly; body prose measured far above threshold. Overflow: at 390px viewport, `document.body.scrollWidth === window.innerWidth` (no horizontal page scroll) while a wide `<pre>` block measured `scrollWidth=1349` vs `clientWidth=279` with `overflow-x: auto` — content scrolls locally, page does not. This corroborates (not merely repeats) the quick-task fixes for F2/F3/F4. |
 
-**Score:** 4/6 roadmap Success Criteria fully verified without qualification (SC3, SC4 clean; SC1 and SC2/SC5 each contain one confirmed defect); 1 truth present-but-behavior-unverified (SC6 contrast).
+**Score:** 6/6 roadmap Success Criteria verified. 0 truths present-but-behavior-unverified.
 
 ### Required Artifacts
 
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
-| `src/presentation/dashboard.ts` | Pure current/next/attention/formal-vs-observed selectors | ⚠️ WIRED, defect present | `buildDashboardViewModel` exists, exports match, is imported by `project-presentation.ts` and consumed by `dashboard-page.tsx`. `phaseWork()`/`blockerWork()` produce non-navigable `url` values (CR-01). |
-| `src/presentation/roadmap.ts` | Ordered active/history phase and wave view models | ✓ VERIFIED | Exists, exported types match plan frontmatter, wired to `/api/roadmap` and `roadmap-page.tsx`. |
-| `src/web/pages/roadmap-page.tsx` | Vertical roadmap and archived milestone browser | ⚠️ WIRED, defect present | Renders correctly from the API but ignores route params (WR-01). |
-| `src/rendering/markdown.ts` | Sanitized GFM/Shiki/heading rendering pipeline | ✓ VERIFIED | 404 lines, sanitize ordering confirmed, exports match. |
-| `src/rendering/plan-segments.ts` | Reusable PLAN semantic/checkpoint syntax projection | ✓ VERIFIED | 213 lines, recognized-tag allowlist, used by markdown.ts only for `kind === 'plan'` bodies. |
-| `src/rendering/frontmatter-views.ts` | Known-field builder registry with generic remainder | ✓ VERIFIED | 91 lines, exports match. |
-| `src/presentation/coverage.ts` | Conservative deterministic truth-to-coverage matrix | ✓ VERIFIED | 167 lines, wired into `plan-pair-page.tsx`. |
-| `src/presentation/references.ts` | Milestone-contextual reference registry | ✓ VERIFIED | 184 lines, correctly uses `buildPhaseUrl`/`buildPlanUrl` (unlike dashboard.ts). |
-| `src/rendering/linkify.ts` | Post-sanitize HAST reference plugin | ✓ VERIFIED | 113 lines, runs after sanitize per pipeline order. |
-| `src/web/pages/plan-pair-page.tsx`, `artifact-page.tsx`, `dashboard-page.tsx` | Reader/dashboard pages | ✓ VERIFIED | All present, routed in `app-router.tsx`, consume the above selectors. |
-| `src/web/styles/globals.css` | Theme tokens + local overflow containment | ✓ VERIFIED (static) | oklch tokens, `.table-scroll`/`.code-scroll` wrappers, `body { max-width: 100% }` present; visual/contrast correctness itself requires a browser (see truth 10). |
+| `src/presentation/dashboard.ts` | Pure current/next/attention/formal-vs-observed selectors | ✓ VERIFIED | `phaseWork()`/`blockerWork()` now call `buildPhaseUrl(identity)`; live URLs resolve to registered routes. |
+| `src/presentation/roadmap.ts` | Ordered active/history phase and wave view models | ✓ VERIFIED | Wired to `/api/roadmap` and `roadmap-page.tsx`; wave/dependency data confirmed rendering. |
+| `src/web/pages/roadmap-page.tsx` | Vertical roadmap and archived milestone browser, scoped to route params | ✓ VERIFIED | Now reads `useLocation()`, resolves target via `resolveRoadmapDeepLink`, opens and scrolls the matched `<details>`; survives reload. |
+| `src/web/pages/roadmap-deep-link.ts` | Deep-link target resolution helper | ✓ VERIFIED | Present, imported by `roadmap-page.tsx`; `resolveRoadmapDeepLink`/`milestoneContainsDeepLink` both used. |
+| `src/web/pages/scroll-settle.ts` | Layout-settle-aware scroll helper | ✓ VERIFIED | Used by `PhaseFlow`'s targeted-scroll effect; addresses the earlier "scroll lost on long documents" gap (G-04 in stale 02-UAT.md). |
+| `src/rendering/markdown.ts` | Sanitized GFM/Shiki/heading rendering pipeline | ✓ VERIFIED | `rehype-sanitize` correctly ordered per 02-REVIEW.md; no injected script executed live. |
+| `src/rendering/plan-segments.ts` | Reusable PLAN semantic/checkpoint syntax projection | ✓ VERIFIED | 129 rendered plan-section elements on a real 5-tag PLAN.md; no literal tag leakage. |
+| `src/rendering/frontmatter-views.ts` | Known-field builder registry with generic remainder | ✓ VERIFIED | 10 rendered `.metadata-panel` elements (known + generic) on a live artifact. |
+| `src/presentation/coverage.ts` | Conservative deterministic truth-to-coverage matrix | ✓ VERIFIED | 14 live-rendered coverage rows on a real plan/summary pair. |
+| `src/presentation/references.ts` | Milestone-contextual reference registry | ✓ VERIFIED | `phasePreview`/`planPreview` build correct URLs; end-to-end click confirmed. |
+| `src/rendering/linkify.ts` | Post-sanitize HAST reference plugin | ✓ VERIFIED | `.document-reference` triggers render only for defined IDs. |
+| `src/web/pages/mermaid-theme.ts` | oklch→sRGB conversion for mermaid theming | ✓ VERIFIED | Chroma percentDivisor fixed from 100 to 250 (0.4 CSS Color 4 reference range) per WR-01 of `02-REVIEW.md`, confirmed live: mermaid renders correctly in both themes. |
+| `src/server/index.ts` | Artifact/document HTTP routes | ✓ VERIFIED | `jsonRecord()` now applied to `frontmatter`/`structured` before `c.json()`, closing the circular-YAML 500 risk (WR-02 of `02-REVIEW.md`). |
+| `src/web/pages/artifact-page.tsx`, `plan-pair-page.tsx`, `dashboard-page.tsx` | Reader/dashboard pages | ✓ VERIFIED | All routed and consuming the above selectors; `DocumentCanvas` memoization confirmed correct by 02-REVIEW.md (prevents diagram/preview state loss on sibling re-render, the F1 root cause). |
+| `src/web/styles/globals.css` | Theme tokens + local overflow containment | ✓ VERIFIED | `pre`/`table`/`.mermaid` element selectors carry `overflow-x: auto`; live-measured local scroll containment at 390px with no page-level horizontal scroll. |
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 |------|-----|-----|--------|---------|
-| `src/rendering/markdown.ts` | `src/rendering/plan-segments.ts` | `segmentPlanBody`, `kind === 'plan'` only | ✓ WIRED | Confirmed by grep and passing markdown.test.ts assertions. |
-| `src/server/index.ts` | `src/server/artifact-index.ts` | `buildArtifactIndex`/lookup | ✓ WIRED | Route handlers resolve tokens only against the in-memory index; traversal-shaped tokens fail closed per 02-REVIEW.md. |
-| `src/web/pages/artifact-page.tsx` | `src/rendering/markdown.ts` | `DocumentView` mounts sanitized HTML, runs strict Mermaid | ✓ WIRED | Confirmed by review and passing security tests. |
-| `src/presentation/dashboard.ts` (`phaseWork`/`blockerWork`) | `src/presentation/routes.ts` (`buildPhaseUrl`) | Should build phase routes via `buildPhaseUrl` | ✗ NOT WIRED | Uses the bare `phase.key` identity segment instead — see gap 1. |
-| `src/web/pages/roadmap-page.tsx` | route params (`:milestoneKey`/`:phaseKey`) | Should scope/open the matched phase | ✗ NOT WIRED | `RoadmapPage` never calls `useParams()`/`useLocation()` — see gap 2. |
-| `src/presentation/references.ts` (`phasePreview`/`planPreview`) | `src/presentation/routes.ts` | `buildPhaseUrl`/`buildPlanUrl` | ✓ WIRED | Correct, unlike dashboard.ts. |
+| `src/presentation/dashboard.ts` (`phaseWork`/`blockerWork`) | `src/presentation/routes.ts` (`buildPhaseUrl`) | Build phase routes via `buildPhaseUrl` | ✓ WIRED | Confirmed both by source (`grep -n buildPhaseUrl`) and live click-through navigation. |
+| `src/web/pages/roadmap-page.tsx` | route params via `useLocation()` | Scope/open the matched phase | ✓ WIRED | Confirmed live: clicking a dashboard CTA lands on the roadmap with the correct `<details>` open and scrolled; reload reproduces it. |
+| `src/rendering/markdown.ts` | `src/rendering/plan-segments.ts` | `segmentPlanBody`, `kind === 'plan'` only | ✓ WIRED | 129 plan-section elements rendered live from a real multi-tag PLAN.md. |
+| `src/presentation/references.ts` (`phasePreview`/`planPreview`) | `src/presentation/routes.ts` | `buildPhaseUrl`/`buildPlanUrl` | ✓ WIRED | End-to-end: trigger click → popover → "Open" link → correct destination URL, confirmed live. |
+| `src/web/pages/plan-pair-page.tsx` | `src/presentation/coverage.ts` | `buildCoverageMatrix` | ✓ WIRED | 14 live rows rendered from real snapshot data. |
+| `src/web/pages/artifact-page.tsx` | `src/rendering/frontmatter-views.ts` | `buildFrontmatterPanels` | ✓ WIRED | 10 live `.metadata-panel` elements. |
 
 ### Data-Flow Trace (Level 4)
 
 | Artifact | Data Variable | Source | Produces Real Data | Status |
 |----------|---------------|--------|---------------------|--------|
-| `/api/dashboard` `next.immediate.url` | `phase.key` / `currentPhase?.key` | `phaseKeyOf(identity)` (raw identity segment, not a route) | Real value, wrong shape for navigation | ⚠️ STATIC-SHAPED (looks like a URL, isn't one) |
-| `/api/roadmap` phase rows `url` | `buildPhaseUrl(identity)` | routes.ts | Yes | ✓ FLOWING |
+| `/api/dashboard` `next.immediate.url` | `buildPhaseUrl(phase.identity)` | `routes.ts` | Yes — resolves to a route the roadmap itself registers | ✓ FLOWING |
+| `/api/roadmap` phase rows `url` | `buildPhaseUrl(identity)` | `routes.ts` | Yes | ✓ FLOWING |
 | Rendered artifact HTML | sanitized document string | `createArtifactRenderer` over snapshot artifact body | Yes | ✓ FLOWING |
 | Coverage matrix rows | plan `must_haves.truths` × summary `coverage` | `buildCoverageMatrix` over live snapshot | Yes | ✓ FLOWING |
+| Roadmap deep-link target | `resolveRoadmapDeepLink(pathname)` | `useLocation()` + live `/api/roadmap` phase URLs | Yes — matched against actual phase `url` fields, not a static index | ✓ FLOWING |
 
 ### Behavioral Spot-Checks
 
 | Behavior | Command | Result | Status |
 |----------|---------|--------|--------|
-| Full automated gate on final integrated tree | `npm test` | 20 files, 236 tests, all pass | ✓ PASS |
-| Production build succeeds | `npm run build` | Succeeds (with an unrelated >500kB chunk-size advisory, not an error) | ✓ PASS |
-| Dense-fixture server smoke | `npm run smoke -- fixtures/dense` | `GSD Lore smoke passed for fixtures/dense` | ✓ PASS |
-| Dashboard "Next up" URL resolves to a registered route (this project) | `node src/server/index.ts /home/cinedise/gsd-lore` then `curl /api/dashboard` | `next.immediate.url = "p~vv1.0~n~v02~vsituational-awareness-artifact-reading"` — matches no route pattern in `app-router.tsx` | ✗ FAIL (confirms gap 1) |
-| Dashboard "Next up" URL resolves to a registered route (studio-portal, external real corpus) | `node src/server/index.ts /home/cinedise/studio-portal` then `curl /api/dashboard` | `next.immediate.url = "p~vv2.0~n~v04~vbulk-archive-downloads"` — same defect, reproduced on the project's own qualitative UAT corpus | ✗ FAIL (confirms gap 1) |
-| `RoadmapPage` reads route params | `grep -n "useParams\|useLocation" src/web/pages/roadmap-page.tsx` | No matches | ✗ FAIL (confirms gap 2) |
+| Full automated test suite | `npx vitest run` | 26 files, 369 tests, all pass | ✓ PASS |
+| Typecheck | `npm run typecheck` | Clean, no output | ✓ PASS |
+| Dashboard CTA navigates to a registered route (studio-portal) | Live browser click on `a.next-primary` | Lands on `/milestones/m~v2.0/phases/p~vv2.0~n~v04~vbulk-archive-downloads` with `<h3>Bulk Archive Downloads</h3>` open and scrolled to top | ✓ PASS |
+| Deep link reload reproduces scoped view | Direct navigation to the same phase URL | 1 open `<details>`, same targeted heading | ✓ PASS |
+| Fallback blocker branch navigates (no current phase) | Live browser click against port-4182 fixture | Primary CTA `/roadmap`, navigation succeeds | ✓ PASS |
+| Mermaid renders in both themes | Live browser, dense fixture, light + dark | 0 pending, 1 SVG in each theme | ✓ PASS |
+| No embedded HTML executes | Live browser, `dialog` event listener across all pages visited | 0 alerts triggered | ✓ PASS |
+| No page-level horizontal scroll at 390px | Live `document.body.scrollWidth` vs `window.innerWidth` | Equal (390 === 390) | ✓ PASS |
+| Wide code block scrolls locally | Live `pre.scrollWidth` vs `pre.clientWidth` | 1349 vs 279, `overflow-x: auto` | ✓ PASS |
+| Reference trigger → popover → correct destination | Live click-through on `.document-reference` | "Open" link resolves to `/milestones/.../plans/01-03` | ✓ PASS |
+| Archived milestone phase tree browsable | Live click on `.history-milestone summary` | Milestone-qualified phase/plan links render (`/milestones/m~v1.0/phases/...`) | ✓ PASS |
+| Contrast on real content, both themes | Canvas-based sRGB contrast computation, live DOM | `.document-reference`: 4.74:1 light / 7.66:1 dark — matches 02-17 gate's own instrumented numbers | ✓ PASS |
+
+### Post-gate code review findings (02-REVIEW.md, 2026-09-01)
+
+All three Warnings and one of two Info items claimed fixed in commit `cfaedad` were independently re-checked against current source, not accepted from the commit message alone:
+
+| Finding | Fix expected | Verified in source |
+|---------|-------------|---------------------|
+| WR-01 (mermaid-theme.ts oklch chroma range) | `percentDivisor` for chroma changed from 100 to 250 | ✓ `parsePercentOrFraction(cRaw, 250)` at line 83 |
+| WR-02 (circular-YAML 500 risk on document/artifact routes) | `jsonRecord()` applied before `c.json()` | ✓ `frontmatter: jsonRecord(...)`, `structured: jsonRecord(...)` at `src/server/index.ts:54-55` |
+| WR-03 (unhandled mermaid chunk-load rejection) | `.catch()` added to the dynamic import chain | ✓ `chunk.catch(() => {...})` at `src/web/pages/artifact-page.tsx:253` |
+| IN-01 (duplicate `.attention-list p` CSS rule) | Merged into one block | ✓ Single rule block at `src/web/styles/globals.css:797-802` |
+| IN-02 (dead CSS in `index.html`) | Not claimed fixed by commit `cfaedad` | Not re-checked — Info-severity, cosmetic dead code, does not affect any observable truth |
 
 ### Requirements Coverage
 
-| Requirement | Source Plan | Description | Status | Evidence |
-|-------------|-------------|--------------|--------|----------|
-| DASH-01 | 02-01, 02-02, 02-03, 02-06 | Landing view shows current milestone/phase/status/progress from STATE | ✓ SATISFIED | Verified live against two corpora. |
-| DASH-02 | 02-02, 02-03, 02-06 | Landing view shows what comes next and what is blocked | ⚠️ SATISFIED w/ defect | Content is shown correctly; the generated link for it is broken (CR-01) whenever the item is phase/blocker kind. |
-| DASH-03 | 02-02, 02-03, 02-06 | Landing view shows work awaiting human verification | ✓ SATISFIED | `human_judgment`/coverage waits correctly surfaced in `attention`, confirmed live (8 items on this project). |
-| DASH-04 | 02-02, 02-03, 02-06 | Formal vs. observed completion presented as two separate signals | ✓ SATISFIED | `formal`/`observed`/`discrepancy` fields independently sourced, tested at the null/unknown boundary. |
-| ROAD-01 | 02-03, 02-06 | Roadmap renders every phase's goal/criteria/requirements/dependencies | ⚠️ SATISFIED w/ defect | Content renders; deep-linking to a specific phase doesn't scope/open it (WR-01). |
-| ROAD-02 | 02-03, 02-06 | Plans grouped by wave, blocked-on shown | ✓ SATISFIED | `waveBands`/`blockedBy` rendered per phase. |
-| ROAD-03 | 02-03, 02-06 | Dependency shape as legible flow, not ASCII | ✓ SATISFIED | Implemented via authored-dependency spine, not the (unused, buggy) ASCII parse. |
-| ROAD-04 | 02-02, 02-03, 02-06 | Phase identity milestone-qualified throughout | ✓ SATISFIED | `phaseKeyOf`/`buildPhaseUrl` embed `milestoneVersion`; duplicate-identity round trip tested. |
-| READ-01 | 02-04, 02-06 | GFM tables/code/task-lists/blockquotes render | ✓ SATISFIED | markdown.ts pipeline, tested. |
-| READ-02 | 02-04, 02-06 | Frontmatter as structured panels | ✓ SATISFIED | `buildFrontmatterPanels`, guarded + generic remainder. |
-| READ-03 | 02-04, 02-06 | PLAN pseudo-XML tags render as visible structure | ✓ SATISFIED | `segmentPlanBody`, recognized-tag allowlist, tested. |
-| READ-04 | 02-04, 02-06 | Rendered markdown sanitized, no embedded HTML executes | ✓ SATISFIED | `rehypeSanitize` correctly ordered; independently confirmed by 02-REVIEW.md. |
-| READ-05 | 02-05, 02-06 | Plan/summary readable together via coverage matching | ✓ SATISFIED | `buildCoverageMatrix`, tested. |
-| READ-06 | 02-04, 02-06 | Stable heading anchors | ✓ SATISFIED | `rehype-slug` in pipeline; deduped IDs tested. |
-| NAV-02 | 02-05, 02-06 | Requirement IDs in prose become clickable links | ✓ SATISFIED | `rehypeResolvedReferences`, tested for adjacency/punctuation cases. |
-| NAV-03 | 02-05, 02-06 | Phase/plan references in prose become clickable links | ⚠️ SATISFIED w/ defect | Link target URL is correctly formed; following it does not scope the destination view (shared root cause with ROAD-01/WR-01). |
-| NAV-04 | 02-05, 02-06 | Undefined-ID mentions stay plain text | ✓ SATISFIED | Tested for empty/malformed/definition-less cases. |
-| NAV-06 | 02-02, 02-06 | URLs shareable/bookmarkable, map onto milestone→phase→plan→artifact | ⚠️ SATISFIED w/ defect | Encoding/round-trip is correct (`parsePresentationUrl`, tested); the phase-URL "land on the right view" half is broken (WR-01). |
-| HIST-01 | 02-03, 02-06 | Archived milestones viewable, visually distinct | ✓ SATISFIED | `data-archived` styling, History section. |
-| HIST-02 | 02-03, 02-06 | Archived phase trees browsable | ✓ SATISFIED | `MilestoneTree` reused for history entries. |
-| UI-01 | 02-03, 02-06 | studio-portal visual language (oklch/base-sera/lucide/squared) | ✓ SATISFIED (static) | Tokens, icon imports, squared radii present in source. |
-| UI-02 | 02-03, 02-06 | Both themes render correctly, contrast verified on real content | ? NEEDS HUMAN | Explicitly unresolved — 02-06-SUMMARY.md's own D3 deliverable is `status: unknown`. |
-| UI-03 | 02-03, 02-06 | Wide content scrolls locally, page body never scrolls horizontally | ⚠️ SATISFIED (static), NEEDS HUMAN (behavior) | CSS containment rules present; actual no-horizontal-scroll behavior at 390px needs a browser. |
+All 23 requirement IDs listed in the task (DASH-01/02/03/04, ROAD-01/02/03/04, READ-01/02/03/04/05/06, NAV-02/03/04/06, HIST-01/02, UI-01/02/03) are claimed by at least one plan's frontmatter `requirements:` field (cross-checked by aggregating all `02-*-PLAN.md` files, excluding the superseded `02-09`). No orphaned requirements.
 
-No orphaned requirements: all 23 IDs mapped to Phase 2 in REQUIREMENTS.md are claimed by at least one plan's frontmatter, and no plan claims an ID outside that set.
+| Requirement | Status | Evidence |
+|-------------|--------|----------|
+| DASH-01 | ✓ SATISFIED | Live milestone/phase/status/progress rendering, confirmed on 3 corpora including a degraded fallback. |
+| DASH-02 | ✓ SATISFIED | "What comes next" content renders and its CTA navigates correctly (CR-01 closed). |
+| DASH-03 | ✓ SATISFIED | Blockers/human-judgment waits surfaced; 86 attention rows live against studio-portal. |
+| DASH-04 | ✓ SATISFIED | `formal`/`observed` independently sourced with distinct provenance; degrades to null/"Unavailable" together rather than fabricating a number. |
+| ROAD-01 | ✓ SATISFIED | Deep-linking now scopes/opens the correct phase (WR-01 closed). |
+| ROAD-02 | ✓ SATISFIED | 135 wave-related elements rendered live. |
+| ROAD-03 | ✓ SATISFIED | Authored-dependency spine, not ASCII. |
+| ROAD-04 | ✓ SATISFIED | `phaseKeyOf`/`buildPhaseUrl` milestone-qualify identity throughout. |
+| READ-01 | ✓ SATISFIED | Tables/code/task-lists render live. |
+| READ-02 | ✓ SATISFIED | 10 live `.metadata-panel` elements (known + generic). |
+| READ-03 | ✓ SATISFIED | 129 plan-section elements, zero literal tag leakage on a real 5-tag PLAN.md. |
+| READ-04 | ✓ SATISFIED | No injected script executed across all pages visited. |
+| READ-05 | ✓ SATISFIED | 14 live coverage-matrix rows from real data. |
+| READ-06 | ✓ SATISFIED | Heading `id` attributes present via rehype-slug. |
+| NAV-02 | ✓ SATISFIED | Requirement IDs clickable, confirmed end-to-end. |
+| NAV-03 | ✓ SATISFIED | Phase/plan references clickable and now correctly scope the destination (shared fix with ROAD-01). |
+| NAV-04 | ✓ SATISFIED | Covered by passing `references.test.ts` for undefined/malformed cases; consistent with observed linkify behavior. |
+| NAV-06 | ✓ SATISFIED | Deep links reload-stable and shareable, confirmed live. |
+| HIST-01 | ✓ SATISFIED | `data-archived="true"` styling distinguishes archive rows. |
+| HIST-02 | ✓ SATISFIED | Archived phase trees browsable with correct milestone-qualified URLs, confirmed live. |
+| UI-01 | ✓ SATISFIED | oklch tokens, lucide icons, squared corners present and rendering. |
+| UI-02 | ✓ SATISFIED | Contrast measured live in both themes; matches the human-approved 02-17 gate's own instrumented numbers. Deferred: mermaid diagram visual styling (acknowledged non-blocking, see below). |
+| UI-03 | ✓ SATISFIED | Wide content scrolls locally; no page-level horizontal scroll at 390px, confirmed live. |
 
 ### Anti-Patterns Found
 
 | File | Line | Pattern | Severity | Impact |
 |------|------|---------|----------|--------|
-| `src/presentation/dashboard.ts` | 183, 218-232 | `url: phase.key` / `url: currentPhase?.key ?? '/roadmap'` — opaque identity key used as a route | 🛑 Blocker | Primary dashboard CTA and blocker-resolution link 404 (gap 1 / CR-01). |
-| `src/web/pages/roadmap-page.tsx` | whole file | No `useParams()`/`useLocation()` — route params ignored | 🛑 Blocker | Phase/milestone deep links don't scope/open the target (gap 2 / WR-01). |
-| `src/planning-repo/handlers/roadmap.ts` | 118-122, 167 | `extractDependencyShape(fm.body)` matches before archived `<details>` blocks are stripped; can surface an archived milestone's diagram | ℹ️ Info | Currently dead code — no production UI consumer of `structured.dependencyShape` was found (`grep -rn dependencyShape src/` outside tests/handler). Latent bug (WR-02 in 02-REVIEW.md); does not currently affect a rendered truth, but will silently mis-surface data if ever wired to the UI. |
-| `src/presentation/dashboard.ts` | 351-354, 380-384 | `computedPercent.display` unrounded (`"28.571428571428573%"`) | ℹ️ Info | Field unused by any reviewed React page today (WR-03 in 02-REVIEW.md); part of the public `/api/dashboard` contract, so it will ship unrounded to a future consumer. |
-| `src/web/pages/artifact-page.tsx` | 300-304 | Warning list items keyed by their own text | ℹ️ Info | Possible React key collision on duplicate warning text (IN-01 in 02-REVIEW.md); cosmetic dev-mode risk only. |
+| `.planning/REQUIREMENTS.md` | 29, 36-38, 45-63, 78-85 | The prose checklist (`- [ ]`) for DASH-01, ROAD-01/02/03, READ-01/02/03/05/06, NAV-02/03/06, HIST-01/02, UI-01/02/03 and the summary table (`| ... | Pending |`) were not updated to reflect completion, even though all of these are now functionally verified | ℹ️ Info | Documentation bookkeeping only — does not reflect a codebase gap. Every one of these IDs is independently confirmed working above. Recommend updating REQUIREMENTS.md's checkboxes/table before closing the phase, since a future contributor reading only that file would be misled. |
+| `index.html` | 17-288 (IN-02 from 02-REVIEW.md) | ~150 lines of dead critical-CSS scaffold targeting classNames no longer present in `src/web` | ℹ️ Info | Cosmetic dead code, no behavioral effect; not claimed fixed by commit `cfaedad`. |
 
-No `TBD`/`FIXME`/`XXX`/`TODO`/`HACK`/`PLACEHOLDER` debt markers found in any phase-modified source file (one `TBD` match is a code comment describing ROADMAP.md's own literal "Plans: TBD" syntax, not a debt marker).
+No `TBD`/`FIXME`/`XXX`/`TODO`/`HACK`/`PLACEHOLDER` debt markers found in any phase-modified source file.
+
+### Deferred Items (not gaps)
+
+Per `.planning/STATE.md`'s Deferred Items table, both acknowledged and excluded from this verification's scope:
+
+| Item | Status |
+|------|--------|
+| Mermaid diagram styling — rendering is correct and bounded (confirmed live: 379×462, 0 pending), but the diagrams' visual design was judged "ugly" at the human gate and is explicitly deferred, not a defect. | Open, deferred at v0.1 milestone close |
+| `.artifact-metadata > summary span` renders at 9.92px, under a 10px accessibility floor. Contrast passes (4.74 light / 6.99 dark); only the size is open. | Open, deferred at v0.1 milestone close |
 
 ### Human Verification Required
 
-### 1. Light/dark contrast on real long-form content
-
-**Test:** Open `fixtures/dense` and a real multi-task `PLAN.md` (e.g. from `/home/cinedise/studio-portal`) in a host browser, at desktop and 390px, in both light and dark themes.
-**Expected:** Prose, muted text, links in every interaction state, badges, table headers/cells/borders, highlighted code tokens/background, Mermaid labels/lines/background, and reference-preview trigger/popup text/actions all read as legible against their actual rendered backgrounds.
-**Why human:** Contrast on rendered output is not derivable from source or grep. `02-06-SUMMARY.md`'s own D3 deliverable records `status: unknown` and `human_judgment: true` — the contrast-affecting styling change (`b523070`, +589 lines to `globals.css`) landed but was never re-inspected in a browser afterward, by the executing agent's own account.
+None. All six success criteria were verified through a combination of source inspection, the full automated test suite (369/369 passing), and live browser-driven checks (Playwright against Chromium) across three real running corpora — this project's own `.planning/`, the `~/studio-portal` reference corpus named by the phase's own success criteria, and a synthetic fallback-blocker fixture. Contrast, navigation, and rendering claims were independently re-measured rather than accepted from SUMMARY.md prose, and matched the numbers already produced by the human-approved 02-17 UAT gate.
 
 ### Gaps Summary
 
-Phase 2 delivers a substantively complete, well-tested read-only reader: the security-critical markdown
-sanitization pipeline, the PLAN semantic-tag projection, the frontmatter panel system, the coverage
-matrix, and the prose linkifier are all genuinely wired to real data with passing regression coverage,
-and the requirement traceability is clean (all 23 IDs accounted for, no orphans).
+None. The two Critical/Warning-severity gaps recorded in the stale `02-VERIFICATION.md` (CR-01: dashboard CTA pointed at a non-route identity string; WR-01: `RoadmapPage` ignored its own route params) are both confirmed fixed in the current tree, with the fix verified at the source level and end-to-end in a live browser, not merely re-read from commit messages. The subsequent human UAT gate (02-17, approved 2026-09-01) found and closed nine further defects (mermaid non-rendering, contrast, prose measure, 320px overflow, a dead CSS selector, scrollbar weight, popover positioning, nested-section numbering, table zebra tone) under quick task `260901-ten`. The post-gate code review (`02-REVIEW.md`) found zero Critical issues and its three Warnings plus one Info item were confirmed fixed in commit `cfaedad`. Two items remain open by explicit human deferral (mermaid diagram visual polish; one metadata label at 9.92px) — both are recorded in `.planning/STATE.md`'s Deferred Items table and are not phase-goal blockers.
 
-Two gaps prevent a clean pass, both already identified and fully diagnosed by the phase's own code
-review (02-REVIEW.md CR-01, WR-01) and reproduced independently here by running the app against two
-real corpora (this project and studio-portal):
-
-1. **CR-01 (Critical, unfixed):** the dashboard's most prominent interactive element — the "Next up"
-   action and the blocker-resolution link — points at a non-route identity string whenever the
-   recommended action is phase- or blocker-kind, which is the common case (not an edge case): it fired
-   on this very project's own dashboard and on the studio-portal reference corpus in the exact
-   verification runs performed for this report. Clicking it 404s.
-2. **WR-01 (Warning, unfixed):** `RoadmapPage` never reads its own route params, so every phase- or
-   milestone-scoped URL — including ones the app's own prose linkifier (NAV-02/NAV-03) generates —
-   lands on the same fully-collapsed top-of-roadmap view rather than the referenced phase.
-
-Both were flagged by review before this verification ran and remain present in the code as submitted.
-Given the phase's stated Core Value ("immediately know where the work stands... without reading a
-single file by hand"), a dead primary call-to-action is not a cosmetic nit — it sends the user back to
-manually hunting through the collapsed roadmap for the exact information the dashboard exists to
-surface. Recommend closing both via `/gsd-plan-phase --gaps` before proceeding to Phase 3, which
-depends on Phase 2's routing conventions.
-
-The third open item — light/dark contrast on real long-form content (UI-02) — is not a code-level gap;
-it is an explicitly acknowledged, still-open human-verification item the phase's own 02-06-SUMMARY.md
-already flags rather than silently passing.
+The only non-codebase finding is that `.planning/REQUIREMENTS.md`'s own checklist/table was not updated to mark these requirement IDs complete — a documentation-sync gap, not a functional one.
 
 ---
 
-_Verified: 2026-08-29T14:20:00Z_
+_Verified: 2026-09-01T17:37:45Z_
 _Verifier: Claude (gsd-verifier)_

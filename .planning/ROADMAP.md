@@ -45,7 +45,7 @@ against fixtures Phase 1 already built.
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Read Layer & Domain Model** - Headless snapshot of any `.planning/` tree, proven against sparse and dense fixtures via a JSON harness (completed 2026-08-24)
-- [ ] **Phase 2: Situational Awareness & Artifact Reading** - The dashboard, roadmap view, markdown pipeline, and prose linkifier — first pixels
+- [x] **Phase 2: Situational Awareness & Artifact Reading** - The dashboard, roadmap view, markdown pipeline, and prose linkifier — first pixels (completed 2026-09-01)
 - [ ] **Phase 3: Search, Browsing & Traceability** - Full-text search over source markdown, tree navigator, requirements traceability
 - [ ] **Phase 4: Portability & Degradation Hardening** - Adversarial proof against sparse, unknown-type, and broken projects, plus the refresh seam
 
@@ -159,7 +159,7 @@ Plans:
 
 **Wave 13** *(gap closure — blocked on Wave 12 completion)*
 
-- [ ] 02-17-PLAN.md — Complete fresh-build human re-gate across themes, viewports, muted surfaces, fallbacks, scrollbar interactions, and destination branches
+- [x] 02-17-PLAN.md — Complete fresh-build human re-gate across themes, viewports, muted surfaces, fallbacks, scrollbar interactions, and destination branches
 
 ### Phase 3: Search, Browsing & Traceability
 
@@ -200,7 +200,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Read Layer & Domain Model | 4/4 | Complete    | 2026-08-24 |
-| 2. Situational Awareness & Artifact Reading | 15/16 | In Progress|  |
+| 2. Situational Awareness & Artifact Reading | 16/16 | Complete    | 2026-09-01 |
 | 3. Search, Browsing & Traceability | 0/2 | Not started | - |
 | 4. Portability & Degradation Hardening | 0/2 | Not started | - |
 
