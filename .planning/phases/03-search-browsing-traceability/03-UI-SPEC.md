@@ -1,7 +1,7 @@
 ---
 phase: "3"
 slug: "search-browsing-traceability"
-status: draft
+status: approved
 shadcn_initialized: true
 preset: b3Dqcuo4kU
 created: "2026-09-02"
@@ -136,6 +136,8 @@ chip borders on non-active/non-complete statuses, or any body text.
 | Element | Copy |
 |---------|------|
 | Primary CTA | "See all N results" — dropdown-to-`/search` transition link (the one net-new user-facing action this phase adds; every other interaction is navigation into content that already has its own established copy, e.g. `Popover`'s existing "Open"). |
+| Placeholder (header search field, nothing typed) | `Search` — minimal, matching the app's icon-plus-field chrome convention. No dropdown renders until a query is typed. |
+| Error state (search endpoint failure) | `Search is unavailable.` — rendered as a single `.notice.destructive` row at reduced scale *inside* the dropdown, so the message appears at the field the user is typing in. Distinct from the `Indexing…` transient (D-04), which is not an error. |
 | Empty state heading (search results, zero matches) | `No matches for "{query}".` |
 | Empty state body (search results, zero matches) | `Nothing in .planning/ contains that exact token or its prefix. Search does not correct typos or match approximately — check the spelling and try again.` (Grounds the empty state in D-05's deliberate no-fuzzy-matching decision so it reads as a design choice, not a bug.) |
 | Empty state heading (dropdown, zero matches, index ready) | `No matches` (compact — dropdown has no room for a full sentence) |
@@ -152,45 +154,56 @@ chip borders on non-active/non-complete statuses, or any body text.
 
 ## UI Considerations
 
-Applicable state considerations resolved: 17 covered, 4 backstop, 2 unresolved.
+Coverage computed by `ui-consideration-probe.cjs` over the five surfaces this phase adds, run after
+checker verification. Element kinds were confirmed rather than taken from the prose heuristic alone:
+`tree-navigator` tripped only the `nav` cue, so `list-collection` was added by confirmation — without
+it the tree's empty, populated, partial, and zero-one-many states would never have been raised.
 
-| Category | Element(s) | Status | Resolution / Reason |
-|----------|------------|--------|---------------------|
-| loading | search-header-field (interactive-control) | ✅ covered | D-04: search field is enabled the entire time; a query typed before the index is ready shows the `Indexing…` transient state (see Copywriting Contract) and resolves itself automatically — never disabled, never dropped. |
-| empty | search-dropdown (list-collection) | ✅ covered | Zero-match dropdown renders the compact `No matches` heading (Copywriting Contract); no separate body copy given dropdown's limited space. |
-| loading | search-dropdown (list-collection) | ✅ covered | Same `Indexing…` transient as the header field — one shared state, not duplicated logic. |
-| overflow | search-dropdown (list-collection) | ✅ covered | Dropdown is capped (exact cap left to plan-phase, recommend 8 per D-01's "compact preview" framing) with a `See all N results` footer row (Primary CTA) linking to `/search?q=`. |
-| zero-one-many | search-dropdown (list-collection) | ✅ covered | Singular/plural handled in the footer copy (`See all 1 result` vs `See all N results`); result rows themselves need no count-dependent layout change. |
-| populated | search-dropdown (list-collection) | ✅ covered | D-01/D-02: debounced (120–200ms) as-you-type rows, no Enter required, stale-response guard mandatory. |
-| empty | search-results-page (list-collection) | ✅ covered | `No matches for "{query}"` heading + D-05-grounded body (Copywriting Contract). |
-| loading | search-results-page (list-collection) | 🧪 backstop | Reuse the existing `.roadmap-loading`/`.dashboard-loading` skeleton pattern for the initial `/search` page fetch. No page-specific loading design was authored beyond "reuse the existing skeleton" — verify at implementation time that the skeleton reads sensibly above a grouped-results layout rather than a flat list. |
-| error | search-results-page (list-collection) | ✅ covered | `.notice.destructive` pattern, exact copy in Copywriting Contract. |
-| populated | search-results-page (list-collection) | ✅ covered | D-07 (group by location then artifact type), D-08 (one centered snippet per row, expand-in-place for the rest, deep-link to nearest heading anchor). |
-| overflow | search-results-page (list-collection) | 🧪 backstop | Neither CONTEXT.md nor research specifies a per-group or whole-page result cap for a query that matches hundreds of hits. Recommend the existing `.attention-more`/"show N more" pattern from the dashboard's attention panel as the nearest precedent (progressive reveal, not pagination) — but this is a plan-phase decision, not locked here. |
-| zero-one-many | search-results-page (list-collection) | ✅ covered | Result-count copy pluralizes (`"1 result in 2 files"` vs `"42 results across 9 phases"`), matching the tone of existing count copy (`.wave-band header`'s `"{n} plan(s)"`). |
-| long-text | search-results-page (list-collection) | ✅ covered | Snippet and file-path text use `overflow-wrap: anywhere`, the same rule already applied to `.document-outline a` and `.source-note`. |
-| empty | tree-navigator (nav, list-collection) | 🧪 backstop | A location group (`quick/`, `research/`, `milestones/`) with zero files renders `Nothing here yet.` (Copywriting Contract), mirroring `.empty-note`'s tone. Full adversarial proof of every empty-directory combination is Phase 4's TGT-04 scope (sparse-fixture rendering) — Phase 3 must not error, but exhaustive verification is explicitly deferred. |
-| overflow | tree-navigator (nav, list-collection) | ✅ covered | Sidebar scrolls independently — `position: sticky` + `overflow-y: auto` + bounded `height`, the same mechanism as `.document-outline` (`max-height: calc(100vh - 7rem); overflow-y: auto`), scaled to the shell-level sidebar's own height budget. |
-| partial | tree-navigator (list-collection) | ✅ covered | D-10: unrecognized files render as ordinary nodes (not vanishing); D-10's recorded exclusions (`research/.cache/`, depth-terminated walk) render as explicitly-marked stub nodes — this *is* the partial/incomplete-data case, resolved by design. |
-| long-text | tree-navigator (nav) | ✅ covered | Long filenames/phase names wrap via `overflow-wrap: anywhere` inside the `minmax(14rem, 18rem)` track, same convention as the rest of the app's narrow-column text. |
-| zero-one-many | tree-navigator (list-collection) | N/A — dismissed | Tree structure is a literal disk mirror (D-10); it has no count-dependent copy or layout branch — a tree with one phase and a tree with twelve render through the identical node template. |
-| empty | traceability-view (list-collection) | 🧪 backstop | Per-requirement "uncovered" is fully specified (D-15); a whole-category-empty or whole-page-empty case (e.g. `REQUIREMENTS.md` itself missing) is formally Phase 4's TGT-04 boundary, not Phase 3's — but the route must not error if it occurs. Copy not authored beyond "reuse `.empty-note`" default. |
-| loading | traceability-view (list-collection) | ✅ covered | Reuse existing `useQuery` `isPending` branch pattern (`roadmap-page.tsx`'s exact structure) — no new mechanism needed. |
-| error | traceability-view (list-collection) | ✅ covered | `.notice.destructive`, copy in Copywriting Contract. |
-| populated | traceability-view (list-collection) | ✅ covered | D-13 (two explicit status columns, never merged), D-14 (grouped by REQUIREMENTS.md category, filter by ID/text, status filters for uncovered/disagreeing). |
-| partial | traceability-view (list-collection) | ✅ covered | A dangling covering-phase reference renders as raw text + an explicit "unresolved" marker (D-15), carrying forward Phase 1's D-10 / Phase 2's D-17 — never a broken link, never silently dropped. |
-| overflow | traceability-view (list-collection) | ⚠ unresolved | No decision recorded on whether the traceability table scrolls horizontally on narrow viewports (mirroring `.coverage-table-boundary`'s existing `overflow-x-auto` wrapper) or reflows to stacked cards below a breakpoint. Both are viable given UI-03's "wide content scrolls in its own container" constraint; planner should pick one and record it as an explicit assumption. |
-| zero-one-many | traceability-view (list-collection) | N/A — dismissed | Every category always renders at least the requirement rows authored in `REQUIREMENTS.md` for this project; row-level singular/plural copy is not applicable since each row is one requirement by construction. |
-| long-text | traceability-view (list-collection) | ✅ covered | Requirement description text wraps via the existing `.requirement-list span` pattern, already proven on the roadmap page for the same data shape. |
-| error | search-header-field (interactive-control) | ⚠ unresolved | Neither CONTEXT.md nor research addresses what the header field shows if the search *endpoint itself* fails (distinct from "index not ready yet," which D-04 fully covers). No existing precedent in the codebase for an inline-field error state (no other form input exists). Planner should decide between a quiet inline row inside the dropdown (nearest fit: reuse `.notice` at reduced scale) or silent retry. |
+**38 applicable considerations — 32 resolved (explicit), 3 backstop, 3 dismissed, 0 unresolved.**
 
-**Dismissed (relevance filter did not raise these):** `populated`/`partial` do not apply to
-`search-header-field` (a text input has no "populated with rows" state distinct from its value);
-`media` and `form`-only categories (`partial` on `search-dropdown`) were not raised because dropdown
-results are never partially loaded — they are either present, absent, or mid-index per the states
-already covered above.
+State coverage lives here; the user-facing strings for empty and error states live in
+`## Copywriting Contract` and are referenced rather than restated.
 
----
+| Category | Element | Status | Resolution / Reason |
+|----------|---------|--------|---------------------|
+| empty | search-header-field (form, interactive-control, static-content) | ✅ covered | Placeholder reads `Search`; no dropdown renders until a query is typed (see Copywriting Contract). |
+| loading | search-header-field | ✅ covered | D-04: field is enabled the entire time; a query typed before the index is ready shows the `Indexing…` transient and resolves itself automatically — never disabled, never dropped. |
+| error | search-header-field | ✅ covered | Endpoint failure (distinct from "index not ready") renders `Search is unavailable.` as a reduced-scale `.notice.destructive` row inside the dropdown. Copy in Copywriting Contract. |
+| partial | search-header-field | N/A — dismissed | A single-line text input has no partial-data state distinct from its own value; `partial` was raised by the `form` cue but has no referent here. |
+| overflow | search-header-field | ✅ covered | A query longer than the track scrolls horizontally inside the native single-line input. The field never grows or wraps — it sits in the sticky `z-index: 20` header, where a height change would shift the whole shell. |
+| long-text | search-header-field | ✅ covered | Same mechanism as `overflow` above: single-line, native horizontal scroll, no wrap. The dropdown below is unaffected by query length. |
+| empty | search-dropdown (form, list-collection, interactive-control) | ✅ covered | Zero-match dropdown renders the compact `No matches` heading; no body copy, given the dropdown's limited space. |
+| loading | search-dropdown | ✅ covered | Same `Indexing…` transient as the header field — one shared state, not duplicated logic. |
+| error | search-dropdown | ✅ covered | Shares the header field's endpoint-failure state: one `.notice.destructive` row, not a second error mechanism. |
+| populated | search-dropdown | ✅ covered | D-01/D-02: debounced (120–200ms) as-you-type rows, no Enter required, stale-response guard mandatory. |
+| partial | search-dropdown | ✅ covered | Mid-index results are shown as they are, alongside the `Indexing…` transient — never withheld until the index completes (D-04's "never a dropped query"). |
+| overflow | search-dropdown | ✅ covered | Capped at 8 rows (D-01's "compact preview" framing) with a `See all N results` footer row linking to `/search?q=`. |
+| zero-one-many | search-dropdown | ✅ covered | Singular/plural handled in the footer copy (`See all 1 result` vs `See all N results`); result rows need no count-dependent layout change. |
+| long-text | search-dropdown | ✅ covered | File paths truncate head-first with a leading ellipsis, keeping the filename tail always visible (`…/02-05-PLAN.md`). The elided phase directory is already carried by the group header above the row, so nothing identifying is lost. |
+| empty | search-results-page (list-collection, static-content) | ✅ covered | `No matches for "{query}"` heading + D-05-grounded body (Copywriting Contract). |
+| loading | search-results-page | 🧪 backstop | Reuse the existing `.roadmap-loading`/`.dashboard-loading` skeleton for the initial `/search` fetch. No page-specific loading design was authored beyond "reuse the existing skeleton" — verify at implementation time that it reads sensibly above a grouped-results layout rather than a flat list. |
+| error | search-results-page | ✅ covered | `.notice.destructive` pattern, exact copy in Copywriting Contract. |
+| populated | search-results-page | ✅ covered | D-07 (group by location then artifact type), D-08 (one centered snippet per row, expand-in-place for the rest, deep-link to nearest heading anchor). |
+| partial | search-results-page | ✅ covered | A file the reader could not parse still appears as a result row carrying an explicit unreadable marker rather than being silently dropped — carrying forward Phase 1's D-10 and Phase 2's D-17 degrade-don't-hide rule. |
+| overflow | search-results-page | ✅ covered | Progressive reveal per group using the dashboard attention panel's existing `.attention-more` "show N more" pattern — not pagination, so grouping stays intact and no page state enters the URL. |
+| zero-one-many | search-results-page | ✅ covered | Result-count copy pluralizes (`"1 result in 2 files"` vs `"42 results across 9 phases"`), matching the tone of `.wave-band header`'s existing `"{n} plan(s)"`. |
+| long-text | search-results-page | ✅ covered | Snippet and file-path text use `overflow-wrap: anywhere`, the same rule already applied to `.document-outline a` and `.source-note`. |
+| empty | tree-navigator (nav, list-collection) | 🧪 backstop | A location group (`quick/`, `research/`, `milestones/`) with zero files renders `Nothing here yet.`, mirroring `.empty-note`'s tone. Adversarial proof of every empty-directory combination is Phase 4's TGT-04 scope (sparse-fixture rendering) — Phase 3 must not error, but exhaustive verification is explicitly deferred. |
+| loading | tree-navigator | ✅ covered | The track holds its `minmax(14rem, 18rem)` width with background and right border only — no skeleton rows — and the tree fills in when the shell's existing `presentation` query resolves. No layout shift, and no skeleton to build for a window a local filesystem read closes in milliseconds. |
+| error | tree-navigator | ✅ covered | No separate error copy: the tree renders from the same `presentation` query the shell already fetches, a failure is surfaced once by the existing `.shell-notice`, and the sidebar simply does not render — consistent with how the rest of the shell degrades today. |
+| populated | tree-navigator | ✅ covered | D-10: a literal mirror of the on-disk `.planning/` structure — root docs, `phases/`, `quick/`, `milestones/`, `research/` — one node template per entry, expandable per phase. |
+| partial | tree-navigator | ✅ covered | D-10: unrecognized files render as ordinary nodes rather than vanishing; recorded exclusions (`research/.cache/`, depth-terminated walk) render as explicitly-marked stub nodes. This *is* the partial/incomplete-data case, resolved by design. |
+| overflow | tree-navigator | ✅ covered | Sidebar scrolls independently — `position: sticky` + `overflow-y: auto` + bounded height, the same mechanism as `.document-outline` (`max-height: calc(100vh - 7rem); overflow-y: auto`), scaled to the shell-level sidebar's own height budget. |
+| zero-one-many | tree-navigator | N/A — dismissed | Tree structure is a literal disk mirror (D-10); it has no count-dependent copy or layout branch — a tree with one phase and a tree with twelve render through the identical node template. |
+| long-text | tree-navigator | ✅ covered | Long filenames and phase names wrap via `overflow-wrap: anywhere` inside the `minmax(14rem, 18rem)` track, the same convention as the rest of the app's narrow-column text. |
+| empty | traceability-view (list-collection, static-content) | 🧪 backstop | Per-requirement "uncovered" is fully specified (D-15); a whole-category-empty or whole-page-empty case (e.g. `REQUIREMENTS.md` itself missing) is formally Phase 4's TGT-04 boundary, not Phase 3's — but the route must not error if it occurs. Copy not authored beyond the `.empty-note` default. |
+| loading | traceability-view | ✅ covered | Reuse the existing `useQuery` `isPending` branch pattern (`roadmap-page.tsx`'s exact structure) — no new mechanism needed. |
+| error | traceability-view | ✅ covered | `.notice.destructive`, copy in Copywriting Contract. |
+| populated | traceability-view | ✅ covered | D-13 (two explicit status columns, never merged), D-14 (grouped by REQUIREMENTS.md category, filter by ID/text, status filters for uncovered/disagreeing). |
+| partial | traceability-view | ✅ covered | A dangling covering-phase reference renders as raw text plus an explicit "unresolved" marker (D-15), carrying forward Phase 1's D-10 and Phase 2's D-17 — never a broken link, never silently dropped. |
+| overflow | traceability-view | ✅ covered | The table scrolls horizontally inside the existing `.coverage-table-boundary` `overflow-x-auto` wrapper from Phase 2, satisfying UI-03. Chosen over a stacked-card reflow so D-13's two status columns stay adjacent — the side-by-side disagreement signal is the whole point of the view and a card reflow would break it. |
+| zero-one-many | traceability-view | N/A — dismissed | Every category always renders the requirement rows authored in `REQUIREMENTS.md`; row-level singular/plural copy is not applicable since each row is one requirement by construction. |
+| long-text | traceability-view | ✅ covered | Requirement description text wraps via the existing `.requirement-list span` pattern, already proven on the roadmap page for the same data shape. |
 
 ## Registry Safety
 
@@ -203,12 +216,19 @@ already covered above.
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
-- [ ] Dimension 7 Inventory Provenance: PASS
+Verified by gsd-ui-checker (2026-09-02) — **APPROVED**, 6/7 PASS, 1 non-blocking FLAG.
 
-**Approval:** pending
+- [x] Dimension 1 Copywriting: PASS
+- [ ] Dimension 2 Visuals: **FLAG** (non-blocking) — the contract specifies interaction and structure
+      for the four new surfaces but never declares visual *priority*: which element draws the eye
+      first on the search results page, what anchors a deeply-nested tree, whether the traceability
+      row's mismatch flag is the primary signal. Deliberately left open rather than invented here —
+      plan-phase should settle focal points against the real rendered surfaces.
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
+- [x] Dimension 7 Inventory Provenance: PASS
+
+**Approval:** approved (2026-09-02) — the Dimension 2 FLAG is accepted as a plan-phase input, not a
+blocker.
