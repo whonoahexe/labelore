@@ -600,12 +600,26 @@
   font-size: 1.3rem;
 }
 
-.next-primary p,
-.next-preview p {
+.next-primary p {
   margin: 0.45rem 0 0;
+  overflow: hidden;
   color: var(--muted-foreground);
   font-size: 0.82rem;
   line-height: 1.55;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.next-preview p {
+  margin: 0.45rem 0 0;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .next-primary > svg,
