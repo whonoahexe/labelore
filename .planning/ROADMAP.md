@@ -154,7 +154,7 @@ Plans:
 
 **Wave 12** *(gap closure — blocked on Wave 11 completion)*
 
-- [ ] 02-15-PLAN.md — Registry-backed `.planning` artifact-path previews, with G2-03's source-path prerequisite recorded honestly
+- [x] 02-15-PLAN.md — Registry-backed `.planning` artifact-path previews, with G2-03's source-path prerequisite recorded honestly
 - [ ] 02-16-PLAN.md — Reproduction-first attention routing, bounded Next descriptions, and normalized label/chip tokens (G2-07..G2-10)
 
 **Wave 13** *(gap closure — blocked on Wave 12 completion)*
@@ -200,7 +200,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Read Layer & Domain Model | 4/4 | Complete    | 2026-08-24 |
-| 2. Situational Awareness & Artifact Reading | 13/16 | In Progress|  |
+| 2. Situational Awareness & Artifact Reading | 14/16 | In Progress|  |
 | 3. Search, Browsing & Traceability | 0/2 | Not started | - |
 | 4. Portability & Degradation Hardening | 0/2 | Not started | - |
 
