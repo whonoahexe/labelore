@@ -2165,8 +2165,18 @@ pre {
   line-height: 1.75;
 }
 
-.artifact-document > :is(p, ul, ol, blockquote) {
+/* Measure cap. The child combinator alone missed every paragraph a plan nests inside
+   .plan-section, which ran ~120 characters per line. Descendant-match instead, and exclude the
+   block kinds that legitimately want the whole column. */
+.artifact-document :is(p, ul, ol, blockquote):not(table *):not(pre *):not(.mermaid *) {
   max-width: 76ch;
+}
+
+/* An unbroken .planning path is longer than a 320px viewport, and prose defaults to
+   overflow-wrap: normal — so the text, not any element box, pushed the page wider than the
+   screen. Break inside the token rather than letting it set a floor on the layout. */
+.artifact-document :is(p, li, dd, blockquote):not(pre *) {
+  overflow-wrap: anywhere;
 }
 
 .artifact-document :is(h1, h2, h3, h4, h5, h6) {

@@ -370,3 +370,24 @@ describe('reference popover anchoring (F7)', () => {
     expect(tsx).not.toContain('anchor={state.trigger}');
   });
 });
+
+describe('nested prose measure and wrapping (F3, F4)', () => {
+  it('caps prose measure by descendant match so plan-nested paragraphs are covered', async () => {
+    const css = await source('src/web/styles/globals.css');
+    // The child combinator missed everything a plan nests inside .plan-section.
+    expect(css).not.toMatch(/\.artifact-document > :is\(p, ul, ol, blockquote\) \{/);
+    const blocks = ruleBlocks(
+      css,
+      '.artifact-document :is(p, ul, ol, blockquote):not(table *):not(pre *):not(.mermaid *) {',
+    );
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]).toMatch(/max-width:\s*76ch/);
+  });
+
+  it('breaks unbroken .planning paths in prose without touching code blocks', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const blocks = ruleBlocks(css, '.artifact-document :is(p, li, dd, blockquote):not(pre *) {');
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]).toMatch(/overflow-wrap:\s*anywhere/);
+  });
+});
