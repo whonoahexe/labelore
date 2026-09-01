@@ -391,3 +391,21 @@ describe('nested prose measure and wrapping (F3, F4)', () => {
     expect(blocks[0]).toMatch(/overflow-wrap:\s*anywhere/);
   });
 });
+
+describe('muted surface contrast and dead selectors (F2, F5)', () => {
+  it('lifts discrepancy-callout prose off the shared muted token', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const blocks = ruleBlocks(css, '.discrepancy-callout p {');
+    expect(blocks).toHaveLength(1);
+    // Bare --muted-foreground measured 4.11:1 in light against this callout's tinted ground.
+    expect(blocks[0]).not.toMatch(/color:\s*var\(--muted-foreground\)\s*;/);
+    expect(blocks[0]).toMatch(/color-mix\(in oklch, var\(--muted-foreground\).*var\(--foreground\)\)/);
+  });
+
+  it('carries no attention-list rule for an element the dashboard never renders', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const dashboard = await source('src/web/pages/dashboard-page.tsx');
+    expect(css).not.toContain('.attention-list small');
+    expect(dashboard).not.toMatch(/<small/);
+  });
+});

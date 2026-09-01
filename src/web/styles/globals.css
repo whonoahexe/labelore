@@ -710,9 +710,14 @@
   color: var(--destructive);
 }
 
+/* The 8% destructive tint on this callout's background costs it contrast the other muted
+   surfaces do not pay: --muted-foreground alone measured 4.11:1 in light, under the 4.5:1
+   floor for 12.8px text. Pull it slightly toward --foreground here (5.37:1 light, 7.39:1 dark)
+   rather than moving the shared token, which every other muted surface clears with little
+   headroom. */
 .discrepancy-callout p {
   margin: 0.3rem 0 0;
-  color: var(--muted-foreground);
+  color: color-mix(in oklch, var(--muted-foreground) 85%, var(--foreground));
   font-size: 0.8rem;
 }
 
@@ -787,8 +792,9 @@
   font-size: 0.84rem;
 }
 
-.attention-list p,
-.attention-list small {
+/* No <small> is rendered in an attention row — a row is item-kind span, strong, p and the
+   source note — so the selector that used to sit alongside this one matched nothing. */
+.attention-list p {
   color: var(--muted-foreground);
   font-size: 0.77rem;
   line-height: 1.55;
