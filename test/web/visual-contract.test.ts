@@ -340,3 +340,22 @@ describe('outline-less artifact layout (G2-11)', () => {
     expect(tsx).toMatch(/data-outline=\{outlineHeadings\(document\)\.length > 0 \? 'true' : 'false'\}/);
   });
 });
+
+describe('task-list item flow (G2-12)', () => {
+  it('lays task items out as inline flow, not a fixed-column grid', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const blocks = ruleBlocks(css, '.artifact-document .task-list-item {');
+    expect(blocks).toHaveLength(1);
+    // A grid here strands the trailing text node in the 1rem checkbox column.
+    expect(blocks[0]).not.toMatch(/display:\s*grid/);
+    expect(blocks[0]).toMatch(/display:\s*block/);
+    expect(blocks[0]).toMatch(/padding-left:/);
+  });
+
+  it('hangs the task checkbox into the indent', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const blocks = ruleBlocks(css, ".artifact-document .task-list-item > input[type='checkbox'] {");
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]).toMatch(/margin-left:\s*-/);
+  });
+});
