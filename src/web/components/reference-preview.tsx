@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Popover } from '@base-ui/react/popover';
 import { ArrowUpRight, X } from 'lucide-react';
 import type { ReferencePreviewDto } from '../../presentation/references.ts';
@@ -21,7 +22,20 @@ export function ReferencePreview({
   onOpenChange,
   onCloseComplete,
 }: ReferencePreviewProps): React.JSX.Element | null {
-  if (!state) return null;
+  const trigger = state?.trigger ?? null;
+  /**
+   * A virtual anchor, not the element itself. The trigger is a plain DOM node inside the
+   * document mount — it is not React-rendered, so the positioner never registered its box and
+   * fell back to a 0x0 reference at the viewport origin, pinning the popup to the top-left.
+   * Measuring on demand also keeps the popup correct after a scroll or resize.
+   */
+  const anchor = useMemo(
+    () => (trigger ? { getBoundingClientRect: () => trigger.getBoundingClientRect() } : null),
+    [trigger],
+  );
+
+  // Hooks must run before this guard, so it sits below them rather than at the top.
+  if (!state || !anchor) return null;
   const { preview } = state;
 
   return (
@@ -35,7 +49,7 @@ export function ReferencePreview({
       <Popover.Portal>
         <Popover.Positioner
           className="reference-preview-positioner"
-          anchor={state.trigger}
+          anchor={anchor}
           sideOffset={8}
           align="start"
           positionMethod="fixed"
