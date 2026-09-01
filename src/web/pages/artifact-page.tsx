@@ -37,9 +37,15 @@ interface ArtifactDocumentResponse {
   document: RenderedDocument;
 }
 
-function DocumentOutline({ document }: { document: RenderedDocument }): React.JSX.Element | null {
+/** Headings the outline renders. Shared with the layout so the grid knows whether column 1 is filled. */
+function outlineHeadings(document: RenderedDocument): RenderedDocument['headings'] {
   const headings = document.headings.filter((heading) => heading.depth <= 3).slice(0, 18);
-  if (headings.length < 2) return null;
+  return headings.length < 2 ? [] : headings;
+}
+
+function DocumentOutline({ document }: { document: RenderedDocument }): React.JSX.Element | null {
+  const headings = outlineHeadings(document);
+  if (headings.length === 0) return null;
   return (
     <nav className="document-outline" aria-label="On this page">
       <p>On this page</p>
@@ -334,7 +340,10 @@ export function ArtifactPage(): React.JSX.Element {
         </p>
       ))}
 
-      <div className="document-reader-layout">
+      <div
+        className="document-reader-layout"
+        data-outline={outlineHeadings(document).length > 0 ? 'true' : 'false'}
+      >
         <DocumentOutline document={document} />
         <article className="document-canvas" aria-label={`${artifact.title} document`}>
           <DocumentView document={document} />

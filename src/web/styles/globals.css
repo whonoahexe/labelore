@@ -2106,6 +2106,12 @@ pre {
   min-width: 0;
 }
 
+/* No outline means no column-1 child, so the canvas would otherwise land in the
+   14rem sidebar track and render prose at ~2 words per line. */
+.document-reader-layout[data-outline='false'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .document-outline {
   position: sticky;
   top: 5.5rem;

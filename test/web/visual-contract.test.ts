@@ -326,3 +326,17 @@ describe('G2-10 status-chip semantic tone contract', () => {
     }
   });
 });
+
+describe('outline-less artifact layout (G2-11)', () => {
+  it('collapses the reader grid to one column when no outline renders', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const blocks = ruleBlocks(css, ".document-reader-layout[data-outline='false'] {");
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]).toMatch(/grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+  });
+
+  it('marks the reader layout with whether an outline is present', async () => {
+    const tsx = await source('src/web/pages/artifact-page.tsx');
+    expect(tsx).toMatch(/data-outline=\{outlineHeadings\(document\)\.length > 0 \? 'true' : 'false'\}/);
+  });
+});
