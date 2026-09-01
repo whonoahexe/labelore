@@ -490,7 +490,9 @@ describe('sanitized metadata to controlled React preview bridge', () => {
     }
     expect(preview).toContain("from '@base-ui/react/popover'");
     expect(preview).toMatch(
-      /<Popover\.Positioner[\s\S]*className="reference-preview-positioner"[\s\S]*anchor=\{state\.trigger\}[\s\S]*sideOffset=\{8\}[\s\S]*align="start"[\s\S]*positionMethod="fixed"/,
+      // `anchor` is a virtual element measuring the trigger, not the trigger node itself — a raw
+      // Element anchor left the positioner with a 0x0 reference at the viewport origin (F7).
+      /<Popover\.Positioner[\s\S]*className="reference-preview-positioner"[\s\S]*anchor=\{anchor\}[\s\S]*sideOffset=\{8\}[\s\S]*align="start"[\s\S]*positionMethod="fixed"/,
     );
     expect(preview).toContain('finalFocus={() => state.trigger}');
     expect(preview).toContain('href={preview.url}');

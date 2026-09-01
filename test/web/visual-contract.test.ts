@@ -359,3 +359,14 @@ describe('task-list item flow (G2-12)', () => {
     expect(blocks[0]).toMatch(/margin-left:\s*-/);
   });
 });
+
+describe('reference popover anchoring (F7)', () => {
+  it('anchors the positioner to a measured virtual element, not the raw trigger node', async () => {
+    const tsx = await source('src/web/components/reference-preview.tsx');
+    // A raw Element anchor left the positioner with a 0x0 reference at the viewport origin,
+    // pinning every popup to the top-left. A virtual anchor measures on demand instead.
+    expect(tsx).toMatch(/getBoundingClientRect:\s*\(\)\s*=>\s*trigger\.getBoundingClientRect\(\)/);
+    expect(tsx).toContain('anchor={anchor}');
+    expect(tsx).not.toContain('anchor={state.trigger}');
+  });
+});
