@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-08-24)
 Phase: 02 (Situational Awareness & Artifact Reading) — EXECUTING
 Plan: 3 of 16
 Status: Ready to execute
-Last activity: 2026-09-01 — Completed quick task 260901-ten: nine phase-02 UAT findings fixed (F1–F9)
+Last activity: 2026-09-01 — 02-17 human gate approved; phase 02 plans all complete
 
 Progress: [███░░░░░░░] 25%
 
@@ -100,7 +100,8 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 | Category | Item | Status | Deferred At | Milestone |
 |----------|------|--------|-------------|-----------|
-| *(none)* | | | | |
+| UI polish | Mermaid diagram styling — rendering is correct and bounded (379×462, within min(70vh, 36rem)), but the diagrams themselves look poor. Human verdict at the 02-17 gate: "works as expected but it looks very ugly." Theme variables reach mermaid as converted sRGB; what they map to is unreviewed. | Open | 2026-09-01 | v0.1 |
+| Accessibility | `.artifact-metadata > summary span` renders at 9.92px, under a 10px floor. Contrast passes (4.74 light / 6.99 dark); the size does not. | Open | 2026-09-01 | v0.1 |
 
 ## Session Continuity
 
