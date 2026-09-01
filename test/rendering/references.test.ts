@@ -349,6 +349,68 @@ flowchart TD
   });
 });
 
+describe('inline-code artifact-path references', () => {
+  it('converts a standalone inline-code artifact path into one preview trigger', async () => {
+    const registry = buildReferenceRegistry(presentation());
+    const renderer = await createArtifactRenderer();
+    const rendered = await renderer.render(artifact(`See \`${rootArtifact}\` for details.`), {
+      referenceRegistry: registry,
+    });
+
+    expect(rendered.html.match(/data-reference-key=/g)).toHaveLength(1);
+    expect(rendered.html).toContain(`>${rootArtifact}</button>`);
+    expect(rendered.html).not.toContain('<code>');
+    expect(rendered.references).toHaveLength(1);
+    expect(rendered.references?.[0]).toMatchObject({
+      type: 'artifact',
+      identity: rootArtifact,
+      url: buildArtifactUrl(null, rootArtifact),
+    });
+  });
+
+  it('leaves a fenced code block containing the same path untouched', async () => {
+    const registry = buildReferenceRegistry(presentation());
+    const renderer = await createArtifactRenderer();
+    const rendered = await renderer.render(
+      artifact(`\`\`\`\n${rootArtifact}\n\`\`\``),
+      { referenceRegistry: registry },
+    );
+
+    expect(rendered.html).not.toContain('data-reference-key=');
+    expect(rendered.html).toContain(rootArtifact);
+    expect(rendered.html).toMatch(/<pre[^>]*><code/);
+    expect(rendered.references ?? []).toHaveLength(0);
+  });
+
+  it('leaves inline code with surrounding prose, an unknown path, a source path, or a hash untouched', async () => {
+    const registry = buildReferenceRegistry(presentation());
+    const renderer = await createArtifactRenderer();
+    const rendered = await renderer.render(
+      artifact(
+        `Mixed: \`see ${rootArtifact} here\`. Unknown: \`.planning/phases/99-missing/99-MISSING.md\`. Source: \`backend/src/auth/mod.rs\`. Hash: \`a1b2c3d\`.`,
+      ),
+      { referenceRegistry: registry },
+    );
+
+    expect(rendered.html).not.toContain('data-reference-key=');
+    expect(rendered.html.match(/<code>/g)).toHaveLength(4);
+    expect(rendered.references ?? []).toHaveLength(0);
+  });
+
+  it('never nests the generated trigger inside an authored link or another interactive element', async () => {
+    const registry = buildReferenceRegistry(presentation());
+    const renderer = await createArtifactRenderer();
+    const rendered = await renderer.render(
+      artifact(`[\`${rootArtifact}\`](https://example.com)`),
+      { referenceRegistry: registry },
+    );
+
+    expect(rendered.html).not.toContain('data-reference-key=');
+    expect(rendered.html).toContain(`<a href="https://example.com"><code>${rootArtifact}</code></a>`);
+    expect(rendered.references ?? []).toHaveLength(0);
+  });
+});
+
 describe('sanitized metadata to controlled React preview bridge', () => {
   it.each([
     { type: 'click', key: undefined },
