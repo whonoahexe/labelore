@@ -1,6 +1,7 @@
 import type { Element, ElementContent, Root, RootContent, Text } from 'hast';
 import type { VFile } from 'vfile';
 import {
+  resolveArtifactReference,
   resolvePresentationReference,
   type ReferencePreviewDto,
   type ReferenceRegistry,
@@ -31,9 +32,14 @@ function classesOf(element: Element): string[] {
   return typeof value === 'string' ? value.split(/\s+/).filter(Boolean) : [];
 }
 
+// `code` is handled separately in walk() (see inlineCodeReference) rather than here: it needs a
+// narrow standalone-path transformation, not a blanket skip. `a` and `pre` stay blanket-skipped —
+// an authored link's or a fenced block's descendants are never scanned or transformed, which also
+// guarantees any `code` reachable by walk()'s loop is neither inside `pre` nor inside `a` (their
+// children are never visited).
 function skipped(element: Element): boolean {
   return (
-    ['a', 'code', 'pre'].includes(element.tagName) ||
+    ['a', 'pre'].includes(element.tagName) ||
     classesOf(element).some((value) => value === 'mermaid' || value.startsWith('language-mermaid'))
   );
 }
@@ -82,6 +88,29 @@ function linkifiedText(
   return output;
 }
 
+/**
+ * A standalone inline `code` node (exactly one text child, no surrounding prose in the same node)
+ * whose trimmed content is an exact registered artifact path becomes the same trusted preview
+ * control prose linkification produces — reusing `resolveArtifactReference` so path resolution
+ * has exactly one implementation. Anything else about the node (mixed content, unresolved value,
+ * a different reference type) is left untouched: this transformation is narrow by design.
+ */
+function inlineCodeReference(
+  code: Element,
+  registry: ReferenceRegistry,
+  used: Map<string, ReferencePreviewDto>,
+): Element | null {
+  if (code.children.length !== 1) return null;
+  const [only] = code.children;
+  if (only.type !== 'text') return null;
+  const value = only.value.trim();
+  if (!value) return null;
+  const preview = resolveArtifactReference(registry, value);
+  if (!preview) return null;
+  used.set(preview.key, preview);
+  return control(preview, value);
+}
+
 /** Adds trusted controls to resolved text only; source-authored active content is already gone. */
 export function rehypeResolvedReferences() {
   return function transform(tree: Root, file: VFile): void {
@@ -98,6 +127,11 @@ export function rehypeResolvedReferences() {
       for (let index = 0; index < parent.children.length; index += 1) {
         const child: RootContent | ElementContent = parent.children[index];
         if (child.type === 'element') {
+          if (child.tagName === 'code') {
+            const replacement = inlineCodeReference(child, resolvedRegistry, resolvedUsed);
+            if (replacement) parent.children[index] = replacement;
+            continue;
+          }
           if (!skipped(child)) walk(child);
           continue;
         }
