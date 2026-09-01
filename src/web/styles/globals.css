@@ -2369,9 +2369,24 @@ pre {
 
 .plan-section-label {
   display: inline-flex;
+  gap: 0.45rem;
+  align-items: baseline;
   margin-bottom: 0.65rem;
   font-family: var(--font-heading);
   font-weight: 700;
+}
+
+/* The section's dotted position among its siblings. A plan nests plan > tasks > task > task and
+   the separator is drawn only at the top level, so this is the only cue telling you how deep you
+   are and which sibling you are reading. Tabular figures keep the column steady down a list. */
+.plan-section-ordinal {
+  color: color-mix(in oklch, var(--muted-foreground) 70%, var(--foreground));
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.plan-section-ordinal:empty {
+  display: none;
 }
 
 .mermaid,

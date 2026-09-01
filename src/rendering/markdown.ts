@@ -282,7 +282,7 @@ export function planSectionLabel(tag: string): string {
     .join(' ');
 }
 
-function planSectionOpen(segment: PlanSegment): string {
+function planSectionOpen(segment: PlanSegment, ordinal: string): string {
   const attributes = PLAN_ATTRIBUTE_NAMES.flatMap((name) => {
     const value = segment.attributes[name];
     return value === undefined ? [] : [` data-plan-${name}="${escapeHtml(value)}"`];
@@ -291,7 +291,10 @@ function planSectionOpen(segment: PlanSegment): string {
   // ever target it (UI-SPEC E15 "partial": no visual seam between recognised and unrecognised
   // sections).
   const recognized = isRecognizedPlanTag(segment.tag);
-  return `<section class="plan-section plan-section-${escapeHtml(segment.tag)}" data-plan-section="${escapeHtml(segment.tag)}" data-plan-recognized="${recognized}"${attributes}><div class="plan-section-label">${escapeHtml(planSectionLabel(segment.tag))}</div>`;
+  // The ordinal is the section's dotted position among its siblings ("2", "2.1", "2.1.3"). A
+  // plan nests plan > tasks > task > task, and the label alone gave no way to tell which one you
+  // were reading.
+  return `<section class="plan-section plan-section-${escapeHtml(segment.tag)}" data-plan-section="${escapeHtml(segment.tag)}" data-plan-recognized="${recognized}" data-plan-ordinal="${escapeHtml(ordinal)}"${attributes}><div class="plan-section-label"><span class="plan-section-ordinal">${escapeHtml(ordinal)}</span>${escapeHtml(planSectionLabel(segment.tag))}</div>`;
 }
 
 async function renderMarkdownChunk(
@@ -318,12 +321,14 @@ async function renderPlanRange(
   start: number,
   end: number,
   context: RenderContext,
+  ordinalPath = '',
 ): Promise<string> {
   const children = directChildren(segments, start, end).sort(
     (left, right) => left.start - right.start || right.end - left.end,
   );
   const output: string[] = [];
   let cursor = start;
+  let ordinal = 0;
 
   for (const segment of children) {
     if (segment.start < cursor) continue;
@@ -335,6 +340,8 @@ async function renderPlanRange(
         `<aside class="plan-segment-warning" role="note"><strong>PLAN wrapper warning:</strong> ${escapeHtml(warning)}</aside><pre class="plan-segment-literal"><code>${escapeHtml(segment.raw)}</code></pre>`,
       );
     } else {
+      ordinal += 1;
+      const segmentPath = ordinalPath ? `${ordinalPath}.${ordinal}` : String(ordinal);
       const inner = await renderPlanRange(
         processor,
         body,
@@ -342,8 +349,9 @@ async function renderPlanRange(
         segment.contentStart,
         segment.contentEnd,
         context,
+        segmentPath,
       );
-      output.push(planSectionOpen(segment));
+      output.push(planSectionOpen(segment, segmentPath));
       output.push(
         inner.trim().length > 0
           ? inner
