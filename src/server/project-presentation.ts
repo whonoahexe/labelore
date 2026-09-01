@@ -200,7 +200,13 @@ function jsonValue(value: unknown, ancestors = new Set<object>()): unknown {
   );
 }
 
-function jsonRecord(value: Record<string, unknown>): Record<string, unknown> {
+/**
+ * Normalizes a parsed-frontmatter record into something `JSON.stringify` can always serialize —
+ * cycles broken, non-JSON types coerced. Exported because the artifact and document routes hand
+ * the same records straight to the client and must not be the one pair of endpoints that throws
+ * a 500 on a self-referencing YAML anchor.
+ */
+export function jsonRecord(value: Record<string, unknown>): Record<string, unknown> {
   return jsonValue(value) as Record<string, unknown>;
 }
 

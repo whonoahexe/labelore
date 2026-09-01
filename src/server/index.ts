@@ -13,7 +13,7 @@ import { parsePresentationUrl } from '../presentation/routes.ts';
 import { createArtifactRenderer } from '../rendering/markdown.ts';
 import { resolveTargetPath } from '../cli/target-path.ts';
 import { buildArtifactIndex } from './artifact-index.ts';
-import { toProjectPresentation } from './project-presentation.ts';
+import { jsonRecord, toProjectPresentation } from './project-presentation.ts';
 
 const DEFAULT_PORT = 4173;
 const HOSTNAME = '127.0.0.1';
@@ -49,8 +49,10 @@ export function createApp(
         path: lookup.artifact.path,
         kind: lookup.artifact.kind,
         title: lookup.artifact.title,
-        frontmatter: lookup.artifact.frontmatter,
-        structured: lookup.artifact.structured,
+        // Same normalization every presentation endpoint applies: a malformed or cyclic YAML
+        // anchor must degrade, not 500 this one document.
+        frontmatter: jsonRecord(lookup.artifact.frontmatter),
+        structured: jsonRecord(lookup.artifact.structured),
         warnings: lookup.artifact.warnings,
       },
       phaseIdentity: lookup.phaseIdentity,
