@@ -9,12 +9,13 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 import { Link } from 'react-router';
-import { buildArtifactUrl } from '../../presentation/routes.ts';
-import type {
-  AttentionItem,
-  DashboardViewModel,
-  NextWorkItem,
-  SourceProvenance,
+import {
+  provenanceLabel,
+  sourceDestination,
+  type AttentionItem,
+  type DashboardViewModel,
+  type NextWorkItem,
+  type SourceProvenance,
 } from '../../presentation/dashboard.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
 
@@ -28,29 +29,10 @@ async function fetchDashboard(): Promise<DashboardResponse> {
   return (await response.json()) as DashboardResponse;
 }
 
-function provenanceLabel(provenance: SourceProvenance): string {
-  switch (provenance.kind) {
-    case 'state':
-      return 'STATE';
-    case 'roadmap':
-      return 'ROADMAP';
-    case 'summary':
-      return 'SUMMARY files';
-    case 'derived':
-      return 'Snapshot projection';
-  }
-}
-
 const ATTENTION_PAGE_SIZE = 8;
 
 function kindLabel(kind: NextWorkItem['kind']): string {
   return kind.replaceAll('-', ' ');
-}
-
-function sourceDestination(provenance: SourceProvenance): string | null {
-  if (!['state', 'roadmap'].includes(provenance.kind)) return null;
-  const [path] = provenance.ref.split('#');
-  return path.endsWith('.md') ? buildArtifactUrl(null, path) : null;
 }
 
 function SourceLink({ provenance, children }: { provenance: SourceProvenance; children?: string }) {
@@ -224,7 +206,11 @@ export function DashboardPage(): React.JSX.Element {
                   <li key={item.key} data-type={item.type}>
                     <AttentionIcon type={item.type} />
                     {item.url ? (
-                      <Link className="attention-action" to={item.url}>
+                      <Link
+                        className="attention-action"
+                        to={item.url}
+                        aria-label={`Open ${item.type}: ${item.title}`}
+                      >
                         <span className="item-kind">{item.type}</span>
                         <strong>{item.title}</strong>
                         <p>{item.detail}</p>

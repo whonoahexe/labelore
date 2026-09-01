@@ -1,9 +1,39 @@
 import type { PhaseDto, PlanDto, ProjectPresentation } from '../server/project-presentation.ts';
-import { buildPhaseUrl } from './routes.ts';
+import { buildArtifactUrl, buildPhaseUrl } from './routes.ts';
 
 export interface SourceProvenance {
   kind: 'state' | 'roadmap' | 'summary' | 'derived';
   ref: string;
+}
+
+/**
+ * Human-readable label for an attention/next-work row's provenance. This is deliberately a
+ * pure, side-effect-free function (not a component) so both the dashboard page and the
+ * G2-07 destination-matrix contract test can call it directly without importing JSX.
+ */
+export function provenanceLabel(provenance: SourceProvenance): string {
+  switch (provenance.kind) {
+    case 'state':
+      return 'STATE';
+    case 'roadmap':
+      return 'ROADMAP';
+    case 'summary':
+      return 'SUMMARY files';
+    case 'derived':
+      return 'Snapshot projection';
+  }
+}
+
+/**
+ * Resolves a row's provenance to a navigable in-app destination, independently of the row's
+ * primary `AttentionItem.url`/`NextWorkItem.url`. Only `state` and `roadmap` provenance kinds
+ * name an on-disk markdown source that can be linked to; `summary` and `derived` provenance
+ * never produce a second navigable link (G2-07: the two destinations must never be conflated).
+ */
+export function sourceDestination(provenance: SourceProvenance): string | null {
+  if (!['state', 'roadmap'].includes(provenance.kind)) return null;
+  const [path] = provenance.ref.split('#');
+  return path.endsWith('.md') ? buildArtifactUrl(null, path) : null;
 }
 
 export interface SourcedValue<T> {
