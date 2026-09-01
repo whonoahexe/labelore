@@ -1702,7 +1702,7 @@ pre {
 }
 
 .coverage-table-boundary tbody tr:nth-child(even) td {
-  background: color-mix(in oklch, var(--muted) 38%, transparent);
+  background: var(--table-zebra);
 }
 
 .document-reference {
@@ -2280,8 +2280,19 @@ pre {
   vertical-align: top;
 }
 
+/* One declared source for table striping, shared with the coverage matrix below. A flat 38%
+   --muted sat outside the palette on both grounds; each theme now mixes toward the surface it
+   actually paints, so the stripe reads as the same material as the table. */
+:root {
+  --table-zebra: color-mix(in oklch, var(--muted) 62%, transparent);
+}
+
+.dark {
+  --table-zebra: color-mix(in oklch, var(--secondary) 50%, transparent);
+}
+
 .artifact-document tr:nth-child(even) td {
-  background: color-mix(in oklch, var(--muted) 38%, transparent);
+  background: var(--table-zebra);
 }
 
 .artifact-document pre {
@@ -2293,17 +2304,35 @@ pre {
   line-height: 1.65;
 }
 
+/* Thin and quiet at rest, stronger once the block is engaged. The 8px default bar with its
+   own track read as a chunky OS control against this surface; --border alone was also nearly
+   invisible in dark, where it resolves to oklch(1 0 0 / 10%). */
+.artifact-document pre {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklch, var(--muted-foreground) 45%, transparent) transparent;
+}
+
 .artifact-document pre::-webkit-scrollbar {
-  height: 8px;
+  height: 6px;
+}
+
+.artifact-document pre::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .artifact-document pre::-webkit-scrollbar-thumb {
-  background: var(--border);
+  background: color-mix(in oklch, var(--muted-foreground) 45%, transparent);
   border-radius: 0;
 }
 
+.artifact-document pre:hover::-webkit-scrollbar-thumb,
+.artifact-document pre:focus-within::-webkit-scrollbar-thumb,
 .artifact-document pre::-webkit-scrollbar-thumb:hover {
   background: var(--muted-foreground);
+}
+
+.artifact-document pre:focus-within {
+  scrollbar-color: var(--muted-foreground) transparent;
 }
 
 .artifact-document :not(pre) > code {

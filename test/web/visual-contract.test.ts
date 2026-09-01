@@ -409,3 +409,33 @@ describe('muted surface contrast and dead selectors (F2, F5)', () => {
     expect(dashboard).not.toMatch(/<small/);
   });
 });
+
+describe('code scrollbar and table striping (F6, F9)', () => {
+  it('draws a thin code scrollbar that strengthens once the block is engaged', async () => {
+    const css = await source('src/web/styles/globals.css');
+    expect(ruleBlocks(css, '.artifact-document pre::-webkit-scrollbar {')[0]).toMatch(
+      /height:\s*6px/,
+    );
+    expect(ruleBlocks(css, '.artifact-document pre::-webkit-scrollbar-track {')[0]).toMatch(
+      /background:\s*transparent/,
+    );
+    // --border alone resolves to oklch(1 0 0 / 10%) in dark, which is effectively invisible.
+    expect(ruleBlocks(css, '.artifact-document pre::-webkit-scrollbar-thumb {')[0]).toMatch(
+      /var\(--muted-foreground\)/,
+    );
+    expect(css).toContain('.artifact-document pre:focus-within::-webkit-scrollbar-thumb');
+  });
+
+  it('drives both zebra rules from one declared per-theme source', async () => {
+    const css = await source('src/web/styles/globals.css');
+    expect(ruleBlocks(css, '.artifact-document tr:nth-child(even) td {')[0]).toMatch(
+      /background:\s*var\(--table-zebra\)/,
+    );
+    expect(
+      ruleBlocks(css, '.coverage-table-boundary tbody tr:nth-child(even) td {')[0],
+    ).toMatch(/background:\s*var\(--table-zebra\)/);
+    // Declared for both grounds, so neither theme falls back to the other's stripe.
+    expect(css).toMatch(/:root \{\n  --table-zebra:/);
+    expect(css).toMatch(/\.dark \{\n  --table-zebra:/);
+  });
+});
