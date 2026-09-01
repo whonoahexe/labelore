@@ -262,3 +262,67 @@ describe('G2-08 bounded Next descriptions', () => {
     expect(page).not.toMatch(/item\.description\.(slice|substring|substr)\(/);
   });
 });
+
+// G2-09/G2-10 (02-13-SUMMARY.md items 2, 4): section-label color and status-chip tone must
+// come from one named, theme-aware token contract rather than a conflicting later cascade or
+// a page-specific override.
+describe('G2-09 section-label token contract', () => {
+  it('diagnoses every .plan-section-label declaration and finds the conflicting later color', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const blocks = ruleBlocks(css, '.plan-section-label {');
+    expect(blocks.length).toBeGreaterThanOrEqual(2);
+    const colorDeclarations = blocks.filter((block) => /^\s*color\s*:/m.test(block));
+    expect(colorDeclarations).toHaveLength(1);
+    expect(colorDeclarations[0]).toContain('var(--muted-foreground)');
+  });
+
+  it('resolves top-level and nested section labels to the same muted token', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const blocks = ruleBlocks(css, '.plan-section-label {');
+    for (const block of blocks) {
+      expect(block).not.toContain('var(--primary)');
+    }
+  });
+});
+
+describe('G2-10 status-chip semantic tone contract', () => {
+  it('keeps active/current and complete/exact on the primary treatment', async () => {
+    const css = await source('src/web/styles/globals.css');
+    expect(css).toMatch(
+      /\.status-chip\[data-tone='active'\],\s*\n\.status-chip\[data-tone='complete'\]\s*\{[\s\S]*var\(--primary\)/,
+    );
+  });
+
+  it('keeps pending/quiet/inferred on the muted treatment, distinct from active/complete', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [quiet] = ruleBlocks(css, ".status-chip[data-tone='quiet'] {");
+    expect(quiet).toBeDefined();
+    expect(quiet).toContain('var(--muted-foreground)');
+    expect(quiet).not.toContain('var(--primary)');
+  });
+
+  it('assigns inferred coverage matches the quiet treatment, not the active/complete treatment', async () => {
+    const page = await source('src/web/pages/plan-pair-page.tsx');
+    expect(page).toMatch(
+      /data-tone=\{match\.kind === 'exact' \? 'complete' : 'quiet'\}/,
+    );
+    expect(page).not.toMatch(/data-tone=\{match\.kind === 'exact' \? 'complete' : 'active'\}/);
+  });
+
+  it('never assigns a raw/unrecognized status-chip tone at any call site', async () => {
+    const files = await Promise.all(
+      ['src/web/pages/dashboard-page.tsx', 'src/web/pages/roadmap-page.tsx', 'src/web/pages/plan-pair-page.tsx'].map(
+        source,
+      ),
+    );
+    const recognizedTones = ['active', 'complete', 'quiet'];
+    for (const file of files) {
+      const toneLiterals = [...file.matchAll(/data-tone=(?:"([\w-]+)"|\{[^}]*'([\w-]+)'[^}]*\})/g)]
+        .flatMap((match) => [match[1], match[2]])
+        .filter((value): value is string => Boolean(value));
+      for (const tone of toneLiterals) {
+        expect(recognizedTones).toContain(tone);
+      }
+    }
+  });
+});
