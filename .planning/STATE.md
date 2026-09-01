@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-08-24)
 Phase: 02 (Situational Awareness & Artifact Reading) — EXECUTING
 Plan: 3 of 16
 Status: Ready to execute
-Last activity: 2026-09-01 — Phase 02 execution resumed (wave continue)
+Last activity: 2026-09-01 — Completed quick task 260901-ten: nine phase-02 UAT findings fixed (F1–F9)
 
 Progress: [███░░░░░░░] 25%
 
@@ -87,6 +87,12 @@ None yet.
 ### Blockers/Concerns
 
 - Phase 2 is the heaviest phase (23 of 45 requirements across six subsystems: shell/theme, dashboard, roadmap, markdown pipeline, linkifier, milestone history). Plan decomposition should expect the top of the coarse 1–3 plan range and split by subsystem, not by view.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260901-ten | Fix nine phase-02 UAT findings in the web UI (mermaid oklch outage, discrepancy-callout contrast, plan-section prose measure, 320px overflow, dead selector, code scrollbar, popover anchor, nested plan numbering, table zebra) | 2026-09-01 | cb3692a | [260901-ten-fix-nine-phase-02-uat-findings-in-the-we](./quick/260901-ten-fix-nine-phase-02-uat-findings-in-the-we/) |
 
 ## Deferred Items
 
