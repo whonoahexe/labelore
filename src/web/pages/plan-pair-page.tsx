@@ -165,7 +165,7 @@ export function PlanPairPage(): React.JSX.Element {
                     <td>
                       <span
                         className="status-chip"
-                        data-tone={match.kind === 'exact' ? 'complete' : 'active'}
+                        data-tone={match.kind === 'exact' ? 'complete' : 'quiet'}
                       >
                         {match.kind}
                       </span>
