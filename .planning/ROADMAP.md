@@ -173,8 +173,24 @@ Plans:
   3. The app is usable before the index finishes building — index construction never blocks first paint.
   4. A tree navigator mirrors `.planning/`'s real structure — root docs, `phases/`, `quick/`, `milestones/`, `research/` — expandable per phase, and a traceability view shows every requirement with the phase covering it and its status.
 
-**Plans**: 2 plans
+**Plans**: 4 plans *(sized at 2 at roadmap time; split to 4 because D-11's assembly fix, the search surfaces, the sidebar restructure, and the traceability view each own a distinct file set and `src/server/index.ts`, `src/presentation/routes.ts`, `app-shell.tsx` and `globals.css` are touched by more than one — a two-plan split would have put every task over the per-plan file budget)*
 **UI hint**: yes
+
+**Wave 1** *(tracer — the vertical slice every later wave builds on)*
+
+- [ ] 03-01-PLAN.md — End-to-end exact-token search, the D-11 assembly fix that makes the corpus complete, and non-blocking index construction (FIND-01, FIND-02, FIND-05)
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 03-02-PLAN.md — Location-then-type result grouping, match-centred snippets with heading deep-links, and the /search reading surface (FIND-03, FIND-04)
+
+**Wave 3** *(blocked on Wave 2 — shares app-shell.tsx and globals.css)*
+
+- [ ] 03-03-PLAN.md — The disk-mirroring tree navigator and the shell restructured into header-over-sidebar-plus-content (NAV-01)
+
+**Wave 4** *(blocked on Wave 3 — shares app-shell.tsx, tree.ts and globals.css)*
+
+- [ ] 03-04-PLAN.md — The requirements traceability view with two unmerged status columns, category grouping, and uncovered/disagreement filters (NAV-05)
 
 ### Phase 4: Portability & Degradation Hardening
 
