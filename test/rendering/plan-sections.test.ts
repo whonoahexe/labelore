@@ -348,3 +348,44 @@ describe('locked syntax theme (G-06)', () => {
     expect(rendered.html).toContain('--shiki-dark');
   });
 });
+
+describe('nested PLAN section ordinals (F8)', () => {
+  it('numbers each section by its dotted position among its siblings', async () => {
+    const renderer = await createArtifactRenderer();
+    const rendered = await renderer.render(
+      artifact(`<objective>
+First.
+</objective>
+
+<tasks>
+<task>
+<name>
+Alpha.
+</name>
+<verify>
+Check alpha.
+</verify>
+</task>
+<task>
+<name>
+Beta.
+</name>
+</task>
+</tasks>`),
+    );
+
+    // Top level counts 1..n; depth appends, so a reader can tell 2.1.2 from 2.2.
+    expect(rendered.html).toContain('data-plan-ordinal="1"');
+    expect(rendered.html).toContain('data-plan-ordinal="2"');
+    expect(rendered.html).toContain('data-plan-ordinal="2.1"');
+    expect(rendered.html).toContain('data-plan-ordinal="2.1.1"');
+    expect(rendered.html).toContain('data-plan-ordinal="2.1.2"');
+    expect(rendered.html).toContain('data-plan-ordinal="2.2"');
+    expect(rendered.html).toContain('<span class="plan-section-ordinal">2.1.2</span>');
+
+    // Every section carries one, so the cue never goes missing partway down a plan.
+    const sections = rendered.html.match(/<section class="plan-section /g) ?? [];
+    const ordinals = rendered.html.match(/data-plan-ordinal="/g) ?? [];
+    expect(ordinals).toHaveLength(sections.length);
+  });
+});
