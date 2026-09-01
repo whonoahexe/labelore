@@ -6,7 +6,13 @@ import {
   type ReferenceRegistry,
 } from '../presentation/references.ts';
 
-const REFERENCE_TOKEN = /Phase\s+[\p{Letter}\p{Number}.]+|[A-Z][A-Z0-9]+-\d+|\d+(?:\.\d+)?-\d+/gu;
+// `.planning/...` alternative is listed first so an artifact path is captured whole (e.g.
+// `phases/02-15-PLAN.md`) before the plan-id alternative could match an embedded substring like
+// `02-15` on its own. Trailing sentence punctuation (`.`, `,`, `;`, `:`, `!`, `?`, closing
+// brackets/quotes) is excluded from the match so a path at the end of a sentence resolves on its
+// bare canonical form while the punctuation stays as ordinary trailing text.
+const REFERENCE_TOKEN =
+  /\.planning\/\S*[^\s.,;:!?)\]}'"]|Phase\s+[\p{Letter}\p{Number}.]+|[A-Z][A-Z0-9]+-\d+|\d+(?:\.\d+)?-\d+/gu;
 const IDENTIFIER_EDGE = /[\p{Letter}\p{Number}_-]/u;
 
 interface ReferenceRenderContext {
