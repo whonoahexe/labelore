@@ -53,7 +53,11 @@ function toHexByte(value: number): string {
   return value.toString(16).padStart(2, '0');
 }
 
-/** Parses an L, C, or alpha component that may carry a trailing `%`. */
+/**
+ * Parses a component that may carry a trailing `%`. The divisor is per-component because CSS
+ * Color 4 gives each its own reference range: lightness and alpha map 100% to 1, but chroma maps
+ * 100% to 0.4. Dividing chroma by 100 would oversaturate it by 2.5x.
+ */
 function parsePercentOrFraction(raw: string, percentDivisor: number): number {
   if (raw.endsWith('%')) {
     return parseFloat(raw.slice(0, -1)) / percentDivisor;
@@ -76,7 +80,7 @@ export function toMermaidColor(value: string): string {
   try {
     const [, lRaw, cRaw, hRaw, , alphaRaw] = match;
     const l = parsePercentOrFraction(lRaw, 100);
-    const c = parsePercentOrFraction(cRaw, 100);
+    const c = parsePercentOrFraction(cRaw, 250);
     const h = parseFloat(hRaw);
     if ([l, c, h].some((component) => Number.isNaN(component))) return value;
 

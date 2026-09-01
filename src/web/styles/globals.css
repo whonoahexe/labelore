@@ -795,13 +795,10 @@
 /* No <small> is rendered in an attention row — a row is item-kind span, strong, p and the
    source note — so the selector that used to sit alongside this one matched nothing. */
 .attention-list p {
+  margin: 0.35rem 0;
   color: var(--muted-foreground);
   font-size: 0.77rem;
   line-height: 1.55;
-}
-
-.attention-list p {
-  margin: 0.35rem 0;
 }
 
 .attention-action {

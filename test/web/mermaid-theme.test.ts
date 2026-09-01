@@ -86,3 +86,17 @@ describe('toMermaidColor', () => {
     expect(toMermaidColor('oklch(nope)')).toBe('oklch(nope)');
   });
 });
+
+describe('percentage components (WR-01)', () => {
+  it('maps 100% chroma to 0.4, not 1.0', () => {
+    // CSS Color 4 gives chroma its own reference range. Treating 100% as 1.0 oversaturates by
+    // 2.5x, so oklch(0.7 50% 150) must equal oklch(0.7 0.2 150).
+    expect(toMermaidColor('oklch(0.7 50% 150)')).toBe(toMermaidColor('oklch(0.7 0.2 150)'));
+    expect(toMermaidColor('oklch(0.7 100% 150)')).toBe(toMermaidColor('oklch(0.7 0.4 150)'));
+  });
+
+  it('still maps 100% lightness and alpha to 1', () => {
+    expect(toMermaidColor('oklch(100% 0 0)')).toBe(toMermaidColor('oklch(1 0 0)'));
+    expect(toMermaidColor('oklch(0.5 0 0 / 100%)')).toBe(toMermaidColor('oklch(0.5 0 0)'));
+  });
+});

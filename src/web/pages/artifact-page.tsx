@@ -201,7 +201,7 @@ export function DocumentView({ document }: { document: RenderedDocument }): Reac
     );
     if (mermaidNodes.length > 0) {
       const rootStyle = getComputedStyle(window.document.documentElement);
-      void import('mermaid').then(async ({ default: mermaid }) => {
+      const chunk = import('mermaid').then(async ({ default: mermaid }) => {
         const baseOptions = {
           securityLevel: 'strict' as const,
           startOnLoad: false,
@@ -249,6 +249,15 @@ export function DocumentView({ document }: { document: RenderedDocument }): Reac
             ]);
           }
         }
+      });
+      chunk.catch(() => {
+        // The module itself failed to load; every node keeps its readable source, but say so
+        // rather than leaving the diagrams silently unrendered.
+        if (disposed) return;
+        setRuntimeWarnings((warnings) => [
+          ...warnings,
+          'The Mermaid renderer could not be loaded; diagrams remain readable as source.',
+        ]);
       });
     }
 
