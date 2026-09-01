@@ -228,3 +228,37 @@ describe('revised visual contract (G-08, G-10, G-05, G-07, G-03, E9 long-text)',
     expect(page).toContain('node.textContent = source');
   });
 });
+
+// G2-08 (02-13-SUMMARY.md item 10): unusually long Next descriptions must keep the panel
+// bounded while the complete authored text stays present in the DOM/accessible tree — only
+// the visual presentation is clipped, never the underlying string.
+describe('G2-08 bounded Next descriptions', () => {
+  it('first detects that primary and preview Next descriptions have no bounded line policy', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [primary] = ruleBlocks(css, '.next-primary p {');
+    const [preview] = ruleBlocks(css, '.next-preview p {');
+    expect(primary).toBeDefined();
+    expect(preview).toBeDefined();
+    expect(primary).toContain('-webkit-line-clamp: 3;');
+    expect(preview).toContain('-webkit-line-clamp: 2;');
+  });
+
+  it('clamps primary descriptions at three visual lines and preview descriptions at two', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [primary] = ruleBlocks(css, '.next-primary p {');
+    const [preview] = ruleBlocks(css, '.next-preview p {');
+    for (const block of [primary, preview]) {
+      expect(block).toContain('display: -webkit-box;');
+      expect(block).toContain('-webkit-box-orient: vertical;');
+      expect(block).toContain('overflow: hidden;');
+    }
+    expect(primary).toContain('-webkit-line-clamp: 3;');
+    expect(preview).toContain('-webkit-line-clamp: 2;');
+  });
+
+  it('never truncates the underlying description string in the component itself', async () => {
+    const page = await source('src/web/pages/dashboard-page.tsx');
+    expect(page).toContain('<p>{item.description}</p>');
+    expect(page).not.toMatch(/item\.description\.(slice|substring|substr)\(/);
+  });
+});
