@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { Artifact } from '../../src/domain/model.ts';
 import {
   buildReferenceRegistry,
+  resolveArtifactReference,
   resolvePresentationReference,
 } from '../../src/presentation/references.ts';
 import {
@@ -183,14 +184,66 @@ describe('milestone-contextual presentation references', () => {
     );
   });
 
-  it.each(['', ' ', 'READ-', 'READ-999', 'Phase', 'Phase 99', '01-', '99-99'])(
-    'leaves unresolved or malformed token %j ordinary',
-    (token) => {
-      expect(
-        resolvePresentationReference(buildReferenceRegistry(presentation()), token, activeArtifact),
-      ).toBeNull();
-    },
-  );
+  it.each([
+    '',
+    ' ',
+    'READ-',
+    'READ-999',
+    'Phase',
+    'Phase 99',
+    '01-',
+    '99-99',
+    '.planning/phases/99-missing/99-MISSING.md',
+    'backend/src/auth/mod.rs',
+    'a1b2c3d',
+  ])('leaves unresolved or malformed token %j ordinary', (token) => {
+    expect(
+      resolvePresentationReference(buildReferenceRegistry(presentation()), token, activeArtifact),
+    ).toBeNull();
+  });
+});
+
+describe('exact artifact-path presentation references', () => {
+  it('resolves a registered phase artifact path to its existing artifact preview and Open URL', () => {
+    const registry = buildReferenceRegistry(presentation());
+
+    expect(resolvePresentationReference(registry, activeArtifact, rootArtifact)).toMatchObject({
+      type: 'artifact',
+      identity: activeArtifact,
+      title: 'Current context',
+      url: buildArtifactUrl(activeIdentity, activeArtifact),
+    });
+    expect(resolveArtifactReference(registry, activeArtifact)?.url).toBe(
+      buildArtifactUrl(activeIdentity, activeArtifact),
+    );
+  });
+
+  it('resolves milestone-root and archived artifact paths from the same registry, without phase-number assumptions', () => {
+    const registry = buildReferenceRegistry(presentation());
+
+    // Resolved while "contained in" an unrelated artifact — proves resolution never consults the
+    // containing document's own milestone/phase context, unlike phase/plan/requirement tokens.
+    expect(resolvePresentationReference(registry, rootArtifact, activeArtifact)).toMatchObject({
+      type: 'artifact',
+      identity: rootArtifact,
+      title: 'Project',
+      url: buildArtifactUrl(null, rootArtifact),
+    });
+    expect(resolvePresentationReference(registry, archivedArtifact, rootArtifact)).toMatchObject({
+      type: 'artifact',
+      identity: archivedArtifact,
+      title: 'Archived context',
+      url: buildArtifactUrl(archivedIdentity, archivedArtifact),
+    });
+  });
+
+  it('never synthesizes a destination for an unregistered .planning path, a source path, or a commit hash', () => {
+    const registry = buildReferenceRegistry(presentation());
+
+    expect(resolveArtifactReference(registry, '.planning/phases/99-missing/99-MISSING.md')).toBeNull();
+    expect(resolvePresentationReference(registry, 'backend/src/auth/mod.rs', activeArtifact)).toBeNull();
+    expect(resolvePresentationReference(registry, 'a1b2c3d', activeArtifact)).toBeNull();
+  });
 });
 
 describe('post-sanitize reference enrichment', () => {
@@ -219,6 +272,69 @@ flowchart TD
     expect(rendered.html).toContain('READ-05 --> A');
     expect(rendered.references).toHaveLength(3);
     expect(rendered.warnings).toEqual([]);
+  });
+
+  it('linkifies an exact prose artifact path to a preview whose Open URL is the existing artifact URL', async () => {
+    const registry = buildReferenceRegistry(presentation());
+    const renderer = await createArtifactRenderer();
+    const rendered = await renderer.render(
+      artifact(`See ${rootArtifact} for the project overview.`),
+      { referenceRegistry: registry },
+    );
+
+    expect(rendered.html.match(/data-reference-key=/g)).toHaveLength(1);
+    expect(rendered.html).toContain(`>${rootArtifact}</button>`);
+    expect(rendered.references).toHaveLength(1);
+    expect(rendered.references?.[0]).toMatchObject({
+      type: 'artifact',
+      identity: rootArtifact,
+      url: buildArtifactUrl(null, rootArtifact),
+    });
+  });
+
+  it('resolves a milestone-root or archived artifact path from the same registry, without phase-number assumptions', async () => {
+    const registry = buildReferenceRegistry(presentation());
+    const renderer = await createArtifactRenderer();
+    const rendered = await renderer.render(
+      artifact(`Archived copy lives at ${archivedArtifact} in the old milestone.`),
+      { referenceRegistry: registry },
+    );
+
+    expect(rendered.html.match(/data-reference-key=/g)).toHaveLength(1);
+    expect(rendered.references?.[0]).toMatchObject({
+      type: 'artifact',
+      identity: archivedArtifact,
+      url: buildArtifactUrl(archivedIdentity, archivedArtifact),
+    });
+  });
+
+  it('leaves an unknown .planning path, a reproduced source path, and a commit hash as plain text (D-17)', async () => {
+    const registry = buildReferenceRegistry(presentation());
+    const renderer = await createArtifactRenderer();
+    const rendered = await renderer.render(
+      artifact(
+        'Missing at .planning/phases/99-missing/99-MISSING.md, source backend/src/auth/mod.rs, commit a1b2c3d.',
+      ),
+      { referenceRegistry: registry },
+    );
+
+    expect(rendered.html).not.toContain('data-reference-key=');
+    expect(rendered.html).toContain('.planning/phases/99-missing/99-MISSING.md');
+    expect(rendered.html).toContain('backend/src/auth/mod.rs');
+    expect(rendered.html).toContain('a1b2c3d');
+    expect(rendered.references ?? []).toHaveLength(0);
+  });
+
+  it('excludes trailing sentence punctuation from lookup while keeping the visible reference faithful to the authored path', async () => {
+    const registry = buildReferenceRegistry(presentation());
+    const renderer = await createArtifactRenderer();
+    const rendered = await renderer.render(artifact(`Read ${rootArtifact}. Then continue.`), {
+      referenceRegistry: registry,
+    });
+
+    expect(rendered.html).toContain(`>${rootArtifact}</button>`);
+    expect(rendered.html).toContain('</button>. Then continue.');
+    expect(rendered.references).toHaveLength(1);
   });
 
   it('installs reference enrichment after sanitize and before stringify', async () => {
