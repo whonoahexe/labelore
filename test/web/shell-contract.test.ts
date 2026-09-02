@@ -103,4 +103,15 @@ describe('authorized Studio Portal shell contract', () => {
     expect(shell).toContain('<div className="shell-outlet" id="main-content">');
     expect(shell).toContain('href="#main-content"');
   });
+
+  // IN-01: top-level groups are meant to start open. Applying `open` only from the effect left
+  // them closed for the first paint, so the sidebar visibly snapped open after mount. The
+  // declarative attribute makes the first paint already correct; the effect stays for the
+  // route-reveal case, which must react to navigation and must keep its open-once semantics so
+  // a user's own manual close is never fought.
+  it('opens top-level tree groups declaratively on first paint, not only from the effect', async () => {
+    const navigator = await source('src/web/components/tree-navigator.tsx');
+    expect(navigator).toMatch(/<details[^>]*\sopen=\{node\.nodeType === 'group'\}/);
+    expect(navigator).toContain('if (detailsRef.current) detailsRef.current.open = true;');
+  });
 });
