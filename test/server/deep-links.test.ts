@@ -45,6 +45,7 @@ describe('production SPA deep-link delivery', () => {
     '/roadmap',
     '/search',
     '/search?q=IDENT-02',
+    '/traceability',
     buildPhaseUrl(phase),
     buildPlanUrl(phase, '02-02 / 計画'),
     buildArtifactUrl(phase, '.planning/phase / RESEARCH.md'),
