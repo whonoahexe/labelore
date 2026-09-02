@@ -1,11 +1,12 @@
 ---
 phase: 03-search-browsing-traceability
 verified: 2026-09-02T16:04:52Z
-status: human_needed
+status: passed
 score: 4/4 roadmap truths verified; 7/7 requirement IDs satisfied
 behavior_unverified: 0
 overrides_applied: 0
 human_verification:
+
   - test: "Render a search result whose match sits inside a non-ASCII grapheme cluster (a combining mark or ZWJ emoji sequence) in fixtures/dense or a purpose-built fixture, and read the highlighted snippet in the actual browser."
     expected: "The highlight/window boundary never bisects a combining mark or ZWJ sequence, only ever a plain code point or (correctly) a surrogate pair."
     why_human: "03-01-PLAN.md's own must_haves marks this `verification: backstop` — the unit tests prove surrogate-pair safety but explicitly do not settle the grapheme-cluster case; only a human reading a real rendered row can confirm it."

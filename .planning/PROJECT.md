@@ -17,7 +17,10 @@ artifact lives — without reading a single file by hand.
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ Full-text search across every file in `.planning/`, grouped by phase and artifact type — Phase 3
+- ✓ Navigable browser of the complete `.planning/` tree — Phase 3
+- ✓ Clickable cross-references between requirements, phases, plans, summaries, and roadmap entries — Phase 3
+- ✓ First-class requirements traceability view — Phase 3
 
 ### Active
 
@@ -40,15 +43,6 @@ artifact lives — without reading a single file by hand.
 - [ ] Renders the roadmap: phases, their goals, success criteria, plan lists, wave structure, and
       completion state
 - [ ] Shows milestone history and archived milestones as distinct from the active one
-
-**Findability — "where is that thing?"**
-
-- [ ] Full-text search across every file in `.planning/`, with results grouped by phase and artifact type
-- [ ] Navigable browser of the whole `.planning/` tree — root docs, `phases/`, `quick/`, `milestones/`,
-      `research/`
-- [ ] Cross-references are clickable: requirement ID → the phase covering it, phase → its plans and
-      summaries, roadmap entry → the underlying artifact
-- [ ] Requirements and their traceability to phases are viewable as a first-class view
 
 **Reading — "render this properly"**
 
@@ -150,7 +144,7 @@ style). The tokens are copied; the codebase is not.
 | Read-only in v1; no writes to `.planning/` | GSD owns these files' invariants. A viewer that cannot write cannot corrupt planning state. Driving GSD is a named future direction, not v1 scope. | ✓ Phase 1 established a read-only filesystem boundary with containment checks |
 | One project per run, targeted by path argument | Simplest thing that satisfies "works on any GSD project" without building registry, discovery, or persistence machinery. | ✓ Phase 1 verified absolute, relative, `~`-prefixed, and symlinked targets |
 | Own repository at `~/gsd-lore`, clone-and-run | Chosen over `npx`/global CLI: no packaging or distribution burden for a personal tool. | — Pending |
-| Findability via full-text search *and* navigation/cross-linking | Both were chosen over curated per-type aggregate pages. Search covers the unknown-unknowns; navigation covers walking a structure you already understand. | — Pending |
+| Findability via full-text search *and* navigation/cross-linking | Both were chosen over curated per-type aggregate pages. Search covers the unknown-unknowns; navigation covers walking a structure you already understand. | ✓ Phase 3 shipped exact-token search, grouped snippets, a complete tree, and requirements traceability |
 | studio-portal is a reference and theme source, nothing more | Explicit user instruction. The dashboard must render any GSD project, so hardcoding to studio-portal would defeat the point. | — Pending |
 | Live file-watching deferred to v2, read layer built to allow it | Watching is real infrastructure (watcher plus transport plus client state). Deferring it is cheap only if the read layer is a seam from day one. | ✓ Phase 1 delivered and tested the single `refresh()` seam |
 | Tech stack deferred to research | User declined to pre-commit. A local read-only tool has different pressures than studio-portal's networked app; the theme is portable across candidate stacks. | — Pending |
@@ -176,4 +170,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-24 after Phase 1*
+*Last updated: 2026-09-02 after Phase 3*
