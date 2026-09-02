@@ -3,6 +3,7 @@ import { BookOpenText, LayoutDashboard, Map, Radio } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
+import { SearchField } from './search-field.tsx';
 import { ThemeToggle } from './theme-toggle.tsx';
 
 async function fetchPresentation(): Promise<ProjectPresentation> {
@@ -51,6 +52,7 @@ export function AppShell(): React.JSX.Element {
         </nav>
 
         <div className="shell-controls">
+          <SearchField />
           <div className="snapshot-status" aria-live="polite">
             <Radio aria-hidden="true" />
             {presentation.isPending ? (

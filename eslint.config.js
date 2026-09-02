@@ -11,6 +11,14 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
+    rules: {
+      // Leading underscore signals an intentionally-unused parameter (e.g. an external callback
+      // signature this codebase must conform to, such as MiniSearch's tokenize/processTerm
+      // (text, fieldName) shape, where fieldName is part of the contract but not always consumed).
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    },
+  },
+  {
     files: [
       '*.config.{js,ts}',
       'src/cli/**/*.ts',

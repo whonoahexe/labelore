@@ -14,6 +14,7 @@ import { createArtifactRenderer } from '../rendering/markdown.ts';
 import { resolveTargetPath } from '../cli/target-path.ts';
 import { buildArtifactIndex } from './artifact-index.ts';
 import { jsonRecord, toProjectPresentation } from './project-presentation.ts';
+import { createSearchIndexState, searchIndex } from './search-index.ts';
 
 const DEFAULT_PORT = 4173;
 const HOSTNAME = '127.0.0.1';
@@ -37,6 +38,11 @@ export function createApp(
   const renderer = createArtifactRenderer();
   const presentation = toProjectPresentation(source.getSnapshot());
   const referenceRegistry = buildReferenceRegistry(presentation);
+  // D-04/FIND-05: constructing the state object is synchronous and cheap (just a status flag);
+  // the actual MiniSearch build is scheduled off this path inside buildFrom — createApp returning
+  // (and the server accepting connections) never waits on index readiness.
+  const searchIndexState = createSearchIndexState();
+  searchIndexState.buildFrom(source.getSnapshot());
 
   const artifactResponse = async (lookup: ReturnType<typeof artifactIndex.lookup>) => {
     if (!lookup.found) return lookup;
@@ -78,6 +84,17 @@ export function createApp(
       readAt: presentation.readAt,
       history: buildRoadmapViewModel(presentation).history,
     });
+  });
+  app.get('/api/search', (c) => {
+    const query = c.req.query('q') ?? '';
+    const state = searchIndexState.state();
+    // Answers HTTP 200 in every readiness state — never a 5xx, never a hang, and this handler
+    // never blocks /api/dashboard or any other route while the index is still building (FIND-05).
+    if (state.status !== 'ready') {
+      return c.json({ status: state.status, query, total: 0, results: [] });
+    }
+    const results = searchIndex(state, query);
+    return c.json({ status: 'ready' as const, query, total: results.length, results });
   });
   app.get('/api/artifacts/*', async (c) => {
     const pathname = new URL(c.req.url).pathname;

@@ -2494,3 +2494,154 @@ pre {
     padding-inline: 1rem;
   }
 }
+
+/* Phase 3 — header search field and /search results page (D-01, D-02, D-03, D-04, D-05). */
+.search-field {
+  display: flex;
+  gap: 0.5rem;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
+  border: 1px solid var(--border);
+  background: var(--input);
+  padding: 0.4rem 0.65rem;
+  color: var(--muted-foreground);
+}
+
+.search-field:focus-within {
+  border-color: var(--ring);
+  color: var(--foreground);
+}
+
+.search-field-icon {
+  width: 0.85rem;
+  height: 0.85rem;
+  flex: none;
+}
+
+.search-field-input {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.search-field-input:focus {
+  outline: none;
+}
+
+.search-field-input::placeholder {
+  color: var(--muted-foreground);
+}
+
+.search-dropdown-positioner {
+  z-index: 60;
+}
+
+.search-dropdown {
+  display: grid;
+  width: min(22rem, calc(100vw - 2rem));
+  max-height: min(24rem, calc(100vh - 6rem));
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: 0 1rem 2.5rem color-mix(in oklab, var(--foreground) 18%, transparent);
+}
+
+.search-dropdown-notice,
+.search-dropdown-status,
+.search-dropdown-empty {
+  padding: 0.75rem 1rem;
+  font-size: 0.78rem;
+}
+
+.search-dropdown-status p {
+  margin: 0 0 0.2rem;
+  color: var(--foreground);
+}
+
+.search-dropdown-status small {
+  color: var(--muted-foreground);
+}
+
+.search-dropdown-list {
+  display: grid;
+}
+
+.search-dropdown-item {
+  display: grid;
+  gap: 0.15rem;
+  border-top: 1px solid var(--border);
+  padding: 0.6rem 1rem;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.search-dropdown-list > :first-child {
+  border-top: 0;
+}
+
+.search-dropdown-item[data-highlighted] {
+  background: var(--sidebar-accent);
+}
+
+.search-result-title {
+  overflow: hidden;
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-result-path {
+  overflow-wrap: anywhere;
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: 0.64rem;
+}
+
+/* File paths truncate head-first with a leading ellipsis inside the compact dropdown, keeping the
+   filename tail (the identifying part) always visible. */
+.search-dropdown-item .search-result-path {
+  overflow: hidden;
+  direction: rtl;
+  text-align: left;
+  text-overflow: ellipsis;
+  unicode-bidi: plaintext;
+  white-space: nowrap;
+}
+
+.search-dropdown-footer {
+  justify-content: center;
+  border-top: 1px solid var(--border);
+  padding: 0.6rem 1rem;
+}
+
+.search-result-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.search-result-list a {
+  display: grid;
+  gap: 0.25rem;
+  border: 1px solid var(--border);
+  background: color-mix(in oklch, var(--card) 94%, transparent);
+  padding: 1rem 1.25rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.search-result-list strong {
+  font-size: 0.9rem;
+}
