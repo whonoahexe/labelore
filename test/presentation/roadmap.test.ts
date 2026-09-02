@@ -95,6 +95,7 @@ function presentation(milestones: MilestoneDto[]): ProjectPresentation {
     checkpoints: [],
     coverageWaits: [],
     mentions: { byId: {}, all: [] },
+    exclusions: [],
   };
 }
 

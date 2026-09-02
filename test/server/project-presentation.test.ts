@@ -5,6 +5,7 @@ import { LocalFsPlanningFilesystem } from '../../src/planning-fs/local-fs.ts';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
 import { projectPlanCheckpoints, segmentPlanBody } from '../../src/rendering/plan-segments.ts';
 import { toProjectPresentation } from '../../src/server/project-presentation.ts';
+import type { ProjectSnapshot } from '../../src/planning-repo/types.ts';
 
 const ROOT = '/project';
 
@@ -231,6 +232,10 @@ coverage_results:
     expect(presentation.readAt).toBe(snapshot.readAt);
     expect(json).not.toContain('$circularRef');
     expect(JSON.parse(json)).toEqual(presentation);
+    expect(presentation.exclusions).toBe(snapshot.exclusions);
+    expect(presentation.exclusions).toEqual([
+      expect.objectContaining({ path: '.planning/research/.cache' }),
+    ]);
     expect(
       presentation.milestones
         .find((milestone) => !milestone.archived)
@@ -239,5 +244,21 @@ coverage_results:
       { completed: 0, total: 2, sourcePath: '.planning/ROADMAP.md' },
       { completed: 0, total: 1, sourcePath: '.planning/ROADMAP.md' },
     ]);
+  });
+
+  it('carries exclusions through the empty-presentation path when snapshot.project is null', () => {
+    const snapshot: ProjectSnapshot = {
+      loadStatus: { status: 'path-not-found', pathChecked: '/nope', rawPath: '/nope', message: 'nope' },
+      readAt: '2026-09-02T00:00:00.000Z',
+      rootPath: '/nope',
+      project: null,
+      warnings: [],
+      exclusions: [{ path: '.planning/research/.cache', reason: 'Matches the research/.cache/ exclusion rule' }],
+    };
+
+    const presentation = toProjectPresentation(snapshot);
+
+    expect(presentation.exclusions).toEqual(snapshot.exclusions);
+    expect(presentation.artifacts).toEqual([]);
   });
 });

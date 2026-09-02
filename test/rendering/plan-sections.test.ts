@@ -34,6 +34,7 @@ function basePresentation(overrides: Partial<ProjectPresentation> = {}): Project
     checkpoints: [],
     coverageWaits: [],
     mentions: { byId: {}, all: [] },
+    exclusions: [],
     ...overrides,
   };
 }

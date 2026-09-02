@@ -130,6 +130,7 @@ function presentation(
     checkpoints: [],
     coverageWaits: [],
     mentions: { byId: {}, all: [] },
+    exclusions: [],
     ...overrides,
   };
 }
