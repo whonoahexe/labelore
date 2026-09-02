@@ -9,6 +9,7 @@ import {
   milestoneKeyOf,
   parsePresentationUrl,
   phaseKeyOf,
+  presentationRoutePatterns,
 } from '../../src/presentation/routes.ts';
 
 const active: PhaseIdentity = {
@@ -84,6 +85,11 @@ describe('milestone-qualified presentation route codec', () => {
   it('parses dashboard and roadmap routes without inventing identity', () => {
     expect(parsePresentationUrl('/')).toEqual({ ok: true, route: { kind: 'dashboard' } });
     expect(parsePresentationUrl('/roadmap')).toEqual({ ok: true, route: { kind: 'roadmap' } });
+  });
+
+  it('round-trips the /search route (D-03: query lives in ?q=, not the route itself)', () => {
+    expect(presentationRoutePatterns.search).toBe('/search');
+    expect(parsePresentationUrl('/search')).toEqual({ ok: true, route: { kind: 'search' } });
   });
 
   it.each([
