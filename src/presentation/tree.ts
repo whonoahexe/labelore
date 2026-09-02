@@ -125,8 +125,15 @@ export function buildTreeViewModel(presentation: ProjectPresentation): TreeNode[
     relSegments: string[],
     leaf: (path: string, label: string) => TreeNode,
   ): void {
-    if (relSegments.length === 0) return;
-    let cumulativePath = GROUP_PATH_PREFIX[location].join('/');
+    const groupPath = GROUP_PATH_PREFIX[location].join('/');
+    // A zero-segment path is the location group's own directory — reachable when the excluded
+    // path IS the planning root. D-10 says nothing skipped is ever silently absent, so this
+    // becomes a leaf directly under the group rather than disappearing.
+    if (relSegments.length === 0) {
+      groupNode(location).children.push(leaf(groupPath, groupPath));
+      return;
+    }
+    let cumulativePath = groupPath;
     let siblings = groupNode(location).children;
     for (let index = 0; index < relSegments.length - 1; index += 1) {
       const segment = relSegments[index];
