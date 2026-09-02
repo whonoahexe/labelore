@@ -106,6 +106,7 @@ function registryWithRead05(): ReferenceRegistry {
           structured: {},
           milestoneKey: null,
           phaseKey: null,
+          warnings: [],
         },
       ],
     }),

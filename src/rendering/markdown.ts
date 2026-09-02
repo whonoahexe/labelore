@@ -15,6 +15,7 @@ import type { Artifact } from '../domain/model.ts';
 import type { ReferencePreviewDto, ReferenceRegistry } from '../presentation/references.ts';
 import { rehypeResolvedReferences } from './linkify.ts';
 import { isRecognizedPlanTag, segmentPlanBody, type PlanSegment } from './plan-segments.ts';
+import { stableSlug } from './slug.ts';
 
 const MAX_MERMAID_SOURCE_BYTES = 256 * 1024;
 const PLAN_ATTRIBUTE_NAMES = ['type', 'gate', 'tdd'] as const;
@@ -86,20 +87,6 @@ function classesOf(element: Element): string[] {
 function languageOf(code: Element): string {
   const languageClass = classesOf(code).find((value) => value.startsWith('language-'));
   return languageClass?.slice('language-'.length).toLowerCase() || 'text';
-}
-
-function stableSlug(text: string): string {
-  return (
-    text
-      .normalize('NFKD')
-      .replace(/\p{Mark}/gu, '')
-      .toLowerCase()
-      .trim()
-      .replace(/[^\p{Letter}\p{Number}\s_-]/gu, '')
-      .replace(/[\s_]+/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '') || 'section'
-  );
 }
 
 function contextOf(file: VFile): RenderContext {

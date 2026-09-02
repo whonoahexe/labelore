@@ -119,6 +119,7 @@ function presentation(): ProjectPresentation {
         structured: {},
         milestoneKey: milestoneKeyOf('v2.0'),
         phaseKey: activePhase.key,
+        warnings: [],
       },
       {
         key: buildArtifactUrl(archivedIdentity, archivedArtifact),
@@ -130,6 +131,7 @@ function presentation(): ProjectPresentation {
         structured: {},
         milestoneKey: milestoneKeyOf('v1.0'),
         phaseKey: oldPhase.key,
+        warnings: [],
       },
       {
         key: buildArtifactUrl(null, rootArtifact),
@@ -141,6 +143,7 @@ function presentation(): ProjectPresentation {
         structured: {},
         milestoneKey: null,
         phaseKey: null,
+        warnings: [],
       },
     ],
     blockers: [],

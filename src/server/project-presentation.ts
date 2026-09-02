@@ -127,6 +127,10 @@ export interface ArtifactDto {
   structured: Record<string, unknown>;
   milestoneKey: string | null;
   phaseKey: string | null;
+  /** Parse warnings the artifact carries (Phase 1's WarningCollector output, passed through
+   * unchanged) — a non-empty array is what lets a consumer (e.g. search.ts's `unreadable` flag)
+   * mark a file the reader could not fully parse without dropping it from any listing. */
+  warnings: unknown[];
 }
 
 export interface ProjectPresentation {
@@ -402,6 +406,7 @@ function artifactDtos(project: Project): ArtifactDto[] {
         structured: jsonRecord(artifact.structured),
         milestoneKey: owner ? milestoneKeyOf(owner.identity.milestoneVersion) : null,
         phaseKey: owner?.phaseKey ?? null,
+        warnings: artifact.warnings,
       };
     })
     .sort((left, right) => left.path.localeCompare(right.path));
