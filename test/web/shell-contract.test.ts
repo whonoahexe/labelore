@@ -92,4 +92,15 @@ describe('authorized Studio Portal shell contract', () => {
     expect(pair).toContain('if (!plan.summary) return { plan: planDocument, summary: null }');
     expect(pair).not.toContain('does not have a paired summary yet');
   });
+
+  it('restructures the shell content region into a persistent sidebar plus outlet (03-03 D-09)', async () => {
+    const shell = await source('src/web/components/app-shell.tsx');
+    expect(shell).toContain("import { TreeNavigator } from './tree-navigator.tsx';");
+    expect(shell).toMatch(
+      /<div className="shell-content" data-sidebar={sidebarAbsent \? 'absent' : 'present'}>/,
+    );
+    expect(shell).toContain('<TreeNavigator onAbsentChange={setSidebarAbsent} />');
+    expect(shell).toContain('<div className="shell-outlet" id="main-content">');
+    expect(shell).toContain('href="#main-content"');
+  });
 });

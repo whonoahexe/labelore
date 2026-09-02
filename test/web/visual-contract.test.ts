@@ -481,3 +481,83 @@ describe('header search dropdown — navigating surface (03-02 Task 3, D-01)', (
     expect(source_).not.toContain('dangerouslySetInnerHTML');
   });
 });
+
+describe('persistent tree sidebar (03-03 Task 2, D-09/D-10/D-12)', () => {
+  it('declares a two-column grid whose first track is the sidebar, collapsing to one track when absent (Test 1)', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [block] = ruleBlocks(css, '.shell-content {');
+    expect(block).toBeDefined();
+    expect(block).toContain('display: grid;');
+    expect(block).toMatch(/grid-template-columns:\s*minmax\(14rem, 18rem\) minmax\(0, 1fr\);/);
+
+    const [absentBlock] = ruleBlocks(css, ".shell-content[data-sidebar='absent'] {");
+    expect(absentBlock).toBeDefined();
+    expect(absentBlock).toMatch(/grid-template-columns:\s*minmax\(0, 1fr\);/);
+  });
+
+  it('consumes the --sidebar, --sidebar-border, and --sidebar-accent token family rather than generic tokens (Test 2)', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [trackBlock] = ruleBlocks(css, '.tree-navigator {');
+    expect(trackBlock).toBeDefined();
+    expect(trackBlock).toContain('background: var(--sidebar);');
+    expect(trackBlock).toContain('border-right: 1px solid var(--sidebar-border);');
+
+    const [hoverBlock] = ruleBlocks(css, 'summary.tree-node-row:hover {');
+    expect(hoverBlock).toBeDefined();
+    expect(hoverBlock).toContain('background: var(--sidebar-accent);');
+  });
+
+  it('is sticky, bounded in height, and scrolls on its own overflow-y (Test 3)', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [block] = ruleBlocks(css, '.tree-navigator {');
+    expect(block).toBeDefined();
+    expect(block).toContain('position: sticky;');
+    expect(block).toMatch(/height:\s*calc\(100vh - var\(--shell-header-height, 0px\)\);/);
+    expect(block).toContain('overflow-y: auto;');
+  });
+
+  it('highlights the current-route node via --sidebar-primary, not the page-level --primary pair (Test 4)', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [block] = ruleBlocks(css, ".tree-node-row[data-active='true'] {");
+    expect(block).toBeDefined();
+    expect(block).toContain('background: var(--sidebar-primary);');
+    expect(block).toContain('color: var(--sidebar-primary-foreground);');
+  });
+
+  it('wraps long node labels via overflow-wrap: anywhere inside the track (Test 5)', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [block] = ruleBlocks(css, '.tree-node-row {');
+    expect(block).toBeDefined();
+    expect(block).toContain('overflow-wrap: anywhere;');
+  });
+
+  it('keeps the existing document-reader and page-stack width rules intact after the shell restructure (Test 6)', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [readerBlock] = ruleBlocks(css, '.document-reader-layout {');
+    expect(readerBlock).toBeDefined();
+    expect(readerBlock).toMatch(/grid-template-columns:\s*minmax\(10rem, 14rem\) minmax\(0, 1fr\);/);
+    const [pageStackBlock] = ruleBlocks(css, '.page-stack {');
+    expect(pageStackBlock).toBeDefined();
+    expect(pageStackBlock).toContain('width: min(80rem, 100%);');
+  });
+
+  it('collapses the sidebar out of the layout entirely at the narrow shell breakpoint, not just squeezing it (narrow-viewport)', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const narrowSection = css.slice(css.indexOf('@media (max-width: 62rem)'));
+    expect(narrowSection).toMatch(/\.tree-navigator\s*\{\s*display:\s*none;/);
+  });
+
+  it('uses native details/summary for disclosure, never the headless collapsible primitive (Test 7)', async () => {
+    const treeNavigator = await source('src/web/components/tree-navigator.tsx');
+    expect(treeNavigator).not.toContain('@base-ui/react/collapsible');
+    expect(treeNavigator).toContain('<details');
+    expect(treeNavigator).not.toMatch(/localStorage|sessionStorage/);
+  });
+
+  it('renders the sidebar inside the shell content region while the skip link still targets main content only', async () => {
+    const shell = await source('src/web/components/app-shell.tsx');
+    expect(shell).toContain('<TreeNavigator');
+    expect(shell).toContain('href="#main-content"');
+    expect(shell).toMatch(/<div className="shell-outlet" id="main-content">/);
+  });
+});
