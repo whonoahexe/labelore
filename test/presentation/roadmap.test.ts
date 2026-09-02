@@ -290,6 +290,7 @@ describe('buildRoadmapViewModel', () => {
         structured: {},
         milestoneKey: null,
         phaseKey: null,
+        warnings: [],
       },
     ];
 

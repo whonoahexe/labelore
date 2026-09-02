@@ -6,6 +6,7 @@ import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
 import { artifactTokenOf, buildPlanUrl } from '../../src/presentation/routes.ts';
 import { buildFrontmatterPanels } from '../../src/rendering/frontmatter-views.ts';
 import { createArtifactRenderer } from '../../src/rendering/markdown.ts';
+import { stableSlug } from '../../src/rendering/slug.ts';
 import { buildArtifactIndex } from '../../src/server/artifact-index.ts';
 import { createApp } from '../../src/server/index.ts';
 
@@ -171,6 +172,24 @@ const answer: number = 42
     expect(first.html).toContain('data-heading-id="repeat"');
     expect(first.html).toContain('data-heading-id="repeat-1"');
     expect(first.html).not.toContain('autofocus');
+  });
+});
+
+describe('stableSlug (extracted to src/rendering/slug.ts, 03-02)', () => {
+  it('lowercases, strips diacritics, and collapses whitespace/underscores to a single hyphen', () => {
+    expect(stableSlug('Some Heading')).toBe('some-heading');
+    expect(stableSlug('Café Déjà Vu')).toBe('cafe-deja-vu');
+    expect(stableSlug('snake_case   heading')).toBe('snake-case-heading');
+  });
+
+  it('falls back to "section" for text with no letters or numbers', () => {
+    expect(stableSlug('***')).toBe('section');
+    expect(stableSlug('')).toBe('section');
+  });
+
+  it('has no import statements — the zero-dependency contract that lets presentation code depend on it', async () => {
+    const source = await readFile(new URL('../../src/rendering/slug.ts', import.meta.url), 'utf8');
+    expect(source).not.toMatch(/^import /m);
   });
 });
 
