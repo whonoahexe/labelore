@@ -561,3 +561,47 @@ describe('persistent tree sidebar (03-03 Task 2, D-09/D-10/D-12)', () => {
     expect(shell).toMatch(/<div className="shell-outlet" id="main-content">/);
   });
 });
+
+describe('traceability filters and disagreement markers (03-04 Task 3, D-13/D-14/D-15)', () => {
+  it('reuses .status-chip for the destructive marker tone, referencing the destructive token rather than a literal colour', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [block] = ruleBlocks(css, ".status-chip[data-tone='destructive'] {");
+    expect(block).toBeDefined();
+    expect(block).toContain('var(--destructive)');
+    expect(block).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+    expect(block).not.toMatch(/\brgb\(/);
+  });
+
+  it('gives the active status filter button the primary treatment, distinct from its resting state', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [restingBlock] = ruleBlocks(css, '.trace-filter-button {');
+    expect(restingBlock).toBeDefined();
+    expect(restingBlock).not.toContain('var(--primary)');
+
+    const [activeBlock] = ruleBlocks(css, ".trace-filter-button[data-active='true'] {");
+    expect(activeBlock).toBeDefined();
+    expect(activeBlock).toContain('var(--primary)');
+  });
+
+  it('declares the filter row and status-filter group', async () => {
+    const css = await source('src/web/styles/globals.css');
+    expect(ruleBlocks(css, '.trace-filters {')[0]).toBeDefined();
+    expect(ruleBlocks(css, '.trace-status-filters {')[0]).toBeDefined();
+  });
+
+  it('the page re-exports a pure filter predicate rather than filtering via URL search params', async () => {
+    const page = await source('src/web/pages/traceability-page.tsx');
+    expect(page).toContain('matchesTraceabilityFilter');
+    expect(page).not.toMatch(/\?filter=|searchParams/);
+
+    const filterModule = await source('src/web/pages/traceability-filter.ts');
+    expect(filterModule).toContain('export function matchesTraceabilityFilter');
+  });
+
+  it('uses the exact chip labels authored in the UI-SPEC Copywriting Contract', async () => {
+    const page = await source('src/web/pages/traceability-page.tsx');
+    expect(page).toContain('Uncovered');
+    expect(page).toContain('Status mismatch');
+    expect(page).toContain('Unresolved');
+  });
+});
