@@ -90,7 +90,16 @@ function SearchRow({ row }: { row: SearchResultRow }): React.JSX.Element {
   );
 }
 
-function SearchGroupSection({ group }: { group: SearchResultGroup }): React.JSX.Element {
+// WR-03: both keys fold in the query. `row.path` and `group.key` are query-independent, so a
+// group or file matching two different searches was reconciled as the same component instance and
+// carried its `expanded`/`limit` state into unrelated results. Keying by query remounts instead.
+function SearchGroupSection({
+  group,
+  query,
+}: {
+  group: SearchResultGroup;
+  query: string;
+}): React.JSX.Element {
   const [limit, setLimit] = useState(GROUP_PAGE_SIZE);
   const visibleRows = group.rows.slice(0, limit);
 
@@ -101,7 +110,7 @@ function SearchGroupSection({ group }: { group: SearchResultGroup }): React.JSX.
       </h2>
       <ul className="search-group-rows">
         {visibleRows.map((row) => (
-          <SearchRow key={row.path} row={row} />
+          <SearchRow key={`${query}:${row.path}`} row={row} />
         ))}
       </ul>
       {limit < group.rows.length ? (
@@ -203,7 +212,7 @@ export function SearchPage(): React.JSX.Element {
       </header>
       <div className="search-groups">
         {view.groups.map((group) => (
-          <SearchGroupSection key={group.key} group={group} />
+          <SearchGroupSection key={`${query}:${group.key}`} group={group} query={query} />
         ))}
       </div>
     </main>
