@@ -22,6 +22,17 @@ const STATE_MD_PATH = '.planning/STATE.md';
 const ROADMAP_MD_PATH = '.planning/ROADMAP.md';
 const REQUIREMENTS_MD_PATH = '.planning/REQUIREMENTS.md';
 
+/**
+ * Frontmatter text that is optional in practice: absent, empty, and whitespace-only all mean
+ * "not set." Returns null for every one of them so downstream key derivation sees a single
+ * absent-value shape instead of three.
+ */
+function normalizeOptionalText(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length === 0 ? null : trimmed;
+}
+
 function toDomainArtifact(parsed: ParsedArtifact): Artifact {
   return {
     id: parsed.ref.path,
@@ -178,8 +189,13 @@ export function assembleDomainModel(parsed: ParsedArtifact[], _warnings: ParseWa
   const name = projectDoc?.title ?? basename(rootPath);
 
   const stateArtifact = artifacts[STATE_MD_PATH];
-  const activeMilestoneVersion = (stateArtifact?.frontmatter.milestone as string | undefined) ?? null;
-  const activeMilestoneName = (stateArtifact?.frontmatter.milestone_name as string | undefined) ?? null;
+  // An empty or whitespace-only value is a legal YAML scalar and a plausible "not yet named"
+  // state, but it is not a usable milestone version: routes.ts's milestoneKeyOf() refuses to
+  // encode an empty path segment and throws, and that throw reaches createApp() synchronously.
+  // Normalize it to null here so an unnamed milestone degrades to the same 'current' key an
+  // absent one already produces, rather than taking the whole dashboard down.
+  const activeMilestoneVersion = normalizeOptionalText(stateArtifact?.frontmatter.milestone);
+  const activeMilestoneName = normalizeOptionalText(stateArtifact?.frontmatter.milestone_name);
 
   const roadmapArtifact = parsed.find((p) => p.ref.path === ROADMAP_MD_PATH);
   const roadmapStructured = roadmapArtifact?.structured as
@@ -312,7 +328,13 @@ export function assembleDomainModel(parsed: ParsedArtifact[], _warnings: ParseWa
         // dirname of the first collected artifact — preserves the existing value byte for byte,
         // since discovery groups every artifact for one quick task under the same directory.
         path: dirname(group[0].ref.path),
-        stateRow: quickTasksCompleted.find((row) => Object.values(row).some((v) => v.includes(id))) ?? null,
+        // `typeof v === 'string'` guards the unchecked cast above: parseMarkdownTable pads every
+        // missing cell with '', so a non-string is unreachable today, but the cast asserts a
+        // shape this code does not own.
+        stateRow:
+          quickTasksCompleted.find((row) =>
+            Object.values(row).some((v) => typeof v === 'string' && v.includes(id)),
+          ) ?? null,
         artifacts,
       };
     })
