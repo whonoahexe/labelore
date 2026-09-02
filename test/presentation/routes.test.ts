@@ -92,6 +92,14 @@ describe('milestone-qualified presentation route codec', () => {
     expect(parsePresentationUrl('/search')).toEqual({ ok: true, route: { kind: 'search' } });
   });
 
+  it('round-trips the /traceability route (D-16: its own top-level route)', () => {
+    expect(presentationRoutePatterns.traceability).toBe('/traceability');
+    expect(parsePresentationUrl('/traceability')).toEqual({
+      ok: true,
+      route: { kind: 'traceability' },
+    });
+  });
+
   it.each([
     ['/milestones/current/phases', 'truncated'],
     ['/milestones//phases/anything', 'empty-token'],
