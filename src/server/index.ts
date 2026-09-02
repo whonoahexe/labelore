@@ -10,6 +10,7 @@ import { buildDashboardViewModel } from '../presentation/dashboard.ts';
 import { buildRoadmapViewModel } from '../presentation/roadmap.ts';
 import { buildReferenceRegistry } from '../presentation/references.ts';
 import { parsePresentationUrl } from '../presentation/routes.ts';
+import { buildSearchGroups, extractSnippets } from '../presentation/search.ts';
 import { createArtifactRenderer } from '../rendering/markdown.ts';
 import { resolveTargetPath } from '../cli/target-path.ts';
 import { buildArtifactIndex } from './artifact-index.ts';
@@ -91,10 +92,32 @@ export function createApp(
     // Answers HTTP 200 in every readiness state — never a 5xx, never a hang, and this handler
     // never blocks /api/dashboard or any other route while the index is still building (FIND-05).
     if (state.status !== 'ready') {
-      return c.json({ status: state.status, query, total: 0, results: [] });
+      return c.json({ status: state.status, query, total: 0, fileCount: 0, results: [], groups: [] });
     }
     const results = searchIndex(state, query);
-    return c.json({ status: 'ready' as const, query, total: results.length, results });
+    // Presentation is cheap to recompute per request (never cached), matching every other route
+    // handler's convention above.
+    const currentPresentation = toProjectPresentation(source.getSnapshot());
+    const groups = buildSearchGroups(results, currentPresentation);
+    // D-08: snippets are extracted from the artifact's raw indexed body — never rendered HTML,
+    // never a second call through the artifact renderer — using each hit's own matched terms.
+    for (const group of groups) {
+      for (const row of group.rows) {
+        const document = state.documents.get(row.path);
+        const extracted = document ? extractSnippets(document.body, row.matchedTerms) : null;
+        row.snippets = extracted?.snippets ?? [];
+        row.matchCount = extracted?.matchCount ?? 0;
+      }
+    }
+    const fileCount = new Set(results.map((hit) => hit.path)).size;
+    return c.json({
+      status: 'ready' as const,
+      query,
+      total: results.length,
+      fileCount,
+      results,
+      groups,
+    });
   });
   app.get('/api/artifacts/*', async (c) => {
     const pathname = new URL(c.req.url).pathname;

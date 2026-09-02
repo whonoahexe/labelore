@@ -1,5 +1,12 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router';
+import type {
+  SearchHighlightRange,
+  SearchResultGroup,
+  SearchResultRow,
+  SearchSnippet,
+} from '../../presentation/search.ts';
 import type { SearchApiResponse } from '../../server/search-index.ts';
 
 async function fetchSearchResults(query: string, signal: AbortSignal): Promise<SearchApiResponse> {
@@ -11,8 +18,109 @@ async function fetchSearchResults(query: string, signal: AbortSignal): Promise<S
   return (await response.json()) as SearchApiResponse;
 }
 
+// D-08: progressive reveal per group, mirroring the dashboard attention panel's existing
+// "Show N more" pattern — never pagination, never page state in the URL.
+const GROUP_PAGE_SIZE = 5;
+
+/** Splits a snippet's text at its already-merged, non-overlapping highlight ranges and returns
+ * plain text nodes with only the matched slices wrapped in `<mark>` — corpus text never becomes
+ * an HTML string, satisfying T-03-02-01. */
+function highlightedSnippetNodes(text: string, highlights: SearchHighlightRange[]): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  let cursor = 0;
+  highlights.forEach((range, index) => {
+    if (range.start > cursor) nodes.push(text.slice(cursor, range.start));
+    nodes.push(<mark key={index}>{text.slice(range.start, range.end)}</mark>);
+    cursor = range.end;
+  });
+  if (cursor < text.length) nodes.push(text.slice(cursor));
+  return nodes;
+}
+
+function SnippetLink({ row, snippet }: { row: SearchResultRow; snippet: SearchSnippet }): React.JSX.Element {
+  const to = snippet.anchor ? `${row.url}#${encodeURIComponent(snippet.anchor)}` : row.url;
+  return (
+    <Link className="search-snippet" to={to}>
+      {highlightedSnippetNodes(snippet.text, snippet.highlights)}
+    </Link>
+  );
+}
+
+function SearchRow({ row }: { row: SearchResultRow }): React.JSX.Element {
+  const [expanded, setExpanded] = useState(false);
+  const [first, ...rest] = row.snippets;
+  const hasMore = rest.length > 0;
+
+  return (
+    <li>
+      <article className="search-result-card">
+        <header className="search-result-card-header">
+          <Link className="search-result-card-title" to={row.url}>
+            {row.title}
+          </Link>
+          {row.matchCount > 0 ? (
+            <span className="status-chip">
+              {row.matchCount} {row.matchCount === 1 ? 'match' : 'matches'}
+            </span>
+          ) : null}
+          {row.unreadable ? (
+            <span className="status-chip" data-tone="quiet">
+              Unreadable
+            </span>
+          ) : null}
+        </header>
+        <span className="search-result-path">{row.path}</span>
+        {first ? (
+          <div className="search-snippets">
+            <SnippetLink row={row} snippet={first} />
+            {expanded ? rest.map((snippet, index) => <SnippetLink key={index} row={row} snippet={snippet} />) : null}
+          </div>
+        ) : null}
+        {hasMore ? (
+          <button
+            type="button"
+            className="search-snippet-toggle"
+            onClick={() => setExpanded((value) => !value)}
+          >
+            {expanded ? 'Show fewer matches' : `+${rest.length} more ${rest.length === 1 ? 'match' : 'matches'}`}
+          </button>
+        ) : null}
+      </article>
+    </li>
+  );
+}
+
+function SearchGroupSection({ group }: { group: SearchResultGroup }): React.JSX.Element {
+  const [limit, setLimit] = useState(GROUP_PAGE_SIZE);
+  const visibleRows = group.rows.slice(0, limit);
+
+  return (
+    <section className="search-group" aria-labelledby={`search-group-${group.key}`}>
+      <h2 className="search-group-label" id={`search-group-${group.key}`}>
+        {group.label}
+      </h2>
+      <ul className="search-group-rows">
+        {visibleRows.map((row) => (
+          <SearchRow key={row.path} row={row} />
+        ))}
+      </ul>
+      {limit < group.rows.length ? (
+        <div className="attention-more">
+          <span>
+            Showing {limit} of {group.rows.length}
+          </span>
+          <button type="button" onClick={() => setLimit((value) => value + GROUP_PAGE_SIZE)}>
+            Show more
+          </button>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 /** The /search route (D-03): reads its query from ?q= so a refresh or a bookmarked link reproduces
- * the same results. */
+ * the same results. Results render grouped by location then artifact type (D-07), each row carrying
+ * a snippet centred on its own highest-scoring match (D-08). */
 export function SearchPage(): React.JSX.Element {
   const [searchParams] = useSearchParams();
   const query = (searchParams.get('q') ?? '').trim();
@@ -86,24 +194,18 @@ export function SearchPage(): React.JSX.Element {
       <header className="page-intro">
         <div>
           <p className="eyebrow">Findability</p>
-          <h1>
-            Results for &quot;{query}&quot;
-          </h1>
+          <h1>Results for &quot;{query}&quot;</h1>
           <p className="lede">
-            {view.total} {view.total === 1 ? 'result' : 'results'}
+            {view.total} {view.total === 1 ? 'result' : 'results'} across {view.fileCount}{' '}
+            {view.fileCount === 1 ? 'file' : 'files'}
           </p>
         </div>
       </header>
-      <ul className="search-result-list">
-        {view.results.map((hit) => (
-          <li key={hit.path}>
-            <Link to={hit.url}>
-              <strong>{hit.title}</strong>
-              <span className="search-result-path">{hit.path}</span>
-            </Link>
-          </li>
+      <div className="search-groups">
+        {view.groups.map((group) => (
+          <SearchGroupSection key={group.key} group={group} />
         ))}
-      </ul>
+      </div>
     </main>
   );
 }
