@@ -7,6 +7,7 @@
 import MiniSearch from 'minisearch';
 import type { Artifact, PhaseIdentity } from '../domain/model.ts';
 import type { ProjectSnapshot } from '../planning-repo/types.ts';
+import type { SearchResultGroup } from '../presentation/search.ts';
 import { buildArtifactUrl, milestoneKeyOf, phaseKeyOf } from '../presentation/routes.ts';
 import { segmentPlanBody } from '../rendering/plan-segments.ts';
 
@@ -66,12 +67,18 @@ export function isReady(
   return state.status === 'ready';
 }
 
-/** The full API response shape `/api/search` returns in every readiness state. */
+/** The full API response shape `/api/search` returns in every readiness state. `results` is the
+ * flat ranked list (unchanged since plan 03-01, still what the header dropdown reads); `groups` is
+ * the same rows reshaped by buildSearchGroups for the /search reading surface (03-02, additive —
+ * every row in `groups` also appears in `results`). `fileCount` is the distinct-file count backing
+ * the "N results across M files" half of the results-page copy, alongside `total`'s row count. */
 export interface SearchApiResponse {
   status: SearchIndexState['status'];
   query: string;
   total: number;
+  fileCount: number;
   results: SearchHit[];
+  groups: SearchResultGroup[];
 }
 
 // T-03-01-02 (DoS): anchored on the full token (^...$) with bounded quantifiers and no nested

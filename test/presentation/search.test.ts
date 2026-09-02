@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
+import type { Artifact, Phase, PhaseIdentity, Project } from '../../src/domain/model.ts';
+import type { ProjectSnapshot } from '../../src/planning-repo/types.ts';
 import type {
   ArtifactDto,
   MilestoneDto,
   PhaseDto,
   ProjectPresentation,
 } from '../../src/server/project-presentation.ts';
+import { createApp } from '../../src/server/index.ts';
+import type { SearchApiResponse } from '../../src/server/search-index.ts';
 import {
   buildSearchGroups,
   extractSnippets,
@@ -314,5 +318,142 @@ describe('extractSnippets', () => {
     const code = body.charCodeAt(bodyOffset);
     expect(code >= 0xdc00 && code <= 0xdfff).toBe(false);
     expect(text.toLowerCase()).toContain('matchme');
+  });
+});
+
+// --- Task 2: GET /api/search response shape (groups + fileCount) -----------------------------
+
+function waitForBuild(): Promise<void> {
+  return new Promise((resolve) => setImmediate(resolve));
+}
+
+const IDENTITY: PhaseIdentity = { milestoneVersion: null, number: '01', projectCode: null, slug: 'demo' };
+
+function makeArtifact(overrides: Partial<Artifact> & { path: string }): Artifact {
+  return {
+    id: overrides.path,
+    kind: 'context',
+    location: 'phase',
+    frontmatter: {},
+    title: overrides.path,
+    body: '',
+    bodyLength: 0,
+    bodyHash: 'x',
+    mtimeMs: 0,
+    warnings: [],
+    structured: {},
+    ...overrides,
+  };
+}
+
+function makeProject(phaseArtifacts: Artifact[]): Project {
+  const phase: Phase = {
+    identity: IDENTITY,
+    name: 'Demo Phase',
+    dirPath: '.planning/phases/01-demo',
+    archived: false,
+    goal: null,
+    dependsOnRaw: null,
+    requirementIds: [],
+    requirementRefs: [],
+    successCriteria: [],
+    roadmapComplete: null,
+    diskStatus: 'complete',
+    plans: [],
+    artifacts: Object.fromEntries(phaseArtifacts.map((artifact) => [artifact.path, artifact])),
+  };
+  return {
+    rootPath: '/project',
+    name: 'Demo',
+    artifacts: {},
+    config: {},
+    milestones: [{ version: null, name: 'Current', archived: false, phases: [phase] }],
+    // search-index.ts's collectReachableArtifacts walks the flattened Project.phases list (not
+    // milestones[].phases) — assemble.ts always keeps both in sync, so the fixture must too.
+    phases: [phase],
+    quickTasks: [],
+    requirements: [],
+    mentions: { byId: {}, all: [] },
+  };
+}
+
+function makeSnapshot(project: Project | null): ProjectSnapshot {
+  return {
+    loadStatus: { status: 'ok' },
+    readAt: '2026-09-02T00:00:00.000Z',
+    rootPath: '/project',
+    project,
+    warnings: [],
+    exclusions: [],
+  };
+}
+
+describe('GET /api/search — grouped response (Task 2)', () => {
+  it('returns groups alongside results in the ready state, every group row also present in results (Test 1)', async () => {
+    const body = `${'x '.repeat(30)}IDENT-02 appears in this document body for testing purposes.`;
+    const artifact = makeArtifact({ path: 'phases/01-demo/01-01-PLAN.md', kind: 'plan', title: 'Plan', body });
+    const app = createApp({ getSnapshot: () => makeSnapshot(makeProject([artifact])) });
+    await waitForBuild();
+
+    const response = await app.request('/api/search?q=IDENT-02');
+    const payload = (await response.json()) as SearchApiResponse;
+
+    expect(response.status).toBe(200);
+    expect(payload.status).toBe('ready');
+    expect(payload.groups.length).toBeGreaterThan(0);
+    const resultPaths = new Set(payload.results.map((hit) => hit.path));
+    for (const group of payload.groups) {
+      for (const row of group.rows) {
+        expect(resultPaths.has(row.path)).toBe(true);
+        expect(Array.isArray(row.snippets)).toBe(true);
+      }
+    }
+    expect(payload.groups[0].rows[0].snippets.length).toBeGreaterThan(0);
+  });
+
+  it('returns an empty groups array and building status while the index is still constructing (Test 2)', async () => {
+    const artifact = makeArtifact({ path: 'phases/01-demo/01-01-PLAN.md' });
+    const app = createApp({ getSnapshot: () => makeSnapshot(makeProject([artifact])) });
+    // No await between createApp() and this request — the setImmediate-scheduled build has not
+    // run yet, so the index is still in the 'building' state.
+    const response = await app.request('/api/search?q=anything');
+    const payload = (await response.json()) as SearchApiResponse;
+
+    expect(response.status).toBe(200);
+    expect(payload.status).toBe('building');
+    expect(payload.groups).toEqual([]);
+  });
+
+  it('marks a hit unreadable when its artifact carries a parse warning (Test 3)', async () => {
+    const artifact = makeArtifact({
+      path: 'phases/01-demo/01-01-PLAN.md',
+      body: 'UNIQUETERM appears once in this body.',
+      warnings: [{ path: 'phases/01-demo/01-01-PLAN.md', stage: 'read', message: 'boom', salvage: 'nothing readable' }],
+    });
+    const app = createApp({ getSnapshot: () => makeSnapshot(makeProject([artifact])) });
+    await waitForBuild();
+
+    const response = await app.request('/api/search?q=UNIQUETERM');
+    const payload = (await response.json()) as SearchApiResponse;
+
+    const row = payload.groups.flatMap((group) => group.rows).find((candidate) => candidate.path === artifact.path);
+    expect(row?.unreadable).toBe(true);
+  });
+
+  it('counts result rows in total and distinct files in fileCount (Test 4)', async () => {
+    const artifact = makeArtifact({
+      path: 'phases/01-demo/01-01-PLAN.md',
+      body: 'DISTINCTTERM appears once in this body for counting.',
+    });
+    const app = createApp({ getSnapshot: () => makeSnapshot(makeProject([artifact])) });
+    await waitForBuild();
+
+    const response = await app.request('/api/search?q=DISTINCTTERM');
+    const payload = (await response.json()) as SearchApiResponse;
+
+    expect(payload.total).toBe(payload.results.length);
+    expect(payload.fileCount).toBe(new Set(payload.results.map((hit) => hit.path)).size);
+    expect(payload.total).toBe(1);
+    expect(payload.fileCount).toBe(1);
   });
 });
