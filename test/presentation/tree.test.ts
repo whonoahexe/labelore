@@ -201,3 +201,27 @@ describe('buildTreeViewModel — small fixtures', () => {
     ]);
   });
 });
+
+describe('buildTreeViewModel — zero-segment exclusions (WR-01)', () => {
+  // D-10: nothing this tool found or deliberately skipped is ever silently absent. The one
+  // exclusion whose path IS the planning root (`.planning` itself unlistable) relativizes to
+  // zero segments against GROUP_PATH_PREFIX.root, and insert()'s early return used to drop it —
+  // so the single worst case, where nothing under .planning/ could be read, rendered as an
+  // empty tree carrying no explanation at all.
+  it('renders a .planning-rooted exclusion as a visible, reason-carrying stub', () => {
+    const presentation = {
+      milestones: [],
+      artifacts: [],
+      exclusions: [{ path: '.planning', reason: 'Directory could not be listed (EACCES)' }],
+    } as unknown as ProjectPresentation;
+
+    const tree = buildTreeViewModel(presentation);
+    const exclusions = collectByType(tree, 'exclusion');
+
+    expect(exclusions).toHaveLength(1);
+    expect(exclusions[0].path).toBe('.planning');
+    expect(exclusions[0].excludedReason).toBe('Directory could not be listed (EACCES)');
+    expect(exclusions[0].url).toBeNull();
+    expect(exclusions[0].label.length).toBeGreaterThan(0);
+  });
+});
