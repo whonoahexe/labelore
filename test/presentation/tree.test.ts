@@ -4,7 +4,7 @@ import { InMemoryPlanningFilesystem } from '../../src/planning-fs/in-memory-fs.t
 import { LocalFsPlanningFilesystem } from '../../src/planning-fs/local-fs.ts';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
 import { buildTreeViewModel, type TreeNode, type TreeNodeType } from '../../src/presentation/tree.ts';
-import { buildPhaseUrl } from '../../src/presentation/routes.ts';
+import { buildPhaseUrl, presentationRoutePatterns } from '../../src/presentation/routes.ts';
 import { toProjectPresentation, type ProjectPresentation } from '../../src/server/project-presentation.ts';
 
 const ROOT = '/project';
@@ -108,15 +108,47 @@ describe('buildTreeViewModel — fixtures/dense', () => {
     expect(researchGroup?.children.some((child) => child.nodeType === 'exclusion')).toBe(true);
   });
 
-  it('Test 6: every leaf url is exactly the artifact DTO key, never hand-built', async () => {
+  it('Test 6: every leaf url is exactly the artifact DTO key, never hand-built — except the root REQUIREMENTS.md override (D-16)', async () => {
     const presentation = await fixturePresentation('dense');
     const tree = buildTreeViewModel(presentation);
     const keyByPath = new Map(presentation.artifacts.map((artifact) => [artifact.path, artifact.key]));
     for (const file of collectByType(tree, 'file')) {
+      if (file.path === '.planning/REQUIREMENTS.md') {
+        expect(file.url).toBe(presentationRoutePatterns.traceability);
+        continue;
+      }
       expect(file.url).toBe(keyByPath.get(file.path));
       expect(file.url).toBeTruthy();
       expect(file.url?.startsWith('/artifacts/') || file.url?.startsWith('/milestones/')).toBe(true);
     }
+  });
+
+  it('Task 2 Test 1: the root REQUIREMENTS.md node resolves to the traceability route; every other root document keeps its artifact route', async () => {
+    const presentation = await fixturePresentation('dense');
+    const tree = buildTreeViewModel(presentation);
+
+    const rootRequirements = findNode(tree, '.planning/REQUIREMENTS.md');
+    expect(rootRequirements?.url).toBe(presentationRoutePatterns.traceability);
+
+    const archivedRequirements = findNode(tree, '.planning/milestones/v1.0-REQUIREMENTS.md');
+    expect(archivedRequirements?.url).toBeTruthy();
+    expect(archivedRequirements?.url).not.toBe(presentationRoutePatterns.traceability);
+
+    const keyByPath = new Map(presentation.artifacts.map((artifact) => [artifact.path, artifact.key]));
+    const otherRootDocs = collectByType(tree, 'file').filter(
+      (node) => node.location === 'root' && node.path !== '.planning/REQUIREMENTS.md',
+    );
+    expect(otherRootDocs.length).toBeGreaterThan(0);
+    for (const node of otherRootDocs) {
+      expect(node.url).toBe(keyByPath.get(node.path));
+    }
+  });
+
+  it('Task 2 Test 2: a project with no root REQUIREMENTS.md produces a tree with no such override and no thrown error', async () => {
+    const presentation = await presentationOf({ '.planning/spikes/idea.md': '# idea' });
+    expect(() => buildTreeViewModel(presentation)).not.toThrow();
+    const tree = buildTreeViewModel(presentation);
+    expect(findNode(tree, '.planning/REQUIREMENTS.md')).toBeUndefined();
   });
 
   it('phase directory nodes resolve their url via buildPhaseUrl on the owning identity', async () => {
