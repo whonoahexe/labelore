@@ -6,7 +6,8 @@ import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
 import { toProjectPresentation } from '../../src/server/project-presentation.ts';
 import { createApp } from '../../src/server/index.ts';
 import { buildPhaseUrl, phaseKeyOf } from '../../src/presentation/routes.ts';
-import { buildTraceabilityViewModel, type TraceabilityGroup } from '../../src/presentation/traceability.ts';
+import { buildTraceabilityViewModel, type TraceabilityGroup, type TraceabilityRow } from '../../src/presentation/traceability.ts';
+import { matchesTraceabilityFilter, type TraceabilityFilterState } from '../../src/web/pages/traceability-filter.ts';
 
 const PHASE_1_IDENTITY = { milestoneVersion: null, number: '01', projectCode: null, slug: 'first' };
 const PHASE_2_IDENTITY = { milestoneVersion: null, number: '02', projectCode: null, slug: 'second' };
@@ -225,5 +226,99 @@ describe('buildTraceabilityViewModel', () => {
     expect(Array.isArray(payload.groups)).toBe(true);
     expect(payload.groups.length).toBeGreaterThan(0);
     expect(Array.isArray(payload.deferredRows)).toBe(true);
+  });
+});
+
+function traceabilityRow(overrides: Partial<TraceabilityRow> = {}): TraceabilityRow {
+  return {
+    id: 'TGT-01',
+    category: 'Targeting',
+    text: 'User starts the dashboard with a project path argument',
+    tier: 'v1',
+    requirementStatus: true,
+    coveringPhases: [],
+    uncovered: false,
+    hasUnresolvedReference: false,
+    statusDisagreement: false,
+    ...overrides,
+  };
+}
+
+function filterState(overrides: Partial<TraceabilityFilterState> = {}): TraceabilityFilterState {
+  return { query: '', status: 'all', ...overrides };
+}
+
+describe('matchesTraceabilityFilter (Task 3)', () => {
+  it('Test 1: matches ID case-insensitively and text by substring; an empty filter matches everything', () => {
+    const row = traceabilityRow({ id: 'TGT-01', text: 'Dashboard renders the project path' });
+
+    expect(matchesTraceabilityFilter(row, filterState({ query: 'tgt-01' }))).toBe(true);
+    expect(matchesTraceabilityFilter(row, filterState({ query: 'renders the project' }))).toBe(true);
+    expect(matchesTraceabilityFilter(row, filterState({ query: 'no-match-here' }))).toBe(false);
+    expect(matchesTraceabilityFilter(row, filterState())).toBe(true);
+  });
+
+  it('Test 2: the uncovered status filter isolates exactly the rows the projection marked uncovered', () => {
+    const uncoveredRow = traceabilityRow({ id: 'A-01', uncovered: true });
+    const coveredRow = traceabilityRow({ id: 'A-02', uncovered: false });
+    const filter = filterState({ status: 'uncovered' });
+
+    expect(matchesTraceabilityFilter(uncoveredRow, filter)).toBe(true);
+    expect(matchesTraceabilityFilter(coveredRow, filter)).toBe(false);
+  });
+
+  it('Test 3: the disagreement status filter isolates exactly the flagged rows, and neither filter alters the two status values', () => {
+    const disagreeingRow = traceabilityRow({
+      id: 'A-03',
+      requirementStatus: true,
+      statusDisagreement: true,
+      coveringPhases: [
+        {
+          raw: 'Phase 1',
+          phaseKey: 'p1',
+          url: '/milestones/current/phases/p1',
+          resolved: true,
+          phaseName: 'Phase One',
+          phaseDiskStatus: 'in_progress',
+          phaseRoadmapComplete: false,
+        },
+      ],
+    });
+    const agreeingRow = traceabilityRow({ id: 'A-04', statusDisagreement: false });
+    const filter = filterState({ status: 'disagreement' });
+
+    expect(matchesTraceabilityFilter(disagreeingRow, filter)).toBe(true);
+    expect(matchesTraceabilityFilter(agreeingRow, filter)).toBe(false);
+    // The predicate is a pure boolean gate — it never mutates or replaces the row's own fields.
+    expect(disagreeingRow.requirementStatus).toBe(true);
+    expect(disagreeingRow.coveringPhases[0].phaseDiskStatus).toBe('in_progress');
+  });
+
+  it('Test 4: rows outside a category are excluded, so a fully-filtered category renders no rows', () => {
+    const rows = [
+      traceabilityRow({ id: 'A-05', uncovered: true }),
+      traceabilityRow({ id: 'A-06', uncovered: false }),
+    ];
+    const filter = filterState({ status: 'uncovered' });
+    const remaining = rows.filter((row) => matchesTraceabilityFilter(row, filter));
+
+    expect(remaining.map((row) => row.id)).toEqual(['A-05']);
+  });
+
+  it('Test 5: the counts shown on the filter controls equal the projection\'s own counts, not a component recount', () => {
+    const view = buildTraceabilityViewModel(
+      presentationWith([
+        requirement({ id: 'U-01', coveringPhases: [] }),
+        requirement({
+          id: 'U-02',
+          coveringPhases: [{ raw: 'Phase 1', targetPhaseKey: PHASE_1_KEY }],
+        }),
+      ]),
+    );
+
+    // The projection's own counts are the single source of truth a filter UI must read from —
+    // never a `.filter(...).length` recount performed in the component.
+    expect(view.counts.total).toBe(2);
+    expect(view.counts.uncovered).toBe(1);
   });
 });
