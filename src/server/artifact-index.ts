@@ -47,6 +47,12 @@ export function buildArtifactIndex(snapshot: ProjectSnapshot): ArtifactIndex {
         if (indexed) planRoutes.set(buildPlanUrl(phase.identity, plan.id), indexed);
       }
     }
+    // D-11: quick tasks carry no phase identity of their own.
+    for (const quickTask of project.quickTasks) {
+      for (const artifact of Object.values(quickTask.artifacts)) {
+        entries.set(artifact.path, { artifact, phaseIdentity: null });
+      }
+    }
   }
 
   const missing = (artifactPath: string): ArtifactLookupResult => ({

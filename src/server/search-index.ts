@@ -119,6 +119,12 @@ function collectReachableArtifacts(snapshot: ProjectSnapshot): ReachableArtifact
       out.push({ artifact, phaseIdentity: phase.identity });
     }
   }
+  // D-11: quick tasks carry no phase identity of their own.
+  for (const quickTask of project.quickTasks) {
+    for (const artifact of Object.values(quickTask.artifacts)) {
+      out.push({ artifact, phaseIdentity: null });
+    }
+  }
   return out;
 }
 

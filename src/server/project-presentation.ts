@@ -1,5 +1,6 @@
 import type {
   Artifact,
+  ArtifactLocation,
   MentionIndex,
   PhaseIdentity,
   Project,
@@ -121,6 +122,7 @@ export interface ArtifactDto {
   path: string;
   kind: string;
   title: string;
+  location: ArtifactLocation;
   frontmatter: Record<string, unknown>;
   structured: Record<string, unknown>;
   milestoneKey: string | null;
@@ -300,6 +302,7 @@ function allArtifacts(project: Project): Artifact[] {
   return [
     ...Object.values(project.artifacts),
     ...project.phases.flatMap((phase) => Object.values(phase.artifacts)),
+    ...project.quickTasks.flatMap((quickTask) => Object.values(quickTask.artifacts)),
   ];
 }
 
@@ -394,6 +397,7 @@ function artifactDtos(project: Project): ArtifactDto[] {
         path: artifact.path,
         kind: artifact.kind,
         title: artifact.title,
+        location: artifact.location,
         frontmatter: jsonRecord(artifact.frontmatter),
         structured: jsonRecord(artifact.structured),
         milestoneKey: owner ? milestoneKeyOf(owner.identity.milestoneVersion) : null,
