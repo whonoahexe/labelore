@@ -59,7 +59,7 @@ prose-scanning linkifier — there are no existing links to render.
 - [x] **NAV-02**: Requirement IDs appearing in prose (`AUTH-01`) become clickable links to the phase covering that requirement
 - [x] **NAV-03**: Phase and plan references appearing in prose become clickable links to those phases and plans
 - [x] **NAV-04**: A reference to an ID with no definition renders as plain text, never as a broken link
-- [ ] **NAV-05**: A requirements traceability view shows requirement → phase → status
+- [x] **NAV-05**: A requirements traceability view shows requirement → phase → status
 - [x] **NAV-06**: URLs are shareable and bookmarkable, mapping onto milestone → phase → plan → artifact
 - [x] **NAV-07**: The loaded snapshot exposes a decision-mention index (decision ID → the files mentioning it), verifiable through the data-layer harness — built now so decision linking can be added later without reworking the assembly pass
 
@@ -174,7 +174,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 | NAV-02 | Phase 2 | Complete |
 | NAV-03 | Phase 2 | Complete |
 | NAV-04 | Phase 2 | Complete |
-| NAV-05 | Phase 3 | Pending |
+| NAV-05 | Phase 3 | Complete |
 | NAV-06 | Phase 2 | Complete |
 | NAV-07 | Phase 1 | Complete |
 | FIND-01 | Phase 3 | Complete |
