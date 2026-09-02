@@ -200,6 +200,9 @@
 #root,
 .app-shell,
 .shell-content,
+.shell-outlet,
+.tree-navigator,
+.tree-node,
 .page-stack,
 .dashboard-page,
 .position-hero,
@@ -405,6 +408,123 @@
 .shell-content {
   position: relative;
   z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr);
+  align-items: start;
+}
+
+/* D-09: no separate sidebar error surface exists — when the tree query fails, TreeNavigator
+   renders nothing and the shell falls back to a single reading column instead of leaving a
+   permanently-empty track. */
+.shell-content[data-sidebar='absent'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.shell-outlet {
+  min-width: 0;
+}
+
+/* D-09/D-12: the first real consumer of the --sidebar oklch token family. `--shell-header-height`
+   is set by app-shell.tsx from the header's own measured rendered height (it is not a fixed rem
+   value — the header sizes to its padded, responsive content) rather than a guessed constant. */
+.tree-navigator {
+  position: sticky;
+  top: var(--shell-header-height, 0px);
+  height: calc(100vh - var(--shell-header-height, 0px));
+  overflow-y: auto;
+  border-right: 1px solid var(--sidebar-border);
+  background: var(--sidebar);
+  color: var(--sidebar-foreground);
+}
+
+.tree-root,
+.tree-children {
+  display: grid;
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tree-root {
+  padding: 0.85rem 0.75rem;
+}
+
+.tree-children {
+  margin-top: 0.15rem;
+  padding-left: 0.9rem;
+}
+
+.tree-node-row {
+  display: flex;
+  min-width: 0;
+  gap: 0.4rem;
+  align-items: center;
+  overflow-wrap: anywhere;
+  padding: 0.3rem 0.4rem;
+  color: var(--sidebar-foreground);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+a.tree-node-row:hover,
+summary.tree-node-row:hover {
+  background: var(--sidebar-accent);
+  color: var(--sidebar-accent-foreground);
+}
+
+/* D-12: the current-route node's active state, via the sidebar's own token pair rather than the
+   page-level --primary — the highlight lives inside the sidebar's own material. */
+.tree-node-row[data-active='true'] {
+  background: var(--sidebar-primary);
+  color: var(--sidebar-primary-foreground);
+}
+
+.tree-node-link,
+.tree-group-label {
+  overflow-wrap: anywhere;
+  color: inherit;
+  text-decoration: none;
+}
+
+.tree-group-label {
+  color: var(--sidebar-foreground);
+  font-family: var(--font-heading);
+  font-size: 0.67rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tree-disclosure > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.tree-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.tree-excluded {
+  color: var(--muted-foreground);
+}
+
+.tree-excluded-marker {
+  border: 1px solid var(--border);
+  padding: 0.05rem 0.3rem;
+  font-family: var(--font-heading);
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.tree-excluded-reason {
+  display: block;
+  overflow-wrap: anywhere;
+  padding-left: 0.4rem;
+  color: var(--muted-foreground);
+  font-size: 0.68rem;
 }
 
 .page-stack {
@@ -1359,6 +1479,16 @@ pre {
 
   .shell-nav {
     border-right: 0;
+  }
+
+  /* D-09: the sidebar collapses out of the layout entirely below 62rem rather than squeezing the
+     reading column — mirrors how .shell-nav/.snapshot-status already adapt at this breakpoint. */
+  .shell-content {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tree-navigator {
+    display: none;
   }
 
   .position-hero,
