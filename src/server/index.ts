@@ -10,6 +10,7 @@ import { buildDashboardViewModel } from '../presentation/dashboard.ts';
 import { buildRoadmapViewModel } from '../presentation/roadmap.ts';
 import { buildReferenceRegistry } from '../presentation/references.ts';
 import { parsePresentationUrl } from '../presentation/routes.ts';
+import { buildTraceabilityViewModel } from '../presentation/traceability.ts';
 import { buildSearchGroups, extractSnippets } from '../presentation/search.ts';
 import { buildTreeViewModel } from '../presentation/tree.ts';
 import { createArtifactRenderer } from '../rendering/markdown.ts';
@@ -90,6 +91,10 @@ export function createApp(
   app.get('/api/tree', (c) => {
     const presentation = toProjectPresentation(source.getSnapshot());
     return c.json(buildTreeViewModel(presentation));
+  });
+  app.get('/api/traceability', (c) => {
+    const presentation = toProjectPresentation(source.getSnapshot());
+    return c.json(buildTraceabilityViewModel(presentation));
   });
   app.get('/api/search', (c) => {
     const query = c.req.query('q') ?? '';

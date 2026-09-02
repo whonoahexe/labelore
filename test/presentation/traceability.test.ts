@@ -185,7 +185,7 @@ describe('buildTraceabilityViewModel', () => {
     expect(view.counts).toEqual({ total: 0, uncovered: 0, disagreement: 0 });
   });
 
-  it('Test 8: every v1 requirement appears exactly once across groups; every non-v1 requirement appears exactly once in deferredRows and never in groups (fixtures/dense)', async () => {
+  it('Test 8: every checkbox-bearing requirement appears exactly once across groups; every checkbox-less (deferred-tier) requirement appears exactly once in deferredRows and never in groups (fixtures/dense)', async () => {
     const root = resolve('fixtures/dense');
     const repository = new PlanningRepository(new LocalFsPlanningFilesystem(root), root);
     const snapshot = await repository.load();
@@ -194,8 +194,11 @@ describe('buildTraceabilityViewModel', () => {
 
     const groupedIds = allRows(view.groups).map((row) => row.id);
     const deferredIds = view.deferredRows.map((row) => row.id);
-    const v1Ids = presentation.requirements.filter((r) => r.tier === 'v1').map((r) => r.id);
-    const nonV1Ids = presentation.requirements.filter((r) => r.tier !== 'v1').map((r) => r.id);
+    // REQUIREMENTS.md's tier heading is an open string, not a closed 'v1'/'v2'/'future' enum —
+    // fixtures/dense's live tier is literally "v3.0 Requirements". A checkbox's presence is the
+    // parser's own portable signal for "actionable, current tier" (handlers/requirements.ts).
+    const v1Ids = presentation.requirements.filter((r) => r.checked !== null).map((r) => r.id);
+    const nonV1Ids = presentation.requirements.filter((r) => r.checked === null).map((r) => r.id);
 
     expect(new Set(groupedIds)).toEqual(new Set(v1Ids));
     expect(groupedIds).toHaveLength(v1Ids.length);

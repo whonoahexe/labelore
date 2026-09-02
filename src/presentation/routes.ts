@@ -8,6 +8,7 @@ export const presentationRoutePatterns = {
   dashboard: '/',
   roadmap: '/roadmap',
   search: '/search',
+  traceability: '/traceability',
   milestone: '/milestones/:milestoneKey',
   phase: '/milestones/:milestoneKey/phases/:phaseKey',
   plan: '/milestones/:milestoneKey/phases/:phaseKey/plans/:planId',
@@ -19,6 +20,7 @@ export type PresentationRoute =
   | { kind: 'dashboard' }
   | { kind: 'roadmap' }
   | { kind: 'search' }
+  | { kind: 'traceability' }
   | { kind: 'milestone'; milestoneVersion: string | null }
   | {
       kind: 'phase';
@@ -231,6 +233,9 @@ export function parsePresentationUrl(input: string): PresentationRouteParseResul
   }
   if (segments.length === 1 && segments[0] === 'search') {
     return { ok: true, route: { kind: 'search' } };
+  }
+  if (segments.length === 1 && segments[0] === 'traceability') {
+    return { ok: true, route: { kind: 'traceability' } };
   }
 
   if (segments[0] === 'artifacts') {
