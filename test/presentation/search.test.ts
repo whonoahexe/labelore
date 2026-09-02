@@ -79,6 +79,7 @@ function presentation(overrides: Partial<ProjectPresentation> = {}): ProjectPres
     checkpoints: [],
     coverageWaits: [],
     mentions: { byId: {}, all: [] },
+    exclusions: [],
     ...overrides,
   };
 }

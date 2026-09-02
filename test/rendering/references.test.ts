@@ -150,6 +150,7 @@ function presentation(): ProjectPresentation {
     checkpoints: [],
     coverageWaits: [],
     mentions: { byId: {}, all: [] },
+    exclusions: [],
   };
 }
 

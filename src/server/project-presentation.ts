@@ -6,7 +6,7 @@ import type {
   Project,
   Requirement,
 } from '../domain/model.ts';
-import type { LoadStatus, ProjectSnapshot } from '../planning-repo/types.ts';
+import type { DiscoveryExclusion, LoadStatus, ProjectSnapshot } from '../planning-repo/types.ts';
 import {
   artifactTokenOf,
   buildArtifactUrl,
@@ -147,6 +147,12 @@ export interface ProjectPresentation {
   checkpoints: PlanCheckpointDto[];
   coverageWaits: CoverageWaitDto[];
   mentions: MentionIndex;
+  /** D-10/NAV-01: every recorded discovery exclusion (research/.cache/, a depth-terminated walk),
+   * passed through unchanged so the tree projection can render them as visible, reason-carrying
+   * stub nodes rather than letting a deliberate skip vanish silently. Populated on both the normal
+   * and the empty presentation paths — a failed load still carries an empty array, never an absent
+   * key. */
+  exclusions: DiscoveryExclusion[];
 }
 
 interface PassingEvidence {
@@ -427,6 +433,7 @@ function emptyPresentation(snapshot: ProjectSnapshot): ProjectPresentation {
     checkpoints: [],
     coverageWaits: [],
     mentions: { byId: {}, all: [] },
+    exclusions: snapshot.exclusions,
   };
 }
 
@@ -569,5 +576,6 @@ export function toProjectPresentation(snapshot: ProjectSnapshot): ProjectPresent
     checkpoints: allCheckpoints,
     coverageWaits,
     mentions: project.mentions,
+    exclusions: snapshot.exclusions,
   };
 }

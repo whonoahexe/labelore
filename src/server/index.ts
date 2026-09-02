@@ -11,6 +11,7 @@ import { buildRoadmapViewModel } from '../presentation/roadmap.ts';
 import { buildReferenceRegistry } from '../presentation/references.ts';
 import { parsePresentationUrl } from '../presentation/routes.ts';
 import { buildSearchGroups, extractSnippets } from '../presentation/search.ts';
+import { buildTreeViewModel } from '../presentation/tree.ts';
 import { createArtifactRenderer } from '../rendering/markdown.ts';
 import { resolveTargetPath } from '../cli/target-path.ts';
 import { buildArtifactIndex } from './artifact-index.ts';
@@ -85,6 +86,10 @@ export function createApp(
       readAt: presentation.readAt,
       history: buildRoadmapViewModel(presentation).history,
     });
+  });
+  app.get('/api/tree', (c) => {
+    const presentation = toProjectPresentation(source.getSnapshot());
+    return c.json(buildTreeViewModel(presentation));
   });
   app.get('/api/search', (c) => {
     const query = c.req.query('q') ?? '';
