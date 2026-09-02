@@ -2856,3 +2856,107 @@ pre {
   border-color: var(--primary);
   color: var(--primary);
 }
+
+/* Phase 3 — traceability view (D-13, D-14, D-15, D-16). The "Uncovered"/"Status mismatch"/
+   "Unresolved" markers are the only destructive use in this phase — flagging a data disagreement,
+   never a destructive action (this tool has none). Reuses .status-chip verbatim rather than
+   inventing a new chip style, per the UI-SPEC's Copywriting Contract. */
+.status-chip[data-tone='destructive'] {
+  border-color: color-mix(in oklch, var(--destructive) 55%, var(--border));
+  background: color-mix(in oklch, var(--destructive) 8%, transparent);
+  color: var(--destructive);
+}
+
+.trace-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.trace-filter-input {
+  flex: 1;
+  min-width: 12rem;
+  border: 1px solid var(--border);
+  background: var(--input);
+  padding: 0.5rem 0.75rem;
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+}
+
+.trace-filter-input::placeholder {
+  color: var(--muted-foreground);
+}
+
+.trace-filter-input:focus {
+  outline: none;
+  border-color: var(--ring);
+}
+
+.trace-status-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.trace-filter-button {
+  border: 1px solid var(--border);
+  background: var(--background);
+  padding: 0.4rem 0.7rem;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-size: 0.64rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.trace-filter-button:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.trace-filter-button[data-active='true'] {
+  border-color: var(--primary);
+  background: color-mix(in oklch, var(--primary) 9%, transparent);
+  color: var(--primary);
+}
+
+.trace-category,
+.trace-deferred {
+  margin-top: 2rem;
+}
+
+.trace-category > h2,
+.trace-deferred > h2 {
+  margin-bottom: 0.75rem;
+}
+
+.trace-marker-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.trace-covering-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.trace-covering-entry {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.trace-dangling-text {
+  overflow-wrap: anywhere;
+  color: var(--muted-foreground);
+}

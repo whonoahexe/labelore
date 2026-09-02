@@ -1,0 +1,281 @@
+import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router';
+import type {
+  TraceabilityCoveringPhase,
+  TraceabilityRow,
+  TraceabilityViewModel,
+} from '../../presentation/traceability.ts';
+
+async function fetchTraceability(): Promise<TraceabilityViewModel> {
+  const response = await fetch('/api/traceability', { headers: { Accept: 'application/json' } });
+  if (!response.ok) throw new Error(`Traceability request failed (${response.status})`);
+  return (await response.json()) as TraceabilityViewModel;
+}
+
+export type TraceabilityStatusFilter = 'all' | 'uncovered' | 'disagreement';
+
+export interface TraceabilityFilterState {
+  query: string;
+  status: TraceabilityStatusFilter;
+}
+
+export const DEFAULT_TRACEABILITY_FILTER: TraceabilityFilterState = { query: '', status: 'all' };
+
+/** D-14: narrows by requirement ID or requirement text (case-insensitive), then isolates the two
+ * highest-value slices — uncovered rows and rows whose two status signals disagree. Local
+ * component state only — never a refetch, never URL state (see traceability-page's own filter
+ * controls). Exported and tested directly per 03-04-PLAN.md Task 3. */
+export function matchesTraceabilityFilter(
+  row: TraceabilityRow,
+  filter: TraceabilityFilterState,
+): boolean {
+  const query = filter.query.trim().toLowerCase();
+  const matchesQuery =
+    query.length === 0 ||
+    row.id.toLowerCase().includes(query) ||
+    row.text.toLowerCase().includes(query);
+  if (!matchesQuery) return false;
+  if (filter.status === 'uncovered') return row.uncovered;
+  if (filter.status === 'disagreement') return row.statusDisagreement;
+  return true;
+}
+
+function RequirementStatusChip({ status }: { status: boolean | null }): React.JSX.Element {
+  if (status === null) {
+    return (
+      <span className="status-chip" data-tone="quiet">
+        —
+      </span>
+    );
+  }
+  return (
+    <span className="status-chip" data-tone={status ? 'complete' : 'quiet'}>
+      {status ? 'Complete' : 'Incomplete'}
+    </span>
+  );
+}
+
+function CoveringPhaseEntry({
+  rowId,
+  covering,
+  index,
+}: {
+  rowId: string;
+  covering: TraceabilityCoveringPhase;
+  index: number;
+}): React.JSX.Element {
+  if (covering.resolved && covering.url && covering.phaseName) {
+    return (
+      <li key={`${rowId}-covering-${index}`} className="trace-covering-entry">
+        <Link to={covering.url}>{covering.phaseName}</Link>
+        <span
+          className="status-chip"
+          data-tone={covering.phaseDiskStatus === 'complete' ? 'complete' : 'quiet'}
+        >
+          {(covering.phaseDiskStatus ?? 'unknown').replaceAll('_', ' ')}
+        </span>
+      </li>
+    );
+  }
+  return (
+    <li key={`${rowId}-covering-${index}`} className="trace-covering-entry">
+      <span className="trace-dangling-text">{covering.raw}</span>
+      <span className="status-chip" data-tone="destructive">
+        Unresolved
+      </span>
+    </li>
+  );
+}
+
+function TraceabilityRowCells({ row }: { row: TraceabilityRow }): React.JSX.Element {
+  return (
+    <>
+      <td>
+        <strong>{row.id}</strong>
+      </td>
+      <td>{row.text}</td>
+      <td>
+        <div className="trace-marker-stack">
+          <RequirementStatusChip status={row.requirementStatus} />
+          {row.statusDisagreement ? (
+            <span className="status-chip trace-marker" data-tone="destructive">
+              Status mismatch
+            </span>
+          ) : null}
+        </div>
+      </td>
+      <td>
+        {row.uncovered ? (
+          <span className="status-chip trace-marker" data-tone="destructive">
+            Uncovered
+          </span>
+        ) : (
+          <ul className="trace-covering-list">
+            {row.coveringPhases.map((covering, index) => (
+              <CoveringPhaseEntry
+                key={`${row.id}-covering-${index}`}
+                rowId={row.id}
+                covering={covering}
+                index={index}
+              />
+            ))}
+          </ul>
+        )}
+      </td>
+    </>
+  );
+}
+
+function TraceabilityTable({
+  rows,
+  captionId,
+}: {
+  rows: TraceabilityRow[];
+  captionId: string;
+}): React.JSX.Element {
+  return (
+    <div className="coverage-table-boundary">
+      <table aria-labelledby={captionId}>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Requirement</th>
+            <th>Requirement status</th>
+            <th>Covering phase</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.id}>
+              <TraceabilityRowCells row={row} />
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export function TraceabilityPage(): React.JSX.Element {
+  const traceability = useQuery({ queryKey: ['traceability'], queryFn: fetchTraceability });
+  const [filter, setFilter] = useState<TraceabilityFilterState>(DEFAULT_TRACEABILITY_FILTER);
+
+  const filteredGroups = useMemo(() => {
+    const data = traceability.data;
+    if (!data) return [];
+    return data.groups
+      .map((group) => ({
+        category: group.category,
+        rows: group.rows.filter((row) => matchesTraceabilityFilter(row, filter)),
+      }))
+      .filter((group) => group.rows.length > 0);
+  }, [traceability.data, filter]);
+
+  if (traceability.isPending) {
+    return (
+      <main className="page-stack" aria-busy="true">
+        <p className="eyebrow">Requirement coverage</p>
+        <h1>Reading the traceability view…</h1>
+        <div className="roadmap-loading" aria-hidden="true" />
+      </main>
+    );
+  }
+  if (traceability.isError) {
+    return (
+      <main className="page-stack">
+        <p className="eyebrow">Connection error</p>
+        <h1>The traceability view could not be loaded.</h1>
+        <section className="notice destructive" role="alert">
+          <h2>Request failed</h2>
+          <p>{traceability.error.message}</p>
+        </section>
+      </main>
+    );
+  }
+
+  const view = traceability.data;
+  return (
+    <main className="page-stack">
+      <header className="page-intro">
+        <div>
+          <p className="eyebrow">Requirement coverage</p>
+          <h1>Traceability</h1>
+          <p className="lede">
+            Every requirement beside the state of the phase covering it — the requirement&rsquo;s
+            own claimed status and the covering phase&rsquo;s own state travel as two separate
+            signals, never merged into one verdict.
+          </p>
+        </div>
+      </header>
+
+      <section className="trace-filters" aria-label="Filter requirements">
+        <input
+          type="search"
+          className="trace-filter-input"
+          placeholder="Filter by ID or text"
+          aria-label="Filter by requirement ID or text"
+          value={filter.query}
+          onChange={(event) =>
+            setFilter((current) => ({ ...current, query: event.target.value }))
+          }
+        />
+        <div className="trace-status-filters" role="group" aria-label="Filter by status">
+          <button
+            type="button"
+            className="trace-filter-button"
+            data-active={filter.status === 'all' ? 'true' : undefined}
+            onClick={() => setFilter((current) => ({ ...current, status: 'all' }))}
+          >
+            All ({view.counts.total})
+          </button>
+          <button
+            type="button"
+            className="trace-filter-button"
+            data-active={filter.status === 'uncovered' ? 'true' : undefined}
+            onClick={() => setFilter((current) => ({ ...current, status: 'uncovered' }))}
+          >
+            Uncovered ({view.counts.uncovered})
+          </button>
+          <button
+            type="button"
+            className="trace-filter-button"
+            data-active={filter.status === 'disagreement' ? 'true' : undefined}
+            onClick={() => setFilter((current) => ({ ...current, status: 'disagreement' }))}
+          >
+            Status mismatch ({view.counts.disagreement})
+          </button>
+        </div>
+      </section>
+
+      {filteredGroups.length > 0 ? (
+        filteredGroups.map((group) => {
+          const headingId = `trace-category-${group.category.replaceAll(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}`;
+          return (
+            <section key={group.category} className="trace-category" aria-labelledby={headingId}>
+              <h2 id={headingId} className="search-group-label">
+                {group.category}
+              </h2>
+              <TraceabilityTable rows={group.rows} captionId={headingId} />
+            </section>
+          );
+        })
+      ) : (
+        <p className="empty-note">
+          {view.groups.length === 0
+            ? 'No requirements are present in this snapshot.'
+            : 'No requirements match the current filter.'}
+        </p>
+      )}
+
+      {view.deferredRows.length > 0 ? (
+        <section className="trace-deferred" aria-labelledby="trace-deferred-heading">
+          <h2 id="trace-deferred-heading" className="search-group-label">
+            Deferred requirements
+          </h2>
+          <TraceabilityTable rows={view.deferredRows} captionId="trace-deferred-heading" />
+        </section>
+      ) : null}
+    </main>
+  );
+}
