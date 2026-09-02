@@ -12,6 +12,7 @@
         "id": ".planning/PROJECT.md",
         "path": ".planning/PROJECT.md",
         "kind": "project",
+        "location": "root",
         "frontmatter": {},
         "title": "Sparse Empty Fixture",
         "bodyLength": 881,
@@ -52,6 +53,7 @@
         "id": ".planning/REQUIREMENTS.md",
         "path": ".planning/REQUIREMENTS.md",
         "kind": "requirements",
+        "location": "root",
         "frontmatter": {},
         "title": "Requirements: Sparse Empty Fixture",
         "bodyLength": 718,
@@ -94,6 +96,7 @@
         "id": ".planning/STATE.md",
         "path": ".planning/STATE.md",
         "kind": "state",
+        "location": "root",
         "frontmatter": {
           "gsd_state_version": "1.0",
           "status": "planning",

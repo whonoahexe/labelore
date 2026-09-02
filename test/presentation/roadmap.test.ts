@@ -285,6 +285,7 @@ describe('buildRoadmapViewModel', () => {
         path: '.planning/REQUIREMENTS.md',
         kind: 'requirements',
         title: 'Requirements',
+        location: 'root',
         frontmatter: {},
         structured: {},
         milestoneKey: null,

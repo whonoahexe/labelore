@@ -26,6 +26,22 @@ const SKIPPED_DIRS = new Set(['research/.cache']);
 // layer below this port.
 const MAX_WALK_DEPTH = 64;
 
+// Deterministic order independent of readdir/Map-iteration order: location group, then
+// milestone version, then phase number (dotted-numeric), then path. Location groups are ordered
+// by this fixed precedence list so the same six-way partition always sorts identically. Hoisted to
+// module level (rather than local to discover()) so downstream consumers — e.g. tree.ts's location
+// grouping — order location groups by the one ordering the codebase already committed to instead
+// of inventing a second.
+export const LOCATION_ORDER: Record<ArtifactLocation, number> = {
+  root: 0,
+  phase: 1,
+  'archived-phase': 2,
+  quick: 3,
+  'milestone-root': 4,
+  research: 5,
+  other: 6,
+};
+
 export interface DiscoveryResult {
   refs: ArtifactRef[];
   exclusions: DiscoveryExclusion[];
@@ -169,18 +185,9 @@ export async function discover(fs: PlanningFilesystem): Promise<DiscoveryResult>
     await walk(PLANNING_DIR, 0);
   }
 
-  // Deterministic order independent of readdir/Map-iteration order: location group, then
-  // milestone version, then phase number (dotted-numeric), then path. Location groups are ordered
-  // by a fixed precedence list so the same six-way partition always sorts identically.
-  const LOCATION_ORDER: Record<ArtifactLocation, number> = {
-    root: 0,
-    phase: 1,
-    'archived-phase': 2,
-    quick: 3,
-    'milestone-root': 4,
-    research: 5,
-    other: 6,
-  };
+  // Deterministic order independent of readdir/Map-iteration order: location group (per the
+  // module-level LOCATION_ORDER above), then milestone version, then phase number (dotted-numeric),
+  // then path — the same six-way partition always sorts identically.
   refs.sort((a, b) => {
     const locDiff = LOCATION_ORDER[a.location] - LOCATION_ORDER[b.location];
     if (locDiff !== 0) return locDiff;

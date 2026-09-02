@@ -101,6 +101,7 @@ function registryWithRead05(): ReferenceRegistry {
           path: READ05_ARTIFACT,
           kind: 'project',
           title: 'Project',
+          location: 'root',
           frontmatter: {},
           structured: {},
           milestoneKey: null,

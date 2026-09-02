@@ -1,6 +1,6 @@
 // Layer B types. The LoadStatus union and ParseWarning shape are the load-bearing contracts
 // D-11/D-12 fix — every consumer of PlanningRepository handles exactly these shapes.
-import type { PhaseIdentity } from '../domain/model.ts';
+import type { ArtifactLocation, PhaseIdentity } from '../domain/model.ts';
 
 /** D-12: load()/refresh() never throw. Every failure is one of these four named states. */
 export type LoadStatus =
@@ -32,8 +32,10 @@ export interface RawArtifact {
   size: number;
 }
 
-/** Which top-level GSD tree an artifact lives under, position-derived, never content-derived. */
-export type ArtifactLocation = 'root' | 'phase' | 'archived-phase' | 'quick' | 'milestone-root' | 'research' | 'other';
+/** Which top-level GSD tree an artifact lives under, position-derived, never content-derived. Single
+ * definition lives in domain/model.ts (mirrors the IdScheme/Mention re-export convention mentions.ts
+ * already established) — re-exported here rather than redeclared, so there is exactly one union. */
+export type { ArtifactLocation } from '../domain/model.ts';
 
 /** Discovery-derived reference to a not-yet-parsed file, plus its dispatch-relevant location fields. */
 export interface ArtifactRef {

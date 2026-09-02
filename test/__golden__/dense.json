@@ -12,6 +12,7 @@
         "id": ".planning/BACKLOG.md",
         "path": ".planning/BACKLOG.md",
         "kind": "backlog",
+        "location": "root",
         "frontmatter": {},
         "title": "Backlog: Dense Fixture Project",
         "bodyLength": 536,
@@ -24,6 +25,7 @@
         "id": ".planning/config.json",
         "path": ".planning/config.json",
         "kind": "config",
+        "location": "root",
         "frontmatter": {
           "mode": "yolo",
           "granularity": "coarse",
@@ -86,6 +88,7 @@
         "id": ".planning/estimation-calibration.json",
         "path": ".planning/estimation-calibration.json",
         "kind": "unknown",
+        "location": "root",
         "frontmatter": {
           "schema_version": 1,
           "samples": [
@@ -110,6 +113,7 @@
         "id": ".planning/HANDOFF.json",
         "path": ".planning/HANDOFF.json",
         "kind": "unknown",
+        "location": "root",
         "frontmatter": {},
         "title": "HANDOFF.json",
         "bodyLength": 953,
@@ -129,6 +133,7 @@
         "id": ".planning/LEARNINGS.md",
         "path": ".planning/LEARNINGS.md",
         "kind": "learnings",
+        "location": "root",
         "frontmatter": {
           "generated": {},
           "project": "Dense Fixture Project",
@@ -151,6 +156,7 @@
         "id": ".planning/MILESTONES.md",
         "path": ".planning/MILESTONES.md",
         "kind": "milestones",
+        "location": "root",
         "frontmatter": {},
         "title": "Project Milestones: Dense Fixture Project",
         "bodyLength": 1346,
@@ -163,6 +169,7 @@
         "id": ".planning/PROJECT.md",
         "path": ".planning/PROJECT.md",
         "kind": "project",
+        "location": "root",
         "frontmatter": {},
         "title": "Dense Fixture Project",
         "bodyLength": 2370,
@@ -213,6 +220,7 @@
         "id": ".planning/REQUIREMENTS.md",
         "path": ".planning/REQUIREMENTS.md",
         "kind": "requirements",
+        "location": "root",
         "frontmatter": {},
         "title": "Requirements: Dense Fixture Project — v3.0 Live Read Surface",
         "bodyLength": 1549,
@@ -307,6 +315,7 @@
         "id": ".planning/RETROSPECTIVE.md",
         "path": ".planning/RETROSPECTIVE.md",
         "kind": "retrospective",
+        "location": "root",
         "frontmatter": {},
         "title": "Project Retrospective",
         "bodyLength": 1870,
@@ -319,6 +328,7 @@
         "id": ".planning/ROADMAP.md",
         "path": ".planning/ROADMAP.md",
         "kind": "roadmap",
+        "location": "root",
         "frontmatter": {},
         "title": "Roadmap: Dense Fixture Project",
         "bodyLength": 2536,
@@ -447,6 +457,7 @@
         "id": ".planning/STATE.md",
         "path": ".planning/STATE.md",
         "kind": "state",
+        "location": "root",
         "frontmatter": {
           "gsd_state_version": "1.0",
           "status": "executing",
@@ -527,6 +538,7 @@
         "id": ".planning/v3.0-CAPACITY-PLAN.md",
         "path": ".planning/v3.0-CAPACITY-PLAN.md",
         "kind": "capacity-plan",
+        "location": "root",
         "frontmatter": {},
         "title": "v3.0 Capacity Plan",
         "bodyLength": 850,
@@ -539,6 +551,7 @@
         "id": ".planning/WINDOWS.md",
         "path": ".planning/WINDOWS.md",
         "kind": "windows",
+        "location": "root",
         "frontmatter": {
           "schema_version": 1,
           "open_count": 2,
@@ -581,6 +594,136 @@
           ],
           "rowSource": "json"
         }
+      },
+      ".planning/milestones/v1.0-MILESTONE-AUDIT.md": {
+        "id": ".planning/milestones/v1.0-MILESTONE-AUDIT.md",
+        "path": ".planning/milestones/v1.0-MILESTONE-AUDIT.md",
+        "kind": "milestone-audit",
+        "location": "milestone-root",
+        "frontmatter": {},
+        "title": "Milestone Audit: v1.0 Bootstrap",
+        "bodyLength": 346,
+        "bodyHash": "fe6f5f77dd23a1f0b97891d3d5db7992d6026ba1cdf73ce874688a58858112fd",
+        "mtimeMs": 0,
+        "warnings": [],
+        "structured": {}
+      },
+      ".planning/milestones/v1.0-REQUIREMENTS.md": {
+        "id": ".planning/milestones/v1.0-REQUIREMENTS.md",
+        "path": ".planning/milestones/v1.0-REQUIREMENTS.md",
+        "kind": "requirements",
+        "location": "milestone-root",
+        "frontmatter": {},
+        "title": "Requirements: Dense Fixture Project — v1.0 Bootstrap",
+        "bodyLength": 641,
+        "bodyHash": "bc0c1985fd0271ab21becc8e997744fc2477dbcab97e05a7d410d6f410e40fce",
+        "mtimeMs": 0,
+        "warnings": [],
+        "structured": {}
+      },
+      ".planning/milestones/v1.0-ROADMAP.md": {
+        "id": ".planning/milestones/v1.0-ROADMAP.md",
+        "path": ".planning/milestones/v1.0-ROADMAP.md",
+        "kind": "roadmap",
+        "location": "milestone-root",
+        "frontmatter": {},
+        "title": "Roadmap: Dense Fixture Project (v1.0 snapshot)",
+        "bodyLength": 705,
+        "bodyHash": "627623b9c10c77d1eaf3893fb9fa03091200e8b0c15e4c261d5844fbf86de120",
+        "mtimeMs": 0,
+        "warnings": [],
+        "structured": {}
+      },
+      ".planning/milestones/v2.0-MILESTONE-AUDIT.md": {
+        "id": ".planning/milestones/v2.0-MILESTONE-AUDIT.md",
+        "path": ".planning/milestones/v2.0-MILESTONE-AUDIT.md",
+        "kind": "milestone-audit",
+        "location": "milestone-root",
+        "frontmatter": {},
+        "title": "Milestone Audit: v2.0 Legacy Bridge",
+        "bodyLength": 435,
+        "bodyHash": "a49b44a2f58a1312f9f03310b975a8c70e5db839a1a4da305062087af6523901",
+        "mtimeMs": 0,
+        "warnings": [],
+        "structured": {}
+      },
+      ".planning/milestones/v2.0-REQUIREMENTS.md": {
+        "id": ".planning/milestones/v2.0-REQUIREMENTS.md",
+        "path": ".planning/milestones/v2.0-REQUIREMENTS.md",
+        "kind": "requirements",
+        "location": "milestone-root",
+        "frontmatter": {},
+        "title": "Requirements: Dense Fixture Project — v2.0 Legacy Bridge",
+        "bodyLength": 879,
+        "bodyHash": "e4403d8e29b9f9fa1fb9d9384af3b5467cb65ae707e053b60e4f6642d3e0ecdf",
+        "mtimeMs": 0,
+        "warnings": [],
+        "structured": {}
+      },
+      ".planning/milestones/v2.0-ROADMAP.md": {
+        "id": ".planning/milestones/v2.0-ROADMAP.md",
+        "path": ".planning/milestones/v2.0-ROADMAP.md",
+        "kind": "roadmap",
+        "location": "milestone-root",
+        "frontmatter": {},
+        "title": "Roadmap: Dense Fixture Project (v2.0 snapshot)",
+        "bodyLength": 1247,
+        "bodyHash": "40eb5174ac2cd8d9393d51adfe1e35f97a4a009131c720a7845b31573a61346b",
+        "mtimeMs": 0,
+        "warnings": [],
+        "structured": {}
+      },
+      ".planning/research/PITFALLS.md": {
+        "id": ".planning/research/PITFALLS.md",
+        "path": ".planning/research/PITFALLS.md",
+        "kind": "unknown",
+        "location": "research",
+        "frontmatter": {},
+        "title": "Pitfalls Research: Dense Fixture Project",
+        "bodyLength": 576,
+        "bodyHash": "71bf08ca66d51a3025f0efd6e46a470f0f1c81122a16a9db56334522ddfdb6f6",
+        "mtimeMs": 0,
+        "warnings": [],
+        "structured": {}
+      },
+      ".planning/research/STACK.md": {
+        "id": ".planning/research/STACK.md",
+        "path": ".planning/research/STACK.md",
+        "kind": "unknown",
+        "location": "research",
+        "frontmatter": {},
+        "title": "Technology Stack: Dense Fixture Project",
+        "bodyLength": 394,
+        "bodyHash": "ae6d30ba1a4ea87a2e5f4d005460ec4aadddeeeb2d697aa41353b68454738c86",
+        "mtimeMs": 0,
+        "warnings": [],
+        "structured": {}
+      },
+      ".planning/research/SUMMARY.md": {
+        "id": ".planning/research/SUMMARY.md",
+        "path": ".planning/research/SUMMARY.md",
+        "kind": "unknown",
+        "location": "research",
+        "frontmatter": {},
+        "title": "Research Summary: Dense Fixture Project",
+        "bodyLength": 397,
+        "bodyHash": "99f9a8ed81e0d2e28a7ddf991e402dca6c38615f931887cd25ba44ec0ce547f0",
+        "mtimeMs": 0,
+        "warnings": [],
+        "structured": {}
+      },
+      ".planning/ui-reviews/.gitignore": {
+        "id": ".planning/ui-reviews/.gitignore",
+        "path": ".planning/ui-reviews/.gitignore",
+        "kind": "unknown",
+        "location": "other",
+        "frontmatter": {},
+        "title": ".planning/ui-reviews/.gitignore",
+        "bodyLength": 14,
+        "bodyHash": "240a3e0d37d2e86b614063f5347eb02d4f99ca6c254de6b82871ff8d95532a7d",
+        "mtimeMs": 0,
+        "warnings": [],
+        "structured": {}
       }
     },
     "config": {
@@ -821,6 +964,7 @@
                 "id": ".planning/milestones/v1.0-phases/01-bootstrap/01-01-PLAN.md",
                 "path": ".planning/milestones/v1.0-phases/01-bootstrap/01-01-PLAN.md",
                 "kind": "plan",
+                "location": "archived-phase",
                 "frontmatter": {
                   "phase": "01",
                   "plan": "01",
@@ -864,6 +1008,7 @@
                 "id": ".planning/milestones/v1.0-phases/01-bootstrap/01-01-SUMMARY.md",
                 "path": ".planning/milestones/v1.0-phases/01-bootstrap/01-01-SUMMARY.md",
                 "kind": "summary",
+                "location": "archived-phase",
                 "frontmatter": {
                   "phase": "01",
                   "plan": "01",
@@ -927,6 +1072,7 @@
                 "id": ".planning/milestones/v1.0-phases/01-bootstrap/01-CONTEXT.md",
                 "path": ".planning/milestones/v1.0-phases/01-bootstrap/01-CONTEXT.md",
                 "kind": "context",
+                "location": "archived-phase",
                 "frontmatter": {},
                 "title": "Phase 1: Bootstrap - Context",
                 "bodyLength": 1114,
@@ -1138,6 +1284,7 @@
                 "id": ".planning/milestones/v2.0-phases/01-legacy-ingest/01-01-PLAN.md",
                 "path": ".planning/milestones/v2.0-phases/01-legacy-ingest/01-01-PLAN.md",
                 "kind": "plan",
+                "location": "archived-phase",
                 "frontmatter": {
                   "phase": "01",
                   "plan": "01",
@@ -1181,6 +1328,7 @@
                 "id": ".planning/milestones/v2.0-phases/01-legacy-ingest/01-01-SUMMARY.md",
                 "path": ".planning/milestones/v2.0-phases/01-legacy-ingest/01-01-SUMMARY.md",
                 "kind": "summary",
+                "location": "archived-phase",
                 "frontmatter": {
                   "phase": "01",
                   "plan": "01",
@@ -1246,6 +1394,7 @@
                 "id": ".planning/milestones/v2.0-phases/01-legacy-ingest/01-CONTEXT.md",
                 "path": ".planning/milestones/v2.0-phases/01-legacy-ingest/01-CONTEXT.md",
                 "kind": "context",
+                "location": "archived-phase",
                 "frontmatter": {},
                 "title": "Phase 1: Legacy Ingest - Context",
                 "bodyLength": 1167,
@@ -1463,6 +1612,7 @@
                 "id": ".planning/milestones/v2.0-phases/02-batch-export/02-01-PLAN.md",
                 "path": ".planning/milestones/v2.0-phases/02-batch-export/02-01-PLAN.md",
                 "kind": "plan",
+                "location": "archived-phase",
                 "frontmatter": {
                   "phase": "02",
                   "plan": "01",
@@ -1508,6 +1658,7 @@
                 "id": ".planning/milestones/v2.0-phases/02-batch-export/02-01-SUMMARY.md",
                 "path": ".planning/milestones/v2.0-phases/02-batch-export/02-01-SUMMARY.md",
                 "kind": "summary",
+                "location": "archived-phase",
                 "frontmatter": {
                   "phase": "02",
                   "plan": "01",
@@ -2334,6 +2485,7 @@
                 "id": ".planning/phases/01-identity-slice/01-01-PLAN.md",
                 "path": ".planning/phases/01-identity-slice/01-01-PLAN.md",
                 "kind": "plan",
+                "location": "phase",
                 "frontmatter": {
                   "phase": "01",
                   "plan": "01",
@@ -2379,6 +2531,7 @@
                 "id": ".planning/phases/01-identity-slice/01-01-SUMMARY.md",
                 "path": ".planning/phases/01-identity-slice/01-01-SUMMARY.md",
                 "kind": "summary",
+                "location": "phase",
                 "frontmatter": {
                   "phase": "01",
                   "plan": "01",
@@ -2468,6 +2621,7 @@
                 "id": ".planning/phases/01-identity-slice/01-02-PLAN.md",
                 "path": ".planning/phases/01-identity-slice/01-02-PLAN.md",
                 "kind": "plan",
+                "location": "phase",
                 "frontmatter": {
                   "phase": "01",
                   "plan": "02",
@@ -2515,6 +2669,7 @@
                 "id": ".planning/phases/01-identity-slice/01-02-SUMMARY.md",
                 "path": ".planning/phases/01-identity-slice/01-02-SUMMARY.md",
                 "kind": "summary",
+                "location": "phase",
                 "frontmatter": {
                   "phase": "01",
                   "plan": "02",
@@ -2609,6 +2764,7 @@
                 "id": ".planning/phases/01-identity-slice/01-AI-SPEC.md",
                 "path": ".planning/phases/01-identity-slice/01-AI-SPEC.md",
                 "kind": "ai-spec",
+                "location": "phase",
                 "frontmatter": {},
                 "title": "AI-SPEC — Phase 1: identity-slice",
                 "bodyLength": 1665,
@@ -2621,6 +2777,7 @@
                 "id": ".planning/phases/01-identity-slice/01-CONTEXT.md",
                 "path": ".planning/phases/01-identity-slice/01-CONTEXT.md",
                 "kind": "context",
+                "location": "phase",
                 "frontmatter": {},
                 "title": "Phase 1: Identity Slice - Context",
                 "bodyLength": 2096,
@@ -2642,6 +2799,7 @@
                 "id": ".planning/phases/01-identity-slice/01-COST-MODEL.md",
                 "path": ".planning/phases/01-identity-slice/01-COST-MODEL.md",
                 "kind": "cost-model",
+                "location": "phase",
                 "frontmatter": {},
                 "title": "Cost Model: Identity Slice",
                 "bodyLength": 751,
@@ -2654,6 +2812,7 @@
                 "id": ".planning/phases/01-identity-slice/01-LEARNINGS.md",
                 "path": ".planning/phases/01-identity-slice/01-LEARNINGS.md",
                 "kind": "learnings",
+                "location": "phase",
                 "frontmatter": {
                   "phase": "01",
                   "phase_name": "identity-slice",
@@ -2678,6 +2837,7 @@
                 "id": ".planning/phases/01-identity-slice/01-PATTERNS.md",
                 "path": ".planning/phases/01-identity-slice/01-PATTERNS.md",
                 "kind": "patterns",
+                "location": "phase",
                 "frontmatter": {},
                 "title": "Phase 1: Identity Slice - Patterns",
                 "bodyLength": 1015,
@@ -2690,6 +2850,7 @@
                 "id": ".planning/phases/01-identity-slice/01-RESEARCH.md",
                 "path": ".planning/phases/01-identity-slice/01-RESEARCH.md",
                 "kind": "research",
+                "location": "phase",
                 "frontmatter": {},
                 "title": "Phase 1: Identity Slice - Research",
                 "bodyLength": 2393,
@@ -2702,6 +2863,7 @@
                 "id": ".planning/phases/01-identity-slice/01-SECURITY.md",
                 "path": ".planning/phases/01-identity-slice/01-SECURITY.md",
                 "kind": "security",
+                "location": "phase",
                 "frontmatter": {
                   "phase": 1,
                   "slug": "identity-slice",
@@ -2722,6 +2884,7 @@
                 "id": ".planning/phases/01-identity-slice/01-SPEC.md",
                 "path": ".planning/phases/01-identity-slice/01-SPEC.md",
                 "kind": "spec",
+                "location": "phase",
                 "frontmatter": {},
                 "title": "Phase 1: Identity Slice — Specification",
                 "bodyLength": 2889,
@@ -2734,6 +2897,7 @@
                 "id": ".planning/phases/01-identity-slice/01-UAT.md",
                 "path": ".planning/phases/01-identity-slice/01-UAT.md",
                 "kind": "uat",
+                "location": "phase",
                 "frontmatter": {
                   "status": "complete",
                   "phase": "01-identity-slice",
@@ -2755,6 +2919,7 @@
                 "id": ".planning/phases/01-identity-slice/01-UI-SPEC.md",
                 "path": ".planning/phases/01-identity-slice/01-UI-SPEC.md",
                 "kind": "ui-spec",
+                "location": "phase",
                 "frontmatter": {
                   "phase": 1,
                   "slug": "identity-slice",
@@ -2775,6 +2940,7 @@
                 "id": ".planning/phases/01-identity-slice/01-VALIDATION.md",
                 "path": ".planning/phases/01-identity-slice/01-VALIDATION.md",
                 "kind": "validation",
+                "location": "phase",
                 "frontmatter": {
                   "phase": 1,
                   "slug": "identity-slice",
@@ -2794,6 +2960,7 @@
                 "id": ".planning/phases/01-identity-slice/01-VERIFICATION.md",
                 "path": ".planning/phases/01-identity-slice/01-VERIFICATION.md",
                 "kind": "verification",
+                "location": "phase",
                 "frontmatter": {
                   "phase": "01-identity-slice",
                   "verified": "2026-06-10T10:30:00Z",
@@ -2907,6 +3074,7 @@
                 "id": ".planning/phases/02-transport-layer/02-01-PLAN.md",
                 "path": ".planning/phases/02-transport-layer/02-01-PLAN.md",
                 "kind": "plan",
+                "location": "phase",
                 "frontmatter": {},
                 "title": ".planning/phases/02-transport-layer/02-01-PLAN.md",
                 "bodyLength": 2052,
@@ -2926,6 +3094,7 @@
                 "id": ".planning/phases/02-transport-layer/02-CONTEXT.md",
                 "path": ".planning/phases/02-transport-layer/02-CONTEXT.md",
                 "kind": "context",
+                "location": "phase",
                 "frontmatter": {},
                 "title": "Phase 2: Transport Layer - Context",
                 "bodyLength": 1626,
@@ -3130,6 +3299,7 @@
             "id": ".planning/milestones/v1.0-phases/01-bootstrap/01-01-PLAN.md",
             "path": ".planning/milestones/v1.0-phases/01-bootstrap/01-01-PLAN.md",
             "kind": "plan",
+            "location": "archived-phase",
             "frontmatter": {
               "phase": "01",
               "plan": "01",
@@ -3173,6 +3343,7 @@
             "id": ".planning/milestones/v1.0-phases/01-bootstrap/01-01-SUMMARY.md",
             "path": ".planning/milestones/v1.0-phases/01-bootstrap/01-01-SUMMARY.md",
             "kind": "summary",
+            "location": "archived-phase",
             "frontmatter": {
               "phase": "01",
               "plan": "01",
@@ -3236,6 +3407,7 @@
             "id": ".planning/milestones/v1.0-phases/01-bootstrap/01-CONTEXT.md",
             "path": ".planning/milestones/v1.0-phases/01-bootstrap/01-CONTEXT.md",
             "kind": "context",
+            "location": "archived-phase",
             "frontmatter": {},
             "title": "Phase 1: Bootstrap - Context",
             "bodyLength": 1114,
@@ -3440,6 +3612,7 @@
             "id": ".planning/milestones/v2.0-phases/01-legacy-ingest/01-01-PLAN.md",
             "path": ".planning/milestones/v2.0-phases/01-legacy-ingest/01-01-PLAN.md",
             "kind": "plan",
+            "location": "archived-phase",
             "frontmatter": {
               "phase": "01",
               "plan": "01",
@@ -3483,6 +3656,7 @@
             "id": ".planning/milestones/v2.0-phases/01-legacy-ingest/01-01-SUMMARY.md",
             "path": ".planning/milestones/v2.0-phases/01-legacy-ingest/01-01-SUMMARY.md",
             "kind": "summary",
+            "location": "archived-phase",
             "frontmatter": {
               "phase": "01",
               "plan": "01",
@@ -3548,6 +3722,7 @@
             "id": ".planning/milestones/v2.0-phases/01-legacy-ingest/01-CONTEXT.md",
             "path": ".planning/milestones/v2.0-phases/01-legacy-ingest/01-CONTEXT.md",
             "kind": "context",
+            "location": "archived-phase",
             "frontmatter": {},
             "title": "Phase 1: Legacy Ingest - Context",
             "bodyLength": 1167,
@@ -3765,6 +3940,7 @@
             "id": ".planning/milestones/v2.0-phases/02-batch-export/02-01-PLAN.md",
             "path": ".planning/milestones/v2.0-phases/02-batch-export/02-01-PLAN.md",
             "kind": "plan",
+            "location": "archived-phase",
             "frontmatter": {
               "phase": "02",
               "plan": "01",
@@ -3810,6 +3986,7 @@
             "id": ".planning/milestones/v2.0-phases/02-batch-export/02-01-SUMMARY.md",
             "path": ".planning/milestones/v2.0-phases/02-batch-export/02-01-SUMMARY.md",
             "kind": "summary",
+            "location": "archived-phase",
             "frontmatter": {
               "phase": "02",
               "plan": "01",
@@ -4629,6 +4806,7 @@
             "id": ".planning/phases/01-identity-slice/01-01-PLAN.md",
             "path": ".planning/phases/01-identity-slice/01-01-PLAN.md",
             "kind": "plan",
+            "location": "phase",
             "frontmatter": {
               "phase": "01",
               "plan": "01",
@@ -4674,6 +4852,7 @@
             "id": ".planning/phases/01-identity-slice/01-01-SUMMARY.md",
             "path": ".planning/phases/01-identity-slice/01-01-SUMMARY.md",
             "kind": "summary",
+            "location": "phase",
             "frontmatter": {
               "phase": "01",
               "plan": "01",
@@ -4763,6 +4942,7 @@
             "id": ".planning/phases/01-identity-slice/01-02-PLAN.md",
             "path": ".planning/phases/01-identity-slice/01-02-PLAN.md",
             "kind": "plan",
+            "location": "phase",
             "frontmatter": {
               "phase": "01",
               "plan": "02",
@@ -4810,6 +4990,7 @@
             "id": ".planning/phases/01-identity-slice/01-02-SUMMARY.md",
             "path": ".planning/phases/01-identity-slice/01-02-SUMMARY.md",
             "kind": "summary",
+            "location": "phase",
             "frontmatter": {
               "phase": "01",
               "plan": "02",
@@ -4904,6 +5085,7 @@
             "id": ".planning/phases/01-identity-slice/01-AI-SPEC.md",
             "path": ".planning/phases/01-identity-slice/01-AI-SPEC.md",
             "kind": "ai-spec",
+            "location": "phase",
             "frontmatter": {},
             "title": "AI-SPEC — Phase 1: identity-slice",
             "bodyLength": 1665,
@@ -4916,6 +5098,7 @@
             "id": ".planning/phases/01-identity-slice/01-CONTEXT.md",
             "path": ".planning/phases/01-identity-slice/01-CONTEXT.md",
             "kind": "context",
+            "location": "phase",
             "frontmatter": {},
             "title": "Phase 1: Identity Slice - Context",
             "bodyLength": 2096,
@@ -4937,6 +5120,7 @@
             "id": ".planning/phases/01-identity-slice/01-COST-MODEL.md",
             "path": ".planning/phases/01-identity-slice/01-COST-MODEL.md",
             "kind": "cost-model",
+            "location": "phase",
             "frontmatter": {},
             "title": "Cost Model: Identity Slice",
             "bodyLength": 751,
@@ -4949,6 +5133,7 @@
             "id": ".planning/phases/01-identity-slice/01-LEARNINGS.md",
             "path": ".planning/phases/01-identity-slice/01-LEARNINGS.md",
             "kind": "learnings",
+            "location": "phase",
             "frontmatter": {
               "phase": "01",
               "phase_name": "identity-slice",
@@ -4973,6 +5158,7 @@
             "id": ".planning/phases/01-identity-slice/01-PATTERNS.md",
             "path": ".planning/phases/01-identity-slice/01-PATTERNS.md",
             "kind": "patterns",
+            "location": "phase",
             "frontmatter": {},
             "title": "Phase 1: Identity Slice - Patterns",
             "bodyLength": 1015,
@@ -4985,6 +5171,7 @@
             "id": ".planning/phases/01-identity-slice/01-RESEARCH.md",
             "path": ".planning/phases/01-identity-slice/01-RESEARCH.md",
             "kind": "research",
+            "location": "phase",
             "frontmatter": {},
             "title": "Phase 1: Identity Slice - Research",
             "bodyLength": 2393,
@@ -4997,6 +5184,7 @@
             "id": ".planning/phases/01-identity-slice/01-SECURITY.md",
             "path": ".planning/phases/01-identity-slice/01-SECURITY.md",
             "kind": "security",
+            "location": "phase",
             "frontmatter": {
               "phase": 1,
               "slug": "identity-slice",
@@ -5017,6 +5205,7 @@
             "id": ".planning/phases/01-identity-slice/01-SPEC.md",
             "path": ".planning/phases/01-identity-slice/01-SPEC.md",
             "kind": "spec",
+            "location": "phase",
             "frontmatter": {},
             "title": "Phase 1: Identity Slice — Specification",
             "bodyLength": 2889,
@@ -5029,6 +5218,7 @@
             "id": ".planning/phases/01-identity-slice/01-UAT.md",
             "path": ".planning/phases/01-identity-slice/01-UAT.md",
             "kind": "uat",
+            "location": "phase",
             "frontmatter": {
               "status": "complete",
               "phase": "01-identity-slice",
@@ -5050,6 +5240,7 @@
             "id": ".planning/phases/01-identity-slice/01-UI-SPEC.md",
             "path": ".planning/phases/01-identity-slice/01-UI-SPEC.md",
             "kind": "ui-spec",
+            "location": "phase",
             "frontmatter": {
               "phase": 1,
               "slug": "identity-slice",
@@ -5070,6 +5261,7 @@
             "id": ".planning/phases/01-identity-slice/01-VALIDATION.md",
             "path": ".planning/phases/01-identity-slice/01-VALIDATION.md",
             "kind": "validation",
+            "location": "phase",
             "frontmatter": {
               "phase": 1,
               "slug": "identity-slice",
@@ -5089,6 +5281,7 @@
             "id": ".planning/phases/01-identity-slice/01-VERIFICATION.md",
             "path": ".planning/phases/01-identity-slice/01-VERIFICATION.md",
             "kind": "verification",
+            "location": "phase",
             "frontmatter": {
               "phase": "01-identity-slice",
               "verified": "2026-06-10T10:30:00Z",
@@ -5202,6 +5395,7 @@
             "id": ".planning/phases/02-transport-layer/02-01-PLAN.md",
             "path": ".planning/phases/02-transport-layer/02-01-PLAN.md",
             "kind": "plan",
+            "location": "phase",
             "frontmatter": {},
             "title": ".planning/phases/02-transport-layer/02-01-PLAN.md",
             "bodyLength": 2052,
@@ -5221,6 +5415,7 @@
             "id": ".planning/phases/02-transport-layer/02-CONTEXT.md",
             "path": ".planning/phases/02-transport-layer/02-CONTEXT.md",
             "kind": "context",
+            "location": "phase",
             "frontmatter": {},
             "title": "Phase 2: Transport Layer - Context",
             "bodyLength": 1626,
@@ -5252,6 +5447,74 @@
           "Commit": "a1b2c3d",
           "Status": "",
           "Directory": "[quick/260615-1a2-add-transport-adapter](quick/260615-1a2-add-transport-adapter)"
+        },
+        "artifacts": {
+          ".planning/quick/260615-1a2-add-transport-adapter/260615-1a2-PLAN.md": {
+            "id": ".planning/quick/260615-1a2-add-transport-adapter/260615-1a2-PLAN.md",
+            "path": ".planning/quick/260615-1a2-add-transport-adapter/260615-1a2-PLAN.md",
+            "kind": "plan",
+            "location": "quick",
+            "frontmatter": {
+              "phase": "quick",
+              "plan": "260615-1a2",
+              "type": "execute",
+              "autonomous": true,
+              "requirements": []
+            },
+            "title": ".planning/quick/260615-1a2-add-transport-adapter/260615-1a2-PLAN.md",
+            "bodyLength": 674,
+            "bodyHash": "f4e828b586e3618fb6323b9792f3fb1b0ee2e55111da38bace5297885b5ff37d",
+            "mtimeMs": 0,
+            "warnings": [],
+            "structured": {}
+          },
+          ".planning/quick/260615-1a2-add-transport-adapter/260615-1a2-SUMMARY.md": {
+            "id": ".planning/quick/260615-1a2-add-transport-adapter/260615-1a2-SUMMARY.md",
+            "path": ".planning/quick/260615-1a2-add-transport-adapter/260615-1a2-SUMMARY.md",
+            "kind": "summary",
+            "location": "quick",
+            "frontmatter": {
+              "phase": "quick",
+              "plan": "260615-1a2",
+              "subsystem": "transport",
+              "tags": [
+                "fixture",
+                "quick"
+              ],
+              "requires": [],
+              "provides": [
+                "Transport adapter stub"
+              ],
+              "affects": [],
+              "actuals": {
+                "tokens": 400,
+                "tasks": 1,
+                "commits": 1
+              },
+              "tech-stack": {
+                "added": [],
+                "patterns": []
+              },
+              "key-files": {
+                "created": [
+                  "src/transport/adapter-stub.ts"
+                ],
+                "modified": []
+              },
+              "key-decisions": [],
+              "patterns-established": [],
+              "requirements-completed": [],
+              "duration": "5min",
+              "completed": {},
+              "status": "complete"
+            },
+            "title": "Quick Task 260615-1a2: Add Transport Adapter Stub Summary",
+            "bodyLength": 743,
+            "bodyHash": "ca9e94e41e6694a59a94063c5c5c71a8892c35a3261a4c91f121ccce17e9283e",
+            "mtimeMs": 0,
+            "warnings": [],
+            "structured": {}
+          }
         }
       },
       {
@@ -5264,6 +5527,27 @@
           "Commit": "",
           "Status": "Needs Review",
           "Directory": "[quick/260701-3xz-fix-quick-typo](quick/260701-3xz-fix-quick-typo)"
+        },
+        "artifacts": {
+          ".planning/quick/260701-3xz-fix-quick-typo/260701-3xz-PLAN.md": {
+            "id": ".planning/quick/260701-3xz-fix-quick-typo/260701-3xz-PLAN.md",
+            "path": ".planning/quick/260701-3xz-fix-quick-typo/260701-3xz-PLAN.md",
+            "kind": "plan",
+            "location": "quick",
+            "frontmatter": {
+              "phase": "quick",
+              "plan": "260701-3xz",
+              "type": "execute",
+              "autonomous": true,
+              "requirements": []
+            },
+            "title": ".planning/quick/260701-3xz-fix-quick-typo/260701-3xz-PLAN.md",
+            "bodyLength": 724,
+            "bodyHash": "05074f2fdff31c61ce4b1785854e17f63b7697e2069b7953ae4476c73e8255ba",
+            "mtimeMs": 0,
+            "warnings": [],
+            "structured": {}
+          }
         }
       }
     ],
@@ -6013,6 +6297,7 @@
                   "id": ".planning/phases/01-identity-slice/01-01-PLAN.md",
                   "path": ".planning/phases/01-identity-slice/01-01-PLAN.md",
                   "kind": "plan",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": "01",
                     "plan": "01",
@@ -6058,6 +6343,7 @@
                   "id": ".planning/phases/01-identity-slice/01-01-SUMMARY.md",
                   "path": ".planning/phases/01-identity-slice/01-01-SUMMARY.md",
                   "kind": "summary",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": "01",
                     "plan": "01",
@@ -6147,6 +6433,7 @@
                   "id": ".planning/phases/01-identity-slice/01-02-PLAN.md",
                   "path": ".planning/phases/01-identity-slice/01-02-PLAN.md",
                   "kind": "plan",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": "01",
                     "plan": "02",
@@ -6194,6 +6481,7 @@
                   "id": ".planning/phases/01-identity-slice/01-02-SUMMARY.md",
                   "path": ".planning/phases/01-identity-slice/01-02-SUMMARY.md",
                   "kind": "summary",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": "01",
                     "plan": "02",
@@ -6288,6 +6576,7 @@
                   "id": ".planning/phases/01-identity-slice/01-AI-SPEC.md",
                   "path": ".planning/phases/01-identity-slice/01-AI-SPEC.md",
                   "kind": "ai-spec",
+                  "location": "phase",
                   "frontmatter": {},
                   "title": "AI-SPEC — Phase 1: identity-slice",
                   "bodyLength": 1665,
@@ -6300,6 +6589,7 @@
                   "id": ".planning/phases/01-identity-slice/01-CONTEXT.md",
                   "path": ".planning/phases/01-identity-slice/01-CONTEXT.md",
                   "kind": "context",
+                  "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice - Context",
                   "bodyLength": 2096,
@@ -6321,6 +6611,7 @@
                   "id": ".planning/phases/01-identity-slice/01-COST-MODEL.md",
                   "path": ".planning/phases/01-identity-slice/01-COST-MODEL.md",
                   "kind": "cost-model",
+                  "location": "phase",
                   "frontmatter": {},
                   "title": "Cost Model: Identity Slice",
                   "bodyLength": 751,
@@ -6333,6 +6624,7 @@
                   "id": ".planning/phases/01-identity-slice/01-LEARNINGS.md",
                   "path": ".planning/phases/01-identity-slice/01-LEARNINGS.md",
                   "kind": "learnings",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": "01",
                     "phase_name": "identity-slice",
@@ -6357,6 +6649,7 @@
                   "id": ".planning/phases/01-identity-slice/01-PATTERNS.md",
                   "path": ".planning/phases/01-identity-slice/01-PATTERNS.md",
                   "kind": "patterns",
+                  "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice - Patterns",
                   "bodyLength": 1015,
@@ -6369,6 +6662,7 @@
                   "id": ".planning/phases/01-identity-slice/01-RESEARCH.md",
                   "path": ".planning/phases/01-identity-slice/01-RESEARCH.md",
                   "kind": "research",
+                  "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice - Research",
                   "bodyLength": 2393,
@@ -6381,6 +6675,7 @@
                   "id": ".planning/phases/01-identity-slice/01-SECURITY.md",
                   "path": ".planning/phases/01-identity-slice/01-SECURITY.md",
                   "kind": "security",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": 1,
                     "slug": "identity-slice",
@@ -6401,6 +6696,7 @@
                   "id": ".planning/phases/01-identity-slice/01-SPEC.md",
                   "path": ".planning/phases/01-identity-slice/01-SPEC.md",
                   "kind": "spec",
+                  "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice — Specification",
                   "bodyLength": 2889,
@@ -6413,6 +6709,7 @@
                   "id": ".planning/phases/01-identity-slice/01-UAT.md",
                   "path": ".planning/phases/01-identity-slice/01-UAT.md",
                   "kind": "uat",
+                  "location": "phase",
                   "frontmatter": {
                     "status": "complete",
                     "phase": "01-identity-slice",
@@ -6434,6 +6731,7 @@
                   "id": ".planning/phases/01-identity-slice/01-UI-SPEC.md",
                   "path": ".planning/phases/01-identity-slice/01-UI-SPEC.md",
                   "kind": "ui-spec",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": 1,
                     "slug": "identity-slice",
@@ -6454,6 +6752,7 @@
                   "id": ".planning/phases/01-identity-slice/01-VALIDATION.md",
                   "path": ".planning/phases/01-identity-slice/01-VALIDATION.md",
                   "kind": "validation",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": 1,
                     "slug": "identity-slice",
@@ -6473,6 +6772,7 @@
                   "id": ".planning/phases/01-identity-slice/01-VERIFICATION.md",
                   "path": ".planning/phases/01-identity-slice/01-VERIFICATION.md",
                   "kind": "verification",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": "01-identity-slice",
                     "verified": "2026-06-10T10:30:00Z",
@@ -7237,6 +7537,7 @@
                   "id": ".planning/phases/01-identity-slice/01-01-PLAN.md",
                   "path": ".planning/phases/01-identity-slice/01-01-PLAN.md",
                   "kind": "plan",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": "01",
                     "plan": "01",
@@ -7282,6 +7583,7 @@
                   "id": ".planning/phases/01-identity-slice/01-01-SUMMARY.md",
                   "path": ".planning/phases/01-identity-slice/01-01-SUMMARY.md",
                   "kind": "summary",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": "01",
                     "plan": "01",
@@ -7371,6 +7673,7 @@
                   "id": ".planning/phases/01-identity-slice/01-02-PLAN.md",
                   "path": ".planning/phases/01-identity-slice/01-02-PLAN.md",
                   "kind": "plan",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": "01",
                     "plan": "02",
@@ -7418,6 +7721,7 @@
                   "id": ".planning/phases/01-identity-slice/01-02-SUMMARY.md",
                   "path": ".planning/phases/01-identity-slice/01-02-SUMMARY.md",
                   "kind": "summary",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": "01",
                     "plan": "02",
@@ -7512,6 +7816,7 @@
                   "id": ".planning/phases/01-identity-slice/01-AI-SPEC.md",
                   "path": ".planning/phases/01-identity-slice/01-AI-SPEC.md",
                   "kind": "ai-spec",
+                  "location": "phase",
                   "frontmatter": {},
                   "title": "AI-SPEC — Phase 1: identity-slice",
                   "bodyLength": 1665,
@@ -7524,6 +7829,7 @@
                   "id": ".planning/phases/01-identity-slice/01-CONTEXT.md",
                   "path": ".planning/phases/01-identity-slice/01-CONTEXT.md",
                   "kind": "context",
+                  "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice - Context",
                   "bodyLength": 2096,
@@ -7545,6 +7851,7 @@
                   "id": ".planning/phases/01-identity-slice/01-COST-MODEL.md",
                   "path": ".planning/phases/01-identity-slice/01-COST-MODEL.md",
                   "kind": "cost-model",
+                  "location": "phase",
                   "frontmatter": {},
                   "title": "Cost Model: Identity Slice",
                   "bodyLength": 751,
@@ -7557,6 +7864,7 @@
                   "id": ".planning/phases/01-identity-slice/01-LEARNINGS.md",
                   "path": ".planning/phases/01-identity-slice/01-LEARNINGS.md",
                   "kind": "learnings",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": "01",
                     "phase_name": "identity-slice",
@@ -7581,6 +7889,7 @@
                   "id": ".planning/phases/01-identity-slice/01-PATTERNS.md",
                   "path": ".planning/phases/01-identity-slice/01-PATTERNS.md",
                   "kind": "patterns",
+                  "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice - Patterns",
                   "bodyLength": 1015,
@@ -7593,6 +7902,7 @@
                   "id": ".planning/phases/01-identity-slice/01-RESEARCH.md",
                   "path": ".planning/phases/01-identity-slice/01-RESEARCH.md",
                   "kind": "research",
+                  "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice - Research",
                   "bodyLength": 2393,
@@ -7605,6 +7915,7 @@
                   "id": ".planning/phases/01-identity-slice/01-SECURITY.md",
                   "path": ".planning/phases/01-identity-slice/01-SECURITY.md",
                   "kind": "security",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": 1,
                     "slug": "identity-slice",
@@ -7625,6 +7936,7 @@
                   "id": ".planning/phases/01-identity-slice/01-SPEC.md",
                   "path": ".planning/phases/01-identity-slice/01-SPEC.md",
                   "kind": "spec",
+                  "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice — Specification",
                   "bodyLength": 2889,
@@ -7637,6 +7949,7 @@
                   "id": ".planning/phases/01-identity-slice/01-UAT.md",
                   "path": ".planning/phases/01-identity-slice/01-UAT.md",
                   "kind": "uat",
+                  "location": "phase",
                   "frontmatter": {
                     "status": "complete",
                     "phase": "01-identity-slice",
@@ -7658,6 +7971,7 @@
                   "id": ".planning/phases/01-identity-slice/01-UI-SPEC.md",
                   "path": ".planning/phases/01-identity-slice/01-UI-SPEC.md",
                   "kind": "ui-spec",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": 1,
                     "slug": "identity-slice",
@@ -7678,6 +7992,7 @@
                   "id": ".planning/phases/01-identity-slice/01-VALIDATION.md",
                   "path": ".planning/phases/01-identity-slice/01-VALIDATION.md",
                   "kind": "validation",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": 1,
                     "slug": "identity-slice",
@@ -7697,6 +8012,7 @@
                   "id": ".planning/phases/01-identity-slice/01-VERIFICATION.md",
                   "path": ".planning/phases/01-identity-slice/01-VERIFICATION.md",
                   "kind": "verification",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": "01-identity-slice",
                     "verified": "2026-06-10T10:30:00Z",
@@ -8461,6 +8777,7 @@
                   "id": ".planning/phases/01-identity-slice/01-01-PLAN.md",
                   "path": ".planning/phases/01-identity-slice/01-01-PLAN.md",
                   "kind": "plan",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": "01",
                     "plan": "01",
@@ -8506,6 +8823,7 @@
                   "id": ".planning/phases/01-identity-slice/01-01-SUMMARY.md",
                   "path": ".planning/phases/01-identity-slice/01-01-SUMMARY.md",
                   "kind": "summary",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": "01",
                     "plan": "01",
@@ -8595,6 +8913,7 @@
                   "id": ".planning/phases/01-identity-slice/01-02-PLAN.md",
                   "path": ".planning/phases/01-identity-slice/01-02-PLAN.md",
                   "kind": "plan",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": "01",
                     "plan": "02",
@@ -8642,6 +8961,7 @@
                   "id": ".planning/phases/01-identity-slice/01-02-SUMMARY.md",
                   "path": ".planning/phases/01-identity-slice/01-02-SUMMARY.md",
                   "kind": "summary",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": "01",
                     "plan": "02",
@@ -8736,6 +9056,7 @@
                   "id": ".planning/phases/01-identity-slice/01-AI-SPEC.md",
                   "path": ".planning/phases/01-identity-slice/01-AI-SPEC.md",
                   "kind": "ai-spec",
+                  "location": "phase",
                   "frontmatter": {},
                   "title": "AI-SPEC — Phase 1: identity-slice",
                   "bodyLength": 1665,
@@ -8748,6 +9069,7 @@
                   "id": ".planning/phases/01-identity-slice/01-CONTEXT.md",
                   "path": ".planning/phases/01-identity-slice/01-CONTEXT.md",
                   "kind": "context",
+                  "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice - Context",
                   "bodyLength": 2096,
@@ -8769,6 +9091,7 @@
                   "id": ".planning/phases/01-identity-slice/01-COST-MODEL.md",
                   "path": ".planning/phases/01-identity-slice/01-COST-MODEL.md",
                   "kind": "cost-model",
+                  "location": "phase",
                   "frontmatter": {},
                   "title": "Cost Model: Identity Slice",
                   "bodyLength": 751,
@@ -8781,6 +9104,7 @@
                   "id": ".planning/phases/01-identity-slice/01-LEARNINGS.md",
                   "path": ".planning/phases/01-identity-slice/01-LEARNINGS.md",
                   "kind": "learnings",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": "01",
                     "phase_name": "identity-slice",
@@ -8805,6 +9129,7 @@
                   "id": ".planning/phases/01-identity-slice/01-PATTERNS.md",
                   "path": ".planning/phases/01-identity-slice/01-PATTERNS.md",
                   "kind": "patterns",
+                  "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice - Patterns",
                   "bodyLength": 1015,
@@ -8817,6 +9142,7 @@
                   "id": ".planning/phases/01-identity-slice/01-RESEARCH.md",
                   "path": ".planning/phases/01-identity-slice/01-RESEARCH.md",
                   "kind": "research",
+                  "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice - Research",
                   "bodyLength": 2393,
@@ -8829,6 +9155,7 @@
                   "id": ".planning/phases/01-identity-slice/01-SECURITY.md",
                   "path": ".planning/phases/01-identity-slice/01-SECURITY.md",
                   "kind": "security",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": 1,
                     "slug": "identity-slice",
@@ -8849,6 +9176,7 @@
                   "id": ".planning/phases/01-identity-slice/01-SPEC.md",
                   "path": ".planning/phases/01-identity-slice/01-SPEC.md",
                   "kind": "spec",
+                  "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice — Specification",
                   "bodyLength": 2889,
@@ -8861,6 +9189,7 @@
                   "id": ".planning/phases/01-identity-slice/01-UAT.md",
                   "path": ".planning/phases/01-identity-slice/01-UAT.md",
                   "kind": "uat",
+                  "location": "phase",
                   "frontmatter": {
                     "status": "complete",
                     "phase": "01-identity-slice",
@@ -8882,6 +9211,7 @@
                   "id": ".planning/phases/01-identity-slice/01-UI-SPEC.md",
                   "path": ".planning/phases/01-identity-slice/01-UI-SPEC.md",
                   "kind": "ui-spec",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": 1,
                     "slug": "identity-slice",
@@ -8902,6 +9232,7 @@
                   "id": ".planning/phases/01-identity-slice/01-VALIDATION.md",
                   "path": ".planning/phases/01-identity-slice/01-VALIDATION.md",
                   "kind": "validation",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": 1,
                     "slug": "identity-slice",
@@ -8921,6 +9252,7 @@
                   "id": ".planning/phases/01-identity-slice/01-VERIFICATION.md",
                   "path": ".planning/phases/01-identity-slice/01-VERIFICATION.md",
                   "kind": "verification",
+                  "location": "phase",
                   "frontmatter": {
                     "phase": "01-identity-slice",
                     "verified": "2026-06-10T10:30:00Z",
@@ -9029,6 +9361,7 @@
                   "id": ".planning/phases/02-transport-layer/02-01-PLAN.md",
                   "path": ".planning/phases/02-transport-layer/02-01-PLAN.md",
                   "kind": "plan",
+                  "location": "phase",
                   "frontmatter": {},
                   "title": ".planning/phases/02-transport-layer/02-01-PLAN.md",
                   "bodyLength": 2052,
@@ -9048,6 +9381,7 @@
                   "id": ".planning/phases/02-transport-layer/02-CONTEXT.md",
                   "path": ".planning/phases/02-transport-layer/02-CONTEXT.md",
                   "kind": "context",
+                  "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 2: Transport Layer - Context",
                   "bodyLength": 1626,
@@ -9159,6 +9493,7 @@
                   "id": ".planning/phases/02-transport-layer/02-01-PLAN.md",
                   "path": ".planning/phases/02-transport-layer/02-01-PLAN.md",
                   "kind": "plan",
+                  "location": "phase",
                   "frontmatter": {},
                   "title": ".planning/phases/02-transport-layer/02-01-PLAN.md",
                   "bodyLength": 2052,
@@ -9178,6 +9513,7 @@
                   "id": ".planning/phases/02-transport-layer/02-CONTEXT.md",
                   "path": ".planning/phases/02-transport-layer/02-CONTEXT.md",
                   "kind": "context",
+                  "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 2: Transport Layer - Context",
                   "bodyLength": 1626,

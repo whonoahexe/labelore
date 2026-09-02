@@ -27,6 +27,7 @@ function toDomainArtifact(parsed: ParsedArtifact): Artifact {
     id: parsed.ref.path,
     path: parsed.ref.path,
     kind: parsed.ref.kind,
+    location: parsed.ref.location,
     frontmatter: parsed.frontmatter,
     title: parsed.title,
     body: parsed.body,
@@ -155,9 +156,20 @@ function buildPhaseFromRoadmapOnly(identity: PhaseIdentity, block: RoadmapPhaseB
 }
 
 export function assembleDomainModel(parsed: ParsedArtifact[], _warnings: ParseWarning[], rootPath: string): Project {
-  const rootArtifacts = parsed.filter((p) => p.ref.location === 'root');
+  // D-11: widened from a root-only filter to a loose-artifact filter — 'research', 'milestone-root'
+  // and 'other' have no other home in the domain model, so they fold into the same Project.artifacts
+  // map root docs already use. The existing CONFIG_PATH/PROJECT_MD_PATH/STATE_MD_PATH/ROADMAP_MD_PATH/
+  // REQUIREMENTS_MD_PATH exact-path lookups below keep resolving unchanged since those paths are
+  // still 'root'-located and still land in this same map.
+  const looseArtifacts = parsed.filter(
+    (p) =>
+      p.ref.location === 'root' ||
+      p.ref.location === 'research' ||
+      p.ref.location === 'milestone-root' ||
+      p.ref.location === 'other',
+  );
   const artifacts: Record<string, Artifact> = {};
-  for (const p of rootArtifacts) {
+  for (const p of looseArtifacts) {
     artifacts[p.ref.path] = toDomainArtifact(p);
   }
 
@@ -279,21 +291,31 @@ export function assembleDomainModel(parsed: ParsedArtifact[], _warnings: ParseWa
   }));
 
   // --- Quick tasks: grouped by quickTaskId, cross-linked to STATE.md's authoritative status table. ---
+  // D-11: collects every matching ParsedArtifact per quick task (not just its directory path), so
+  // QuickTask.artifacts can be built the same way Phase.artifacts already is by buildPhaseFromGroup —
+  // no second artifact-to-map helper.
   const quickTasksCompleted = (stateArtifact?.structured.quickTasksCompleted as Record<string, string>[] | undefined) ?? [];
-  const quickGroups = new Map<string, string>(); // quickTaskId -> directory path
+  const quickGroups = new Map<string, ParsedArtifact[]>(); // quickTaskId -> its ParsedArtifacts
   for (const p of parsed) {
     if (p.ref.location === 'quick' && p.ref.quickTaskId) {
-      if (!quickGroups.has(p.ref.quickTaskId)) {
-        quickGroups.set(p.ref.quickTaskId, dirname(p.ref.path));
-      }
+      const existing = quickGroups.get(p.ref.quickTaskId);
+      if (existing) existing.push(p);
+      else quickGroups.set(p.ref.quickTaskId, [p]);
     }
   }
   const quickTasks: QuickTask[] = [...quickGroups.entries()]
-    .map(([id, path]) => ({
-      id,
-      path,
-      stateRow: quickTasksCompleted.find((row) => Object.values(row).some((v) => v.includes(id))) ?? null,
-    }))
+    .map(([id, group]): QuickTask => {
+      const artifacts: Record<string, Artifact> = {};
+      for (const p of group) artifacts[p.ref.path] = toDomainArtifact(p);
+      return {
+        id,
+        // dirname of the first collected artifact — preserves the existing value byte for byte,
+        // since discovery groups every artifact for one quick task under the same directory.
+        path: dirname(group[0].ref.path),
+        stateRow: quickTasksCompleted.find((row) => Object.values(row).some((v) => v.includes(id))) ?? null,
+        artifacts,
+      };
+    })
     .sort((a, b) => a.id.localeCompare(b.id));
 
   const project: Project = {

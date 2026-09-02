@@ -4,11 +4,22 @@
 // Every status-like field is an open `string`, not a closed union, so an unrecognized value from a
 // future GSD version passes through instead of failing.
 
+/**
+ * Which top-level GSD tree an artifact lives under, position-derived, never content-derived
+ * (DATA-02). The single definition of this union in the codebase — planning-repo/types.ts
+ * re-exports it rather than redeclaring it, mirroring how mentions.ts re-exports IdScheme/Mention
+ * from here.
+ */
+export type ArtifactLocation = 'root' | 'phase' | 'archived-phase' | 'quick' | 'milestone-root' | 'research' | 'other';
+
 /** The universal base shape every parsed artifact carries, regardless of type. */
 export interface Artifact {
   id: string;
   path: string;
   kind: string;
+  /** D-11: every reachable artifact carries the location discovery classified it under, so no
+   * consumer re-derives it by string-matching a path prefix. */
+  location: ArtifactLocation;
   frontmatter: Record<string, unknown>;
   title: string;
   body: string;
@@ -176,6 +187,8 @@ export interface QuickTask {
   path: string;
   /** The matching row from STATE.md's "Quick Tasks Completed" table — the authoritative status index for quick/ — when one exists. */
   stateRow: Record<string, unknown> | null;
+  /** Quick-task-scoped artifacts (PLAN.md, SUMMARY.md, ...) keyed by path — mirrors Phase.artifacts exactly, so both artifact-bearing model types share one shape. */
+  artifacts: Record<string, Artifact>;
 }
 
 export interface Project {
