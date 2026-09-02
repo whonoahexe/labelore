@@ -57,6 +57,15 @@ export type SearchIndexState =
     }
   | { status: 'error'; message: string };
 
+/** Narrows SearchIndexState to its 'ready' member — a small, explicit convenience for route
+ * handlers or future consumers that need the ready-only fields (index/documents/owners/builtAt)
+ * without repeating the status-literal check inline. */
+export function isReady(
+  state: SearchIndexState,
+): state is Extract<SearchIndexState, { status: 'ready' }> {
+  return state.status === 'ready';
+}
+
 /** The full API response shape `/api/search` returns in every readiness state. */
 export interface SearchApiResponse {
   status: SearchIndexState['status'];

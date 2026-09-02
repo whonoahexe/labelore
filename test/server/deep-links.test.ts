@@ -43,6 +43,8 @@ describe('production SPA deep-link delivery', () => {
   it.each([
     '/',
     '/roadmap',
+    '/search',
+    '/search?q=IDENT-02',
     buildPhaseUrl(phase),
     buildPlanUrl(phase, '02-02 / 計画'),
     buildArtifactUrl(phase, '.planning/phase / RESEARCH.md'),

@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { Artifact, Phase, PhaseIdentity, Project } from '../../src/domain/model.ts';
 import type { ProjectSnapshot } from '../../src/planning-repo/types.ts';
+import { createApp } from '../../src/server/index.ts';
 import {
   buildSearchDocuments,
   createSearchIndexState,
+  isReady,
   processSearchTerm,
   searchIndex,
   tokenizeSearchText,
@@ -197,5 +199,130 @@ describe('createSearchIndexState / searchIndex — end to end', () => {
     const oversized = 'a'.repeat(MAX_QUERY_LENGTH + 500);
     expect(() => searchIndex(state, oversized)).not.toThrow();
     expect(searchIndex(state, oversized)).toEqual([]);
+  });
+
+  it('yields ready with zero results for a snapshot whose project is null, not an error', async () => {
+    const search = createSearchIndexState();
+    search.buildFrom(makeSnapshot(null));
+    await waitForBuild();
+    const state = search.state();
+    expect(state.status).toBe('ready');
+    expect(searchIndex(state, 'anything')).toEqual([]);
+  });
+
+  it('isReady narrows to the ready member and only the ready member', async () => {
+    const search = createSearchIndexState();
+    expect(isReady(search.state())).toBe(false);
+    search.buildFrom(makeSnapshot(makeProject([], [])));
+    await waitForBuild();
+    expect(isReady(search.state())).toBe(true);
+    expect(isReady({ status: 'error', message: 'boom' })).toBe(false);
+  });
+
+  it('keeps two byte-identical-body artifacts as separate results keyed by their distinct paths', async () => {
+    const bodyA = makeArtifact({ path: '.planning/phases/01-x/01-A.md', title: 'A', body: 'shared unique-marker-token content' });
+    const bodyB = makeArtifact({ path: '.planning/phases/01-x/01-B.md', title: 'B', body: 'shared unique-marker-token content' });
+    const project = makeProject([], [makePhase([bodyA, bodyB])]);
+    const search = createSearchIndexState();
+    search.buildFrom(makeSnapshot(project));
+    await waitForBuild();
+    const hits = searchIndex(search.state(), 'unique-marker-token');
+    expect(hits.map((hit) => hit.path).sort()).toEqual([bodyA.path, bodyB.path].sort());
+  });
+
+  it('returns identical order across two calls with the same query, and breaks score ties by path ascending', async () => {
+    const first = makeArtifact({ path: '.planning/phases/01-x/01-B.md', title: 'B', body: 'tie-break-term' });
+    const second = makeArtifact({ path: '.planning/phases/01-x/01-A.md', title: 'A', body: 'tie-break-term' });
+    const project = makeProject([], [makePhase([first, second])]);
+    const search = createSearchIndexState();
+    search.buildFrom(makeSnapshot(project));
+    await waitForBuild();
+    const state = search.state();
+    const runOne = searchIndex(state, 'tie-break-term');
+    const runTwo = searchIndex(state, 'tie-break-term');
+    expect(runOne.map((hit) => hit.path)).toEqual(runTwo.map((hit) => hit.path));
+    // Both artifacts tie on score (identical body/title shape) — the explicit tiebreak orders them
+    // by path ascending, so 01-A.md (alphabetically first) comes before 01-B.md regardless of
+    // insertion order above.
+    expect(runOne.map((hit) => hit.path)).toEqual([second.path, first.path]);
+  });
+
+  it('indexes and retrieves a non-ASCII path token intact, matching a query that differs only in case', async () => {
+    const artifact = makeArtifact({
+      path: '.planning/phases/01-x/01-CONTEXT.md',
+      title: 'Context',
+      body: 'References backend/src/日本語/mod.rs as the adapter entry point.',
+    });
+    const project = makeProject([], [makePhase([artifact])]);
+    const search = createSearchIndexState();
+    search.buildFrom(makeSnapshot(project));
+    await waitForBuild();
+    const state = search.state();
+    const lower = searchIndex(state, 'backend/src/日本語/mod.rs');
+    const upper = searchIndex(state, 'BACKEND/SRC/日本語/MOD.RS');
+    expect(lower.map((hit) => hit.path)).toContain(artifact.path);
+    expect(upper.map((hit) => hit.path)).toContain(artifact.path);
+  });
+});
+
+describe('createApp — /api/search readiness integration (Task 3)', () => {
+  function appOver(project: Project | null) {
+    const snapshot = makeSnapshot(project);
+    return createApp({ getSnapshot: () => snapshot });
+  }
+
+  it('answers HTTP 200 with status "building" and empty results for a request issued before the scheduled build runs', async () => {
+    const app = appOver(makeProject([], []));
+    // No await between createApp() and this request — the setImmediate-scheduled build has not
+    // run yet, so this exercises the same-tick "building" path (D-04/FIND-05).
+    const response = await app.request('/api/search?q=anything');
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { status: string; results: unknown[] };
+    expect(body.status).toBe('building');
+    expect(body.results).toEqual([]);
+  });
+
+  it('answers HTTP 200 with status "ready" and results once the scheduled build resolves', async () => {
+    const plan = makeArtifact({
+      path: '.planning/phases/01-identity-slice/01-02-PLAN.md',
+      title: '01-02: Identity slice',
+      frontmatter: { requirements: ['IDENT-02'] },
+    });
+    const app = appOver(makeProject([], [makePhase([plan])]));
+    await waitForBuild();
+    const response = await app.request('/api/search?q=IDENT-02');
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { status: string; results: { path: string }[] };
+    expect(body.status).toBe('ready');
+    expect(body.results.map((hit) => hit.path)).toContain(plan.path);
+  });
+
+  it('answers HTTP 200 with zero results for an empty, whitespace-only, or punctuation-only q — never a thrown error', async () => {
+    const app = appOver(makeProject([], []));
+    await waitForBuild();
+    for (const q of ['', '   ', '!!!---...']) {
+      const response = await app.request(`/api/search?q=${encodeURIComponent(q)}`);
+      expect(response.status).toBe(200);
+      const body = (await response.json()) as { total: number };
+      expect(body.total).toBe(0);
+    }
+  });
+
+  it('answers HTTP 200 (never a 4xx/5xx) for a q longer than MAX_QUERY_LENGTH, truncating before search', async () => {
+    const app = appOver(makeProject([], []));
+    await waitForBuild();
+    const oversized = 'a'.repeat(5000);
+    const response = await app.request(`/api/search?q=${encodeURIComponent(oversized)}`);
+    expect(response.status).toBe(200);
+  });
+
+  it('keeps answering /api/dashboard while the search index state is still building', async () => {
+    const app = appOver(makeProject([], []));
+    // Same-tick request, before the scheduled build resolves — /api/dashboard must not be blocked
+    // by search index construction (T-03-01-05, FIND-05).
+    const [search, dashboard] = await Promise.all([app.request('/api/search?q=x'), app.request('/api/dashboard')]);
+    expect(dashboard.status).toBe(200);
+    const searchBody = (await search.json()) as { status: string };
+    expect(searchBody.status).toBe('building');
   });
 });
