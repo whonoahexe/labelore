@@ -6,39 +6,23 @@ import type {
   TraceabilityRow,
   TraceabilityViewModel,
 } from '../../presentation/traceability.ts';
+import {
+  DEFAULT_TRACEABILITY_FILTER,
+  matchesTraceabilityFilter,
+  type TraceabilityFilterState,
+} from './traceability-filter.ts';
+
+// Re-exported so the filter predicate stays reachable directly from the page module (its natural
+// call site) while its DOM-free definition lives in traceability-filter.ts — the same seam
+// roadmap-deep-link.ts establishes, which keeps this .tsx file (and the "jsx" compiler option it
+// requires) out of the dependency graph of plain-.ts presentation tests (03-04-PLAN.md Task 3).
+export { DEFAULT_TRACEABILITY_FILTER, matchesTraceabilityFilter };
+export type { TraceabilityFilterState, TraceabilityStatusFilter } from './traceability-filter.ts';
 
 async function fetchTraceability(): Promise<TraceabilityViewModel> {
   const response = await fetch('/api/traceability', { headers: { Accept: 'application/json' } });
   if (!response.ok) throw new Error(`Traceability request failed (${response.status})`);
   return (await response.json()) as TraceabilityViewModel;
-}
-
-export type TraceabilityStatusFilter = 'all' | 'uncovered' | 'disagreement';
-
-export interface TraceabilityFilterState {
-  query: string;
-  status: TraceabilityStatusFilter;
-}
-
-export const DEFAULT_TRACEABILITY_FILTER: TraceabilityFilterState = { query: '', status: 'all' };
-
-/** D-14: narrows by requirement ID or requirement text (case-insensitive), then isolates the two
- * highest-value slices — uncovered rows and rows whose two status signals disagree. Local
- * component state only — never a refetch, never URL state (see traceability-page's own filter
- * controls). Exported and tested directly per 03-04-PLAN.md Task 3. */
-export function matchesTraceabilityFilter(
-  row: TraceabilityRow,
-  filter: TraceabilityFilterState,
-): boolean {
-  const query = filter.query.trim().toLowerCase();
-  const matchesQuery =
-    query.length === 0 ||
-    row.id.toLowerCase().includes(query) ||
-    row.text.toLowerCase().includes(query);
-  if (!matchesQuery) return false;
-  if (filter.status === 'uncovered') return row.uncovered;
-  if (filter.status === 'disagreement') return row.statusDisagreement;
-  return true;
 }
 
 function RequirementStatusChip({ status }: { status: boolean | null }): React.JSX.Element {
