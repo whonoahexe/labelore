@@ -4,16 +4,16 @@ milestone: v1.0
 current_phase: 03
 current_phase_name: Search, Browsing & Traceability
 status: executing
-stopped_at: Completed 03-01-PLAN.md
-last_updated: "2026-09-02T10:20:26.175Z"
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-09-02T10:42:47.058Z"
 last_activity: 2026-09-02
 last_activity_desc: Phase 03 execution started
-state_head: 84d5d84ee74b3347d58840a4b612c011a6d22b65
+state_head: c0dc31f66ffdb0661a949b2fd892987e35f748fc
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 24
-  completed_plans: 21
+  completed_plans: 22
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-08-24)
 ## Current Position
 
 Phase: 03 (Search, Browsing & Traceability) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-09-02 — Phase 03 execution started
 
@@ -64,6 +64,7 @@ Progress: [███░░░░░░░] 25%
 | Phase 02 P15 | 10min | 2 tasks | 3 files |
 | Phase 02 P16 | 15min | 3 tasks | 6 files |
 | Phase 03 P01 | 47min | 3 tasks | 27 files |
+| Phase 03-search-browsing-traceability P02 | 20min | 3 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,8 @@ Recent decisions affecting current work:
 - [Phase 02]: G2-10 fix reclassifies inferred coverage matches from the active status-chip tone to quiet; exact matches keep complete/primary.
 - [Phase 03]: Resumed Task 1 from a prior killed-executor session's uncommitted work per user instruction; reconciled and fixed two defects (tab-splitting tokenizer bug, setImmediate/tsconfig.web.json typecheck break) before committing as one atomic unit.
 - [Phase 03]: D-11 fix: ArtifactLocation is a single domain-level union re-exported by planning-repo/types.ts; QuickTask.artifacts mirrors Phase.artifacts, closing the reachable-artifact gap for research/, milestones/, quick/ and unrecognized top-level docs.
+- [Phase 03]: Added ArtifactDto.warnings so search rows (and future presentation consumers) can mark a parse-warning artifact unreadable without dropping it from any listing.
+- [Phase 03]: A milestone-root search hit's archived-milestone group is resolved via naming.ts's canonical parseMilestoneFileName on its basename, since SearchHit.milestoneKey is only ever set from phaseIdentity, which milestone-root artifacts never carry.
 
 ### Pending Todos
 
@@ -109,6 +112,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-02T10:20:18.447Z
-Stopped at: Completed 03-01-PLAN.md
+Last session: 2026-09-02T10:42:46.983Z
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None

@@ -69,8 +69,8 @@ The search half of "finding buried artifacts."
 
 - [x] **FIND-01**: Full-text search covers every file in `.planning/`
 - [x] **FIND-02**: The index is built from source markdown, not rendered text, so exact tokens (`ROLE-07`, `backend/src/authz/mod.rs`) match reliably
-- [ ] **FIND-03**: Results are grouped by phase and artifact type
-- [ ] **FIND-04**: Each result shows a snippet with the match highlighted
+- [x] **FIND-03**: Results are grouped by phase and artifact type
+- [x] **FIND-04**: Each result shows a snippet with the match highlighted
 - [x] **FIND-05**: Index construction does not block first paint
 
 ### Milestone History
@@ -179,8 +179,8 @@ Which phases cover which requirements. Populated during roadmap creation.
 | NAV-07 | Phase 1 | Complete |
 | FIND-01 | Phase 3 | Complete |
 | FIND-02 | Phase 3 | Complete |
-| FIND-03 | Phase 3 | Pending |
-| FIND-04 | Phase 3 | Pending |
+| FIND-03 | Phase 3 | Complete |
+| FIND-04 | Phase 3 | Complete |
 | FIND-05 | Phase 3 | Complete |
 | HIST-01 | Phase 2 | Complete |
 | HIST-02 | Phase 2 | Complete |

@@ -182,7 +182,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1)*
 
-- [ ] 03-02-PLAN.md — Location-then-type result grouping, match-centred snippets with heading deep-links, and the /search reading surface (FIND-03, FIND-04)
+- [x] 03-02-PLAN.md — Location-then-type result grouping, match-centred snippets with heading deep-links, and the /search reading surface (FIND-03, FIND-04)
 
 **Wave 3** *(blocked on Wave 2 — shares app-shell.tsx and globals.css)*
 
