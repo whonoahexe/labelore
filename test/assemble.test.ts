@@ -315,3 +315,44 @@ describe('assembleDomainModel — D-11 reachable-equals-discovered (fixtures/den
     }
   });
 });
+
+describe('assembleDomainModel — malformed frontmatter degrades rather than breaking', () => {
+  // CR-01: `milestone: ''` is a legal YAML value distinct from omitting the key. It must reach
+  // Milestone.version as null, exactly like an absent key, because milestoneKeyOf() refuses to
+  // encode an empty path segment and its throw would otherwise abort createApp() at startup.
+  it('normalizes an empty-string milestone version to null so route-key derivation never throws', async () => {
+    const { project } = await assembleTree({
+      '.planning/STATE.md': "---\nmilestone: ''\nmilestone_name: ''\n---\n\n# Project State\n",
+      '.planning/phases/01-current/01-CONTEXT.md': '<domain>x</domain>',
+    });
+    const live = project.milestones.find((m) => m.phases.length > 0);
+    expect(live).toBeDefined();
+    expect(live!.version).toBeNull();
+    for (const phase of live!.phases) {
+      expect(phase.identity.milestoneVersion).toBeNull();
+    }
+  });
+
+  it('treats a whitespace-only milestone version the same as an empty one', async () => {
+    const { project } = await assembleTree({
+      '.planning/STATE.md': "---\nmilestone: '   '\n---\n\n# Project State\n",
+      '.planning/phases/01-current/01-CONTEXT.md': '<domain>x</domain>',
+    });
+    const live = project.milestones.find((m) => m.phases.length > 0);
+    expect(live!.version).toBeNull();
+  });
+
+  // WR-04: a short table row still assembles. parseMarkdownTable pads missing cells with '',
+  // so a non-string cell is not reachable through the current parser — the typeof guard added
+  // alongside this test is defense-in-depth against the unchecked cast, not a live crash fix.
+  it('assembles a quick task whose STATE.md table row has fewer cells than headers', async () => {
+    const state =
+      '---\nstatus: executing\n---\n\n# Project State\n\n## Accumulated Context\n\n### Quick Tasks Completed\n\n| # | Description | Directory |\n|---|---|---|\n| 260726-unp |\n';
+    const { project } = await assembleTree({
+      '.planning/STATE.md': state,
+      '.planning/quick/260726-unp-add-a-toggle/260726-unp-PLAN.md': '# plan',
+    });
+    expect(project.quickTasks).toHaveLength(1);
+    expect(project.quickTasks[0].stateRow).not.toBeNull();
+  });
+});
