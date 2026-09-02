@@ -3,6 +3,7 @@ import { presentationRoutePatterns } from '../presentation/routes.ts';
 import { AppShell } from './components/app-shell.tsx';
 import { DashboardPage } from './pages/dashboard-page.tsx';
 import { RoadmapPage } from './pages/roadmap-page.tsx';
+import { SearchPage } from './pages/search-page.tsx';
 import { ArtifactPage } from './pages/artifact-page.tsx';
 import { PlanPairPage } from './pages/plan-pair-page.tsx';
 
@@ -47,6 +48,7 @@ export const appRouter = createBrowserRouter([
     children: [
       { path: presentationRoutePatterns.dashboard, element: <DashboardPage /> },
       { path: presentationRoutePatterns.roadmap, element: <RoadmapPage /> },
+      { path: presentationRoutePatterns.search, element: <SearchPage /> },
       { path: presentationRoutePatterns.milestone, element: <RoadmapPage /> },
       { path: presentationRoutePatterns.phase, element: <RoadmapPage /> },
       { path: presentationRoutePatterns.plan, element: <PlanPairPage /> },

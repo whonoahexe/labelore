@@ -7,6 +7,7 @@ const ARTIFACT_PREFIX = 'a~';
 export const presentationRoutePatterns = {
   dashboard: '/',
   roadmap: '/roadmap',
+  search: '/search',
   milestone: '/milestones/:milestoneKey',
   phase: '/milestones/:milestoneKey/phases/:phaseKey',
   plan: '/milestones/:milestoneKey/phases/:phaseKey/plans/:planId',
@@ -17,6 +18,7 @@ export const presentationRoutePatterns = {
 export type PresentationRoute =
   | { kind: 'dashboard' }
   | { kind: 'roadmap' }
+  | { kind: 'search' }
   | { kind: 'milestone'; milestoneVersion: string | null }
   | {
       kind: 'phase';
@@ -226,6 +228,9 @@ export function parsePresentationUrl(input: string): PresentationRouteParseResul
     return failure('duplicate-token', `Route repeats reserved token: ${duplicate}`, duplicate);
   if (segments.length === 1 && segments[0] === 'roadmap') {
     return { ok: true, route: { kind: 'roadmap' } };
+  }
+  if (segments.length === 1 && segments[0] === 'search') {
+    return { ok: true, route: { kind: 'search' } };
   }
 
   if (segments[0] === 'artifacts') {
