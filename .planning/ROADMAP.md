@@ -173,7 +173,7 @@ Plans:
   3. The app is usable before the index finishes building — index construction never blocks first paint.
   4. A tree navigator mirrors `.planning/`'s real structure — root docs, `phases/`, `quick/`, `milestones/`, `research/` — expandable per phase, and a traceability view shows every requirement with the phase covering it and its status.
 
-**Plans**: 1/4 plans executed *(sized at 2 at roadmap time; split to 4 because D-11's assembly fix, the search surfaces, the sidebar restructure, and the traceability view each own a distinct file set and `src/server/index.ts`, `src/presentation/routes.ts`, `app-shell.tsx` and `globals.css` are touched by more than one — a two-plan split would have put every task over the per-plan file budget)*
+**Plans**: 3/4 plans executed *(sized at 2 at roadmap time; split to 4 because D-11's assembly fix, the search surfaces, the sidebar restructure, and the traceability view each own a distinct file set and `src/server/index.ts`, `src/presentation/routes.ts`, `app-shell.tsx` and `globals.css` are touched by more than one — a two-plan split would have put every task over the per-plan file budget)*
 **UI hint**: yes
 
 **Wave 1** *(tracer — the vertical slice every later wave builds on)*
@@ -186,7 +186,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 — shares app-shell.tsx and globals.css)*
 
-- [ ] 03-03-PLAN.md — The disk-mirroring tree navigator and the shell restructured into header-over-sidebar-plus-content (NAV-01)
+- [x] 03-03-PLAN.md — The disk-mirroring tree navigator and the shell restructured into header-over-sidebar-plus-content (NAV-01)
 
 **Wave 4** *(blocked on Wave 3 — shares app-shell.tsx, tree.ts and globals.css)*
 

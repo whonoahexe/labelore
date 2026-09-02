@@ -55,7 +55,7 @@ The navigation half of the "finding buried artifacts" pain. GSD's cross-referenc
 prose mentions, not markdown links, so this requires building an ID registry and a
 prose-scanning linkifier — there are no existing links to render.
 
-- [ ] **NAV-01**: A tree navigator mirrors `.planning/`'s real structure — root docs, `phases/`, `quick/`, `milestones/`, `research/` — expandable per phase
+- [x] **NAV-01**: A tree navigator mirrors `.planning/`'s real structure — root docs, `phases/`, `quick/`, `milestones/`, `research/` — expandable per phase
 - [x] **NAV-02**: Requirement IDs appearing in prose (`AUTH-01`) become clickable links to the phase covering that requirement
 - [x] **NAV-03**: Phase and plan references appearing in prose become clickable links to those phases and plans
 - [x] **NAV-04**: A reference to an ID with no definition renders as plain text, never as a broken link
@@ -170,7 +170,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 | READ-04 | Phase 2 | Complete |
 | READ-05 | Phase 2 | Complete |
 | READ-06 | Phase 2 | Complete |
-| NAV-01 | Phase 3 | Pending |
+| NAV-01 | Phase 3 | Complete |
 | NAV-02 | Phase 2 | Complete |
 | NAV-03 | Phase 2 | Complete |
 | NAV-04 | Phase 2 | Complete |
