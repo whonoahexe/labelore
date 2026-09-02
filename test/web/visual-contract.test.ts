@@ -439,3 +439,45 @@ describe('code scrollbar and table striping (F6, F9)', () => {
     expect(css).toMatch(/\.dark \{\n  --table-zebra:/);
   });
 });
+
+describe('header search dropdown — navigating surface (03-02 Task 3, D-01)', () => {
+  it('bounds the rendered rows by a named constant, not a magic-number slice (Test 1)', async () => {
+    const source_ = await source('src/web/components/search-field.tsx');
+    expect(source_).toMatch(/const DROPDOWN_LIMIT = 8;/);
+    expect(source_).toMatch(/\.slice\(0, DROPDOWN_LIMIT\)/);
+    expect(source_).not.toMatch(/\.slice\(0,\s*8\)/);
+  });
+
+  it('pluralizes the footer copy between the one-result and many-result forms (Test 2)', async () => {
+    const source_ = await source('src/web/components/search-field.tsx');
+    expect(source_).toMatch(/total === 1 \? 'result' : 'results'/);
+    expect(source_).toContain('See all {total}');
+  });
+
+  it('builds the footer link from presentationRoutePatterns.search plus an encoded query, never a literal /search?q= string (Test 3)', async () => {
+    const source_ = await source('src/web/components/search-field.tsx');
+    expect(source_).toContain('presentationRoutePatterns.search}?q=${encodeURIComponent(trimmed)}');
+    expect(source_).not.toMatch(/['"]\/search\?q=/);
+  });
+
+  it('truncates the dropdown path from the head via CSS, keeping the filename tail visible (Test 4)', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [block] = ruleBlocks(css, '.search-dropdown-item .search-result-path {');
+    expect(block).toBeDefined();
+    expect(block).toContain('direction: rtl;');
+    expect(block).toContain('text-overflow: ellipsis;');
+  });
+
+  it('bounds the dropdown height with its own scroll so a long result set cannot shift the sticky header (Test 5)', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [block] = ruleBlocks(css, '.search-dropdown {');
+    expect(block).toBeDefined();
+    expect(block).toMatch(/max-height:\s*min\(/);
+    expect(block).toContain('overflow-y: auto;');
+  });
+
+  it('never injects corpus-derived markup into the DOM as raw HTML', async () => {
+    const source_ = await source('src/web/components/search-field.tsx');
+    expect(source_).not.toContain('dangerouslySetInnerHTML');
+  });
+});
