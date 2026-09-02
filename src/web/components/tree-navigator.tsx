@@ -88,7 +88,7 @@ function TreeBranch({
 
   return (
     <li className="tree-node" data-node-type={node.nodeType}>
-      <details className="tree-disclosure" ref={detailsRef}>
+      <details className="tree-disclosure" ref={detailsRef} open={node.nodeType === 'group'}>
         <summary className="tree-node-row" data-active={isActive ? 'true' : undefined}>
           {node.url ? (
             <Link to={node.url} className={labelClassName} onClick={(event) => event.stopPropagation()}>
