@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 0
+open_count: 1
 waived_count: 0
 fixed_count: 2
-total_count: 2
-last_updated: 2026-08-22T16:44:39.305Z
+total_count: 3
+last_updated: 2026-09-02T10:04:51.761Z
 ---
 
 # Broken Windows Ledger
@@ -17,6 +17,7 @@ last_updated: 2026-08-22T16:44:39.305Z
 |----|-------|------|------|------|-------------|--------|--------|-------------|-------------|
 | 1 | 01 | unrun-verify | fixtures/dense/.planning/HANDOFF.json |  | structured-extraction warning for HANDOFF.json's trailing comma requires plan 01-03's json-config.ts handler; not yet producible in this worktree | fixed |  | 2026-08-22T16:29:23.141Z | 2026-08-22T16:44:39.206Z |
 | 2 | 01 | unrun-verify | fixtures/dense/.planning/phases/01-identity-slice/01-COST-MODEL.md |  | Task 2/3 acceptance criteria expecting phase-nested artifacts (SPEC.md, AI-SPEC.md, 01-COST-MODEL.md, 02-01-PLAN.md body) in snapshot.project.artifacts require plan 01-03's assembleDomainModel extension beyond its current root-only tracer scope; not yet producible in this worktree | fixed |  | 2026-08-22T16:29:29.756Z | 2026-08-22T16:44:39.305Z |
+| 3 | 03 | lint-warning | test/web/visual-contract.test.ts | 438 | Pre-existing no-regex-spaces lint error, unrelated to plan 03-01's files (confirmed via empty git diff against HEAD). | open |  | 2026-09-02T10:04:51.761Z |  |
 
 ````json
 [
@@ -43,6 +44,18 @@ last_updated: 2026-08-22T16:44:39.305Z
     "reason": "",
     "recorded_at": "2026-08-22T16:29:29.756Z",
     "resolved_at": "2026-08-22T16:44:39.305Z"
+  },
+  {
+    "id": 3,
+    "kind": "lint-warning",
+    "phase": "03",
+    "file": "test/web/visual-contract.test.ts",
+    "line": 438,
+    "description": "Pre-existing no-regex-spaces lint error, unrelated to plan 03-01's files (confirmed via empty git diff against HEAD).",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-02T10:04:51.761Z",
+    "resolved_at": null
   }
 ]
 ````

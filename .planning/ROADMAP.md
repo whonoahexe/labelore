@@ -173,12 +173,12 @@ Plans:
   3. The app is usable before the index finishes building — index construction never blocks first paint.
   4. A tree navigator mirrors `.planning/`'s real structure — root docs, `phases/`, `quick/`, `milestones/`, `research/` — expandable per phase, and a traceability view shows every requirement with the phase covering it and its status.
 
-**Plans**: 4 plans *(sized at 2 at roadmap time; split to 4 because D-11's assembly fix, the search surfaces, the sidebar restructure, and the traceability view each own a distinct file set and `src/server/index.ts`, `src/presentation/routes.ts`, `app-shell.tsx` and `globals.css` are touched by more than one — a two-plan split would have put every task over the per-plan file budget)*
+**Plans**: 1/4 plans executed *(sized at 2 at roadmap time; split to 4 because D-11's assembly fix, the search surfaces, the sidebar restructure, and the traceability view each own a distinct file set and `src/server/index.ts`, `src/presentation/routes.ts`, `app-shell.tsx` and `globals.css` are touched by more than one — a two-plan split would have put every task over the per-plan file budget)*
 **UI hint**: yes
 
 **Wave 1** *(tracer — the vertical slice every later wave builds on)*
 
-- [ ] 03-01-PLAN.md — End-to-end exact-token search, the D-11 assembly fix that makes the corpus complete, and non-blocking index construction (FIND-01, FIND-02, FIND-05)
+- [x] 03-01-PLAN.md — End-to-end exact-token search, the D-11 assembly fix that makes the corpus complete, and non-blocking index construction (FIND-01, FIND-02, FIND-05)
 
 **Wave 2** *(blocked on Wave 1)*
 
@@ -217,7 +217,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Read Layer & Domain Model | 4/4 | Complete    | 2026-08-24 |
 | 2. Situational Awareness & Artifact Reading | 16/16 | Complete    | 2026-09-01 |
-| 3. Search, Browsing & Traceability | 0/2 | Not started | - |
+| 3. Search, Browsing & Traceability | 1/4 | In Progress|  |
 | 4. Portability & Degradation Hardening | 0/2 | Not started | - |
 
 ## Backlog
