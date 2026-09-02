@@ -7,7 +7,13 @@
 import { LOCATION_ORDER } from '../planning-repo/discovery.ts';
 import { comparePhaseNumbers } from '../planning-repo/naming.ts';
 import type { ProjectPresentation } from '../server/project-presentation.ts';
-import { buildPhaseUrl } from './routes.ts';
+import { buildPhaseUrl, presentationRoutePatterns } from './routes.ts';
+
+// D-16: clicking the root REQUIREMENTS.md node in the sidebar lands on the traceability view
+// rather than the raw document. Scoped to the root document only — an archived milestone's own
+// REQUIREMENTS.md keeps its ordinary artifact route, since the traceability view only ever
+// projects the live/root requirements set.
+const ROOT_REQUIREMENTS_PATH = '.planning/REQUIREMENTS.md';
 
 // PhaseIdentity itself isn't re-exported by project-presentation.ts — recovered structurally from
 // the DTO shape it already carries, rather than adding a fifth import for one type.
@@ -156,7 +162,7 @@ export function buildTreeViewModel(presentation: ProjectPresentation): TreeNode[
       path,
       nodeType: 'file',
       location: artifact.location,
-      url: artifact.key,
+      url: artifact.path === ROOT_REQUIREMENTS_PATH ? presentationRoutePatterns.traceability : artifact.key,
       excludedReason: null,
       unknownKind: artifact.kind === 'unknown',
       children: [],

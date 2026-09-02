@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpenText, LayoutDashboard, Map, Radio } from 'lucide-react';
+import { BookOpenText, LayoutDashboard, ListChecks, Map, Radio } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
@@ -75,6 +75,10 @@ export function AppShell(): React.JSX.Element {
           <NavLink className={navigationClass} to={presentationRoutePatterns.roadmap}>
             <Map aria-hidden="true" />
             Roadmap
+          </NavLink>
+          <NavLink className={navigationClass} to={presentationRoutePatterns.traceability}>
+            <ListChecks aria-hidden="true" />
+            Traceability
           </NavLink>
         </nav>
 
