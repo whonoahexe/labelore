@@ -1,12 +1,20 @@
+import { resolve } from 'node:path';
 import { describe, it, expect } from 'vitest';
 import { assembleDomainModel } from '../src/planning-repo/assemble.ts';
 import { discover } from '../src/planning-repo/discovery.ts';
 import { parseWithRegistry } from '../src/planning-repo/registry.ts';
 import { WarningCollector } from '../src/planning-repo/warnings.ts';
 import { InMemoryPlanningFilesystem } from '../src/planning-fs/in-memory-fs.ts';
+import { LocalFsPlanningFilesystem } from '../src/planning-fs/local-fs.ts';
+import { PlanningRepository } from '../src/planning-repo/snapshot.ts';
+import { buildSearchDocuments, createSearchIndexState, searchIndex } from '../src/server/search-index.ts';
 import type { ParsedArtifact, ArtifactRef } from '../src/planning-repo/types.ts';
 
 const ROOT = '/project';
+
+function waitForBuild(): Promise<void> {
+  return new Promise((done) => setImmediate(done));
+}
 
 async function assembleTree(files: Record<string, string>) {
   const fs = new InMemoryPlanningFilesystem(files);
@@ -209,5 +217,101 @@ describe('assembleDomainModel — deterministic ordering', () => {
     const { project: projectB } = await assembleTree(files);
     expect(projectA.phases.map((p) => p.identity.number)).toEqual(projectB.phases.map((p) => p.identity.number));
     expect(projectA.phases.map((p) => p.identity.number)).toEqual(['01', '02']);
+  });
+});
+
+// D-11: every file discovery finds must be reachable from the assembled model — proven by an
+// equality assertion against fixtures/dense, not a spot check.
+describe('assembleDomainModel — D-11 reachable-equals-discovered (fixtures/dense)', () => {
+  async function loadDense() {
+    const root = resolve('fixtures/dense');
+    const fs = new LocalFsPlanningFilesystem(root);
+    const { refs } = await discover(fs);
+    const repository = new PlanningRepository(fs, root);
+    const snapshot = await repository.load();
+    if (!snapshot.project) throw new Error('fixtures/dense failed to assemble a Project');
+    return { refs, project: snapshot.project };
+  }
+
+  it('makes the set of reachable artifact paths exactly equal the set of discovered paths — 52 members', async () => {
+    const { refs, project } = await loadDense();
+    const discoveredPaths = new Set(refs.map((ref) => ref.path));
+    const reachablePaths = new Set([
+      ...Object.keys(project.artifacts),
+      ...project.phases.flatMap((phase) => Object.keys(phase.artifacts)),
+      ...project.quickTasks.flatMap((quickTask) => Object.keys(quickTask.artifacts)),
+    ]);
+    expect(discoveredPaths.size).toBe(52);
+    expect(reachablePaths).toEqual(discoveredPaths);
+  });
+
+  it('gives project.artifacts 23 entries for fixtures/dense, including research/milestone-root/other paths', async () => {
+    const { project } = await loadDense();
+    expect(Object.keys(project.artifacts)).toHaveLength(23);
+    expect(project.artifacts['.planning/research/STACK.md']).toBeDefined();
+    expect(project.artifacts['.planning/milestones/v1.0-ROADMAP.md']).toBeDefined();
+    expect(project.artifacts['.planning/ui-reviews/.gitignore']).toBeDefined();
+  });
+
+  it('keeps quickTasks at two entries with unchanged id/path/stateRow, and gives 260615-1a2 two keyed artifacts', async () => {
+    const { project } = await loadDense();
+    expect(project.quickTasks).toHaveLength(2);
+    const task = project.quickTasks.find((t) => t.id === '260615-1a2');
+    expect(task).toBeDefined();
+    expect(task?.path).toBe('.planning/quick/260615-1a2-add-transport-adapter');
+    expect(task?.stateRow).not.toBeNull();
+    expect(Object.keys(task?.artifacts ?? {}).sort()).toEqual(
+      [
+        '.planning/quick/260615-1a2-add-transport-adapter/260615-1a2-PLAN.md',
+        '.planning/quick/260615-1a2-add-transport-adapter/260615-1a2-SUMMARY.md',
+      ].sort(),
+    );
+  });
+
+  it('resolves normally on a normal tree — assembleDomainModel([], [], root) still yields empty collections and zero artifacts', () => {
+    const project = assembleDomainModel([], [], ROOT);
+    expect(project.milestones).toEqual([]);
+    expect(project.phases).toEqual([]);
+    expect(project.quickTasks).toEqual([]);
+    expect(Object.keys(project.artifacts)).toHaveLength(0);
+  });
+
+  it('gives every reachable artifact a location matching its discovery classification', async () => {
+    const { refs, project } = await loadDense();
+    const locationByPath = new Map(refs.map((ref) => [ref.path, ref.location]));
+    const allReachable = [
+      ...Object.values(project.artifacts),
+      ...project.phases.flatMap((phase) => Object.values(phase.artifacts)),
+      ...project.quickTasks.flatMap((quickTask) => Object.values(quickTask.artifacts)),
+    ];
+    for (const artifact of allReachable) {
+      expect(artifact.location).toBe(locationByPath.get(artifact.path));
+    }
+    expect(project.artifacts['.planning/PROJECT.md'].location).toBe('root');
+    expect(project.artifacts['.planning/research/STACK.md'].location).toBe('research');
+    expect(project.artifacts['.planning/ui-reviews/.gitignore'].location).toBe('other');
+  });
+
+  it('searches the literal src/transport/adapter-stub.ts and returns exactly the three quick/ files that contain it', async () => {
+    const { project } = await loadDense();
+    const snapshot = {
+      loadStatus: { status: 'ok' as const },
+      readAt: '2026-09-02T00:00:00.000Z',
+      rootPath: project.rootPath,
+      project,
+      warnings: [],
+      exclusions: [],
+    };
+    // buildSearchDocuments must reach the same corpus collectReachableArtifacts (createSearchIndexState)
+    // does — proven directly here, not just implied by the count above.
+    expect(buildSearchDocuments(snapshot).length).toBe(52);
+    const search = createSearchIndexState();
+    search.buildFrom(snapshot);
+    await waitForBuild();
+    const hits = searchIndex(search.state(), 'src/transport/adapter-stub.ts');
+    expect(hits).toHaveLength(3);
+    for (const hit of hits) {
+      expect(hit.path.startsWith('.planning/quick/')).toBe(true);
+    }
   });
 });
