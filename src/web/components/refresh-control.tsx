@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { formatReadAt } from './app-shell.tsx';
 import { Button } from './ui/button.tsx';
+import { useToastManager } from './ui/toast.tsx';
 
 interface RefreshResponse {
   refreshed: boolean;
@@ -27,8 +29,12 @@ interface RefreshControlProps {
 
 /** Header Refresh control (D-01) — re-reads the project through `POST /api/refresh`, the
  * codebase's first `useMutation`. Every other data flow here is `useQuery`. */
-export function RefreshControl({ readAt, onPendingChange }: RefreshControlProps): React.JSX.Element {
+export function RefreshControl({
+  readAt,
+  onPendingChange,
+}: RefreshControlProps): React.JSX.Element {
   const queryClient = useQueryClient();
+  const toastManager = useToastManager();
 
   const mutation = useMutation({
     mutationFn: postRefresh,
@@ -41,8 +47,20 @@ export function RefreshControl({ readAt, onPendingChange }: RefreshControlProps)
       // D-03: preserve the current route, return to the top.
       window.scrollTo({ top: 0 });
     },
-    // Task 2 wires the D-04 failure toast here.
-    onError: () => {},
+    // D-04: the previously loaded snapshot and its original readAt are retained unchanged - this
+    // handler never touches the query cache and never scrolls. The raw fetch/server error text
+    // never reaches the toast; only the retained snapshot's own read time varies in the fixed
+    // copy below, which is the one deliberate exception to every other `.notice.destructive`
+    // branch in this codebase interpolating `{error.message}`.
+    onError: () => {
+      toastManager.add({
+        title: 'Refresh failed',
+        description: `Refresh failed. Showing the last successful read from ${
+          readAt ? formatReadAt(readAt) : 'the previous read'
+        }.`,
+        type: 'error',
+      });
+    },
   });
 
   const isRefreshing = mutation.isPending;

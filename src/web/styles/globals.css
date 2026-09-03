@@ -2960,3 +2960,75 @@ pre {
   overflow-wrap: anywhere;
   color: var(--muted-foreground);
 }
+
+/* Phase 4 — refresh control, in-progress spin, and the failure toast (D-01 through D-04). */
+
+.refresh-control {
+  color: var(--primary);
+}
+
+.refresh-icon {
+  color: var(--primary);
+}
+
+.refresh-icon.spinning {
+  animation: refresh-spin 1s linear infinite;
+}
+
+@keyframes refresh-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .refresh-icon.spinning {
+    animation: none;
+  }
+}
+
+.toast-viewport {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: min(22rem, calc(100vw - 3rem));
+}
+
+.toast {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--destructive);
+  background: var(--card);
+  color: var(--card-foreground);
+}
+
+.toast h2 {
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: 0.67rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.toast p {
+  color: var(--foreground);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.toast button {
+  justify-self: end;
+  color: var(--muted-foreground);
+  background: none;
+  border: none;
+}
