@@ -4,16 +4,16 @@ milestone: v1.0
 current_phase: 04
 current_phase_name: Portability & Degradation Hardening
 status: executing
-stopped_at: Completed 04-02-PLAN.md
-last_updated: "2026-09-03T23:18:59.743Z"
+stopped_at: Completed 04-03-PLAN.md
+last_updated: "2026-09-03T23:34:29.640Z"
 last_activity: 2026-09-04
 last_activity_desc: Phase 04 execution started
-state_head: 3613898169b2ccfccb1c2726a40f018972695eaa
+state_head: f01542a7e71de34f1a18f74856108558d36fa550
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 28
-  completed_plans: 26
+  completed_plans: 27
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-02)
 ## Current Position
 
 Phase: 04 (Portability & Degradation Hardening) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-09-04 — Phase 04 execution started
 
@@ -70,6 +70,7 @@ Progress: [████████░░] 75%
 | Phase 03-search-browsing-traceability P04 | 15min | 3 tasks | 14 files |
 | Phase 04 P01 | 40min | 3 tasks | 8 files |
 | Phase 04 P02 | 76min | 3 tasks | 6 files |
+| Phase 04 P03 | 40min | 3 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -100,6 +101,8 @@ Recent decisions affecting current work:
 - [Phase 04]: source.refresh is captured via .bind(source), not a bare method-reference extraction — A bare extraction (const fn = source.refresh) drops 'this', which silently 500'd every refresh in the Task 1 live probe before being fixed.
 - [Phase 04]: [04-02]: The rawPath-vs-pathChecked branch in InvalidProjectScreen narrows via 'rawPath' in loadStatus inline in the JSX condition rather than a hoisted boolean, both for correct TS narrowing and so the component never names a LoadStatus status-string literal.
 - [Phase 04]: [04-02]: D-17 restart command corrected to npm run dev -- /path/to/your/project (not the UI-SPEC's npx gsd-lore placeholder) since package.json declares no bin field.
+- [Phase 04]: [04-03]: artifactWarningTone() derives null/'warning'/'unreadable' from bodyLength (not the warning's own salvage prose), the single shared function tree.ts and search.ts both call rather than re-deriving the split locally.
+- [Phase 04]: [04-03]: The artifact-page header badge and the disclosure's own outer <summary> are two separate DOM nodes sharing the 'Warning' label and .status-chip styling rather than one clickable element, since native <details> makes the summary itself the interactive control.
 
 ### Pending Todos
 
@@ -127,6 +130,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-03T23:18:59.650Z
-Stopped at: Completed 04-02-PLAN.md
+Last session: 2026-09-03T23:34:23.873Z
+Stopped at: Completed 04-03-PLAN.md
 Resume file: None
