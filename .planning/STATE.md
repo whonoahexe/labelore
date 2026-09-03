@@ -4,16 +4,16 @@ milestone: v1.0
 current_phase: 04
 current_phase_name: Portability & Degradation Hardening
 status: executing
-stopped_at: Completed 04-01-PLAN.md
-last_updated: "2026-09-03T22:08:51.119Z"
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-09-03T23:18:59.743Z"
 last_activity: 2026-09-04
 last_activity_desc: Phase 04 execution started
-state_head: cdac07bf703a548562a718bf3aadf789cc6c1132
+state_head: 3613898169b2ccfccb1c2726a40f018972695eaa
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 28
-  completed_plans: 25
+  completed_plans: 26
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-02)
 ## Current Position
 
 Phase: 04 (Portability & Degradation Hardening) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-09-04 — Phase 04 execution started
 
@@ -69,6 +69,7 @@ Progress: [████████░░] 75%
 | Phase 03-search-browsing-traceability P03 | 18min | 2 tasks | 16 files |
 | Phase 03-search-browsing-traceability P04 | 15min | 3 tasks | 14 files |
 | Phase 04 P01 | 40min | 3 tasks | 8 files |
+| Phase 04 P02 | 76min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -97,6 +98,8 @@ Recent decisions affecting current work:
 - [Phase 03]: Web logic a plain-.ts presentation test must import directly (matchesTraceabilityFilter) lives in a DOM-free sibling module (traceability-filter.ts) rather than inline in its .tsx page, mirroring roadmap-deep-link.ts — required because tsconfig.server.json excludes src/web/** and sets no --jsx option.
 - [Phase 04]: buildDerivedViews() is a zero-arg closure re-reading source.getSnapshot() rather than taking a snapshot argument, matching PlanningRepository's this.snapshot-before-return contract — Keeps exactly one toProjectPresentation(source.getSnapshot()) call site, satisfying the plan's own drift-detection grep, and works correctly after refresh() resolves.
 - [Phase 04]: source.refresh is captured via .bind(source), not a bare method-reference extraction — A bare extraction (const fn = source.refresh) drops 'this', which silently 500'd every refresh in the Task 1 live probe before being fixed.
+- [Phase 04]: [04-02]: The rawPath-vs-pathChecked branch in InvalidProjectScreen narrows via 'rawPath' in loadStatus inline in the JSX condition rather than a hoisted boolean, both for correct TS narrowing and so the component never names a LoadStatus status-string literal.
+- [Phase 04]: [04-02]: D-17 restart command corrected to npm run dev -- /path/to/your/project (not the UI-SPEC's npx gsd-lore placeholder) since package.json declares no bin field.
 
 ### Pending Todos
 
@@ -124,6 +127,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-03T22:08:51.027Z
-Stopped at: Completed 04-01-PLAN.md
+Last session: 2026-09-03T23:18:59.650Z
+Stopped at: Completed 04-02-PLAN.md
 Resume file: None
