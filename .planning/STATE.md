@@ -3,17 +3,17 @@ gsd_state_version: 1.0
 milestone: v1.0
 current_phase: 04
 current_phase_name: Portability & Degradation Hardening
-status: executing
-stopped_at: Completed 04-03-PLAN.md
-last_updated: "2026-09-03T23:34:29.640Z"
+status: verifying
+stopped_at: Completed 04-04-PLAN.md
+last_updated: "2026-09-03T23:46:50.486Z"
 last_activity: 2026-09-04
 last_activity_desc: Phase 04 execution started
-state_head: f01542a7e71de34f1a18f74856108558d36fa550
+state_head: 971d8c432424a818731927d99dd32fde54bbe2d9
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 28
-  completed_plans: 27
+  completed_plans: 28
 ---
 
 # Project State
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-02)
 
 Phase: 04 (Portability & Degradation Hardening) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-09-04 — Phase 04 execution started
 
 Progress: [████████░░] 75%
@@ -71,6 +71,7 @@ Progress: [████████░░] 75%
 | Phase 04 P01 | 40min | 3 tasks | 8 files |
 | Phase 04 P02 | 76min | 3 tasks | 6 files |
 | Phase 04 P03 | 40min | 3 tasks | 13 files |
+| Phase 04 P04 | 45min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -103,6 +104,8 @@ Recent decisions affecting current work:
 - [Phase 04]: [04-02]: D-17 restart command corrected to npm run dev -- /path/to/your/project (not the UI-SPEC's npx gsd-lore placeholder) since package.json declares no bin field.
 - [Phase 04]: [04-03]: artifactWarningTone() derives null/'warning'/'unreadable' from bodyLength (not the warning's own salvage prose), the single shared function tree.ts and search.ts both call rather than re-deriving the split locally.
 - [Phase 04]: [04-03]: The artifact-page header badge and the disclosure's own outer <summary> are two separate DOM nodes sharing the 'Warning' label and .status-chip styling rather than one clickable element, since native <details> makes the summary itself the interactive control.
+- [Phase 04]: [Phase 04][04-04]: EmptyState's block variant reuses .empty-flow with a new data-tone='quiet' attribute rather than a new class, scoping the D-09 neutral-icon correction to exactly the generic empty state.
+- [Phase 04]: [Phase 04][04-04]: The adversarial portability suite (test/portability.test.ts) drives the real Hono app via mkdtemp fixture copies (mountFixture/serve), never a synthetic snapshot literal, so the committed fixture corpus is provably unmodified.
 
 ### Pending Todos
 
@@ -130,6 +133,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-03T23:34:23.873Z
-Stopped at: Completed 04-03-PLAN.md
+Last session: 2026-09-03T23:46:50.393Z
+Stopped at: Completed 04-04-PLAN.md
 Resume file: None
