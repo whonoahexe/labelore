@@ -3,6 +3,18 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useLocation } from 'react-router';
 import type { TreeNode } from '../../presentation/tree.ts';
 
+/** D-12: the tree half of the shared Warning/Unreadable vocabulary — same tones and labels as the
+ * artifact-page badge and the search-page chip. Null tone renders nothing; the node stays a
+ * normal, clickable node either way (marked, never disabled and never hidden). */
+function WarningIndicator({ tone }: { tone: TreeNode['warningTone'] }): React.JSX.Element | null {
+  if (tone === null) return null;
+  return (
+    <span className="status-chip" data-tone={tone === 'unreadable' ? 'destructive' : 'warning'}>
+      {tone === 'unreadable' ? 'Unreadable' : 'Warning'}
+    </span>
+  );
+}
+
 async function fetchTree(): Promise<TreeNode[]> {
   const response = await fetch('/api/tree', { headers: { Accept: 'application/json' } });
   if (!response.ok) throw new Error(`Tree request failed (${response.status})`);
@@ -76,9 +88,13 @@ function TreeBranch({
         {node.url ? (
           <Link to={node.url} className="tree-node-row" data-active={isActive ? 'true' : undefined}>
             {node.label}
+            <WarningIndicator tone={node.warningTone} />
           </Link>
         ) : (
-          <span className="tree-node-row">{node.label}</span>
+          <span className="tree-node-row">
+            {node.label}
+            <WarningIndicator tone={node.warningTone} />
+          </span>
         )}
       </li>
     );

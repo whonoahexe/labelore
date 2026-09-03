@@ -2,6 +2,7 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useLocation } from 'react-router';
 import type { PhaseIdentity } from '../../domain/model.ts';
+import type { ParseWarning } from '../../planning-repo/types.ts';
 import {
   buildMilestoneUrl,
   buildPhaseUrl,
@@ -32,7 +33,9 @@ interface ArtifactDocumentResponse {
     title: string;
     frontmatter: Record<string, unknown>;
     structured: Record<string, unknown>;
-    warnings: unknown[];
+    /** D-11: the four-field ParseWarning record, passed through unchanged from the domain layer —
+     * rendered structurally in the technical-details disclosure below, never stringified. */
+    warnings: ParseWarning[];
   };
   phaseIdentity: PhaseIdentity | null;
   document: RenderedDocument;
@@ -280,7 +283,7 @@ export function DocumentView({ document }: { document: RenderedDocument }): Reac
     <>
       <DocumentCanvas html={document.html} mountRef={mountRef} />
       {runtimeWarnings.map((warning, index) => (
-        <p className="notice warning" role="status" key={`runtime-${index}`}>
+        <p className="notice render-warning" role="status" key={`runtime-${index}`}>
           {warning}
         </p>
       ))}
@@ -338,6 +341,9 @@ export function ArtifactPage(): React.JSX.Element {
   }
 
   const { artifact, phaseIdentity, document } = query.data;
+  // D-10/D-11: whether this artifact needs the badge/disclosure at all — a structured-metadata
+  // parse warning on the artifact, a document-level warning, or both.
+  const hasWarnings = artifact.warnings.length > 0 || document.warnings.length > 0;
   return (
     <main className="artifact-page">
       <nav className="artifact-breadcrumbs" aria-label="Breadcrumb">
@@ -360,6 +366,11 @@ export function ArtifactPage(): React.JSX.Element {
 
       <header className="artifact-heading">
         <p className="eyebrow">{artifact.kind}</p>
+        {hasWarnings ? (
+          <span className="status-chip" data-tone="warning">
+            Warning
+          </span>
+        ) : null}
         <h1>{artifact.title}</h1>
         <p className="artifact-path">{artifact.path}</p>
       </header>
@@ -377,16 +388,51 @@ export function ArtifactPage(): React.JSX.Element {
         </details>
       ) : null}
 
-      {artifact.warnings.map(String).map((warning, index) => (
-        <p className="notice warning" role="status" key={`artifact-${index}`}>
-          {warning}
-        </p>
-      ))}
-      {document.warnings.map((warning, index) => (
-        <p className="notice warning" role="status" key={`document-${index}`}>
-          {warning}
-        </p>
-      ))}
+      {hasWarnings ? (
+        <details className="artifact-metadata artifact-warning-disclosure">
+          <summary>
+            <span className="status-chip" data-tone="warning">
+              Warning
+            </span>
+          </summary>
+          <div className="metadata-panels warning-disclosure-body" aria-label="Warning details">
+            <p>
+              Some of this document's structured metadata could not be read. The document text below was recovered and is shown normally.
+            </p>
+            <details className="warning-technical-details">
+              <summary>Technical details</summary>
+              {artifact.warnings.length > 0 ? (
+                <dl className="warning-fields">
+                  {artifact.warnings.map((warning, index) => (
+                    <div key={`artifact-warning-${index}`}>
+                      <dt>Path</dt>
+                      <dd className="artifact-path">{warning.path}</dd>
+                      <dt>Stage</dt>
+                      <dd className="source-note">{warning.stage}</dd>
+                      <dt>Message</dt>
+                      <dd className="source-note">{warning.message}</dd>
+                      <dt>Salvage</dt>
+                      <dd className="source-note">{warning.salvage}</dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : null}
+              {document.warnings.length > 0 ? (
+                <div className="warning-document-warnings">
+                  <p className="warning-fields-label">Document warnings</p>
+                  <ul>
+                    {document.warnings.map((warning, index) => (
+                      <li className="source-note" key={`document-warning-${index}`}>
+                        {warning}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </details>
+          </div>
+        </details>
+      ) : null}
 
       <div
         className="document-reader-layout"
