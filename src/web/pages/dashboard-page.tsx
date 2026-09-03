@@ -18,6 +18,7 @@ import {
   type SourceProvenance,
 } from '../../presentation/dashboard.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
+import { InvalidProjectScreen } from './invalid-project-screen.tsx';
 
 type DashboardResponse = DashboardViewModel & {
   loadStatus: ProjectPresentation['loadStatus'];
@@ -101,17 +102,12 @@ export function DashboardPage(): React.JSX.Element {
   }
 
   const view = dashboard.data;
+  // The router's ProjectGate already intercepts every failed load before this page renders; this
+  // branch is a structural guard against reading fields off an empty presentation if this page is
+  // ever reached directly. It renders the same InvalidProjectScreen the gate uses, so there is
+  // exactly one visual design for this state reached from either place (D-15).
   if (view.loadStatus.status !== 'ok') {
-    return (
-      <main className="page-stack">
-        <p className="eyebrow">{view.loadStatus.status.replaceAll('-', ' ')}</p>
-        <h1>GSD Lore could not read this project.</h1>
-        <section className="notice destructive" role="alert">
-          <h2>Local project load failed</h2>
-          <p>{view.loadStatus.message}</p>
-        </section>
-      </main>
-    );
+    return <InvalidProjectScreen loadStatus={view.loadStatus} />;
   }
 
   const discrepancy = view.attention.find((item) => item.type === 'discrepancy') ?? null;
