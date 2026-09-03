@@ -4,16 +4,16 @@ milestone: v1.0
 current_phase: 04
 current_phase_name: Portability & Degradation Hardening
 status: executing
-stopped_at: Phase 4 context gathered
-last_updated: "2026-09-03T08:48:37.788Z"
-last_activity: 2026-09-02
-last_activity_desc: Phase 3 complete, transitioned to Phase 4
-state_head: 65782a116ba99875c922667efd01fe11e301b8b8
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-09-03T22:08:51.119Z"
+last_activity: 2026-09-04
+last_activity_desc: Phase 04 execution started
+state_head: cdac07bf703a548562a718bf3aadf789cc6c1132
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 28
-  completed_plans: 24
+  completed_plans: 25
 ---
 
 # Project State
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-02)
 
 **Core value:** Open the dashboard on a GSD project and immediately know where the work stands and where any planning artifact lives — without reading a single file by hand.
-**Current focus:** Phase 4 — Portability & Degradation Hardening
+**Current focus:** Phase 04 — Portability & Degradation Hardening
 
 ## Current Position
 
-Phase: 04 (Portability & Degradation Hardening) — READY TO EXECUTE
-Plan: Not started
+Phase: 04 (Portability & Degradation Hardening) — EXECUTING
+Plan: 2 of 4
 Status: Ready to execute
-Last activity: 2026-09-02 — Phase 3 complete, transitioned to Phase 4
+Last activity: 2026-09-04 — Phase 04 execution started
 
 Progress: [████████░░] 75%
 
@@ -68,6 +68,7 @@ Progress: [████████░░] 75%
 | Phase 03-search-browsing-traceability P02 | 20min | 3 tasks | 14 files |
 | Phase 03-search-browsing-traceability P03 | 18min | 2 tasks | 16 files |
 | Phase 03-search-browsing-traceability P04 | 15min | 3 tasks | 14 files |
+| Phase 04 P01 | 40min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,8 @@ Recent decisions affecting current work:
 - [Phase 03]: Traceability's actionable/deferred split uses requirement.checked !== null (the parser's own checkbox-presence signal), not a literal tier === 'v1' string match — REQUIREMENTS.md's tier heading is an open string across GSD projects and a literal comparison would silently empty the main table on any project past its first milestone.
 - [Phase 03]: Both the requirement's own checkbox and each covering phase's own diskStatus/roadmapComplete travel end to end as separate TraceabilityRow fields; statusDisagreement is a derived, filter-only boolean, never a merged verdict — direct extension of Phase 2's D-02 disagreement-signal principle.
 - [Phase 03]: Web logic a plain-.ts presentation test must import directly (matchesTraceabilityFilter) lives in a DOM-free sibling module (traceability-filter.ts) rather than inline in its .tsx page, mirroring roadmap-deep-link.ts — required because tsconfig.server.json excludes src/web/** and sets no --jsx option.
+- [Phase 04]: buildDerivedViews() is a zero-arg closure re-reading source.getSnapshot() rather than taking a snapshot argument, matching PlanningRepository's this.snapshot-before-return contract — Keeps exactly one toProjectPresentation(source.getSnapshot()) call site, satisfying the plan's own drift-detection grep, and works correctly after refresh() resolves.
+- [Phase 04]: source.refresh is captured via .bind(source), not a bare method-reference extraction — A bare extraction (const fn = source.refresh) drops 'this', which silently 500'd every refresh in the Task 1 live probe before being fixed.
 
 ### Pending Todos
 
@@ -121,6 +124,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-02T20:16:21.855Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-portability-degradation-hardening/04-CONTEXT.md
+Last session: 2026-09-03T22:08:51.027Z
+Stopped at: Completed 04-01-PLAN.md
+Resume file: None

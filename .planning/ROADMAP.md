@@ -205,7 +205,7 @@ Plans:
   4. Starting against a nonexistent path, or a directory with no `.planning/`, shows a message naming the problem and the exact path that was checked.
   5. Every view states when its data was read from disk, and a Refresh action re-reads the project through the same `refresh()` seam a future file watcher will call.
 
-**Plans**: 4 plans *(sized at 2 at roadmap time; split to 4 because each of the four surfaces —
+**Plans**: 1/4 plans executed *(sized at 2 at roadmap time; split to 4 because each of the four surfaces —
 the refresh seam, the invalid-project screen, the damaged-artifact treatment, and the empty-state
 plus portability proof — owns a distinct file set, and `src/web/styles/globals.css` plus
 `src/web/pages/artifact-page.tsx` are touched by more than one, so a two-plan split would have put
@@ -215,7 +215,7 @@ several tasks over the per-plan file budget)*
 Plans:
 **Wave 1** *(tracer — the vertical slice every later wave builds on)*
 
-- [ ] 04-01-PLAN.md — Tracer: the refresh seam end to end, the atomic derived-view swap, and the header timestamp that states the snapshot's age (TGT-08)
+- [x] 04-01-PLAN.md — Tracer: the refresh seam end to end, the atomic derived-view swap, and the header timestamp that states the snapshot's age (TGT-08)
 
 **Wave 2** *(blocked on Wave 1 — shares globals.css)*
 
@@ -239,7 +239,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Read Layer & Domain Model | 4/4 | Complete    | 2026-08-24 |
 | 2. Situational Awareness & Artifact Reading | 16/16 | Complete    | 2026-09-01 |
 | 3. Search, Browsing & Traceability | 4/4 | Complete    | 2026-09-02 |
-| 4. Portability & Degradation Hardening | 0/4 | Not started | - |
+| 4. Portability & Degradation Hardening | 1/4 | In Progress|  |
 
 ## Backlog
 
