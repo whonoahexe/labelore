@@ -2867,6 +2867,61 @@ pre {
   color: var(--destructive);
 }
 
+/* Phase 4 (D-10/D-12) — the damaged-artifact "body survived" tone: the artifact-page badge, the
+   tree indicator, and the search chip. Deliberately its own selector rather than sharing the
+   destructive rule above, even though the formula is identical, so a future genuinely-destructive
+   action is never silently retoned by a CSS rename. */
+.status-chip[data-tone='warning'] {
+  border-color: color-mix(in oklch, var(--destructive) 55%, var(--border));
+  background: color-mix(in oklch, var(--destructive) 8%, transparent);
+  color: var(--destructive);
+}
+
+/* Phase 4 (D-11) — the warning-badge disclosure. The technical-detail dl's values wrap instead of
+   truncating, and the disclosure has no fixed pixel box or scroll container of its own — it
+   inherits its width from the surrounding .artifact-heading / .metadata-panels column. */
+.artifact-warning-disclosure {
+  overflow-wrap: anywhere;
+}
+
+.warning-fields {
+  display: grid;
+  gap: 0.4rem 1rem;
+  grid-template-columns: max-content 1fr;
+  margin-top: 0.75rem;
+}
+
+.warning-fields dt {
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.warning-fields dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.warning-fields-label {
+  margin: 0.75rem 0 0.3rem;
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.warning-document-warnings ul {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
 .trace-filters {
   display: flex;
   flex-wrap: wrap;

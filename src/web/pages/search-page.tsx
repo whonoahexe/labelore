@@ -63,9 +63,9 @@ function SearchRow({ row }: { row: SearchResultRow }): React.JSX.Element {
               {row.matchCount} {row.matchCount === 1 ? 'match' : 'matches'}
             </span>
           ) : null}
-          {row.unreadable ? (
-            <span className="status-chip" data-tone="quiet">
-              Unreadable
+          {row.warningTone ? (
+            <span className="status-chip" data-tone={row.warningTone === 'unreadable' ? 'destructive' : 'warning'}>
+              {row.warningTone === 'unreadable' ? 'Unreadable' : 'Warning'}
             </span>
           ) : null}
         </header>
