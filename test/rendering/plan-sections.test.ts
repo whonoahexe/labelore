@@ -108,6 +108,7 @@ function registryWithRead05(): ReferenceRegistry {
           milestoneKey: null,
           phaseKey: null,
           warnings: [],
+          bodyLength: 0,
         },
       ],
     }),

@@ -7,6 +7,7 @@
 import { LOCATION_ORDER } from '../planning-repo/discovery.ts';
 import { comparePhaseNumbers } from '../planning-repo/naming.ts';
 import type { ProjectPresentation } from '../server/project-presentation.ts';
+import { artifactWarningTone, type ArtifactWarningTone } from './artifact-warning-tone.ts';
 import { buildPhaseUrl, presentationRoutePatterns } from './routes.ts';
 
 // D-16: clicking the root REQUIREMENTS.md node in the sidebar lands on the traceability view
@@ -21,7 +22,8 @@ type PhaseIdentity = ProjectPresentation['milestones'][number]['phases'][number]
 
 // The location union, recovered from LOCATION_ORDER's own key set rather than a second import of
 // domain/model.ts's ArtifactLocation — this file's import list is deliberately limited to
-// routes.ts, project-presentation.ts, naming.ts, and discovery.ts.
+// routes.ts, project-presentation.ts, naming.ts, discovery.ts, and the zero-import-cost
+// artifact-warning-tone.ts (Phase 4, D-12's single shared tone derivation).
 type TreeLocation = keyof typeof LOCATION_ORDER;
 
 export type TreeNodeType = 'group' | 'directory' | 'file' | 'exclusion';
@@ -38,6 +40,10 @@ export interface TreeNode {
   excludedReason: string | null;
   /** True when a file leaf's artifact kind is the generic 'unknown' fallback. */
   unknownKind: boolean;
+  /** D-12: a file leaf's damaged-artifact tone, derived once via `artifactWarningTone()`. Always
+   * null on group/directory/exclusion nodes — the tone is metadata on a real leaf, never a new
+   * node. */
+  warningTone: ArtifactWarningTone;
   children: TreeNode[];
 }
 
@@ -114,6 +120,7 @@ export function buildTreeViewModel(presentation: ProjectPresentation): TreeNode[
       url: null,
       excludedReason: null,
       unknownKind: false,
+      warningTone: null,
       children: [],
     };
     groups.set(location, created);
@@ -150,6 +157,7 @@ export function buildTreeViewModel(presentation: ProjectPresentation): TreeNode[
           url: identity ? buildPhaseUrl(identity) : null,
           excludedReason: null,
           unknownKind: false,
+          warningTone: null,
           children: [],
         };
         directories.set(cumulativePath, directory);
@@ -172,6 +180,7 @@ export function buildTreeViewModel(presentation: ProjectPresentation): TreeNode[
       url: artifact.path === ROOT_REQUIREMENTS_PATH ? presentationRoutePatterns.traceability : artifact.key,
       excludedReason: null,
       unknownKind: artifact.kind === 'unknown',
+      warningTone: artifactWarningTone(artifact),
       children: [],
     }));
   }
@@ -187,6 +196,7 @@ export function buildTreeViewModel(presentation: ProjectPresentation): TreeNode[
       url: null,
       excludedReason: exclusion.reason,
       unknownKind: false,
+      warningTone: null,
       children: [],
     }));
   }

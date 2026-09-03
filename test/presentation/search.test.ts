@@ -47,6 +47,7 @@ function artifact(overrides: Partial<ArtifactDto> & Pick<ArtifactDto, 'path' | '
     milestoneKey: null,
     phaseKey: null,
     warnings: [],
+    bodyLength: 1,
     ...overrides,
   };
 }
@@ -218,7 +219,7 @@ describe('buildSearchGroups', () => {
     ]);
   });
 
-  it('marks a row unreadable when its artifact carries a parse warning, and still includes the row', () => {
+  it('marks a row with the nothing-salvageable tone when its warned artifact has an empty body, and still includes the row', () => {
     const activePhase = phase({ key: 'p~a', milestoneKey: 'm~current', name: 'Phase A' });
     const view = presentation({
       milestones: [milestone({ key: 'm~current', archived: false, phases: [activePhase] })],
@@ -228,12 +229,59 @@ describe('buildSearchGroups', () => {
           location: 'phase',
           phaseKey: 'p~a',
           warnings: [{ path: 'phases/a/broken.md', stage: 'read', message: 'boom', salvage: 'nothing readable' }],
+          bodyLength: 0,
         }),
       ],
     });
     const groups = buildSearchGroups([hit({ path: 'phases/a/broken.md', phaseKey: 'p~a' })], view);
     expect(groups[0].rows).toHaveLength(1);
-    expect(groups[0].rows[0].unreadable).toBe(true);
+    expect(groups[0].rows[0].warningTone).toBe('unreadable');
+  });
+
+  it('marks a row with the body-survived tone when its warned artifact has a non-empty body', () => {
+    const activePhase = phase({ key: 'p~a', milestoneKey: 'm~current', name: 'Phase A' });
+    const view = presentation({
+      milestones: [milestone({ key: 'm~current', archived: false, phases: [activePhase] })],
+      artifacts: [
+        artifact({
+          path: 'phases/a/damaged.md',
+          location: 'phase',
+          phaseKey: 'p~a',
+          warnings: [{ path: 'phases/a/damaged.md', stage: 'frontmatter', message: 'boom', salvage: 'body intact' }],
+          bodyLength: 42,
+        }),
+      ],
+    });
+    const groups = buildSearchGroups([hit({ path: 'phases/a/damaged.md', phaseKey: 'p~a' })], view);
+    expect(groups[0].rows[0].warningTone).toBe('warning');
+  });
+
+  it('a warning does not change row order — a warned and an unwarned row sort identically to two clean rows (D-13)', () => {
+    const activePhase = phase({ key: 'p~a', milestoneKey: 'm~current', name: 'Phase A' });
+    const buildView = (warned: boolean) =>
+      presentation({
+        milestones: [milestone({ key: 'm~current', archived: false, phases: [activePhase] })],
+        artifacts: [
+          artifact({ path: 'phases/a/01-PLAN.md', location: 'phase', kind: 'plan', phaseKey: 'p~a' }),
+          artifact({
+            path: 'phases/a/02-SUMMARY.md',
+            location: 'phase',
+            kind: 'summary',
+            phaseKey: 'p~a',
+            warnings: warned
+              ? [{ path: 'phases/a/02-SUMMARY.md', stage: 'read', message: 'boom', salvage: 'body intact' }]
+              : [],
+          }),
+        ],
+      });
+    const hits: SearchHitLike[] = [
+      hit({ path: 'phases/a/02-SUMMARY.md', kind: 'summary', phaseKey: 'p~a' }),
+      hit({ path: 'phases/a/01-PLAN.md', kind: 'plan', phaseKey: 'p~a' }),
+    ];
+
+    const cleanOrder = buildSearchGroups(hits, buildView(false))[0].rows.map((row) => row.path);
+    const warnedOrder = buildSearchGroups(hits, buildView(true))[0].rows.map((row) => row.path);
+    expect(warnedOrder).toEqual(cleanOrder);
   });
 
   it('drops an unmatched phase/milestone hit into the trailing "other" group rather than an error', () => {
@@ -425,7 +473,7 @@ describe('GET /api/search — grouped response (Task 2)', () => {
     expect(payload.groups).toEqual([]);
   });
 
-  it('marks a hit unreadable when its artifact carries a parse warning (Test 3)', async () => {
+  it('marks a hit with the nothing-salvageable tone when its parse-warned artifact has an empty body (Test 3)', async () => {
     const artifact = makeArtifact({
       path: 'phases/01-demo/01-01-PLAN.md',
       body: 'UNIQUETERM appears once in this body.',
@@ -438,7 +486,7 @@ describe('GET /api/search — grouped response (Task 2)', () => {
     const payload = (await response.json()) as SearchApiResponse;
 
     const row = payload.groups.flatMap((group) => group.rows).find((candidate) => candidate.path === artifact.path);
-    expect(row?.unreadable).toBe(true);
+    expect(row?.warningTone).toBe('unreadable');
   });
 
   it('counts result rows in total and distinct files in fileCount (Test 4)', async () => {

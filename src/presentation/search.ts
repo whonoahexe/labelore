@@ -11,6 +11,7 @@
 // a real `SearchHit[]` satisfies it without an import.
 import { parseMilestoneFileName } from '../planning-repo/naming.ts';
 import type { ArtifactDto, ProjectPresentation } from '../server/project-presentation.ts';
+import { artifactWarningTone, type ArtifactWarningTone } from './artifact-warning-tone.ts';
 import { stableSlug } from '../rendering/slug.ts';
 
 /** Structurally mirrors src/server/search-index.ts's `SearchHit` — redeclared, not imported (see
@@ -48,9 +49,9 @@ export interface SearchResultRow extends SearchHitLike {
   /** Total occurrence count of every matched term in the body — may exceed `snippets.length`
    * when several occurrences merged into shared windows. */
   matchCount: number;
-  /** True when the artifact carries a parse warning — the row still renders (degrade, don't hide)
-   * rather than being dropped. */
-  unreadable: boolean;
+  /** D-12: the row's damaged-artifact tone, from the same shared `artifactWarningTone()` the tree
+   * uses — the row still renders either way (degrade, don't hide) rather than being dropped. */
+  warningTone: ArtifactWarningTone;
 }
 
 export type SearchGroupKind = 'phase' | 'root' | 'research' | 'quick' | 'archived-milestone' | 'other';
@@ -82,7 +83,9 @@ function toRow(hit: SearchHitLike, artifact: ArtifactDto | undefined): SearchRes
     ...hit,
     snippets: [],
     matchCount: 0,
-    unreadable: (artifact?.warnings.length ?? 0) > 0,
+    // D-13: the tone is presentation metadata attached after `compareHits` has already ordered
+    // the hits — it never feeds back into ranking.
+    warningTone: artifact ? artifactWarningTone(artifact) : null,
   };
 }
 
