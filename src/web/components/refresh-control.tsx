@@ -51,7 +51,7 @@ export function RefreshControl({
     // handler never touches the query cache and never scrolls. The raw fetch/server error text
     // never reaches the toast; only the retained snapshot's own read time varies in the fixed
     // copy below, which is the one deliberate exception to every other `.notice.destructive`
-    // branch in this codebase interpolating `{error.message}`.
+    // branch in this codebase interpolating the caught error's own message text.
     onError: () => {
       toastManager.add({
         title: 'Refresh failed',
