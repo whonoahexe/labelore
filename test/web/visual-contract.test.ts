@@ -435,8 +435,8 @@ describe('code scrollbar and table striping (F6, F9)', () => {
       ruleBlocks(css, '.coverage-table-boundary tbody tr:nth-child(even) td {')[0],
     ).toMatch(/background:\s*var\(--table-zebra\)/);
     // Declared for both grounds, so neither theme falls back to the other's stripe.
-    expect(css).toMatch(/:root \{\n  --table-zebra:/);
-    expect(css).toMatch(/\.dark \{\n  --table-zebra:/);
+    expect(css).toMatch(/:root \{\n {2}--table-zebra:/);
+    expect(css).toMatch(/\.dark \{\n {2}--table-zebra:/);
   });
 });
 

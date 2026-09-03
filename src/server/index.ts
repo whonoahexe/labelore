@@ -24,11 +24,24 @@ const HOSTNAME = '127.0.0.1';
 
 interface SnapshotSource {
   getSnapshot(): ProjectSnapshot;
+  /** Optional: a source with nothing to refresh into (the failed-initial-load literal below)
+   * simply omits this member. TGT-08 empty edge: POST /api/refresh against such a source is not
+   * an error - it answers 200 with `refreshed: false`. */
+  refresh?(): Promise<ProjectSnapshot>;
 }
 
 interface ServerOptions {
   port?: number;
   production?: boolean;
+}
+
+/** D-05: every read handler serves from one of these bundles, built together from a single
+ * snapshot, and replaced together in one assignment - never mutated field by field. */
+interface DerivedViews {
+  presentation: ReturnType<typeof toProjectPresentation>;
+  artifactIndex: ReturnType<typeof buildArtifactIndex>;
+  referenceRegistry: ReturnType<typeof buildReferenceRegistry>;
+  searchIndexState: ReturnType<typeof createSearchIndexState>;
 }
 
 export function createApp(
@@ -37,19 +50,37 @@ export function createApp(
   staticRoot = './dist',
 ): Hono {
   const app = new Hono();
-  const artifactIndex = buildArtifactIndex(source.getSnapshot());
   const renderer = createArtifactRenderer();
-  const presentation = toProjectPresentation(source.getSnapshot());
-  const referenceRegistry = buildReferenceRegistry(presentation);
-  // D-04/FIND-05: constructing the state object is synchronous and cheap (just a status flag);
-  // the actual MiniSearch build is scheduled off this path inside buildFrom — createApp returning
-  // (and the server accepting connections) never waits on index readiness.
-  const searchIndexState = createSearchIndexState();
-  searchIndexState.buildFrom(source.getSnapshot());
 
-  const artifactResponse = async (lookup: ReturnType<typeof artifactIndex.lookup>) => {
+  // D-05: builds all four derived views from one read of the source's current snapshot. Called
+  // both at startup and after a successful refresh - `source.getSnapshot()` reflects the just-
+  // completed refresh because `PlanningRepository.refresh()` assigns its own `this.snapshot`
+  // before resolving, so a fresh call here after `await source.refresh()` always observes the new
+  // snapshot, never the one buildDerivedViews was first constructed from.
+  function buildDerivedViews(): DerivedViews {
+    const presentation = toProjectPresentation(source.getSnapshot());
+    const artifactIndex = buildArtifactIndex(source.getSnapshot());
+    const referenceRegistry = buildReferenceRegistry(presentation);
+    // D-04/FIND-05: constructing the state object is synchronous and cheap (just a status flag);
+    // the actual MiniSearch build is scheduled off this path inside buildFrom - callers never wait
+    // on index readiness.
+    const searchIndexState = createSearchIndexState();
+    searchIndexState.buildFrom(source.getSnapshot());
+    return { presentation, artifactIndex, referenceRegistry, searchIndexState };
+  }
+
+  // Replacing `derived` with a freshly built bundle in one assignment is the atomic swap D-05
+  // requires - never mutate the existing bundle field by field.
+  let derived = buildDerivedViews();
+  let inFlight: Promise<ProjectSnapshot> | null = null;
+
+  const artifactResponse = async (
+    lookup: ReturnType<DerivedViews['artifactIndex']['lookup']>,
+  ) => {
     if (!lookup.found) return lookup;
-    const document = await (await renderer).render(lookup.artifact, { referenceRegistry });
+    const document = await (
+      await renderer
+    ).render(lookup.artifact, { referenceRegistry: derived.referenceRegistry });
     return {
       found: true as const,
       status: 'found' as const,
@@ -69,46 +100,38 @@ export function createApp(
     };
   };
 
-  app.get('/api/presentation', (c) => c.json(presentation));
+  app.get('/api/presentation', (c) => c.json(derived.presentation));
   app.get('/api/dashboard', (c) => {
-    const presentation = toProjectPresentation(source.getSnapshot());
     return c.json({
-      ...buildDashboardViewModel(presentation),
-      loadStatus: presentation.loadStatus,
+      ...buildDashboardViewModel(derived.presentation),
+      loadStatus: derived.presentation.loadStatus,
     });
   });
   app.get('/api/roadmap', (c) => {
-    const presentation = toProjectPresentation(source.getSnapshot());
-    return c.json(buildRoadmapViewModel(presentation));
+    return c.json(buildRoadmapViewModel(derived.presentation));
   });
   app.get('/api/history', (c) => {
-    const presentation = toProjectPresentation(source.getSnapshot());
     return c.json({
-      readAt: presentation.readAt,
-      history: buildRoadmapViewModel(presentation).history,
+      readAt: derived.presentation.readAt,
+      history: buildRoadmapViewModel(derived.presentation).history,
     });
   });
   app.get('/api/tree', (c) => {
-    const presentation = toProjectPresentation(source.getSnapshot());
-    return c.json(buildTreeViewModel(presentation));
+    return c.json(buildTreeViewModel(derived.presentation));
   });
   app.get('/api/traceability', (c) => {
-    const presentation = toProjectPresentation(source.getSnapshot());
-    return c.json(buildTraceabilityViewModel(presentation));
+    return c.json(buildTraceabilityViewModel(derived.presentation));
   });
   app.get('/api/search', (c) => {
     const query = c.req.query('q') ?? '';
-    const state = searchIndexState.state();
+    const state = derived.searchIndexState.state();
     // Answers HTTP 200 in every readiness state — never a 5xx, never a hang, and this handler
     // never blocks /api/dashboard or any other route while the index is still building (FIND-05).
     if (state.status !== 'ready') {
       return c.json({ status: state.status, query, total: 0, fileCount: 0, results: [], groups: [] });
     }
     const results = searchIndex(state, query);
-    // Presentation is cheap to recompute per request (never cached), matching every other route
-    // handler's convention above.
-    const currentPresentation = toProjectPresentation(source.getSnapshot());
-    const groups = buildSearchGroups(results, currentPresentation);
+    const groups = buildSearchGroups(results, derived.presentation);
     // D-08: snippets are extracted from the artifact's raw indexed body — never rendered HTML,
     // never a second call through the artifact renderer — using each hit's own matched terms.
     for (const group of groups) {
@@ -145,7 +168,7 @@ export function createApp(
       );
     }
 
-    const lookup = artifactIndex.lookup(route.route.artifactPath);
+    const lookup = derived.artifactIndex.lookup(route.route.artifactPath);
     if (!lookup.found) return c.json(lookup, 404);
     return c.json(await artifactResponse(lookup));
   });
@@ -163,8 +186,53 @@ export function createApp(
         404,
       );
     }
-    const lookup = artifactIndex.lookupRoute(route.route);
+    const lookup = derived.artifactIndex.lookupRoute(route.route);
     return lookup.found ? c.json(await artifactResponse(lookup)) : c.json(lookup, 404);
+  });
+  app.post('/api/refresh', async (c) => {
+    // T-04-01-01/02: same-origin gate before touching the filesystem. An absent header (curl, the
+    // smoke probe, and every test in this suite) passes - only a present, non-same-origin value is
+    // rejected.
+    const fetchSite = c.req.header('sec-fetch-site');
+    if (fetchSite && fetchSite !== 'same-origin') {
+      return c.json({ refreshed: false, reason: 'cross-site' as const }, 403);
+    }
+
+    if (!source.refresh) {
+      // TGT-08 empty edge: a source with nothing to refresh into is not an error.
+      return c.json({
+        refreshed: false,
+        readAt: derived.presentation.readAt,
+        loadStatus: derived.presentation.loadStatus,
+      });
+    }
+    // Bound once, outside the coalescing branch - `source.refresh` is a method on `source` (e.g.
+    // `PlanningRepository.prototype.refresh`, which reads `this.fs`/`this.rootPath`), so calling
+    // an unbound reference to it would silently drop `this` and throw.
+    const refresh = source.refresh.bind(source);
+
+    try {
+      // T-04-01-01: coalesce concurrent refreshes into one in-flight filesystem walk - N
+      // simultaneous callers await the same promise rather than each starting their own rebuild.
+      if (!inFlight) {
+        inFlight = refresh().finally(() => {
+          inFlight = null;
+        });
+      }
+      const snapshot = await inFlight;
+      // D-05: the atomic swap - every field the derived bundle carries replaces together in one
+      // assignment, never mutated piecemeal.
+      derived = buildDerivedViews();
+      return c.json({
+        refreshed: true as const,
+        readAt: snapshot.readAt,
+        loadStatus: snapshot.loadStatus,
+      });
+    } catch {
+      // PlanningRepository.refresh() documents that it never throws; this catch is purely a
+      // defensive boundary. `derived` is left untouched - D-04 retains the previous snapshot.
+      return c.json({ refreshed: false as const, error: 'Refresh failed' }, 500);
+    }
   });
   app.all('/api/*', (c) => c.json({ error: 'API route not found' }, 404));
 

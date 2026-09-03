@@ -4,17 +4,19 @@ import { BookOpenText, LayoutDashboard, ListChecks, Map, Radio } from 'lucide-re
 import { NavLink, Outlet } from 'react-router';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
+import { RefreshControl } from './refresh-control.tsx';
 import { SearchField } from './search-field.tsx';
 import { ThemeToggle } from './theme-toggle.tsx';
 import { TreeNavigator } from './tree-navigator.tsx';
 
-async function fetchPresentation(): Promise<ProjectPresentation> {
+// Plan 04-02 reuses this fetcher; no second fetcher for the same endpoint.
+export async function fetchPresentation(): Promise<ProjectPresentation> {
   const response = await fetch('/api/presentation', { headers: { Accept: 'application/json' } });
   if (!response.ok) throw new Error(`Presentation request failed (${response.status})`);
   return (await response.json()) as ProjectPresentation;
 }
 
-function formatReadAt(readAt: string): string {
+export function formatReadAt(readAt: string): string {
   const parsed = new Date(readAt);
   return Number.isNaN(parsed.valueOf()) ? readAt : parsed.toLocaleString();
 }
@@ -29,6 +31,11 @@ export function AppShell(): React.JSX.Element {
   // the content region collapses to a single column via this data attribute rather than leaving a
   // permanently-empty sidebar track.
   const [sidebarAbsent, setSidebarAbsent] = useState(false);
+
+  // D-02: lifted from RefreshControl's own useMutation so the header status can swap to
+  // "Refreshing..." in place, with no new DOM node and no layout shift, while the current
+  // snapshot stays fully visible and interactive underneath it.
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // D-09: the sidebar sits under the sticky header and must start exactly at its bottom edge —
   // .shell-header has no fixed rem height (it sizes to its own padded, responsive content), so its
@@ -90,6 +97,8 @@ export function AppShell(): React.JSX.Element {
               <span>Reading snapshot…</span>
             ) : presentation.isError ? (
               <span className="snapshot-error">Snapshot metadata unavailable</span>
+            ) : isRefreshing ? (
+              <span>Refreshing…</span>
             ) : (
               <span>
                 <small>Snapshot read</small>
@@ -98,6 +107,10 @@ export function AppShell(): React.JSX.Element {
                 </time>
               </span>
             )}
+            <RefreshControl
+              readAt={presentation.data?.readAt ?? null}
+              onPendingChange={setIsRefreshing}
+            />
           </div>
           <ThemeToggle />
         </div>
