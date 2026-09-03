@@ -128,9 +128,15 @@ export interface ArtifactDto {
   milestoneKey: string | null;
   phaseKey: string | null;
   /** Parse warnings the artifact carries (Phase 1's WarningCollector output, passed through
-   * unchanged) — a non-empty array is what lets a consumer (e.g. search.ts's `unreadable` flag)
-   * mark a file the reader could not fully parse without dropping it from any listing. */
+   * unchanged) — a non-empty array is what lets a consumer (e.g. presentation/artifact-warning-
+   * tone.ts's `artifactWarningTone()`) mark a file the reader could not fully parse without
+   * dropping it from any listing. */
   warnings: unknown[];
+  /** Artifact.bodyLength, passed through unchanged (Phase 4, D-12) — the deterministic
+   * did-the-body-survive signal `artifactWarningTone()` uses to split `warnings.length > 0` into
+   * the body-survived ('warning') vs. nothing-salvageable ('unreadable') tone, rather than a prose
+   * match against a warning's own `salvage` string. */
+  bodyLength: number;
 }
 
 export interface ProjectPresentation {
@@ -413,6 +419,7 @@ function artifactDtos(project: Project): ArtifactDto[] {
         milestoneKey: owner ? milestoneKeyOf(owner.identity.milestoneVersion) : null,
         phaseKey: owner?.phaseKey ?? null,
         warnings: artifact.warnings,
+        bodyLength: artifact.bodyLength,
       };
     })
     .sort((left, right) => left.path.localeCompare(right.path));
