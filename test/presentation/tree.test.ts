@@ -225,3 +225,109 @@ describe('buildTreeViewModel — zero-segment exclusions (WR-01)', () => {
     expect(exclusions[0].label.length).toBeGreaterThan(0);
   });
 });
+
+describe('buildTreeViewModel — D-12 warning tone (Phase 4)', () => {
+  function artifactPresentation(artifacts: Array<Record<string, unknown>>): ProjectPresentation {
+    return { milestones: [], artifacts, exclusions: [] } as unknown as ProjectPresentation;
+  }
+
+  function countNodes(nodes: TreeNode[]): number {
+    return nodes.reduce((sum, node) => sum + 1 + countNodes(node.children), 0);
+  }
+
+  it('marks a warned artifact with a non-empty body with the body-survived tone; a clean sibling stays null — both keep their url', () => {
+    const presentation = artifactPresentation([
+      {
+        key: 'a~clean',
+        path: '.planning/clean.md',
+        kind: 'markdown',
+        title: 'clean',
+        location: 'root',
+        frontmatter: {},
+        structured: {},
+        milestoneKey: null,
+        phaseKey: null,
+        warnings: [],
+        bodyLength: 10,
+      },
+      {
+        key: 'a~broken',
+        path: '.planning/broken.md',
+        kind: 'markdown',
+        title: 'broken',
+        location: 'root',
+        frontmatter: {},
+        structured: {},
+        milestoneKey: null,
+        phaseKey: null,
+        warnings: [{ path: '.planning/broken.md', stage: 'frontmatter', message: 'boom', salvage: 'body intact' }],
+        bodyLength: 10,
+      },
+    ]);
+
+    const tree = buildTreeViewModel(presentation);
+    const fileLeaves = collectByType(tree, 'file');
+    expect(fileLeaves.filter((node) => node.warningTone === 'warning')).toHaveLength(1);
+    expect(fileLeaves.filter((node) => node.warningTone === null)).toHaveLength(1);
+
+    const clean = findNode(tree, '.planning/clean.md');
+    const broken = findNode(tree, '.planning/broken.md');
+    expect(clean?.warningTone).toBeNull();
+    expect(clean?.url).toBeTruthy();
+    expect(broken?.warningTone).toBe('warning');
+    expect(broken?.url).toBeTruthy();
+  });
+
+  it('marks a warned artifact with an empty body with the nothing-salvageable tone', () => {
+    const presentation = artifactPresentation([
+      {
+        key: 'a~unreadable',
+        path: '.planning/unreadable.md',
+        kind: 'markdown',
+        title: 'unreadable',
+        location: 'root',
+        frontmatter: {},
+        structured: {},
+        milestoneKey: null,
+        phaseKey: null,
+        warnings: [{ path: '.planning/unreadable.md', stage: 'read', message: 'boom', salvage: 'nothing readable' }],
+        bodyLength: 0,
+      },
+    ]);
+
+    const tree = buildTreeViewModel(presentation);
+    expect(findNode(tree, '.planning/unreadable.md')?.warningTone).toBe('unreadable');
+  });
+
+  it('group and directory nodes always carry a null tone, and the total node count is identical with and without warnings — no node is added or removed by a warning', () => {
+    const artifactAt = (warned: boolean) => [
+      {
+        key: 'a~x',
+        path: '.planning/phases/01-a/01-CONTEXT.md',
+        kind: 'context',
+        title: 'x',
+        location: 'phase',
+        frontmatter: {},
+        structured: {},
+        milestoneKey: null,
+        phaseKey: null,
+        warnings: warned
+          ? [{ path: '.planning/phases/01-a/01-CONTEXT.md', stage: 'frontmatter', message: 'boom', salvage: 'body intact' }]
+          : [],
+        bodyLength: 5,
+      },
+    ];
+
+    const cleanTree = buildTreeViewModel(artifactPresentation(artifactAt(false)));
+    const warnedTree = buildTreeViewModel(artifactPresentation(artifactAt(true)));
+
+    expect(countNodes(warnedTree)).toBe(countNodes(cleanTree));
+
+    for (const node of [...collectByType(warnedTree, 'group'), ...collectByType(warnedTree, 'directory')]) {
+      expect(node.warningTone).toBeNull();
+    }
+    for (const node of collectByType(warnedTree, 'exclusion')) {
+      expect(node.warningTone).toBeNull();
+    }
+  });
+});
