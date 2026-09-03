@@ -7,6 +7,7 @@ import type { ProjectPresentation } from '../../server/project-presentation.ts';
 import { RefreshControl } from './refresh-control.tsx';
 import { SearchField } from './search-field.tsx';
 import { ThemeToggle } from './theme-toggle.tsx';
+import { ToastProvider } from './ui/toast.tsx';
 import { TreeNavigator } from './tree-navigator.tsx';
 
 // Plan 04-02 reuses this fetcher; no second fetcher for the same endpoint.
@@ -56,78 +57,80 @@ export function AppShell(): React.JSX.Element {
   }, []);
 
   return (
-    <div
-      className="app-shell"
-      style={{ '--shell-header-height': `${headerHeight}px` } as React.CSSProperties}
-    >
-      <a className="skip-link" href="#main-content">
-        Skip to content
-      </a>
-      <header className="shell-header" ref={headerRef}>
-        <NavLink className="brand" to={presentationRoutePatterns.dashboard}>
-          <span className="brand-mark" aria-hidden="true">
-            <BookOpenText />
-          </span>
-          <span>
-            <strong>GSD Lore</strong>
-            <small>{presentation.data?.projectName ?? 'Planning intelligence'}</small>
-          </span>
-        </NavLink>
+    <ToastProvider>
+      <div
+        className="app-shell"
+        style={{ '--shell-header-height': `${headerHeight}px` } as React.CSSProperties}
+      >
+        <a className="skip-link" href="#main-content">
+          Skip to content
+        </a>
+        <header className="shell-header" ref={headerRef}>
+          <NavLink className="brand" to={presentationRoutePatterns.dashboard}>
+            <span className="brand-mark" aria-hidden="true">
+              <BookOpenText />
+            </span>
+            <span>
+              <strong>GSD Lore</strong>
+              <small>{presentation.data?.projectName ?? 'Planning intelligence'}</small>
+            </span>
+          </NavLink>
 
-        <nav className="shell-nav" aria-label="Primary navigation">
-          <NavLink className={navigationClass} end to={presentationRoutePatterns.dashboard}>
-            <LayoutDashboard aria-hidden="true" />
-            Dashboard
-          </NavLink>
-          <NavLink className={navigationClass} to={presentationRoutePatterns.roadmap}>
-            <Map aria-hidden="true" />
-            Roadmap
-          </NavLink>
-          <NavLink className={navigationClass} to={presentationRoutePatterns.traceability}>
-            <ListChecks aria-hidden="true" />
-            Traceability
-          </NavLink>
-        </nav>
+          <nav className="shell-nav" aria-label="Primary navigation">
+            <NavLink className={navigationClass} end to={presentationRoutePatterns.dashboard}>
+              <LayoutDashboard aria-hidden="true" />
+              Dashboard
+            </NavLink>
+            <NavLink className={navigationClass} to={presentationRoutePatterns.roadmap}>
+              <Map aria-hidden="true" />
+              Roadmap
+            </NavLink>
+            <NavLink className={navigationClass} to={presentationRoutePatterns.traceability}>
+              <ListChecks aria-hidden="true" />
+              Traceability
+            </NavLink>
+          </nav>
 
-        <div className="shell-controls">
-          <SearchField />
-          <div className="snapshot-status" aria-live="polite">
-            <Radio aria-hidden="true" />
-            {presentation.isPending ? (
-              <span>Reading snapshot…</span>
-            ) : presentation.isError ? (
-              <span className="snapshot-error">Snapshot metadata unavailable</span>
-            ) : isRefreshing ? (
-              <span>Refreshing…</span>
-            ) : (
-              <span>
-                <small>Snapshot read</small>
-                <time dateTime={presentation.data.readAt}>
-                  {formatReadAt(presentation.data.readAt)}
-                </time>
-              </span>
-            )}
-            <RefreshControl
-              readAt={presentation.data?.readAt ?? null}
-              onPendingChange={setIsRefreshing}
-            />
+          <div className="shell-controls">
+            <SearchField />
+            <div className="snapshot-status" aria-live="polite">
+              <Radio aria-hidden="true" />
+              {presentation.isPending ? (
+                <span>Reading snapshot…</span>
+              ) : presentation.isError ? (
+                <span className="snapshot-error">Snapshot metadata unavailable</span>
+              ) : isRefreshing ? (
+                <span>Refreshing…</span>
+              ) : (
+                <span>
+                  <small>Snapshot read</small>
+                  <time dateTime={presentation.data.readAt}>
+                    {formatReadAt(presentation.data.readAt)}
+                  </time>
+                </span>
+              )}
+              <RefreshControl
+                readAt={presentation.data?.readAt ?? null}
+                onPendingChange={setIsRefreshing}
+              />
+            </div>
+            <ThemeToggle />
           </div>
-          <ThemeToggle />
-        </div>
-      </header>
+        </header>
 
-      {presentation.isError ? (
-        <div className="shell-notice" role="alert">
-          The shell could not refresh its snapshot metadata. Page-level data may also be
-          unavailable.
-        </div>
-      ) : null}
-      <div className="shell-content" data-sidebar={sidebarAbsent ? 'absent' : 'present'}>
-        <TreeNavigator onAbsentChange={setSidebarAbsent} />
-        <div className="shell-outlet" id="main-content">
-          <Outlet />
+        {presentation.isError ? (
+          <div className="shell-notice" role="alert">
+            The shell could not refresh its snapshot metadata. Page-level data may also be
+            unavailable.
+          </div>
+        ) : null}
+        <div className="shell-content" data-sidebar={sidebarAbsent ? 'absent' : 'present'}>
+          <TreeNavigator onAbsentChange={setSidebarAbsent} />
+          <div className="shell-outlet" id="main-content">
+            <Outlet />
+          </div>
         </div>
       </div>
-    </div>
+    </ToastProvider>
   );
 }
