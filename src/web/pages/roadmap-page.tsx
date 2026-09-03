@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Check, ChevronRight, Circle, ExternalLink, History, Link2, Waypoints } from 'lucide-react';
+import { Check, ChevronRight, Circle, ExternalLink, History, Link2 } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
+import { EmptyState } from '../components/empty-state.tsx';
 import type {
   MilestoneFlow,
   RoadmapPhaseRow,
@@ -120,7 +121,7 @@ function PhaseFlow({
                   ))}
                 </ul>
               ) : (
-                <p className="empty-note">No success criteria authored.</p>
+                <EmptyState />
               )}
             </section>
             <section aria-labelledby={`${phase.key}-requirements`}>
@@ -140,7 +141,7 @@ function PhaseFlow({
                   ))}
                 </ul>
               ) : (
-                <p className="empty-note">No requirements mapped.</p>
+                <EmptyState />
               )}
             </section>
           </div>
@@ -178,7 +179,7 @@ function PhaseFlow({
                 </section>
               ))
             ) : (
-              <p className="empty-note">No plans are present for this phase.</p>
+              <EmptyState />
             )}
           </div>
         </details>
@@ -195,15 +196,7 @@ function MilestoneTree({
   target: RoadmapDeepLinkTarget | null;
 }): React.JSX.Element {
   if (milestone.empty) {
-    return (
-      <div className="empty-flow" role="status">
-        <Waypoints aria-hidden="true" />
-        <div>
-          <h3>No phases in {milestone.name}</h3>
-          <p>This milestone has an authored identity but no phase rows yet.</p>
-        </div>
-      </div>
-    );
+    return <EmptyState variant="block" />;
   }
   const targetIndex = target?.phaseUrl
     ? milestone.phases.findIndex((phase) => phase.url === target.phaseUrl)
@@ -310,10 +303,7 @@ export function RoadmapPage(): React.JSX.Element {
         {view.active ? (
           <MilestoneTree milestone={view.active} target={target} />
         ) : (
-          <div className="empty-flow" role="status">
-            <Waypoints aria-hidden="true" />
-            <p>No active milestone exists in this snapshot.</p>
-          </div>
+          <EmptyState variant="block" />
         )}
       </section>
 
@@ -332,7 +322,7 @@ export function RoadmapPage(): React.JSX.Element {
             ))}
           </div>
         ) : (
-          <p className="empty-note">No archived milestones are present in this snapshot.</p>
+          <EmptyState />
         )}
       </section>
     </main>

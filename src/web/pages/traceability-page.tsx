@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
+import { EmptyState } from '../components/empty-state.tsx';
 import type {
   TraceabilityCoveringPhase,
   TraceabilityRow,
@@ -244,12 +245,10 @@ export function TraceabilityPage(): React.JSX.Element {
             </section>
           );
         })
+      ) : view.groups.length === 0 ? (
+        <EmptyState />
       ) : (
-        <p className="empty-note">
-          {view.groups.length === 0
-            ? 'No requirements are present in this snapshot.'
-            : 'No requirements match the current filter.'}
-        </p>
+        <p className="empty-note">No requirements match the current filter.</p>
       )}
 
       {view.deferredRows.length > 0 ? (

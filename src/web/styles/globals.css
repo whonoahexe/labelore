@@ -959,6 +959,10 @@ summary.tree-node-row:hover {
   color: var(--primary);
 }
 
+.empty-flow[data-tone='quiet'] svg {
+  color: var(--muted-foreground);
+}
+
 .quiet-state p,
 .empty-flow p {
   margin: 0;
