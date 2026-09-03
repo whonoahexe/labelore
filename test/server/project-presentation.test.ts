@@ -246,6 +246,23 @@ coverage_results:
     ]);
   });
 
+  it('carries Artifact.bodyLength through to ArtifactDto.bodyLength unchanged (Phase 4, D-12)', async () => {
+    const root = resolve('fixtures/dense');
+    const repository = new PlanningRepository(new LocalFsPlanningFilesystem(root), root);
+    const snapshot = await repository.load();
+    const presentation = toProjectPresentation(snapshot);
+
+    for (const artifact of presentation.artifacts) {
+      expect(typeof artifact.bodyLength).toBe('number');
+    }
+    const tabBrokenPlan = presentation.artifacts.find(
+      (artifact) => artifact.path === '.planning/phases/02-transport-layer/02-01-PLAN.md',
+    );
+    // The tab-broken plan's frontmatter-stage warning leaves its body intact — bodyLength must be
+    // the deterministic non-zero survived-body signal, not derived from the warning's own prose.
+    expect(tabBrokenPlan?.bodyLength).toBeGreaterThan(0);
+  });
+
   it('carries exclusions through the empty-presentation path when snapshot.project is null', () => {
     const snapshot: ProjectSnapshot = {
       loadStatus: { status: 'path-not-found', pathChecked: '/nope', rawPath: '/nope', message: 'nope' },

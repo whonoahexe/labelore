@@ -283,7 +283,7 @@ export function DocumentView({ document }: { document: RenderedDocument }): Reac
     <>
       <DocumentCanvas html={document.html} mountRef={mountRef} />
       {runtimeWarnings.map((warning, index) => (
-        <p className="notice render-warning" role="status" key={`runtime-${index}`}>
+        <p className="notice render-issue" role="status" key={`runtime-${index}`}>
           {warning}
         </p>
       ))}
