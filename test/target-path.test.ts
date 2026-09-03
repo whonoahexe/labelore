@@ -126,6 +126,49 @@ describe('resolveTargetPath — path targeting contract', () => {
       expect(missing.message.length).toBeGreaterThan(0);
     }
   });
+
+  it('resolves an empty path argument relative to process.cwd(), never throwing and never path-not-found for a directory that exists (TGT-07 empty)', () => {
+    const originalCwd = process.cwd();
+    const tmp = mkdtempSync(join(tmpdir(), 'gsd-lore-emptyarg-'));
+    cleanupPaths.push(tmp);
+    process.chdir(tmp);
+    try {
+      const result = resolveTargetPath('');
+      expect(() => result).not.toThrow();
+      if ('status' in result) {
+        expect(result.status).not.toBe('path-not-found');
+        expect(result.status).toBe('not-a-gsd-project');
+        expect(result.pathChecked).toBe(tmp);
+      } else {
+        expect(result.rootPath).toBe(tmp);
+      }
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
+
+  it('preserves rawPath byte-identical for a nonexistent non-ASCII path, with no normalization applied (TGT-07 encoding)', () => {
+    // Composed (NFC -- single code point U+00E9) and decomposed (NFD -- 'e' U+0065 followed by
+    // combining acute accent U+0301) forms of the same accented character, plus a CJK segment
+    // (U+4E2D U+6587). Written as explicit \u escapes so the two forms are guaranteed
+    // byte-distinct regardless of how any editor or filesystem might otherwise normalize a raw
+    // multi-byte character. A nonexistent path is guaranteed for both since neither directory is
+    // ever created on disk.
+    const composedE = '\u00e9'; // precomposed 'e with acute'
+    const decomposedE = 'e\u0301'; // 'e' + combining acute accent
+    const cjk = '\u4e2d\u6587';
+    const composed = `/definitely/not/a/real/caf${composedE}-${cjk}-path`;
+    const decomposed = `/definitely/not/a/real/caf${decomposedE}-${cjk}-path`;
+    expect(composed).not.toBe(decomposed);
+    expect(composed.normalize('NFC')).not.toBe(decomposed);
+    for (const raw of [composed, decomposed]) {
+      const result = resolveTargetPath(raw);
+      expect('status' in result && result.status).toBe('path-not-found');
+      if ('status' in result && result.status === 'path-not-found') {
+        expect(result.rawPath).toBe(raw);
+      }
+    }
+  });
 });
 
 describe('inside-tree symlink escape', () => {

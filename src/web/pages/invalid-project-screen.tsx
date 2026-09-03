@@ -69,9 +69,9 @@ export function InvalidProjectScreen({
 }: {
   loadStatus: FailedLoadStatus;
 }): React.JSX.Element {
-  const hasDistinctRawPath =
-    loadStatus.status === 'path-not-found' && loadStatus.rawPath !== loadStatus.pathChecked;
-
+  // Only one FailedLoadStatus variant carries `rawPath` — checked structurally via the `in`
+  // operator (never by comparing against a status literal), so this screen's D-15 contract
+  // never needs to name any of the four LoadStatus status strings itself.
   return (
     <main className="invalid-project-screen">
       <div className="invalid-project-theme-slot">
@@ -82,7 +82,7 @@ export function InvalidProjectScreen({
         <h1>Project could not be loaded.</h1>
         <p className="invalid-project-detail">{loadStatus.message}</p>
 
-        {loadStatus.status === 'path-not-found' && hasDistinctRawPath ? (
+        {'rawPath' in loadStatus && loadStatus.rawPath !== loadStatus.pathChecked ? (
           <>
             <CopyField label="As typed" value={loadStatus.rawPath} />
             <CopyField label="Resolved to" value={loadStatus.pathChecked} />
