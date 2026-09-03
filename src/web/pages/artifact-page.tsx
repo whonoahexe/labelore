@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useLocation } from 'react-router';
 import type { PhaseIdentity } from '../../domain/model.ts';
 import type { ParseWarning } from '../../planning-repo/types.ts';
+import { EmptyState } from '../components/empty-state.tsx';
 import {
   buildMilestoneUrl,
   buildPhaseUrl,
@@ -386,7 +387,9 @@ export function ArtifactPage(): React.JSX.Element {
             ))}
           </div>
         </details>
-      ) : null}
+      ) : (
+        <EmptyState />
+      )}
 
       {hasWarnings ? (
         <details className="artifact-metadata artifact-warning-disclosure">
