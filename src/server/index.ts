@@ -76,11 +76,12 @@ export function createApp(
 
   const artifactResponse = async (
     lookup: ReturnType<DerivedViews['artifactIndex']['lookup']>,
+    activeDerived: DerivedViews,
   ) => {
     if (!lookup.found) return lookup;
     const document = await (
       await renderer
-    ).render(lookup.artifact, { referenceRegistry: derived.referenceRegistry });
+    ).render(lookup.artifact, { referenceRegistry: activeDerived.referenceRegistry });
     return {
       found: true as const,
       status: 'found' as const,
@@ -156,6 +157,10 @@ export function createApp(
     });
   });
   app.get('/api/artifacts/*', async (c) => {
+    // D-05: capture the bundle as the first statement, before URL parsing and before the lookup,
+    // so this request's whole response is built from exactly one bundle — never the module-level
+    // `derived` binding re-read after an await, which a concurrently completing refresh could swap.
+    const activeDerived = derived;
     const pathname = new URL(c.req.url).pathname;
     const rawToken = pathname.slice('/api/artifacts/'.length);
     const route = parsePresentationUrl(`/artifacts/${rawToken}`);
@@ -171,11 +176,13 @@ export function createApp(
       );
     }
 
-    const lookup = derived.artifactIndex.lookup(route.route.artifactPath);
+    const lookup = activeDerived.artifactIndex.lookup(route.route.artifactPath);
     if (!lookup.found) return c.json(lookup, 404);
-    return c.json(await artifactResponse(lookup));
+    return c.json(await artifactResponse(lookup, activeDerived));
   });
   app.get('/api/documents', async (c) => {
+    // D-05: same single-bundle capture as /api/artifacts/* above.
+    const activeDerived = derived;
     const routeInput = c.req.query('route') ?? '';
     const route = parsePresentationUrl(routeInput);
     if (!route.ok || (route.route.kind !== 'artifact' && route.route.kind !== 'plan')) {
@@ -189,8 +196,8 @@ export function createApp(
         404,
       );
     }
-    const lookup = derived.artifactIndex.lookupRoute(route.route);
-    return lookup.found ? c.json(await artifactResponse(lookup)) : c.json(lookup, 404);
+    const lookup = activeDerived.artifactIndex.lookupRoute(route.route);
+    return lookup.found ? c.json(await artifactResponse(lookup, activeDerived)) : c.json(lookup, 404);
   });
   app.post('/api/refresh', async (c) => {
     // T-04-01-01/02: same-origin gate before touching the filesystem. An absent header (curl, the
