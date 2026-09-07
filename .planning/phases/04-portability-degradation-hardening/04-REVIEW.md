@@ -1,9 +1,10 @@
 ---
 phase: 04-portability-degradation-hardening
-reviewed: 2026-09-07T00:00:00Z
+reviewed: 2026-09-07T20:28:50Z
 depth: standard
-files_reviewed: 32
+files_reviewed: 36
 files_reviewed_list:
+  - src/presentation/artifact-warning-summary.ts
   - src/presentation/artifact-warning-tone.ts
   - src/presentation/search.ts
   - src/presentation/tree.ts
@@ -23,6 +24,7 @@ files_reviewed_list:
   - src/web/pages/traceability-page.tsx
   - src/web/styles/globals.css
   - test/portability.test.ts
+  - test/presentation/artifact-warning-summary.test.ts
   - test/presentation/roadmap.test.ts
   - test/presentation/search.test.ts
   - test/presentation/tree.test.ts
@@ -39,170 +41,141 @@ files_reviewed_list:
   - test/web/refresh-contract.test.ts
   - test/web/visual-contract.test.ts
 findings:
-  critical: 1
-  warning: 1
-  info: 1
-  total: 3
+  critical: 2
+  warning: 3
+  info: 0
+  total: 5
 status: issues_found
 ---
 
 # Phase 04: Code Review Report
 
-**Reviewed:** 2026-09-07
+**Reviewed:** 2026-09-07T20:28:50Z
 **Depth:** standard
-**Files Reviewed:** 32 (full-phase re-review, superseding the prior 04-01..04-04-scoped report at this path)
+**Files Reviewed:** 36
 **Status:** issues_found
 
 ## Summary
 
-This is a full-phase re-review covering all of 04-01 through 04-05, with particular attention paid
-to the 04-05 gap-closure commits per the review brief: the D-05 single-bundle-capture fix in
-`src/server/index.ts`, and the `bodyLength` forwarding / shared `artifactWarningTone()` wiring on
-the artifact page.
+The phase still has two release-blocking correctness defects. A failed real filesystem refresh is
+reported as successful and replaces the last usable snapshot, contrary to D-04. Separately, the new
+Refresh action is nested inside a header region that CSS hides below 62rem, so it is unavailable on
+narrow screens. Search snippet extraction also has two reproducible window/highlight defects, and
+the derived-view builder does not actually capture the single snapshot its atomicity comment claims.
 
-**The D-05 snapshot-capture fix is correct.** I traced every async handler in `createApp()`
-(`GET /api/artifacts/*`, `GET /api/documents`, `POST /api/refresh`) line by line. Both
-artifact-serving handlers now capture `const activeDerived = derived` as their first statement,
-before any `await`, and thread that single bundle through `artifactResponse(lookup, activeDerived)`,
-which reads only the parameter — never the module-level `derived` binding — for the reference
-registry used after the `await renderer.render(...)` call. Every other route handler in this file
-(`/api/presentation`, `/api/dashboard`, `/api/roadmap`, `/api/history`, `/api/tree`,
-`/api/traceability`, `/api/search`) is fully synchronous with no `await` in its body, so there is no
-window in which a concurrent refresh's reassignment of `derived` could split a single response
-across two snapshots. `test/server/derived-snapshot-isolation.test.ts` exercises the real race and
-passes; `npm run typecheck` and the full relevant test suite (404 tests across 28 files) pass clean.
+The focused regression suites pass (34 tests across the search, refresh, and warning-summary test
+files), but their current cases do not exercise these boundaries; one refresh test actually codifies
+the failed-refresh behavior as success.
 
-Digging past the mechanically-verified parts, I found one genuine content-correctness bug that
-undercuts this phase's own stated goal (D-12: let a user distinguish "damaged but readable" from
-"nothing salvageable"), and one reproducible logic bug in the pre-existing snippet-extraction code
-that this phase's search rows depend on. Both are demonstrated below with a concrete reproduction,
-not just an inspection claim.
+## Narrative Findings (AI reviewer)
 
 ## Critical Issues
 
-### CR-01: The warning-disclosure copy contradicts the "Unreadable" badge it sits under
+### CR-01: A failed real refresh discards the last successful presentation
 
-**File:** `src/web/pages/artifact-page.tsx:412-415`
+**File:** `src/server/index.ts:232-240`
 
-**Issue:** D-12 (04-03) introduced a two-tier vocabulary — `'warning'` ("damaged but the body
-survived and is shown normally") vs `'unreadable'` ("nothing survived") — specifically so a user can
-tell those two situations apart. The disclosure body that appears under *both* badge variants,
-however, is one hardcoded, unconditional sentence:
+**Issue:** The handler treats every resolved `source.refresh()` result as success, rebuilds all
+derived views, and returns `refreshed: true` without checking `snapshot.loadStatus`. The production
+source is `PlanningRepository`, whose `refresh()` deliberately never throws: target failures such as
+permission loss or removal of `.planning/` resolve to a snapshot with a non-`ok` load status and
+`project: null`. Therefore the catch at lines 241-244 is not the normal failure path. A transient
+filesystem failure after a valid load replaces `derived` with an empty presentation; client
+invalidation then switches the whole app to `InvalidProjectScreen`. This violates D-04's explicit
+requirement to retain the previous snapshot and timestamp on refresh failure. The test at
+`test/server/refresh.test.ts:165-176` currently locks in the incorrect behavior by expecting a
+project-null snapshot to be reported as a successful refresh.
 
-```tsx
-{warningTone ? (
-  <details className="artifact-metadata artifact-warning-disclosure">
-    <summary>
-      <span className="status-chip" data-tone={warningTone === 'unreadable' ? 'destructive' : 'warning'}>
-        {warningTone === 'unreadable' ? 'Unreadable' : 'Warning'}
-      </span>
-    </summary>
-    <div className="metadata-panels warning-disclosure-body" aria-label="Warning details">
-      <p>
-        Some of this document's structured metadata could not be read. The document text below was recovered and is shown normally.
-      </p>
-      ...
+**Fix:** Treat a non-`ok` returned snapshot as a failed refresh before assigning `derived`, and return
+a non-2xx response so `RefreshControl.onError` shows the retention toast. Keep the existing derived
+bundle untouched:
+
+```ts
+const snapshot = await inFlight;
+if (snapshot.loadStatus.status !== 'ok') {
+  return c.json({ refreshed: false as const, error: snapshot.loadStatus.message }, 500);
+}
+derived = buildDerivedViews(snapshot);
+return c.json({ refreshed: true as const, readAt: snapshot.readAt, loadStatus: snapshot.loadStatus });
 ```
 
-This is reachable and wrong in two concrete, traceable ways:
+Update the failed-load-status test to assert `refreshed: false`, a failure HTTP status, and that the
+next `/api/presentation` response still has the pre-refresh `readAt` and data.
 
-1. **The `'unreadable'` case (bodyLength === 0).** `artifactWarningTone()` returns `'unreadable'`
-   exactly when `bodyLength === 0` (`src/presentation/artifact-warning-tone.ts:14`), and
-   `bodyLength` is `body.length` from the domain layer
-   (`src/planning-repo/registry.ts:52`, `src/planning-repo/assemble.ts:45`). An empty body
-   renders to empty HTML, so `RenderedDocument.empty` (`html.trim().length === 0`,
-   `src/rendering/markdown.ts:403`) is *always* true whenever `warningTone === 'unreadable'`. That
-   means `DocumentView` will render its own, contradicting message directly below the disclosure:
-   `"This artifact has structured metadata but no authored body."`
-   (`src/web/pages/artifact-page.tsx:285`). The disclosure claims the text "below was recovered and
-   is shown normally" in the exact case where the page immediately below it says there is no text
-   at all. A user hitting a genuinely unreadable file — precisely the scenario this phase built the
-   "Unreadable" badge to call out — gets two contradictory explanations on the same screen.
+### CR-02: The Refresh action is completely unavailable below 62rem
 
-2. **The document-only-warning case.** The tone is computed from the union of `artifact.warnings`
-   and `document.warnings` (`artifact-page.tsx:355-358`), and `document.warnings` is populated for
-   purely rendering-time issues unrelated to structured metadata (e.g. an oversized Mermaid diagram,
-   `src/rendering/markdown.ts:170-174`). In that case `artifact.warnings` can be empty while
-   `document.warnings` is not — the badge and disclosure still render (by design, per the D-10
-   comment at `artifact-page.tsx:352-354`), but the hardcoded sentence "Some of this document's
-   structured metadata could not be read" is false: nothing about the structured metadata failed.
+**File:** `src/web/styles/globals.css:1471-1478`
 
-`test/web/degradation-ui-contract.test.ts` only pins that this sentence is *generic* (single
-sentence, not branched per `WarningStage`) — it does not, and given the current implementation
-cannot, assert that the sentence is *accurate* for both tones and both trigger sources. Fixing this
-does not require branching per parser stage (which D-11 correctly rejects); it requires branching
-the summary sentence on `warningTone` (and optionally on whether the trigger was structural vs.
-rendering), e.g.:
+**Issue:** `RefreshControl` is rendered inside `.snapshot-status` (`app-shell.tsx:103-128`), but the
+existing narrow breakpoint sets that entire container to `display: none`. Consequently users at any
+viewport at or below 62rem—including the supported 320px layout—cannot invoke the new project-wide
+Refresh action at all. The source-contract test only verifies that the control is nested in
+`.snapshot-status`; it does not inspect the breakpoint, so it passes while guaranteeing the control
+will be hidden there.
 
-**Fix:**
-```tsx
-<p>
-  {warningTone === 'unreadable'
-    ? "This document's content could not be recovered. Its structured metadata, and the body text below, could not be read."
-    : "Some of this document's structured metadata could not be read. The document text below was recovered and is shown normally."}
-</p>
-```
+**Fix:** Keep the control in a visible header container at narrow widths and hide only the timestamp
+text, or move `RefreshControl` beside `ThemeToggle` outside `.snapshot-status`. Add a responsive
+contract or browser test that asserts the refresh button remains displayed and keyboard reachable at
+the 62rem boundary and below.
 
 ## Warnings
 
-### WR-01: `extractSnippets` can emit two search-result snippets with overlapping, mid-word-truncated text
+### WR-01: Unicode lowercasing corrupts snippet highlight offsets
 
-**File:** `src/presentation/search.ts:385-408` (window construction inside `extractSnippets`)
+**File:** `src/presentation/search.ts:368-371`
 
-**Issue:** The module's own docstring (`search.ts:353-359`) states the intent: occurrences that
-"overlap or abut inside one window... merge into a single window... rather than producing separate
-near-duplicate snippets." The implementation only merges occurrences that land inside the *same*
-window (tested by `search.test.ts`'s Test 6). It does not check whether two *different* windows'
-raw text ranges overlap once both occurrences become independent seeds. When two matched-term
-occurrences are farther apart than `windowChars / 2` (so neither's window fully contains the other's
-occurrence) but closer together than `windowChars`, their two windows still overlap in text.
+**Issue:** Occurrence indices are calculated in `body.toLowerCase()` and then applied directly to the
+original body. Unicode lowercasing is not length-preserving. For example, `İMATCH end` lowercases to
+`i̇match end` (the first character expands to two UTF-16 code units). The real function currently
+returns highlight `{ start: 2, end: 7 }` for the term `match`, so the UI marks `ATCH ` rather than
+`MATCH`. Any length-changing case mapping before a match shifts every subsequent range and can also
+shift snippet boundaries.
 
-I reproduced this directly against the real function:
+**Fix:** Search with an offset-preserving case-fold strategy, or maintain an explicit mapping from
+indices in the normalized string back to UTF-16 offsets in the original body. Add a regression case
+using `İMATCH` and assert the highlighted original slice is exactly `MATCH`.
 
+### WR-02: Independently seeded snippets can overlap and expose truncated match fragments
+
+**File:** `src/presentation/search.ts:385-407`
+
+**Issue:** The inner loop consumes an occurrence only when the entire occurrence lies within the
+current window. Two occurrences separated by more than half the window but less than the full window
+therefore become separate seeds even though their resulting text windows overlap. The row renders
+duplicated body text, and each window can cut through the other match as unhighlighted partial text.
+This contradicts the function's documented promise to avoid near-duplicate windows. Existing tests
+cover multiple occurrences inside one window, not overlapping independently seeded windows.
+
+**Fix:** Merge accepted windows when their `[start, end)` ranges overlap, recomputing relative
+highlight ranges, or clip adjacent windows at a safe midpoint/word boundary. Add a case with two
+matches spaced in the `(windowChars / 2, windowChars)` interval.
+
+### WR-03: `buildDerivedViews` reads the source three times instead of capturing one snapshot
+
+**File:** `src/server/index.ts:60-68`
+
+**Issue:** The function's contract says all views are built from one read, but it independently calls
+`source.getSnapshot()` for the presentation, artifact index, and search index. The production getter
+is currently stable during this synchronous function, but the `SnapshotSource` interface does not
+guarantee referential stability or purity. A future source implementation can therefore produce a
+bundle whose fields came from different snapshots, defeating the atomic-bundle invariant at its
+construction seam.
+
+**Fix:** Capture once and pass the same object to every builder:
+
+```ts
+function buildDerivedViews(snapshot = source.getSnapshot()): DerivedViews {
+  const presentation = toProjectPresentation(snapshot);
+  const artifactIndex = buildArtifactIndex(snapshot);
+  const referenceRegistry = buildReferenceRegistry(presentation);
+  const searchIndexState = createSearchIndexState();
+  searchIndexState.buildFrom(snapshot);
+  return { presentation, artifactIndex, referenceRegistry, searchIndexState };
+}
 ```
-body = 900 chars + "FIRSTMATCH" (900-910) + 75 'y' chars + "SECONDMATCH" (985-996) + 200 'z' chars
-extractSnippets(body, ['firstmatch', 'secondmatch'])
-```
-
-produces:
-```
-snippet 1: bodyOffset 820, text ends "...yyyyyyyyyyyyyyySECON"   (mid-word-truncated, unhighlighted)
-snippet 2: bodyOffset 905, text starts "MATCHyyyyyyyyyyyyyyy..."  (mid-word-truncated, unhighlighted)
-```
-
-Both search-result snippet cards for this row would display the same run of 85 characters of body
-text (positions 905-990), and each snippet additionally shows a plain-text, unhighlighted fragment
-of the *other* snippet's match term cut off mid-word ("SECON" / "MATCH") with no visual indication
-it's a fragment. This is exactly the "separate near-duplicate snippets" the docstring says this
-function avoids — it just isn't reachable through Test 6's same-window construction, because Test 6
-only exercises occurrences close enough to land in one window.
-
-**Fix:** After selecting a window for a seed, either (a) also consume any *unconsumed* occurrence
-whose own window would overlap the just-built window (not just occurrences inside the built window),
-or (b) clip window boundaries so adjacent accepted windows never overlap (e.g. cap `windowEnd` at
-the midpoint between this seed and the next unconsumed seed). Either approach should be pinned with
-a test using two occurrences spaced in the `(windowChars/2, windowChars)` gap — the exact case this
-review's reproduction used, which the existing Test 6 does not cover.
-
-## Info
-
-### IN-01: Duplicate CSS rule bodies for `data-tone='warning'` and `data-tone='destructive'`
-
-**File:** `src/web/styles/globals.css:2868-2882`
-
-**Issue:** `.status-chip[data-tone='destructive']` and `.status-chip[data-tone='warning']` declare
-byte-identical rule bodies (same `border-color`/`background`/`color` formula against
-`var(--destructive)`). The adjacent comment explains this is deliberate — a separate selector "so a
-future genuinely-destructive action is never silently retoned by a CSS rename" — so this is not a
-functional bug, but it is a literal duplication that will drift silently if one rule is edited
-without the other (there is no shared custom property or `@layer` composition tying them together).
-
-**Fix:** Not required to ship. If revisited, consider defining a shared `--tone-destructive-*`
-custom-property triplet that both selectors reference, preserving the two independent selectors
-(for the stated future-proofing reason) while removing the duplicated literal values.
 
 ---
 
-_Reviewed: 2026-09-07_
-_Reviewer: Claude (gsd-code-reviewer)_
+_Reviewed: 2026-09-07T20:28:50Z_
+_Reviewer: the agent (gsd-code-reviewer)_
 _Depth: standard_
