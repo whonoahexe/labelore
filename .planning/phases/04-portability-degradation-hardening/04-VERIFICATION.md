@@ -1,159 +1,287 @@
 ---
 phase: 04-portability-degradation-hardening
-verified: 2026-09-04T06:52:38Z
+verified: 2026-09-07T22:15:00Z
 status: gaps_found
-score: 6/8 must-haves verified
+score: 9/10 must-haves verified
 behavior_unverified: 0
 overrides_applied: 0
+re_verification:
+  previous_status: gaps_found
+  previous_score: 6/8
+  gaps_closed:
+    - "One vocabulary spans all three surfaces: 'Warning' when the body survived, 'Unreadable' when nothing was salvageable, derived by a single shared function rather than three independent rules (D-12)."
+    - "A successful refresh replaces the presentation, artifact index, reference registry and search index together in one assignment; no response ever mixes fields from two different snapshots (D-05)."
+  gaps_remaining: []
+  regressions: []
 gaps:
-  - truth: "One vocabulary spans all three surfaces: 'Warning' when the body survived, 'Unreadable' when nothing was salvageable, derived by a single shared function rather than three independent rules (D-12) — plan 04-03 must_have."
+  - truth: "Opening the warning badge reveals a plain-language summary of what failed and what survived, with path, stage, message and salvage from the ParseWarning record in a nested secondary section (D-11) — plan 04-03 must_have, still in force for this whole-phase re-verification."
     status: failed
     reason: >
-      tree.ts and search.ts both derive their badge/chip tone via the shared
-      artifactWarningTone(warnings, bodyLength) function and correctly render 'Unreadable' when
-      bodyLength === 0. artifact-page.tsx never calls artifactWarningTone at all — it hard-codes
-      data-tone="warning" and the literal label "Warning" for both the header badge and the
-      disclosure summary, for every warned artifact regardless of whether the body survived. The
-      single-artifact server response (artifactResponse() in src/server/index.ts, used by both
-      GET /api/artifacts/* and GET /api/documents) never forwards `bodyLength` on the artifact
-      object, even though ArtifactDto (src/server/project-presentation.ts:135-139) already carries
-      it for exactly this purpose — so the client cannot compute the real tone even if it tried.
-      A user opening the one artifact whose body is completely unreadable sees the identical
-      "Warning" badge as one that merely lost a frontmatter field. This is independently confirmed
-      against the code (not merely taken from 04-REVIEW.md's CR-01): grep for `artifactWarningTone`
-      and `bodyLength` across src/server/index.ts and src/web/pages/artifact-page.tsx returns zero
-      matches in either file.
+      Independently traced against the current code, not taken from 04-REVIEW.md's CR-01 on
+      trust. `src/web/pages/artifact-page.tsx` line 414 renders one hardcoded, unconditional
+      sentence under BOTH the Warning and the Unreadable badge: "Some of this document's
+      structured metadata could not be read. The document text below was recovered and is shown
+      normally." That sentence is the D-11 must-have's entire "what survived" content, and it is
+      false exactly when `warningTone === 'unreadable'`. `artifactWarningTone()`
+      (src/presentation/artifact-warning-tone.ts:14) returns `'unreadable'` only when
+      `bodyLength === 0`; `bodyLength` is `parsed.body.length`
+      (src/planning-repo/registry.ts:52, src/planning-repo/assemble.ts:45), so a zero-length raw
+      body is rendered through `renderMarkdownChunk`/`renderPlanRange` and its resulting HTML is
+      necessarily empty, making `RenderedDocument.empty` (`html.trim().length === 0`,
+      src/rendering/markdown.ts:403) true. `ArtifactPage` (lines 281-287) already renders "This
+      artifact has structured metadata but no authored body." for exactly that state. Both
+      elements render on the same page for the same artifact: the disclosure claims the text
+      "was recovered and is shown normally" one paragraph above the empty-document notice saying
+      there is no text at all. This is a first-order, deterministic contradiction, not a
+      hypothetical — I confirmed the code paths that force it (bodyLength 0 -> empty HTML ->
+      document.empty -> the "no authored body" branch) rather than accepting the review's claim
+      unread. The 04-05 gap-closure plan correctly and narrowly closed D-12's badge/label wiring
+      (confirmed: the tone/label pairing is now correct and shared — see verified truths below)
+      but left this pre-existing 04-03 disclosure sentence untouched, and 04-05's own fix is what
+      makes the 'unreadable' branch reachable on this page for the first time — so this
+      contradiction was dormant before 04-05 and is live now. A second, narrower instance of the
+      same defect: when only `document.warnings` is non-empty (a rendering-time issue, e.g. an
+      oversized Mermaid diagram) and `artifact.warnings` is empty, the same sentence claims
+      "structured metadata could not be read," which is false — nothing about the metadata
+      failed.
+      Distinct from D-12: D-12's own promise (one shared vocabulary/tone/label across three
+      surfaces, derived by one function) is NOT undermined by this — the badge and label
+      computation is correctly wired and shared, verified below. This gap is specifically about
+      the disclosure body's honesty, which is a distinct must-have (D-11) that the 04-05 fix's
+      scope did not reach.
+      04-05-PLAN.md's own must-have "marked with the Unreadable badge and its existing warning
+      disclosure, never blanked, replaced by an error screen, demoted, or dropped" is satisfied
+      as literally worded (the page does render, is not blanked, carries both elements) — that
+      specific must-have does not require the disclosure text to be accurate, only present. The
+      04-05 prohibition "MUST NOT present a damaged artifact under a tone that overstates what
+      survived" is judgment-tier (verification: unverified) and is arguable on the word "tone"
+      narrowly read (the tone/label pairing itself does not overstate survival); this is recorded
+      here as a human-verification item rather than folded into this gap's severity, per the
+      escalation-gate handling for judgment-tier prohibitions.
     artifacts:
-      - path: "src/server/index.ts"
-        issue: "artifactResponse() (lines 77-101) omits bodyLength from the returned artifact object"
       - path: "src/web/pages/artifact-page.tsx"
-        issue: "Lines 369-373 and 394-400 hard-code data-tone=\"warning\"/\"Warning\" and never import or call artifactWarningTone; no branch ever renders \"Unreadable\" on this page"
+        issue: "Line 414's disclosure paragraph is one unconditional sentence claiming the body 'was recovered and is shown normally,' rendered under both the Warning and the Unreadable badge, contradicting the empty-document notice at lines 281-287 whenever warningTone === 'unreadable'"
     missing:
-      - "Forward lookup.artifact.bodyLength in artifactResponse()'s returned artifact object"
-      - "Import artifactWarningTone in artifact-page.tsx and use it to choose data-tone/label at both the header badge and the disclosure summary"
-      - "A test asserting the \"Unreadable\" branch is reachable on the artifact page (the current degradation-ui-contract.test.ts assertion at lines 47-48 only proves \"Warning\" is reachable there)"
-  - truth: "A successful refresh replaces the presentation, artifact index, reference registry and search index together in one assignment; no response ever mixes fields from two different snapshots (D-05) — plan 04-01 must_have."
-    status: failed
-    reason: >
-      Verified independently against src/server/index.ts. GET /api/artifacts/* and GET
-      /api/documents each compute `lookup` synchronously from the live `derived.artifactIndex` at
-      call time, then pass `lookup` into the async `artifactResponse()` helper, which itself reads
-      the live module-level `derived.referenceRegistry` binding after an `await` (`await renderer`
-      then `.render()`). Because `derived` is a single mutable `let` reassigned in one line inside
-      POST /api/refresh (`derived = buildDerivedViews()`), a refresh that completes on another
-      connection between the synchronous `lookup` computation and the later `derived.referenceRegistry`
-      read causes that one response to combine `lookup.artifact` from the pre-refresh artifact index
-      with `referenceRegistry` from the post-refresh bundle — contradicting the must-have's literal,
-      unconditional wording. This does not crash or lose data (worst case: stale/missing
-      cross-reference links in one response) and is not exercised by any existing test —
-      test/server/refresh.test.ts's concurrency test only proves two concurrent POST /api/refresh
-      calls converge on one readAt, not that a GET racing a concurrent refresh reads one consistent
-      bundle throughout its lifecycle. Matches 04-REVIEW.md's WR-01, confirmed here directly against
-      the source rather than taken on the review's word.
-    artifacts:
-      - path: "src/server/index.ts"
-        issue: "artifactResponse() (lines 77-101) reads the live `derived` binding a second time inside an async function instead of receiving the bundle captured at the start of the request"
-    missing:
-      - "Capture `derived` once per request (e.g. `const activeDerived = derived;`) in the /api/artifacts/* and /api/documents handlers and thread it through artifactResponse() instead of re-reading the module-level binding mid-request"
+      - "Branch the disclosure summary sentence on warningTone (or on whether the trigger was structural vs. rendering-only): the 'unreadable' branch must not claim the body was recovered or is shown normally"
+      - "A test asserting the disclosure text is accurate for the 'unreadable' tone specifically — the existing test/web/degradation-ui-contract.test.ts 'renders one generic plain-language summary' case currently pins the single hardcoded sentence as correct for every tone, which would need to change alongside the fix"
 deferred: []
-human_verification: []
+behavior_unverified_items: []
+human_verification:
+  - test: "Manually open an artifact whose body is fully unreadable (bodyLength: 0, at least one warning) in the running dashboard and read the warning disclosure end to end."
+    expected: "The disclosure text should not claim the document text 'was recovered and is shown normally' when the empty-document notice on the same page says there is no authored body — the two statements should not contradict each other for a human reader."
+    why_human: "This is a content-honesty judgment about prose wording, not a structural wiring check; the previous item records the deterministic code-path evidence, this item asks a human to confirm the fix (once made) actually reads as coherent to a person, not just non-contradictory by grep."
+  - test: "Review 04-05-PLAN.md's two judgment-tier prohibitions against CR-01's finding: 'MUST NOT present a damaged artifact under a tone that overstates what survived' and decide whether the disclosure-text defect (distinct from the badge/label tone, which is correctly wired) trips this prohibition as intended by its author."
+    expected: "A human decision on whether the prohibition's 'tone' language was meant to cover disclosure prose as well as the badge/label, and whether this phase should be held for a fix or allowed to ship with the gap above tracked for a fast follow-up."
+    why_human: "Both 04-05 prohibitions are explicitly marked verification: unverified (judgment-tier) in the plan's own frontmatter — per the escalation-gate contract, a judgment-tier prohibition is never silently passed or silently failed; it is routed to a human for the authoritative call, with this verifier's non-authoritative read recorded above."
 ---
 
 # Phase 4: Portability & Degradation Hardening Verification Report
 
 **Phase Goal:** The dashboard is proven to work on any GSD project — sparse, unfamiliar, partly broken, or not a GSD project at all — and never shows data whose age it cannot state.
-**Verified:** 2026-09-04T06:52:38Z
+**Verified:** 2026-09-07T22:15:00Z
 **Status:** gaps_found
-**Re-verification:** No — initial verification
+**Re-verification:** Yes — after gap closure (plan 04-05, wave 5)
 
 ## Goal Achievement
+
+### Re-verification Summary
+
+The prior 04-VERIFICATION.md (2026-09-04) found 6/8 must-haves verified and 2 FAILED:
+D-12 (shared Warning/Unreadable vocabulary missing on the artifact page) and D-05 (a GET racing a
+concurrent refresh could mix pre- and post-refresh snapshot data). Plan 04-05 was written and
+executed to close exactly those two. Both are now independently confirmed fixed below, each with
+behavioral evidence obtained by reverting the fix in place, re-running the pinned test, observing
+it fail exactly as the plan predicted, and restoring the fix byte-identical.
+
+A standard-depth code review run immediately before this verification (04-REVIEW.md) additionally
+found one new critical issue (CR-01) in the 04-05 diff's neighborhood. I independently traced
+CR-01 against the live code rather than taking the review's severity on trust (see the gaps
+section) and concur it is real: it is not the same defect as D-12 (the badge/label vocabulary is
+now correctly shared and computed, confirmed below) but a distinct, still-open defect in a
+different must-have (D-11, "what survived") that D-12's badge fix newly exposed by making the
+'unreadable' branch reachable on the artifact page for the first time. This keeps the phase at
+`gaps_found` rather than `passed`.
 
 ### Observable Truths (Roadmap Success Criteria)
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | Sparse (`sparse-started`) and dense fixtures both render as complete, navigable dashboards; unrecognized artifact type appears in navigation and renders as plain markdown | ✓ VERIFIED | `test/portability.test.ts` drives the real `createApp` + `PlanningRepository` against `fixtures/sparse-empty`, `fixtures/sparse-started`, `fixtures/dense` over every route (`/api/presentation`, `/api/dashboard`, `/api/roadmap`, `/api/history`, `/api/tree`, `/api/traceability`, `/api/search?q=phase`), asserting HTTP 200 for each. `TGT-05` test explicitly resolves `.planning/v3.0-CAPACITY-PLAN.md` and `.planning/HANDOFF.json` (unrecognized kinds) through the tree and `/api/documents`, asserting a navigable URL and non-empty rendered HTML. `tree.ts:182` sets `unknownKind: artifact.kind === 'unknown'` on every such leaf. |
-| 2 | Removing `quick/`, `milestones/`, `research/`, `UI-SPEC.md`, `SECURITY.md` produces an honest empty state in the affected view and leaves every other view untouched, never an error page | ✓ VERIFIED | `test/portability.test.ts` ("produces empty states, never an error page... (TGT-04)") removes all five and asserts every route still 200s, no leaf names a deleted `UI-SPEC.md`/`SECURITY.md`, and every optional location group (`quick`, `milestone-root`, `archived-phase`, `research`) still appears in the tree with zero matching leaves. `EmptyState`/`EMPTY_STATE_MESSAGE` (`src/web/components/empty-state.tsx`) is imported and rendered at 8 call sites across `roadmap-page.tsx`, `traceability-page.tsx`, `artifact-page.tsx`. |
-| 3 | A file with deliberately corrupted YAML degrades only its own view; every other page still renders and the app does not crash | ✓ VERIFIED (D-10/D-11/D-13); ✗ FAILED (D-12, see gap) | `test/presentation/search.test.ts` and `test/presentation/tree.test.ts` prove per-artifact isolation and rank-independence (D-13, `warningTone` never affects sort order). D-12's "one shared vocabulary across all three surfaces" is violated on the artifact page — see gaps. |
-| 4 | Starting against a nonexistent path, or a directory with no `.planning/`, shows a message naming the problem and the exact path that was checked | ✓ VERIFIED | `src/web/pages/invalid-project-screen.tsx` renders `loadStatus.message` verbatim and a copyable `pathChecked` (plus `rawPath` when it differs). `app-router.tsx`'s `ProjectGate` gates the entire routed tree — no `<Outlet/>` mounts on a non-ok `loadStatus`, so nav/search/tree are structurally absent (D-14). `test/target-path.test.ts` and `test/web/invalid-project-contract.test.ts` cover the resolver and screen contract. |
-| 5 | Every view states when its data was read from disk, and a Refresh action re-reads the project through the same `refresh()` seam a future file watcher will call | ✓ VERIFIED (D-01–D-04); ⚠️ Partial (D-05, see gap) | `app-shell.tsx` renders `formatReadAt(presentation.data.readAt)` beside `RefreshControl` in the global header on every route; `RefreshControl` calls `POST /api/refresh`, which calls `source.refresh.bind(source)` → `PlanningRepository.refresh()`. `test/server/refresh.test.ts` proves the seam, the empty-source 200 path, and readAt-equal coalescing for concurrent POSTs. D-05's *general* "no response ever mixes fields from two different snapshots" claim is violated for `/api/artifacts/*` and `/api/documents` under a narrower race than the tested one — see gap. |
+| 1 | Sparse and dense fixtures both render as complete, navigable dashboards; unrecognized artifact type appears in navigation and renders as plain markdown | ✓ VERIFIED (regression-checked) | `test/portability.test.ts` unchanged by 04-05, still present and passing in the 38-file/540-test run; `tree.ts:` `unknownKind` logic unchanged. |
+| 2 | Removing `quick/`, `milestones/`, `research/`, `UI-SPEC.md`, `SECURITY.md` produces an honest empty state, never an error page | ✓ VERIFIED (regression-checked) | `EmptyState` call sites and `test/portability.test.ts`'s stripped-fixture assertions unchanged; 04-05 touched neither file. |
+| 3 | A file with deliberately corrupted YAML degrades only its own view; every other page still renders and the app does not crash | ✓ VERIFIED (D-10/D-12/D-13, badge+label); ✗ FAILED (D-11 disclosure honesty, see gap) | D-12's shared-vocabulary gap from the prior verification is now closed — see Required Artifacts and Key Links below. A new, distinct defect in D-11's disclosure text is found on independent inspection — see gaps. Neither defect crashes the app or leaks damage to another view; the roadmap-level SC3 wording ("degrades only its own view... does not crash") literally still holds. |
+| 4 | Starting against a nonexistent path, or a directory with no `.planning/`, shows a message naming the problem and the exact path checked | ✓ VERIFIED (regression-checked) | `invalid-project-screen.tsx`, `app-router.tsx` unchanged by 04-05. |
+| 5 | Every view states when its data was read from disk, and a Refresh action re-reads the project through the same `refresh()` seam | ✓ VERIFIED (D-01–D-04 regression-checked; D-05 now closed) | D-05's atomic-swap gap is closed — see below. |
 
-**Score:** 6/8 must-haves verified (2 plan-declared must-haves — both concerning cross-request/cross-surface consistency guarantees — fail on direct code inspection)
+**Score:** 9/10 must-haves verified (the 2 previously-failed truths are now closed; 1 new truth, D-11's disclosure-honesty must-have from 04-03, fails on independent inspection, newly exposed by the D-12 fix)
+
+### Gap 1 (D-12) — Closed, Verified
+
+**Must-have:** "One vocabulary spans all three surfaces: 'Warning' when the body survived,
+'Unreadable' when nothing was salvageable, derived by a single shared function... (D-12)."
+
+**Evidence:**
+- `src/web/pages/artifact-page.tsx` now imports `artifactWarningTone`/`ArtifactWarningTone` from
+  `../../presentation/artifact-warning-tone.ts` (line 8) and computes one `const warningTone`
+  (line 355) from `[...artifact.warnings, ...document.warnings]` and `artifact.bodyLength`, used
+  at both the header badge (line 382-383) and the disclosure summary (line 408-409). No
+  statically-quoted `data-tone` value remains on the page — confirmed via
+  `grep -n 'data-tone=' src/web/pages/artifact-page.tsx`, both occurrences are expression-valued.
+- `src/server/index.ts`'s `artifactResponse()` now returns `bodyLength: lookup.artifact.bodyLength`
+  on the `artifact` object (line ~97), forwarded by both `GET /api/documents` and
+  `GET /api/artifacts/*` since both share this one builder.
+- **Behavioral proof, not just presence:** I reverted `src/web/pages/artifact-page.tsx` to its
+  pre-04-05 state (`git show 523ac7a^:...`) and re-ran
+  `test/web/degradation-ui-contract.test.ts` — the D-12 case fails exactly as predicted
+  (`expect(page).toContain('artifact-warning-tone.ts')` fails). Restored the fixed file
+  byte-identical (confirmed via `git status --porcelain` showing no diff) and re-ran the full
+  targeted suite — all 14 tests across the three touched files pass.
+- `test/server/artifact-response.test.ts` (4 cases, all passing) pins `bodyLength: 0 -> 'unreadable'`,
+  `bodyLength: 1 -> 'warning'`, empty-warnings `-> null`, and cross-route agreement.
+- `tree.ts` (line 183) and `search.ts` (line 88) already called the same shared function before
+  04-05 and are unchanged — regression-checked via grep, both still call
+  `artifactWarningTone(artifact)`.
+
+**Verdict:** ✓ VERIFIED. The vocabulary is now genuinely one shared computation across all three
+surfaces, with a passing test that was confirmed to fail on the pre-fix code.
+
+### Gap 2 (D-05) — Closed, Verified
+
+**Must-have:** "A successful refresh replaces the presentation, artifact index, reference registry
+and search index together in one assignment; no response ever mixes fields from two different
+snapshots (D-05)."
+
+**Evidence:**
+- `src/server/index.ts`'s `/api/artifacts/*` and `/api/documents` handlers both capture
+  `const activeDerived = derived;` as their literal first statement (before URL/route parsing and
+  before the lookup), and pass `activeDerived` into `artifactResponse(lookup, activeDerived)`,
+  which now reads `activeDerived.referenceRegistry` — the module-level `derived` binding is never
+  read a second time inside the async response builder.
+- **Behavioral proof, not just presence:** I reverted `src/server/index.ts` to its pre-04-05 state
+  (`git show 19ebb91^:...`) and re-ran `test/server/derived-snapshot-isolation.test.ts` — 2 of 3
+  tests fail exactly as predicted (the race case: `expect(payload.document.html).toContain(...)`
+  fails because the html is bare `<p>See <code>.planning/NOTES.md</code>...`; the source-region
+  check also fails). The control case correctly still passes, proving the assertion is not
+  vacuous. Restored the fixed file byte-identical and re-ran — all 3 tests pass.
+- Code review (04-REVIEW.md) independently traced every async handler in `createApp()` line by
+  line and reached the same conclusion; I did not rely on that trace alone — the revert-and-observe
+  exercise above is my own, independent confirmation.
+
+**Verdict:** ✓ VERIFIED. A GET spanning a completing refresh now provably renders end-to-end from
+the bundle captured at request start.
+
+### Edge Probes (04-05-PLAN.md must_haves)
+
+| Edge probe | Status | Evidence |
+|---|---|---|
+| A GET whose rendering spans a completing refresh resolves cross-references against the pre-refresh registry | ✓ VERIFIED | `test/server/derived-snapshot-isolation.test.ts`'s race case, confirmed to fail on pre-fix code (above), passes on current code. |
+| Warning/Unreadable split sits exactly at bodyLength 0 (0 -> Unreadable, 1 -> Warning), on the artifact page and in tree/search rows alike | ✓ VERIFIED | `artifactWarningTone()`'s own logic (`bodyLength > 0 ? 'warning' : 'unreadable'`) is the single function tree.ts, search.ts, and artifact-page.tsx all call (grep-confirmed at all three call sites); the exact 0-vs-1 boundary is unit-pinned in `test/server/artifact-response.test.ts`. Because all three surfaces route through the same function, the boundary guarantee transfers to all three by construction, not by three separately-authored tests. |
+| An artifact with no warnings shows no badge whatever its body length | ✓ VERIFIED | `artifactWarningTone()` returns `null` when `warnings.length === 0` regardless of `bodyLength`, pinned by `test/server/artifact-response.test.ts`'s third case (`bodyLength: 0`, empty warnings, `-> null`); `artifact-page.tsx`'s badge and disclosure are both gated on `warningTone ?` — a null tone renders neither. |
+| Backstop: every response from the two artifact routes built from exactly one bundle for its whole lifecycle | ✓ VERIFIED (via named behavioral test, not presence alone) | The backstop truth is satisfied by the same race-case test above rather than left to abstain — the test exercises the actual interleaving, not merely a source-shape check (a source-region check is present too, but is explicitly the secondary, not primary, proof per the plan's own `<behavior>` block). |
+
+### New Finding: D-11 Disclosure Honesty (Gap)
+
+See the `gaps` frontmatter entry above for the full, evidence-based reasoning. Summary: the
+warning-disclosure paragraph on the artifact page is one hardcoded sentence ("...was recovered and
+is shown normally") rendered unconditionally under both the Warning and the newly-reachable
+Unreadable badge. For the Unreadable case (bodyLength 0), this directly contradicts the
+"no authored body" message the same page shows immediately below, and it is exactly the "what
+survived" content the 04-03 D-11 must-have requires be accurate. This is distinct from D-12 (the
+tone/label pairing itself is correct and shared, verified above) and was not part of either gap
+04-05 was scoped to close — it is a new-to-this-run finding, independently confirmed here rather
+than accepted from 04-REVIEW.md's CR-01 on trust.
 
 ### Required Artifacts
 
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
-| `src/server/index.ts` | `POST /api/refresh` + single derived-views bundle | ✓ VERIFIED (wired) / ⚠️ atomicity gap | Route present, coalescing present; `artifactResponse()` re-reads live `derived` mid-request (gap above) and omits `bodyLength` (gap above) |
-| `src/web/components/refresh-control.tsx` | Header Refresh control, first `useMutation` | ✓ VERIFIED | `useMutation`, disables on pending, unconditional `invalidateQueries()`, error toast with fixed string |
-| `src/web/components/ui/toast.tsx` | Toast provider/portal/viewport/root | ✓ VERIFIED | Present and wired into `app-shell.tsx`; IN-01 (unconditional `data-tone="destructive"`) is real but not tied to any must-have — informational only |
-| `src/web/components/app-shell.tsx` | "Refreshing…" status swap, single `ToastProvider` mount | ✓ VERIFIED | `snapshot-status` slot swaps in place; no layout shift markup change observed |
-| `src/web/pages/invalid-project-screen.tsx` | Whole-app failure screen | ✓ VERIFIED | Exactly heading + detail + path field(s) + restart command; theme toggle retained |
-| `src/web/app-router.tsx` | Presentation-gated root | ✓ VERIFIED | `ProjectGate` branches between `InvalidProjectScreen` and `AppShell`; no double-fetch (`fetchPresentation` reused, same query key) |
-| `src/presentation/artifact-warning-tone.ts` | Single tone derivation | ✓ VERIFIED, substantive | Pure function, `bodyLength`-driven split |
-| `src/presentation/tree.ts` / `src/presentation/search.ts` | `warningTone` carried on leaf/row | ✓ VERIFIED, wired to shared function | Both import and call `artifactWarningTone` |
-| `src/web/pages/artifact-page.tsx` | D-10/D-11 badge + disclosure using shared tone | ✗ PARTIAL — D-10/D-11 present, D-12 (shared function) not wired | See gap above |
-| `src/web/components/empty-state.tsx` | Single generic empty state | ✓ VERIFIED | `EMPTY_STATE_MESSAGE = 'Nothing here yet.'`, `inline`/`block` variants, muted icon, no accent color |
-| `test/portability.test.ts` | Adversarial three-fixture + stripped + unknown-type proof | ✓ VERIFIED | Mounts fixtures via `mkdtemp`+`cp`, never mutates `fixtures/` (asserted by its own self-source regex check and a before/after `listTree` diff) |
+| `src/server/index.ts` | `artifactResponse()` forwarding `bodyLength`, `activeDerived` threaded through | ✓ VERIFIED, wired | Both fixes confirmed by revert-and-observe (above) |
+| `src/web/pages/artifact-page.tsx` | Shared tone at both badge and disclosure summary sites | ✓ VERIFIED for tone/label wiring; ✗ disclosure body text still hardcoded/inaccurate for the unreadable case (see gap) | |
+| `test/server/artifact-response.test.ts` | Server-route bodyLength/tone contract | ✓ VERIFIED | 4/4 passing, confirmed failing on pre-fix code is not applicable here (new file) but each case was read and matches its stated behavior |
+| `test/server/derived-snapshot-isolation.test.ts` | Race-case + control + source-region proof | ✓ VERIFIED | 3/3 passing; race case confirmed to fail on pre-fix `index.ts` |
+| `test/web/degradation-ui-contract.test.ts` | D-12 mapping-anchored regex proof | ✓ VERIFIED | Confirmed to fail on pre-fix `artifact-page.tsx`; also still pins the now-partially-inaccurate D-11 generic sentence unconditionally (line ~24-30 of the test) — this is the same test whose D-11 case would need to change alongside a fix for the gap above |
+| `src/presentation/tree.ts` / `search.ts` | `warningTone` via shared function | ✓ VERIFIED (regression-checked, unchanged) | |
+| `test/portability.test.ts` | Adversarial fixture proof | ✓ VERIFIED (regression-checked, unchanged) | |
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 |------|----|-----|--------|---------|
-| `refresh-control.tsx` | `src/server/index.ts` | `fetch POST /api/refresh` | ✓ WIRED | `postRefresh()` fetches, `useMutation` drives it |
-| `refresh-control.tsx` | TanStack Query cache | `invalidateQueries()` | ✓ WIRED | Unconditional, in `onSuccess` |
-| `src/server/index.ts` | `PlanningRepository.refresh()` | `source.refresh.bind(source)` | ✓ WIRED | Bound before call; empty-source path returns 200 with `refreshed:false` |
-| `app-router.tsx` | `app-shell.tsx` | shared `fetchPresentation`/`['presentation']` query key | ✓ WIRED | One fetch, not two — confirmed by shared import |
-| `invalid-project-screen.tsx` | `src/cli/target-path.ts` | renders `loadStatus.message` verbatim | ✓ WIRED | No re-derivation found |
-| `src/presentation/tree.ts` → `artifact-warning-tone.ts` | shared derivation | `artifactWarningTone(artifact)` | ✓ WIRED | line 183 |
-| `src/presentation/search.ts` → `artifact-warning-tone.ts` | shared derivation | `artifactWarningTone(artifact)` | ✓ WIRED | line 88 |
-| `src/web/pages/artifact-page.tsx` → `artifact-warning-tone.ts` | shared derivation | *(required by D-12, not present)* | ✗ NOT WIRED | No import of `artifact-warning-tone.ts` anywhere in `artifact-page.tsx` |
-| `src/server/index.ts` (`artifactResponse`) → `derived` snapshot | single bundle per request | *(required by D-05)* | ✗ NOT WIRED (race) | `derived` is re-read live at a second async point rather than the bundle captured at request start |
+| `src/web/pages/artifact-page.tsx` | `src/presentation/artifact-warning-tone.ts` | `artifactWarningTone(...)` | ✓ WIRED | Confirmed by import + call-site grep and by revert-and-observe test failure |
+| `src/server/index.ts` (`artifactResponse`) | `activeDerived` parameter | single-bundle read | ✓ WIRED | Confirmed by revert-and-observe test failure; region-scoped source check also passes |
+| `src/server/index.ts` (`/api/artifacts/*`, `/api/documents`) | `artifactResponse(lookup, activeDerived)` | capture-first pattern | ✓ WIRED | `const activeDerived = derived;` is the first statement in both handlers, confirmed by source read |
+| `src/web/pages/artifact-page.tsx` (badge/disclosure) | honest disclosure content | tone-conditional prose | ✗ NOT WIRED | The tone/label is conditional; the disclosure body sentence is not — see gap |
 
 ### Behavioral Spot-Checks
 
 | Behavior | Command | Result | Status |
 |----------|---------|--------|--------|
-| Full test suite | `npx vitest run` | 36 files, 533 tests, all passed | ✓ PASS |
-| CR-01 claim (artifact page never renders "Unreadable") | `grep -n "artifactWarningTone\|bodyLength" src/web/pages/artifact-page.tsx src/server/index.ts` | zero matches in either file | ✓ CONFIRMS gap |
-| Degradation contract test only proves "Warning" reachable on artifact page | `grep -n "Unreadable\|Warning\|data-tone" test/web/degradation-ui-contract.test.ts` | line 47-48 asserts only `data-tone="warning"` / `Warning` text for the page-level check; `Unreadable` string only asserted against `tree`/`search` *source text*, not the artifact page | ✓ CONFIRMS gap |
-| D-13 rank-independence | `grep -n "D-13" test/presentation/search.test.ts` | named test present and included in the 533 passing | ✓ PASS |
-| Refresh coalescing (both-POST concurrency) | `test/server/refresh.test.ts` "coalesces two concurrent calls..." | included in the 533 passing | ✓ PASS (narrower race not covered — see gap) |
+| Full test suite | `npx vitest run` | 38 files, 540 tests, all passed | ✓ PASS |
+| D-12 fix fails on pre-fix `artifact-page.tsx` | Reverted file to `523ac7a^`, ran `test/web/degradation-ui-contract.test.ts` | 1 failed, 10 passed — the exact D-12 assertion fails | ✓ CONFIRMS fix is load-bearing, not vacuous |
+| D-05 fix fails on pre-fix `src/server/index.ts` | Reverted file to `19ebb91^`, ran `test/server/derived-snapshot-isolation.test.ts` | 2 failed, 1 passed (control case correctly still passes) | ✓ CONFIRMS fix is load-bearing, not vacuous |
+| Both files restored byte-identical | `git status --porcelain -- src/server/index.ts src/web/pages/artifact-page.tsx` | no output | ✓ CONFIRMED clean |
+| `npm run typecheck && npm run lint` | — | clean, no output | ✓ PASS |
+| `npm run build && npm run smoke` | — | build succeeds; `GSD Lore smoke passed for /home/cinedise/gsd-lore` | ✓ PASS |
+| CR-01 disclosure contradiction | Traced `bodyLength===0 -> renderMarkdownChunk('') -> html.trim().length===0 -> document.empty` against `src/rendering/markdown.ts:403` and `artifact-page.tsx:281-287` | Deterministic: every `warningTone==='unreadable'` case has `document.empty===true` | ✓ CONFIRMS gap (independently, not from review text) |
 
 ### Requirements Coverage
 
 | Requirement | Source Plan | Description | Status | Evidence |
 |-------------|-------------|-------------|--------|----------|
-| TGT-03 | 04-04 | Dashboard renders correctly regardless of phase/milestone count or config toggles | ✓ SATISFIED | `test/portability.test.ts` three-fixture route sweep + NaN/Infinity precision test |
-| TGT-04 | 04-04 | Missing optional artifact/directory → honest empty state, never error page | ✓ SATISFIED | Stripped-fixture test + `EmptyState` component, 8 call sites |
-| TGT-05 | 04-04 | Unrecognized artifact type stays navigable, renders as plain markdown | ✓ SATISFIED | Named test against `dense` fixture's unknown-kind files |
-| TGT-06 | 04-03 | Malformed file isolated to its own view, no crash | ✓ SATISFIED overall; D-12 sub-requirement (shared vocabulary) not fully met (see gap) | `artifact-warning-tone.ts` shared by 2 of 3 required surfaces |
-| TGT-07 | 04-02 | Invalid path shows message naming problem + exact path | ✓ SATISFIED | `InvalidProjectScreen`, `ProjectGate`, resolver tests |
-| TGT-08 | 04-01 | Every view states read time; Refresh re-reads through the same seam | ✓ SATISFIED overall; D-05 atomicity sub-claim not fully met under a narrower race than what's tested (see gap) | `refresh-control.tsx`, `app-shell.tsx`, `test/server/refresh.test.ts` |
+| TGT-03 | 04-04 | Dashboard renders correctly regardless of phase/milestone count or config toggles | ✓ SATISFIED (regression-checked, unchanged by 04-05) | `test/portability.test.ts` |
+| TGT-04 | 04-04 | Missing optional artifact/directory -> honest empty state, never error page | ✓ SATISFIED (regression-checked) | Stripped-fixture test + `EmptyState` |
+| TGT-05 | 04-04 | Unrecognized artifact type stays navigable, renders as plain markdown | ✓ SATISFIED (regression-checked) | Named test against `dense` fixture |
+| TGT-06 | 04-03, 04-05 | Malformed file isolated to its own view, no crash | ✓ SATISFIED for isolation/no-crash and D-12 vocabulary (now closed); ✗ D-11 disclosure-honesty sub-requirement not met for the newly-reachable Unreadable case (see gap) | `artifact-response.test.ts`, `derived-snapshot-isolation.test.ts`, `degradation-ui-contract.test.ts` |
+| TGT-07 | 04-02 | Invalid path shows message naming problem + exact path | ✓ SATISFIED (regression-checked) | `InvalidProjectScreen`, resolver tests |
+| TGT-08 | 04-01, 04-05 | Every view states read time; Refresh re-reads through same seam; single-bundle atomicity | ✓ SATISFIED — both the original refresh-seam claim and the D-05 atomicity sub-claim now closed | `refresh-control.tsx`, `app-shell.tsx`, `test/server/refresh.test.ts`, `test/server/derived-snapshot-isolation.test.ts` |
 
-No orphaned requirements: all six `TGT-03..TGT-08` IDs from `REQUIREMENTS.md` (lines 18-23, 153-158) appear in exactly one plan's `requirements:` frontmatter each (04-01→TGT-08, 04-02→TGT-07, 04-03→TGT-06, 04-04→TGT-03/04/05).
+No orphaned requirements: all six `TGT-03..TGT-08` IDs appear in exactly the plans that declare
+them (04-01 -> TGT-08, 04-02 -> TGT-07, 04-03 -> TGT-06, 04-04 -> TGT-03/04/05, 04-05 -> TGT-06/08).
+Note: `.planning/REQUIREMENTS.md`'s status table currently shows TGT-03/04/05/07 as "Gaps Found"
+even though this and the prior verification both find them satisfied — this appears to be a
+phase-level status propagated to every requirement the phase owns rather than a per-requirement
+finding, and is expected to update once this phase's overall status changes; it is not itself
+counted as a gap here since the underlying evidence supports SATISFIED for all four.
 
 ### Anti-Patterns Found
 
 | File | Line | Pattern | Severity | Impact |
 |------|------|---------|----------|--------|
-| `src/web/components/ui/toast.tsx` | 24-38 | Unconditional `data-tone="destructive"` regardless of `toast.type` | ℹ️ Info | Matches 04-REVIEW.md IN-01; not tied to a phase must-have, latent footgun for a future non-error toast producer |
+| `src/web/pages/artifact-page.tsx` | 414 | Hardcoded, unconditional disclosure sentence that becomes false under a code path this same file makes reachable | 🛑 Blocker (see gap) | See D-11 gap above |
+| `src/presentation/search.ts` | 385-408 | `extractSnippets` can emit two overlapping, mid-word-truncated snippets when two occurrences are spaced in `(windowChars/2, windowChars)` (04-REVIEW.md WR-01) | ⚠️ Warning | Pre-existing (phase 3 origin), not modified by any phase-4 plan, not tied to any phase-4 must-have; left visible for follow-up, not a phase-4 gap |
+| `src/web/components/ui/toast.tsx` | 24-38 | Unconditional `data-tone="destructive"` regardless of `toast.type` (04-REVIEW.md IN-01) | ℹ️ Info | Pre-existing (phase 4-01), not tied to a phase must-have |
 
-No `TBD`/`FIXME`/`XXX`/`TODO`/`HACK`/`PLACEHOLDER` debt markers found in any file modified by this phase (one match for the `placeholder="..."` form-input attribute in `traceability-page.tsx`, which is not a debt marker).
+No `TBD`/`FIXME`/`XXX`/`TODO`/`HACK`/`PLACEHOLDER` debt markers found in any file this run touched
+(`src/server/index.ts`, `src/web/pages/artifact-page.tsx`, and the three test files).
 
 ### Gaps Summary
 
-Two plan-declared must-haves fail on direct inspection of the current code, independent of and cross-confirmed against 04-REVIEW.md's CR-01/WR-01 findings — I did not take the review's word for either; both were re-derived here from `grep`/source reads:
+One gap remains open after this re-verification, distinct from the two the prior verification
+found and 04-05 closed:
 
-1. **D-12 (plan 04-03, blocking):** The phase's own headline "one shared Warning/Unreadable vocabulary across the artifact badge, the tree indicator, and the search chip" is wired on 2 of 3 surfaces. `artifact-page.tsx` hard-codes the "Warning" tone/label unconditionally and the server-side single-artifact response doesn't even carry the `bodyLength` field the shared `artifactWarningTone()` function needs. A completely unreadable artifact is visually indistinguishable from a lightly-damaged one on the one page a user would open to find out. This is a genuine, user-visible degradation-hardening gap in a phase whose stated goal is exactly this kind of legibility.
+1. **D-11 disclosure honesty (new-to-this-run finding, blocking):** The artifact page's
+   warning-disclosure paragraph is a single hardcoded sentence claiming the document body "was
+   recovered and is shown normally," rendered unconditionally under both the Warning and the
+   Unreadable badge. For the Unreadable case — the exact case D-12's badge fix (this run) made
+   reachable on this page for the first time — this directly contradicts the page's own
+   "no authored body" notice one section below it, and fails the D-11 must-have's own promise of
+   "what survived." This is independently confirmed by tracing the deterministic code path
+   (`bodyLength === 0` -> empty rendered HTML -> `document.empty === true`), not accepted from
+   04-REVIEW.md's CR-01 on trust. It does not undermine D-12's tone/label vocabulary (verified
+   correct above) and does not violate 04-05-PLAN.md's own must-haves as literally worded (which
+   only require the page not be blanked/replaced/demoted, and require the existing disclosure be
+   present — not that its prose be accurate). It is, however, a real defect against the phase's
+   stated purpose (letting a reader "know how badly damaged" a file is) and against 04-03's D-11
+   must-have, which remains part of this phase's full must-have set. The fix is small and
+   mechanical (branch the one sentence on `warningTone`), and the review already supplies it.
 
-2. **D-05 (plan 04-01, non-blocking but real):** The atomic-swap guarantee ("no response ever mixes fields from two different snapshots") holds for the tested case (concurrent `POST /api/refresh` calls converging on one `readAt`) but not for the broader, literal claim: a `GET /api/artifacts/*` or `GET /api/documents` request racing a concurrent refresh can serve a response combining pre-refresh `artifactIndex` data with post-refresh `referenceRegistry` data, because `artifactResponse()` re-reads the live module-level `derived` binding at a second `await` point instead of using the bundle captured when the request started. Narrow window, no crash, no data loss — but it contradicts the must-have's unconditional wording and is untested.
-
-Both gaps are precise, small, mechanical fixes (forward `bodyLength` + call the existing shared function; capture `derived` once per request) — the same fixes 04-REVIEW.md already proposes for CR-01/WR-01. WR-02 (duplicated `buildDerivedViews()` work on concurrent refresh) and IN-01 (toast tone) are real but do not violate any phase must-have as literally stated and are not included as gaps here; they remain visible in 04-REVIEW.md for follow-up.
-
-The remaining 6 of 8 must-haves — including all of TGT-03, TGT-04, TGT-05, TGT-07, and the bulk of TGT-06 and TGT-08 — are genuinely, substantively implemented and covered by real tests exercising the actual server and fixtures, not just source-text pattern matches.
+Both previously-failed truths (D-12, D-05) are now closed with independently-reproduced
+behavioral evidence (fix reverted, failure observed, fix restored) — not accepted from
+SUMMARY.md's claims or from 04-REVIEW.md's trace alone. The 38-file/540-test suite, typecheck,
+lint, build, and smoke all pass. Two judgment-tier prohibitions from 04-05-PLAN.md remain
+unresolved by design (`verification: unverified`) and are routed to human verification above
+rather than silently passed or failed.
 
 ---
 
-_Verified: 2026-09-04T06:52:38Z_
+_Verified: 2026-09-07T22:15:00Z_
 _Verifier: Claude (gsd-verifier)_

@@ -18,9 +18,9 @@ rather than defensive polish.
 - [ ] **TGT-03**: Dashboard renders a GSD project correctly regardless of phase count, milestone count, or which config toggles are enabled — including a fresh project with one phase and no milestones
 - [ ] **TGT-04**: A missing optional artifact or directory (`quick/`, `milestones/`, `research/`, `UI-SPEC.md`, `SECURITY.md`) produces an honest empty state in the affected view, never an error page
 - [ ] **TGT-05**: An artifact type the dashboard does not recognize still appears in navigation and renders as plain markdown
-- [x] **TGT-06**: A single malformed file (bad YAML, unparseable structure) is isolated to its own view — it never blanks another page or crashes the app
+- [ ] **TGT-06**: A single malformed file (bad YAML, unparseable structure) is isolated to its own view — it never blanks another page or crashes the app
 - [ ] **TGT-07**: Pointing at a nonexistent path, or a directory with no `.planning/`, produces a clear message naming the problem and the path checked
-- [x] **TGT-08**: Every view shows when its data was read from disk, and a Refresh action re-reads the project
+- [ ] **TGT-08**: Every view shows when its data was read from disk, and a Refresh action re-reads the project
 
 ### Situational Awareness
 
@@ -153,9 +153,9 @@ Which phases cover which requirements. Populated during roadmap creation.
 | TGT-03 | Phase 4 | Gaps Found |
 | TGT-04 | Phase 4 | Gaps Found |
 | TGT-05 | Phase 4 | Gaps Found |
-| TGT-06 | Phase 4 | Complete |
+| TGT-06 | Phase 4 | Gaps Found |
 | TGT-07 | Phase 4 | Gaps Found |
-| TGT-08 | Phase 4 | Complete |
+| TGT-08 | Phase 4 | Gaps Found |
 | DASH-01 | Phase 2 | Complete |
 | DASH-02 | Phase 2 | Complete |
 | DASH-03 | Phase 2 | Complete |
