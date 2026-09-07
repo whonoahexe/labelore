@@ -205,7 +205,7 @@ Plans:
   4. Starting against a nonexistent path, or a directory with no `.planning/`, shows a message naming the problem and the exact path that was checked.
   5. Every view states when its data was read from disk, and a Refresh action re-reads the project through the same `refresh()` seam a future file watcher will call.
 
-**Plans**: 5/6 plans executed — 04-05 and 04-06 are gap-closure plans. 04-05 closed the two
+**Plans**: 6/6 plans executed — 04-05 and 04-06 are gap-closure plans. 04-05 closed the two
 must-haves the first `04-VERIFICATION.md` found failed (D-12's shared vocabulary missing on the
 artifact page, and D-05's atomic-swap claim broken by a GET racing a refresh). Re-verification then
 returned `gaps_found` again at 9/10 with one new-to-that-run defect the D-12 fix newly exposed —
@@ -240,7 +240,7 @@ Plans:
 
 **Wave 6** *(gap closure — blocked on the 04-VERIFICATION.md re-verification `gaps_found` result)*
 
-- [ ] 04-06-PLAN.md — Make the damaged-artifact disclosure honest: branch the summary on outcome so an unreadable body is never described as recovered, and a rendering-only warning is never blamed on the metadata (TGT-06)
+- [x] 04-06-PLAN.md — Make the damaged-artifact disclosure honest: branch the summary on outcome so an unreadable body is never described as recovered, and a rendering-only warning is never blamed on the metadata (TGT-06)
 
 ## Progress
 
@@ -252,7 +252,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Read Layer & Domain Model | 4/4 | Complete    | 2026-08-24 |
 | 2. Situational Awareness & Artifact Reading | 16/16 | Complete    | 2026-09-01 |
 | 3. Search, Browsing & Traceability | 4/4 | Complete    | 2026-09-02 |
-| 4. Portability & Degradation Hardening | 5/5 | In Progress|  |
+| 4. Portability & Degradation Hardening | 6/6 | In Progress|  |
 
 ## Backlog
 

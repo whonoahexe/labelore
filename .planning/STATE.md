@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.0
 current_phase: 04
-current_phase_name: portability-degradation-hardening
+current_phase_name: Portability & Degradation Hardening
 status: executing
-stopped_at: Completed 04-05-PLAN.md
-last_updated: "2026-09-07T20:08:15.596Z"
-last_activity: 2026-09-07
-last_activity_desc: Phase 04 execution started
-state_head: b595344c14c7518947fa26aed67c789bb9e521ba
+stopped_at: Completed 04-06-PLAN.md
+last_updated: "2026-09-07T20:19:23.239Z"
+last_activity: 2026-09-08
+last_activity_desc: Completed 04-06-PLAN.md
+state_head: 7ca514717e06e433d9b3716ddf0094e65dbf7104
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 30
-  completed_plans: 29
+  completed_plans: 30
 ---
 
 # Project State
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-09-02)
 
 ## Current Position
 
-Phase: 04 (portability-degradation-hardening) — READY TO EXECUTE
-Plan: 2 of 5
-Status: Ready to execute
-Last activity: 2026-09-07 — Phase 04 execution started
+Phase: 04 (Portability & Degradation Hardening) — AWAITING VERIFICATION
+Plan: 6 of 6
+Status: All plans executed; awaiting phase verification
+Last activity: 2026-09-08 — Completed 04-06-PLAN.md
 
 Progress: [████████░░] 75%
 
@@ -73,6 +73,7 @@ Progress: [████████░░] 75%
 | Phase 04 P03 | 40min | 3 tasks | 13 files |
 | Phase 04 P04 | 45min | 3 tasks | 7 files |
 | Phase 04 P05 | 15min | 3 tasks | 5 files |
+| Phase 04 P06 | 4min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -109,6 +110,9 @@ Recent decisions affecting current work:
 - [Phase 04]: [Phase 04][04-04]: The adversarial portability suite (test/portability.test.ts) drives the real Hono app via mkdtemp fixture copies (mountFixture/serve), never a synthetic snapshot literal, so the committed fixture corpus is provably unmodified.
 - [Phase 04]: [Phase 04][04-05]: warningTone on artifact-page.tsx is computed once from the combined artifact.warnings + document.warnings arrays and artifact.bodyLength, then read at both the header badge and disclosure summary — one binding, mirroring search-page.tsx's row.warningTone ternary shape exactly.
 - [Phase 04]: [Phase 04][04-05]: activeDerived is captured as the literal first statement in both /api/artifacts/* and /api/documents (before URL parsing) so the capture always precedes the handler's first await, closing the D-05 race where a concurrent refresh could otherwise mix pre- and post-refresh data in one response.
+- [Phase 04]: [04-06]: Unreadable tone takes precedence over warning-source counts, making every warned zero-length body select the no-body summary.
+- [Phase 04]: [04-06]: Structural warnings outrank rendering warnings when both exist; all warnings remain visible in Technical details.
+- [Phase 04]: [04-06]: Inconsistent non-null tone with zero warnings returns null rather than inventing an explanation.
 
 ### Pending Todos
 
@@ -136,6 +140,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-07T16:15:43.868Z
-Stopped at: Completed 04-05-PLAN.md
+Last session: 2026-09-07T20:19:23.139Z
+Stopped at: Completed 04-06-PLAN.md
 Resume file: None
