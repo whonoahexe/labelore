@@ -1,6 +1,6 @@
 ---
 phase: 04-portability-degradation-hardening
-reviewed: 2026-09-03T23:54:57Z
+reviewed: 2026-09-07T00:00:00Z
 depth: standard
 files_reviewed: 32
 files_reviewed_list:
@@ -28,6 +28,8 @@ files_reviewed_list:
   - test/presentation/tree.test.ts
   - test/rendering/plan-sections.test.ts
   - test/rendering/references.test.ts
+  - test/server/artifact-response.test.ts
+  - test/server/derived-snapshot-isolation.test.ts
   - test/server/project-presentation.test.ts
   - test/server/refresh.test.ts
   - test/target-path.test.ts
@@ -38,272 +40,169 @@ files_reviewed_list:
   - test/web/visual-contract.test.ts
 findings:
   critical: 1
-  warning: 2
+  warning: 1
   info: 1
-  total: 4
+  total: 3
 status: issues_found
 ---
 
-# Phase 4: Code Review Report
+# Phase 04: Code Review Report
 
-**Reviewed:** 2026-09-03T23:54:57Z
+**Reviewed:** 2026-09-07
 **Depth:** standard
-**Files Reviewed:** 32
+**Files Reviewed:** 32 (full-phase re-review, superseding the prior 04-01..04-04-scoped report at this path)
 **Status:** issues_found
 
 ## Summary
 
-Phase 4 adds `POST /api/refresh` with an atomic derived-view swap, a `ProjectGate` above the app
-shell for invalid-project handling, a shared damaged-artifact "Warning"/"Unreadable" tone
-(`artifactWarningTone()`), a shared `EmptyState` component, and an adversarial portability test
-suite. The refresh contract, invalid-project screen, and empty-state unification are each
-well-covered by source-text contract tests and behave as documented.
+This is a full-phase re-review covering all of 04-01 through 04-05, with particular attention paid
+to the 04-05 gap-closure commits per the review brief: the D-05 single-bundle-capture fix in
+`src/server/index.ts`, and the `bodyLength` forwarding / shared `artifactWarningTone()` wiring on
+the artifact page.
 
-The one substantive defect found is that the phase's own headline feature — a single shared
-Warning/Unreadable vocabulary spanning "the artifact badge, the tree indicator, and the search
-chip" (the exact phrase used in both `tree-navigator.tsx`'s doc comment and the
-`degradation-ui-contract.test.ts` test title) — was only wired up on two of the three surfaces.
-`artifact-page.tsx` still hard-codes `data-tone="warning"` / the label `"Warning"` and never
-renders `"Unreadable"`, and the server-side DTO it consumes doesn't even carry the `bodyLength`
-field needed to compute the real tone. A user opening the one document whose body is *completely*
-unreadable sees the same badge as a document that merely lost some frontmatter but kept its body —
-directly contradicting this phase's degradation-hardening goal.
+**The D-05 snapshot-capture fix is correct.** I traced every async handler in `createApp()`
+(`GET /api/artifacts/*`, `GET /api/documents`, `POST /api/refresh`) line by line. Both
+artifact-serving handlers now capture `const activeDerived = derived` as their first statement,
+before any `await`, and thread that single bundle through `artifactResponse(lookup, activeDerived)`,
+which reads only the parameter — never the module-level `derived` binding — for the reference
+registry used after the `await renderer.render(...)` call. Every other route handler in this file
+(`/api/presentation`, `/api/dashboard`, `/api/roadmap`, `/api/history`, `/api/tree`,
+`/api/traceability`, `/api/search`) is fully synchronous with no `await` in its body, so there is no
+window in which a concurrent refresh's reassignment of `derived` could split a single response
+across two snapshots. `test/server/derived-snapshot-isolation.test.ts` exercises the real race and
+passes; `npm run typecheck` and the full relevant test suite (404 tests across 28 files) pass clean.
 
-Two further issues affect the new `POST /api/refresh` atomic-swap machinery: a narrow but real
-race window where a single request can render with fields from two different `derived` bundles,
-and concurrent refreshes redoing full view-derivation work that the code's own comments claim is
-coalesced.
+Digging past the mechanically-verified parts, I found one genuine content-correctness bug that
+undercuts this phase's own stated goal (D-12: let a user distinguish "damaged but readable" from
+"nothing salvageable"), and one reproducible logic bug in the pre-existing snippet-extraction code
+that this phase's search rows depend on. Both are demonstrated below with a concrete reproduction,
+not just an inspection claim.
 
 ## Critical Issues
 
-### CR-01: Artifact page never renders the "Unreadable" tone — the D-12 shared vocabulary is incomplete
+### CR-01: The warning-disclosure copy contradicts the "Unreadable" badge it sits under
 
-**File:** `src/web/pages/artifact-page.tsx:369-373,394-400`
-**Issue:**
+**File:** `src/web/pages/artifact-page.tsx:412-415`
 
-Both `tree-navigator.tsx` and `search-page.tsx` derive their damaged-artifact badge from the
-shared `artifactWarningTone()` split (`'warning'` when the body survived, `'unreadable'` when
-nothing did — see `src/presentation/artifact-warning-tone.ts`). `tree-navigator.tsx`'s own doc
-comment states this is "the tree half of the shared Warning/Unreadable vocabulary — same tones and
-labels as the artifact-page badge and the search-page chip," and
-`test/web/degradation-ui-contract.test.ts` is titled exactly "one Warning/Unreadable vocabulary
-spans the artifact badge, the tree indicator, and the search chip (D-12)."
-
-`artifact-page.tsx`, however, never computes a tone at all. It hard-codes:
+**Issue:** D-12 (04-03) introduced a two-tier vocabulary — `'warning'` ("damaged but the body
+survived and is shown normally") vs `'unreadable'` ("nothing survived") — specifically so a user can
+tell those two situations apart. The disclosure body that appears under *both* badge variants,
+however, is one hardcoded, unconditional sentence:
 
 ```tsx
-const hasWarnings = artifact.warnings.length > 0 || document.warnings.length > 0;
-...
-{hasWarnings ? (
-  <span className="status-chip" data-tone="warning">
-    Warning
-  </span>
-) : null}
+{warningTone ? (
+  <details className="artifact-metadata artifact-warning-disclosure">
+    <summary>
+      <span className="status-chip" data-tone={warningTone === 'unreadable' ? 'destructive' : 'warning'}>
+        {warningTone === 'unreadable' ? 'Unreadable' : 'Warning'}
+      </span>
+    </summary>
+    <div className="metadata-panels warning-disclosure-body" aria-label="Warning details">
+      <p>
+        Some of this document's structured metadata could not be read. The document text below was recovered and is shown normally.
+      </p>
+      ...
 ```
 
-for both the header badge and the disclosure summary. There is no branch that ever renders
-`data-tone="destructive"` / the label `"Unreadable"` on this page — a document whose body is
-completely unrecoverable (`bodyLength === 0`, `artifactWarningTone()` would return `'unreadable'`
-on the tree/search rows for the exact same artifact) shows the identical "Warning" badge as a
-document that merely lost one piece of frontmatter but rendered normally otherwise.
+This is reachable and wrong in two concrete, traceable ways:
 
-This isn't just a missed style tweak — it's structurally impossible to fix client-side as written,
-because the server never sends the data needed. `artifactResponse()` in `src/server/index.ts`
-builds the artifact object for `/api/documents` and `/api/artifacts/*` without `bodyLength`:
+1. **The `'unreadable'` case (bodyLength === 0).** `artifactWarningTone()` returns `'unreadable'`
+   exactly when `bodyLength === 0` (`src/presentation/artifact-warning-tone.ts:14`), and
+   `bodyLength` is `body.length` from the domain layer
+   (`src/planning-repo/registry.ts:52`, `src/planning-repo/assemble.ts:45`). An empty body
+   renders to empty HTML, so `RenderedDocument.empty` (`html.trim().length === 0`,
+   `src/rendering/markdown.ts:403`) is *always* true whenever `warningTone === 'unreadable'`. That
+   means `DocumentView` will render its own, contradicting message directly below the disclosure:
+   `"This artifact has structured metadata but no authored body."`
+   (`src/web/pages/artifact-page.tsx:285`). The disclosure claims the text "below was recovered and
+   is shown normally" in the exact case where the page immediately below it says there is no text
+   at all. A user hitting a genuinely unreadable file — precisely the scenario this phase built the
+   "Unreadable" badge to call out — gets two contradictory explanations on the same screen.
 
-```ts
-artifact: {
-  id: lookup.artifact.id,
-  path: lookup.artifact.path,
-  kind: lookup.artifact.kind,
-  title: lookup.artifact.title,
-  frontmatter: jsonRecord(lookup.artifact.frontmatter),
-  structured: jsonRecord(lookup.artifact.structured),
-  warnings: lookup.artifact.warnings,
-},
-```
+2. **The document-only-warning case.** The tone is computed from the union of `artifact.warnings`
+   and `document.warnings` (`artifact-page.tsx:355-358`), and `document.warnings` is populated for
+   purely rendering-time issues unrelated to structured metadata (e.g. an oversized Mermaid diagram,
+   `src/rendering/markdown.ts:170-174`). In that case `artifact.warnings` can be empty while
+   `document.warnings` is not — the badge and disclosure still render (by design, per the D-10
+   comment at `artifact-page.tsx:352-354`), but the hardcoded sentence "Some of this document's
+   structured metadata could not be read" is false: nothing about the structured metadata failed.
 
-`ArtifactDto` (the shape the tree/search DTOs use) *does* carry `bodyLength` for exactly this
-purpose (see `src/server/project-presentation.ts:135-139`), but the single-artifact document
-response never forwards it, so `artifactWarningTone()` cannot be called from `artifact-page.tsx`
-even if it imported it.
-
-Given this phase is specifically "portability & degradation hardening," and the reviewed test only
-asserts that `data-tone="warning"` and the text `"Warning"` are present (never asserting the
-`"Unreadable"` branch is reachable on this page — see the assertions in
-`degradation-ui-contract.test.ts`), the gap slipped past the test suite.
+`test/web/degradation-ui-contract.test.ts` only pins that this sentence is *generic* (single
+sentence, not branched per `WarningStage`) — it does not, and given the current implementation
+cannot, assert that the sentence is *accurate* for both tones and both trigger sources. Fixing this
+does not require branching per parser stage (which D-11 correctly rejects); it requires branching
+the summary sentence on `warningTone` (and optionally on whether the trigger was structural vs.
+rendering), e.g.:
 
 **Fix:**
-
-Forward `bodyLength` in the single-artifact response and compute the same shared tone client-side:
-
-```ts
-// src/server/index.ts — artifactResponse()
-artifact: {
-  id: lookup.artifact.id,
-  path: lookup.artifact.path,
-  kind: lookup.artifact.kind,
-  title: lookup.artifact.title,
-  frontmatter: jsonRecord(lookup.artifact.frontmatter),
-  structured: jsonRecord(lookup.artifact.structured),
-  warnings: lookup.artifact.warnings,
-  bodyLength: lookup.artifact.bodyLength,
-},
-```
-
 ```tsx
-// src/web/pages/artifact-page.tsx
-import { artifactWarningTone } from '../../presentation/artifact-warning-tone.ts';
-...
-const warningTone = artifactWarningTone({
-  warnings: artifact.warnings,
-  bodyLength: /* forwarded field, or fall back to document.empty ? 0 : 1 */,
-});
-...
-{warningTone ? (
-  <span className="status-chip" data-tone={warningTone === 'unreadable' ? 'destructive' : 'warning'}>
-    {warningTone === 'unreadable' ? 'Unreadable' : 'Warning'}
-  </span>
-) : null}
+<p>
+  {warningTone === 'unreadable'
+    ? "This document's content could not be recovered. Its structured metadata, and the body text below, could not be read."
+    : "Some of this document's structured metadata could not be read. The document text below was recovered and is shown normally."}
+</p>
 ```
-
-and add a test asserting the `"Unreadable"` branch is actually reachable on this page (the current
-contract test only proves `"Warning"` is reachable).
 
 ## Warnings
 
-### WR-01: `artifactResponse()` can mix artifact-index and reference-registry state across a concurrent refresh
+### WR-01: `extractSnippets` can emit two search-result snippets with overlapping, mid-word-truncated text
 
-**File:** `src/server/index.ts:77-101,155-191`
-**Issue:**
+**File:** `src/presentation/search.ts:385-408` (window construction inside `extractSnippets`)
 
-The module comment states the D-05 invariant plainly: "every read handler serves from one of
-these bundles, built together from a single snapshot, and replaced together in one assignment —
-never mutated field by field." In practice, a single request does *not* read one consistent
-`derived` snapshot — it reads the live module-level `derived` binding at two separate points in
-its async lifecycle:
+**Issue:** The module's own docstring (`search.ts:353-359`) states the intent: occurrences that
+"overlap or abut inside one window... merge into a single window... rather than producing separate
+near-duplicate snippets." The implementation only merges occurrences that land inside the *same*
+window (tested by `search.test.ts`'s Test 6). It does not check whether two *different* windows'
+raw text ranges overlap once both occurrences become independent seeds. When two matched-term
+occurrences are farther apart than `windowChars / 2` (so neither's window fully contains the other's
+occurrence) but closer together than `windowChars`, their two windows still overlap in text.
 
-```ts
-app.get('/api/artifacts/*', async (c) => {
-  ...
-  const lookup = derived.artifactIndex.lookup(route.route.artifactPath);   // read #1
-  if (!lookup.found) return c.json(lookup, 404);
-  return c.json(await artifactResponse(lookup));                          // reads derived.referenceRegistry inside, read #2
-});
+I reproduced this directly against the real function:
+
+```
+body = 900 chars + "FIRSTMATCH" (900-910) + 75 'y' chars + "SECONDMATCH" (985-996) + 200 'z' chars
+extractSnippets(body, ['firstmatch', 'secondmatch'])
 ```
 
-```ts
-const artifactResponse = async (lookup: ...) => {
-  if (!lookup.found) return lookup;
-  const document = await (await renderer).render(lookup.artifact, {
-    referenceRegistry: derived.referenceRegistry,   // live read, not the same `derived` as the lookup above
-  });
-  ...
-};
+produces:
+```
+snippet 1: bodyOffset 820, text ends "...yyyyyyyyyyyyyyySECON"   (mid-word-truncated, unhighlighted)
+snippet 2: bodyOffset 905, text starts "MATCHyyyyyyyyyyyyyyy..."  (mid-word-truncated, unhighlighted)
 ```
 
-If a `POST /api/refresh` completes on another connection between "read #1" and "read #2" (both
-awaits give the event loop a chance to run the refresh handler's synchronous
-`derived = buildDerivedViews()` reassignment), the response for this request is rendered with
-`lookup.artifact` from the *old* artifact index but `referenceRegistry` from the *new* bundle.
-Worst case this produces subtly wrong/missing cross-reference links in the rendered document for
-that one response; it does not crash or leak data, but it is a genuine violation of the atomicity
-this code's own comments promise, and the race widens under real refresh traffic (e.g. a file
-watcher in a later phase).
+Both search-result snippet cards for this row would display the same run of 85 characters of body
+text (positions 905-990), and each snippet additionally shows a plain-text, unhighlighted fragment
+of the *other* snippet's match term cut off mid-word ("SECON" / "MATCH") with no visual indication
+it's a fragment. This is exactly the "separate near-duplicate snippets" the docstring says this
+function avoids — it just isn't reachable through Test 6's same-window construction, because Test 6
+only exercises occurrences close enough to land in one window.
 
-**Fix:** Capture the bundle once per request and thread it through instead of re-reading the
-module-level `derived` binding mid-request:
-
-```ts
-app.get('/api/artifacts/*', async (c) => {
-  const activeDerived = derived;
-  ...
-  const lookup = activeDerived.artifactIndex.lookup(route.route.artifactPath);
-  if (!lookup.found) return c.json(lookup, 404);
-  return c.json(await artifactResponse(lookup, activeDerived));
-});
-
-const artifactResponse = async (
-  lookup: ReturnType<DerivedViews['artifactIndex']['lookup']>,
-  activeDerived: DerivedViews,
-) => {
-  if (!lookup.found) return lookup;
-  const document = await (await renderer).render(lookup.artifact, {
-    referenceRegistry: activeDerived.referenceRegistry,
-  });
-  ...
-};
-```
-
-Apply the same pattern to the `/api/documents` handler.
-
-### WR-02: Concurrent `POST /api/refresh` calls duplicate the full view-derivation and search-index build, not just the filesystem walk
-
-**File:** `src/server/index.ts:214-236`
-**Issue:**
-
-The coalescing comment claims: "coalesce concurrent refreshes into one in-flight filesystem walk —
-N simultaneous callers await the same promise rather than each starting their own rebuild." The
-`inFlight` promise does correctly coalesce the call into `source.refresh()` (the filesystem walk),
-but each caller that was awaiting `inFlight` independently calls `buildDerivedViews()` again after
-it resolves:
-
-```ts
-if (!inFlight) {
-  inFlight = refresh().finally(() => { inFlight = null; });
-}
-const snapshot = await inFlight;
-derived = buildDerivedViews();   // <-- runs once per concurrent caller, not once per refresh
-```
-
-`buildDerivedViews()` is not free: it rebuilds `toProjectPresentation`, `buildArtifactIndex`,
-`buildReferenceRegistry`, and schedules a full MiniSearch rebuild via `searchIndexState.buildFrom`.
-Two overlapping `POST /api/refresh` calls (e.g. a user double-clicking the refresh control, or two
-browser tabs open on the same server) trigger two full rebuilds of all four derived views and two
-MiniSearch index builds, even though only one filesystem read happened. The final result is still
-correct (both rebuilds are built from the same resolved snapshot), so this is not a correctness
-bug, but it directly contradicts the "one in-flight ... rather than each starting their own
-rebuild" framing and wastes real CPU work on every concurrent refresh.
-
-**Fix:** Coalesce the rebuild the same way the filesystem walk is coalesced — memoize the
-`buildDerivedViews()` call inside the same `inFlight`-guarded block so it also runs once per
-refresh cycle, e.g. by having `inFlight` resolve to the already-built `DerivedViews` bundle instead
-of the raw snapshot:
-
-```ts
-if (!inFlight) {
-  inFlight = refresh()
-    .then((snapshot) => {
-      derived = buildDerivedViews();
-      return snapshot;
-    })
-    .finally(() => { inFlight = null; });
-}
-const snapshot = await inFlight;
-```
+**Fix:** After selecting a window for a seed, either (a) also consume any *unconsumed* occurrence
+whose own window would overlap the just-built window (not just occurrences inside the built window),
+or (b) clip window boundaries so adjacent accepted windows never overlap (e.g. cap `windowEnd` at
+the midpoint between this seed and the next unconsumed seed). Either approach should be pinned with
+a test using two occurrences spaced in the `(windowChars/2, windowChars)` gap — the exact case this
+review's reproduction used, which the existing Test 6 does not cover.
 
 ## Info
 
-### IN-01: `Toast` tone is unconditionally `"destructive"` regardless of `toast.type`
+### IN-01: Duplicate CSS rule bodies for `data-tone='warning'` and `data-tone='destructive'`
 
-**File:** `src/web/components/ui/toast.tsx:24-38`
-**Issue:** `ToastList` renders every toast with `data-tone="destructive"` regardless of the
-toast's own `type` field:
+**File:** `src/web/styles/globals.css:2868-2882`
 
-```tsx
-{toasts.map((toast) => (
-  <Toast.Root key={toast.id} toast={toast} className="toast" data-tone="destructive">
-```
+**Issue:** `.status-chip[data-tone='destructive']` and `.status-chip[data-tone='warning']` declare
+byte-identical rule bodies (same `border-color`/`background`/`color` formula against
+`var(--destructive)`). The adjacent comment explains this is deliberate — a separate selector "so a
+future genuinely-destructive action is never silently retoned by a CSS rename" — so this is not a
+functional bug, but it is a literal duplication that will drift silently if one rule is edited
+without the other (there is no shared custom property or `@layer` composition tying them together).
 
-The comment acknowledges this is fine "today" because the refresh-failure toast is the only
-producer, but the hard-coded tone means any future non-error toast (a success/info toast, say)
-would silently inherit the destructive styling with no compile-time or test signal to catch it.
-**Fix:** Derive the tone from `toast.type` (e.g. `data-tone={toast.type === 'error' ? 'destructive' : 'quiet'}`)
-now, while there is only one call site to update, rather than leaving a footgun for the next toast
-producer.
+**Fix:** Not required to ship. If revisited, consider defining a shared `--tone-destructive-*`
+custom-property triplet that both selectors reference, preserving the two independent selectors
+(for the stated future-proofing reason) while removing the duplicated literal values.
 
 ---
 
-_Reviewed: 2026-09-03T23:54:57Z_
+_Reviewed: 2026-09-07_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_
