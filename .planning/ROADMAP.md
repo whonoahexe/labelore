@@ -205,9 +205,12 @@ Plans:
   4. Starting against a nonexistent path, or a directory with no `.planning/`, shows a message naming the problem and the exact path that was checked.
   5. Every view states when its data was read from disk, and a Refresh action re-reads the project through the same `refresh()` seam a future file watcher will call.
 
-**Plans**: 5/5 plans executed — 04-05 is a gap-closure plan added after `04-VERIFICATION.md` returned
-`gaps_found` (2 of 8 must-haves failed: D-12's shared vocabulary missing on the artifact page, and
-D-05's atomic-swap claim broken by a GET racing a refresh) *(sized at 2 at roadmap time; split to 4 because each of the four surfaces —
+**Plans**: 5/6 plans executed — 04-05 and 04-06 are gap-closure plans. 04-05 closed the two
+must-haves the first `04-VERIFICATION.md` found failed (D-12's shared vocabulary missing on the
+artifact page, and D-05's atomic-swap claim broken by a GET racing a refresh). Re-verification then
+returned `gaps_found` again at 9/10 with one new-to-that-run defect the D-12 fix newly exposed —
+D-11's disclosure prose claiming the body was recovered even under the Unreadable badge — which
+04-06 closes *(sized at 2 at roadmap time; split to 4 because each of the four surfaces —
 the refresh seam, the invalid-project screen, the damaged-artifact treatment, and the empty-state
 plus portability proof — owns a distinct file set, and `src/web/styles/globals.css` plus
 `src/web/pages/artifact-page.tsx` are touched by more than one, so a two-plan split would have put
@@ -234,6 +237,10 @@ Plans:
 **Wave 5** *(gap closure — blocked on the 04-VERIFICATION.md `gaps_found` result)*
 
 - [x] 04-05-PLAN.md — Close the two failed must-haves: the shared Warning/Unreadable vocabulary reaching the artifact page, and one derived bundle per request (TGT-06, TGT-08)
+
+**Wave 6** *(gap closure — blocked on the 04-VERIFICATION.md re-verification `gaps_found` result)*
+
+- [ ] 04-06-PLAN.md — Make the damaged-artifact disclosure honest: branch the summary on outcome so an unreadable body is never described as recovered, and a rendering-only warning is never blamed on the metadata (TGT-06)
 
 ## Progress
 
