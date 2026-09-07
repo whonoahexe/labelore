@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.0
 current_phase: 04
-current_phase_name: portability-degradation-hardening
+current_phase_name: Portability & Degradation Hardening
 status: executing
-stopped_at: Completed 04-04-PLAN.md
-last_updated: "2026-09-04T07:23:39.643Z"
-last_activity: 2026-09-04
+stopped_at: Completed 04-05-PLAN.md
+last_updated: "2026-09-07T16:15:43.965Z"
+last_activity: 2026-09-07
 last_activity_desc: Phase 04 execution started
-state_head: 83cc9f15380e7c074fd467ed52e67f4c38c7b727
+state_head: fd490d90c9afe31e74c7cfd1610b9188a9dbea40
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 29
-  completed_plans: 28
+  completed_plans: 29
 ---
 
 # Project State
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-09-02)
 
 ## Current Position
 
-Phase: 04 (portability-degradation-hardening) — READY TO EXECUTE
-Plan: 1 of 4
+Phase: 04 (Portability & Degradation Hardening) — EXECUTING
+Plan: 2 of 5
 Status: Ready to execute
-Last activity: 2026-09-04 — Phase 04 execution started
+Last activity: 2026-09-07 — Phase 04 execution started
 
 Progress: [████████░░] 75%
 
@@ -72,6 +72,7 @@ Progress: [████████░░] 75%
 | Phase 04 P02 | 76min | 3 tasks | 6 files |
 | Phase 04 P03 | 40min | 3 tasks | 13 files |
 | Phase 04 P04 | 45min | 3 tasks | 7 files |
+| Phase 04 P05 | 15min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -106,6 +107,8 @@ Recent decisions affecting current work:
 - [Phase 04]: [04-03]: The artifact-page header badge and the disclosure's own outer <summary> are two separate DOM nodes sharing the 'Warning' label and .status-chip styling rather than one clickable element, since native <details> makes the summary itself the interactive control.
 - [Phase 04]: [Phase 04][04-04]: EmptyState's block variant reuses .empty-flow with a new data-tone='quiet' attribute rather than a new class, scoping the D-09 neutral-icon correction to exactly the generic empty state.
 - [Phase 04]: [Phase 04][04-04]: The adversarial portability suite (test/portability.test.ts) drives the real Hono app via mkdtemp fixture copies (mountFixture/serve), never a synthetic snapshot literal, so the committed fixture corpus is provably unmodified.
+- [Phase 04]: [Phase 04][04-05]: warningTone on artifact-page.tsx is computed once from the combined artifact.warnings + document.warnings arrays and artifact.bodyLength, then read at both the header badge and disclosure summary — one binding, mirroring search-page.tsx's row.warningTone ternary shape exactly.
+- [Phase 04]: [Phase 04][04-05]: activeDerived is captured as the literal first statement in both /api/artifacts/* and /api/documents (before URL parsing) so the capture always precedes the handler's first await, closing the D-05 race where a concurrent refresh could otherwise mix pre- and post-refresh data in one response.
 
 ### Pending Todos
 
@@ -133,6 +136,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-03T23:46:50.393Z
-Stopped at: Completed 04-04-PLAN.md
+Last session: 2026-09-07T16:15:43.868Z
+Stopped at: Completed 04-05-PLAN.md
 Resume file: None
