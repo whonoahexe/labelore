@@ -8,6 +8,7 @@ import {
   artifactWarningTone,
   type ArtifactWarningTone,
 } from '../../presentation/artifact-warning-tone.ts';
+import { artifactWarningSummary } from '../../presentation/artifact-warning-summary.ts';
 import {
   buildMilestoneUrl,
   buildPhaseUrl,
@@ -356,6 +357,11 @@ export function ArtifactPage(): React.JSX.Element {
     warnings: [...artifact.warnings, ...document.warnings],
     bodyLength: artifact.bodyLength,
   });
+  const warningSummary = artifactWarningSummary({
+    tone: warningTone,
+    structuralWarningCount: artifact.warnings.length,
+    renderWarningCount: document.warnings.length,
+  });
   return (
     <main className="artifact-page">
       <nav className="artifact-breadcrumbs" aria-label="Breadcrumb">
@@ -410,9 +416,7 @@ export function ArtifactPage(): React.JSX.Element {
             </span>
           </summary>
           <div className="metadata-panels warning-disclosure-body" aria-label="Warning details">
-            <p>
-              Some of this document's structured metadata could not be read. The document text below was recovered and is shown normally.
-            </p>
+            {warningSummary ? <p>{warningSummary}</p> : null}
             <details className="warning-technical-details">
               <summary>Technical details</summary>
               {artifact.warnings.length > 0 ? (

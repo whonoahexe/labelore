@@ -4,6 +4,7 @@
 // src/web/**, and sets no --jsx option.
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
+import { ARTIFACT_WARNING_SUMMARIES } from '../../src/presentation/artifact-warning-summary.ts';
 
 async function source(path: string): Promise<string> {
   return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
@@ -22,9 +23,13 @@ describe('degradation UI contract (D-10, D-11, D-12, D-13)', () => {
 
   it('renders one generic plain-language summary, never a per-parser-stage variant (D-11)', async () => {
     const page = await source('src/web/pages/artifact-page.tsx');
-    expect(page).toContain(
-      "Some of this document's structured metadata could not be read. The document text below was recovered and is shown normally.",
-    );
+    expect(page).toContain('artifact-warning-summary.ts');
+    expect((page.match(/artifactWarningSummary\(/g) ?? []).length).toBe(1);
+    for (const value of Object.values(ARTIFACT_WARNING_SUMMARIES)) {
+      expect(page).not.toContain(value);
+    }
+    const stripped = page.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    expect(stripped).toMatch(/artifactWarningSummary\(\{\s*tone:\s*warningTone/);
     // The summary string is never branched on a WarningStage literal.
     for (const stage of ['frontmatter', 'structured-extraction', 'assembly']) {
       expect(page).not.toMatch(new RegExp(`stage === '${stage}'`));
