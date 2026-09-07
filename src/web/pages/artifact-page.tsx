@@ -5,6 +5,10 @@ import type { PhaseIdentity } from '../../domain/model.ts';
 import type { ParseWarning } from '../../planning-repo/types.ts';
 import { EmptyState } from '../components/empty-state.tsx';
 import {
+  artifactWarningTone,
+  type ArtifactWarningTone,
+} from '../../presentation/artifact-warning-tone.ts';
+import {
   buildMilestoneUrl,
   buildPhaseUrl,
   presentationRoutePatterns,
@@ -37,6 +41,9 @@ interface ArtifactDocumentResponse {
     /** D-11: the four-field ParseWarning record, passed through unchanged from the domain layer —
      * rendered structurally in the technical-details disclosure below, never stringified. */
     warnings: ParseWarning[];
+    /** D-12/TGT-06: the did-the-body-survive signal artifactWarningTone() needs to compute the
+     * same tone the tree and search rows already show for this artifact. */
+    bodyLength: number;
   };
   phaseIdentity: PhaseIdentity | null;
   document: RenderedDocument;
@@ -342,9 +349,13 @@ export function ArtifactPage(): React.JSX.Element {
   }
 
   const { artifact, phaseIdentity, document } = query.data;
-  // D-10/D-11: whether this artifact needs the badge/disclosure at all — a structured-metadata
-  // parse warning on the artifact, a document-level warning, or both.
-  const hasWarnings = artifact.warnings.length > 0 || document.warnings.length > 0;
+  // D-10/D-11/D-12: one shared derivation of the damaged-artifact tone — the same function
+  // tree.ts and search.ts call — computed from both warning arrays (a document-level warning
+  // also earns a badge, per D-10) and the artifact's own bodyLength.
+  const warningTone: ArtifactWarningTone = artifactWarningTone({
+    warnings: [...artifact.warnings, ...document.warnings],
+    bodyLength: artifact.bodyLength,
+  });
   return (
     <main className="artifact-page">
       <nav className="artifact-breadcrumbs" aria-label="Breadcrumb">
@@ -367,9 +378,9 @@ export function ArtifactPage(): React.JSX.Element {
 
       <header className="artifact-heading">
         <p className="eyebrow">{artifact.kind}</p>
-        {hasWarnings ? (
-          <span className="status-chip" data-tone="warning">
-            Warning
+        {warningTone ? (
+          <span className="status-chip" data-tone={warningTone === 'unreadable' ? 'destructive' : 'warning'}>
+            {warningTone === 'unreadable' ? 'Unreadable' : 'Warning'}
           </span>
         ) : null}
         <h1>{artifact.title}</h1>
@@ -391,11 +402,11 @@ export function ArtifactPage(): React.JSX.Element {
         <EmptyState />
       )}
 
-      {hasWarnings ? (
+      {warningTone ? (
         <details className="artifact-metadata artifact-warning-disclosure">
           <summary>
-            <span className="status-chip" data-tone="warning">
-              Warning
+            <span className="status-chip" data-tone={warningTone === 'unreadable' ? 'destructive' : 'warning'}>
+              {warningTone === 'unreadable' ? 'Unreadable' : 'Warning'}
             </span>
           </summary>
           <div className="metadata-panels warning-disclosure-body" aria-label="Warning details">
