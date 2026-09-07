@@ -44,8 +44,41 @@ describe('degradation UI contract (D-10, D-11, D-12, D-13)', () => {
     const tree = await source('src/web/components/tree-navigator.tsx');
     const search = await source('src/web/pages/search-page.tsx');
 
-    expect(page).toContain('data-tone="warning"');
-    expect(page).toMatch(/>\s*Warning\s*</);
+    // The tone is computed, not a static literal: the page imports the shared derivation and
+    // calls it, and both quoted labels appear (proving the Unreadable branch is reachable here).
+    expect(page).toContain('artifact-warning-tone.ts');
+    expect(page).toContain('artifactWarningTone(');
+    expect(page).toContain("'Warning'");
+    expect(page).toContain("'Unreadable'");
+    // No statically-quoted tone attribute anywhere on this page — every data-tone occurrence must
+    // be expression-valued.
+    expect(page).not.toMatch(/data-tone="[^"]*"/);
+    const expressionValuedToneCount = (page.match(/data-tone=\{/g) ?? []).length;
+    expect(expressionValuedToneCount).toBe(2);
+
+    // Mapping assertion (not mere co-presence): strip comments, then pin both directions of the
+    // tone/label mapping via the guard-anchored ternary shape search-page.tsx already satisfies.
+    const stripped = page.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    const mappingRegex = /warningTone\s*===\s*'unreadable'\s*\?\s*'([^']*)'\s*:\s*'([^']*)'/g;
+    const pairs = [...stripped.matchAll(mappingRegex)].map(([, consequent, alternate]) => `${consequent}|${alternate}`);
+    expect(pairs).toHaveLength(4);
+    expect(pairs.filter((pair) => pair === 'Unreadable|Warning')).toHaveLength(2);
+    expect(pairs.filter((pair) => pair === 'destructive|warning')).toHaveLength(2);
+
+    // Both sites, one binding: neither label can be rendered outside the guard above, and both
+    // sites provably read the same tone value.
+    expect((stripped.match(/'Unreadable'/g) ?? []).length).toBe(2);
+    expect((stripped.match(/'Warning'/g) ?? []).length).toBe(2);
+    expect((stripped.match(/const warningTone/g) ?? []).length).toBe(1);
+
+    // Satisfiability check against the existing correct call site: the same regex over
+    // search-page.tsx today yields exactly destructive|warning and Unreadable|Warning.
+    const searchStripped = search.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    const searchPairs = [...searchStripped.matchAll(mappingRegex)].map(
+      ([, consequent, alternate]) => `${consequent}|${alternate}`,
+    );
+    expect(searchPairs).toContain('destructive|warning');
+    expect(searchPairs).toContain('Unreadable|Warning');
 
     expect(tree).toContain('warningTone');
     expect(tree).toContain("'Warning'");

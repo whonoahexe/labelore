@@ -94,6 +94,9 @@ export function createApp(
         frontmatter: jsonRecord(lookup.artifact.frontmatter),
         structured: jsonRecord(lookup.artifact.structured),
         warnings: lookup.artifact.warnings,
+        // D-12/TGT-06: forwarded unchanged so the client can compute the same
+        // artifactWarningTone() the tree and search rows already show for this artifact.
+        bodyLength: lookup.artifact.bodyLength,
       },
       phaseIdentity: lookup.phaseIdentity,
       document,
