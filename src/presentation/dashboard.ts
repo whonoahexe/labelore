@@ -254,7 +254,7 @@ function blockerWork(
   presentation: ProjectPresentation,
   currentPhase: PhaseDto | null,
 ): NextWorkItem | null {
-  const blocker = presentation.blockers[0];
+  const blocker = presentation.blockers.find((candidate) => !isPlaceholderBlocker(candidate.text));
   if (!blocker) return null;
   return {
     kind: 'blocker',
@@ -265,6 +265,10 @@ function blockerWork(
     description: blocker.text,
     url: currentPhase ? buildPhaseUrl(currentPhase.identity) : '/roadmap',
   };
+}
+
+function isPlaceholderBlocker(text: string): boolean {
+  return /^none(?:\s+yet)?[.!]?$/i.test(text.trim());
 }
 
 function nextWork(
@@ -315,6 +319,7 @@ function attentionItems(
     });
   }
   for (const blocker of presentation.blockers) {
+    if (isPlaceholderBlocker(blocker.text)) continue;
     items.push({
       type: 'blocker',
       key: `blocker:${blocker.key}`,
@@ -414,7 +419,8 @@ export function buildDashboardViewModel(presentation: ProjectPresentation): Dash
         ),
         computedPercent: {
           value: computedPercent,
-          display: computedPercent === null ? 'Not recorded' : formatPercentDisplay(computedPercent),
+          display:
+            computedPercent === null ? 'Not recorded' : formatPercentDisplay(computedPercent),
           provenance: { kind: 'derived', ref: `${statePath}#progress.completed_plans/total_plans` },
         },
       },

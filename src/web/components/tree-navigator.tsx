@@ -9,7 +9,11 @@ import type { TreeNode } from '../../presentation/tree.ts';
 function WarningIndicator({ tone }: { tone: TreeNode['warningTone'] }): React.JSX.Element | null {
   if (tone === null) return null;
   return (
-    <span className="status-chip" data-tone={tone === 'unreadable' ? 'destructive' : 'warning'}>
+    <span
+      className="tree-warning-indicator status-chip"
+      data-tone={tone === 'unreadable' ? 'destructive' : 'warning'}
+    >
+      <span className="sr-only">, status: </span>
       {tone === 'unreadable' ? 'Unreadable' : 'Warning'}
     </span>
   );
@@ -107,7 +111,11 @@ function TreeBranch({
       <details className="tree-disclosure" ref={detailsRef} open={node.nodeType === 'group'}>
         <summary className="tree-node-row" data-active={isActive ? 'true' : undefined}>
           {node.url ? (
-            <Link to={node.url} className={labelClassName} onClick={(event) => event.stopPropagation()}>
+            <Link
+              to={node.url}
+              className={labelClassName}
+              onClick={(event) => event.stopPropagation()}
+            >
               {node.label}
             </Link>
           ) : (
@@ -116,7 +124,12 @@ function TreeBranch({
         </summary>
         <ul className="tree-children">
           {node.children.map((child) => (
-            <TreeBranch key={child.key} node={child} pathname={pathname} routeOpenKeys={routeOpenKeys} />
+            <TreeBranch
+              key={child.key}
+              node={child}
+              pathname={pathname}
+              routeOpenKeys={routeOpenKeys}
+            />
           ))}
         </ul>
       </details>
@@ -155,7 +168,12 @@ export function TreeNavigator({
     <nav className="tree-navigator" aria-label="Planning directory tree">
       <ul className="tree-root">
         {tree.map((group) => (
-          <TreeBranch key={group.key} node={group} pathname={pathname} routeOpenKeys={routeOpenKeys} />
+          <TreeBranch
+            key={group.key}
+            node={group}
+            pathname={pathname}
+            routeOpenKeys={routeOpenKeys}
+          />
         ))}
       </ul>
     </nav>
