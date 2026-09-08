@@ -21,7 +21,7 @@ this fixture project needs — including types studio-portal has never produced.
 
 ### Corruption boundary
 - **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02
-  hardening task and plan 01-02 of the real GSD Lore project introduce corruption elsewhere.
+  hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere.
 
 ### Claude's Discretion
 Everything not named above is open — this is a fixture, not a real implementation target.

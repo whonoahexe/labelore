@@ -2,9 +2,9 @@
 
 ## Project
 
-**GSD Lore**
+**Labelore**
 
-GSD Lore is a read-only web dashboard that makes a GSD `.planning/` directory legible. It lives in its
+Labelore is a read-only web dashboard that makes a GSD `.planning/` directory legible. It lives in its
 own repository, is started with a path argument pointing at any GSD-managed project, and renders that
 project's planning state: where the work stands, what every phase and plan contains, and where the
 accumulated decisions, learnings, and review findings are buried. It is a personal tool, built to
@@ -15,7 +15,7 @@ artifact lives — without reading a single file by hand.
 
 ### Constraints
 
-- **Deployment**: Clone-and-run from its own repo at `~/gsd-lore`, targeted with a path argument at
+- **Deployment**: Clone-and-run from its own repo at `~/labelore`, targeted with a path argument at
   startup — Not a per-project install, not a published CLI, not a hosted service. Keeps v1 setup trivial.
 
 - **Access**: Read-only filesystem access to the target `.planning/` — The tool must be incapable of
@@ -101,7 +101,7 @@ artifact lives — without reading a single file by hand.
 
 | Recommended | Alternative | When to Use Alternative |
 |-------------|-------------|--------------------------|
-| Vite + React SPA + Hono | Next.js 16 App Router | If GSD Lore ever grows a networked/multi-user mode, needs SEO, or you specifically want RSC's fs-read-with-no-API-layer for a much larger artifact tree where the API surface really would dominate the codebase. Not this project's v1. |
+| Vite + React SPA + Hono | Next.js 16 App Router | If Labelore ever grows a networked/multi-user mode, needs SEO, or you specifically want RSC's fs-read-with-no-API-layer for a much larger artifact tree where the API surface really would dominate the codebase. Not this project's v1. |
 | Hono | Express 5.2.1 | If you want the single most battle-tested, tutorial-everywhere Node server — functionally equivalent here, just more ceremony (middleware chaining conventions, no built-in SSE helper) for ~6 routes. |
 | Hono | Fastify 5.12.1 | If you want built-in JSON-schema request/response validation — not a real need for a read-only local API with a handful of routes. |
 | MiniSearch | FlexSearch 0.8.212 | If corpus grows into the tens of thousands of documents and raw index-build/query speed becomes the bottleneck. At "a few hundred markdown files," both are instant; MiniSearch's incremental `add`/`remove`/`discard` API and cleaner TS-native docs win on maintainability. |

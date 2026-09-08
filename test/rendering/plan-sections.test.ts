@@ -8,7 +8,7 @@ import { createArtifactRenderer } from '../../src/rendering/markdown.ts';
 import type { PhaseDto, ProjectPresentation } from '../../src/server/project-presentation.ts';
 
 const CORPUS_PLAN_PATH =
-  process.env.GSD_LORE_CORPUS ??
+  process.env.LABELORE_CORPUS ??
   '/home/cinedise/studio-portal/.planning/phases/01-portal-owned-identity-sessions/01-01-PLAN.md';
 
 function artifact(

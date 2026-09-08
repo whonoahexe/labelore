@@ -15,7 +15,7 @@ export const queryClient = new QueryClient({
 });
 
 const rootElement = document.getElementById('root');
-if (!rootElement) throw new Error('GSD Lore root element was not found');
+if (!rootElement) throw new Error('Labelore root element was not found');
 
 createRoot(rootElement).render(
   <StrictMode>

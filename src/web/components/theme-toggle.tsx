@@ -1,7 +1,7 @@
 import { Moon, Sun } from 'lucide-react';
 import { Button } from './ui/button.tsx';
 
-export const THEME_STORAGE_KEY = 'gsd-lore-theme';
+export const THEME_STORAGE_KEY = 'labelore-theme';
 
 export function ThemeToggle(): React.JSX.Element {
   function handleClick(): void {

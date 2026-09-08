@@ -38,7 +38,7 @@ const mountedRoots: string[] = [];
  * Every mutation this suite performs happens on the returned copy, cleaned up in afterAll. */
 async function mountFixture(name: string): Promise<string> {
   const fixtureRoot = join(FIXTURES_ROOT, name);
-  const tmpRoot = await mkdtemp(join(tmpdir(), `gsd-lore-portability-${name}-`));
+  const tmpRoot = await mkdtemp(join(tmpdir(), `labelore-portability-${name}-`));
   await cp(fixtureRoot, tmpRoot, { recursive: true });
   mountedRoots.push(tmpRoot);
   return tmpRoot;

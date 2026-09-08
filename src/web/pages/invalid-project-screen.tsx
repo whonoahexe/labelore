@@ -6,7 +6,7 @@ import { ThemeToggle } from '../components/theme-toggle.tsx';
 
 /**
  * D-17: the only restart affordance on this screen is copy-to-terminal. `package.json` declares
- * no `bin` entry, so `npx gsd-lore ...` is not a real invocation for this repo — `dev` is the
+ * no `bin` entry, so `npx labelore ...` is not a real invocation for this repo — `dev` is the
  * declared script that starts the server against a path argument.
  */
 const RESTART_COMMAND = 'npm run dev -- /path/to/your/project';

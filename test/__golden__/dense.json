@@ -2781,13 +2781,13 @@
                 "frontmatter": {},
                 "title": "Phase 1: Identity Slice - Context",
                 "bodyLength": 2096,
-                "bodyHash": "b4e327b378e74e6f0597daa10f5888379d187e4107a016e171b26c7c0d323a4a",
+                "bodyHash": "dcd7a117f0e8857446bacd1816a652aacddac87da7088276f439e8ebca4e0a98",
                 "mtimeMs": 0,
                 "warnings": [],
                 "structured": {
                   "sections": {
                     "domain": "## Phase Boundary\n\nDeliver the identity vertical slice and, along the way, exercise the full spread of artifact types\nthis fixture project needs — including types studio-portal has never produced.",
-                    "decisions": "## Implementation Decisions\n\n### Artifact spread\n- **D-01:** Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own\n  `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the\n  generic-markdown fallback.\n\n### Corruption boundary\n- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02\n  hardening task and plan 01-02 of the real GSD Lore project introduce corruption elsewhere.\n\n### Claude's Discretion\nEverything not named above is open — this is a fixture, not a real implementation target.",
+                    "decisions": "## Implementation Decisions\n\n### Artifact spread\n- **D-01:** Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own\n  `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the\n  generic-markdown fallback.\n\n### Corruption boundary\n- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02\n  hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere.\n\n### Claude's Discretion\nEverything not named above is open — this is a fixture, not a real implementation target.",
                     "specifics": "## Specific Ideas\n\nNo specific requirements — open to standard approaches. This phase exists to prove the artifact-type\nbreadth claim, not to model realistic product decisions.",
                     "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows\n- `~/.claude/gsd-core/bin/lib/artifacts.cjs` — `CANONICAL_EXACT`/`CANONICAL_PATTERNS`, the ground truth\n  for which root files are canonical",
                     "code_context": "## Existing Code Insights\n\n### Reusable Assets\nNone — this is a synthetic fixture tree with no code.\n\n### Established Patterns\n- Registry-dispatched artifact handlers, generic handler unconditional and last (from plan `01-01`).\n\n### Integration Points\nNone — the fixture has no downstream phase beyond Phase 2 within this same tree.",
@@ -5102,13 +5102,13 @@
             "frontmatter": {},
             "title": "Phase 1: Identity Slice - Context",
             "bodyLength": 2096,
-            "bodyHash": "b4e327b378e74e6f0597daa10f5888379d187e4107a016e171b26c7c0d323a4a",
+            "bodyHash": "dcd7a117f0e8857446bacd1816a652aacddac87da7088276f439e8ebca4e0a98",
             "mtimeMs": 0,
             "warnings": [],
             "structured": {
               "sections": {
                 "domain": "## Phase Boundary\n\nDeliver the identity vertical slice and, along the way, exercise the full spread of artifact types\nthis fixture project needs — including types studio-portal has never produced.",
-                "decisions": "## Implementation Decisions\n\n### Artifact spread\n- **D-01:** Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own\n  `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the\n  generic-markdown fallback.\n\n### Corruption boundary\n- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02\n  hardening task and plan 01-02 of the real GSD Lore project introduce corruption elsewhere.\n\n### Claude's Discretion\nEverything not named above is open — this is a fixture, not a real implementation target.",
+                "decisions": "## Implementation Decisions\n\n### Artifact spread\n- **D-01:** Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own\n  `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the\n  generic-markdown fallback.\n\n### Corruption boundary\n- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02\n  hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere.\n\n### Claude's Discretion\nEverything not named above is open — this is a fixture, not a real implementation target.",
                 "specifics": "## Specific Ideas\n\nNo specific requirements — open to standard approaches. This phase exists to prove the artifact-type\nbreadth claim, not to model realistic product decisions.",
                 "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows\n- `~/.claude/gsd-core/bin/lib/artifacts.cjs` — `CANONICAL_EXACT`/`CANONICAL_PATTERNS`, the ground truth\n  for which root files are canonical",
                 "code_context": "## Existing Code Insights\n\n### Reusable Assets\nNone — this is a synthetic fixture tree with no code.\n\n### Established Patterns\n- Registry-dispatched artifact handlers, generic handler unconditional and last (from plan `01-01`).\n\n### Integration Points\nNone — the fixture has no downstream phase beyond Phase 2 within this same tree.",
@@ -6593,13 +6593,13 @@
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice - Context",
                   "bodyLength": 2096,
-                  "bodyHash": "b4e327b378e74e6f0597daa10f5888379d187e4107a016e171b26c7c0d323a4a",
+                  "bodyHash": "dcd7a117f0e8857446bacd1816a652aacddac87da7088276f439e8ebca4e0a98",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
                     "sections": {
                       "domain": "## Phase Boundary\n\nDeliver the identity vertical slice and, along the way, exercise the full spread of artifact types\nthis fixture project needs — including types studio-portal has never produced.",
-                      "decisions": "## Implementation Decisions\n\n### Artifact spread\n- **D-01:** Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own\n  `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the\n  generic-markdown fallback.\n\n### Corruption boundary\n- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02\n  hardening task and plan 01-02 of the real GSD Lore project introduce corruption elsewhere.\n\n### Claude's Discretion\nEverything not named above is open — this is a fixture, not a real implementation target.",
+                      "decisions": "## Implementation Decisions\n\n### Artifact spread\n- **D-01:** Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own\n  `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the\n  generic-markdown fallback.\n\n### Corruption boundary\n- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02\n  hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere.\n\n### Claude's Discretion\nEverything not named above is open — this is a fixture, not a real implementation target.",
                       "specifics": "## Specific Ideas\n\nNo specific requirements — open to standard approaches. This phase exists to prove the artifact-type\nbreadth claim, not to model realistic product decisions.",
                       "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows\n- `~/.claude/gsd-core/bin/lib/artifacts.cjs` — `CANONICAL_EXACT`/`CANONICAL_PATTERNS`, the ground truth\n  for which root files are canonical",
                       "code_context": "## Existing Code Insights\n\n### Reusable Assets\nNone — this is a synthetic fixture tree with no code.\n\n### Established Patterns\n- Registry-dispatched artifact handlers, generic handler unconditional and last (from plan `01-01`).\n\n### Integration Points\nNone — the fixture has no downstream phase beyond Phase 2 within this same tree.",
@@ -7833,13 +7833,13 @@
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice - Context",
                   "bodyLength": 2096,
-                  "bodyHash": "b4e327b378e74e6f0597daa10f5888379d187e4107a016e171b26c7c0d323a4a",
+                  "bodyHash": "dcd7a117f0e8857446bacd1816a652aacddac87da7088276f439e8ebca4e0a98",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
                     "sections": {
                       "domain": "## Phase Boundary\n\nDeliver the identity vertical slice and, along the way, exercise the full spread of artifact types\nthis fixture project needs — including types studio-portal has never produced.",
-                      "decisions": "## Implementation Decisions\n\n### Artifact spread\n- **D-01:** Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own\n  `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the\n  generic-markdown fallback.\n\n### Corruption boundary\n- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02\n  hardening task and plan 01-02 of the real GSD Lore project introduce corruption elsewhere.\n\n### Claude's Discretion\nEverything not named above is open — this is a fixture, not a real implementation target.",
+                      "decisions": "## Implementation Decisions\n\n### Artifact spread\n- **D-01:** Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own\n  `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the\n  generic-markdown fallback.\n\n### Corruption boundary\n- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02\n  hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere.\n\n### Claude's Discretion\nEverything not named above is open — this is a fixture, not a real implementation target.",
                       "specifics": "## Specific Ideas\n\nNo specific requirements — open to standard approaches. This phase exists to prove the artifact-type\nbreadth claim, not to model realistic product decisions.",
                       "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows\n- `~/.claude/gsd-core/bin/lib/artifacts.cjs` — `CANONICAL_EXACT`/`CANONICAL_PATTERNS`, the ground truth\n  for which root files are canonical",
                       "code_context": "## Existing Code Insights\n\n### Reusable Assets\nNone — this is a synthetic fixture tree with no code.\n\n### Established Patterns\n- Registry-dispatched artifact handlers, generic handler unconditional and last (from plan `01-01`).\n\n### Integration Points\nNone — the fixture has no downstream phase beyond Phase 2 within this same tree.",
@@ -9073,13 +9073,13 @@
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice - Context",
                   "bodyLength": 2096,
-                  "bodyHash": "b4e327b378e74e6f0597daa10f5888379d187e4107a016e171b26c7c0d323a4a",
+                  "bodyHash": "dcd7a117f0e8857446bacd1816a652aacddac87da7088276f439e8ebca4e0a98",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
                     "sections": {
                       "domain": "## Phase Boundary\n\nDeliver the identity vertical slice and, along the way, exercise the full spread of artifact types\nthis fixture project needs — including types studio-portal has never produced.",
-                      "decisions": "## Implementation Decisions\n\n### Artifact spread\n- **D-01:** Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own\n  `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the\n  generic-markdown fallback.\n\n### Corruption boundary\n- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02\n  hardening task and plan 01-02 of the real GSD Lore project introduce corruption elsewhere.\n\n### Claude's Discretion\nEverything not named above is open — this is a fixture, not a real implementation target.",
+                      "decisions": "## Implementation Decisions\n\n### Artifact spread\n- **D-01:** Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own\n  `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the\n  generic-markdown fallback.\n\n### Corruption boundary\n- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02\n  hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere.\n\n### Claude's Discretion\nEverything not named above is open — this is a fixture, not a real implementation target.",
                       "specifics": "## Specific Ideas\n\nNo specific requirements — open to standard approaches. This phase exists to prove the artifact-type\nbreadth claim, not to model realistic product decisions.",
                       "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows\n- `~/.claude/gsd-core/bin/lib/artifacts.cjs` — `CANONICAL_EXACT`/`CANONICAL_PATTERNS`, the ground truth\n  for which root files are canonical",
                       "code_context": "## Existing Code Insights\n\n### Reusable Assets\nNone — this is a synthetic fixture tree with no code.\n\n### Established Patterns\n- Registry-dispatched artifact handlers, generic handler unconditional and last (from plan `01-01`).\n\n### Integration Points\nNone — the fixture has no downstream phase beyond Phase 2 within this same tree.",
@@ -10842,7 +10842,7 @@
               "line": 24,
               "offset": 747
             },
-            "excerpt": "hardening task and plan 01-02 of the real GSD Lore project introduce corruption elsewhere."
+            "excerpt": "hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere."
           },
           {
             "scheme": "plan",
@@ -11928,7 +11928,7 @@
             "line": 24,
             "offset": 747
           },
-          "excerpt": "hardening task and plan 01-02 of the real GSD Lore project introduce corruption elsewhere."
+          "excerpt": "hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere."
         },
         {
           "scheme": "phase",

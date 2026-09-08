@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpenText, LayoutDashboard, ListChecks, Map, Radio } from 'lucide-react';
+import { LayoutDashboard, ListChecks, Map, Radio, Tag } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
@@ -68,10 +68,10 @@ export function AppShell(): React.JSX.Element {
         <header className="shell-header" ref={headerRef}>
           <NavLink className="brand" to={presentationRoutePatterns.dashboard}>
             <span className="brand-mark" aria-hidden="true">
-              <BookOpenText />
+              <Tag />
             </span>
             <span>
-              <strong>GSD Lore</strong>
+              <strong>Labelore</strong>
               <small>{presentation.data?.projectName ?? 'Planning intelligence'}</small>
             </span>
           </NavLink>

@@ -85,7 +85,7 @@ function presentation(milestones: MilestoneDto[]): ProjectPresentation {
     readAt: '2026-08-27T04:00:00.000Z',
     loadStatus: { status: 'ok' },
     rootPath: '/project',
-    projectName: 'GSD Lore',
+    projectName: 'Labelore',
     config: {},
     state: null,
     milestones,

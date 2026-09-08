@@ -63,7 +63,7 @@ describe('resolveTargetPath — path targeting contract', () => {
   });
 
   it("resolves a symlinked root to the symlink's target, not the link path", () => {
-    const tmp = mkdtempSync(join(tmpdir(), 'gsd-lore-symlink-'));
+    const tmp = mkdtempSync(join(tmpdir(), 'labelore-symlink-'));
     cleanupPaths.push(tmp);
     const linkPath = join(tmp, 'project-link');
     symlinkSync(FIXTURE_ROOT, linkPath, 'dir');
@@ -92,7 +92,7 @@ describe('resolveTargetPath — path targeting contract', () => {
   });
 
   it('returns not-a-gsd-project for an existing directory with no .planning child, without throwing', () => {
-    const tmp = mkdtempSync(join(tmpdir(), 'gsd-lore-noproject-'));
+    const tmp = mkdtempSync(join(tmpdir(), 'labelore-noproject-'));
     cleanupPaths.push(tmp);
     const result = resolveTargetPath(tmp);
     expect('status' in result && result.status).toBe('not-a-gsd-project');
@@ -107,7 +107,7 @@ describe('resolveTargetPath — path targeting contract', () => {
       // A root process can read a mode-000 directory — the assertion would be vacuous.
       return;
     }
-    const tmp = mkdtempSync(join(tmpdir(), 'gsd-lore-noperm-'));
+    const tmp = mkdtempSync(join(tmpdir(), 'labelore-noperm-'));
     cleanupPaths.push(tmp);
     chmodSync(tmp, 0o000);
     const result = resolveTargetPath(tmp);
@@ -129,7 +129,7 @@ describe('resolveTargetPath — path targeting contract', () => {
 
   it('resolves an empty path argument relative to process.cwd(), never throwing and never path-not-found for a directory that exists (TGT-07 empty)', () => {
     const originalCwd = process.cwd();
-    const tmp = mkdtempSync(join(tmpdir(), 'gsd-lore-emptyarg-'));
+    const tmp = mkdtempSync(join(tmpdir(), 'labelore-emptyarg-'));
     cleanupPaths.push(tmp);
     process.chdir(tmp);
     try {
@@ -173,7 +173,7 @@ describe('resolveTargetPath — path targeting contract', () => {
 
 describe('inside-tree symlink escape', () => {
   it('refuses to return content for a symlink inside the tree resolving outside the canonicalized root, recording a stage "read" warning naming the escaping path', async () => {
-    const tmp = mkdtempSync(join(tmpdir(), 'gsd-lore-escape-'));
+    const tmp = mkdtempSync(join(tmpdir(), 'labelore-escape-'));
     cleanupPaths.push(tmp);
     const projectRoot = join(tmp, 'project');
     const outside = join(tmp, 'outside-secret.md');
