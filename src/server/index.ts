@@ -377,14 +377,14 @@ async function runCli(): Promise<void> {
       if (!dashboard.ok || !root.ok || !payload.readAt || !payload.loadStatus) {
         throw new Error('Smoke response contract failed');
       }
-      console.log(`GSD Lore smoke passed for ${options.rawPath}`);
+      console.log(`Labelore smoke passed for ${options.rawPath}`);
     } finally {
       server.close();
     }
     return;
   }
 
-  console.log(`GSD Lore is reading ${options.rawPath}`);
+  console.log(`Labelore is reading ${options.rawPath}`);
   console.log(`Open ${baseUrl}`);
 }
 

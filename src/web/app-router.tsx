@@ -37,7 +37,7 @@ function NotFound(): React.JSX.Element {
       <h1>This local route does not exist.</h1>
       <section className="notice">
         <h2>Nothing is mapped here</h2>
-        <p>The address is outside the current GSD Lore route tree.</p>
+        <p>The address is outside the current Labelore route tree.</p>
         <Link to={presentationRoutePatterns.dashboard}>Return to the dashboard</Link>
       </section>
     </main>

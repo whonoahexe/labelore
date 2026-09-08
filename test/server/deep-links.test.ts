@@ -25,13 +25,13 @@ const phase: PhaseIdentity = {
 
 describe('production SPA deep-link delivery', () => {
   let staticRoot = '';
-  const shell = '<!doctype html><html><body><div id="root">GSD Lore shell</div></body></html>';
+  const shell = '<!doctype html><html><body><div id="root">Labelore shell</div></body></html>';
 
   beforeAll(async () => {
-    staticRoot = await mkdtemp(join(tmpdir(), 'gsd-lore-deep-links-'));
+    staticRoot = await mkdtemp(join(tmpdir(), 'labelore-deep-links-'));
     await mkdir(join(staticRoot, 'assets'));
     await writeFile(join(staticRoot, 'index.html'), shell);
-    await writeFile(join(staticRoot, 'assets', 'app.js'), 'window.__GSD_LORE__ = true;');
+    await writeFile(join(staticRoot, 'assets', 'app.js'), 'window.__LABELORE__ = true;');
   });
 
   afterAll(async () => {
@@ -66,11 +66,11 @@ describe('production SPA deep-link delivery', () => {
 
     const asset = await app.request('/assets/app.js');
     expect(asset.status).toBe(200);
-    expect(await asset.text()).toBe('window.__GSD_LORE__ = true;');
+    expect(await asset.text()).toBe('window.__LABELORE__ = true;');
 
     const missingAsset = await app.request('/assets/missing.js');
     expect(missingAsset.status).toBe(404);
-    expect(await missingAsset.text()).not.toContain('GSD Lore shell');
+    expect(await missingAsset.text()).not.toContain('Labelore shell');
   });
 
   it('serves presentation, dashboard, roadmap, and history from the same snapshot identity', async () => {

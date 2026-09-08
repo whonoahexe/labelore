@@ -216,7 +216,7 @@ export function parsePresentationUrl(input: string): PresentationRouteParseResul
 
   let pathname: string;
   try {
-    pathname = new URL(headingResult.path, 'http://gsd-lore.local').pathname;
+    pathname = new URL(headingResult.path, 'http://labelore.local').pathname;
   } catch {
     return failure('malformed-token', 'URL could not be parsed');
   }

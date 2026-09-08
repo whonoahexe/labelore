@@ -4,10 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
+    <meta name="application-name" content="Labelore" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <script>
       (() => {
         try {
-          const storedTheme = localStorage.getItem('gsd-lore-theme');
+          const storedTheme = localStorage.getItem('labelore-theme');
           document.documentElement.classList.toggle('dark', storedTheme !== 'light');
         } catch {
           document.documentElement.classList.add('dark');
@@ -286,7 +288,7 @@
         }
       }
     </style>
-    <title>GSD Lore</title>
+    <title>Labelore</title>
   </head>
   <body>
     <div id="root"></div>
