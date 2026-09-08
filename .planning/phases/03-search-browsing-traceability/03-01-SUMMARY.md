@@ -101,7 +101,7 @@ coverage:
         ref: "test/server/search-index.test.ts#createApp — /api/search readiness integration (Task 3)"
         status: pass
       - kind: other
-        ref: "npm run smoke — 'GSD Lore smoke passed' unchanged after Task 3"
+        ref: "npm run smoke — 'Labelore smoke passed' unchanged after Task 3"
         status: pass
     human_judgment: false
   - id: D4

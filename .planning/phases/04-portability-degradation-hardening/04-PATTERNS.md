@@ -192,7 +192,7 @@ if (view.loadStatus.status !== 'ok') {
   return (
     <main className="page-stack">
       <p className="eyebrow">{view.loadStatus.status.replaceAll('-', ' ')}</p>
-      <h1>GSD Lore could not read this project.</h1>
+      <h1>Labelore could not read this project.</h1>
       <section className="notice destructive" role="alert">
         <h2>Local project load failed</h2>
         <p>{view.loadStatus.message}</p>

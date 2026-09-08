@@ -89,7 +89,7 @@ All six fixes are present and correctly shaped in the current codebase — not m
 | Index build never blocks first paint (FIND-05) | Server started; `/api/search` and `/api/dashboard` both hit immediately | Both HTTP 200, no hang | ✓ PASS |
 | Tree mirrors disk exactly, 52 files + 1 exclusion (NAV-01) | `curl '/api/tree'` against `fixtures/dense`, walked and counted nodes | 52 file nodes, 1 exclusion node with reason | ✓ PASS |
 | Dual, unmerged status columns on traceability rows (NAV-05) | `curl '/api/traceability'`, inspected row shape | `requirementStatus` and `coveringPhases[].phaseDiskStatus`/`phaseRoadmapComplete` present as separate fields, `statusDisagreement` boolean, no `combinedStatus` symbol anywhere in repo (`grep` returned 0 lines) | ✓ PASS |
-| Sparse-empty project does not crash the server (regression for CR-01) | `node src/server/index.ts fixtures/sparse-empty --smoke` | "GSD Lore smoke passed for fixtures/sparse-empty" | ✓ PASS |
+| Sparse-empty project does not crash the server (regression for CR-01) | `node src/server/index.ts fixtures/sparse-empty --smoke` | "Labelore smoke passed for fixtures/sparse-empty" | ✓ PASS |
 | Full regression suite | `npx vitest run` (run once) | 30 test files, 475 tests, all passing | ✓ PASS |
 
 ### Anti-Patterns Found

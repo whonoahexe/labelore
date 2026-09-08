@@ -37,7 +37,7 @@ Two evidence classes, kept distinct throughout:
 - **Instrumented measurement** with playwright-core against the same three servers, used where the
   claim is numeric (contrast ratios, line-box widths, scroll geometry, destination URLs).
 
-Theme is selected by `localStorage['gsd-lore-theme']`; there is no `prefers-color-scheme` support
+Theme is selected by `localStorage['labelore-theme']`; there is no `prefers-color-scheme` support
 and the default is dark, so every measurement sets the key before first paint. Contrast was
 computed by converting oklch to sRGB in-probe — `getComputedStyle` returns oklch verbatim and
 canvas does not normalize it, so a naive numeric parse silently reports 1:1 for every selector.

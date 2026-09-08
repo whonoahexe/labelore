@@ -1,8 +1,8 @@
-# Roadmap: GSD Lore
+# Roadmap: Labelore
 
 ## Overview
 
-GSD Lore is built from the inside out. Phase 1 produces no pixels at all: it turns any `.planning/`
+Labelore is built from the inside out. Phase 1 produces no pixels at all: it turns any `.planning/`
 directory on disk into a complete, inspectable in-memory snapshot, and proves that claim with a JSON
 harness run against two synthetic fixtures — a sparse fresh project and a dense project containing
 artifact types studio-portal does not have. This is deliberate. Research ranked *overfitting the parser
@@ -256,29 +256,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 ## Backlog
 
-### Phase 999.1: Rename project from "GSD Lore" to "Labelore" (BACKLOG)
-
-**Goal:** [Captured for future planning]
-**Requirements:** TBD
-**Plans:** 0 plans
-
-Rename the product from **GSD Lore** to **Labelore**. Raised by the user on 2026-08-31
-during the phase 02 UAT re-gate, and deliberately kept out of that gate's scope.
-
-Known surfaces the rename touches — not exhaustive, confirm during planning:
-
-- `.planning/PROJECT.md` — project title and prose
-- `package.json` — `name`, `description`, and the `bin` entry
-- The CLI entrypoint's startup banner (`GSD Lore is reading <path>`)
-- `index.html` `<title>` and any in-app shell heading
-- `README` / docs
-- Fixture corpus names and any test asserting on the old string (the smoke test
-  prints `GSD Lore smoke passed for <corpus>`)
-- The repo directory `~/gsd-lore` and the git remote, if the rename extends that far
-
-Open question for planning: whether the repo/directory name changes too, or only the
-product name. The deployment constraint in PROJECT.md names `~/gsd-lore` explicitly.
-
-Plans:
-
-- [ ] TBD (promote with /gsd-review-backlog when ready)
+No backlog items.

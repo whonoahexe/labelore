@@ -185,7 +185,7 @@ status: complete
 
 ## Accomplishments
 
-- Established the GSD Lore repository: ES-module TypeScript project pinned to the versions in `.claude/CLAUDE.md` (with two documented version-pin fallbacks), Vitest, ESLint flat config, no build step — Node's native type-stripping runs `.ts` sources directly.
+- Established the Labelore repository: ES-module TypeScript project pinned to the versions in `.claude/CLAUDE.md` (with two documented version-pin fallbacks), Vitest, ESLint flat config, no build step — Node's native type-stripping runs `.ts` sources directly.
 - Wired one production-quality path through every layer: `resolveTargetPath` → `LocalFsPlanningFilesystem` → `discover()` → `parseWithRegistry()` (`GenericMarkdownHandler`) → `assembleDomainModel()` → `PlanningRepository.load()` → `normalizeForGolden()` → CLI JSON on stdout.
 - Proved the `PlanningFilesystem` seam is real, not aspirational: `InMemoryPlanningFilesystem.fromDirectory()` walks the same fixture and produces byte-identical normalized JSON to the Node-backed implementation.
 - Authored the `sparse-empty` fixture traced line-by-line to `~/.claude/gsd-core/templates/` (never to `~/studio-portal`), and committed its golden snapshot.
@@ -262,7 +262,7 @@ See `key-decisions` in frontmatter. Summary: two version-pin fallbacks (`typescr
 
 **4. [Rule 3 - Blocking] `npm run <script>` output was polluting the "stdout parses as pure JSON" contract**
 - **Found during:** Task 1 (scaffold)
-- **Issue:** npm's default lifecycle output (e.g. "> gsd-lore@0.1.0 snapshot") prepends to stdout, breaking `JSON.parse` on the CLI's output
+- **Issue:** npm's default lifecycle output (e.g. "> labelore@0.1.0 snapshot") prepends to stdout, breaking `JSON.parse` on the CLI's output
 - **Fix:** Added `.npmrc` with `loglevel=silent`
 - **Files modified:** `.npmrc`
 - **Verification:** `npm run snapshot -- fixtures/sparse-empty --stable` stdout parses as pure JSON
@@ -291,7 +291,7 @@ See `key-decisions` in frontmatter. Summary: two version-pin fallbacks (`typescr
 
 ### Acceptance-Criteria Environmental Note (not a code deviation)
 
-One of Task 2's literal acceptance criteria — *"Running `npm run snapshot -- .` from the repository root exits nonzero with a message naming the resolved repository path and stating no planning directory was found"* — is **not reproducible in this repository as written**, because this repository (`gsd-lore`) is itself GSD-managed: its own `.planning/` directory (used to run *this very phase*) already exists at the repo root. Running the literal command therefore correctly exits `0` with `loadStatus.status: "ok"`, which is the CORRECT behavior for a directory that genuinely has a `.planning/` child — not a bug.
+One of Task 2's literal acceptance criteria — *"Running `npm run snapshot -- .` from the repository root exits nonzero with a message naming the resolved repository path and stating no planning directory was found"* — is **not reproducible in this repository as written**, because this repository (`labelore`) is itself GSD-managed: its own `.planning/` directory (used to run *this very phase*) already exists at the repo root. Running the literal command therefore correctly exits `0` with `loadStatus.status: "ok"`, which is the CORRECT behavior for a directory that genuinely has a `.planning/` child — not a bug.
 
 The underlying behavior the criterion intended to verify (a directory that exists but has no `.planning/` child produces `not-a-gsd-project`, naming the resolved path, without throwing) IS fully covered and passing: `test/target-path.test.ts#returns not-a-gsd-project for an existing directory with no .planning child, without throwing`, exercised against a freshly created temp directory guaranteed to lack `.planning/`. No implementation change was needed or made in response to this note — it is a documentation artifact of the plan assuming a fact about this repo (no self-hosted `.planning/` at the time of writing) that later became false once GSD itself started managing this project's own development.
 

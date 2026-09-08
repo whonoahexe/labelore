@@ -70,7 +70,7 @@ designed in Phases 1–3.
   design.
 - **D-16:** Present the exact checked path in a prominent, copyable code-style field. When the path as
   typed differs from its resolved form, show both values.
-- **D-17:** Provide a copyable example terminal command for restarting GSD Lore with a corrected project
+- **D-17:** Provide a copyable example terminal command for restarting Labelore with a corrected project
   path. Do not add an in-app project picker or switcher.
 
 ### the agent's Discretion

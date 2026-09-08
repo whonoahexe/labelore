@@ -6,7 +6,7 @@ status: completed
 stopped_at: Phase 04 complete — all phases complete
 last_updated: "2026-09-08T08:17:08.609Z"
 last_activity: 2026-09-08
-last_activity_desc: Phase 04 complete
+last_activity_desc: Completed quick task 260908-k1n: Rename project to Labelore
 state_head: 65cc9a34b4bfa9cde92acff27464f1f7167692bd
 progress:
   total_phases: 4
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-08)
 Phase: 04
 Plan: Not started
 Status: All phases complete
-Last activity: 2026-09-08 — Phase 04 complete
+Last activity: 2026-09-08 - Completed quick task 260908-k1n: Rename project to Labelore
 
 Progress: [██████████] 100%
 
@@ -103,7 +103,7 @@ Recent decisions affecting current work:
 - [Phase 04]: buildDerivedViews() is a zero-arg closure re-reading source.getSnapshot() rather than taking a snapshot argument, matching PlanningRepository's this.snapshot-before-return contract — Keeps exactly one toProjectPresentation(source.getSnapshot()) call site, satisfying the plan's own drift-detection grep, and works correctly after refresh() resolves.
 - [Phase 04]: source.refresh is captured via .bind(source), not a bare method-reference extraction — A bare extraction (const fn = source.refresh) drops 'this', which silently 500'd every refresh in the Task 1 live probe before being fixed.
 - [Phase 04]: [04-02]: The rawPath-vs-pathChecked branch in InvalidProjectScreen narrows via 'rawPath' in loadStatus inline in the JSX condition rather than a hoisted boolean, both for correct TS narrowing and so the component never names a LoadStatus status-string literal.
-- [Phase 04]: [04-02]: D-17 restart command corrected to npm run dev -- /path/to/your/project (not the UI-SPEC's npx gsd-lore placeholder) since package.json declares no bin field.
+- [Phase 04]: [04-02]: D-17 restart command corrected to npm run dev -- /path/to/your/project (not the UI-SPEC's npx labelore placeholder) since package.json declares no bin field.
 - [Phase 04]: [04-03]: artifactWarningTone() derives null/'warning'/'unreadable' from bodyLength (not the warning's own salvage prose), the single shared function tree.ts and search.ts both call rather than re-deriving the split locally.
 - [Phase 04]: [04-03]: The artifact-page header badge and the disclosure's own outer <summary> are two separate DOM nodes sharing the 'Warning' label and .status-chip styling rather than one clickable element, since native <details> makes the summary itself the interactive control.
 - [Phase 04]: [Phase 04][04-04]: EmptyState's block variant reuses .empty-flow with a new data-tone='quiet' attribute rather than a new class, scoping the D-09 neutral-icon correction to exactly the generic empty state.
@@ -128,6 +128,7 @@ None.
 |---|-------------|------|--------|-----------|
 | 260901-ten | Fix nine phase-02 UAT findings in the web UI (mermaid oklch outage, discrepancy-callout contrast, plan-section prose measure, 320px overflow, dead selector, code scrollbar, popover anchor, nested plan numbering, table zebra) | 2026-09-01 | cb3692a | [260901-ten-fix-nine-phase-02-uat-findings-in-the-we](./quick/260901-ten-fix-nine-phase-02-uat-findings-in-the-we/) |
 | 260902-tnw | Fix all six phase-03 code review findings from 03-REVIEW.md (CR-01 empty-milestone startup crash, WR-01 dropped root exclusion, WR-02 undeclared hast-util-sanitize, WR-03 search state leak across queries, WR-04 unchecked cast, IN-01 details first-paint flash) | 2026-09-02 | 2cfc6e4 | [260902-tnw-fix-all-six-phase-03-code-review-findin](./quick/260902-tnw-fix-all-six-phase-03-code-review-findin/) |
+| 260908-k1n | Rename the project and product to Labelore everywhere | 2026-09-08 | 65b1919 | [260908-k1n-we-are-changing-this-project-s-name-to-l](./quick/260908-k1n-we-are-changing-this-project-s-name-to-l/) |
 
 ## Deferred Items
 

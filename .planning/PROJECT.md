@@ -1,8 +1,8 @@
-# GSD Lore
+# Labelore
 
 ## What This Is
 
-GSD Lore is a read-only web dashboard that makes a GSD `.planning/` directory legible. It lives in its
+Labelore is a read-only web dashboard that makes a GSD `.planning/` directory legible. It lives in its
 own repository, is started with a path argument pointing at any GSD-managed project, and renders that
 project's planning state: where the work stands, what every phase and plan contains, and where the
 accumulated decisions, learnings, and review findings are buried. It is a personal tool, built to
@@ -111,7 +111,7 @@ style). The tokens are copied; the codebase is not.
 
 ## Constraints
 
-- **Deployment**: Clone-and-run from its own repo at `~/gsd-lore`, targeted with a path argument at
+- **Deployment**: Clone-and-run from its own repo at `~/labelore`, targeted with a path argument at
   startup — Not a per-project install, not a published CLI, not a hosted service. Keeps v1 setup trivial.
 - **Access**: Read-only filesystem access to the target `.planning/` — The tool must be incapable of
   damaging planning state it does not own.
@@ -134,7 +134,7 @@ style). The tokens are copied; the codebase is not.
 |----------|-----------|---------|
 | Read-only in v1; no writes to `.planning/` | GSD owns these files' invariants. A viewer that cannot write cannot corrupt planning state. Driving GSD is a named future direction, not v1 scope. | ✓ Phase 1 established a read-only filesystem boundary with containment checks |
 | One project per run, targeted by path argument | Simplest thing that satisfies "works on any GSD project" without building registry, discovery, or persistence machinery. | ✓ Phase 1 verified absolute, relative, `~`-prefixed, and symlinked targets |
-| Own repository at `~/gsd-lore`, clone-and-run | Chosen over `npx`/global CLI: no packaging or distribution burden for a personal tool. | — Pending |
+| Own repository at `~/labelore`, clone-and-run | Chosen over `npx`/global CLI: no packaging or distribution burden for a personal tool. | — Pending |
 | Findability via full-text search *and* navigation/cross-linking | Both were chosen over curated per-type aggregate pages. Search covers the unknown-unknowns; navigation covers walking a structure you already understand. | ✓ Phase 3 shipped exact-token search, grouped snippets, a complete tree, and requirements traceability |
 | studio-portal is a reference and theme source, nothing more | Explicit user instruction. The dashboard must render any GSD project, so hardcoding to studio-portal would defeat the point. | ✓ Phase 4 verified sparse, dense, stripped, malformed, and invalid targets in both themes |
 | Live file-watching deferred to v2, read layer built to allow it | Watching is real infrastructure (watcher plus transport plus client state). Deferring it is cheap only if the read layer is a seam from day one. | ✓ Phase 1 delivered and tested the single `refresh()` seam |

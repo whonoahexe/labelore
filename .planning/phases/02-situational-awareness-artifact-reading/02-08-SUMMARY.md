@@ -83,7 +83,7 @@ coverage:
     requirement: "NAV-06"
     verification:
       - kind: manual_procedural
-        ref: "node src/server/index.ts /home/cinedise/gsd-lore; fetch /api/roadmap; resolveRoadmapDeepLink(url) -> non-null"
+        ref: "node src/server/index.ts /home/cinedise/labelore; fetch /api/roadmap; resolveRoadmapDeepLink(url) -> non-null"
         status: pass
     human_judgment: true
     rationale: "Verified end-to-end during execution (server started, real phase url fetched, resolver confirmed non-null), but the visual open/scroll/collapse behavior in an actual browser was not captured by a screenshot or e2e test in this gap-closure plan (no jsdom/Playwright per plan scope) — a human should confirm the rendered behavior at least once."
@@ -247,7 +247,7 @@ None.
 - `npm test` — 251 passed (0 failed)
 - `npm run typecheck`, `npm run lint`, `npm run build` — all exit 0
 - `npm run smoke -- fixtures/dense` — passed
-- Live round trip against `node src/server/index.ts /home/cinedise/gsd-lore` — `resolveRoadmapDeepLink` returned a non-null phase target for a real `/api/roadmap` phase url
+- Live round trip against `node src/server/index.ts /home/cinedise/labelore` — `resolveRoadmapDeepLink` returned a non-null phase target for a real `/api/roadmap` phase url
 
 ---
 *Phase: 02-situational-awareness-artifact-reading*

@@ -1,13 +1,13 @@
 # Project Research Summary
 
-**Project:** GSD Lore  
+**Project:** Labelore
 **Domain:** Local filesystem-backed read-only dashboard for GSD `.planning/` directories  
 **Researched:** 2026-08-21  
 **Confidence:** HIGH (domain research grounded in primary-source inspection of real `.planning/` trees and code-versioned GSD contracts; stack/features/architecture cross-validated across independent researcher findings)
 
 ## Executive Summary
 
-GSD Lore is a read-only web viewer over structured markdown planning directories produced by the GSD orchestration tool. The core research finding is that **`.planning/` is not a schema, it is a filesystem-shaped event log** — GSD enforces conventions through a code-owned artifact registry that evolves between versions, and the most important architectural decision is treating this as an evolving surface, not a fixed contract.
+Labelore is a read-only web viewer over structured markdown planning directories produced by the GSD orchestration tool. The core research finding is that **`.planning/` is not a schema, it is a filesystem-shaped event log** — GSD enforces conventions through a code-owned artifact registry that evolves between versions, and the most important architectural decision is treating this as an evolving surface, not a fixed contract.
 
 The recommended approach is a **Vite 8 + React 19 SPA with a thin Hono/Node API server**, chosen not for lightness as a reflex but because this tool's actual constraints (CLI path argument as the primary entry point, no multi-user hosting, local-only deployment, explicit forward-compatibility obligations to future file-watching and write-back) point consistently toward that stack and away from Next.js's infrastructure. The stack is mature, dependencies are stable, and the tech choice is the least risky part of this project — the real risk lives entirely in the data layer: parsing a moving-target corpus correctly, degrading gracefully when optional artifacts are absent or unknown types appear, and building a parser boundary that doesn't preclude future capabilities like file-watching or write-back.
 
@@ -192,7 +192,7 @@ V1 has no file watcher (reads on load + explicit refresh). Without visible times
 | Area | Confidence | Notes |
 |------|------------|-------|
 | **Stack** | HIGH | Grounded in this tool's specific constraints (CLI, local-only, forward-compat obligations). Every version verified current 2026-08-21. Mature, no alpha/beta. |
-| **Features** | HIGH | Grounded in real studio-portal, GSD Lore's PROJECT.md (three confirmed pains), cross-checked against Linear/Jira/GitHub Projects, Docusaurus/MkDocs, Obsidian. Table-stakes unanimous; differentiators grounded in corpus's unique properties (ID-based cross-refs). |
+| **Features** | HIGH | Grounded in real studio-portal, Labelore's PROJECT.md (three confirmed pains), cross-checked against Linear/Jira/GitHub Projects, Docusaurus/MkDocs, Obsidian. Table-stakes unanimous; differentiators grounded in corpus's unique properties (ID-based cross-refs). |
 | **Architecture** | HIGH | Derived from PROJECT.md's forward-compat obligations and studio-portal's real structure. Layer A/B is standard repository pattern. Patterns are established (not invented). |
 | **Pitfalls** | HIGH | Grounded in studio-portal (where manifesting) and gsd-core/templates (where preventable). Ten pitfalls with concrete examples, mitigation, recovery costs. |
 
@@ -213,7 +213,7 @@ V1 has no file watcher (reads on load + explicit refresh). Without visible times
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/home/cinedise/gsd-lore/.planning/PROJECT.md` — Project charter (scope, pains, constraints, forward-compat obligations)
+- `/home/cinedise/labelore/.planning/PROJECT.md` — Project charter (scope, pains, constraints, forward-compat obligations)
 - `~/studio-portal/.planning/` (live inspection) — Real mature GSD project (STATE.md, ROADMAP.md, REQUIREMENTS.md, config.json, MILESTONES.md, phases/, quick/, milestones/)
 - `~/.claude/gsd-core/templates/` and `gsd-core/bin/lib/artifacts.cjs` — Artifact registry (CANONICAL_EXACT, CANONICAL_PATTERNS), authoritative contract
 - `gsd-core` source (`phase-id.cjs`, `init.cjs`, `roadmap.cjs`, `configuration.cjs`) — Phase/quick/milestone naming grammar, internal parsing code proving recommended regexes

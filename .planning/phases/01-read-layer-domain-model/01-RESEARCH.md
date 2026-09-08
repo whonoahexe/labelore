@@ -805,10 +805,10 @@ build step) if it ever proves insufficient for this codebase's syntax needs.
 - `~/.claude/gsd-core/templates/context.md`, `research.md`, `discussion-log.md`, `VALIDATION.md`,
   `SECURITY.md`, `UI-SPEC.md` — listed and spot-read directly this session, confirming the
   frontmatter-presence inconsistency behind Pattern 2's dispatch rationale.
-- `/home/cinedise/gsd-lore/.planning/config.json` lines 24 and 46 — read directly this session.
+- `/home/cinedise/labelore/.planning/config.json` lines 24 and 46 — read directly this session.
   Verbatim: `"nyquist_validation": false,` (line 24) and `"security_enforcement": true,` (line 46) —
   the basis for skipping the Validation Architecture section and including the Security Domain section.
-- `/home/cinedise/gsd-lore/.planning/REQUIREMENTS.md` — read in full this session; requirement ID
+- `/home/cinedise/labelore/.planning/REQUIREMENTS.md` — read in full this session; requirement ID
   grammar (`[A-Z][A-Z0-9]*-\d{2,}`) re-confirmed against every listed ID (TGT-01..08, DASH-01..04,
   ROAD-01..04, READ-01..06, NAV-01..07, FIND-01..05, HIST-01..02, UI-01..03, DATA-01..06).
 - `npm view typescript version` → `7.0.2`; `npm view vitest version` → `4.1.11`; `npm view gray-matter

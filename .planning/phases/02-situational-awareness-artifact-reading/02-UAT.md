@@ -145,7 +145,7 @@ fixing G-01 by extending the whitelist would not.
 - G-08: four levels of nesting on the artifact page — page canvas → document card →
   section container → code block box — plus dense inline-code chips that read as a
   further box layer.
-- Theme default: `localStorage['gsd-lore-theme']`, dark unless the value is exactly
+- Theme default: `localStorage['labelore-theme']`, dark unless the value is exactly
   `light`. `prefers-color-scheme` is never consulted, so a light-preference OS still
   opens dark. Not raised by the tester; recorded as an observation, not a gap.
 

@@ -116,7 +116,7 @@ No automated blocker remains. The phase cannot be marked `passed` because a non-
 | Full regression | `npx vitest run` | 39 files, 546 tests passed | ✓ PASS |
 | Static correctness | `npm run typecheck && npm run lint` | Exit 0 | ✓ PASS |
 | Production bundle | `npm run build` | Exit 0 | ✓ PASS |
-| Smoke path | `npm run smoke` | `GSD Lore smoke passed for /home/cinedise/gsd-lore` | ✓ PASS |
+| Smoke path | `npm run smoke` | `Labelore smoke passed for /home/cinedise/labelore` | ✓ PASS |
 
 ### Probe Execution
 

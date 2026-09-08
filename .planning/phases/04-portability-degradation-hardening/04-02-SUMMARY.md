@@ -40,7 +40,7 @@ key-files:
     - test/target-path.test.ts
 
 key-decisions:
-  - "Used `npm run dev -- /path/to/your/project` for the D-17 restart command, correcting the UI-SPEC's placeholder `npx gsd-lore {path}` — package.json declares no `bin` field, so that invocation would not actually work; `dev` is the real script that accepts a path argument."
+  - "Used `npm run dev -- /path/to/your/project` for the D-17 restart command, correcting the UI-SPEC's placeholder `npx labelore {path}` — package.json declares no `bin` field, so that invocation would not actually work; `dev` is the real script that accepts a path argument."
   - "Narrowed the rawPath-vs-pathChecked branch via `'rawPath' in loadStatus` directly in the JSX ternary condition rather than storing the boolean check in a named variable first — TypeScript only narrows the union at the exact point of the `in` check, so hoisting it would have required an unsafe cast; as a side effect this also means the component never needs to compare against a status-literal string like 'path-not-found', which the contract test in Task 3 asserts never appears in the file at all."
 
 patterns-established:
@@ -166,7 +166,7 @@ Each task was committed atomically:
 
 ## Decisions Made
 
-- Restart command corrected to `npm run dev -- /path/to/your/project`, not the UI-SPEC's placeholder `npx gsd-lore {path}` — confirmed `package.json` has no `bin` field, so `dev` is the only real invocation.
+- Restart command corrected to `npm run dev -- /path/to/your/project`, not the UI-SPEC's placeholder `npx labelore {path}` — confirmed `package.json` has no `bin` field, so `dev` is the only real invocation.
 - The `rawPath`-differs-from-`pathChecked` branch narrows via `'rawPath' in loadStatus` inline in the JSX condition, not through a pre-computed boolean, both for correct TypeScript narrowing and so the component's source text never has to name a `LoadStatus` status-string literal (verified in Task 3's contract test).
 
 ## Deviations from Plan

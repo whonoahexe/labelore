@@ -44,7 +44,7 @@ requirements-completed: [DASH-01]
 
 coverage:
   - id: D1
-    description: "A user can start GSD Lore against a project path and see snapshot-authored current position through the local server and browser shell."
+    description: "A user can start Labelore against a project path and see snapshot-authored current position through the local server and browser shell."
     requirement: DASH-01
     verification:
       - kind: e2e

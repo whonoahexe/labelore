@@ -6,7 +6,7 @@
 Two corpora were used throughout: the **template/reference corpus** (`~/.claude/gsd-core/templates/`,
 `~/.claude/gsd-core/references/`, `~/.claude/gsd-core/bin/lib/*.cjs`) which defines what GSD *intends*
 to produce, and the **observed corpus** (`~/studio-portal/.planning/`, a real mature project — 2
-milestones, 9 phases, 69 plans — and `~/gsd-lore/.planning/`, a real fresh/greenfield project) which
+milestones, 9 phases, 69 plans — and `~/labelore/.planning/`, a real fresh/greenfield project) which
 shows what GSD *actually* produces. Where they disagree, both are reported and the disagreement itself
 is treated as a finding.
 
@@ -46,7 +46,7 @@ domain.**
 
 The third discovery is that `config.json`'s *actual on-disk shape differs from the shipped template*.
 The template (`gsd-core/templates/config.json`) shows a nested nine-key nested tree. Two real projects
-on this machine (`studio-portal`, `gsd-lore`) both have a **flatter, ~15-key top-level shape** with a
+on this machine (`studio-portal`, `labelore`) both have a **flatter, ~15-key top-level shape** with a
 nested `workflow` object carrying ~25 sub-keys, plus `git`, `ship`, `hooks` objects — closer to, but
 still not identical to, the ~60-key field reference documented in `references/planning-config.md`
 (`Complete Field Reference`, generated from `CONFIG_DEFAULTS`/`VALID_CONFIG_KEYS` in code). That
@@ -102,17 +102,17 @@ concerns — see `<recommended_strategy>` below.
 
 | File | Produced by | Mandatory? | Structured data? | Notes |
 |---|---|---|---|---|
-| `PROJECT.md` | `/gsd-new-project` | Yes (always present) | No (prose, tables) | Requirements (Validated/Active/Out of Scope), Key Decisions table, Constraints. Confirmed identical shape in `gsd-lore` (fresh) and referenced by `studio-portal`'s STATE.md. |
-| `ROADMAP.md` | `/gsd-new-project`, `/gsd-new-milestone` | Yes once milestone exists | Semi (regular heading grammar; fully parsed by `gsd-tools query roadmap analyze`) | Absent in a brand-new project before roadmap creation (confirmed: `gsd-lore/.planning/` has no ROADMAP.md yet). |
+| `PROJECT.md` | `/gsd-new-project` | Yes (always present) | No (prose, tables) | Requirements (Validated/Active/Out of Scope), Key Decisions table, Constraints. Confirmed identical shape in `labelore` (fresh) and referenced by `studio-portal`'s STATE.md. |
+| `ROADMAP.md` | `/gsd-new-project`, `/gsd-new-milestone` | Yes once milestone exists | Semi (regular heading grammar; fully parsed by `gsd-tools query roadmap analyze`) | Absent in a brand-new project before roadmap creation (confirmed: `labelore/.planning/` has no ROADMAP.md yet). |
 | `STATE.md` | `/gsd-new-project`, `/gsd-health --repair` | Yes | **Yes — YAML frontmatter** | The living-memory file. See schema below. |
 | `REQUIREMENTS.md` | `/gsd-new-milestone` | Yes once milestone exists | Semi (checkbox + ID grammar; `mark-complete`/`ready-ids` CLI subcommands operate on it) | |
-| `MILESTONES.md` | `/gsd-complete-milestone` | Only after ≥1 milestone shipped | No | Absent in `gsd-lore` (fresh); present in `studio-portal` (1 shipped milestone). |
+| `MILESTONES.md` | `/gsd-complete-milestone` | Only after ≥1 milestone shipped | No | Absent in `labelore` (fresh); present in `studio-portal` (1 shipped milestone). |
 | `BACKLOG.md` | `/gsd-add-backlog` | Optional | No | Not present in either sampled project — genuinely optional. |
 | `LEARNINGS.md` | `/gsd-extract-learnings`, `/gsd-execute-phase` | Optional | **Yes — YAML frontmatter** (project-root aggregate variant; per-phase `NN-LEARNINGS.md` also exists, see below) | |
 | `THREADS.md` | `/gsd-thread` | Optional | No | Not present in either sampled project. |
 | `config.json` | `/gsd-new-project`, `/gsd-health --repair` | Yes | **Yes — JSON, ~60 keys** | See full schema below. Shape differs from shipped template — see Executive Summary. |
 | `CLAUDE.md` | `/gsd-profile` | Optional | No | Lives at project root, not necessarily `.planning/` (path is `claude_md_path` config key, default `./.claude/CLAUDE.md`). Out of `.planning/` scope for this dashboard's tree browser, but worth linking to. |
-| `RETROSPECTIVE.md` | `/gsd-complete-milestone` | Only after ≥1 milestone shipped | No | Present in `studio-portal`, absent in `gsd-lore`. "Living document updated at each milestone close." |
+| `RETROSPECTIVE.md` | `/gsd-complete-milestone` | Only after ≥1 milestone shipped | No | Present in `studio-portal`, absent in `labelore`. "Living document updated at each milestone close." |
 | `WINDOWS.md` | `/gsd-ship` (broken-windows ledger, `workflow.windows_enforce`) | Optional (feature-gated) | **Yes — YAML frontmatter + markdown table + fenced JSON array** | Confirmed present in `studio-portal` with 10 open items; genuinely undocumented in template registry — a live example of registry drift. See schema below. |
 | `STATE-ARCHIVE.md` | `gsd-tools state prune` (`workflow.auto_prune_state`) | Optional | No (archive of pruned STATE.md history) | Not observed in either sample; confirmed to exist in code (`artifacts.cjs` comment: "state.cts's cmdStatePrune writes this at the .planning/ root"). |
 | `milestone.lock` | Milestone-claim mechanism (`src/milestone-lock.cts`) | Transient/optional | Yes (JSON, but ephemeral — a live claim file, not a durable record) | Not observed; a runtime coordination file, likely irrelevant to a read-only historical dashboard except as a "work in progress" indicator if present. |
@@ -188,7 +188,7 @@ assume `phases/` only ever holds the current milestone's work, though in the obs
 
 ### `research/` (project-level, not phase-level)
 
-Confirmed from both `studio-portal/.planning/research/` and `gsd-lore/.planning/research/` (this very
+Confirmed from both `studio-portal/.planning/research/` and `labelore/.planning/research/` (this very
 document is being written into the second one). Produced by the GSD research stage
 (`/gsd-new-project`, `/gsd-new-milestone`) — this is the **same research agent role this document was
 generated by**. Fixed file set:
@@ -221,7 +221,7 @@ more than one reading from a git checkout.
 ### Directories referenced in the question but NOT observed in either sample, confirmed to exist in code/templates
 
 These are real GSD surfaces documented in `gsd-core/references/artifact-types.md` and workflow files,
-but absent from both `studio-portal` and `gsd-lore` — genuine variability evidence, not omissions:
+but absent from both `studio-portal` and `labelore` — genuine variability evidence, not omissions:
 
 | Directory | Purpose | Evidence |
 |---|---|---|
@@ -293,7 +293,7 @@ Capture groups: 1 = optional project code, 2 = phase number token (parse as stri
 and lettered phases are legitimate), 3 = slug. **Custom mode breaks this regex** — `phase_naming:
 "custom"` phase IDs are arbitrary uppercase strings (`customId || slug.toUpperCase()`), not numbers.
 A parser MUST branch on `config.phase_naming` before assuming numeric phase ordering. Neither sampled
-project uses custom mode (`gsd-lore` and `studio-portal` both have `"phase_naming": "sequential"`).
+project uses custom mode (`labelore` and `studio-portal` both have `"phase_naming": "sequential"`).
 
 **On-disk directory-scan regex** used internally to detect existing phase numbers (from `phase.cjs`):
 ```js
@@ -761,7 +761,7 @@ verbatim (render blockquotes normally) rather than try to parse structurally.
 
 ### PROJECT.md
 
-Confirmed via `gsd-lore/.planning/PROJECT.md` (this project's own file, read in full at research
+Confirmed via `labelore/.planning/PROJECT.md` (this project's own file, read in full at research
 start) matching `gsd-core/templates/project.md`'s shape:
 ```
 # {Project Name}
@@ -778,7 +778,7 @@ start) matching `gsd-core/templates/project.md`'s shape:
 ## Evolution
 ```
 The `## Key Decisions` table's Outcome column uses `— Pending` as a literal placeholder value until a
-decision is validated by shipped work — confirmed in the live file (all 7 decisions in `gsd-lore`'s
+decision is validated by shipped work — confirmed in the live file (all 7 decisions in `labelore`'s
 PROJECT.md show `— Pending`). This table is the closest thing to a project-wide decision log outside
 of per-phase `D-NN` IDs in CONTEXT.md — but it is NOT ID-keyed (no `D-NN` prefix at this level), so
 cross-linking it to phase-level decisions is a text-matching problem, not an ID-join.
@@ -862,7 +862,7 @@ Every ID scheme observed, with its scope and the artifacts that carry it:
 | Threat ID | `T-{phase}-{NN}` (e.g. `T-N-01`) | Phase-scoped | `SECURITY.md` Threat Register | Accepted Risks Log `Threat Ref` column |
 | Deliverable ID | `D1`, `D2`, ... (NOTE: same `D` prefix letter as Decision IDs but a DIFFERENT namespace — collision risk in naive ID search) | Plan-scoped | `SUMMARY.md coverage[].id` | `UAT.md` (implied — "cross-referencing from UAT.md and audit reports" per template's field-semantics table), audit reports |
 | Windows-ledger ID | Plain integer, ledger-wide sequential | Project-wide | `WINDOWS.md` table `id` column | `gsd-tools windows waive/fixed <id>` (CLI-only reference, not cross-linked from other markdown) |
-| Requirement traceability | Requirement → Phase (1:1 per the template: "Each requirement maps to exactly one phase") | — | `REQUIREMENTS.md ## Traceability` table | This is explicitly named in `gsd-lore`'s own `PROJECT.md` as a first-class dashboard requirement — the table itself is a ready-made join source. |
+| Requirement traceability | Requirement → Phase (1:1 per the template: "Each requirement maps to exactly one phase") | — | `REQUIREMENTS.md ## Traceability` table | This is explicitly named in `labelore`'s own `PROJECT.md` as a first-class dashboard requirement — the table itself is a ready-made join source. |
 
 **Important collision warning:** `D-NN` (project decisions) and `D{N}` (SUMMARY.md coverage
 deliverable IDs, no hyphen) are visually similar but semantically and namespace-distinct. A
@@ -953,7 +953,7 @@ worktree
 | `roadmap` | `milestone-scope`, `get-phase`, `validate`, `upgrade`, `update-plan-progress`, `annotate-dependencies` | (not individually probed) | `get-phase` likely returns single-phase detail; `validate` likely a lint check — useful for a "roadmap health" indicator |
 | `progress` | (no subcommand — direct) | JSON: `milestone_version`, `milestone_name`, `phases[]`, `total_plans`, `total_summaries`, `percent`, `phase_scope` | **High** — lighter-weight sibling of `roadmap analyze`, likely the exact source for a "where am I" header widget |
 | `state` | `load` | Full merged config (all ~60+ keys with resolved defaults) plus more | **High** — the single most reliable way to read effective config, since it already applies the `depth`→`granularity` migration, `planning.*` alias resolution, and `sub_repos` auto-sync that a naive `config.json` read would miss |
-| `stats` | (direct) | JSON: milestone_version, milestone_name, phases[], phases_completed/total, total_plans, total_summaries, percent, plan_percent, requirements_total/complete, git_commits, git_first_commit_date, last_activity, phase_scope | **High** — ready-made stats-panel data; confirmed working even on a phase-less fresh project (`gsd-lore`), returning zeroed/null fields gracefully rather than erroring — good evidence the CLI itself already does graceful degradation a dashboard can lean on |
+| `stats` | (direct) | JSON: milestone_version, milestone_name, phases[], phases_completed/total, total_plans, total_summaries, percent, plan_percent, requirements_total/complete, git_commits, git_first_commit_date, last_activity, phase_scope | **High** — ready-made stats-panel data; confirmed working even on a phase-less fresh project (`labelore`), returning zeroed/null fields gracefully rather than erroring — good evidence the CLI itself already does graceful degradation a dashboard can lean on |
 | `requirements` | `mark-complete`, `ready-ids`, `revert-phase` | (write-oriented; `ready-ids` may be read-only — not confirmed) | Likely low relevance — these are workflow-mutation commands, not the requirements-list read path (that's `REQUIREMENTS.md` parsing directly, or possibly an unlisted read subcommand not discovered) |
 | `phase` | `list-plans`, plus write verbs (`add`, `insert`, `remove`, `complete`, `next-decimal`, `uat-passed`) | `list-plans` is plausibly read-only and useful | Worth probing further in implementation phase |
 | `phases` | `list`, `clear` | `list` plausibly a flat phase index | Worth probing further |
@@ -982,7 +982,7 @@ file mtimes rather than re-invoking on every request.
 Confirmed: `studio-portal/.gsd/dispatch-isolation-sentinel.json` — a single file,
 `{"isolation":"harness-worktree","harness_flag":"isolation=\"worktree\"","phase":"03","plan":null,"written_at":<epoch ms>}`. This is **transient execution-coordination state** (which isolation mode the
 last execute-phase run used), not durable project history. **Out of scope** for the dashboard — no
-value in surfacing a workflow-internal sentinel to a human reviewing project status. `gsd-lore` (fresh
+value in surfacing a workflow-internal sentinel to a human reviewing project status. `labelore` (fresh
 project) does not have a `.gsd/` directory at all yet, confirming it's created lazily on first
 execute-phase run, not at project init.
 
@@ -1009,7 +1009,7 @@ orchestration logic).
 
 **Relevance to a dashboard:** `~/.claude/gsd-core/` is shared across ALL GSD projects on this machine
 — it is not per-project state, and a dashboard targeting one project by path argument
-(`gsd-lore`'s own core requirement) should never need to read it at runtime **except** to resolve
+(`labelore`'s own core requirement) should never need to read it at runtime **except** to resolve
 `VERSION` for a "GSD core version" display, and possibly to read `templates/README.md` /
 `bin/lib/artifacts.cjs`'s `CANONICAL_EXACT` set once, at build time or cached at startup, to drive the
 "known artifact type" lookup table described in the recommended strategy below. **It should never be
@@ -1100,10 +1100,10 @@ dashboard runs.**
 
 ## Variability Across Projects
 
-Directly confirmed by contrasting `gsd-lore` (fresh, pre-roadmap) against `studio-portal` (mature, 2
+Directly confirmed by contrasting `labelore` (fresh, pre-roadmap) against `studio-portal` (mature, 2
 milestones, 9 phases, 69 plans):
 
-| Aspect | `gsd-lore` (fresh) | `studio-portal` (mature) |
+| Aspect | `labelore` (fresh) | `studio-portal` (mature) |
 |---|---|---|
 | `ROADMAP.md` | **Absent** | Present, milestone-grouped with `<details>` archive |
 | `STATE.md` | Not yet checked directly but implied absent/minimal (no ROADMAP means no phases to track) | Rich, 200+ lines, every optional section populated |
@@ -1137,7 +1137,7 @@ necessary by this comparison, not merely a defensive nicety.
 | Config key | Default | When `false`, suppresses |
 |---|---|---|
 | `workflow.ui_phase` | `true` | `NN-UI-SPEC.md` generation (still only for phases classified as frontend-relevant even when `true`) |
-| `workflow.nyquist_validation` | `true` | `NN-VALIDATION.md`'s `nyquist_compliant`/`wave_0_complete` gating is inert; the file may still be created as a stub (confirmed: `gsd-lore` has `nyquist_validation: false` set from project creation — likely reflects a non-UI-heavy/simple project's defaults) |
+| `workflow.nyquist_validation` | `true` | `NN-VALIDATION.md`'s `nyquist_compliant`/`wave_0_complete` gating is inert; the file may still be created as a stub (confirmed: `labelore` has `nyquist_validation: false` set from project creation — likely reflects a non-UI-heavy/simple project's defaults) |
 | `workflow.security_enforcement` | `true` | `NN-SECURITY.md` generation entirely — "When `false`, security checks are skipped entirely" (direct quote, `planning-config.md`) |
 | `workflow.ai_integration_phase` | `true` | `NN-AI-SPEC.md` generation (also gated on the phase being an AI-system phase regardless of this toggle) |
 | `workflow.code_review` | `true` | Built-in review step in `/gsd-ship` — affects `NN-REVIEW.md`/`NN-REVIEW-FIX.md` presence |
@@ -1351,8 +1351,8 @@ needed was available locally.
   `workstream`/`milestone`/`verification`/`uat` (subcommand enumeration via error output)
 
 **Observed corpus:**
-- `~/gsd-lore/.planning/PROJECT.md`, `~/gsd-lore/.planning/config.json`,
-  `~/gsd-lore/.planning/` directory listing
+- `~/labelore/.planning/PROJECT.md`, `~/labelore/.planning/config.json`,
+  `~/labelore/.planning/` directory listing
 - `~/studio-portal/.planning/` — full directory listing plus direct reads of: `STATE.md`,
   `HANDOFF.json`, `estimation-calibration.json`, `config.json`, `ROADMAP.md`, `REQUIREMENTS.md`,
   `WINDOWS.md`, `phases/01-portal-owned-identity-sessions/` through `phases/04-.../` (listings),

@@ -50,7 +50,7 @@ must_haves:
 ---
 
 <objective>
-Close nine verified phase-02 UAT findings (F1..F9) in the GSD Lore web UI.
+Close nine verified phase-02 UAT findings (F1..F9) in the Labelore web UI.
 
 Purpose: F1 is a total feature outage (no mermaid diagram renders in either theme, and the
 degradation path is dead too). F2 is a WCAG AA failure. F3, F4 and F7 are measurable layout and
@@ -78,10 +78,10 @@ Three dev servers are already running and MUST NOT be started or killed:
 
 Browser checks use `playwright-core` (already in node_modules) with the chromium binary at
 `~/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome`. Ad-hoc `.mjs` probes MUST be
-written to and run from the repo root `/home/cinedise/gsd-lore` (module resolution fails
+written to and run from the repo root `/home/cinedise/labelore` (module resolution fails
 elsewhere) and MUST be deleted before the task's commit — they are throwaway and never committed.
 
-Theme is selected by `localStorage['gsd-lore-theme']` (`'light'` | `'dark'`), read by the inline
+Theme is selected by `localStorage['labelore-theme']` (`'light'` | `'dark'`), read by the inline
 boot script in `index.html`. There is no `prefers-color-scheme` support and the default when the
 key is absent is dark. Every browser check MUST set the key in an init script before first paint
 (`context.addInitScript(...)`), or it measures dark twice.
@@ -150,7 +150,7 @@ bearing for this work and are called out in the tasks that could break them.
   <verify>
     <automated>npx vitest run test/web/mermaid-theme.test.ts test/web/visual-contract.test.ts</automated>
     <browser>Throwaway probe at repo root against `:4180` artifact A, run once per theme with
-    `gsd-lore-theme` set in an init script. Pass requires, in BOTH themes: count of
+    `labelore-theme` set in an init script. Pass requires, in BOTH themes: count of
     `[data-mermaid-pending="true"]` is 0, count of `.mermaid svg` is 1, count of `.mermaid-fallback`
     is 1, count of `.notice.warning` is 1, and no captured `pageerror` whose message contains
     "Unsupported color format". Delete the probe before committing.</browser>

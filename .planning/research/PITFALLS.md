@@ -2,13 +2,13 @@
 
 **Domain:** Local filesystem-backed documentation/planning dashboards and markdown-rendering developer tools (specifically: a read-only viewer over a GSD `.planning/` directory)
 **Researched:** 2026-08-21
-**Confidence:** HIGH (grounded directly in `~/studio-portal/.planning/`, GSD Lore's own `PROJECT.md`, and `gsd-core` 1.11.0's template set; MEDIUM on general web/rendering claims, cited)
+**Confidence:** HIGH (grounded directly in `~/studio-portal/.planning/`, Labelore's own `PROJECT.md`, and `gsd-core` 1.11.0's template set; MEDIUM on general web/rendering claims, cited)
 
 This file is written against artifacts actually read in `~/studio-portal/.planning/` — a mature, two-milestone GSD project — and cross-checked against `~/.claude/gsd-core/templates/`, which contains artifact types (`AI-SPEC.md`, `SPEC.md`, `DEBUG.md`) that do **not** appear in studio-portal at all. That gap is itself evidence for pitfall #1.
 
 ## Critical Pitfalls
 
-Ranked by severity for GSD Lore specifically. #1–#4 are architectural and must be decided before the reader/parser layer is built; #5–#10 can be addressed progressively but still need a plan-level decision early.
+Ranked by severity for Labelore specifically. #1–#4 are architectural and must be decided before the reader/parser layer is built; #5–#10 can be addressed progressively but still need a plan-level decision early.
 
 ### Pitfall 1: Building the parser against studio-portal's shape, not GSD's contract
 
@@ -23,7 +23,7 @@ The developer has exactly one real `.planning/` tree to look at while building (
 - `RETROSPECTIVE.md`, `WINDSURF.md`-style project-specific notes, `estimation-calibration.json`, `HANDOFF.json` all exist. Any of these can be absent, especially early in a project's life.
 
 **Why it happens:**
-There is only one convenient example to develop against, iteration is fastest when the code matches what's on disk in front of you, and "it renders `~/studio-portal` correctly" *feels* like the definition of done — but that project alone cannot exercise the empty-project code path, the single-milestone-no-archive path, or the "GSD added a new artifact type since this tool was written" path. This is explicitly named as the single biggest risk in GSD Lore's own `PROJECT.md`.
+There is only one convenient example to develop against, iteration is fastest when the code matches what's on disk in front of you, and "it renders `~/studio-portal` correctly" *feels* like the definition of done — but that project alone cannot exercise the empty-project code path, the single-milestone-no-archive path, or the "GSD added a new artifact type since this tool was written" path. This is explicitly named as the single biggest risk in Labelore's own `PROJECT.md`.
 
 **How likely for this project:** Very high. It is architecturally guaranteed to happen at least partially — there is no second GSD project on this machine yet to develop against, and the temptation to special-case what's visible in studio-portal (2 milestones, `quick/`, every artifact type) is constant background pressure throughout the build.
 
@@ -31,7 +31,7 @@ There is only one convenient example to develop against, iteration is fastest wh
 - Do not derive the parser's shape from `~/studio-portal`. Derive it from `gsd-core`'s templates (`~/.claude/gsd-core/templates/*.md` and `templates/research-project/*.md`) plus its actual state-machine outputs (`config.json` default shape, `STATE.md` frontmatter schema) — those are the contract; studio-portal is one instance of it.
 - Build and check in **two synthetic fixture trees** before or alongside the real reader code: (a) a maximally-sparse fresh project — `PROJECT.md` + `REQUIREMENTS.md` only, no `ROADMAP.md`, no `phases/`, `STATE.md` in its earliest shape — and (b) a maximally-dense one, either a copy of studio-portal's structure with file contents redacted/replaced, or a synthetic tree that adds artifact types studio-portal doesn't have (`AI-SPEC.md`, `SPEC.md`) plus a *third* milestone so multi-milestone logic isn't tested only at N=2.
 - Every "assume field/directory X exists" statement in the code should be traceable to a specific line in a GSD template or a `config.json` default — not to "it's there in studio-portal."
-- Treat unknown top-level entries under `.planning/` (a doc type GSD adds later, or a project-specific file like `WINDOWS.md`) as a required, tested code path — GSD Lore's own requirements already demand this ("Tolerates artifact types it does not recognize... still appears and renders as markdown instead of disappearing or breaking").
+- Treat unknown top-level entries under `.planning/` (a doc type GSD adds later, or a project-specific file like `WINDOWS.md`) as a required, tested code path — Labelore's own requirements already demand this ("Tolerates artifact types it does not recognize... still appears and renders as markdown instead of disappearing or breaking").
 - The two-fixture testing strategy is not optional polish — it is the only thing that actually catches this class of bug, because studio-portal alone structurally cannot exercise the empty-project or unknown-artifact-type paths. Golden-file/snapshot tests against both fixtures, run in CI or at minimum before every phase is called done, are the concrete mechanism.
 
 **Warning signs:** Any code with a comment like "studio-portal always has..."; any function whose only test input is the real `~/studio-portal` tree; any path-building logic that concatenates `phases/NN-slug` without also handling `milestones/vX.Y-phases/NN-slug` and `quick/<timestamp-slug>`; reaching for `.milestone` or `.current_phase` off `STATE.md` frontmatter without a null-check.
@@ -47,7 +47,7 @@ There is only one convenient example to develop against, iteration is fastest wh
 The same risk applies, in smaller doses, to `UI-SPEC.md` and `PATTERNS.md`, which were confirmed (via grep) to contain literal HTML-like tags elsewhere in studio-portal.
 
 **Why it happens:**
-GSD's plan format was designed to be read by an LLM (which parses pseudo-XML natively and correctly) and by a human in a terminal/editor (where angle brackets are just visible text) — not by a CommonMark renderer, which is a third, unconsidered reader. The mismatch only surfaces once a real markdown-to-HTML pipeline is pointed at these files, which is exactly what GSD Lore does.
+GSD's plan format was designed to be read by an LLM (which parses pseudo-XML natively and correctly) and by a human in a terminal/editor (where angle brackets are just visible text) — not by a CommonMark renderer, which is a third, unconsidered reader. The mismatch only surfaces once a real markdown-to-HTML pipeline is pointed at these files, which is exactly what Labelore does.
 
 **How likely for this project:** Very high. `PLAN.md` is one of the two artifact types the project's own requirements name explicitly ("`PLAN.md` and its paired `SUMMARY.md` are readable together"), so this isn't an edge case being rendered occasionally — it's a primary, load-bearing rendering target.
 
@@ -71,7 +71,7 @@ Similarly, `REQUIREMENTS.md` is not a clean, stable table — it mixes structure
 **Why it happens:**
 Markdown looks structured (headings, lists, tables) so it's tempting to parse it like a lightweight database. But GSD's actual source of truth for machine-readable state is deliberately narrow — YAML frontmatter in `STATE.md`, `config.json`, `HANDOFF.json` — precisely because the markdown bodies are meant to be free prose, edited by hand and by an LLM, and are not contract-stable.
 
-**How likely for this project:** Very high — GSD Lore's core value proposition ("immediately know where the work stands") depends on exactly the kind of progress/status derivation that's easiest to get subtly wrong this way.
+**How likely for this project:** Very high — Labelore's core value proposition ("immediately know where the work stands") depends on exactly the kind of progress/status derivation that's easiest to get subtly wrong this way.
 
 **How to avoid:**
 - **Structured facts (progress percent, current phase, completion counts, requirement IDs and their status) must be read only from the documents GSD designates as machine-readable**: `STATE.md` frontmatter's `progress` block, `config.json`, `ROADMAP.md`'s own explicit `[x]`/`[ ]` phase-line and plan-line syntax (which GSD itself treats as authoritative, not incidental prose) — not derived by re-counting checkboxes across arbitrary files.
@@ -93,7 +93,7 @@ Markdown looks structured (headings, lists, tables) so it's tempting to parse it
 **Why it happens:**
 Frontmatter and JSON *feel* trustworthy because they're structured, unlike prose markdown — so the defensive instinct that naturally applies to "parsing markdown as data" often doesn't get applied here too, even though the same authors (human + LLM, across GSD versions) are producing this input.
 
-**How likely for this project:** High. GSD Lore is explicitly required to work across GSD versions and phase-of-life ("mid-milestone or greenfield"), and `gsd-core` is an actively evolving tool (1.11.0 at time of writing) — schema drift across versions is a stated compatibility constraint in `PROJECT.md`, not a hypothetical.
+**How likely for this project:** High. Labelore is explicitly required to work across GSD versions and phase-of-life ("mid-milestone or greenfield"), and `gsd-core` is an actively evolving tool (1.11.0 at time of writing) — schema drift across versions is a stated compatibility constraint in `PROJECT.md`, not a hypothetical.
 
 **How to avoid:**
 - Parse frontmatter/JSON defensively at the boundary: every parse is wrapped, every field access uses optional chaining/defaults, and a parse failure or missing-field condition produces a typed "this file's structured data is unavailable" result rather than propagating an exception up the call stack.
@@ -154,7 +154,7 @@ The underlying data (phases, requirements, timestamps, dependency graphs already
 ### Pitfall 7: Unsafe HTML and un-sanitized markdown rendering
 
 **What goes wrong:**
-Markdown renderers that pass raw HTML through (`rehype-raw` without `rehype-sanitize`, or equivalent) execute anything embedded in a document, including `<script>` tags, `onerror`/`onclick` attributes on `<img>`, and `<iframe>` sources — a well-documented, current class of vulnerability in markdown-rendering React apps. GSD Lore's content is locally authored and not adversarial in the normal case, but the content is written partly by an LLM across many sessions and partly by hand, over a long project lifetime — the threat model isn't "someone else's malicious repo," it's "any copy-pasted snippet, scraped research excerpt, or LLM-generated content that happens to include HTML-like text" rendering as live DOM instead of visible text. Confirmed directly: `01-UI-SPEC.md` and `PATTERNS.md` files in studio-portal already contain literal HTML tags (grep-confirmed), so this isn't a hypothetical edge case for this corpus.
+Markdown renderers that pass raw HTML through (`rehype-raw` without `rehype-sanitize`, or equivalent) execute anything embedded in a document, including `<script>` tags, `onerror`/`onclick` attributes on `<img>`, and `<iframe>` sources — a well-documented, current class of vulnerability in markdown-rendering React apps. Labelore's content is locally authored and not adversarial in the normal case, but the content is written partly by an LLM across many sessions and partly by hand, over a long project lifetime — the threat model isn't "someone else's malicious repo," it's "any copy-pasted snippet, scraped research excerpt, or LLM-generated content that happens to include HTML-like text" rendering as live DOM instead of visible text. Confirmed directly: `01-UI-SPEC.md` and `PATTERNS.md` files in studio-portal already contain literal HTML tags (grep-confirmed), so this isn't a hypothetical edge case for this corpus.
 
 **Why it happens:**
 Enabling raw-HTML passthrough is often the path of least resistance to get GSD's pseudo-XML tags (Pitfall 2) or an intentional `<details>`/`<br>` to render "nicely," without realizing it opens the same door to anything else that looks like a tag.
@@ -230,7 +230,7 @@ These are unglamorous compared to the parsing/rendering work, so they get deferr
 ### Pitfall 10: Theme porting drifts from "copy tokens" to "maintain a fork"
 
 **What goes wrong:**
-`PROJECT.md` commits to lifting studio-portal's oklch token palette, shadcn `base-sera` component style, `@base-ui/react` primitives, lucide icons, and squared-corner convention — explicitly "the tokens are copied; the codebase is not." The concrete ways this goes subtly wrong: dark-mode tokens ported incompletely (a light-mode oklch value copied but its dark-mode counterpart missed or approximated, since dark mode is usually a second, parallel token set, not a mechanical derivation of the light one); contrast ratios that were tuned against studio-portal's specific component compositions (a card-on-card, badge-on-muted-background combination) breaking when the same tokens are applied to GSD Lore's different layout and component mix; and token drift over time — studio-portal's design system keeps evolving (its own `.planning/quick/` history shows multiple recent quick-tasks specifically retuning navbar and scrollbar visual design), while GSD Lore's copy is a one-time snapshot that silently diverges with no mechanism to notice or reconcile.
+`PROJECT.md` commits to lifting studio-portal's oklch token palette, shadcn `base-sera` component style, `@base-ui/react` primitives, lucide icons, and squared-corner convention — explicitly "the tokens are copied; the codebase is not." The concrete ways this goes subtly wrong: dark-mode tokens ported incompletely (a light-mode oklch value copied but its dark-mode counterpart missed or approximated, since dark mode is usually a second, parallel token set, not a mechanical derivation of the light one); contrast ratios that were tuned against studio-portal's specific component compositions (a card-on-card, badge-on-muted-background combination) breaking when the same tokens are applied to Labelore's different layout and component mix; and token drift over time — studio-portal's design system keeps evolving (its own `.planning/quick/` history shows multiple recent quick-tasks specifically retuning navbar and scrollbar visual design), while Labelore's copy is a one-time snapshot that silently diverges with no mechanism to notice or reconcile.
 
 **Why it happens:**
 "Copy the tokens" sounds like a one-time, mechanical act, but a design system is tokens *plus* the component-level decisions about how they're combined (spacing scale, elevation/shadow use, focus-ring treatment) — porting only the token values without also porting (or independently re-deriving) those combination decisions produces something that looks superficially right in isolation and subtly wrong once real content and real components are laid out.
@@ -239,7 +239,7 @@ These are unglamorous compared to the parsing/rendering work, so they get deferr
 
 **How to avoid:**
 - Port the full token set (both light and dark values) as a single atomic copy from studio-portal's actual token source file, not hand-transcribed from visual inspection — this avoids partial/approximated dark-mode values.
-- Verify contrast (WCAG AA at minimum, for text-on-background and text-on-muted combinations actually used in GSD Lore's own layouts) directly in GSD Lore's own components, not by assuming studio-portal's own contrast choices transfer — GSD Lore's content-heavy, document-reading layouts are a different composition than studio-portal's app UI, and contrast that worked for a status badge doesn't guarantee it works for long-form markdown body text.
+- Verify contrast (WCAG AA at minimum, for text-on-background and text-on-muted combinations actually used in Labelore's own layouts) directly in Labelore's own components, not by assuming studio-portal's own contrast choices transfer — Labelore's content-heavy, document-reading layouts are a different composition than studio-portal's app UI, and contrast that worked for a status badge doesn't guarantee it works for long-form markdown body text.
 - Treat the port as a one-time snapshot explicitly, in writing (already true per `PROJECT.md`'s "no coupling" decision) — do not build any live or build-time dependency (shared package, copied component source with intent to keep syncing) that would create pressure to keep re-syncing as studio-portal's theme evolves. If studio-portal's theme changes meaningfully later, that's a deliberate, scoped re-port decision, not automatic drift to chase.
 - Test both themes (light and dark) against real rendered markdown content (tables, code blocks, blockquotes, the unicode/emoji already present in studio-portal's own docs like `✅`/`🚧`/`█░` progress bars) early, since prose-heavy rendering surfaces contrast and spacing issues that a component-only theme check won't.
 
@@ -341,11 +341,11 @@ Even for a single-user, local-only tool, a couple of domain-specific issues matt
 
 - Direct inspection of `~/studio-portal/.planning/` (STATE.md, ROADMAP.md, REQUIREMENTS.md, config.json, `phases/02-roles-permission-enforcement/02-01-PLAN.md`, `quick/` directory names, `milestones/v1.0-phases/` structure) — HIGH confidence, primary source.
 - `~/.claude/gsd-core/templates/` (full template listing, including artifact types like `AI-SPEC.md` and `SPEC.md` absent from studio-portal's own tree) — HIGH confidence, primary source establishing the contract vs. the one example.
-- `/home/cinedise/gsd-lore/.planning/PROJECT.md` — HIGH confidence, defines this project's own explicit scope boundaries and stated risks.
+- `/home/cinedise/labelore/.planning/PROJECT.md` — HIGH confidence, defines this project's own explicit scope boundaries and stated risks.
 - [rehype-sanitize (GitHub)](https://github.com/rehypejs/rehype-sanitize) and [Secure Markdown Rendering in React with React-Markdown (Strapi)](https://strapi.io/blog/react-markdown-complete-guide-security-styling) — MEDIUM confidence, current community/vendor guidance on markdown XSS mitigation.
 - [CopilotKit raw-HTML XSS advisory](https://github.com/CopilotKit/CopilotKit/issues/3938) — MEDIUM confidence, concrete real-world example of the rehype-raw-without-sanitize failure mode.
 - [Client-Side Full-Text Search Engines comparison (npm-compare.com)](https://npm-compare.com/elasticlunr,flexsearch,fuse.js,js-search,lunr,search-index) — MEDIUM confidence, corroborates startup-blocking index-build behavior in common client-side search libraries.
 
 ---
-*Pitfalls research for: local filesystem-backed GSD `.planning/` dashboard (GSD Lore)*
+*Pitfalls research for: local filesystem-backed GSD `.planning/` dashboard (Labelore)*
 *Researched: 2026-08-21*

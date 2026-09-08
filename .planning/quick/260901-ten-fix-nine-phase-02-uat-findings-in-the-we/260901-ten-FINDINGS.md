@@ -3,7 +3,7 @@
 Measured 2026-09-01 with playwright-core against three live dev servers:
 D1 `fixtures/dense` :4180 · D2 `~/studio-portal` :4181 · D3 fallback fixture :4182.
 
-Theme is selected by `localStorage['gsd-lore-theme']` (`'light'` | `'dark'`) — set in
+Theme is selected by `localStorage['labelore-theme']` (`'light'` | `'dark'`) — set in
 `index.html`'s inline boot script. It does NOT read `prefers-color-scheme`, and the
 default when the key is absent is **dark**. Any browser check must set the key before
 first paint, or it measures dark only.

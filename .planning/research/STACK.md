@@ -45,7 +45,7 @@ tree/file read — is not worth inheriting App Router conventions, RSC/client co
 management, and a heavier dev server for a UI that is fundamentally an interactive SPA (live search-as-
 you-type, filterable tree, clickable cross-references) with no SEO, no scale, and no hosting concern to
 justify SSR. **Confidence: HIGH** — this reasoning is about this app's specific shape, not a general
-Next-vs-Vite verdict; a networked, multi-user, or SEO-relevant GSD Lore would tip the other way.
+Next-vs-Vite verdict; a networked, multi-user, or SEO-relevant Labelore would tip the other way.
 
 ## Recommended Stack
 
@@ -116,7 +116,7 @@ npm install -D vite @vitejs/plugin-react @tailwindcss/vite tailwindcss typescrip
 
 | Recommended | Alternative | When to Use Alternative |
 |-------------|-------------|--------------------------|
-| Vite + React SPA + Hono | Next.js 16 App Router | If GSD Lore ever grows a networked/multi-user mode, needs SEO, or you specifically want RSC's fs-read-with-no-API-layer for a much larger artifact tree where the API surface really would dominate the codebase. Not this project's v1. |
+| Vite + React SPA + Hono | Next.js 16 App Router | If Labelore ever grows a networked/multi-user mode, needs SEO, or you specifically want RSC's fs-read-with-no-API-layer for a much larger artifact tree where the API surface really would dominate the codebase. Not this project's v1. |
 | Hono | Express 5.2.1 | If you want the single most battle-tested, tutorial-everywhere Node server — functionally equivalent here, just more ceremony (middleware chaining conventions, no built-in SSE helper) for ~6 routes. |
 | Hono | Fastify 5.12.1 | If you want built-in JSON-schema request/response validation — not a real need for a read-only local API with a handful of routes. |
 | MiniSearch | FlexSearch 0.8.212 | If corpus grows into the tens of thousands of documents and raw index-build/query speed becomes the bottleneck. At "a few hundred markdown files," both are instant; MiniSearch's incremental `add`/`remove`/`discard` API and cleaner TS-native docs win on maintainability. |

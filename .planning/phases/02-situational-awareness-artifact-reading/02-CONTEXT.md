@@ -6,7 +6,7 @@
 <domain>
 ## Phase Boundary
 
-Phase 2 turns the Phase 1 read-layer snapshot into GSD Lore's first usable web interface. It delivers
+Phase 2 turns the Phase 1 read-layer snapshot into Labelore's first usable web interface. It delivers
 the project-status landing view, roadmap and archived-milestone views, safe long-form artifact
 rendering, paired plan/summary reading, milestone-qualified routes, heading anchors, and prose links
 for requirements, phases, and plans. It also establishes the studio-portal-derived visual shell in
@@ -135,7 +135,7 @@ or future capabilities.
   component conventions; adapt for Vite rather than copying Next/RSC settings blindly.
 - `/home/cinedise/studio-portal/frontend/components/theme-toggle.tsx` — light/dark interaction reference,
   not a code dependency.
-- `/home/cinedise/studio-portal/frontend/package.json` — reference dependency inventory only; GSD Lore
+- `/home/cinedise/studio-portal/frontend/package.json` — reference dependency inventory only; Labelore
   remains independently built and must not import from studio-portal at runtime.
 
 </canonical_refs>

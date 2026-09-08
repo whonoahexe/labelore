@@ -1,4 +1,4 @@
-# Requirements: GSD Lore
+# Requirements: Labelore
 
 **Defined:** 2026-08-21
 **Core Value:** Open the dashboard on a GSD project and immediately know where the work stands and where any planning artifact lives — without reading a single file by hand.

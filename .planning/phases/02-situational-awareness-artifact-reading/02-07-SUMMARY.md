@@ -51,7 +51,7 @@ coverage:
         ref: "test/presentation/dashboard.test.ts#phase-kind next-work url round-trips through the canonical phase-URL builder (CR-01)"
         status: pass
       - kind: manual_procedural
-        ref: "curl http://127.0.0.1:4173/api/dashboard against ~/gsd-lore and ~/studio-portal; next.immediate.url begins with /milestones/"
+        ref: "curl http://127.0.0.1:4173/api/dashboard against ~/labelore and ~/studio-portal; next.immediate.url begins with /milestones/"
         status: pass
     human_judgment: false
   - id: D2
@@ -144,7 +144,7 @@ None - no external service configuration required.
 
 ## Next Phase Readiness
 
-- Verification gap 1 (CR-01) is closed: `npm test` passes 240 tests (up from 236), `npm run typecheck`, `npm run lint`, and `npm run build` all exit clean, and live reproduction against both `~/gsd-lore` and `~/studio-portal` confirms `next.immediate.url` now begins with `/milestones/` rather than the bare `p~` identity segment.
+- Verification gap 1 (CR-01) is closed: `npm test` passes 240 tests (up from 236), `npm run typecheck`, `npm run lint`, and `npm run build` all exit clean, and live reproduction against both `~/labelore` and `~/studio-portal` confirms `next.immediate.url` now begins with `/milestones/` rather than the bare `p~` identity segment.
 - `npm run smoke -- fixtures/dense` passes.
 - WR-03 is closed alongside it in the same file/function, as scoped by the plan.
 - No shipped behavior changed outside `phaseWork`, `blockerWork`, and the `computedPercent` display string, per the plan's `<success_criteria>`.
@@ -160,4 +160,4 @@ None - no external service configuration required.
 - `test/presentation/dashboard.test.ts` — FOUND
 - `.planning/phases/02-situational-awareness-artifact-reading/02-07-SUMMARY.md` — FOUND
 - Commits `9f60159`, `c583391`, `bdab04d`, `9ac65e5`, `318d3b4`, `3bb6517` — all FOUND in `git log --oneline --all`
-- Re-ran plan `<verification>`: `npm test` (240 pass, > 236 baseline), `npm run typecheck` (clean), `npm run lint` (clean), `npm run build` (succeeds), live `/api/dashboard` reproduction against `~/gsd-lore` and `~/studio-portal` (both `url` values begin with `/milestones/`), `npm run smoke -- fixtures/dense` (passes)
+- Re-ran plan `<verification>`: `npm test` (240 pass, > 236 baseline), `npm run typecheck` (clean), `npm run lint` (clean), `npm run build` (succeeds), live `/api/dashboard` reproduction against `~/labelore` and `~/studio-portal` (both `url` values begin with `/milestones/`), `npm run smoke -- fixtures/dense` (passes)

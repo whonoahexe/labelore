@@ -499,7 +499,7 @@ constraint — the tool cannot write). Carried forward unchanged — this dimens
 | Primary CTA | **"Open"** (`.reference-preview-open`) — the sole persistent-intent action in this phase; deliberately minimal per D-14/D-15 (preview-first, single explicit escape hatch to the full page). Icon: `ArrowUpRight`. |
 | Empty state heading (per-surface) | "No dependency-ready work is reported in the active milestone." (dashboard next-up) · "No discrepancy, blocker, dependency wait, or human gate needs attention." (needs-attention) · "No success criteria authored." / "No requirements mapped." / "No plans are present for this phase." (roadmap phase detail) · "No archived milestones are present in this snapshot." (history) · "This milestone has an authored identity but no phase rows yet." (empty milestone) · "Empty document" (artifact body) · "Empty list" / "Empty object" (frontmatter metadata panels) |
 | Empty state body | Each heading above is self-contained (states the absence directly, in the domain's own vocabulary — "dependency-ready," "human gate," "phase rows") rather than a generic "Nothing here yet." No separate "next step" line is appended, because this is a read-only observational tool: there is no action the empty state should prompt the user to take. |
-| Error state | "The project snapshot did not respond." / "Dashboard request failed" / `{dashboard.error.message}` (dashboard) · "The roadmap could not be loaded." / "Request failed" / `{roadmap.error.message}` (roadmap) · "GSD Lore could not read this project." / "Local project load failed" / `{view.loadStatus.message}` (project-level load failure) · "The shell could not refresh its snapshot metadata. Page-level data may also be unavailable." (shell-level degraded banner) — pattern is consistently: **plain-language headline → labeled sub-panel → the raw underlying message string**, never a bare stack trace. |
+| Error state | "The project snapshot did not respond." / "Dashboard request failed" / `{dashboard.error.message}` (dashboard) · "The roadmap could not be loaded." / "Request failed" / `{roadmap.error.message}` (roadmap) · "Labelore could not read this project." / "Local project load failed" / `{view.loadStatus.message}` (project-level load failure) · "The shell could not refresh its snapshot metadata. Page-level data may also be unavailable." (shell-level degraded banner) — pattern is consistently: **plain-language headline → labeled sub-panel → the raw underlying message string**, never a bare stack trace. |
 | Destructive confirmation | Not applicable — no destructive actions exist in this read-only tool. The `destructive` color token is reserved for discrepancy/error signaling only (see Color table), never for a confirm-delete affordance. |
 
 ---
@@ -813,7 +813,7 @@ acceptable; a future plan should pick one rather than doing both.
 `'light'` as dark — including the common case of no stored value at all, i.e. every first visit —
 so `prefers-color-scheme: light` is never consulted. A light-preference OS still opens the app dark.
 
-**Recommended treatment:** when `localStorage['gsd-lore-theme']` has no value, resolve via
+**Recommended treatment:** when `localStorage['labelore-theme']` has no value, resolve via
 `window.matchMedia('(prefers-color-scheme: light)').matches` before defaulting to dark. An explicit
 prior user toggle (a real stored `'light'` or `'dark'` value) always overrides the OS preference and
 must keep winning. This keeps both themes first-class per UI-02 rather than silently treating dark
