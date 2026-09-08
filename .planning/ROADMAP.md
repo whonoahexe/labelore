@@ -47,7 +47,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Read Layer & Domain Model** - Headless snapshot of any `.planning/` tree, proven against sparse and dense fixtures via a JSON harness (completed 2026-08-24)
 - [x] **Phase 2: Situational Awareness & Artifact Reading** - The dashboard, roadmap view, markdown pipeline, and prose linkifier — first pixels (completed 2026-09-01)
 - [x] **Phase 3: Search, Browsing & Traceability** - Full-text search over source markdown, tree navigator, requirements traceability (completed 2026-09-02)
-- [ ] **Phase 4: Portability & Degradation Hardening** - Adversarial proof against sparse, unknown-type, and broken projects, plus the refresh seam
+- [x] **Phase 4: Portability & Degradation Hardening** - Adversarial proof against sparse, unknown-type, and broken projects, plus the refresh seam (completed 2026-09-08)
 
 ## Phase Details
 
@@ -252,7 +252,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Read Layer & Domain Model | 4/4 | Complete    | 2026-08-24 |
 | 2. Situational Awareness & Artifact Reading | 16/16 | Complete    | 2026-09-01 |
 | 3. Search, Browsing & Traceability | 4/4 | Complete    | 2026-09-02 |
-| 4. Portability & Degradation Hardening | 6/6 | In Progress|  |
+| 4. Portability & Degradation Hardening | 6/6 | Complete    | 2026-09-08 |
 
 ## Backlog
 

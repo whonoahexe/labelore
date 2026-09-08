@@ -21,20 +21,16 @@ artifact lives — without reading a single file by hand.
 - ✓ Navigable browser of the complete `.planning/` tree — Phase 3
 - ✓ Clickable cross-references between requirements, phases, plans, summaries, and roadmap entries — Phase 3
 - ✓ First-class requirements traceability view — Phase 3
+- ✓ Dashboard renders arbitrary GSD project shapes without hardcoded phase, milestone, or config assumptions — Phase 4
+- ✓ Missing optional artifacts and directories produce honest empty states — Phase 4
+- ✓ Unknown artifact types remain navigable and render through the generic document reader — Phase 4
+- ✓ Invalid targets name the problem and exact checked path — Phase 4
+- ✓ Every valid view states snapshot age and Refresh re-reads through one atomic seam — Phase 4
+- ✓ Light and dark themes preserve the studio-portal visual language across sparse, dense, degraded, and invalid states — Phase 4
 
 ### Active
 
 <!-- Greenfield: every Active requirement is a hypothesis until shipped and validated. -->
-
-**Targeting & portability**
-
-- [ ] Dashboard is started with a project path argument/env var and renders that project's `.planning/`
-- [ ] Renders any GSD project correctly with nothing hardcoded — different phase counts, different
-      config toggles, mid-milestone or greenfield, with or without archived milestones
-- [ ] Degrades gracefully when optional artifacts are absent (no `UI-SPEC.md`, no `SECURITY.md`, no
-      `quick/`, no `milestones/`) rather than erroring
-- [ ] Tolerates artifact types it does not recognize — a doc type GSD adds later still appears and
-      renders as markdown instead of disappearing or breaking the view
 
 **Situational awareness — "where am I?"**
 
@@ -49,11 +45,6 @@ artifact lives — without reading a single file by hand.
 - [ ] Markdown artifacts render properly — tables, code blocks, checklists, and YAML frontmatter
       presented as structured data rather than raw text
 - [ ] `PLAN.md` and its paired `SUMMARY.md` are readable together rather than as two unrelated files
-
-**Look and feel**
-
-- [ ] Uses studio-portal's visual language — its oklch token palette, shadcn `base-sera` component
-      style, lucide icons, and squared-corner house style — with light and dark themes
 
 ### Out of Scope
 
@@ -145,7 +136,7 @@ style). The tokens are copied; the codebase is not.
 | One project per run, targeted by path argument | Simplest thing that satisfies "works on any GSD project" without building registry, discovery, or persistence machinery. | ✓ Phase 1 verified absolute, relative, `~`-prefixed, and symlinked targets |
 | Own repository at `~/gsd-lore`, clone-and-run | Chosen over `npx`/global CLI: no packaging or distribution burden for a personal tool. | — Pending |
 | Findability via full-text search *and* navigation/cross-linking | Both were chosen over curated per-type aggregate pages. Search covers the unknown-unknowns; navigation covers walking a structure you already understand. | ✓ Phase 3 shipped exact-token search, grouped snippets, a complete tree, and requirements traceability |
-| studio-portal is a reference and theme source, nothing more | Explicit user instruction. The dashboard must render any GSD project, so hardcoding to studio-portal would defeat the point. | — Pending |
+| studio-portal is a reference and theme source, nothing more | Explicit user instruction. The dashboard must render any GSD project, so hardcoding to studio-portal would defeat the point. | ✓ Phase 4 verified sparse, dense, stripped, malformed, and invalid targets in both themes |
 | Live file-watching deferred to v2, read layer built to allow it | Watching is real infrastructure (watcher plus transport plus client state). Deferring it is cheap only if the read layer is a seam from day one. | ✓ Phase 1 delivered and tested the single `refresh()` seam |
 | Tech stack deferred to research | User declined to pre-commit. A local read-only tool has different pressures than studio-portal's networked app; the theme is portable across candidate stacks. | — Pending |
 | Built for one user, no distribution concerns | Removes onboarding, docs, version-compatibility, and contribution surface from v1 scope. Portability across GSD projects is still required — but for this user's own projects. | — Pending |
@@ -170,4 +161,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-02 after Phase 3*
+*Last updated: 2026-09-08 after Phase 4*
