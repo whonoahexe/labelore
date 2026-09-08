@@ -1,4 +1,5 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useLocation } from 'react-router';
 import type { PhaseIdentity } from '../../domain/model.ts';
@@ -49,6 +50,11 @@ interface ArtifactDocumentResponse {
   phaseIdentity: PhaseIdentity | null;
   document: RenderedDocument;
 }
+
+const WARNING_DISCLOSURE_LABELS: Record<Exclude<ArtifactWarningTone, null>, string> = {
+  unreadable: 'Unreadable details',
+  warning: 'Warning details',
+};
 
 /** Headings the outline renders. Shared with the layout so the grid knows whether column 1 is filled. */
 function outlineHeadings(document: RenderedDocument): RenderedDocument['headings'] {
@@ -194,7 +200,9 @@ export function DocumentView({ document }: { document: RenderedDocument }): Reac
           measure: () => {
             const heading = window.document.getElementById(targetId);
             if (!heading) return null;
-            return heading.getBoundingClientRect().top + window.document.documentElement.scrollHeight;
+            return (
+              heading.getBoundingClientRect().top + window.document.documentElement.scrollHeight
+            );
           },
           scroll: () => {
             window.document.getElementById(targetId)?.scrollIntoView({ block: 'start' });
@@ -385,7 +393,10 @@ export function ArtifactPage(): React.JSX.Element {
       <header className="artifact-heading">
         <p className="eyebrow">{artifact.kind}</p>
         {warningTone ? (
-          <span className="status-chip" data-tone={warningTone === 'unreadable' ? 'destructive' : 'warning'}>
+          <span
+            className="status-chip"
+            data-tone={warningTone === 'unreadable' ? 'destructive' : 'warning'}
+          >
             {warningTone === 'unreadable' ? 'Unreadable' : 'Warning'}
           </span>
         ) : null}
@@ -411,9 +422,16 @@ export function ArtifactPage(): React.JSX.Element {
       {warningTone ? (
         <details className="artifact-metadata artifact-warning-disclosure">
           <summary>
-            <span className="status-chip" data-tone={warningTone === 'unreadable' ? 'destructive' : 'warning'}>
-              {warningTone === 'unreadable' ? 'Unreadable' : 'Warning'}
+            <span className="warning-disclosure-label">
+              <span
+                className="status-chip"
+                data-tone={warningTone === 'unreadable' ? 'destructive' : 'warning'}
+              >
+                {warningTone === 'unreadable' ? 'Unreadable' : 'Warning'}
+              </span>
+              <span>{WARNING_DISCLOSURE_LABELS[warningTone]}</span>
             </span>
+            <ChevronDown className="warning-disclosure-chevron" aria-hidden="true" />
           </summary>
           <div className="metadata-panels warning-disclosure-body" aria-label="Warning details">
             {warningSummary ? <p>{warningSummary}</p> : null}

@@ -351,6 +351,24 @@ describe('buildDashboardViewModel', () => {
     if (parsed.ok) expect(parsed.route.kind).toBe('phase');
   });
 
+  it('does not promote placeholder blocker copy as recommended work', () => {
+    const view = buildDashboardViewModel(
+      presentation({
+        blockers: [
+          {
+            key: 'state:blocker-placeholder',
+            sourcePath: '.planning/STATE.md',
+            heading: 'Blockers',
+            text: 'None yet.',
+          },
+        ],
+      }),
+    );
+
+    expect(view.next.immediate).not.toMatchObject({ kind: 'blocker' });
+    expect(view.attention).not.toContainEqual(expect.objectContaining({ type: 'blocker' }));
+  });
+
   it('blocker-kind next-work url falls back to /roadmap when no current phase is resolvable (CR-01)', () => {
     const source = presentation({
       blockers: [
@@ -617,7 +635,9 @@ describe('buildDashboardViewModel', () => {
 
   it('dependency attention destination is the blocked plan own route', () => {
     const blocked = plan('01-02', false, [{ raw: '01-99', targetPlanKey: null }]);
-    const view = buildDashboardViewModel(presentation({}, { plans: [plan('01-01', true), blocked] }));
+    const view = buildDashboardViewModel(
+      presentation({}, { plans: [plan('01-01', true), blocked] }),
+    );
     const dependency = view.attention.find((item) => item.type === 'dependency');
     expect(dependency?.url).toBe(blocked.key);
   });
@@ -640,7 +660,10 @@ describe('buildDashboardViewModel', () => {
     // fixture builds a realistic plan key the same way, instead of the opaque `plan:01-02`
     // shorthand the other fixtures in this file use for identity-comparison-only tests.
     const realPlanKey = buildPlanUrl(LIVE_IDENTITY, '01-02');
-    const blocked: PlanDto = { ...plan('01-02', false, [{ raw: '01-99', targetPlanKey: null }]), key: realPlanKey };
+    const blocked: PlanDto = {
+      ...plan('01-02', false, [{ raw: '01-99', targetPlanKey: null }]),
+      key: realPlanKey,
+    };
     const view = buildDashboardViewModel(
       presentation(
         {
