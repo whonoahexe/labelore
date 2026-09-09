@@ -1,17 +1,26 @@
 // Eager cross-reference resolution (plan 01-04, D-10, ARCHITECTURE.md "Domain Model" §Resolution
 // strategy). Builds each lookup map exactly once over the just-assembled graph, then rewrites the
 // graph's resolved-reference fields in place — this is called once, at the end of assembly, never
-// per-render. A reference whose target is absent resolves to `{ raw, resolved: null }` and adds
-// nothing to the warning channel: GSD prose mentions undefined identifiers routinely (this
-// project's own STATE.md carries literal "[Phase ?]:" placeholders), so routing every unresolved
-// mention into a warning would bury the handful of real parse failures under hundreds of routine
-// ones. A rollup count of dangling references was considered and deliberately deferred to a later
-// phase's project-health surface — do not add one here.
+// per-render. A reference whose target is absent (a well-formed id/token that simply doesn't match
+// any sibling) resolves to `{ raw, resolved: null }` and adds nothing to the warning channel: GSD
+// prose mentions undefined identifiers routinely (this project's own STATE.md carries literal
+// "[Phase ?]:" placeholders), so routing every unresolved mention into a warning would bury the
+// handful of real parse failures under hundreds of routine ones. A rollup count of dangling
+// references was considered and deliberately deferred to a later phase's project-health surface —
+// do not add one here.
 //
 // Accepted trade-off, recorded once at this entry point: a mistyped id and a deliberately-unlinked
 // mention are indistinguishable under this rule.
+//
+// This does NOT extend to a wrong-shaped field. `depends_on` being present but not an array (a bare
+// string or number — a plausible authoring typo) is a structurally invalid value regardless of what
+// it points at, distinguishable from "well-formed reference to something absent" by construction.
+// That case records exactly one warning naming the plan and the wrong-shaped field, via the
+// `warnings` collector threaded in below, and still degrades to "no dependencies" (D-12: load()/
+// refresh() must never throw on this input).
 import type { Phase, Project, Reference, Requirement } from '../domain/model.ts';
 import { comparePhaseNumbers } from './naming.ts';
+import type { WarningCollector } from './warnings.ts';
 
 // Re-exported so callers of this module never need to import from '../domain/model.ts' just to
 // name the Reference type — the generic type itself lives in domain/model.ts (see that file's own
@@ -65,7 +74,7 @@ function resolvePhaseByLiveMilestoneNumber(project: Project, liveMilestoneVersio
  * query roadmap analyze`) leaves this unparsed too, and inventing a phase-dependency graph from
  * free text would be a fabricated relationship, not a resolved one.
  */
-export function resolveCrossReferences(project: Project): void {
+export function resolveCrossReferences(project: Project, warnings: WarningCollector): void {
   const requirementsById = new Map(project.requirements.map((r): [string, Requirement] => [r.id, r]));
   const liveMilestone = project.milestones.find((m) => !m.archived) ?? null;
   const liveMilestoneVersion = liveMilestone?.version ?? null;
@@ -103,9 +112,29 @@ export function resolveCrossReferences(project: Project): void {
       // bare string or number is a plausible authoring typo (`depends_on: 01-01` instead of
       // `depends_on: ["01-01"]`). Anything that isn't actually an array degrades to "no
       // dependencies" rather than throwing, preserving D-12's "load()/refresh() never throw"
-      // contract for the whole snapshot, not just this one plan.
+      // contract for the whole snapshot, not just this one plan — but unlike an unresolved
+      // reference (see this file's header comment), a wrong-shaped field records exactly one
+      // warning naming the plan and the field.
+      //
+      // The key is absent entirely, or present with an explicit YAML null (`depends_on:` with no
+      // value) both read as "no dependencies declared" and stay warning-free: an empty scalar is
+      // routine authoring shorthand for "none", not a malformed field, and is indistinguishable in
+      // intent from simply omitting the key.
       const rawDependsOn = plan.frontmatter.depends_on;
-      const dependsOnRaw = Array.isArray(rawDependsOn) ? rawDependsOn.map((v) => String(v)) : [];
+      let dependsOnRaw: string[];
+      if (Array.isArray(rawDependsOn)) {
+        dependsOnRaw = rawDependsOn.map((v) => String(v));
+      } else if (rawDependsOn === undefined || rawDependsOn === null) {
+        dependsOnRaw = [];
+      } else {
+        warnings.add(
+          plan.path,
+          'assembly',
+          `Plan ${plan.id}'s depends_on frontmatter is ${typeof rawDependsOn === 'object' ? 'an object' : typeof rawDependsOn} (${JSON.stringify(rawDependsOn)}), not an array`,
+          'plan treated as having no declared dependencies',
+        );
+        dependsOnRaw = [];
+      }
       plan.dependsOnRefs = dependsOnRaw.map((raw) => ({
         raw,
         resolved: phase.plans.find((sibling) => sibling.id === raw) ?? null,

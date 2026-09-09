@@ -73,7 +73,10 @@ export class PlanningRepository {
     const warnings = new WarningCollector();
     const { refs, exclusions } = await discover(this.fs);
     const parsed = await Promise.all(refs.map((ref) => parseWithRegistry(this.fs, ref, warnings)));
-    const project = assembleDomainModel(parsed, warnings.all(), this.rootPath);
+    // The live collector itself, not a warnings.all() snapshot taken here — resolveCrossReferences()
+    // runs inside assembleDomainModel and may add a warning (e.g. a malformed plan depends_on) that
+    // must be visible to the warnings.all() read below, after assembly returns.
+    const project = assembleDomainModel(parsed, warnings, this.rootPath);
     // NAV-07 (plan 01-04, D-14): runs after handler dispatch AND after assembly, never alongside
     // discovery — scanMentions() assigns a brand-new MentionIndex every refresh, it never merges into
     // a previously returned snapshot's index.

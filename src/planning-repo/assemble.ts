@@ -9,12 +9,21 @@
 // parsing — the same object references also populate the flat `snapshot.warnings` list one layer
 // up in snapshot.ts. This module never re-collects or rebuilds warnings; it only copies references
 // through, which is what keeps the two channels from ever drifting apart.
+//
+// One documented exception: resolveCrossReferences() runs at the END of this function, after every
+// Artifact.warnings array above has already been copied from its ParsedArtifact. A warning it adds
+// (e.g. a malformed plan `depends_on`) reaches the flat `snapshot.warnings` list via the live
+// `warnings` collector threaded in below — snapshot.ts re-reads the collector after this function
+// returns — but does NOT reliably reach the owning Artifact's own `.warnings` array, since that
+// array reference was captured before this pass ran. Flat-only is the honest answer here, not a bug
+// to fix quietly.
 import { basename, dirname } from 'node:path';
 import type { Project, Artifact, Phase, Milestone, Plan, PlanSummary, Requirement, QuickTask, PhaseIdentity } from '../domain/model.ts';
-import type { ParsedArtifact, ParseWarning } from './types.ts';
+import type { ParsedArtifact } from './types.ts';
 import { parsePlanFileName, comparePhaseNumbers } from './naming.ts';
 import type { RoadmapPhaseBlock } from './handlers/roadmap.ts';
 import { resolveCrossReferences } from './crossref.ts';
+import type { WarningCollector } from './warnings.ts';
 
 const CONFIG_PATH = '.planning/config.json';
 const PROJECT_MD_PATH = '.planning/PROJECT.md';
@@ -166,7 +175,7 @@ function buildPhaseFromRoadmapOnly(identity: PhaseIdentity, block: RoadmapPhaseB
   };
 }
 
-export function assembleDomainModel(parsed: ParsedArtifact[], _warnings: ParseWarning[], rootPath: string): Project {
+export function assembleDomainModel(parsed: ParsedArtifact[], warnings: WarningCollector, rootPath: string): Project {
   // D-11: widened from a root-only filter to a loose-artifact filter — 'research', 'milestone-root'
   // and 'other' have no other home in the domain model, so they fold into the same Project.artifacts
   // map root docs already use. The existing CONFIG_PATH/PROJECT_MD_PATH/STATE_MD_PATH/ROADMAP_MD_PATH/
@@ -356,7 +365,7 @@ export function assembleDomainModel(parsed: ParsedArtifact[], _warnings: ParseWa
   // Phase/Plan/Requirement it touches already exists in its final shape (ARCHITECTURE.md's eager
   // resolution rationale: milliseconds-to-low-seconds at this corpus size, and lazy per-render
   // resolution would just be this same pass re-run on every request).
-  resolveCrossReferences(project);
+  resolveCrossReferences(project, warnings);
 
   return project;
 }
