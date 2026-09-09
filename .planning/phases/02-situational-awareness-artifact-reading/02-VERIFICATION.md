@@ -1,6 +1,6 @@
 ---
 phase: 02-situational-awareness-artifact-reading
-verified: 2026-09-01T17:37:45Z
+verified: 2026-09-09T14:55:00Z
 status: passed
 score: 6/6 success criteria verified
 behavior_unverified: 0
@@ -13,14 +13,56 @@ re_verification:
     - "A phase or milestone URL lands on a view scoped/opened to that specific phase (WR-01)"
   gaps_remaining: []
   regressions: []
+second_re_verification:
+  at: 2026-09-09T14:55:00Z
+  reason: >-
+    29 commits touched src/web, src/presentation, src/rendering and src/server after the
+    02-17 approval — including 64cc42b "fix(ui): unify interface hierarchy and color states" —
+    so the approved surfaces were re-styled after the gate that approved them. Verification had
+    also gone stale against four summaries touched by the Labelore rename (bc06c8c).
+  method: playwright-core driving Chromium against two fresh servers (fixtures/dense, ~/studio-portal)
+  uat: 02-UAT.md — all 11 round-1 gaps reconciled resolved and independently re-verified
+  security: 02-SECURITY.md — 69 threats, threats_open 0, one accepted risk (R-02-01)
+  outcome: passed
 ---
 
 # Phase 02: Situational Awareness & Artifact Reading Verification Report
 
 **Phase Goal:** Opening the dashboard on a project answers "where does the work stand" at a glance, and every artifact — plan, summary, research, or a type the tool has never seen — reads as a properly formatted, cross-linked document.
-**Verified:** 2026-09-01T17:37:45Z
+**Verified:** 2026-09-09T14:55:00Z (second re-verification; previously 2026-09-01T17:37:45Z)
 **Status:** passed
 **Re-verification:** Yes — the existing `02-VERIFICATION.md` was stale (dated 2026-08-29, `status: gaps_found`, score 4/6). This report supersedes it after re-checking the current tree, including work done after that verification ran: plans 02-10 through 02-16, the human UAT gate 02-17 (approved 2026-09-01, nine defects found and fixed under quick task `260901-ten`), and a post-gate code review (`02-REVIEW.md`, 3 Warnings + 2 Info, resolved in commit `cfaedad`).
+
+## Second Re-Verification — 2026-09-09
+
+The 02-17 gate approved this phase on 2026-09-01. Since then **29 commits** touched `src/web`,
+`src/presentation`, `src/rendering` and `src/server` — including `64cc42b fix(ui): unify interface
+hierarchy and color states`, which restyled the very surfaces the gate approved. An approval alone
+was therefore no longer sufficient evidence, so every round-1 gap was re-driven against the current
+build with playwright-core and a real Chromium, on two fresh servers (`fixtures/dense`,
+`~/studio-portal`) started specifically for this pass.
+
+| Gap | Round-1 failure | Re-verified 2026-09-09 |
+|---|---|---|
+| G-01 | `</execution_context>`, `</read_first>` rendered as literal text | 0 GSD section tags leak on the exact file G-01 cited; the sole angle-bracket token is `<seconds>`, genuine prose in a code span at source line 218 |
+| G-02 | blocker action inert | real `<a href="/milestones/m~v2.0/phases/p~vv2.0~n~v04~vbulk-archive-downloads">` |
+| G-03 | 0 reference triggers on a doc carrying `references: 5` | 16 `.document-reference` buttons; click opens the popover with a working Open action |
+| G-04 | deep-link scroll lost on long bodies | `#trust-boundaries` settles at `top=80px`, in viewport, `scrollY=13381` |
+| G-05 | "tables look horrible" | zebra striping live in both themes; vertical cell borders 0px |
+| G-06, G-07 | code theme / badges rejected | subjective; approved at the 02-17 gate |
+| G-08 | 4–5 nested card layers | measured container depth 3 |
+| G-09 | paths and commits inert | `.planning/*.md` paths are interactive preview controls |
+| G-10 | code clipped, unreachable | all 8 overflowing `<pre>` are `overflow-x:auto` and genuinely scrollable — `maxScrollLeft` equals hidden width exactly |
+| G-11 | `<read_first>` rendered as one run-on paragraph | 372 list items parse on that page |
+
+Mermaid renders in both themes at 379×462 — identical to the dimensions 02-17 recorded as passing —
+with zero page errors. `npm test` 547/547, `typecheck`, `lint`, `build`, `smoke -- fixtures/dense`
+all exit 0.
+
+**Affordance note carried forward (not a reopened gap).** G-10's reachability defect is fixed, but
+the largest code block hides 1658px of content — about 2.7× its 606px visible width — behind a 2px
+scrollbar, quieted deliberately by quick task `260901-ten` (F6, F9). Content is reachable; from a
+static view a reader still cannot tell text is missing. A design decision to affirm or revisit.
 
 ## Prior Gaps: Verified Closed
 
