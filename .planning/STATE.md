@@ -87,7 +87,7 @@ Recent decisions affecting current work:
 - [Phase 01]: The decision-mention index scans pre-assembly artifact bodies and exposes stable, bounded excerpts; decision links remain a later UI concern.
 - [Phase 01]: The read layer's single `refresh()` seam is byte-stable, concurrency-safe, and proven against both local and in-memory filesystem implementations.
 - [Phase 01]: TypeScript remains pinned to 5.9.3 because TS7 is outside `typescript-eslint@8.67.0`'s peer range.
-- [Phase 02]: 02-13 UAT re-gate NOT APPROVED: 10 measured gaps (G2-01..G2-10) found on the post-wave-9 tree; plan 02-09's gate remains open and phase 02 does not close on this round
+- [Phase 02]: 02-13 UAT re-gate NOT APPROVED: 10 measured gaps (G2-01..G2-10) found on the post-wave-9 tree; plan 02-09's gate remained open and phase 02 did not close on that round. **Resolved 2026-09-01:** G2-01..G2-10 were closed by 02-14/02-15/02-16, and the 02-17 fresh-build re-gate was APPROVED (`02-17-SUMMARY.md`: `gate: approved`), carrying UI-02 forward. 02-09 stays `status: superseded` (`superseded_by: 02-13`) with no SUMMARY by design — the gate chain 02-09 -> 02-13 -> 02-17 terminated in approval and phase 02 is complete.
 - [Phase 02]: [02-15]: Artifact previews indexed directly by canonical snapshot path (no milestone indirection, unlike phase/plan/requirement identity); resolveArtifactReference shared by prose and inline-code linkification for one implementation.
 - [Phase 02]: G2-07 not reproduced as a routing bug by the deterministic attention-row matrix; fixed with accessible link labelling only (aria-label on the primary attention link).
 - [Phase 02]: G2-10 fix reclassifies inferred coverage matches from the active status-chip tone to quiet; exact matches keep complete/primary.
