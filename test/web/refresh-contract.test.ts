@@ -110,3 +110,50 @@ describe('refresh contract — D-01 through D-05 in the shell and control', () =
     expect(ruleBlock).not.toMatch(/display:\s*none;/);
   });
 });
+
+describe('Refresh control — structural guarantee behind the measured keyboard behaviour (quick-260910-0x4 item 11)', () => {
+  // quick-260910-0x4 measured this control's keyboard reachability and operability live, via
+  // Playwright against the real dev server at 320/700/992px x light/dark (six cells; results
+  // recorded in the plan's SUMMARY.md, not here). These assertions are NOT a substitute for that
+  // measurement — they pin the STRUCTURAL properties that make the measured behaviour true by
+  // construction, so a future refactor that silently removes one of them is caught before it ever
+  // needs re-measuring.
+  it('renders a native <button> element, not a click handler on a non-interactive element', async () => {
+    const control = await source('src/web/components/refresh-control.tsx');
+    // Button (@base-ui/react/button) renders a real <button> by default; this only breaks if a
+    // future edit passes render={<div/>}-style polymorphism or swaps the primitive entirely.
+    expect(control).toMatch(/<Button\b/);
+    expect(control).not.toMatch(/render=\{/);
+    const buttonPrimitive = await source('src/web/components/ui/button.tsx');
+    expect(buttonPrimitive).toContain("from '@base-ui/react/button'");
+  });
+
+  it('declares a focus-visible treatment on both theme grounds (not just a bare :focus reset)', async () => {
+    const buttonPrimitive = await source('src/web/components/ui/button.tsx');
+    // Measured live: real keyboard Tab focus genuinely triggers :focus-visible and a visible
+    // outline in both themes (light ratio 2.29:1, dark ratio 1.46:1 against the page background —
+    // both below the WCAG 1.4.11 3:1 non-text-contrast guideline; recorded as a residual finding
+    // in the SUMMARY, distinct from reachability/operability which this task closes). This
+    // assertion pins that SOME focus-visible treatment exists structurally — not a claim about
+    // its measured contrast, which can only be re-verified live, not from source.
+    expect(buttonPrimitive).toMatch(/focus-visible:/);
+    expect(buttonPrimitive).not.toMatch(/focus-visible:outline-none(?!\S)/);
+  });
+
+  it('never gates the click handler on a pointer-only event (keydown/click both reach the same mutation)', async () => {
+    const control = await source('src/web/components/refresh-control.tsx');
+    // A real <button> gets Enter/Space-triggers-click for free from the browser's own UA behavior
+    // — there is no bespoke onKeyDown here precisely because there must not be one; a hand-rolled
+    // keydown handler would be the same class of bug a `<div onClick>` control has (fires on one
+    // key, not both). Pin the ABSENCE of a bespoke handler as the structural guarantee.
+    expect(control).not.toMatch(/onKeyDown/);
+    expect(control).toMatch(/onClick=\{\(\)\s*=>\s*mutation\.mutate\(\)\}/);
+  });
+
+  it('the snapshot-age <time> element carries no tabindex, so it is correctly never a Tab stop (measured live: confirmed absent from focus order in all six cells)', async () => {
+    const shell = await source('src/web/components/app-shell.tsx');
+    const timeMatch = shell.match(/<time[^>]*>/);
+    expect(timeMatch, 'expected a <time> element in app-shell.tsx').not.toBeNull();
+    expect(timeMatch?.[0]).not.toMatch(/tabIndex/);
+  });
+});
