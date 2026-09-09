@@ -1,0 +1,33 @@
+{
+  "contract": "1.0.0",
+  "flavor": "core",
+  "milestone": "v1.0",
+  "phases": [
+    {
+      "number": "1",
+      "name": "Read Layer & Domain Model",
+      "status": "complete"
+    },
+    {
+      "number": "2",
+      "name": "Situational Awareness & Artifact Reading",
+      "status": "complete"
+    },
+    {
+      "number": "3",
+      "name": "Search, Browsing & Traceability",
+      "status": "complete"
+    },
+    {
+      "number": "4",
+      "name": "Portability & Degradation Hardening",
+      "status": "complete"
+    }
+  ],
+  "next": {
+    "command": "/gsd:progress",
+    "label": "Choose the next step",
+    "reason": "Phases 1-4 complete; phase 5 reverted"
+  },
+  "updated_at": "2026-09-09T07:54:57.185893Z"
+}

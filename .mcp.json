@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "gsd-browser": {
+      "type": "stdio",
+      "command": "/home/cinedise/.npm-global/bin/gsd-browser",
+      "args": [
+        "mcp",
+        "--session",
+        "gsd-labelore",
+        "--identity-scope",
+        "project",
+        "--identity-key",
+        "labelore",
+        "--identity-project",
+        "labelore"
+      ]
+    }
+  }
+}
