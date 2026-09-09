@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { LayoutDashboard, ListChecks, Map, Radio, Tag } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router';
@@ -24,6 +24,19 @@ export function formatReadAt(readAt: string): string {
 
 function navigationClass({ isActive }: { isActive: boolean }): string {
   return isActive ? 'shell-nav-link active' : 'shell-nav-link';
+}
+
+/** The Suspense fallback shown for the brief window a lazy-loaded route chunk is fetching, on a
+ * loopback-only server this normally resolves in well under a frame — kept deliberately plain
+ * (no skeleton chrome) since there is nothing meaningful to preview before the page's own data
+ * query even starts. */
+function PageLoadingFallback(): React.JSX.Element {
+  return (
+    <main className="page-stack" role="status" aria-live="polite">
+      <p className="eyebrow">Loading</p>
+      <h1>Opening view…</h1>
+    </main>
+  );
 }
 
 export function AppShell(): React.JSX.Element {
@@ -127,7 +140,13 @@ export function AppShell(): React.JSX.Element {
         <div className="shell-content" data-sidebar={sidebarAbsent ? 'absent' : 'present'}>
           <TreeNavigator onAbsentChange={setSidebarAbsent} />
           <div className="shell-outlet" id="main-content">
-            <Outlet />
+            {/* quick-260910-0x4 item 10: every routed page is now React.lazy()-loaded
+                (app-router.tsx), so this is the one Suspense boundary its fallback needs. A
+                single shared boundary here (not one per route) since every lazy element renders
+                through this same Outlet. */}
+            <Suspense fallback={<PageLoadingFallback />}>
+              <Outlet />
+            </Suspense>
           </div>
         </div>
       </div>
