@@ -6,7 +6,7 @@
 // renamed. mountFixture() is the only function that ever reads a path composed from FIXTURES_ROOT
 // for a copy source; every other read in this file targets an already-mounted temp copy.
 import { afterAll, describe, expect, it } from 'vitest';
-import { cp, mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, relative } from 'node:path';
@@ -279,3 +279,160 @@ describe('adversarial portability — three project shapes, a stripped copy, unk
     expect(after).toEqual(before);
   });
 });
+
+// quick-260910-0x4 item 9 (DATA-01's boundary, plan 01-01's original must-have restored):
+// src/planning-fs/local-fs.ts is the ONLY file under src/ permitted to import the Node filesystem
+// module, in any spelling. This is a durable structural gate, not a one-off shell check — it stays
+// enforced after this task, catching a future regression the same way a planted violation is
+// caught below.
+//
+// The pattern anchors on import/require SYNTAX (the module specifier in quotes as the argument of
+// an import/require form), not the bare token `fs` — several files legitimately mention the module
+// name in prose comments (src/cli/target-path.ts, src/planning-repo/discovery.ts,
+// src/server/search-index.ts, and local-fs.ts's own comment, which quotes the import string
+// verbatim inside a `//` comment) and must NOT be flagged. Comments are stripped before matching so
+// prose can never trip the gate.
+const REPO_ROOT = join(__dirname, '..');
+const SRC_DIR = join(REPO_ROOT, 'src');
+const ALLOWED_FS_IMPORTER = 'src/planning-fs/local-fs.ts';
+
+// Matches the Node filesystem module specifier — bare or `node:`-prefixed, with or without the
+// `/promises` subpath — as the argument of a static `import ... from`, a bare `import '<mod>'`
+// side-effect import, a `require(...)` call, or a dynamic `import(...)` call. Anchored so
+// `'./fs-helper.ts'` or `'fs-extra'` (unrelated names merely containing "fs") never match: the
+// quoted content must be exactly `fs`, `node:fs`, `fs/promises`, or `node:fs/promises`.
+const FS_IMPORT_PATTERN = /(?:\bimport\s*\(\s*|\brequire\s*\(\s*|\bfrom\s+|\bimport\s+)['"](?:node:)?fs(?:\/promises)?['"]/;
+
+/** Strips `/* ... *\/` block comments and `// ...` line comments so prose mentions of the module
+ * name never trip FS_IMPORT_PATTERN. Not a full tokenizer — adequate because no file in this
+ * codebase puts `//` or `/*` inside a string/template literal on a line this gate cares about. */
+function stripCommentsForFsGate(source: string): string {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n')
+    .map((line) => {
+      const idx = line.indexOf('//');
+      return idx === -1 ? line : line.slice(0, idx);
+    })
+    .join('\n');
+}
+
+async function listTsFiles(dir: string): Promise<string[]> {
+  const out: string[] = [];
+  async function walk(d: string): Promise<void> {
+    const entries = await readdir(d, { withFileTypes: true });
+    for (const entry of entries) {
+      const abs = join(d, entry.name);
+      if (entry.isDirectory()) {
+        await walk(abs);
+      } else if (entry.isFile() && (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx'))) {
+        out.push(abs);
+      }
+    }
+  }
+  await walk(dir);
+  return out;
+}
+
+/** Returns the repo-root-relative (posix-separated) paths of every file under `srcDir` — except
+ * `allowedRelPath` — whose (comment-stripped) source imports the Node filesystem module under any
+ * spelling. */
+async function findFsImportViolations(srcDir: string, allowedRelPath: string): Promise<string[]> {
+  const files = await listTsFiles(srcDir);
+  const violations: string[] = [];
+  for (const abs of files) {
+    const relPath = relative(REPO_ROOT, abs).split('\\').join('/');
+    if (relPath === allowedRelPath) continue;
+    const source = await readFile(abs, 'utf8');
+    if (FS_IMPORT_PATTERN.test(stripCommentsForFsGate(source))) {
+      violations.push(relPath);
+    }
+  }
+  return violations;
+}
+
+describe('Node filesystem module import boundary (DATA-01, quick-260910-0x4 item 9)', () => {
+  it('is imported nowhere under src/ except local-fs.ts, in any real spelling', async () => {
+    const violations = await findFsImportViolations(SRC_DIR, ALLOWED_FS_IMPORTER);
+    expect(violations).toEqual([]);
+  });
+
+  it('is not fooled by prose mentions of the module name in comments', async () => {
+    // These files mention "node:fs" in prose comments and must never appear as violations —
+    // confirmed by name rather than merely by the (already-passing) empty-violations assertion
+    // above, so a future refactor that turns one of these mentions into a real import is caught by
+    // name, not just by count.
+    const proseOnlyFiles = ['src/cli/target-path.ts', 'src/planning-repo/discovery.ts', 'src/server/search-index.ts'];
+    for (const relPath of proseOnlyFiles) {
+      const source = await readFile(join(REPO_ROOT, relPath), 'utf8');
+      // Confirm the file genuinely still mentions the module name in prose — otherwise this test
+      // would pass vacuously if the comment were ever deleted.
+      expect(source).toMatch(/node:fs\b/);
+    }
+    const violations = await findFsImportViolations(SRC_DIR, ALLOWED_FS_IMPORTER);
+    for (const relPath of proseOnlyFiles) {
+      expect(violations).not.toContain(relPath);
+    }
+  });
+
+  it('local-fs.ts itself is exempted despite its own comment quoting the import string verbatim', async () => {
+    const source = await readFile(join(REPO_ROOT, ALLOWED_FS_IMPORTER), 'utf8');
+    // Confirm the trap this test is named for actually exists in the file: a `//` comment
+    // containing the literal quoted import string, which the naive (non-comment-stripping) version
+    // of this gate would have matched.
+    expect(source).toMatch(/\/\/.*['"]node:fs['"]/);
+    const violations = await findFsImportViolations(SRC_DIR, ALLOWED_FS_IMPORTER);
+    expect(violations).not.toContain(ALLOWED_FS_IMPORTER);
+  });
+
+  // Positive control (plan requirement: "a gate matching only today's literal line is theatre").
+  // Plants a real import under every spelling the gate must catch, in a synthetic tmpdir tree (not
+  // the real src/ — no working-tree mutation, safe even if this test crashes mid-run), confirms the
+  // gate fails on each, then confirms a clean file in the same tree passes.
+  it('positive control: catches a planted import under every real spelling (node:-prefixed, bare, /promises, static, require, dynamic)', async () => {
+    // Self-contained cleanup (try/finally on its own tmpdir) rather than the shared mountedRoots/
+    // afterAll mechanism above: that afterAll is scoped to the earlier describe block and fires
+    // before this describe's tests run, so a root pushed here would never actually be removed.
+    const plantedRoot = await mkdtemp(join(tmpdir(), 'labelore-fs-gate-plant-'));
+    try {
+      await plantAndAssertFsGateCatchesEverySpelling(plantedRoot);
+    } finally {
+      await rm(plantedRoot, { recursive: true, force: true });
+    }
+  });
+});
+
+async function plantAndAssertFsGateCatchesEverySpelling(plantedRoot: string): Promise<void> {
+  const nested = join(plantedRoot, 'nested');
+  await mkdir(nested, { recursive: true });
+
+  const spellings: Record<string, string> = {
+    'static-node-prefixed.ts': `import { readFileSync } from 'node:fs';\nexport const x = readFileSync;\n`,
+    'static-bare.ts': `import { readFileSync } from 'fs';\nexport const x = readFileSync;\n`,
+    'static-promises-node-prefixed.ts': `import { readFile } from 'node:fs/promises';\nexport const x = readFile;\n`,
+    'static-promises-bare.ts': `import { readFile } from 'fs/promises';\nexport const x = readFile;\n`,
+    'require-node-prefixed.ts': `const fsMod = require('node:fs');\nexport const x = fsMod;\n`,
+    'require-bare.ts': `const fsMod = require('fs');\nexport const x = fsMod;\n`,
+    'require-promises.ts': `const fspMod = require('fs/promises');\nexport const x = fspMod;\n`,
+    'dynamic-node-prefixed.ts': `export const x = async () => import('node:fs');\n`,
+    'dynamic-bare.ts': `export const x = async () => import('fs');\n`,
+    'dynamic-promises.ts': `export const x = async () => import('fs/promises');\n`,
+    'nested/deep-static.ts': `import { readFileSync } from 'node:fs';\nexport const x = readFileSync;\n`,
+  };
+  for (const [name, content] of Object.entries(spellings)) {
+    await writeFile(join(plantedRoot, name), content, 'utf8');
+  }
+  // A clean file in the same tree — must NOT be flagged, proving the gate discriminates rather than
+  // failing the whole directory once anything is planted.
+  await writeFile(join(plantedRoot, 'clean.ts'), `// mentions node:fs in prose only\nexport const y = 1;\n`, 'utf8');
+
+  // findFsImportViolations returns paths relative to REPO_ROOT (it's built to scan under src/), so
+  // pass '__none__' as the allowed-importer exemption (nothing in this synthetic tree should be
+  // exempt) and compare against REPO_ROOT-relative paths of the planted files.
+  const violations = await findFsImportViolations(plantedRoot, '__none__');
+  for (const name of Object.keys(spellings)) {
+    const relFromRepoRoot = relative(REPO_ROOT, join(plantedRoot, name));
+    expect(violations, `expected ${name} to be caught`).toContain(relFromRepoRoot);
+  }
+  expect(violations).not.toContain(relative(REPO_ROOT, join(plantedRoot, 'clean.ts')));
+}
