@@ -64,7 +64,7 @@ is in the audit record referenced below; this table summarizes by group.
 
 | Risk ID | Threat Ref | Rationale | Accepted By | Date |
 |---------|------------|-----------|-------------|------|
-| R-02-01 | T-02-20 | The 02-06 gate closed on an explicit human close-out decision rather than a re-run of its named checklist, and deliverable D3 carries `status: unknown` while the plan reads `status: complete` — so a missing response did not block completion as the control declared it would. Accepted because: the user is the human the gate defers to and did give an explicit decision; D3 is flagged `human_judgment: true` so it resurfaces rather than disappearing; and the same surface was in fact re-gated downstream by 02-09 → 02-13 → 02-17, the last of which was approved. Severity medium, below the `high` block threshold, so non-blocking regardless. | User (via /gsd-verify-work 02 security gate) | 2026-09-09 |
+| R-02-01 | T-02-20 | The 02-06 gate closed on an explicit human close-out decision rather than a re-run of its named checklist, and deliverable D3 carries `status: unknown` while the plan reads `status: complete` — so a missing response did not block completion as the control declared it would. Accepted because: the user is the human the gate defers to and did give an explicit decision; D3 is flagged `human_judgment: true` so it resurfaces rather than disappearing; and the same surface was in fact re-gated downstream by 02-09 → 02-13 → 02-17, the last of which was approved. Severity medium, below the `high` block threshold, so non-blocking regardless. **Correction, 2026-09-10 (quick-260910-0x4 Task 6):** the mitigating chain named above is inaccurate — `02-09-PLAN.md` carries `status: superseded`, `superseded_by: 02-13`, and its 2026-08-29 UAT round was NOT approved (10 measured gaps G2-01..G2-10, recorded in `02-UAT.md`); it produced gap-closure plans `02-10` through `02-13`, it did not pass evidence. The real chain is `02-13 → 02-17`, the latter approved. A complete per-surface mapping of D3's eight named surfaces (prose, muted text, links in every state, badges, table chrome, highlighted code, Mermaid output, reference previews) to `02-13`/`02-17` evidence now exists at `02-06-SUMMARY.md`'s D3 coverage entry (second `verification` item, dated 2026-09-10) — every surface accounted for, none unmapped. R-02-01's disposition (accepted, non-blocking) is unchanged by this correction; only the evidence citation is fixed. | User (via /gsd-verify-work 02 security gate) | 2026-09-09 |
 
 ---
 
@@ -101,6 +101,7 @@ than treated as independently open, and all close on that evidence.
 | Audit Date | Threats Total | Closed | Open | Run By |
 |------------|---------------|--------|------|--------|
 | 2026-09-09 | 69 | 68 | 0 (1 accepted, R-02-01) | gsd-security-auditor (ASVS L1, block_on: high) |
+| 2026-09-10 | 69 | 68 | 0 (1 accepted, R-02-01 — evidence citation corrected, disposition unchanged) | quick-260910-0x4 Task 6 (R-02-01 reconciliation: corrected the 02-09→02-13→02-17 mitigating-chain citation to 02-13→02-17 since 02-09 was superseded and unapproved; completed the per-surface D3 mapping at `02-06-SUMMARY.md`) |
 
 ---
 

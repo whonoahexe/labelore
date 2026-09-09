@@ -84,8 +84,39 @@ coverage:
       - kind: manual_procedural
         ref: "Prior host-browser UAT round; styling resolved in b523070 (src/web/styles/globals.css, +589 lines)"
         status: unknown
+      - kind: manual_procedural
+        date: "2026-09-10"
+        ref: >-
+          quick-260910-0x4 Task 6 reconciliation. Per-surface mapping to concrete downstream
+          evidence, all eight named surfaces: prose -> 02-17-SUMMARY.md non-regression table,
+          "Narrative prose styling: fail -> fixed" (968/864px line boxes -> 795px/76ch); muted
+          text -> 02-17-SUMMARY.md "Verdicts - muted surfaces" (9 selectors x light/dark, all
+          pass, floor 4.74:1 light / 6.94-7.66:1 dark); links in every state ->
+          02-13-SUMMARY.md Item 3 (hover state PASS; click-to-popover position REJECTED as
+          G2-02) resolved at 02-17-SUMMARY.md verdict #5 ("Popover position: fail -> fixed,
+          now tracks its trigger"); badges -> 02-13-SUMMARY.md Item 4 (G2-10, inconsistent chip
+          colors) resolved at 02-17-SUMMARY.md verdict #9 ("Status chips: pass (human)");
+          table chrome -> 02-13-SUMMARY.md Item 5 (G2-04, vertical borders + no zebra striping)
+          resolved at 02-17-SUMMARY.md verdict #8 ("Tables: fail -> fixed... one per-theme
+          token"); highlighted code -> 02-13-SUMMARY.md Item 6 (PASS) and 02-17-SUMMARY.md
+          verdict #3 ("Code scrollbar: fail -> fixed", 6px transparent-track thumb); Mermaid
+          output -> 02-13-SUMMARY.md Item 7 (G2-05, renders but unstyled) resolved at
+          02-17-SUMMARY.md verdict #1 (renders correctly in both themes at 379x462; the
+          separate styling-quality objection stayed on the STATE.md Deferred Items list until
+          closed by this same quick task's Task 3c); reference previews -> 02-13-SUMMARY.md
+          Item 8 (resting-appearance clause PASSES where triggers exist; rejection was the
+          pre-existing file-path coverage gap G-09, a deliberate scope boundary per D-17, not a
+          D3 contrast/styling defect) with positioning resolved at 02-17-SUMMARY.md verdict #5
+          (same G2-02 fix as links). The mitigating chain is 02-13 -> 02-17, NOT 02-09 ->
+          02-13 -> 02-17: 02-09-PLAN.md carries status: superseded, superseded_by: 02-13, and
+          its 2026-08-29 UAT round was NOT approved (10 measured gaps G2-01..G2-10, recorded in
+          02-UAT.md) -- it produced the gap-closure plans 02-10 through 02-13, it did not pass
+          evidence. Citing 02-09 as a completed link in the chain, as R-02-01's original
+          accepted-risk rationale in 02-SECURITY.md does, is corrected there with a dated
+          addendum rather than by editing this historical record.
+        status: pass
     human_judgment: true
-    rationale: "Contrast judgment on real rendered surfaces requires a human in a browser. The styling fixes landed in b523070 but were not re-inspected in a browser after that commit — see Issues Encountered."
+    rationale: "Contrast judgment on real rendered surfaces requires a human in a browser. The styling fixes landed in b523070 but were not re-inspected in a browser after that commit — see Issues Encountered. RECONCILED 2026-09-10 (quick-260910-0x4): every named surface now has concrete downstream evidence via 02-13 and 02-17 (not 02-09, which was superseded and unapproved) — see the second verification entry above. This original unknown verdict is preserved unmodified above; it is what 02-06 actually knew at the time."
 
 duration: 12min
 completed: 2026-08-29
