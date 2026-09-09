@@ -22,7 +22,105 @@ does not (item 11) and long-body scroll positioning is wrong (item 10).
 
 ## Tests
 
-### Contrast pass
+Canonical result set as of the 2026-09-09 reconciliation. Each entry carries its round-1 verdict
+so the history stays visible; the round-1 tables are preserved verbatim below under
+"Round-1 detail (historical)".
+
+### 1. Body prose renders without leaked section tags
+expected: GSD plan-section wrapper tags never render as literal text in `.artifact-document`.
+result: pass
+round_1: fail (G-01)
+reverified: "0 GSD section tags leak on the exact file G-01 cited; the only angle-bracket token is `<seconds>`, genuine prose in a code span at source line 218."
+
+### 2. Muted and faded text is legible
+expected: Muted/secondary text meets contrast on its actual painted ground, both themes.
+result: pass
+round_1: not reached
+reverified: "Covered by 02-17's 9-selector x light/dark x desktop/390px measurement table."
+
+### 3. Links are legible and actually linked, all states
+expected: Things that read as links are links; default/hover/focus-visible/visited all legible.
+result: pass
+round_1: fail (G-03, G-09)
+reverified: "16 `.document-reference` controls render on a plan page; planning paths in prose are interactive."
+
+### 4. Badges and status chips
+expected: Badge and chip treatments read as intentional and meet contrast.
+result: pass
+round_1: pass with quality objection (G-07)
+reverified: "Objection resolved through 02-12/02-13 and approved at the 02-17 gate."
+
+### 5. Table chrome
+expected: Tables read cleanly — striping present, no heavy vertical rules.
+result: pass
+round_1: fail (G-05)
+reverified: "Zebra striping live in both themes on `.artifact-document tr:nth-child(even) td`; vertical cell borders 0px."
+
+### 6. Shiki code blocks
+expected: Code is legible, themed coherently, and no content is unreachable.
+result: pass
+round_1: legible, theme rejected (G-06); later found clipped (G-10)
+reverified: "All 8 overflowing `<pre>` are `overflow-x:auto` and genuinely scrollable — maxScrollLeft equals hidden width exactly. See the affordance note in Gap Reconciliation."
+
+### 7. Mermaid diagrams
+expected: Valid diagrams draw in both themes and stay within their size bound; invalid ones fall back visibly.
+result: pass
+round_1: not reached (no diagrams encountered)
+reverified: "Renders 379x462 in both themes on fixtures/dense — identical to the dimensions 02-17 recorded as passing — with zero page errors."
+
+### 8. Reference-preview popover
+expected: A reference in prose exposes a preview trigger; the popover opens with a working Open action.
+result: pass
+round_1: fail (G-03)
+reverified: "Trigger is a `<button aria-label='Preview ...'>`; click opens `.reference-preview` with an Open action to a valid artifact URL."
+
+### 9. Destructive signals
+expected: Destructive/damage signalling is distinguishable and meets contrast.
+result: pass
+round_1: pass
+
+### 10. Dashboard "Next up" navigates to the scoped phase
+expected: The primary CTA navigates to the roadmap with exactly that phase opened and scrolled into view.
+result: pass
+round_1: partial — navigated, but scroll target lost on long bodies (G-04)
+reverified: "Deep link settles at top=80px, in viewport, scrollY=13381 on a long plan after layout settle."
+
+### 11. Blocker action navigates to the scoped phase
+expected: The attention-panel blocker row is an activatable control reaching its stated destination.
+result: pass
+round_1: fail (G-02)
+reverified: "Blocker rows are real anchors to /milestones/m~v2.0/phases/p~vv2.0~n~v04~vbulk-archive-downloads."
+
+### 12. Other disclosures stay collapsed
+expected: Opening one phase disclosure leaves every other one closed.
+result: pass
+round_1: pass
+
+### 13. Prose reference reaches the same destination as the CTA
+expected: A phase reference clicked in prose, followed through Open, matches the dashboard CTA destination.
+result: pass
+round_1: pass
+
+### 14. Deep-link reload reproduces the view
+expected: Reloading a deep link reproduces the same scoped, opened view.
+result: pass
+round_1: pass
+
+### 15. Nested markdown inside wrapper tags parses
+expected: Lists inside unrecognized wrapper tags parse as lists, not run-on paragraphs.
+result: pass
+round_1: fail (G-11)
+reverified: "372 list items parse on the page whose `<read_first>` block used to render run-on."
+
+### 16. Visual nesting depth is bounded
+expected: Artifact pages do not stack excessive nested card layers.
+result: pass
+round_1: fail (G-08, 4-5 layers measured)
+reverified: "Measured container nesting depth around code blocks is 3."
+
+## Round-1 detail (historical)
+
+### Contrast pass (round 1)
 
 | # | Surface | Verdict |
 |---|---------|---------|
@@ -40,7 +138,7 @@ Items 2 and 7 are recorded as **still open**, not as passes — no surface was r
 so no verdict exists. Light/dark were not separately reported; both themes were
 available, and no finding was theme-specific.
 
-### Navigation pass
+### Navigation pass (round 1)
 
 | # | Flow | Verdict |
 |---|------|---------|
@@ -49,6 +147,15 @@ available, and no finding was theme-specific.
 | 12 | other disclosures stay collapsed | ✓ pass |
 | 13 | prose reference → Open → same destination | ✓ pass |
 | 14 | deep link reload reproduces view | ✓ pass |
+
+## Summary
+
+total: 16
+passed: 16
+issues: 0
+pending: 0
+skipped: 0
+blocked: 0
 
 ## Gap Reconciliation — 2026-09-09
 
