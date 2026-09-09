@@ -682,3 +682,76 @@ describe('index.html — anti-FOUC critical CSS (quick-260910-0x4 item 3, 02-REV
     expect(lineCount).toBe(162);
   });
 });
+
+describe('sub-10px micro-label family (quick-260910-0x4 item 8)', () => {
+  // The six sibling selectors sharing the uppercase-micro-label convention (three at 0.62rem/
+  // 9.92px, three at 0.6rem/9.6px — smaller still). Named here so the pin covers the whole family,
+  // not just the one selector the audit happened to name.
+  const MICRO_LABEL_SELECTORS = [
+    '.tree-excluded-marker {',
+    '.phase-facts dt {',
+    '.blocked-by {',
+    '.artifact-metadata > summary span {',
+    '.warning-fields dt {',
+    '.warning-fields-label {',
+  ];
+
+  it('declares a single shared token at or above 10px, with real headroom against rem rounding', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const match = css.match(/--font-size-micro-label:\s*([\d.]+)rem;/);
+    expect(match, 'expected --font-size-micro-label to be declared').not.toBeNull();
+    const rem = Number(match?.[1]);
+    // No root font-size override exists anywhere in this file (confirmed by grep at plan time and
+    // re-confirmed by the test below) — the browser default 16px root applies directly, no em
+    // compounding to account for.
+    const computedPx = rem * 16;
+    expect(computedPx).toBeGreaterThanOrEqual(10);
+    // 0.625rem (exactly 10px) was explicitly rejected for having no headroom against rounding —
+    // pin that the chosen value clears it with margin, not just clears the floor.
+    expect(computedPx).toBeGreaterThan(10);
+  });
+
+  it('confirms no root/html/body font-size override exists, so the rem-to-px computation above is direct', async () => {
+    const css = await source('src/web/styles/globals.css');
+    expect(css).not.toMatch(/(^|\n)\s*(html|:root|body)\s*(,[^{]*)?\{[^}]*font-size:/);
+  });
+
+  it('routes every sibling in the family through the shared token, not a literal', async () => {
+    const css = await source('src/web/styles/globals.css');
+    for (const selector of MICRO_LABEL_SELECTORS) {
+      const block = ruleBlocks(css, selector)[0];
+      expect(block, `expected a rule block for ${selector}`).toBeDefined();
+      expect(block, `${selector} should use the shared token`).toMatch(
+        /font-size:\s*var\(--font-size-micro-label\)/,
+      );
+    }
+  });
+
+  it('leaves no literal 0.6rem or 0.62rem font-size anywhere in the stylesheet (including inside media queries)', async () => {
+    const css = await source('src/web/styles/globals.css');
+    // Covers the whole cascade, not just the six base declarations above — a media query that
+    // re-shrinks one of these selectors at a narrow width would still trip this, since it scans
+    // the raw source text unconditionally rather than only the six ruleBlocks() extractions.
+    expect(css).not.toMatch(/font-size:\s*0\.6rem\s*;/);
+    expect(css).not.toMatch(/font-size:\s*0\.62rem\s*;/);
+  });
+
+  it('does not regress the muted-foreground colour on any sibling that used it before this change (colour untouched, contrast holds by construction)', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const mutedForegroundSiblings = [
+      '.phase-facts dt {',
+      '.artifact-metadata > summary span {',
+      '.warning-fields dt {',
+      '.warning-fields-label {',
+    ];
+    for (const selector of mutedForegroundSiblings) {
+      const block = ruleBlocks(css, selector)[0];
+      expect(block, `${selector} should still read var(--muted-foreground)`).toMatch(
+        /color:\s*var\(--muted-foreground\)/,
+      );
+    }
+    // .tree-excluded-marker sets no color of its own (inherits from .tree-excluded, its parent
+    // selector), and .blocked-by reads var(--destructive) — both pre-existing and untouched by
+    // this change, which only moved font-size to the shared token.
+  });
+});
