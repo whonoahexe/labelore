@@ -1,4 +1,4 @@
-// Test-only loader (quick-260910-0x4 item 9, plan 01-01's original must-have restored): walks a
+// Test-only loader (quick-260910-0x4 item 7, plan 01-01's original must-have restored): walks a
 // real directory tree once and returns an in-memory instance holding its contents. This is the
 // only place under test/ a real directory read is legitimate for building a PlanningFilesystem —
 // D-08's fs-equivalence proof runs identical fixtures through both PlanningFilesystem
