@@ -1,5 +1,10 @@
+import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import { toMermaidColor } from '../../src/web/pages/mermaid-theme.ts';
+
+async function source(path: string): Promise<string> {
+  return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
+}
 
 /** Parses a hex color string into its three channel values. */
 function hexChannels(hex: string): [number, number, number] {
@@ -98,5 +103,107 @@ describe('percentage components (WR-01)', () => {
   it('still maps 100% lightness and alpha to 1', () => {
     expect(toMermaidColor('oklch(100% 0 0)')).toBe(toMermaidColor('oklch(1 0 0)'));
     expect(toMermaidColor('oklch(0.5 0 0 / 100%)')).toBe(toMermaidColor('oklch(0.5 0 0)'));
+  });
+});
+
+describe('mermaid initialization site — source-level contract (quick-260910-0x4 item 9)', () => {
+  // Extracts the `themeVariables: { ... }` object literal's raw source text from
+  // artifact-page.tsx's mermaid.initialize() call — a plain-text region extraction, matching the
+  // pattern test/web/visual-contract.test.ts already uses for stylesheet rule blocks.
+  async function extractThemeVariablesBlock(): Promise<string> {
+    const page = await source('src/web/pages/artifact-page.tsx');
+    const start = page.indexOf('themeVariables: {');
+    expect(start, 'expected a themeVariables: { block in artifact-page.tsx').toBeGreaterThan(-1);
+    const openBraceIndex = page.indexOf('{', start);
+    let depth = 0;
+    let cursor = openBraceIndex;
+    for (; cursor < page.length; cursor += 1) {
+      if (page[cursor] === '{') depth += 1;
+      else if (page[cursor] === '}') {
+        depth -= 1;
+        if (depth === 0) break;
+      }
+    }
+    return page.slice(openBraceIndex, cursor + 1);
+  }
+
+  it('covers the full named palette: node fill/border, cluster fill/border, secondary/tertiary colours, edge colour, edge-label background, cluster/node text colour, note colours, and font size', async () => {
+    const block = await extractThemeVariablesBlock();
+    const requiredKeys = [
+      'background',
+      'primaryColor',
+      'primaryTextColor',
+      'primaryBorderColor',
+      'secondaryColor',
+      'tertiaryColor',
+      'tertiaryTextColor',
+      'lineColor',
+      'nodeBkg',
+      'nodeBorder',
+      'nodeTextColor',
+      'clusterBkg',
+      'clusterBorder',
+      'edgeLabelBackground',
+      'noteBkgColor',
+      'noteTextColor',
+      'noteBorderColor',
+      'fontSize',
+    ];
+    for (const key of requiredKeys) {
+      expect(block, `expected themeVariables to declare ${key}`).toMatch(new RegExp(`\\b${key}:`));
+    }
+  });
+
+  it('routes every themeVariables value through toMermaidColor() — the single conversion seam, never a second one', async () => {
+    const block = await extractThemeVariablesBlock();
+    // Every `key: <expression>,` pair's expression must itself be a toMermaidColor(...) call —
+    // proves no entry hands mermaid a raw, unconverted property value. fontSize is included
+    // deliberately: it isn't a colour, but toMermaidColor() returns non-oklch input unchanged, so
+    // wrapping it costs nothing and keeps the "every value flows through the converter" contract
+    // literal rather than color-only.
+    const entries = [...block.matchAll(/(\w+):\s*(toMermaidColor\([^)]*\)|[^,\n]+),?/g)];
+    expect(entries.length).toBeGreaterThanOrEqual(18);
+    for (const [, key, expr] of entries) {
+      expect(expr.trim(), `${key} should be wrapped in toMermaidColor(...)`).toMatch(
+        /^toMermaidColor\(/,
+      );
+    }
+    // Confirms this test isn't accidentally matching zero entries and passing vacuously — a second
+    // conversion helper anywhere in this file would be a seam violation.
+    expect((block.match(/toMermaidColor\(/g) ?? []).length).toBeGreaterThanOrEqual(18);
+    const converterNames = new Set(
+      [...block.matchAll(/(\w+)\(rootStyle\.getPropertyValue|(\w+)\(bodyFontSize\)/g)].flatMap(
+        (m) => [m[1], m[2]].filter((x): x is string => Boolean(x)),
+      ),
+    );
+    expect(converterNames).toEqual(new Set(['toMermaidColor']));
+  });
+
+  it('seeds node fill from --card, not --secondary (the 02-13 root-cause fix)', async () => {
+    const page = await source('src/web/pages/artifact-page.tsx');
+    expect(page).toMatch(/primaryColor:\s*toMermaidColor\(rootStyle\.getPropertyValue\('--card'\)/);
+    expect(page).toMatch(/nodeBkg:\s*toMermaidColor\(rootStyle\.getPropertyValue\('--card'\)/);
+    // --secondary is still read (for secondaryColor, its actual namesake concept), just no longer
+    // as the node-fill seed.
+    expect(page).toMatch(
+      /secondaryColor:\s*toMermaidColor\(rootStyle\.getPropertyValue\('--secondary'\)/,
+    );
+  });
+
+  it('keeps securityLevel strict and the dynamic import', async () => {
+    const page = await source('src/web/pages/artifact-page.tsx');
+    expect(page).toMatch(/securityLevel:\s*'strict'/);
+    expect(page).toMatch(/import\(\s*'mermaid'\s*\)/);
+  });
+
+  it('keeps both lower fallback rungs reachable: the colourless base-options retry, and the per-node readable-source fallback', async () => {
+    const page = await source('src/web/pages/artifact-page.tsx');
+    // Rung 2: on a themeVariables initialize() failure, retry with baseOptions alone (no colours).
+    const initSection = page.slice(page.indexOf('const chunk = import'), page.indexOf('chunk.catch'));
+    expect(initSection).toMatch(/catch\s*\{[\s\S]*?mermaid\.initialize\(baseOptions\)/);
+    // Rung 3: per-node, a parse/run failure restores the readable source text rather than leaving
+    // a broken node.
+    expect(initSection).toMatch(/node\.textContent\s*=\s*source/);
+    expect(initSection).toMatch(/mermaid-fallback/);
   });
 });

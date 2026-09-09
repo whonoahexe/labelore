@@ -229,14 +229,44 @@ export function DocumentView({ document }: { document: RenderedDocument }): Reac
           fontFamily: rootStyle.getPropertyValue('--font-sans').trim(),
         };
         try {
+          // quick-260910-0x4 item 9: full palette, all through toMermaidColor() — the single
+          // conversion seam, never a second one and never a raw property handed to mermaid
+          // unconverted. Every value here, including fontSize (not a colour; toMermaidColor()
+          // returns non-oklch input unchanged), is wrapped for that reason — the source-level
+          // contract test in test/web/mermaid-theme.test.ts asserts this literally.
+          //
+          // Seeds vs. derived: under theme:'base' mermaid computes most of its palette from a
+          // small seed set (primaryColor -> nodeBkg/mainBkg, secondaryColor -> edgeLabelBackground,
+          // tertiaryColor -> clusterBkg, each `||`-defaulted only when unset). Rather than let
+          // derivation run and risk an inconsistent result, every named surface below is seeded
+          // explicitly instead.
+          //
+          // primaryColor was --secondary before this fix — the 02-13 diagnosis's root cause: dark
+          // --secondary carries chroma and sits off the app's zero-chroma neutral palette, which is
+          // what read as "very ugly". --card is the actual neutral surface the rest of the app
+          // paints nodes/panels on, so node fill now seeds from that instead.
+          const bodyFontSize = getComputedStyle(window.document.body).fontSize;
           mermaid.initialize({
             ...baseOptions,
             themeVariables: {
               background: toMermaidColor(rootStyle.getPropertyValue('--background').trim()),
-              primaryColor: toMermaidColor(rootStyle.getPropertyValue('--secondary').trim()),
+              primaryColor: toMermaidColor(rootStyle.getPropertyValue('--card').trim()),
               primaryTextColor: toMermaidColor(rootStyle.getPropertyValue('--foreground').trim()),
               primaryBorderColor: toMermaidColor(rootStyle.getPropertyValue('--border').trim()),
+              secondaryColor: toMermaidColor(rootStyle.getPropertyValue('--secondary').trim()),
+              tertiaryColor: toMermaidColor(rootStyle.getPropertyValue('--muted').trim()),
+              tertiaryTextColor: toMermaidColor(rootStyle.getPropertyValue('--foreground').trim()),
               lineColor: toMermaidColor(rootStyle.getPropertyValue('--foreground').trim()),
+              nodeBkg: toMermaidColor(rootStyle.getPropertyValue('--card').trim()),
+              nodeBorder: toMermaidColor(rootStyle.getPropertyValue('--border').trim()),
+              nodeTextColor: toMermaidColor(rootStyle.getPropertyValue('--foreground').trim()),
+              clusterBkg: toMermaidColor(rootStyle.getPropertyValue('--muted').trim()),
+              clusterBorder: toMermaidColor(rootStyle.getPropertyValue('--border').trim()),
+              edgeLabelBackground: toMermaidColor(rootStyle.getPropertyValue('--card').trim()),
+              noteBkgColor: toMermaidColor(rootStyle.getPropertyValue('--muted').trim()),
+              noteTextColor: toMermaidColor(rootStyle.getPropertyValue('--foreground').trim()),
+              noteBorderColor: toMermaidColor(rootStyle.getPropertyValue('--border').trim()),
+              fontSize: toMermaidColor(bodyFontSize),
             },
           });
         } catch {
