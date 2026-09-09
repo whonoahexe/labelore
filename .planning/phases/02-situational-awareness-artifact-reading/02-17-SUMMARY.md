@@ -27,6 +27,26 @@ were fixed under quick task
 [260901-ten](../../quick/260901-ten-fix-nine-phase-02-uat-findings-in-the-we/) and re-verified
 before approval.
 
+## Tested Commit (T-02-17-01)
+
+**Tree under test: `56346a4`** — `docs(quick-260901-ten): record the nine-finding UAT fix pass`,
+2026-09-01T22:29:28+05:30.
+
+> **Provenance caveat — this SHA was reconstructed on 2026-09-09, not recorded at the gate.**
+> The original gate record identified its tree in prose only ("a build containing 02-14, 02-15 and
+> 02-16" plus quick task 260901-ten), which left threat T-02-17-01's "record the tested commit"
+> clause unsatisfied. The reconstruction is unambiguous but is stated here as a later inference,
+> not as a contemporaneous observation.
+
+Evidence for the identification:
+
+- `56346a4` is the **direct parent** of `fbe395e docs(02-17): record the approved fresh-build
+  re-gate` — the commit that recorded this very approval (`git rev-parse fbe395e^` → `56346a4`).
+- Nothing sits between them: `git log 56346a4..fbe395e` returns only `fbe395e` itself, so no code
+  changed between the tree that was gated and the tree that recorded the verdict.
+- It contains all the work this gate names: 02-14 (7 commits), 02-15 (6), 02-16 (7), and all seven
+  `quick-260901-ten` commits carrying findings F1–F9.
+
 ## Method
 
 Two evidence classes, kept distinct throughout:
