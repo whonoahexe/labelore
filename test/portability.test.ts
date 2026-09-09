@@ -280,7 +280,7 @@ describe('adversarial portability — three project shapes, a stripped copy, unk
   });
 });
 
-// quick-260910-0x4 item 9 (DATA-01's boundary, plan 01-01's original must-have restored):
+// quick-260910-0x4 item 7 (DATA-01's boundary, plan 01-01's original must-have restored):
 // src/planning-fs/local-fs.ts is the ONLY file under src/ permitted to import the Node filesystem
 // module, in any spelling. This is a durable structural gate, not a one-off shell check — it stays
 // enforced after this task, catching a future regression the same way a planted violation is
@@ -351,7 +351,7 @@ async function findFsImportViolations(srcDir: string, allowedRelPath: string): P
   return violations;
 }
 
-describe('Node filesystem module import boundary (DATA-01, quick-260910-0x4 item 9)', () => {
+describe('Node filesystem module import boundary (DATA-01, quick-260910-0x4 item 7)', () => {
   it('is imported nowhere under src/ except local-fs.ts, in any real spelling', async () => {
     const violations = await findFsImportViolations(SRC_DIR, ALLOWED_FS_IMPORTER);
     expect(violations).toEqual([]);
