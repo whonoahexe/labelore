@@ -2,9 +2,9 @@
 schema_version: 1
 open_count: 3
 waived_count: 0
-fixed_count: 2
-total_count: 5
-last_updated: 2026-09-07T20:20:02.709Z
+fixed_count: 3
+total_count: 6
+last_updated: 2026-09-09T13:00:00.000Z
 ---
 
 # Broken Windows Ledger
@@ -20,6 +20,7 @@ last_updated: 2026-09-07T20:20:02.709Z
 | 3 | 03 | lint-warning | test/web/visual-contract.test.ts | 438 | Pre-existing no-regex-spaces lint error, unrelated to plan 03-01's files (confirmed via empty git diff against HEAD). | open |  | 2026-09-02T10:04:51.761Z |  |
 | 4 | 04 | unrun-verify | src/web/pages/artifact-page.tsx |  | Human must confirm the unreadable disclosure and empty-document notice read as one coherent explanation | open |  | 2026-09-07T20:20:02.595Z |  |
 | 5 | 04 | unrun-verify | .planning/phases/04-portability-degradation-hardening/04-05-PLAN.md |  | Human must decide whether the 04-05 tone prohibition includes disclosure prose | open |  | 2026-09-07T20:20:02.709Z |  |
+| 6 | quick-260909-ogb | unrun-verify | src/web/styles/globals.css |  | CR-02 human-check: RESOLVED by orchestrator. Ran headless chromium (playwright bundled binary, no project dependency added) against a live server at 1200/992/700/320px. At every width .snapshot-status is visible (not display:none), the age <time> renders real text, the Refresh button is visible at 36x36, and scrollWidth==clientWidth (no horizontal body scroll). Pre-fix commit 8e1aa10 confirmed to have display:none, so the change is real. | fixed |  | 2026-09-09T12:53:14.635Z | 2026-09-09T13:00:00.000Z |
 
 ````json
 [
@@ -82,6 +83,18 @@ last_updated: 2026-09-07T20:20:02.709Z
     "reason": "",
     "recorded_at": "2026-09-07T20:20:02.709Z",
     "resolved_at": null
+  },
+  {
+    "id": 6,
+    "kind": "unrun-verify",
+    "phase": "quick-260909-ogb",
+    "file": "src/web/styles/globals.css",
+    "line": null,
+    "description": "CR-02 human-check: RESOLVED by orchestrator. Ran headless chromium (playwright bundled binary, no project dependency added) against a live server at 1200/992/700/320px. At every width .snapshot-status is visible (not display:none), the age <time> renders real text, the Refresh button is visible at 36x36, and scrollWidth==clientWidth (no horizontal body scroll). Pre-fix commit 8e1aa10 confirmed to have display:none, so the change is real.",
+    "status": "fixed",
+    "reason": "Verified by orchestrator via headless chromium at 1200/992/700/320px; no dependency added.",
+    "recorded_at": "2026-09-09T12:53:14.635Z",
+    "resolved_at": "2026-09-09T13:00:00.000Z"
   }
 ]
 ````

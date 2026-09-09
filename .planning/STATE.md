@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-08)
 Phase: 04
 Plan: Not started
 Status: All phases complete
-Last activity: 2026-09-08 - Completed quick task 260908-k1n: Rename project to Labelore
+Last activity: 2026-09-09 - Completed quick task 260909-ogb: Close all five open 04-REVIEW findings (CR-01, CR-02, WR-01, WR-02, WR-03)
 
 Progress: [██████████] 100%
 
@@ -129,6 +129,7 @@ None.
 | 260901-ten | Fix nine phase-02 UAT findings in the web UI (mermaid oklch outage, discrepancy-callout contrast, plan-section prose measure, 320px overflow, dead selector, code scrollbar, popover anchor, nested plan numbering, table zebra) | 2026-09-01 | cb3692a | [260901-ten-fix-nine-phase-02-uat-findings-in-the-we](./quick/260901-ten-fix-nine-phase-02-uat-findings-in-the-we/) |
 | 260902-tnw | Fix all six phase-03 code review findings from 03-REVIEW.md (CR-01 empty-milestone startup crash, WR-01 dropped root exclusion, WR-02 undeclared hast-util-sanitize, WR-03 search state leak across queries, WR-04 unchecked cast, IN-01 details first-paint flash) | 2026-09-02 | 2cfc6e4 | [260902-tnw-fix-all-six-phase-03-code-review-findin](./quick/260902-tnw-fix-all-six-phase-03-code-review-findin/) |
 | 260908-k1n | Rename the project and product to Labelore everywhere | 2026-09-08 | 65b1919 | [260908-k1n-we-are-changing-this-project-s-name-to-l](./quick/260908-k1n-we-are-changing-this-project-s-name-to-l/) |
+| 260909-ogb | Close all five open findings from 04-REVIEW.md (CR-01 refresh reporting success on a reachable failure, CR-02 snapshot age and Refresh hidden below 62rem, WR-01 Unicode-lowercase highlight offset drift, WR-02 overlapping snippet windows, WR-03 buildDerivedViews multi-read decision) | 2026-09-09 | d615c9d | [260909-ogb-close-all-five-open-findings-from-04-rev](./quick/260909-ogb-close-all-five-open-findings-from-04-rev/) |
 
 ## Deferred Items
 
