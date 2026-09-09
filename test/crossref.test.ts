@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { assembleDomainModel } from '../src/planning-repo/assemble.ts';
 import { resolveCrossReferences } from '../src/planning-repo/crossref.ts';
 import { discover } from '../src/planning-repo/discovery.ts';
@@ -6,15 +8,17 @@ import { parseWithRegistry } from '../src/planning-repo/registry.ts';
 import { WarningCollector } from '../src/planning-repo/warnings.ts';
 import { InMemoryPlanningFilesystem } from '../src/planning-fs/in-memory-fs.ts';
 import { PlanningRepository } from '../src/planning-repo/snapshot.ts';
+import { LocalFsPlanningFilesystem } from '../src/planning-fs/local-fs.ts';
 
 const ROOT = '/project';
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 async function assembleTree(files: Record<string, string>) {
   const fs = new InMemoryPlanningFilesystem(files);
   const warnings = new WarningCollector();
   const { refs } = await discover(fs);
   const parsed = await Promise.all(refs.map((r) => parseWithRegistry(fs, r, warnings)));
-  const project = assembleDomainModel(parsed, warnings.all(), ROOT);
+  const project = assembleDomainModel(parsed, warnings, ROOT);
   return { project, warnings };
 }
 
@@ -135,6 +139,18 @@ describe('resolveCrossReferences — Plan.summaryRef and Plan.dependsOnRefs', ()
     expect(plan01.dependsOnRefs).toEqual([{ raw: '01-99', resolved: null }]);
   });
 
+  // D-10 explicit pin: a well-formed depends_on array whose entry names a sibling that doesn't
+  // exist is a routine, unlinked-mention case — distinguishable from a wrong-shaped field (below) —
+  // and must add NO warning. This states the invariant explicitly rather than leaving it implied by
+  // a fixture's golden warning count.
+  it('adds no warning for a well-formed depends_on entry that does not resolve (D-10 silence)', async () => {
+    const { project, warnings } = await assembleTree({
+      '.planning/phases/01-x/01-01-PLAN.md': '---\nphase: 01\nplan: 01\ndepends_on: ["01-99"]\n---\n\nbody\n',
+    });
+    expect(project.phases[0].plans[0].dependsOnRefs).toEqual([{ raw: '01-99', resolved: null }]);
+    expect(warnings.all()).toHaveLength(0);
+  });
+
   // CR-01 regression: a non-array `depends_on` (a plausible authoring typo — a bare string instead
   // of a YAML list) must degrade to "no dependencies", never throw. Previously
   // `((plan.frontmatter.depends_on as unknown[] | undefined) ?? []).map(...)` threw
@@ -149,6 +165,54 @@ describe('resolveCrossReferences — Plan.summaryRef and Plan.dependsOnRefs', ()
     expect(plan01.dependsOnRefs).toEqual([]);
   });
 
+  // quick-260910-0x4 item 6: unlike a dangling reference, a wrong-shaped depends_on field is
+  // structurally invalid regardless of what it points at — it records exactly one warning naming
+  // the plan and the field, while still never throwing (D-12, pinned separately above).
+  it('records exactly one warning naming the plan and the field for a non-array depends_on', async () => {
+    const { project, warnings } = await assembleTree({
+      '.planning/phases/01-x/01-01-PLAN.md': '---\nphase: 01\nplan: 01\ndepends_on: "01-99"\n---\n\nbody\n',
+    });
+    const plan01 = project.phases[0].plans[0];
+    expect(plan01.dependsOnRefs).toEqual([]);
+    const planWarnings = warnings.all();
+    expect(planWarnings).toHaveLength(1);
+    expect(planWarnings[0].path).toBe(plan01.path);
+    expect(planWarnings[0].stage).toBe('assembly');
+    expect(planWarnings[0].message).toContain('01-01');
+    expect(planWarnings[0].message).toContain('depends_on');
+  });
+
+  // A number (another plausible non-array shape) hits the same branch and must also warn exactly
+  // once, never throw.
+  it('records exactly one warning for a non-array depends_on that is a number', async () => {
+    const { project, warnings } = await assembleTree({
+      '.planning/phases/01-x/01-01-PLAN.md': '---\nphase: 01\nplan: 01\ndepends_on: 42\n---\n\nbody\n',
+    });
+    const plan01 = project.phases[0].plans[0];
+    expect(plan01.dependsOnRefs).toEqual([]);
+    expect(warnings.all()).toHaveLength(1);
+  });
+
+  // The key being absent entirely is the routine case (most plans declare no dependencies) and must
+  // stay warning-free.
+  it('adds no warning when depends_on is absent entirely', async () => {
+    const { warnings } = await assembleTree({
+      '.planning/phases/01-x/01-01-PLAN.md': '---\nphase: 01\nplan: 01\n---\n\nbody\n',
+    });
+    expect(warnings.all()).toHaveLength(0);
+  });
+
+  // Explicit decision pin: a YAML null (`depends_on:` with no value) reads the same as "absent" —
+  // routine authoring shorthand for "none", not a malformed field — and stays warning-free too.
+  it('adds no warning and yields an empty dependsOnRefs when depends_on is explicit YAML null', async () => {
+    const { project, warnings } = await assembleTree({
+      '.planning/phases/01-x/01-01-PLAN.md': '---\nphase: 01\nplan: 01\ndepends_on:\n---\n\nbody\n',
+    });
+    const plan01 = project.phases[0].plans[0];
+    expect(plan01.dependsOnRefs).toEqual([]);
+    expect(warnings.all()).toHaveLength(0);
+  });
+
   it('PlanningRepository.load() returns an ok snapshot rather than throwing when a PLAN.md has a non-array depends_on', async () => {
     const fs = new InMemoryPlanningFilesystem({
       '.planning/phases/01-x/01-01-PLAN.md': '---\nphase: 01\nplan: 01\ndepends_on: "01-99"\n---\n\nbody\n',
@@ -158,6 +222,24 @@ describe('resolveCrossReferences — Plan.summaryRef and Plan.dependsOnRefs', ()
     expect(snapshot.loadStatus.status).toBe('ok');
     expect(snapshot.project).not.toBeNull();
     expect(snapshot.project?.phases[0].plans[0].dependsOnRefs).toEqual([]);
+    // The new warning reaches the flat snapshot.warnings list — the live collector threaded through
+    // assembleDomainModel into resolveCrossReferences, re-read here after assembly returns.
+    expect(snapshot.warnings).toHaveLength(1);
+    expect(snapshot.warnings[0].stage).toBe('assembly');
+  });
+
+  // Documents the flat-only answer this task's plan explicitly required a decision on: the owning
+  // artifact's own .warnings array was already materialized (copied by reference from its
+  // ParsedArtifact) before resolveCrossReferences runs, so a warning added during cross-referencing
+  // does NOT reliably reach it — only the flat snapshot list. Asserted here rather than left implied.
+  it('does not add the depends_on warning to the owning artifact’s own warnings array (flat-only)', async () => {
+    const { project, warnings } = await assembleTree({
+      '.planning/phases/01-x/01-01-PLAN.md': '---\nphase: 01\nplan: 01\ndepends_on: "01-99"\n---\n\nbody\n',
+    });
+    const plan01 = project.phases[0].plans[0];
+    expect(warnings.all()).toHaveLength(1);
+    const artifact = project.phases[0].artifacts[plan01.path];
+    expect(artifact?.warnings ?? []).toHaveLength(0);
   });
 });
 
@@ -169,9 +251,33 @@ describe('resolveCrossReferences — idempotence', () => {
       '.planning/phases/01-foundation/01-01-PLAN.md': '---\nphase: 01\nplan: 01\ndepends_on: []\n---\n\nbody\n',
     });
     const before = JSON.stringify(project);
-    resolveCrossReferences(project);
+    resolveCrossReferences(project, new WarningCollector());
     const after = JSON.stringify(project);
     expect(after).toBe(before);
     expect(project.phases[0].requirementRefs).toHaveLength(1);
+  });
+});
+
+// quick-260910-0x4 item 6: test/__golden__/sparse-started.json already pins D-10's silence as a
+// byte-for-byte property of the committed golden (its `SLICE-99` requirement reference is dangling
+// and the golden records 0 warnings) — but that leaves the invariant implied, never stated. This
+// test states it directly, against the real fixture on disk (not a synthetic tree), so the
+// invariant survives even if the golden fixture is ever regenerated.
+describe('resolveCrossReferences — sparse-started fixture (D-10 silence, stated not implied)', () => {
+  it('loads the real sparse-started fixture with its dangling SLICE-99 reference and adds zero warnings', async () => {
+    const fixtureRoot = join(__dirname, '..', 'fixtures', 'sparse-started');
+    const fs = new LocalFsPlanningFilesystem(fixtureRoot);
+    const repo = new PlanningRepository(fs, fixtureRoot);
+    const snapshot = await repo.load();
+    expect(snapshot.loadStatus.status).toBe('ok');
+    expect(snapshot.warnings).toHaveLength(0);
+    // Confirm the fixture actually exercises the dangling case this test is named for — a
+    // zero-warning assertion against a fixture with no SLICE-99 reference at all would prove nothing.
+    const requirementIds = snapshot.project?.requirements.map((r) => r.id) ?? [];
+    expect(requirementIds).not.toContain('SLICE-99');
+    const hasDanglingSlice99 = (snapshot.project?.phases ?? []).some((phase) =>
+      phase.requirementRefs.some((ref) => ref.raw === 'SLICE-99' && ref.resolved === null),
+    );
+    expect(hasDanglingSlice99).toBe(true);
   });
 });

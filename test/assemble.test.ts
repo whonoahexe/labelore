@@ -21,7 +21,7 @@ async function assembleTree(files: Record<string, string>) {
   const warnings = new WarningCollector();
   const { refs } = await discover(fs);
   const parsed = await Promise.all(refs.map((r) => parseWithRegistry(fs, r, warnings)));
-  const project = assembleDomainModel(parsed, warnings.all(), ROOT);
+  const project = assembleDomainModel(parsed, warnings, ROOT);
   return { project, warnings, parsed };
 }
 
@@ -161,7 +161,7 @@ describe('assembleDomainModel — warning identity', () => {
       warnings: warnings.forPath('.planning/STATE.md'),
       structured: {},
     };
-    const project = assembleDomainModel([parsedArtifact], warnings.all(), ROOT);
+    const project = assembleDomainModel([parsedArtifact], warnings, ROOT);
     const artifactWarning = project.artifacts['.planning/STATE.md'].warnings[0];
     expect(artifactWarning).toBe(warning);
     expect(warnings.all()[0]).toBe(warning);
@@ -186,7 +186,7 @@ describe('assembleDomainModel — total parse failure', () => {
       warnings: warnings.forPath(failedRef.path),
       structured: {},
     };
-    const project = assembleDomainModel([failedParsed], warnings.all(), ROOT);
+    const project = assembleDomainModel([failedParsed], warnings, ROOT);
     expect(project).not.toBeNull();
     expect(project.artifacts['.planning/STATE.md']).toBeDefined();
     expect(warnings.all()).toHaveLength(1);
@@ -196,7 +196,7 @@ describe('assembleDomainModel — total parse failure', () => {
 
 describe('assembleDomainModel — empty input', () => {
   it('yields a Project with empty collections, not null, and zero warnings for an empty parsed-artifact array', () => {
-    const project = assembleDomainModel([], [], ROOT);
+    const project = assembleDomainModel([], new WarningCollector(), ROOT);
     expect(project).not.toBeNull();
     expect(project.milestones).toEqual([]);
     expect(project.phases).toEqual([]);
@@ -269,7 +269,7 @@ describe('assembleDomainModel — D-11 reachable-equals-discovered (fixtures/den
   });
 
   it('resolves normally on a normal tree — assembleDomainModel([], [], root) still yields empty collections and zero artifacts', () => {
-    const project = assembleDomainModel([], [], ROOT);
+    const project = assembleDomainModel([], new WarningCollector(), ROOT);
     expect(project.milestones).toEqual([]);
     expect(project.phases).toEqual([]);
     expect(project.quickTasks).toEqual([]);
