@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.18.0"
+  },
   "scripts": {
     "snapshot": "node src/cli/snapshot.ts",
     "dev": "node src/server/index.ts",
