@@ -1,14 +1,26 @@
+import { lazy } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { createBrowserRouter, isRouteErrorResponse, Link, useRouteError } from 'react-router';
 import { presentationRoutePatterns } from '../presentation/routes.ts';
 import { AppShell, fetchPresentation } from './components/app-shell.tsx';
-import { DashboardPage } from './pages/dashboard-page.tsx';
 import { InvalidProjectScreen } from './pages/invalid-project-screen.tsx';
-import { RoadmapPage } from './pages/roadmap-page.tsx';
-import { SearchPage } from './pages/search-page.tsx';
-import { TraceabilityPage } from './pages/traceability-page.tsx';
-import { ArtifactPage } from './pages/artifact-page.tsx';
-import { PlanPairPage } from './pages/plan-pair-page.tsx';
+
+const DashboardPage = lazy(() =>
+  import('./pages/dashboard-page.tsx').then((m) => ({ default: m.DashboardPage })),
+);
+const RoadmapPage = lazy(() =>
+  import('./pages/roadmap-page.tsx').then((m) => ({ default: m.RoadmapPage })),
+);
+const SearchPage = lazy(() => import('./pages/search-page.tsx').then((m) => ({ default: m.SearchPage })));
+const TraceabilityPage = lazy(() =>
+  import('./pages/traceability-page.tsx').then((m) => ({ default: m.TraceabilityPage })),
+);
+const ArtifactPage = lazy(() =>
+  import('./pages/artifact-page.tsx').then((m) => ({ default: m.ArtifactPage })),
+);
+const PlanPairPage = lazy(() =>
+  import('./pages/plan-pair-page.tsx').then((m) => ({ default: m.PlanPairPage })),
+);
 
 function RouteError(): React.JSX.Element {
   const error = useRouteError();
