@@ -4,10 +4,10 @@ milestone: v1.0
 current_phase: 04
 status: completed
 stopped_at: Phase 04 complete — all phases complete
-last_updated: "2026-09-08T08:17:08.609Z"
-last_activity: 2026-09-08
-last_activity_desc: Completed quick task 260908-k1n: Rename project to Labelore
-state_head: 65cc9a34b4bfa9cde92acff27464f1f7167692bd
+last_updated: "2026-09-09T20:13:51.982Z"
+last_activity: 2026-09-09
+last_activity_desc: "Completed quick task 260908-k1n: Rename project to Labelore"
+state_head: 2d6ea0a258e3430228ecf50691bfdbf8263a6cbf
 progress:
   total_phases: 4
   completed_phases: 4
@@ -130,15 +130,18 @@ None.
 | 260902-tnw | Fix all six phase-03 code review findings from 03-REVIEW.md (CR-01 empty-milestone startup crash, WR-01 dropped root exclusion, WR-02 undeclared hast-util-sanitize, WR-03 search state leak across queries, WR-04 unchecked cast, IN-01 details first-paint flash) | 2026-09-02 | 2cfc6e4 | [260902-tnw-fix-all-six-phase-03-code-review-findin](./quick/260902-tnw-fix-all-six-phase-03-code-review-findin/) |
 | 260908-k1n | Rename the project and product to Labelore everywhere | 2026-09-08 | 65b1919 | [260908-k1n-we-are-changing-this-project-s-name-to-l](./quick/260908-k1n-we-are-changing-this-project-s-name-to-l/) |
 | 260909-ogb | Close all five open findings from 04-REVIEW.md (CR-01 refresh reporting success on a reachable failure, CR-02 snapshot age and Refresh hidden below 62rem, WR-01 Unicode-lowercase highlight offset drift, WR-02 overlapping snippet windows, WR-03 buildDerivedViews multi-read decision) | 2026-09-09 | d615c9d | [260909-ogb-close-all-five-open-findings-from-04-rev](./quick/260909-ogb-close-all-five-open-findings-from-04-rev/) |
+| 260910-0x4 | Close the v1.0 milestone tech-debt list — 12 of 14 items closed (WINDOWS.md entries 3/4/5, stale phase-03 lint note, dead index.html critical-CSS, package.json engines floor, title-derivation dedupe, depends_on warning plumbing, node:fs seam restored to local-fs.ts only, the sub-10px micro-label family, full mermaid theme palette, warning-free build via real splitting, measured keyboard reachability of Refresh, 02-06 D3 + R-02-01 reconciliation); 03-UI-REVIEW and 04-UI-REVIEW left open, re-staled by this task's own CSS changes; new WCAG 1.4.11 focus-ring contrast finding logged as WINDOWS.md entry 7 (waived) | 2026-09-10 | 2d6ea0a | [260910-0x4-close-every-tech-debt-item-in-planning-v](./quick/260910-0x4-close-every-tech-debt-item-in-planning-v/) |
 
 ## Deferred Items
 
 Items acknowledged and deferred at milestone close, most recent first:
 
-| Category | Item | Status | Deferred At | Milestone |
-|----------|------|--------|-------------|-----------|
-| UI polish | Mermaid diagram styling — rendering is correct and bounded (379×462, within min(70vh, 36rem)), but the diagrams themselves look poor. Human verdict at the 02-17 gate: "works as expected but it looks very ugly." Theme variables reach mermaid as converted sRGB; what they map to is unreviewed. | Open | 2026-09-01 | v0.1 |
-| Accessibility | `.artifact-metadata > summary span` renders at 9.92px, under a 10px floor. Contrast passes (4.74 light / 6.99 dark); the size does not. | Open | 2026-09-01 | v0.1 |
+No entries remain open. Both prior rows were closed by `quick-260910-0x4`:
+
+| Category | Item | Status | Deferred At | Closed At | Milestone |
+|----------|------|--------|-------------|-----------|-----------|
+| UI polish | Mermaid diagram styling — theme variables now cover the full named palette (node/cluster fill and border, secondary/tertiary colours, edge colour and edge-label background, cluster/node text colour, note colours, font size), all through `toMermaidColor()`, with the node-fill seed corrected from `--secondary` to `--card` (the 02-13 diagnosis's root cause). | Closed | 2026-09-01 | 2026-09-10 | v0.1 |
+| Accessibility | `.artifact-metadata > summary span` and five sibling uppercase-micro-label selectors now share one token, `--font-size-micro-label: 0.7rem` (11.2px), clearing the 10px floor with real headroom; no literal 0.6rem/0.62rem font-size remains anywhere in the stylesheet. | Closed | 2026-09-01 | 2026-09-10 | v0.1 |
 
 ## Session Continuity
 
