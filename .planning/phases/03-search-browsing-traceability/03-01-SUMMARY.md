@@ -225,10 +225,11 @@ _Note: Task 2 (tdd="true") followed a strict RED→GREEN split — implementatio
 - **Issue:** Two `no-regex-spaces` errors (lines 438-439) in a file this plan never touches. Confirmed pre-existing via `git diff HEAD -- test/web/visual-contract.test.ts` returning empty before any of this plan's commits.
 - **Action taken:** Left unfixed per the scope-boundary rule. Logged to `.planning/phases/03-search-browsing-traceability/deferred-items.md` and to the `WINDOWS.md` ledger (`lint-warning`, phase 03, entry id 3).
 - **Impact:** `npm run lint` over the whole repo reports 2 errors throughout this plan's execution; `npm run lint` scoped to this plan's own files reports 0.
+- **Resolved 2026-09-10 (quick-260910-0x4):** The two regex literals (`/:root \{\n  --table-zebra:/` and `/\.dark \{\n  --table-zebra:/`) now use a counted `{2}` quantifier in place of the literal two-space run (`/:root \{\n {2}--table-zebra:/` and `/\.dark \{\n {2}--table-zebra:/`, `test/web/visual-contract.test.ts:438-439`). `npm run lint` exits 0, silent, over the whole repo. `WINDOWS.md` ledger entry 3 closed by the same task. The entry in `deferred-items.md` was struck outright (it is a live open-issue queue, not a historical record).
 
 ---
 
-**Total deviations:** 5 auto-fixed (2 bugs, 2 blocking, 1 missing-critical/completeness) + 1 out-of-scope logged, not fixed.
+**Total deviations:** 5 auto-fixed (2 bugs, 2 blocking, 1 missing-critical/completeness) + 1 out-of-scope logged, not fixed (subsequently resolved 2026-09-10 by quick-260910-0x4).
 **Impact on plan:** All auto-fixes were necessary for correctness (tokenizer), buildability (typecheck), or the plan's own stated acceptance criteria (lint cleanliness, quick-task search reachability, artifact-list completeness). No scope creep — the one out-of-scope item found was deliberately left alone and logged rather than fixed.
 
 ## Issues Encountered
