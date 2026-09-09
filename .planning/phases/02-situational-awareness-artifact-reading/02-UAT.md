@@ -1,9 +1,9 @@
 ---
-status: gaps-found
+status: complete
 phase: 02-situational-awareness-artifact-reading
 source: [02-09-PLAN.md, 02-VERIFICATION.md]
 started: 2026-08-29
-updated: 2026-08-29
+updated: 2026-09-09
 corpora: ["/home/cinedise/studio-portal", "fixtures/dense"]
 environment: "production build (npm start), host browser via cloudflared tunnel"
 ---
@@ -50,7 +50,98 @@ available, and no finding was theme-specific.
 | 13 | prose reference → Open → same destination | ✓ pass |
 | 14 | deep link reload reproduces view | ✓ pass |
 
-## Gaps
+## Gap Reconciliation — 2026-09-09
+
+All eleven round-1 gaps below are **resolved**. They were closed across three gate rounds, and
+each was independently re-verified against the CURRENT tree in this session with playwright-core
+driving a real Chromium against two fresh servers (`fixtures/dense` :4190, `~/studio-portal` :4191)
+on a build at `0311066`. This matters because 29 commits touched `src/web`, `src/presentation`,
+`src/rendering` and `src/server` after the 02-17 approval — including `64cc42b fix(ui): unify
+interface hierarchy and color states` — so the approval alone was not sufficient evidence.
+
+**Gate chain:** 02-09 NOT APPROVED (G-01..G-11) → wave 9 (02-10, 02-11, 02-12) → 02-13 NOT
+APPROVED (G2-01..G2-10) → 02-14, 02-15, 02-16 → **02-17 APPROVED** (human, 2026-09-01), nine
+further defects fixed under quick task 260901-ten and re-verified before approval.
+
+```yaml
+- gap_id: G-01
+  status: resolved
+  resolved_by: [02-10, 02-13]
+  reverified: "0 GSD section tags leak on the exact file G-01 cited. The only angle-bracket token
+    in body text is `<seconds>`, which is genuine prose inside a code span at source line 218."
+- gap_id: G-02
+  status: resolved
+  resolved_by: [02-11, 02-13]
+  reverified: "Blocker rows are real anchors: href=/milestones/m~v2.0/phases/p~vv2.0~n~v04~vbulk-archive-downloads
+    — the destination the round-1 record confirmed correct in data but inert in the UI."
+- gap_id: G-03
+  status: resolved
+  resolved_by: [02-10, 02-12, 02-13]
+  reverified: "16 .document-reference elements render (was 0). Each is a <button> with
+    aria-label='Preview <path>'; clicking opens .reference-preview with a heading and a working
+    Open action (/artifacts/a~.planning%2FPROJECT.md)."
+- gap_id: G-04
+  status: resolved
+  resolved_by: [02-11, 02-13]
+  reverified: "Deep link to #trust-boundaries on the long plan settles at top=80px, in viewport,
+    scrollY=13381 after a 1.6s layout settle — the long-document case that used to lose position."
+- gap_id: G-05
+  status: resolved
+  resolved_by: [02-12, 02-13]
+  reverified: "Zebra striping live in both themes on .artifact-document tr:nth-child(even) td
+    (dark oklch(...)/0.5, light oklch(...)/0.62). Vertical cell borders are 0px — the specific
+    02-13 complaint."
+- gap_id: G-06
+  status: resolved
+  resolved_by: [02-12, 02-13, 02-17]
+  reverified: "Subjective; carried through to the 02-17 human gate and approved there."
+- gap_id: G-07
+  status: resolved
+  resolved_by: [02-12, 02-13, 02-17]
+  reverified: "Subjective; approved at the 02-17 gate."
+- gap_id: G-08
+  status: resolved
+  resolved_by: [02-12, 02-13]
+  reverified: "Measured container nesting depth around code blocks is 3, down from the 4-5 layers
+    recorded in round 1."
+- gap_id: G-09
+  status: resolved
+  resolved_by: [02-12, 02-15, 02-17]
+  reverified: "Planning paths in prose (.planning/PROJECT.md, ROADMAP.md, STATE.md) are interactive
+    preview controls, not inert text."
+- gap_id: G-10
+  status: resolved
+  resolved_by: [02-12, 02-13]
+  reverified: "Every overflowing <pre> is overflow-x:auto and genuinely scrollable — maxScrollLeft
+    equals hidden width exactly on all 8 blocks, so no content is unreachable. See the affordance
+    note below: the scrollbar is 2px by deliberate design (quick 260901-ten F6/F9)."
+- gap_id: G-11
+  status: resolved
+  resolved_by: [02-10, 02-13]
+  reverified: "372 list items parse on the page whose <read_first> block used to render as one
+    run-on paragraph."
+```
+
+**Also re-verified:** mermaid renders in both themes at 379x462 — byte-identical to the dimensions
+02-17 recorded as passing — with zero page errors. `npm test` 547/547, `typecheck`, `lint`,
+`build`, `smoke -- fixtures/dense` all exit 0.
+
+### Affordance note on G-10 (not a reopened gap)
+
+The reachability defect is fixed. The discoverability tradeoff it was found under is not, and is
+recorded here rather than silently absorbed: the largest code block on the studio-portal plan page
+hides 1658px of content — about 2.7x its 606px visible width — behind a 2px scrollbar. The content
+can be scrolled to; from a static view a reader still cannot tell text is missing. Quick task
+260901-ten quieted that scrollbar deliberately (F6, F9), so this is a design decision to affirm or
+revisit, not a regression to fix.
+
+### Deferred, carried forward from 02-17
+
+- **Mermaid diagram styling** — "works as expected but it looks very ugly." Rendering is correct
+  and bounded; the diagrams' visual design is explicitly deferred.
+- **`.artifact-metadata > summary span` at 9.9px** — under a 10px floor.
+
+## Gaps (round 1, historical — all resolved above)
 
 ### G-01 — Unknown plan-section tags leak as literal text (defect, confirmed + root-caused)
 
