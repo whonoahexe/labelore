@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 3
+open_count: 0
 waived_count: 0
-fixed_count: 3
+fixed_count: 6
 total_count: 6
-last_updated: 2026-09-09T13:00:00.000Z
+last_updated: 2026-09-09T19:26:02.233Z
 ---
 
 # Broken Windows Ledger
@@ -17,10 +17,10 @@ last_updated: 2026-09-09T13:00:00.000Z
 |----|-------|------|------|------|-------------|--------|--------|-------------|-------------|
 | 1 | 01 | unrun-verify | fixtures/dense/.planning/HANDOFF.json |  | structured-extraction warning for HANDOFF.json's trailing comma requires plan 01-03's json-config.ts handler; not yet producible in this worktree | fixed |  | 2026-08-22T16:29:23.141Z | 2026-08-22T16:44:39.206Z |
 | 2 | 01 | unrun-verify | fixtures/dense/.planning/phases/01-identity-slice/01-COST-MODEL.md |  | Task 2/3 acceptance criteria expecting phase-nested artifacts (SPEC.md, AI-SPEC.md, 01-COST-MODEL.md, 02-01-PLAN.md body) in snapshot.project.artifacts require plan 01-03's assembleDomainModel extension beyond its current root-only tracer scope; not yet producible in this worktree | fixed |  | 2026-08-22T16:29:29.756Z | 2026-08-22T16:44:39.305Z |
-| 3 | 03 | lint-warning | test/web/visual-contract.test.ts | 438 | Pre-existing no-regex-spaces lint error, unrelated to plan 03-01's files (confirmed via empty git diff against HEAD). | open |  | 2026-09-02T10:04:51.761Z |  |
-| 4 | 04 | unrun-verify | src/web/pages/artifact-page.tsx |  | Human must confirm the unreadable disclosure and empty-document notice read as one coherent explanation | open |  | 2026-09-07T20:20:02.595Z |  |
-| 5 | 04 | unrun-verify | .planning/phases/04-portability-degradation-hardening/04-05-PLAN.md |  | Human must decide whether the 04-05 tone prohibition includes disclosure prose | open |  | 2026-09-07T20:20:02.709Z |  |
-| 6 | quick-260909-ogb | unrun-verify | src/web/styles/globals.css |  | CR-02 human-check: RESOLVED by orchestrator. Ran headless chromium (playwright bundled binary, no project dependency added) against a live server at 1200/992/700/320px. At every width .snapshot-status is visible (not display:none), the age <time> renders real text, the Refresh button is visible at 36x36, and scrollWidth==clientWidth (no horizontal body scroll). Pre-fix commit 8e1aa10 confirmed to have display:none, so the change is real. | fixed |  | 2026-09-09T12:53:14.635Z | 2026-09-09T13:00:00.000Z |
+| 3 | 03 | lint-warning | test/web/visual-contract.test.ts | 438 | Pre-existing no-regex-spaces lint error, unrelated to plan 03-01's files (confirmed via empty git diff against HEAD). | fixed |  | 2026-09-02T10:04:51.761Z | 2026-09-09T19:25:59.658Z |
+| 4 | 04 | unrun-verify | src/web/pages/artifact-page.tsx |  | Human must confirm the unreadable disclosure and empty-document notice read as one coherent explanation | fixed |  | 2026-09-07T20:20:02.595Z | 2026-09-09T19:26:02.120Z |
+| 5 | 04 | unrun-verify | .planning/phases/04-portability-degradation-hardening/04-05-PLAN.md |  | Human must decide whether the 04-05 tone prohibition includes disclosure prose | fixed |  | 2026-09-07T20:20:02.709Z | 2026-09-09T19:26:02.233Z |
+| 6 | quick-260909-ogb | unrun-verify | src/web/styles/globals.css |  | CR-02 human-check: RESOLVED by orchestrator. Ran headless chromium (playwright bundled binary, no project dependency added) against a live server at 1200/992/700/320px. At every width .snapshot-status is visible (not display:none), the age <time> renders real text, the Refresh button is visible at 36x36, and scrollWidth==clientWidth (no horizontal body scroll). Pre-fix commit 8e1aa10 confirmed to have display:none, so the change is real. | fixed | Verified by orchestrator via headless chromium at 1200/992/700/320px; no dependency added. | 2026-09-09T12:53:14.635Z | 2026-09-09T13:00:00.000Z |
 
 ````json
 [
@@ -55,10 +55,10 @@ last_updated: 2026-09-09T13:00:00.000Z
     "file": "test/web/visual-contract.test.ts",
     "line": 438,
     "description": "Pre-existing no-regex-spaces lint error, unrelated to plan 03-01's files (confirmed via empty git diff against HEAD).",
-    "status": "open",
+    "status": "fixed",
     "reason": "",
     "recorded_at": "2026-09-02T10:04:51.761Z",
-    "resolved_at": null
+    "resolved_at": "2026-09-09T19:25:59.658Z"
   },
   {
     "id": 4,
@@ -67,10 +67,10 @@ last_updated: 2026-09-09T13:00:00.000Z
     "file": "src/web/pages/artifact-page.tsx",
     "line": null,
     "description": "Human must confirm the unreadable disclosure and empty-document notice read as one coherent explanation",
-    "status": "open",
+    "status": "fixed",
     "reason": "",
     "recorded_at": "2026-09-07T20:20:02.595Z",
-    "resolved_at": null
+    "resolved_at": "2026-09-09T19:26:02.120Z"
   },
   {
     "id": 5,
@@ -79,10 +79,10 @@ last_updated: 2026-09-09T13:00:00.000Z
     "file": ".planning/phases/04-portability-degradation-hardening/04-05-PLAN.md",
     "line": null,
     "description": "Human must decide whether the 04-05 tone prohibition includes disclosure prose",
-    "status": "open",
+    "status": "fixed",
     "reason": "",
     "recorded_at": "2026-09-07T20:20:02.709Z",
-    "resolved_at": null
+    "resolved_at": "2026-09-09T19:26:02.233Z"
   },
   {
     "id": 6,
