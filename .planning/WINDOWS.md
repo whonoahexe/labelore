@@ -1,10 +1,10 @@
 ---
 schema_version: 1
 open_count: 0
-waived_count: 0
+waived_count: 1
 fixed_count: 6
-total_count: 6
-last_updated: 2026-09-09T19:26:02.233Z
+total_count: 7
+last_updated: 2026-09-09T20:02:02.205Z
 ---
 
 # Broken Windows Ledger
@@ -21,6 +21,7 @@ last_updated: 2026-09-09T19:26:02.233Z
 | 4 | 04 | unrun-verify | src/web/pages/artifact-page.tsx |  | Human must confirm the unreadable disclosure and empty-document notice read as one coherent explanation | fixed |  | 2026-09-07T20:20:02.595Z | 2026-09-09T19:26:02.120Z |
 | 5 | 04 | unrun-verify | .planning/phases/04-portability-degradation-hardening/04-05-PLAN.md |  | Human must decide whether the 04-05 tone prohibition includes disclosure prose | fixed |  | 2026-09-07T20:20:02.709Z | 2026-09-09T19:26:02.233Z |
 | 6 | quick-260909-ogb | unrun-verify | src/web/styles/globals.css |  | CR-02 human-check: RESOLVED by orchestrator. Ran headless chromium (playwright bundled binary, no project dependency added) against a live server at 1200/992/700/320px. At every width .snapshot-status is visible (not display:none), the age <time> renders real text, the Refresh button is visible at 36x36, and scrollWidth==clientWidth (no horizontal body scroll). Pre-fix commit 8e1aa10 confirmed to have display:none, so the change is real. | fixed | Verified by orchestrator via headless chromium at 1200/992/700/320px; no dependency added. | 2026-09-09T12:53:14.635Z | 2026-09-09T13:00:00.000Z |
+| 7 | quick-260910-0x4 | unmet-truth | src/web/components/ui/button.tsx |  | Refresh control's measured focus-visible ring contrast falls below WCAG 1.4.11's 3:1 non-text guideline in both themes (light 2.29:1, dark 1.46:1, measured live via Playwright against the actual computed outline colour and page background). Reachability and operability (Enter and Space) are confirmed working; only ring contrast is short. | waived | Out of scope for quick-260910-0x4 item 11, which was scoped to measuring reachability/operability (now confirmed working in all six cells), not remediating contrast. Fixing the ring color is a real, separate design change (likely a new --focus-ring token, not just an alpha bump) deserving its own task rather than a rushed fix bundled into this measurement task. Logged here so the finding survives past this plan; pick up as a future quick task or phase item. | 2026-09-09T20:01:49.266Z | 2026-09-09T20:02:02.205Z |
 
 ````json
 [
@@ -95,6 +96,18 @@ last_updated: 2026-09-09T19:26:02.233Z
     "reason": "Verified by orchestrator via headless chromium at 1200/992/700/320px; no dependency added.",
     "recorded_at": "2026-09-09T12:53:14.635Z",
     "resolved_at": "2026-09-09T13:00:00.000Z"
+  },
+  {
+    "id": 7,
+    "kind": "unmet-truth",
+    "phase": "quick-260910-0x4",
+    "file": "src/web/components/ui/button.tsx",
+    "line": null,
+    "description": "Refresh control's measured focus-visible ring contrast falls below WCAG 1.4.11's 3:1 non-text guideline in both themes (light 2.29:1, dark 1.46:1, measured live via Playwright against the actual computed outline colour and page background). Reachability and operability (Enter and Space) are confirmed working; only ring contrast is short.",
+    "status": "waived",
+    "reason": "Out of scope for quick-260910-0x4 item 11, which was scoped to measuring reachability/operability (now confirmed working in all six cells), not remediating contrast. Fixing the ring color is a real, separate design change (likely a new --focus-ring token, not just an alpha bump) deserving its own task rather than a rushed fix bundled into this measurement task. Logged here so the finding survives past this plan; pick up as a future quick task or phase item.",
+    "recorded_at": "2026-09-09T20:01:49.266Z",
+    "resolved_at": "2026-09-09T20:02:02.205Z"
   }
 ]
 ````
