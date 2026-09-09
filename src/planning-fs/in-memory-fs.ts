@@ -2,8 +2,11 @@
 // running the same fixtures through this and LocalFsPlanningFilesystem must produce byte-identical
 // snapshots. Also makes permission-denied / unreadable-file hostile cases authorable without
 // committing awkward files to git.
-import { readdirSync, statSync, readFileSync } from 'node:fs';
-import { join, relative, sep } from 'node:path';
+//
+// This file intentionally never imports the Node filesystem module — local-fs.ts is the sole file
+// under src/ that does. The real-directory-walking loader that once lived here as a static
+// fromDirectory() method now lives at test/helpers/from-directory.ts, since it existed only to
+// support D-08's fs-equivalence test fixture loading, not this class's own runtime behavior.
 import type { DirEntry, FileRead, FsCapabilities, PlanningFilesystem } from './types.ts';
 
 function normalizeRelPath(relPath: string): string {
@@ -61,33 +64,5 @@ export class InMemoryPlanningFilesystem implements PlanningFilesystem {
       if (filePath.startsWith(prefix)) return true;
     }
     return key === '.';
-  }
-
-  /**
-   * Walks a real directory tree once and returns an in-memory instance holding its contents.
-   * This is the only other place a real directory read is legitimate — plan 01-04 uses it to run
-   * identical fixtures through both PlanningFilesystem implementations.
-   */
-  static async fromDirectory(rootPath: string): Promise<InMemoryPlanningFilesystem> {
-    const contents: Record<string, string> = {};
-    let latestMtime = 0;
-
-    function walk(dir: string): void {
-      const entries = readdirSync(dir, { withFileTypes: true });
-      for (const entry of entries) {
-        const abs = join(dir, entry.name);
-        if (entry.isDirectory()) {
-          walk(abs);
-        } else if (entry.isFile()) {
-          const relPath = relative(rootPath, abs).split(sep).join('/');
-          const stat = statSync(abs);
-          latestMtime = Math.max(latestMtime, stat.mtimeMs);
-          contents[relPath] = readFileSync(abs, 'utf8');
-        }
-      }
-    }
-
-    walk(rootPath);
-    return new InMemoryPlanningFilesystem(contents, latestMtime);
   }
 }

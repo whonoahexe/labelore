@@ -17,6 +17,7 @@ import { InMemoryPlanningFilesystem } from '../src/planning-fs/in-memory-fs.ts';
 import { PlanningRepository } from '../src/planning-repo/snapshot.ts';
 import { normalizeForGolden } from '../src/planning-repo/serialize.ts';
 import type { DirEntry, FileRead, FsCapabilities, PlanningFilesystem } from '../src/planning-fs/types.ts';
+import { fromDirectory } from './helpers/from-directory.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -27,7 +28,7 @@ describe.each(FIXTURES)('fs-equivalence — %s', (fixtureName) => {
     const fixtureRoot = join(__dirname, '..', 'fixtures', fixtureName);
     const localResult = await buildSnapshotJson(fixtureRoot, { stable: true, withBodies: false });
 
-    const inMemoryFs = await InMemoryPlanningFilesystem.fromDirectory(fixtureRoot);
+    const inMemoryFs = await fromDirectory(fixtureRoot);
     const repo = new PlanningRepository(inMemoryFs, fixtureRoot);
     const snapshot = await repo.load();
     const inMemoryResult = normalizeForGolden(snapshot, fixtureRoot, { stable: true, withBodies: false });
