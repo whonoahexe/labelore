@@ -104,6 +104,15 @@
     BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-heading:
     'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', ui-monospace, monospace;
+  /* quick-260910-0x4 item 8: the shared uppercase-micro-label size. Was three literal 0.62rem
+     declarations (9.92px) and three literal 0.6rem declarations (9.6px, smaller still) scattered
+     across .tree-excluded-marker, .phase-facts dt, .blocked-by, .artifact-metadata > summary span,
+     .warning-fields dt and .warning-fields-label — one design convention applied as a repeated
+     magic number, not six independent choices. 0.7rem = 11.2px at the unmodified 16px root (no
+     em compounding anywhere in this file) clears the 10px accessibility floor with real headroom;
+     0.625rem (exactly 10px) was rejected for having none. Not theme-dependent, so defined once
+     here rather than duplicated into .dark below — same pattern as --radius above. */
+  --font-size-micro-label: 0.7rem;
   color: var(--foreground);
   background: var(--background);
   color-scheme: light;
@@ -525,7 +534,7 @@ summary.tree-node-row:hover {
   border: 1px solid var(--border);
   padding: 0.05rem 0.3rem;
   font-family: var(--font-heading);
-  font-size: 0.6rem;
+  font-size: var(--font-size-micro-label);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -1130,7 +1139,7 @@ summary.tree-node-row:hover {
   margin-bottom: 0.25rem;
   color: var(--muted-foreground);
   font-family: var(--font-heading);
-  font-size: 0.6rem;
+  font-size: var(--font-size-micro-label);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -1295,7 +1304,7 @@ summary.tree-node-row:hover {
   overflow-wrap: anywhere;
   color: var(--destructive);
   font-family: var(--font-heading);
-  font-size: 0.6rem;
+  font-size: var(--font-size-micro-label);
   text-align: right;
   text-transform: uppercase;
 }
@@ -2247,7 +2256,7 @@ pre {
 
 .artifact-metadata > summary span {
   color: var(--muted-foreground);
-  font-size: 0.62rem;
+  font-size: var(--font-size-micro-label);
 }
 
 .metadata-panels {
@@ -2980,7 +2989,7 @@ pre {
 .warning-fields dt {
   color: var(--muted-foreground);
   font-family: var(--font-heading);
-  font-size: 0.62rem;
+  font-size: var(--font-size-micro-label);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -2995,7 +3004,7 @@ pre {
   margin: 0.75rem 0 0.3rem;
   color: var(--muted-foreground);
   font-family: var(--font-heading);
-  font-size: 0.62rem;
+  font-size: var(--font-size-micro-label);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
