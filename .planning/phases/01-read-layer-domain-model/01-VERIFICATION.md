@@ -1,15 +1,19 @@
 ---
 phase: 01-read-layer-domain-model
-verified: 2026-08-24T01:45:00Z
+verified: 2026-09-09T14:25:00Z
 status: passed
-score: 5/5 roadmap success criteria verified (39/39 plan-level must-have artifacts/key-links pass; 135/135 tests pass)
+score: 5/5 roadmap success criteria verified (39/39 plan-level must-have artifacts/key-links pass; 547/547 tests pass)
 behavior_unverified: 0
 overrides_applied: 0
-human_verification:
-
-  - test: "Run `npm run snapshot -- ~/studio-portal --stable > /tmp/sp.json` and confirm it exits 0; `loadStatus.status` is `ok`; the phase list contains both the live milestone's phases and the archived `v1.0` ones with the two 'Phase 1' entries distinct; the warning list is short enough to read and every entry names a real problem rather than a routine unresolved identifier; the mention index shows a decision id appearing across several files with sensible excerpts. Then repeat with a relative path, a `~`-prefixed path, and a symlink to the same directory and confirm all four resolve to the same root."
-    expected: "All the above hold against the real, messy, non-fixture project — this is deliberately the only defense against a regression that manifests solely at real-world scale (D-04)."
-    why_human: "01-04-PLAN.md's own `<human-check>` block marks this manual smoke test as deliberately unautomated (D-04: no committed assertion may depend on `~/studio-portal`), and this project's `human_verify_mode` is `end-of-phase`, so the executor correctly deferred it rather than running it. The verifier ran the automated half as a sanity check (see notes below) but the qualitative judgment — 'is the warning list short enough to read', 'are the excerpts sensible' — genuinely needs a human."
+human_verification: resolved
+human_verification_resolved:
+  by: 01-UAT.md (23/23 pass, 0 issues)
+  at: 2026-09-09T14:25:00Z
+  note: >-
+    The deferred manual smoke test against ~/studio-portal was executed and passed.
+    Re-verified against the CURRENT read layer, not the 2026-08-24 one: src/planning-repo
+    changed five times after the original verification (02-02, 02-06, 02-08, 03-01, and
+    quick 260902-tnw), so this is a genuine re-verification rather than a timestamp refresh.
 ---
 
 # Phase 01: Read Layer & Domain Model Verification Report
@@ -18,9 +22,37 @@ human_verification:
 filesystem interface that already admits multi-project, watching, and write-back, and proven correct
 without a browser.
 
-**Verified:** 2026-08-24T01:45:00Z
-**Status:** human_needed
-**Re-verification:** No — initial verification
+**Verified:** 2026-09-09T14:25:00Z (re-verified; originally 2026-08-24T01:45:00Z)
+**Status:** passed
+**Re-verification:** Yes — the read layer changed five times after the initial verification
+(`02-02`, `02-06`, `02-08`, `03-01`, quick `260902-tnw`). The full suite and the deferred
+manual smoke test were both re-run against the current tree.
+
+## Human Verification — Resolved 2026-09-09
+
+The one item this report deferred to a human is now closed. Recorded in full in `01-UAT.md`;
+summarized here:
+
+| Criterion | Result |
+|---|---|
+| Exit 0, `loadStatus.status: ok` against `~/studio-portal` | ✓ |
+| Archived `v1.0` and live `v2.0` "Phase 1" entries stay distinct | ✓ two separate entries; compound identity holds |
+| Warning list short and every entry a real problem | ✓ 2 warnings, both re-confirmed as genuine malformed YAML by an independent parser (unquoted backtick; unquoted `@`-scoped package name) — neither a routine unresolved identifier |
+| Salvage claim honest | ✓ `frontmatter: {}` with body intact (12174 / 7446 bytes) |
+| Mention index: a decision id across several files with sensible excerpts | ✓ `decision:D-07` spans 52 files; 653 scheme-qualified ids, 9280 mentions; all 9280 excerpts contain their own id |
+| Four path shapes resolve to the same root | ✓ absolute / relative / `~` / symlink all byte-identical; canonicalization shown directly (a symlink echoes its real target) |
+
+Also re-run this session, beyond the deferred item: a true cold start (`rm -rf node_modules`,
+`npm ci`, snapshot) producing parse-on-first-try JSON with no lifecycle banner; and both
+dense-fixture checkpoints that plan `01-02` had left as `human_judgment` pending `01-03`'s
+handlers — the healthy-tree spread (53 files on disk → 52 artifacts + 1 declared exclusion,
+nothing dropped; `config.json` round-tripping byte-identical) and the corruption isolation
+(exactly 2 warnings among 52 artifacts, defect 3 correctly producing none).
+
+**One observation, not a defect:** only 6 artifacts now classify as `kind: "unknown"` where this
+report originally recorded "dozens". Phases 02–03 added typed handlers, so `01-SPEC.md`,
+`01-AI-SPEC.md`, `01-COST-MODEL.md` and `v3.0-CAPACITY-PLAN.md` now resolve to `spec`, `ai-spec`,
+`cost-model` and `capacity-plan`. The invariant that matters — no file dropped — still holds.
 
 ## Goal Achievement
 
