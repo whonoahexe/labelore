@@ -368,6 +368,91 @@ describe('extractSnippets', () => {
     expect(code >= 0xdc00 && code <= 0xdfff).toBe(false);
     expect(text.toLowerCase()).toContain('matchme');
   });
+
+  // --- WR-01 regression: length-changing case mappings must not desynchronize highlight offsets --
+
+  it('highlights exactly the matched original slice when a length-changing case mapping precedes it (WR-01)', () => {
+    const body = 'İMATCH end';
+    const { snippets } = extractSnippets(body, ['match']);
+
+    expect(snippets).toHaveLength(1);
+    const [snippet] = snippets;
+    expect(snippet.highlights).toHaveLength(1);
+    const [highlight] = snippet.highlights;
+    expect(snippet.text.slice(highlight.start, highlight.end)).toBe('MATCH');
+  });
+
+  it('keeps highlight offsets absolute against the ORIGINAL body after a length-changing case mapping (WR-01)', () => {
+    const body = 'İMATCH end';
+    const { snippets } = extractSnippets(body, ['match']);
+    const [snippet] = snippets;
+    const [highlight] = snippet.highlights;
+
+    const absoluteStart = snippet.bodyOffset + highlight.start;
+    const absoluteEnd = snippet.bodyOffset + highlight.end;
+    expect(body.slice(absoluteStart, absoluteEnd)).toBe('MATCH');
+    expect(absoluteStart).toBe(body.indexOf('MATCH'));
+  });
+
+  // --- WR-02 regression: independently seeded overlapping windows must merge, not duplicate ------
+
+  it('merges two independently seeded windows spaced in the (windowChars/2, windowChars) interval into one snippet (WR-02)', () => {
+    // half = 80 for windowChars: 160. A 115-char gap between matches is in (80, 160) — each
+    // match's own +/-80 window does not reach the other match at seed time (so neither consumes
+    // the other's occurrence during seeding), but the two seeded windows themselves overlap by
+    // 45 characters once both exist — exactly the near-duplicate-window defect WR-02 fixes.
+    const prefix = 'x'.repeat(200);
+    const gap = 'y'.repeat(115);
+    const suffix = 'z'.repeat(300);
+    const body = `${prefix}AAAA${gap}BBBB${suffix}`;
+    const { snippets, matchCount } = extractSnippets(body, ['aaaa', 'bbbb'], { windowChars: 160 });
+
+    expect(matchCount).toBe(2);
+    expect(snippets).toHaveLength(1);
+    const [snippet] = snippets;
+
+    // No duplicated body region: the merged window's text is a single contiguous slice, so a
+    // count of how many times the (otherwise-unique) gap filler appears in it is exactly one.
+    expect(snippet.text.split('y'.repeat(115)).length - 1).toBe(1);
+
+    // Highlights are two ascending, non-overlapping ranges, each covering a real, unbroken match.
+    expect(snippet.highlights).toHaveLength(2);
+    const [first, second] = snippet.highlights;
+    expect(first.end).toBeLessThanOrEqual(second.start);
+    expect(snippet.text.slice(first.start, first.end)).toBe('AAAA');
+    expect(snippet.text.slice(second.start, second.end)).toBe('BBBB');
+  });
+
+  it('merges overlapping windows without cutting either match into a partial, unhighlighted fragment (WR-02)', () => {
+    // A 78-char gap - tighter than the 115-char case above - reproduces the review's second
+    // finding: pre-fix, the first window's text ended mid-match ("...MA"). Post-fix, the windows
+    // still merge into one, so neither match can be truncated.
+    const prefix = 'x'.repeat(200);
+    const gap = 'y'.repeat(78);
+    const suffix = 'z'.repeat(300);
+    const body = `${prefix}AAAA${gap}BBBB${suffix}`;
+    const { snippets } = extractSnippets(body, ['aaaa', 'bbbb'], { windowChars: 160 });
+
+    expect(snippets).toHaveLength(1);
+    const [snippet] = snippets;
+    expect(snippet.highlights).toHaveLength(2);
+    for (const highlight of snippet.highlights) {
+      const slice = snippet.text.slice(highlight.start, highlight.end);
+      expect(slice === 'AAAA' || slice === 'BBBB').toBe(true);
+    }
+  });
+
+  it('still yields two separate, ascending snippets when matches are far enough apart to stay disjoint (WR-02 non-regression)', () => {
+    // Mirrors Test 7 above but pins the assurance explicitly for WR-02: the merge pass must not
+    // over-collapse genuinely disjoint windows into one.
+    const body = `${'a'.repeat(50)}FIRST-ID${'b'.repeat(400)}SECOND-ID${'c'.repeat(50)}`;
+    const { snippets } = extractSnippets(body, ['first-id', 'second-id'], { windowChars: 160 });
+
+    expect(snippets).toHaveLength(2);
+    expect(snippets[0].bodyOffset).toBeLessThan(snippets[1].bodyOffset);
+    expect(snippets[0].text.toLowerCase()).toContain('first-id');
+    expect(snippets[1].text.toLowerCase()).toContain('second-id');
+  });
 });
 
 // --- Task 2: GET /api/search response shape (groups + fileCount) -----------------------------

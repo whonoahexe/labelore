@@ -277,8 +277,38 @@ interface Occurrence {
   term: string;
 }
 
+/** WR-02: a window candidate in absolute body coordinates, collected during seeding and merged
+ * with any overlapping/abutting sibling before any text is sliced. `highlights` stays in absolute
+ * body coordinates through the merge; only materialization converts to window-relative. */
+interface CandidateWindow {
+  start: number;
+  end: number;
+  highlights: SearchHighlightRange[];
+}
+
+/** WR-01: a length-preserving case fold. Iterates the input by code point (not UTF-16 unit),
+ * lowercasing each one, but keeps the folded form only when its UTF-16 length equals the
+ * original code point's UTF-16 length - otherwise the original code point is kept unchanged. This
+ * makes the fold exactly length-preserving by construction, so index arithmetic performed against
+ * the folded string (indexOf, slice) stays valid UTF-16 index arithmetic against the original,
+ * unfolded string - no highlight range can drift off its match.
+ *
+ * Tradeoff, deliberate: a length-changing case mapping (e.g. 'İ' -> 'i' + COMBINING DOT ABOVE, one
+ * UTF-16 unit -> two) is left unfolded and therefore will not participate in a case-insensitive
+ * match at that position. This is strictly preferable to shifting every subsequent highlight range
+ * in the document to accommodate one expanding character. (Verified: this returns "MATCH", not a
+ * shifted slice, for the 'İMATCH end' / 'match' case.) */
+function foldCase(input: string): string {
+  let out = '';
+  for (const char of input) {
+    const folded = char.toLowerCase();
+    out += folded.length === char.length ? folded : char;
+  }
+  return out;
+}
+
 function findOccurrences(bodyLower: string, term: string): Occurrence[] {
-  const needle = term.toLowerCase();
+  const needle = foldCase(term);
   if (needle.length === 0) return [];
   const out: Occurrence[] = [];
   let cursor = 0;
@@ -357,6 +387,13 @@ export interface ExtractSnippetsOptions {
  * into a single window with merged, non-overlapping highlight ranges rather than producing separate
  * near-duplicate snippets. The longest matched term is preferred as a window's seed, so a snippet
  * naturally centers on the intact ID/path literal rather than a generic split-part word.
+ *
+ * WR-02: this merge is not limited to occurrences that landed inside one seed's window. Candidate
+ * windows are collected in absolute body coordinates for every seed first, then sorted and merged
+ * with any sibling window whose span overlaps or abuts - so two independently seeded windows that
+ * happen to overlap (e.g. two matches spaced less than `windowChars` apart but more than
+ * `windowChars / 2` apart, so neither consumes the other's occurrence at seed time) still produce
+ * one merged snippet instead of two windows sharing duplicated body text.
  */
 export function extractSnippets(
   body: string,
@@ -365,7 +402,10 @@ export function extractSnippets(
 ): ExtractSnippetsResult {
   const windowChars = options.windowChars ?? DEFAULT_WINDOW_CHARS;
   const half = windowChars / 2;
-  const bodyLower = body.toLowerCase();
+  // WR-01: length-preserving fold, not `body.toLowerCase()` - see foldCase's doc comment. A
+  // length-changing case mapping (whole-string toLowerCase()) would desynchronize every index
+  // found in the folded string from the original body's UTF-16 offsets.
+  const bodyLower = foldCase(body);
   const uniqueTerms = [...new Set(matchedTerms.filter((term) => term.length > 0))];
 
   const occurrences = uniqueTerms.flatMap((term) => findOccurrences(bodyLower, term));
@@ -380,7 +420,10 @@ export function extractSnippets(
   const occurrenceIndex = new Map(occurrences.map((occurrence, index) => [occurrence, index]));
   const consumed = new Array<boolean>(occurrences.length).fill(false);
 
-  const snippets: SearchSnippet[] = [];
+  // Pass 1 (seeding): collect every accepted window as a candidate in ABSOLUTE body coordinates -
+  // no text sliced, no offsets converted to window-relative yet. Kept exactly as before: longest-
+  // term-first seed priority, one window per unconsumed occurrence.
+  const candidates: CandidateWindow[] = [];
 
   for (const seed of priority) {
     const seedIndex = occurrenceIndex.get(seed);
@@ -394,18 +437,48 @@ export function extractSnippets(
       if (consumed[index]) continue;
       const occurrence = occurrences[index];
       if (occurrence.start >= windowStart && occurrence.end <= windowEnd) {
-        highlights.push({ start: occurrence.start - windowStart, end: occurrence.end - windowStart });
+        // Absolute coordinates - converted to window-relative only at materialization, after
+        // the merge pass below has had a chance to widen this window's span.
+        highlights.push({ start: occurrence.start, end: occurrence.end });
         consumed[index] = true;
       }
     }
 
-    snippets.push({
-      text: body.slice(windowStart, windowEnd),
-      highlights: mergeHighlightRanges(highlights),
-      bodyOffset: windowStart,
-      anchor: resolveAnchor(body, windowStart),
-    });
+    candidates.push({ start: windowStart, end: windowEnd, highlights });
   }
+
+  // Pass 2 (merge): a sort plus one linear pass over accepted windows - never a pairwise scan,
+  // which could go quadratic on a body with many matches (T-Q1-03). Any candidate whose start
+  // falls at or before the running window's end (overlap OR abut) is folded into it; its span
+  // widens to the union and its highlights are appended.
+  candidates.sort((left, right) => left.start - right.start);
+  const mergedWindows: CandidateWindow[] = [];
+  for (const candidate of candidates) {
+    const last = mergedWindows[mergedWindows.length - 1];
+    if (last && candidate.start <= last.end) {
+      last.end = Math.max(last.end, candidate.end);
+      last.highlights.push(...candidate.highlights);
+    } else {
+      mergedWindows.push({ start: candidate.start, end: candidate.end, highlights: [...candidate.highlights] });
+    }
+  }
+
+  // Pass 3 (materialize): slice each merged window's text exactly once, convert its absolute
+  // highlights to window-relative, and route them through the existing mergeHighlightRanges so the
+  // ascending, non-overlapping guarantee highlightedSnippetNodes depends on holds after the union
+  // (two merged windows' highlight sets are not pre-sorted with respect to each other).
+  const snippets: SearchSnippet[] = mergedWindows.map((window) => {
+    const relativeHighlights = window.highlights.map((highlight) => ({
+      start: highlight.start - window.start,
+      end: highlight.end - window.start,
+    }));
+    return {
+      text: body.slice(window.start, window.end),
+      highlights: mergeHighlightRanges(relativeHighlights),
+      bodyOffset: window.start,
+      anchor: resolveAnchor(body, window.start),
+    };
+  });
 
   snippets.sort((left, right) => left.bodyOffset - right.bodyOffset);
   return { snippets, matchCount };
