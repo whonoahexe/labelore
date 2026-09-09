@@ -163,17 +163,57 @@ describe('POST /api/refresh', () => {
     expect(body.readAt).toBe(snapshot.readAt);
   });
 
-  it('carries a failed loadStatus verbatim, never a 5xx, when refresh() resolves to project: null', async () => {
-    const before = makeSnapshot('2026-09-01T00:00:00.000Z', []);
+  it('answers a failure status with refreshed: false, never true, when refresh() resolves to project: null (CR-01/ATT-01)', async () => {
+    const before = makeSnapshot('2026-09-01T00:00:00.000Z', ['.planning/PROJECT.md']);
     const { source, queueNext } = makeSpySource(before);
     queueNext(FAILED_SNAPSHOT);
     const app = createApp(source, true, '.');
 
     const response = await app.request('/api/refresh', { method: 'POST' });
-    expect(response.status).toBe(200);
-    const body = (await response.json()) as { refreshed: boolean; loadStatus: unknown };
-    expect(body.refreshed).toBe(true);
-    expect(body.loadStatus).toEqual(FAILED_SNAPSHOT.loadStatus);
+    expect(response.status).toBeGreaterThanOrEqual(400);
+    const body = (await response.json()) as { refreshed: boolean; error: unknown };
+    expect(body.refreshed).toBe(false);
+    expect(body.error).toBe(FAILED_SNAPSHOT.loadStatus.status !== 'ok' ? FAILED_SNAPSHOT.loadStatus.message : undefined);
+  });
+
+  it('retains the pre-refresh readAt and project after a reachable-failure refresh (D-04)', async () => {
+    const before = makeSnapshot('2026-09-01T00:00:00.000Z', ['.planning/PROJECT.md']);
+    const { source, queueNext } = makeSpySource(before);
+    queueNext(FAILED_SNAPSHOT);
+    const app = createApp(source, true, '.');
+
+    await app.request('/api/refresh', { method: 'POST' });
+
+    const presentationResponse = await app.request('/api/presentation');
+    const presentationBody = (await presentationResponse.json()) as {
+      readAt: string;
+      loadStatus: unknown;
+    };
+    expect(presentationBody.readAt).toBe(before.readAt);
+    expect(presentationBody.loadStatus).toEqual({ status: 'ok' });
+
+    const treeResponse = await (await app.request('/api/tree')).json();
+    expect(JSON.stringify(treeResponse)).toContain('PROJECT.md');
+  });
+
+  it('recovers on a subsequent successful refresh after a reachable-failure refresh poisoned nothing', async () => {
+    const before = makeSnapshot('2026-09-01T00:00:00.000Z', ['.planning/PROJECT.md']);
+    const after = makeSnapshot('2026-09-02T00:00:00.000Z', ['.planning/PROJECT.md']);
+    const { source, queueNext } = makeSpySource(before);
+    queueNext(FAILED_SNAPSHOT);
+    const app = createApp(source, true, '.');
+
+    await app.request('/api/refresh', { method: 'POST' });
+
+    queueNext(after);
+    const secondRefresh = await app.request('/api/refresh', { method: 'POST' });
+    expect(secondRefresh.status).toBe(200);
+    const secondBody = (await secondRefresh.json()) as { refreshed: boolean };
+    expect(secondBody.refreshed).toBe(true);
+
+    const presentationResponse = await app.request('/api/presentation');
+    const presentationBody = (await presentationResponse.json()) as { readAt: string };
+    expect(presentationBody.readAt).toBe(after.readAt);
   });
 
   it('answers 500 with refreshed: false on a rejecting refresh(), and retains the pre-refresh readAt on the next GET (D-04)', async () => {

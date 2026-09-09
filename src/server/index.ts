@@ -52,20 +52,21 @@ export function createApp(
   const app = new Hono();
   const renderer = createArtifactRenderer();
 
-  // D-05: builds all four derived views from one read of the source's current snapshot. Called
-  // both at startup and after a successful refresh - `source.getSnapshot()` reflects the just-
-  // completed refresh because `PlanningRepository.refresh()` assigns its own `this.snapshot`
-  // before resolving, so a fresh call here after `await source.refresh()` always observes the new
-  // snapshot, never the one buildDerivedViews was first constructed from.
-  function buildDerivedViews(): DerivedViews {
-    const presentation = toProjectPresentation(source.getSnapshot());
-    const artifactIndex = buildArtifactIndex(source.getSnapshot());
+  // D-05/WR-03: builds all four derived views from one snapshot. `snapshot` defaults to the
+  // source's current snapshot for the startup call; the post-refresh call site (CR-01) passes the
+  // already-resolved snapshot explicitly, since it already has it in hand and re-reading
+  // `source.getSnapshot()` a second time would be a redundant read of the same value. This
+  // function remains the file's only presentation-building call site, whichever way `snapshot`
+  // was obtained.
+  function buildDerivedViews(snapshot: ProjectSnapshot = source.getSnapshot()): DerivedViews {
+    const presentation = toProjectPresentation(snapshot);
+    const artifactIndex = buildArtifactIndex(snapshot);
     const referenceRegistry = buildReferenceRegistry(presentation);
     // D-04/FIND-05: constructing the state object is synchronous and cheap (just a status flag);
     // the actual MiniSearch build is scheduled off this path inside buildFrom - callers never wait
     // on index readiness.
     const searchIndexState = createSearchIndexState();
-    searchIndexState.buildFrom(source.getSnapshot());
+    searchIndexState.buildFrom(snapshot);
     return { presentation, artifactIndex, referenceRegistry, searchIndexState };
   }
 
@@ -230,9 +231,22 @@ export function createApp(
         });
       }
       const snapshot = await inFlight;
+      // CR-01/D-04: a resolved refresh whose loadStatus is not ok is a reachable failure -
+      // PlanningRepository.refresh() never throws (D-12), it resolves normally with
+      // project: null. Answer a failure status and leave `derived` untouched so no served
+      // response is ever built from the failed snapshot; the previously retained bundle keeps
+      // serving every subsequent GET.
+      if (snapshot.loadStatus.status !== 'ok') {
+        return c.json(
+          { refreshed: false as const, error: snapshot.loadStatus.message },
+          500,
+        );
+      }
       // D-05: the atomic swap - every field the derived bundle carries replaces together in one
-      // assignment, never mutated piecemeal.
-      derived = buildDerivedViews();
+      // assignment, never mutated piecemeal. Only reached on an ok load status. `snapshot` is
+      // passed explicitly (WR-03) - it is already the resolved post-refresh value, so re-reading
+      // `source.getSnapshot()` here would be a redundant second read of the same snapshot.
+      derived = buildDerivedViews(snapshot);
       return c.json({
         refreshed: true as const,
         readAt: snapshot.readAt,
