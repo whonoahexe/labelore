@@ -605,3 +605,80 @@ describe('traceability filters and disagreement markers (03-04 Task 3, D-13/D-14
     expect(page).toContain('Unresolved');
   });
 });
+
+describe('index.html — anti-FOUC critical CSS (quick-260910-0x4 item 3, 02-REVIEW IN-02)', () => {
+  it('still primes the theme class before first paint via the inline script', async () => {
+    const html = await source('index.html');
+    expect(html).toMatch(/<script>[\s\S]*localStorage\.getItem\('labelore-theme'\)[\s\S]*<\/script>/);
+    expect(html).toContain("document.documentElement.classList.toggle('dark'");
+  });
+
+  it('still declares a ground colour, foreground colour and colour-scheme under both the light and dark root selectors', async () => {
+    const html = await source('index.html');
+    const rootBlock = html.match(/:root\s*\{([\s\S]*?)\n {6}\}/)?.[1] ?? '';
+    expect(rootBlock).toMatch(/--background:\s*oklch/);
+    expect(rootBlock).toMatch(/--foreground:\s*oklch/);
+    expect(rootBlock).toMatch(/color:\s*var\(--foreground\)/);
+    expect(rootBlock).toMatch(/background:\s*var\(--background\)/);
+    expect(rootBlock).toMatch(/color-scheme:\s*light/);
+
+    const darkRootBlock = html.match(/:root\.dark\s*\{([\s\S]*?)\n {6}\}/)?.[1] ?? '';
+    expect(darkRootBlock).toMatch(/--background:\s*oklch/);
+    expect(darkRootBlock).toMatch(/--foreground:\s*oklch/);
+    expect(darkRootBlock).toMatch(/color-scheme:\s*dark/);
+  });
+
+  it('retains the pre-hydration effect blocks (box-sizing reset, body ground paint with min-width, form-control font reset)', async () => {
+    const html = await source('index.html');
+    expect(html).toMatch(/\*\s*\{\s*\n\s*box-sizing:\s*border-box;/);
+    const bodyBlock = html.match(/\n {6}body\s*\{([\s\S]*?)\n {6}\}/)?.[1] ?? '';
+    expect(bodyBlock).toMatch(/min-width:\s*320px/);
+    expect(bodyBlock).toMatch(/color:\s*var\(--foreground\)/);
+    expect(bodyBlock).toMatch(/background:\s*var\(--background\)/);
+    expect(html).toMatch(/button,\s*\n\s*input,\s*\n\s*textarea,\s*\n\s*select\s*\{\s*\n\s*font:\s*inherit;/);
+  });
+
+  it('drops the dead component-scaffold selectors confirmed unreferenced by src/web (word-boundary className match, not substring)', async () => {
+    const html = await source('index.html');
+    const deadSelectors = [
+      '.screen',
+      '.position-card',
+      '.error-card',
+      '.card-heading',
+      '.progress-block',
+      '.progress-row',
+      '.progress-track',
+      '.progress-fill',
+      '.metadata',
+      '.status',
+      '.muted',
+      '.skeleton',
+      '@keyframes pulse',
+      '@media (max-width: 36rem)',
+    ];
+    for (const selector of deadSelectors) {
+      expect(html, `expected ${selector} to be removed`).not.toContain(selector);
+    }
+  });
+
+  it('retains the live selectors confirmed by an exact className-token match (not the substring-fuzzy grep the audit originally used)', async () => {
+    const html = await source('index.html');
+    expect(html).toContain('.eyebrow {');
+    expect(html).toContain('.lede {');
+    // Bare element selectors are always live by construction (h1/h2/strong appear throughout the
+    // app) and are never candidates for this word-boundary className check.
+    expect(html).toMatch(/\n {6}h1,\s*\n\s*h2\s*\{/);
+    expect(html).toMatch(/\n {6}strong\s*\{/);
+  });
+
+  it('reports the true before/after line count against the measured 297-line baseline', async () => {
+    const html = await source('index.html');
+    // `wc -l`-equivalent count (number of newline characters), not split('\n').length — the latter
+    // over-counts by one for a file ending in a trailing newline.
+    const lineCount = (html.match(/\n/g) ?? []).length;
+    // Recorded here as a live assertion, not just prose: the measured baseline was 297 lines: this
+    // pins the post-cleanup count (162, via `wc -l index.html`) so a future edit that silently
+    // re-bloats the file is visible.
+    expect(lineCount).toBe(162);
+  });
+});
