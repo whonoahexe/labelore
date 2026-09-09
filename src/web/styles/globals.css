@@ -1484,11 +1484,22 @@ pre {
     grid-template-columns: minmax(10rem, 1fr) auto;
   }
 
+  /* CR-02/TGT-08/UI-03: below 62rem the snapshot age and Refresh control stay reachable — a
+     compact treatment (decorative icon and descriptive label dropped, timestamp and button kept),
+     never `display: none`, which would also remove the subtree from the accessibility tree. */
   .snapshot-status {
+    gap: 0.35rem;
+    padding-inline: 0;
+  }
+
+  .snapshot-status > svg,
+  .snapshot-status small {
     display: none;
   }
 
   .shell-controls {
+    grid-column: 1 / -1;
+    flex-wrap: wrap;
     padding-inline: 0.75rem;
   }
 
@@ -1497,7 +1508,7 @@ pre {
   }
 
   /* D-09: the sidebar collapses out of the layout entirely below 62rem rather than squeezing the
-     reading column — mirrors how .shell-nav/.snapshot-status already adapt at this breakpoint. */
+     reading column — mirrors how .shell-nav adapts at this breakpoint. */
   .shell-content {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1540,11 +1551,28 @@ pre {
     border-inline: 0;
   }
 
+  /* CR-02/UI-03: at 320px, an absolutely positioned top-right overlay (the pre-fix layout) has no
+     bound on its own shrink-to-fit width once the compact snapshot-status is visible alongside
+     the search field and theme toggle - measured to risk pushing the body wider than the
+     viewport. Relaid out to flow as a normal, full-width row below the nav instead: bounded by
+     the grid column's own 1fr = 100% width, and flex-wrap as a second line of defense in case any
+     single child still cannot shrink far enough. */
   .shell-controls {
-    position: absolute;
-    top: 0.7rem;
-    right: 0.65rem;
-    padding: 0;
+    grid-column: 1 / -1;
+    flex-wrap: wrap;
+    row-gap: 0.35rem;
+    padding: 0.5rem 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .snapshot-status {
+    gap: 0.3rem;
+  }
+
+  /* Bounds the timestamp so its existing ellipsis containment (`.snapshot-status time`) actually
+     engages at this width, rather than pushing the Refresh button off the row's available space. */
+  .snapshot-status time {
+    max-width: 9ch;
   }
 
   .shell-nav-link {

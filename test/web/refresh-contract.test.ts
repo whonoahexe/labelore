@@ -95,4 +95,18 @@ describe('refresh contract — D-01 through D-05 in the shell and control', () =
     const unauthorized = currentKeys.filter((key) => !PHASE_3_DEPENDENCY_KEYS.has(key));
     expect(unauthorized).toEqual([]);
   });
+
+  it('no longer suppresses the snapshot-status container from the layout below 62rem (CR-02)', async () => {
+    const css = await source('src/web/styles/globals.css');
+    // Same slicing idiom test/web/visual-contract.test.ts's narrow-viewport test uses: from the
+    // 62rem media-query opener to EOF, so this only inspects the narrow-width cascade.
+    const narrowSection = css.slice(css.indexOf('@media (max-width: 62rem)'));
+    const ruleStart = narrowSection.indexOf('.snapshot-status {');
+    expect(ruleStart).toBeGreaterThanOrEqual(0);
+    const ruleBlock = narrowSection.slice(ruleStart, narrowSection.indexOf('}', ruleStart) + 1);
+    // Pins the outcome (the container stays in the layout, so it stays in the accessibility tree
+    // too), not one particular compact-treatment property spelling — a reasonable future refactor
+    // of how the compact state is achieved must not produce a false failure here.
+    expect(ruleBlock).not.toMatch(/display:\s*none;/);
+  });
 });
