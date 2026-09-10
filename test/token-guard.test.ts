@@ -296,16 +296,89 @@ function spacingComponentIsRawLength(comp: string): boolean {
 interface Family {
   name: string;
   matchesProperty(property: string): boolean;
-  isViolatingComponent(component: string, property: string): boolean;
+  /** Receives the full declaration value and decides whether it violates this family. Spacing
+   * splits into top-level components internally (multi-value shorthand); the type family checks
+   * most properties as a whole (font-family/line-height/font-weight aren't shorthand-splittable
+   * the same way — a comma-separated font stack would misparse under whitespace-splitting). */
+  isViolatingValue(value: string, property: string): boolean;
 }
 
 const spacingFamily: Family = {
   name: 'spacing',
   matchesProperty: (property) => SPACING_PROPERTIES.has(property),
-  isViolatingComponent: (component) => spacingComponentIsRawLength(component),
+  isViolatingValue: (value) => splitTopLevel(value).some(spacingComponentIsRawLength),
 };
 
-export const FAMILIES: Family[] = [spacingFamily];
+// ---------------------------------------------------------------------------
+// Type family (JZ8-02)
+// ---------------------------------------------------------------------------
+
+const TYPE_PROPERTIES = new Set(['font-size', 'line-height', 'letter-spacing', 'font-weight', 'font-family', 'font']);
+
+/** True when `value` is a single top-level `var(...)` call, in full — the only shape that
+ * unconditionally passes every type check (fallbacks included, same rule as spacing). */
+function isBareVarCall(value: string): boolean {
+  return isWhollyWrappedInSingleVarCall(value);
+}
+
+function fontSizeIsViolating(value: string): boolean {
+  if (value === 'inherit') return false;
+  if (isBareVarCall(value)) return false;
+  const stripped = withoutVarCalls(value);
+  if (/clamp\(/.test(stripped)) return true; // usage-site clamp() — the fluid token itself lives in :root
+  return /(?<![\w-])-?\d*\.?\d+(rem|px|vw|em)\b/.test(stripped);
+}
+
+function lineHeightIsViolating(value: string): boolean {
+  if (value === 'normal' || value === 'inherit') return false;
+  if (isBareVarCall(value)) return false;
+  return true; // any bare number or raw length outside var() is a violation
+}
+
+function letterSpacingIsViolating(value: string): boolean {
+  if (isBareVarCall(value)) return false;
+  if (/^-?0(\.0+)?(em|rem|px)?$/.test(value)) return false; // zero is not a spacing choice
+  return true;
+}
+
+function fontWeightIsViolating(value: string): boolean {
+  if (isBareVarCall(value)) return false;
+  return /^\d+$/.test(value);
+}
+
+function fontFamilyIsViolating(value: string): boolean {
+  if (value === 'inherit') return false;
+  return !isBareVarCall(value);
+}
+
+function fontShorthandIsViolating(value: string): boolean {
+  return value !== 'inherit';
+}
+
+const typeFamily: Family = {
+  name: 'type',
+  matchesProperty: (property) => TYPE_PROPERTIES.has(property),
+  isViolatingValue: (value, property) => {
+    switch (property) {
+      case 'font-size':
+        return fontSizeIsViolating(value);
+      case 'line-height':
+        return lineHeightIsViolating(value);
+      case 'letter-spacing':
+        return letterSpacingIsViolating(value);
+      case 'font-weight':
+        return fontWeightIsViolating(value);
+      case 'font-family':
+        return fontFamilyIsViolating(value);
+      case 'font':
+        return fontShorthandIsViolating(value);
+      default:
+        return false;
+    }
+  },
+};
+
+export const FAMILIES: Family[] = [spacingFamily, typeFamily];
 
 // ---------------------------------------------------------------------------
 // Allowlist — each entry exempts only its exact selector + property + value; every entry must
@@ -356,6 +429,18 @@ export const ALLOWLIST: AllowlistEntry[] = [
     value: '0.75em',
     reason: 'em-relative heading margin — scales with the heading\'s own resolved font-size, not a fixed step',
   },
+  {
+    selector: '.position-copy h1 span',
+    property: 'font-size',
+    value: 'max(0.2em, var(--fs-1))',
+    reason: 'P-04: em-relative hero label with a floor — 0.2em of the hero clamp, never below --fs-1',
+  },
+  {
+    selector: '.artifact-document :not(pre) > code',
+    property: 'font-size',
+    value: '0.86em',
+    reason: 'em-relative inline-code size — scales with its parent\'s resolved font-size, not a fixed step',
+  },
 ];
 
 function isAllowlisted(decl: Declaration, allowlist: AllowlistEntry[]): boolean {
@@ -377,9 +462,7 @@ export function scanTokenViolations(
     if (decl.inTokenBlock) continue;
     for (const family of families) {
       if (!family.matchesProperty(decl.property)) continue;
-      const components = splitTopLevel(decl.value);
-      const flagged = components.filter((c) => family.isViolatingComponent(c, decl.property));
-      if (flagged.length === 0) continue;
+      if (!family.isViolatingValue(decl.value, decl.property)) continue;
       if (isAllowlisted(decl, allowlist)) continue;
       out.push(`${decl.line} ${decl.selector} { ${decl.property}: ${decl.value} } [${family.name}]`);
     }
@@ -395,9 +478,9 @@ function liveCss(): string {
   return readFileSync(CSS_PATH, 'utf8');
 }
 
-describe('token guard — spacing family (JZ8-01, JZ8-04)', () => {
-  it('has zero spacing violations outside the token blocks in the real stylesheet', () => {
-    const violations = scanTokenViolations(liveCss(), [spacingFamily]);
+describe('token guard — spacing + type families (JZ8-01, JZ8-02, JZ8-04)', () => {
+  it('has zero violations outside the token blocks in the real stylesheet', () => {
+    const violations = scanTokenViolations(liveCss(), FAMILIES);
     expect(violations).toEqual([]);
   });
 
@@ -412,7 +495,7 @@ describe('token guard — spacing family (JZ8-01, JZ8-04)', () => {
 
       // Without the allowlist, this exact declaration must be a real violation — otherwise the
       // entry is vestigial (exempting something the scanner wouldn't have flagged anyway).
-      const withoutAllowlist = scanTokenViolations(css, [spacingFamily], []);
+      const withoutAllowlist = scanTokenViolations(css, FAMILIES, []);
       const matchesThisEntry = withoutAllowlist.some((v) =>
         v.startsWith(`${live!.line} ${entry.selector} { ${entry.property}: ${entry.value} }`),
       );
@@ -456,7 +539,41 @@ describe('token guard — spacing family (JZ8-01, JZ8-04)', () => {
     expect(reservedHits).toEqual([]);
   });
 
-  describe('positive control — plants one violation per spacing shape in a tmpdir, never the real source tree', () => {
+  it('keeps every static --fs-* literal at or above the 10px floor, and consumes every defined --fs-*/--fs-N--lh/--lh-*/--ls-*/--fw-* token at least once', () => {
+    const css = liveCss();
+    const decls = parseDeclarations(css);
+
+    // --fs-2 aliases --font-size-micro-label (a var(), not a literal) — the floor is already
+    // enforced on that token by the sub-10px micro-label family's own visual-contract test.
+    const fsLiteralDecls = decls.filter(
+      (d) => d.inTokenBlock && /^--fs-\d+$/.test(d.property) && !/^var\(/.test(d.value),
+    );
+    expect(fsLiteralDecls.length).toBeGreaterThan(0);
+    for (const d of fsLiteralDecls) {
+      const m = /^(\d*\.?\d+)rem$/.exec(d.value);
+      expect(m, `--${d.property} is not a plain rem literal: ${d.value}`).toBeTruthy();
+      expect(parseFloat(m![1])).toBeGreaterThanOrEqual(0.625);
+    }
+
+    const usageCss = decls
+      .filter((d) => !d.inTokenBlock)
+      .map((d) => d.value)
+      .join(' ');
+    const typeTokenDecls = decls.filter(
+      (d) =>
+        d.inTokenBlock &&
+        /^--(fs-[\w-]+|lh-[\w-]+|ls-[\w-]+|fw-[\w-]+)$/.test(d.property) &&
+        d.property !== '--font-size-micro-label',
+    );
+    expect(typeTokenDecls.length).toBeGreaterThan(0);
+    for (const d of typeTokenDecls) {
+      const name = d.property.replace(/^--/, '');
+      const consumed = usageCss.includes(`var(--${name})`);
+      expect(consumed, `--${name} is defined but never consumed`).toBe(true);
+    }
+  });
+
+  describe('positive control — plants one violation per spacing/type shape in a tmpdir, never the real source tree', () => {
     let plantedRoot: string;
 
     afterEach(async () => {
@@ -489,6 +606,30 @@ describe('token guard — spacing family (JZ8-01, JZ8-04)', () => {
 .violating-usage-site-clamp {
   gap: clamp(1rem, 2vw, 3rem);
 }
+.violating-font-size {
+  font-size: 0.8rem;
+}
+.violating-font-size-clamp {
+  font-size: clamp(1rem, 2vw, 1.5rem);
+}
+.violating-line-height {
+  line-height: 1.4;
+}
+.violating-letter-spacing {
+  letter-spacing: 0.05em;
+}
+.violating-font-weight {
+  font-weight: 600;
+}
+.violating-font-family {
+  font-family: Arial, sans-serif;
+}
+.violating-font-shorthand {
+  font: 12px/1.4 sans-serif;
+}
+.dark .violating-compound-selector {
+  font-size: 0.8rem;
+}
 
 :root {
   padding: 999rem;
@@ -498,16 +639,24 @@ describe('token guard — spacing family (JZ8-01, JZ8-04)', () => {
   margin-left: -999rem;
   padding-right: calc(1rem + 2px);
   row-gap: clamp(1rem, 2vw, 3rem);
+  font-size: 999rem;
+  line-height: 999;
+  letter-spacing: 999em;
+  font-weight: 999;
+  font-family: Arial, sans-serif;
 }
 .dark {
   padding: 999rem;
+  font-size: 999rem;
 }
 @theme inline {
   padding: 999rem;
+  font-size: 999rem;
 }
 @media (min-width: 10px) {
   :root {
     padding: 999rem;
+    font-size: 999rem;
   }
 }
 
@@ -516,12 +665,18 @@ describe('token guard — spacing family (JZ8-01, JZ8-04)', () => {
   margin: 0 auto;
   gap: var(--space-2);
   top: 0;
+  font-size: var(--fs-3);
+  line-height: var(--lh-normal);
+  letter-spacing: var(--ls-wide);
+  font-weight: var(--fw-semibold);
+  font-family: var(--font-sans);
+  font: inherit;
 }
 `;
       await writeFile(fixturePath, violatingFixture, 'utf8');
       const css = await import('node:fs/promises').then((fs) => fs.readFile(fixturePath, 'utf8'));
 
-      const violations = scanTokenViolations(css, [spacingFamily], []);
+      const violations = scanTokenViolations(css, FAMILIES, []);
       const joined = violations.join('\n');
 
       for (const needle of [
@@ -532,6 +687,14 @@ describe('token guard — spacing family (JZ8-01, JZ8-04)', () => {
         '.violating-negative-margin { margin-left: -3px }',
         '.violating-calc { padding: calc(1rem + 2px) }',
         '.violating-usage-site-clamp { gap: clamp(1rem, 2vw, 3rem) }',
+        '.violating-font-size { font-size: 0.8rem }',
+        '.violating-font-size-clamp { font-size: clamp(1rem, 2vw, 1.5rem) }',
+        '.violating-line-height { line-height: 1.4 }',
+        '.violating-letter-spacing { letter-spacing: 0.05em }',
+        '.violating-font-weight { font-weight: 600 }',
+        '.violating-font-family { font-family: Arial, sans-serif }',
+        '.violating-font-shorthand { font: 12px/1.4 sans-serif }',
+        '.dark .violating-compound-selector { font-size: 0.8rem }',
       ]) {
         expect(joined, `expected to catch: ${needle}`).toContain(needle);
       }
@@ -542,8 +705,9 @@ describe('token guard — spacing family (JZ8-01, JZ8-04)', () => {
       expect(joined).not.toMatch(/^\d+ \.dark \{/m);
       expect(joined).not.toMatch(/^\d+ @theme inline \{/m);
 
-      // A clean fixture (all lengths already var()-wrapped, or zero) yields zero violations.
-      const cleanOnly = violations.filter((v) => v.includes('.clean'));
+      // A clean fixture (all lengths already var()-wrapped, or zero, or inherit) yields zero
+      // violations.
+      const cleanOnly = violations.filter((v) => v.includes('.clean {'));
       expect(cleanOnly).toEqual([]);
     });
   });

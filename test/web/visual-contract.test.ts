@@ -175,7 +175,8 @@ describe('revised visual contract (G-08, G-10, G-05, G-07, G-03, E9 long-text)',
     expect(css).toContain('.document-reference:focus-visible');
     const [linkBlock] = ruleBlocks(css, '.artifact-document a {');
     expect(linkBlock).toContain('var(--primary)');
-    expect(linkBlock).toContain('font-weight: 600;');
+    // quick-260910-jz8: migrated onto the weight scale — same 600 weight, token spelling.
+    expect(linkBlock).toContain('font-weight: var(--fw-semibold);');
   });
 
   it('wraps a long unbroken outline token instead of overflowing the sticky column', async () => {
@@ -686,7 +687,9 @@ describe('index.html — anti-FOUC critical CSS (quick-260910-0x4 item 3, 02-REV
     // pins the post-cleanup count so a future edit that silently re-bloats the file is visible.
     // 162 after the cleanup, then 165: +3 for the comment above the dark snapshot explaining why it
     // is `.dark` and not `:root.dark` (WINDOWS.md entry 7) — a deliberate, acknowledged addition.
-    expect(lineCount).toBe(165);
+    // Then 167: +2 for quick-260910-jz8's --font-heading/--font-mono mirror (D-02) — one
+    // declaration split into two, the second wrapping onto its own line like --font-sans above it.
+    expect(lineCount).toBe(167);
   });
 });
 
