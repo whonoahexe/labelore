@@ -423,9 +423,11 @@ describe('code scrollbar and table striping (F6, F9)', () => {
     expect(ruleBlocks(css, '.artifact-document pre::-webkit-scrollbar-track {')[0]).toMatch(
       /background:\s*transparent/,
     );
-    // --border alone resolves to oklch(1 0 0 / 10%) in dark, which is effectively invisible.
+    // --border alone resolves to oklch(1 0 0 / 16%) in dark, which is effectively invisible.
+    // quick-260910-jz8: named --scrollbar-thumb (recurs with the Firefox scrollbar-color track
+    // colour below) — same var(--muted-foreground) 45% recipe, token spelling.
     expect(ruleBlocks(css, '.artifact-document pre::-webkit-scrollbar-thumb {')[0]).toMatch(
-      /var\(--muted-foreground\)/,
+      /var\(--scrollbar-thumb\)/,
     );
     expect(css).toContain('.artifact-document pre:focus-within::-webkit-scrollbar-thumb');
   });
@@ -689,7 +691,12 @@ describe('index.html — anti-FOUC critical CSS (quick-260910-0x4 item 3, 02-REV
     // is `.dark` and not `:root.dark` (WINDOWS.md entry 7) — a deliberate, acknowledged addition.
     // Then 167: +2 for quick-260910-jz8's --font-heading/--font-mono mirror (D-02) — one
     // declaration split into two, the second wrapping onto its own line like --font-sans above it.
-    expect(lineCount).toBe(167);
+    // Then 143: -24 for the same plan's colour cleanup (JZ8-03) — five dead tokens deleted from
+    // each theme (--accent, --accent-foreground, --chart-1..5, --radius, --sidebar-ring) plus
+    // three .dark redundancies removed (--primary-foreground, --card-foreground/--sidebar-foreground
+    // folded into :root's var(--foreground) alias, --sidebar-primary/--sidebar-accent falling
+    // through to :root). The named recipes and scale tokens are deliberately not mirrored here.
+    expect(lineCount).toBe(143);
   });
 });
 
