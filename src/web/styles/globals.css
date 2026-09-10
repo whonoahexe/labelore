@@ -26,6 +26,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-heading: var(--font-heading);
+  --font-mono: var(--font-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -102,8 +103,10 @@
   --font-sans:
     'Space Grotesk', 'Avenir Next', Avenir, ui-sans-serif, system-ui, -apple-system,
     BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-heading:
-    'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', ui-monospace, monospace;
+  --font-heading: var(--font-mono);
+  --font-mono:
+    'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Monaco, Consolas,
+    'Liberation Mono', monospace;
   /* quick-260910-0x4 item 8: the shared uppercase-micro-label size. Was three literal 0.62rem
      declarations (9.92px) and three literal 0.6rem declarations (9.6px, smaller still) scattered
      across .tree-excluded-marker, .phase-facts dt, .blocked-by, .artifact-metadata > summary span,
@@ -195,6 +198,55 @@
   --space-fluid-12: clamp(2rem, 5vw, 4.5rem);
   --space-fluid-13: clamp(2.5rem, 7vw, 5rem);
   --space-fluid-14: clamp(2rem, 5vw, 5.5rem);
+
+  /* Type scale (JZ8-02). Six static steps on a near-constant ~1.09 ratio, plus one display-ish
+     outlier (--fs-7). --fs-2 aliases the pre-existing --font-size-micro-label (palette :root)
+     rather than redeclaring its value, so the six MICRO_LABEL_SELECTORS and every other 0.7rem
+     usage site share one literal. */
+  --fs-1: 0.64rem;
+  --fs-2: var(--font-size-micro-label);
+  --fs-3: 0.76rem;
+  --fs-4: 0.82rem;
+  --fs-5: 0.9rem;
+  --fs-6: 1rem;
+  --fs-7: 1.3rem;
+
+  /* Fluid and display sizing — 13 ad hoc clamp() shapes consolidated to 8 named tokens. */
+  --fs-fluid-1: clamp(0.95rem, 2vw, 1.15rem);
+  --fs-fluid-2: clamp(1.05rem, 2vw, 1.35rem);
+  --fs-fluid-3: clamp(1.15rem, 2.5vw, 1.65rem);
+  --fs-fluid-4: clamp(1.35rem, 3vw, 2rem);
+  --fs-display-1: clamp(1.8rem, 4vw, 2.7rem);
+  --fs-display-2: clamp(2rem, 6vw, 4.5rem);
+  --fs-display-3: clamp(2.8rem, 6vw, 5.75rem);
+  --fs-display-narrow: clamp(2.65rem, 15vw, 4.3rem);
+
+  /* Line-height steps. Ties snap up. */
+  --lh-display: 0.9;
+  --lh-none: 1;
+  --lh-tight: 1.2;
+  --lh-snug: 1.4;
+  --lh-normal: 1.55;
+  --lh-relaxed: 1.7;
+
+  /* Paired line-heights — only the companions with a real usage site are kept; --fs-1--lh,
+     --fs-2--lh, --fs-6--lh and --fs-7--lh had zero consumers after migration and were dropped. */
+  --fs-3--lh: var(--lh-normal);
+  --fs-4--lh: var(--lh-normal);
+  --fs-5--lh: var(--lh-normal);
+
+  /* Letter-spacing steps. */
+  --ls-tighter: -0.07em;
+  --ls-tight: -0.035em;
+  --ls-normal: 0;
+  --ls-wide: 0.05em;
+  --ls-wider: 0.08em;
+  --ls-widest: 0.12em;
+
+  /* Weight tokens. Both historical 650s (D-01) snap to --fw-semibold. */
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
 }
 
 @layer base {
@@ -364,8 +416,8 @@
 
 .brand strong {
   font-family: var(--font-heading);
-  font-size: 0.78rem;
-  letter-spacing: 0.12em;
+  font-size: var(--fs-3);
+  letter-spacing: var(--ls-widest);
   text-transform: uppercase;
 }
 
@@ -373,7 +425,7 @@
 .snapshot-status small {
   overflow: hidden;
   color: var(--muted-foreground);
-  font-size: 0.68rem;
+  font-size: var(--fs-2);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -390,8 +442,8 @@
   padding: var(--space-3-5) var(--space-5);
   color: var(--muted-foreground);
   font-family: var(--font-heading);
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
   text-decoration: none;
   text-transform: uppercase;
 }
@@ -418,7 +470,7 @@
   gap: var(--space-2);
   padding: var(--space-2-5) var(--space-fluid-4);
   color: var(--muted-foreground);
-  font-size: 0.74rem;
+  font-size: var(--fs-3);
 }
 
 .shell-controls {
@@ -435,7 +487,7 @@
   overflow: hidden;
   color: var(--foreground);
   font-family: var(--font-heading);
-  font-size: 0.66rem;
+  font-size: var(--fs-1);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -456,7 +508,7 @@
   border-bottom: 1px solid var(--destructive);
   background: color-mix(in oklch, var(--destructive) 9%, var(--background));
   text-align: center;
-  font-size: 0.78rem;
+  font-size: var(--fs-3);
 }
 
 .shell-content {
@@ -519,8 +571,8 @@
   min-height: 2rem;
   padding: var(--space-1-5) var(--space-2);
   color: var(--sidebar-foreground);
-  font-size: 0.78rem;
-  line-height: 1.4;
+  font-size: var(--fs-3);
+  line-height: var(--lh-snug);
   text-decoration: none;
 }
 
@@ -553,9 +605,9 @@ summary.tree-node-row:hover {
 .tree-group-label {
   color: var(--sidebar-foreground);
   font-family: var(--font-heading);
-  font-size: 0.67rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
   text-transform: uppercase;
 }
 
@@ -577,7 +629,7 @@ summary.tree-node-row:hover {
   padding: var(--space-0-5) var(--space-1);
   font-family: var(--font-heading);
   font-size: var(--font-size-micro-label);
-  letter-spacing: 0.06em;
+  letter-spacing: var(--ls-wide);
   text-transform: uppercase;
 }
 
@@ -586,7 +638,7 @@ summary.tree-node-row:hover {
   overflow-wrap: anywhere;
   padding-left: var(--space-1-5);
   color: var(--muted-foreground);
-  font-size: 0.68rem;
+  font-size: var(--fs-2);
 }
 
 .page-stack {
@@ -602,10 +654,10 @@ summary.tree-node-row:hover {
   margin-bottom: var(--space-3);
   color: var(--primary);
   font-family: var(--font-heading);
-  font-size: 0.67rem;
-  font-weight: 600;
-  letter-spacing: 0.13em;
-  line-height: 1.3;
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
   text-transform: uppercase;
 }
 
@@ -617,18 +669,18 @@ summary.tree-node-row:hover {
 .page-stack > h1,
 .page-intro h1 {
   margin-bottom: var(--space-4);
-  font-size: clamp(2.6rem, 7vw, 5.6rem);
-  font-weight: 600;
-  letter-spacing: -0.07em;
-  line-height: 0.9;
+  font-size: var(--fs-display-3);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tighter);
+  line-height: var(--lh-display);
 }
 
 .lede {
   max-width: 48rem;
   margin-bottom: 0;
   color: var(--muted-foreground);
-  font-size: clamp(0.95rem, 2vw, 1.15rem);
-  line-height: 1.65;
+  font-size: var(--fs-fluid-1);
+  line-height: var(--lh-relaxed);
 }
 
 .position-hero {
@@ -644,8 +696,8 @@ summary.tree-node-row:hover {
   margin-bottom: var(--space-3);
   color: var(--muted-foreground);
   font-family: var(--font-heading);
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
+  font-size: var(--fs-3);
+  letter-spacing: var(--ls-wider);
   text-transform: uppercase;
 }
 
@@ -653,19 +705,19 @@ summary.tree-node-row:hover {
   max-width: 13ch;
   margin: 0;
   overflow-wrap: anywhere;
-  font-size: clamp(2.8rem, 6vw, 5.75rem);
-  font-weight: 600;
-  letter-spacing: -0.08em;
-  line-height: 0.86;
+  font-size: var(--fs-display-3);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tighter);
+  line-height: var(--lh-display);
 }
 
 .position-copy h1 span {
   display: block;
   margin-bottom: var(--space-2-5);
   color: var(--muted-foreground);
-  font-size: 0.2em;
-  letter-spacing: 0.08em;
-  line-height: 1;
+  font-size: max(0.2em, var(--fs-1));
+  letter-spacing: var(--ls-wider);
+  line-height: var(--lh-none);
   text-transform: uppercase;
 }
 
@@ -687,9 +739,9 @@ summary.tree-node-row:hover {
   width: fit-content;
   border: 1px solid var(--border);
   font-family: var(--font-heading);
-  font-size: 0.64rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-size: var(--fs-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
   text-transform: uppercase;
 }
 
@@ -725,8 +777,8 @@ summary.tree-node-row:hover {
   overflow-wrap: anywhere;
   color: var(--muted-foreground);
   font-family: var(--font-heading);
-  font-size: 0.64rem;
-  line-height: 1.5;
+  font-size: var(--fs-1);
+  line-height: var(--lh-normal);
 }
 
 .immediate-work,
@@ -750,8 +802,8 @@ summary.tree-node-row:hover {
 .progress-panel h2,
 .section-heading h2 {
   margin-bottom: 0;
-  font-size: clamp(1.15rem, 2.5vw, 1.65rem);
-  letter-spacing: -0.04em;
+  font-size: var(--fs-fluid-3);
+  letter-spacing: var(--ls-tight);
 }
 
 .next-primary,
@@ -779,15 +831,15 @@ summary.tree-node-row:hover {
 
 .next-primary strong {
   margin-top: var(--space-2);
-  font-size: 1.3rem;
+  font-size: var(--fs-7);
 }
 
 .next-primary p {
   margin: var(--space-2) 0 0;
   overflow: hidden;
   color: var(--muted-foreground);
-  font-size: 0.82rem;
-  line-height: 1.55;
+  font-size: var(--fs-4);
+  line-height: var(--fs-4--lh);
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
@@ -797,8 +849,8 @@ summary.tree-node-row:hover {
   margin: var(--space-2) 0 0;
   overflow: hidden;
   color: var(--muted-foreground);
-  font-size: 0.82rem;
-  line-height: 1.55;
+  font-size: var(--fs-4);
+  line-height: var(--fs-4--lh);
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -851,16 +903,16 @@ summary.tree-node-row:hover {
 
 .formal-progress-value strong {
   font-family: var(--font-heading);
-  font-size: clamp(3rem, 7vw, 5.5rem);
-  font-weight: 500;
-  letter-spacing: -0.08em;
-  line-height: 0.8;
+  font-size: var(--fs-display-3);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tighter);
+  line-height: var(--lh-display);
 }
 
 .formal-progress-value span {
   color: var(--muted-foreground);
   font-family: var(--font-heading);
-  font-size: 0.7rem;
+  font-size: var(--fs-2);
   text-transform: uppercase;
 }
 
@@ -873,8 +925,8 @@ summary.tree-node-row:hover {
   border-top: 1px solid var(--border);
   color: var(--muted-foreground);
   font-family: var(--font-heading);
-  font-size: 0.67rem;
-  letter-spacing: 0.04em;
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wide);
 }
 
 .discrepancy-callout {
@@ -900,7 +952,7 @@ summary.tree-node-row:hover {
 .discrepancy-callout p {
   margin: var(--space-1) 0 0;
   color: color-mix(in oklch, var(--muted-foreground) 85%, var(--foreground));
-  font-size: 0.8rem;
+  font-size: var(--fs-4);
 }
 
 .dashboard-grid {
@@ -971,7 +1023,7 @@ summary.tree-node-row:hover {
   margin-top: var(--space-1-5);
   color: var(--foreground);
   font-family: var(--font-heading);
-  font-size: 0.84rem;
+  font-size: var(--fs-4);
 }
 
 /* No <small> is rendered in an attention row — a row is item-kind span, strong, p and the
@@ -979,8 +1031,8 @@ summary.tree-node-row:hover {
 .attention-list p {
   margin: var(--space-1-5) 0;
   color: var(--muted-foreground);
-  font-size: 0.77rem;
-  line-height: 1.55;
+  font-size: var(--fs-3);
+  line-height: var(--fs-3--lh);
 }
 
 .attention-action {
@@ -1028,8 +1080,8 @@ summary.tree-node-row:hover {
 .quiet-state p,
 .empty-flow p {
   margin: 0;
-  font-size: 0.82rem;
-  line-height: 1.55;
+  font-size: var(--fs-4);
+  line-height: var(--fs-4--lh);
 }
 
 .page-intro {
@@ -1047,7 +1099,7 @@ summary.tree-node-row:hover {
   flex: none;
   color: var(--muted-foreground);
   font-family: var(--font-heading);
-  font-size: 0.67rem;
+  font-size: var(--fs-2);
   text-decoration: none;
   text-transform: uppercase;
 }
@@ -1132,8 +1184,8 @@ summary.tree-node-row:hover {
 
 .roadmap-phase-header h3 {
   margin: 0;
-  font-size: clamp(1.05rem, 2vw, 1.35rem);
-  letter-spacing: -0.035em;
+  font-size: var(--fs-fluid-2);
+  letter-spacing: var(--ls-tight);
 }
 
 .roadmap-phase-header h3 a {
@@ -1149,8 +1201,8 @@ summary.tree-node-row:hover {
   max-width: 54rem;
   margin: var(--space-2) 0 0;
   color: var(--muted-foreground);
-  font-size: 0.82rem;
-  line-height: 1.55;
+  font-size: var(--fs-4);
+  line-height: var(--fs-4--lh);
 }
 
 .phase-statuses {
@@ -1182,14 +1234,14 @@ summary.tree-node-row:hover {
   color: var(--muted-foreground);
   font-family: var(--font-heading);
   font-size: var(--font-size-micro-label);
-  letter-spacing: 0.08em;
+  letter-spacing: var(--ls-wider);
   text-transform: uppercase;
 }
 
 .phase-facts dd {
   margin: 0;
   overflow-wrap: anywhere;
-  font-size: 0.79rem;
+  font-size: var(--fs-4);
 }
 
 .phase-disclosure > summary,
@@ -1201,8 +1253,8 @@ summary.tree-node-row:hover {
   padding: var(--space-3-5) var(--space-6);
   cursor: pointer;
   font-family: var(--font-heading);
-  font-size: 0.67rem;
-  letter-spacing: 0.05em;
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wide);
   list-style: none;
   text-transform: uppercase;
 }
@@ -1246,8 +1298,8 @@ summary.tree-node-row:hover {
 .phase-detail-grid h4,
 .wave-band header {
   margin: 0 0 var(--space-3);
-  font-size: 0.7rem;
-  letter-spacing: 0.06em;
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wide);
   text-transform: uppercase;
 }
 
@@ -1255,8 +1307,8 @@ summary.tree-node-row:hover {
   margin: 0;
   padding-left: var(--space-4);
   color: var(--muted-foreground);
-  font-size: 0.78rem;
-  line-height: 1.6;
+  font-size: var(--fs-3);
+  line-height: var(--fs-3--lh);
 }
 
 .token-list {
@@ -1272,7 +1324,7 @@ summary.tree-node-row:hover {
   border: 1px solid var(--border);
   color: var(--foreground);
   font-family: var(--font-heading);
-  font-size: 0.63rem;
+  font-size: var(--fs-1);
 }
 
 .wave-stack {
@@ -1328,7 +1380,7 @@ summary.tree-node-row:hover {
   gap: var(--space-2);
   align-items: center;
   font-family: var(--font-heading);
-  font-size: 0.7rem;
+  font-size: var(--fs-2);
   text-decoration: none;
 }
 
@@ -1354,8 +1406,8 @@ summary.tree-node-row:hover {
 .empty-note {
   margin: 0;
   color: var(--muted-foreground);
-  font-size: 0.78rem;
-  line-height: 1.55;
+  font-size: var(--fs-3);
+  line-height: var(--fs-3--lh);
 }
 
 .empty-flow {
@@ -1366,7 +1418,7 @@ summary.tree-node-row:hover {
 
 .empty-flow h3 {
   margin: 0 0 var(--space-1);
-  font-size: 0.85rem;
+  font-size: var(--fs-4);
 }
 
 .history-section {
@@ -1411,7 +1463,7 @@ summary.tree-node-row:hover {
 .history-milestone > summary small {
   margin-top: var(--space-1);
   color: var(--muted-foreground);
-  font-size: 0.58rem;
+  font-size: var(--fs-1);
 }
 
 .history-tree {
@@ -1431,7 +1483,7 @@ summary.tree-node-row:hover {
 
 .notice h2 {
   margin-bottom: var(--space-2-5);
-  font-size: 1rem;
+  font-size: var(--fs-6);
 }
 
 .notice p {
@@ -1639,7 +1691,7 @@ pre {
   }
 
   .position-copy h1 {
-    font-size: clamp(2.65rem, 15vw, 4.3rem);
+    font-size: var(--fs-display-narrow);
   }
 
   .progress-panel {
@@ -1716,7 +1768,7 @@ pre {
   flex-wrap: wrap;
   gap: var(--space-1-5);
   color: var(--muted-foreground);
-  font-size: 0.78rem;
+  font-size: var(--fs-3);
 }
 
 .artifact-breadcrumbs a:hover,
@@ -1734,8 +1786,8 @@ pre {
 .artifact-path {
   overflow-wrap: anywhere;
   color: var(--muted-foreground);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.76rem;
+  font-family: var(--font-mono);
+  font-size: var(--fs-3);
 }
 
 .metadata-panels {
@@ -1753,8 +1805,8 @@ pre {
 
 .metadata-panel h2 {
   margin: 0 0 var(--space-3);
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
+  font-size: var(--fs-3);
+  letter-spacing: var(--ls-wider);
   text-transform: uppercase;
 }
 
@@ -1778,8 +1830,8 @@ pre {
 
 .metadata-record dt {
   color: var(--muted-foreground);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
 }
 
 .metadata-record dd {
@@ -1801,7 +1853,7 @@ pre {
   min-width: 0;
   max-width: 100%;
   color: var(--foreground);
-  line-height: 1.72;
+  line-height: var(--lh-relaxed);
 }
 
 .artifact-document > :first-child {
@@ -1812,7 +1864,7 @@ pre {
   position: relative;
   scroll-margin-top: 5rem;
   margin: 1.8em 0 0.65em;
-  line-height: 1.2;
+  line-height: var(--lh-tight);
 }
 
 .heading-copy {
@@ -1870,9 +1922,9 @@ pre {
 
 .plan-section-label {
   color: var(--muted-foreground);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.66rem;
-  letter-spacing: 0.09em;
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
   text-transform: uppercase;
 }
 
@@ -1890,7 +1942,7 @@ pre {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2) var(--space-4);
-  font-size: 0.8rem;
+  font-size: var(--fs-4);
 }
 
 .plan-pair-jumps a {
@@ -1988,7 +2040,7 @@ pre {
 
 .reference-preview-heading h2 {
   margin: var(--space-0-5) 0 0;
-  font-size: 1rem;
+  font-size: var(--fs-6);
 }
 
 .reference-preview-close {
@@ -2022,8 +2074,8 @@ pre {
 
 .reference-preview-facts dt {
   color: var(--muted-foreground);
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: var(--fs-3);
+  font-weight: var(--fw-bold);
   text-transform: uppercase;
 }
 
@@ -2041,8 +2093,8 @@ pre {
   background: var(--primary);
   padding: var(--space-2-5) var(--space-3-5);
   color: var(--primary-foreground);
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: var(--fs-4);
+  font-weight: var(--fw-bold);
   text-decoration: none;
 }
 
@@ -2085,8 +2137,8 @@ pre {
   max-width: 28rem;
   margin: 0;
   color: var(--muted-foreground);
-  font-size: 0.86rem;
-  line-height: 1.6;
+  font-size: var(--fs-5);
+  line-height: var(--fs-5--lh);
 }
 
 .attention-list li {
@@ -2100,13 +2152,13 @@ pre {
 }
 
 .attention-list .item-kind {
-  line-height: 1.15rem;
+  line-height: var(--lh-relaxed);
 }
 
 .attention-list strong {
   margin-top: var(--space-1-5);
-  font-size: 0.92rem;
-  line-height: 1.4;
+  font-size: var(--fs-5);
+  line-height: var(--lh-snug);
 }
 
 .attention-more {
@@ -2116,7 +2168,7 @@ pre {
   justify-content: space-between;
   padding-top: var(--space-5);
   color: var(--muted-foreground);
-  font-size: 0.76rem;
+  font-size: var(--fs-3);
 }
 
 .attention-more button {
@@ -2127,7 +2179,7 @@ pre {
   color: var(--foreground);
   cursor: pointer;
   font-family: var(--font-heading);
-  font-size: 0.67rem;
+  font-size: var(--fs-2);
   text-transform: uppercase;
 }
 
@@ -2184,13 +2236,13 @@ pre {
 .requirement-list strong {
   color: var(--primary);
   font-family: var(--font-heading);
-  font-size: 0.68rem;
+  font-size: var(--fs-2);
 }
 
 .requirement-list span {
   color: var(--muted-foreground);
-  font-size: 0.77rem;
-  line-height: 1.5;
+  font-size: var(--fs-3);
+  line-height: var(--fs-3--lh);
 }
 
 .requirement-list a {
@@ -2199,8 +2251,8 @@ pre {
   gap: var(--space-1-5);
   align-items: center;
   margin-top: var(--space-0-5);
-  font-size: 0.7rem;
-  font-weight: 650;
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
   text-decoration: underline;
   text-underline-offset: 0.2em;
 }
@@ -2222,15 +2274,15 @@ pre {
 
 .wave-plan-copy strong {
   color: var(--foreground);
-  font-size: 0.72rem;
+  font-size: var(--fs-2);
 }
 
 .wave-plan-copy small {
   overflow-wrap: anywhere;
   color: var(--muted-foreground);
   font-family: var(--font-sans);
-  font-size: 0.75rem;
-  line-height: 1.45;
+  font-size: var(--fs-3);
+  line-height: var(--lh-snug);
 }
 
 .roadmap-phase[data-archived='true'] .roadmap-phase-body {
@@ -2247,7 +2299,7 @@ pre {
   padding-bottom: var(--space-3-5);
   border-bottom: 1px solid var(--border);
   font-family: var(--font-heading);
-  font-size: 0.68rem;
+  font-size: var(--fs-2);
 }
 
 .artifact-breadcrumbs a {
@@ -2263,9 +2315,9 @@ pre {
   max-width: 22ch;
   margin: 0;
   overflow-wrap: anywhere;
-  font-size: clamp(2rem, 6vw, 4.5rem);
-  letter-spacing: -0.065em;
-  line-height: 0.98;
+  font-size: var(--fs-display-2);
+  letter-spacing: var(--ls-tighter);
+  line-height: var(--lh-none);
 }
 
 .artifact-path {
@@ -2286,9 +2338,9 @@ pre {
   padding: var(--space-3-5) var(--space-4);
   cursor: pointer;
   font-family: var(--font-heading);
-  font-size: 0.7rem;
-  font-weight: 650;
-  letter-spacing: 0.06em;
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wide);
   text-transform: uppercase;
 }
 
@@ -2317,15 +2369,15 @@ pre {
 
 .metadata-panel h2 {
   color: var(--primary);
-  font-size: 0.7rem;
+  font-size: var(--fs-2);
 }
 
 .metadata-record,
 .metadata-list {
   gap: var(--space-2-5);
   padding-left: var(--space-4);
-  font-size: 0.8rem;
-  line-height: 1.55;
+  font-size: var(--fs-4);
+  line-height: var(--fs-4--lh);
 }
 
 .document-reader-layout {
@@ -2354,8 +2406,8 @@ pre {
 .document-outline > p {
   color: var(--muted-foreground);
   font-family: var(--font-heading);
-  font-size: 0.65rem;
-  letter-spacing: 0.08em;
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
   text-transform: uppercase;
 }
 
@@ -2375,8 +2427,8 @@ pre {
   display: block;
   overflow-wrap: anywhere;
   color: var(--muted-foreground);
-  font-size: 0.74rem;
-  line-height: 1.4;
+  font-size: var(--fs-3);
+  line-height: var(--lh-snug);
   text-decoration: none;
 }
 
@@ -2391,8 +2443,8 @@ pre {
 }
 
 .artifact-document {
-  font-size: clamp(0.94rem, 1.4vw, 1.02rem);
-  line-height: 1.75;
+  font-size: var(--fs-fluid-1);
+  line-height: var(--lh-relaxed);
 }
 
 /* Measure cap. The child combinator alone missed every paragraph a plan nests inside
@@ -2412,25 +2464,25 @@ pre {
 .artifact-document :is(h1, h2, h3, h4, h5, h6) {
   margin-top: 2.3em;
   margin-bottom: 0.75em;
-  letter-spacing: -0.035em;
-  line-height: 1.25;
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
 }
 
 .artifact-document h1 {
-  font-size: clamp(1.8rem, 4vw, 2.7rem);
+  font-size: var(--fs-display-1);
 }
 .artifact-document h2 {
   padding-bottom: var(--space-1-5);
   border-bottom: 1px solid var(--border);
-  font-size: clamp(1.35rem, 3vw, 2rem);
+  font-size: var(--fs-fluid-4);
 }
 .artifact-document h3 {
-  font-size: clamp(1.08rem, 2vw, 1.35rem);
+  font-size: var(--fs-fluid-2);
 }
 
 .artifact-document a {
   color: var(--primary);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   text-underline-offset: 0.2em;
 }
 
@@ -2483,8 +2535,8 @@ pre {
 .artifact-document table {
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 0.86rem;
-  line-height: 1.5;
+  font-size: var(--fs-5);
+  line-height: var(--fs-5--lh);
 }
 
 .artifact-document th {
@@ -2493,8 +2545,8 @@ pre {
   background: var(--secondary);
   color: var(--secondary-foreground);
   font-family: var(--font-heading);
-  font-size: 0.7rem;
-  letter-spacing: 0.04em;
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wide);
   text-transform: uppercase;
 }
 
@@ -2524,8 +2576,8 @@ pre {
   border: 1px solid var(--border);
   background: var(--secondary) !important;
   font-family: var(--font-heading);
-  font-size: 0.82rem;
-  line-height: 1.65;
+  font-size: var(--fs-4);
+  line-height: var(--lh-relaxed);
 }
 
 /* Thin and quiet at rest, stronger once the block is engaged. The 8px default bar with its
@@ -2597,7 +2649,7 @@ pre {
   align-items: baseline;
   margin-bottom: var(--space-2-5);
   font-family: var(--font-heading);
-  font-weight: 700;
+  font-weight: var(--fw-bold);
 }
 
 /* The section's dotted position among its siblings. A plan nests plan > tasks > task > task and
@@ -2606,7 +2658,7 @@ pre {
 .plan-section-ordinal {
   color: color-mix(in oklch, var(--muted-foreground) 70%, var(--foreground));
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
+  letter-spacing: var(--ls-normal);
 }
 
 .plan-section-ordinal:empty {
@@ -2762,7 +2814,7 @@ pre {
   background: transparent;
   color: inherit;
   font-family: var(--font-sans);
-  font-size: 0.82rem;
+  font-size: var(--fs-4);
   white-space: nowrap;
 }
 
@@ -2793,7 +2845,7 @@ pre {
 .search-dropdown-status,
 .search-dropdown-empty {
   padding: var(--space-3) var(--space-4);
-  font-size: 0.78rem;
+  font-size: var(--fs-3);
 }
 
 .search-dropdown-status p {
@@ -2830,8 +2882,8 @@ pre {
 
 .search-result-title {
   overflow: hidden;
-  font-size: 0.84rem;
-  font-weight: 600;
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -2840,7 +2892,7 @@ pre {
   overflow-wrap: anywhere;
   color: var(--muted-foreground);
   font-family: var(--font-heading);
-  font-size: 0.64rem;
+  font-size: var(--fs-1);
 }
 
 /* File paths truncate head-first with a leading ellipsis inside the compact dropdown, keeping the
@@ -2877,9 +2929,9 @@ pre {
   margin: 0;
   color: var(--muted-foreground);
   font-family: var(--font-heading);
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-size: var(--fs-3);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
   text-transform: uppercase;
 }
 
@@ -2909,8 +2961,8 @@ pre {
 .search-result-card-title {
   overflow-wrap: anywhere;
   color: inherit;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: var(--fs-5);
+  font-weight: var(--fw-semibold);
   text-decoration: none;
 }
 
@@ -2930,8 +2982,8 @@ pre {
   background: color-mix(in oklch, var(--muted) 40%, transparent);
   padding: var(--space-2) var(--space-2-5);
   color: var(--foreground);
-  font-size: 0.82rem;
-  line-height: 1.55;
+  font-size: var(--fs-4);
+  line-height: var(--fs-4--lh);
   text-decoration: none;
 }
 
@@ -2953,8 +3005,8 @@ pre {
   color: var(--foreground);
   cursor: pointer;
   font-family: var(--font-heading);
-  font-size: 0.64rem;
-  letter-spacing: 0.05em;
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wide);
   text-transform: uppercase;
 }
 
@@ -3032,8 +3084,8 @@ pre {
   color: var(--muted-foreground);
   font-family: var(--font-heading);
   font-size: var(--font-size-micro-label);
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wide);
   text-transform: uppercase;
 }
 
@@ -3047,8 +3099,8 @@ pre {
   color: var(--muted-foreground);
   font-family: var(--font-heading);
   font-size: var(--font-size-micro-label);
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wide);
   text-transform: uppercase;
 }
 
@@ -3075,7 +3127,7 @@ pre {
   padding: var(--space-2) var(--space-3);
   color: var(--foreground);
   font-family: var(--font-sans);
-  font-size: 0.82rem;
+  font-size: var(--fs-4);
 }
 
 .trace-filter-input::placeholder {
@@ -3100,8 +3152,8 @@ pre {
   color: var(--muted-foreground);
   cursor: pointer;
   font-family: var(--font-heading);
-  font-size: 0.64rem;
-  letter-spacing: 0.05em;
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wide);
   text-transform: uppercase;
 }
 
@@ -3207,16 +3259,16 @@ pre {
 .toast h2 {
   color: var(--muted-foreground);
   font-family: var(--font-heading);
-  font-size: 0.67rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
   text-transform: uppercase;
 }
 
 .toast p {
   color: var(--foreground);
-  font-size: 0.82rem;
-  line-height: 1.55;
+  font-size: var(--fs-4);
+  line-height: var(--fs-4--lh);
 }
 
 .toast button {
@@ -3260,10 +3312,10 @@ pre {
 
 .invalid-project-panel h1 {
   margin: 0;
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 600;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
+  font-size: var(--fs-display-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
 }
 
 .invalid-project-detail {
@@ -3271,8 +3323,8 @@ pre {
   overflow-wrap: anywhere;
   color: var(--muted-foreground);
   max-width: 52ch;
-  font-size: 0.95rem;
-  line-height: 1.65;
+  font-size: var(--fs-5);
+  line-height: var(--lh-relaxed);
 }
 
 .copy-field {
@@ -3284,9 +3336,9 @@ pre {
   margin: 0;
   color: var(--muted-foreground);
   font-family: var(--font-heading);
-  font-size: 0.67rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
   text-transform: uppercase;
 }
 
@@ -3305,7 +3357,7 @@ pre {
   overflow-wrap: anywhere;
   color: var(--foreground);
   font-family: var(--font-heading);
-  font-size: 0.85rem;
+  font-size: var(--fs-4);
 }
 
 .copy-field-button {
