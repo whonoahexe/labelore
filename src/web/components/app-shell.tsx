@@ -1,9 +1,11 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { LayoutDashboard, ListChecks, Map, Radio, Tag } from 'lucide-react';
+import { LayoutDashboard, ListChecks, Map, Radio } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router';
+import { formatProjectMeta, projectDisplayName } from '../../presentation/shell-header.ts';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
+import { LabeloreMark } from './labelore-mark.tsx';
 import { RefreshControl } from './refresh-control.tsx';
 import { SearchField } from './search-field.tsx';
 import { ThemeToggle } from './theme-toggle.tsx';
@@ -69,6 +71,12 @@ export function AppShell(): React.JSX.Element {
     return () => observer.disconnect();
   }, []);
 
+  const displayName = projectDisplayName(
+    presentation.data?.projectName ?? null,
+    presentation.data?.rootPath ?? '',
+  );
+  const projectMeta = formatProjectMeta(presentation.data?.state ?? null);
+
   return (
     <ToastProvider>
       <div
@@ -79,13 +87,22 @@ export function AppShell(): React.JSX.Element {
           Skip to content
         </a>
         <header className="shell-header" ref={headerRef}>
-          <NavLink className="brand" to={presentationRoutePatterns.dashboard}>
+          <NavLink
+            className="brand"
+            to={presentationRoutePatterns.dashboard}
+            title={presentation.data?.rootPath}
+            aria-label={`Labelore — ${displayName}`}
+          >
             <span className="brand-mark" aria-hidden="true">
-              <Tag />
+              <LabeloreMark />
             </span>
-            <span>
-              <strong>Labelore</strong>
-              <small>{presentation.data?.projectName ?? 'Planning intelligence'}</small>
+            <strong className="brand-wordmark">Labelore</strong>
+            <span className="brand-separator" aria-hidden="true">
+              /
+            </span>
+            <span className="brand-project">
+              <span className="brand-project-name">{displayName}</span>
+              {projectMeta ? <small className="brand-meta">{projectMeta}</small> : null}
             </span>
           </NavLink>
 
