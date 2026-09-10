@@ -26,8 +26,8 @@
   ],
   "next": {
     "command": "/gsd:progress",
-    "label": "Choose the next step",
-    "reason": "Phases 1-4 complete; phase 5 reverted"
+    "label": "Show progress",
+    "reason": "Unsure of state — showing progress"
   },
-  "updated_at": "2026-09-09T07:54:57.185893Z"
+  "updated_at": "2026-09-10T08:34:58.493Z"
 }
