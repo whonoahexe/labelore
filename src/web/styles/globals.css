@@ -345,7 +345,8 @@
   z-index: 20;
   top: 0;
   display: grid;
-  grid-template-columns: minmax(12rem, 1fr) auto minmax(12rem, 1fr);
+  grid-template-areas: 'brand nav controls';
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: stretch;
   min-width: 0;
   max-width: 100%;
@@ -364,8 +365,10 @@
 }
 
 .brand {
-  gap: var(--space-3);
+  grid-area: brand;
+  gap: var(--space-2-5);
   padding: var(--space-3) var(--space-fluid-4);
+  min-width: 0;
   text-decoration: none;
 }
 
@@ -380,31 +383,52 @@
 }
 
 .brand-mark svg {
-  width: 1rem;
+  width: 1.25rem;
 }
 
-.brand > span:last-child {
-  display: grid;
-  min-width: 0;
-}
-
-.brand strong {
+.brand-wordmark {
+  flex: none;
   font-family: var(--font-heading);
   font-size: var(--fs-3);
+  font-weight: var(--fw-semibold);
   letter-spacing: var(--ls-widest);
   text-transform: uppercase;
 }
 
-.brand small,
-.snapshot-status small {
+.brand-separator {
+  flex: none;
+  color: var(--border);
+  font-weight: var(--fw-medium);
+}
+
+.brand-project {
+  display: grid;
+  min-width: 0;
+}
+
+.brand-project-name {
   overflow: hidden;
-  color: var(--muted-foreground);
-  font-size: var(--fs-2);
+  color: var(--foreground);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.brand-meta,
+.snapshot-status small {
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wide);
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 .shell-nav {
+  grid-area: nav;
   border-inline: 1px solid var(--border);
 }
 
@@ -413,13 +437,17 @@
   height: 100%;
   gap: var(--space-2);
   align-items: center;
-  padding: var(--space-3-5) var(--space-5);
+  padding: var(--space-2-5) var(--space-4);
   color: var(--muted-foreground);
   font-family: var(--font-heading);
   font-size: var(--fs-2);
   letter-spacing: var(--ls-wider);
   text-decoration: none;
   text-transform: uppercase;
+}
+
+.shell-nav-link + .shell-nav-link {
+  border-left: 1px solid var(--border);
 }
 
 .shell-nav-link svg,
@@ -434,7 +462,6 @@
 }
 
 .shell-nav-link.active {
-  background: var(--state-active);
   color: var(--foreground);
   box-shadow: inset 0 -2px var(--primary);
 }
@@ -448,6 +475,7 @@
 }
 
 .shell-controls {
+  grid-area: controls;
   min-width: 0;
   justify-content: flex-end;
 }
@@ -1558,7 +1586,8 @@ pre {
 
 @media (max-width: 62rem) {
   .shell-header {
-    grid-template-columns: minmax(10rem, 1fr) auto;
+    grid-template-areas: 'brand controls' 'nav nav';
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   /* CR-02/TGT-08/UI-03: below 62rem the snapshot age and Refresh control stay reachable — a
@@ -1575,13 +1604,19 @@ pre {
   }
 
   .shell-controls {
-    grid-column: 1 / -1;
     flex-wrap: wrap;
     padding-inline: var(--space-3);
   }
 
   .shell-nav {
-    border-right: 0;
+    width: 100%;
+    border-inline: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .shell-nav-link {
+    flex: 1;
+    justify-content: center;
   }
 
   /* D-09: the sidebar collapses out of the layout entirely below 62rem rather than squeezing the
@@ -1615,17 +1650,17 @@ pre {
 @media (max-width: 42rem) {
   .shell-header {
     position: relative;
-    grid-template-columns: 1fr;
   }
 
   .brand {
     padding: var(--space-3) var(--space-4);
-    border-bottom: 1px solid var(--border);
   }
 
-  .shell-nav {
-    width: 100%;
-    border-inline: 0;
+  /* NAV-02: the wordmark and separator drop out at the narrowest width — the accessible name
+     survives via the brand link's own aria-label, so nothing is lost, only the visual lockup. */
+  .brand-wordmark,
+  .brand-separator {
+    display: none;
   }
 
   /* CR-02/UI-03: at 320px, an absolutely positioned top-right overlay (the pre-fix layout) has no
@@ -1635,11 +1670,9 @@ pre {
      the grid column's own 1fr = 100% width, and flex-wrap as a second line of defense in case any
      single child still cannot shrink far enough. */
   .shell-controls {
-    grid-column: 1 / -1;
     flex-wrap: wrap;
     row-gap: var(--space-1-5);
     padding: var(--space-2) var(--space-4);
-    border-top: 1px solid var(--border);
   }
 
   .snapshot-status {
@@ -1654,8 +1687,6 @@ pre {
 
   .shell-nav-link {
     min-width: 0;
-    flex: 1;
-    justify-content: center;
     padding-inline: var(--space-2-5);
     padding-block: var(--space-3);
   }
