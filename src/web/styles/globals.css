@@ -27,7 +27,6 @@
   --font-sans: var(--font-sans);
   --font-heading: var(--font-heading);
   --font-mono: var(--font-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-accent: var(--sidebar-accent);
@@ -35,17 +34,10 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -56,50 +48,34 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: var(--foreground);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
+  --popover-foreground: var(--foreground);
   --primary: oklch(0.553 0.195 38.402);
   --primary-foreground: oklch(0.98 0.016 73.684);
   --secondary: oklch(0.967 0.001 286.375);
   --secondary-foreground: oklch(0.21 0.006 285.885);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.49 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.885 0 0);
   --input: oklch(0.9 0 0);
   --ring: var(--primary);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
   --sidebar: oklch(0.972 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-foreground: var(--foreground);
   --sidebar-primary: color-mix(in oklch, var(--primary) 11%, transparent);
   --sidebar-primary-foreground: var(--sidebar-foreground);
   --sidebar-accent: color-mix(in oklch, var(--sidebar-foreground) 6%, transparent);
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.875 0 0);
-  --sidebar-ring: var(--primary);
-  --state-hover: color-mix(in oklch, var(--foreground) 6%, transparent);
-  --state-active: color-mix(in oklch, var(--primary) 11%, transparent);
+  --state-hover: var(--sidebar-accent);
+  --state-active: var(--sidebar-primary);
   --font-sans:
     'Space Grotesk', 'Avenir Next', Avenir, ui-sans-serif, system-ui, -apple-system,
     BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -114,8 +90,21 @@
      magic number, not six independent choices. 0.7rem = 11.2px at the unmodified 16px root (no
      em compounding anywhere in this file) clears the 10px accessibility floor with real headroom;
      0.625rem (exactly 10px) was rejected for having none. Not theme-dependent, so defined once
-     here rather than duplicated into .dark below — same pattern as --radius above. */
+     here rather than duplicated into .dark below — same pattern as the state aliases above. */
   --font-size-micro-label: 0.7rem;
+
+  /* Named colour recipes (JZ8-03). Recurring color-mix() shapes get one name instead of being
+     re-spelled at every usage site; single-use recipes stay inline. --scrollbar-thumb is not in
+     the plan's original table — added because it recurs at two usage sites (the Firefox
+     scrollbar-color track colour and the WebKit ::-webkit-scrollbar-thumb background for
+     .artifact-document pre) and the guard's own recurring-recipe check would otherwise flag it. */
+  --card-veil: color-mix(in oklch, var(--card) 94%, transparent);
+  --destructive-tint: color-mix(in oklch, var(--destructive) 8%, transparent);
+  --destructive-border: color-mix(in oklch, var(--destructive) 55%, var(--border));
+  --primary-tint: color-mix(in oklch, var(--primary) 9%, transparent);
+  --shadow-popover: 0 1rem 2.5rem color-mix(in oklab, var(--foreground) 18%, transparent);
+  --scrollbar-thumb: color-mix(in oklch, var(--muted-foreground) 45%, transparent);
+
   color: var(--foreground);
   background: var(--background);
   color-scheme: light;
@@ -127,34 +116,19 @@
   --background: oklch(0.125 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.215 0 0);
-  --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.47 0.157 37.304);
-  --primary-foreground: oklch(0.98 0.016 73.684);
   --secondary: oklch(0.274 0.006 286.033);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.75 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 16%);
   --input: oklch(1 0 0 / 19%);
   --ring: oklch(0.56 0.157 37.304);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
   --sidebar: oklch(0.175 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: color-mix(in oklch, var(--primary) 11%, transparent);
-  --sidebar-primary-foreground: var(--sidebar-foreground);
-  --sidebar-accent: color-mix(in oklch, var(--sidebar-foreground) 6%, transparent);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 16%);
-  --sidebar-ring: var(--primary);
   color-scheme: dark;
 }
 
@@ -764,7 +738,7 @@ summary.tree-node-row:hover {
 .status-chip[data-tone='active'],
 .status-chip[data-tone='complete'] {
   border-color: color-mix(in oklch, var(--primary) 65%, var(--border));
-  background: color-mix(in oklch, var(--primary) 9%, transparent);
+  background: var(--primary-tint);
   color: var(--primary);
 }
 
@@ -789,7 +763,7 @@ summary.tree-node-row:hover {
 .history-section,
 .notice {
   border: 1px solid var(--border);
-  background: color-mix(in oklch, var(--card) 94%, transparent);
+  background: var(--card-veil);
 }
 
 .immediate-work {
@@ -934,8 +908,8 @@ summary.tree-node-row:hover {
   gap: var(--space-3);
   grid-column: 1 / -1;
   padding: var(--space-4);
-  border: 1px solid color-mix(in oklch, var(--destructive) 55%, var(--border));
-  background: color-mix(in oklch, var(--destructive) 8%, transparent);
+  border: 1px solid var(--destructive-border);
+  background: var(--destructive-tint);
 }
 
 .discrepancy-callout > svg {
@@ -2018,7 +1992,7 @@ pre {
   background: var(--popover);
   padding: var(--space-4);
   color: var(--popover-foreground);
-  box-shadow: 0 1rem 2.5rem color-mix(in oklab, var(--foreground) 18%, transparent);
+  box-shadow: var(--shadow-popover);
   transform-origin: var(--transform-origin);
   transition:
     opacity 120ms ease,
@@ -2327,7 +2301,7 @@ pre {
 
 .artifact-metadata {
   border: 1px solid var(--border);
-  background: color-mix(in oklch, var(--card) 94%, transparent);
+  background: var(--card-veil);
 }
 
 .artifact-metadata > summary {
@@ -2582,10 +2556,10 @@ pre {
 
 /* Thin and quiet at rest, stronger once the block is engaged. The 8px default bar with its
    own track read as a chunky OS control against this surface; --border alone was also nearly
-   invisible in dark, where it resolves to oklch(1 0 0 / 10%). */
+   invisible in dark, where it resolves to oklch(1 0 0 / 16%). */
 .artifact-document pre {
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in oklch, var(--muted-foreground) 45%, transparent) transparent;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
 .artifact-document pre::-webkit-scrollbar {
@@ -2597,7 +2571,7 @@ pre {
 }
 
 .artifact-document pre::-webkit-scrollbar-thumb {
-  background: color-mix(in oklch, var(--muted-foreground) 45%, transparent);
+  background: var(--scrollbar-thumb);
   border-radius: 0;
 }
 
@@ -2838,7 +2812,7 @@ pre {
   border: 1px solid var(--border);
   background: var(--popover);
   color: var(--popover-foreground);
-  box-shadow: 0 1rem 2.5rem color-mix(in oklab, var(--foreground) 18%, transparent);
+  box-shadow: var(--shadow-popover);
 }
 
 .search-dropdown-notice,
@@ -2947,7 +2921,7 @@ pre {
   display: grid;
   gap: var(--space-2);
   border: 1px solid var(--border);
-  background: color-mix(in oklch, var(--card) 94%, transparent);
+  background: var(--card-veil);
   padding: var(--space-4) var(--space-5);
 }
 
@@ -2992,7 +2966,7 @@ pre {
 }
 
 .search-snippet mark {
-  background: color-mix(in oklch, var(--primary) 9%, transparent);
+  background: var(--primary-tint);
   color: var(--primary);
   padding: 0;
 }
@@ -3020,8 +2994,8 @@ pre {
    never a destructive action (this tool has none). Reuses .status-chip verbatim rather than
    inventing a new chip style, per the UI-SPEC's Copywriting Contract. */
 .status-chip[data-tone='destructive'] {
-  border-color: color-mix(in oklch, var(--destructive) 55%, var(--border));
-  background: color-mix(in oklch, var(--destructive) 8%, transparent);
+  border-color: var(--destructive-border);
+  background: var(--destructive-tint);
   color: var(--destructive);
 }
 
@@ -3030,8 +3004,8 @@ pre {
    destructive rule above, even though the formula is identical, so a future genuinely-destructive
    action is never silently retoned by a CSS rename. */
 .status-chip[data-tone='warning'] {
-  border-color: color-mix(in oklch, var(--destructive) 55%, var(--border));
-  background: color-mix(in oklch, var(--destructive) 8%, transparent);
+  border-color: var(--destructive-border);
+  background: var(--destructive-tint);
   color: var(--destructive);
 }
 
@@ -3301,7 +3275,7 @@ pre {
   padding: var(--space-fluid-7);
   border: 1px solid var(--border);
   border-top: 3px solid var(--destructive);
-  background: color-mix(in oklch, var(--card) 94%, transparent);
+  background: var(--card-veil);
 }
 
 .invalid-project-icon {

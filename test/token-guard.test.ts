@@ -301,6 +301,12 @@ interface Family {
    * most properties as a whole (font-family/line-height/font-weight aren't shorthand-splittable
    * the same way — a comma-separated font stack would misparse under whitespace-splitting). */
   isViolatingValue(value: string, property: string): boolean;
+  /** Optional cross-declaration pass, run once per scan after every per-declaration check. Used
+   * by the colour family to catch a color-mix() recipe that recurs across usage sites, or that
+   * duplicates a token definition's own value — neither is visible from a single declaration in
+   * isolation. Returns fully-formatted violation strings (same shape as the main loop's), already
+   * allowlist-filtered. */
+  extraViolations?(decls: Declaration[], allowlist: AllowlistEntry[]): string[];
 }
 
 const spacingFamily: Family = {
@@ -378,7 +384,130 @@ const typeFamily: Family = {
   },
 };
 
-export const FAMILIES: Family[] = [spacingFamily, typeFamily];
+// ---------------------------------------------------------------------------
+// Colour family (JZ8-03)
+// ---------------------------------------------------------------------------
+
+// A raw colour function call — the `in oklch`/`in oklab` interpolation keyword inside
+// color-mix() has no parenthesis immediately after the colour-space name, so it never matches.
+const RAW_COLOR_FUNCTION_RE = /\b(rgb|rgba|hsl|hsla|hwb|lab|lch|oklab|oklch|color)\(/;
+const HEX_COLOR_RE = /#[0-9a-fA-F]{3,8}\b/;
+
+// Properties where a bare named colour keyword (red, black, ...) is a real violation. Kept
+// deliberately short — this codebase's only two intentional keyword values, `transparent` and
+// `currentColor`, always pass regardless of property.
+const COLOR_BEARING_PROPERTIES = new Set([
+  'color',
+  'background',
+  'background-color',
+  'border',
+  'border-color',
+  'border-top-color',
+  'border-right-color',
+  'border-bottom-color',
+  'border-left-color',
+  'outline',
+  'outline-color',
+  'box-shadow',
+  'text-decoration-color',
+  'scrollbar-color',
+  'fill',
+  'stroke',
+  'caret-color',
+  'column-rule-color',
+  'text-shadow',
+]);
+
+// A small, deliberately non-exhaustive set of basic named colours — enough to catch a real
+// regression and to drive the positive control; this codebase has zero legitimate uses of any
+// named colour keyword outside `transparent`/`currentColor` (confirmed by the plan's own audit).
+const NAMED_COLOR_KEYWORDS = new Set([
+  'red', 'blue', 'green', 'black', 'white', 'gray', 'grey', 'yellow', 'orange', 'purple', 'pink',
+  'brown', 'cyan', 'magenta', 'lime', 'navy', 'teal', 'maroon', 'olive', 'silver', 'gold',
+]);
+
+function colorFunctionOrHexIsRaw(value: string): boolean {
+  const stripped = withoutVarCalls(value);
+  return RAW_COLOR_FUNCTION_RE.test(stripped) || HEX_COLOR_RE.test(stripped);
+}
+
+function namedColorKeywordIsUsed(value: string): boolean {
+  const stripped = withoutVarCalls(value);
+  const words = stripped.match(/[a-zA-Z-]+/g) ?? [];
+  return words.some((w) => {
+    const lower = w.toLowerCase();
+    if (lower === 'transparent' || lower === 'currentcolor') return false;
+    return NAMED_COLOR_KEYWORDS.has(lower);
+  });
+}
+
+function colorIsViolatingValue(value: string, property: string): boolean {
+  if (isBareVarCall(value)) return false;
+  if (colorFunctionOrHexIsRaw(value)) return true;
+  if (COLOR_BEARING_PROPERTIES.has(property) && namedColorKeywordIsUsed(value)) return true;
+  return false;
+}
+
+/** Extracts every balanced `color-mix(...)` call in `text`, whitespace-normalised. */
+function extractColorMixCalls(text: string): string[] {
+  const out: string[] = [];
+  const re = /color-mix\(/g;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(text))) {
+    let depth = 0;
+    let i = match.index;
+    for (; i < text.length; i++) {
+      if (text[i] === '(') depth++;
+      else if (text[i] === ')') {
+        depth--;
+        if (depth === 0) {
+          i++;
+          break;
+        }
+      }
+    }
+    out.push(text.slice(match.index, i).replace(/\s+/g, ' '));
+  }
+  return out;
+}
+
+function colorExtraViolations(decls: Declaration[], allowlist: AllowlistEntry[]): string[] {
+  const usageDecls = decls.filter((d) => !d.inTokenBlock);
+  const tokenDefinitionValues = new Set(
+    decls
+      .filter((d) => d.inTokenBlock && /^--[\w-]+$/.test(d.property))
+      .map((d) => d.value.replace(/\s+/g, ' ').trim()),
+  );
+
+  const recipeOccurrences = new Map<string, number>();
+  const perDeclRecipes = new Map<Declaration, string[]>();
+  for (const d of usageDecls) {
+    const recipes = extractColorMixCalls(d.value);
+    perDeclRecipes.set(d, recipes);
+    for (const r of recipes) recipeOccurrences.set(r, (recipeOccurrences.get(r) ?? 0) + 1);
+  }
+
+  const out: string[] = [];
+  for (const d of usageDecls) {
+    const recipes = perDeclRecipes.get(d) ?? [];
+    const flagged = recipes.some(
+      (r) => tokenDefinitionValues.has(r) || (recipeOccurrences.get(r) ?? 0) >= 2,
+    );
+    if (!flagged) continue;
+    if (isAllowlisted(d, allowlist)) continue;
+    out.push(`${d.line} ${d.selector} { ${d.property}: ${d.value} } [color]`);
+  }
+  return out;
+}
+
+const colorFamily: Family = {
+  name: 'color',
+  matchesProperty: () => true,
+  isViolatingValue: colorIsViolatingValue,
+  extraViolations: colorExtraViolations,
+};
+
+export const FAMILIES: Family[] = [spacingFamily, typeFamily, colorFamily];
 
 // ---------------------------------------------------------------------------
 // Allowlist — each entry exempts only its exact selector + property + value; every entry must
@@ -467,7 +596,11 @@ export function scanTokenViolations(
       out.push(`${decl.line} ${decl.selector} { ${decl.property}: ${decl.value} } [${family.name}]`);
     }
   }
-  return out;
+  for (const family of families) {
+    if (!family.extraViolations) continue;
+    out.push(...family.extraViolations(decls, allowlist));
+  }
+  return [...new Set(out)];
 }
 
 // ---------------------------------------------------------------------------
@@ -478,7 +611,11 @@ function liveCss(): string {
   return readFileSync(CSS_PATH, 'utf8');
 }
 
-describe('token guard — spacing + type families (JZ8-01, JZ8-02, JZ8-04)', () => {
+function liveIndexHtml(): string {
+  return readFileSync(join(REPO_ROOT, 'index.html'), 'utf8');
+}
+
+describe('token guard — spacing + type + colour families (JZ8-01, JZ8-02, JZ8-03, JZ8-04)', () => {
   it('has zero violations outside the token blocks in the real stylesheet', () => {
     const violations = scanTokenViolations(liveCss(), FAMILIES);
     expect(violations).toEqual([]);
@@ -573,6 +710,59 @@ describe('token guard — spacing + type families (JZ8-01, JZ8-02, JZ8-04)', () 
     }
   });
 
+  it('runs the three colour palette checks over the merged :root/.dark blocks', () => {
+    const css = liveCss();
+    const decls = parseDeclarations(css);
+
+    // Palette colour tokens only — excludes the scale/font tokens (--space-*, --fs-*, --lh-*,
+    // --ls-*, --fw-*, --font-*), which live under the same ":root" prelude but aren't colours.
+    const isPaletteColorToken = (property: string) =>
+      /^--[\w-]+$/.test(property) && !/^--(space-|fs-|lh-|ls-|fw-|font-)/.test(property);
+    const rootDecls = decls.filter((d) => d.selector === ':root' && isPaletteColorToken(d.property));
+    const darkDecls = decls.filter((d) => d.selector === '.dark' && isPaletteColorToken(d.property));
+    const rootMap = new Map(rootDecls.map((d) => [d.property, d.value.replace(/\s+/g, ' ').trim()]));
+    const darkOverrideMap = new Map(darkDecls.map((d) => [d.property, d.value.replace(/\s+/g, ' ').trim()]));
+
+    // Check 2: .dark declares no token whose value string equals its :root value (a redundant
+    // re-declaration — remove it and let :root's declaration cascade through instead).
+    for (const [name, darkValue] of darkOverrideMap) {
+      const rootValue = rootMap.get(name);
+      expect(rootValue === darkValue, `.dark redundantly redeclares --${name.replace(/^--/, '')} identically to :root`).toBe(false);
+    }
+
+    // Check 1: no two DIFFERENT tokens hold identical non-alias values in BOTH themes at once —
+    // that's a structural naming redundancy (the --sidebar-primary/--state-active bug this task
+    // fixes), not a coincidental single-theme convergence (several near-white/near-black literals
+    // legitimately match by accident in only one theme, e.g. dark's --foreground and
+    // --secondary-foreground). A pure single var() alias (e.g. --state-active:
+    // var(--sidebar-primary)) is ignored, since aliasing is the sanctioned way to share a recipe.
+    const darkMap = new Map<string, string>();
+    for (const [name, value] of rootMap) darkMap.set(name, darkOverrideMap.get(name) ?? value);
+    const names = [...rootMap.keys()].filter((n) => !isWhollyWrappedInSingleVarCall(rootMap.get(n)!));
+    for (let i = 0; i < names.length; i++) {
+      for (let j = i + 1; j < names.length; j++) {
+        const [a, b] = [names[i], names[j]];
+        const sameLight = rootMap.get(a) === rootMap.get(b);
+        const sameDark = darkMap.get(a) === darkMap.get(b);
+        expect(sameLight && sameDark, `--${a.replace(/^--/, '')} and --${b.replace(/^--/, '')} hold identical values in both themes`).toBe(false);
+      }
+    }
+
+    // Check 3: none of the confirmed-dead tokens survives in globals.css or index.html, matched
+    // with a boundary so --accent never matches --sidebar-accent.
+    const deadTokens = ['--accent', '--accent-foreground', '--chart-1', '--chart-2', '--chart-3', '--chart-4', '--chart-5', '--radius', '--sidebar-ring'];
+    const html = liveIndexHtml();
+    for (const name of deadTokens) {
+      const boundarySafe = new RegExp(`(?<![\\w-])${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w-])`);
+      expect(boundarySafe.test(css), `${name} still declared in globals.css`).toBe(false);
+      expect(boundarySafe.test(html), `${name} still declared in index.html`).toBe(false);
+    }
+    // Confirm the boundary itself is real, not vacuous — --sidebar-accent (a live token) must
+    // never be caught by the --accent pattern.
+    const accentPattern = new RegExp(`(?<![\\w-])--accent(?![\\w-])`);
+    expect(accentPattern.test('--sidebar-accent: color-mix(in oklch, var(--sidebar-foreground) 6%, transparent);')).toBe(false);
+  });
+
   describe('positive control — plants one violation per spacing/type shape in a tmpdir, never the real source tree', () => {
     let plantedRoot: string;
 
@@ -630,6 +820,18 @@ describe('token guard — spacing + type families (JZ8-01, JZ8-02, JZ8-04)', () 
 .dark .violating-compound-selector {
   font-size: 0.8rem;
 }
+.violating-hex-color {
+  color: #ff0000;
+}
+.violating-named-color {
+  background: red;
+}
+.violating-recurring-recipe-a {
+  background: color-mix(in oklch, var(--muted) 30%, transparent);
+}
+.violating-recurring-recipe-b {
+  background: color-mix(in oklch, var(--muted) 30%, transparent);
+}
 
 :root {
   padding: 999rem;
@@ -671,6 +873,8 @@ describe('token guard — spacing + type families (JZ8-01, JZ8-02, JZ8-04)', () 
   font-weight: var(--fw-semibold);
   font-family: var(--font-sans);
   font: inherit;
+  color: var(--foreground);
+  background: transparent;
 }
 `;
       await writeFile(fixturePath, violatingFixture, 'utf8');
@@ -695,6 +899,10 @@ describe('token guard — spacing + type families (JZ8-01, JZ8-02, JZ8-04)', () 
         '.violating-font-family { font-family: Arial, sans-serif }',
         '.violating-font-shorthand { font: 12px/1.4 sans-serif }',
         '.dark .violating-compound-selector { font-size: 0.8rem }',
+        '.violating-hex-color { color: #ff0000 }',
+        '.violating-named-color { background: red }',
+        '.violating-recurring-recipe-a { background: color-mix(in oklch, var(--muted) 30%, transparent) }',
+        '.violating-recurring-recipe-b { background: color-mix(in oklch, var(--muted) 30%, transparent) }',
       ]) {
         expect(joined, `expected to catch: ${needle}`).toContain(needle);
       }
