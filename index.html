@@ -63,7 +63,10 @@
         font-synthesis: none;
       }
 
-      :root.dark {
+      /* `.dark`, never `:root.dark`: at (0,1,0) this ties with globals.css `.dark`, and the later
+         stylesheet wins, so this snapshot only paints before hydration. `:root.dark` (0,2,0)
+         out-specified globals.css and shadowed every dark token after load (WINDOWS.md entry 7). */
+      .dark {
         --background: oklch(0.125 0 0);
         --foreground: oklch(0.985 0 0);
         --card: oklch(0.215 0 0);
@@ -81,7 +84,7 @@
         --destructive: oklch(0.704 0.191 22.216);
         --border: oklch(1 0 0 / 16%);
         --input: oklch(1 0 0 / 19%);
-        --ring: var(--primary);
+        --ring: oklch(0.56 0.157 37.304);
         --chart-1: oklch(0.87 0 0);
         --chart-2: oklch(0.556 0 0);
         --chart-3: oklch(0.439 0 0);
