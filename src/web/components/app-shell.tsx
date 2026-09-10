@@ -1,13 +1,13 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { LayoutDashboard, ListChecks, Map, Radio } from 'lucide-react';
+import { LayoutDashboard, ListChecks, Map } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router';
 import { formatProjectMeta, projectDisplayName } from '../../presentation/shell-header.ts';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
 import { LabeloreMark } from './labelore-mark.tsx';
-import { RefreshControl } from './refresh-control.tsx';
 import { SearchField } from './search-field.tsx';
+import { SnapshotStatus } from './snapshot-status.tsx';
 import { ThemeToggle } from './theme-toggle.tsx';
 import { ToastProvider } from './ui/toast.tsx';
 import { TreeNavigator } from './tree-navigator.tsx';
@@ -17,11 +17,6 @@ export async function fetchPresentation(): Promise<ProjectPresentation> {
   const response = await fetch('/api/presentation', { headers: { Accept: 'application/json' } });
   if (!response.ok) throw new Error(`Presentation request failed (${response.status})`);
   return (await response.json()) as ProjectPresentation;
-}
-
-export function formatReadAt(readAt: string): string {
-  const parsed = new Date(readAt);
-  return Number.isNaN(parsed.valueOf()) ? readAt : parsed.toLocaleString();
 }
 
 function navigationClass({ isActive }: { isActive: boolean }): string {
@@ -47,11 +42,6 @@ export function AppShell(): React.JSX.Element {
   // the content region collapses to a single column via this data attribute rather than leaving a
   // permanently-empty sidebar track.
   const [sidebarAbsent, setSidebarAbsent] = useState(false);
-
-  // D-02: lifted from RefreshControl's own useMutation so the header status can swap to
-  // "Refreshing..." in place, with no new DOM node and no layout shift, while the current
-  // snapshot stays fully visible and interactive underneath it.
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // D-09: the sidebar sits under the sticky header and must start exactly at its bottom edge —
   // .shell-header has no fixed rem height (it sizes to its own padded, responsive content), so its
@@ -122,28 +112,11 @@ export function AppShell(): React.JSX.Element {
           </nav>
 
           <div className="shell-controls">
+            <SnapshotStatus
+              readAt={presentation.data?.readAt ?? null}
+              phase={presentation.isPending ? 'pending' : presentation.isError ? 'error' : 'ready'}
+            />
             <SearchField />
-            <div className="snapshot-status" aria-live="polite">
-              <Radio aria-hidden="true" />
-              {presentation.isPending ? (
-                <span>Reading snapshot…</span>
-              ) : presentation.isError ? (
-                <span className="snapshot-error">Snapshot metadata unavailable</span>
-              ) : isRefreshing ? (
-                <span>Refreshing…</span>
-              ) : (
-                <span>
-                  <small>Snapshot read</small>
-                  <time dateTime={presentation.data.readAt}>
-                    {formatReadAt(presentation.data.readAt)}
-                  </time>
-                </span>
-              )}
-              <RefreshControl
-                readAt={presentation.data?.readAt ?? null}
-                onPendingChange={setIsRefreshing}
-              />
-            </div>
             <ThemeToggle />
           </div>
         </header>
