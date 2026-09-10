@@ -3,6 +3,9 @@
 // test/**/*.ts while excluding src/web/**, so a real import would not typecheck under the server
 // project). Pins D-01 through D-05 and the UI Considerations rows this plan's must_haves.truths
 // claim as mechanically checkable.
+//
+// quick-260911-243 merged RefreshControl into SnapshotStatus (NAV-05): every guarantee below now
+// reads src/web/components/snapshot-status.tsx in place of the deleted refresh-control.tsx.
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 
@@ -42,44 +45,46 @@ const PHASE_3_DEPENDENCY_KEYS = new Set([
 ]);
 
 describe('refresh contract — D-01 through D-05 in the shell and control', () => {
-  it('renders RefreshControl inside snapshot-status and mounts exactly one ToastProvider (D-01)', async () => {
+  it('renders SnapshotStatus inside .shell-controls and mounts exactly one ToastProvider (D-01)', async () => {
     const shell = await source('src/web/components/app-shell.tsx');
-    const snapshotStatusBlock = shell.slice(
-      shell.indexOf('<div className="snapshot-status"'),
-      shell.indexOf('</div>', shell.indexOf('<div className="snapshot-status"')) + '</div>'.length,
+    const controlsBlock = shell.slice(
+      shell.indexOf('<div className="shell-controls">'),
+      shell.indexOf('</div>', shell.indexOf('<div className="shell-controls">')) + '</div>'.length,
     );
-    expect(snapshotStatusBlock).toContain('<RefreshControl');
+    expect(controlsBlock).toContain('<SnapshotStatus');
     expect(shell.match(/<ToastProvider>/g)).toHaveLength(1);
   });
 
   it('shares one status slot between "Snapshot read" and "Refreshing..." (D-02)', async () => {
-    const shell = await source('src/web/components/app-shell.tsx');
-    expect(shell).toContain('Refreshing…');
-    expect(shell).toContain('Snapshot read');
+    const status = await source('src/web/components/snapshot-status.tsx');
+    expect(status).toContain('Refreshing…');
+    expect(status).toContain('Snapshot read');
   });
 
   it('sets disabled and aria-disabled from the pending flag, and carries the refresh aria-label (D-02)', async () => {
-    const control = await source('src/web/components/refresh-control.tsx');
-    expect(control).toContain('disabled={isRefreshing}');
-    expect(control).toContain('aria-disabled={isRefreshing}');
-    expect(control).toContain('aria-label="Refresh the project snapshot"');
+    const status = await source('src/web/components/snapshot-status.tsx');
+    expect(status).toContain('disabled={isRefreshing}');
+    expect(status).toContain('aria-disabled={isRefreshing}');
+    expect(status).toContain('aria-label="Refresh the project snapshot"');
   });
 
   it('invalidates the query cache unconditionally and scrolls to top on success (D-03, D-05)', async () => {
-    const control = await source('src/web/components/refresh-control.tsx');
-    expect(control).toContain('invalidateQueries()');
-    expect(control).toMatch(/window\.scrollTo\(\{\s*top:\s*0\s*\}\)/);
+    const status = await source('src/web/components/snapshot-status.tsx');
+    expect(status).toContain('invalidateQueries()');
+    expect(status).toMatch(/window\.scrollTo\(\{\s*top:\s*0\s*\}\)/);
   });
 
   it('never interpolates a fetch/server error into the toast, only the fixed copy (D-04)', async () => {
-    const control = await source('src/web/components/refresh-control.tsx');
-    expect(control).not.toContain('error.message');
-    expect(control).toContain('Showing the last successful read from');
+    const status = await source('src/web/components/snapshot-status.tsx');
+    expect(status).not.toContain('error.message');
+    expect(status).toContain('Showing the last successful read from');
   });
 
   it('adds no persistent "stale" label anywhere in the shell (D-04)', async () => {
     const shell = await source('src/web/components/app-shell.tsx');
+    const status = await source('src/web/components/snapshot-status.tsx');
     expect(shell.toLowerCase()).not.toContain('stale');
+    expect(status.toLowerCase()).not.toContain('stale');
   });
 
   it('fixes the toast viewport to the bottom-right corner of the viewport', async () => {
@@ -96,18 +101,31 @@ describe('refresh contract — D-01 through D-05 in the shell and control', () =
     expect(unauthorized).toEqual([]);
   });
 
-  it('no longer suppresses the snapshot-status container from the layout below 62rem (CR-02)', async () => {
+  // CR-02 (quick-260911-243 revision): originally anchored on the first `.snapshot-status {` rule
+  // after the 62rem media query, which would grow fragile once the pill's selectors moved and
+  // multiplied. Now scans every rule anywhere in the stylesheet whose selector contains
+  // `.snapshot-`, media queries included, and asserts none declares display: none — the pill must
+  // stay in the accessibility tree at every width.
+  it('never suppresses any .snapshot- selector from the layout at any width (CR-02)', async () => {
     const css = await source('src/web/styles/globals.css');
-    // Same slicing idiom test/web/visual-contract.test.ts's narrow-viewport test uses: from the
-    // 62rem media-query opener to EOF, so this only inspects the narrow-width cascade.
-    const narrowSection = css.slice(css.indexOf('@media (max-width: 62rem)'));
-    const ruleStart = narrowSection.indexOf('.snapshot-status {');
-    expect(ruleStart).toBeGreaterThanOrEqual(0);
-    const ruleBlock = narrowSection.slice(ruleStart, narrowSection.indexOf('}', ruleStart) + 1);
-    // Pins the outcome (the container stays in the layout, so it stays in the accessibility tree
-    // too), not one particular compact-treatment property spelling — a reasonable future refactor
-    // of how the compact state is achieved must not produce a false failure here.
-    expect(ruleBlock).not.toMatch(/display:\s*none;/);
+    const lines = css.split('\n');
+    const snapshotSelectorLineIndexes: number[] = [];
+    for (let index = 0; index < lines.length; index += 1) {
+      const trimmed = lines[index].trim();
+      if (trimmed.includes('.snapshot-') && trimmed.endsWith('{')) {
+        snapshotSelectorLineIndexes.push(index);
+      }
+    }
+    expect(snapshotSelectorLineIndexes.length).toBeGreaterThan(0);
+    for (const startIndex of snapshotSelectorLineIndexes) {
+      let cursor = startIndex + 1;
+      const body: string[] = [];
+      while (cursor < lines.length && lines[cursor].trim() !== '}') {
+        body.push(lines[cursor]);
+        cursor += 1;
+      }
+      expect(body.join('\n')).not.toMatch(/display:\s*none;/);
+    }
   });
 });
 
@@ -119,11 +137,11 @@ describe('Refresh control — structural guarantee behind the measured keyboard 
   // construction, so a future refactor that silently removes one of them is caught before it ever
   // needs re-measuring.
   it('renders a native <button> element, not a click handler on a non-interactive element', async () => {
-    const control = await source('src/web/components/refresh-control.tsx');
+    const status = await source('src/web/components/snapshot-status.tsx');
     // Button (@base-ui/react/button) renders a real <button> by default; this only breaks if a
     // future edit passes render={<div/>}-style polymorphism or swaps the primitive entirely.
-    expect(control).toMatch(/<Button\b/);
-    expect(control).not.toMatch(/render=\{/);
+    expect(status).toMatch(/<Button\b/);
+    expect(status).not.toMatch(/render=\{/);
     const buttonPrimitive = await source('src/web/components/ui/button.tsx');
     expect(buttonPrimitive).toContain("from '@base-ui/react/button'");
   });
@@ -141,19 +159,19 @@ describe('Refresh control — structural guarantee behind the measured keyboard 
   });
 
   it('never gates the click handler on a pointer-only event (keydown/click both reach the same mutation)', async () => {
-    const control = await source('src/web/components/refresh-control.tsx');
+    const status = await source('src/web/components/snapshot-status.tsx');
     // A real <button> gets Enter/Space-triggers-click for free from the browser's own UA behavior
     // — there is no bespoke onKeyDown here precisely because there must not be one; a hand-rolled
     // keydown handler would be the same class of bug a `<div onClick>` control has (fires on one
     // key, not both). Pin the ABSENCE of a bespoke handler as the structural guarantee.
-    expect(control).not.toMatch(/onKeyDown/);
-    expect(control).toMatch(/onClick=\{\(\)\s*=>\s*mutation\.mutate\(\)\}/);
+    expect(status).not.toMatch(/onKeyDown/);
+    expect(status).toMatch(/onClick=\{\(\)\s*=>\s*mutation\.mutate\(\)\}/);
   });
 
   it('the snapshot-age <time> element carries no tabindex, so it is correctly never a Tab stop (measured live: confirmed absent from focus order in all six cells)', async () => {
-    const shell = await source('src/web/components/app-shell.tsx');
-    const timeMatch = shell.match(/<time[^>]*>/);
-    expect(timeMatch, 'expected a <time> element in app-shell.tsx').not.toBeNull();
+    const status = await source('src/web/components/snapshot-status.tsx');
+    const timeMatch = status.match(/<time[^>]*>/);
+    expect(timeMatch, 'expected a <time> element in snapshot-status.tsx').not.toBeNull();
     expect(timeMatch?.[0]).not.toMatch(/tabIndex/);
   });
 });

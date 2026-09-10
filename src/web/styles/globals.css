@@ -415,8 +415,7 @@
   white-space: nowrap;
 }
 
-.brand-meta,
-.snapshot-status small {
+.brand-meta {
   overflow: hidden;
   color: var(--muted-foreground);
   font-family: var(--font-mono);
@@ -450,8 +449,7 @@
   border-left: 1px solid var(--border);
 }
 
-.shell-nav-link svg,
-.snapshot-status > svg {
+.shell-nav-link svg {
   width: 0.95rem;
   height: 0.95rem;
 }
@@ -468,10 +466,7 @@
 
 .snapshot-status {
   justify-content: flex-end;
-  gap: var(--space-2);
-  padding: var(--space-2-5) var(--space-fluid-4);
-  color: var(--muted-foreground);
-  font-size: var(--fs-3);
+  min-width: 0;
 }
 
 .shell-controls {
@@ -480,25 +475,73 @@
   justify-content: flex-end;
 }
 
-.snapshot-status > span {
-  display: grid;
+/* NAV-05 (quick-260911-243): the status pill absorbs the former RefreshControl. */
+.snapshot-pill {
+  gap: var(--space-2);
   min-width: 0;
+  padding-inline: var(--space-2-5);
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-normal);
+  text-transform: none;
 }
 
-.snapshot-status time {
-  overflow: hidden;
+.snapshot-pill:hover {
+  border-color: var(--ring);
   color: var(--foreground);
-  font-family: var(--font-heading);
-  font-size: var(--fs-1);
+}
+
+/* Keeps the pill legible while disabled during a refresh, overriding the Button variant's
+   default disabled opacity. */
+.snapshot-pill[data-state='refreshing'] {
+  opacity: 1;
+}
+
+.snapshot-dot {
+  width: var(--space-2);
+  height: var(--space-2);
+  flex: none;
+  background: var(--primary);
+}
+
+.snapshot-pill[data-state='pending'] .snapshot-dot {
+  background: var(--muted-foreground);
+}
+
+.snapshot-pill[data-state='refreshing'] .snapshot-dot {
+  animation: loading-pulse 0.8s ease-in-out infinite alternate;
+}
+
+.snapshot-pill[data-state='error'] {
+  color: var(--destructive);
+  border-color: var(--destructive-border);
+}
+
+.snapshot-pill[data-state='error'] .snapshot-dot {
+  background: var(--destructive);
+}
+
+.snapshot-label {
+  overflow: hidden;
+  min-width: 0;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.snapshot-status > svg {
-  color: var(--primary);
+.snapshot-label time {
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
 }
 
-.snapshot-error,
+@media (prefers-reduced-motion: reduce) {
+  .snapshot-pill[data-state='refreshing'] .snapshot-dot {
+    animation: none;
+  }
+}
+
 .shell-notice {
   color: var(--destructive);
 }
@@ -1590,19 +1633,6 @@ pre {
     grid-template-columns: minmax(0, 1fr) auto;
   }
 
-  /* CR-02/TGT-08/UI-03: below 62rem the snapshot age and Refresh control stay reachable — a
-     compact treatment (decorative icon and descriptive label dropped, timestamp and button kept),
-     never `display: none`, which would also remove the subtree from the accessibility tree. */
-  .snapshot-status {
-    gap: var(--space-1-5);
-    padding-inline: 0;
-  }
-
-  .snapshot-status > svg,
-  .snapshot-status small {
-    display: none;
-  }
-
   .shell-controls {
     flex-wrap: wrap;
     padding-inline: var(--space-3);
@@ -1673,16 +1703,6 @@ pre {
     flex-wrap: wrap;
     row-gap: var(--space-1-5);
     padding: var(--space-2) var(--space-4);
-  }
-
-  .snapshot-status {
-    gap: var(--space-1);
-  }
-
-  /* Bounds the timestamp so its existing ellipsis containment (`.snapshot-status time`) actually
-     engages at this width, rather than pushing the Refresh button off the row's available space. */
-  .snapshot-status time {
-    max-width: 9ch;
   }
 
   .shell-nav-link {
@@ -3211,34 +3231,8 @@ pre {
   color: var(--muted-foreground);
 }
 
-/* Phase 4 — refresh control, in-progress spin, and the failure toast (D-01 through D-04). */
-
-.refresh-control {
-  color: var(--primary);
-}
-
-.refresh-icon {
-  color: var(--primary);
-}
-
-.refresh-icon.spinning {
-  animation: refresh-spin 1s linear infinite;
-}
-
-@keyframes refresh-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .refresh-icon.spinning {
-    animation: none;
-  }
-}
+/* Phase 4 — failure toast (D-04). The refresh control's own rules moved to the .snapshot-pill
+   block above it merged into (quick-260911-243, NAV-05). */
 
 .toast-viewport {
   position: fixed;
