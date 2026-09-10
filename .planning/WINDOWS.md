@@ -1,10 +1,10 @@
 ---
 schema_version: 1
 open_count: 0
-waived_count: 1
-fixed_count: 6
+waived_count: 0
+fixed_count: 7
 total_count: 7
-last_updated: 2026-09-09T20:02:02.205Z
+last_updated: 2026-09-10T08:19:02.771Z
 ---
 
 # Broken Windows Ledger
@@ -21,7 +21,7 @@ last_updated: 2026-09-09T20:02:02.205Z
 | 4 | 04 | unrun-verify | src/web/pages/artifact-page.tsx |  | Human must confirm the unreadable disclosure and empty-document notice read as one coherent explanation | fixed |  | 2026-09-07T20:20:02.595Z | 2026-09-09T19:26:02.120Z |
 | 5 | 04 | unrun-verify | .planning/phases/04-portability-degradation-hardening/04-05-PLAN.md |  | Human must decide whether the 04-05 tone prohibition includes disclosure prose | fixed |  | 2026-09-07T20:20:02.709Z | 2026-09-09T19:26:02.233Z |
 | 6 | quick-260909-ogb | unrun-verify | src/web/styles/globals.css |  | CR-02 human-check: RESOLVED by orchestrator. Ran headless chromium (playwright bundled binary, no project dependency added) against a live server at 1200/992/700/320px. At every width .snapshot-status is visible (not display:none), the age <time> renders real text, the Refresh button is visible at 36x36, and scrollWidth==clientWidth (no horizontal body scroll). Pre-fix commit 8e1aa10 confirmed to have display:none, so the change is real. | fixed | Verified by orchestrator via headless chromium at 1200/992/700/320px; no dependency added. | 2026-09-09T12:53:14.635Z | 2026-09-09T13:00:00.000Z |
-| 7 | quick-260910-0x4 | unmet-truth | src/web/components/ui/button.tsx |  | Refresh control's measured focus-visible ring contrast falls below WCAG 1.4.11's 3:1 non-text guideline in both themes (light 2.29:1, dark 1.46:1, measured live via Playwright against the actual computed outline colour and page background). Reachability and operability (Enter and Space) are confirmed working; only ring contrast is short. | waived | Out of scope for quick-260910-0x4 item 11, which was scoped to measuring reachability/operability (now confirmed working in all six cells), not remediating contrast. Fixing the ring color is a real, separate design change (likely a new --focus-ring token, not just an alpha bump) deserving its own task rather than a rushed fix bundled into this measurement task. Logged here so the finding survives past this plan; pick up as a future quick task or phase item. | 2026-09-09T20:01:49.266Z | 2026-09-09T20:02:02.205Z |
+| 7 | quick-260910-0x4 | unmet-truth | src/web/components/ui/button.tsx |  | Refresh control's measured focus-visible ring contrast falls below WCAG 1.4.11's 3:1 non-text guideline in both themes (light 2.29:1, dark 1.46:1, measured live via Playwright against the actual computed outline colour and page background). Reachability and operability (Enter and Space) are confirmed working; only ring contrast is short. [Corrected 2026-09-10: the logged figures came from a flat sRGB-composite model, not rendered pixels. True rendered-pixel measurement of the 3px outline band: light 2.36:1, dark 1.93:1 — both still under 3:1.] | fixed | Fixed via /gsd-fast (user-chosen Option A). Root cause was two-part: the base layer drew the outline at 50% alpha (outline-ring/50), and index.html pre-hydration token snapshot declared its dark tokens under :root.dark (specificity 0,2,0), which out-specified globals.css .dark (0,1,0) and silently shadowed any corrected dark --ring. Fix: outline-ring/50 -> outline-ring (opaque); dark --ring -> oklch(0.56 0.157 37.304); snapshot selector :root.dark -> .dark so globals.css wins the tie after load. Measured on real rendered pixels at 1200px: light 5.21:1, dark 4.07:1. Pinned by test/web/focus-ring-contrast.test.ts (contrast recomputed from tokens, snapshot specificity guard, snapshot/globals token sync in both themes). | 2026-09-09T20:01:49.266Z | 2026-09-10T08:19:02.771Z |
 
 ````json
 [
@@ -103,11 +103,11 @@ last_updated: 2026-09-09T20:02:02.205Z
     "phase": "quick-260910-0x4",
     "file": "src/web/components/ui/button.tsx",
     "line": null,
-    "description": "Refresh control's measured focus-visible ring contrast falls below WCAG 1.4.11's 3:1 non-text guideline in both themes (light 2.29:1, dark 1.46:1, measured live via Playwright against the actual computed outline colour and page background). Reachability and operability (Enter and Space) are confirmed working; only ring contrast is short.",
-    "status": "waived",
-    "reason": "Out of scope for quick-260910-0x4 item 11, which was scoped to measuring reachability/operability (now confirmed working in all six cells), not remediating contrast. Fixing the ring color is a real, separate design change (likely a new --focus-ring token, not just an alpha bump) deserving its own task rather than a rushed fix bundled into this measurement task. Logged here so the finding survives past this plan; pick up as a future quick task or phase item.",
+    "description": "Refresh control's measured focus-visible ring contrast falls below WCAG 1.4.11's 3:1 non-text guideline in both themes (light 2.29:1, dark 1.46:1, measured live via Playwright against the actual computed outline colour and page background). Reachability and operability (Enter and Space) are confirmed working; only ring contrast is short. [Corrected 2026-09-10: the logged figures came from a flat sRGB-composite model, not rendered pixels. True rendered-pixel measurement of the 3px outline band: light 2.36:1, dark 1.93:1 — both still under 3:1.]",
+    "status": "fixed",
+    "reason": "Fixed via /gsd-fast (user-chosen Option A). Root cause was two-part: the base layer drew the outline at 50% alpha (outline-ring/50), and index.html pre-hydration token snapshot declared its dark tokens under :root.dark (specificity 0,2,0), which out-specified globals.css .dark (0,1,0) and silently shadowed any corrected dark --ring. Fix: outline-ring/50 -> outline-ring (opaque); dark --ring -> oklch(0.56 0.157 37.304); snapshot selector :root.dark -> .dark so globals.css wins the tie after load. Measured on real rendered pixels at 1200px: light 5.21:1, dark 4.07:1. Pinned by test/web/focus-ring-contrast.test.ts (contrast recomputed from tokens, snapshot specificity guard, snapshot/globals token sync in both themes).",
     "recorded_at": "2026-09-09T20:01:49.266Z",
-    "resolved_at": "2026-09-09T20:02:02.205Z"
+    "resolved_at": "2026-09-10T08:19:02.771Z"
   }
 ]
 ````

@@ -613,7 +613,7 @@ describe('index.html — anti-FOUC critical CSS (quick-260910-0x4 item 3, 02-REV
     expect(html).toContain("document.documentElement.classList.toggle('dark'");
   });
 
-  it('still declares a ground colour, foreground colour and colour-scheme under both the light and dark root selectors', async () => {
+  it('still declares a ground colour, foreground colour and colour-scheme under both the light (:root) and dark (.dark) snapshot selectors', async () => {
     const html = await source('index.html');
     const rootBlock = html.match(/:root\s*\{([\s\S]*?)\n {6}\}/)?.[1] ?? '';
     expect(rootBlock).toMatch(/--background:\s*oklch/);
@@ -622,10 +622,13 @@ describe('index.html — anti-FOUC critical CSS (quick-260910-0x4 item 3, 02-REV
     expect(rootBlock).toMatch(/background:\s*var\(--background\)/);
     expect(rootBlock).toMatch(/color-scheme:\s*light/);
 
-    const darkRootBlock = html.match(/:root\.dark\s*\{([\s\S]*?)\n {6}\}/)?.[1] ?? '';
-    expect(darkRootBlock).toMatch(/--background:\s*oklch/);
-    expect(darkRootBlock).toMatch(/--foreground:\s*oklch/);
-    expect(darkRootBlock).toMatch(/color-scheme:\s*dark/);
+    // `.dark`, not `:root.dark`: the snapshot must not out-specify globals.css's `.dark`
+    // (focus-ring-contrast.test.ts pins that). Anchored to the 6-space selector indent so the
+    // explanatory comment above the block, which names both selectors, never matches.
+    const darkBlock = html.match(/\n {6}\.dark\s*\{([\s\S]*?)\n {6}\}/)?.[1] ?? '';
+    expect(darkBlock).toMatch(/--background:\s*oklch/);
+    expect(darkBlock).toMatch(/--foreground:\s*oklch/);
+    expect(darkBlock).toMatch(/color-scheme:\s*dark/);
   });
 
   it('retains the pre-hydration effect blocks (box-sizing reset, body ground paint with min-width, form-control font reset)', async () => {
@@ -677,9 +680,10 @@ describe('index.html — anti-FOUC critical CSS (quick-260910-0x4 item 3, 02-REV
     // over-counts by one for a file ending in a trailing newline.
     const lineCount = (html.match(/\n/g) ?? []).length;
     // Recorded here as a live assertion, not just prose: the measured baseline was 297 lines: this
-    // pins the post-cleanup count (162, via `wc -l index.html`) so a future edit that silently
-    // re-bloats the file is visible.
-    expect(lineCount).toBe(162);
+    // pins the post-cleanup count so a future edit that silently re-bloats the file is visible.
+    // 162 after the cleanup, then 165: +3 for the comment above the dark snapshot explaining why it
+    // is `.dark` and not `:root.dark` (WINDOWS.md entry 7) — a deliberate, acknowledged addition.
+    expect(lineCount).toBe(165);
   });
 });
 
