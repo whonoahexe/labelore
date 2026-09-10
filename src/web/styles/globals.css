@@ -235,6 +235,10 @@
   --dialog-offset-top: 12vh;
   --dialog-max-width: 40rem;
   --dialog-results-max-height: 28rem;
+
+  /* Control sizing. Mirrors button.tsx's `sm` / `icon-sm` size (h-9 = 2.25rem) so non-Button
+     chrome — the search trigger's shortcut hint — can match the header pill's height exactly. */
+  --control-height-sm: 2.25rem;
 }
 
 @layer base {
@@ -2839,8 +2843,12 @@ pre {
   color: var(--foreground);
 }
 
+/* Same box height as the adjacent .snapshot-pill (both size="sm"), so the two read as one row. */
 .search-trigger-kbd {
-  padding: var(--space-0-5) var(--space-1);
+  display: inline-flex;
+  height: var(--control-height-sm);
+  align-items: center;
+  padding-inline: var(--space-2-5);
   border: 1px solid var(--border);
   color: var(--muted-foreground);
   font-family: var(--font-mono);
