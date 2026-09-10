@@ -235,10 +235,6 @@
   --dialog-offset-top: 12vh;
   --dialog-max-width: 40rem;
   --dialog-results-max-height: 28rem;
-
-  /* Control sizing. Mirrors button.tsx's `sm` / `icon-sm` size (h-9 = 2.25rem) so non-Button
-     chrome — the search trigger's shortcut hint — can match the header pill's height exactly. */
-  --control-height-sm: 2.25rem;
 }
 
 @layer base {
@@ -489,6 +485,7 @@
 
 .shell-controls {
   grid-area: controls;
+  gap: var(--space-2);
   min-width: 0;
   justify-content: flex-end;
 }
@@ -2834,23 +2831,22 @@ pre {
 /* NAV-04 (quick-260911-243) — header search: an icon trigger opening a centred @base-ui/react
    Dialog over a full-screen scrim, wrapping an inline Combobox. Replaces the former inline
    dropdown field (Phase 3, D-01 through D-05); the query machinery itself is unchanged. */
+/* Built as the same bordered box as the adjacent .snapshot-pill (both size="sm"): one border,
+   one padding, one hover treatment, so the two controls match in height and on hover. */
 .search-trigger {
   gap: var(--space-2);
+  padding-inline: var(--space-2-5);
+  border: 1px solid var(--border);
   color: var(--muted-foreground);
 }
 
 .search-trigger:hover {
+  border-color: var(--ring);
   color: var(--foreground);
 }
 
-/* Same box height as the adjacent .snapshot-pill (both size="sm"), so the two read as one row. */
 .search-trigger-kbd {
-  display: inline-flex;
-  height: var(--control-height-sm);
-  align-items: center;
-  padding-inline: var(--space-2-5);
-  border: 1px solid var(--border);
-  color: var(--muted-foreground);
+  color: inherit;
   font-family: var(--font-mono);
   font-size: var(--fs-1);
   letter-spacing: var(--ls-normal);
