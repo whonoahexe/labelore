@@ -4,10 +4,10 @@ milestone: v1.0
 current_phase: 04
 status: completed
 stopped_at: Phase 04 complete — all phases complete
-last_updated: "2026-09-09T20:13:51.982Z"
+last_updated: "2026-09-10T08:20:33.942Z"
 last_activity: 2026-09-09
 last_activity_desc: "Completed quick task 260908-k1n: Rename project to Labelore"
-state_head: 2d6ea0a258e3430228ecf50691bfdbf8263a6cbf
+state_head: 233ded9c061ae93a92b310240cc77c98a6dfebbf
 progress:
   total_phases: 4
   completed_phases: 4
@@ -131,6 +131,7 @@ None.
 | 260908-k1n | Rename the project and product to Labelore everywhere | 2026-09-08 | 65b1919 | [260908-k1n-we-are-changing-this-project-s-name-to-l](./quick/260908-k1n-we-are-changing-this-project-s-name-to-l/) |
 | 260909-ogb | Close all five open findings from 04-REVIEW.md (CR-01 refresh reporting success on a reachable failure, CR-02 snapshot age and Refresh hidden below 62rem, WR-01 Unicode-lowercase highlight offset drift, WR-02 overlapping snippet windows, WR-03 buildDerivedViews multi-read decision) | 2026-09-09 | d615c9d | [260909-ogb-close-all-five-open-findings-from-04-rev](./quick/260909-ogb-close-all-five-open-findings-from-04-rev/) |
 | 260910-0x4 | Close the v1.0 milestone tech-debt list — 12 of 14 items closed (WINDOWS.md entries 3/4/5, stale phase-03 lint note, dead index.html critical-CSS, package.json engines floor, title-derivation dedupe, depends_on warning plumbing, node:fs seam restored to local-fs.ts only, the sub-10px micro-label family, full mermaid theme palette, warning-free build via real splitting, measured keyboard reachability of Refresh, 02-06 D3 + R-02-01 reconciliation); 03-UI-REVIEW and 04-UI-REVIEW left open, re-staled by this task's own CSS changes; new WCAG 1.4.11 focus-ring contrast finding logged as WINDOWS.md entry 7 (waived) | 2026-09-10 | 2d6ea0a | [260910-0x4-close-every-tech-debt-item-in-planning-v](./quick/260910-0x4-close-every-tech-debt-item-in-planning-v/) |
+| 6 | fast: fix WCAG 1.4.11 focus-ring contrast (WINDOWS.md entry 7) — opaque outline, dark --ring oklch(0.56 0.157 37.304), index.html dark snapshot :root.dark to .dark after it shadowed globals.css; measured light 5.21:1, dark 4.07:1 | 2026-09-10 | 233ded9 | — |
 
 ## Deferred Items
 
