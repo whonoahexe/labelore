@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.0
 status: Awaiting next milestone
 stopped_at: Phase 04 complete — all phases complete
-last_updated: "2026-09-10T08:34:58.484Z"
-last_activity: 2026-09-10
+last_updated: "2026-09-10T20:43:41.794Z"
+last_activity: 2026-09-11
 last_activity_desc: Milestone v1.0 completed and archived
-state_head: f107f0ee5e40dcac3c8aa18cae2418f1bb790a3a
+state_head: a53d0ffeef2c03a55776caa6c0fe874233fd67f5
 progress:
   total_phases: 4
   completed_phases: 4
@@ -81,7 +81,6 @@ Decisions are logged in PROJECT.md Key Decisions table. v1.0's per-phase decisio
 milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) and in
 `milestones/v1.0-phases/*/*-SUMMARY.md`.
 
-
 ### Pending Todos
 
 None yet.
@@ -96,6 +95,7 @@ None.
 |---|-------------|------|--------|-----------|
 | 260910-jz8 | Centralize spacing, type and color tokens with a guard check | 2026-09-10 | 55c010f | [260910-jz8-centralize-spacing-type-and-color-tokens](./quick/260910-jz8-centralize-spacing-type-and-color-tokens/) |
 | 260911-243 | Navbar redesign: Strata logo mark everywhere, brand+project lockup, segmented tabs, search icon with full-screen dialog, snapshot status pill | 2026-09-11 | 6a0e5f9 | [260911-243-navbar-redesign-strata-logo-mark-everywh](./quick/260911-243-navbar-redesign-strata-logo-mark-everywh/) |
+| 3 | Match the header Ctrl K hint height to the snapshot pill | 2026-09-10 | a53d0ff | — |
 
 ## Deferred Items
 
