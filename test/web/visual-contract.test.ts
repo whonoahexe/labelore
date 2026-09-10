@@ -356,7 +356,10 @@ describe('task-list item flow (G2-12)', () => {
     const css = await source('src/web/styles/globals.css');
     const blocks = ruleBlocks(css, ".artifact-document .task-list-item > input[type='checkbox'] {");
     expect(blocks).toHaveLength(1);
-    expect(blocks[0]).toMatch(/margin-left:\s*-/);
+    // quick-260910-jz8: migrated onto the spacing scale — the negative hang now reads
+    // `calc(-1 * var(--space-6))` (no longer a leading minus sign on the literal itself), but the
+    // intent (a negative hang) is unchanged and pinned either way.
+    expect(blocks[0]).toMatch(/margin-left:\s*(-|calc\(-1 \* var\(--space-)/);
   });
 });
 
