@@ -155,6 +155,48 @@
   color-scheme: dark;
 }
 
+/* quick-260910-jz8: theme-independent scale tokens (spacing, type, line-height,
+   letter-spacing, weight). Plain custom properties, deliberately outside the
+   Tailwind-reserved `@theme`/`@theme inline` namespaces so they can never rescale
+   button.tsx's own utility classes. Not theme-dependent, so intentionally not
+   mirrored into index.html's pre-hydration snapshot. */
+:root {
+  /* Spacing scale (JZ8-01). Step N = N * 0.25rem; half-steps below 1rem use -N-5. */
+  --space-0-5: 0.125rem;
+  --space-1: 0.25rem;
+  --space-1-5: 0.375rem;
+  --space-2: 0.5rem;
+  --space-2-5: 0.625rem;
+  --space-3: 0.75rem;
+  --space-3-5: 0.875rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 1.75rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-22: 5.5rem;
+  --space-28: 7rem;
+
+  /* Fluid spacing. Each token is a merged clamp() shape (see SUMMARY for the cluster
+     table); the clamp literal lives only here, never at a usage site. */
+  --space-fluid-1: clamp(0rem, 2vw, 1.5rem);
+  --space-fluid-2: clamp(1rem, 2.5vw, 1.5rem);
+  --space-fluid-3: clamp(1.25rem, 3vw, 2rem);
+  --space-fluid-4: clamp(1rem, 3vw, 2.5rem);
+  --space-fluid-5: clamp(1.1rem, 4vw, 2.5rem);
+  --space-fluid-6: clamp(1.5rem, 3vw, 2.5rem);
+  --space-fluid-7: clamp(1.25rem, 4vw, 3rem);
+  --space-fluid-8: clamp(1rem, 4vw, 3.5rem);
+  --space-fluid-9: clamp(1.5rem, 4vw, 4rem);
+  --space-fluid-10: clamp(2rem, 5vw, 4rem);
+  --space-fluid-11: clamp(1.5rem, 4vw, 4.5rem);
+  --space-fluid-12: clamp(2rem, 5vw, 4.5rem);
+  --space-fluid-13: clamp(2.5rem, 7vw, 5rem);
+  --space-fluid-14: clamp(2rem, 5vw, 5.5rem);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring;
@@ -260,9 +302,9 @@
 .skip-link {
   position: fixed;
   z-index: 100;
-  top: 0.75rem;
-  left: 0.75rem;
-  padding: 0.65rem 0.9rem;
+  top: var(--space-3);
+  left: var(--space-3);
+  padding: var(--space-2-5) var(--space-3-5);
   border: 1px solid var(--ring);
   background: var(--background);
   transform: translateY(-180%);
@@ -296,8 +338,8 @@
 }
 
 .brand {
-  gap: 0.75rem;
-  padding: 0.8rem clamp(1rem, 3vw, 2.5rem);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-fluid-4);
   text-decoration: none;
 }
 
@@ -343,9 +385,9 @@
 .shell-nav-link {
   display: flex;
   height: 100%;
-  gap: 0.5rem;
+  gap: var(--space-2);
   align-items: center;
-  padding: 0.85rem 1.15rem;
+  padding: var(--space-3-5) var(--space-5);
   color: var(--muted-foreground);
   font-family: var(--font-heading);
   font-size: 0.7rem;
@@ -373,8 +415,8 @@
 
 .snapshot-status {
   justify-content: flex-end;
-  gap: 0.55rem;
-  padding: 0.65rem clamp(1rem, 3vw, 2.5rem);
+  gap: var(--space-2);
+  padding: var(--space-2-5) var(--space-fluid-4);
   color: var(--muted-foreground);
   font-size: 0.74rem;
 }
@@ -410,7 +452,7 @@
 .shell-notice {
   position: relative;
   z-index: 2;
-  padding: 0.6rem 1rem;
+  padding: var(--space-2-5) var(--space-4);
   border-bottom: 1px solid var(--destructive);
   background: color-mix(in oklch, var(--destructive) 9%, var(--background));
   text-align: center;
@@ -452,30 +494,30 @@
 .tree-root,
 .tree-children {
   display: grid;
-  gap: 0.15rem;
+  gap: var(--space-0-5);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .tree-root {
-  padding: 1rem 0.8rem 2rem;
+  padding: var(--space-4) var(--space-3) var(--space-8);
 }
 
 .tree-children {
-  margin-top: 0.15rem;
-  padding-left: 1.05rem;
+  margin-top: var(--space-0-5);
+  padding-left: var(--space-4);
   border-left: 1px solid color-mix(in oklch, var(--sidebar-border) 78%, transparent);
 }
 
 .tree-node-row {
   display: flex;
   min-width: 0;
-  gap: 0.55rem;
+  gap: var(--space-2);
   align-items: center;
   overflow-wrap: anywhere;
   min-height: 2rem;
-  padding: 0.38rem 0.45rem;
+  padding: var(--space-1-5) var(--space-2);
   color: var(--sidebar-foreground);
   font-size: 0.78rem;
   line-height: 1.4;
@@ -532,7 +574,7 @@ summary.tree-node-row:hover {
 
 .tree-excluded-marker {
   border: 1px solid var(--border);
-  padding: 0.05rem 0.3rem;
+  padding: var(--space-0-5) var(--space-1);
   font-family: var(--font-heading);
   font-size: var(--font-size-micro-label);
   letter-spacing: 0.06em;
@@ -542,7 +584,7 @@ summary.tree-node-row:hover {
 .tree-excluded-reason {
   display: block;
   overflow-wrap: anywhere;
-  padding-left: 0.4rem;
+  padding-left: var(--space-1-5);
   color: var(--muted-foreground);
   font-size: 0.68rem;
 }
@@ -550,14 +592,14 @@ summary.tree-node-row:hover {
 .page-stack {
   width: min(80rem, 100%);
   margin: 0 auto;
-  padding: clamp(2rem, 5vw, 5.5rem) clamp(1rem, 4vw, 3.5rem) 7rem;
+  padding: var(--space-fluid-14) var(--space-fluid-8) var(--space-28);
 }
 
 .eyebrow {
   display: flex;
-  gap: 0.45rem;
+  gap: var(--space-2);
   align-items: center;
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--space-3);
   color: var(--primary);
   font-family: var(--font-heading);
   font-size: 0.67rem;
@@ -574,7 +616,7 @@ summary.tree-node-row:hover {
 
 .page-stack > h1,
 .page-intro h1 {
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
   font-size: clamp(2.6rem, 7vw, 5.6rem);
   font-weight: 600;
   letter-spacing: -0.07em;
@@ -592,14 +634,14 @@ summary.tree-node-row:hover {
 .position-hero {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(18rem, 0.75fr);
-  gap: clamp(1.5rem, 4vw, 4rem);
+  gap: var(--space-fluid-9);
   align-items: end;
-  padding-bottom: clamp(2.5rem, 7vw, 5rem);
+  padding-bottom: var(--space-fluid-13);
   border-bottom: 1px solid var(--border);
 }
 
 .milestone-label {
-  margin-bottom: 0.8rem;
+  margin-bottom: var(--space-3);
   color: var(--muted-foreground);
   font-family: var(--font-heading);
   font-size: 0.75rem;
@@ -619,7 +661,7 @@ summary.tree-node-row:hover {
 
 .position-copy h1 span {
   display: block;
-  margin-bottom: 0.65rem;
+  margin-bottom: var(--space-2-5);
   color: var(--muted-foreground);
   font-size: 0.2em;
   letter-spacing: 0.08em;
@@ -630,9 +672,9 @@ summary.tree-node-row:hover {
 .position-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.8rem;
+  gap: var(--space-3);
   align-items: center;
-  margin-top: 1.75rem;
+  margin-top: var(--space-7);
 }
 
 .status-chip,
@@ -640,7 +682,7 @@ summary.tree-node-row:hover {
 .formal-status,
 .item-kind {
   display: inline-flex;
-  gap: 0.4rem;
+  gap: var(--space-1-5);
   align-items: center;
   width: fit-content;
   border: 1px solid var(--border);
@@ -654,7 +696,7 @@ summary.tree-node-row:hover {
 .status-chip,
 .milestone-version,
 .formal-status {
-  padding: 0.38rem 0.55rem;
+  padding: var(--space-1-5) var(--space-2);
 }
 
 .status-chip {
@@ -699,7 +741,7 @@ summary.tree-node-row:hover {
 }
 
 .immediate-work {
-  padding: clamp(1.25rem, 3vw, 2rem);
+  padding: var(--space-fluid-3);
   border-top: 3px solid var(--primary);
   box-shadow: 0.7rem 0.7rem 0 color-mix(in oklch, var(--muted) 65%, transparent);
 }
@@ -716,15 +758,15 @@ summary.tree-node-row:hover {
 .next-preview {
   display: flex;
   min-width: 0;
-  gap: 1rem;
+  gap: var(--space-4);
   align-items: flex-start;
   justify-content: space-between;
   text-decoration: none;
 }
 
 .next-primary {
-  margin-top: 1.4rem;
-  padding-top: 1.2rem;
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
   border-top: 1px solid var(--border);
 }
 
@@ -736,12 +778,12 @@ summary.tree-node-row:hover {
 }
 
 .next-primary strong {
-  margin-top: 0.5rem;
+  margin-top: var(--space-2);
   font-size: 1.3rem;
 }
 
 .next-primary p {
-  margin: 0.45rem 0 0;
+  margin: var(--space-2) 0 0;
   overflow: hidden;
   color: var(--muted-foreground);
   font-size: 0.82rem;
@@ -752,7 +794,7 @@ summary.tree-node-row:hover {
 }
 
 .next-preview p {
-  margin: 0.45rem 0 0;
+  margin: var(--space-2) 0 0;
   overflow: hidden;
   color: var(--muted-foreground);
   font-size: 0.82rem;
@@ -784,10 +826,10 @@ summary.tree-node-row:hover {
 .progress-panel {
   display: grid;
   grid-template-columns: minmax(12rem, 0.8fr) minmax(13rem, 0.7fr) minmax(14rem, 1fr);
-  gap: 1.5rem 2rem;
+  gap: var(--space-6) var(--space-8);
   align-items: center;
-  margin-top: clamp(2rem, 5vw, 4rem);
-  padding: clamp(1.25rem, 3vw, 2rem);
+  margin-top: var(--space-fluid-10);
+  padding: var(--space-fluid-3);
 }
 
 .progress-panel > header {
@@ -795,15 +837,15 @@ summary.tree-node-row:hover {
 }
 
 .formal-status {
-  margin-top: 1rem;
+  margin-top: var(--space-4);
   color: var(--primary);
 }
 
 .formal-progress-value {
   display: flex;
-  gap: 0.65rem;
+  gap: var(--space-2-5);
   align-items: baseline;
-  padding-inline: clamp(0rem, 2vw, 1.5rem);
+  padding-inline: var(--space-fluid-1);
   border-inline: 1px solid var(--border);
 }
 
@@ -824,10 +866,10 @@ summary.tree-node-row:hover {
 
 .observed-progress {
   display: flex;
-  gap: 1rem;
+  gap: var(--space-4);
   justify-content: space-between;
   grid-column: 1 / -1;
-  padding-top: 1rem;
+  padding-top: var(--space-4);
   border-top: 1px solid var(--border);
   color: var(--muted-foreground);
   font-family: var(--font-heading);
@@ -837,9 +879,9 @@ summary.tree-node-row:hover {
 
 .discrepancy-callout {
   display: flex;
-  gap: 0.8rem;
+  gap: var(--space-3);
   grid-column: 1 / -1;
-  padding: 1rem;
+  padding: var(--space-4);
   border: 1px solid color-mix(in oklch, var(--destructive) 55%, var(--border));
   background: color-mix(in oklch, var(--destructive) 8%, transparent);
 }
@@ -856,7 +898,7 @@ summary.tree-node-row:hover {
    rather than moving the shared token, which every other muted surface clears with little
    headroom. */
 .discrepancy-callout p {
-  margin: 0.3rem 0 0;
+  margin: var(--space-1) 0 0;
   color: color-mix(in oklch, var(--muted-foreground) 85%, var(--foreground));
   font-size: 0.8rem;
 }
@@ -864,26 +906,26 @@ summary.tree-node-row:hover {
 .dashboard-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(18rem, 0.7fr);
-  gap: 1.25rem;
-  margin-top: 1.25rem;
+  gap: var(--space-5);
+  margin-top: var(--space-5);
 }
 
 .attention-panel,
 .preview-panel {
-  padding: clamp(1.25rem, 3vw, 2rem);
+  padding: var(--space-fluid-3);
 }
 
 .section-heading {
   display: flex;
   min-width: 0;
-  gap: 1rem;
+  gap: var(--space-4);
   align-items: flex-start;
   justify-content: space-between;
 }
 
 .section-heading.compact {
   align-items: end;
-  padding-bottom: 1.25rem;
+  padding-bottom: var(--space-5);
   border-bottom: 1px solid var(--border);
 }
 
@@ -905,8 +947,8 @@ summary.tree-node-row:hover {
 .attention-list li {
   display: grid;
   grid-template-columns: 1rem minmax(0, 1fr);
-  gap: 0.8rem;
-  padding: 1.15rem 0;
+  gap: var(--space-3);
+  padding: var(--space-5) 0;
   border-bottom: 1px solid var(--border);
 }
 
@@ -921,12 +963,12 @@ summary.tree-node-row:hover {
 .attention-list svg {
   width: 1rem;
   height: 1rem;
-  margin-top: 0.15rem;
+  margin-top: var(--space-0-5);
 }
 
 .attention-list strong {
   display: block;
-  margin-top: 0.35rem;
+  margin-top: var(--space-1-5);
   color: var(--foreground);
   font-family: var(--font-heading);
   font-size: 0.84rem;
@@ -935,7 +977,7 @@ summary.tree-node-row:hover {
 /* No <small> is rendered in an attention row — a row is item-kind span, strong, p and the
    source note — so the selector that used to sit alongside this one matched nothing. */
 .attention-list p {
-  margin: 0.35rem 0;
+  margin: var(--space-1-5) 0;
   color: var(--muted-foreground);
   font-size: 0.77rem;
   line-height: 1.55;
@@ -956,20 +998,20 @@ summary.tree-node-row:hover {
 }
 
 .next-preview {
-  padding: 1.2rem 0;
+  padding: var(--space-5) 0;
   border-bottom: 1px solid var(--border);
 }
 
 .quiet-state,
 .empty-flow {
   display: flex;
-  gap: 0.8rem;
+  gap: var(--space-3);
   align-items: flex-start;
   color: var(--muted-foreground);
 }
 
 .quiet-state {
-  padding: 1.5rem 0;
+  padding: var(--space-6) 0;
 }
 
 .quiet-state svg,
@@ -992,15 +1034,15 @@ summary.tree-node-row:hover {
 
 .page-intro {
   display: flex;
-  gap: 2rem;
+  gap: var(--space-8);
   align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: clamp(2rem, 5vw, 4.5rem);
+  margin-bottom: var(--space-fluid-12);
 }
 
 .text-link {
   display: inline-flex;
-  gap: 0.45rem;
+  gap: var(--space-2);
   align-items: center;
   flex: none;
   color: var(--muted-foreground);
@@ -1020,7 +1062,7 @@ summary.tree-node-row:hover {
 
 .milestone-flow,
 .history-section {
-  padding: clamp(1.25rem, 3vw, 2.25rem);
+  padding: var(--space-fluid-3);
 }
 
 .active-flow {
@@ -1033,14 +1075,14 @@ summary.tree-node-row:hover {
 
 .roadmap-spine {
   position: relative;
-  margin-top: 2rem;
+  margin-top: var(--space-8);
 }
 
 .roadmap-spine::before {
   position: absolute;
-  top: 0.55rem;
-  bottom: 1rem;
-  left: 0.55rem;
+  top: var(--space-2);
+  bottom: var(--space-4);
+  left: var(--space-2);
   width: 1px;
   background: var(--border);
   content: '';
@@ -1050,8 +1092,8 @@ summary.tree-node-row:hover {
   position: relative;
   display: grid;
   grid-template-columns: 1.15rem minmax(0, 1fr);
-  gap: 1.15rem;
-  padding-bottom: 1.5rem;
+  gap: var(--space-5);
+  padding-bottom: var(--space-6);
   scroll-margin-top: 6rem;
 }
 
@@ -1082,10 +1124,10 @@ summary.tree-node-row:hover {
 
 .roadmap-phase-header {
   display: flex;
-  gap: 1.25rem;
+  gap: var(--space-5);
   align-items: flex-start;
   justify-content: space-between;
-  padding: clamp(1rem, 2.5vw, 1.5rem);
+  padding: var(--space-fluid-2);
 }
 
 .roadmap-phase-header h3 {
@@ -1105,7 +1147,7 @@ summary.tree-node-row:hover {
 
 .phase-goal {
   max-width: 54rem;
-  margin: 0.5rem 0 0;
+  margin: var(--space-2) 0 0;
   color: var(--muted-foreground);
   font-size: 0.82rem;
   line-height: 1.55;
@@ -1115,7 +1157,7 @@ summary.tree-node-row:hover {
   display: flex;
   flex: none;
   flex-wrap: wrap;
-  gap: 0.45rem;
+  gap: var(--space-2);
   justify-content: flex-end;
 }
 
@@ -1128,7 +1170,7 @@ summary.tree-node-row:hover {
 
 .phase-facts > div {
   min-width: 0;
-  padding: 0.85rem 1.5rem;
+  padding: var(--space-3-5) var(--space-6);
 }
 
 .phase-facts > div + div {
@@ -1136,7 +1178,7 @@ summary.tree-node-row:hover {
 }
 
 .phase-facts dt {
-  margin-bottom: 0.25rem;
+  margin-bottom: var(--space-1);
   color: var(--muted-foreground);
   font-family: var(--font-heading);
   font-size: var(--font-size-micro-label);
@@ -1154,9 +1196,9 @@ summary.tree-node-row:hover {
 .history-milestone > summary {
   display: flex;
   min-width: 0;
-  gap: 0.65rem;
+  gap: var(--space-2-5);
   align-items: center;
-  padding: 0.9rem 1.5rem;
+  padding: var(--space-3-5) var(--space-6);
   cursor: pointer;
   font-family: var(--font-heading);
   font-size: 0.67rem;
@@ -1197,13 +1239,13 @@ summary.tree-node-row:hover {
 
 .phase-detail-grid > section {
   min-width: 0;
-  padding: 1.25rem 1.5rem;
+  padding: var(--space-5) var(--space-6);
   background: var(--card);
 }
 
 .phase-detail-grid h4,
 .wave-band header {
-  margin: 0 0 0.75rem;
+  margin: 0 0 var(--space-3);
   font-size: 0.7rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1211,7 +1253,7 @@ summary.tree-node-row:hover {
 
 .phase-detail-grid ul {
   margin: 0;
-  padding-left: 1.1rem;
+  padding-left: var(--space-4);
   color: var(--muted-foreground);
   font-size: 0.78rem;
   line-height: 1.6;
@@ -1220,13 +1262,13 @@ summary.tree-node-row:hover {
 .token-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: var(--space-1-5);
   padding: 0 !important;
   list-style: none;
 }
 
 .token-list li {
-  padding: 0.3rem 0.45rem;
+  padding: var(--space-1) var(--space-2);
   border: 1px solid var(--border);
   color: var(--foreground);
   font-family: var(--font-heading);
@@ -1235,8 +1277,8 @@ summary.tree-node-row:hover {
 
 .wave-stack {
   display: grid;
-  gap: 0.75rem;
-  padding: 1rem 1.5rem 1.5rem;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6) var(--space-6);
   border-top: 1px solid var(--border);
   background: var(--secondary);
 }
@@ -1248,10 +1290,10 @@ summary.tree-node-row:hover {
 
 .wave-band header {
   display: flex;
-  gap: 1rem;
+  gap: var(--space-4);
   justify-content: space-between;
   margin: 0;
-  padding: 0.65rem 0.85rem;
+  padding: var(--space-2-5) var(--space-3-5);
   border-bottom: 1px solid var(--border);
   color: var(--muted-foreground);
 }
@@ -1265,10 +1307,10 @@ summary.tree-node-row:hover {
 .wave-band li {
   display: flex;
   min-width: 0;
-  gap: 1rem;
+  gap: var(--space-4);
   align-items: center;
   justify-content: space-between;
-  padding: 0.7rem 0.85rem;
+  padding: var(--space-3) var(--space-3-5);
   border-bottom: 1px solid var(--border);
 }
 
@@ -1283,7 +1325,7 @@ summary.tree-node-row:hover {
 .wave-band li a {
   display: flex;
   min-width: 0;
-  gap: 0.55rem;
+  gap: var(--space-2);
   align-items: center;
   font-family: var(--font-heading);
   font-size: 0.7rem;
@@ -1317,24 +1359,24 @@ summary.tree-node-row:hover {
 }
 
 .empty-flow {
-  margin-top: 1.5rem;
-  padding: 1.25rem;
+  margin-top: var(--space-6);
+  padding: var(--space-5);
   border: 1px dashed var(--border);
 }
 
 .empty-flow h3 {
-  margin: 0 0 0.3rem;
+  margin: 0 0 var(--space-1);
   font-size: 0.85rem;
 }
 
 .history-section {
-  margin-top: 1.25rem;
+  margin-top: var(--space-5);
   background: color-mix(in oklch, var(--muted) 55%, var(--background));
 }
 
 .history-section > .section-heading {
   align-items: center;
-  padding-bottom: 1.5rem;
+  padding-bottom: var(--space-6);
   border-bottom: 1px solid var(--border);
 }
 
@@ -1345,8 +1387,8 @@ summary.tree-node-row:hover {
 
 .history-list {
   display: grid;
-  gap: 0.75rem;
-  margin-top: 1rem;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
 }
 
 .history-milestone {
@@ -1367,20 +1409,20 @@ summary.tree-node-row:hover {
 }
 
 .history-milestone > summary small {
-  margin-top: 0.2rem;
+  margin-top: var(--space-1);
   color: var(--muted-foreground);
   font-size: 0.58rem;
 }
 
 .history-tree {
-  padding: 0 1.25rem 1.25rem;
+  padding: 0 var(--space-5) var(--space-5);
   border-top: 1px solid var(--border);
   opacity: 0.82;
 }
 
 .notice {
-  margin-top: 2rem;
-  padding: 1.5rem;
+  margin-top: var(--space-8);
+  padding: var(--space-6);
 }
 
 .notice.destructive {
@@ -1388,20 +1430,20 @@ summary.tree-node-row:hover {
 }
 
 .notice h2 {
-  margin-bottom: 0.65rem;
+  margin-bottom: var(--space-2-5);
   font-size: 1rem;
 }
 
 .notice p {
-  margin-bottom: 0.7rem;
+  margin-bottom: var(--space-3);
   color: var(--muted-foreground);
 }
 
 .dashboard-loading,
 .roadmap-loading {
   display: grid;
-  gap: 1rem;
-  margin-top: 3rem;
+  gap: var(--space-4);
+  margin-top: var(--space-12);
 }
 
 .dashboard-loading span,
@@ -1478,7 +1520,7 @@ table {
 }
 
 pre {
-  padding: 1rem;
+  padding: var(--space-4);
   background: var(--secondary);
 }
 
@@ -1497,7 +1539,7 @@ pre {
      compact treatment (decorative icon and descriptive label dropped, timestamp and button kept),
      never `display: none`, which would also remove the subtree from the accessibility tree. */
   .snapshot-status {
-    gap: 0.35rem;
+    gap: var(--space-1-5);
     padding-inline: 0;
   }
 
@@ -1509,7 +1551,7 @@ pre {
   .shell-controls {
     grid-column: 1 / -1;
     flex-wrap: wrap;
-    padding-inline: 0.75rem;
+    padding-inline: var(--space-3);
   }
 
   .shell-nav {
@@ -1551,7 +1593,7 @@ pre {
   }
 
   .brand {
-    padding: 0.7rem 1rem;
+    padding: var(--space-3) var(--space-4);
     border-bottom: 1px solid var(--border);
   }
 
@@ -1569,13 +1611,13 @@ pre {
   .shell-controls {
     grid-column: 1 / -1;
     flex-wrap: wrap;
-    row-gap: 0.35rem;
-    padding: 0.5rem 1rem;
+    row-gap: var(--space-1-5);
+    padding: var(--space-2) var(--space-4);
     border-top: 1px solid var(--border);
   }
 
   .snapshot-status {
-    gap: 0.3rem;
+    gap: var(--space-1);
   }
 
   /* Bounds the timestamp so its existing ellipsis containment (`.snapshot-status time`) actually
@@ -1588,12 +1630,12 @@ pre {
     min-width: 0;
     flex: 1;
     justify-content: center;
-    padding-inline: 0.65rem;
-    padding-block: 0.7rem;
+    padding-inline: var(--space-2-5);
+    padding-block: var(--space-3);
   }
 
   .page-stack {
-    padding-top: 2.5rem;
+    padding-top: var(--space-10);
   }
 
   .position-copy h1 {
@@ -1605,7 +1647,7 @@ pre {
   }
 
   .formal-progress-value {
-    padding: 1rem 0;
+    padding: var(--space-4) 0;
     border-block: 1px solid var(--border);
     border-inline: 0;
   }
@@ -1665,14 +1707,14 @@ pre {
 
 .artifact-page {
   display: grid;
-  gap: 1.5rem;
+  gap: var(--space-6);
   min-width: 0;
 }
 
 .artifact-breadcrumbs {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: var(--space-1-5);
   color: var(--muted-foreground);
   font-size: 0.78rem;
 }
@@ -1684,9 +1726,9 @@ pre {
 
 .artifact-heading {
   display: grid;
-  gap: 0.35rem;
+  gap: var(--space-1-5);
   border-bottom: 1px solid var(--border);
-  padding-bottom: 1.2rem;
+  padding-bottom: var(--space-5);
 }
 
 .artifact-path {
@@ -1699,18 +1741,18 @@ pre {
 .metadata-panels {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(17rem, 100%), 1fr));
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .metadata-panel {
   min-width: 0;
   border: 1px solid var(--border);
   background: color-mix(in oklch, var(--card) 92%, var(--muted));
-  padding: 0.9rem;
+  padding: var(--space-3-5);
 }
 
 .metadata-panel h2 {
-  margin: 0 0 0.7rem;
+  margin: 0 0 var(--space-3);
   font-size: 0.78rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1723,14 +1765,14 @@ pre {
 .metadata-record,
 .metadata-list {
   display: grid;
-  gap: 0.45rem;
+  gap: var(--space-2);
   margin: 0;
-  padding-left: 1rem;
+  padding-left: var(--space-4);
 }
 
 .metadata-record > div {
   display: grid;
-  gap: 0.2rem;
+  gap: var(--space-1);
   min-width: 0;
 }
 
@@ -1774,7 +1816,7 @@ pre {
 }
 
 .heading-copy {
-  margin-left: 0.45rem;
+  margin-left: var(--space-2);
   border: 0;
   background: transparent;
   color: var(--muted-foreground);
@@ -1800,7 +1842,7 @@ pre {
 
 .artifact-document :is(th, td) {
   border-bottom: 1px solid var(--border);
-  padding: 0.45rem 0.65rem;
+  padding: var(--space-2) var(--space-2-5);
   text-align: left;
 }
 
@@ -1811,14 +1853,14 @@ pre {
 
 .artifact-document pre {
   border: 1px solid var(--border);
-  padding: 0.9rem;
+  padding: var(--space-3-5);
 }
 
 .plan-section {
-  margin: 1rem 0;
+  margin: var(--space-4) 0;
   min-width: 0;
   border-top: 1px solid var(--border);
-  padding: 0.2rem 0 0.2rem 1rem;
+  padding: var(--space-1) 0 var(--space-1) var(--space-4);
 }
 
 .plan-section .plan-section {
@@ -1837,7 +1879,7 @@ pre {
 .plan-segment-warning,
 .artifact-empty {
   border: 1px solid color-mix(in oklch, var(--destructive) 45%, var(--border));
-  padding: 0.8rem;
+  padding: var(--space-3);
 }
 
 .mermaid-fallback {
@@ -1847,7 +1889,7 @@ pre {
 .plan-pair-jumps {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 1rem;
+  gap: var(--space-2) var(--space-4);
   font-size: 0.8rem;
 }
 
@@ -1862,7 +1904,7 @@ pre {
   min-width: 0;
   border: 1px solid var(--border);
   background: var(--card);
-  padding: clamp(1rem, 2vw, 1.5rem);
+  padding: var(--space-fluid-2);
 }
 
 .coverage-table-boundary {
@@ -1878,7 +1920,7 @@ pre {
 
 .coverage-table-boundary :is(th, td) {
   border-bottom: 1px solid var(--border);
-  padding: 0.65rem;
+  padding: var(--space-2-5);
   text-align: left;
   vertical-align: top;
 }
@@ -1919,10 +1961,10 @@ pre {
 .reference-preview {
   display: grid;
   width: min(24rem, calc(100vw - 2rem));
-  gap: 1rem;
+  gap: var(--space-4);
   border: 1px solid var(--border);
   background: var(--popover);
-  padding: 1rem;
+  padding: var(--space-4);
   color: var(--popover-foreground);
   box-shadow: 0 1rem 2.5rem color-mix(in oklab, var(--foreground) 18%, transparent);
   transform-origin: var(--transform-origin);
@@ -1941,11 +1983,11 @@ pre {
   display: flex;
   align-items: start;
   justify-content: space-between;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .reference-preview-heading h2 {
-  margin: 0.15rem 0 0;
+  margin: var(--space-0-5) 0 0;
   font-size: 1rem;
 }
 
@@ -1968,14 +2010,14 @@ pre {
 
 .reference-preview-facts {
   display: grid;
-  gap: 0.5rem;
+  gap: var(--space-2);
   margin: 0;
 }
 
 .reference-preview-facts div {
   display: grid;
   grid-template-columns: 5rem minmax(0, 1fr);
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .reference-preview-facts dt {
@@ -1994,10 +2036,10 @@ pre {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
+  gap: var(--space-1-5);
   min-height: 2.5rem;
   background: var(--primary);
-  padding: 0.6rem 0.9rem;
+  padding: var(--space-2-5) var(--space-3-5);
   color: var(--primary-foreground);
   font-size: 0.85rem;
   font-weight: 700;
@@ -2049,12 +2091,12 @@ pre {
 
 .attention-list li {
   grid-template-columns: 1.15rem minmax(0, 1fr);
-  gap: 0.9rem;
+  gap: var(--space-3-5);
   align-items: start;
 }
 
 .attention-list svg {
-  margin-top: 0.08rem;
+  margin-top: var(--space-0-5);
 }
 
 .attention-list .item-kind {
@@ -2062,17 +2104,17 @@ pre {
 }
 
 .attention-list strong {
-  margin-top: 0.42rem;
+  margin-top: var(--space-1-5);
   font-size: 0.92rem;
   line-height: 1.4;
 }
 
 .attention-more {
   display: flex;
-  gap: 1rem;
+  gap: var(--space-4);
   align-items: center;
   justify-content: space-between;
-  padding-top: 1.25rem;
+  padding-top: var(--space-5);
   color: var(--muted-foreground);
   font-size: 0.76rem;
 }
@@ -2081,7 +2123,7 @@ pre {
   min-height: 2.35rem;
   border: 1px solid var(--border);
   background: var(--background);
-  padding: 0.55rem 0.8rem;
+  padding: var(--space-2) var(--space-3);
   color: var(--foreground);
   cursor: pointer;
   font-family: var(--font-heading);
@@ -2095,7 +2137,7 @@ pre {
 }
 
 .preview-empty {
-  padding-top: 1.4rem;
+  padding-top: var(--space-6);
 }
 
 .phase-statuses .status-chip {
@@ -2104,7 +2146,7 @@ pre {
 
 .criteria-list {
   display: grid;
-  gap: 0.7rem;
+  gap: var(--space-3);
   padding: 0 !important;
   list-style: none;
 }
@@ -2112,20 +2154,20 @@ pre {
 .criteria-list li {
   display: grid;
   grid-template-columns: 1rem minmax(0, 1fr);
-  gap: 0.65rem;
+  gap: var(--space-2-5);
   align-items: start;
 }
 
 .criteria-list svg {
   width: 0.9rem;
   height: 0.9rem;
-  margin-top: 0.24rem;
+  margin-top: var(--space-1);
   color: var(--primary);
 }
 
 .requirement-list {
   display: grid;
-  gap: 0.65rem;
+  gap: var(--space-2-5);
   margin: 0;
   padding: 0 !important;
   list-style: none;
@@ -2133,8 +2175,8 @@ pre {
 
 .requirement-list li {
   display: grid;
-  gap: 0.35rem;
-  padding: 0.75rem;
+  gap: var(--space-1-5);
+  padding: var(--space-3);
   border: 1px solid var(--border);
   color: var(--foreground);
 }
@@ -2154,9 +2196,9 @@ pre {
 .requirement-list a {
   display: inline-flex;
   width: fit-content;
-  gap: 0.35rem;
+  gap: var(--space-1-5);
   align-items: center;
-  margin-top: 0.15rem;
+  margin-top: var(--space-0-5);
   font-size: 0.7rem;
   font-weight: 650;
   text-decoration: underline;
@@ -2174,7 +2216,7 @@ pre {
 
 .wave-plan-copy {
   display: grid;
-  gap: 0.18rem;
+  gap: var(--space-0-5);
   min-width: 0;
 }
 
@@ -2198,11 +2240,11 @@ pre {
 .artifact-page {
   width: min(88rem, 100%);
   margin: 0 auto;
-  padding: clamp(1.5rem, 4vw, 4.5rem) clamp(1rem, 4vw, 3.5rem) 7rem;
+  padding: var(--space-fluid-11) var(--space-fluid-8) var(--space-28);
 }
 
 .artifact-breadcrumbs {
-  padding-bottom: 0.9rem;
+  padding-bottom: var(--space-3-5);
   border-bottom: 1px solid var(--border);
   font-family: var(--font-heading);
   font-size: 0.68rem;
@@ -2213,8 +2255,8 @@ pre {
 }
 
 .artifact-heading {
-  gap: 0.75rem;
-  padding: clamp(1.25rem, 3vw, 2.25rem) 0 clamp(1.5rem, 3vw, 2.5rem);
+  gap: var(--space-3);
+  padding: var(--space-fluid-3) 0 var(--space-fluid-6);
 }
 
 .artifact-heading h1 {
@@ -2238,10 +2280,10 @@ pre {
 
 .artifact-metadata > summary {
   display: flex;
-  gap: 1rem;
+  gap: var(--space-4);
   align-items: center;
   justify-content: space-between;
-  padding: 0.85rem 1rem;
+  padding: var(--space-3-5) var(--space-4);
   cursor: pointer;
   font-family: var(--font-heading);
   font-size: 0.7rem;
@@ -2262,7 +2304,7 @@ pre {
 .metadata-panels {
   grid-template-columns: repeat(auto-fit, minmax(min(19rem, 100%), 1fr));
   gap: 1px;
-  padding: 1px;
+  padding: var(--space-0-5);
   border-top: 1px solid var(--border);
   background: var(--border);
 }
@@ -2270,7 +2312,7 @@ pre {
 .metadata-panel {
   border: 0;
   background: var(--card);
-  padding: 1rem;
+  padding: var(--space-4);
 }
 
 .metadata-panel h2 {
@@ -2280,8 +2322,8 @@ pre {
 
 .metadata-record,
 .metadata-list {
-  gap: 0.6rem;
-  padding-left: 1.1rem;
+  gap: var(--space-2-5);
+  padding-left: var(--space-4);
   font-size: 0.8rem;
   line-height: 1.55;
 }
@@ -2289,7 +2331,7 @@ pre {
 .document-reader-layout {
   display: grid;
   grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr);
-  gap: clamp(1.25rem, 4vw, 3.5rem);
+  gap: var(--space-fluid-8);
   align-items: start;
   min-width: 0;
 }
@@ -2302,10 +2344,10 @@ pre {
 
 .document-outline {
   position: sticky;
-  top: 5.5rem;
+  top: var(--space-22);
   max-height: calc(100vh - 7rem);
   overflow-y: auto;
-  padding-right: 1rem;
+  padding-right: var(--space-4);
   border-right: 1px solid var(--border);
 }
 
@@ -2319,14 +2361,14 @@ pre {
 
 .document-outline ol {
   display: grid;
-  gap: 0.55rem;
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .document-outline li[data-depth='3'] {
-  padding-left: 0.8rem;
+  padding-left: var(--space-3);
 }
 
 .document-outline a {
@@ -2345,7 +2387,7 @@ pre {
 .document-canvas {
   min-width: 0;
   max-width: 70rem;
-  padding: clamp(1.1rem, 4vw, 3.5rem);
+  padding: var(--space-fluid-8);
 }
 
 .artifact-document {
@@ -2378,7 +2420,7 @@ pre {
   font-size: clamp(1.8rem, 4vw, 2.7rem);
 }
 .artifact-document h2 {
-  padding-bottom: 0.4rem;
+  padding-bottom: var(--space-1-5);
   border-bottom: 1px solid var(--border);
   font-size: clamp(1.35rem, 3vw, 2rem);
 }
@@ -2394,18 +2436,18 @@ pre {
 
 .artifact-document blockquote {
   margin-inline: 0;
-  padding: 0.3rem 1rem;
+  padding: var(--space-1) var(--space-4);
   border-left: 3px solid var(--primary);
   background: color-mix(in oklch, var(--primary) 5%, transparent);
   color: var(--muted-foreground);
 }
 
 .artifact-document :is(ul, ol) {
-  padding-left: 1.35rem;
+  padding-left: var(--space-5);
 }
 
 .artifact-document li + li {
-  margin-top: 0.35rem;
+  margin-top: var(--space-1-5);
 }
 
 .artifact-document li[id^='requirement-'] {
@@ -2423,12 +2465,12 @@ pre {
    such child-count assumption. */
 .artifact-document .task-list-item {
   display: block;
-  padding-left: 1.55rem;
+  padding-left: var(--space-6);
 }
 
 .artifact-document .task-list-item > input[type='checkbox'] {
-  margin-left: -1.55rem;
-  margin-right: 0.55rem;
+  margin-left: calc(-1 * var(--space-6));
+  margin-right: var(--space-2);
 }
 
 .artifact-document input[type='checkbox'] {
@@ -2457,7 +2499,7 @@ pre {
 }
 
 .artifact-document :is(th, td) {
-  padding: 0.7rem 0.8rem;
+  padding: var(--space-3) var(--space-3);
   border-color: var(--border);
   vertical-align: top;
 }
@@ -2478,7 +2520,7 @@ pre {
 }
 
 .artifact-document pre {
-  padding: 1.1rem 1.2rem;
+  padding: var(--space-4) var(--space-5);
   border: 1px solid var(--border);
   background: var(--secondary) !important;
   font-family: var(--font-heading);
@@ -2519,7 +2561,7 @@ pre {
 
 .artifact-document :not(pre) > code {
   background: color-mix(in oklch, var(--secondary) 70%, transparent);
-  padding: 0.12rem 0.3rem;
+  padding: var(--space-0-5) var(--space-1);
   color: var(--secondary-foreground);
   font-family: var(--font-heading);
   font-size: 0.86em;
@@ -2538,10 +2580,10 @@ pre {
 }
 
 .plan-section {
-  margin: 1.5rem 0;
+  margin: var(--space-6) 0;
   min-width: 0;
   border-top: 1px solid var(--border);
-  padding: 1.15rem 1.25rem;
+  padding: var(--space-5) var(--space-5);
 }
 
 .plan-section .plan-section {
@@ -2551,9 +2593,9 @@ pre {
 
 .plan-section-label {
   display: inline-flex;
-  gap: 0.45rem;
+  gap: var(--space-2);
   align-items: baseline;
-  margin-bottom: 0.65rem;
+  margin-bottom: var(--space-2-5);
   font-family: var(--font-heading);
   font-weight: 700;
 }
@@ -2573,7 +2615,7 @@ pre {
 
 .mermaid,
 .mermaid-fallback {
-  padding: 1rem;
+  padding: var(--space-4);
   border: 1px solid var(--border);
   background: var(--card);
 }
@@ -2617,7 +2659,7 @@ pre {
 }
 
 .plan-pair-page {
-  gap: 2rem;
+  gap: var(--space-8);
 }
 
 .plan-open-notice {
@@ -2626,12 +2668,12 @@ pre {
 }
 
 .plan-open-notice p {
-  margin: 0.45rem 0 0;
+  margin: var(--space-2) 0 0;
 }
 
 .coverage-matrix,
 .plan-pair-document {
-  padding: clamp(1.1rem, 4vw, 2.5rem);
+  padding: var(--space-fluid-5);
 }
 
 @media (max-width: 58rem) {
@@ -2642,7 +2684,7 @@ pre {
   .document-outline {
     position: static;
     max-height: none;
-    padding: 0 0 1rem;
+    padding: 0 0 var(--space-4);
     border-right: 0;
     border-bottom: 1px solid var(--border);
   }
@@ -2654,11 +2696,11 @@ pre {
 
 @media (max-width: 42rem) {
   .artifact-page {
-    padding-top: 1.5rem;
+    padding-top: var(--space-6);
   }
 
   .document-canvas {
-    padding: 1rem;
+    padding: var(--space-4);
   }
 
   .document-outline ol {
@@ -2670,7 +2712,7 @@ pre {
   }
 
   .warning-fields dt:not(:first-child) {
-    margin-top: 0.4rem;
+    margin-top: var(--space-1-5);
   }
 
   .attention-more {
@@ -2679,25 +2721,25 @@ pre {
   }
 
   .phase-facts > div {
-    padding-inline: 1rem;
+    padding-inline: var(--space-4);
   }
 
   .phase-detail-grid > section,
   .wave-stack {
-    padding-inline: 1rem;
+    padding-inline: var(--space-4);
   }
 }
 
 /* Phase 3 — header search field and /search results page (D-01, D-02, D-03, D-04, D-05). */
 .search-field {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
   flex: 1;
   align-items: center;
   min-width: 0;
   border: 1px solid var(--border);
   background: var(--input);
-  padding: 0.4rem 0.65rem;
+  padding: var(--space-1-5) var(--space-2-5);
   color: var(--muted-foreground);
 }
 
@@ -2750,12 +2792,12 @@ pre {
 .search-dropdown-notice,
 .search-dropdown-status,
 .search-dropdown-empty {
-  padding: 0.75rem 1rem;
+  padding: var(--space-3) var(--space-4);
   font-size: 0.78rem;
 }
 
 .search-dropdown-status p {
-  margin: 0 0 0.2rem;
+  margin: 0 0 var(--space-1);
   color: var(--foreground);
 }
 
@@ -2769,9 +2811,9 @@ pre {
 
 .search-dropdown-item {
   display: grid;
-  gap: 0.15rem;
+  gap: var(--space-0-5);
   border-top: 1px solid var(--border);
-  padding: 0.6rem 1rem;
+  padding: var(--space-2-5) var(--space-4);
   color: inherit;
   text-decoration: none;
   cursor: pointer;
@@ -2815,18 +2857,18 @@ pre {
 .search-dropdown-footer {
   justify-content: center;
   border-top: 1px solid var(--border);
-  padding: 0.6rem 1rem;
+  padding: var(--space-2-5) var(--space-4);
 }
 
 /* /search results page — grouped surface (D-07 location+kind taxonomy, D-08 snippets). */
 .search-groups {
   display: grid;
-  gap: 2rem;
+  gap: var(--space-8);
 }
 
 .search-group {
   display: grid;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 /* Label/eyebrow typographic role (UI-SPEC Typography) — deliberately NOT --primary: accent is
@@ -2843,7 +2885,7 @@ pre {
 
 .search-group-rows {
   display: grid;
-  gap: 0.75rem;
+  gap: var(--space-3);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -2851,16 +2893,16 @@ pre {
 
 .search-result-card {
   display: grid;
-  gap: 0.5rem;
+  gap: var(--space-2);
   border: 1px solid var(--border);
   background: color-mix(in oklch, var(--card) 94%, transparent);
-  padding: 1rem 1.25rem;
+  padding: var(--space-4) var(--space-5);
 }
 
 .search-result-card-header {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: var(--space-2);
   align-items: center;
 }
 
@@ -2878,15 +2920,15 @@ pre {
 
 .search-snippets {
   display: grid;
-  gap: 0.5rem;
-  margin-top: 0.15rem;
+  gap: var(--space-2);
+  margin-top: var(--space-0-5);
 }
 
 .search-snippet {
   overflow-wrap: anywhere;
   border: 1px solid transparent;
   background: color-mix(in oklch, var(--muted) 40%, transparent);
-  padding: 0.5rem 0.65rem;
+  padding: var(--space-2) var(--space-2-5);
   color: var(--foreground);
   font-size: 0.82rem;
   line-height: 1.55;
@@ -2907,7 +2949,7 @@ pre {
   justify-self: start;
   border: 1px solid var(--border);
   background: var(--background);
-  padding: 0.4rem 0.65rem;
+  padding: var(--space-1-5) var(--space-2-5);
   color: var(--foreground);
   cursor: pointer;
   font-family: var(--font-heading);
@@ -2962,7 +3004,7 @@ pre {
 .warning-disclosure-label {
   display: flex;
   min-width: 0;
-  gap: 0.75rem;
+  gap: var(--space-3);
   align-items: center;
   color: var(--foreground);
 }
@@ -2981,9 +3023,9 @@ pre {
 
 .warning-fields {
   display: grid;
-  gap: 0.4rem 1rem;
+  gap: var(--space-1-5) var(--space-4);
   grid-template-columns: max-content 1fr;
-  margin-top: 0.75rem;
+  margin-top: var(--space-3);
 }
 
 .warning-fields dt {
@@ -3001,7 +3043,7 @@ pre {
 }
 
 .warning-fields-label {
-  margin: 0.75rem 0 0.3rem;
+  margin: var(--space-3) 0 var(--space-1);
   color: var(--muted-foreground);
   font-family: var(--font-heading);
   font-size: var(--font-size-micro-label);
@@ -3012,17 +3054,17 @@ pre {
 
 .warning-document-warnings ul {
   display: grid;
-  gap: 0.3rem;
+  gap: var(--space-1);
   margin: 0;
-  padding-left: 1.1rem;
+  padding-left: var(--space-4);
 }
 
 .trace-filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: var(--space-4);
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-6);
 }
 
 .trace-filter-input {
@@ -3030,7 +3072,7 @@ pre {
   min-width: 12rem;
   border: 1px solid var(--border);
   background: var(--input);
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
   color: var(--foreground);
   font-family: var(--font-sans);
   font-size: 0.82rem;
@@ -3048,13 +3090,13 @@ pre {
 .trace-status-filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .trace-filter-button {
   border: 1px solid var(--border);
   background: var(--background);
-  padding: 0.4rem 0.7rem;
+  padding: var(--space-1-5) var(--space-3);
   color: var(--muted-foreground);
   cursor: pointer;
   font-family: var(--font-heading);
@@ -3077,24 +3119,24 @@ pre {
 
 .trace-category,
 .trace-deferred {
-  margin-top: 2rem;
+  margin-top: var(--space-8);
 }
 
 .trace-category > h2,
 .trace-deferred > h2 {
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--space-3);
 }
 
 .trace-marker-stack {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: var(--space-1-5);
   align-items: center;
 }
 
 .trace-covering-list {
   display: grid;
-  gap: 0.5rem;
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -3103,7 +3145,7 @@ pre {
 .trace-covering-entry {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: var(--space-2);
   align-items: center;
 }
 
@@ -3143,19 +3185,19 @@ pre {
 
 .toast-viewport {
   position: fixed;
-  right: 1.5rem;
-  bottom: 1.5rem;
+  right: var(--space-6);
+  bottom: var(--space-6);
   z-index: 30;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
   width: min(22rem, calc(100vw - 3rem));
 }
 
 .toast {
   display: grid;
-  gap: 0.3rem;
-  padding: 0.85rem 1rem;
+  gap: var(--space-1);
+  padding: var(--space-3-5) var(--space-4);
   border: 1px solid var(--border);
   border-left: 3px solid var(--destructive);
   background: var(--card);
@@ -3191,20 +3233,20 @@ pre {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: clamp(1.25rem, 4vw, 3rem);
+  padding: var(--space-fluid-7);
 }
 
 .invalid-project-theme-slot {
   position: fixed;
-  top: 1.5rem;
-  right: 1.5rem;
+  top: var(--space-6);
+  right: var(--space-6);
 }
 
 .invalid-project-panel {
   display: grid;
-  gap: 1.25rem;
+  gap: var(--space-5);
   width: min(40rem, 100%);
-  padding: clamp(1.5rem, 4vw, 3rem);
+  padding: var(--space-fluid-7);
   border: 1px solid var(--border);
   border-top: 3px solid var(--destructive);
   background: color-mix(in oklch, var(--card) 94%, transparent);
@@ -3235,7 +3277,7 @@ pre {
 
 .copy-field {
   display: grid;
-  gap: 0.4rem;
+  gap: var(--space-1-5);
 }
 
 .copy-field-label {
@@ -3250,9 +3292,9 @@ pre {
 
 .copy-field-row {
   display: flex;
-  gap: 0.6rem;
+  gap: var(--space-2-5);
   align-items: center;
-  padding: 0.6rem 0.75rem;
+  padding: var(--space-2-5) var(--space-3);
   border: 1px solid var(--border);
   background: color-mix(in oklch, var(--muted) 45%, transparent);
 }
