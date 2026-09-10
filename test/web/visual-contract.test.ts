@@ -446,7 +446,7 @@ describe('code scrollbar and table striping (F6, F9)', () => {
   });
 });
 
-describe('header search dropdown — navigating surface (03-02 Task 3, D-01)', () => {
+describe('header search dialog — navigating surface (03-02 Task 3, D-01; quick-260911-243 NAV-04)', () => {
   it('bounds the rendered rows by a named constant, not a magic-number slice (Test 1)', async () => {
     const source_ = await source('src/web/components/search-field.tsx');
     expect(source_).toMatch(/const DROPDOWN_LIMIT = 8;/);
@@ -468,7 +468,7 @@ describe('header search dropdown — navigating surface (03-02 Task 3, D-01)', (
 
   it('truncates the dropdown path from the head via CSS, keeping the filename tail visible (Test 4)', async () => {
     const css = await source('src/web/styles/globals.css');
-    const [block] = ruleBlocks(css, '.search-dropdown-item .search-result-path {');
+    const [block] = ruleBlocks(css, '.search-dialog-item .search-result-path {');
     expect(block).toBeDefined();
     expect(block).toContain('direction: rtl;');
     expect(block).toContain('text-overflow: ellipsis;');
@@ -476,7 +476,7 @@ describe('header search dropdown — navigating surface (03-02 Task 3, D-01)', (
 
   it('bounds the dropdown height with its own scroll so a long result set cannot shift the sticky header (Test 5)', async () => {
     const css = await source('src/web/styles/globals.css');
-    const [block] = ruleBlocks(css, '.search-dropdown {');
+    const [block] = ruleBlocks(css, '.search-dialog-results {');
     expect(block).toBeDefined();
     expect(block).toMatch(/max-height:\s*min\(/);
     expect(block).toContain('overflow-y: auto;');

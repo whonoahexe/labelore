@@ -6,7 +6,7 @@ import { formatProjectMeta, projectDisplayName } from '../../presentation/shell-
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
 import { LabeloreMark } from './labelore-mark.tsx';
-import { SearchField } from './search-field.tsx';
+import { SearchDialog } from './search-field.tsx';
 import { SnapshotStatus } from './snapshot-status.tsx';
 import { ThemeToggle } from './theme-toggle.tsx';
 import { ToastProvider } from './ui/toast.tsx';
@@ -116,7 +116,7 @@ export function AppShell(): React.JSX.Element {
               readAt={presentation.data?.readAt ?? null}
               phase={presentation.isPending ? 'pending' : presentation.isError ? 'error' : 'ready'}
             />
-            <SearchField />
+            <SearchDialog />
             <ThemeToggle />
           </div>
         </header>

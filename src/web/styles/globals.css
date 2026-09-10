@@ -104,6 +104,10 @@
   --primary-tint: color-mix(in oklch, var(--primary) 9%, transparent);
   --shadow-popover: 0 1rem 2.5rem color-mix(in oklab, var(--foreground) 18%, transparent);
   --scrollbar-thumb: color-mix(in oklch, var(--muted-foreground) 45%, transparent);
+  /* NAV-04 (quick-260911-243): the search dialog's full-screen scrim. Declared per-theme (below)
+     rather than shared, since a single recipe cannot darken correctly on both light and dark
+     backgrounds — see .dark for the corresponding value. */
+  --overlay-scrim: color-mix(in oklch, var(--foreground) 38%, transparent);
 
   color: var(--foreground);
   background: var(--background);
@@ -129,6 +133,9 @@
   --sidebar: oklch(0.175 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 16%);
+  /* Darkens further from the already-dark background, so the scrim still reads as a distinct
+     layer rather than disappearing into it. */
+  --overlay-scrim: color-mix(in oklch, var(--background) 72%, transparent);
   color-scheme: dark;
 }
 
@@ -221,6 +228,13 @@
   --fw-medium: 500;
   --fw-semibold: 600;
   --fw-bold: 700;
+
+  /* NAV-04 (quick-260911-243): search dialog geometry. Deliberately not `--space-` prefixed —
+     the token-guard's step check only accepts plain rem multiples of 0.125rem for that family,
+     and a vh-based offset and rem-based widths here don't fit that shape. */
+  --dialog-offset-top: 12vh;
+  --dialog-max-width: 40rem;
+  --dialog-results-max-height: 28rem;
 }
 
 @layer base {
@@ -1711,6 +1725,12 @@ pre {
     padding-block: var(--space-3);
   }
 
+  /* NAV-04: the shortcut hint has no room at the narrowest width; the trigger's aria-label keeps
+     it fully operable and named for assistive tech. */
+  .search-trigger-kbd {
+    display: none;
+  }
+
   .page-stack {
     padding-top: var(--space-10);
   }
@@ -2807,86 +2827,136 @@ pre {
   }
 }
 
-/* Phase 3 — header search field and /search results page (D-01, D-02, D-03, D-04, D-05). */
-.search-field {
-  display: flex;
+/* NAV-04 (quick-260911-243) — header search: an icon trigger opening a centred @base-ui/react
+   Dialog over a full-screen scrim, wrapping an inline Combobox. Replaces the former inline
+   dropdown field (Phase 3, D-01 through D-05); the query machinery itself is unchanged. */
+.search-trigger {
   gap: var(--space-2);
-  flex: 1;
-  align-items: center;
-  min-width: 0;
-  border: 1px solid var(--border);
-  background: var(--input);
-  padding: var(--space-1-5) var(--space-2-5);
   color: var(--muted-foreground);
 }
 
-.search-field:focus-within {
-  border-color: var(--ring);
+.search-trigger:hover {
   color: var(--foreground);
 }
 
-.search-field-icon {
-  width: 0.85rem;
-  height: 0.85rem;
-  flex: none;
-}
-
-.search-field-input {
-  flex: 1;
-  min-width: 0;
-  overflow-x: auto;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font-family: var(--font-sans);
-  font-size: var(--fs-4);
-  white-space: nowrap;
-}
-
-.search-field-input:focus {
-  outline: none;
-}
-
-.search-field-input::placeholder {
+.search-trigger-kbd {
+  padding: var(--space-0-5) var(--space-1);
+  border: 1px solid var(--border);
   color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-normal);
 }
 
-.search-dropdown-positioner {
-  z-index: 60;
+.search-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: var(--overlay-scrim);
 }
 
-.search-dropdown {
+.search-dialog-viewport {
+  position: fixed;
+  inset: 0;
+  z-index: 71;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--dialog-offset-top) var(--space-4) var(--space-4);
+}
+
+.search-dialog {
   display: grid;
-  width: min(22rem, calc(100vw - 2rem));
-  max-height: min(24rem, calc(100vh - 6rem));
-  overflow-y: auto;
+  width: min(var(--dialog-max-width), 100%);
   border: 1px solid var(--border);
   background: var(--popover);
   color: var(--popover-foreground);
   box-shadow: var(--shadow-popover);
 }
 
-.search-dropdown-notice,
-.search-dropdown-status,
-.search-dropdown-empty {
+.search-dialog-field {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  padding: var(--space-3-5) var(--space-4);
+  color: var(--muted-foreground);
+}
+
+.search-dialog-field:focus-within {
+  box-shadow: inset 0 -2px var(--ring);
+  color: var(--foreground);
+}
+
+.search-dialog-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: var(--font-sans);
+  font-size: var(--fs-fluid-1);
+}
+
+.search-dialog-input:focus {
+  outline: none;
+}
+
+.search-dialog-input::placeholder {
+  color: var(--muted-foreground);
+}
+
+.search-dialog-esc-hint {
+  flex: none;
+  padding: var(--space-0-5) var(--space-1);
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-normal);
+}
+
+.search-dialog-results {
+  max-height: min(
+    var(--dialog-results-max-height),
+    calc(100vh - var(--dialog-offset-top) - var(--space-28))
+  );
+  overflow-y: auto;
+}
+
+.search-dialog-notice,
+.search-dialog-status,
+.search-dialog-empty,
+.search-dialog-hint {
   padding: var(--space-3) var(--space-4);
   font-size: var(--fs-3);
 }
 
-.search-dropdown-status p {
+.search-dialog-status p {
   margin: 0 0 var(--space-1);
   color: var(--foreground);
 }
 
-.search-dropdown-status small {
+.search-dialog-status small {
   color: var(--muted-foreground);
 }
 
-.search-dropdown-list {
+.search-dialog-legend {
+  display: flex;
+  gap: var(--space-3);
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  list-style: none;
+}
+
+.search-dialog-list {
   display: grid;
 }
 
-.search-dropdown-item {
+.search-dialog-item {
   display: grid;
   gap: var(--space-0-5);
   border-top: 1px solid var(--border);
@@ -2896,11 +2966,11 @@ pre {
   cursor: pointer;
 }
 
-.search-dropdown-list > :first-child {
+.search-dialog-list > :first-child {
   border-top: 0;
 }
 
-.search-dropdown-item[data-highlighted] {
+.search-dialog-item[data-highlighted] {
   background: var(--state-active);
   box-shadow: inset 3px 0 var(--primary);
 }
@@ -2920,9 +2990,9 @@ pre {
   font-size: var(--fs-1);
 }
 
-/* File paths truncate head-first with a leading ellipsis inside the compact dropdown, keeping the
+/* File paths truncate head-first with a leading ellipsis inside the dialog list, keeping the
    filename tail (the identifying part) always visible. */
-.search-dropdown-item .search-result-path {
+.search-dialog-item .search-result-path {
   overflow: hidden;
   direction: rtl;
   text-align: left;
@@ -2931,7 +3001,7 @@ pre {
   white-space: nowrap;
 }
 
-.search-dropdown-footer {
+.search-dialog-footer {
   justify-content: center;
   border-top: 1px solid var(--border);
   padding: var(--space-2-5) var(--space-4);

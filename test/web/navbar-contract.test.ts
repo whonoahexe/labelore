@@ -12,7 +12,10 @@ import {
   formatProjectMeta,
   formatReadAt,
   formatRelativeReadAt,
+  isEditableTarget,
+  isSearchShortcut,
   projectDisplayName,
+  shortcutHintFor,
 } from '../../src/presentation/shell-header.ts';
 
 async function source(path: string): Promise<string> {
@@ -190,6 +193,67 @@ describe('shell-header helpers', () => {
       expect(formatRelativeReadAt('2026-01-01T00:00:00.000Z', now)).toBe('3d ago');
     });
   });
+
+  describe('isSearchShortcut', () => {
+    it('is true for k/K with metaKey or ctrlKey and no other modifier', () => {
+      expect(
+        isSearchShortcut({ key: 'k', metaKey: true, ctrlKey: false, altKey: false, shiftKey: false }),
+      ).toBe(true);
+      expect(
+        isSearchShortcut({ key: 'K', metaKey: false, ctrlKey: true, altKey: false, shiftKey: false }),
+      ).toBe(true);
+    });
+
+    it('is false with altKey or shiftKey held', () => {
+      expect(
+        isSearchShortcut({ key: 'k', metaKey: true, ctrlKey: false, altKey: true, shiftKey: false }),
+      ).toBe(false);
+      expect(
+        isSearchShortcut({ key: 'k', metaKey: true, ctrlKey: false, altKey: false, shiftKey: true }),
+      ).toBe(false);
+    });
+
+    it('is false with no modifier, or for any other key', () => {
+      expect(
+        isSearchShortcut({ key: 'k', metaKey: false, ctrlKey: false, altKey: false, shiftKey: false }),
+      ).toBe(false);
+      expect(
+        isSearchShortcut({ key: 'p', metaKey: true, ctrlKey: false, altKey: false, shiftKey: false }),
+      ).toBe(false);
+    });
+  });
+
+  describe('shortcutHintFor', () => {
+    it('returns ⌘K for Apple platforms', () => {
+      expect(shortcutHintFor('MacIntel')).toBe('⌘K');
+      expect(shortcutHintFor('iPhone')).toBe('⌘K');
+      expect(shortcutHintFor('iPad')).toBe('⌘K');
+    });
+
+    it('returns Ctrl K for everything else', () => {
+      expect(shortcutHintFor('Win32')).toBe('Ctrl K');
+      expect(shortcutHintFor('Linux x86_64')).toBe('Ctrl K');
+      expect(shortcutHintFor('')).toBe('Ctrl K');
+    });
+  });
+
+  describe('isEditableTarget', () => {
+    it('is true for INPUT, TEXTAREA and SELECT', () => {
+      expect(isEditableTarget({ tagName: 'INPUT', isContentEditable: false })).toBe(true);
+      expect(isEditableTarget({ tagName: 'TEXTAREA', isContentEditable: false })).toBe(true);
+      expect(isEditableTarget({ tagName: 'SELECT', isContentEditable: false })).toBe(true);
+    });
+
+    it('is true when isContentEditable is true', () => {
+      expect(isEditableTarget({ tagName: 'DIV', isContentEditable: true })).toBe(true);
+    });
+
+    it('is false for BUTTON, A, and null', () => {
+      expect(isEditableTarget({ tagName: 'BUTTON', isContentEditable: false })).toBe(false);
+      expect(isEditableTarget({ tagName: 'A', isContentEditable: false })).toBe(false);
+      expect(isEditableTarget(null)).toBe(false);
+    });
+  });
 });
 
 describe('Strata mark, brand lockup and tabs (D-01, D-02, NAV-01..03)', () => {
@@ -329,5 +393,99 @@ describe('snapshot-status pill absorbs refresh-control (NAV-05)', () => {
     expect(css).toMatch(
       /@media \(prefers-reduced-motion: reduce\)\s*\{[^{}]*\.snapshot-dot\s*\{[^}]*animation:\s*none/s,
     );
+  });
+});
+
+describe('search dialog (NAV-04)', () => {
+  it('search-field.tsx imports from @base-ui/react/dialog and renders the dialog parts', async () => {
+    const field = await source('src/web/components/search-field.tsx');
+    expect(field).toContain("from '@base-ui/react/dialog'");
+    expect(field).toContain('Dialog.Backdrop');
+    expect(field).toContain('Dialog.Viewport');
+    expect(field).toContain('Dialog.Popup');
+    expect(field).toContain('Dialog.Title');
+    expect(field).toMatch(/Combobox\.Root[^>]*\binline\b/s);
+    expect(field).toContain('aria-keyshortcuts');
+  });
+
+  it('exports SearchDialog', async () => {
+    const field = await source('src/web/components/search-field.tsx');
+    expect(field).toMatch(/export function SearchDialog/);
+  });
+
+  it('adds a window keydown listener in an effect and removes it in cleanup', async () => {
+    const field = await source('src/web/components/search-field.tsx');
+    expect(field).toMatch(/window\.addEventListener\('keydown'/);
+    expect(field).toMatch(/window\.removeEventListener\('keydown'/);
+  });
+
+  it('keeps the existing query machinery unchanged', async () => {
+    const field = await source('src/web/components/search-field.tsx');
+    expect(field).toMatch(/const DEBOUNCE_MS = 160;/);
+    expect(field).toMatch(/const DROPDOWN_LIMIT = 8;/);
+    expect(field).toMatch(/\.slice\(0, DROPDOWN_LIMIT\)/);
+    expect(field).toMatch(/queryFn:\s*\(\{\s*signal\s*\}\)/);
+    expect(field).toMatch(/status === 'building'/);
+  });
+
+  it('builds the search-page navigation from presentationRoutePatterns.search, never a literal path', async () => {
+    const field = await source('src/web/components/search-field.tsx');
+    expect(field).toContain('presentationRoutePatterns.search');
+    expect(field).not.toMatch(/['"]\/search\?q=/);
+  });
+
+  it('app-shell.tsx renders SearchDialog in .shell-controls', async () => {
+    const shell = await source('src/web/components/app-shell.tsx');
+    expect(shell).toContain('<SearchDialog');
+  });
+
+  it('never injects corpus-derived markup into the DOM as raw HTML', async () => {
+    const field = await source('src/web/components/search-field.tsx');
+    expect(field).not.toContain('dangerouslySetInnerHTML');
+  });
+
+  it('CSS: --overlay-scrim is declared in both :root and .dark with different values', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const rootMatch = css.match(/:root\s*\{[^}]*--overlay-scrim:\s*([^;]+);/s);
+    const darkMatch = css.match(/\.dark\s*\{[^}]*--overlay-scrim:\s*([^;]+);/s);
+    expect(rootMatch).not.toBeNull();
+    expect(darkMatch).not.toBeNull();
+    expect(rootMatch?.[1].trim()).not.toBe(darkMatch?.[1].trim());
+    expect(css).toMatch(/\.search-dialog-backdrop\s*\{[^}]*var\(--overlay-scrim\)/s);
+  });
+
+  it('CSS: search-dialog-results scrolls within a bounded max-height', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [block] = ruleBlocks(css, '.search-dialog-results {');
+    expect(block).toBeDefined();
+    expect(block).toMatch(/max-height:\s*min\(/);
+    expect(block).toContain('overflow-y: auto;');
+  });
+
+  it('CSS: the dialog item path keeps head-truncation via rtl + ellipsis', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [block] = ruleBlocks(css, '.search-dialog-item .search-result-path {');
+    expect(block).toBeDefined();
+    expect(block).toContain('direction: rtl;');
+    expect(block).toContain('text-overflow: ellipsis;');
+  });
+
+  it('CSS: .search-trigger-kbd is hidden inside the 42rem media block', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const narrowSection = css.slice(css.indexOf('@media (max-width: 42rem)'));
+    expect(narrowSection).toMatch(/\.search-trigger-kbd\s*\{[^}]*display:\s*none;/s);
+  });
+
+  it('CSS: the old .search-field and .search-dropdown rules are gone', async () => {
+    const css = await source('src/web/styles/globals.css');
+    expect(css).not.toMatch(/\.search-field\s*\{/);
+    expect(css).not.toMatch(/\.search-dropdown\s*\{/);
+  });
+
+  it('dialog geometry tokens are not --space- prefixed and are declared in scale :root', async () => {
+    const css = await source('src/web/styles/globals.css');
+    expect(css).toMatch(/--dialog-offset-top:/);
+    expect(css).toMatch(/--dialog-max-width:/);
+    expect(css).toMatch(/--dialog-results-max-height:/);
   });
 });
