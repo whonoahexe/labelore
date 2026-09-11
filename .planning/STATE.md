@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 milestone: v1.0
 status: Awaiting next milestone
 stopped_at: Phase 04 complete — all phases complete
-last_updated: "2026-09-10T20:43:41.794Z"
+last_updated: "2026-09-11T19:29:12.818Z"
 last_activity: 2026-09-11
 last_activity_desc: Milestone v1.0 completed and archived
-state_head: a53d0ffeef2c03a55776caa6c0fe874233fd67f5
+state_head: 155b4ab3e4ddb6d2053f0d6597ed341b8424b208
+current_phase: 04
 progress:
   total_phases: 4
   completed_phases: 4
   total_plans: 30
   completed_plans: 30
-current_phase: 04
 ---
 
 # Project State
@@ -97,6 +97,7 @@ None.
 | 260911-243 | Navbar redesign: Strata logo mark everywhere, brand+project lockup, segmented tabs, search icon with full-screen dialog, snapshot status pill | 2026-09-11 | 6a0e5f9 | [260911-243-navbar-redesign-strata-logo-mark-everywh](./quick/260911-243-navbar-redesign-strata-logo-mark-everywh/) |
 | 3 | Match the header Ctrl K hint height to the snapshot pill | 2026-09-11 | 89eb434 | — |
 | 260911-vqe | Sidebar redesign: navbar drawer, readable labels, lifecycle order, hide exclusions | 2026-09-11 | a6e6532 | [260911-vqe-sidebar-redesign-navbar-drawer-readable-](./quick/260911-vqe-sidebar-redesign-navbar-drawer-readable-/) |
+| 5 | Strip emojis from next-primary and attention-panel descriptions | 2026-09-11 | 155b4ab | — |
 
 ## Deferred Items
 
