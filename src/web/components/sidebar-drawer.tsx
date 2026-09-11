@@ -15,7 +15,7 @@ export function SidebarDrawer(): React.JSX.Element {
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger
-        className={buttonVariants({ variant: 'ghost', size: 'sm', className: 'sidebar-trigger' })}
+        className={buttonVariants({ variant: 'ghost', size: 'icon-sm', className: 'sidebar-trigger' })}
         aria-label="Open planning files"
       >
         <PanelLeft aria-hidden="true" />

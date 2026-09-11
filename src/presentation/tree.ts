@@ -1,15 +1,16 @@
 // Pure projection over an already-assembled ProjectPresentation — no filesystem I/O, no second
 // walk of the planning tree, no low-level filesystem-path module import (see 03-03-PLAN.md's
-// prohibitions). The tree mirrors every reachable artifact, each shown as a leaf with a readable
-// label (quick-260911-vqe D-02/D-03), and recorded exclusions are deliberately not shown in this
-// surface (quick-260911-vqe D-04) — they remain on `ProjectPresentation.exclusions` verbatim for
-// any other surface that wants them; nothing is deleted, only not rendered here.
+// prohibitions). The tree shows the project's markdown documents, each as a leaf with a readable
+// label (quick-260911-vqe D-02/D-03). Some things are deliberately not shown in this surface:
+// recorded exclusions (D-04), non-markdown machine state such as config.json, HANDOFF.json and
+// milestone.lock, and the catch-all 'other' location. They all stay on ProjectPresentation
+// verbatim for any other surface that wants them; nothing is deleted, only not rendered here.
 import { LOCATION_ORDER } from '../planning-repo/discovery.ts';
 import { comparePhaseNumbers } from '../planning-repo/naming.ts';
 import type { ProjectPresentation } from '../server/project-presentation.ts';
 import { artifactWarningTone, type ArtifactWarningTone } from './artifact-warning-tone.ts';
 import { buildPhaseUrl, presentationRoutePatterns } from './routes.ts';
-import { GROUP_LABELS, labelOf, rankOf, formatSuffix } from './tree-labels.ts';
+import { GROUP_LABELS, labelOf, rankOf } from './tree-labels.ts';
 
 // D-16: clicking the root REQUIREMENTS.md node in the sidebar lands on the traceability view
 // rather than the raw document. Scoped to the root document only — an archived milestone's own
@@ -61,9 +62,18 @@ const GROUP_PATH_PREFIX: Record<TreeLocation, readonly string[]> = {
   other: ['.planning'],
 };
 
-const ORDERED_LOCATIONS: TreeLocation[] = (Object.keys(LOCATION_ORDER) as TreeLocation[]).sort(
-  (a, b) => LOCATION_ORDER[a] - LOCATION_ORDER[b],
-);
+// The catch-all location for anything outside GSD's known layout (spikes/, ui-reviews/, ...) —
+// never a planning document worth browsing, so the tree drops the whole group.
+const HIDDEN_LOCATIONS: ReadonlySet<TreeLocation> = new Set(['other']);
+
+const ORDERED_LOCATIONS: TreeLocation[] = (Object.keys(LOCATION_ORDER) as TreeLocation[])
+  .filter((location) => !HIDDEN_LOCATIONS.has(location))
+  .sort((a, b) => LOCATION_ORDER[a] - LOCATION_ORDER[b]);
+
+/** Only markdown documents in a browsable location reach the tree. */
+function isShownInTree(artifact: { path: string; location: TreeLocation }): boolean {
+  return !HIDDEN_LOCATIONS.has(artifact.location) && artifact.path.toLowerCase().endsWith('.md');
+}
 
 function relativeSegments(path: string, location: TreeLocation): string[] {
   const prefix = GROUP_PATH_PREFIX[location];
@@ -147,6 +157,7 @@ export function buildTreeViewModel(presentation: ProjectPresentation): TreeNode[
   }
 
   for (const artifact of presentation.artifacts) {
+    if (!isShownInTree(artifact)) continue;
     insert(artifact.location, relativeSegments(artifact.path, artifact.location), (path) => {
       const { label, badge } = labelOf({ location: artifact.location, nodeType: 'file', path }, null);
       return {
@@ -170,25 +181,6 @@ export function buildTreeViewModel(presentation: ProjectPresentation): TreeNode[
     return lastSegment(left.path).localeCompare(lastSegment(right.path));
   }
 
-  // D-02 collision rule: when two or more sibling leaves land on the same readable label, every
-  // one of them whose file extension isn't `.md` gets that extension appended in parentheses
-  // ('State' / 'State (JSON)') — never the `.md` sibling, which keeps the bare label.
-  function disambiguateLabels(leaves: TreeNode[]): void {
-    const byLabel = new Map<string, TreeNode[]>();
-    for (const leaf of leaves) {
-      const bucket = byLabel.get(leaf.label);
-      if (bucket) bucket.push(leaf);
-      else byLabel.set(leaf.label, [leaf]);
-    }
-    for (const bucket of byLabel.values()) {
-      if (bucket.length < 2) continue;
-      for (const node of bucket) {
-        const suffix = formatSuffix(lastSegment(node.path));
-        if (suffix !== null) node.label = `${node.label} (${suffix})`;
-      }
-    }
-  }
-
   function sortChildren(nodes: TreeNode[]): void {
     const dirs = nodes.filter((node) => node.nodeType === 'directory');
     const leaves = nodes.filter((node) => node.nodeType !== 'directory');
@@ -202,7 +194,6 @@ export function buildTreeViewModel(presentation: ProjectPresentation): TreeNode[
     });
     leaves.sort(rankCompare);
     nodes.splice(0, nodes.length, ...dirs, ...leaves);
-    disambiguateLabels(leaves);
     for (const dir of dirs) sortChildren(dir.children);
   }
 

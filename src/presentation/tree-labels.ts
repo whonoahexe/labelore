@@ -51,17 +51,6 @@ export function sentenceCase(token: string): string {
     .join(' ');
 }
 
-/** Null for a `.md` name or a name with no extension, otherwise the extension upper-cased
- * ('STATE.json' gives 'JSON'). Used only to disambiguate same-label siblings after sorting. */
-export function formatSuffix(segment: string): string | null {
-  const lastDot = segment.lastIndexOf('.');
-  if (lastDot <= 0) return null;
-  const extension = segment.slice(lastDot + 1);
-  if (extension.length === 0) return null;
-  if (extension.toLowerCase() === 'md') return null;
-  return extension.toUpperCase();
-}
-
 function genericDirectoryLabel(segment: string): { label: string; badge: string | null } {
   return { label: sentenceCase(segment), badge: null };
 }

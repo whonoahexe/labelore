@@ -20,10 +20,20 @@ function WarningIndicator({ tone }: { tone: TreeNode['warningTone'] }): React.JS
   );
 }
 
+const SHOWN_NODE_TYPES: ReadonlySet<string> = new Set(['group', 'directory', 'file']);
+
+/** Drops any node type this client doesn't render, such as the 'exclusion' stubs an older server
+ * process still sends until it is restarted. */
+function pruneUnknownNodes(nodes: TreeNode[]): TreeNode[] {
+  return nodes
+    .filter((node) => SHOWN_NODE_TYPES.has(node.nodeType))
+    .map((node) => ({ ...node, children: pruneUnknownNodes(node.children) }));
+}
+
 async function fetchTree(): Promise<TreeNode[]> {
   const response = await fetch('/api/tree', { headers: { Accept: 'application/json' } });
   if (!response.ok) throw new Error(`Tree request failed (${response.status})`);
-  return (await response.json()) as TreeNode[];
+  return pruneUnknownNodes((await response.json()) as TreeNode[]);
 }
 
 /** The shared `['tree']` query. `AppShell` calls this to decide when to render the drawer trigger
