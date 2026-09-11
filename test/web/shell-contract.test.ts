@@ -93,15 +93,31 @@ describe('authorized Studio Portal shell contract', () => {
     expect(pair).not.toContain('does not have a paired summary yet');
   });
 
-  it('restructures the shell content region into a persistent sidebar plus outlet (03-03 D-09)', async () => {
+  it('mounts the planning-files drawer trigger in the header and keeps a single-column content region (quick-260911-vqe D-01)', async () => {
     const shell = await source('src/web/components/app-shell.tsx');
-    expect(shell).toContain("import { TreeNavigator } from './tree-navigator.tsx';");
-    expect(shell).toMatch(
-      /<div className="shell-content" data-sidebar={sidebarAbsent \? 'absent' : 'present'}>/,
-    );
-    expect(shell).toContain('<TreeNavigator onAbsentChange={setSidebarAbsent} />');
+    expect(shell).toContain("import { SidebarDrawer } from './sidebar-drawer.tsx';");
+    expect(shell).toContain("import { useTreeQuery } from './tree-navigator.tsx';");
+
+    const headerIndex = shell.indexOf('<header className="shell-header"');
+    const brandIndex = shell.indexOf('className="brand"');
+    const triggerIndex = shell.indexOf('{tree.isSuccess ? <SidebarDrawer /> : null}');
+    expect(headerIndex).toBeGreaterThanOrEqual(0);
+    expect(brandIndex).toBeGreaterThan(headerIndex);
+    expect(triggerIndex).toBeGreaterThan(headerIndex);
+    expect(triggerIndex).toBeLessThan(brandIndex);
+
+    expect(shell).toContain('<div className="shell-content">');
     expect(shell).toContain('<div className="shell-outlet" id="main-content">');
     expect(shell).toContain('href="#main-content"');
+
+    expect(shell).not.toContain('data-sidebar');
+    expect(shell).not.toContain('onAbsentChange');
+    expect(shell).not.toContain('ResizeObserver');
+    expect(shell).not.toContain('shell-header-height');
+
+    const sidebarDrawer = await source('src/web/components/sidebar-drawer.tsx');
+    expect(sidebarDrawer).toContain('<TreeNavigator open={open} onNavigate={() => setOpen(false)} />');
+    expect(sidebarDrawer).not.toContain('dangerouslySetInnerHTML');
   });
 
   // IN-01: top-level groups are meant to start open. Applying `open` only from the effect left

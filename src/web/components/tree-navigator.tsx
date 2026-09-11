@@ -26,6 +26,13 @@ async function fetchTree(): Promise<TreeNode[]> {
   return (await response.json()) as TreeNode[];
 }
 
+/** The shared `['tree']` query. `AppShell` calls this to decide when to render the drawer trigger
+ * at all, and `TreeNavigator` calls it again for its own data — react-query dedupes the underlying
+ * fetch by queryKey, so this is never a second network round trip. */
+export function useTreeQuery() {
+  return useQuery({ queryKey: ['tree'], queryFn: fetchTree });
+}
+
 /** Every node key from the root down to (and including) the node whose own `url` matches
  * `pathname` — or `null` when nothing in the tree matches the current route. D-12: this is the
  * "branch containing the current route", recomputed on every navigation. */
@@ -43,10 +50,12 @@ function TreeBranch({
   node,
   pathname,
   routeOpenKeys,
+  onNavigate,
 }: {
   node: TreeNode;
   pathname: string;
   routeOpenKeys: Set<string>;
+  onNavigate: () => void;
 }): React.JSX.Element {
   const isActive = node.url !== null && node.url === pathname;
   // D-12: top-level groups start open; everything else opens only when the current route's
@@ -76,7 +85,12 @@ function TreeBranch({
     return (
       <li className="tree-node" data-node-type={node.nodeType}>
         {node.url ? (
-          <Link to={node.url} className="tree-node-row" data-active={isActive ? 'true' : undefined}>
+          <Link
+            to={node.url}
+            className="tree-node-row"
+            data-active={isActive ? 'true' : undefined}
+            onClick={onNavigate}
+          >
             <span className="tree-chevron-spacer" aria-hidden="true" />
             <span className="tree-node-label" title={node.path}>
               {node.label}
@@ -112,7 +126,10 @@ function TreeBranch({
               to={node.url}
               className={labelClassName}
               title={labelTitle}
-              onClick={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                onNavigate();
+              }}
             >
               {node.label}
             </Link>
@@ -130,6 +147,7 @@ function TreeBranch({
               node={child}
               pathname={pathname}
               routeOpenKeys={routeOpenKeys}
+              onNavigate={onNavigate}
             />
           ))}
         </ul>
@@ -138,20 +156,30 @@ function TreeBranch({
   );
 }
 
-/** D-09/D-10/D-12: the persistent left sidebar, a literal mirror of `.planning/` as it sits on
- * disk. No separate error surface of its own — per 03-UI-SPEC.md, a failure here simply means the
- * sidebar doesn't render, relying on the shell's own existing snapshot-error notice. */
+/** D-01/D-12: the drawer body — a literal mirror of `.planning/` as it sits on disk, now hosted
+ * inside SidebarDrawer's `@base-ui/react` Dialog rather than a permanent sidebar track. No
+ * separate error surface of its own — per 03-UI-SPEC.md, a failure here simply means the drawer's
+ * tree doesn't render, relying on the shell's own existing snapshot-error notice. */
 export function TreeNavigator({
-  onAbsentChange,
+  open,
+  onNavigate,
 }: {
-  onAbsentChange?: (absent: boolean) => void;
+  open: boolean;
+  onNavigate: () => void;
 }): React.JSX.Element | null {
   const { pathname } = useLocation();
-  const query = useQuery({ queryKey: ['tree'], queryFn: fetchTree });
+  const query = useTreeQuery();
+  const navRef = useRef<HTMLElement | null>(null);
 
+  // D-01: on open, scroll the current route's row into view. A rAF defers past the paint that
+  // makes the keepMounted popup visible, so the just-unhidden element has real layout to measure.
   useEffect(() => {
-    onAbsentChange?.(query.isError);
-  }, [query.isError, onAbsentChange]);
+    if (!open || navRef.current === null) return;
+    const frame = requestAnimationFrame(() => {
+      navRef.current?.querySelector<HTMLElement>("[data-active='true']")?.scrollIntoView({ block: 'nearest' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [open]);
 
   if (query.isError) return null;
 
@@ -166,7 +194,7 @@ export function TreeNavigator({
   const routeOpenKeys = new Set(findRevealPath(tree, pathname, []) ?? []);
 
   return (
-    <nav className="tree-navigator" aria-label="Planning directory tree">
+    <nav className="tree-navigator" aria-label="Planning directory tree" ref={navRef}>
       <ul className="tree-root">
         {tree.map((group) => (
           <TreeBranch
@@ -174,6 +202,7 @@ export function TreeNavigator({
             node={group}
             pathname={pathname}
             routeOpenKeys={routeOpenKeys}
+            onNavigate={onNavigate}
           />
         ))}
       </ul>
