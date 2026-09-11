@@ -85,12 +85,13 @@
     'Liberation Mono', monospace;
   /* quick-260910-0x4 item 8: the shared uppercase-micro-label size. Was three literal 0.62rem
      declarations (9.92px) and three literal 0.6rem declarations (9.6px, smaller still) scattered
-     across .tree-excluded-marker, .phase-facts dt, .blocked-by, .artifact-metadata > summary span,
-     .warning-fields dt and .warning-fields-label — one design convention applied as a repeated
-     magic number, not six independent choices. 0.7rem = 11.2px at the unmodified 16px root (no
-     em compounding anywhere in this file) clears the 10px accessibility floor with real headroom;
-     0.625rem (exactly 10px) was rejected for having none. Not theme-dependent, so defined once
-     here rather than duplicated into .dark below — same pattern as the state aliases above. */
+     across .phase-facts dt, .blocked-by, .artifact-metadata > summary span, .warning-fields dt and
+     .warning-fields-label — one design convention applied as a repeated magic number, not five
+     independent choices (the family's former sixth sibling, the tree's exclusion marker, left with
+     quick-260911-vqe D-04). 0.7rem = 11.2px at the unmodified 16px root (no em compounding
+     anywhere in this file) clears the 10px accessibility floor with real headroom; 0.625rem
+     (exactly 10px) was rejected for having none. Not theme-dependent, so defined once here rather
+     than duplicated into .dark below — same pattern as the state aliases above. */
   --font-size-micro-label: 0.7rem;
 
   /* Named colour recipes (JZ8-03). Recurring color-mix() shapes get one name instead of being
@@ -235,6 +236,11 @@
   --dialog-offset-top: 12vh;
   --dialog-max-width: 40rem;
   --dialog-results-max-height: 28rem;
+
+  /* quick-260911-vqe: the planning-files drawer's width. Deliberately not `--space-` prefixed,
+     same reason as the dialog geometry tokens above — the step check only accepts plain rem
+     multiples of 0.125rem, and this is a viewport-relative min() shape. */
+  --drawer-width: min(22rem, 88vw);
 }
 
 @layer base {
@@ -359,14 +365,22 @@
   z-index: 20;
   top: 0;
   display: grid;
-  grid-template-areas: 'brand nav controls';
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-areas: 'menu brand nav controls';
+  grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: stretch;
   min-width: 0;
   max-width: 100%;
   border-bottom: 1px solid var(--border);
   background: color-mix(in oklch, var(--background) 90%, transparent);
   backdrop-filter: blur(16px);
+}
+
+/* quick-260911-vqe D-01: the planning-files drawer trigger, at the far left of the header at
+   every width. */
+.sidebar-trigger {
+  grid-area: menu;
+  align-self: center;
+  margin-left: var(--space-3);
 }
 
 .brand,
@@ -575,14 +589,6 @@
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr);
-  align-items: start;
-}
-
-/* D-09: no separate sidebar error surface exists — when the tree query fails, TreeNavigator
-   renders nothing and the shell falls back to a single reading column instead of leaving a
-   permanently-empty track. */
-.shell-content[data-sidebar='absent'] {
   grid-template-columns: minmax(0, 1fr);
 }
 
@@ -590,17 +596,12 @@
   min-width: 0;
 }
 
-/* D-09/D-12: the first real consumer of the --sidebar oklch token family. `--shell-header-height`
-   is set by app-shell.tsx from the header's own measured rendered height (it is not a fixed rem
-   value — the header sizes to its padded, responsive content) rather than a guessed constant. */
+/* quick-260911-vqe D-01: the tree is now the drawer's own scroll body — the drawer's popup owns
+   position, sizing, border and background, so this is just the scrolling list inside it. */
 .tree-navigator {
-  position: sticky;
-  top: var(--shell-header-height, 0px);
-  height: calc(100vh - var(--shell-header-height, 0px));
+  min-height: 0;
   overflow-y: auto;
-  border-right: 1px solid var(--sidebar-border);
-  background: var(--sidebar);
-  color: var(--sidebar-foreground);
+  overscroll-behavior: contain;
 }
 
 .tree-root,
@@ -616,35 +617,81 @@
   padding: var(--space-4) var(--space-3) var(--space-8);
 }
 
+/* SB-05: every group after the first gets the group gap; the first sits flush against the
+   drawer's own header padding. */
+.tree-root > .tree-node + .tree-node {
+  margin-top: var(--space-4);
+}
+
 .tree-children {
-  margin-top: var(--space-0-5);
-  padding-left: var(--space-4);
+  /* Puts the guide line under the parent chevron's centre: the row's own --space-2 inline padding
+     plus half the --space-4 chevron column. */
+  margin-left: var(--space-4);
+  padding-left: var(--space-3);
   border-left: 1px solid color-mix(in oklch, var(--sidebar-border) 78%, transparent);
 }
 
+/* SB-05: one row anatomy — a fixed chevron/spacer column, then a flexible ellipsis label, with the
+   badge and warning indicator flowing into trailing auto-sized columns after it. */
 .tree-node-row {
-  display: flex;
-  min-width: 0;
-  gap: var(--space-2);
+  display: grid;
+  grid-template-columns: var(--space-4) minmax(0, 1fr);
+  grid-auto-flow: column;
+  grid-auto-columns: auto;
   align-items: center;
-  overflow-wrap: anywhere;
-  min-height: 2rem;
-  padding: var(--space-1-5) var(--space-2);
-  color: var(--sidebar-foreground);
+  gap: var(--space-1-5);
+  min-height: var(--space-8);
+  padding-inline: var(--space-2);
+  color: var(--muted-foreground);
   font-size: var(--fs-3);
   line-height: var(--lh-snug);
   text-decoration: none;
 }
 
-.tree-warning-indicator {
-  flex: none;
-  margin-left: auto;
+.tree-node-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-chevron {
+  width: var(--space-3-5);
+  height: var(--space-3-5);
+  justify-self: center;
+  color: var(--muted-foreground);
+  transition: transform 140ms ease;
+}
+
+.tree-disclosure[open] > summary > .tree-chevron {
+  transform: rotate(90deg);
+}
+
+.tree-badge {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--ls-normal);
+}
+
+/* Folder rows (directories with children) read in the sidebar's stronger foreground weight; leaf
+   rows keep the muted tone set on .tree-node-row above. */
+.tree-node[data-node-type='directory'] > .tree-disclosure > .tree-node-row {
+  color: var(--sidebar-foreground);
+  font-weight: var(--fw-medium);
 }
 
 a.tree-node-row:hover,
 summary.tree-node-row:hover {
   background: var(--sidebar-accent);
-  color: var(--sidebar-accent-foreground);
+  color: var(--sidebar-foreground);
+}
+
+a.tree-node-row:focus-visible,
+summary.tree-node-row:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
 }
 
 /* D-12: the current-route node's active state, via the sidebar's own token pair rather than the
@@ -657,13 +704,12 @@ summary.tree-node-row:hover {
 
 .tree-node-link,
 .tree-group-label {
-  overflow-wrap: anywhere;
   color: inherit;
   text-decoration: none;
 }
 
 .tree-group-label {
-  color: var(--sidebar-foreground);
+  color: var(--muted-foreground);
   font-family: var(--font-heading);
   font-size: var(--fs-2);
   font-weight: var(--fw-semibold);
@@ -680,25 +726,67 @@ summary.tree-node-row:hover {
   display: none;
 }
 
-.tree-excluded {
-  color: var(--muted-foreground);
+/* quick-260911-vqe D-01: the overlay drawer that now hosts the planning tree, opened from the
+   header's menu trigger. Fixed to the left edge at every viewport width. */
+.sidebar-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: var(--overlay-scrim);
+  transition: opacity 160ms ease;
 }
 
-.tree-excluded-marker {
-  border: 1px solid var(--border);
-  padding: var(--space-0-5) var(--space-1);
+.sidebar-drawer-backdrop[data-starting-style],
+.sidebar-drawer-backdrop[data-ending-style] {
+  opacity: 0;
+}
+
+.sidebar-drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 71;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: var(--drawer-width);
+  background: var(--sidebar);
+  color: var(--sidebar-foreground);
+  border-right: 1px solid var(--sidebar-border);
+  box-shadow: var(--shadow-popover);
+  transition: transform 200ms ease;
+}
+
+.sidebar-drawer[data-starting-style],
+.sidebar-drawer[data-ending-style] {
+  transform: translateX(-100%);
+}
+
+.sidebar-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--sidebar-border);
+}
+
+.sidebar-drawer-title {
+  margin: 0;
+  color: var(--sidebar-foreground);
   font-family: var(--font-heading);
-  font-size: var(--font-size-micro-label);
-  letter-spacing: var(--ls-wide);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
   text-transform: uppercase;
 }
 
-.tree-excluded-reason {
-  display: block;
-  overflow-wrap: anywhere;
-  padding-left: var(--space-1-5);
-  color: var(--muted-foreground);
-  font-size: var(--fs-2);
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-drawer,
+  .sidebar-drawer-backdrop,
+  .tree-chevron {
+    transition: none;
+  }
 }
 
 .page-stack {
@@ -1644,8 +1732,8 @@ pre {
 
 @media (max-width: 62rem) {
   .shell-header {
-    grid-template-areas: 'brand controls' 'nav nav';
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'menu brand controls' 'nav nav nav';
+    grid-template-columns: auto minmax(0, 1fr) auto;
   }
 
   .shell-controls {
@@ -1662,16 +1750,6 @@ pre {
   .shell-nav-link {
     flex: 1;
     justify-content: center;
-  }
-
-  /* D-09: the sidebar collapses out of the layout entirely below 62rem rather than squeezing the
-     reading column — mirrors how .shell-nav adapts at this breakpoint. */
-  .shell-content {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .tree-navigator {
-    display: none;
   }
 
   .position-hero,
@@ -1695,6 +1773,12 @@ pre {
 @media (max-width: 42rem) {
   .shell-header {
     position: relative;
+  }
+
+  /* quick-260911-vqe: trims the trigger-to-brand gap at the narrowest width, so the menu trigger,
+     brand and controls still fit their own row without pushing the header past two rows. */
+  .sidebar-trigger {
+    margin-left: var(--space-2);
   }
 
   .brand {

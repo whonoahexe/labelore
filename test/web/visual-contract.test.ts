@@ -488,38 +488,49 @@ describe('header search dialog — navigating surface (03-02 Task 3, D-01; quick
   });
 });
 
-describe('persistent tree sidebar (03-03 Task 2, D-09/D-10/D-12)', () => {
-  it('declares a two-column grid whose first track is the sidebar, collapsing to one track when absent (Test 1)', async () => {
+describe('planning-files drawer (quick-260911-vqe D-01..D-04, SB-04/SB-05)', () => {
+  it('collapses the shell content region to a single full-width column, with no attribute-variant selector left (Test 1)', async () => {
     const css = await source('src/web/styles/globals.css');
     const [block] = ruleBlocks(css, '.shell-content {');
     expect(block).toBeDefined();
     expect(block).toContain('display: grid;');
-    expect(block).toMatch(/grid-template-columns:\s*minmax\(14rem, 18rem\) minmax\(0, 1fr\);/);
-
-    const [absentBlock] = ruleBlocks(css, ".shell-content[data-sidebar='absent'] {");
-    expect(absentBlock).toBeDefined();
-    expect(absentBlock).toMatch(/grid-template-columns:\s*minmax\(0, 1fr\);/);
+    expect(block).toMatch(/grid-template-columns:\s*minmax\(0, 1fr\);/);
+    expect(css).not.toMatch(/\.shell-content\[/);
   });
 
-  it('consumes the --sidebar, --sidebar-border, and --sidebar-accent token family rather than generic tokens (Test 2)', async () => {
+  it('the drawer popup uses the --sidebar token family and a shadow, hover uses --sidebar-accent (Test 2)', async () => {
     const css = await source('src/web/styles/globals.css');
-    const [trackBlock] = ruleBlocks(css, '.tree-navigator {');
-    expect(trackBlock).toBeDefined();
-    expect(trackBlock).toContain('background: var(--sidebar);');
-    expect(trackBlock).toContain('border-right: 1px solid var(--sidebar-border);');
+    const [drawerBlock] = ruleBlocks(css, '.sidebar-drawer {');
+    expect(drawerBlock).toBeDefined();
+    expect(drawerBlock).toContain('position: fixed;');
+    expect(drawerBlock).toContain('width: var(--drawer-width);');
+    expect(drawerBlock).toContain('background: var(--sidebar);');
+    expect(drawerBlock).toContain('color: var(--sidebar-foreground);');
+    expect(drawerBlock).toContain('border-right: 1px solid var(--sidebar-border);');
+    expect(drawerBlock).toContain('box-shadow: var(--shadow-popover);');
 
     const [hoverBlock] = ruleBlocks(css, 'summary.tree-node-row:hover {');
     expect(hoverBlock).toBeDefined();
     expect(hoverBlock).toContain('background: var(--sidebar-accent);');
+    expect(hoverBlock).toContain('color: var(--sidebar-foreground);');
   });
 
-  it('is sticky, bounded in height, and scrolls on its own overflow-y (Test 3)', async () => {
+  it('scrolls on its own overflow-y with no sticky positioning, slides in via a --drawer-width token and respects reduced motion (Test 3)', async () => {
     const css = await source('src/web/styles/globals.css');
-    const [block] = ruleBlocks(css, '.tree-navigator {');
-    expect(block).toBeDefined();
-    expect(block).toContain('position: sticky;');
-    expect(block).toMatch(/height:\s*calc\(100vh - var\(--shell-header-height, 0px\)\);/);
-    expect(block).toContain('overflow-y: auto;');
+    const [treeBlock] = ruleBlocks(css, '.tree-navigator {');
+    expect(treeBlock).toBeDefined();
+    expect(treeBlock).toContain('overflow-y: auto;');
+    expect(treeBlock).not.toContain('position: sticky;');
+
+    expect(css).toContain('--drawer-width: min(22rem, 88vw);');
+
+    expect(css).toMatch(
+      /\.sidebar-drawer\[data-starting-style\],\s*\n\.sidebar-drawer\[data-ending-style\]\s*\{[\s\S]*translateX\(-100%\)/,
+    );
+
+    expect(css).toMatch(
+      /\.sidebar-drawer,\s*\.sidebar-drawer-backdrop,\s*\.tree-chevron\s*\{\s*transition:\s*none;/,
+    );
   });
 
   it('highlights the current-route node via --sidebar-primary, not the page-level --primary pair (Test 4)', async () => {
@@ -530,11 +541,12 @@ describe('persistent tree sidebar (03-03 Task 2, D-09/D-10/D-12)', () => {
     expect(block).toContain('color: var(--sidebar-primary-foreground);');
   });
 
-  it('wraps long node labels via overflow-wrap: anywhere inside the track (Test 5)', async () => {
+  it('truncates a long node label with an ellipsis, never wrapping it (Test 5)', async () => {
     const css = await source('src/web/styles/globals.css');
-    const [block] = ruleBlocks(css, '.tree-node-row {');
+    const [block] = ruleBlocks(css, '.tree-node-label {');
     expect(block).toBeDefined();
-    expect(block).toContain('overflow-wrap: anywhere;');
+    expect(block).toContain('text-overflow: ellipsis;');
+    expect(block).toContain('white-space: nowrap;');
   });
 
   it('keeps the existing document-reader and page-stack width rules intact after the shell restructure (Test 6)', async () => {
@@ -547,24 +559,53 @@ describe('persistent tree sidebar (03-03 Task 2, D-09/D-10/D-12)', () => {
     expect(pageStackBlock).toContain('width: min(80rem, 100%);');
   });
 
-  it('collapses the sidebar out of the layout entirely at the narrow shell breakpoint, not just squeezing it (narrow-viewport)', async () => {
+  it('keeps a menu area in the header grid at both the base and 62rem layouts, and never hides the tree or its trigger from 62rem onward (narrow-viewport)', async () => {
     const css = await source('src/web/styles/globals.css');
-    const narrowSection = css.slice(css.indexOf('@media (max-width: 62rem)'));
-    expect(narrowSection).toMatch(/\.tree-navigator\s*\{\s*display:\s*none;/);
+    const [baseHeader] = ruleBlocks(css, '.shell-header {');
+    expect(baseHeader).toBeDefined();
+    expect(baseHeader).toContain("grid-template-areas: 'menu brand nav controls';");
+
+    const narrowSection = css.slice(
+      css.indexOf('@media (max-width: 62rem)'),
+      css.indexOf('@media (max-width: 42rem)'),
+    );
+    expect(narrowSection).toContain("grid-template-areas: 'menu brand controls' 'nav nav nav';");
+
+    const fromNarrow = css.slice(css.indexOf('@media (max-width: 62rem)'));
+    expect(fromNarrow).not.toMatch(/\.tree-navigator\s*\{[^}]*display:\s*none;/s);
+    expect(fromNarrow).not.toMatch(/\.sidebar-trigger\s*\{[^}]*display:\s*none;/s);
   });
 
-  it('uses native details/summary for disclosure, never the headless collapsible primitive (Test 7)', async () => {
+  it('uses native details/summary for disclosure, never the headless collapsible primitive, and the drawer holds no client-side persisted state (Test 7)', async () => {
     const treeNavigator = await source('src/web/components/tree-navigator.tsx');
     expect(treeNavigator).not.toContain('@base-ui/react/collapsible');
     expect(treeNavigator).toContain('<details');
     expect(treeNavigator).not.toMatch(/localStorage|sessionStorage/);
+
+    const sidebarDrawer = await source('src/web/components/sidebar-drawer.tsx');
+    expect(sidebarDrawer).not.toMatch(/localStorage|sessionStorage/);
   });
 
-  it('renders the sidebar inside the shell content region while the skip link still targets main content only', async () => {
+  it('wires the drawer trigger, the base-ui Dialog and the tree body across the three files', async () => {
     const shell = await source('src/web/components/app-shell.tsx');
-    expect(shell).toContain('<TreeNavigator');
+    expect(shell).toContain('<SidebarDrawer');
     expect(shell).toContain('href="#main-content"');
     expect(shell).toMatch(/<div className="shell-outlet" id="main-content">/);
+
+    const sidebarDrawer = await source('src/web/components/sidebar-drawer.tsx');
+    expect(sidebarDrawer).toContain('<TreeNavigator');
+    expect(sidebarDrawer).toContain("@base-ui/react/dialog");
+    expect(sidebarDrawer).toContain('<Dialog.Portal keepMounted>');
+    expect(sidebarDrawer).toContain('aria-label="Open planning files"');
+    expect(sidebarDrawer).toContain('PanelLeft');
+    expect(sidebarDrawer).toContain('Dialog.Title');
+
+    const treeNavigator = await source('src/web/components/tree-navigator.tsx');
+    expect(treeNavigator).toContain('export function useTreeQuery');
+    expect(treeNavigator).toContain('ChevronRight');
+    expect(treeNavigator).toContain('className="tree-badge"');
+    expect(treeNavigator).toContain('title={node.path}');
+    expect(treeNavigator).toContain("scrollIntoView({ block: 'nearest' })");
   });
 });
 
@@ -701,11 +742,11 @@ describe('index.html — anti-FOUC critical CSS (quick-260910-0x4 item 3, 02-REV
 });
 
 describe('sub-10px micro-label family (quick-260910-0x4 item 8)', () => {
-  // The six sibling selectors sharing the uppercase-micro-label convention (three at 0.62rem/
-  // 9.92px, three at 0.6rem/9.6px — smaller still). Named here so the pin covers the whole family,
-  // not just the one selector the audit happened to name.
+  // The five sibling selectors sharing the uppercase-micro-label convention (three at 0.62rem/
+  // 9.92px, two at 0.6rem/9.6px — smaller still). Named here so the pin covers the whole family,
+  // not just the one selector the audit happened to name. The former sixth sibling,
+  // .tree-excluded-marker, left with the tree's exclusion marker (quick-260911-vqe D-04).
   const MICRO_LABEL_SELECTORS = [
-    '.tree-excluded-marker {',
     '.phase-facts dt {',
     '.blocked-by {',
     '.artifact-metadata > summary span {',
@@ -746,9 +787,9 @@ describe('sub-10px micro-label family (quick-260910-0x4 item 8)', () => {
 
   it('leaves no literal 0.6rem or 0.62rem font-size anywhere in the stylesheet (including inside media queries)', async () => {
     const css = await source('src/web/styles/globals.css');
-    // Covers the whole cascade, not just the six base declarations above — a media query that
+    // Covers the whole cascade, not just the five base declarations above — a media query that
     // re-shrinks one of these selectors at a narrow width would still trip this, since it scans
-    // the raw source text unconditionally rather than only the six ruleBlocks() extractions.
+    // the raw source text unconditionally rather than only the five ruleBlocks() extractions.
     expect(css).not.toMatch(/font-size:\s*0\.6rem\s*;/);
     expect(css).not.toMatch(/font-size:\s*0\.62rem\s*;/);
   });
@@ -767,8 +808,7 @@ describe('sub-10px micro-label family (quick-260910-0x4 item 8)', () => {
         /color:\s*var\(--muted-foreground\)/,
       );
     }
-    // .tree-excluded-marker sets no color of its own (inherits from .tree-excluded, its parent
-    // selector), and .blocked-by reads var(--destructive) — both pre-existing and untouched by
-    // this change, which only moved font-size to the shared token.
+    // .blocked-by reads var(--destructive) — pre-existing and untouched by this change, which only
+    // moved font-size to the shared token.
   });
 });

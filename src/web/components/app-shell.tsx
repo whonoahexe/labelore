@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { LayoutDashboard, ListChecks, Map } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router';
@@ -7,10 +7,11 @@ import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
 import { LabeloreMark } from './labelore-mark.tsx';
 import { SearchDialog } from './search-field.tsx';
+import { SidebarDrawer } from './sidebar-drawer.tsx';
 import { SnapshotStatus } from './snapshot-status.tsx';
 import { ThemeToggle } from './theme-toggle.tsx';
 import { ToastProvider } from './ui/toast.tsx';
-import { TreeNavigator } from './tree-navigator.tsx';
+import { useTreeQuery } from './tree-navigator.tsx';
 
 // Plan 04-02 reuses this fetcher; no second fetcher for the same endpoint.
 export async function fetchPresentation(): Promise<ProjectPresentation> {
@@ -38,28 +39,9 @@ function PageLoadingFallback(): React.JSX.Element {
 
 export function AppShell(): React.JSX.Element {
   const presentation = useQuery({ queryKey: ['presentation'], queryFn: fetchPresentation });
-  // D-09: the sidebar has no error surface of its own (see TreeNavigator) — when it can't render,
-  // the content region collapses to a single column via this data attribute rather than leaving a
-  // permanently-empty sidebar track.
-  const [sidebarAbsent, setSidebarAbsent] = useState(false);
-
-  // D-09: the sidebar sits under the sticky header and must start exactly at its bottom edge —
-  // .shell-header has no fixed rem height (it sizes to its own padded, responsive content), so its
-  // height is measured at runtime rather than guessed, and fed to the CSS track as a custom
-  // property.
-  const headerRef = useRef<HTMLElement | null>(null);
-  const [headerHeight, setHeaderHeight] = useState(0);
-
-  useEffect(() => {
-    const node = headerRef.current;
-    if (!node) return;
-    const observer = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (entry) setHeaderHeight(entry.contentRect.height);
-    });
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
+  // D-01: the drawer trigger renders only once the shared tree query has succeeded — react-query
+  // dedupes this against SidebarDrawer/TreeNavigator's own read of the same queryKey.
+  const tree = useTreeQuery();
 
   const displayName = projectDisplayName(
     presentation.data?.projectName ?? null,
@@ -69,14 +51,12 @@ export function AppShell(): React.JSX.Element {
 
   return (
     <ToastProvider>
-      <div
-        className="app-shell"
-        style={{ '--shell-header-height': `${headerHeight}px` } as React.CSSProperties}
-      >
+      <div className="app-shell">
         <a className="skip-link" href="#main-content">
           Skip to content
         </a>
-        <header className="shell-header" ref={headerRef}>
+        <header className="shell-header">
+          {tree.isSuccess ? <SidebarDrawer /> : null}
           <NavLink
             className="brand"
             to={presentationRoutePatterns.dashboard}
@@ -127,8 +107,7 @@ export function AppShell(): React.JSX.Element {
             unavailable.
           </div>
         ) : null}
-        <div className="shell-content" data-sidebar={sidebarAbsent ? 'absent' : 'present'}>
-          <TreeNavigator onAbsentChange={setSidebarAbsent} />
+        <div className="shell-content">
           <div className="shell-outlet" id="main-content">
             {/* quick-260910-0x4 item 10: every routed page is now React.lazy()-loaded
                 (app-router.tsx), so this is the one Suspense boundary its fallback needs. A
