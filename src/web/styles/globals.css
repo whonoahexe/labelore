@@ -376,10 +376,11 @@
 }
 
 /* quick-260911-vqe D-01: the planning-files drawer trigger, at the far left of the header at
-   every width. */
+   every width. No align-self override: the default stretch, combined with the button's own fixed
+   height, resolves to a top-aligned box — matching .brand's own top edge at every width, including
+   the 400px layout where .brand-project can wrap onto a second line and grow the header row. */
 .sidebar-trigger {
   grid-area: menu;
-  align-self: center;
   margin-left: var(--space-3);
 }
 
