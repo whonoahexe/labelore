@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-10)
 Phase: Milestone v1.0 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-09-11 - Completed quick task 260911-243: Navbar redesign: Strata logo mark everywhere, brand+project lockup, segmented tabs, search icon with full-screen dialog, snapshot status pill
+Last activity: 2026-09-11 - Completed quick task 260911-vqe: Sidebar redesign: navbar drawer, readable labels, lifecycle order, hide exclusions
 
 ## Performance Metrics
 
@@ -96,6 +96,7 @@ None.
 | 260910-jz8 | Centralize spacing, type and color tokens with a guard check | 2026-09-10 | 55c010f | [260910-jz8-centralize-spacing-type-and-color-tokens](./quick/260910-jz8-centralize-spacing-type-and-color-tokens/) |
 | 260911-243 | Navbar redesign: Strata logo mark everywhere, brand+project lockup, segmented tabs, search icon with full-screen dialog, snapshot status pill | 2026-09-11 | 6a0e5f9 | [260911-243-navbar-redesign-strata-logo-mark-everywh](./quick/260911-243-navbar-redesign-strata-logo-mark-everywh/) |
 | 3 | Match the header Ctrl K hint height to the snapshot pill | 2026-09-11 | 89eb434 | — |
+| 260911-vqe | Sidebar redesign: navbar drawer, readable labels, lifecycle order, hide exclusions | 2026-09-11 | a6e6532 | [260911-vqe-sidebar-redesign-navbar-drawer-readable-](./quick/260911-vqe-sidebar-redesign-navbar-drawer-readable-/) |
 
 ## Deferred Items
 
