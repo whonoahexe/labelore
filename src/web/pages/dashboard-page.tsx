@@ -19,6 +19,7 @@ import {
 } from '../../presentation/dashboard.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
 import { InvalidProjectScreen } from './invalid-project-screen.tsx';
+import { stripEmoji } from './strip-emoji.ts';
 
 type DashboardResponse = DashboardViewModel & {
   loadStatus: ProjectPresentation['loadStatus'];
@@ -48,7 +49,8 @@ function SourceLink({ provenance, children }: { provenance: SourceProvenance; ch
   );
 }
 
-function NextWork({ item, primary = false }: { item: NextWorkItem; primary?: boolean }) {
+function NextWork({ item: rawItem, primary = false }: { item: NextWorkItem; primary?: boolean }) {
+  const item = primary ? { ...rawItem, description: stripEmoji(rawItem.description) } : rawItem;
   return (
     <Link className={primary ? 'next-primary' : 'next-preview'} to={item.url}>
       <div>
@@ -209,13 +211,13 @@ export function DashboardPage(): React.JSX.Element {
                       >
                         <span className="item-kind">{item.type}</span>
                         <strong>{item.title}</strong>
-                        <p>{item.detail}</p>
+                        <p>{stripEmoji(item.detail)}</p>
                       </Link>
                     ) : (
                       <div>
                         <span className="item-kind">{item.type}</span>
                         <strong>{item.title}</strong>
-                        <p>{item.detail}</p>
+                        <p>{stripEmoji(item.detail)}</p>
                       </div>
                     )}
                     <SourceLink provenance={item.provenance} />
