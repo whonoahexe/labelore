@@ -40,16 +40,38 @@ function findNode(nodes: TreeNode[], path: string): TreeNode | undefined {
 }
 
 describe('buildTreeViewModel — fixtures/dense', () => {
-  it('Test 1: file leaves cover every reachable artifact path — no extra, no missing', async () => {
+  it('Test 1: file leaves cover every markdown artifact outside the other location — no extra, no missing', async () => {
     const presentation = await fixturePresentation('dense');
     const tree = buildTreeViewModel(presentation);
     const filePaths = new Set(collectByType(tree, 'file').map((node) => node.path));
-    const artifactPaths = new Set(presentation.artifacts.map((artifact) => artifact.path));
-    expect(filePaths.size).toBe(52);
-    expect(filePaths).toEqual(artifactPaths);
+    const shownPaths = new Set(
+      presentation.artifacts
+        .filter((artifact) => artifact.location !== 'other' && artifact.path.endsWith('.md'))
+        .map((artifact) => artifact.path),
+    );
+    expect(filePaths.size).toBeGreaterThan(40);
+    expect(filePaths).toEqual(shownPaths);
   });
 
-  it('Test 2: top-level groups appear in LOCATION_ORDER sequence', async () => {
+  it('hides non-markdown machine state and the whole other location', async () => {
+    const presentation = await fixturePresentation('dense');
+    const tree = buildTreeViewModel(presentation);
+    for (const path of [
+      '.planning/config.json',
+      '.planning/estimation-calibration.json',
+      '.planning/HANDOFF.json',
+      '.planning/ui-reviews',
+      '.planning/ui-reviews/.gitignore',
+    ]) {
+      expect(findNode(tree, path), `${path} should not be in the tree`).toBeUndefined();
+    }
+    expect(tree.some((node) => node.location === 'other')).toBe(false);
+    for (const node of collectByType(tree, 'file')) {
+      expect(node.path.endsWith('.md'), `${node.path} should be markdown`).toBe(true);
+    }
+  });
+
+  it('Test 2: top-level groups appear in LOCATION_ORDER sequence, without the other location', async () => {
     const presentation = await fixturePresentation('dense');
     const tree = buildTreeViewModel(presentation);
     expect(tree.map((node) => node.location)).toEqual([
@@ -59,7 +81,6 @@ describe('buildTreeViewModel — fixtures/dense', () => {
       'quick',
       'milestone-root',
       'research',
-      'other',
     ]);
     expect(tree.every((node) => node.nodeType === 'group')).toBe(true);
   });
@@ -169,9 +190,9 @@ describe('buildTreeViewModel — fixtures/dense', () => {
 
 describe('buildTreeViewModel — small fixtures', () => {
   it('Test 4: a file with an unrecognized kind still appears as an ordinary leaf with a destination', async () => {
-    const presentation = await presentationOf({ '.planning/spikes/idea.md': '# idea' });
+    const presentation = await presentationOf({ '.planning/phases/01-a/notes.md': '# notes' });
     const tree = buildTreeViewModel(presentation);
-    const node = findNode(tree, '.planning/spikes/idea.md');
+    const node = findNode(tree, '.planning/phases/01-a/notes.md');
     expect(node).toBeDefined();
     expect(node?.nodeType).toBe('file');
     expect(node?.unknownKind).toBe(true);
@@ -181,7 +202,7 @@ describe('buildTreeViewModel — small fixtures', () => {
   it('Test 7: a sparse project with no quick/milestones/research renders without error', async () => {
     const presentation = await fixturePresentation('sparse-started');
     const tree = buildTreeViewModel(presentation);
-    expect(tree).toHaveLength(7);
+    expect(tree).toHaveLength(6);
     for (const location of ['quick', 'milestone-root', 'research', 'archived-phase'] as const) {
       const group = tree.find((node) => node.location === location);
       expect(group === undefined || group.children.length === 0).toBe(true);
@@ -210,9 +231,9 @@ describe('buildTreeViewModel — small fixtures', () => {
 describe('buildTreeViewModel — exclusions hidden (D-04, WR-01 inverted)', () => {
   // D-04 reverses Phase-3 D-10's "visible stub" rule for the tree only: a recorded exclusion is
   // never rendered, even in the one worst case where the exclusion IS the planning root itself and
-  // there is nothing else to show — that must still yield an empty, non-throwing tree of seven
+  // there is nothing else to show — that must still yield an empty, non-throwing tree of six
   // empty groups rather than a stub node or a thrown error.
-  it('a presentation carrying only the .planning exclusion yields seven empty groups, without throwing', () => {
+  it('a presentation carrying only the .planning exclusion yields six empty groups, without throwing', () => {
     const presentation = {
       milestones: [],
       artifacts: [],
@@ -222,7 +243,7 @@ describe('buildTreeViewModel — exclusions hidden (D-04, WR-01 inverted)', () =
     expect(() => buildTreeViewModel(presentation)).not.toThrow();
     const tree = buildTreeViewModel(presentation);
 
-    expect(tree).toHaveLength(7);
+    expect(tree).toHaveLength(6);
     for (const group of tree) {
       expect(group.nodeType).toBe('group');
       expect(group.children).toHaveLength(0);
@@ -257,7 +278,7 @@ describe('buildTreeViewModel — readable labels and badges (quick-260911-vqe D-
     expect(sentenceCase('add-transport-adapter')).toBe('Add transport adapter');
   });
 
-  it('the dense tree groups appear in sentence-cased order: Project, Phases, Archived phases, Quick tasks, Milestones, Research, Other', async () => {
+  it('the dense tree groups appear in sentence-cased order: Project, Phases, Archived phases, Quick tasks, Milestones, Research', async () => {
     const presentation = await fixturePresentation('dense');
     const tree = buildTreeViewModel(presentation);
     expect(tree.map((node) => node.label)).toEqual([
@@ -267,7 +288,6 @@ describe('buildTreeViewModel — readable labels and badges (quick-260911-vqe D-
       'Quick tasks',
       'Milestones',
       'Research',
-      'Other',
     ]);
   });
 
@@ -276,9 +296,6 @@ describe('buildTreeViewModel — readable labels and badges (quick-260911-vqe D-
     const tree = buildTreeViewModel(presentation);
     const cases: Array<[string, string, string | null]> = [
       ['.planning/STATE.md', 'State', null],
-      ['.planning/config.json', 'Config', null],
-      ['.planning/estimation-calibration.json', 'Estimation calibration', null],
-      ['.planning/HANDOFF.json', 'Handoff', null],
       ['.planning/v3.0-CAPACITY-PLAN.md', 'Capacity plan', 'v3.0'],
       ['.planning/phases/01-identity-slice', 'Identity Slice', '01'],
       ['.planning/phases/01-identity-slice/01-01-PLAN.md', 'Plan 01', null],
@@ -294,8 +311,6 @@ describe('buildTreeViewModel — readable labels and badges (quick-260911-vqe D-
       ['.planning/milestones/v1.0-ROADMAP.md', 'Roadmap', 'v1.0'],
       ['.planning/milestones/v2.0-MILESTONE-AUDIT.md', 'Milestone audit', 'v2.0'],
       ['.planning/research/STACK.md', 'Stack', null],
-      ['.planning/ui-reviews', 'UI reviews', null],
-      ['.planning/ui-reviews/.gitignore', 'Gitignore', null],
     ];
     for (const [path, label, badge] of cases) {
       const node = findNode(tree, path);
@@ -314,7 +329,7 @@ describe('buildTreeViewModel — readable labels and badges (quick-260911-vqe D-
     }
   });
 
-  it('disambiguates same-label siblings by appending the non-md extension, leaving a lone file unsuffixed', () => {
+  it('keeps a root markdown file and drops its same-named JSON sibling and other root JSON', () => {
     const presentation = {
       milestones: [],
       artifacts: [
@@ -363,8 +378,8 @@ describe('buildTreeViewModel — readable labels and badges (quick-260911-vqe D-
 
     const tree = buildTreeViewModel(presentation);
     expect(findNode(tree, '.planning/STATE.md')?.label).toBe('State');
-    expect(findNode(tree, '.planning/STATE.json')?.label).toBe('State (JSON)');
-    expect(findNode(tree, '.planning/config.json')?.label).toBe('Config');
+    expect(findNode(tree, '.planning/STATE.json')).toBeUndefined();
+    expect(findNode(tree, '.planning/config.json')).toBeUndefined();
   });
 });
 
@@ -393,7 +408,7 @@ describe('buildTreeViewModel — lifecycle order (D-03)', () => {
     ]);
   });
 
-  it('orders the root group Project, Roadmap, Requirements, State, Milestones, Backlog, Learnings, Retrospective, then other .md, then JSON', async () => {
+  it('orders the root group Project, Roadmap, Requirements, State, Milestones, Backlog, Learnings, Retrospective, then other .md', async () => {
     const presentation = await fixturePresentation('dense');
     const tree = buildTreeViewModel(presentation);
     const rootGroup = tree.find((node) => node.location === 'root');
@@ -408,9 +423,6 @@ describe('buildTreeViewModel — lifecycle order (D-03)', () => {
       'Retrospective',
       'Capacity plan',
       'Windows',
-      'Config',
-      'Estimation calibration',
-      'Handoff',
     ]);
   });
 

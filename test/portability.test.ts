@@ -186,20 +186,30 @@ describe('adversarial portability — three project shapes, a stripped copy, unk
     const { app } = await serve(root);
     const tree = (await (await app.request('/api/tree')).json()) as TreeNodeLike[];
     const leaves = flattenTree(tree).filter((node) => node.nodeType === 'file');
+    const presentation = (await (await app.request('/api/presentation')).json()) as {
+      artifacts: { path: string; key: string }[];
+    };
 
-    for (const path of ['.planning/v3.0-CAPACITY-PLAN.md', '.planning/HANDOFF.json']) {
-      const leaf = leaves.find((node) => node.path === path);
-      if (!leaf) throw new Error(`expected a file leaf for ${path}`);
-      expect(leaf.url, path).not.toBeNull();
-      if (leaf.url === null) throw new Error('unreachable — asserted above');
-
-      const documentResponse = await app.request(
-        `/api/documents?route=${encodeURIComponent(leaf.url)}`,
-      );
+    async function expectReadable(path: string, route: string): Promise<void> {
+      const documentResponse = await app.request(`/api/documents?route=${encodeURIComponent(route)}`);
       expect(documentResponse.status, path).toBe(200);
       const document = (await documentResponse.json()) as { document?: { html?: string } };
       expect(document.document?.html, path).toBeTruthy();
     }
+
+    // An unrecognized markdown document stays a navigable tree leaf.
+    const capacityPlan = leaves.find((node) => node.path === '.planning/v3.0-CAPACITY-PLAN.md');
+    if (!capacityPlan) throw new Error('expected a file leaf for .planning/v3.0-CAPACITY-PLAN.md');
+    expect(capacityPlan.url).not.toBeNull();
+    if (capacityPlan.url === null) throw new Error('unreachable — asserted above');
+    await expectReadable(capacityPlan.path, capacityPlan.url);
+
+    // Non-markdown machine state is not a tree leaf (quick-260911-vqe follow-up), but the generic
+    // handler still reads it through its own artifact route.
+    expect(leaves.some((node) => node.path === '.planning/HANDOFF.json')).toBe(false);
+    const handoff = presentation.artifacts.find((artifact) => artifact.path === '.planning/HANDOFF.json');
+    if (!handoff) throw new Error('expected an artifact for .planning/HANDOFF.json');
+    await expectReadable(handoff.path, handoff.key);
   });
 
   it('produces empty states, never an error page, when quick/, milestones/, research/, UI-SPEC.md and SECURITY.md are removed, leaving the rest untouched (TGT-04)', async () => {
@@ -244,14 +254,17 @@ describe('adversarial portability — three project shapes, a stripped copy, unk
     expect(phaseGroup?.children.length ?? 0).toBeGreaterThan(0);
   });
 
-  it('emits the exact LOCATION_ORDER group-key set exactly once each, present or absent, across every shape (group-set invariant)', async () => {
+  it('emits the LOCATION_ORDER group-key set minus the hidden other location, exactly once each, present or absent, across every shape (group-set invariant)', async () => {
     const sparseEmptyRoot = await mountFixture('sparse-empty');
     const sparseStartedRoot = await mountFixture('sparse-started');
     const denseRoot = await mountFixture('dense');
     const strippedRoot = await mountFixture('dense');
     await rm(join(strippedRoot, '.planning', 'quick'), { recursive: true, force: true });
 
-    const expectedLocations = Object.keys(LOCATION_ORDER).sort();
+    // The catch-all 'other' location is deliberately not a tree group (quick-260911-vqe follow-up).
+    const expectedLocations = Object.keys(LOCATION_ORDER)
+      .filter((location) => location !== 'other')
+      .sort();
 
     for (const root of [sparseEmptyRoot, sparseStartedRoot, denseRoot, strippedRoot]) {
       const { app } = await serve(root);
