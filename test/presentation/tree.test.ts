@@ -4,6 +4,7 @@ import { InMemoryPlanningFilesystem } from '../../src/planning-fs/in-memory-fs.t
 import { LocalFsPlanningFilesystem } from '../../src/planning-fs/local-fs.ts';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
 import { buildTreeViewModel, type TreeNode, type TreeNodeType } from '../../src/presentation/tree.ts';
+import { sentenceCase } from '../../src/presentation/tree-labels.ts';
 import { buildPhaseUrl, presentationRoutePatterns } from '../../src/presentation/routes.ts';
 import { toProjectPresentation, type ProjectPresentation } from '../../src/server/project-presentation.ts';
 
@@ -94,18 +95,21 @@ describe('buildTreeViewModel — fixtures/dense', () => {
     expect(quickDir?.url).toBeNull();
   });
 
-  it('Test 5: the research/.cache exclusion is a single flagged node under the research group', async () => {
+  it('Test 5 (inverted, D-04): the research/.cache exclusion is not shown; the research group holds exactly its three .md files', async () => {
     const presentation = await fixturePresentation('dense');
     const tree = buildTreeViewModel(presentation);
-    const exclusions = collectByType(tree, 'exclusion');
-    expect(exclusions).toHaveLength(1);
-    expect(exclusions[0].path).toBe('.planning/research/.cache');
-    expect(exclusions[0].excludedReason).toBe(presentation.exclusions[0]?.reason);
-    expect(exclusions[0].excludedReason?.length ?? 0).toBeGreaterThan(0);
-    expect(exclusions[0].url).toBeNull();
+    for (const node of collectByType(tree, 'file').concat(collectByType(tree, 'directory'))) {
+      expect(node.path).not.toContain('.cache');
+    }
 
     const researchGroup = tree.find((node) => node.location === 'research');
-    expect(researchGroup?.children.some((child) => child.nodeType === 'exclusion')).toBe(true);
+    expect(researchGroup?.children.map((child) => child.path).sort()).toEqual(
+      [
+        '.planning/research/PITFALLS.md',
+        '.planning/research/STACK.md',
+        '.planning/research/SUMMARY.md',
+      ].sort(),
+    );
   });
 
   it('Test 6: every leaf url is exactly the artifact DTO key, never hand-built — except the root REQUIREMENTS.md override (D-16)', async () => {
@@ -186,7 +190,7 @@ describe('buildTreeViewModel — small fixtures', () => {
     expect(phaseGroup?.children.length).toBeGreaterThan(0);
   });
 
-  it('orders phase directory siblings by dotted-numeric phase number, not lexicographically', async () => {
+  it('orders phase directory siblings by dotted-numeric phase number, not lexicographically (D-03)', async () => {
     const presentation = await presentationOf({
       '.planning/phases/10-tenth/10-CONTEXT.md': 'a',
       '.planning/phases/2-second/2-CONTEXT.md': 'b',
@@ -194,35 +198,275 @@ describe('buildTreeViewModel — small fixtures', () => {
     });
     const tree = buildTreeViewModel(presentation);
     const phaseGroup = tree.find((node) => node.location === 'phase');
-    expect(phaseGroup?.children.map((node) => node.label)).toEqual([
-      '2-second',
-      '2.1-urgent',
-      '10-tenth',
+    expect(phaseGroup?.children.map((node) => node.path)).toEqual([
+      '.planning/phases/2-second',
+      '.planning/phases/2.1-urgent',
+      '.planning/phases/10-tenth',
     ]);
+    expect(phaseGroup?.children.map((node) => node.badge)).toEqual(['2', '2.1', '10']);
   });
 });
 
-describe('buildTreeViewModel — zero-segment exclusions (WR-01)', () => {
-  // D-10: nothing this tool found or deliberately skipped is ever silently absent. The one
-  // exclusion whose path IS the planning root (`.planning` itself unlistable) relativizes to
-  // zero segments against GROUP_PATH_PREFIX.root, and insert()'s early return used to drop it —
-  // so the single worst case, where nothing under .planning/ could be read, rendered as an
-  // empty tree carrying no explanation at all.
-  it('renders a .planning-rooted exclusion as a visible, reason-carrying stub', () => {
+describe('buildTreeViewModel — exclusions hidden (D-04, WR-01 inverted)', () => {
+  // D-04 reverses Phase-3 D-10's "visible stub" rule for the tree only: a recorded exclusion is
+  // never rendered, even in the one worst case where the exclusion IS the planning root itself and
+  // there is nothing else to show — that must still yield an empty, non-throwing tree of seven
+  // empty groups rather than a stub node or a thrown error.
+  it('a presentation carrying only the .planning exclusion yields seven empty groups, without throwing', () => {
     const presentation = {
       milestones: [],
       artifacts: [],
       exclusions: [{ path: '.planning', reason: 'Directory could not be listed (EACCES)' }],
     } as unknown as ProjectPresentation;
 
+    expect(() => buildTreeViewModel(presentation)).not.toThrow();
     const tree = buildTreeViewModel(presentation);
-    const exclusions = collectByType(tree, 'exclusion');
 
-    expect(exclusions).toHaveLength(1);
-    expect(exclusions[0].path).toBe('.planning');
-    expect(exclusions[0].excludedReason).toBe('Directory could not be listed (EACCES)');
-    expect(exclusions[0].url).toBeNull();
-    expect(exclusions[0].label.length).toBeGreaterThan(0);
+    expect(tree).toHaveLength(7);
+    for (const group of tree) {
+      expect(group.nodeType).toBe('group');
+      expect(group.children).toHaveLength(0);
+    }
+    expect(collectByType(tree, 'file')).toHaveLength(0);
+    expect(collectByType(tree, 'directory')).toHaveLength(0);
+  });
+
+  it('no node anywhere carries an excludedReason key, and no label ever contains "Excluded"', async () => {
+    const presentation = await fixturePresentation('dense');
+    const tree = buildTreeViewModel(presentation);
+    function walk(nodes: TreeNode[]): void {
+      for (const node of nodes) {
+        expect(node).not.toHaveProperty('excludedReason');
+        expect(node.label).not.toContain('Excluded');
+        walk(node.children);
+      }
+    }
+    walk(tree);
+  });
+});
+
+describe('buildTreeViewModel — readable labels and badges (quick-260911-vqe D-02)', () => {
+  it('sentenceCase splits, cases and upper-cases the known acronym set', () => {
+    expect(sentenceCase('UI-SPEC')).toBe('UI spec');
+    expect(sentenceCase('AI-SPEC')).toBe('AI spec');
+    expect(sentenceCase('DISCUSSION-LOG')).toBe('Discussion log');
+    expect(sentenceCase('COST-MODEL')).toBe('Cost model');
+    expect(sentenceCase('estimation-calibration')).toBe('Estimation calibration');
+    expect(sentenceCase('api_keys')).toBe('API keys');
+    expect(sentenceCase('UAT')).toBe('UAT');
+    expect(sentenceCase('add-transport-adapter')).toBe('Add transport adapter');
+  });
+
+  it('the dense tree groups appear in sentence-cased order: Project, Phases, Archived phases, Quick tasks, Milestones, Research, Other', async () => {
+    const presentation = await fixturePresentation('dense');
+    const tree = buildTreeViewModel(presentation);
+    expect(tree.map((node) => node.label)).toEqual([
+      'Project',
+      'Phases',
+      'Archived phases',
+      'Quick tasks',
+      'Milestones',
+      'Research',
+      'Other',
+    ]);
+  });
+
+  it('renders readable label/badge pairs for a spread of dense fixture paths', async () => {
+    const presentation = await fixturePresentation('dense');
+    const tree = buildTreeViewModel(presentation);
+    const cases: Array<[string, string, string | null]> = [
+      ['.planning/STATE.md', 'State', null],
+      ['.planning/config.json', 'Config', null],
+      ['.planning/estimation-calibration.json', 'Estimation calibration', null],
+      ['.planning/HANDOFF.json', 'Handoff', null],
+      ['.planning/v3.0-CAPACITY-PLAN.md', 'Capacity plan', 'v3.0'],
+      ['.planning/phases/01-identity-slice', 'Identity Slice', '01'],
+      ['.planning/phases/01-identity-slice/01-01-PLAN.md', 'Plan 01', null],
+      ['.planning/phases/01-identity-slice/01-02-SUMMARY.md', 'Summary 02', null],
+      ['.planning/phases/01-identity-slice/01-UI-SPEC.md', 'UI spec', null],
+      ['.planning/phases/01-identity-slice/01-AI-SPEC.md', 'AI spec', null],
+      ['.planning/phases/01-identity-slice/01-UAT.md', 'UAT', null],
+      ['.planning/milestones/v1.0-phases', 'v1.0', null],
+      ['.planning/milestones/v2.0-phases/02-batch-export', 'Batch Export', '02'],
+      ['.planning/quick/260615-1a2-add-transport-adapter', 'Add transport adapter', 'Jun 15'],
+      ['.planning/quick/260701-3xz-fix-quick-typo', 'Fix quick typo', 'Jul 1'],
+      ['.planning/quick/260615-1a2-add-transport-adapter/260615-1a2-PLAN.md', 'Plan', null],
+      ['.planning/milestones/v1.0-ROADMAP.md', 'Roadmap', 'v1.0'],
+      ['.planning/milestones/v2.0-MILESTONE-AUDIT.md', 'Milestone audit', 'v2.0'],
+      ['.planning/research/STACK.md', 'Stack', null],
+      ['.planning/ui-reviews', 'UI reviews', null],
+      ['.planning/ui-reviews/.gitignore', 'Gitignore', null],
+    ];
+    for (const [path, label, badge] of cases) {
+      const node = findNode(tree, path);
+      expect(node, `expected a node at ${path}`).toBeDefined();
+      expect(node?.label, `label for ${path}`).toBe(label);
+      expect(node?.badge, `badge for ${path}`).toBe(badge);
+    }
+  });
+
+  it('no file-leaf label anywhere in the dense tree contains ".md" or ".json"', async () => {
+    const presentation = await fixturePresentation('dense');
+    const tree = buildTreeViewModel(presentation);
+    for (const node of collectByType(tree, 'file')) {
+      expect(node.label).not.toContain('.md');
+      expect(node.label).not.toContain('.json');
+    }
+  });
+
+  it('disambiguates same-label siblings by appending the non-md extension, leaving a lone file unsuffixed', () => {
+    const presentation = {
+      milestones: [],
+      artifacts: [
+        {
+          key: 'a~state-md',
+          path: '.planning/STATE.md',
+          kind: 'markdown',
+          title: 'state',
+          location: 'root',
+          frontmatter: {},
+          structured: {},
+          milestoneKey: null,
+          phaseKey: null,
+          warnings: [],
+          bodyLength: 5,
+        },
+        {
+          key: 'a~state-json',
+          path: '.planning/STATE.json',
+          kind: 'unknown',
+          title: 'state',
+          location: 'root',
+          frontmatter: {},
+          structured: {},
+          milestoneKey: null,
+          phaseKey: null,
+          warnings: [],
+          bodyLength: 5,
+        },
+        {
+          key: 'a~config',
+          path: '.planning/config.json',
+          kind: 'unknown',
+          title: 'config',
+          location: 'root',
+          frontmatter: {},
+          structured: {},
+          milestoneKey: null,
+          phaseKey: null,
+          warnings: [],
+          bodyLength: 5,
+        },
+      ],
+      exclusions: [],
+    } as unknown as ProjectPresentation;
+
+    const tree = buildTreeViewModel(presentation);
+    expect(findNode(tree, '.planning/STATE.md')?.label).toBe('State');
+    expect(findNode(tree, '.planning/STATE.json')?.label).toBe('State (JSON)');
+    expect(findNode(tree, '.planning/config.json')?.label).toBe('Config');
+  });
+});
+
+describe('buildTreeViewModel — lifecycle order (D-03)', () => {
+  it('orders a phase directory Context, Spec, AI spec, UI spec, Research, Patterns, Cost model, Validation, then plans interleaved with summaries, then Verification, Security, UAT, Learnings', async () => {
+    const presentation = await fixturePresentation('dense');
+    const tree = buildTreeViewModel(presentation);
+    const phaseDir = findNode(tree, '.planning/phases/01-identity-slice');
+    expect(phaseDir?.children.map((node) => node.label)).toEqual([
+      'Context',
+      'Spec',
+      'AI spec',
+      'UI spec',
+      'Research',
+      'Patterns',
+      'Cost model',
+      'Validation',
+      'Plan 01',
+      'Summary 01',
+      'Plan 02',
+      'Summary 02',
+      'Verification',
+      'Security',
+      'UAT',
+      'Learnings',
+    ]);
+  });
+
+  it('orders the root group Project, Roadmap, Requirements, State, Milestones, Backlog, Learnings, Retrospective, then other .md, then JSON', async () => {
+    const presentation = await fixturePresentation('dense');
+    const tree = buildTreeViewModel(presentation);
+    const rootGroup = tree.find((node) => node.location === 'root');
+    expect(rootGroup?.children.map((node) => node.label)).toEqual([
+      'Project',
+      'Roadmap',
+      'Requirements',
+      'State',
+      'Milestones',
+      'Backlog',
+      'Learnings',
+      'Retrospective',
+      'Capacity plan',
+      'Windows',
+      'Config',
+      'Estimation calibration',
+      'Handoff',
+    ]);
+  });
+
+  it('orders quick task directories newest first by the raw YYMMDD-ttt name', async () => {
+    const presentation = await fixturePresentation('dense');
+    const tree = buildTreeViewModel(presentation);
+    const quickGroup = tree.find((node) => node.location === 'quick');
+    expect(quickGroup?.children.map((node) => node.path)).toEqual([
+      '.planning/quick/260701-3xz-fix-quick-typo',
+      '.planning/quick/260615-1a2-add-transport-adapter',
+    ]);
+  });
+
+  it('orders milestone-root files newest version first, then Roadmap, Requirements, Milestone audit', async () => {
+    const presentation = await fixturePresentation('dense');
+    const tree = buildTreeViewModel(presentation);
+    const milestoneRootGroup = tree.find((node) => node.location === 'milestone-root');
+    expect(
+      milestoneRootGroup?.children.map((node) => [node.label, node.badge]),
+    ).toEqual([
+      ['Roadmap', 'v2.0'],
+      ['Requirements', 'v2.0'],
+      ['Milestone audit', 'v2.0'],
+      ['Roadmap', 'v1.0'],
+      ['Requirements', 'v1.0'],
+      ['Milestone audit', 'v1.0'],
+    ]);
+  });
+
+  it('orders research Summary, Stack, Pitfalls', async () => {
+    const presentation = await fixturePresentation('dense');
+    const tree = buildTreeViewModel(presentation);
+    const researchGroup = tree.find((node) => node.location === 'research');
+    expect(researchGroup?.children.map((node) => node.label)).toEqual(['Summary', 'Stack', 'Pitfalls']);
+  });
+
+  it('orders archived wrappers v1.0 then v2.0, with the v2.0 phases Legacy Ingest then Batch Export', async () => {
+    const presentation = await fixturePresentation('dense');
+    const tree = buildTreeViewModel(presentation);
+    const archivedGroup = tree.find((node) => node.location === 'archived-phase');
+    expect(archivedGroup?.children.map((node) => node.label)).toEqual(['v1.0', 'v2.0']);
+    const v2Wrapper = findNode(tree, '.planning/milestones/v2.0-phases');
+    expect(v2Wrapper?.children.map((node) => node.label)).toEqual(['Legacy Ingest', 'Batch Export']);
+  });
+
+  it('every node carries a badge key (string or null)', async () => {
+    const presentation = await fixturePresentation('dense');
+    const tree = buildTreeViewModel(presentation);
+    function walk(nodes: TreeNode[]): void {
+      for (const node of nodes) {
+        expect(node).toHaveProperty('badge');
+        expect(typeof node.badge === 'string' || node.badge === null).toBe(true);
+        walk(node.children);
+      }
+    }
+    walk(tree);
   });
 });
 
@@ -324,9 +568,6 @@ describe('buildTreeViewModel — D-12 warning tone (Phase 4)', () => {
     expect(countNodes(warnedTree)).toBe(countNodes(cleanTree));
 
     for (const node of [...collectByType(warnedTree, 'group'), ...collectByType(warnedTree, 'directory')]) {
-      expect(node.warningTone).toBeNull();
-    }
-    for (const node of collectByType(warnedTree, 'exclusion')) {
       expect(node.warningTone).toBeNull();
     }
   });

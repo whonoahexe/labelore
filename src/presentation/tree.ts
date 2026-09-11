@@ -1,14 +1,15 @@
 // Pure projection over an already-assembled ProjectPresentation — no filesystem I/O, no second
 // walk of the planning tree, no low-level filesystem-path module import (see 03-03-PLAN.md's
-// prohibitions). The tree is a literal mirror of `.planning/` as it sits on disk: every reachable
-// artifact appears as a leaf (including files whose parsed kind is 'unknown'), and every recorded
-// exclusion appears as a visible, reason-carrying stub — nothing this tool found or deliberately
-// skipped is ever silently absent (D-10).
+// prohibitions). The tree mirrors every reachable artifact, each shown as a leaf with a readable
+// label (quick-260911-vqe D-02/D-03), and recorded exclusions are deliberately not shown in this
+// surface (quick-260911-vqe D-04) — they remain on `ProjectPresentation.exclusions` verbatim for
+// any other surface that wants them; nothing is deleted, only not rendered here.
 import { LOCATION_ORDER } from '../planning-repo/discovery.ts';
 import { comparePhaseNumbers } from '../planning-repo/naming.ts';
 import type { ProjectPresentation } from '../server/project-presentation.ts';
 import { artifactWarningTone, type ArtifactWarningTone } from './artifact-warning-tone.ts';
 import { buildPhaseUrl, presentationRoutePatterns } from './routes.ts';
+import { GROUP_LABELS, labelOf, rankOf, formatSuffix } from './tree-labels.ts';
 
 // D-16: clicking the root REQUIREMENTS.md node in the sidebar lands on the traceability view
 // rather than the raw document. Scoped to the root document only — an archived milestone's own
@@ -22,11 +23,11 @@ type PhaseIdentity = ProjectPresentation['milestones'][number]['phases'][number]
 
 // The location union, recovered from LOCATION_ORDER's own key set rather than a second import of
 // domain/model.ts's ArtifactLocation — this file's import list is deliberately limited to
-// routes.ts, project-presentation.ts, naming.ts, discovery.ts, and the zero-import-cost
-// artifact-warning-tone.ts (Phase 4, D-12's single shared tone derivation).
-type TreeLocation = keyof typeof LOCATION_ORDER;
+// routes.ts, project-presentation.ts, naming.ts, discovery.ts, tree-labels.ts, and the
+// zero-import-cost artifact-warning-tone.ts (Phase 4, D-12's single shared tone derivation).
+export type TreeLocation = keyof typeof LOCATION_ORDER;
 
-export type TreeNodeType = 'group' | 'directory' | 'file' | 'exclusion';
+export type TreeNodeType = 'group' | 'directory' | 'file';
 
 export interface TreeNode {
   key: string;
@@ -34,28 +35,18 @@ export interface TreeNode {
   path: string;
   nodeType: TreeNodeType;
   location: TreeLocation;
-  /** Null for a group/directory node with no route of its own, and for exclusion stubs. */
+  /** Null for a group/directory node with no route of its own. */
   url: string | null;
-  /** Null except on exclusion stubs, where it carries discovery's own reason string verbatim. */
-  excludedReason: string | null;
+  /** D-02: a small readable badge — a phase number, milestone version, or quick-task short date.
+   * Null on group nodes and on any node with no natural badge. */
+  badge: string | null;
   /** True when a file leaf's artifact kind is the generic 'unknown' fallback. */
   unknownKind: boolean;
   /** D-12: a file leaf's damaged-artifact tone, derived once via `artifactWarningTone()`. Always
-   * null on group/directory/exclusion nodes — the tone is metadata on a real leaf, never a new
-   * node. */
+   * null on group/directory nodes — the tone is metadata on a real leaf, never a new node. */
   warningTone: ArtifactWarningTone;
   children: TreeNode[];
 }
-
-const GROUP_LABELS: Record<TreeLocation, string> = {
-  root: 'Root Documents',
-  phase: 'Phases',
-  'archived-phase': 'Archived Phases',
-  quick: 'Quick Tasks',
-  'milestone-root': 'Milestones',
-  research: 'Research',
-  other: 'Other',
-};
 
 // The path-segment prefix each location's artifacts share on disk, used only to reconstruct the
 // remaining (real) path segments beneath a group — never to reclassify a path's location, which
@@ -74,34 +65,23 @@ const ORDERED_LOCATIONS: TreeLocation[] = (Object.keys(LOCATION_ORDER) as TreeLo
   (a, b) => LOCATION_ORDER[a] - LOCATION_ORDER[b],
 );
 
-/** Classifies an exclusion's directory path into the same location taxonomy discovery uses,
- * purely from its path segments — exclusions are recorded before discovery ever gets far enough
- * to classify them, so there is no ArtifactRef.location to read here. */
-function locationOfExcludedPath(path: string): TreeLocation {
-  const segments = path.split('/');
-  const top = segments[1];
-  if (top === undefined) return 'root';
-  if (top === 'phases') return 'phase';
-  if (top === 'quick') return 'quick';
-  if (top === 'research') return 'research';
-  if (top === 'milestones') {
-    return segments[2] !== undefined && segments[2].endsWith('-phases')
-      ? 'archived-phase'
-      : 'milestone-root';
-  }
-  return 'other';
-}
-
 function relativeSegments(path: string, location: TreeLocation): string[] {
   const prefix = GROUP_PATH_PREFIX[location];
   return path.split('/').slice(prefix.length);
 }
 
+function lastSegment(path: string): string {
+  const segments = path.split('/');
+  return segments[segments.length - 1] ?? path;
+}
+
 export function buildTreeViewModel(presentation: ProjectPresentation): TreeNode[] {
-  const phaseDirPathToIdentity = new Map<string, PhaseIdentity>();
+  const phaseDirPathToIdentity = new Map<string, { identity: PhaseIdentity; name: string }>();
   for (const milestone of presentation.milestones) {
     for (const phase of milestone.phases) {
-      if (phase.dirPath !== null) phaseDirPathToIdentity.set(phase.dirPath, phase.identity);
+      if (phase.dirPath !== null) {
+        phaseDirPathToIdentity.set(phase.dirPath, { identity: phase.identity, name: phase.name });
+      }
     }
   }
 
@@ -118,7 +98,7 @@ export function buildTreeViewModel(presentation: ProjectPresentation): TreeNode[
       nodeType: 'group',
       location,
       url: null,
-      excludedReason: null,
+      badge: null,
       unknownKind: false,
       warningTone: null,
       children: [],
@@ -130,16 +110,9 @@ export function buildTreeViewModel(presentation: ProjectPresentation): TreeNode[
   function insert(
     location: TreeLocation,
     relSegments: string[],
-    leaf: (path: string, label: string) => TreeNode,
+    leaf: (path: string) => TreeNode,
   ): void {
     const groupPath = GROUP_PATH_PREFIX[location].join('/');
-    // A zero-segment path is the location group's own directory — reachable when the excluded
-    // path IS the planning root. D-10 says nothing skipped is ever silently absent, so this
-    // becomes a leaf directly under the group rather than disappearing.
-    if (relSegments.length === 0) {
-      groupNode(location).children.push(leaf(groupPath, groupPath));
-      return;
-    }
     let cumulativePath = groupPath;
     let siblings = groupNode(location).children;
     for (let index = 0; index < relSegments.length - 1; index += 1) {
@@ -147,15 +120,19 @@ export function buildTreeViewModel(presentation: ProjectPresentation): TreeNode[
       cumulativePath = `${cumulativePath}/${segment}`;
       let directory = directories.get(cumulativePath);
       if (!directory) {
-        const identity = phaseDirPathToIdentity.get(cumulativePath);
+        const owning = phaseDirPathToIdentity.get(cumulativePath);
+        const { label, badge } = labelOf(
+          { location, nodeType: 'directory', path: cumulativePath },
+          owning ? { name: owning.name, number: owning.identity.number } : null,
+        );
         directory = {
           key: cumulativePath,
-          label: segment,
+          label,
           path: cumulativePath,
           nodeType: 'directory',
           location,
-          url: identity ? buildPhaseUrl(identity) : null,
-          excludedReason: null,
+          url: owning ? buildPhaseUrl(owning.identity) : null,
+          badge,
           unknownKind: false,
           warningTone: null,
           children: [],
@@ -165,40 +142,51 @@ export function buildTreeViewModel(presentation: ProjectPresentation): TreeNode[
       }
       siblings = directory.children;
     }
-    const label = relSegments[relSegments.length - 1];
-    cumulativePath = `${cumulativePath}/${label}`;
-    siblings.push(leaf(cumulativePath, label));
+    cumulativePath = `${cumulativePath}/${relSegments[relSegments.length - 1]}`;
+    siblings.push(leaf(cumulativePath));
   }
 
   for (const artifact of presentation.artifacts) {
-    insert(artifact.location, relativeSegments(artifact.path, artifact.location), (path, label) => ({
-      key: path,
-      label,
-      path,
-      nodeType: 'file',
-      location: artifact.location,
-      url: artifact.path === ROOT_REQUIREMENTS_PATH ? presentationRoutePatterns.traceability : artifact.key,
-      excludedReason: null,
-      unknownKind: artifact.kind === 'unknown',
-      warningTone: artifactWarningTone(artifact),
-      children: [],
-    }));
+    insert(artifact.location, relativeSegments(artifact.path, artifact.location), (path) => {
+      const { label, badge } = labelOf({ location: artifact.location, nodeType: 'file', path }, null);
+      return {
+        key: path,
+        label,
+        path,
+        nodeType: 'file',
+        location: artifact.location,
+        url: artifact.path === ROOT_REQUIREMENTS_PATH ? presentationRoutePatterns.traceability : artifact.key,
+        badge,
+        unknownKind: artifact.kind === 'unknown',
+        warningTone: artifactWarningTone(artifact),
+        children: [],
+      };
+    });
   }
 
-  for (const exclusion of presentation.exclusions) {
-    const location = locationOfExcludedPath(exclusion.path);
-    insert(location, relativeSegments(exclusion.path, location), (path, label) => ({
-      key: `exclusion:${path}`,
-      label,
-      path,
-      nodeType: 'exclusion',
-      location,
-      url: null,
-      excludedReason: exclusion.reason,
-      unknownKind: false,
-      warningTone: null,
-      children: [],
-    }));
+  function rankCompare(left: TreeNode, right: TreeNode): number {
+    const rankDiff = rankOf(left) - rankOf(right);
+    if (rankDiff !== 0) return rankDiff;
+    return lastSegment(left.path).localeCompare(lastSegment(right.path));
+  }
+
+  // D-02 collision rule: when two or more sibling leaves land on the same readable label, every
+  // one of them whose file extension isn't `.md` gets that extension appended in parentheses
+  // ('State' / 'State (JSON)') — never the `.md` sibling, which keeps the bare label.
+  function disambiguateLabels(leaves: TreeNode[]): void {
+    const byLabel = new Map<string, TreeNode[]>();
+    for (const leaf of leaves) {
+      const bucket = byLabel.get(leaf.label);
+      if (bucket) bucket.push(leaf);
+      else byLabel.set(leaf.label, [leaf]);
+    }
+    for (const bucket of byLabel.values()) {
+      if (bucket.length < 2) continue;
+      for (const node of bucket) {
+        const suffix = formatSuffix(lastSegment(node.path));
+        if (suffix !== null) node.label = `${node.label} (${suffix})`;
+      }
+    }
   }
 
   function sortChildren(nodes: TreeNode[]): void {
@@ -207,11 +195,14 @@ export function buildTreeViewModel(presentation: ProjectPresentation): TreeNode[
     dirs.sort((left, right) => {
       const leftIdentity = phaseDirPathToIdentity.get(left.path);
       const rightIdentity = phaseDirPathToIdentity.get(right.path);
-      if (leftIdentity && rightIdentity) return comparePhaseNumbers(leftIdentity.number, rightIdentity.number);
-      return left.label.localeCompare(right.label);
+      if (leftIdentity && rightIdentity) {
+        return comparePhaseNumbers(leftIdentity.identity.number, rightIdentity.identity.number);
+      }
+      return rankCompare(left, right);
     });
-    leaves.sort((left, right) => left.label.localeCompare(right.label));
+    leaves.sort(rankCompare);
     nodes.splice(0, nodes.length, ...dirs, ...leaves);
+    disambiguateLabels(leaves);
     for (const dir of dirs) sortChildren(dir.children);
   }
 

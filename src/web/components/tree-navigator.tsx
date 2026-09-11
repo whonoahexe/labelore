@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { ChevronRight } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
 import type { TreeNode } from '../../presentation/tree.ts';
 
@@ -63,21 +64,6 @@ function TreeBranch({
     if (detailsRef.current) detailsRef.current.open = true;
   }, [revealed]);
 
-  if (node.nodeType === 'exclusion') {
-    const reasonId = `${node.key}-reason`;
-    return (
-      <li className="tree-node" data-node-type="exclusion">
-        <span className="tree-node-row tree-excluded" aria-describedby={reasonId}>
-          <span className="tree-excluded-marker">Excluded</span>
-          {node.label}
-        </span>
-        <span id={reasonId} className="tree-excluded-reason">
-          {node.excludedReason}
-        </span>
-      </li>
-    );
-  }
-
   if (node.children.length === 0) {
     if (node.nodeType === 'group') {
       return (
@@ -91,12 +77,20 @@ function TreeBranch({
       <li className="tree-node" data-node-type={node.nodeType}>
         {node.url ? (
           <Link to={node.url} className="tree-node-row" data-active={isActive ? 'true' : undefined}>
-            {node.label}
+            <span className="tree-chevron-spacer" aria-hidden="true" />
+            <span className="tree-node-label" title={node.path}>
+              {node.label}
+            </span>
+            {node.badge !== null ? <span className="tree-badge">{node.badge}</span> : null}
             <WarningIndicator tone={node.warningTone} />
           </Link>
         ) : (
           <span className="tree-node-row">
-            {node.label}
+            <span className="tree-chevron-spacer" aria-hidden="true" />
+            <span className="tree-node-label" title={node.path}>
+              {node.label}
+            </span>
+            {node.badge !== null ? <span className="tree-badge">{node.badge}</span> : null}
             <WarningIndicator tone={node.warningTone} />
           </span>
         )}
@@ -104,23 +98,30 @@ function TreeBranch({
     );
   }
 
-  const labelClassName = node.nodeType === 'group' ? 'tree-group-label' : 'tree-node-link';
+  const labelClassName =
+    node.nodeType === 'group' ? 'tree-node-label tree-group-label' : 'tree-node-label tree-node-link';
+  const labelTitle = node.nodeType === 'directory' ? node.path : undefined;
 
   return (
     <li className="tree-node" data-node-type={node.nodeType}>
       <details className="tree-disclosure" ref={detailsRef} open={node.nodeType === 'group'}>
         <summary className="tree-node-row" data-active={isActive ? 'true' : undefined}>
+          <ChevronRight className="tree-chevron" aria-hidden="true" />
           {node.url ? (
             <Link
               to={node.url}
               className={labelClassName}
+              title={labelTitle}
               onClick={(event) => event.stopPropagation()}
             >
               {node.label}
             </Link>
           ) : (
-            <span className={labelClassName}>{node.label}</span>
+            <span className={labelClassName} title={labelTitle}>
+              {node.label}
+            </span>
           )}
+          {node.badge !== null ? <span className="tree-badge">{node.badge}</span> : null}
         </summary>
         <ul className="tree-children">
           {node.children.map((child) => (
