@@ -31,7 +31,7 @@ async function fetchDashboard(): Promise<DashboardResponse> {
   return (await response.json()) as DashboardResponse;
 }
 
-const ATTENTION_PAGE_SIZE = 8;
+const ATTENTION_PAGE_SIZE = 4;
 
 function kindLabel(kind: NextWorkItem['kind']): string {
   return kind.replaceAll('-', ' ');
