@@ -1033,15 +1033,25 @@ summary.tree-node-row:focus-visible {
 
 .progress-panel {
   display: grid;
-  grid-template-columns: minmax(12rem, 0.8fr) minmax(13rem, 1fr) minmax(8rem, auto);
+  grid-template-columns: minmax(14rem, 1fr) minmax(18rem, 1.2fr);
   gap: var(--space-6) var(--space-8);
   align-items: center;
   margin-top: var(--space-fluid-10);
   padding: var(--space-fluid-3);
 }
 
-.progress-panel > header {
+.progress-panel-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
   align-self: start;
+}
+
+.progress-panel-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
 }
 
 .formal-status {
@@ -1053,9 +1063,9 @@ summary.tree-node-row:focus-visible {
 .formal-progress-value {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2-5);
-  padding-inline: var(--space-fluid-1);
-  border-inline: 1px solid var(--border);
+  gap: var(--space-3-5);
+  padding-left: var(--space-8);
+  border-left: 1px solid var(--border);
 }
 
 .plan-progress-headline {
@@ -1108,11 +1118,11 @@ summary.tree-node-row:focus-visible {
 .plan-pill[data-state='awaiting'] {
   border-color: color-mix(in oklch, var(--primary) 60%, var(--border));
   background: var(--primary-tint);
-  color: var(--primary);
+  color: var(--foreground);
 }
 
 .plan-pill[data-state='awaiting'] strong {
-  color: var(--primary);
+  color: var(--foreground);
 }
 
 .checkpoint-callout {
@@ -1134,7 +1144,7 @@ summary.tree-node-row:focus-visible {
 .checkpoint-content {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1-5);
+  gap: var(--space-2);
 }
 
 .checkpoint-header {
@@ -1146,9 +1156,10 @@ summary.tree-node-row:focus-visible {
 
 .checkpoint-badge {
   padding: var(--space-0-5) var(--space-2);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: color-mix(in oklch, var(--primary) 20%, transparent);
-  color: var(--primary);
+  background: var(--card);
+  color: var(--foreground);
   font-family: var(--font-heading);
   font-size: var(--fs-1);
   font-weight: var(--fw-medium);
@@ -1163,21 +1174,27 @@ summary.tree-node-row:focus-visible {
 }
 
 .checkpoint-callout p {
-  margin: var(--space-1) 0 0;
+  margin: 0;
   color: color-mix(in oklch, var(--foreground) 90%, var(--muted-foreground));
   font-size: var(--fs-3);
+  line-height: var(--lh-normal);
 }
 
 .checkpoint-link {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1-5);
-  color: var(--primary);
+  margin-top: var(--space-0-5);
+  color: var(--foreground);
   font-family: var(--font-heading);
   font-size: var(--fs-3);
   font-weight: var(--fw-medium);
   text-decoration: underline;
   text-underline-offset: 0.2em;
+}
+
+.checkpoint-link:hover {
+  color: var(--primary);
 }
 
 .checkpoint-link svg {
@@ -1886,10 +1903,6 @@ pre {
   .progress-panel {
     grid-template-columns: minmax(12rem, 1fr) minmax(12rem, 1fr);
   }
-
-  .progress-panel > .source-note {
-    grid-column: 1 / -1;
-  }
 }
 
 @media (max-width: 42rem) {
@@ -1951,15 +1964,15 @@ pre {
 
   .plan-progress-summary,
   .formal-progress-value {
-    padding: var(--space-4) 0;
-    border-block: 1px solid var(--border);
-    border-inline: 0;
+    padding-left: 0;
+    padding-top: var(--space-4);
+    border-left: 0;
+    border-top: 1px solid var(--border);
   }
 
   .checkpoint-callout,
   .observed-progress,
-  .discrepancy-callout,
-  .progress-panel > .source-note {
+  .discrepancy-callout {
     grid-column: auto;
   }
 
