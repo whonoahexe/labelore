@@ -101,6 +101,7 @@ None.
 | 6 | attention-panel in the dashboard should only show 4 at a time | 2026-09-12 | 974d845 | — |
 | 260912-lfi | Scroll to blocker in project state from source link, and render markdown without raw asterisks in dashboard | 2026-09-12 | c6def3f | [260912-lfi-scroll-to-blocker-in-project-state-from-](./quick/260912-lfi-scroll-to-blocker-in-project-state-from-/) |
 | 260912-oae | Revamp progress panel to show phase and checkpoints clearly | 2026-09-12 | 4825c8f | [260912-oae-revamp-progress-panel-to-show-phase-and-](./quick/260912-oae-revamp-progress-panel-to-show-phase-and-/) |
+| 8 | Refine progress panel spacing, grid alignment, and dark/light contrast | 2026-09-12 | 59dc045 | — |
 
 
 ## Deferred Items
