@@ -43,11 +43,11 @@ describe('stripEmoji', () => {
 describe('dashboard-page emoji sanitization contract', () => {
   it('imports and applies stripEmoji to next-primary and attention panel descriptions', async () => {
     const page = await source('src/web/pages/dashboard-page.tsx');
-    expect(page).toMatch(/import \{ stripEmoji \} from '\.\/strip-emoji\.ts';/);
+    expect(page).toMatch(/import \{.*stripEmoji.*\} from '\.\/strip-emoji\.ts';/);
     expect(page).toContain('stripEmoji(rawItem.description)');
-    expect(page).toContain('<InlineMarkdown text={stripEmoji(item.detail)} />');
+    expect(page).toContain('<p>{stripMarkdown(stripEmoji(item.detail))}</p>');
     // Ensure the G2-08 invariant that prevents slice/substr truncation is still intact
-    expect(page).toContain('<InlineMarkdown text={item.description} />');
+    expect(page).toContain('<p>{item.description}</p>');
     expect(page).not.toMatch(/item\.description\.(slice|substring|substr)\(/);
   });
 });
