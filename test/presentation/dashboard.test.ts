@@ -762,6 +762,7 @@ describe('buildDashboardViewModel', () => {
       const view = buildDashboardViewModel(p);
 
       expect(view.completion.phaseStatus).toBe('Awaiting Checkpoint');
+      expect(view.completion.phaseMode).toBe('Phase Execution');
       expect(view.completion.counts).toEqual({
         completed: 1,
         awaitingCheckpoint: 1,
@@ -777,7 +778,7 @@ describe('buildDashboardViewModel', () => {
       });
     });
 
-    it('sets phaseStatus to Complete when all plans are complete', () => {
+    it('sets phaseStatus to Complete and phaseMode to Phase Complete when all plans are complete', () => {
       const p = presentation(
         {},
         {
@@ -789,6 +790,7 @@ describe('buildDashboardViewModel', () => {
       const view = buildDashboardViewModel(p);
 
       expect(view.completion.phaseStatus).toBe('Complete');
+      expect(view.completion.phaseMode).toBe('Phase Complete');
       expect(view.completion.counts).toEqual({
         completed: 2,
         awaitingCheckpoint: 0,
@@ -810,12 +812,33 @@ describe('buildDashboardViewModel', () => {
       const view = buildDashboardViewModel(p);
 
       expect(view.completion.phaseStatus).toBe('In Progress');
+      expect(view.completion.phaseMode).toBe('Phase Execution');
       expect(view.completion.counts).toEqual({
         completed: 1,
         awaitingCheckpoint: 0,
         remaining: 2,
         total: 3,
       });
+    });
+
+    it('resolves phaseMode to Phase Discussion, Phase Planning, and Phase Verification based on state.status', () => {
+      const pDiscuss = presentation(
+        { state: { ...presentation().state!, status: 'discussing' } },
+        { plans: [plan('01-01', false)] },
+      );
+      expect(buildDashboardViewModel(pDiscuss).completion.phaseMode).toBe('Phase Discussion');
+
+      const pPlan = presentation(
+        { state: { ...presentation().state!, status: 'planning' } },
+        { plans: [plan('01-01', false)] },
+      );
+      expect(buildDashboardViewModel(pPlan).completion.phaseMode).toBe('Phase Planning');
+
+      const pVerify = presentation(
+        { state: { ...presentation().state!, status: 'verifying' } },
+        { plans: [plan('01-01', true), plan('01-02', false)] },
+      );
+      expect(buildDashboardViewModel(pVerify).completion.phaseMode).toBe('Phase Verification');
     });
   });
 });

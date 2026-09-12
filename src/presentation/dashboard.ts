@@ -110,6 +110,7 @@ export interface DashboardViewModel {
   completion: {
     currentPhaseKey: string | null;
     phaseStatus: string | null;
+    phaseMode: string;
     counts: PhasePlanCounts;
     activeCheckpoint: PhaseProgressCheckpoint | null;
     formal: CompletionSignal;
@@ -207,12 +208,14 @@ function phaseCompletionConsolidated(
   presentation: ProjectPresentation,
 ): {
   phaseStatus: string | null;
+  phaseMode: string;
   counts: PhasePlanCounts;
   activeCheckpoint: PhaseProgressCheckpoint | null;
 } {
   if (!phase) {
     return {
       phaseStatus: null,
+      phaseMode: 'Phase Execution',
       counts: { completed: 0, awaitingCheckpoint: 0, remaining: 0, total: 0 },
       activeCheckpoint: null,
     };
@@ -248,6 +251,26 @@ function phaseCompletionConsolidated(
     phaseStatus = 'Planned';
   }
 
+  let phaseMode: string;
+  if ((total > 0 && completed === total) || phase.roadmapComplete) {
+    phaseMode = 'Phase Complete';
+  } else {
+    const rawStateStatus = presentation.state?.status?.toLowerCase() ?? '';
+    if (rawStateStatus.includes('discuss')) {
+      phaseMode = 'Phase Discussion';
+    } else if (rawStateStatus.includes('plan')) {
+      phaseMode = 'Phase Planning';
+    } else if (rawStateStatus.includes('verif')) {
+      phaseMode = 'Phase Verification';
+    } else if (rawStateStatus.includes('execut')) {
+      phaseMode = 'Phase Execution';
+    } else if (phase.diskStatus === 'researched') {
+      phaseMode = 'Phase Research';
+    } else {
+      phaseMode = 'Phase Execution';
+    }
+  }
+
   const pendingCheckpoint = presentation.checkpoints.find(
     (cp) => cp.status === 'pending' && cp.gate === 'blocking-human' && cp.phaseKey === phase.key,
   );
@@ -264,6 +287,7 @@ function phaseCompletionConsolidated(
 
   return {
     phaseStatus,
+    phaseMode,
     counts: { completed, awaitingCheckpoint, remaining, total },
     activeCheckpoint,
   };
@@ -533,6 +557,7 @@ export function buildDashboardViewModel(presentation: ProjectPresentation): Dash
     completion: {
       currentPhaseKey: currentPhase?.key ?? null,
       phaseStatus: consolidated.phaseStatus,
+      phaseMode: consolidated.phaseMode,
       counts: consolidated.counts,
       activeCheckpoint: consolidated.activeCheckpoint,
       ...completion,
