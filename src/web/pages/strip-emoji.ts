@@ -18,3 +18,5 @@ export function stripEmoji(text: string): string {
     .replace(/[ \t]+([.,!?:;])/g, '$1')
     .trim();
 }
+
+export { stripMarkdown } from './strip-markdown.ts';

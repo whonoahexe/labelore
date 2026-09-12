@@ -19,8 +19,7 @@ import {
 } from '../../presentation/dashboard.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
 import { InvalidProjectScreen } from './invalid-project-screen.tsx';
-import { InlineMarkdown } from '../components/inline-markdown.tsx';
-import { stripEmoji } from './strip-emoji.ts';
+import { stripEmoji, stripMarkdown } from './strip-emoji.ts';
 
 type DashboardResponse = DashboardViewModel & {
   loadStatus: ProjectPresentation['loadStatus'];
@@ -51,15 +50,15 @@ function SourceLink({ provenance, children }: { provenance: SourceProvenance; ch
 }
 
 function NextWork({ item: rawItem, primary = false }: { item: NextWorkItem; primary?: boolean }) {
-  const item = primary ? { ...rawItem, description: stripEmoji(rawItem.description) } : rawItem;
+  const item = primary
+    ? { ...rawItem, description: stripMarkdown(stripEmoji(rawItem.description)) }
+    : { ...rawItem, description: stripMarkdown(rawItem.description) };
   return (
     <Link className={primary ? 'next-primary' : 'next-preview'} to={item.url}>
       <div>
         <span className="item-kind">{kindLabel(item.kind)}</span>
-        <strong>{item.title}</strong>
-        <p>
-          <InlineMarkdown text={item.description} />
-        </p>
+        <strong>{stripMarkdown(item.title)}</strong>
+        <p>{item.description}</p>
       </div>
       <ArrowRight aria-hidden="true" />
     </Link>
@@ -184,10 +183,8 @@ export function DashboardPage(): React.JSX.Element {
           <div className="discrepancy-callout" role="status">
             <AlertTriangle aria-hidden="true" />
             <div>
-              <strong>{discrepancy.title}</strong>
-              <p>
-                <InlineMarkdown text={discrepancy.detail} />
-              </p>
+              <strong>{stripMarkdown(discrepancy.title)}</strong>
+              <p>{stripMarkdown(discrepancy.detail)}</p>
             </div>
           </div>
         ) : null}
@@ -212,21 +209,17 @@ export function DashboardPage(): React.JSX.Element {
                       <Link
                         className="attention-action"
                         to={item.url}
-                        aria-label={`Open ${item.type}: ${item.title}`}
+                        aria-label={`Open ${item.type}: ${stripMarkdown(item.title)}`}
                       >
                         <span className="item-kind">{item.type}</span>
-                        <strong>{item.title}</strong>
-                        <p>
-                          <InlineMarkdown text={stripEmoji(item.detail)} />
-                        </p>
+                        <strong>{stripMarkdown(item.title)}</strong>
+                        <p>{stripMarkdown(stripEmoji(item.detail))}</p>
                       </Link>
                     ) : (
                       <div>
                         <span className="item-kind">{item.type}</span>
-                        <strong>{item.title}</strong>
-                        <p>
-                          <InlineMarkdown text={stripEmoji(item.detail)} />
-                        </p>
+                        <strong>{stripMarkdown(item.title)}</strong>
+                        <p>{stripMarkdown(stripEmoji(item.detail))}</p>
                       </div>
                     )}
                     <SourceLink provenance={item.provenance} />

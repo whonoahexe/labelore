@@ -1200,24 +1200,6 @@ summary.tree-node-row:focus-visible {
   min-width: 0;
 }
 
-.dashboard-page p strong {
-  display: inline;
-  margin-top: 0;
-  font-family: inherit;
-  font-size: inherit;
-  font-weight: var(--fw-semibold);
-  color: var(--foreground);
-}
-
-.dashboard-page p code {
-  background: var(--secondary);
-  padding: var(--space-0-5) var(--space-1);
-  border-radius: var(--radius-sm);
-  color: var(--secondary-foreground);
-  font-family: var(--font-heading);
-  font-size: var(--fs-3);
-}
-
 .preview-list {
   display: grid;
 }
