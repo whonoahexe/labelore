@@ -259,7 +259,7 @@ describe('G2-08 bounded Next descriptions', () => {
 
   it('never truncates the underlying description string in the component itself', async () => {
     const page = await source('src/web/pages/dashboard-page.tsx');
-    expect(page).toContain('<p>{item.description}</p>');
+    expect(page).toContain('<InlineMarkdown text={item.description} />');
     expect(page).not.toMatch(/item\.description\.(slice|substring|substr)\(/);
   });
 });
