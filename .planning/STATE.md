@@ -100,6 +100,8 @@ None.
 | 5 | Strip emojis from next-primary and attention-panel descriptions | 2026-09-11 | 155b4ab | — |
 | 6 | attention-panel in the dashboard should only show 4 at a time | 2026-09-12 | 974d845 | — |
 | 260912-lfi | Scroll to blocker in project state from source link, and render markdown without raw asterisks in dashboard | 2026-09-12 | c6def3f | [260912-lfi-scroll-to-blocker-in-project-state-from-](./quick/260912-lfi-scroll-to-blocker-in-project-state-from-/) |
+| 260912-oae | Revamp progress panel to show phase and checkpoints clearly | 2026-09-12 | 4825c8f | [260912-oae-revamp-progress-panel-to-show-phase-and-](./quick/260912-oae-revamp-progress-panel-to-show-phase-and-/) |
+
 
 ## Deferred Items
 
