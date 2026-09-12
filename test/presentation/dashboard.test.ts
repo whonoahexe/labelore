@@ -739,4 +739,83 @@ describe('buildDashboardViewModel', () => {
     expect(newer.readAt).toBe('2026-08-27T03:00:00.000Z');
     expect(newer.current.progress.completedPlans.value).toBe(7);
   });
+
+  describe('phase completion consolidation and plan counts', () => {
+    it('sets phaseStatus to Awaiting Checkpoint, populates counts, and surfaces active checkpoint', () => {
+      const awaitingPlan = plan('01-02', false);
+      awaitingPlan.summary = {
+        key: 'summary:01-02',
+        path: '01-02-SUMMARY.md',
+        frontmatter: { status: 'awaiting-checkpoint' },
+      };
+      const cp = checkpoint({ planKey: awaitingPlan.key, planId: '01-02' });
+      awaitingPlan.checkpoints = [cp];
+
+      const p = presentation(
+        { checkpoints: [cp] },
+        {
+          formalPlanProgress: { completed: 1, total: 3, sourcePath: '.planning/ROADMAP.md' },
+          plans: [plan('01-01', true), awaitingPlan, plan('01-03', false)],
+        },
+      );
+
+      const view = buildDashboardViewModel(p);
+
+      expect(view.completion.phaseStatus).toBe('Awaiting Checkpoint');
+      expect(view.completion.counts).toEqual({
+        completed: 1,
+        awaitingCheckpoint: 1,
+        remaining: 1,
+        total: 3,
+      });
+      expect(view.completion.activeCheckpoint).toEqual({
+        key: cp.key,
+        planKey: awaitingPlan.key,
+        planId: '01-02',
+        name: 'Approval',
+        type: 'checkpoint:human-verify',
+      });
+    });
+
+    it('sets phaseStatus to Complete when all plans are complete', () => {
+      const p = presentation(
+        {},
+        {
+          formalPlanProgress: { completed: 2, total: 2, sourcePath: '.planning/ROADMAP.md' },
+          plans: [plan('01-01', true), plan('01-02', true)],
+        },
+      );
+
+      const view = buildDashboardViewModel(p);
+
+      expect(view.completion.phaseStatus).toBe('Complete');
+      expect(view.completion.counts).toEqual({
+        completed: 2,
+        awaitingCheckpoint: 0,
+        remaining: 0,
+        total: 2,
+      });
+      expect(view.completion.activeCheckpoint).toBeNull();
+    });
+
+    it('sets phaseStatus to In Progress when plans are partially done without checkpoints', () => {
+      const p = presentation(
+        {},
+        {
+          formalPlanProgress: { completed: 1, total: 3, sourcePath: '.planning/ROADMAP.md' },
+          plans: [plan('01-01', true), plan('01-02', false), plan('01-03', false)],
+        },
+      );
+
+      const view = buildDashboardViewModel(p);
+
+      expect(view.completion.phaseStatus).toBe('In Progress');
+      expect(view.completion.counts).toEqual({
+        completed: 1,
+        awaitingCheckpoint: 0,
+        remaining: 2,
+        total: 3,
+      });
+    });
+  });
 });

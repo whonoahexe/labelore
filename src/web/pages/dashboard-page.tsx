@@ -114,7 +114,6 @@ export function DashboardPage(): React.JSX.Element {
     return <InvalidProjectScreen loadStatus={view.loadStatus} />;
   }
 
-  const discrepancy = view.attention.find((item) => item.type === 'discrepancy') ?? null;
   return (
     <main className="dashboard-page page-stack">
       <section className="position-hero" aria-labelledby="current-position-heading">
@@ -156,14 +155,42 @@ export function DashboardPage(): React.JSX.Element {
             <p className="eyebrow">Current phase</p>
             <h2 id="phase-progress-heading">Plan completion</h2>
           </div>
-          {view.completion.formal.status ? (
-            <span className="formal-status">{view.completion.formal.status}</span>
+          {view.completion.phaseStatus ? (
+            <span
+              className="status-chip"
+              data-tone={
+                view.completion.phaseStatus === 'Complete'
+                  ? 'complete'
+                  : view.completion.phaseStatus === 'Awaiting Checkpoint' ||
+                      view.completion.phaseStatus === 'In Progress'
+                    ? 'active'
+                    : 'quiet'
+              }
+            >
+              <CircleDot aria-hidden="true" />
+              {view.completion.phaseStatus}
+            </span>
           ) : null}
         </header>
-        {view.completion.formal.completed !== null && view.completion.formal.total !== null ? (
-          <div className="formal-progress-value">
-            <strong>{view.completion.formal.completed}</strong>
-            <span>of {view.completion.formal.total} plans</span>
+        {view.completion.counts.total > 0 ? (
+          <div className="plan-progress-summary">
+            <div className="plan-progress-headline">
+              <strong>{view.completion.counts.completed}</strong>
+              <span>of {view.completion.counts.total} plans completed</span>
+            </div>
+            <div className="plan-breakdown-pills">
+              <span className="plan-pill" data-state="completed">
+                <strong>{view.completion.counts.completed}</strong> Completed
+              </span>
+              {view.completion.counts.awaitingCheckpoint > 0 ? (
+                <span className="plan-pill" data-state="awaiting">
+                  <strong>{view.completion.counts.awaitingCheckpoint}</strong> Awaiting Review
+                </span>
+              ) : null}
+              <span className="plan-pill" data-state="remaining">
+                <strong>{view.completion.counts.remaining}</strong> Remaining
+              </span>
+            </div>
           </div>
         ) : (
           <p className="progress-empty">
@@ -172,19 +199,20 @@ export function DashboardPage(): React.JSX.Element {
         )}
         <SourceLink provenance={view.completion.formal.provenance}>Open roadmap</SourceLink>
 
-        <div className="observed-progress">
-          <span>
-            Files on disk · {view.completion.observed.completed ?? 0} of{' '}
-            {view.completion.observed.total ?? 0} summaries present
-          </span>
-          {view.completion.observed.status ? <span>{view.completion.observed.status}</span> : null}
-        </div>
-        {discrepancy ? (
-          <div className="discrepancy-callout" role="status">
+        {view.completion.activeCheckpoint ? (
+          <div className="checkpoint-callout" role="status">
             <AlertTriangle aria-hidden="true" />
-            <div>
-              <strong>{stripMarkdown(discrepancy.title)}</strong>
-              <p>{stripMarkdown(discrepancy.detail)}</p>
+            <div className="checkpoint-content">
+              <div className="checkpoint-header">
+                <span className="checkpoint-badge">Awaiting human review</span>
+                <strong>{stripMarkdown(view.completion.activeCheckpoint.name)}</strong>
+              </div>
+              <p>
+                Manual verification is required before Plan {view.completion.activeCheckpoint.planId} can complete.
+              </p>
+              <Link to={view.completion.activeCheckpoint.planKey} className="checkpoint-link">
+                Open plan <ArrowRight aria-hidden="true" />
+              </Link>
             </div>
           </div>
         ) : null}

@@ -278,4 +278,47 @@ coverage_results:
     expect(presentation.exclusions).toEqual(snapshot.exclusions);
     expect(presentation.artifacts).toEqual([]);
   });
+
+  it('keeps complete false and preserves blocking-human checkpoints when plan summary has status awaiting-checkpoint', async () => {
+    const presentation = await presentationOf({
+      '.planning/STATE.md': state('### Blockers\n\nNone'),
+      '.planning/phases/01-live/01-01-PLAN.md': plan(
+        `<task type="checkpoint:human-verify" gate="blocking-human">
+  <name>ZIP64 native verification</name>
+</task>`,
+      ),
+      '.planning/phases/01-live/01-01-SUMMARY.md': `---
+phase: "01"
+plan: "01"
+status: awaiting-checkpoint
+---
+# Summary
+`,
+      '.planning/phases/01-live/01-02-PLAN.md': plan('', '["01-01"]'),
+      '.planning/phases/01-live/01-02-SUMMARY.md': `---
+phase: "01"
+plan: "02"
+status: complete
+---
+# Summary
+`,
+    });
+
+    const activePhase = presentation.milestones[0].phases[0];
+    const plan01 = activePhase.plans.find((p) => p.id === '01-01');
+    const plan02 = activePhase.plans.find((p) => p.id === '01-02');
+
+    expect(plan01?.complete).toBe(false);
+    expect(plan01?.summary?.frontmatter.status).toBe('awaiting-checkpoint');
+    expect(plan02?.complete).toBe(true);
+
+    expect(presentation.checkpoints).toEqual([
+      expect.objectContaining({
+        planId: '01-01',
+        name: 'ZIP64 native verification',
+        gate: 'blocking-human',
+        status: 'pending',
+      }),
+    ]);
+  });
 });

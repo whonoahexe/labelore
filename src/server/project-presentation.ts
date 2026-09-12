@@ -485,7 +485,11 @@ export function toProjectPresentation(snapshot: ProjectSnapshot): ProjectPresent
             evidenceKey: pass?.key ?? null,
           };
         });
-        if (plan.summary === null) {
+        const summaryStatus = asString(plan.summary?.frontmatter?.status);
+        const isAwaitingCheckpoint = summaryStatus === 'awaiting-checkpoint';
+        const isComplete = plan.summary !== null && !isAwaitingCheckpoint;
+
+        if (plan.summary === null || isAwaitingCheckpoint) {
           allCheckpoints.push(
             ...checkpoints.filter((checkpoint) => checkpoint.gate === 'blocking-human'),
           );
@@ -521,7 +525,7 @@ export function toProjectPresentation(snapshot: ProjectSnapshot): ProjectPresent
           description:
             roadmap.phase?.plans.find((entry) => entry.id === plan.id)?.description || null,
           frontmatter: jsonRecord(plan.frontmatter),
-          complete: plan.summary !== null,
+          complete: isComplete,
           summary: plan.summary
             ? {
                 key: artifactTokenOf(plan.summary.path),

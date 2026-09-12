@@ -68,6 +68,21 @@ export interface NextWorkItem {
   url: string;
 }
 
+export interface PhasePlanCounts {
+  completed: number;
+  awaitingCheckpoint: number;
+  remaining: number;
+  total: number;
+}
+
+export interface PhaseProgressCheckpoint {
+  key: string;
+  planKey: string;
+  planId: string;
+  name: string;
+  type: string;
+}
+
 export interface CompletionSignal {
   completed: number | null;
   total: number | null;
@@ -94,6 +109,9 @@ export interface DashboardViewModel {
   };
   completion: {
     currentPhaseKey: string | null;
+    phaseStatus: string | null;
+    counts: PhasePlanCounts;
+    activeCheckpoint: PhaseProgressCheckpoint | null;
     formal: CompletionSignal;
     observed: CompletionSignal;
   };
@@ -182,6 +200,73 @@ function hasDiscrepancy(formal: CompletionSignal, observed: CompletionSignal): b
     observed.total !== null &&
     (formal.completed !== observed.completed || formal.total !== observed.total)
   );
+}
+
+function phaseCompletionConsolidated(
+  phase: PhaseDto | null,
+  presentation: ProjectPresentation,
+): {
+  phaseStatus: string | null;
+  counts: PhasePlanCounts;
+  activeCheckpoint: PhaseProgressCheckpoint | null;
+} {
+  if (!phase) {
+    return {
+      phaseStatus: null,
+      counts: { completed: 0, awaitingCheckpoint: 0, remaining: 0, total: 0 },
+      activeCheckpoint: null,
+    };
+  }
+
+  const completed = phase.plans.filter((plan) => plan.complete).length;
+  const awaitingCheckpoint = phase.plans.filter((plan) => {
+    if (plan.complete) return false;
+    const status = plan.summary?.frontmatter?.status;
+    return (
+      status === 'awaiting-checkpoint' ||
+      plan.checkpoints.some((cp) => cp.gate === 'blocking-human' && cp.status === 'pending')
+    );
+  }).length;
+
+  const total = Math.max(phase.plans.length, phase.formalPlanProgress?.total ?? 0);
+  const remaining = Math.max(0, total - completed - awaitingCheckpoint);
+
+  let phaseStatus: string;
+  if (awaitingCheckpoint > 0) {
+    phaseStatus = 'Awaiting Checkpoint';
+  } else if (total > 0 && completed === total) {
+    phaseStatus = 'Complete';
+  } else if (completed > 0) {
+    phaseStatus = 'In Progress';
+  } else if (phase.diskStatus === 'researched') {
+    phaseStatus = 'Researched';
+  } else if (phase.diskStatus === 'in_progress') {
+    phaseStatus = 'In Progress';
+  } else if (phase.roadmapComplete) {
+    phaseStatus = 'Complete';
+  } else {
+    phaseStatus = 'Planned';
+  }
+
+  const pendingCheckpoint = presentation.checkpoints.find(
+    (cp) => cp.status === 'pending' && cp.gate === 'blocking-human' && cp.phaseKey === phase.key,
+  );
+
+  const activeCheckpoint: PhaseProgressCheckpoint | null = pendingCheckpoint
+    ? {
+        key: pendingCheckpoint.key,
+        planKey: pendingCheckpoint.planKey,
+        planId: pendingCheckpoint.planId,
+        name: pendingCheckpoint.name,
+        type: pendingCheckpoint.type,
+      }
+    : null;
+
+  return {
+    phaseStatus,
+    counts: { completed, awaitingCheckpoint, remaining, total },
+    activeCheckpoint,
+  };
 }
 
 function planIndex(presentation: ProjectPresentation): Map<string, PlanDto> {
@@ -413,6 +498,7 @@ export function buildDashboardViewModel(presentation: ProjectPresentation): Dash
       : null;
   const currentPhase = currentPhaseOf(presentation);
   const completion = completionOf(currentPhase);
+  const consolidated = phaseCompletionConsolidated(currentPhase, presentation);
   return {
     readAt: presentation.readAt,
     projectName: presentation.projectName,
@@ -444,7 +530,13 @@ export function buildDashboardViewModel(presentation: ProjectPresentation): Dash
         },
       },
     },
-    completion: { currentPhaseKey: currentPhase?.key ?? null, ...completion },
+    completion: {
+      currentPhaseKey: currentPhase?.key ?? null,
+      phaseStatus: consolidated.phaseStatus,
+      counts: consolidated.counts,
+      activeCheckpoint: consolidated.activeCheckpoint,
+      ...completion,
+    },
     next: nextWork(presentation, currentPhase),
     attention: attentionItems(presentation, currentPhase, completion.formal, completion.observed),
   };
