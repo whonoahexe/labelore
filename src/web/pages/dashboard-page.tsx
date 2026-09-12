@@ -150,27 +150,30 @@ export function DashboardPage(): React.JSX.Element {
       </section>
 
       <section className="progress-panel" aria-labelledby="phase-progress-heading">
-        <header>
+        <header className="progress-panel-header">
           <div>
             <p className="eyebrow">Current phase</p>
             <h2 id="phase-progress-heading">Plan completion</h2>
           </div>
-          {view.completion.phaseStatus ? (
-            <span
-              className="status-chip"
-              data-tone={
-                view.completion.phaseStatus === 'Complete'
-                  ? 'complete'
-                  : view.completion.phaseStatus === 'Awaiting Checkpoint' ||
-                      view.completion.phaseStatus === 'In Progress'
-                    ? 'active'
-                    : 'quiet'
-              }
-            >
-              <CircleDot aria-hidden="true" />
-              {view.completion.phaseStatus}
-            </span>
-          ) : null}
+          <div className="progress-panel-meta">
+            {view.completion.phaseStatus ? (
+              <span
+                className="status-chip"
+                data-tone={
+                  view.completion.phaseStatus === 'Complete'
+                    ? 'complete'
+                    : view.completion.phaseStatus === 'Awaiting Checkpoint' ||
+                        view.completion.phaseStatus === 'In Progress'
+                      ? 'active'
+                      : 'quiet'
+                }
+              >
+                <CircleDot aria-hidden="true" />
+                {view.completion.phaseStatus}
+              </span>
+            ) : null}
+            <SourceLink provenance={view.completion.formal.provenance}>Open roadmap</SourceLink>
+          </div>
         </header>
         {view.completion.counts.total > 0 ? (
           <div className="plan-progress-summary">
@@ -197,7 +200,6 @@ export function DashboardPage(): React.JSX.Element {
             The roadmap does not specify a plan checklist for this phase.
           </p>
         )}
-        <SourceLink provenance={view.completion.formal.provenance}>Open roadmap</SourceLink>
 
         {view.completion.activeCheckpoint ? (
           <div className="checkpoint-callout" role="status">
