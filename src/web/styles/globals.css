@@ -1033,7 +1033,7 @@ summary.tree-node-row:focus-visible {
 
 .progress-panel {
   display: grid;
-  grid-template-columns: minmax(12rem, 0.8fr) minmax(13rem, 0.7fr) minmax(14rem, 1fr);
+  grid-template-columns: minmax(12rem, 0.8fr) minmax(13rem, 1fr) minmax(8rem, auto);
   gap: var(--space-6) var(--space-8);
   align-items: center;
   margin-top: var(--space-fluid-10);
@@ -1049,14 +1049,22 @@ summary.tree-node-row:focus-visible {
   color: var(--primary);
 }
 
+.plan-progress-summary,
 .formal-progress-value {
   display: flex;
+  flex-direction: column;
   gap: var(--space-2-5);
-  align-items: baseline;
   padding-inline: var(--space-fluid-1);
   border-inline: 1px solid var(--border);
 }
 
+.plan-progress-headline {
+  display: flex;
+  gap: var(--space-2-5);
+  align-items: baseline;
+}
+
+.plan-progress-headline strong,
 .formal-progress-value strong {
   font-family: var(--font-heading);
   font-size: var(--fs-display-3);
@@ -1065,11 +1073,116 @@ summary.tree-node-row:focus-visible {
   line-height: var(--lh-display);
 }
 
+.plan-progress-headline span,
 .formal-progress-value span {
   color: var(--muted-foreground);
   font-family: var(--font-heading);
   font-size: var(--fs-2);
   text-transform: uppercase;
+}
+
+.plan-breakdown-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.plan-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  padding: var(--space-1) var(--space-2-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+}
+
+.plan-pill strong {
+  color: var(--foreground);
+  font-weight: var(--fw-medium);
+}
+
+.plan-pill[data-state='awaiting'] {
+  border-color: color-mix(in oklch, var(--primary) 60%, var(--border));
+  background: var(--primary-tint);
+  color: var(--primary);
+}
+
+.plan-pill[data-state='awaiting'] strong {
+  color: var(--primary);
+}
+
+.checkpoint-callout {
+  display: flex;
+  gap: var(--space-3);
+  grid-column: 1 / -1;
+  padding: var(--space-4);
+  border: 1px solid color-mix(in oklch, var(--primary) 50%, var(--border));
+  background: var(--primary-tint);
+}
+
+.checkpoint-callout > svg {
+  width: 1rem;
+  flex: none;
+  margin-top: var(--space-0-5);
+  color: var(--primary);
+}
+
+.checkpoint-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+}
+
+.checkpoint-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  flex-wrap: wrap;
+}
+
+.checkpoint-badge {
+  padding: var(--space-0-5) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklch, var(--primary) 20%, transparent);
+  color: var(--primary);
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+}
+
+.checkpoint-callout strong {
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+  color: var(--foreground);
+}
+
+.checkpoint-callout p {
+  margin: var(--space-1) 0 0;
+  color: color-mix(in oklch, var(--foreground) 90%, var(--muted-foreground));
+  font-size: var(--fs-3);
+}
+
+.checkpoint-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  color: var(--primary);
+  font-family: var(--font-heading);
+  font-size: var(--fs-3);
+  font-weight: var(--fw-medium);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.checkpoint-link svg {
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
 .observed-progress {
@@ -1836,12 +1949,14 @@ pre {
     grid-template-columns: 1fr;
   }
 
+  .plan-progress-summary,
   .formal-progress-value {
     padding: var(--space-4) 0;
     border-block: 1px solid var(--border);
     border-inline: 0;
   }
 
+  .checkpoint-callout,
   .observed-progress,
   .discrepancy-callout,
   .progress-panel > .source-note {
