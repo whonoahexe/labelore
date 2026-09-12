@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.0
 status: Awaiting next milestone
 stopped_at: Phase 04 complete — all phases complete
-last_updated: "2026-09-12T09:48:29.127Z"
-last_activity: 2026-09-11
-last_activity_desc: Milestone v1.0 completed and archived
-state_head: 974d845427260d19ca1bdf4a087d476074612d77
+last_updated: "2026-09-12T10:09:12.000Z"
+last_activity: 2026-09-12
+last_activity_desc: Completed quick task 260912-lfi: Scroll to blocker in project state from source link, and render markdown without raw asterisks in dashboard
+state_head: c6def3f443b749d0739c43d73b06497f48b9f0d1
 current_phase: 04
 progress:
   total_phases: 4
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-10)
 Phase: Milestone v1.0 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-09-11 - Completed quick task 260911-vqe: Sidebar redesign: navbar drawer, readable labels, lifecycle order, hide exclusions
+Last activity: 2026-09-12 - Completed quick task 260912-lfi: Scroll to blocker in project state from source link, and render markdown without raw asterisks in dashboard
 
 ## Performance Metrics
 
@@ -99,6 +99,7 @@ None.
 | 260911-vqe | Sidebar redesign: navbar drawer, readable labels, lifecycle order, hide exclusions | 2026-09-11 | a6e6532 | [260911-vqe-sidebar-redesign-navbar-drawer-readable-](./quick/260911-vqe-sidebar-redesign-navbar-drawer-readable-/) |
 | 5 | Strip emojis from next-primary and attention-panel descriptions | 2026-09-11 | 155b4ab | — |
 | 6 | attention-panel in the dashboard should only show 4 at a time | 2026-09-12 | 974d845 | — |
+| 260912-lfi | Scroll to blocker in project state from source link, and render markdown without raw asterisks in dashboard | 2026-09-12 | c6def3f | [260912-lfi-scroll-to-blocker-in-project-state-from-](./quick/260912-lfi-scroll-to-blocker-in-project-state-from-/) |
 
 ## Deferred Items
 
