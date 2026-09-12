@@ -44,10 +44,14 @@ function PhaseFlow({
       measure: () => {
         const element = articleRef.current;
         if (!element) return null;
-        return element.getBoundingClientRect().top + document.documentElement.scrollHeight;
+        return (
+          window.scrollY +
+          element.getBoundingClientRect().top +
+          document.documentElement.scrollHeight
+        );
       },
       scroll: () => {
-        articleRef.current?.scrollIntoView({ block: 'start' });
+        articleRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
       },
       schedule: (callback) => requestAnimationFrame(callback),
       cancel: (handle) => cancelAnimationFrame(handle),

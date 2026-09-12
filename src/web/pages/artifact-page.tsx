@@ -202,11 +202,15 @@ export function DocumentView({ document }: { document: RenderedDocument }): Reac
             const heading = window.document.getElementById(targetId);
             if (!heading) return null;
             return (
-              heading.getBoundingClientRect().top + window.document.documentElement.scrollHeight
+              window.scrollY +
+              heading.getBoundingClientRect().top +
+              window.document.documentElement.scrollHeight
             );
           },
           scroll: () => {
-            window.document.getElementById(targetId)?.scrollIntoView({ block: 'start' });
+            window.document
+              .getElementById(targetId)
+              ?.scrollIntoView({ block: 'start', behavior: 'smooth' });
           },
           schedule: (callback) => requestAnimationFrame(callback),
           cancel: (handle) => cancelAnimationFrame(handle),

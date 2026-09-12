@@ -254,6 +254,7 @@
     background: var(--background);
     scrollbar-color: var(--muted-foreground) var(--muted);
     scrollbar-width: thin;
+    scroll-behavior: smooth;
   }
 
   body {
