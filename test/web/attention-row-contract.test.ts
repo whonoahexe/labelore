@@ -172,17 +172,17 @@ describe('G2-07 attention-row destination matrix', () => {
     assertPrimaryDestination('discrepancy', item, buildPhaseUrl(IDENTITY));
   });
 
-  it('resolvable blocker: primary destination is the current phase route when a current phase resolves', () => {
+  it('resolvable blocker: primary destination is the blocker source artifact anchor', () => {
     const view = buildDashboardViewModel(
       presentation({
         blockers: [{ key: 'state:blocker', sourcePath: '.planning/STATE.md', heading: 'Blockers', text: 'Authored blocker' }],
       }),
     );
     const item = attentionOf(view, 'blocker');
-    assertPrimaryDestination('resolvable blocker', item, buildPhaseUrl(IDENTITY));
+    assertPrimaryDestination('resolvable blocker', item, '/artifacts/a~.planning%2FSTATE.md#blockers');
   });
 
-  it('fallback blocker: primary destination falls back to /roadmap when no current phase resolves', () => {
+  it('fallback blocker: primary destination is the blocker source artifact anchor when no current phase resolves', () => {
     const source = presentation({
       blockers: [{ key: 'state:blocker', sourcePath: '.planning/STATE.md', heading: 'Blockers', text: 'Authored blocker' }],
     });
@@ -190,7 +190,7 @@ describe('G2-07 attention-row destination matrix', () => {
     source.state = { ...source.state, milestone: null, phaseNumber: null };
     const view = buildDashboardViewModel(source);
     const item = attentionOf(view, 'blocker');
-    assertPrimaryDestination('fallback blocker', item, '/roadmap');
+    assertPrimaryDestination('fallback blocker', item, '/artifacts/a~.planning%2FSTATE.md#blockers');
   });
 
   it('dependency: primary destination is the blocked plan own route', () => {
@@ -236,7 +236,7 @@ describe('G2-07 attention-row destination matrix', () => {
 });
 
 describe('G2-07 primary vs. provenance destination independence', () => {
-  it('every row with a resolvable provenance destination exposes it separately from the primary destination', () => {
+  it('every row with a resolvable provenance destination exposes it with distinct accessible labelling', () => {
     const view = buildDashboardViewModel(
       presentation({
         blockers: [{ key: 'state:blocker', sourcePath: '.planning/STATE.md', heading: 'Blockers', text: 'Authored blocker' }],
@@ -245,7 +245,7 @@ describe('G2-07 primary vs. provenance destination independence', () => {
     const blocker = attentionOf(view, 'blocker');
     const provenanceUrl = sourceDestination(blocker.provenance);
     expect(provenanceUrl).not.toBeNull();
-    expect(provenanceUrl).not.toBe(blocker.url);
+    expect(provenanceUrl).toBe(blocker.url);
     expect(provenanceLabel(blocker.provenance).toLowerCase()).not.toContain(blocker.title.toLowerCase());
   });
 

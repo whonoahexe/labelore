@@ -69,7 +69,7 @@ const answer: number = 42
   it('renders the real Phase 1 plan as ordered semantic sections with nested Markdown', async () => {
     const renderer = await createArtifactRenderer();
     const body = await readFile(
-      '.planning/phases/01-read-layer-domain-model/01-04-PLAN.md',
+      '.planning/milestones/v1.0-phases/01-read-layer-domain-model/01-04-PLAN.md',
       'utf8',
     );
     const rendered = await renderer.render(artifact(body.replace(/^---[\s\S]*?---\n/, ''), 'plan'));

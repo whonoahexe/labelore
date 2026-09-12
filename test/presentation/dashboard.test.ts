@@ -330,7 +330,7 @@ describe('buildDashboardViewModel', () => {
     }
   });
 
-  it('blocker-kind next-work url round-trips to the current phase route when resolvable (CR-01)', () => {
+  it('blocker-kind next-work url routes directly to the blocker source artifact anchor (CR-01)', () => {
     const view = buildDashboardViewModel(
       presentation({
         blockers: [
@@ -345,10 +345,10 @@ describe('buildDashboardViewModel', () => {
     );
     expect(view.next.immediate).toMatchObject({ kind: 'blocker' });
     const url = view.next.immediate?.url ?? '';
-    expect(url).toBe(buildPhaseUrl(LIVE_IDENTITY));
+    expect(url).toBe('/artifacts/a~.planning%2FSTATE.md#blockers');
     const parsed = parsePresentationUrl(url);
     expect(parsed.ok).toBe(true);
-    if (parsed.ok) expect(parsed.route.kind).toBe('phase');
+    if (parsed.ok) expect(parsed.route.kind).toBe('artifact');
   });
 
   it('does not promote placeholder blocker copy as recommended work', () => {
@@ -369,7 +369,7 @@ describe('buildDashboardViewModel', () => {
     expect(view.attention).not.toContainEqual(expect.objectContaining({ type: 'blocker' }));
   });
 
-  it('blocker-kind next-work url falls back to /roadmap when no current phase is resolvable (CR-01)', () => {
+  it('blocker-kind next-work url routes directly to blocker source artifact even when no current phase is resolvable (CR-01)', () => {
     const source = presentation({
       blockers: [
         {
@@ -385,10 +385,10 @@ describe('buildDashboardViewModel', () => {
     const view = buildDashboardViewModel(source);
     expect(view.next.immediate).toMatchObject({ kind: 'blocker' });
     const url = view.next.immediate?.url ?? '';
-    expect(url).toBe('/roadmap');
+    expect(url).toBe('/artifacts/a~.planning%2FSTATE.md#blockers');
     const parsed = parsePresentationUrl(url);
     expect(parsed.ok).toBe(true);
-    if (parsed.ok) expect(parsed.route.kind).toBe('roadmap');
+    if (parsed.ok) expect(parsed.route.kind).toBe('artifact');
   });
 
   it('checkpoint wait: reports each pending blocking-human checkpoint once', () => {
@@ -627,7 +627,7 @@ describe('buildDashboardViewModel', () => {
     ).toBe('/artifacts/a~.planning%2FROADMAP.md#phase-01');
   });
 
-  it('authored-blocker attention destination equals buildPhaseUrl(currentPhase.identity) when a current phase resolves (G-02)', () => {
+  it('authored-blocker attention destination points to blocker source artifact anchor (G-02)', () => {
     const view = buildDashboardViewModel(
       presentation({
         blockers: [
@@ -641,10 +641,10 @@ describe('buildDashboardViewModel', () => {
       }),
     );
     const blocker = view.attention.find((item) => item.type === 'blocker');
-    expect(blocker?.url).toBe(buildPhaseUrl(LIVE_IDENTITY));
+    expect(blocker?.url).toBe('/artifacts/a~.planning%2FSTATE.md#blockers');
   });
 
-  it('authored-blocker attention destination falls back to /roadmap when no current phase resolves (G-02)', () => {
+  it('authored-blocker attention destination points to blocker source artifact anchor when no current phase resolves (G-02)', () => {
     const source = presentation({
       blockers: [
         {
@@ -659,7 +659,7 @@ describe('buildDashboardViewModel', () => {
     source.state = { ...source.state, milestone: null, phaseNumber: null };
     const view = buildDashboardViewModel(source);
     const blocker = view.attention.find((item) => item.type === 'blocker');
-    expect(blocker?.url).toBe('/roadmap');
+    expect(blocker?.url).toBe('/artifacts/a~.planning%2FSTATE.md#blockers');
   });
 
   it('dependency attention destination is the blocked plan own route', () => {

@@ -1,4 +1,9 @@
-import type { PhaseDto, PlanDto, ProjectPresentation } from '../server/project-presentation.ts';
+import type {
+  PhaseDto,
+  PlanDto,
+  ProjectBlockerDto,
+  ProjectPresentation,
+} from '../server/project-presentation.ts';
 import { buildArtifactUrl, buildPhaseUrl } from './routes.ts';
 import { stableSlug } from '../rendering/slug.ts';
 
@@ -251,6 +256,14 @@ function checkpointWork(
   };
 }
 
+function blockerUrl(blocker: ProjectBlockerDto): string {
+  return buildArtifactUrl(
+    null,
+    blocker.sourcePath,
+    blocker.heading ? stableSlug(blocker.heading) : undefined,
+  );
+}
+
 function blockerWork(
   presentation: ProjectPresentation,
   currentPhase: PhaseDto | null,
@@ -264,7 +277,7 @@ function blockerWork(
     planKey: null,
     title: 'Resolve the active blocker',
     description: blocker.text,
-    url: currentPhase ? buildPhaseUrl(currentPhase.identity) : '/roadmap',
+    url: blockerUrl(blocker),
   };
 }
 
@@ -327,7 +340,7 @@ function attentionItems(
       sourceKey: blocker.key,
       title: 'Authored blocker',
       detail: blocker.text,
-      url: currentPhase ? buildPhaseUrl(currentPhase.identity) : '/roadmap',
+      url: blockerUrl(blocker),
       provenance: {
         kind: 'state',
         ref: blocker.heading
