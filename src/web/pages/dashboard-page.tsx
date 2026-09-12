@@ -153,7 +153,7 @@ export function DashboardPage(): React.JSX.Element {
         <header className="progress-panel-header">
           <div>
             <p className="eyebrow">Current phase</p>
-            <h2 id="phase-progress-heading">Plan completion</h2>
+            <h2 id="phase-progress-heading">Phase progress</h2>
           </div>
           <div className="progress-panel-meta">
             {view.completion.phaseStatus ? (

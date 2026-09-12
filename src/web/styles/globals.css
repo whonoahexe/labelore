@@ -1184,6 +1184,8 @@ summary.tree-node-row:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1-5);
+  width: fit-content;
+  align-self: flex-start;
   margin-top: var(--space-0-5);
   color: var(--foreground);
   font-family: var(--font-heading);
