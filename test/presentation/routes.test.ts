@@ -82,6 +82,15 @@ describe('milestone-qualified presentation route codec', () => {
     }
   });
 
+  it('normalizes headings with accidental leading hashes', () => {
+    expect(buildArtifactUrl(null, '.planning/STATE.md', '#blockersconcerns')).toBe(
+      '/artifacts/a~.planning%2FSTATE.md#blockersconcerns',
+    );
+    expect(buildArtifactUrl(null, '.planning/STATE.md', '###blockersconcerns')).toBe(
+      '/artifacts/a~.planning%2FSTATE.md#blockersconcerns',
+    );
+  });
+
   it('parses dashboard and roadmap routes without inventing identity', () => {
     expect(parsePresentationUrl('/')).toEqual({ ok: true, route: { kind: 'dashboard' } });
     expect(parsePresentationUrl('/roadmap')).toEqual({ ok: true, route: { kind: 'roadmap' } });

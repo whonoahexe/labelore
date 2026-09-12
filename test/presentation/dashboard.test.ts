@@ -6,7 +6,7 @@ import type {
   PlanDto,
   ProjectPresentation,
 } from '../../src/server/project-presentation.ts';
-import { buildDashboardViewModel } from '../../src/presentation/dashboard.ts';
+import { buildDashboardViewModel, sourceDestination } from '../../src/presentation/dashboard.ts';
 import {
   buildPhaseUrl,
   buildPlanUrl,
@@ -596,6 +596,35 @@ describe('buildDashboardViewModel', () => {
     if (parsed.ok && parsed.route.kind === 'phase') {
       expect(phaseKeyOf(parsed.route.phaseIdentity)).toBe(LIVE_PHASE_KEY);
     }
+  });
+
+  it('blocker attention items populate provenance.ref with heading anchor slug and sourceDestination resolves to artifact with anchor (LFI-01)', () => {
+    const view = buildDashboardViewModel(
+      presentation({
+        blockers: [
+          {
+            key: 'state:blocker',
+            sourcePath: '.planning/STATE.md',
+            heading: 'Blockers/Concerns',
+            text: 'Authored blocker',
+          },
+        ],
+      }),
+    );
+    const blocker = view.attention.find((item) => item.type === 'blocker');
+    expect(blocker?.provenance.ref).toBe('.planning/STATE.md#blockersconcerns');
+    expect(sourceDestination(blocker!.provenance)).toBe(
+      '/artifacts/a~.planning%2FSTATE.md#blockersconcerns',
+    );
+  });
+
+  it('sourceDestination preserves heading hash anchors on state and roadmap provenance (LFI-01)', () => {
+    expect(
+      sourceDestination({ kind: 'state', ref: '.planning/STATE.md#blockersconcerns' }),
+    ).toBe('/artifacts/a~.planning%2FSTATE.md#blockersconcerns');
+    expect(
+      sourceDestination({ kind: 'roadmap', ref: '.planning/ROADMAP.md#phase-01' }),
+    ).toBe('/artifacts/a~.planning%2FROADMAP.md#phase-01');
   });
 
   it('authored-blocker attention destination equals buildPhaseUrl(currentPhase.identity) when a current phase resolves (G-02)', () => {

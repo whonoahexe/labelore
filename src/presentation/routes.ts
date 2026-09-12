@@ -150,8 +150,9 @@ function artifactPathOf(token: string): { ok: true; value: string } | { ok: fals
 
 function withHeading(path: string, heading?: string): string {
   if (heading === undefined) return path;
-  assertNonEmpty(heading, 'Heading');
-  return `${path}#${encodePart(heading)}`;
+  const clean = heading.replace(/^#+/, '');
+  assertNonEmpty(clean, 'Heading');
+  return `${path}#${encodePart(clean)}`;
 }
 
 export function buildMilestoneUrl(version: string | null): string {
