@@ -1,5 +1,6 @@
 import type { PhaseDto, PlanDto, ProjectPresentation } from '../server/project-presentation.ts';
 import { buildArtifactUrl, buildPhaseUrl } from './routes.ts';
+import { stableSlug } from '../rendering/slug.ts';
 
 export interface SourceProvenance {
   kind: 'state' | 'roadmap' | 'summary' | 'derived';
@@ -32,8 +33,8 @@ export function provenanceLabel(provenance: SourceProvenance): string {
  */
 export function sourceDestination(provenance: SourceProvenance): string | null {
   if (!['state', 'roadmap'].includes(provenance.kind)) return null;
-  const [path] = provenance.ref.split('#');
-  return path.endsWith('.md') ? buildArtifactUrl(null, path) : null;
+  const [path, hash] = provenance.ref.split('#');
+  return path.endsWith('.md') ? buildArtifactUrl(null, path, hash || undefined) : null;
 }
 
 export interface SourcedValue<T> {
@@ -327,7 +328,12 @@ function attentionItems(
       title: 'Authored blocker',
       detail: blocker.text,
       url: currentPhase ? buildPhaseUrl(currentPhase.identity) : '/roadmap',
-      provenance: { kind: 'state', ref: blocker.sourcePath },
+      provenance: {
+        kind: 'state',
+        ref: blocker.heading
+          ? `${blocker.sourcePath}#${stableSlug(blocker.heading)}`
+          : blocker.sourcePath,
+      },
     });
   }
   const plans = planIndex(presentation);

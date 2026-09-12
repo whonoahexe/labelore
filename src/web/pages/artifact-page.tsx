@@ -161,6 +161,7 @@ export function DocumentView({ document }: { document: RenderedDocument }): Reac
   const [runtimeWarnings, setRuntimeWarnings] = useState<string[]>([]);
   const [referenceState, setReferenceState] = useState<ReferencePreviewState | null>(null);
   const [referenceOpen, setReferenceOpen] = useState(false);
+  const { hash } = useLocation();
   const previews = useMemo(
     () => new Map((document.references ?? []).map((preview) => [preview.key, preview])),
     [document.references],
@@ -192,7 +193,7 @@ export function DocumentView({ document }: { document: RenderedDocument }): Reac
       cleanups.push(() => control.removeEventListener('click', activate));
     }
 
-    const rawHeading = window.location.hash.slice(1);
+    const rawHeading = (hash || window.location.hash).slice(1);
     if (rawHeading) {
       try {
         const targetId = decodeURIComponent(rawHeading);
@@ -315,7 +316,7 @@ export function DocumentView({ document }: { document: RenderedDocument }): Reac
       disposed = true;
       cleanups.forEach((cleanup) => cleanup());
     };
-  }, [document, previews]);
+  }, [document, previews, hash]);
 
   if (document.empty) {
     return (
