@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.0
 status: Awaiting next milestone
 stopped_at: "Completed quick task 260917-0yp: Parse per-milestone ROADMAP.md files for archived phases"
-last_updated: "2026-09-16T19:41:50.413Z"
+last_updated: "2026-09-16T19:55:25.994Z"
 last_activity: 2026-09-16
 last_activity_desc: "Completed quick task 260917-0yp: Parse per-milestone ROADMAP.md files for archived phases"
-state_head: 1076f46b183ca634ab88eddfb50fabaf8a0012f9
+state_head: b53a9fe655b50a52b8dee18ddd158d16502c9e4c
 current_phase: 04
 progress:
   total_phases: 4
@@ -106,6 +106,7 @@ None.
 | 260916-qqk | Scrollbars take no layout space, drop to lower opacity, and appear only on hover/focus | 2026-09-16 | c5cc80f | [260916-qqk-the-scrollbars-throughout-the-site-shoul](./quick/260916-qqk-the-scrollbars-throughout-the-site-shoul/) |
 | 260916-vjt | Add pagination to the requirement-list component on the roadmap page, showing 4 items at a time | 2026-09-16 | 85c675f | [260916-vjt-add-pagination-to-the-requirement-list-c](./quick/260916-vjt-add-pagination-to-the-requirement-list-c/) |
 | 260917-0yp | Parse per-milestone ROADMAP.md files for archived phases | 2026-09-16 | 1076f46 | [260917-0yp-parse-per-milestone-roadmap-md-files-e-g](./quick/260917-0yp-parse-per-milestone-roadmap-md-files-e-g/) |
+| 14 | Fix plan-checklist regex stealing the next line's description for bare (no-description) checklist lines | 2026-09-16 | b53a9fe | — |
 
 ## Deferred Items
 
