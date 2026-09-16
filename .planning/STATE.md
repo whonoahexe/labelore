@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.0
 status: Awaiting next milestone
 stopped_at: Phase 04 complete — all phases complete
-last_updated: "2026-09-16T15:39:45.804Z"
-last_activity: 2026-09-16
-last_activity_desc: "Completed quick task 260912-lfi: Scroll to blocker in project state from source link, and render markdown without raw asterisks in dashboard"
-state_head: 1ba98d1caf2692b42c02465daa2fd3b2fafd6403
+last_updated: "2026-09-12T10:09:12.000Z"
+last_activity: 2026-09-12
+last_activity_desc: Completed quick task 260912-lfi: Scroll to blocker in project state from source link, and render markdown without raw asterisks in dashboard
+state_head: c6def3f443b749d0739c43d73b06497f48b9f0d1
 current_phase: 04
 progress:
   total_phases: 4
@@ -104,7 +104,7 @@ None.
 | 8 | Refine progress panel spacing, grid alignment, and dark/light contrast | 2026-09-12 | 59dc045 | — |
 | 260916-o2o | Remove all the loading state text, keep the skeletons and add a top bar loader | 2026-09-16 | 41a4c4e | [260916-o2o-remove-all-the-loading-state-text-keep-t](./quick/260916-o2o-remove-all-the-loading-state-text-keep-t/) |
 | 260916-qqk | Scrollbars take no layout space, drop to lower opacity, and appear only on hover/focus | 2026-09-16 | c5cc80f | [260916-qqk-the-scrollbars-throughout-the-site-shoul](./quick/260916-qqk-the-scrollbars-throughout-the-site-shoul/) |
-| 12 | Ensure scrollbars are visible on hover across engines | 2026-09-16 | 1ba98d1 | — |
+
 
 ## Deferred Items
 
