@@ -98,11 +98,14 @@ describe('authorized Studio Portal shell contract', () => {
   it('mounts the planning-files drawer trigger in the header and keeps a single-column content region (quick-260911-vqe D-01)', async () => {
     const shell = await source('src/web/components/app-shell.tsx');
     expect(shell).toContain("import { SidebarDrawer } from './sidebar-drawer.tsx';");
-    expect(shell).toContain("import { useTreeQuery } from './tree-navigator.tsx';");
+    // debug/loading-state-regression: the trigger used to be gated on the shared ['tree'] query
+    // succeeding, which delayed the icon ~500 ms past the rest of the header for no benefit —
+    // TreeNavigator already renders its own pending/error states inside the drawer.
+    expect(shell).not.toContain("import { useTreeQuery } from './tree-navigator.tsx';");
 
     const headerIndex = shell.indexOf('<header className="shell-header"');
     const brandIndex = shell.indexOf('className="brand"');
-    const triggerIndex = shell.indexOf('{tree.isSuccess ? <SidebarDrawer /> : null}');
+    const triggerIndex = shell.indexOf('<SidebarDrawer />');
     expect(headerIndex).toBeGreaterThanOrEqual(0);
     expect(brandIndex).toBeGreaterThan(headerIndex);
     expect(triggerIndex).toBeGreaterThan(headerIndex);

@@ -370,9 +370,10 @@ function parseCli(args: string[]): CliOptions {
 
 async function runCli(): Promise<void> {
   const options = parseCli(process.argv.slice(2));
+  const production = process.env.NODE_ENV === 'production';
   const server = await startServer(options.rawPath, {
     port: options.port,
-    production: process.env.NODE_ENV === 'production',
+    production,
   });
   const address = server.address();
   const port = typeof address === 'object' && address ? address.port : options.port;
@@ -399,6 +400,18 @@ async function runCli(): Promise<void> {
   }
 
   console.log(`Labelore is reading ${options.rawPath}`);
+  // debug/loading-state-regression: the tunnel origin had been running this file with NODE_ENV
+  // unset since Sep 15, silently serving the Vite dev middleware. Over a ~150 ms-RTT tunnel that
+  // is 55 unbundled module round-trips and ~11.8 s of fully blank page, versus ~0.77 s from
+  // `dist/`. Nothing in the output said which mode was active, so the misconfiguration was
+  // invisible. It is now the loudest line at startup.
+  if (production) {
+    console.log('Mode: production — serving the prebuilt ./dist bundle');
+  } else {
+    console.warn(
+      'Mode: DEVELOPMENT — serving unbundled modules through Vite. Expect a slow first paint over any network hop; run `npm start` (NODE_ENV=production) after `npm run build` to serve ./dist instead.',
+    );
+  }
   console.log(`Open ${baseUrl}`);
 }
 

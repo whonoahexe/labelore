@@ -35,6 +35,17 @@ function stripCssComments(css: string): string {
   return css.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '));
 }
 
+/** Same idea for TS/TSX sources, covering both `/* *\/` (including the `{/* *\/}` JSX form) and
+ * `//` line comments, so the identifier counts below bind to real code rather than to prose about
+ * it. Load-bearing: the router's own explanatory comment contains the words `lazy()` and
+ * `trackRouteChunk`, which inflated the raw match counts and made a correct implementation look
+ * like an unwrapped route. The `[^:]` guard leaves `https://` inside string literals alone. */
+function stripJsComments(src: string): string {
+  return src
+    .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
+    .replace(/(^|[^:])\/\/[^\n]*/g, (m, lead: string) => lead + ' '.repeat(m.length - lead.length));
+}
+
 /** Extracts the body of every top-level rule whose comma-separated selector list (which may span
  * multiple lines, and which grows across tasks 1-3 as more classes join the shared skeleton rule
  * groups) contains every selector in `selectors` as an exact member — mirrors
@@ -166,6 +177,100 @@ describe('loading-state contract (quick-260916-o2o)', () => {
     expect(component).toContain('sr-only');
     expect(component).toContain('role="status"');
     expect(component).toContain('aria-live="polite"');
+  });
+
+  // debug/loading-state-regression. The bar was originally wired as app-shell.tsx's
+  // `<Suspense fallback>`. React only renders a fallback when the boundary MOUNTS, and react-router
+  // v8 navigates inside `startTransition` — during which React keeps an already-mounted boundary's
+  // children on screen instead of swapping in the fallback. Measured: with a route chunk held for
+  // 2500 ms, a hard load painted the bar at t=432 ms while a client-side navigation to the same URL
+  // never painted it, in both the dev and production builds. These three tests pin each half of the
+  // replacement wiring so that shape cannot come back.
+  it('drives the top bar from chunks in flight, not from a Suspense boundary mounting', async () => {
+    const component = await source('src/web/components/route-progress.tsx');
+    expect(component, 'subscribes to an external store rather than mounting as a fallback').toContain(
+      'useSyncExternalStore',
+    );
+
+    // The signal itself lives in a plain .ts module so it carries no JSX/DOM types — that is what
+    // lets test/web/route-chunk-store.test.ts import and DRIVE it under tsconfig.server.json.
+    // Behaviour is asserted there; these only pin the shape that makes it reachable.
+    const store = await source('src/web/components/route-chunk-store.ts');
+    expect(store, 'exports the lazy-factory wrapper the router feeds it').toContain(
+      'export function trackRouteChunk',
+    );
+    expect(store, 'exports the subscribe/getSnapshot pair the component reads').toContain(
+      'export const routeChunkStore',
+    );
+    expect(store, 'increments an in-flight counter before awaiting the chunk').toMatch(
+      /chunksInFlight \+= 1/,
+    );
+    expect(store, 'decrements it in a finally, so a failed chunk cannot strand the bar').toMatch(
+      /finally\s*\{[\s\S]*chunksInFlight -= 1/,
+    );
+    expect(
+      store,
+      'defers notification past the render pass that invoked the lazy factory',
+    ).toContain('queueMicrotask');
+  });
+
+  it('renders the top bar outside the Suspense boundary and never as its fallback', async () => {
+    // Comment-stripped: the shell's own explanatory JSX comment mentions `<RouteProgress />`, so a
+    // raw indexOf could bind to prose instead of to the element that actually renders.
+    const shell = stripJsComments(await source('src/web/components/app-shell.tsx'));
+    expect(shell, 'RouteProgress is no longer the Suspense fallback').not.toContain(
+      'fallback={<RouteProgress',
+    );
+    expect(shell, 'the boundary keeps only a layout placeholder').toContain(
+      'fallback={<RouteFallback />}',
+    );
+    const barIndex = shell.indexOf('<RouteProgress />');
+    const suspenseIndex = shell.indexOf('<Suspense');
+    expect(barIndex, 'RouteProgress is rendered by the shell').toBeGreaterThan(-1);
+    expect(
+      barIndex,
+      'RouteProgress sits above the Suspense boundary, so it stays committed while the boundary suspends',
+    ).toBeLessThan(suspenseIndex);
+  });
+
+  it('routes every lazy page through trackRouteChunk', async () => {
+    const router = await source('src/web/app-router.tsx');
+    // Anchored on `= lazy(` so prose like "lazy()-loaded" in the surrounding comments cannot
+    // inflate either count.
+    const declared = (router.match(/=\s*lazy\(/g) ?? []).length;
+    const tracked = (router.match(/=\s*lazy\(\s*trackRouteChunk\(/g) ?? []).length;
+    expect(declared, 'the router still lazy-loads its pages').toBeGreaterThan(0);
+    expect(
+      tracked,
+      'every lazy() factory is wrapped — an untracked one is a route with no loading feedback',
+    ).toBe(declared);
+  });
+
+  // debug/loading-state-regression, third cause: the trigger was gated on the shared ['tree'] query
+  // succeeding, so the icon popped in ~500 ms after the rest of the header (120 KB /api/tree
+  // payload) — for nothing, since TreeNavigator already renders its own pending/error states.
+  it('renders the sidebar trigger without waiting on the tree query', async () => {
+    const shell = await source('src/web/components/app-shell.tsx');
+    expect(shell, 'the drawer trigger is unconditional').toContain('<SidebarDrawer />');
+    expect(shell, 'no tree-query gate around the trigger').not.toMatch(
+      /tree\.isSuccess\s*\?\s*<SidebarDrawer/,
+    );
+    expect(shell, 'the shell no longer reads the tree query at all').not.toContain('useTreeQuery');
+
+    const navigator = await source('src/web/components/tree-navigator.tsx');
+    expect(navigator, 'because the drawer contents own the pending state').toContain(
+      'query.isPending',
+    );
+    expect(navigator, 'and the error state').toContain('query.isError');
+  });
+
+  it('names the serve mode at startup so a dev-mode serve is never silent', async () => {
+    const server = await source('src/server/index.ts');
+    expect(server).toContain('Mode: production');
+    expect(server).toContain('Mode: DEVELOPMENT');
+    expect(server, 'the dev banner is a warning, not an easily-missed log line').toMatch(
+      /console\.warn\(\s*\n?\s*'Mode: DEVELOPMENT/,
+    );
   });
 
   it('layers the route-progress bar above the header and neutralizes it under reduced motion', async () => {

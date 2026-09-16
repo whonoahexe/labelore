@@ -6,13 +6,12 @@ import { formatProjectMeta, projectDisplayName } from '../../presentation/shell-
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
 import { LabeloreMark } from './labelore-mark.tsx';
-import { RouteProgress } from './route-progress.tsx';
+import { RouteFallback, RouteProgress } from './route-progress.tsx';
 import { SearchDialog } from './search-field.tsx';
 import { SidebarDrawer } from './sidebar-drawer.tsx';
 import { SnapshotStatus } from './snapshot-status.tsx';
 import { ThemeToggle } from './theme-toggle.tsx';
 import { ToastProvider } from './ui/toast.tsx';
-import { useTreeQuery } from './tree-navigator.tsx';
 
 // Plan 04-02 reuses this fetcher; no second fetcher for the same endpoint.
 export async function fetchPresentation(): Promise<ProjectPresentation> {
@@ -27,9 +26,6 @@ function navigationClass({ isActive }: { isActive: boolean }): string {
 
 export function AppShell(): React.JSX.Element {
   const presentation = useQuery({ queryKey: ['presentation'], queryFn: fetchPresentation });
-  // D-01: the drawer trigger renders only once the shared tree query has succeeded — react-query
-  // dedupes this against SidebarDrawer/TreeNavigator's own read of the same queryKey.
-  const tree = useTreeQuery();
 
   const displayName = projectDisplayName(
     presentation.data?.projectName ?? null,
@@ -40,11 +36,16 @@ export function AppShell(): React.JSX.Element {
   return (
     <ToastProvider>
       <div className="app-shell">
+        <RouteProgress />
         <a className="skip-link" href="#main-content">
           Skip to content
         </a>
         <header className="shell-header">
-          {tree.isSuccess ? <SidebarDrawer /> : null}
+          {/* D-01: rendered unconditionally. It used to be gated on the shared `['tree']` query
+              succeeding, which made the icon pop in ~500 ms after the rest of the header (measured
+              against a 120 KB /api/tree payload) — and the gate bought nothing, because
+              TreeNavigator already renders its own isPending/isError states inside the drawer. */}
+          <SidebarDrawer />
           <NavLink
             className="brand"
             to={presentationRoutePatterns.dashboard}
@@ -100,8 +101,11 @@ export function AppShell(): React.JSX.Element {
             {/* quick-260910-0x4 item 10: every routed page is now React.lazy()-loaded
                 (app-router.tsx), so this is the one Suspense boundary its fallback needs. A
                 single shared boundary here (not one per route) since every lazy element renders
-                through this same Outlet. */}
-            <Suspense fallback={<RouteProgress />}>
+                through this same Outlet. The fallback only holds the layout box — the visible
+                loading feedback is <RouteProgress /> above, which lives OUTSIDE this boundary
+                precisely so it can also paint during transition-driven navigations, when React
+                never renders this fallback at all. */}
+            <Suspense fallback={<RouteFallback />}>
               <Outlet />
             </Suspense>
           </div>
