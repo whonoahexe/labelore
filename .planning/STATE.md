@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-10)
 Phase: Milestone v1.0 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-09-16 - Completed quick task 260916-qqk: scrollbars take no layout space, sit at lower opacity, and appear only on hover/focus
+Last activity: 2026-09-16 - Completed quick task 260916-vjt: Add pagination to the requirement-list component on the roadmap page, showing 4 items at a time.
 
 ## Performance Metrics
 
@@ -104,6 +104,7 @@ None.
 | 8 | Refine progress panel spacing, grid alignment, and dark/light contrast | 2026-09-12 | 59dc045 | — |
 | 260916-o2o | Remove all the loading state text, keep the skeletons and add a top bar loader | 2026-09-16 | 41a4c4e | [260916-o2o-remove-all-the-loading-state-text-keep-t](./quick/260916-o2o-remove-all-the-loading-state-text-keep-t/) |
 | 260916-qqk | Scrollbars take no layout space, drop to lower opacity, and appear only on hover/focus | 2026-09-16 | c5cc80f | [260916-qqk-the-scrollbars-throughout-the-site-shoul](./quick/260916-qqk-the-scrollbars-throughout-the-site-shoul/) |
+| 260916-vjt | Add pagination to the requirement-list component on the roadmap page, showing 4 items at a time | 2026-09-16 | 85c675f | [260916-vjt-add-pagination-to-the-requirement-list-c](./quick/260916-vjt-add-pagination-to-the-requirement-list-c/) |
 
 
 ## Deferred Items
