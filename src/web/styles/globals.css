@@ -95,16 +95,19 @@
   --font-size-micro-label: 0.7rem;
 
   /* Named colour recipes (JZ8-03). Recurring color-mix() shapes get one name instead of being
-     re-spelled at every usage site; single-use recipes stay inline. --scrollbar-thumb is not in
-     the plan's original table — added because it recurs at two usage sites (the Firefox
-     scrollbar-color track colour and the WebKit ::-webkit-scrollbar-thumb background for
-     .artifact-document pre) and the guard's own recurring-recipe check would otherwise flag it. */
+     re-spelled at every usage site; single-use recipes stay inline. --scrollbar-thumb and
+     --scrollbar-thumb-strong are not in the plan's original table — added by quick-260916-qqk
+     because --scrollbar-thumb recurs at the universal `*` rest rule (Firefox scrollbar-color)
+     and the unscoped ::-webkit-scrollbar-thumb rule, while --scrollbar-thumb-strong covers the
+     WebKit-only direct-thumb-hover state; the guard's own recurring-recipe check would
+     otherwise flag either as a duplicated recipe. */
   --card-veil: color-mix(in oklch, var(--card) 94%, transparent);
   --destructive-tint: color-mix(in oklch, var(--destructive) 8%, transparent);
   --destructive-border: color-mix(in oklch, var(--destructive) 55%, var(--border));
   --primary-tint: color-mix(in oklch, var(--primary) 9%, transparent);
   --shadow-popover: 0 1rem 2.5rem color-mix(in oklab, var(--foreground) 18%, transparent);
-  --scrollbar-thumb: color-mix(in oklch, var(--muted-foreground) 45%, transparent);
+  --scrollbar-thumb: color-mix(in oklch, var(--muted-foreground) 30%, transparent);
+  --scrollbar-thumb-strong: color-mix(in oklch, var(--muted-foreground) 55%, transparent);
   /* NAV-04 (quick-260911-243): the search dialog's full-screen scrim. Declared per-theme (below)
      rather than shared, since a single recipe cannot darken correctly on both light and dark
      backgrounds — see .dark for the corresponding value. */
@@ -243,16 +246,20 @@
 }
 
 @layer base {
+  /* quick-260916-qqk D-01: the rest state is universal, not enumerated. Declared on `*` rather
+     than relying on inheritance — the .tree-navigator comment this replaces (below) asserted
+     scrollbar-* does not inherit while the spec says it does, so setting it on every element
+     makes the zero-space rest state hold true under either reading, with no scroller left out. */
   * {
     @apply border-border outline-ring;
     box-sizing: border-box;
+    scrollbar-width: none;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
   }
 
   html {
     max-width: 100%;
     background: var(--background);
-    scrollbar-color: var(--muted-foreground) var(--muted);
-    scrollbar-width: thin;
     scroll-behavior: smooth;
   }
 
@@ -607,10 +614,6 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  /* The same thin scrollbar as the page itself (html in @layer base): scrollbar-* properties are
-     not inherited, so a scroll container left alone falls back to the wide OS bar. */
-  scrollbar-color: var(--muted-foreground) var(--muted);
-  scrollbar-width: thin;
 }
 
 .tree-root,
@@ -1855,9 +1858,36 @@ table,
   overscroll-behavior-inline: contain;
 }
 
-pre,
-table,
-.mermaid {
+/* quick-260916-qqk: consolidated scrollbar block (D-01–D-04). Zero space at rest everywhere —
+   the universal `*` rule above sets scrollbar-width: none, and the unscoped ::-webkit-scrollbar
+   rule below defaults to a 0px fallback. Revealed only on hover/focus of a bounded container
+   (the :is() rule below), never on the root `html` scroller: the pointer sits over `html`
+   whenever it is anywhere in the window, so a hover-gated page bar would be permanently
+   visible — exactly the always-on status quo this removes — and revealing a native bar there
+   would reflow the whole page, which is the layout shift this task removes. A native scrollbar
+   always occupies content-box space while visible, which is why the reveal is scoped to
+   bounded containers rather than the page. */
+::-webkit-scrollbar {
+  width: var(--scrollbar-size, 0px);
+  height: var(--scrollbar-size, 0px);
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-strong);
+}
+
+:is(.tree-navigator, .document-outline, .search-dialog-results, .coverage-table-boundary, .overflow-x-auto, .table-scroll, .code-scroll, pre, table, .mermaid, .mermaid-fallback):is(:hover, :focus-within) {
+  --scrollbar-size: 6px;
   scrollbar-width: thin;
 }
 
@@ -2935,37 +2965,6 @@ pre {
   font-family: var(--font-heading);
   font-size: var(--fs-4);
   line-height: var(--lh-relaxed);
-}
-
-/* Thin and quiet at rest, stronger once the block is engaged. The 8px default bar with its
-   own track read as a chunky OS control against this surface; --border alone was also nearly
-   invisible in dark, where it resolves to oklch(1 0 0 / 16%). */
-.artifact-document pre {
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb) transparent;
-}
-
-.artifact-document pre::-webkit-scrollbar {
-  height: 6px;
-}
-
-.artifact-document pre::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.artifact-document pre::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb);
-  border-radius: 0;
-}
-
-.artifact-document pre:hover::-webkit-scrollbar-thumb,
-.artifact-document pre:focus-within::-webkit-scrollbar-thumb,
-.artifact-document pre::-webkit-scrollbar-thumb:hover {
-  background: var(--muted-foreground);
-}
-
-.artifact-document pre:focus-within {
-  scrollbar-color: var(--muted-foreground) transparent;
 }
 
 .artifact-document :not(pre) > code {
