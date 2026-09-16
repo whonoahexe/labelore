@@ -1,0 +1,115 @@
+// Quick 260916-o2o: source-text contract pinning that removed loading-state copy never returns,
+// while every pending branch keeps a skeleton + polite status. Same house idiom as
+// test/web/visual-contract.test.ts (`source()`/region-scoped rule extraction) and
+// test/web/build-splitting.test.ts (readFile-by-URL source assertions). Grows across the plan's
+// three tasks — task 1 covers the four already-skeletoned pages, task 2 adds artifact/plan-pair,
+// task 3 adds the shell's route-transition loader.
+import { readFile } from 'node:fs/promises';
+import { describe, expect, it } from 'vitest';
+
+async function source(path: string): Promise<string> {
+  return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
+}
+
+/** Slices `src` down to its pending branch: starts at a factored-out `function *Loading()`
+ * definition when one precedes the first `isPending` occurrence (dashboard-page.tsx's
+ * `DashboardLoading()`), otherwise starts at `isPending` itself (every other page inlines its
+ * pending JSX). Ends at the next `isError` occurrence, so assertions bind to the pending branch
+ * only, not to the whole file. */
+function pendingSlice(src: string): string {
+  const pendingIndex = src.indexOf('isPending');
+  if (pendingIndex === -1) throw new Error('expected an isPending branch in this source');
+  const loadingFnMatch = src.match(/function \w*Loading\(\)/);
+  const start =
+    loadingFnMatch && loadingFnMatch.index !== undefined && loadingFnMatch.index < pendingIndex
+      ? loadingFnMatch.index
+      : pendingIndex;
+  const errorIndex = src.indexOf('isError', pendingIndex);
+  return errorIndex === -1 ? src.slice(start) : src.slice(start, errorIndex);
+}
+
+/** Extracts the body of a rule whose selector spans one or more consecutive lines (mirrors
+ * visual-contract.test.ts's single-line `ruleBlocks`, extended for compound multi-line
+ * selectors like `.dashboard-loading,\n.roadmap-loading {`). */
+function ruleBlock(css: string, selectorLines: string[]): string | undefined {
+  const lines = css.split('\n');
+  for (let index = 0; index <= lines.length - selectorLines.length; index += 1) {
+    const window = lines.slice(index, index + selectorLines.length).map((line) => line.trim());
+    if (window.join('\n') !== selectorLines.join('\n')) continue;
+    const body: string[] = [];
+    let cursor = index + selectorLines.length;
+    while (cursor < lines.length && lines[cursor].trim() !== '}') {
+      body.push(lines[cursor]);
+      cursor += 1;
+    }
+    return body.join('\n');
+  }
+  return undefined;
+}
+
+// Headline/eyebrow literals removed by this plan. Grown across tasks 1-3; the negative gate below
+// always asserts against the full array so a literal can never quietly creep back in once its
+// task has landed. The search-page "Searching…" indexing headline stays here (it is the isPending
+// branch's own headline); the distinct "Indexing…" empty-state headline is intentionally excluded
+// per the plan's locked decisions.
+const REMOVED_LOADING_LITERALS = [
+  'Reading the current position',
+  'Reading the roadmap',
+  'Reading the traceability view',
+  'Searching…',
+];
+
+const NEGATIVE_GATE_FILES = [
+  'src/web/pages/dashboard-page.tsx',
+  'src/web/pages/roadmap-page.tsx',
+  'src/web/pages/traceability-page.tsx',
+  'src/web/pages/search-page.tsx',
+  'src/web/pages/artifact-page.tsx',
+  'src/web/pages/plan-pair-page.tsx',
+  'src/web/components/app-shell.tsx',
+];
+
+const PENDING_PAGES: Array<{ path: string; skeletonClass: string }> = [
+  { path: 'src/web/pages/dashboard-page.tsx', skeletonClass: 'dashboard-loading' },
+  { path: 'src/web/pages/roadmap-page.tsx', skeletonClass: 'roadmap-loading' },
+  { path: 'src/web/pages/traceability-page.tsx', skeletonClass: 'roadmap-loading' },
+  { path: 'src/web/pages/search-page.tsx', skeletonClass: 'roadmap-loading' },
+];
+
+describe('loading-state contract (quick-260916-o2o)', () => {
+  it('keeps skeleton geometry and drops the eyebrow/headline copy from every already-skeletoned pending branch', async () => {
+    for (const page of PENDING_PAGES) {
+      const slice = pendingSlice(await source(page.path));
+      expect(slice, `${page.path} pending slice`).toContain(page.skeletonClass);
+      expect(slice, `${page.path} pending slice`).not.toContain('eyebrow');
+      expect(slice, `${page.path} pending slice`).not.toMatch(/<h1>/);
+    }
+  });
+
+  it('keeps a polite screen-reader status and aria-busy on every already-skeletoned pending branch', async () => {
+    for (const page of PENDING_PAGES) {
+      const slice = pendingSlice(await source(page.path));
+      expect(slice, `${page.path} pending slice`).toContain('aria-busy="true"');
+      expect(slice, `${page.path} pending slice`).toContain('sr-only');
+      expect(slice, `${page.path} pending slice`).toContain('role="status"');
+      expect(slice, `${page.path} pending slice`).toContain('aria-live="polite"');
+    }
+  });
+
+  it('never lets a removed loading headline/eyebrow literal creep back into any routed page or the shell', async () => {
+    for (const file of NEGATIVE_GATE_FILES) {
+      const text = await source(file);
+      for (const literal of REMOVED_LOADING_LITERALS) {
+        expect(text, `${file} should not contain "${literal}"`).not.toContain(literal);
+      }
+    }
+  });
+
+  it('drops the skeleton top offset and the now-orphaned --space-12 token together', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const block = ruleBlock(css, ['.dashboard-loading,', '.roadmap-loading {']);
+    expect(block, '.dashboard-loading, .roadmap-loading rule block').toBeDefined();
+    expect(block).not.toMatch(/margin-top/);
+    expect(css).not.toContain('--space-12');
+  });
+});
