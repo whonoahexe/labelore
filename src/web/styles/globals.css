@@ -1858,18 +1858,23 @@ table,
   overscroll-behavior-inline: contain;
 }
 
-/* quick-260916-qqk: consolidated scrollbar block (D-01–D-04). Zero space at rest everywhere —
-   the universal `*` rule above sets scrollbar-width: none, and the unscoped ::-webkit-scrollbar
-   rule below defaults to a 0px fallback. Revealed only on hover/focus of a bounded container
-   (the :is() rule below), never on the root `html` scroller: the pointer sits over `html`
-   whenever it is anywhere in the window, so a hover-gated page bar would be permanently
-   visible — exactly the always-on status quo this removes — and revealing a native bar there
-   would reflow the whole page, which is the layout shift this task removes. A native scrollbar
-   always occupies content-box space while visible, which is why the reveal is scoped to
-   bounded containers rather than the page. */
+/* quick-260916-qqk (revised): reveal is scoped to the scrollbar itself, not the panel it
+   scrolls — hovering anywhere in a bounded container used to reveal its bar; now only
+   hovering the bar's own rendered thumb does. That requires the thumb to have real (if
+   small) geometry to hover at all times, so it can no longer be zero-width like the root
+   `html` scroller (D-02, untouched, still permanently hidden — it is not in the :is() list
+   below and stays governed by the `*` rule's scrollbar-width: none and this block's
+   unscoped ::-webkit-scrollbar 0-width default). WebKit does not let one pseudo-element's
+   :hover state style a sibling pseudo-element (::-webkit-scrollbar:hover cannot reach into
+   ::-webkit-scrollbar-thumb, and a custom property bridging the two was tried and did not
+   propagate reliably) — so ::-webkit-scrollbar-thumb:hover, matching only the cursor being
+   over the thumb's own rendered box, is the one dependable primitive here. Firefox has no
+   equivalent per-thumb hover pseudo at all (scrollbar-color/scrollbar-width are static), so
+   it keeps a small, constant, quiet bar instead — an accepted engine asymmetry, same shape
+   as the already-established WebKit-only thumb-hover-darken split below. */
 ::-webkit-scrollbar {
-  width: var(--scrollbar-size, 0px);
-  height: var(--scrollbar-size, 0px);
+  width: 0;
+  height: 0;
 }
 
 ::-webkit-scrollbar-track,
@@ -1878,7 +1883,7 @@ table,
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb);
+  background: transparent;
   border-radius: 0;
 }
 
@@ -1886,9 +1891,14 @@ table,
   background: var(--scrollbar-thumb-strong);
 }
 
-:is(.tree-navigator, .document-outline, .search-dialog-results, .coverage-table-boundary, .overflow-x-auto, .table-scroll, .code-scroll, pre, table, .mermaid, .mermaid-fallback):is(:hover, :focus-within) {
-  --scrollbar-size: 6px;
+:is(.tree-navigator, .document-outline, .search-dialog-results, .coverage-table-boundary, .overflow-x-auto, .table-scroll, .code-scroll, pre, table, .mermaid, .mermaid-fallback) {
   scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+:is(.tree-navigator, .document-outline, .search-dialog-results, .coverage-table-boundary, .overflow-x-auto, .table-scroll, .code-scroll, pre, table, .mermaid, .mermaid-fallback)::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
 }
 
 .document-overflow-boundary {
