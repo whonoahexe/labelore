@@ -160,8 +160,9 @@ export function TraceabilityPage(): React.JSX.Element {
   if (traceability.isPending) {
     return (
       <main className="page-stack" aria-busy="true">
-        <p className="eyebrow">Requirement coverage</p>
-        <h1>Reading the traceability view…</h1>
+        <span className="sr-only" role="status" aria-live="polite">
+          Loading
+        </span>
         <div className="roadmap-loading" aria-hidden="true" />
       </main>
     );

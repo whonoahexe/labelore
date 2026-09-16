@@ -154,8 +154,9 @@ export function SearchPage(): React.JSX.Element {
   if (search.isPending) {
     return (
       <main className="page-stack" aria-busy="true">
-        <p className="eyebrow">Findability</p>
-        <h1>Searching…</h1>
+        <span className="sr-only" role="status" aria-live="polite">
+          Loading
+        </span>
         <div className="roadmap-loading" aria-hidden="true" />
       </main>
     );

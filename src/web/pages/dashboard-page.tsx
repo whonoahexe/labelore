@@ -78,8 +78,9 @@ function AttentionIcon({ type }: { type: AttentionItem['type'] }): React.JSX.Ele
 function DashboardLoading(): React.JSX.Element {
   return (
     <main className="page-stack" aria-busy="true">
-      <p className="eyebrow">Situational awareness</p>
-      <h1>Reading the current position…</h1>
+      <span className="sr-only" role="status" aria-live="polite">
+        Loading
+      </span>
       <div className="dashboard-loading" aria-hidden="true">
         <span />
         <span />

@@ -255,8 +255,9 @@ export function RoadmapPage(): React.JSX.Element {
   if (roadmap.isPending) {
     return (
       <main className="page-stack" aria-busy="true">
-        <p className="eyebrow">Execution map</p>
-        <h1>Reading the roadmap…</h1>
+        <span className="sr-only" role="status" aria-live="polite">
+          Loading
+        </span>
         <div className="roadmap-loading" aria-hidden="true" />
       </main>
     );
