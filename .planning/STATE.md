@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-10)
 Phase: Milestone v1.0 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-09-12 - Completed quick task 260912-lfi: Scroll to blocker in project state from source link, and render markdown without raw asterisks in dashboard
+Last activity: 2026-09-16 - Completed quick task 260916-o2o: remove all the loading state text, keep the skeletons and add a top bar load
 
 ## Performance Metrics
 
@@ -102,6 +102,7 @@ None.
 | 260912-lfi | Scroll to blocker in project state from source link, and render markdown without raw asterisks in dashboard | 2026-09-12 | c6def3f | [260912-lfi-scroll-to-blocker-in-project-state-from-](./quick/260912-lfi-scroll-to-blocker-in-project-state-from-/) |
 | 260912-oae | Revamp progress panel to show phase and checkpoints clearly | 2026-09-12 | 4825c8f | [260912-oae-revamp-progress-panel-to-show-phase-and-](./quick/260912-oae-revamp-progress-panel-to-show-phase-and-/) |
 | 8 | Refine progress panel spacing, grid alignment, and dark/light contrast | 2026-09-12 | 59dc045 | — |
+| 260916-o2o | Remove all the loading state text, keep the skeletons and add a top bar loader | 2026-09-16 | 41a4c4e | [260916-o2o-remove-all-the-loading-state-text-keep-t](./quick/260916-o2o-remove-all-the-loading-state-text-keep-t/) |
 
 
 ## Deferred Items
