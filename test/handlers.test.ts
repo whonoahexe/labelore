@@ -199,6 +199,45 @@ describe('RoadmapHandler', () => {
     expect(phases[0].roadmapComplete).toBe(false);
   });
 
+  it('parses a description-less checklist line as its own entry with no description, never stealing the next line', () => {
+    // Real GSD shape (studio-portal v1.0 Phase 4): some plan lines carry no
+    // trailing description at all. \s* around the separator previously matched
+    // \n, and a bare hyphen counted as a valid separator, so a description-less
+    // line's match would backtrack across the newline and swallow the *next*
+    // list item's entire line as its own "description" — starving that next
+    // plan of its own match.
+    const content = `### Phase 4: Delivery\n**Goal**: Ship it\n\nPlans:\n\n- [x] 04-01-PLAN.md\n- [x] 04-02-PLAN.md\n- [x] 04-13-PLAN.md — Real description here.\n`;
+    const result = RoadmapHandler.parse(
+      raw('.planning/ROADMAP.md', content),
+      ref('.planning/ROADMAP.md'),
+    );
+    const phases = result.structured?.phases as {
+      plans: { id: string; description: string; checked: boolean }[];
+    }[];
+
+    expect(phases[0].plans).toEqual([
+      { id: '04-01', description: '', checked: true },
+      { id: '04-02', description: '', checked: true },
+      { id: '04-13', description: 'Real description here.', checked: true },
+    ]);
+  });
+
+  it('parses a lone description-less checklist line at the end of a list without garbage from its own filename suffix', () => {
+    // Isolated bare line, nothing after it: the same backtrack previously grabbed
+    // the hyphen inside its own "-PLAN.md" suffix as the separator, leaving a
+    // spurious description of "PLAN.md".
+    const content = `### Phase 4: Delivery\n**Goal**: Ship it\n\nPlans:\n\n- [x] 04-07-PLAN.md\n`;
+    const result = RoadmapHandler.parse(
+      raw('.planning/ROADMAP.md', content),
+      ref('.planning/ROADMAP.md'),
+    );
+    const phases = result.structured?.phases as {
+      plans: { id: string; description: string; checked: boolean }[];
+    }[];
+
+    expect(phases[0].plans).toEqual([{ id: '04-07', description: '', checked: true }]);
+  });
+
   // 0YP-01: a per-milestone ROADMAP.md snapshot (milestones/vX.Y-ROADMAP.md) is claimed by
   // RoadmapHandler and parses through the same flat-phases path a per-milestone file's lack of a
   // <details> wrapper naturally produces — milestoneGroups stays empty.
