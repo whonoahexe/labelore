@@ -4,6 +4,8 @@ import {
   AlertTriangle,
   ArrowRight,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   CircleDot,
   MapPin,
   ShieldAlert,
@@ -89,7 +91,7 @@ function DashboardLoading(): React.JSX.Element {
 
 export function DashboardPage(): React.JSX.Element {
   const dashboard = useQuery({ queryKey: ['dashboard'], queryFn: fetchDashboard });
-  const [attentionLimit, setAttentionLimit] = useState(ATTENTION_PAGE_SIZE);
+  const [attentionPage, setAttentionPage] = useState(1);
 
   if (dashboard.isPending) return <DashboardLoading />;
   if (dashboard.isError) {
@@ -113,6 +115,12 @@ export function DashboardPage(): React.JSX.Element {
   if (view.loadStatus.status !== 'ok') {
     return <InvalidProjectScreen loadStatus={view.loadStatus} />;
   }
+
+  const totalAttentionPages = Math.ceil(view.attention.length / ATTENTION_PAGE_SIZE);
+  const currentAttentionPage = Math.min(Math.max(1, attentionPage), totalAttentionPages || 1);
+  const attentionStart = (currentAttentionPage - 1) * ATTENTION_PAGE_SIZE;
+  const attentionEnd = Math.min(attentionStart + ATTENTION_PAGE_SIZE, view.attention.length);
+  const visibleAttention = view.attention.slice(attentionStart, attentionEnd);
 
   return (
     <main className="dashboard-page page-stack">
@@ -232,7 +240,7 @@ export function DashboardPage(): React.JSX.Element {
           {view.attention.length > 0 ? (
             <>
               <ol className="attention-list">
-                {view.attention.slice(0, attentionLimit).map((item) => (
+                {visibleAttention.map((item) => (
                   <li key={item.key} data-type={item.type}>
                     <AttentionIcon type={item.type} />
                     {item.url ? (
@@ -256,18 +264,33 @@ export function DashboardPage(): React.JSX.Element {
                   </li>
                 ))}
               </ol>
-              {attentionLimit < view.attention.length ? (
-                <div className="attention-more">
+              {totalAttentionPages > 1 ? (
+                <nav className="attention-pagination" aria-label="Needs attention pagination">
                   <span>
-                    Showing {attentionLimit} of {view.attention.length}
+                    Showing {attentionStart + 1}–{attentionEnd} of {view.attention.length}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => setAttentionLimit((value) => value + ATTENTION_PAGE_SIZE)}
-                  >
-                    Show more
-                  </button>
-                </div>
+                  <div className="attention-pagination-actions">
+                    <button
+                      type="button"
+                      aria-label="Previous page"
+                      onClick={() => setAttentionPage((page) => Math.max(1, page - 1))}
+                      disabled={currentAttentionPage <= 1}
+                    >
+                      <ChevronLeft aria-hidden="true" />
+                    </button>
+                    <span className="attention-page-status" aria-live="polite">
+                      {currentAttentionPage} / {totalAttentionPages}
+                    </span>
+                    <button
+                      type="button"
+                      aria-label="Next page"
+                      onClick={() => setAttentionPage((page) => Math.min(totalAttentionPages, page + 1))}
+                      disabled={currentAttentionPage >= totalAttentionPages}
+                    >
+                      <ChevronRight aria-hidden="true" />
+                    </button>
+                  </div>
+                </nav>
               ) : null}
             </>
           ) : (

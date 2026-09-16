@@ -76,7 +76,9 @@ describe('authorized Studio Portal shell contract', () => {
 
     expect(dashboard).toContain('Next up');
     expect(dashboard).toContain('phaseMode');
-    expect(dashboard).toContain('Show more');
+    expect(dashboard).toContain('attention-pagination');
+    expect(dashboard).toContain('Previous page');
+    expect(dashboard).not.toContain('Show more');
     expect(dashboard).not.toContain('Primary signal');
     expect(dashboard).not.toContain('Formal phase progress');
     expect(dashboard).not.toContain('What moves next');

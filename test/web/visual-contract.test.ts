@@ -149,6 +149,7 @@ describe('revised visual contract (G-08, G-10, G-05, G-07, G-03, E9 long-text)',
     const [block] = ruleBlocks(css, '.attention-list > li > .source-note {');
     expect(block).toBeDefined();
     expect(block).toContain('grid-column: 2;');
+    expect(block).toContain('justify-self: start;');
     expect(block).toContain('min-width: 0;');
   });
 

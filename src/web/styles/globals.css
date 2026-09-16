@@ -305,6 +305,8 @@
 .tree-node,
 .page-stack,
 .dashboard-page,
+.roadmap-page,
+.traceability-page,
 .position-hero,
 .dashboard-grid,
 .position-copy,
@@ -1330,6 +1332,7 @@ summary.tree-node-row:focus-visible {
 
 .attention-list > li > .source-note {
   grid-column: 2;
+  justify-self: start;
   min-width: 0;
 }
 
@@ -1378,6 +1381,11 @@ summary.tree-node-row:focus-visible {
   align-items: flex-end;
   justify-content: space-between;
   margin-bottom: var(--space-fluid-12);
+}
+
+.roadmap-page .page-intro,
+.traceability-page .page-intro {
+  margin-top: var(--space-fluid-14);
 }
 
 .text-link {
@@ -1905,6 +1913,11 @@ pre {
   .progress-panel {
     grid-template-columns: minmax(12rem, 1fr) minmax(12rem, 1fr);
   }
+
+  .roadmap-page .page-intro,
+  .traceability-page .page-intro {
+    margin-top: 0;
+  }
 }
 
 @media (max-width: 42rem) {
@@ -2391,6 +2404,7 @@ pre {
 }
 
 .source-link {
+  width: fit-content;
   text-decoration: underline;
   text-decoration-color: color-mix(in oklch, currentColor 35%, transparent);
   text-underline-offset: 0.22em;
@@ -2429,7 +2443,7 @@ pre {
   line-height: var(--lh-snug);
 }
 
-.attention-more {
+.attention-pagination {
   display: flex;
   gap: var(--space-4);
   align-items: center;
@@ -2439,21 +2453,48 @@ pre {
   font-size: var(--fs-3);
 }
 
-.attention-more button {
-  min-height: 2.35rem;
-  border: 1px solid var(--border);
-  background: var(--background);
-  padding: var(--space-2) var(--space-3);
-  color: var(--foreground);
-  cursor: pointer;
-  font-family: var(--font-heading);
-  font-size: var(--fs-2);
-  text-transform: uppercase;
+.attention-pagination-actions {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
 }
 
-.attention-more button:hover {
+.attention-page-status {
+  color: var(--foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  min-width: 3.5rem;
+  text-align: center;
+}
+
+.attention-pagination button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--foreground);
+  cursor: pointer;
+  padding: 0;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.attention-pagination button:hover:not(:disabled) {
   border-color: var(--primary);
   color: var(--primary);
+}
+
+.attention-pagination button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.attention-pagination button svg {
+  width: 1rem;
+  height: 1rem;
 }
 
 .preview-empty {
@@ -3035,9 +3076,10 @@ pre {
     margin-top: var(--space-1-5);
   }
 
-  .attention-more {
+  .attention-pagination {
     align-items: flex-start;
     flex-direction: column;
+    gap: var(--space-3);
   }
 
   .phase-facts > div {
