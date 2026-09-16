@@ -254,7 +254,7 @@
     @apply border-border outline-ring;
     box-sizing: border-box;
     scrollbar-width: none;
-    scrollbar-color: var(--scrollbar-thumb) transparent;
+    scrollbar-color: transparent transparent;
   }
 
   html {
@@ -1858,18 +1858,13 @@ table,
   overscroll-behavior-inline: contain;
 }
 
-/* quick-260916-qqk: consolidated scrollbar block (D-01–D-04). Zero space at rest everywhere —
-   the universal `*` rule above sets scrollbar-width: none, and the unscoped ::-webkit-scrollbar
-   rule below defaults to a 0px fallback. Revealed only on hover/focus of a bounded container
-   (the :is() rule below), never on the root `html` scroller: the pointer sits over `html`
-   whenever it is anywhere in the window, so a hover-gated page bar would be permanently
-   visible — exactly the always-on status quo this removes — and revealing a native bar there
-   would reflow the whole page, which is the layout shift this task removes. A native scrollbar
-   always occupies content-box space while visible, which is why the reveal is scoped to
-   bounded containers rather than the page. */
+/* Consolidated scrollbar block: invisible at rest via transparent thumb and track,
+   revealed with 6px / thin geometry and --scrollbar-thumb (30%) on hover/focus across
+   all scroll containers and the page, strengthening to --scrollbar-thumb-strong (55%)
+   on direct thumb hover. */
 ::-webkit-scrollbar {
-  width: var(--scrollbar-size, 0px);
-  height: var(--scrollbar-size, 0px);
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track,
@@ -1878,17 +1873,29 @@ table,
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb);
+  background: transparent;
   border-radius: 0;
+}
+
+:is(html, .tree-navigator, .document-outline, .search-dialog-results, .coverage-table-boundary, .overflow-x-auto, .table-scroll, .code-scroll, pre, table, .mermaid, .mermaid-fallback) {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+:is(html, .tree-navigator, .document-outline, .search-dialog-results, .coverage-table-boundary, .overflow-x-auto, .table-scroll, .code-scroll, pre, table, .mermaid, .mermaid-fallback):is(:hover, :focus-within) {
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+:is(html, .tree-navigator, .document-outline, .search-dialog-results, .coverage-table-boundary, .overflow-x-auto, .table-scroll, .code-scroll, pre, table, .mermaid, .mermaid-fallback):is(:hover, :focus-within)::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+}
+
+:is(html, .tree-navigator, .document-outline, .search-dialog-results, .coverage-table-boundary, .overflow-x-auto, .table-scroll, .code-scroll, pre, table, .mermaid, .mermaid-fallback)::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-strong);
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--scrollbar-thumb-strong);
-}
-
-:is(.tree-navigator, .document-outline, .search-dialog-results, .coverage-table-boundary, .overflow-x-auto, .table-scroll, .code-scroll, pre, table, .mermaid, .mermaid-fallback):is(:hover, :focus-within) {
-  --scrollbar-size: 6px;
-  scrollbar-width: thin;
 }
 
 .document-overflow-boundary {
