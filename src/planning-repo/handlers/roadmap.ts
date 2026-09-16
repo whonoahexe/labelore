@@ -6,6 +6,7 @@ import { basename } from 'node:path';
 import type { ArtifactHandler, RawArtifact, ArtifactRef } from '../types.ts';
 import { tryParseFrontmatter } from '../frontmatter.ts';
 import { deriveTitle } from './title.ts';
+import { parseMilestoneFileName } from '../naming.ts';
 
 export interface RoadmapPlanEntry {
   id: string;
@@ -145,9 +146,21 @@ function extractMilestoneGroups(body: string): MilestoneExtraction {
   return { groups, remainder };
 }
 
+/**
+ * A per-milestone `milestones/vX.Y-ROADMAP.md` snapshot: same document token as the root file,
+ * one directory level down. `parseMilestoneFileName` is this codebase's single grammar module for
+ * milestone filenames (naming.ts) — no second regex is written here.
+ */
+function isMilestoneRoadmapFile(ref: ArtifactRef): boolean {
+  if (ref.location !== 'milestone-root') return false;
+  const parsed = parseMilestoneFileName(basename(ref.path));
+  return parsed.matched && parsed.document.toUpperCase() === 'ROADMAP';
+}
+
 export const RoadmapHandler: ArtifactHandler = {
   kind: 'roadmap',
-  match: (ref) => ref.location === 'root' && basename(ref.path) === 'ROADMAP.md',
+  match: (ref) =>
+    (ref.location === 'root' && basename(ref.path) === 'ROADMAP.md') || isMilestoneRoadmapFile(ref),
   parse(raw: RawArtifact, ref: ArtifactRef) {
     const fm = tryParseFrontmatter(raw.content);
     const title = deriveTitle(fm.data, fm.body, ref.path);

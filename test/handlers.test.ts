@@ -198,6 +198,44 @@ describe('RoadmapHandler', () => {
     ]);
     expect(phases[0].roadmapComplete).toBe(false);
   });
+
+  // 0YP-01: a per-milestone ROADMAP.md snapshot (milestones/vX.Y-ROADMAP.md) is claimed by
+  // RoadmapHandler and parses through the same flat-phases path a per-milestone file's lack of a
+  // <details> wrapper naturally produces — milestoneGroups stays empty.
+  it('claims a milestone-root vX.Y-ROADMAP.md ref and yields flat phases with empty milestoneGroups', () => {
+    const milestoneRef = ref('.planning/milestones/v1.0-ROADMAP.md', {
+      location: 'milestone-root',
+      kind: 'roadmap',
+      milestoneVersion: 'v1.0',
+    });
+    expect(RoadmapHandler.match(milestoneRef)).toBe(true);
+
+    const content = `### Phase 1: Bootstrap\n**Goal**: Ship the base layer\n`;
+    const result = RoadmapHandler.parse(raw('.planning/milestones/v1.0-ROADMAP.md', content), milestoneRef);
+    const phases = result.structured?.phases as { number: string; name: string }[];
+    expect(phases).toHaveLength(1);
+    expect(phases[0]).toMatchObject({ number: '1', name: 'Bootstrap' });
+    expect(result.structured?.milestoneGroups).toEqual([]);
+  });
+
+  // 0YP-01 negative: other milestone-root document tokens (REQUIREMENTS, MILESTONE-AUDIT) are not
+  // claimed by RoadmapHandler and still fall through to GenericMarkdownHandler.
+  it('does not claim milestone-root REQUIREMENTS or MILESTONE-AUDIT files', () => {
+    const reqRef = ref('.planning/milestones/v1.0-REQUIREMENTS.md', {
+      location: 'milestone-root',
+      kind: 'requirements',
+      milestoneVersion: 'v1.0',
+    });
+    const auditRef = ref('.planning/milestones/v1.0-MILESTONE-AUDIT.md', {
+      location: 'milestone-root',
+      kind: 'milestone-audit',
+      milestoneVersion: 'v1.0',
+    });
+    expect(RoadmapHandler.match(reqRef)).toBe(false);
+    expect(RoadmapHandler.match(auditRef)).toBe(false);
+    expect(HANDLERS.find((h) => h.match(reqRef))).toBe(GenericMarkdownHandler);
+    expect(HANDLERS.find((h) => h.match(auditRef))).toBe(GenericMarkdownHandler);
+  });
 });
 
 describe('RequirementsHandler', () => {
