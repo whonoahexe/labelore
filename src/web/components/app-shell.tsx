@@ -6,6 +6,7 @@ import { formatProjectMeta, projectDisplayName } from '../../presentation/shell-
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
 import { LabeloreMark } from './labelore-mark.tsx';
+import { RouteProgress } from './route-progress.tsx';
 import { SearchDialog } from './search-field.tsx';
 import { SidebarDrawer } from './sidebar-drawer.tsx';
 import { SnapshotStatus } from './snapshot-status.tsx';
@@ -22,19 +23,6 @@ export async function fetchPresentation(): Promise<ProjectPresentation> {
 
 function navigationClass({ isActive }: { isActive: boolean }): string {
   return isActive ? 'shell-nav-link active' : 'shell-nav-link';
-}
-
-/** The Suspense fallback shown for the brief window a lazy-loaded route chunk is fetching, on a
- * loopback-only server this normally resolves in well under a frame — kept deliberately plain
- * (no skeleton chrome) since there is nothing meaningful to preview before the page's own data
- * query even starts. */
-function PageLoadingFallback(): React.JSX.Element {
-  return (
-    <main className="page-stack" role="status" aria-live="polite">
-      <p className="eyebrow">Loading</p>
-      <h1>Opening view…</h1>
-    </main>
-  );
 }
 
 export function AppShell(): React.JSX.Element {
@@ -113,7 +101,7 @@ export function AppShell(): React.JSX.Element {
                 (app-router.tsx), so this is the one Suspense boundary its fallback needs. A
                 single shared boundary here (not one per route) since every lazy element renders
                 through this same Outlet. */}
-            <Suspense fallback={<PageLoadingFallback />}>
+            <Suspense fallback={<RouteProgress />}>
               <Outlet />
             </Suspense>
           </div>

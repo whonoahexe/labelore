@@ -1883,6 +1883,44 @@ pre {
   }
 }
 
+/* quick-260916-o2o (O2O-03): route-transition top bar, portal-mounted into document.body by
+   RouteProgress (route-progress.tsx) — see that component's comment for why the portal is
+   load-bearing. Layered above .shell-header (z-index: 20) and .toast-viewport (30), below the
+   drawer/dialog layer (60-71). */
+.route-progress {
+  position: fixed;
+  z-index: 40;
+  top: 0;
+  inset-inline: 0;
+  height: var(--space-0-5);
+  pointer-events: none;
+}
+
+.route-progress-bar {
+  display: block;
+  width: 40%;
+  height: 100%;
+  background: var(--primary);
+  animation: route-progress-sweep 1.1s ease-in-out infinite;
+}
+
+@keyframes route-progress-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(250%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-progress-bar {
+    width: 100%;
+    animation: none;
+  }
+}
+
 @media (max-width: 62rem) {
   .shell-header {
     grid-template-areas: 'menu brand controls' 'nav nav nav';

@@ -35,8 +35,10 @@ describe('route-level code splitting (entry chunk fix)', () => {
   it('wraps the routed Outlet in a Suspense boundary with a real fallback element', async () => {
     const shell = await source('src/web/components/app-shell.tsx');
     expect(shell).toMatch(/import \{[^}]*\bSuspense\b[^}]*\} from 'react';/);
-    expect(shell).toMatch(/<Suspense fallback=\{<PageLoadingFallback \/>\}>\s*<Outlet \/>\s*<\/Suspense>/);
-    expect(shell).toContain('function PageLoadingFallback():');
+    expect(shell).toMatch(/<Suspense fallback=\{<RouteProgress \/>\}>\s*<Outlet \/>\s*<\/Suspense>/);
+    expect(shell).toContain("import { RouteProgress } from './route-progress.tsx';");
+    // quick-260916-o2o (O2O-03): the debounced top bar loader replaced the former text fallback.
+    expect(shell).not.toContain('PageLoadingFallback');
   });
 });
 
