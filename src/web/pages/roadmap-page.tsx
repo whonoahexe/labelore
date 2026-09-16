@@ -276,7 +276,7 @@ export function RoadmapPage(): React.JSX.Element {
 
   const view = roadmap.data;
   return (
-    <main className="page-stack">
+    <main className="roadmap-page page-stack">
       <header className="page-intro">
         <div>
           <p className="eyebrow">Execution narrative</p>

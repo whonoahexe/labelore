@@ -181,7 +181,7 @@ export function TraceabilityPage(): React.JSX.Element {
 
   const view = traceability.data;
   return (
-    <main className="page-stack">
+    <main className="traceability-page page-stack">
       <header className="page-intro">
         <div>
           <p className="eyebrow">Requirement coverage</p>
