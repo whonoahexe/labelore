@@ -1,6 +1,14 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Check, ChevronRight, Circle, ExternalLink, History, Link2 } from 'lucide-react';
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Circle,
+  ExternalLink,
+  History,
+  Link2,
+} from 'lucide-react';
 import { Link, useLocation } from 'react-router';
 import { EmptyState } from '../components/empty-state.tsx';
 import type {
@@ -8,12 +16,15 @@ import type {
   RoadmapPhaseRow,
   RoadmapViewModel,
 } from '../../presentation/roadmap.ts';
+import { paginate } from './list-pagination.ts';
 import {
   milestoneContainsDeepLink,
   resolveRoadmapDeepLink,
   type RoadmapDeepLinkTarget,
 } from './roadmap-deep-link.ts';
 import { scrollWhenSettled } from './scroll-settle.ts';
+
+const REQUIREMENT_PAGE_SIZE = 4;
 
 async function fetchRoadmap(): Promise<RoadmapViewModel> {
   const response = await fetch('/api/roadmap', { headers: { Accept: 'application/json' } });
@@ -35,6 +46,8 @@ function PhaseFlow({
   const articleRef = useRef<HTMLElement | null>(null);
   const detailsRef = useRef<HTMLDetailsElement | null>(null);
   const openedRef = useRef(false);
+  const [requirementPage, setRequirementPage] = useState(1);
+  const requirementWindow = paginate(phase.requirements, requirementPage, REQUIREMENT_PAGE_SIZE);
 
   useEffect(() => {
     if (!targeted || openedRef.current) return;
@@ -131,19 +144,57 @@ function PhaseFlow({
             <section aria-labelledby={`${phase.key}-requirements`}>
               <h4 id={`${phase.key}-requirements`}>Requirements</h4>
               {phase.requirements.length > 0 ? (
-                <ul className="requirement-list">
-                  {phase.requirements.map((requirement) => (
-                    <li key={requirement.id}>
-                      <strong>{requirement.id}</strong>
-                      {requirement.text ? <span>{requirement.text}</span> : null}
-                      {requirement.url ? (
-                        <Link to={requirement.url}>
-                          Read requirement <ExternalLink aria-hidden="true" />
-                        </Link>
-                      ) : null}
-                    </li>
-                  ))}
-                </ul>
+                <>
+                  <ul className="requirement-list">
+                    {requirementWindow.items.map((requirement) => (
+                      <li key={requirement.id}>
+                        <strong>{requirement.id}</strong>
+                        {requirement.text ? <span>{requirement.text}</span> : null}
+                        {requirement.url ? (
+                          <Link to={requirement.url}>
+                            Read requirement <ExternalLink aria-hidden="true" />
+                          </Link>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                  {requirementWindow.totalPages > 1 ? (
+                    <nav
+                      className="requirement-pagination"
+                      aria-label={`Requirements pagination for Phase ${phase.number}`}
+                    >
+                      <span>
+                        Showing {requirementWindow.start}–{requirementWindow.end} of{' '}
+                        {requirementWindow.total}
+                      </span>
+                      <div className="requirement-pagination-actions">
+                        <button
+                          type="button"
+                          aria-label="Previous page"
+                          onClick={() => setRequirementPage((page) => Math.max(1, page - 1))}
+                          disabled={requirementWindow.page <= 1}
+                        >
+                          <ChevronLeft aria-hidden="true" />
+                        </button>
+                        <span className="requirement-page-status" aria-live="polite">
+                          {requirementWindow.page} / {requirementWindow.totalPages}
+                        </span>
+                        <button
+                          type="button"
+                          aria-label="Next page"
+                          onClick={() =>
+                            setRequirementPage((page) =>
+                              Math.min(requirementWindow.totalPages, page + 1),
+                            )
+                          }
+                          disabled={requirementWindow.page >= requirementWindow.totalPages}
+                        >
+                          <ChevronRight aria-hidden="true" />
+                        </button>
+                      </div>
+                    </nav>
+                  ) : null}
+                </>
               ) : (
                 <EmptyState />
               )}
