@@ -413,32 +413,41 @@ describe('muted surface contrast and dead selectors (F2, F5)', () => {
 // block now covers every scroller in the app. These assertions are region-scoped source checks;
 // the perceptual claims (no painted bar/gutter at rest, faint-but-grabbable on hover, both
 // themes) are handed to the plan's <human-check> gate, harvested at end-of-phase.
-const SCROLLBAR_REVEAL_SELECTOR =
-  ':is(.tree-navigator, .document-outline, .search-dialog-results, .coverage-table-boundary, .overflow-x-auto, .table-scroll, .code-scroll, pre, table, .mermaid, .mermaid-fallback):is(:hover, :focus-within) {';
+const SCROLLBAR_CONTAINERS =
+  ':is(html, .tree-navigator, .document-outline, .search-dialog-results, .coverage-table-boundary, .overflow-x-auto, .table-scroll, .code-scroll, pre, table, .mermaid, .mermaid-fallback)';
+const SCROLLBAR_REVEAL_SELECTOR = `${SCROLLBAR_CONTAINERS}:is(:hover, :focus-within) {`;
 
 describe('zero-space, hover-revealed scrollbars (QQK-01, QQK-02, QQK-03)', () => {
-  it('collapses every scroll container to zero space at rest — Firefox', async () => {
+  it('collapses unrevealed scroll containers at rest — Firefox', async () => {
     const css = await source('src/web/styles/globals.css');
     const [block] = ruleBlocks(css, '* {');
     expect(block).toBeDefined();
     expect(block).toContain('scrollbar-width: none;');
-    expect(block).toContain('scrollbar-color: var(--scrollbar-thumb) transparent;');
+    expect(block).toContain('scrollbar-color: transparent transparent;');
   });
 
   it('collapses every scroll container to zero space at rest — WebKit', async () => {
     const css = await source('src/web/styles/globals.css');
     const [block] = ruleBlocks(css, '::-webkit-scrollbar {');
     expect(block).toBeDefined();
-    expect(block).toContain('width: var(--scrollbar-size, 0px);');
-    expect(block).toContain('height: var(--scrollbar-size, 0px);');
+    expect(block).toContain('width: 6px;');
+    expect(block).toContain('height: 6px;');
+
+    const [thumb] = ruleBlocks(css, '::-webkit-scrollbar-thumb {');
+    expect(thumb).toBeDefined();
+    expect(thumb).toContain('background: transparent;');
   });
 
   it('reveals a thin 6px bar only on hover or focus of a bounded container', async () => {
     const css = await source('src/web/styles/globals.css');
-    const [block] = ruleBlocks(css, SCROLLBAR_REVEAL_SELECTOR);
-    expect(block).toBeDefined();
-    expect(block).toContain('--scrollbar-size: 6px;');
-    expect(block).toContain('scrollbar-width: thin;');
+    const [restBlock] = ruleBlocks(css, `${SCROLLBAR_CONTAINERS} {`);
+    expect(restBlock).toBeDefined();
+    expect(restBlock).toContain('scrollbar-width: thin;');
+    expect(restBlock).toContain('scrollbar-color: transparent transparent;');
+
+    const [revealBlock] = ruleBlocks(css, SCROLLBAR_REVEAL_SELECTOR);
+    expect(revealBlock).toBeDefined();
+    expect(revealBlock).toContain('scrollbar-color: var(--scrollbar-thumb) transparent;');
   });
 
   it('carries thumb colour through two named tokens, never re-spelled at a usage site', async () => {
@@ -451,8 +460,11 @@ describe('zero-space, hover-revealed scrollbars (QQK-01, QQK-02, QQK-03)', () =>
       '--scrollbar-thumb-strong: color-mix(in oklch, var(--muted-foreground) 55%, transparent);',
     );
 
-    const [thumb] = ruleBlocks(css, '::-webkit-scrollbar-thumb {');
-    expect(thumb).toMatch(/background:\s*var\(--scrollbar-thumb\);/);
+    const [revealThumb] = ruleBlocks(
+      css,
+      `${SCROLLBAR_CONTAINERS}:is(:hover, :focus-within)::-webkit-scrollbar-thumb {`,
+    );
+    expect(revealThumb).toMatch(/background:\s*var\(--scrollbar-thumb\);/);
 
     const [thumbHover] = ruleBlocks(css, '::-webkit-scrollbar-thumb:hover {');
     expect(thumbHover).toMatch(/background:\s*var\(--scrollbar-thumb-strong\);/);
