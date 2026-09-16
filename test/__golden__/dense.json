@@ -632,7 +632,32 @@
         "bodyHash": "627623b9c10c77d1eaf3893fb9fa03091200e8b0c15e4c261d5844fbf86de120",
         "mtimeMs": 0,
         "warnings": [],
-        "structured": {}
+        "structured": {
+          "milestoneGroups": [],
+          "phases": [
+            {
+              "number": "1",
+              "name": "Bootstrap",
+              "goal": "Stand up the earliest scaffolding for the fixture project",
+              "dependsOnRaw": "Nothing (first phase)",
+              "requirementIds": [
+                "BOOT-01"
+              ],
+              "successCriteria": [
+                "The scaffolding runs end to end"
+              ],
+              "plans": [
+                {
+                  "id": "01-01",
+                  "description": "Bootstrap scaffolding",
+                  "checked": true
+                }
+              ],
+              "roadmapComplete": true
+            }
+          ],
+          "dependencyShape": null
+        }
       },
       ".planning/milestones/v2.0-MILESTONE-AUDIT.md": {
         "id": ".planning/milestones/v2.0-MILESTONE-AUDIT.md",
@@ -671,7 +696,52 @@
         "bodyHash": "40eb5174ac2cd8d9393d51adfe1e35f97a4a009131c720a7845b31573a61346b",
         "mtimeMs": 0,
         "warnings": [],
-        "structured": {}
+        "structured": {
+          "milestoneGroups": [],
+          "phases": [
+            {
+              "number": "1",
+              "name": "Legacy Ingest",
+              "goal": "Pull legacy records into the new store",
+              "dependsOnRaw": "Nothing (first phase of v2.0)",
+              "requirementIds": [
+                "LEGACY-01"
+              ],
+              "successCriteria": [
+                "Legacy records are readable in the new store"
+              ],
+              "plans": [
+                {
+                  "id": "01-01",
+                  "description": "Legacy ingest pipeline",
+                  "checked": true
+                }
+              ],
+              "roadmapComplete": true
+            },
+            {
+              "number": "2",
+              "name": "Batch Export",
+              "goal": "Export ingested batches to the downstream consumer",
+              "dependsOnRaw": "Phase 1",
+              "requirementIds": [
+                "XPORT-LEGACY-01"
+              ],
+              "successCriteria": [
+                "A batch export job runs against ingested records"
+              ],
+              "plans": [
+                {
+                  "id": "02-01",
+                  "description": "Batch export job",
+                  "checked": true
+                }
+              ],
+              "roadmapComplete": true
+            }
+          ],
+          "dependencyShape": null
+        }
       },
       ".planning/research/PITFALLS.md": {
         "id": ".planning/research/PITFALLS.md",
@@ -794,10 +864,19 @@
             "dirPath": ".planning/milestones/v1.0-phases/01-bootstrap",
             "archived": true,
             "goal": "Stand up the earliest scaffolding for the fixture project",
-            "dependsOnRaw": null,
-            "requirementIds": [],
-            "requirementRefs": [],
-            "successCriteria": [],
+            "dependsOnRaw": "Nothing (first phase)",
+            "requirementIds": [
+              "BOOT-01"
+            ],
+            "requirementRefs": [
+              {
+                "raw": "BOOT-01",
+                "resolved": null
+              }
+            ],
+            "successCriteria": [
+              "The scaffolding runs end to end"
+            ],
             "roadmapComplete": true,
             "diskStatus": "complete",
             "plans": [
@@ -1110,10 +1189,19 @@
             "dirPath": ".planning/milestones/v2.0-phases/01-legacy-ingest",
             "archived": true,
             "goal": "Pull legacy records into the new store",
-            "dependsOnRaw": null,
-            "requirementIds": [],
-            "requirementRefs": [],
-            "successCriteria": [],
+            "dependsOnRaw": "Nothing (first phase of v2.0)",
+            "requirementIds": [
+              "LEGACY-01"
+            ],
+            "requirementRefs": [
+              {
+                "raw": "LEGACY-01",
+                "resolved": null
+              }
+            ],
+            "successCriteria": [
+              "Legacy records are readable in the new store"
+            ],
             "roadmapComplete": true,
             "diskStatus": "complete",
             "plans": [
@@ -1425,10 +1513,19 @@
             "dirPath": ".planning/milestones/v2.0-phases/02-batch-export",
             "archived": true,
             "goal": "Export ingested batches to the downstream consumer",
-            "dependsOnRaw": null,
-            "requirementIds": [],
-            "requirementRefs": [],
-            "successCriteria": [],
+            "dependsOnRaw": "Phase 1",
+            "requirementIds": [
+              "XPORT-LEGACY-01"
+            ],
+            "requirementRefs": [
+              {
+                "raw": "XPORT-LEGACY-01",
+                "resolved": null
+              }
+            ],
+            "successCriteria": [
+              "A batch export job runs against ingested records"
+            ],
             "roadmapComplete": true,
             "diskStatus": "complete",
             "plans": [
@@ -3129,10 +3226,19 @@
         "dirPath": ".planning/milestones/v1.0-phases/01-bootstrap",
         "archived": true,
         "goal": "Stand up the earliest scaffolding for the fixture project",
-        "dependsOnRaw": null,
-        "requirementIds": [],
-        "requirementRefs": [],
-        "successCriteria": [],
+        "dependsOnRaw": "Nothing (first phase)",
+        "requirementIds": [
+          "BOOT-01"
+        ],
+        "requirementRefs": [
+          {
+            "raw": "BOOT-01",
+            "resolved": null
+          }
+        ],
+        "successCriteria": [
+          "The scaffolding runs end to end"
+        ],
         "roadmapComplete": true,
         "diskStatus": "complete",
         "plans": [
@@ -3438,10 +3544,19 @@
         "dirPath": ".planning/milestones/v2.0-phases/01-legacy-ingest",
         "archived": true,
         "goal": "Pull legacy records into the new store",
-        "dependsOnRaw": null,
-        "requirementIds": [],
-        "requirementRefs": [],
-        "successCriteria": [],
+        "dependsOnRaw": "Nothing (first phase of v2.0)",
+        "requirementIds": [
+          "LEGACY-01"
+        ],
+        "requirementRefs": [
+          {
+            "raw": "LEGACY-01",
+            "resolved": null
+          }
+        ],
+        "successCriteria": [
+          "Legacy records are readable in the new store"
+        ],
         "roadmapComplete": true,
         "diskStatus": "complete",
         "plans": [
@@ -3753,10 +3868,19 @@
         "dirPath": ".planning/milestones/v2.0-phases/02-batch-export",
         "archived": true,
         "goal": "Export ingested batches to the downstream consumer",
-        "dependsOnRaw": null,
-        "requirementIds": [],
-        "requirementRefs": [],
-        "successCriteria": [],
+        "dependsOnRaw": "Phase 1",
+        "requirementIds": [
+          "XPORT-LEGACY-01"
+        ],
+        "requirementRefs": [
+          {
+            "raw": "XPORT-LEGACY-01",
+            "resolved": null
+          }
+        ],
+        "successCriteria": [
+          "A batch export job runs against ingested records"
+        ],
         "roadmapComplete": true,
         "diskStatus": "complete",
         "plans": [
