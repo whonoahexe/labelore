@@ -121,6 +121,103 @@ describe('assembleDomainModel — directory/roadmap mismatches', () => {
   });
 });
 
+describe('assembleDomainModel — per-milestone ROADMAP.md promotion (0YP)', () => {
+  it('sources goal, depends-on, requirement ids and success criteria from the per-milestone file when the root <details> block is a bare checklist', async () => {
+    const rootRoadmap = `# Roadmap: Demo\n\n<details>\n<summary>✅ v1.0 MVP (Phases 1) - SHIPPED</summary>\n\n### Phase 1: Bootstrap\n**Goal**: Root goal\n\nPlans:\n- [x] 01-01: Schema\n\n</details>\n`;
+    const perMilestoneRoadmap = `# Roadmap Snapshot: v1.0\n\n### Phase 1: Bootstrap\n**Goal**: Per-milestone goal\n**Depends on**: Nothing (first phase)\n**Requirements**: [BOOT-01]\n**Success Criteria** (what must be TRUE):\n  1. Boots correctly\n`;
+    const { project } = await assembleTree({
+      '.planning/ROADMAP.md': rootRoadmap,
+      '.planning/milestones/v1.0-ROADMAP.md': perMilestoneRoadmap,
+      '.planning/milestones/v1.0-phases/01-bootstrap/01-CONTEXT.md': '<domain>x</domain>',
+    });
+    const phase = project.phases.find((p) => p.archived && p.identity.milestoneVersion === 'v1.0');
+    expect(phase).toBeDefined();
+    expect(phase?.goal).toBe('Per-milestone goal');
+    expect(phase?.dependsOnRaw).toBe('Nothing (first phase)');
+    expect(phase?.requirementIds).toEqual(['BOOT-01']);
+    expect(phase?.successCriteria).toEqual(['Boots correctly']);
+  });
+
+  it('falls back to the root <details> block per field when the per-milestone block leaves it empty', async () => {
+    const rootRoadmap = `# Roadmap: Demo\n\n<details>\n<summary>✅ v1.0 MVP (Phases 1) - SHIPPED</summary>\n\n### Phase 1: Bootstrap\n**Goal**: Root goal\n**Depends on**: Nothing (first phase)\n\nPlans:\n- [x] 01-01: Schema\n\n</details>\n`;
+    // Omits Depends on and the plan checklist — both fields should fall back to the root block.
+    const perMilestoneRoadmap = `### Phase 1: Bootstrap\n**Goal**: Per-milestone goal\n`;
+    const { project } = await assembleTree({
+      '.planning/ROADMAP.md': rootRoadmap,
+      '.planning/milestones/v1.0-ROADMAP.md': perMilestoneRoadmap,
+      '.planning/milestones/v1.0-phases/01-bootstrap/01-CONTEXT.md': '<domain>x</domain>',
+    });
+    const phase = project.phases.find((p) => p.archived && p.identity.milestoneVersion === 'v1.0');
+    expect(phase?.goal).toBe('Per-milestone goal'); // primary still wins where it supplies a value
+    expect(phase?.dependsOnRaw).toBe('Nothing (first phase)'); // fallback fills what primary omitted
+    // roadmapComplete is taken as a pair with whichever block supplied the plans array — here, root's.
+    expect(phase?.roadmapComplete).toBe(true);
+  });
+
+  it('produces a Phase for a phase number present only in the per-milestone file, with no matching directory or root entry', async () => {
+    const rootRoadmap = `# Roadmap: Demo\n\n<details>\n<summary>✅ v1.0 MVP (Phases 1) - SHIPPED</summary>\n\n### Phase 1: Bootstrap\n**Goal**: Root goal\n\nPlans:\n- [x] 01-01: Schema\n\n</details>\n`;
+    const perMilestoneRoadmap = `### Phase 1: Bootstrap\n**Goal**: Per-milestone goal\n\n### Phase 2: Extras\n**Goal**: Only in the snapshot\n`;
+    const { project } = await assembleTree({
+      '.planning/ROADMAP.md': rootRoadmap,
+      '.planning/milestones/v1.0-ROADMAP.md': perMilestoneRoadmap,
+      '.planning/milestones/v1.0-phases/01-bootstrap/01-CONTEXT.md': '<domain>x</domain>',
+    });
+    const phase2 = project.phases.find(
+      (p) => p.archived && p.identity.milestoneVersion === 'v1.0' && p.identity.number === '2',
+    );
+    expect(phase2).toBeDefined();
+    expect(phase2?.goal).toBe('Only in the snapshot');
+    expect(phase2?.diskStatus).toBe('no_directory');
+  });
+
+  it('keeps a directory-backed archived phase\'s plans and artifacts from disk while sourcing roadmap fields from the per-milestone file', async () => {
+    const perMilestoneRoadmap = `### Phase 1: Bootstrap\n**Goal**: Per-milestone goal\n**Requirements**: [BOOT-01]\n`;
+    const { project } = await assembleTree({
+      '.planning/milestones/v1.0-ROADMAP.md': perMilestoneRoadmap,
+      '.planning/milestones/v1.0-phases/01-bootstrap/01-01-PLAN.md': '---\nphase: 01\nplan: 01\n---\n\nbody\n',
+    });
+    const phase = project.phases.find((p) => p.archived && p.identity.milestoneVersion === 'v1.0');
+    expect(phase?.goal).toBe('Per-milestone goal');
+    expect(phase?.requirementIds).toEqual(['BOOT-01']);
+    expect(phase?.plans).toHaveLength(1);
+    expect(phase?.plans[0].id).toBe('01-01');
+    expect(phase?.dirPath).toContain('01-bootstrap');
+  });
+
+  it('assembles an archived milestone with only a root <details> group exactly as before when no per-milestone file exists', async () => {
+    const rootRoadmap = `# Roadmap: Demo\n\n<details>\n<summary>✅ v2.0 Legacy (Phases 1) - SHIPPED</summary>\n\n### Phase 1: Legacy\n**Goal**: Root-only goal\n\nPlans:\n- [x] 01-01: Schema\n\n</details>\n`;
+    const { project } = await assembleTree({
+      '.planning/ROADMAP.md': rootRoadmap,
+      '.planning/milestones/v2.0-phases/01-legacy/01-CONTEXT.md': '<domain>x</domain>',
+    });
+    const phase = project.phases.find((p) => p.archived && p.identity.milestoneVersion === 'v2.0');
+    expect(phase?.goal).toBe('Root-only goal');
+    expect(phase?.dependsOnRaw).toBeNull();
+    expect(phase?.requirementIds).toEqual([]);
+    expect(phase?.successCriteria).toEqual([]);
+  });
+
+  const rootWithV1Details = `# Roadmap: Demo\n\n<details>\n<summary>✅ v1.0 MVP (Phases 1) - SHIPPED</summary>\n\n### Phase 1: Bootstrap\n**Goal**: Root goal for degrade check\n\nPlans:\n- [x] 01-01: Schema\n\n</details>\n`;
+
+  it.each([
+    ['empty file', ''],
+    ['frontmatter-only', '---\nfoo: bar\n---\n'],
+    ['malformed YAML frontmatter', '---\nfoo: "unterminated\n---\n\nbody\n'],
+    ['no Phase N heading', '# Snapshot\n\nJust prose, no phase headings.\n'],
+  ])(
+    'degrades to the root-derived phase without throwing when the per-milestone file is %s',
+    async (_label, content) => {
+      const { project } = await assembleTree({
+        '.planning/ROADMAP.md': rootWithV1Details,
+        '.planning/milestones/v1.0-ROADMAP.md': content,
+        '.planning/milestones/v1.0-phases/01-bootstrap/01-CONTEXT.md': '<domain>x</domain>',
+      });
+      const phase = project.phases.find((p) => p.archived && p.identity.milestoneVersion === 'v1.0');
+      expect(phase?.goal).toBe('Root goal for degrade check');
+    },
+  );
+});
+
 describe('assembleDomainModel — empty project', () => {
   it('yields empty milestone, phase, and plan collections with no warning for a project with no ROADMAP.md and no phases/', async () => {
     const { project, warnings } = await assembleTree({

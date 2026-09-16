@@ -156,6 +156,37 @@ function buildPhaseFromGroup(group: PhaseGroupInput, roadmapBlock: RoadmapPhaseB
   };
 }
 
+/**
+ * Promote-with-field-level-fallback (0YP assumption-delta decision): `primary` (the per-milestone
+ * `vX.Y-ROADMAP.md` block for this phase number) wins per field when it supplies a value —
+ * non-null `goal`/`dependsOnRaw`, non-empty `name`/`requirementIds`/`successCriteria` — and
+ * `fallback` (the root `<details>` block) fills whatever `primary` leaves empty, remaining the
+ * sole source when no per-milestone block exists. `plans` and `roadmapComplete` are taken
+ * together, as a pair, from whichever block actually supplies a non-empty plan checklist,
+ * preferring `primary` — `roadmapComplete` is a derived summary of exactly that array and is
+ * never paired with a `plans` array it did not describe.
+ */
+function mergeRoadmapPhaseBlocks(
+  primary: RoadmapPhaseBlock | null,
+  fallback: RoadmapPhaseBlock | null,
+): RoadmapPhaseBlock | null {
+  if (!primary) return fallback;
+  if (!fallback) return primary;
+
+  const plansSource = primary.plans.length > 0 ? primary : fallback;
+
+  return {
+    number: primary.number,
+    name: primary.name || fallback.name,
+    goal: primary.goal ?? fallback.goal,
+    dependsOnRaw: primary.dependsOnRaw ?? fallback.dependsOnRaw,
+    requirementIds: primary.requirementIds.length > 0 ? primary.requirementIds : fallback.requirementIds,
+    successCriteria: primary.successCriteria.length > 0 ? primary.successCriteria : fallback.successCriteria,
+    plans: plansSource.plans,
+    roadmapComplete: plansSource.roadmapComplete,
+  };
+}
+
 /** Builds a directory-less Phase for a ROADMAP.md entry with no matching phases/ directory. */
 function buildPhaseFromRoadmapOnly(identity: PhaseIdentity, block: RoadmapPhaseBlock, archived: boolean): Phase {
   return {
@@ -213,6 +244,20 @@ export function assembleDomainModel(parsed: ParsedArtifact[], warnings: WarningC
   const liveRoadmapPhases = roadmapStructured?.phases ?? [];
   const archivedRoadmapGroups = roadmapStructured?.milestoneGroups ?? [];
 
+  // --- Per-milestone ROADMAP.md snapshots (e.g. milestones/v1.0-ROADMAP.md): a second,
+  // preferred-when-present phase-block source for archived phases only (0YP-01/02/03). Keyed by
+  // milestone version; a version is only recorded when its per-milestone file actually supplies a
+  // non-empty phases array, so an absent, empty, or malformed per-milestone file contributes
+  // nothing and every changed code path degrades to today's root-only behavior (0YP-04).
+  const perMilestoneRoadmapPhases = new Map<string, RoadmapPhaseBlock[]>();
+  for (const p of parsed) {
+    if (p.ref.location !== 'milestone-root' || p.ref.kind !== 'roadmap' || !p.ref.milestoneVersion) continue;
+    const candidatePhases = (p.structured as { phases?: unknown } | undefined)?.phases;
+    if (Array.isArray(candidatePhases) && candidatePhases.length > 0) {
+      perMilestoneRoadmapPhases.set(p.ref.milestoneVersion, candidatePhases as RoadmapPhaseBlock[]);
+    }
+  }
+
   // --- Group phase-scoped and archived-phase-scoped refs by their compound identity. ---
   const liveGroups = new Map<string, PhaseGroupInput>();
   const archivedGroups = new Map<string, PhaseGroupInput>();
@@ -265,20 +310,46 @@ export function assembleDomainModel(parsed: ParsedArtifact[], warnings: WarningC
   for (const g of archivedRoadmapGroups) {
     if (g.version) archivedVersions.add(g.version);
   }
+  // A per-milestone file can be the sole source of phase data for its version (e.g. an archive
+  // whose root <details> group is absent entirely) — additive only, never removes a version.
+  for (const version of perMilestoneRoadmapPhases.keys()) {
+    archivedVersions.add(version);
+  }
 
   for (const version of archivedVersions) {
     const roadmapGroup = archivedRoadmapGroups.find((g) => g.version === version) ?? null;
+    const perMilestoneBlocks = perMilestoneRoadmapPhases.get(version) ?? [];
+    const rootBlocks = roadmapGroup?.phases ?? [];
+
     const phases: Phase[] = [];
-    const matchedNumbers = new Set<string>();
+    // Numbers (in whichever source's raw spelling matched) already covered by a directory group.
+    const matchedNumbers: string[] = [];
 
     for (const group of archivedGroups.values()) {
       if (group.identity.milestoneVersion !== version) continue;
-      const block = roadmapGroup?.phases.find((b) => phaseNumbersEqual(b.number, group.identity.number)) ?? null;
-      if (block) matchedNumbers.add(block.number);
+      const primary = perMilestoneBlocks.find((b) => phaseNumbersEqual(b.number, group.identity.number)) ?? null;
+      const fallback = rootBlocks.find((b) => phaseNumbersEqual(b.number, group.identity.number)) ?? null;
+      const block = mergeRoadmapPhaseBlocks(primary, fallback);
+      if (block) matchedNumbers.push(group.identity.number);
       phases.push(buildPhaseFromGroup(group, block));
     }
-    for (const block of roadmapGroup?.phases ?? []) {
-      if (matchedNumbers.has(block.number)) continue;
+
+    // Union of both roadmap sources' phase numbers not already covered by a directory group above
+    // — a number present only in the per-milestone file still produces a Phase (0YP-02), and a
+    // root-only number is unaffected (today's behavior).
+    const roadmapOnlyBlocks: RoadmapPhaseBlock[] = [];
+    const seenRoadmapOnly: string[] = [];
+    for (const block of [...rootBlocks, ...perMilestoneBlocks]) {
+      if (matchedNumbers.some((n) => phaseNumbersEqual(n, block.number))) continue;
+      if (seenRoadmapOnly.some((n) => phaseNumbersEqual(n, block.number))) continue;
+      seenRoadmapOnly.push(block.number);
+      roadmapOnlyBlocks.push(block);
+    }
+    for (const b of roadmapOnlyBlocks) {
+      const primary = perMilestoneBlocks.find((x) => phaseNumbersEqual(x.number, b.number)) ?? null;
+      const fallback = rootBlocks.find((x) => phaseNumbersEqual(x.number, b.number)) ?? null;
+      // At least one of primary/fallback is non-null: b was drawn from one of those two arrays.
+      const block = mergeRoadmapPhaseBlocks(primary, fallback)!;
       const identity: PhaseIdentity = { milestoneVersion: version, number: block.number, projectCode: null, slug: '' };
       phases.push(buildPhaseFromRoadmapOnly(identity, block, true));
     }
