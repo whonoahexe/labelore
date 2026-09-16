@@ -1787,13 +1787,17 @@ summary.tree-node-row:focus-visible {
 }
 
 .dashboard-loading,
-.roadmap-loading {
+.roadmap-loading,
+.artifact-loading,
+.plan-pair-loading {
   display: grid;
   gap: var(--space-4);
 }
 
 .dashboard-loading span,
-.roadmap-loading {
+.roadmap-loading,
+.artifact-loading span,
+.plan-pair-loading span {
   min-height: 5rem;
   background: var(--muted);
   animation: loading-pulse 1.2s ease-in-out infinite alternate;
@@ -1801,6 +1805,14 @@ summary.tree-node-row:focus-visible {
 
 .roadmap-loading {
   min-height: 22rem;
+}
+
+.artifact-loading span:last-child {
+  min-height: 22rem;
+}
+
+.plan-pair-loading span:last-child {
+  min-height: 12rem;
 }
 
 .theme-toggle {

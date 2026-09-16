@@ -374,8 +374,14 @@ export function ArtifactPage(): React.JSX.Element {
   if (query.isPending) {
     return (
       <main className="page-stack" aria-busy="true">
-        <p className="eyebrow">Artifact reading</p>
-        <h1>Loading the document…</h1>
+        <span className="sr-only" role="status" aria-live="polite">
+          Loading
+        </span>
+        <div className="artifact-loading" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </div>
       </main>
     );
   }

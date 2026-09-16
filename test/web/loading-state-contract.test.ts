@@ -28,23 +28,26 @@ function pendingSlice(src: string): string {
   return errorIndex === -1 ? src.slice(start) : src.slice(start, errorIndex);
 }
 
-/** Extracts the body of a rule whose selector spans one or more consecutive lines (mirrors
- * visual-contract.test.ts's single-line `ruleBlocks`, extended for compound multi-line
- * selectors like `.dashboard-loading,\n.roadmap-loading {`). */
-function ruleBlock(css: string, selectorLines: string[]): string | undefined {
-  const lines = css.split('\n');
-  for (let index = 0; index <= lines.length - selectorLines.length; index += 1) {
-    const window = lines.slice(index, index + selectorLines.length).map((line) => line.trim());
-    if (window.join('\n') !== selectorLines.join('\n')) continue;
-    const body: string[] = [];
-    let cursor = index + selectorLines.length;
-    while (cursor < lines.length && lines[cursor].trim() !== '}') {
-      body.push(lines[cursor]);
-      cursor += 1;
+/** Extracts the body of every top-level rule whose comma-separated selector list (which may span
+ * multiple lines, and which grows across tasks 1-3 as more classes join the shared skeleton rule
+ * groups) contains every selector in `selectors` as an exact member — mirrors
+ * visual-contract.test.ts's `ruleBlocks`, generalised so a compound selector growing from
+ * `.dashboard-loading, .roadmap-loading {` to `.dashboard-loading, .roadmap-loading,
+ * .artifact-loading, .plan-pair-loading {` still matches without pinning line counts. */
+function ruleBlocksContaining(css: string, selectors: string[]): string[] {
+  const blocks: string[] = [];
+  const ruleRe = /([^{}]+)\{([^{}]*)\}/g;
+  let match: RegExpExecArray | null;
+  while ((match = ruleRe.exec(css))) {
+    const selectorList = match[1]
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (selectors.every((needed) => selectorList.includes(needed))) {
+      blocks.push(match[2]);
     }
-    return body.join('\n');
   }
-  return undefined;
+  return blocks;
 }
 
 // Headline/eyebrow literals removed by this plan. Grown across tasks 1-3; the negative gate below
@@ -57,6 +60,8 @@ const REMOVED_LOADING_LITERALS = [
   'Reading the roadmap',
   'Reading the traceability view',
   'Searching…',
+  'Loading the document',
+  'Loading plan review',
 ];
 
 const NEGATIVE_GATE_FILES = [
@@ -74,10 +79,12 @@ const PENDING_PAGES: Array<{ path: string; skeletonClass: string }> = [
   { path: 'src/web/pages/roadmap-page.tsx', skeletonClass: 'roadmap-loading' },
   { path: 'src/web/pages/traceability-page.tsx', skeletonClass: 'roadmap-loading' },
   { path: 'src/web/pages/search-page.tsx', skeletonClass: 'roadmap-loading' },
+  { path: 'src/web/pages/artifact-page.tsx', skeletonClass: 'artifact-loading' },
+  { path: 'src/web/pages/plan-pair-page.tsx', skeletonClass: 'plan-pair-loading' },
 ];
 
 describe('loading-state contract (quick-260916-o2o)', () => {
-  it('keeps skeleton geometry and drops the eyebrow/headline copy from every already-skeletoned pending branch', async () => {
+  it('keeps skeleton geometry and drops the eyebrow/headline copy from every pending branch', async () => {
     for (const page of PENDING_PAGES) {
       const slice = pendingSlice(await source(page.path));
       expect(slice, `${page.path} pending slice`).toContain(page.skeletonClass);
@@ -86,7 +93,7 @@ describe('loading-state contract (quick-260916-o2o)', () => {
     }
   });
 
-  it('keeps a polite screen-reader status and aria-busy on every already-skeletoned pending branch', async () => {
+  it('keeps a polite screen-reader status and aria-busy on every pending branch', async () => {
     for (const page of PENDING_PAGES) {
       const slice = pendingSlice(await source(page.path));
       expect(slice, `${page.path} pending slice`).toContain('aria-busy="true"');
@@ -107,9 +114,36 @@ describe('loading-state contract (quick-260916-o2o)', () => {
 
   it('drops the skeleton top offset and the now-orphaned --space-12 token together', async () => {
     const css = await source('src/web/styles/globals.css');
-    const block = ruleBlock(css, ['.dashboard-loading,', '.roadmap-loading {']);
-    expect(block, '.dashboard-loading, .roadmap-loading rule block').toBeDefined();
-    expect(block).not.toMatch(/margin-top/);
+    const blocks = ruleBlocksContaining(css, ['.dashboard-loading', '.roadmap-loading']);
+    expect(blocks.length, '.dashboard-loading, .roadmap-loading rule block').toBeGreaterThanOrEqual(1);
+    for (const block of blocks) expect(block).not.toMatch(/margin-top/);
     expect(css).not.toContain('--space-12');
+  });
+
+  it('gives artifact and plan-pair pages skeletons built from the shared skeleton rule groups', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const gridBlocks = ruleBlocksContaining(css, [
+      '.dashboard-loading',
+      '.roadmap-loading',
+      '.artifact-loading',
+      '.plan-pair-loading',
+    ]);
+    expect(gridBlocks.length, 'shared display:grid skeleton group').toBeGreaterThanOrEqual(1);
+    for (const block of gridBlocks) {
+      expect(block).toContain('display: grid');
+      expect(block).toContain('gap: var(--space-4)');
+    }
+
+    const pulseBlocks = ruleBlocksContaining(css, [
+      '.dashboard-loading span',
+      '.roadmap-loading',
+      '.artifact-loading span',
+      '.plan-pair-loading span',
+    ]);
+    expect(pulseBlocks.length, 'shared pulsing skeleton group').toBeGreaterThanOrEqual(1);
+    for (const block of pulseBlocks) {
+      expect(block).toContain('background: var(--muted)');
+      expect(block).toContain('animation: loading-pulse');
+    }
   });
 });

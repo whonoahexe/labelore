@@ -98,7 +98,15 @@ export function PlanPairPage(): React.JSX.Element {
   if (query.isPending)
     return (
       <main className="page-stack" aria-busy="true">
-        <h1>Loading plan review…</h1>
+        <span className="sr-only" role="status" aria-live="polite">
+          Loading
+        </span>
+        <div className="plan-pair-loading" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+          <span />
+        </div>
       </main>
     );
   if (query.isError)
