@@ -93,14 +93,21 @@ function parsePhaseBlockFields(raw: RawPhaseBlock): RoadmapPhaseBlock {
   const successCriteria = [...raw.body.matchAll(/^\s*\d+\.\s*(.+)$/gm)].map((m) => m[1].trim());
   // GSD roadmaps have used both the early `01-01: Description` spelling and the
   // current `01-01-PLAN.md — Description` spelling. Treat the filename suffix as
-  // presentation, not identity, and accept either colon or dash separators.
+  // presentation, not identity, and accept either colon or dash separators. The
+  // separator+description is one optional group using [ \t]* (never \s*) around
+  // it, so a bare `- [x] 04-01-PLAN.md` line (no description at all) can't have
+  // its match backtrack across the newline and steal the next list item's line
+  // as its own "description" — \s* matches \n, and a bare hyphen is itself a
+  // valid separator, so without this guard a description-less line's optional
+  // filename suffix ungreedy-backtracks into either its own trailing "-PLAN.md"
+  // or, worse, the following line's leading "- ".
   const plans: RoadmapPlanEntry[] = [
     ...raw.body.matchAll(
-      /^\s*-\s*\[([ xX])\]\s*(?:\*\*)?(\d+(?:\.\d+)?-\d+)(?:-PLAN)?(?:\.md)?(?:\*\*)?\s*(?::|[—–-])\s*(.*)$/gm,
+      /^\s*-\s*\[([ xX])\]\s*(?:\*\*)?(\d+(?:\.\d+)?-\d+)(?:-PLAN)?(?:\.md)?(?:\*\*)?(?:[ \t]*(?::|[—–-])[ \t]*(.*))?$/gm,
     ),
   ].map((match) => ({
     id: match[2],
-    description: match[3].trim(),
+    description: (match[3] ?? '').trim(),
     checked: match[1].toLowerCase() === 'x',
   }));
 
