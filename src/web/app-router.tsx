@@ -3,23 +3,39 @@ import { useQuery } from '@tanstack/react-query';
 import { createBrowserRouter, isRouteErrorResponse, Link, useRouteError } from 'react-router';
 import { presentationRoutePatterns } from '../presentation/routes.ts';
 import { AppShell, fetchPresentation } from './components/app-shell.tsx';
+import { trackRouteChunk } from './components/route-chunk-store.ts';
 import { InvalidProjectScreen } from './pages/invalid-project-screen.tsx';
 
-const DashboardPage = lazy(() =>
-  import('./pages/dashboard-page.tsx').then((m) => ({ default: m.DashboardPage })),
+// Every routed page is lazy()-loaded, and every factory goes through `trackRouteChunk` so the
+// shell's top bar can show during navigations as well as on the initial load — a bare Suspense
+// fallback cannot, because react-router navigates inside a transition (see route-progress.tsx).
+const DashboardPage = lazy(
+  trackRouteChunk(() =>
+    import('./pages/dashboard-page.tsx').then((m) => ({ default: m.DashboardPage })),
+  ),
 );
-const RoadmapPage = lazy(() =>
-  import('./pages/roadmap-page.tsx').then((m) => ({ default: m.RoadmapPage })),
+const RoadmapPage = lazy(
+  trackRouteChunk(() =>
+    import('./pages/roadmap-page.tsx').then((m) => ({ default: m.RoadmapPage })),
+  ),
 );
-const SearchPage = lazy(() => import('./pages/search-page.tsx').then((m) => ({ default: m.SearchPage })));
-const TraceabilityPage = lazy(() =>
-  import('./pages/traceability-page.tsx').then((m) => ({ default: m.TraceabilityPage })),
+const SearchPage = lazy(
+  trackRouteChunk(() => import('./pages/search-page.tsx').then((m) => ({ default: m.SearchPage }))),
 );
-const ArtifactPage = lazy(() =>
-  import('./pages/artifact-page.tsx').then((m) => ({ default: m.ArtifactPage })),
+const TraceabilityPage = lazy(
+  trackRouteChunk(() =>
+    import('./pages/traceability-page.tsx').then((m) => ({ default: m.TraceabilityPage })),
+  ),
 );
-const PlanPairPage = lazy(() =>
-  import('./pages/plan-pair-page.tsx').then((m) => ({ default: m.PlanPairPage })),
+const ArtifactPage = lazy(
+  trackRouteChunk(() =>
+    import('./pages/artifact-page.tsx').then((m) => ({ default: m.ArtifactPage })),
+  ),
+);
+const PlanPairPage = lazy(
+  trackRouteChunk(() =>
+    import('./pages/plan-pair-page.tsx').then((m) => ({ default: m.PlanPairPage })),
+  ),
 );
 
 function RouteError(): React.JSX.Element {

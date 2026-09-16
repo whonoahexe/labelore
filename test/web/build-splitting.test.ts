@@ -22,8 +22,13 @@ describe('route-level code splitting (entry chunk fix)', () => {
       'plan-pair-page.tsx',
     ];
     for (const page of lazyPages) {
-      expect(router, `expected a lazy() import of ${page}`).toMatch(
-        new RegExp(`lazy\\(\\s*\\(\\)\\s*=>\\s*import\\(['"]\\./pages/${page.replace('.', '\\.')}['"]\\)`),
+      // debug/loading-state-regression: each factory is now wrapped in `trackRouteChunk(...)` so
+      // the shell's top bar can show during navigations, hence the extra hop between `lazy(` and
+      // the `() => import(...)` this used to match directly.
+      expect(router, `expected a tracked lazy() import of ${page}`).toMatch(
+        new RegExp(
+          `lazy\\(\\s*trackRouteChunk\\(\\s*\\(\\)\\s*=>\\s*import\\(['"]\\./pages/${page.replace('.', '\\.')}['"]\\)`,
+        ),
       );
     }
     // InvalidProjectScreen deliberately stays eager: ProjectGate renders it directly (not through
@@ -35,8 +40,14 @@ describe('route-level code splitting (entry chunk fix)', () => {
   it('wraps the routed Outlet in a Suspense boundary with a real fallback element', async () => {
     const shell = await source('src/web/components/app-shell.tsx');
     expect(shell).toMatch(/import \{[^}]*\bSuspense\b[^}]*\} from 'react';/);
-    expect(shell).toMatch(/<Suspense fallback=\{<RouteProgress \/>\}>\s*<Outlet \/>\s*<\/Suspense>/);
-    expect(shell).toContain("import { RouteProgress } from './route-progress.tsx';");
+    // debug/loading-state-regression: the fallback is now a bare layout placeholder. The visible
+    // loading feedback moved OUT of the boundary to <RouteProgress />, because React never renders
+    // a fallback for an already-mounted boundary during react-router's transition-driven
+    // navigations — see loading-state-contract.test.ts for the full contract.
+    expect(shell).toMatch(/<Suspense fallback=\{<RouteFallback \/>\}>\s*<Outlet \/>\s*<\/Suspense>/);
+    expect(shell).toContain(
+      "import { RouteFallback, RouteProgress } from './route-progress.tsx';",
+    );
     // quick-260916-o2o (O2O-03): the debounced top bar loader replaced the former text fallback.
     expect(shell).not.toContain('PageLoadingFallback');
   });
