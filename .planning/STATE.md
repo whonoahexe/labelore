@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-10)
 Phase: Milestone v1.0 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-09-16 - Completed quick task 260916-o2o: remove all the loading state text, keep the skeletons and add a top bar load
+Last activity: 2026-09-16 - Completed quick task 260916-qqk: scrollbars take no layout space, sit at lower opacity, and appear only on hover/focus
 
 ## Performance Metrics
 
@@ -103,6 +103,7 @@ None.
 | 260912-oae | Revamp progress panel to show phase and checkpoints clearly | 2026-09-12 | 4825c8f | [260912-oae-revamp-progress-panel-to-show-phase-and-](./quick/260912-oae-revamp-progress-panel-to-show-phase-and-/) |
 | 8 | Refine progress panel spacing, grid alignment, and dark/light contrast | 2026-09-12 | 59dc045 | — |
 | 260916-o2o | Remove all the loading state text, keep the skeletons and add a top bar loader | 2026-09-16 | 41a4c4e | [260916-o2o-remove-all-the-loading-state-text-keep-t](./quick/260916-o2o-remove-all-the-loading-state-text-keep-t/) |
+| 260916-qqk | Scrollbars take no layout space, drop to lower opacity, and appear only on hover/focus | 2026-09-16 | c5cc80f | [260916-qqk-the-scrollbars-throughout-the-site-shoul](./quick/260916-qqk-the-scrollbars-throughout-the-site-shoul/) |
 
 
 ## Deferred Items
