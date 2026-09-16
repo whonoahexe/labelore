@@ -408,16 +408,18 @@ describe('muted surface contrast and dead selectors (F2, F5)', () => {
   });
 });
 
-// quick-260916-qqk: zero-space, hover-revealed scrollbar contract. Replaces the two tests above
-// that pinned .artifact-document pre's now-removed per-site scrollbar rules — one consolidated
-// block now covers every scroller in the app. These assertions are region-scoped source checks;
-// the perceptual claims (no painted bar/gutter at rest, faint-but-grabbable on hover, both
-// themes) are handed to the plan's <human-check> gate, harvested at end-of-phase.
-const SCROLLBAR_REVEAL_SELECTOR =
-  ':is(.tree-navigator, .document-outline, .search-dialog-results, .coverage-table-boundary, .overflow-x-auto, .table-scroll, .code-scroll, pre, table, .mermaid, .mermaid-fallback):is(:hover, :focus-within) {';
+// quick-260916-qqk (revised): scrollbar-thumb-hover-revealed contract, not panel-hover. The
+// bar is a constant small footprint for the 11 bounded containers (not zero, and not gated by
+// hovering anywhere in the panel) — invisible in WebKit until the cursor is over the thumb's
+// own rendered box; a small constant dim bar in Firefox, which has no per-thumb hover pseudo
+// at all. These assertions are region-scoped source checks; the perceptual claims (thumb
+// invisible until hovered, faint-but-grabbable on hover, both themes) are handed to the plan's
+// <human-check> gate, harvested at end-of-phase.
+const SCROLLBAR_CONTAINERS =
+  ':is(.tree-navigator, .document-outline, .search-dialog-results, .coverage-table-boundary, .overflow-x-auto, .table-scroll, .code-scroll, pre, table, .mermaid, .mermaid-fallback)';
 
-describe('zero-space, hover-revealed scrollbars (QQK-01, QQK-02, QQK-03)', () => {
-  it('collapses every scroll container to zero space at rest — Firefox', async () => {
+describe('scrollbar-thumb-hover-revealed scrollbars (QQK-01, QQK-02, QQK-03)', () => {
+  it('hides the scrollbar entirely at rest for every untouched container — Firefox', async () => {
     const css = await source('src/web/styles/globals.css');
     const [block] = ruleBlocks(css, '* {');
     expect(block).toBeDefined();
@@ -425,20 +427,42 @@ describe('zero-space, hover-revealed scrollbars (QQK-01, QQK-02, QQK-03)', () =>
     expect(block).toContain('scrollbar-color: var(--scrollbar-thumb) transparent;');
   });
 
-  it('collapses every scroll container to zero space at rest — WebKit', async () => {
+  it('hides the scrollbar entirely at rest for every untouched container — WebKit', async () => {
     const css = await source('src/web/styles/globals.css');
     const [block] = ruleBlocks(css, '::-webkit-scrollbar {');
     expect(block).toBeDefined();
-    expect(block).toContain('width: var(--scrollbar-size, 0px);');
-    expect(block).toContain('height: var(--scrollbar-size, 0px);');
+    expect(block).toContain('width: 0;');
+    expect(block).toContain('height: 0;');
   });
 
-  it('reveals a thin 6px bar only on hover or focus of a bounded container', async () => {
+  it('gives the 11 bounded containers a small constant Firefox bar (no per-thumb hover pseudo exists there)', async () => {
     const css = await source('src/web/styles/globals.css');
-    const [block] = ruleBlocks(css, SCROLLBAR_REVEAL_SELECTOR);
+    const [block] = ruleBlocks(css, `${SCROLLBAR_CONTAINERS} {`);
     expect(block).toBeDefined();
-    expect(block).toContain('--scrollbar-size: 6px;');
     expect(block).toContain('scrollbar-width: thin;');
+    expect(block).toContain('scrollbar-color: var(--scrollbar-thumb) transparent;');
+  });
+
+  it('gives the 11 bounded containers a small constant 4px WebKit scrollbar track', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [block] = ruleBlocks(css, `${SCROLLBAR_CONTAINERS}::-webkit-scrollbar {`);
+    expect(block).toBeDefined();
+    expect(block).toContain('width: 4px;');
+    expect(block).toContain('height: 4px;');
+  });
+
+  it('keeps the WebKit thumb invisible until the cursor is over the thumb itself', async () => {
+    // WebKit does not let one pseudo-element's :hover state reach into a sibling pseudo-element
+    // (::-webkit-scrollbar:hover cannot style ::-webkit-scrollbar-thumb, and a custom property
+    // bridging the two was tried and did not propagate reliably) — so the thumb's own :hover is
+    // the only dependable trigger, which means the reveal is scoped to the thumb's rendered box,
+    // not the container that hosts it.
+    const css = await source('src/web/styles/globals.css');
+    const [thumb] = ruleBlocks(css, '::-webkit-scrollbar-thumb {');
+    expect(thumb).toMatch(/background:\s*transparent;/);
+
+    const [thumbHover] = ruleBlocks(css, '::-webkit-scrollbar-thumb:hover {');
+    expect(thumbHover).toMatch(/background:\s*var\(--scrollbar-thumb-strong\);/);
   });
 
   it('carries thumb colour through two named tokens, never re-spelled at a usage site', async () => {
@@ -450,12 +474,6 @@ describe('zero-space, hover-revealed scrollbars (QQK-01, QQK-02, QQK-03)', () =>
     expect(root).toContain(
       '--scrollbar-thumb-strong: color-mix(in oklch, var(--muted-foreground) 55%, transparent);',
     );
-
-    const [thumb] = ruleBlocks(css, '::-webkit-scrollbar-thumb {');
-    expect(thumb).toMatch(/background:\s*var\(--scrollbar-thumb\);/);
-
-    const [thumbHover] = ruleBlocks(css, '::-webkit-scrollbar-thumb:hover {');
-    expect(thumbHover).toMatch(/background:\s*var\(--scrollbar-thumb-strong\);/);
 
     // Each recipe appears exactly once — its :root definition — never re-spelled at a usage site.
     const thumbRecipe = 'color-mix(in oklch, var(--muted-foreground) 30%, transparent)';
