@@ -1,3 +1,4 @@
+import { basename } from 'node:path';
 import type {
   Artifact,
   ArtifactLocation,
@@ -7,6 +8,7 @@ import type {
   Requirement,
 } from '../domain/model.ts';
 import type { DiscoveryExclusion, LoadStatus, ProjectSnapshot } from '../planning-repo/types.ts';
+import { parseMilestoneFileName } from '../planning-repo/naming.ts';
 import {
   artifactTokenOf,
   buildArtifactUrl,
@@ -15,6 +17,11 @@ import {
   phaseKeyOf,
 } from '../presentation/routes.ts';
 import { projectPlanCheckpoints } from '../rendering/plan-segments.ts';
+
+/** The canonical root roadmap path — looked up by identity, never by first-artifact-with-kind
+ * 'roadmap', since a per-milestone `vX.Y-ROADMAP.md` snapshot now also carries `kind: 'roadmap'`
+ * and structured phases (0YP). */
+const ROOT_ROADMAP_PATH = '.planning/ROADMAP.md';
 
 export interface ProjectBlockerDto {
   key: string;
@@ -279,28 +286,20 @@ function samePhaseNumber(left: string, right: string): boolean {
   return Number.isFinite(leftNumber) && Number.isFinite(rightNumber) && leftNumber === rightNumber;
 }
 
-function roadmapPhaseRecord(
-  project: Project,
-  identity: PhaseIdentity,
-  archived: boolean,
-): { sourcePath: string; phase: RoadmapPhaseRecord | null } {
-  const roadmap = Object.values(project.artifacts).find((artifact) => artifact.kind === 'roadmap');
-  if (!roadmap) return { sourcePath: '.planning/ROADMAP.md', phase: null };
-  let candidates: unknown = roadmap.structured.phases;
-  if (archived && identity.milestoneVersion !== null) {
-    const groups = roadmap.structured.milestoneGroups;
-    if (Array.isArray(groups)) {
-      const group = groups
-        .map(asRecord)
-        .find((record) => record && asString(record.version) === identity.milestoneVersion);
-      candidates = group?.phases;
-    }
-  }
-  if (!Array.isArray(candidates)) return { sourcePath: roadmap.path, phase: null };
+interface RoadmapSource {
+  sourcePath: string;
+  candidates: unknown;
+}
+
+/** Scans one candidate phase-block array for `identity.number`, mapping its plan checklist into
+ * `RoadmapPlanRecord[]` with the existing defensive shape checks intact — extracted so it can run
+ * over more than one source (per-milestone file, then root `<details>` group) without duplication. */
+function findPhaseRecord(candidates: unknown, number: string): RoadmapPhaseRecord | null {
+  if (!Array.isArray(candidates)) return null;
   for (const candidate of candidates) {
     const record = asRecord(candidate);
-    const number = record ? asString(record.number) : null;
-    if (!record || !number || !samePhaseNumber(number, identity.number)) continue;
+    const candidateNumber = record ? asString(record.number) : null;
+    if (!record || !candidateNumber || !samePhaseNumber(candidateNumber, number)) continue;
     const plans = Array.isArray(record.plans)
       ? record.plans.flatMap((value): RoadmapPlanRecord[] => {
           const plan = asRecord(value);
@@ -309,9 +308,83 @@ function roadmapPhaseRecord(
           return [{ id, description: asString(plan.description) ?? '', checked: plan.checked }];
         })
       : [];
-    return { sourcePath: roadmap.path, phase: { number, plans } };
+    return { number: candidateNumber, plans };
   }
-  return { sourcePath: roadmap.path, phase: null };
+  return null;
+}
+
+/** Locates the per-milestone `vX.Y-ROADMAP.md` snapshot artifact for `version`, if one exists —
+ * resolved by `parseMilestoneFileName` on the basename, compared case-insensitively, per naming.ts
+ * (this codebase's single grammar module for milestone filenames). */
+function perMilestoneRoadmapArtifact(project: Project, version: string): Artifact | null {
+  return (
+    Object.values(project.artifacts).find((artifact) => {
+      if (artifact.kind !== 'roadmap' || artifact.location !== 'milestone-root') return false;
+      const parsed = parseMilestoneFileName(basename(artifact.path));
+      return parsed.matched && parsed.version.toLowerCase() === version.toLowerCase();
+    }) ?? null
+  );
+}
+
+/**
+ * Resolves the roadmap phase-block ordered candidate sources for `identity`. A live phase (or an
+ * archived phase with no milestone version) has exactly one source: the root artifact's top-level
+ * `structured.phases`. An archived phase with a milestone version lists the per-milestone
+ * artifact's `structured.phases` first, then the root artifact's matching `<details>` group
+ * phases — a missing per-milestone artifact simply yields a one-entry list, so a project with no
+ * per-milestone files behaves exactly as it does today.
+ */
+function roadmapSources(project: Project, identity: PhaseIdentity, archived: boolean): RoadmapSource[] {
+  const rootArtifact = project.artifacts[ROOT_ROADMAP_PATH] ?? null;
+  const rootSourcePath = rootArtifact?.path ?? ROOT_ROADMAP_PATH;
+
+  if (!archived || identity.milestoneVersion === null) {
+    return [{ sourcePath: rootSourcePath, candidates: rootArtifact?.structured.phases }];
+  }
+
+  const sources: RoadmapSource[] = [];
+  const perMilestoneArtifact = perMilestoneRoadmapArtifact(project, identity.milestoneVersion);
+  if (perMilestoneArtifact) {
+    sources.push({ sourcePath: perMilestoneArtifact.path, candidates: perMilestoneArtifact.structured.phases });
+  }
+
+  let rootCandidates: unknown;
+  if (rootArtifact) {
+    const groups = rootArtifact.structured.milestoneGroups;
+    if (Array.isArray(groups)) {
+      const group = groups
+        .map(asRecord)
+        .find((record) => record && asString(record.version) === identity.milestoneVersion);
+      rootCandidates = group?.phases;
+    }
+  }
+  sources.push({ sourcePath: rootSourcePath, candidates: rootCandidates });
+  return sources;
+}
+
+/**
+ * Chooses among the ordered candidate sources: the first whose matched block has a non-empty
+ * `plans` array wins outright (this is what fixes the compacted-root-checklist case without
+ * letting a per-milestone file that lists no plans blank out plan rows the root file still
+ * supplies). If no source has plan entries, the first source that matched the phase number at all
+ * is used; if none matched, `phase` is null and `sourcePath` names the first candidate source.
+ */
+function roadmapPhaseRecord(
+  project: Project,
+  identity: PhaseIdentity,
+  archived: boolean,
+): { sourcePath: string; phase: RoadmapPhaseRecord | null } {
+  const sources = roadmapSources(project, identity, archived);
+
+  let firstMatch: { sourcePath: string; phase: RoadmapPhaseRecord } | null = null;
+  for (const source of sources) {
+    const phase = findPhaseRecord(source.candidates, identity.number);
+    if (!phase) continue;
+    if (!firstMatch) firstMatch = { sourcePath: source.sourcePath, phase };
+    if (phase.plans.length > 0) return { sourcePath: source.sourcePath, phase };
+  }
+  if (firstMatch) return firstMatch;
+  return { sourcePath: sources[0]?.sourcePath ?? ROOT_ROADMAP_PATH, phase: null };
 }
 
 function allArtifacts(project: Project): Artifact[] {

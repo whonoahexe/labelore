@@ -222,6 +222,76 @@ coverage_results:
     });
   });
 
+  it('sources archived plan descriptions and formalPlanProgress from the per-milestone file when the root checklist line is compacted and unparseable (0YP-03)', async () => {
+    const rootRoadmap = `# Roadmap\n\n<details>\n<summary>✅ v1.0 MVP (Phases 1) - SHIPPED</summary>\n\n### Phase 1: Bootstrap\n**Goal**: Ship it\n\nPlans:\n- [x] v1.0 Phase 1: Bootstrap (4/4 plans) — completed 2025-11-01\n\n</details>\n`;
+    const perMilestoneRoadmap = `### Phase 1: Bootstrap\n**Goal**: Ship it\n\nPlans:\n- [x] 01-01-PLAN.md — Bootstrap scaffolding\n`;
+    const presentation = await presentationOf({
+      '.planning/ROADMAP.md': rootRoadmap,
+      '.planning/milestones/v1.0-ROADMAP.md': perMilestoneRoadmap,
+      '.planning/milestones/v1.0-phases/01-bootstrap/01-01-PLAN.md': plan(''),
+    });
+    const archived = presentation.milestones.find((m) => m.archived)?.phases[0];
+    expect(archived?.plans[0].description).toBe('Bootstrap scaffolding');
+    expect(archived?.formalPlanProgress).toEqual({
+      completed: 1,
+      total: 1,
+      sourcePath: '.planning/milestones/v1.0-ROADMAP.md',
+    });
+  });
+
+  it('falls back to the root file when only it supplies plan entries and the per-milestone file has none (0YP-03)', async () => {
+    const rootRoadmap = `# Roadmap\n\n<details>\n<summary>✅ v1.0 MVP (Phases 1) - SHIPPED</summary>\n\n### Phase 1: Bootstrap\n**Goal**: Ship it\n\nPlans:\n- [x] 01-01: Schema\n\n</details>\n`;
+    const perMilestoneRoadmap = `### Phase 1: Bootstrap\n**Goal**: Ship it\n`;
+    const presentation = await presentationOf({
+      '.planning/ROADMAP.md': rootRoadmap,
+      '.planning/milestones/v1.0-ROADMAP.md': perMilestoneRoadmap,
+      '.planning/milestones/v1.0-phases/01-bootstrap/01-01-PLAN.md': plan(''),
+    });
+    const archived = presentation.milestones.find((m) => m.archived)?.phases[0];
+    expect(archived?.plans[0].description).toBe('Schema');
+    expect(archived?.formalPlanProgress).toEqual({
+      completed: 1,
+      total: 1,
+      sourcePath: '.planning/ROADMAP.md',
+    });
+  });
+
+  it('leaves descriptions and formalPlanProgress null when neither source supplies plan entries (0YP-03)', async () => {
+    const rootRoadmap = `# Roadmap\n\n<details>\n<summary>✅ v1.0 MVP (Phases 1) - SHIPPED</summary>\n\n### Phase 1: Bootstrap\n**Goal**: Ship it\n\n</details>\n`;
+    const perMilestoneRoadmap = `### Phase 1: Bootstrap\n**Goal**: Ship it\n`;
+    const presentation = await presentationOf({
+      '.planning/ROADMAP.md': rootRoadmap,
+      '.planning/milestones/v1.0-ROADMAP.md': perMilestoneRoadmap,
+      '.planning/milestones/v1.0-phases/01-bootstrap/01-01-PLAN.md': plan(''),
+    });
+    const archived = presentation.milestones.find((m) => m.archived)?.phases[0];
+    expect(archived?.plans[0].description).toBeNull();
+    expect(archived?.formalPlanProgress).toBeNull();
+  });
+
+  it('resolves a live phase only against the root file, even when a per-milestone file exists for another version sharing the phase number (0YP-03)', async () => {
+    const rootRoadmap = `# Roadmap\n\n### Phase 1: Current\n**Goal**: Ship it\n\nPlans:\n- [x] 01-01: Live description\n`;
+    const perMilestoneRoadmap = `### Phase 1: Bootstrap\n**Goal**: Old goal\n\nPlans:\n- [x] 01-01-PLAN.md — Should never surface on the live phase\n`;
+    const presentation = await presentationOf({
+      '.planning/STATE.md': state('### Blockers\n\nNone'),
+      '.planning/ROADMAP.md': rootRoadmap,
+      '.planning/milestones/v1.0-ROADMAP.md': perMilestoneRoadmap,
+      '.planning/phases/01-current/01-01-PLAN.md': plan(''),
+    });
+    const live = presentation.milestones.find((m) => !m.archived)?.phases[0];
+    expect(live?.plans[0].description).toBe('Live description');
+    expect(live?.formalPlanProgress?.sourcePath).toBe('.planning/ROADMAP.md');
+  });
+
+  it('presents without throwing when the root .planning/ROADMAP.md is absent entirely (0YP-03)', async () => {
+    const presentation = await presentationOf({
+      '.planning/milestones/v1.0-phases/01-bootstrap/01-01-PLAN.md': plan(''),
+    });
+    const archived = presentation.milestones.find((m) => m.archived)?.phases[0];
+    expect(archived?.formalPlanProgress).toBeNull();
+    expect(archived?.plans[0].description).toBeNull();
+  });
+
   it('is cycle-free, retains readAt, and serializes the dense graph without cycle markers', async () => {
     const root = resolve('fixtures/dense');
     const repository = new PlanningRepository(new LocalFsPlanningFilesystem(root), root);
