@@ -32,10 +32,12 @@ next_action: NONE — investigation closed. The user verified the fix against th
   127.0.0.1:4399 and confirmed the top bar now appears on navigation ("confirmed fixed, commit it").
   The RC2/RC3 code fix is committed, this session is archived, and the reusable lessons are recorded in
   `.planning/debug/knowledge-base.md`. One item is deliberately carried OUT of this session rather than
-  left open in it: RC1 is a deployment misconfiguration, not a code defect — the live tunnel origin on
-  :4173 (PID 225631, NODE_ENV unset) was left running untouched at the user's explicit instruction and
-  is being remediated separately. The code-side guard for RC1 (the serve-mode startup banner) shipped
-  with this fix.
+  left open in it: RC1 is a deployment misconfiguration, not a code defect — the dev-mode origin
+  (PID 225631) was left running untouched at the user's explicit instruction and was remediated by the
+  user separately. Observed read-only at close: :4173 is now a different process (PID 726605, started
+  18:50) with NODE_ENV=production, and `curl` of its root returns `/assets/index-CNBiQoxH.js` with no
+  `@vite/client` — i.e. the tunnel origin is serving the prebuilt bundle, so RC1 is resolved in fact as
+  well as in code. The code-side guard for RC1 (the serve-mode startup banner) shipped with this fix.
 
 reasoning_checkpoint:
   hypothesis: "Three separate causes combine. RC1 (environment): the tunnel origin runs `node src/server/index.ts` with NODE_ENV unset, so `createApp`'s `production` flag is false and Hono serves the Vite dev middleware instead of `dist/` — 55 unbundled module round-trips at tunnel latency leave the page fully blank for ~11.8 s. RC2 (code): `RouteProgress` is wired only as a `<Suspense fallback>`, which React renders only when the boundary MOUNTS; react-router v8 navigates inside `startTransition`, during which React keeps an already-mounted boundary's children on screen instead of swapping in the fallback, so the bar can never show on an in-app navigation. RC3 (code): `app-shell.tsx:47` gates `SidebarDrawer` on `tree.isSuccess`, so the icon waits on a 120 KB `/api/tree` payload and always pops in after the rest of the header."
