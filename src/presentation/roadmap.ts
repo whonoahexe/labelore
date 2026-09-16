@@ -37,6 +37,8 @@ export interface RoadmapPhaseRow {
   formalStatus: string | null;
   observedStatus: string;
   progress: PhaseDto['formalPlanProgress'];
+  observedProgress: { completed: number; total: number };
+  progressDisagreement: boolean;
   successCriteria: string[];
   requirements: Array<{
     id: string;
@@ -156,10 +158,30 @@ function waveBands(phase: PhaseDto): WaveBand[] {
     }));
 }
 
+/** Disk-observed plan completion (SUMMARY.md presence), mirroring dashboard.ts's `observed`
+ * signal — kept alongside the ROADMAP.md-authored `formalPlanProgress` ("formal") so a phase
+ * row can flag when the two disagree instead of silently trusting whichever was read last. */
+function observedProgressOf(phase: PhaseDto): { completed: number; total: number } {
+  return {
+    completed: phase.plans.filter((plan) => plan.complete).length,
+    total: phase.plans.length,
+  };
+}
+
+function hasProgressDisagreement(
+  formal: PhaseDto['formalPlanProgress'],
+  observed: { completed: number; total: number },
+): boolean {
+  return (
+    formal !== null && (formal.completed !== observed.completed || formal.total !== observed.total)
+  );
+}
+
 function phaseRow(phase: PhaseDto, presentation: ProjectPresentation): RoadmapPhaseRow {
   const requirementArtifact = presentation.artifacts.find(
     (artifact) => artifact.kind === 'requirements' && artifact.milestoneKey === null,
   );
+  const observedProgress = observedProgressOf(phase);
   return {
     key: phase.key,
     url: buildPhaseUrl(phase.identity),
@@ -173,6 +195,8 @@ function phaseRow(phase: PhaseDto, presentation: ProjectPresentation): RoadmapPh
       phase.roadmapComplete === null ? null : phase.roadmapComplete ? 'complete' : 'incomplete',
     observedStatus: phase.diskStatus,
     progress: phase.formalPlanProgress ? { ...phase.formalPlanProgress } : null,
+    observedProgress,
+    progressDisagreement: hasProgressDisagreement(phase.formalPlanProgress, observedProgress),
     successCriteria: [...phase.successCriteria],
     requirements: phase.requirementIds.map((id) => {
       const requirement = presentation.requirements.find(

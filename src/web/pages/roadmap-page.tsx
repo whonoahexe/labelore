@@ -23,6 +23,7 @@ import {
   type RoadmapDeepLinkTarget,
 } from './roadmap-deep-link.ts';
 import { scrollWhenSettled } from './scroll-settle.ts';
+import { stripEmoji } from './strip-emoji.ts';
 
 const REQUIREMENT_PAGE_SIZE = 4;
 
@@ -40,9 +41,11 @@ function PhaseFlow({
   targeted: boolean;
 }): React.JSX.Element {
   const progress = phase.progress;
+  const observedProgress = phase.observedProgress;
+  const showPlanCompletion = progress !== null || observedProgress.total > 0;
   const displayStatus = phase.formalStatus ?? phase.observedStatus;
   const statusLabel = displayStatus.replaceAll('_', ' ');
-  const hasFacts = Boolean(progress || phase.authoredDependencies);
+  const hasFacts = Boolean(showPlanCompletion || phase.authoredDependencies);
   const articleRef = useRef<HTMLElement | null>(null);
   const detailsRef = useRef<HTMLDetailsElement | null>(null);
   const openedRef = useRef(false);
@@ -94,20 +97,27 @@ function PhaseFlow({
           <div className="phase-statuses" aria-label="Phase status">
             <span
               className="status-chip"
-              data-tone={displayStatus === 'complete' ? 'complete' : 'quiet'}
+              data-tone={
+                !phase.progressDisagreement && displayStatus === 'complete' ? 'complete' : 'quiet'
+              }
+              title={
+                phase.progressDisagreement && progress
+                  ? `ROADMAP.md records ${progress.completed} of ${progress.total} plans; SUMMARY files record ${observedProgress.completed} of ${observedProgress.total}`
+                  : undefined
+              }
             >
-              {statusLabel}
+              {phase.progressDisagreement ? 'Status mismatch' : statusLabel}
             </span>
           </div>
         </header>
 
         {hasFacts ? (
           <dl className="phase-facts">
-            {progress ? (
+            {showPlanCompletion ? (
               <div>
                 <dt>Plan completion</dt>
                 <dd>
-                  {progress.completed} of {progress.total} plans
+                  {observedProgress.completed} of {observedProgress.total} plans
                 </dd>
               </div>
             ) : null}
@@ -287,7 +297,7 @@ function HistoryMilestone({
       <summary>
         <ChevronRight aria-hidden="true" />
         <span>
-          <strong>{milestone.name}</strong>
+          <strong>{stripEmoji(milestone.name)}</strong>
           <small>{milestone.version ?? 'Unversioned archive'} · Archived</small>
         </span>
       </summary>

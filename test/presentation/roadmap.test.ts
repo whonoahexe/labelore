@@ -147,10 +147,17 @@ describe('buildRoadmapViewModel', () => {
   });
 
   it('exposes identity, status, goal, authored dependency text, progress, and expandable detail', () => {
+    const identity = phase('02').identity;
+    const phaseKey = buildPhaseUrl(identity);
+    const plans = [
+      plan('02-01', { complete: true, phaseKey }),
+      plan('02-02', { complete: true, phaseKey }),
+    ];
     const row = buildRoadmapViewModel(
       presentation([
         milestone('v2.0', false, [
           phase('02', {
+            plans,
             roadmapComplete: true,
             diskStatus: 'complete',
             formalPlanProgress: {
@@ -171,8 +178,56 @@ describe('buildRoadmapViewModel', () => {
       formalStatus: 'complete',
       observedStatus: 'complete',
       progress: { completed: 2, total: 2, sourcePath: '.planning/ROADMAP.md' },
+      observedProgress: { completed: 2, total: 2 },
+      progressDisagreement: false,
       successCriteria: ['Criterion 02'],
       requirements: [{ id: 'REQ-02', text: null, checked: null, url: null }],
+    });
+  });
+
+  it('flags a phase where ROADMAP.md checkbox counts disagree with observed SUMMARY completions', () => {
+    const identity = phase('01').identity;
+    const phaseKey = buildPhaseUrl(identity);
+    const plans = [
+      plan('01-01', { complete: true, phaseKey }),
+      plan('01-02', { complete: true, phaseKey }),
+    ];
+    const row = buildRoadmapViewModel(
+      presentation([
+        milestone('v2.0', false, [
+          phase('01', {
+            plans,
+            // ROADMAP.md only has the first plan's checkbox ticked, even though both
+            // plans' SUMMARY.md files exist on disk (the exact studio-portal 01-06 case).
+            formalPlanProgress: { completed: 1, total: 2, sourcePath: '.planning/ROADMAP.md' },
+          }),
+        ]),
+      ]),
+    ).active?.phases[0];
+
+    expect(row).toMatchObject({
+      progress: { completed: 1, total: 2 },
+      observedProgress: { completed: 2, total: 2 },
+      progressDisagreement: true,
+    });
+  });
+
+  it('does not flag a disagreement when there is no formal ROADMAP.md progress to compare', () => {
+    const row = buildRoadmapViewModel(
+      presentation([
+        milestone('v2.0', false, [
+          phase('01', {
+            plans: [plan('01-01', { complete: true })],
+            formalPlanProgress: null,
+          }),
+        ]),
+      ]),
+    ).active?.phases[0];
+
+    expect(row).toMatchObject({
+      progress: null,
+      observedProgress: { completed: 1, total: 1 },
+      progressDisagreement: false,
     });
   });
 

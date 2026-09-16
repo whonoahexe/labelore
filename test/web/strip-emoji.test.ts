@@ -51,3 +51,14 @@ describe('dashboard-page emoji sanitization contract', () => {
     expect(page).not.toMatch(/item\.description\.(slice|substring|substr)\(/);
   });
 });
+
+describe('roadmap-page emoji sanitization contract', () => {
+  it('strips emoji from an archived milestone name before display', async () => {
+    // Archived milestones are named after the ROADMAP.md <summary> text verbatim
+    // (src/planning-repo/assemble.ts), which frequently carries an authored emoji,
+    // e.g. "<summary>✅ v1.0 Portal (v1.0 Phases 1-4) — SHIPPED 2026-07-26</summary>".
+    const page = await source('src/web/pages/roadmap-page.tsx');
+    expect(page).toMatch(/import \{ stripEmoji \} from '\.\/strip-emoji\.ts';/);
+    expect(page).toContain('<strong>{stripEmoji(milestone.name)}</strong>');
+  });
+});
