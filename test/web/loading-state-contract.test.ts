@@ -28,13 +28,21 @@ function pendingSlice(src: string): string {
   return errorIndex === -1 ? src.slice(start) : src.slice(start, errorIndex);
 }
 
+/** Blanks out `/* ... *\/` block comments while preserving line counts (mirrors
+ * token-guard.test.ts's `stripCssComments`) — otherwise a comment sitting directly above a
+ * selector (no intervening brace) gets swallowed into the selector-list match below. */
+function stripCssComments(css: string): string {
+  return css.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '));
+}
+
 /** Extracts the body of every top-level rule whose comma-separated selector list (which may span
  * multiple lines, and which grows across tasks 1-3 as more classes join the shared skeleton rule
  * groups) contains every selector in `selectors` as an exact member — mirrors
  * visual-contract.test.ts's `ruleBlocks`, generalised so a compound selector growing from
  * `.dashboard-loading, .roadmap-loading {` to `.dashboard-loading, .roadmap-loading,
  * .artifact-loading, .plan-pair-loading {` still matches without pinning line counts. */
-function ruleBlocksContaining(css: string, selectors: string[]): string[] {
+function ruleBlocksContaining(cssRaw: string, selectors: string[]): string[] {
+  const css = stripCssComments(cssRaw);
   const blocks: string[] = [];
   const ruleRe = /([^{}]+)\{([^{}]*)\}/g;
   let match: RegExpExecArray | null;
@@ -62,6 +70,7 @@ const REMOVED_LOADING_LITERALS = [
   'Searching…',
   'Loading the document',
   'Loading plan review',
+  'Opening view',
 ];
 
 const NEGATIVE_GATE_FILES = [
@@ -145,5 +154,31 @@ describe('loading-state contract (quick-260916-o2o)', () => {
       expect(block).toContain('background: var(--muted)');
       expect(block).toContain('animation: loading-pulse');
     }
+  });
+
+  it('debounces, portals and cleans up the route-transition top bar loader', async () => {
+    const component = await source('src/web/components/route-progress.tsx');
+    expect(component).toContain('createPortal');
+    expect(component).toContain('document.body');
+    expect(component).toContain('ROUTE_PROGRESS_DELAY_MS = 150');
+    expect(component).toContain('clearTimeout');
+    expect(component).toContain('aria-hidden');
+    expect(component).toContain('sr-only');
+    expect(component).toContain('role="status"');
+    expect(component).toContain('aria-live="polite"');
+  });
+
+  it('layers the route-progress bar above the header and neutralizes it under reduced motion', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [progressBlock] = ruleBlocksContaining(css, ['.route-progress']);
+    expect(progressBlock, '.route-progress rule block').toBeDefined();
+    expect(progressBlock).toContain('position: fixed');
+    const zIndexMatch = progressBlock?.match(/z-index:\s*(\d+)/);
+    expect(zIndexMatch, '.route-progress declares a numeric z-index').not.toBeNull();
+    expect(Number(zIndexMatch?.[1])).toBeGreaterThan(20);
+
+    const barBlocks = ruleBlocksContaining(css, ['.route-progress-bar']);
+    expect(barBlocks.length, '.route-progress-bar rule blocks (base + reduced-motion)').toBeGreaterThanOrEqual(2);
+    expect(barBlocks.some((block) => block.includes('animation: none'))).toBe(true);
   });
 });
