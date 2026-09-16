@@ -80,13 +80,6 @@ describe('revised visual contract (G-08, G-10, G-05, G-07, G-03, E9 long-text)',
     expect(block).toContain('min-width: 0;');
   });
 
-  it('draws a visible cross-browser scrollbar on fenced code blocks', async () => {
-    const css = await source('src/web/styles/globals.css');
-    expect(css).toContain('.artifact-document pre::-webkit-scrollbar {');
-    expect(css).toContain('.artifact-document pre::-webkit-scrollbar-thumb {');
-    expect(css).toMatch(/\.artifact-document pre::-webkit-scrollbar-thumb:hover\s*\{[\s\S]*var\(--muted-foreground\)/);
-  });
-
   it('never wraps a fenced code line', async () => {
     const css = await source('src/web/styles/globals.css');
     expect(css).not.toMatch(/^\.(?:artifact-document )?pre[^{]*\{[^}]*white-space:\s*pre-wrap/m);
@@ -415,22 +408,83 @@ describe('muted surface contrast and dead selectors (F2, F5)', () => {
   });
 });
 
-describe('code scrollbar and table striping (F6, F9)', () => {
-  it('draws a thin code scrollbar that strengthens once the block is engaged', async () => {
+// quick-260916-qqk: zero-space, hover-revealed scrollbar contract. Replaces the two tests above
+// that pinned .artifact-document pre's now-removed per-site scrollbar rules — one consolidated
+// block now covers every scroller in the app. These assertions are region-scoped source checks;
+// the perceptual claims (no painted bar/gutter at rest, faint-but-grabbable on hover, both
+// themes) are handed to the plan's <human-check> gate, harvested at end-of-phase.
+const SCROLLBAR_REVEAL_SELECTOR =
+  ':is(.tree-navigator, .document-outline, .search-dialog-results, .coverage-table-boundary, .overflow-x-auto, .table-scroll, .code-scroll, pre, table, .mermaid, .mermaid-fallback):is(:hover, :focus-within) {';
+
+describe('zero-space, hover-revealed scrollbars (QQK-01, QQK-02, QQK-03)', () => {
+  it('collapses every scroll container to zero space at rest — Firefox', async () => {
     const css = await source('src/web/styles/globals.css');
-    expect(ruleBlocks(css, '.artifact-document pre::-webkit-scrollbar {')[0]).toMatch(
-      /height:\s*6px/,
+    const [block] = ruleBlocks(css, '* {');
+    expect(block).toBeDefined();
+    expect(block).toContain('scrollbar-width: none;');
+    expect(block).toContain('scrollbar-color: var(--scrollbar-thumb) transparent;');
+  });
+
+  it('collapses every scroll container to zero space at rest — WebKit', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [block] = ruleBlocks(css, '::-webkit-scrollbar {');
+    expect(block).toBeDefined();
+    expect(block).toContain('width: var(--scrollbar-size, 0px);');
+    expect(block).toContain('height: var(--scrollbar-size, 0px);');
+  });
+
+  it('reveals a thin 6px bar only on hover or focus of a bounded container', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [block] = ruleBlocks(css, SCROLLBAR_REVEAL_SELECTOR);
+    expect(block).toBeDefined();
+    expect(block).toContain('--scrollbar-size: 6px;');
+    expect(block).toContain('scrollbar-width: thin;');
+  });
+
+  it('carries thumb colour through two named tokens, never re-spelled at a usage site', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [root] = ruleBlocks(css, ':root {');
+    expect(root).toContain(
+      '--scrollbar-thumb: color-mix(in oklch, var(--muted-foreground) 30%, transparent);',
     );
-    expect(ruleBlocks(css, '.artifact-document pre::-webkit-scrollbar-track {')[0]).toMatch(
-      /background:\s*transparent/,
+    expect(root).toContain(
+      '--scrollbar-thumb-strong: color-mix(in oklch, var(--muted-foreground) 55%, transparent);',
     );
-    // --border alone resolves to oklch(1 0 0 / 16%) in dark, which is effectively invisible.
-    // quick-260910-jz8: named --scrollbar-thumb (recurs with the Firefox scrollbar-color track
-    // colour below) — same var(--muted-foreground) 45% recipe, token spelling.
-    expect(ruleBlocks(css, '.artifact-document pre::-webkit-scrollbar-thumb {')[0]).toMatch(
-      /var\(--scrollbar-thumb\)/,
-    );
-    expect(css).toContain('.artifact-document pre:focus-within::-webkit-scrollbar-thumb');
+
+    const [thumb] = ruleBlocks(css, '::-webkit-scrollbar-thumb {');
+    expect(thumb).toMatch(/background:\s*var\(--scrollbar-thumb\);/);
+
+    const [thumbHover] = ruleBlocks(css, '::-webkit-scrollbar-thumb:hover {');
+    expect(thumbHover).toMatch(/background:\s*var\(--scrollbar-thumb-strong\);/);
+
+    // Each recipe appears exactly once — its :root definition — never re-spelled at a usage site.
+    const thumbRecipe = 'color-mix(in oklch, var(--muted-foreground) 30%, transparent)';
+    const thumbStrongRecipe = 'color-mix(in oklch, var(--muted-foreground) 55%, transparent)';
+    expect(css.split(thumbRecipe).length - 1).toBe(1);
+    expect(css.split(thumbStrongRecipe).length - 1).toBe(1);
+  });
+
+  it('leaves no scrollbar declaration at any of the four legacy sites', async () => {
+    const css = await source('src/web/styles/globals.css');
+    for (const selector of ['html {', '.tree-navigator {', '.mermaid {', '.artifact-document pre {']) {
+      for (const block of ruleBlocks(css, selector)) {
+        expect(block).not.toMatch(/scrollbar/);
+      }
+    }
+  });
+
+  it('keeps scroll-behavior, overflow, and overscroll-behavior declarations untouched', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [html] = ruleBlocks(css, 'html {');
+    expect(html).toContain('scroll-behavior: smooth;');
+
+    const [treeNavigator] = ruleBlocks(css, '.tree-navigator {');
+    expect(treeNavigator).toContain('overflow-y: auto;');
+    expect(treeNavigator).toContain('overscroll-behavior: contain;');
+
+    const [mermaidGroup] = ruleBlocks(css, '.mermaid {');
+    expect(mermaidGroup).toContain('overflow-x: auto;');
+    expect(mermaidGroup).toContain('overscroll-behavior-inline: contain;');
   });
 
   it('drives both zebra rules from one declared per-theme source', async () => {
