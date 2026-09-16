@@ -2,11 +2,11 @@
 gsd_state_version: "1.0"
 milestone: v1.0
 status: Awaiting next milestone
-stopped_at: Phase 04 complete — all phases complete
-last_updated: "2026-09-12T10:09:12.000Z"
-last_activity: 2026-09-12
-last_activity_desc: Completed quick task 260912-lfi: Scroll to blocker in project state from source link, and render markdown without raw asterisks in dashboard
-state_head: c6def3f443b749d0739c43d73b06497f48b9f0d1
+stopped_at: "Completed quick task 260917-0yp: Parse per-milestone ROADMAP.md files for archived phases"
+last_updated: "2026-09-16T19:41:50.413Z"
+last_activity: 2026-09-16
+last_activity_desc: "Completed quick task 260917-0yp: Parse per-milestone ROADMAP.md files for archived phases"
+state_head: 1076f46b183ca634ab88eddfb50fabaf8a0012f9
 current_phase: 04
 progress:
   total_phases: 4
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-10)
 Phase: Milestone v1.0 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-09-16 - Completed quick task 260916-vjt: Add pagination to the requirement-list component on the roadmap page, showing 4 items at a time.
+Last activity: 2026-09-16 - Completed quick task 260917-0yp: Parse per-milestone ROADMAP.md files for archived phases
 
 ## Performance Metrics
 
@@ -105,7 +105,7 @@ None.
 | 260916-o2o | Remove all the loading state text, keep the skeletons and add a top bar loader | 2026-09-16 | 41a4c4e | [260916-o2o-remove-all-the-loading-state-text-keep-t](./quick/260916-o2o-remove-all-the-loading-state-text-keep-t/) |
 | 260916-qqk | Scrollbars take no layout space, drop to lower opacity, and appear only on hover/focus | 2026-09-16 | c5cc80f | [260916-qqk-the-scrollbars-throughout-the-site-shoul](./quick/260916-qqk-the-scrollbars-throughout-the-site-shoul/) |
 | 260916-vjt | Add pagination to the requirement-list component on the roadmap page, showing 4 items at a time | 2026-09-16 | 85c675f | [260916-vjt-add-pagination-to-the-requirement-list-c](./quick/260916-vjt-add-pagination-to-the-requirement-list-c/) |
-
+| 260917-0yp | Parse per-milestone ROADMAP.md files for archived phases | 2026-09-16 | 1076f46 | [260917-0yp-parse-per-milestone-roadmap-md-files-e-g](./quick/260917-0yp-parse-per-milestone-roadmap-md-files-e-g/) |
 
 ## Deferred Items
 
@@ -122,8 +122,8 @@ Two v1.0 close-time verification overrides recorded below; the two earlier rows 
 
 ## Session Continuity
 
-Last session: 2026-09-08T08:18:00Z
-Stopped at: Phase 04 complete — all phases complete
+Last session: 2026-09-16T19:41:50.405Z
+Stopped at: Completed quick task 260917-0yp: Parse per-milestone ROADMAP.md files for archived phases
 Resume file: None
 
 ## Operator Next Steps
