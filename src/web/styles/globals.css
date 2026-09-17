@@ -2114,6 +2114,10 @@ pre {
   .blocked-by {
     text-align: left;
   }
+
+  .trace-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3701,6 +3705,71 @@ pre {
 .trace-category > h2,
 .trace-deferred > h2 {
   margin-bottom: var(--space-3);
+}
+
+/* NS4 Task 2 — each category's own proportion cue, dropped beneath the heading rather than
+   inline: the heading rule above already declares a bottom margin, so the bar fills that gap
+   without fighting the heading's own box, and a long category name can never squeeze it to
+   nothing. */
+.trace-category-bar {
+  margin-bottom: var(--space-4);
+}
+
+/* NS4 Task 2 — the hierarchical row list replacing the former ruled grid (NS4-05). ID and text
+   carry the primary line; status + covering-phase form a visually subordinate secondary block via
+   size/colour rather than a cell border. Collapses to one column under 42rem (see the shared
+   narrow-viewport media block above). */
+.trace-rows {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.trace-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: var(--space-3-5) var(--space-4);
+}
+
+.trace-row-primary {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-1);
+}
+
+.trace-row-id {
+  font-family: var(--font-heading);
+  font-size: var(--fs-3);
+  letter-spacing: var(--ls-wide);
+}
+
+.trace-row-text {
+  overflow-wrap: anywhere;
+  color: var(--foreground);
+  font-size: var(--fs-4);
+  line-height: var(--fs-4--lh);
+}
+
+.trace-row-secondary {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-3);
+  align-content: start;
+}
+
+.trace-row-micro-label {
+  display: block;
+  margin-bottom: var(--space-1);
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--font-size-micro-label);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
 }
 
 .trace-marker-stack {

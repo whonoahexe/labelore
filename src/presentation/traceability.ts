@@ -33,11 +33,6 @@ export interface TraceabilityRow {
   statusDisagreement: boolean;
 }
 
-export interface TraceabilityGroup {
-  category: string;
-  rows: TraceabilityRow[];
-}
-
 export interface TraceabilityCounts {
   total: number;
   uncovered: number;
@@ -54,6 +49,15 @@ export interface TraceabilityCoverage {
   mismatched: number;
   uncovered: number;
   coveragePercent: number;
+}
+
+export interface TraceabilityGroup {
+  category: string;
+  rows: TraceabilityRow[];
+  /** This category's own coverage, computed over its own rows only — independent of any sibling
+   * category's figures and never recomputed from a filtered subset (see Task 2's
+   * filteredGroups note in traceability-page.tsx). */
+  coverage: TraceabilityCoverage;
 }
 
 export interface TraceabilityViewModel {
@@ -177,10 +181,10 @@ export function buildTraceabilityViewModel(presentation: ProjectPresentation): T
     rows.push(row);
   }
 
-  const groups: TraceabilityGroup[] = groupOrder.map((category) => ({
-    category,
-    rows: rowsByCategory.get(category) ?? [],
-  }));
+  const groups: TraceabilityGroup[] = groupOrder.map((category) => {
+    const rows = rowsByCategory.get(category) ?? [];
+    return { category, rows, coverage: coverageOf(rows) };
+  });
   const allRows = groups.flatMap((group) => group.rows);
   return {
     groups,

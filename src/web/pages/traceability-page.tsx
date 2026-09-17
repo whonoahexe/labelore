@@ -116,72 +116,59 @@ function CoverageBar({
   );
 }
 
-function TraceabilityRowCells({ row }: { row: TraceabilityRow }): React.JSX.Element {
-  return (
-    <>
-      <td>
-        <strong>{row.id}</strong>
-      </td>
-      <td>{row.text}</td>
-      <td>
-        <div className="trace-marker-stack">
-          <RequirementStatusChip status={row.requirementStatus} />
-          {row.statusDisagreement ? (
-            <span className="status-chip trace-marker" data-tone="destructive">
-              Status mismatch
-            </span>
-          ) : null}
-        </div>
-      </td>
-      <td>
-        {row.uncovered ? (
-          <span className="status-chip trace-marker" data-tone="destructive">
-            Uncovered
-          </span>
-        ) : (
-          <ul className="trace-covering-list">
-            {row.coveringPhases.map((covering, index) => (
-              <CoveringPhaseEntry
-                key={`${row.id}-covering-${index}`}
-                rowId={row.id}
-                covering={covering}
-                index={index}
-              />
-            ))}
-          </ul>
-        )}
-      </td>
-    </>
-  );
-}
-
-function TraceabilityTable({
+/** The hierarchical replacement for the former ruled table (NS4-05). Since the list carries no
+ * column headers, each row's secondary block names what it's showing via a micro-label — the
+ * information the removed header row used to carry, kept without adding a heading row back. */
+function TraceabilityRowList({
   rows,
-  captionId,
+  labelledBy,
 }: {
   rows: TraceabilityRow[];
-  captionId: string;
+  labelledBy: string;
 }): React.JSX.Element {
   return (
-    <div className="coverage-table-boundary">
-      <table aria-labelledby={captionId}>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Requirement</th>
-            <th>Requirement status</th>
-            <th>Covering phase</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.id}>
-              <TraceabilityRowCells row={row} />
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <ul className="trace-rows" aria-labelledby={labelledBy}>
+      {rows.map((row) => (
+        <li key={row.id} className="trace-row">
+          <div className="trace-row-primary">
+            <strong className="trace-row-id">{row.id}</strong>
+            <span className="trace-row-text">{row.text}</span>
+          </div>
+          <div className="trace-row-secondary">
+            <div>
+              <span className="trace-row-micro-label">Requirement status</span>
+              <div className="trace-marker-stack">
+                <RequirementStatusChip status={row.requirementStatus} />
+                {row.statusDisagreement ? (
+                  <span className="status-chip trace-marker" data-tone="destructive">
+                    Status mismatch
+                  </span>
+                ) : null}
+              </div>
+            </div>
+            <div>
+              <span className="trace-row-micro-label">Covering phase</span>
+              {row.uncovered ? (
+                <span className="status-chip trace-marker" data-tone="destructive">
+                  Uncovered
+                </span>
+              ) : (
+                <ul className="trace-covering-list">
+                  {row.coveringPhases.map((covering, index) => (
+                    <CoveringPhaseEntry
+                      key={`${row.id}-covering-${index}`}
+                      rowId={row.id}
+                      covering={covering}
+                      index={index}
+                    />
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -189,12 +176,16 @@ export function TraceabilityPage(): React.JSX.Element {
   const traceability = useQuery({ queryKey: ['traceability'], queryFn: fetchTraceability });
   const [filter, setFilter] = useState<TraceabilityFilterState>(DEFAULT_TRACEABILITY_FILTER);
 
+  // Carries `coverage` through unchanged from the source group — the category bar always reads
+  // this unfiltered figure, never the filtered row subset the section happens to be showing, so
+  // it stays a real proportion cue rather than one that shrinks as the user types.
   const filteredGroups = useMemo(() => {
     const data = traceability.data;
     if (!data) return [];
     return data.groups
       .map((group) => ({
         category: group.category,
+        coverage: group.coverage,
         rows: group.rows.filter((row) => matchesTraceabilityFilter(row, filter)),
       }))
       .filter((group) => group.rows.length > 0);
@@ -309,7 +300,10 @@ export function TraceabilityPage(): React.JSX.Element {
               <h2 id={headingId} className="search-group-label">
                 {group.category}
               </h2>
-              <TraceabilityTable rows={group.rows} captionId={headingId} />
+              <div className="trace-category-bar">
+                <CoverageBar coverage={group.coverage} label={`${group.category} coverage`} />
+              </div>
+              <TraceabilityRowList rows={group.rows} labelledBy={headingId} />
             </section>
           );
         })
@@ -324,7 +318,7 @@ export function TraceabilityPage(): React.JSX.Element {
           <h2 id="trace-deferred-heading" className="search-group-label">
             Deferred requirements
           </h2>
-          <TraceabilityTable rows={view.deferredRows} captionId="trace-deferred-heading" />
+          <TraceabilityRowList rows={view.deferredRows} labelledBy="trace-deferred-heading" />
         </section>
       ) : null}
     </main>

@@ -113,3 +113,59 @@ describe('traceability redesign — summary strip (NS4-01, NS4-04, D-02, Task 1)
     }
   });
 });
+
+describe('traceability redesign — per-category bars and hierarchical rows (NS4-02, NS4-05, D-01, Task 2)', () => {
+  it('emits no tabular row markup anywhere in the page', async () => {
+    const page = await source('src/web/pages/traceability-page.tsx');
+    expect(page).not.toMatch(/<table\b/);
+    expect(page).not.toMatch(/<thead\b/);
+    expect(page).not.toMatch(/<tbody\b/);
+    expect(page).not.toMatch(/<tr\b/);
+    expect(page).not.toMatch(/<td\b/);
+    expect(page).not.toMatch(/<th\b/);
+  });
+
+  it('renders each category section with its own labelled coverage bar', async () => {
+    const page = await source('src/web/pages/traceability-page.tsx');
+    expect(page).toContain('<CoverageBar coverage={group.coverage} label={`${group.category} coverage`} />');
+  });
+
+  it('reads the category bar from group.coverage rather than recomputing over the filtered row subset', async () => {
+    const page = await source('src/web/pages/traceability-page.tsx');
+    // The mapping that produces filteredGroups must carry `coverage` through from the source
+    // group unchanged, not derive a fresh figure from the filtered rows it also produces.
+    expect(page).toMatch(/coverage:\s*group\.coverage,/);
+  });
+
+  it('renders requirement rows through the shared trace-rows list, not a re-invented markup shape', async () => {
+    const page = await source('src/web/pages/traceability-page.tsx');
+    expect(page).toContain('function TraceabilityRowList');
+    expect((page.match(/<TraceabilityRowList/g) ?? []).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('leaves the status chip component and its tone values unchanged from the pre-redesign source', async () => {
+    const page = await source('src/web/pages/traceability-page.tsx');
+    expect(page).toContain('function RequirementStatusChip');
+    expect(page).toContain("data-tone={status ? 'complete' : 'quiet'}");
+    expect(page).toContain('function CoveringPhaseEntry');
+  });
+
+  it('token-guards the new row-list rules — no raw colour, length or type literal outside the token blocks', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [rowsBlock] = ruleBlocks(css, '.trace-rows {');
+    const [rowBlock] = ruleBlocks(css, '.trace-row {');
+    expect(rowsBlock).toBeDefined();
+    expect(rowBlock).toBeDefined();
+    for (const block of [rowsBlock, rowBlock]) {
+      expect(block).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+      expect(block).not.toMatch(/\brgb\(/);
+    }
+  });
+
+  it('still leaves .coverage-table-boundary\'s rules in place for plan-pair-page.tsx', async () => {
+    const css = await source('src/web/styles/globals.css');
+    expect(ruleBlocks(css, '.coverage-table-boundary {')[0]).toBeDefined();
+    const planPair = await source('src/web/pages/plan-pair-page.tsx');
+    expect(planPair).toContain('coverage-table-boundary');
+  });
+});
