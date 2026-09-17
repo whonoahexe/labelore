@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-10)
 Phase: Milestone v1.0 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-09-16 - Completed quick task 260917-0yp: Parse per-milestone ROADMAP.md files for archived phases
+Last activity: 2026-09-17 - Completed quick task 260917-ns4: Redesign the traceability page's UI/UX
 
 ## Performance Metrics
 
@@ -107,6 +107,7 @@ None.
 | 260916-vjt | Add pagination to the requirement-list component on the roadmap page, showing 4 items at a time | 2026-09-16 | 85c675f | [260916-vjt-add-pagination-to-the-requirement-list-c](./quick/260916-vjt-add-pagination-to-the-requirement-list-c/) |
 | 260917-0yp | Parse per-milestone ROADMAP.md files for archived phases | 2026-09-16 | 1076f46 | [260917-0yp-parse-per-milestone-roadmap-md-files-e-g](./quick/260917-0yp-parse-per-milestone-roadmap-md-files-e-g/) |
 | 14 | Fix plan-checklist regex stealing the next line's description for bare (no-description) checklist lines | 2026-09-16 | b53a9fe | — |
+| 260917-ns4 | Redesign the traceability page's UI/UX — coverage summary strip, per-category proportion bars, and deferred-tier grouping under the reused history treatment | 2026-09-17 | a06e2b8 | [260917-ns4-redesign-the-traceability-page-s-ui-ux-c](./quick/260917-ns4-redesign-the-traceability-page-s-ui-ux-c/) |
 
 ## Deferred Items
 
