@@ -947,7 +947,8 @@ summary.tree-node-row:focus-visible {
 .preview-panel,
 .milestone-flow,
 .history-section,
-.notice {
+.notice,
+.trace-summary {
   border: 1px solid var(--border);
   background: var(--card-veil);
 }
@@ -3537,6 +3538,101 @@ pre {
   gap: var(--space-1);
   margin: 0;
   padding-left: var(--space-4);
+}
+
+/* NS4 (quick-260917-ns4): the at-a-glance coverage strip that also hosts the filter controls
+   (D-02). Joins the shared border+veil panel family declared above rather than inventing a new
+   surface, and declares no radius token — squared corners, matching the rest of the sheet. */
+.trace-summary {
+  display: grid;
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
+  padding: var(--space-6);
+}
+
+.trace-summary-headline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  align-items: center;
+}
+
+.trace-coverage-percent {
+  display: grid;
+  flex: none;
+  gap: var(--space-1);
+}
+
+.trace-coverage-percent-value {
+  font-family: var(--font-heading);
+  font-size: var(--fs-display-1);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-none);
+}
+
+.trace-coverage-percent-label {
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--font-size-micro-label);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+/* The three-segment proportional bar (D-01). Segments tile the full width and always sum to
+   100%, so the track itself needs no background colour of its own — only the border that frames
+   it. Bare palette tokens throughout: no color-mix() recipe is needed for three distinguishable,
+   already-token-backed tones. */
+.trace-bar {
+  display: flex;
+  flex: 1;
+  min-width: 12rem;
+  height: var(--space-3);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.trace-bar-segment {
+  height: 100%;
+}
+
+.trace-bar-covered {
+  background: var(--primary);
+}
+
+.trace-bar-mismatched {
+  background: var(--destructive);
+}
+
+.trace-bar-uncovered {
+  background: var(--border);
+}
+
+.trace-stat-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  margin: 0;
+}
+
+.trace-stat-tile {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.trace-stat-tile dt {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--font-size-micro-label);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.trace-stat-tile dd {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: var(--fs-5);
+  font-weight: var(--fw-semibold);
 }
 
 .trace-filters {

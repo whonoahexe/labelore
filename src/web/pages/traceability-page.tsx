@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import { EmptyState } from '../components/empty-state.tsx';
 import type {
+  TraceabilityCoverage,
   TraceabilityCoveringPhase,
   TraceabilityRow,
   TraceabilityViewModel,
@@ -70,6 +71,48 @@ function CoveringPhaseEntry({
         Unresolved
       </span>
     </li>
+  );
+}
+
+/** Renders the three-way covered/mismatched/uncovered partition as one proportional bar. Reused
+ * verbatim for both the page-level aggregate (Task 1) and each category's own bar (Task 2) — both
+ * read a TraceabilityCoverage, never recount rows themselves. The proportion is conveyed once to
+ * assistive technology via the container's own role/aria-label; the three segments are aria-hidden
+ * so they are never announced as three separate, unlabelled boxes. A zero-total scope renders no
+ * bar at all rather than three zero-width segments. */
+function CoverageBar({
+  coverage,
+  label,
+}: {
+  coverage: TraceabilityCoverage;
+  label: string;
+}): React.JSX.Element | null {
+  if (coverage.total === 0) return null;
+  const coveredPercent = (coverage.covered / coverage.total) * 100;
+  const mismatchedPercent = (coverage.mismatched / coverage.total) * 100;
+  const uncoveredPercent = (coverage.uncovered / coverage.total) * 100;
+  return (
+    <div
+      className="trace-bar"
+      role="img"
+      aria-label={`${label}: ${coverage.covered} covered, ${coverage.mismatched} status mismatched, ${coverage.uncovered} uncovered`}
+    >
+      <span
+        className="trace-bar-segment trace-bar-covered"
+        aria-hidden="true"
+        style={{ width: `${coveredPercent}%` }}
+      />
+      <span
+        className="trace-bar-segment trace-bar-mismatched"
+        aria-hidden="true"
+        style={{ width: `${mismatchedPercent}%` }}
+      />
+      <span
+        className="trace-bar-segment trace-bar-uncovered"
+        aria-hidden="true"
+        style={{ width: `${uncoveredPercent}%` }}
+      />
+    </div>
   );
 }
 
@@ -195,43 +238,67 @@ export function TraceabilityPage(): React.JSX.Element {
         </div>
       </header>
 
-      <section className="trace-filters" aria-label="Filter requirements">
-        <input
-          type="search"
-          className="trace-filter-input"
-          placeholder="Filter by ID or text"
-          aria-label="Filter by requirement ID or text"
-          value={filter.query}
-          onChange={(event) =>
-            setFilter((current) => ({ ...current, query: event.target.value }))
-          }
-        />
-        <div className="trace-status-filters" role="group" aria-label="Filter by status">
-          <button
-            type="button"
-            className="trace-filter-button"
-            data-active={filter.status === 'all' ? 'true' : undefined}
-            onClick={() => setFilter((current) => ({ ...current, status: 'all' }))}
-          >
-            All ({view.counts.total})
-          </button>
-          <button
-            type="button"
-            className="trace-filter-button"
-            data-active={filter.status === 'uncovered' ? 'true' : undefined}
-            onClick={() => setFilter((current) => ({ ...current, status: 'uncovered' }))}
-          >
-            Uncovered ({view.counts.uncovered})
-          </button>
-          <button
-            type="button"
-            className="trace-filter-button"
-            data-active={filter.status === 'disagreement' ? 'true' : undefined}
-            onClick={() => setFilter((current) => ({ ...current, status: 'disagreement' }))}
-          >
-            Status mismatch ({view.counts.disagreement})
-          </button>
+      <section className="trace-summary" aria-label="Requirement coverage summary">
+        <div className="trace-summary-headline">
+          <div className="trace-coverage-percent">
+            <span className="trace-coverage-percent-value">{view.coverage.coveragePercent}%</span>
+            <span className="trace-coverage-percent-label">Covered</span>
+          </div>
+          <CoverageBar coverage={view.coverage} label="Overall coverage" />
+          <dl className="trace-stat-tiles">
+            <div className="trace-stat-tile">
+              <dt>Total</dt>
+              <dd>{view.coverage.total}</dd>
+            </div>
+            <div className="trace-stat-tile">
+              <dt>Uncovered</dt>
+              <dd>{view.coverage.uncovered}</dd>
+            </div>
+            <div className="trace-stat-tile">
+              <dt>Status mismatch</dt>
+              <dd>{view.coverage.mismatched}</dd>
+            </div>
+          </dl>
         </div>
+
+        <section className="trace-filters" aria-label="Filter requirements">
+          <input
+            type="search"
+            className="trace-filter-input"
+            placeholder="Filter by ID or text"
+            aria-label="Filter by requirement ID or text"
+            value={filter.query}
+            onChange={(event) =>
+              setFilter((current) => ({ ...current, query: event.target.value }))
+            }
+          />
+          <div className="trace-status-filters" role="group" aria-label="Filter by status">
+            <button
+              type="button"
+              className="trace-filter-button"
+              data-active={filter.status === 'all' ? 'true' : undefined}
+              onClick={() => setFilter((current) => ({ ...current, status: 'all' }))}
+            >
+              All
+            </button>
+            <button
+              type="button"
+              className="trace-filter-button"
+              data-active={filter.status === 'uncovered' ? 'true' : undefined}
+              onClick={() => setFilter((current) => ({ ...current, status: 'uncovered' }))}
+            >
+              Uncovered
+            </button>
+            <button
+              type="button"
+              className="trace-filter-button"
+              data-active={filter.status === 'disagreement' ? 'true' : undefined}
+              onClick={() => setFilter((current) => ({ ...current, status: 'disagreement' }))}
+            >
+              Status mismatch
+            </button>
+          </div>
+        </section>
       </section>
 
       {filteredGroups.length > 0 ? (
