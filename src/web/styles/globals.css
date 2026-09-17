@@ -81,8 +81,8 @@
     BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-heading: var(--font-mono);
   --font-mono:
-    'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Monaco, Consolas,
-    'Liberation Mono', monospace;
+    'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono',
+    monospace;
   /* quick-260910-0x4 item 8: the shared uppercase-micro-label size. Was three literal 0.62rem
      declarations (9.92px) and three literal 0.6rem declarations (9.6px, smaller still) scattered
      across .phase-facts dt, .blocked-by, .artifact-metadata > summary span, .warning-fields dt and
@@ -2576,7 +2576,9 @@ pre {
   color: var(--foreground);
   cursor: pointer;
   padding: 0;
-  transition: border-color 0.15s ease, color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .attention-pagination button:hover:not(:disabled),

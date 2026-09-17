@@ -7,7 +7,12 @@ import { toProjectPresentation } from '../../src/server/project-presentation.ts'
 import { createApp } from '../../src/server/index.ts';
 import { buildPhaseUrl, phaseKeyOf } from '../../src/presentation/routes.ts';
 import { buildTraceabilityViewModel, type TraceabilityGroup, type TraceabilityRow } from '../../src/presentation/traceability.ts';
-import { matchesTraceabilityFilter, type TraceabilityFilterState } from '../../src/web/pages/traceability-filter.ts';
+import {
+  DEFAULT_TRACEABILITY_FILTER,
+  matchesDeferredTraceabilityFilter,
+  matchesTraceabilityFilter,
+  type TraceabilityFilterState,
+} from '../../src/web/pages/traceability-filter.ts';
 
 const PHASE_1_IDENTITY = { milestoneVersion: null, number: '01', projectCode: null, slug: 'first' };
 const PHASE_2_IDENTITY = { milestoneVersion: null, number: '02', projectCode: null, slug: 'second' };
@@ -379,7 +384,7 @@ function traceabilityRow(overrides: Partial<TraceabilityRow> = {}): Traceability
 }
 
 function filterState(overrides: Partial<TraceabilityFilterState> = {}): TraceabilityFilterState {
-  return { query: '', status: 'all', ...overrides };
+  return { query: '', status: 'all', includeHistory: false, ...overrides };
 }
 
 describe('matchesTraceabilityFilter (Task 3)', () => {
@@ -454,5 +459,59 @@ describe('matchesTraceabilityFilter (Task 3)', () => {
     // never a `.filter(...).length` recount performed in the component.
     expect(view.counts.total).toBe(2);
     expect(view.counts.uncovered).toBe(1);
+  });
+});
+
+describe('deferredTiers (NS4 Task 3)', () => {
+  it('Test 1: groups deferredRows by tier in first-appearance order; every deferred row appears in exactly one tier; deferredRows itself is unchanged', () => {
+    const view = buildTraceabilityViewModel(
+      presentationWith([
+        requirement({ id: 'V2-01', tier: 'v2', checked: null }),
+        requirement({ id: 'V3-01', tier: 'v3', checked: null }),
+        requirement({ id: 'V2-02', tier: 'v2', checked: null }),
+      ]),
+    );
+
+    expect(view.deferredTiers.map((tier) => tier.tier)).toEqual(['v2', 'v3']);
+    expect(view.deferredTiers[0].rows.map((row) => row.id)).toEqual(['V2-01', 'V2-02']);
+    expect(view.deferredTiers[1].rows.map((row) => row.id)).toEqual(['V3-01']);
+    expect(view.deferredRows.map((row) => row.id)).toEqual(['V2-01', 'V3-01', 'V2-02']);
+
+    const tieredIds = view.deferredTiers.flatMap((tier) => tier.rows.map((row) => row.id));
+    expect(new Set(tieredIds).size).toBe(tieredIds.length);
+    expect(new Set(tieredIds)).toEqual(new Set(view.deferredRows.map((row) => row.id)));
+  });
+
+  it('Test 2: a corpus with no deferred requirements yields an empty deferredTiers array, not a single empty tier', () => {
+    const view = buildTraceabilityViewModel(presentationWith([requirement({ checked: true })]));
+
+    expect(view.deferredTiers).toEqual([]);
+  });
+});
+
+describe('includeHistory filter axis (NS4 Task 3)', () => {
+  it('Test 3: DEFAULT_TRACEABILITY_FILTER carries includeHistory set to false', () => {
+    expect(DEFAULT_TRACEABILITY_FILTER.includeHistory).toBe(false);
+  });
+
+  it('Test 4: matchesTraceabilityFilter is unchanged for active-tier rows with the new field present', () => {
+    const row = traceabilityRow({ id: 'TGT-01', text: 'Dashboard renders the project path' });
+
+    expect(matchesTraceabilityFilter(row, filterState({ query: 'tgt-01', includeHistory: true }))).toBe(true);
+    expect(matchesTraceabilityFilter(row, filterState({ query: 'no-match', includeHistory: false }))).toBe(false);
+  });
+
+  it('Test 5: includeHistory governs whether deferred tiers are filtered at all', () => {
+    const row = traceabilityRow({ id: 'V2-01', text: 'Some deferred requirement', uncovered: true });
+
+    // Off: matches regardless of query/status.
+    expect(matchesDeferredTraceabilityFilter(row, filterState({ query: 'no-match-at-all', includeHistory: false }))).toBe(
+      true,
+    );
+    // On: subject to the same query/status rules as an active row.
+    expect(matchesDeferredTraceabilityFilter(row, filterState({ query: 'no-match-at-all', includeHistory: true }))).toBe(
+      false,
+    );
+    expect(matchesDeferredTraceabilityFilter(row, filterState({ query: 'deferred', includeHistory: true }))).toBe(true);
   });
 });

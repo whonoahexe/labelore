@@ -1,15 +1,18 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { ChevronRight, History } from 'lucide-react';
 import { Link } from 'react-router';
 import { EmptyState } from '../components/empty-state.tsx';
 import type {
   TraceabilityCoverage,
   TraceabilityCoveringPhase,
+  TraceabilityDeferredTier,
   TraceabilityRow,
   TraceabilityViewModel,
 } from '../../presentation/traceability.ts';
 import {
   DEFAULT_TRACEABILITY_FILTER,
+  matchesDeferredTraceabilityFilter,
   matchesTraceabilityFilter,
   type TraceabilityFilterState,
 } from './traceability-filter.ts';
@@ -18,7 +21,11 @@ import {
 // call site) while its DOM-free definition lives in traceability-filter.ts — the same seam
 // roadmap-deep-link.ts establishes, which keeps this .tsx file (and the "jsx" compiler option it
 // requires) out of the dependency graph of plain-.ts presentation tests (03-04-PLAN.md Task 3).
-export { DEFAULT_TRACEABILITY_FILTER, matchesTraceabilityFilter };
+export {
+  DEFAULT_TRACEABILITY_FILTER,
+  matchesDeferredTraceabilityFilter,
+  matchesTraceabilityFilter,
+};
 export type { TraceabilityFilterState, TraceabilityStatusFilter } from './traceability-filter.ts';
 
 async function fetchTraceability(): Promise<TraceabilityViewModel> {
@@ -172,6 +179,50 @@ function TraceabilityRowList({
   );
 }
 
+/** One tier's disclosure inside the reused History treatment (NS4-03, NS4-04, D-03). Reuses
+ * roadmap-page.tsx's `HistoryMilestone` class names and ref-plus-effect idiom verbatim, but drives
+ * the open effect from the toggle state and the tier's own match count rather than a fire-once
+ * guard — the disclosure tracks the filter on every render instead of latching after the first.
+ * The effect only ever opens a tier; it never forces one closed, so a tier the user opened by hand
+ * stays open even after the toggle switches off. Filtering: off means every row in the tier
+ * renders untouched; on means only matching rows render, and a tier left with no matches renders
+ * nothing rather than an empty disclosure. */
+function DeferredTierDisclosure({
+  tier,
+  filter,
+}: {
+  tier: TraceabilityDeferredTier;
+  filter: TraceabilityFilterState;
+}): React.JSX.Element | null {
+  const detailsRef = useRef<HTMLDetailsElement | null>(null);
+  const visibleRows = tier.rows.filter((row) => matchesDeferredTraceabilityFilter(row, filter));
+
+  useEffect(() => {
+    if (!filter.includeHistory) return;
+    if (visibleRows.length > 0 && detailsRef.current) detailsRef.current.open = true;
+  }, [filter.includeHistory, visibleRows.length]);
+
+  if (visibleRows.length === 0) return null;
+
+  const headingId = `trace-history-tier-${tier.tier.replaceAll(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}`;
+  return (
+    <details className="history-milestone" ref={detailsRef}>
+      <summary>
+        <ChevronRight aria-hidden="true" />
+        <span>
+          <strong>{tier.tier}</strong>
+          <small>
+            {tier.rows.length} {tier.rows.length === 1 ? 'requirement' : 'requirements'}
+          </small>
+        </span>
+      </summary>
+      <div className="history-tree">
+        <TraceabilityRowList rows={visibleRows} labelledBy={headingId} />
+      </div>
+    </details>
+  );
+}
+
 export function TraceabilityPage(): React.JSX.Element {
   const traceability = useQuery({ queryKey: ['traceability'], queryFn: fetchTraceability });
   const [filter, setFilter] = useState<TraceabilityFilterState>(DEFAULT_TRACEABILITY_FILTER);
@@ -289,6 +340,17 @@ export function TraceabilityPage(): React.JSX.Element {
               Status mismatch
             </button>
           </div>
+          <button
+            type="button"
+            className="trace-filter-button"
+            data-active={filter.includeHistory ? 'true' : undefined}
+            aria-pressed={filter.includeHistory}
+            onClick={() =>
+              setFilter((current) => ({ ...current, includeHistory: !current.includeHistory }))
+            }
+          >
+            Search deferred tiers
+          </button>
         </section>
       </section>
 
@@ -313,12 +375,20 @@ export function TraceabilityPage(): React.JSX.Element {
         <p className="empty-note">No requirements match the current filter.</p>
       )}
 
-      {view.deferredRows.length > 0 ? (
-        <section className="trace-deferred" aria-labelledby="trace-deferred-heading">
-          <h2 id="trace-deferred-heading" className="search-group-label">
-            Deferred requirements
-          </h2>
-          <TraceabilityRowList rows={view.deferredRows} labelledBy="trace-deferred-heading" />
+      {view.deferredTiers.length > 0 ? (
+        <section className="history-section" aria-labelledby="trace-deferred-heading">
+          <header className="section-heading">
+            <div>
+              <p className="eyebrow">Beyond the active tier</p>
+              <h2 id="trace-deferred-heading">Deferred requirements</h2>
+            </div>
+            <History aria-hidden="true" />
+          </header>
+          <div className="history-list">
+            {view.deferredTiers.map((tier) => (
+              <DeferredTierDisclosure key={tier.tier} tier={tier} filter={filter} />
+            ))}
+          </div>
         </section>
       ) : null}
     </main>
