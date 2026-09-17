@@ -299,6 +299,70 @@ describe('TraceabilityCoverage (NS4 Task 1)', () => {
   });
 });
 
+describe('TraceabilityGroup.coverage (NS4 Task 2)', () => {
+  it('Test 1: each group carries its own coverage, derived from that group\'s rows only', () => {
+    const view = buildTraceabilityViewModel(
+      presentationWith([
+        requirement({ id: 'A-01', category: 'Alpha', checked: true, coveringPhases: [] }),
+        requirement({ id: 'A-02', category: 'Alpha', checked: true, coveringPhases: [] }),
+        requirement({
+          id: 'B-01',
+          category: 'Beta',
+          checked: true,
+          coveringPhases: [{ raw: 'Phase 1', targetPhaseKey: PHASE_1_KEY }],
+        }),
+      ], [phase({ key: PHASE_1_KEY, identity: PHASE_1_IDENTITY, diskStatus: 'complete' })]),
+    );
+    const alpha = view.groups.find((group) => group.category === 'Alpha')!;
+    const beta = view.groups.find((group) => group.category === 'Beta')!;
+
+    expect(alpha.coverage.coveragePercent).toBe(0);
+    expect(beta.coverage.coveragePercent).toBe(100);
+  });
+
+  it('Test 2: summing covered/mismatched/uncovered across every group equals the whole-view coverage', () => {
+    const view = buildTraceabilityViewModel(
+      presentationWith([
+        requirement({ id: 'A-01', category: 'Alpha', checked: true, coveringPhases: [] }),
+        requirement({
+          id: 'B-01',
+          category: 'Beta',
+          checked: true,
+          coveringPhases: [{ raw: 'Phase 1', targetPhaseKey: PHASE_1_KEY }],
+        }),
+      ], [phase({ key: PHASE_1_KEY, identity: PHASE_1_IDENTITY, diskStatus: 'complete' })]),
+    );
+    const summed = view.groups.reduce(
+      (acc, group) => ({
+        covered: acc.covered + group.coverage.covered,
+        mismatched: acc.mismatched + group.coverage.mismatched,
+        uncovered: acc.uncovered + group.coverage.uncovered,
+      }),
+      { covered: 0, mismatched: 0, uncovered: 0 },
+    );
+
+    expect(summed).toEqual({
+      covered: view.coverage.covered,
+      mismatched: view.coverage.mismatched,
+      uncovered: view.coverage.uncovered,
+    });
+  });
+
+  it('Test 3: against fixtures/dense, every group\'s three bucket counts sum to that group\'s own row count', async () => {
+    const root = resolve('fixtures/dense');
+    const repository = new PlanningRepository(new LocalFsPlanningFilesystem(root), root);
+    const snapshot = await repository.load();
+    const presentation = toProjectPresentation(snapshot);
+    const view = buildTraceabilityViewModel(presentation);
+
+    for (const group of view.groups) {
+      expect(group.coverage.covered + group.coverage.mismatched + group.coverage.uncovered).toBe(
+        group.rows.length,
+      );
+    }
+  });
+});
+
 function traceabilityRow(overrides: Partial<TraceabilityRow> = {}): TraceabilityRow {
   return {
     id: 'TGT-01',
