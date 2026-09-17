@@ -44,10 +44,23 @@ export interface TraceabilityCounts {
   disagreement: number;
 }
 
+/** A disjoint three-way partition of a row scope (the whole view, or a single category) — every
+ * row lands in exactly one of covered/mismatched/uncovered, and the three always sum to total.
+ * `coveragePercent` treats a mismatched row as covered (it does have a covering phase), rounds to
+ * a whole number, and reports 0 for an empty scope rather than dividing by zero. */
+export interface TraceabilityCoverage {
+  total: number;
+  covered: number;
+  mismatched: number;
+  uncovered: number;
+  coveragePercent: number;
+}
+
 export interface TraceabilityViewModel {
   groups: TraceabilityGroup[];
   deferredRows: TraceabilityRow[];
   counts: TraceabilityCounts;
+  coverage: TraceabilityCoverage;
 }
 
 function phasesByKey(presentation: ProjectPresentation): Map<string, PhaseDto> {
@@ -101,6 +114,19 @@ function disagreesWithAnyCovering(
     const phaseComplete = covering.phaseDiskStatus === 'complete';
     return phaseComplete !== requirementStatus;
   });
+}
+
+/** Derives the disjoint covered/mismatched/uncovered partition (see TraceabilityCoverage) from a
+ * row scope. Module-local: both the whole-view coverage and each group's own coverage call this
+ * same function over their own rows so the two can never drift apart via a second, divergent
+ * counting rule. */
+function coverageOf(rows: TraceabilityRow[]): TraceabilityCoverage {
+  const total = rows.length;
+  const uncovered = rows.filter((row) => row.uncovered).length;
+  const mismatched = rows.filter((row) => row.coveringPhases.length > 0 && row.statusDisagreement).length;
+  const covered = total - uncovered - mismatched;
+  const coveragePercent = total === 0 ? 0 : Math.round(((covered + mismatched) / total) * 100);
+  return { total, covered, mismatched, uncovered, coveragePercent };
 }
 
 function traceabilityRow(requirement: RequirementDto, phaseByKey: Map<string, PhaseDto>): TraceabilityRow {
@@ -164,5 +190,6 @@ export function buildTraceabilityViewModel(presentation: ProjectPresentation): T
       uncovered: allRows.filter((row) => row.uncovered).length,
       disagreement: allRows.filter((row) => row.statusDisagreement).length,
     },
+    coverage: coverageOf(allRows),
   };
 }

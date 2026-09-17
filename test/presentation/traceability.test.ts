@@ -229,6 +229,76 @@ describe('buildTraceabilityViewModel', () => {
   });
 });
 
+describe('TraceabilityCoverage (NS4 Task 1)', () => {
+  it('Test 1: a scope of rows partitions into three disjoint buckets that sum to the total', () => {
+    const coveredPhase = phase({ key: PHASE_1_KEY, identity: PHASE_1_IDENTITY, diskStatus: 'complete' });
+    const view = buildTraceabilityViewModel(
+      presentationWith(
+        [
+          requirement({ id: 'A-01', checked: true, coveringPhases: [{ raw: 'Phase 1', targetPhaseKey: PHASE_1_KEY }] }),
+          requirement({ id: 'A-02', checked: false, coveringPhases: [{ raw: 'Phase 1', targetPhaseKey: PHASE_1_KEY }] }),
+          requirement({ id: 'A-03', checked: true, coveringPhases: [] }),
+        ],
+        [coveredPhase],
+      ),
+    );
+
+    expect(view.coverage.total).toBe(3);
+    expect(view.coverage.covered + view.coverage.mismatched + view.coverage.uncovered).toBe(3);
+  });
+
+  it('Test 2: uncovered and mismatched can never both be true for one row', () => {
+    const req = requirement({ checked: true, coveringPhases: [] });
+    const view = buildTraceabilityViewModel(presentationWith([req]));
+    const row = allRows(view.groups)[0];
+
+    expect(row.uncovered).toBe(true);
+    expect(row.statusDisagreement).toBe(false);
+    expect(view.coverage.uncovered).toBe(1);
+    expect(view.coverage.mismatched).toBe(0);
+  });
+
+  it('Test 3: coveragePercent is (covered + mismatched) / total as a whole number — a mismatched row counts as covered', () => {
+    const inProgressPhase = phase({ key: PHASE_1_KEY, identity: PHASE_1_IDENTITY, diskStatus: 'in_progress' });
+    const mismatchedReq = requirement({
+      id: 'A-01',
+      checked: true,
+      coveringPhases: [{ raw: 'Phase 1', targetPhaseKey: PHASE_1_KEY }],
+    });
+    const uncoveredReq = requirement({ id: 'A-02', checked: true, coveringPhases: [] });
+    const view = buildTraceabilityViewModel(presentationWith([mismatchedReq, uncoveredReq], [inProgressPhase]));
+
+    expect(view.coverage.mismatched).toBe(1);
+    expect(view.coverage.uncovered).toBe(1);
+    expect(view.coverage.coveragePercent).toBe(50);
+  });
+
+  it('Test 4: an empty requirements array yields an all-zero coverage and a 0 percent, with no thrown error', () => {
+    expect(() => buildTraceabilityViewModel(presentationWith([]))).not.toThrow();
+    const view = buildTraceabilityViewModel(presentationWith([]));
+
+    expect(view.coverage).toEqual({ total: 0, covered: 0, mismatched: 0, uncovered: 0, coveragePercent: 0 });
+  });
+
+  it('Test 5: counts stays exactly the three pre-existing keys — the new projection never widens it', () => {
+    const view = buildTraceabilityViewModel(presentationWith([requirement()]));
+
+    expect(Object.keys(view.counts).sort()).toEqual(['disagreement', 'total', 'uncovered']);
+  });
+
+  it('Test 6: against fixtures/dense, coverage totals equal the sum of each group\'s own row count', async () => {
+    const root = resolve('fixtures/dense');
+    const repository = new PlanningRepository(new LocalFsPlanningFilesystem(root), root);
+    const snapshot = await repository.load();
+    const presentation = toProjectPresentation(snapshot);
+    const view = buildTraceabilityViewModel(presentation);
+    const totalRows = view.groups.reduce((sum, group) => sum + group.rows.length, 0);
+
+    expect(view.coverage.total).toBe(totalRows);
+    expect(view.coverage.covered + view.coverage.mismatched + view.coverage.uncovered).toBe(totalRows);
+  });
+});
+
 function traceabilityRow(overrides: Partial<TraceabilityRow> = {}): TraceabilityRow {
   return {
     id: 'TGT-01',
