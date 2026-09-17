@@ -57,7 +57,9 @@ describe('traceability redesign — summary strip (NS4-01, NS4-04, D-02, Task 1)
     expect(page).toContain('<section className="trace-summary"');
 
     const summary = extractElement(page, '<section className="trace-summary"');
-    expect(summary, 'search input nested inside the summary strip').toContain('className="trace-filters"');
+    expect(summary, 'search input nested inside the summary strip').toContain(
+      'className="trace-filters"',
+    );
     expect(summary, 'status filter group nested inside the summary strip').toContain(
       'className="trace-status-filters"',
     );
@@ -70,7 +72,8 @@ describe('traceability redesign — summary strip (NS4-01, NS4-04, D-02, Task 1)
     expect(barTag![0]).toContain('role="img"');
     expect(barTag![0]).toMatch(/aria-label=/);
 
-    const segmentMatches = page.match(/className="trace-bar-segment[^"]*"\s+aria-hidden="true"/g) ?? [];
+    const segmentMatches =
+      page.match(/className="trace-bar-segment[^"]*"\s+aria-hidden="true"/g) ?? [];
     expect(segmentMatches.length).toBeGreaterThanOrEqual(3);
   });
 
@@ -79,7 +82,7 @@ describe('traceability redesign — summary strip (NS4-01, NS4-04, D-02, Task 1)
     expect(page).toMatch(/if \(coverage\.total === 0\) return null;/);
   });
 
-  it('reads the stat tiles from the projection\'s own coverage fields, never a component recount', async () => {
+  it("reads the stat tiles from the projection's own coverage fields, never a component recount", async () => {
     const page = await source('src/web/pages/traceability-page.tsx');
     expect(page).toContain('{view.coverage.total}');
     expect(page).toContain('{view.coverage.uncovered}');
@@ -98,7 +101,7 @@ describe('traceability redesign — summary strip (NS4-01, NS4-04, D-02, Task 1)
     const page = await source('src/web/pages/traceability-page.tsx');
     expect(page).toContain('function RequirementStatusChip');
     expect(page).toContain("data-tone={status ? 'complete' : 'quiet'}");
-    expect(page).toContain("data-tone=\"destructive\"");
+    expect(page).toContain('data-tone="destructive"');
   });
 
   it('token-guards the new summary-strip rules — no raw colour, length or type literal outside the token blocks', async () => {
@@ -127,7 +130,9 @@ describe('traceability redesign — per-category bars and hierarchical rows (NS4
 
   it('renders each category section with its own labelled coverage bar', async () => {
     const page = await source('src/web/pages/traceability-page.tsx');
-    expect(page).toContain('<CoverageBar coverage={group.coverage} label={`${group.category} coverage`} />');
+    expect(page).toContain(
+      '<CoverageBar coverage={group.coverage} label={`${group.category} coverage`} />',
+    );
   });
 
   it('reads the category bar from group.coverage rather than recomputing over the filtered row subset', async () => {
@@ -162,10 +167,81 @@ describe('traceability redesign — per-category bars and hierarchical rows (NS4
     }
   });
 
-  it('still leaves .coverage-table-boundary\'s rules in place for plan-pair-page.tsx', async () => {
+  it("still leaves .coverage-table-boundary's rules in place for plan-pair-page.tsx", async () => {
     const css = await source('src/web/styles/globals.css');
     expect(ruleBlocks(css, '.coverage-table-boundary {')[0]).toBeDefined();
     const planPair = await source('src/web/pages/plan-pair-page.tsx');
     expect(planPair).toContain('coverage-table-boundary');
+  });
+});
+
+/** Blanks out `/* ... *\/` block comments while preserving line counts, mirroring
+ * test/token-guard.test.ts's stripCssComments — so a prose mention of a history-* class name
+ * inside a comment can never satisfy or break the selector-count pin below. */
+function stripCssComments(css: string): string {
+  return css.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '));
+}
+
+// Measured against the stylesheet immediately before this task's edits (git blame:
+// quick-260917-ns4 Task 2 commit) — Task 3 adds no history-prefixed CSS rule at all, reusing
+// every one of roadmap-page.tsx's existing global, un-scoped .history-* rules verbatim.
+const HISTORY_SELECTOR_LINE_COUNT_BEFORE_TASK_3 = 21;
+
+describe('traceability redesign — deferred tiers under the reused History treatment (NS4-03, NS4-04, D-03, Task 3)', () => {
+  it('imports History and ChevronRight from lucide and renders all four history class names', async () => {
+    const page = await source('src/web/pages/traceability-page.tsx');
+    expect(page).toMatch(
+      /import\s*\{[^}]*\bChevronRight\b[^}]*\bHistory\b[^}]*\}\s*from\s*'lucide-react'/,
+    );
+    expect(page).toContain('className="history-section"');
+    expect(page).toContain('className="history-list"');
+    expect(page).toContain('className="history-milestone"');
+    expect(page).toContain('className="history-tree"');
+  });
+
+  it('declares no new history-prefixed rule in globals.css', async () => {
+    const css = stripCssComments(await source('src/web/styles/globals.css'));
+    const historySelectorLines = css.split('\n').filter((line) => /\.history-[\w-]+/.test(line));
+    expect(historySelectorLines.length).toBe(HISTORY_SELECTOR_LINE_COUNT_BEFORE_TASK_3);
+  });
+
+  it('the history toggle reuses the existing filter-button class and carries aria-pressed, reflecting includeHistory', async () => {
+    const page = await source('src/web/pages/traceability-page.tsx');
+    expect(page).toMatch(
+      /data-active=\{filter\.includeHistory \? 'true' : undefined\}\s*\n\s*aria-pressed=\{filter\.includeHistory\}/,
+    );
+  });
+
+  it('reads deferredTiers rather than re-grouping deferredRows in the component', async () => {
+    const page = await source('src/web/pages/traceability-page.tsx');
+    expect(page).toContain('view.deferredTiers.map((tier) =>');
+    expect(page).not.toMatch(/deferredRows\.reduce|deferredRows\.filter\(\(row\) => row\.tier/);
+  });
+
+  it('governs deferred-tier filtering through matchesDeferredTraceabilityFilter, not a second predicate', async () => {
+    const page = await source('src/web/pages/traceability-page.tsx');
+    expect(page).toContain('matchesDeferredTraceabilityFilter');
+
+    const filterModule = await source('src/web/pages/traceability-filter.ts');
+    expect(filterModule).toContain('export function matchesDeferredTraceabilityFilter');
+    expect(filterModule).toContain('includeHistory: boolean');
+  });
+
+  it('the disclosure effect only ever opens a tier — it never sets open to false', async () => {
+    const page = await source('src/web/pages/traceability-page.tsx');
+    const start = page.indexOf('function DeferredTierDisclosure');
+    const end = page.indexOf('\nexport function TraceabilityPage');
+    expect(start, 'DeferredTierDisclosure declaration').toBeGreaterThan(-1);
+    expect(end, 'TraceabilityPage declaration (body end marker)').toBeGreaterThan(start);
+    const body = page.slice(start, end);
+    expect(body).not.toMatch(/\.open\s*=\s*false/);
+    expect(body).toMatch(/\.open\s*=\s*true/);
+  });
+
+  it('preserves the EmptyState import, the bare element and the filter-result absence sentence', async () => {
+    const page = await source('src/web/pages/traceability-page.tsx');
+    expect(page).toContain("import { EmptyState } from '../components/empty-state.tsx';");
+    expect(page).toContain('<EmptyState />');
+    expect(page).toContain('No requirements match the current filter.');
   });
 });

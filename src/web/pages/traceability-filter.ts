@@ -9,9 +9,18 @@ export type TraceabilityStatusFilter = 'all' | 'uncovered' | 'disagreement';
 export interface TraceabilityFilterState {
   query: string;
   status: TraceabilityStatusFilter;
+  /** NS4-04/D-03: off by default. Off means the deferred tiers render every row they hold,
+   * untouched by query/status; on means the same query/status rules apply to them too. A
+   * separate axis from `status` — it governs *whether* the filter reaches the deferred tiers at
+   * all, not *how* it filters them. */
+  includeHistory: boolean;
 }
 
-export const DEFAULT_TRACEABILITY_FILTER: TraceabilityFilterState = { query: '', status: 'all' };
+export const DEFAULT_TRACEABILITY_FILTER: TraceabilityFilterState = {
+  query: '',
+  status: 'all',
+  includeHistory: false,
+};
 
 /** D-14: narrows by requirement ID or requirement text (case-insensitive), then isolates the two
  * highest-value slices — uncovered rows and rows whose two status signals disagree. Local
@@ -31,4 +40,16 @@ export function matchesTraceabilityFilter(
   if (filter.status === 'uncovered') return row.uncovered;
   if (filter.status === 'disagreement') return row.statusDisagreement;
   return true;
+}
+
+/** NS4-04/D-03: the deferred-tier gate. With `includeHistory` false a deferred row matches
+ * unconditionally, regardless of query or status — the tiers stay unfiltered while the toggle is
+ * off. With it true the row is subject to the exact same query/status rules an active row would
+ * be, via a delegate call rather than a second, divergent matching rule. */
+export function matchesDeferredTraceabilityFilter(
+  row: TraceabilityRow,
+  filter: TraceabilityFilterState,
+): boolean {
+  if (!filter.includeHistory) return true;
+  return matchesTraceabilityFilter(row, filter);
 }
