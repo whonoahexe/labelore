@@ -7,7 +7,12 @@ import { toProjectPresentation } from '../../src/server/project-presentation.ts'
 import { createApp } from '../../src/server/index.ts';
 import { buildPhaseUrl, phaseKeyOf } from '../../src/presentation/routes.ts';
 import { buildTraceabilityViewModel, type TraceabilityGroup, type TraceabilityRow } from '../../src/presentation/traceability.ts';
-import { matchesTraceabilityFilter, type TraceabilityFilterState } from '../../src/web/pages/traceability-filter.ts';
+import {
+  DEFAULT_TRACEABILITY_FILTER,
+  matchesDeferredTraceabilityFilter,
+  matchesTraceabilityFilter,
+  type TraceabilityFilterState,
+} from '../../src/web/pages/traceability-filter.ts';
 
 const PHASE_1_IDENTITY = { milestoneVersion: null, number: '01', projectCode: null, slug: 'first' };
 const PHASE_2_IDENTITY = { milestoneVersion: null, number: '02', projectCode: null, slug: 'second' };
@@ -229,6 +234,140 @@ describe('buildTraceabilityViewModel', () => {
   });
 });
 
+describe('TraceabilityCoverage (NS4 Task 1)', () => {
+  it('Test 1: a scope of rows partitions into three disjoint buckets that sum to the total', () => {
+    const coveredPhase = phase({ key: PHASE_1_KEY, identity: PHASE_1_IDENTITY, diskStatus: 'complete' });
+    const view = buildTraceabilityViewModel(
+      presentationWith(
+        [
+          requirement({ id: 'A-01', checked: true, coveringPhases: [{ raw: 'Phase 1', targetPhaseKey: PHASE_1_KEY }] }),
+          requirement({ id: 'A-02', checked: false, coveringPhases: [{ raw: 'Phase 1', targetPhaseKey: PHASE_1_KEY }] }),
+          requirement({ id: 'A-03', checked: true, coveringPhases: [] }),
+        ],
+        [coveredPhase],
+      ),
+    );
+
+    expect(view.coverage.total).toBe(3);
+    expect(view.coverage.covered + view.coverage.mismatched + view.coverage.uncovered).toBe(3);
+  });
+
+  it('Test 2: uncovered and mismatched can never both be true for one row', () => {
+    const req = requirement({ checked: true, coveringPhases: [] });
+    const view = buildTraceabilityViewModel(presentationWith([req]));
+    const row = allRows(view.groups)[0];
+
+    expect(row.uncovered).toBe(true);
+    expect(row.statusDisagreement).toBe(false);
+    expect(view.coverage.uncovered).toBe(1);
+    expect(view.coverage.mismatched).toBe(0);
+  });
+
+  it('Test 3: coveragePercent is (covered + mismatched) / total as a whole number — a mismatched row counts as covered', () => {
+    const inProgressPhase = phase({ key: PHASE_1_KEY, identity: PHASE_1_IDENTITY, diskStatus: 'in_progress' });
+    const mismatchedReq = requirement({
+      id: 'A-01',
+      checked: true,
+      coveringPhases: [{ raw: 'Phase 1', targetPhaseKey: PHASE_1_KEY }],
+    });
+    const uncoveredReq = requirement({ id: 'A-02', checked: true, coveringPhases: [] });
+    const view = buildTraceabilityViewModel(presentationWith([mismatchedReq, uncoveredReq], [inProgressPhase]));
+
+    expect(view.coverage.mismatched).toBe(1);
+    expect(view.coverage.uncovered).toBe(1);
+    expect(view.coverage.coveragePercent).toBe(50);
+  });
+
+  it('Test 4: an empty requirements array yields an all-zero coverage and a 0 percent, with no thrown error', () => {
+    expect(() => buildTraceabilityViewModel(presentationWith([]))).not.toThrow();
+    const view = buildTraceabilityViewModel(presentationWith([]));
+
+    expect(view.coverage).toEqual({ total: 0, covered: 0, mismatched: 0, uncovered: 0, coveragePercent: 0 });
+  });
+
+  it('Test 5: counts stays exactly the three pre-existing keys — the new projection never widens it', () => {
+    const view = buildTraceabilityViewModel(presentationWith([requirement()]));
+
+    expect(Object.keys(view.counts).sort()).toEqual(['disagreement', 'total', 'uncovered']);
+  });
+
+  it('Test 6: against fixtures/dense, coverage totals equal the sum of each group\'s own row count', async () => {
+    const root = resolve('fixtures/dense');
+    const repository = new PlanningRepository(new LocalFsPlanningFilesystem(root), root);
+    const snapshot = await repository.load();
+    const presentation = toProjectPresentation(snapshot);
+    const view = buildTraceabilityViewModel(presentation);
+    const totalRows = view.groups.reduce((sum, group) => sum + group.rows.length, 0);
+
+    expect(view.coverage.total).toBe(totalRows);
+    expect(view.coverage.covered + view.coverage.mismatched + view.coverage.uncovered).toBe(totalRows);
+  });
+});
+
+describe('TraceabilityGroup.coverage (NS4 Task 2)', () => {
+  it('Test 1: each group carries its own coverage, derived from that group\'s rows only', () => {
+    const view = buildTraceabilityViewModel(
+      presentationWith([
+        requirement({ id: 'A-01', category: 'Alpha', checked: true, coveringPhases: [] }),
+        requirement({ id: 'A-02', category: 'Alpha', checked: true, coveringPhases: [] }),
+        requirement({
+          id: 'B-01',
+          category: 'Beta',
+          checked: true,
+          coveringPhases: [{ raw: 'Phase 1', targetPhaseKey: PHASE_1_KEY }],
+        }),
+      ], [phase({ key: PHASE_1_KEY, identity: PHASE_1_IDENTITY, diskStatus: 'complete' })]),
+    );
+    const alpha = view.groups.find((group) => group.category === 'Alpha')!;
+    const beta = view.groups.find((group) => group.category === 'Beta')!;
+
+    expect(alpha.coverage.coveragePercent).toBe(0);
+    expect(beta.coverage.coveragePercent).toBe(100);
+  });
+
+  it('Test 2: summing covered/mismatched/uncovered across every group equals the whole-view coverage', () => {
+    const view = buildTraceabilityViewModel(
+      presentationWith([
+        requirement({ id: 'A-01', category: 'Alpha', checked: true, coveringPhases: [] }),
+        requirement({
+          id: 'B-01',
+          category: 'Beta',
+          checked: true,
+          coveringPhases: [{ raw: 'Phase 1', targetPhaseKey: PHASE_1_KEY }],
+        }),
+      ], [phase({ key: PHASE_1_KEY, identity: PHASE_1_IDENTITY, diskStatus: 'complete' })]),
+    );
+    const summed = view.groups.reduce(
+      (acc, group) => ({
+        covered: acc.covered + group.coverage.covered,
+        mismatched: acc.mismatched + group.coverage.mismatched,
+        uncovered: acc.uncovered + group.coverage.uncovered,
+      }),
+      { covered: 0, mismatched: 0, uncovered: 0 },
+    );
+
+    expect(summed).toEqual({
+      covered: view.coverage.covered,
+      mismatched: view.coverage.mismatched,
+      uncovered: view.coverage.uncovered,
+    });
+  });
+
+  it('Test 3: against fixtures/dense, every group\'s three bucket counts sum to that group\'s own row count', async () => {
+    const root = resolve('fixtures/dense');
+    const repository = new PlanningRepository(new LocalFsPlanningFilesystem(root), root);
+    const snapshot = await repository.load();
+    const presentation = toProjectPresentation(snapshot);
+    const view = buildTraceabilityViewModel(presentation);
+
+    for (const group of view.groups) {
+      expect(group.coverage.covered + group.coverage.mismatched + group.coverage.uncovered).toBe(
+        group.rows.length,
+      );
+    }
+  });
+});
+
 function traceabilityRow(overrides: Partial<TraceabilityRow> = {}): TraceabilityRow {
   return {
     id: 'TGT-01',
@@ -245,7 +384,7 @@ function traceabilityRow(overrides: Partial<TraceabilityRow> = {}): Traceability
 }
 
 function filterState(overrides: Partial<TraceabilityFilterState> = {}): TraceabilityFilterState {
-  return { query: '', status: 'all', ...overrides };
+  return { query: '', status: 'all', includeHistory: false, ...overrides };
 }
 
 describe('matchesTraceabilityFilter (Task 3)', () => {
@@ -320,5 +459,59 @@ describe('matchesTraceabilityFilter (Task 3)', () => {
     // never a `.filter(...).length` recount performed in the component.
     expect(view.counts.total).toBe(2);
     expect(view.counts.uncovered).toBe(1);
+  });
+});
+
+describe('deferredTiers (NS4 Task 3)', () => {
+  it('Test 1: groups deferredRows by tier in first-appearance order; every deferred row appears in exactly one tier; deferredRows itself is unchanged', () => {
+    const view = buildTraceabilityViewModel(
+      presentationWith([
+        requirement({ id: 'V2-01', tier: 'v2', checked: null }),
+        requirement({ id: 'V3-01', tier: 'v3', checked: null }),
+        requirement({ id: 'V2-02', tier: 'v2', checked: null }),
+      ]),
+    );
+
+    expect(view.deferredTiers.map((tier) => tier.tier)).toEqual(['v2', 'v3']);
+    expect(view.deferredTiers[0].rows.map((row) => row.id)).toEqual(['V2-01', 'V2-02']);
+    expect(view.deferredTiers[1].rows.map((row) => row.id)).toEqual(['V3-01']);
+    expect(view.deferredRows.map((row) => row.id)).toEqual(['V2-01', 'V3-01', 'V2-02']);
+
+    const tieredIds = view.deferredTiers.flatMap((tier) => tier.rows.map((row) => row.id));
+    expect(new Set(tieredIds).size).toBe(tieredIds.length);
+    expect(new Set(tieredIds)).toEqual(new Set(view.deferredRows.map((row) => row.id)));
+  });
+
+  it('Test 2: a corpus with no deferred requirements yields an empty deferredTiers array, not a single empty tier', () => {
+    const view = buildTraceabilityViewModel(presentationWith([requirement({ checked: true })]));
+
+    expect(view.deferredTiers).toEqual([]);
+  });
+});
+
+describe('includeHistory filter axis (NS4 Task 3)', () => {
+  it('Test 3: DEFAULT_TRACEABILITY_FILTER carries includeHistory set to false', () => {
+    expect(DEFAULT_TRACEABILITY_FILTER.includeHistory).toBe(false);
+  });
+
+  it('Test 4: matchesTraceabilityFilter is unchanged for active-tier rows with the new field present', () => {
+    const row = traceabilityRow({ id: 'TGT-01', text: 'Dashboard renders the project path' });
+
+    expect(matchesTraceabilityFilter(row, filterState({ query: 'tgt-01', includeHistory: true }))).toBe(true);
+    expect(matchesTraceabilityFilter(row, filterState({ query: 'no-match', includeHistory: false }))).toBe(false);
+  });
+
+  it('Test 5: includeHistory governs whether deferred tiers are filtered at all', () => {
+    const row = traceabilityRow({ id: 'V2-01', text: 'Some deferred requirement', uncovered: true });
+
+    // Off: matches regardless of query/status.
+    expect(matchesDeferredTraceabilityFilter(row, filterState({ query: 'no-match-at-all', includeHistory: false }))).toBe(
+      true,
+    );
+    // On: subject to the same query/status rules as an active row.
+    expect(matchesDeferredTraceabilityFilter(row, filterState({ query: 'no-match-at-all', includeHistory: true }))).toBe(
+      false,
+    );
+    expect(matchesDeferredTraceabilityFilter(row, filterState({ query: 'deferred', includeHistory: true }))).toBe(true);
   });
 });

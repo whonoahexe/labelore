@@ -4,7 +4,11 @@
 // computes a merged/derived verdict from them (see 03-04-PLAN.md's prohibitions and
 // T-03-04-04). No filesystem I/O, no second walk of the planning tree — same shape as
 // roadmap.ts and coverage.ts.
-import type { PhaseDto, ProjectPresentation, RequirementDto } from '../server/project-presentation.ts';
+import type {
+  PhaseDto,
+  ProjectPresentation,
+  RequirementDto,
+} from '../server/project-presentation.ts';
 import { buildPhaseUrl } from './routes.ts';
 
 export interface TraceabilityCoveringPhase {
@@ -33,21 +37,47 @@ export interface TraceabilityRow {
   statusDisagreement: boolean;
 }
 
-export interface TraceabilityGroup {
-  category: string;
-  rows: TraceabilityRow[];
-}
-
 export interface TraceabilityCounts {
   total: number;
   uncovered: number;
   disagreement: number;
 }
 
+/** A disjoint three-way partition of a row scope (the whole view, or a single category) — every
+ * row lands in exactly one of covered/mismatched/uncovered, and the three always sum to total.
+ * `coveragePercent` treats a mismatched row as covered (it does have a covering phase), rounds to
+ * a whole number, and reports 0 for an empty scope rather than dividing by zero. */
+export interface TraceabilityCoverage {
+  total: number;
+  covered: number;
+  mismatched: number;
+  uncovered: number;
+  coveragePercent: number;
+}
+
+export interface TraceabilityGroup {
+  category: string;
+  rows: TraceabilityRow[];
+  /** This category's own coverage, computed over its own rows only — independent of any sibling
+   * category's figures and never recomputed from a filtered subset (see Task 2's
+   * filteredGroups note in traceability-page.tsx). */
+  coverage: TraceabilityCoverage;
+}
+
+/** Deferred (checkbox-less) rows grouped by their raw tier heading string — the discretion
+ * resolution in 260917-ns4-PLAN.md fixes History grouping to the tier string alone, since the
+ * archived per-milestone REQUIREMENTS.md corpora never reach this projection. */
+export interface TraceabilityDeferredTier {
+  tier: string;
+  rows: TraceabilityRow[];
+}
+
 export interface TraceabilityViewModel {
   groups: TraceabilityGroup[];
   deferredRows: TraceabilityRow[];
+  deferredTiers: TraceabilityDeferredTier[];
   counts: TraceabilityCounts;
+  coverage: TraceabilityCoverage;
 }
 
 function phasesByKey(presentation: ProjectPresentation): Map<string, PhaseDto> {
@@ -65,7 +95,9 @@ function coveringPhaseOf(
   // A reference whose targetPhaseKey is null while its raw string is non-empty is, by
   // construction, the dangling case (D-15) — no new resolution logic is required here, this is a
   // rendering rule over data the presentation already resolved correctly.
-  const phase = reference.targetPhaseKey ? (phaseByKey.get(reference.targetPhaseKey) ?? null) : null;
+  const phase = reference.targetPhaseKey
+    ? (phaseByKey.get(reference.targetPhaseKey) ?? null)
+    : null;
   if (!phase) {
     return {
       raw: reference.raw,
@@ -103,7 +135,25 @@ function disagreesWithAnyCovering(
   });
 }
 
-function traceabilityRow(requirement: RequirementDto, phaseByKey: Map<string, PhaseDto>): TraceabilityRow {
+/** Derives the disjoint covered/mismatched/uncovered partition (see TraceabilityCoverage) from a
+ * row scope. Module-local: both the whole-view coverage and each group's own coverage call this
+ * same function over their own rows so the two can never drift apart via a second, divergent
+ * counting rule. */
+function coverageOf(rows: TraceabilityRow[]): TraceabilityCoverage {
+  const total = rows.length;
+  const uncovered = rows.filter((row) => row.uncovered).length;
+  const mismatched = rows.filter(
+    (row) => row.coveringPhases.length > 0 && row.statusDisagreement,
+  ).length;
+  const covered = total - uncovered - mismatched;
+  const coveragePercent = total === 0 ? 0 : Math.round(((covered + mismatched) / total) * 100);
+  return { total, covered, mismatched, uncovered, coveragePercent };
+}
+
+function traceabilityRow(
+  requirement: RequirementDto,
+  phaseByKey: Map<string, PhaseDto>,
+): TraceabilityRow {
   const coveringPhases = requirement.coveringPhases.map((reference) =>
     coveringPhaseOf(reference, phaseByKey),
   );
@@ -120,13 +170,19 @@ function traceabilityRow(requirement: RequirementDto, phaseByKey: Map<string, Ph
   };
 }
 
-export function buildTraceabilityViewModel(presentation: ProjectPresentation): TraceabilityViewModel {
+export function buildTraceabilityViewModel(
+  presentation: ProjectPresentation,
+): TraceabilityViewModel {
   const phaseByKey = phasesByKey(presentation);
   // Groups are ordered by first appearance in the requirements array — a Map preserves insertion
   // order, so no separate sort step is needed and no alphabetical re-sort is introduced.
   const groupOrder: string[] = [];
   const rowsByCategory = new Map<string, TraceabilityRow[]>();
   const deferredRows: TraceabilityRow[] = [];
+  // Same insertion-ordered-Map idiom as the category grouping above — first-appearance order,
+  // no alphabetical re-sort.
+  const tierOrder: string[] = [];
+  const rowsByTier = new Map<string, TraceabilityRow[]>();
 
   for (const requirement of presentation.requirements) {
     const row = traceabilityRow(requirement, phaseByKey);
@@ -140,6 +196,13 @@ export function buildTraceabilityViewModel(presentation: ProjectPresentation): T
     // its first milestone — a TGT-03 regression this fixture-backed test exists to catch.
     if (requirement.checked === null) {
       deferredRows.push(row);
+      let tierRows = rowsByTier.get(row.tier);
+      if (!tierRows) {
+        tierRows = [];
+        rowsByTier.set(row.tier, tierRows);
+        tierOrder.push(row.tier);
+      }
+      tierRows.push(row);
       continue;
     }
     let rows = rowsByCategory.get(row.category);
@@ -151,18 +214,24 @@ export function buildTraceabilityViewModel(presentation: ProjectPresentation): T
     rows.push(row);
   }
 
-  const groups: TraceabilityGroup[] = groupOrder.map((category) => ({
-    category,
-    rows: rowsByCategory.get(category) ?? [],
+  const groups: TraceabilityGroup[] = groupOrder.map((category) => {
+    const rows = rowsByCategory.get(category) ?? [];
+    return { category, rows, coverage: coverageOf(rows) };
+  });
+  const deferredTiers: TraceabilityDeferredTier[] = tierOrder.map((tier) => ({
+    tier,
+    rows: rowsByTier.get(tier) ?? [],
   }));
   const allRows = groups.flatMap((group) => group.rows);
   return {
     groups,
     deferredRows,
+    deferredTiers,
     counts: {
       total: allRows.length,
       uncovered: allRows.filter((row) => row.uncovered).length,
       disagreement: allRows.filter((row) => row.statusDisagreement).length,
     },
+    coverage: coverageOf(allRows),
   };
 }
