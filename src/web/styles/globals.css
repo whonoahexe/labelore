@@ -81,8 +81,8 @@
     BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-heading: var(--font-mono);
   --font-mono:
-    'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Monaco, Consolas,
-    'Liberation Mono', monospace;
+    'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono',
+    monospace;
   /* quick-260910-0x4 item 8: the shared uppercase-micro-label size. Was three literal 0.62rem
      declarations (9.92px) and three literal 0.6rem declarations (9.6px, smaller still) scattered
      across .phase-facts dt, .blocked-by, .artifact-metadata > summary span, .warning-fields dt and
@@ -947,7 +947,8 @@ summary.tree-node-row:focus-visible {
 .preview-panel,
 .milestone-flow,
 .history-section,
-.notice {
+.notice,
+.trace-summary {
   border: 1px solid var(--border);
   background: var(--card-veil);
 }
@@ -2113,6 +2114,10 @@ pre {
   .blocked-by {
     text-align: left;
   }
+
+  .trace-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2571,7 +2576,9 @@ pre {
   color: var(--foreground);
   cursor: pointer;
   padding: 0;
-  transition: border-color 0.15s ease, color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .attention-pagination button:hover:not(:disabled),
@@ -3539,6 +3546,101 @@ pre {
   padding-left: var(--space-4);
 }
 
+/* NS4 (quick-260917-ns4): the at-a-glance coverage strip that also hosts the filter controls
+   (D-02). Joins the shared border+veil panel family declared above rather than inventing a new
+   surface, and declares no radius token — squared corners, matching the rest of the sheet. */
+.trace-summary {
+  display: grid;
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
+  padding: var(--space-6);
+}
+
+.trace-summary-headline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  align-items: center;
+}
+
+.trace-coverage-percent {
+  display: grid;
+  flex: none;
+  gap: var(--space-1);
+}
+
+.trace-coverage-percent-value {
+  font-family: var(--font-heading);
+  font-size: var(--fs-display-1);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-none);
+}
+
+.trace-coverage-percent-label {
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--font-size-micro-label);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+/* The three-segment proportional bar (D-01). Segments tile the full width and always sum to
+   100%, so the track itself needs no background colour of its own — only the border that frames
+   it. Bare palette tokens throughout: no color-mix() recipe is needed for three distinguishable,
+   already-token-backed tones. */
+.trace-bar {
+  display: flex;
+  flex: 1;
+  min-width: 12rem;
+  height: var(--space-3);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.trace-bar-segment {
+  height: 100%;
+}
+
+.trace-bar-covered {
+  background: var(--primary);
+}
+
+.trace-bar-mismatched {
+  background: var(--destructive);
+}
+
+.trace-bar-uncovered {
+  background: var(--border);
+}
+
+.trace-stat-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  margin: 0;
+}
+
+.trace-stat-tile {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.trace-stat-tile dt {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--font-size-micro-label);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.trace-stat-tile dd {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: var(--fs-5);
+  font-weight: var(--fw-semibold);
+}
+
 .trace-filters {
   display: flex;
   flex-wrap: wrap;
@@ -3605,6 +3707,71 @@ pre {
 .trace-category > h2,
 .trace-deferred > h2 {
   margin-bottom: var(--space-3);
+}
+
+/* NS4 Task 2 — each category's own proportion cue, dropped beneath the heading rather than
+   inline: the heading rule above already declares a bottom margin, so the bar fills that gap
+   without fighting the heading's own box, and a long category name can never squeeze it to
+   nothing. */
+.trace-category-bar {
+  margin-bottom: var(--space-4);
+}
+
+/* NS4 Task 2 — the hierarchical row list replacing the former ruled grid (NS4-05). ID and text
+   carry the primary line; status + covering-phase form a visually subordinate secondary block via
+   size/colour rather than a cell border. Collapses to one column under 42rem (see the shared
+   narrow-viewport media block above). */
+.trace-rows {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.trace-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: var(--space-3-5) var(--space-4);
+}
+
+.trace-row-primary {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-1);
+}
+
+.trace-row-id {
+  font-family: var(--font-heading);
+  font-size: var(--fs-3);
+  letter-spacing: var(--ls-wide);
+}
+
+.trace-row-text {
+  overflow-wrap: anywhere;
+  color: var(--foreground);
+  font-size: var(--fs-4);
+  line-height: var(--fs-4--lh);
+}
+
+.trace-row-secondary {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-3);
+  align-content: start;
+}
+
+.trace-row-micro-label {
+  display: block;
+  margin-bottom: var(--space-1);
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--font-size-micro-label);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
 }
 
 .trace-marker-stack {
