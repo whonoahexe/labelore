@@ -2,11 +2,11 @@
 gsd_state_version: "1.0"
 milestone: v1.0
 status: Awaiting next milestone
-stopped_at: "Completed quick task 260917-0yp: Parse per-milestone ROADMAP.md files for archived phases"
-last_updated: "2026-09-16T19:55:25.994Z"
-last_activity: 2026-09-16
-last_activity_desc: "Completed quick task 260917-0yp: Parse per-milestone ROADMAP.md files for archived phases"
-state_head: b53a9fe655b50a52b8dee18ddd158d16502c9e4c
+stopped_at: "Completed quick task 260917-wba: Fix visual/UX regressions on the redesigned traceability page"
+last_updated: "2026-09-18T13:20:29.344Z"
+last_activity: 2026-09-18
+last_activity_desc: "Completed quick task 260917-wba: Fix visual/UX regressions on the redesigned traceability page"
+state_head: 33ca7513c8fcf46370c04694ba05f87342b19f67
 current_phase: 04
 progress:
   total_phases: 4
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-10)
 Phase: Milestone v1.0 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-09-17 - Completed quick task 260917-ns4: Redesign the traceability page's UI/UX
+Last activity: 2026-09-18 - Completed quick task 260917-wba: Fix visual/UX regressions on the redesigned traceability page
 
 ## Performance Metrics
 
@@ -81,6 +81,8 @@ Decisions are logged in PROJECT.md Key Decisions table. v1.0's per-phase decisio
 milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) and in
 `milestones/v1.0-phases/*/*-SUMMARY.md`.
 
+- [Phase 04]: 260917-wba: fixed 7 visual/UX regressions on the redesigned traceability page — --traced-fill recipe + framed coverage bars, honest tracing headline, site-pattern filter input with height parity, track-and-thumb deferred toggle, restored .history-tree top padding, quiet-toned unscheduled chips, hairline-separated rows with inverted hierarchy
+
 ### Pending Todos
 
 None yet.
@@ -108,6 +110,7 @@ None.
 | 260917-0yp | Parse per-milestone ROADMAP.md files for archived phases | 2026-09-16 | 1076f46 | [260917-0yp-parse-per-milestone-roadmap-md-files-e-g](./quick/260917-0yp-parse-per-milestone-roadmap-md-files-e-g/) |
 | 14 | Fix plan-checklist regex stealing the next line's description for bare (no-description) checklist lines | 2026-09-16 | b53a9fe | — |
 | 260917-ns4 | Redesign the traceability page's UI/UX — coverage summary strip, per-category proportion bars, and deferred-tier grouping under the reused history treatment | 2026-09-17 | a06e2b8 | [260917-ns4-redesign-the-traceability-page-s-ui-ux-c](./quick/260917-ns4-redesign-the-traceability-page-s-ui-ux-c/) |
+| 260917-wba | Fix visual/UX regressions on the redesigned traceability page | 2026-09-18 | 33ca751 | [260917-wba-fix-visual-ux-regressions-on-the-redesig](./quick/260917-wba-fix-visual-ux-regressions-on-the-redesig/) |
 
 ## Deferred Items
 
@@ -124,8 +127,8 @@ Two v1.0 close-time verification overrides recorded below; the two earlier rows 
 
 ## Session Continuity
 
-Last session: 2026-09-16T19:41:50.405Z
-Stopped at: Completed quick task 260917-0yp: Parse per-milestone ROADMAP.md files for archived phases
+Last session: 2026-09-18T13:20:21.577Z
+Stopped at: Completed quick task 260917-wba: Fix visual/UX regressions on the redesigned traceability page
 Resume file: None
 
 ## Operator Next Steps
