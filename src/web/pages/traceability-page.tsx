@@ -125,13 +125,21 @@ function CoverageBar({
 
 /** The hierarchical replacement for the former ruled table (NS4-05). Since the list carries no
  * column headers, each row's secondary block names what it's showing via a micro-label — the
- * information the removed header row used to carry, kept without adding a heading row back. */
+ * information the removed header row used to carry, kept without adding a heading row back.
+ * quick-260917-wba Task 3: the optional `variant` prop drives a deferred-tier presentation —
+ * every deferred row has a null requirement status by construction, so the Requirement-status
+ * block (and its guaranteed-em-dash chip) is noise there; a deferred row with no covering phase
+ * reads as "not yet scheduled" in a quiet tone rather than the alarming destructive "Uncovered"
+ * chip the default (active-tier) variant still shows. The default variant's markup is
+ * structurally identical to before this task. */
 function TraceabilityRowList({
   rows,
   labelledBy,
+  variant = 'default',
 }: {
   rows: TraceabilityRow[];
   labelledBy: string;
+  variant?: 'default' | 'deferred';
 }): React.JSX.Element {
   return (
     <ul className="trace-rows" aria-labelledby={labelledBy}>
@@ -142,36 +150,47 @@ function TraceabilityRowList({
             <span className="trace-row-text">{row.text}</span>
           </div>
           <div className="trace-row-secondary">
-            <div>
-              <span className="trace-row-micro-label">Requirement status</span>
-              <div className="trace-marker-stack">
-                <RequirementStatusChip status={row.requirementStatus} />
-                {row.statusDisagreement ? (
-                  <span className="status-chip trace-marker" data-tone="destructive">
-                    Status mismatch
-                  </span>
-                ) : null}
+            {variant !== 'deferred' ? (
+              <div>
+                <span className="trace-row-micro-label">Requirement status</span>
+                <div className="trace-marker-stack">
+                  <RequirementStatusChip status={row.requirementStatus} />
+                  {row.statusDisagreement ? (
+                    <span className="status-chip trace-marker" data-tone="destructive">
+                      Status mismatch
+                    </span>
+                  ) : null}
+                </div>
               </div>
-            </div>
-            <div>
-              <span className="trace-row-micro-label">Covering phase</span>
-              {row.uncovered ? (
-                <span className="status-chip trace-marker" data-tone="destructive">
-                  Uncovered
+            ) : null}
+            {variant === 'deferred' && row.uncovered ? (
+              <div>
+                <span className="trace-row-micro-label">Scheduling</span>
+                <span className="status-chip trace-marker" data-tone="quiet">
+                  Not yet scheduled
                 </span>
-              ) : (
-                <ul className="trace-covering-list">
-                  {row.coveringPhases.map((covering, index) => (
-                    <CoveringPhaseEntry
-                      key={`${row.id}-covering-${index}`}
-                      rowId={row.id}
-                      covering={covering}
-                      index={index}
-                    />
-                  ))}
-                </ul>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div>
+                <span className="trace-row-micro-label">Covering phase</span>
+                {row.uncovered ? (
+                  <span className="status-chip trace-marker" data-tone="destructive">
+                    Uncovered
+                  </span>
+                ) : (
+                  <ul className="trace-covering-list">
+                    {row.coveringPhases.map((covering, index) => (
+                      <CoveringPhaseEntry
+                        key={`${row.id}-covering-${index}`}
+                        rowId={row.id}
+                        covering={covering}
+                        index={index}
+                      />
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
         </li>
       ))}
@@ -217,7 +236,7 @@ function DeferredTierDisclosure({
         </span>
       </summary>
       <div className="history-tree">
-        <TraceabilityRowList rows={visibleRows} labelledBy={headingId} />
+        <TraceabilityRowList rows={visibleRows} labelledBy={headingId} variant="deferred" />
       </div>
     </details>
   );

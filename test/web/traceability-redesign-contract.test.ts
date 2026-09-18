@@ -324,3 +324,61 @@ describe('traceability visual/UX regression fixes (quick-260917-wba, Task 2 — 
     expect(pressedThumbBlock).toMatch(/transform:/);
   });
 });
+
+describe('traceability visual/UX regression fixes (quick-260917-wba, Task 3 — deferred-tier chips/padding, lighter rows)', () => {
+  it('.history-tree pads all four sides from one token, and the history selector-line count is unchanged', async () => {
+    const css = stripCssComments(await source('src/web/styles/globals.css'));
+    // Index 1: index 0 is the shared min-width/max-width selector-group rule that also happens
+    // to end in the exact line `.history-tree {` (see the shared-scroll-clamp block above); the
+    // rule this task edited is the standalone declaration further down the sheet.
+    const treeBlock = ruleBlocks(css, '.history-tree {')[1];
+    expect(treeBlock).toBeDefined();
+    expect(treeBlock).toMatch(/padding:\s*var\(--space-5\);/);
+
+    const historySelectorLines = css.split('\n').filter((line) => /\.history-[\w-]+/.test(line));
+    expect(historySelectorLines.length).toBe(HISTORY_SELECTOR_LINE_COUNT_BEFORE_TASK_3);
+  });
+
+  it('TraceabilityRowList accepts a variant prop, defaulting to "default", passed as "deferred" only from the disclosure', async () => {
+    const page = await source('src/web/pages/traceability-page.tsx');
+    expect(page).toMatch(/variant\s*=\s*'default'/);
+    expect(page).toContain(
+      '<TraceabilityRowList rows={visibleRows} labelledBy={headingId} variant="deferred" />',
+    );
+  });
+
+  it('the deferred branch renders a quiet-toned "not yet scheduled" chip and never the destructive tone', async () => {
+    const page = await source('src/web/pages/traceability-page.tsx');
+    const start = page.indexOf('function TraceabilityRowList');
+    const end = page.indexOf('\n/** One tier');
+    expect(start, 'TraceabilityRowList declaration').toBeGreaterThan(-1);
+    expect(end, 'DeferredTierDisclosure doc comment (body end marker)').toBeGreaterThan(start);
+    const body = page.slice(start, end);
+    expect(body).toContain("variant === 'deferred' && row.uncovered");
+    expect(body).toMatch(/data-tone="quiet"/);
+    expect(body).toMatch(/Not yet scheduled/);
+  });
+
+  it('.trace-row declares no border shorthand while an adjacent-sibling rule declares a top hairline', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [rowBlock] = ruleBlocks(css, '.trace-row {');
+    expect(rowBlock).toBeDefined();
+    expect(rowBlock).not.toMatch(/\bborder:/);
+
+    const [siblingBlock] = ruleBlocks(css, '.trace-row + .trace-row {');
+    expect(siblingBlock).toBeDefined();
+    expect(siblingBlock).toMatch(/border-top:\s*1px solid var\(--border\)/);
+  });
+
+  it('the row text outranks its ID: row-text steps up to fs-5, row-id demotes to the micro-label treatment', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [textBlock] = ruleBlocks(css, '.trace-row-text {');
+    expect(textBlock).toBeDefined();
+    expect(textBlock).toMatch(/font-size:\s*var\(--fs-5\)/);
+
+    const [idBlock] = ruleBlocks(css, '.trace-row-id {');
+    expect(idBlock).toBeDefined();
+    expect(idBlock).toMatch(/font-size:\s*var\(--font-size-micro-label\)/);
+    expect(idBlock).toMatch(/text-transform:\s*uppercase/);
+  });
+});

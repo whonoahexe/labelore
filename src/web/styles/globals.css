@@ -1770,7 +1770,7 @@ summary.tree-node-row:focus-visible {
 }
 
 .history-tree {
-  padding: 0 var(--space-5) var(--space-5);
+  padding: var(--space-5);
   border-top: 1px solid var(--border);
   opacity: 0.82;
 }
@@ -3813,10 +3813,12 @@ pre {
 /* NS4 Task 2 — the hierarchical row list replacing the former ruled grid (NS4-05). ID and text
    carry the primary line; status + covering-phase form a visually subordinate secondary block via
    size/colour rather than a cell border. Collapses to one column under 42rem (see the shared
-   narrow-viewport media block above). */
+   narrow-viewport media block above). quick-260917-wba Task 3: rows now separate with a single
+   hairline between siblings instead of a four-sided border per row, so the list reads as one
+   continuous sequence rather than a stack of heavy cards. */
 .trace-rows {
   display: grid;
-  gap: var(--space-3);
+  gap: 0;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -3826,9 +3828,16 @@ pre {
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
   gap: var(--space-4);
-  border: 1px solid var(--border);
   background: var(--card);
   padding: var(--space-3-5) var(--space-4);
+}
+
+.trace-row:hover {
+  background: var(--state-hover);
+}
+
+.trace-row + .trace-row {
+  border-top: 1px solid var(--border);
 }
 
 .trace-row-primary {
@@ -3837,17 +3846,21 @@ pre {
   gap: var(--space-1);
 }
 
+/* quick-260917-wba Task 3: demoted to the shared micro-label treatment so the requirement text
+   below it outranks the ID, matching every other micro-label/value pairing in this file. */
 .trace-row-id {
+  color: var(--muted-foreground);
   font-family: var(--font-heading);
-  font-size: var(--fs-3);
-  letter-spacing: var(--ls-wide);
+  font-size: var(--font-size-micro-label);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
 }
 
 .trace-row-text {
   overflow-wrap: anywhere;
   color: var(--foreground);
-  font-size: var(--fs-4);
-  line-height: var(--fs-4--lh);
+  font-size: var(--fs-5);
+  line-height: var(--fs-5--lh);
 }
 
 .trace-row-secondary {
@@ -3855,6 +3868,7 @@ pre {
   min-width: 0;
   gap: var(--space-3);
   align-content: start;
+  font-size: var(--fs-3);
 }
 
 .trace-row-micro-label {
