@@ -2138,10 +2138,6 @@ pre {
   .blocked-by {
     text-align: left;
   }
-
-  .trace-row {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3163,14 +3159,6 @@ pre {
     grid-template-columns: 1fr;
   }
 
-  .warning-fields {
-    grid-template-columns: 1fr;
-  }
-
-  .warning-fields dt:not(:first-child) {
-    margin-top: var(--space-1-5);
-  }
-
   .attention-pagination,
   .requirement-pagination {
     align-items: flex-start;
@@ -3579,6 +3567,20 @@ pre {
   overflow-wrap: anywhere;
 }
 
+/* quick-260918-qkd Task 3 (D1, QKD-08): moved here, immediately after the .warning-fields rules it
+   must beat, from the shared narrow-viewport media block far above — where it was defeated by the
+   later, equal-specificity .warning-fields base rule (the same source-order bug class as .trace-row,
+   found by a planning-time scan of every narrow-viewport override in this file). */
+@media (max-width: 42rem) {
+  .warning-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .warning-fields dt:not(:first-child) {
+    margin-top: var(--space-1-5);
+  }
+}
+
 .warning-fields-label {
   margin: var(--space-3) 0 var(--space-1);
   color: var(--muted-foreground);
@@ -3639,6 +3641,16 @@ pre {
 .trace-coverage-percent-note {
   max-width: 20rem;
   margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-2);
+}
+
+/* quick-260918-qkd Task 3 (E1, E2): styled like .trace-coverage-percent-note above — a quiet
+   disclosure that the deferred tiers below are unfiltered while the switch is off and a filter is
+   actually engaged, so the page never contradicts the rows it renders beneath the empty-scope
+   sentence. */
+.trace-deferred-filter-note {
+  margin: var(--space-1) 0 0;
   color: var(--muted-foreground);
   font-size: var(--fs-2);
 }
@@ -3778,15 +3790,17 @@ pre {
 
 /* quick-260917-wba Task 2: the deferred-tier control renders as a real track-and-thumb switch —
    distinct from the plain filter buttons beside it — while still belonging visually to the same
-   row (same min-height, border, padding scale, heading font, uppercase treatment). */
+   row (same min-height, heading font, uppercase treatment). quick-260918-qkd Task 3 (C1, C2, C3):
+   border/background/padding removed so the track and thumb are the control's only surface — the
+   old chrome measured identically to .trace-filter-button, and its hover rule's foreground colour
+   read louder than the adjacent button's genuine primary active state. Now a role="switch" with a
+   live aria-checked (see the page); its checked-state label speaks the same primary language as
+   .trace-filter-button[data-active='true'] below. */
 .trace-toggle {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
   min-height: var(--space-8);
-  border: 1px solid var(--border);
-  background: var(--background);
-  padding: var(--space-1-5) var(--space-3);
   color: var(--muted-foreground);
   cursor: pointer;
   font-family: var(--font-heading);
@@ -3796,8 +3810,6 @@ pre {
 }
 
 .trace-toggle:hover {
-  border-color: var(--foreground);
-  background: var(--state-hover);
   color: var(--foreground);
 }
 
@@ -3820,11 +3832,15 @@ pre {
   transition: transform 160ms ease;
 }
 
-.trace-toggle[aria-pressed='true'] .trace-toggle-track {
+.trace-toggle[aria-checked='true'] {
+  color: var(--primary);
+}
+
+.trace-toggle[aria-checked='true'] .trace-toggle-track {
   background: var(--primary-tint);
 }
 
-.trace-toggle[aria-pressed='true'] .trace-toggle-thumb {
+.trace-toggle[aria-checked='true'] .trace-toggle-thumb {
   background: var(--primary);
   transform: translateX(var(--space-3));
 }
@@ -3878,9 +3894,13 @@ pre {
   list-style: none;
 }
 
+/* quick-260918-qkd Task 3 (D2, D3, D5): the secondary column's content measures 150-290px while it
+   was allotted 468px at 1440 — bound to its content width instead, so ~400px returns to the
+   requirement text; align-items: start gives the two columns a shared top baseline. */
 .trace-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 20rem);
+  align-items: start;
   gap: var(--space-4);
   background: var(--card);
   padding: var(--space-3-5) var(--space-4);
@@ -3894,9 +3914,24 @@ pre {
   border-top: 1px solid var(--border);
 }
 
+/* quick-260918-qkd Task 3 (D1, QKD-08): the collapse used to live in the shared narrow-viewport
+   media block far above, where it was defeated by this later, equal-specificity base .trace-row
+   rule — moved here, immediately after the rule it must beat, so source order can never again
+   silently re-defeat it. See test/web/css-source-order.test.ts, which guards this bug class
+   generally. */
+@media (max-width: 42rem) {
+  .trace-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* quick-260918-qkd Task 3 (D2): align-content: start removes the dead vertical gap that used to
+   stretch between the ID label and the text it labels when the secondary column set a taller row
+   height. */
 .trace-row-primary {
   display: grid;
   min-width: 0;
+  align-content: start;
   gap: var(--space-1);
 }
 
@@ -3923,16 +3958,6 @@ pre {
   gap: var(--space-3);
   align-content: start;
   font-size: var(--fs-3);
-}
-
-.trace-row-micro-label {
-  display: block;
-  margin-bottom: var(--space-1);
-  color: var(--muted-foreground);
-  font-family: var(--font-heading);
-  font-size: var(--font-size-micro-label);
-  letter-spacing: var(--ls-wider);
-  text-transform: uppercase;
 }
 
 .trace-marker-stack {
