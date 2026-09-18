@@ -312,6 +312,82 @@ describe('traceability visual/UX regression fixes (quick-260917-wba, Task 1 — 
   });
 });
 
+describe('traceability visual/UX regression fixes (quick-260918-qkd Task 2 — token vocabulary, tones, two distinguishable signals)', () => {
+  it('each bar-segment rule resolves to its own named token, never transparent or a bare primary/destructive token', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const segments: Array<[string, string]> = [
+      ['.trace-bar-complete {', '--traced-fill'],
+      ['.trace-bar-in-flight {', '--in-flight-fill'],
+      ['.trace-bar-missing {', '--missing-fill'],
+      ['.trace-bar-unresolved {', '--unresolved-fill'],
+      ['.trace-bar-uncovered {', '--uncovered-fill'],
+    ];
+    for (const [selector, token] of segments) {
+      const [block] = ruleBlocks(css, selector);
+      expect(block, `${selector} block`).toBeDefined();
+      expect(block).toContain(`var(${token})`);
+      expect(block).not.toContain('transparent');
+      expect(block).not.toMatch(/background:\s*var\(--primary\)/);
+      expect(block).not.toMatch(/background:\s*var\(--destructive\)/);
+    }
+  });
+
+  it('declares all five recipe tokens once in the :root block, each derived from the existing palette', async () => {
+    const css = await source('src/web/styles/globals.css');
+    for (const token of [
+      '--traced-fill',
+      '--in-flight-fill',
+      '--missing-fill',
+      '--unresolved-fill',
+      '--uncovered-fill',
+    ]) {
+      const re = new RegExp(`${token}:\\s*color-mix\\(in oklch, var\\(--[\\w-]+\\)`);
+      expect(css, `${token} declared as a color-mix recipe`).toMatch(re);
+    }
+  });
+
+  it('both new chip tone rules exist and reference their own fill token as both border-color and color', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [inFlightBlock] = ruleBlocks(css, ".status-chip[data-tone='in-flight'] {");
+    const [missingBlock] = ruleBlocks(css, ".status-chip[data-tone='missing'] {");
+    expect(inFlightBlock).toBeDefined();
+    expect(inFlightBlock).toContain('var(--in-flight-fill)');
+    expect(missingBlock).toBeDefined();
+    expect(missingBlock).toContain('var(--missing-fill)');
+  });
+
+  it('the phase-signal marker rule exists on .status-chip[data-signal="phase"]::before', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [markerBlock] = ruleBlocks(css, ".status-chip[data-signal='phase']::before {");
+    expect(markerBlock).toBeDefined();
+    expect(markerBlock).toContain('background: currentColor');
+  });
+
+  it("the disk-status lookup in the page maps all four known statuses, falling back to 'quiet'", async () => {
+    const page = await source('src/web/pages/traceability-page.tsx');
+    expect(page).toMatch(/complete:\s*'complete'/);
+    expect(page).toMatch(/in_progress:\s*'in-flight'/);
+    expect(page).toMatch(/researched:\s*'in-flight'/);
+    expect(page).toMatch(/no_directory:\s*'missing'/);
+    expect(page).toContain("return 'quiet';");
+  });
+
+  it('the requirement chip renders Checked/Unchecked copy while the pinned tone ternary is byte-identical', async () => {
+    const page = await source('src/web/pages/traceability-page.tsx');
+    expect(page).toContain("data-tone={status ? 'complete' : 'quiet'}");
+    expect(page).toContain('{status ? \'Checked\' : \'Unchecked\'}');
+    expect(page).toContain('data-signal="requirement"');
+    expect(page).toContain('data-signal="phase"');
+  });
+
+  it('documents --ring as a deliberate literal beside its .dark declaration, without changing its value', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const darkBlock = ruleBlocks(css, '.dark {')[0]!;
+    expect(darkBlock).toMatch(/QKD-10[\s\S]*focus-ring-contrast\.test\.ts/);
+    expect(darkBlock).toMatch(/--ring:\s*oklch\(0\.56 0\.157 37\.304\);/);
+  });
+});
+
 describe('traceability visual/UX regression fixes (quick-260917-wba, Task 2 — filter row input, height parity, switch)', () => {
   it('.trace-filter-input references neither the frosted input token nor a raw colour literal, and declares a min-height', async () => {
     const css = await source('src/web/styles/globals.css');

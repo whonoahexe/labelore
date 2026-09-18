@@ -105,10 +105,25 @@
   --destructive-tint: color-mix(in oklch, var(--destructive) 8%, transparent);
   --destructive-border: color-mix(in oklch, var(--destructive) 55%, var(--border));
   --primary-tint: color-mix(in oklch, var(--primary) 9%, transparent);
-  /* quick-260917-wba Task 1: the traced-fill recipe for .trace-bar-covered — a muted-down primary,
-     not the raw accent token, so a fully-traced bar reads as a measurement tone rather than the
-     site's sparing full-strength accent colour repeated down the page. */
-  --traced-fill: color-mix(in oklch, var(--primary) 40%, var(--muted));
+  /* quick-260918-qkd Task 2: the five-bucket bar/chip tone vocabulary (A1-A4). Each recipe mixes
+     toward --foreground or --muted-foreground rather than --muted, so one string works correctly
+     in both themes — darkening in light, lightening in dark — instead of the old --traced-fill
+     shape (40% into --muted), which measured as a muddy maroon in dark and a washed pastel in
+     light. --traced-fill now backs .trace-bar-complete: full commitment, the accent read at high
+     strength against --foreground. */
+  --traced-fill: color-mix(in oklch, var(--primary) 80%, var(--foreground));
+  /* The accent, drained of commitment — backs .trace-bar-in-flight and the in-flight chip tone. */
+  --in-flight-fill: color-mix(in oklch, var(--primary) 38%, var(--muted-foreground));
+  /* A subdued brick that reads as a gap rather than as damage — backs .trace-bar-missing and the
+     missing chip tone (A4: a phase with no directory on disk is not the same as active work). */
+  --missing-fill: color-mix(in oklch, var(--destructive) 35%, var(--muted-foreground));
+  /* Full alarm, reserved for a covering reference that resolves to no phase at all — backs
+     .trace-bar-unresolved. */
+  --unresolved-fill: color-mix(in oklch, var(--destructive) 75%, var(--foreground));
+  /* A neutral tone visibly distinct from the --muted track in both themes — backs
+     .trace-bar-uncovered, replacing the old `transparent` fill that made an uncovered share
+     indistinguishable from unfilled track (A4). */
+  --uncovered-fill: color-mix(in oklch, var(--muted-foreground) 28%, var(--muted));
   --shadow-popover: 0 1rem 2.5rem color-mix(in oklab, var(--foreground) 18%, transparent);
   --scrollbar-thumb: color-mix(in oklch, var(--muted-foreground) 30%, transparent);
   --scrollbar-thumb-strong: color-mix(in oklch, var(--muted-foreground) 55%, transparent);
@@ -137,6 +152,11 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 16%);
   --input: oklch(1 0 0 / 19%);
+  /* quick-260918-qkd Task 2 (QKD-10, A5): deliberately a hand-tuned literal, not derived from
+     --primary. Dark --primary at L 0.47 fails the WCAG 1.4.11 3:1 non-text contrast floor against
+     --background and --card; this literal is the recorded fix (WINDOWS.md entry 7).
+     test/web/focus-ring-contrast.test.ts owns this value and re-fails on any change to --primary,
+     --background, --card or --ring — change none of the four without re-running that suite. */
   --ring: oklch(0.56 0.157 37.304);
   --sidebar: oklch(0.175 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
@@ -3474,6 +3494,32 @@ pre {
   color: var(--destructive);
 }
 
+/* quick-260918-qkd Task 2 (A3): a covering phase actively being worked and one with no directory
+   on disk are no longer the same grey chip — each gets its own tone, no background override so
+   both inherit .status-chip's shared muted wash. */
+.status-chip[data-tone='in-flight'] {
+  border-color: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border));
+  color: var(--in-flight-fill);
+}
+
+.status-chip[data-tone='missing'] {
+  border-color: color-mix(in oklch, var(--missing-fill) 50%, var(--border));
+  color: var(--missing-fill);
+}
+
+/* quick-260918-qkd Task 2 (A2): the requirement's own claimed status and the covering phase's own
+   state are two independent signals — this marker gives the phase-sourced chip a visible source
+   cue at a glance, on top of the Checked/Unchecked copy change that already names the requirement
+   chip for what it is. Squared, no radius, per the sheet's convention. */
+.status-chip[data-signal='phase']::before {
+  display: inline-block;
+  width: var(--space-1-5);
+  height: var(--space-1-5);
+  margin-inline-end: var(--space-1);
+  background: currentColor;
+  content: '';
+}
+
 /* Phase 4 (D-11) — the warning-badge disclosure. The technical-detail dl's values wrap instead of
    truncating, and the disclosure has no fixed pixel box or scroll container of its own — it
    inherits its width from the surrounding .artifact-heading / .metadata-panels column. */
@@ -3620,12 +3666,20 @@ pre {
   background: var(--traced-fill);
 }
 
+.trace-bar-in-flight {
+  background: var(--in-flight-fill);
+}
+
+.trace-bar-missing {
+  background: var(--missing-fill);
+}
+
 .trace-bar-unresolved {
-  background: var(--destructive);
+  background: var(--unresolved-fill);
 }
 
 .trace-bar-uncovered {
-  background: transparent;
+  background: var(--uncovered-fill);
 }
 
 .trace-stat-tiles {
