@@ -105,6 +105,10 @@
   --destructive-tint: color-mix(in oklch, var(--destructive) 8%, transparent);
   --destructive-border: color-mix(in oklch, var(--destructive) 55%, var(--border));
   --primary-tint: color-mix(in oklch, var(--primary) 9%, transparent);
+  /* quick-260917-wba Task 1: the traced-fill recipe for .trace-bar-covered — a muted-down primary,
+     not the raw accent token, so a fully-traced bar reads as a measurement tone rather than the
+     site's sparing full-strength accent colour repeated down the page. */
+  --traced-fill: color-mix(in oklch, var(--primary) 40%, var(--muted));
   --shadow-popover: 0 1rem 2.5rem color-mix(in oklab, var(--foreground) 18%, transparent);
   --scrollbar-thumb: color-mix(in oklch, var(--muted-foreground) 30%, transparent);
   --scrollbar-thumb-strong: color-mix(in oklch, var(--muted-foreground) 55%, transparent);
@@ -3584,10 +3588,19 @@ pre {
   text-transform: uppercase;
 }
 
+/* quick-260917-wba Task 1: denies the completion reading the bare percentage otherwise invites —
+   the figure counts requirements with a covering phase, not work completed. */
+.trace-coverage-percent-note {
+  max-width: 20rem;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-2);
+}
+
 /* The three-segment proportional bar (D-01). Segments tile the full width and always sum to
-   100%, so the track itself needs no background colour of its own — only the border that frames
-   it. Bare palette tokens throughout: no color-mix() recipe is needed for three distinguishable,
-   already-token-backed tones. */
+   100%. quick-260917-wba Task 1: the track itself now always paints a var(--muted) fill inside a
+   padding gutter, so a fully-traced scope still shows a framed track with an inset fill rather
+   than a full-bleed solid block indistinguishable from a horizontal rule. */
 .trace-bar {
   display: flex;
   flex: 1;
@@ -3595,6 +3608,8 @@ pre {
   height: var(--space-3);
   overflow: hidden;
   border: 1px solid var(--border);
+  padding: var(--space-0-5);
+  background: var(--muted);
 }
 
 .trace-bar-segment {
@@ -3602,7 +3617,7 @@ pre {
 }
 
 .trace-bar-covered {
-  background: var(--primary);
+  background: var(--traced-fill);
 }
 
 .trace-bar-mismatched {
@@ -3610,7 +3625,7 @@ pre {
 }
 
 .trace-bar-uncovered {
-  background: var(--border);
+  background: transparent;
 }
 
 .trace-stat-tiles {
@@ -3712,9 +3727,26 @@ pre {
 /* NS4 Task 2 — each category's own proportion cue, dropped beneath the heading rather than
    inline: the heading rule above already declares a bottom margin, so the bar fills that gap
    without fighting the heading's own box, and a long category name can never squeeze it to
-   nothing. */
+   nothing. quick-260917-wba Task 1: now a flex row pairing the bar with a numeric readout, and
+   the bar itself is width-bound so it reads as a measurement rather than a full-bleed rule. */
 .trace-category-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   margin-bottom: var(--space-4);
+}
+
+.trace-category-bar .trace-bar {
+  max-width: 24rem;
+}
+
+.trace-category-readout {
+  flex: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--font-size-micro-label);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
 }
 
 /* NS4 Task 2 — the hierarchical row list replacing the former ruled grid (NS4-05). ID and text

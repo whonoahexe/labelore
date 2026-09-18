@@ -102,7 +102,7 @@ function CoverageBar({
     <div
       className="trace-bar"
       role="img"
-      aria-label={`${label}: ${coverage.covered} covered, ${coverage.mismatched} status mismatched, ${coverage.uncovered} uncovered`}
+      aria-label={`${label}: ${coverage.covered} with a covering phase, ${coverage.mismatched} status mismatched, ${coverage.uncovered} uncovered`}
     >
       <span
         className="trace-bar-segment trace-bar-covered"
@@ -284,7 +284,10 @@ export function TraceabilityPage(): React.JSX.Element {
         <div className="trace-summary-headline">
           <div className="trace-coverage-percent">
             <span className="trace-coverage-percent-value">{view.coverage.coveragePercent}%</span>
-            <span className="trace-coverage-percent-label">Covered</span>
+            <span className="trace-coverage-percent-label">Traced</span>
+            <p className="trace-coverage-percent-note">
+              Counts requirements with a covering phase &mdash; not a measure of work completed.
+            </p>
           </div>
           <CoverageBar coverage={view.coverage} label="Overall coverage" />
           <dl className="trace-stat-tiles">
@@ -364,6 +367,9 @@ export function TraceabilityPage(): React.JSX.Element {
               </h2>
               <div className="trace-category-bar">
                 <CoverageBar coverage={group.coverage} label={`${group.category} coverage`} />
+                <span className="trace-category-readout">
+                  {group.coverage.covered}/{group.coverage.total} traced
+                </span>
               </div>
               <TraceabilityRowList rows={group.rows} labelledBy={headingId} />
             </section>
