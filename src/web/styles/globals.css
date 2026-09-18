@@ -3664,15 +3664,19 @@ pre {
   margin-bottom: var(--space-6);
 }
 
+/* quick-260917-wba Task 2: matches the site's own control pattern (the same border+background
+   surface .trace-filter-button rests on) instead of the frosted input token, and shares the
+   buttons' min-height so the whole filter row resolves to one level baseline. */
 .trace-filter-input {
   flex: 1;
   min-width: 12rem;
+  min-height: var(--space-8);
   border: 1px solid var(--border);
-  background: var(--input);
-  padding: var(--space-2) var(--space-3);
+  background: var(--background);
+  padding: var(--space-1-5) var(--space-3);
   color: var(--foreground);
   font-family: var(--font-sans);
-  font-size: var(--fs-4);
+  font-size: var(--fs-3);
 }
 
 .trace-filter-input::placeholder {
@@ -3691,6 +3695,10 @@ pre {
 }
 
 .trace-filter-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--space-8);
   border: 1px solid var(--border);
   background: var(--background);
   padding: var(--space-1-5) var(--space-3);
@@ -3712,6 +3720,59 @@ pre {
   border-color: var(--primary);
   background: var(--state-active);
   color: var(--primary);
+}
+
+/* quick-260917-wba Task 2: the deferred-tier control renders as a real track-and-thumb switch —
+   distinct from the plain filter buttons beside it — while still belonging visually to the same
+   row (same min-height, border, padding scale, heading font, uppercase treatment). */
+.trace-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--space-8);
+  border: 1px solid var(--border);
+  background: var(--background);
+  padding: var(--space-1-5) var(--space-3);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+}
+
+.trace-toggle:hover {
+  border-color: var(--foreground);
+  background: var(--state-hover);
+  color: var(--foreground);
+}
+
+.trace-toggle-track {
+  position: relative;
+  flex: none;
+  width: var(--space-7);
+  height: var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--muted);
+}
+
+.trace-toggle-thumb {
+  position: absolute;
+  top: var(--space-0-5);
+  left: var(--space-0-5);
+  width: var(--space-3);
+  height: var(--space-3);
+  background: var(--muted-foreground);
+  transition: transform 160ms ease;
+}
+
+.trace-toggle[aria-pressed='true'] .trace-toggle-track {
+  background: var(--primary-tint);
+}
+
+.trace-toggle[aria-pressed='true'] .trace-toggle-thumb {
+  background: var(--primary);
+  transform: translateX(var(--space-3));
 }
 
 .trace-category,

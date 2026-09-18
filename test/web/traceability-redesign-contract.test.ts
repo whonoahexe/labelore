@@ -294,3 +294,33 @@ describe('traceability visual/UX regression fixes (quick-260917-wba, Task 1 — 
     expect(page).toMatch(/\{group\.coverage\.covered\}\/\{group\.coverage\.total\}/);
   });
 });
+
+describe('traceability visual/UX regression fixes (quick-260917-wba, Task 2 — filter row input, height parity, switch)', () => {
+  it('.trace-filter-input references neither the frosted input token nor a raw colour literal, and declares a min-height', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [inputBlock] = ruleBlocks(css, '.trace-filter-input {');
+    expect(inputBlock).toBeDefined();
+    expect(inputBlock).not.toMatch(/var\(--input\)/);
+    expect(inputBlock).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+    expect(inputBlock).not.toMatch(/\brgb\(/);
+    expect(inputBlock).toMatch(/min-height:\s*var\(--space-8\)/);
+  });
+
+  it('.trace-filter-button declares the same min-height token as the filter input', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [buttonBlock] = ruleBlocks(css, '.trace-filter-button {');
+    expect(buttonBlock).toBeDefined();
+    expect(buttonBlock).toMatch(/min-height:\s*var\(--space-8\)/);
+  });
+
+  it('the deferred-tier toggle renders track and thumb elements, and the pressed-state rule declares a transform', async () => {
+    const page = await source('src/web/pages/traceability-page.tsx');
+    expect(page).toContain('className="trace-toggle-track"');
+    expect(page).toContain('className="trace-toggle-thumb"');
+
+    const css = await source('src/web/styles/globals.css');
+    const [pressedThumbBlock] = ruleBlocks(css, ".trace-toggle[aria-pressed='true'] .trace-toggle-thumb {");
+    expect(pressedThumbBlock).toBeDefined();
+    expect(pressedThumbBlock).toMatch(/transform:/);
+  });
+});
