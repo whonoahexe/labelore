@@ -81,12 +81,13 @@ function CoveringPhaseEntry({
   );
 }
 
-/** Renders the three-way covered/mismatched/uncovered partition as one proportional bar. Reused
- * verbatim for both the page-level aggregate (Task 1) and each category's own bar (Task 2) — both
- * read a TraceabilityCoverage, never recount rows themselves. The proportion is conveyed once to
- * assistive technology via the container's own role/aria-label; the three segments are aria-hidden
- * so they are never announced as three separate, unlabelled boxes. A zero-total scope renders no
- * bar at all rather than three zero-width segments. */
+/** Renders the five-bucket phase-sourced partition as one proportional bar, in partition order:
+ * complete / in-flight / missing / unresolved / uncovered. Reused verbatim for both the
+ * page-level aggregate (Task 1) and each category's own bar (Task 2) — both read a
+ * TraceabilityCoverage, never recount rows themselves. The proportion is conveyed once to
+ * assistive technology via the container's own role/aria-label; the five segments are aria-hidden
+ * so they are never announced as five separate, unlabelled boxes. A zero-total scope renders no
+ * bar at all rather than five zero-width segments. */
 function CoverageBar({
   coverage,
   label,
@@ -95,29 +96,37 @@ function CoverageBar({
   label: string;
 }): React.JSX.Element | null {
   if (coverage.total === 0) return null;
-  const coveredPercent = (coverage.covered / coverage.total) * 100;
-  const mismatchedPercent = (coverage.mismatched / coverage.total) * 100;
-  const uncoveredPercent = (coverage.uncovered / coverage.total) * 100;
+  const total = coverage.total;
   return (
     <div
       className="trace-bar"
       role="img"
-      aria-label={`${label}: ${coverage.covered} with a covering phase, ${coverage.mismatched} status mismatched, ${coverage.uncovered} uncovered`}
+      aria-label={`${label}: ${coverage.completePhase} with a complete covering phase, ${coverage.inFlightPhase} in flight, ${coverage.missingPhase} with no covering phase directory, ${coverage.unresolvedPhase} unresolved, ${coverage.uncovered} uncovered`}
     >
       <span
-        className="trace-bar-segment trace-bar-covered"
+        className="trace-bar-segment trace-bar-complete"
         aria-hidden="true"
-        style={{ width: `${coveredPercent}%` }}
+        style={{ width: `${(coverage.completePhase / total) * 100}%` }}
       />
       <span
-        className="trace-bar-segment trace-bar-mismatched"
+        className="trace-bar-segment trace-bar-in-flight"
         aria-hidden="true"
-        style={{ width: `${mismatchedPercent}%` }}
+        style={{ width: `${(coverage.inFlightPhase / total) * 100}%` }}
+      />
+      <span
+        className="trace-bar-segment trace-bar-missing"
+        aria-hidden="true"
+        style={{ width: `${(coverage.missingPhase / total) * 100}%` }}
+      />
+      <span
+        className="trace-bar-segment trace-bar-unresolved"
+        aria-hidden="true"
+        style={{ width: `${(coverage.unresolvedPhase / total) * 100}%` }}
       />
       <span
         className="trace-bar-segment trace-bar-uncovered"
         aria-hidden="true"
-        style={{ width: `${uncoveredPercent}%` }}
+        style={{ width: `${(coverage.uncovered / total) * 100}%` }}
       />
     </div>
   );
@@ -302,25 +311,55 @@ export function TraceabilityPage(): React.JSX.Element {
       <section className="trace-summary" aria-label="Requirement coverage summary">
         <div className="trace-summary-headline">
           <div className="trace-coverage-percent">
-            <span className="trace-coverage-percent-value">{view.coverage.coveragePercent}%</span>
-            <span className="trace-coverage-percent-label">Traced</span>
+            <span className="trace-coverage-percent-value">
+              {view.coverage.completePhasePercent}%
+            </span>
+            <span className="trace-coverage-percent-label">Covered by complete phases</span>
             <p className="trace-coverage-percent-note">
-              Counts requirements with a covering phase &mdash; not a measure of work completed.
+              {view.coverage.tracedPercent}% of requirements name a covering phase at all &mdash;
+              this headline counts only those whose covering phase is finished on disk. A
+              requirement&rsquo;s own checkbox is reported separately as the Checked tile below.
             </p>
           </div>
           <CoverageBar coverage={view.coverage} label="Overall coverage" />
           <dl className="trace-stat-tiles">
-            <div className="trace-stat-tile">
+            <div className="trace-stat-tile" data-bucket="total">
               <dt>Total</dt>
               <dd>{view.coverage.total}</dd>
             </div>
-            <div className="trace-stat-tile">
+            <div className="trace-stat-tile" data-bucket="complete">
+              <dt>Complete phase</dt>
+              <dd>{view.coverage.completePhase}</dd>
+            </div>
+            <div className="trace-stat-tile" data-bucket="in-flight">
+              <dt>In flight</dt>
+              <dd>{view.coverage.inFlightPhase}</dd>
+            </div>
+            <div className="trace-stat-tile" data-bucket="missing">
+              <dt>No directory</dt>
+              <dd>{view.coverage.missingPhase}</dd>
+            </div>
+            <div className="trace-stat-tile" data-bucket="uncovered">
               <dt>Uncovered</dt>
               <dd>{view.coverage.uncovered}</dd>
             </div>
-            <div className="trace-stat-tile">
-              <dt>Status mismatch</dt>
-              <dd>{view.coverage.mismatched}</dd>
+            {view.coverage.unresolvedPhase > 0 ? (
+              <div className="trace-stat-tile" data-bucket="unresolved">
+                <dt>Unresolved</dt>
+                <dd>{view.coverage.unresolvedPhase}</dd>
+              </div>
+            ) : null}
+            <div className="trace-requirement-stat-tiles">
+              <div className="trace-stat-tile">
+                <dt>Checked</dt>
+                <dd>{view.coverage.claimedComplete}</dd>
+              </div>
+              {view.coverage.mismatched > 0 ? (
+                <div className="trace-stat-tile">
+                  <dt>Status mismatch</dt>
+                  <dd>{view.coverage.mismatched}</dd>
+                </div>
+              ) : null}
             </div>
           </dl>
         </div>
@@ -357,6 +396,7 @@ export function TraceabilityPage(): React.JSX.Element {
               type="button"
               className="trace-filter-button"
               data-active={filter.status === 'disagreement' ? 'true' : undefined}
+              disabled={view.coverage.mismatched === 0}
               onClick={() => setFilter((current) => ({ ...current, status: 'disagreement' }))}
             >
               Status mismatch
@@ -390,7 +430,7 @@ export function TraceabilityPage(): React.JSX.Element {
               <div className="trace-category-bar">
                 <CoverageBar coverage={group.coverage} label={`${group.category} coverage`} />
                 <span className="trace-category-readout">
-                  {group.coverage.covered}/{group.coverage.total} traced
+                  {group.coverage.completePhase}/{group.coverage.total} complete
                 </span>
               </div>
               <TraceabilityRowList rows={group.rows} labelledBy={headingId} />

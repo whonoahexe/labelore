@@ -234,8 +234,24 @@ describe('buildTraceabilityViewModel', () => {
   });
 });
 
-describe('TraceabilityCoverage (NS4 Task 1)', () => {
-  it('Test 1: a scope of rows partitions into three disjoint buckets that sum to the total', () => {
+describe('TraceabilityCoverage (NS4 Task 1, quick-260918-qkd Task 1)', () => {
+  function sumBuckets(coverage: {
+    completePhase: number;
+    inFlightPhase: number;
+    missingPhase: number;
+    unresolvedPhase: number;
+    uncovered: number;
+  }): number {
+    return (
+      coverage.completePhase +
+      coverage.inFlightPhase +
+      coverage.missingPhase +
+      coverage.unresolvedPhase +
+      coverage.uncovered
+    );
+  }
+
+  it('Test 1: a scope of rows partitions into five disjoint buckets that sum to the total', () => {
     const coveredPhase = phase({ key: PHASE_1_KEY, identity: PHASE_1_IDENTITY, diskStatus: 'complete' });
     const view = buildTraceabilityViewModel(
       presentationWith(
@@ -249,49 +265,148 @@ describe('TraceabilityCoverage (NS4 Task 1)', () => {
     );
 
     expect(view.coverage.total).toBe(3);
-    expect(view.coverage.covered + view.coverage.mismatched + view.coverage.uncovered).toBe(3);
+    expect(sumBuckets(view.coverage)).toBe(3);
   });
 
-  it('Test 2: uncovered and mismatched can never both be true for one row', () => {
+  it('Test 2: a row whose only covering phase is complete lands in the complete bucket and nowhere else', () => {
+    const coveredPhase = phase({ key: PHASE_1_KEY, identity: PHASE_1_IDENTITY, diskStatus: 'complete' });
+    const req = requirement({
+      checked: true,
+      coveringPhases: [{ raw: 'Phase 1', targetPhaseKey: PHASE_1_KEY }],
+    });
+    const view = buildTraceabilityViewModel(presentationWith([req], [coveredPhase]));
+
+    expect(view.coverage.completePhase).toBe(1);
+    expect(view.coverage.inFlightPhase).toBe(0);
+    expect(view.coverage.missingPhase).toBe(0);
+    expect(view.coverage.unresolvedPhase).toBe(0);
+    expect(view.coverage.uncovered).toBe(0);
+  });
+
+  it('Test 3: a row whose only covering phase is in_progress (or an unrecognised on-disk status) lands in the in-flight bucket', () => {
+    const inProgressPhase = phase({ key: PHASE_1_KEY, identity: PHASE_1_IDENTITY, diskStatus: 'in_progress' });
+    const unrecognisedPhase = phase({ key: PHASE_2_KEY, identity: PHASE_2_IDENTITY, diskStatus: 'some_future_status' });
+    const view = buildTraceabilityViewModel(
+      presentationWith(
+        [
+          requirement({ id: 'A-01', checked: true, coveringPhases: [{ raw: 'Phase 1', targetPhaseKey: PHASE_1_KEY }] }),
+          requirement({ id: 'A-02', checked: true, coveringPhases: [{ raw: 'Phase 2', targetPhaseKey: PHASE_2_KEY }] }),
+        ],
+        [inProgressPhase, unrecognisedPhase],
+      ),
+    );
+
+    expect(view.coverage.inFlightPhase).toBe(2);
+    expect(view.coverage.completePhase).toBe(0);
+  });
+
+  it('Test 4: a row whose only covering phase has no directory on disk lands in the missing bucket', () => {
+    const missingPhase = phase({ key: PHASE_1_KEY, identity: PHASE_1_IDENTITY, diskStatus: 'no_directory' });
+    const req = requirement({
+      checked: true,
+      coveringPhases: [{ raw: 'Phase 1', targetPhaseKey: PHASE_1_KEY }],
+    });
+    const view = buildTraceabilityViewModel(presentationWith([req], [missingPhase]));
+
+    expect(view.coverage.missingPhase).toBe(1);
+    expect(view.coverage.inFlightPhase).toBe(0);
+  });
+
+  it('Test 5: a row whose every covering reference is unresolved lands in the unresolved bucket', () => {
+    const req = requirement({
+      checked: true,
+      coveringPhases: [{ raw: 'Phase 99', targetPhaseKey: null }],
+    });
+    const view = buildTraceabilityViewModel(presentationWith([req]));
+
+    expect(view.coverage.unresolvedPhase).toBe(1);
+    expect(view.coverage.uncovered).toBe(0);
+  });
+
+  it('Test 6: a row with no covering reference at all lands in the uncovered bucket', () => {
     const req = requirement({ checked: true, coveringPhases: [] });
     const view = buildTraceabilityViewModel(presentationWith([req]));
     const row = allRows(view.groups)[0];
 
     expect(row.uncovered).toBe(true);
-    expect(row.statusDisagreement).toBe(false);
     expect(view.coverage.uncovered).toBe(1);
-    expect(view.coverage.mismatched).toBe(0);
+    expect(view.coverage.completePhase).toBe(0);
   });
 
-  it('Test 3: coveragePercent is (covered + mismatched) / total as a whole number — a mismatched row counts as covered', () => {
-    const inProgressPhase = phase({ key: PHASE_1_KEY, identity: PHASE_1_IDENTITY, diskStatus: 'in_progress' });
-    const mismatchedReq = requirement({
-      id: 'A-01',
+  it('Test 7: a row covered by both a complete phase and an in-flight phase lands in the in-flight bucket — the weakest covering phase decides', () => {
+    const completePhase = phase({ key: PHASE_1_KEY, identity: PHASE_1_IDENTITY, diskStatus: 'complete' });
+    const inProgressPhase = phase({ key: PHASE_2_KEY, identity: PHASE_2_IDENTITY, diskStatus: 'in_progress' });
+    const req = requirement({
       checked: true,
-      coveringPhases: [{ raw: 'Phase 1', targetPhaseKey: PHASE_1_KEY }],
+      coveringPhases: [
+        { raw: 'Phase 1', targetPhaseKey: PHASE_1_KEY },
+        { raw: 'Phase 2', targetPhaseKey: PHASE_2_KEY },
+      ],
     });
-    const uncoveredReq = requirement({ id: 'A-02', checked: true, coveringPhases: [] });
-    const view = buildTraceabilityViewModel(presentationWith([mismatchedReq, uncoveredReq], [inProgressPhase]));
+    const view = buildTraceabilityViewModel(presentationWith([req], [completePhase, inProgressPhase]));
 
-    expect(view.coverage.mismatched).toBe(1);
-    expect(view.coverage.uncovered).toBe(1);
-    expect(view.coverage.coveragePercent).toBe(50);
+    expect(view.coverage.inFlightPhase).toBe(1);
+    expect(view.coverage.completePhase).toBe(0);
   });
 
-  it('Test 4: an empty requirements array yields an all-zero coverage and a 0 percent, with no thrown error', () => {
+  it('Test 8: the requirement-side tally counts rows whose own requirementStatus is exactly true, computed without reading any covering phase', () => {
+    const inProgressPhase = phase({ key: PHASE_1_KEY, identity: PHASE_1_IDENTITY, diskStatus: 'in_progress' });
+    const view = buildTraceabilityViewModel(
+      presentationWith(
+        [
+          requirement({ id: 'A-01', checked: true, coveringPhases: [{ raw: 'Phase 1', targetPhaseKey: PHASE_1_KEY }] }),
+          requirement({ id: 'A-02', checked: false, coveringPhases: [{ raw: 'Phase 1', targetPhaseKey: PHASE_1_KEY }] }),
+          requirement({ id: 'A-03', checked: true, coveringPhases: [] }),
+        ],
+        [inProgressPhase],
+      ),
+    );
+
+    // A-01 and A-03 are checked=true; A-02 is checked=false. Both A-01's and A-03's covering
+    // state differ (in-flight vs. uncovered), proving claimedComplete never reads the phase side.
+    expect(view.coverage.claimedComplete).toBe(2);
+  });
+
+  it('Test 9: an empty requirements array yields an all-zero coverage and 0 percent for both percentages, with no thrown error', () => {
     expect(() => buildTraceabilityViewModel(presentationWith([]))).not.toThrow();
     const view = buildTraceabilityViewModel(presentationWith([]));
 
-    expect(view.coverage).toEqual({ total: 0, covered: 0, mismatched: 0, uncovered: 0, coveragePercent: 0 });
+    expect(view.coverage).toEqual({
+      total: 0,
+      completePhase: 0,
+      inFlightPhase: 0,
+      missingPhase: 0,
+      unresolvedPhase: 0,
+      uncovered: 0,
+      tracedPercent: 0,
+      completePhasePercent: 0,
+      claimedComplete: 0,
+      mismatched: 0,
+    });
   });
 
-  it('Test 5: counts stays exactly the three pre-existing keys — the new projection never widens it', () => {
+  it('Test 10: counts stays exactly the three pre-existing keys — the new projection never widens it', () => {
     const view = buildTraceabilityViewModel(presentationWith([requirement()]));
 
     expect(Object.keys(view.counts).sort()).toEqual(['disagreement', 'total', 'uncovered']);
   });
 
-  it('Test 6: against fixtures/dense, coverage totals equal the sum of each group\'s own row count', async () => {
+  it('Test 11: tracedPercent and completePhasePercent are whole numbers computed against total', () => {
+    const completeReq = requirement({
+      id: 'A-01',
+      checked: true,
+      coveringPhases: [{ raw: 'Phase 1', targetPhaseKey: PHASE_1_KEY }],
+    });
+    const uncoveredReq = requirement({ id: 'A-02', checked: true, coveringPhases: [] });
+    const view = buildTraceabilityViewModel(
+      presentationWith([completeReq, uncoveredReq], [phase({ key: PHASE_1_KEY, identity: PHASE_1_IDENTITY, diskStatus: 'complete' })]),
+    );
+
+    expect(view.coverage.tracedPercent).toBe(50);
+    expect(view.coverage.completePhasePercent).toBe(50);
+  });
+
+  it('Test 12: against fixtures/dense, every group\'s five buckets sum to that group\'s row count, and the groups\' buckets sum to the whole-view buckets', async () => {
     const root = resolve('fixtures/dense');
     const repository = new PlanningRepository(new LocalFsPlanningFilesystem(root), root);
     const snapshot = await repository.load();
@@ -300,11 +415,34 @@ describe('TraceabilityCoverage (NS4 Task 1)', () => {
     const totalRows = view.groups.reduce((sum, group) => sum + group.rows.length, 0);
 
     expect(view.coverage.total).toBe(totalRows);
-    expect(view.coverage.covered + view.coverage.mismatched + view.coverage.uncovered).toBe(totalRows);
+    expect(sumBuckets(view.coverage)).toBe(totalRows);
+
+    const summed = view.groups.reduce(
+      (acc, group) => ({
+        completePhase: acc.completePhase + group.coverage.completePhase,
+        inFlightPhase: acc.inFlightPhase + group.coverage.inFlightPhase,
+        missingPhase: acc.missingPhase + group.coverage.missingPhase,
+        unresolvedPhase: acc.unresolvedPhase + group.coverage.unresolvedPhase,
+        uncovered: acc.uncovered + group.coverage.uncovered,
+      }),
+      { completePhase: 0, inFlightPhase: 0, missingPhase: 0, unresolvedPhase: 0, uncovered: 0 },
+    );
+
+    expect(summed).toEqual({
+      completePhase: view.coverage.completePhase,
+      inFlightPhase: view.coverage.inFlightPhase,
+      missingPhase: view.coverage.missingPhase,
+      unresolvedPhase: view.coverage.unresolvedPhase,
+      uncovered: view.coverage.uncovered,
+    });
+
+    for (const group of view.groups) {
+      expect(sumBuckets(group.coverage)).toBe(group.rows.length);
+    }
   });
 });
 
-describe('TraceabilityGroup.coverage (NS4 Task 2)', () => {
+describe('TraceabilityGroup.coverage (NS4 Task 2, quick-260918-qkd Task 1)', () => {
   it('Test 1: each group carries its own coverage, derived from that group\'s rows only', () => {
     const view = buildTraceabilityViewModel(
       presentationWith([
@@ -321,11 +459,11 @@ describe('TraceabilityGroup.coverage (NS4 Task 2)', () => {
     const alpha = view.groups.find((group) => group.category === 'Alpha')!;
     const beta = view.groups.find((group) => group.category === 'Beta')!;
 
-    expect(alpha.coverage.coveragePercent).toBe(0);
-    expect(beta.coverage.coveragePercent).toBe(100);
+    expect(alpha.coverage.completePhasePercent).toBe(0);
+    expect(beta.coverage.completePhasePercent).toBe(100);
   });
 
-  it('Test 2: summing covered/mismatched/uncovered across every group equals the whole-view coverage', () => {
+  it('Test 2: summing each bucket across every group equals the whole-view coverage', () => {
     const view = buildTraceabilityViewModel(
       presentationWith([
         requirement({ id: 'A-01', category: 'Alpha', checked: true, coveringPhases: [] }),
@@ -339,21 +477,19 @@ describe('TraceabilityGroup.coverage (NS4 Task 2)', () => {
     );
     const summed = view.groups.reduce(
       (acc, group) => ({
-        covered: acc.covered + group.coverage.covered,
-        mismatched: acc.mismatched + group.coverage.mismatched,
+        completePhase: acc.completePhase + group.coverage.completePhase,
         uncovered: acc.uncovered + group.coverage.uncovered,
       }),
-      { covered: 0, mismatched: 0, uncovered: 0 },
+      { completePhase: 0, uncovered: 0 },
     );
 
     expect(summed).toEqual({
-      covered: view.coverage.covered,
-      mismatched: view.coverage.mismatched,
+      completePhase: view.coverage.completePhase,
       uncovered: view.coverage.uncovered,
     });
   });
 
-  it('Test 3: against fixtures/dense, every group\'s three bucket counts sum to that group\'s own row count', async () => {
+  it('Test 3: against fixtures/dense, every group\'s five bucket counts sum to that group\'s own row count', async () => {
     const root = resolve('fixtures/dense');
     const repository = new PlanningRepository(new LocalFsPlanningFilesystem(root), root);
     const snapshot = await repository.load();
@@ -361,9 +497,13 @@ describe('TraceabilityGroup.coverage (NS4 Task 2)', () => {
     const view = buildTraceabilityViewModel(presentation);
 
     for (const group of view.groups) {
-      expect(group.coverage.covered + group.coverage.mismatched + group.coverage.uncovered).toBe(
-        group.rows.length,
-      );
+      expect(
+        group.coverage.completePhase +
+          group.coverage.inFlightPhase +
+          group.coverage.missingPhase +
+          group.coverage.unresolvedPhase +
+          group.coverage.uncovered,
+      ).toBe(group.rows.length);
     }
   });
 });

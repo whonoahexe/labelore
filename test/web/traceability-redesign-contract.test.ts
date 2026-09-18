@@ -85,8 +85,21 @@ describe('traceability redesign — summary strip (NS4-01, NS4-04, D-02, Task 1)
   it("reads the stat tiles from the projection's own coverage fields, never a component recount", async () => {
     const page = await source('src/web/pages/traceability-page.tsx');
     expect(page).toContain('{view.coverage.total}');
+    expect(page).toContain('{view.coverage.completePhase}');
+    expect(page).toContain('{view.coverage.inFlightPhase}');
+    expect(page).toContain('{view.coverage.missingPhase}');
     expect(page).toContain('{view.coverage.uncovered}');
+    expect(page).toContain('{view.coverage.unresolvedPhase}');
+    expect(page).toContain('{view.coverage.claimedComplete}');
     expect(page).toContain('{view.coverage.mismatched}');
+  });
+
+  it('quick-260918-qkd Task 1: renders a data-bucket attribute per partition tile and reads completePhasePercent for the hero value', async () => {
+    const page = await source('src/web/pages/traceability-page.tsx');
+    expect(page).toContain('{view.coverage.completePhasePercent}%');
+    for (const bucket of ['total', 'complete', 'in-flight', 'missing', 'uncovered']) {
+      expect(page).toContain(`data-bucket="${bucket}"`);
+    }
   });
 
   it('drops the parenthesised counts from the status filter button labels — the stat tiles carry them now', async () => {
@@ -255,24 +268,28 @@ describe('traceability visual/UX regression fixes (quick-260917-wba, Task 1 — 
     expect(barBlock).toMatch(/padding:\s*var\(--space-0-5\)/);
   });
 
-  it('.trace-bar-covered references the new traced-fill recipe token, never the bare primary token', async () => {
+  it('.trace-bar-complete references the traced-fill recipe token, never the bare primary token', async () => {
     const css = await source('src/web/styles/globals.css');
-    const [coveredBlock] = ruleBlocks(css, '.trace-bar-covered {');
-    expect(coveredBlock).toBeDefined();
-    expect(coveredBlock).toContain('var(--traced-fill)');
-    expect(coveredBlock).not.toContain('var(--primary)');
+    const [completeBlock] = ruleBlocks(css, '.trace-bar-complete {');
+    expect(completeBlock).toBeDefined();
+    expect(completeBlock).toContain('var(--traced-fill)');
+    expect(completeBlock).not.toContain('var(--primary)');
   });
 
-  it('declares --traced-fill once in the :root token block as a primary/muted recipe', async () => {
+  it('declares --traced-fill once in the :root token block as a primary-derived recipe', async () => {
     const css = await source('src/web/styles/globals.css');
-    expect(css).toMatch(/--traced-fill:\s*color-mix\(in oklch, var\(--primary\)[^;]*var\(--muted\)\)/);
+    expect(css).toMatch(/--traced-fill:\s*color-mix\(in oklch, var\(--primary\)/);
   });
 
-  it('the hero label reads as tracing language with a non-completion caption beneath it', async () => {
+  it('the hero label reads as complete-phase language with a note that preserves the tracing figure', async () => {
     const page = await source('src/web/pages/traceability-page.tsx');
-    expect(page).toContain('<span className="trace-coverage-percent-label">Traced</span>');
+    expect(page).toContain(
+      '<span className="trace-coverage-percent-label">Covered by complete phases</span>',
+    );
     expect(page).toContain('className="trace-coverage-percent-note"');
-    expect(page).toMatch(/not a measure of work completed/);
+    expect(page).toMatch(/\{view\.coverage\.tracedPercent\}% of requirements name a covering phase/);
+    expect(page).toMatch(/finished on disk/);
+    expect(page).toMatch(/Checked tile/);
   });
 
   it("the aggregate bar's aria-label sentence describes a covering phase rather than raw completion", async () => {
@@ -291,7 +308,7 @@ describe('traceability visual/UX regression fixes (quick-260917-wba, Task 1 — 
       '<CoverageBar coverage={group.coverage} label={`${group.category} coverage`} />',
     );
     expect(page).toContain('className="trace-category-readout"');
-    expect(page).toMatch(/\{group\.coverage\.covered\}\/\{group\.coverage\.total\}/);
+    expect(page).toMatch(/\{group\.coverage\.completePhase\}\/\{group\.coverage\.total\}/);
   });
 });
 
