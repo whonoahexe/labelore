@@ -345,13 +345,16 @@ export function TraceabilityPage(): React.JSX.Element {
           </div>
           <button
             type="button"
-            className="trace-filter-button"
+            className="trace-toggle"
             data-active={filter.includeHistory ? 'true' : undefined}
             aria-pressed={filter.includeHistory}
             onClick={() =>
               setFilter((current) => ({ ...current, includeHistory: !current.includeHistory }))
             }
           >
+            <span className="trace-toggle-track" aria-hidden="true">
+              <span className="trace-toggle-thumb" />
+            </span>
             Search deferred tiers
           </button>
         </section>
