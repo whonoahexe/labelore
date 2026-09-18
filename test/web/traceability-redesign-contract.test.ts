@@ -245,3 +245,52 @@ describe('traceability redesign — deferred tiers under the reused History trea
     expect(page).toContain('No requirements match the current filter.');
   });
 });
+
+describe('traceability visual/UX regression fixes (quick-260917-wba, Task 1 — bars read as data, honest headline)', () => {
+  it('.trace-bar always paints a track background and a padding gutter, never a bare frame', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [barBlock] = ruleBlocks(css, '.trace-bar {');
+    expect(barBlock).toBeDefined();
+    expect(barBlock).toMatch(/background:\s*var\(--muted\)/);
+    expect(barBlock).toMatch(/padding:\s*var\(--space-0-5\)/);
+  });
+
+  it('.trace-bar-covered references the new traced-fill recipe token, never the bare primary token', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [coveredBlock] = ruleBlocks(css, '.trace-bar-covered {');
+    expect(coveredBlock).toBeDefined();
+    expect(coveredBlock).toContain('var(--traced-fill)');
+    expect(coveredBlock).not.toContain('var(--primary)');
+  });
+
+  it('declares --traced-fill once in the :root token block as a primary/muted recipe', async () => {
+    const css = await source('src/web/styles/globals.css');
+    expect(css).toMatch(/--traced-fill:\s*color-mix\(in oklch, var\(--primary\)[^;]*var\(--muted\)\)/);
+  });
+
+  it('the hero label reads as tracing language with a non-completion caption beneath it', async () => {
+    const page = await source('src/web/pages/traceability-page.tsx');
+    expect(page).toContain('<span className="trace-coverage-percent-label">Traced</span>');
+    expect(page).toContain('className="trace-coverage-percent-note"');
+    expect(page).toMatch(/not a measure of work completed/);
+  });
+
+  it("the aggregate bar's aria-label sentence describes a covering phase rather than raw completion", async () => {
+    const page = await source('src/web/pages/traceability-page.tsx');
+    expect(page).toMatch(/covering phase/);
+  });
+
+  it('the per-category bar is width-bound and paired with a numeric readout read from group.coverage', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [categoryBarBlock] = ruleBlocks(css, '.trace-category-bar .trace-bar {');
+    expect(categoryBarBlock).toBeDefined();
+    expect(categoryBarBlock).toMatch(/max-width:/);
+
+    const page = await source('src/web/pages/traceability-page.tsx');
+    expect(page).toContain(
+      '<CoverageBar coverage={group.coverage} label={`${group.category} coverage`} />',
+    );
+    expect(page).toContain('className="trace-category-readout"');
+    expect(page).toMatch(/\{group\.coverage\.covered\}\/\{group\.coverage\.total\}/);
+  });
+});
