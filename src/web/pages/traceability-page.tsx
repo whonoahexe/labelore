@@ -152,10 +152,11 @@ function CoverageBar({
   );
 }
 
-/** The hierarchical replacement for the former ruled table (NS4-05). Since the list carries no
- * column headers, each row's secondary block names what it's showing via a micro-label — the
- * information the removed header row used to carry, kept without adding a heading row back.
- * quick-260917-wba Task 3: the optional `variant` prop drives a deferred-tier presentation —
+/** The hierarchical replacement for the former ruled table (NS4-05). quick-260918-qkd Task 3
+ * (D4): the visible per-row micro-labels — really column headers repeated on every row — are gone;
+ * the accessible name they carried survives as an `sr-only` span with the same words, since the
+ * chips are self-identifying after Task 2 (Checked/Unchecked plus a source marker on the phase
+ * chip). quick-260917-wba Task 3: the optional `variant` prop drives a deferred-tier presentation —
  * every deferred row has a null requirement status by construction, so the Requirement-status
  * block (and its guaranteed-em-dash chip) is noise there; a deferred row with no covering phase
  * reads as "not yet scheduled" in a quiet tone rather than the alarming destructive "Uncovered"
@@ -181,7 +182,7 @@ function TraceabilityRowList({
           <div className="trace-row-secondary">
             {variant !== 'deferred' ? (
               <div>
-                <span className="trace-row-micro-label">Requirement status</span>
+                <span className="sr-only">Requirement status</span>
                 <div className="trace-marker-stack">
                   <RequirementStatusChip status={row.requirementStatus} />
                   {row.statusDisagreement ? (
@@ -194,14 +195,13 @@ function TraceabilityRowList({
             ) : null}
             {variant === 'deferred' && row.uncovered ? (
               <div>
-                <span className="trace-row-micro-label">Scheduling</span>
                 <span className="status-chip trace-marker" data-tone="quiet">
                   Not yet scheduled
                 </span>
               </div>
             ) : (
               <div>
-                <span className="trace-row-micro-label">Covering phase</span>
+                <span className="sr-only">Covering phase</span>
                 {row.uncovered ? (
                   <span className="status-chip trace-marker" data-tone="destructive">
                     Uncovered
@@ -269,6 +269,14 @@ function DeferredTierDisclosure({
       </div>
     </details>
   );
+}
+
+/** E2: the deferred-tier switch governs whether the query/status filter *reaches* the deferred
+ * tiers, not whether they're shown — "engaged" means the filter would actually narrow anything if
+ * it did reach them, so the unfiltered-tiers note (E1/E2) only appears when there's something to
+ * warn about. */
+function isFilterEngaged(filter: TraceabilityFilterState): boolean {
+  return filter.status !== 'all' || filter.query.trim().length > 0;
 }
 
 export function TraceabilityPage(): React.JSX.Element {
@@ -425,8 +433,9 @@ export function TraceabilityPage(): React.JSX.Element {
           <button
             type="button"
             className="trace-toggle"
+            role="switch"
             data-active={filter.includeHistory ? 'true' : undefined}
-            aria-pressed={filter.includeHistory}
+            aria-checked={filter.includeHistory}
             onClick={() =>
               setFilter((current) => ({ ...current, includeHistory: !current.includeHistory }))
             }
@@ -434,7 +443,7 @@ export function TraceabilityPage(): React.JSX.Element {
             <span className="trace-toggle-track" aria-hidden="true">
               <span className="trace-toggle-thumb" />
             </span>
-            Search deferred tiers
+            Filter deferred tiers too
           </button>
         </section>
       </section>
@@ -460,7 +469,7 @@ export function TraceabilityPage(): React.JSX.Element {
       ) : view.groups.length === 0 ? (
         <EmptyState />
       ) : (
-        <p className="empty-note">No requirements match the current filter.</p>
+        <p className="empty-note">No active-tier requirements match the current filter.</p>
       )}
 
       {view.deferredTiers.length > 0 ? (
@@ -469,6 +478,11 @@ export function TraceabilityPage(): React.JSX.Element {
             <div>
               <p className="eyebrow">Beyond the active tier</p>
               <h2 id="trace-deferred-heading">Deferred requirements</h2>
+              {!filter.includeHistory && isFilterEngaged(filter) ? (
+                <p className="trace-deferred-filter-note">
+                  The deferred tiers below are shown unfiltered.
+                </p>
+              ) : null}
             </div>
             <History aria-hidden="true" />
           </header>

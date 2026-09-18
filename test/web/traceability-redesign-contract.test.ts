@@ -218,11 +218,12 @@ describe('traceability redesign — deferred tiers under the reused History trea
     expect(historySelectorLines.length).toBe(HISTORY_SELECTOR_LINE_COUNT_BEFORE_TASK_3);
   });
 
-  it('the history toggle reuses the existing filter-button class and carries aria-pressed, reflecting includeHistory', async () => {
+  it('the history toggle reuses the existing trace-toggle class and carries aria-checked, reflecting includeHistory (quick-260918-qkd Task 3: role=switch replaces aria-pressed)', async () => {
     const page = await source('src/web/pages/traceability-page.tsx');
     expect(page).toMatch(
-      /data-active=\{filter\.includeHistory \? 'true' : undefined\}\s*\n\s*aria-pressed=\{filter\.includeHistory\}/,
+      /data-active=\{filter\.includeHistory \? 'true' : undefined\}\s*\n\s*aria-checked=\{filter\.includeHistory\}/,
     );
+    expect(page).toContain('role="switch"');
   });
 
   it('reads deferredTiers rather than re-grouping deferredRows in the component', async () => {
@@ -251,11 +252,11 @@ describe('traceability redesign — deferred tiers under the reused History trea
     expect(body).toMatch(/\.open\s*=\s*true/);
   });
 
-  it('preserves the EmptyState import, the bare element and the filter-result absence sentence', async () => {
+  it('preserves the EmptyState import and the bare element; the filter-result absence sentence is scoped to the active tier (quick-260918-qkd Task 3, E1)', async () => {
     const page = await source('src/web/pages/traceability-page.tsx');
     expect(page).toContain("import { EmptyState } from '../components/empty-state.tsx';");
     expect(page).toContain('<EmptyState />');
-    expect(page).toContain('No requirements match the current filter.');
+    expect(page).toContain('No active-tier requirements match the current filter.');
   });
 });
 
@@ -406,15 +407,15 @@ describe('traceability visual/UX regression fixes (quick-260917-wba, Task 2 — 
     expect(buttonBlock).toMatch(/min-height:\s*var\(--space-8\)/);
   });
 
-  it('the deferred-tier toggle renders track and thumb elements, and the pressed-state rule declares a transform', async () => {
+  it('the deferred-tier toggle renders track and thumb elements, and the checked-state rule declares a transform (quick-260918-qkd Task 3: rekeyed from aria-pressed to aria-checked)', async () => {
     const page = await source('src/web/pages/traceability-page.tsx');
     expect(page).toContain('className="trace-toggle-track"');
     expect(page).toContain('className="trace-toggle-thumb"');
 
     const css = await source('src/web/styles/globals.css');
-    const [pressedThumbBlock] = ruleBlocks(css, ".trace-toggle[aria-pressed='true'] .trace-toggle-thumb {");
-    expect(pressedThumbBlock).toBeDefined();
-    expect(pressedThumbBlock).toMatch(/transform:/);
+    const [checkedThumbBlock] = ruleBlocks(css, ".trace-toggle[aria-checked='true'] .trace-toggle-thumb {");
+    expect(checkedThumbBlock).toBeDefined();
+    expect(checkedThumbBlock).toMatch(/transform:/);
   });
 });
 
@@ -473,5 +474,104 @@ describe('traceability visual/UX regression fixes (quick-260917-wba, Task 3 — 
     expect(idBlock).toBeDefined();
     expect(idBlock).toMatch(/font-size:\s*var\(--font-size-micro-label\)/);
     expect(idBlock).toMatch(/text-transform:\s*uppercase/);
+  });
+});
+
+describe('traceability visual/UX regression fixes (quick-260918-qkd Task 3 — row layout, real switch, honest filter, source-order guard)', () => {
+  it('.trace-row declares align-items: start and the content-bound column template', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [rowBlock] = ruleBlocks(css, '.trace-row {');
+    expect(rowBlock).toBeDefined();
+    expect(rowBlock).toMatch(/align-items:\s*start/);
+    expect(rowBlock).toMatch(/grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, 20rem\)/);
+  });
+
+  it('.trace-row-primary declares align-content: start', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [primaryBlock] = ruleBlocks(css, '.trace-row-primary {');
+    expect(primaryBlock).toBeDefined();
+    expect(primaryBlock).toMatch(/align-content:\s*start/);
+  });
+
+  it('.trace-row-micro-label no longer exists, and its accessible names survive as sr-only spans', async () => {
+    const css = await source('src/web/styles/globals.css');
+    expect(css).not.toContain('.trace-row-micro-label');
+
+    const page = await source('src/web/pages/traceability-page.tsx');
+    expect(page).not.toContain('trace-row-micro-label');
+    expect(page).toMatch(/<span className="sr-only">Requirement status<\/span>/);
+    expect(page).toMatch(/<span className="sr-only">Covering phase<\/span>/);
+    expect(page).not.toMatch(/<span className="trace-row-micro-label">Scheduling<\/span>/);
+  });
+
+  it('the deferred toggle carries role="switch" and a live aria-checked reflecting includeHistory', async () => {
+    const page = await source('src/web/pages/traceability-page.tsx');
+    expect(page).toContain('role="switch"');
+    expect(page).toMatch(/aria-checked=\{filter\.includeHistory\}/);
+    expect(page).not.toMatch(/aria-pressed=\{filter\.includeHistory\}/);
+  });
+
+  it('.trace-toggle declares no border or background — the track and thumb are its only surface', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const [toggleBlock] = ruleBlocks(css, '.trace-toggle {');
+    expect(toggleBlock).toBeDefined();
+    expect(toggleBlock).not.toMatch(/\bborder:/);
+    expect(toggleBlock).not.toMatch(/\bbackground:/);
+
+    const [hoverBlock] = ruleBlocks(css, '.trace-toggle:hover {');
+    expect(hoverBlock).toBeDefined();
+    expect(hoverBlock).not.toMatch(/\bborder-color:/);
+    expect(hoverBlock).not.toMatch(/\bbackground:/);
+
+    const [checkedBlock] = ruleBlocks(css, ".trace-toggle[aria-checked='true'] {");
+    expect(checkedBlock).toBeDefined();
+    expect(checkedBlock).toMatch(/color:\s*var\(--primary\)/);
+  });
+
+  it('the page contains the scoped empty-note sentence and the new switch label', async () => {
+    const page = await source('src/web/pages/traceability-page.tsx');
+    expect(page).toContain('No active-tier requirements match the current filter.');
+    expect(page).toContain('Filter deferred tiers too');
+  });
+
+  it('renders the unfiltered-deferred-tiers note only when the switch is off and a filter is engaged', async () => {
+    const page = await source('src/web/pages/traceability-page.tsx');
+    expect(page).toContain('function isFilterEngaged');
+    expect(page).toContain('className="trace-deferred-filter-note"');
+    expect(page).toMatch(/!filter\.includeHistory && isFilterEngaged\(filter\)/);
+
+    const css = await source('src/web/styles/globals.css');
+    expect(ruleBlocks(css, '.trace-deferred-filter-note {')[0]).toBeDefined();
+  });
+
+  it('moves the .trace-row and .warning-fields narrow-viewport collapses to live immediately after the rules they must beat (QKD-08)', async () => {
+    const css = await source('src/web/styles/globals.css');
+
+    // The shared narrow-viewport block (identified by its unrelated, still-present sibling rule
+    // .blocked-by) no longer declares .trace-row at all.
+    const [sharedBlock] = ruleBlocks(css, '.blocked-by {');
+    expect(sharedBlock).toBeDefined();
+
+    const blockedByLine = css.split('\n').findIndex((line) => line.trim() === '.blocked-by {');
+    const traceRowBaseLine = css.split('\n').findIndex((line) => line.trim() === '.trace-row {');
+    expect(traceRowBaseLine).toBeGreaterThan(blockedByLine);
+
+    // .trace-row's own narrow-viewport collapse now lives after .trace-row + .trace-row, i.e.
+    // between the base rule and .trace-row-primary.
+    const lines = css.split('\n');
+    const rowPrimaryLine = lines.findIndex((line) => line.trim() === '.trace-row-primary {');
+    const collapseBetween = lines
+      .slice(traceRowBaseLine, rowPrimaryLine)
+      .some((line) => line.trim() === '@media (max-width: 42rem) {');
+    expect(collapseBetween).toBe(true);
+
+    // .warning-fields' own narrow-viewport collapse now lives after its dd rule, before
+    // .warning-fields-label.
+    const warningDdLine = lines.findIndex((line) => line.trim() === '.warning-fields dd {');
+    const warningLabelLine = lines.findIndex((line) => line.trim() === '.warning-fields-label {');
+    const warningCollapseBetween = lines
+      .slice(warningDdLine, warningLabelLine)
+      .some((line) => line.trim() === '@media (max-width: 42rem) {');
+    expect(warningCollapseBetween).toBe(true);
   });
 });

@@ -49,10 +49,10 @@ describe('empty-state contract (D-06, D-07, D-08, D-09)', () => {
     expect((roadmap.match(/<EmptyState/g) ?? []).length).toBeGreaterThanOrEqual(6);
   });
 
-  it("removes traceability-page.tsx's former no-requirements sentence, but keeps its filter-result sentence (D-08, scope rule)", async () => {
+  it("removes traceability-page.tsx's former no-requirements sentence, but keeps its filter-result sentence, scoped to the active tier since quick-260918-qkd Task 3 (D-08, scope rule)", async () => {
     const traceability = await source('src/web/pages/traceability-page.tsx');
     expect(traceability).not.toContain('No requirements are present in this snapshot.');
-    expect(traceability).toContain('No requirements match the current filter.');
+    expect(traceability).toContain('No active-tier requirements match the current filter.');
     expect(traceability).toContain('<EmptyState />');
   });
 
