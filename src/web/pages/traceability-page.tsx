@@ -37,16 +37,35 @@ async function fetchTraceability(): Promise<TraceabilityViewModel> {
 function RequirementStatusChip({ status }: { status: boolean | null }): React.JSX.Element {
   if (status === null) {
     return (
-      <span className="status-chip" data-tone="quiet">
+      <span className="status-chip" data-signal="requirement" data-tone="quiet">
         —
       </span>
     );
   }
   return (
-    <span className="status-chip" data-tone={status ? 'complete' : 'quiet'}>
-      {status ? 'Complete' : 'Incomplete'}
+    <span
+      className="status-chip"
+      data-tone={status ? 'complete' : 'quiet'}
+      data-signal="requirement"
+    >
+      {status ? 'Checked' : 'Unchecked'}
     </span>
   );
+}
+
+/** A3: an actively-worked covering phase and one with no directory on disk are no longer the same
+ * grey chip. Module-level so the mapping is a single, testable fact rather than inlined per call
+ * site; an unrecognised or missing disk status falls back to 'quiet' rather than being dropped. */
+const COVERING_PHASE_TONE_BY_DISK_STATUS: Record<string, 'complete' | 'in-flight' | 'missing'> = {
+  complete: 'complete',
+  in_progress: 'in-flight',
+  researched: 'in-flight',
+  no_directory: 'missing',
+};
+
+function coveringPhaseTone(diskStatus: string | null): 'complete' | 'in-flight' | 'missing' | 'quiet' {
+  if (diskStatus === null) return 'quiet';
+  return COVERING_PHASE_TONE_BY_DISK_STATUS[diskStatus] ?? 'quiet';
 }
 
 function CoveringPhaseEntry({
@@ -64,7 +83,8 @@ function CoveringPhaseEntry({
         <Link to={covering.url}>{covering.phaseName}</Link>
         <span
           className="status-chip"
-          data-tone={covering.phaseDiskStatus === 'complete' ? 'complete' : 'quiet'}
+          data-signal="phase"
+          data-tone={coveringPhaseTone(covering.phaseDiskStatus)}
         >
           {(covering.phaseDiskStatus ?? 'unknown').replaceAll('_', ' ')}
         </span>
@@ -74,7 +94,7 @@ function CoveringPhaseEntry({
   return (
     <li key={`${rowId}-covering-${index}`} className="trace-covering-entry">
       <span className="trace-dangling-text">{covering.raw}</span>
-      <span className="status-chip" data-tone="destructive">
+      <span className="status-chip" data-signal="phase" data-tone="destructive">
         Unresolved
       </span>
     </li>
