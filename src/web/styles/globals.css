@@ -3616,11 +3616,11 @@ pre {
   height: 100%;
 }
 
-.trace-bar-covered {
+.trace-bar-complete {
   background: var(--traced-fill);
 }
 
-.trace-bar-mismatched {
+.trace-bar-unresolved {
   background: var(--destructive);
 }
 

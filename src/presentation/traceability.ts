@@ -43,16 +43,34 @@ export interface TraceabilityCounts {
   disagreement: number;
 }
 
-/** A disjoint three-way partition of a row scope (the whole view, or a single category) — every
- * row lands in exactly one of covered/mismatched/uncovered, and the three always sum to total.
- * `coveragePercent` treats a mismatched row as covered (it does have a covering phase), rounds to
- * a whole number, and reports 0 for an empty scope rather than dividing by zero. */
+/** A disjoint five-way partition of a row scope (the whole view, or a single category), derived
+ * solely from each row's covering phase(s) — never from the requirement's own checkbox. Every row
+ * lands in exactly one of completePhase/inFlightPhase/missingPhase/unresolvedPhase/uncovered, and
+ * the five always sum to total. A row covered by more than one phase lands in the weakest bucket
+ * among them (complete beats in-flight beats missing beats unresolved), so a requirement split
+ * across a finished phase and an unfinished one is never reported as finished.
+ *
+ * `claimedComplete` is the requirement side's own tally — rows whose own `requirementStatus` is
+ * `true` — computed without reading any covering phase at all. `mismatched` is deliberately not a
+ * partition bucket: it is `disagreesWithAnyCovering()`'s own count, reported as a sibling figure so
+ * the partition itself can never silently become a merged, two-signal verdict.
+ *
+ * `tracedPercent` is `(total - uncovered) / total`: the share of requirements that name a covering
+ * phase at all, regardless of that phase's state — the figure the page's headline used to report.
+ * `completePhasePercent` is `completePhase / total`: the share whose covering phase is finished on
+ * disk, which is what the headline reports now. Both round to a whole number and are both 0 for an
+ * empty scope rather than dividing by zero. */
 export interface TraceabilityCoverage {
   total: number;
-  covered: number;
-  mismatched: number;
+  completePhase: number;
+  inFlightPhase: number;
+  missingPhase: number;
+  unresolvedPhase: number;
   uncovered: number;
-  coveragePercent: number;
+  tracedPercent: number;
+  completePhasePercent: number;
+  claimedComplete: number;
+  mismatched: number;
 }
 
 export interface TraceabilityGroup {
@@ -135,19 +153,63 @@ function disagreesWithAnyCovering(
   });
 }
 
-/** Derives the disjoint covered/mismatched/uncovered partition (see TraceabilityCoverage) from a
- * row scope. Module-local: both the whole-view coverage and each group's own coverage call this
- * same function over their own rows so the two can never drift apart via a second, divergent
- * counting rule. */
+type CoveringRank = 0 | 1 | 2 | 3;
+
+/** Ordinal rank of a single covering phase's state — unresolved lowest, then no-directory, then
+ * on-disk-but-not-complete, then complete highest. `diskStatus === 'complete'` is the complete
+ * rank; `diskStatus === 'no_directory'` is the missing rank; every other non-null status
+ * (`'in_progress'`, `'researched'`, or any future value `assemble.ts` might add) degrades to the
+ * in-flight rank rather than being dropped, so an unrecognised status still reads as "something
+ * exists, it is not finished" instead of silently vanishing from the partition. */
+function coveringRank(covering: TraceabilityCoveringPhase): CoveringRank {
+  if (!covering.resolved) return 0;
+  if (covering.phaseDiskStatus === 'complete') return 3;
+  if (covering.phaseDiskStatus === 'no_directory') return 1;
+  return 2;
+}
+
+/** Derives the disjoint five-bucket phase-sourced partition (see TraceabilityCoverage) from a row
+ * scope. Module-local: both the whole-view coverage and each group's own coverage call this same
+ * function over their own rows so the two can never drift apart via a second, divergent counting
+ * rule. A row with no covering phase at all short-circuits to uncovered before any rank is taken;
+ * a row with one or more covering phases lands in the bucket of the weakest (lowest-ranked) one. */
 function coverageOf(rows: TraceabilityRow[]): TraceabilityCoverage {
   const total = rows.length;
-  const uncovered = rows.filter((row) => row.uncovered).length;
-  const mismatched = rows.filter(
-    (row) => row.coveringPhases.length > 0 && row.statusDisagreement,
-  ).length;
-  const covered = total - uncovered - mismatched;
-  const coveragePercent = total === 0 ? 0 : Math.round(((covered + mismatched) / total) * 100);
-  return { total, covered, mismatched, uncovered, coveragePercent };
+  let completePhase = 0;
+  let inFlightPhase = 0;
+  let missingPhase = 0;
+  let unresolvedPhase = 0;
+  let uncovered = 0;
+
+  for (const row of rows) {
+    if (row.coveringPhases.length === 0) {
+      uncovered += 1;
+      continue;
+    }
+    const weakestRank = Math.min(...row.coveringPhases.map(coveringRank)) as CoveringRank;
+    if (weakestRank === 3) completePhase += 1;
+    else if (weakestRank === 2) inFlightPhase += 1;
+    else if (weakestRank === 1) missingPhase += 1;
+    else unresolvedPhase += 1;
+  }
+
+  const claimedComplete = rows.filter((row) => row.requirementStatus === true).length;
+  const mismatched = rows.filter((row) => row.statusDisagreement).length;
+  const tracedPercent = total === 0 ? 0 : Math.round(((total - uncovered) / total) * 100);
+  const completePhasePercent = total === 0 ? 0 : Math.round((completePhase / total) * 100);
+
+  return {
+    total,
+    completePhase,
+    inFlightPhase,
+    missingPhase,
+    unresolvedPhase,
+    uncovered,
+    tracedPercent,
+    completePhasePercent,
+    claimedComplete,
+    mismatched,
+  };
 }
 
 function traceabilityRow(
