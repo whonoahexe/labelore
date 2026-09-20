@@ -3,6 +3,7 @@
 import type { ArtifactHandler, RawArtifact, ArtifactRef } from '../types.ts';
 import { tryParseFrontmatter } from '../frontmatter.ts';
 import { deriveTitle } from './title.ts';
+import { projectSections } from './section-projection.ts';
 
 export const GenericMarkdownHandler: ArtifactHandler = {
   kind: 'unknown',
@@ -15,6 +16,7 @@ export const GenericMarkdownHandler: ArtifactHandler = {
       frontmatter: fm.data,
       body: fm.body,
       warning: fm.warning,
+      structured: projectSections(ref.kind, fm.body),
     };
   },
 };
