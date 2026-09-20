@@ -31,7 +31,7 @@ Requirement IDs continue from v1.0 (archived at `milestones/v1.0-REQUIREMENTS.md
 
 - [ ] **READ-07**: Long documents carry a table of contents that tracks reading position and stays
       legible at every viewport width
-- [ ] **BACK-02**: `D-XX` decision and `WR-XX` warning mentions are clickable and resolve to their
+- [x] **BACK-02**: `D-XX` decision and `WR-XX` warning mentions are clickable and resolve to their
       source
 
 ### Visual Consistency
@@ -127,7 +127,7 @@ maps to Phase 5; the wave column records where it is expected to land inside tha
 | VIEW-05 | Phase 5 | 4 — Coverage | Pending |
 | VIEW-06 | Phase 5 | 2 — Extraction (section projection + speculative fallback) | Pending |
 | READ-07 | Phase 5 | Any — independent of the registry work | Pending |
-| BACK-02 | Phase 5 | Any — independent of the registry work | Pending |
+| BACK-02 | Phase 5 | Any — independent of the registry work | Complete |
 | UI-04 | Phase 5 | 1 — Foundation (convention written down) | Complete |
 | UI-05 | Phase 5 | 1 — Foundation (convention enforced by test) | Complete |
 | UI-06 | Phase 5 | Conformance condition across waves 1-4 | Pending |
