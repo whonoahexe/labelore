@@ -428,8 +428,8 @@
                 "location": "phase",
                 "frontmatter": {},
                 "title": "Phase 1: First Slice - Context",
-                "bodyLength": 1696,
-                "bodyHash": "5d5608ca688d7c5b0c0c52ed026341862815944194b732873c2e708346238321",
+                "bodyLength": 1550,
+                "bodyHash": "3c12a83bc7fb920c276f0d2c9a7b38cf6eaa58e3d924f758b6fb7d546129dcf6",
                 "mtimeMs": 0,
                 "warnings": [],
                 "structured": {
@@ -639,8 +639,8 @@
             "location": "phase",
             "frontmatter": {},
             "title": "Phase 1: First Slice - Context",
-            "bodyLength": 1696,
-            "bodyHash": "5d5608ca688d7c5b0c0c52ed026341862815944194b732873c2e708346238321",
+            "bodyLength": 1550,
+            "bodyHash": "3c12a83bc7fb920c276f0d2c9a7b38cf6eaa58e3d924f758b6fb7d546129dcf6",
             "mtimeMs": 0,
             "warnings": [],
             "structured": {
@@ -841,8 +841,8 @@
                   "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: First Slice - Context",
-                  "bodyLength": 1696,
-                  "bodyHash": "5d5608ca688d7c5b0c0c52ed026341862815944194b732873c2e708346238321",
+                  "bodyLength": 1550,
+                  "bodyHash": "3c12a83bc7fb920c276f0d2c9a7b38cf6eaa58e3d924f758b6fb7d546129dcf6",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
@@ -1043,8 +1043,8 @@
                   "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: First Slice - Context",
-                  "bodyLength": 1696,
-                  "bodyHash": "5d5608ca688d7c5b0c0c52ed026341862815944194b732873c2e708346238321",
+                  "bodyLength": 1550,
+                  "bodyHash": "3c12a83bc7fb920c276f0d2c9a7b38cf6eaa58e3d924f758b6fb7d546129dcf6",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
@@ -1262,8 +1262,8 @@
                   "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: First Slice - Context",
-                  "bodyLength": 1696,
-                  "bodyHash": "5d5608ca688d7c5b0c0c52ed026341862815944194b732873c2e708346238321",
+                  "bodyLength": 1550,
+                  "bodyHash": "3c12a83bc7fb920c276f0d2c9a7b38cf6eaa58e3d924f758b6fb7d546129dcf6",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
@@ -1419,7 +1419,7 @@
             "artifactKind": "context",
             "position": {
               "line": 19,
-              "offset": 427
+              "offset": 399
             },
             "excerpt": "- **D-01:** The slice is a single tracer plan, not split into multiple plans — there is nothing to"
           }
@@ -1577,7 +1577,7 @@
           "artifactKind": "context",
           "position": {
             "line": 19,
-            "offset": 427
+            "offset": 399
           },
           "excerpt": "- **D-01:** The slice is a single tracer plan, not split into multiple plans — there is nothing to"
         },
