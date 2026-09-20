@@ -57,7 +57,15 @@ UI-05, UI-06
    the reader is; a `D-XX` or `WR-XX` mention in prose is clickable and lands on its source.
    *(READ-07, BACK-02)*
 
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Tracer: DISCUSSION-LOG end to end — section-projection hook, view registry, View/Source toggle, collapsed remainder, view-sourced outline (VIEW-01, VIEW-02)
+- [ ] 05-02-PLAN.md — Design language written down (`docs/design-language.md`) and enforced by the class-vocabulary test (UI-04, UI-05)
+- [ ] 05-03-PLAN.md — `D-XX` / `WR-XX` mentions: warning scheme, decision/warning registries, phase-local-then-corpus resolution (BACK-02)
+- [ ] 05-04-PLAN.md — Outline reading-position tracking and narrow-width sticky disclosure (READ-07)
+- [ ] 05-05-PLAN.md — VERIFICATION and PLAN views plus the unrecognized-type structural fallback (VIEW-03, VIEW-04, VIEW-06)
+- [ ] 05-06-PLAN.md — Remaining 15 manifests, registry completeness, conformance sweep and end-of-phase human check (VIEW-05, UI-06)
 
 **UI hint**: yes
 
@@ -110,7 +118,7 @@ small independent entry.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 5. Per-Type Document Views | 0/? | Not started | - |
+| 5. Per-Type Document Views | 0/6 | Planned | - |
 
 *Phases 1-4 (v1.0) are complete and archived — see [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md).*
 
