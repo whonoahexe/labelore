@@ -2,6 +2,8 @@ import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import {
   extractDiscussionLog,
+  extractReviewWarnings,
+  parseDecisionEntries,
   projectSections,
   SECTION_PROJECTIONS,
 } from '../src/planning-repo/handlers/section-projection.ts';
@@ -14,6 +16,17 @@ async function fixtureBody(): Promise<string> {
   // The real fixture carries frontmatter-free markdown prose only (an audit-trail doc, not an
   // artifact with YAML frontmatter) — the whole file is the body `extractDiscussionLog` consumes.
   return raw;
+}
+
+async function readRepoFile(relativePath: string): Promise<string> {
+  return await readFile(new URL(`../${relativePath}`, import.meta.url), 'utf8');
+}
+
+/** Slices the real Phase 5 CONTEXT.md's `<decisions>` tag body, mirroring context.ts's own
+ * extractTag discipline — bounded, non-greedy, single tag name. */
+function extractDecisionsTagBody(content: string): string | null {
+  const m = content.match(/<decisions>([\s\S]*?)<\/decisions>/);
+  return m ? m[1].trim() : null;
 }
 
 describe('extractDiscussionLog — real Phase 5 fixture (12/12-audited anchor)', () => {
@@ -135,8 +148,8 @@ describe('extractDiscussionLog — inline synthetic tables', () => {
 });
 
 describe('SECTION_PROJECTIONS / projectSections', () => {
-  it('registers only discussion-log in this plan', () => {
-    expect(Object.keys(SECTION_PROJECTIONS)).toEqual(['discussion-log']);
+  it('registers discussion-log and review as of this plan', () => {
+    expect(Object.keys(SECTION_PROJECTIONS).sort()).toEqual(['discussion-log', 'review']);
   });
 
   it('returns {} for a kind with no registered projection, never throwing', () => {
@@ -148,5 +161,82 @@ describe('SECTION_PROJECTIONS / projectSections', () => {
     const result = projectSections('discussion-log', body);
     expect(result).toHaveProperty('questions');
     expect(result).toHaveProperty('topics');
+  });
+});
+
+describe('parseDecisionEntries — real Phase 5 CONTEXT.md <decisions> tag body', () => {
+  it('yields 15 entries D-01…D-15 in order, D-01 folding its Reversibility continuation and D-06 starting with "A manifest that promotes"', async () => {
+    const content = await readRepoFile('.planning/phases/05-per-type-document-views/05-CONTEXT.md');
+    const tagBody = extractDecisionsTagBody(content);
+    const entries = parseDecisionEntries(tagBody);
+
+    expect(entries.map((entry) => entry.id)).toEqual(
+      Array.from({ length: 15 }, (_, i) => `D-${String(i + 1).padStart(2, '0')}`),
+    );
+    const d01 = entries.find((entry) => entry.id === 'D-01');
+    expect(d01?.text).toContain('Reversibility');
+    const d06 = entries.find((entry) => entry.id === 'D-06');
+    expect(d06?.text.startsWith('A manifest that promotes')).toBe(true);
+  });
+});
+
+describe('parseDecisionEntries — synthetic cases', () => {
+  it('returns [] for null input', () => {
+    expect(parseDecisionEntries(null)).toEqual([]);
+  });
+
+  it('returns [] for empty string input', () => {
+    expect(parseDecisionEntries('')).toEqual([]);
+  });
+
+  it('yields two entries when a non-decision bullet sits between two D-NN bullets', () => {
+    const body = [
+      '- **D-01:** First decision.',
+      '- Some other bullet, not a decision.',
+      '- **D-02:** Second decision.',
+    ].join('\n');
+    const entries = parseDecisionEntries(body);
+    expect(entries).toEqual([
+      { id: 'D-01', text: 'First decision.' },
+      { id: 'D-02', text: 'Second decision.' },
+    ]);
+  });
+
+  it('folds an indented continuation line into the preceding entry, joined by a single space', () => {
+    const body = ['- **D-01:** First line of the decision.', '  Continuation line.'].join('\n');
+    expect(parseDecisionEntries(body)).toEqual([
+      { id: 'D-01', text: 'First line of the decision. Continuation line.' },
+    ]);
+  });
+});
+
+describe('extractReviewWarnings — real 01-REVIEW.md', () => {
+  it('yields four entries WR-01…WR-04, with WR-04 starting with the gray-matter finding title', async () => {
+    const body = await readRepoFile(
+      '.planning/milestones/v1.0-phases/01-read-layer-domain-model/01-REVIEW.md',
+    );
+    const { warnings } = extractReviewWarnings(body);
+
+    expect(warnings.map((w) => w.id)).toEqual(['WR-01', 'WR-02', 'WR-03', 'WR-04']);
+    expect(warnings[3].title.startsWith('`gray-matter` is a runtime dependency')).toBe(true);
+  });
+
+  it('projectSections("review", ...) returns the same shape as extractReviewWarnings', async () => {
+    const body = await readRepoFile(
+      '.planning/milestones/v1.0-phases/01-read-layer-domain-model/01-REVIEW.md',
+    );
+    expect(projectSections('review', body)).toEqual(extractReviewWarnings(body));
+  });
+});
+
+describe('extractReviewWarnings — synthetic cases', () => {
+  it('returns { warnings: [] } for a body with no ## Warnings section', () => {
+    expect(extractReviewWarnings('## Findings\n\nSomething else entirely.\n')).toEqual({
+      warnings: [],
+    });
+  });
+
+  it('returns { warnings: [] } for an empty body', () => {
+    expect(extractReviewWarnings('')).toEqual({ warnings: [] });
   });
 });

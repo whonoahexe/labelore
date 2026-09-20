@@ -17,8 +17,19 @@ function artifact(path: string, kind: string, body: string): ParsedArtifact {
 }
 
 describe('ID_PATTERNS', () => {
-  it('has exactly four keys — the schemes NAV-02/03/07 consume', () => {
-    expect(Object.keys(ID_PATTERNS).sort()).toEqual(['decision', 'phase', 'plan', 'requirement']);
+  it('has exactly five keys — the schemes NAV-02/03/07 consume', () => {
+    expect(Object.keys(ID_PATTERNS).sort()).toEqual([
+      'decision',
+      'phase',
+      'plan',
+      'requirement',
+      'warning',
+    ]);
+  });
+
+  it('lists warning before requirement in object literal order, so WR-01 is never misclassified as requirement', () => {
+    const keys = Object.keys(ID_PATTERNS);
+    expect(keys.indexOf('warning')).toBeLessThan(keys.indexOf('requirement'));
   });
 });
 
@@ -78,6 +89,29 @@ describe('scanMentions — decision scheme and the D-05-vs-D1 collision', () => 
     const body = 'coverage:\n  - id: D1\n  - id: D2\n';
     const index = scanMentions([artifact('SUMMARY.md', 'summary', body)]);
     expect(index.all.filter((m) => m.scheme === 'decision')).toHaveLength(0);
+  });
+});
+
+describe('scanMentions — warning scheme (BACK-02)', () => {
+  it('captures a WR-NN token as scheme warning, never requirement', () => {
+    const body = 'Per WR-01, this needs a fix.';
+    const index = scanMentions([artifact('a.md', 'review', body)]);
+    const mention = index.all.find((m) => m.id === 'WR-01');
+    expect(mention?.scheme).toBe('warning');
+    expect(index.all.filter((m) => m.scheme === 'requirement')).toHaveLength(0);
+  });
+
+  it('still captures a three-or-more-letter-prefixed WRX-NN token as requirement, not warning', () => {
+    const body = 'See WRX-01 for detail.';
+    const index = scanMentions([artifact('a.md', 'generic', body)]);
+    const mention = index.all.find((m) => m.id === 'WRX-01');
+    expect(mention?.scheme).toBe('requirement');
+  });
+
+  it('skips a WR-NN token inside a fenced code block or inline code span, like every other scheme', () => {
+    const body = 'Prose mentions WR-01.\n\n```\nWR-02 is inside a fence.\n```\n\nAnd `WR-03` is a span.\n';
+    const index = scanMentions([artifact('a.md', 'review', body)]);
+    expect(index.all.map((m) => m.id)).toEqual(['WR-01']);
   });
 });
 
