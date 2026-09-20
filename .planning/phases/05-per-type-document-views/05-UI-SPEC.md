@@ -185,7 +185,7 @@ Reuses the existing `<details className="artifact-metadata">` pattern verbatim �
 same `.card-veil` background, same `<summary>` + trailing count-span shape already shown for
 "Document metadata".
 
-- Summary copy: **"More in this document · {N} sections"** (N = count of unpromoted top-level sections). Exact mirror of the existing `Document metadata <span>{N} sections</span>` phrasing.
+- Summary copy: **"More in this document · {N} sections"** (N = count of unpromoted top-level sections), pluralized — **"· 1 section"** when N = 1. Otherwise an exact mirror of the existing `Document metadata <span>{N} sections</span>` phrasing.
 - Placement: after the promoted region, in document order (D-02), as the *last* item — also the final entry the outline lists (D-11: "the collapsed remainder as a single entry").
 - If the manifest promotes every section (N = 0), omit the disclosure entirely — do not render an empty one. This is the same "silently omit" rule as D-06, applied to the remainder itself.
 - No new class needed — this is a `.artifact-metadata` reuse, already in the shared vocabulary.
@@ -214,6 +214,7 @@ promoted straight from `artifact.frontmatter` (Frontmatter Projection, no handle
   - `<dt>Expected</dt><dd>{expected}</dd>`
   - `<dt>Why a person</dt><dd>{why_human}</dd>`
 - Wrap each check in `<div className="view-verification-check">` (**view-local**, spacing/border grouping only — the field styling itself is the shared `.metadata-list`).
+- A check missing `expected` or `why_human` omits just that `dt`/`dd` row and still renders with the fields it has (field-level D-06).
 - Empty array (`human_verification` absent or `[]`): omit the whole "Needs human verification" section per D-06 — do not render the heading with an EmptyState under it. A VERIFICATION file with nothing needing a human is a legitimate, silent case.
 - Long text: `expected`/`why_human` are free text and may run to a full sentence or more — `dd` wraps normally, no truncation.
 
@@ -248,7 +249,7 @@ stays. Only its **data source** changes (view registry's promoted-section list, 
 into normal flow) is replaced, not extended — that rule is the exact pattern D-12 rejects.
 
 - Trigger: a full-width sticky button pinned directly under the page chrome (`position: sticky; top: var(--space-22)` — reuse the same sticky offset the wide-layout outline already uses, so the trigger lands exactly where the sidebar column would have started).
-- Trigger label (D-13's own example, verbatim): **"On this page · {current section label}"**. Before any section has been scrolled past, show the first section's label. Trailing `ChevronDown` icon (reused import, matches `.warning-disclosure-chevron`'s icon choice), rotated via `@base-ui/react` Popover's `data-open`/`data-popup-open` attribute — mirror the existing chevron-rotate convention rather than inventing a new one.
+- Trigger label (D-13's own example, verbatim): **"On this page · {current section label}"**. Before any section has been scrolled past, show the first section's label. The label is single-line with `text-overflow: ellipsis` — the full, untruncated labels are always available in the popover list. Trailing `ChevronDown` icon (reused import, matches `.warning-disclosure-chevron`'s icon choice), rotated via `@base-ui/react` Popover's `data-open`/`data-popup-open` attribute — mirror the existing chevron-rotate convention rather than inventing a new one.
 - Content: `@base-ui/react` `Popover.Positioner` + `Popover.Popup`, anchored to the trigger, rendering the **same** `<ol>` markup the wide outline uses (reuse `.document-outline ol` styling — don't duplicate it into a second list style). This is the "overlay," not push-content, behavior D-12 requires — `Popover` over a bespoke `<details>` per RESEARCH.md's own recommendation, since `<details>` cannot overlay.
 - Class names: `.document-outline-trigger` (**shared** — new, add to `docs/design-language.md`) for the sticky button; the popup content reuses `.document-outline` unmodified.
 - Keyboard/focus: standard `@base-ui/react` Popover behavior (Escape closes, focus returns to trigger) — no custom focus trap.
@@ -319,23 +320,67 @@ Case-6 unrecognized copy is specified separately above (Section 8) and does not 
 
 ## UI Considerations
 
-Applicable state considerations resolved: 13 covered, 0 backstop, 0 unresolved.
+Probe run 2026-09-20 with `ui-consideration-probe.cjs` over the 8 surfaces in "New Component
+Specifications" (element kinds confirmed: E1 interactive-control; E2–E7 list-collection; E8
+static-content). 53 applicable considerations: **39 resolved (explicit), 14 dismissed with reason, 0 backstop, 0 unresolved.**
+Three rows marked **New (probe)** are decisions the probe surfaced that the spec did not previously
+state; each is also written into its component section above.
 
-| Category | Element(s) | Status | Resolution / Reason |
-|----------|------------|--------|---------------------|
-| empty | discussion-log options (list-collection) | ✅ covered | A question with no `✓` row is omitted from the promoted region entirely per D-06 — never rendered with a missing "Chosen" state (New Component Specs §3). |
-| empty | verification checks (list-collection) | ✅ covered | Empty/absent `human_verification[]` omits the whole "Needs human verification" heading — no EmptyState placeholder under it (New Component Specs §4). |
-| empty | collapsed remainder (list-collection) | ✅ covered | Zero unpromoted sections omits the disclosure entirely rather than rendering an empty `<details>` (New Component Specs §2). |
-| populated | discussion-log options (list-collection) | ✅ covered | Typical volume is single-digit questions per log (survey: 12/12 audited, no outliers) — no pagination, relies on existing section-gap tokens (New Component Specs §3). |
-| populated | verification checks (list-collection) | ✅ covered | Typical 3–8 checks per doc, rendered as a flat `.metadata-list`-styled series — no scroll region needed at this volume (New Component Specs §4). |
-| zero-one-many | discussion-log questions (list-collection) | ✅ covered | Single-question logs get the identical heading treatment as multi-question logs — no singular-case layout fork (New Component Specs §3). |
-| long-text | discussion-log option descriptions (static-content) | ✅ covered | Wraps via existing `overflow-wrap: anywhere` rule, never truncated (New Component Specs §3). |
-| long-text | verification `expected`/`why_human` (static-content) | ✅ covered | Free-text `dd` values wrap normally, no clamp (New Component Specs §4). |
-| long-text | unrecognized-kind eyebrow/notice text (static-content) | ✅ covered | An arbitrary/ugly kind string still wraps inside `.eyebrow`/`.notice`, no fixed-width truncation (New Component Specs §8). |
-| overflow | plan task-structure index (list-collection) | ✅ covered | Deliberately **not** capped like the 18-entry outline — every gated/ungated section must remain visible; scrolls with the page (New Component Specs §5). |
-| overflow | narrow-width outline popover (nav) | ✅ covered | Reuses `.document-outline`'s existing `overflow-y: auto` behavior inside the Popover content — no new overflow rule (New Component Specs §7). |
-| loading | document-view toggle (interactive-control) | ✅ covered | Both states render from data already fetched in one `/api/documents` response — no independent loading state exists to design for. |
-| error | document-view toggle (interactive-control) | ✅ covered | No independent fetch to fail; toggle only switches already-loaded local state. |
+| Category | Element | Status | Resolution / Reason |
+|----------|---------|--------|---------------------|
+| loading | E1 Document source toggle | ⛔ dismissed | Dismissed — no independent fetch: every view renders from the single `/api/documents` response the artifact page has already awaited; the existing page-level loading/error treatment (`artifact-page.tsx`) covers it. |
+| error | E1 Document source toggle | ⛔ dismissed | Dismissed — no independent fetch: every view renders from the single `/api/documents` response the artifact page has already awaited; the existing page-level loading/error treatment (`artifact-page.tsx`) covers it. |
+| long-text | E1 Document source toggle | ✅ resolved (explicit) | Labels are fixed single words "View" / "Source" (§1); no variable text can overflow the `size="xs"` buttons. |
+| empty | E2 Collapsed remainder disclosure | ✅ resolved (explicit) | N = 0 unpromoted sections omits the disclosure entirely — no empty `<details>` renders (§2). |
+| loading | E2 Collapsed remainder disclosure | ⛔ dismissed | Dismissed — no independent fetch: every view renders from the single `/api/documents` response the artifact page has already awaited; the existing page-level loading/error treatment (`artifact-page.tsx`) covers it. |
+| error | E2 Collapsed remainder disclosure | ⛔ dismissed | Dismissed — no independent fetch: every view renders from the single `/api/documents` response the artifact page has already awaited; the existing page-level loading/error treatment (`artifact-page.tsx`) covers it. |
+| populated | E2 Collapsed remainder disclosure | ✅ resolved (explicit) | Reuses `<details className="artifact-metadata">` with summary "More in this document · {N} sections" and the unpromoted sections inside, in document order (§2). |
+| partial | E2 Collapsed remainder disclosure | ✅ resolved (explicit) | A section whose heading fails `splitSections` is not counted and not listed; N reflects only parsed sections (D-06 silent omission applied to the remainder). |
+| overflow | E2 Collapsed remainder disclosure | ✅ resolved (explicit) | Expanded content flows in the page and scrolls with it — no inner scroll region (§2). |
+| zero-one-many | E2 Collapsed remainder disclosure | ✅ resolved (explicit) | **New (probe):** summary copy pluralizes — "· 1 section" for N = 1, "· {N} sections" otherwise (§2). |
+| long-text | E2 Collapsed remainder disclosure | ✅ resolved (explicit) | Section headings inside the remainder wrap via `.artifact-document`'s existing `overflow-wrap: anywhere`; the summary label itself is fixed copy plus a count. |
+| empty | E3 DISCUSSION-LOG options | ✅ resolved (explicit) | A question with no `Selected === '✓'` row is omitted from the promoted region and falls into the collapsed remainder (§3, D-06). |
+| loading | E3 DISCUSSION-LOG options | ⛔ dismissed | Dismissed — no independent fetch: every view renders from the single `/api/documents` response the artifact page has already awaited; the existing page-level loading/error treatment (`artifact-page.tsx`) covers it. |
+| error | E3 DISCUSSION-LOG options | ⛔ dismissed | Dismissed — no independent fetch: every view renders from the single `/api/documents` response the artifact page has already awaited; the existing page-level loading/error treatment (`artifact-page.tsx`) covers it. |
+| populated | E3 DISCUSSION-LOG options | ✅ resolved (explicit) | Per question: `.section-heading.compact` + `<ul className="view-discussion-log-options">`, chosen row leads with the `Chosen` chip, others plain muted text, table row order preserved (§3). |
+| partial | E3 DISCUSSION-LOG options | ✅ resolved (explicit) | A row with an empty `Description` cell renders its `Option` cell text instead; a question with no options table at all is not promoted and falls to the remainder (D-06). |
+| overflow | E3 DISCUSSION-LOG options | ✅ resolved (explicit) | Many questions rely on the page's `--space-7`/`--space-8` section gaps and scroll with the page — no pagination, no cap (§3). |
+| zero-one-many | E3 DISCUSSION-LOG options | ✅ resolved (explicit) | A single-question log gets the identical heading treatment; no singular layout fork (§3). |
+| long-text | E3 DISCUSSION-LOG options | ✅ resolved (explicit) | Option descriptions wrap (`overflow-wrap: anywhere`), never truncated or clamped (§3). |
+| empty | E4 VERIFICATION human checks | ✅ resolved (explicit) | `human_verification` absent or `[]` omits the whole "Needs human verification" section — no heading with an EmptyState under it (§4, D-06). |
+| loading | E4 VERIFICATION human checks | ⛔ dismissed | Dismissed — no independent fetch: every view renders from the single `/api/documents` response the artifact page has already awaited; the existing page-level loading/error treatment (`artifact-page.tsx`) covers it. |
+| error | E4 VERIFICATION human checks | ⛔ dismissed | Dismissed — no independent fetch: every view renders from the single `/api/documents` response the artifact page has already awaited; the existing page-level loading/error treatment (`artifact-page.tsx`) covers it. |
+| populated | E4 VERIFICATION human checks | ✅ resolved (explicit) | `.section-heading` "Needs human verification" followed by one `.view-verification-check` per entry, each a `.metadata-list` with Check / Expected / Why a person rows (§4). |
+| partial | E4 VERIFICATION human checks | ✅ resolved (explicit) | **New (probe):** a check missing `expected` or `why_human` omits just that `dt`/`dd` row; the check still renders with the fields it has (field-level D-06) (§4). |
+| overflow | E4 VERIFICATION human checks | ✅ resolved (explicit) | Checks render as a flat series that scrolls with the page — no inner scroll region (§4). |
+| zero-one-many | E4 VERIFICATION human checks | ✅ resolved (explicit) | One check or many: same heading, same per-check grouping; no count-dependent layout (§4). |
+| long-text | E4 VERIFICATION human checks | ✅ resolved (explicit) | `expected` / `why_human` `dd` values wrap normally, no clamp (§4). |
+| empty | E5 PLAN task-structure index | ✅ resolved (explicit) | A plan body emitting no `data-plan-ordinal` segments omits the index entirely (D-06); the plan body still renders. |
+| loading | E5 PLAN task-structure index | ⛔ dismissed | Dismissed — no independent fetch: every view renders from the single `/api/documents` response the artifact page has already awaited; the existing page-level loading/error treatment (`artifact-page.tsx`) covers it. |
+| error | E5 PLAN task-structure index | ⛔ dismissed | Dismissed — no independent fetch: every view renders from the single `/api/documents` response the artifact page has already awaited; the existing page-level loading/error treatment (`artifact-page.tsx`) covers it. |
+| populated | E5 PLAN task-structure index | ✅ resolved (explicit) | `<ol className="view-plan-task-index">`, one `<li data-gate>` per segment in ordinal order: ordinal + tag label + `Gates` chip only when `data-plan-gate` is present (§5). |
+| partial | E5 PLAN task-structure index | ✅ resolved (explicit) | A segment with an ordinal but no tag label renders the ordinal alone; a segment with no ordinal is skipped (D-06). |
+| overflow | E5 PLAN task-structure index | ✅ resolved (explicit) | Deliberately not capped at 18 like the outline — every section listed, scrolls with the page (§5). |
+| zero-one-many | E5 PLAN task-structure index | ✅ resolved (explicit) | One segment still renders the `<ol>` with a single row; no special singular case (§5). |
+| long-text | E5 PLAN task-structure index | ✅ resolved (explicit) | Tag labels wrap onto a second line within the `<li>`; the ordinal column keeps its width. |
+| empty | E6 Outline — wide layout | ✅ resolved (explicit) | When the view has no promoted sections and no remainder entry, `DocumentOutline` is not rendered (existing omit behaviour, unchanged data-source swap per D-11). |
+| loading | E6 Outline — wide layout | ⛔ dismissed | Dismissed — no independent fetch: every view renders from the single `/api/documents` response the artifact page has already awaited; the existing page-level loading/error treatment (`artifact-page.tsx`) covers it. |
+| error | E6 Outline — wide layout | ⛔ dismissed | Dismissed — no independent fetch: every view renders from the single `/api/documents` response the artifact page has already awaited; the existing page-level loading/error treatment (`artifact-page.tsx`) covers it. |
+| populated | E6 Outline — wide layout | ✅ resolved (explicit) | Existing `.document-outline` sticky column; entries are the manifest's promoted sections plus the remainder as the last entry; exactly one `data-active="true"` entry (§6, D-11/D-13). |
+| partial | E6 Outline — wide layout | ✅ resolved (explicit) | A promoted section absent from the file is omitted from the outline as well as the view (D-06 + D-11 keep them in lockstep). |
+| overflow | E6 Outline — wide layout | ✅ resolved (explicit) | Existing `overflow-y: auto` on the sticky column and the existing 18-entry cap are retained (§6). |
+| zero-one-many | E6 Outline — wide layout | ✅ resolved (explicit) | A single-entry outline renders with that entry active by default (§7 applies the same rule to the trigger label). |
+| long-text | E6 Outline — wide layout | ✅ resolved (explicit) | Entry labels wrap inside the column per existing `.document-outline` styling; no truncation. |
+| empty | E7 Outline — narrow-width disclosure | ✅ resolved (explicit) | Trigger is omitted whenever the wide outline would be omitted (same emptiness rule as E6). |
+| loading | E7 Outline — narrow-width disclosure | ⛔ dismissed | Dismissed — no independent fetch: every view renders from the single `/api/documents` response the artifact page has already awaited; the existing page-level loading/error treatment (`artifact-page.tsx`) covers it. |
+| error | E7 Outline — narrow-width disclosure | ⛔ dismissed | Dismissed — no independent fetch: every view renders from the single `/api/documents` response the artifact page has already awaited; the existing page-level loading/error treatment (`artifact-page.tsx`) covers it. |
+| populated | E7 Outline — narrow-width disclosure | ✅ resolved (explicit) | Sticky `.document-outline-trigger` "On this page · {current section label}" + `ChevronDown`, opening a `@base-ui/react` Popover that renders the same `<ol>` markup as the wide outline (§7, D-12). |
+| partial | E7 Outline — narrow-width disclosure | ✅ resolved (explicit) | Same lockstep omission as E6 — the popover list mirrors the wide outline's entries exactly. |
+| overflow | E7 Outline — narrow-width disclosure | ✅ resolved (explicit) | Popup reuses `.document-outline`'s `overflow-y: auto`; height is bounded by the viewport via the Popover positioner (§7). |
+| zero-one-many | E7 Outline — narrow-width disclosure | ✅ resolved (explicit) | Before any section is scrolled past, and for a single-entry outline, the trigger shows the first section's label (§7). |
+| long-text | E7 Outline — narrow-width disclosure | ✅ resolved (explicit) | **New (probe):** the trigger label is single-line with `text-overflow: ellipsis`; the full untruncated labels are always visible in the popover list (§7). |
+| overflow | E8 Unrecognized-type marker | ✅ resolved (explicit) | Chip sits in `ArtifactHeader`'s existing chip slot; the `.notice` block and structural read flow in the page and scroll with it (§8). |
+| long-text | E8 Unrecognized-type marker | ✅ resolved (explicit) | An arbitrary/ugly `kind` string wraps inside `.eyebrow` and inside the bold `{kind}` span of the notice — no fixed-width truncation (§8). |
 
 ---
 
