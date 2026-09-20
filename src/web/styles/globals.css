@@ -3183,21 +3183,75 @@ pre {
   padding: var(--space-fluid-5);
 }
 
+/* D-12/D-13, §7: the narrow-width sticky disclosure trigger — a full-width sticky button pinned
+   directly under the page chrome at the same offset the wide outline column already uses, so it
+   lands exactly where the sidebar track would have started. Hidden by default; shown only below
+   58rem (see media block below), where the wide `nav.document-outline` column is hidden instead
+   of being flowed into normal document order (RESEARCH Pitfall 5 — the pattern this replaces). */
+.document-outline-trigger {
+  display: none;
+  position: sticky;
+  top: var(--space-22);
+  z-index: 30;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  background: var(--card-veil);
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.document-outline-trigger > span {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.document-outline-trigger svg {
+  flex: none;
+  transition: transform 150ms ease;
+}
+
+/* Mirrors .artifact-warning-disclosure[open] .warning-disclosure-chevron's rotate convention —
+   base-ui's own open-state attribute stands in for the native <details> `[open]` selector. */
+.document-outline-trigger[data-popup-open] svg {
+  transform: rotate(180deg);
+}
+
+.document-outline-positioner {
+  z-index: 60;
+}
+
+/* The popover reuses `.document-outline` unmodified for its list styling, but the positioner
+   already handles placement — the sticky positioning inherited from the wide-column rule above
+   must not apply inside the popup, so it is cancelled here, scoped to this one context only. */
+.document-outline-positioner .document-outline {
+  position: static;
+  max-height: min(60vh, 24rem);
+  width: min(24rem, calc(100vw - var(--space-8)));
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--popover);
+}
+
 @media (max-width: 58rem) {
   .document-reader-layout {
     grid-template-columns: 1fr;
   }
 
-  .document-outline {
-    position: static;
-    max-height: none;
-    padding: 0 0 var(--space-4);
-    border-right: 0;
-    border-bottom: 1px solid var(--border);
+  nav.document-outline {
+    display: none;
   }
 
-  .document-outline ol {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .document-outline-trigger {
+    display: flex;
   }
 }
 
