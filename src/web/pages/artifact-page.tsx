@@ -15,11 +15,8 @@ import {
   buildPhaseUrl,
   presentationRoutePatterns,
 } from '../../presentation/routes.ts';
-import {
-  buildFrontmatterPanels,
-  type FrontmatterPanel,
-  type FrontmatterValueView,
-} from '../../rendering/frontmatter-views.ts';
+import { buildFrontmatterPanels } from '../../rendering/frontmatter-views.ts';
+import { MetadataPanel } from '../components/metadata-panel.tsx';
 import type { RenderedDocument } from '../../rendering/markdown.ts';
 import { ReferencePreview, type ReferencePreviewState } from '../components/reference-preview.tsx';
 import { DocumentViewToggle } from '../components/document-view-toggle.tsx';
@@ -75,46 +72,6 @@ const WARNING_DISCLOSURE_LABELS: Record<Exclude<ArtifactWarningTone, null>, stri
 function outlineHeadings(document: RenderedDocument): RenderedDocument['headings'] {
   const headings = document.headings.filter((heading) => heading.depth <= 3).slice(0, 18);
   return headings.length < 2 ? [] : headings;
-}
-
-function ValueView({ value }: { value: FrontmatterValueView }): React.JSX.Element {
-  if (value.kind === 'scalar') return <span className="metadata-scalar">{value.value}</span>;
-  if (value.kind === 'list') {
-    return value.items.length === 0 ? (
-      <span className="metadata-empty">Empty list</span>
-    ) : (
-      <ol className="metadata-list">
-        {value.items.map((item, index) => (
-          <li key={index}>
-            <ValueView value={item} />
-          </li>
-        ))}
-      </ol>
-    );
-  }
-  return value.entries.length === 0 ? (
-    <span className="metadata-empty">Empty object</span>
-  ) : (
-    <dl className="metadata-record">
-      {value.entries.map((entry) => (
-        <div key={entry.key}>
-          <dt>{entry.key}</dt>
-          <dd>
-            <ValueView value={entry.value} />
-          </dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
-
-function MetadataPanel({ panel }: { panel: FrontmatterPanel }): React.JSX.Element {
-  return (
-    <section className={`metadata-panel metadata-panel-${panel.presentation}`}>
-      <h2>{panel.label}</h2>
-      <ValueView value={panel.value} />
-    </section>
-  );
 }
 
 async function copyHeadingUrl(id: string): Promise<void> {

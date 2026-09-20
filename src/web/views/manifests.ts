@@ -3,6 +3,7 @@
 // here is VIEW-01's "empty" case: `resolveView` returns `null` and `artifact-page.tsx` falls back
 // to the existing source reader with no toggle.
 import type { DiscussionTopic } from '../../planning-repo/handlers/section-projection.ts';
+import { factsBlock } from './facts.ts';
 import type { ViewKind } from './kinds.ts';
 import type { PromotedBlock, ViewManifest } from './manifest.ts';
 
@@ -40,11 +41,46 @@ function discussionQuestionsBlock(): PromotedBlock {
   };
 }
 
+/** VIEW-03's leading block: promotes `human_verification[]` straight off `artifact.frontmatter`
+ * — no handler work needed (the array is already on the wire). A non-array value (this repo's
+ * `01-VERIFICATION.md` carries the string `resolved`) or an empty array both yield `null`, so
+ * `composeView` skips the block entirely (D-06). */
+function humanVerificationBlock(): PromotedBlock {
+  return {
+    type: 'data',
+    id: 'human-verification',
+    label: 'Needs human verification',
+    component: 'verification-checks',
+    select: (input) => {
+      const raw = input.frontmatter.human_verification;
+      return Array.isArray(raw) && raw.length > 0 ? raw : null;
+    },
+  };
+}
+
 export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> = Object.freeze({
   'discussion-log': {
     kind: 'discussion-log',
     lead: 'Each question, the options that were on the table, and which one was chosen.',
     promote: [discussionQuestionsBlock()],
+  },
+  verification: {
+    kind: 'verification',
+    lead: 'What still needs a human to check, first — then everything already confirmed.',
+    promote: [
+      humanVerificationBlock(),
+      factsBlock('verdict', 'Verdict', [
+        'status',
+        'score',
+        'verified',
+        'behavior_unverified',
+        'overrides_applied',
+      ]),
+      { type: 'section', heading: /^gaps summary/i },
+      { type: 'section', heading: /^goal achievement/i },
+      { type: 'section', heading: /^requirements coverage/i },
+      { type: 'section', heading: /^human verification/i },
+    ],
   },
 });
 

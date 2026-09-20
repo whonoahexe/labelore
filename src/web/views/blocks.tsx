@@ -1,14 +1,103 @@
-// The view registry's `data`-block component table (`BlockComponentKey` -> component). Only
-// `discussion-questions` renders real content in this plan; the other three keys are declared now
-// (see `manifest.ts`) so Plan 05-05 only has to swap in real components, never widen the union.
-// Every value rendered here is plain JSX text — this file never injects raw HTML; the only
-// sanctioned site for that is `DocumentCanvas` in `artifact-page.tsx`.
+// The view registry's `data`-block component table (`BlockComponentKey` -> component).
+// `discussion-questions` (05-01), `fact-list`/`verification-checks` (05-05 Task 1) and
+// `plan-task-index` (05-05 Task 2) all render real content. Every value rendered here is plain
+// JSX text — this file never injects raw HTML; the only sanctioned site for that is
+// `DocumentCanvas` in `artifact-page.tsx`.
 import { Fragment } from 'react';
 import type { DiscussionQuestion } from '../../planning-repo/handlers/section-projection.ts';
+import { ValueView } from '../components/metadata-panel.tsx';
+import type { Fact } from './facts.ts';
 import type { BlockComponentKey } from './manifest.ts';
 
 function NotYetImplemented(_props: { label: string; data: unknown }): React.JSX.Element | null {
   return null;
+}
+
+/** A reusable dt/dd field-list block (`src/web/views/facts.ts`'s `selectFacts`/`factsBlock`),
+ * shared by the VERIFICATION "Verdict" block and the PLAN "Plan facts" block. */
+function FactList({ label, data }: { label: string; data: unknown }): React.JSX.Element | null {
+  const facts = Array.isArray(data) ? (data as Fact[]) : [];
+  if (facts.length === 0) return null;
+  return (
+    <>
+      <header className="section-heading">
+        <h2>{label}</h2>
+      </header>
+      <dl className="metadata-record">
+        {facts.map((fact) => (
+          <div key={fact.key}>
+            <dt>{fact.label}</dt>
+            <dd>
+              <ValueView value={fact.value} />
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </>
+  );
+}
+
+interface RawVerificationCheck {
+  test?: unknown;
+  expected?: unknown;
+  why_human?: unknown;
+}
+
+function checkField(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() !== '' ? value : null;
+}
+
+/** VIEW-03's leading block: `human_verification[]` promoted straight from `artifact.frontmatter`
+ * (no handler work — UI-SPEC §4). Each entry renders only the Check/Expected/Why-a-person rows it
+ * actually has (field-level D-06); an entry with none of the three fields is skipped entirely. */
+function VerificationChecks({
+  label,
+  data,
+}: {
+  label: string;
+  data: unknown;
+}): React.JSX.Element | null {
+  const entries = Array.isArray(data) ? (data as unknown[]) : [];
+  if (entries.length === 0) return null;
+  return (
+    <>
+      <header className="section-heading">
+        <h2>{label}</h2>
+      </header>
+      {entries.map((entry, index) => {
+        if (typeof entry !== 'object' || entry === null) return null;
+        const raw = entry as RawVerificationCheck;
+        const test = checkField(raw.test);
+        const expected = checkField(raw.expected);
+        const whyHuman = checkField(raw.why_human);
+        if (test === null && expected === null && whyHuman === null) return null;
+        return (
+          <div className="view-verification-check" key={index}>
+            <dl className="metadata-list">
+              {test !== null ? (
+                <div>
+                  <dt>Check</dt>
+                  <dd>{test}</dd>
+                </div>
+              ) : null}
+              {expected !== null ? (
+                <div>
+                  <dt>Expected</dt>
+                  <dd>{expected}</dd>
+                </div>
+              ) : null}
+              {whyHuman !== null ? (
+                <div>
+                  <dt>Why a person</dt>
+                  <dd>{whyHuman}</dd>
+                </div>
+              ) : null}
+            </dl>
+          </div>
+        );
+      })}
+    </>
+  );
 }
 
 /** Per question (one D-06-filtered, already-resolved `DiscussionQuestion`): a `.section-heading
@@ -53,7 +142,7 @@ export const BLOCK_COMPONENTS: Record<
   React.ComponentType<{ label: string; data: unknown }>
 > = {
   'discussion-questions': DiscussionQuestions,
-  'verification-checks': NotYetImplemented,
+  'verification-checks': VerificationChecks,
   'plan-task-index': NotYetImplemented,
-  'fact-list': NotYetImplemented,
+  'fact-list': FactList,
 };
