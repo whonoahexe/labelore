@@ -12,8 +12,13 @@ import {
 // `02-15` on its own. Trailing sentence punctuation (`.`, `,`, `;`, `:`, `!`, `?`, closing
 // brackets/quotes) is excluded from the match so a path at the end of a sentence resolves on its
 // bare canonical form while the punctuation stays as ordinary trailing text.
+//
+// BACK-02: `D-\d+` is a dedicated alternative because the single-letter `D` prefix does not
+// satisfy the `[A-Z][A-Z0-9]+-\d+` alternative below (that shape requires two-or-more prefix
+// characters). `WR-\d+` needs no separate alternative — `WR` already has two prefix characters, so
+// it is already captured by `[A-Z][A-Z0-9]+-\d+` and typed by `tokenIdentity` downstream.
 const REFERENCE_TOKEN =
-  /\.planning\/\S*[^\s.,;:!?)\]}'"]|Phase\s+[\p{Letter}\p{Number}.]+|[A-Z][A-Z0-9]+-\d+|\d+(?:\.\d+)?-\d+/gu;
+  /\.planning\/\S*[^\s.,;:!?)\]}'"]|D-\d+|Phase\s+[\p{Letter}\p{Number}.]+|[A-Z][A-Z0-9]+-\d+|\d+(?:\.\d+)?-\d+/gu;
 const IDENTIFIER_EDGE = /[\p{Letter}\p{Number}_-]/u;
 
 interface ReferenceRenderContext {

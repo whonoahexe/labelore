@@ -15,6 +15,7 @@ import {
 } from '../../src/presentation/routes.ts';
 import { createArtifactRenderer } from '../../src/rendering/markdown.ts';
 import type {
+  ArtifactDto,
   MilestoneDto,
   PhaseDto,
   PlanDto,
@@ -418,6 +419,252 @@ describe('inline-code artifact-path references', () => {
     expect(rendered.html).not.toContain('data-reference-key=');
     expect(rendered.html).toContain(`<a href="https://example.com"><code>${rootArtifact}</code></a>`);
     expect(rendered.references ?? []).toHaveLength(0);
+  });
+});
+
+describe('BACK-02 — decision/warning mentions, phase-local-then-corpus resolution (D-14/D-15)', () => {
+  const back02MilestoneKey = milestoneKeyOf('v2.0');
+  const phase1Identity = {
+    milestoneVersion: 'v2.0',
+    number: '01',
+    projectCode: null,
+    slug: 'phase-one',
+  };
+  const phase2Identity = {
+    milestoneVersion: 'v2.0',
+    number: '02',
+    projectCode: null,
+    slug: 'phase-two',
+  };
+  const phase1ContextPath = '.planning/phases/01-phase-one/01-CONTEXT.md';
+  const phase2ContextPath = '.planning/phases/02-phase-two/02-CONTEXT.md';
+  const phase1ReviewPath = '.planning/phases/01-phase-one/01-REVIEW.md';
+  const phase1DuplicateReviewPath = '.planning/phases/01-phase-one/01-REVIEW-FIX.md';
+  const back02RootPath = '.planning/PROJECT.md';
+
+  function minimalPhase(identity: typeof phase1Identity): PhaseDto {
+    return {
+      key: phaseKeyOf(identity),
+      milestoneKey: back02MilestoneKey,
+      identity,
+      name: `Phase ${identity.number}`,
+      dirPath: null,
+      archived: false,
+      goal: null,
+      dependsOnRaw: null,
+      requirementIds: [],
+      requirementRefs: [],
+      successCriteria: [],
+      roadmapComplete: null,
+      formalPlanProgress: null,
+      diskStatus: 'in_progress',
+      plans: [],
+    };
+  }
+
+  function minimalArtifact(overrides: Partial<ArtifactDto> & Pick<ArtifactDto, 'path' | 'kind'>): ArtifactDto {
+    return {
+      key: buildArtifactUrl(null, overrides.path),
+      title: overrides.path,
+      location: 'phase',
+      frontmatter: {},
+      structured: {},
+      milestoneKey: back02MilestoneKey,
+      phaseKey: null,
+      warnings: [],
+      bodyLength: 0,
+      ...overrides,
+    };
+  }
+
+  const phase1Dto = minimalPhase(phase1Identity);
+  const phase2Dto = minimalPhase(phase2Identity);
+
+  function back02Presentation(): ProjectPresentation {
+    return {
+      readAt: '2026-09-20T00:00:00.000Z',
+      loadStatus: { status: 'ok' },
+      rootPath: '/project',
+      projectName: 'BACK-02 fixture',
+      config: {},
+      state: null,
+      milestones: [
+        {
+          key: back02MilestoneKey,
+          version: 'v2.0',
+          name: 'Current v2.0',
+          archived: false,
+          phases: [phase1Dto, phase2Dto],
+        },
+      ],
+      requirements: [],
+      artifacts: [
+        minimalArtifact({
+          path: back02RootPath,
+          kind: 'project',
+          key: buildArtifactUrl(null, back02RootPath),
+          milestoneKey: null,
+          phaseKey: null,
+          location: 'root',
+        }),
+        minimalArtifact({
+          path: phase1ContextPath,
+          kind: 'context',
+          key: buildArtifactUrl(phase1Identity, phase1ContextPath),
+          phaseKey: phase1Dto.key,
+          structured: {
+            decisions: [
+              { id: 'D-01', text: 'Phase one defines D-01 this way.' },
+              { id: 'D-05', text: 'Phase one uniquely defines D-05.' },
+            ],
+          },
+        }),
+        minimalArtifact({
+          path: phase2ContextPath,
+          kind: 'context',
+          key: buildArtifactUrl(phase2Identity, phase2ContextPath),
+          phaseKey: phase2Dto.key,
+          structured: {
+            decisions: [{ id: 'D-01', text: 'Phase two defines D-01 differently.' }],
+          },
+        }),
+        minimalArtifact({
+          path: phase1ReviewPath,
+          kind: 'review',
+          key: buildArtifactUrl(phase1Identity, phase1ReviewPath),
+          phaseKey: phase1Dto.key,
+          structured: {
+            warnings: [
+              { id: 'WR-01', title: 'title A' },
+              { id: 'WR-02', title: 'title B' },
+            ],
+          },
+        }),
+        // A second artifact in phase one, distinct from the REVIEW itself, so the "phase-1
+        // artifact" rendering the mention is not the same document that defines it.
+        minimalArtifact({
+          path: phase1DuplicateReviewPath,
+          kind: 'review-fix',
+          key: buildArtifactUrl(phase1Identity, phase1DuplicateReviewPath),
+          phaseKey: phase1Dto.key,
+        }),
+      ],
+      blockers: [],
+      checkpoints: [],
+      coverageWaits: [],
+      mentions: { byId: {}, all: [] },
+      exclusions: [],
+    };
+  }
+
+  it('resolves a D-01 mention inside a phase-1 artifact to phase one\'s own D-01, with a Defined in · Phase 01 detail', async () => {
+    const registry = buildReferenceRegistry(back02Presentation());
+    const renderer = await createArtifactRenderer();
+    const rendered = await renderer.render(artifact('Decided per D-01.', phase1ContextPath), {
+      referenceRegistry: registry,
+    });
+
+    expect(rendered.references).toHaveLength(1);
+    expect(rendered.references?.[0]).toMatchObject({
+      type: 'decision',
+      identity: 'D-01',
+      title: 'Phase one defines D-01 this way.',
+    });
+    expect(rendered.references?.[0].detail.value).toMatch(/^Phase 01/);
+  });
+
+  it('resolves the same D-01 token rendered inside a phase-2 artifact to phase two\'s own definition instead', async () => {
+    const registry = buildReferenceRegistry(back02Presentation());
+    const renderer = await createArtifactRenderer();
+    const rendered = await renderer.render(artifact('Decided per D-01.', phase2ContextPath), {
+      referenceRegistry: registry,
+    });
+
+    expect(rendered.references).toHaveLength(1);
+    expect(rendered.references?.[0]).toMatchObject({
+      type: 'decision',
+      identity: 'D-01',
+      title: 'Phase two defines D-01 differently.',
+    });
+    expect(rendered.references?.[0].detail.value).toMatch(/^Phase 02/);
+  });
+
+  it('leaves D-01 as plain text from a phase-less root document (ambiguous corpus-wide — two phases define it)', async () => {
+    const registry = buildReferenceRegistry(back02Presentation());
+    const renderer = await createArtifactRenderer();
+    const rendered = await renderer.render(artifact('Decided per D-01.', back02RootPath), {
+      referenceRegistry: registry,
+    });
+
+    expect(rendered.html).not.toContain('data-reference-key=');
+    expect(rendered.references ?? []).toHaveLength(0);
+  });
+
+  it('resolves D-05 from a phase-less root document via the corpus-wide fallback (exactly one definition)', async () => {
+    const registry = buildReferenceRegistry(back02Presentation());
+    const renderer = await createArtifactRenderer();
+    const rendered = await renderer.render(artifact('Decided per D-05.', back02RootPath), {
+      referenceRegistry: registry,
+    });
+
+    expect(rendered.references).toHaveLength(1);
+    expect(rendered.references?.[0]).toMatchObject({
+      type: 'decision',
+      identity: 'D-05',
+      title: 'Phase one uniquely defines D-05.',
+    });
+  });
+
+  it('resolves WR-02 (and leaves WR-09 as plain text) when rendered inside a different phase-1 artifact than the one defining it', async () => {
+    const registry = buildReferenceRegistry(back02Presentation());
+    const renderer = await createArtifactRenderer();
+    const rendered = await renderer.render(
+      artifact('Fixed WR-02 and WR-09.', phase1DuplicateReviewPath),
+      { referenceRegistry: registry },
+    );
+
+    expect(rendered.references).toHaveLength(1);
+    expect(rendered.references?.[0]).toMatchObject({
+      type: 'warning',
+      identity: 'WR-02',
+      title: 'title B',
+    });
+    expect(rendered.html).toContain('WR-09');
+    expect(rendered.html.match(/data-reference-key=/g)).toHaveLength(1);
+  });
+
+  it('collapses a duplicate WR-02 within one REVIEW to plain text (addResolution\'s null-on-duplicate ambiguity, reused unmodified — chosen over a second bespoke ambiguity rule)', async () => {
+    const duplicateReviewPath = '.planning/phases/01-phase-one/01-DUPLICATE-REVIEW.md';
+    const presentationWithDuplicate = back02Presentation();
+    presentationWithDuplicate.artifacts.push(
+      minimalArtifact({
+        path: duplicateReviewPath,
+        kind: 'review',
+        key: buildArtifactUrl(phase1Identity, duplicateReviewPath),
+        phaseKey: phase1Dto.key,
+        structured: {
+          warnings: [
+            { id: 'WR-02', title: 'first duplicate' },
+            { id: 'WR-02', title: 'second duplicate' },
+          ],
+        },
+      }),
+    );
+    const registry = buildReferenceRegistry(presentationWithDuplicate);
+    const renderer = await createArtifactRenderer();
+    const rendered = await renderer.render(
+      artifact('See WR-02 for the finding.', phase1DuplicateReviewPath),
+      { referenceRegistry: registry },
+    );
+
+    expect(rendered.html).not.toContain('data-reference-key=');
+    expect(rendered.references ?? []).toHaveLength(0);
+  });
+
+  it('falls straight to corpus resolution for a D- token when the containing artifact path is unregistered', () => {
+    const registry = buildReferenceRegistry(back02Presentation());
+    const resolved = resolvePresentationReference(registry, 'D-05', 'not/a/registered/path.md');
+    expect(resolved).toMatchObject({ type: 'decision', identity: 'D-05' });
   });
 });
 
