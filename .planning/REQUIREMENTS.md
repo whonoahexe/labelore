@@ -115,27 +115,29 @@ Tracked, not in this roadmap.
 
 ## Traceability
 
-Populated during roadmap creation.
+Mapped during roadmap creation, 2026-09-20. The milestone is a single phase, so every requirement
+maps to Phase 5; the wave column records where it is expected to land inside that phase.
 
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| VIEW-01 | — | Pending |
-| VIEW-02 | — | Pending |
-| VIEW-03 | — | Pending |
-| VIEW-04 | — | Pending |
-| VIEW-05 | — | Pending |
-| VIEW-06 | — | Pending |
-| READ-07 | — | Pending |
-| BACK-02 | — | Pending |
-| UI-04 | — | Pending |
-| UI-05 | — | Pending |
-| UI-06 | — | Pending |
+| Requirement | Phase | Wave (suggested) | Status |
+|-------------|-------|------------------|--------|
+| VIEW-01 | Phase 5 | 1 — Foundation (view registry, granular `kind`) | Pending |
+| VIEW-02 | Phase 5 | 3 — Proof (DISCUSSION-LOG end to end) | Pending |
+| VIEW-03 | Phase 5 | 4 — Coverage (view only; no handler work) | Pending |
+| VIEW-04 | Phase 5 | 4 — Coverage | Pending |
+| VIEW-05 | Phase 5 | 4 — Coverage | Pending |
+| VIEW-06 | Phase 5 | 2 — Extraction (section projection + speculative fallback) | Pending |
+| READ-07 | Phase 5 | Any — independent of the registry work | Pending |
+| BACK-02 | Phase 5 | Any — independent of the registry work | Pending |
+| UI-04 | Phase 5 | 1 — Foundation (convention written down) | Pending |
+| UI-05 | Phase 5 | 1 — Foundation (convention enforced by test) | Pending |
+| UI-06 | Phase 5 | Conformance condition across waves 1-4 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 11 total
-- Mapped to phases: 0 (roadmap pending)
-- Unmapped: 11
+- Mapped to phases: 11 (all to Phase 5)
+- Unmapped: 0
+- Duplicated across phases: 0
 
 ---
 *Requirements defined: 2026-09-20*
-*Last updated: 2026-09-20 after milestone v1.1 scoping*
+*Last updated: 2026-09-20 after roadmap creation — Phase 5 mapped, 11/11 covered*

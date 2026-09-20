@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 milestone_name: Legible Documents
 status: planning
-last_updated: "2026-09-20T12:10:39.556Z"
+last_updated: "2026-09-20T12:14:57.000Z"
 last_activity: 2026-09-20
 progress:
-  total_phases: 0
+  total_phases: 1
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-20)
 
 **Core value:** Open the dashboard on a GSD project and immediately know where the work stands and where any planning artifact lives — without reading a single file by hand.
-**Current focus:** Milestone v1.1 Legible Documents — defining requirements
+**Current focus:** Milestone v1.1 Legible Documents — Phase 5 (Per-Type Document Views) roadmapped, awaiting plans
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 5 - Per-Type Document Views (not started)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-09-20 — Milestone v1.1 started
+Status: Roadmapped — ready to plan
+Last activity: 2026-09-20 — Roadmap created for v1.1: one phase, 11/11 requirements mapped
 
 ## Performance Metrics
 
@@ -127,10 +127,10 @@ Two v1.0 close-time verification overrides recorded below; the two earlier rows 
 
 ## Session Continuity
 
-Last session: 2026-09-18T13:20:21.577Z
-Stopped at: Completed quick task 260917-wba: Fix visual/UX regressions on the redesigned traceability page
+Last session: 2026-09-20T12:14:57.000Z
+Stopped at: Created the v1.1 roadmap — Phase 5 Per-Type Document Views, single phase, 4 suggested waves
 Resume file: None
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- Plan the phase with /gsd-plan-phase 5
