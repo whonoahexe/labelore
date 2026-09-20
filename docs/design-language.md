@@ -48,6 +48,7 @@ is always to add the missing name to this document, never to edit the reference 
 | `document-canvas` | The right-hand reading column inside `.document-reader-layout` | globals.css:2904 |
 | `document-outline` | Sticky left-column "On this page" nav, `--fs-3` links, hover → `--primary` | globals.css:2821 |
 | `document-outline-trigger` | The narrow-width sticky disclosure trigger that opens the outline as a popover (D-12) | new — Phase 5 §7 |
+| `document-outline-positioner` | The `Popover.Positioner` wrapper around the narrow-width outline popup (D-12) | new — Phase 5 §7 |
 | `document-view-toggle` | The View/Source control mounted in `ArtifactHeader`'s `children` slot (D-01/D-03) | globals.css:2864 |
 | `view-block` | One promoted or remainder block inside a per-type view's canvas | globals.css:2871 |
 | `artifact-document` | The full rendered-markdown document body (Source mode, and inside promoted sections) | globals.css:2240, 2910 |
