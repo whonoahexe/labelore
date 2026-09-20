@@ -27,8 +27,14 @@ What the read layer actually extracts (`src/planning-repo/handlers/index.ts`):
 
 Consequence: "when I open a discussion log I want to see the questions, the options I was given,
 and what I chose" is not reachable by styling. Nothing parses a DISCUSSION-LOG into questions,
-options and choices. Per-type work is therefore **two layers** — a handler that extracts, and a
-view that renders — not one.
+options and choices.
+
+> **Corrected 2026-09-20.** This originally claimed per-type work is **always** two layers — a
+> handler that extracts plus a view that renders. That holds only for the section-structured
+> types. The frontmatter-structured ones (VERIFICATION, SUMMARY, REVIEW, MILESTONE-AUDIT) need
+> **no handler work at all** — their structure is already parsed and already serialized to the
+> client; they need only a view that promotes it. VERIFICATION's `human_verification[]` is already
+> an array of `{test, expected, why_human}` triples on the wire. See [[artifact-structure-survey]].
 
 ### Structure that IS extracted is discarded at the client boundary
 
@@ -62,19 +68,29 @@ re-invents it slightly differently.
 `SearchPage` already conforms (`page-stack` + `page-intro` + `lede`). The divergence is exactly
 two pages, not five.
 
-## Axis 3 — Categorization: unresolved
+## Axis 3 — Categorization: RESOLVED 2026-09-20
 
-Two orthogonal schemes exist and neither answers "what is this document *for*":
+> **This section's original framing was wrong and has been replaced.** It proposed a purpose-based
+> axis (decision record / verification evidence / specification / research / narrative) as the
+> likely answer. A survey of 425 planning files disproved it — see [[artifact-structure-survey]].
+> The decision and all five sub-question answers are in `.planning/research/questions.md`.
 
-- `location` — 6 sidebar groups (`Project`, `Phases`, `Archived phases`, `Quick tasks`,
-  `Milestones`, `Research`): where the file lives on disk.
-- `kind` — 11 handler kinds, but 11 of 16 types collapse into 2 catch-alls, so it is not usable as
-  a presentation axis today.
+**No purpose taxonomy.** Extraction keys on **where a type's structure lives**, not on what the
+document is for. Purpose does not predict extraction strategy: VERIFICATION and UAT serve nearly
+the same purpose but store their structure in different places (nested YAML vs `##` sections), so
+a purpose-keyed template would have to implement both paths anyway.
 
-A purpose-based axis (decision record / verification evidence / specification / research /
-narrative) would drive both sidebar grouping and which view template a type receives. Open
-question — see `.planning/research/questions.md`. It should be settled before views are designed,
-since it determines how many templates there are.
+- `kind` becomes the single presentation axis and must go granular — the two catch-alls
+  (`frontmatter-only`, `unknown`) hold 11 of 16 real types between them and have to split.
+  `FrontmatterOnlyHandler` remains a legitimate shared *parse* path; this is a presentation change.
+- `location` keeps its job: the sidebar stays grouped by it.
+- An unmanifested type gets a **speculative structural read** — nested frontmatter → frontmatter
+  projection, stable `##` sections → section projection with an outline, neither → plain markdown.
+  The existing unknown-kind badge marks it, so an unfamiliar type reads better than today rather
+  than being stranded.
+
+**Scope, corrected.** This note originally framed the work as ~5 templates vs ~16. Neither: it is
+**3 extraction strategies (2 already built) + 16 small per-type manifests**.
 
 ## Delivery shape
 
