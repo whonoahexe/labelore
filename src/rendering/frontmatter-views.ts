@@ -58,12 +58,17 @@ export const FRONTMATTER_PANEL_BUILDERS: readonly FrontmatterPanelBuilder[] = Ob
   { key: 'progress', label: 'Progress', build: progressView },
 ]);
 
-function humanizeKey(key: string): string {
+export function humanizeKey(key: string): string {
   return key
     .replaceAll('_', ' ')
     .replaceAll('-', ' ')
     .replace(/^./, (first) => first.toUpperCase());
 }
+
+/** `recursiveValue` under its public name — the recursive, DOM-free frontmatter-value builder
+ * every per-type view consuming raw frontmatter values (VIEW-03's fact-list block, the fallback
+ * frontmatter projection) reuses instead of re-deriving its own. */
+export { recursiveValue as toFrontmatterValueView };
 
 /** Specialized builders run first; every unhandled shape remains visible as recursive text. */
 export function buildFrontmatterPanels(frontmatter: Record<string, unknown>): FrontmatterPanel[] {
