@@ -36,9 +36,9 @@ Requirement IDs continue from v1.0 (archived at `milestones/v1.0-REQUIREMENTS.md
 
 ### Visual Consistency
 
-- [ ] **UI-04**: The design language shared by the dashboard, roadmap, traceability and search pages
+- [x] **UI-04**: The design language shared by the dashboard, roadmap, traceability and search pages
       is written down as a stated convention
-- [ ] **UI-05**: That convention is enforced by a test, so a new view cannot silently drift from it
+- [x] **UI-05**: That convention is enforced by a test, so a new view cannot silently drift from it
 - [ ] **UI-06**: Every document view uses that language — moving between a document and the dashboard
       reads as one application
 
@@ -128,8 +128,8 @@ maps to Phase 5; the wave column records where it is expected to land inside tha
 | VIEW-06 | Phase 5 | 2 — Extraction (section projection + speculative fallback) | Pending |
 | READ-07 | Phase 5 | Any — independent of the registry work | Pending |
 | BACK-02 | Phase 5 | Any — independent of the registry work | Pending |
-| UI-04 | Phase 5 | 1 — Foundation (convention written down) | Pending |
-| UI-05 | Phase 5 | 1 — Foundation (convention enforced by test) | Pending |
+| UI-04 | Phase 5 | 1 — Foundation (convention written down) | Complete |
+| UI-05 | Phase 5 | 1 — Foundation (convention enforced by test) | Complete |
 | UI-06 | Phase 5 | Conformance condition across waves 1-4 | Pending |
 
 **Coverage:**
