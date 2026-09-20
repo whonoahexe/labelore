@@ -22,10 +22,22 @@ import {
 } from '../../rendering/frontmatter-views.ts';
 import type { RenderedDocument } from '../../rendering/markdown.ts';
 import { ReferencePreview, type ReferencePreviewState } from '../components/reference-preview.tsx';
+import { DocumentViewToggle } from '../components/document-view-toggle.tsx';
 import { handleDocumentReferenceActivation } from './document-reference-activation.ts';
 import { dropLeadingTitle } from './document-title.ts';
 import { toMermaidColor } from './mermaid-theme.ts';
 import { scrollWhenSettled } from './scroll-settle.ts';
+import { humanizeKind } from '../views/kinds.ts';
+import { resolveView } from '../views/manifests.ts';
+import {
+  composeView,
+  outlineEntriesOf,
+  REMAINDER_ID,
+  REMAINDER_LABEL,
+  type ComposedView,
+} from '../views/manifest.ts';
+import { splitRenderedDocument } from '../views/document-sections.ts';
+import { BLOCK_COMPONENTS } from '../views/blocks.tsx';
 export {
   handleDocumentReferenceActivation,
   restoreDocumentReferenceFocus,
@@ -374,6 +386,78 @@ function ArtifactReader({
   );
 }
 
+/**
+ * The per-type view: manifest-promoted blocks first (D-04's promotion order), then D-02's
+ * collapsed remainder, then D-11's view-sourced outline. Defined in this file — not
+ * `views/manifest.ts` — so it can reuse `DocumentView` directly with no import cycle. The outline
+ * markup below is a temporary inline render; Task 2 extracts it into
+ * `../components/document-outline.tsx` and swaps this for `<DocumentOutline entries={entries} />`.
+ */
+function ViewReader({
+  title,
+  composed,
+  shown,
+}: {
+  title: string;
+  composed: ComposedView;
+  shown: RenderedDocument;
+}): React.JSX.Element {
+  const entries = outlineEntriesOf(composed);
+  const remainderCount = composed.remainder.length;
+  const remainderHtml = useMemo(
+    () => composed.remainder.map((group) => group.html).join(''),
+    [composed.remainder],
+  );
+  return (
+    <div
+      className="document-reader-layout"
+      data-outline={entries.length > 0 ? 'true' : 'false'}
+    >
+      {entries.length > 0 ? (
+        <nav className="document-outline" aria-label="On this page">
+          <p>On this page</p>
+          <ol>
+            {entries.map((entry) => (
+              <li key={entry.id} data-depth={2}>
+                <a href={`#${encodeURIComponent(entry.id)}`}>{entry.label}</a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      ) : null}
+      <article className="document-canvas" aria-label={`${title} document`}>
+        {composed.blocks.map((block) => {
+          if (block.kind === 'section') {
+            return (
+              <section className="view-block" id={block.id} key={block.id}>
+                <header className="section-heading">
+                  <h2>{block.label}</h2>
+                </header>
+                <DocumentView document={{ ...shown, html: block.group.html, headings: [] }} />
+              </section>
+            );
+          }
+          const Component = BLOCK_COMPONENTS[block.component];
+          return (
+            <section className="view-block" id={block.id} key={block.id}>
+              <Component label={block.label} data={block.data} />
+            </section>
+          );
+        })}
+        {remainderCount > 0 ? (
+          <details className="artifact-metadata" id={REMAINDER_ID}>
+            <summary>
+              {REMAINDER_LABEL}{' '}
+              <span>{remainderCount === 1 ? '1 section' : `${remainderCount} sections`}</span>
+            </summary>
+            <DocumentView document={{ ...shown, html: remainderHtml, headings: [] }} />
+          </details>
+        ) : null}
+      </article>
+    </div>
+  );
+}
+
 async function loadDocument(route: string): Promise<ArtifactDocumentResponse> {
   const response = await fetch(`/api/documents?route=${encodeURIComponent(route)}`);
   if (!response.ok) {
@@ -395,6 +479,27 @@ export function ArtifactPage(): React.JSX.Element {
     () => (query.data ? buildFrontmatterPanels(query.data.artifact.frontmatter) : []),
     [query.data],
   );
+  const [mode, setMode] = useState<'view' | 'source'>('view');
+  const manifest = useMemo(
+    () => (query.data ? resolveView(query.data.artifact.kind) : null),
+    [query.data],
+  );
+  const shown = useMemo(
+    () => (query.data ? dropLeadingTitle(query.data.document, query.data.artifact.title) : null),
+    [query.data],
+  );
+  const groups = useMemo(() => (shown ? splitRenderedDocument(shown.html) : []), [shown]);
+  const composed = useMemo<ComposedView | null>(() => {
+    if (!manifest || !query.data) return null;
+    return composeView(manifest, {
+      kind: query.data.artifact.kind,
+      frontmatter: query.data.artifact.frontmatter,
+      structured: query.data.artifact.structured,
+      groups,
+      planSegments: [],
+    });
+  }, [manifest, query.data, groups]);
+  const viewAvailable = composed !== null && composed.blocks.length > 0;
 
   if (query.isPending) {
     return (
@@ -454,9 +559,10 @@ export function ArtifactPage(): React.JSX.Element {
     <main className="artifact-page page-stack">
       <ArtifactHeader
         crumbs={crumbs}
-        eyebrow={artifact.kind}
+        eyebrow={humanizeKind(artifact.kind)}
         title={artifact.title}
         path={artifact.path}
+        lead={manifest?.lead ?? null}
         chip={
           warningTone ? (
             <span
@@ -467,7 +573,9 @@ export function ArtifactPage(): React.JSX.Element {
             </span>
           ) : null
         }
-      />
+      >
+        {viewAvailable ? <DocumentViewToggle mode={mode} onChange={setMode} /> : null}
+      </ArtifactHeader>
 
       {panels.length > 0 ? (
         <details className="artifact-metadata">
@@ -533,7 +641,11 @@ export function ArtifactPage(): React.JSX.Element {
         </details>
       ) : null}
 
-      <ArtifactReader title={artifact.title} document={document} />
+      {viewAvailable && mode === 'view' && composed && shown ? (
+        <ViewReader title={artifact.title} composed={composed} shown={shown} />
+      ) : (
+        <ArtifactReader title={artifact.title} document={document} />
+      )}
     </main>
   );
 }
