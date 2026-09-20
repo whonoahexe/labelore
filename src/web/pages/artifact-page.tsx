@@ -24,6 +24,7 @@ import type { RenderedDocument } from '../../rendering/markdown.ts';
 import { ReferencePreview, type ReferencePreviewState } from '../components/reference-preview.tsx';
 import { DocumentViewToggle } from '../components/document-view-toggle.tsx';
 import { DocumentOutline, type OutlineEntry } from '../components/document-outline.tsx';
+import { useActiveSection } from '../components/use-active-section.ts';
 import { handleDocumentReferenceActivation } from './document-reference-activation.ts';
 import { dropLeadingTitle } from './document-title.ts';
 import { toMermaidColor } from './mermaid-theme.ts';
@@ -366,12 +367,13 @@ function ArtifactReader({
       })),
     [shown],
   );
+  const activeId = useActiveSection(entries.map((entry) => entry.id));
   return (
     <div
       className="document-reader-layout"
       data-outline={outlineHeadings(shown).length > 0 ? 'true' : 'false'}
     >
-      <DocumentOutline entries={entries} />
+      <DocumentOutline entries={entries} activeId={activeId} />
       <article className="document-canvas" aria-label={`${title} document`}>
         <DocumentView document={shown} />
       </article>
@@ -396,6 +398,7 @@ function ViewReader({
 }): React.JSX.Element {
   const rawEntries = outlineEntriesOf(composed);
   const entries = rawEntries.length < 2 ? [] : rawEntries;
+  const activeId = useActiveSection(entries.map((entry) => entry.id));
   const remainderCount = composed.remainder.length;
   const remainderHtml = useMemo(
     () => composed.remainder.map((group) => group.html).join(''),
@@ -406,7 +409,7 @@ function ViewReader({
       className="document-reader-layout"
       data-outline={entries.length > 0 ? 'true' : 'false'}
     >
-      <DocumentOutline entries={entries} />
+      <DocumentOutline entries={entries} activeId={activeId} />
       <article className="document-canvas" aria-label={`${title} document`}>
         {composed.blocks.map((block) => {
           if (block.kind === 'section') {
