@@ -31,12 +31,29 @@ The shipped app is a Vite 8 + React 19 SPA served by a Hono 4 Node server, start
 
 It has about 24.4k lines of TypeScript/TSX/CSS and 590 tests.
 
-## Next Milestone Goals
+## Current Milestone: v1.1 Legible Documents
 
-Not yet defined. `/gsd-new-milestone` will choose scope. The candidates carried forward are the v2
-requirements listed under Active below. The strongest signal is PLAT-01 (live file-watching),
-because the read layer, the `refresh()` seam, and the TanStack Query fetch layer were all built to
-admit it without restructuring.
+**Goal:** Every planning document type shows what it is actually for, in one consistent visual
+language — so a discussion log reads as questions and choices, a verification as what to verify,
+and a plan as a plan.
+
+**Target features:**
+- Per-type document views for all 16 artifact types, behind a view registry keyed on `kind`
+- The existing design language codified as a documented, testable convention
+- A readable table of contents on long documents (READ-07 — the component exists, its appearance
+  does not hold up)
+- Clickable `D-XX` / `WR-XX` decision and warning mentions (BACK-02)
+
+**Shape:** a single phase. The work is 3 extraction strategies + 16 small per-type manifests, not N
+view templates — two of the three strategies already ship. Staging happens through plans and waves
+inside the phase rather than across phases.
+
+**Why now:** v1.0 made every artifact *reachable*; none of it is *legible*. Two blockers cleared
+2026-09-20 — categorization settled (`research/questions.md`) and the document page frame fixed
+(quick task `260920-mzr`).
+
+**Not this milestone:** PLAT-01 (live file-watching) remains the strongest platform signal and the
+read layer still admits it without restructuring — it is deferred, not dropped.
 
 ## Requirements
 
@@ -79,20 +96,31 @@ admit it without restructuring.
 
 ### Active
 
-<!-- Candidates for the next milestone, carried from v1.0's v2 requirements. Each is a hypothesis until /gsd-new-milestone scopes it. -->
+<!-- Scoped into v1.1 on 2026-09-20. Items marked [v1.1] are this milestone's; the rest stay carried candidates. -->
 
-**Findability enhancements**
+**Document legibility — v1.1**
+
+- [ ] [v1.1] Per-type document views for all 16 artifact types, behind a view registry keyed on a
+      granularised `kind`. Extraction keys on where a type's structure lives, not on its purpose.
+- [ ] [v1.1] The existing design language codified as a documented, testable convention
+- [ ] [v1.1] READ-07: Readable table of contents on long documents — the component exists and is
+      already sticky; its appearance is the gap
+- [ ] [v1.1] BACK-02: Clickable `D-XX` decision and `WR-XX` warning mentions, surfacing NAV-07's
+      index in the UI
+
+**Findability enhancements — carried**
 
 - [ ] BACK-01: Backlinks panel on requirements, decisions, and phases — "what else references this"
-- [ ] BACK-02: Clickable `D-XX` decision and `WR-XX` warning mentions, surfacing NAV-07's index in the UI
-- [ ] FIND-06: Faceted search — filter by requirement ID, phase, or artifact type
+- [ ] FIND-06: Faceted search — filter by requirement ID, phase, or artifact type. *Becomes
+      practical after v1.1: filtering by artifact type needs the granular `kind` this milestone
+      produces.*
 - [ ] NAV-08: Command palette (Cmd-K) quick-jump that reuses the search index
 
-**Reading enhancements**
+**Reading enhancements — carried**
 
-- [ ] READ-07: Sticky table of contents on long documents
 - [ ] READ-08: Fuller plan-vs-outcome pairing, with every documented deviation shown against the task
-      it departed from
+      it departed from. *Deliberately deferred from v1.1: PLAN and SUMMARY still get their own views
+      there as 2 of the 16 types, but the deviation-pairing feature is not in scope.*
 
 **Dashboard enhancements**
 
@@ -222,4 +250,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-10 after v1.0 milestone*
+*Last updated: 2026-09-20 after starting milestone v1.1 Legible Documents*

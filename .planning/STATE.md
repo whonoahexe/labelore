@@ -1,35 +1,33 @@
 ---
 gsd_state_version: "1.0"
-milestone: v1.0
-status: Awaiting next milestone
-stopped_at: "Completed quick task 260920-mzr: Fix document-page chrome drift and the loading-to-loaded container reflow on ArtifactPage and PlanPairPage"
-last_updated: "2026-09-20T11:03:19.706Z"
+milestone: v1.1
+milestone_name: Legible Documents
+status: planning
+last_updated: "2026-09-20T12:10:39.556Z"
 last_activity: 2026-09-20
-last_activity_desc: "Completed quick task 260920-mzr: Fix document-page chrome drift and the loading-to-loaded container reflow on ArtifactPage and PlanPairPage"
-state_head: 33ca7513c8fcf46370c04694ba05f87342b19f67
-current_phase: 04
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 30
-  completed_plans: 30
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-09-10)
+See: .planning/PROJECT.md (updated 2026-09-20)
 
 **Core value:** Open the dashboard on a GSD project and immediately know where the work stands and where any planning artifact lives — without reading a single file by hand.
-**Current focus:** Planning next milestone — v1.0 MVP shipped 2026-09-10
+**Current focus:** Milestone v1.1 Legible Documents — defining requirements
 
 ## Current Position
 
-Phase: Milestone v1.0 complete
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-09-20 - Completed quick task 260920-mzr: Fix document-page chrome drift and the loading-to-loaded container reflow on ArtifactPage and PlanPairPage
+Status: Defining requirements
+Last activity: 2026-09-20 — Milestone v1.1 started
 
 ## Performance Metrics
 
