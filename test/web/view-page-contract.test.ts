@@ -1,11 +1,20 @@
 // Source-text contract for the Phase 5 view-registry page dispatch, in the same readFile + regex
 // idiom as css-source-order.test.ts and visual-contract.test.ts — no AST tooling, no React
 // Testing Library (this codebase has neither dependency).
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 async function source(path: string): Promise<string> {
   return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
+}
+
+/** Every file directly under `src/web/views/` (flat — no subdirectories exist there today),
+ * as `path`-relative strings usable with `source()`. */
+async function viewsFiles(): Promise<string[]> {
+  const dirUrl = new URL('../../src/web/views/', import.meta.url);
+  const entries = await readdir(fileURLToPath(dirUrl));
+  return entries.map((entry) => `src/web/views/${entry}`);
 }
 
 describe('view-page contract (VIEW-01/D-11)', () => {
@@ -65,5 +74,65 @@ describe('view-page contract (VIEW-01/D-11)', () => {
     expect(nearby).toContain('Unrecognized type');
     expect(nearby).not.toContain('destructive');
     expect(nearby).not.toMatch(/data-tone=\{/);
+  });
+
+  it('accent reservation: every data-tone="active" chip reads Chosen or Gates, and no view file uses the parse-degradation tones (UI-06)', async () => {
+    const files = [...(await viewsFiles()).filter((f) => f.endsWith('.tsx')), 'src/web/pages/artifact-page.tsx'];
+    for (const file of files) {
+      const text = await source(file);
+      const lines = text.split('\n');
+      for (let i = 0; i < lines.length; i += 1) {
+        if (!lines[i].includes('data-tone="active"')) continue;
+        expect(lines[i]).toContain('status-chip');
+        const nearby = lines.slice(i, Math.min(i + 3, lines.length)).join('\n');
+        expect(nearby.includes('Chosen') || nearby.includes('Gates')).toBe(true);
+      }
+    }
+
+    // Neither destructive/warning parse-degradation tone belongs to a view — those chips are the
+    // page's own artifact-parse badge, never duplicated into per-type view chrome.
+    for (const file of await viewsFiles()) {
+      const text = await source(file);
+      expect(text).not.toContain('data-tone="destructive"');
+      expect(text).not.toContain('data-tone="warning"');
+    }
+  });
+
+  it('copy contract: View/Source toggle labels, remainder copy, unrecognized-type chip text, and silent D-06 absence (empty-state message never appears in a view)', async () => {
+    const toggle = await source('src/web/components/document-view-toggle.tsx');
+    // Whitespace-tolerant: the Button children render on their own line (`>\n  View\n</Button>`),
+    // not literally adjacent to the angle brackets.
+    expect(toggle).toMatch(/>\s*View\s*</);
+    expect(toggle).toMatch(/>\s*Source\s*</);
+
+    const page = await source('src/web/pages/artifact-page.tsx');
+    // "More in this document" lives as the shared REMAINDER_LABEL constant (manifest.ts); the
+    // page renders it via that import rather than a duplicated literal.
+    expect(page).toContain('REMAINDER_LABEL');
+    const manifestModule = await source('src/web/views/manifest.ts');
+    expect(manifestModule).toContain('More in this document');
+    expect(page).toContain('Unrecognized type');
+
+    for (const file of await viewsFiles()) {
+      const text = await source(file);
+      expect(text).not.toContain('Nothing here yet');
+    }
+  });
+
+  it('single header: every document page renders through ArtifactHeader, and no view file forks its own header/breadcrumbs chrome', async () => {
+    const page = await source('src/web/pages/artifact-page.tsx');
+    expect(page).toContain('<ArtifactHeader');
+
+    for (const file of await viewsFiles()) {
+      const text = await source(file);
+      expect(text).not.toContain('artifact-breadcrumbs');
+      expect(text).not.toContain('<header className="artifact-heading"');
+    }
+  });
+
+  it('registry-only dispatch: artifact-page.tsx branches on artifact.kind in at most two places (the plan-segments extraction and the unknown eyebrow/notice case) — every other per-kind behaviour lives in a manifest', async () => {
+    const page = await source('src/web/pages/artifact-page.tsx');
+    const occurrences = (page.match(/artifact\.kind === '/g) ?? []).length;
+    expect(occurrences).toBeLessThanOrEqual(2);
   });
 });
