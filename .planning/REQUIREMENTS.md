@@ -15,9 +15,9 @@ Requirement IDs continue from v1.0 (archived at `milestones/v1.0-REQUIREMENTS.md
 
 ### Document Views
 
-- [ ] **VIEW-01**: Each artifact type renders through a view selected for that type, rather than one
+- [x] **VIEW-01**: Each artifact type renders through a view selected for that type, rather than one
       undifferentiated reader
-- [ ] **VIEW-02**: A discussion log shows, for each question, the options that were offered and which
+- [x] **VIEW-02**: A discussion log shows, for each question, the options that were offered and which
       one was chosen
 - [ ] **VIEW-03**: A verification report leads with what still needs human verification — each check,
       what is expected, and why a person is required
@@ -120,8 +120,8 @@ maps to Phase 5; the wave column records where it is expected to land inside tha
 
 | Requirement | Phase | Wave (suggested) | Status |
 |-------------|-------|------------------|--------|
-| VIEW-01 | Phase 5 | 1 — Foundation (view registry, granular `kind`) | Pending |
-| VIEW-02 | Phase 5 | 3 — Proof (DISCUSSION-LOG end to end) | Pending |
+| VIEW-01 | Phase 5 | 1 — Foundation (view registry, granular `kind`) | Complete |
+| VIEW-02 | Phase 5 | 3 — Proof (DISCUSSION-LOG end to end) | Complete |
 | VIEW-03 | Phase 5 | 4 — Coverage (view only; no handler work) | Pending |
 | VIEW-04 | Phase 5 | 4 — Coverage | Pending |
 | VIEW-05 | Phase 5 | 4 — Coverage | Pending |
@@ -133,6 +133,7 @@ maps to Phase 5; the wave column records where it is expected to land inside tha
 | UI-06 | Phase 5 | Conformance condition across waves 1-4 | Pending |
 
 **Coverage:**
+
 - v1.1 requirements: 11 total
 - Mapped to phases: 11 (all to Phase 5)
 - Unmapped: 0

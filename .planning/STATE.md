@@ -2,19 +2,19 @@
 gsd_state_version: "1.0"
 milestone: v1.1
 milestone_name: Legible Documents
-current_phase: 5
+current_phase: 05
 current_phase_name: Per-Type Document Views
-status: planning
-stopped_at: Phase 5 UI-SPEC approved
-last_updated: "2026-09-20T15:04:43.592Z"
+status: executing
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-09-20T15:32:38.648Z"
 last_activity: 2026-09-20
-last_activity_desc: "Roadmap created for v1.1: one phase, 11/11 requirements mapped"
-state_head: "0bc492e237938a262836f3d6355664ee33b55ae0"
+last_activity_desc: Phase 05 execution started
+state_head: e4f57d1f07951d7af5ba73b8ad1b39a8b44c12b3
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 6
-  completed_plans: 0
+  completed_plans: 1
 ---
 
 # Project State
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-20)
 
 **Core value:** Open the dashboard on a GSD project and immediately know where the work stands and where any planning artifact lives — without reading a single file by hand.
-**Current focus:** Milestone v1.1 Legible Documents — Phase 5 (Per-Type Document Views) roadmapped, awaiting plans
+**Current focus:** Phase 05 — Per-Type Document Views
 
 ## Current Position
 
-Phase: 5 (Per-Type Document Views) — READY TO EXECUTE
-Plan: —
-Status: Roadmapped — ready to plan
-Last activity: 2026-09-20 — Roadmap created for v1.1: one phase, 11/11 requirements mapped
+Phase: 05 (Per-Type Document Views) — EXECUTING
+Plan: 2 of 6
+Status: Ready to execute
+Last activity: 2026-09-20 — Phase 05 execution started
 
 ## Performance Metrics
 
@@ -74,6 +74,7 @@ Last activity: 2026-09-20 — Roadmap created for v1.1: one phase, 11/11 require
 | Phase 04 P04 | 45min | 3 tasks | 7 files |
 | Phase 04 P05 | 15min | 3 tasks | 5 files |
 | Phase 04 P06 | 4min | 3 tasks | 5 files |
+| Phase 05 P01 | 26min | 2 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,7 @@ milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) a
 `milestones/v1.0-phases/*/*-SUMMARY.md`.
 
 - [Phase 04]: 260917-wba: fixed 7 visual/UX regressions on the redesigned traceability page — --traced-fill recipe + framed coverage bars, honest tracing headline, site-pattern filter input with height parity, track-and-thumb deferred toggle, restored .history-tree top padding, quiet-toned unscheduled chips, hairline-separated rows with inverted hierarchy
+- [Phase 05]: 05-01: View is the page, Source is the escape hatch (D-01) — the client-side view registry (composeView/outlineEntriesOf/resolveView) is now ArtifactPage's primary render path, proven end to end on the discussion-log view.
 
 ### Pending Todos
 
@@ -131,9 +133,9 @@ Two v1.0 close-time verification overrides recorded below; the two earlier rows 
 
 ## Session Continuity
 
-Last session: 2026-09-20T14:18:16.775Z
-Stopped at: Phase 5 UI-SPEC approved
-Resume file: .planning/phases/05-per-type-document-views/05-UI-SPEC.md
+Last session: 2026-09-20T15:32:38.628Z
+Stopped at: Completed 05-01-PLAN.md
+Resume file: None
 
 ## Operator Next Steps
 
