@@ -2714,8 +2714,6 @@ pre {
 }
 
 .artifact-breadcrumbs {
-  padding-bottom: var(--space-3-5);
-  border-bottom: 1px solid var(--border);
   font-family: var(--font-heading);
   font-size: var(--fs-2);
 }
