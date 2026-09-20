@@ -49,8 +49,8 @@ export interface Reference<T> {
   resolved: T | null;
 }
 
-/** The four ID schemes the mention scanner recognizes (plan 01-04, D-13) — exactly the set NAV-02, NAV-03, and NAV-07 consume. Every other scheme in GSD's inventory (threat ids, wave numbers, ledger integers) is read only from structured frontmatter, never scanned out of prose. */
-export type IdScheme = 'requirement' | 'decision' | 'plan' | 'phase';
+/** The five ID schemes the mention scanner recognizes (plan 01-04, D-13; `warning` added Phase 5, BACK-02) — exactly the set NAV-02, NAV-03, and NAV-07 consume. Every other scheme in GSD's inventory (threat ids, wave numbers, ledger integers) is read only from structured frontmatter, never scanned out of prose. */
+export type IdScheme = 'requirement' | 'decision' | 'plan' | 'phase' | 'warning';
 
 /**
  * One occurrence of an id-shaped token in prose (D-16): which artifact it was found in (path and the

@@ -5,6 +5,7 @@ import type { ArtifactHandler, RawArtifact, ArtifactRef } from '../types.ts';
 import { tryParseFrontmatter } from '../frontmatter.ts';
 import { deriveTitle } from './title.ts';
 import { artifactTokenOf } from './artifact-token.ts';
+import { parseDecisionEntries } from './section-projection.ts';
 
 const CONTEXT_TAGS = ['domain', 'decisions', 'specifics', 'canonical_refs', 'code_context', 'deferred'] as const;
 
@@ -32,7 +33,7 @@ export const ContextHandler: ArtifactHandler = {
       frontmatter: fm.data,
       body: fm.body,
       warning: fm.warning,
-      structured: { sections },
+      structured: { decisions: parseDecisionEntries(sections.decisions), sections },
     };
   },
 };

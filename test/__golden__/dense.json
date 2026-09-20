@@ -1159,6 +1159,12 @@
                 "mtimeMs": 0,
                 "warnings": [],
                 "structured": {
+                  "decisions": [
+                    {
+                      "id": "D-01",
+                      "text": "Keep the bootstrap phase to a single plan — nothing else exists yet to build on."
+                    }
+                  ],
                   "sections": {
                     "domain": "## Phase Boundary\n\nStand up the earliest scaffolding for the fixture project — the v1.0 \"Phase 1\", archived here under\n`milestones/v1.0-phases/01-bootstrap/`, distinct from v3.0's own \"Phase 1\" (`phases/01-identity-slice/`)\ndespite sharing the number `01`.",
                     "decisions": "## Implementation Decisions\n\n### Scope\n- **D-01:** Keep the bootstrap phase to a single plan — nothing else exists yet to build on.\n\n### Claude's Discretion\nEverything else is open.",
@@ -1490,6 +1496,12 @@
                 "mtimeMs": 0,
                 "warnings": [],
                 "structured": {
+                  "decisions": [
+                    {
+                      "id": "D-01",
+                      "text": "Read-only ingest for v2.0 — no retry logic, deferred to backlog."
+                    }
+                  ],
                   "sections": {
                     "domain": "## Phase Boundary\n\nPull legacy records into the new store — the v2.0 \"Phase 1\", archived here under\n`milestones/v2.0-phases/01-legacy-ingest/`, distinct from both v1.0's \"Phase 1\" (bootstrap) and v3.0's\n\"Phase 1\" (identity slice) despite all three sharing the number `01`.",
                     "decisions": "## Implementation Decisions\n\n### Scope\n- **D-01:** Read-only ingest for v2.0 — no retry logic, deferred to backlog.\n\n### Claude's Discretion\nEverything else is open.",
@@ -2882,6 +2894,16 @@
                 "mtimeMs": 0,
                 "warnings": [],
                 "structured": {
+                  "decisions": [
+                    {
+                      "id": "D-01",
+                      "text": "Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the generic-markdown fallback."
+                    },
+                    {
+                      "id": "D-02",
+                      "text": "No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02 hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere."
+                    }
+                  ],
                   "sections": {
                     "domain": "## Phase Boundary\n\nDeliver the identity vertical slice and, along the way, exercise the full spread of artifact types\nthis fixture project needs — including types studio-portal has never produced.",
                     "decisions": "## Implementation Decisions\n\n### Artifact spread\n- **D-01:** Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own\n  `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the\n  generic-markdown fallback.\n\n### Corruption boundary\n- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02\n  hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere.\n\n### Claude's Discretion\nEverything not named above is open — this is a fixture, not a real implementation target.",
@@ -3199,6 +3221,12 @@
                 "mtimeMs": 0,
                 "warnings": [],
                 "structured": {
+                  "decisions": [
+                    {
+                      "id": "D-01",
+                      "text": "This phase carries only `02-01-PLAN.md` and `02-CONTEXT.md` — no summary yet, since the fixture must represent a phase that is planned but not yet executed at this point in the project's history."
+                    }
+                  ],
                   "sections": {
                     "domain": "## Phase Boundary\n\nWire the transport layer connecting the identity slice to the rest of the system. This phase is\ndeliberately thinner than Phase 1 — no `01-RESEARCH.md`-equivalent, no security/UI-spec — to represent\na mid-flight phase directory with only a subset of possible artifact types present.",
                     "decisions": "## Implementation Decisions\n\n### Scope\n- **D-01:** This phase carries only `02-01-PLAN.md` and `02-CONTEXT.md` — no summary yet, since the\n  fixture must represent a phase that is planned but not yet executed at this point in the project's\n  history.\n\n### Claude's Discretion\nEverything else is open — this is a fixture, not a real implementation target.",
@@ -3521,6 +3549,12 @@
             "mtimeMs": 0,
             "warnings": [],
             "structured": {
+              "decisions": [
+                {
+                  "id": "D-01",
+                  "text": "Keep the bootstrap phase to a single plan — nothing else exists yet to build on."
+                }
+              ],
               "sections": {
                 "domain": "## Phase Boundary\n\nStand up the earliest scaffolding for the fixture project — the v1.0 \"Phase 1\", archived here under\n`milestones/v1.0-phases/01-bootstrap/`, distinct from v3.0's own \"Phase 1\" (`phases/01-identity-slice/`)\ndespite sharing the number `01`.",
                 "decisions": "## Implementation Decisions\n\n### Scope\n- **D-01:** Keep the bootstrap phase to a single plan — nothing else exists yet to build on.\n\n### Claude's Discretion\nEverything else is open.",
@@ -3845,6 +3879,12 @@
             "mtimeMs": 0,
             "warnings": [],
             "structured": {
+              "decisions": [
+                {
+                  "id": "D-01",
+                  "text": "Read-only ingest for v2.0 — no retry logic, deferred to backlog."
+                }
+              ],
               "sections": {
                 "domain": "## Phase Boundary\n\nPull legacy records into the new store — the v2.0 \"Phase 1\", archived here under\n`milestones/v2.0-phases/01-legacy-ingest/`, distinct from both v1.0's \"Phase 1\" (bootstrap) and v3.0's\n\"Phase 1\" (identity slice) despite all three sharing the number `01`.",
                 "decisions": "## Implementation Decisions\n\n### Scope\n- **D-01:** Read-only ingest for v2.0 — no retry logic, deferred to backlog.\n\n### Claude's Discretion\nEverything else is open.",
@@ -5230,6 +5270,16 @@
             "mtimeMs": 0,
             "warnings": [],
             "structured": {
+              "decisions": [
+                {
+                  "id": "D-01",
+                  "text": "Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the generic-markdown fallback."
+                },
+                {
+                  "id": "D-02",
+                  "text": "No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02 hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere."
+                }
+              ],
               "sections": {
                 "domain": "## Phase Boundary\n\nDeliver the identity vertical slice and, along the way, exercise the full spread of artifact types\nthis fixture project needs — including types studio-portal has never produced.",
                 "decisions": "## Implementation Decisions\n\n### Artifact spread\n- **D-01:** Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own\n  `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the\n  generic-markdown fallback.\n\n### Corruption boundary\n- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02\n  hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere.\n\n### Claude's Discretion\nEverything not named above is open — this is a fixture, not a real implementation target.",
@@ -5547,6 +5597,12 @@
             "mtimeMs": 0,
             "warnings": [],
             "structured": {
+              "decisions": [
+                {
+                  "id": "D-01",
+                  "text": "This phase carries only `02-01-PLAN.md` and `02-CONTEXT.md` — no summary yet, since the fixture must represent a phase that is planned but not yet executed at this point in the project's history."
+                }
+              ],
               "sections": {
                 "domain": "## Phase Boundary\n\nWire the transport layer connecting the identity slice to the rest of the system. This phase is\ndeliberately thinner than Phase 1 — no `01-RESEARCH.md`-equivalent, no security/UI-spec — to represent\na mid-flight phase directory with only a subset of possible artifact types present.",
                 "decisions": "## Implementation Decisions\n\n### Scope\n- **D-01:** This phase carries only `02-01-PLAN.md` and `02-CONTEXT.md` — no summary yet, since the\n  fixture must represent a phase that is planned but not yet executed at this point in the project's\n  history.\n\n### Claude's Discretion\nEverything else is open — this is a fixture, not a real implementation target.",
@@ -6721,6 +6777,16 @@
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
+                    "decisions": [
+                      {
+                        "id": "D-01",
+                        "text": "Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the generic-markdown fallback."
+                      },
+                      {
+                        "id": "D-02",
+                        "text": "No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02 hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere."
+                      }
+                    ],
                     "sections": {
                       "domain": "## Phase Boundary\n\nDeliver the identity vertical slice and, along the way, exercise the full spread of artifact types\nthis fixture project needs — including types studio-portal has never produced.",
                       "decisions": "## Implementation Decisions\n\n### Artifact spread\n- **D-01:** Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own\n  `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the\n  generic-markdown fallback.\n\n### Corruption boundary\n- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02\n  hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere.\n\n### Claude's Discretion\nEverything not named above is open — this is a fixture, not a real implementation target.",
@@ -7961,6 +8027,16 @@
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
+                    "decisions": [
+                      {
+                        "id": "D-01",
+                        "text": "Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the generic-markdown fallback."
+                      },
+                      {
+                        "id": "D-02",
+                        "text": "No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02 hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere."
+                      }
+                    ],
                     "sections": {
                       "domain": "## Phase Boundary\n\nDeliver the identity vertical slice and, along the way, exercise the full spread of artifact types\nthis fixture project needs — including types studio-portal has never produced.",
                       "decisions": "## Implementation Decisions\n\n### Artifact spread\n- **D-01:** Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own\n  `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the\n  generic-markdown fallback.\n\n### Corruption boundary\n- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02\n  hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere.\n\n### Claude's Discretion\nEverything not named above is open — this is a fixture, not a real implementation target.",
@@ -9201,6 +9277,16 @@
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
+                    "decisions": [
+                      {
+                        "id": "D-01",
+                        "text": "Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the generic-markdown fallback."
+                      },
+                      {
+                        "id": "D-02",
+                        "text": "No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02 hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere."
+                      }
+                    ],
                     "sections": {
                       "domain": "## Phase Boundary\n\nDeliver the identity vertical slice and, along the way, exercise the full spread of artifact types\nthis fixture project needs — including types studio-portal has never produced.",
                       "decisions": "## Implementation Decisions\n\n### Artifact spread\n- **D-01:** Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own\n  `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the\n  generic-markdown fallback.\n\n### Corruption boundary\n- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02\n  hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere.\n\n### Claude's Discretion\nEverything not named above is open — this is a fixture, not a real implementation target.",
@@ -9513,6 +9599,12 @@
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
+                    "decisions": [
+                      {
+                        "id": "D-01",
+                        "text": "This phase carries only `02-01-PLAN.md` and `02-CONTEXT.md` — no summary yet, since the fixture must represent a phase that is planned but not yet executed at this point in the project's history."
+                      }
+                    ],
                     "sections": {
                       "domain": "## Phase Boundary\n\nWire the transport layer connecting the identity slice to the rest of the system. This phase is\ndeliberately thinner than Phase 1 — no `01-RESEARCH.md`-equivalent, no security/UI-spec — to represent\na mid-flight phase directory with only a subset of possible artifact types present.",
                       "decisions": "## Implementation Decisions\n\n### Scope\n- **D-01:** This phase carries only `02-01-PLAN.md` and `02-CONTEXT.md` — no summary yet, since the\n  fixture must represent a phase that is planned but not yet executed at this point in the project's\n  history.\n\n### Claude's Discretion\nEverything else is open — this is a fixture, not a real implementation target.",
@@ -9645,6 +9737,12 @@
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
+                    "decisions": [
+                      {
+                        "id": "D-01",
+                        "text": "This phase carries only `02-01-PLAN.md` and `02-CONTEXT.md` — no summary yet, since the fixture must represent a phase that is planned but not yet executed at this point in the project's history."
+                      }
+                    ],
                     "sections": {
                       "domain": "## Phase Boundary\n\nWire the transport layer connecting the identity slice to the rest of the system. This phase is\ndeliberately thinner than Phase 1 — no `01-RESEARCH.md`-equivalent, no security/UI-spec — to represent\na mid-flight phase directory with only a subset of possible artifact types present.",
                       "decisions": "## Implementation Decisions\n\n### Scope\n- **D-01:** This phase carries only `02-01-PLAN.md` and `02-CONTEXT.md` — no summary yet, since the\n  fixture must represent a phase that is planned but not yet executed at this point in the project's\n  history.\n\n### Claude's Discretion\nEverything else is open — this is a fixture, not a real implementation target.",

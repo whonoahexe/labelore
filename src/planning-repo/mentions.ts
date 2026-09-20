@@ -18,16 +18,23 @@ import type { IdScheme, Mention, MentionIndex } from '../domain/model.ts';
 // Mention/MentionIndex for why the types are defined there instead of here.
 export type { IdScheme, Mention, MentionIndex } from '../domain/model.ts';
 
-// D-13's four schemes — exactly what NAV-02, NAV-03, and NAV-07 consume. Everything else in
-// GSD-DOMAIN.md's nine-scheme inventory (threat ids, wave numbers, windows-ledger integers) is read
-// only from structured frontmatter, never scanned out of prose — those are precisely the schemes with
-// no distinctive shape, where a bare integer would match any number in any document.
+// D-13's five schemes (Phase 5 BACK-02 added `warning`) — exactly what NAV-02, NAV-03, and NAV-07
+// consume. Everything else in GSD-DOMAIN.md's nine-scheme inventory (threat ids, wave numbers,
+// windows-ledger integers) is read only from structured frontmatter, never scanned out of prose —
+// those are precisely the schemes with no distinctive shape, where a bare integer would match any
+// number in any document.
 //
 // T-01-11 (DoS): every pattern below is anchored on a word boundary with bounded quantifiers and no
 // nested unbounded groups, so none of them can exhibit catastrophic backtracking regardless of input
 // size or shape. The combined scan (collectRawMatches) also walks the text exactly once per scheme,
 // never composing these expressions into one another.
 export const ID_PATTERNS: Record<IdScheme, RegExp> = {
+  // Literally the letters WR, per GSD's `WR-NN` review-finding-id grammar (Phase 5, BACK-02). Must
+  // be visited before `requirement` below: `collectRawMatches` sorts equal-span candidates by
+  // `Object.keys` iteration order, and `WR-01` also satisfies `requirement`'s two-or-more-uppercase
+  // prefix shape, so without this ordering every `WR-NN` token would be misclassified as a
+  // requirement id instead of a warning id.
+  warning: /\bWR-\d+\b/g,
   // A prefix of two-or-more uppercase/digit characters (must start with a letter), a hyphen, then
   // two-or-more digits. Deliberately requires >=2 prefix characters — `[A-Z][A-Z0-9]+`, not `*` — so a
   // single-letter `D-NN` token can never match here. That precedence is what keeps decision ids and
