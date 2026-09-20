@@ -1,0 +1,150 @@
+// The view registry's shared shapes and its pure composer. A manifest declares, in
+// `promote` order (D-04), which sections/data a view pulls out of the document; `composeView`
+// walks that list once against a concrete `ViewInput` and returns the ordered blocks plus
+// whatever the manifest left unconsumed (D-02's collapsed remainder).
+import type { DocumentSectionGroup, PlanSegmentAttributes } from './document-sections.ts';
+
+/** Declared now so 05-05 can add components without widening this union a second time — only
+ * `discussion-questions` has a real component in this plan (see `blocks.tsx`). */
+export type BlockComponentKey =
+  | 'discussion-questions'
+  | 'verification-checks'
+  | 'plan-task-index'
+  | 'fact-list';
+
+export type PromotedBlock =
+  | {
+      type: 'section';
+      /** String compare is case-insensitive on trimmed text; a `RegExp` uses `.test`. */
+      heading: string | RegExp;
+      label?: string;
+      /** When true, every matching group is promoted (in document order); otherwise only the
+       * first unconsumed match. */
+      all?: boolean;
+    }
+  | {
+      type: 'data';
+      id: string;
+      label: string;
+      component: BlockComponentKey;
+      /** Returning `null`, `undefined`, or an empty array skips the block entirely (D-06). */
+      select: (input: ViewInput) => unknown;
+      /** Marks document-section groups this data block already accounts for, so they drop out of
+       * the D-02 remainder instead of being shown twice. */
+      consumes?: (group: DocumentSectionGroup, selected: unknown) => boolean;
+    };
+
+export interface ViewManifest {
+  kind: string;
+  /** One sentence of per-type header copy (UI-SPEC § Per-Type Header Copy), verbatim. */
+  lead: string;
+  promote: readonly PromotedBlock[];
+}
+
+export interface ViewInput {
+  kind: string;
+  frontmatter: Record<string, unknown>;
+  structured: Record<string, unknown>;
+  groups: DocumentSectionGroup[];
+  planSegments: PlanSegmentAttributes[];
+}
+
+export type ComposedBlock = { id: string; label: string } & (
+  | { kind: 'section'; group: DocumentSectionGroup }
+  | { kind: 'data'; component: BlockComponentKey; data: unknown }
+);
+
+export interface ComposedView {
+  blocks: ComposedBlock[];
+  remainder: DocumentSectionGroup[];
+}
+
+export interface OutlineEntry {
+  id: string;
+  label: string;
+}
+
+export const REMAINDER_ID = 'view-remainder';
+export const REMAINDER_LABEL = 'More in this document';
+export const INTRODUCTION_LABEL = 'Introduction';
+
+function headingMatches(heading: string | RegExp, group: DocumentSectionGroup): boolean {
+  if (group.heading === null) return false;
+  if (typeof heading === 'string') {
+    return heading.trim().toLowerCase() === group.heading.trim().toLowerCase();
+  }
+  return heading.test(group.heading);
+}
+
+/**
+ * Walks `manifest.promote` in order (D-04), emitting one block per match/non-empty selection and
+ * marking every group it accounts for as consumed. Block ids are `view-block-` + the 1-based
+ * position among emitted blocks (not among promote entries — a `section` entry with `all: true`
+ * can emit several). Remainder is every unconsumed, non-blank group, in original document order,
+ * with the leading (no-heading) group relabelled `INTRODUCTION_LABEL`.
+ */
+export function composeView(manifest: ViewManifest, input: ViewInput): ComposedView {
+  const consumed = new Set<DocumentSectionGroup>();
+  const blocks: ComposedBlock[] = [];
+  let position = 0;
+  const nextId = (): string => {
+    position += 1;
+    return `view-block-${position}`;
+  };
+
+  for (const entry of manifest.promote) {
+    if (entry.type === 'section') {
+      const matches = input.groups.filter(
+        (group) => !consumed.has(group) && headingMatches(entry.heading, group),
+      );
+      const selected = entry.all ? matches : matches.slice(0, 1);
+      for (const group of selected) {
+        consumed.add(group);
+        blocks.push({
+          id: nextId(),
+          label: entry.label ?? group.heading ?? '',
+          kind: 'section',
+          group,
+        });
+      }
+      continue;
+    }
+
+    const selected = entry.select(input);
+    const isEmpty =
+      selected === null || selected === undefined || (Array.isArray(selected) && selected.length === 0);
+    if (isEmpty) continue;
+
+    if (entry.consumes) {
+      for (const group of input.groups) {
+        if (!consumed.has(group) && entry.consumes(group, selected)) {
+          consumed.add(group);
+        }
+      }
+    }
+
+    blocks.push({
+      id: nextId(),
+      label: entry.label,
+      kind: 'data',
+      component: entry.component,
+      data: selected,
+    });
+  }
+
+  const remainder = input.groups
+    .filter((group) => !consumed.has(group) && group.html.trim() !== '')
+    .map((group) => (group.heading === null ? { ...group, heading: INTRODUCTION_LABEL } : group));
+
+  return { blocks, remainder };
+}
+
+/** The outline's data source in View mode (D-11): the composed blocks in promotion order, plus
+ * one trailing entry for the remainder — omitted entirely when the remainder is empty. */
+export function outlineEntriesOf(view: ComposedView): OutlineEntry[] {
+  const entries: OutlineEntry[] = view.blocks.map((block) => ({ id: block.id, label: block.label }));
+  if (view.remainder.length > 0) {
+    entries.push({ id: REMAINDER_ID, label: REMAINDER_LABEL });
+  }
+  return entries;
+}

@@ -2860,6 +2860,47 @@ pre {
   color: var(--primary);
 }
 
+/* D-01/D-03: the View/Source control mounted in ArtifactHeader's children slot. */
+.document-view-toggle {
+  display: inline-flex;
+  gap: var(--space-1);
+  margin-top: var(--space-3);
+}
+
+/* One promoted or remainder block inside a per-type view's canvas. */
+.view-block {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.view-block + .view-block {
+  margin-top: var(--space-8);
+}
+
+/* VIEW-02 DISCUSSION-LOG view (view-local, UI-SPEC §3). */
+.view-discussion-log-options {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-discussion-log-option {
+  display: flex;
+  gap: var(--space-3);
+  align-items: baseline;
+  font-size: var(--fs-3);
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+
+.view-discussion-log-option[data-chosen='true'] {
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+  color: var(--foreground);
+}
+
 .document-canvas {
   min-width: 0;
   max-width: 70rem;
