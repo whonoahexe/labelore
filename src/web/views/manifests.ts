@@ -99,6 +99,189 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
       ]),
     ],
   },
+  summary: {
+    kind: 'summary',
+    lead: 'What shipped, against what the plan committed to.',
+    promote: [
+      { type: 'section', heading: /^accomplishments/i },
+      { type: 'section', heading: /^decisions made/i },
+      { type: 'section', heading: /^deviations from plan/i },
+      { type: 'section', heading: /^issues encountered/i },
+      factsBlock('recorded', 'Recorded outcome', [
+        'requirements-completed',
+        'key-decisions',
+        'patterns-established',
+        'subsystem',
+        'tags',
+      ]),
+      { type: 'section', heading: /^next phase readiness/i },
+    ],
+  },
+  review: {
+    kind: 'review',
+    lead: 'Findings from cross-AI review, by severity.',
+    promote: [
+      { type: 'section', heading: /^summary$/i },
+      { type: 'section', heading: /^critical issues/i },
+      { type: 'section', heading: /^warnings/i },
+      { type: 'section', heading: /^info$/i },
+      factsBlock('review-facts', 'Review facts', ['depth', 'files_reviewed', 'reviewed']),
+    ],
+  },
+  'milestone-audit': {
+    kind: 'milestone-audit',
+    lead: "Whether the milestone's own intent — not just its checklist — was met.",
+    promote: [
+      { type: 'section', heading: /^verdict/i },
+      factsBlock('audit', 'Audit', ['status', 'audited', 'scores', 'gaps']),
+      { type: 'section', heading: /^findings/i },
+      { type: 'section', heading: /^scope check/i },
+      { type: 'section', heading: /^requirements coverage/i },
+      { type: 'section', heading: /^tech debt/i },
+    ],
+  },
+  research: {
+    kind: 'research',
+    lead: 'The stack, patterns and pitfalls this phase was planned against.',
+    promote: [
+      { type: 'section', heading: /^summary$/i },
+      { type: 'section', heading: /^standard stack/i },
+      { type: 'section', heading: /^architecture patterns/i },
+      { type: 'section', heading: /^don.t hand-roll/i },
+      { type: 'section', heading: /^common pitfalls/i },
+      { type: 'section', heading: /^open questions/i },
+    ],
+  },
+  patterns: {
+    kind: 'patterns',
+    // UI-SPEC's own sentence for `patterns`, kept verbatim even though PATTERNS.md is the
+    // analog map, not decisions/lessons/surprises — spec copy is never rewritten here.
+    lead: 'Decisions, lessons and surprises carried out of this phase.',
+    promote: [
+      { type: 'section', heading: /^file classification/i },
+      { type: 'section', heading: /^pattern assignments/i },
+      { type: 'section', heading: /^shared patterns/i },
+      { type: 'section', heading: /^no analog found/i },
+    ],
+  },
+  'ui-spec': {
+    kind: 'ui-spec',
+    lead: "The design contract this phase's views were built against.",
+    promote: [
+      { type: 'section', heading: /^new component specifications/i },
+      { type: 'section', heading: /^copywriting contract/i },
+      { type: 'section', heading: /^existing shared vocabulary/i },
+      { type: 'section', heading: /^ui considerations/i },
+      { type: 'section', heading: /^design system/i },
+    ],
+  },
+  uat: {
+    kind: 'uat',
+    lead: 'The acceptance checks a human walked through, and what they found.',
+    promote: [
+      factsBlock('uat-facts', 'Session', ['status', 'started', 'updated']),
+      { type: 'section', heading: /^summary$/i },
+      { type: 'section', heading: /^gaps/i },
+      { type: 'section', heading: /^tests$/i },
+      { type: 'section', heading: /^current test/i },
+    ],
+  },
+  validation: {
+    kind: 'validation',
+    lead: "Where this phase's plan met the verification bar, and where it fell short.",
+    promote: [
+      factsBlock('validation-facts', 'Status', ['status', 'nyquist_compliant', 'wave_0_complete']),
+      { type: 'section', heading: /^per-task verification map/i },
+      { type: 'section', heading: /^manual-only verifications/i },
+      { type: 'section', heading: /^wave 0 requirements/i },
+      { type: 'section', heading: /^validation sign-off/i },
+    ],
+  },
+  security: {
+    kind: 'security',
+    lead: 'Threats considered for this phase, and how each was mitigated.',
+    promote: [
+      factsBlock('security-facts', 'Status', ['status', 'threats_open', 'asvs_level']),
+      { type: 'section', heading: /^threat register/i },
+      { type: 'section', heading: /^trust boundaries/i },
+      { type: 'section', heading: /^accepted risks/i },
+      { type: 'section', heading: /^sign-off/i },
+    ],
+  },
+  'ui-review': {
+    kind: 'ui-review',
+    lead: 'A retroactive visual audit against the written design contract.',
+    promote: [
+      factsBlock('ui-review-facts', 'Score', [
+        'status',
+        'score',
+        'max_score',
+        'needs_human_review',
+      ]),
+      { type: 'section', heading: /^top 3 priority fixes/i },
+      { type: 'section', heading: /^pillar scores/i },
+      { type: 'section', heading: /^detailed findings/i },
+      { type: 'section', heading: /^summary$/i },
+    ],
+  },
+  coverage: {
+    kind: 'coverage',
+    lead: "Which edges and cases this phase's plan actually accounted for.",
+    // A degenerate COVERAGE.md with no `##` sections at all composes to zero blocks — the page
+    // falls back to the full document with the toggle hidden (documented VIEW-01 empty rule).
+    promote: [
+      { type: 'section', heading: /coverage/i, all: true },
+      { type: 'section', heading: /^decisions?/i },
+    ],
+  },
+  learnings: {
+    kind: 'learnings',
+    lead: "What this phase taught that the next one shouldn't have to re-learn.",
+    promote: [
+      { type: 'section', heading: /^decisions$/i },
+      { type: 'section', heading: /^lessons$/i },
+      { type: 'section', heading: /^patterns$/i },
+      { type: 'section', heading: /^surprises$/i },
+      factsBlock('counts', 'Counts', ['counts']),
+    ],
+  },
+  context: {
+    kind: 'context',
+    lead: 'The decisions locked in before this phase was planned, and what was left open.',
+    promote: [
+      { type: 'section', heading: /^implementation decisions/i },
+      { type: 'section', heading: /^(phase|task) boundary/i },
+      { type: 'section', heading: /^specific ideas/i },
+      { type: 'section', heading: /^deferred ideas/i },
+      { type: 'section', heading: /^existing code insights/i },
+      // Canonical References is intentionally not promoted here — it falls to the D-02 remainder.
+    ],
+  },
+  'review-fix': {
+    kind: 'review-fix',
+    lead: 'Which review findings were fixed, which were skipped, and why.',
+    promote: [
+      factsBlock('fix-facts', 'Fix run', [
+        'status',
+        'fixed',
+        'skipped',
+        'findings_in_scope',
+        'iteration',
+      ]),
+      { type: 'section', heading: /^fixed issues/i },
+      { type: 'section', heading: /^skipped issues/i },
+      { type: 'section', heading: /^deferred/i },
+    ],
+  },
+  findings: {
+    kind: 'findings',
+    lead: 'What the debug session found, and what it ruled out.',
+    promote: [
+      { type: 'section', heading: /^f\d+\b/i, all: true },
+      { type: 'section', heading: /^regression floor/i },
+      { type: 'section', heading: /^not a defect/i },
+    ],
+  },
 });
 
 /** Registered lookup only — VIEW-01's original "empty" case, kept for the registry-completeness
