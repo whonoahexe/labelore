@@ -27,13 +27,15 @@ import { dropLeadingTitle } from './document-title.ts';
 import { toMermaidColor } from './mermaid-theme.ts';
 import { scrollWhenSettled } from './scroll-settle.ts';
 import { humanizeKind } from '../views/kinds.ts';
-import { resolveView } from '../views/manifests.ts';
+import { resolveViewFor } from '../views/manifests.ts';
+import { unrecognizedNotice } from '../views/fallback.ts';
 import {
   composeView,
   outlineEntriesOf,
   REMAINDER_ID,
   REMAINDER_LABEL,
   type ComposedView,
+  type ViewInput,
 } from '../views/manifest.ts';
 import { extractPlanSegments, splitRenderedDocument } from '../views/document-sections.ts';
 import { BLOCK_COMPONENTS } from '../views/blocks.tsx';
@@ -400,6 +402,31 @@ function ViewReader({
   );
 }
 
+/** VIEW-06's neutral notice, below the header — same shared `.notice` treatment
+ * `plan-pair-page.tsx`'s "Outcome not recorded yet" aside already uses. Case (b)'s lead carries a
+ * literal `{kind}` placeholder; here it is split so the kind renders inside a real `<strong>`
+ * rather than being pre-baked into plain text. */
+function UnrecognizedNotice({ kind }: { kind: string }): React.JSX.Element {
+  const { lead, kindLabel } = unrecognizedNotice(kind);
+  if (kindLabel === null) {
+    return (
+      <aside className="notice view-unrecognized-notice" role="status">
+        <p>{lead}</p>
+      </aside>
+    );
+  }
+  const [before, after] = lead.split('{kind}');
+  return (
+    <aside className="notice view-unrecognized-notice" role="status">
+      <p>
+        {before}
+        <strong>{kindLabel}</strong>
+        {after}
+      </p>
+    </aside>
+  );
+}
+
 async function loadDocument(route: string): Promise<ArtifactDocumentResponse> {
   const response = await fetch(`/api/documents?route=${encodeURIComponent(route)}`);
   if (!response.ok) {
@@ -422,10 +449,6 @@ export function ArtifactPage(): React.JSX.Element {
     [query.data],
   );
   const [mode, setMode] = useState<'view' | 'source'>('view');
-  const manifest = useMemo(
-    () => (query.data ? resolveView(query.data.artifact.kind) : null),
-    [query.data],
-  );
   const shown = useMemo(
     () => (query.data ? dropLeadingTitle(query.data.document, query.data.artifact.title) : null),
     [query.data],
@@ -436,16 +459,29 @@ export function ArtifactPage(): React.JSX.Element {
       query.data?.artifact.kind === 'plan' && shown ? extractPlanSegments(shown.html) : [],
     [query.data, shown],
   );
-  const composed = useMemo<ComposedView | null>(() => {
-    if (!manifest || !query.data) return null;
-    return composeView(manifest, {
+  const viewInput = useMemo<ViewInput | null>(() => {
+    if (!query.data) return null;
+    return {
       kind: query.data.artifact.kind,
       frontmatter: query.data.artifact.frontmatter,
       structured: query.data.artifact.structured,
       groups,
       planSegments,
-    });
-  }, [manifest, query.data, groups, planSegments]);
+    };
+  }, [query.data, groups, planSegments]);
+  // VIEW-06: a registered manifest, or fallback.ts's synthesized structural-read manifest — one
+  // dispatch path either way (`resolveView` itself stays registry-only, for 05-06's completeness
+  // test).
+  const resolved = useMemo(
+    () => (viewInput ? resolveViewFor(viewInput.kind, viewInput) : null),
+    [viewInput],
+  );
+  const manifest = resolved?.manifest ?? null;
+  const recognized = resolved?.recognized ?? true;
+  const composed = useMemo<ComposedView | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return composeView(manifest, viewInput);
+  }, [manifest, viewInput]);
   const viewAvailable = composed !== null && composed.blocks.length > 0;
 
   if (query.isPending) {
@@ -511,14 +547,21 @@ export function ArtifactPage(): React.JSX.Element {
         path={artifact.path}
         lead={manifest?.lead ?? null}
         chip={
-          warningTone ? (
-            <span
-              className="status-chip"
-              data-tone={warningTone === 'unreadable' ? 'destructive' : 'warning'}
-            >
-              {warningTone === 'unreadable' ? 'Unreadable' : 'Warning'}
-            </span>
-          ) : null
+          <>
+            {warningTone ? (
+              <span
+                className="status-chip"
+                data-tone={warningTone === 'unreadable' ? 'destructive' : 'warning'}
+              >
+                {warningTone === 'unreadable' ? 'Unreadable' : 'Warning'}
+              </span>
+            ) : null}
+            {!recognized ? (
+              <span className="status-chip" data-tone="quiet">
+                Unrecognized type
+              </span>
+            ) : null}
+          </>
         }
       >
         {viewAvailable ? <DocumentViewToggle mode={mode} onChange={setMode} /> : null}
@@ -587,6 +630,8 @@ export function ArtifactPage(): React.JSX.Element {
           </div>
         </details>
       ) : null}
+
+      {!recognized ? <UnrecognizedNotice kind={artifact.kind} /> : null}
 
       {viewAvailable && mode === 'view' && composed && shown ? (
         <ViewReader title={artifact.title} composed={composed} shown={shown} />

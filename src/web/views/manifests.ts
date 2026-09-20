@@ -5,8 +5,9 @@
 import type { DiscussionTopic } from '../../planning-repo/handlers/section-projection.ts';
 import { factsBlock } from './facts.ts';
 import { planTaskIndexBlock } from './plan-task-index.ts';
+import { fallbackManifest } from './fallback.ts';
 import type { ViewKind } from './kinds.ts';
-import type { PromotedBlock, ViewManifest } from './manifest.ts';
+import type { PromotedBlock, ViewInput, ViewManifest } from './manifest.ts';
 
 /**
  * `select` and `consumes` run back to back, synchronously, within the same `composeView` call
@@ -100,6 +101,24 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
   },
 });
 
-export function resolveView(kind: string): ViewManifest | null {
-  return (VIEW_MANIFESTS as Record<string, ViewManifest | undefined>)[kind] ?? null;
+/** Registered lookup only — VIEW-01's original "empty" case, kept for the registry-completeness
+ * test in 05-06. `recognized: false` means `manifest` is `null`, never a synthesized fallback;
+ * `resolveViewFor` below is what a page actually renders against. */
+export function resolveView(kind: string): { manifest: ViewManifest | null; recognized: boolean } {
+  const manifest = (VIEW_MANIFESTS as Record<string, ViewManifest | undefined>)[kind];
+  return manifest ? { manifest, recognized: true } : { manifest: null, recognized: false };
+}
+
+/** VIEW-06: the registered manifest when one exists, otherwise `fallback.ts`'s synthesized
+ * structural-read manifest — so `ArtifactPage` has exactly one dispatch path and a manifest is
+ * always available to `composeView`. */
+export function resolveViewFor(
+  kind: string,
+  input: ViewInput,
+): { manifest: ViewManifest; recognized: boolean } {
+  const resolved = resolveView(kind);
+  if (resolved.manifest) {
+    return { manifest: resolved.manifest, recognized: true };
+  }
+  return { manifest: fallbackManifest(kind, input), recognized: false };
 }
