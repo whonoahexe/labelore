@@ -5,16 +5,16 @@ milestone_name: Legible Documents
 current_phase: 05
 current_phase_name: Per-Type Document Views
 status: executing
-stopped_at: Completed 05-01-PLAN.md
-last_updated: "2026-09-20T15:32:38.648Z"
+stopped_at: Completed 05-02-PLAN.md
+last_updated: "2026-09-20T15:48:55.700Z"
 last_activity: 2026-09-20
 last_activity_desc: Phase 05 execution started
-state_head: e4f57d1f07951d7af5ba73b8ad1b39a8b44c12b3
+state_head: f4868baae0eecafc8b806c32e92c54fe76462e29
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 6
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-20)
 ## Current Position
 
 Phase: 05 (Per-Type Document Views) — EXECUTING
-Plan: 2 of 6
+Plan: 3 of 6
 Status: Ready to execute
 Last activity: 2026-09-20 — Phase 05 execution started
 
@@ -75,6 +75,7 @@ Last activity: 2026-09-20 — Phase 05 execution started
 | Phase 04 P05 | 15min | 3 tasks | 5 files |
 | Phase 04 P06 | 4min | 3 tasks | 5 files |
 | Phase 05 P01 | 26min | 2 tasks | 15 files |
+| Phase 05 P02 | 15min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -86,6 +87,7 @@ milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) a
 
 - [Phase 04]: 260917-wba: fixed 7 visual/UX regressions on the redesigned traceability page — --traced-fill recipe + framed coverage bars, honest tracing headline, site-pattern filter input with height parity, track-and-thumb deferred toggle, restored .history-tree top padding, quiet-toned unscheduled chips, hairline-separated rows with inverted hierarchy
 - [Phase 05]: 05-01: View is the page, Source is the escape hatch (D-01) — the client-side view registry (composeView/outlineEntriesOf/resolveView) is now ArtifactPage's primary render path, proven end to end on the discussion-log view.
+- [Phase 05]: 05-02: docs/design-language.md written down (UI-04) and enforced by test/web/class-vocabulary.test.ts (UI-05), a class-vocabulary allowlist derived from the doc's own table rows plus the D-09 view-local namespace, with a comparison-aware data-tone extractor so ternary comparison operands never get mistaken for tone values. — Precondition for Plans 05-03..05-06: every remaining per-type view manifest is authored against this vocabulary and gated by this test.
 
 ### Pending Todos
 
@@ -133,8 +135,8 @@ Two v1.0 close-time verification overrides recorded below; the two earlier rows 
 
 ## Session Continuity
 
-Last session: 2026-09-20T15:32:38.628Z
-Stopped at: Completed 05-01-PLAN.md
+Last session: 2026-09-20T15:48:55.679Z
+Stopped at: Completed 05-02-PLAN.md
 Resume file: None
 
 ## Operator Next Steps
