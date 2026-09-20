@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useLocation } from 'react-router';
 import type { PhaseIdentity } from '../../domain/model.ts';
 import type { ParseWarning } from '../../planning-repo/types.ts';
-import { EmptyState } from '../components/empty-state.tsx';
+import { ArtifactHeader, type ArtifactCrumb } from '../components/artifact-header.tsx';
 import {
   artifactWarningTone,
   type ArtifactWarningTone,
@@ -23,6 +23,7 @@ import {
 import type { RenderedDocument } from '../../rendering/markdown.ts';
 import { ReferencePreview, type ReferencePreviewState } from '../components/reference-preview.tsx';
 import { handleDocumentReferenceActivation } from './document-reference-activation.ts';
+import { dropLeadingTitle } from './document-title.ts';
 import { toMermaidColor } from './mermaid-theme.ts';
 import { scrollWhenSettled } from './scroll-settle.ts';
 export {
@@ -349,6 +350,30 @@ export function DocumentView({ document }: { document: RenderedDocument }): Reac
   );
 }
 
+/** The outline plus the rendered document. Its own component so the duplicate-title trim is
+ * memoised: DocumentView's effects mutate the rendered DOM, so the document it is handed must keep
+ * its identity from render to render rather than be rebuilt inline by the page. */
+function ArtifactReader({
+  title,
+  document,
+}: {
+  title: string;
+  document: RenderedDocument;
+}): React.JSX.Element {
+  const shown = useMemo(() => dropLeadingTitle(document, title), [document, title]);
+  return (
+    <div
+      className="document-reader-layout"
+      data-outline={outlineHeadings(shown).length > 0 ? 'true' : 'false'}
+    >
+      <DocumentOutline document={shown} />
+      <article className="document-canvas" aria-label={`${title} document`}>
+        <DocumentView document={shown} />
+      </article>
+    </div>
+  );
+}
+
 async function loadDocument(route: string): Promise<ArtifactDocumentResponse> {
   const response = await fetch(`/api/documents?route=${encodeURIComponent(route)}`);
   if (!response.ok) {
@@ -411,39 +436,38 @@ export function ArtifactPage(): React.JSX.Element {
     structuralWarningCount: artifact.warnings.length,
     renderWarningCount: document.warnings.length,
   });
+  const crumbs: ArtifactCrumb[] = [
+    { label: 'Dashboard', to: presentationRoutePatterns.dashboard },
+    { label: 'Roadmap', to: presentationRoutePatterns.roadmap },
+    ...(phaseIdentity
+      ? [
+          {
+            label: phaseIdentity.milestoneVersion ?? 'Current milestone',
+            to: buildMilestoneUrl(phaseIdentity.milestoneVersion),
+          },
+          { label: `Phase ${phaseIdentity.number}`, to: buildPhaseUrl(phaseIdentity) },
+        ]
+      : []),
+    { label: artifact.title },
+  ];
   return (
     <main className="artifact-page">
-      <nav className="artifact-breadcrumbs" aria-label="Breadcrumb">
-        <Link to={presentationRoutePatterns.dashboard}>Dashboard</Link>
-        <span aria-hidden="true">/</span>
-        <Link to={presentationRoutePatterns.roadmap}>Roadmap</Link>
-        {phaseIdentity ? (
-          <>
-            <span aria-hidden="true">/</span>
-            <Link to={buildMilestoneUrl(phaseIdentity.milestoneVersion)}>
-              {phaseIdentity.milestoneVersion ?? 'Current milestone'}
-            </Link>
-            <span aria-hidden="true">/</span>
-            <Link to={buildPhaseUrl(phaseIdentity)}>Phase {phaseIdentity.number}</Link>
-          </>
-        ) : null}
-        <span aria-hidden="true">/</span>
-        <span aria-current="page">{artifact.title}</span>
-      </nav>
-
-      <header className="artifact-heading">
-        <p className="eyebrow">{artifact.kind}</p>
-        {warningTone ? (
-          <span
-            className="status-chip"
-            data-tone={warningTone === 'unreadable' ? 'destructive' : 'warning'}
-          >
-            {warningTone === 'unreadable' ? 'Unreadable' : 'Warning'}
-          </span>
-        ) : null}
-        <h1>{artifact.title}</h1>
-        <p className="artifact-path">{artifact.path}</p>
-      </header>
+      <ArtifactHeader
+        crumbs={crumbs}
+        eyebrow={artifact.kind}
+        title={artifact.title}
+        path={artifact.path}
+        chip={
+          warningTone ? (
+            <span
+              className="status-chip"
+              data-tone={warningTone === 'unreadable' ? 'destructive' : 'warning'}
+            >
+              {warningTone === 'unreadable' ? 'Unreadable' : 'Warning'}
+            </span>
+          ) : null
+        }
+      />
 
       {panels.length > 0 ? (
         <details className="artifact-metadata">
@@ -456,9 +480,7 @@ export function ArtifactPage(): React.JSX.Element {
             ))}
           </div>
         </details>
-      ) : (
-        <EmptyState />
-      )}
+      ) : null}
 
       {warningTone ? (
         <details className="artifact-metadata artifact-warning-disclosure">
@@ -511,15 +533,7 @@ export function ArtifactPage(): React.JSX.Element {
         </details>
       ) : null}
 
-      <div
-        className="document-reader-layout"
-        data-outline={outlineHeadings(document).length > 0 ? 'true' : 'false'}
-      >
-        <DocumentOutline document={document} />
-        <article className="document-canvas" aria-label={`${artifact.title} document`}>
-          <DocumentView document={document} />
-        </article>
-      </div>
+      <ArtifactReader title={artifact.title} document={document} />
     </main>
   );
 }

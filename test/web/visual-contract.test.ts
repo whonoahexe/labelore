@@ -106,12 +106,14 @@ describe('revised visual contract (G-08, G-10, G-05, G-07, G-03, E9 long-text)',
     expect(longUnbrokenLine).toBe(true);
   });
 
-  it('gives the first table column a floor without fixing the layout', async () => {
+  it('gives the first table column a floor without fixing the layout or forbidding a wrap', async () => {
     const css = await source('src/web/styles/globals.css');
     const [block] = ruleBlocks(css, '.artifact-document table :is(th, td):first-child {');
     expect(block).toBeDefined();
     expect(block).toContain('min-width: 8ch;');
-    expect(block).toContain('white-space: nowrap;');
+    // A nowrap first column is sized to its longest cell, which starves every other column when
+    // that cell is prose (a Key Decisions row's title) — the columns collapsed to ~100px.
+    expect(block).not.toContain('white-space: nowrap;');
     expect(css).not.toMatch(/^\.artifact-document table \{[^}]*table-layout:\s*fixed/m);
   });
 
@@ -332,7 +334,7 @@ describe('outline-less artifact layout (G2-11)', () => {
 
   it('marks the reader layout with whether an outline is present', async () => {
     const tsx = await source('src/web/pages/artifact-page.tsx');
-    expect(tsx).toMatch(/data-outline=\{outlineHeadings\(document\)\.length > 0 \? 'true' : 'false'\}/);
+    expect(tsx).toMatch(/data-outline=\{outlineHeadings\(shown\)\.length > 0 \? 'true' : 'false'\}/);
   });
 });
 

@@ -110,13 +110,6 @@ describe('traceability redesign — summary strip (NS4-01, NS4-04, D-02, Task 1)
     expect(filters).not.toMatch(/Status mismatch \(\{/);
   });
 
-  it('leaves RequirementStatusChip and the status-chip tone treatment untouched — chips are explicitly out of scope', async () => {
-    const page = await source('src/web/pages/traceability-page.tsx');
-    expect(page).toContain('function RequirementStatusChip');
-    expect(page).toContain("data-tone={status ? 'complete' : 'quiet'}");
-    expect(page).toContain('data-tone="destructive"');
-  });
-
   it('token-guards the new summary-strip rules — no raw colour, length or type literal outside the token blocks', async () => {
     const css = await source('src/web/styles/globals.css');
     const [summaryBlock] = ruleBlocks(css, '.trace-summary {');
@@ -161,11 +154,10 @@ describe('traceability redesign — per-category bars and hierarchical rows (NS4
     expect((page.match(/<TraceabilityRowList/g) ?? []).length).toBeGreaterThanOrEqual(2);
   });
 
-  it('leaves the status chip component and its tone values unchanged from the pre-redesign source', async () => {
+  it('splits the covering-phase name and its status chip into separate components', async () => {
     const page = await source('src/web/pages/traceability-page.tsx');
-    expect(page).toContain('function RequirementStatusChip');
-    expect(page).toContain("data-tone={status ? 'complete' : 'quiet'}");
-    expect(page).toContain('function CoveringPhaseEntry');
+    expect(page).toContain('function CoveringPhaseName');
+    expect(page).toContain('function CoveringPhaseChip');
   });
 
   it('token-guards the new row-list rules — no raw colour, length or type literal outside the token blocks', async () => {
@@ -269,28 +261,18 @@ describe('traceability visual/UX regression fixes (quick-260917-wba, Task 1 — 
     expect(barBlock).toMatch(/padding:\s*var\(--space-0-5\)/);
   });
 
-  it('.trace-bar-complete references the traced-fill recipe token, never the bare primary token', async () => {
+  it('.trace-bar-complete references the bare primary token, not a diluted recipe', async () => {
     const css = await source('src/web/styles/globals.css');
     const [completeBlock] = ruleBlocks(css, '.trace-bar-complete {');
     expect(completeBlock).toBeDefined();
-    expect(completeBlock).toContain('var(--traced-fill)');
-    expect(completeBlock).not.toContain('var(--primary)');
+    expect(completeBlock).toContain('var(--primary)');
   });
 
-  it('declares --traced-fill once in the :root token block as a primary-derived recipe', async () => {
-    const css = await source('src/web/styles/globals.css');
-    expect(css).toMatch(/--traced-fill:\s*color-mix\(in oklch, var\(--primary\)/);
-  });
-
-  it('the hero label reads as complete-phase language with a note that preserves the tracing figure', async () => {
+  it('the hero label reads as complete-phase language', async () => {
     const page = await source('src/web/pages/traceability-page.tsx');
     expect(page).toContain(
       '<span className="trace-coverage-percent-label">Covered by complete phases</span>',
     );
-    expect(page).toContain('className="trace-coverage-percent-note"');
-    expect(page).toMatch(/\{view\.coverage\.tracedPercent\}% of requirements name a covering phase/);
-    expect(page).toMatch(/finished on disk/);
-    expect(page).toMatch(/Checked tile/);
   });
 
   it("the aggregate bar's aria-label sentence describes a covering phase rather than raw completion", async () => {
@@ -314,36 +296,23 @@ describe('traceability visual/UX regression fixes (quick-260917-wba, Task 1 — 
 });
 
 describe('traceability visual/UX regression fixes (quick-260918-qkd Task 2 — token vocabulary, tones, two distinguishable signals)', () => {
-  it('each bar-segment rule resolves to its own named token, never transparent or a bare primary/destructive token', async () => {
+  it('each bar-segment rule resolves to its own token, never transparent, and no two segments collide on the same token', async () => {
     const css = await source('src/web/styles/globals.css');
     const segments: Array<[string, string]> = [
-      ['.trace-bar-complete {', '--traced-fill'],
-      ['.trace-bar-in-flight {', '--in-flight-fill'],
-      ['.trace-bar-missing {', '--missing-fill'],
-      ['.trace-bar-unresolved {', '--unresolved-fill'],
-      ['.trace-bar-uncovered {', '--uncovered-fill'],
+      ['.trace-bar-complete {', '--primary'],
+      ['.trace-bar-in-flight {', '--ring'],
+      ['.trace-bar-missing {', '--destructive-border'],
+      ['.trace-bar-unresolved {', '--destructive'],
+      ['.trace-bar-uncovered {', '--muted-foreground'],
     ];
+    const seen = new Set<string>();
     for (const [selector, token] of segments) {
       const [block] = ruleBlocks(css, selector);
       expect(block, `${selector} block`).toBeDefined();
       expect(block).toContain(`var(${token})`);
       expect(block).not.toContain('transparent');
-      expect(block).not.toMatch(/background:\s*var\(--primary\)/);
-      expect(block).not.toMatch(/background:\s*var\(--destructive\)/);
-    }
-  });
-
-  it('declares all five recipe tokens once in the :root block, each derived from the existing palette', async () => {
-    const css = await source('src/web/styles/globals.css');
-    for (const token of [
-      '--traced-fill',
-      '--in-flight-fill',
-      '--missing-fill',
-      '--unresolved-fill',
-      '--uncovered-fill',
-    ]) {
-      const re = new RegExp(`${token}:\\s*color-mix\\(in oklch, var\\(--[\\w-]+\\)`);
-      expect(css, `${token} declared as a color-mix recipe`).toMatch(re);
+      expect(seen.has(token), `${token} reused by another segment`).toBe(false);
+      seen.add(token);
     }
   });
 
@@ -364,21 +333,13 @@ describe('traceability visual/UX regression fixes (quick-260918-qkd Task 2 — t
     expect(markerBlock).toContain('background: currentColor');
   });
 
-  it("the disk-status lookup in the page maps all four known statuses, falling back to 'quiet'", async () => {
-    const page = await source('src/web/pages/traceability-page.tsx');
-    expect(page).toMatch(/complete:\s*'complete'/);
-    expect(page).toMatch(/in_progress:\s*'in-flight'/);
-    expect(page).toMatch(/researched:\s*'in-flight'/);
-    expect(page).toMatch(/no_directory:\s*'missing'/);
-    expect(page).toContain("return 'quiet';");
-  });
-
-  it('the requirement chip renders Checked/Unchecked copy while the pinned tone ternary is byte-identical', async () => {
-    const page = await source('src/web/pages/traceability-page.tsx');
-    expect(page).toContain("data-tone={status ? 'complete' : 'quiet'}");
-    expect(page).toContain('{status ? \'Checked\' : \'Unchecked\'}');
-    expect(page).toContain('data-signal="requirement"');
-    expect(page).toContain('data-signal="phase"');
+  it("the disk-status lookup maps all four known statuses, falling back to 'quiet' (moved to traceability-rollup.ts with the rail)", async () => {
+    const rollup = await source('src/web/pages/traceability-rollup.ts');
+    expect(rollup).toMatch(/complete:\s*'complete'/);
+    expect(rollup).toMatch(/in_progress:\s*'in-flight'/);
+    expect(rollup).toMatch(/researched:\s*'in-flight'/);
+    expect(rollup).toMatch(/no_directory:\s*'missing'/);
+    expect(rollup).toContain("return 'quiet';");
   });
 
   it('documents --ring as a deliberate literal beside its .dark declaration, without changing its value', async () => {
@@ -478,19 +439,19 @@ describe('traceability visual/UX regression fixes (quick-260917-wba, Task 3 — 
 });
 
 describe('traceability visual/UX regression fixes (quick-260918-qkd Task 3 — row layout, real switch, honest filter, source-order guard)', () => {
-  it('.trace-row declares align-items: start and the content-bound column template', async () => {
+  it('.trace-row declares align-items: start and the fixed-rail column template (sketch 001, variant C)', async () => {
     const css = await source('src/web/styles/globals.css');
     const [rowBlock] = ruleBlocks(css, '.trace-row {');
     expect(rowBlock).toBeDefined();
     expect(rowBlock).toMatch(/align-items:\s*start/);
-    expect(rowBlock).toMatch(/grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, 20rem\)/);
+    expect(rowBlock).toMatch(/grid-template-columns:\s*9rem minmax\(0, 1fr\)/);
   });
 
-  it('.trace-row-primary declares align-content: start', async () => {
+  it('.trace-row-body declares align-content: start', async () => {
     const css = await source('src/web/styles/globals.css');
-    const [primaryBlock] = ruleBlocks(css, '.trace-row-primary {');
-    expect(primaryBlock).toBeDefined();
-    expect(primaryBlock).toMatch(/align-content:\s*start/);
+    const [bodyBlock] = ruleBlocks(css, '.trace-row-body {');
+    expect(bodyBlock).toBeDefined();
+    expect(bodyBlock).toMatch(/align-content:\s*start/);
   });
 
   it('.trace-row-micro-label no longer exists, and its accessible names survive as sr-only spans', async () => {
@@ -499,7 +460,6 @@ describe('traceability visual/UX regression fixes (quick-260918-qkd Task 3 — r
 
     const page = await source('src/web/pages/traceability-page.tsx');
     expect(page).not.toContain('trace-row-micro-label');
-    expect(page).toMatch(/<span className="sr-only">Requirement status<\/span>/);
     expect(page).toMatch(/<span className="sr-only">Covering phase<\/span>/);
     expect(page).not.toMatch(/<span className="trace-row-micro-label">Scheduling<\/span>/);
   });
@@ -557,13 +517,22 @@ describe('traceability visual/UX regression fixes (quick-260918-qkd Task 3 — r
     expect(traceRowBaseLine).toBeGreaterThan(blockedByLine);
 
     // .trace-row's own narrow-viewport collapse now lives after .trace-row + .trace-row, i.e.
-    // between the base rule and .trace-row-primary.
+    // between the base rule and .trace-row-rail.
     const lines = css.split('\n');
-    const rowPrimaryLine = lines.findIndex((line) => line.trim() === '.trace-row-primary {');
+    const rowRailLine = lines.findIndex((line) => line.trim() === '.trace-row-rail {');
     const collapseBetween = lines
-      .slice(traceRowBaseLine, rowPrimaryLine)
+      .slice(traceRowBaseLine, rowRailLine)
       .some((line) => line.trim() === '@media (max-width: 42rem) {');
     expect(collapseBetween).toBe(true);
+
+    // The rail's own stacking collapse lives after the rail's base rule, before its count rule.
+    const railLine = lines.findIndex((line) => line.trim() === '.trace-row-rail {');
+    const railCountLine = lines.findIndex((line) => line.trim() === '.trace-row-rail-count {');
+    expect(
+      lines
+        .slice(railLine, railCountLine)
+        .some((line) => line.trim() === '@media (max-width: 42rem) {'),
+    ).toBe(true);
 
     // .warning-fields' own narrow-viewport collapse now lives after its dd rule, before
     // .warning-fields-label.
@@ -573,5 +542,58 @@ describe('traceability visual/UX regression fixes (quick-260918-qkd Task 3 — r
       .slice(warningDdLine, warningLabelLine)
       .some((line) => line.trim() === '@media (max-width: 42rem) {');
     expect(warningCollapseBetween).toBe(true);
+  });
+});
+
+describe('traceability status rail (sketch 001, variant C)', () => {
+  it('renders one rail per row holding a single chip drawn from the rollup, not one chip per phase', async () => {
+    const page = await source('src/web/pages/traceability-page.tsx');
+    const start = page.indexOf('function TraceabilityRowList');
+    const end = page.indexOf('\n/** One tier');
+    const body = page.slice(start, end);
+    expect(body).toContain('className="trace-row-rail"');
+    expect(body).toContain('coveringRollup(row.coveringPhases)');
+    expect(body).toContain('<CoveringPhaseChip covering={rollup.worst} />');
+    // The chip is rendered exactly once inside the row; per-phase lines carry text, not chips.
+    expect((body.match(/<CoveringPhaseChip/g) ?? []).length).toBe(1);
+  });
+
+  it('renders each covering phase as a name/link line marked by its tone square, with no status word beside it', async () => {
+    const page = await source('src/web/pages/traceability-page.tsx');
+    expect(page).toContain('className="trace-covering-line"');
+    expect(page).toContain('data-tone={coveringPhaseSignal(covering)}');
+    expect(page).not.toContain('trace-covering-status');
+  });
+
+  it('drops the pre-rail row classes from the stylesheet and the page', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const page = await source('src/web/pages/traceability-page.tsx');
+    for (const gone of [
+      'trace-row-primary',
+      'trace-row-secondary',
+      'trace-row-phase',
+      'trace-covering-names',
+      'trace-covering-list',
+      'trace-covering-entry',
+      'trace-covering-status',
+    ]) {
+      expect(css, `${gone} in globals.css`).not.toContain(gone);
+      expect(page, `${gone} in the page`).not.toContain(gone);
+    }
+  });
+
+  it('token-guards the new rail rules — no raw colour literal in the rail, body or phase-line rules', async () => {
+    const css = await source('src/web/styles/globals.css');
+    for (const selector of [
+      '.trace-row-rail {',
+      '.trace-row-body {',
+      '.trace-covering-line {',
+      '.trace-covering-line::before {',
+    ]) {
+      const [block] = ruleBlocks(css, selector);
+      expect(block, `${selector} block`).toBeDefined();
+      expect(block).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+      expect(block).not.toMatch(/\brgb\(/);
+    }
   });
 });

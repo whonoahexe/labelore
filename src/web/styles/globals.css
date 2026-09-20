@@ -105,25 +105,20 @@
   --destructive-tint: color-mix(in oklch, var(--destructive) 8%, transparent);
   --destructive-border: color-mix(in oklch, var(--destructive) 55%, var(--border));
   --primary-tint: color-mix(in oklch, var(--primary) 9%, transparent);
-  /* quick-260918-qkd Task 2: the five-bucket bar/chip tone vocabulary (A1-A4). Each recipe mixes
-     toward --foreground or --muted-foreground rather than --muted, so one string works correctly
-     in both themes — darkening in light, lightening in dark — instead of the old --traced-fill
-     shape (40% into --muted), which measured as a muddy maroon in dark and a washed pastel in
-     light. --traced-fill now backs .trace-bar-complete: full commitment, the accent read at high
-     strength against --foreground. */
-  --traced-fill: color-mix(in oklch, var(--primary) 80%, var(--foreground));
-  /* The accent, drained of commitment — backs .trace-bar-in-flight and the in-flight chip tone. */
+  /* quick-260918-qkd Task 2: the five-bucket bar/chip tone vocabulary (A1-A4). --in-flight-fill
+     and --missing-fill stay named recipes because the matching status chips (below) also read
+     them; .trace-bar-complete/-unresolved/-uncovered reference their base tokens directly — see
+     the .trace-bar-* rules — since a diluted color-mix() (whether toward --muted or toward
+     --foreground/--ring) consistently read as washed out or muddy at every ratio tried; the bar
+     only needed to be legible, not theme-blended. */
+  /* The accent, drained of commitment — backs .trace-bar-in-flight (as --ring, undiluted; see the
+     .trace-bar-in-flight rule) and the in-flight chip tone. */
   --in-flight-fill: color-mix(in oklch, var(--primary) 38%, var(--muted-foreground));
-  /* A subdued brick that reads as a gap rather than as damage — backs .trace-bar-missing and the
-     missing chip tone (A4: a phase with no directory on disk is not the same as active work). */
+  /* A subdued brick that reads as a gap rather than as damage — backs the missing chip tone (A4:
+     a phase with no directory on disk is not the same as active work). .trace-bar-missing uses
+     --destructive-border directly instead (see that rule), for the same de-washing reason as
+     complete/unresolved/uncovered above. */
   --missing-fill: color-mix(in oklch, var(--destructive) 35%, var(--muted-foreground));
-  /* Full alarm, reserved for a covering reference that resolves to no phase at all — backs
-     .trace-bar-unresolved. */
-  --unresolved-fill: color-mix(in oklch, var(--destructive) 75%, var(--foreground));
-  /* A neutral tone visibly distinct from the --muted track in both themes — backs
-     .trace-bar-uncovered, replacing the old `transparent` fill that made an uncovered share
-     indistinguishable from unfilled track (A4). */
-  --uncovered-fill: color-mix(in oklch, var(--muted-foreground) 28%, var(--muted));
   --shadow-popover: 0 1rem 2.5rem color-mix(in oklab, var(--foreground) 18%, transparent);
   --scrollbar-thumb: color-mix(in oklch, var(--muted-foreground) 30%, transparent);
   --scrollbar-thumb-strong: color-mix(in oklch, var(--muted-foreground) 55%, transparent);
@@ -1745,7 +1740,7 @@ summary.tree-node-row:focus-visible {
 }
 
 .history-section {
-  margin-top: var(--space-5);
+  margin-top: var(--space-8);
   background: color-mix(in oklch, var(--muted) 55%, var(--background));
 }
 
@@ -2294,7 +2289,6 @@ pre {
 
 .artifact-document table :is(th, td):first-child {
   min-width: 8ch;
-  white-space: nowrap;
 }
 
 .artifact-document pre {
@@ -2754,6 +2748,14 @@ pre {
 .artifact-path {
   margin: 0;
   font-family: var(--font-heading);
+}
+
+.artifact-lead {
+  max-width: 62ch;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-fluid-1);
+  line-height: var(--lh-relaxed);
 }
 
 .artifact-metadata {
@@ -3605,7 +3607,7 @@ pre {
   display: grid;
   gap: var(--space-6);
   margin-bottom: var(--space-8);
-  padding: var(--space-6);
+  padding: var(--space-fluid-6);
 }
 
 .trace-summary-headline {
@@ -3636,19 +3638,9 @@ pre {
   text-transform: uppercase;
 }
 
-/* quick-260917-wba Task 1: denies the completion reading the bare percentage otherwise invites —
-   the figure counts requirements with a covering phase, not work completed. */
-.trace-coverage-percent-note {
-  max-width: 20rem;
-  margin: 0;
-  color: var(--muted-foreground);
-  font-size: var(--fs-2);
-}
-
-/* quick-260918-qkd Task 3 (E1, E2): styled like .trace-coverage-percent-note above — a quiet
-   disclosure that the deferred tiers below are unfiltered while the switch is off and a filter is
-   actually engaged, so the page never contradicts the rows it renders beneath the empty-scope
-   sentence. */
+/* quick-260918-qkd Task 3 (E1, E2): a quiet disclosure that the deferred tiers below are
+   unfiltered while the switch is off and a filter is actually engaged, so the page never
+   contradicts the rows it renders beneath the empty-scope sentence. */
 .trace-deferred-filter-note {
   margin: var(--space-1) 0 0;
   color: var(--muted-foreground);
@@ -3675,23 +3667,28 @@ pre {
 }
 
 .trace-bar-complete {
-  background: var(--traced-fill);
+  background: var(--primary);
 }
 
+/* --ring, not --in-flight-fill: same family as complete but lighter, so it stays a step below it
+   without a wash-inducing color-mix() dilution. */
 .trace-bar-in-flight {
-  background: var(--in-flight-fill);
+  background: var(--ring);
 }
 
+/* --destructive-border, not --missing-fill: the destructive family's own lighter step, mirroring
+   --ring's role for the primary family, and one --destructive already-tinted token instead of a
+   custom dilution. */
 .trace-bar-missing {
-  background: var(--missing-fill);
+  background: var(--destructive-border);
 }
 
 .trace-bar-unresolved {
-  background: var(--unresolved-fill);
+  background: var(--destructive);
 }
 
 .trace-bar-uncovered {
-  background: var(--uncovered-fill);
+  background: var(--muted-foreground);
 }
 
 .trace-stat-tiles {
@@ -3727,7 +3724,6 @@ pre {
   flex-wrap: wrap;
   gap: var(--space-4);
   align-items: center;
-  margin-bottom: var(--space-6);
 }
 
 /* quick-260917-wba Task 2: matches the site's own control pattern (the same border+background
@@ -3894,14 +3890,14 @@ pre {
   list-style: none;
 }
 
-/* quick-260918-qkd Task 3 (D2, D3, D5): the secondary column's content measures 150-290px while it
-   was allotted 468px at 1440 — bound to its content width instead, so ~400px returns to the
-   requirement text; align-items: start gives the two columns a shared top baseline. */
+/* Sketch 001 (variant C, status rail): a fixed rail column holds ONE rollup chip so status is the
+   first thing the eye lands on down the list, and the body column holds the ID, the text and one
+   quiet line per covering phase. align-items: start gives the two columns a shared top edge. */
 .trace-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 20rem);
+  grid-template-columns: 9rem minmax(0, 1fr);
   align-items: start;
-  gap: var(--space-4);
+  gap: var(--space-5);
   background: var(--card);
   padding: var(--space-3-5) var(--space-4);
 }
@@ -3918,21 +3914,46 @@ pre {
    media block far above, where it was defeated by this later, equal-specificity base .trace-row
    rule — moved here, immediately after the rule it must beat, so source order can never again
    silently re-defeat it. See test/web/css-source-order.test.ts, which guards this bug class
-   generally. */
+   generally. The rail stacks above the body; .trace-row-rail's own collapse sits right after its
+   base rule below for the same reason. */
 @media (max-width: 42rem) {
   .trace-row {
     grid-template-columns: 1fr;
+    row-gap: var(--space-2);
   }
 }
 
+.trace-row-rail {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-1-5);
+  justify-items: start;
+}
+
+@media (max-width: 42rem) {
+  .trace-row-rail {
+    grid-auto-flow: column;
+    align-items: center;
+    justify-content: start;
+    column-gap: var(--space-2);
+  }
+}
+
+.trace-row-rail-count {
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
 /* quick-260918-qkd Task 3 (D2): align-content: start removes the dead vertical gap that used to
-   stretch between the ID label and the text it labels when the secondary column set a taller row
-   height. */
-.trace-row-primary {
+   stretch between the ID label and the text it labels when the rail set a taller row height. */
+.trace-row-body {
   display: grid;
   min-width: 0;
   align-content: start;
-  gap: var(--space-1);
+  gap: var(--space-1-5);
 }
 
 /* quick-260917-wba Task 3: demoted to the shared micro-label treatment so the requirement text
@@ -3952,34 +3973,55 @@ pre {
   line-height: var(--fs-5--lh);
 }
 
-.trace-row-secondary {
+/* One quiet line per covering phase: a squared tone marker (the same square the phase chip's
+   ::before draws), the phase name/link, and its own status as a micro word — the rail chip is only
+   the worst of these, so each phase's status must stay readable here as text, not colour alone. */
+.trace-covering-lines {
   display: grid;
-  min-width: 0;
-  gap: var(--space-3);
-  align-content: start;
-  font-size: var(--fs-3);
-}
-
-.trace-marker-stack {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1-5);
-  align-items: center;
-}
-
-.trace-covering-list {
-  display: grid;
-  gap: var(--space-2);
-  margin: 0;
+  gap: var(--space-0-5);
+  margin: var(--space-1) 0 0;
   padding: 0;
   list-style: none;
+  font-size: var(--fs-4);
+  line-height: var(--fs-4--lh);
 }
 
-.trace-covering-entry {
+.trace-covering-line {
+  --trace-tone: var(--primary);
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
-  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  align-items: baseline;
+  overflow-wrap: anywhere;
+}
+
+.trace-covering-line::before {
+  flex: none;
+  align-self: center;
+  width: var(--space-1-5);
+  height: var(--space-1-5);
+  background: var(--trace-tone);
+  content: '';
+}
+
+.trace-covering-line[data-tone='in-flight'] {
+  --trace-tone: var(--in-flight-fill);
+}
+
+.trace-covering-line[data-tone='missing'] {
+  --trace-tone: var(--missing-fill);
+}
+
+.trace-covering-line[data-tone='quiet'] {
+  --trace-tone: var(--muted-foreground);
+}
+
+.trace-covering-line[data-tone='destructive'] {
+  --trace-tone: var(--destructive);
+}
+
+.trace-row-flags {
+  margin-top: var(--space-1);
 }
 
 .trace-dangling-text {

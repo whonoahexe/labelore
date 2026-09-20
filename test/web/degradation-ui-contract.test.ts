@@ -104,7 +104,7 @@ describe('degradation UI contract (D-10, D-11, D-12, D-13)', () => {
     const tree = await source('src/web/components/tree-navigator.tsx');
 
     const disclosureStart = page.indexOf('artifact-warning-disclosure');
-    const disclosureEnd = page.indexOf('document-reader-layout');
+    const disclosureEnd = page.indexOf('<ArtifactReader');
     expect(disclosureStart).toBeGreaterThan(-1);
     expect(disclosureEnd).toBeGreaterThan(disclosureStart);
     const disclosureSource = page.slice(disclosureStart, disclosureEnd);

@@ -1,8 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useLocation } from 'react-router';
 import { buildCoverageMatrix, type CoverageStatement } from '../../presentation/coverage.ts';
-import { presentationRoutePatterns } from '../../presentation/routes.ts';
+import {
+  buildMilestoneUrl,
+  buildPhaseUrl,
+  parsePresentationUrl,
+  presentationRoutePatterns,
+} from '../../presentation/routes.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
+import { ArtifactHeader, type ArtifactCrumb } from '../components/artifact-header.tsx';
 import { DocumentView } from './artifact-page.tsx';
 
 interface DocumentResponse {
@@ -18,6 +24,10 @@ interface DocumentResponse {
 interface PlanPairResponse {
   plan: DocumentResponse;
   summary: DocumentResponse | null;
+  /** From the presentation snapshot: the id ("01-01") the page is titled by, and the ROADMAP's own
+   * one-line description of the plan when it has one. A plan file carries no title of its own — its
+   * derived title is the file path — so the path must not be what the page is named. */
+  meta: { id: string; description: string | null };
 }
 
 function records(value: unknown): Record<string, unknown>[] {
@@ -76,15 +86,16 @@ async function loadPair(route: string): Promise<PlanPairResponse> {
   const planDocument = await fetchJson<DocumentResponse>(
     `/api/documents?route=${encodeURIComponent(route)}`,
   );
-  if (!plan.summary) return { plan: planDocument, summary: null };
+  const meta = { id: plan.id, description: plan.description };
+  if (!plan.summary) return { plan: planDocument, summary: null, meta };
   const summaryRoute = presentation.artifacts.find(
     (artifact) => artifact.path === plan.summary?.path,
   )?.key;
-  if (!summaryRoute) return { plan: planDocument, summary: null };
+  if (!summaryRoute) return { plan: planDocument, summary: null, meta };
   const summaryDocument = await fetchJson<DocumentResponse>(
     `/api/documents?route=${encodeURIComponent(summaryRoute)}`,
   );
-  return { plan: planDocument, summary: summaryDocument };
+  return { plan: planDocument, summary: summaryDocument, meta };
 }
 
 export function PlanPairPage(): React.JSX.Element {
@@ -124,24 +135,40 @@ export function PlanPairPage(): React.JSX.Element {
   const matrix = pair.summary
     ? buildCoverageMatrix(truthRows(pair.plan), coverageRows(pair.summary))
     : null;
+  const parsed = parsePresentationUrl(location.pathname);
+  const planRoute = parsed.ok && parsed.route.kind === 'plan' ? parsed.route : null;
+  const crumbs: ArtifactCrumb[] = [
+    { label: 'Dashboard', to: presentationRoutePatterns.dashboard },
+    { label: 'Roadmap', to: presentationRoutePatterns.roadmap },
+    ...(planRoute
+      ? [
+          {
+            label: planRoute.milestoneVersion ?? 'Current milestone',
+            to: buildMilestoneUrl(planRoute.milestoneVersion),
+          },
+          {
+            label: `Phase ${planRoute.phaseIdentity.number}`,
+            to: buildPhaseUrl(planRoute.phaseIdentity),
+          },
+        ]
+      : []),
+    { label: `Plan ${pair.meta.id}` },
+  ];
   return (
     <main className="artifact-page plan-pair-page">
-      <nav className="artifact-breadcrumbs" aria-label="Breadcrumb">
-        <Link to={presentationRoutePatterns.dashboard}>Dashboard</Link>
-        <span>/</span>
-        <Link to={presentationRoutePatterns.roadmap}>Roadmap</Link>
-        <span>/</span>
-        <span aria-current="page">{pair.plan.artifact.title}</span>
-      </nav>
-      <header className="artifact-heading">
-        <p className="eyebrow">Plan and outcome</p>
-        <h1>{pair.plan.artifact.title}</h1>
+      <ArtifactHeader
+        crumbs={crumbs}
+        eyebrow="Plan and outcome"
+        title={`Plan ${pair.meta.id}`}
+        lead={pair.meta.description}
+        path={pair.plan.artifact.path}
+      >
         <nav className="plan-pair-jumps" aria-label="Plan review sections">
           {matrix ? <a href="#coverage-matrix">Coverage matrix</a> : null}
           <a href="#plan-document">Plan</a>
           {pair.summary ? <a href="#summary-document">Summary</a> : null}
         </nav>
-      </header>
+      </ArtifactHeader>
       {!pair.summary ? (
         <aside className="notice plan-open-notice" role="status">
           <strong>Outcome not recorded yet</strong>
