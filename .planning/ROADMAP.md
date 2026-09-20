@@ -57,7 +57,7 @@ UI-05, UI-06
    the reader is; a `D-XX` or `WR-XX` mention in prose is clickable and lands on its source.
    *(READ-07, BACK-02)*
 
-**Plans**: 3/6 plans executed
+**Plans**: 4/6 plans executed
 
 Plans:
 **Wave 1**
@@ -68,7 +68,7 @@ Plans:
 
 - [x] 05-02-PLAN.md — Design language written down (`docs/design-language.md`) and enforced by the class-vocabulary test (UI-04, UI-05)
 - [x] 05-03-PLAN.md — `D-XX` / `WR-XX` mentions: warning scheme, decision/warning registries, phase-local-then-corpus resolution (BACK-02)
-- [ ] 05-04-PLAN.md — Outline reading-position tracking and narrow-width sticky disclosure (READ-07)
+- [x] 05-04-PLAN.md — Outline reading-position tracking and narrow-width sticky disclosure (READ-07)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -129,7 +129,7 @@ small independent entry.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 5. Per-Type Document Views | 3/6 | In Progress|  |
+| 5. Per-Type Document Views | 4/6 | In Progress|  |
 
 *Phases 1-4 (v1.0) are complete and archived — see [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md).*
 
