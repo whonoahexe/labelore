@@ -433,6 +433,12 @@
                 "mtimeMs": 0,
                 "warnings": [],
                 "structured": {
+                  "decisions": [
+                    {
+                      "id": "D-01",
+                      "text": "The slice is a single tracer plan, not split into multiple plans — there is nothing to split yet at this fixture's stage."
+                    }
+                  ],
                   "sections": {
                     "domain": "## Phase Boundary\n\nDeliver the first narrow vertical slice of the fixture project end to end. This phase produces no\nhistory beyond its own plan — it exists to prove the parser survives a project with structure\n(a roadmap, one phase) but nothing executed yet.",
                     "decisions": "## Implementation Decisions\n\n### Scope\n- **D-01:** The slice is a single tracer plan, not split into multiple plans — there is nothing to\n  split yet at this fixture's stage.\n\n### Claude's Discretion\nEverything below the phase boundary is open — this is a fixture, not a real implementation target.",
@@ -638,6 +644,12 @@
             "mtimeMs": 0,
             "warnings": [],
             "structured": {
+              "decisions": [
+                {
+                  "id": "D-01",
+                  "text": "The slice is a single tracer plan, not split into multiple plans — there is nothing to split yet at this fixture's stage."
+                }
+              ],
               "sections": {
                 "domain": "## Phase Boundary\n\nDeliver the first narrow vertical slice of the fixture project end to end. This phase produces no\nhistory beyond its own plan — it exists to prove the parser survives a project with structure\n(a roadmap, one phase) but nothing executed yet.",
                 "decisions": "## Implementation Decisions\n\n### Scope\n- **D-01:** The slice is a single tracer plan, not split into multiple plans — there is nothing to\n  split yet at this fixture's stage.\n\n### Claude's Discretion\nEverything below the phase boundary is open — this is a fixture, not a real implementation target.",
@@ -834,6 +846,12 @@
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
+                    "decisions": [
+                      {
+                        "id": "D-01",
+                        "text": "The slice is a single tracer plan, not split into multiple plans — there is nothing to split yet at this fixture's stage."
+                      }
+                    ],
                     "sections": {
                       "domain": "## Phase Boundary\n\nDeliver the first narrow vertical slice of the fixture project end to end. This phase produces no\nhistory beyond its own plan — it exists to prove the parser survives a project with structure\n(a roadmap, one phase) but nothing executed yet.",
                       "decisions": "## Implementation Decisions\n\n### Scope\n- **D-01:** The slice is a single tracer plan, not split into multiple plans — there is nothing to\n  split yet at this fixture's stage.\n\n### Claude's Discretion\nEverything below the phase boundary is open — this is a fixture, not a real implementation target.",
@@ -1030,6 +1048,12 @@
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
+                    "decisions": [
+                      {
+                        "id": "D-01",
+                        "text": "The slice is a single tracer plan, not split into multiple plans — there is nothing to split yet at this fixture's stage."
+                      }
+                    ],
                     "sections": {
                       "domain": "## Phase Boundary\n\nDeliver the first narrow vertical slice of the fixture project end to end. This phase produces no\nhistory beyond its own plan — it exists to prove the parser survives a project with structure\n(a roadmap, one phase) but nothing executed yet.",
                       "decisions": "## Implementation Decisions\n\n### Scope\n- **D-01:** The slice is a single tracer plan, not split into multiple plans — there is nothing to\n  split yet at this fixture's stage.\n\n### Claude's Discretion\nEverything below the phase boundary is open — this is a fixture, not a real implementation target.",
@@ -1243,6 +1267,12 @@
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
+                    "decisions": [
+                      {
+                        "id": "D-01",
+                        "text": "The slice is a single tracer plan, not split into multiple plans — there is nothing to split yet at this fixture's stage."
+                      }
+                    ],
                     "sections": {
                       "domain": "## Phase Boundary\n\nDeliver the first narrow vertical slice of the fixture project end to end. This phase produces no\nhistory beyond its own plan — it exists to prove the parser survives a project with structure\n(a roadmap, one phase) but nothing executed yet.",
                       "decisions": "## Implementation Decisions\n\n### Scope\n- **D-01:** The slice is a single tracer plan, not split into multiple plans — there is nothing to\n  split yet at this fixture's stage.\n\n### Claude's Discretion\nEverything below the phase boundary is open — this is a fixture, not a real implementation target.",

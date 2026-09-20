@@ -377,6 +377,20 @@ describe('ContextHandler', () => {
     ]);
     expect(sections.domain).toBe('Boundary text');
   });
+
+  it('populates structured.decisions from a two-bullet <decisions> tag body', () => {
+    const content = `# Phase 1 - Context\n\n<domain>\nBoundary text\n</domain>\n<decisions>\n- **D-01:** First decision text.\n- **D-02:** Second decision text.\n</decisions>\n<specifics>\nNone\n</specifics>\n<canonical_refs>\nrefs\n</canonical_refs>\n<code_context>\ncode\n</code_context>\n<deferred>\nnothing\n</deferred>\n`;
+    const contextRef = ref('.planning/phases/01-x/01-CONTEXT.md', {
+      location: 'phase',
+      kind: 'context',
+    });
+    const result = ContextHandler.parse(raw(contextRef.path, content), contextRef);
+    const decisions = result.structured?.decisions as { id: string; text: string }[];
+    expect(decisions).toEqual([
+      { id: 'D-01', text: 'First decision text.' },
+      { id: 'D-02', text: 'Second decision text.' },
+    ]);
+  });
 });
 
 describe('JsonConfigHandler', () => {
