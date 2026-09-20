@@ -2714,12 +2714,6 @@ pre {
   background: color-mix(in oklch, var(--card) 72%, var(--muted));
 }
 
-.artifact-page {
-  width: min(88rem, 100%);
-  margin: 0 auto;
-  padding: var(--space-fluid-11) var(--space-fluid-8) var(--space-28);
-}
-
 .artifact-breadcrumbs {
   padding-bottom: var(--space-3-5);
   border-bottom: 1px solid var(--border);
@@ -3149,10 +3143,6 @@ pre {
 }
 
 @media (max-width: 42rem) {
-  .artifact-page {
-    padding-top: var(--space-6);
-  }
-
   .document-canvas {
     padding: var(--space-4);
   }

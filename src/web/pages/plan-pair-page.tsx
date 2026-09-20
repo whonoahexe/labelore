@@ -155,7 +155,7 @@ export function PlanPairPage(): React.JSX.Element {
     { label: `Plan ${pair.meta.id}` },
   ];
   return (
-    <main className="artifact-page plan-pair-page">
+    <main className="artifact-page plan-pair-page page-stack">
       <ArtifactHeader
         crumbs={crumbs}
         eyebrow="Plan and outcome"
