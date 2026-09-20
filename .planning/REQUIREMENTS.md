@@ -23,7 +23,7 @@ Requirement IDs continue from v1.0 (archived at `milestones/v1.0-REQUIREMENTS.md
       what is expected, and why a person is required
 - [x] **VIEW-04**: A plan shows its task structure, including each section's position and whether it
       gates
-- [ ] **VIEW-05**: All 16 known artifact types have a registered view, not a subset
+- [x] **VIEW-05**: All 16 known artifact types have a registered view, not a subset
 - [x] **VIEW-06**: An artifact type with no registered view still renders structurally, inferred from
       its shape, and is marked unrecognized rather than presented as understood
 
@@ -39,7 +39,7 @@ Requirement IDs continue from v1.0 (archived at `milestones/v1.0-REQUIREMENTS.md
 - [x] **UI-04**: The design language shared by the dashboard, roadmap, traceability and search pages
       is written down as a stated convention
 - [x] **UI-05**: That convention is enforced by a test, so a new view cannot silently drift from it
-- [ ] **UI-06**: Every document view uses that language — moving between a document and the dashboard
+- [x] **UI-06**: Every document view uses that language — moving between a document and the dashboard
       reads as one application
 
 ## Implementation Context
@@ -124,13 +124,13 @@ maps to Phase 5; the wave column records where it is expected to land inside tha
 | VIEW-02 | Phase 5 | 3 — Proof (DISCUSSION-LOG end to end) | Complete |
 | VIEW-03 | Phase 5 | 4 — Coverage (view only; no handler work) | Complete |
 | VIEW-04 | Phase 5 | 4 — Coverage | Complete |
-| VIEW-05 | Phase 5 | 4 — Coverage | Pending |
+| VIEW-05 | Phase 5 | 4 — Coverage | Complete |
 | VIEW-06 | Phase 5 | 2 — Extraction (section projection + speculative fallback) | Complete |
 | READ-07 | Phase 5 | Any — independent of the registry work | Complete |
 | BACK-02 | Phase 5 | Any — independent of the registry work | Complete |
 | UI-04 | Phase 5 | 1 — Foundation (convention written down) | Complete |
 | UI-05 | Phase 5 | 1 — Foundation (convention enforced by test) | Complete |
-| UI-06 | Phase 5 | Conformance condition across waves 1-4 | Pending |
+| UI-06 | Phase 5 | Conformance condition across waves 1-4 | Complete |
 
 **Coverage:**
 
