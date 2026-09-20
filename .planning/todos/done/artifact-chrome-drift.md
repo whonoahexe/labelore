@@ -2,7 +2,16 @@
 title: Fix document-page chrome drift and the loading→loaded container reflow
 date: 2026-09-20
 priority: medium
+status: done
+completed: 2026-09-20
+completed_by: quick task 260920-mzr (commits cc92a07, 4934254, 84c402d)
 ---
+
+> **Closed 2026-09-20.** Execution found a fourth drift axis this note missed: a
+> `@media (max-width: 42rem)` rule set `.artifact-page { padding-top: var(--space-6) }`, which
+> would have kept defeating `.page-stack`'s `--space-10` at narrow widths — the drift would have
+> moved rather than closed. Fixed in the same change. See
+> `.planning/quick/260920-mzr-fix-document-page-chrome-drift-and-the-l/`.
 
 # Document-page chrome drift
 

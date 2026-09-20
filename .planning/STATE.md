@@ -2,10 +2,10 @@
 gsd_state_version: "1.0"
 milestone: v1.0
 status: Awaiting next milestone
-stopped_at: "Completed quick task 260917-wba: Fix visual/UX regressions on the redesigned traceability page"
-last_updated: "2026-09-18T13:20:29.344Z"
-last_activity: 2026-09-18
-last_activity_desc: "Completed quick task 260917-wba: Fix visual/UX regressions on the redesigned traceability page"
+stopped_at: "Completed quick task 260920-mzr: Fix document-page chrome drift and the loading-to-loaded container reflow on ArtifactPage and PlanPairPage"
+last_updated: "2026-09-20T11:03:19.706Z"
+last_activity: 2026-09-20
+last_activity_desc: "Completed quick task 260920-mzr: Fix document-page chrome drift and the loading-to-loaded container reflow on ArtifactPage and PlanPairPage"
 state_head: 33ca7513c8fcf46370c04694ba05f87342b19f67
 current_phase: 04
 progress:
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-10)
 Phase: Milestone v1.0 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-09-18 - Completed quick task 260918-qkd: Traceability page honest coverage, colour vocabulary, real switch, and row layout
+Last activity: 2026-09-20 - Completed quick task 260920-mzr: Fix document-page chrome drift and the loading-to-loaded container reflow on ArtifactPage and PlanPairPage
 
 ## Performance Metrics
 
@@ -112,6 +112,7 @@ None.
 | 260917-ns4 | Redesign the traceability page's UI/UX — coverage summary strip, per-category proportion bars, and deferred-tier grouping under the reused history treatment | 2026-09-17 | a06e2b8 | [260917-ns4-redesign-the-traceability-page-s-ui-ux-c](./quick/260917-ns4-redesign-the-traceability-page-s-ui-ux-c/) |
 | 260917-wba | Fix visual/UX regressions on the redesigned traceability page | 2026-09-18 | 33ca751 | [260917-wba-fix-visual-ux-regressions-on-the-redesig](./quick/260917-wba-fix-visual-ux-regressions-on-the-redesig/) |
 | 260918-qkd | Traceability page: honest phase-sourced coverage (no more 100% while phases are in flight), named colour tone vocabulary, real deferred-tier switch, and rebuilt trace-row layout | 2026-09-18 | 24d9637 | [260918-qkd-fix-traceability-page-inconsistent-color](./quick/260918-qkd-fix-traceability-page-inconsistent-color/) |
+| 260920-mzr | Fix document-page chrome drift and the loading-to-loaded container reflow on ArtifactPage and PlanPairPage | 2026-09-20 | 84c402d | [260920-mzr-fix-document-page-chrome-drift-and-the-l](./quick/260920-mzr-fix-document-page-chrome-drift-and-the-l/) |
 
 ## Deferred Items
 
