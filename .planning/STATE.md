@@ -2,15 +2,18 @@
 gsd_state_version: "1.0"
 milestone: v1.1
 milestone_name: Legible Documents
+current_phase: 5
 status: planning
-last_updated: "2026-09-20T12:14:57.000Z"
+stopped_at: Phase 5 context gathered
+last_updated: "2026-09-20T13:12:28.992Z"
 last_activity: 2026-09-20
+last_activity_desc: "Roadmap created for v1.1: one phase, 11/11 requirements mapped"
+state_head: 1c4b879fcd2429408bc75293b51b936f7ed02042
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
-  percent: 0
 ---
 
 # Project State
@@ -127,9 +130,9 @@ Two v1.0 close-time verification overrides recorded below; the two earlier rows 
 
 ## Session Continuity
 
-Last session: 2026-09-20T12:14:57.000Z
-Stopped at: Created the v1.1 roadmap — Phase 5 Per-Type Document Views, single phase, 4 suggested waves
-Resume file: None
+Last session: 2026-09-20T13:12:28.979Z
+Stopped at: Phase 5 context gathered
+Resume file: .planning/phases/05-per-type-document-views/05-CONTEXT.md
 
 ## Operator Next Steps
 
