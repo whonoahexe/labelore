@@ -1154,8 +1154,8 @@
                 "location": "archived-phase",
                 "frontmatter": {},
                 "title": "Phase 1: Bootstrap - Context",
-                "bodyLength": 1114,
-                "bodyHash": "6c8f9297302e32973e1d60f85c13a82b458a9f562149357c842060730ec4f426",
+                "bodyLength": 968,
+                "bodyHash": "ac982ed8249b6d7b880044040cc36a2a9f68b87d0d5a13536ce88f20c7f07f4e",
                 "mtimeMs": 0,
                 "warnings": [],
                 "structured": {
@@ -1491,8 +1491,8 @@
                 "location": "archived-phase",
                 "frontmatter": {},
                 "title": "Phase 1: Legacy Ingest - Context",
-                "bodyLength": 1167,
-                "bodyHash": "565e432eba483105dc293b64c7ef399bf021747f5f470d2cfab6016bf5ed4a08",
+                "bodyLength": 1021,
+                "bodyHash": "0402b11f725d1af691372dadaa737e8aa7a81e9f8052b0cc4fcc2fd5ac2908b8",
                 "mtimeMs": 0,
                 "warnings": [],
                 "structured": {
@@ -2889,8 +2889,8 @@
                 "location": "phase",
                 "frontmatter": {},
                 "title": "Phase 1: Identity Slice - Context",
-                "bodyLength": 2096,
-                "bodyHash": "dcd7a117f0e8857446bacd1816a652aacddac87da7088276f439e8ebca4e0a98",
+                "bodyLength": 1950,
+                "bodyHash": "59cacbdcd9182913dc462bf41649abdafacd7bda6bd6d6a255a6f1ad107d2eec",
                 "mtimeMs": 0,
                 "warnings": [],
                 "structured": {
@@ -3216,8 +3216,8 @@
                 "location": "phase",
                 "frontmatter": {},
                 "title": "Phase 2: Transport Layer - Context",
-                "bodyLength": 1626,
-                "bodyHash": "60f6f4c0f59d56c00cb2f4a81cc4c477b6967c43a311095ff2f63ac323a9c530",
+                "bodyLength": 1480,
+                "bodyHash": "ff61180897899b55d9ec0f8766f7e6fd1b72b3b673886c4507c3ad9d03bd9729",
                 "mtimeMs": 0,
                 "warnings": [],
                 "structured": {
@@ -3544,8 +3544,8 @@
             "location": "archived-phase",
             "frontmatter": {},
             "title": "Phase 1: Bootstrap - Context",
-            "bodyLength": 1114,
-            "bodyHash": "6c8f9297302e32973e1d60f85c13a82b458a9f562149357c842060730ec4f426",
+            "bodyLength": 968,
+            "bodyHash": "ac982ed8249b6d7b880044040cc36a2a9f68b87d0d5a13536ce88f20c7f07f4e",
             "mtimeMs": 0,
             "warnings": [],
             "structured": {
@@ -3874,8 +3874,8 @@
             "location": "archived-phase",
             "frontmatter": {},
             "title": "Phase 1: Legacy Ingest - Context",
-            "bodyLength": 1167,
-            "bodyHash": "565e432eba483105dc293b64c7ef399bf021747f5f470d2cfab6016bf5ed4a08",
+            "bodyLength": 1021,
+            "bodyHash": "0402b11f725d1af691372dadaa737e8aa7a81e9f8052b0cc4fcc2fd5ac2908b8",
             "mtimeMs": 0,
             "warnings": [],
             "structured": {
@@ -5265,8 +5265,8 @@
             "location": "phase",
             "frontmatter": {},
             "title": "Phase 1: Identity Slice - Context",
-            "bodyLength": 2096,
-            "bodyHash": "dcd7a117f0e8857446bacd1816a652aacddac87da7088276f439e8ebca4e0a98",
+            "bodyLength": 1950,
+            "bodyHash": "59cacbdcd9182913dc462bf41649abdafacd7bda6bd6d6a255a6f1ad107d2eec",
             "mtimeMs": 0,
             "warnings": [],
             "structured": {
@@ -5592,8 +5592,8 @@
             "location": "phase",
             "frontmatter": {},
             "title": "Phase 2: Transport Layer - Context",
-            "bodyLength": 1626,
-            "bodyHash": "60f6f4c0f59d56c00cb2f4a81cc4c477b6967c43a311095ff2f63ac323a9c530",
+            "bodyLength": 1480,
+            "bodyHash": "ff61180897899b55d9ec0f8766f7e6fd1b72b3b673886c4507c3ad9d03bd9729",
             "mtimeMs": 0,
             "warnings": [],
             "structured": {
@@ -6772,8 +6772,8 @@
                   "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice - Context",
-                  "bodyLength": 2096,
-                  "bodyHash": "dcd7a117f0e8857446bacd1816a652aacddac87da7088276f439e8ebca4e0a98",
+                  "bodyLength": 1950,
+                  "bodyHash": "59cacbdcd9182913dc462bf41649abdafacd7bda6bd6d6a255a6f1ad107d2eec",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
@@ -8022,8 +8022,8 @@
                   "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice - Context",
-                  "bodyLength": 2096,
-                  "bodyHash": "dcd7a117f0e8857446bacd1816a652aacddac87da7088276f439e8ebca4e0a98",
+                  "bodyLength": 1950,
+                  "bodyHash": "59cacbdcd9182913dc462bf41649abdafacd7bda6bd6d6a255a6f1ad107d2eec",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
@@ -9272,8 +9272,8 @@
                   "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 1: Identity Slice - Context",
-                  "bodyLength": 2096,
-                  "bodyHash": "dcd7a117f0e8857446bacd1816a652aacddac87da7088276f439e8ebca4e0a98",
+                  "bodyLength": 1950,
+                  "bodyHash": "59cacbdcd9182913dc462bf41649abdafacd7bda6bd6d6a255a6f1ad107d2eec",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
@@ -9594,8 +9594,8 @@
                   "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 2: Transport Layer - Context",
-                  "bodyLength": 1626,
-                  "bodyHash": "60f6f4c0f59d56c00cb2f4a81cc4c477b6967c43a311095ff2f63ac323a9c530",
+                  "bodyLength": 1480,
+                  "bodyHash": "ff61180897899b55d9ec0f8766f7e6fd1b72b3b673886c4507c3ad9d03bd9729",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
@@ -9732,8 +9732,8 @@
                   "location": "phase",
                   "frontmatter": {},
                   "title": "Phase 2: Transport Layer - Context",
-                  "bodyLength": 1626,
-                  "bodyHash": "60f6f4c0f59d56c00cb2f4a81cc4c477b6967c43a311095ff2f63ac323a9c530",
+                  "bodyLength": 1480,
+                  "bodyHash": "ff61180897899b55d9ec0f8766f7e6fd1b72b3b673886c4507c3ad9d03bd9729",
                   "mtimeMs": 0,
                   "warnings": [],
                   "structured": {
@@ -9788,7 +9788,7 @@
             "artifactKind": "context",
             "position": {
               "line": 68,
-              "offset": 2009
+              "offset": 1874
             },
             "excerpt": "- Live reconciliation with a running session — tracked as v4.0 requirement IDENT-04."
           },
@@ -9847,7 +9847,7 @@
             "artifactKind": "context",
             "position": {
               "line": 23,
-              "offset": 623
+              "offset": 595
             },
             "excerpt": "- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02"
           },
@@ -9893,7 +9893,7 @@
             "artifactKind": "context",
             "position": {
               "line": 19,
-              "offset": 422
+              "offset": 394
             },
             "excerpt": "- **D-01:** Keep the bootstrap phase to a single plan — nothing else exists yet to build on."
           },
@@ -9904,7 +9904,7 @@
             "artifactKind": "context",
             "position": {
               "line": 19,
-              "offset": 442
+              "offset": 414
             },
             "excerpt": "- **D-01:** Read-only ingest for v2.0 — no retry logic, deferred to backlog."
           },
@@ -9915,7 +9915,7 @@
             "artifactKind": "context",
             "position": {
               "line": 18,
-              "offset": 377
+              "offset": 349
             },
             "excerpt": "- **D-01:** Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own"
           },
@@ -9959,7 +9959,7 @@
             "artifactKind": "context",
             "position": {
               "line": 19,
-              "offset": 473
+              "offset": 445
             },
             "excerpt": "- **D-01:** This phase carries only `02-01-PLAN.md` and `02-CONTEXT.md` — no summary yet, since the"
           },
@@ -10049,7 +10049,7 @@
             "artifactKind": "context",
             "position": {
               "line": 9,
-              "offset": 193
+              "offset": 185
             },
             "excerpt": "Stand up the earliest scaffolding for the fixture project — the v1.0 \"Phase 1\", archived here under"
           },
@@ -10060,7 +10060,7 @@
             "artifactKind": "context",
             "position": {
               "line": 10,
-              "offset": 289
+              "offset": 281
             },
             "excerpt": "`milestones/v1.0-phases/01-bootstrap/`, distinct from v3.0's own \"Phase 1\" (`phases/01-identity-slice/`)"
           },
@@ -10126,7 +10126,7 @@
             "artifactKind": "context",
             "position": {
               "line": 9,
-              "offset": 178
+              "offset": 170
             },
             "excerpt": "Pull legacy records into the new store — the v2.0 \"Phase 1\", archived here under"
           },
@@ -10137,7 +10137,7 @@
             "artifactKind": "context",
             "position": {
               "line": 10,
-              "offset": 279
+              "offset": 271
             },
             "excerpt": "`milestones/v2.0-phases/01-legacy-ingest/`, distinct from both v1.0's \"Phase 1\" (bootstrap) and v3.0's"
           },
@@ -10148,7 +10148,7 @@
             "artifactKind": "context",
             "position": {
               "line": 11,
-              "offset": 312
+              "offset": 304
             },
             "excerpt": "\"Phase 1\" (identity slice) despite all three sharing the number `01`."
           },
@@ -10368,7 +10368,7 @@
             "artifactKind": "context",
             "position": {
               "line": 10,
-              "offset": 251
+              "offset": 243
             },
             "excerpt": "deliberately thinner than Phase 1 — no `01-RESEARCH.md`-equivalent, no security/UI-spec — to represent"
           },
@@ -10379,7 +10379,7 @@
             "artifactKind": "context",
             "position": {
               "line": 49,
-              "offset": 1246
+              "offset": 1136
             },
             "excerpt": "- `src/identity/slice.ts` (Phase 1) — the resolver the transport layer calls into."
           },
@@ -10390,7 +10390,7 @@
             "artifactKind": "context",
             "position": {
               "line": 52,
-              "offset": 1361
+              "offset": 1251
             },
             "excerpt": "- Never-throw resolver contract (Phase 1)."
           },
@@ -10401,7 +10401,7 @@
             "artifactKind": "context",
             "position": {
               "line": 55,
-              "offset": 1444
+              "offset": 1334
             },
             "excerpt": "- Transport requests call `resolveIdentity` from Phase 1's slice."
           },
@@ -10871,7 +10871,7 @@
             "artifactKind": "context",
             "position": {
               "line": 61,
-              "offset": 1861
+              "offset": 1751
             },
             "excerpt": "None — the fixture has no downstream phase beyond Phase 2 within this same tree."
           },
@@ -11051,7 +11051,7 @@
             "artifactKind": "context",
             "position": {
               "line": 23,
-              "offset": 715
+              "offset": 687
             },
             "excerpt": "- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02"
           },
@@ -11062,7 +11062,7 @@
             "artifactKind": "context",
             "position": {
               "line": 24,
-              "offset": 747
+              "offset": 719
             },
             "excerpt": "hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere."
           },
@@ -11598,7 +11598,7 @@
           "artifactKind": "context",
           "position": {
             "line": 9,
-            "offset": 193
+            "offset": 185
           },
           "excerpt": "Stand up the earliest scaffolding for the fixture project — the v1.0 \"Phase 1\", archived here under"
         },
@@ -11609,7 +11609,7 @@
           "artifactKind": "context",
           "position": {
             "line": 10,
-            "offset": 289
+            "offset": 281
           },
           "excerpt": "`milestones/v1.0-phases/01-bootstrap/`, distinct from v3.0's own \"Phase 1\" (`phases/01-identity-slice/`)"
         },
@@ -11620,7 +11620,7 @@
           "artifactKind": "context",
           "position": {
             "line": 19,
-            "offset": 422
+            "offset": 394
           },
           "excerpt": "- **D-01:** Keep the bootstrap phase to a single plan — nothing else exists yet to build on."
         },
@@ -11763,7 +11763,7 @@
           "artifactKind": "context",
           "position": {
             "line": 9,
-            "offset": 178
+            "offset": 170
           },
           "excerpt": "Pull legacy records into the new store — the v2.0 \"Phase 1\", archived here under"
         },
@@ -11774,7 +11774,7 @@
           "artifactKind": "context",
           "position": {
             "line": 10,
-            "offset": 279
+            "offset": 271
           },
           "excerpt": "`milestones/v2.0-phases/01-legacy-ingest/`, distinct from both v1.0's \"Phase 1\" (bootstrap) and v3.0's"
         },
@@ -11785,7 +11785,7 @@
           "artifactKind": "context",
           "position": {
             "line": 11,
-            "offset": 312
+            "offset": 304
           },
           "excerpt": "\"Phase 1\" (identity slice) despite all three sharing the number `01`."
         },
@@ -11796,7 +11796,7 @@
           "artifactKind": "context",
           "position": {
             "line": 19,
-            "offset": 442
+            "offset": 414
           },
           "excerpt": "- **D-01:** Read-only ingest for v2.0 — no retry logic, deferred to backlog."
         },
@@ -12115,7 +12115,7 @@
           "artifactKind": "context",
           "position": {
             "line": 18,
-            "offset": 377
+            "offset": 349
           },
           "excerpt": "- **D-01:** Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own"
         },
@@ -12126,7 +12126,7 @@
           "artifactKind": "context",
           "position": {
             "line": 23,
-            "offset": 623
+            "offset": 595
           },
           "excerpt": "- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02"
         },
@@ -12137,7 +12137,7 @@
           "artifactKind": "context",
           "position": {
             "line": 23,
-            "offset": 715
+            "offset": 687
           },
           "excerpt": "- **D-02:** No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02"
         },
@@ -12148,7 +12148,7 @@
           "artifactKind": "context",
           "position": {
             "line": 24,
-            "offset": 747
+            "offset": 719
           },
           "excerpt": "hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere."
         },
@@ -12159,7 +12159,7 @@
           "artifactKind": "context",
           "position": {
             "line": 61,
-            "offset": 1861
+            "offset": 1751
           },
           "excerpt": "None — the fixture has no downstream phase beyond Phase 2 within this same tree."
         },
@@ -12170,7 +12170,7 @@
           "artifactKind": "context",
           "position": {
             "line": 68,
-            "offset": 2009
+            "offset": 1874
           },
           "excerpt": "- Live reconciliation with a running session — tracked as v4.0 requirement IDENT-04."
         },
@@ -12412,7 +12412,7 @@
           "artifactKind": "context",
           "position": {
             "line": 10,
-            "offset": 251
+            "offset": 243
           },
           "excerpt": "deliberately thinner than Phase 1 — no `01-RESEARCH.md`-equivalent, no security/UI-spec — to represent"
         },
@@ -12423,7 +12423,7 @@
           "artifactKind": "context",
           "position": {
             "line": 19,
-            "offset": 473
+            "offset": 445
           },
           "excerpt": "- **D-01:** This phase carries only `02-01-PLAN.md` and `02-CONTEXT.md` — no summary yet, since the"
         },
@@ -12434,7 +12434,7 @@
           "artifactKind": "context",
           "position": {
             "line": 49,
-            "offset": 1246
+            "offset": 1136
           },
           "excerpt": "- `src/identity/slice.ts` (Phase 1) — the resolver the transport layer calls into."
         },
@@ -12445,7 +12445,7 @@
           "artifactKind": "context",
           "position": {
             "line": 52,
-            "offset": 1361
+            "offset": 1251
           },
           "excerpt": "- Never-throw resolver contract (Phase 1)."
         },
@@ -12456,7 +12456,7 @@
           "artifactKind": "context",
           "position": {
             "line": 55,
-            "offset": 1444
+            "offset": 1334
           },
           "excerpt": "- Transport requests call `resolveIdentity` from Phase 1's slice."
         },

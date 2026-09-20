@@ -17,6 +17,20 @@ function extractTag(body: string, tag: string): string | null {
   return m ? m[1].trim() : null;
 }
 
+/** The six tag names with no underscore (`domain`, `decisions`, `specifics`, `deferred`) are
+ * valid CommonMark HTML tag names, so a standalone `<domain>`/`<decisions>`/… line opens an
+ * HTML block (type 7) that swallows every following line — including an immediately-adjacent
+ * `## Heading` line with no blank line to close the block — as literal, unparsed text. The real
+ * `05-CONTEXT.md` corpus file hits this exactly: `<decisions>\n## Implementation Decisions`
+ * never becomes an `<h2>`, so VIEW-05's `context` manifest has nothing to promote. `extractTag`
+ * above already ran against the untouched `fm.body`; this only changes the copy handed to the
+ * markdown-to-HTML render pipeline — blanking the six tag-only lines (never their content)
+ * removes the HTML-block trigger without disturbing anything `structured.sections` reads. */
+function stripContextTagLines(body: string): string {
+  const pattern = new RegExp(`^[ \\t]*</?(?:${CONTEXT_TAGS.join('|')})>[ \\t]*$`, 'gm');
+  return body.replace(pattern, '');
+}
+
 export const ContextHandler: ArtifactHandler = {
   kind: 'context',
   match: (ref) => artifactTokenOf(ref) === 'CONTEXT',
@@ -31,7 +45,7 @@ export const ContextHandler: ArtifactHandler = {
     return {
       title,
       frontmatter: fm.data,
-      body: fm.body,
+      body: stripContextTagLines(fm.body),
       warning: fm.warning,
       structured: { decisions: parseDecisionEntries(sections.decisions), sections },
     };
