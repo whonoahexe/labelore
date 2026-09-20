@@ -451,7 +451,7 @@ export function ArtifactPage(): React.JSX.Element {
     { label: artifact.title },
   ];
   return (
-    <main className="artifact-page">
+    <main className="artifact-page page-stack">
       <ArtifactHeader
         crumbs={crumbs}
         eyebrow={artifact.kind}
