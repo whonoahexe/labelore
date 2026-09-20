@@ -29,6 +29,16 @@ export interface DiscussionTopic {
 
 export type SectionProjection = (body: string) => Record<string, unknown>;
 
+export interface DecisionEntry {
+  id: string;
+  text: string;
+}
+
+export interface ReviewWarning {
+  id: string;
+  title: string;
+}
+
 // Bounded, single-line pattern (T-05-01: no nested unbounded groups) — matches both apostrophe
 // spellings the corpus has used (straight `'` and curly `’`) for the `**User's choice:**` prose
 // line. `[^*]*` tolerates parenthetical asides between "choice" and the closing `:**` without
@@ -93,11 +103,83 @@ export function extractDiscussionLog(body: string): {
   return { questions, topics };
 }
 
+// Bounded, single-line pattern (T-05-07: no nested unbounded groups) matching a phase CONTEXT.md
+// decision bullet — `- **D-NN:**` — opening a new entry. A phase's `<decisions>` tag body is a
+// line-scanned sequence of such bullets, each optionally followed by indented continuation lines
+// (including `— **Reversibility:**` sub-lines), never a single whole-body regex.
+const DECISION_BULLET_RE = /^- \*\*(D-\d+):\*\*\s*(.*)$/;
+
+/**
+ * Line-scans a phase CONTEXT.md's `<decisions>` tag body (BACK-02, D-14/D-15) into per-decision
+ * entries, in document order. A `- **D-NN:**` bullet opens an entry; any subsequent indented
+ * (whitespace-prefixed) line is a continuation, folded into the same entry's `text` joined by a
+ * single space — this is what pulls a `— **Reversibility:**` sub-line into its owning decision's
+ * text (BACK-02 truth). A blank line, a heading, or a non-decision bullet closes the currently
+ * open entry without starting a new one. Null/empty input, or a body with no `D-NN` bullets,
+ * returns `[]` — never throws.
+ */
+export function parseDecisionEntries(text: string | null): DecisionEntry[] {
+  if (!text) return [];
+
+  const entries: DecisionEntry[] = [];
+  let current: { id: string; parts: string[] } | null = null;
+
+  const closeCurrent = (): void => {
+    if (!current) return;
+    entries.push({ id: current.id, text: current.parts.join(' ').trim() });
+    current = null;
+  };
+
+  for (const line of text.split('\n')) {
+    const bulletMatch = DECISION_BULLET_RE.exec(line);
+    if (bulletMatch) {
+      closeCurrent();
+      const [, id, rest] = bulletMatch;
+      current = { id, parts: rest.trim() ? [rest.trim()] : [] };
+      continue;
+    }
+    if (current && /^\s+\S/.test(line)) {
+      current.parts.push(line.trim());
+      continue;
+    }
+    closeCurrent();
+  }
+  closeCurrent();
+
+  return entries;
+}
+
+// Bounded, single-line pattern matching a REVIEW.md `### WR-NN: title` (or ` — `/` - ` separated)
+// subsection heading — the same discipline as DECISION_BULLET_RE above.
+const WARNING_HEADING_RE = /^(WR-\d+)(?::| — | - )\s*(.*)$/;
+
+/**
+ * Line-scans a phase REVIEW.md body (BACK-02) for its `## Warnings` section, then each `### WR-NN:
+ * title` subsection within it, in document order. No `## Warnings` section (or no body) yields
+ * `{ warnings: [] }` — never throws.
+ */
+export function extractReviewWarnings(body: string): { warnings: ReviewWarning[] } {
+  const warningsSection = splitSections(body).find(
+    (section) => section.heading.trim().toLowerCase() === 'warnings',
+  );
+  if (!warningsSection) return { warnings: [] };
+
+  const warnings: ReviewWarning[] = [];
+  for (const subsection of splitSubsections(warningsSection.body)) {
+    const match = WARNING_HEADING_RE.exec(subsection.heading);
+    if (!match) continue;
+    const [, id, title] = match;
+    warnings.push({ id, title: title.trim() });
+  }
+  return { warnings };
+}
+
 /** Keyed on the wire `artifact.kind` string (already granular — RESEARCH.md § Corrected
  * Understanding). Frozen so a later plan cannot mutate the registry in place; extend it by adding
  * a new key, never by patching an existing entry. */
 export const SECTION_PROJECTIONS: Readonly<Record<string, SectionProjection>> = Object.freeze({
   'discussion-log': extractDiscussionLog,
+  review: extractReviewWarnings,
 });
 
 /** Never throws — every composed primitive is a pure line-scanner, and a kind with no registered
