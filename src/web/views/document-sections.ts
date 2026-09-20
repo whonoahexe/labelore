@@ -1,13 +1,14 @@
 // Splits an already-rendered document into top-level section groups, two ways: a pure, DOM-free
 // grouping function (`groupDocumentSections`) consumed directly by unit tests, and a browser
 // adapter (`splitRenderedDocument`) that walks the live DOM to produce the `SectionNode[]` input.
-// `splitRenderedDocument`'s DOM surface is described by small structural interfaces declared
-// locally in this module rather than by importing `lib.dom` types — that keeps this file
-// type-checkable both under `tsconfig.web.json` (real DOM lib present) and under
-// `tsconfig.server.json` (no DOM lib; reached only via a direct test import of the DOM-free
-// exports). The local `declare const DOMParser` shadows the real global for type-checking
-// purposes only — `declare` erases at compile time, so the emitted JS still resolves `DOMParser`
-// to whatever is actually in scope at runtime.
+// A third browser adapter, `extractPlanSegments` (VIEW-04), reads the `data-plan-*` attributes
+// `renderPlanRange` already emits per plan segment. Both adapters' DOM surface is described by
+// small structural interfaces declared locally in this module rather than by importing `lib.dom`
+// types — that keeps this file type-checkable both under `tsconfig.web.json` (real DOM lib
+// present) and under `tsconfig.server.json` (no DOM lib; reached only via a direct test import of
+// the DOM-free exports). The local `declare const DOMParser` shadows the real global for
+// type-checking purposes only — `declare` erases at compile time, so the emitted JS still
+// resolves `DOMParser` to whatever is actually in scope at runtime.
 
 export interface SectionNode {
   tag: string;
@@ -22,9 +23,8 @@ export interface DocumentSectionGroup {
   html: string;
 }
 
-/** Populated by Plan 05-05 from `renderPlanRange`'s `data-plan-ordinal`/`data-plan-section`/
- * `data-plan-gate` attributes (VIEW-04, Tag Projection Pattern 3). Declared here now, alongside
- * the other view-input shapes, so 05-05 only has to populate it — never touch this type. */
+/** Populated by `extractPlanSegments` (below) from `renderPlanRange`'s `data-plan-ordinal`/
+ * `data-plan-section`/`data-plan-gate` attributes (VIEW-04, Tag Projection Pattern 3). */
 export interface PlanSegmentAttributes {
   ordinal: string;
   tag: string;
@@ -84,11 +84,12 @@ interface MinimalElement {
   getAttribute(name: string): string | null;
   cloneNode(deep: boolean): MinimalElement;
   querySelector(selector: string): MinimalElement | null;
+  querySelectorAll(selector: string): ArrayLike<MinimalElement>;
   remove(): void;
 }
 
 interface MinimalParsedDocument {
-  body: { children: ArrayLike<MinimalElement> };
+  body: { children: ArrayLike<MinimalElement>; querySelectorAll(selector: string): ArrayLike<MinimalElement> };
 }
 
 declare const DOMParser:
@@ -136,4 +137,53 @@ export function splitRenderedDocument(html: string): DocumentSectionGroup[] {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const nodes = Array.from(doc.body.children).map(sectionNodeOf);
   return groupDocumentSections(nodes);
+}
+
+// ---------------------------------------------------------------------------
+// VIEW-04: plan task-structure extraction (Tag Projection Pattern 3, presentation-side only —
+// `renderPlanRange` already emits every attribute read below).
+// ---------------------------------------------------------------------------
+
+/** Returns the first direct child of `el` that is a `<section data-plan-section="value">` — not
+ * a deeper descendant, so a nested task's own `name`/`action`/etc. children never shadow the
+ * segment being inspected. */
+function directChildPlanSection(el: MinimalElement, value: string): MinimalElement | null {
+  for (let i = 0; i < el.children.length; i++) {
+    const child = el.children[i];
+    if (
+      child.tagName.toLowerCase() === 'section' &&
+      child.getAttribute('data-plan-section') === value
+    ) {
+      return child;
+    }
+  }
+  return null;
+}
+
+function planSegmentAttributesOf(el: MinimalElement): PlanSegmentAttributes {
+  const ordinal = el.getAttribute('data-plan-ordinal') ?? '';
+  const tag = el.getAttribute('data-plan-section') ?? '';
+  const labelEl = el.querySelector('.plan-section-label');
+  const label = labelEl ? textWithoutDescendant(labelEl, '.plan-section-ordinal') : '';
+  const gate = el.getAttribute('data-plan-gate');
+  const type = el.getAttribute('data-plan-type');
+  let name: string | null = null;
+  if (tag === 'task') {
+    const nameEl = directChildPlanSection(el, 'name');
+    name = nameEl ? textWithoutDescendant(nameEl, '.plan-section-label') : null;
+  }
+  return { ordinal, tag, label, gate, type, name };
+}
+
+/** Browser-only adapter (VIEW-04): reads every `section.plan-section[data-plan-ordinal]` out of
+ * the already-rendered plan HTML, in document order, via the same inert `DOMParser` pattern
+ * `splitRenderedDocument` uses. Falls back to `[]` when `DOMParser` is unavailable (SSR/test) —
+ * the plan-task-index block then selects no rows and `composeView` omits it (D-06). */
+export function extractPlanSegments(html: string): PlanSegmentAttributes[] {
+  if (typeof DOMParser === 'undefined') {
+    return [];
+  }
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const nodes = Array.from(doc.body.querySelectorAll('section.plan-section[data-plan-ordinal]'));
+  return nodes.map(planSegmentAttributesOf);
 }

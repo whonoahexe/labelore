@@ -35,7 +35,7 @@ import {
   REMAINDER_LABEL,
   type ComposedView,
 } from '../views/manifest.ts';
-import { splitRenderedDocument } from '../views/document-sections.ts';
+import { extractPlanSegments, splitRenderedDocument } from '../views/document-sections.ts';
 import { BLOCK_COMPONENTS } from '../views/blocks.tsx';
 export {
   handleDocumentReferenceActivation,
@@ -431,6 +431,11 @@ export function ArtifactPage(): React.JSX.Element {
     [query.data],
   );
   const groups = useMemo(() => (shown ? splitRenderedDocument(shown.html) : []), [shown]);
+  const planSegments = useMemo(
+    () =>
+      query.data?.artifact.kind === 'plan' && shown ? extractPlanSegments(shown.html) : [],
+    [query.data, shown],
+  );
   const composed = useMemo<ComposedView | null>(() => {
     if (!manifest || !query.data) return null;
     return composeView(manifest, {
@@ -438,9 +443,9 @@ export function ArtifactPage(): React.JSX.Element {
       frontmatter: query.data.artifact.frontmatter,
       structured: query.data.artifact.structured,
       groups,
-      planSegments: [],
+      planSegments,
     });
-  }, [manifest, query.data, groups]);
+  }, [manifest, query.data, groups, planSegments]);
   const viewAvailable = composed !== null && composed.blocks.length > 0;
 
   if (query.isPending) {
