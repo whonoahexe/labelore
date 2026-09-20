@@ -7,11 +7,8 @@ import { Fragment } from 'react';
 import type { DiscussionQuestion } from '../../planning-repo/handlers/section-projection.ts';
 import { ValueView } from '../components/metadata-panel.tsx';
 import type { Fact } from './facts.ts';
+import type { PlanIndexRow } from './plan-task-index.ts';
 import type { BlockComponentKey } from './manifest.ts';
-
-function NotYetImplemented(_props: { label: string; data: unknown }): React.JSX.Element | null {
-  return null;
-}
 
 /** A reusable dt/dd field-list block (`src/web/views/facts.ts`'s `selectFacts`/`factsBlock`),
  * shared by the VERIFICATION "Verdict" block and the PLAN "Plan facts" block. */
@@ -100,6 +97,40 @@ function VerificationChecks({
   );
 }
 
+/** VIEW-04's task-structure index (`src/web/views/plan-task-index.ts`'s `selectPlanIndexRows`):
+ * ordinal + label per row, in ordinal order, with a `Gates` chip only when the row carries a
+ * `gate` value — an ungated row shows no chip at all (never a quiet-toned "not gated" marker). */
+function PlanTaskIndex({
+  label,
+  data,
+}: {
+  label: string;
+  data: unknown;
+}): React.JSX.Element | null {
+  const rows = Array.isArray(data) ? (data as PlanIndexRow[]) : [];
+  if (rows.length === 0) return null;
+  return (
+    <>
+      <header className="section-heading">
+        <h2>{label}</h2>
+      </header>
+      <ol className="view-plan-task-index">
+        {rows.map((row) => (
+          <li key={row.ordinal} data-gate={row.gate !== null} data-depth={row.depth}>
+            <span className="view-plan-task-ordinal">{row.ordinal}</span>
+            <span className="view-plan-task-label">{row.label}</span>
+            {row.gate !== null ? (
+              <span className="status-chip" data-tone="active">
+                Gates
+              </span>
+            ) : null}
+          </li>
+        ))}
+      </ol>
+    </>
+  );
+}
+
 /** Per question (one D-06-filtered, already-resolved `DiscussionQuestion`): a `.section-heading
  * .compact` header naming the topic/question, then every option in the file's own table-row
  * order — the chosen row leads with a `Chosen` chip, every other row renders as plain muted text
@@ -143,6 +174,6 @@ export const BLOCK_COMPONENTS: Record<
 > = {
   'discussion-questions': DiscussionQuestions,
   'verification-checks': VerificationChecks,
-  'plan-task-index': NotYetImplemented,
+  'plan-task-index': PlanTaskIndex,
   'fact-list': FactList,
 };

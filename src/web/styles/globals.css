@@ -2933,6 +2933,38 @@ pre {
   border-top: 0;
 }
 
+/* VIEW-04 PLAN view task-structure index (view-local, UI-SPEC §5). */
+.view-plan-task-index {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-plan-task-index li {
+  display: grid;
+  grid-template-columns: var(--space-10) minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: baseline;
+}
+
+.view-plan-task-index li[data-depth='2'] {
+  padding-left: var(--space-4);
+}
+
+.view-plan-task-ordinal {
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+}
+
+.view-plan-task-label {
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+  overflow-wrap: anywhere;
+}
+
 .document-canvas {
   min-width: 0;
   max-width: 70rem;

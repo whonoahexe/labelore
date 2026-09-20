@@ -4,6 +4,7 @@
 // to the existing source reader with no toggle.
 import type { DiscussionTopic } from '../../planning-repo/handlers/section-projection.ts';
 import { factsBlock } from './facts.ts';
+import { planTaskIndexBlock } from './plan-task-index.ts';
 import type { ViewKind } from './kinds.ts';
 import type { PromotedBlock, ViewManifest } from './manifest.ts';
 
@@ -80,6 +81,21 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
       { type: 'section', heading: /^goal achievement/i },
       { type: 'section', heading: /^requirements coverage/i },
       { type: 'section', heading: /^human verification/i },
+    ],
+  },
+  plan: {
+    kind: 'plan',
+    lead: 'The task structure this plan commits to, in order, and which sections gate.',
+    promote: [
+      planTaskIndexBlock,
+      { type: 'section', heading: 'Objective' },
+      factsBlock('plan-facts', 'Plan facts', [
+        'wave',
+        'depends_on',
+        'requirements',
+        'autonomous',
+        'type',
+      ]),
     ],
   },
 });
