@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 001 — trace-row layout</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding-top: 3.25rem; background: var(--background); color: var(--foreground); font-family: var(--font-sans); }
+  a { color: var(--primary); text-underline-offset: 0.18em; }
+  a:hover { text-decoration-thickness: 2px; }
+  ul { margin: 0; padding: 0; list-style: none; }
+
+  /* ---- sketch chrome (not part of the design) ---- */
+  #variant-nav { position: fixed; inset: 0 0 auto 0; z-index: 9998; display: flex; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--card); border-bottom: 1px solid var(--border); overflow-x: auto; }
+  .variant-tab { flex: none; padding: 0.4rem 0.75rem; border: 1px solid var(--border); background: transparent; color: var(--foreground); font: 600 0.72rem var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; transition: all .15s ease; }
+  .variant-tab:hover { background: var(--state-hover); }
+  .variant-tab.active { border-color: var(--primary); color: var(--primary); background: var(--primary-tint); }
+  #sketch-tools { position: fixed; right: 12px; bottom: 12px; z-index: 9999; display: grid; gap: 6px; padding: 8px 12px; background: rgba(0,0,0,.72); color: #fff; font: 12px system-ui; border-radius: 8px; opacity: .45; transition: opacity .2s; }
+  #sketch-tools:hover { opacity: 1; }
+  #sketch-tools div { display: flex; gap: 6px; align-items: center; }
+  #sketch-tools button, #sketch-tools select { font: inherit; padding: 2px 8px; color: #fff; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.3); border-radius: 4px; cursor: pointer; }
+  #sketch-tools button.on { background: rgba(255,255,255,.4); }
+  .brief { max-width: 60rem; margin: 0 auto; padding: 1.25rem 1rem 0; color: var(--muted-foreground); font-size: var(--fs-4); line-height: var(--lh-normal); }
+  .brief b { color: var(--foreground); }
+  .stage { container-type: inline-size; max-width: var(--w, 68rem); margin: 0 auto; padding: 1rem; transition: max-width .2s ease; }
+  .variant { display: none; }
+  .variant.active { display: block; }
+  .list-title { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 var(--space-2); font: 600 var(--fs-2) var(--font-heading); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+  .list-frame { border: 1px solid var(--border); background: var(--card); }
+
+  /* ---- shared atoms (verbatim from globals.css) ---- */
+  .status-chip { display: inline-flex; gap: var(--space-1-5); align-items: center; width: fit-content; padding: var(--space-1-5) var(--space-2); border: 1px solid var(--border); background: color-mix(in oklch, var(--muted) 55%, transparent); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+  .status-chip[data-tone='complete'] { border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); background: var(--primary-tint); color: var(--primary); }
+  .status-chip[data-tone='quiet'] { color: var(--muted-foreground); }
+  .status-chip[data-tone='destructive'] { border-color: var(--destructive-border); background: var(--destructive-tint); color: var(--destructive); }
+  .status-chip[data-tone='in-flight'] { border-color: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border)); color: var(--in-flight-fill); }
+  .status-chip[data-tone='missing'] { border-color: color-mix(in oklch, var(--missing-fill) 50%, var(--border)); color: var(--missing-fill); }
+  .status-chip[data-signal='phase']::before { display: inline-block; width: var(--space-1-5); height: var(--space-1-5); margin-inline-end: var(--space-1); background: currentColor; content: ''; }
+  .micro { color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+  .dangling { overflow-wrap: anywhere; color: var(--muted-foreground); }
+
+  /* ======================================================================
+     CURRENT — as shipped today (padding-top on .trace-row-phase is the new --space-3)
+     ====================================================================== */
+  .cur .trace-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 20rem); align-items: start; gap: var(--space-4); background: var(--card); padding: var(--space-3-5) var(--space-4); }
+  .cur .trace-row:hover { background: var(--state-hover); }
+  .cur .trace-row + .trace-row { border-top: 1px solid var(--border); }
+  .cur .trace-row-primary { display: grid; min-width: 0; align-content: start; gap: var(--space-1); }
+  .cur .trace-row-id { color: var(--muted-foreground); font: 400 var(--fs-2) var(--font-heading); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+  .cur .trace-row-text { overflow-wrap: anywhere; font-size: var(--fs-5); line-height: 1.55; }
+  .cur .trace-row-phase { display: grid; gap: var(--space-1); margin-top: var(--space-2); padding-top: var(--space-3); }
+  .cur .trace-covering-names { display: grid; gap: var(--space-1); overflow-wrap: anywhere; }
+  .cur .trace-row-secondary { display: grid; min-width: 0; gap: var(--space-3); align-content: start; font-size: var(--fs-3); }
+  .cur .trace-covering-list { display: grid; gap: var(--space-2); }
+  .cur .trace-covering-entry { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+  @container (max-width: 42rem) { .cur .trace-row { grid-template-columns: 1fr; } }
+
+  /* ======================================================================
+     A — LEDGER: one aligned grid, header once, chips share a right edge
+     ====================================================================== */
+  .a-head, .a-row { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr) minmax(0, 24rem); column-gap: var(--space-5); align-items: baseline; padding: var(--space-3) var(--space-4); }
+  .a-head { position: sticky; top: 3.25rem; z-index: 2; padding-block: var(--space-2); background: var(--sidebar); border-bottom: 1px solid var(--border); }
+  .a-head .cover-head { display: grid; grid-template-columns: minmax(0, 1fr) 7.5rem; column-gap: var(--space-2); }
+  .a-row { background: var(--card); }
+  .a-row:hover { background: var(--state-hover); }
+  .a-row + .a-row { border-top: 1px solid var(--border); }
+  .a-id { display: grid; gap: var(--space-1-5); justify-items: start; }
+  .a-id strong { color: var(--muted-foreground); font: 500 var(--fs-3) var(--font-heading); letter-spacing: var(--ls-wider); }
+  .a-text { font-size: var(--fs-5); line-height: 1.55; overflow-wrap: anywhere; }
+  .a-cover { display: grid; gap: var(--space-2); }
+  .a-cover li { display: grid; grid-template-columns: minmax(0, 1fr) 7.5rem; column-gap: var(--space-2); align-items: baseline; font-size: var(--fs-4); line-height: 1.4; overflow-wrap: anywhere; }
+  .a-cover .status-chip { justify-self: end; }
+  @container (max-width: 46rem) {
+    .a-head { display: none; }
+    .a-row { grid-template-columns: 1fr; row-gap: var(--space-2); }
+    .a-id { grid-auto-flow: column; justify-content: start; align-items: center; column-gap: var(--space-3); }
+    .a-cover li { grid-template-columns: minmax(0, 1fr) auto; }
+  }
+
+  /* ======================================================================
+     B — CARD + FOOTER: ID and flags on top, text, then a ruled "Covered by" strip.
+     The left rule takes the row's worst tone so a colour column forms down the list.
+     ====================================================================== */
+  .b-row { --tone: var(--primary); display: grid; gap: var(--space-2-5); padding: var(--space-3-5) var(--space-4) var(--space-3-5) calc(var(--space-4) - 3px); border-left: 3px solid var(--tone); background: var(--card); }
+  .b-row:hover { background: var(--state-hover); }
+  .b-row + .b-row { border-top: 1px solid var(--border); }
+  .b-row[data-worst='bad'] { --tone: var(--destructive); }
+  .b-row[data-worst='missing'] { --tone: var(--missing-fill); }
+  .b-row[data-worst='in-flight'] { --tone: var(--in-flight-fill); }
+  .b-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-2); }
+  .b-top strong { color: var(--muted-foreground); font: 500 var(--fs-3) var(--font-heading); letter-spacing: var(--ls-wider); }
+  .b-text { max-width: 72ch; font-size: var(--fs-5); line-height: 1.55; overflow-wrap: anywhere; }
+  .b-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-5); padding-top: var(--space-2-5); border-top: 1px dashed var(--border); font-size: var(--fs-4); }
+  .b-foot .micro { margin-inline-end: calc(var(--space-2) * -1); }
+  .b-phase { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-width: 0; overflow-wrap: anywhere; }
+
+  /* ======================================================================
+     C — STATUS RAIL: rollup chip in a fixed left rail; phases become quiet lines under the text
+     ====================================================================== */
+  .c-row { display: grid; grid-template-columns: 9rem minmax(0, 1fr); column-gap: var(--space-5); align-items: start; padding: var(--space-3-5) var(--space-4); background: var(--card); }
+  .c-row:hover { background: var(--state-hover); }
+  .c-row + .c-row { border-top: 1px solid var(--border); }
+  .c-rail { display: grid; gap: var(--space-1-5); justify-items: start; padding-top: 0.05rem; }
+  .c-rail .count { color: var(--muted-foreground); font: 400 var(--fs-1) var(--font-heading); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+  .c-body { display: grid; gap: var(--space-1-5); min-width: 0; }
+  .c-body strong { color: var(--muted-foreground); font: 500 var(--fs-3) var(--font-heading); letter-spacing: var(--ls-wider); }
+  .c-text { max-width: 72ch; font-size: var(--fs-5); line-height: 1.55; overflow-wrap: anywhere; }
+  .c-phases { display: grid; gap: var(--space-0-5); margin-top: var(--space-1); font-size: var(--fs-4); }
+  .c-phases li { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-2); overflow-wrap: anywhere; }
+  .c-phases li::before { content: ''; flex: none; align-self: center; width: var(--space-1-5); height: var(--space-1-5); background: var(--pc, var(--primary)); }
+  .c-phases li[data-s='in-flight'] { --pc: var(--in-flight-fill); }
+  .c-phases li[data-s='missing'] { --pc: var(--missing-fill); }
+  .c-phases li[data-s='unresolved'] { --pc: var(--destructive); }
+  .c-phases .st { color: var(--muted-foreground); font: 400 var(--fs-1) var(--font-heading); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+  .c-flags { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-1); }
+  @container (max-width: 42rem) {
+    .c-row { grid-template-columns: 1fr; row-gap: var(--space-2); }
+    .c-rail { grid-auto-flow: column; justify-content: start; align-items: center; column-gap: var(--space-2); }
+  }
+</style>
+</head>
+<body>
+
+<nav id="variant-nav" aria-label="Variants">
+  <button class="variant-tab active" data-v="cur">Current</button>
+  <button class="variant-tab" data-v="a">A · Ledger</button>
+  <button class="variant-tab" data-v="b">B · Card + footer</button>
+  <button class="variant-tab" data-v="c">C · Status rail ★ Selected</button>
+</nav>
+
+<div class="brief" id="brief"></div>
+
+<main class="stage" id="stage">
+  <div class="list-title"><span>Active requirements</span><span id="count"></span></div>
+  <div class="variant active" id="v-cur"><div class="list-frame"><ul class="cur" id="list-cur"></ul></div></div>
+  <div class="variant" id="v-a"><div class="list-frame">
+    <div class="a-head"><span class="micro">ID</span><span class="micro">Requirement</span><span class="cover-head"><span class="micro">Covered by</span><span class="micro" style="text-align:right">Phase status</span></span></div>
+    <ul id="list-a"></ul></div></div>
+  <div class="variant" id="v-b"><div class="list-frame"><ul id="list-b"></ul></div></div>
+  <div class="variant" id="v-c"><div class="list-frame"><ul id="list-c"></ul></div></div>
+</main>
+
+<div id="sketch-tools">
+  <div>Theme <button data-theme="light" class="on">Light</button><button data-theme="dark">Dark</button></div>
+  <div>Width <button data-w="375px">Phone</button><button data-w="768px">Tablet</button><button data-w="" class="on">Desktop</button></div>
+  <div>Data <button data-set="mixed" class="on">Mixed</button><button data-set="stress">Stress</button></div>
+</div>
+
+<script>
+/* One fixture, four renderers. Field names mirror TraceabilityRow / TraceabilityCoveringPhase. */
+const MIXED = [
+  { id: 'NAV-05', text: 'The sidebar highlights the current route and survives a hard refresh on any deep link.',
+    phases: [{ name: 'Phase 12 — Navigation and deep-link routing', status: 'complete' }] },
+  { id: 'NS4-03', text: 'Deferred tiers render inside the History disclosure and open when the filter has matches.',
+    phases: [{ name: 'Phase 4 — Search and history', status: 'complete' }, { name: 'Phase 7 — Deferred tier presentation', status: 'in-flight' }] },
+  { id: 'QKD-08', text: 'The row collapses to one column below 42rem without the secondary column overlapping the text.',
+    phases: [{ name: 'Phase 9 — Traceability redesign', status: 'in-flight' }] },
+  { id: 'JZ8-02', mismatch: true, text: 'Every font size resolves to one of the six static type-scale steps or the display outlier, with no literal rem values left at usage sites and paired line-heights only where a consumer exists.',
+    phases: [{ name: 'Phase 6 — Token consolidation', status: 'complete' }] },
+  { id: 'SRCH-09', text: 'Search results group by phase and artifact type with a snippet under each hit.',
+    phases: [{ name: 'Phase 15 — Search grouping', status: 'missing' }] },
+  { id: 'DOC-14', text: 'Mermaid diagrams render client-side after the markdown HTML is mounted.',
+    phases: [{ raw: 'Phase 99', status: 'unresolved', resolved: false }] },
+  { id: 'WRT-01', text: 'Write-back of edited planning files.', uncovered: true, phases: [] },
+];
+const STRESS = [
+  { id: 'NS4-04', mismatch: true, text: 'The History disclosure reuses the roadmap page\'s HistoryMilestone class names and ref-plus-effect idiom verbatim, but drives the open effect from the toggle state and the tier\'s own match count rather than a fire-once guard, so the disclosure tracks the filter on every render instead of latching after the first one and never forces a hand-opened tier closed.',
+    phases: [{ name: 'Phase 4 — Search and history', status: 'complete' }, { name: 'Phase 7 — Deferred tier presentation', status: 'in-flight' }, { name: 'Phase 11 — Filter state and the switch control', status: 'in-flight' }, { name: 'Phase 15 — Search grouping', status: 'missing' }] },
+  { id: 'A2', text: 'Short.', phases: [{ name: 'Phase 3 — A covering phase name that is deliberately far too long for one line so it has to wrap inside its column without pushing the status chip somewhere else', status: 'complete' }] },
+  { id: 'A3', text: 'Two phases, one unresolved reference.', phases: [{ name: 'Phase 2 — Reader boundary', status: 'complete' }, { raw: 'Phase 41-not-a-real-directory', status: 'unresolved', resolved: false }] },
+  { id: 'A4', text: 'Nothing covers this.', uncovered: true, phases: [] },
+];
+
+const TONE = { complete: 'complete', 'in-flight': 'in-flight', missing: 'missing', unresolved: 'destructive' };
+const LABEL = { complete: 'complete', 'in-flight': 'in progress', missing: 'no directory', unresolved: 'Unresolved' };
+const chip = (s) => `<span class="status-chip" data-signal="phase" data-tone="${TONE[s]}">${LABEL[s]}</span>`;
+const flagChip = (t) => `<span class="status-chip" data-tone="destructive">${t}</span>`;
+const nameOf = (p) => p.resolved === false ? `<span class="dangling">${p.raw}</span>` : `<a href="#" onclick="return false">${p.name}</a>`;
+const RANK = { complete: 0, 'in-flight': 1, missing: 2, unresolved: 3 };
+const worstPhase = (r) => r.phases.reduce((w, p) => (RANK[p.status] > RANK[w] ? p.status : w), 'complete');
+const worstRow = (r) => (r.uncovered || r.mismatch || worstPhase(r) === 'unresolved') ? 'bad' : worstPhase(r);
+
+const render = {
+  cur: (r) => `<li class="trace-row"><div class="trace-row-primary"><strong class="trace-row-id">${r.id}</strong><span class="trace-row-text">${r.text}</span>${
+      !r.uncovered && r.phases.length ? `<div class="trace-row-phase"><span class="micro">Phase</span><ul class="trace-covering-names">${r.phases.map(p => `<li>${nameOf(p)}</li>`).join('')}</ul></div>` : ''}</div>
+    <div class="trace-row-secondary">${r.mismatch ? `<div>${flagChip('Status mismatch')}</div>` : ''}<div>${
+      r.uncovered ? flagChip('Uncovered') : `<ul class="trace-covering-list">${r.phases.map(p => `<li class="trace-covering-entry">${chip(p.status)}</li>`).join('')}</ul>`}</div></div></li>`,
+
+  a: (r) => `<li class="a-row"><div class="a-id"><strong>${r.id}</strong>${r.mismatch ? flagChip('Status mismatch') : ''}</div>
+    <div class="a-text">${r.text}</div>
+    <ul class="a-cover">${r.uncovered ? `<li><span class="dangling">—</span>${flagChip('Uncovered')}</li>` : r.phases.map(p => `<li><span>${nameOf(p)}</span>${chip(p.status)}</li>`).join('')}</ul></li>`,
+
+  b: (r) => `<li class="b-row" data-worst="${worstRow(r)}"><div class="b-top"><strong>${r.id}</strong>${r.mismatch ? flagChip('Status mismatch') : ''}${r.uncovered ? flagChip('Uncovered') : ''}</div>
+    <div class="b-text">${r.text}</div>
+    ${r.uncovered ? '' : `<div class="b-foot"><span class="micro">Covered by</span>${r.phases.map(p => `<span class="b-phase">${nameOf(p)}${chip(p.status)}</span>`).join('')}</div>`}</li>`,
+
+  c: (r) => {
+    const w = worstPhase(r);
+    const rail = r.uncovered ? flagChip('Uncovered') : chip(w);
+    const count = r.uncovered ? 'no phase' : `${r.phases.length} phase${r.phases.length > 1 ? 's' : ''}${r.phases.length > 1 && w !== 'complete' ? ' · worst shown' : ''}`;
+    return `<li class="c-row"><div class="c-rail">${rail}<span class="count">${count}</span></div>
+      <div class="c-body"><strong>${r.id}</strong><div class="c-text">${r.text}</div>
+      ${r.phases.length ? `<ul class="c-phases">${r.phases.map(p => `<li data-s="${p.status}">${nameOf(p)}<span class="st">${LABEL[p.status]}</span></li>`).join('')}</ul>` : ''}
+      ${r.mismatch ? `<div class="c-flags">${flagChip('Status mismatch')}</div>` : ''}</div></li>`;
+  },
+};
+
+const BRIEFS = {
+  cur: '<b>Current.</b> Shipped layout for reference: ID, text and a Phase block on the left; unlabeled status chips on the right, detached from the phase name they describe.',
+  a: '<b>A · Ledger.</b> One grid for the whole list. Column header appears once; ID, requirement and Covered-by line up row to row, and each phase name sits on the same line as its own chip, chips sharing one right edge. Closest to the current markup — mostly CSS.',
+  b: '<b>B · Card + footer.</b> Single column, no right-hand rail. ID and row-level flags on top, text, then a ruled "Covered by" strip with each phase next to its chip. A left rule takes the row\'s worst tone, so colour scans down the list. Best on narrow screens; rows are taller.',
+  c: '<b>C · Status rail.</b> A fixed left rail holds one rollup chip, so status is the first thing the eye lands on. Phases drop to quiet lines under the text with a tone square. Fastest to scan; needs a new derived "worst phase" field the page does not compute today.',
+};
+
+let current = 'cur', dataset = 'mixed';
+function paint() {
+  const rows = dataset === 'mixed' ? MIXED : STRESS;
+  for (const k of ['cur', 'a', 'b', 'c']) document.getElementById('list-' + k).innerHTML = rows.map(render[k]).join('');
+  document.getElementById('count').textContent = rows.length + ' rows';
+  document.getElementById('brief').innerHTML = BRIEFS[current];
+}
+function showVariant(v) {
+  current = v;
+  document.querySelectorAll('.variant').forEach(el => el.classList.toggle('active', el.id === 'v-' + v));
+  document.querySelectorAll('.variant-tab').forEach(t => t.classList.toggle('active', t.dataset.v === v));
+  document.getElementById('brief').innerHTML = BRIEFS[v];
+}
+document.querySelectorAll('.variant-tab').forEach(t => t.addEventListener('click', () => showVariant(t.dataset.v)));
+function group(sel, attr, fn) {
+  document.querySelectorAll(sel).forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll(sel).forEach(x => x.classList.toggle('on', x === b));
+    fn(b.dataset[attr]);
+  }));
+}
+group('[data-theme]', 'theme', v => document.documentElement.classList.toggle('dark', v === 'dark'));
+group('[data-w]', 'w', v => document.getElementById('stage').style.setProperty('--w', v || '68rem'));
+group('[data-set]', 'set', v => { dataset = v; paint(); });
+paint();
+</script>
+</body>
+</html>
