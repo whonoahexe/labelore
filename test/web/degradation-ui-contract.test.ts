@@ -55,9 +55,13 @@ describe('degradation UI contract (D-10, D-11, D-12, D-13)', () => {
     expect(page).toContain('artifactWarningTone(');
     expect(page).toContain("'Warning'");
     expect(page).toContain("'Unreadable'");
-    // No statically-quoted tone attribute anywhere on this page — every data-tone occurrence must
-    // be expression-valued.
-    expect(page).not.toMatch(/data-tone="[^"]*"/);
+    // No statically-quoted *computed-tone* attribute anywhere on this page — the Warning/Unreadable
+    // distinction must always be expression-valued, reading the shared artifactWarningTone()
+    // derivation rather than a hardcoded literal. VIEW-06 (Phase 5) later adds an unrelated,
+    // genuinely constant `data-tone="quiet"` chip (the Unrecognized-type marker) that has nothing
+    // to compute — this assertion is scoped to the two tones this test's invariant actually
+    // protects, not every tone value the page will ever render.
+    expect(page).not.toMatch(/data-tone="(?:destructive|warning)"/);
     const expressionValuedToneCount = (page.match(/data-tone=\{/g) ?? []).length;
     expect(expressionValuedToneCount).toBe(2);
 
