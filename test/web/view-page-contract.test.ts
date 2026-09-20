@@ -46,4 +46,24 @@ describe('view-page contract (VIEW-01/D-11)', () => {
     expect(manifest).not.toContain('EmptyState');
     expect(manifest).not.toContain('Nothing here yet.');
   });
+
+  it('dispatches through resolveViewFor and renders the VIEW-06 unrecognized marker with a quiet (never destructive/warning) chip', async () => {
+    const page = await source('src/web/pages/artifact-page.tsx');
+    expect(page).toContain('resolveViewFor(');
+    expect(page).toContain('Unrecognized type');
+    expect(page).toContain('data-tone="quiet"');
+    expect(page).toContain('view-unrecognized-notice');
+    expect(page).toContain('role="status"');
+
+    // The quiet chip's literal text sits within 3 lines of its data-tone="quiet" attribute — a
+    // self-contained span, never sharing a data-tone expression with the destructive/warning chip
+    // rendered a few lines above it in the same chip fragment.
+    const lines = page.split('\n');
+    const quietToneLine = lines.findIndex((line) => line.includes('data-tone="quiet"'));
+    expect(quietToneLine).toBeGreaterThanOrEqual(0);
+    const nearby = lines.slice(quietToneLine, quietToneLine + 4).join('\n');
+    expect(nearby).toContain('Unrecognized type');
+    expect(nearby).not.toContain('destructive');
+    expect(nearby).not.toMatch(/data-tone=\{/);
+  });
 });

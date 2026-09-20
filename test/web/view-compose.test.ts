@@ -117,11 +117,13 @@ describe('outlineEntriesOf', () => {
 describe('resolveView', () => {
   it('resolves the registered discussion-log manifest', () => {
     const resolved = resolveView('discussion-log');
-    expect(resolved).not.toBeNull();
-    expect(resolved?.kind).toBe('discussion-log');
+    expect(resolved.recognized).toBe(true);
+    expect(resolved.manifest?.kind).toBe('discussion-log');
   });
 
-  it('returns null for a kind with no registered manifest', () => {
-    expect(resolveView('nope')).toBeNull();
+  it('returns { manifest: null, recognized: false } for a kind with no registered manifest', () => {
+    const resolved = resolveView('nope');
+    expect(resolved.recognized).toBe(false);
+    expect(resolved.manifest).toBeNull();
   });
 });
