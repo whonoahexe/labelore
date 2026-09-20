@@ -4,11 +4,11 @@ milestone: v1.1
 milestone_name: Legible Documents
 current_phase: 5
 status: planning
-stopped_at: Phase 5 context gathered
-last_updated: "2026-09-20T13:12:28.992Z"
+stopped_at: Phase 5 UI-SPEC approved
+last_updated: "2026-09-20T14:18:16.787Z"
 last_activity: 2026-09-20
 last_activity_desc: "Roadmap created for v1.1: one phase, 11/11 requirements mapped"
-state_head: 1c4b879fcd2429408bc75293b51b936f7ed02042
+state_head: d8482e2246d2749a2f9ef0f4692b972fa3367b7f
 progress:
   total_phases: 1
   completed_phases: 0
@@ -130,9 +130,9 @@ Two v1.0 close-time verification overrides recorded below; the two earlier rows 
 
 ## Session Continuity
 
-Last session: 2026-09-20T13:12:28.979Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-per-type-document-views/05-CONTEXT.md
+Last session: 2026-09-20T14:18:16.775Z
+Stopped at: Phase 5 UI-SPEC approved
+Resume file: .planning/phases/05-per-type-document-views/05-UI-SPEC.md
 
 ## Operator Next Steps
 
