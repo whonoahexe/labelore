@@ -16,6 +16,12 @@ import {
   matchesTraceabilityFilter,
   type TraceabilityFilterState,
 } from './traceability-filter.ts';
+import {
+  coveringPhaseSignal,
+  coveringPhaseStatusLabel,
+  coveringRollup,
+  isResolvedCovering,
+} from './traceability-rollup.ts';
 
 // Re-exported so the filter predicate stays reachable directly from the page module (its natural
 // call site) while its DOM-free definition lives in traceability-filter.ts — the same seam
@@ -34,70 +40,23 @@ async function fetchTraceability(): Promise<TraceabilityViewModel> {
   return (await response.json()) as TraceabilityViewModel;
 }
 
-function RequirementStatusChip({ status }: { status: boolean | null }): React.JSX.Element {
-  if (status === null) {
-    return (
-      <span className="status-chip" data-signal="requirement" data-tone="quiet">
-        —
-      </span>
-    );
+/** The phase name/link half of a covering-phase entry, one quiet line per phase in the row body
+ * (see TraceabilityRowList) — a long phase name wraps freely there instead of shoving the rail's
+ * status chip around. */
+function CoveringPhaseName({ covering }: { covering: TraceabilityCoveringPhase }): React.JSX.Element {
+  if (isResolvedCovering(covering)) {
+    return <Link to={covering.url!}>{covering.phaseName}</Link>;
   }
+  return <span className="trace-dangling-text">{covering.raw}</span>;
+}
+
+/** The status-chip half of a covering-phase entry. The rail draws exactly one, from the row's worst
+ * covering phase (coveringRollup); every phase's own status stays readable as text on its line. */
+function CoveringPhaseChip({ covering }: { covering: TraceabilityCoveringPhase }): React.JSX.Element {
   return (
-    <span
-      className="status-chip"
-      data-tone={status ? 'complete' : 'quiet'}
-      data-signal="requirement"
-    >
-      {status ? 'Checked' : 'Unchecked'}
+    <span className="status-chip" data-signal="phase" data-tone={coveringPhaseSignal(covering)}>
+      {coveringPhaseStatusLabel(covering)}
     </span>
-  );
-}
-
-/** A3: an actively-worked covering phase and one with no directory on disk are no longer the same
- * grey chip. Module-level so the mapping is a single, testable fact rather than inlined per call
- * site; an unrecognised or missing disk status falls back to 'quiet' rather than being dropped. */
-const COVERING_PHASE_TONE_BY_DISK_STATUS: Record<string, 'complete' | 'in-flight' | 'missing'> = {
-  complete: 'complete',
-  in_progress: 'in-flight',
-  researched: 'in-flight',
-  no_directory: 'missing',
-};
-
-function coveringPhaseTone(diskStatus: string | null): 'complete' | 'in-flight' | 'missing' | 'quiet' {
-  if (diskStatus === null) return 'quiet';
-  return COVERING_PHASE_TONE_BY_DISK_STATUS[diskStatus] ?? 'quiet';
-}
-
-function CoveringPhaseEntry({
-  rowId,
-  covering,
-  index,
-}: {
-  rowId: string;
-  covering: TraceabilityCoveringPhase;
-  index: number;
-}): React.JSX.Element {
-  if (covering.resolved && covering.url && covering.phaseName) {
-    return (
-      <li key={`${rowId}-covering-${index}`} className="trace-covering-entry">
-        <Link to={covering.url}>{covering.phaseName}</Link>
-        <span
-          className="status-chip"
-          data-signal="phase"
-          data-tone={coveringPhaseTone(covering.phaseDiskStatus)}
-        >
-          {(covering.phaseDiskStatus ?? 'unknown').replaceAll('_', ' ')}
-        </span>
-      </li>
-    );
-  }
-  return (
-    <li key={`${rowId}-covering-${index}`} className="trace-covering-entry">
-      <span className="trace-dangling-text">{covering.raw}</span>
-      <span className="status-chip" data-signal="phase" data-tone="destructive">
-        Unresolved
-      </span>
-    </li>
   );
 }
 
@@ -111,12 +70,32 @@ function CoveringPhaseEntry({
 function CoverageBar({
   coverage,
   label,
+  onlyComplete = false,
 }: {
   coverage: TraceabilityCoverage;
   label: string;
+  /** The summary headline's own bar sits beside a "% covered by complete phases" figure, so
+   * showing the other four buckets there reads as a mismatch with that number — render just the
+   * complete share against an otherwise empty track instead of the full five-segment breakdown. */
+  onlyComplete?: boolean;
 }): React.JSX.Element | null {
   if (coverage.total === 0) return null;
   const total = coverage.total;
+  if (onlyComplete) {
+    return (
+      <div
+        className="trace-bar"
+        role="img"
+        aria-label={`${label}: ${coverage.completePhase} of ${total} with a complete covering phase`}
+      >
+        <span
+          className="trace-bar-segment trace-bar-complete"
+          aria-hidden="true"
+          style={{ width: `${(coverage.completePhase / total) * 100}%` }}
+        />
+      </div>
+    );
+  }
   return (
     <div
       className="trace-bar"
@@ -152,16 +131,17 @@ function CoverageBar({
   );
 }
 
-/** The hierarchical replacement for the former ruled table (NS4-05). quick-260918-qkd Task 3
- * (D4): the visible per-row micro-labels — really column headers repeated on every row — are gone;
- * the accessible name they carried survives as an `sr-only` span with the same words, since the
- * chips are self-identifying after Task 2 (Checked/Unchecked plus a source marker on the phase
- * chip). quick-260917-wba Task 3: the optional `variant` prop drives a deferred-tier presentation —
- * every deferred row has a null requirement status by construction, so the Requirement-status
- * block (and its guaranteed-em-dash chip) is noise there; a deferred row with no covering phase
- * reads as "not yet scheduled" in a quiet tone rather than the alarming destructive "Uncovered"
- * chip the default (active-tier) variant still shows. The default variant's markup is
- * structurally identical to before this task. */
+/** The hierarchical replacement for the former ruled table (NS4-05). Sketch 001 (variant C): a
+ * fixed status rail on the left holds ONE chip — the row's worst covering phase, or "Uncovered" —
+ * so status is the first thing the eye lands on down the list; the body holds the ID, the text and
+ * one quiet line per covering phase. The rail is a rollup, so every phase's own status is repeated
+ * as text on its line rather than left to colour alone. quick-260918-qkd Task 3 (D4): the visible
+ * per-row micro-labels — really column headers repeated on every row — are gone; the accessible
+ * name they carried survives as an `sr-only` span with the same words. quick-260917-wba Task 3:
+ * the optional `variant` prop drives a deferred-tier presentation — every deferred row has a null
+ * requirement status by construction, so the status-mismatch flag is noise there; a deferred row
+ * with no covering phase reads as "not yet scheduled" in a quiet tone rather than the alarming
+ * destructive "Uncovered" chip the default (active-tier) variant still shows. */
 function TraceabilityRowList({
   rows,
   labelledBy,
@@ -173,56 +153,52 @@ function TraceabilityRowList({
 }): React.JSX.Element {
   return (
     <ul className="trace-rows" aria-labelledby={labelledBy}>
-      {rows.map((row) => (
-        <li key={row.id} className="trace-row">
-          <div className="trace-row-primary">
-            <strong className="trace-row-id">{row.id}</strong>
-            <span className="trace-row-text">{row.text}</span>
-          </div>
-          <div className="trace-row-secondary">
-            {variant !== 'deferred' ? (
-              <div>
-                <span className="sr-only">Requirement status</span>
-                <div className="trace-marker-stack">
-                  <RequirementStatusChip status={row.requirementStatus} />
-                  {row.statusDisagreement ? (
-                    <span className="status-chip trace-marker" data-tone="destructive">
-                      Status mismatch
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-            ) : null}
-            {variant === 'deferred' && row.uncovered ? (
-              <div>
+      {rows.map((row) => {
+        const rollup = row.uncovered ? null : coveringRollup(row.coveringPhases);
+        return (
+          <li key={row.id} className="trace-row">
+            <div className="trace-row-rail">
+              <span className="sr-only">Covering phase</span>
+              {variant === 'deferred' && row.uncovered ? (
                 <span className="status-chip trace-marker" data-tone="quiet">
                   Not yet scheduled
                 </span>
-              </div>
-            ) : (
-              <div>
-                <span className="sr-only">Covering phase</span>
-                {row.uncovered ? (
+              ) : row.uncovered ? (
+                <span className="status-chip trace-marker" data-tone="destructive">
+                  Uncovered
+                </span>
+              ) : rollup ? (
+                <CoveringPhaseChip covering={rollup.worst} />
+              ) : null}
+              <span className="trace-row-rail-count">{rollup ? rollup.countLabel : 'No phase'}</span>
+            </div>
+            <div className="trace-row-body">
+              <strong className="trace-row-id">{row.id}</strong>
+              <span className="trace-row-text">{row.text}</span>
+              {rollup ? (
+                <ul className="trace-covering-lines">
+                  {row.coveringPhases.map((covering, index) => (
+                    <li
+                      key={`${row.id}-covering-${index}`}
+                      className="trace-covering-line"
+                      data-tone={coveringPhaseSignal(covering)}
+                    >
+                      <CoveringPhaseName covering={covering} />
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              {variant !== 'deferred' && row.statusDisagreement ? (
+                <div className="trace-row-flags">
                   <span className="status-chip trace-marker" data-tone="destructive">
-                    Uncovered
+                    Status mismatch
                   </span>
-                ) : (
-                  <ul className="trace-covering-list">
-                    {row.coveringPhases.map((covering, index) => (
-                      <CoveringPhaseEntry
-                        key={`${row.id}-covering-${index}`}
-                        rowId={row.id}
-                        covering={covering}
-                        index={index}
-                      />
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-          </div>
-        </li>
-      ))}
+                </div>
+              ) : null}
+            </div>
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -343,13 +319,8 @@ export function TraceabilityPage(): React.JSX.Element {
               {view.coverage.completePhasePercent}%
             </span>
             <span className="trace-coverage-percent-label">Covered by complete phases</span>
-            <p className="trace-coverage-percent-note">
-              {view.coverage.tracedPercent}% of requirements name a covering phase at all &mdash;
-              this headline counts only those whose covering phase is finished on disk. A
-              requirement&rsquo;s own checkbox is reported separately as the Checked tile below.
-            </p>
           </div>
-          <CoverageBar coverage={view.coverage} label="Overall coverage" />
+          <CoverageBar coverage={view.coverage} label="Overall coverage" onlyComplete />
           <dl className="trace-stat-tiles">
             <div className="trace-stat-tile" data-bucket="total">
               <dt>Total</dt>

@@ -20,12 +20,10 @@ describe('empty-state contract (D-06, D-07, D-08, D-09)', () => {
   it('is imported by every optional-content surface, none of which re-types the message literal directly (D-08)', async () => {
     const roadmap = await source('src/web/pages/roadmap-page.tsx');
     const traceability = await source('src/web/pages/traceability-page.tsx');
-    const artifact = await source('src/web/pages/artifact-page.tsx');
 
     for (const [name, page] of [
       ['roadmap-page.tsx', roadmap],
       ['traceability-page.tsx', traceability],
-      ['artifact-page.tsx', artifact],
     ] as const) {
       expect(page, name).toContain("import { EmptyState } from '../components/empty-state.tsx';");
       expect(page, name).not.toContain('Nothing here yet.');
@@ -56,9 +54,11 @@ describe('empty-state contract (D-06, D-07, D-08, D-09)', () => {
     expect(traceability).toContain('<EmptyState />');
   });
 
-  it('adds <EmptyState /> to artifact-page.tsx for a document with no structured metadata, replacing the old silent null (D-08)', async () => {
+  it('artifact-page.tsx renders nothing for a document with no structured metadata — a file without frontmatter is normal, and a loose "Nothing here yet." above the outline read as an error (reverses the D-08 addition, artifact page only)', async () => {
     const artifact = await source('src/web/pages/artifact-page.tsx');
-    expect(artifact).toMatch(/\{panels\.length > 0 \? \([\s\S]*?\) : \(\s*<EmptyState \/>\s*\)\}/);
+    expect(artifact).not.toContain('EmptyState');
+    expect(artifact).not.toContain('Nothing here yet.');
+    expect(artifact).toMatch(/\{panels\.length > 0 \? \([\s\S]*?\) : null\}/);
   });
 
   it('leaves dashboard-page.tsx untouched — its two all-clear sentences and on-deck sentence still exist (scope rule)', async () => {

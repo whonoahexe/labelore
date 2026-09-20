@@ -91,7 +91,7 @@ describe('authorized Studio Portal shell contract', () => {
   it('lets open plans render without manufacturing a missing-summary error', async () => {
     const pair = await source('src/web/pages/plan-pair-page.tsx');
     expect(pair).toContain('Outcome not recorded yet');
-    expect(pair).toContain('if (!plan.summary) return { plan: planDocument, summary: null }');
+    expect(pair).toContain('if (!plan.summary) return { plan: planDocument, summary: null, meta };');
     expect(pair).not.toContain('does not have a paired summary yet');
   });
 
@@ -134,5 +134,26 @@ describe('authorized Studio Portal shell contract', () => {
     const navigator = await source('src/web/components/tree-navigator.tsx');
     expect(navigator).toMatch(/<details[^>]*\sopen=\{node\.nodeType === 'group'\}/);
     expect(navigator).toContain('if (detailsRef.current) detailsRef.current.open = true;');
+  });
+});
+
+describe('shared artifact header', () => {
+  it('ArtifactPage and PlanPairPage both open with ArtifactHeader instead of hand-written breadcrumb and heading markup', async () => {
+    const artifact = await source('src/web/pages/artifact-page.tsx');
+    const pair = await source('src/web/pages/plan-pair-page.tsx');
+    for (const [name, page] of [
+      ['artifact-page.tsx', artifact],
+      ['plan-pair-page.tsx', pair],
+    ] as const) {
+      expect(page, name).toContain('<ArtifactHeader');
+      expect(page, name).not.toContain('className="artifact-breadcrumbs"');
+      expect(page, name).not.toContain('className="artifact-heading"');
+    }
+  });
+
+  it('the plan page is titled by its plan id, never by the file path', async () => {
+    const pair = await source('src/web/pages/plan-pair-page.tsx');
+    expect(pair).toContain('title={`Plan ${pair.meta.id}`}');
+    expect(pair).not.toContain('title={pair.plan.artifact.title}');
   });
 });
