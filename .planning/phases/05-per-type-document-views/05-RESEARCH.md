@@ -588,7 +588,7 @@ above, per CONTEXT.md's own note.
 | A2 | The recommended manifest/registry shape (`SECTION_PROJECTION_EXTRACTORS` mirroring `FRONTMATTER_PANEL_BUILDERS`) is a suggestion, not a locked design — CONTEXT.md explicitly leaves "whether manifests are data or small functions" to Claude's Discretion. | Code Examples, Architecture Patterns | None if the planner treats it as illustrative; would be wrong only if presented as mandatory. |
 | A3 | `@base-ui/react` `Popover`/`Dialog` chosen over `<details>` for D-12's narrow-width disclosure is a recommendation based on reading D-12's "overlays the section list" wording, not a verified requirement — the actual mechanics are Claude's Discretion per CONTEXT.md. | Alternatives Considered | Low — either approach is accessible if built carefully; the plan should treat this as a starting recommendation, not a constraint. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Exact granular `kind` string set the view registry must cover**
    - What we know: all 16 types' `artifact.kind` values were derived by tracing `deriveKind()` and

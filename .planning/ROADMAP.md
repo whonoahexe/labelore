@@ -60,11 +60,22 @@ UI-05, UI-06
 **Plans**: 6 plans
 
 Plans:
+**Wave 1**
+
 - [ ] 05-01-PLAN.md — Tracer: DISCUSSION-LOG end to end — section-projection hook, view registry, View/Source toggle, collapsed remainder, view-sourced outline (VIEW-01, VIEW-02)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 05-02-PLAN.md — Design language written down (`docs/design-language.md`) and enforced by the class-vocabulary test (UI-04, UI-05)
 - [ ] 05-03-PLAN.md — `D-XX` / `WR-XX` mentions: warning scheme, decision/warning registries, phase-local-then-corpus resolution (BACK-02)
 - [ ] 05-04-PLAN.md — Outline reading-position tracking and narrow-width sticky disclosure (READ-07)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 05-05-PLAN.md — VERIFICATION and PLAN views plus the unrecognized-type structural fallback (VIEW-03, VIEW-04, VIEW-06)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 05-06-PLAN.md — Remaining 15 manifests, registry completeness, conformance sweep and end-of-phase human check (VIEW-05, UI-06)
 
 **UI hint**: yes
