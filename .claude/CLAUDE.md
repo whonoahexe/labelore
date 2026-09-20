@@ -162,7 +162,7 @@ artifact lives — without reading a single file by hand.
 
 ## Conventions
 
-Conventions not yet established. Will populate as patterns emerge during development.
+Visual and naming conventions live in [docs/design-language.md](../docs/design-language.md); the class-vocabulary test (test/web/class-vocabulary.test.ts) enforces them.
 <!-- GSD:conventions-end -->
 
 <!-- GSD:architecture-start source:ARCHITECTURE.md -->
