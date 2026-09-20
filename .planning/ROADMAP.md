@@ -57,12 +57,12 @@ UI-05, UI-06
    the reader is; a `D-XX` or `WR-XX` mention in prose is clickable and lands on its source.
    *(READ-07, BACK-02)*
 
-**Plans**: 6 plans
+**Plans**: 1/6 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 05-01-PLAN.md — Tracer: DISCUSSION-LOG end to end — section-projection hook, view registry, View/Source toggle, collapsed remainder, view-sourced outline (VIEW-01, VIEW-02)
+- [x] 05-01-PLAN.md — Tracer: DISCUSSION-LOG end to end — section-projection hook, view registry, View/Source toggle, collapsed remainder, view-sourced outline (VIEW-01, VIEW-02)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -129,7 +129,7 @@ small independent entry.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 5. Per-Type Document Views | 0/6 | Planned | - |
+| 5. Per-Type Document Views | 1/6 | In Progress|  |
 
 *Phases 1-4 (v1.0) are complete and archived — see [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md).*
 
