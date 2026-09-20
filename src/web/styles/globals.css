@@ -2922,6 +2922,17 @@ pre {
   color: var(--foreground);
 }
 
+/* VIEW-03 VERIFICATION view (view-local, UI-SPEC §4): spacing/border grouping only — the field
+   styling itself is the shared .metadata-list rule. */
+.view-verification-check {
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--border);
+}
+
+.view-verification-check:first-of-type {
+  border-top: 0;
+}
+
 .document-canvas {
   min-width: 0;
   max-width: 70rem;
