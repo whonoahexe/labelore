@@ -57,7 +57,7 @@ UI-05, UI-06
    the reader is; a `D-XX` or `WR-XX` mention in prose is clickable and lands on its source.
    *(READ-07, BACK-02)*
 
-**Plans**: 4/6 plans executed
+**Plans**: 5/6 plans executed
 
 Plans:
 **Wave 1**
@@ -72,7 +72,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 05-05-PLAN.md — VERIFICATION and PLAN views plus the unrecognized-type structural fallback (VIEW-03, VIEW-04, VIEW-06)
+- [x] 05-05-PLAN.md — VERIFICATION and PLAN views plus the unrecognized-type structural fallback (VIEW-03, VIEW-04, VIEW-06)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -129,7 +129,7 @@ small independent entry.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 5. Per-Type Document Views | 4/6 | In Progress|  |
+| 5. Per-Type Document Views | 5/6 | In Progress|  |
 
 *Phases 1-4 (v1.0) are complete and archived — see [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md).*
 

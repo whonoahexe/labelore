@@ -19,12 +19,12 @@ Requirement IDs continue from v1.0 (archived at `milestones/v1.0-REQUIREMENTS.md
       undifferentiated reader
 - [x] **VIEW-02**: A discussion log shows, for each question, the options that were offered and which
       one was chosen
-- [ ] **VIEW-03**: A verification report leads with what still needs human verification — each check,
+- [x] **VIEW-03**: A verification report leads with what still needs human verification — each check,
       what is expected, and why a person is required
-- [ ] **VIEW-04**: A plan shows its task structure, including each section's position and whether it
+- [x] **VIEW-04**: A plan shows its task structure, including each section's position and whether it
       gates
 - [ ] **VIEW-05**: All 16 known artifact types have a registered view, not a subset
-- [ ] **VIEW-06**: An artifact type with no registered view still renders structurally, inferred from
+- [x] **VIEW-06**: An artifact type with no registered view still renders structurally, inferred from
       its shape, and is marked unrecognized rather than presented as understood
 
 ### Reading Surface
@@ -122,10 +122,10 @@ maps to Phase 5; the wave column records where it is expected to land inside tha
 |-------------|-------|------------------|--------|
 | VIEW-01 | Phase 5 | 1 — Foundation (view registry, granular `kind`) | Complete |
 | VIEW-02 | Phase 5 | 3 — Proof (DISCUSSION-LOG end to end) | Complete |
-| VIEW-03 | Phase 5 | 4 — Coverage (view only; no handler work) | Pending |
-| VIEW-04 | Phase 5 | 4 — Coverage | Pending |
+| VIEW-03 | Phase 5 | 4 — Coverage (view only; no handler work) | Complete |
+| VIEW-04 | Phase 5 | 4 — Coverage | Complete |
 | VIEW-05 | Phase 5 | 4 — Coverage | Pending |
-| VIEW-06 | Phase 5 | 2 — Extraction (section projection + speculative fallback) | Pending |
+| VIEW-06 | Phase 5 | 2 — Extraction (section projection + speculative fallback) | Complete |
 | READ-07 | Phase 5 | Any — independent of the registry work | Complete |
 | BACK-02 | Phase 5 | Any — independent of the registry work | Complete |
 | UI-04 | Phase 5 | 1 — Foundation (convention written down) | Complete |
