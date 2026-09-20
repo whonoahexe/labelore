@@ -5,16 +5,16 @@ milestone_name: Legible Documents
 current_phase: 05
 current_phase_name: Per-Type Document Views
 status: executing
-stopped_at: Completed 05-04-PLAN.md
-last_updated: "2026-09-20T16:16:47.047Z"
+stopped_at: Completed 05-05-PLAN.md
+last_updated: "2026-09-20T20:14:14.596Z"
 last_activity: 2026-09-20
 last_activity_desc: Phase 05 execution started
-state_head: 4be64d85e930b28b76e52caeff4742cebd82b165
+state_head: e63bd69b92926349013de2999a2ad41ec46f94df
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-20)
 ## Current Position
 
 Phase: 05 (Per-Type Document Views) — EXECUTING
-Plan: 5 of 6
+Plan: 6 of 6
 Status: Ready to execute
 Last activity: 2026-09-20 — Phase 05 execution started
 
@@ -78,6 +78,7 @@ Last activity: 2026-09-20 — Phase 05 execution started
 | Phase 05 P02 | 15min | 2 tasks | 3 files |
 | Phase 05 P03 | 14min | 2 tasks | 12 files |
 | Phase 05 P04 | 20min | 2 tasks | 8 files |
+| Phase 05 P05 | 235min | 3 tasks | 16 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,7 @@ milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) a
 - [Phase 05]: 05-02: docs/design-language.md written down (UI-04) and enforced by test/web/class-vocabulary.test.ts (UI-05), a class-vocabulary allowlist derived from the doc's own table rows plus the D-09 view-local namespace, with a comparison-aware data-tone extractor so ternary comparison operands never get mistaken for tone values. — Precondition for Plans 05-03..05-06: every remaining per-type view manifest is authored against this vocabulary and gated by this test.
 - [Phase 05]: 05-03: D-XX/WR-XX mentions resolve phase-local-first-then-corpus-unique (D-14), preview-first via the unmodified reference-preview.tsx (D-15) — decisionPreview/warningPreview reuse addResolution's existing null-on-duplicate ambiguity collapse rather than a second ambiguity rule. — Two parallel maps (phase-scoped, corpus-wide) built from the same existing primitive keep the resolution logic auditable against one ambiguity rule instead of two.
 - [Phase 05]: 05-04: pickActiveEntry + useActiveSection (single IntersectionObserver) drive one active outline entry; below 58rem a document-outline-trigger Popover replaces the old in-flow rule (RESEARCH Pitfall 5). — One pure picker + one hook seam, shared by Source and View modes (D-11); D-12's narrow disclosure reuses the wide column's own <ol> markup via an extracted OutlineList so the two presentations cannot drift.
+- [Phase 05]: 05-05: fallback pattern for unregistered kinds (VIEW-06) — resolveViewFor folds fallback.ts's synthesized structural-read manifest into the one dispatch path ArtifactPage calls; resolveView stays registry-only for 05-06's completeness test. — An unrecognized artifact.kind still gets a real ViewManifest (nested frontmatter -> headed sections -> full document), never a null branch, so the page has exactly one render path and a quiet, honest 'Unrecognized type' marker rather than a silent fallback to the old source reader.
 
 ### Pending Todos
 
@@ -139,8 +141,8 @@ Two v1.0 close-time verification overrides recorded below; the two earlier rows 
 
 ## Session Continuity
 
-Last session: 2026-09-20T16:16:47.025Z
-Stopped at: Completed 05-04-PLAN.md
+Last session: 2026-09-20T20:14:14.573Z
+Stopped at: Completed 05-05-PLAN.md
 Resume file: None
 
 ## Operator Next Steps
