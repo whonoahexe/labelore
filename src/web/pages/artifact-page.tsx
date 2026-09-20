@@ -23,6 +23,7 @@ import {
 import type { RenderedDocument } from '../../rendering/markdown.ts';
 import { ReferencePreview, type ReferencePreviewState } from '../components/reference-preview.tsx';
 import { DocumentViewToggle } from '../components/document-view-toggle.tsx';
+import { DocumentOutline, type OutlineEntry } from '../components/document-outline.tsx';
 import { handleDocumentReferenceActivation } from './document-reference-activation.ts';
 import { dropLeadingTitle } from './document-title.ts';
 import { toMermaidColor } from './mermaid-theme.ts';
@@ -73,23 +74,6 @@ const WARNING_DISCLOSURE_LABELS: Record<Exclude<ArtifactWarningTone, null>, stri
 function outlineHeadings(document: RenderedDocument): RenderedDocument['headings'] {
   const headings = document.headings.filter((heading) => heading.depth <= 3).slice(0, 18);
   return headings.length < 2 ? [] : headings;
-}
-
-function DocumentOutline({ document }: { document: RenderedDocument }): React.JSX.Element | null {
-  const headings = outlineHeadings(document);
-  if (headings.length === 0) return null;
-  return (
-    <nav className="document-outline" aria-label="On this page">
-      <p>On this page</p>
-      <ol>
-        {headings.map((heading) => (
-          <li key={heading.id} data-depth={heading.depth}>
-            <a href={`#${encodeURIComponent(heading.id)}`}>{heading.text}</a>
-          </li>
-        ))}
-      </ol>
-    </nav>
-  );
 }
 
 function ValueView({ value }: { value: FrontmatterValueView }): React.JSX.Element {
@@ -373,12 +357,21 @@ function ArtifactReader({
   document: RenderedDocument;
 }): React.JSX.Element {
   const shown = useMemo(() => dropLeadingTitle(document, title), [document, title]);
+  const entries: OutlineEntry[] = useMemo(
+    () =>
+      outlineHeadings(shown).map((heading) => ({
+        id: heading.id,
+        label: heading.text,
+        depth: heading.depth,
+      })),
+    [shown],
+  );
   return (
     <div
       className="document-reader-layout"
       data-outline={outlineHeadings(shown).length > 0 ? 'true' : 'false'}
     >
-      <DocumentOutline document={shown} />
+      <DocumentOutline entries={entries} />
       <article className="document-canvas" aria-label={`${title} document`}>
         <DocumentView document={shown} />
       </article>
@@ -388,10 +381,9 @@ function ArtifactReader({
 
 /**
  * The per-type view: manifest-promoted blocks first (D-04's promotion order), then D-02's
- * collapsed remainder, then D-11's view-sourced outline. Defined in this file — not
- * `views/manifest.ts` — so it can reuse `DocumentView` directly with no import cycle. The outline
- * markup below is a temporary inline render; Task 2 extracts it into
- * `../components/document-outline.tsx` and swaps this for `<DocumentOutline entries={entries} />`.
+ * collapsed remainder, then D-11's view-sourced outline (via the shared `DocumentOutline`
+ * component). Defined in this file — not `views/manifest.ts` — so it can reuse `DocumentView`
+ * directly with no import cycle.
  */
 function ViewReader({
   title,
@@ -402,7 +394,8 @@ function ViewReader({
   composed: ComposedView;
   shown: RenderedDocument;
 }): React.JSX.Element {
-  const entries = outlineEntriesOf(composed);
+  const rawEntries = outlineEntriesOf(composed);
+  const entries = rawEntries.length < 2 ? [] : rawEntries;
   const remainderCount = composed.remainder.length;
   const remainderHtml = useMemo(
     () => composed.remainder.map((group) => group.html).join(''),
@@ -413,18 +406,7 @@ function ViewReader({
       className="document-reader-layout"
       data-outline={entries.length > 0 ? 'true' : 'false'}
     >
-      {entries.length > 0 ? (
-        <nav className="document-outline" aria-label="On this page">
-          <p>On this page</p>
-          <ol>
-            {entries.map((entry) => (
-              <li key={entry.id} data-depth={2}>
-                <a href={`#${encodeURIComponent(entry.id)}`}>{entry.label}</a>
-              </li>
-            ))}
-          </ol>
-        </nav>
-      ) : null}
+      <DocumentOutline entries={entries} />
       <article className="document-canvas" aria-label={`${title} document`}>
         {composed.blocks.map((block) => {
           if (block.kind === 'section') {
