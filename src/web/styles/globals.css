@@ -2965,6 +2965,12 @@ pre {
   overflow-wrap: anywhere;
 }
 
+/* VIEW-06 unrecognized-type marker (view-local, UI-SPEC §8): the .notice base rule carries the
+   visual treatment; this is spacing only. */
+.view-unrecognized-notice {
+  margin-bottom: var(--space-6);
+}
+
 .document-canvas {
   min-width: 0;
   max-width: 70rem;
