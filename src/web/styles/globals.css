@@ -2860,6 +2860,27 @@ pre {
   color: var(--primary);
 }
 
+/* READ-07/D-13: the single currently-tracked entry. Same accent transition as
+   .source-link:hover, plus a squared left-gutter bar mirroring
+   .status-chip[data-signal='phase']::before's marker language (no border-radius). */
+.document-outline a[data-active='true'] {
+  color: var(--primary);
+}
+
+.document-outline li:has(a[data-active='true']) {
+  position: relative;
+}
+
+.document-outline li:has(a[data-active='true'])::before {
+  position: absolute;
+  top: var(--space-0-5);
+  bottom: var(--space-0-5);
+  left: calc(-1 * var(--space-3));
+  width: var(--space-0-5);
+  background: var(--primary);
+  content: '';
+}
+
 /* D-01/D-03: the View/Source control mounted in ArtifactHeader's children slot. */
 .document-view-toggle {
   display: inline-flex;
