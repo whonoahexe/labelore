@@ -6,6 +6,7 @@ import type { DiscussionTopic } from '../../planning-repo/handlers/section-proje
 import { factsBlock } from './facts.ts';
 import { planTaskIndexBlock } from './plan-task-index.ts';
 import { fallbackManifest } from './fallback.ts';
+import { discussionLogLayout } from './layout-discussion-log.ts';
 import type { ViewKind } from './kinds.ts';
 import type { PromotedBlock, ViewInput, ViewManifest } from './manifest.ts';
 
@@ -65,6 +66,7 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
     kind: 'discussion-log',
     lead: 'Each question, the options that were on the table, and which one was chosen.',
     promote: [discussionQuestionsBlock()],
+    layout: discussionLogLayout,
   },
   verification: {
     kind: 'verification',

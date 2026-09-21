@@ -59,18 +59,58 @@ is always to add the missing name to this document, never to edit the reference 
 | `sr-only` | Visually-hidden, screen-reader-only text | globals.css:1857 |
 | `min-w-0` | Layout utility forcing a flex/grid child's min-width to 0 so its content can shrink/wrap | src/web/pages/roadmap-page.tsx:90 (no dedicated CSS rule — relies on the property being unset elsewhere) |
 | `text-link` | Inline text link style distinct from `.source-link` | globals.css:1412 |
+| `document-cover` | sketch-004 B3 cover-sheet wrapper — `ArtifactHeader`'s optional `cover` prop | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-cover-copy` | Cover sheet: eyebrow/h1/lede/facts/path column | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-cover-facts` | Cover sheet: the one-line facts row | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-cover-controls` | Cover sheet: status chip + View/Source toggle column | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-cover-cells` | Cover sheet: the headline/glance/chapter-index row, pair with `data-glance` | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-cover-cell` | One cell inside `.document-cover-cells` | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-cover-glance` | Modifier on `.document-cover-cell` for the accent-topped "worth knowing" cell | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-cover-headline` | Cover sheet: the big number + label inside the headline cell | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-cover-pills` | Cover sheet: the row of supporting-count pills | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-cover-pill` | One supporting-count pill, typography mirrors `.plan-pill` but squared | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-chapter-index` | Cover sheet: the clickable "In this document" chapter list | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-chapter-index-number` | One chapter-index row's two-digit number | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-chapter-index-title` | One chapter-index row's title | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-chapter-index-count` | One chapter-index row's item count | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-chapter-bar` | The pinned bar shown once `.document-cover` scrolls out of view | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-chapter-bar-number` | Pinned bar: the current chapter's number | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-chapter-bar-title` | Pinned bar: the current chapter's title | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-chapter-bar-doc` | Pinned bar: the document title, hidden at the 42rem breakpoint | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-fold-tools` | The "Expand all"/"Collapse all" row above the first fold | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-fold` | One folded chapter — also carries `.view-block` (data-open attribute) | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-fold-title` | The fold's `h2` wrapper around `.document-fold-head` | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-fold-head` | The fold's clickable header button | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-fold-number` | The fold header's big muted number | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-fold-name` | The fold header's title — carries the heading size so status chips keep the inherited body line-height (F-05) | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-fold-rollup` | The fold header's roll-up status chips | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-fold-chevron` | The fold header's disclosure chevron (rotates via `[data-open='true']`) | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-fold-body` | A fold's revealed content, rendered only while open | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-item` | One item row inside a fold body | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-item-head` | An item row's ref/title + chips header line | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-item-ref` | An item row's reference label (e.g. "Q1", "Task 1") | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-item-title` | An item row's title | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-item-chips` | An item row's type-specific chip cluster | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-item-state` | An item row's state chip + chosen-answer text line | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-item-answer` | The chosen-answer text inside `.document-item-state` | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-item-more` | An item row's detail-toggle link + revealed detail wrapper | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-item-detail` | An item row's revealed detail block | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-item-detail-row` | One labeled row inside `.document-item-detail` | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-item-detail-label` | The optional label on a `.document-item-detail-row` | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-also` | The grid of secondary panels inside the Also chapter | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-also-panel` | One secondary panel inside `.document-also` | globals.css — sketch-004 B3 layout (quick-260922-3us) |
 
 ## Tones
 
 | Tone | Meaning | Used for |
 |------|---------|----------|
-| `active` | In progress / currently selected — accent-tinted | A chosen discussion-log option, the current phase while in progress, an active outline entry |
-| `complete` | Finished / matched — accent-tinted (shares styling with `active`) | A completed phase or plan, an exact traceability match |
-| `quiet` | Neutral coverage gap — muted-foreground, never alarming | An unrecognized/unmanifested type, a non-exact traceability match, a phase not yet started |
-| `destructive` | Genuine read/parse failure only | The "Unreadable" artifact-parse chip; never used for a merely-unrecognized type |
-| `warning` | Partial read/parse degradation only | The "Warning" artifact-parse chip |
-| `in-flight` | A phase or item currently being worked | Traceability covering-phase signal |
-| `missing` | An expected item that has not appeared | Traceability covering-phase signal |
+| `active` | In progress / currently selected — accent-tinted | A chosen discussion-log option, the current phase while in progress, an active outline entry, a sketch-004 B3 item's "Chosen"/"Claude chose" state chip |
+| `complete` | Finished / matched — accent-tinted (shares styling with `active`) | A completed phase or plan, an exact traceability match, a sketch-004 B3 document's "N of N decided"/"Passed" cover status and a fully-verified item's state chip |
+| `quiet` | Neutral coverage gap — muted-foreground, never alarming | An unrecognized/unmanifested type, a non-exact traceability match, a phase not yet started, every sketch-004 B3 roll-up chip and Also-chapter panel chip |
+| `destructive` | Genuine read/parse failure only | The "Unreadable" artifact-parse chip; never used for a merely-unrecognized type; never used by any sketch-004 B3 document-content chip (state/rollup/pill), which stay within `active`/`complete`/`quiet`/`in-flight`/`missing` |
+| `warning` | Partial read/parse degradation only | The "Warning" artifact-parse chip; never used by any sketch-004 B3 document-content chip, same rule as `destructive` above |
+| `in-flight` | A phase or item currently being worked | Traceability covering-phase signal, a sketch-004 B3 document's "Awaiting checkpoint"/"Gaps found" cover status |
+| `missing` | An expected item that has not appeared | Traceability covering-phase signal, a sketch-004 B3 gap item's "Failed" state chip |
 
 ## Families
 
@@ -121,7 +161,11 @@ element is actually written, regardless of class name:
 - **The 10% accent reservation.** `--primary` is reserved, in this phase's new UI, for exactly: the
   eyebrow kind label, the chosen-option chip in a discussion-log question, the gate chip in a
   plan's task index, the active/current outline entry, and the document-view toggle's active-state
-  indicator. Never used for body text, never used decoratively.
+  indicator. Never used for body text, never used decoratively. sketch-004 B3 (quick-260922-3us)
+  extends this same reservation to: the cover sheet's `.document-cover-glance` cell's top rule, the
+  pinned chapter bar's current-chapter number, and every cover/panel eyebrow (`.document-cover-copy
+  .eyebrow`, `.document-cover-cell .eyebrow`, `.document-also-panel .eyebrow`) — the last of these
+  is the pre-existing `.eyebrow` rule reused verbatim, not a new accent use.
 - **Squared corners.** `border-radius` is unset (0) everywhere except 3 existing call sites of
   `--radius-sm`. Treat radius as the exception, never the default, for any new element.
 - **Light + dark parity.** Every new rule is checked against both `:root` and `.dark` — both
@@ -130,7 +174,9 @@ element is actually written, regardless of class name:
   sanctioned absence copy when a visible absence surface is genuinely needed; absence is silent
   (no copy at all) everywhere else (D-06).
 - **`ArtifactHeader` is the only document-page header.** Every per-type view reuses it unmodified
-  rather than forking a bespoke header per kind.
+  rather than forking a bespoke header per kind. The sketch-004 B3 cover sheet (quick-260922-3us)
+  is this same component's optional `cover` prop — a `.document-cover` wrapper around the identical
+  eyebrow/h1/lede/path fields plus the headline/glance/chapter-index cells — never a second header.
 
 ## Surface-scoped registered names
 
