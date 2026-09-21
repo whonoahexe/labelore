@@ -1,0 +1,1 @@
+No external API integration: Phase 05 adds per-type document views over Labelore's existing local filesystem reader and its own loopback HTTP routes; it adds no external API, SDK, or service dependency.
