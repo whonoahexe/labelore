@@ -252,3 +252,115 @@ test.describe('document layout — sketch-004 B3 (quick-260922-3us)', () => {
     await expect(page.locator('.reference-preview')).toBeVisible();
   });
 });
+
+// ---------------------------------------------------------------------------
+// PLAN/VERIFICATION cover/glance smoke (quick-260922-3us Task 2) — a lighter check than
+// `runFullBehaviorChecks` above: cover/glance presence, specific folds present/absent (with an
+// item-count assertion where the fixture's shape is pinned), and the parsed headline. Archived
+// fixtures are immutable, so hardcoded expected values are safe.
+// ---------------------------------------------------------------------------
+
+interface SmokeFoldExpectation {
+  title: string;
+  /** Asserted with `toBeGreaterThanOrEqual` — "at least one item". */
+  minItems?: number;
+  /** Asserted with `toBe` — an exact, pinned item count. */
+  exactItems?: number;
+}
+
+interface SmokeFixture {
+  id: string;
+  pathIncludes: string;
+  glance: boolean;
+  headline?: string;
+  foldsPresent?: SmokeFoldExpectation[];
+  foldsAbsent?: string[];
+}
+
+const PLAN_AND_VERIFICATION_SMOKE_FIXTURES: SmokeFixture[] = [
+  {
+    id: '01-01-plan',
+    pathIncludes: '01-read-layer-domain-model/01-01-PLAN.md',
+    glance: true,
+    foldsPresent: [{ title: 'Tasks', minItems: 1 }, { title: 'Must be true when done' }],
+  },
+  {
+    id: '01-02-plan',
+    pathIncludes: '01-read-layer-domain-model/01-02-PLAN.md',
+    glance: false,
+  },
+  {
+    id: '05-verification',
+    pathIncludes: '05-per-type-document-views/05-VERIFICATION.md',
+    glance: true,
+    headline: '5/7',
+    foldsPresent: [{ title: 'Needs a human', exactItems: 4 }],
+  },
+  {
+    id: '01-verification',
+    pathIncludes: '01-read-layer-domain-model/01-VERIFICATION.md',
+    glance: false,
+    headline: '5/5',
+    foldsAbsent: ['Needs a human'],
+  },
+  {
+    id: '02-verification',
+    pathIncludes: '02-situational-awareness-artifact-reading/02-VERIFICATION.md',
+    glance: false,
+    headline: '6/6',
+  },
+];
+
+async function runCoverGlanceSmoke(page: Page, baseURL: string, fixture: SmokeFixture): Promise<void> {
+  const url = await resolveFixtureUrl(baseURL, fixture.pathIncludes);
+  await setTheme(page, 'light');
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(url);
+  await waitForCover(page);
+
+  const glanceCount = await page.locator('.document-cover-glance').count();
+  const dataGlance = await page.locator('.document-cover-cells').first().getAttribute('data-glance');
+  if (fixture.glance) {
+    expect(glanceCount).toBeGreaterThan(0);
+    expect(dataGlance).toBe('true');
+  } else {
+    expect(glanceCount).toBe(0);
+    expect(dataGlance).toBe('false');
+  }
+
+  if (fixture.headline !== undefined) {
+    const headlineText = (
+      await page.locator('.document-cover-headline strong').first().innerText()
+    ).trim();
+    expect(headlineText).toBe(fixture.headline);
+  }
+
+  for (const fold of fixture.foldsPresent ?? []) {
+    const foldSection = page
+      .locator('.document-fold')
+      .filter({ has: page.locator('.document-fold-name', { hasText: fold.title }) })
+      .first();
+    await expect(foldSection).toHaveCount(1);
+    if (fold.minItems !== undefined || fold.exactItems !== undefined) {
+      await foldSection.locator('.document-fold-head').click();
+      const itemCount = await foldSection.locator('.document-item').count();
+      if (fold.exactItems !== undefined) {
+        expect(itemCount).toBe(fold.exactItems);
+      } else if (fold.minItems !== undefined) {
+        expect(itemCount).toBeGreaterThanOrEqual(fold.minItems);
+      }
+    }
+  }
+
+  for (const title of fixture.foldsAbsent ?? []) {
+    expect(await page.locator('.document-fold-name', { hasText: title }).count()).toBe(0);
+  }
+}
+
+test.describe('document layout — PLAN/VERIFICATION cover/glance smoke (quick-260922-3us)', () => {
+  for (const fixture of PLAN_AND_VERIFICATION_SMOKE_FIXTURES) {
+    test(fixture.id, async ({ page, baseURL }) => {
+      await runCoverGlanceSmoke(page, baseURL ?? 'http://127.0.0.1:4199', fixture);
+    });
+  }
+});
