@@ -140,8 +140,12 @@ describe('buildCoverageMatrix', () => {
 
     expect(source.indexOf('coverage-matrix')).toBeLessThan(source.indexOf('plan-document'));
     expect(source.indexOf('plan-document')).toBeLessThan(source.indexOf('summary-document'));
-    expect(source).toContain('<DocumentView document={pair.plan.document}');
-    expect(source).toContain('<DocumentView document={pair.summary.document}');
+    // quick-260921-l4e (F-02): rendered through `dropLeadingTitle`-wrapped documents — the same
+    // duplicate-title trim ArtifactPage already applies — rather than the raw fetched documents,
+    // so a summary's own `# Phase X Plan Y: … Summary` heading no longer duplicates this page's
+    // own "Full summary" <h2>.
+    expect(source).toContain('<DocumentView document={planDocument ?? pair.plan.document}');
+    expect(source).toContain('<DocumentView document={summaryDocument ?? pair.summary.document}');
     expect(source).toContain('document-overflow-boundary');
   });
 });
