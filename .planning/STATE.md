@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-09-21)
 Phase: Milestone v1.1 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-09-21 — Milestone v1.1 completed and archived
+Last activity: 2026-09-21 - Completed quick task 260921-l4e: automated UI/UX consistency sweep of the document-page foundation
 
 ## Performance Metrics
 
@@ -113,6 +113,7 @@ None.
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 260921-l4e | Automated UI/UX consistency sweep of the document-page foundation (Playwright, `npm run test:e2e`) — 3 foundation fixes, 1 per-type waiver | 2026-09-21 | d3adb3d | [260921-l4e-automate-ui-ux-consistency-verification-](./quick/260921-l4e-automate-ui-ux-consistency-verification-/) |
 
 ## Deferred Items
 
