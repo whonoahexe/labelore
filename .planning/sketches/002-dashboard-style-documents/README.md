@@ -27,10 +27,13 @@ Both documents are normalised into one shape. That shape is the pattern every ty
 Content is real: studio-portal phase 04 (`04-DISCUSSION-LOG.md`, `04-06-PLAN.md`), trimmed for length.
 
 ## How to View
-Serve the sketches folder (fonts load through the theme's symlink), then open this page:
+Served over the tailnet by the `labelore-sketches` user service (Tailscale Serve `/sketches` →
+127.0.0.1:4174):
 
-    cd .planning/sketches && python3 -m http.server 8792
-    open http://127.0.0.1:8792/002-dashboard-style-documents/
+    https://cinedise.persian-elnath.ts.net/sketches/002-dashboard-style-documents/
+
+Locally: `http://127.0.0.1:4174/002-dashboard-style-documents/` (opening the file directly won't
+load the fonts — they come through the theme's symlink).
 
 Toolbar (bottom right): Discussion log / Plan, Light / Dark, Phone / Tablet / Desktop.
 
