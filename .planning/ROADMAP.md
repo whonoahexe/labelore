@@ -21,7 +21,7 @@ Full phase detail, success criteria, and plan waves: [milestones/v1.0-ROADMAP.md
 
 **v1.1 Legible Documents**
 
-- [ ] **Phase 5: Per-Type Document Views** - Every artifact type renders through its own view, in one written-down visual language
+- [x] **Phase 5: Per-Type Document Views** - Every artifact type renders through its own view, in one written-down visual language (completed 2026-09-21)
 
 ## Phase Details
 
@@ -129,7 +129,7 @@ small independent entry.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 5. Per-Type Document Views | 6/6 | In Progress|  |
+| 5. Per-Type Document Views | 6/6 | Complete    | 2026-09-21 |
 
 *Phases 1-4 (v1.0) are complete and archived — see [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md).*
 

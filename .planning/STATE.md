@@ -3,41 +3,41 @@ gsd_state_version: "1.0"
 milestone: v1.1
 milestone_name: Legible Documents
 current_phase: 05
-current_phase_name: Per-Type Document Views
-status: verifying
-stopped_at: Phase 5 execution complete — 6/6 plans, VERIFICATION human_needed, awaiting /gsd-verify-work 05
-last_updated: "2026-09-20T20:48:05.507Z"
-last_activity: 2026-09-20
-last_activity_desc: Phase 05 execution started
-state_head: 206566a8f32be9740b0be6cb8d76e9d15beab0c9
+status: completed
+stopped_at: Phase 05 complete — all phases complete
+last_updated: "2026-09-21T09:01:05.400Z"
+last_activity: 2026-09-21
+last_activity_desc: Phase 05 complete
+state_head: 71591ce10c46d4604d0eea374701e25faf808186
 progress:
   total_phases: 1
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 6
   completed_plans: 6
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-09-20)
+See: .planning/PROJECT.md (updated 2026-09-21)
 
 **Core value:** Open the dashboard on a GSD project and immediately know where the work stands and where any planning artifact lives — without reading a single file by hand.
-**Current focus:** Phase 05 — Per-Type Document Views
+**Current focus:** Close milestone v1.1 — then per-type polish quick tasks against the Phase 5 view registry
 
 ## Current Position
 
-Phase: 05 (Per-Type Document Views) — EXECUTING
-Plan: 6 of 6
-Status: Phase complete — ready for verification
-Last activity: 2026-09-20 — Phase 05 execution started
+Phase: 05
+Plan: Not started
+Status: All phases complete
+Last activity: 2026-09-21 — Phase 05 complete
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 30
+- Total plans completed: 36
 - Average duration: —
 - Total execution time: 0.0 hours
 
@@ -49,6 +49,7 @@ Last activity: 2026-09-20 — Phase 05 execution started
 | 02 | 16 | - | - |
 | 3 | 4 | - | - |
 | 04 | 6 | - | - |
+| 05 | 6 | - | - |
 
 **Recent Trend:**
 
@@ -99,7 +100,10 @@ milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) a
 
 ### Pending Todos
 
-None yet.
+- Per-type surface polish, one quick task per artifact type against the Phase 5 view registry (05-UAT deferred follow-up)
+- ReDoS timing tests for section-projection and mention scanners; standing `dangerouslySetInnerHTML` guard on `blocks.tsx` (05-SECURITY notes 1–2)
+- Cap View-mode outline entries or amend T-05-11 (05-SECURITY note 3)
+- UI-review polish: opaque narrow outline trigger, depth markers on plan task index, primary-coloured trigger chevron (05-UI-REVIEW)
 
 ### Blockers/Concerns
 
@@ -143,10 +147,10 @@ Two v1.0 close-time verification overrides recorded below; the two earlier rows 
 
 ## Session Continuity
 
-Last session: 2026-09-20T20:48:05.475Z
-Stopped at: Phase 5 execution complete — 6/6 plans, VERIFICATION human_needed, awaiting /gsd-verify-work 05
+Last session: 2026-09-21T09:05:00Z
+Stopped at: Phase 05 complete and verified (UAT 4/4, security threats_open 0, UI review 22/24) — milestone v1.1 ready to close
 Resume file: None
 
 ## Operator Next Steps
 
-- Plan the phase with /gsd-plan-phase 5
+- Close the milestone with /gsd-complete-milestone v1.1
