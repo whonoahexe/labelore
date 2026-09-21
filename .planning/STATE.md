@@ -13,6 +13,7 @@ progress:
   completed_phases: 1
   total_plans: 6
   completed_plans: 6
+  percent: 100
 current_phase: 05
 ---
 
@@ -23,7 +24,7 @@ current_phase: 05
 See: .planning/PROJECT.md (updated 2026-09-21)
 
 **Core value:** Open the dashboard on a GSD project and immediately know where the work stands and where any planning artifact lives — without reading a single file by hand.
-**Current focus:** Close milestone v1.1 — then per-type polish quick tasks against the Phase 5 view registry
+**Current focus:** Planning next milestone (`/gsd-new-milestone`) — candidates in PROJECT.md Active
 
 ## Current Position
 
@@ -117,10 +118,12 @@ None.
 
 Items acknowledged and deferred at milestone close, most recent first:
 
-Two v1.0 close-time verification overrides recorded below; the two earlier rows were closed by `quick-260910-0x4`:
+Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verification overrides, and two earlier rows closed by `quick-260910-0x4`:
 
 | Category | Item | Status | Deferred At | Closed At | Milestone |
 |----------|------|--------|-------------|-----------|-----------|
+| debug_sessions | debug/knowledge-base.md | unknown (false positive — this is the debug knowledge base, not a session; the one real session is in `debug/resolved/`) — acknowledged at close | 2026-09-21 | — | v1.1 |
+| quick_tasks | 260912-oae-revamp-progress-panel-to-show-phase-and- | unknown (false positive — complete with PLAN+SUMMARY, commit `4825c8f`; SUMMARY carries no status field) — acknowledged at close | 2026-09-21 | — | v1.1 |
 | verification_gaps | 02-situational-awareness-artifact-reading/02-VERIFICATION.md | stale (doc-only SUMMARY edit `beb291c` post-dates it; covered by passed milestone audit) — override accepted at close | 2026-09-10 | — | v1.0 |
 | verification_gaps | 03-search-browsing-traceability/03-VERIFICATION.md | stale (doc-only SUMMARY edit `f1a5355` post-dates it; covered by passed milestone audit) — override accepted at close | 2026-09-10 | — | v1.0 |
 | UI polish | Mermaid diagram styling — theme variables now cover the full named palette (node/cluster fill and border, secondary/tertiary colours, edge colour and edge-label background, cluster/node text colour, note colours, font size), all through `toMermaidColor()`, with the node-fill seed corrected from `--secondary` to `--card` (the 02-13 diagnosis's root cause). | Closed | 2026-09-01 | 2026-09-10 | v0.1 |
@@ -129,7 +132,7 @@ Two v1.0 close-time verification overrides recorded below; the two earlier rows 
 ## Session Continuity
 
 Last session: 2026-09-21T09:05:00Z
-Stopped at: Phase 05 complete and verified (UAT 4/4, security threats_open 0, UI review 22/24) — milestone v1.1 ready to close
+Stopped at: Milestone v1.1 archived and tagged — awaiting /gsd-new-milestone
 Resume file: None
 
 ## Operator Next Steps
