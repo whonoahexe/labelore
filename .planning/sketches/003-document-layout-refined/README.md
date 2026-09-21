@@ -2,7 +2,7 @@
 sketch: 003
 name: document-layout-refined
 question: "Keeping sketch 002 A's building blocks, which layout reads as a document page rather than a copy of the dashboard?"
-winner: null
+winner: "A2"
 tags: [documents, layout, per-type-views, refinement]
 ---
 
@@ -45,3 +45,6 @@ Tabs include "Today" and "A from 002" for comparison. Toolbar: document, theme, 
 | A1 | Clear (sidebar layout) | Good | Low: reuses panel CSS | Rail content is out of view once you scroll down |
 | A2 | Strongest (cover sheet + chapters) | Good | Medium: new sheet + numbered sections | Cover sheet is tall on phones |
 | A3 | Clear (tabs) | Best (one section at a time) | Medium: tab state per document | Search-on-page (Ctrl+F) can't see hidden tabs |
+
+## Outcome
+**Winner: A2 (Sheet).** Refined in sketch 004 (phones, long-document navigation, a third document type).

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sketch 003 — Document layout, refined from A</title>
-<link rel="stylesheet" href="../themes/default.css">
+<title>Sketch 004 — Cover sheet, refined</title>
+<link rel="stylesheet" href="../themes/default.css?v=004">
 <style>
 /* Layout/component rules for this sketch only. Everything visual comes from ../themes/default.css,
    which carries the app's own tokens verbatim. Class names mirror the dashboard's where the sketch
@@ -82,66 +82,17 @@ pre.source { margin: 0; padding: var(--space-5); border: 1px solid var(--border)
 .side-list li .muted { font-size: var(--fs-3); }
 ul.side-list { padding: 0; }
 
-/* ================= VARIANT: TODAY (reference) ================= */
-.today h1 { font-family: var(--font-mono); font-size: var(--fs-display-3); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); font-weight: var(--fw-semibold); margin: var(--space-2) 0 var(--space-4); max-width: 18ch; overflow-wrap: anywhere; }
-.today .lede { color: var(--muted-foreground); font-size: var(--fs-fluid-1); line-height: var(--lh-relaxed); max-width: 48rem; }
-.today .reader { display: grid; grid-template-columns: 14rem minmax(0, 1fr); gap: var(--space-fluid-9); margin-top: var(--space-8); padding-top: var(--space-6); border-top: 1px solid var(--border); }
-.today .outline { position: sticky; top: 4rem; align-self: start; font-size: var(--fs-3); display: grid; gap: var(--space-2); border-right: 1px solid var(--border); padding-right: var(--space-4); }
-.today .outline b { font-family: var(--font-mono); font-weight: 400; font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
-.today .canvas { max-width: 54rem; }
-.today .t-group { margin-top: var(--space-10); }
-.today .t-group:first-child { margin-top: 0; }
-.today .t-group h2 { font-family: var(--font-mono); font-size: var(--fs-fluid-3); font-weight: var(--fw-medium); padding-bottom: var(--space-4); border-bottom: 1px solid var(--border); margin-bottom: var(--space-4); }
-.today .t-q { margin: var(--space-5) 0; }
-.today .t-q .alts { margin-top: var(--space-2); display: grid; gap: var(--space-2); color: var(--muted-foreground); font-size: var(--fs-4); }
-@container (max-width: 760px) { .today .reader { grid-template-columns: 1fr; } .today .outline { position: static; border-right: 0; padding: 0 0 var(--space-4); border-bottom: 1px solid var(--border); } }
-
-/* ================= VARIANT A: DASHBOARD MIRROR ================= */
-.a-hero { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(18rem, 0.75fr); gap: var(--space-fluid-9); align-items: end; padding-bottom: var(--space-fluid-13); border-bottom: 1px solid var(--border); }
-.a-context { margin-bottom: var(--space-3); color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-3); letter-spacing: var(--ls-wider); text-transform: uppercase; }
-.a-hero h1 { font-family: var(--font-mono); font-size: var(--fs-display-3); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tighter); line-height: var(--lh-display); max-width: 14ch; overflow-wrap: anywhere; }
+/* ---- borrowed from 002 A ---- */
 .a-meta { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; margin-top: var(--space-7); }
-.immediate-work { border: 1px solid var(--border); background: var(--card-veil); padding: var(--space-fluid-3); border-top: 3px solid var(--primary); box-shadow: 0.7rem 0.7rem 0 color-mix(in oklch, var(--muted) 65%, transparent); }
-.immediate-work h2 { font-family: var(--font-mono); font-size: var(--fs-fluid-3); letter-spacing: var(--ls-tight); font-weight: var(--fw-medium); }
-.immediate-work p { margin-top: var(--space-4); color: color-mix(in oklch, var(--muted-foreground) 85%, var(--foreground)); font-size: var(--fs-4); }
-.immediate-work .text-link { display: inline-block; margin-top: var(--space-4); }
-.progress-panel { display: grid; grid-template-columns: minmax(14rem, 1fr) minmax(18rem, 1.2fr); gap: var(--space-6) var(--space-8); align-items: center; margin-top: var(--space-fluid-10); }
-.progress-panel-header { display: flex; flex-direction: column; gap: var(--space-4); align-self: start; }
-.progress-summary { display: flex; flex-direction: column; gap: var(--space-3-5); padding-left: var(--space-8); border-left: 1px solid var(--border); }
 .progress-headline { display: flex; gap: var(--space-2-5); align-items: baseline; }
 .progress-headline strong { font-family: var(--font-heading); font-size: var(--fs-display-3); font-weight: var(--fw-medium); letter-spacing: var(--ls-tighter); line-height: var(--lh-display); }
 .progress-headline span { color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-2); text-transform: uppercase; }
-.a-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(18rem, 0.7fr); gap: var(--space-5); margin-top: var(--space-5); }
-.a-side { display: grid; gap: var(--space-5); align-content: start; }
-.a-group-label { margin-top: var(--space-6); }
-.a-controls { display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); margin-top: var(--space-6); flex-wrap: wrap; }
-.a-controls + .progress-panel { margin-top: var(--space-6); }
-@container (max-width: 900px) { .a-hero, .progress-panel, .a-grid { grid-template-columns: 1fr; } .progress-summary { padding-left: 0; border-left: 0; padding-top: var(--space-5); border-top: 1px solid var(--border); } }
 
-/* ================= A1: RAIL ================= */
-.r-mast { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--space-6); flex-wrap: wrap; padding-bottom: var(--space-6); border-bottom: 1px solid var(--border); }
-.r-mast h1 { font-family: var(--font-mono); font-size: var(--fs-display-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tight); line-height: var(--lh-tight); max-width: 26ch; overflow-wrap: anywhere; }
-.r-mast .lede { margin-top: var(--space-3); color: var(--muted-foreground); font-size: var(--fs-5); max-width: 60ch; }
-.r-mast-right { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-3); }
-.r-body { display: grid; grid-template-columns: minmax(16rem, 20rem) minmax(0, 1fr); gap: var(--space-fluid-9); margin-top: var(--space-8); align-items: start; }
-.r-rail { display: grid; gap: var(--space-6); }
-.r-rail .immediate-work { box-shadow: 0.45rem 0.45rem 0 color-mix(in oklch, var(--muted) 65%, transparent); }
-.r-rail .immediate-work h2 { font-size: var(--fs-6); }
-.r-stat strong { display: block; font-family: var(--font-heading); font-size: var(--fs-display-3); font-weight: var(--fw-medium); letter-spacing: var(--ls-tighter); line-height: var(--lh-display); }
-.r-stat > span { display: block; margin-top: var(--space-2); color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-2); text-transform: uppercase; letter-spacing: var(--ls-wider); }
-.r-stat-list { list-style: none; padding: 0; margin-top: var(--space-4); border-top: 1px solid var(--border); }
-.r-stat-list li { display: flex; justify-content: space-between; padding: var(--space-2) 0; border-bottom: 1px solid var(--border); font-family: var(--font-heading); font-size: var(--fs-3); color: var(--muted-foreground); }
-.r-stat-list li b { color: var(--foreground); font-weight: var(--fw-medium); }
-.r-railsec { padding-top: var(--space-5); border-top: 1px solid var(--border); }
-.r-railsec h3 { font-family: var(--font-mono); font-size: var(--fs-6); font-weight: var(--fw-medium); }
-.r-railsec .side-list { margin-top: var(--space-3); gap: var(--space-3); }
-.r-main { display: grid; gap: var(--space-5); min-width: 0; }
-@container (max-width: 900px) { .r-body { grid-template-columns: 1fr; } .r-mast-right { align-items: flex-start; } }
-
-/* ================= A2: SHEET ================= */
+/* ================= A2: SHEET (from 003) ================= */
 .s-sheet { border: 1px solid var(--border); background: var(--card-veil); }
 .s-top { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-6); flex-wrap: wrap; padding: var(--space-fluid-3); }
-.s-top h1 { font-family: var(--font-mono); font-size: var(--fs-display-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tight); line-height: var(--lh-tight); max-width: 28ch; overflow-wrap: anywhere; }
+.s-top h1 { font-family: var(--font-mono); font-size: var(--fs-display-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tight); line-height: var(--lh-tight); max-width: 28ch; overflow-wrap: break-word; hyphens: auto; }
+@container (max-width: 560px) { .s-top h1 { font-size: var(--fs-fluid-4); } }
 .s-top .lede { margin-top: var(--space-3); color: var(--muted-foreground); font-size: var(--fs-5); max-width: 60ch; }
 .s-top-right { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-3); }
 .s-cells { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr) minmax(0, 1fr); border-top: 1px solid var(--border); }
@@ -168,30 +119,62 @@ ul.side-list { padding: 0; }
   .s-section { grid-template-columns: 1fr; gap: var(--space-2); }
 }
 
-/* ================= A3: TABS ================= */
-.t-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(15rem, 19rem); gap: var(--space-fluid-9); align-items: end; }
-.t-head h1 { font-family: var(--font-mono); font-size: var(--fs-display-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tight); line-height: var(--lh-tight); max-width: 26ch; overflow-wrap: anywhere; }
-.t-head .lede { margin-top: var(--space-3); color: var(--muted-foreground); font-size: var(--fs-5); max-width: 60ch; }
-.t-stats { border: 1px solid var(--border); background: var(--card-veil); }
-.t-stat { display: flex; align-items: baseline; gap: var(--space-3); padding: var(--space-3) var(--space-5); border-top: 1px solid var(--border); }
-.t-stat:first-child { border-top: 0; }
-.t-stat strong { font-family: var(--font-heading); font-size: var(--fs-display-1); font-weight: var(--fw-medium); line-height: var(--lh-none); letter-spacing: var(--ls-tight); min-width: 3.5ch; }
-.t-stat span { color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-2); text-transform: uppercase; letter-spacing: var(--ls-wider); }
-.t-stat.accent strong { color: var(--primary); }
-.t-glance { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--space-2) var(--space-6); align-items: baseline; margin-top: var(--space-6); padding: var(--space-5) var(--space-fluid-3); border: 1px solid var(--border); border-top: 3px solid var(--primary); background: var(--card-veil); box-shadow: 0.5rem 0.5rem 0 color-mix(in oklch, var(--muted) 65%, transparent); }
-.t-glance h2 { font-family: var(--font-mono); font-size: var(--fs-6); font-weight: var(--fw-medium); }
-.t-glance p { grid-column: 2; color: var(--muted-foreground); font-size: var(--fs-4); }
-.t-glance .eyebrow { margin: 0; }
-.t-tabs { display: flex; gap: 0; margin-top: var(--space-10); border-bottom: 1px solid var(--border); overflow-x: auto; }
-.t-tab { display: flex; gap: var(--space-2); align-items: center; padding: var(--space-3) var(--space-4); border: 0; background: none; border-bottom: 2px solid transparent; margin-bottom: -1px; font-family: var(--font-mono); font-size: var(--fs-3); color: var(--muted-foreground); white-space: nowrap; transition: all .15s ease; }
-.t-tab:hover { color: var(--foreground); background: var(--state-hover); }
-.t-tab[aria-selected='true'] { color: var(--foreground); border-bottom-color: var(--primary); }
-.t-tab .n { font-size: var(--fs-1); padding: 0 var(--space-1-5); border: 1px solid var(--border); }
-.t-body { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(16rem, 0.6fr); gap: var(--space-5); margin-top: var(--space-5); align-items: start; }
-.t-side { display: grid; gap: var(--space-5); }
-.t-panel > .item:first-child { padding-top: 0; }
-.t-side .panel h2 { font-size: var(--fs-6); }
-@container (max-width: 900px) { .t-head, .t-body { grid-template-columns: 1fr; } .t-glance { grid-template-columns: 1fr; } .t-glance p { grid-column: 1; } }
+
+/* ---------- shared by B1–B3 ---------- */
+.s-factline { margin-top: var(--space-3); display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); }
+.s-factline b { color: var(--foreground); font-weight: var(--fw-medium); }
+.rollup { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.s-section { scroll-margin-top: 7rem; }
+.ch-bar-wrap { position: sticky; top: 3rem; z-index: 20; height: 0; margin: 0 calc(-1 * var(--space-fluid-8)); }
+.ch-bar { position: absolute; inset: 0 0 auto 0; display: flex; align-items: center; gap: var(--space-4); padding: var(--space-2-5) var(--space-fluid-8); background: color-mix(in oklch, var(--background) 92%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-3); opacity: 0; pointer-events: none; transform: translateY(-4px); transition: opacity .15s ease, transform .15s ease; }
+.ch-bar.shown { opacity: 1; pointer-events: auto; transform: none; }
+.ch-bar .n { color: var(--primary); }
+.ch-bar .t { color: var(--muted-foreground); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ch-bar .grow { flex: 1; min-width: 0; display: flex; gap: var(--space-3); overflow: hidden; }
+
+/* ================= B1: COMPACT COVER ================= */
+.b1-cells { display: grid; grid-template-columns: auto minmax(0, 1.4fr) minmax(0, 1fr); border-top: 1px solid var(--border); }
+.b1-cells .s-cell { padding: var(--space-5) var(--space-fluid-3); }
+.b1-num > strong { font-family: var(--font-heading); font-size: var(--fs-display-1); font-weight: var(--fw-medium); line-height: var(--lh-none); letter-spacing: var(--ls-tight); }
+.b1-num > span { display: block; margin-top: var(--space-1-5); color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-2); text-transform: uppercase; letter-spacing: var(--ls-wider); }
+.b1-num .chips { margin-top: var(--space-3); }
+.b1-cells .glance p { margin-top: var(--space-2); }
+.b1-facts summary { display: none; }
+.b1-facts .s-facts { gap: var(--space-2); }
+@container (max-width: 900px) {
+  .b1-cells { grid-template-columns: 1fr; }
+  .b1-facts summary { display: block; cursor: pointer; font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+  .b1-facts[open] summary { margin-bottom: var(--space-3); }
+}
+
+/* ================= B2: CHAPTER INDEX ================= */
+.ch-index { list-style: none; padding: 0; display: grid; }
+.ch-index li button { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr) auto; gap: var(--space-3); align-items: baseline; width: 100%; padding: var(--space-2) 0; border: 0; border-bottom: 1px solid var(--border); background: none; text-align: left; transition: color .15s ease; }
+.ch-index li:last-child button { border-bottom: 0; }
+.ch-index li button:hover { color: var(--primary); }
+.ch-index .n { font-family: var(--font-heading); font-size: var(--fs-3); color: var(--muted-foreground); }
+.ch-index .t { font-size: var(--fs-4); font-weight: var(--fw-medium); }
+.ch-index .c { font-family: var(--font-heading); font-size: var(--fs-2); color: var(--muted-foreground); }
+
+/* ================= B3: FOLDED CHAPTERS ================= */
+.fold { margin-top: var(--space-4); border: 1px solid var(--border); background: var(--card-veil); }
+.fold:first-of-type { margin-top: var(--space-8); }
+.fold { scroll-margin-top: 7rem; }
+.fold-head { display: grid; grid-template-columns: 4rem minmax(0, 1fr) auto 1.5rem; gap: var(--space-5); align-items: center; width: 100%; padding: var(--space-5) var(--space-fluid-3); border: 0; background: none; text-align: left; transition: background .15s ease; }
+.fold-head:hover { background: var(--state-hover); }
+.fold-head .s-num { font-size: var(--fs-fluid-3); }
+.fold-head h2 { font-family: var(--font-mono); font-size: var(--fs-fluid-3); font-weight: var(--fw-medium); letter-spacing: var(--ls-tight); }
+.fold-head .chev { font-family: var(--font-mono); color: var(--muted-foreground); transition: transform .15s ease; }
+.fold.open .fold-head .chev { transform: rotate(90deg); }
+.fold-body { padding: 0 var(--space-fluid-3) var(--space-5) calc(4rem + var(--space-5) + var(--space-fluid-3)); border-top: 1px solid var(--border); }
+.fold-tools { display: flex; justify-content: flex-end; margin-top: var(--space-8); }
+.fold-tools + .fold { margin-top: var(--space-3); }
+@container (max-width: 900px) {
+  .fold-head { grid-template-columns: 2.5rem minmax(0, 1fr) 1.5rem; }
+  .fold-head .rollup { grid-column: 2; }
+  .fold-head .chev { grid-column: 3; grid-row: 1; }
+  .fold-body { padding-left: var(--space-fluid-3); }
+}
 
 /* reveal animation */
 .fade { animation: fade .18s ease; }
@@ -202,12 +185,11 @@ ul.side-list { padding: 0; }
 <body>
 
 <div id="variant-nav" role="tablist">
-  <span class="label">Sketch 003</span>
-  <button class="variant-tab" data-variant="today">Today</button>
-  <button class="variant-tab" data-variant="a">A from 002 (reference)</button>
-  <button class="variant-tab active" data-variant="a1">A1: Rail</button>
-  <button class="variant-tab" data-variant="a2">A2: Sheet ★ Selected</button>
-  <button class="variant-tab" data-variant="a3">A3: Tabs</button>
+  <span class="label">Sketch 004</span>
+  <button class="variant-tab" data-variant="a2">A2 from 003 (reference)</button>
+  <button class="variant-tab" data-variant="b1">B1: Compact cover</button>
+  <button class="variant-tab active" data-variant="b2">B2: Chapter index</button>
+  <button class="variant-tab" data-variant="b3">B3: Folded chapters</button>
 </div>
 
 <div id="frame">
@@ -220,7 +202,7 @@ ul.side-list { padding: 0; }
 
 <div id="sketch-tools" style="position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:12px;background:rgba(0,0,0,0.78);color:white;padding:8px 10px;opacity:0.55;transition:opacity 0.2s;display:grid;gap:6px;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.55'">
   <div data-group="doc">Doc:
-    <button data-doc="dl">Discussion log</button><button data-doc="plan">Plan</button>
+    <button data-doc="dl">Discussion log</button><button data-doc="plan">Plan</button><button data-doc="ver">Verification</button>
   </div>
   <div data-group="theme">Theme:
     <button data-theme="light">Light</button><button data-theme="dark">Dark</button>
@@ -406,10 +388,81 @@ must_haves:
   <name>Task 1: Auto-collect a completion transition exactly once</name>
   …`,
   },
+
+  ver: {
+    kind: 'Verification',
+    crumbs: ['Dashboard', 'Roadmap', 'v1.1', 'Phase 04'],
+    context: 'Phase 04 · 2026-08-29',
+    title: 'Bulk Archive Downloads',
+    lede: 'A member selects many files and folders at once and pulls them down as a single archive that survives the trip.',
+    path: '.planning/phases/04-bulk-archive-downloads/04-VERIFICATION.md',
+    status: { label: 'Gaps found', tone: 'warning' },
+    meta: [{ label: 'First pass' }],
+    facts: [['Verified', '2026-08-29 16:20 UTC'], ['Result', '19 of 39 must-haves verified'], ['Re-verification', 'No — first pass'], ['Overrides applied', 'None']],
+    glance: {
+      eyebrow: 'Needs a human',
+      title: '3 checks only you can run',
+      body: 'A real 60-second walk deadline, a single entry over 4 GiB, and refusal focus behaviour in a browser. None can be proven automatically.',
+      action: 'See the checks',
+      target: 'h-1',
+    },
+    stats: {
+      headline: { n: '19/39', label: 'must-haves verified' },
+      pills: [['7', 'Gaps'], ['3', 'Need a human'], ['1', 'Uncertain'], ['0', 'Overrides']],
+      tiles: [['19/39', 'Verified'], ['7', 'Gaps'], ['3', 'Need a human'], ['1', 'Uncertain', true]],
+    },
+    groupsLabel: 'Findings',
+    unit: 'items',
+    groups: [
+      { id: 'roadmap', title: 'Roadmap success criteria', items: [
+        { id: 'r-1', ref: 'R1', title: 'A member multi-selects files/folders and starts Download beside Send to…; the old card is gone.', answer: 'Verified', answerTone: 'complete', note: 'routeDownloadSelection, SelectionBar and browse-view are wired; frontend suite passes 250/250.' },
+        { id: 'r-2', ref: 'R2', title: 'Progress is live; cancel leaves no partial; completed archives survive restart and are collected/swept correctly.', answer: 'Failed', answerTone: 'warning', note: 'cancel_job_handler rejects Tool::Archive, and an isolated suffix range can delete the archive after one byte.' },
+        { id: 'r-3', ref: 'R3', title: 'Over-400-GiB and malformed requests fail before work with real totals.', answer: 'Failed', answerTone: 'warning', note: 'Post-preflight file growth is copied through EOF with no cumulative cap.' },
+        { id: 'r-4', ref: 'R4', title: 'Native Windows/macOS ZIP64 interop succeeds at both thresholds and omissions are exact.', answer: 'Uncertain', answerTone: 'quiet', note: 'Omission tests pass; all four native-tool evidence blocks remain PENDING.' },
+        { id: 'r-5', ref: 'R5', title: 'A large archive completes intact over the exact production tunnel journey.', answer: 'Failed', answerTone: 'warning', note: 'A 3.90 GiB staged RAR crossed api.cinedise.com, but no produced archive was exercised and concurrent attempts were not run.' },
+      ]},
+      { id: 'gaps', title: 'Gaps to close', items: [
+        { id: 'g-1', ref: 'Gap 1', title: 'Archive preparation can be cancelled without leaving a partial file behind.', answer: 'Failed', answerTone: 'warning', note: 'The HTTP cancel handler returns an error for Tool::Archive instead of calling ArchiveExecutor::cancel.', detail: ['Route Tool::Archive cancellation to state.job_executors.archive.cancel(&handle).', 'Add an end-to-end API cancellation test proving no final or partial artifact.'], verify: 'backend/src/api/jobs.rs:1082-1093' },
+        { id: 'g-2', ref: 'Gap 2', title: 'Every accepted archive selection can actually be executed as a durable archive job.', answer: 'Failed', answerTone: 'warning', note: 'Cloud selections are accepted and persisted, then ArchiveExecutor rejects every non-local source.', detail: ['Implement cloud reads end to end, or reject cloud archive requests before inserting rows.'] },
+        { id: 'g-3', ref: 'Gap 3', title: 'A prepared archive is removed only after a complete collection and stays resumable after an interrupted pull.', answer: 'Failed', answerTone: 'warning', note: 'Any range ending at EOF counts as complete; bytes=-1 can deliver one byte and delete the archive.', detail: ['Require full-file coverage before unlinking.', 'Add suffix/end-only range regression tests.'] },
+        { id: 'g-4', ref: 'Gap 4', title: 'The 400 GiB and stage-capacity controls bound the bytes actually archived despite concurrent source mutation.', answer: 'Failed', answerTone: 'warning', detail: ['Revalidate source size at reopen.', 'Enforce the byte ceiling while copying.'] },
+        { id: 'g-5', ref: 'Gap 5', title: 'Archives beyond 4 GiB and 65,535 entries open in Windows Explorer and macOS Archive Utility.', answer: 'Partial', answerTone: 'quiet', note: 'The native-tool checkpoint is unperformed; all four results remain PENDING.' },
+        { id: 'g-6', ref: 'Gap 6', title: 'DL-09 is proven through the exact production member/archive route, including concurrent tickets.', answer: 'Failed', answerTone: 'warning', note: 'Evidence used a staged RAR via api.cinedise.com, not a produced archive at studio.cinedise.com.' },
+        { id: 'g-7', ref: 'Gap 7', title: 'Terminal archive rows remain actionable in /jobs without a manual refresh.', answer: 'Failed', answerTone: 'warning', note: 'A live-only job is dropped when it becomes terminal; no refresh is ever scheduled.', verify: 'frontend/app/jobs/page.tsx:294-305' },
+      ]},
+      { id: 'human', title: 'Needs a human', items: [
+        { id: 'h-1', ref: 'Check 1', title: 'A real 60-second archive-walk deadline fails closed and writes zero job/manifest rows.', answer: 'Not run', answerTone: 'active', detail: ['Run: the ignored a_walk_that_exceeds_the_deadline_fails_closed_and_inserts_zero_rows test.', 'Expect: the request times out, returns no partial total, both row counts stay zero.'], note: 'Why a human: the test is ignored and exceeds the verifier’s 10-second spot-check bound.' },
+        { id: 'h-2', ref: 'Check 2', title: 'A single entry beyond 4 GiB produces independently readable ZIP64 output.', answer: 'Not run', answerTone: 'active', detail: ['Run: the ignored >4 GiB archive_zip64 test with enough scratch space.', 'Expect: a fresh reader reaches EOF with the exact size and a valid CRC.'], note: 'Why a human: writes and rereads several GiB.' },
+        { id: 'h-3', ref: 'Check 3', title: 'Archive refusals preserve selection, folder/scroll position and focus in a real browser.', answer: 'Not run', answerTone: 'active', detail: ['Run: trigger cap, capacity, timeout and generic refusals from /browse by keyboard and pointer.', 'Expect: focus returns to Download; selection, folder and scroll unchanged.'], note: 'Why a human: no DOM/browser harness covers this transition.' },
+      ]},
+    ],
+    side: [
+      { eyebrow: 'By plan', title: 'Plan must-haves', items: [['04-01', '1 of 2 verified'], ['04-02', '2 of 3 verified · 1 unverified behaviour'], ['04-03', '1 of 4 verified · 1 uncertain']] },
+      { eyebrow: 'Where the gaps are', title: 'Files', count: 6, items: [['backend/src/api/jobs.rs', 'Gaps 1, 2'], ['backend/src/jobs/executors/archive.rs', 'Gaps 2, 4'], ['backend/src/download/mod.rs', 'Gap 3'], ['frontend/app/jobs/page.tsx', 'Gap 7']] },
+    ],
+    source: `---
+phase: 04-bulk-archive-downloads
+verified: 2026-08-29T16:20:03Z
+status: gaps_found
+score: 19/39 must-haves verified
+behavior_unverified: 3
+overrides_applied: 0
+gaps:
+  - truth: "Archive preparation can be cancelled without leaving a partial file behind."
+    status: failed
+    …
+---
+
+# Phase 4: Bulk Archive Downloads Verification Report
+
+**Phase Goal:** A member selects many files and folders at once and pulls them down as a single archive …`,
+  },
 };
 
+DOCS.ver.groups.forEach(g => g.items.forEach(i => { i.more = { roadmap: 'Evidence', gaps: 'Why it failed · what to fix', human: 'How to run it' }[g.id]; }));
+
 /* ------------------------------ state ------------------------------ */
-const state = { variant: 'a1', tab: null, doc: 'dl', theme: 'dark', width: 'full', mode: 'view', open: new Set(), expandedCard: null };
+const state = { variant: 'b2', tab: null, openCh: new Set(), factsOpen: false, doc: 'dl', theme: 'dark', width: 'full', mode: 'view', open: new Set(), expandedCard: null };
 const $root = document.getElementById('root');
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -436,6 +489,7 @@ function detailBlock(it) {
 }
 const hasDetail = it => !!(it.alts || it.note || it.detail || it.verify);
 function moreLabel(it) {
+  if (it.more) return it.more;
   if (it.alts) return `${it.alts.length} other option${it.alts.length > 1 ? 's' : ''}${it.note ? ' · note' : ''}`;
   if (it.detail) return 'What it does · how it’s verified';
   return 'Details';
@@ -459,57 +513,6 @@ function sideList(s) {
 }
 const totalItems = d => d.groups.reduce((n, g) => n + g.items.length, 0);
 
-/* ------------------------------ TODAY ------------------------------ */
-function renderToday(d) {
-  const body = state.mode === 'source' ? source(d) : `<div class="reader">
-      <nav class="outline"><b>On this page</b>${d.groups.map(g => `<span>${esc(g.title)}</span>`).join('')}<span class="muted">More in this document</span></nav>
-      <div class="canvas">${d.groups.map(g => `<section class="t-group"><div class="eyebrow">${esc(g.title)}</div>${g.items.map(it => `
-        <div class="t-q"><div class="item-title" style="font-family:var(--font-mono);font-size:var(--fs-fluid-3)">${esc(it.title)}</div>
-        <div class="item-answer">${chip(d === DOCS.dl ? 'Chosen' : it.answer, 'active')}${d === DOCS.dl ? `<span class="answer-text">${esc(it.answer)}</span>` : ''}</div>
-        ${it.alts ? `<div class="alts">${it.alts.map(esc).map(a => `<span>${a}</span>`).join('')}</div>` : ''}</div>`).join('')}</section>`).join('')}</div></div>`;
-  return `<div class="page today fade">${crumbs(d)}<div class="eyebrow">${esc(d.kind)}</div>
-    <h1>${esc(d.context.split(' · ')[0])}: ${esc(d.title)} - ${esc(d.kind)}</h1>
-    <p class="lede">${esc(d.lede)}</p><p class="source-note" style="margin:var(--space-3) 0 var(--space-5)">${esc(d.path)}</p>${toggle()}${body}</div>`;
-}
-
-/* ------------------------------ A: DASHBOARD MIRROR ------------------------------ */
-function renderA(d) {
-  const hero = `<section class="a-hero">
-    <div style="min-width:0">${crumbs(d)}<div class="eyebrow">◇ ${esc(d.kind)}</div>
-      <div class="a-context">${esc(d.context)}</div>
-      <h1>${esc(d.title)}</h1>
-      <div class="a-meta">${chip(d.status.label, d.status.tone)}${metaBits(d)}</div></div>
-    <aside class="immediate-work"><div class="eyebrow">${esc(d.glance.eyebrow)}</div><h2>${esc(d.glance.title)}</h2>
-      <p>${esc(d.glance.body)}</p><button class="text-link" data-jump="${d.glance.target}">${esc(d.glance.action)} →</button></aside>
-  </section>`;
-  const controls = `<div class="a-controls"><p class="source-note">${esc(d.path)}</p>${toggle()}</div>`;
-  if (state.mode === 'source') return `<div class="page fade">${hero}${controls}<div style="margin-top:var(--space-5)">${source(d)}</div></div>`;
-  const progress = `<section class="panel progress-panel">
-    <div class="progress-panel-header"><div class="eyebrow">At a glance</div><h2>${esc(d.lede)}</h2></div>
-    <div class="progress-summary"><div class="progress-headline"><strong>${d.stats.headline.n}</strong><span>${esc(d.stats.headline.label)}</span></div>
-      <div class="chips">${d.stats.pills.map(([n, l]) => `<span class="plan-pill"><strong>${n}</strong> ${esc(l)}</span>`).join('')}</div></div>
-  </section>`;
-  const main = `<section class="panel"><div class="section-heading compact"><div><div class="eyebrow">${esc(d.groupsLabel)}</div><h2>${d === DOCS.dl ? 'What was decided' : 'The work'}</h2></div><span class="count-box">${totalItems(d)}</span></div>
-    ${d.groups.map((g, i) => `<div class="eyebrow a-group-label">${esc(g.title)} · ${g.items.length}</div>${g.items.map(it => itemRow(it, d)).join('')}`).join('')}</section>`;
-  const side = `<div class="a-side">${d.side.map(s => `<section class="panel"><div class="section-heading compact"><div><div class="eyebrow">${esc(s.eyebrow)}</div><h2>${esc(s.title)}</h2></div><span class="count-box">${s.count || s.items.length}</span></div>${sideList(s)}</section>`).join('')}</div>`;
-  return `<div class="page fade">${hero}${controls}${progress}<div class="a-grid">${main}${side}</div></div>`;
-}
-
-/* ------------------------------ A1: RAIL ------------------------------ */
-function renderRail(d) {
-  const mast = `${crumbs(d)}<header class="r-mast"><div style="min-width:0"><div class="eyebrow">${esc(d.kind)} · ${esc(d.context)}</div><h1>${esc(d.title)}</h1><p class="lede">${esc(d.lede)}</p></div>
-    <div class="r-mast-right"><div class="a-meta" style="margin:0">${chip(d.status.label, d.status.tone)}${metaBits(d)}</div>${toggle()}</div></header>`;
-  if (state.mode === 'source') return `<div class="page fade">${mast}<div style="margin-top:var(--space-6)">${source(d)}</div></div>`;
-  const rail = `<aside class="r-rail">
-    <div class="immediate-work"><div class="eyebrow">${esc(d.glance.eyebrow)}</div><h2>${esc(d.glance.title)}</h2><p>${esc(d.glance.body)}</p><button class="text-link" data-jump="${d.glance.target}">${esc(d.glance.action)} →</button></div>
-    <div class="r-stat"><strong>${d.stats.headline.n}</strong><span>${esc(d.stats.headline.label)}</span>
-      <ul class="r-stat-list">${d.stats.pills.map(([n, l]) => `<li><span>${esc(l)}</span><b>${n}</b></li>`).join('')}</ul></div>
-    ${d.side.map(sd => `<section class="r-railsec"><div class="eyebrow">${esc(sd.eyebrow)}</div><h3>${esc(sd.title)}</h3>${sideList(sd)}</section>`).join('')}
-  </aside>`;
-  const main = `<div class="r-main">${d.groups.map(g => `<section class="panel"><div class="section-heading compact"><div><div class="eyebrow">${esc(d.groupsLabel)}</div><h2>${esc(g.title)}</h2></div><span class="count-box">${g.items.length}</span></div>${g.items.map(it => itemRow(it, d)).join('')}</section>`).join('')}</div>`;
-  return `<div class="page fade">${mast}<div class="r-body">${rail}${main}</div></div>`;
-}
-
 /* ------------------------------ A2: SHEET ------------------------------ */
 function renderSheet(d) {
   const sheet = `${crumbs(d)}<section class="s-sheet">
@@ -531,23 +534,83 @@ function renderSheet(d) {
   return `<div class="page fade">${sheet}${sections}${also}</div>`;
 }
 
-/* ------------------------------ A3: TABS ------------------------------ */
-function renderTabs(d) {
-  if (!d.groups.some(g => g.id === state.tab)) state.tab = d.groups[0].id;
-  const head = `${crumbs(d)}<header class="t-head"><div style="min-width:0"><div class="eyebrow">${esc(d.kind)} · ${esc(d.context)}</div><h1>${esc(d.title)}</h1><p class="lede">${esc(d.lede)}</p>
-      <div class="a-meta" style="margin-top:var(--space-5)">${chip(d.status.label, d.status.tone)}${metaBits(d)}${toggle()}</div></div>
-    <div class="t-stats">${d.stats.tiles.slice(0, 3).concat([d.stats.tiles[3]]).map(([n, l, acc]) => `<div class="t-stat${acc ? ' accent' : ''}"><strong>${n}</strong><span>${esc(l)}</span></div>`).join('')}</div></header>`;
-  if (state.mode === 'source') return `<div class="page fade">${head}<div style="margin-top:var(--space-6)">${source(d)}</div></div>`;
-  const glance = `<section class="t-glance"><div class="eyebrow">${esc(d.glance.eyebrow)}</div><h2>${esc(d.glance.title)}</h2><button class="text-link" data-jump="${d.glance.target}">${esc(d.glance.action)} →</button><p>${esc(d.glance.body)}</p></section>`;
-  const tabs = `<div class="t-tabs" role="tablist">${d.groups.map(g => `<button class="t-tab" role="tab" aria-selected="${g.id === state.tab}" data-tab="${g.id}">${esc(g.title)} <span class="n">${g.items.length}</span></button>`).join('')}</div>`;
-  const g = d.groups.find(g => g.id === state.tab);
-  const main = `<section class="panel fade t-panel">${g.items.map(it => itemRow(it, d)).join('')}</section>`;
-  const side = `<div class="t-side">${d.side.map(sd => `<section class="panel"><div class="eyebrow">${esc(sd.eyebrow)}</div><h2>${esc(sd.title)}</h2>${sideList(sd)}</section>`).join('')}</div>`;
-  return `<div class="page fade">${head}${glance}${tabs}<div class="t-body">${main}${side}</div></div>`;
+/* ------------------------------ shared for B1–B3 ------------------------------ */
+const pad = n => String(n).padStart(2, '0');
+function rollup(g, d) {
+  if (d === DOCS.dl) {
+    const byClaude = g.items.filter(i => i.claude).length;
+    return chip(`${g.items.length} chosen`, 'quiet') + (byClaude ? chip(`${byClaude} by Claude`, 'active') : '');
+  }
+  const counts = new Map();
+  g.items.forEach(i => { const k = i.answer; counts.set(k, { n: (counts.get(k)?.n || 0) + 1, tone: i.answerTone }); });
+  return [...counts].map(([label, { n, tone }]) => chip(`${n} ${label}`, tone)).join('');
+}
+const factLine = d => `<p class="source-note s-factline">${d.facts.map(([k, v]) => `<span>${esc(k)} <b>${esc(v)}</b></span>`).join('')}</p>`;
+const chapterBar = d => `<div class="ch-bar-wrap"><div class="ch-bar" id="ch-bar"><div class="grow"><span class="n" id="ch-bar-n">01</span><span id="ch-bar-t">${esc(d.groups[0].title)}</span><span class="t">· ${esc(d.title)}</span></div>${toggle()}</div></div>`;
+function chapterSections(d, withAlso = true) {
+  const sections = d.groups.map((g, i) => `<section class="s-section" id="ch-${g.id}" data-ch-n="${pad(i + 1)}" data-ch-t="${esc(g.title)}"><div class="s-num">${pad(i + 1)}</div><div style="min-width:0">
+      <h2>${esc(g.title)}</h2><div class="rollup s-sub" style="margin-top:var(--space-2)">${rollup(g, d)}</div>${g.items.map(it => itemRow(it, d)).join('')}</div></section>`).join('');
+  if (!withAlso) return sections;
+  return sections + `<section class="s-section" id="ch-also" data-ch-n="${pad(d.groups.length + 1)}" data-ch-t="Also in this document"><div class="s-num">${pad(d.groups.length + 1)}</div><div style="min-width:0"><h2>Also in this document</h2>
+      <div class="s-also">${d.side.map(sd => `<section class="panel"><div class="eyebrow">${esc(sd.eyebrow)}</div><h2 style="font-size:var(--fs-6)">${esc(sd.title)}</h2>${sideList(sd)}</section>`).join('')}</div></div></section>`;
+}
+const numberCell = d => `<div class="s-cell b1-num"><div class="eyebrow">At a glance</div><strong>${d.stats.headline.n}</strong><span>${esc(d.stats.headline.label)}</span>
+  <div class="chips">${d.stats.pills.map(([n, l]) => `<span class="plan-pill"><strong>${n}</strong> ${esc(l)}</span>`).join('')}</div></div>`;
+const glanceCell = d => `<div class="s-cell glance"><div class="eyebrow">${esc(d.glance.eyebrow)}</div><h2>${esc(d.glance.title)}</h2><p>${esc(d.glance.body)}</p><button class="text-link" style="margin-top:var(--space-3)" data-jump="${d.glance.target}">${esc(d.glance.action)} →</button></div>`;
+const coverTop = (d, extra = '') => `<div class="s-top"><div style="min-width:0"><div class="eyebrow">${esc(d.kind)} · ${esc(d.context)}</div><h1>${esc(d.title)}</h1><p class="lede">${esc(d.lede)}</p>${extra}</div>
+  <div class="s-top-right">${chip(d.status.label, d.status.tone)}${toggle()}</div></div>`;
+
+/* ------------------------------ B1: COMPACT COVER ------------------------------ */
+function renderCompact(d) {
+  const cover = `${crumbs(d)}<section class="s-sheet">${coverTop(d)}
+    <div class="b1-cells">${numberCell(d)}${glanceCell(d)}
+      <div class="s-cell"><details class="b1-facts" ${state.factsOpen ? 'open' : ''}><summary>Facts</summary><div class="eyebrow">Facts</div><dl class="s-facts">${d.facts.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl></details></div>
+    </div></section>`;
+  if (state.mode === 'source') return `<div class="page fade">${cover}<div style="margin-top:var(--space-6)">${source(d)}</div></div>`;
+  return `<div class="page fade">${cover}${chapterSections(d)}</div>`;
 }
 
+/* ------------------------------ B2: CHAPTER INDEX ------------------------------ */
+function indexCell(d) {
+  const all = d.groups.map((g, i) => [pad(i + 1), g.title, `${g.items.length}`, g.id]).concat([[pad(d.groups.length + 1), 'Also in this document', '', 'also']]);
+  return `<div class="s-cell"><div class="eyebrow">In this document</div><ol class="ch-index">${all.map(([n, t, c, id]) => `<li><button data-chapter="${id}"><span class="n">${n}</span><span class="t">${esc(t)}</span><span class="c">${c}</span></button></li>`).join('')}</ol></div>`;
+}
+function renderIndex(d) {
+  const cover = `${crumbs(d)}<section class="s-sheet" id="cover">${coverTop(d, factLine(d))}
+    <div class="b1-cells">${numberCell(d)}${glanceCell(d)}${indexCell(d)}</div></section>`;
+  if (state.mode === 'source') return `<div class="page fade">${cover}<div style="margin-top:var(--space-6)">${source(d)}</div></div>`;
+  return `<div class="page fade">${chapterBar(d)}${cover}${chapterSections(d)}</div>`;
+}
+
+/* ------------------------------ B3: FOLDED CHAPTERS ------------------------------ */
+function renderFolded(d) {
+  const cover = `${crumbs(d)}<section class="s-sheet" id="cover">${coverTop(d, factLine(d))}
+    <div class="b1-cells">${numberCell(d)}${glanceCell(d)}${indexCell(d)}</div></section>`;
+  if (state.mode === 'source') return `<div class="page fade">${cover}<div style="margin-top:var(--space-6)">${source(d)}</div></div>`;
+  const allOpen = d.groups.every(g => state.openCh.has(g.id)) && state.openCh.has('also');
+  const folds = d.groups.map((g, i) => { const open = state.openCh.has(g.id); return `<section class="fold s-section-f${open ? ' open' : ''}" id="ch-${g.id}" data-ch-n="${pad(i + 1)}" data-ch-t="${esc(g.title)}">
+      <button class="fold-head" data-fold="${g.id}" aria-expanded="${open}"><span class="s-num">${pad(i + 1)}</span><h2>${esc(g.title)}</h2><span class="rollup">${rollup(g, d)}</span><span class="chev">›</span></button>
+      ${open ? `<div class="fold-body fade">${g.items.map(it => itemRow(it, d)).join('')}</div>` : ''}</section>`; }).join('');
+  const openAlso = state.openCh.has('also');
+  const also = `<section class="fold${openAlso ? ' open' : ''}" id="ch-also" data-ch-n="${pad(d.groups.length + 1)}" data-ch-t="Also in this document">
+      <button class="fold-head" data-fold="also" aria-expanded="${openAlso}"><span class="s-num">${pad(d.groups.length + 1)}</span><h2>Also in this document</h2><span class="rollup">${d.side.map(sd => chip(`${sd.count || sd.items.length} ${sd.title}`, 'quiet')).join('')}</span><span class="chev">›</span></button>
+      ${openAlso ? `<div class="fold-body fade"><div class="s-also">${d.side.map(sd => `<section class="panel"><div class="eyebrow">${esc(sd.eyebrow)}</div><h2 style="font-size:var(--fs-6)">${esc(sd.title)}</h2>${sideList(sd)}</section>`).join('')}</div></div>` : ''}</section>`;
+  return `<div class="page fade">${chapterBar(d)}${cover}<div class="fold-tools"><button class="text-link" data-fold-all="${allOpen ? 'close' : 'open'}">${allOpen ? 'Collapse all' : 'Expand all'}</button></div>${folds}${also}</div>`;
+}
+
+/* chapter bar: show once the cover scrolls away, name the chapter being read */
+function updateChapterBar() {
+  const bar = document.getElementById('ch-bar'), cover = document.getElementById('cover');
+  if (!bar || !cover) return;
+  bar.classList.toggle('shown', cover.getBoundingClientRect().bottom < 60);
+  let cur = null;
+  document.querySelectorAll('[data-ch-n]').forEach(el => { if (el.getBoundingClientRect().top < 140) cur = el; });
+  if (cur) { document.getElementById('ch-bar-n').textContent = cur.dataset.chN; document.getElementById('ch-bar-t').textContent = cur.dataset.chT; }
+}
+window.addEventListener('scroll', updateChapterBar, { passive: true });
+
 /* ------------------------------ wiring ------------------------------ */
-const RENDER = { today: renderToday, a: renderA, a1: renderRail, a2: renderSheet, a3: renderTabs };
+const RENDER = { a2: renderSheet, b1: renderCompact, b2: renderIndex, b3: renderFolded };
 function render() {
   const d = DOCS[state.doc];
   $root.innerHTML = RENDER[state.variant](d);
@@ -556,25 +619,30 @@ function render() {
   f.style.maxWidth = state.width === 'full' ? 'none' : state.width + 'px';
   f.classList.toggle('narrow-frame', state.width !== 'full');
   document.querySelectorAll('.variant-tab').forEach(t => t.classList.toggle('active', t.dataset.variant === state.variant));
+  updateChapterBar();
   document.querySelectorAll('#sketch-tools button').forEach(b => {
     const on = (b.dataset.doc && b.dataset.doc === state.doc) || (b.dataset.theme && b.dataset.theme === state.theme) || (b.dataset.width && b.dataset.width === state.width);
     b.classList.toggle('on', !!on);
   });
 }
+document.addEventListener('toggle', e => { if (e.target.classList && e.target.classList.contains('b1-facts')) state.factsOpen = e.target.open; }, true);
 document.addEventListener('click', e => {
   const t = e.target.closest('button, [data-open], [data-card]');
   if (!t) return;
   if (t.dataset.variant) { state.variant = t.dataset.variant; state.mode = 'view'; state.expandedCard = null; }
-  else if (t.dataset.doc) { state.doc = t.dataset.doc; state.tab = null; state.open.clear(); state.expandedCard = null; state.mode = 'view'; }
+  else if (t.dataset.doc) { state.doc = t.dataset.doc; state.tab = null; state.openCh.clear(); state.open.clear(); state.expandedCard = null; state.mode = 'view'; }
   else if (t.dataset.theme) state.theme = t.dataset.theme;
   else if (t.dataset.width) state.width = t.dataset.width;
   else if (t.dataset.mode) state.mode = t.dataset.mode;
   else if (t.dataset.open) { state.open.has(t.dataset.open) ? state.open.delete(t.dataset.open) : state.open.add(t.dataset.open); }
   else if (t.dataset.tab) { state.tab = t.dataset.tab; }
+  else if (t.dataset.fold) { state.openCh.has(t.dataset.fold) ? state.openCh.delete(t.dataset.fold) : state.openCh.add(t.dataset.fold); }
+  else if (t.dataset.foldAll) { const d = DOCS[state.doc]; if (t.dataset.foldAll === 'open') { d.groups.forEach(g => state.openCh.add(g.id)); state.openCh.add('also'); } else state.openCh.clear(); }
+  else if (t.dataset.chapter) { state.openCh.add(t.dataset.chapter); render(); const el = document.getElementById('ch-' + t.dataset.chapter); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
   else if (t.dataset.card) { state.expandedCard = state.expandedCard === t.dataset.card ? null : t.dataset.card; }
   else if (t.dataset.jump) {
     const id = t.dataset.jump; state.mode = 'view'; state.open.add(id);
-    const g = DOCS[state.doc].groups.find(g => g.items.some(i => i.id === id)); if (g) { state.expandedCard = g.id; state.tab = g.id; }
+    const g = DOCS[state.doc].groups.find(g => g.items.some(i => i.id === id)); if (g) { state.expandedCard = g.id; state.tab = g.id; state.openCh.add(g.id); }
     render(); const el = document.getElementById(id);
     if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.style.transition = 'background .6s'; el.style.background = 'var(--primary-tint)'; setTimeout(() => el.style.background = '', 1400); }
     return;
