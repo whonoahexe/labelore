@@ -24,7 +24,9 @@ export interface DocumentSectionGroup {
 }
 
 /** Populated by `extractPlanSegments` (below) from `renderPlanRange`'s `data-plan-ordinal`/
- * `data-plan-section`/`data-plan-gate` attributes (VIEW-04, Tag Projection Pattern 3). */
+ * `data-plan-section`/`data-plan-gate` attributes (VIEW-04, Tag Projection Pattern 3). `tdd` and
+ * `html` (sketch-004 B3, quick-260922-3us Task 2) are optional so existing literal
+ * `PlanSegmentAttributes` fixtures in tests keep typechecking without every field. */
 export interface PlanSegmentAttributes {
   ordinal: string;
   tag: string;
@@ -32,6 +34,8 @@ export interface PlanSegmentAttributes {
   gate: string | null;
   type: string | null;
   name: string | null;
+  tdd?: string | null;
+  html?: string;
 }
 
 /**
@@ -79,6 +83,9 @@ interface MinimalElement {
   tagName: string;
   id: string;
   outerHTML: string;
+  /** Read here only by `extractTableRows` (a table cell's own content html, for the "Evidence"
+   * detail block) — a real `Element.innerHTML` getter, present on every actual DOM element. */
+  innerHTML: string;
   textContent: string | null;
   children: ArrayLike<MinimalElement>;
   getAttribute(name: string): string | null;
@@ -215,12 +222,13 @@ function planSegmentAttributesOf(el: MinimalElement): PlanSegmentAttributes {
   const label = labelEl ? textWithoutDescendant(labelEl, '.plan-section-ordinal') : '';
   const gate = el.getAttribute('data-plan-gate');
   const type = el.getAttribute('data-plan-type');
+  const tdd = el.getAttribute('data-plan-tdd');
   let name: string | null = null;
   if (tag === 'task') {
     const nameEl = directChildPlanSection(el, 'name');
     name = nameEl ? textWithoutDescendant(nameEl, '.plan-section-label') : null;
   }
-  return { ordinal, tag, label, gate, type, name };
+  return { ordinal, tag, label, gate, type, name, tdd, html: el.outerHTML };
 }
 
 /** Browser-only adapter (VIEW-04): reads every `section.plan-section[data-plan-ordinal]` out of
@@ -234,4 +242,60 @@ export function extractPlanSegments(html: string): PlanSegmentAttributes[] {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const nodes = Array.from(doc.body.querySelectorAll('section.plan-section[data-plan-ordinal]'));
   return nodes.map(planSegmentAttributesOf);
+}
+
+export interface TableRow {
+  header: string[];
+  cells: { text: string; html: string }[];
+}
+
+const HEADING_LEVEL_RE = /^h([1-4])$/;
+
+/** Browser-only adapter (sketch-004 B3, quick-260922-3us Task 2): finds the first `h1`-`h4` whose
+ * text (without a `.heading-copy` copy-link button) matches `heading`, then the first `<table>`
+ * appearing after it in document order but before the next heading at the same or a shallower
+ * level — returns one entry per `tbody tr`, each carrying the shared `thead th` header texts and
+ * its own `td` cells (`{ text, html }`, `html` being that cell's own inner markup, e.g. for an
+ * "Evidence" column that legitimately holds inline formatting). Fallback (no `DOMParser`, or no
+ * matching heading/table found): `[]`. */
+export function extractTableRows(html: string, heading: RegExp): TableRow[] {
+  if (typeof DOMParser === 'undefined') return [];
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const all = Array.from(doc.body.querySelectorAll('*'));
+
+  let targetIndex = -1;
+  let targetLevel = 0;
+  for (let i = 0; i < all.length; i++) {
+    const level = HEADING_LEVEL_RE.exec(all[i].tagName.toLowerCase())?.[1];
+    if (level === undefined) continue;
+    if (heading.test(textWithoutDescendant(all[i], '.heading-copy'))) {
+      targetIndex = i;
+      targetLevel = Number(level);
+      break;
+    }
+  }
+  if (targetIndex === -1) return [];
+
+  let table: MinimalElement | null = null;
+  for (let i = targetIndex + 1; i < all.length; i++) {
+    const tag = all[i].tagName.toLowerCase();
+    const level = HEADING_LEVEL_RE.exec(tag)?.[1];
+    if (level !== undefined && Number(level) <= targetLevel) break;
+    if (tag === 'table') {
+      table = all[i];
+      break;
+    }
+  }
+  if (!table) return [];
+
+  const header = Array.from(table.querySelectorAll('thead th')).map((th) =>
+    (th.textContent ?? '').trim(),
+  );
+  return Array.from(table.querySelectorAll('tbody tr')).map((row) => ({
+    header,
+    cells: Array.from(row.querySelectorAll('td')).map((td) => ({
+      text: (td.textContent ?? '').trim(),
+      html: td.innerHTML,
+    })),
+  }));
 }

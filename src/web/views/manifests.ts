@@ -7,6 +7,8 @@ import { factsBlock } from './facts.ts';
 import { planTaskIndexBlock } from './plan-task-index.ts';
 import { fallbackManifest } from './fallback.ts';
 import { discussionLogLayout } from './layout-discussion-log.ts';
+import { planLayout } from './layout-plan.ts';
+import { verificationLayout } from './layout-verification.ts';
 import type { ViewKind } from './kinds.ts';
 import type { PromotedBlock, ViewInput, ViewManifest } from './manifest.ts';
 
@@ -85,6 +87,7 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
       { type: 'section', heading: /^requirements coverage/i },
       { type: 'section', heading: /^human verification/i },
     ],
+    layout: verificationLayout,
   },
   plan: {
     kind: 'plan',
@@ -100,6 +103,7 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
         'type',
       ]),
     ],
+    layout: planLayout,
   },
   summary: {
     kind: 'summary',
