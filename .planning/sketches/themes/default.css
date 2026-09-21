@@ -60,6 +60,34 @@
   --ls-wider: 0.08em;
   --fw-semibold: 600;
 
+
+  /* Added for sketch 002 (dashboard-style documents) — verbatim from globals.css. */
+  --card-veil: color-mix(in oklch, var(--card) 94%, transparent);
+  --space-7: 1.75rem;
+  --space-10: 2.5rem;
+  --space-28: 7rem;
+  --space-fluid-3: clamp(1.25rem, 3vw, 2rem);
+  --space-fluid-8: clamp(1rem, 4vw, 3.5rem);
+  --space-fluid-9: clamp(1.5rem, 4vw, 4rem);
+  --space-fluid-10: clamp(2rem, 5vw, 4rem);
+  --space-fluid-13: clamp(2.5rem, 7vw, 5rem);
+  --space-fluid-14: clamp(2rem, 5vw, 5.5rem);
+  --fs-7: 1.3rem;
+  --fs-fluid-1: clamp(0.95rem, 2vw, 1.15rem);
+  --fs-fluid-3: clamp(1.15rem, 2.5vw, 1.65rem);
+  --fs-display-1: clamp(1.8rem, 4vw, 2.7rem);
+  --fs-display-3: clamp(2.8rem, 6vw, 5.75rem);
+  --lh-display: 0.9;
+  --lh-none: 1;
+  --lh-tight: 1.2;
+  --lh-snug: 1.4;
+  --lh-relaxed: 1.7;
+  --ls-tighter: -0.07em;
+  --ls-tight: -0.035em;
+  --ls-widest: 0.12em;
+  --fw-medium: 500;
+  --fw-bold: 700;
+
   color: var(--foreground);
   background: var(--background);
   color-scheme: light;

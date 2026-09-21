@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 002 — Dashboard-style documents</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+/* Layout/component rules for this sketch only. Everything visual comes from ../themes/default.css,
+   which carries the app's own tokens verbatim. Class names mirror the dashboard's where the sketch
+   reuses a dashboard pattern (immediate-work, progress-panel, attention-panel, preview-panel,
+   status-chip, plan-pill, eyebrow, section-heading) so the winner maps straight onto real CSS. */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-5); line-height: var(--lh-normal); padding-top: 3rem; }
+h1, h2, h3, p, ul, ol, dl, dd { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+a { color: inherit; }
+code, .mono { font-family: var(--font-mono); }
+
+/* ---------- variant tabs (sketch chrome) ---------- */
+#variant-nav { position: fixed; inset: 0 0 auto 0; z-index: 50; display: flex; gap: var(--space-1); align-items: center; padding: var(--space-2) var(--space-4); background: var(--background); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; overflow-x: auto; }
+#variant-nav .label { color: var(--muted-foreground); margin-right: var(--space-2); white-space: nowrap; }
+.variant-tab { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; background: none; white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; color: var(--muted-foreground); transition: all .15s ease; }
+.variant-tab:hover { color: var(--foreground); background: var(--state-hover); }
+.variant-tab.active { color: var(--primary); border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); background: var(--primary-tint); }
+
+/* ---------- app shell (static approximation) ---------- */
+.shell-header { display: flex; align-items: center; gap: var(--space-4); height: 3.75rem; padding: 0 var(--space-4); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.brand-mark { width: 2.25rem; height: 2.25rem; background: var(--primary); display: grid; place-items: center; color: white; font-weight: 700; }
+.shell-nav { display: flex; margin: 0 auto; height: 100%; }
+.shell-nav span { display: flex; align-items: center; padding: 0 var(--space-5); border-left: 1px solid var(--border); color: var(--muted-foreground); }
+.shell-nav span:last-child { border-right: 1px solid var(--border); }
+@container (max-width: 640px) { .shell-nav { display: none; } }
+
+
+#frame { margin: 0 auto; container-type: inline-size; transition: max-width .2s ease; background: var(--background); min-height: 100vh; }
+#frame.narrow-frame { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+.page { width: min(80rem, 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); }
+
+/* ---------- shared atoms (mirroring globals.css) ---------- */
+.eyebrow { display: flex; gap: var(--space-2); align-items: center; margin-bottom: var(--space-3); color: var(--primary); font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+.crumbs { font-family: var(--font-mono); font-size: var(--fs-3); color: var(--muted-foreground); margin-bottom: var(--space-6); }
+.crumbs b { color: var(--foreground); font-weight: 400; }
+.status-chip { display: inline-flex; gap: var(--space-1-5); align-items: center; width: fit-content; padding: var(--space-1-5) var(--space-2); border: 1px solid var(--border); background: color-mix(in oklch, var(--muted) 55%, transparent); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.status-chip[data-tone='active'], .status-chip[data-tone='complete'] { border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); background: var(--primary-tint); color: var(--primary); }
+.status-chip[data-tone='quiet'] { color: var(--muted-foreground); }
+.status-chip[data-tone='warning'] { border-color: color-mix(in oklch, oklch(0.75 0.15 75) 60%, var(--border)); color: oklch(0.72 0.15 75); }
+.plan-pill { display: inline-flex; align-items: center; gap: var(--space-1-5); padding: var(--space-1) var(--space-2-5); border: 1px solid var(--border); color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-2); line-height: var(--lh-tight); }
+.plan-pill strong { color: var(--foreground); font-weight: var(--fw-medium); }
+.source-note { color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-1); line-height: var(--lh-normal); overflow-wrap: anywhere; }
+.text-link { font-family: var(--font-mono); font-size: var(--fs-2); text-decoration: underline; text-underline-offset: 3px; color: var(--foreground); background: none; border: 0; padding: 0; }
+.text-link:hover { color: var(--primary); }
+.panel { border: 1px solid var(--border); background: var(--card-veil); padding: var(--space-fluid-3); min-width: 0; }
+.panel h2, .section-heading h2 { font-size: var(--fs-fluid-3); letter-spacing: var(--ls-tight); font-weight: var(--fw-medium); font-family: var(--font-mono); }
+.section-heading { display: flex; gap: var(--space-4); align-items: flex-end; justify-content: space-between; min-width: 0; }
+.section-heading.compact { padding-bottom: var(--space-5); border-bottom: 1px solid var(--border); }
+.count-box { display: grid; min-width: 2.25rem; height: 2.25rem; padding: 0 var(--space-2); place-items: center; border: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-5); }
+.muted { color: var(--muted-foreground); }
+.view-toggle { display: inline-flex; gap: var(--space-1); font-family: var(--font-sans); font-size: var(--fs-5); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.view-toggle button { border: 0; background: none; padding: var(--space-1-5) var(--space-3); color: var(--muted-foreground); transition: all .15s ease; }
+.view-toggle button:hover { color: var(--foreground); }
+.view-toggle button[aria-pressed='true'] { background: var(--muted); color: var(--foreground); box-shadow: inset 0 -2px 0 var(--primary); }
+pre.source { margin: 0; padding: var(--space-5); border: 1px solid var(--border); background: var(--card-veil); font-family: var(--font-mono); font-size: var(--fs-3); line-height: var(--lh-normal); white-space: pre-wrap; overflow-wrap: anywhere; color: var(--muted-foreground); }
+
+/* item rows shared by variants */
+.item { padding: var(--space-5) 0; border-bottom: 1px solid var(--border); min-width: 0; }
+.item:last-child { border-bottom: 0; padding-bottom: 0; }
+.item-head { display: flex; gap: var(--space-3); align-items: flex-start; justify-content: space-between; }
+.item-id { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.item-title { font-weight: var(--fw-medium); font-size: var(--fs-5); line-height: var(--lh-snug); margin-top: var(--space-1); }
+.item-answer { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin-top: var(--space-3); font-size: var(--fs-5); }
+.item-answer .answer-text { font-weight: var(--fw-medium); }
+.item-more { margin-top: var(--space-3); }
+.item-detail { margin-top: var(--space-3); padding: var(--space-3) var(--space-4); border-left: 2px solid var(--border); color: var(--muted-foreground); font-size: var(--fs-4); display: grid; gap: var(--space-2); }
+.item-detail .alt { display: flex; gap: var(--space-2); }
+.item-detail .alt::before { content: '—'; color: var(--border); }
+.item-detail code { font-size: var(--fs-3); color: var(--foreground); }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.side-list { display: grid; gap: var(--space-4); margin-top: var(--space-5); }
+.side-list li { list-style: none; display: grid; gap: var(--space-1); font-size: var(--fs-4); }
+.side-list li .muted { font-size: var(--fs-3); }
+ul.side-list { padding: 0; }
+
+/* ================= VARIANT: TODAY (reference) ================= */
+.today h1 { font-family: var(--font-mono); font-size: var(--fs-display-3); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); font-weight: var(--fw-semibold); margin: var(--space-2) 0 var(--space-4); max-width: 18ch; overflow-wrap: anywhere; }
+.today .lede { color: var(--muted-foreground); font-size: var(--fs-fluid-1); line-height: var(--lh-relaxed); max-width: 48rem; }
+.today .reader { display: grid; grid-template-columns: 14rem minmax(0, 1fr); gap: var(--space-fluid-9); margin-top: var(--space-8); padding-top: var(--space-6); border-top: 1px solid var(--border); }
+.today .outline { position: sticky; top: 4rem; align-self: start; font-size: var(--fs-3); display: grid; gap: var(--space-2); border-right: 1px solid var(--border); padding-right: var(--space-4); }
+.today .outline b { font-family: var(--font-mono); font-weight: 400; font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.today .canvas { max-width: 54rem; }
+.today .t-group { margin-top: var(--space-10); }
+.today .t-group:first-child { margin-top: 0; }
+.today .t-group h2 { font-family: var(--font-mono); font-size: var(--fs-fluid-3); font-weight: var(--fw-medium); padding-bottom: var(--space-4); border-bottom: 1px solid var(--border); margin-bottom: var(--space-4); }
+.today .t-q { margin: var(--space-5) 0; }
+.today .t-q .alts { margin-top: var(--space-2); display: grid; gap: var(--space-2); color: var(--muted-foreground); font-size: var(--fs-4); }
+@container (max-width: 760px) { .today .reader { grid-template-columns: 1fr; } .today .outline { position: static; border-right: 0; padding: 0 0 var(--space-4); border-bottom: 1px solid var(--border); } }
+
+/* ================= VARIANT A: DASHBOARD MIRROR ================= */
+.a-hero { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(18rem, 0.75fr); gap: var(--space-fluid-9); align-items: end; padding-bottom: var(--space-fluid-13); border-bottom: 1px solid var(--border); }
+.a-context { margin-bottom: var(--space-3); color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-3); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.a-hero h1 { font-family: var(--font-mono); font-size: var(--fs-display-3); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tighter); line-height: var(--lh-display); max-width: 14ch; overflow-wrap: anywhere; }
+.a-meta { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; margin-top: var(--space-7); }
+.immediate-work { border: 1px solid var(--border); background: var(--card-veil); padding: var(--space-fluid-3); border-top: 3px solid var(--primary); box-shadow: 0.7rem 0.7rem 0 color-mix(in oklch, var(--muted) 65%, transparent); }
+.immediate-work h2 { font-family: var(--font-mono); font-size: var(--fs-fluid-3); letter-spacing: var(--ls-tight); font-weight: var(--fw-medium); }
+.immediate-work p { margin-top: var(--space-4); color: color-mix(in oklch, var(--muted-foreground) 85%, var(--foreground)); font-size: var(--fs-4); }
+.immediate-work .text-link { display: inline-block; margin-top: var(--space-4); }
+.progress-panel { display: grid; grid-template-columns: minmax(14rem, 1fr) minmax(18rem, 1.2fr); gap: var(--space-6) var(--space-8); align-items: center; margin-top: var(--space-fluid-10); }
+.progress-panel-header { display: flex; flex-direction: column; gap: var(--space-4); align-self: start; }
+.progress-summary { display: flex; flex-direction: column; gap: var(--space-3-5); padding-left: var(--space-8); border-left: 1px solid var(--border); }
+.progress-headline { display: flex; gap: var(--space-2-5); align-items: baseline; }
+.progress-headline strong { font-family: var(--font-heading); font-size: var(--fs-display-3); font-weight: var(--fw-medium); letter-spacing: var(--ls-tighter); line-height: var(--lh-display); }
+.progress-headline span { color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-2); text-transform: uppercase; }
+.a-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(18rem, 0.7fr); gap: var(--space-5); margin-top: var(--space-5); }
+.a-side { display: grid; gap: var(--space-5); align-content: start; }
+.a-group-label { margin-top: var(--space-6); }
+.a-controls { display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); margin-top: var(--space-6); flex-wrap: wrap; }
+.a-controls + .progress-panel { margin-top: var(--space-6); }
+@container (max-width: 900px) { .a-hero, .progress-panel, .a-grid { grid-template-columns: 1fr; } .progress-summary { padding-left: 0; border-left: 0; padding-top: var(--space-5); border-top: 1px solid var(--border); } }
+
+/* ================= VARIANT B: LEDGER ================= */
+.b-head { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--space-6); flex-wrap: wrap; padding-bottom: var(--space-6); border-bottom: 1px solid var(--border); }
+.b-head h1 { font-family: var(--font-mono); font-size: var(--fs-display-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tight); line-height: var(--lh-tight); max-width: 28ch; }
+.b-head .lede { margin-top: var(--space-3); color: var(--muted-foreground); font-size: var(--fs-5); max-width: 60ch; }
+.b-head-right { display: flex; flex-direction: column; gap: var(--space-3); align-items: flex-end; }
+.stat-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: var(--space-6); border: 1px solid var(--border); background: var(--card-veil); }
+.stat-tile { padding: var(--space-5); border-left: 1px solid var(--border); display: grid; gap: var(--space-2); }
+.stat-tile:first-child { border-left: 0; }
+.stat-tile strong { font-family: var(--font-heading); font-size: var(--fs-display-1); font-weight: var(--fw-medium); line-height: var(--lh-none); letter-spacing: var(--ls-tight); }
+.stat-tile span { color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-2); text-transform: uppercase; letter-spacing: var(--ls-wider); }
+.stat-tile.accent strong { color: var(--primary); }
+.b-notice { display: flex; gap: var(--space-4); align-items: baseline; flex-wrap: wrap; margin-top: var(--space-5); padding: var(--space-4) var(--space-5); border: 1px solid var(--border); border-left: 3px solid var(--primary); background: var(--card-veil); font-size: var(--fs-4); }
+.b-notice b { font-family: var(--font-mono); font-weight: var(--fw-medium); }
+.ledger { margin-top: var(--space-5); border: 1px solid var(--border); background: var(--card-veil); }
+.ledger-head { display: flex; justify-content: space-between; align-items: center; padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--border); }
+.ledger-head h2 { font-family: var(--font-mono); font-size: var(--fs-6); font-weight: var(--fw-medium); letter-spacing: var(--ls-tight); }
+.ledger-cols, .ledger-row { display: grid; grid-template-columns: 3.5rem minmax(0, 1.3fr) minmax(0, 1fr) 6.5rem 1.5rem; gap: var(--space-4); align-items: baseline; padding: var(--space-3) var(--space-5); }
+.ledger-cols { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); border-bottom: 1px solid var(--border); }
+.ledger-row { border-bottom: 1px solid var(--border); cursor: pointer; transition: background .15s ease; font-size: var(--fs-4); }
+.ledger-row:hover { background: var(--state-hover); }
+.ledger-row .q { line-height: var(--lh-snug); }
+.ledger-row .a { font-weight: var(--fw-medium); color: var(--foreground); line-height: var(--lh-snug); }
+.ledger-row .chev { color: var(--muted-foreground); transition: transform .15s ease; font-family: var(--font-mono); }
+.ledger-row.open .chev { transform: rotate(90deg); }
+.ledger-detail { padding: 0 var(--space-5) var(--space-4) calc(3.5rem + var(--space-5) + var(--space-4)); border-bottom: 1px solid var(--border); }
+.ledger-detail .item-detail { margin-top: 0; }
+.ledger:last-child .ledger-row:last-child { border-bottom: 0; }
+.b-side { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5); margin-top: var(--space-5); }
+.b-side .panel h2 { font-size: var(--fs-6); }
+@container (max-width: 900px) {
+  .stat-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat-tile:nth-child(3) { border-left: 0; }
+  .stat-tile:nth-child(n+3) { border-top: 1px solid var(--border); }
+  .b-side { grid-template-columns: 1fr; }
+  .b-head-right { align-items: flex-start; }
+  .ledger-cols { display: none; }
+  .ledger-row { grid-template-columns: minmax(0, 1fr) 1.5rem; gap: var(--space-1) var(--space-3); }
+  .ledger-row .idc { grid-column: 1; }
+  .ledger-row .q { grid-column: 1; }
+  .ledger-row .a { grid-column: 1; }
+  .ledger-row .ref { grid-column: 1; }
+  .ledger-row .chev { grid-column: 2; grid-row: 1; }
+  .ledger-detail { padding-left: var(--space-5); }
+}
+
+/* ================= VARIANT C: BOARD ================= */
+.c-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem); gap: var(--space-fluid-9); align-items: start; }
+.c-head h1 { font-family: var(--font-mono); font-size: var(--fs-display-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tight); line-height: var(--lh-tight); max-width: 24ch; }
+.c-head .lede { margin-top: var(--space-3); color: var(--muted-foreground); font-size: var(--fs-5); }
+.c-glance { border: 1px solid var(--border); border-top: 3px solid var(--primary); background: var(--card-veil); padding: var(--space-5); }
+.c-glance h2 { font-family: var(--font-mono); font-size: var(--fs-6); font-weight: var(--fw-medium); }
+.c-glance p { margin-top: var(--space-2); color: var(--muted-foreground); font-size: var(--fs-4); }
+.c-strip { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-6); padding-bottom: var(--space-6); border-bottom: 1px solid var(--border); }
+.c-board { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5); margin-top: var(--space-6); }
+.c-card { border: 1px solid var(--border); background: var(--card-veil); padding: var(--space-5); cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease; min-width: 0; display: flex; flex-direction: column; }
+.c-card:hover { border-color: color-mix(in oklch, var(--primary) 50%, var(--border)); }
+.c-card.expanded { grid-column: 1 / -1; cursor: default; box-shadow: 0.5rem 0.5rem 0 color-mix(in oklch, var(--muted) 65%, transparent); }
+.c-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3); padding-bottom: var(--space-4); border-bottom: 1px solid var(--border); }
+.c-card-head h2 { font-family: var(--font-mono); font-size: var(--fs-6); font-weight: var(--fw-medium); letter-spacing: var(--ls-tight); }
+.c-summary { list-style: none; padding: 0; margin-top: var(--space-4); display: grid; gap: var(--space-3); font-size: var(--fs-4); }
+.c-summary li { display: grid; gap: var(--space-0-5); }
+.c-summary li .muted { font-size: var(--fs-3); }
+.c-summary li .answer-text { font-weight: var(--fw-medium); }
+.c-card .c-foot { margin-top: auto; padding-top: var(--space-4); }
+.c-card.side-card { cursor: default; }
+@container (max-width: 900px) { .c-head, .c-board { grid-template-columns: 1fr; } }
+
+/* reveal animation */
+.fade { animation: fade .18s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .fade { animation: none; } }
+</style>
+</head>
+<body>
+
+<div id="variant-nav" role="tablist">
+  <span class="label">Sketch 002</span>
+  <button class="variant-tab" data-variant="today">Today (reference)</button>
+  <button class="variant-tab active" data-variant="a">A: Dashboard mirror</button>
+  <button class="variant-tab" data-variant="b">B: Ledger</button>
+  <button class="variant-tab" data-variant="c">C: Board</button>
+</div>
+
+<div id="frame">
+  <header class="shell-header">
+    <span class="brand-mark">L</span><span>Labelore</span>
+    <nav class="shell-nav"><span>Dashboard</span><span>Roadmap</span><span>Traceability</span></nav>
+  </header>
+  <main id="root"></main>
+</div>
+
+<div id="sketch-tools" style="position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:12px;background:rgba(0,0,0,0.78);color:white;padding:8px 10px;opacity:0.55;transition:opacity 0.2s;display:grid;gap:6px;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.55'">
+  <div data-group="doc">Doc:
+    <button data-doc="dl">Discussion log</button><button data-doc="plan">Plan</button>
+  </div>
+  <div data-group="theme">Theme:
+    <button data-theme="light">Light</button><button data-theme="dark">Dark</button>
+  </div>
+  <div data-group="width">Width:
+    <button data-width="390">Phone</button><button data-width="820">Tablet</button><button data-width="full">Desktop</button>
+  </div>
+</div>
+<style>
+#sketch-tools button { background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 2px 7px; margin-left: 3px; font: inherit; cursor: pointer; }
+#sketch-tools button.on { background: #c2410c; border-color: #c2410c; }
+</style>
+
+<script>
+/* ---------------------------------------------------------------------------------------------
+   Real content, trimmed only for length:
+   studio-portal/.planning/phases/04-bulk-archive-downloads/04-DISCUSSION-LOG.md
+   studio-portal/.planning/phases/04-bulk-archive-downloads/04-06-PLAN.md (+ 04-06-SUMMARY status)
+   Both documents are normalised into ONE shape — the point of the sketch is a pattern every
+   artifact type can fill:
+     hero   → what this is, where it sits, its status
+     glance → the one thing you need to know (dashboard's "Next up" card)
+     stats  → headline count + supporting counts (dashboard's progress panel)
+     groups → the document's main structured body (dashboard's "Needs attention")
+     side   → secondary lists (dashboard's "On deck")
+   --------------------------------------------------------------------------------------------- */
+const DOCS = {
+  dl: {
+    kind: 'Discussion log',
+    crumbs: ['Dashboard', 'Roadmap', 'v1.1', 'Phase 04'],
+    context: 'Phase 04 · 2026-08-21',
+    title: 'Bulk Archive Downloads',
+    lede: 'Each question that was asked, what was on the table, and what was chosen.',
+    path: '.planning/phases/04-bulk-archive-downloads/04-DISCUSSION-LOG.md',
+    status: { label: '16 of 16 decided', tone: 'complete' },
+    meta: [{ label: '→ 04-CONTEXT.md', link: true }],
+    glance: {
+      eyebrow: 'Left to Claude',
+      title: '1 decision made on your behalf',
+      body: '“Manifest is the contract” (D-09) — you answered “you decide”. Recorded as one-way: the archive builds exactly the file list measured on POST.',
+      action: 'Jump to that question',
+      target: 'q-cap-3',
+    },
+    stats: {
+      headline: { n: 16, label: 'questions decided' },
+      pills: [['4', 'Topics'], ['2', 'Execution-time'], ['3', 'Open questions'], ['4', 'Deferred']],
+      tiles: [['16', 'Questions decided'], ['4', 'Topics'], ['2', 'Decided later'], ['3', 'Still open', true]],
+    },
+    groupsLabel: 'Decisions',
+    unit: 'questions',
+    groups: [
+      { id: 'surface', title: 'Browse action surface', items: [
+        { id: 'q-surface-1', ref: 'D-01', title: 'When the card above the table goes away, what does a row’s own Download button do?', answer: 'Downloads immediately', alts: ['Opens a small dialog', 'Row Download is removed'], note: 'Both the per-row icon button (browse-row.tsx:193) and the context-menu Download (:236) rewire to this.' },
+        { id: 'q-surface-2', ref: 'D-02', title: 'What happens when exactly one file (not a folder) is checked?', answer: 'One file downloads direct', alts: ['Always builds an archive', 'Button label tells you'], note: 'The label variant was declined, so the button stays “Download”; the two-behaviours-one-label problem goes to the UI researcher.' },
+        { id: 'q-surface-3', ref: 'D-03', title: 'The archive job finishes. How does the member collect it?', answer: 'Starts automatically', alts: ['Button on the tray row', 'Auto-start, but only if watching'] },
+        { id: 'q-surface-4', ref: 'D-04', title: 'The job completes while the app is closed. What then?', answer: 'Tray row keeps a button', alts: ['Auto-starts on next visit', 'It’s collected or it’s gone'] },
+      ]},
+      { id: 'lifetime', title: 'Archive lifetime', items: [
+        { id: 'q-life-1', ref: '→ Q2', title: 'A 300 GB download dies at 90%. Is the staged archive still there?', answer: 'Deleted when serving starts', alts: ['Deleted only on success', 'Never auto-deleted on download'], note: 'Claude flagged the resumability cost (PITFALLS P10); refined in the next question rather than reversed.' },
+        { id: 'q-life-2', ref: 'D-05', title: 'Given one-shot semantics, when exactly does the file leave stage?', answer: 'Ticket one-shot, file survives the response', alts: ['File goes at serve start', 'Split the deliverable instead'], note: 'Keeps simple ticket semantics and gets Range resume, by separating the ticket’s lifetime from the file’s.' },
+        { id: 'q-life-3', ref: 'D-06', title: 'How long does an uncollected archive sit on stage?', answer: '24 hours from completion', alts: ['7 days from completion', 'When stage gets tight'] },
+        { id: 'q-life-4', ref: 'D-07', title: 'A power cut killed a build — interrupted job, half-written .zip on stage.', answer: 'Boot reconciliation deletes it', alts: ['Keep it, resume the build', 'Keep it, let the sweep get it'] },
+      ]},
+      { id: 'cap', title: 'Cap + the total', items: [
+        { id: 'q-cap-1', ref: 'D-08', title: 'Where does the recursive walk that produces the real total happen?', answer: 'Synchronously on POST', alts: ['As the job’s first phase', 'Bounded pre-flight, then the job'] },
+        { id: 'q-cap-2', ref: 'D-08', title: 'The pre-flight walk hits its deadline. What does the member get?', answer: 'Refused, told to narrow it', alts: ['Refused, with what it got so far', 'Let it run longer for local tiers'] },
+        { id: 'q-cap-3', ref: 'D-09', claude: true, title: 'Does the pre-flight walk’s file list become the job’s persisted manifest?', answer: 'Manifest is the contract', alts: ['Executor re-walks fresh', 'Persist it, refresh on resume'], note: 'You said “you decide”. Only option under which DL-08 is buildable; gives Range resume a deterministic byte layout. Cost: files created after the POST are not included.' },
+        { id: 'q-cap-4', ref: 'D-10', title: 'The walk comes back over cap. Where does that refusal land?', answer: 'Dialog with the numbers', alts: ['Inline in the selection bar', 'Alert above the table'] },
+      ]},
+      { id: 'perm', title: 'Permission + stage cost', items: [
+        { id: 'q-perm-1', ref: 'D-11', title: 'What permissions does a bulk archive download require?', answer: 'Read on the source only', alts: ['Read on source + write on stage', 'Read on source, admin-configurable'] },
+        { id: 'q-perm-2', ref: 'D-12', title: 'Keep the existing two-tier TierLocks lock for archive jobs?', answer: 'Keep the existing lock', alts: ['Source lock only', 'Own concurrency lane'], note: 'Serialization cost accepted knowingly; both alternatives carried in CONTEXT § Deferred.' },
+        { id: 'q-perm-3', ref: 'D-13', title: 'Selection is under cap but stage lacks free space.', answer: 'Refused at POST, numbers shown', alts: ['Queued until there’s room', 'Let it try'] },
+        { id: 'q-perm-4', ref: 'D-14', title: 'What does the browser save, and is _archives/ visible in /browse?', answer: 'Named for the selection, dir hidden', alts: ['Job id everywhere, dir hidden', 'Named for the selection, dir visible'] },
+      ]},
+      { id: 'exec', title: 'Decided during execution', items: [
+        { id: 'q-exec-1', ref: 'E1', title: 'D-04 vs D-14/D-16: does a completed archive stay in the docked tray?', answer: 'Archive carve-out (isDockedArchive)', alts: ['Honor D-14/D-16 strictly'], note: 'Without it, a failed auto-start renders its error nowhere until the member opens /jobs.' },
+        { id: 'q-exec-2', ref: 'E2', title: 'Can one member collect another member’s staged archive?', answer: 'Accept new copy — they cannot', alts: ['Reword', 'Expose creator, hide Download'], note: '“Only the member who built this archive can download it.” Closes a carried-forward open question.' },
+      ]},
+    ],
+    side: [
+      { eyebrow: 'Carried forward', title: 'Open questions', items: [
+        ['Where does DL-08’s omission report surface?', 'Decide during planning'],
+        ['HARDEN-01 on_collision fix — shared validation seam with the bulk-select payload?', 'Decide during planning'],
+        ['Can one member collect another’s archive?', 'Closed by E2', 'complete'],
+      ]},
+      { eyebrow: 'Declined, kept on file', title: 'Deferred ideas', items: [
+        ['Volume-splitting into .zip.001 / .002', 'Contingency if the DL-09 spike finds long streams unreliable'],
+        ['Source-only tier lock / archive concurrency lane', 'Reach for when a long build blocks the studio'],
+        ['7-day retention · space-pressure sweeping', 'Declined D-06 options'],
+        ['Delete only on confirmed-complete transfer', 'Declined D-05 option'],
+      ]},
+    ],
+    source: `# Phase 4: Bulk Archive Downloads - Discussion Log
+
+> **Audit trail only.** Do not use as input to planning, research, or execution agents.
+> Decisions are captured in CONTEXT.md — this log preserves the alternatives considered.
+
+**Date:** 2026-08-21
+**Phase:** 4-Bulk Archive Downloads
+**Areas discussed:** Browse action surface, Archive lifetime, Cap + the total, Permission + stage cost
+
+---
+
+## Browse action surface
+
+### Q1 — When the card above the table goes away, what does a row's own Download button do?
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Downloads immediately | Mint ticket → browser download starts. … | ✓ |
+| Opens a small dialog | \`DownloadAffordance\` moves from an inline card … | |
+| Row Download is removed | One path only — check the row, hit the bulk … | |
+
+**User's choice:** Downloads immediately
+**Notes:** → CONTEXT D-01. …`,
+  },
+
+  plan: {
+    kind: 'Plan',
+    crumbs: ['Dashboard', 'Roadmap', 'v1.1', 'Phase 04', 'Wave 6'],
+    context: 'Phase 04 · Plan 06 · Wave 6',
+    title: 'Archive jobs: auto-collect once, disclose omissions',
+    lede: 'Make durable archive outcomes understandable and recoverable in the existing job surfaces.',
+    path: '.planning/phases/04-bulk-archive-downloads/04-06-PLAN.md',
+    status: { label: 'Awaiting checkpoint', tone: 'active' },
+    meta: [{ label: 'Depends on 04-05' }, { label: 'Summary →', link: true }],
+    glance: {
+      eyebrow: 'Blocking checkpoint',
+      title: 'Task 3 needs a human',
+      body: 'Verify responsive, focus, live-region and native-download behaviour against the production build at desktop, 390px and a short viewport. Reply “approved” or name the failing consideration.',
+      action: 'Open task 3',
+      target: 't-3',
+    },
+    stats: {
+      headline: { n: 2, label: 'of 3 tasks done' },
+      pills: [['2', 'Auto · TDD'], ['1', 'Human check'], ['9', 'Must-haves'], ['1', 'Flagged']],
+      tiles: [['2/3', 'Tasks done'], ['9', 'Must-haves'], ['4', 'Requirements'], ['1', 'Flagged', true]],
+    },
+    groupsLabel: 'Tasks',
+    unit: 'items',
+    groups: [
+      { id: 'tasks', title: 'Tasks', items: [
+        { id: 't-1', ref: 'Task 1', title: 'Auto-collect a completion transition exactly once', answer: 'Done', answerTone: 'complete', chips: [['auto', 'quiet'], ['TDD', 'quiet']], files: 4,
+          detail: ['New WS transition to completed starts once; REST refetch / reconnect / navigation do not.', 'Explicit Download and auto-start use the identical ticket / native-navigation helper.'], verify: 'cd frontend && npm test -- --test-name-pattern=\'archive|download\'' },
+        { id: 't-2', ref: 'Task 2', title: 'Render archive lifecycle and exact omission disclosure', answer: 'Done', answerTone: 'complete', chips: [['auto', 'quiet'], ['TDD', 'quiet']], files: 4,
+          detail: ['Every queued / running / interrupted / failed / cancelled / completed / expired state maps to locked copy and action.', 'Omission zero / one / many and load / error / partial detail preserve the authoritative count and Download.'], verify: 'cd frontend && npm test && npm run lint && npm run build' },
+        { id: 't-3', ref: 'Task 3', title: 'Verify responsive, focus, live-region and native-download behaviour', answer: 'Waiting on you', answerTone: 'active', chips: [['checkpoint', 'quiet'], ['blocking-human', 'active']], files: 4,
+          detail: ['Execute every UI-SPEC backstop at desktop and 390px, short viewport, 300-character paths, keyboard-only dialog flow, reduced motion, screen-reader announcements.', 'Confirm native auto/explicit downloads do not buffer in JavaScript and all 25 UI considerations remain true.'], verify: 'Reply “approved” with observations, or report the failing consideration and viewport.' },
+      ]},
+      { id: 'musts', title: 'Must be true when done', items: [
+        { id: 'm-1', ref: 'Flagged', title: 'Completion frames, reconnects, refetches, tray reopen and navigation race through a once-per-job-per-session auto-start guard.', answer: 'Assumption', answerTone: 'warning' },
+        { id: 'm-2', ref: 'Truth', title: 'Queued/running archive rows show archive-specific summary, progress, current path and Cancel Archive.', answer: 'Covered by task 2', answerTone: 'quiet' },
+        { id: 'm-3', ref: 'Truth', title: 'Failed/interrupted rows expose Retry (never Resume); collected/expired rows say “Archive no longer available”.', answer: 'Covered by task 2', answerTone: 'quiet' },
+        { id: 'm-4', ref: 'Truth', title: 'A newly received completed frame auto-starts collection once; mint failure leaves Download and exact inline error.', answer: 'Covered by task 1', answerTone: 'quiet' },
+        { id: 'm-5', ref: 'Backstop', title: 'At 390px an archive row wraps without clipping; a 300-character path does not widen the tray.', answer: 'Checked in task 3', answerTone: 'active' },
+        { id: 'm-6', ref: 'Backstop', title: 'Completion/omission transitions announce once through the existing polite region.', answer: 'Checked in task 3', answerTone: 'active' },
+      ]},
+    ],
+    side: [
+      { eyebrow: 'Traces to', title: 'Requirements', items: [['DL-04', 'Cancel & retry'], ['DL-07', 'Archive lifetime'], ['DL-08', 'Named omissions'], ['DL-09', 'Large pulls resume']] },
+      { eyebrow: 'Threat model', title: 'Threats', items: [['T-04-17 · Information disclosure', 'high — owner authorization on omission list', 'active'], ['T-04-16 · Denial of service', 'medium — transition-only auto-start guard'], ['T-04-18 · Tampering', 'medium — actions derived from closed job state']] },
+      { eyebrow: 'Touches', title: 'Files', count: 7, items: [['frontend/lib/archive-job-download.ts', 'new'], ['frontend/lib/use-jobs-socket.ts', ''], ['frontend/components/job-row.tsx', ''], ['frontend/app/jobs/page.tsx', '+ 3 more']] },
+    ],
+    source: `---
+phase: 04-bulk-archive-downloads
+plan: 06
+type: execute
+wave: 6
+depends_on: [04-05]
+autonomous: false
+requirements: [DL-04, DL-07, DL-08, DL-09]
+must_haves:
+  truths:
+    - "[Flagged assumption DL-09/concurrency] Completion frames, reconnects, …"
+    …
+---
+<objective>Present archive jobs, auto-collect once, and disclose exact omissions in existing job surfaces. …</objective>
+<tasks>
+<task type="auto" tdd="true">
+  <name>Task 1: Auto-collect a completion transition exactly once</name>
+  …`,
+  },
+};
+
+/* ------------------------------ state ------------------------------ */
+const state = { variant: 'a', doc: 'dl', theme: 'dark', width: 'full', mode: 'view', open: new Set(), expandedCard: null };
+const $root = document.getElementById('root');
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* ------------------------------ shared pieces ------------------------------ */
+const chip = (label, tone) => `<span class="status-chip"${tone ? ` data-tone="${tone}"` : ''}>${esc(label)}</span>`;
+const crumbs = d => `<div class="crumbs">${d.crumbs.map(esc).join(' / ')} / <b>${esc(d.kind)}</b></div>`;
+const toggle = () => `<div class="view-toggle" role="group" aria-label="View or source">
+  <button data-mode="view" aria-pressed="${state.mode === 'view'}">View</button>
+  <button data-mode="source" aria-pressed="${state.mode === 'source'}">Source</button></div>`;
+const metaBits = d => d.meta.map(m => m.link ? `<button class="text-link">${esc(m.label)}</button>` : `<span class="source-note">${esc(m.label)}</span>`).join('');
+const source = d => `<pre class="source fade">${esc(d.source)}</pre>`;
+
+function answerChip(it, d) {
+  if (d === DOCS.dl) return chip(it.claude ? 'Claude chose' : 'Chosen', 'active');
+  return chip(it.answer, it.answerTone);
+}
+function detailBlock(it) {
+  const parts = [];
+  if (it.alts) parts.push(`<div class="muted" style="font-family:var(--font-mono);font-size:var(--fs-1);letter-spacing:var(--ls-wider);text-transform:uppercase">Also on the table</div>` + it.alts.map(a => `<div class="alt">${esc(a)}</div>`).join(''));
+  if (it.note) parts.push(`<div>${esc(it.note)}</div>`);
+  if (it.detail) parts.push(it.detail.map(x => `<div class="alt">${esc(x)}</div>`).join(''));
+  if (it.verify) parts.push(`<div>Verify: <code>${esc(it.verify)}</code></div>`);
+  return parts.length ? `<div class="item-detail fade">${parts.join('')}</div>` : '';
+}
+const hasDetail = it => !!(it.alts || it.note || it.detail || it.verify);
+function moreLabel(it) {
+  if (it.alts) return `${it.alts.length} other option${it.alts.length > 1 ? 's' : ''}${it.note ? ' · note' : ''}`;
+  if (it.detail) return 'What it does · how it’s verified';
+  return 'Details';
+}
+function itemRow(it, d, { showAnswerText = true } = {}) {
+  const isDl = d === DOCS.dl;
+  const open = state.open.has(it.id);
+  const chips = (it.chips || []).map(([l, t]) => chip(l, t)).join('');
+  return `<article class="item" id="${it.id}">
+    <div class="item-head"><div style="min-width:0">
+      <div class="item-id">${esc(it.ref)}</div>
+      <div class="item-title">${esc(it.title)}</div></div>
+      ${chips ? `<div class="chips">${chips}</div>` : ''}
+    </div>
+    <div class="item-answer">${answerChip(it, d)}${isDl && showAnswerText ? `<span class="answer-text">${esc(it.answer)}</span>` : ''}</div>
+    ${hasDetail(it) ? `<div class="item-more"><button class="text-link" data-open="${it.id}">${open ? 'Hide' : moreLabel(it)}</button></div>${open ? detailBlock(it) : ''}` : ''}
+  </article>`;
+}
+function sideList(s) {
+  return `<ul class="side-list">${s.items.map(([a, b, tone]) => `<li><span>${tone ? chip(tone === 'complete' ? 'Closed' : 'High', tone) + ' ' : ''}${esc(a)}</span>${b ? `<span class="muted">${esc(b)}</span>` : ''}</li>`).join('')}</ul>`;
+}
+const totalItems = d => d.groups.reduce((n, g) => n + g.items.length, 0);
+
+/* ------------------------------ TODAY ------------------------------ */
+function renderToday(d) {
+  const body = state.mode === 'source' ? source(d) : `<div class="reader">
+      <nav class="outline"><b>On this page</b>${d.groups.map(g => `<span>${esc(g.title)}</span>`).join('')}<span class="muted">More in this document</span></nav>
+      <div class="canvas">${d.groups.map(g => `<section class="t-group"><div class="eyebrow">${esc(g.title)}</div>${g.items.map(it => `
+        <div class="t-q"><div class="item-title" style="font-family:var(--font-mono);font-size:var(--fs-fluid-3)">${esc(it.title)}</div>
+        <div class="item-answer">${chip(d === DOCS.dl ? 'Chosen' : it.answer, 'active')}${d === DOCS.dl ? `<span class="answer-text">${esc(it.answer)}</span>` : ''}</div>
+        ${it.alts ? `<div class="alts">${it.alts.map(esc).map(a => `<span>${a}</span>`).join('')}</div>` : ''}</div>`).join('')}</section>`).join('')}</div></div>`;
+  return `<div class="page today fade">${crumbs(d)}<div class="eyebrow">${esc(d.kind)}</div>
+    <h1>${esc(d.context.split(' · ')[0])}: ${esc(d.title)} - ${esc(d.kind)}</h1>
+    <p class="lede">${esc(d.lede)}</p><p class="source-note" style="margin:var(--space-3) 0 var(--space-5)">${esc(d.path)}</p>${toggle()}${body}</div>`;
+}
+
+/* ------------------------------ A: DASHBOARD MIRROR ------------------------------ */
+function renderA(d) {
+  const hero = `<section class="a-hero">
+    <div style="min-width:0">${crumbs(d)}<div class="eyebrow">◇ ${esc(d.kind)}</div>
+      <div class="a-context">${esc(d.context)}</div>
+      <h1>${esc(d.title)}</h1>
+      <div class="a-meta">${chip(d.status.label, d.status.tone)}${metaBits(d)}</div></div>
+    <aside class="immediate-work"><div class="eyebrow">${esc(d.glance.eyebrow)}</div><h2>${esc(d.glance.title)}</h2>
+      <p>${esc(d.glance.body)}</p><button class="text-link" data-jump="${d.glance.target}">${esc(d.glance.action)} →</button></aside>
+  </section>`;
+  const controls = `<div class="a-controls"><p class="source-note">${esc(d.path)}</p>${toggle()}</div>`;
+  if (state.mode === 'source') return `<div class="page fade">${hero}${controls}<div style="margin-top:var(--space-5)">${source(d)}</div></div>`;
+  const progress = `<section class="panel progress-panel">
+    <div class="progress-panel-header"><div class="eyebrow">At a glance</div><h2>${esc(d.lede)}</h2></div>
+    <div class="progress-summary"><div class="progress-headline"><strong>${d.stats.headline.n}</strong><span>${esc(d.stats.headline.label)}</span></div>
+      <div class="chips">${d.stats.pills.map(([n, l]) => `<span class="plan-pill"><strong>${n}</strong> ${esc(l)}</span>`).join('')}</div></div>
+  </section>`;
+  const main = `<section class="panel"><div class="section-heading compact"><div><div class="eyebrow">${esc(d.groupsLabel)}</div><h2>${d === DOCS.dl ? 'What was decided' : 'The work'}</h2></div><span class="count-box">${totalItems(d)}</span></div>
+    ${d.groups.map((g, i) => `<div class="eyebrow a-group-label">${esc(g.title)} · ${g.items.length}</div>${g.items.map(it => itemRow(it, d)).join('')}`).join('')}</section>`;
+  const side = `<div class="a-side">${d.side.map(s => `<section class="panel"><div class="section-heading compact"><div><div class="eyebrow">${esc(s.eyebrow)}</div><h2>${esc(s.title)}</h2></div><span class="count-box">${s.count || s.items.length}</span></div>${sideList(s)}</section>`).join('')}</div>`;
+  return `<div class="page fade">${hero}${controls}${progress}<div class="a-grid">${main}${side}</div></div>`;
+}
+
+/* ------------------------------ B: LEDGER ------------------------------ */
+function renderB(d) {
+  const isDl = d === DOCS.dl;
+  const head = `${crumbs(d)}<header class="b-head"><div style="min-width:0"><div class="eyebrow">${esc(d.kind)} · ${esc(d.context)}</div><h1>${esc(d.title)}</h1><p class="lede">${esc(d.lede)}</p></div>
+    <div class="b-head-right">${chip(d.status.label, d.status.tone)}${toggle()}</div></header>`;
+  if (state.mode === 'source') return `<div class="page fade">${head}<div style="margin-top:var(--space-5)">${source(d)}</div></div>`;
+  const tiles = `<section class="stat-tiles">${d.stats.tiles.map(([n, l, acc]) => `<div class="stat-tile${acc ? ' accent' : ''}"><strong>${n}</strong><span>${esc(l)}</span></div>`).join('')}</section>`;
+  const notice = `<div class="b-notice"><span class="eyebrow" style="margin:0">${esc(d.glance.eyebrow)}</span><b>${esc(d.glance.title)}</b><span class="muted">${esc(d.glance.body)}</span><button class="text-link" data-jump="${d.glance.target}">${esc(d.glance.action)} →</button></div>`;
+  const cols = isDl ? ['Ref', 'Question', 'Chosen', ''] : ['Ref', 'Item', 'State', ''];
+  const ledgers = d.groups.map(g => `<section class="ledger"><div class="ledger-head"><h2>${esc(g.title)}</h2><span class="source-note">${g.items.length} ${esc(d.unit)}</span></div>
+    <div class="ledger-cols"><span>${cols[0]}</span><span>${cols[1]}</span><span>${cols[2]}</span><span>${isDl ? 'Also offered' : 'Kind'}</span><span></span></div>
+    ${g.items.map(it => { const open = state.open.has(it.id); return `<div class="ledger-row${open ? ' open' : ''}" id="${it.id}" data-open="${it.id}">
+      <span class="item-id idc">${esc(it.ref)}</span><span class="q">${esc(it.title)}</span>
+      <span class="a">${isDl ? (it.claude ? chip('Claude chose', 'active') + ' ' : '') + esc(it.answer) : chip(it.answer, it.answerTone)}</span>
+      <span class="source-note ref">${isDl ? (it.alts ? it.alts.length + ' more' : '—') : (it.chips || []).map(c => c[0]).join(' · ') || '—'}</span>
+      <span class="chev">${hasDetail(it) ? '›' : ''}</span></div>${open && hasDetail(it) ? `<div class="ledger-detail">${detailBlock(it)}</div>` : ''}`; }).join('')}</section>`).join('');
+  const side = `<div class="b-side">${d.side.map(s => `<section class="panel"><div class="eyebrow">${esc(s.eyebrow)}</div><h2>${esc(s.title)}</h2>${sideList(s)}</section>`).join('')}</div>`;
+  return `<div class="page fade">${head}${tiles}${notice}${ledgers}${side}</div>`;
+}
+
+/* ------------------------------ C: BOARD ------------------------------ */
+function renderC(d) {
+  const isDl = d === DOCS.dl;
+  const head = `${crumbs(d)}<header class="c-head"><div style="min-width:0"><div class="eyebrow">${esc(d.kind)} · ${esc(d.context)}</div><h1>${esc(d.title)}</h1><p class="lede">${esc(d.lede)}</p>
+      <div class="a-meta" style="margin-top:var(--space-5)">${chip(d.status.label, d.status.tone)}${metaBits(d)}${toggle()}</div></div>
+    <aside class="c-glance"><div class="eyebrow">${esc(d.glance.eyebrow)}</div><h2>${esc(d.glance.title)}</h2><p>${esc(d.glance.body)}</p><button class="text-link" style="margin-top:var(--space-3)" data-jump="${d.glance.target}">${esc(d.glance.action)} →</button></aside></header>`;
+  if (state.mode === 'source') return `<div class="page fade">${head}<div style="margin-top:var(--space-6)">${source(d)}</div></div>`;
+  const strip = `<div class="c-strip">${d.stats.tiles.map(([n, l]) => `<span class="plan-pill"><strong>${n}</strong> ${esc(l)}</span>`).join('')}</div>`;
+  const cards = d.groups.map(g => {
+    const exp = state.expandedCard === g.id;
+    const body = exp ? g.items.map(it => itemRow(it, d)).join('')
+      : `<ul class="c-summary">${g.items.slice(0, 4).map(it => `<li><span class="muted">${esc(it.title)}</span><span class="answer-text">${isDl ? '→ ' + esc(it.answer) : ''}${!isDl ? chip(it.answer, it.answerTone) : ''}</span></li>`).join('')}</ul>`;
+    return `<section class="c-card${exp ? ' expanded fade' : ''}" data-card="${g.id}"><div class="c-card-head"><div><div class="eyebrow" style="margin-bottom:var(--space-1)">${g.items.length} ${esc(d.unit)}</div><h2>${esc(g.title)}</h2></div>
+      <button class="text-link" data-card="${g.id}">${exp ? 'Collapse' : 'Open'}</button></div>${body}</section>`;
+  }).join('');
+  const sideCards = d.side.map(s => `<section class="c-card side-card"><div class="c-card-head"><div><div class="eyebrow" style="margin-bottom:var(--space-1)">${esc(s.eyebrow)}</div><h2>${esc(s.title)}</h2></div><span class="count-box">${s.count || s.items.length}</span></div>${sideList(s)}</section>`).join('');
+  return `<div class="page fade">${head}${strip}<div class="c-board">${cards}${sideCards}</div></div>`;
+}
+
+/* ------------------------------ wiring ------------------------------ */
+const RENDER = { today: renderToday, a: renderA, b: renderB, c: renderC };
+function render() {
+  const d = DOCS[state.doc];
+  $root.innerHTML = RENDER[state.variant](d);
+  document.documentElement.classList.toggle('dark', state.theme === 'dark');
+  const f = document.getElementById('frame');
+  f.style.maxWidth = state.width === 'full' ? 'none' : state.width + 'px';
+  f.classList.toggle('narrow-frame', state.width !== 'full');
+  document.querySelectorAll('.variant-tab').forEach(t => t.classList.toggle('active', t.dataset.variant === state.variant));
+  document.querySelectorAll('#sketch-tools button').forEach(b => {
+    const on = (b.dataset.doc && b.dataset.doc === state.doc) || (b.dataset.theme && b.dataset.theme === state.theme) || (b.dataset.width && b.dataset.width === state.width);
+    b.classList.toggle('on', !!on);
+  });
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('button, [data-open], [data-card]');
+  if (!t) return;
+  if (t.dataset.variant) { state.variant = t.dataset.variant; state.mode = 'view'; state.expandedCard = null; }
+  else if (t.dataset.doc) { state.doc = t.dataset.doc; state.open.clear(); state.expandedCard = null; state.mode = 'view'; }
+  else if (t.dataset.theme) state.theme = t.dataset.theme;
+  else if (t.dataset.width) state.width = t.dataset.width;
+  else if (t.dataset.mode) state.mode = t.dataset.mode;
+  else if (t.dataset.open) { state.open.has(t.dataset.open) ? state.open.delete(t.dataset.open) : state.open.add(t.dataset.open); }
+  else if (t.dataset.card) { state.expandedCard = state.expandedCard === t.dataset.card ? null : t.dataset.card; }
+  else if (t.dataset.jump) {
+    const id = t.dataset.jump; state.mode = 'view'; state.open.add(id);
+    const g = DOCS[state.doc].groups.find(g => g.items.some(i => i.id === id)); if (g) state.expandedCard = g.id;
+    render(); const el = document.getElementById(id);
+    if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.style.transition = 'background .6s'; el.style.background = 'var(--primary-tint)'; setTimeout(() => el.style.background = '', 1400); }
+    return;
+  } else return;
+  render();
+});
+render();
+</script>
+</body>
+</html>
