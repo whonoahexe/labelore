@@ -189,7 +189,7 @@ ul.side-list { padding: 0; }
   <button class="variant-tab" data-variant="a2">A2 from 003 (reference)</button>
   <button class="variant-tab" data-variant="b1">B1: Compact cover</button>
   <button class="variant-tab active" data-variant="b2">B2: Chapter index</button>
-  <button class="variant-tab" data-variant="b3">B3: Folded chapters</button>
+  <button class="variant-tab" data-variant="b3">B3: Folded chapters ★ Selected</button>
 </div>
 
 <div id="frame">
@@ -462,7 +462,7 @@ gaps:
 DOCS.ver.groups.forEach(g => g.items.forEach(i => { i.more = { roadmap: 'Evidence', gaps: 'Why it failed · what to fix', human: 'How to run it' }[g.id]; }));
 
 /* ------------------------------ state ------------------------------ */
-const state = { variant: 'b2', tab: null, openCh: new Set(), factsOpen: false, doc: 'dl', theme: 'dark', width: 'full', mode: 'view', open: new Set(), expandedCard: null };
+const state = { variant: 'b3', tab: null, openCh: new Set(), factsOpen: false, doc: 'dl', theme: 'dark', width: 'full', mode: 'view', open: new Set(), expandedCard: null };
 const $root = document.getElementById('root');
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 

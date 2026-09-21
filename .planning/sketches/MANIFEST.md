@@ -16,4 +16,4 @@ The dashboard (`src/web/pages/dashboard-page.tsx`) for sketch 002. The shipped t
 | 001 | trace-row-layout | How should a trace-row be laid out so rhythm, phase placement, the two-column split and scannability all improve? | C — status rail | traceability, layout, list-row |
 | 002 | dashboard-style-documents | Which layout makes a document page read like the dashboard, in a shape every artifact type can fill? | A — dashboard mirror (refine in 003) | documents, layout, per-type-views |
 | 003 | document-layout-refined | Keeping 002 A's building blocks, which layout reads as a document page rather than a copy of the dashboard? | A2 — cover sheet + numbered chapters (refine in 004) | documents, layout, per-type-views, refinement |
-| 004 | sheet-refined | How should A2's cover sheet and numbered chapters handle phones, long documents and a third document type? | — (pending) | documents, layout, navigation, refinement |
+| 004 | sheet-refined | How should A2's cover sheet and numbered chapters handle phones, long documents and a third document type? | B3 — folded chapters (build it) | documents, layout, navigation, refinement |

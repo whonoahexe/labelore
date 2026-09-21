@@ -2,7 +2,7 @@
 sketch: 004
 name: sheet-refined
 question: "How should A2's cover sheet and numbered chapters handle phones, long documents and a third document type?"
-winner: null
+winner: "B3"
 tags: [documents, layout, per-type-views, refinement, navigation]
 ---
 
@@ -45,3 +45,18 @@ Every chapter heading now carries that summary line in all three variants.
 | B1 | Shortest | Same as A2 | Low | No navigation help |
 | B2 | Medium | Good: index + "where am I" bar | Medium: scroll tracking | Replaces today's outline rail — a real change |
 | B3 | Medium | Best: fold what you don't need | Medium+ | Find-on-page misses folded chapters; one click more to read |
+
+## Outcome
+**Winner: B3 (Folded chapters).** The document-page pattern going forward:
+
+1. **Cover sheet** — one bordered box: eyebrow (kind · context), smaller title, one-line lede, a
+   one-line facts row, status chip + View/Source; below it three cells: big number with count pills,
+   the accent-topped "worth knowing" box with a jump link, and a clickable chapter index with counts.
+2. **Pinned chapter bar** — appears once the cover scrolls away; shows the current chapter number and
+   name, the document title, and View/Source.
+3. **Folded chapters** — each chapter is a bordered row: big muted number, title, roll-up chips
+   summarising its items by state, chevron. Expand one, or all. Jumping (index, glance link) opens
+   the target chapter.
+4. **Items** — ref, title, state chip (plus the chosen answer for discussion logs), and a detail
+   link whose wording fits the type ("2 other options", "Why it failed · what to fix", "How to run it").
+5. **Last chapter** is always "Also in this document" (the side lists as small panels).
