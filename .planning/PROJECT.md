@@ -94,19 +94,33 @@ read layer still admits it without restructuring — it is deferred, not dropped
 - ✓ Light and dark themes keep the studio-portal visual language across sparse, dense, degraded,
   and invalid states — v1.0
 
+**Document legibility**
+
+- ✓ Per-type document views for all 18 registered kinds behind a client-side view registry keyed
+  on a granularised `kind`; View is the page, Source is the escape hatch; unregistered kinds get a
+  speculative structural read behind a quiet `Unrecognized type` marker — Phase 5
+- ✓ The design language written down in `docs/design-language.md` and enforced by the
+  class-vocabulary test — Phase 5
+- ✓ READ-07: outline tracks reading position via one IntersectionObserver; below 58rem it becomes
+  a sticky, keyboard-operable disclosure — Phase 5
+- ✓ BACK-02: `D-XX` / `WR-XX` mentions resolve phase-local-first-then-corpus-unique and preview
+  before navigating — Phase 5
+
 ### Active
 
 <!-- Scoped into v1.1 on 2026-09-20. Items marked [v1.1] are this milestone's; the rest stay carried candidates. -->
 
-**Document legibility — v1.1**
+**Document legibility — carried from v1.1 (the seam shipped; per-type polish is follow-on)**
 
-- [ ] [v1.1] Per-type document views for all 16 artifact types, behind a view registry keyed on a
-      granularised `kind`. Extraction keys on where a type's structure lives, not on its purpose.
-- [ ] [v1.1] The existing design language codified as a documented, testable convention
-- [ ] [v1.1] READ-07: Readable table of contents on long documents — the component exists and is
-      already sticky; its appearance is the gap
-- [ ] [v1.1] BACK-02: Clickable `D-XX` decision and `WR-XX` warning mentions, surfacing NAV-07's
-      index in the UI
+- [ ] Perfect each artifact type's surface against the Phase 5 view registry, one quick task per
+      type (SUMMARY, CONTEXT, UI-SPEC, PATTERNS, UAT, SECURITY, UI-REVIEW, VALIDATION, ROADMAP,
+      REQUIREMENTS, MILESTONE-AUDIT, …) — Phase 5 proved the seam and the flagship types; it did
+      not claim every view is finished (05-UAT deferred follow-up)
+- [ ] Regression tests the Phase 5 threat register promised but never got: 5k-row / 10k-line
+      ReDoS timing tests for the section-projection and mention scanners, and a standing assertion
+      that `blocks.tsx` stays free of `dangerouslySetInnerHTML` (05-SECURITY audit notes 1–2)
+- [ ] Cap View-mode outline entries the way Source mode caps at 18, or amend T-05-11's mitigation
+      text (05-SECURITY audit note 3)
 
 **Findability enhancements — carried**
 
@@ -231,6 +245,10 @@ decision, stays an accepted medium risk, mitigated by the approved 02-13 → 02-
 | One captured derived-views bundle per request | Prevents a concurrent refresh from mixing pre- and post-refresh data in a single response. | ✓ Good — closed D-05; regression-tested |
 | In-memory MiniSearch, rebuilt on start, non-blocking | A few hundred files index in well under a second; incremental `add`/`remove` fits a future watcher. | ✓ Good — revisit only if corpus size grows substantially |
 | Pin TypeScript 5.9.3 rather than TS7 | TS7 is outside `typescript-eslint@8.67.0`'s peer range. | ⚠️ Revisit — when `typescript-eslint` supports TS7 |
+| The per-type view is the page; Source is the escape hatch (D-01) | Promoting structure into a secondary panel would leave the generic reader as the primary surface — the thing v1.1 exists to replace. | ✓ Good — one render path, proven across 18 kinds |
+| Extraction keys on where structure lives, not on document purpose | VERIFICATION and UAT share a purpose but store structure in different places; a purpose taxonomy would still need both paths. | ✓ Good — 3 strategies + 18 manifests, no template tier |
+| Design language is a documented allowlist enforced by a test, not a lint rule | The vocabulary is small and stable; a test that reads the doc's own table keeps the doc and the code from drifting apart. | ✓ Good — every Phase 5 manifest was authored against it |
+| Phase 5 ships the seam, not the polish | Each type's surface gets its own quick task against the registry; folding all 18 into the phase would have made it a restyle marathon with no shared contract. | ✓ Good — recorded as a deferred follow-up in 05-UAT, carried into Active |
 
 ## Evolution
 
@@ -250,4 +268,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-20 after starting milestone v1.1 Legible Documents*
+*Last updated: 2026-09-21 after Phase 5 (Per-Type Document Views) — milestone v1.1 ready to close*

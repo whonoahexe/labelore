@@ -1,13 +1,14 @@
 ---
 phase: 05-per-type-document-views
 verified: 2026-09-20T20:46:15Z
-status: human_needed
+status: passed
 score: 5/7 truths verified
 covered_files: [".claude/CLAUDE.md", ".planning/REQUIREMENTS.md", ".planning/phases/05-per-type-document-views/05-01-PLAN.md", ".planning/phases/05-per-type-document-views/05-01-SUMMARY.md", ".planning/phases/05-per-type-document-views/05-02-PLAN.md", ".planning/phases/05-per-type-document-views/05-02-SUMMARY.md", ".planning/phases/05-per-type-document-views/05-03-PLAN.md", ".planning/phases/05-per-type-document-views/05-03-SUMMARY.md", ".planning/phases/05-per-type-document-views/05-04-PLAN.md", ".planning/phases/05-per-type-document-views/05-04-SUMMARY.md", ".planning/phases/05-per-type-document-views/05-05-PLAN.md", ".planning/phases/05-per-type-document-views/05-05-SUMMARY.md", ".planning/phases/05-per-type-document-views/05-06-PLAN.md", ".planning/phases/05-per-type-document-views/05-06-SUMMARY.md", ".planning/phases/05-per-type-document-views/05-REVIEW.md", "docs/design-language.md", "src/domain/model.ts", "src/planning-repo/handlers/context.ts", "src/planning-repo/handlers/generic.ts", "src/planning-repo/handlers/section-projection.ts", "src/planning-repo/mentions.ts", "src/presentation/references.ts", "src/rendering/frontmatter-views.ts", "src/rendering/linkify.ts", "src/web/components/document-outline.tsx", "src/web/components/document-view-toggle.tsx", "src/web/components/metadata-panel.tsx", "src/web/components/use-active-section.ts", "src/web/pages/artifact-page.tsx", "src/web/styles/globals.css", "src/web/views/active-section.ts", "src/web/views/blocks.tsx", "src/web/views/document-sections.ts", "src/web/views/facts.ts", "src/web/views/fallback.ts", "src/web/views/kinds.ts", "src/web/views/manifest.ts", "src/web/views/manifests.ts", "src/web/views/plan-task-index.ts"]
 covered_digest: "v1:sha256:13a4e93eef0619db4bc322fa8778cec29006d77eccac2803a6824a56e83af2b7"
 behavior_unverified: 2
 overrides_applied: 0
 behavior_unverified_items:
+
   - truth: "UI-06 — moving between a document view and the dashboard, roadmap, traceability and search reads as one application in both light and dark (same section headings, status chips, empty states, page intros)"
     test: "Open the dashboard, roadmap, traceability, search pages and at least six real artifacts of different kinds (DISCUSSION-LOG, VERIFICATION with checks, VERIFICATION without checks, PLAN, an unrecognized-kind file, one more of REVIEW/CONTEXT/SECURITY/FINDINGS) in both light and dark themes"
     expected: "Eyebrows, section headings, status chips (including the quiet Unrecognized-type chip), empty states, notices and page intros read as one visual system — no view looks like a foreign surface, the Unrecognized-type chip reads as neutral rather than an error"
@@ -17,6 +18,7 @@ behavior_unverified_items:
     expected: "Exactly one outline entry is active at a time and tracks scroll position at 1200px; below 58rem the trigger is pinned, its label matches the current section, and the popover is fully keyboard-operable"
     why_human: "pickActiveEntry (the pure selection logic) is unit-tested, and the presence of IntersectionObserver/Popover wiring is confirmed by text-scan contracts, but no test drives a real or mocked IntersectionObserver through actual scroll events, and keyboard-only popover operability is inherently an interaction/perceptual claim. The plan's own must_haves mark this a `verification: backstop` truth."
 human_verification:
+
   - test: "Open /milestones/m~v1.1/.../05-DISCUSSION-LOG.md and a real REVIEW.md, toggle View/Source, in both light and dark themes"
     expected: "View mode renders questions+chips as one application with the dashboard; Source shows the full document; toggling never changes the URL"
     why_human: "Plan 05-01's must_haves backstop truth — visual/cross-theme rendering with no browser test harness available"
