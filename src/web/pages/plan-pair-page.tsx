@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useLocation } from 'react-router';
 import { buildCoverageMatrix, type CoverageStatement } from '../../presentation/coverage.ts';
@@ -10,6 +11,7 @@ import {
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
 import { ArtifactHeader, type ArtifactCrumb } from '../components/artifact-header.tsx';
 import { DocumentView } from './artifact-page.tsx';
+import { dropLeadingTitle } from './document-title.ts';
 
 interface DocumentResponse {
   found: true;
@@ -105,6 +107,24 @@ export function PlanPairPage(): React.JSX.Element {
     queryFn: () => loadPair(location.pathname),
     staleTime: Number.POSITIVE_INFINITY,
   });
+  // F-02 (quick-260921-l4e): every GSD SUMMARY.md opens with its own `# Phase X Plan Y: … Summary`
+  // title (the summary template's own convention) — rendered unmodified, that produces a second
+  // <h1> directly under this page's own "Full summary" <h2>, duplicating the same words twice in
+  // the accessibility tree. `dropLeadingTitle` is the same fix `ArtifactPage` already applies to
+  // every single-document view; applied here to both halves of the pair for symmetry, even though
+  // PLAN.md bodies don't normally carry a leading H1 of their own.
+  const planDocument = useMemo(
+    () =>
+      query.data ? dropLeadingTitle(query.data.plan.document, query.data.plan.artifact.title) : null,
+    [query.data],
+  );
+  const summaryDocument = useMemo(
+    () =>
+      query.data?.summary
+        ? dropLeadingTitle(query.data.summary.document, query.data.summary.artifact.title)
+        : null,
+    [query.data],
+  );
 
   if (query.isPending)
     return (
@@ -231,13 +251,13 @@ export function PlanPairPage(): React.JSX.Element {
       <section id="plan-document" className="plan-pair-document document-overflow-boundary">
         <p className="eyebrow">Authored intent</p>
         <h2>Full plan</h2>
-        <DocumentView document={pair.plan.document} />
+        <DocumentView document={planDocument ?? pair.plan.document} />
       </section>
       {pair.summary ? (
         <section id="summary-document" className="plan-pair-document document-overflow-boundary">
           <p className="eyebrow">Recorded outcome</p>
           <h2>Full summary</h2>
-          <DocumentView document={pair.summary.document} />
+          <DocumentView document={summaryDocument ?? pair.summary.document} />
         </section>
       ) : null}
     </main>

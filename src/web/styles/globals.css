@@ -2733,7 +2733,11 @@ pre {
   overflow-wrap: anywhere;
   font-size: var(--fs-display-3);
   letter-spacing: var(--ls-tighter);
-  line-height: var(--lh-none);
+  /* F-02 (quick-260921-l4e): was `--lh-none` (1) — every reference page's h1
+     (`.page-stack > h1, .page-intro h1`) uses `--lh-display` (0.9); document pages sharing the
+     same `--fs-display-3`/`--fw-semibold`/`--ls-tighter` tokens had drifted on line-height alone.
+     D-10: the document side moves to match the reference pages, never the reverse. */
+  line-height: var(--lh-display);
 }
 
 .artifact-path {
@@ -3291,8 +3295,15 @@ pre {
 }
 
 @media (max-width: 58rem) {
+  /* F-14 (quick-260921-l4e): a bare `1fr` resolves to `minmax(auto, 1fr)` — the track's `auto`
+     minimum refuses to shrink below its content's min-content width. An unbreakable long inline
+     element (a `.document-outline-trigger` label, an unwrapped `<code>` span) then widens this
+     single grid track past the viewport, and every descendant computing a percentage width
+     inherits that wider basis, overflowing the whole page horizontally at narrow widths.
+     `minmax(0, 1fr)` is the same fix already applied to the two-column layout's own second
+     track above — this collapsed single-column layout needs it too. */
   .document-reader-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   nav.document-outline {

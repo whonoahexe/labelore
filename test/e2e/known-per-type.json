@@ -1,1 +1,7 @@
-[]
+[
+  {
+    "page": "doc-requirements",
+    "check": "F-02",
+    "reason": "The corpus's requirements-kind fixture (.planning/milestones/v1.0-REQUIREMENTS.md) is an archival document that embeds a full prior REQUIREMENTS.md body — including that document's own `# Requirements: Labelore` title — beneath the archive's own `# Requirements Archive: v1.0 MVP` heading. dropLeadingTitle() only strips the leading H1 matching the artifact's own title, so the embedded document's H1 survives into the rendered body, giving main two <h1> elements (measured h1Count=2) instead of one. This is a property of this one archived file's content, not the renderer, the fallback view, or any shared component — a differently-authored requirements-kind file would not reproduce it. Confined to a single kind; tracked for the requirements-kind per-type quick task rather than fixed here."
+  }
+]
