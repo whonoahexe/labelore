@@ -2,7 +2,7 @@
 sketch: 002
 name: dashboard-style-documents
 question: "Which layout makes a document page read like the dashboard, in a shape every artifact type can fill?"
-winner: null
+winner: "A"
 tags: [documents, layout, per-type-views, dashboard]
 ---
 
@@ -59,3 +59,8 @@ Toolbar (bottom right): Discussion log / Plan, Light / Dark, Phone / Tablet / De
 | A | Lowest: reuses dashboard CSS | Good | Main panel gets long | Big hero still costs half the first screen |
 | B | Medium: new table rows | Best | Best; rows stay one line | Least "dashboard", most "report" |
 | C | Medium: new card grid + expand | Good at a glance | Worst; expanding shifts the grid | Summaries truncate; detail is one click away |
+
+## Outcome
+**Winner: A (Dashboard mirror)** — the five-slot pattern and the dashboard's building blocks are
+right, but as-is it reads as a copy of the dashboard. Refined in sketch 003, which keeps A's parts
+and tries layouts that read as a document page.

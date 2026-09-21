@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sketch 002 — Dashboard-style documents</title>
+<title>Sketch 003 — Document layout, refined from A</title>
 <link rel="stylesheet" href="../themes/default.css">
 <style>
 /* Layout/component rules for this sketch only. Everything visual comes from ../themes/default.css,
@@ -118,72 +118,80 @@ ul.side-list { padding: 0; }
 .a-controls + .progress-panel { margin-top: var(--space-6); }
 @container (max-width: 900px) { .a-hero, .progress-panel, .a-grid { grid-template-columns: 1fr; } .progress-summary { padding-left: 0; border-left: 0; padding-top: var(--space-5); border-top: 1px solid var(--border); } }
 
-/* ================= VARIANT B: LEDGER ================= */
-.b-head { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--space-6); flex-wrap: wrap; padding-bottom: var(--space-6); border-bottom: 1px solid var(--border); }
-.b-head h1 { font-family: var(--font-mono); font-size: var(--fs-display-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tight); line-height: var(--lh-tight); max-width: 28ch; }
-.b-head .lede { margin-top: var(--space-3); color: var(--muted-foreground); font-size: var(--fs-5); max-width: 60ch; }
-.b-head-right { display: flex; flex-direction: column; gap: var(--space-3); align-items: flex-end; }
-.stat-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: var(--space-6); border: 1px solid var(--border); background: var(--card-veil); }
-.stat-tile { padding: var(--space-5); border-left: 1px solid var(--border); display: grid; gap: var(--space-2); }
-.stat-tile:first-child { border-left: 0; }
-.stat-tile strong { font-family: var(--font-heading); font-size: var(--fs-display-1); font-weight: var(--fw-medium); line-height: var(--lh-none); letter-spacing: var(--ls-tight); }
-.stat-tile span { color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-2); text-transform: uppercase; letter-spacing: var(--ls-wider); }
-.stat-tile.accent strong { color: var(--primary); }
-.b-notice { display: flex; gap: var(--space-4); align-items: baseline; flex-wrap: wrap; margin-top: var(--space-5); padding: var(--space-4) var(--space-5); border: 1px solid var(--border); border-left: 3px solid var(--primary); background: var(--card-veil); font-size: var(--fs-4); }
-.b-notice b { font-family: var(--font-mono); font-weight: var(--fw-medium); }
-.ledger { margin-top: var(--space-5); border: 1px solid var(--border); background: var(--card-veil); }
-.ledger-head { display: flex; justify-content: space-between; align-items: center; padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--border); }
-.ledger-head h2 { font-family: var(--font-mono); font-size: var(--fs-6); font-weight: var(--fw-medium); letter-spacing: var(--ls-tight); }
-.ledger-cols, .ledger-row { display: grid; grid-template-columns: 3.5rem minmax(0, 1.3fr) minmax(0, 1fr) 6.5rem 1.5rem; gap: var(--space-4); align-items: baseline; padding: var(--space-3) var(--space-5); }
-.ledger-cols { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); border-bottom: 1px solid var(--border); }
-.ledger-row { border-bottom: 1px solid var(--border); cursor: pointer; transition: background .15s ease; font-size: var(--fs-4); }
-.ledger-row:hover { background: var(--state-hover); }
-.ledger-row .q { line-height: var(--lh-snug); }
-.ledger-row .a { font-weight: var(--fw-medium); color: var(--foreground); line-height: var(--lh-snug); }
-.ledger-row .chev { color: var(--muted-foreground); transition: transform .15s ease; font-family: var(--font-mono); }
-.ledger-row.open .chev { transform: rotate(90deg); }
-.ledger-detail { padding: 0 var(--space-5) var(--space-4) calc(3.5rem + var(--space-5) + var(--space-4)); border-bottom: 1px solid var(--border); }
-.ledger-detail .item-detail { margin-top: 0; }
-.ledger:last-child .ledger-row:last-child { border-bottom: 0; }
-.b-side { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5); margin-top: var(--space-5); }
-.b-side .panel h2 { font-size: var(--fs-6); }
+/* ================= A1: RAIL ================= */
+.r-mast { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--space-6); flex-wrap: wrap; padding-bottom: var(--space-6); border-bottom: 1px solid var(--border); }
+.r-mast h1 { font-family: var(--font-mono); font-size: var(--fs-display-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tight); line-height: var(--lh-tight); max-width: 26ch; overflow-wrap: anywhere; }
+.r-mast .lede { margin-top: var(--space-3); color: var(--muted-foreground); font-size: var(--fs-5); max-width: 60ch; }
+.r-mast-right { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-3); }
+.r-body { display: grid; grid-template-columns: minmax(16rem, 20rem) minmax(0, 1fr); gap: var(--space-fluid-9); margin-top: var(--space-8); align-items: start; }
+.r-rail { display: grid; gap: var(--space-6); }
+.r-rail .immediate-work { box-shadow: 0.45rem 0.45rem 0 color-mix(in oklch, var(--muted) 65%, transparent); }
+.r-rail .immediate-work h2 { font-size: var(--fs-6); }
+.r-stat strong { display: block; font-family: var(--font-heading); font-size: var(--fs-display-3); font-weight: var(--fw-medium); letter-spacing: var(--ls-tighter); line-height: var(--lh-display); }
+.r-stat > span { display: block; margin-top: var(--space-2); color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-2); text-transform: uppercase; letter-spacing: var(--ls-wider); }
+.r-stat-list { list-style: none; padding: 0; margin-top: var(--space-4); border-top: 1px solid var(--border); }
+.r-stat-list li { display: flex; justify-content: space-between; padding: var(--space-2) 0; border-bottom: 1px solid var(--border); font-family: var(--font-heading); font-size: var(--fs-3); color: var(--muted-foreground); }
+.r-stat-list li b { color: var(--foreground); font-weight: var(--fw-medium); }
+.r-railsec { padding-top: var(--space-5); border-top: 1px solid var(--border); }
+.r-railsec h3 { font-family: var(--font-mono); font-size: var(--fs-6); font-weight: var(--fw-medium); }
+.r-railsec .side-list { margin-top: var(--space-3); gap: var(--space-3); }
+.r-main { display: grid; gap: var(--space-5); min-width: 0; }
+@container (max-width: 900px) { .r-body { grid-template-columns: 1fr; } .r-mast-right { align-items: flex-start; } }
+
+/* ================= A2: SHEET ================= */
+.s-sheet { border: 1px solid var(--border); background: var(--card-veil); }
+.s-top { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-6); flex-wrap: wrap; padding: var(--space-fluid-3); }
+.s-top h1 { font-family: var(--font-mono); font-size: var(--fs-display-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tight); line-height: var(--lh-tight); max-width: 28ch; overflow-wrap: anywhere; }
+.s-top .lede { margin-top: var(--space-3); color: var(--muted-foreground); font-size: var(--fs-5); max-width: 60ch; }
+.s-top-right { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-3); }
+.s-cells { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr) minmax(0, 1fr); border-top: 1px solid var(--border); }
+.s-cell { padding: var(--space-fluid-3); border-left: 1px solid var(--border); min-width: 0; }
+.s-cell:first-child { border-left: 0; }
+.s-cell.glance { border-top: 3px solid var(--primary); margin-top: -1px; }
+.s-cell.glance h2 { font-family: var(--font-mono); font-size: var(--fs-6); font-weight: var(--fw-medium); }
+.s-cell.glance p { margin-top: var(--space-3); color: var(--muted-foreground); font-size: var(--fs-4); }
+.s-facts { display: grid; gap: var(--space-3); }
+.s-facts div { display: grid; gap: var(--space-0-5); }
+.s-facts dt { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.s-facts dd { font-size: var(--fs-4); overflow-wrap: anywhere; }
+.s-controls { display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); flex-wrap: wrap; margin-top: var(--space-6); }
+.s-section { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: var(--space-6); margin-top: var(--space-10); padding-top: var(--space-6); border-top: 1px solid var(--border); }
+.s-num { font-family: var(--font-heading); font-size: var(--fs-display-1); font-weight: var(--fw-medium); line-height: var(--lh-none); letter-spacing: var(--ls-tight); color: var(--muted-foreground); }
+.s-section h2 { font-family: var(--font-mono); font-size: var(--fs-fluid-3); font-weight: var(--fw-medium); letter-spacing: var(--ls-tight); }
+.s-section .s-sub { margin-top: var(--space-1); }
+.s-also { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: var(--space-5); margin-top: var(--space-5); }
 @container (max-width: 900px) {
-  .stat-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .stat-tile:nth-child(3) { border-left: 0; }
-  .stat-tile:nth-child(n+3) { border-top: 1px solid var(--border); }
-  .b-side { grid-template-columns: 1fr; }
-  .b-head-right { align-items: flex-start; }
-  .ledger-cols { display: none; }
-  .ledger-row { grid-template-columns: minmax(0, 1fr) 1.5rem; gap: var(--space-1) var(--space-3); }
-  .ledger-row .idc { grid-column: 1; }
-  .ledger-row .q { grid-column: 1; }
-  .ledger-row .a { grid-column: 1; }
-  .ledger-row .ref { grid-column: 1; }
-  .ledger-row .chev { grid-column: 2; grid-row: 1; }
-  .ledger-detail { padding-left: var(--space-5); }
+  .s-cells { grid-template-columns: 1fr; }
+  .s-cell { border-left: 0; border-top: 1px solid var(--border); }
+  .s-cell:first-child { border-top: 0; }
+  .s-top-right { align-items: flex-start; }
+  .s-section { grid-template-columns: 1fr; gap: var(--space-2); }
 }
 
-/* ================= VARIANT C: BOARD ================= */
-.c-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem); gap: var(--space-fluid-9); align-items: start; }
-.c-head h1 { font-family: var(--font-mono); font-size: var(--fs-display-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tight); line-height: var(--lh-tight); max-width: 24ch; }
-.c-head .lede { margin-top: var(--space-3); color: var(--muted-foreground); font-size: var(--fs-5); }
-.c-glance { border: 1px solid var(--border); border-top: 3px solid var(--primary); background: var(--card-veil); padding: var(--space-5); }
-.c-glance h2 { font-family: var(--font-mono); font-size: var(--fs-6); font-weight: var(--fw-medium); }
-.c-glance p { margin-top: var(--space-2); color: var(--muted-foreground); font-size: var(--fs-4); }
-.c-strip { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-6); padding-bottom: var(--space-6); border-bottom: 1px solid var(--border); }
-.c-board { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5); margin-top: var(--space-6); }
-.c-card { border: 1px solid var(--border); background: var(--card-veil); padding: var(--space-5); cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease; min-width: 0; display: flex; flex-direction: column; }
-.c-card:hover { border-color: color-mix(in oklch, var(--primary) 50%, var(--border)); }
-.c-card.expanded { grid-column: 1 / -1; cursor: default; box-shadow: 0.5rem 0.5rem 0 color-mix(in oklch, var(--muted) 65%, transparent); }
-.c-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3); padding-bottom: var(--space-4); border-bottom: 1px solid var(--border); }
-.c-card-head h2 { font-family: var(--font-mono); font-size: var(--fs-6); font-weight: var(--fw-medium); letter-spacing: var(--ls-tight); }
-.c-summary { list-style: none; padding: 0; margin-top: var(--space-4); display: grid; gap: var(--space-3); font-size: var(--fs-4); }
-.c-summary li { display: grid; gap: var(--space-0-5); }
-.c-summary li .muted { font-size: var(--fs-3); }
-.c-summary li .answer-text { font-weight: var(--fw-medium); }
-.c-card .c-foot { margin-top: auto; padding-top: var(--space-4); }
-.c-card.side-card { cursor: default; }
-@container (max-width: 900px) { .c-head, .c-board { grid-template-columns: 1fr; } }
+/* ================= A3: TABS ================= */
+.t-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(15rem, 19rem); gap: var(--space-fluid-9); align-items: end; }
+.t-head h1 { font-family: var(--font-mono); font-size: var(--fs-display-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tight); line-height: var(--lh-tight); max-width: 26ch; overflow-wrap: anywhere; }
+.t-head .lede { margin-top: var(--space-3); color: var(--muted-foreground); font-size: var(--fs-5); max-width: 60ch; }
+.t-stats { border: 1px solid var(--border); background: var(--card-veil); }
+.t-stat { display: flex; align-items: baseline; gap: var(--space-3); padding: var(--space-3) var(--space-5); border-top: 1px solid var(--border); }
+.t-stat:first-child { border-top: 0; }
+.t-stat strong { font-family: var(--font-heading); font-size: var(--fs-display-1); font-weight: var(--fw-medium); line-height: var(--lh-none); letter-spacing: var(--ls-tight); min-width: 3.5ch; }
+.t-stat span { color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-2); text-transform: uppercase; letter-spacing: var(--ls-wider); }
+.t-stat.accent strong { color: var(--primary); }
+.t-glance { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--space-2) var(--space-6); align-items: baseline; margin-top: var(--space-6); padding: var(--space-5) var(--space-fluid-3); border: 1px solid var(--border); border-top: 3px solid var(--primary); background: var(--card-veil); box-shadow: 0.5rem 0.5rem 0 color-mix(in oklch, var(--muted) 65%, transparent); }
+.t-glance h2 { font-family: var(--font-mono); font-size: var(--fs-6); font-weight: var(--fw-medium); }
+.t-glance p { grid-column: 2; color: var(--muted-foreground); font-size: var(--fs-4); }
+.t-glance .eyebrow { margin: 0; }
+.t-tabs { display: flex; gap: 0; margin-top: var(--space-10); border-bottom: 1px solid var(--border); overflow-x: auto; }
+.t-tab { display: flex; gap: var(--space-2); align-items: center; padding: var(--space-3) var(--space-4); border: 0; background: none; border-bottom: 2px solid transparent; margin-bottom: -1px; font-family: var(--font-mono); font-size: var(--fs-3); color: var(--muted-foreground); white-space: nowrap; transition: all .15s ease; }
+.t-tab:hover { color: var(--foreground); background: var(--state-hover); }
+.t-tab[aria-selected='true'] { color: var(--foreground); border-bottom-color: var(--primary); }
+.t-tab .n { font-size: var(--fs-1); padding: 0 var(--space-1-5); border: 1px solid var(--border); }
+.t-body { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(16rem, 0.6fr); gap: var(--space-5); margin-top: var(--space-5); align-items: start; }
+.t-side { display: grid; gap: var(--space-5); }
+.t-panel > .item:first-child { padding-top: 0; }
+.t-side .panel h2 { font-size: var(--fs-6); }
+@container (max-width: 900px) { .t-head, .t-body { grid-template-columns: 1fr; } .t-glance { grid-template-columns: 1fr; } .t-glance p { grid-column: 1; } }
 
 /* reveal animation */
 .fade { animation: fade .18s ease; }
@@ -194,11 +202,12 @@ ul.side-list { padding: 0; }
 <body>
 
 <div id="variant-nav" role="tablist">
-  <span class="label">Sketch 002</span>
-  <button class="variant-tab" data-variant="today">Today (reference)</button>
-  <button class="variant-tab active" data-variant="a">A: Dashboard mirror ★ Selected</button>
-  <button class="variant-tab" data-variant="b">B: Ledger</button>
-  <button class="variant-tab" data-variant="c">C: Board</button>
+  <span class="label">Sketch 003</span>
+  <button class="variant-tab" data-variant="today">Today</button>
+  <button class="variant-tab" data-variant="a">A from 002 (reference)</button>
+  <button class="variant-tab active" data-variant="a1">A1: Rail</button>
+  <button class="variant-tab" data-variant="a2">A2: Sheet</button>
+  <button class="variant-tab" data-variant="a3">A3: Tabs</button>
 </div>
 
 <div id="frame">
@@ -248,6 +257,7 @@ const DOCS = {
     path: '.planning/phases/04-bulk-archive-downloads/04-DISCUSSION-LOG.md',
     status: { label: '16 of 16 decided', tone: 'complete' },
     meta: [{ label: '→ 04-CONTEXT.md', link: true }],
+    facts: [['Discussed', '2026-08-21'], ['Areas', '4 topics, 4 questions each'], ['Decisions feed', '04-CONTEXT.md (D-01 … D-14)'], ['Note', 'Audit trail only — not an input to planning']],
     glance: {
       eyebrow: 'Left to Claude',
       title: '1 decision made on your behalf',
@@ -339,6 +349,7 @@ const DOCS = {
     path: '.planning/phases/04-bulk-archive-downloads/04-06-PLAN.md',
     status: { label: 'Awaiting checkpoint', tone: 'active' },
     meta: [{ label: 'Depends on 04-05' }, { label: 'Summary →', link: true }],
+    facts: [['Wave', '6 of phase 04'], ['Depends on', '04-05'], ['Runs unattended', 'No — task 3 needs a human'], ['Summary', 'Awaiting checkpoint · 2 commits']],
     glance: {
       eyebrow: 'Blocking checkpoint',
       title: 'Task 3 needs a human',
@@ -398,7 +409,7 @@ must_haves:
 };
 
 /* ------------------------------ state ------------------------------ */
-const state = { variant: 'a', doc: 'dl', theme: 'dark', width: 'full', mode: 'view', open: new Set(), expandedCard: null };
+const state = { variant: 'a1', tab: null, doc: 'dl', theme: 'dark', width: 'full', mode: 'view', open: new Set(), expandedCard: null };
 const $root = document.getElementById('root');
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -484,47 +495,59 @@ function renderA(d) {
   return `<div class="page fade">${hero}${controls}${progress}<div class="a-grid">${main}${side}</div></div>`;
 }
 
-/* ------------------------------ B: LEDGER ------------------------------ */
-function renderB(d) {
-  const isDl = d === DOCS.dl;
-  const head = `${crumbs(d)}<header class="b-head"><div style="min-width:0"><div class="eyebrow">${esc(d.kind)} · ${esc(d.context)}</div><h1>${esc(d.title)}</h1><p class="lede">${esc(d.lede)}</p></div>
-    <div class="b-head-right">${chip(d.status.label, d.status.tone)}${toggle()}</div></header>`;
-  if (state.mode === 'source') return `<div class="page fade">${head}<div style="margin-top:var(--space-5)">${source(d)}</div></div>`;
-  const tiles = `<section class="stat-tiles">${d.stats.tiles.map(([n, l, acc]) => `<div class="stat-tile${acc ? ' accent' : ''}"><strong>${n}</strong><span>${esc(l)}</span></div>`).join('')}</section>`;
-  const notice = `<div class="b-notice"><span class="eyebrow" style="margin:0">${esc(d.glance.eyebrow)}</span><b>${esc(d.glance.title)}</b><span class="muted">${esc(d.glance.body)}</span><button class="text-link" data-jump="${d.glance.target}">${esc(d.glance.action)} →</button></div>`;
-  const cols = isDl ? ['Ref', 'Question', 'Chosen', ''] : ['Ref', 'Item', 'State', ''];
-  const ledgers = d.groups.map(g => `<section class="ledger"><div class="ledger-head"><h2>${esc(g.title)}</h2><span class="source-note">${g.items.length} ${esc(d.unit)}</span></div>
-    <div class="ledger-cols"><span>${cols[0]}</span><span>${cols[1]}</span><span>${cols[2]}</span><span>${isDl ? 'Also offered' : 'Kind'}</span><span></span></div>
-    ${g.items.map(it => { const open = state.open.has(it.id); return `<div class="ledger-row${open ? ' open' : ''}" id="${it.id}" data-open="${it.id}">
-      <span class="item-id idc">${esc(it.ref)}</span><span class="q">${esc(it.title)}</span>
-      <span class="a">${isDl ? (it.claude ? chip('Claude chose', 'active') + ' ' : '') + esc(it.answer) : chip(it.answer, it.answerTone)}</span>
-      <span class="source-note ref">${isDl ? (it.alts ? it.alts.length + ' more' : '—') : (it.chips || []).map(c => c[0]).join(' · ') || '—'}</span>
-      <span class="chev">${hasDetail(it) ? '›' : ''}</span></div>${open && hasDetail(it) ? `<div class="ledger-detail">${detailBlock(it)}</div>` : ''}`; }).join('')}</section>`).join('');
-  const side = `<div class="b-side">${d.side.map(s => `<section class="panel"><div class="eyebrow">${esc(s.eyebrow)}</div><h2>${esc(s.title)}</h2>${sideList(s)}</section>`).join('')}</div>`;
-  return `<div class="page fade">${head}${tiles}${notice}${ledgers}${side}</div>`;
+/* ------------------------------ A1: RAIL ------------------------------ */
+function renderRail(d) {
+  const mast = `${crumbs(d)}<header class="r-mast"><div style="min-width:0"><div class="eyebrow">${esc(d.kind)} · ${esc(d.context)}</div><h1>${esc(d.title)}</h1><p class="lede">${esc(d.lede)}</p></div>
+    <div class="r-mast-right"><div class="a-meta" style="margin:0">${chip(d.status.label, d.status.tone)}${metaBits(d)}</div>${toggle()}</div></header>`;
+  if (state.mode === 'source') return `<div class="page fade">${mast}<div style="margin-top:var(--space-6)">${source(d)}</div></div>`;
+  const rail = `<aside class="r-rail">
+    <div class="immediate-work"><div class="eyebrow">${esc(d.glance.eyebrow)}</div><h2>${esc(d.glance.title)}</h2><p>${esc(d.glance.body)}</p><button class="text-link" data-jump="${d.glance.target}">${esc(d.glance.action)} →</button></div>
+    <div class="r-stat"><strong>${d.stats.headline.n}</strong><span>${esc(d.stats.headline.label)}</span>
+      <ul class="r-stat-list">${d.stats.pills.map(([n, l]) => `<li><span>${esc(l)}</span><b>${n}</b></li>`).join('')}</ul></div>
+    ${d.side.map(sd => `<section class="r-railsec"><div class="eyebrow">${esc(sd.eyebrow)}</div><h3>${esc(sd.title)}</h3>${sideList(sd)}</section>`).join('')}
+  </aside>`;
+  const main = `<div class="r-main">${d.groups.map(g => `<section class="panel"><div class="section-heading compact"><div><div class="eyebrow">${esc(d.groupsLabel)}</div><h2>${esc(g.title)}</h2></div><span class="count-box">${g.items.length}</span></div>${g.items.map(it => itemRow(it, d)).join('')}</section>`).join('')}</div>`;
+  return `<div class="page fade">${mast}<div class="r-body">${rail}${main}</div></div>`;
 }
 
-/* ------------------------------ C: BOARD ------------------------------ */
-function renderC(d) {
-  const isDl = d === DOCS.dl;
-  const head = `${crumbs(d)}<header class="c-head"><div style="min-width:0"><div class="eyebrow">${esc(d.kind)} · ${esc(d.context)}</div><h1>${esc(d.title)}</h1><p class="lede">${esc(d.lede)}</p>
+/* ------------------------------ A2: SHEET ------------------------------ */
+function renderSheet(d) {
+  const sheet = `${crumbs(d)}<section class="s-sheet">
+    <div class="s-top"><div style="min-width:0"><div class="eyebrow">${esc(d.kind)} · ${esc(d.context)}</div><h1>${esc(d.title)}</h1><p class="lede">${esc(d.lede)}</p></div>
+      <div class="s-top-right">${chip(d.status.label, d.status.tone)}</div></div>
+    <div class="s-cells">
+      <div class="s-cell"><div class="eyebrow">At a glance</div><div class="progress-headline"><strong>${d.stats.headline.n}</strong><span>${esc(d.stats.headline.label)}</span></div>
+        <div class="chips" style="margin-top:var(--space-4)">${d.stats.pills.map(([n, l]) => `<span class="plan-pill"><strong>${n}</strong> ${esc(l)}</span>`).join('')}</div></div>
+      <div class="s-cell glance"><div class="eyebrow">${esc(d.glance.eyebrow)}</div><h2>${esc(d.glance.title)}</h2><p>${esc(d.glance.body)}</p><button class="text-link" style="margin-top:var(--space-3)" data-jump="${d.glance.target}">${esc(d.glance.action)} →</button></div>
+      <div class="s-cell"><div class="eyebrow">Facts</div><dl class="s-facts">${d.facts.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl></div>
+    </div></section>
+    <div class="s-controls"><p class="source-note">${esc(d.path)}</p>${toggle()}</div>`;
+  if (state.mode === 'source') return `<div class="page fade">${sheet}<div style="margin-top:var(--space-5)">${source(d)}</div></div>`;
+  const pad = n => String(n).padStart(2, '0');
+  const sections = d.groups.map((g, i) => `<section class="s-section"><div class="s-num">${pad(i + 1)}</div><div style="min-width:0">
+      <h2>${esc(g.title)}</h2><p class="source-note s-sub">${g.items.length} ${esc(d.unit)}</p>${g.items.map(it => itemRow(it, d)).join('')}</div></section>`).join('');
+  const also = `<section class="s-section"><div class="s-num">${pad(d.groups.length + 1)}</div><div style="min-width:0"><h2>Also in this document</h2>
+      <div class="s-also">${d.side.map(sd => `<section class="panel"><div class="eyebrow">${esc(sd.eyebrow)}</div><h2 style="font-size:var(--fs-6)">${esc(sd.title)}</h2>${sideList(sd)}</section>`).join('')}</div></div></section>`;
+  return `<div class="page fade">${sheet}${sections}${also}</div>`;
+}
+
+/* ------------------------------ A3: TABS ------------------------------ */
+function renderTabs(d) {
+  if (!d.groups.some(g => g.id === state.tab)) state.tab = d.groups[0].id;
+  const head = `${crumbs(d)}<header class="t-head"><div style="min-width:0"><div class="eyebrow">${esc(d.kind)} · ${esc(d.context)}</div><h1>${esc(d.title)}</h1><p class="lede">${esc(d.lede)}</p>
       <div class="a-meta" style="margin-top:var(--space-5)">${chip(d.status.label, d.status.tone)}${metaBits(d)}${toggle()}</div></div>
-    <aside class="c-glance"><div class="eyebrow">${esc(d.glance.eyebrow)}</div><h2>${esc(d.glance.title)}</h2><p>${esc(d.glance.body)}</p><button class="text-link" style="margin-top:var(--space-3)" data-jump="${d.glance.target}">${esc(d.glance.action)} →</button></aside></header>`;
+    <div class="t-stats">${d.stats.tiles.slice(0, 3).concat([d.stats.tiles[3]]).map(([n, l, acc]) => `<div class="t-stat${acc ? ' accent' : ''}"><strong>${n}</strong><span>${esc(l)}</span></div>`).join('')}</div></header>`;
   if (state.mode === 'source') return `<div class="page fade">${head}<div style="margin-top:var(--space-6)">${source(d)}</div></div>`;
-  const strip = `<div class="c-strip">${d.stats.tiles.map(([n, l]) => `<span class="plan-pill"><strong>${n}</strong> ${esc(l)}</span>`).join('')}</div>`;
-  const cards = d.groups.map(g => {
-    const exp = state.expandedCard === g.id;
-    const body = exp ? g.items.map(it => itemRow(it, d)).join('')
-      : `<ul class="c-summary">${g.items.slice(0, 4).map(it => `<li><span class="muted">${esc(it.title)}</span><span class="answer-text">${isDl ? '→ ' + esc(it.answer) : ''}${!isDl ? chip(it.answer, it.answerTone) : ''}</span></li>`).join('')}</ul>`;
-    return `<section class="c-card${exp ? ' expanded fade' : ''}" data-card="${g.id}"><div class="c-card-head"><div><div class="eyebrow" style="margin-bottom:var(--space-1)">${g.items.length} ${esc(d.unit)}</div><h2>${esc(g.title)}</h2></div>
-      <button class="text-link" data-card="${g.id}">${exp ? 'Collapse' : 'Open'}</button></div>${body}</section>`;
-  }).join('');
-  const sideCards = d.side.map(s => `<section class="c-card side-card"><div class="c-card-head"><div><div class="eyebrow" style="margin-bottom:var(--space-1)">${esc(s.eyebrow)}</div><h2>${esc(s.title)}</h2></div><span class="count-box">${s.count || s.items.length}</span></div>${sideList(s)}</section>`).join('');
-  return `<div class="page fade">${head}${strip}<div class="c-board">${cards}${sideCards}</div></div>`;
+  const glance = `<section class="t-glance"><div class="eyebrow">${esc(d.glance.eyebrow)}</div><h2>${esc(d.glance.title)}</h2><button class="text-link" data-jump="${d.glance.target}">${esc(d.glance.action)} →</button><p>${esc(d.glance.body)}</p></section>`;
+  const tabs = `<div class="t-tabs" role="tablist">${d.groups.map(g => `<button class="t-tab" role="tab" aria-selected="${g.id === state.tab}" data-tab="${g.id}">${esc(g.title)} <span class="n">${g.items.length}</span></button>`).join('')}</div>`;
+  const g = d.groups.find(g => g.id === state.tab);
+  const main = `<section class="panel fade t-panel">${g.items.map(it => itemRow(it, d)).join('')}</section>`;
+  const side = `<div class="t-side">${d.side.map(sd => `<section class="panel"><div class="eyebrow">${esc(sd.eyebrow)}</div><h2>${esc(sd.title)}</h2>${sideList(sd)}</section>`).join('')}</div>`;
+  return `<div class="page fade">${head}${glance}${tabs}<div class="t-body">${main}${side}</div></div>`;
 }
 
 /* ------------------------------ wiring ------------------------------ */
-const RENDER = { today: renderToday, a: renderA, b: renderB, c: renderC };
+const RENDER = { today: renderToday, a: renderA, a1: renderRail, a2: renderSheet, a3: renderTabs };
 function render() {
   const d = DOCS[state.doc];
   $root.innerHTML = RENDER[state.variant](d);
@@ -542,15 +565,16 @@ document.addEventListener('click', e => {
   const t = e.target.closest('button, [data-open], [data-card]');
   if (!t) return;
   if (t.dataset.variant) { state.variant = t.dataset.variant; state.mode = 'view'; state.expandedCard = null; }
-  else if (t.dataset.doc) { state.doc = t.dataset.doc; state.open.clear(); state.expandedCard = null; state.mode = 'view'; }
+  else if (t.dataset.doc) { state.doc = t.dataset.doc; state.tab = null; state.open.clear(); state.expandedCard = null; state.mode = 'view'; }
   else if (t.dataset.theme) state.theme = t.dataset.theme;
   else if (t.dataset.width) state.width = t.dataset.width;
   else if (t.dataset.mode) state.mode = t.dataset.mode;
   else if (t.dataset.open) { state.open.has(t.dataset.open) ? state.open.delete(t.dataset.open) : state.open.add(t.dataset.open); }
+  else if (t.dataset.tab) { state.tab = t.dataset.tab; }
   else if (t.dataset.card) { state.expandedCard = state.expandedCard === t.dataset.card ? null : t.dataset.card; }
   else if (t.dataset.jump) {
     const id = t.dataset.jump; state.mode = 'view'; state.open.add(id);
-    const g = DOCS[state.doc].groups.find(g => g.items.some(i => i.id === id)); if (g) state.expandedCard = g.id;
+    const g = DOCS[state.doc].groups.find(g => g.items.some(i => i.id === id)); if (g) { state.expandedCard = g.id; state.tab = g.id; }
     render(); const el = document.getElementById(id);
     if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.style.transition = 'background .6s'; el.style.background = 'var(--primary-tint)'; setTimeout(() => el.style.background = '', 1400); }
     return;
