@@ -1,3 +1,10 @@
+---
+audit_acknowledged:
+  milestone: v1.1
+  at: 2026-09-21
+  status: unknown
+---
+
 # GSD Debug Knowledge Base
 
 Resolved debug sessions. Used by `gsd-debugger` to surface known-pattern hypotheses at the start of new investigations.
@@ -5,6 +12,7 @@ Resolved debug sessions. Used by `gsd-debugger` to surface known-pattern hypothe
 ---
 
 ## loading-state-regression — route-transition top bar never appeared on in-app navigation; page blank ~12s on load
+
 - **Date:** 2026-09-16
 - **Error patterns:** no errors in console, loading bar never appears, top bar missing on navigation, skeletons don't appear, sidebar icon delayed, slow page switching, blank page for several seconds, Suspense fallback not rendering, RouteProgress, React.lazy, startTransition, useNavigation idle, NODE_ENV unset, Vite dev middleware served in production
 - **Root cause(s):** ENVIRONMENT — the Cloudflare tunnel origin ran `node src/server/index.ts` with `NODE_ENV` unset, so `createApp(source, production = process.env.NODE_ENV === 'production')` was false and Hono served the Vite dev middleware instead of `./dist`; at 150ms RTT that is 55 unbundled round trips and a fully blank page until t=11,792ms (vs 14 requests / t=765ms in prod); **and** CODE — `RouteProgress` was wired only as the `<Suspense fallback>`, but React renders a fallback only when the boundary MOUNTS, and react-router runs navigations inside `startTransition` where React deliberately keeps an already-mounted boundary's children on screen, so the bar could never paint on an in-app navigation (reproduced identically in dev and prod); **and** STRUCTURAL — `app-shell.tsx` gated the drawer trigger behind `{tree.isSuccess ? <SidebarDrawer /> : null}`, making the sidebar icon wait on a 120,265-byte `/api/tree` payload (482ms lag in prod, 564ms in dev)

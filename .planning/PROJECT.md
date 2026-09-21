@@ -15,45 +15,40 @@ artifact lives — without reading a single file by hand.
 
 ## Current State
 
-**v1.0 MVP shipped 2026-09-10.** All four phases are complete, 45/45 v1 requirements are satisfied,
-and the milestone audit `passed` with zero open tech debt. One accepted, non-blocking risk is on
-record (R-02-01). The full record is in `milestones/v1.0-*` and `MILESTONES.md`.
+**v1.1 Legible Documents shipped 2026-09-21.** One phase (5), 6 plans, 11/11 v1.1 requirements
+satisfied; Phase 5 verified `passed`, UAT 4/4, security `threats_open: 0`, UI review 22/24. Every
+planning document type now opens into a view built for it, behind a client-side view registry
+keyed on a granularised `kind` and speaking one written-down, test-enforced design language. The
+full record is in `milestones/v1.1-*` and `MILESTONES.md`.
+
+**v1.0 MVP shipped 2026-09-10.** Four phases, 45/45 v1 requirements, milestone audit `passed`. The
+record is in `milestones/v1.0-*`.
 
 The shipped app is a Vite 8 + React 19 SPA served by a Hono 4 Node server, started with
 `npm run dev -- /path/to/project`. It contains:
 
 - a headless read layer behind a swappable filesystem seam
 - a sanitized, PLAN-aware markdown pipeline (unified/remark/rehype, Shiki, client-side Mermaid)
+- per-type document views for all 18 registered kinds, with a structural fallback for the rest
+- a documented design language (`docs/design-language.md`) enforced by a class-vocabulary test
 - MiniSearch full-text search
 - a tree navigator
 - requirements traceability
 - a single `refresh()` seam with an atomic derived-view swap
 
-It has about 24.4k lines of TypeScript/TSX/CSS and 590 tests.
+It has about 35.2k lines of TypeScript/TSX/CSS and 1071 tests across 64 files.
 
-## Current Milestone: v1.1 Legible Documents
+## Next Milestone Goals
 
-**Goal:** Every planning document type shows what it is actually for, in one consistent visual
-language — so a discussion log reads as questions and choices, a verification as what to verify,
-and a plan as a plan.
+Not yet defined — start with `/gsd-new-milestone`. The candidates carried in Active below fall into
+three groups, roughly in order of how ready they are:
 
-**Target features:**
-- Per-type document views for all 16 artifact types, behind a view registry keyed on `kind`
-- The existing design language codified as a documented, testable convention
-- A readable table of contents on long documents (READ-07 — the component exists, its appearance
-  does not hold up)
-- Clickable `D-XX` / `WR-XX` decision and warning mentions (BACK-02)
-
-**Shape:** a single phase. The work is 3 extraction strategies + 16 small per-type manifests, not N
-view templates — two of the three strategies already ship. Staging happens through plans and waves
-inside the phase rather than across phases.
-
-**Why now:** v1.0 made every artifact *reachable*; none of it is *legible*. Two blockers cleared
-2026-09-20 — categorization settled (`research/questions.md`) and the document page frame fixed
-(quick task `260920-mzr`).
-
-**Not this milestone:** PLAT-01 (live file-watching) remains the strongest platform signal and the
-read layer still admits it without restructuring — it is deferred, not dropped.
+1. **Finish what v1.1 opened** — per-type surface polish against the view registry, the 05-SECURITY
+   regression tests, and the 05-UI-REVIEW polish items. Small, well-specified, no design work.
+2. **Findability on top of the granular `kind`** — FIND-06 faceted search and NAV-08 command palette
+   both became practical once v1.1 gave every artifact a real kind.
+3. **Platform** — PLAT-01 live file-watching remains the strongest signal; the read layer, the
+   `refresh()` seam and the TanStack Query layer all still admit it without restructuring.
 
 ## Requirements
 
@@ -98,19 +93,19 @@ read layer still admits it without restructuring — it is deferred, not dropped
 
 - ✓ Per-type document views for all 18 registered kinds behind a client-side view registry keyed
   on a granularised `kind`; View is the page, Source is the escape hatch; unregistered kinds get a
-  speculative structural read behind a quiet `Unrecognized type` marker — Phase 5
+  speculative structural read behind a quiet `Unrecognized type` marker — v1.1
 - ✓ The design language written down in `docs/design-language.md` and enforced by the
-  class-vocabulary test — Phase 5
+  class-vocabulary test — v1.1
 - ✓ READ-07: outline tracks reading position via one IntersectionObserver; below 58rem it becomes
-  a sticky, keyboard-operable disclosure — Phase 5
+  a sticky, keyboard-operable disclosure — v1.1
 - ✓ BACK-02: `D-XX` / `WR-XX` mentions resolve phase-local-first-then-corpus-unique and preview
-  before navigating — Phase 5
+  before navigating — v1.1
 
 ### Active
 
-<!-- Scoped into v1.1 on 2026-09-20. Items marked [v1.1] are this milestone's; the rest stay carried candidates. -->
+<!-- Candidates carried into the next milestone after the v1.1 close on 2026-09-21. Nothing here is scoped yet. -->
 
-**Document legibility — carried from v1.1 (the seam shipped; per-type polish is follow-on)**
+**Document legibility — follow-on from v1.1 (the seam shipped; per-type polish is next)**
 
 - [ ] Perfect each artifact type's surface against the Phase 5 view registry, one quick task per
       type (SUMMARY, CONTEXT, UI-SPEC, PATTERNS, UAT, SECURITY, UI-REVIEW, VALIDATION, ROADMAP,
@@ -121,6 +116,8 @@ read layer still admits it without restructuring — it is deferred, not dropped
       that `blocks.tsx` stays free of `dangerouslySetInnerHTML` (05-SECURITY audit notes 1–2)
 - [ ] Cap View-mode outline entries the way Source mode caps at 18, or amend T-05-11's mitigation
       text (05-SECURITY audit note 3)
+- [ ] UI-review polish: opaque narrow outline trigger, depth markers on the plan task index,
+      primary-coloured trigger chevron (05-UI-REVIEW, 22/24)
 
 **Findability enhancements — carried**
 
@@ -190,8 +187,9 @@ variants, so it is not hardcoded to studio-portal's shape.
   `RETROSPECTIVE.md`, plus project-specific notes.
 - *Machine-readable state*: `STATE.md` YAML frontmatter, `config.json` (read as an open map),
   `HANDOFF.json`, and `estimation-calibration.json`.
-- *Phase directories*: `phases/NN-slug/` with up to about 15 artifact types. The ten recognized types
-  get typed handlers; everything else falls through to the generic markdown handler.
+- *Phase directories*: `phases/NN-slug/` with up to about 15 artifact types. Handlers dispatch on
+  filename+location into a granularised `kind`; all 18 registered kinds have a view manifest, and
+  anything else gets a structural read behind an `Unrecognized type` marker.
 - *Other trees*: `quick/`, `milestones/`, `research/`, `ui-reviews/`.
 - *Beyond `.planning/`*: research confirmed that GSD's skills, agents, and hooks hold no state worth
   showing in the dashboard, which resolves the open question from project start.
@@ -199,11 +197,13 @@ variants, so it is not hardcoded to studio-portal's shape.
 **Theme source.** studio-portal's oklch tokens, shadcn `base-sera` over `@base-ui/react`, lucide icons,
 and squared corners were copied. The codebase was not.
 
-**Known issues / debt.** No open tech debt at v1.0 close. R-02-01, the 02-06 gate closed on a human
-decision, stays an accepted medium risk, mitigated by the approved 02-13 → 02-17 gate chain.
+**Known issues / debt.** At v1.1 close: the 05-SECURITY threat register promised three regression
+tests that were not written (ReDoS timing for the section-projection and mention scanners, a
+standing `dangerouslySetInnerHTML` guard on `blocks.tsx`, and a View-mode outline cap) — all listed
+in Active. R-02-01 from v1.0 stays an accepted medium risk.
 
 **Environment.** Linux, Node 22.23.1 (`engines.node >=22.18.0`). Built against GSD core 1.11.0;
-1.13.0 installed at v1.0 close.
+1.13.0 installed at v1.0 close, 1.14.0 at v1.1 close.
 
 ## Constraints
 
@@ -268,4 +268,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-21 after Phase 5 (Per-Type Document Views) — milestone v1.1 ready to close*
+*Last updated: 2026-09-21 after v1.1 milestone*
