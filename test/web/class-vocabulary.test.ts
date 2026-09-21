@@ -11,10 +11,10 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join, relative } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { VIEW_LOCAL_PREFIXES } from '../../src/web/views/kinds.ts';
+import { checkTokens, loadVocabulary, viewLocalPattern } from '../helpers/design-vocabulary.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(__dirname, '..', '..');
-const DOC_PATH = join(REPO_ROOT, 'docs/design-language.md');
 
 const SCAN_ROOTS = ['src/web/views', 'src/web/pages', 'src/web/components'];
 const EXCLUDE_SEGMENT = `${join('components', 'ui')}${'/'}`;
@@ -22,39 +22,6 @@ const EXCLUDE_SEGMENT = `${join('components', 'ui')}${'/'}`;
 /** A template-literal static segment that immediately precedes a `${…}` interpolation carries
  * this marker so checkTokens treats it as a prefix rather than a whole-name match. */
 const PREFIX_MARKER = '\u0000PREFIX';
-
-// ---------------------------------------------------------------------------
-// docs/design-language.md parser (D-08: the doc is the single vocabulary)
-// ---------------------------------------------------------------------------
-
-export interface Vocabulary {
-  classes: Set<string>;
-  tones: Set<string>;
-}
-
-/** Splits the doc on `## ` section headings; within each section, every line matching
- * `| \`token\` |` (token = `[a-z][a-z0-9-]*`) registers a name. A section whose heading starts
- * with "Tones" feeds `tones`; every other section feeds `classes`. */
-export function parseVocabulary(markdown: string): Vocabulary {
-  const classes = new Set<string>();
-  const tones = new Set<string>();
-  const lines = markdown.split('\n');
-  let currentSet: Set<string> | null = classes;
-  const rowPattern = /^\|\s*`([a-z][a-z0-9-]*)`\s*\|/;
-
-  for (const line of lines) {
-    const headingMatch = /^##\s+(.*)$/.exec(line);
-    if (headingMatch) {
-      currentSet = headingMatch[1].trim().startsWith('Tones') ? tones : classes;
-      continue;
-    }
-    if (!currentSet) continue;
-    const rowMatch = rowPattern.exec(line);
-    if (rowMatch) currentSet.add(rowMatch[1]);
-  }
-
-  return { classes, tones };
-}
 
 // ---------------------------------------------------------------------------
 // Source scanner — no AST, text/regex only (per plan prohibition)
@@ -245,33 +212,6 @@ function collectComparisonAwareStrings(expr: string): string[] {
   return results;
 }
 
-/** `^view-(p1|p2|…)-[a-z0-9-]+$` with each prefix regex-escaped (kinds contain hyphens, e.g.
- * `discussion-log`, `milestone-audit`). A bare `view-x` (no kind segment) never matches. */
-export function viewLocalPattern(prefixes: readonly string[]): RegExp {
-  const escaped = prefixes.map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-  return new RegExp(`^view-(${escaped.join('|')})-[a-z0-9-]+$`);
-}
-
-/** Checks a list of raw tokens (as produced by extractClassTokens, PREFIX_MARKER intact)
- * against the documented `classes` set and the view-local pattern. A plain token passes when
- * it's in `classes` or matches `viewLocal`; a prefix token passes when some documented name
- * starts with that prefix. Returns the offending raw tokens (marker stripped for display). */
-export function checkTokens(tokens: string[], classes: Set<string>, viewLocal: RegExp): string[] {
-  const offenders: string[] = [];
-  for (const token of tokens) {
-    const isPrefix = token.endsWith(PREFIX_MARKER);
-    const clean = isPrefix ? token.slice(0, -PREFIX_MARKER.length) : token;
-    if (isPrefix) {
-      const ok = [...classes].some((name) => name.startsWith(clean));
-      if (!ok) offenders.push(clean);
-      continue;
-    }
-    if (classes.has(clean) || viewLocal.test(clean)) continue;
-    offenders.push(clean);
-  }
-  return offenders;
-}
-
 // ---------------------------------------------------------------------------
 // File discovery
 // ---------------------------------------------------------------------------
@@ -304,16 +244,13 @@ function walkTsxFiles(root: string): string[] {
   return results.sort();
 }
 
-function loadVocabulary(): Vocabulary {
-  return parseVocabulary(readFileSync(DOC_PATH, 'utf8'));
-}
 
 // ---------------------------------------------------------------------------
 // Suite
 // ---------------------------------------------------------------------------
 
 describe('class-vocabulary allowlist (UI-05, D-08, D-09, D-10)', () => {
-  const vocabulary = loadVocabulary();
+  const vocabulary = loadVocabulary(REPO_ROOT);
   const viewLocal = viewLocalPattern(VIEW_LOCAL_PREFIXES);
   const scannedFiles = SCAN_ROOTS.flatMap((root) => walkTsxFiles(root));
 
