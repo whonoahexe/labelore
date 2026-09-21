@@ -2,19 +2,18 @@
 gsd_state_version: "1.0"
 milestone: v1.1
 milestone_name: Legible Documents
-current_phase: 05
-status: completed
+status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-09-21T09:01:05.400Z"
+last_updated: "2026-09-21T09:34:14.305Z"
 last_activity: 2026-09-21
-last_activity_desc: Phase 05 complete
-state_head: 71591ce10c46d4604d0eea374701e25faf808186
+last_activity_desc: Milestone v1.1 completed and archived
+state_head: 5eaa6dc2f1e0df8d324a1c8867aa9b13eca145df
 progress:
   total_phases: 1
   completed_phases: 1
   total_plans: 6
   completed_plans: 6
-  percent: 100
+current_phase: 05
 ---
 
 # Project State
@@ -28,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-09-21)
 
 ## Current Position
 
-Phase: 05
-Plan: Not started
-Status: All phases complete
-Last activity: 2026-09-21 — Phase 05 complete
+Phase: Milestone v1.1 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-09-21 — Milestone v1.1 completed and archived
 
 ## Performance Metrics
 
@@ -113,24 +112,6 @@ None.
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
-| 260910-jz8 | Centralize spacing, type and color tokens with a guard check | 2026-09-10 | 55c010f | [260910-jz8-centralize-spacing-type-and-color-tokens](./quick/260910-jz8-centralize-spacing-type-and-color-tokens/) |
-| 260911-243 | Navbar redesign: Strata logo mark everywhere, brand+project lockup, segmented tabs, search icon with full-screen dialog, snapshot status pill | 2026-09-11 | 6a0e5f9 | [260911-243-navbar-redesign-strata-logo-mark-everywh](./quick/260911-243-navbar-redesign-strata-logo-mark-everywh/) |
-| 3 | Match the header Ctrl K hint height to the snapshot pill | 2026-09-11 | 89eb434 | — |
-| 260911-vqe | Sidebar redesign: navbar drawer, readable labels, lifecycle order, hide exclusions | 2026-09-11 | a6e6532 | [260911-vqe-sidebar-redesign-navbar-drawer-readable-](./quick/260911-vqe-sidebar-redesign-navbar-drawer-readable-/) |
-| 5 | Strip emojis from next-primary and attention-panel descriptions | 2026-09-11 | 155b4ab | — |
-| 6 | attention-panel in the dashboard should only show 4 at a time | 2026-09-12 | 974d845 | — |
-| 260912-lfi | Scroll to blocker in project state from source link, and render markdown without raw asterisks in dashboard | 2026-09-12 | c6def3f | [260912-lfi-scroll-to-blocker-in-project-state-from-](./quick/260912-lfi-scroll-to-blocker-in-project-state-from-/) |
-| 260912-oae | Revamp progress panel to show phase and checkpoints clearly | 2026-09-12 | 4825c8f | [260912-oae-revamp-progress-panel-to-show-phase-and-](./quick/260912-oae-revamp-progress-panel-to-show-phase-and-/) |
-| 8 | Refine progress panel spacing, grid alignment, and dark/light contrast | 2026-09-12 | 59dc045 | — |
-| 260916-o2o | Remove all the loading state text, keep the skeletons and add a top bar loader | 2026-09-16 | 41a4c4e | [260916-o2o-remove-all-the-loading-state-text-keep-t](./quick/260916-o2o-remove-all-the-loading-state-text-keep-t/) |
-| 260916-qqk | Scrollbars take no layout space, drop to lower opacity, and appear only on hover/focus | 2026-09-16 | c5cc80f | [260916-qqk-the-scrollbars-throughout-the-site-shoul](./quick/260916-qqk-the-scrollbars-throughout-the-site-shoul/) |
-| 260916-vjt | Add pagination to the requirement-list component on the roadmap page, showing 4 items at a time | 2026-09-16 | 85c675f | [260916-vjt-add-pagination-to-the-requirement-list-c](./quick/260916-vjt-add-pagination-to-the-requirement-list-c/) |
-| 260917-0yp | Parse per-milestone ROADMAP.md files for archived phases | 2026-09-16 | 1076f46 | [260917-0yp-parse-per-milestone-roadmap-md-files-e-g](./quick/260917-0yp-parse-per-milestone-roadmap-md-files-e-g/) |
-| 14 | Fix plan-checklist regex stealing the next line's description for bare (no-description) checklist lines | 2026-09-16 | b53a9fe | — |
-| 260917-ns4 | Redesign the traceability page's UI/UX — coverage summary strip, per-category proportion bars, and deferred-tier grouping under the reused history treatment | 2026-09-17 | a06e2b8 | [260917-ns4-redesign-the-traceability-page-s-ui-ux-c](./quick/260917-ns4-redesign-the-traceability-page-s-ui-ux-c/) |
-| 260917-wba | Fix visual/UX regressions on the redesigned traceability page | 2026-09-18 | 33ca751 | [260917-wba-fix-visual-ux-regressions-on-the-redesig](./quick/260917-wba-fix-visual-ux-regressions-on-the-redesig/) |
-| 260918-qkd | Traceability page: honest phase-sourced coverage (no more 100% while phases are in flight), named colour tone vocabulary, real deferred-tier switch, and rebuilt trace-row layout | 2026-09-18 | 24d9637 | [260918-qkd-fix-traceability-page-inconsistent-color](./quick/260918-qkd-fix-traceability-page-inconsistent-color/) |
-| 260920-mzr | Fix document-page chrome drift and the loading-to-loaded container reflow on ArtifactPage and PlanPairPage | 2026-09-20 | 84c402d | [260920-mzr-fix-document-page-chrome-drift-and-the-l](./quick/260920-mzr-fix-document-page-chrome-drift-and-the-l/) |
 
 ## Deferred Items
 
@@ -153,4 +134,4 @@ Resume file: None
 
 ## Operator Next Steps
 
-- Close the milestone with /gsd-complete-milestone v1.1
+- Start the next milestone with /gsd-new-milestone

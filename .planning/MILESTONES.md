@@ -1,5 +1,45 @@
 # Milestones
 
+## v1.1 Legible Documents (Shipped: 2026-09-21)
+
+**Phases completed:** 1 phase, 6 plans, 13 tasks (plus 13 directory quick tasks and 5 inline
+quick tasks between the v1.0 close and Phase 5)
+
+**Delivered:** Every planning document type opens into a view built for that type — a discussion
+log as questions and chosen options, a verification as what still needs a human, a plan as its task
+structure — behind a client-side view registry keyed on a granularised `kind`, all speaking one
+written-down and test-enforced design language. Long documents get a reading-position-tracking
+outline; `D-XX` / `WR-XX` mentions are clickable.
+
+**Stats:** 127 commits, 2026-09-10 → 2026-09-21; ~35.2k lines of TypeScript/TSX/CSS (src + tests,
+up from 24.4k); 1071 tests across 64 files (up from 590 / 40); 11/11 v1.1 requirements satisfied.
+
+**Closeout:** `verified_closeout`. Phase 05 `verification_status: passed` (5/7 truths automated,
+2 backstop truths closed by 05-UAT 4/4), code review clean, security `threats_open: 0`, UI review
+22/24. No `v1.1-MILESTONE-AUDIT.md` — the milestone is a single phase whose own verification,
+UAT, security and UI-review passes covered it; the user chose to skip a separate audit at close.
+
+**Known verification overrides:** 0. Two artifact-audit false positives acknowledged at close
+(`debug/knowledge-base.md` is the debug knowledge base, not a session; quick task `260912-oae` is
+complete but its SUMMARY carries no status field), 0 carried forward from a prior close.
+
+**Archive:** `milestones/v1.1-ROADMAP.md`, `v1.1-REQUIREMENTS.md`, `v1.1-phases/`, `v1.1-quick/`
+
+**Key accomplishments:**
+
+- A client-side view registry (`src/web/views/`) keyed on a granularised `kind` — View is the page, Source the escape hatch (D-01) — proven end to end on DISCUSSION-LOG, where each question shows its offered options and the chosen one.
+- The design language written down in `docs/design-language.md` and enforced by `test/web/class-vocabulary.test.ts`, an allowlist derived from the doc's own table rows plus a view-local namespace, so a new view cannot silently drift.
+- `D-XX` decision and `WR-XX` warning mentions clickable, preview-first, resolving phase-local-first-then-corpus-unique — a new `warning` ID scheme and a two-tier resolution map wired into the existing linkify pipeline with zero changes to `reference-preview.tsx`.
+- Outline reading-position tracking via one IntersectionObserver and a pure `pickActiveEntry`; below 58rem the outline becomes a sticky, keyboard-operable Popover disclosure that reuses the wide column's own list markup.
+- VERIFICATION (leads with `human_verification[]`) and PLAN (task index with gating) views, plus a speculative structural fallback for unregistered kinds behind a quiet `Unrecognized type` chip.
+- All 18 registered kinds carry a manifest, pinned by a bidirectional registry-completeness test; the UI-06 conformance sweep surfaced and fixed a CommonMark HTML-block bug in `ContextHandler`.
+
+**Deferred at close:** per-type surface polish (one quick task per type), the 05-SECURITY
+regression tests (ReDoS timing, `dangerouslySetInnerHTML` guard, View-mode outline cap), and the
+05-UI-REVIEW polish items — all carried into PROJECT.md Active.
+
+---
+
 ## v1.0 MVP (Shipped: 2026-09-10)
 
 **Phases completed:** 4 phases, 30 plans, 79 tasks
