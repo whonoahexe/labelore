@@ -1,0 +1,254 @@
+// sketch-004 B3 "folded chapters" e2e coverage (quick-260922-3us Task 1). Fixtures are resolved by
+// path from the live `/api/presentation` payload (never hardcoded URLs) so the suite always
+// reflects this repo's own `.planning/` corpus. `runFullBehaviorChecks` is the shared behavior
+// helper Task 2 (plan/verification cover/glance smoke) and Task 3 (full coverage over every type,
+// plus the foundation-sweep updates) build on — Task 3 appends fixtures here rather than
+// duplicating the checks. Uses plain `expect` throughout; `results.json` belongs to the separate
+// foundation-consistency sweep.
+import { expect, test, type Page } from '@playwright/test';
+
+interface Fixture {
+  id: string;
+  /** A substring of the artifact's own `path`, unique enough in this repo's corpus to resolve to
+   * exactly one artifact via `/api/presentation`. */
+  pathIncludes: string;
+  glance: boolean;
+}
+
+const DISCUSSION_LOG_FIXTURES: Fixture[] = [
+  {
+    id: '01-discussion-log',
+    pathIncludes: '01-read-layer-domain-model/01-DISCUSSION-LOG.md',
+    glance: true,
+  },
+  {
+    id: '02-discussion-log',
+    pathIncludes: '02-situational-awareness-artifact-reading/02-DISCUSSION-LOG.md',
+    glance: false,
+  },
+  {
+    id: '03-discussion-log',
+    pathIncludes: '03-search-browsing-traceability/03-DISCUSSION-LOG.md',
+    glance: true,
+  },
+  {
+    id: '05-discussion-log',
+    pathIncludes: '05-per-type-document-views/05-DISCUSSION-LOG.md',
+    glance: true,
+  },
+];
+
+interface ArtifactDtoLite {
+  key: string;
+  path: string;
+}
+
+interface PresentationLite {
+  artifacts: ArtifactDtoLite[];
+}
+
+/** Resolves a fixture's route by matching `path` against `/api/presentation`'s live artifact
+ * list — never a hardcoded URL, so an archival/rename never silently starts skipping a fixture
+ * (it fails loudly here instead). */
+async function resolveFixtureUrl(baseURL: string, pathIncludes: string): Promise<string> {
+  const response = await fetch(`${baseURL}/api/presentation`);
+  if (!response.ok) {
+    throw new Error(`document-layout.spec: /api/presentation responded ${response.status}`);
+  }
+  const data = (await response.json()) as PresentationLite;
+  const artifact = data.artifacts.find((entry) => entry.path.includes(pathIncludes));
+  if (!artifact) {
+    throw new Error(`document-layout.spec: no artifact found with path including "${pathIncludes}"`);
+  }
+  return artifact.key;
+}
+
+async function setTheme(page: Page, theme: 'light' | 'dark'): Promise<void> {
+  await page.addInitScript((t: string) => {
+    window.localStorage.setItem('labelore-theme', t);
+  }, theme);
+}
+
+async function waitForCover(page: Page): Promise<void> {
+  await page.locator('.document-cover').first().waitFor({ state: 'visible' });
+}
+
+/**
+ * The full sketch-004 B3 behavior contract, run against one fixture: cover present with a smaller
+ * h1 than the reference roadmap page; index/fold counts match; glance present/absent per
+ * `fixture.glance`; the first fold toggles; Expand all/Collapse all; the pinned chapter bar's
+ * appear/disappear and offset; the last index entry opens the Also chapter and scrolls it into
+ * view; the glance action (when present) opens its target; the header toggle to Source removes
+ * every fold but keeps the cover, and an index click from Source returns to View with that
+ * chapter open; finally, at 420px in both themes with everything expanded, no horizontal overflow.
+ */
+async function runFullBehaviorChecks(
+  page: Page,
+  baseURL: string,
+  fixture: Fixture,
+): Promise<void> {
+  const url = await resolveFixtureUrl(baseURL, fixture.pathIncludes);
+
+  await setTheme(page, 'light');
+  await page.setViewportSize({ width: 1280, height: 900 });
+
+  await page.goto('/roadmap');
+  await page.locator('.page-intro h1').first().waitFor({ state: 'visible' });
+  const refFontSize = await page
+    .locator('.page-intro h1')
+    .first()
+    .evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+
+  await page.goto(url);
+  await waitForCover(page);
+
+  const coverFontSize = await page
+    .locator('.document-cover h1')
+    .first()
+    .evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+  expect(coverFontSize, 'cover h1 must be smaller than the reference roadmap h1').toBeLessThan(
+    refFontSize,
+  );
+
+  const indexCount = await page.locator('.document-chapter-index li').count();
+  const foldCount = await page.locator('.document-fold').count();
+  expect(foldCount).toBeGreaterThan(0);
+  expect(indexCount).toBe(foldCount);
+
+  const glanceCount = await page.locator('.document-cover-glance').count();
+  const dataGlance = await page.locator('.document-cover-cells').first().getAttribute('data-glance');
+  if (fixture.glance) {
+    expect(glanceCount).toBeGreaterThan(0);
+    expect(dataGlance).toBe('true');
+  } else {
+    expect(glanceCount).toBe(0);
+    expect(dataGlance).toBe('false');
+  }
+
+  // First fold toggles aria-expanded and its body.
+  const firstFoldHead = page.locator('.document-fold-head').first();
+  const firstFold = page.locator('.document-fold').first();
+  await expect(firstFoldHead).toHaveAttribute('aria-expanded', 'false');
+  await firstFoldHead.click();
+  await expect(firstFoldHead).toHaveAttribute('aria-expanded', 'true');
+  await expect(firstFold.locator('.document-fold-body')).toBeVisible();
+  await firstFoldHead.click();
+  await expect(firstFoldHead).toHaveAttribute('aria-expanded', 'false');
+  expect(await firstFold.locator('.document-fold-body').count()).toBe(0);
+
+  // Expand all opens every fold and flips to Collapse all, which closes them. The chapter-bar
+  // scroll check below deliberately runs *while everything is still expanded* — with every fold
+  // collapsed the page can be shorter than the viewport, in which case "scroll to the bottom" is a
+  // no-op and the cover never actually leaves view.
+  const foldToolsButton = page.locator('.document-fold-tools button');
+  await expect(foldToolsButton).toHaveText(/expand all/i);
+  await foldToolsButton.click();
+  await expect(foldToolsButton).toHaveText(/collapse all/i);
+  await expect(page.locator('.document-fold[data-open="true"]')).toHaveCount(foldCount);
+
+  // Chapter bar: absent at top, visible after scrolling past the cover.
+  await expect(page.locator('.document-chapter-bar')).toHaveCount(0);
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  const chapterBar = page.locator('.document-chapter-bar');
+  await chapterBar.waitFor({ state: 'visible' });
+  const barBox = await chapterBar.boundingBox();
+  const headerBox = await page.locator('.shell-header').boundingBox();
+  expect(barBox).not.toBeNull();
+  expect(headerBox).not.toBeNull();
+  if (barBox && headerBox) {
+    expect(Math.abs(barBox.y - (headerBox.y + headerBox.height))).toBeLessThanOrEqual(24);
+  }
+  const barNumberText = (await page.locator('.document-chapter-bar-number').innerText()).trim();
+  expect(barNumberText).toMatch(/^\d{2}$/);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect(page.locator('.document-chapter-bar')).toHaveCount(0);
+
+  await foldToolsButton.click();
+  await expect(foldToolsButton).toHaveText(/expand all/i);
+  await expect(page.locator('.document-fold[data-open="true"]')).toHaveCount(0);
+
+  // The last index entry opens #chapter-also and scrolls it into the viewport. The scroll itself
+  // is a `behavior: 'smooth'` animation (jumpTo, layout-components.tsx) — poll rather than read
+  // the bounding box once, so a still-animating scroll never reads as a failure.
+  await page.locator('.document-chapter-index li button').last().click();
+  const alsoFold = page.locator('#chapter-also');
+  await expect(alsoFold).toHaveAttribute('data-open', 'true');
+  const viewportSize = page.viewportSize();
+  expect(viewportSize).not.toBeNull();
+  if (viewportSize) {
+    const viewportHeight = viewportSize.height;
+    await expect
+      .poll(async () => (await alsoFold.boundingBox())?.y ?? Number.POSITIVE_INFINITY)
+      .toBeLessThan(viewportHeight);
+  }
+  // Collapse it back down before the glance/source checks below.
+  await page.locator('#chapter-also .document-fold-head').click();
+
+  // The glance action opens its target chapter (only meaningful when a glance cell exists).
+  if (fixture.glance) {
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.locator('.document-cover-glance button').click();
+    await expect(page.locator('.document-fold[data-open="true"]').first()).toBeVisible();
+  }
+
+  // Header toggle to Source removes folds but keeps .document-cover.
+  const headerToggle = page.locator('.artifact-heading .document-view-toggle');
+  await headerToggle.getByRole('button', { name: 'Source' }).click();
+  expect(await page.locator('.document-fold').count()).toBe(0);
+  await expect(page.locator('.document-cover')).toBeVisible();
+
+  // An index click returns to View with that chapter open.
+  await page.locator('.document-chapter-index li button').first().click();
+  const firstFoldAfterReturn = page.locator('.document-fold').first();
+  await expect(firstFoldAfterReturn).toBeVisible();
+  await expect(firstFoldAfterReturn).toHaveAttribute('data-open', 'true');
+
+  // 420px, both themes, everything expanded: no horizontal overflow.
+  for (const theme of ['light', 'dark'] as const) {
+    await setTheme(page, theme);
+    await page.setViewportSize({ width: 420, height: 900 });
+    await page.goto(url);
+    await waitForCover(page);
+    await page.locator('.document-fold-tools button').click();
+    await expect(page.locator('.document-fold[data-open="true"]')).toHaveCount(foldCount);
+    const overflow = await page.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      innerWidth: window.innerWidth,
+    }));
+    expect(
+      overflow.scrollWidth,
+      `${fixture.id} ${theme}@420: horizontal overflow (${overflow.scrollWidth} > ${overflow.innerWidth})`,
+    ).toBeLessThanOrEqual(overflow.innerWidth + 1);
+  }
+}
+
+test.describe('document layout — sketch-004 B3 (quick-260922-3us)', () => {
+  for (const fixture of DISCUSSION_LOG_FIXTURES) {
+    test(fixture.id, async ({ page, baseURL }) => {
+      await runFullBehaviorChecks(page, baseURL ?? 'http://127.0.0.1:4199', fixture);
+    });
+  }
+
+  test('05 discussion log: a reference preview opens from inside an expanded Also panel', async ({
+    page,
+    baseURL,
+  }) => {
+    const url = await resolveFixtureUrl(
+      baseURL ?? 'http://127.0.0.1:4199',
+      '05-per-type-document-views/05-DISCUSSION-LOG.md',
+    );
+    await setTheme(page, 'light');
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(url);
+    await waitForCover(page);
+
+    await page.locator('#chapter-also .document-fold-head').click();
+    const referenceTrigger = page.locator('#chapter-also [data-reference-key]').first();
+    const found = (await referenceTrigger.count()) > 0;
+    expect(found, 'expected at least one [data-reference-key] inside the Also chapter on 05').toBe(
+      true,
+    );
+    await referenceTrigger.click();
+    await expect(page.locator('.reference-preview')).toBeVisible();
+  });
+});

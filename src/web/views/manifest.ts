@@ -3,6 +3,9 @@
 // walks that list once against a concrete `ViewInput` and returns the ordered blocks plus
 // whatever the manifest left unconsumed (D-02's collapsed remainder).
 import type { DocumentSectionGroup, PlanSegmentAttributes } from './document-sections.ts';
+// Type-only import — erased at compile time, so this never creates a runtime import cycle with
+// layout.ts (which itself imports the runtime `remainderOf` value below from this module).
+import type { DocumentLayoutSpec } from './layout.ts';
 
 /** Declared now so 05-05 can add components without widening this union a second time — only
  * `discussion-questions` has a real component in this plan (see `blocks.tsx`). */
@@ -39,6 +42,10 @@ export interface ViewManifest {
   /** One sentence of per-type header copy (UI-SPEC § Per-Type Header Copy), verbatim. */
   lead: string;
   promote: readonly PromotedBlock[];
+  /** sketch-004 B3 (quick-260922-3us): the cover/chapter-index/folded-chapter layout a manifest
+   * opts into by declaring one of these — absent for every kind that keeps the pre-existing
+   * promoted-block view. */
+  layout?: DocumentLayoutSpec;
 }
 
 export interface ViewInput {
@@ -47,6 +54,10 @@ export interface ViewInput {
   structured: Record<string, unknown>;
   groups: DocumentSectionGroup[];
   planSegments: PlanSegmentAttributes[];
+  /** sketch-004 B3: the paired plan-summary status, matched generically in artifact-page.tsx by
+   * `path` (no new `artifact.kind === '` branch) — `null` when the artifact isn't a plan, or a
+   * plan with no paired summary yet. */
+  planProgress?: { complete: boolean; summaryStatus: string | null } | null;
 }
 
 export type ComposedBlock = { id: string; label: string } & (
@@ -74,6 +85,19 @@ function headingMatches(heading: string | RegExp, group: DocumentSectionGroup): 
     return heading.trim().toLowerCase() === group.heading.trim().toLowerCase();
   }
   return heading.test(group.heading);
+}
+
+/** Every unconsumed, non-blank group, in original document order, with the leading (no-heading)
+ * group relabelled `INTRODUCTION_LABEL` — extracted out of `composeView` so `composeDocumentLayout`
+ * (sketch-004 B3, quick-260922-3us) can compute the exact same D-02 remainder rule against its own
+ * `consumed` set (section chapters, `accountsFor`, and Also panels) without re-deriving it. */
+export function remainderOf(
+  groups: DocumentSectionGroup[],
+  consumed: ReadonlySet<DocumentSectionGroup>,
+): DocumentSectionGroup[] {
+  return groups
+    .filter((group) => !consumed.has(group) && group.html.trim() !== '')
+    .map((group) => (group.heading === null ? { ...group, heading: INTRODUCTION_LABEL } : group));
 }
 
 /**
@@ -132,9 +156,7 @@ export function composeView(manifest: ViewManifest, input: ViewInput): ComposedV
     });
   }
 
-  const remainder = input.groups
-    .filter((group) => !consumed.has(group) && group.html.trim() !== '')
-    .map((group) => (group.heading === null ? { ...group, heading: INTRODUCTION_LABEL } : group));
+  const remainder = remainderOf(input.groups, consumed);
 
   return { blocks, remainder };
 }

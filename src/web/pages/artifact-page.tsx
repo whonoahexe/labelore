@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useLocation } from 'react-router';
@@ -39,10 +39,43 @@ import {
 } from '../views/manifest.ts';
 import { extractPlanSegments, splitRenderedDocument } from '../views/document-sections.ts';
 import { BLOCK_COMPONENTS } from '../views/blocks.tsx';
+import { composeDocumentLayout } from '../views/layout.ts';
+import {
+  ChapterBar,
+  CoverCells,
+  CoverFacts,
+  CoverStatusChip,
+  FoldedChapters,
+  useChapterFolds,
+} from '../views/layout-components.tsx';
+import { fetchPresentation } from '../components/app-shell.tsx';
+import type { ProjectPresentation } from '../../server/project-presentation.ts';
 export {
   handleDocumentReferenceActivation,
   restoreDocumentReferenceFocus,
 } from './document-reference-activation.ts';
+
+/** sketch-004 B3 (quick-260922-3us): the plan whose own `path` equals the current artifact's path,
+ * reduced to the two fields `ViewInput.planProgress` carries. A plain module-level function (not
+ * inlined into the `useMemo` callback below) so the React Compiler can preserve the memoization —
+ * a nested triple `for` loop with an early `return` inside the callback body itself defeats it. */
+function findPlanProgress(
+  presentation: ProjectPresentation | undefined,
+  path: string | undefined,
+): { complete: boolean; summaryStatus: string | null } | null {
+  if (!presentation || !path) return null;
+  for (const milestone of presentation.milestones) {
+    for (const phase of milestone.phases) {
+      for (const plan of phase.plans) {
+        if (plan.path !== path) continue;
+        const summaryStatus =
+          typeof plan.summary?.frontmatter?.status === 'string' ? plan.summary.frontmatter.status : null;
+        return { complete: plan.complete, summaryStatus };
+      }
+    }
+  }
+  return null;
+}
 
 interface ArtifactDocumentResponse {
   found: true;
@@ -444,6 +477,10 @@ export function ArtifactPage(): React.JSX.Element {
     queryFn: () => loadDocument(route),
     staleTime: Number.POSITIVE_INFINITY,
   });
+  // sketch-004 B3 (quick-260922-3us): the same cached ['presentation'] query app-shell.tsx already
+  // populates — matched by `path` below, generically, so this never adds a further per-kind
+  // branch (view-page-contract.test.ts caps that pattern's occurrence count).
+  const presentationQuery = useQuery({ queryKey: ['presentation'], queryFn: fetchPresentation });
   const panels = useMemo(
     () => (query.data ? buildFrontmatterPanels(query.data.artifact.frontmatter) : []),
     [query.data],
@@ -459,6 +496,10 @@ export function ArtifactPage(): React.JSX.Element {
       query.data?.artifact.kind === 'plan' && shown ? extractPlanSegments(shown.html) : [],
     [query.data, shown],
   );
+  const planProgress = useMemo(
+    () => findPlanProgress(presentationQuery.data, query.data?.artifact.path),
+    [presentationQuery.data, query.data],
+  );
   const viewInput = useMemo<ViewInput | null>(() => {
     if (!query.data) return null;
     return {
@@ -467,8 +508,9 @@ export function ArtifactPage(): React.JSX.Element {
       structured: query.data.artifact.structured,
       groups,
       planSegments,
+      planProgress,
     };
-  }, [query.data, groups, planSegments]);
+  }, [query.data, groups, planSegments, planProgress]);
   // VIEW-06: a registered manifest, or fallback.ts's synthesized structural-read manifest — one
   // dispatch path either way (`resolveView` itself stays registry-only, for 05-06's completeness
   // test).
@@ -482,7 +524,19 @@ export function ArtifactPage(): React.JSX.Element {
     if (!manifest || !viewInput) return null;
     return composeView(manifest, viewInput);
   }, [manifest, viewInput]);
-  const viewAvailable = composed !== null && composed.blocks.length > 0;
+  // sketch-004 B3: the cover/chapter-index/folded-chapter layout, when the resolved manifest opts
+  // into one — `null` for every kind that keeps the pre-existing promoted-block view.
+  const layout = useMemo(() => {
+    if (!manifest || !viewInput) return null;
+    return composeDocumentLayout(manifest, viewInput);
+  }, [manifest, viewInput]);
+  const onRequireView = useCallback(() => setMode('view'), []);
+  const folds = useChapterFolds(layout, { onRequireView });
+  const renderHtml = useCallback(
+    (html: string) => (shown ? <DocumentView document={{ ...shown, html, headings: [] }} /> : null),
+    [shown],
+  );
+  const viewAvailable = layout !== null || (composed !== null && composed.blocks.length > 0);
 
   if (query.isPending) {
     return (
@@ -546,6 +600,14 @@ export function ArtifactPage(): React.JSX.Element {
         title={artifact.title}
         path={artifact.path}
         lead={manifest?.lead ?? null}
+        cover={
+          layout
+            ? {
+                facts: <CoverFacts facts={layout.cover.facts} />,
+                cells: <CoverCells layout={layout} onJump={folds.jumpTo} />,
+              }
+            : undefined
+        }
         chip={
           <>
             {warningTone ? (
@@ -561,6 +623,7 @@ export function ArtifactPage(): React.JSX.Element {
                 Unrecognized type
               </span>
             ) : null}
+            {layout ? <CoverStatusChip status={layout.cover.status} /> : null}
           </>
         }
       >
@@ -633,7 +696,14 @@ export function ArtifactPage(): React.JSX.Element {
 
       {!recognized ? <UnrecognizedNotice kind={artifact.kind} /> : null}
 
-      {viewAvailable && mode === 'view' && composed && shown ? (
+      {layout && mode === 'view' ? (
+        <div className="document-reader-layout" data-outline="false">
+          <article className="document-canvas" aria-label={`${artifact.title} document`}>
+            <ChapterBar layout={layout} title={artifact.title} mode={mode} onModeChange={setMode} />
+            <FoldedChapters layout={layout} folds={folds} renderHtml={renderHtml} />
+          </article>
+        </div>
+      ) : viewAvailable && mode === 'view' && composed && shown ? (
         <ViewReader title={artifact.title} composed={composed} shown={shown} />
       ) : (
         <ArtifactReader title={artifact.title} document={document} />

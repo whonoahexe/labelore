@@ -102,6 +102,12 @@
      WebKit-only direct-thumb-hover state; the guard's own recurring-recipe check would
      otherwise flag either as a duplicated recipe. */
   --card-veil: color-mix(in oklch, var(--card) 94%, transparent);
+  /* quick-260922-3us: the translucent "floating chrome" backdrop `.shell-header` already used
+     inline, now named so `.document-chapter-bar` (sketch-004 B3's pinned chapter bar, which sticks
+     directly beneath the shell header and wants the identical wash) can share it — a second
+     usage-site of the same literal recipe string is exactly what the token-guard's recurring-recipe
+     check flags, so both sites now alias the same named token instead. */
+  --chrome-veil: color-mix(in oklch, var(--background) 90%, transparent);
   --destructive-tint: color-mix(in oklch, var(--destructive) 8%, transparent);
   --destructive-border: color-mix(in oklch, var(--destructive) 55%, var(--border));
   --primary-tint: color-mix(in oklch, var(--primary) 9%, transparent);
@@ -261,6 +267,12 @@
      same reason as the dialog geometry tokens above — the step check only accepts plain rem
      multiples of 0.125rem, and this is a viewport-relative min() shape. */
   --drawer-width: min(22rem, 88vw);
+
+  /* quick-260922-3us: sketch-004 B3's folded-chapter number column width, shared between
+     `.document-fold-head`'s own grid track and `.document-fold-body`'s indent-to-the-title-column
+     calc() — named so the calc() never carries a bare `4rem` literal (the token-guard's spacing
+     family scans `calc()` contents for exactly that). */
+  --fold-number-column: 4rem;
 }
 
 @layer base {
@@ -398,7 +410,7 @@
   min-width: 0;
   max-width: 100%;
   border-bottom: 1px solid var(--border);
-  background: color-mix(in oklch, var(--background) 90%, transparent);
+  background: var(--chrome-veil);
   backdrop-filter: blur(16px);
 }
 
@@ -2900,6 +2912,497 @@ pre {
 
 .view-block + .view-block {
   margin-top: var(--space-8);
+}
+
+/* =========================================================================
+   sketch-004 B3 "folded chapters" (quick-260922-3us): cover sheet, pinned chapter bar, folded
+   chapters, item rows, Also chapter. Shared by DISCUSSION-LOG, PLAN and VERIFICATION — no kind
+   name appears anywhere below. `.document-fold` rules are placed after `.view-block` on purpose
+   (see the comment above `.document-fold` itself) so they win by source order, not specificity.
+   ========================================================================= */
+
+.document-cover {
+  border: 1px solid var(--border);
+  background: var(--card-veil);
+}
+
+.artifact-heading[data-layout='cover'] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-6);
+  border-bottom: 0;
+  padding: var(--space-fluid-3);
+}
+
+.document-cover-copy {
+  display: grid;
+  gap: var(--space-1-5);
+  min-width: 0;
+}
+
+.document-cover-copy h1 {
+  max-width: 28ch;
+  margin: 0;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  font-family: var(--font-mono);
+  font-size: var(--fs-display-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+}
+
+.document-cover-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-3);
+}
+
+.document-cover-facts b {
+  color: var(--foreground);
+  font-weight: var(--fw-medium);
+}
+
+.document-cover-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.document-cover-cells {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1.4fr) minmax(0, 1fr);
+  border-top: 1px solid var(--border);
+}
+
+.document-cover-cells[data-glance='false'] {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.document-cover-cell {
+  min-width: 0;
+  padding: var(--space-fluid-3);
+  border-left: 1px solid var(--border);
+}
+
+.document-cover-cell:first-child {
+  border-left: 0;
+}
+
+.document-cover-glance {
+  border-top: 3px solid var(--primary);
+}
+
+.document-cover-glance h2 {
+  margin-top: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-6);
+  font-weight: var(--fw-medium);
+}
+
+.document-cover-glance p {
+  margin-top: var(--space-3);
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+}
+
+.document-cover-headline {
+  display: flex;
+  gap: var(--space-2-5);
+  align-items: baseline;
+  margin-top: var(--space-2);
+}
+
+.document-cover-headline strong {
+  font-family: var(--font-heading);
+  font-size: var(--fs-display-1);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tighter);
+  line-height: var(--lh-display);
+}
+
+.document-cover-headline span {
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  text-transform: uppercase;
+}
+
+.document-cover-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  margin-top: var(--space-4);
+}
+
+/* Mirrors .plan-pill's typography (dashboard-page.tsx) but stays squared — every new element in
+   this phase keeps border-radius unset per docs/design-language.md. */
+.document-cover-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  padding: var(--space-1) var(--space-2-5);
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+}
+
+.document-cover-pill strong {
+  color: var(--foreground);
+  font-weight: var(--fw-medium);
+}
+
+.document-chapter-index {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.document-chapter-index li button {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: baseline;
+  width: 100%;
+  padding: var(--space-2) 0;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  color: inherit;
+  text-align: left;
+  transition: color 0.15s ease;
+}
+
+.document-chapter-index li:last-child button {
+  border-bottom: 0;
+}
+
+.document-chapter-index li button:hover {
+  color: var(--primary);
+}
+
+.document-chapter-index-number {
+  font-family: var(--font-heading);
+  font-size: var(--fs-3);
+  color: var(--muted-foreground);
+}
+
+.document-chapter-index-title {
+  min-width: 0;
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+}
+
+.document-chapter-index-count {
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  color: var(--muted-foreground);
+}
+
+@media (max-width: 62rem) {
+  .document-cover-cells,
+  .document-cover-cells[data-glance='false'] {
+    grid-template-columns: 1fr;
+  }
+
+  .document-cover-cell {
+    border-top: 1px solid var(--border);
+    border-left: 0;
+  }
+
+  .document-cover-cell:first-child {
+    border-top: 0;
+  }
+
+  .document-cover-controls {
+    align-items: flex-start;
+  }
+}
+
+/* Pinned chapter bar — appears once .document-cover scrolls out of view (ChapterBar's own
+   IntersectionObserver), sitting at the same sticky offset .document-outline-trigger already uses
+   (--space-22 clears the shell header's rendered height at every width the header stays sticky). */
+.document-chapter-bar {
+  position: sticky;
+  /* Fallback for the instant before ChapterBar's own ResizeObserver measures the shell header's
+     real (content-driven, non-token) height and sets an inline `top` — same offset
+     .document-outline-trigger already sticks at. */
+  top: var(--space-22);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-2-5) var(--space-fluid-3);
+  border-bottom: 1px solid var(--border);
+  background: var(--chrome-veil);
+  backdrop-filter: blur(6px);
+  font-family: var(--font-mono);
+  font-size: var(--fs-3);
+}
+
+.document-chapter-bar-number {
+  color: var(--primary);
+}
+
+.document-chapter-bar-title {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.document-chapter-bar-doc {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 42rem) {
+  .document-cover-copy h1 {
+    font-size: var(--fs-fluid-4);
+  }
+
+  .document-chapter-bar-doc {
+    display: none;
+  }
+}
+
+.document-fold-tools {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-8);
+}
+
+.document-fold-title {
+  margin: 0;
+}
+
+.document-fold-head {
+  display: grid;
+  grid-template-columns: var(--fold-number-column) minmax(0, 1fr) auto 1.5rem;
+  gap: var(--space-5);
+  align-items: center;
+  width: 100%;
+  padding: var(--space-5) var(--space-fluid-3);
+  border: 0;
+  background: none;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.document-fold-head:hover {
+  background: var(--state-hover);
+}
+
+.document-fold-number {
+  font-family: var(--font-heading);
+  font-size: var(--fs-fluid-3);
+  font-weight: var(--fw-medium);
+  color: var(--muted-foreground);
+}
+
+/* Heading size/line-height lives here, not on the h2 or the button, so a status chip inside
+   .document-fold-rollup keeps the inherited body line-height (F-05) rather than inheriting the
+   fold title's tighter one. */
+.document-fold-name {
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-fluid-3);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tight);
+}
+
+.document-fold-rollup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+}
+
+.document-fold-chevron {
+  color: var(--muted-foreground);
+  transition: transform 0.15s ease;
+}
+
+.document-fold[data-open='true'] .document-fold-chevron {
+  transform: rotate(90deg);
+}
+
+@keyframes document-fold-fade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.document-fold-body {
+  padding: 0 var(--space-fluid-3) var(--space-5)
+    calc(var(--fold-number-column) + var(--space-5) + var(--space-fluid-3));
+  border-top: 1px solid var(--border);
+  animation: document-fold-fade 0.18s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .document-fold-body {
+    animation: none;
+  }
+}
+
+@media (max-width: 42rem) {
+  .document-fold-head {
+    grid-template-columns: 2.5rem minmax(0, 1fr) 1.5rem;
+  }
+
+  .document-fold-rollup {
+    grid-column: 2;
+  }
+
+  .document-fold-chevron {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .document-fold-body {
+    padding-left: var(--space-4);
+  }
+}
+
+/* `.document-fold` is deliberately also a `.view-block` (shares the shared canvas-column
+   presentation) but must win the fold-to-fold spacing over `.view-block + .view-block`'s
+   `--space-8` above — placed after that rule so source order settles it (gap 0: the fold head and
+   body already carry their own padding). */
+.document-fold {
+  gap: 0;
+  padding: 0;
+  margin-top: var(--space-4);
+}
+
+.document-fold-tools + .document-fold {
+  margin-top: var(--space-3);
+}
+
+.document-item {
+  min-width: 0;
+  padding: var(--space-5) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.document-item:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.document-item:focus-visible {
+  outline-offset: var(--space-1);
+}
+
+.document-item-head {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+/* F-14 (420px, quick-260922-3us): the ref+title column has no explicit class of its own (a plain
+   wrapper div in ItemRow) — without `min-width: 0` a flex child sizes to its content's
+   min-content width by default, and a long unbroken item title (real corpus VERIFICATION titles
+   run 100+ characters) then forces this track past the viewport instead of wrapping. */
+.document-item-head > div {
+  min-width: 0;
+}
+
+.document-item-ref {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.document-item-title {
+  margin: var(--space-1) 0 0;
+  overflow-wrap: anywhere;
+  font-size: var(--fs-5);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-snug);
+}
+
+.document-item-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+}
+
+.document-item-state {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  margin-top: var(--space-3);
+  font-size: var(--fs-5);
+}
+
+.document-item-answer {
+  font-weight: var(--fw-medium);
+}
+
+.document-item-more {
+  margin-top: var(--space-3);
+}
+
+.document-item-detail {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-left: 2px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+}
+
+.document-item-detail-row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.document-item-detail-label {
+  color: var(--foreground);
+  font-weight: var(--fw-medium);
+}
+
+.document-also {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
+  gap: var(--space-5);
+}
+
+.document-also-panel {
+  min-width: 0;
+  border: 1px solid var(--border);
+  background: var(--card-veil);
+  padding: var(--space-fluid-3);
+}
+
+.document-also-panel + .artifact-metadata,
+.document-also + .artifact-metadata {
+  margin-top: var(--space-5);
 }
 
 /* VIEW-02 DISCUSSION-LOG view (view-local, UI-SPEC §3). */

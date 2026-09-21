@@ -140,6 +140,54 @@ export function splitRenderedDocument(html: string): DocumentSectionGroup[] {
 }
 
 // ---------------------------------------------------------------------------
+// sketch-004 B3 (quick-260922-3us): browser adapters consumed by layout.ts's composer — a fold's
+// own title already names its section/panel, so the section's leading heading is stripped before
+// rendering the fold body; a panel's roll-up chip and glance body need a lightweight read of "how
+// many items, and what does the first one say" without re-parsing markdown.
+// ---------------------------------------------------------------------------
+
+/** Strips a leading `<h1>`-`<h6>` element off `html` (a fold/panel's own title already names it) —
+ * a clone of the remaining top-level children's `outerHTML`, joined. Returns `html` unchanged when
+ * the first top-level element isn't a heading, or when `DOMParser` is unavailable (SSR/test). */
+export function stripLeadingHeading(html: string): string {
+  if (typeof DOMParser === 'undefined') return html;
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const children = Array.from(doc.body.children);
+  if (children.length === 0) return html;
+  const first = children[0];
+  if (!/^h[1-6]$/.test(first.tagName.toLowerCase())) return html;
+  return children
+    .slice(1)
+    .map((child) => child.outerHTML)
+    .join('');
+}
+
+/** The first `<ul>`/`<ol>` found anywhere in `html`, in document order — every direct `<li>` child
+ * of that single list (nested sub-lists' own `<li>`s are not counted). Fallback (no `DOMParser`):
+ * a regex count of every `<li` occurrence in the raw string. */
+export function countListItems(html: string): number {
+  if (typeof DOMParser === 'undefined') {
+    return (html.match(/<li[\s>]/g) ?? []).length;
+  }
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const list = Array.from(doc.body.querySelectorAll('ul, ol'))[0];
+  if (!list) return 0;
+  return Array.from(list.children).filter((child) => child.tagName.toLowerCase() === 'li').length;
+}
+
+/** The trimmed text content of every direct `<li>` child of the first `<ul>`/`<ol>` found in
+ * `html`, in document order. Fallback (no `DOMParser`): `[]`. */
+export function listItemTexts(html: string): string[] {
+  if (typeof DOMParser === 'undefined') return [];
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const list = Array.from(doc.body.querySelectorAll('ul, ol'))[0];
+  if (!list) return [];
+  return Array.from(list.children)
+    .filter((child) => child.tagName.toLowerCase() === 'li')
+    .map((child) => (child.textContent ?? '').trim());
+}
+
+// ---------------------------------------------------------------------------
 // VIEW-04: plan task-structure extraction (Tag Projection Pattern 3, presentation-side only —
 // `renderPlanRange` already emits every attribute read below).
 // ---------------------------------------------------------------------------
