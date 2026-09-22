@@ -77,6 +77,10 @@ export interface HeadingSignature {
   eyebrowLetterSpacing: string | null;
   eyebrowTextTransform: string | null;
   h1OffsetTop: number | null;
+  /** sketch-004 B3 (quick-260922-3us): `.artifact-heading`'s own `data-layout` attribute value
+   * (`'cover'` on a document adopting the new layout), or `null` when the element itself is
+   * absent or carries no such attribute. */
+  headingLayout: string | null;
 }
 
 /** F-02's heading-block signature: `main`'s h1/eyebrow typography plus the h1's offset from the
@@ -87,6 +91,7 @@ export async function headingSignature(page: Page): Promise<HeadingSignature> {
     const main = document.querySelector('main');
     const h1 = main?.querySelector('h1') ?? null;
     const eyebrow = main?.querySelector('.eyebrow') ?? null;
+    const heading = main?.querySelector('.artifact-heading') ?? null;
     const h1Computed = h1 ? getComputedStyle(h1) : null;
     const eyebrowComputed = eyebrow ? getComputedStyle(eyebrow) : null;
     const h1OffsetTop =
@@ -104,6 +109,7 @@ export async function headingSignature(page: Page): Promise<HeadingSignature> {
       eyebrowLetterSpacing: eyebrowComputed?.letterSpacing ?? null,
       eyebrowTextTransform: eyebrowComputed?.textTransform ?? null,
       h1OffsetTop,
+      headingLayout: heading?.getAttribute('data-layout') ?? null,
     };
   });
 }
@@ -209,6 +215,13 @@ const CORNER_SELECTORS = [
   '.document-canvas',
   '.document-outline-trigger',
   '.document-view-toggle button',
+  // sketch-004 B3 (quick-260922-3us): strengthens F-06 over the new cover/fold/panel chrome.
+  '.document-cover',
+  '.document-cover-cell',
+  '.document-cover-pill',
+  '.document-fold',
+  '.document-chapter-bar',
+  '.document-also-panel',
 ];
 
 /** F-06: squared corners — every element matching one of the shared "boxy chrome" selectors,
