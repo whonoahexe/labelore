@@ -10,7 +10,7 @@ import {
 
 async function fixtureBody(): Promise<string> {
   const raw = await readFile(
-    new URL('../.planning/phases/05-per-type-document-views/05-DISCUSSION-LOG.md', import.meta.url),
+    new URL('../.planning/milestones/v1.1-phases/05-per-type-document-views/05-DISCUSSION-LOG.md', import.meta.url),
     'utf8',
   );
   // The real fixture carries frontmatter-free markdown prose only (an audit-trail doc, not an
@@ -166,7 +166,7 @@ describe('SECTION_PROJECTIONS / projectSections', () => {
 
 describe('parseDecisionEntries — real Phase 5 CONTEXT.md <decisions> tag body', () => {
   it('yields 15 entries D-01…D-15 in order, D-01 folding its Reversibility continuation and D-06 starting with "A manifest that promotes"', async () => {
-    const content = await readRepoFile('.planning/phases/05-per-type-document-views/05-CONTEXT.md');
+    const content = await readRepoFile('.planning/milestones/v1.1-phases/05-per-type-document-views/05-CONTEXT.md');
     const tagBody = extractDecisionsTagBody(content);
     const entries = parseDecisionEntries(tagBody);
 

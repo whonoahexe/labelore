@@ -3350,6 +3350,20 @@ pre {
   gap: var(--space-1-5);
 }
 
+/* F-14 (420px, quick-260922-3us): side by side, the chip column keeps its content width and a
+   long unbreakable chip (a plan task's "checkpoint:human-verify" gate) pushes the row past the
+   viewport — below 42rem the chips drop beneath the title and wrap across the full row instead. */
+@media (max-width: 42rem) {
+  .document-item-head {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .document-item-chips {
+    max-width: 100%;
+  }
+}
+
 .document-item-state {
   display: flex;
   flex-wrap: wrap;

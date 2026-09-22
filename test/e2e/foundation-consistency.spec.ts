@@ -70,6 +70,28 @@ function typographyMatches(a: HeadingSignature, b: HeadingSignature): boolean {
   );
 }
 
+// sketch-004 B3 (quick-260922-3us): a cover page's eyebrow still matches ref-roadmap's, but its h1
+// is deliberately smaller than ref-roadmap's (the sketch's own smaller cover title) — only the
+// eyebrow half of `typographyMatches` applies to a cover page's heading.
+function eyebrowMatches(a: HeadingSignature, b: HeadingSignature): boolean {
+  return (
+    a.eyebrowFontSize === b.eyebrowFontSize &&
+    a.eyebrowColor === b.eyebrowColor &&
+    a.eyebrowLetterSpacing === b.eyebrowLetterSpacing &&
+    a.eyebrowTextTransform === b.eyebrowTextTransform
+  );
+}
+
+function coverH1Matches(a: HeadingSignature, b: HeadingSignature): boolean {
+  return (
+    a.h1FontSize === b.h1FontSize &&
+    a.h1FontWeight === b.h1FontWeight &&
+    a.h1LetterSpacing === b.h1LetterSpacing &&
+    a.h1LineHeight === b.h1LineHeight &&
+    a.h1FontFamily === b.h1FontFamily
+  );
+}
+
 function chipMatches(a: ChipSignature, b: ChipSignature): boolean {
   return (
     a.fontSize === b.fontSize &&
@@ -116,6 +138,10 @@ function runSweep(theme: 'light' | 'dark', width: number): void {
 
     const frameSignatures = new Map<string, Awaited<ReturnType<typeof frameSignature>>>();
     const refOffsets: number[] = [];
+    // sketch-004 B3 (quick-260922-3us): the first cover-layout page's own heading signature,
+    // captured in this same sweep — every subsequent cover page's h1 must match it (cover titles
+    // consistent with each other), rather than matching ref-roadmap's larger h1.
+    let firstCoverHeading: HeadingSignature | null = null;
 
     for (const spec of matrix.pages) {
       await test.step(spec.id, async () => {
@@ -172,14 +198,51 @@ function runSweep(theme: 'light' | 'dark', width: number): void {
         // "no `.page-intro`/`.lede`", unlike the other three reference pages and every document
         // page, which all share `.page-intro h1` / `.artifact-heading h1`'s typography tokens.
         if (spec.id !== 'ref-dashboard') {
-          softCheck(
-            'F-02',
-            spec.id,
-            theme,
-            width,
-            typographyMatches(heading, refRoadmapHeading),
-            `h1/eyebrow typography vs ref-roadmap: ${JSON.stringify(heading)} vs ${JSON.stringify(refRoadmapHeading)}`,
-          );
+          // sketch-004 B3 (quick-260922-3us): a cover-layout page's h1 is deliberately smaller
+          // than ref-roadmap's (the sketch's own smaller cover title) — its eyebrow still matches
+          // ref-roadmap, its h1 must be strictly smaller, and its h1 must match every other cover
+          // page's h1 (measured in this same sweep) so every cover title is internally consistent.
+          if (heading.headingLayout === 'cover') {
+            softCheck(
+              'F-02',
+              spec.id,
+              theme,
+              width,
+              eyebrowMatches(heading, refRoadmapHeading),
+              `cover eyebrow vs ref-roadmap: ${JSON.stringify(heading)} vs ${JSON.stringify(refRoadmapHeading)}`,
+            );
+            const coverSize = parseFloat(heading.h1FontSize ?? '0');
+            const refSize = parseFloat(refRoadmapHeading.h1FontSize ?? '0');
+            softCheck(
+              'F-02',
+              spec.id,
+              theme,
+              width,
+              coverSize > 0 && refSize > 0 && coverSize < refSize,
+              `cover h1FontSize=${heading.h1FontSize} must be smaller than ref-roadmap h1FontSize=${refRoadmapHeading.h1FontSize}`,
+            );
+            if (firstCoverHeading === null) {
+              firstCoverHeading = heading;
+            } else {
+              softCheck(
+                'F-02',
+                spec.id,
+                theme,
+                width,
+                coverH1Matches(heading, firstCoverHeading),
+                `cover h1 vs first cover page's h1: ${JSON.stringify(heading)} vs ${JSON.stringify(firstCoverHeading)}`,
+              );
+            }
+          } else {
+            softCheck(
+              'F-02',
+              spec.id,
+              theme,
+              width,
+              typographyMatches(heading, refRoadmapHeading),
+              `h1/eyebrow typography vs ref-roadmap: ${JSON.stringify(heading)} vs ${JSON.stringify(refRoadmapHeading)}`,
+            );
+          }
         }
         if (spec.family !== 'reference' && heading.h1OffsetTop !== null && refOffsets.length > 0) {
           const min = Math.min(...refOffsets) - 2;
@@ -455,8 +518,12 @@ test('behaviour: view/source toggle (F-10)', async ({ page }) => {
       await page.goto(spec.url);
       await waitForPageReady(page, spec.family);
 
-      const toggle = page.locator('.document-view-toggle');
+      // sketch-004 B3 (quick-260922-3us): scoped to the header's own toggle — the pinned chapter
+      // bar (`.document-chapter-bar`) carries a second `.document-view-toggle` once scrolled past
+      // the cover, which an unscoped locator would double-match.
+      const toggle = page.locator('.artifact-heading .document-view-toggle');
       const hasToggle = (await toggle.count()) > 0;
+      const isCoverPage = (await page.locator('.document-cover').count()) > 0;
 
       if (!hasToggle) {
         const viewBlockCount = await page.locator('.view-block').count();
@@ -526,6 +593,20 @@ test('behaviour: view/source toggle (F-10)', async ({ page }) => {
           `mainStable=${boxStable(mainBoxBefore, mainBoxAfter)} headingStable=${boxStable(headingBoxBefore, headingBoxAfter)}`,
       );
 
+      // sketch-004 B3: Source mode drops every `.document-fold`, but the cover sheet itself
+      // (header, facts, headline/glance/chapter-index cells) is not per-mode chrome and stays.
+      if (isCoverPage) {
+        const coverCountInSource = await page.locator('.document-cover').count();
+        softCheck(
+          'F-10',
+          spec.id,
+          'light',
+          1280,
+          coverCountInSource > 0,
+          `cover page but .document-cover count in Source mode=${coverCountInSource}`,
+        );
+      }
+
       await toggle.getByRole('button', { name: 'View' }).click();
       const viewBlockCountAfter = await page.locator('.view-block').count();
       softCheck(
@@ -549,6 +630,15 @@ test('behaviour: remainder disclosure (F-11)', async ({ page }) => {
     await test.step(spec.id, async () => {
       await page.goto(spec.url);
       await waitForPageReady(page, spec.family);
+
+      // sketch-004 B3 (quick-260922-3us): on a cover-layout page the remainder lives inside the
+      // Also chapter's fold body, rendered only while that fold is open — open it first (a no-op
+      // when the page has no fold layout, or no Also chapter at all) so `details#view-remainder`
+      // is actually present in the DOM for the assertions below.
+      const alsoFoldHead = page.locator('#chapter-also .document-fold-head');
+      if ((await alsoFoldHead.count()) > 0) {
+        await alsoFoldHead.click();
+      }
 
       const remainder = page.locator('details#view-remainder');
       const hasRemainder = (await remainder.count()) > 0;
@@ -594,21 +684,30 @@ test('behaviour: fallback marker for unrecognized kinds (F-12)', async ({ page }
       await page.goto(spec.url);
       await waitForPageReady(page, spec.family);
 
-      const quietChip = page.locator('.artifact-heading .status-chip[data-tone="quiet"]');
+      // sketch-004 B3 (quick-260922-3us): identified by its own text now, not by "any quiet
+      // chip" — a cover page's own status chip (e.g. plan's "Not yet executed") is legitimately
+      // quiet-toned too, and would otherwise be mistaken for the unrecognized-type marker.
+      const headingChips = page.locator('.artifact-heading .status-chip');
+      const headingChipCount = await headingChips.count();
+      let foundUnrecognizedChip = false;
+      for (let i = 0; i < headingChipCount; i++) {
+        const text = (await headingChips.nth(i).innerText()).trim().toLowerCase();
+        if (text === 'unrecognized type') {
+          foundUnrecognizedChip = true;
+          break;
+        }
+      }
       const notice = page.locator('aside.notice.view-unrecognized-notice[role="status"]');
-      const quietCount = await quietChip.count();
       const noticeCount = await notice.count();
 
       if (!spec.registered) {
-        const chipText = quietCount > 0 ? (await quietChip.first().innerText()).trim() : '';
         softCheck(
           'F-12',
           spec.id,
           'light',
           1280,
-          // `.status-chip` renders text-transform: uppercase — compare case-insensitively.
-          quietCount > 0 && chipText.toLowerCase() === 'unrecognized type' && noticeCount > 0,
-          `quietCount=${quietCount} chipText="${chipText}" noticeCount=${noticeCount}`,
+          foundUnrecognizedChip && noticeCount > 0,
+          `foundUnrecognizedChip=${foundUnrecognizedChip} noticeCount=${noticeCount}`,
         );
       } else {
         softCheck(
@@ -616,8 +715,8 @@ test('behaviour: fallback marker for unrecognized kinds (F-12)', async ({ page }
           spec.id,
           'light',
           1280,
-          quietCount === 0 && noticeCount === 0,
-          `registered kind but quietCount=${quietCount} noticeCount=${noticeCount}`,
+          !foundUnrecognizedChip && noticeCount === 0,
+          `registered kind but foundUnrecognizedChip=${foundUnrecognizedChip} noticeCount=${noticeCount}`,
         );
       }
 

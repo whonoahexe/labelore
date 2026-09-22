@@ -222,8 +222,30 @@ async function runFullBehaviorChecks(
   }
 }
 
+// quick-260922-3us Task 3: PLAN and VERIFICATION fixtures appended to the same full-behavior
+// helper Task 1 wrote — the whole cover/fold/bar/jump/source/420 contract, proven type-agnostic.
+const PLAN_AND_VERIFICATION_FULL_FIXTURES: Fixture[] = [
+  { id: '01-01-plan-full', pathIncludes: '01-read-layer-domain-model/01-01-PLAN.md', glance: true },
+  { id: '01-02-plan-full', pathIncludes: '01-read-layer-domain-model/01-02-PLAN.md', glance: false },
+  {
+    id: '05-verification-full',
+    pathIncludes: '05-per-type-document-views/05-VERIFICATION.md',
+    glance: true,
+  },
+  {
+    id: '01-verification-full',
+    pathIncludes: '01-read-layer-domain-model/01-VERIFICATION.md',
+    glance: false,
+  },
+  {
+    id: '02-verification-full',
+    pathIncludes: '02-situational-awareness-artifact-reading/02-VERIFICATION.md',
+    glance: false,
+  },
+];
+
 test.describe('document layout — sketch-004 B3 (quick-260922-3us)', () => {
-  for (const fixture of DISCUSSION_LOG_FIXTURES) {
+  for (const fixture of [...DISCUSSION_LOG_FIXTURES, ...PLAN_AND_VERIFICATION_FULL_FIXTURES]) {
     test(fixture.id, async ({ page, baseURL }) => {
       await runFullBehaviorChecks(page, baseURL ?? 'http://127.0.0.1:4199', fixture);
     });
@@ -363,4 +385,38 @@ test.describe('document layout — PLAN/VERIFICATION cover/glance smoke (quick-2
       await runCoverGlanceSmoke(page, baseURL ?? 'http://127.0.0.1:4199', fixture);
     });
   }
+
+  // quick-260922-3us Task 3: a reference preview reachable from inside an expanded PLAN or
+  // VERIFICATION chapter/panel. Tries each candidate fixture's every fold and Also panel in turn
+  // (expanded first) — fails, never skips, if no `[data-reference-key]` is found anywhere.
+  test('a reference preview opens from inside an expanded PLAN or VERIFICATION chapter/panel', async ({
+    page,
+    baseURL,
+  }) => {
+    const candidates = [
+      '01-read-layer-domain-model/01-01-PLAN.md',
+      '05-per-type-document-views/05-VERIFICATION.md',
+      '01-read-layer-domain-model/01-VERIFICATION.md',
+    ];
+    let opened = false;
+    for (const pathIncludes of candidates) {
+      const url = await resolveFixtureUrl(baseURL ?? 'http://127.0.0.1:4199', pathIncludes);
+      await setTheme(page, 'light');
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await page.goto(url);
+      await waitForCover(page);
+      await page.locator('.document-fold-tools button').click(); // Expand all
+      const referenceTrigger = page.locator('[data-reference-key]').first();
+      if ((await referenceTrigger.count()) > 0) {
+        await referenceTrigger.click();
+        await expect(page.locator('.reference-preview')).toBeVisible();
+        opened = true;
+        break;
+      }
+    }
+    expect(
+      opened,
+      `expected at least one [data-reference-key] reachable inside an expanded PLAN/VERIFICATION document among: ${candidates.join(', ')}`,
+    ).toBe(true);
+  });
 });
