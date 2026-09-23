@@ -6,7 +6,7 @@ status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
 last_updated: "2026-09-21T09:34:14.305Z"
 last_activity: 2026-09-23
-last_activity_desc: Completed quick task 260923-jxp (discussion-log review fixes)
+last_activity_desc: Completed quick task 260923-lju (CONTEXT page per sketch 006 D1)
 state_head: 5eaa6dc2f1e0df8d324a1c8867aa9b13eca145df
 progress:
   total_phases: 1
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-09-21)
 Phase: Milestone v1.1 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-09-23 - Completed quick task 260923-jxp: discussion-log review fixes on the B3 layout
+Last activity: 2026-09-23 - Completed quick task 260923-lju: CONTEXT page per sketch 006 D1
 
 ## Performance Metrics
 
@@ -113,6 +113,7 @@ None.
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 260923-lju | CONTEXT page per sketch 006 D1 — boundary hero with In-this-phase card, quiet out-strip, amber open-questions panel, continuous decision register, Claude's discretion tagged into decisions, ideas panels, More-in-this-document; archived quick-task artifacts now parse; visual-contract canvas test updated (validated: Needs Review — live visual check) | 2026-09-23 | 86daac3 | [260923-lju-context-page-per-sketch-006-d1](./quick/260923-lju-context-page-per-sketch-006-d1/) |
 | 260923-jxp | Discussion-log review fixes on the B3 layout — no dropped questions (✓ variants, custom answers, table-under-area and bold-Q shapes), numbered answer cards with titles, quiet notes toggle, declined-area ghost chapters, log date, endnotes sheet, truthful cover counts; copy-path icon replaces the raw path on every artifact page | 2026-09-23 | 3f74056 | [260923-jxp-discussion-log-page-review-fixes-on-the-](./quick/260923-jxp-discussion-log-page-review-fixes-on-the-/) |
 | 260922-3us | Sketch-004 B3 folded-chapters document layout (cover sheet, chapter index, pinned chapter bar, folded chapters) for DISCUSSION-LOG, PLAN and VERIFICATION | 2026-09-22 | ed62ee0 | [260922-3us-build-sketch-004-b3-folded-chapters-docu](./quick/260922-3us-build-sketch-004-b3-folded-chapters-docu/) |
 | 260921-l4e | Automated UI/UX consistency sweep of the document-page foundation (Playwright, `npm run test:e2e`) — 3 foundation fixes, 1 per-type waiver | 2026-09-21 | d3adb3d | [260921-l4e-automate-ui-ux-consistency-verification-](./quick/260921-l4e-automate-ui-ux-consistency-verification-/) |
