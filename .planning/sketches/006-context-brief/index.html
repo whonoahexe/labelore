@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 006 — Context, round 2</title>
+<link rel="stylesheet" href="../themes/default.css?v=006">
+<style>
+/* Sketch 006 (round 2 of 005): shared atoms copied from 005; layout below. 005 built on 004's B3 winner (cover sheet, chapter index, pinned chapter bar, folded
+   chapters). Shared atoms are copied from 004 verbatim so the comparison is only about what a
+   CONTEXT document puts inside that frame. Everything visual comes from ../themes/default.css. */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-5); line-height: var(--lh-normal); padding-top: 3rem; }
+h1, h2, h3, p, ul, ol, dl, dd { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+code { font-family: var(--font-mono); font-size: 0.9em; padding: 0 0.2em; background: color-mix(in oklch, var(--muted) 70%, transparent); }
+strong { font-weight: var(--fw-semibold); }
+
+#variant-nav { position: fixed; inset: 0 0 auto 0; z-index: 50; display: flex; gap: var(--space-1); align-items: center; padding: var(--space-2) var(--space-4); background: var(--background); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; overflow-x: auto; }
+#variant-nav .label { color: var(--muted-foreground); margin-right: var(--space-2); white-space: nowrap; }
+.variant-tab { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; background: none; white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; color: var(--muted-foreground); transition: all .15s ease; }
+.variant-tab:hover { color: var(--foreground); background: var(--state-hover); }
+.variant-tab.active { color: var(--primary); border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); background: var(--primary-tint); }
+
+.shell-header { display: flex; align-items: center; gap: var(--space-4); height: 3.75rem; padding: 0 var(--space-4); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.brand-mark { width: 2.25rem; height: 2.25rem; background: var(--primary); display: grid; place-items: center; color: white; font-weight: 700; }
+.shell-nav { display: flex; margin: 0 auto; height: 100%; }
+.shell-nav span { display: flex; align-items: center; padding: 0 var(--space-5); border-left: 1px solid var(--border); color: var(--muted-foreground); }
+.shell-nav span:last-child { border-right: 1px solid var(--border); }
+@container (max-width: 640px) { .shell-nav { display: none; } }
+#frame { margin: 0 auto; container-type: inline-size; transition: max-width .2s ease; background: var(--background); min-height: 100vh; }
+#frame.narrow-frame { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+.page { width: min(80rem, 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); }
+
+.eyebrow { display: flex; gap: var(--space-2); align-items: center; margin-bottom: var(--space-3); color: var(--primary); font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+.status-chip { display: inline-flex; gap: var(--space-1-5); align-items: center; width: fit-content; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: color-mix(in oklch, var(--muted) 55%, transparent); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.status-chip[data-tone='active'], .status-chip[data-tone='complete'] { border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); background: var(--primary-tint); color: var(--primary); }
+.status-chip[data-tone='quiet'] { color: var(--muted-foreground); }
+.status-chip[data-tone='warning'] { border-color: color-mix(in oklch, oklch(0.75 0.15 75) 60%, var(--border)); color: oklch(0.72 0.15 75); }
+button.status-chip:hover { background: var(--state-hover); }
+.plan-pill { display: inline-flex; align-items: center; gap: var(--space-1-5); padding: var(--space-1) var(--space-2-5); border: 1px solid var(--border); color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-2); line-height: var(--lh-tight); }
+.plan-pill strong { color: var(--foreground); font-weight: var(--fw-medium); }
+.source-note { color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-1); line-height: var(--lh-normal); overflow-wrap: anywhere; }
+.text-link { font-family: var(--font-mono); font-size: var(--fs-2); text-decoration: underline; text-underline-offset: 3px; color: var(--foreground); background: none; border: 0; padding: 0; }
+.text-link:hover { color: var(--primary); }
+.muted { color: var(--muted-foreground); }
+.view-toggle { display: inline-flex; gap: var(--space-1); font-family: var(--font-sans); font-size: var(--fs-5); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.view-toggle button { border: 0; background: none; padding: var(--space-1-5) var(--space-3); color: var(--muted-foreground); transition: all .15s ease; }
+.view-toggle button[aria-pressed='true'] { background: var(--muted); color: var(--foreground); box-shadow: inset 0 -2px 0 var(--primary); }
+.icon-btn { display: inline-grid; place-items: center; width: 2rem; height: 2rem; border: 1px solid var(--border); background: none; color: var(--muted-foreground); transition: all .15s ease; }
+.icon-btn:hover { color: var(--foreground); background: var(--state-hover); }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.mention { font-family: var(--font-mono); font-size: 0.92em; color: var(--primary); background: none; border: 0; padding: 0; text-decoration: underline dotted; text-underline-offset: 3px; }
+
+/* ================= 006: dashboard vocabulary ================= */
+.page { width: min(80rem, 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); display: grid; gap: var(--space-fluid-9); }
+.page-intro h1 { font-size: var(--fs-display-3); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tighter); line-height: var(--lh-display); font-family: var(--font-heading); }
+.lede { color: var(--muted-foreground); font-size: var(--fs-fluid-1); line-height: var(--lh-relaxed); max-width: 48rem; }
+.meta-row { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; margin-top: var(--space-5); }
+.meta-row .sep { flex: 1; }
+.panel { border: 1px solid var(--border); background: var(--card-veil); padding: var(--space-fluid-3); min-width: 0; }
+.panel.accent { border-top: 3px solid var(--primary); box-shadow: 0.7rem 0.7rem 0 color-mix(in oklch, var(--muted) 65%, transparent); }
+.panel.amber { border-top: 3px solid oklch(0.75 0.15 75); }
+.panel.amber > .eyebrow, .amber-text { color: oklch(0.72 0.15 75); }
+.section-heading { display: flex; gap: var(--space-4); align-items: flex-end; justify-content: space-between; min-width: 0; padding-bottom: var(--space-4); border-bottom: 1px solid var(--border); }
+.section-heading h2 { font-family: var(--font-mono); font-size: var(--fs-fluid-3); font-weight: var(--fw-medium); letter-spacing: var(--ls-tight); }
+.count-box { display: grid; min-width: 2.25rem; height: 2.25rem; padding: 0 var(--space-2); place-items: center; border: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-5); }
+
+/* boundary hero (position-hero) */
+.hero { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(18rem, 0.85fr); gap: var(--space-fluid-9); align-items: start; }
+@container (max-width: 900px) { .hero { grid-template-columns: 1fr; } }
+.hero .statement { font-family: var(--font-heading); font-size: var(--fs-fluid-3); line-height: var(--lh-snug); letter-spacing: var(--ls-tight); max-width: 40ch; }
+.hero .statement-rest { margin-top: var(--space-4); color: var(--muted-foreground); font-size: var(--fs-4); max-width: 62ch; }
+.in-list { list-style: none; padding: 0; display: grid; gap: var(--space-1-5); margin-top: var(--space-3); }
+.in-list li { display: grid; grid-template-columns: 1.1rem minmax(0, 1fr); gap: var(--space-2); font-size: var(--fs-4); }
+.in-list li::before { content: '✓'; color: var(--primary); font-family: var(--font-mono); font-size: var(--fs-3); }
+.in-inline { display: flex; flex-wrap: wrap; gap: var(--space-1-5); margin-top: var(--space-3); }
+.in-inline span { padding: var(--space-1) var(--space-2); border: 1px solid color-mix(in oklch, var(--primary) 35%, var(--border)); font-size: var(--fs-3); }
+.out-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); }
+.drift { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); letter-spacing: var(--ls-wider); }
+.scope-out { list-style: none; padding: 0; display: grid; gap: var(--space-2); margin-top: var(--space-3); }
+.scope-out li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-3); font-size: var(--fs-4); color: var(--muted-foreground); padding-bottom: var(--space-2); border-bottom: 1px dashed var(--border); }
+.scope-out li:last-child { border-bottom: 0; padding-bottom: 0; }
+.scope-out .dest { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.scope-origin { margin-top: var(--space-3); }
+.out-strip { display: grid; grid-template-columns: 12rem minmax(0, 1fr); gap: var(--space-4); padding: var(--space-3) 0; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border); color: var(--muted-foreground); }
+.out-label { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; padding-top: 0.2em; }
+.out-label span { text-transform: none; opacity: .75; }
+.out-strip ul { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-1-5) var(--space-5); font-size: var(--fs-3); }
+.out-strip .dest { margin-left: var(--space-1);  font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; opacity: .8; }
+@container (max-width: 760px) { .out-strip { grid-template-columns: 1fr; gap: var(--space-2); } .out-strip ul { display: grid; } }
+.quiet-out { background: none; } .quiet-out .eyebrow { color: var(--muted-foreground); }
+.stat-row { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-5); }
+.stat { display: inline-flex; gap: var(--space-2); align-items: baseline; padding: var(--space-1-5) var(--space-3); border: 1px solid var(--border); background: none; font-family: var(--font-heading); font-size: var(--fs-2); color: var(--muted-foreground); text-transform: uppercase; letter-spacing: var(--ls-wider); }
+.stat b { font-size: var(--fs-5); color: var(--foreground); font-weight: var(--fw-medium); }
+button.stat:hover { background: var(--state-hover); }
+.stat.warn { border-color: color-mix(in oklch, oklch(0.75 0.15 75) 55%, var(--border)); }
+.stat.warn b { color: oklch(0.72 0.15 75); }
+
+/* open questions (attention-panel) */
+.attn-list { list-style: none; padding: 0; display: grid; margin-top: var(--space-2); }
+.attn-list li { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr) auto; gap: var(--space-3); align-items: baseline; padding: var(--space-3) 0; border-bottom: 1px solid var(--border); scroll-margin-top: 6rem; }
+.attn-list li:last-child { border-bottom: 0; padding-bottom: 0; }
+.attn-list .tag { font-family: var(--font-mono); font-size: var(--fs-2); color: oklch(0.72 0.15 75); }
+.attn-list .q { font-size: var(--fs-4); }
+.attn-list .why { grid-column: 2 / -1; color: var(--muted-foreground); font-size: var(--fs-4); }
+@container (max-width: 700px) { .attn-list li { grid-template-columns: 4rem minmax(0, 1fr); } .attn-list li > .chips { grid-column: 2; } }
+
+/* D1: continuous register */
+.register { display: grid; }
+.reg-area { display: grid; grid-template-columns: 14rem minmax(0, 1fr); gap: var(--space-6); padding: var(--space-6) 0; border-bottom: 1px solid var(--border); }
+.reg-area:last-child { border-bottom: 0; }
+.reg-area > header { position: sticky; top: 4rem; align-self: start; }
+.reg-area > header h3 { font-family: var(--font-mono); font-size: var(--fs-5); font-weight: var(--fw-medium); }
+.reg-area > header .chips { margin-top: var(--space-2); }
+@container (max-width: 900px) { .reg-area { grid-template-columns: 1fr; gap: var(--space-2); } .reg-area > header { position: static; } }
+.dec { display: grid; grid-template-columns: 3.75rem minmax(0, 1fr) auto; gap: var(--space-1) var(--space-3); align-items: baseline; padding: var(--space-2-5) 0; scroll-margin-top: 6rem; }
+.dec + .dec { border-top: 1px dashed var(--border); }
+.dec .tag { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); letter-spacing: var(--ls-wider); }
+.dec .sum { text-align: left; border: 0; background: none; padding: 0; font-size: var(--fs-5); line-height: var(--lh-snug); }
+.dec button.sum:hover { color: var(--primary); }
+.dec .body { grid-column: 2 / -1; display: grid; gap: var(--space-2-5); color: var(--muted-foreground); font-size: var(--fs-4); max-width: 75ch; padding-top: var(--space-1); }
+.dec .rev { font-size: var(--fs-3); padding-left: var(--space-3); border-left: 2px solid var(--border); }
+.dec .rev b, .claude-note b { font-family: var(--font-mono); font-weight: 400; font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; margin-right: var(--space-1-5); }
+.claude-note { grid-column: 2 / -1; font-size: var(--fs-3); color: var(--muted-foreground); display: flex; gap: var(--space-1-5); align-items: baseline; }
+.claude-note b { color: var(--primary); white-space: nowrap; }
+.open-flag { grid-column: 2 / -1; font-size: var(--fs-3); }
+@container (max-width: 700px) { .dec { grid-template-columns: 3.25rem minmax(0, 1fr); } .dec > .chips { grid-column: 2; } }
+.flash { animation: flash 1.4s ease; }
+@keyframes flash { 0%, 40% { background: var(--primary-tint); } 100% { background: transparent; } }
+
+/* D2: register + reader */
+.split { display: grid; grid-template-columns: minmax(18rem, 0.8fr) minmax(0, 1.4fr); border: 1px solid var(--border); background: var(--card-veil); min-height: 32rem; }
+.split-list { border-right: 1px solid var(--border); max-height: 42rem; overflow-y: auto; }
+.split-list h3 { position: sticky; top: 0; background: var(--background); padding: var(--space-2) var(--space-4); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); border-bottom: 1px solid var(--border); font-weight: 400; }
+.split-list button { display: grid; grid-template-columns: 3.25rem minmax(0, 1fr) auto; gap: var(--space-2); align-items: baseline; width: 100%; padding: var(--space-2) var(--space-4); border: 0; border-bottom: 1px solid var(--border); background: none; text-align: left; font-size: var(--fs-4); transition: background .12s ease; }
+.split-list button:hover { background: var(--state-hover); }
+.split-list button[aria-current='true'] { background: var(--primary-tint); box-shadow: inset 3px 0 0 var(--primary); }
+.split-list .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.split-list .tag { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); }
+.split-list .mark { font-family: var(--font-mono); font-size: var(--fs-1); }
+.reader { padding: var(--space-fluid-3); display: grid; gap: var(--space-4); align-content: start; }
+.reader .rtag { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); letter-spacing: var(--ls-wider); }
+.reader h3 { font-family: var(--font-heading); font-size: var(--fs-fluid-3); font-weight: var(--fw-medium); line-height: var(--lh-snug); letter-spacing: var(--ls-tight); }
+.reader .rbody { color: var(--muted-foreground); font-size: var(--fs-5); line-height: var(--lh-relaxed); max-width: 68ch; }
+.reader .rnav { display: flex; gap: var(--space-3); justify-content: space-between; padding-top: var(--space-4); border-top: 1px solid var(--border); margin-top: var(--space-2); }
+.reader .inset { padding: var(--space-3) var(--space-4); border: 1px solid var(--border); border-left: 3px solid oklch(0.75 0.15 75); font-size: var(--fs-4); }
+.reader .inset.claude { border-left-color: var(--primary); }
+.reader .inset .eyebrow { margin-bottom: var(--space-1-5); }
+.reader .inset .muted { margin-top: var(--space-1-5); }
+.kbd { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); }
+@container (max-width: 860px) { .split { grid-template-columns: 1fr; } .split-list { border-right: 0; border-bottom: 1px solid var(--border); max-height: 18rem; } }
+
+/* D3: area cards */
+.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5); }
+.cards.three { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
+@container (max-width: 860px) { .cards, .cards.three { grid-template-columns: 1fr; } }
+.card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3); padding-bottom: var(--space-3); border-bottom: 1px solid var(--border); }
+.card-head h3 { font-family: var(--font-mono); font-size: var(--fs-6); font-weight: var(--fw-medium); }
+.card .dec { grid-template-columns: 3.25rem minmax(0, 1fr) auto; }
+.card .dec .sum { font-size: var(--fs-4); }
+.card-foot { margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--border); }
+.card-foot ul { list-style: none; padding: 0; display: grid; gap: var(--space-1-5); margin-top: var(--space-1-5); }
+.card-foot li { font-size: var(--fs-3); color: var(--muted-foreground); padding-left: var(--space-3); border-left: 2px solid color-mix(in oklch, var(--primary) 50%, var(--border)); }
+
+/* ideas + back matter (preview-panel) */
+.idea-list { list-style: none; padding: 0; display: grid; }
+.idea { padding: var(--space-3) 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+.idea:last-child { border-bottom: 0; padding-bottom: 0; }
+.idea .it { font-weight: var(--fw-medium); font-size: var(--fs-4); line-height: var(--lh-snug); }
+.idea .ib { margin-top: var(--space-1); color: var(--muted-foreground); font-size: var(--fs-4); }
+.idea:not(.open) .ib { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.idea:hover .it { color: var(--primary); }
+.idea.untitled .ib { color: var(--foreground); margin-top: 0; }
+.leftover { list-style: none; padding: 0; display: grid; gap: var(--space-2); margin-top: var(--space-3); }
+.leftover li { font-size: var(--fs-4); color: var(--muted-foreground); padding-left: var(--space-3); border-left: 2px solid color-mix(in oklch, var(--primary) 50%, var(--border)); }
+.more-in { border: 1px solid var(--border); }
+.more-in > summary { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); padding: var(--space-4) var(--space-fluid-3); cursor: pointer; list-style: none; }
+.more-in > summary:hover { background: var(--state-hover); }
+.more-in > summary h2 { font-family: var(--font-mono); font-size: var(--fs-6); font-weight: var(--fw-medium); }
+.more-in[open] > summary { border-bottom: 1px solid var(--border); }
+.back-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); padding: var(--space-5) var(--space-fluid-3); }
+@container (max-width: 760px) { .back-groups { grid-template-columns: 1fr; } }
+.back-group h3 { font-family: var(--font-mono); font-size: var(--fs-4); font-weight: var(--fw-medium); padding-bottom: var(--space-2); border-bottom: 1px solid var(--border); }
+.back-group ul { list-style: none; padding: 0; display: grid; gap: var(--space-2); margin: var(--space-2) 0 var(--space-3); }
+.back-group li { font-size: var(--fs-3); color: var(--muted-foreground); padding-left: var(--space-3); border-left: 1px solid var(--border); }
+.back-group details summary { cursor: pointer; font-size: var(--fs-4); padding: var(--space-1-5) 0; list-style: none; }
+.back-group details summary::before { content: '› '; color: var(--muted-foreground); font-family: var(--font-mono); display: inline-block; transition: transform .15s ease; }
+.back-group details[open] summary::before { transform: rotate(90deg); }
+.back-group details summary .c { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); margin-left: var(--space-1); }
+.toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--foreground); color: var(--background); padding: var(--space-2) var(--space-4); font-family: var(--font-mono); font-size: var(--fs-2); z-index: 9999; animation: fade .15s ease; }
+.fade { animation: fade .18s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .fade, .flash { animation: none; } }
+</style>
+</head>
+<body>
+<div id="variant-nav" role="tablist">
+  <span class="label">Sketch 006</span>
+  <button class="variant-tab active" data-variant="d1">D1: Brief + register ★ Selected</button>
+  <button class="variant-tab" data-variant="d2">D2: Register + reader</button>
+  <button class="variant-tab" data-variant="d3">D3: Area cards</button>
+</div>
+<div id="frame">
+  <header class="shell-header"><span class="brand-mark">L</span><span>Labelore</span>
+    <nav class="shell-nav"><span>Dashboard</span><span>Roadmap</span><span>Traceability</span></nav></header>
+  <main id="root"></main>
+</div>
+<div id="sketch-tools" style="position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:12px;background:rgba(0,0,0,0.78);color:white;padding:8px 10px;opacity:0.55;transition:opacity 0.2s;display:grid;gap:6px;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.55'">
+  <div>Doc: <button data-doc="sp01">studio-portal P1</button><button data-doc="lb05">labelore P5</button></div>
+  <div>Theme: <button data-theme="light">Light</button><button data-theme="dark">Dark</button></div>
+  <div>Width: <button data-width="390">Phone</button><button data-width="820">Tablet</button><button data-width="full">Desktop</button></div>
+</div>
+<style>
+#sketch-tools button { background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 2px 7px; margin-left: 3px; font: inherit; cursor: pointer; }
+#sketch-tools button.on { background: #c2410c; border-color: #c2410c; }
+</style>
+<script>
+/* Same real content as sketch 005 (mechanically extracted, not rewritten):
+     studio-portal 01-CONTEXT.md — explicit In / Not-in-scope lists, 3 OPEN questions, one-paragraph discretion
+     labelore 05-CONTEXT.md — prose boundary, no OPEN questions, bulleted discretion
+   Round 2: no cover sheet, no folded chapters. Built from the dashboard's own pieces — page-intro,
+   position-hero + the accent card, attention panel, preview panels. The boundary leads. */
+const DOCS = { sp01: {"id":"sp01","file":".planning/phases/01-portal-owned-identity-sessions/01-CONTEXT.md","title":"Phase 1: Portal-Owned Identity & Sessions","gathered":"2026-08-03","status":"Ready for planning","boundary":{"summary":["Members sign in to the portal with a username and password the portal itself holds, and stay signed in across backend restarts and power cuts. Cloudflare Access stops authenticating anyone; the tunnel remains purely as network transport. Covers AUTH-01 through AUTH-06."],"inList":["`users` and `sessions` tables","Argon2id hashing","login/logout","the `VerifiedIdentity` seam swap","forced first-login password change","login rate limiting","WS/download authentication against portal sessions","the `backstage` account CLI","removal of the Access policy"],"outList":["Roles, permissions, or any per-tier gating → Phase 2","Admin UI for accounts, session listing, live-session revocation → Phase 3","`SessionRevocationBus` and the third `tokio::select!` arm → Phase 3 (ADMIN-03)","Bulk downloads, folder sizes → Phases 4 and 5"],"drift":true,"outFromProse":false},"areas":[{"title":"Session lifetime & expiry","decisions":[{"tag":"D-01","summary":"Sessions use a **30-day sliding idle expiry** — every authenticated request pushes the deadline out.","detail":"The extractor already touches the sessions row per request, so `last_seen` is written in the same touch. This is deliberately chosen to also give Phase 3's ADMIN-05 (\"who is logged in, when did they last act\") its data for free.","reversibility":null},{"tag":"D-02","summary":"**Multiple concurrent sessions per member** — one row per login, so the studio laptop and a phone at home coexist.","detail":"**Logout ends only the session that issued the request**, not the member's others.","reversibility":null},{"tag":"D-03","summary":"**A password change invalidates all of that member's other sessions**, keeping the one that performed the change (`DELETE FROM sessions WHERE user_id = ? AND id != ?`).","detail":"Closes PITFALLS P4, and makes Phase 3's ADMIN-02 admin reset correct by default.","reversibility":null},{"tag":"D-04","summary":"Logout's \"immediately\" (AUTH-03) means **new connections only** in this phase.","detail":"REST dies instantly because the extractor queries the sessions table every request — there is no cache to invalidate. The next ticket-mint is refused, so no new WebSocket or download can start. The frontend closes its own socket on logout, covering the same-tab case. **Server-side teardown of an already-open socket is Phase 3's `SessionRevocationBus` — do not build it here.** The remaining gap is a logout issued from a different device, and that is accepted for this phase.","reversibility":"reversible — Phase 3 extends this rather than undoing it."}]},{"title":"Cutover & bootstrap","decisions":[{"tag":"D-05","summary":"The bootstrap path is a **CLI binary explicitly named `backstage`** (user-specified; do NOT name it `cinedise-portal` or `backend`).","detail":"Implemented as a second binary target in the existing `backend` crate (`backend/src/bin/backstage.rs`), sharing the db and auth modules with the server. Chosen over env vars and migration seeding specifically so no credential ever lands in a config file or systemd unit — STATE.md already carries an open concern about `cloudflared.service` leaking its token via `systemctl cat`.","reversibility":null},{"tag":"D-06","summary":"**`backstage` is not admin-only.** It can create, list, and reset *any* account.","detail":"Two reasons: the studio must be fully operable the moment Access is removed rather than waiting until Phase 3's admin UI, and the CLI is the permanent break-glass path when someone is locked out or the admin account becomes unusable. Phase 3's UI becomes the pleasant way to do what the CLI already can — not the only way.","reversibility":null},{"tag":"D-07","summary":"**The Cloudflare Access policy is removed entirely at cutover.** The tunnel stays as transport only.","detail":"Required by AUTH-01's success criterion (\"no Access interstitial appears anywhere in the flow\"), and it **dissolves the 2026-10-14 ACME problem outright** rather than working around it — with no Access gate there is nothing blocking `/.well-known/acme-challenge/*`. Consequence to plan for: the box loses its edge shield, so the portal's own rate limiting and fail-closed extractor become the only front door.","reversibility":"costly — re-adding Access means reconfiguring the Cloudflare application and would reintroduce the ACME-challenge gating that STATE.md flags as the highest-consequence open operational item."},{"tag":"D-08","summary":"**`audit_log.actor` keeps its existing raw-`TEXT` shape** — the handle is snapshotted as a plain string at time of action.","detail":"No FK, no migration to `audit_log`. This makes Phase 3's ADMIN-04 (\"delete an account, history stays readable\") work for free, because the row never depended on the user existing. Existing v1.0 rows keep their Cloudflare Access emails and stay readable as historical values; the audit view must therefore render two actor shapes. Accepted tradeoff: renaming a member does not rewrite their history, and a reused handle reads as the same actor.","reversibility":"one-way — moving to a FK later requires migrating historical rows whose actor strings (v1.0 Access emails) have no corresponding user record to point at."}]},{"title":"Login & forced-change UX","decisions":[{"tag":"D-09","summary":"**Next.js middleware gates the routes** — it checks the session cookie and redirects unauthenticated visitors to `/login` before render, rather than letting the shell paint and redirecting on a 401.","detail":"The cookie is scoped `Domain=.cinedise.com`, so `studio.` can see it. **See OPEN-01 below — the prerender cost of this must be measured before planning locks it in.**","reversibility":null},{"tag":"D-10","summary":"**Middleware validates the session against the backend**, not just the presence of a cookie — so a stale cookie redirects with no flash in any case.","detail":"**Accepted cost, stated and reaffirmed:** this puts a blocking Vercel → tunnel → box round-trip in front of every page load. Planner should give it a short timeout.","reversibility":null},{"tag":"D-11","summary":"When the backend is unreachable during that validation, middleware **fails closed and redirects to `/login`**.","detail":"**Accepted cost, stated and reaffirmed:** during this site's frequent power cuts every member is bounced to a login form that also cannot authenticate, and loses their place. **This is deliberate. Do not \"fix\" it downstream as a bug** — the alternative (render and let the API surface the outage) was presented and rejected.","reversibility":"reversible — the fallback branch is local to middleware."},{"tag":"D-12","summary":"AUTH-02 is enforced by a **server-side `must_change_password` flag checked inside the `VerifiedIdentity` extractor**, which refuses every endpoint except change-password and logout with a distinct status the frontend routes on.","detail":"Login issues a normal full session; there is no second \"pre-auth\" session kind. One check in the seam covers all present and future routes, which is what stops the PITFALLS P5 scattering failure from reappearing when Phase 3 and Phase 4 add handlers. Frontend gets a `/change-password` route it lands on when it sees that status.","reversibility":null},{"tag":"D-13","summary":"A member has **a normalized handle *and* a separate display name**.","detail":"The handle is letters, digits, underscore, hyphen; stored and compared lowercased, with uniqueness enforced on the normalized form so `Kunal` and `kunal` cannot both exist. Login is therefore case-insensitive. The display name is the human name shown across the app.","reversibility":null},{"tag":"D-14","summary":"**The handle — not the display name — is what gets snapshotted into `audit_log.actor`** (see D-08).","detail":"Unique, stable, unambiguous. The audit view resolves the handle to a display name for presentation while the account exists, and falls back to the bare handle after a Phase 3 delete.","reversibility":null},{"tag":"D-15","summary":"Password rule is **minimum length 12, no composition requirements** — current OWASP/NIST guidance; composition rules push people toward `Password1!` and block good passphrases.","detail":"Enforced server-side, with the frontend showing the same rule so nobody is surprised on submit.","reversibility":null}]},{"title":"Rate limiting & lockout","decisions":[{"tag":"D-16","summary":"A throttled login returns a **time-boxed 429 with a visible \"try again in Nm\"**, and the form disables submit until then.","detail":"**Account lockout requiring an admin was explicitly rejected** — it hands anyone who can reach the login form a way to lock out any member by name, including the studio's only admin, on a box with no email recovery path. The throttle must be self-healing; `tower_governor`'s GCRA refill gives this.","reversibility":null},{"tag":"D-17","summary":"The limiter keys on **both client IP and submitted handle**, as two independent limits.","detail":"The IP limit stops one machine grinding many accounts; the handle limit stops a distributed attempt on one account. It also degrades safely if the real-client-IP header turns out to be missing or spoofable (see OPEN-02). **The per-handle limit must be time-boxed exactly like the IP one — never a permanent lock**, or D-16's rejected option returns through a side door.","reversibility":null},{"tag":"D-18","summary":"Unknown handle and wrong password are **identical in message, status, and timing** — an unknown handle still runs a throwaway Argon2 verify against a fixed dummy hash so the response costs the same.","detail":"**Unknown handles also accumulate against the per-handle limiter**, so a 429 does not leak account existence either — otherwise the throttle from D-16/D-17 becomes the enumeration oracle the constant-time work exists to close. This is PITFALLS P3 implemented straight.","reversibility":null},{"tag":"D-19","summary":"**Rate limiting applies to `/login` and change-password only.** The session-validation path D-10 introduced is **not** limited: it is keyed by an opaque 256-bit token that is not meaningfully guessable, and D-10 puts it on the hot path for every page load and prefetch, so a limiter there would throttle ordinary browsing.","detail":"It is a cheap indexed SQLite lookup.","reversibility":null}]}],"openQs":[{"tag":"OPEN-01","blocks":"D-09","summary":"Does adding `middleware.ts` actually cost the static prerendering of `/browse/[tier]/[[...path]]`?","detail":"During discussion this was first asserted and then corrected — middleware runs at request time and does not by itself force a route dynamic (calling `cookies()`/`headers()` *inside* a page or layout is what deopts). **Verify against a real `next build`, checking the route still emits `●`.** This matters because quick task 260727-era work (STATE.md \"quick task 5\") deliberately moved that route from `ƒ` to `●` and STATE.md treats regressing it as a real cost."},{"tag":"OPEN-02","blocks":"D-17","summary":"Which header does *this* deployment's `cloudflared` set for the real client IP?","detail":"Everything arrives from the tunnel, so without a trustworthy header every member shares one IP bucket. Needed to configure `tower_governor`'s `SmartIpKeyExtractor` and `connect_info`. Carried from research SUMMARY.md open question 3."},{"tag":"OPEN-03","blocks":null,"summary":"Concrete throttle thresholds — how many attempts, over what window, and how long the block lasts, for both the IP and handle limiters.","detail":"Not discussed; researcher should propose defaults grounded in OWASP guidance for the planner to encode."}],"discretion":["No area was handed over wholesale. Within the decisions above, the following are left to planning judgment: the exact session-token generation call, the `sessions` table's column set beyond what D-01 and D-04 require, the timeout value on D-10's validation call, the distinct status code chosen for D-12, and `backstage`'s subcommand surface beyond create/list/reset."],"specifics":[{"title":"The CLI must be called `backstage`","body":"The user rejected the proposed `cinedise-portal` name outright and specified `backstage`. Use it verbatim — binary name, invocation in docs, and anywhere it is referenced."},{"title":"UI work must use shadcn theme preset `b3Dqcuo4na`","body":", strictly. This held across all four v1.0 phases without drift and is a standing project rule, not a per-phase preference. Applies to the new `/login` and `/change-password` screens."},{"title":null,"body":"The user consistently chose the tighter, more explicit option when a tradeoff was presented (backend validation over optimistic rendering, fail-closed over graceful degradation, handle + display name over a single field). Where a later ambiguity arises, that is the direction to lean."}],"deferred":[{"title":"Live-socket teardown on logout","body":"server-side closing of an already-open WebSocket. Deliberately left to Phase 3's `SessionRevocationBus` (ADMIN-03), per D-04 and the roadmap's own assignment."},{"title":"Login page visual treatment, logout placement in the navbar, and \"remember me\"","body":"offered and passed over. Planner and `/gsd-ui-phase` have discretion within preset `b3Dqcuo4na`."},{"title":"What the `sessions` table stores for Phase 3's ADMIN-05 to read","body":"(device / user-agent, IP, login time) — offered and passed over. D-01 commits to `last_seen`; the rest is Phase 3's to specify, though adding the columns now is cheaper than migrating later and the planner may choose to."},{"title":"How AUTH-06's power-cut survival is actually proven","body":"offered and passed over. v1.0 has an existing unclean-shutdown test to model on."},{"title":"Throttle events writing an `audit_log` row","body":"raised as a possible question, not pursued. Candidate for Phase 3's ADMIN-06 audit work."}],"refs":[{"title":"Milestone-level context","items":["`.planning/PROJECT.md` — § Constraints (security posture now that the portal holds a password store), § Key Decisions (the v1.0 Access decision and its v2.0 supersession)","`.planning/REQUIREMENTS.md` — AUTH-01…AUTH-06 verbatim; § Out of Scope (no 2FA, no email, no SSO/LDAP, no self-service registration)","`.planning/ROADMAP.md` § Phase 1 — goal, the five success criteria, and the Notes block naming the `VerifiedIdentity` seam, the route inventory, and the `AUTH_MODE=dev` gate","`.planning/STATE.md` § Blockers/Concerns — the 2026-10-14 ACME/TLS item that D-07 dissolves, plus the `cloudflared.service` token-leak concern that motivated D-05"]},{"title":"v2.0 research (all four are load-bearing for this phase)","items":["`.planning/research/SUMMARY.md` — the consolidated picture; § Implications for Roadmap \"Phase 1\"; § Open Questions (items 1 and 3 map to D-08 and OPEN-02)","`.planning/research/STACK.md` — Argon2id parameters, session-token and cookie shape, `tower_governor` and `axum-extra` version couplings, and the list of explicitly rejected crates (`axum-login`, `casbin-rs`, `oso`, bcrypt/scrypt/ PBKDF2)","`.planning/research/ARCHITECTURE.md` — the `VerifiedIdentity` seam (D-05 of v1.0), why bearer tokens were rejected for WS, and the three session- revocation lifetimes","`.planning/research/PITFALLS.md` — P1 (incomplete auth cutover / route inventory), P2 (fail-open dual auth), P3 (timing + enumeration, implemented by D-18), P4 (session lifecycle, implemented by D-03 and D-12), P5 (scattered checks, the reason D-12 lives in the seam)"]},{"title":"Code the phase modifies or depends on","items":["`backend/src/auth/mod.rs` — `VerifiedIdentity`, `Claims`, `AuthError`, `assert_safe_startup`; the seam whose body is swapped","`backend/src/auth/jwt.rs` — the Cloudflare Access verifier being retired","`backend/src/auth/dev_bypass.rs` — must keep working, constructing a session-shaped identity instead of JWT claims","`backend/src/tickets/store.rs` — 60s single-use ticket TTL and sweep; the WS/download authorization path D-04 depends on","`backend/src/ws/mod.rs` — ticket-authorized upgrade; where Phase 3 will later add its revocation arm","`backend/migrations/0001_init.sql` — the `audit_log` table D-08 preserves","`backend/migrations/0002_jobs_and_audit.sql` — the closed-enum + CHECK constraint convention new tables should follow"]},{"title":"v1.0 precedent worth reading before deciding shape","items":["`.planning/milestones/v1.0-MILESTONE-AUDIT.md` — the recorded tech debt this phase must not add to"]}],"code":[{"title":"Reusable Assets","items":["**`VerifiedIdentity` (`backend/src/auth/mod.rs:43`)** — an axum `FromRequestParts` extractor deliberately decoupled from the JWT crate for exactly this swap. Its doc comment says so explicitly. Swapping its body from header+JWT-verify to cookie+session-lookup leaves `api/browse.rs`, `tickets/mint.rs`, `download/mod.rs`, and `api/audit.rs` untouched. **This is also where D-12's `must_change_password` check belongs.**","**`AuthError` (`auth/mod.rs:50`)** — already maps every failure variant to a flat 401 without distinguishing reasons, which is the right instinct for D-18. Needs a new variant for D-12's must-change status.","**`assert_safe_startup` (`auth/mod.rs:116`)** — the `AUTH_MODE=dev` panic-on-prod gate (v1.0 D-10). Its second branch currently panics on unconfigured `CF_ACCESS_AUD`/`CF_ACCESS_TEAM_DOMAIN`; that branch becomes meaningless once D-07 removes Access and should be replaced, not deleted — the fail-loud-at-startup behavior is the valuable part.","**`TicketStore` (`backend/src/tickets/store.rs`)** — 60s TTL, single-use, CSPRNG-random, purpose-scoped (`TicketPurpose::Ws` / download), with a 15s sweep. AUTH-04 reuses this wholesale; only the mint-time authorization check changes from JWT to session.","**`dev_bypass.rs`** — `fixed_identity()` stays, now returning a session-shaped identity."]},{"title":"Established Patterns","items":["**Closed enums over free strings on the wire.** `TierId`, `TicketPurpose`, `JobStatus` are all closed Rust enums backed by SQL `CHECK` constraints (`0002_jobs_and_audit.sql:18`). Any new status or flag introduced here should follow that, not a bare `TEXT`.","**Fail closed, never open.** `init_verifier` falls back to a verifier that rejects everything; `is_loopback_bind` treats unresolvable as unsafe. The session lookup must behave the same way. This is also the house style D-11 follows.","**Migrations are additive and commented with the decision they encode.** `0001` and `0002` both open with a rationale block naming the D-number. A new `0003` should match.","**SQLite via `sqlx` 0.9, WAL, `synchronous=FULL`.** AUTH-06's survival across a power cut comes from this existing substrate, already proven against a real unclean-shutdown test — sessions being a plain table is what makes AUTH-06 nearly free.","**Frontend has no `middleware.ts` today** (`frontend/` has none) and no `/login` route — `app/` holds only `page.tsx`, `browse/`, `jobs/`, `audit/`. D-09 introduces the first one."]},{"title":"Integration Points","items":["**`backend/src/auth/mod.rs`** — the single seam; the swap happens inside `from_request_parts`.","**`backend/migrations/0003_*.sql`** — new `users` and `sessions` tables. `audit_log` is deliberately NOT migrated (D-08).","**`backend/src/bin/backstage.rs`** — new binary target (D-05); needs a `[[bin]]` entry in `backend/Cargo.toml`, which currently declares no explicit binaries.","**`frontend/middleware.ts`** — new (D-09/D-10/D-11).","**`frontend/app/login/` and `frontend/app/change-password/`** — new routes.","**Navbar** — needs a logout affordance and somewhere to show the display name (D-13). The navbar was reworked recently by quick tasks 260802-sya, 260802-uv1, and 8/13; match what is there rather than reinventing it.","**`Cf-Access-Jwt-Assertion` header read (`auth/mod.rs:83`)** — the line that disappears at cutover."]},{"title":"Constraints this architecture imposes","items":["The browser `WebSocket` API cannot set custom headers, which is *why* the ticket-mint indirection exists. Any \"just send a bearer token\" suggestion for AUTH-04 is already-rejected ground.","Frontend (Vercel) and backend (the box) are separate origins sharing the registrable domain `cinedise.com`. The existing `CorsLayer` already has `allow_credentials(true)` with an explicit single origin, so the cookie shape in STACK.md needs **no CORS change**."]}]}, lb05: {"id":"lb05","file":".planning/milestones/v1.1-phases/05-per-type-document-views/05-CONTEXT.md","title":"Phase 5: Per-Type Document Views","gathered":"2026-09-20","status":"Ready for planning","boundary":{"summary":["Phase 5 makes every planning document legible as the kind of document it is. It delivers a per-kind **view registry** mirroring the existing read-side `HANDLERS` registry, a granularised `kind` that splits the two catch-alls (`frontmatter-only`, `unknown`) into real presentation keys, the section-projection extractor built from the shipped `splitSections` / `splitSubsections` / `parseMarkdownTable` primitives, a speculative structural fallback for unmanifested types, and a registered view for all 16 known artifact types. Alongside that it writes the emergent design language down as a documented convention enforced by a test, fixes the document outline's appearance and reading-position tracking, and makes `D-XX` / `WR-XX` mentions resolve."],"inList":[],"outList":["a purpose/category taxonomy (rejected 2026-09-20)","adopting `gsd-tools query`","rewriting the dashboard, roadmap, traceability or search pages — they are the reference this conforms to","plan-vs-outcome deviation pairing (READ-08)","backlinks (BACK-01)","faceted search (FIND-06)","file watching (PLAT-01)"],"drift":false,"outFromProse":true},"areas":[{"title":"View / Document-Body Relationship","decisions":[{"tag":"D-01","summary":"The per-type view is the page.","detail":"The full rendered document is reachable through an explicit **Document source** toggle rather than sitting permanently beneath the view. Chosen so that \"a discussion log reads as questions and choices\" is literally true instead of showing the same `| Option | Description | Selected |` table twice — once promoted, once as raw prose. This revises Phase 2's D-09, which made the structured summary a compact lead into the always- present full document.","reversibility":"costly — every one of the 16 views is authored against this page shape, and reverting to lead-plus-body would rework each one plus the outline's data source (D-09 below)."},{"tag":"D-02","summary":"Content the manifest does **not** promote still renders inside the view, after the promoted region, in its original document order, **collapsed by default** behind a disclosure.","detail":"Nothing is ever unreachable even when a manifest is thin or has gone stale against a newer GSD template, and the view stays tight.","reversibility":null},{"tag":"D-03","summary":"The **Document source** toggle shows the full document through the existing v1.0 sanitized markdown pipeline — tables, code, Mermaid, heading anchors and linkified mentions intact.","detail":"Not literal raw markdown text. The per-type view is an interpretation layered over the reader that already works, not a replacement for it.","reversibility":null}]},{"title":"Promotion Order and Fidelity","decisions":[{"tag":"D-04","summary":"A manifest's promotion list **is** the render order.","detail":"A view may present promoted fields/sections in an order that differs from the file. VIEW-03's \"leads with what still needs a human\" is therefore a one-line manifest fact, not special-case code. Document order is still preserved for everything in D-02's unpromoted remainder.","reversibility":null},{"tag":"D-05","summary":"No per-block provenance affordances.","detail":"Promoted blocks do **not** carry \"in document\" back-links to their source heading anchors. The **Document source** toggle (D-03) is the single signal that the view has reordered and folded things; the view surface stays free of meta-chrome.","reversibility":null},{"tag":"D-06","summary":"A manifest that promotes a section or field the file does not contain **silently omits** it — no empty slot, no empty-state scaffolding, no partial-match chip.","detail":"Absence is normal in this corpus (GSD templates carry optional sections, artifacts are legitimately partial). This extends Phase 1/2's rule that dangling references are data rather than warnings: attention states stay reserved for genuine read or parse degradation.","reversibility":null}]},{"title":"Design Language Convention","decisions":[{"tag":"D-07","summary":"The design language lives in a **repo document** (e.g. `docs/design-language.md`) that owns the vocabulary — `status-chip[data-tone]`, `section-heading` (+ `.compact`), `empty-note`, `quiet-state`, `notice` / `notice destructive`, `source-note`, `source-link`, `eyebrow`, `lede`, `page-intro`, `page-stack`, and the `history-*` family.","detail":"`.claude/CLAUDE.md` § Conventions — currently reading \"Conventions not yet established\" — shrinks to a one-line pointer at that doc, because CLAUDE.md's sections are GSD-managed and regenerated and would not hold a long spec.","reversibility":null},{"tag":"D-08","summary":"UI-05's enforcing test is a **class vocabulary allowlist**.","detail":"It derives the sanctioned names from the design-language doc, scans `className` literals in view and page code, and fails on any name outside the vocabulary. Chosen over a token/primitive lint (which catches theme drift but not a view inventing its own heading or chip pattern) and over structural conformance checks (which test the shape but not bespoke chrome added on top).","reversibility":null},{"tag":"D-09","summary":"The escape route for genuinely view-private styling is a **reserved view-local namespace** — names under a declared per-view prefix (e.g. `view-discussion-log-*`) are auto-allowed.","detail":"Every *shared* name therefore remains a deliberate, documented act, while a view can style its own internals without amending the doc. Not a test-side exception array, which would be a second vocabulary drifting from the first.","reversibility":null},{"tag":"D-10","summary":"The vocabulary test runs over the existing dashboard, roadmap, traceability and search pages too.","detail":"The doc is derived from those four pages, so they should pass by construction; a failure means the vocabulary was written incompletely. **When a reference page fails, the fix is to add the name to the doc — never to rewrite the page.** Rewriting those pages stays out of scope per REQUIREMENTS.md § Out of Scope.","reversibility":null}]},{"title":"Reading Surface — Outline (READ-07)","decisions":[{"tag":"D-11","summary":"The outline lists **the view's own sections** — the manifest's promoted sections in promotion order, then D-02's collapsed remainder as a single entry.","detail":"Not `RenderedDocument.headings` as today, which after D-04's reordering and D-02's folding would link to positions that no longer match what is on screen. The view registry already knows the section list, so this does not introduce a second source of headings.","reversibility":null},{"tag":"D-12","summary":"At widths where the sticky left column does not fit, the outline **collapses to a sticky disclosure** pinned under the page chrome; opening it overlays the section list.","detail":"It stays reachable at any scroll depth without consuming reading width. Rejected: dropping it into normal flow above the document (only reachable by scrolling to the top — which is most of what READ-07 objects to), and folding it into the narrow-width sidebar drawer (mixes cross-document with in-document navigation).","reversibility":null},{"tag":"D-13","summary":"Reading position is shown as a single **active entry**, tracked with an `IntersectionObserver` on section boundaries — **and at narrow width the collapsed disclosure's own label names the current section** (e.g. \"On this page · Human verification\"), so position is answerable without opening anything at exactly the width where the list is hidden.","detail":"Per Phase 2's **D-16**, scrolling must **not** rewrite the URL; this tracking is visual only.","reversibility":null}]},{"title":"Reading Surface — Mentions (BACK-02)","decisions":[{"tag":"D-14","summary":"`D-XX` and `WR-XX` resolve **phase-local first, then whole corpus**.","detail":"A mention resolves against the definitions in its own phase directory; if none exists there, fall back to a corpus-wide search and link only when **exactly one** definition matches. Ambiguous or absent → plain text, per Phase 2's **D-17**. The fallback is what lets cross-phase citations in `PROJECT.md` and `MILESTONES.md` resolve at all.","reversibility":"reversible — resolution strategy is local to the mention-resolution layer."},{"tag":"D-15","summary":"Both schemes follow Phase 2's **D-14** preview-first pattern, reusing `src/web/components/reference-preview.tsx`.","detail":"Per Phase 2's **D-15**, the type-specific detail is the decision's own statement or the warning's finding title, **plus which phase defines it** — which is exactly the disambiguation D-14 above requires when the global fallback fires. One interaction across every ID scheme; no new pattern on the document surface.","reversibility":null}]}],"openQs":[],"discretion":["Exact filename and internal organisation of the design-language doc (D-07), and the exact spelling of the reserved view-local prefix (D-09).","Whether the vocabulary test parses the doc or is generated from it, and how `className` literals are extracted (AST vs. source scan) — provided D-08's failure condition and D-10's scope hold.","The precise registry shape for manifests, and whether manifests are data or small functions — provided it mirrors `HANDLERS` and is keyed on the granularised `kind`.","Disclosure mechanics, overlay placement, focus handling and transitions for D-12, provided pointer and keyboard users get equivalent access.","`IntersectionObserver` thresholds and root margins for D-13.","The exact granular `kind` key names produced by splitting `frontmatter-only` and `unknown`.","Wave decomposition inside the phase — ROADMAP.md's four-wave suggestion is a sound ordering, not a mandate."],"specifics":[{"title":null,"body":"The phase goal's own framing is the acceptance feel: \"a discussion log reads as questions and choices, a verification as what still needs a human, a plan as a plan\" — and every one of them reads as the same application as the dashboard."},{"title":null,"body":"DISCUSSION-LOG is the proof case and should go end to end early. Its anchor is the `| Option | Description | Selected |` table with `✓` (audited 12/12). The `**User's choice:**` prose line already has two spellings — treat it as tolerant enrichment, never the anchor."},{"title":null,"body":"VIEW-03 needs no handler work: `human_verification[]` is already an array of `{test, expected, why_human}` on the wire. It needs a view that promotes the field instead of burying it in a collapsed metadata disclosure."},{"title":null,"body":"The first type deliberately cannot be a quick task. Naming the design language (UI-04/UI-05) comes **before** multiplying surfaces against it, or each new view re-invents it slightly differently — the same drift already seen between `.page-stack` and `.artifact-page`, multiplied sixteen-fold."},{"title":null,"body":"Views should be verified against real long-form GSD artifacts in both themes, not toy markdown — wide tables, code blocks, Mermaid, and the sparse/dense/stripped fixtures."}],"deferred":[{"title":"Per-block provenance links","body":"giving each promoted block an \"in document\" affordance back to its source heading anchor. Rejected as D-05 in favour of keeping the view surface free of meta-chrome; worth revisiting if the reordering in D-04 ever proves disorienting in practice."},{"title":"Manifest-drift signalling","body":"a quiet \"matched N of M\" chip when a manifest promotes fields a file lacks. Rejected as D-06 for now; becomes interesting if GSD template churn starts silently hollowing out views."},{"title":"Outline nesting document headings under view sections","body":"two-level navigation on long artifacts. Rejected as D-11 for scope; the 18-entry cap would need rethinking first."},{"title":"Status-based re-ranking inside a promoted group","body":"(failing checks above passing, unselected options below the chosen one). Not taken in D-04, which stops at declared order."},{"title":null,"body":"Already tracked in `REQUIREMENTS.md § Deferred` and not re-opened here: READ-08 (deviation pairing), BACK-01 (backlinks panel), FIND-06 (faceted search — becomes practical *after* this phase's granular `kind`), NAV-08 (command palette), DASH-05, PLAT-01…04."}],"refs":[{"title":"Phase Scope and Locked Milestone Facts","items":["`.planning/ROADMAP.md` § \"Phase 5: Per-Type Document Views\" — goal, 11 mapped requirements, five success criteria, the \"Scope shape — read before planning\" strategy table, and the suggested wave structure. **Read § Scope shape before sizing anything.**","`.planning/REQUIREMENTS.md` — VIEW-01…06, READ-07, BACK-02, UI-04…06 are the complete Phase 5 set. **§ Implementation Context is the established-facts list a plan must build on rather than re-derive.** § Out of Scope names four exclusions, including rewriting the reference pages.","`.planning/PROJECT.md` — core value, read-only boundary, one-project-per-run constraint, resolved stack, and the Key Decisions table carrying v1.0's locked rules."]},{"title":"The Categorization Decision and Its Evidence","items":["`.planning/research/questions.md` — **the resolved categorization decision (2026-09-20)** and all five sub-question answers. No purpose taxonomy; extraction keys on where structure lives; `kind` goes granular; sidebar stays grouped by `location`; unrecognized types get a speculative structural read. This is the decision Phase 5 implements — do not re-litigate it.","`.planning/notes/artifact-structure-survey.md` — the 425-file empirical survey that disproved the purpose axis and established the three-strategy partition.","`.planning/notes/per-kind-artifact-rendering.md` — the three-axis diagnosis (parsing, design language, categorization). **Two claims were corrected 2026-09-20 and are marked as such in the file — read the correction blocks, not just the prose around them.**"]},{"title":"Prior Locked Decisions This Phase Must Honour","items":["`.planning/milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-CONTEXT.md` — D-09 (document-first canvas; **revised by D-01 above**), D-10 (unknown frontmatter fields stay visible), D-11 (PLAN pseudo-XML as semantic structure), D-13 (milestone-qualified routes; **costly to change**), D-14/D-15 (preview-first, type-aware preview content), D-16 (heading anchors never auto-rewrite the URL on scroll), D-17 (unresolved IDs render as plain text).","`.planning/milestones/v1.0-phases/01-read-layer-domain-model/01-CONTEXT.md` — the read-layer contracts the view registry consumes. Note its decision IDs are a **separate** `D-01…D-16` namespace from Phase 2's, which is the fact D-14 above turns on."]},{"title":"Code the Phase Builds On","items":["`src/planning-repo/handlers/index.ts` — the ordered `HANDLERS` registry the view registry mirrors. `GenericMarkdownHandler` must stay last (load-bearing comment at its declaration).","`src/planning-repo/handlers/markdown-sections.ts` — `splitSections` / `splitSubsections` / `parseMarkdownTable`, shipping and tested; the section-projection extractor composes these.","`src/planning-repo/handlers/frontmatter-only.ts` — stays a legitimate shared **parse** path. The granular-`kind` split is a presentation change, not a parser rewrite.","`src/rendering/markdown.ts` — `renderPlanRange`, the only existing per-kind branch (`input.kind === 'plan'`).","`src/rendering/frontmatter-views.ts` — `FRONTMATTER_PANEL_BUILDERS`, the closest existing analog to the manifest pattern.","`src/server/index.ts` and `src/web/pages/artifact-page.tsx` — `artifact.structured` is serialized by the server and declared in the client DTO but **never read**; the \"Document metadata\" disclosure is built from `frontmatter` instead. Wiring `structured` through is foundation work.","`src/web/pages/artifact-page.tsx` — `outlineHeadings` / `DocumentOutline`, plus `src/web/styles/globals.css` `.document-outline` and its media queries.","`src/planning-repo/mentions.ts` — `ID_PATTERNS` has `requirement`, `decision`, `plan`, `phase` and **no `warning` scheme**; `WR-01` currently matches `requirement`. The header comments explain the precedence rules and the ReDoS constraints any new pattern must satisfy.","`src/web/components/reference-preview.tsx` — the D-15 preview surface both schemes reuse."]},{"title":"Visual Reference","items":["`src/web/pages/dashboard-page.tsx`, `roadmap-page.tsx`, `traceability-page.tsx`, `search-page.tsx` — the four pages the design-language doc is derived from and which D-10's test must also pass. Reference, not work items."]}],"code":[{"title":"Reusable Assets","items":["`HANDLERS` (`src/planning-repo/handlers/index.ts:18`) — a working ordered registry keyed by kind on the read side, with no counterpart on the display side. The view registry is its mirror.","`FRONTMATTER_PANEL_BUILDERS` (`src/rendering/frontmatter-views.ts:54`) — an existing frozen-array-of-builders registry; the nearest shipped analog for how manifests should be shaped.","`splitSections` / `splitSubsections` / `parseMarkdownTable` (`src/planning-repo/handlers/markdown-sections.ts`) — already shipping and tested. Section projection composes these rather than writing new parsing.","`DocumentOutline` (`src/web/pages/artifact-page.tsx:66`) — exists and is already sticky (`globals.css:2821`). Filters to depth ≤ 3, caps at 18 entries, hides below 2. The gap is its data source (D-11), narrow-width behaviour (D-12) and position tracking (D-13) — not its existence.","`scanMentions` / `ID_PATTERNS` / `stripCodeForScanning` (`src/planning-repo/mentions.ts`) — BACK-02 adds a scheme to a working scanner rather than building one.","`reference-preview.tsx` — the preview surface D-15 reuses for both new schemes."]},{"title":"Established Patterns","items":["One-way dependency: `planning-fs` → `planning-repo` → zero-I/O `domain`. View and route code consume repository/domain output and must not import filesystem code or handlers.","Handlers' `match()` inspects only filename and location, never file content (DATA-02). The **speculative structural read** for unmanifested types is a *presentation-side* inference over already-parsed content — it must not push content sniffing back into handler matching.","Status-like values and artifact kinds are open, not closed enums. The granularised `kind` must keep an unconditional fallback for values that do not exist yet.","Dangling references are data (`resolved: null`), not warnings. D-06 and D-14 above are the same rule applied to manifests and to mention resolution.","`local-fs.ts` is the sole `src/` importer of `node:fs`, pinned by a test gate. Nothing in this phase touches that."]},{"title":"Integration Points","items":["Wire `artifact.structured` across the server→client boundary so views can read what handlers already extract (`src/server/index.ts` → `artifact-page.tsx`).","Add the view registry beside the existing rendering layer, dispatching on granularised `kind` with an unconditional fallback to the D-03 generic document.","Split `frontmatter-only` and `unknown` into real presentation kinds without changing which handler parses each type.","Add a `warning` scheme to `ID_PATTERNS` with precedence over `requirement` — the same separation problem `decision` already solves against `requirement`, and subject to the same ReDoS bounds.","Add the vocabulary test to the vitest suite, reading the design-language doc and scanning view/page `className` literals across both the new views and the four reference pages."]}]} };
+DOCS.sp01.meta = { phase: '01', covers: 'AUTH-01 … AUTH-06' };
+DOCS.lb05.meta = { phase: '05', covers: 'VIEW-01 … 03 · UI-04/05 · READ-07 · BACK-02' };
+const ICON_COPY = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
+const ICON_CHECK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+
+const state = { variant: 'd1', doc: 'sp01', theme: 'dark', width: 'full', mode: 'view', open: new Set(), sel: null };
+const $root = document.getElementById('root');
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function inl(s, links = true) {
+  const codes = [];
+  let x = esc(String(s ?? '').replace(/`([^`]+)`/g, (_, c) => `\u0000${codes.push(c) - 1}\u0000`));
+  x = x.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/(^|[^*\w])\*([^*\s][^*]*)\*/g, '$1<em>$2</em>')
+    .replace(/\b(D-\d{2}|OPEN-\d{2})\b/g, links ? '<button class="mention" data-goto="$1">$1</button>' : '<span class="mention">$1</span>');
+  return x.replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${esc(codes[+i])}</code>`);
+}
+const chip = (label, tone) => `<span class="status-chip"${tone ? ` data-tone="${tone}"` : ''}>${esc(label)}</span>`;
+const chipBtn = (label, tone, goto) => `<button class="status-chip" data-tone="${tone}" data-goto="${goto}">${esc(label)}</button>`;
+const fmtDate = iso => { const d = new Date(iso + 'T00:00:00'); return isNaN(d) ? iso : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); };
+const decisions = d => d.areas.flatMap(a => a.decisions);
+const revTone = r => /^(one-way|costly)/i.test(r) ? 'warning' : 'quiet';
+const revWord = r => (r.match(/^[\w-]+/) || [''])[0];
+const shortTitle = d => d.title.replace(/^Phase \d+:\s*/, '');
+const firstSentence = s => { const m = /^(.+?[.!?])(\s|$)/.exec(s); return m ? m[1] : s; };
+const blockedBy = (d, tag) => d.openQs.filter(o => o.blocks === tag);
+const hardToUndo = d => decisions(d).filter(x => x.reversibility && revTone(x.reversibility) === 'warning');
+
+/* Claude's discretion, tagged into areas: an item naming a D-tag attaches to that decision; the rest stay loose */
+function discretion(d) {
+  let lead = null, items = d.discretion;
+  if (d.discretion.length === 1) { const m = /^(.*?:)\s+(.+)$/.exec(d.discretion[0]); if (m) { lead = m[1]; items = m[2].replace(/\.$/, '').split(/,\s+(?:and\s+)?/); } }
+  const tags = new Set(decisions(d).map(x => x.tag));
+  const byTag = new Map(), loose = [];
+  items.forEach(it => { const t = (it.match(/\bD-\d{2}\b/) || [])[0]; if (t && tags.has(t)) { (byTag.get(t) || byTag.set(t, []).get(t)).push(it); } else loose.push(it); });
+  return { lead, byTag, loose, total: items.length };
+}
+
+/* ------------------------------ shared pieces ------------------------------ */
+const toggle = () => `<div class="view-toggle" role="group" aria-label="View or source"><button data-mode="view" aria-pressed="${state.mode === 'view'}">View</button><button data-mode="source" aria-pressed="${state.mode === 'source'}">Source</button></div>`;
+function intro(d) {
+  return `<header class="page-intro"><div class="eyebrow">Context · Phase ${esc(d.meta.phase)} · Gathered ${esc(fmtDate(d.gathered))}</div>
+    <h1>${esc(shortTitle(d))}</h1>
+    <div class="meta-row">${chip(d.status, 'complete')}<span class="source-note">Covers ${esc(d.meta.covers)}</span><span class="sep"></span>
+      <button class="icon-btn" data-copy="${esc(d.file)}" title="Copy path · ${esc(d.file)}" aria-label="Copy path">${ICON_COPY}</button>${toggle()}</div></header>`;
+}
+function outItem(s) {
+  const m = /^(.*?)\s*→\s*(.+)$/.exec(s);
+  return m ? `<li><span>${inl(m[1])}</span><span class="dest">→ ${esc(m[2])}</span></li>` : `<li><span>${inl(s)}</span><span></span></li>`;
+}
+function outCard(d, cls = 'panel accent') {
+  const b = d.boundary;
+  return `<aside class="${cls}"><div class="out-head"><div class="eyebrow" style="margin:0">Not in this phase</div><span class="drift">${b.drift ? 'do not drift into these' : ''}</span></div>
+    <ul class="scope-out">${b.outList.map(outItem).join('')}</ul>
+    ${b.outFromProse ? `<p class="source-note scope-origin">Read from the boundary’s “This phase does not…” sentence.</p>` : ''}</aside>`;
+}
+function inCard(d) {
+  const b = d.boundary, { rest } = statement(d);
+  const body = b.inList.length ? `<ul class="in-list">${b.inList.map(x => `<li><span>${inl(x)}</span></li>`).join('')}</ul>` : `<p class="source-note" style="font-size:var(--fs-4);margin-top:var(--space-3)">${inl(rest)}</p>`;
+  return `<aside class="panel accent"><div class="eyebrow" style="margin:0">In this phase</div>${body}</aside>`;
+}
+function outStrip(d) {
+  const b = d.boundary;
+  return `<section class="out-strip"><div class="out-label">Not in this phase${b.drift ? ' <span>· do not drift into these</span>' : ''}</div>
+    <ul>${b.outList.map(s => { const m = /^(.*?)\s*→\s*(.+)$/.exec(s); return `<li>${inl(m ? m[1] : s)}${m ? ` <span class="dest">→ ${esc(m[2])}</span>` : ''}</li>`; }).join('')}</ul></section>`;
+}
+function stats(d) {
+  const s = [`<button class="stat" data-goto="${decisions(d)[0].tag}"><b>${decisions(d).length}</b> decisions locked</button>`];
+  if (d.openQs.length) s.push(`<button class="stat warn" data-goto="${d.openQs[0].tag}"><b>${d.openQs.length}</b> open for the researcher</button>`);
+  const h = hardToUndo(d); if (h.length) s.push(`<button class="stat" data-goto="${h[0].tag}"><b>${h.length}</b> hard to undo</button>`);
+  const dis = discretion(d); if (dis.total) s.push(`<span class="stat"><b>${dis.total}</b> left to Claude</span>`);
+  return `<div class="stat-row">${s.join('')}</div>`;
+}
+function statement(d) {
+  const b = d.boundary, all = b.summary.join(' ');
+  const first = firstSentence(all), rest = all.slice(first.length).trim();
+  return { first, rest };
+}
+function inScope(d, style = 'list') {
+  const b = d.boundary;
+  if (!b.inList.length) return '';
+  return `<div style="margin-top:var(--space-6)"><div class="eyebrow" style="margin:0">In this phase</div>${style === 'list'
+    ? `<ul class="in-list">${b.inList.map(x => `<li><span>${inl(x)}</span></li>`).join('')}</ul>`
+    : `<div class="in-inline">${b.inList.map(x => `<span>${inl(x)}</span>`).join('')}</div>`}</div>`;
+}
+function openPanel(d) {
+  if (!d.openQs.length) return '';
+  return `<section class="panel amber" id="open"><div class="eyebrow">Open for the researcher</div>
+    <p class="source-note">Flagged, not decided — the researcher resolves these; the planner must not assume an answer.</p>
+    <ul class="attn-list">${d.openQs.map(o => { const open = state.open.has(o.tag);
+      return `<li id="x-${o.tag}"><span class="tag">${esc(o.tag)}</span><button class="dec-q sum" style="text-align:left;border:0;background:none;padding:0" data-open="${o.tag}"><span class="q">${inl(o.summary, false)}</span></button>
+        <div class="chips">${o.blocks ? chipBtn(`blocks ${o.blocks}`, 'warning', o.blocks) : chip('unattached', 'quiet')}</div>
+        ${open && o.detail ? `<p class="why fade">${inl(o.detail)}</p>` : ''}</li>`; }).join('')}</ul></section>`;
+}
+function decRow(d, x, dis, { compact = false } = {}) {
+  const open = state.open.has(x.tag);
+  const hasMore = !!(x.detail || x.reversibility);
+  const chips = [...blockedBy(d, x.tag).map(o => chipBtn(o.tag, 'warning', o.tag)), x.reversibility ? chip(revWord(x.reversibility), revTone(x.reversibility)) : ''].join('');
+  const notes = (dis.byTag.get(x.tag) || []).map(n => `<div class="claude-note"><b>Claude decides</b><span>${inl(n)}</span></div>`).join('');
+  return `<div class="dec" id="x-${x.tag}"><span class="tag">${esc(x.tag)}</span>
+    ${hasMore ? `<button class="sum" data-open="${x.tag}" aria-expanded="${open}">${inl(x.summary, false)}</button>` : `<span class="sum">${inl(x.summary)}</span>`}
+    <div class="chips">${chips}</div>
+    ${open ? `<div class="body fade">${x.detail ? `<p>${inl(x.detail)}</p>` : ''}${x.reversibility ? `<p class="rev"><b>Reversibility</b>${inl(x.reversibility)}</p>` : ''}</div>` : ''}
+    ${notes}</div>`;
+}
+function idea(it, id) { const open = state.open.has(id);
+  return `<li class="idea${open ? ' open' : ''}${it.title ? '' : ' untitled'}" data-open="${id}">${it.title ? `<div class="it">${inl(it.title)}</div>` : ''}<div class="ib">${inl(it.body)}</div></li>`; }
+function ideas(d) {
+  return `<div class="cards">
+    <section class="panel"><div class="section-heading" style="padding-bottom:var(--space-3)"><h2 style="font-size:var(--fs-6)">Specific ideas</h2><span class="count-box">${d.specifics.length}</span></div><ul class="idea-list">${d.specifics.map((it, i) => idea(it, 'sp' + i)).join('')}</ul></section>
+    <section class="panel"><div class="section-heading" style="padding-bottom:var(--space-3)"><h2 style="font-size:var(--fs-6)">Deferred</h2><span class="count-box">${d.deferred.length}</span></div><ul class="idea-list">${d.deferred.map((it, i) => idea(it, 'df' + i)).join('')}</ul></section></div>`;
+}
+function looseDiscretion(d, title = 'Also left to Claude') {
+  const dis = discretion(d); if (!dis.loose.length) return '';
+  return `<section class="panel"><div class="eyebrow">${esc(title)}</div>${dis.lead ? `<p class="source-note">${inl(dis.lead)}</p>` : ''}<ul class="leftover">${dis.loose.map(x => `<li>${inl(x)}</li>`).join('')}</ul></section>`;
+}
+function moreIn(d) {
+  const grp = g => `<details${state.open.has('bm-' + g.title) ? ' open' : ''} data-det="bm-${esc(g.title)}"><summary>${esc(g.title)}<span class="c">${g.items.length}</span></summary><ul>${g.items.map(x => `<li>${inl(x)}</li>`).join('')}</ul></details>`;
+  const nr = d.refs.reduce((n, g) => n + g.items.length, 0), nc = d.code.reduce((n, g) => n + g.items.length, 0);
+  return `<details class="more-in"${state.open.has('more') ? ' open' : ''} data-det="more"><summary><h2>More in this document</h2><span class="chips">${chip(nr + ' references', 'quiet')}${chip(nc + ' code insights', 'quiet')}</span></summary>
+    <div class="back-groups"><div class="back-group"><h3>Canonical references</h3>${d.refs.map(grp).join('')}</div><div class="back-group"><h3>Existing code insights</h3>${d.code.map(grp).join('')}</div></div></details>`;
+}
+const areaChips = (d, a) => [chip(`${a.decisions.length} locked`, 'quiet'), a.decisions.some(x => blockedBy(d, x.tag).length) ? chip(`${a.decisions.filter(x => blockedBy(d, x.tag).length).length} open`, 'warning') : ''].join('');
+
+/* ------------------------------ D1: brief + register ------------------------------ */
+function renderD1(d) {
+  const { first, rest } = statement(d), dis = discretion(d);
+  const hero = `<section class="hero"><div><div class="eyebrow">Phase boundary</div><p class="statement">${inl(first)}</p>${rest && d.boundary.inList.length ? `<p class="statement-rest">${inl(rest)}</p>` : ''}${stats(d)}</div>${inCard(d)}</section>${outStrip(d)}`;
+  const register = `<section><div class="section-heading"><h2>Decisions</h2><span class="count-box">${decisions(d).length}</span></div>
+    <div class="register">${d.areas.map(a => `<div class="reg-area"><header><h3>${esc(a.title)}</h3><div class="chips">${areaChips(d, a)}</div></header>
+      <div>${a.decisions.map(x => decRow(d, x, dis)).join('')}</div></div>`).join('')}</div></section>`;
+  return `${intro(d)}${hero}${openPanel(d)}${register}${looseDiscretion(d)}${ideas(d)}${moreIn(d)}`;
+}
+
+/* ------------------------------ D2: register + reader ------------------------------ */
+function renderD2(d) {
+  const { first, rest } = statement(d), dis = discretion(d);
+  const all = decisions(d);
+  const sel = all.find(x => x.tag === state.sel) || all[0];
+  const idx = all.indexOf(sel);
+  const hero = `<section><div class="eyebrow">Phase boundary</div><p class="statement" style="font-family:var(--font-heading);font-size:var(--fs-fluid-3);line-height:var(--lh-snug);max-width:52ch">${inl(first)}</p>${inScope(d, 'inline')}${stats(d)}</section>${outStrip(d)}`;
+  const list = d.areas.map(a => `<h3>${esc(a.title)}</h3>${a.decisions.map(x => {
+    const mark = blockedBy(d, x.tag).length ? '<span class="mark amber-text">OPEN</span>' : (dis.byTag.has(x.tag) ? '<span class="mark" style="color:var(--primary)">claude</span>' : (x.reversibility && revTone(x.reversibility) === 'warning' ? `<span class="mark muted">${esc(revWord(x.reversibility))}</span>` : '<span></span>'));
+    return `<button data-sel="${x.tag}" aria-current="${x === sel}"><span class="tag">${esc(x.tag)}</span><span class="t">${esc(x.summary.replace(/\*+|`/g, ''))}</span>${mark}</button>`; }).join('')}`).join('');
+  const area = d.areas.find(a => a.decisions.includes(sel));
+  const reader = `<article class="reader fade" id="x-${sel.tag}"><div class="eyebrow" style="margin:0">${esc(area.title)}</div>
+    <div class="rtag">${esc(sel.tag)} ${sel.reversibility ? chip(revWord(sel.reversibility), revTone(sel.reversibility)) : ''}</div>
+    <h3>${inl(sel.summary)}</h3>${sel.detail ? `<p class="rbody">${inl(sel.detail)}</p>` : ''}
+    ${sel.reversibility ? `<p class="source-note" style="font-size:var(--fs-3)"><b style="font-family:var(--font-mono);font-weight:400">REVERSIBILITY</b> ${inl(sel.reversibility)}</p>` : ''}
+    ${blockedBy(d, sel.tag).map(o => `<div class="inset"><div class="eyebrow amber-text">Open for the researcher · ${esc(o.tag)}</div><div>${inl(o.summary)}</div>${o.detail ? `<p class="muted">${inl(o.detail)}</p>` : ''}</div>`).join('')}
+    ${(dis.byTag.get(sel.tag) || []).map(n => `<div class="inset claude"><div class="eyebrow">Claude decides</div><div>${inl(n)}</div></div>`).join('')}
+    <div class="rnav"><button class="text-link" data-sel="${all[Math.max(0, idx - 1)].tag}" ${idx === 0 ? 'disabled style="opacity:.3"' : ''}>← ${esc(all[Math.max(0, idx - 1)].tag)}</button><span class="kbd">${idx + 1} / ${all.length} · ↑ ↓ keys</span><button class="text-link" data-sel="${all[Math.min(all.length - 1, idx + 1)].tag}" ${idx === all.length - 1 ? 'disabled style="opacity:.3"' : ''}>${esc(all[Math.min(all.length - 1, idx + 1)].tag)} →</button></div></article>`;
+  const loose = d.openQs.filter(o => !o.blocks);
+  const looseOpen = loose.length ? `<section class="panel amber"><div class="eyebrow">Also open for the researcher</div><ul class="attn-list">${loose.map(o => `<li id="x-${o.tag}"><span class="tag">${esc(o.tag)}</span><span class="q">${inl(o.summary)}</span><span></span>${o.detail ? `<p class="why">${inl(o.detail)}</p>` : ''}</li>`).join('')}</ul></section>` : '';
+  return `${intro(d)}${hero}<section><div class="section-heading"><h2>Decisions</h2><span class="count-box">${all.length}</span></div><div class="split" style="margin-top:var(--space-5)"><nav class="split-list">${list}</nav>${reader}</div></section>
+    ${looseOpen}${looseDiscretion(d)}${ideas(d)}${moreIn(d)}`;
+}
+
+/* ------------------------------ D3: area cards ------------------------------ */
+function renderD3(d) {
+  const { first, rest } = statement(d), dis = discretion(d);
+  const boundary = `<section class="cards three"><div class="panel accent"><div class="eyebrow">Phase boundary</div><p class="statement" style="font-family:var(--font-heading);font-size:var(--fs-fluid-3);line-height:var(--lh-snug)">${inl(first)}</p>${rest ? `<p class="statement-rest" style="margin-top:var(--space-3);color:var(--muted-foreground);font-size:var(--fs-4)">${inl(rest)}</p>` : ''}${inScope(d, 'inline')}</div>${outCard(d, 'panel quiet-out')}</section>`;
+  const cards = `<section><div class="section-heading"><h2>Decisions by area</h2>${stats(d).replace('stat-row', 'stat-row" style="margin:0')}</div>
+    <div class="cards" style="margin-top:var(--space-5)">${d.openQs.length ? openPanel(d).replace('<section class="panel amber" id="open">', '<section class="panel amber" id="open" style="grid-column:1 / -1">') : ''}
+    ${d.areas.map(a => { const notes = a.decisions.flatMap(x => dis.byTag.get(x.tag) || []);
+      return `<section class="panel card"><div class="card-head"><h3>${esc(a.title)}</h3><div class="chips">${areaChips(d, a)}</div></div>
+        ${a.decisions.map(x => decRow(d, x, { byTag: new Map() })).join('')}
+        ${notes.length ? `<div class="card-foot"><div class="eyebrow" style="margin:0">Claude decides</div><ul>${notes.map(n => `<li>${inl(n)}</li>`).join('')}</ul></div>` : ''}</section>`; }).join('')}
+    ${dis.loose.length ? looseDiscretion(d, 'Claude also decides') : ''}</div></section>`;
+  return `${intro(d)}${boundary}${cards}${ideas(d)}${moreIn(d)}`;
+}
+
+/* ------------------------------ wiring ------------------------------ */
+const RENDER = { d1: renderD1, d2: renderD2, d3: renderD3 };
+function render() {
+  const d = DOCS[state.doc];
+  $root.innerHTML = state.mode === 'source'
+    ? `<div class="page fade">${intro(d)}<pre style="padding:var(--space-5);border:1px solid var(--border);white-space:pre-wrap;font-family:var(--font-mono);font-size:var(--fs-3);color:var(--muted-foreground)">(source markdown of ${esc(d.file)})</pre></div>`
+    : `<div class="page fade">${RENDER[state.variant](d)}</div>`;
+  document.documentElement.classList.toggle('dark', state.theme === 'dark');
+  const f = document.getElementById('frame');
+  f.style.maxWidth = state.width === 'full' ? 'none' : state.width + 'px';
+  f.classList.toggle('narrow-frame', state.width !== 'full');
+  document.querySelectorAll('.variant-tab').forEach(t => t.classList.toggle('active', t.dataset.variant === state.variant));
+  document.querySelectorAll('#sketch-tools button').forEach(b => b.classList.toggle('on', b.dataset.doc === state.doc || b.dataset.theme === state.theme || b.dataset.width === state.width));
+}
+function goto(tag) {
+  state.mode = 'view';
+  if (state.variant === 'd2' && /^D-/.test(tag)) state.sel = tag; else state.open.add(tag);
+  if (/^D-/.test(tag) && state.variant !== 'd2') state.open.add(tag);
+  render();
+  const el = document.getElementById('x-' + tag);
+  if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.classList.add('flash'); }
+}
+function toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 1400); }
+document.addEventListener('toggle', e => { const k = e.target.dataset && e.target.dataset.det; if (k) e.target.open ? state.open.add(k) : state.open.delete(k); }, true);
+document.addEventListener('keydown', e => {
+  if (state.variant !== 'd2' || !['ArrowDown', 'ArrowUp'].includes(e.key)) return;
+  const all = decisions(DOCS[state.doc]); const i = Math.max(0, all.findIndex(x => x.tag === state.sel));
+  const n = all[Math.min(all.length - 1, Math.max(0, i + (e.key === 'ArrowDown' ? 1 : -1)))]; state.sel = n.tag; e.preventDefault(); render();
+  document.querySelector(`[data-sel="${n.tag}"][aria-current="true"]`)?.scrollIntoView({ block: 'nearest' });
+});
+document.addEventListener('click', e => {
+  const t = e.target.closest('button, [data-open]');
+  if (!t) return;
+  if (t.dataset.goto) { e.stopPropagation(); goto(t.dataset.goto); return; }
+  if (t.dataset.copy) { navigator.clipboard?.writeText(t.dataset.copy).catch(() => {}); t.innerHTML = ICON_CHECK; setTimeout(() => { t.innerHTML = ICON_COPY; }, 1500); toast('Copied ' + t.dataset.copy); return; }
+  if (t.dataset.variant) { state.variant = t.dataset.variant; state.mode = 'view'; }
+  else if (t.dataset.doc) { state.doc = t.dataset.doc; state.open.clear(); state.sel = null; state.mode = 'view'; }
+  else if (t.dataset.theme) state.theme = t.dataset.theme;
+  else if (t.dataset.width) state.width = t.dataset.width;
+  else if (t.dataset.mode) state.mode = t.dataset.mode;
+  else if (t.dataset.sel) state.sel = t.dataset.sel;
+  else if (t.dataset.open) { const k = t.dataset.open; state.open.has(k) ? state.open.delete(k) : state.open.add(k); }
+  else return;
+  render();
+});
+render();
+</script>
+</body>
+</html>
