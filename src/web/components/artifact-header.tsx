@@ -1,5 +1,6 @@
 import { Fragment } from 'react';
 import { Link } from 'react-router';
+import { CopyPathButton } from './copy-path-button.tsx';
 
 export interface ArtifactCrumb {
   label: string;
@@ -13,8 +14,9 @@ export interface ArtifactCrumb {
  * so a later restyle of the page header is one edit, not two.
  *
  * `chip` sits between the eyebrow and the title (the Warning/Unreadable badge); `lead` is one
- * sentence of human-authored context under the title; `path` is the file it came from; `children`
- * render last inside the header (the plan page's section jump links).
+ * sentence of human-authored context under the title; `path` is the file it came from — offered as
+ * a copy-path icon button (quick-260923-jxp, JXP-09), not printed; `children` render last inside
+ * the header (the plan page's section jump links).
  *
  * `cover` (sketch-004 B3, quick-260922-3us) is optional: without it, the rendered markup is
  * byte-identical to before. With it, the same eyebrow/h1/lede/path fields render inside a
@@ -65,7 +67,7 @@ export function ArtifactHeader({
           {chip}
           <h1>{title}</h1>
           {lead ? <p className="artifact-lead">{lead}</p> : null}
-          {path ? <p className="artifact-path">{path}</p> : null}
+          {path ? <CopyPathButton path={path} /> : null}
           {children}
         </header>
       </>
@@ -82,9 +84,9 @@ export function ArtifactHeader({
             <h1>{title}</h1>
             {lead ? <p className="artifact-lead">{lead}</p> : null}
             {cover.facts}
-            {path ? <p className="artifact-path">{path}</p> : null}
           </div>
           <div className="document-cover-controls">
+            {path ? <CopyPathButton path={path} /> : null}
             {chip}
             {children}
           </div>

@@ -23,7 +23,7 @@ is always to add the missing name to this document, never to edit the reference 
 | `artifact-lead` | The document-page equivalent of `.lede`, rendered by `ArtifactHeader`'s `lead` prop | globals.css:2744 |
 | `artifact-heading` | The document-page header block (`ArtifactHeader`'s title row) | globals.css:2167, 2725 |
 | `artifact-breadcrumbs` | The document-page breadcrumb nav | globals.css:2154, 2716 |
-| `artifact-path` | The document-page file-path caption | globals.css:2174, 2739 |
+| `artifact-path` | The file-path value inside the warning technical details (`dd`) — no longer the header caption; the header offers the path as a copy button (`artifact-path-copy`) instead (quick-260923-jxp) | globals.css:2174, 2739 |
 | `artifact-page` | The `<main>` wrapper for every document page (`artifact-page.tsx`, `plan-pair-page.tsx`) | globals.css:2148 |
 | `section-heading` | Flex row heading pattern | globals.css:1281 |
 | `compact` | Modifier on `.section-heading`: adds a bordered icon well + bottom rule | globals.css:1289 |
@@ -99,14 +99,32 @@ is always to add the missing name to this document, never to edit the reference 
 | `document-item-detail-label` | The optional label on a `.document-item-detail-row` | globals.css — sketch-004 B3 layout (quick-260922-3us) |
 | `document-also` | The grid of secondary panels inside the Also chapter | globals.css — sketch-004 B3 layout (quick-260922-3us) |
 | `document-also-panel` | One secondary panel inside `.document-also` | globals.css — sketch-004 B3 layout (quick-260922-3us) |
+| `document-answer` | A discussion question's chosen/settled/custom answer card | globals.css — discussion-log review fixes (quick-260923-jxp) |
+| `document-answer-option` | The answer card's number+title line | globals.css — discussion-log review fixes (quick-260923-jxp) |
+| `document-answer-words` | The answer card's quoted "Your words" line | globals.css — discussion-log review fixes (quick-260923-jxp) |
+| `document-option-number` | An option's squared numeral badge — shared by the answer card and the numbered options list | globals.css — discussion-log review fixes (quick-260923-jxp) |
+| `document-option-title` | An option's title text | globals.css — discussion-log review fixes (quick-260923-jxp) |
+| `document-option-desc` | An option's description text | globals.css — discussion-log review fixes (quick-260923-jxp) |
+| `document-option-list` | The numbered "other options" disclosure list | globals.css — discussion-log review fixes (quick-260923-jxp) |
+| `document-option` | One row inside `.document-option-list` | globals.css — discussion-log review fixes (quick-260923-jxp) |
+| `document-item-note-toggle` | A question item's quiet note-reveal button, separate from the options disclosure | globals.css — discussion-log review fixes (quick-260923-jxp) |
+| `document-item-note` | A question item's revealed note text | globals.css — discussion-log review fixes (quick-260923-jxp) |
+| `document-item-note-mark` | The small inline marker on a note segment that started "Accepted gap:" | globals.css — discussion-log review fixes (quick-260923-jxp) |
+| `document-ghost` | A declined-area "Not discussed" row, placed after the real chapters — inert, no button/chevron/body | globals.css — discussion-log review fixes (quick-260923-jxp) |
+| `document-ghost-name` | A ghost row's declined-area name | globals.css — discussion-log review fixes (quick-260923-jxp) |
+| `document-endnotes` | The discussion-log's always-open back-matter sheet, replacing the folded Also chapter | globals.css — discussion-log review fixes (quick-260923-jxp) |
+| `document-endnotes-title` | The endnotes sheet's own heading (reads `also.title`, "Endnotes") | globals.css — discussion-log review fixes (quick-260923-jxp) |
+| `document-endnote` | One subsection inside the endnotes sheet (Claude's Discretion, Open Questions, Deferred Ideas) | globals.css — discussion-log review fixes (quick-260923-jxp) |
+| `document-endnote-title` | An endnote subsection's small-caps heading | globals.css — discussion-log review fixes (quick-260923-jxp) |
+| `artifact-path-copy` | ArtifactHeader's copy-path icon button, replacing the printed file-path caption on every artifact page | globals.css — discussion-log review fixes (quick-260923-jxp) |
 
 ## Tones
 
 | Tone | Meaning | Used for |
 |------|---------|----------|
-| `active` | In progress / currently selected — accent-tinted | A chosen discussion-log option, the current phase while in progress, an active outline entry, a sketch-004 B3 item's "Chosen"/"Claude chose" state chip |
+| `active` | In progress / currently selected — accent-tinted | A chosen discussion-log option, the current phase while in progress, an active outline entry, a sketch-004 B3 item's "Chosen"/"Claude chose" state chip, and (quick-260923-jxp) a discussion item's "Custom answer" state chip |
 | `complete` | Finished / matched — accent-tinted (shares styling with `active`) | A completed phase or plan, an exact traceability match, a sketch-004 B3 document's "N of N decided"/"Passed" cover status and a fully-verified item's state chip |
-| `quiet` | Neutral coverage gap — muted-foreground, never alarming | An unrecognized/unmanifested type, a non-exact traceability match, a phase not yet started, every sketch-004 B3 roll-up chip and Also-chapter panel chip |
+| `quiet` | Neutral coverage gap — muted-foreground, never alarming | An unrecognized/unmanifested type, a non-exact traceability match, a phase not yet started, every sketch-004 B3 roll-up chip and Also-chapter panel chip, and (quick-260923-jxp) an unresolved discussion item's "Open" state chip, a chosen answer's qualifier chip, and a declined-area ghost row's "Not discussed" chip |
 | `destructive` | Genuine read/parse failure only | The "Unreadable" artifact-parse chip; never used for a merely-unrecognized type; never used by any sketch-004 B3 document-content chip (state/rollup/pill), which stay within `active`/`complete`/`quiet`/`in-flight`/`missing` |
 | `warning` | Partial read/parse degradation only | The "Warning" artifact-parse chip; never used by any sketch-004 B3 document-content chip, same rule as `destructive` above |
 | `in-flight` | A phase or item currently being worked | Traceability covering-phase signal, a sketch-004 B3 document's "Awaiting checkpoint"/"Gaps found" cover status |
@@ -168,6 +186,14 @@ element is actually written, regardless of class name:
   is the pre-existing `.eyebrow` rule reused verbatim, not a new accent use.
 - **Squared corners.** `border-radius` is unset (0) everywhere except 3 existing call sites of
   `--radius-sm`. Treat radius as the exception, never the default, for any new element.
+- **The discussion log ends on an Endnotes sheet.** (quick-260923-jxp, JXP-07) An opt-in
+  `alsoStyle: 'endnotes'` on `DocumentLayoutSpec` replaces the folded "Also in this document"
+  chapter with an always-open `.document-endnotes` back-matter sheet — small-caps subsections,
+  hanging bullets, quieter than a chapter fold. PLAN and VERIFICATION keep the default `'fold'`
+  style unchanged.
+- **`data-ghost="true"`.** (quick-260923-jxp, JXP-02) A declined-area row in the chapter index
+  (`.document-chapter-index li[data-ghost="true"]`) carries this attribute so it can be styled and
+  tested as non-interactive — no `<button>`, no jump target.
 - **Light + dark parity.** Every new rule is checked against both `:root` and `.dark` — both
   palettes are fully declared in `globals.css`.
 - **`EMPTY_STATE_MESSAGE` reused verbatim.** The shared string `'Nothing here yet.'` is the only
@@ -177,6 +203,8 @@ element is actually written, regardless of class name:
   rather than forking a bespoke header per kind. The sketch-004 B3 cover sheet (quick-260922-3us)
   is this same component's optional `cover` prop — a `.document-cover` wrapper around the identical
   eyebrow/h1/lede/path fields plus the headline/glance/chapter-index cells — never a second header.
+  The path is offered as a copy-path icon button (`.artifact-path-copy`, quick-260923-jxp), not
+  printed — see `artifact-path-copy` above.
 
 ## Surface-scoped registered names
 
