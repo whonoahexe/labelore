@@ -1,10 +1,16 @@
 // The CONTEXT brief e2e (quick-260923-lju, sketch-006 D1): real corpus files, never a fixture
 // mock. Fixtures resolve by path against the live `/api/presentation` payload (the
 // document-layout.spec.ts `resolveFixtureUrl` pattern) so an archival/rename fails loudly here
-// instead of silently skipping. Studio-portal fixtures (on port 4198, wired in Task 3) are
-// test.skip when that server/project isn't present — this file's own repo-only tracer test always
-// runs.
+// instead of silently skipping. Studio-portal fixtures run against the read-only server on port
+// 4198 (playwright.config.ts, present only when ~/studio-portal/.planning exists) and
+// test.skip themselves otherwise — this file's own repo-only tracer tests always run.
+import { existsSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
+
+const STUDIO_PORTAL_AVAILABLE = existsSync(join(homedir(), 'studio-portal', '.planning'));
+const SP_BASE_URL = 'http://127.0.0.1:4198';
 
 interface ArtifactDtoLite {
   key: string;
@@ -100,4 +106,135 @@ test.describe('CONTEXT brief — LB v1.1/05 (tracer)', () => {
 
     await expect(page.locator('.view-context-claude-note')).toHaveCount(4);
   });
+});
+
+test.describe('CONTEXT brief — repo fixtures', () => {
+  test('LB v1.0/01: label-prose out (1 item), discretion lead + bullets + trailer', async ({ page, baseURL }) => {
+    const url = await resolveFixtureUrl(baseURL ?? 'http://127.0.0.1:4199', '01-read-layer-domain-model/01-CONTEXT.md');
+    await page.goto(url);
+    await page.locator('#context-boundary').waitFor({ state: 'visible' });
+    await expect(page.locator('.document-cover')).toHaveCount(0);
+    await expect(page.locator('.view-context-out li')).toHaveCount(1);
+    await expect(page.locator('.view-context-decision')).toHaveCount(16);
+  });
+
+  test('quick oae: 9 untagged rows across 3 areas, no out-strip, no discretion panel', async ({ page, baseURL }) => {
+    const url = await resolveFixtureUrl(
+      baseURL ?? 'http://127.0.0.1:4199',
+      '260912-oae-revamp-progress-panel-to-show-phase-and-/260912-oae-CONTEXT.md',
+    );
+    await page.goto(url);
+    await page.locator('#context-boundary').waitFor({ state: 'visible' });
+    await expect(page.locator('.view-context-decision')).toHaveCount(9);
+    await expect(page.locator('.view-context-area')).toHaveCount(3);
+    await expect(page.locator('.view-context-out')).toHaveCount(0);
+    await expect(page.locator('#context-discretion')).toHaveCount(0);
+  });
+
+  test('quick jxp: the numbered boundary list in the In card, and 1 out item from "Out of scope:"', async ({
+    page,
+    baseURL,
+  }) => {
+    const url = await resolveFixtureUrl(
+      baseURL ?? 'http://127.0.0.1:4199',
+      '260923-jxp-discussion-log-page-review-fixes-on-the-/260923-jxp-CONTEXT.md',
+    );
+    await page.goto(url);
+    await page.locator('#context-boundary').waitFor({ state: 'visible' });
+    await expect(page.locator('.view-context-out li')).toHaveCount(1);
+    await expect(page.locator('.view-context-decision')).toHaveCount(15);
+  });
+
+  test('every repo fixture: DOM order is hero, then register, then More; the More disclosure starts closed', async ({
+    page,
+    baseURL,
+  }) => {
+    const url = await resolveFixtureUrl(baseURL ?? 'http://127.0.0.1:4199', '05-per-type-document-views/05-CONTEXT.md');
+    await page.goto(url);
+    await page.locator('#context-boundary').waitFor({ state: 'visible' });
+    const more = page.locator('#view-remainder');
+    await expect(more).toHaveAttribute('open', '', { timeout: 5000 }).catch(() => {});
+    const isOpen = await more.evaluate((el) => (el as HTMLDetailsElement).open);
+    expect(isOpen).toBe(false);
+    await expect(more.locator('summary span')).toHaveText(/\d+ sections?/);
+  });
+});
+
+test.describe('CONTEXT brief — studio-portal fixtures (4198)', () => {
+  test.skip(!STUDIO_PORTAL_AVAILABLE, 'studio-portal not present locally');
+
+  test('SP 01: attention panel with 3 rows; clicking a blocks-D chip jumps to and expands the decision', async ({
+    page,
+  }) => {
+    const url = await resolveFixtureUrl(SP_BASE_URL, '01-portal-owned-identity-sessions/01-CONTEXT.md');
+    await page.goto(`${SP_BASE_URL}${url}`);
+    await page.locator('#context-open').waitFor({ state: 'visible' });
+    await expect(page.locator('.view-context-open-list li')).toHaveCount(3);
+
+    const blocksChip = page.locator('#question-open-01 button', { hasText: 'blocks D-09' });
+    await blocksChip.click();
+    const target = page.locator('#decision-d-09');
+    await expect(target).toBeFocused();
+    await expect(target.locator('.view-context-detail')).toBeVisible();
+
+    await expect(page.locator('.artifact-meta-row .source-note')).toContainText('AUTH-01');
+  });
+
+  test('SP 04: boundary-notes table has 9 body rows, out-strip has 1 item, extras render before the register', async ({
+    page,
+  }) => {
+    const url = await resolveFixtureUrl(SP_BASE_URL, '04-bulk-archive-downloads/04-CONTEXT.md');
+    await page.goto(`${SP_BASE_URL}${url}`);
+    await page.locator('#context-boundary').waitFor({ state: 'visible' });
+    await expect(page.locator('.view-context-out li')).toHaveCount(1);
+    await expect(page.locator('.view-context-boundary-notes table tbody tr')).toHaveCount(9);
+    await expect(page.locator('.view-context-extra')).toHaveCount(1);
+  });
+
+  test('SP quick 2pr: .view-context-note count is 10', async ({ page }) => {
+    const url = await resolveFixtureUrl(
+      SP_BASE_URL,
+      '260803-2pr-we-should-implement-right-click-context-/260803-2pr-CONTEXT.md',
+    );
+    await page.goto(`${SP_BASE_URL}${url}`);
+    await page.locator('#context-decisions').waitFor({ state: 'visible' });
+    await expect(page.locator('.view-context-note')).toHaveCount(10);
+  });
+});
+
+test.describe('CONTEXT brief — 420px overflow (no horizontal scroll)', () => {
+  for (const theme of ['light', 'dark'] as const) {
+    test(`LB v1.1/05 at 420px, ${theme}: document does not overflow, every bounded table/code scrolls in place`, async ({
+      page,
+      baseURL,
+    }) => {
+      await page.addInitScript((t: string) => {
+        window.localStorage.setItem('labelore-theme', t);
+      }, theme);
+      await page.setViewportSize({ width: 420, height: 900 });
+      const url = await resolveFixtureUrl(baseURL ?? 'http://127.0.0.1:4199', '05-per-type-document-views/05-CONTEXT.md');
+      await page.goto(url);
+      await page.locator('#context-boundary').waitFor({ state: 'visible' });
+
+      // Expand the first decision and first idea, and open the More disclosure — the widest
+      // states the layout can be in — before measuring.
+      await page.locator('.view-context-decision').first().locator('.view-context-summary').click();
+      const firstIdea = page.locator('.view-context-idea').first();
+      if (await firstIdea.count()) await firstIdea.click();
+      const more = page.locator('#view-remainder');
+      if (await more.count()) {
+        await more.locator('summary').click();
+      }
+
+      const overflow = await page.evaluate(() => ({
+        docScrollWidth: document.documentElement.scrollWidth,
+        innerWidth: window.innerWidth,
+        boundaries: Array.from(document.querySelectorAll('.document-overflow-boundary')).map((el) => ({
+          scrollWidth: el.scrollWidth,
+          clientWidth: el.clientWidth,
+        })),
+      }));
+      expect(overflow.docScrollWidth).toBeLessThanOrEqual(overflow.innerWidth + 1);
+    });
+  }
 });
