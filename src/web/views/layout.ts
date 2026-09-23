@@ -22,6 +22,34 @@ export interface ItemDetail {
   label: string;
   rows?: { label?: string; text: string }[];
   html?: string;
+  /** quick-260923-jxp (JXP-03/JXP-04): source-table options remaining after the chosen one, in
+   * source order, each keeping its real 1-based table position. */
+  options?: ItemOption[];
+}
+
+/** quick-260923-jxp (JXP-03/JXP-04): one option from a discussion question's source table — a
+ * numbered, titled entry, with its description when the source table carries one. */
+export interface ItemOption {
+  number: number | null;
+  title: string;
+  description: string | null;
+}
+
+/** quick-260923-jxp (JXP-03/JXP-05): the answer card an item's state line can carry — the chosen
+ * (or settled) option, a qualifier chip when the chosen cell carried one, and the user's own words
+ * when they add something the option title doesn't already say. */
+export interface ItemAnswer {
+  option: ItemOption | null;
+  qualifier: string | null;
+  words: string | null;
+}
+
+/** quick-260923-jxp (JXP-06): a question's `**Notes:**` paragraph, behind a quiet toggle. Each
+ * segment is plain text; a segment whose sentence started `"Accepted gap:"` carries that as its
+ * `mark`, with the prefix removed from `text`. */
+export interface ItemNote {
+  label: string;
+  segments: { text: string; mark: string | null }[];
 }
 
 export interface ChapterItem {
@@ -33,6 +61,12 @@ export interface ChapterItem {
   answer?: string | null;
   chips?: Tally[];
   detail?: ItemDetail | null;
+  /** quick-260923-jxp (JXP-03/JXP-04/JXP-05): the chosen/settled/custom answer card. Absent (or
+   * null) leaves the pre-existing `.document-item-state`/`.document-item-answer` markup untouched
+   * — plan and verification items never set this. */
+  answerCard?: ItemAnswer | null;
+  /** quick-260923-jxp (JXP-06): the quiet note toggle. Absent (or null) renders no toggle at all. */
+  note?: ItemNote | null;
 }
 
 export interface SelectedChapter {
@@ -96,6 +130,26 @@ export interface ComposedAlsoPanel {
   eyebrow: string;
   html: string;
   count: number | null;
+  /** quick-260923-jxp (JXP-07): the panel's own group heading (e.g. "Claude's Discretion") —
+   * `ALSO_CHAPTER_TITLE`-style panels never needed this; the endnotes sheet's subsection heading
+   * does. */
+  heading: string;
+  /** quick-260923-jxp (JXP-07): `stripLeadingHeading(html)` — the endnotes sheet renders its own
+   * `<h3>` from `heading`, so the panel body must not repeat it. */
+  bodyHtml: string;
+}
+
+/** quick-260923-jxp (JXP-02): a declined-area row — greyed, non-expandable, placed after the real
+ * chapters. `key` names the declined area (also its React key upstream); `title` is the display
+ * name; `label` is the quiet chip text ("Not discussed"). */
+export interface GhostChapter {
+  key: string;
+  title: string;
+  label: string;
+}
+
+export interface ComposedGhost extends GhostChapter {
+  id: string;
 }
 
 export interface ComposedAlsoChapter {
@@ -104,6 +158,11 @@ export interface ComposedAlsoChapter {
   panels: ComposedAlsoPanel[];
   remainder: DocumentSectionGroup[];
   rollup: { text: string; tone: ChipTone }[];
+  /** quick-260923-jxp (JXP-07): 'fold' (default, plan/verification's folded "Also in this
+   * document" chapter, unchanged) or 'endnotes' (the discussion-log's always-open back-matter
+   * sheet). */
+  style: 'fold' | 'endnotes';
+  title: string;
 }
 
 export interface DocumentLayoutSpec {
@@ -111,17 +170,28 @@ export interface DocumentLayoutSpec {
   also?: readonly AlsoSpec[];
   cover: (
     input: ViewInput,
-    parts: { chapters: ComposedChapter[]; also: ComposedAlsoPanel[] },
+    parts: { chapters: ComposedChapter[]; also: ComposedAlsoPanel[]; ghosts: ComposedGhost[] },
   ) => CoverData;
+  /** quick-260923-jxp (JXP-02): declined-area ghost rows, derived from `input`. Null/`[]` (the
+   * default when omitted) composes zero ghosts; ghosts alone never make a layout — a manifest with
+   * zero real chapters still composes to `null` even when `ghosts` would be non-empty. */
+  ghosts?: (input: ViewInput) => GhostChapter[] | null;
+  /** quick-260923-jxp (JXP-07): 'fold' (default) or 'endnotes'. Only the discussion-log layout
+   * opts into 'endnotes' — plan and verification are untouched. */
+  alsoStyle?: 'fold' | 'endnotes';
 }
 
 export interface ComposedDocumentLayout {
   cover: CoverData;
   chapters: ComposedChapter[];
   also: ComposedAlsoChapter | null;
+  /** quick-260923-jxp (JXP-02): composed declined-area ghost rows — `[]` when the spec has none. */
+  ghosts: ComposedGhost[];
 }
 
 export const ALSO_CHAPTER_TITLE = 'Also in this document';
+/** quick-260923-jxp (JXP-07): the discussion-log's endnotes-style Also chapter title. */
+export const ENDNOTES_TITLE = 'Endnotes';
 
 function pad(n: number): string {
   return String(n).padStart(2, '0');
@@ -337,7 +407,15 @@ export function composeDocumentLayout(
       const panelId = index === 0 ? `also-${alsoSpec.id}` : `also-${alsoSpec.id}-${index + 1}`;
       const rawCount = countListItems(group.html);
       const count = rawCount > 0 ? rawCount : null;
-      panels.push({ id: panelId, specId: alsoSpec.id, eyebrow: alsoSpec.eyebrow, html: group.html, count });
+      panels.push({
+        id: panelId,
+        specId: alsoSpec.id,
+        eyebrow: alsoSpec.eyebrow,
+        html: group.html,
+        count,
+        heading: group.heading ?? alsoSpec.eyebrow,
+        bodyHtml: stripLeadingHeading(group.html),
+      });
       panelRollupSeeds.push({ count, heading: group.heading ?? alsoSpec.eyebrow });
     });
   }
@@ -356,16 +434,24 @@ export function composeDocumentLayout(
         tone: 'quiet',
       });
     }
+    const alsoStyle = spec.alsoStyle ?? 'fold';
     also = {
       id: 'chapter-also',
       number: pad(chapters.length + 1),
       panels,
       remainder,
       rollup: alsoRollup,
+      style: alsoStyle,
+      title: alsoStyle === 'endnotes' ? ENDNOTES_TITLE : ALSO_CHAPTER_TITLE,
     };
   }
 
-  const cover = spec.cover(input, { chapters, also: panels });
+  // quick-260923-jxp (JXP-02): ghosts never make a layout on their own — computed only once at
+  // least one real chapter exists (the `chapters.length === 0` guard above already returned).
+  const ghostSpecs = spec.ghosts?.(input) ?? [];
+  const ghosts: ComposedGhost[] = ghostSpecs.map((ghost) => ({ ...ghost, id: `ghost-${slug(ghost.key)}` }));
 
-  return { cover, chapters, also };
+  const cover = spec.cover(input, { chapters, also: panels, ghosts });
+
+  return { cover, chapters, also, ghosts };
 }
