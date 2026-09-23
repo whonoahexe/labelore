@@ -222,6 +222,13 @@ const CORNER_SELECTORS = [
   '.document-fold',
   '.document-chapter-bar',
   '.document-also-panel',
+  // quick-260923-jxp: strengthens F-06 over the answer card, ghost row, endnotes sheet and the
+  // shared copy-path button.
+  '.document-answer',
+  '.document-option-number',
+  '.document-ghost',
+  '.document-endnotes',
+  '.artifact-path-copy',
 ];
 
 /** F-06: squared corners — every element matching one of the shared "boxy chrome" selectors,
