@@ -23,6 +23,11 @@ export interface ArtifactCrumb {
  * `.document-cover` sheet — `cover.facts` is the one-line facts row slotted after the path, and
  * `cover.cells` (the headline/glance/chapter-index row) renders after the sheet's own header row.
  * ArtifactHeader stays the only document-page header either way (docs/design-language.md).
+ *
+ * `meta` (quick-260923-lju, sketch-006 D1) is an optional plain-variant-only prop: when present,
+ * one `div.artifact-meta-row` renders after the h1/lead, holding `meta` then the copy-path button
+ * then `children` — replacing the separate copy button and children the plain variant otherwise
+ * renders directly in `header`. Absent, the plain-variant markup stays byte-identical to before.
  */
 export function ArtifactHeader({
   crumbs,
@@ -33,6 +38,7 @@ export function ArtifactHeader({
   chip,
   children,
   cover,
+  meta,
 }: {
   crumbs: ArtifactCrumb[];
   eyebrow: string;
@@ -42,6 +48,7 @@ export function ArtifactHeader({
   chip?: React.ReactNode;
   children?: React.ReactNode;
   cover?: { facts?: React.ReactNode; cells: React.ReactNode };
+  meta?: React.ReactNode;
 }): React.JSX.Element {
   const breadcrumbs = (
     <nav className="artifact-breadcrumbs" aria-label="Breadcrumb">
@@ -67,8 +74,18 @@ export function ArtifactHeader({
           {chip}
           <h1>{title}</h1>
           {lead ? <p className="artifact-lead">{lead}</p> : null}
-          {path ? <CopyPathButton path={path} /> : null}
-          {children}
+          {meta ? (
+            <div className="artifact-meta-row">
+              {meta}
+              {path ? <CopyPathButton path={path} /> : null}
+              {children}
+            </div>
+          ) : (
+            <>
+              {path ? <CopyPathButton path={path} /> : null}
+              {children}
+            </>
+          )}
         </header>
       </>
     );

@@ -110,6 +110,13 @@
   --chrome-veil: color-mix(in oklch, var(--background) 90%, transparent);
   --destructive-tint: color-mix(in oklch, var(--destructive) 8%, transparent);
   --destructive-border: color-mix(in oklch, var(--destructive) 55%, var(--border));
+  /* quick-260923-lju (sketch-006 D1): amber, flagged-for-someone-else-to-resolve — never an error
+     (docs/design-language.md § Tones). Used by the CONTEXT brief's open-question chips/panel rule,
+     the "open" stat, a costly/one-way reversibility chip and an area's open chip. Declared per
+     theme (light here, dark below) since a single recipe cannot stay legible on both grounds;
+     test/web/caution-contrast.test.ts pins both at >= 4.5:1 against --background and --card. */
+  --caution: oklch(0.52 0.12 70);
+  --caution-border: color-mix(in oklch, var(--caution) 55%, var(--border));
   --primary-tint: color-mix(in oklch, var(--primary) 9%, transparent);
   /* quick-260918-qkd Task 2: the five-bucket bar/chip tone vocabulary (A1-A4). --in-flight-fill
      and --missing-fill stay named recipes because the matching status chips (below) also read
@@ -165,6 +172,9 @@
   /* Darkens further from the already-dark background, so the scrim still reads as a distinct
      layer rather than disappearing into it. */
   --overlay-scrim: color-mix(in oklch, var(--background) 72%, transparent);
+  /* quick-260923-lju: dark counterpart of --caution above — brighter, so it still clears 4.5:1
+     against the dark ground; test/web/caution-contrast.test.ts pins the exact ratio. */
+  --caution: oklch(0.78 0.14 75);
   color-scheme: dark;
 }
 
@@ -5052,4 +5062,533 @@ pre {
 
 .copy-field-button {
   flex: none;
+}
+
+/* ==========================================================================
+   quick-260923-lju (sketch-006 D1): the CONTEXT brief — .status-chip[data-tone='caution'],
+   .artifact-meta-row, and every .view-context-* rule. Additive only. Tokens throughout, no
+   radius, --fw-medium/--fw-semibold only. Mirrors the sketch's .hero/.statement/.in-list/
+   .out-strip/.reg-area/.dec/.attn-list/.idea/.leftover/.back-groups, translated onto this
+   codebase's shared vocabulary (position-hero/immediate-work/attention-panel/preview-panel).
+   ========================================================================== */
+
+.status-chip[data-tone='caution'] {
+  border-color: var(--caution-border);
+  color: var(--caution);
+}
+
+.artifact-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.artifact-meta-row .artifact-path-copy {
+  margin-left: auto;
+}
+
+/* Boundary hero (P-2). Overrides position-hero's align-items so the left column's stats sit
+   below the statement rather than being baseline-aligned with the In card, and removes the
+   bottom border/padding so the out-strip below joins it directly. */
+.view-context-hero {
+  align-items: start;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.view-context-hero-left {
+  min-width: 0;
+}
+
+.view-context-statement {
+  max-width: 40ch;
+  overflow-wrap: anywhere;
+  font-family: var(--font-heading);
+  font-size: var(--fs-fluid-3);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-snug);
+}
+
+.view-context-rest {
+  margin-top: var(--space-4);
+  max-width: 62ch;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+}
+
+.view-context-in-list {
+  display: grid;
+  gap: var(--space-1-5);
+  margin-top: var(--space-3);
+  padding: 0;
+  list-style: none;
+}
+
+.view-context-in-list li {
+  display: grid;
+  grid-template-columns: 1.1rem minmax(0, 1fr);
+  gap: var(--space-2);
+  overflow-wrap: anywhere;
+  font-size: var(--fs-4);
+}
+
+.view-context-in-list li::before {
+  content: '\2713';
+  color: var(--primary);
+  font-family: var(--font-mono);
+  font-size: var(--fs-3);
+}
+
+.view-context-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+
+.view-context-stat {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  padding: var(--space-1-5) var(--space-3);
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-context-stat:hover {
+  background: var(--state-hover);
+}
+
+.view-context-stat strong {
+  font-size: var(--fs-5);
+  font-weight: var(--fw-medium);
+  color: var(--foreground);
+}
+
+.view-context-stat-caution {
+  border-color: var(--caution-border);
+}
+
+.view-context-stat-caution strong {
+  color: var(--caution);
+}
+
+/* Out strip (P-3): a quiet, dashed rule under the hero. */
+.view-context-out {
+  padding: var(--space-3) 0;
+  border-top: 1px dashed var(--border);
+  border-bottom: 1px dashed var(--border);
+  color: var(--muted-foreground);
+}
+
+.view-context-out-label {
+  margin-bottom: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-context-out ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-context-out li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  padding-bottom: var(--space-2);
+  overflow-wrap: anywhere;
+  font-size: var(--fs-4);
+  border-bottom: 1px dashed var(--border);
+}
+
+.view-context-out li:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.view-context-dest {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Boundary notes (Locked-upstream tables, ### amendments) — quiet blocks between the out-strip
+   and the open panel/register. */
+.view-context-boundary-notes {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.view-context-boundary-notes h3 {
+  margin-bottom: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+}
+
+/* Open questions (P-4): amber attention panel. */
+.view-context-open {
+  border-top: 3px solid var(--caution);
+}
+
+.view-context-open > .eyebrow {
+  color: var(--caution);
+}
+
+.view-context-open-list {
+  display: grid;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-context-open-list li {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: baseline;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border);
+  scroll-margin-top: var(--space-22);
+}
+
+.view-context-open-list li:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.view-context-tag {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-context-open-list .view-context-tag {
+  color: var(--caution);
+}
+
+.view-context-question {
+  overflow-wrap: anywhere;
+  border: 0;
+  background: none;
+  padding: 0;
+  text-align: left;
+  font-size: var(--fs-4);
+}
+
+.view-context-why {
+  grid-column: 2 / -1;
+  overflow-wrap: anywhere;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+}
+
+@media (max-width: 62rem) {
+  .view-context-open-list li {
+    grid-template-columns: 4rem minmax(0, 1fr);
+  }
+  .view-context-open-list li > .view-context-chips {
+    grid-column: 2;
+  }
+}
+
+/* Unrecognised sections, rendered before the register in document order. */
+.view-context-extra {
+  min-width: 0;
+}
+
+/* Decision register (P-5, P-6). */
+.view-context-register {
+  display: grid;
+}
+
+.view-context-area {
+  display: grid;
+  grid-template-columns: 14rem minmax(0, 1fr);
+  gap: var(--space-6);
+  padding: var(--space-6) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.view-context-area:last-child {
+  border-bottom: 0;
+}
+
+.view-context-area-head {
+  position: sticky;
+  top: var(--space-22);
+  align-self: start;
+}
+
+.view-context-area-head h3 {
+  font-family: var(--font-mono);
+  font-size: var(--fs-5);
+  font-weight: var(--fw-medium);
+}
+
+.view-context-area-head .view-context-chips {
+  margin-top: var(--space-2);
+}
+
+.view-context-area-body {
+  min-width: 0;
+}
+
+@media (max-width: 62rem) {
+  .view-context-area {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+  .view-context-area-head {
+    position: static;
+  }
+}
+
+.view-context-note {
+  overflow-wrap: anywhere;
+  padding: var(--space-2-5) 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+}
+
+.view-context-decision {
+  display: grid;
+  grid-template-columns: 3.75rem minmax(0, 1fr) auto;
+  gap: var(--space-1) var(--space-3);
+  align-items: baseline;
+  padding: var(--space-2-5) 0;
+  scroll-margin-top: var(--space-22);
+}
+
+.view-context-decision + .view-context-decision {
+  border-top: 1px dashed var(--border);
+}
+
+.view-context-summary {
+  overflow-wrap: anywhere;
+  border: 0;
+  background: none;
+  padding: 0;
+  text-align: left;
+  font-size: var(--fs-5);
+  line-height: var(--lh-snug);
+}
+
+button.view-context-summary:hover {
+  color: var(--primary);
+}
+
+.view-context-detail {
+  grid-column: 2 / -1;
+  display: grid;
+  gap: var(--space-2-5);
+  max-width: 75ch;
+  padding-top: var(--space-1);
+  overflow-wrap: anywhere;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+}
+
+.view-context-reversibility {
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--border);
+  font-size: var(--fs-3);
+}
+
+.view-context-reversibility b {
+  margin-right: var(--space-1-5);
+  font-family: var(--font-mono);
+  font-weight: var(--fw-medium);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-context-claude-note {
+  grid-column: 2 / -1;
+  display: flex;
+  gap: var(--space-1-5);
+  align-items: baseline;
+  overflow-wrap: anywhere;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.view-context-claude-label {
+  color: var(--primary);
+  font-family: var(--font-mono);
+  font-weight: var(--fw-medium);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+@media (max-width: 62rem) {
+  .view-context-decision {
+    grid-template-columns: 3.25rem minmax(0, 1fr);
+  }
+  .view-context-decision > .view-context-chips {
+    grid-column: 2;
+  }
+}
+
+/* Also left to Claude (P-6). */
+.view-context-leftover {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding: 0;
+  list-style: none;
+}
+
+.view-context-leftover li {
+  overflow-wrap: anywhere;
+  padding-left: var(--space-3);
+  /* Plain --border, not a primary tint — the 10% accent reservation
+     (docs/design-language.md) does not extend to this hanging rule. */
+  border-left: 2px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+}
+
+/* Ideas (P-7). */
+.view-context-ideas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5);
+}
+
+@media (max-width: 62rem) {
+  .view-context-ideas {
+    grid-template-columns: 1fr;
+  }
+}
+
+.view-context-idea-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-context-idea {
+  display: block;
+  width: 100%;
+  padding: var(--space-3) 0;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.view-context-idea-list li:last-child .view-context-idea {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.view-context-idea-title {
+  display: block;
+  overflow-wrap: anywhere;
+  font-weight: var(--fw-medium);
+  font-size: var(--fs-4);
+  line-height: var(--lh-snug);
+}
+
+.view-context-idea-body {
+  display: -webkit-box;
+  margin-top: var(--space-1);
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.view-context-idea[data-open='true'] .view-context-idea-body {
+  display: block;
+  -webkit-line-clamp: unset;
+}
+
+.view-context-idea[data-untitled='true'] .view-context-idea-body {
+  margin-top: 0;
+  color: var(--foreground);
+}
+
+.view-context-idea:hover .view-context-idea-title {
+  color: var(--primary);
+}
+
+/* Back matter (P-8): the "More in this document" disclosure. */
+.view-context-more-groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+
+@media (max-width: 62rem) {
+  .view-context-more-groups {
+    grid-template-columns: 1fr;
+  }
+}
+
+.view-context-more-group h3 {
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+}
+
+/* prefers-reduced-motion is already respected globally — jumpTo's scroll/focus logic in
+   context-brief-components.tsx reads window.matchMedia itself, mirroring useChapterFolds. */
+
+.view-context-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+}
+
+.view-context-ref {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--primary);
+  font-family: var(--font-mono);
+  font-size: var(--fs-3);
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.view-context-ref:hover {
+  color: var(--foreground);
+}
+
+.view-context-block-text,
+.view-context-block-list {
+  overflow-wrap: anywhere;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+}
+
+.view-context-block-list {
+  padding-left: var(--space-5);
 }

@@ -50,6 +50,8 @@ import {
 } from '../views/layout-components.tsx';
 import { fetchPresentation } from '../components/app-shell.tsx';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
+import type { ComposedContextBrief } from '../views/context-brief.ts';
+import { ContextBriefView, ContextIntroMeta } from '../views/context-brief-components.tsx';
 export {
   handleDocumentReferenceActivation,
   restoreDocumentReferenceFocus,
@@ -71,6 +73,28 @@ function findPlanProgress(
         const summaryStatus =
           typeof plan.summary?.frontmatter?.status === 'string' ? plan.summary.frontmatter.status : null;
         return { complete: plan.complete, summaryStatus };
+      }
+    }
+  }
+  return null;
+}
+
+/** quick-260923-lju: the phase whose own identity matches the current artifact's `phaseIdentity`
+ * (already resolved server-side, the same signal the breadcrumbs use — no new `artifact.kind === '`
+ * branch), reduced to its `requirementIds`. `null` for a quick task (no `phaseIdentity`) or a phase
+ * with no requirements. */
+function findPhaseRequirementIds(
+  presentation: ProjectPresentation | undefined,
+  phaseIdentity: PhaseIdentity | null | undefined,
+): string[] | null {
+  if (!presentation || !phaseIdentity) return null;
+  for (const milestone of presentation.milestones) {
+    for (const phase of milestone.phases) {
+      if (
+        phase.identity.number === phaseIdentity.number &&
+        phase.identity.milestoneVersion === phaseIdentity.milestoneVersion
+      ) {
+        return phase.requirementIds.length > 0 ? phase.requirementIds : null;
       }
     }
   }
@@ -500,6 +524,10 @@ export function ArtifactPage(): React.JSX.Element {
     () => findPlanProgress(presentationQuery.data, query.data?.artifact.path),
     [presentationQuery.data, query.data],
   );
+  const phaseRequirementIds = useMemo(
+    () => findPhaseRequirementIds(presentationQuery.data, query.data?.phaseIdentity),
+    [presentationQuery.data, query.data],
+  );
   const viewInput = useMemo<ViewInput | null>(() => {
     if (!query.data) return null;
     return {
@@ -509,8 +537,9 @@ export function ArtifactPage(): React.JSX.Element {
       groups,
       planSegments,
       planProgress,
+      phaseRequirementIds,
     };
-  }, [query.data, groups, planSegments, planProgress]);
+  }, [query.data, groups, planSegments, planProgress, phaseRequirementIds]);
   // VIEW-06: a registered manifest, or fallback.ts's synthesized structural-read manifest — one
   // dispatch path either way (`resolveView` itself stays registry-only, for 05-06's completeness
   // test).
@@ -530,13 +559,19 @@ export function ArtifactPage(): React.JSX.Element {
     if (!manifest || !viewInput) return null;
     return composeDocumentLayout(manifest, viewInput);
   }, [manifest, viewInput]);
+  // quick-260923-lju (sketch-006 D1): the CONTEXT brief, when the resolved manifest opts into one
+  // — `null` for every kind that keeps the pre-existing promoted-block/B3 view.
+  const brief = useMemo<ComposedContextBrief | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.brief?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   const onRequireView = useCallback(() => setMode('view'), []);
   const folds = useChapterFolds(layout, { onRequireView });
   const renderHtml = useCallback(
     (html: string) => (shown ? <DocumentView document={{ ...shown, html, headings: [] }} /> : null),
     [shown],
   );
-  const viewAvailable = layout !== null || (composed !== null && composed.blocks.length > 0);
+  const viewAvailable = layout !== null || brief !== null || (composed !== null && composed.blocks.length > 0);
 
   if (query.isPending) {
     return (
@@ -596,10 +631,11 @@ export function ArtifactPage(): React.JSX.Element {
     <main className="artifact-page page-stack">
       <ArtifactHeader
         crumbs={crumbs}
-        eyebrow={humanizeKind(artifact.kind)}
-        title={artifact.title}
+        eyebrow={brief ? brief.intro.eyebrow : humanizeKind(artifact.kind)}
+        title={brief?.intro.title ?? artifact.title}
         path={artifact.path}
-        lead={manifest?.lead ?? null}
+        lead={brief ? null : (manifest?.lead ?? null)}
+        meta={brief ? <ContextIntroMeta intro={brief.intro} /> : undefined}
         cover={
           layout
             ? {
@@ -701,6 +737,12 @@ export function ArtifactPage(): React.JSX.Element {
           <article className="document-canvas" aria-label={`${artifact.title} document`}>
             <ChapterBar layout={layout} title={artifact.title} mode={mode} onModeChange={setMode} />
             <FoldedChapters layout={layout} folds={folds} renderHtml={renderHtml} />
+          </article>
+        </div>
+      ) : brief && mode === 'view' ? (
+        <div className="document-reader-layout" data-outline="false">
+          <article className="document-canvas" aria-label={`${artifact.title} document`}>
+            <ContextBriefView brief={brief} renderHtml={renderHtml} />
           </article>
         </div>
       ) : viewAvailable && mode === 'view' && composed && shown ? (
