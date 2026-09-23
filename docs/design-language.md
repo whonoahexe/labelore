@@ -207,6 +207,22 @@ element is actually written, regardless of class name:
   eyebrow/h1/lede/path fields plus the headline/glance/chapter-index cells — never a second header.
   The path is offered as a copy-path icon button (`.artifact-path-copy`, quick-260923-jxp), not
   printed — see `artifact-path-copy` above.
+- **CONTEXT uses the sketch-006 D1 brief layout, not B3.** (quick-260923-lju) The `context` kind's
+  manifest declares a `brief` hook (`composeContextBrief`) instead of opting into `layout`
+  (`DocumentLayoutSpec`) — a boundary hero, a quiet out-strip, an amber open-questions panel, a
+  continuous decision register, and single closed "More in this document" disclosure holding
+  canonical references and existing code insights. It never carries a cover sheet, a chapter
+  index, folded chapters, or an endnotes sheet — those are B3's shape (DISCUSSION-LOG, PLAN,
+  VERIFICATION), deliberately not CONTEXT's.
+- **The 10% accent reservation extends to the CONTEXT brief's In-this-phase card.** (quick-260923-lju)
+  `.immediate-work`'s existing top rule is reused verbatim for the brief's accent "In this phase"
+  card, plus the ✓ marks in its list and the "Claude decides" label under a tagged decision. No
+  other brief element (the leftover-discretion hanging rule, chips, stats) uses `--primary`.
+- **`caution` is amber and never an error.** (quick-260923-lju) The CONTEXT brief's open-question
+  chips, the "open for the researcher" stat, a costly/one-way/irreversible reversibility chip, and
+  an area's "N open" chip all use the `caution` tone — flagged for someone else to resolve, not a
+  parse failure. The `destructive`/`warning` tones stay reserved for the artifact-parse badge, per
+  the existing rule above.
 
 ## Surface-scoped registered names
 

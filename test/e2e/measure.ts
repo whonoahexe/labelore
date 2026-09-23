@@ -229,6 +229,15 @@ const CORNER_SELECTORS = [
   '.document-ghost',
   '.document-endnotes',
   '.artifact-path-copy',
+  // quick-260923-lju: strengthens F-06 over the CONTEXT brief's own radius-bearing chrome.
+  '.view-context-hero',
+  '.view-context-in',
+  '.view-context-open',
+  '.view-context-stat',
+  '.view-context-decision',
+  '.view-context-idea',
+  '.view-context-more',
+  '.artifact-meta-row',
 ];
 
 /** F-06: squared corners — every element matching one of the shared "boxy chrome" selectors,
