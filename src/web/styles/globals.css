@@ -3494,8 +3494,6 @@ pre {
 
 .document-canvas {
   min-width: 0;
-  max-width: 70rem;
-  padding: var(--space-fluid-8);
 }
 
 .artifact-document {
@@ -3833,10 +3831,6 @@ pre {
 }
 
 @media (max-width: 42rem) {
-  .document-canvas {
-    padding: var(--space-4);
-  }
-
   .document-outline ol {
     grid-template-columns: 1fr;
   }
