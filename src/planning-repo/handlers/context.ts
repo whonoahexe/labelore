@@ -6,6 +6,7 @@ import { tryParseFrontmatter } from '../frontmatter.ts';
 import { deriveTitle } from './title.ts';
 import { artifactTokenOf } from './artifact-token.ts';
 import { parseDecisionEntries } from './section-projection.ts';
+import { extractContextBrief } from './context-brief.ts';
 
 const CONTEXT_TAGS = ['domain', 'decisions', 'specifics', 'canonical_refs', 'code_context', 'deferred'] as const;
 
@@ -42,12 +43,22 @@ export const ContextHandler: ArtifactHandler = {
       sections[tag] = extractTag(fm.body, tag);
     }
 
+    // quick-260923-lju (sketch-006 D1): the CONTEXT brief projection, guarded by try/catch so a
+    // throw here never breaks `decisions`/`sections` below (T-lju-04, C-1) — a parse failure just
+    // omits `brief`, and the page falls back to the pre-existing promoted-block view.
+    let brief;
+    try {
+      brief = extractContextBrief(fm.body);
+    } catch {
+      brief = undefined;
+    }
+
     return {
       title,
       frontmatter: fm.data,
       body: stripContextTagLines(fm.body),
       warning: fm.warning,
-      structured: { decisions: parseDecisionEntries(sections.decisions), sections },
+      structured: { decisions: parseDecisionEntries(sections.decisions), sections, brief },
     };
   },
 };

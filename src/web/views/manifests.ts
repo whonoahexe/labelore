@@ -11,6 +11,7 @@ import { planLayout } from './layout-plan.ts';
 import { verificationLayout } from './layout-verification.ts';
 import type { ViewKind } from './kinds.ts';
 import type { PromotedBlock, ViewInput, ViewManifest } from './manifest.ts';
+import { composeContextBrief } from './context-brief.ts';
 
 /**
  * `select` and `consumes` run back to back, synchronously, within the same `composeView` call
@@ -254,6 +255,9 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
   context: {
     kind: 'context',
     lead: 'The decisions locked in before this phase was planned, and what was left open.',
+    // quick-260923-lju (sketch-006 D1): the CONTEXT brief layout — `promote` below stays as the
+    // fallback path for a server that predates `structured.brief` (C-1); `brief` is what the page
+    // actually renders when it composes.
     promote: [
       { type: 'section', heading: /^implementation decisions/i },
       { type: 'section', heading: /^(phase|task) boundary/i },
@@ -262,6 +266,7 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
       { type: 'section', heading: /^existing code insights/i },
       // Canonical References is intentionally not promoted here — it falls to the D-02 remainder.
     ],
+    brief: composeContextBrief,
   },
   'review-fix': {
     kind: 'review-fix',

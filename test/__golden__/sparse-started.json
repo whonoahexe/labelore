@@ -446,6 +446,74 @@
                     "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows exactly",
                     "code_context": "## Existing Code Insights\n\n### Reusable Assets\nNone — this is a synthetic fixture tree with no code.\n\n### Established Patterns\nNone yet — this is the first and only phase in this fixture.\n\n### Integration Points\nNone — the fixture has no downstream phase.",
                     "deferred": "## Deferred Ideas\n\nNone — discussion stayed within phase scope."
+                  },
+                  "brief": {
+                    "meta": {
+                      "title": "First Slice",
+                      "phase": "1",
+                      "quickId": null,
+                      "gathered": "2026-08-22",
+                      "status": "Ready for planning",
+                      "preambleExtra": false
+                    },
+                    "boundary": {
+                      "eyebrow": "Phase Boundary",
+                      "statement": "Deliver the first narrow vertical slice of the fixture project end to end.",
+                      "statementRest": "This phase produces no history beyond its own plan — it exists to prove the parser survives a project with structure (a roadmap, one phase) but nothing executed yet.",
+                      "inList": [],
+                      "outList": [],
+                      "outFromProse": false,
+                      "outSource": null,
+                      "drift": false,
+                      "blocks": [],
+                      "notes": [],
+                      "extras": []
+                    },
+                    "decisionsPreamble": [],
+                    "areas": [
+                      {
+                        "title": "Scope",
+                        "entries": [
+                          {
+                            "kind": "decision",
+                            "tag": "D-01",
+                            "summary": "The slice is a single tracer plan, not split into multiple plans — there is nothing to split yet at this fixture's stage.",
+                            "detail": "",
+                            "reversibility": null
+                          }
+                        ]
+                      }
+                    ],
+                    "openQuestions": [],
+                    "discretion": {
+                      "heading": "Claude's Discretion",
+                      "lead": [
+                        {
+                          "kind": "paragraph",
+                          "text": "Everything below the phase boundary is open — this is a fixture, not a real implementation target."
+                        }
+                      ],
+                      "items": [],
+                      "trailer": []
+                    },
+                    "specifics": [
+                      {
+                        "title": null
+                      }
+                    ],
+                    "deferred": [
+                      {
+                        "title": null
+                      }
+                    ],
+                    "recognizedHeadings": [
+                      "Phase Boundary",
+                      "Implementation Decisions",
+                      "Specific Ideas",
+                      "Canonical References",
+                      "Existing Code Insights",
+                      "Deferred Ideas"
+                    ]
                   }
                 }
               }
@@ -657,6 +725,74 @@
                 "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows exactly",
                 "code_context": "## Existing Code Insights\n\n### Reusable Assets\nNone — this is a synthetic fixture tree with no code.\n\n### Established Patterns\nNone yet — this is the first and only phase in this fixture.\n\n### Integration Points\nNone — the fixture has no downstream phase.",
                 "deferred": "## Deferred Ideas\n\nNone — discussion stayed within phase scope."
+              },
+              "brief": {
+                "meta": {
+                  "title": "First Slice",
+                  "phase": "1",
+                  "quickId": null,
+                  "gathered": "2026-08-22",
+                  "status": "Ready for planning",
+                  "preambleExtra": false
+                },
+                "boundary": {
+                  "eyebrow": "Phase Boundary",
+                  "statement": "Deliver the first narrow vertical slice of the fixture project end to end.",
+                  "statementRest": "This phase produces no history beyond its own plan — it exists to prove the parser survives a project with structure (a roadmap, one phase) but nothing executed yet.",
+                  "inList": [],
+                  "outList": [],
+                  "outFromProse": false,
+                  "outSource": null,
+                  "drift": false,
+                  "blocks": [],
+                  "notes": [],
+                  "extras": []
+                },
+                "decisionsPreamble": [],
+                "areas": [
+                  {
+                    "title": "Scope",
+                    "entries": [
+                      {
+                        "kind": "decision",
+                        "tag": "D-01",
+                        "summary": "The slice is a single tracer plan, not split into multiple plans — there is nothing to split yet at this fixture's stage.",
+                        "detail": "",
+                        "reversibility": null
+                      }
+                    ]
+                  }
+                ],
+                "openQuestions": [],
+                "discretion": {
+                  "heading": "Claude's Discretion",
+                  "lead": [
+                    {
+                      "kind": "paragraph",
+                      "text": "Everything below the phase boundary is open — this is a fixture, not a real implementation target."
+                    }
+                  ],
+                  "items": [],
+                  "trailer": []
+                },
+                "specifics": [
+                  {
+                    "title": null
+                  }
+                ],
+                "deferred": [
+                  {
+                    "title": null
+                  }
+                ],
+                "recognizedHeadings": [
+                  "Phase Boundary",
+                  "Implementation Decisions",
+                  "Specific Ideas",
+                  "Canonical References",
+                  "Existing Code Insights",
+                  "Deferred Ideas"
+                ]
               }
             }
           }
@@ -859,6 +995,74 @@
                       "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows exactly",
                       "code_context": "## Existing Code Insights\n\n### Reusable Assets\nNone — this is a synthetic fixture tree with no code.\n\n### Established Patterns\nNone yet — this is the first and only phase in this fixture.\n\n### Integration Points\nNone — the fixture has no downstream phase.",
                       "deferred": "## Deferred Ideas\n\nNone — discussion stayed within phase scope."
+                    },
+                    "brief": {
+                      "meta": {
+                        "title": "First Slice",
+                        "phase": "1",
+                        "quickId": null,
+                        "gathered": "2026-08-22",
+                        "status": "Ready for planning",
+                        "preambleExtra": false
+                      },
+                      "boundary": {
+                        "eyebrow": "Phase Boundary",
+                        "statement": "Deliver the first narrow vertical slice of the fixture project end to end.",
+                        "statementRest": "This phase produces no history beyond its own plan — it exists to prove the parser survives a project with structure (a roadmap, one phase) but nothing executed yet.",
+                        "inList": [],
+                        "outList": [],
+                        "outFromProse": false,
+                        "outSource": null,
+                        "drift": false,
+                        "blocks": [],
+                        "notes": [],
+                        "extras": []
+                      },
+                      "decisionsPreamble": [],
+                      "areas": [
+                        {
+                          "title": "Scope",
+                          "entries": [
+                            {
+                              "kind": "decision",
+                              "tag": "D-01",
+                              "summary": "The slice is a single tracer plan, not split into multiple plans — there is nothing to split yet at this fixture's stage.",
+                              "detail": "",
+                              "reversibility": null
+                            }
+                          ]
+                        }
+                      ],
+                      "openQuestions": [],
+                      "discretion": {
+                        "heading": "Claude's Discretion",
+                        "lead": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Everything below the phase boundary is open — this is a fixture, not a real implementation target."
+                          }
+                        ],
+                        "items": [],
+                        "trailer": []
+                      },
+                      "specifics": [
+                        {
+                          "title": null
+                        }
+                      ],
+                      "deferred": [
+                        {
+                          "title": null
+                        }
+                      ],
+                      "recognizedHeadings": [
+                        "Phase Boundary",
+                        "Implementation Decisions",
+                        "Specific Ideas",
+                        "Canonical References",
+                        "Existing Code Insights",
+                        "Deferred Ideas"
+                      ]
                     }
                   }
                 }
@@ -1061,6 +1265,74 @@
                       "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows exactly",
                       "code_context": "## Existing Code Insights\n\n### Reusable Assets\nNone — this is a synthetic fixture tree with no code.\n\n### Established Patterns\nNone yet — this is the first and only phase in this fixture.\n\n### Integration Points\nNone — the fixture has no downstream phase.",
                       "deferred": "## Deferred Ideas\n\nNone — discussion stayed within phase scope."
+                    },
+                    "brief": {
+                      "meta": {
+                        "title": "First Slice",
+                        "phase": "1",
+                        "quickId": null,
+                        "gathered": "2026-08-22",
+                        "status": "Ready for planning",
+                        "preambleExtra": false
+                      },
+                      "boundary": {
+                        "eyebrow": "Phase Boundary",
+                        "statement": "Deliver the first narrow vertical slice of the fixture project end to end.",
+                        "statementRest": "This phase produces no history beyond its own plan — it exists to prove the parser survives a project with structure (a roadmap, one phase) but nothing executed yet.",
+                        "inList": [],
+                        "outList": [],
+                        "outFromProse": false,
+                        "outSource": null,
+                        "drift": false,
+                        "blocks": [],
+                        "notes": [],
+                        "extras": []
+                      },
+                      "decisionsPreamble": [],
+                      "areas": [
+                        {
+                          "title": "Scope",
+                          "entries": [
+                            {
+                              "kind": "decision",
+                              "tag": "D-01",
+                              "summary": "The slice is a single tracer plan, not split into multiple plans — there is nothing to split yet at this fixture's stage.",
+                              "detail": "",
+                              "reversibility": null
+                            }
+                          ]
+                        }
+                      ],
+                      "openQuestions": [],
+                      "discretion": {
+                        "heading": "Claude's Discretion",
+                        "lead": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Everything below the phase boundary is open — this is a fixture, not a real implementation target."
+                          }
+                        ],
+                        "items": [],
+                        "trailer": []
+                      },
+                      "specifics": [
+                        {
+                          "title": null
+                        }
+                      ],
+                      "deferred": [
+                        {
+                          "title": null
+                        }
+                      ],
+                      "recognizedHeadings": [
+                        "Phase Boundary",
+                        "Implementation Decisions",
+                        "Specific Ideas",
+                        "Canonical References",
+                        "Existing Code Insights",
+                        "Deferred Ideas"
+                      ]
                     }
                   }
                 }
@@ -1280,6 +1552,74 @@
                       "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows exactly",
                       "code_context": "## Existing Code Insights\n\n### Reusable Assets\nNone — this is a synthetic fixture tree with no code.\n\n### Established Patterns\nNone yet — this is the first and only phase in this fixture.\n\n### Integration Points\nNone — the fixture has no downstream phase.",
                       "deferred": "## Deferred Ideas\n\nNone — discussion stayed within phase scope."
+                    },
+                    "brief": {
+                      "meta": {
+                        "title": "First Slice",
+                        "phase": "1",
+                        "quickId": null,
+                        "gathered": "2026-08-22",
+                        "status": "Ready for planning",
+                        "preambleExtra": false
+                      },
+                      "boundary": {
+                        "eyebrow": "Phase Boundary",
+                        "statement": "Deliver the first narrow vertical slice of the fixture project end to end.",
+                        "statementRest": "This phase produces no history beyond its own plan — it exists to prove the parser survives a project with structure (a roadmap, one phase) but nothing executed yet.",
+                        "inList": [],
+                        "outList": [],
+                        "outFromProse": false,
+                        "outSource": null,
+                        "drift": false,
+                        "blocks": [],
+                        "notes": [],
+                        "extras": []
+                      },
+                      "decisionsPreamble": [],
+                      "areas": [
+                        {
+                          "title": "Scope",
+                          "entries": [
+                            {
+                              "kind": "decision",
+                              "tag": "D-01",
+                              "summary": "The slice is a single tracer plan, not split into multiple plans — there is nothing to split yet at this fixture's stage.",
+                              "detail": "",
+                              "reversibility": null
+                            }
+                          ]
+                        }
+                      ],
+                      "openQuestions": [],
+                      "discretion": {
+                        "heading": "Claude's Discretion",
+                        "lead": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Everything below the phase boundary is open — this is a fixture, not a real implementation target."
+                          }
+                        ],
+                        "items": [],
+                        "trailer": []
+                      },
+                      "specifics": [
+                        {
+                          "title": null
+                        }
+                      ],
+                      "deferred": [
+                        {
+                          "title": null
+                        }
+                      ],
+                      "recognizedHeadings": [
+                        "Phase Boundary",
+                        "Implementation Decisions",
+                        "Specific Ideas",
+                        "Canonical References",
+                        "Existing Code Insights",
+                        "Deferred Ideas"
+                      ]
                     }
                   }
                 }

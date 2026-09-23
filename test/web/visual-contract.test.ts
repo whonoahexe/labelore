@@ -28,13 +28,17 @@ function ruleBlocks(css: string, selectorLine: string): string[] {
 }
 
 describe('revised visual contract (G-08, G-10, G-05, G-07, G-03, E9 long-text)', () => {
-  it('flattens the document canvas — no enclosing border, background fill, or shadow', async () => {
+  // quick-260923-lju: the full-width canvas commit 082a834 intentionally introduced. The prior
+  // positive `max-width: 70rem;` expectation is replaced with negative assertions — `.document-canvas`
+  // declares no max-width and no padding, while keeping its other structural properties.
+  it('flattens the document canvas — no enclosing border, background fill, or shadow, and no max-width', async () => {
     const css = await source('src/web/styles/globals.css');
     const [block] = ruleBlocks(css, '.document-canvas {');
     expect(block).toBeDefined();
     expect(block).not.toMatch(/^\s*(border|box-shadow|background)\s*:/m);
     expect(block).toContain('min-width: 0;');
-    expect(block).toContain('max-width: 70rem;');
+    expect(block).not.toMatch(/^\s*max-width\s*:/m);
+    expect(block).not.toMatch(/^\s*padding\s*:/m);
   });
 
   it('keeps one hairline on top-level plan sections', async () => {

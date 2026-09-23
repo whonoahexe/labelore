@@ -1172,6 +1172,74 @@
                     "canonical_refs": "## Canonical References\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows",
                     "code_context": "## Existing Code Insights\n\n### Reusable Assets\nNone — first phase of the project.\n\n### Established Patterns\nNone yet.\n\n### Integration Points\nNone.",
                     "deferred": "## Deferred Ideas\n\nNone."
+                  },
+                  "brief": {
+                    "meta": {
+                      "title": "Bootstrap",
+                      "phase": "1",
+                      "quickId": null,
+                      "gathered": "2025-10-21",
+                      "status": "Ready for planning",
+                      "preambleExtra": false
+                    },
+                    "boundary": {
+                      "eyebrow": "Phase Boundary",
+                      "statement": "Stand up the earliest scaffolding for the fixture project — the v1.0 \"Phase 1\", archived here under `milestones/v1.0-phases/01-bootstrap/`, distinct from v3.0's own \"Phase 1\" (`phases/01-identity-slice/`) despite sharing the number `01`.",
+                      "statementRest": "",
+                      "inList": [],
+                      "outList": [],
+                      "outFromProse": false,
+                      "outSource": null,
+                      "drift": false,
+                      "blocks": [],
+                      "notes": [],
+                      "extras": []
+                    },
+                    "decisionsPreamble": [],
+                    "areas": [
+                      {
+                        "title": "Scope",
+                        "entries": [
+                          {
+                            "kind": "decision",
+                            "tag": "D-01",
+                            "summary": "Keep the bootstrap phase to a single plan — nothing else exists yet to build on.",
+                            "detail": "",
+                            "reversibility": null
+                          }
+                        ]
+                      }
+                    ],
+                    "openQuestions": [],
+                    "discretion": {
+                      "heading": "Claude's Discretion",
+                      "lead": [
+                        {
+                          "kind": "paragraph",
+                          "text": "Everything else is open."
+                        }
+                      ],
+                      "items": [],
+                      "trailer": []
+                    },
+                    "specifics": [
+                      {
+                        "title": null
+                      }
+                    ],
+                    "deferred": [
+                      {
+                        "title": null
+                      }
+                    ],
+                    "recognizedHeadings": [
+                      "Phase Boundary",
+                      "Implementation Decisions",
+                      "Specific Ideas",
+                      "Canonical References",
+                      "Existing Code Insights",
+                      "Deferred Ideas"
+                    ]
                   }
                 }
               }
@@ -1509,6 +1577,74 @@
                     "canonical_refs": "## Canonical References\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows",
                     "code_context": "## Existing Code Insights\n\n### Reusable Assets\nNone yet at v2.0's start.\n\n### Established Patterns\nNone yet.\n\n### Integration Points\nNone yet.",
                     "deferred": "## Deferred Ideas\n\n- Retry logic on network failure — deferred to backlog."
+                  },
+                  "brief": {
+                    "meta": {
+                      "title": "Legacy Ingest",
+                      "phase": "1",
+                      "quickId": null,
+                      "gathered": "2026-01-06",
+                      "status": "Ready for planning",
+                      "preambleExtra": false
+                    },
+                    "boundary": {
+                      "eyebrow": "Phase Boundary",
+                      "statement": "Pull legacy records into the new store — the v2.0 \"Phase 1\", archived here under `milestones/v2.0-phases/01-legacy-ingest/`, distinct from both v1.0's \"Phase 1\" (bootstrap) and v3.0's \"Phase 1\" (identity slice) despite all three sharing the number `01`.",
+                      "statementRest": "",
+                      "inList": [],
+                      "outList": [],
+                      "outFromProse": false,
+                      "outSource": null,
+                      "drift": false,
+                      "blocks": [],
+                      "notes": [],
+                      "extras": []
+                    },
+                    "decisionsPreamble": [],
+                    "areas": [
+                      {
+                        "title": "Scope",
+                        "entries": [
+                          {
+                            "kind": "decision",
+                            "tag": "D-01",
+                            "summary": "Read-only ingest for v2.0 — no retry logic, deferred to backlog.",
+                            "detail": "",
+                            "reversibility": null
+                          }
+                        ]
+                      }
+                    ],
+                    "openQuestions": [],
+                    "discretion": {
+                      "heading": "Claude's Discretion",
+                      "lead": [
+                        {
+                          "kind": "paragraph",
+                          "text": "Everything else is open."
+                        }
+                      ],
+                      "items": [],
+                      "trailer": []
+                    },
+                    "specifics": [
+                      {
+                        "title": null
+                      }
+                    ],
+                    "deferred": [
+                      {
+                        "title": null
+                      }
+                    ],
+                    "recognizedHeadings": [
+                      "Phase Boundary",
+                      "Implementation Decisions",
+                      "Specific Ideas",
+                      "Canonical References",
+                      "Existing Code Insights",
+                      "Deferred Ideas"
+                    ]
                   }
                 }
               }
@@ -2911,6 +3047,86 @@
                     "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows\n- `~/.claude/gsd-core/bin/lib/artifacts.cjs` — `CANONICAL_EXACT`/`CANONICAL_PATTERNS`, the ground truth\n  for which root files are canonical",
                     "code_context": "## Existing Code Insights\n\n### Reusable Assets\nNone — this is a synthetic fixture tree with no code.\n\n### Established Patterns\n- Registry-dispatched artifact handlers, generic handler unconditional and last (from plan `01-01`).\n\n### Integration Points\nNone — the fixture has no downstream phase beyond Phase 2 within this same tree.",
                     "deferred": "## Deferred Ideas\n\n- Live reconciliation with a running session — tracked as v4.0 requirement IDENT-04."
+                  },
+                  "brief": {
+                    "meta": {
+                      "title": "Identity Slice",
+                      "phase": "1",
+                      "quickId": null,
+                      "gathered": "2026-06-05",
+                      "status": "Ready for planning",
+                      "preambleExtra": false
+                    },
+                    "boundary": {
+                      "eyebrow": "Phase Boundary",
+                      "statement": "Deliver the identity vertical slice and, along the way, exercise the full spread of artifact types this fixture project needs — including types studio-portal has never produced.",
+                      "statementRest": "",
+                      "inList": [],
+                      "outList": [],
+                      "outFromProse": false,
+                      "outSource": null,
+                      "drift": false,
+                      "blocks": [],
+                      "notes": [],
+                      "extras": []
+                    },
+                    "decisionsPreamble": [],
+                    "areas": [
+                      {
+                        "title": "Artifact spread",
+                        "entries": [
+                          {
+                            "kind": "decision",
+                            "tag": "D-01",
+                            "summary": "Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the generic-markdown fallback.",
+                            "detail": "",
+                            "reversibility": null
+                          }
+                        ]
+                      },
+                      {
+                        "title": "Corruption boundary",
+                        "entries": [
+                          {
+                            "kind": "decision",
+                            "tag": "D-02",
+                            "summary": "No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02 hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere.",
+                            "detail": "",
+                            "reversibility": null
+                          }
+                        ]
+                      }
+                    ],
+                    "openQuestions": [],
+                    "discretion": {
+                      "heading": "Claude's Discretion",
+                      "lead": [
+                        {
+                          "kind": "paragraph",
+                          "text": "Everything not named above is open — this is a fixture, not a real implementation target."
+                        }
+                      ],
+                      "items": [],
+                      "trailer": []
+                    },
+                    "specifics": [
+                      {
+                        "title": null
+                      }
+                    ],
+                    "deferred": [
+                      {
+                        "title": null
+                      }
+                    ],
+                    "recognizedHeadings": [
+                      "Phase Boundary",
+                      "Implementation Decisions",
+                      "Specific Ideas",
+                      "Canonical References",
+                      "Existing Code Insights",
+                      "Deferred Ideas"
+                    ]
                   }
                 }
               },
@@ -3234,6 +3450,74 @@
                     "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows",
                     "code_context": "## Existing Code Insights\n\n### Reusable Assets\n- `src/identity/slice.ts` (Phase 1) — the resolver the transport layer calls into.\n\n### Established Patterns\n- Never-throw resolver contract (Phase 1).\n\n### Integration Points\n- Transport requests call `resolveIdentity` from Phase 1's slice.",
                     "deferred": "## Deferred Ideas\n\nNone — discussion stayed within phase scope."
+                  },
+                  "brief": {
+                    "meta": {
+                      "title": "Transport Layer",
+                      "phase": "2",
+                      "quickId": null,
+                      "gathered": "2026-08-19",
+                      "status": "Ready for planning",
+                      "preambleExtra": false
+                    },
+                    "boundary": {
+                      "eyebrow": "Phase Boundary",
+                      "statement": "Wire the transport layer connecting the identity slice to the rest of the system.",
+                      "statementRest": "This phase is deliberately thinner than Phase 1 — no `01-RESEARCH.md`-equivalent, no security/UI-spec — to represent a mid-flight phase directory with only a subset of possible artifact types present.",
+                      "inList": [],
+                      "outList": [],
+                      "outFromProse": false,
+                      "outSource": null,
+                      "drift": false,
+                      "blocks": [],
+                      "notes": [],
+                      "extras": []
+                    },
+                    "decisionsPreamble": [],
+                    "areas": [
+                      {
+                        "title": "Scope",
+                        "entries": [
+                          {
+                            "kind": "decision",
+                            "tag": "D-01",
+                            "summary": "This phase carries only `02-01-PLAN.md` and `02-CONTEXT.md` — no summary yet, since the fixture must represent a phase that is planned but not yet executed at this point in the project's history.",
+                            "detail": "",
+                            "reversibility": null
+                          }
+                        ]
+                      }
+                    ],
+                    "openQuestions": [],
+                    "discretion": {
+                      "heading": "Claude's Discretion",
+                      "lead": [
+                        {
+                          "kind": "paragraph",
+                          "text": "Everything else is open — this is a fixture, not a real implementation target."
+                        }
+                      ],
+                      "items": [],
+                      "trailer": []
+                    },
+                    "specifics": [
+                      {
+                        "title": null
+                      }
+                    ],
+                    "deferred": [
+                      {
+                        "title": null
+                      }
+                    ],
+                    "recognizedHeadings": [
+                      "Phase Boundary",
+                      "Implementation Decisions",
+                      "Specific Ideas",
+                      "Canonical References",
+                      "Existing Code Insights",
+                      "Deferred Ideas"
+                    ]
                   }
                 }
               }
@@ -3562,6 +3846,74 @@
                 "canonical_refs": "## Canonical References\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows",
                 "code_context": "## Existing Code Insights\n\n### Reusable Assets\nNone — first phase of the project.\n\n### Established Patterns\nNone yet.\n\n### Integration Points\nNone.",
                 "deferred": "## Deferred Ideas\n\nNone."
+              },
+              "brief": {
+                "meta": {
+                  "title": "Bootstrap",
+                  "phase": "1",
+                  "quickId": null,
+                  "gathered": "2025-10-21",
+                  "status": "Ready for planning",
+                  "preambleExtra": false
+                },
+                "boundary": {
+                  "eyebrow": "Phase Boundary",
+                  "statement": "Stand up the earliest scaffolding for the fixture project — the v1.0 \"Phase 1\", archived here under `milestones/v1.0-phases/01-bootstrap/`, distinct from v3.0's own \"Phase 1\" (`phases/01-identity-slice/`) despite sharing the number `01`.",
+                  "statementRest": "",
+                  "inList": [],
+                  "outList": [],
+                  "outFromProse": false,
+                  "outSource": null,
+                  "drift": false,
+                  "blocks": [],
+                  "notes": [],
+                  "extras": []
+                },
+                "decisionsPreamble": [],
+                "areas": [
+                  {
+                    "title": "Scope",
+                    "entries": [
+                      {
+                        "kind": "decision",
+                        "tag": "D-01",
+                        "summary": "Keep the bootstrap phase to a single plan — nothing else exists yet to build on.",
+                        "detail": "",
+                        "reversibility": null
+                      }
+                    ]
+                  }
+                ],
+                "openQuestions": [],
+                "discretion": {
+                  "heading": "Claude's Discretion",
+                  "lead": [
+                    {
+                      "kind": "paragraph",
+                      "text": "Everything else is open."
+                    }
+                  ],
+                  "items": [],
+                  "trailer": []
+                },
+                "specifics": [
+                  {
+                    "title": null
+                  }
+                ],
+                "deferred": [
+                  {
+                    "title": null
+                  }
+                ],
+                "recognizedHeadings": [
+                  "Phase Boundary",
+                  "Implementation Decisions",
+                  "Specific Ideas",
+                  "Canonical References",
+                  "Existing Code Insights",
+                  "Deferred Ideas"
+                ]
               }
             }
           }
@@ -3892,6 +4244,74 @@
                 "canonical_refs": "## Canonical References\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows",
                 "code_context": "## Existing Code Insights\n\n### Reusable Assets\nNone yet at v2.0's start.\n\n### Established Patterns\nNone yet.\n\n### Integration Points\nNone yet.",
                 "deferred": "## Deferred Ideas\n\n- Retry logic on network failure — deferred to backlog."
+              },
+              "brief": {
+                "meta": {
+                  "title": "Legacy Ingest",
+                  "phase": "1",
+                  "quickId": null,
+                  "gathered": "2026-01-06",
+                  "status": "Ready for planning",
+                  "preambleExtra": false
+                },
+                "boundary": {
+                  "eyebrow": "Phase Boundary",
+                  "statement": "Pull legacy records into the new store — the v2.0 \"Phase 1\", archived here under `milestones/v2.0-phases/01-legacy-ingest/`, distinct from both v1.0's \"Phase 1\" (bootstrap) and v3.0's \"Phase 1\" (identity slice) despite all three sharing the number `01`.",
+                  "statementRest": "",
+                  "inList": [],
+                  "outList": [],
+                  "outFromProse": false,
+                  "outSource": null,
+                  "drift": false,
+                  "blocks": [],
+                  "notes": [],
+                  "extras": []
+                },
+                "decisionsPreamble": [],
+                "areas": [
+                  {
+                    "title": "Scope",
+                    "entries": [
+                      {
+                        "kind": "decision",
+                        "tag": "D-01",
+                        "summary": "Read-only ingest for v2.0 — no retry logic, deferred to backlog.",
+                        "detail": "",
+                        "reversibility": null
+                      }
+                    ]
+                  }
+                ],
+                "openQuestions": [],
+                "discretion": {
+                  "heading": "Claude's Discretion",
+                  "lead": [
+                    {
+                      "kind": "paragraph",
+                      "text": "Everything else is open."
+                    }
+                  ],
+                  "items": [],
+                  "trailer": []
+                },
+                "specifics": [
+                  {
+                    "title": null
+                  }
+                ],
+                "deferred": [
+                  {
+                    "title": null
+                  }
+                ],
+                "recognizedHeadings": [
+                  "Phase Boundary",
+                  "Implementation Decisions",
+                  "Specific Ideas",
+                  "Canonical References",
+                  "Existing Code Insights",
+                  "Deferred Ideas"
+                ]
               }
             }
           }
@@ -5287,6 +5707,86 @@
                 "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows\n- `~/.claude/gsd-core/bin/lib/artifacts.cjs` — `CANONICAL_EXACT`/`CANONICAL_PATTERNS`, the ground truth\n  for which root files are canonical",
                 "code_context": "## Existing Code Insights\n\n### Reusable Assets\nNone — this is a synthetic fixture tree with no code.\n\n### Established Patterns\n- Registry-dispatched artifact handlers, generic handler unconditional and last (from plan `01-01`).\n\n### Integration Points\nNone — the fixture has no downstream phase beyond Phase 2 within this same tree.",
                 "deferred": "## Deferred Ideas\n\n- Live reconciliation with a running session — tracked as v4.0 requirement IDENT-04."
+              },
+              "brief": {
+                "meta": {
+                  "title": "Identity Slice",
+                  "phase": "1",
+                  "quickId": null,
+                  "gathered": "2026-06-05",
+                  "status": "Ready for planning",
+                  "preambleExtra": false
+                },
+                "boundary": {
+                  "eyebrow": "Phase Boundary",
+                  "statement": "Deliver the identity vertical slice and, along the way, exercise the full spread of artifact types this fixture project needs — including types studio-portal has never produced.",
+                  "statementRest": "",
+                  "inList": [],
+                  "outList": [],
+                  "outFromProse": false,
+                  "outSource": null,
+                  "drift": false,
+                  "blocks": [],
+                  "notes": [],
+                  "extras": []
+                },
+                "decisionsPreamble": [],
+                "areas": [
+                  {
+                    "title": "Artifact spread",
+                    "entries": [
+                      {
+                        "kind": "decision",
+                        "tag": "D-01",
+                        "summary": "Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the generic-markdown fallback.",
+                        "detail": "",
+                        "reversibility": null
+                      }
+                    ]
+                  },
+                  {
+                    "title": "Corruption boundary",
+                    "entries": [
+                      {
+                        "kind": "decision",
+                        "tag": "D-02",
+                        "summary": "No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02 hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere.",
+                        "detail": "",
+                        "reversibility": null
+                      }
+                    ]
+                  }
+                ],
+                "openQuestions": [],
+                "discretion": {
+                  "heading": "Claude's Discretion",
+                  "lead": [
+                    {
+                      "kind": "paragraph",
+                      "text": "Everything not named above is open — this is a fixture, not a real implementation target."
+                    }
+                  ],
+                  "items": [],
+                  "trailer": []
+                },
+                "specifics": [
+                  {
+                    "title": null
+                  }
+                ],
+                "deferred": [
+                  {
+                    "title": null
+                  }
+                ],
+                "recognizedHeadings": [
+                  "Phase Boundary",
+                  "Implementation Decisions",
+                  "Specific Ideas",
+                  "Canonical References",
+                  "Existing Code Insights",
+                  "Deferred Ideas"
+                ]
               }
             }
           },
@@ -5610,6 +6110,74 @@
                 "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows",
                 "code_context": "## Existing Code Insights\n\n### Reusable Assets\n- `src/identity/slice.ts` (Phase 1) — the resolver the transport layer calls into.\n\n### Established Patterns\n- Never-throw resolver contract (Phase 1).\n\n### Integration Points\n- Transport requests call `resolveIdentity` from Phase 1's slice.",
                 "deferred": "## Deferred Ideas\n\nNone — discussion stayed within phase scope."
+              },
+              "brief": {
+                "meta": {
+                  "title": "Transport Layer",
+                  "phase": "2",
+                  "quickId": null,
+                  "gathered": "2026-08-19",
+                  "status": "Ready for planning",
+                  "preambleExtra": false
+                },
+                "boundary": {
+                  "eyebrow": "Phase Boundary",
+                  "statement": "Wire the transport layer connecting the identity slice to the rest of the system.",
+                  "statementRest": "This phase is deliberately thinner than Phase 1 — no `01-RESEARCH.md`-equivalent, no security/UI-spec — to represent a mid-flight phase directory with only a subset of possible artifact types present.",
+                  "inList": [],
+                  "outList": [],
+                  "outFromProse": false,
+                  "outSource": null,
+                  "drift": false,
+                  "blocks": [],
+                  "notes": [],
+                  "extras": []
+                },
+                "decisionsPreamble": [],
+                "areas": [
+                  {
+                    "title": "Scope",
+                    "entries": [
+                      {
+                        "kind": "decision",
+                        "tag": "D-01",
+                        "summary": "This phase carries only `02-01-PLAN.md` and `02-CONTEXT.md` — no summary yet, since the fixture must represent a phase that is planned but not yet executed at this point in the project's history.",
+                        "detail": "",
+                        "reversibility": null
+                      }
+                    ]
+                  }
+                ],
+                "openQuestions": [],
+                "discretion": {
+                  "heading": "Claude's Discretion",
+                  "lead": [
+                    {
+                      "kind": "paragraph",
+                      "text": "Everything else is open — this is a fixture, not a real implementation target."
+                    }
+                  ],
+                  "items": [],
+                  "trailer": []
+                },
+                "specifics": [
+                  {
+                    "title": null
+                  }
+                ],
+                "deferred": [
+                  {
+                    "title": null
+                  }
+                ],
+                "recognizedHeadings": [
+                  "Phase Boundary",
+                  "Implementation Decisions",
+                  "Specific Ideas",
+                  "Canonical References",
+                  "Existing Code Insights",
+                  "Deferred Ideas"
+                ]
               }
             }
           }
@@ -6794,6 +7362,86 @@
                       "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows\n- `~/.claude/gsd-core/bin/lib/artifacts.cjs` — `CANONICAL_EXACT`/`CANONICAL_PATTERNS`, the ground truth\n  for which root files are canonical",
                       "code_context": "## Existing Code Insights\n\n### Reusable Assets\nNone — this is a synthetic fixture tree with no code.\n\n### Established Patterns\n- Registry-dispatched artifact handlers, generic handler unconditional and last (from plan `01-01`).\n\n### Integration Points\nNone — the fixture has no downstream phase beyond Phase 2 within this same tree.",
                       "deferred": "## Deferred Ideas\n\n- Live reconciliation with a running session — tracked as v4.0 requirement IDENT-04."
+                    },
+                    "brief": {
+                      "meta": {
+                        "title": "Identity Slice",
+                        "phase": "1",
+                        "quickId": null,
+                        "gathered": "2026-06-05",
+                        "status": "Ready for planning",
+                        "preambleExtra": false
+                      },
+                      "boundary": {
+                        "eyebrow": "Phase Boundary",
+                        "statement": "Deliver the identity vertical slice and, along the way, exercise the full spread of artifact types this fixture project needs — including types studio-portal has never produced.",
+                        "statementRest": "",
+                        "inList": [],
+                        "outList": [],
+                        "outFromProse": false,
+                        "outSource": null,
+                        "drift": false,
+                        "blocks": [],
+                        "notes": [],
+                        "extras": []
+                      },
+                      "decisionsPreamble": [],
+                      "areas": [
+                        {
+                          "title": "Artifact spread",
+                          "entries": [
+                            {
+                              "kind": "decision",
+                              "tag": "D-01",
+                              "summary": "Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the generic-markdown fallback.",
+                              "detail": "",
+                              "reversibility": null
+                            }
+                          ]
+                        },
+                        {
+                          "title": "Corruption boundary",
+                          "entries": [
+                            {
+                              "kind": "decision",
+                              "tag": "D-02",
+                              "summary": "No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02 hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere.",
+                              "detail": "",
+                              "reversibility": null
+                            }
+                          ]
+                        }
+                      ],
+                      "openQuestions": [],
+                      "discretion": {
+                        "heading": "Claude's Discretion",
+                        "lead": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Everything not named above is open — this is a fixture, not a real implementation target."
+                          }
+                        ],
+                        "items": [],
+                        "trailer": []
+                      },
+                      "specifics": [
+                        {
+                          "title": null
+                        }
+                      ],
+                      "deferred": [
+                        {
+                          "title": null
+                        }
+                      ],
+                      "recognizedHeadings": [
+                        "Phase Boundary",
+                        "Implementation Decisions",
+                        "Specific Ideas",
+                        "Canonical References",
+                        "Existing Code Insights",
+                        "Deferred Ideas"
+                      ]
                     }
                   }
                 },
@@ -8044,6 +8692,86 @@
                       "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows\n- `~/.claude/gsd-core/bin/lib/artifacts.cjs` — `CANONICAL_EXACT`/`CANONICAL_PATTERNS`, the ground truth\n  for which root files are canonical",
                       "code_context": "## Existing Code Insights\n\n### Reusable Assets\nNone — this is a synthetic fixture tree with no code.\n\n### Established Patterns\n- Registry-dispatched artifact handlers, generic handler unconditional and last (from plan `01-01`).\n\n### Integration Points\nNone — the fixture has no downstream phase beyond Phase 2 within this same tree.",
                       "deferred": "## Deferred Ideas\n\n- Live reconciliation with a running session — tracked as v4.0 requirement IDENT-04."
+                    },
+                    "brief": {
+                      "meta": {
+                        "title": "Identity Slice",
+                        "phase": "1",
+                        "quickId": null,
+                        "gathered": "2026-06-05",
+                        "status": "Ready for planning",
+                        "preambleExtra": false
+                      },
+                      "boundary": {
+                        "eyebrow": "Phase Boundary",
+                        "statement": "Deliver the identity vertical slice and, along the way, exercise the full spread of artifact types this fixture project needs — including types studio-portal has never produced.",
+                        "statementRest": "",
+                        "inList": [],
+                        "outList": [],
+                        "outFromProse": false,
+                        "outSource": null,
+                        "drift": false,
+                        "blocks": [],
+                        "notes": [],
+                        "extras": []
+                      },
+                      "decisionsPreamble": [],
+                      "areas": [
+                        {
+                          "title": "Artifact spread",
+                          "entries": [
+                            {
+                              "kind": "decision",
+                              "tag": "D-01",
+                              "summary": "Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the generic-markdown fallback.",
+                              "detail": "",
+                              "reversibility": null
+                            }
+                          ]
+                        },
+                        {
+                          "title": "Corruption boundary",
+                          "entries": [
+                            {
+                              "kind": "decision",
+                              "tag": "D-02",
+                              "summary": "No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02 hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere.",
+                              "detail": "",
+                              "reversibility": null
+                            }
+                          ]
+                        }
+                      ],
+                      "openQuestions": [],
+                      "discretion": {
+                        "heading": "Claude's Discretion",
+                        "lead": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Everything not named above is open — this is a fixture, not a real implementation target."
+                          }
+                        ],
+                        "items": [],
+                        "trailer": []
+                      },
+                      "specifics": [
+                        {
+                          "title": null
+                        }
+                      ],
+                      "deferred": [
+                        {
+                          "title": null
+                        }
+                      ],
+                      "recognizedHeadings": [
+                        "Phase Boundary",
+                        "Implementation Decisions",
+                        "Specific Ideas",
+                        "Canonical References",
+                        "Existing Code Insights",
+                        "Deferred Ideas"
+                      ]
                     }
                   }
                 },
@@ -9294,6 +10022,86 @@
                       "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows\n- `~/.claude/gsd-core/bin/lib/artifacts.cjs` — `CANONICAL_EXACT`/`CANONICAL_PATTERNS`, the ground truth\n  for which root files are canonical",
                       "code_context": "## Existing Code Insights\n\n### Reusable Assets\nNone — this is a synthetic fixture tree with no code.\n\n### Established Patterns\n- Registry-dispatched artifact handlers, generic handler unconditional and last (from plan `01-01`).\n\n### Integration Points\nNone — the fixture has no downstream phase beyond Phase 2 within this same tree.",
                       "deferred": "## Deferred Ideas\n\n- Live reconciliation with a running session — tracked as v4.0 requirement IDENT-04."
+                    },
+                    "brief": {
+                      "meta": {
+                        "title": "Identity Slice",
+                        "phase": "1",
+                        "quickId": null,
+                        "gathered": "2026-06-05",
+                        "status": "Ready for planning",
+                        "preambleExtra": false
+                      },
+                      "boundary": {
+                        "eyebrow": "Phase Boundary",
+                        "statement": "Deliver the identity vertical slice and, along the way, exercise the full spread of artifact types this fixture project needs — including types studio-portal has never produced.",
+                        "statementRest": "",
+                        "inList": [],
+                        "outList": [],
+                        "outFromProse": false,
+                        "outSource": null,
+                        "drift": false,
+                        "blocks": [],
+                        "notes": [],
+                        "extras": []
+                      },
+                      "decisionsPreamble": [],
+                      "areas": [
+                        {
+                          "title": "Artifact spread",
+                          "entries": [
+                            {
+                              "kind": "decision",
+                              "tag": "D-01",
+                              "summary": "Every unfamiliar artifact type (`SPEC.md`, `AI-SPEC.md`) is authored from its own `gsd-core` template, and one genuinely invented type (`01-COST-MODEL.md`) is added to prove the generic-markdown fallback.",
+                              "detail": "",
+                              "reversibility": null
+                            }
+                          ]
+                        },
+                        {
+                          "title": "Corruption boundary",
+                          "entries": [
+                            {
+                              "kind": "decision",
+                              "tag": "D-02",
+                              "summary": "No corruption is introduced in this phase's artifacts directly — the fixture's plan 01-02 hardening task and plan 01-02 of the real Labelore project introduce corruption elsewhere.",
+                              "detail": "",
+                              "reversibility": null
+                            }
+                          ]
+                        }
+                      ],
+                      "openQuestions": [],
+                      "discretion": {
+                        "heading": "Claude's Discretion",
+                        "lead": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Everything not named above is open — this is a fixture, not a real implementation target."
+                          }
+                        ],
+                        "items": [],
+                        "trailer": []
+                      },
+                      "specifics": [
+                        {
+                          "title": null
+                        }
+                      ],
+                      "deferred": [
+                        {
+                          "title": null
+                        }
+                      ],
+                      "recognizedHeadings": [
+                        "Phase Boundary",
+                        "Implementation Decisions",
+                        "Specific Ideas",
+                        "Canonical References",
+                        "Existing Code Insights",
+                        "Deferred Ideas"
+                      ]
                     }
                   }
                 },
@@ -9612,6 +10420,74 @@
                       "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows",
                       "code_context": "## Existing Code Insights\n\n### Reusable Assets\n- `src/identity/slice.ts` (Phase 1) — the resolver the transport layer calls into.\n\n### Established Patterns\n- Never-throw resolver contract (Phase 1).\n\n### Integration Points\n- Transport requests call `resolveIdentity` from Phase 1's slice.",
                       "deferred": "## Deferred Ideas\n\nNone — discussion stayed within phase scope."
+                    },
+                    "brief": {
+                      "meta": {
+                        "title": "Transport Layer",
+                        "phase": "2",
+                        "quickId": null,
+                        "gathered": "2026-08-19",
+                        "status": "Ready for planning",
+                        "preambleExtra": false
+                      },
+                      "boundary": {
+                        "eyebrow": "Phase Boundary",
+                        "statement": "Wire the transport layer connecting the identity slice to the rest of the system.",
+                        "statementRest": "This phase is deliberately thinner than Phase 1 — no `01-RESEARCH.md`-equivalent, no security/UI-spec — to represent a mid-flight phase directory with only a subset of possible artifact types present.",
+                        "inList": [],
+                        "outList": [],
+                        "outFromProse": false,
+                        "outSource": null,
+                        "drift": false,
+                        "blocks": [],
+                        "notes": [],
+                        "extras": []
+                      },
+                      "decisionsPreamble": [],
+                      "areas": [
+                        {
+                          "title": "Scope",
+                          "entries": [
+                            {
+                              "kind": "decision",
+                              "tag": "D-01",
+                              "summary": "This phase carries only `02-01-PLAN.md` and `02-CONTEXT.md` — no summary yet, since the fixture must represent a phase that is planned but not yet executed at this point in the project's history.",
+                              "detail": "",
+                              "reversibility": null
+                            }
+                          ]
+                        }
+                      ],
+                      "openQuestions": [],
+                      "discretion": {
+                        "heading": "Claude's Discretion",
+                        "lead": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Everything else is open — this is a fixture, not a real implementation target."
+                          }
+                        ],
+                        "items": [],
+                        "trailer": []
+                      },
+                      "specifics": [
+                        {
+                          "title": null
+                        }
+                      ],
+                      "deferred": [
+                        {
+                          "title": null
+                        }
+                      ],
+                      "recognizedHeadings": [
+                        "Phase Boundary",
+                        "Implementation Decisions",
+                        "Specific Ideas",
+                        "Canonical References",
+                        "Existing Code Insights",
+                        "Deferred Ideas"
+                      ]
                     }
                   }
                 }
@@ -9750,6 +10626,74 @@
                       "canonical_refs": "## Canonical References\n\n**Downstream agents MUST read these before planning or implementing.**\n\n### Fixture provenance\n- `~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows",
                       "code_context": "## Existing Code Insights\n\n### Reusable Assets\n- `src/identity/slice.ts` (Phase 1) — the resolver the transport layer calls into.\n\n### Established Patterns\n- Never-throw resolver contract (Phase 1).\n\n### Integration Points\n- Transport requests call `resolveIdentity` from Phase 1's slice.",
                       "deferred": "## Deferred Ideas\n\nNone — discussion stayed within phase scope."
+                    },
+                    "brief": {
+                      "meta": {
+                        "title": "Transport Layer",
+                        "phase": "2",
+                        "quickId": null,
+                        "gathered": "2026-08-19",
+                        "status": "Ready for planning",
+                        "preambleExtra": false
+                      },
+                      "boundary": {
+                        "eyebrow": "Phase Boundary",
+                        "statement": "Wire the transport layer connecting the identity slice to the rest of the system.",
+                        "statementRest": "This phase is deliberately thinner than Phase 1 — no `01-RESEARCH.md`-equivalent, no security/UI-spec — to represent a mid-flight phase directory with only a subset of possible artifact types present.",
+                        "inList": [],
+                        "outList": [],
+                        "outFromProse": false,
+                        "outSource": null,
+                        "drift": false,
+                        "blocks": [],
+                        "notes": [],
+                        "extras": []
+                      },
+                      "decisionsPreamble": [],
+                      "areas": [
+                        {
+                          "title": "Scope",
+                          "entries": [
+                            {
+                              "kind": "decision",
+                              "tag": "D-01",
+                              "summary": "This phase carries only `02-01-PLAN.md` and `02-CONTEXT.md` — no summary yet, since the fixture must represent a phase that is planned but not yet executed at this point in the project's history.",
+                              "detail": "",
+                              "reversibility": null
+                            }
+                          ]
+                        }
+                      ],
+                      "openQuestions": [],
+                      "discretion": {
+                        "heading": "Claude's Discretion",
+                        "lead": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Everything else is open — this is a fixture, not a real implementation target."
+                          }
+                        ],
+                        "items": [],
+                        "trailer": []
+                      },
+                      "specifics": [
+                        {
+                          "title": null
+                        }
+                      ],
+                      "deferred": [
+                        {
+                          "title": null
+                        }
+                      ],
+                      "recognizedHeadings": [
+                        "Phase Boundary",
+                        "Implementation Decisions",
+                        "Specific Ideas",
+                        "Canonical References",
+                        "Existing Code Insights",
+                        "Deferred Ideas"
+                      ]
                     }
                   }
                 }

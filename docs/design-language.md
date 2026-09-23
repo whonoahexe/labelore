@@ -117,6 +117,7 @@ is always to add the missing name to this document, never to edit the reference 
 | `document-endnote` | One subsection inside the endnotes sheet (Claude's Discretion, Open Questions, Deferred Ideas) | globals.css — discussion-log review fixes (quick-260923-jxp) |
 | `document-endnote-title` | An endnote subsection's small-caps heading | globals.css — discussion-log review fixes (quick-260923-jxp) |
 | `artifact-path-copy` | ArtifactHeader's copy-path icon button, replacing the printed file-path caption on every artifact page | globals.css — discussion-log review fixes (quick-260923-jxp) |
+| `artifact-meta-row` | ArtifactHeader's optional `meta` prop row (plain variant only) — holds the caller's meta content, then the copy-path button, then `children` | globals.css — CONTEXT brief (quick-260923-lju) |
 
 ## Tones
 
@@ -129,6 +130,7 @@ is always to add the missing name to this document, never to edit the reference 
 | `warning` | Partial read/parse degradation only | The "Warning" artifact-parse chip; never used by any sketch-004 B3 document-content chip, same rule as `destructive` above |
 | `in-flight` | A phase or item currently being worked | Traceability covering-phase signal, a sketch-004 B3 document's "Awaiting checkpoint"/"Gaps found" cover status |
 | `missing` | An expected item that has not appeared | Traceability covering-phase signal, a sketch-004 B3 gap item's "Failed" state chip |
+| `caution` | Amber, flagged for someone else to resolve — never an error (quick-260923-lju) | The CONTEXT brief's open-question chips and panel rule, the "open" stat, a costly/one-way reversibility chip, and an area's "N open" chip |
 
 ## Families
 
@@ -226,7 +228,7 @@ plan's "no AST tooling" constraint.
 | `attention-page-status` | Dashboard | |
 | `attention-pagination` | Dashboard | |
 | `attention-pagination-actions` | Dashboard | |
-| `attention-panel` | Dashboard | |
+| `attention-panel` | Dashboard | shared with the CONTEXT brief (quick-260923-lju) |
 | `checkpoint-badge` | Dashboard | |
 | `checkpoint-callout` | Dashboard | |
 | `checkpoint-content` | Dashboard | |
@@ -235,7 +237,7 @@ plan's "no AST tooling" constraint.
 | `dashboard-grid` | Dashboard | |
 | `dashboard-loading` | Dashboard | |
 | `dashboard-page` | Dashboard | |
-| `immediate-work` | Dashboard | |
+| `immediate-work` | Dashboard | shared with the CONTEXT brief (quick-260923-lju) |
 | `item-kind` | Dashboard | |
 | `milestone-label` | Dashboard | |
 | `next-preview` | Dashboard | |
@@ -245,11 +247,11 @@ plan's "no AST tooling" constraint.
 | `plan-progress-headline` | Dashboard | |
 | `plan-progress-summary` | Dashboard | |
 | `position-copy` | Dashboard | |
-| `position-hero` | Dashboard | |
+| `position-hero` | Dashboard | shared with the CONTEXT brief (quick-260923-lju) |
 | `position-meta` | Dashboard | |
 | `preview-empty` | Dashboard | |
 | `preview-list` | Dashboard | |
-| `preview-panel` | Dashboard | |
+| `preview-panel` | Dashboard | shared with the CONTEXT brief (quick-260923-lju) |
 | `progress-empty` | Dashboard | |
 | `progress-panel` | Dashboard | |
 | `progress-panel-header` | Dashboard | |

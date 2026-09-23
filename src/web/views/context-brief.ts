@@ -1,0 +1,550 @@
+// The CONTEXT brief composer (quick-260923-lju, sketch-006 D1): a pure `ViewInput` ->
+// `ComposedContextBrief` projection over `structured.brief` (built by
+// `src/planning-repo/handlers/context-brief.ts`). No DOM, no rendering — `context-brief-
+// components.tsx` is the only consumer. Returns `null` when the brief is missing/malformed, or
+// holds neither a boundary nor any area — the page then falls back to the promoted-block view
+// (C-1, T-lju-04).
+import type {
+  AreaEntry,
+  Block,
+  ContextBoundary,
+  ContextBrief,
+  IdeaItem,
+} from '../../planning-repo/handlers/context-brief.ts';
+import type { ViewInput } from './manifest.ts';
+import type { DocumentSectionGroup } from './document-sections.ts';
+import { INTRODUCTION_LABEL } from './manifest.ts';
+
+// ---------------------------------------------------------------------------
+// Composed model
+// ---------------------------------------------------------------------------
+
+export interface ComposedIntro {
+  eyebrow: string;
+  title: string | null;
+  status: { label: string; tone: 'complete' | 'quiet' } | null;
+  covers: string | null;
+}
+
+export interface ComposedBoundaryNote {
+  id: string;
+  title: string | null;
+  blocks: Block[];
+}
+
+export interface ComposedBoundary {
+  eyebrow: string;
+  statement: string | null;
+  restBlocks: Block[];
+  inList: string[];
+  outItems: { text: string; dest: string | null }[];
+  outFromProse: boolean;
+  drift: boolean;
+}
+
+export interface ComposedReversibility {
+  word: string;
+  text: string;
+  tone: 'caution' | 'quiet';
+}
+
+export interface ComposedClaudeNote {
+  id: string;
+  text: string;
+}
+
+export interface ComposedDecision {
+  id: string;
+  tag: string | null;
+  summary: string;
+  detail: string;
+  reversibility: ComposedReversibility | null;
+  expandable: boolean;
+  openChips: { tag: string; id: string }[];
+  claudeNotes: ComposedClaudeNote[];
+}
+
+export type ComposedAreaEntry =
+  | { kind: 'note'; text: string }
+  | { kind: 'decision'; decision: ComposedDecision };
+
+export interface ComposedArea {
+  id: string;
+  title: string;
+  lockedCount: number;
+  openCount: number;
+  entries: ComposedAreaEntry[];
+}
+
+export interface ComposedOpenQuestionRow {
+  id: string;
+  tag: string | null;
+  label: string;
+  summary: string;
+  detail: string;
+  expandable: boolean;
+  blocks: { tag: string; id: string }[];
+}
+
+export interface ComposedOpenPanel {
+  lead: Block[];
+  rows: ComposedOpenQuestionRow[];
+}
+
+export interface ComposedDiscretionPanel {
+  lead: Block[];
+  loose: string[];
+  trailer: Block[];
+}
+
+export interface ComposedIdeaItem {
+  id: string;
+  title: string | null;
+  body: string;
+}
+
+export interface ComposedIdeasPanel {
+  id: string;
+  label: string;
+  items: ComposedIdeaItem[];
+}
+
+export interface ComposedStat {
+  id: string;
+  count: number;
+  label: string;
+  target: string;
+  caution: boolean;
+}
+
+export interface ComposedContextBrief {
+  intro: ComposedIntro;
+  boundary: ComposedBoundary | null;
+  boundaryNotes: ComposedBoundaryNote[];
+  areas: ComposedArea[];
+  decisionCount: number;
+  decisionsPreamble: Block[];
+  openPanel: ComposedOpenPanel | null;
+  discretionPanel: ComposedDiscretionPanel | null;
+  specifics: ComposedIdeasPanel | null;
+  deferred: ComposedIdeasPanel | null;
+  stats: ComposedStat[];
+  refTargets: Record<string, string>;
+  /** Unrecognised `##` document-section groups, rendered before the register (in document order),
+   * plus the leading (no-heading) group when the brief's preamble held extra prose. */
+  extras: DocumentSectionGroup[];
+  /** Canonical-references and existing-code-insights groups, held for the closed "More in this
+   * document" disclosure — in document order. */
+  more: DocumentSectionGroup[];
+}
+
+// ---------------------------------------------------------------------------
+// Group partition — unrecognised sections (`extras`) vs. the "More" disclosure (`more`)
+// ---------------------------------------------------------------------------
+
+/** Lowercases, strips `*`/`` ` ``/`_`, collapses link syntax to its label, and normalises
+ * whitespace — the same key both `recognizedHeadings` and each document-section group's own
+ * heading are compared through. */
+function normalizeHeading(text: string): string {
+  return text
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/[*`_]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+const MORE_HEADING_RE = /^(canonical references|existing code insights)$/i;
+
+function partitionGroups(
+  groups: DocumentSectionGroup[],
+  recognizedHeadings: string[],
+  preambleExtra: boolean,
+): { extras: DocumentSectionGroup[]; more: DocumentSectionGroup[] } {
+  const recognized = new Set(recognizedHeadings.map(normalizeHeading));
+  const extras: DocumentSectionGroup[] = [];
+  const more: DocumentSectionGroup[] = [];
+  for (const group of groups) {
+    if (group.html.trim() === '') continue;
+    if (group.heading === null) {
+      if (preambleExtra) extras.push({ ...group, heading: INTRODUCTION_LABEL });
+      continue;
+    }
+    if (MORE_HEADING_RE.test(group.heading.trim())) {
+      more.push(group);
+      continue;
+    }
+    const key = normalizeHeading(group.heading);
+    if (recognized.has(key)) continue;
+    extras.push(group);
+  }
+  return { extras, more };
+}
+
+// ---------------------------------------------------------------------------
+// Formatting helpers
+// ---------------------------------------------------------------------------
+
+const MONTHS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
+/** ISO `YYYY-MM-DD` -> `Mon D, YYYY` through a fixed month table (never `Date`/`Intl` — no locale
+ * dependency). Anything else comes back unchanged. */
+export function formatGatheredDate(gathered: string | null): string | null {
+  if (!gathered) return null;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(gathered.trim());
+  if (!match) return gathered;
+  const [, year, monthStr, dayStr] = match;
+  const monthIndex = Number(monthStr) - 1;
+  if (monthIndex < 0 || monthIndex > 11) return gathered;
+  const day = Number(dayStr);
+  return `${MONTHS[monthIndex]} ${day}, ${year}`;
+}
+
+/** Collapses each same-prefix run of 3+ consecutive numbers to `PFX-a … PFX-b`, keeps ROADMAP
+ * order otherwise, joins with ` · `. Empty input -> `null`. */
+export function formatCovers(ids: string[] | null | undefined): string | null {
+  if (!ids || ids.length === 0) return null;
+  const parsed = ids.map((id) => {
+    const m = /^([A-Za-z]+)-(\d+)$/.exec(id.trim());
+    return m ? { raw: id.trim(), prefix: m[1], num: Number(m[2]) } : { raw: id.trim(), prefix: null, num: null };
+  });
+
+  const out: string[] = [];
+  let i = 0;
+  while (i < parsed.length) {
+    const start = parsed[i];
+    if (start.prefix === null) {
+      out.push(start.raw);
+      i += 1;
+      continue;
+    }
+    let j = i;
+    while (
+      j + 1 < parsed.length &&
+      parsed[j + 1].prefix === start.prefix &&
+      parsed[j + 1].num === (parsed[j].num as number) + 1
+    ) {
+      j += 1;
+    }
+    const runLength = j - i + 1;
+    if (runLength >= 3) {
+      out.push(`${start.prefix}-${String(start.num).padStart(2, '0')} … ${start.prefix}-${String(parsed[j].num).padStart(2, '0')}`);
+    } else {
+      for (let k = i; k <= j; k++) out.push(parsed[k].raw);
+    }
+    i = j + 1;
+  }
+  return out.join(' · ');
+}
+
+function eyebrowOf(phase: string | null, quickId: string | null, gathered: string | null): string {
+  const parts = ['Context'];
+  if (phase) {
+    const [whole, frac] = phase.split('.');
+    parts.push(`Phase ${whole.padStart(2, '0')}${frac ? `.${frac}` : ''}`);
+  } else if (quickId) {
+    parts.push(`Quick task ${quickId}`);
+  }
+  const formattedGathered = formatGatheredDate(gathered);
+  if (formattedGathered) parts.push(`Gathered ${formattedGathered}`);
+  return parts.join(' · ');
+}
+
+const STATUS_COMPLETE_RE = /^(ready|complete|done|locked)/i;
+
+function statusOf(status: string | null): ComposedIntro['status'] {
+  if (!status) return null;
+  return { label: status, tone: STATUS_COMPLETE_RE.test(status) ? 'complete' : 'quiet' };
+}
+
+const CAUTION_REVERSIBILITY_RE = /^(costly|one-way|irreversible)/i;
+
+function reversibilityTone(word: string): 'caution' | 'quiet' {
+  return CAUTION_REVERSIBILITY_RE.test(word) ? 'caution' : 'quiet';
+}
+
+// ---------------------------------------------------------------------------
+// Type guard
+// ---------------------------------------------------------------------------
+
+function isContextBrief(value: unknown): value is ContextBrief {
+  if (!value || typeof value !== 'object') return false;
+  const v = value as Partial<ContextBrief>;
+  return (
+    typeof v.meta === 'object' &&
+    v.meta !== null &&
+    Array.isArray(v.areas) &&
+    Array.isArray(v.specifics) &&
+    Array.isArray(v.deferred) &&
+    Array.isArray(v.openQuestions) &&
+    Array.isArray(v.recognizedHeadings)
+  );
+}
+
+// ---------------------------------------------------------------------------
+// composeContextBrief
+// ---------------------------------------------------------------------------
+
+export function composeContextBrief(input: ViewInput): ComposedContextBrief | null {
+  const raw = (input.structured as Record<string, unknown>).brief;
+  if (!isContextBrief(raw)) return null;
+  const brief = raw;
+
+  if (!brief.boundary && brief.areas.length === 0) return null;
+
+  const intro: ComposedIntro = {
+    eyebrow: eyebrowOf(brief.meta.phase, brief.meta.quickId, brief.meta.gathered),
+    title: null,
+    status: statusOf(brief.meta.status),
+    covers: formatCovers(input.phaseRequirementIds ?? null),
+  };
+
+  const refTargets: Record<string, string> = {};
+  const decisionIdsSeen = new Map<string, number>();
+
+  // First pass: assign every decision entry its final id, in area/entry order — recorded in a
+  // flat queue (`decisionIdsInOrder`) so the second pass (building composed areas below) replays
+  // the exact same ids rather than re-deriving them from a tag lookup, which would collapse a
+  // duplicate tag's second occurrence onto the first (both `D-01` rows sharing one id).
+  const decisionIdByTag = new Map<string, string>();
+  const decisionIdsInOrder: string[] = [];
+  let areaIndex = 0;
+  for (const area of brief.areas) {
+    let rowIndex = 0;
+    for (const entry of area.entries) {
+      if (entry.kind !== 'decision') continue;
+      rowIndex += 1;
+      let id: string;
+      if (entry.tag) {
+        const lowerTag = entry.tag.toLowerCase();
+        const seen = decisionIdsSeen.get(lowerTag) ?? 0;
+        decisionIdsSeen.set(lowerTag, seen + 1);
+        id = seen === 0 ? `decision-${lowerTag}` : `decision-${lowerTag}-${seen + 1}`;
+        if (seen === 0) decisionIdByTag.set(entry.tag, id);
+      } else {
+        id = `decision-a${areaIndex}-${rowIndex}`;
+      }
+      decisionIdsInOrder.push(id);
+      refTargets[entry.tag ?? id] = entry.tag ? decisionIdByTag.get(entry.tag)! : id;
+    }
+    areaIndex += 1;
+  }
+
+  // Open-question ids + blocks-target resolution.
+  const openRowsBySource: ComposedOpenQuestionRow[][] = [];
+  const openIdByTag = new Map<string, string>();
+  for (const source of brief.openQuestions) {
+    const rows: ComposedOpenQuestionRow[] = [];
+    for (const item of source.items) {
+      const id = item.tag ? `question-${item.tag.toLowerCase()}` : `question-${item.number}`;
+      if (item.tag) {
+        openIdByTag.set(item.tag, id);
+        refTargets[item.tag] = id;
+      }
+      rows.push({
+        id,
+        tag: item.tag,
+        label: item.tag ?? String(item.number),
+        summary: item.summary,
+        detail: item.detail,
+        expandable: item.detail.trim() !== '',
+        blocks: item.blocks
+          .filter((tag) => decisionIdByTag.has(tag))
+          .map((tag) => ({ tag, id: decisionIdByTag.get(tag)! })),
+      });
+    }
+    openRowsBySource.push(rows);
+  }
+  const allOpenRows = openRowsBySource.flat();
+
+  // Claude-notes attachment + discretion loose list (Task 2 — tagging into the first D-NN a
+  // discretion item names, only when a register row has that tag).
+  const claudeNotesByDecisionId = new Map<string, ComposedClaudeNote[]>();
+  const loose: string[] = [];
+  if (brief.discretion) {
+    let noteIndex = 0;
+    for (const item of brief.discretion.items) {
+      const match = /D-\d{1,3}/.exec(item);
+      const targetId = match ? decisionIdByTag.get(match[0]) : undefined;
+      if (targetId) {
+        noteIndex += 1;
+        const list = claudeNotesByDecisionId.get(targetId) ?? [];
+        list.push({ id: `claude-note-${targetId}-${list.length + 1}`, text: item });
+        claudeNotesByDecisionId.set(targetId, list);
+      } else {
+        loose.push(item);
+      }
+    }
+    void noteIndex;
+  }
+
+  // Second pass: build composed areas, replaying `decisionIdsInOrder` (never re-deriving from
+  // `decisionIdByTag`, which only remembers a duplicate tag's first id).
+  const areas: ComposedArea[] = [];
+  let decisionCursor = 0;
+  areaIndex = 0;
+  for (const area of brief.areas) {
+    let lockedCount = 0;
+    let openCount = 0;
+    const entries: ComposedAreaEntry[] = [];
+    for (const entry of area.entries as AreaEntry[]) {
+      if (entry.kind === 'note') {
+        entries.push({ kind: 'note', text: entry.text });
+        continue;
+      }
+      lockedCount += 1;
+      const id = decisionIdsInOrder[decisionCursor];
+      decisionCursor += 1;
+      const openChips = entry.tag
+        ? allOpenRows.filter((row) => row.blocks.some((b) => b.tag === entry.tag)).map((row) => ({ tag: row.label, id: row.id }))
+        : [];
+      if (openChips.length > 0) openCount += 1;
+      const reversibility = entry.reversibility
+        ? { word: entry.reversibility.word, text: entry.reversibility.text, tone: reversibilityTone(entry.reversibility.word) }
+        : null;
+      entries.push({
+        kind: 'decision',
+        decision: {
+          id,
+          tag: entry.tag,
+          summary: entry.summary,
+          detail: entry.detail,
+          reversibility,
+          expandable: entry.detail.trim() !== '' || reversibility !== null,
+          openChips,
+          claudeNotes: claudeNotesByDecisionId.get(id) ?? [],
+        },
+      });
+    }
+    areas.push({ id: `area-${areaIndex}`, title: area.title, lockedCount, openCount, entries });
+    areaIndex += 1;
+  }
+
+  const decisionCount = areas.reduce((sum, a) => sum + a.lockedCount, 0);
+
+  // Boundary.
+  let boundary: ComposedBoundary | null = null;
+  const boundaryNotes: ComposedBoundaryNote[] = [];
+  if (brief.boundary) {
+    const b: ContextBoundary = brief.boundary;
+    boundary = {
+      eyebrow: b.eyebrow,
+      statement: b.statement,
+      restBlocks: [
+        ...(b.statementRest ? [{ kind: 'paragraph', text: b.statementRest } as Block] : []),
+        ...b.blocks,
+      ],
+      inList: b.inList,
+      outItems: b.outList,
+      outFromProse: b.outFromProse,
+      drift: b.drift,
+    };
+    let noteIdx = 0;
+    for (const note of b.notes) {
+      noteIdx += 1;
+      boundaryNotes.push({ id: `boundary-note-${noteIdx}`, title: note.title, blocks: note.blocks });
+    }
+    for (const extra of b.extras) {
+      noteIdx += 1;
+      boundaryNotes.push({ id: `boundary-note-${noteIdx}`, title: extra.title, blocks: extra.blocks });
+    }
+  }
+
+  // Open panel.
+  const openLead = brief.openQuestions.flatMap((s) => s.lead);
+  const openPanel: ComposedOpenPanel | null = allOpenRows.length > 0 ? { lead: openLead, rows: allOpenRows } : null;
+
+  // Discretion panel.
+  const discretionPanel: ComposedDiscretionPanel | null = brief.discretion
+    ? { lead: brief.discretion.lead, loose, trailer: brief.discretion.trailer }
+    : null;
+
+  // Ideas.
+  const ideaPanel = (items: IdeaItem[], prefix: string, label: string): ComposedIdeasPanel | null => {
+    if (items.length === 0) return null;
+    return {
+      id: `context-${prefix}`,
+      label,
+      items: items.map((it, idx) => ({ id: `${prefix}-${idx + 1}`, title: it.title, body: it.body })),
+    };
+  };
+  const specifics = ideaPanel(brief.specifics, 'specifics', 'Specific ideas');
+  const deferred = ideaPanel(brief.deferred, 'deferred', 'Deferred');
+
+  // Stats.
+  const stats: ComposedStat[] = [];
+  const firstDecisionId = areas.flatMap((a) => a.entries).find((e) => e.kind === 'decision');
+  if (decisionCount > 0 && firstDecisionId && firstDecisionId.kind === 'decision') {
+    stats.push({
+      id: 'stat-locked',
+      count: decisionCount,
+      label: decisionCount === 1 ? 'decision locked' : 'decisions locked',
+      target: firstDecisionId.decision.id,
+      caution: false,
+    });
+  }
+  if (allOpenRows.length > 0) {
+    stats.push({
+      id: 'stat-open',
+      count: allOpenRows.length,
+      label: allOpenRows.length === 1 ? 'open for the researcher' : 'open for the researcher',
+      target: allOpenRows[0].id,
+      caution: true,
+    });
+  }
+  const hardToUndo = areas
+    .flatMap((a) => a.entries)
+    .filter((e): e is Extract<ComposedAreaEntry, { kind: 'decision' }> => e.kind === 'decision')
+    .filter((e) => e.decision.reversibility?.tone === 'caution');
+  if (hardToUndo.length > 0) {
+    stats.push({
+      id: 'stat-hard',
+      count: hardToUndo.length,
+      label: 'hard to undo',
+      target: hardToUndo[0].decision.id,
+      caution: false,
+    });
+  }
+  const leftToClaude = (brief.discretion?.items.length ?? 0);
+  if (leftToClaude > 0) {
+    stats.push({
+      id: 'stat-claude',
+      count: leftToClaude,
+      label: 'left to Claude',
+      target: 'context-discretion',
+      caution: false,
+    });
+  }
+
+  const { extras, more } = partitionGroups(input.groups, brief.recognizedHeadings, brief.meta.preambleExtra);
+
+  return {
+    intro,
+    boundary,
+    boundaryNotes,
+    areas,
+    decisionCount,
+    decisionsPreamble: brief.decisionsPreamble,
+    openPanel,
+    discretionPanel,
+    specifics,
+    deferred,
+    stats,
+    refTargets,
+    extras,
+    more,
+  };
+}

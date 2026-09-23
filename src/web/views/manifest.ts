@@ -6,6 +6,9 @@ import type { DocumentSectionGroup, PlanSegmentAttributes } from './document-sec
 // Type-only import — erased at compile time, so this never creates a runtime import cycle with
 // layout.ts (which itself imports the runtime `remainderOf` value below from this module).
 import type { DocumentLayoutSpec } from './layout.ts';
+// Type-only import — mirrors the DocumentLayoutSpec pattern above so `brief` below introduces no
+// runtime cycle with context-brief.ts (quick-260923-lju, sketch-006 D1).
+import type { ComposedContextBrief } from './context-brief.ts';
 
 /** Declared now so 05-05 can add components without widening this union a second time — only
  * `discussion-questions` has a real component in this plan (see `blocks.tsx`). */
@@ -46,6 +49,10 @@ export interface ViewManifest {
    * opts into by declaring one of these — absent for every kind that keeps the pre-existing
    * promoted-block view. */
   layout?: DocumentLayoutSpec;
+  /** quick-260923-lju (sketch-006 D1): the layout a manifest opts into instead of `promote` —
+   * currently only `context`. Returns `null` when the input can't compose a brief, and the page
+   * falls back to the promoted-block view. */
+  brief?: (input: ViewInput) => ComposedContextBrief | null;
 }
 
 export interface ViewInput {
@@ -58,6 +65,10 @@ export interface ViewInput {
    * `path` (no new `artifact.kind === '` branch) — `null` when the artifact isn't a plan, or a
    * plan with no paired summary yet. */
   planProgress?: { complete: boolean; summaryStatus: string | null } | null;
+  /** quick-260923-lju: the phase's own ROADMAP requirement IDs (in ROADMAP order), matched
+   * generically by path — `null`/absent when the artifact isn't phase-scoped or the phase carries
+   * none. Feeds the CONTEXT brief intro's "Covers …" note. */
+  phaseRequirementIds?: string[] | null;
 }
 
 export type ComposedBlock = { id: string; label: string } & (
