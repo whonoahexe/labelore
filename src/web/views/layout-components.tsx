@@ -1,8 +1,9 @@
-// sketch-004 B3 (quick-260922-3us): the shared, kind-agnostic cover/chapter-bar/fold components —
-// never names a kind, never imports DocumentView directly (html renders through the `renderHtml`
-// prop artifact-page.tsx supplies, keeping DocumentCanvas the only raw-HTML sink, T-3us-01).
+// sketch-004 B3 (quick-260922-3us), extended by quick-260923-jxp: the shared, kind-agnostic
+// cover/chapter-bar/fold components — never names a kind, never imports DocumentView directly
+// (html renders through the `renderHtml` prop artifact-page.tsx supplies, keeping DocumentCanvas
+// the only raw-HTML sink, T-3us-01).
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, StickyNote } from 'lucide-react';
 import { DocumentViewToggle } from '../components/document-view-toggle.tsx';
 import { useActiveSection } from '../components/use-active-section.ts';
 import {
@@ -24,8 +25,12 @@ import { REMAINDER_ID, REMAINDER_LABEL } from './manifest.ts';
 export interface ChapterFolds {
   openChapters: ReadonlySet<string>;
   openItems: ReadonlySet<string>;
+  /** quick-260923-jxp (JXP-06): open note ids — a separate set from `openItems`, so Expand
+   * all/Collapse all and `jumpTo` never touch a note's own open/closed state. */
+  openNotes: ReadonlySet<string>;
   toggleChapter(id: string): void;
   toggleItem(id: string): void;
+  toggleNote(id: string): void;
   expandAll(): void;
   collapseAll(): void;
   allOpen: boolean;
@@ -36,6 +41,17 @@ function allChapterIds(layout: ComposedDocumentLayout | null): string[] {
   if (!layout) return [];
   const ids = layout.chapters.map((chapter) => chapter.id);
   if (layout.also) ids.push(layout.also.id);
+  return ids;
+}
+
+/** quick-260923-jxp (JXP-07): the ids Expand all/Collapse all/allOpen operate over — every real
+ * chapter, plus the Also chapter only when it is the folded ('fold') style. An endnotes-style Also
+ * chapter is always open and never toggled, so it never enters this set (or a ghost row, which
+ * never toggles at all). */
+function expandableChapterIds(layout: ComposedDocumentLayout | null): string[] {
+  if (!layout) return [];
+  const ids = layout.chapters.map((chapter) => chapter.id);
+  if (layout.also && layout.also.style === 'fold') ids.push(layout.also.id);
   return ids;
 }
 
@@ -72,6 +88,7 @@ export function useChapterFolds(
     () => initialOpenFromHash(layout).chapters,
   );
   const [openItems, setOpenItems] = useState<Set<string>>(() => initialOpenFromHash(layout).items);
+  const [openNotes, setOpenNotes] = useState<Set<string>>(() => new Set());
   // react-hooks v7: never call setState synchronously from an effect body — the pending scroll
   // target lives in a ref, consumed by an effect keyed on a plain counter bump.
   const pendingScrollRef = useRef<{ chapterId: string; itemId: string | null } | null>(null);
@@ -95,7 +112,16 @@ export function useChapterFolds(
     });
   }, []);
 
-  const ids = useMemo(() => allChapterIds(layout), [layout]);
+  const toggleNote = useCallback((id: string) => {
+    setOpenNotes((previous) => {
+      const next = new Set(previous);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const ids = useMemo(() => expandableChapterIds(layout), [layout]);
   const allOpen = ids.length > 0 && ids.every((id) => openChapters.has(id));
 
   const expandAll = useCallback(() => setOpenChapters(new Set(ids)), [ids]);
@@ -148,12 +174,27 @@ export function useChapterFolds(
       const chapterEl = document.getElementById(pending.chapterId);
       if (!chapterEl) return;
       chapterEl.scrollIntoView({ behavior, block: 'start' });
-      chapterEl.querySelector<HTMLButtonElement>('.document-fold-head')?.focus({ preventScroll: true });
+      // quick-260923-jxp: an endnotes-style Also chapter has no `.document-fold-head` to focus —
+      // fall back to focusing the chapter element itself (it carries `tabIndex={-1}`).
+      const foldHead = chapterEl.querySelector<HTMLButtonElement>('.document-fold-head');
+      if (foldHead) foldHead.focus({ preventScroll: true });
+      else chapterEl.focus({ preventScroll: true });
     });
     return () => window.cancelAnimationFrame(raf);
   }, [scrollTick]);
 
-  return { openChapters, openItems, toggleChapter, toggleItem, expandAll, collapseAll, allOpen, jumpTo };
+  return {
+    openChapters,
+    openItems,
+    openNotes,
+    toggleChapter,
+    toggleItem,
+    toggleNote,
+    expandAll,
+    collapseAll,
+    allOpen,
+    jumpTo,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -189,7 +230,7 @@ export function CoverCells({
   layout: ComposedDocumentLayout;
   onJump: (targetId: string) => void;
 }): React.JSX.Element {
-  const { cover, chapters, also } = layout;
+  const { cover, chapters, also, ghosts } = layout;
 
   const headlineCell =
     cover.headline || cover.pills.length > 0 ? (
@@ -224,16 +265,9 @@ export function CoverCells({
     </div>
   ) : null;
 
-  const indexEntries: { id: string; number: string; title: string; count: number | null }[] = [
-    ...chapters.map((chapter) => ({
-      id: chapter.id,
-      number: chapter.number,
-      title: chapter.title,
-      count: chapter.count,
-    })),
-    ...(also ? [{ id: also.id, number: also.number, title: ALSO_CHAPTER_TITLE, count: null }] : []),
-  ];
-
+  // quick-260923-jxp (JXP-02/JXP-07): index order is chapters, then ghosts (non-interactive,
+  // "Not discussed"), then the Also/Endnotes entry — titled from `also.title` so an endnotes-style
+  // sheet reads "Endnotes" instead of "Also in this document".
   return (
     <div className="document-cover-cells" data-glance={cover.glance ? 'true' : 'false'}>
       {headlineCell}
@@ -242,17 +276,36 @@ export function CoverCells({
         <p className="eyebrow">In this document</p>
         <nav aria-label="Chapters">
           <ol className="document-chapter-index">
-            {indexEntries.map((entry) => (
-              <li key={entry.id}>
-                <button type="button" onClick={() => onJump(entry.id)}>
-                  <span className="document-chapter-index-number">{entry.number}</span>
-                  <span className="document-chapter-index-title">{entry.title}</span>
-                  {entry.count !== null ? (
-                    <span className="document-chapter-index-count">{entry.count}</span>
+            {chapters.map((chapter) => (
+              <li key={chapter.id}>
+                <button type="button" onClick={() => onJump(chapter.id)}>
+                  <span className="document-chapter-index-number">{chapter.number}</span>
+                  <span className="document-chapter-index-title">{chapter.title}</span>
+                  {chapter.count !== null ? (
+                    <span className="document-chapter-index-count">{chapter.count}</span>
                   ) : null}
                 </button>
               </li>
             ))}
+            {ghosts.map((ghost) => (
+              <li key={ghost.id} data-ghost="true">
+                <span className="document-chapter-index-number" aria-hidden="true">
+                  –
+                </span>
+                <span className="document-chapter-index-title">{ghost.title}</span>
+                <span className="status-chip" data-tone="quiet">
+                  {ghost.label}
+                </span>
+              </li>
+            ))}
+            {also ? (
+              <li key={also.id}>
+                <button type="button" onClick={() => onJump(also.id)}>
+                  <span className="document-chapter-index-number">{also.number}</span>
+                  <span className="document-chapter-index-title">{also.title}</span>
+                </button>
+              </li>
+            ) : null}
           </ol>
         </nav>
       </div>
@@ -312,7 +365,7 @@ export function ChapterBar({
     ? [...layout.chapters, layout.also]
     : layout.chapters;
   const active = allEntries.find((entry) => entry.id === activeId) ?? layout.chapters[0];
-  const activeTitle = active.id === 'chapter-also' ? ALSO_CHAPTER_TITLE : (active as ComposedChapter).title;
+  const activeTitle = active.id === 'chapter-also' ? (layout.also?.title ?? ALSO_CHAPTER_TITLE) : (active as ComposedChapter).title;
 
   return (
     <div
@@ -350,13 +403,18 @@ function ItemRow({
   item,
   open,
   onToggle,
+  noteOpen,
+  onToggleNote,
   renderHtml,
 }: {
   item: ComposedItem;
   open: boolean;
   onToggle: () => void;
+  noteOpen: boolean;
+  onToggleNote: () => void;
   renderHtml: (html: string) => React.ReactNode;
 }): React.JSX.Element {
+  const noteId = `${item.id}-note`;
   return (
     <article className="document-item" id={item.id} tabIndex={-1}>
       <div className="document-item-head">
@@ -373,8 +431,54 @@ function ItemRow({
             ))}
           </div>
         ) : null}
+        {item.note ? (
+          <button
+            type="button"
+            className="document-item-note-toggle"
+            aria-expanded={noteOpen}
+            aria-controls={noteId}
+            onClick={onToggleNote}
+          >
+            <StickyNote aria-hidden="true" />
+            {item.note.label}
+          </button>
+        ) : null}
       </div>
-      {item.state ? (
+      {item.answerCard ? (
+        <div className="document-answer">
+          {item.answerCard.option ? (
+            <>
+              <p className="document-answer-option">
+                {item.answerCard.option.number !== null ? (
+                  <span className="document-option-number">{item.answerCard.option.number}</span>
+                ) : null}
+                <span className="document-option-title">{item.answerCard.option.title}</span>
+              </p>
+              {item.answerCard.option.description ? (
+                <p className="document-option-desc">{item.answerCard.option.description}</p>
+              ) : null}
+            </>
+          ) : null}
+          {item.answerCard.words ? (
+            <p className="document-answer-words">
+              <span className="document-item-detail-label">Your words</span>
+              {item.answerCard.words}
+            </p>
+          ) : null}
+          {item.state ? (
+            <div className="document-item-state">
+              <span className="status-chip" data-tone={item.state.tone}>
+                {item.state.label}
+              </span>
+              {item.answerCard.qualifier ? (
+                <span className="status-chip" data-tone="quiet">
+                  {item.answerCard.qualifier}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      ) : item.state ? (
         <div className="document-item-state">
           <span className="status-chip" data-tone={item.state.tone}>
             {item.state.label}
@@ -389,6 +493,21 @@ function ItemRow({
           </button>
           {open ? (
             <div className="document-item-detail">
+              {item.detail.options && item.detail.options.length > 0 ? (
+                <ol className="document-option-list">
+                  {item.detail.options.map((option, index) => (
+                    <li className="document-option" key={index}>
+                      {option.number !== null ? (
+                        <span className="document-option-number">{option.number}</span>
+                      ) : null}
+                      <span className="document-option-title">{option.title}</span>
+                      {option.description ? (
+                        <span className="document-option-desc">{option.description}</span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ol>
+              ) : null}
               {item.detail.rows?.map((row, index) => (
                 <div className="document-item-detail-row" key={index}>
                   {row.label ? <span className="document-item-detail-label">{row.label}</span> : null}
@@ -398,6 +517,16 @@ function ItemRow({
               {item.detail.html ? renderHtml(item.detail.html) : null}
             </div>
           ) : null}
+        </div>
+      ) : null}
+      {item.note && noteOpen ? (
+        <div className="document-item-note" id={noteId}>
+          {item.note.segments.map((segment, index) => (
+            <span key={index}>
+              {segment.mark ? <span className="document-item-note-mark">{segment.mark}</span> : null}
+              {segment.text}
+            </span>
+          ))}
         </div>
       ) : null}
     </article>
@@ -410,6 +539,8 @@ function ChapterFold({
   onToggle,
   openItems,
   onToggleItem,
+  openNotes,
+  onToggleNote,
   renderHtml,
 }: {
   chapter: ComposedChapter;
@@ -417,6 +548,8 @@ function ChapterFold({
   onToggle: () => void;
   openItems: ReadonlySet<string>;
   onToggleItem: (id: string) => void;
+  openNotes: ReadonlySet<string>;
+  onToggleNote: (id: string) => void;
   renderHtml: (html: string) => React.ReactNode;
 }): React.JSX.Element {
   const bodyId = `${chapter.id}-body`;
@@ -445,6 +578,8 @@ function ChapterFold({
                   item={item}
                   open={openItems.has(item.id)}
                   onToggle={() => onToggleItem(item.id)}
+                  noteOpen={openNotes.has(`${item.id}-note`)}
+                  onToggleNote={() => onToggleNote(`${item.id}-note`)}
                   renderHtml={renderHtml}
                 />
               ))
@@ -484,7 +619,7 @@ function AlsoFold({
           onClick={onToggle}
         >
           <span className="document-fold-number">{also.number}</span>
-          <span className="document-fold-name">{ALSO_CHAPTER_TITLE}</span>
+          <span className="document-fold-name">{also.title}</span>
           <FoldRollup rollup={also.rollup} />
           <ChevronRight className="document-fold-chevron" aria-hidden="true" />
         </button>
@@ -511,6 +646,43 @@ function AlsoFold({
             </details>
           ) : null}
         </div>
+      ) : null}
+    </section>
+  );
+}
+
+/** quick-260923-jxp (JXP-07): the discussion-log's always-open back-matter sheet, replacing the
+ * folded "Also in this document" chapter. Quieter typography, small-caps subsections, hanging
+ * bullets — never folded, and its panels keep their original anchor ids so the cover glance and
+ * chapter index still jump straight to them. */
+function EndnotesSheet({
+  also,
+  renderHtml,
+}: {
+  also: ComposedAlsoChapter;
+  renderHtml: (html: string) => React.ReactNode;
+}): React.JSX.Element {
+  const remainderHtml = useMemo(
+    () => also.remainder.map((group) => group.html).join(''),
+    [also.remainder],
+  );
+  return (
+    <section className="view-block document-endnotes" id={also.id} tabIndex={-1}>
+      <h2 className="document-endnotes-title">{also.title}</h2>
+      {also.panels.map((panel) => (
+        <section className="document-endnote" id={panel.id} key={panel.id} tabIndex={-1}>
+          <h3 className="document-endnote-title">{panel.heading}</h3>
+          {renderHtml(panel.bodyHtml)}
+        </section>
+      ))}
+      {also.remainder.length > 0 ? (
+        <details className="artifact-metadata" id={REMAINDER_ID}>
+          <summary>
+            {REMAINDER_LABEL}{' '}
+            <span>{also.remainder.length === 1 ? '1 section' : `${also.remainder.length} sections`}</span>
+          </summary>
+          {renderHtml(remainderHtml)}
+        </details>
       ) : null}
     </section>
   );
@@ -544,13 +716,28 @@ export function FoldedChapters({
           onToggle={() => folds.toggleChapter(chapter.id)}
           openItems={folds.openItems}
           onToggleItem={folds.toggleItem}
+          openNotes={folds.openNotes}
+          onToggleNote={folds.toggleNote}
           renderHtml={renderHtml}
         />
+      ))}
+      {layout.ghosts.map((ghost) => (
+        <div className="document-ghost" id={ghost.id} key={ghost.id}>
+          <span className="document-fold-number" aria-hidden="true">
+            –
+          </span>
+          <span className="document-ghost-name">{ghost.title}</span>
+          <span className="status-chip" data-tone="quiet">
+            {ghost.label}
+          </span>
+        </div>
       ))}
       {layout.also
         ? (() => {
             const also = layout.also;
-            return (
+            return also.style === 'endnotes' ? (
+              <EndnotesSheet also={also} renderHtml={renderHtml} />
+            ) : (
               <AlsoFold
                 also={also}
                 open={folds.openChapters.has(also.id)}

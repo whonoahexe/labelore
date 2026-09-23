@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   ALSO_CHAPTER_TITLE,
+  ENDNOTES_TITLE,
   chapterForTarget,
   composeDocumentLayout,
   factValueText,
@@ -142,6 +143,94 @@ describe('composeDocumentLayout', () => {
     expect(seenChapterIds).toEqual(['chapter-one']);
     expect(seenPanelIds).toEqual(['also-side']);
   });
+
+  // -------------------------------------------------------------------------
+  // quick-260923-jxp Task 2: ghosts, alsoStyle, panel heading/bodyHtml.
+  // -------------------------------------------------------------------------
+
+  it('ghosts: composed with ids `ghost-<slug(key)>`, neither numbered nor counted; null/[] gives []', () => {
+    let seenGhostIds: string[] = [];
+    const spec: DocumentLayoutSpec = {
+      chapters: [itemsSpec('one', () => [{ key: 'a', title: 'Chapter A', items: [] }])],
+      cover: (_input, parts) => {
+        seenGhostIds = parts.ghosts.map((g) => g.id);
+        return { status: null, facts: [], headline: null, pills: [], glance: null };
+      },
+      ghosts: () => [{ key: 'Path targeting (TGT-01)', title: 'Path targeting (TGT-01)', label: 'Not discussed' }],
+    };
+    const manifest: ViewManifest = { kind: 'test-kind', lead: 'lead.', promote: [], layout: spec };
+    const composed = composeDocumentLayout(manifest, baseInput({ groups }));
+    expect(composed!.ghosts).toEqual([
+      { key: 'Path targeting (TGT-01)', title: 'Path targeting (TGT-01)', label: 'Not discussed', id: 'ghost-path-targeting-tgt-01' },
+    ]);
+    expect(seenGhostIds).toEqual(['ghost-path-targeting-tgt-01']);
+
+    const specNoGhosts: DocumentLayoutSpec = {
+      chapters: [itemsSpec('one', () => [{ key: 'a', title: 'Chapter A', items: [] }])],
+      cover: () => ({ status: null, facts: [], headline: null, pills: [], glance: null }),
+    };
+    const manifestNoGhosts: ViewManifest = { kind: 'test-kind', lead: 'lead.', promote: [], layout: specNoGhosts };
+    expect(composeDocumentLayout(manifestNoGhosts, baseInput({ groups }))!.ghosts).toEqual([]);
+  });
+
+  it('ghosts alone never make a layout on their own — zero chapters still returns null', () => {
+    const spec: DocumentLayoutSpec = {
+      chapters: [itemsSpec('empty', () => null)],
+      cover: () => ({ status: null, facts: [], headline: null, pills: [], glance: null }),
+      ghosts: () => [{ key: 'a', title: 'A', label: 'Not discussed' }],
+    };
+    const manifest: ViewManifest = { kind: 'test-kind', lead: 'lead.', promote: [], layout: spec };
+    expect(composeDocumentLayout(manifest, baseInput({ groups }))).toBeNull();
+  });
+
+  it('alsoStyle "endnotes" gives also.style "endnotes" and title ENDNOTES_TITLE; default/"fold" give "fold" and ALSO_CHAPTER_TITLE', () => {
+    const specEndnotes: DocumentLayoutSpec = {
+      chapters: [itemsSpec('one', () => [{ key: 'a', title: 'Chapter A', items: [] }])],
+      also: [{ id: 'side', heading: 'Side notes', eyebrow: 'Side' }],
+      cover: () => ({ status: null, facts: [], headline: null, pills: [], glance: null }),
+      alsoStyle: 'endnotes',
+    };
+    const manifestEndnotes: ViewManifest = { kind: 'test-kind', lead: 'lead.', promote: [], layout: specEndnotes };
+    const composedEndnotes = composeDocumentLayout(manifestEndnotes, baseInput({ groups }));
+    expect(composedEndnotes!.also).toMatchObject({ style: 'endnotes', title: ENDNOTES_TITLE });
+
+    const specDefault: DocumentLayoutSpec = {
+      chapters: [itemsSpec('one', () => [{ key: 'a', title: 'Chapter A', items: [] }])],
+      also: [{ id: 'side', heading: 'Side notes', eyebrow: 'Side' }],
+      cover: () => ({ status: null, facts: [], headline: null, pills: [], glance: null }),
+    };
+    const manifestDefault: ViewManifest = { kind: 'test-kind', lead: 'lead.', promote: [], layout: specDefault };
+    const composedDefault = composeDocumentLayout(manifestDefault, baseInput({ groups }));
+    expect(composedDefault!.also).toMatchObject({ style: 'fold', title: ALSO_CHAPTER_TITLE });
+  });
+
+  it('each Also panel carries heading (group heading) and bodyHtml (stripLeadingHeading of its html)', () => {
+    const spec: DocumentLayoutSpec = {
+      chapters: [itemsSpec('one', () => [{ key: 'a', title: 'Chapter A', items: [] }])],
+      also: [{ id: 'side', heading: 'Side notes', eyebrow: 'Side' }],
+      cover: () => ({ status: null, facts: [], headline: null, pills: [], glance: null }),
+    };
+    const manifest: ViewManifest = { kind: 'test-kind', lead: 'lead.', promote: [], layout: spec };
+    const composed = composeDocumentLayout(manifest, baseInput({ groups }));
+    // Node has no DOMParser — stripLeadingHeading falls back to returning html unchanged.
+    expect(composed!.also!.panels[0]).toMatchObject({
+      heading: 'Side notes',
+      bodyHtml: '<h2>Side notes</h2><ul><li>a</li><li>b</li></ul>',
+    });
+  });
+
+  it('chapterForTarget still resolves chapter-also/also-<spec>/embedded ids under alsoStyle "endnotes"', () => {
+    const spec: DocumentLayoutSpec = {
+      chapters: [itemsSpec('one', () => [{ key: 'a', title: 'Chapter A', items: [] }])],
+      also: [{ id: 'side', heading: 'Side notes', eyebrow: 'Side' }],
+      cover: () => ({ status: null, facts: [], headline: null, pills: [], glance: null }),
+      alsoStyle: 'endnotes',
+    };
+    const manifest: ViewManifest = { kind: 'test-kind', lead: 'lead.', promote: [], layout: spec };
+    const composed = composeDocumentLayout(manifest, baseInput({ groups }))!;
+    expect(chapterForTarget(composed, 'chapter-also')).toEqual({ chapterId: 'chapter-also', itemId: null });
+    expect(chapterForTarget(composed, 'also-side')).toEqual({ chapterId: 'chapter-also', itemId: 'also-side' });
+  });
 });
 
 describe('rollupOf', () => {
@@ -263,10 +352,23 @@ describe('chapterForTarget', () => {
       also: {
         id: 'chapter-also',
         number: '03',
-        panels: [{ id: 'also-discretion', specId: 'discretion', eyebrow: 'Left to Claude', html: '<p id="embedded-in-panel">z</p>', count: 2 }],
+        panels: [
+          {
+            id: 'also-discretion',
+            specId: 'discretion',
+            eyebrow: 'Left to Claude',
+            html: '<p id="embedded-in-panel">z</p>',
+            count: 2,
+            heading: 'Discretion',
+            bodyHtml: '<p id="embedded-in-panel">z</p>',
+          },
+        ],
         remainder: [group({ id: 'leftover', heading: 'Leftover', html: '<p id="embedded-in-remainder">r</p>' })],
         rollup: [],
+        style: 'fold',
+        title: ALSO_CHAPTER_TITLE,
       },
+      ghosts: [],
     };
   }
 
@@ -327,7 +429,7 @@ describe('chapterForTarget', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Discussion-log layout data (layout-discussion-log.ts)
+// Discussion-log layout data (layout-discussion-log.ts) — quick-260923-jxp
 // ---------------------------------------------------------------------------
 
 function discussionQuestion(overrides: Partial<DiscussionQuestion> & Pick<DiscussionQuestion, 'topic' | 'question'>): DiscussionQuestion {
@@ -336,8 +438,17 @@ function discussionQuestion(overrides: Partial<DiscussionQuestion> & Pick<Discus
     chosenOption: 'A',
     chosenDescription: 'Option A',
     userChoice: null,
+    chosenIndex: 1,
+    qualifier: null,
+    resolution: 'chosen',
+    settled: null,
+    notes: null,
     ...overrides,
   };
+}
+
+function topic(overrides: Partial<DiscussionTopic> & Pick<DiscussionTopic, 'heading' | 'questionCount' | 'resolvedCount'>): DiscussionTopic {
+  return { leftover: false, ...overrides };
 }
 
 describe('discussionLogLayout', () => {
@@ -354,15 +465,15 @@ describe('discussionLogLayout', () => {
     return { manifest, input: baseInput({ kind: 'discussion-log', structured, groups }) };
   }
 
-  it('composes one chapter per topic, in first-seen order, holding only resolved questions as Q1..Qn', () => {
+  it('composes one chapter per topic, in first-seen order, holding every question as Q1..Qn (JXP-05: none filtered)', () => {
     const questions: DiscussionQuestion[] = [
       discussionQuestion({ topic: 'Topic One', question: 'Q1?' }),
       discussionQuestion({ topic: 'Topic One', question: 'Q2?' }),
-      discussionQuestion({ topic: 'Topic Two', question: 'Q1?' }),
+      discussionQuestion({ topic: 'Topic Two', question: 'Q1?', resolution: 'open', chosenIndex: null }),
     ];
     const topics: DiscussionTopic[] = [
-      { heading: 'Topic One', questionCount: 2, resolvedCount: 2 },
-      { heading: 'Topic Two', questionCount: 3, resolvedCount: 1 },
+      topic({ heading: 'Topic One', questionCount: 2, resolvedCount: 2 }),
+      topic({ heading: 'Topic Two', questionCount: 3, resolvedCount: 1 }),
     ];
     const { manifest, input } = manifestWith({ questions, topics });
     const composed = composeDocumentLayout(manifest, input);
@@ -371,114 +482,240 @@ describe('discussionLogLayout', () => {
     expect(composed!.chapters[1].items!.map((i) => i.ref)).toEqual(['Q1']);
   });
 
-  it('marks a fully-resolved topic Chosen (rollup "chosen"), and a "you decide" answer/userChoice Claude chose (rollup "by Claude")', () => {
+  it('state by resolution: chosen → Chosen (active/"chosen"), claude → Claude chose (active/"by Claude"), custom → Custom answer (active/"custom"), open → Open (quiet/"open")', () => {
     const questions: DiscussionQuestion[] = [
-      discussionQuestion({ topic: 'T', question: 'Normal?' }),
-      discussionQuestion({
-        topic: 'T',
-        question: 'Left to Claude?',
-        chosenOption: 'You decide',
-        chosenDescription: 'You decide',
-      }),
-      discussionQuestion({
-        topic: 'T',
-        question: 'User wrote you decide?',
-        userChoice: 'you decide',
-      }),
+      discussionQuestion({ topic: 'T', question: 'Chosen?', resolution: 'chosen' }),
+      discussionQuestion({ topic: 'T', question: 'Claude?', resolution: 'claude', chosenIndex: null }),
+      discussionQuestion({ topic: 'T', question: 'Custom?', resolution: 'custom', chosenIndex: null, userChoice: 'My words' }),
+      discussionQuestion({ topic: 'T', question: 'Open?', resolution: 'open', chosenIndex: null }),
     ];
-    const topics: DiscussionTopic[] = [{ heading: 'T', questionCount: 3, resolvedCount: 3 }];
+    const topics: DiscussionTopic[] = [topic({ heading: 'T', questionCount: 4, resolvedCount: 3 })];
     const { manifest, input } = manifestWith({ questions, topics });
     const composed = composeDocumentLayout(manifest, input);
     const items = composed!.chapters[0].items!;
     expect(items[0].state).toMatchObject({ label: 'Chosen', tone: 'active', rollup: 'chosen' });
     expect(items[1].state).toMatchObject({ label: 'Claude chose', tone: 'active', rollup: 'by Claude' });
-    expect(items[2].state).toMatchObject({ label: 'Claude chose', tone: 'active', rollup: 'by Claude' });
+    expect(items[2].state).toMatchObject({ label: 'Custom answer', tone: 'active', rollup: 'custom' });
+    expect(items[3].state).toMatchObject({ label: 'Open', tone: 'quiet', rollup: 'open' });
   });
 
-  it('detail: "N other option(s)" plus " · note" and a Your words row when userChoice differs from the chosen option', () => {
-    const questions: DiscussionQuestion[] = [
-      discussionQuestion({
-        topic: 'T',
-        question: 'Q?',
-        options: [
-          { option: 'A', description: 'Option A', chosen: true },
-          { option: 'B', description: 'Option B', chosen: false },
-          { option: 'C', description: 'Option C', chosen: false },
-        ],
-        userChoice: 'My own words',
-      }),
-    ];
-    const topics: DiscussionTopic[] = [{ heading: 'T', questionCount: 1, resolvedCount: 1 }];
-    const { manifest, input } = manifestWith({ questions, topics });
+  it('answerCard: chosenIndex set → {chosenIndex, chosenOption, chosenDescription or null}; else settled; else null', () => {
+    const chosenQ = discussionQuestion({ topic: 'T', question: 'Q1?', chosenIndex: 2, chosenOption: 'B', chosenDescription: '' });
+    const settledQ = discussionQuestion({
+      topic: 'T',
+      question: 'Q2?',
+      resolution: 'custom',
+      chosenIndex: null,
+      chosenOption: '',
+      chosenDescription: '',
+      userChoice: 'free text',
+      settled: { option: 'Settled opt', description: 'settled desc', prompt: 'Follow-up' },
+    });
+    const openQ = discussionQuestion({ topic: 'T', question: 'Q3?', resolution: 'open', chosenIndex: null, chosenOption: '', chosenDescription: '' });
+    const topics: DiscussionTopic[] = [topic({ heading: 'T', questionCount: 3, resolvedCount: 2 })];
+    const { manifest, input } = manifestWith({ questions: [chosenQ, settledQ, openQ], topics });
     const composed = composeDocumentLayout(manifest, input);
-    const item = composed!.chapters[0].items![0];
-    expect(item.detail!.label).toBe('2 other options · note');
-    expect(item.detail!.rows).toEqual([
-      { text: 'Option B' },
-      { text: 'Option C' },
-      { label: 'Your words', text: 'My own words' },
-    ]);
+    const items = composed!.chapters[0].items!;
+    expect(items[0].answerCard).toMatchObject({ option: { number: 2, title: 'B', description: null } });
+    expect(items[1].answerCard).toMatchObject({ option: { number: null, title: 'Settled opt', description: 'settled desc' } });
+    expect(items[2].answerCard).toBeNull();
   });
 
-  it('omits the detail entirely when there are no other options and no distinguishing note', () => {
-    const questions: DiscussionQuestion[] = [discussionQuestion({ topic: 'T', question: 'Q?' })];
-    const topics: DiscussionTopic[] = [{ heading: 'T', questionCount: 1, resolvedCount: 1 }];
-    const { manifest, input } = manifestWith({ questions, topics });
+  it('answerCard qualifier is shown for a non-Claude qualifier, and suppressed when it names Claude', () => {
+    const renamedQ = discussionQuestion({ topic: 'T', question: 'Q1?', qualifier: 'renamed' });
+    const claudeQ = discussionQuestion({ topic: 'T', question: 'Q2?', resolution: 'claude', qualifier: "Claude's call" });
+    const topics: DiscussionTopic[] = [topic({ heading: 'T', questionCount: 2, resolvedCount: 2 })];
+    const { manifest, input } = manifestWith({ questions: [renamedQ, claudeQ], topics });
     const composed = composeDocumentLayout(manifest, input);
-    expect(composed!.chapters[0].items![0].detail).toBeNull();
+    const items = composed!.chapters[0].items!;
+    expect(items[0].answerCard!.qualifier).toBe('renamed');
+    expect(items[1].answerCard!.qualifier).toBeNull();
   });
 
-  it("accounts for a fully-resolved topic's group, leaving a partially-resolved topic's group in the remainder", () => {
+  it('answerCard words: userChoice shown only when not "you decide" and (quote/asterisk/backtick/case-folded) distinct from the option title', () => {
+    const sameAsOption = discussionQuestion({ topic: 'T', question: 'Q1?', chosenOption: 'Backstage', userChoice: '"backstage"' });
+    const different = discussionQuestion({ topic: 'T', question: 'Q2?', chosenOption: 'CLI subcommand', userChoice: 'use the name `backstage`' });
+    const youDecide = discussionQuestion({
+      topic: 'T',
+      question: 'Q3?',
+      resolution: 'claude',
+      chosenIndex: null,
+      chosenOption: '',
+      chosenDescription: '',
+      userChoice: 'you decide',
+    });
+    const topics: DiscussionTopic[] = [topic({ heading: 'T', questionCount: 3, resolvedCount: 3 })];
+    const { manifest, input } = manifestWith({ questions: [sameAsOption, different, youDecide], topics });
+    const composed = composeDocumentLayout(manifest, input);
+    const items = composed!.chapters[0].items!;
+    expect(items[0].answerCard!.words).toBeNull();
+    expect(items[1].answerCard!.words).toBe('use the name `backstage`');
+    expect(items[2].answerCard).toBeNull();
+  });
+
+  it('detail: options = source-table options minus the chosen one, in source order; label "N other option(s)" when chosen, "N option(s) offered" when not; null when the list is empty', () => {
+    const withChosen = discussionQuestion({
+      topic: 'T',
+      question: 'Q1?',
+      chosenIndex: 1,
+      options: [
+        { option: 'A', description: 'Option A', chosen: true },
+        { option: 'B', description: 'Option B', chosen: false },
+        { option: 'C', description: 'Option C', chosen: false },
+      ],
+    });
+    const openWithOptions = discussionQuestion({
+      topic: 'T',
+      question: 'Q2?',
+      resolution: 'open',
+      chosenIndex: null,
+      chosenOption: '',
+      chosenDescription: '',
+      options: [
+        { option: 'X', description: 'desc X', chosen: false },
+        { option: 'Y', description: 'desc Y', chosen: false },
+      ],
+    });
+    const noOthers = discussionQuestion({ topic: 'T', question: 'Q3?' });
+    const topics: DiscussionTopic[] = [topic({ heading: 'T', questionCount: 3, resolvedCount: 2 })];
+    const { manifest, input } = manifestWith({ questions: [withChosen, openWithOptions, noOthers], topics });
+    const composed = composeDocumentLayout(manifest, input);
+    const items = composed!.chapters[0].items!;
+    expect(items[0].detail).toMatchObject({
+      label: '2 other options',
+      options: [
+        { number: 2, title: 'B', description: 'Option B' },
+        { number: 3, title: 'C', description: 'Option C' },
+      ],
+    });
+    expect(items[1].detail).toMatchObject({ label: '2 options offered' });
+    expect(items[0].detail!.label).not.toContain('note');
+    expect(items[2].detail).toBeNull();
+  });
+
+  it('note: notes → { label: "Note", segments }, an "Accepted gap:" sentence carries mark "Accepted gap" with the prefix stripped; no notes → note null', () => {
+    const withNote = discussionQuestion({
+      topic: 'T',
+      question: 'Q1?',
+      notes: 'First sentence here. Accepted gap: a known limitation.',
+    });
+    const withoutNote = discussionQuestion({ topic: 'T', question: 'Q2?' });
+    const topics: DiscussionTopic[] = [topic({ heading: 'T', questionCount: 2, resolvedCount: 2 })];
+    const { manifest, input } = manifestWith({ questions: [withNote, withoutNote], topics });
+    const composed = composeDocumentLayout(manifest, input);
+    const items = composed!.chapters[0].items!;
+    expect(items[0].note).toEqual({
+      label: 'Note',
+      segments: [
+        { text: 'First sentence here.', mark: null },
+        { text: 'a known limitation.', mark: 'Accepted gap' },
+      ],
+    });
+    expect(items[1].note).toBeNull();
+  });
+
+  it('accountsFor is the topic\'s group exactly when the topic is not leftover', () => {
     const questions: DiscussionQuestion[] = [
-      discussionQuestion({ topic: 'Full', question: 'Q1?' }),
-      discussionQuestion({ topic: 'Partial', question: 'Q1?' }),
+      discussionQuestion({ topic: 'Clean', question: 'Q1?' }),
+      discussionQuestion({ topic: 'Leftover', question: 'Q1?' }),
     ];
     const topics: DiscussionTopic[] = [
-      { heading: 'Full', questionCount: 1, resolvedCount: 1 },
-      { heading: 'Partial', questionCount: 2, resolvedCount: 1 },
+      topic({ heading: 'Clean', questionCount: 1, resolvedCount: 1, leftover: false }),
+      topic({ heading: 'Leftover', questionCount: 1, resolvedCount: 1, leftover: true }),
     ];
     const groups: DocumentSectionGroup[] = [
-      group({ id: 'full', heading: 'Full', html: '<h2>Full</h2>' }),
-      group({ id: 'partial', heading: 'Partial', html: '<h2>Partial</h2>' }),
+      group({ id: 'clean', heading: 'Clean', html: '<h2>Clean</h2>' }),
+      group({ id: 'leftover', heading: 'Leftover', html: '<h2>Leftover</h2>' }),
     ];
     const { manifest, input } = manifestWith({ questions, topics }, groups);
     const composed = composeDocumentLayout(manifest, input);
-    expect(composed!.also!.remainder.map((g) => g.heading)).toEqual(['Partial']);
+    expect(composed!.also!.remainder.map((g) => g.heading)).toEqual(['Leftover']);
   });
 
-  it('cover: headline shows "of T questions decided" only when some questions are unresolved', () => {
-    const questions: DiscussionQuestion[] = [discussionQuestion({ topic: 'T', question: 'Q1?' })];
-    const topicsPartial: DiscussionTopic[] = [{ heading: 'T', questionCount: 2, resolvedCount: 1 }];
-    const { manifest, input } = manifestWith({ questions, topics: topicsPartial });
+  it('cover: headline value = decided count (items not Open), status "D of T decided"', () => {
+    const questions: DiscussionQuestion[] = [
+      discussionQuestion({ topic: 'T', question: 'Q1?' }),
+      discussionQuestion({ topic: 'T', question: 'Q2?', resolution: 'open', chosenIndex: null }),
+    ];
+    const topics: DiscussionTopic[] = [topic({ heading: 'T', questionCount: 2, resolvedCount: 1 })];
+    const { manifest, input } = manifestWith({ questions, topics });
     const composed = composeDocumentLayout(manifest, input);
     expect(composed!.cover.headline).toEqual({ value: '1', label: 'of 2 questions decided' });
     expect(composed!.cover.status).toMatchObject({ tone: 'in-flight' });
 
-    const topicsFull: DiscussionTopic[] = [{ heading: 'T', questionCount: 1, resolvedCount: 1 }];
-    const { manifest: manifest2, input: input2 } = manifestWith({ questions, topics: topicsFull });
+    const fullQuestions: DiscussionQuestion[] = [discussionQuestion({ topic: 'T', question: 'Q1?' })];
+    const fullTopics: DiscussionTopic[] = [topic({ heading: 'T', questionCount: 1, resolvedCount: 1 })];
+    const { manifest: manifest2, input: input2 } = manifestWith({ questions: fullQuestions, topics: fullTopics });
     const composed2 = composeDocumentLayout(manifest2, input2);
     expect(composed2!.cover.headline).toEqual({ value: '1', label: 'questions decided' });
     expect(composed2!.cover.status).toMatchObject({ tone: 'complete' });
   });
 
-  it('cover facts is always empty', () => {
+  it('cover facts: Discussed always present ("D of N offered areas"); Logged present only with a date', () => {
     const questions: DiscussionQuestion[] = [discussionQuestion({ topic: 'T', question: 'Q1?' })];
-    const topics: DiscussionTopic[] = [{ heading: 'T', questionCount: 1, resolvedCount: 1 }];
-    const { manifest, input } = manifestWith({ questions, topics });
-    expect(composeDocumentLayout(manifest, input)!.cover.facts).toEqual([]);
+    const topics: DiscussionTopic[] = [topic({ heading: 'T', questionCount: 1, resolvedCount: 1 })];
+    const { manifest, input } = manifestWith({ questions, topics, date: null, areasDiscussed: null, declinedAreas: [] });
+    const composed = composeDocumentLayout(manifest, input);
+    expect(composed!.cover.facts).toEqual([{ label: 'Discussed', value: '1 of 1 offered areas' }]);
+
+    const { manifest: manifest2, input: input2 } = manifestWith({
+      questions,
+      topics,
+      date: '2026-08-21',
+      areasDiscussed: null,
+      declinedAreas: [],
+    });
+    const composed2 = composeDocumentLayout(manifest2, input2);
+    expect(composed2!.cover.facts).toEqual([
+      { label: 'Logged', value: 'Aug 21, 2026' },
+      { label: 'Discussed', value: '1 of 1 offered areas' },
+    ]);
   });
 
-  it('cover glance prefers a you-decide question, jumping to its composed item id', () => {
+  it('cover facts: Discussed total prefers declinedAreas.length, then declinedCount, then offeredCount, else discussed count', () => {
+    const questions: DiscussionQuestion[] = [discussionQuestion({ topic: 'T', question: 'Q1?' })];
+    const topics: DiscussionTopic[] = [topic({ heading: 'T', questionCount: 1, resolvedCount: 1 })];
+
+    const withAreas = manifestWith({ questions, topics, date: null, areasDiscussed: ['T'], declinedAreas: ['A', 'B'] });
+    expect(composeDocumentLayout(withAreas.manifest, withAreas.input)!.cover.facts).toContainEqual({
+      label: 'Discussed',
+      value: '1 of 3 offered areas',
+    });
+
+    const withCount = manifestWith({ questions, topics, date: null, areasDiscussed: ['T'], declinedAreas: [], declinedCount: 2 });
+    expect(composeDocumentLayout(withCount.manifest, withCount.input)!.cover.facts).toContainEqual({
+      label: 'Discussed',
+      value: '1 of 3 offered areas',
+    });
+
+    const withOffered = manifestWith({ questions, topics, date: null, areasDiscussed: ['T'], declinedAreas: [], offeredCount: 5 });
+    expect(composeDocumentLayout(withOffered.manifest, withOffered.input)!.cover.facts).toContainEqual({
+      label: 'Discussed',
+      value: '1 of 5 offered areas',
+    });
+  });
+
+  it('cover: Topics pill = chapters.length, Left to Claude = Claude-chose item count', () => {
+    const questions: DiscussionQuestion[] = [
+      discussionQuestion({ topic: 'One', question: 'Q1?' }),
+      discussionQuestion({ topic: 'Two', question: 'Q1?', resolution: 'claude', chosenIndex: null }),
+    ];
+    const topics: DiscussionTopic[] = [
+      topic({ heading: 'One', questionCount: 1, resolvedCount: 1 }),
+      topic({ heading: 'Two', questionCount: 1, resolvedCount: 1 }),
+    ];
+    const { manifest, input } = manifestWith({ questions, topics });
+    const composed = composeDocumentLayout(manifest, input)!;
+    expect(composed.cover.pills).toContainEqual({ value: '2', label: 'Topics' });
+    expect(composed.cover.pills).toContainEqual({ value: '1', label: 'Left to Claude' });
+  });
+
+  it('cover glance prefers a Claude-chose question, jumping to its composed item id', () => {
     const questions: DiscussionQuestion[] = [
       discussionQuestion({ topic: 'T', question: 'Normal?' }),
-      discussionQuestion({
-        topic: 'T',
-        question: 'Left to Claude?',
-        chosenOption: 'you decide',
-        chosenDescription: 'Manifest is the contract',
-      }),
+      discussionQuestion({ topic: 'T', question: 'Left to Claude?', resolution: 'claude', chosenIndex: null, chosenOption: '', chosenDescription: '' }),
     ];
-    const topics: DiscussionTopic[] = [{ heading: 'T', questionCount: 2, resolvedCount: 2 }];
+    const topics: DiscussionTopic[] = [topic({ heading: 'T', questionCount: 2, resolvedCount: 2 })];
     const { manifest, input } = manifestWith({ questions, topics });
     const composed = composeDocumentLayout(manifest, input)!;
     const claudeItem = composed.chapters[0].items!.find((i) => i.state?.label === 'Claude chose')!;
@@ -491,7 +728,7 @@ describe('discussionLogLayout', () => {
 
   it('cover glance falls back to the discretion panel\'s list count, then to null', () => {
     const questions: DiscussionQuestion[] = [discussionQuestion({ topic: 'T', question: 'Q1?' })];
-    const topics: DiscussionTopic[] = [{ heading: 'T', questionCount: 1, resolvedCount: 1 }];
+    const topics: DiscussionTopic[] = [topic({ heading: 'T', questionCount: 1, resolvedCount: 1 })];
     const discretionGroup = group({
       id: 'discretion',
       heading: "Claude's Discretion",
@@ -510,7 +747,28 @@ describe('discussionLogLayout', () => {
     expect(composedNoDiscretion.cover.glance).toBeNull();
   });
 
-  it('ALSO_CHAPTER_TITLE is the shared "Also in this document" string', () => {
+  it('ghosts come from structured.declinedAreas, each "Not discussed"', () => {
+    const questions: DiscussionQuestion[] = [discussionQuestion({ topic: 'T', question: 'Q1?' })];
+    const topics: DiscussionTopic[] = [topic({ heading: 'T', questionCount: 1, resolvedCount: 1 })];
+    const { manifest, input } = manifestWith({ questions, topics, declinedAreas: ['Structured-extraction depth', 'Path targeting'] });
+    const composed = composeDocumentLayout(manifest, input)!;
+    expect(composed.ghosts.map((g) => ({ title: g.title, label: g.label }))).toEqual([
+      { title: 'Structured-extraction depth', label: 'Not discussed' },
+      { title: 'Path targeting', label: 'Not discussed' },
+    ]);
+  });
+
+  it('alsoStyle is "endnotes" — plan/verification keep the default fold', () => {
+    const questions: DiscussionQuestion[] = [discussionQuestion({ topic: 'T', question: 'Q1?' })];
+    const topics: DiscussionTopic[] = [topic({ heading: 'T', questionCount: 1, resolvedCount: 1 })];
+    const discretionGroup = group({ id: 'discretion', heading: "Claude's Discretion", html: '<h2>D</h2><ul><li>x</li></ul>' });
+    const { manifest, input } = manifestWith({ questions, topics }, [discretionGroup]);
+    const composed = composeDocumentLayout(manifest, input)!;
+    expect(composed.also).toMatchObject({ style: 'endnotes', title: ENDNOTES_TITLE });
+  });
+
+  it('ALSO_CHAPTER_TITLE is the shared "Also in this document" string; ENDNOTES_TITLE is "Endnotes"', () => {
     expect(ALSO_CHAPTER_TITLE).toBe('Also in this document');
+    expect(ENDNOTES_TITLE).toBe('Endnotes');
   });
 });

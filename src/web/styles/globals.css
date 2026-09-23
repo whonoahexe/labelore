@@ -2190,6 +2190,20 @@ pre {
   font-size: var(--fs-3);
 }
 
+/* quick-260923-jxp Task 3 (JXP-09): ArtifactHeader's copy-path icon button, replacing the raw
+   path caption in both header variants. `justify-self: start` keeps it from stretching across the
+   plain header's single-column grid track (the cover variant sits in its own flex column,
+   `.document-cover-controls`, and needs no such override). */
+.artifact-path-copy {
+  justify-self: start;
+  color: var(--muted-foreground);
+}
+
+.artifact-path-copy:hover,
+.artifact-path-copy:focus-visible {
+  color: var(--foreground);
+}
+
 .metadata-panels {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(17rem, 100%), 1fr));
@@ -3417,6 +3431,211 @@ pre {
 .document-also-panel + .artifact-metadata,
 .document-also + .artifact-metadata {
   margin-top: var(--space-5);
+}
+
+/* quick-260923-jxp Task 1 (JXP-03/JXP-04): the chosen/settled answer card — a quiet card, not the
+   plain state line plan/verification items still use. */
+.document-answer {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+}
+
+.document-answer-option {
+  display: flex;
+  gap: var(--space-3);
+  align-items: baseline;
+  margin: 0;
+}
+
+/* The distinctive squared numeral badge (JXP-04) — a monospace, bordered square that inverts to
+   foreground-on-background inside the answer card so the chosen number reads at a glance without
+   spending the --primary accent (docs/design-language.md's 10% reservation). A shared min-width
+   keeps single digits and 10+ aligned to the same column. */
+.document-option-number {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: var(--space-7);
+  padding: var(--space-0-5) var(--space-1-5);
+  border: 1px solid var(--border);
+  background: var(--muted);
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+}
+
+.document-answer .document-option-number {
+  background: var(--foreground);
+  color: var(--background);
+  border-color: var(--foreground);
+}
+
+.document-option-title {
+  font-weight: var(--fw-semibold);
+}
+
+.document-option-desc {
+  margin: 0;
+  color: var(--muted-foreground);
+}
+
+.document-answer-words {
+  margin: 0;
+  display: flex;
+  gap: var(--space-2);
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+
+.document-answer-words::before {
+  content: '"';
+}
+
+.document-answer-words::after {
+  content: '"';
+}
+
+/* The numbered options disclosure (JXP-03/JXP-04): a grid of rows, badge in the first column. */
+.document-option-list {
+  display: grid;
+  gap: var(--space-2-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.document-option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-3);
+  align-items: baseline;
+}
+
+.document-option .document-option-desc {
+  grid-column: 2;
+}
+
+/* JXP-06: the quiet note toggle, separate from the options disclosure. */
+.document-item-note-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-2);
+  cursor: pointer;
+}
+
+.document-item-note-toggle:hover,
+.document-item-note-toggle:focus-visible {
+  color: var(--foreground);
+}
+
+.document-item-note-toggle:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: var(--space-1);
+}
+
+.document-item-note-toggle svg {
+  width: 1em;
+  height: 1em;
+}
+
+.document-item-note {
+  margin-top: var(--space-3);
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.document-item-note-mark {
+  margin-right: var(--space-2);
+  color: var(--foreground);
+  font-size: var(--fs-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+/* quick-260923-jxp Task 2 (JXP-02): a declined-area ghost row — the same fold-head column grid,
+   deliberately inert (no hover, no cursor, no chevron, no body). */
+.document-ghost {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--space-3);
+  align-items: center;
+  margin-top: var(--space-4);
+  padding: var(--space-4) 0;
+  border-top: 1px dashed var(--border);
+  color: var(--muted-foreground);
+}
+
+.document-ghost-name {
+  font-size: var(--fs-5);
+}
+
+@media (max-width: 42rem) {
+  .document-ghost {
+    grid-template-columns: auto 1fr;
+  }
+}
+
+/* JXP-07: the Endnotes sheet replacing "Also in this document" on discussion logs only — a
+   quieter, always-open typographic back-matter sheet. */
+.document-endnotes {
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border);
+}
+
+.document-endnotes-title {
+  margin: 0 0 var(--space-4);
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-3);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  text-transform: uppercase;
+}
+
+.document-endnote {
+  margin-top: var(--space-5);
+}
+
+.document-endnote:first-of-type {
+  margin-top: 0;
+}
+
+.document-endnote-title {
+  margin: 0 0 var(--space-2);
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-3);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  text-transform: uppercase;
+}
+
+/* Hanging bullets: the bullet sits outside the text column so wrapped lines align with the
+   first line's text — no negative margins (F-14). */
+.document-endnote ul,
+.document-endnote ol {
+  margin: 0;
+  padding-left: var(--space-5);
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.document-endnote li + li {
+  margin-top: var(--space-2);
 }
 
 /* VIEW-02 DISCUSSION-LOG view (view-local, UI-SPEC §3). */
