@@ -461,7 +461,7 @@ function clipAtFirstClosingTag(text: string): string {
 /** `splitSections(body)`, with every section's body clipped at its own closing tag line (see
  * `clipAtFirstClosingTag`) — the one seam every role extractor below reads top-level `##`
  * sections through. */
-function topSections(body: string): { heading: string; body: string }[] {
+export function topSections(body: string): { heading: string; body: string }[] {
   return splitSections(body).map((s) => ({ heading: s.heading, body: clipAtFirstClosingTag(s.body) }));
 }
 
@@ -676,7 +676,11 @@ const DECISION_OPEN_RE = /^\*\*(D-\d{1,3})[:.]?\*\*[:.]?\s*/;
 const REVERSIBILITY_SPLIT_RE = /\s[—–-]\s\*\*Reversibility:\*\*\s*/;
 const REVERSIBILITY_WORD_RE = /^(reversible|costly|one-way|irreversible)/i;
 const DISCRETION_HEADING_RE = /discretion/i;
-const OPEN_QUESTIONS_HEADING_RE = /open questions?/i;
+// Anchored at the start (not a bare substring test) — a heading like "The STATE.md open question
+// is already answered" (SP 03's `<resolved_open_question>` block) legitimately contains the words
+// "open question" without being one; only a heading that itself IS an open-questions heading
+// ("Open questions for the researcher", "Open Questions Carried Forward", …) should match.
+const OPEN_QUESTIONS_HEADING_RE = /^open questions?\b/i;
 
 function splitReversibility(text: string): { text: string; reversibility: { word: string; text: string } | null } {
   const parts = text.split(REVERSIBILITY_SPLIT_RE);
@@ -717,7 +721,7 @@ function parseAreaEntries(body: string): AreaEntry[] {
     const trimmed = raw.trim();
     if (trimmed === '' || TAG_LINE_RE.test(trimmed)) {
       // A blank line followed by an indented line continues an open decision (multi-paragraph).
-      if (current && i + 1 < lines.length && isIndentedContinuation(lines[i + 1])) {
+      if (current && i + 1 < lines.length && /^[ \t]+\S/.test(lines[i + 1])) {
         i += 1;
         continue;
       }
@@ -727,7 +731,11 @@ function parseAreaEntries(body: string): AreaEntry[] {
       continue;
     }
 
-    const bulletMatch = UNORDERED_ITEM_RE.exec(trimmed) ?? ORDERED_ITEM_RE.exec(trimmed);
+    // A bullet only opens a NEW decision at column 0 — a nested (indented) sub-bullet is prose
+    // detail belonging to the decision already open, not a sibling entry (a real corpus decision
+    // routinely nests a `  - sub-point` list under its own top-level `- **D-NN:**` bullet).
+    const isTopLevelLine = !/^[ \t]/.test(raw);
+    const bulletMatch = isTopLevelLine ? (UNORDERED_ITEM_RE.exec(trimmed) ?? ORDERED_ITEM_RE.exec(trimmed)) : null;
     if (bulletMatch) {
       closeDecision();
       closeNote();
@@ -740,7 +748,7 @@ function parseAreaEntries(body: string): AreaEntry[] {
       continue;
     }
 
-    if (current && isIndentedContinuation(raw)) {
+    if (current && /^[ \t]+\S/.test(raw)) {
       current.parts.push(trimmed);
       i += 1;
       continue;
