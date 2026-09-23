@@ -5575,6 +5575,7 @@ button.view-context-summary:hover {
   font-size: var(--fs-3);
   text-decoration: underline dotted;
   text-underline-offset: 3px;
+  white-space: nowrap;
   cursor: pointer;
 }
 

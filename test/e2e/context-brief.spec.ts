@@ -83,4 +83,21 @@ test.describe('CONTEXT brief — LB v1.1/05 (tracer)', () => {
     await page.getByRole('button', { name: 'View', exact: true }).click();
     await expect(page.locator('.view-block')).toHaveCount(viewBlocksBefore);
   });
+
+  test('the "decisions locked" stat focuses the first decision row, and 4 discretion notes sit under decisions', async ({
+    page,
+    baseURL,
+  }) => {
+    const url = await resolveFixtureUrl(baseURL ?? 'http://127.0.0.1:4199', '05-per-type-document-views/05-CONTEXT.md');
+    await page.goto(url);
+    await page.locator('#context-boundary').waitFor({ state: 'visible' });
+
+    const lockedStat = page.locator('.view-context-stat', { hasText: 'decisions locked' });
+    await expect(lockedStat).toBeVisible();
+    await lockedStat.click();
+    const firstDecision = page.locator('.view-context-decision').first();
+    await expect(firstDecision).toBeFocused();
+
+    await expect(page.locator('.view-context-claude-note')).toHaveCount(4);
+  });
 });
