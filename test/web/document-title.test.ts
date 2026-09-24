@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { RenderedDocument } from '../../src/rendering/markdown.ts';
-import { dropLeadingTitle } from '../../src/web/pages/document-title.ts';
+import { dropLeadingTitle, splitPhaseTitle } from '../../src/web/pages/document-title.ts';
 
 function doc(overrides: Partial<RenderedDocument> = {}): RenderedDocument {
   return {
@@ -49,5 +49,27 @@ describe('dropLeadingTitle', () => {
   it('is a no-op for a document with no headings', () => {
     const original = doc({ html: '<p>Just text.</p>', headings: [] });
     expect(dropLeadingTitle(original, 'Anything')).toBe(original);
+  });
+});
+
+describe('splitPhaseTitle', () => {
+  it('moves the phase out and drops the kind suffix', () => {
+    expect(
+      splitPhaseTitle('Phase 1: Portal-Owned Identity & Sessions - Discussion Log', 'Discussion log'),
+    ).toEqual({ phase: 'Phase 1', title: 'Portal-Owned Identity & Sessions' });
+  });
+
+  it('keeps a suffix that is not the kind', () => {
+    expect(splitPhaseTitle('Phase 2.1: Search - Notes', 'Discussion log')).toEqual({
+      phase: 'Phase 2.1',
+      title: 'Search - Notes',
+    });
+  });
+
+  it('leaves a title without the phase prefix unchanged', () => {
+    expect(splitPhaseTitle('Discussion Log', 'Discussion log')).toEqual({
+      phase: null,
+      title: 'Discussion Log',
+    });
   });
 });

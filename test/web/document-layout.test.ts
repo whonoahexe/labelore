@@ -97,10 +97,10 @@ describe('composeDocumentLayout', () => {
     expect(composed!.also!.panels).toHaveLength(1);
     expect(composed!.also!.panels[0]).toMatchObject({ id: 'also-side', eyebrow: 'Side', count: 2 });
     // "Notes" and "Nothing to see" stay in the remainder — never consumed by anything.
-    expect(composed!.also!.remainder.map((g) => g.heading)).toEqual(['Introduction', 'Notes', 'Nothing to see']);
+    expect(composed!.remainder.map((g) => g.heading)).toEqual(['Introduction', 'Notes', 'Nothing to see']);
   });
 
-  it('the Also chapter is null when it would hold neither a panel nor a remainder group', () => {
+  it('the Also chapter is null when it would hold no panel (a remainder alone never earns one)', () => {
     const spec: DocumentLayoutSpec = {
       chapters: [{ type: 'section', id: 'all', heading: /.*/, all: true }],
       cover: () => ({ status: null, facts: [], headline: null, pills: [], glance: null }),
@@ -123,7 +123,7 @@ describe('composeDocumentLayout', () => {
     };
     const manifest: ViewManifest = { kind: 'test-kind', lead: 'lead.', promote: [], layout: spec };
     const composed = composeDocumentLayout(manifest, baseInput({ groups }));
-    expect(composed!.also!.remainder.map((g) => g.heading)).toEqual(['Introduction', 'Nothing to see']);
+    expect(composed!.remainder.map((g) => g.heading)).toEqual(['Introduction', 'Nothing to see']);
   });
 
   it('calls cover(input, parts) last, so the cover can reference composed chapter/panel ids', () => {
@@ -363,11 +363,11 @@ describe('chapterForTarget', () => {
             bodyHtml: '<p id="embedded-in-panel">z</p>',
           },
         ],
-        remainder: [group({ id: 'leftover', heading: 'Leftover', html: '<p id="embedded-in-remainder">r</p>' })],
         rollup: [],
         style: 'fold',
         title: ALSO_CHAPTER_TITLE,
       },
+      remainder: [group({ id: 'leftover', heading: 'Leftover', html: '<p id="embedded-in-remainder">r</p>' })],
       ghosts: [],
     };
   }
@@ -404,7 +404,7 @@ describe('chapterForTarget', () => {
     });
   });
 
-  it('finds an id="x" embedded inside a section chapter\'s html, an item\'s detail html, a panel\'s html, or a remainder group\'s html', () => {
+  it('finds an id="x" embedded inside a section chapter\'s html, an item\'s detail html, or a panel\'s html — never a remainder group, which View mode does not render', () => {
     expect(chapterForTarget(makeLayout(), 'embedded-in-section')).toEqual({
       chapterId: 'chapter-section',
       itemId: null,
@@ -417,10 +417,7 @@ describe('chapterForTarget', () => {
       chapterId: 'chapter-also',
       itemId: 'also-discretion',
     });
-    expect(chapterForTarget(makeLayout(), 'embedded-in-remainder')).toEqual({
-      chapterId: 'chapter-also',
-      itemId: null,
-    });
+    expect(chapterForTarget(makeLayout(), 'embedded-in-remainder')).toBeNull();
   });
 
   it('returns null for an unknown target', () => {
@@ -553,6 +550,14 @@ describe('discussionLogLayout', () => {
     expect(items[2].answerCard).toBeNull();
   });
 
+  it('answerCard words: quotes the log already wrapped the words in are dropped (the card adds its own)', () => {
+    const quoted = discussionQuestion({ topic: 'T', question: 'Q1?', chosenOption: 'CLI subcommand', userChoice: '"use the name `backstage`"' });
+    const topics: DiscussionTopic[] = [topic({ heading: 'T', questionCount: 1, resolvedCount: 1 })];
+    const { manifest, input } = manifestWith({ questions: [quoted], topics });
+    const composed = composeDocumentLayout(manifest, input);
+    expect(composed!.chapters[0].items![0].answerCard!.words).toBe('use the name `backstage`');
+  });
+
   it('detail: options = source-table options minus the chosen one, in source order; label "N other option(s)" when chosen, "N option(s) offered" when not; null when the list is empty', () => {
     const withChosen = discussionQuestion({
       topic: 'T',
@@ -629,7 +634,7 @@ describe('discussionLogLayout', () => {
     ];
     const { manifest, input } = manifestWith({ questions, topics }, groups);
     const composed = composeDocumentLayout(manifest, input);
-    expect(composed!.also!.remainder.map((g) => g.heading)).toEqual(['Leftover']);
+    expect(composed!.remainder.map((g) => g.heading)).toEqual(['Leftover']);
   });
 
   it('cover: headline value = decided count (items not Open), status "D of T decided"', () => {

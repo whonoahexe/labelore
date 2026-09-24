@@ -185,7 +185,9 @@ element is actually written, regardless of class name:
   extends this same reservation to: the cover sheet's `.document-cover-glance` cell's top rule, the
   pinned chapter bar's current-chapter number, and every cover/panel eyebrow (`.document-cover-copy
   .eyebrow`, `.document-cover-cell .eyebrow`, `.document-also-panel .eyebrow`) — the last of these
-  is the pre-existing `.eyebrow` rule reused verbatim, not a new accent use.
+  is the pre-existing `.eyebrow` rule reused verbatim, not a new accent use. The discussion log's
+  endnote panel titles (Claude's Discretion, Deferred Ideas) take the same accent as those panel
+  eyebrows.
 - **Squared corners.** `border-radius` is unset (0) everywhere except 3 existing call sites of
   `--radius-sm`. Treat radius as the exception, never the default, for any new element.
 - **The discussion log ends on an Endnotes sheet.** (quick-260923-jxp, JXP-07) An opt-in
@@ -210,8 +212,8 @@ element is actually written, regardless of class name:
 - **CONTEXT uses the sketch-006 D1 brief layout, not B3.** (quick-260923-lju) The `context` kind's
   manifest declares a `brief` hook (`composeContextBrief`) instead of opting into `layout`
   (`DocumentLayoutSpec`) — a boundary hero, a quiet out-strip, an amber open-questions panel, a
-  continuous decision register, and single closed "More in this document" disclosure holding
-  canonical references and existing code insights. It never carries a cover sheet, a chapter
+  continuous decision register. Sections the brief doesn't claim (canonical references, existing
+  code insights) are read in Source — View mode has no "More in this document" disclosure. It never carries a cover sheet, a chapter
   index, folded chapters, or an endnotes sheet — those are B3's shape (DISCUSSION-LOG, PLAN,
   VERIFICATION), deliberately not CONTEXT's.
 - **The 10% accent reservation extends to the CONTEXT brief's In-this-phase card.** (quick-260923-lju)

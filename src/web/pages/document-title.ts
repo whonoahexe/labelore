@@ -23,3 +23,25 @@ export function dropLeadingTitle(document: RenderedDocument, title: string): Ren
     headings: rest,
   };
 }
+
+/** GSD titles its phase documents `Phase 1: Portal-Owned Identity & Sessions - Discussion Log`.
+ * On a cover page the eyebrow already names the document kind, so the phase moves up beside it
+ * (`Phase 1 · Discussion log`) and the H1 keeps only the phase name. A title that doesn't match the
+ * `Phase N: name` shape comes back unchanged with `phase: null`; the trailing ` - <kind>` is only
+ * dropped when it repeats `kindLabel` (case-insensitive). */
+export function splitPhaseTitle(
+  title: string,
+  kindLabel: string,
+): { phase: string | null; title: string } {
+  const match = /^\s*Phase\s+(\d+(?:\.\d+)*)\s*:\s*(.+?)\s*$/i.exec(title);
+  if (!match) return { phase: null, title };
+  let name = match[2]!;
+  const suffix = new RegExp(`\\s+[-–—]\\s+${escapeRegExp(kindLabel.trim())}$`, 'i');
+  name = name.replace(suffix, '').trim();
+  if (!name) return { phase: null, title };
+  return { phase: `Phase ${match[1]}`, title: name };
+}
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}

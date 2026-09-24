@@ -2,7 +2,7 @@
 // cover/chapter-bar/fold components — never names a kind, never imports DocumentView directly
 // (html renders through the `renderHtml` prop artifact-page.tsx supplies, keeping DocumentCanvas
 // the only raw-HTML sink, T-3us-01).
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronRight, StickyNote } from 'lucide-react';
 import { DocumentViewToggle } from '../components/document-view-toggle.tsx';
 import { useActiveSection } from '../components/use-active-section.ts';
@@ -10,13 +10,14 @@ import {
   ALSO_CHAPTER_TITLE,
   chapterForTarget,
   type ComposedAlsoChapter,
+  type ComposedAlsoPanel,
   type ComposedChapter,
   type ComposedDocumentLayout,
   type ComposedItem,
   type CoverFact,
   type Tally,
 } from './layout.ts';
-import { REMAINDER_ID, REMAINDER_LABEL } from './manifest.ts';
+import { deferredOutcome, splitEndnoteBody } from './endnote-items.ts';
 
 // ---------------------------------------------------------------------------
 // useChapterFolds — open/closed state, expand/collapse-all, and jump-to-target
@@ -200,6 +201,20 @@ export function useChapterFolds(
 // ---------------------------------------------------------------------------
 // Cover pieces
 // ---------------------------------------------------------------------------
+
+/** The user's words are raw log text: render `backtick` spans as inline code, the rest verbatim. */
+function withInlineCode(text: string): React.ReactNode[] {
+  return text
+    .split(/(`[^`]+`)/)
+    .filter(Boolean)
+    .map((part, index) =>
+      part.length > 2 && part.startsWith('`') && part.endsWith('`') ? (
+        <code key={index}>{part.slice(1, -1)}</code>
+      ) : (
+        <Fragment key={index}>{part}</Fragment>
+      ),
+    );
+}
 
 export function CoverFacts({ facts }: { facts: CoverFact[] }): React.JSX.Element | null {
   if (facts.length === 0) return null;
@@ -462,7 +477,7 @@ function ItemRow({
           {item.answerCard.words ? (
             <p className="document-answer-words">
               <span className="document-item-detail-label">Your words</span>
-              {item.answerCard.words}
+              <q>{withInlineCode(item.answerCard.words)}</q>
             </p>
           ) : null}
           {item.state ? (
@@ -604,10 +619,6 @@ function AlsoFold({
   renderHtml: (html: string) => React.ReactNode;
 }): React.JSX.Element {
   const bodyId = `${also.id}-body`;
-  const remainderHtml = useMemo(
-    () => also.remainder.map((group) => group.html).join(''),
-    [also.remainder],
-  );
   return (
     <section className="view-block document-fold" id={also.id} data-open={open}>
       <h2 className="document-fold-title">
@@ -634,19 +645,55 @@ function AlsoFold({
               </section>
             ))}
           </div>
-          {also.remainder.length > 0 ? (
-            <details className="artifact-metadata" id={REMAINDER_ID}>
-              <summary>
-                {REMAINDER_LABEL}{' '}
-                <span>
-                  {also.remainder.length === 1 ? '1 section' : `${also.remainder.length} sections`}
-                </span>
-              </summary>
-              {renderHtml(remainderHtml)}
-            </details>
-          ) : null}
         </div>
       ) : null}
+    </section>
+  );
+}
+
+/** One endnote as a CONTEXT-brief-style panel: heading with its item count, prose as-is, the
+ * first list as divided rows. A deferred idea's recorded outcome sits on its row as a quiet chip. */
+function EndnotePanel({
+  panel,
+  renderHtml,
+}: {
+  panel: ComposedAlsoPanel;
+  renderHtml: (html: string) => React.ReactNode;
+}): React.JSX.Element {
+  const body = useMemo(() => {
+    const split = splitEndnoteBody(panel.bodyHtml);
+    const items = split.items?.map((html) =>
+      panel.specId === 'deferred' ? deferredOutcome(html) : { html, outcome: null },
+    );
+    return { ...split, items };
+  }, [panel.bodyHtml, panel.specId]);
+  return (
+    <section className="document-endnote preview-panel" id={panel.id} tabIndex={-1}>
+      <header className="view-discussion-log-endnote-head">
+        <h3 className="document-endnote-title">{panel.heading}</h3>
+        {panel.count !== null ? <span className="view-discussion-log-endnote-count">{panel.count}</span> : null}
+      </header>
+      {body.lead ? renderHtml(body.lead) : null}
+      {body.items && body.items.length > 0 ? (
+        <ul className="view-discussion-log-endnote-list">
+          {body.items.map((item, index) => (
+            <li
+              key={index}
+              className="view-discussion-log-endnote-row"
+              data-outcome={item.outcome ? (item.outcome.startsWith('→') ? 'forward' : 'dropped') : undefined}
+            >
+              {/* A tight-list item has no <p>; the prose rules (inline code etc.) key off one. */}
+              {renderHtml(/^<(p|ul|ol|div|pre|blockquote)\b/i.test(item.html) ? item.html : `<p>${item.html}</p>`)}
+              {item.outcome ? (
+                <span className="status-chip" data-tone="quiet">
+                  {item.outcome}
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {body.trailer ? renderHtml(body.trailer) : null}
     </section>
   );
 }
@@ -662,28 +709,14 @@ function EndnotesSheet({
   also: ComposedAlsoChapter;
   renderHtml: (html: string) => React.ReactNode;
 }): React.JSX.Element {
-  const remainderHtml = useMemo(
-    () => also.remainder.map((group) => group.html).join(''),
-    [also.remainder],
-  );
   return (
     <section className="view-block document-endnotes" id={also.id} tabIndex={-1}>
       <h2 className="document-endnotes-title">{also.title}</h2>
-      {also.panels.map((panel) => (
-        <section className="document-endnote" id={panel.id} key={panel.id} tabIndex={-1}>
-          <h3 className="document-endnote-title">{panel.heading}</h3>
-          {renderHtml(panel.bodyHtml)}
-        </section>
-      ))}
-      {also.remainder.length > 0 ? (
-        <details className="artifact-metadata" id={REMAINDER_ID}>
-          <summary>
-            {REMAINDER_LABEL}{' '}
-            <span>{also.remainder.length === 1 ? '1 section' : `${also.remainder.length} sections`}</span>
-          </summary>
-          {renderHtml(remainderHtml)}
-        </details>
-      ) : null}
+      <div className="view-discussion-log-endnote-grid">
+        {also.panels.map((panel) => (
+          <EndnotePanel key={panel.id} panel={panel} renderHtml={renderHtml} />
+        ))}
+      </div>
     </section>
   );
 }

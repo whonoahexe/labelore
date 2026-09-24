@@ -156,7 +156,6 @@ export interface ComposedAlsoChapter {
   id: 'chapter-also';
   number: string;
   panels: ComposedAlsoPanel[];
-  remainder: DocumentSectionGroup[];
   rollup: { text: string; tone: ChipTone }[];
   /** quick-260923-jxp (JXP-07): 'fold' (default, plan/verification's folded "Also in this
    * document" chapter, unchanged) or 'endnotes' (the discussion-log's always-open back-matter
@@ -185,6 +184,8 @@ export interface ComposedDocumentLayout {
   cover: CoverData;
   chapters: ComposedChapter[];
   also: ComposedAlsoChapter | null;
+  /** Groups no chapter or Also panel claimed. Not rendered in View mode — read them in Source. */
+  remainder: DocumentSectionGroup[];
   /** quick-260923-jxp (JXP-02): composed declined-area ghost rows — `[]` when the spec has none. */
   ghosts: ComposedGhost[];
 }
@@ -299,11 +300,6 @@ export function chapterForTarget(
     for (const panel of layout.also.panels) {
       if (panel.id === targetId || htmlHasId(panel.html, targetId)) {
         return { chapterId: layout.also.id, itemId: panel.id };
-      }
-    }
-    for (const group of layout.also.remainder) {
-      if (group.id === targetId || htmlHasId(group.html, targetId)) {
-        return { chapterId: layout.also.id, itemId: null };
       }
     }
   }
@@ -423,23 +419,18 @@ export function composeDocumentLayout(
   const remainder = remainderOf(input.groups, consumed);
 
   let also: ComposedAlsoChapter | null = null;
-  if (panels.length > 0 || remainder.length > 0) {
+  // The remainder is not rendered in View mode (read it in Source), so it never earns an Also
+  // chapter or a roll-up chip on its own.
+  if (panels.length > 0) {
     const alsoRollup: { text: string; tone: ChipTone }[] = panelRollupSeeds.map((seed) => ({
       text: seed.count !== null ? `${seed.count} ${seed.heading}` : seed.heading,
       tone: 'quiet',
     }));
-    if (remainder.length > 0) {
-      alsoRollup.push({
-        text: `${remainder.length} more section${remainder.length === 1 ? '' : 's'}`,
-        tone: 'quiet',
-      });
-    }
     const alsoStyle = spec.alsoStyle ?? 'fold';
     also = {
       id: 'chapter-also',
       number: pad(chapters.length + 1),
       panels,
-      remainder,
       rollup: alsoRollup,
       style: alsoStyle,
       title: alsoStyle === 'endnotes' ? ENDNOTES_TITLE : ALSO_CHAPTER_TITLE,
@@ -453,5 +444,5 @@ export function composeDocumentLayout(
 
   const cover = spec.cover(input, { chapters, also: panels, ghosts });
 
-  return { cover, chapters, also, ghosts };
+  return { cover, chapters, also, remainder, ghosts };
 }

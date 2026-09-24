@@ -101,7 +101,7 @@ describe('plan layout — Tasks chapter', () => {
 
     const missingHtml = [taskSegment({ ordinal: '1.1', html: undefined })];
     const composedMissing = composeDocumentLayout(planManifest, baseInput({ planSegments: missingHtml, groups }))!;
-    expect(composedMissing.also!.remainder.map((g) => g.heading)).toEqual(['Tasks']);
+    expect(composedMissing.remainder.map((g) => g.heading)).toEqual(['Tasks']);
   });
 });
 

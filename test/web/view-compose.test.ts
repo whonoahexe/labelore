@@ -3,8 +3,6 @@ import {
   composeView,
   outlineEntriesOf,
   INTRODUCTION_LABEL,
-  REMAINDER_ID,
-  REMAINDER_LABEL,
   type ViewInput,
   type ViewManifest,
 } from '../../src/web/views/manifest.ts';
@@ -89,17 +87,16 @@ describe('composeView', () => {
 });
 
 describe('outlineEntriesOf', () => {
-  it('appends exactly one remainder entry, after the promoted blocks, when the remainder is non-empty', () => {
+  it('lists only the promoted blocks — the remainder is not rendered in View mode, so it has no entry', () => {
     const composed = composeView(manifest, input);
-    const entries = outlineEntriesOf(composed);
-    expect(entries).toEqual([
+    expect(composed.remainder.length).toBeGreaterThan(0);
+    expect(outlineEntriesOf(composed)).toEqual([
       { id: 'view-block-1', label: 'Topic A promoted' },
       { id: 'view-block-2', label: 'Facts' },
-      { id: REMAINDER_ID, label: REMAINDER_LABEL },
     ]);
   });
 
-  it('omits the remainder entry entirely when every group was consumed', () => {
+  it('lists every promoted block when every group was consumed', () => {
     const fullManifest: ViewManifest = {
       kind: 'test-kind',
       lead: '',
@@ -110,7 +107,7 @@ describe('outlineEntriesOf', () => {
     const fullInput: ViewInput = { ...input, groups: groups.slice(1) };
     const composed = composeView(fullManifest, fullInput);
     expect(composed.remainder).toEqual([]);
-    expect(outlineEntriesOf(composed).some((entry) => entry.id === REMAINDER_ID)).toBe(false);
+    expect(outlineEntriesOf(composed)).toHaveLength(composed.blocks.length);
   });
 });
 

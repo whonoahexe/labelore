@@ -176,26 +176,30 @@ async function runFullBehaviorChecks(
   // read the bounding box once, so a still-animating scroll never reads as a failure.
   // quick-260923-jxp: a fold-style Also opens/collapses like any chapter fold; an endnotes-style
   // Also (discussion logs) has no `.document-fold-head` and is always open.
-  await page.locator('.document-chapter-index li button').last().click();
-  const alsoTarget = page.locator('#chapter-also');
-  const alsoIsEndnotes = (await alsoTarget.locator('.document-endnotes').count()) > 0 || (await page.locator('#chapter-also.document-endnotes').count()) > 0;
-  if (!alsoIsEndnotes) {
-    await expect(alsoTarget).toHaveAttribute('data-open', 'true');
-  } else {
-    await expect(alsoTarget.locator('.document-fold-head')).toHaveCount(0);
-  }
-  const viewportSize = page.viewportSize();
-  expect(viewportSize).not.toBeNull();
-  if (viewportSize) {
-    const viewportHeight = viewportSize.height;
-    await expect
-      .poll(async () => (await alsoTarget.boundingBox())?.y ?? Number.POSITIVE_INFINITY)
-      .toBeLessThan(viewportHeight);
-  }
-  // Collapse it back down before the glance/source checks below (fold style only — endnotes never
-  // collapse).
-  if (!alsoIsEndnotes) {
-    await page.locator('#chapter-also .document-fold-head').click();
+  // A document whose leftover sections were its only Also content has no Also chapter at all
+  // (View mode renders no remainder disclosure) — skip the Also checks there.
+  if ((await page.locator('#chapter-also').count()) > 0) {
+    await page.locator('.document-chapter-index li button').last().click();
+    const alsoTarget = page.locator('#chapter-also');
+    const alsoIsEndnotes = (await alsoTarget.locator('.document-endnotes').count()) > 0 || (await page.locator('#chapter-also.document-endnotes').count()) > 0;
+    if (!alsoIsEndnotes) {
+      await expect(alsoTarget).toHaveAttribute('data-open', 'true');
+    } else {
+      await expect(alsoTarget.locator('.document-fold-head')).toHaveCount(0);
+    }
+    const viewportSize = page.viewportSize();
+    expect(viewportSize).not.toBeNull();
+    if (viewportSize) {
+      const viewportHeight = viewportSize.height;
+      await expect
+        .poll(async () => (await alsoTarget.boundingBox())?.y ?? Number.POSITIVE_INFINITY)
+        .toBeLessThan(viewportHeight);
+    }
+    // Collapse it back down before the glance/source checks below (fold style only — endnotes never
+    // collapse).
+    if (!alsoIsEndnotes) {
+      await page.locator('#chapter-also .document-fold-head').click();
+    }
   }
 
   // The glance action opens its target chapter (only meaningful when a glance cell exists).
