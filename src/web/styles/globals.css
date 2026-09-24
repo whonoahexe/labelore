@@ -5719,3 +5719,88 @@ button.view-context-summary:hover {
 .view-context-block-list {
   padding-left: var(--space-5);
 }
+
+/* Quiet back-matter rows closing the brief: requirement amendments, canonical references,
+   existing code insights (quick-260925-3ob, 3OB-04). Tokens only — no --primary, no status-chip
+   tone, no card, no hero stat. Every row starts collapsed. */
+.view-context-asides {
+  display: grid;
+  min-width: 0;
+  border-top: 1px solid var(--border);
+}
+
+.view-context-aside {
+  min-width: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.view-context-aside-toggle {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-2-5) 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.view-context-aside-toggle:hover {
+  color: var(--foreground);
+}
+
+.view-context-aside-chevron {
+  flex: none;
+  align-self: center;
+  width: var(--space-3);
+  height: var(--space-3);
+  transition: transform 0.15s ease;
+}
+
+.view-context-aside-toggle[aria-expanded='true'] .view-context-aside-chevron {
+  transform: rotate(90deg);
+}
+
+.view-context-aside-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: var(--fw-medium);
+}
+
+.view-context-aside-count {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-context-aside-hint {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-2);
+}
+
+.view-context-aside-body {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+  padding: 0 0 var(--space-5) calc(var(--space-3) + var(--space-2));
+}
+
+.view-context-aside-group-title {
+  margin-bottom: var(--space-1-5);
+  color: var(--muted-foreground);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+}
+
+.view-context-aside-body .view-context-block-text,
+.view-context-aside-body .view-context-block-list {
+  font-size: var(--fs-3);
+}

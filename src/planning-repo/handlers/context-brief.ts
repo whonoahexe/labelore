@@ -1,7 +1,8 @@
 // The CONTEXT.md D1 brief projection (quick-260923-lju): a tolerant, line-scanned read of a
 // CONTEXT document's body into `ContextBrief` — boundary, decision areas, open questions,
-// discretion, specific/deferred ideas, and the recognised-heading ledger the composer needs to
-// build the unrecognised-section remainder (C-1). Composed exclusively from `splitSections` /
+// discretion, specific/deferred ideas, requirement amendments (quick-260925-3ob), and the
+// recognised-heading ledger the composer needs to build the unrecognised-section remainder (C-1).
+// Composed exclusively from `splitSections` /
 // `splitSubsections` / `parseMarkdownTable` plus per-line bounded regexes (T-01-11) — never a
 // whole-document regex, never a nested unbounded quantifier. Called from `ContextHandler.parse`
 // inside a try/catch; a throw here must never break `structured.decisions`/`structured.sections`.
@@ -100,6 +101,21 @@ export interface IdeaItem {
   body: string;
 }
 
+/** One `###`-titled (or untitled, when it holds a section's lead prose) group of blocks inside a
+ * back-matter aside section (amendments/references/code) — quick-260925-3ob. */
+export interface AsideGroup {
+  title: string | null;
+  blocks: Block[];
+}
+
+/** One back-matter aside section — a `<blocking_amendments>`/`<canonical_refs>`/`<code_context>`
+ * `##` section (or heading-matched equivalent), reduced to its own heading text plus its groups
+ * (quick-260925-3ob). */
+export interface ContextAside {
+  heading: string;
+  groups: AsideGroup[];
+}
+
 export interface ContextBrief {
   meta: ContextBriefMeta;
   boundary: ContextBoundary | null;
@@ -109,8 +125,11 @@ export interface ContextBrief {
   discretion: DiscretionBlock | null;
   specifics: IdeaItem[];
   deferred: IdeaItem[];
+  /** Requirement-amendments back matter (quick-260925-3ob, 3OB-01) — recognised by the
+   * `<blocking_amendments>` tag or a "Requirement amendments" heading. */
+  amendments: ContextAside[];
   /** Every `##` heading text this extractor accounted for — the composer's partition key for the
-   * unrecognised-section (`extras`) and "More" (`more`) buckets. */
+   * unrecognised-section (`extras`) bucket. */
   recognizedHeadings: string[];
 }
 
@@ -415,7 +434,7 @@ function parseMeta(body: string): ContextBriefMeta {
 // Section role resolution
 // ---------------------------------------------------------------------------
 
-type Role = 'boundary' | 'decisions' | 'specifics' | 'deferred' | 'references' | 'code' | null;
+type Role = 'boundary' | 'decisions' | 'specifics' | 'deferred' | 'references' | 'code' | 'amendments' | null;
 
 const ROLE_HEADING_TESTS: [RegExp, Role][] = [
   [/^(phase|task) boundary/i, 'boundary'],
@@ -424,6 +443,10 @@ const ROLE_HEADING_TESTS: [RegExp, Role][] = [
   [/^deferred ideas/i, 'deferred'],
   [/^canonical references/i, 'references'],
   [/^existing code insights/i, 'code'],
+  // The leading non-alphanumeric run (never a letter/digit) lets a leading emoji ("⚠️ Requirement
+  // amendments…") match without the character class ever consuming the following letter — the
+  // scan stays linear (T-lju-02).
+  [/^[^\p{L}\p{N}]*requirement amendments?\b/iu, 'amendments'],
 ];
 
 const TAG_ROLE_BY_NAME: Record<string, Role> = {
@@ -433,6 +456,7 @@ const TAG_ROLE_BY_NAME: Record<string, Role> = {
   deferred: 'deferred',
   canonical_refs: 'references',
   code_context: 'code',
+  blocking_amendments: 'amendments',
 };
 
 function roleOfHeading(heading: string): Role {
@@ -485,6 +509,42 @@ function tagRoleAbove(body: string, headingText: string): Role {
     }
   }
   return null;
+}
+
+// ---------------------------------------------------------------------------
+// Back-matter asides — amendments / references / code (quick-260925-3ob)
+// ---------------------------------------------------------------------------
+
+/** A thematic-break run (three or more of `-`, `*` or `_`, optionally space-separated) — a rule
+ * carries no prose, so it is dropped from an aside group's blocks. */
+const THEMATIC_BREAK_RE = /^[-*_](?:\s*[-*_]){2,}$/;
+
+function dropThematicBreaks(blocks: Block[]): Block[] {
+  return blocks.filter((block) => !(block.kind === 'paragraph' && THEMATIC_BREAK_RE.test(block.text.trim())));
+}
+
+/** Every `role`-bearing `##` section (by heading test or opening tag), reduced to its own groups:
+ * an untitled leading group for any prose before the first `###` (omitted when empty), then one
+ * group per `###` subsection (kept even when empty). A section that yields zero groups is omitted
+ * entirely. Used for the amendments/references/code back-matter rows (quick-260925-3ob). */
+export function asideSectionsOf(body: string, role: 'amendments' | 'references' | 'code'): ContextAside[] {
+  const sections = topSections(body).filter(
+    (s) => roleOfHeading(s.heading) === role || tagRoleAbove(body, s.heading) === role,
+  );
+  const asides: ContextAside[] = [];
+  for (const section of sections) {
+    const firstSubIndex = section.body.search(/^###\s+/m);
+    const preambleText = firstSubIndex === -1 ? section.body : section.body.slice(0, firstSubIndex);
+    const groups: AsideGroup[] = [];
+    const preambleBlocks = dropThematicBreaks(parseBlocks(preambleText));
+    if (preambleBlocks.length > 0) groups.push({ title: null, blocks: preambleBlocks });
+    for (const sub of splitSubsections(section.body)) {
+      groups.push({ title: sub.heading, blocks: dropThematicBreaks(parseBlocks(sub.body)) });
+    }
+    if (groups.length === 0) continue;
+    asides.push({ heading: section.heading, groups });
+  }
+  return asides;
 }
 
 // ---------------------------------------------------------------------------
@@ -978,6 +1038,7 @@ export function extractContextBrief(body: string): ContextBrief {
   const discretion = extractDiscretion(body);
   const specifics = ideaItemsOf(body, 'specifics');
   const deferred = ideaItemsOf(body, 'deferred');
+  const amendments = asideSectionsOf(body, 'amendments');
 
   if (boundary) boundary = extractBoundaryNotes(boundary);
 
@@ -990,6 +1051,7 @@ export function extractContextBrief(body: string): ContextBrief {
     if (role === 'deferred' && deferred.length > 0) recognizedHeadings.push(section.heading);
     if (role === 'references') recognizedHeadings.push(section.heading);
     if (role === 'code') recognizedHeadings.push(section.heading);
+    if (role === 'amendments') recognizedHeadings.push(section.heading);
   }
   for (const source of openQuestions) {
     // A `##`-level open-questions source (not a `###` subsection of decisions) earns its own
@@ -1007,6 +1069,7 @@ export function extractContextBrief(body: string): ContextBrief {
     discretion,
     specifics,
     deferred,
+    amendments,
     recognizedHeadings,
   };
 }

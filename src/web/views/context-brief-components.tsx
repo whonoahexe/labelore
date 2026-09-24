@@ -1,16 +1,20 @@
 // The CONTEXT brief's React surface (quick-260923-lju, sketch-006 D1): hero, out-strip, boundary
 // notes, the amber open-questions panel, unrecognised-section extras, the continuous decision
-// register, the discretion panel, and the ideas panels.
+// register, the discretion panel, the ideas panels, and — closing the brief (quick-260925-3ob) —
+// the quiet back-matter rows: requirement amendments, canonical references, existing code
+// insights, each collapsed and muted.
 // Every markdown-derived string renders only through `Inline` (tokenizeInline output mapped to
 // React text/code/strong/em nodes) — never `dangerouslySetInnerHTML` (T-lju-01). Whole-section
 // HTML (extras, More) still goes through the existing sanitized `renderHtml` callback, unchanged.
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 import type { InlineToken } from './inline-markdown.ts';
 import { tokenizeInline } from './inline-markdown.ts';
 import type { Block } from '../../planning-repo/handlers/context-brief.ts';
 import type {
   ComposedArea,
   ComposedAreaEntry,
+  ComposedAside,
   ComposedContextBrief,
   ComposedIntro,
   ComposedOpenQuestionRow,
@@ -431,6 +435,61 @@ function OpenQuestionRowView({
   );
 }
 
+// ---------------------------------------------------------------------------
+// ContextAsides — quiet back-matter rows (amendments, references, code) (quick-260925-3ob)
+// ---------------------------------------------------------------------------
+
+function ContextAsides({
+  asides,
+  refTargets,
+  interaction,
+}: {
+  asides: ComposedAside[];
+  refTargets: Record<string, string>;
+  interaction: ContextBriefInteraction;
+}): React.JSX.Element | null {
+  if (asides.length === 0) return null;
+  return (
+    <section className="view-block view-context-asides" aria-label="Supporting material">
+      {asides.map((aside) => {
+        const open = interaction.isOpen(aside.id);
+        return (
+          <div key={aside.id} className="view-context-aside" id={aside.id} tabIndex={-1} data-kind={aside.kind}>
+            <button
+              type="button"
+              className="view-context-aside-toggle"
+              aria-expanded={open}
+              aria-controls={`${aside.id}-body`}
+              onClick={() => interaction.toggle(aside.id)}
+            >
+              <ChevronRight className="view-context-aside-chevron" aria-hidden="true" />
+              <span className="view-context-aside-label">
+                <Inline text={aside.label} refTargets={refTargets} interactive={false} />
+              </span>
+              {aside.count > 0 ? <span className="view-context-aside-count">{aside.count}</span> : null}
+              {aside.hint !== null ? <span className="view-context-aside-hint">{aside.hint}</span> : null}
+            </button>
+            {open ? (
+              <div className="view-context-aside-body" id={`${aside.id}-body`}>
+                {aside.groups.map((group, index) => (
+                  <div className="view-context-aside-group" key={index}>
+                    {group.title !== null ? (
+                      <p className="view-context-aside-group-title">
+                        <Inline text={group.title} refTargets={refTargets} interactive={false} />
+                      </p>
+                    ) : null}
+                    <BlockList blocks={group.blocks} refTargets={refTargets} onJump={interaction.jumpTo} />
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
 export function ContextBriefView({
   brief,
   renderHtml,
@@ -645,6 +704,7 @@ export function ContextBriefView({
         </div>
       ) : null}
 
+      <ContextAsides asides={brief.asides} refTargets={refTargets} interaction={interaction} />
     </>
   );
 }

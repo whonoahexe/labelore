@@ -14,6 +14,7 @@ import type {
 import type { ViewInput } from './manifest.ts';
 import type { DocumentSectionGroup } from './document-sections.ts';
 import { INTRODUCTION_LABEL } from './manifest.ts';
+import { stripEmoji } from '../pages/strip-emoji.ts';
 
 // ---------------------------------------------------------------------------
 // Composed model
@@ -120,6 +121,24 @@ export interface ComposedStat {
   open: boolean;
 }
 
+/** One group inside a back-matter aside row — a `###`-titled subsection, or the untitled leading
+ * group holding a section's lead prose (quick-260925-3ob). */
+export interface ComposedAsideGroup {
+  title: string | null;
+  blocks: Block[];
+}
+
+/** One quiet, collapsed back-matter row closing the brief: requirement amendments, canonical
+ * references, or existing code insights (quick-260925-3ob, 3OB-01/02/03). */
+export interface ComposedAside {
+  id: string;
+  kind: 'amendments' | 'references' | 'code';
+  label: string;
+  count: number;
+  hint: string | null;
+  groups: ComposedAsideGroup[];
+}
+
 export interface ComposedContextBrief {
   intro: ComposedIntro;
   boundary: ComposedBoundary | null;
@@ -137,8 +156,13 @@ export interface ComposedContextBrief {
    * plus the leading (no-heading) group when the brief's preamble held extra prose. */
   extras: DocumentSectionGroup[];
   /** Canonical-references and existing-code-insights groups, held for the closed "More in this
-   * document" disclosure — in document order. */
+   * document" disclosure — in document order. Dead: nothing renders it since 1d0baf3; removed in
+   * quick-260925-3ob Task 2 once those sections move into `asides`. */
   more: DocumentSectionGroup[];
+  /** Quiet, collapsed back-matter rows closing the brief, in order: amendments (one row per
+   * section), then canonical references (merged), then existing code insights (merged) —
+   * quick-260925-3ob. */
+  asides: ComposedAside[];
 }
 
 // ---------------------------------------------------------------------------
@@ -182,6 +206,65 @@ function partitionGroups(
     extras.push(group);
   }
   return { extras, more };
+}
+
+// ---------------------------------------------------------------------------
+// Back-matter asides — amendments / references / code (quick-260925-3ob)
+// ---------------------------------------------------------------------------
+
+interface RawAsideSection {
+  heading: string;
+  groups: ComposedAsideGroup[];
+}
+
+/** Reads `value` (an older payload's `undefined`, or `ContextAside[]`) tolerantly — a non-array
+ * becomes `[]`, and any entry/group failing the expected shape is dropped rather than thrown on
+ * (T-3ob-03, C-1: an older server's payload must still compose). */
+function tolerantAsideSections(value: unknown): RawAsideSection[] {
+  if (!Array.isArray(value)) return [];
+  const out: RawAsideSection[] = [];
+  for (const entry of value) {
+    if (!entry || typeof entry !== 'object') continue;
+    const e = entry as Record<string, unknown>;
+    if (typeof e.heading !== 'string' || !Array.isArray(e.groups)) continue;
+    const groups: ComposedAsideGroup[] = [];
+    let shapeOk = true;
+    for (const g of e.groups) {
+      if (!g || typeof g !== 'object') {
+        shapeOk = false;
+        break;
+      }
+      const gg = g as Record<string, unknown>;
+      if (!(gg.title === null || typeof gg.title === 'string') || !Array.isArray(gg.blocks)) {
+        shapeOk = false;
+        break;
+      }
+      groups.push({ title: gg.title as string | null, blocks: gg.blocks as Block[] });
+    }
+    if (!shapeOk) continue;
+    out.push({ heading: e.heading, groups });
+  }
+  return out;
+}
+
+function countAsideBlocks(blocks: Block[]): number {
+  let count = 0;
+  for (const block of blocks) {
+    if (block.kind === 'list') count += block.items.length;
+    if (block.kind === 'table') count += block.rows.length;
+  }
+  return count;
+}
+
+function countAsideGroups(groups: ComposedAsideGroup[]): number {
+  return groups.reduce((sum, group) => sum + countAsideBlocks(group.blocks), 0);
+}
+
+/** Titled groups' titles, backticks/asterisks stripped, joined by ` · ` — `null` when no group in
+ * `groups` has a title. */
+function hintOfAsideGroups(groups: ComposedAsideGroup[]): string | null {
+  const titles = groups.filter((g): g is { title: string; blocks: Block[] } => g.title !== null).map((g) => g.title.replace(/[`*]/g, ''));
+  return titles.length > 0 ? titles.join(' · ') : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -530,6 +613,20 @@ export function composeContextBrief(input: ViewInput): ComposedContextBrief | nu
 
   const { extras, more } = partitionGroups(input.groups, brief.recognizedHeadings, brief.meta.preambleExtra);
 
+  // Back-matter asides (quick-260925-3ob): one row per amendments section, in document order.
+  const amendmentsSections = tolerantAsideSections((brief as unknown as Record<string, unknown>).amendments);
+  const asides: ComposedAside[] = amendmentsSections.map((section, index) => {
+    const id = index === 0 ? 'context-amendments' : `context-amendments-${index + 1}`;
+    return {
+      id,
+      kind: 'amendments',
+      label: stripEmoji(section.heading) || 'Amendments',
+      count: countAsideGroups(section.groups),
+      hint: hintOfAsideGroups(section.groups),
+      groups: section.groups,
+    };
+  });
+
   return {
     intro,
     boundary,
@@ -545,5 +642,6 @@ export function composeContextBrief(input: ViewInput): ComposedContextBrief | nu
     refTargets,
     extras,
     more,
+    asides,
   };
 }
