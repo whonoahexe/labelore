@@ -45,7 +45,9 @@ export interface ComposedBoundary {
 export interface ComposedReversibility {
   word: string;
   text: string;
-  tone: 'caution' | 'quiet';
+  /** Costly / one-way / irreversible — counted by the "hard to undo" stat and given the
+   *  plain (untoned) chip, one step louder than `quiet`. */
+  hardToUndo: boolean;
 }
 
 export interface ComposedClaudeNote {
@@ -114,7 +116,8 @@ export interface ComposedStat {
   count: number;
   label: string;
   target: string;
-  caution: boolean;
+  /** The "open for the researcher" stat — rendered in the `in-flight` (awaiting someone) tone. */
+  open: boolean;
 }
 
 export interface ComposedContextBrief {
@@ -270,11 +273,7 @@ function statusOf(status: string | null): ComposedIntro['status'] {
   return { label: status, tone: STATUS_COMPLETE_RE.test(status) ? 'complete' : 'quiet' };
 }
 
-const CAUTION_REVERSIBILITY_RE = /^(costly|one-way|irreversible)/i;
-
-function reversibilityTone(word: string): 'caution' | 'quiet' {
-  return CAUTION_REVERSIBILITY_RE.test(word) ? 'caution' : 'quiet';
-}
+const HARD_TO_UNDO_RE = /^(costly|one-way|irreversible)/i;
 
 // ---------------------------------------------------------------------------
 // Type guard
@@ -413,7 +412,7 @@ export function composeContextBrief(input: ViewInput): ComposedContextBrief | nu
         : [];
       if (openChips.length > 0) openCount += 1;
       const reversibility = entry.reversibility
-        ? { word: entry.reversibility.word, text: entry.reversibility.text, tone: reversibilityTone(entry.reversibility.word) }
+        ? { word: entry.reversibility.word, text: entry.reversibility.text, hardToUndo: HARD_TO_UNDO_RE.test(entry.reversibility.word) }
         : null;
       entries.push({
         kind: 'decision',
@@ -493,7 +492,7 @@ export function composeContextBrief(input: ViewInput): ComposedContextBrief | nu
       count: decisionCount,
       label: decisionCount === 1 ? 'decision locked' : 'decisions locked',
       target: firstDecisionId.decision.id,
-      caution: false,
+      open: false,
     });
   }
   if (allOpenRows.length > 0) {
@@ -502,20 +501,20 @@ export function composeContextBrief(input: ViewInput): ComposedContextBrief | nu
       count: allOpenRows.length,
       label: allOpenRows.length === 1 ? 'open for the researcher' : 'open for the researcher',
       target: allOpenRows[0].id,
-      caution: true,
+      open: true,
     });
   }
   const hardToUndo = areas
     .flatMap((a) => a.entries)
     .filter((e): e is Extract<ComposedAreaEntry, { kind: 'decision' }> => e.kind === 'decision')
-    .filter((e) => e.decision.reversibility?.tone === 'caution');
+    .filter((e) => e.decision.reversibility?.hardToUndo);
   if (hardToUndo.length > 0) {
     stats.push({
       id: 'stat-hard',
       count: hardToUndo.length,
       label: 'hard to undo',
       target: hardToUndo[0].decision.id,
-      caution: false,
+      open: false,
     });
   }
   const leftToClaude = (brief.discretion?.items.length ?? 0);
@@ -525,7 +524,7 @@ export function composeContextBrief(input: ViewInput): ComposedContextBrief | nu
       count: leftToClaude,
       label: 'left to Claude',
       target: 'context-discretion',
-      caution: false,
+      open: false,
     });
   }
 

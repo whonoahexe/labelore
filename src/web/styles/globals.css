@@ -5183,19 +5183,11 @@ pre {
 }
 
 /* ==========================================================================
-   quick-260923-lju (sketch-006 D1): the CONTEXT brief — .status-chip[data-tone='caution'],
-   .artifact-meta-row, and every .view-context-* rule. Additive only. Tokens throughout, no
+   quick-260923-lju (sketch-006 D1): the CONTEXT brief — .artifact-meta-row, and every .view-context-* rule. Additive only. Tokens throughout, no
    radius, --fw-medium/--fw-semibold only. Mirrors the sketch's .hero/.statement/.in-list/
    .out-strip/.reg-area/.dec/.attn-list/.idea/.leftover/.back-groups, translated onto this
    codebase's shared vocabulary (position-hero/immediate-work/attention-panel/preview-panel).
    ========================================================================== */
-
-.status-chip[data-tone='caution'] {
-  /* Preset tokens only: the preset's one chromatic colour, as an outline (no tint), so it reads
-     as flagged without looking like the filled `active` chip. */
-  border-color: var(--primary);
-  color: var(--primary);
-}
 
 .artifact-meta-row {
   display: flex;
@@ -5292,12 +5284,14 @@ pre {
   color: var(--foreground);
 }
 
-.view-context-stat-caution {
-  border-color: var(--primary);
+/* Open questions wait on the researcher: the site's `in-flight` (awaiting someone) tone, as on
+   .status-chip[data-tone='in-flight']. */
+.view-context-stat-open {
+  border-color: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border));
 }
 
-.view-context-stat-caution strong {
-  color: var(--primary);
+.view-context-stat-open strong {
+  color: var(--in-flight-fill);
 }
 
 /* Out strip (P-3): a quiet, dashed rule under the hero. */
@@ -5361,13 +5355,13 @@ pre {
   font-weight: var(--fw-medium);
 }
 
-/* Open questions (P-4): amber attention panel. */
+/* Open questions (P-4): attention panel in the `in-flight` (awaiting someone) tone. */
 .view-context-open {
-  border-top: 3px solid var(--primary);
+  border-top: 3px solid var(--in-flight-fill);
 }
 
 .view-context-open > .eyebrow {
-  color: var(--primary);
+  color: var(--in-flight-fill);
 }
 
 .view-context-open-list {
@@ -5399,7 +5393,7 @@ pre {
 }
 
 .view-context-open-list .view-context-tag {
-  color: var(--primary);
+  color: var(--in-flight-fill);
 }
 
 .view-context-question {
