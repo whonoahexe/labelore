@@ -467,10 +467,22 @@ export function ContextBriefView({
               </div>
             ) : null}
           </div>
-          <aside className="immediate-work view-context-in">
-            <p className="eyebrow">In this phase</p>
+        </section>
+      ) : null}
+
+      {/* Scope (P-2/P-3): In and Out side by side in one block, so the pair reads as one
+          boundary and each out item keeps its destination next to its text. */}
+      {brief.boundary ? (
+        <section className="view-block view-context-scope">
+          <div className="view-context-in">
+            <p className="view-context-scope-label">
+              In this phase
+              {brief.boundary.inList.length > 0 ? (
+                <span className="view-context-scope-count">{brief.boundary.inList.length}</span>
+              ) : null}
+            </p>
             {brief.boundary.inList.length > 0 ? (
-              <ul className="view-context-in-list">
+              <ul>
                 {brief.boundary.inList.map((item, index) => (
                   <li key={index}>
                     {/* One wrapper, so the li's two-column grid (check, text) gets exactly two
@@ -486,27 +498,30 @@ export function ContextBriefView({
                 <BlockList blocks={brief.boundary.restBlocks} refTargets={refTargets} onJump={interaction.jumpTo} />
               </div>
             )}
-          </aside>
-        </section>
-      ) : null}
-
-      {brief.boundary && brief.boundary.outItems.length > 0 ? (
-        <section className="view-block view-context-out">
-          <p className="view-context-out-label">
-            Not in this phase{brief.boundary.drift ? ' · do not drift into these' : ''}
-          </p>
-          <ul>
-            {brief.boundary.outItems.map((item, index) => (
-              <li key={index}>
-                {/* One wrapper: the li is a text/destination grid, and Inline emits one node per
-                    text/code fragment. */}
-                <span>
-                  <Inline text={item.text} refTargets={refTargets} onJump={interaction.jumpTo} />
-                </span>
-                {item.dest ? <span className="view-context-dest">→ {item.dest}</span> : null}
-              </li>
-            ))}
-          </ul>
+          </div>
+          {brief.boundary.outItems.length > 0 ? (
+            <div className="view-context-out">
+              <p className="view-context-scope-label">
+                Not in this phase
+                <span className="view-context-scope-count">{brief.boundary.outItems.length}</span>
+              </p>
+              <ul>
+                {brief.boundary.outItems.map((item, index) => (
+                  <li key={index}>
+                    {/* One wrapper: the li is a mark/body grid, and Inline emits one node per
+                        text/code fragment. */}
+                    <span>
+                      <Inline text={item.text} refTargets={refTargets} onJump={interaction.jumpTo} />
+                      {item.dest ? <span className="view-context-dest">→ {item.dest}</span> : null}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {brief.boundary.drift ? (
+                <p className="view-context-drift">Do not drift into these.</p>
+              ) : null}
+            </div>
+          ) : null}
         </section>
       ) : null}
 

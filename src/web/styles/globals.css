@@ -5200,10 +5200,10 @@ pre {
   margin-left: auto;
 }
 
-/* Boundary hero (P-2). Overrides position-hero's align-items so the left column's stats sit
-   below the statement rather than being baseline-aligned with the In card, and removes the
-   bottom border/padding so the out-strip below joins it directly. */
+/* Boundary hero (P-2). The statement and stats span the full width; the In/Out pair sits in
+   the scope block below, so position-hero's second column is dropped. */
 .view-context-hero {
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
   padding-bottom: 0;
   border-bottom: 0;
@@ -5228,29 +5228,6 @@ pre {
   max-width: 62ch;
   color: var(--muted-foreground);
   font-size: var(--fs-4);
-}
-
-.view-context-in-list {
-  display: grid;
-  gap: var(--space-1-5);
-  margin-top: var(--space-3);
-  padding: 0;
-  list-style: none;
-}
-
-.view-context-in-list li {
-  display: grid;
-  grid-template-columns: 1.1rem minmax(0, 1fr);
-  gap: var(--space-2);
-  overflow-wrap: anywhere;
-  font-size: var(--fs-4);
-}
-
-.view-context-in-list li::before {
-  content: '\2713';
-  color: var(--primary);
-  font-family: var(--font-mono);
-  font-size: var(--fs-3);
 }
 
 .view-context-stats {
@@ -5294,22 +5271,54 @@ pre {
   color: var(--in-flight-fill);
 }
 
-/* Out strip (P-3): a quiet, dashed rule under the hero. */
+/* Scope (P-2/P-3): In and Out as two equal columns of one bordered block. In carries the
+   accent (top rule, check marks); Out stays muted with a dash and its destination inline. */
+.view-context-scope {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  border: 1px solid var(--border);
+  background: var(--card-veil);
+}
+
+.view-context-in,
 .view-context-out {
-  padding: var(--space-3) 0;
-  border-top: 1px dashed var(--border);
-  border-bottom: 1px dashed var(--border);
+  min-width: 0;
+  padding: var(--space-fluid-3);
+}
+
+.view-context-in {
+  border-top: 3px solid var(--primary);
+}
+
+.view-context-out {
+  border-top: 3px solid var(--border);
+  border-left: 1px solid var(--border);
   color: var(--muted-foreground);
 }
 
-.view-context-out-label {
-  margin-bottom: var(--space-2);
-  font-family: var(--font-mono);
-  font-size: var(--fs-1);
+.view-context-scope-label {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  margin-bottom: var(--space-3);
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
   letter-spacing: var(--ls-wider);
   text-transform: uppercase;
 }
 
+.view-context-in .view-context-scope-label {
+  color: var(--primary);
+}
+
+.view-context-scope-count {
+  color: var(--muted-foreground);
+  font-weight: var(--fw-medium);
+}
+
+.view-context-in ul,
 .view-context-out ul {
   display: grid;
   gap: var(--space-2);
@@ -5318,27 +5327,45 @@ pre {
   list-style: none;
 }
 
+.view-context-in li,
 .view-context-out li {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--space-3);
-  padding-bottom: var(--space-2);
+  grid-template-columns: 1.1rem minmax(0, 1fr);
+  gap: var(--space-2);
   overflow-wrap: anywhere;
   font-size: var(--fs-4);
-  border-bottom: 1px dashed var(--border);
 }
 
-.view-context-out li:last-child {
-  padding-bottom: 0;
-  border-bottom: 0;
+.view-context-in li::before,
+.view-context-out li::before {
+  font-family: var(--font-mono);
+  font-size: var(--fs-3);
+}
+
+.view-context-in li::before {
+  content: '\2713';
+  color: var(--primary);
+}
+
+.view-context-out li::before {
+  content: '\2013';
 }
 
 .view-context-dest {
+  display: inline-block;
+  margin-left: var(--space-2);
+  color: var(--foreground);
   font-family: var(--font-mono);
   font-size: var(--fs-1);
   letter-spacing: var(--ls-wider);
   text-transform: uppercase;
   white-space: nowrap;
+}
+
+.view-context-drift {
+  margin-top: var(--space-3);
+  font-size: var(--fs-2);
+  font-style: italic;
 }
 
 /* Boundary notes (Locked-upstream tables, ### amendments) — quiet blocks between the out-strip
