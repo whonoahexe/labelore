@@ -46,6 +46,8 @@ function minimalBrief(overrides: Partial<ContextBrief> = {}): ContextBrief {
     specifics: [],
     deferred: [],
     amendments: [],
+    references: [],
+    codeInsights: [],
     recognizedHeadings: ['Phase Boundary'],
     ...overrides,
   };
@@ -333,5 +335,104 @@ describe('asides — amendments end to end', () => {
     const composed = composeContextBrief(baseInput(brief, { groups }));
 
     expect(composed?.asides).toHaveLength(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// asides — canonical references and existing code insights (quick-260925-3ob, Task 2)
+// ---------------------------------------------------------------------------
+
+const TWO_REFERENCES_SECTIONS_DOC = `# Phase 1: Test - Context
+
+<domain>
+## Phase Boundary
+
+A statement.
+
+</domain>
+
+<canonical_refs>
+## Canonical References
+
+### Group A
+- \`path/a.ts\` — nice
+
+</canonical_refs>
+
+## Canonical References
+
+### Group B
+- \`path/b.ts\` — nice
+
+<code_context>
+## Existing Code Insights
+
+### Group C
+- item
+
+</code_context>
+
+<decisions>
+## Implementation Decisions
+
+### Area One
+
+- **D-01:** A decision.
+
+</decisions>
+`;
+
+describe('asides — canonical references and existing code insights', () => {
+  it('emits asides in order amendments, references, code, merging two references sections into one', () => {
+    const brief = extractContextBrief(TWO_REFERENCES_SECTIONS_DOC);
+    const groups = groupsFor([
+      'Phase Boundary',
+      'Canonical References',
+      'Canonical References',
+      'Existing Code Insights',
+      'Implementation Decisions',
+    ]);
+    const composed = composeContextBrief(baseInput(brief, { groups }));
+
+    expect(composed?.asides.map((a) => a.kind)).toEqual(['references', 'code']);
+
+    const references = composed!.asides[0];
+    expect(references.id).toBe('context-references');
+    expect(references.label).toBe('Canonical references');
+    expect(references.groups.map((g) => g.title)).toEqual(['Group A', 'Group B']);
+    expect(references.count).toBe(2);
+    expect(references.hint).toBe('Group A · Group B');
+
+    const code = composed!.asides[1];
+    expect(code.id).toBe('context-code');
+    expect(code.label).toBe('Existing code insights');
+    expect(code.groups.map((g) => g.title)).toEqual(['Group C']);
+    expect(code.count).toBe(1);
+    expect(code.hint).toBe('Group C');
+  });
+
+  it('gives no references aside when references is empty, composes non-null when references/codeInsights are absent, and has no more key', () => {
+    const emptyRefs = composeContextBrief(baseInput(minimalBrief({ references: [] })));
+    expect(emptyRefs?.asides.some((a) => a.kind === 'references')).toBe(false);
+
+    const brief = minimalBrief();
+    delete (brief as Partial<ContextBrief>).references;
+    delete (brief as Partial<ContextBrief>).codeInsights;
+    const composed = composeContextBrief(baseInput(brief));
+    expect(composed).not.toBeNull();
+    expect(composed).not.toHaveProperty('more');
+  });
+
+  it('never lets a Canonical References / Existing Code Insights group leak into extras', () => {
+    const brief = extractContextBrief(TWO_REFERENCES_SECTIONS_DOC);
+    const groups = groupsFor([
+      'Phase Boundary',
+      'Canonical References',
+      'Canonical References',
+      'Existing Code Insights',
+      'Implementation Decisions',
+    ]);
+    const composed = composeContextBrief(baseInput(brief, { groups }));
+    expect(composed?.extras.some((e) => /canonical references|existing code insights/i.test(e.heading ?? ''))).toBe(false);
   });
 });
