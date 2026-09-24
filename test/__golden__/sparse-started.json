@@ -506,6 +506,69 @@
                         "title": null
                       }
                     ],
+                    "amendments": [],
+                    "references": [
+                      {
+                        "heading": "Canonical References",
+                        "groups": [
+                          {
+                            "title": null,
+                            "blocks": [
+                              {
+                                "kind": "paragraph",
+                                "text": "**Downstream agents MUST read these before planning or implementing.**"
+                              }
+                            ]
+                          },
+                          {
+                            "title": "Fixture provenance",
+                            "blocks": [
+                              {
+                                "kind": "list",
+                                "ordered": false,
+                                "items": [
+                                  "`~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows exactly"
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ],
+                    "codeInsights": [
+                      {
+                        "heading": "Existing Code Insights",
+                        "groups": [
+                          {
+                            "title": "Reusable Assets",
+                            "blocks": [
+                              {
+                                "kind": "paragraph",
+                                "text": "None — this is a synthetic fixture tree with no code."
+                              }
+                            ]
+                          },
+                          {
+                            "title": "Established Patterns",
+                            "blocks": [
+                              {
+                                "kind": "paragraph",
+                                "text": "None yet — this is the first and only phase in this fixture."
+                              }
+                            ]
+                          },
+                          {
+                            "title": "Integration Points",
+                            "blocks": [
+                              {
+                                "kind": "paragraph",
+                                "text": "None — the fixture has no downstream phase."
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ],
                     "recognizedHeadings": [
                       "Phase Boundary",
                       "Implementation Decisions",
@@ -785,6 +848,69 @@
                     "title": null
                   }
                 ],
+                "amendments": [],
+                "references": [
+                  {
+                    "heading": "Canonical References",
+                    "groups": [
+                      {
+                        "title": null,
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "**Downstream agents MUST read these before planning or implementing.**"
+                          }
+                        ]
+                      },
+                      {
+                        "title": "Fixture provenance",
+                        "blocks": [
+                          {
+                            "kind": "list",
+                            "ordered": false,
+                            "items": [
+                              "`~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows exactly"
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "codeInsights": [
+                  {
+                    "heading": "Existing Code Insights",
+                    "groups": [
+                      {
+                        "title": "Reusable Assets",
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "None — this is a synthetic fixture tree with no code."
+                          }
+                        ]
+                      },
+                      {
+                        "title": "Established Patterns",
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "None yet — this is the first and only phase in this fixture."
+                          }
+                        ]
+                      },
+                      {
+                        "title": "Integration Points",
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "None — the fixture has no downstream phase."
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
                 "recognizedHeadings": [
                   "Phase Boundary",
                   "Implementation Decisions",
@@ -1055,6 +1181,69 @@
                           "title": null
                         }
                       ],
+                      "amendments": [],
+                      "references": [
+                        {
+                          "heading": "Canonical References",
+                          "groups": [
+                            {
+                              "title": null,
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "**Downstream agents MUST read these before planning or implementing.**"
+                                }
+                              ]
+                            },
+                            {
+                              "title": "Fixture provenance",
+                              "blocks": [
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "`~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows exactly"
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "codeInsights": [
+                        {
+                          "heading": "Existing Code Insights",
+                          "groups": [
+                            {
+                              "title": "Reusable Assets",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "None — this is a synthetic fixture tree with no code."
+                                }
+                              ]
+                            },
+                            {
+                              "title": "Established Patterns",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "None yet — this is the first and only phase in this fixture."
+                                }
+                              ]
+                            },
+                            {
+                              "title": "Integration Points",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "None — the fixture has no downstream phase."
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
                       "recognizedHeadings": [
                         "Phase Boundary",
                         "Implementation Decisions",
@@ -1323,6 +1512,69 @@
                       "deferred": [
                         {
                           "title": null
+                        }
+                      ],
+                      "amendments": [],
+                      "references": [
+                        {
+                          "heading": "Canonical References",
+                          "groups": [
+                            {
+                              "title": null,
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "**Downstream agents MUST read these before planning or implementing.**"
+                                }
+                              ]
+                            },
+                            {
+                              "title": "Fixture provenance",
+                              "blocks": [
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "`~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows exactly"
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "codeInsights": [
+                        {
+                          "heading": "Existing Code Insights",
+                          "groups": [
+                            {
+                              "title": "Reusable Assets",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "None — this is a synthetic fixture tree with no code."
+                                }
+                              ]
+                            },
+                            {
+                              "title": "Established Patterns",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "None yet — this is the first and only phase in this fixture."
+                                }
+                              ]
+                            },
+                            {
+                              "title": "Integration Points",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "None — the fixture has no downstream phase."
+                                }
+                              ]
+                            }
+                          ]
                         }
                       ],
                       "recognizedHeadings": [
@@ -1610,6 +1862,69 @@
                       "deferred": [
                         {
                           "title": null
+                        }
+                      ],
+                      "amendments": [],
+                      "references": [
+                        {
+                          "heading": "Canonical References",
+                          "groups": [
+                            {
+                              "title": null,
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "**Downstream agents MUST read these before planning or implementing.**"
+                                }
+                              ]
+                            },
+                            {
+                              "title": "Fixture provenance",
+                              "blocks": [
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "`~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows exactly"
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "codeInsights": [
+                        {
+                          "heading": "Existing Code Insights",
+                          "groups": [
+                            {
+                              "title": "Reusable Assets",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "None — this is a synthetic fixture tree with no code."
+                                }
+                              ]
+                            },
+                            {
+                              "title": "Established Patterns",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "None yet — this is the first and only phase in this fixture."
+                                }
+                              ]
+                            },
+                            {
+                              "title": "Integration Points",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "None — the fixture has no downstream phase."
+                                }
+                              ]
+                            }
+                          ]
                         }
                       ],
                       "recognizedHeadings": [

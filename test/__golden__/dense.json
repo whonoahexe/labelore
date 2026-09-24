@@ -1232,6 +1232,60 @@
                         "title": null
                       }
                     ],
+                    "amendments": [],
+                    "references": [
+                      {
+                        "heading": "Canonical References",
+                        "groups": [
+                          {
+                            "title": "Fixture provenance",
+                            "blocks": [
+                              {
+                                "kind": "list",
+                                "ordered": false,
+                                "items": [
+                                  "`~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows"
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ],
+                    "codeInsights": [
+                      {
+                        "heading": "Existing Code Insights",
+                        "groups": [
+                          {
+                            "title": "Reusable Assets",
+                            "blocks": [
+                              {
+                                "kind": "paragraph",
+                                "text": "None — first phase of the project."
+                              }
+                            ]
+                          },
+                          {
+                            "title": "Established Patterns",
+                            "blocks": [
+                              {
+                                "kind": "paragraph",
+                                "text": "None yet."
+                              }
+                            ]
+                          },
+                          {
+                            "title": "Integration Points",
+                            "blocks": [
+                              {
+                                "kind": "paragraph",
+                                "text": "None."
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ],
                     "recognizedHeadings": [
                       "Phase Boundary",
                       "Implementation Decisions",
@@ -1635,6 +1689,60 @@
                     "deferred": [
                       {
                         "title": null
+                      }
+                    ],
+                    "amendments": [],
+                    "references": [
+                      {
+                        "heading": "Canonical References",
+                        "groups": [
+                          {
+                            "title": "Fixture provenance",
+                            "blocks": [
+                              {
+                                "kind": "list",
+                                "ordered": false,
+                                "items": [
+                                  "`~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows"
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ],
+                    "codeInsights": [
+                      {
+                        "heading": "Existing Code Insights",
+                        "groups": [
+                          {
+                            "title": "Reusable Assets",
+                            "blocks": [
+                              {
+                                "kind": "paragraph",
+                                "text": "None yet at v2.0's start."
+                              }
+                            ]
+                          },
+                          {
+                            "title": "Established Patterns",
+                            "blocks": [
+                              {
+                                "kind": "paragraph",
+                                "text": "None yet."
+                              }
+                            ]
+                          },
+                          {
+                            "title": "Integration Points",
+                            "blocks": [
+                              {
+                                "kind": "paragraph",
+                                "text": "None yet."
+                              }
+                            ]
+                          }
+                        ]
                       }
                     ],
                     "recognizedHeadings": [
@@ -3119,6 +3227,73 @@
                         "title": null
                       }
                     ],
+                    "amendments": [],
+                    "references": [
+                      {
+                        "heading": "Canonical References",
+                        "groups": [
+                          {
+                            "title": null,
+                            "blocks": [
+                              {
+                                "kind": "paragraph",
+                                "text": "**Downstream agents MUST read these before planning or implementing.**"
+                              }
+                            ]
+                          },
+                          {
+                            "title": "Fixture provenance",
+                            "blocks": [
+                              {
+                                "kind": "list",
+                                "ordered": false,
+                                "items": [
+                                  "`~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows",
+                                  "`~/.claude/gsd-core/bin/lib/artifacts.cjs` — `CANONICAL_EXACT`/`CANONICAL_PATTERNS`, the ground truth for which root files are canonical"
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ],
+                    "codeInsights": [
+                      {
+                        "heading": "Existing Code Insights",
+                        "groups": [
+                          {
+                            "title": "Reusable Assets",
+                            "blocks": [
+                              {
+                                "kind": "paragraph",
+                                "text": "None — this is a synthetic fixture tree with no code."
+                              }
+                            ]
+                          },
+                          {
+                            "title": "Established Patterns",
+                            "blocks": [
+                              {
+                                "kind": "list",
+                                "ordered": false,
+                                "items": [
+                                  "Registry-dispatched artifact handlers, generic handler unconditional and last (from plan `01-01`)."
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "title": "Integration Points",
+                            "blocks": [
+                              {
+                                "kind": "paragraph",
+                                "text": "None — the fixture has no downstream phase beyond Phase 2 within this same tree."
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ],
                     "recognizedHeadings": [
                       "Phase Boundary",
                       "Implementation Decisions",
@@ -3508,6 +3683,78 @@
                     "deferred": [
                       {
                         "title": null
+                      }
+                    ],
+                    "amendments": [],
+                    "references": [
+                      {
+                        "heading": "Canonical References",
+                        "groups": [
+                          {
+                            "title": null,
+                            "blocks": [
+                              {
+                                "kind": "paragraph",
+                                "text": "**Downstream agents MUST read these before planning or implementing.**"
+                              }
+                            ]
+                          },
+                          {
+                            "title": "Fixture provenance",
+                            "blocks": [
+                              {
+                                "kind": "list",
+                                "ordered": false,
+                                "items": [
+                                  "`~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows"
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ],
+                    "codeInsights": [
+                      {
+                        "heading": "Existing Code Insights",
+                        "groups": [
+                          {
+                            "title": "Reusable Assets",
+                            "blocks": [
+                              {
+                                "kind": "list",
+                                "ordered": false,
+                                "items": [
+                                  "`src/identity/slice.ts` (Phase 1) — the resolver the transport layer calls into."
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "title": "Established Patterns",
+                            "blocks": [
+                              {
+                                "kind": "list",
+                                "ordered": false,
+                                "items": [
+                                  "Never-throw resolver contract (Phase 1)."
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "title": "Integration Points",
+                            "blocks": [
+                              {
+                                "kind": "list",
+                                "ordered": false,
+                                "items": [
+                                  "Transport requests call `resolveIdentity` from Phase 1's slice."
+                                ]
+                              }
+                            ]
+                          }
+                        ]
                       }
                     ],
                     "recognizedHeadings": [
@@ -3906,6 +4153,60 @@
                     "title": null
                   }
                 ],
+                "amendments": [],
+                "references": [
+                  {
+                    "heading": "Canonical References",
+                    "groups": [
+                      {
+                        "title": "Fixture provenance",
+                        "blocks": [
+                          {
+                            "kind": "list",
+                            "ordered": false,
+                            "items": [
+                              "`~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows"
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "codeInsights": [
+                  {
+                    "heading": "Existing Code Insights",
+                    "groups": [
+                      {
+                        "title": "Reusable Assets",
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "None — first phase of the project."
+                          }
+                        ]
+                      },
+                      {
+                        "title": "Established Patterns",
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "None yet."
+                          }
+                        ]
+                      },
+                      {
+                        "title": "Integration Points",
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "None."
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
                 "recognizedHeadings": [
                   "Phase Boundary",
                   "Implementation Decisions",
@@ -4302,6 +4603,60 @@
                 "deferred": [
                   {
                     "title": null
+                  }
+                ],
+                "amendments": [],
+                "references": [
+                  {
+                    "heading": "Canonical References",
+                    "groups": [
+                      {
+                        "title": "Fixture provenance",
+                        "blocks": [
+                          {
+                            "kind": "list",
+                            "ordered": false,
+                            "items": [
+                              "`~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows"
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "codeInsights": [
+                  {
+                    "heading": "Existing Code Insights",
+                    "groups": [
+                      {
+                        "title": "Reusable Assets",
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "None yet at v2.0's start."
+                          }
+                        ]
+                      },
+                      {
+                        "title": "Established Patterns",
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "None yet."
+                          }
+                        ]
+                      },
+                      {
+                        "title": "Integration Points",
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "None yet."
+                          }
+                        ]
+                      }
+                    ]
                   }
                 ],
                 "recognizedHeadings": [
@@ -5779,6 +6134,73 @@
                     "title": null
                   }
                 ],
+                "amendments": [],
+                "references": [
+                  {
+                    "heading": "Canonical References",
+                    "groups": [
+                      {
+                        "title": null,
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "**Downstream agents MUST read these before planning or implementing.**"
+                          }
+                        ]
+                      },
+                      {
+                        "title": "Fixture provenance",
+                        "blocks": [
+                          {
+                            "kind": "list",
+                            "ordered": false,
+                            "items": [
+                              "`~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows",
+                              "`~/.claude/gsd-core/bin/lib/artifacts.cjs` — `CANONICAL_EXACT`/`CANONICAL_PATTERNS`, the ground truth for which root files are canonical"
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "codeInsights": [
+                  {
+                    "heading": "Existing Code Insights",
+                    "groups": [
+                      {
+                        "title": "Reusable Assets",
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "None — this is a synthetic fixture tree with no code."
+                          }
+                        ]
+                      },
+                      {
+                        "title": "Established Patterns",
+                        "blocks": [
+                          {
+                            "kind": "list",
+                            "ordered": false,
+                            "items": [
+                              "Registry-dispatched artifact handlers, generic handler unconditional and last (from plan `01-01`)."
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "title": "Integration Points",
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "None — the fixture has no downstream phase beyond Phase 2 within this same tree."
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
                 "recognizedHeadings": [
                   "Phase Boundary",
                   "Implementation Decisions",
@@ -6168,6 +6590,78 @@
                 "deferred": [
                   {
                     "title": null
+                  }
+                ],
+                "amendments": [],
+                "references": [
+                  {
+                    "heading": "Canonical References",
+                    "groups": [
+                      {
+                        "title": null,
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "**Downstream agents MUST read these before planning or implementing.**"
+                          }
+                        ]
+                      },
+                      {
+                        "title": "Fixture provenance",
+                        "blocks": [
+                          {
+                            "kind": "list",
+                            "ordered": false,
+                            "items": [
+                              "`~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows"
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "codeInsights": [
+                  {
+                    "heading": "Existing Code Insights",
+                    "groups": [
+                      {
+                        "title": "Reusable Assets",
+                        "blocks": [
+                          {
+                            "kind": "list",
+                            "ordered": false,
+                            "items": [
+                              "`src/identity/slice.ts` (Phase 1) — the resolver the transport layer calls into."
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "title": "Established Patterns",
+                        "blocks": [
+                          {
+                            "kind": "list",
+                            "ordered": false,
+                            "items": [
+                              "Never-throw resolver contract (Phase 1)."
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "title": "Integration Points",
+                        "blocks": [
+                          {
+                            "kind": "list",
+                            "ordered": false,
+                            "items": [
+                              "Transport requests call `resolveIdentity` from Phase 1's slice."
+                            ]
+                          }
+                        ]
+                      }
+                    ]
                   }
                 ],
                 "recognizedHeadings": [
@@ -7432,6 +7926,73 @@
                       "deferred": [
                         {
                           "title": null
+                        }
+                      ],
+                      "amendments": [],
+                      "references": [
+                        {
+                          "heading": "Canonical References",
+                          "groups": [
+                            {
+                              "title": null,
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "**Downstream agents MUST read these before planning or implementing.**"
+                                }
+                              ]
+                            },
+                            {
+                              "title": "Fixture provenance",
+                              "blocks": [
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "`~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows",
+                                    "`~/.claude/gsd-core/bin/lib/artifacts.cjs` — `CANONICAL_EXACT`/`CANONICAL_PATTERNS`, the ground truth for which root files are canonical"
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "codeInsights": [
+                        {
+                          "heading": "Existing Code Insights",
+                          "groups": [
+                            {
+                              "title": "Reusable Assets",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "None — this is a synthetic fixture tree with no code."
+                                }
+                              ]
+                            },
+                            {
+                              "title": "Established Patterns",
+                              "blocks": [
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "Registry-dispatched artifact handlers, generic handler unconditional and last (from plan `01-01`)."
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "title": "Integration Points",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "None — the fixture has no downstream phase beyond Phase 2 within this same tree."
+                                }
+                              ]
+                            }
+                          ]
                         }
                       ],
                       "recognizedHeadings": [
@@ -8764,6 +9325,73 @@
                           "title": null
                         }
                       ],
+                      "amendments": [],
+                      "references": [
+                        {
+                          "heading": "Canonical References",
+                          "groups": [
+                            {
+                              "title": null,
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "**Downstream agents MUST read these before planning or implementing.**"
+                                }
+                              ]
+                            },
+                            {
+                              "title": "Fixture provenance",
+                              "blocks": [
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "`~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows",
+                                    "`~/.claude/gsd-core/bin/lib/artifacts.cjs` — `CANONICAL_EXACT`/`CANONICAL_PATTERNS`, the ground truth for which root files are canonical"
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "codeInsights": [
+                        {
+                          "heading": "Existing Code Insights",
+                          "groups": [
+                            {
+                              "title": "Reusable Assets",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "None — this is a synthetic fixture tree with no code."
+                                }
+                              ]
+                            },
+                            {
+                              "title": "Established Patterns",
+                              "blocks": [
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "Registry-dispatched artifact handlers, generic handler unconditional and last (from plan `01-01`)."
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "title": "Integration Points",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "None — the fixture has no downstream phase beyond Phase 2 within this same tree."
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
                       "recognizedHeadings": [
                         "Phase Boundary",
                         "Implementation Decisions",
@@ -10094,6 +10722,73 @@
                           "title": null
                         }
                       ],
+                      "amendments": [],
+                      "references": [
+                        {
+                          "heading": "Canonical References",
+                          "groups": [
+                            {
+                              "title": null,
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "**Downstream agents MUST read these before planning or implementing.**"
+                                }
+                              ]
+                            },
+                            {
+                              "title": "Fixture provenance",
+                              "blocks": [
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "`~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows",
+                                    "`~/.claude/gsd-core/bin/lib/artifacts.cjs` — `CANONICAL_EXACT`/`CANONICAL_PATTERNS`, the ground truth for which root files are canonical"
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "codeInsights": [
+                        {
+                          "heading": "Existing Code Insights",
+                          "groups": [
+                            {
+                              "title": "Reusable Assets",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "None — this is a synthetic fixture tree with no code."
+                                }
+                              ]
+                            },
+                            {
+                              "title": "Established Patterns",
+                              "blocks": [
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "Registry-dispatched artifact handlers, generic handler unconditional and last (from plan `01-01`)."
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "title": "Integration Points",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "None — the fixture has no downstream phase beyond Phase 2 within this same tree."
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
                       "recognizedHeadings": [
                         "Phase Boundary",
                         "Implementation Decisions",
@@ -10480,6 +11175,78 @@
                           "title": null
                         }
                       ],
+                      "amendments": [],
+                      "references": [
+                        {
+                          "heading": "Canonical References",
+                          "groups": [
+                            {
+                              "title": null,
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "**Downstream agents MUST read these before planning or implementing.**"
+                                }
+                              ]
+                            },
+                            {
+                              "title": "Fixture provenance",
+                              "blocks": [
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "`~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows"
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "codeInsights": [
+                        {
+                          "heading": "Existing Code Insights",
+                          "groups": [
+                            {
+                              "title": "Reusable Assets",
+                              "blocks": [
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "`src/identity/slice.ts` (Phase 1) — the resolver the transport layer calls into."
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "title": "Established Patterns",
+                              "blocks": [
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "Never-throw resolver contract (Phase 1)."
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "title": "Integration Points",
+                              "blocks": [
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "Transport requests call `resolveIdentity` from Phase 1's slice."
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
                       "recognizedHeadings": [
                         "Phase Boundary",
                         "Implementation Decisions",
@@ -10684,6 +11451,78 @@
                       "deferred": [
                         {
                           "title": null
+                        }
+                      ],
+                      "amendments": [],
+                      "references": [
+                        {
+                          "heading": "Canonical References",
+                          "groups": [
+                            {
+                              "title": null,
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "**Downstream agents MUST read these before planning or implementing.**"
+                                }
+                              ]
+                            },
+                            {
+                              "title": "Fixture provenance",
+                              "blocks": [
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "`~/.claude/gsd-core/templates/context.md` — the six-tag section grammar this file follows"
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "codeInsights": [
+                        {
+                          "heading": "Existing Code Insights",
+                          "groups": [
+                            {
+                              "title": "Reusable Assets",
+                              "blocks": [
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "`src/identity/slice.ts` (Phase 1) — the resolver the transport layer calls into."
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "title": "Established Patterns",
+                              "blocks": [
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "Never-throw resolver contract (Phase 1)."
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "title": "Integration Points",
+                              "blocks": [
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "Transport requests call `resolveIdentity` from Phase 1's slice."
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
                         }
                       ],
                       "recognizedHeadings": [
