@@ -1,6 +1,6 @@
 // The CONTEXT brief's React surface (quick-260923-lju, sketch-006 D1): hero, out-strip, boundary
 // notes, the amber open-questions panel, unrecognised-section extras, the continuous decision
-// register, the discretion panel, ideas panels, and the closed "More in this document" disclosure.
+// register, the discretion panel, and the ideas panels.
 // Every markdown-derived string renders only through `Inline` (tokenizeInline output mapped to
 // React text/code/strong/em nodes) — never `dangerouslySetInnerHTML` (T-lju-01). Whole-section
 // HTML (extras, More) still goes through the existing sanitized `renderHtml` callback, unchanged.
@@ -16,7 +16,6 @@ import type {
   ComposedOpenQuestionRow,
 } from './context-brief.ts';
 import { stripLeadingHeading } from './document-sections.ts';
-import { REMAINDER_ID, REMAINDER_LABEL } from './manifest.ts';
 
 // ---------------------------------------------------------------------------
 // Inline rendering
@@ -616,21 +615,6 @@ export function ContextBriefView({
         </div>
       ) : null}
 
-      {brief.more.length > 0 ? (
-        <details className="artifact-metadata view-context-more" id={REMAINDER_ID}>
-          <summary>
-            {REMAINDER_LABEL} <span>{brief.more.length === 1 ? '1 section' : `${brief.more.length} sections`}</span>
-          </summary>
-          <div className="view-context-more-groups">
-            {brief.more.map((group, index) => (
-              <div className="view-context-more-group" key={`more-${index}`}>
-                {group.heading ? <h3>{group.heading}</h3> : null}
-                {renderHtml(stripLeadingHeading(group.html))}
-              </div>
-            ))}
-          </div>
-        </details>
-      ) : null}
     </>
   );
 }

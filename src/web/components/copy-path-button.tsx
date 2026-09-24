@@ -1,6 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, Copy } from 'lucide-react';
+import { Check, Link2 } from 'lucide-react';
 import { Button } from './ui/button.tsx';
+
+/** `navigator.clipboard` only exists in secure contexts; over plain http fall back to execCommand. */
+function legacyCopy(text: string): boolean {
+  const field = document.createElement('textarea');
+  field.value = text;
+  field.setAttribute('readonly', '');
+  field.style.position = 'fixed';
+  field.style.opacity = '0';
+  document.body.appendChild(field);
+  field.select();
+  try {
+    return document.execCommand('copy');
+  } catch {
+    return false;
+  } finally {
+    field.remove();
+  }
+}
 
 /**
  * quick-260923-jxp (JXP-09): the copy-path icon button that replaces the raw file-path caption on
@@ -22,7 +40,11 @@ export function CopyPathButton({ path }: { path: string }): React.JSX.Element {
 
   async function handleCopy(): Promise<void> {
     try {
-      await navigator.clipboard.writeText(path);
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(path);
+      } else if (!legacyCopy(path)) {
+        return; // Insecure context (plain http) and no fallback worked — stay inert.
+      }
       setCopied(true);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       timeoutRef.current = setTimeout(() => setCopied(false), 1500);
@@ -42,7 +64,7 @@ export function CopyPathButton({ path }: { path: string }): React.JSX.Element {
       type="button"
       variant="ghost"
     >
-      {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+      {copied ? <Check aria-hidden="true" /> : <Link2 aria-hidden="true" />}
       <span className="sr-only" role="status">
         {copied ? 'Path copied' : ''}
       </span>

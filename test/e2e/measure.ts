@@ -236,7 +236,6 @@ const CORNER_SELECTORS = [
   '.view-context-stat',
   '.view-context-decision',
   '.view-context-idea',
-  '.view-context-more',
   '.artifact-meta-row',
 ];
 

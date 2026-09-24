@@ -106,11 +106,11 @@ describe('view-page contract (VIEW-01/D-11)', () => {
     expect(toggle).toMatch(/>\s*Source\s*</);
 
     const page = await source('src/web/pages/artifact-page.tsx');
-    // "More in this document" lives as the shared REMAINDER_LABEL constant (manifest.ts); the
-    // page renders it via that import rather than a duplicated literal.
-    expect(page).toContain('REMAINDER_LABEL');
+    // View mode renders no "More in this document" remainder disclosure — leftover sections are
+    // read in Source.
+    expect(page).not.toContain('More in this document');
     const manifestModule = await source('src/web/views/manifest.ts');
-    expect(manifestModule).toContain('More in this document');
+    expect(manifestModule).not.toContain('More in this document');
     expect(page).toContain('Unrecognized type');
 
     for (const file of await viewsFiles()) {

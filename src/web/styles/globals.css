@@ -2981,11 +2981,17 @@ pre {
 .document-cover-facts {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-1) var(--space-4);
+  gap: var(--space-1) var(--space-2);
   margin: 0;
   color: var(--muted-foreground);
   font-family: var(--font-heading);
   font-size: var(--fs-3);
+}
+
+.document-cover-facts > span + span::before {
+  content: '·' / '';
+  margin-right: var(--space-2);
+  color: var(--muted-foreground);
 }
 
 .document-cover-facts b {
@@ -3494,20 +3500,37 @@ pre {
   color: var(--muted-foreground);
 }
 
+/* The user's own words: a pull-quote under the chosen option — a hanging rule, the label as a
+   small caps-tracked line above, the words themselves at full foreground contrast. */
 .document-answer-words {
-  margin: 0;
-  display: flex;
-  gap: var(--space-2);
-  color: var(--muted-foreground);
+  display: grid;
+  gap: var(--space-1);
+  margin: var(--space-1) 0 0;
+  padding: var(--space-1) 0 var(--space-1) var(--space-3);
+  border-left: 2px solid var(--border);
   overflow-wrap: anywhere;
 }
 
-.document-answer-words::before {
-  content: '"';
+.document-answer-words .document-item-detail-label {
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-widest);
+  text-transform: uppercase;
 }
 
-.document-answer-words::after {
-  content: '"';
+.document-answer-words q {
+  color: var(--foreground);
+  hanging-punctuation: first;
+}
+
+.document-answer-words code {
+  background: var(--secondary);
+  padding: var(--space-0-5) var(--space-1);
+  color: var(--secondary-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-3);
 }
 
 /* The numbered options disclosure (JXP-03/JXP-04): a grid of rows, badge in the first column. */
@@ -3601,13 +3624,13 @@ pre {
 /* JXP-07: the Endnotes sheet replacing "Also in this document" on discussion logs only — a
    quieter, always-open typographic back-matter sheet. */
 .document-endnotes {
-  margin-top: var(--space-5);
-  padding-top: var(--space-5);
+  margin-top: var(--space-10);
+  padding-top: var(--space-10);
   border-top: 1px solid var(--border);
 }
 
 .document-endnotes-title {
-  margin: 0 0 var(--space-4);
+  margin: 0 0 var(--space-5);
   color: var(--muted-foreground);
   font-family: var(--font-heading);
   font-size: var(--fs-3);
@@ -3646,6 +3669,112 @@ pre {
 
 .document-endnote li + li {
   margin-top: var(--space-2);
+}
+
+/* The endnote panels: CONTEXT-brief-style preview panels, stacked full width like the brief's own
+   discretion panel — side by side, a short Discretion card sat half-empty beside a long list. */
+.view-discussion-log-endnote-grid {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.view-discussion-log-endnote-grid .document-endnote {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: 0;
+  min-width: 0;
+}
+
+.view-discussion-log-endnote-grid .document-endnote-title {
+  margin: 0;
+  /* Same accent as .eyebrow — a panel label, not content. */
+  color: var(--primary);
+}
+
+/* The panel head mirrors `.section-heading.compact` (title, count box, bottom rule) without being
+   one — F-04 holds every `.section-heading` to the roadmap's h2 typography. */
+.view-discussion-log-endnote-head {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.view-discussion-log-endnote-count {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border: 1px solid var(--border);
+  font-family: var(--font-heading);
+}
+
+.view-discussion-log-endnote-grid .artifact-document {
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+}
+
+.view-discussion-log-endnote-grid .artifact-document > :first-child {
+  margin-top: 0;
+}
+
+.view-discussion-log-endnote-grid .artifact-document > :last-child {
+  margin-bottom: 0;
+}
+
+/* `.document-endnote` prefix: outranks the endnote sheet's hanging-bullet `ul` rule. */
+.document-endnote .view-discussion-log-endnote-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  font-size: inherit;
+  list-style: none;
+}
+
+.view-discussion-log-endnote-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-4);
+  align-items: baseline;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.view-discussion-log-endnote-row:first-child {
+  padding-top: 0;
+}
+
+.view-discussion-log-endnote-row:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.view-discussion-log-endnote-row .artifact-document {
+  min-width: 0;
+  color: var(--foreground);
+}
+
+.view-discussion-log-endnote-row .status-chip {
+  /* One chip width down the column, so the outcomes line up as a ledger. */
+  justify-content: center;
+  min-width: 7.5rem;
+}
+
+/* A dropped idea (passed over / not pursued) steps back; one carried to a later phase stays at
+   full contrast. */
+.view-discussion-log-endnote-row[data-outcome='dropped'] .artifact-document {
+  color: var(--muted-foreground);
+}
+
+/* The prose after the list is a footnote to it: ruled off, a step smaller. */
+.view-discussion-log-endnote-list + .artifact-document {
+  margin-top: auto;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-3);
 }
 
 /* VIEW-02 DISCUSSION-LOG view (view-local, UI-SPEC §3). */
@@ -5534,27 +5663,6 @@ button.view-context-summary:hover {
 
 .view-context-idea:hover .view-context-idea-title {
   color: var(--primary);
-}
-
-/* Back matter (P-8): the "More in this document" disclosure. */
-.view-context-more-groups {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-6);
-}
-
-@media (max-width: 62rem) {
-  .view-context-more-groups {
-    grid-template-columns: 1fr;
-  }
-}
-
-.view-context-more-group h3 {
-  padding-bottom: var(--space-2);
-  border-bottom: 1px solid var(--border);
-  font-family: var(--font-mono);
-  font-size: var(--fs-4);
-  font-weight: var(--fw-medium);
 }
 
 /* prefers-reduced-motion is already respected globally — jumpTo's scroll/focus logic in

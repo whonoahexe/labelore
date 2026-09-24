@@ -23,7 +23,7 @@ import { DocumentViewToggle } from '../components/document-view-toggle.tsx';
 import { DocumentOutline, type OutlineEntry } from '../components/document-outline.tsx';
 import { useActiveSection } from '../components/use-active-section.ts';
 import { handleDocumentReferenceActivation } from './document-reference-activation.ts';
-import { dropLeadingTitle } from './document-title.ts';
+import { dropLeadingTitle, splitPhaseTitle } from './document-title.ts';
 import { toMermaidColor } from './mermaid-theme.ts';
 import { scrollWhenSettled } from './scroll-settle.ts';
 import { humanizeKind } from '../views/kinds.ts';
@@ -32,8 +32,6 @@ import { unrecognizedNotice } from '../views/fallback.ts';
 import {
   composeView,
   outlineEntriesOf,
-  REMAINDER_ID,
-  REMAINDER_LABEL,
   type ComposedView,
   type ViewInput,
 } from '../views/manifest.ts';
@@ -415,11 +413,6 @@ function ViewReader({
   const rawEntries = outlineEntriesOf(composed);
   const entries = rawEntries.length < 2 ? [] : rawEntries;
   const activeId = useActiveSection(entries.map((entry) => entry.id));
-  const remainderCount = composed.remainder.length;
-  const remainderHtml = useMemo(
-    () => composed.remainder.map((group) => group.html).join(''),
-    [composed.remainder],
-  );
   return (
     <div
       className="document-reader-layout"
@@ -445,15 +438,6 @@ function ViewReader({
             </section>
           );
         })}
-        {remainderCount > 0 ? (
-          <details className="artifact-metadata" id={REMAINDER_ID}>
-            <summary>
-              {REMAINDER_LABEL}{' '}
-              <span>{remainderCount === 1 ? '1 section' : `${remainderCount} sections`}</span>
-            </summary>
-            <DocumentView document={{ ...shown, html: remainderHtml, headings: [] }} />
-          </details>
-        ) : null}
       </article>
     </div>
   );
@@ -627,12 +611,22 @@ export function ArtifactPage(): React.JSX.Element {
       : []),
     { label: artifact.title },
   ];
+  // A cover page's eyebrow already names the kind: move `Phase N` up beside it and keep only the
+  // phase name in the H1.
+  const kindLabel = humanizeKind(artifact.kind);
+  const coverTitle = layout && !brief ? splitPhaseTitle(artifact.title, kindLabel) : null;
   return (
     <main className="artifact-page page-stack">
       <ArtifactHeader
         crumbs={crumbs}
-        eyebrow={brief ? brief.intro.eyebrow : humanizeKind(artifact.kind)}
-        title={brief?.intro.title ?? artifact.title}
+        eyebrow={
+          brief
+            ? brief.intro.eyebrow
+            : coverTitle?.phase
+              ? `${coverTitle.phase} · ${kindLabel}`
+              : kindLabel
+        }
+        title={brief?.intro.title ?? coverTitle?.title ?? artifact.title}
         path={artifact.path}
         lead={brief ? null : (manifest?.lead ?? null)}
         meta={brief ? <ContextIntroMeta intro={brief.intro} /> : undefined}

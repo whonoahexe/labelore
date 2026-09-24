@@ -145,18 +145,11 @@ test.describe('CONTEXT brief — repo fixtures', () => {
     await expect(page.locator('.view-context-decision')).toHaveCount(15);
   });
 
-  test('every repo fixture: DOM order is hero, then register, then More; the More disclosure starts closed', async ({
-    page,
-    baseURL,
-  }) => {
+  test('every repo fixture: View mode renders no "More in this document" disclosure', async ({ page, baseURL }) => {
     const url = await resolveFixtureUrl(baseURL ?? 'http://127.0.0.1:4199', '05-per-type-document-views/05-CONTEXT.md');
     await page.goto(url);
     await page.locator('#context-boundary').waitFor({ state: 'visible' });
-    const more = page.locator('#view-remainder');
-    await expect(more).toHaveAttribute('open', '', { timeout: 5000 }).catch(() => {});
-    const isOpen = await more.evaluate((el) => (el as HTMLDetailsElement).open);
-    expect(isOpen).toBe(false);
-    await expect(more.locator('summary span')).toHaveText(/\d+ sections?/);
+    await expect(page.locator('#view-remainder')).toHaveCount(0);
   });
 });
 
@@ -216,15 +209,11 @@ test.describe('CONTEXT brief — 420px overflow (no horizontal scroll)', () => {
       await page.goto(url);
       await page.locator('#context-boundary').waitFor({ state: 'visible' });
 
-      // Expand the first decision and first idea, and open the More disclosure — the widest
-      // states the layout can be in — before measuring.
+      // Expand the first decision and first idea — the widest states the layout can be in —
+      // before measuring.
       await page.locator('.view-context-decision').first().locator('.view-context-summary').click();
       const firstIdea = page.locator('.view-context-idea').first();
       if (await firstIdea.count()) await firstIdea.click();
-      const more = page.locator('#view-remainder');
-      if (await more.count()) {
-        await more.locator('summary').click();
-      }
 
       const overflow = await page.evaluate(() => ({
         docScrollWidth: document.documentElement.scrollWidth,

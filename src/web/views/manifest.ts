@@ -86,8 +86,6 @@ export interface OutlineEntry {
   label: string;
 }
 
-export const REMAINDER_ID = 'view-remainder';
-export const REMAINDER_LABEL = 'More in this document';
 export const INTRODUCTION_LABEL = 'Introduction';
 
 function headingMatches(heading: string | RegExp, group: DocumentSectionGroup): boolean {
@@ -172,12 +170,8 @@ export function composeView(manifest: ViewManifest, input: ViewInput): ComposedV
   return { blocks, remainder };
 }
 
-/** The outline's data source in View mode (D-11): the composed blocks in promotion order, plus
- * one trailing entry for the remainder — omitted entirely when the remainder is empty. */
+/** The outline's data source in View mode (D-11): the composed blocks in promotion order. The
+ * remainder is not rendered in View mode (read it in Source), so it has no entry. */
 export function outlineEntriesOf(view: ComposedView): OutlineEntry[] {
-  const entries: OutlineEntry[] = view.blocks.map((block) => ({ id: block.id, label: block.label }));
-  if (view.remainder.length > 0) {
-    entries.push({ id: REMAINDER_ID, label: REMAINDER_LABEL });
-  }
-  return entries;
+  return view.blocks.map((block) => ({ id: block.id, label: block.label }));
 }

@@ -58,6 +58,12 @@ function stripWordMarks(value: string): string {
     .toLowerCase();
 }
 
+function unquote(value: string): string {
+  const trimmed = value.trim();
+  const match = /^(["'“‘])([\s\S]*)(["'”’])$/.exec(trimmed);
+  return match && match[2]!.trim() ? match[2]!.trim() : trimmed;
+}
+
 function isYouDecide(value: string | null): boolean {
   return stripWordMarks(value ?? '') === 'you decide';
 }
@@ -133,7 +139,8 @@ function buildItem(question: DiscussionQuestion, index: number): ChapterItem {
     rawWords.trim() !== '' &&
     !isYouDecide(rawWords) &&
     stripWordMarks(rawWords) !== stripWordMarks(optionPart?.title ?? '');
-  const words = wordsAreDistinct ? rawWords : null;
+  // The card quotes the words itself (`<q>`), so drop quotes the log already wrapped them in.
+  const words = wordsAreDistinct ? unquote(rawWords) : null;
 
   const answerCard: ItemAnswer | null =
     optionPart || words

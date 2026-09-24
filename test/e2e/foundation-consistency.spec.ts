@@ -621,7 +621,7 @@ test('behaviour: view/source toggle (F-10)', async ({ page }) => {
   }
 });
 
-test('behaviour: remainder disclosure (F-11)', async ({ page }) => {
+test('behaviour: no remainder disclosure in View mode (F-11)', async ({ page }) => {
   await setTheme(page, 'light');
   await page.setViewportSize({ width: 1280, height: 900 });
 
@@ -631,45 +631,15 @@ test('behaviour: remainder disclosure (F-11)', async ({ page }) => {
       await page.goto(spec.url);
       await waitForPageReady(page, spec.family);
 
-      // sketch-004 B3 (quick-260922-3us): on a cover-layout page the remainder lives inside the
-      // Also chapter's fold body, rendered only while that fold is open — open it first (a no-op
-      // when the page has no fold layout, or no Also chapter at all) so `details#view-remainder`
-      // is actually present in the DOM for the assertions below.
+      // Leftover sections are read in Source; View mode renders no "More in this document"
+      // disclosure. Open a cover page's Also fold first (where it used to live) so its absence
+      // is checked there too.
       const alsoFoldHead = page.locator('#chapter-also .document-fold-head');
       if ((await alsoFoldHead.count()) > 0) {
         await alsoFoldHead.click();
       }
-
-      const remainder = page.locator('details#view-remainder');
-      const hasRemainder = (await remainder.count()) > 0;
-      if (!hasRemainder) {
-        softCheck('F-11', spec.id, 'light', 1280, true, 'no remainder on this page');
-        return;
-      }
-
-      const classAttr = (await remainder.getAttribute('class')) ?? '';
-      const openBefore = await remainder.getAttribute('open');
-      const summarySpanText = (await remainder.locator('summary span').first().innerText()).trim();
-      // `.artifact-metadata > summary` renders text-transform: uppercase — match
-      // case-insensitively against the rendered text.
-      const summaryFormatOk = /^\d+ sections?$/i.test(summarySpanText);
-
-      await remainder.locator('summary').click();
-      const openAfter = await remainder.getAttribute('open');
-      const innerVisible = await remainder.locator('.artifact-document').first().isVisible();
-
-      softCheck(
-        'F-11',
-        spec.id,
-        'light',
-        1280,
-        classAttr.split(/\s+/).includes('artifact-metadata') &&
-          openBefore === null &&
-          summaryFormatOk &&
-          openAfter !== null &&
-          innerVisible,
-        `class="${classAttr}" openBefore=${openBefore} summary="${summarySpanText}" openAfter=${openAfter} innerVisible=${innerVisible}`,
-      );
+      const remainderCount = await page.locator('details#view-remainder').count();
+      softCheck('F-11', spec.id, 'light', 1280, remainderCount === 0, `remainderCount=${remainderCount}`);
     });
   }
 });

@@ -8,13 +8,13 @@ import {
 /**
  * Tracks which outline entry is currently being read via a single `IntersectionObserver` over the
  * elements named by `ids` (READ-07, D-13). One hook, two id lists (D-11): Source mode passes
- * rendered heading ids, View mode passes `view-block-N` / `view-remainder` ids — the hook itself
+ * rendered heading ids, View mode passes `view-block-N` ids — the hook itself
  * has no opinion on which.
  *
  * Visual only — this hook never reads or writes `location`, `history`, or the URL hash (Phase 2
  * D-16). Because `DocumentView` mutates its subtree after mount (Mermaid replaces `<pre>` nodes
  * with `<svg>`), this hook observes the wrapper elements the readers themselves own (rendered
- * headings, `section.view-block`, `details#view-remainder`) rather than anything Mermaid might
+ * headings, `section.view-block`) rather than anything Mermaid might
  * later replace.
  */
 export function useActiveSection(ids: readonly string[]): string | null {
