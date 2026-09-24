@@ -110,12 +110,13 @@
   --chrome-veil: color-mix(in oklch, var(--background) 90%, transparent);
   --destructive-tint: color-mix(in oklch, var(--destructive) 8%, transparent);
   --destructive-border: color-mix(in oklch, var(--destructive) 55%, var(--border));
-  /* quick-260923-lju (sketch-006 D1): amber, flagged-for-someone-else-to-resolve — never an error
-     (docs/design-language.md § Tones). Used by the CONTEXT brief's open-question chips/panel rule,
+  /* quick-260923-lju (sketch-006 D1): flagged-for-someone-else-to-resolve, in --primary's own
+     terracotta hue (a lighter step in dark, a deeper one in light) rather than a separate amber, since
+     the site has one accent family. Never an error (docs/design-language.md § Tones). Used by the CONTEXT brief's open-question chips/panel rule,
      the "open" stat, a costly/one-way reversibility chip and an area's open chip. Declared per
      theme (light here, dark below) since a single recipe cannot stay legible on both grounds;
      test/web/caution-contrast.test.ts pins both at >= 4.5:1 against --background and --card. */
-  --caution: oklch(0.52 0.12 70);
+  --caution: oklch(0.49 0.13 38);
   --caution-border: color-mix(in oklch, var(--caution) 55%, var(--border));
   --primary-tint: color-mix(in oklch, var(--primary) 9%, transparent);
   /* quick-260918-qkd Task 2: the five-bucket bar/chip tone vocabulary (A1-A4). --in-flight-fill
@@ -172,9 +173,9 @@
   /* Darkens further from the already-dark background, so the scrim still reads as a distinct
      layer rather than disappearing into it. */
   --overlay-scrim: color-mix(in oklch, var(--background) 72%, transparent);
-  /* quick-260923-lju: dark counterpart of --caution above — brighter, so it still clears 4.5:1
-     against the dark ground; test/web/caution-contrast.test.ts pins the exact ratio. */
-  --caution: oklch(0.78 0.14 75);
+  /* quick-260923-lju: dark counterpart of --caution above — a lighter terracotta, so it still
+     clears 4.5:1 against the dark ground; test/web/caution-contrast.test.ts pins the exact ratio. */
+  --caution: oklch(0.72 0.12 40);
   color-scheme: dark;
 }
 
@@ -5558,7 +5559,7 @@ button.view-context-summary:hover {
 }
 
 .view-context-claude-label {
-  color: var(--primary);
+  color: var(--muted-foreground);
   font-family: var(--font-mono);
   font-weight: var(--fw-medium);
   font-size: var(--fs-1);
@@ -5677,7 +5678,9 @@ button.view-context-summary:hover {
   border: 0;
   background: none;
   padding: 0;
-  color: var(--primary);
+  /* Muted like every other in-document cross-reference (.document-reference) — the accent is
+     reserved, not spent on links. */
+  color: var(--muted-foreground);
   font-family: var(--font-mono);
   font-size: var(--fs-3);
   text-decoration: underline dotted;

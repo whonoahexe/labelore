@@ -498,7 +498,11 @@ export function ContextBriefView({
           <ul>
             {brief.boundary.outItems.map((item, index) => (
               <li key={index}>
-                <Inline text={item.text} refTargets={refTargets} onJump={interaction.jumpTo} />
+                {/* One wrapper: the li is a text/destination grid, and Inline emits one node per
+                    text/code fragment. */}
+                <span>
+                  <Inline text={item.text} refTargets={refTargets} onJump={interaction.jumpTo} />
+                </span>
                 {item.dest ? <span className="view-context-dest">→ {item.dest}</span> : null}
               </li>
             ))}
