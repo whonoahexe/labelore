@@ -2925,7 +2925,6 @@ pre {
 .document-view-toggle {
   display: inline-flex;
   gap: var(--space-1);
-  margin-top: var(--space-3);
 }
 
 /* One promoted or remainder block inside a per-type view's canvas. */
