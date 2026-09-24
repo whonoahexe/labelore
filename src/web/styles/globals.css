@@ -5271,24 +5271,28 @@ pre {
   color: var(--in-flight-fill);
 }
 
-/* Scope (P-2/P-3): In and Out as two open columns under matching 2px rules — In carries the
-   accent (primary rule, check marks); Out stays muted with a dash and its destination on its own
-   line. No frame or fill: the columns sit on the page like the hero above them. */
+/* Scope (P-2/P-3): In and Out as two equal columns of one bordered block. In carries the
+   accent (top rule, check marks); Out stays muted with a dash and its destination inline. */
 .view-context-scope {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
-  gap: var(--space-fluid-5) var(--space-fluid-9);
+  border: 1px solid var(--border);
+  background: var(--card-veil);
 }
 
 .view-context-in,
 .view-context-out {
   min-width: 0;
-  padding-top: var(--space-3);
-  border-top: 2px solid var(--primary);
+  padding: var(--space-fluid-3);
+}
+
+.view-context-in {
+  border-top: 3px solid var(--primary);
 }
 
 .view-context-out {
-  border-top-color: var(--border);
+  border-top: 3px solid var(--border);
+  border-left: 1px solid var(--border);
   color: var(--muted-foreground);
 }
 
@@ -5348,8 +5352,8 @@ pre {
 }
 
 .view-context-dest {
-  display: block;
-  margin-top: var(--space-0-5);
+  display: inline-block;
+  margin-left: var(--space-2);
   color: var(--foreground);
   font-family: var(--font-mono);
   font-size: var(--fs-1);
