@@ -5272,11 +5272,15 @@ pre {
 }
 
 /* Scope (P-2/P-3): In and Out as two equal columns of one bordered block. In carries the
-   accent (top rule, check marks); Out stays muted with a dash and its destination inline. */
+   accent (top rule, check marks); Out stays muted with a dash and its destination inline.
+   The column rules are inset shadows, not borders, so each spans its full column with a square
+   end at the divider; the frame drops its own top edge and view-block's gap so the rules meet. */
 .view-context-scope {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
   border: 1px solid var(--border);
+  gap: 0;
+  border-top: 0;
   background: var(--card-veil);
 }
 
@@ -5287,11 +5291,11 @@ pre {
 }
 
 .view-context-in {
-  border-top: 3px solid var(--primary);
+  box-shadow: inset 0 3px 0 var(--primary);
 }
 
 .view-context-out {
-  border-top: 3px solid var(--border);
+  box-shadow: inset 0 3px 0 var(--border);
   border-left: 1px solid var(--border);
   color: var(--muted-foreground);
 }
