@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-09-21)
 Phase: Milestone v1.1 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-09-23 - Completed quick task 260923-lju: CONTEXT page per sketch 006 D1
+Last activity: 2026-09-25 - Completed quick task 260925-3ob: Context page quietly surfaces canonical references, code insights, and requirement amendments
 
 ## Performance Metrics
 
@@ -113,6 +113,7 @@ None.
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 260925-3ob | CONTEXT page: quiet collapsed back-matter rows for requirement amendments (tag-recognised, emoji stripped), canonical references and existing code insights, grouped by ### heading; unused `more` field removed | 2026-09-25 | 4b9eedd | [260925-3ob-context-page-quietly-surface-canonical-r](./quick/260925-3ob-context-page-quietly-surface-canonical-r/) |
 | 260923-lju | CONTEXT page per sketch 006 D1 — boundary hero with In-this-phase card, quiet out-strip, amber open-questions panel, continuous decision register, Claude's discretion tagged into decisions, ideas panels, More-in-this-document; archived quick-task artifacts now parse; visual-contract canvas test updated (validated: Needs Review — live visual check) | 2026-09-23 | 86daac3 | [260923-lju-context-page-per-sketch-006-d1](./quick/260923-lju-context-page-per-sketch-006-d1/) |
 | 260923-jxp | Discussion-log review fixes on the B3 layout — no dropped questions (✓ variants, custom answers, table-under-area and bold-Q shapes), numbered answer cards with titles, quiet notes toggle, declined-area ghost chapters, log date, endnotes sheet, truthful cover counts; copy-path icon replaces the raw path on every artifact page | 2026-09-23 | 3f74056 | [260923-jxp-discussion-log-page-review-fixes-on-the-](./quick/260923-jxp-discussion-log-page-review-fixes-on-the-/) |
 | 260922-3us | Sketch-004 B3 folded-chapters document layout (cover sheet, chapter index, pinned chapter bar, folded chapters) for DISCUSSION-LOG, PLAN and VERIFICATION | 2026-09-22 | ed62ee0 | [260922-3us-build-sketch-004-b3-folded-chapters-docu](./quick/260922-3us-build-sketch-004-b3-folded-chapters-docu/) |
