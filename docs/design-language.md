@@ -128,9 +128,8 @@ is always to add the missing name to this document, never to edit the reference 
 | `quiet` | Neutral coverage gap — muted-foreground, never alarming | An unrecognized/unmanifested type, a non-exact traceability match, a phase not yet started, every sketch-004 B3 roll-up chip and Also-chapter panel chip, and (quick-260923-jxp) an unresolved discussion item's "Open" state chip, a chosen answer's qualifier chip, and a declined-area ghost row's "Not discussed" chip |
 | `destructive` | Genuine read/parse failure only | The "Unreadable" artifact-parse chip; never used for a merely-unrecognized type; never used by any sketch-004 B3 document-content chip (state/rollup/pill), which stay within `active`/`complete`/`quiet`/`in-flight`/`missing` |
 | `warning` | Partial read/parse degradation only | The "Warning" artifact-parse chip; never used by any sketch-004 B3 document-content chip, same rule as `destructive` above |
-| `in-flight` | A phase or item currently being worked | Traceability covering-phase signal, a sketch-004 B3 document's "Awaiting checkpoint"/"Gaps found" cover status |
+| `in-flight` | A phase or item currently being worked, or waiting on someone | Traceability covering-phase signal, a sketch-004 B3 document's "Awaiting checkpoint"/"Gaps found" cover status, and the CONTEXT brief's open questions (open-question chips, an area's "N open" chip, the "open for the researcher" stat and panel rule) |
 | `missing` | An expected item that has not appeared | Traceability covering-phase signal, a sketch-004 B3 gap item's "Failed" state chip |
-| `caution` | Plain `--primary` as an outline chip (no tint) — preset tokens only, no custom hue. Flagged for someone else to resolve — never an error (quick-260923-lju) | The CONTEXT brief's open-question chips and panel rule, the "open" stat, a costly/one-way reversibility chip, and an area's "N open" chip |
 
 ## Families
 
@@ -220,13 +219,14 @@ element is actually written, regardless of class name:
   `.immediate-work`'s existing top rule is reused verbatim for the brief's accent "In this phase"
   card, plus the ✓ marks in its list and the "Claude decides" label under a tagged decision. No
   other brief element (the leftover-discretion hanging rule, chips, stats) uses `--primary`.
-- **`caution` uses the preset's `--primary`, never a custom hue, and is never an error.** (quick-260923-lju) The CONTEXT brief's open-question
-  chips, the "open for the researcher" stat, a costly/one-way/irreversible reversibility chip, and
-  an area's "N open" chip all use the `caution` tone — flagged for someone else to resolve, not a
-  parse failure. The `destructive`/`warning` tones stay reserved for the artifact-parse badge, per
-  the existing rule above. No page defines its own colour token: every colour comes from the
-  shadcn `base-sera` preset's tokens. Cross-references (`.view-context-ref`) and the "Claude decides"
-  label stay muted like `.document-reference`.
+- **The CONTEXT brief has no tone of its own.** (quick-260923-lju, retoned 2026-09-25) Open
+  questions — the open-question chips, an area's "N open" chip, the "open for the researcher" stat
+  and the open panel's rule/eyebrow/tags — use the shared `in-flight` tone (`--in-flight-fill`):
+  they are waiting on someone, like "Awaiting checkpoint". A costly/one-way/irreversible
+  reversibility chip is the plain untoned `.status-chip` (foreground text, one step above `quiet`),
+  matching the neutral "hard to undo" stat; any other reversibility chip is `quiet`. The
+  `destructive`/`warning` tones stay reserved for the artifact-parse badge. Cross-references
+  (`.view-context-ref`) and the "Claude decides" label stay muted like `.document-reference`.
 
 ## Surface-scoped registered names
 

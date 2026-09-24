@@ -293,14 +293,14 @@ function DecisionRow({
             key={chip.id}
             type="button"
             className="status-chip"
-            data-tone="caution"
+            data-tone="in-flight"
             onClick={() => interaction.jumpTo(chip.id)}
           >
             {chip.tag}
           </button>
         ))}
         {decision.reversibility ? (
-          <span className="status-chip" data-tone={decision.reversibility.tone}>
+          <span className="status-chip" data-tone={decision.reversibility.hardToUndo ? undefined : 'quiet'}>
             {decision.reversibility.word}
           </span>
         ) : null}
@@ -348,7 +348,7 @@ function AreaBlock({
             {area.lockedCount === 1 ? '1 locked' : `${area.lockedCount} locked`}
           </span>
           {area.openCount > 0 ? (
-            <span className="status-chip" data-tone="caution">
+            <span className="status-chip" data-tone="in-flight">
               {area.openCount === 1 ? '1 open' : `${area.openCount} open`}
             </span>
           ) : null}
@@ -403,7 +403,7 @@ function OpenQuestionRowView({
               key={b.id}
               type="button"
               className="status-chip"
-              data-tone="caution"
+              data-tone="in-flight"
               onClick={() => interaction.jumpTo(b.id)}
             >
               blocks {b.tag}
@@ -457,7 +457,7 @@ export function ContextBriefView({
                     key={stat.id}
                     type="button"
                     className={
-                      stat.caution ? 'view-context-stat view-context-stat-caution' : 'view-context-stat'
+                      stat.open ? 'view-context-stat view-context-stat-open' : 'view-context-stat'
                     }
                     onClick={() => interaction.jumpTo(stat.target)}
                   >

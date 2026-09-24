@@ -125,7 +125,7 @@ describe('composeContextBrief', () => {
     expect(new Set(ids).size).toBe(3);
   });
 
-  it('tones a costly/one-way/irreversible reversibility as caution, and anything else as quiet', () => {
+  it('flags a costly/one-way/irreversible reversibility as hard to undo, and nothing else', () => {
     const brief = minimalBrief({
       areas: [
         {
@@ -151,8 +151,8 @@ describe('composeContextBrief', () => {
     });
     const composed = composeContextBrief(baseInput(brief));
     const [d1, d2] = composed!.areas[0].entries.map((e) => (e.kind === 'decision' ? e.decision : null));
-    expect(d1?.reversibility?.tone).toBe('caution');
-    expect(d2?.reversibility?.tone).toBe('quiet');
+    expect(d1?.reversibility?.hardToUndo).toBe(true);
+    expect(d2?.reversibility?.hardToUndo).toBe(false);
   });
 
   it('formats the phase-requirement Covers note from ViewInput.phaseRequirementIds', () => {
