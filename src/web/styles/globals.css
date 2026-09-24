@@ -110,14 +110,6 @@
   --chrome-veil: color-mix(in oklch, var(--background) 90%, transparent);
   --destructive-tint: color-mix(in oklch, var(--destructive) 8%, transparent);
   --destructive-border: color-mix(in oklch, var(--destructive) 55%, var(--border));
-  /* quick-260923-lju (sketch-006 D1): flagged-for-someone-else-to-resolve, in --primary's own
-     terracotta hue (a lighter step in dark, a deeper one in light) rather than a separate amber, since
-     the site has one accent family. Never an error (docs/design-language.md § Tones). Used by the CONTEXT brief's open-question chips/panel rule,
-     the "open" stat, a costly/one-way reversibility chip and an area's open chip. Declared per
-     theme (light here, dark below) since a single recipe cannot stay legible on both grounds;
-     test/web/caution-contrast.test.ts pins both at >= 4.5:1 against --background and --card. */
-  --caution: oklch(0.49 0.13 38);
-  --caution-border: color-mix(in oklch, var(--caution) 55%, var(--border));
   --primary-tint: color-mix(in oklch, var(--primary) 9%, transparent);
   /* quick-260918-qkd Task 2: the five-bucket bar/chip tone vocabulary (A1-A4). --in-flight-fill
      and --missing-fill stay named recipes because the matching status chips (below) also read
@@ -173,9 +165,6 @@
   /* Darkens further from the already-dark background, so the scrim still reads as a distinct
      layer rather than disappearing into it. */
   --overlay-scrim: color-mix(in oklch, var(--background) 72%, transparent);
-  /* quick-260923-lju: dark counterpart of --caution above — a lighter terracotta, so it still
-     clears 4.5:1 against the dark ground; test/web/caution-contrast.test.ts pins the exact ratio. */
-  --caution: oklch(0.72 0.12 40);
   color-scheme: dark;
 }
 
@@ -5202,8 +5191,10 @@ pre {
    ========================================================================== */
 
 .status-chip[data-tone='caution'] {
-  border-color: var(--caution-border);
-  color: var(--caution);
+  /* Preset tokens only: the preset's one chromatic colour, as an outline (no tint), so it reads
+     as flagged without looking like the filled `active` chip. */
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 .artifact-meta-row {
@@ -5302,11 +5293,11 @@ pre {
 }
 
 .view-context-stat-caution {
-  border-color: var(--caution-border);
+  border-color: var(--primary);
 }
 
 .view-context-stat-caution strong {
-  color: var(--caution);
+  color: var(--primary);
 }
 
 /* Out strip (P-3): a quiet, dashed rule under the hero. */
@@ -5372,11 +5363,11 @@ pre {
 
 /* Open questions (P-4): amber attention panel. */
 .view-context-open {
-  border-top: 3px solid var(--caution);
+  border-top: 3px solid var(--primary);
 }
 
 .view-context-open > .eyebrow {
-  color: var(--caution);
+  color: var(--primary);
 }
 
 .view-context-open-list {
@@ -5408,7 +5399,7 @@ pre {
 }
 
 .view-context-open-list .view-context-tag {
-  color: var(--caution);
+  color: var(--primary);
 }
 
 .view-context-question {

@@ -130,7 +130,7 @@ is always to add the missing name to this document, never to edit the reference 
 | `warning` | Partial read/parse degradation only | The "Warning" artifact-parse chip; never used by any sketch-004 B3 document-content chip, same rule as `destructive` above |
 | `in-flight` | A phase or item currently being worked | Traceability covering-phase signal, a sketch-004 B3 document's "Awaiting checkpoint"/"Gaps found" cover status |
 | `missing` | An expected item that has not appeared | Traceability covering-phase signal, a sketch-004 B3 gap item's "Failed" state chip |
-| `caution` | A lighter/deeper step of `--primary`'s terracotta hue (not a separate amber), flagged for someone else to resolve — never an error (quick-260923-lju) | The CONTEXT brief's open-question chips and panel rule, the "open" stat, a costly/one-way reversibility chip, and an area's "N open" chip |
+| `caution` | Plain `--primary` as an outline chip (no tint) — preset tokens only, no custom hue. Flagged for someone else to resolve — never an error (quick-260923-lju) | The CONTEXT brief's open-question chips and panel rule, the "open" stat, a costly/one-way reversibility chip, and an area's "N open" chip |
 
 ## Families
 
@@ -220,12 +220,12 @@ element is actually written, regardless of class name:
   `.immediate-work`'s existing top rule is reused verbatim for the brief's accent "In this phase"
   card, plus the ✓ marks in its list and the "Claude decides" label under a tagged decision. No
   other brief element (the leftover-discretion hanging rule, chips, stats) uses `--primary`.
-- **`caution` is terracotta, not amber, and never an error.** (quick-260923-lju) The CONTEXT brief's open-question
+- **`caution` uses the preset's `--primary`, never a custom hue, and is never an error.** (quick-260923-lju) The CONTEXT brief's open-question
   chips, the "open for the researcher" stat, a costly/one-way/irreversible reversibility chip, and
   an area's "N open" chip all use the `caution` tone — flagged for someone else to resolve, not a
   parse failure. The `destructive`/`warning` tones stay reserved for the artifact-parse badge, per
-  the existing rule above. It sits in `--primary`'s hue family so the brief stays inside the
-  site's single accent family; cross-references (`.view-context-ref`) and the "Claude decides"
+  the existing rule above. No page defines its own colour token: every colour comes from the
+  shadcn `base-sera` preset's tokens. Cross-references (`.view-context-ref`) and the "Claude decides"
   label stay muted like `.document-reference`.
 
 ## Surface-scoped registered names
