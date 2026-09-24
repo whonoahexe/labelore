@@ -10,6 +10,7 @@ import type {
   ContextBoundary,
   ContextBrief,
   IdeaItem,
+  SpecificKind,
 } from '../../planning-repo/handlers/context-brief.ts';
 import type { ViewInput } from './manifest.ts';
 import type { DocumentSectionGroup } from './document-sections.ts';
@@ -112,6 +113,24 @@ export interface ComposedIdeasPanel {
   items: ComposedIdeaItem[];
 }
 
+/** One tagged Specific-ideas row (sketch-007 C, quick-260925-3ug): `kind`/`kindLabel`/`tone` are
+ * derived defensively from the source item, so a missing or unrecognised `kind` still composes as
+ * a plain Note (3UG-04) rather than throwing. */
+export interface ComposedSpecificItem {
+  id: string;
+  title: string | null;
+  body: string;
+  kind: SpecificKind;
+  kindLabel: string;
+  tone: 'active' | 'in-flight' | 'quiet';
+}
+
+export interface ComposedSpecificsPanel {
+  id: 'context-specifics';
+  label: string;
+  items: ComposedSpecificItem[];
+}
+
 export interface ComposedStat {
   id: string;
   count: number;
@@ -148,7 +167,7 @@ export interface ComposedContextBrief {
   decisionsPreamble: Block[];
   openPanel: ComposedOpenPanel | null;
   discretionPanel: ComposedDiscretionPanel | null;
-  specifics: ComposedIdeasPanel | null;
+  specifics: ComposedSpecificsPanel | null;
   deferred: ComposedIdeasPanel | null;
   stats: ComposedStat[];
   refTargets: Record<string, string>;
@@ -352,6 +371,31 @@ function statusOf(status: string | null): ComposedIntro['status'] {
 }
 
 const HARD_TO_UNDO_RE = /^(costly|one-way|irreversible)/i;
+
+// ---------------------------------------------------------------------------
+// Specifics (sketch-007 C, quick-260925-3ug)
+// ---------------------------------------------------------------------------
+
+const SPECIFIC_KIND_META: Record<SpecificKind, { label: string; tone: 'active' | 'in-flight' | 'quiet' }> = {
+  rule: { label: 'Rule', tone: 'active' },
+  leaning: { label: 'Leaning', tone: 'in-flight' },
+  note: { label: 'Note', tone: 'quiet' },
+};
+
+/** Reads `kind` defensively — a missing or non-enum value (an older server payload) becomes
+ * 'note'/'Note'/'quiet' rather than throwing (3UG-04). */
+function composeSpecificsPanel(items: readonly (IdeaItem & { kind?: unknown })[]): ComposedSpecificsPanel | null {
+  if (items.length === 0) return null;
+  return {
+    id: 'context-specifics',
+    label: 'Specific ideas',
+    items: items.map((it, idx) => {
+      const kind: SpecificKind = it.kind === 'rule' || it.kind === 'leaning' || it.kind === 'note' ? it.kind : 'note';
+      const meta = SPECIFIC_KIND_META[kind];
+      return { id: `specifics-${idx + 1}`, title: it.title, body: it.body, kind, kindLabel: meta.label, tone: meta.tone };
+    }),
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Type guard
@@ -558,7 +602,7 @@ export function composeContextBrief(input: ViewInput): ComposedContextBrief | nu
       items: items.map((it, idx) => ({ id: `${prefix}-${idx + 1}`, title: it.title, body: it.body })),
     };
   };
-  const specifics = ideaPanel(brief.specifics, 'specifics', 'Specific ideas');
+  const specifics = composeSpecificsPanel(brief.specifics);
   const deferred = ideaPanel(brief.deferred, 'deferred', 'Deferred');
 
   // Stats.

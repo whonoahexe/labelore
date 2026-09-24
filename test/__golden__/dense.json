@@ -1224,7 +1224,8 @@
                     },
                     "specifics": [
                       {
-                        "title": null
+                        "title": null,
+                        "kind": "note"
                       }
                     ],
                     "deferred": [
@@ -1683,7 +1684,8 @@
                     },
                     "specifics": [
                       {
-                        "title": null
+                        "title": null,
+                        "kind": "note"
                       }
                     ],
                     "deferred": [
@@ -3219,7 +3221,8 @@
                     },
                     "specifics": [
                       {
-                        "title": null
+                        "title": null,
+                        "kind": "note"
                       }
                     ],
                     "deferred": [
@@ -3677,7 +3680,8 @@
                     },
                     "specifics": [
                       {
-                        "title": null
+                        "title": null,
+                        "kind": "note"
                       }
                     ],
                     "deferred": [
@@ -4145,7 +4149,8 @@
                 },
                 "specifics": [
                   {
-                    "title": null
+                    "title": null,
+                    "kind": "note"
                   }
                 ],
                 "deferred": [
@@ -4597,7 +4602,8 @@
                 },
                 "specifics": [
                   {
-                    "title": null
+                    "title": null,
+                    "kind": "note"
                   }
                 ],
                 "deferred": [
@@ -6126,7 +6132,8 @@
                 },
                 "specifics": [
                   {
-                    "title": null
+                    "title": null,
+                    "kind": "note"
                   }
                 ],
                 "deferred": [
@@ -6584,7 +6591,8 @@
                 },
                 "specifics": [
                   {
-                    "title": null
+                    "title": null,
+                    "kind": "note"
                   }
                 ],
                 "deferred": [
@@ -7920,7 +7928,8 @@
                       },
                       "specifics": [
                         {
-                          "title": null
+                          "title": null,
+                          "kind": "note"
                         }
                       ],
                       "deferred": [
@@ -9317,7 +9326,8 @@
                       },
                       "specifics": [
                         {
-                          "title": null
+                          "title": null,
+                          "kind": "note"
                         }
                       ],
                       "deferred": [
@@ -10714,7 +10724,8 @@
                       },
                       "specifics": [
                         {
-                          "title": null
+                          "title": null,
+                          "kind": "note"
                         }
                       ],
                       "deferred": [
@@ -11167,7 +11178,8 @@
                       },
                       "specifics": [
                         {
-                          "title": null
+                          "title": null,
+                          "kind": "note"
                         }
                       ],
                       "deferred": [
@@ -11445,7 +11457,8 @@
                       },
                       "specifics": [
                         {
-                          "title": null
+                          "title": null,
+                          "kind": "note"
                         }
                       ],
                       "deferred": [

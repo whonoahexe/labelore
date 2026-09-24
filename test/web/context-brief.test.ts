@@ -382,6 +382,48 @@ A statement.
 </decisions>
 `;
 
+// ---------------------------------------------------------------------------
+// specifics — kind/label/tone mapping (sketch-007 C, quick-260925-3ug Task 1)
+// ---------------------------------------------------------------------------
+
+describe('composeContextBrief — specifics', () => {
+  it('maps rule/leaning/note to their kindLabel and tone', () => {
+    const brief = minimalBrief({
+      specifics: [
+        { title: 'A rule.', body: 'body', kind: 'rule' },
+        { title: null, body: 'A leaning.', kind: 'leaning' },
+        { title: null, body: 'A note.', kind: 'note' },
+      ],
+    });
+    const composed = composeContextBrief(baseInput(brief));
+    expect(composed?.specifics?.items.map((i) => [i.kind, i.kindLabel, i.tone])).toEqual([
+      ['rule', 'Rule', 'active'],
+      ['leaning', 'Leaning', 'in-flight'],
+      ['note', 'Note', 'quiet'],
+    ]);
+  });
+
+  it('defaults a missing or unknown kind to note/Note/quiet without throwing (3UG-04)', () => {
+    const brief = minimalBrief({
+      specifics: [
+        { title: null, body: 'No kind at all.' } as never,
+        { title: null, body: 'An unknown kind.', kind: 'bogus' as never },
+      ],
+    });
+    expect(() => composeContextBrief(baseInput(brief))).not.toThrow();
+    const composed = composeContextBrief(baseInput(brief));
+    expect(composed?.specifics?.items.map((i) => [i.kind, i.kindLabel, i.tone])).toEqual([
+      ['note', 'Note', 'quiet'],
+      ['note', 'Note', 'quiet'],
+    ]);
+  });
+
+  it('gives null specifics when the array is empty', () => {
+    const composed = composeContextBrief(baseInput(minimalBrief({ specifics: [] })));
+    expect(composed?.specifics).toBeNull();
+  });
+});
+
 describe('asides — canonical references and existing code insights', () => {
   it('emits asides in order amendments, references, code, merging two references sections into one', () => {
     const brief = extractContextBrief(TWO_REFERENCES_SECTIONS_DOC);

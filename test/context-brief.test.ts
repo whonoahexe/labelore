@@ -4,7 +4,13 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
-import { extractContextBrief, firstSentence, parseBlocks } from '../src/planning-repo/handlers/context-brief.ts';
+import {
+  classifySpecific,
+  extractContextBrief,
+  firstSentence,
+  parseBlocks,
+  splitIdeaLead,
+} from '../src/planning-repo/handlers/context-brief.ts';
 
 const REPO_ROOT = new URL('../', import.meta.url);
 const SP_ROOT = '/home/cinedise/studio-portal/.planning';
@@ -277,5 +283,109 @@ describe('extractContextBrief — canonical references and existing code insight
     const brief = extractContextBrief(body);
     expect(brief.amendments).toHaveLength(1);
     expect(brief.amendments[0].heading).not.toMatch(/requirement amendments/i);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// quick-260925-3ug Task 1: ideas — specifics (sketch 007 C)
+// ---------------------------------------------------------------------------
+
+describe('ideas — specifics (sketch 007 C)', () => {
+  describe('splitIdeaLead', () => {
+    it('splits a lead ending in its own period, inside the bold span', () => {
+      const { title, body } = splitIdeaLead(
+        '**The CLI must be called `backstage`.** The user rejected the proposed `cinedise-portal` name outright and specified `backstage`.',
+      );
+      expect(title).toBe('The CLI must be called `backstage`.');
+      expect(body).toBe(
+        'The user rejected the proposed `cinedise-portal` name outright and specified `backstage`.',
+      );
+    });
+
+    it('joins a short first sentence of the tail onto the title with no inserted space', () => {
+      const { title, body } = splitIdeaLead(
+        '**UI work must use shadcn theme preset `b3Dqcuo4na`**, strictly. This held across all four v1.0 phases without drift.',
+      );
+      expect(title).toBe('UI work must use shadcn theme preset `b3Dqcuo4na`, strictly.');
+      expect(body).toBe('This held across all four v1.0 phases without drift.');
+    });
+
+    it('consumes an em-dash separator directly after the bold, and the colon/period separators produce the same split', () => {
+      const dash = splitIdeaLead('**Live-socket teardown on logout** — server-side closing of an already-open socket.');
+      expect(dash).toEqual({ title: 'Live-socket teardown on logout', body: 'server-side closing of an already-open socket.' });
+
+      const colon = splitIdeaLead('**Live-socket teardown on logout**: server-side closing of an already-open socket.');
+      expect(colon).toEqual(dash);
+
+      const period = splitIdeaLead('**Live-socket teardown on logout**. server-side closing of an already-open socket.');
+      expect(period).toEqual(dash);
+    });
+
+    it('lifts a leading parenthetical into the body only when a separator follows it', () => {
+      const { title, body } = splitIdeaLead(
+        "**What the `sessions` table stores for Phase 3's ADMIN-05 to read** (device / user-agent, IP, login time) — offered and passed over.",
+      );
+      expect(title).toBe("What the `sessions` table stores for Phase 3's ADMIN-05 to read");
+      expect(body).toBe('device / user-agent, IP, login time — offered and passed over.');
+    });
+
+    it('gives title null for text with no leading bold, and for an unclosed bold span', () => {
+      expect(splitIdeaLead('The user consistently chose the tighter, more explicit option.')).toEqual({
+        title: null,
+        body: 'The user consistently chose the tighter, more explicit option.',
+      });
+      expect(splitIdeaLead('**abc')).toEqual({ title: null, body: '**abc' });
+    });
+  });
+
+  describe('classifySpecific', () => {
+    it('classifies must/strictly/verbatim language as rule', () => {
+      expect(classifySpecific('The CLI must be called `backstage`.', 'Use it verbatim.')).toBe('rule');
+      expect(classifySpecific(null, 'This is a standing project rule, not a per-phase preference.')).toBe('rule');
+    });
+
+    it('classifies a recorded preference/tendency as leaning', () => {
+      expect(
+        classifySpecific(null, 'The user consistently chose the tighter, more explicit option when a tradeoff was presented.'),
+      ).toBe('leaning');
+    });
+
+    it('classifies plain prose with no signal as note', () => {
+      expect(classifySpecific(null, 'Just some text.')).toBe('note');
+    });
+
+    it('checks the title before the body, and leaning before rule', () => {
+      // A leaning-flavoured title must not fall through to a rule match found only in the body.
+      expect(
+        classifySpecific(
+          'The user consistently chose the smaller surface over the stricter one — except where lockout is at stake.',
+          'This must never be read as a rule.',
+        ),
+      ).toBe('leaning');
+    });
+  });
+
+  it.runIf(existsSync(SP01_PATH))('SP 01: kinds rule/rule/leaning, with pinned titles and body prefixes', async () => {
+    const body = await readFile(SP01_PATH, 'utf8');
+    const brief = extractContextBrief(body);
+    expect(brief.specifics).toHaveLength(3);
+    expect(brief.specifics.map((s) => s.kind)).toEqual(['rule', 'rule', 'leaning']);
+    expect(brief.specifics[0].title).toBe('The CLI must be called `backstage`.');
+    expect(brief.specifics[0].body.startsWith('The user rejected the proposed')).toBe(true);
+    expect(brief.specifics[1].title).toBe('UI work must use shadcn theme preset `b3Dqcuo4na`, strictly.');
+    expect(brief.specifics[1].body.startsWith('This held across')).toBe(true);
+  });
+
+  it.runIf(existsSync(SP03_PATH))('SP 03: kinds leaning/note/rule/rule/rule, with pinned titles and body prefixes', async () => {
+    const body = await readFile(SP03_PATH, 'utf8');
+    const brief = extractContextBrief(body);
+    expect(brief.specifics).toHaveLength(5);
+    expect(brief.specifics.map((s) => s.kind)).toEqual(['leaning', 'note', 'rule', 'rule', 'rule']);
+    expect(brief.specifics[0].title).toBe(
+      'The user consistently chose the smaller surface over the stricter one — except where lockout is at stake.',
+    );
+    expect(brief.specifics[0].body.startsWith("This phase reproduces Phase 2's recorded through-line")).toBe(true);
+    expect(brief.specifics[3].title).toBe('UI work must use shadcn theme preset `b3Dqcuo4na`, strictly.');
+    expect(brief.specifics[3].body.startsWith('Standing project rule')).toBe(true);
   });
 });

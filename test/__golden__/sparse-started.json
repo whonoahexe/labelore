@@ -498,7 +498,8 @@
                     },
                     "specifics": [
                       {
-                        "title": null
+                        "title": null,
+                        "kind": "rule"
                       }
                     ],
                     "deferred": [
@@ -840,7 +841,8 @@
                 },
                 "specifics": [
                   {
-                    "title": null
+                    "title": null,
+                    "kind": "rule"
                   }
                 ],
                 "deferred": [
@@ -1173,7 +1175,8 @@
                       },
                       "specifics": [
                         {
-                          "title": null
+                          "title": null,
+                          "kind": "rule"
                         }
                       ],
                       "deferred": [
@@ -1506,7 +1509,8 @@
                       },
                       "specifics": [
                         {
-                          "title": null
+                          "title": null,
+                          "kind": "rule"
                         }
                       ],
                       "deferred": [
@@ -1856,7 +1860,8 @@
                       },
                       "specifics": [
                         {
-                          "title": null
+                          "title": null,
+                          "kind": "rule"
                         }
                       ],
                       "deferred": [

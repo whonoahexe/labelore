@@ -665,42 +665,71 @@ export function ContextBriefView({
 
       {brief.specifics || brief.deferred ? (
         <div className="view-block view-context-ideas">
-          {[brief.specifics, brief.deferred]
-            .filter((panel): panel is NonNullable<typeof panel> => panel !== null)
-            .map((panel) => (
-              <section id={panel.id} className="preview-panel" key={panel.id}>
-                <header className="section-heading compact">
-                  <h2>{panel.label}</h2>
-                  <span>{panel.items.length}</span>
-                </header>
-                <ul className="view-context-idea-list">
-                  {panel.items.map((item) => {
-                    const open = interaction.isOpen(item.id);
-                    return (
-                      <li key={item.id}>
-                        <button
-                          type="button"
-                          className="view-context-idea"
-                          aria-expanded={open}
-                          data-open={open}
-                          data-untitled={item.title === null}
-                          onClick={() => interaction.toggle(item.id)}
-                        >
-                          {item.title ? (
-                            <span className="view-context-idea-title">
-                              <Inline text={item.title} refTargets={refTargets} interactive={false} />
-                            </span>
-                          ) : null}
-                          <span className="view-context-idea-body">
-                            <Inline text={item.body} refTargets={refTargets} interactive={false} />
+          {brief.specifics ? (
+            <section id="context-specifics" className="view-context-ideas-col view-context-specifics-col">
+              <p className="view-context-scope-label">
+                Specific ideas
+                <span className="view-context-scope-count">{brief.specifics.items.length}</span>
+              </p>
+              <ul className="view-context-specifics">
+                {brief.specifics.items.map((item) => (
+                  <li key={item.id} className="view-context-idea" data-kind={item.kind}>
+                    <span className="status-chip" data-tone={item.tone}>
+                      {item.kindLabel}
+                    </span>
+                    <div>
+                      {item.title ? (
+                        <>
+                          <strong>
+                            <Inline text={item.title} refTargets={refTargets} onJump={interaction.jumpTo} />
+                          </strong>{' '}
+                          <span className="view-context-idea-rest">
+                            <Inline text={item.body} refTargets={refTargets} onJump={interaction.jumpTo} />
                           </span>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </section>
-            ))}
+                        </>
+                      ) : (
+                        <Inline text={item.body} refTargets={refTargets} onJump={interaction.jumpTo} />
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+          {brief.deferred ? (
+            <section id={brief.deferred.id} className="preview-panel">
+              <header className="section-heading compact">
+                <h2>{brief.deferred.label}</h2>
+                <span>{brief.deferred.items.length}</span>
+              </header>
+              <ul className="view-context-idea-list">
+                {brief.deferred.items.map((item) => {
+                  const open = interaction.isOpen(item.id);
+                  return (
+                    <li key={item.id}>
+                      <button
+                        type="button"
+                        className="view-context-idea"
+                        aria-expanded={open}
+                        data-open={open}
+                        data-untitled={item.title === null}
+                        onClick={() => interaction.toggle(item.id)}
+                      >
+                        {item.title ? (
+                          <span className="view-context-idea-title">
+                            <Inline text={item.title} refTargets={refTargets} interactive={false} />
+                          </span>
+                        ) : null}
+                        <span className="view-context-idea-body">
+                          <Inline text={item.body} refTargets={refTargets} interactive={false} />
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ) : null}
         </div>
       ) : null}
 
