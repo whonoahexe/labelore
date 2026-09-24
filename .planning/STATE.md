@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-09-24T20:56:35.360Z"
+last_updated: "2026-09-24T20:58:45.008Z"
 last_activity: 2026-09-23
 last_activity_desc: Completed quick task 260923-lju (CONTEXT page per sketch 006 D1)
-state_head: 513822e261f65db5d18ef2531d9554c8c0fc3e1f
+state_head: e48bb52335325bbaa22bdcbe9271a57dd13fdaea
 progress:
   total_phases: 1
   completed_phases: 1
@@ -119,6 +119,7 @@ None.
 | 260921-l4e | Automated UI/UX consistency sweep of the document-page foundation (Playwright, `npm run test:e2e`) — 3 foundation fixes, 1 per-type waiver | 2026-09-21 | d3adb3d | [260921-l4e-automate-ui-ux-consistency-verification-](./quick/260921-l4e-automate-ui-ux-consistency-verification-/) |
 | 5 | CONTEXT brief: In/Out scope as one two-column block | 2026-09-24 | 04e9769 | — |
 | 6 | CONTEXT scope block: top rules meet at the divider | 2026-09-24 | 513822e | — |
+| 7 | CONTEXT In-list: capitalise items | 2026-09-24 | e48bb52 | — |
 
 ## Deferred Items
 
