@@ -5612,17 +5612,60 @@ button.view-context-summary:hover {
   font-size: var(--fs-4);
 }
 
-/* Ideas (P-7). */
+/* Ideas (P-7). Sketch-007 variant C (quick-260925-3ug): a wider Deferred column and a narrower
+   Specific-ideas column, matching the sketch's own 1fr / 1.3fr split. */
 .view-context-ideas {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-5);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  gap: var(--space-fluid-9);
+  align-items: start;
 }
 
 @media (max-width: 62rem) {
   .view-context-ideas {
     grid-template-columns: 1fr;
   }
+}
+
+.view-context-ideas-col {
+  min-width: 0;
+  padding-top: var(--space-3);
+  border-top: 2px solid var(--border);
+}
+
+/* The 10% accent reservation (quick-260925-3ug, sketch-007 C): the Specific-ideas column's own
+   top rule and label take --primary, matching the shipped In-this-phase card's treatment. */
+.view-context-specifics-col {
+  border-top-color: var(--primary);
+}
+
+.view-context-specifics-col .view-context-scope-label {
+  color: var(--primary);
+}
+
+.view-context-specifics {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  gap: var(--space-3);
+  list-style: none;
+}
+
+.view-context-specifics .view-context-idea {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  gap: var(--space-3);
+  overflow-wrap: anywhere;
+  font-size: var(--fs-4);
+}
+
+.view-context-specifics .view-context-idea .status-chip {
+  justify-self: start;
+  align-self: start;
+}
+
+.view-context-idea-rest {
+  color: var(--muted-foreground);
 }
 
 .view-context-idea-list {

@@ -6,6 +6,8 @@
 // `splitSubsections` / `parseMarkdownTable` plus per-line bounded regexes (T-01-11) — never a
 // whole-document regex, never a nested unbounded quantifier. Called from `ContextHandler.parse`
 // inside a try/catch; a throw here must never break `structured.decisions`/`structured.sections`.
+// A specific idea's kind (rule/leaning/note, sketch-007 C, quick-260925-3ug) is a per-item
+// heuristic classification over its own split title/body text — never a whole-document scan.
 import { splitSections, splitSubsections, parseMarkdownTable } from './markdown-sections.ts';
 
 // ---------------------------------------------------------------------------
@@ -101,6 +103,14 @@ export interface IdeaItem {
   body: string;
 }
 
+/** A specific idea's heuristic classification (sketch-007 C, quick-260925-3ug): `rule` (must/
+ * strictly/verbatim language), `leaning` (a recorded preference/tendency), or `note` (neither). */
+export type SpecificKind = 'rule' | 'leaning' | 'note';
+
+export interface SpecificIdea extends IdeaItem {
+  kind: SpecificKind;
+}
+
 /** One `###`-titled (or untitled, when it holds a section's lead prose) group of blocks inside a
  * back-matter aside section (amendments/references/code) — quick-260925-3ob. */
 export interface AsideGroup {
@@ -123,7 +133,7 @@ export interface ContextBrief {
   areas: ContextArea[];
   openQuestions: OpenQuestionsSource[];
   discretion: DiscretionBlock | null;
-  specifics: IdeaItem[];
+  specifics: SpecificIdea[];
   deferred: IdeaItem[];
   /** Requirement-amendments back matter (quick-260925-3ob, 3OB-01) — recognised by the
    * `<blocking_amendments>` tag or a "Requirement amendments" heading. */
@@ -995,9 +1005,84 @@ function topLevelColonIndex(text: string): number {
 // Specifics / deferred (Task 2)
 // ---------------------------------------------------------------------------
 
-const IDEA_TITLE_RE = /^\*\*([^*]{1,160}?)\*\*(:|\.|\s[—-])\s*(.*)$/;
+const LEAD_BOLD_RE = /^\*\*([^*]{1,200})\*\*/;
+const LEAD_PAREN_RE = /^(\s*)\(([^()]{1,160})\)/;
+const LEAD_DASH_RE = /^([—–-])\s/;
 
-function ideaItemsOf(body: string, role: 'specifics' | 'deferred'): IdeaItem[] {
+/** Splits a `**lead**` idea item into its bold `title` and the rest as `body` (sketch-007 C,
+ * quick-260925-3ug). Bounded, per-item scans only (T-01-11); no leading bold means `title: null`
+ * and the raw text, verbatim, as `body`. See the plan's numbered rule list for the exact
+ * precedence: a leading parenthetical is lifted into the body only when a separator (dash/colon/
+ * period) directly follows it; otherwise a leading separator right after the bold is consumed; X
+ * ending in sentence punctuation makes X itself the whole title; otherwise a short (<=60 char)
+ * first sentence of the tail joins the title with no inserted space. */
+export function splitIdeaLead(raw: string): { title: string | null; body: string } {
+  const boldMatch = LEAD_BOLD_RE.exec(raw);
+  if (!boldMatch) return { title: null, body: raw.trim() };
+
+  const title = boldMatch[1];
+  const tail = raw.slice(boldMatch[0].length);
+
+  const consumeSeparator = (candidate: string): { remainder: string; matched: boolean } => {
+    const trimmed = candidate.replace(/^\s+/, '');
+    const dashMatch = LEAD_DASH_RE.exec(trimmed);
+    if (dashMatch) {
+      return { remainder: trimmed.slice(dashMatch[0].length).replace(/^\s+/, ''), matched: true };
+    }
+    if (trimmed.startsWith(':') || trimmed.startsWith('.')) {
+      return { remainder: trimmed.slice(1).replace(/^\s+/, ''), matched: true };
+    }
+    return { remainder: candidate, matched: false };
+  };
+
+  const parenMatch = LEAD_PAREN_RE.exec(tail);
+  if (parenMatch) {
+    const afterLift = tail.slice(parenMatch[0].length);
+    const { remainder, matched } = consumeSeparator(afterLift);
+    if (matched) {
+      const lifted = parenMatch[2];
+      return { title, body: `${lifted} — ${remainder}`.trim() };
+    }
+    // No separator followed the parenthetical — restore the untouched tail and fall through.
+  }
+
+  {
+    const { remainder, matched } = consumeSeparator(tail);
+    if (matched) return { title, body: remainder.trim() };
+  }
+
+  if (/[.!?:]$/.test(title)) {
+    return { title, body: tail.trim() };
+  }
+
+  const [sentence, remainder] = firstSentence(tail);
+  if (sentence.length <= 60) {
+    return { title: title + sentence, body: remainder.trim() };
+  }
+  return { title, body: tail.trim() };
+}
+
+const LEANING_RE =
+  /\bconsistently\s+(chose|chooses|choose|picked|picks|pick|prefers|preferred|took|takes)\b|\blean(?:s|ed|ing)?\b|\bthe user\s+(?:tends|takes|prefers|leans|is willing)\b|\bstated preference\b/i;
+const RULE_RE =
+  /\bmust\b|\bstrictly\b|\bverbatim\b|\bnon-negotiable\b|\bhard\s+(?:rule|directive|requirement)\b|\bstanding\s+(?:project\s+)?rule\b/i;
+
+/** Heuristic kind classification (sketch-007 C, quick-260925-3ug): the title is checked first
+ * (leaning, then rule), then the whole title+body text, then 'note' when nothing matches. Order
+ * matters — a leaning-flavoured lead must never fall through to a rule match found only in body
+ * prose. */
+export function classifySpecific(title: string | null, body: string): SpecificKind {
+  if (title !== null) {
+    if (LEANING_RE.test(title)) return 'leaning';
+    if (RULE_RE.test(title)) return 'rule';
+  }
+  const whole = `${title ?? ''} ${body}`;
+  if (LEANING_RE.test(whole)) return 'leaning';
+  if (RULE_RE.test(whole)) return 'rule';
+  return 'note';
+}
+
+function rawIdeaItemsOf(body: string, role: 'specifics' | 'deferred'): IdeaItem[] {
   const sections = topSections(body).filter((s) => roleOfHeading(s.heading) === role || tagRoleAbove(body, s.heading) === role);
   const section = sections[0];
   if (!section) return [];
@@ -1006,20 +1091,19 @@ function ideaItemsOf(body: string, role: 'specifics' | 'deferred'): IdeaItem[] {
   for (const block of blocks) {
     if (block.kind === 'list') {
       for (const raw of block.items) {
-        const match = IDEA_TITLE_RE.exec(raw);
-        if (match) {
-          items.push({ title: match[1].trim(), body: match[3].trim() });
-        } else {
-          items.push({ title: null, body: raw.trim() });
-        }
+        items.push(splitIdeaLead(raw));
       }
       continue;
     }
     if (block.kind === 'paragraph') {
-      items.push({ title: null, body: block.text.trim() });
+      items.push(splitIdeaLead(block.text));
     }
   }
   return items;
+}
+
+function specificsOf(body: string): SpecificIdea[] {
+  return rawIdeaItemsOf(body, 'specifics').map((item) => ({ ...item, kind: classifySpecific(item.title, item.body) }));
 }
 
 // ---------------------------------------------------------------------------
@@ -1040,8 +1124,8 @@ export function extractContextBrief(body: string): ContextBrief {
   const { preamble: decisionsPreamble, areas } = extractDecisionsAndAreas(body);
   const openQuestions = extractOpenQuestions(body);
   const discretion = extractDiscretion(body);
-  const specifics = ideaItemsOf(body, 'specifics');
-  const deferred = ideaItemsOf(body, 'deferred');
+  const specifics = specificsOf(body);
+  const deferred = rawIdeaItemsOf(body, 'deferred');
   const amendments = asideSectionsOf(body, 'amendments');
   const references = asideSectionsOf(body, 'references');
   const codeInsights = asideSectionsOf(body, 'code');
