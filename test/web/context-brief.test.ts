@@ -7,8 +7,10 @@ import {
   formatCovers,
   formatGatheredDate,
 } from '../../src/web/views/context-brief.ts';
+import { extractContextBrief } from '../../src/planning-repo/handlers/context-brief.ts';
 import type { ContextBrief } from '../../src/planning-repo/handlers/context-brief.ts';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
+import type { DocumentSectionGroup } from '../../src/web/views/document-sections.ts';
 
 function baseInput(brief: unknown, overrides: Partial<ViewInput> = {}): ViewInput {
   return {
@@ -43,6 +45,7 @@ function minimalBrief(overrides: Partial<ContextBrief> = {}): ContextBrief {
     discretion: null,
     specifics: [],
     deferred: [],
+    amendments: [],
     recognizedHeadings: ['Phase Boundary'],
     ...overrides,
   };
@@ -160,5 +163,175 @@ describe('composeContextBrief', () => {
       baseInput(minimalBrief(), { phaseRequirementIds: ['AUTH-01', 'AUTH-02'] }),
     );
     expect(composed?.intro.covers).toBe('AUTH-01 · AUTH-02');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// asides — amendments end to end (quick-260925-3ob, Task 1)
+// ---------------------------------------------------------------------------
+
+const AMENDMENTS_DOC = `# Phase 1: Test - Context
+
+<domain>
+## Phase Boundary
+
+A statement about scope.
+
+</domain>
+
+<blocking_amendments>
+## ⚠️ Requirement amendments this discussion forces
+
+**The planner must not plan against the current wording of these.**
+
+| Document | Change |
+|---|---|
+| REQUIREMENTS.md — X | Reword this. |
+| ROADMAP.md — Y | Reword that. |
+
+Resolve these before planning.
+
+</blocking_amendments>
+
+<decisions>
+## Implementation Decisions
+
+### Area One
+
+- **D-01:** A decision summary.
+
+</decisions>
+`;
+
+const NO_AMENDMENTS_DOC = `# Phase 1: Test - Context
+
+<domain>
+## Phase Boundary
+
+A statement about scope.
+
+</domain>
+
+<decisions>
+## Implementation Decisions
+
+### Area One
+
+- **D-01:** A decision summary.
+
+</decisions>
+`;
+
+const TAGGED_AMENDMENTS_DOC = `# Phase 4: Test - Context
+
+<domain>
+## Phase Boundary
+
+A statement about scope.
+
+</domain>
+
+<blocking_amendments>
+## ⚠️ One research recommendation is superseded — do not inherit it
+
+Do not inherit the superseded recommendation.
+
+</blocking_amendments>
+
+<decisions>
+## Implementation Decisions
+
+### Area One
+
+- **D-01:** A decision summary.
+
+</decisions>
+`;
+
+const HEADING_ONLY_AMENDMENTS_DOC = `# Phase 5: Test - Context
+
+<domain>
+## Phase Boundary
+
+A statement about scope.
+
+</domain>
+
+## Requirement amendments
+
+Fix this before planning.
+
+<decisions>
+## Implementation Decisions
+
+### Area One
+
+- **D-01:** A decision summary.
+
+</decisions>
+`;
+
+function groupsFor(headings: (string | null)[]): DocumentSectionGroup[] {
+  return headings.map((heading) => ({ id: null, heading, html: '<p>x</p>' }));
+}
+
+describe('asides — amendments end to end', () => {
+  it('composes exactly one quiet amendments aside with an emoji-free label, count and untitled group', () => {
+    const brief = extractContextBrief(AMENDMENTS_DOC);
+    const groups = groupsFor(['Phase Boundary', '⚠️ Requirement amendments this discussion forces', 'Implementation Decisions']);
+    const composed = composeContextBrief(baseInput(brief, { groups }));
+
+    expect(composed?.asides).toHaveLength(1);
+    const aside = composed!.asides[0];
+    expect(aside.id).toBe('context-amendments');
+    expect(aside.kind).toBe('amendments');
+    expect(aside.label).toBe('Requirement amendments this discussion forces');
+    expect(aside.count).toBe(2);
+    expect(aside.hint).toBeNull();
+    expect(aside.groups).toHaveLength(1);
+    expect(aside.groups[0].title).toBeNull();
+    expect(aside.groups[0].blocks.map((b) => b.kind)).toEqual(['paragraph', 'table', 'paragraph']);
+  });
+
+  it('drops the amendments section out of extras', () => {
+    const brief = extractContextBrief(AMENDMENTS_DOC);
+    const groups = groupsFor(['Phase Boundary', '⚠️ Requirement amendments this discussion forces', 'Implementation Decisions']);
+    const composed = composeContextBrief(baseInput(brief, { groups }));
+
+    expect(composed?.extras.some((e) => (e.heading ?? '').toLowerCase().includes('amendments'))).toBe(false);
+  });
+
+  it('gives no asides when the document has no amendments section', () => {
+    const brief = extractContextBrief(NO_AMENDMENTS_DOC);
+    const groups = groupsFor(['Phase Boundary', 'Implementation Decisions']);
+    const composed = composeContextBrief(baseInput(brief, { groups }));
+
+    expect(composed?.asides).toEqual([]);
+  });
+
+  it('recognises a <blocking_amendments> section by its tag when the heading does not say "requirement amendments"', () => {
+    const brief = extractContextBrief(TAGGED_AMENDMENTS_DOC);
+    const groups = groupsFor(['Phase Boundary', '⚠️ One research recommendation is superseded — do not inherit it', 'Implementation Decisions']);
+    const composed = composeContextBrief(baseInput(brief, { groups }));
+
+    expect(composed?.asides).toHaveLength(1);
+    expect(composed!.asides[0].label).toBe('One research recommendation is superseded — do not inherit it');
+  });
+
+  it('still composes non-null with no asides when the amendments key is absent from the payload', () => {
+    const brief = minimalBrief();
+    delete (brief as Partial<ContextBrief>).amendments;
+    const composed = composeContextBrief(baseInput(brief));
+
+    expect(composed).not.toBeNull();
+    expect(composed?.asides).toEqual([]);
+  });
+
+  it('recognises a heading-only "## Requirement amendments" with no tag', () => {
+    const brief = extractContextBrief(HEADING_ONLY_AMENDMENTS_DOC);
+    const groups = groupsFor(['Phase Boundary', 'Requirement amendments', 'Implementation Decisions']);
+    const composed = composeContextBrief(baseInput(brief, { groups }));
+
+    expect(composed?.asides).toHaveLength(1);
   });
 });
