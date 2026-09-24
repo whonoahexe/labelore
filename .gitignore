@@ -11,3 +11,4 @@ playwright-report/
 # Per-run GSD scratch — the dispatch-isolation sentinel workflows rewrite on
 # every agent dispatch. Runtime state, not project content.
 .gsd/
+.playwright-mcp/
