@@ -211,10 +211,21 @@ element is actually written, regardless of class name:
 - **CONTEXT uses the sketch-006 D1 brief layout, not B3.** (quick-260923-lju) The `context` kind's
   manifest declares a `brief` hook (`composeContextBrief`) instead of opting into `layout`
   (`DocumentLayoutSpec`) — a boundary hero, a quiet out-strip, an amber open-questions panel, a
-  continuous decision register. Sections the brief doesn't claim (canonical references, existing
-  code insights) are read in Source — View mode has no "More in this document" disclosure. It never carries a cover sheet, a chapter
-  index, folded chapters, or an endnotes sheet — those are B3's shape (DISCUSSION-LOG, PLAN,
-  VERIFICATION), deliberately not CONTEXT's.
+  continuous decision register. View mode has no "More in this document" disclosure — that was
+  removed in 1d0baf3. It never carries a cover sheet, a chapter index, folded chapters, or an
+  endnotes sheet — those are B3's shape (DISCUSSION-LOG, PLAN, VERIFICATION), deliberately not
+  CONTEXT's. Sections the brief still doesn't claim render as extras or are read in Source.
+- **The brief closes on quiet, collapsed back-matter rows.** (quick-260925-3ob) A
+  `<blocking_amendments>` section (recognised by its tag, or a heading matching
+  `/requirement amendments?/i` after a leading emoji) and — always, not just when unrecognised
+  elsewhere — canonical references and existing code insights each surface as one
+  `.view-context-aside` row at the very end of `ContextBriefView`, after the ideas panels. Every
+  row starts collapsed; the amendments row is labelled with its own heading minus the leading
+  emoji, and each row's content renders through the same `Inline`/`BlockList` path as the rest of
+  the brief — grouped by its `###` subsection titles, with `.planning/` paths rendered as code and
+  D-NN mentions as the brief's existing muted jump buttons. The rows are muted type
+  (`--muted-foreground`, brightening only to `--foreground` on hover) on hairline rules
+  (`--border`) — no card, no status-chip tone, no hero stat, and no `--primary`.
 - **The 10% accent reservation extends to the CONTEXT brief's In-this-phase card.** (quick-260923-lju)
   `.immediate-work`'s existing top rule is reused verbatim for the brief's accent "In this phase"
   card, plus the ✓ marks in its list and the "Claude decides" label under a tagged decision. No
@@ -226,7 +237,10 @@ element is actually written, regardless of class name:
   reversibility chip is the plain untoned `.status-chip` (foreground text, one step above `quiet`),
   matching the neutral "hard to undo" stat; any other reversibility chip is `quiet`. The
   `destructive`/`warning` tones stay reserved for the artifact-parse badge. Cross-references
-  (`.view-context-ref`) and the "Claude decides" label stay muted like `.document-reference`.
+  (`.view-context-ref`) and the "Claude decides" label stay muted like `.document-reference`. The
+  amendments back-matter row (quick-260925-3ob) carries no `warning`/`destructive`/`in-flight`
+  tone either, despite its source heading's own ⚠️ — the row is as quiet as its references/code
+  siblings.
 
 ## Surface-scoped registered names
 
