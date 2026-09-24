@@ -167,6 +167,13 @@ function BlockList({
 
 // ---------------------------------------------------------------------------
 // useContextBrief — open-id set, toggle, jump (mirrors useChapterFolds' pending-scroll pattern)
+/** In-list items are mid-sentence fragments ("login/logout", "the X seam swap"); capitalise a
+ * leading lowercase letter so the list reads as items. A leading code span or link is left alone —
+ * identifiers keep their case. */
+function capitalizeItem(text: string): string {
+  return text.replace(/^[a-z]/, (letter) => letter.toUpperCase());
+}
+
 // ---------------------------------------------------------------------------
 
 export interface ContextBriefInteraction {
@@ -488,7 +495,7 @@ export function ContextBriefView({
                     {/* One wrapper, so the li's two-column grid (check, text) gets exactly two
                         items — Inline emits one node per text/code fragment. */}
                     <span>
-                      <Inline text={item} refTargets={refTargets} onJump={interaction.jumpTo} />
+                      <Inline text={capitalizeItem(item)} refTargets={refTargets} onJump={interaction.jumpTo} />
                     </span>
                   </li>
                 ))}
