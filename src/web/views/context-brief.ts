@@ -155,18 +155,16 @@ export interface ComposedContextBrief {
   /** Unrecognised `##` document-section groups, rendered before the register (in document order),
    * plus the leading (no-heading) group when the brief's preamble held extra prose. */
   extras: DocumentSectionGroup[];
-  /** Canonical-references and existing-code-insights groups, held for the closed "More in this
-   * document" disclosure — in document order. Dead: nothing renders it since 1d0baf3; removed in
-   * quick-260925-3ob Task 2 once those sections move into `asides`. */
-  more: DocumentSectionGroup[];
   /** Quiet, collapsed back-matter rows closing the brief, in order: amendments (one row per
    * section), then canonical references (merged), then existing code insights (merged) —
-   * quick-260925-3ob. */
+   * quick-260925-3ob. Canonical-references/existing-code-insights sections used to be held here
+   * for a closed "More in this document" disclosure; that disclosure was removed in 1d0baf3 and
+   * those sections now surface through `asides` instead. */
   asides: ComposedAside[];
 }
 
 // ---------------------------------------------------------------------------
-// Group partition — unrecognised sections (`extras`) vs. the "More" disclosure (`more`)
+// Group partition — unrecognised sections (`extras`)
 // ---------------------------------------------------------------------------
 
 /** Lowercases, strips `*`/`` ` ``/`_`, collapses link syntax to its label, and normalises
@@ -181,31 +179,28 @@ function normalizeHeading(text: string): string {
     .toLowerCase();
 }
 
-const MORE_HEADING_RE = /^(canonical references|existing code insights)$/i;
-
+/** Every unrecognised, non-blank group, in document order, with the leading (no-heading) group
+ * relabelled `INTRODUCTION_LABEL` when the brief's preamble held extra prose. Canonical-references
+ * and existing-code-insights headings are already in `recognizedHeadings` (they surface through
+ * `asides` instead), so they fall out here without a second bucket. */
 function partitionGroups(
   groups: DocumentSectionGroup[],
   recognizedHeadings: string[],
   preambleExtra: boolean,
-): { extras: DocumentSectionGroup[]; more: DocumentSectionGroup[] } {
+): { extras: DocumentSectionGroup[] } {
   const recognized = new Set(recognizedHeadings.map(normalizeHeading));
   const extras: DocumentSectionGroup[] = [];
-  const more: DocumentSectionGroup[] = [];
   for (const group of groups) {
     if (group.html.trim() === '') continue;
     if (group.heading === null) {
       if (preambleExtra) extras.push({ ...group, heading: INTRODUCTION_LABEL });
       continue;
     }
-    if (MORE_HEADING_RE.test(group.heading.trim())) {
-      more.push(group);
-      continue;
-    }
     const key = normalizeHeading(group.heading);
     if (recognized.has(key)) continue;
     extras.push(group);
   }
-  return { extras, more };
+  return { extras };
 }
 
 // ---------------------------------------------------------------------------
@@ -611,21 +606,35 @@ export function composeContextBrief(input: ViewInput): ComposedContextBrief | nu
     });
   }
 
-  const { extras, more } = partitionGroups(input.groups, brief.recognizedHeadings, brief.meta.preambleExtra);
+  const { extras } = partitionGroups(input.groups, brief.recognizedHeadings, brief.meta.preambleExtra);
 
-  // Back-matter asides (quick-260925-3ob): one row per amendments section, in document order.
-  const amendmentsSections = tolerantAsideSections((brief as unknown as Record<string, unknown>).amendments);
-  const asides: ComposedAside[] = amendmentsSections.map((section, index) => {
-    const id = index === 0 ? 'context-amendments' : `context-amendments-${index + 1}`;
-    return {
-      id,
-      kind: 'amendments',
-      label: stripEmoji(section.heading) || 'Amendments',
-      count: countAsideGroups(section.groups),
-      hint: hintOfAsideGroups(section.groups),
-      groups: section.groups,
-    };
-  });
+  // Back-matter asides (quick-260925-3ob): amendments (one row per section, in document order),
+  // then a single merged canonical-references row, then a single merged code-insights row.
+  const briefRecord = brief as unknown as Record<string, unknown>;
+  const amendmentsSections = tolerantAsideSections(briefRecord.amendments);
+  const amendmentsAsides: ComposedAside[] = amendmentsSections.map((section, index) => ({
+    id: index === 0 ? 'context-amendments' : `context-amendments-${index + 1}`,
+    kind: 'amendments',
+    label: stripEmoji(section.heading) || 'Amendments',
+    count: countAsideGroups(section.groups),
+    hint: hintOfAsideGroups(section.groups),
+    groups: section.groups,
+  }));
+
+  const mergedAside = (value: unknown, id: string, kind: 'references' | 'code', label: string): ComposedAside | null => {
+    const sections = tolerantAsideSections(value);
+    if (sections.length === 0) return null;
+    const groups = sections.flatMap((section) => section.groups);
+    return { id, kind, label, count: countAsideGroups(groups), hint: hintOfAsideGroups(groups), groups };
+  };
+  const referencesAside = mergedAside(briefRecord.references, 'context-references', 'references', 'Canonical references');
+  const codeAside = mergedAside(briefRecord.codeInsights, 'context-code', 'code', 'Existing code insights');
+
+  const asides: ComposedAside[] = [
+    ...amendmentsAsides,
+    ...(referencesAside ? [referencesAside] : []),
+    ...(codeAside ? [codeAside] : []),
+  ];
 
   return {
     intro,
@@ -641,7 +650,6 @@ export function composeContextBrief(input: ViewInput): ComposedContextBrief | nu
     stats,
     refTargets,
     extras,
-    more,
     asides,
   };
 }

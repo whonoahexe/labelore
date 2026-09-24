@@ -14,6 +14,9 @@ async function repoBody(relativePath: string): Promise<string> {
 }
 
 const SP01_PATH = `${SP_ROOT}/phases/01-portal-owned-identity-sessions/01-CONTEXT.md`;
+const SP02_PATH = `${SP_ROOT}/phases/02-roles-permission-enforcement/02-CONTEXT.md`;
+const SP03_PATH = `${SP_ROOT}/phases/03-account-administration-session-control/03-CONTEXT.md`;
+const SP04_PATH = `${SP_ROOT}/phases/04-bulk-archive-downloads/04-CONTEXT.md`;
 const LB05_PATH = '.planning/milestones/v1.1-phases/05-per-type-document-views/05-CONTEXT.md';
 
 describe('extractContextBrief — SP phases/01 boundary', () => {
@@ -137,5 +140,142 @@ describe('parseBlocks', () => {
     const blocks = parseBlocks('| A | B |\n| C | D |\n');
     expect(blocks).toHaveLength(1);
     expect(blocks[0].kind).toBe('paragraph');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// quick-260925-3ob Task 2: canonical references / existing code insights
+// ---------------------------------------------------------------------------
+
+const REFS_AND_CODE_DOC = `# Phase 1: Test - Context
+
+<domain>
+## Phase Boundary
+
+A statement.
+
+</domain>
+
+<canonical_refs>
+## Canonical References
+
+**Read these first.**
+
+### G1
+- \`path/one.ts\` — note one
+
+### G2
+- \`path/two.ts\` — note two
+
+</canonical_refs>
+
+<code_context>
+## Existing Code Insights
+
+### H1
+- Item one
+
+### H2
+- Item two
+
+---
+
+### H3
+- Item three
+
+</code_context>
+
+<decisions>
+## Implementation Decisions
+
+### Area One
+
+- **D-01:** A decision.
+
+</decisions>
+`;
+
+const NONE_OF_THE_THREE_DOC = `# Phase 1: Test - Context
+
+<domain>
+## Phase Boundary
+
+A statement.
+
+</domain>
+
+<decisions>
+## Implementation Decisions
+
+### Area One
+
+- **D-01:** A decision.
+
+</decisions>
+`;
+
+describe('extractContextBrief — canonical references and existing code insights', () => {
+  it('groups canonical_refs by ### heading (untitled lead first) and code_context the same way, dropping bare "---" lines', () => {
+    const brief = extractContextBrief(REFS_AND_CODE_DOC);
+    expect(brief.references).toHaveLength(1);
+    expect(brief.references[0].groups.map((g) => g.title)).toEqual([null, 'G1', 'G2']);
+    expect(brief.codeInsights).toHaveLength(1);
+    expect(brief.codeInsights[0].groups.map((g) => g.title)).toEqual(['H1', 'H2', 'H3']);
+
+    const allBlocks = [...brief.references[0].groups, ...brief.codeInsights[0].groups].flatMap((g) => g.blocks);
+    expect(allBlocks.some((b) => b.kind === 'paragraph' && b.text.trim() === '---')).toBe(false);
+  });
+
+  it('gives amendments/references/codeInsights all [] and never throws when none of the three sections are present', () => {
+    expect(() => extractContextBrief(NONE_OF_THE_THREE_DOC)).not.toThrow();
+    const brief = extractContextBrief(NONE_OF_THE_THREE_DOC);
+    expect(brief.amendments).toEqual([]);
+    expect(brief.references).toEqual([]);
+    expect(brief.codeInsights).toEqual([]);
+  });
+
+  it.runIf(existsSync(SP02_PATH))('SP 02: pinned amendments/references/codeInsights shape', async () => {
+    const body = await readFile(SP02_PATH, 'utf8');
+    const brief = extractContextBrief(body);
+
+    expect(brief.amendments).toHaveLength(1);
+    expect(brief.amendments[0].heading).toMatch(/Requirement amendments/);
+    expect(brief.amendments[0].groups).toHaveLength(1);
+    expect(brief.amendments[0].groups[0].title).toBeNull();
+    const tableBlock = brief.amendments[0].groups[0].blocks.find((b) => b.kind === 'table');
+    expect(tableBlock?.kind).toBe('table');
+    if (tableBlock?.kind === 'table') expect(tableBlock.rows).toHaveLength(6);
+
+    expect(brief.references).toHaveLength(1);
+    expect(brief.references[0].groups.map((g) => g.title)).toEqual([
+      null,
+      'Milestone-level context',
+      'v2.0 research (load-bearing for this phase)',
+      'Phase 1 output — read before touching the auth seam',
+      'Code this phase modifies or depends on',
+      'v1.0 precedent worth reading before deciding shape',
+    ]);
+
+    expect(brief.codeInsights).toHaveLength(1);
+    expect(brief.codeInsights[0].groups.map((g) => g.title)).toEqual([
+      'Reusable Assets',
+      'Established Patterns',
+      'Integration Points',
+      'Constraints this architecture imposes',
+    ]);
+  });
+
+  it.runIf(existsSync(SP03_PATH))('SP 03: <blocking_amendments> recognised by tag, not by heading text', async () => {
+    const body = await readFile(SP03_PATH, 'utf8');
+    const brief = extractContextBrief(body);
+    expect(brief.amendments).toHaveLength(1);
+    expect(brief.amendments[0].heading).not.toMatch(/requirement amendments/i);
+  });
+
+  it.runIf(existsSync(SP04_PATH))('SP 04: <blocking_amendments> recognised by tag, not by heading text', async () => {
+    const body = await readFile(SP04_PATH, 'utf8');
+    const brief = extractContextBrief(body);
+    expect(brief.amendments).toHaveLength(1);
+    expect(brief.amendments[0].heading).not.toMatch(/requirement amendments/i);
   });
 });

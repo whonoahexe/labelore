@@ -128,6 +128,10 @@ export interface ContextBrief {
   /** Requirement-amendments back matter (quick-260925-3ob, 3OB-01) — recognised by the
    * `<blocking_amendments>` tag or a "Requirement amendments" heading. */
   amendments: ContextAside[];
+  /** Canonical-references back matter (quick-260925-3ob, 3OB-02). */
+  references: ContextAside[];
+  /** Existing-code-insights back matter (quick-260925-3ob, 3OB-03). */
+  codeInsights: ContextAside[];
   /** Every `##` heading text this extractor accounted for — the composer's partition key for the
    * unrecognised-section (`extras`) bucket. */
   recognizedHeadings: string[];
@@ -1039,6 +1043,8 @@ export function extractContextBrief(body: string): ContextBrief {
   const specifics = ideaItemsOf(body, 'specifics');
   const deferred = ideaItemsOf(body, 'deferred');
   const amendments = asideSectionsOf(body, 'amendments');
+  const references = asideSectionsOf(body, 'references');
+  const codeInsights = asideSectionsOf(body, 'code');
 
   if (boundary) boundary = extractBoundaryNotes(boundary);
 
@@ -1070,6 +1076,8 @@ export function extractContextBrief(body: string): ContextBrief {
     specifics,
     deferred,
     amendments,
+    references,
+    codeInsights,
     recognizedHeadings,
   };
 }
