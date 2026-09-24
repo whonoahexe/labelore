@@ -612,9 +612,10 @@ export function ArtifactPage(): React.JSX.Element {
     { label: artifact.title },
   ];
   // A cover page's eyebrow already names the kind: move `Phase N` up beside it and keep only the
-  // phase name in the H1.
+  // phase name in the H1. The CONTEXT brief's eyebrow already carries the phase, so it only takes
+  // the stripped H1.
   const kindLabel = humanizeKind(artifact.kind);
-  const coverTitle = layout && !brief ? splitPhaseTitle(artifact.title, kindLabel) : null;
+  const coverTitle = layout || brief ? splitPhaseTitle(artifact.title, kindLabel) : null;
   return (
     <main className="artifact-page page-stack">
       <ArtifactHeader
