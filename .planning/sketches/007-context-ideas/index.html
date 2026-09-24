@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 007 — CONTEXT ideas: specifics + deferred</title>
+<link rel="stylesheet" href="../themes/default.css?v=007">
+<style>
+/* Sketch 007: the CONTEXT brief's closing section (.view-context-ideas). Shell atoms copied from
+   006; everything visual comes from ../themes/default.css. The shipped In/Out scope block is
+   reproduced at the top as a reference for label weight and rules. */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-5); line-height: var(--lh-normal); padding-top: 3rem; }
+h1, h2, h3, p, ul, ol { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+code { font-family: var(--font-mono); font-size: 0.9em; padding: 0 0.2em; background: color-mix(in oklch, var(--muted) 70%, transparent); }
+strong { font-weight: var(--fw-semibold); }
+
+#variant-nav { position: fixed; inset: 0 0 auto 0; z-index: 50; display: flex; gap: var(--space-1); align-items: center; padding: var(--space-2) var(--space-4); background: var(--background); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; overflow-x: auto; }
+#variant-nav .label { color: var(--muted-foreground); margin-right: var(--space-2); white-space: nowrap; }
+.variant-tab { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; background: none; white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; color: var(--muted-foreground); transition: all .15s ease; }
+.variant-tab:hover { color: var(--foreground); background: var(--state-hover); }
+.variant-tab.active { color: var(--primary); border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); background: var(--primary-tint); }
+.shell-header { display: flex; align-items: center; gap: var(--space-4); height: 3.75rem; padding: 0 var(--space-4); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.brand-mark { width: 2.25rem; height: 2.25rem; background: var(--primary); display: grid; place-items: center; color: white; font-weight: 700; }
+#frame { margin: 0 auto; container-type: inline-size; transition: max-width .2s ease; background: var(--background); min-height: 100vh; }
+#frame.narrow-frame { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+.page { width: min(80rem, 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); display: grid; gap: var(--space-8); }
+.toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--foreground); color: var(--background); padding: var(--space-2) var(--space-4); font-family: var(--font-mono); font-size: var(--fs-2); z-index: 9999; animation: fade .15s ease; }
+.fade { animation: fade .18s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .fade { animation: none; } }
+.mention { font-family: var(--font-mono); font-size: 0.92em; color: var(--primary); background: none; border: 0; padding: 0; text-decoration: underline dotted; text-underline-offset: 3px; }
+.mention:hover { text-decoration-style: solid; }
+.ref-note { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+
+/* ---- shared label vocabulary, copied from the shipped scope block ---- */
+.label { display: flex; gap: var(--space-2); align-items: baseline; margin-bottom: var(--space-3); color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.label.accent { color: var(--primary); }
+.label .count { color: var(--muted-foreground); font-weight: var(--fw-medium); }
+.label .aside { margin-left: auto; font-weight: var(--fw-medium); text-transform: none; letter-spacing: 0; font-family: var(--font-sans); font-size: var(--fs-2); }
+
+/* reference: the shipped In/Out block (condensed) */
+.scope { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); border: 1px solid var(--border); border-top: 0; background: var(--card-veil); opacity: .55; }
+.scope > div { padding: var(--space-fluid-3); box-shadow: inset 0 3px 0 var(--primary); font-size: var(--fs-4); }
+.scope > div + div { box-shadow: inset 0 3px 0 var(--border); border-left: 1px solid var(--border); color: var(--muted-foreground); }
+
+/* tags */
+.tag { display: inline-flex; align-items: center; gap: var(--space-1); padding: 0.1rem var(--space-1-5); border: 1px solid var(--border); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; color: var(--muted-foreground); background: none; }
+.tag[data-tone='accent'] { color: var(--primary); border-color: color-mix(in oklch, var(--primary) 55%, var(--border)); background: var(--primary-tint); }
+.tag[data-tone='flight'] { color: var(--in-flight-fill); border-color: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border)); }
+button.tag { cursor: pointer; transition: all .15s ease; }
+button.tag:hover { background: var(--state-hover); }
+button.tag[aria-pressed='true'] { color: var(--foreground); border-color: var(--foreground); }
+.dest { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; color: var(--foreground); }
+.revisit { display: block; margin-top: var(--space-1-5); font-size: var(--fs-3); color: var(--foreground); }
+.revisit::before { content: 'Revisit if '; font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--in-flight-fill); }
+
+/* ================= A: refined panels ================= */
+.a-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); border: 1px solid var(--border); border-top: 0; background: var(--card-veil); }
+.a-grid > section { min-width: 0; padding: var(--space-fluid-3); box-shadow: inset 0 3px 0 var(--border); }
+.a-grid > section + section { border-left: 1px solid var(--border); }
+.a-list { list-style: none; padding: 0; display: grid; }
+.a-list li { padding: var(--space-3) 0; border-bottom: 1px solid var(--border); font-size: var(--fs-4); overflow-wrap: anywhere; transition: background .15s ease; }
+.a-list li:first-child { padding-top: 0; }
+.a-list li:last-child { border-bottom: 0; padding-bottom: 0; }
+.a-spec .lead { color: var(--foreground); }
+.a-spec .rest { color: var(--muted-foreground); }
+.a-def .title { font-weight: var(--fw-medium); line-height: var(--lh-snug); }
+.a-def .meta { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin-top: var(--space-1-5); }
+.a-def .body { margin-top: var(--space-1-5); color: var(--muted-foreground); }
+.a-def .body[data-clamped='true'] { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.more { margin-top: var(--space-1); padding: 0; border: 0; background: none; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.more:hover { color: var(--primary); }
+
+/* ================= B: guidance band + register ================= */
+.b-guidance { border: 1px solid var(--border); border-top: 0; box-shadow: inset 0 3px 0 var(--primary); background: var(--card-veil); padding: var(--space-fluid-3); display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(16rem, 1fr); gap: var(--space-fluid-9); }
+@container (max-width: 820px) { .b-guidance { grid-template-columns: 1fr; } }
+.b-rules { list-style: none; padding: 0; counter-reset: rule; display: grid; gap: var(--space-4); }
+.b-rules li { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr); gap: var(--space-2); counter-increment: rule; overflow-wrap: anywhere; }
+.b-rules li::before { content: counter(rule, decimal-leading-zero); font-family: var(--font-mono); font-size: var(--fs-2); color: var(--primary); padding-top: 0.2rem; }
+.b-rules .lead { font-family: var(--font-heading); font-size: var(--fs-5); line-height: var(--lh-snug); }
+.b-rules .rest { display: block; margin-top: var(--space-1); color: var(--muted-foreground); font-size: var(--fs-3); }
+.b-lean { display: grid; gap: var(--space-4); align-content: start; }
+.b-lean blockquote { margin: 0; padding-left: var(--space-4); border-left: 2px solid var(--primary); font-size: var(--fs-4); color: var(--foreground); overflow-wrap: anywhere; }
+.b-lean blockquote .rest { display: block; margin-top: var(--space-1-5); color: var(--muted-foreground); font-size: var(--fs-3); }
+.b-note { font-size: var(--fs-3); color: var(--muted-foreground); padding-top: var(--space-3); border-top: 1px dashed var(--border); overflow-wrap: anywhere; }
+.b-note strong { color: var(--foreground); }
+.b-register-head { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin-bottom: var(--space-3); }
+.b-register-head .label { margin: 0 var(--space-3) 0 0; }
+.b-table { width: 100%; border-collapse: collapse; font-size: var(--fs-4); }
+.b-table th { text-align: left; padding: 0 var(--space-3) var(--space-2) 0; border-bottom: 1px solid var(--border); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.b-table td { padding: var(--space-3) var(--space-3) var(--space-3) 0; border-bottom: 1px solid var(--border); vertical-align: top; overflow-wrap: anywhere; }
+.b-table tr:hover td { background: var(--state-hover); }
+.b-table .title { font-weight: var(--fw-medium); line-height: var(--lh-snug); }
+.b-table .body { display: block; margin-top: var(--space-1); color: var(--muted-foreground); font-size: var(--fs-3); }
+.b-table .what { display: grid; gap: var(--space-1); justify-items: start; }
+.b-table .from { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); }
+.b-table .where { color: var(--muted-foreground); font-size: var(--fs-3); }
+.b-table td:nth-child(1) { width: 52%; }
+.b-table td:nth-child(2) { width: 16%; }
+@container (max-width: 700px) {
+  .b-table thead { display: none; }
+  .b-table, .b-table tbody, .b-table tr, .b-table td { display: block; width: auto !important; }
+  .b-table tr { padding: var(--space-3) 0; border-bottom: 1px solid var(--border); }
+  .b-table td { padding: 0; border: 0; }
+  .b-table td + td { margin-top: var(--space-1-5); }
+  .b-table .what { display: flex; gap: var(--space-2); }
+}
+
+/* ================= C: grouped by fate ================= */
+.c-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: var(--space-fluid-9); align-items: start; }
+@container (max-width: 900px) { .c-wrap { grid-template-columns: 1fr; } }
+.c-col { min-width: 0; padding-top: var(--space-3); border-top: 2px solid var(--primary); }
+.c-col.quiet { border-top-color: var(--border); }
+.c-spec { list-style: none; padding: 0; display: grid; gap: var(--space-3); }
+.c-spec li { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: var(--space-3); font-size: var(--fs-4); overflow-wrap: anywhere; }
+.c-spec li .tag { justify-self: start; align-self: start; margin-top: 0.15rem; }
+.c-spec .rest { color: var(--muted-foreground); }
+.c-group + .c-group { margin-top: var(--space-5); }
+.c-group-head { display: flex; width: 100%; gap: var(--space-2); align-items: baseline; padding: 0 0 var(--space-2); border: 0; border-bottom: 1px dashed var(--border); background: none; text-align: left; font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--foreground); }
+.c-group-head .count { color: var(--muted-foreground); font-weight: var(--fw-medium); }
+.c-group-head .chev { margin-left: auto; color: var(--muted-foreground); transition: transform .15s ease; }
+.c-group-head[aria-expanded='false'] .chev { transform: rotate(-90deg); }
+.c-group-head:hover { color: var(--primary); }
+.c-group-note { margin-top: var(--space-1-5); color: var(--muted-foreground); font-size: var(--fs-2); }
+.c-items { list-style: none; padding: 0; display: grid; }
+.c-items li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-1) var(--space-3); padding: var(--space-2-5) 0; border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); font-size: var(--fs-4); overflow-wrap: anywhere; }
+.c-items li:last-child { border-bottom: 0; }
+.c-items .title { font-weight: var(--fw-medium); line-height: var(--lh-snug); }
+.c-items .body { grid-column: 1 / -1; color: var(--muted-foreground); font-size: var(--fs-3); }
+.c-items .revisit { grid-column: 1 / -1; margin-top: 0; }
+.c-items .from { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); align-self: baseline; }
+</style>
+</head>
+<body>
+<div id="variant-nav" role="tablist">
+  <span class="label" style="margin:0 var(--space-2) 0 0">Sketch 007</span>
+  <button class="variant-tab" data-variant="a">A: Refined panels</button>
+  <button class="variant-tab" data-variant="b">B: Guidance + register</button>
+  <button class="variant-tab" data-variant="c">C: Grouped by fate ★ Selected</button>
+</div>
+<div id="frame">
+  <header class="shell-header"><span class="brand-mark">L</span><span>Labelore</span></header>
+  <main id="root"></main>
+</div>
+<div id="sketch-tools" style="position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:12px;background:rgba(0,0,0,0.78);color:white;padding:8px 10px;opacity:0.55;transition:opacity 0.2s;display:grid;gap:6px;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.55'">
+  <div>Doc: <button data-doc="sp01">studio-portal P1</button><button data-doc="sp03">studio-portal P3</button></div>
+  <div>Theme: <button data-theme="light">Light</button><button data-theme="dark">Dark</button></div>
+  <div>Width: <button data-width="390">Phone</button><button data-width="820">Tablet</button><button data-width="full">Desktop</button></div>
+</div>
+<style>
+#sketch-tools button { background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 2px 7px; margin-left: 3px; font: inherit; cursor: pointer; }
+#sketch-tools button.on { background: #c2410c; border-color: #c2410c; }
+</style>
+<script>
+/* Real text from studio-portal 01-CONTEXT.md and 03-CONTEXT.md (<specifics>, <deferred>).
+   Item text is verbatim apart from capitalising a body's first letter and lifting a title's
+   trailing parenthetical into the body. The structured fields — kind, fate, from, dest, revisit —
+   are HAND-ANNOTATED here: they show what a parser would have to extract, not what
+   context-brief.ts extracts today. */
+const DOCS = {
+  sp01: {
+    name: 'Phase 1 — Portal-Owned Identity & Sessions',
+    inN: 9, outN: 4,
+    specifics: [
+      { kind: 'rule', lead: 'The CLI must be called `backstage`.', rest: 'The user rejected the proposed `cinedise-portal` name outright and specified `backstage`. Use it verbatim — binary name, invocation in docs, and anywhere it is referenced.' },
+      { kind: 'rule', lead: 'UI work must use shadcn theme preset `b3Dqcuo4na`, strictly.', rest: 'This held across all four v1.0 phases without drift and is a standing project rule, not a per-phase preference. Applies to the new `/login` and `/change-password` screens.' },
+      { kind: 'leaning', lead: null, rest: 'The user consistently chose the tighter, more explicit option when a tradeoff was presented (backend validation over optimistic rendering, fail-closed over graceful degradation, handle + display name over a single field). Where a later ambiguity arises, that is the direction to lean.' },
+    ],
+    deferred: [
+      { title: 'Live-socket teardown on logout', fate: 'handed', from: 'D-04', dest: 'Phase 3 · ADMIN-03', revisit: null, body: 'Server-side closing of an already-open WebSocket. Deliberately left to Phase 3\'s `SessionRevocationBus` (ADMIN-03), per D-04 and the roadmap\'s own assignment.' },
+      { title: 'Login page visual treatment, logout placement in the navbar, and "remember me"', fate: 'passed', from: null, dest: null, revisit: null, body: 'Offered and passed over. Planner and `/gsd-ui-phase` have discretion within preset `b3Dqcuo4na`.' },
+      { title: 'What the `sessions` table stores for Phase 3\'s ADMIN-05 to read', fate: 'passed', from: 'D-01', dest: 'Phase 3 · ADMIN-05', revisit: null, body: 'Device / user-agent, IP, login time — offered and passed over. D-01 commits to `last_seen`; the rest is Phase 3\'s to specify, though adding the columns now is cheaper than migrating later and the planner may choose to.' },
+      { title: 'How AUTH-06\'s power-cut survival is actually proven', fate: 'passed', from: null, dest: null, revisit: null, body: 'Offered and passed over. v1.0 has an existing unclean-shutdown test to model on.' },
+      { title: 'Throttle events writing an `audit_log` row', fate: 'notpursued', from: null, dest: 'Phase 3 · ADMIN-06', revisit: null, body: 'Raised as a possible question, not pursued. Candidate for Phase 3\'s ADMIN-06 audit work.' },
+    ],
+  },
+  sp03: {
+    name: 'Phase 3 — Account Administration & Session Control',
+    inN: 7, outN: 3,
+    specifics: [
+      { kind: 'leaning', lead: 'The user consistently chose the smaller surface over the stricter one — except where lockout is at stake.', rest: 'This phase reproduces Phase 2\'s recorded through-line almost exactly: admin-typed passwords over generation (D-01), no rename (D-04), jobs keep running (D-06), no `detail` column (D-15), one sessions surface not two (D-13), hard delete over a tombstone (D-09). But on the two questions touching admin availability they took the tighter option both times: all three self-actions refused (D-11), and the invariant rewritten properly rather than patched per-operation (D-12). **Where a later ambiguity arises, lean toward the smaller surface — unless it touches lockout or admin access, where they will pay for strictness.**' },
+      { kind: 'note', lead: 'D-07 was reached by refinement, not reversal.', rest: 'The user first chose to state the disabled reason plainly at login. When the enumeration cost was named — that it would retire a property Phase 1 built and proved — they took the version that keeps the plain message *and* the property, gated behind a successful password verify. Record it as a considered position, not a concession: they wanted the member told, and they got that.' },
+      { kind: 'rule', lead: '`backstage` remains the name, verbatim.', rest: 'Rejected alternatives outright in Phase 1.' },
+      { kind: 'rule', lead: 'UI work must use shadcn theme preset `b3Dqcuo4na`, strictly.', rest: 'Standing project rule, held across four v1.0 phases and Phase 2 without drift.' },
+      { kind: 'rule', lead: 'The `/admin` shell is Phase 2\'s and must not be restructured.', rest: 'P2 D-20 was written for this phase specifically. Everything new attaches to `/admin` (create dialog) or `/admin/users/{id}` (sessions, disable, delete). The nav item appears exactly once and does not change.' },
+    ],
+    deferred: [
+      { title: 'Server-generated passwords', fate: 'declined', from: 'D-01', dest: null, revisit: 'a weak admin-typed password ever causes trouble', body: 'Offered as D-01\'s first option and declined. The natural revisit if a weak admin-typed password ever causes trouble.' },
+      { title: 'Display-name editing', fate: 'declined', from: 'D-04', dest: null, revisit: 'typo-driven delete-and-recreate becomes annoying', body: 'D-04\'s middle option. Cheap to add later and carries no audit consequence (only the handle is snapshotted); the first thing to build if typo-driven delete-and-recreate becomes annoying.' },
+      { title: 'Cancelling a disabled member\'s in-flight jobs', fate: 'declined', from: 'D-06', dest: null, revisit: null, body: 'ARCHITECTURE § 3\'s recommendation, declined as D-06. Recorded so a future phase revisits rather than rediscovers; the mechanism (`cancel_job_handler`\'s existing path) is named there.' },
+      { title: 'Warning the admin about a member\'s running jobs at disable time', fate: 'declined', from: 'D-06', dest: null, revisit: 'D-06\'s silence proves surprising', body: 'D-06\'s third option. The cheapest middle ground if D-06\'s silence proves surprising.' },
+      { title: 'Reserving deleted handles against reuse', fate: 'declined', from: 'D-09', dest: null, revisit: 'a departure-and-replacement ever actually collides', body: 'D-09\'s third option. The mitigation for P1 D-08\'s "a reused handle reads as the same actor" tradeoff, if a departure-and-replacement ever actually collides.' },
+      { title: 'A global `/admin/sessions` page', fate: 'declined', from: 'D-13', dest: null, revisit: null, body: 'D-13\'s second option. A second consumer of the same query; addable without touching the per-member section.' },
+      { title: 'A dedicated `detail` column on `audit_log`', fate: 'declined', from: 'D-15', dest: null, revisit: 'the compound-`target` grammar starts causing renderer bugs', body: 'D-15\'s second option, and the structurally cleaner one. Revisit if the compound-`target` grammar starts causing renderer bugs; note it needs a migration of historical values.' },
+      { title: 'A separate account-events audit table or section', fate: 'declined', from: 'D-16', dest: null, revisit: null, body: 'D-16\'s third option.' },
+      { title: 'Per-session kill / standalone force-logout', fate: 'out', from: 'REQUIREMENTS.md', dest: null, revisit: null, body: 'Already out of scope by REQUIREMENTS.md, restated here so it is not rediscovered as a gap: revocation is account-wide, folded into disable.' },
+      { title: '`admin` split into finer bits (`manage_users` / `view_audit`)', fate: 'carried', from: 'Phase 2', dest: null, revisit: null, body: 'Carried from Phase 2\'s deferred list, still deferred. D-16\'s audit filter makes the `view_audit` split slightly more attractive, not less.' },
+    ],
+  },
+};
+
+const FATE = {
+  handed: { label: 'Handed on', tone: 'accent', group: 'Handed to a later phase', note: 'Someone else owns it now — follow the destination.' },
+  declined: { label: 'Declined', tone: 'quiet', group: 'Declined options', note: 'A decision\'s alternative the user turned down. Revisit only when its trigger fires.' },
+  passed: { label: 'Passed over', tone: 'quiet', group: 'Offered, passed over', note: 'Raised in discussion and left to the planner.' },
+  notpursued: { label: 'Not pursued', tone: 'quiet', group: 'Offered, passed over', note: 'Raised in discussion and left to the planner.' },
+  out: { label: 'Out of scope', tone: 'flight', group: 'Out of scope, restated', note: 'Recorded so it is not rediscovered as a gap.' },
+  carried: { label: 'Still deferred', tone: 'flight', group: 'Carried forward', note: 'Deferred in an earlier phase and deferred again.' },
+};
+const KIND = { rule: { label: 'Rule', tone: 'accent' }, leaning: { label: 'Leaning', tone: 'flight' }, note: { label: 'Note', tone: 'quiet' } };
+
+const state = { variant: 'c', doc: 'sp01', theme: 'dark', width: 'full', open: new Set(), fate: null, collapsed: new Set() };
+
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function md(s) {
+  if (!s) return '';
+  const parts = esc(s).split(/(`[^`]+`)/g);
+  return parts.map(p => {
+    if (p.startsWith('`')) return `<code>${p.slice(1, -1)}</code>`;
+    return p.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/\b((?:P\d )?D-\d+|(?:ADMIN|AUTH)-\d+)\b/g, '<button class="mention" data-goto="$1">$1</button>');
+  }).join('');
+}
+const tag = (label, tone, extra = '') => `<span class="tag" data-tone="${tone}" ${extra}>${label}</span>`;
+const dest = d => d ? `<span class="dest">→ ${md(d)}</span>` : '';
+const from = f => f ? `<span class="from">from ${md(f)}</span>` : '';
+
+function scopeRef(d) {
+  return `<div><p class="ref-note" style="margin-bottom:var(--space-2)">Shipped In/Out block, for reference</p>
+  <div class="scope"><div><p class="label accent">In this phase <span class="count">${d.inN}</span></p>✓ …</div>
+  <div><p class="label">Not in this phase <span class="count">${d.outN}</span></p>– …</div></div></div>`;
+}
+
+/* ---- A ---- */
+function variantA(d) {
+  const spec = d.specifics.map(s => `<li class="a-spec">${s.lead ? `<strong class="lead">${md(s.lead)}</strong> ` : ''}<span class="${s.lead ? 'rest' : 'lead'}">${md(s.rest)}</span></li>`).join('');
+  const def = d.deferred.map((x, i) => {
+    const k = 'a' + i; const open = state.open.has(k); const long = x.body.length > 150;
+    return `<li class="a-def"><div class="title">${md(x.title)}</div>
+      <div class="meta">${tag(FATE[x.fate].label, FATE[x.fate].tone)}${dest(x.dest)}${x.from && !x.dest ? `<span class="ref-note">from ${md(x.from)}</span>` : ''}</div>
+      <p class="body" data-clamped="${long && !open}">${md(x.body)}</p>
+      ${long ? `<button class="more" data-open="${k}">${open ? 'Less' : 'More'}</button>` : ''}</li>`;
+  }).join('');
+  return `<div class="a-grid">
+    <section><p class="label">Specific ideas <span class="count">${d.specifics.length}</span></p><ul class="a-list">${spec}</ul></section>
+    <section><p class="label">Deferred <span class="count">${d.deferred.length}</span></p><ul class="a-list">${def}</ul></section>
+  </div>`;
+}
+
+/* ---- B ---- */
+function variantB(d) {
+  const rules = d.specifics.filter(s => s.kind === 'rule');
+  const leans = d.specifics.filter(s => s.kind === 'leaning');
+  const notes = d.specifics.filter(s => s.kind === 'note');
+  const fates = [...new Set(d.deferred.map(x => x.fate))];
+  const rows = d.deferred.filter(x => !state.fate || x.fate === state.fate).map(x => `<tr class="fade">
+      <td><div class="title">${md(x.title)}</div><span class="body">${md(x.body)}</span></td>
+      <td><div class="what">${tag(FATE[x.fate].label, FATE[x.fate].tone)}${from(x.from)}</div></td>
+      <td class="where">${x.dest ? dest(x.dest) : x.revisit ? `<span class="revisit" style="margin:0">${md(x.revisit)}</span>` : '<span class="ref-note">—</span>'}</td></tr>`).join('');
+  return `<section class="b-guidance">
+      <div><p class="label accent">Standing guidance <span class="count">${rules.length} rules</span></p>
+        <ol class="b-rules">${rules.map(s => `<li><div><span class="lead">${md(s.lead)}</span><span class="rest">${md(s.rest)}</span></div></li>`).join('')}</ol></div>
+      <div class="b-lean"><p class="label" style="margin:0">How the user leans</p>
+        ${leans.map(s => `<blockquote>${s.lead ? `<strong>${md(s.lead)}</strong>` : md(s.rest)}${s.lead ? `<span class="rest">${md(s.rest)}</span>` : ''}</blockquote>`).join('')}
+        ${notes.map(s => `<p class="b-note"><strong>${md(s.lead)}</strong> ${md(s.rest)}</p>`).join('')}</div>
+    </section>
+    <section>
+      <div class="b-register-head"><p class="label">Deferred <span class="count">${d.deferred.length}</span></p>
+        ${fates.length > 1 ? `<button class="tag" data-fate="" aria-pressed="${!state.fate}">All</button>` + fates.map(f => `<button class="tag" data-fate="${f}" aria-pressed="${state.fate === f}">${FATE[f].label} ${d.deferred.filter(x => x.fate === f).length}</button>`).join('') : ''}</div>
+      <table class="b-table"><thead><tr><th>Idea</th><th>What happened</th><th>Goes to / revisit if</th></tr></thead><tbody>${rows}</tbody></table>
+    </section>`;
+}
+
+/* ---- C ---- */
+function variantC(d) {
+  const spec = d.specifics.map(s => `<li>${tag(KIND[s.kind].label, KIND[s.kind].tone)}<div>${s.lead ? `<strong>${md(s.lead)}</strong> ` : ''}<span class="${s.lead ? 'rest' : ''}">${md(s.rest)}</span></div></li>`).join('');
+  const groups = {};
+  d.deferred.forEach(x => { const g = FATE[x.fate].group; (groups[g] ||= { note: FATE[x.fate].note, items: [] }).items.push(x); });
+  const order = ['Handed to a later phase', 'Declined options', 'Offered, passed over', 'Out of scope, restated', 'Carried forward'];
+  const grp = order.filter(g => groups[g]).map(g => {
+    const open = !state.collapsed.has(g);
+    return `<div class="c-group"><button class="c-group-head" data-collapse="${g}" aria-expanded="${open}">${g} <span class="count">${groups[g].items.length}</span><span class="chev">▾</span></button>
+      ${open ? `<p class="c-group-note">${groups[g].note}</p><ul class="c-items fade">${groups[g].items.map(x => `<li><span class="title">${md(x.title)}</span>${x.dest ? dest(x.dest) : from(x.from)}
+        ${x.revisit ? `<span class="revisit">${md(x.revisit)}</span>` : ''}<span class="body">${md(x.body)}</span></li>`).join('')}</ul>` : ''}</div>`;
+  }).join('');
+  return `<div class="c-wrap">
+    <section class="c-col"><p class="label accent">Specific ideas <span class="count">${d.specifics.length}</span></p><ul class="c-spec">${spec}</ul></section>
+    <section class="c-col quiet"><p class="label">Deferred <span class="count">${d.deferred.length}</span></p>${grp}</section>
+  </div>`;
+}
+
+const RENDER = { a: variantA, b: variantB, c: variantC };
+const $root = document.getElementById('root');
+function render() {
+  const d = DOCS[state.doc];
+  $root.innerHTML = `<div class="page fade"><p class="ref-note">${d.name} · CONTEXT · … decisions register above …</p>${scopeRef(d)}${RENDER[state.variant](d)}</div>`;
+  document.documentElement.classList.toggle('dark', state.theme === 'dark');
+  const f = document.getElementById('frame');
+  f.style.maxWidth = state.width === 'full' ? 'none' : state.width + 'px';
+  f.classList.toggle('narrow-frame', state.width !== 'full');
+  document.querySelectorAll('.variant-tab').forEach(t => t.classList.toggle('active', t.dataset.variant === state.variant));
+  document.querySelectorAll('#sketch-tools button').forEach(b => b.classList.toggle('on', b.dataset.doc === state.doc || b.dataset.theme === state.theme || b.dataset.width === state.width));
+}
+function toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 1400); }
+document.addEventListener('click', e => {
+  const t = e.target.closest('button');
+  if (!t) return;
+  if (t.dataset.goto) { toast('Would jump to ' + t.dataset.goto); return; }
+  if (t.dataset.variant) { state.variant = t.dataset.variant; state.fate = null; }
+  else if (t.dataset.doc) { state.doc = t.dataset.doc; state.open.clear(); state.fate = null; state.collapsed.clear(); }
+  else if (t.dataset.theme) state.theme = t.dataset.theme;
+  else if (t.dataset.width) state.width = t.dataset.width;
+  else if (t.dataset.open) { const k = t.dataset.open; state.open.has(k) ? state.open.delete(k) : state.open.add(k); }
+  else if ('fate' in t.dataset) state.fate = t.dataset.fate || null;
+  else if (t.dataset.collapse) { const g = t.dataset.collapse; state.collapsed.has(g) ? state.collapsed.delete(g) : state.collapsed.add(g); }
+  else return;
+  render();
+});
+render();
+</script>
+</body>
+</html>
