@@ -473,7 +473,11 @@ export function ContextBriefView({
               <ul className="view-context-in-list">
                 {brief.boundary.inList.map((item, index) => (
                   <li key={index}>
-                    <Inline text={item} refTargets={refTargets} onJump={interaction.jumpTo} />
+                    {/* One wrapper, so the li's two-column grid (check, text) gets exactly two
+                        items — Inline emits one node per text/code fragment. */}
+                    <span>
+                      <Inline text={item} refTargets={refTargets} onJump={interaction.jumpTo} />
+                    </span>
                   </li>
                 ))}
               </ul>
