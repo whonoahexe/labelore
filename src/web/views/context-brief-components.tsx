@@ -16,6 +16,7 @@ import type {
   ComposedAreaEntry,
   ComposedAside,
   ComposedContextBrief,
+  ComposedDeferredGroup,
   ComposedIntro,
   ComposedOpenQuestionRow,
 } from './context-brief.ts';
@@ -176,6 +177,77 @@ function BlockList({
  * identifiers keep their case. */
 function capitalizeItem(text: string): string {
   return text.replace(/^[a-z]/, (letter) => letter.toUpperCase());
+}
+
+// ---------------------------------------------------------------------------
+// Deferred fate group (sketch-007 C, quick-260925-3ug)
+// ---------------------------------------------------------------------------
+
+/** One collapsible Deferred fate bucket. Open state is local to the group (groups start
+ * expanded) rather than routed through `ContextBriefInteraction` — a fate group is not a
+ * hash-addressable idea, so it has nothing to restore from the URL. */
+function DeferredGroupView({
+  group,
+  refTargets,
+  onJump,
+}: {
+  group: ComposedDeferredGroup;
+  refTargets: Record<string, string>;
+  onJump: (id: string) => void;
+}): React.JSX.Element {
+  const [open, setOpen] = useState(true);
+  const itemsId = `${group.id}-items`;
+  return (
+    <div className="view-context-fate" data-fate={group.fate} id={group.id}>
+      <button
+        type="button"
+        className="view-context-fate-head"
+        aria-expanded={open}
+        aria-controls={itemsId}
+        onClick={() => setOpen((prev) => !prev)}
+      >
+        {group.label}
+        <span className="view-context-scope-count">{group.items.length}</span>
+        <ChevronRight className="view-context-fate-chevron" aria-hidden="true" />
+      </button>
+      <div id={itemsId} hidden={!open}>
+        <p className="view-context-fate-note">{group.note}</p>
+        <ul className="view-context-fate-items">
+          {group.items.map((item) => (
+            <li key={item.id} className="view-context-idea">
+              <span className="view-context-idea-title">
+                <Inline
+                  text={item.title ?? capitalizeItem(item.body)}
+                  refTargets={refTargets}
+                  onJump={onJump}
+                />
+              </span>
+              {item.dest ? (
+                <span className="view-context-dest">
+                  → <Inline text={item.dest} refTargets={refTargets} onJump={onJump} />
+                </span>
+              ) : item.from ? (
+                <span className="view-context-from">
+                  from <Inline text={item.from} refTargets={refTargets} onJump={onJump} />
+                </span>
+              ) : null}
+              {item.revisit ? (
+                <p className="view-context-revisit">
+                  <span className="view-context-revisit-label">Revisit if</span>{' '}
+                  <Inline text={item.revisit} refTargets={refTargets} onJump={onJump} />
+                </p>
+              ) : null}
+              {item.title ? (
+                <p className="view-context-fate-body">
+                  <Inline text={capitalizeItem(item.body)} refTargets={refTargets} onJump={onJump} />
+                </p>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -697,37 +769,19 @@ export function ContextBriefView({
             </section>
           ) : null}
           {brief.deferred ? (
-            <section id={brief.deferred.id} className="preview-panel">
-              <header className="section-heading compact">
-                <h2>{brief.deferred.label}</h2>
-                <span>{brief.deferred.items.length}</span>
-              </header>
-              <ul className="view-context-idea-list">
-                {brief.deferred.items.map((item) => {
-                  const open = interaction.isOpen(item.id);
-                  return (
-                    <li key={item.id}>
-                      <button
-                        type="button"
-                        className="view-context-idea"
-                        aria-expanded={open}
-                        data-open={open}
-                        data-untitled={item.title === null}
-                        onClick={() => interaction.toggle(item.id)}
-                      >
-                        {item.title ? (
-                          <span className="view-context-idea-title">
-                            <Inline text={item.title} refTargets={refTargets} interactive={false} />
-                          </span>
-                        ) : null}
-                        <span className="view-context-idea-body">
-                          <Inline text={item.body} refTargets={refTargets} interactive={false} />
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+            <section id={brief.deferred.id} className="view-context-ideas-col">
+              <p className="view-context-scope-label">
+                {brief.deferred.label}
+                <span className="view-context-scope-count">{brief.deferred.count}</span>
+              </p>
+              {brief.deferred.groups.map((group) => (
+                <DeferredGroupView
+                  key={group.id}
+                  group={group}
+                  refTargets={refTargets}
+                  onJump={interaction.jumpTo}
+                />
+              ))}
             </section>
           ) : null}
         </div>

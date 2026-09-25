@@ -95,6 +95,32 @@ describe('CONTEXT brief corpus guard (19 files)', () => {
       expect(brief.amendments.length, `${testCase.label} amendments count`).toBe(testCase.amendments);
     });
 
+    // sketch-007 C (quick-260925-3ug): an enum/arithmetic guard rather than per-file pinned kinds
+    // — every file's specifics and deferred must classify into the two enums, and no deferred item
+    // may be lost or duplicated by the composer's fate grouping.
+    runner(`${testCase.label}: idea kinds and fates stay in their enums, group counts sum`, async () => {
+      const body = await loadBody(testCase);
+      const brief = briefOf(body);
+      const kinds = new Set(['rule', 'leaning', 'note']);
+      const fates = new Set(['handed', 'declined', 'passed', 'out', 'carried', 'other']);
+      for (const specific of brief.specifics) {
+        expect(kinds.has(specific.kind), `${testCase.label} specific kind ${specific.kind}`).toBe(true);
+      }
+      for (const item of brief.deferred) {
+        expect(fates.has(item.fate), `${testCase.label} deferred fate ${item.fate}`).toBe(true);
+      }
+      const composed = composeContextBrief({
+        kind: 'context',
+        frontmatter: {},
+        structured: { brief },
+        groups: [],
+        planSegments: [],
+      });
+      const grouped = composed?.deferred?.groups.reduce((sum, g) => sum + g.items.length, 0) ?? 0;
+      expect(grouped, `${testCase.label} grouped deferred count`).toBe(brief.deferred.length);
+      if (brief.deferred.length > 0) expect(composed?.deferred?.count).toBe(brief.deferred.length);
+    });
+
     runner(`${testCase.label}: nothing dropped (word-coverage guard)`, async () => {
       const body = await loadBody(testCase);
       const brief = briefOf(body);

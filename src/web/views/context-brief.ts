@@ -9,6 +9,7 @@ import type {
   Block,
   ContextBoundary,
   ContextBrief,
+  DeferredFate,
   IdeaItem,
   SpecificKind,
 } from '../../planning-repo/handlers/context-brief.ts';
@@ -101,18 +102,6 @@ export interface ComposedDiscretionPanel {
   trailer: Block[];
 }
 
-export interface ComposedIdeaItem {
-  id: string;
-  title: string | null;
-  body: string;
-}
-
-export interface ComposedIdeasPanel {
-  id: string;
-  label: string;
-  items: ComposedIdeaItem[];
-}
-
 /** One tagged Specific-ideas row (sketch-007 C, quick-260925-3ug): `kind`/`kindLabel`/`tone` are
  * derived defensively from the source item, so a missing or unrecognised `kind` still composes as
  * a plain Note (3UG-04) rather than throwing. */
@@ -129,6 +118,34 @@ export interface ComposedSpecificsPanel {
   id: 'context-specifics';
   label: string;
   items: ComposedSpecificItem[];
+}
+
+/** One Deferred row (sketch-007 C, quick-260925-3ug): `from`/`dest`/`revisit` are read
+ * defensively (a non-string value from an older payload becomes null, 3UG-04). */
+export interface ComposedDeferredItem {
+  id: string;
+  title: string | null;
+  body: string;
+  from: string | null;
+  dest: string | null;
+  revisit: string | null;
+}
+
+/** One fate-grouped Deferred bucket, in the fixed `DEFERRED_FATE_ORDER` — empty groups are
+ * omitted by the composer, never rendered empty. */
+export interface ComposedDeferredGroup {
+  id: string;
+  fate: DeferredFate;
+  label: string;
+  note: string;
+  items: ComposedDeferredItem[];
+}
+
+export interface ComposedDeferredPanel {
+  id: 'context-deferred';
+  label: string;
+  count: number;
+  groups: ComposedDeferredGroup[];
 }
 
 export interface ComposedStat {
@@ -168,7 +185,7 @@ export interface ComposedContextBrief {
   openPanel: ComposedOpenPanel | null;
   discretionPanel: ComposedDiscretionPanel | null;
   specifics: ComposedSpecificsPanel | null;
-  deferred: ComposedIdeasPanel | null;
+  deferred: ComposedDeferredPanel | null;
   stats: ComposedStat[];
   refTargets: Record<string, string>;
   /** Unrecognised `##` document-section groups, rendered before the register (in document order),
@@ -398,6 +415,65 @@ function composeSpecificsPanel(items: readonly (IdeaItem & { kind?: unknown })[]
 }
 
 // ---------------------------------------------------------------------------
+// Deferred (sketch-007 C, quick-260925-3ug)
+// ---------------------------------------------------------------------------
+
+/** Fixed group order and copy, verbatim from the sketch except the 'other' default (there is no
+ * sketch entry for an unrecognised fate — Parked is this composer's own addition). */
+const DEFERRED_FATE_ORDER: readonly DeferredFate[] = ['handed', 'declined', 'passed', 'out', 'carried', 'other'];
+const DEFERRED_FATE_SET = new Set<string>(DEFERRED_FATE_ORDER);
+const DEFERRED_FATE_META: Record<DeferredFate, { label: string; note: string }> = {
+  handed: { label: 'Handed to a later phase', note: 'Someone else owns it now — follow the destination.' },
+  declined: {
+    label: 'Declined options',
+    note: "A decision's alternative the user turned down. Revisit only when its trigger fires.",
+  },
+  passed: { label: 'Offered, passed over', note: 'Raised in discussion and left to the planner.' },
+  out: { label: 'Out of scope, restated', note: 'Recorded so it is not rediscovered as a gap.' },
+  carried: { label: 'Carried forward', note: 'Deferred in an earlier phase and deferred again.' },
+  other: {
+    label: 'Parked',
+    note: 'Deferred with no outcome the brief could recognise — the text says what happened.',
+  },
+};
+
+function isDeferredFate(value: unknown): value is DeferredFate {
+  return typeof value === 'string' && DEFERRED_FATE_SET.has(value);
+}
+
+/** Reads fate/from/dest/revisit defensively — an unknown/missing fate becomes 'other', and a
+ * non-string from/dest/revisit becomes null (3UG-04, an older server payload still composes).
+ * Groups are emitted in the fixed `DEFERRED_FATE_ORDER`; an empty group is omitted entirely. */
+function composeDeferredPanel(
+  items: readonly (IdeaItem & { fate?: unknown; from?: unknown; dest?: unknown; revisit?: unknown })[],
+): ComposedDeferredPanel | null {
+  if (items.length === 0) return null;
+  const byFate = new Map<DeferredFate, ComposedDeferredItem[]>();
+  items.forEach((it, idx) => {
+    const fate: DeferredFate = isDeferredFate(it.fate) ? it.fate : 'other';
+    const list = byFate.get(fate) ?? [];
+    list.push({
+      id: `deferred-${idx + 1}`,
+      title: it.title,
+      body: it.body,
+      from: typeof it.from === 'string' ? it.from : null,
+      dest: typeof it.dest === 'string' ? it.dest : null,
+      revisit: typeof it.revisit === 'string' ? it.revisit : null,
+    });
+    byFate.set(fate, list);
+  });
+
+  const groups: ComposedDeferredGroup[] = [];
+  for (const fate of DEFERRED_FATE_ORDER) {
+    const groupItems = byFate.get(fate);
+    if (!groupItems || groupItems.length === 0) continue;
+    const meta = DEFERRED_FATE_META[fate];
+    groups.push({ id: `context-deferred-${fate}`, fate, label: meta.label, note: meta.note, items: groupItems });
+  }
+  return { id: 'context-deferred', label: 'Deferred', count: items.length, groups };
+}
+
+// ---------------------------------------------------------------------------
 // Type guard
 // ---------------------------------------------------------------------------
 
@@ -594,16 +670,8 @@ export function composeContextBrief(input: ViewInput): ComposedContextBrief | nu
     : null;
 
   // Ideas.
-  const ideaPanel = (items: IdeaItem[], prefix: string, label: string): ComposedIdeasPanel | null => {
-    if (items.length === 0) return null;
-    return {
-      id: `context-${prefix}`,
-      label,
-      items: items.map((it, idx) => ({ id: `${prefix}-${idx + 1}`, title: it.title, body: it.body })),
-    };
-  };
   const specifics = composeSpecificsPanel(brief.specifics);
-  const deferred = ideaPanel(brief.deferred, 'deferred', 'Deferred');
+  const deferred = composeDeferredPanel(brief.deferred);
 
   // Stats.
   const stats: ComposedStat[] = [];

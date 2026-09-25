@@ -424,6 +424,92 @@ describe('composeContextBrief — specifics', () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// deferred — fate grouping (sketch-007 C, quick-260925-3ug Task 2)
+// ---------------------------------------------------------------------------
+
+function deferredItem(body: string, overrides: Record<string, unknown> = {}): never {
+  return { title: null, body, fate: 'other', from: null, dest: null, revisit: null, ...overrides } as never;
+}
+
+describe('composeContextBrief — deferred', () => {
+  it('emits groups in the fixed fate order, with the sketch copy, whatever the item order', () => {
+    const brief = minimalBrief({
+      deferred: [
+        deferredItem('Carried.', { fate: 'carried' }),
+        deferredItem('Declined.', { fate: 'declined' }),
+        deferredItem('Handed.', { fate: 'handed' }),
+      ],
+    });
+    const composed = composeContextBrief(baseInput(brief));
+    expect(composed?.deferred?.groups.map((g) => [g.fate, g.id, g.label])).toEqual([
+      ['handed', 'context-deferred-handed', 'Handed to a later phase'],
+      ['declined', 'context-deferred-declined', 'Declined options'],
+      ['carried', 'context-deferred-carried', 'Carried forward'],
+    ]);
+    expect(composed?.deferred?.groups[1].note).toBe(
+      "A decision's alternative the user turned down. Revisit only when its trigger fires.",
+    );
+  });
+
+  it('omits empty groups and sums the group counts to deferred.length', () => {
+    const brief = minimalBrief({
+      deferred: [
+        deferredItem('One.', { fate: 'passed' }),
+        deferredItem('Two.', { fate: 'passed' }),
+        deferredItem('Three.', { fate: 'out' }),
+      ],
+    });
+    const composed = composeContextBrief(baseInput(brief));
+    expect(composed?.deferred?.groups).toHaveLength(2);
+    expect(composed?.deferred?.count).toBe(3);
+    expect(composed?.deferred?.groups.reduce((n, g) => n + g.items.length, 0)).toBe(3);
+  });
+
+  it('lands a missing or unknown fate in Parked and nulls non-string fields (3UG-04)', () => {
+    const brief = minimalBrief({
+      deferred: [
+        { title: null, body: 'An older payload, no new fields at all.' } as never,
+        deferredItem('A bogus fate.', { fate: 'nonsense', from: 12, dest: {}, revisit: false }),
+      ],
+    });
+    expect(() => composeContextBrief(baseInput(brief))).not.toThrow();
+    const composed = composeContextBrief(baseInput(brief));
+    expect(composed?.deferred?.groups.map((g) => [g.fate, g.label])).toEqual([['other', 'Parked']]);
+    expect(composed?.deferred?.groups[0].items.map((i) => [i.from, i.dest, i.revisit])).toEqual([
+      [null, null, null],
+      [null, null, null],
+    ]);
+  });
+
+  it('carries title/body/from/dest/revisit through onto the composed item', () => {
+    const brief = minimalBrief({
+      deferred: [
+        deferredItem('body text', {
+          title: 'A title',
+          fate: 'handed',
+          from: 'D-04',
+          dest: 'Phase 3 · ADMIN-03',
+          revisit: 'the cost rises',
+        }),
+      ],
+    });
+    const item = composeContextBrief(baseInput(brief))?.deferred?.groups[0].items[0];
+    expect(item).toEqual({
+      id: 'deferred-1',
+      title: 'A title',
+      body: 'body text',
+      from: 'D-04',
+      dest: 'Phase 3 · ADMIN-03',
+      revisit: 'the cost rises',
+    });
+  });
+
+  it('gives null deferred when the array is empty', () => {
+    expect(composeContextBrief(baseInput(minimalBrief({ deferred: [] })))?.deferred).toBeNull();
+  });
+});
+
 describe('asides — canonical references and existing code insights', () => {
   it('emits asides in order amendments, references, code, merging two references sections into one', () => {
     const brief = extractContextBrief(TWO_REFERENCES_SECTIONS_DOC);
