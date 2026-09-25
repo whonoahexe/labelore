@@ -181,7 +181,12 @@ test.describe('CONTEXT brief — studio-portal fixtures (4198)', () => {
     await page.locator('#context-boundary').waitFor({ state: 'visible' });
     await expect(page.locator('.view-context-out li')).toHaveCount(1);
     await expect(page.locator('.view-context-boundary-notes table tbody tr')).toHaveCount(9);
-    await expect(page.locator('.view-context-extra')).toHaveCount(1);
+    // Updated 2026-09-25 (found stale while running quick-260925-3ug Task 3): this file's one
+    // `##` section stopped being an unrecognised "extra" in quick-260925-3ob, which taught the
+    // brief to claim canonical references and existing code insights as back-matter aside rows.
+    // SP 04 now yields 0 extras and three asides — amendments, references, code — one each.
+    await expect(page.locator('.view-context-extra')).toHaveCount(0);
+    await expect(page.locator('.view-context-aside')).toHaveCount(3);
   });
 
   test('SP quick 2pr: .view-context-note count is 10', async ({ page }) => {
@@ -192,6 +197,43 @@ test.describe('CONTEXT brief — studio-portal fixtures (4198)', () => {
     await page.goto(`${SP_BASE_URL}${url}`);
     await page.locator('#context-decisions').waitFor({ state: 'visible' });
     await expect(page.locator('.view-context-note')).toHaveCount(10);
+  });
+
+  test('SP 01 + 03: ideas grouped by fate (sketch 007 C)', async ({ page }) => {
+    const sp01 = await resolveFixtureUrl(SP_BASE_URL, '01-portal-owned-identity-sessions/01-CONTEXT.md');
+    await page.goto(`${SP_BASE_URL}${sp01}`);
+    await page.locator('#context-specifics').waitFor({ state: 'visible' });
+
+    await expect(page.locator('#context-specifics .view-context-idea')).toHaveCount(3);
+    await expect(page.locator('#context-specifics .view-context-idea[data-kind="rule"]')).toHaveCount(2);
+    await expect(page.locator('#context-specifics .view-context-idea[data-kind="leaning"]')).toHaveCount(1);
+
+    const groups = page.locator('#context-deferred .view-context-fate');
+    await expect(groups).toHaveCount(2);
+    await expect(groups.first()).toHaveAttribute('data-fate', 'handed');
+    await expect(groups.first().locator('.view-context-idea').first()).toContainText('→ Phase 3 · ADMIN-03');
+
+    // Groups start expanded; the header collapses and restores its own items.
+    const passed = page.locator('.view-context-fate[data-fate="passed"]');
+    const passedHead = passed.locator('.view-context-fate-head');
+    await expect(passedHead).toHaveAttribute('aria-expanded', 'true');
+    await passedHead.click();
+    await expect(passedHead).toHaveAttribute('aria-expanded', 'false');
+    await expect(passed.locator('.view-context-idea').first()).toBeHidden();
+    await passedHead.click();
+    await expect(passedHead).toHaveAttribute('aria-expanded', 'true');
+    await expect(passed.locator('.view-context-idea').first()).toBeVisible();
+
+    const sp03 = await resolveFixtureUrl(SP_BASE_URL, '03-account-administration-session-control/03-CONTEXT.md');
+    await page.goto(`${SP_BASE_URL}${sp03}`);
+    await page.locator('#context-deferred').waitFor({ state: 'visible' });
+
+    const declined = page.locator('.view-context-fate[data-fate="declined"]');
+    await expect(declined.locator('.view-context-idea')).toHaveCount(8);
+    await expect(declined.locator('.view-context-revisit')).toHaveCount(5);
+    await expect(page.locator('.view-context-fate[data-fate="out"] .view-context-idea')).toHaveCount(1);
+    await expect(page.locator('.view-context-fate[data-fate="carried"] .view-context-idea')).toHaveCount(1);
+    await expect(declined.locator('.view-context-fate-body').first()).toContainText('Offered as D-01');
   });
 });
 
