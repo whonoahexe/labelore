@@ -111,6 +111,24 @@ export interface SpecificIdea extends IdeaItem {
   kind: SpecificKind;
 }
 
+/** What happened to a deferred idea (sketch-007 C, quick-260925-3ug): handed to a later phase,
+ * a decision's declined alternative, offered and passed over, restated out-of-scope, carried
+ * forward from an earlier phase's own deferred list, or `other` (Parked) when none of those
+ * signals are present. */
+export type DeferredFate = 'handed' | 'declined' | 'passed' | 'out' | 'carried' | 'other';
+
+export interface DeferredIdea extends IdeaItem {
+  fate: DeferredFate;
+  /** The source decision (`D-NN`), an out-of-scope source document, or the earlier phase a
+   * carried item came from — null when none is recognised. */
+  from: string | null;
+  /** `Phase N` (optionally ` · REQ-ID`) the idea was handed to — null when no later-phase mention
+   * survives the "preceded by from" / "at or below the document's own phase" exclusions. */
+  dest: string | null;
+  /** The trigger text after a "revisit if …" mention in the body — null when none is present. */
+  revisit: string | null;
+}
+
 /** One `###`-titled (or untitled, when it holds a section's lead prose) group of blocks inside a
  * back-matter aside section (amendments/references/code) — quick-260925-3ob. */
 export interface AsideGroup {
@@ -134,7 +152,7 @@ export interface ContextBrief {
   openQuestions: OpenQuestionsSource[];
   discretion: DiscretionBlock | null;
   specifics: SpecificIdea[];
-  deferred: IdeaItem[];
+  deferred: DeferredIdea[];
   /** Requirement-amendments back matter (quick-260925-3ob, 3OB-01) — recognised by the
    * `<blocking_amendments>` tag or a "Requirement amendments" heading. */
   amendments: ContextAside[];
@@ -1107,6 +1125,200 @@ function specificsOf(body: string): SpecificIdea[] {
 }
 
 // ---------------------------------------------------------------------------
+// Deferred — fate, from, destination, revisit (sketch-007 C, quick-260925-3ug)
+// ---------------------------------------------------------------------------
+
+const CARRIED_RE = /\bcarried\s+(?:(?:forward|over)\s+)?from\b|\bstill\s+deferred\b/i;
+const CARRIED_FROM_PHASE_RE = /\bcarried\s+(?:(?:forward|over)\s+)?from\s+(Phase\s+\d{1,3}(?:\.\d{1,3})?)/i;
+const OUT_OF_SCOPE_RE = /\bout of scope\b/i;
+const OUT_MD_FILE_RE = /\b([A-Z][A-Z_-]{1,40}\.md)\b/;
+const DECLINED_RE = /\b(?:declined|rejected|not chosen|not taken)\b/i;
+const DECLINED_OPTIONS_RE = /D-\d{1,3}['’]s\s+(?:[\w-]{1,20}\s+){0,2}options?\b/i;
+const PASSED_RE = /\bpassed over\b|\bnot pursued\b|\bset aside\b/i;
+const PHASE_MENTION_RE = /Phase\s+(\d{1,3}(?:\.\d{1,3})?)/g;
+const REQ_TOKEN_RE = /\b([A-Z][A-Z0-9]{1,11}-\d{2,4})\b/g;
+const D_TAG_RE = /D-\d{1,3}/g;
+
+/** `firstSentence`, walked repeatedly over `text` until nothing remains — used to split the
+ * title+body of a deferred item into per-sentence chunks for the destination scan below. */
+function sentencesOf(text: string): string[] {
+  const out: string[] = [];
+  let rest = text;
+  while (rest.trim() !== '') {
+    const [sentence, remainder] = firstSentence(rest);
+    out.push(sentence);
+    if (remainder === rest || remainder === '') break;
+    rest = remainder;
+  }
+  return out;
+}
+
+/** Finds the first surviving `Phase N` mention (sketch-007 C's destination rule): scanned
+ * sentence by sentence (title first, then the body's own sentences, in order) so the REQ-ID
+ * pairing below can stay scoped to "the sentence containing that mention" without tracking
+ * combined-text offsets. A mention immediately preceded by `from ` is skipped (that is a source,
+ * not a destination); when `ownPhase` parses as a number, a mention at or below it is skipped too
+ * — a destination is always a later phase. The paired REQ-ID is the first
+ * `[A-Z][A-Z0-9]{1,11}-\d{2,4}` token in that same sentence, skipping `WR-`/`OPEN-` prefixes. */
+function destinationOf(title: string | null, body: string, ownPhase: string | null): string | null {
+  const ownNum = ownPhase !== null ? Number(ownPhase) : null;
+  const ownNumValid = ownNum !== null && !Number.isNaN(ownNum);
+  const sentences: string[] = [];
+  if (title !== null) sentences.push(title);
+  sentences.push(...sentencesOf(body));
+
+  for (const sentence of sentences) {
+    PHASE_MENTION_RE.lastIndex = 0;
+    let survivingN: string | null = null;
+    let m: RegExpExecArray | null;
+    while ((m = PHASE_MENTION_RE.exec(sentence)) !== null) {
+      const before = sentence.slice(Math.max(0, m.index - 5), m.index);
+      if (/from\s*$/i.test(before)) continue;
+      const n = Number(m[1]);
+      if (ownNumValid && !(n > (ownNum as number))) continue;
+      survivingN = m[1];
+      break;
+    }
+    if (survivingN === null) continue;
+
+    REQ_TOKEN_RE.lastIndex = 0;
+    let req: string | null = null;
+    let r: RegExpExecArray | null;
+    while ((r = REQ_TOKEN_RE.exec(sentence)) !== null) {
+      if (r[1].startsWith('WR-') || r[1].startsWith('OPEN-')) continue;
+      req = r[1];
+      break;
+    }
+    return req ? `Phase ${survivingN} · ${req}` : `Phase ${survivingN}`;
+  }
+  return null;
+}
+
+/** The first `D-\d{1,3}` token in `text` not preceded by a `P\d{1,2} ` cross-phase prefix (e.g.
+ * the "P1 D-08" style reference this corpus uses to cite another phase's own decision). */
+function firstUnprefixedDTag(text: string): string | null {
+  D_TAG_RE.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = D_TAG_RE.exec(text)) !== null) {
+    const before = text.slice(Math.max(0, m.index - 6), m.index);
+    if (/P\d{1,2}\s*$/i.test(before)) continue;
+    return m[0];
+  }
+  return null;
+}
+
+/** `from`, by fate: `carried` reads the `Phase N` right after the carried-from phrase; `out`
+ * reads the first ALL-CAPS `.md` filename token; every other fate reads the first unprefixed
+ * `D-NN` tag in `text`. */
+function fromOf(fate: DeferredFate, text: string): string | null {
+  if (fate === 'carried') {
+    const m = CARRIED_FROM_PHASE_RE.exec(text);
+    return m ? m[1] : null;
+  }
+  if (fate === 'out') {
+    const m = OUT_MD_FILE_RE.exec(text);
+    return m ? m[1] : null;
+  }
+  return firstUnprefixedDTag(text);
+}
+
+/** Finds the first top-level (outside backticks/parens) `,`, `;`, `:` or ` — ` in `text`, and
+ * returns the text up to (not including) it — or the whole text when none is found. Bounded,
+ * single linear pass (T-01-11). */
+function topLevelCutoff(text: string): string {
+  let depth = 0;
+  let inCode = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '`') {
+      inCode = !inCode;
+      continue;
+    }
+    if (inCode) continue;
+    if (ch === '(') {
+      depth += 1;
+      continue;
+    }
+    if (ch === ')') {
+      depth = Math.max(0, depth - 1);
+      continue;
+    }
+    if (depth === 0) {
+      if (ch === ',' || ch === ';' || ch === ':') return text.slice(0, i);
+      if (text.startsWith(' — ', i)) return text.slice(0, i);
+    }
+  }
+  return text;
+}
+
+const AS_EVEN_BEFORE_RE = /\b(as|even)$/i;
+
+/** The trigger text after the first case-insensitive whole-word `if` in `body` (never the title),
+ * walked linearly with backtick-parity tracking so an `if` inside a code span is ignored, and
+ * skipped when immediately preceded by `as`/`even` ("as if it were", "even if"). Cut at the first
+ * top-level `,`/`;`/`:`/` — ` or `firstSentence`'s own sentence-end (whichever is shorter, so code
+ * spans and abbreviations never end it early). Returns null for a trigger under 2 words or over
+ * 200 characters — a bare "if so" carries no real trigger to revisit. */
+export function revisitTrigger(body: string): string | null {
+  let backtickCount = 0;
+  let startIndex = -1;
+  for (let i = 0; i < body.length; i++) {
+    const ch = body[i];
+    if (ch === '`') {
+      backtickCount += 1;
+      continue;
+    }
+    if (backtickCount % 2 === 1) continue; // inside a code span
+    if ((ch === 'i' || ch === 'I') && (body[i + 1] === 'f' || body[i + 1] === 'F')) {
+      const beforeOk = i === 0 || /\s/.test(body[i - 1]);
+      const afterOk = i + 2 >= body.length || /[\s,;:.!?]/.test(body[i + 2]);
+      if (!beforeOk || !afterOk) continue;
+      const before = body.slice(Math.max(0, i - 6), i).trimEnd();
+      if (AS_EVEN_BEFORE_RE.test(before)) continue;
+      startIndex = i + 2;
+      break;
+    }
+  }
+  if (startIndex === -1) return null;
+
+  const remainder = body.slice(startIndex);
+  const byPunct = topLevelCutoff(remainder);
+  const [bySentence] = firstSentence(remainder);
+  const cut = byPunct.length <= bySentence.length ? byPunct : bySentence;
+  const trimmed = cut.trim().replace(/\.$/, '');
+  if (trimmed === '') return null;
+  const wordCount = trimmed.split(/\s+/).filter((w) => w !== '').length;
+  if (wordCount < 2 || trimmed.length > 200) return null;
+  return trimmed;
+}
+
+/** Fate/from/dest/revisit classification for one deferred idea (sketch-007 C, quick-260925-3ug).
+ * `text` (title + '. ' + body) is checked in order — carried, out, declined, passed, handed
+ * (a destination was found), else 'other' (Parked). Never throws; a missing/unrecognised value
+ * anywhere upstream degrades to the same defaults the composer reads defensively (3UG-04). */
+export function classifyDeferred(
+  title: string | null,
+  body: string,
+  ownPhase: string | null,
+): { fate: DeferredFate; from: string | null; dest: string | null; revisit: string | null } {
+  const text = `${title ?? ''}. ${body}`;
+  const dest = destinationOf(title, body, ownPhase);
+
+  let fate: DeferredFate;
+  if (CARRIED_RE.test(text)) fate = 'carried';
+  else if (OUT_OF_SCOPE_RE.test(text)) fate = 'out';
+  else if (DECLINED_RE.test(text) || DECLINED_OPTIONS_RE.test(text)) fate = 'declined';
+  else if (PASSED_RE.test(text)) fate = 'passed';
+  else if (dest !== null) fate = 'handed';
+  else fate = 'other';
+
+  const from = fromOf(fate, text);
+  const revisit = revisitTrigger(body);
+
+  return { fate, from, dest, revisit };
+}
+
+// ---------------------------------------------------------------------------
 // extractContextBrief
 // ---------------------------------------------------------------------------
 
@@ -1125,7 +1337,10 @@ export function extractContextBrief(body: string): ContextBrief {
   const openQuestions = extractOpenQuestions(body);
   const discretion = extractDiscretion(body);
   const specifics = specificsOf(body);
-  const deferred = rawIdeaItemsOf(body, 'deferred');
+  const deferred = rawIdeaItemsOf(body, 'deferred').map((item) => ({
+    ...item,
+    ...classifyDeferred(item.title, item.body, meta.phase),
+  }));
   const amendments = asideSectionsOf(body, 'amendments');
   const references = asideSectionsOf(body, 'references');
   const codeInsights = asideSectionsOf(body, 'code');

@@ -5,10 +5,12 @@ import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import {
+  classifyDeferred,
   classifySpecific,
   extractContextBrief,
   firstSentence,
   parseBlocks,
+  revisitTrigger,
   splitIdeaLead,
 } from '../src/planning-repo/handlers/context-brief.ts';
 
@@ -130,6 +132,22 @@ describe('T-lju-02: ReDoS timing guard', () => {
   it('finishes a 200,000-character pathological boundary line under 250ms and never throws', () => {
     const pathological = '**'.repeat(2000) + '`'.repeat(2000) + ', does not'.repeat(2000) + '('.repeat(2000);
     const body = `# Phase 1: X - Context\n\n<domain>\n## Phase Boundary\n\n${pathological}\n\n</domain>\n`;
+    const start = Date.now();
+    expect(() => extractContextBrief(body)).not.toThrow();
+    expect(Date.now() - start).toBeLessThan(250);
+  });
+
+  it('finishes a ~200,000-character pathological ideas section under 250ms and never throws', () => {
+    // Every scanner the ideas path adds, fed its own worst case at once: unterminated bold leads,
+    // `if ` for revisitTrigger, `Phase 1 ` for the destination scan, `D-01` for the from scan, and
+    // unbalanced `(` for topLevelCutoff's depth tracking.
+    const item = '**' + 'if '.repeat(4000) + 'Phase 1 '.repeat(4000) + 'D-01'.repeat(4000) + '('.repeat(4000);
+    const body =
+      '# Phase 1: X - Context\n\n<specifics>\n## Specific Ideas\n\n' +
+      item +
+      '\n\n</specifics>\n\n<deferred>\n## Deferred Ideas\n\n' +
+      item +
+      '\n\n</deferred>\n';
     const start = Date.now();
     expect(() => extractContextBrief(body)).not.toThrow();
     expect(Date.now() - start).toBeLessThan(250);
@@ -387,5 +405,107 @@ describe('ideas — specifics (sketch 007 C)', () => {
     expect(brief.specifics[0].body.startsWith("This phase reproduces Phase 2's recorded through-line")).toBe(true);
     expect(brief.specifics[3].title).toBe('UI work must use shadcn theme preset `b3Dqcuo4na`, strictly.');
     expect(brief.specifics[3].body.startsWith('Standing project rule')).toBe(true);
+  });
+});
+
+describe('ideas — deferred (sketch 007 C)', () => {
+  describe('revisitTrigger', () => {
+    it('takes the text after the first `if`, cut at the first top-level separator', () => {
+      expect(revisitTrigger('Revisit if X ever happens; note Y')).toBe('X ever happens');
+    });
+
+    it('ignores an `if` preceded by `as` or `even`', () => {
+      expect(revisitTrigger('Treated as if it were a rule all along')).toBeNull();
+      expect(revisitTrigger('Kept even if the cost rises later on')).toBeNull();
+    });
+
+    it('ignores an `if` inside a code span', () => {
+      expect(revisitTrigger('The `if (x) return` branch stays as written.')).toBeNull();
+    });
+
+    it('returns null for a trigger under 3 words', () => {
+      expect(revisitTrigger('if so')).toBeNull();
+    });
+
+    it('never reads the title — only the body', () => {
+      expect(classifyDeferred('Revisit if the cost rises', 'A plain body.', null).revisit).toBeNull();
+    });
+  });
+
+  describe('classifyDeferred', () => {
+    it('reads carried before every other signal, with the phase it came from', () => {
+      const got = classifyDeferred('A split', 'carried forward from Phase 2, declined as D-04.', '3');
+      expect(got.fate).toBe('carried');
+      expect(got.from).toBe('Phase 2');
+    });
+
+    it('reads out-of-scope as `out`, sourced to the all-caps markdown file', () => {
+      const got = classifyDeferred(null, 'Already out of scope by REQUIREMENTS.md, restated here.', '3');
+      expect(got.fate).toBe('out');
+      expect(got.from).toBe('REQUIREMENTS.md');
+    });
+
+    it("reads a decision's declined options as `declined`", () => {
+      expect(classifyDeferred(null, "D-06's third option, not taken.", '3').fate).toBe('declined');
+      expect(classifyDeferred(null, "D-04's middle option.", '3').fate).toBe('declined');
+    });
+
+    it('reads passed-over wording as `passed`', () => {
+      expect(classifyDeferred(null, 'Offered and passed over.', '1').fate).toBe('passed');
+      expect(classifyDeferred(null, 'Raised as a question, not pursued.', '1').fate).toBe('passed');
+    });
+
+    it('falls back to `handed` when only a destination is present, then to `other`', () => {
+      expect(classifyDeferred(null, "Left to Phase 3's ADMIN-03 work.", '1').fate).toBe('handed');
+      const other = classifyDeferred(null, 'Something with no recognisable outcome at all.', '1');
+      expect(other).toEqual({ fate: 'other', from: null, dest: null, revisit: null });
+    });
+
+    it('never treats a `from Phase N`, or a phase at or below its own, as a destination', () => {
+      expect(classifyDeferred(null, 'Carried from Phase 2 and still open.', '3').dest).toBeNull();
+      expect(classifyDeferred(null, "Left to Phase 1's own work.", '3').dest).toBeNull();
+    });
+
+    it('pairs the destination with the first REQ-ID in that same sentence, skipping WR-/OPEN-', () => {
+      expect(classifyDeferred(null, "Handed to Phase 3's ADMIN-03 work.", '1').dest).toBe('Phase 3 · ADMIN-03');
+      expect(classifyDeferred(null, 'Handed to Phase 3, see WR-02.', '1').dest).toBe('Phase 3');
+    });
+  });
+
+  it.runIf(existsSync(SP01_PATH))('SP 01: 5 deferred items, pinned fate/from/dest/revisit', async () => {
+    const body = await readFile(SP01_PATH, 'utf8');
+    const brief = extractContextBrief(body);
+    expect(brief.deferred.map((d) => [d.fate, d.from, d.dest, d.revisit])).toEqual([
+      ['handed', 'D-04', 'Phase 3 · ADMIN-03', null],
+      ['passed', null, null, null],
+      ['passed', 'D-01', 'Phase 3 · ADMIN-05', null],
+      ['passed', null, null, null],
+      ['passed', null, 'Phase 3 · ADMIN-06', null],
+    ]);
+    expect(brief.deferred[2].title).toBe("What the `sessions` table stores for Phase 3's ADMIN-05 to read");
+    expect(brief.deferred[2].body.startsWith('device / user-agent, IP, login time — offered and passed over')).toBe(
+      true,
+    );
+  });
+
+  it.runIf(existsSync(SP03_PATH))('SP 03: 8 declined, 1 out, 1 carried, with pinned revisit triggers', async () => {
+    const body = await readFile(SP03_PATH, 'utf8');
+    const brief = extractContextBrief(body);
+    expect(brief.deferred.map((d) => [d.fate, d.from, d.dest, d.revisit])).toEqual([
+      ['declined', 'D-01', null, 'a weak admin-typed password ever causes trouble'],
+      ['declined', 'D-04', null, 'typo-driven delete-and-recreate becomes annoying'],
+      ['declined', 'D-06', null, null],
+      ['declined', 'D-06', null, "D-06's silence proves surprising"],
+      ['declined', 'D-09', null, 'a departure-and-replacement ever actually collides'],
+      ['declined', 'D-13', null, null],
+      ['declined', 'D-15', null, 'the compound-`target` grammar starts causing renderer bugs'],
+      ['declined', 'D-16', null, null],
+      ['out', 'REQUIREMENTS.md', null, null],
+      ['carried', 'Phase 2', null, null],
+    ]);
+    // Deliberate deviation from the sketch's hand data, following the sketch's own stated rule:
+    // #10's trailing parenthetical is lifted out of the title and into the body.
+    expect(brief.deferred[9].title).toBe('`admin` split into finer bits');
+    expect(brief.deferred[9].body.startsWith('`manage_users` / `view_audit` — carried from Phase 2')).toBe(true);
   });
 });
