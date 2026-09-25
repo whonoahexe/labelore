@@ -123,12 +123,12 @@ is always to add the missing name to this document, never to edit the reference 
 
 | Tone | Meaning | Used for |
 |------|---------|----------|
-| `active` | In progress / currently selected — accent-tinted | A chosen discussion-log option, the current phase while in progress, an active outline entry, a sketch-004 B3 item's "Chosen"/"Claude chose" state chip, and (quick-260923-jxp) a discussion item's "Custom answer" state chip |
+| `active` | In progress / currently selected — accent-tinted | A chosen discussion-log option, the current phase while in progress, an active outline entry, a sketch-004 B3 item's "Chosen"/"Claude chose" state chip, (quick-260923-jxp) a discussion item's "Custom answer" state chip, and (quick-260925-3ug) a CONTEXT specific idea's Rule chip |
 | `complete` | Finished / matched — accent-tinted (shares styling with `active`) | A completed phase or plan, an exact traceability match, a sketch-004 B3 document's "N of N decided"/"Passed" cover status and a fully-verified item's state chip |
-| `quiet` | Neutral coverage gap — muted-foreground, never alarming | An unrecognized/unmanifested type, a non-exact traceability match, a phase not yet started, every sketch-004 B3 roll-up chip and Also-chapter panel chip, and (quick-260923-jxp) an unresolved discussion item's "Open" state chip, a chosen answer's qualifier chip, and a declined-area ghost row's "Not discussed" chip |
+| `quiet` | Neutral coverage gap — muted-foreground, never alarming | An unrecognized/unmanifested type, a non-exact traceability match, a phase not yet started, every sketch-004 B3 roll-up chip and Also-chapter panel chip, and (quick-260923-jxp) an unresolved discussion item's "Open" state chip, a chosen answer's qualifier chip, a declined-area ghost row's "Not discussed" chip, and (quick-260925-3ug) a CONTEXT specific idea's Note chip |
 | `destructive` | Genuine read/parse failure only | The "Unreadable" artifact-parse chip; never used for a merely-unrecognized type; never used by any sketch-004 B3 document-content chip (state/rollup/pill), which stay within `active`/`complete`/`quiet`/`in-flight`/`missing` |
 | `warning` | Partial read/parse degradation only | The "Warning" artifact-parse chip; never used by any sketch-004 B3 document-content chip, same rule as `destructive` above |
-| `in-flight` | A phase or item currently being worked, or waiting on someone | Traceability covering-phase signal, a sketch-004 B3 document's "Awaiting checkpoint"/"Gaps found" cover status, and the CONTEXT brief's open questions (open-question chips, an area's "N open" chip, the "open for the researcher" stat and panel rule) |
+| `in-flight` | A phase or item currently being worked, or waiting on someone | Traceability covering-phase signal, a sketch-004 B3 document's "Awaiting checkpoint"/"Gaps found" cover status, and the CONTEXT brief's open questions (open-question chips, an area's "N open" chip, the "open for the researcher" stat and panel rule), and (quick-260925-3ug) a CONTEXT specific idea's Leaning chip plus a deferred idea's "Revisit if" label |
 | `missing` | An expected item that has not appeared | Traceability covering-phase signal, a sketch-004 B3 gap item's "Failed" state chip |
 
 ## Families
@@ -230,6 +230,10 @@ element is actually written, regardless of class name:
   `.immediate-work`'s existing top rule is reused verbatim for the brief's accent "In this phase"
   card, plus the ✓ marks in its list and the "Claude decides" label under a tagged decision. No
   other brief element (the leftover-discretion hanging rule, chips, stats) uses `--primary`.
+  (quick-260925-3ug, sketch-007 C) It extends once more, to the ideas block: the Specific ideas
+  column's top rule and its scope label, the specifics' Rule chip (via the shared `active` tone)
+  and a deferred fate-group header's hover colour. Nothing else in the ideas block — not the
+  Deferred column's own top rule, not its group notes, destinations or bodies — uses `--primary`.
 - **The CONTEXT brief has no tone of its own.** (quick-260923-lju, retoned 2026-09-25) Open
   questions — the open-question chips, an area's "N open" chip, the "open for the researcher" stat
   and the open panel's rule/eyebrow/tags — use the shared `in-flight` tone (`--in-flight-fill`):
@@ -241,6 +245,11 @@ element is actually written, regardless of class name:
   amendments back-matter row (quick-260925-3ob) carries no `warning`/`destructive`/`in-flight`
   tone either, despite its source heading's own ⚠️ — the row is as quiet as its references/code
   siblings.
+- **CONTEXT Deferred is grouped by fate, never by source order.** (quick-260925-3ug, sketch-007 C)
+  The groups render in one fixed order — handed, declined, passed, out, carried, then the Parked
+  default for an idea whose outcome the brief could not recognise — and an empty group is omitted
+  rather than rendered empty. Each header is a collapsible button in the same uppercase
+  label-plus-count style as the In/Out scope labels, and every group starts expanded.
 
 ## Surface-scoped registered names
 
