@@ -4,8 +4,8 @@ milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
 last_updated: "2026-09-24T20:58:45.008Z"
-last_activity: 2026-09-23
-last_activity_desc: Completed quick task 260923-lju (CONTEXT page per sketch 006 D1)
+last_activity: 2026-09-25
+last_activity_desc: Completed quick task 260925-3ug (sketch-007 C ideas block)
 state_head: e48bb52335325bbaa22bdcbe9271a57dd13fdaea
 progress:
   total_phases: 1
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-09-21)
 Phase: Milestone v1.1 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-09-25 - Completed quick task 260925-3ob: Context page quietly surfaces canonical references, code insights, and requirement amendments
+Last activity: 2026-09-25 - Completed quick task 260925-3ug: sketch-007 variant C ideas block (tagged specifics, Deferred grouped by fate)
 
 ## Performance Metrics
 
@@ -113,6 +113,7 @@ None.
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 260925-3ug | CONTEXT ideas block per sketch-007 variant C — specifics tagged RULE/LEANING/NOTE with their full text, Deferred grouped by fate (handed/declined/passed/out/carried/Parked) in collapsible groups with source, destination and a "Revisit if" trigger; also repaired a stale SP 04 e2e assertion left by 3ob | 2026-09-25 | 7082d43 | [260925-3ug-build-sketch-007-c-into-the-context-brie](./quick/260925-3ug-build-sketch-007-c-into-the-context-brie/) |
 | 260925-3ob | CONTEXT page: quiet collapsed back-matter rows for requirement amendments (tag-recognised, emoji stripped), canonical references and existing code insights, grouped by ### heading; unused `more` field removed | 2026-09-25 | 4b9eedd | [260925-3ob-context-page-quietly-surface-canonical-r](./quick/260925-3ob-context-page-quietly-surface-canonical-r/) |
 | 260923-lju | CONTEXT page per sketch 006 D1 — boundary hero with In-this-phase card, quiet out-strip, amber open-questions panel, continuous decision register, Claude's discretion tagged into decisions, ideas panels, More-in-this-document; archived quick-task artifacts now parse; visual-contract canvas test updated (validated: Needs Review — live visual check) | 2026-09-23 | 86daac3 | [260923-lju-context-page-per-sketch-006-d1](./quick/260923-lju-context-page-per-sketch-006-d1/) |
 | 260923-jxp | Discussion-log review fixes on the B3 layout — no dropped questions (✓ variants, custom answers, table-under-area and bold-Q shapes), numbered answer cards with titles, quiet notes toggle, declined-area ghost chapters, log date, endnotes sheet, truthful cover counts; copy-path icon replaces the raw path on every artifact page | 2026-09-23 | 3f74056 | [260923-jxp-discussion-log-page-review-fixes-on-the-](./quick/260923-jxp-discussion-log-page-review-fixes-on-the-/) |
@@ -139,8 +140,8 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-09-22T16:55:00Z
-Stopped at: Quick task 260922-3us complete (human visual check pending) — awaiting /gsd-new-milestone
+Last session: 2026-09-25
+Stopped at: Quick task 260925-3ug complete (all 3 tasks committed; human visual check of the six screenshots pending) — awaiting /gsd-new-milestone
 Resume file: None
 
 ## Operator Next Steps
