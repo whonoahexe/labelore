@@ -156,6 +156,10 @@ export interface ContextBrief {
   /** Requirement-amendments back matter (quick-260925-3ob, 3OB-01) — recognised by the
    * `<blocking_amendments>` tag or a "Requirement amendments" heading. */
   amendments: ContextAside[];
+  /** Settled-question back matter — an open question the discussion already answered, so the
+   * researcher must not re-open it. Recognised by the `<resolved_open_question>` tag or a heading
+   * reading "…open question… answered/resolved" / "Resolved open question". */
+  resolved: ContextAside[];
   /** Canonical-references back matter (quick-260925-3ob, 3OB-02). */
   references: ContextAside[];
   /** Existing-code-insights back matter (quick-260925-3ob, 3OB-03). */
@@ -466,7 +470,16 @@ function parseMeta(body: string): ContextBriefMeta {
 // Section role resolution
 // ---------------------------------------------------------------------------
 
-type Role = 'boundary' | 'decisions' | 'specifics' | 'deferred' | 'references' | 'code' | 'amendments' | null;
+type Role =
+  | 'boundary'
+  | 'decisions'
+  | 'specifics'
+  | 'deferred'
+  | 'references'
+  | 'code'
+  | 'amendments'
+  | 'resolved'
+  | null;
 
 const ROLE_HEADING_TESTS: [RegExp, Role][] = [
   [/^(phase|task) boundary/i, 'boundary'],
@@ -479,6 +492,10 @@ const ROLE_HEADING_TESTS: [RegExp, Role][] = [
   // amendments…") match without the character class ever consuming the following letter — the
   // scan stays linear (T-lju-02).
   [/^[^\p{L}\p{N}]*requirement amendments?\b/iu, 'amendments'],
+  // Settled questions: "Resolved open question…" (leading emoji allowed, as above), or an
+  // unanchored "…open question is already answered…" phrase — fixed alternations, no nested runs.
+  [/^[^\p{L}\p{N}]*resolved open questions?\b/iu, 'resolved'],
+  [/\bopen questions? (?:is|are|was|were) already (?:answered|resolved|settled)\b/i, 'resolved'],
 ];
 
 const TAG_ROLE_BY_NAME: Record<string, Role> = {
@@ -489,6 +506,8 @@ const TAG_ROLE_BY_NAME: Record<string, Role> = {
   canonical_refs: 'references',
   code_context: 'code',
   blocking_amendments: 'amendments',
+  resolved_open_question: 'resolved',
+  resolved_open_questions: 'resolved',
 };
 
 function roleOfHeading(heading: string): Role {
@@ -559,7 +578,10 @@ function dropThematicBreaks(blocks: Block[]): Block[] {
  * an untitled leading group for any prose before the first `###` (omitted when empty), then one
  * group per `###` subsection (kept even when empty). A section that yields zero groups is omitted
  * entirely. Used for the amendments/references/code back-matter rows (quick-260925-3ob). */
-export function asideSectionsOf(body: string, role: 'amendments' | 'references' | 'code'): ContextAside[] {
+export function asideSectionsOf(
+  body: string,
+  role: 'amendments' | 'resolved' | 'references' | 'code',
+): ContextAside[] {
   const sections = topSections(body).filter(
     (s) => roleOfHeading(s.heading) === role || tagRoleAbove(body, s.heading) === role,
   );
@@ -1342,6 +1364,7 @@ export function extractContextBrief(body: string): ContextBrief {
     ...classifyDeferred(item.title, item.body, meta.phase),
   }));
   const amendments = asideSectionsOf(body, 'amendments');
+  const resolved = asideSectionsOf(body, 'resolved');
   const references = asideSectionsOf(body, 'references');
   const codeInsights = asideSectionsOf(body, 'code');
 
@@ -1357,6 +1380,7 @@ export function extractContextBrief(body: string): ContextBrief {
     if (role === 'references') recognizedHeadings.push(section.heading);
     if (role === 'code') recognizedHeadings.push(section.heading);
     if (role === 'amendments') recognizedHeadings.push(section.heading);
+    if (role === 'resolved') recognizedHeadings.push(section.heading);
   }
   for (const source of openQuestions) {
     // A `##`-level open-questions source (not a `###` subsection of decisions) earns its own
@@ -1375,6 +1399,7 @@ export function extractContextBrief(body: string): ContextBrief {
     specifics,
     deferred,
     amendments,
+    resolved,
     references,
     codeInsights,
     recognizedHeadings,

@@ -164,11 +164,11 @@ export interface ComposedAsideGroup {
   blocks: Block[];
 }
 
-/** One quiet, collapsed back-matter row closing the brief: requirement amendments, canonical
- * references, or existing code insights (quick-260925-3ob, 3OB-01/02/03). */
+/** One quiet, collapsed back-matter row closing the brief: a settled open question, requirement
+ * amendments, canonical references, or existing code insights (quick-260925-3ob, 3OB-01/02/03). */
 export interface ComposedAside {
   id: string;
-  kind: 'amendments' | 'references' | 'code';
+  kind: 'resolved' | 'amendments' | 'references' | 'code';
   label: string;
   count: number;
   hint: string | null;
@@ -191,8 +191,8 @@ export interface ComposedContextBrief {
   /** Unrecognised `##` document-section groups, rendered before the register (in document order),
    * plus the leading (no-heading) group when the brief's preamble held extra prose. */
   extras: DocumentSectionGroup[];
-  /** Quiet, collapsed back-matter rows closing the brief, in order: amendments (one row per
-   * section), then canonical references (merged), then existing code insights (merged) —
+  /** Quiet, collapsed back-matter rows closing the brief, in order: settled open questions and
+   * amendments (one row per section each), then canonical references (merged), then existing code insights (merged) —
    * quick-260925-3ob. Canonical-references/existing-code-insights sections used to be held here
    * for a closed "More in this document" disclosure; that disclosure was removed in 1d0baf3 and
    * those sections now surface through `asides` instead. */
@@ -720,9 +720,18 @@ export function composeContextBrief(input: ViewInput): ComposedContextBrief | nu
 
   const { extras } = partitionGroups(input.groups, brief.recognizedHeadings, brief.meta.preambleExtra);
 
-  // Back-matter asides (quick-260925-3ob): amendments (one row per section, in document order),
-  // then a single merged canonical-references row, then a single merged code-insights row.
+  // Back-matter asides (quick-260925-3ob): settled open questions, then amendments (one row per
+  // section each, in document order), then a single merged canonical-references row, then a
+  // single merged code-insights row.
   const briefRecord = brief as unknown as Record<string, unknown>;
+  const resolvedAsides: ComposedAside[] = tolerantAsideSections(briefRecord.resolved).map((section, index) => ({
+    id: index === 0 ? 'context-resolved' : `context-resolved-${index + 1}`,
+    kind: 'resolved',
+    label: stripEmoji(section.heading) || 'Resolved open question',
+    count: 0,
+    hint: null,
+    groups: section.groups,
+  }));
   const amendmentsSections = tolerantAsideSections(briefRecord.amendments);
   const amendmentsAsides: ComposedAside[] = amendmentsSections.map((section, index) => ({
     id: index === 0 ? 'context-amendments' : `context-amendments-${index + 1}`,
@@ -743,6 +752,7 @@ export function composeContextBrief(input: ViewInput): ComposedContextBrief | nu
   const codeAside = mergedAside(briefRecord.codeInsights, 'context-code', 'code', 'Existing code insights');
 
   const asides: ComposedAside[] = [
+    ...resolvedAsides,
     ...amendmentsAsides,
     ...(referencesAside ? [referencesAside] : []),
     ...(codeAside ? [codeAside] : []),
