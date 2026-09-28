@@ -5649,16 +5649,25 @@ button.view-context-summary:hover {
   display: grid;
   margin: 0;
   padding: 0;
-  gap: var(--space-3);
   list-style: none;
 }
 
 .view-context-specifics .view-context-idea {
   display: grid;
   grid-template-columns: 5.5rem minmax(0, 1fr);
-  gap: var(--space-3);
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--border);
   overflow-wrap: anywhere;
   font-size: var(--fs-4);
+}
+
+.view-context-specifics .view-context-idea:first-child {
+  padding-top: var(--space-1);
+}
+
+.view-context-specifics .view-context-idea:last-child {
+  border-bottom: 0;
 }
 
 .view-context-specifics .view-context-idea .status-chip {
@@ -5679,7 +5688,7 @@ button.view-context-summary:hover {
 
 /* Deferred fate groups (quick-260925-3ug, sketch-007 C). */
 .view-context-fate + .view-context-fate {
-  margin-top: var(--space-5);
+  margin-top: var(--space-8);
 }
 
 .view-context-fate-head {
@@ -5716,7 +5725,7 @@ button.view-context-summary:hover {
 }
 
 .view-context-fate-note {
-  margin-top: var(--space-1-5);
+  margin: var(--space-2) 0 var(--space-1);
   color: var(--muted-foreground);
   font-size: var(--fs-2);
 }
@@ -5731,8 +5740,8 @@ button.view-context-summary:hover {
 .view-context-fate-items .view-context-idea {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--space-1) var(--space-3);
-  padding: var(--space-2-5) 0;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-4) 0;
   border-bottom: 1px solid var(--border);
   font-size: var(--fs-4);
 }
