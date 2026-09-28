@@ -213,16 +213,17 @@ test.describe('CONTEXT brief — studio-portal fixtures (4198)', () => {
     await expect(groups.first()).toHaveAttribute('data-fate', 'handed');
     await expect(groups.first().locator('.view-context-idea').first()).toContainText('→ Phase 3 · ADMIN-03');
 
-    // Groups start expanded; the header collapses and restores its own items.
+    // Groups start collapsed; the header expands and re-collapses its own items.
     const passed = page.locator('.view-context-fate[data-fate="passed"]');
     const passedHead = passed.locator('.view-context-fate-head');
-    await expect(passedHead).toHaveAttribute('aria-expanded', 'true');
-    await passedHead.click();
     await expect(passedHead).toHaveAttribute('aria-expanded', 'false');
     await expect(passed.locator('.view-context-idea').first()).toBeHidden();
     await passedHead.click();
     await expect(passedHead).toHaveAttribute('aria-expanded', 'true');
     await expect(passed.locator('.view-context-idea').first()).toBeVisible();
+    await passedHead.click();
+    await expect(passedHead).toHaveAttribute('aria-expanded', 'false');
+    await expect(passed.locator('.view-context-idea').first()).toBeHidden();
 
     const sp03 = await resolveFixtureUrl(SP_BASE_URL, '03-account-administration-session-control/03-CONTEXT.md');
     await page.goto(`${SP_BASE_URL}${sp03}`);
