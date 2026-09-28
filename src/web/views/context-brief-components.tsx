@@ -184,7 +184,7 @@ function capitalizeItem(text: string): string {
 // ---------------------------------------------------------------------------
 
 /** One collapsible Deferred fate bucket. Open state is local to the group (groups start
- * expanded) rather than routed through `ContextBriefInteraction` — a fate group is not a
+ * collapsed) rather than routed through `ContextBriefInteraction` — a fate group is not a
  * hash-addressable idea, so it has nothing to restore from the URL. */
 function DeferredGroupView({
   group,
@@ -195,7 +195,7 @@ function DeferredGroupView({
   refTargets: Record<string, string>;
   onJump: (id: string) => void;
 }): React.JSX.Element {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const itemsId = `${group.id}-items`;
   return (
     <div className="view-context-fate" data-fate={group.fate} id={group.id}>
