@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 009 — RESEARCH figures: diagram + directory tree</title>
+<link rel="stylesheet" href="../themes/default.css?v=009">
+<style>
+/* Sketch 009: the two figures inside the 008-A "02 Architecture" chapter. Diagram and tree are
+   independent choices, so each has its own variant row. */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-5); line-height: var(--lh-normal); padding-top: 3rem; }
+h1, h2, h3, p, ul, ol, figure { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+code { font-family: var(--font-mono); font-size: 0.88em; padding: 0 0.2em; background: color-mix(in oklch, var(--muted) 70%, transparent); }
+strong { font-weight: var(--fw-semibold); }
+#variant-nav { position: fixed; inset: 0 0 auto 0; z-index: 50; display: flex; gap: var(--space-1); align-items: center; padding: var(--space-2) var(--space-4); background: var(--background); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; overflow-x: auto; }
+#variant-nav .label { color: var(--muted-foreground); margin: 0 var(--space-2); white-space: nowrap; }
+#variant-nav .sepv { width: 1px; align-self: stretch; background: var(--border); margin: 0 var(--space-3); }
+.variant-tab { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; background: none; white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; color: var(--muted-foreground); transition: all .15s ease; }
+.variant-tab:hover { color: var(--foreground); background: var(--state-hover); }
+.variant-tab.active { color: var(--primary); border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); background: var(--primary-tint); }
+.shell-header { display: flex; align-items: center; gap: var(--space-4); height: 3.75rem; padding: 0 var(--space-4); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.brand-mark { width: 2.25rem; height: 2.25rem; background: var(--primary); display: grid; place-items: center; color: white; font-weight: 700; }
+#frame { margin: 0 auto; container-type: inline-size; transition: max-width .2s ease; background: var(--background); min-height: 100vh; }
+#frame.narrow-frame { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+.page { width: min(80rem, 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); display: grid; gap: var(--space-8); }
+.toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--foreground); color: var(--background); padding: var(--space-2) var(--space-4); font-family: var(--font-mono); font-size: var(--fs-2); z-index: 9999; }
+.fade { animation: fade .18s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .fade { animation: none; } }
+.label { display: flex; gap: var(--space-2); align-items: baseline; margin-bottom: var(--space-3); color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.label .count { font-weight: var(--fw-medium); }
+.mono-note { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.section-heading { display: flex; gap: var(--space-4); align-items: flex-end; padding-bottom: var(--space-3); border-bottom: 1px solid var(--border); }
+.section-heading h2 { font-family: var(--font-mono); font-size: var(--fs-fluid-3); font-weight: var(--fw-medium); letter-spacing: var(--ls-tight); }
+.section-heading .num { color: var(--muted-foreground); margin-right: var(--space-3); }
+.ref-note { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.chip { display: inline-flex; align-items: center; gap: var(--space-1); padding: 0.1rem var(--space-1-5); border: 1px solid var(--border); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; color: var(--muted-foreground); background: none; line-height: 1.5; }
+.chip[data-tone='accent'] { color: var(--primary); border-color: color-mix(in oklch, var(--primary) 55%, var(--border)); background: var(--primary-tint); }
+.chip[data-tone='amber'] { color: oklch(0.74 0.15 75); border-color: color-mix(in oklch, oklch(0.75 0.15 75) 50%, var(--border)); }
+button.chip { cursor: pointer; transition: all .15s ease; }
+button.chip:hover { background: var(--state-hover); }
+button.chip[aria-pressed='true'] { color: var(--foreground); border-color: var(--foreground); }
+.part-tag { display: inline-block; padding: 0 var(--space-1-5); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); color: var(--background); background: var(--primary); text-transform: uppercase; }
+.caveat { font-size: var(--fs-3); color: var(--muted-foreground); padding: var(--space-2) var(--space-3); border: 1px dashed var(--border); }
+.caveat strong { color: var(--foreground); }
+
+/* ---------- figure shell ---------- */
+.figure { border: 1px solid var(--border); background: var(--card); min-width: 0; }
+.figure-bar { display: flex; gap: var(--space-2); align-items: center; padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); }
+.figure-bar .t { font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); margin-right: auto; }
+.figure-body { overflow: auto; padding: var(--space-6); max-height: 40rem; }
+.figure-cap { padding: var(--space-3); border-top: 1px dashed var(--border); font-size: var(--fs-3); color: var(--muted-foreground); }
+.ascii { position: relative; width: max-content; }
+.ascii pre { position: relative; z-index: 1; margin: 0; font-family: 'DejaVu Sans Mono', 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace; font-size: var(--dg-size, 0.8rem); line-height: 1.18; color: var(--foreground); }
+.ascii pre .ln { display: block; height: 1.18em; white-space: pre; }
+.g-line { color: color-mix(in oklch, var(--muted-foreground) 70%, transparent); }
+.g-arrow { color: var(--primary); }
+.g-note { color: var(--muted-foreground); font-style: italic; }
+.grid-paper { background-image: linear-gradient(color-mix(in oklch, var(--border) 35%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in oklch, var(--border) 35%, transparent) 1px, transparent 1px); background-size: 1.5rem 1.5rem; }
+.overlay { position: fixed; inset: 0; z-index: 200; background: color-mix(in oklch, var(--background) 94%, transparent); display: grid; place-items: center; padding: var(--space-6); }
+.overlay .figure { width: min(100%, 96rem); max-height: 94vh; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.overlay .figure-body { max-height: none; }
+
+/* B: lifted — cards drawn behind the grid */
+.lift-card { position: absolute; z-index: 0; border: 1px solid color-mix(in oklch, var(--foreground) 22%, var(--border)); background: var(--background); transition: border-color .15s ease, background .15s ease; }
+.lift-card.node { border-color: color-mix(in oklch, var(--primary) 40%, var(--border)); background: color-mix(in oklch, var(--primary-tint) 60%, var(--background)); }
+.lift-card.hot { border-color: var(--primary); background: var(--primary-tint); }
+.lift-card .cap { position: absolute; top: -0.62rem; left: 0.5rem; padding: 0 0.3rem; background: var(--card); font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.lifted pre .g-line { color: color-mix(in oklch, var(--muted-foreground) 55%, transparent); }
+.lifted pre .g-arrow { color: var(--primary); }
+.lifted pre .t-node { font-weight: 600; }
+.lifted pre .t-sub { color: var(--muted-foreground); }
+
+/* C: mermaid */
+.mermaid-wrap { display: block; text-align: center; min-height: 12rem; }
+.mermaid-wrap { text-transform: none; letter-spacing: 0; }
+.mermaid-wrap svg { display: inline-block; width: min(100%, 52rem) !important; max-width: 100% !important; height: auto; }
+.mermaid-wrap .label { display: revert; margin: 0; font: inherit; color: inherit; text-transform: none; letter-spacing: 0; }
+
+/* ---------- trees ---------- */
+.tree { font-family: var(--font-mono); font-size: var(--fs-3); display: grid; }
+.tree-row { display: grid; grid-template-columns: minmax(14rem, max-content) minmax(0, 1fr); gap: var(--space-4); padding: 0.2rem 0; border-bottom: 1px dotted color-mix(in oklch, var(--border) 50%, transparent); align-items: baseline; }
+.tree-row:hover { background: var(--state-hover); }
+.tree-name { white-space: nowrap; display: flex; align-items: baseline; }
+.tree-name .guide { color: color-mix(in oklch, var(--muted-foreground) 55%, transparent); white-space: pre; }
+.dir { color: var(--primary); background: none; border: 0; padding: 0; font: inherit; }
+.dir .chev { display: inline-block; width: 1em; color: var(--muted-foreground); transition: transform .15s ease; }
+.dir[aria-expanded='false'] .chev { transform: rotate(-90deg); }
+.tree-note { font-family: var(--font-sans); color: var(--muted-foreground); font-size: var(--fs-3); display: flex; gap: var(--space-2); align-items: baseline; flex-wrap: wrap; }
+@container (max-width: 700px) { .tree-row { grid-template-columns: 1fr; gap: 0; } .tree-note { padding-left: 1.5rem; } }
+
+.tb-tools { display: flex; gap: var(--space-2); align-items: center; margin-bottom: var(--space-3); flex-wrap: wrap; }
+.tb { list-style: none; padding: 0; display: grid; }
+.tb li { display: grid; grid-template-columns: minmax(0, 18rem) minmax(0, 1fr); gap: var(--space-4); align-items: baseline; padding: var(--space-1-5) 0; border-bottom: 1px solid color-mix(in oklch, var(--border) 45%, transparent); }
+.tb li:hover { background: var(--state-hover); }
+.tb .nm { display: flex; gap: var(--space-2); align-items: baseline; font-family: var(--font-mono); font-size: var(--fs-3); min-width: 0; }
+.tb .nm svg { flex: none; width: 0.95rem; height: 0.95rem; transform: translateY(0.12rem); color: var(--muted-foreground); }
+.tb .nm .is-dir { color: var(--primary); }
+.tb .nm .dir svg { color: var(--primary); }
+.tb .nt { font-size: var(--fs-3); color: var(--muted-foreground); display: flex; gap: var(--space-2); align-items: baseline; flex-wrap: wrap; }
+.tb li[data-badge='NEW'] .nm span.f, .tb li[data-badge='EXTEND'] .nm span.f { color: var(--foreground); font-weight: var(--fw-medium); }
+.tb li.dim { opacity: .38; }
+@container (max-width: 700px) { .tb li { grid-template-columns: 1fr; gap: var(--space-0-5); } .tb .nt { padding-left: 1.6rem; } }
+
+.tc { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: var(--space-4); }
+.tc-card { border: 1px solid var(--border); background: var(--card-veil); min-width: 0; }
+.tc-head { display: flex; gap: var(--space-2); align-items: baseline; padding: var(--space-2-5) var(--space-3); border-bottom: 1px solid var(--border); box-shadow: inset 0 3px 0 var(--primary); }
+.tc-head .p { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); }
+.tc-head .n { font-family: var(--font-mono); font-size: var(--fs-4); color: var(--primary); }
+.tc-head .c { margin-left: auto; font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); }
+.tc-head .note { flex-basis: 100%; }
+.tc-card ul { list-style: none; padding: var(--space-2) var(--space-3) var(--space-3); margin: 0; display: grid; gap: var(--space-2); }
+.tc-card li { display: grid; gap: 0.1rem; }
+.tc-card .f { font-family: var(--font-mono); font-size: var(--fs-3); display: flex; gap: var(--space-2); align-items: baseline; flex-wrap: wrap; }
+.tc-card .f .sub { color: var(--primary); }
+.tc-card .d { font-size: var(--fs-2); color: var(--muted-foreground); }
+.tc-root { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); align-items: baseline; font-family: var(--font-mono); font-size: var(--fs-3); color: var(--muted-foreground); }
+.tc-root b { color: var(--foreground); font-weight: var(--fw-medium); }
+</style>
+</head>
+<body>
+<div id="variant-nav" role="tablist">
+  <span class="label">Sketch 009</span>
+  <span class="part-tag">Diagram</span>
+  <button class="variant-tab" data-dg="a">A: Framed ASCII</button>
+  <button class="variant-tab" data-dg="b">B: Lifted ★</button>
+  <button class="variant-tab" data-dg="c">C: Mermaid redraw</button>
+  <span class="sepv"></span>
+  <span class="part-tag">Tree</span>
+  <button class="variant-tab" data-tr="a">A: ASCII guides</button>
+  <button class="variant-tab" data-tr="b">B: Clean list ★</button>
+  <button class="variant-tab" data-tr="c">C: Directory cards</button>
+</div>
+<div id="frame">
+  <header class="shell-header"><span class="brand-mark">L</span><span>Labelore</span></header>
+  <main id="root"></main>
+</div>
+<div id="sketch-tools" style="position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:12px;background:rgba(0,0,0,0.78);color:white;padding:8px 10px;opacity:0.55;transition:opacity 0.2s;display:grid;gap:6px;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.55'">
+  <div>Doc: <button data-doc="lab02">labelore P2</button><button data-doc="sp02">studio-portal P2</button></div>
+  <div>Theme: <button data-theme="light">Light</button><button data-theme="dark">Dark</button></div>
+  <div>Width: <button data-width="390">Phone</button><button data-width="820">Tablet</button><button data-width="full">Desktop</button></div>
+</div>
+<style>
+#sketch-tools button { background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 2px 7px; margin-left: 3px; font: inherit; cursor: pointer; }
+#sketch-tools button.on { background: #c2410c; border-color: #c2410c; }
+</style>
+
+<!-- Verbatim ```text fences from the two RESEARCH.md files (same as 008). -->
+<script type="text/plain" id="lab02-diagram">CLI project path
+      │
+      ▼
+resolveTargetPath → LocalFsPlanningFilesystem → PlanningRepository.load()
+                                              │
+                                              ▼
+                                   immutable ProjectSnapshot
+                                              │
+                  ┌───────────────────────────┴──────────────────────────┐
+                  ▼                                                      ▼
+       cycle-free ProjectPresentation                         Artifact lookup by path
+       (IDs/keys, no object cycles)                           (snapshot only; no fs read)
+                  │                                                      │
+                  └───────────────────────────┬──────────────────────────┘
+                                              ▼
+                                      Hono JSON endpoints
+                                              │
+                                              ▼
+                              React Query + canonical route codec
+                  ┌───────────────────┬──────────────────────┬───────────┐
+                  ▼                   ▼                      ▼           ▼
+              Dashboard          Roadmap/history      Artifact page   Preview
+                                                           │
+                                                           ▼
+                           artifact-view registry (known → generic fallback)
+                                                           │
+                              ┌────────────────────────────┴────────────┐
+                              ▼                                         ▼
+                    PLAN pseudo-XML segmenter                 normal markdown body
+                              └────────────────────────────┬────────────┘
+                                                           ▼
+                  remark/GFM → raw HTML parse → sanitize → slug/linkify/Shiki
+                                                           │
+                                                           ▼
+                                      sanitized document HTML
+                                                           │
+                                          ┌────────────────┴──────────────┐
+                                          ▼                               ▼
+                                  strict Mermaid.run()            anchors/ref popover</script>
+<script type="text/plain" id="lab02-tree">src/
+├── server/
+│   ├── index.ts                 # CLI start, Hono, Vite dev/prod delivery
+│   ├── project-presentation.ts  # cycle-free DTO and pure selectors
+│   └── artifact-index.ts        # snapshot-only artifact lookup
+├── presentation/
+│   ├── routes.ts                # canonical key/URL codec shared by server/client
+│   ├── references.ts            # contextual requirement/phase/plan resolution
+│   ├── dashboard.ts             # current/next/attention selectors
+│   ├── roadmap.ts               # phase/wave/history view models
+│   └── coverage.ts              # conservative truth↔coverage matrix
+├── rendering/
+│   ├── plan-segments.ts         # bounded pseudo-XML grammar
+│   ├── markdown.ts              # one unified processor/highlighter lifecycle
+│   ├── linkify.ts               # trusted post-sanitize AST enrichment
+│   └── frontmatter-views.ts     # known fields + generic remainder
+└── web/
+    ├── main.tsx
+    ├── app-router.tsx
+    ├── pages/                   # dashboard, roadmap, artifact, plan-pair
+    ├── components/              # shell, previews, document chrome
+    ├── components/ui/           # generated base-sera primitives
+    └── styles/globals.css       # ported oklch tokens + document containment
+test/
+├── presentation/               # DTO, routing, dashboard, coverage
+├── rendering/                  # pseudo-XML, sanitizer, links, anchors
+└── server/                      # deep-link fallback and API contracts</script>
+<script type="text/plain" id="sp02-diagram">                        ┌──────────────────────────────────────┐
+  HOST KERNEL / DEVICES │                                      │
+                        │  /proc/self/mountinfo   (procfs —    │
+                        │       0.14 ms, NEVER blocks)         │
+                        │  /mnt/{stage,vault,archive} (statvfs │
+                        │       0.002 ms healthy / ∞ if wedged)│
+                        │  /dev/disk/by-id/... (smartctl+sudo) │
+                        │  Google Drive API   (rclone about)   │
+                        └───┬────────┬────────┬────────┬───────┘
+                            │        │        │        │
+        ┌───────────────────┴─┐ ┌────┴─────┐ ┌┴───────┐ ┌┴──────────┐
+        │ PROBER THREAD:stage │ │ :vault   │ │:archive│ │ :cloud    │   ← one dedicated
+        │ (dedicated OS thread│ │          │ │        │ │           │     std::thread each;
+        │  NOT spawn_blocking)│ │          │ │        │ │           │     a wedge here is
+        └──────────┬──────────┘ └────┬─────┘ └───┬────┘ └─────┬─────┘     CONTAINED
+                   │                 │           │            │
+                   │  mpsc/watch (non-blocking send; a wedged thread
+                   │  simply stops sending — no other tier notices)
+                   ▼                 ▼           ▼            ▼
+        ┌────────────────────────────────────────────────────────────┐
+        │  HEALTH REGISTRY  (async task)                             │
+        │  • per-tier latest snapshot map  → on-connect snapshot D-19│
+        │  • staleness watchdog: no reading in N → `unreachable`     │
+        │    (D-15: the TIMEOUT is the signal; thread stays leaked)  │
+        │  • change-detect → emit only on change (D-19)              │
+        └───────────────────────────┬────────────────────────────────┘
+                                    │ Event::TierHealth { tier, state, .. , probed_at }
+                                    ▼
+        ┌────────────────────────────────────────────────────────────┐
+        │  BROADCAST BUS  tokio::broadcast::Sender<Event>  (ws/bus.rs)│
+        │  Lagged → receiver survives; resend full snapshot (F12)     │
+        └───────────────────────────┬────────────────────────────────┘
+                                    │ fan-out
+                                    ▼
+        ┌────────────────────────────────────────────────────────────┐
+        │  /ws HANDLER (axum, EXISTING — ticket-authorized, Phase 1) │
+        │  replace placeholder echo loop with: snapshot → subscribe  │
+        └───────────────────────────┬────────────────────────────────┘
+                                    │ WSS, direct cross-origin (bypasses Vercel)
+                                    ▼
+        ┌────────────────────────────────────────────────────────────┐
+        │  BROWSER  /  (Next.js client component, D-03)              │
+        │  4 cards, fixed order (D-04) · skeleton until first frame  │
+        │  (D-13) · probed_at ticks client-side (D-20) · reconnect   │
+        │  w/ fresh ticket mint + capped backoff (D-21)              │
+        └────────────────────────────────────────────────────────────┘</script>
+<script type="text/plain" id="sp02-tree">backend/src/
+├── health/
+│   ├── mod.rs           # TierState enum (healthy|degraded|unreachable — D-12), HealthFrame, probed_at
+│   ├── collector.rs     # per-tier dedicated prober threads + registry/staleness watchdog
+│   └── smart.rs         # smartctl invocation + BITMASK exit decode (F2) + JSON parse + reason-line composition (D-10)
+├── tiers/
+│   ├── mod.rs           # TierId, TierConfig (mount path, smart device, smart type), registry. Browse/stat only — NOT transfer (Anti-Pattern 1)
+│   ├── local.rs         # LocalTier: mountinfo check → bounded statvfs canary
+│   └── rclone_tier.rs   # RcloneTier: bounded `rclone about --json` subprocess
+├── ws/
+│   ├── mod.rs           # EXISTING — replace the placeholder echo loop only
+│   └── bus.rs           # NEW: broadcast::Sender<Event> wrapper + tagged Event enum
+├── config.rs            # EXTEND: tier config (see Pattern 3)
+└── lib.rs               # EXTEND: AppState gains bus + snapshot registry; init_state spawns probers
+                         #   (precedent: tickets.spawn_sweeper — same pattern, same place)</script>
+
+
+
+<!-- Hand-converted Mermaid for variant C. Nothing in Labelore can produce these from the ASCII;
+     they show what the chapter would look like if the RESEARCH author had written a mermaid fence. -->
+<script type="text/plain" id="lab02-mermaid">flowchart TD
+  A[CLI project path] --> B[resolveTargetPath] --> C[LocalFsPlanningFilesystem] --> D["PlanningRepository.load()"]
+  D --> E[immutable ProjectSnapshot]
+  E --> F["cycle-free ProjectPresentation<br/><small>IDs/keys, no object cycles</small>"]
+  E --> G["Artifact lookup by path<br/><small>snapshot only; no fs read</small>"]
+  F --> H[Hono JSON endpoints]
+  G --> H
+  H --> I[React Query + canonical route codec]
+  I --> J[Dashboard]
+  I --> K[Roadmap/history]
+  I --> L[Artifact page]
+  I --> M[Preview]
+  L --> N["artifact-view registry<br/><small>known → generic fallback</small>"]
+  N --> O[PLAN pseudo-XML segmenter]
+  N --> P[normal markdown body]
+  O --> Q["remark/GFM → raw HTML parse → sanitize → slug/linkify/Shiki"]
+  P --> Q
+  Q --> R[sanitized document HTML]
+  R --> S["strict Mermaid.run()"]
+  R --> T[anchors/ref popover]</script>
+<script type="text/plain" id="sp02-mermaid">flowchart TD
+  subgraph HOST["HOST KERNEL / DEVICES"]
+    H1["/proc/self/mountinfo — 0.14 ms, NEVER blocks"]
+    H2["/mnt/{stage,vault,archive} statvfs — 0.002 ms healthy / ∞ if wedged"]
+    H3["/dev/disk/by-id/... (smartctl+sudo)"]
+    H4["Google Drive API (rclone about)"]
+  end
+  subgraph PROBERS["one dedicated std::thread each — a wedge here is CONTAINED"]
+    P1["PROBER THREAD: stage<br/><small>dedicated OS thread, NOT spawn_blocking</small>"]
+    P2[":vault"]
+    P3[":archive"]
+    P4[":cloud"]
+  end
+  HOST --> P1 & P2 & P3 & P4
+  P1 & P2 & P3 & P4 -- "mpsc/watch (non-blocking send)" --> R["HEALTH REGISTRY (async task)<br/><small>per-tier snapshot · staleness watchdog → unreachable · emit on change</small>"]
+  R -- "Event::TierHealth { tier, state, .., probed_at }" --> B["BROADCAST BUS<br/><small>tokio::broadcast · Lagged → resend snapshot (F12)</small>"]
+  B -- "fan-out" --> W["/ws HANDLER (axum, EXISTING)<br/><small>snapshot → subscribe</small>"]
+  W -- "WSS, direct cross-origin" --> U["BROWSER (Next.js client, D-03)<br/><small>4 cards · skeleton · probed_at ticks · reconnect w/ backoff</small>"]</script>
+
+<script src="../008-research-page/data.js?v=1"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+const state = { dg: 'b', tr: 'b', doc: 'lab02', theme: 'dark', width: 'full', fit: false, grid: false, overlay: false, changedOnly: false, collapsed: new Set() };
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+function md(src) {
+  if (src == null) return '';
+  let s = esc(String(src).replace(/\[(VERIFIED|CITED|ASSUMED)(?::[^\]]*)?\]/g, ''));
+  return s.replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/(^|[^*\w])\*([^*\n]+)\*(?!\w)/g, '$1<em>$2</em>');
+}
+const txt = id => document.getElementById(id).textContent;
+const BOX = '─│┌┐└┘├┤┬┴┼', ARW = '▼▲►◄→←↑↓';
+
+/* ---------- A: framed ASCII ---------- */
+const glyphs = t => t.split('\n').map(l => `<span class="ln">${glyphsLine(l) || ' '}</span>`).join('');
+const glyphsLine = t => esc(t).replace(/([─│┌┐└┘├┤┬┴┼]+)/g, '<span class="g-line">$1</span>').replace(/([▼▲►◄→←↑↓])/g, '<span class="g-arrow">$1</span>');
+
+/* ---------- B: lifted ----------
+   1. Pad the text into a char grid.
+   2. Boxes: every ┌ that closes into a ┐ / └ / ┘ rectangle becomes a card; its border glyphs are
+      blanked (the card draws the border) except where a connector meets it.
+   3. Box-less diagrams: text runs (split on 2+ spaces or arrows outside brackets) become nodes;
+      vertically adjacent runs that overlap in columns merge into one node card.
+   4. Text outside any card in a boxed diagram is annotation → muted italic. */
+function liftModel(text) {
+  const lines = text.split('\n'); const W = Math.max(...lines.map(l => [...l].length));
+  const g = lines.map(l => { const a = [...l]; while (a.length < W) a.push(' '); return a; });
+  const H = g.length, at = (r, c) => (g[r] && g[r][c]) || ' ';
+  const boxes = [];
+  for (let r = 0; r < H; r++) for (let c = 0; c < W; c++) {
+    if (at(r, c) !== '┌') continue;
+    let c2 = c + 1; while (c2 < W && '─┬┴┼'.includes(at(r, c2))) c2++;
+    if (at(r, c2) !== '┐') continue;
+    let r2 = r + 1; while (r2 < H && '│├┤┼'.includes(at(r2, c))) r2++;
+    if (at(r2, c) !== '└' || at(r2, c2) !== '┘') continue;
+    boxes.push({ r1: r, c1: c, r2, c2, kind: 'box' });
+  }
+  const inBox = (r, c) => boxes.some(b => r > b.r1 && r < b.r2 && c > b.c1 && c < b.c2);
+  const onBorder = (r, c) => boxes.some(b => ((r === b.r1 || r === b.r2) && c >= b.c1 && c <= b.c2) || ((c === b.c1 || c === b.c2) && r >= b.r1 && r <= b.r2));
+  // blank borders; keep a connector stub where a line leaves the box (┬ ┴ ├ ┤ → │/─ outside only)
+  boxes.forEach(b => {
+    for (let c = b.c1; c <= b.c2; c++) { for (const r of [b.r1, b.r2]) { g[r][c] = ' '; } }
+    for (let r = b.r1; r <= b.r2; r++) { for (const c of [b.c1, b.c2]) { if (BOX.includes(g[r][c])) g[r][c] = ' '; } }
+  });
+  // text runs
+  const runs = [];
+  for (let r = 0; r < H; r++) {
+    let c = 0;
+    while (c < W) {
+      const ch = g[r][c];
+      if (ch === ' ' || BOX.includes(ch) || ARW.includes(ch) || ch === '•') { c++; continue; }
+      let e = c, depth = 0, gap = 0;
+      while (e < W) {
+        const x = g[r][e];
+        if (x === '(' || x === '{' || x === '[') depth++;
+        if (x === ')' || x === '}' || x === ']') depth = Math.max(0, depth - 1);
+        if (BOX.includes(x) || (ARW.includes(x) && depth === 0)) break;
+        if (x === ' ') { gap++; if (gap >= 2 && depth === 0) break; } else gap = 0;
+        e++;
+      }
+      let end = e; while (end > c && g[r][end - 1] === ' ') end--;
+      runs.push({ r, c1: c, c2: end - 1, box: inBox(r, c) });
+      c = e;
+    }
+  }
+  // a source line that overruns its box by a char or two (e.g. BROADCAST BUS) widens that box only
+  boxes.forEach(b => { const c0 = b.c2; runs.forEach(run => { if (run.r > b.r1 && run.r < b.r2 && run.c1 > b.c1 && run.c1 < c0 && run.c2 >= c0 && run.c2 <= c0 + 2) b.c2 = Math.max(b.c2, run.c2 + 2); });
+    for (let r = b.r1 + 1; r < b.r2; r++) for (let c = c0 + 1; c <= b.c2; c++) if (BOX.includes(g[r][c])) g[r][c] = ' '; });
+  const nodes = [];
+  if (!boxes.length) {
+    runs.forEach(run => {
+      const n = nodes.find(n => n.r2 === run.r - 1 && run.c1 <= n.c2 + 1 && run.c2 >= n.c1 - 1);
+      if (n) { n.r2 = run.r; n.c1 = Math.min(n.c1, run.c1); n.c2 = Math.max(n.c2, run.c2); n.lines.push(run); }
+      else nodes.push({ r1: run.r, r2: run.r, c1: run.c1, c2: run.c2, lines: [run], kind: 'node' });
+    });
+  }
+  return { g, H, W, boxes, nodes, runs };
+}
+function liftHTML(text) {
+  const m = liftModel(text);
+  const cls = Array.from({ length: m.H }, () => Array(m.W).fill(''));
+  m.runs.forEach(run => {
+    const node = m.nodes.find(n => run.r >= n.r1 && run.r <= n.r2 && run.c1 >= n.c1 && run.c2 <= n.c2);
+    const k = run.box ? (m.boxes.find(b => run.r === b.r1 + 1 && run.c1 > b.c1 && run.c1 < b.c2) ? 't-node' : '') : node ? (node.r1 === run.r ? 't-node' : 't-sub') : m.boxes.length ? 'g-note' : 't-node';
+    for (let c = run.c1; c <= run.c2; c++) cls[run.r][c] = k;
+  });
+  const html = m.g.map((row, r) => {
+    let out = '', cur = null, buf = '';
+    const flush = () => { if (buf) out += cur ? `<span class="${cur}">${esc(buf)}</span>` : esc(buf); buf = ''; };
+    row.forEach((ch, c) => {
+      const k = BOX.includes(ch) ? 'g-line' : ARW.includes(ch) ? 'g-arrow' : cls[r][c];
+      if (k !== cur) { flush(); cur = k; }
+      buf += ch;
+    });
+    flush();
+    return `<span class="ln">${out.replace(/\s+$/, '') || ' '}</span>`;
+  }).join('');
+  return { html, cards: [...m.boxes, ...m.nodes] };
+}
+function placeCards(host) {
+  const pre = host.querySelector('pre'); const cards = JSON.parse(host.dataset.cards);
+  const probe = document.createElement('span'); probe.textContent = 'M'.repeat(100); probe.style.visibility = 'hidden'; pre.appendChild(probe);
+  const cw = probe.getBoundingClientRect().width / 100; probe.remove();
+  const lh = pre.querySelector('.ln').getBoundingClientRect().height;
+  host.querySelectorAll('.lift-card').forEach(x => x.remove());
+  cards.forEach((b, i) => {
+    const d = document.createElement('div'); d.className = 'lift-card ' + b.kind; d.dataset.i = i;
+    if (b.kind === 'box') Object.assign(d.style, { left: (b.c1 + 0.5) * cw + 'px', top: (b.r1 + 0.5) * lh + 'px', width: (b.c2 - b.c1) * cw + 'px', height: (b.r2 - b.r1) * lh + 'px' });
+    else Object.assign(d.style, { left: (b.c1 - 0.7) * cw + 'px', top: (b.r1 - 0.22) * lh + 'px', width: (b.c2 - b.c1 + 2.4) * cw + 'px', height: (b.r2 - b.r1 + 1.44) * lh + 'px' });
+    host.insertBefore(d, pre);
+  });
+}
+
+/* ---------- trees ---------- */
+function parseTree(text) {
+  const rows = [];
+  text.split('\n').forEach(line => {
+    const m = line.match(/^([\s│├└─]*)([^#\s][^#]*?)?\s*(?:#\s*(.*))?$/);
+    if (!m) return;
+    if (!m[2] && m[3] && rows.length) { rows[rows.length - 1].note += ' ' + m[3].trim(); return; }
+    if (!m[2]) return;
+    const prefix = m[1] || '';
+    rows.push({ depth: Math.round([...prefix].length / 4), prefix, name: m[2].trim(), note: (m[3] || '').trim(), dir: /\/$/.test(m[2].trim()) });
+  });
+  rows.forEach(r => { const b = r.note.match(/^(NEW|EXTEND|EXISTING)\b[:\s—-]*/); if (b) { r.badge = b[1]; r.note = r.note.slice(b[0].length); } });
+  rows.forEach((r, i) => { r.parent = null; for (let j = i - 1; j >= 0; j--) if (rows[j].depth < r.depth) { r.parent = j; break; } });
+  return rows;
+}
+const badge = b => b ? `<span class="chip" data-tone="${{ NEW: 'accent', EXTEND: 'amber', EXISTING: '' }[b]}">${b.toLowerCase()}</span>` : '';
+const hidden = (rows, i, id) => { let p = rows[i].parent; while (p != null) { if (state.collapsed.has(id + ':' + p)) return true; p = rows[p].parent; } return false; };
+function treeA(d) {
+  const rows = parseTree(txt(d.treeId));
+  return `<div class="tree">${rows.map((r, i) => hidden(rows, i, d.treeId) ? '' : `<div class="tree-row"><span class="tree-name"><span class="guide">${esc(r.prefix)}</span>${r.dir ? `<button class="dir" data-collapse="${d.treeId}:${i}" aria-expanded="${!state.collapsed.has(d.treeId + ':' + i)}"><span class="chev">▾</span>${esc(r.name)}</button>` : esc(r.name)}</span><span class="tree-note">${badge(r.badge)}${md(r.note)}</span></div>`).join('')}</div>`;
+}
+const I_DIR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>';
+const I_FILE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>';
+function treeB(d) {
+  const rows = parseTree(txt(d.treeId));
+  const hasBadges = rows.some(r => r.badge && r.badge !== 'EXISTING');
+  const keep = new Set();
+  if (state.changedOnly) rows.forEach((r, i) => { if (r.badge === 'NEW' || r.badge === 'EXTEND') { keep.add(i); let p = r.parent; while (p != null) { keep.add(p); p = rows[p].parent; } } });
+  return `<div class="tb-tools">
+      ${hasBadges ? `<button class="chip" data-changed="1" aria-pressed="${state.changedOnly}">Changed only · ${rows.filter(r => r.badge === 'NEW' || r.badge === 'EXTEND').length}</button>` : `<span class="mono-note">No NEW / EXTEND markers in this tree</span>`}
+      <span class="mono-note" style="margin-left:auto">${rows.filter(r => !r.dir).length} files · ${rows.filter(r => r.dir).length} folders</span></div>
+    <ul class="tb">${rows.map((r, i) => {
+      if (hidden(rows, i, d.treeId)) return '';
+      const dim = state.changedOnly && !keep.has(i);
+      if (state.changedOnly && dim && r.dir) return '';
+      if (dim) return '';
+      const pad = `padding-left:${r.depth * 1.4}rem`;
+      return `<li data-badge="${r.badge || ''}"><span class="nm" style="${pad}">${r.dir ? `<button class="dir" data-collapse="${d.treeId}:${i}" aria-expanded="${!state.collapsed.has(d.treeId + ':' + i)}" style="display:flex;gap:var(--space-2);align-items:baseline">${I_DIR}<span class="is-dir">${esc(r.name)}</span></button>` : `${I_FILE}<span class="f">${esc(r.name)}</span>`}</span><span class="nt">${badge(r.badge)}${md(r.note)}</span></li>`;
+    }).join('')}</ul>`;
+}
+function treeC(d) {
+  const rows = parseTree(txt(d.treeId));
+  const roots = rows.map((r, i) => [r, i]).filter(([r]) => r.depth === 0);
+  const cards = [], loose = [];
+  roots.forEach(([root, ri]) => {
+    rows.forEach((r, i) => {
+      if (r.parent !== ri) return;
+      if (r.dir) {
+        const kids = [];
+        const walk = (pi, lvl) => rows.forEach((k, ki) => { if (k.parent === pi) { kids.push({ ...k, lvl }); if (k.dir) walk(ki, lvl + 1); } });
+        walk(i, 0);
+        cards.push({ root: root.name, dir: r, kids });
+      } else loose.push({ root: root.name, r });
+    });
+  });
+  return `<div class="tc">
+    ${cards.map(c => `<section class="tc-card"><div class="tc-head"><span class="p">${esc(c.root)}</span><span class="n">${esc(c.dir.name)}</span>${c.kids.length ? `<span class="c">${c.kids.filter(k => !k.dir).length || c.kids.length}</span>` : ''}${c.dir.note && c.kids.length ? `<span class="d note">${badge(c.dir.badge)}${md(c.dir.note)}</span>` : ''}</div>
+      <ul>${c.kids.length ? c.kids.map(k => `<li style="padding-left:${k.lvl * 1}rem"><span class="f"><span class="${k.dir ? 'sub' : ''}">${esc(k.name)}</span>${badge(k.badge)}</span>${k.note ? `<span class="d">${md(k.note)}</span>` : ''}</li>`).join('') : `<li><span class="d">${md(c.dir.note) || '—'}</span></li>`}</ul></section>`).join('')}
+    ${loose.length ? `<section class="tc-card"><div class="tc-head"><span class="p">${esc(loose[0].root)}</span><span class="n">top-level files</span><span class="c">${loose.length}</span></div><ul>${loose.map(({ r }) => `<li><span class="f">${esc(r.name)}${badge(r.badge)}</span>${r.note ? `<span class="d">${md(r.note)}</span>` : ''}</li>`).join('')}</ul></section>` : ''}
+  </div>`;
+}
+
+/* ---------- page ---------- */
+function diagram(d) {
+  const T = { a: 'A · framed ASCII', b: 'B · lifted', c: 'C · Mermaid redraw' }[state.dg];
+  let body;
+  if (state.dg === 'a') body = `<div class="ascii"><pre>${glyphs(txt(d.diagramId))}</pre></div>`;
+  else if (state.dg === 'b') { const L = liftHTML(txt(d.diagramId)); body = `<div class="ascii lifted" data-cards='${esc(JSON.stringify(L.cards))}'><pre>${L.html}</pre></div>`; }
+  else body = `<div class="mermaid-wrap"><pre class="mermaid">${esc(txt(d.diagramId.replace('diagram', 'mermaid')))}</pre></div>`;
+  const tools = state.dg === 'c' ? '' : `<button class="chip" data-fit="1" aria-pressed="${state.fit}">${state.fit ? 'Fit to width' : 'Actual size'}</button><button class="chip" data-grid="1" aria-pressed="${state.grid}">Grid</button>`;
+  return `<figure class="figure">
+    <div class="figure-bar"><span class="t">System architecture</span>${tools}<button class="chip" data-overlay="1">Expand ⤢</button></div>
+    <div class="figure-body ${state.grid && state.dg !== 'c' ? 'grid-paper' : ''}" data-fitbox="1">${body}</div>
+    <figcaption class="figure-cap">${md(d.diagramNote)}</figcaption></figure>
+    ${state.dg === 'c' ? `<p class="caveat" style="margin-top:var(--space-3)"><strong>Hand-converted.</strong> Both RESEARCH files use a <code>text</code> fence; Labelore cannot turn ASCII into Mermaid reliably. C shows what the chapter gets when the source already has a <code>mermaid</code> fence (the app renders those today) — it is the comparison point, not something the parser can produce.</p>` : ''}
+    ${state.dg === 'b' ? `<p class="caveat" style="margin-top:var(--space-3)"><strong>Generic.</strong> Cards are found by the page, not hand-placed: <code>┌…┐└…┘</code> rectangles become cards (studio-portal), and in a box-less diagram (labelore) text runs are clustered into nodes. Connectors stay the author's ASCII. Hover a card.</p>` : ''}`;
+}
+function render() {
+  const d = DOCS[state.doc];
+  const TT = { a: 'A · ASCII guides', b: 'B · clean list', c: 'C · directory cards' }[state.tr];
+  document.getElementById('root').innerHTML = `<div class="page fade">
+    <p class="ref-note">${d.project} · ${d.file} · 008-A frame · … 01 Standard stack above …</p>
+    <div class="section-heading"><h2><span class="num">02</span>Architecture</h2></div>
+    <section>${diagram(d)}</section>
+    <section><p class="label">Directory structure</p>${{ a: treeA, b: treeB, c: treeC }[state.tr](d)}
+      <p style="margin-top:var(--space-3);font-size:var(--fs-3);color:var(--muted-foreground);max-width:72ch">${md(d.treeNote)}</p></section>
+    <p class="ref-note">… Patterns ⇄ Anti-patterns · Don't hand-roll · 03 Common pitfalls below …</p>
+  </div>${state.overlay ? `<div class="overlay" data-close="1"><div class="figure" style="display:grid"><div class="figure-bar"><span class="t">System architecture</span><button class="chip" data-close="1">Close ✕</button></div><div class="figure-body">${state.dg === 'b' ? (() => { const L = liftHTML(txt(d.diagramId)); return `<div class="ascii lifted" style="--dg-size:0.95rem" data-cards='${esc(JSON.stringify(L.cards))}'><pre>${L.html}</pre></div>`; })() : state.dg === 'a' ? `<div class="ascii" style="--dg-size:0.95rem"><pre>${glyphs(txt(d.diagramId))}</pre></div>` : `<div class="mermaid-wrap"><pre class="mermaid">${esc(txt(d.diagramId.replace('diagram', 'mermaid')))}</pre></div>`}</div></div></div>` : ''}`;
+  document.documentElement.classList.toggle('dark', state.theme === 'dark');
+  const f = document.getElementById('frame');
+  f.style.maxWidth = state.width === 'full' ? 'none' : state.width + 'px';
+  f.classList.toggle('narrow-frame', state.width !== 'full');
+  document.querySelectorAll('[data-dg]').forEach(t => t.classList.toggle('active', t.dataset.dg === state.dg));
+  document.querySelectorAll('[data-tr]').forEach(t => t.classList.toggle('active', t.dataset.tr === state.tr));
+  document.querySelectorAll('#sketch-tools button').forEach(b => b.classList.toggle('on', b.dataset.doc === state.doc || b.dataset.theme === state.theme || b.dataset.width === state.width));
+  if (state.fit) document.querySelectorAll('[data-fitbox] .ascii').forEach(a => { const box = a.parentElement; const avail = box.clientWidth - 48; a.style.setProperty('--dg-size', '0.8rem'); const w = a.scrollWidth; if (w > avail) a.style.setProperty('--dg-size', (0.8 * avail / w).toFixed(3) + 'rem'); });
+  document.querySelectorAll('.ascii.lifted').forEach(placeCards);
+  if (document.querySelector('pre.mermaid') && window.mermaid) {
+    mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme: state.theme === 'dark' ? 'dark' : 'neutral', fontFamily: 'ui-monospace, DejaVu Sans Mono, monospace', themeVariables: { fontSize: '15px' }, flowchart: { htmlLabels: true, curve: 'basis', useMaxWidth: true, nodeSpacing: 34, rankSpacing: 38 } });
+    mermaid.run({ querySelector: 'pre.mermaid' }).catch(e => console.error(e));
+  }
+}
+document.addEventListener('mouseover', e => { const host = e.target.closest('.ascii.lifted'); if (!host) return; const pre = host.querySelector('pre'); const r = pre.getBoundingClientRect(); host.querySelectorAll('.lift-card').forEach(c => { const b = c.getBoundingClientRect(); c.classList.toggle('hot', e.clientX >= b.left && e.clientX <= b.right && e.clientY >= b.top && e.clientY <= b.bottom); }); });
+function toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 1400); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && state.overlay) { state.overlay = false; render(); } });
+document.addEventListener('click', e => {
+  const t = e.target.closest('button, [data-close]');
+  if (!t) return;
+  if (t.dataset.close && (e.target === t || t.tagName === 'BUTTON')) { state.overlay = false; }
+  else if (t.dataset.dg) state.dg = t.dataset.dg;
+  else if (t.dataset.tr) { state.tr = t.dataset.tr; state.changedOnly = false; }
+  else if (t.dataset.doc) { state.doc = t.dataset.doc; state.collapsed.clear(); state.changedOnly = false; }
+  else if (t.dataset.theme) state.theme = t.dataset.theme;
+  else if (t.dataset.width) state.width = t.dataset.width;
+  else if (t.dataset.fit) state.fit = !state.fit;
+  else if (t.dataset.grid) state.grid = !state.grid;
+  else if (t.dataset.overlay) state.overlay = true;
+  else if (t.dataset.changed) state.changedOnly = !state.changedOnly;
+  else if (t.dataset.collapse) { const k = t.dataset.collapse; state.collapsed.has(k) ? state.collapsed.delete(k) : state.collapsed.add(k); }
+  else return;
+  const y = window.scrollY; render(); window.scrollTo(0, y);
+});
+window.addEventListener('resize', () => { if (state.fit) render(); else document.querySelectorAll('.ascii.lifted').forEach(placeCards); });
+document.fonts ? document.fonts.ready.then(render) : render();
+</script>
+</body>
+</html>
