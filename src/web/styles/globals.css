@@ -3708,6 +3708,12 @@ pre {
   font-size: var(--fs-4);
 }
 
+/* The document reader's 76ch measure is for a full-page read; an endnote panel spans the sheet, so
+   its prose runs the panel's width. The `.document-endnote` step outranks that rule's :not()s. */
+.view-discussion-log-endnote-grid .document-endnote .artifact-document :is(p, ul, ol, blockquote) {
+  max-width: none;
+}
+
 .view-discussion-log-endnote-grid .artifact-document > :first-child {
   margin-top: 0;
 }
