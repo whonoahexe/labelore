@@ -255,6 +255,7 @@ describe('extractContextBrief — canonical references and existing code insight
     expect(() => extractContextBrief(NONE_OF_THE_THREE_DOC)).not.toThrow();
     const brief = extractContextBrief(NONE_OF_THE_THREE_DOC);
     expect(brief.amendments).toEqual([]);
+    expect(brief.resolved).toEqual([]);
     expect(brief.references).toEqual([]);
     expect(brief.codeInsights).toEqual([]);
   });
@@ -295,6 +296,20 @@ describe('extractContextBrief — canonical references and existing code insight
     const brief = extractContextBrief(body);
     expect(brief.amendments).toHaveLength(1);
     expect(brief.amendments[0].heading).not.toMatch(/requirement amendments/i);
+  });
+
+  it.runIf(existsSync(SP03_PATH))('SP 03: <resolved_open_question> becomes a resolved aside, not an extra', async () => {
+    const body = await readFile(SP03_PATH, 'utf8');
+    const brief = extractContextBrief(body);
+    expect(brief.resolved).toHaveLength(1);
+    expect(brief.resolved[0].heading).toMatch(/already answered/);
+    expect(brief.recognizedHeadings).toContain(brief.resolved[0].heading);
+    expect(brief.openQuestions.some((q) => /already answered/.test(q.heading))).toBe(false);
+  });
+
+  it('recognises a settled question by heading alone, with no tag', () => {
+    const doc = '## Phase Boundary\n\nScope.\n\n## ✅ Resolved open question: audit actor shape\n\nRaw TEXT, no FK.\n';
+    expect(extractContextBrief(doc).resolved.map((a) => a.heading)).toEqual(['✅ Resolved open question: audit actor shape']);
   });
 
   it.runIf(existsSync(SP04_PATH))('SP 04: <blocking_amendments> recognised by tag, not by heading text', async () => {
