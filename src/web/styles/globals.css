@@ -5324,8 +5324,10 @@ pre {
   font-weight: var(--fw-medium);
 }
 
-.view-context-in ul,
-.view-context-out ul {
+/* Child combinators, not descendants: when In has no bullet list it falls back to prose blocks
+   (.view-context-rest), whose lists must not pick up the check/text grid. */
+.view-context-in > ul,
+.view-context-out > ul {
   display: grid;
   gap: var(--space-2);
   margin: 0;
@@ -5333,8 +5335,8 @@ pre {
   list-style: none;
 }
 
-.view-context-in li,
-.view-context-out li {
+.view-context-in > ul > li,
+.view-context-out > ul > li {
   display: grid;
   grid-template-columns: 1.1rem minmax(0, 1fr);
   gap: var(--space-2);
@@ -5342,18 +5344,18 @@ pre {
   font-size: var(--fs-4);
 }
 
-.view-context-in li::before,
-.view-context-out li::before {
+.view-context-in > ul > li::before,
+.view-context-out > ul > li::before {
   font-family: var(--font-mono);
   font-size: var(--fs-3);
 }
 
-.view-context-in li::before {
+.view-context-in > ul > li::before {
   content: '\2713';
   color: var(--primary);
 }
 
-.view-context-out li::before {
+.view-context-out > ul > li::before {
   content: '\2013';
 }
 
