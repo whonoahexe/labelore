@@ -2,7 +2,7 @@
 sketch: 010
 name: legitimacy-audit
 question: "How should RESEARCH's Package Legitimacy Audit show its verdicts, making [SLOP] removals and [SUS] flags stand out?"
-winner: null
+winner: "B"
 tags: [documents, per-type-views, research, legitimacy, packages]
 ---
 
@@ -38,3 +38,12 @@ legitimacy").
 Rows come from 008's `data.js` (verbatim seam tables). The SLOP rows and their reasons are
 invented, and badged everywhere. C matches audit rows to stack entries by splitting combined
 names on `,` / `+` / ` / `.
+
+## Winner
+**B: Lanes by verdict, with pagination.** Build it.
+- Three lanes, **Removed · slop** → **Flagged · suspicious** → **Approved**. Each lane shows at most **4** items, then a "Show N more {removed|flagged|approved}" row that toggles to "Show fewer". The rule applies to all three lanes; Approved counts its chips.
+- Slop and SUS items show their signals (registry, age, downloads/wk, repo, rule), with the bad signals in `missing`. Approved packages are compact chips; a dashed chip means its disposition isn't a plain "Approved", and that disposition is listed underneath.
+- System tones only: the Removed lane uses `missing` (rule, heading, count, strike-through), Flagged uses `in-flight`, and Approved stays neutral. **Never `--destructive`**: this is document content.
+- The seam intro sits above the lanes, the protocol note heads the Flagged lane, and the full seam table stays behind a toggle.
+
+Before this, all three variants were rejected for leaving the colour system (invented amber, destructive red, purple badge). They were re-toned in 86cc624, and then B was chosen.
