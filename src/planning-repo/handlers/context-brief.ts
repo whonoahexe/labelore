@@ -156,9 +156,10 @@ export interface ContextBrief {
   /** Requirement-amendments back matter (quick-260925-3ob, 3OB-01) — recognised by the
    * `<blocking_amendments>` tag or a "Requirement amendments" heading. */
   amendments: ContextAside[];
-  /** Settled-question back matter — an open question the discussion already answered, so the
-   * researcher must not re-open it. Recognised by the `<resolved_open_question>` tag or a heading
-   * reading "…open question… answered/resolved" / "Resolved open question". */
+  /** A settled open question — one the discussion already answered, so the researcher must not
+   * re-open it. Recognised by the `<resolved_open_question>` tag or a heading reading "Resolved
+   * open question…" / "…open question is already answered…", so it never falls through to the
+   * view's extras; the view deliberately does not render it. */
   resolved: ContextAside[];
   /** Canonical-references back matter (quick-260925-3ob, 3OB-02). */
   references: ContextAside[];
