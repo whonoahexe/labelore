@@ -350,13 +350,15 @@ describe('asides — amendments end to end', () => {
     expect(composed?.asides).toEqual([]);
   });
 
-  it('recognises a <blocking_amendments> section by its tag when the heading does not say "requirement amendments"', () => {
+  it('recognises a <blocking_amendments> planner warning by its tag, then hides it (no row, no extra)', () => {
     const brief = extractContextBrief(TAGGED_AMENDMENTS_DOC);
-    const groups = groupsFor(['Phase Boundary', '⚠️ One research recommendation is superseded — do not inherit it', 'Implementation Decisions']);
+    const heading = '⚠️ One research recommendation is superseded — do not inherit it';
+    const groups = groupsFor(['Phase Boundary', heading, 'Implementation Decisions']);
     const composed = composeContextBrief(baseInput(brief, { groups }));
 
-    expect(composed?.asides).toHaveLength(1);
-    expect(composed!.asides[0].label).toBe('One research recommendation is superseded — do not inherit it');
+    expect(brief.amendments).toHaveLength(1);
+    expect(composed?.asides).toEqual([]);
+    expect(composed?.extras.map((g) => g.heading)).not.toContain(heading);
   });
 
   it('still composes non-null with no asides when the amendments key is absent from the payload', () => {
