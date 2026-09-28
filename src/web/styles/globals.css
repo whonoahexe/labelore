@@ -5376,20 +5376,6 @@ pre {
   font-style: italic;
 }
 
-/* Boundary notes (Locked-upstream tables, ### amendments) — quiet blocks between the out-strip
-   and the open panel/register. */
-.view-context-boundary-notes {
-  display: grid;
-  gap: var(--space-6);
-}
-
-.view-context-boundary-notes h3 {
-  margin-bottom: var(--space-2);
-  font-family: var(--font-mono);
-  font-size: var(--fs-4);
-  font-weight: var(--fw-medium);
-}
-
 /* Open questions (P-4): attention panel in the `in-flight` (awaiting someone) tone. */
 .view-context-open {
   border-top: 3px solid var(--in-flight-fill);
@@ -5918,8 +5904,8 @@ button.view-context-summary:hover {
   font-size: var(--fs-3);
 }
 
-/* Brief tables — the amendments' Document / Current wording / Required change grid and the
-   boundary's Locked / Source table — fit their block's width and wrap, instead of the global
+/* Aside tables — the amendments' Document / Current wording / Required change grid, the
+   boundary's Locked / Source table — fit their row's width and wrap, instead of the global
    max-content table that blew the block out to thousands of pixels and clipped the prose around
    it. Same hairline, muted register as the rows. */
 .view-context-aside-group {
@@ -5928,7 +5914,7 @@ button.view-context-summary:hover {
   min-width: 0;
 }
 
-:is(.view-context-aside-body, .view-context-boundary-notes) table {
+.view-context-aside-body table {
   display: table;
   width: 100%;
   min-width: 0;
@@ -5937,15 +5923,17 @@ button.view-context-summary:hover {
   line-height: var(--fs-3--lh);
 }
 
-:is(.view-context-aside-body, .view-context-boundary-notes) :is(th, td) {
+.view-context-aside-body :is(th, td) {
   padding: var(--space-2) var(--space-3) var(--space-2) 0;
   border-bottom: 1px solid var(--border);
   text-align: left;
   vertical-align: top;
-  overflow-wrap: anywhere;
+  /* break-word, not anywhere: it still wraps an over-long token, but does not shrink a cell's
+     min-content to one character, so auto layout gives a path column its natural width. */
+  overflow-wrap: break-word;
 }
 
-:is(.view-context-aside-body, .view-context-boundary-notes) th {
+.view-context-aside-body th {
   color: var(--muted-foreground);
   font-size: var(--fs-2);
   font-weight: var(--fw-medium);
@@ -5953,14 +5941,6 @@ button.view-context-summary:hover {
   text-transform: uppercase;
 }
 
-.view-context-aside-body table {
-  table-layout: fixed;
-}
-
-.view-context-aside-body :is(th, td):first-child {
-  width: 30%;
-}
-
-:is(.view-context-aside-body, .view-context-boundary-notes) td code {
+.view-context-aside-body td code {
   font-size: var(--fs-2);
 }
