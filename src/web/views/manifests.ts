@@ -12,6 +12,7 @@ import { verificationLayout } from './layout-verification.ts';
 import type { ViewKind } from './kinds.ts';
 import type { PromotedBlock, ViewInput, ViewManifest } from './manifest.ts';
 import { composeContextBrief } from './context-brief.ts';
+import { composeResearchBriefing } from './research-briefing.ts';
 
 /**
  * `select` and `consumes` run back to back, synchronously, within the same `composeView` call
@@ -158,6 +159,7 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
       { type: 'section', heading: /^common pitfalls/i },
       { type: 'section', heading: /^open questions/i },
     ],
+    briefing: composeResearchBriefing,
   },
   patterns: {
     kind: 'patterns',

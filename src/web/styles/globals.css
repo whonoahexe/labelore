@@ -5950,3 +5950,288 @@ button.view-context-summary:hover {
 .view-context-aside-body td code {
   font-size: var(--fs-2);
 }
+
+/* quick-260929-3x3:start */
+/* ==========================================================================
+   quick-260929-3x3 (sketches 008 A, 009 B+B, 010 B): the RESEARCH briefing — every .view-research-*
+   rule, plus the view-agnostic figure rules (.figure-frame, .lifted-diagram, .clean-tree). Additive
+   only, one contiguous block. Tokens throughout, no radius, no literal colour, --fw-medium /
+   --fw-semibold only; colour comes from the shared tones (--primary, --in-flight-fill,
+   --missing-fill) and the theme tokens (--border, --muted-foreground, --card, --primary-tint,
+   --state-hover) — never a destructive/warning token, and no colour-mix recipe of its own.
+   Ancestors of a .status-chip set no line-height, so every chip keeps the inherited body value
+   (F-05). Media overrides sit after their base rules (css-source-order).
+   ========================================================================== */
+
+/* Cover facts: date, confidence chip, valid-until — then the breakdown and the quiet Domain
+   caption wrap onto their own full-width rows inside ArtifactHeader's .artifact-meta-row. */
+.view-research-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-research-facts b {
+  color: var(--foreground);
+  font-weight: var(--fw-medium);
+}
+
+button.view-research-confidence {
+  cursor: pointer;
+}
+
+button.view-research-confidence:hover {
+  background: var(--state-hover);
+}
+
+.view-research-confidence-chevron {
+  width: var(--space-3);
+  height: var(--space-3);
+  transition: transform 0.15s ease;
+}
+
+.view-research-confidence[aria-expanded='true'] .view-research-confidence-chevron {
+  transform: rotate(180deg);
+}
+
+.view-research-breakdown {
+  display: grid;
+  flex-basis: 100%;
+  order: 2;
+  gap: var(--space-2);
+  max-width: 46rem;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.view-research-breakdown-row {
+  display: grid;
+  grid-template-columns: 10rem 7.5rem minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: baseline;
+  font-size: var(--fs-3);
+}
+
+.view-research-breakdown-area {
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+p.view-research-breakdown-note,
+.view-research-breakdown-row .view-research-breakdown-note {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.view-research-valid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: baseline;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.view-research-key {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-research-domain {
+  flex-basis: 100%;
+  order: 3;
+  max-width: 72ch;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.view-research-domain .view-research-key {
+  margin-right: var(--space-2);
+}
+
+/* Summary block: the lead and its muted follow-on paragraphs beside the recommendation. */
+.view-research-summary {
+  grid-template-columns: minmax(0, 1.5fr) minmax(16rem, 0.8fr);
+  gap: var(--space-fluid-9);
+  align-items: start;
+}
+
+.view-research-summary-text,
+.view-research-rest {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.view-research-lead {
+  max-width: 70ch;
+  margin: 0;
+  font-size: var(--fs-6);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
+}
+
+.view-research-rest {
+  max-width: 72ch;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+}
+
+.view-research-note {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 72ch;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.view-research-text,
+.view-research-list {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-research-list {
+  padding-left: var(--space-5);
+}
+
+.view-research-aside {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.view-research-recommendation {
+  padding: var(--space-3) var(--space-4);
+  border-left: 3px solid var(--primary);
+  background: var(--primary-tint);
+  font-size: var(--fs-4);
+  overflow-wrap: anywhere;
+}
+
+.view-research-recommendation .eyebrow {
+  display: block;
+  margin-bottom: var(--space-1);
+}
+
+.view-research-recommendation p {
+  margin: 0;
+}
+
+@media (max-width: 62rem) {
+  .view-research-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .view-research-breakdown-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .view-research-breakdown-row .view-research-breakdown-note {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Evidence markers: [VERIFIED] / [CITED] / [ASSUMED] as small V / C / A superscripts. */
+.view-research-evidence {
+  display: inline-block;
+  margin-inline-start: var(--space-0-5);
+  padding: 0 var(--space-0-5);
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  line-height: var(--lh-tight);
+  vertical-align: super;
+  cursor: help;
+}
+
+.view-research-evidence[data-evidence='assumed'] {
+  border-color: var(--in-flight-border);
+  color: var(--in-flight-fill);
+}
+
+/* Tables inside the briefing (block tables, back matter, seam output). */
+.view-research-table {
+  display: table;
+  width: 100%;
+  min-width: 0;
+  border-collapse: collapse;
+  font-size: var(--fs-3);
+  line-height: var(--fs-3--lh);
+}
+
+.view-research-table :is(th, td) {
+  padding: var(--space-2) var(--space-3) var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: break-word;
+}
+
+.view-research-table th {
+  color: var(--muted-foreground);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+}
+
+/* "In the source only": every section the view does not render, as links into Source mode. */
+.view-research-source-only {
+  grid-template-columns: 12rem minmax(0, 1fr);
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+  border-top: 1px dashed var(--border);
+  border-bottom: 1px dashed var(--border);
+}
+
+.view-research-source-only ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5) var(--space-5);
+  margin: 0;
+  padding: 0;
+  font-size: var(--fs-3);
+  list-style: none;
+}
+
+.view-research-source-only button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  text-decoration: underline dotted;
+  text-underline-offset: var(--space-0-5);
+}
+
+.view-research-source-only button:hover {
+  color: var(--foreground);
+}
+
+@media (max-width: 62rem) {
+  .view-research-source-only {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+}
+/* quick-260929-3x3:end */

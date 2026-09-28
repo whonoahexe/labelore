@@ -9,6 +9,8 @@ import type { DocumentLayoutSpec } from './layout.ts';
 // Type-only import — mirrors the DocumentLayoutSpec pattern above so `brief` below introduces no
 // runtime cycle with context-brief.ts (quick-260923-lju, sketch-006 D1).
 import type { ComposedContextBrief } from './context-brief.ts';
+// Type-only import — same reason as `brief` above (quick-260929-3x3, sketch-008 A).
+import type { ComposedResearchBriefing } from './research-briefing.ts';
 
 /** Declared now so 05-05 can add components without widening this union a second time — only
  * `discussion-questions` has a real component in this plan (see `blocks.tsx`). */
@@ -53,6 +55,11 @@ export interface ViewManifest {
    * currently only `context`. Returns `null` when the input can't compose a brief, and the page
    * falls back to the promoted-block view. */
   brief?: (input: ViewInput) => ComposedContextBrief | null;
+  /** quick-260929-3x3 (sketch-008 A): the RESEARCH briefing layout a manifest opts into instead of
+   * `promote` — currently only `research`. Returns `null` when the input can't compose a briefing
+   * (an older server's payload has no `structured.briefing`), and the page falls back to the
+   * promoted-block view, which the manifest keeps as `promote`. */
+  briefing?: (input: ViewInput) => ComposedResearchBriefing | null;
 }
 
 export interface ViewInput {
@@ -69,6 +76,12 @@ export interface ViewInput {
    * generically by path — `null`/absent when the artifact isn't phase-scoped or the phase carries
    * none. Feeds the CONTEXT brief intro's "Covers …" note. */
   phaseRequirementIds?: string[] | null;
+  /** quick-260929-3x3: the rendered document's own headings (`{id, text, depth}`), passed
+   * generically — lets a composer resolve a source-only entry to the `###` heading it names. */
+  headings?: { id: string; text: string; depth: number }[];
+  /** quick-260929-3x3: the other artifacts in the same directory, matched generically by path in
+   * artifact-page.tsx (no per-kind branch) — a RESEARCH page links its sibling CONTEXT.md. */
+  siblingArtifacts?: { kind: string; path: string; url: string }[];
 }
 
 export type ComposedBlock = { id: string; label: string } & (
