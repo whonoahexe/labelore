@@ -3,18 +3,18 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-09-24T20:58:45.008Z"
+last_updated: "2026-09-28T11:12:25.481Z"
 last_activity: 2026-09-25
 last_activity_desc: Completed quick task 260925-3ug (sketch-007 C ideas block)
-state_head: e48bb52335325bbaa22bdcbe9271a57dd13fdaea
+state_head: a211c1487c37fb5f830056a19446f82f71ac77b7
+milestone_name: Legible Documents
+current_phase: 05
 progress:
   total_phases: 1
   completed_phases: 1
   total_plans: 6
   completed_plans: 6
   percent: 100
-milestone_name: Legible Documents
-current_phase: 05
 ---
 
 # Project State
@@ -122,6 +122,7 @@ None.
 | 5 | CONTEXT brief: In/Out scope as one two-column block | 2026-09-24 | 04e9769 | — |
 | 6 | CONTEXT scope block: top rules meet at the divider | 2026-09-24 | 513822e | — |
 | 7 | CONTEXT In-list: capitalise items | 2026-09-24 | e48bb52 | — |
+| 10 | Loosen spacing in Specific ideas and Deferred on the context page | 2026-09-28 | a211c14 | — |
 
 ## Deferred Items
 
