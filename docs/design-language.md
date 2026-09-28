@@ -118,6 +118,28 @@ is always to add the missing name to this document, never to edit the reference 
 | `document-endnote-title` | An endnote subsection's small-caps heading | globals.css — discussion-log review fixes (quick-260923-jxp) |
 | `artifact-path-copy` | ArtifactHeader's copy-path icon button, replacing the printed file-path caption on every artifact page | globals.css — discussion-log review fixes (quick-260923-jxp) |
 | `artifact-meta-row` | ArtifactHeader's optional `meta` prop row (plain variant only) — holds the caller's meta content, then the copy-path button, then `children` | globals.css — CONTEXT brief (quick-260923-lju) |
+| `figure-frame` | The titled figure wrapper (`<figure>`): bar, scrolling body, caption — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `figure-frame-bar` | The frame's top bar — title left, Fit / Actual size and Expand chips right — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `figure-frame-title` | The frame bar's uppercase mono title — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `figure-frame-body` | The frame's scrolling body (scrolls at actual size; `document-overflow-boundary` alongside) — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `figure-frame-caption` | The dashed-rule caption under the body — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `figure-frame-dialog` | The Expand dialog popup — the same figure at actual size (Base UI Dialog, mirrors `sidebar-drawer`) — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `figure-frame-plain` | A figure the lift rejects (or a non-diagram block): plain text with its glyphs dimmed — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `lifted-diagram` | The lifted diagram host: `position: relative`, holds the cards behind the text — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `lifted-diagram-fit` | The wrapper the Fit to width scale is measured against — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `lifted-diagram-card` | One decorative card behind the text (`data-kind` box / node), positioned from the measured character width and row height — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `lifted-diagram-text` | The `<pre>` of real ASCII text, above the cards — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `lifted-diagram-row` | One fixed-height line of the diagram — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `lifted-diagram-node` | A node/box title — semibold — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `lifted-diagram-sub` | A second line inside a node — muted — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `lifted-diagram-note` | Free text beside boxes — muted italic annotation — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `clean-tree` | The clean-list directory tree (`<ul>`) — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `clean-tree-tools` | The tree's tools row — Changed only chip, file/folder counts — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `clean-tree-count` | The `F files · D folders` count — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `clean-tree-row` | One tree row: name column, notes column (`data-badge` NEW / EXTEND / EXISTING) — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `clean-tree-name` | The indented name cell with its Folder/File icon — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `clean-tree-folder` | A collapsible folder's toggle button (`aria-expanded`) — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `clean-tree-note` | The notes cell — badge chip plus the `# comment` — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
 
 ## Tones
 
@@ -259,6 +281,18 @@ element is actually written, regardless of class name:
   default for an idea whose outcome the brief could not recognise — and an empty group is omitted
   rather than rendered empty. Each header is a collapsible button in the same uppercase
   label-plus-count style as the In/Out scope labels, and every group starts expanded.
+- **ASCII figures are lifted, not redrawn.** (quick-260929-3x3, sketch 009) A box-drawing diagram
+  keeps its source text as real, selectable text; the cards behind it are decoration, positioned
+  from the measured character width and row height (`.lifted-diagram-*`). A directory tree becomes
+  a clean list (`.clean-tree-*`). Their pure models live in `src/rendering/` (`ascii-lift.ts`,
+  `ascii-tree.ts`) and their components in `src/web/components/` with no research-specific import,
+  so the `lifted-figures-everywhere` todo can reuse them unchanged for every document. Detection is
+  conservative (a real `┌…┐└…┘` rectangle or a connector flow; three or more `├──`/`└──` lines) and
+  Source mode is always the way back to the raw text.
+- **The 10% accent reservation extends to the figures.** (quick-260929-3x3) The lifted diagram's
+  arrows and node-card tint, and the clean tree's folder names and icons, take `--primary` (the
+  NEW chip uses the shared `active` tone). Box cards, connector glyphs, notes and file names stay on
+  `--border`, `--background` and the muted foreground.
 
 ## Surface-scoped registered names
 
