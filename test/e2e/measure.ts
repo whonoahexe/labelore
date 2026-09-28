@@ -237,6 +237,16 @@ const CORNER_SELECTORS = [
   '.view-context-decision',
   '.view-context-idea',
   '.artifact-meta-row',
+  // quick-260929-3x3: strengthens F-06 over the RESEARCH briefing and the shared figure chrome.
+  '.figure-frame',
+  '.lifted-diagram-card',
+  '.clean-tree-row',
+  '.view-research-recommendation',
+  '.view-research-lane',
+  '.view-research-pitfall',
+  '.view-research-alt',
+  '.view-research-back-rows',
+  '.view-research-breakdown',
 ];
 
 /** F-06: squared corners — every element matching one of the shared "boxy chrome" selectors,
