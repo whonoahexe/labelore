@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-09-28T16:16:08.022Z"
+last_updated: "2026-09-28T16:20:31.908Z"
 last_activity: 2026-09-25
 last_activity_desc: Completed quick task 260925-3ug (sketch-007 C ideas block)
-state_head: "0bff11ad37816b7ea98231c3b1da4502fe56a47a"
+state_head: 8d3822bc720f0ec08d3e4e9db0e100192a2d4df6
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -125,6 +125,7 @@ None.
 | 10 | Loosen spacing in Specific ideas and Deferred on the context page | 2026-09-28 | a211c14 | — |
 | 11 | Keep the scope check/text grid off In's prose fallback on CONTEXT briefs | 2026-09-28 | 81a1859 | — |
 | 12 | Start Deferred fate groups collapsed on CONTEXT briefs | 2026-09-28 | 0bff11a | — |
+| 13 | Fit the CONTEXT amendments table to its row (wrapping, hairline, muted header) | 2026-09-28 | 8d3822b | — |
 
 ## Deferred Items
 
