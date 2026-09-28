@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-09-28T16:37:40.912Z"
+last_updated: "2026-09-28T16:40:31.954Z"
 last_activity: 2026-09-25
 last_activity_desc: Completed quick task 260925-3ug (sketch-007 C ideas block)
-state_head: 1abfea9394c23089ded707c77d9c0a8d93e693b0
+state_head: d6a1442496a3af911e43480ee8a780accdf34ab7
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -129,6 +129,7 @@ None.
 | 14 | Show a settled open question (<resolved_open_question>) as a CONTEXT back-matter row, not a raw extra | 2026-09-28 | a68e58e | — |
 | 15 | Stop rendering the settled open question on CONTEXT briefs (recognised, hidden in View) | 2026-09-28 | 9703918 | — |
 | 16 | Hide planner-warning <blocking_amendments> sections on CONTEXT briefs; keep real requirement amendments | 2026-09-28 | 1abfea9 | — |
+| 17 | Fix Claude-decides notes rendering as word-fragment columns on CONTEXT decisions | 2026-09-28 | d6a1442 | — |
 
 ## Deferred Items
 
