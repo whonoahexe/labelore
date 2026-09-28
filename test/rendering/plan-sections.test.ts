@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
+import { SP_PLANNING } from '../helpers/studio-portal.ts';
 import type { Artifact } from '../../src/domain/model.ts';
 import { buildReferenceRegistry, type ReferenceRegistry } from '../../src/presentation/references.ts';
 import { phaseKeyOf, buildPlanUrl } from '../../src/presentation/routes.ts';
@@ -9,7 +10,7 @@ import type { PhaseDto, ProjectPresentation } from '../../src/server/project-pre
 
 const CORPUS_PLAN_PATH =
   process.env.LABELORE_CORPUS ??
-  '/home/cinedise/studio-portal/.planning/phases/01-portal-owned-identity-sessions/01-01-PLAN.md';
+  `${SP_PLANNING}/phases/01-portal-owned-identity-sessions/01-01-PLAN.md`;
 
 function artifact(
   body: string,

@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
+import { SP_PLANNING } from './helpers/studio-portal.ts';
 import {
   extractDiscussionLog,
   extractReviewWarnings,
@@ -737,7 +738,7 @@ describe('extractDiscussionLog — meta (date, areasDiscussed, offeredCount, dec
 
 describe('extractDiscussionLog — studio-portal repro (JXP-05)', () => {
   const reproPath =
-    '/home/cinedise/studio-portal/.planning/phases/01-portal-owned-identity-sessions/01-DISCUSSION-LOG.md';
+    `${SP_PLANNING}/phases/01-portal-owned-identity-sessions/01-DISCUSSION-LOG.md`;
 
   it.runIf(existsSync(reproPath))(
     'the Cutover & bootstrap admin CLI question resolves chosen, chosenIndex 1, qualifier "renamed", userChoice containing "backstage"',

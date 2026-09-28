@@ -7,11 +7,12 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
+import { SP_PLANNING } from '../helpers/studio-portal.ts';
 import { extractContextBrief, topSections, type ContextBrief } from '../../src/planning-repo/handlers/context-brief.ts';
 import { composeContextBrief } from '../../src/web/views/context-brief.ts';
 
 const REPO_ROOT = new URL('../../', import.meta.url);
-const SP_ROOT = '/home/cinedise/studio-portal/.planning';
+const SP_ROOT = SP_PLANNING;
 
 async function repoBody(relativePath: string): Promise<string> {
   return await readFile(new URL(relativePath, REPO_ROOT), 'utf8');

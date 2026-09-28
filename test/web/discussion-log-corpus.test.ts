@@ -6,6 +6,7 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
+import { SP_PLANNING } from '../helpers/studio-portal.ts';
 import {
   composeDocumentLayout,
   type ComposedDocumentLayout,
@@ -15,7 +16,7 @@ import { extractDiscussionLog } from '../../src/planning-repo/handlers/section-p
 import type { ViewInput, ViewManifest } from '../../src/web/views/manifest.ts';
 
 const REPO_ROOT = new URL('../../', import.meta.url);
-const SP_ROOT = '/home/cinedise/studio-portal/.planning';
+const SP_ROOT = SP_PLANNING;
 
 async function repoBody(relativePath: string): Promise<string> {
   return await readFile(new URL(relativePath, REPO_ROOT), 'utf8');
