@@ -229,7 +229,9 @@ element is actually written, regardless of class name:
   `<resolved_open_question>` section (or a heading reading "Resolved open question…" / "…open
   question is already answered…") is a note to the researcher, not to the reader: it is recognised
   so it never falls through as a raw extra, and View mode then omits it entirely (Source mode still
-  shows it).
+  shows it). The same holds for a `<blocking_amendments>` section whose heading is not
+  "Requirement amendments…" (a "⚠️ … do not inherit it" planner warning that reuses the tag): it
+  is recognised and hidden, so only real requirement rewording gets a row.
 - **The 10% accent reservation extends to the CONTEXT brief's In-this-phase card.** (quick-260923-lju)
   `.immediate-work`'s existing top rule is reused verbatim for the brief's accent "In this phase"
   card, plus the ✓ marks in its list and the "Claude decides" label under a tagged decision. No

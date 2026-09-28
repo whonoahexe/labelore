@@ -243,6 +243,10 @@ function partitionGroups(
 // Back-matter asides — amendments / references / code (quick-260925-3ob)
 // ---------------------------------------------------------------------------
 
+/** The heading an amendments section needs to be shown: real requirement rewording, not a
+ * planner-only "do not inherit this" warning that shares the `<blocking_amendments>` tag. */
+const REQUIREMENT_AMENDMENTS_RE = /^requirement amendments?\b/i;
+
 interface RawAsideSection {
   heading: string;
   groups: ComposedAsideGroup[];
@@ -724,9 +728,14 @@ export function composeContextBrief(input: ViewInput): ComposedContextBrief | nu
   // then a single merged canonical-references row, then a single merged code-insights row. A
   // settled open question (`brief.resolved`) is deliberately not shown: it is a note to the
   // researcher, not something the reader acts on. Its heading is still recognised, so it never
-  // falls through to `extras`; Source mode keeps it readable.
+  // falls through to `extras`; Source mode keeps it readable. The same goes for a
+  // `<blocking_amendments>` section that is not actually requirement amendments ("⚠️ A recorded
+  // Phase 2 invariant is wrong…", "⚠️ One research recommendation is superseded…"): those are
+  // planner warnings, so only a section headed "Requirement amendments…" earns a row.
   const briefRecord = brief as unknown as Record<string, unknown>;
-  const amendmentsSections = tolerantAsideSections(briefRecord.amendments);
+  const amendmentsSections = tolerantAsideSections(briefRecord.amendments).filter((section) =>
+    REQUIREMENT_AMENDMENTS_RE.test(stripEmoji(section.heading)),
+  );
   const amendmentsAsides: ComposedAside[] = amendmentsSections.map((section, index) => ({
     id: index === 0 ? 'context-amendments' : `context-amendments-${index + 1}`,
     kind: 'amendments',

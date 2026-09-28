@@ -184,9 +184,12 @@ test.describe('CONTEXT brief — studio-portal fixtures (4198)', () => {
     // Updated 2026-09-25 (found stale while running quick-260925-3ug Task 3): this file's one
     // `##` section stopped being an unrecognised "extra" in quick-260925-3ob, which taught the
     // brief to claim canonical references and existing code insights as back-matter aside rows.
-    // SP 04 now yields 0 extras and three asides — amendments, references, code — one each.
+    // SP 04 now yields 0 extras and two asides — references, code. Its `<blocking_amendments>`
+    // section ("One research recommendation is superseded") is a planner warning, not requirement
+    // amendments, so it is recognised and hidden.
     await expect(page.locator('.view-context-extra')).toHaveCount(0);
-    await expect(page.locator('.view-context-aside')).toHaveCount(3);
+    await expect(page.locator('.view-context-aside')).toHaveCount(2);
+    await expect(page.locator('#context-amendments')).toHaveCount(0);
   });
 
   test('SP quick 2pr: .view-context-note count is 10', async ({ page }) => {
