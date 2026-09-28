@@ -231,7 +231,10 @@ element is actually written, regardless of class name:
   so it never falls through as a raw extra, and View mode then omits it entirely (Source mode still
   shows it). The same holds for a `<blocking_amendments>` section whose heading is not
   "Requirement amendments…" (a "⚠️ … do not inherit it" planner warning that reuses the tag): it
-  is recognised and hidden, so only real requirement rewording gets a row.
+  is recognised and hidden, so only real requirement rewording gets a row. Boundary notes (a
+  table the domain section introduces with a "…:" lead-in, such as "Locked upstream — do not
+  re-open…") are also rows, first in the list, labelled with the lead-in's claim before its dash
+  ("Locked upstream") — not an open block between the scope and the register.
 - **The 10% accent reservation extends to the CONTEXT brief's In-this-phase card.** (quick-260923-lju)
   `.immediate-work`'s existing top rule is reused verbatim for the brief's accent "In this phase"
   card, plus the ✓ marks in its list and the "Claude decides" label under a tagged decision. No

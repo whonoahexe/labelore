@@ -164,11 +164,12 @@ export interface ComposedAsideGroup {
   blocks: Block[];
 }
 
-/** One quiet, collapsed back-matter row closing the brief: requirement amendments, canonical
- * references, or existing code insights (quick-260925-3ob, 3OB-01/02/03). */
+/** One quiet, collapsed back-matter row closing the brief: a boundary note (e.g. the "Locked
+ * upstream" table), requirement amendments, canonical references, or existing code insights
+ * (quick-260925-3ob, 3OB-01/02/03). */
 export interface ComposedAside {
   id: string;
-  kind: 'amendments' | 'references' | 'code';
+  kind: 'notes' | 'amendments' | 'references' | 'code';
   label: string;
   count: number;
   hint: string | null;
@@ -191,8 +192,8 @@ export interface ComposedContextBrief {
   /** Unrecognised `##` document-section groups, rendered before the register (in document order),
    * plus the leading (no-heading) group when the brief's preamble held extra prose. */
   extras: DocumentSectionGroup[];
-  /** Quiet, collapsed back-matter rows closing the brief, in order: amendments (one row per
-   * section), then canonical references (merged), then existing code insights (merged) —
+  /** Quiet, collapsed back-matter rows closing the brief, in order: boundary notes and
+   * amendments (one row per note/section each), then canonical references (merged), then existing code insights (merged) —
    * quick-260925-3ob. Canonical-references/existing-code-insights sections used to be held here
    * for a closed "More in this document" disclosure; that disclosure was removed in 1d0baf3 and
    * those sections now surface through `asides` instead. */
@@ -754,7 +755,25 @@ export function composeContextBrief(input: ViewInput): ComposedContextBrief | nu
   const referencesAside = mergedAside(briefRecord.references, 'context-references', 'references', 'Canonical references');
   const codeAside = mergedAside(briefRecord.codeInsights, 'context-code', 'code', 'Existing code insights');
 
+  // Boundary notes (the domain's "Locked upstream" table, an extra `###` beside the boundary) are
+  // reference material, not something to read first, so they close the brief as collapsed rows
+  // too. The label keeps the claim before a dash — "Locked upstream — do not re-open, do not
+  // re-research" reads "Locked upstream" — and drops any leading emoji.
+  const noteAsides: ComposedAside[] = boundaryNotes.map((note) => {
+    const groups: ComposedAsideGroup[] = [{ title: null, blocks: note.blocks }];
+    const title = stripEmoji(note.title ?? '').split(/\s[—–]\s/)[0].trim();
+    return {
+      id: note.id,
+      kind: 'notes',
+      label: title || 'Boundary notes',
+      count: countAsideGroups(groups),
+      hint: null,
+      groups,
+    };
+  });
+
   const asides: ComposedAside[] = [
+    ...noteAsides,
     ...amendmentsAsides,
     ...(referencesAside ? [referencesAside] : []),
     ...(codeAside ? [codeAside] : []),

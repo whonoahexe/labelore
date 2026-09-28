@@ -667,17 +667,6 @@ export function ContextBriefView({
         </section>
       ) : null}
 
-      {brief.boundaryNotes.length > 0 ? (
-        <section className="view-block view-context-boundary-notes">
-          {brief.boundaryNotes.map((note) => (
-            <div key={note.id}>
-              {note.title ? <h3>{note.title}</h3> : null}
-              <BlockList blocks={note.blocks} refTargets={refTargets} onJump={interaction.jumpTo} />
-            </div>
-          ))}
-        </section>
-      ) : null}
-
       {brief.openPanel ? (
         <section id="context-open" className="view-block attention-panel view-context-open">
           <p className="eyebrow">Open for the researcher</p>

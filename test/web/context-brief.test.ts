@@ -304,6 +304,32 @@ A statement about scope.
 </blocking_amendments>
 `;
 
+describe('asides — boundary notes', () => {
+  it('closes the brief with a collapsed row per note, labelled by the lead-in before its dash', () => {
+    const doc = `# Phase 1: Test - Context
+
+<domain>
+## Phase Boundary
+
+A statement about scope.
+
+**Locked upstream — do not re-open, do not re-research:**
+
+| Locked | Source |
+|---|---|
+| ZIP, not TAR | ROADMAP.md |
+| Flat cap | PROJECT.md |
+
+</domain>
+`;
+    const brief = extractContextBrief(doc);
+    const composed = composeContextBrief(baseInput(brief, { groups: groupsFor(['Phase Boundary']) }));
+    expect(composed?.asides.map((a) => [a.id, a.kind, a.label, a.count])).toEqual([
+      ['boundary-note-1', 'notes', 'Locked upstream', 2],
+    ]);
+  });
+});
+
 describe('asides — settled open question', () => {
   it('renders nowhere: no aside row and no extra', () => {
     const brief = extractContextBrief(RESOLVED_DOC);
