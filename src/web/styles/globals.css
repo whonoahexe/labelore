@@ -120,6 +120,8 @@
   /* The accent, drained of commitment — backs .trace-bar-in-flight (as --ring, undiluted; see the
      .trace-bar-in-flight rule) and the in-flight chip tone. */
   --in-flight-fill: color-mix(in oklch, var(--primary) 38%, var(--muted-foreground));
+  /* The in-flight tone softened toward the border — the outline of in-flight chips and stat pills. */
+  --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border));
   /* A subdued brick that reads as a gap rather than as damage — backs the missing chip tone (A4:
      a phase with no directory on disk is not the same as active work). .trace-bar-missing uses
      --destructive-border directly instead (see that rule), for the same de-washing reason as
@@ -4509,7 +4511,7 @@ pre {
    on disk are no longer the same grey chip — each gets its own tone, no background override so
    both inherit .status-chip's shared muted wash. */
 .status-chip[data-tone='in-flight'] {
-  border-color: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border));
+  border-color: var(--in-flight-border);
   color: var(--in-flight-fill);
 }
 
@@ -5264,7 +5266,7 @@ pre {
 /* Open questions wait on the researcher: the site's `in-flight` (awaiting someone) tone, as on
    .status-chip[data-tone='in-flight']. */
 .view-context-stat-open {
-  border-color: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border));
+  border-color: var(--in-flight-border);
 }
 
 .view-context-stat-open strong {
