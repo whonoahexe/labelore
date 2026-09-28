@@ -11,6 +11,15 @@
    only the arrangement differs, so the comparison is about layout, not about one variant having
    better parts. 009 (figures) and 010 (audit) refine two of these parts afterwards. */
 *, *::before, *::after { box-sizing: border-box; }
+/* System tones only (docs/design-language.md ## Tones). --in-flight-border mirrors globals.css:124;
+   the two missing-* helpers are sketch shorthands built from --missing-fill, no new hue. */
+:root { --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border)); --missing-border: color-mix(in oklch, var(--missing-fill) 50%, var(--border)); --missing-tint: color-mix(in oklch, var(--muted) 55%, transparent); }
+.chip[data-tone='active'], .chip[data-tone='complete'] { color: var(--primary); border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); background: var(--primary-tint); }
+.chip[data-tone='quiet'] { color: var(--muted-foreground); }
+.chip[data-tone='in-flight'] { color: var(--in-flight-fill); border-color: var(--in-flight-border); }
+.chip[data-tone='missing'] { color: var(--missing-fill); border-color: var(--missing-border); }
+.synthetic { display: inline-flex; align-items: center; padding: 0 var(--space-1); border: 1px dashed var(--border); font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: var(--ls-wider); color: var(--muted-foreground); background: none; vertical-align: middle; }
+
 html, body { margin: 0; }
 body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-5); line-height: var(--lh-normal); padding-top: 3rem; }
 h1, h2, h3, h4, p, ul, ol, figure { margin: 0; }
@@ -44,7 +53,7 @@ a { color: inherit; }
 .mono-note { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; }
 .panel { border: 1px solid var(--border); background: var(--card-veil); padding: var(--space-fluid-3); min-width: 0; }
 .panel.accent { border-top: 3px solid var(--primary); box-shadow: 0.7rem 0.7rem 0 color-mix(in oklch, var(--muted) 65%, transparent); }
-.panel.amber { border-top: 3px solid oklch(0.75 0.15 75); }
+.panel.in-flight { border-top: 3px solid var(--in-flight-fill); }
 .section-heading { display: flex; gap: var(--space-4); align-items: flex-end; justify-content: space-between; min-width: 0; padding-bottom: var(--space-3); margin-bottom: var(--space-5); border-bottom: 1px solid var(--border); scroll-margin-top: 4.5rem; }
 .section-heading h2 { font-family: var(--font-mono); font-size: var(--fs-fluid-3); font-weight: var(--fw-medium); letter-spacing: var(--ls-tight); }
 .section-heading .num { color: var(--muted-foreground); margin-right: var(--space-3); }
@@ -52,16 +61,11 @@ a { color: inherit; }
 .sub { margin-top: var(--space-8); }
 .sub:first-child { margin-top: 0; }
 .chip { display: inline-flex; align-items: center; gap: var(--space-1); padding: 0.1rem var(--space-1-5); border: 1px solid var(--border); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; color: var(--muted-foreground); background: none; line-height: 1.5; }
-.chip[data-tone='accent'] { color: var(--primary); border-color: color-mix(in oklch, var(--primary) 55%, var(--border)); background: var(--primary-tint); }
-.chip[data-tone='amber'] { color: oklch(0.74 0.15 75); border-color: color-mix(in oklch, oklch(0.75 0.15 75) 50%, var(--border)); }
-.chip[data-tone='red'] { color: var(--destructive); border-color: var(--destructive-border); background: var(--destructive-tint); }
-.chip[data-tone='ok'] { color: var(--foreground); }
-.chip[data-tone='solid-red'] { color: white; background: var(--destructive); border-color: var(--destructive); }
 button.chip { cursor: pointer; transition: all .15s ease; }
 button.chip:hover { background: var(--state-hover); }
 button.chip[aria-pressed='true'] { color: var(--foreground); border-color: var(--foreground); }
 .ev { display: inline-block; margin-left: 0.15em; padding: 0 0.25em; font-family: var(--font-mono); font-size: 0.62em; line-height: 1.4; vertical-align: 0.35em; border: 1px solid var(--border); color: var(--muted-foreground); cursor: help; }
-.ev[data-k='A'] { color: oklch(0.74 0.15 75); border-color: color-mix(in oklch, oklch(0.75 0.15 75) 45%, var(--border)); }
+.ev[data-k='A'] { color: var(--in-flight-fill); border-color: var(--in-flight-border); }
 body.hide-ev .ev { display: none; }
 .link-btn { padding: 0; border: 0; background: none; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; }
 .link-btn:hover { color: var(--primary); }
@@ -82,8 +86,8 @@ body.hide-ev .ev { display: none; }
 .meter { display: inline-flex; gap: 2px; vertical-align: middle; }
 .meter i { width: 0.55rem; height: 0.55rem; border: 1px solid var(--border); }
 .meter i.on { background: var(--primary); border-color: var(--primary); }
-.meter[data-l='mid'] i.on { background: oklch(0.75 0.15 75); border-color: oklch(0.75 0.15 75); }
-.meter[data-l='low'] i.on { background: var(--destructive); border-color: var(--destructive); }
+.meter[data-l='mid'] i.on { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.meter[data-l='low'] i.on { background: var(--missing-fill); border-color: var(--missing-fill); }
 
 /* summary */
 .summary-lead { font-family: var(--font-sans); font-size: var(--fs-6); line-height: var(--lh-relaxed); max-width: 70ch; }
@@ -109,7 +113,7 @@ body.hide-ev .ev { display: none; }
 .alt .other { font-size: var(--fs-4); color: var(--muted-foreground); display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: baseline; }
 .alt .other.struck > span:first-child { text-decoration: line-through; text-decoration-color: color-mix(in oklch, var(--muted-foreground) 70%, transparent); }
 .alt .trade { grid-column: 1 / -1; font-size: var(--fs-3); color: var(--muted-foreground); }
-.alt[data-v='harmful'] { border-color: var(--destructive-border); }
+.alt[data-v='harmful'] { border-color: var(--missing-border); }
 @container (max-width: 640px) { .alt { grid-template-columns: 1fr; } }
 
 /* audit strip */
@@ -117,29 +121,28 @@ body.hide-ev .ev { display: none; }
 .audit-bar { display: flex; height: 0.6rem; border: 1px solid var(--border); }
 .audit-bar span { display: block; height: 100%; }
 .audit-bar .ok { background: color-mix(in oklch, var(--foreground) 35%, transparent); }
-.audit-bar .sus { background: oklch(0.75 0.15 75); }
-.audit-bar .slop { background: var(--destructive); }
+.audit-bar .sus { background: var(--in-flight-fill); }
+.audit-bar .slop { background: var(--missing-fill); }
 .audit-counts { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
 .audit-counts b { font-size: var(--fs-5); font-weight: var(--fw-medium); color: var(--foreground); margin-right: var(--space-1); }
-.audit-counts .sus b { color: oklch(0.74 0.15 75); }
-.audit-counts .slop b { color: var(--destructive); }
+.audit-counts .sus b { color: var(--in-flight-fill); }
+.audit-counts .slop b { color: var(--missing-fill); }
 .removed { display: grid; gap: var(--space-2); }
-.removed-card { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-1) var(--space-3); padding: var(--space-3); border: 1px solid var(--destructive-border); background: var(--destructive-tint); }
-.removed-card .n { font-family: var(--font-mono); font-size: var(--fs-4); text-decoration: line-through; text-decoration-thickness: 2px; text-decoration-color: var(--destructive); }
+.removed-card { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-1) var(--space-3); padding: var(--space-3); border: 1px solid var(--missing-border); background: var(--missing-tint); }
+.removed-card .n { font-family: var(--font-mono); font-size: var(--fs-4); text-decoration: line-through; text-decoration-thickness: 2px; text-decoration-color: var(--missing-fill); }
 .removed-card .r { grid-column: 2; color: var(--muted-foreground); font-size: var(--fs-3); }
 .removed-card .rb { grid-column: 2; font-size: var(--fs-3); }
 .sus-row { display: flex; flex-wrap: wrap; gap: var(--space-1-5); align-items: center; }
-.sus-name { font-family: var(--font-mono); font-size: var(--fs-2); padding: 0.1rem var(--space-1-5); border: 1px solid color-mix(in oklch, oklch(0.75 0.15 75) 45%, var(--border)); color: var(--foreground); }
+.sus-name { font-family: var(--font-mono); font-size: var(--fs-2); padding: 0.1rem var(--space-1-5); border: 1px solid var(--in-flight-border); color: var(--foreground); }
 .none-line { font-size: var(--fs-3); color: var(--muted-foreground); }
-.synthetic { display: inline-block; margin-left: var(--space-2); padding: 0 var(--space-1); font-family: var(--font-mono); font-size: var(--fs-1); color: #fff; background: #7c3aed; letter-spacing: var(--ls-wider); }
 .data-table-wrap { overflow-x: auto; }
 .data-table { width: 100%; border-collapse: collapse; font-size: var(--fs-3); }
 .data-table th { text-align: left; padding: 0 var(--space-3) var(--space-2) 0; border-bottom: 1px solid var(--border); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); white-space: nowrap; }
 .data-table td { padding: var(--space-2) var(--space-3) var(--space-2) 0; border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); vertical-align: top; }
 .data-table td.mono { font-family: var(--font-mono); white-space: nowrap; }
-.data-table tr[data-v='SUS'] td:first-child { box-shadow: inset 2px 0 0 oklch(0.75 0.15 75); padding-left: var(--space-2); }
+.data-table tr[data-v='SUS'] td:first-child { box-shadow: inset 2px 0 0 var(--in-flight-fill); padding-left: var(--space-2); }
 .data-table tr[data-v='SLOP'] td { text-decoration: line-through; color: var(--muted-foreground); }
-.data-table tr[data-v='SLOP'] td:first-child { box-shadow: inset 2px 0 0 var(--destructive); padding-left: var(--space-2); }
+.data-table tr[data-v='SLOP'] td:first-child { box-shadow: inset 2px 0 0 var(--missing-fill); padding-left: var(--space-2); }
 .data-table tr:hover td { background: var(--state-hover); }
 
 /* figures */
@@ -177,7 +180,7 @@ body.hide-ev .ev { display: none; }
 .pat-list li { display: grid; grid-template-columns: 2.5rem minmax(0, 1fr); gap: var(--space-2); padding: var(--space-3) 0; border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); counter-increment: pat; }
 .pat-list li:last-child { border-bottom: 0; }
 .pat-list li::before { content: counter(pat, decimal-leading-zero); font-family: var(--font-mono); font-size: var(--fs-2); color: var(--primary); padding-top: 0.2rem; }
-.pat-list.anti li::before { content: '✕'; color: var(--destructive); }
+.pat-list.anti li::before { content: '✕'; color: var(--missing-fill); }
 .pat-list .t { font-weight: var(--fw-medium); font-size: var(--fs-4); }
 .pat-list .d { display: block; margin-top: var(--space-1); color: var(--muted-foreground); font-size: var(--fs-3); }
 .pat-list .w { display: block; margin-top: var(--space-1); font-size: var(--fs-3); }
@@ -188,7 +191,7 @@ body.hide-ev .ev { display: none; }
 .hr { display: grid; grid-template-columns: 11rem minmax(0, 1fr) 1.5rem minmax(0, 1fr); gap: var(--space-1) var(--space-3); align-items: baseline; padding: var(--space-3) 0; border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); }
 .hr:last-child { border-bottom: 0; }
 .hr .p { font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
-.hr .dont { font-size: var(--fs-4); color: var(--muted-foreground); text-decoration: line-through; text-decoration-color: color-mix(in oklch, var(--destructive) 70%, transparent); }
+.hr .dont { font-size: var(--fs-4); color: var(--muted-foreground); text-decoration: line-through; text-decoration-color: color-mix(in oklch, var(--missing-fill) 70%, transparent); }
 .hr .arr { color: var(--primary); font-family: var(--font-mono); }
 .hr .use { font-size: var(--fs-4); font-weight: var(--fw-medium); }
 .hr .why { grid-column: 2 / -1; font-size: var(--fs-3); color: var(--muted-foreground); }
@@ -199,8 +202,8 @@ body.hide-ev .ev { display: none; }
 /* pitfalls */
 .pit-list { list-style: none; padding: 0; display: grid; gap: var(--space-3); }
 .pit { border: 1px solid var(--border); background: var(--card-veil); }
-.pit[data-sev='CRITICAL'] { border-left: 3px solid var(--destructive); }
-.pit[data-sev='HIGH'] { border-left: 3px solid oklch(0.75 0.15 75); }
+.pit[data-sev='CRITICAL'] { border-left: 3px solid var(--missing-fill); }
+.pit[data-sev='HIGH'] { border-left: 3px solid var(--in-flight-fill); }
 .pit-head { display: grid; grid-template-columns: 2.5rem minmax(0, 1fr) auto; gap: var(--space-3); align-items: baseline; width: 100%; padding: var(--space-3) var(--space-4); border: 0; background: none; text-align: left; }
 .pit-head:hover { background: var(--state-hover); }
 .pit-head .n { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); }
@@ -211,14 +214,14 @@ body.hide-ev .ev { display: none; }
 .pit-more .row { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: var(--space-3); font-size: var(--fs-3); }
 .pit-more .k { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); padding-top: 0.2em; }
 .pit-more .row.avoid .k { color: var(--primary); }
-.pit-more .row.signs .k { color: oklch(0.74 0.15 75); }
+.pit-more .row.signs .k { color: var(--in-flight-fill); }
 @container (max-width: 640px) { .pit-what, .pit-more { padding-left: var(--space-4); } .pit-more .row { grid-template-columns: 1fr; gap: 0; } }
 
 /* questions */
 .q-list { list-style: none; padding: 0; display: grid; }
 .q { display: grid; grid-template-columns: 3rem minmax(0, 1fr); gap: var(--space-1) var(--space-3); padding: var(--space-3) 0; border-bottom: 1px solid var(--border); }
 .q:last-child { border-bottom: 0; }
-.q .n { font-family: var(--font-mono); font-size: var(--fs-2); color: oklch(0.74 0.15 75); padding-top: 0.2em; }
+.q .n { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--in-flight-fill); padding-top: 0.2em; }
 .q[data-resolved='true'] .n { color: var(--muted-foreground); }
 .q .t { font-size: var(--fs-4); font-weight: var(--fw-medium); display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: baseline; }
 .q .b { grid-column: 2; font-size: var(--fs-3); color: var(--muted-foreground); }
@@ -227,8 +230,8 @@ body.hide-ev .ev { display: none; }
 
 /* env */
 .env-table td.ok { color: var(--primary); font-family: var(--font-mono); }
-.env-table td.no { color: var(--destructive); font-family: var(--font-mono); }
-.env-table tr[data-blocking='true'] td { background: var(--destructive-tint); }
+.env-table td.no { color: var(--missing-fill); font-family: var(--font-mono); }
+.env-table tr[data-blocking='true'] td { background: var(--missing-tint); }
 .env-notes { display: grid; gap: var(--space-1); margin-top: var(--space-3); font-size: var(--fs-3); color: var(--muted-foreground); }
 
 /* sources */
@@ -305,8 +308,8 @@ body.hide-ev .ev { display: none; }
 .c-tile .v { font-family: var(--font-mono); font-size: var(--fs-7); line-height: 1; }
 .c-tile .v small { font-size: var(--fs-3); color: var(--muted-foreground); margin-left: var(--space-1); }
 .c-tile .s { font-size: var(--fs-2); color: var(--muted-foreground); }
-.c-tile.warn .v { color: oklch(0.74 0.15 75); }
-.c-tile.bad .v { color: var(--destructive); }
+.c-tile.warn .v { color: var(--in-flight-fill); }
+.c-tile.bad .v { color: var(--missing-fill); }
 .c-hero { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(16rem, 0.9fr); gap: var(--space-fluid-9); align-items: start; }
 @container (max-width: 900px) { .c-hero { grid-template-columns: 1fr; } }
 .c-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--space-5); align-items: start; }
@@ -490,7 +493,7 @@ function md(src) {
   return s.replace(/\u0001(\d+)\u0001/g, (_, i) => { const [k, v] = ev[i]; const L = { VERIFIED: 'V', CITED: 'C', ASSUMED: 'A' }[k]; return `<sup class="ev" data-k="${L}" title="${esc(k.toLowerCase())}${v ? ': ' + esc(v.replace(/`/g, '')) : ''}">${L}</sup>`; });
 }
 const levelOf = raw => { const r = raw.toUpperCase(); if (/^HIGH/.test(r) && !/MEDIUM/.test(r.split(';')[0])) return 'high'; if (/LOW/.test(r) && !/MEDIUM-LOW|HIGH/.test(r)) return 'low'; if (/^MEDIUM-LOW/.test(r)) return 'low'; if (/^HIGH|^MEDIUM-HIGH/.test(r)) return 'high'; return 'mid'; };
-const tone = { high: 'accent', mid: 'amber', low: 'red' };
+const tone = { high: 'complete', mid: 'in-flight', low: 'missing' };
 const meter = lvl => { const n = { high: 3, mid: 2, low: 1 }[lvl]; return `<span class="meter" data-l="${lvl}">${[1,2,3].map(i => `<i class="${i <= n ? 'on' : ''}"></i>`).join('')}</span>`; };
 const confLabel = d => d.confidence.level === 'mixed' ? 'Mixed' : d.confidence.raw.split(/[ —;(]/)[0];
 const confLevel = d => d.confidence.level === 'mixed' ? 'mid' : levelOf(d.confidence.raw);
@@ -535,8 +538,8 @@ const reco = d => `<div class="reco"><span class="eyebrow k">Primary recommendat
 
 function pkgBadges(p) {
   const b = [];
-  if (p.sus) b.push(`<span class="chip" data-tone="amber" title="package-legitimacy seam: too-new">SUS</span>`);
-  if (p.isNew) b.push(`<span class="chip" data-tone="accent">new</span>`);
+  if (p.sus) b.push(`<span class="chip" data-tone="in-flight" title="package-legitimacy seam: too-new">SUS</span>`);
+  if (p.isNew) b.push(`<span class="chip" data-tone="active">new</span>`);
   if (p.pinned) b.push(`<span class="chip">already pinned</span>`);
   if (p.host) b.push(`<span class="chip">host binary</span>`);
   return b.join('');
@@ -544,7 +547,7 @@ function pkgBadges(p) {
 const pkgList = list => `<ul class="pkg-list">${list.map(p => `<li class="pkg">
     <div class="id"><span class="name">${esc(p.name)}</span><span class="ver">${esc(p.version)}${p.date ? ` · ${p.date}` : ''} ${pkgBadges(p)}</span></div>
     <div><div class="purpose">${md(p.purpose)}</div><div class="why">${md(p.why)}</div></div></li>`).join('')}</ul>`;
-const V = { rejected: ['rejected', ''], viable: ['viable alternative', 'ok'], harmful: ['do not use', 'red'], later: ['later phase', 'amber'] };
+const V = { rejected: ['rejected', 'quiet'], viable: ['viable alternative', 'complete'], harmful: ['do not use', 'missing'], later: ['later phase', 'in-flight'] };
 const altList = d => `<ul class="alt-list">${d.alternatives.map(x => `<li class="alt" data-v="${x.verdict}">
     <span class="chosen">${md(x.instead)}</span><span class="over">over</span>
     <span class="other ${x.verdict !== 'viable' ? 'struck' : ''}"><span>${md(x.could)}</span> <span class="chip" data-tone="${V[x.verdict][1]}">${V[x.verdict][0]}</span></span>
@@ -563,16 +566,16 @@ function auditStrip(d, { table = true } = {}) {
   return `<div class="audit-strip">
     <div class="audit-counts"><span><b>${A.n}</b>checked</span><span><b>${A.ok}</b>ok</span><span class="sus"><b>${sus}</b>sus</span><span class="slop"><b>${A.rows.filter(r => r[5] === 'SLOP').length}</b>slop · removed</span>${A.synthetic ? '<span class="synthetic">SYNTHETIC DATA</span>' : ''}</div>
     <div class="audit-bar" aria-hidden="true"><span class="ok" style="width:${pct(A.ok)}"></span><span class="sus" style="width:${pct(sus)}"></span><span class="slop" style="width:${pct(A.rows.filter(r => r[5] === 'SLOP').length)}"></span></div>
-    ${A.slop.length ? `<div class="removed">${A.slop.map(s => `<div class="removed-card"><span class="chip" data-tone="solid-red">SLOP</span><span class="n">${esc(s.name)}</span><span class="r">${md(s.reason)}</span><span class="rb"><span class="mono-note">Replaced by</span> ${md(s.replacedBy)}</span></div>`).join('')}</div>`
+    ${A.slop.length ? `<div class="removed">${A.slop.map(s => `<div class="removed-card"><span class="chip" data-tone="missing">SLOP</span><span class="n">${esc(s.name)}</span><span class="r">${md(s.reason)}</span><span class="rb"><span class="mono-note">Replaced by</span> ${md(s.replacedBy)}</span></div>`).join('')}</div>`
       : `<p class="none-line"><span class="chip">SLOP</span> Packages removed: none.</p>`}
-    ${sus ? `<div class="sus-row"><span class="chip" data-tone="amber">SUS</span>${A.sus.map(n => `<span class="sus-name">${esc(n)}</span>`).join('')}</div>${A.a.susNote ? `<p class="none-line">${md(A.a.susNote)}</p>` : ''}`
+    ${sus ? `<div class="sus-row"><span class="chip" data-tone="in-flight">SUS</span>${A.sus.map(n => `<span class="sus-name">${esc(n)}</span>`).join('')}</div>${A.a.susNote ? `<p class="none-line">${md(A.a.susNote)}</p>` : ''}`
       : `<p class="none-line"><span class="chip">SUS</span> Flagged as suspicious: none.</p>`}
     ${A.a.extra.map(x => `<p class="none-line">${md(x)}</p>`).join('')}
     ${table ? `<div><button class="link-btn" data-open="${k}">${open ? 'Hide' : 'Show'} the full audit table (${A.n} rows) ${open ? '▴' : '▾'}</button>${open ? `<div class="data-table-wrap fade" style="margin-top:var(--space-3)"><p class="muted" style="font-size:var(--fs-3);margin-bottom:var(--space-3);max-width:72ch">${md(A.a.intro)}</p>${auditTable(A)}</div>` : ''}</div>` : ''}
   </div>`;
 }
 const auditTable = A => `<table class="data-table"><thead><tr><th>Package</th><th>Registry</th><th>Age</th><th>Downloads/wk</th><th>Source repo</th><th>Verdict</th><th>Disposition</th></tr></thead><tbody>
-  ${A.rows.map(r => `<tr data-v="${r[5]}"><td class="mono">${esc(r[0])}</td><td>${r[1]}</td><td class="mono">${r[2]}</td><td class="mono">${r[3]}</td><td class="mono">${esc(r[4])}</td><td><span class="chip" data-tone="${r[5] === 'OK' ? 'ok' : r[5] === 'SUS' ? 'amber' : 'solid-red'}">${r[5]}</span>${r[6] ? ` <span class="mono-note">${r[6]}</span>` : ''}</td><td>${esc(r[7])}</td></tr>`).join('')}</tbody></table>`;
+  ${A.rows.map(r => `<tr data-v="${r[5]}"><td class="mono">${esc(r[0])}</td><td>${r[1]}</td><td class="mono">${r[2]}</td><td class="mono">${r[3]}</td><td class="mono">${esc(r[4])}</td><td><span class="chip" data-tone="${r[5] === 'OK' ? 'quiet' : r[5] === 'SUS' ? 'in-flight' : 'missing'}">${r[5]}</span>${r[6] ? ` <span class="mono-note">${r[6]}</span>` : ''}</td><td>${esc(r[7])}</td></tr>`).join('')}</tbody></table>`;
 
 function glyphs(text) {
   return esc(text).replace(/([─│┌┐└┘├┤┬┴┼]+)/g, '<span class="g-line">$1</span>').replace(/([▼▲►◄→←↑↓])/g, '<span class="g-arrow">$1</span>');
@@ -610,7 +613,7 @@ function tree(d) {
     hideBelow = null;
     const key = id + ':' + i, closed = state.collapsed.has(key);
     if (r.dir && closed) hideBelow = r.depth;
-    const bt = { NEW: 'accent', EXTEND: 'amber', EXISTING: '' }[r.badge];
+    const bt = { NEW: 'active', EXTEND: 'in-flight', EXISTING: 'quiet' }[r.badge];
     return `<div class="tree-row"><span class="tree-name"><span class="guide">${esc(r.prefix)}</span>${r.dir ? `<button class="dir" data-collapse="${key}" aria-expanded="${!closed}"><span class="chev">▾</span>${esc(r.name)}</button>` : esc(r.name)}</span>
       <span class="tree-note">${r.badge ? `<span class="chip" data-tone="${bt}">${r.badge.toLowerCase()}</span>` : ''}${md(r.note)}</span></div>`;
   }).join('');
@@ -627,7 +630,7 @@ const handroll = d => `<ul class="hr-list">${d.handroll.map(x => `<li class="hr"
 function pitfalls(d, { openAll = false } = {}) {
   return `<ol class="pit-list">${d.pitfalls.map((p, i) => {
     const k = 'pit' + i, open = openAll || state.open.has(k);
-    const sevTone = { CRITICAL: 'red', HIGH: 'amber', MEDIUM: '' }[p.sev];
+    const sevTone = { CRITICAL: 'missing', HIGH: 'in-flight', MEDIUM: 'quiet' }[p.sev];
     return `<li class="pit" data-sev="${p.sev || ''}">
       <button class="pit-head" data-open="${k}" aria-expanded="${open}"><span class="n">${String(i + 1).padStart(2, '0')}</span><span class="t">${md(p.title)}</span>
         <span class="tags">${p.code ? `<span class="chip">${p.code}</span>` : ''}${p.sev ? `<span class="chip" data-tone="${sevTone}">${p.sev.toLowerCase()}</span>` : ''}<span class="muted" aria-hidden="true">${open ? '▴' : '▾'}</span></span></button>
@@ -639,10 +642,10 @@ function pitfalls(d, { openAll = false } = {}) {
     </li>`; }).join('')}</ol>`;
 }
 const questions = d => `<ol class="q-list">${d.questions.map((q, i) => `<li class="q" data-resolved="${q.resolved}"><span class="n">Q${i + 1}</span>
-    <span class="t">${md(q.title)} ${q.resolved ? '<span class="chip">resolved</span>' : '<span class="chip" data-tone="amber">open</span>'}${q.blocks ? `<span class="mono-note">${md(q.blocks)}</span>` : ''}</span>
+    <span class="t">${md(q.title)} ${q.resolved ? '<span class="chip">resolved</span>' : '<span class="chip" data-tone="in-flight">open</span>'}${q.blocks ? `<span class="mono-note">${md(q.blocks)}</span>` : ''}</span>
     <span class="b">${md(q.body)}</span></li>`).join('')}</ol>`;
 const envTable = d => `<div class="data-table-wrap"><table class="data-table env-table"><thead><tr><th>Dependency</th><th>Required by</th><th></th><th>Version</th><th>Fallback</th></tr></thead><tbody>
-  ${d.env.map(e => `<tr data-blocking="${!!e.blocking}"><td>${md(e.dep)}</td><td class="muted">${md(e.by)}</td><td class="${e.ok ? 'ok' : 'no'}">${e.ok ? '✓' : '✗'}</td><td class="muted">${md(e.ver)}</td><td>${e.blocking ? `<span class="chip" data-tone="red">blocking</span>` : md(e.fb)}</td></tr>`).join('')}</tbody></table></div>
+  ${d.env.map(e => `<tr data-blocking="${!!e.blocking}"><td>${md(e.dep)}</td><td class="muted">${md(e.by)}</td><td class="${e.ok ? 'ok' : 'no'}">${e.ok ? '✓' : '✗'}</td><td class="muted">${md(e.ver)}</td><td>${e.blocking ? `<span class="chip" data-tone="missing">blocking</span>` : md(e.fb)}</td></tr>`).join('')}</tbody></table></div>
   <div class="env-notes">${d.envNotes.map(n => `<p>${md(n)}</p>`).join('')}</div>`;
 function sources(d, { collapsed = true } = {}) {
   const k = 'sources', open = !collapsed || state.open.has(k);
@@ -766,14 +769,14 @@ function variantC(d) {
     <section class="c-hero"><div>${summary(d)}</div><div>${reco(d)}</div></section>
     <div class="c-grid">
       <section class="panel accent w4" id="c-stack"><p class="label accent">Standard stack</p>${stack(d, { alts: false })}</section>
-      <section class="panel w2 ${nSlop ? '' : A.sus.length ? 'amber' : ''}" id="c-audit" style="${nSlop ? 'border-top:3px solid var(--destructive)' : ''}"><p class="label">Package legitimacy</p>${auditStrip(d)}</section>
+      <section class="panel w2 ${nSlop ? '' : A.sus.length ? 'in-flight' : ''}" id="c-audit" style="${nSlop ? 'border-top:3px solid var(--missing-fill)' : ''}"><p class="label">Package legitimacy</p>${auditStrip(d)}</section>
       <section class="panel w6"><p class="label">Alternatives considered <span class="count">${d.alternatives.length}</span></p>${altList(d)}</section>
       <section class="panel w6" id="c-arch"><p class="label">Architecture</p>${figure(d, 'diagram')}
         <div class="sub"><p class="label">Directory structure</p>${tree(d)}</div></section>
       <section class="panel"><p class="label" style="margin-bottom:0"></p>${patterns(d)}</section>
       <section class="panel"><p class="label">Don't hand-roll <span class="count">${d.handroll.length}</span></p>${handroll(d)}</section>
       <section class="panel w6" id="c-pit"><p class="label">Common pitfalls <span class="count">${d.pitfalls.length}</span></p>${pitfalls(d)}</section>
-      <section class="panel amber" id="c-q"><p class="label">${esc(d.questionsHeading)}</p>${questions(d)}</section>
+      <section class="panel in-flight" id="c-q"><p class="label">${esc(d.questionsHeading)}</p>${questions(d)}</section>
       <section class="panel" id="c-env"><p class="label">Environment</p>${envTable(d)}</section>
       <section class="panel w6"><p class="label">Sources</p>${sources(d)}</section>
     </div>

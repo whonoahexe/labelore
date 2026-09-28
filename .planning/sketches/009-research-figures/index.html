@@ -9,6 +9,15 @@
 /* Sketch 009: the two figures inside the 008-A "02 Architecture" chapter. Diagram and tree are
    independent choices, so each has its own variant row. */
 *, *::before, *::after { box-sizing: border-box; }
+/* System tones only (docs/design-language.md ## Tones). --in-flight-border mirrors globals.css:124;
+   the two missing-* helpers are sketch shorthands built from --missing-fill, no new hue. */
+:root { --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border)); --missing-border: color-mix(in oklch, var(--missing-fill) 50%, var(--border)); --missing-tint: color-mix(in oklch, var(--muted) 55%, transparent); }
+.chip[data-tone='active'], .chip[data-tone='complete'] { color: var(--primary); border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); background: var(--primary-tint); }
+.chip[data-tone='quiet'] { color: var(--muted-foreground); }
+.chip[data-tone='in-flight'] { color: var(--in-flight-fill); border-color: var(--in-flight-border); }
+.chip[data-tone='missing'] { color: var(--missing-fill); border-color: var(--missing-border); }
+.synthetic { display: inline-flex; align-items: center; padding: 0 var(--space-1); border: 1px dashed var(--border); font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: var(--ls-wider); color: var(--muted-foreground); background: none; vertical-align: middle; }
+
 html, body { margin: 0; }
 body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-5); line-height: var(--lh-normal); padding-top: 3rem; }
 h1, h2, h3, p, ul, ol, figure { margin: 0; }
@@ -38,8 +47,6 @@ strong { font-weight: var(--fw-semibold); }
 .section-heading .num { color: var(--muted-foreground); margin-right: var(--space-3); }
 .ref-note { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; }
 .chip { display: inline-flex; align-items: center; gap: var(--space-1); padding: 0.1rem var(--space-1-5); border: 1px solid var(--border); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; color: var(--muted-foreground); background: none; line-height: 1.5; }
-.chip[data-tone='accent'] { color: var(--primary); border-color: color-mix(in oklch, var(--primary) 55%, var(--border)); background: var(--primary-tint); }
-.chip[data-tone='amber'] { color: oklch(0.74 0.15 75); border-color: color-mix(in oklch, oklch(0.75 0.15 75) 50%, var(--border)); }
 button.chip { cursor: pointer; transition: all .15s ease; }
 button.chip:hover { background: var(--state-hover); }
 button.chip[aria-pressed='true'] { color: var(--foreground); border-color: var(--foreground); }
@@ -448,7 +455,7 @@ function parseTree(text) {
   rows.forEach((r, i) => { r.parent = null; for (let j = i - 1; j >= 0; j--) if (rows[j].depth < r.depth) { r.parent = j; break; } });
   return rows;
 }
-const badge = b => b ? `<span class="chip" data-tone="${{ NEW: 'accent', EXTEND: 'amber', EXISTING: '' }[b]}">${b.toLowerCase()}</span>` : '';
+const badge = b => b ? `<span class="chip" data-tone="${{ NEW: 'active', EXTEND: 'in-flight', EXISTING: 'quiet' }[b]}">${b.toLowerCase()}</span>` : '';
 const hidden = (rows, i, id) => { let p = rows[i].parent; while (p != null) { if (state.collapsed.has(id + ':' + p)) return true; p = rows[p].parent; } return false; };
 function treeA(d) {
   const rows = parseTree(txt(d.treeId));

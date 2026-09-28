@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 010 — RESEARCH legitimacy audit</title>
+<link rel="stylesheet" href="../themes/default.css?v=010">
+<style>
+/* Sketch 010: the Package Legitimacy Audit inside the 008-A "01 Standard stack" chapter. The
+   question is how verdicts read — above all a [SLOP] removal and the [SUS] flags. Data comes from
+   ../008-research-page/data.js; the SLOP rows are SYNTHETIC (no real RESEARCH.md has removed a
+   package yet) and are badged wherever they appear. */
+*, *::before, *::after { box-sizing: border-box; }
+/* System tones only (docs/design-language.md ## Tones). --in-flight-border mirrors globals.css:124;
+   the two missing-* helpers are sketch shorthands built from --missing-fill, no new hue. */
+:root { --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border)); --missing-border: color-mix(in oklch, var(--missing-fill) 50%, var(--border)); --missing-tint: color-mix(in oklch, var(--muted) 55%, transparent); }
+.chip[data-tone='active'], .chip[data-tone='complete'] { color: var(--primary); border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); background: var(--primary-tint); }
+.chip[data-tone='quiet'] { color: var(--muted-foreground); }
+.chip[data-tone='in-flight'] { color: var(--in-flight-fill); border-color: var(--in-flight-border); }
+.chip[data-tone='missing'] { color: var(--missing-fill); border-color: var(--missing-border); }
+.synthetic { display: inline-flex; align-items: center; padding: 0 var(--space-1); border: 1px dashed var(--border); font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: var(--ls-wider); color: var(--muted-foreground); background: none; vertical-align: middle; }
+
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-5); line-height: var(--lh-normal); padding-top: 3rem; }
+h1, h2, h3, p, ul, ol { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+code { font-family: var(--font-mono); font-size: 0.88em; padding: 0 0.2em; background: color-mix(in oklch, var(--muted) 70%, transparent); }
+strong { font-weight: var(--fw-semibold); }
+#variant-nav { position: fixed; inset: 0 0 auto 0; z-index: 50; display: flex; gap: var(--space-1); align-items: center; padding: var(--space-2) var(--space-4); background: var(--background); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; overflow-x: auto; }
+#variant-nav .lbl { color: var(--muted-foreground); margin-right: var(--space-2); white-space: nowrap; }
+.variant-tab { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; background: none; white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; color: var(--muted-foreground); transition: all .15s ease; }
+.variant-tab:hover { color: var(--foreground); background: var(--state-hover); }
+.variant-tab.active { color: var(--primary); border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); background: var(--primary-tint); }
+.shell-header { display: flex; align-items: center; gap: var(--space-4); height: 3.75rem; padding: 0 var(--space-4); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.brand-mark { width: 2.25rem; height: 2.25rem; background: var(--primary); display: grid; place-items: center; color: white; font-weight: 700; }
+#frame { margin: 0 auto; container-type: inline-size; transition: max-width .2s ease; background: var(--background); min-height: 100vh; }
+#frame.narrow-frame { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+.page { width: min(80rem, 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); display: grid; gap: var(--space-8); }
+.fade { animation: fade .18s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .fade { animation: none; } }
+.toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--foreground); color: var(--background); padding: var(--space-2) var(--space-4); font-family: var(--font-mono); font-size: var(--fs-2); z-index: 9999; }
+
+.label { display: flex; gap: var(--space-2); align-items: baseline; margin-bottom: var(--space-3); color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.label.accent { color: var(--primary); }
+.label .count { font-weight: var(--fw-medium); }
+.mono-note { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.muted { color: var(--muted-foreground); }
+.ref-note { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.section-heading { display: flex; gap: var(--space-4); align-items: flex-end; padding-bottom: var(--space-3); border-bottom: 1px solid var(--border); }
+.section-heading h2 { font-family: var(--font-mono); font-size: var(--fs-fluid-3); font-weight: var(--fw-medium); letter-spacing: var(--ls-tight); }
+.section-heading .num { color: var(--muted-foreground); margin-right: var(--space-3); }
+.chip { display: inline-flex; align-items: center; gap: var(--space-1); padding: 0.1rem var(--space-1-5); border: 1px solid var(--border); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; color: var(--muted-foreground); background: none; line-height: 1.5; }
+button.chip { cursor: pointer; transition: all .15s ease; }
+button.chip:hover { background: var(--state-hover); }
+button.chip[aria-pressed='true'] { color: var(--foreground); border-color: var(--foreground); }
+.link-btn { padding: 0; border: 0; background: none; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.link-btn:hover { color: var(--primary); }
+.intro { font-size: var(--fs-3); color: var(--muted-foreground); max-width: 72ch; }
+.sig { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); }
+.sig b { color: var(--foreground); font-weight: var(--fw-medium); }
+.sig .bad { color: var(--missing-fill); }
+.pkg-n { font-family: var(--font-mono); font-size: var(--fs-4); font-weight: var(--fw-medium); overflow-wrap: anywhere; }
+.struck { text-decoration: line-through; text-decoration-thickness: 2px; text-decoration-color: var(--missing-fill); }
+.data-table-wrap { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; font-size: var(--fs-3); }
+.data-table th { text-align: left; padding: 0 var(--space-3) var(--space-2) 0; border-bottom: 1px solid var(--border); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); white-space: nowrap; }
+.data-table td { padding: var(--space-2) var(--space-3) var(--space-2) 0; border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); vertical-align: top; }
+.data-table td.mono { font-family: var(--font-mono); white-space: nowrap; }
+.data-table tr[data-v='SUS'] td:first-child { box-shadow: inset 2px 0 0 var(--in-flight-fill); padding-left: var(--space-2); }
+.data-table tr[data-v='SLOP'] td { background: var(--missing-tint); }
+.data-table tr[data-v='SLOP'] td:first-child { box-shadow: inset 3px 0 0 var(--missing-fill); padding-left: var(--space-2); }
+
+/* ============ A: verdict strip + table ============ */
+.a-wrap { display: grid; gap: var(--space-5); }
+.a-counts { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-6); align-items: baseline; font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.a-counts b { font-size: var(--fs-6); font-weight: var(--fw-medium); color: var(--foreground); margin-right: var(--space-1-5); }
+.a-counts .sus b { color: var(--in-flight-fill); }
+.a-counts .slop b { color: var(--missing-fill); }
+.a-bar { display: flex; height: 0.7rem; border: 1px solid var(--border); }
+.a-bar span { display: block; height: 100%; }
+.a-bar .ok { background: color-mix(in oklch, var(--foreground) 30%, transparent); }
+.a-bar .sus { background: var(--in-flight-fill); }
+.a-bar .slop { background: var(--missing-fill); }
+.a-removed { display: grid; gap: var(--space-2); }
+.a-rcard { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-1) var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--missing-border); border-left: 3px solid var(--missing-fill); background: var(--missing-tint); }
+.a-rcard .why, .a-rcard .rep { grid-column: 2; font-size: var(--fs-3); }
+.a-rcard .why { color: var(--muted-foreground); }
+.a-sus { display: flex; flex-wrap: wrap; gap: var(--space-1-5); align-items: center; }
+.a-sus .n { font-family: var(--font-mono); font-size: var(--fs-2); padding: 0.1rem var(--space-1-5); border: 1px solid var(--in-flight-border); }
+.a-none { font-size: var(--fs-3); color: var(--muted-foreground); }
+
+/* ============ B: lanes by verdict ============ */
+.b-lanes { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr) minmax(0, 0.8fr); gap: var(--space-4); align-items: start; }
+@container (max-width: 980px) { .b-lanes { grid-template-columns: 1fr; } }
+.b-lane { border: 1px solid var(--border); background: var(--card-veil); min-width: 0; }
+.b-lane-head { display: flex; gap: var(--space-2); align-items: baseline; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border); }
+.b-lane-head .t { font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.b-lane-head .n { margin-left: auto; font-family: var(--font-mono); font-size: var(--fs-6); line-height: 1; }
+.b-lane[data-v='SLOP'] { border-color: var(--missing-border); box-shadow: inset 0 3px 0 var(--missing-fill); }
+.b-lane[data-v='SLOP'] .b-lane-head .t, .b-lane[data-v='SLOP'] .b-lane-head .n { color: var(--missing-fill); }
+.b-lane[data-v='SUS'] { box-shadow: inset 0 3px 0 var(--in-flight-fill); }
+.b-lane[data-v='SUS'] .b-lane-head .t, .b-lane[data-v='SUS'] .b-lane-head .n { color: var(--in-flight-fill); }
+.b-lane[data-v='OK'] .b-lane-head .n { color: var(--muted-foreground); }
+.b-lane .note { padding: var(--space-2) var(--space-4); font-size: var(--fs-2); color: var(--muted-foreground); border-bottom: 1px dashed var(--border); }
+.b-items { list-style: none; padding: 0; margin: 0; display: grid; }
+.b-items li { display: grid; gap: var(--space-1); padding: var(--space-3) var(--space-4); border-bottom: 1px solid color-mix(in oklch, var(--border) 55%, transparent); }
+.b-items li:last-child { border-bottom: 0; }
+.b-items .rep { font-size: var(--fs-3); }
+.b-items .why { font-size: var(--fs-3); color: var(--muted-foreground); }
+.b-ok { display: flex; flex-wrap: wrap; gap: var(--space-1-5); padding: var(--space-3) var(--space-4); }
+.b-ok span { font-family: var(--font-mono); font-size: var(--fs-2); padding: 0.1rem var(--space-1-5); border: 1px solid var(--border); color: var(--muted-foreground); }
+.b-ok span[data-d] { color: var(--foreground); border-style: dashed; }
+.b-empty { padding: var(--space-4); font-size: var(--fs-3); color: var(--muted-foreground); }
+
+/* ============ C: annotated stack ============ */
+.c-summary { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); align-items: center; padding: var(--space-3) var(--space-4); border: 1px solid var(--border); background: var(--card-veil); font-size: var(--fs-3); }
+.c-summary .k { font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.pkg-list { list-style: none; padding: 0; display: grid; }
+.pkg { display: grid; grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr); gap: var(--space-1) var(--space-5); padding: var(--space-3) 0; border-bottom: 1px solid color-mix(in oklch, var(--border) 70%, transparent); }
+.pkg:last-child { border-bottom: 0; }
+.pkg .id { display: grid; gap: var(--space-1); align-content: start; }
+.pkg .ver { display: flex; flex-wrap: wrap; gap: var(--space-1); align-items: center; font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); }
+.pkg .purpose { font-size: var(--fs-4); }
+.pkg .why { margin-top: var(--space-1); color: var(--muted-foreground); font-size: var(--fs-3); }
+.pkg[data-v='SUS'] { box-shadow: inset 2px 0 0 var(--in-flight-fill); padding-left: var(--space-3); }
+.pkg .seam { margin-top: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px dashed var(--in-flight-border); display: grid; gap: var(--space-1); }
+.pkg.removed { background: var(--missing-tint); box-shadow: inset 3px 0 0 var(--missing-fill); padding-left: var(--space-3); border-bottom-color: var(--missing-border); }
+.pkg.removed .purpose { color: var(--muted-foreground); }
+@container (max-width: 640px) { .pkg { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div id="variant-nav" role="tablist">
+  <span class="lbl">Sketch 010</span>
+  <button class="variant-tab" data-variant="a">A: Verdict strip + table</button>
+  <button class="variant-tab" data-variant="b">B: Lanes by verdict</button>
+  <button class="variant-tab" data-variant="c">C: Annotated stack</button>
+</div>
+<div id="frame">
+  <header class="shell-header"><span class="brand-mark">L</span><span>Labelore</span></header>
+  <main id="root"></main>
+</div>
+<div id="sketch-tools" style="position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:12px;background:rgba(0,0,0,0.78);color:white;padding:8px 10px;opacity:0.55;transition:opacity 0.2s;display:grid;gap:6px;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.55'">
+  <div>Doc: <button data-doc="lab02">labelore P2</button><button data-doc="sp02">studio-portal P2</button></div>
+  <div>Audit: <button data-audit="real">real</button><button data-audit="synth">+ synthetic SLOP</button></div>
+  <div>Theme: <button data-theme="light">Light</button><button data-theme="dark">Dark</button></div>
+  <div>Width: <button data-width="390">Phone</button><button data-width="820">Tablet</button><button data-width="full">Desktop</button></div>
+</div>
+<style>
+#sketch-tools button { background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 2px 7px; margin-left: 3px; font: inherit; cursor: pointer; }
+#sketch-tools button.on { background: #c2410c; border-color: #c2410c; }
+</style>
+<script src="../008-research-page/data.js?v=1"></script>
+<script>
+const state = { variant: 'a', doc: 'lab02', audit: 'synth', theme: 'dark', width: 'full', open: new Set() };
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+function md(src) {
+  if (src == null) return '';
+  let s = esc(String(src).replace(/\[(VERIFIED|CITED|ASSUMED)(?::[^\]]*)?\]/g, ''));
+  return s.replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/(^|[^*\w])\*([^*\n]+)\*(?!\w)/g, '$1<em>$2</em>');
+}
+const SYN = '<span class="synthetic" title="Invented for this sketch — no real RESEARCH.md has a [SLOP] removal yet">SYNTHETIC</span>';
+function model(d) {
+  const syn = state.audit === 'synth';
+  const rows = d.audit.rows.map(r => ({ name: r[0], reg: r[1], age: r[2], dl: r[3], repo: r[4], v: r[5], rule: r[6], disp: r[7] }));
+  const slop = syn ? SYNTHETIC_AUDIT.slop.map((s, i) => { const r = SYNTHETIC_AUDIT.rows[i]; return { ...s, reg: r[1], age: r[2], dl: r[3], repo: r[4], rule: r[6], synthetic: true }; }) : [];
+  return { rows, slop, ok: rows.filter(r => r.v === 'OK'), sus: rows.filter(r => r.v === 'SUS'), a: d.audit };
+}
+const sig = r => `<span class="sig"><span>${esc(r.reg)}</span><span>age <b class="${/d$|w$/.test(r.age) ? 'bad' : ''}">${esc(r.age)}</b></span><span><b class="${parseInt(String(r.dl).replace(/,/g, '')) < 5000 ? 'bad' : ''}">${esc(r.dl)}</b>/wk</span><span class="${/^—$|404/.test(r.repo) ? 'bad' : ''}">${/^—$/.test(r.repo) ? 'no repo' : /404/.test(r.repo) ? 'repo 404' : esc(r.repo)}</span>${r.rule ? `<span>rule <b>${esc(r.rule)}</b></span>` : ''}</span>`;
+const tableRows = M => [...M.slop.map(s => ({ name: s.name, reg: s.reg, age: s.age, dl: s.dl, repo: s.repo, v: 'SLOP', rule: s.rule, disp: 'Removed', synthetic: true })), ...M.rows];
+function fullTable(M, k) {
+  const open = state.open.has(k), rows = tableRows(M);
+  return `<div><button class="link-btn" data-open="${k}">${open ? 'Hide' : 'Show'} the seam output (${rows.length} rows) ${open ? '▴' : '▾'}</button>${open ? `<div class="data-table-wrap fade" style="margin-top:var(--space-3)"><p class="intro" style="margin-bottom:var(--space-3)">${md(M.a.intro)}</p><table class="data-table"><thead><tr><th>Package</th><th>Registry</th><th>Age</th><th>Downloads/wk</th><th>Source repo</th><th>Verdict</th><th>Disposition</th></tr></thead><tbody>
+    ${rows.map(r => `<tr data-v="${r.v}"><td class="mono">${esc(r.name)} ${r.synthetic ? SYN : ''}</td><td>${esc(r.reg)}</td><td class="mono">${esc(r.age)}</td><td class="mono">${esc(r.dl)}</td><td class="mono">${esc(r.repo)}</td><td><span class="chip" data-tone="${r.v === 'OK' ? 'quiet' : r.v === 'SUS' ? 'in-flight' : 'missing'}">${r.v}</span>${r.rule ? ` <span class="mono-note">${esc(r.rule)}</span>` : ''}</td><td>${esc(r.disp)}</td></tr>`).join('')}</tbody></table></div>` : ''}</div>`;
+}
+const extras = M => [M.a.susNote, ...M.a.extra].filter(Boolean).map(x => `<p class="a-none">${md(x)}</p>`).join('');
+
+/* A */
+function variantA(d) {
+  const M = model(d), n = M.rows.length + M.slop.length, pct = x => (100 * x / n).toFixed(2) + '%';
+  return `<div class="a-wrap">
+    <div class="a-counts"><span><b>${n}</b>checked</span><span><b>${M.ok.length}</b>ok</span><span class="sus"><b>${M.sus.length}</b>suspicious</span><span class="slop"><b>${M.slop.length}</b>removed as slop</span></div>
+    <div class="a-bar" aria-hidden="true"><span class="slop" style="width:${pct(M.slop.length)}"></span><span class="sus" style="width:${pct(M.sus.length)}"></span><span class="ok" style="width:${pct(M.ok.length)}"></span></div>
+    ${M.slop.length ? `<div class="a-removed">${M.slop.map(s => `<div class="a-rcard"><span class="chip" data-tone="missing">SLOP</span><span class="pkg-n"><span class="struck">${esc(s.name)}</span> ${SYN}</span><span class="why">${md(s.reason)}</span><span class="rep"><span class="mono-note">Replaced by</span> ${md(s.replacedBy)}</span></div>`).join('')}</div>` : `<p class="a-none"><span class="chip">SLOP</span> Packages removed: none.</p>`}
+    ${M.sus.length ? `<div class="a-sus"><span class="chip" data-tone="in-flight">SUS</span>${M.sus.map(r => `<span class="n" title="${esc(r.rule)} · ${esc(r.age)} · ${esc(r.dl)}/wk">${esc(r.name)}</span>`).join('')}</div>` : `<p class="a-none"><span class="chip">SUS</span> Flagged as suspicious: none.</p>`}
+    ${extras(M)}
+    ${fullTable(M, 'a-table')}</div>`;
+}
+/* B */
+function variantB(d) {
+  const M = model(d);
+  const notable = r => r.v === 'OK' && !/^Approved$/.test(r.disp);
+  return `<p class="intro" style="margin-bottom:var(--space-4)">${md(M.a.intro)}</p>
+    <div class="b-lanes">
+      <section class="b-lane" data-v="SLOP"><div class="b-lane-head"><span class="t">Removed · slop</span><span class="n">${M.slop.length}</span></div>
+        ${M.slop.length ? `<ul class="b-items">${M.slop.map(s => `<li><span class="pkg-n"><span class="struck">${esc(s.name)}</span> ${SYN}</span>${sig(s)}<span class="why">${md(s.reason)}</span><span class="rep"><span class="mono-note">Use instead</span> ${md(s.replacedBy)}</span></li>`).join('')}</ul>` : `<p class="b-empty">Nothing removed.</p>`}</section>
+      <section class="b-lane" data-v="SUS"><div class="b-lane-head"><span class="t">Flagged · suspicious</span><span class="n">${M.sus.length}</span></div>
+        ${M.sus.length ? `${M.a.susNote ? `<p class="note">${md(M.a.susNote)}</p>` : ''}<ul class="b-items">${M.sus.map(r => `<li><span class="pkg-n">${esc(r.name)}</span>${sig(r)}<span class="why">${esc(r.disp)}</span></li>`).join('')}</ul>` : `<p class="b-empty">Nothing flagged.</p>`}</section>
+      <section class="b-lane" data-v="OK"><div class="b-lane-head"><span class="t">Approved</span><span class="n">${M.ok.length}</span></div>
+        <div class="b-ok">${M.ok.map(r => `<span ${notable(r) ? 'data-d' : ''} title="${esc(r.disp)} · ${esc(r.age)} · ${esc(r.dl)}/wk">${esc(r.name)}</span>`).join('')}</div>
+        ${M.ok.filter(notable).length ? `<ul class="b-items" style="border-top:1px dashed var(--border)">${M.ok.filter(notable).map(r => `<li><span class="pkg-n" style="font-size:var(--fs-3)">${esc(r.name)}</span><span class="why">${esc(r.disp)}</span></li>`).join('')}</ul>` : ''}</section>
+    </div>
+    ${M.a.extra.map(x => `<p class="a-none">${md(x)}</p>`).join('')}
+    ${fullTable(M, 'b-table')}`;
+}
+/* C */
+function variantC(d) {
+  const M = model(d);
+  const byName = {}; M.rows.forEach(r => byName[r.name] = r);
+  const match = p => p.name.split(/\s*[,+]\s*|\s+\/\s+/).map(s => byName[s.trim()]).filter(Boolean);
+  const row = p => {
+    const hits = match(p), sus = hits.filter(h => h.v === 'SUS'), k = 'seam-' + p.name, open = state.open.has(k);
+    const disp = hits.find(h => h.v === 'OK' && !/^Approved$/.test(h.disp));
+    return `<li class="pkg" data-v="${sus.length ? 'SUS' : ''}"><div class="id"><span class="pkg-n">${esc(p.name)}</span><span class="ver">${esc(p.version)}${p.date ? ' · ' + p.date : ''}
+        ${sus.length ? `<button class="chip" data-tone="in-flight" data-open="${k}" aria-expanded="${open}">SUS${sus.length > 1 ? ' ×' + sus.length : ''} ${open ? '▴' : '▾'}</button>` : hits.length ? `<span class="chip" title="legitimacy: OK">✓ ok</span>` : ''}</span></div>
+      <div><div class="purpose">${md(p.purpose)}</div><div class="why">${md(p.why)}</div>
+        ${disp ? `<div class="why"><span class="mono-note">Audit</span> ${esc(disp.disp)}</div>` : ''}
+        ${open ? `<div class="seam fade">${sus.map(h => `<div><span class="mono-note">${esc(h.name)}</span> ${sig(h)}</div>`).join('')}<span class="why" style="margin:0">${esc(sus[0].disp)}</span></div>` : ''}</div></li>`;
+  };
+  const removed = M.slop.map(s => `<li class="pkg removed"><div class="id"><span class="pkg-n"><span class="struck">${esc(s.name)}</span></span><span class="ver"><span class="chip" data-tone="missing">SLOP · removed</span> ${SYN}</span></div>
+      <div><div class="purpose">${md(s.reason)}</div><div class="why"><span class="mono-note">Replaced by</span> ${md(s.replacedBy)}</div></div></li>`).join('');
+  const extraAudited = M.rows.filter(r => !([...d.core, ...d.supporting].some(p => match(p).includes(r))));
+  return `<div class="c-summary"><span class="k">Legitimacy</span>
+      ${M.slop.length ? `<span class="chip" data-tone="missing">${M.slop.length} removed</span>` : ''}
+      ${M.sus.length ? `<span class="chip" data-tone="in-flight">${M.sus.length} sus</span>` : ''}
+      <span class="chip">${M.ok.length} ok</span>
+      <span class="muted">Verdicts sit on each package below${M.slop.length ? '; removed packages lead the list' : ''}.</span></div>
+    ${M.slop.length ? `<div><p class="label" style="color:var(--missing-fill)">Removed from the stack <span class="count">${M.slop.length}</span></p><ul class="pkg-list">${removed}</ul></div>` : ''}
+    <div><p class="label accent">Core <span class="count">${d.core.length}</span></p><ul class="pkg-list">${d.core.map(row).join('')}</ul></div>
+    <div><p class="label">Supporting <span class="count">${d.supporting.length}</span></p><ul class="pkg-list">${d.supporting.map(row).join('')}</ul></div>
+    ${extraAudited.length ? `<div><p class="label">Audited, not in the stack <span class="count">${extraAudited.length}</span></p><ul class="pkg-list">${extraAudited.map(r => `<li class="pkg"><div class="id"><span class="pkg-n">${esc(r.name)}</span></div><div><div class="purpose">${esc(r.disp)}</div>${sig(r)}</div></li>`).join('')}</ul></div>` : ''}
+    ${extras(M)}
+    ${fullTable(M, 'c-table')}`;
+}
+const RENDER = { a: variantA, b: variantB, c: variantC };
+function render() {
+  const d = DOCS[state.doc];
+  const inChapter = state.variant !== 'c';
+  document.getElementById('root').innerHTML = `<div class="page fade">
+    <p class="ref-note">${d.project} · ${d.file} · 008-A frame</p>
+    <div class="section-heading"><h2><span class="num">01</span>Standard stack</h2></div>
+    ${inChapter ? `<p class="ref-note">… Core ${d.core.length} · Supporting ${d.supporting.length} · Alternatives ${d.alternatives.length} above (as in 008) …</p>
+      <section><p class="label">Package legitimacy</p>${RENDER.a === RENDER[state.variant] ? variantA(d) : variantB(d)}</section>` : variantC(d)}
+    <p class="ref-note">… 02 Architecture below …</p></div>`;
+  document.documentElement.classList.toggle('dark', state.theme === 'dark');
+  const f = document.getElementById('frame');
+  f.style.maxWidth = state.width === 'full' ? 'none' : state.width + 'px';
+  f.classList.toggle('narrow-frame', state.width !== 'full');
+  document.querySelectorAll('.variant-tab').forEach(t => t.classList.toggle('active', t.dataset.variant === state.variant));
+  document.querySelectorAll('#sketch-tools button').forEach(b => b.classList.toggle('on', b.dataset.doc === state.doc || b.dataset.theme === state.theme || b.dataset.width === state.width || b.dataset.audit === state.audit));
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.variant) { state.variant = t.dataset.variant; state.open.clear(); }
+  else if (t.dataset.doc) { state.doc = t.dataset.doc; state.open.clear(); }
+  else if (t.dataset.audit) state.audit = t.dataset.audit;
+  else if (t.dataset.theme) state.theme = t.dataset.theme;
+  else if (t.dataset.width) state.width = t.dataset.width;
+  else if (t.dataset.open) { const k = t.dataset.open; state.open.has(k) ? state.open.delete(k) : state.open.add(k); }
+  else return;
+  const y = window.scrollY; render(); window.scrollTo(0, y);
+});
+render();
+</script>
+</body>
+</html>
