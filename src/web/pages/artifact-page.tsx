@@ -11,6 +11,7 @@ import {
 } from '../../presentation/artifact-warning-tone.ts';
 import { artifactWarningSummary } from '../../presentation/artifact-warning-summary.ts';
 import {
+  buildArtifactUrl,
   buildMilestoneUrl,
   buildPhaseUrl,
   presentationRoutePatterns,
@@ -50,6 +51,8 @@ import { fetchPresentation } from '../components/app-shell.tsx';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
 import type { ComposedContextBrief } from '../views/context-brief.ts';
 import { ContextBriefView, ContextIntroMeta } from '../views/context-brief-components.tsx';
+import type { ComposedResearchBriefing } from '../views/research-briefing.ts';
+import { ResearchBriefingView, ResearchIntroMeta } from '../views/research-briefing-components.tsx';
 export {
   handleDocumentReferenceActivation,
   restoreDocumentReferenceFocus,
@@ -97,6 +100,29 @@ function findPhaseRequirementIds(
     }
   }
   return null;
+}
+
+/** quick-260929-3x3: every other artifact in the same directory as `path`, reduced to what
+ * `ViewInput.siblingArtifacts` carries (kind, path, in-app URL) — matched generically by path so a
+ * RESEARCH page can link its sibling CONTEXT.md with no per-kind branch. */
+function findSiblingArtifacts(
+  presentation: ProjectPresentation | undefined,
+  path: string | undefined,
+  phaseIdentity: PhaseIdentity | null | undefined,
+): { kind: string; path: string; url: string }[] {
+  if (!presentation || !path) return [];
+  const directory = path.slice(0, path.lastIndexOf('/') + 1);
+  const siblings: { kind: string; path: string; url: string }[] = [];
+  for (const artifact of presentation.artifacts) {
+    if (artifact.path === path) continue;
+    if (artifact.path.slice(0, artifact.path.lastIndexOf('/') + 1) !== directory) continue;
+    siblings.push({
+      kind: artifact.kind,
+      path: artifact.path,
+      url: buildArtifactUrl(phaseIdentity ?? null, artifact.path),
+    });
+  }
+  return siblings;
 }
 
 interface ArtifactDocumentResponse {
@@ -512,6 +538,11 @@ export function ArtifactPage(): React.JSX.Element {
     () => findPhaseRequirementIds(presentationQuery.data, query.data?.phaseIdentity),
     [presentationQuery.data, query.data],
   );
+  const siblingArtifacts = useMemo(
+    () =>
+      findSiblingArtifacts(presentationQuery.data, query.data?.artifact.path, query.data?.phaseIdentity),
+    [presentationQuery.data, query.data],
+  );
   const viewInput = useMemo<ViewInput | null>(() => {
     if (!query.data) return null;
     return {
@@ -522,8 +553,10 @@ export function ArtifactPage(): React.JSX.Element {
       planSegments,
       planProgress,
       phaseRequirementIds,
+      headings: shown?.headings ?? [],
+      siblingArtifacts,
     };
-  }, [query.data, groups, planSegments, planProgress, phaseRequirementIds]);
+  }, [query.data, groups, planSegments, planProgress, phaseRequirementIds, shown, siblingArtifacts]);
   // VIEW-06: a registered manifest, or fallback.ts's synthesized structural-read manifest — one
   // dispatch path either way (`resolveView` itself stays registry-only, for 05-06's completeness
   // test).
@@ -549,13 +582,45 @@ export function ArtifactPage(): React.JSX.Element {
     if (!manifest || !viewInput) return null;
     return manifest.brief?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // quick-260929-3x3 (sketch-008 A): the RESEARCH briefing, when the resolved manifest opts into
+  // one — `null` for every kind that keeps the pre-existing promoted-block/B3/brief view, and for
+  // a payload from a server that predates `structured.briefing` (the promoted-block view then
+  // renders).
+  const briefing = useMemo<ComposedResearchBriefing | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.briefing?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
+  // "In the source only" entries switch to Source mode, then scroll to the named heading once the
+  // source document has mounted. The pending id lives in a ref and is cleared only when the frame
+  // callback fires, so a re-run of the effect (StrictMode) still lands on it.
+  const pendingSourceId = useRef<string | null>(null);
+  const showSource = useCallback((id: string | null) => {
+    pendingSourceId.current = id;
+    setMode('source');
+  }, []);
+  useEffect(() => {
+    if (mode !== 'source' || pendingSourceId.current === null) return;
+    const frame = window.requestAnimationFrame(() => {
+      const id = pendingSourceId.current;
+      pendingSourceId.current = null;
+      if (id === null) return;
+      const reducedMotion =
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.document
+        .getElementById(id)
+        ?.scrollIntoView({ block: 'start', behavior: reducedMotion ? 'auto' : 'smooth' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [mode]);
   const onRequireView = useCallback(() => setMode('view'), []);
   const folds = useChapterFolds(layout, { onRequireView });
   const renderHtml = useCallback(
     (html: string) => (shown ? <DocumentView document={{ ...shown, html, headings: [] }} /> : null),
     [shown],
   );
-  const viewAvailable = layout !== null || brief !== null || (composed !== null && composed.blocks.length > 0);
+  const viewAvailable =
+    layout !== null || brief !== null || briefing !== null || (composed !== null && composed.blocks.length > 0);
 
   if (query.isPending) {
     return (
@@ -616,6 +681,9 @@ export function ArtifactPage(): React.JSX.Element {
   // the stripped H1.
   const kindLabel = humanizeKind(artifact.kind);
   const coverTitle = layout || brief ? splitPhaseTitle(artifact.title, kindLabel) : null;
+  // The RESEARCH briefing's cover replaces the header's copy in View mode only; Source mode keeps
+  // the plain header (the same rule the CONTEXT brief follows).
+  const cover = briefing && mode === 'view' ? briefing : null;
   return (
     <main className="artifact-page page-stack">
       <ArtifactHeader
@@ -623,14 +691,22 @@ export function ArtifactPage(): React.JSX.Element {
         eyebrow={
           brief
             ? brief.intro.eyebrow
-            : coverTitle?.phase
-              ? `${coverTitle.phase} · ${kindLabel}`
-              : kindLabel
+            : cover
+              ? cover.intro.eyebrow
+              : coverTitle?.phase
+                ? `${coverTitle.phase} · ${kindLabel}`
+                : kindLabel
         }
-        title={brief?.intro.title ?? coverTitle?.title ?? artifact.title}
+        title={brief?.intro.title ?? cover?.intro.title ?? coverTitle?.title ?? artifact.title}
         path={artifact.path}
-        lead={brief ? null : (manifest?.lead ?? null)}
-        meta={brief ? <ContextIntroMeta intro={brief.intro} /> : undefined}
+        lead={brief || cover ? null : (manifest?.lead ?? null)}
+        meta={
+          brief ? (
+            <ContextIntroMeta intro={brief.intro} />
+          ) : cover ? (
+            <ResearchIntroMeta intro={cover.intro} />
+          ) : undefined
+        }
         cover={
           layout
             ? {
@@ -740,6 +816,8 @@ export function ArtifactPage(): React.JSX.Element {
             <ContextBriefView brief={brief} renderHtml={renderHtml} />
           </article>
         </div>
+      ) : briefing && mode === 'view' ? (
+        <ResearchBriefingView briefing={briefing} onShowSource={showSource} title={artifact.title} />
       ) : viewAvailable && mode === 'view' && composed && shown ? (
         <ViewReader title={artifact.title} composed={composed} shown={shown} />
       ) : (

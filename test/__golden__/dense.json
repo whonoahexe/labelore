@@ -3385,7 +3385,208 @@
                 "bodyHash": "54a47c260908ab0432aad04fa7949c85d8c96303f7c84ac168f42e258e06ad69",
                 "mtimeMs": 0,
                 "warnings": [],
-                "structured": {}
+                "structured": {
+                  "briefing": {
+                    "meta": {
+                      "title": "Identity Slice",
+                      "phase": "1",
+                      "quickId": null,
+                      "researched": "2026-06-06",
+                      "domain": "Fixture authoring against gsd-core's own artifact contract",
+                      "confidence": {
+                        "raw": "HIGH",
+                        "level": "HIGH"
+                      },
+                      "preamble": [],
+                      "breakdown": [
+                        {
+                          "area": "Standard stack",
+                          "level": "HIGH",
+                          "note": "this is a fixture, not a claim about real technology"
+                        },
+                        {
+                          "area": "Architecture",
+                          "level": "HIGH",
+                          "note": "same reason"
+                        },
+                        {
+                          "area": "Pitfalls",
+                          "level": "HIGH",
+                          "note": "same reason"
+                        },
+                        {
+                          "area": "Code examples",
+                          "level": "HIGH",
+                          "note": "same reason"
+                        }
+                      ],
+                      "breakdownText": null,
+                      "validUntil": "N/A — fixture document, does not go stale",
+                      "validUntilShort": "N/A",
+                      "researchDate": "2026-06-06"
+                    },
+                    "summary": {
+                      "paragraphs": [
+                        {
+                          "kind": "paragraph",
+                          "text": "This is a synthetic research document, authored to give the identity-slice phase a realistic `01-RESEARCH.md` to parse. No real research was performed — this file exists to exercise the \"NN-RESEARCH.md\" artifact type's frontmatter-free, fixed-section-tag grammar."
+                        }
+                      ],
+                      "recommendation": "N/A — fixture-only document."
+                    },
+                    "stack": {
+                      "intro": [],
+                      "groups": [
+                        {
+                          "label": "Core",
+                          "kind": "core",
+                          "packages": [
+                            {
+                              "name": "(none)",
+                              "version": "-",
+                              "date": null,
+                              "purpose": "This is a fixture, not a real research document",
+                              "why": "-",
+                              "sus": false,
+                              "pinned": false,
+                              "hostBinary": false
+                            }
+                          ],
+                          "notes": []
+                        }
+                      ],
+                      "alternatives": [],
+                      "installation": false,
+                      "versionVerification": false
+                    },
+                    "audit": null,
+                    "architecture": {
+                      "intro": [],
+                      "diagram": null,
+                      "structure": {
+                        "text": "fixtures/dense/\n├── .planning/       # the tree this research document lives inside",
+                        "notes": []
+                      },
+                      "patterns": [],
+                      "antiPatterns": []
+                    },
+                    "handRoll": {
+                      "rows": [
+                        {
+                          "problem": "Fixture authoring",
+                          "dont": "Ad-hoc example files",
+                          "use": "Templates in `~/.claude/gsd-core/templates/`",
+                          "why": "Traceability (D-01)"
+                        }
+                      ],
+                      "insight": null,
+                      "notes": []
+                    },
+                    "pitfalls": {
+                      "items": [
+                        {
+                          "number": 1,
+                          "title": "Overfitting to one real project",
+                          "severity": null,
+                          "code": null,
+                          "tag": null,
+                          "rows": [
+                            {
+                              "label": "What goes wrong",
+                              "text": "A parser assumes shapes only `~/studio-portal` happens to have",
+                              "code": []
+                            },
+                            {
+                              "label": "Why it happens",
+                              "text": "It's the only real project on the machine",
+                              "code": []
+                            },
+                            {
+                              "label": "How to avoid",
+                              "text": "Derive shapes from `gsd-core` templates instead (D-01)",
+                              "code": []
+                            },
+                            {
+                              "label": "Warning signs",
+                              "text": "Code comments like \"studio-portal always has...\"",
+                              "code": []
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "questions": null,
+                    "environment": null,
+                    "sources": {
+                      "tiers": [
+                        {
+                          "tier": "primary",
+                          "label": "Primary (HIGH confidence)",
+                          "items": [
+                            "`~/.claude/gsd-core/templates/research.md` — the template this file follows"
+                          ]
+                        }
+                      ]
+                    },
+                    "userConstraints": null,
+                    "requirements": null,
+                    "responsibilityMap": null,
+                    "sections": [
+                      {
+                        "heading": "Summary",
+                        "role": "summary",
+                        "rendered": true
+                      },
+                      {
+                        "heading": "Standard Stack",
+                        "role": "stack",
+                        "rendered": true
+                      },
+                      {
+                        "heading": "Architecture Patterns",
+                        "role": "architecture",
+                        "rendered": true
+                      },
+                      {
+                        "heading": "Don't Hand-Roll",
+                        "role": "handRoll",
+                        "rendered": true
+                      },
+                      {
+                        "heading": "Common Pitfalls",
+                        "role": "pitfalls",
+                        "rendered": true
+                      },
+                      {
+                        "heading": "Code Examples",
+                        "role": "sourceOnly",
+                        "rendered": false
+                      },
+                      {
+                        "heading": "Sources",
+                        "role": "sources",
+                        "rendered": true
+                      },
+                      {
+                        "heading": "Metadata",
+                        "role": "metadata",
+                        "rendered": false
+                      }
+                    ],
+                    "sourceOnly": [
+                      {
+                        "label": "Code Examples",
+                        "heading": "Code Examples",
+                        "parentHeading": null
+                      },
+                      {
+                        "label": "Metadata",
+                        "heading": "Metadata",
+                        "parentHeading": null
+                      }
+                    ]
+                  }
+                }
               },
               ".planning/phases/01-identity-slice/01-SECURITY.md": {
                 "id": ".planning/phases/01-identity-slice/01-SECURITY.md",
@@ -6316,7 +6517,208 @@
             "bodyHash": "54a47c260908ab0432aad04fa7949c85d8c96303f7c84ac168f42e258e06ad69",
             "mtimeMs": 0,
             "warnings": [],
-            "structured": {}
+            "structured": {
+              "briefing": {
+                "meta": {
+                  "title": "Identity Slice",
+                  "phase": "1",
+                  "quickId": null,
+                  "researched": "2026-06-06",
+                  "domain": "Fixture authoring against gsd-core's own artifact contract",
+                  "confidence": {
+                    "raw": "HIGH",
+                    "level": "HIGH"
+                  },
+                  "preamble": [],
+                  "breakdown": [
+                    {
+                      "area": "Standard stack",
+                      "level": "HIGH",
+                      "note": "this is a fixture, not a claim about real technology"
+                    },
+                    {
+                      "area": "Architecture",
+                      "level": "HIGH",
+                      "note": "same reason"
+                    },
+                    {
+                      "area": "Pitfalls",
+                      "level": "HIGH",
+                      "note": "same reason"
+                    },
+                    {
+                      "area": "Code examples",
+                      "level": "HIGH",
+                      "note": "same reason"
+                    }
+                  ],
+                  "breakdownText": null,
+                  "validUntil": "N/A — fixture document, does not go stale",
+                  "validUntilShort": "N/A",
+                  "researchDate": "2026-06-06"
+                },
+                "summary": {
+                  "paragraphs": [
+                    {
+                      "kind": "paragraph",
+                      "text": "This is a synthetic research document, authored to give the identity-slice phase a realistic `01-RESEARCH.md` to parse. No real research was performed — this file exists to exercise the \"NN-RESEARCH.md\" artifact type's frontmatter-free, fixed-section-tag grammar."
+                    }
+                  ],
+                  "recommendation": "N/A — fixture-only document."
+                },
+                "stack": {
+                  "intro": [],
+                  "groups": [
+                    {
+                      "label": "Core",
+                      "kind": "core",
+                      "packages": [
+                        {
+                          "name": "(none)",
+                          "version": "-",
+                          "date": null,
+                          "purpose": "This is a fixture, not a real research document",
+                          "why": "-",
+                          "sus": false,
+                          "pinned": false,
+                          "hostBinary": false
+                        }
+                      ],
+                      "notes": []
+                    }
+                  ],
+                  "alternatives": [],
+                  "installation": false,
+                  "versionVerification": false
+                },
+                "audit": null,
+                "architecture": {
+                  "intro": [],
+                  "diagram": null,
+                  "structure": {
+                    "text": "fixtures/dense/\n├── .planning/       # the tree this research document lives inside",
+                    "notes": []
+                  },
+                  "patterns": [],
+                  "antiPatterns": []
+                },
+                "handRoll": {
+                  "rows": [
+                    {
+                      "problem": "Fixture authoring",
+                      "dont": "Ad-hoc example files",
+                      "use": "Templates in `~/.claude/gsd-core/templates/`",
+                      "why": "Traceability (D-01)"
+                    }
+                  ],
+                  "insight": null,
+                  "notes": []
+                },
+                "pitfalls": {
+                  "items": [
+                    {
+                      "number": 1,
+                      "title": "Overfitting to one real project",
+                      "severity": null,
+                      "code": null,
+                      "tag": null,
+                      "rows": [
+                        {
+                          "label": "What goes wrong",
+                          "text": "A parser assumes shapes only `~/studio-portal` happens to have",
+                          "code": []
+                        },
+                        {
+                          "label": "Why it happens",
+                          "text": "It's the only real project on the machine",
+                          "code": []
+                        },
+                        {
+                          "label": "How to avoid",
+                          "text": "Derive shapes from `gsd-core` templates instead (D-01)",
+                          "code": []
+                        },
+                        {
+                          "label": "Warning signs",
+                          "text": "Code comments like \"studio-portal always has...\"",
+                          "code": []
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "questions": null,
+                "environment": null,
+                "sources": {
+                  "tiers": [
+                    {
+                      "tier": "primary",
+                      "label": "Primary (HIGH confidence)",
+                      "items": [
+                        "`~/.claude/gsd-core/templates/research.md` — the template this file follows"
+                      ]
+                    }
+                  ]
+                },
+                "userConstraints": null,
+                "requirements": null,
+                "responsibilityMap": null,
+                "sections": [
+                  {
+                    "heading": "Summary",
+                    "role": "summary",
+                    "rendered": true
+                  },
+                  {
+                    "heading": "Standard Stack",
+                    "role": "stack",
+                    "rendered": true
+                  },
+                  {
+                    "heading": "Architecture Patterns",
+                    "role": "architecture",
+                    "rendered": true
+                  },
+                  {
+                    "heading": "Don't Hand-Roll",
+                    "role": "handRoll",
+                    "rendered": true
+                  },
+                  {
+                    "heading": "Common Pitfalls",
+                    "role": "pitfalls",
+                    "rendered": true
+                  },
+                  {
+                    "heading": "Code Examples",
+                    "role": "sourceOnly",
+                    "rendered": false
+                  },
+                  {
+                    "heading": "Sources",
+                    "role": "sources",
+                    "rendered": true
+                  },
+                  {
+                    "heading": "Metadata",
+                    "role": "metadata",
+                    "rendered": false
+                  }
+                ],
+                "sourceOnly": [
+                  {
+                    "label": "Code Examples",
+                    "heading": "Code Examples",
+                    "parentHeading": null
+                  },
+                  {
+                    "label": "Metadata",
+                    "heading": "Metadata",
+                    "parentHeading": null
+                  }
+                ]
+              }
+            }
           },
           ".planning/phases/01-identity-slice/01-SECURITY.md": {
             "id": ".planning/phases/01-identity-slice/01-SECURITY.md",
@@ -8122,7 +8524,208 @@
                   "bodyHash": "54a47c260908ab0432aad04fa7949c85d8c96303f7c84ac168f42e258e06ad69",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "briefing": {
+                      "meta": {
+                        "title": "Identity Slice",
+                        "phase": "1",
+                        "quickId": null,
+                        "researched": "2026-06-06",
+                        "domain": "Fixture authoring against gsd-core's own artifact contract",
+                        "confidence": {
+                          "raw": "HIGH",
+                          "level": "HIGH"
+                        },
+                        "preamble": [],
+                        "breakdown": [
+                          {
+                            "area": "Standard stack",
+                            "level": "HIGH",
+                            "note": "this is a fixture, not a claim about real technology"
+                          },
+                          {
+                            "area": "Architecture",
+                            "level": "HIGH",
+                            "note": "same reason"
+                          },
+                          {
+                            "area": "Pitfalls",
+                            "level": "HIGH",
+                            "note": "same reason"
+                          },
+                          {
+                            "area": "Code examples",
+                            "level": "HIGH",
+                            "note": "same reason"
+                          }
+                        ],
+                        "breakdownText": null,
+                        "validUntil": "N/A — fixture document, does not go stale",
+                        "validUntilShort": "N/A",
+                        "researchDate": "2026-06-06"
+                      },
+                      "summary": {
+                        "paragraphs": [
+                          {
+                            "kind": "paragraph",
+                            "text": "This is a synthetic research document, authored to give the identity-slice phase a realistic `01-RESEARCH.md` to parse. No real research was performed — this file exists to exercise the \"NN-RESEARCH.md\" artifact type's frontmatter-free, fixed-section-tag grammar."
+                          }
+                        ],
+                        "recommendation": "N/A — fixture-only document."
+                      },
+                      "stack": {
+                        "intro": [],
+                        "groups": [
+                          {
+                            "label": "Core",
+                            "kind": "core",
+                            "packages": [
+                              {
+                                "name": "(none)",
+                                "version": "-",
+                                "date": null,
+                                "purpose": "This is a fixture, not a real research document",
+                                "why": "-",
+                                "sus": false,
+                                "pinned": false,
+                                "hostBinary": false
+                              }
+                            ],
+                            "notes": []
+                          }
+                        ],
+                        "alternatives": [],
+                        "installation": false,
+                        "versionVerification": false
+                      },
+                      "audit": null,
+                      "architecture": {
+                        "intro": [],
+                        "diagram": null,
+                        "structure": {
+                          "text": "fixtures/dense/\n├── .planning/       # the tree this research document lives inside",
+                          "notes": []
+                        },
+                        "patterns": [],
+                        "antiPatterns": []
+                      },
+                      "handRoll": {
+                        "rows": [
+                          {
+                            "problem": "Fixture authoring",
+                            "dont": "Ad-hoc example files",
+                            "use": "Templates in `~/.claude/gsd-core/templates/`",
+                            "why": "Traceability (D-01)"
+                          }
+                        ],
+                        "insight": null,
+                        "notes": []
+                      },
+                      "pitfalls": {
+                        "items": [
+                          {
+                            "number": 1,
+                            "title": "Overfitting to one real project",
+                            "severity": null,
+                            "code": null,
+                            "tag": null,
+                            "rows": [
+                              {
+                                "label": "What goes wrong",
+                                "text": "A parser assumes shapes only `~/studio-portal` happens to have",
+                                "code": []
+                              },
+                              {
+                                "label": "Why it happens",
+                                "text": "It's the only real project on the machine",
+                                "code": []
+                              },
+                              {
+                                "label": "How to avoid",
+                                "text": "Derive shapes from `gsd-core` templates instead (D-01)",
+                                "code": []
+                              },
+                              {
+                                "label": "Warning signs",
+                                "text": "Code comments like \"studio-portal always has...\"",
+                                "code": []
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      "questions": null,
+                      "environment": null,
+                      "sources": {
+                        "tiers": [
+                          {
+                            "tier": "primary",
+                            "label": "Primary (HIGH confidence)",
+                            "items": [
+                              "`~/.claude/gsd-core/templates/research.md` — the template this file follows"
+                            ]
+                          }
+                        ]
+                      },
+                      "userConstraints": null,
+                      "requirements": null,
+                      "responsibilityMap": null,
+                      "sections": [
+                        {
+                          "heading": "Summary",
+                          "role": "summary",
+                          "rendered": true
+                        },
+                        {
+                          "heading": "Standard Stack",
+                          "role": "stack",
+                          "rendered": true
+                        },
+                        {
+                          "heading": "Architecture Patterns",
+                          "role": "architecture",
+                          "rendered": true
+                        },
+                        {
+                          "heading": "Don't Hand-Roll",
+                          "role": "handRoll",
+                          "rendered": true
+                        },
+                        {
+                          "heading": "Common Pitfalls",
+                          "role": "pitfalls",
+                          "rendered": true
+                        },
+                        {
+                          "heading": "Code Examples",
+                          "role": "sourceOnly",
+                          "rendered": false
+                        },
+                        {
+                          "heading": "Sources",
+                          "role": "sources",
+                          "rendered": true
+                        },
+                        {
+                          "heading": "Metadata",
+                          "role": "metadata",
+                          "rendered": false
+                        }
+                      ],
+                      "sourceOnly": [
+                        {
+                          "label": "Code Examples",
+                          "heading": "Code Examples",
+                          "parentHeading": null
+                        },
+                        {
+                          "label": "Metadata",
+                          "heading": "Metadata",
+                          "parentHeading": null
+                        }
+                      ]
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-SECURITY.md": {
                   "id": ".planning/phases/01-identity-slice/01-SECURITY.md",
@@ -9525,7 +10128,208 @@
                   "bodyHash": "54a47c260908ab0432aad04fa7949c85d8c96303f7c84ac168f42e258e06ad69",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "briefing": {
+                      "meta": {
+                        "title": "Identity Slice",
+                        "phase": "1",
+                        "quickId": null,
+                        "researched": "2026-06-06",
+                        "domain": "Fixture authoring against gsd-core's own artifact contract",
+                        "confidence": {
+                          "raw": "HIGH",
+                          "level": "HIGH"
+                        },
+                        "preamble": [],
+                        "breakdown": [
+                          {
+                            "area": "Standard stack",
+                            "level": "HIGH",
+                            "note": "this is a fixture, not a claim about real technology"
+                          },
+                          {
+                            "area": "Architecture",
+                            "level": "HIGH",
+                            "note": "same reason"
+                          },
+                          {
+                            "area": "Pitfalls",
+                            "level": "HIGH",
+                            "note": "same reason"
+                          },
+                          {
+                            "area": "Code examples",
+                            "level": "HIGH",
+                            "note": "same reason"
+                          }
+                        ],
+                        "breakdownText": null,
+                        "validUntil": "N/A — fixture document, does not go stale",
+                        "validUntilShort": "N/A",
+                        "researchDate": "2026-06-06"
+                      },
+                      "summary": {
+                        "paragraphs": [
+                          {
+                            "kind": "paragraph",
+                            "text": "This is a synthetic research document, authored to give the identity-slice phase a realistic `01-RESEARCH.md` to parse. No real research was performed — this file exists to exercise the \"NN-RESEARCH.md\" artifact type's frontmatter-free, fixed-section-tag grammar."
+                          }
+                        ],
+                        "recommendation": "N/A — fixture-only document."
+                      },
+                      "stack": {
+                        "intro": [],
+                        "groups": [
+                          {
+                            "label": "Core",
+                            "kind": "core",
+                            "packages": [
+                              {
+                                "name": "(none)",
+                                "version": "-",
+                                "date": null,
+                                "purpose": "This is a fixture, not a real research document",
+                                "why": "-",
+                                "sus": false,
+                                "pinned": false,
+                                "hostBinary": false
+                              }
+                            ],
+                            "notes": []
+                          }
+                        ],
+                        "alternatives": [],
+                        "installation": false,
+                        "versionVerification": false
+                      },
+                      "audit": null,
+                      "architecture": {
+                        "intro": [],
+                        "diagram": null,
+                        "structure": {
+                          "text": "fixtures/dense/\n├── .planning/       # the tree this research document lives inside",
+                          "notes": []
+                        },
+                        "patterns": [],
+                        "antiPatterns": []
+                      },
+                      "handRoll": {
+                        "rows": [
+                          {
+                            "problem": "Fixture authoring",
+                            "dont": "Ad-hoc example files",
+                            "use": "Templates in `~/.claude/gsd-core/templates/`",
+                            "why": "Traceability (D-01)"
+                          }
+                        ],
+                        "insight": null,
+                        "notes": []
+                      },
+                      "pitfalls": {
+                        "items": [
+                          {
+                            "number": 1,
+                            "title": "Overfitting to one real project",
+                            "severity": null,
+                            "code": null,
+                            "tag": null,
+                            "rows": [
+                              {
+                                "label": "What goes wrong",
+                                "text": "A parser assumes shapes only `~/studio-portal` happens to have",
+                                "code": []
+                              },
+                              {
+                                "label": "Why it happens",
+                                "text": "It's the only real project on the machine",
+                                "code": []
+                              },
+                              {
+                                "label": "How to avoid",
+                                "text": "Derive shapes from `gsd-core` templates instead (D-01)",
+                                "code": []
+                              },
+                              {
+                                "label": "Warning signs",
+                                "text": "Code comments like \"studio-portal always has...\"",
+                                "code": []
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      "questions": null,
+                      "environment": null,
+                      "sources": {
+                        "tiers": [
+                          {
+                            "tier": "primary",
+                            "label": "Primary (HIGH confidence)",
+                            "items": [
+                              "`~/.claude/gsd-core/templates/research.md` — the template this file follows"
+                            ]
+                          }
+                        ]
+                      },
+                      "userConstraints": null,
+                      "requirements": null,
+                      "responsibilityMap": null,
+                      "sections": [
+                        {
+                          "heading": "Summary",
+                          "role": "summary",
+                          "rendered": true
+                        },
+                        {
+                          "heading": "Standard Stack",
+                          "role": "stack",
+                          "rendered": true
+                        },
+                        {
+                          "heading": "Architecture Patterns",
+                          "role": "architecture",
+                          "rendered": true
+                        },
+                        {
+                          "heading": "Don't Hand-Roll",
+                          "role": "handRoll",
+                          "rendered": true
+                        },
+                        {
+                          "heading": "Common Pitfalls",
+                          "role": "pitfalls",
+                          "rendered": true
+                        },
+                        {
+                          "heading": "Code Examples",
+                          "role": "sourceOnly",
+                          "rendered": false
+                        },
+                        {
+                          "heading": "Sources",
+                          "role": "sources",
+                          "rendered": true
+                        },
+                        {
+                          "heading": "Metadata",
+                          "role": "metadata",
+                          "rendered": false
+                        }
+                      ],
+                      "sourceOnly": [
+                        {
+                          "label": "Code Examples",
+                          "heading": "Code Examples",
+                          "parentHeading": null
+                        },
+                        {
+                          "label": "Metadata",
+                          "heading": "Metadata",
+                          "parentHeading": null
+                        }
+                      ]
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-SECURITY.md": {
                   "id": ".planning/phases/01-identity-slice/01-SECURITY.md",
@@ -10928,7 +11732,208 @@
                   "bodyHash": "54a47c260908ab0432aad04fa7949c85d8c96303f7c84ac168f42e258e06ad69",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "briefing": {
+                      "meta": {
+                        "title": "Identity Slice",
+                        "phase": "1",
+                        "quickId": null,
+                        "researched": "2026-06-06",
+                        "domain": "Fixture authoring against gsd-core's own artifact contract",
+                        "confidence": {
+                          "raw": "HIGH",
+                          "level": "HIGH"
+                        },
+                        "preamble": [],
+                        "breakdown": [
+                          {
+                            "area": "Standard stack",
+                            "level": "HIGH",
+                            "note": "this is a fixture, not a claim about real technology"
+                          },
+                          {
+                            "area": "Architecture",
+                            "level": "HIGH",
+                            "note": "same reason"
+                          },
+                          {
+                            "area": "Pitfalls",
+                            "level": "HIGH",
+                            "note": "same reason"
+                          },
+                          {
+                            "area": "Code examples",
+                            "level": "HIGH",
+                            "note": "same reason"
+                          }
+                        ],
+                        "breakdownText": null,
+                        "validUntil": "N/A — fixture document, does not go stale",
+                        "validUntilShort": "N/A",
+                        "researchDate": "2026-06-06"
+                      },
+                      "summary": {
+                        "paragraphs": [
+                          {
+                            "kind": "paragraph",
+                            "text": "This is a synthetic research document, authored to give the identity-slice phase a realistic `01-RESEARCH.md` to parse. No real research was performed — this file exists to exercise the \"NN-RESEARCH.md\" artifact type's frontmatter-free, fixed-section-tag grammar."
+                          }
+                        ],
+                        "recommendation": "N/A — fixture-only document."
+                      },
+                      "stack": {
+                        "intro": [],
+                        "groups": [
+                          {
+                            "label": "Core",
+                            "kind": "core",
+                            "packages": [
+                              {
+                                "name": "(none)",
+                                "version": "-",
+                                "date": null,
+                                "purpose": "This is a fixture, not a real research document",
+                                "why": "-",
+                                "sus": false,
+                                "pinned": false,
+                                "hostBinary": false
+                              }
+                            ],
+                            "notes": []
+                          }
+                        ],
+                        "alternatives": [],
+                        "installation": false,
+                        "versionVerification": false
+                      },
+                      "audit": null,
+                      "architecture": {
+                        "intro": [],
+                        "diagram": null,
+                        "structure": {
+                          "text": "fixtures/dense/\n├── .planning/       # the tree this research document lives inside",
+                          "notes": []
+                        },
+                        "patterns": [],
+                        "antiPatterns": []
+                      },
+                      "handRoll": {
+                        "rows": [
+                          {
+                            "problem": "Fixture authoring",
+                            "dont": "Ad-hoc example files",
+                            "use": "Templates in `~/.claude/gsd-core/templates/`",
+                            "why": "Traceability (D-01)"
+                          }
+                        ],
+                        "insight": null,
+                        "notes": []
+                      },
+                      "pitfalls": {
+                        "items": [
+                          {
+                            "number": 1,
+                            "title": "Overfitting to one real project",
+                            "severity": null,
+                            "code": null,
+                            "tag": null,
+                            "rows": [
+                              {
+                                "label": "What goes wrong",
+                                "text": "A parser assumes shapes only `~/studio-portal` happens to have",
+                                "code": []
+                              },
+                              {
+                                "label": "Why it happens",
+                                "text": "It's the only real project on the machine",
+                                "code": []
+                              },
+                              {
+                                "label": "How to avoid",
+                                "text": "Derive shapes from `gsd-core` templates instead (D-01)",
+                                "code": []
+                              },
+                              {
+                                "label": "Warning signs",
+                                "text": "Code comments like \"studio-portal always has...\"",
+                                "code": []
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      "questions": null,
+                      "environment": null,
+                      "sources": {
+                        "tiers": [
+                          {
+                            "tier": "primary",
+                            "label": "Primary (HIGH confidence)",
+                            "items": [
+                              "`~/.claude/gsd-core/templates/research.md` — the template this file follows"
+                            ]
+                          }
+                        ]
+                      },
+                      "userConstraints": null,
+                      "requirements": null,
+                      "responsibilityMap": null,
+                      "sections": [
+                        {
+                          "heading": "Summary",
+                          "role": "summary",
+                          "rendered": true
+                        },
+                        {
+                          "heading": "Standard Stack",
+                          "role": "stack",
+                          "rendered": true
+                        },
+                        {
+                          "heading": "Architecture Patterns",
+                          "role": "architecture",
+                          "rendered": true
+                        },
+                        {
+                          "heading": "Don't Hand-Roll",
+                          "role": "handRoll",
+                          "rendered": true
+                        },
+                        {
+                          "heading": "Common Pitfalls",
+                          "role": "pitfalls",
+                          "rendered": true
+                        },
+                        {
+                          "heading": "Code Examples",
+                          "role": "sourceOnly",
+                          "rendered": false
+                        },
+                        {
+                          "heading": "Sources",
+                          "role": "sources",
+                          "rendered": true
+                        },
+                        {
+                          "heading": "Metadata",
+                          "role": "metadata",
+                          "rendered": false
+                        }
+                      ],
+                      "sourceOnly": [
+                        {
+                          "label": "Code Examples",
+                          "heading": "Code Examples",
+                          "parentHeading": null
+                        },
+                        {
+                          "label": "Metadata",
+                          "heading": "Metadata",
+                          "parentHeading": null
+                        }
+                      ]
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-SECURITY.md": {
                   "id": ".planning/phases/01-identity-slice/01-SECURITY.md",
