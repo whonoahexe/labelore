@@ -305,18 +305,13 @@ A statement about scope.
 `;
 
 describe('asides — settled open question', () => {
-  it('composes a resolved aside ahead of amendments and keeps it out of extras', () => {
+  it('renders nowhere: no aside row and no extra', () => {
     const brief = extractContextBrief(RESOLVED_DOC);
     const heading = '⚠️ The STATE.md open question is already answered — do not re-research it';
     const groups = groupsFor(['Phase Boundary', heading, 'Requirement amendments']);
     const composed = composeContextBrief(baseInput(brief, { groups }));
 
-    expect(composed?.asides.map((a) => [a.id, a.kind])).toEqual([
-      ['context-resolved', 'resolved'],
-      ['context-amendments', 'amendments'],
-    ]);
-    expect(composed!.asides[0].label).toBe('The STATE.md open question is already answered — do not re-research it');
-    expect(composed!.asides[0].count).toBe(0);
+    expect(composed?.asides.map((a) => a.id)).toEqual(['context-amendments']);
     expect(composed?.extras.map((g) => g.heading)).not.toContain(heading);
   });
 });

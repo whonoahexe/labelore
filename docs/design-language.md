@@ -227,9 +227,9 @@ element is actually written, regardless of class name:
   (`--muted-foreground`, brightening only to `--foreground` on hover) on hairline rules
   (`--border`) — no card, no status-chip tone, no hero stat, and no `--primary`. A
   `<resolved_open_question>` section (or a heading reading "Resolved open question…" / "…open
-  question is already answered…") is back matter of the same kind: a settled question the planner
-  must not re-open, surfaced as the first `.view-context-aside` row, labelled with its own heading,
-  never as a raw extra between the scope block and the register.
+  question is already answered…") is a note to the researcher, not to the reader: it is recognised
+  so it never falls through as a raw extra, and View mode then omits it entirely (Source mode still
+  shows it).
 - **The 10% accent reservation extends to the CONTEXT brief's In-this-phase card.** (quick-260923-lju)
   `.immediate-work`'s existing top rule is reused verbatim for the brief's accent "In this phase"
   card, plus the ✓ marks in its list and the "Claude decides" label under a tagged decision. No
