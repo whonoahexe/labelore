@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-09-28T11:12:25.481Z"
+last_updated: "2026-09-28T14:19:53.787Z"
 last_activity: 2026-09-25
 last_activity_desc: Completed quick task 260925-3ug (sketch-007 C ideas block)
-state_head: a211c1487c37fb5f830056a19446f82f71ac77b7
+state_head: 81a1859db46eb8027665a04961c9741e50ea5486
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -123,6 +123,7 @@ None.
 | 6 | CONTEXT scope block: top rules meet at the divider | 2026-09-24 | 513822e | — |
 | 7 | CONTEXT In-list: capitalise items | 2026-09-24 | e48bb52 | — |
 | 10 | Loosen spacing in Specific ideas and Deferred on the context page | 2026-09-28 | a211c14 | — |
+| 11 | Keep the scope check/text grid off In's prose fallback on CONTEXT briefs | 2026-09-28 | 81a1859 | — |
 
 ## Deferred Items
 
