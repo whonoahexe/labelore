@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-09-28T16:24:59.510Z"
+last_updated: "2026-09-28T16:33:29.041Z"
 last_activity: 2026-09-25
 last_activity_desc: Completed quick task 260925-3ug (sketch-007 C ideas block)
-state_head: a68e58ea56b38d81aa2eeeb748227ed6793f5da7
+state_head: 9703918cb113c086ad46c9898bdaa6ad3361c4b4
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -127,6 +127,7 @@ None.
 | 12 | Start Deferred fate groups collapsed on CONTEXT briefs | 2026-09-28 | 0bff11a | — |
 | 13 | Fit the CONTEXT amendments table to its row (wrapping, hairline, muted header) | 2026-09-28 | 8d3822b | — |
 | 14 | Show a settled open question (<resolved_open_question>) as a CONTEXT back-matter row, not a raw extra | 2026-09-28 | a68e58e | — |
+| 15 | Stop rendering the settled open question on CONTEXT briefs (recognised, hidden in View) | 2026-09-28 | 9703918 | — |
 
 ## Deferred Items
 
