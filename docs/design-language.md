@@ -145,13 +145,13 @@ is always to add the missing name to this document, never to edit the reference 
 
 | Tone | Meaning | Used for |
 |------|---------|----------|
-| `active` | In progress / currently selected — accent-tinted | A chosen discussion-log option, the current phase while in progress, an active outline entry, a sketch-004 B3 item's "Chosen"/"Claude chose" state chip, (quick-260923-jxp) a discussion item's "Custom answer" state chip, and (quick-260925-3ug) a CONTEXT specific idea's Rule chip |
-| `complete` | Finished / matched — accent-tinted (shares styling with `active`) | A completed phase or plan, an exact traceability match, a sketch-004 B3 document's "N of N decided"/"Passed" cover status and a fully-verified item's state chip |
-| `quiet` | Neutral coverage gap — muted-foreground, never alarming | An unrecognized/unmanifested type, a non-exact traceability match, a phase not yet started, every sketch-004 B3 roll-up chip and Also-chapter panel chip, and (quick-260923-jxp) an unresolved discussion item's "Open" state chip, a chosen answer's qualifier chip, a declined-area ghost row's "Not discussed" chip, and (quick-260925-3ug) a CONTEXT specific idea's Note chip |
+| `active` | In progress / currently selected — accent-tinted | A chosen discussion-log option, the current phase while in progress, an active outline entry, a sketch-004 B3 item's "Chosen"/"Claude chose" state chip, (quick-260923-jxp) a discussion item's "Custom answer" state chip, and (quick-260925-3ug) a CONTEXT specific idea's Rule chip, and (quick-260929-3x3) a RESEARCH tree's NEW badge |
+| `complete` | Finished / matched — accent-tinted (shares styling with `active`) | A completed phase or plan, an exact traceability match, a sketch-004 B3 document's "N of N decided"/"Passed" cover status and a fully-verified item's state chip, and (quick-260929-3x3) a RESEARCH viable alternative and high (or medium-high) confidence |
+| `quiet` | Neutral coverage gap — muted-foreground, never alarming | An unrecognized/unmanifested type, a non-exact traceability match, a phase not yet started, every sketch-004 B3 roll-up chip and Also-chapter panel chip, and (quick-260923-jxp) an unresolved discussion item's "Open" state chip, a chosen answer's qualifier chip, a declined-area ghost row's "Not discussed" chip, and (quick-260925-3ug) a CONTEXT specific idea's Note chip, and (quick-260929-3x3) on a RESEARCH page a rejected alternative, a resolved open question, an EXISTING tree badge, MEDIUM/LOW pitfall chips, F-codes, already-pinned / host-binary package badges and an OK seam verdict |
 | `destructive` | Genuine read/parse failure only | The "Unreadable" artifact-parse chip; never used for a merely-unrecognized type; never used by any sketch-004 B3 document-content chip (state/rollup/pill), which stay within `active`/`complete`/`quiet`/`in-flight`/`missing` |
 | `warning` | Partial read/parse degradation only | The "Warning" artifact-parse chip; never used by any sketch-004 B3 document-content chip, same rule as `destructive` above |
-| `in-flight` | A phase or item currently being worked, or waiting on someone | Traceability covering-phase signal, a sketch-004 B3 document's "Awaiting checkpoint"/"Gaps found" cover status, and the CONTEXT brief's open questions (open-question chips, an area's "N open" chip, the "open for the researcher" stat and panel rule), and (quick-260925-3ug) a CONTEXT specific idea's Leaning chip plus a deferred idea's "Revisit if" label |
-| `missing` | An expected item that has not appeared | Traceability covering-phase signal, a sketch-004 B3 gap item's "Failed" state chip |
+| `in-flight` | A phase or item currently being worked, or waiting on someone | Traceability covering-phase signal, a sketch-004 B3 document's "Awaiting checkpoint"/"Gaps found" cover status, and the CONTEXT brief's open questions (open-question chips, an area's "N open" chip, the "open for the researcher" stat and panel rule), and (quick-260925-3ug) a CONTEXT specific idea's Leaning chip plus a deferred idea's "Revisit if" label, and (quick-260929-3x3) on a RESEARCH page a SUS package badge and the Flagged lane, a HIGH pitfall, an open question, an EXTEND tree badge, mid/mixed confidence, a later-phase alternative, and the ASSUMED evidence marker |
+| `missing` | An expected item that has not appeared | Traceability covering-phase signal, a sketch-004 B3 gap item's "Failed" state chip, and (quick-260929-3x3) on a RESEARCH page the Removed lane and a SLOP verdict, a CRITICAL pitfall, a blocking environment chip and a ✗, a do-not-use alternative, low confidence, and a bad audit signal (a fresh package, few downloads, no repo) |
 
 ## Families
 
@@ -293,6 +293,27 @@ element is actually written, regardless of class name:
   arrows and node-card tint, and the clean tree's folder names and icons, take `--primary` (the
   NEW chip uses the shared `active` tone). Box cards, connector glyphs, notes and file names stay on
   `--border`, `--background` and the muted foreground.
+- **RESEARCH uses the sketch-008 A briefing, not B3 and not CONTEXT's brief.** (quick-260929-3x3)
+  The `research` manifest declares a `briefing` hook (`composeResearchBriefing`) and keeps its
+  `promote` list only as the fallback for a server payload with no `structured.briefing`. The page
+  opens on a cover — a facts line (Researched date, a confidence chip that opens the per-area
+  breakdown, Valid until) and a quiet muted Domain caption — then the summary lead beside a Primary
+  recommendation callout and an At a glance column (each row jumps to its chapter), then chapters
+  numbered in order over the sections actually present (01 Standard stack … 06 Sources; a document
+  with no architecture renumbers with no gap), collapsed back-matter rows, and an "In the source
+  only" strip. That strip lists every `##` (and unrecognised `###`) the view does not render, in
+  document order, each a link into Source mode at that heading — so nothing is dropped silently.
+- **The legitimacy audit is lanes by verdict.** (quick-260929-3x3, sketch-010 B) Removed · slop,
+  Flagged · suspicious and Approved, at most four items per lane and then "Show N more"; a dashed
+  Approved chip marks a disposition that is not a plain "Approved"; the full seam table sits behind
+  a toggle; a "Not applicable" audit degrades to its prose lines. Document content never takes the
+  parse-degradation tones — the Removed lane and a CRITICAL pitfall use `missing`, the Flagged lane
+  and a HIGH pitfall use `in-flight`.
+- **The 10% accent reservation extends to the RESEARCH briefing.** (quick-260929-3x3) The
+  recommendation callout's left rule and tint, the Core stack label, and the pressed state of the
+  Patterns ⇄ Anti-patterns control take `--primary`. Evidence markers ([VERIFIED] / [CITED] /
+  [ASSUMED]) render as small V / C / A superscripts in the muted foreground, with the ASSUMED
+  marker on `in-flight`; the citation is in the tooltip.
 
 ## Surface-scoped registered names
 
