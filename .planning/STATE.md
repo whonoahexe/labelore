@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-09-28T16:48:28.126Z"
+last_updated: "2026-09-28T16:51:34.501Z"
 last_activity: 2026-09-25
 last_activity_desc: Completed quick task 260925-3ug (sketch-007 C ideas block)
-state_head: 26dfb32b546d0331d321d0fc17f1ab53476b0d72
+state_head: 4019bc4a74dac577dfed457180da2cf0a0be7b54
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -132,6 +132,7 @@ None.
 | 17 | Fix Claude-decides notes rendering as word-fragment columns on CONTEXT decisions | 2026-09-28 | d6a1442 | — |
 | 18 | Fit CONTEXT boundary-note tables to the page and keep their bold lead-in as the title | 2026-09-28 | 60f2f4a | — |
 | 19 | Fold CONTEXT boundary notes (Locked upstream) into the collapsed back-matter rows | 2026-09-28 | 26dfb32 | — |
+| 20 | Lift the 76ch measure off discussion-log endnote prose | 2026-09-28 | 4019bc4 | — |
 
 ## Deferred Items
 
