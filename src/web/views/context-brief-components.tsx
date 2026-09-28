@@ -406,7 +406,11 @@ function DecisionRow({
       {decision.claudeNotes.map((note) => (
         <div className="view-context-claude-note" key={note.id}>
           <span className="view-context-claude-label">Claude decides</span>
-          <Inline text={note.text} refTargets={refTargets} onJump={interaction.jumpTo} />
+          {/* One flex item for the whole sentence: Inline returns a fragment of spans, and each
+              would otherwise become its own shrinking flex column. */}
+          <span>
+            <Inline text={note.text} refTargets={refTargets} onJump={interaction.jumpTo} />
+          </span>
         </div>
       ))}
     </div>

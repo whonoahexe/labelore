@@ -5578,6 +5578,11 @@ button.view-context-summary:hover {
   font-size: var(--fs-3);
 }
 
+.view-context-claude-note > :last-child {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 .view-context-claude-label {
   color: var(--muted-foreground);
   font-family: var(--font-mono);
