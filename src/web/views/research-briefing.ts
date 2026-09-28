@@ -7,6 +7,8 @@
 // payload from an older server still composes.
 import type { Block } from '../../planning-repo/handlers/context-brief.ts';
 import type { ResearchBriefing } from '../../planning-repo/handlers/research-briefing.ts';
+import { isLiftableDiagram } from '../../rendering/ascii-lift.ts';
+import { isDirectoryTree } from '../../rendering/ascii-tree.ts';
 import type { OutlineEntry, ViewInput } from './manifest.ts';
 import { formatGatheredDate } from './context-brief.ts';
 
@@ -64,7 +66,30 @@ export interface ComposedChapterBase {
   kind: string;
 }
 
-export type ComposedChapter = ComposedChapterBase;
+export interface ComposedPattern {
+  title: string;
+  what: string;
+  when: string | null;
+  /** The `###` heading id a quiet "source" link jumps to, when the pattern has more than What/When. */
+  sourceTarget: string | null;
+}
+
+export interface ComposedArchitecture extends ComposedChapterBase {
+  kind: 'architecture';
+  /** `lifted` is true only when the figure is a real diagram (a rectangle or a connector flow);
+   * otherwise it stays a plain framed figure. */
+  diagram: { text: string; caption: Block[]; lifted: boolean } | null;
+  /** `isTree` is true only with three or more tree-prefixed lines; otherwise a plain framed block. */
+  structure: { text: string; isTree: boolean; notes: Block[] } | null;
+  patterns: ComposedPattern[];
+  antiPatterns: { lead: string; rest: string }[];
+  handRoll: {
+    rows: { problem: string; dont: string; use: string; why: string }[];
+    insight: string | null;
+  } | null;
+}
+
+export type ComposedChapter = ComposedArchitecture;
 
 export interface ComposedResearchBriefing {
   intro: ComposedResearchIntro;
@@ -211,9 +236,83 @@ function sourceOnlyOf(briefing: ResearchBriefing, input: ViewInput): ComposedSou
     });
 }
 
-/** Chapters the briefing claims, in the fixed render order — filled in by the chapter builders. */
-function chaptersOf(_briefing: ResearchBriefing, _input: ViewInput): ComposedChapter[] {
-  return [];
+type ChapterDraft = Omit<ComposedArchitecture, 'number'>;
+
+function architectureOf(briefing: ResearchBriefing, input: ViewInput): ChapterDraft | null {
+  const architecture = briefing.architecture ?? null;
+  const handRoll = briefing.handRoll ?? null;
+  const diagramSource = architecture?.diagram ?? null;
+  const structureSource = architecture?.structure ?? null;
+  const subHeadings = new Map<string, string>();
+  for (const heading of input.headings ?? []) {
+    if (heading.depth !== 3) continue;
+    const key = normalizeHeading(heading.text);
+    if (!subHeadings.has(key)) subHeadings.set(key, heading.id);
+  }
+  const patterns = arrayOf<{ heading?: unknown; title?: unknown; what?: unknown; when?: unknown; hasMore?: unknown }>(
+    architecture?.patterns,
+  ).map((pattern): ComposedPattern => {
+    const heading = typeof pattern.heading === 'string' ? normalizeHeading(pattern.heading) : null;
+    return {
+      title: typeof pattern.title === 'string' ? pattern.title : '',
+      what: typeof pattern.what === 'string' ? pattern.what : '',
+      when: stringOrNull(pattern.when),
+      sourceTarget: pattern.hasMore === true && heading ? (subHeadings.get(heading) ?? null) : null,
+    };
+  });
+  const antiPatterns = arrayOf<{ lead?: unknown; rest?: unknown }>(architecture?.antiPatterns).map((entry) => ({
+    lead: typeof entry.lead === 'string' ? entry.lead : '',
+    rest: typeof entry.rest === 'string' ? entry.rest : '',
+  }));
+  const handRollRows = arrayOf<{ problem?: unknown; dont?: unknown; use?: unknown; why?: unknown }>(
+    handRoll?.rows,
+  ).map((row) => ({
+    problem: typeof row.problem === 'string' ? row.problem : '',
+    dont: typeof row.dont === 'string' ? row.dont : '',
+    use: typeof row.use === 'string' ? row.use : '',
+    why: typeof row.why === 'string' ? row.why : '',
+  }));
+  const insight = stringOrNull(handRoll?.insight);
+
+  const diagram =
+    diagramSource && typeof diagramSource.text === 'string'
+      ? {
+          text: diagramSource.text,
+          caption: arrayOf<Block>(diagramSource.caption),
+          lifted: isLiftableDiagram(diagramSource.text),
+        }
+      : null;
+  const structure =
+    structureSource && typeof structureSource.text === 'string'
+      ? {
+          text: structureSource.text,
+          isTree: isDirectoryTree(structureSource.text),
+          notes: arrayOf<Block>(structureSource.notes),
+        }
+      : null;
+  const hasHandRoll = handRollRows.length > 0 || insight !== null;
+  if (!diagram && !structure && patterns.length === 0 && antiPatterns.length === 0 && !hasHandRoll) {
+    return null;
+  }
+  return {
+    id: 'research-architecture',
+    title: 'Architecture',
+    kind: 'architecture',
+    diagram,
+    structure,
+    patterns,
+    antiPatterns,
+    handRoll: hasHandRoll ? { rows: handRollRows, insight } : null,
+  };
+}
+
+/** Chapters the briefing claims, in the fixed render order, numbered sequentially over the ones
+ * actually present (a document with no architecture renumbers with no gap). */
+function chaptersOf(briefing: ResearchBriefing, input: ViewInput): ComposedChapter[] {
+  const drafts: ChapterDraft[] = [];
+  const architecture = architectureOf(briefing, input);
+  if (architecture) drafts.push(architecture);
+  return drafts.map((draft, index) => ({ ...draft, number: String(index + 1).padStart(2, '0') }));
 }
 
 function hasClaimedChapter(briefing: ResearchBriefing): boolean {

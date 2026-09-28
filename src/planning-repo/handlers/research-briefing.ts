@@ -129,6 +129,8 @@ export interface ResearchStructure {
 }
 
 export interface ResearchPattern {
+  /** The `###` heading text as written (`Pattern 3: Title`), so a composer can link to it. */
+  heading: string;
   title: string;
   what: string;
   when: string | null;
@@ -1283,7 +1285,7 @@ function parsePattern(sub: HeadingSection): ResearchPattern | null {
       consumed += 1;
     }
   }
-  return { title, what: what ?? '', when, hasMore: blocks.length > consumed };
+  return { heading, title, what: what ?? '', when, hasMore: blocks.length > consumed };
 }
 
 function parseAntiPatterns(body: string): ResearchAntiPattern[] {

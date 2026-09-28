@@ -9,8 +9,16 @@ import { ChevronDown } from 'lucide-react';
 import type { Block } from '../../planning-repo/handlers/context-brief.ts';
 import { tokenizeInline } from './inline-markdown.ts';
 import type { InlineToken } from './inline-markdown.ts';
-import type { ComposedResearchBriefing, ComposedResearchIntro } from './research-briefing.ts';
+import type {
+  ComposedArchitecture,
+  ComposedChapter,
+  ComposedResearchBriefing,
+  ComposedResearchIntro,
+} from './research-briefing.ts';
 import { DocumentOutline } from '../components/document-outline.tsx';
+import { FigureFrame } from '../components/figure-frame.tsx';
+import { LiftedDiagram, PlainDiagram } from '../components/lifted-diagram.tsx';
+import { CleanTree } from '../components/clean-tree.tsx';
 import { useActiveSection } from '../components/use-active-section.ts';
 
 // ---------------------------------------------------------------------------
@@ -266,6 +274,199 @@ export function ResearchIntroMeta({ intro }: { intro: ComposedResearchIntro }): 
 }
 
 // ---------------------------------------------------------------------------
+// Chapters
+// ---------------------------------------------------------------------------
+
+function ChapterHeading({ chapter }: { chapter: ComposedChapter }): React.JSX.Element {
+  return (
+    <header className="section-heading">
+      <h2>
+        <span className="view-research-chapter-number">{chapter.number}</span>
+        {chapter.title}
+      </h2>
+    </header>
+  );
+}
+
+/** A small uppercase sub-block label with an optional count (`Core 6`). */
+function ChapterLabel({
+  children,
+  count,
+  accent = false,
+}: {
+  children: React.ReactNode;
+  count?: number;
+  accent?: boolean;
+}): React.JSX.Element {
+  return (
+    <p className="view-research-label" data-accent={accent ? 'true' : undefined}>
+      {children}
+      {count !== undefined ? <span className="view-research-count">{count}</span> : null}
+    </p>
+  );
+}
+
+function ArchitectureChapter({
+  chapter,
+  onShowSource,
+}: {
+  chapter: ComposedArchitecture;
+  onShowSource: (id: string | null) => void;
+}): React.JSX.Element {
+  const [mode, setMode] = useState<'patterns' | 'anti'>('patterns');
+  const { diagram, structure, patterns, antiPatterns, handRoll } = chapter;
+  const showAnti = patterns.length === 0 && antiPatterns.length > 0 ? true : mode === 'anti';
+  const both = patterns.length > 0 && antiPatterns.length > 0;
+  return (
+    <section id={chapter.id} className="view-block view-research-chapter">
+      <ChapterHeading chapter={chapter} />
+      {diagram ? (
+        <FigureFrame
+          title="System architecture"
+          caption={diagram.caption.length > 0 ? <ResearchBlocks blocks={diagram.caption} /> : undefined}
+        >
+          {(fit) => (diagram.lifted ? <LiftedDiagram text={diagram.text} fit={fit} /> : <PlainDiagram text={diagram.text} />)}
+        </FigureFrame>
+      ) : null}
+      {structure ? (
+        <div className="view-research-sub">
+          <ChapterLabel>Directory structure</ChapterLabel>
+          {structure.isTree ? (
+            <CleanTree text={structure.text} />
+          ) : (
+            <FigureFrame title="Directory structure">{() => <PlainDiagram text={structure.text} />}</FigureFrame>
+          )}
+          {structure.notes.length > 0 ? (
+            <div className="view-research-note">
+              <ResearchBlocks blocks={structure.notes} />
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+      {patterns.length > 0 || antiPatterns.length > 0 ? (
+        <div className="view-research-sub">
+          {both ? (
+            <div className="view-research-segmented" role="group" aria-label="Patterns or anti-patterns">
+              <button type="button" aria-pressed={!showAnti} onClick={() => setMode('patterns')}>
+                Patterns {patterns.length}
+              </button>
+              <button type="button" aria-pressed={showAnti} onClick={() => setMode('anti')}>
+                Anti-patterns {antiPatterns.length}
+              </button>
+            </div>
+          ) : (
+            <ChapterLabel count={showAnti ? antiPatterns.length : patterns.length}>
+              {showAnti ? 'Anti-patterns' : 'Patterns'}
+            </ChapterLabel>
+          )}
+          {showAnti ? (
+            <ol className="view-research-patterns" data-kind="anti">
+              {antiPatterns.map((entry, index) => (
+                <li key={index}>
+                  <div>
+                    <span className="view-research-pattern-title">
+                      <ResearchInline text={entry.lead} />
+                    </span>
+                    {entry.rest !== '' ? (
+                      <span className="view-research-pattern-what">
+                        <ResearchInline text={entry.rest} />
+                      </span>
+                    ) : null}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <ol className="view-research-patterns" data-kind="patterns">
+              {patterns.map((pattern, index) => (
+                <li key={index}>
+                  <div>
+                    <span className="view-research-pattern-title">
+                      <ResearchInline text={pattern.title} />
+                    </span>
+                    {pattern.what !== '' ? (
+                      <span className="view-research-pattern-what">
+                        <ResearchInline text={pattern.what} />
+                      </span>
+                    ) : null}
+                    {pattern.when ? (
+                      <span className="view-research-pattern-when">
+                        <span className="view-research-key">Use when</span>
+                        <ResearchInline text={pattern.when} />
+                      </span>
+                    ) : null}
+                    {pattern.sourceTarget ? (
+                      <button
+                        type="button"
+                        className="view-research-link"
+                        onClick={() => onShowSource(pattern.sourceTarget)}
+                      >
+                        source
+                      </button>
+                    ) : null}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+      ) : null}
+      {handRoll ? (
+        <div className="view-research-sub">
+          <ChapterLabel count={handRoll.rows.length}>Don&apos;t hand-roll</ChapterLabel>
+          {handRoll.rows.length > 0 ? (
+            <ul className="view-research-handroll">
+              {handRoll.rows.map((row, index) => (
+                <li key={index}>
+                  <span className="view-research-handroll-problem">
+                    <ResearchInline text={row.problem} />
+                  </span>
+                  <span className="view-research-handroll-dont">
+                    <ResearchInline text={row.dont} />
+                  </span>
+                  <span className="view-research-handroll-arrow" aria-hidden="true">
+                    →
+                  </span>
+                  <span className="view-research-handroll-use">
+                    <ResearchInline text={row.use} />
+                  </span>
+                  {row.why !== '' ? (
+                    <span className="view-research-handroll-why">
+                      <ResearchInline text={row.why} />
+                    </span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {handRoll.insight ? (
+            <p className="view-research-insight">
+              <span className="view-research-key">Key insight</span>
+              <ResearchInline text={handRoll.insight} />
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function ChapterView({
+  chapter,
+  onShowSource,
+}: {
+  chapter: ComposedChapter;
+  onShowSource: (id: string | null) => void;
+}): React.JSX.Element | null {
+  switch (chapter.kind) {
+    case 'architecture':
+      return <ArchitectureChapter chapter={chapter} onShowSource={onShowSource} />;
+    default:
+      return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // ResearchBriefingView
 // ---------------------------------------------------------------------------
 
@@ -316,6 +517,9 @@ export function ResearchBriefingView({
             </aside>
           </section>
         ) : null}
+        {briefing.chapters.map((chapter) => (
+          <ChapterView key={chapter.id} chapter={chapter} onShowSource={onShowSource} />
+        ))}
         {briefing.sourceOnly.length > 0 ? (
           <nav
             id="research-source-only"
