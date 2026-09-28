@@ -770,9 +770,12 @@ function extractBoundaryNotes(boundary: ContextBoundary): ContextBoundary {
     const block = boundary.blocks[i];
     if (block.kind === 'table') {
       const prev = kept[kept.length - 1];
-      if (prev && prev.kind === 'paragraph' && /:\s*$/.test(prev.text.trim())) {
+      // A lead-in is usually bold ("**Locked upstream — do not re-open:**"), so the colon test
+      // runs on the bold-stripped text; the title drops the colon, since it renders as a heading.
+      const lead = prev && prev.kind === 'paragraph' ? stripBold(prev.text).trim() : '';
+      if (/:$/.test(lead)) {
         kept.pop();
-        notes.push({ title: prev.text.trim(), blocks: [block] });
+        notes.push({ title: lead.slice(0, -1).trimEnd(), blocks: [block] });
       } else {
         notes.push({ title: null, blocks: [block] });
       }

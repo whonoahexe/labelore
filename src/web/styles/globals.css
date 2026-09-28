@@ -5918,26 +5918,26 @@ button.view-context-summary:hover {
   font-size: var(--fs-3);
 }
 
-/* Aside tables (the amendments' Document / Current wording / Required change grid) fit the row's
-   width and wrap, instead of the global max-content table that blew the group out to thousands
-   of pixels and clipped the lead paragraph with it. Same hairline, muted register as the rows. */
+/* Brief tables — the amendments' Document / Current wording / Required change grid and the
+   boundary's Locked / Source table — fit their block's width and wrap, instead of the global
+   max-content table that blew the block out to thousands of pixels and clipped the prose around
+   it. Same hairline, muted register as the rows. */
 .view-context-aside-group {
   display: grid;
   gap: var(--space-3);
   min-width: 0;
 }
 
-.view-context-aside-body table {
+:is(.view-context-aside-body, .view-context-boundary-notes) table {
   display: table;
   width: 100%;
   min-width: 0;
   border-collapse: collapse;
-  table-layout: fixed;
   font-size: var(--fs-3);
   line-height: var(--fs-3--lh);
 }
 
-.view-context-aside-body :is(th, td) {
+:is(.view-context-aside-body, .view-context-boundary-notes) :is(th, td) {
   padding: var(--space-2) var(--space-3) var(--space-2) 0;
   border-bottom: 1px solid var(--border);
   text-align: left;
@@ -5945,7 +5945,7 @@ button.view-context-summary:hover {
   overflow-wrap: anywhere;
 }
 
-.view-context-aside-body th {
+:is(.view-context-aside-body, .view-context-boundary-notes) th {
   color: var(--muted-foreground);
   font-size: var(--fs-2);
   font-weight: var(--fw-medium);
@@ -5953,10 +5953,14 @@ button.view-context-summary:hover {
   text-transform: uppercase;
 }
 
+.view-context-aside-body table {
+  table-layout: fixed;
+}
+
 .view-context-aside-body :is(th, td):first-child {
   width: 30%;
 }
 
-.view-context-aside-body td code {
+:is(.view-context-aside-body, .view-context-boundary-notes) td code {
   font-size: var(--fs-2);
 }
