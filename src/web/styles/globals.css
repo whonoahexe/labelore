@@ -6141,17 +6141,24 @@ button.view-research-confidence:hover {
   text-transform: uppercase;
 }
 
+/* Domain: a quiet key/value field — hanging indent under the key, a faint veil and hairline rule. */
 .view-research-domain {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: var(--space-3);
+  align-items: baseline;
   flex-basis: 100%;
   order: 3;
-  max-width: 72ch;
+  width: fit-content;
+  max-width: 78ch;
   margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-left: 1px solid var(--border);
+  background: var(--state-hover);
   color: var(--muted-foreground);
   font-size: var(--fs-3);
-}
-
-.view-research-domain .view-research-key {
-  margin-right: var(--space-2);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
 }
 
 /* Summary block: the lead and its muted follow-on paragraphs beside the recommendation. */
