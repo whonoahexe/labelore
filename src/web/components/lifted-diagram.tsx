@@ -56,10 +56,12 @@ function placeCard(element: HTMLElement, card: LiftCard, cw: number, lh: number)
     element.style.height = `${(card.r2 - card.r1) * lh}px`;
     return;
   }
+  // Nodes on consecutive rows (a step list) must not overlap: keep the vertical bleed under half
+  // the inter-row gap so each card keeps its own border.
   element.style.left = `${(card.c1 - 0.7) * cw}px`;
-  element.style.top = `${(card.r1 - 0.22) * lh}px`;
+  element.style.top = `${(card.r1 - 0.08) * lh}px`;
   element.style.width = `${(card.c2 - card.c1 + 2.4) * cw}px`;
-  element.style.height = `${(card.r2 - card.r1 + 1.44) * lh}px`;
+  element.style.height = `${(card.r2 - card.r1 + 1.16) * lh}px`;
 }
 
 function LiftedFigureView({ figure, fit }: { figure: LiftedFigure; fit: boolean }): React.JSX.Element {

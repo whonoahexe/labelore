@@ -13,6 +13,11 @@ const BOX = '─│┌┐└┘├┤┬┴┼';
 const ARROWS = '▼▲►◄→←↑↓';
 const TOP_EDGE = '─┬┴┼';
 const SIDE_EDGE = '│├┤┼';
+/** An arrow drawn into a box's side (`──►│`) sits where the border would. */
+const SIDE_ARROW = '►◄';
+
+/** How far (in columns) a hand-drawn box's right edge may wander and still count as one box. */
+const RAGGED_TOLERANCE = 3;
 
 export const LIFT_MAX_ROWS = 250;
 export const LIFT_MAX_COLS = 300;
@@ -50,6 +55,8 @@ interface Run {
   c2: number;
   inBox: boolean;
   node: NodeAcc | null;
+  /** Box-less only: text beside a trunk or an edge label, set as a muted note, never a node. */
+  note?: boolean;
 }
 
 interface NodeAcc {
@@ -66,6 +73,69 @@ function isBoxGlyph(ch: string): boolean {
 
 function isArrowGlyph(ch: string): boolean {
   return ARROWS.includes(ch);
+}
+
+
+const isBlank = (ch: string | undefined): boolean => ch === undefined || ch === ' ';
+
+/** Rewrites a plain-ASCII diagram's connectors (only when it has no box glyphs at all) into the
+ * glyphs the lift understands, in place and width-preserving: a lone `|` → `│`, a lone `v`/`^`
+ * under/over a vertical → `▼`/`▲`, a leading `->` / `-->` → `─►`, a `--label-->` edge → `──label─►`,
+ * a free-standing `---->` → `───►`, and a `<-` pointer → `◄─`. A single `->` inside prose stays
+ * text, so "session -> user_id" is still read as words. */
+function normalizeAsciiConnectors(g: string[][]): void {
+  for (const row of g) {
+    for (let c = 0; c < row.length; c++) {
+      if (row[c] === '|' && isBlank(row[c - 1]) && isBlank(row[c + 1])) row[c] = '│';
+    }
+  }
+  for (let r = 0; r < g.length; r++) {
+    const row = g[r];
+    for (let c = 0; c < row.length; c++) {
+      if (!isBlank(row[c - 1]) || !isBlank(row[c + 1])) continue;
+      if (row[c] === 'v' && g[r - 1]?.[c] === '│') row[c] = '▼';
+      else if (row[c] === '^' && g[r + 1]?.[c] === '│') row[c] = '▲';
+    }
+  }
+  const paint = (row: string[], start: number, end: number): void => {
+    for (let c = start; c < end; c++) if (row[c] === '-') row[c] = '─';
+    if (row[end] === '>') row[end] = '►';
+  };
+  for (const row of g) {
+    const line = row.join('');
+    const lead = /^(\s*)(-+)>(?=\s)/.exec(line);
+    if (lead) paint(row, lead[1].length, lead[1].length + lead[2].length);
+    for (const m of line.matchAll(/(-{2,})([A-Za-z]{1,8})(-{2,})>/g)) {
+      const start = m.index ?? 0;
+      paint(row, start, start + m[1].length);
+      paint(row, start + m[1].length + m[2].length, start + m[0].length - 1);
+    }
+    for (const m of line.matchAll(/(?<=\s)(-{2,})>(?=\s|$)/g)) {
+      const start = m.index ?? 0;
+      paint(row, start, start + m[1].length);
+    }
+    for (const m of line.matchAll(/(?<=^|\s)<(-+)(?=\s|$)/g)) {
+      const start = m.index ?? 0;
+      row[start] = '◄';
+      for (let c = start + 1; c <= start + m[1].length; c++) row[c] = '─';
+    }
+  }
+}
+
+/** A box-less run's role from what sits beside it on its own row: text hanging off a vertical
+ * trunk, a bracketed aside further along the row, and text a `◄─` pointer hangs off are notes; text
+ * after a leading arrow starts a new step; a short label drawn between two line segments is an edge
+ * label (note); anything else may merge into the node above. A run that follows a note on the same
+ * row is a note too (the caller applies that). */
+function boxlessRole(row: string[], c1: number, c2: number): 'note' | 'step' | 'merge' {
+  const before = row.slice(0, c1).join('').replace(/\s/g, '');
+  if (/^│+$/.test(before)) return 'note';
+  // An aside: a bracketed remark further along a row, or text a `◄─` pointer hangs off.
+  if (before !== '' && (row[c1] === '(' || row[c1] === '[')) return 'note';
+  if (/◄─*$/.test(before) && before.length > 2) return 'note';
+  if (c2 - c1 < 8 && row[c1 - 1] === '─' && row[c2 + 1] === '─') return 'note';
+  if (/^─*[►→]$/.test(before)) return 'step';
+  return 'merge';
 }
 
 /** Lifts `text` into rows of typed segments plus the cards to draw behind them; `null` when the
@@ -85,19 +155,66 @@ export function liftDiagram(text: string): LiftedFigure | null {
     return padded;
   });
   const at = (r: number, c: number): string => (g[r] && g[r][c]) || ' ';
+  if (!chars.some((row) => row.some(isBoxGlyph))) normalizeAsciiConnectors(g);
 
   // Boxes: every `┌` that closes into a `┐` / `└` / `┘` rectangle.
   const boxes: LiftCard[] = [];
+  const rightBorders = new Map<
+    LiftCard,
+    { top: number; bottom: number; rows: number[]; left: number[]; topStart: number; bottomStart: number }
+  >();
   for (let r = 0; r < height; r++) {
     for (let c = 0; c < width; c++) {
       if (at(r, c) !== '┌') continue;
       let c2 = c + 1;
       while (c2 < width && TOP_EDGE.includes(at(r, c2))) c2++;
       if (at(r, c2) !== '┐') continue;
+      // Walk the left edge down. Hand-drawn boxes drift: each row's left border may sit a column or
+      // two off the one above, and an arrow may be drawn into the side (`──►│`).
+      const leftBorder: number[] = [];
+      let lc = c;
       let r2 = r + 1;
-      while (r2 < height && SIDE_EDGE.includes(at(r2, c))) r2++;
-      if (at(r2, c) !== '└' || at(r2, c2) !== '┘') continue;
-      boxes.push({ kind: 'box', r1: r, c1: c, r2, c2, widened: false });
+      let closed = false;
+      while (r2 < height) {
+        const corner = [0, 1, -1, 2, -2].map((d) => lc + d).find((cc) => cc >= 0 && at(r2, cc) === '└');
+        if (corner !== undefined) {
+          lc = corner;
+          closed = true;
+          break;
+        }
+        const side = [0, 1, -1, 2, -2]
+          .map((d) => lc + d)
+          .find((cc) => cc >= 0 && (SIDE_EDGE.includes(at(r2, cc)) || (cc === lc && SIDE_ARROW.includes(at(r2, cc)))));
+        if (side === undefined) break;
+        leftBorder.push(side);
+        lc = side;
+        r2++;
+      }
+      if (!closed) continue;
+      // …and on the right: the bottom-right corner and each row's right border may sit a column or
+      // three off the top-right corner.
+      let cb = lc + 1;
+      while (cb < width && TOP_EDGE.includes(at(r2, cb))) cb++;
+      if (at(r2, cb) !== '┘' || Math.abs(cb - c2) > RAGGED_TOLERANCE) continue;
+      const rightBorder: number[] = [];
+      let right = Math.max(c2, cb);
+      for (let rr = r + 1; rr < r2; rr++) {
+        let found = -1;
+        for (const d of [0, 1, -1, 2, -2, 3, -3]) {
+          const cc = c2 + d;
+          if (cc > c && SIDE_EDGE.includes(at(rr, cc))) {
+            found = cc;
+            break;
+          }
+        }
+        rightBorder.push(found);
+        // A border pushed right by the row's text: grow to the text's end + 2, as an overrun does.
+        if (found > c2) right = Math.max(right, found + 1);
+      }
+      const left = Math.min(c, lc, ...leftBorder);
+      const box: LiftCard = { kind: 'box', r1: r, c1: left, r2, c2: right, widened: right !== c2 };
+      rightBorders.set(box, { top: c2, bottom: cb, rows: rightBorder, left: leftBorder, topStart: c, bottomStart: lc });
+      boxes.push(box);
       if (boxes.length > MAX_BOXES) return null;
     }
   }
@@ -110,12 +227,16 @@ export function liftDiagram(text: string): LiftedFigure | null {
   // Blank each box's border (the card draws it) — top/bottom rows outright, side columns where a
   // box glyph sits.
   for (const b of boxes) {
-    for (let c = b.c1; c <= b.c2; c++) {
-      g[b.r1][c] = ' ';
-      g[b.r2][c] = ' ';
-    }
-    for (let r = b.r1; r <= b.r2; r++) {
-      for (const c of [b.c1, b.c2]) if (isBoxGlyph(g[r][c])) g[r][c] = ' ';
+    const border = rightBorders.get(b);
+    const topEnd = border ? border.top : b.c2;
+    const bottomEnd = border ? border.bottom : b.c2;
+    for (let c = border ? border.topStart : b.c1; c <= topEnd; c++) g[b.r1][c] = ' ';
+    for (let c = border ? border.bottomStart : b.c1; c <= bottomEnd; c++) g[b.r2][c] = ' ';
+    for (let r = b.r1 + 1; r < b.r2; r++) {
+      const lc = border ? border.left[r - b.r1 - 1] : b.c1;
+      if (isBoxGlyph(g[r][lc])) g[r][lc] = ' ';
+      const rc = border ? border.rows[r - b.r1 - 1] : b.c2;
+      if (rc >= 0 && isBoxGlyph(g[r][rc])) g[r][rc] = ' ';
     }
   }
 
@@ -139,7 +260,9 @@ export function liftDiagram(text: string): LiftedFigure | null {
         if (isBoxGlyph(x) || (isArrowGlyph(x) && depth === 0)) break;
         if (x === ' ') {
           gap++;
-          if (gap >= 2 && depth === 0) break;
+          // Two spaces end a run; inside brackets it takes three, so a bracket that only closes on
+          // the next row (a wrapped box label) can't swallow text further along its own row.
+          if ((gap >= 2 && depth === 0) || gap >= 3) break;
         } else gap = 0;
         e++;
       }
@@ -177,6 +300,7 @@ export function liftDiagram(text: string): LiftedFigure | null {
     let previousRow: NodeAcc[] = [];
     let currentRow: NodeAcc[] = [];
     let rowIndex = -1;
+    let lastRun: Run | null = null;
     for (const run of runs) {
       if (run.r !== rowIndex) {
         previousRow = rowIndex === run.r - 1 ? currentRow : [];
@@ -184,7 +308,15 @@ export function liftDiagram(text: string): LiftedFigure | null {
         currentRow = [];
         rowIndex = run.r;
       }
-      const match = previousRow.find((n) => run.c1 <= n.c2 + 1 && run.c2 >= n.c1 - 1);
+      const previousOnRow = lastRun && lastRun.r === run.r ? lastRun : null;
+      lastRun = run;
+      const role = previousOnRow?.note ? 'note' : boxlessRole(g[run.r], run.c1, run.c2);
+      if (role === 'note') {
+        run.note = true;
+        continue;
+      }
+      const match =
+        role === 'step' ? undefined : previousRow.find((n) => run.c1 <= n.c2 + 1 && run.c2 >= n.c1 - 1);
       if (match) {
         match.r2 = run.r;
         match.c1 = Math.min(match.c1, run.c1);
@@ -213,6 +345,8 @@ export function liftDiagram(text: string): LiftedFigure | null {
     if (run.inBox) {
       const firstRow = (boxesByFirstTextRow.get(run.r) ?? []).some((b) => run.c1 > b.c1 && run.c1 < b.c2);
       kind = firstRow ? 'node' : null;
+    } else if (run.note) {
+      kind = 'note';
     } else if (run.node) {
       kind = run.node.r1 === run.r ? 'node' : 'sub';
     } else {
@@ -258,7 +392,11 @@ export function isLiftableDiagram(text: string): boolean {
   const figure = liftDiagram(text);
   if (figure === null) return false;
   if (figure.cards.some((card) => card.kind === 'box')) return true;
-  for (const line of text.split('\n')) {
+  // A step list whose connectors are leading arrows (`-> step`) has no glyph-only line, but two or
+  // more nodes joined by arrow glyphs is still a flow.
+  const hasArrow = figure.rows.some((row) => row.some((segment) => segment.kind === 'arrow'));
+  if (hasArrow && figure.cards.filter((card) => card.kind === 'node').length >= 2) return true;
+  for (const line of figure.rows.map((row) => row.map((segment) => segment.text).join(''))) {
     const trimmed = line.trim();
     if (trimmed === '') continue;
     let onlyGlyphs = true;
