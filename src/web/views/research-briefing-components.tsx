@@ -5,7 +5,7 @@
 // React's raw-HTML injection prop (T-3x3-01). Colour comes only from the shared tones on `.status-chip`
 // and the theme tokens; the parse-degradation tones never appear on document content.
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Maximize2 } from 'lucide-react';
 import { Link } from 'react-router';
 import type { Block } from '../../planning-repo/handlers/context-brief.ts';
 import { tokenizeInline } from './inline-markdown.ts';
@@ -217,17 +217,13 @@ export function ResearchIntroMeta({ intro }: { intro: ComposedResearchIntro }): 
   return (
     <>
       <span className="view-research-facts">
-        {intro.researched ? (
-          <span>
-            Researched <b>{intro.researched}</b>
-          </span>
-        ) : null}
         {confidence ? (
           // The breakdown opens as a modal (a Base UI dialog, the figure frame's own pattern) rather
           // than an inline drop-down that pushed the cover apart.
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger className="status-chip view-research-confidence" data-tone={confidence.tone}>
               {confidence.label} confidence
+              <Maximize2 aria-hidden="true" />
             </DialogTrigger>
             <DialogContent className="view-research-confidence-dialog">
               <DialogHeader className="view-research-confidence-dialog-head">
@@ -277,6 +273,11 @@ export function ResearchIntroMeta({ intro }: { intro: ComposedResearchIntro }): 
               </div>
             </DialogContent>
           </Dialog>
+        ) : null}
+        {intro.researched ? (
+          <span>
+            Researched <b>{intro.researched}</b>
+          </span>
         ) : null}
         {intro.validUntilShort ? (
           <span>
