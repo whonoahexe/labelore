@@ -239,31 +239,41 @@ export function ResearchIntroMeta({ intro }: { intro: ComposedResearchIntro }): 
                 </DialogTitle>
               </DialogHeader>
               <div id="research-confidence" className="view-research-breakdown">
-                {confidence.raw.trim().toUpperCase() !== confidence.label.toUpperCase() ? (
-                  <p className="view-research-breakdown-note">
-                    <ResearchInline text={confidence.raw} />
+                {confidence.summary ? (
+                  <p className="view-research-breakdown-summary">
+                    <ResearchInline text={confidence.summary} />
                   </p>
                 ) : null}
                 {confidence.rows.length === 0 && confidence.text ? (
-                  <p className="view-research-breakdown-note">
+                  <p className="view-research-breakdown-summary">
                     <ResearchInline text={confidence.text} />
                   </p>
                 ) : null}
-                {confidence.rows.map((row, index) => (
-                  <div key={`${row.area}-${index}`} className="view-research-breakdown-row">
-                    <span className="view-research-breakdown-area">{row.area}</span>
-                    <span>
-                      {row.label ? (
-                        <span className="status-chip" data-tone={row.tone}>
-                          {row.label}
-                        </span>
-                      ) : null}
-                    </span>
-                    <span className="view-research-breakdown-note">
-                      <ResearchInline text={row.note} />
-                    </span>
-                  </div>
-                ))}
+                {confidence.rows.length > 0 ? (
+                  <dl className="view-research-breakdown-list">
+                    {confidence.rows.map((row, index) => (
+                      <div key={`${row.area}-${index}`} className="view-research-breakdown-row">
+                        <dt className="view-research-breakdown-head">
+                          <span className="view-research-breakdown-area">{row.area}</span>
+                          {row.label ? (
+                            <span className="view-research-breakdown-level" data-tone={row.tone}>
+                              <span className="view-research-breakdown-meter" data-steps={row.steps} aria-hidden="true">
+                                <i />
+                                <i />
+                                <i />
+                                <i />
+                              </span>
+                              {row.label}
+                            </span>
+                          ) : null}
+                        </dt>
+                        <dd className="view-research-breakdown-note">
+                          <ResearchInline text={row.note} />
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                ) : null}
               </div>
             </DialogContent>
           </Dialog>
