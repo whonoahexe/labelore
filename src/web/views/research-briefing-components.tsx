@@ -28,11 +28,9 @@ import type {
   LaneApprovedItem,
   LaneFlaggedItem,
 } from './research-briefing.ts';
-import { DocumentOutline } from '../components/document-outline.tsx';
 import { FigureFrame } from '../components/figure-frame.tsx';
 import { LiftedDiagram, PlainDiagram } from '../components/lifted-diagram.tsx';
 import { CleanTree } from '../components/clean-tree.tsx';
-import { useActiveSection } from '../components/use-active-section.ts';
 
 // ---------------------------------------------------------------------------
 // Inline rendering, with the [VERIFIED] / [CITED] / [ASSUMED] evidence markers (S-12)
@@ -1196,8 +1194,6 @@ export function ResearchBriefingView({
   onShowSource: (id: string | null) => void;
   title: string;
 }): React.JSX.Element {
-  const entries = briefing.outline.length < 2 ? [] : briefing.outline;
-  const activeId = useActiveSection(entries.map((entry) => entry.id));
   const { summary } = briefing;
   const jump = useChapterJump();
   const blocks: React.ReactNode[] = [];
@@ -1217,8 +1213,9 @@ export function ResearchBriefingView({
     blocks.push(<ChapterView key={chapter.id} chapter={chapter} onShowSource={onShowSource} />);
   }
   return (
-    <div className="document-reader-layout" data-outline={entries.length > 0 ? 'true' : 'false'}>
-      <DocumentOutline entries={entries} activeId={activeId} />
+    // No outline column (like the CONTEXT brief): the briefing runs the full reading width, and
+    // its own At-a-glance column already jumps to each chapter.
+    <div className="document-reader-layout" data-outline="false">
       <article className="document-canvas" aria-label={`${title} document`}>
         {summary ? (
           <section id="research-summary" className="view-block view-research-summary">
