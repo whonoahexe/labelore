@@ -6165,26 +6165,25 @@ button.view-research-confidence:hover {
   color: var(--primary);
 }
 
-/* Summary block: the lead and its muted follow-on paragraphs beside the recommendation. */
+/* Summary block: a calm lead, then numbered hairline finding rows, beside the recommendation
+   (quick-260929-m30). */
 .view-research-summary {
   grid-template-columns: minmax(0, 1.5fr) minmax(16rem, 0.8fr);
   gap: var(--space-fluid-9);
   align-items: start;
 }
 
-.view-research-summary-text,
-.view-research-rest {
+/* The lead and the findings sit a clear step apart, so the summary reads in two beats. */
+.view-research-summary-text {
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-8);
   min-width: 0;
 }
 
-/* The lead and the follow-on paragraphs sit a clear step apart, so the summary reads in two beats. */
-.view-research-summary-text {
-  gap: var(--space-8);
-}
-
 .view-research-lead {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
   max-width: 64ch;
   margin: 0;
   font-size: var(--fs-6);
@@ -6192,11 +6191,35 @@ button.view-research-confidence:hover {
   overflow-wrap: anywhere;
 }
 
-.view-research-rest {
-  max-width: 66ch;
+.view-research-findings {
+  display: grid;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-research-finding {
+  display: grid;
+  grid-template-columns: var(--space-8) minmax(0, 1fr);
+  column-gap: var(--space-3);
+  align-items: baseline;
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--border);
+}
+
+.view-research-finding-number {
   color: var(--muted-foreground);
-  font-size: var(--fs-4);
-  line-height: var(--lh-relaxed);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.view-research-finding-body {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .view-research-note {
