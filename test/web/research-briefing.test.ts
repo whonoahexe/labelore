@@ -2,6 +2,8 @@
 // LB v1.0/02 extraction (test/research-briefing.test.ts covers the server extractor; the narrow
 // e2e spec covers the two composed end to end). This is the composer-level smoke test.
 import { readFileSync } from 'node:fs';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { tryParseFrontmatter } from '../../src/planning-repo/frontmatter.ts';
 import { extractResearchBriefing } from '../../src/planning-repo/handlers/research-briefing.ts';
@@ -14,6 +16,7 @@ import {
   tidyConfidenceText,
 } from '../../src/web/views/research-briefing.ts';
 import type { ComposedResearchBriefing } from '../../src/web/views/research-briefing.ts';
+import { AuditBlock } from '../../src/web/views/research-briefing-components.tsx';
 import { NA_AUDIT, SP02_SHAPE, SYNTHETIC_SLOP } from '../helpers/research-fixtures.ts';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 import type { DocumentSectionGroup } from '../../src/web/views/document-sections.ts';
@@ -490,5 +493,48 @@ describe('composeResearchBriefing — summary lead and findings', () => {
     expect(summary?.lead).toEqual([]);
     expect(summary?.findings).toEqual([]);
     expect(summary?.recommendation).toBe('Do it.');
+  });
+});
+
+describe('AuditBlock render (sketch 010 B)', () => {
+  function render(composed: ComposedResearchBriefing): string {
+    const audit = chapterOf(composed, 'stack').audit;
+    if (!audit) throw new Error('expected an audit');
+    return renderToStaticMarkup(createElement(AuditBlock, { audit }));
+  }
+
+  it('SP02_SHAPE: keeps the lane tone copy, the caret toggle, tight notes and chipped code', () => {
+    const html = render(composeFrom(SP02_SHAPE));
+    expect(html).toContain('class="view-research-sub view-research-audit"');
+    expect(html).toContain('Nothing removed.');
+    expect(html).toContain('Nothing flagged.');
+    expect(html).not.toContain('>None.<');
+    expect(html).toContain('Show the seam output (4 rows) <span aria-hidden="true">▾</span>');
+    const notes = /<div class="view-research-audit-notes">([\s\S]*?)<\/div>/.exec(html);
+    expect(notes).not.toBeNull();
+    expect(notes?.[1].match(/<p>/g)).toHaveLength(2);
+    expect(html).toContain('<code>gsd-tools query package-legitimacy check --ecosystem crates</code>');
+  });
+
+  it('LB v1.0/02: show-more rows carry an aria-hidden caret and the empty slop lane reads Nothing removed.', () => {
+    const html = render(composeResearchBriefing(inputOf(lb02())) as ComposedResearchBriefing);
+    expect(html).toContain('Show 8 more flagged <span aria-hidden="true">▾</span>');
+    expect(html).toContain('Show 14 more approved <span aria-hidden="true">▾</span>');
+    const slop = /<section class="view-research-lane" data-verdict="slop">([\s\S]*?)<\/section>/.exec(html);
+    expect(slop?.[1]).toContain('Nothing removed.');
+    expect(html).toContain('Show the seam output (30 rows)');
+  });
+
+  it('SYNTHETIC_SLOP: a removed item reads Use instead, with the replacement after it', () => {
+    const html = render(
+      composeFrom(
+        `## Standard Stack\n\n### Core\n\n| Library | Version | Purpose | Why Standard |\n|---|---|---|---|\n| left-pad | 1 | pad | ok |\n\n${SYNTHETIC_SLOP}`,
+      ),
+    );
+    expect(html).toContain(
+      '<span class="view-research-lane-use"><span class="view-research-key">Use instead</span> <code>left-pad</code></span>',
+    );
+    expect(html).not.toContain('Replaced by');
+    expect(html).toContain('data-struck="true"');
   });
 });

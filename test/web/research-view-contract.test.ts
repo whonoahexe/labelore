@@ -63,4 +63,19 @@ describe('research view contract', () => {
     expect(block).not.toMatch(/radius\s*:/);
     expect(block).not.toMatch(/color-mix\(/);
   });
+
+  it('legitimacy lanes stay toned when empty and outline Removed on --missing-border', async () => {
+    const css = await source('src/web/styles/globals.css');
+    expect(css).toMatch(/--missing-border:\s*color-mix\(in oklch, var\(--missing-fill\) 50%, var\(--border\)\)/);
+    const rule = (selector: string): string => {
+      const start = css.indexOf(`${selector} {`);
+      expect(start, selector).toBeGreaterThan(-1);
+      return css.slice(start, css.indexOf('}', start));
+    };
+    const slop = rule(".view-research-lane[data-verdict='slop']");
+    expect(slop).toContain('border-color: var(--missing-border)');
+    expect(slop).toContain('inset 0 3px 0 var(--missing-fill)');
+    expect(rule(".status-chip[data-tone='missing']")).toContain('var(--missing-border)');
+    expect(css).not.toMatch(/^\.view-research-lane:has\(/m);
+  });
 });
