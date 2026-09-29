@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-09-29T10:10:07.172Z"
+last_updated: "2026-09-29T10:14:21.454Z"
 last_activity: 2026-09-29
 last_activity_desc: Completed quick task 260929-3x3 (RESEARCH page view)
-state_head: 09169fba357015fba8b76adc9e8dfddf373eb22a
+state_head: 7b253d54ddd6e18b64b25b018c7007e2d970a817
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -138,6 +138,7 @@ None.
 | 23 | RESEARCH confidence chip opens its breakdown in a modal instead of a drop-down | 2026-09-29 | 3c5fe54 | — |
 | 24 | Confidence modal on shadcn dialog; drop Valid-until block; aligned breakdown spacing | 2026-09-29 | 0c5edd2 | — |
 | 25 | RESEARCH facts line: confidence chip first (with modal icon), then researched and valid-until | 2026-09-29 | 09169fb | — |
+| 26 | RESEARCH Domain line: quiet key/value field (hanging indent, veil, hairline rule) | 2026-09-29 | 7b253d5 | — |
 
 ## Deferred Items
 
