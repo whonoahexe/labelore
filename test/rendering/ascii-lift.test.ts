@@ -72,6 +72,56 @@ describe('liftDiagram — minimal shapes', () => {
     expect(figure.cards[0]).toMatchObject({ c2: 5, widened: false });
   });
 
+  it('a ragged box (bottom-right and row borders a column or two off) still lifts as one box', () => {
+    const figure = must(liftDiagram('┌──────┐\n│ one   │\n│ two    │\n└───────┘'));
+    const boxes = figure.cards.filter((c) => c.kind === 'box');
+    expect(boxes).toHaveLength(1);
+    // Every border glyph of the box is blanked — the card draws it.
+    expect(figure.rows.flat().some((s) => s.kind === 'line')).toBe(false);
+  });
+
+  it('plain-ASCII connectors become glyphs: lone | → │, v under it → ▼, leading -> → ─►', () => {
+    const figure = must(liftDiagram('Browser\n   |\n   v\nHandler\n  -> step one\n  -> step two'));
+    const text = figure.rows.map((row) => row.map((s) => s.text).join('')).join('\n');
+    expect(text).toContain('│');
+    expect(text).toContain('▼');
+    expect(text).toContain('─► step one');
+    expect(isLiftableDiagram('Browser\n   |\n   v\nHandler')).toBe(true);
+  });
+
+  it('a mid-sentence -> in prose stays text; a --label--> edge becomes line + label + arrow', () => {
+    const prose = must(liftDiagram('A\n |\n v\nresolves session -> user_id'));
+    expect(prose.rows[3].map((s) => s.text).join('')).toBe('resolves session -> user_id');
+    const edge = must(liftDiagram('  -> check? ----no----> refuse'));
+    expect(edge.rows[0].map((s) => s.text).join('')).toBe('  ─► check? ────no────► refuse');
+    const label = edge.rows[0].find((s) => s.text === 'no');
+    expect(label?.kind).toBe('note');
+  });
+
+  it('box-less asides: bracketed remarks, ◄─ pointer text and text after a trunk note are notes', () => {
+    const figure = must(liftDiagram('Alpha   [1 query]\n  |\n  |  1. step   (fail closed)\n  v\nBeta   <- UNCHANGED here'));
+    const kindOf = (r: number, needle: string) => figure.rows[r].find((s) => s.text.includes(needle))?.kind;
+    expect(kindOf(0, '[1 query]')).toBe('note');
+    expect(kindOf(2, '(fail closed)')).toBe('note');
+    expect(kindOf(4, 'UNCHANGED')).toBe('note');
+    expect(figure.cards.filter((c) => c.kind === 'node')).toHaveLength(2);
+  });
+
+  it('an unclosed bracket in a box does not swallow the note beside the box', () => {
+    const figure = must(liftDiagram('┌──────────┐\n│ (wrapped │     side note\n│  label)  │\n└──────────┘'));
+    expect(figure.rows[1].find((s) => s.text.includes('side note'))?.kind).toBe('note');
+  });
+
+  it('box-less: text beside a trunk is a note; each arrow-led line starts its own step node', () => {
+    const trunk = must(liftDiagram('Browser\n   |\n   |  1. carries a cookie\n   v\nHandler'));
+    expect(trunk.rows[2].find((s) => s.text.includes('carries'))?.kind).toBe('note');
+    expect(trunk.cards.filter((c) => c.kind === 'node')).toHaveLength(2);
+    const steps = must(liftDiagram('  -> first\n  -> second\n       detail of second'));
+    const nodes = steps.cards.filter((c) => c.kind === 'node');
+    expect(nodes).toHaveLength(2);
+    expect(nodes[1]).toMatchObject({ r1: 1, r2: 2 });
+  });
+
   it('a box-less diagram clusters runs into node cards; a second row joins its node as sub text', () => {
     const figure = must(liftDiagram('Alpha\n  │\n  ▼\nBeta gamma\n(sub line)'));
     const nodes = figure.cards.filter((c) => c.kind === 'node');
@@ -147,9 +197,10 @@ describe('liftDiagram — the corpus diagrams', () => {
   });
 
   const SP03 = `${SP_PLANNING}/milestones/v1.0-phases/03-file-browsing/03-RESEARCH.md`;
-  it.runIf(existsSync(SP03))('studio-portal v1.0/03 (real file): 1 box', async () => {
+  it.runIf(existsSync(SP03))('studio-portal v1.0/03 (real file): both ragged-edged boxes', async () => {
+    // The source draws 2 boxes whose right borders wander by a column; both must lift.
     const text = await diagramOf(SP03);
-    expect(must(liftDiagram(text)).cards.filter((c) => c.kind === 'box')).toHaveLength(1);
+    expect(must(liftDiagram(text)).cards.filter((c) => c.kind === 'box')).toHaveLength(2);
   });
 
   it('isLiftableDiagram: true for the corpus diagrams, false for prose and code', async () => {
