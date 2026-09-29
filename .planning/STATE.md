@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-09-29T10:17:46.246Z"
+last_updated: "2026-09-29T10:21:08.117Z"
 last_activity: 2026-09-29
 last_activity_desc: Completed quick task 260929-3x3 (RESEARCH page view)
-state_head: 48adb0ef84b59a69804650d6f35fd8f74ce55290
+state_head: b34d25db70ef7e68d245cf805d775a8da3037e6a
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -140,6 +140,7 @@ None.
 | 25 | RESEARCH facts line: confidence chip first (with modal icon), then researched and valid-until | 2026-09-29 | 09169fb | — |
 | 26 | RESEARCH Domain line: quiet key/value field (hanging indent, veil, hairline rule) | 2026-09-29 | 7b253d5 | — |
 | 27 | RESEARCH Domain key in primary | 2026-09-29 | 48adb0e | — |
+| 28 | RESEARCH summary: decongested (spacing, leading, measure) | 2026-09-29 | b34d25d | — |
 
 ## Deferred Items
 
