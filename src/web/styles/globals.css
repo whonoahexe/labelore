@@ -6161,6 +6161,10 @@ button.view-research-confidence:hover {
   overflow-wrap: anywhere;
 }
 
+.view-research-domain .view-research-key {
+  color: var(--primary);
+}
+
 /* Summary block: the lead and its muted follow-on paragraphs beside the recommendation. */
 .view-research-summary {
   grid-template-columns: minmax(0, 1.5fr) minmax(16rem, 0.8fr);
