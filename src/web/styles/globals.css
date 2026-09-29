@@ -6184,9 +6184,10 @@ button.view-research-confidence:hover {
   display: grid;
   gap: var(--space-4);
   min-width: 0;
-  max-width: 64ch;
+  max-width: 60ch;
   margin: 0;
-  font-size: var(--fs-6);
+  color: var(--foreground);
+  font-size: var(--fs-5);
   line-height: var(--lh-relaxed);
   overflow-wrap: anywhere;
 }
@@ -6219,7 +6220,21 @@ button.view-research-confidence:hover {
   display: grid;
   gap: var(--space-3);
   min-width: 0;
+  max-width: 64ch;
+  color: var(--foreground);
+  font-size: var(--fs-4);
+  line-height: var(--lh-relaxed);
   overflow-wrap: anywhere;
+}
+
+/* Bold phrases are the scan path: they stand out by weight alone. */
+.view-research-lead strong,
+.view-research-finding-body strong {
+  font-weight: var(--fw-semibold);
+}
+
+.view-research-finding:last-child {
+  padding-bottom: 0;
 }
 
 .view-research-note {

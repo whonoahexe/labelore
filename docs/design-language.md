@@ -297,8 +297,12 @@ element is actually written, regardless of class name:
   The `research` manifest declares a `briefing` hook (`composeResearchBriefing`) and keeps its
   `promote` list only as the fallback for a server payload with no `structured.briefing`. The page
   opens on a cover — a facts line (Researched date, a confidence chip that opens the per-area
-  breakdown, Valid until) and a quiet muted Domain caption — then the summary lead beside a Primary
-  recommendation callout and an At a glance column (each row jumps to its chapter), then chapters
+  breakdown, Valid until) and a quiet muted Domain caption — then the Summary beside a Primary
+  recommendation callout and an At a glance column (each row jumps to its chapter). The Summary's
+  framing paragraph is a calm lead (`--fs-5`, at most 60ch, foreground colour); every later
+  paragraph is a numbered finding row — 01, 02 … as muted mono ordinals, each on a hairline, the body
+  in the foreground colour with bold phrases in semibold as the scan path — and a block that is not
+  a paragraph (list, table, code) stays with the paragraph it follows (quick-260929-m30). Then chapters
   numbered in order over the sections actually present (01 Standard stack … 06 Sources; a document
   with no architecture renumbers with no gap), collapsed back-matter rows, and an "In the source
   only" strip. That strip lists every `##` (and unrecognised `###`) the view does not render, in
@@ -311,8 +315,8 @@ element is actually written, regardless of class name:
   and a HIGH pitfall use `in-flight`.
 - **The 10% accent reservation extends to the RESEARCH briefing.** (quick-260929-3x3) The
   recommendation callout's left rule and tint, the Core stack label, and the pressed state of the
-  Patterns ⇄ Anti-patterns control take `--primary`. Evidence markers ([VERIFIED] / [CITED] /
-  [ASSUMED]) render as small V / C / A superscripts in the muted foreground, with the ASSUMED
+  Patterns ⇄ Anti-patterns control take `--primary`. The Summary's finding ordinals stay on the muted foreground and never
+  take `--primary` (quick-260929-m30). Evidence markers ([VERIFIED] / [CITED] / [ASSUMED]) render as small V / C / A superscripts in the muted foreground, with the ASSUMED
   marker on `in-flight`; the citation is in the tooltip.
 
 ## Surface-scoped registered names
