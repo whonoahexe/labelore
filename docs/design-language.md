@@ -307,17 +307,26 @@ element is actually written, regardless of class name:
   with no architecture renumbers with no gap), collapsed back-matter rows, and an "In the source
   only" strip. That strip lists every `##` (and unrecognised `###`) the view does not render, in
   document order, each a link into Source mode at that heading — so nothing is dropped silently.
-- **The legitimacy audit is lanes by verdict.** (quick-260929-3x3, sketch-010 B) Removed · slop,
-  Flagged · suspicious and Approved, at most four items per lane and then "Show N more"; a dashed
-  Approved chip marks a disposition that is not a plain "Approved"; the full seam table sits behind
-  a toggle; a "Not applicable" audit degrades to its prose lines. Document content never takes the
-  parse-degradation tones — the Removed lane and a CRITICAL pitfall use `missing`, the Flagged lane
-  and a HIGH pitfall use `in-flight`.
+- **The legitimacy audit is lanes by verdict.** (quick-260929-3x3, sketch-010 B; restored to the
+  sketch in quick-260929-mih) Removed · slop, Flagged · suspicious and Approved, at most four items
+  per lane and then "Show N more removed / flagged / approved ▾" (and "Show fewer ▴"), the caret
+  `aria-hidden` so the accessible name is unchanged; a dashed Approved chip marks a disposition that
+  is not a plain "Approved"; the full seam table sits behind a toggle reading "Show the seam output
+  (N rows) ▾"; a "Not applicable" audit degrades to its prose lines. An empty lane keeps its tone —
+  Removed keeps its `--missing-border` outline, missing top rule and heading; Flagged keeps its
+  in-flight top rule and heading — and reads "Nothing removed." / "Nothing flagged." / "Nothing
+  approved.". A removed item's replacement reads "Use instead" (a mono uppercase label, then the
+  replacement in the foreground colour); lane items sit on `--border-faint` hairlines; inline code
+  inside the block is a mono chip on `--code-veil` (the seam table's package names stay plain); and
+  the notes after the lanes stack tightly at `--fs-3` in the muted foreground. Document content never
+  takes the parse-degradation tones — the Removed lane and a CRITICAL pitfall use `missing`, the
+  Flagged lane and a HIGH pitfall use `in-flight`.
 - **The 10% accent reservation extends to the RESEARCH briefing.** (quick-260929-3x3) The
   recommendation callout's left rule and tint, the Core stack label, and the pressed state of the
   Patterns ⇄ Anti-patterns control take `--primary`. The Summary's finding ordinals stay on the muted foreground and never
   take `--primary` (quick-260929-m30). Evidence markers ([VERIFIED] / [CITED] / [ASSUMED]) render as small V / C / A superscripts in the muted foreground, with the ASSUMED
-  marker on `in-flight`; the citation is in the tooltip.
+  marker on `in-flight`; the citation is in the tooltip. (quick-260929-mih, sketch-010 B) The hover colour of the legitimacy lanes' Show more / Show
+  fewer rows and of the seam-output toggle takes `--primary`; nothing else in the audit block does.
 
 ## Surface-scoped registered names
 

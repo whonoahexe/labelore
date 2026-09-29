@@ -102,6 +102,11 @@
      WebKit-only direct-thumb-hover state; the guard's own recurring-recipe check would
      otherwise flag either as a duplicated recipe. */
   --card-veil: color-mix(in oklch, var(--card) 94%, transparent);
+  /* A hairline one step quieter than the border colour, for the RESEARCH legitimacy lanes' item
+     dividers (sketch 010 B). */
+  --border-faint: color-mix(in oklch, var(--border) 55%, transparent);
+  /* The sketch-010 inline-code wash inside the RESEARCH legitimacy block. */
+  --code-veil: color-mix(in oklch, var(--muted) 70%, transparent);
   /* quick-260922-3us: the translucent "floating chrome" backdrop `.shell-header` already used
      inline, now named so `.document-chapter-bar` (sketch-004 B3's pinned chapter bar, which sticks
      directly beneath the shell header and wants the identical wash) can share it — a second
@@ -127,7 +132,7 @@
      --destructive-border directly instead (see that rule), for the same de-washing reason as
      complete/unresolved/uncovered above. */
   --missing-fill: color-mix(in oklch, var(--destructive) 35%, var(--muted-foreground));
-  /* The missing tone softened toward the border, mirroring --in-flight-border: it outlines the
+  /* The missing tone softened toward the border, mirroring --in-flight-border. It outlines the
      missing chip and the RESEARCH Removed lane (sketch 010 B). */
   --missing-border: color-mix(in oklch, var(--missing-fill) 50%, var(--border));
   --shadow-popover: 0 1rem 2.5rem color-mix(in oklab, var(--foreground) 18%, transparent);
@@ -7083,7 +7088,7 @@ p.view-research-note {
   gap: var(--space-1);
   min-width: 0;
   padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-faint);
 }
 
 .view-research-lane-items li:last-child {
@@ -7128,6 +7133,19 @@ p.view-research-note {
   overflow-wrap: anywhere;
 }
 
+.view-research-approved-notes .view-research-lane-name {
+  font-size: var(--fs-3);
+}
+
+/* A removed item's replacement: the mono "Use instead" label, then the replacement in the
+   foreground colour. */
+.view-research-lane-use {
+  display: block;
+  color: var(--foreground);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
 .view-research-approved-list {
   display: flex;
   flex-wrap: wrap;
@@ -7167,11 +7185,46 @@ p.view-research-note {
   letter-spacing: var(--ls-wider);
   text-align: left;
   text-transform: uppercase;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
 }
 
 .view-research-lane-more:hover {
   background: var(--state-hover);
-  color: var(--foreground);
+  color: var(--primary);
+}
+
+/* The seam-output toggle takes the same --primary hover as Show more (sketch 010 B); the shared
+   .view-research-link (the Patterns "source" button) keeps its --foreground hover. It sits after
+   .view-research-link:hover, at equal specificity. */
+.view-research-seam-toggle {
+  transition: color 0.15s ease;
+}
+
+.view-research-seam-toggle:hover {
+  color: var(--primary);
+}
+
+/* The notes after the lanes stack tightly, like the sketch's .a-none lines. */
+.view-research-audit-notes {
+  min-width: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.view-research-audit-notes p {
+  margin: 0;
+}
+
+/* Inline code inside the Package legitimacy block is a mono chip on a muted wash. The seam table's
+   package-name cells (td > code) stay plain mono. */
+.view-research-audit :not(td) > code {
+  padding: 0 var(--space-0-5);
+  background: var(--code-veil);
+  font-family: var(--font-mono);
+  font-size: 0.88em;
 }
 
 /* 03 Common pitfalls. */
