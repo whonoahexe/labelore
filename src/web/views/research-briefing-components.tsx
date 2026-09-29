@@ -548,7 +548,7 @@ function Lane<T>({
           <ResearchInline text={note} />
         </p>
       ) : null}
-      {items.length === 0 ? <p className="view-research-lane-empty">None.</p> : render(shown)}
+      {items.length === 0 ? <p className="view-research-lane-empty">{`Nothing ${noun}.`}</p> : render(shown)}
       {more > 0 ? (
         <button
           type="button"
@@ -556,7 +556,8 @@ function Lane<T>({
           aria-expanded={open}
           onClick={() => setOpen((previous) => !previous)}
         >
-          {open ? 'Show fewer' : `Show ${more} more ${noun}`}
+          {open ? 'Show fewer' : `Show ${more} more ${noun}`}{' '}
+          <span aria-hidden="true">{open ? '▴' : '▾'}</span>
         </button>
       ) : null}
       {after}
@@ -601,8 +602,8 @@ function FlaggedItems({ items, struck }: { items: LaneFlaggedItem[]; struck: boo
             </span>
           ) : null}
           {item.replacement ? (
-            <span className="view-research-lane-why">
-              <span className="view-research-key">Replaced by</span> <ResearchInline text={item.replacement} />
+            <span className="view-research-lane-use">
+              <span className="view-research-key">Use instead</span> <ResearchInline text={item.replacement} />
             </span>
           ) : null}
           {item.disposition ? (
@@ -633,12 +634,13 @@ function ApprovedItems({ items }: { items: LaneApprovedItem[] }): React.JSX.Elem
   );
 }
 
-function AuditBlock({ audit }: { audit: ComposedAudit }): React.JSX.Element {
+// Exported for the render cases in test/web/research-briefing.test.ts.
+export function AuditBlock({ audit }: { audit: ComposedAudit }): React.JSX.Element {
   const [tableOpen, setTableOpen] = useState(false);
   const { lanes } = audit;
   const dashed = lanes ? lanes.ok.items.filter((item) => item.dashed) : [];
   return (
-    <div className="view-research-sub">
+    <div className="view-research-sub view-research-audit">
       <ChapterLabel>Package legitimacy</ChapterLabel>
       {audit.intro.map((line, index) => (
         <p key={index} className="view-research-note">
@@ -692,20 +694,25 @@ function AuditBlock({ audit }: { audit: ComposedAudit }): React.JSX.Element {
           </p>
         ))
       )}
-      {audit.extraNotes.map((note, index) => (
-        <p key={index} className="view-research-note">
-          <ResearchInline text={note} />
-        </p>
-      ))}
+      {audit.extraNotes.length > 0 ? (
+        <div className="view-research-audit-notes">
+          {audit.extraNotes.map((note, index) => (
+            <p key={index}>
+              <ResearchInline text={note} />
+            </p>
+          ))}
+        </div>
+      ) : null}
       {lanes && audit.seamRows.length > 0 ? (
         <div>
           <button
             type="button"
-            className="view-research-link"
+            className="view-research-link view-research-seam-toggle"
             aria-expanded={tableOpen}
             onClick={() => setTableOpen((previous) => !previous)}
           >
-            {tableOpen ? 'Hide' : 'Show'} the seam table ({audit.seamRows.length} rows)
+            {tableOpen ? 'Hide' : 'Show'} the seam output ({audit.seamRows.length} rows){' '}
+            <span aria-hidden="true">{tableOpen ? '▴' : '▾'}</span>
           </button>
           {tableOpen ? (
             <div className="document-overflow-boundary">
