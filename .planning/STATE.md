@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-09-28T22:18:50.850Z"
+last_updated: "2026-09-29T09:34:33.666Z"
 last_activity: 2026-09-29
 last_activity_desc: Completed quick task 260929-3x3 (RESEARCH page view)
-state_head: b47de57ab20ad83ba68b49e098df0d442848278d
+state_head: 67fa9141b4877a41caff3c083c62ec6ef722dd20
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -134,6 +134,7 @@ None.
 | 19 | Fold CONTEXT boundary notes (Locked upstream) into the collapsed back-matter rows | 2026-09-28 | 26dfb32 | — |
 | 20 | Lift the 76ch measure off discussion-log endnote prose | 2026-09-28 | 4019bc4 | — |
 | 260929-3x3 | RESEARCH page view per sketches 008-A (briefing), 009 B+B (lifted diagram + clean tree), 010 B (legitimacy lanes) | 2026-09-28 | b47de57 | [260929-3x3-build-the-research-page-view-per-sketche](./quick/260929-3x3-build-the-research-page-view-per-sketche/) |
+| 22 | Drop the document outline from the RESEARCH briefing (full-width layout, like sketch 008-A) | 2026-09-29 | 67fa914 | — |
 
 ## Deferred Items
 
