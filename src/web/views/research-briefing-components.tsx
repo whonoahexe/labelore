@@ -4,7 +4,6 @@
 // output mapped to React text/code/strong/em nodes, plus the V/C/A evidence markers) — never
 // React's raw-HTML injection prop (T-3x3-01). Colour comes only from the shared tones on `.status-chip`
 // and the theme tokens; the parse-degradation tones never appear on document content.
-import { Dialog } from '@base-ui/react/dialog';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { Link } from 'react-router';
@@ -30,6 +29,7 @@ import type {
   LaneFlaggedItem,
 } from './research-briefing.ts';
 import { FigureFrame } from '../components/figure-frame.tsx';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog.tsx';
 import { LiftedDiagram, PlainDiagram } from '../components/lifted-diagram.tsx';
 import { CleanTree } from '../components/clean-tree.tsx';
 
@@ -225,60 +225,48 @@ export function ResearchIntroMeta({ intro }: { intro: ComposedResearchIntro }): 
         {confidence ? (
           // The breakdown opens as a modal (a Base UI dialog, the figure frame's own pattern) rather
           // than an inline drop-down that pushed the cover apart.
-          <Dialog.Root open={open} onOpenChange={setOpen}>
-            <Dialog.Trigger className="status-chip view-research-confidence" data-tone={confidence.tone}>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger className="status-chip view-research-confidence" data-tone={confidence.tone}>
               {confidence.label} confidence
-            </Dialog.Trigger>
-            <Dialog.Portal>
-              <Dialog.Backdrop className="sidebar-drawer-backdrop" />
-              <Dialog.Popup className="view-research-confidence-dialog">
-                <div className="view-research-confidence-dialog-head">
-                  <Dialog.Title className="view-research-confidence-dialog-title">
-                    <span className="status-chip" data-tone={confidence.tone}>
-                      {confidence.label}
+            </DialogTrigger>
+            <DialogContent className="view-research-confidence-dialog">
+              <DialogHeader className="view-research-confidence-dialog-head">
+                <DialogTitle className="view-research-confidence-dialog-title">
+                  <span className="status-chip" data-tone={confidence.tone}>
+                    {confidence.label}
+                  </span>
+                  Research confidence
+                </DialogTitle>
+              </DialogHeader>
+              <div id="research-confidence" className="view-research-breakdown">
+                {confidence.raw.trim().toUpperCase() !== confidence.label.toUpperCase() ? (
+                  <p className="view-research-breakdown-note">
+                    <ResearchInline text={confidence.raw} />
+                  </p>
+                ) : null}
+                {confidence.rows.length === 0 && confidence.text ? (
+                  <p className="view-research-breakdown-note">
+                    <ResearchInline text={confidence.text} />
+                  </p>
+                ) : null}
+                {confidence.rows.map((row, index) => (
+                  <div key={`${row.area}-${index}`} className="view-research-breakdown-row">
+                    <span className="view-research-breakdown-area">{row.area}</span>
+                    <span>
+                      {row.label ? (
+                        <span className="status-chip" data-tone={row.tone}>
+                          {row.label}
+                        </span>
+                      ) : null}
                     </span>
-                    Research confidence
-                  </Dialog.Title>
-                  <Dialog.Close className="status-chip">Close</Dialog.Close>
-                </div>
-                <div id="research-confidence" className="view-research-breakdown">
-                  {confidence.raw.trim().toUpperCase() !== confidence.label.toUpperCase() ? (
-                    <p className="view-research-breakdown-note">
-                      <ResearchInline text={confidence.raw} />
-                    </p>
-                  ) : null}
-                  {confidence.rows.length === 0 && confidence.text ? (
-                    <p className="view-research-breakdown-note">
-                      <ResearchInline text={confidence.text} />
-                    </p>
-                  ) : null}
-                  {confidence.rows.map((row, index) => (
-                    <div key={`${row.area}-${index}`} className="view-research-breakdown-row">
-                      <span className="view-research-breakdown-area">{row.area}</span>
-                      <span>
-                        {row.label ? (
-                          <span className="status-chip" data-tone={row.tone}>
-                            {row.label}
-                          </span>
-                        ) : null}
-                      </span>
-                      <span className="view-research-breakdown-note">
-                        <ResearchInline text={row.note} />
-                      </span>
-                    </div>
-                  ))}
-                  {intro.validUntil ? (
-                    <p className="view-research-valid">
-                      <span className="view-research-key">Valid until</span>
-                      <span>
-                        <ResearchInline text={intro.validUntil} />
-                      </span>
-                    </p>
-                  ) : null}
-                </div>
-              </Dialog.Popup>
-            </Dialog.Portal>
-          </Dialog.Root>
+                    <span className="view-research-breakdown-note">
+                      <ResearchInline text={row.note} />
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
         ) : null}
         {intro.validUntilShort ? (
           <span>
