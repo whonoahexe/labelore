@@ -77,6 +77,23 @@ describe('RESEARCH corpus guard', () => {
       });
       expect(composed).not.toBeNull();
 
+      // quick-260929-m30: the Summary's lead plus findings keep every extracted block.
+      const composedSummary = composed?.summary ?? null;
+      if (briefing.summary && composedSummary) {
+        const extracted = briefing.summary.paragraphs;
+        if (extracted.some((block) => block.kind === 'paragraph')) {
+          expect(composedSummary.lead.filter((block) => block.kind === 'paragraph')).toHaveLength(1);
+        }
+        composedSummary.findings.forEach((finding, index) => {
+          expect(finding.blocks[0]?.kind).toBe('paragraph');
+          expect(finding.number).toBe(String(index + 1).padStart(2, '0'));
+        });
+        const kept =
+          composedSummary.lead.length +
+          composedSummary.findings.reduce((sum, finding) => sum + finding.blocks.length, 0);
+        expect(kept).toBe(extracted.length);
+      }
+
       const listed = new Set(briefing.sourceOnly.map((entry) => entry.heading));
       const fenceAware = splitFenceAware(body, 2).map((s) => s.heading);
       expect(fenceAware.length).toBe(briefing.sections.length);
@@ -110,5 +127,22 @@ describe('RESEARCH corpus guard', () => {
     expect(b.environment?.rows.filter((r) => r.blocking)).toHaveLength(3);
     expect(b.pitfalls?.items.filter((p) => p.severity === 'CRITICAL')).toHaveLength(3);
     expect(b.sourceOnly).toHaveLength(9);
+  });
+
+  const SP01 = `${SP_PLANNING}/phases/01-portal-owned-identity-sessions/01-RESEARCH.md`;
+  const SP03 = `${SP_PLANNING}/phases/03-account-administration-session-control/03-RESEARCH.md`;
+  const findingsOf = (path: string) =>
+    composeResearchBriefing({
+      kind: 'research',
+      frontmatter: {},
+      structured: { briefing: extractResearchBriefing(bodyOf(path)) },
+      groups: [],
+      planSegments: [],
+    })?.summary?.findings ?? [];
+  it.runIf(existsSync(SP01))('SP phases/01 Summary has 2 findings', () => {
+    expect(findingsOf(SP01)).toHaveLength(2);
+  });
+  it.runIf(existsSync(SP03))('SP phases/03 Summary has 1 finding', () => {
+    expect(findingsOf(SP03)).toHaveLength(1);
   });
 });
