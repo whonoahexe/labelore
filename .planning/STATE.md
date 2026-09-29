@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-09-29T09:56:58.545Z"
+last_updated: "2026-09-29T10:04:25.084Z"
 last_activity: 2026-09-29
 last_activity_desc: Completed quick task 260929-3x3 (RESEARCH page view)
-state_head: 3c5fe54fc8f672ff542e83d6ccaf7f82a19936a5
+state_head: 0c5edd299adcdc372209790d5cf87e635639a237
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -136,6 +136,7 @@ None.
 | 260929-3x3 | RESEARCH page view per sketches 008-A (briefing), 009 B+B (lifted diagram + clean tree), 010 B (legitimacy lanes) | 2026-09-28 | b47de57 | [260929-3x3-build-the-research-page-view-per-sketche](./quick/260929-3x3-build-the-research-page-view-per-sketche/) |
 | 22 | Drop the document outline from the RESEARCH briefing (full-width layout, like sketch 008-A) | 2026-09-29 | 67fa914 | — |
 | 23 | RESEARCH confidence chip opens its breakdown in a modal instead of a drop-down | 2026-09-29 | 3c5fe54 | — |
+| 24 | Confidence modal on shadcn dialog; drop Valid-until block; aligned breakdown spacing | 2026-09-29 | 0c5edd2 | — |
 
 ## Deferred Items
 
