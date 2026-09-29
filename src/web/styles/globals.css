@@ -127,6 +127,9 @@
      --destructive-border directly instead (see that rule), for the same de-washing reason as
      complete/unresolved/uncovered above. */
   --missing-fill: color-mix(in oklch, var(--destructive) 35%, var(--muted-foreground));
+  /* The missing tone softened toward the border, mirroring --in-flight-border: it outlines the
+     missing chip and the RESEARCH Removed lane (sketch 010 B). */
+  --missing-border: color-mix(in oklch, var(--missing-fill) 50%, var(--border));
   --shadow-popover: 0 1rem 2.5rem color-mix(in oklab, var(--foreground) 18%, transparent);
   --scrollbar-thumb: color-mix(in oklch, var(--muted-foreground) 30%, transparent);
   --scrollbar-thumb-strong: color-mix(in oklch, var(--muted-foreground) 55%, transparent);
@@ -4522,7 +4525,7 @@ pre {
 }
 
 .status-chip[data-tone='missing'] {
-  border-color: color-mix(in oklch, var(--missing-fill) 50%, var(--border));
+  border-color: var(--missing-border);
   color: var(--missing-fill);
 }
 
@@ -7012,7 +7015,7 @@ p.view-research-note {
 }
 
 .view-research-lane[data-verdict='slop'] {
-  border-color: var(--missing-fill);
+  border-color: var(--missing-border);
   box-shadow: inset 0 3px 0 var(--missing-fill);
 }
 
@@ -7576,17 +7579,6 @@ a.view-research-id:hover {
 
 .view-research-sub {
   margin-top: var(--space-8);
-}
-
-/* An empty verdict lane carries no tone: nothing was removed or flagged, so nothing should read as
-   a warning. */
-.view-research-lane:has(> .view-research-lane-empty) {
-  border-color: var(--border);
-  box-shadow: none;
-}
-
-.view-research-lane:has(> .view-research-lane-empty) :is(.view-research-lane-title, .view-research-lane-count) {
-  color: var(--muted-foreground);
 }
 
 /* The per-pattern "source" link repeated on every item; it now appears on hover / focus only. */
