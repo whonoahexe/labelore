@@ -78,4 +78,22 @@ describe('research view contract', () => {
     expect(rule(".status-chip[data-tone='missing']")).toContain('var(--missing-border)');
     expect(css).not.toMatch(/^\.view-research-lane:has\(/m);
   });
+
+  it('the legitimacy block takes --primary on its two toggles and keeps the source link on --foreground', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const rule = (selector: string): string => {
+      const start = css.indexOf(`${selector} {`);
+      expect(start, selector).toBeGreaterThan(-1);
+      return css.slice(start, css.indexOf('}', start));
+    };
+    expect(rule('.view-research-seam-toggle:hover')).toContain('color: var(--primary)');
+    expect(rule('.view-research-lane-more:hover')).toContain('color: var(--primary)');
+    expect(rule('.view-research-link:hover')).toContain('color: var(--foreground)');
+    expect(css.indexOf('.view-research-seam-toggle:hover {')).toBeGreaterThan(
+      css.indexOf('.view-research-link:hover {'),
+    );
+    expect(css).toMatch(/--border-faint:\s*color-mix\(in oklch, var\(--border\) 55%, transparent\)/);
+    expect(css).toMatch(/--code-veil:\s*color-mix\(in oklch, var\(--muted\) 70%, transparent\)/);
+    expect(rule('.view-research-audit :not(td) > code')).toContain('var(--code-veil)');
+  });
 });

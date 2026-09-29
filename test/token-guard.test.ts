@@ -570,6 +570,13 @@ export const ALLOWLIST: AllowlistEntry[] = [
     value: '0.86em',
     reason: 'em-relative inline-code size — scales with its parent\'s resolved font-size, not a fixed step',
   },
+  {
+    selector: '.view-research-audit :not(td) > code',
+    property: 'font-size',
+    value: '0.88em',
+    reason:
+      'em-relative inline-code chip in the legitimacy block (sketch 010) — scales with its host line (--fs-3 intro and notes, --fs-2 lane note), the same idiom as .artifact-document :not(pre) > code',
+  },
 ];
 
 function isAllowlisted(decl: Declaration, allowlist: AllowlistEntry[]): boolean {
