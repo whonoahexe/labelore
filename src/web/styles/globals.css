@@ -6016,41 +6016,104 @@ button.view-research-confidence:hover {
 
 .view-research-breakdown {
   display: grid;
-  grid-template-columns: 9.5rem max-content minmax(0, 1fr);
-  column-gap: var(--space-4);
+  gap: var(--space-5);
 }
 
-.view-research-breakdown > p {
-  grid-column: 1 / -1;
+/* The confidence line minus its level: a lead paragraph above the per-area list. */
+.view-research-breakdown-summary {
+  margin: 0;
+  color: var(--foreground);
+  font-size: var(--fs-4);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
 }
 
-/* One confidence area per row — area, level chip, note — divided like a definition list. The rows
-   share the parent's columns (subgrid), so every note starts at the same x whatever its chip. */
+/* Per-area list: area + level meter on the left, the note on the right. Rows share the list's two
+   columns (subgrid) so every note starts at the same x. */
+.view-research-breakdown-list {
+  display: grid;
+  grid-template-columns: 11rem minmax(0, 1fr);
+  column-gap: var(--space-6);
+  margin: 0;
+}
+
 .view-research-breakdown-row {
   display: grid;
   grid-column: 1 / -1;
   grid-template-columns: subgrid;
-  gap: var(--space-2) var(--space-4);
-  align-items: baseline;
-  padding-block: var(--space-3);
+  row-gap: var(--space-1-5);
+  align-items: start;
+  padding-block: var(--space-4);
   border-top: 1px solid var(--border);
-  font-size: var(--fs-3);
 }
 
-.view-research-breakdown-row:first-of-type {
+.view-research-breakdown-row:first-child {
   padding-top: 0;
   border-top: 0;
 }
 
+.view-research-breakdown-head {
+  display: grid;
+  gap: var(--space-1-5);
+  align-content: start;
+  min-width: 0;
+}
+
 .view-research-breakdown-area {
-  font-family: var(--font-heading);
-  font-size: var(--fs-2);
+  color: var(--foreground);
+  font-size: var(--fs-3);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+}
+
+.view-research-breakdown-level {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
   letter-spacing: var(--ls-wider);
   text-transform: uppercase;
 }
 
-p.view-research-breakdown-note,
-.view-research-breakdown-row .view-research-breakdown-note {
+.view-research-breakdown-level[data-tone='active'],
+.view-research-breakdown-level[data-tone='complete'] {
+  --level-fill: var(--primary);
+  color: var(--primary);
+}
+
+.view-research-breakdown-level[data-tone='in-flight'] {
+  --level-fill: var(--in-flight-fill);
+  color: var(--in-flight-fill);
+}
+
+.view-research-breakdown-level[data-tone='missing'] {
+  --level-fill: var(--missing-fill);
+  color: var(--missing-fill);
+}
+
+.view-research-breakdown-meter {
+  display: inline-flex;
+  gap: var(--space-0-5);
+}
+
+.view-research-breakdown-meter i {
+  width: 0.45rem;
+  height: 0.45rem;
+  border: 1px solid var(--border);
+}
+
+.view-research-breakdown-meter[data-steps='1'] i:nth-child(-n + 1),
+.view-research-breakdown-meter[data-steps='2'] i:nth-child(-n + 2),
+.view-research-breakdown-meter[data-steps='3'] i:nth-child(-n + 3),
+.view-research-breakdown-meter[data-steps='4'] i {
+  border-color: var(--level-fill, var(--muted-foreground));
+  background: var(--level-fill, var(--muted-foreground));
+}
+
+.view-research-breakdown-note {
   margin: 0;
   color: var(--muted-foreground);
   font-size: var(--fs-3);
@@ -6058,18 +6121,15 @@ p.view-research-breakdown-note,
   overflow-wrap: anywhere;
 }
 
-/* A free-text confidence line sits above the rows with the same rhythm as a row. */
-p.view-research-breakdown-note {
-  padding-bottom: var(--space-3);
-}
-
 @media (max-width: 42rem) {
-  .view-research-breakdown {
-    grid-template-columns: minmax(0, 1fr) max-content;
+  .view-research-breakdown-list {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .view-research-breakdown-row .view-research-breakdown-note {
-    grid-column: 1 / -1;
+  .view-research-breakdown-head {
+    grid-auto-flow: column;
+    justify-content: space-between;
+    align-items: baseline;
   }
 }
 

@@ -24,6 +24,8 @@ export interface ComposedConfidenceRow {
   area: string;
   label: string | null;
   tone: ResearchTone;
+  /** 1-4 filled steps of the row's level meter (0 when unrated). */
+  steps: number;
   note: string;
 }
 
@@ -31,6 +33,9 @@ export interface ComposedConfidence {
   label: string;
   tone: ResearchTone;
   raw: string;
+  /** The confidence line minus its leading level (the title chip already shows it); null when
+   * nothing is left. */
+  summary: string | null;
   rows: ComposedConfidenceRow[];
   text: string | null;
 }
@@ -348,6 +353,29 @@ export function normalizeHeading(text: string): string {
   return text.replace(/[*`_]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
+const LEVEL_STEPS: Record<string, number> = {
+  HIGH: 4,
+  'MEDIUM-HIGH': 3,
+  MEDIUM: 2,
+  MIXED: 2,
+  'MEDIUM-LOW': 1,
+  'LOW-MEDIUM': 1,
+  LOW: 1,
+};
+
+const LEAD_LEVEL_RE = /^\*{0,2}(MEDIUM-HIGH|MEDIUM-LOW|LOW-MEDIUM|HIGH|MEDIUM|LOW|MIXED)\*{0,2}\s*(?:[—–:-]+\s*)?/i;
+
+/** Tidies a breakdown note or confidence line for display: drops a leading level (and a leftover
+ * "confidence —"), repairs the unbalanced `**` a stripped bold level leaves behind, and
+ * capitalises the first letter. */
+export function tidyConfidenceText(text: string, { dropLevel }: { dropLevel: boolean }): string {
+  let out = text.trim();
+  if (dropLevel) out = out.replace(LEAD_LEVEL_RE, '');
+  out = out.replace(/^confidence\b\s*[—–:-]*\s*/i, '');
+  if ((out.match(/\*\*/g) ?? []).length % 2 === 1) out = out.replace('**', '');
+  return out.replace(/^([a-z])/, (letter) => letter.toUpperCase());
+}
+
 function confidenceOf(meta: ResearchBriefing['meta']): ComposedConfidence | null {
   const confidence = meta.confidence;
   if (!confidence || typeof confidence.raw !== 'string') return null;
@@ -356,13 +384,15 @@ function confidenceOf(meta: ResearchBriefing['meta']): ComposedConfidence | null
     label: level ? levelLabel(level) : 'Unrated',
     tone: levelTone(level),
     raw: confidence.raw,
+    summary: tidyConfidenceText(confidence.raw, { dropLevel: true }) || null,
     rows: arrayOf<{ area?: unknown; level?: unknown; note?: unknown }>(meta.breakdown).map((row) => {
       const rowLevel = typeof row.level === 'string' ? row.level : null;
       return {
         area: typeof row.area === 'string' ? row.area : '',
         label: rowLevel ? levelLabel(rowLevel) : null,
         tone: levelTone(rowLevel),
-        note: typeof row.note === 'string' ? row.note : '',
+        steps: (rowLevel && LEVEL_STEPS[rowLevel]) || 0,
+        note: typeof row.note === 'string' ? tidyConfidenceText(row.note, { dropLevel: false }) : '',
       };
     }),
     text: stringOrNull(meta.breakdownText),

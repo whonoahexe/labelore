@@ -11,6 +11,7 @@ import {
   levelTone,
   normalizeHeading,
   splitSourceLinks,
+  tidyConfidenceText,
 } from '../../src/web/views/research-briefing.ts';
 import type { ComposedResearchBriefing } from '../../src/web/views/research-briefing.ts';
 import { NA_AUDIT, SP02_SHAPE, SYNTHETIC_SLOP } from '../helpers/research-fixtures.ts';
@@ -428,5 +429,17 @@ describe('composeResearchBriefing — At a glance and back matter', () => {
     const noLink = without.backMatter[0];
     if (noLink.kind !== 'constraints') throw new Error('kind');
     expect(noLink.groups[0].ids[0].href).toBeNull();
+  });
+});
+
+describe('tidyConfidenceText — the confidence modal text', () => {
+  it('drops a leading level, a leftover "confidence —", and repairs a dangling **', () => {
+    expect(tidyConfidenceText('MEDIUM-HIGH — the rclone rc API', { dropLevel: true })).toBe('The rclone rc API');
+    expect(tidyConfidenceText('HIGH', { dropLevel: true })).toBe('');
+    expect(tidyConfidenceText('confidence — numeric thresholds', { dropLevel: false })).toBe('Numeric thresholds');
+    expect(
+      tidyConfidenceText('for F1** (proven); **MEDIUM for F3** (docs)', { dropLevel: false }),
+    ).toBe('For F1 (proven); **MEDIUM for F3** (docs)');
+    expect(tidyConfidenceText('`code` first', { dropLevel: false })).toBe('`code` first');
   });
 });
