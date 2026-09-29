@@ -7123,12 +7123,13 @@ button.view-research-pitfall-head:hover {
 }
 
 /* 04 Open questions | 05 Environment. */
+/* Questions (bodies collapsed) beside a long Environment table left a mostly empty column, so the
+   pair stacks like every other chapter (UI pass, post-3x3). */
 .view-research-pair {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: var(--space-fluid-9);
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-fluid-10);
   align-items: start;
-  margin-top: var(--space-8);
 }
 
 .view-research-pair > .view-block {
@@ -7181,8 +7182,11 @@ button.view-research-pitfall-head:hover {
   cursor: pointer;
   font: inherit;
   text-align: left;
-  text-decoration: underline dotted;
-  text-underline-offset: var(--space-0-5);
+}
+
+.view-research-question-title button:hover,
+.view-research-question-title button:focus-visible {
+  color: var(--primary);
 }
 
 .view-research-question-body {
@@ -7411,12 +7415,56 @@ a.view-research-id:hover {
     gap: 0;
   }
 
-  .view-research-pair {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
   .view-research-back-group {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* UI pass (post-3x3): one spacing hierarchy for the whole briefing — chapters sit a fluid 2–4rem
+   apart, a chapter's sub-blocks a fixed 2rem, a label to its content 0.75rem. The generic
+   `.view-block + .view-block` rule missed any chapter following the questions|environment pair
+   (a plain div), which left Sources flush against it. */
+.document-canvas
+  > :is(.view-research-summary, .view-research-chapter, .view-research-pair, .view-research-back, .view-research-source-only)
+  ~ :is(.view-research-chapter, .view-research-pair, .view-research-back, .view-research-source-only) {
+  margin-top: var(--space-fluid-10);
+}
+
+.view-research-sub {
+  margin-top: var(--space-8);
+}
+
+/* An empty verdict lane carries no tone: nothing was removed or flagged, so nothing should read as
+   a warning. */
+.view-research-lane:has(> .view-research-lane-empty) {
+  border-color: var(--border);
+  box-shadow: none;
+}
+
+.view-research-lane:has(> .view-research-lane-empty) :is(.view-research-lane-title, .view-research-lane-count) {
+  color: var(--muted-foreground);
+}
+
+/* The per-pattern "source" link repeated on every item; it now appears on hover / focus only. */
+.view-research-patterns li {
+  position: relative;
+}
+
+.view-research-patterns .view-research-link {
+  position: absolute;
+  top: var(--space-3);
+  right: 0;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.view-research-patterns li:is(:hover, :focus-within) .view-research-link {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .view-research-patterns .view-research-link {
+    opacity: 1;
   }
 }
 /* quick-260929-3x3:end */

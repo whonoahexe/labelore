@@ -873,7 +873,12 @@ function alternativeVerdict(tradeoff: string): AlternativeVerdict {
   if (/^rejected\b/.test(lead)) return 'rejected';
   if (/actively harmful|do not use|don't use/.test(lead)) return 'harmful';
   if (/scoped to\s+(the\s+)?phase\s+\d|later phase|future phase|deferred to phase/.test(lead)) return 'later';
-  return 'viable';
+  // "Viable" only when the author says so; an option that simply wasn't chosen ("… Not worth it",
+  // "Simpler-looking, but …") reads as rejected, never as an accent-toned endorsement.
+  if (/\b(equally (legitimate|valid|good)|viable|also (valid|fine)|either works|acceptable alternative)\b/.test(lead)) {
+    return 'viable';
+  }
+  return 'rejected';
 }
 
 function alternativesOf(rows: Record<string, string>[]): ResearchAlternative[] {

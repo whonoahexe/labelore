@@ -279,10 +279,10 @@ describe('composeResearchBriefing — stack, alternatives and lanes', () => {
     expect(stack.groups[0].label).toBe('Core');
     expect(stack.alternatives.map((a) => [a.verdictLabel, a.tone, a.struck])).toEqual([
       ['rejected', 'quiet', true],
-      ['viable alternative', 'complete', false],
-      ['viable alternative', 'complete', false],
-      ['viable alternative', 'complete', false],
-      ['viable alternative', 'complete', false],
+      ['rejected', 'quiet', true],
+      ['rejected', 'quiet', true],
+      ['rejected', 'quiet', true],
+      ['rejected', 'quiet', true],
     ]);
     const lanes = stack.audit?.lanes;
     expect(lanes?.slop.count).toBe(0);
@@ -295,9 +295,9 @@ describe('composeResearchBriefing — stack, alternatives and lanes', () => {
     const stack = chapterOf(composeFrom(SP02_SHAPE), 'stack');
     expect(stack.alternatives.map((a) => a.verdictLabel)).toEqual([
       'viable alternative',
-      'viable alternative',
+      'rejected',
       'do not use',
-      'viable alternative',
+      'rejected',
       'rejected',
       'later phase',
     ]);

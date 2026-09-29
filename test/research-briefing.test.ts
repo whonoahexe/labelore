@@ -60,12 +60,13 @@ describe('extractResearchBriefing — LB v1.0/02 (repo file)', () => {
     expect(supporting.packages).toHaveLength(15);
     expect(b.stack?.groups.flatMap((g) => g.packages).filter((p) => p.sus)).toHaveLength(10);
     expect(core.packages[0]).toMatchObject({ name: 'vite', version: '8.2.2', date: '2026-08-20', sus: true });
+    // All five were options not chosen; none says it is viable, so none reads as an endorsement.
     expect(b.stack?.alternatives.map((a) => a.verdict)).toEqual([
       'rejected',
-      'viable',
-      'viable',
-      'viable',
-      'viable',
+      'rejected',
+      'rejected',
+      'rejected',
+      'rejected',
     ]);
     expect(b.stack?.installation).toBe(true);
 
@@ -137,11 +138,13 @@ describe('extractResearchBriefing — SP02_SHAPE fixture', () => {
     const [core, supporting] = b.stack?.groups ?? [];
     expect(core.packages).toHaveLength(6);
     expect(supporting.packages).toHaveLength(3);
+    // Only nix ("Equally legitimate …") is viable; libc ("… Not worth it") and spawn_blocking
+    // ("Simpler-looking, but …") were not chosen.
     expect(b.stack?.alternatives.map((a) => a.verdict)).toEqual([
       'viable',
-      'viable',
+      'rejected',
       'harmful',
-      'viable',
+      'rejected',
       'rejected',
       'later',
     ]);
