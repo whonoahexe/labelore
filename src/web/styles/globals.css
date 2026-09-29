@@ -5990,31 +5990,21 @@ button.view-research-confidence:hover {
   background: var(--state-hover);
 }
 
-/* The confidence breakdown modal — the figure frame's dialog recipe (centred, card surface,
-   popover shadow) at a reading width. */
+/* The confidence breakdown modal is shadcn's DialogContent; only its width and header are ours. */
 .view-research-confidence-dialog {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  z-index: 71;
-  display: grid;
-  gap: var(--space-4);
-  width: min(46rem, calc(100vw - 2rem));
   max-height: 88vh;
   overflow-y: auto;
-  padding: var(--space-5);
-  transform: translate(-50%, -50%);
-  border: 1px solid var(--border);
-  background: var(--card);
-  box-shadow: var(--shadow-popover);
+}
+
+@media (min-width: 40rem) {
+  .view-research-confidence-dialog {
+    max-width: 44rem;
+  }
 }
 
 .view-research-confidence-dialog-head {
-  display: flex;
-  gap: var(--space-3);
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: var(--space-3);
+  padding-right: var(--space-10);
+  padding-bottom: var(--space-4);
   border-bottom: 1px solid var(--border);
 }
 
@@ -6022,36 +6012,34 @@ button.view-research-confidence:hover {
   display: flex;
   gap: var(--space-2);
   align-items: center;
-  margin: 0;
-  font-family: var(--font-heading);
-  font-size: var(--fs-5);
-  font-weight: var(--fw-medium);
-}
-
-.view-research-confidence-dialog .view-research-breakdown {
-  max-width: none;
-  padding: 0;
-  border: 0;
-  background: none;
 }
 
 .view-research-breakdown {
   display: grid;
-  flex-basis: 100%;
-  order: 2;
-  gap: var(--space-2);
-  max-width: 46rem;
-  padding: var(--space-3);
-  border: 1px solid var(--border);
-  background: var(--card);
+  grid-template-columns: 9.5rem max-content minmax(0, 1fr);
+  column-gap: var(--space-4);
 }
 
+.view-research-breakdown > p {
+  grid-column: 1 / -1;
+}
+
+/* One confidence area per row — area, level chip, note — divided like a definition list. The rows
+   share the parent's columns (subgrid), so every note starts at the same x whatever its chip. */
 .view-research-breakdown-row {
   display: grid;
-  grid-template-columns: 10rem 7.5rem minmax(0, 1fr);
-  gap: var(--space-3);
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  gap: var(--space-2) var(--space-4);
   align-items: baseline;
+  padding-block: var(--space-3);
+  border-top: 1px solid var(--border);
   font-size: var(--fs-3);
+}
+
+.view-research-breakdown-row:first-of-type {
+  padding-top: 0;
+  border-top: 0;
 }
 
 .view-research-breakdown-area {
@@ -6066,17 +6054,23 @@ p.view-research-breakdown-note,
   margin: 0;
   color: var(--muted-foreground);
   font-size: var(--fs-3);
+  line-height: var(--lh-relaxed);
   overflow-wrap: anywhere;
 }
 
-.view-research-valid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  align-items: baseline;
-  margin: 0;
-  color: var(--muted-foreground);
-  font-size: var(--fs-3);
+/* A free-text confidence line sits above the rows with the same rhythm as a row. */
+p.view-research-breakdown-note {
+  padding-bottom: var(--space-3);
+}
+
+@media (max-width: 42rem) {
+  .view-research-breakdown {
+    grid-template-columns: minmax(0, 1fr) max-content;
+  }
+
+  .view-research-breakdown-row .view-research-breakdown-note {
+    grid-column: 1 / -1;
+  }
 }
 
 .view-research-key {
