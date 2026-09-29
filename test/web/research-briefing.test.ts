@@ -102,8 +102,10 @@ describe('composeResearchBriefing', () => {
     expect(composed?.intro.confidence?.rows[4]).toMatchObject({ label: 'Medium-low', tone: 'missing' });
     expect(composed?.intro.validUntilShort).toBe('2026-09-01');
     expect(composed?.intro.domain).toContain('Local read-only React dashboard');
-    expect(composed?.summary?.lead.startsWith('Phase 2 should be planned')).toBe(true);
-    expect(composed?.summary?.rest).toHaveLength(2);
+    expect(composed?.summary?.lead).toHaveLength(1);
+    const leadBlock = composed?.summary?.lead[0];
+    expect(leadBlock?.kind === 'paragraph' && leadBlock.text.startsWith('Phase 2 should be planned')).toBe(true);
+    expect(composed?.summary?.findings.map((f) => f.number)).toEqual(['01', '02']);
     expect(composed?.summary?.recommendation?.startsWith('Build one reusable')).toBe(true);
     expect(composed?.outline[0]).toEqual({ id: 'research-summary', label: 'Summary' });
     expect(composed?.outline.at(-1)).toEqual({ id: 'research-source-only', label: 'In the source only' });
@@ -441,5 +443,52 @@ describe('tidyConfidenceText — the confidence modal text', () => {
       tidyConfidenceText('for F1** (proven); **MEDIUM for F3** (docs)', { dropLevel: false }),
     ).toBe('For F1 (proven); **MEDIUM for F3** (docs)');
     expect(tidyConfidenceText('`code` first', { dropLevel: false })).toBe('`code` first');
+  });
+});
+
+describe('composeResearchBriefing — summary lead and findings', () => {
+  const summaryOf = (markdown: string) =>
+    composeResearchBriefing(inputOf(extractResearchBriefing(markdown)))?.summary ?? null;
+  const kinds = (blocks: { kind: string }[]) => blocks.map((b) => b.kind);
+
+  it('a single paragraph is the lead and there are no findings', () => {
+    const summary = summaryOf('## Summary\n\nOne lead.\n');
+    expect(summary?.lead).toEqual([{ kind: 'paragraph', text: 'One lead.' }]);
+    expect(summary?.findings).toEqual([]);
+  });
+
+  it('later paragraphs become numbered findings and the recommendation is not one', () => {
+    const summary = summaryOf(
+      '## Summary\n\nLead.\n\nFirst **finding**.\n\nSecond finding.\n\n**Primary recommendation:** Do it.\n',
+    );
+    expect(summary?.lead).toEqual([{ kind: 'paragraph', text: 'Lead.' }]);
+    expect(summary?.findings.map((f) => f.number)).toEqual(['01', '02']);
+    expect(summary?.findings[0]?.blocks).toEqual([{ kind: 'paragraph', text: 'First **finding**.' }]);
+    expect(summary?.recommendation).toBe('Do it.');
+  });
+
+  it('a non-paragraph block after a finding joins that finding', () => {
+    const summary = summaryOf('## Summary\n\nLead.\n\nFinding one:\n\n- a\n- b\n\nFinding two.\n');
+    expect(summary?.findings.map((f) => kinds(f.blocks))).toEqual([['paragraph', 'list'], ['paragraph']]);
+  });
+
+  it('a non-paragraph block between the lead and the first finding joins the lead', () => {
+    const summary = summaryOf('## Summary\n\nLead:\n\n```\nx\n```\n\nFinding.\n');
+    expect(kinds(summary?.lead ?? [])).toEqual(['paragraph', 'code']);
+    expect(summary?.findings).toHaveLength(1);
+  });
+
+  it('a non-paragraph block before any paragraph keeps its source order in the lead', () => {
+    const summary = summaryOf('## Summary\n\n- a\n\nLead.\n\nFinding.\n');
+    expect(kinds(summary?.lead ?? [])).toEqual(['list', 'paragraph']);
+    expect(summary?.findings).toHaveLength(1);
+  });
+
+  it('a recommendation-only summary has no lead and no findings', () => {
+    const summary = summaryOf('## Summary\n\n**Primary recommendation:** Do it.\n');
+    expect(summary).not.toBeNull();
+    expect(summary?.lead).toEqual([]);
+    expect(summary?.findings).toEqual([]);
+    expect(summary?.recommendation).toBe('Do it.');
   });
 });
