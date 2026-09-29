@@ -5990,14 +5990,49 @@ button.view-research-confidence:hover {
   background: var(--state-hover);
 }
 
-.view-research-confidence-chevron {
-  width: var(--space-3);
-  height: var(--space-3);
-  transition: transform 0.15s ease;
+/* The confidence breakdown modal — the figure frame's dialog recipe (centred, card surface,
+   popover shadow) at a reading width. */
+.view-research-confidence-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 71;
+  display: grid;
+  gap: var(--space-4);
+  width: min(46rem, calc(100vw - 2rem));
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: var(--space-5);
+  transform: translate(-50%, -50%);
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: var(--shadow-popover);
 }
 
-.view-research-confidence[aria-expanded='true'] .view-research-confidence-chevron {
-  transform: rotate(180deg);
+.view-research-confidence-dialog-head {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.view-research-confidence-dialog-title {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: var(--fs-5);
+  font-weight: var(--fw-medium);
+}
+
+.view-research-confidence-dialog .view-research-breakdown {
+  max-width: none;
+  padding: 0;
+  border: 0;
+  background: none;
 }
 
 .view-research-breakdown {
