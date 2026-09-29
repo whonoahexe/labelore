@@ -1234,15 +1234,24 @@ export function ResearchBriefingView({
                   <ResearchBlocks blocks={briefing.intro.preamble} />
                 </div>
               ) : null}
-              {summary.lead !== '' ? (
-                <p className="view-research-lead">
-                  <ResearchInline text={summary.lead} />
-                </p>
-              ) : null}
-              {summary.rest.length > 0 ? (
-                <div className="view-research-rest">
-                  <ResearchBlocks blocks={summary.rest} />
+              {summary.lead.length > 0 ? (
+                <div className="view-research-lead">
+                  <ResearchBlocks blocks={summary.lead} />
                 </div>
+              ) : null}
+              {summary.findings.length > 0 ? (
+                <ol className="view-research-findings" aria-label="Findings">
+                  {summary.findings.map((finding) => (
+                    <li key={finding.number} className="view-research-finding">
+                      <span className="view-research-finding-number" aria-hidden="true">
+                        {finding.number}
+                      </span>
+                      <div className="view-research-finding-body">
+                        <ResearchBlocks blocks={finding.blocks} />
+                      </div>
+                    </li>
+                  ))}
+                </ol>
               ) : null}
             </div>
             <aside className="view-research-aside">

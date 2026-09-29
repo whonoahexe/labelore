@@ -51,9 +51,17 @@ export interface ComposedResearchIntro {
   preamble: Block[];
 }
 
+/** One numbered finding: a paragraph plus any non-paragraph blocks that follow it. */
+export interface ComposedResearchFinding {
+  number: string;
+  blocks: Block[];
+}
+
+/** The lead is the framing paragraph together with any non-paragraph blocks before the second
+ * paragraph, in source order; every later paragraph opens a numbered finding. */
 export interface ComposedResearchSummary {
-  lead: string;
-  rest: Block[];
+  lead: Block[];
+  findings: ComposedResearchFinding[];
   recommendation: string | null;
 }
 
@@ -420,13 +428,20 @@ function summaryOf(briefing: ResearchBriefing): ComposedResearchSummary | null {
   const paragraphs = arrayOf<Block>(summary.paragraphs);
   const recommendation = stringOrNull(summary.recommendation);
   if (paragraphs.length === 0 && recommendation === null) return null;
-  const firstIndex = paragraphs.findIndex((block) => block.kind === 'paragraph');
-  const lead = firstIndex === -1 ? '' : (paragraphs[firstIndex] as { text: string }).text;
-  return {
-    lead,
-    rest: paragraphs.filter((_, index) => index !== firstIndex),
-    recommendation,
-  };
+  const lead: Block[] = [];
+  const findings: ComposedResearchFinding[] = [];
+  let leadTaken = false;
+  for (const block of paragraphs) {
+    if (block.kind === 'paragraph' && !leadTaken) {
+      leadTaken = true;
+      lead.push(block);
+    } else if (block.kind === 'paragraph') {
+      findings.push({ number: pad2(findings.length + 1), blocks: [block] });
+    } else {
+      (findings.at(-1)?.blocks ?? lead).push(block);
+    }
+  }
+  return { lead, findings, recommendation };
 }
 
 /** Each source-only entry's Source-mode target: a rendered `h2` group by heading, a `###` heading
