@@ -64,6 +64,23 @@ describe('research view contract', () => {
     expect(block).not.toMatch(/color-mix\(/);
   });
 
+  it('the figure frame shows the whole figure, notes slant, and the figure tokens live in :root (quick-260930-jzt)', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const rule = (selector: string): string => {
+      const start = css.indexOf(`${selector} {`);
+      expect(start, selector).toBeGreaterThan(-1);
+      return css.slice(start, css.indexOf('}', start));
+    };
+    expect(rule('.figure-frame-body')).not.toContain('max-height');
+    expect(rule('.lifted-diagram-note')).toContain('font-synthesis-style: auto');
+    for (const token of ['--figure-card-border', '--figure-node-fill', '--figure-node-border', '--figure-grid-line']) {
+      expect(css, token).toMatch(new RegExp(`^  ${token}:`, 'm'));
+    }
+    expect(css).toContain("lifted-diagram-card[data-hot='true'] {");
+    const frame = await source('src/web/components/figure-frame.tsx');
+    expect(frame).toMatch(/aria-pressed=\{grid\}/);
+  });
+
   it('legitimacy lanes stay toned when empty and outline Removed on --missing-border', async () => {
     const css = await source('src/web/styles/globals.css');
     expect(css).toMatch(/--missing-border:\s*color-mix\(in oklch, var\(--missing-fill\) 50%, var\(--border\)\)/);
