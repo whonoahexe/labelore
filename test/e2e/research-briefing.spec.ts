@@ -53,8 +53,20 @@ test.describe('RESEARCH briefing', () => {
     await expect(flagged.locator('.view-research-lane-items li')).toHaveCount(12);
     await expect(page.locator('.view-research-lane[data-verdict="ok"] .view-research-approved[data-dashed="true"]')).toHaveCount(0);
 
-    // 02 Architecture: 23 node cards, a 27-row clean list with no Changed-only filter.
-    await expect(page.locator('#research-architecture .lifted-diagram-card')).toHaveCount(23);
+    // 02 Architecture (quick-260930-mp6, sketch 012 B): 23 nodes drawn in kind lanes, a details panel on
+    // click, Shown as drawn back to the 23 lifted cards, and a 27-row clean list with no Changed-only filter.
+    const architecture = page.locator('#research-architecture');
+    await expect(architecture.locator('.lane-diagram-node')).toHaveCount(23);
+    await expect(architecture.locator('.lifted-diagram-card')).toHaveCount(0);
+    await architecture.locator('.lane-diagram-node', { hasText: 'Dashboard' }).first().click();
+    await expect(architecture.locator('.lane-diagram-panel')).toBeVisible();
+    await expect(architecture.locator('.lane-diagram-panel')).toContainText('As written');
+    await page.keyboard.press('Escape');
+    await expect(architecture.locator('.lane-diagram-panel')).toBeHidden();
+    await architecture.getByRole('button', { name: 'Shown as drawn' }).click();
+    await expect(architecture.locator('.lifted-diagram-card')).toHaveCount(23);
+    await architecture.getByRole('button', { name: 'Shown as drawn' }).first().click();
+    await expect(architecture.locator('.lane-diagram-node')).toHaveCount(23);
     await expect(page.locator('#research-architecture .clean-tree-row')).toHaveCount(27);
     await expect(page.getByRole('button', { name: /Changed only/ })).toHaveCount(0);
 
@@ -95,7 +107,7 @@ test.describe('RESEARCH briefing', () => {
     await expect(page.locator('.view-research-chapter-number')).toHaveCount(6);
 
     // Squared corners on the new chrome.
-    for (const selector of ['.figure-frame', '.lifted-diagram-card', '.view-research-lane', '.view-research-pitfall']) {
+    for (const selector of ['.figure-frame', '.lane-diagram-node', '.view-research-lane', '.view-research-pitfall']) {
       const radii = await page
         .locator(selector)
         .evaluateAll((els) => els.map((el) => getComputedStyle(el).borderRadius));
@@ -121,6 +133,10 @@ test.describe('RESEARCH briefing', () => {
     await page.goto(`${SP_BASE_URL}${url}`);
     await page.locator('#research-summary').waitFor({ state: 'visible' });
 
+    // Storage health draws as nine nodes in six kind lanes; Shown as drawn is the nine lifted boxes.
+    await expect(page.locator('.lane-diagram-node')).toHaveCount(9);
+    await expect(page.locator('.lane-diagram-lane')).toHaveCount(6);
+    await page.locator('#research-architecture').getByRole('button', { name: 'Shown as drawn' }).click();
     await expect(page.locator('.lifted-diagram-card[data-kind="box"]')).toHaveCount(9);
     await expect(page.getByRole('button', { name: 'Changed only · 3' })).toBeVisible();
     await expect(page.locator('.view-research-env .status-chip', { hasText: 'blocking' })).toHaveCount(3);
