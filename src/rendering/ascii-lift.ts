@@ -123,6 +123,8 @@ interface BoxGeometry {
   /** The open-left outer box has no left edge and the `┘` row may carry text inside it. */
   open: boolean;
   bottomText: boolean;
+  /** Open-left only: the frame's left edge, pushed right of outside runs the inferred edge would cover. */
+  frameLeft?: number;
 }
 
 function isBoxGlyph(ch: string): boolean {
@@ -381,6 +383,37 @@ export function liftDiagram(text: string): LiftedFigure | null {
       }
     }
     card.c1 = left - 1;
+    // The inferred left edge must never cover an outside note or connector: text and connector runs
+    // that start left of it, on this box's own rows and outside the boxes nested in it (a note beside
+    // the box, the `└───►` that enters it). The card starts just right of the furthest such run.
+    const nested = boxes.filter(
+      (inner) =>
+        inner !== card && !geometry.get(inner)?.open && inner.r1 > card.r1 && inner.r2 < card.r2 && inner.c2 < card.c2,
+    );
+    let outsideEnd = -1;
+    for (let r = card.r1 + 1; r < card.r2; r++) {
+      let start = -1;
+      let end = -1;
+      let blanks = 0;
+      const flush = (): void => {
+        if (start >= 0 && start < card.c1 && end > outsideEnd) outsideEnd = end;
+        start = -1;
+      };
+      for (let x = 0; x <= width; x++) {
+        const masked = nested.some((n) => r >= n.r1 && r <= n.r2 && x >= n.c1 && x <= n.c2);
+        if (x >= width || masked || at(r, x) === ' ') {
+          if (masked || x >= width) flush();
+          else if (++blanks >= 2) flush();
+          if (x >= width) break;
+          continue;
+        }
+        blanks = 0;
+        if (start < 0) start = x;
+        end = x;
+      }
+      flush();
+    }
+    if (outsideEnd + 1 > card.c1 + 0.5) geo.frameLeft = outsideEnd + 1;
     for (let x = card.c1 + 1; x < geo.bottom.start; x++) {
       const ch = at(card.r2, x);
       if (ch !== ' ' && !isBoxGlyph(ch) && !isArrowGlyph(ch)) {
@@ -724,7 +757,8 @@ export function liftDiagram(text: string): LiftedFigure | null {
   // hold text on its `┘` row.
   for (const b of boxes) {
     const bottom = geometry.get(b)?.bottomText ? b.r2 + 1.25 : b.r2 + 0.5;
-    b.frame = { left: b.c1 + 0.5, top: b.r1 + 0.5, width: b.c2 - b.c1, height: bottom - (b.r1 + 0.5) };
+    const left = geometry.get(b)?.frameLeft ?? b.c1 + 0.5;
+    b.frame = { left, top: b.r1 + 0.5, width: b.c2 + 0.5 - left, height: bottom - (b.r1 + 0.5) };
   }
 
   const cards: LiftCard[] = [...boxes];
