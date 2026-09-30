@@ -133,11 +133,10 @@ is always to add the missing name to this document, never to edit the reference 
 | `lifted-diagram-node` | A node/box title — semibold — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
 | `lifted-diagram-sub` | A second line inside a node — muted — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
 | `lifted-diagram-note` | Free text beside boxes — muted annotation, slanted by a synthetic oblique scoped to notes (`font-synthesis-style`), so the monospace grid holds — sketch-009 B figure, view-agnostic (quick-260929-3x3, quick-260930-jzt) | globals.css — quick-260929-3x3 block |
-| `clean-tree` | The clean-list directory tree (`<ul>`) — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
-| `clean-tree-tools` | The tree's tools row — Changed only chip, file/folder counts — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
-| `clean-tree-count` | The `F files · D folders` count — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
-| `clean-tree-row` | One tree row: name column, notes column (`data-badge` NEW / EXTEND / EXISTING) — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
-| `clean-tree-name` | The indented name cell with its Folder/File icon — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `clean-tree` | The clean-list directory tree (`<ul>`), rendered inside the same `FigureFrame` as the diagram (titled Directory structure); a single-child folder chain with no intermediate notes collapses into one collapsible row — sketch-009 B figure, view-agnostic (quick-260929-3x3, quick-260930-jzt) | globals.css — quick-260929-3x3 block |
+| `clean-tree-count` | The `F files · D folders` count — now in the figure frame bar — sketch-009 B figure, view-agnostic (quick-260929-3x3, quick-260930-jzt) | globals.css — quick-260929-3x3 block |
+| `clean-tree-row` | One tree row: name column, notes column (`data-badge` NEW / EXTEND / MODIFIED / EXISTING, `data-dir` on folders); faint hairline separators and faint indent guides at a --space-6 step — sketch-009 B figure, view-agnostic (quick-260929-3x3, quick-260930-jzt) | globals.css — quick-260929-3x3 block |
+| `clean-tree-name` | The indented name cell with its Folder/File icon — a --space-6 indent step per depth — sketch-009 B figure, view-agnostic (quick-260929-3x3, quick-260930-jzt) | globals.css — quick-260929-3x3 block |
 | `clean-tree-folder` | A collapsible folder's toggle button (`aria-expanded`) — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
 | `clean-tree-note` | The notes cell — badge chip plus the `# comment` — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
 
@@ -150,7 +149,7 @@ is always to add the missing name to this document, never to edit the reference 
 | `quiet` | Neutral coverage gap — muted-foreground, never alarming | An unrecognized/unmanifested type, a non-exact traceability match, a phase not yet started, every sketch-004 B3 roll-up chip and Also-chapter panel chip, and (quick-260923-jxp) an unresolved discussion item's "Open" state chip, a chosen answer's qualifier chip, a declined-area ghost row's "Not discussed" chip, and (quick-260925-3ug) a CONTEXT specific idea's Note chip, and (quick-260929-3x3) on a RESEARCH page a rejected alternative, a resolved open question, an EXISTING tree badge, MEDIUM/LOW pitfall chips, F-codes, already-pinned / host-binary package badges and an OK seam verdict |
 | `destructive` | Genuine read/parse failure only | The "Unreadable" artifact-parse chip; never used for a merely-unrecognized type; never used by any sketch-004 B3 document-content chip (state/rollup/pill), which stay within `active`/`complete`/`quiet`/`in-flight`/`missing` |
 | `warning` | Partial read/parse degradation only | The "Warning" artifact-parse chip; never used by any sketch-004 B3 document-content chip, same rule as `destructive` above |
-| `in-flight` | A phase or item currently being worked, or waiting on someone | Traceability covering-phase signal, a sketch-004 B3 document's "Awaiting checkpoint"/"Gaps found" cover status, and the CONTEXT brief's open questions (open-question chips, an area's "N open" chip, the "open for the researcher" stat and panel rule), and (quick-260925-3ug) a CONTEXT specific idea's Leaning chip plus a deferred idea's "Revisit if" label, and (quick-260929-3x3) on a RESEARCH page a SUS package badge and the Flagged lane, a HIGH pitfall, an open question, an EXTEND tree badge, mid/mixed confidence, a later-phase alternative, and the ASSUMED evidence marker |
+| `in-flight` | A phase or item currently being worked, or waiting on someone | Traceability covering-phase signal, a sketch-004 B3 document's "Awaiting checkpoint"/"Gaps found" cover status, and the CONTEXT brief's open questions (open-question chips, an area's "N open" chip, the "open for the researcher" stat and panel rule), and (quick-260925-3ug) a CONTEXT specific idea's Leaning chip plus a deferred idea's "Revisit if" label, and (quick-260929-3x3) on a RESEARCH page a SUS package badge and the Flagged lane, a HIGH pitfall, an open question, an EXTEND or MODIFIED tree badge, mid/mixed confidence, a later-phase alternative, and the ASSUMED evidence marker |
 | `missing` | An expected item that has not appeared | Traceability covering-phase signal, a sketch-004 B3 gap item's "Failed" state chip, and (quick-260929-3x3) on a RESEARCH page the Removed lane and a SLOP verdict, a CRITICAL pitfall, a blocking environment chip and a ✗, a do-not-use alternative, low confidence, and a bad audit signal (a fresh package, few downloads, no repo) |
 
 ## Families
@@ -295,7 +294,8 @@ element is actually written, regardless of class name:
   padded step cards that absorb the detail lines under or beside their trunk, with aria-hidden spacer
   rows between stacked steps; edge labels and asides stay outside every card.
 - **The 10% accent reservation extends to the figures.** (quick-260929-3x3) The lifted diagram's
-  arrows, the hovered card, and the clean tree's folder icons, take `--primary` (the NEW chip uses
+  arrows, the hovered card, and the clean tree's folder icons, take `--primary`; folder names sit on
+  `--muted-foreground` (the NEW chip uses
   the shared `active` tone); node cards sit on the quieter `--figure-node-fill` / `--figure-node-border`. Box cards, connector glyphs, notes and file names stay on
   `--border`, `--background` and the muted foreground.
 - **RESEARCH uses the sketch-008 A briefing, not B3 and not CONTEXT's brief.** (quick-260929-3x3)

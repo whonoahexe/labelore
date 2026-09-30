@@ -8,10 +8,12 @@ import { SP02_SHAPE } from '../helpers/research-fixtures.ts';
 import { extractResearchBriefing } from '../../src/planning-repo/handlers/research-briefing.ts';
 import {
   changedOnlySet,
+  collapseFolderChains,
   isDirectoryTree,
   parseTree,
   treeCounts,
 } from '../../src/rendering/ascii-tree.ts';
+import type { TreeRow } from '../../src/rendering/ascii-tree.ts';
 
 const REPO = new URL('../../', import.meta.url);
 
@@ -105,5 +107,131 @@ describe('isDirectoryTree', () => {
         await treeOf('.planning/milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-RESEARCH.md'),
       ),
     ).toBe(true);
+  });
+});
+
+// quick-260930-jzt: the MODIFIED badge and collapseFolderChains, against the studio-portal phases/02
+// roles tree (a verbatim fixture, 32 rows).
+const ROLES_TREE = await readFile(new URL('./fixtures/sp-p02-roles-tree.txt', import.meta.url), 'utf8');
+
+function treeRow(name: string, parent: number | null, depth: number, extra: Partial<TreeRow> = {}): TreeRow {
+  return { depth, prefix: '', name, note: '', dir: name.endsWith('/'), badge: null, parent, ...extra };
+}
+
+describe('MODIFIED badge', () => {
+  it("recognises 'MODIFIED — …' and 'MODIFIED: …', stripping the prefix, and not 'MODIFIEDX …'", () => {
+    const rows = parseTree(
+      'a/\n├── x.ts # MODIFIED — edits x\n├── y.ts # MODIFIED: edits y\n└── z.ts # MODIFIEDX not a badge',
+    );
+    expect(rows.map((r) => [r.badge, r.note])).toEqual([
+      [null, ''],
+      ['MODIFIED', 'edits x'],
+      ['MODIFIED', 'edits y'],
+      [null, 'MODIFIEDX not a badge'],
+    ]);
+  });
+
+  it('roles fixture: 32 rows, 18 files / 14 folders / 18 changed, 12 MODIFIED rows with clean notes', () => {
+    const rows = parseTree(ROLES_TREE);
+    expect(rows).toHaveLength(32);
+    expect(treeCounts(rows)).toEqual({ files: 18, folders: 14, changed: 18 });
+    const modified = rows.filter((r) => r.badge === 'MODIFIED');
+    expect(modified).toHaveLength(12);
+    for (const row of modified) expect(row.note.startsWith('MODIFIED') || row.note.startsWith('—')).toBe(false);
+  });
+
+  it('changedOnlySet holds every NEW / EXTEND / MODIFIED row plus its ancestors', () => {
+    const rows = parseTree(ROLES_TREE);
+    const keep = changedOnlySet(rows);
+    rows.forEach((row, index) => {
+      if (row.badge === 'NEW' || row.badge === 'EXTEND' || row.badge === 'MODIFIED') expect(keep.has(index)).toBe(true);
+    });
+    for (const index of keep) {
+      let cursor = rows[index].parent;
+      while (cursor !== null) {
+        expect(keep.has(cursor)).toBe(true);
+        cursor = rows[cursor].parent;
+      }
+    }
+  });
+});
+
+describe('collapseFolderChains', () => {
+  it("roles: 31 rows, 'app/admin/' is one folder row whose children sit one level deeper", () => {
+    const rows = collapseFolderChains(parseTree(ROLES_TREE));
+    expect(rows).toHaveLength(31);
+    const merged = rows.findIndex((r) => r.name === 'app/admin/');
+    expect(merged).toBeGreaterThan(-1);
+    expect(rows[merged].dir).toBe(true);
+    const children = rows.filter((r) => r.parent === merged);
+    expect(children.map((r) => r.name)).toEqual(['page.tsx', 'users/[id]/page.tsx']);
+    for (const child of children) expect(child.depth).toBe(rows[merged].depth + 1);
+    for (const name of ['backend/', 'src/', 'frontend/', 'components/', 'lib/']) {
+      expect(
+        rows.some((r) => r.name === name),
+        name,
+      ).toBe(true);
+    }
+    // Every parent link is a valid, earlier display index, and depth is the parent's depth + 1.
+    rows.forEach((row, index) => {
+      if (row.parent === null) expect(row.depth).toBe(0);
+      else {
+        expect(row.parent).toBeLessThan(index);
+        expect(row.depth).toBe(rows[row.parent].depth + 1);
+      }
+    });
+  });
+
+  it("a/ → b/ → c/ → f.ts collapses to 'a/b/c/' plus f.ts", () => {
+    const rows = collapseFolderChains([
+      treeRow('a/', null, 0),
+      treeRow('b/', 0, 1),
+      treeRow('c/', 1, 2),
+      treeRow('f.ts', 2, 3),
+    ]);
+    expect(rows.map((r) => [r.name, r.depth, r.parent])).toEqual([
+      ['a/b/c/', 0, null],
+      ['f.ts', 1, 0],
+    ]);
+  });
+
+  it('a note (or a badge) on the parent folder blocks the merge; a noted last folder keeps its note', () => {
+    const blocked = collapseFolderChains([
+      treeRow('a/', null, 0, { note: 'the a folder' }),
+      treeRow('b/', 0, 1),
+      treeRow('f.ts', 1, 2),
+    ]);
+    expect(blocked.map((r) => r.name)).toEqual(['a/', 'b/', 'f.ts']);
+    const kept = collapseFolderChains([
+      treeRow('a/', null, 0),
+      treeRow('b/', 0, 1, { note: 'the b folder', badge: 'NEW' }),
+      treeRow('f.ts', 1, 2),
+    ]);
+    expect(kept.map((r) => [r.name, r.note, r.badge])).toEqual([
+      ['a/b/', 'the b folder', 'NEW'],
+      ['f.ts', '', null],
+    ]);
+  });
+
+  it('a folder with two children never merges', () => {
+    const rows = collapseFolderChains(parseTree('a/\n├── b/\n│   └── x.ts\n└── c.ts'));
+    expect(rows.map((r) => r.name)).toEqual(['a/', 'b/', 'x.ts', 'c.ts']);
+  });
+
+  it('labelore v1.0/02 stays at 27 rows and studio-portal v1.0/02 at 14', async () => {
+    const lb = parseTree(
+      await treeOf('.planning/milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-RESEARCH.md'),
+    );
+    expect(collapseFolderChains(lb)).toHaveLength(27);
+    expect(collapseFolderChains(parseTree(SP_TREE))).toHaveLength(14);
+  });
+
+  it('a 100,000-row single chain collapses within 250 ms', () => {
+    const chain: TreeRow[] = Array.from({ length: 100_000 }, (_, i) => treeRow(`d${i}/`, i === 0 ? null : i - 1, i));
+    chain.push(treeRow('leaf.ts', 99_999, 100_000));
+    const started = performance.now();
+    const rows = collapseFolderChains(chain);
+    expect(performance.now() - started).toBeLessThan(250);
+    expect(rows.map((r) => r.depth)).toEqual([0, 1]);
   });
 });

@@ -4,10 +4,14 @@
 // keep a changed file's ancestors. No DOM, no Node APIs, no research-specific import: the
 // lifted-figures-everywhere todo reuses this unchanged for every document.
 //
+// quick-260930-jzt: a MODIFIED badge (an edit to an existing file, counted as changed like NEW and
+// EXTEND), and collapseFolderChains — a single-child folder chain with no intermediate notes shows
+// as one row (`app/admin/`).
+//
 // T-3x3-02: each line is clipped and parsed with linear scans (no regex over the whole line), and
 // a tree is capped at MAX_ROWS rows.
 
-export type TreeBadge = 'NEW' | 'EXTEND' | 'EXISTING';
+export type TreeBadge = 'NEW' | 'EXTEND' | 'MODIFIED' | 'EXISTING';
 
 export interface TreeRow {
   /** Prefix length / 4, rounded — the indentation level. */
@@ -27,13 +31,15 @@ export interface TreeRow {
 const MAX_LINE = 2000;
 export const TREE_MAX_ROWS = 2000;
 const GUIDE = '│├└─';
+/** The badges that mean "this row is part of the change" — one set drives Changed only and the counts. */
+const CHANGED: ReadonlySet<TreeBadge | null> = new Set<TreeBadge | null>(['NEW', 'EXTEND', 'MODIFIED']);
 
 function isPrefixChar(ch: string): boolean {
   return GUIDE.includes(ch) || /\s/.test(ch);
 }
 
 function badgeOf(note: string): { badge: TreeBadge | null; note: string } {
-  for (const badge of ['NEW', 'EXTEND', 'EXISTING'] as const) {
+  for (const badge of ['NEW', 'EXTEND', 'MODIFIED', 'EXISTING'] as const) {
     if (!note.startsWith(badge)) continue;
     const after = note[badge.length];
     if (after !== undefined && /[A-Za-z0-9_]/.test(after)) continue;
@@ -89,11 +95,11 @@ export function parseTree(text: string): TreeRow[] {
   return rows;
 }
 
-/** Indices of every NEW / EXTEND row plus all of its ancestors — what "Changed only" keeps. */
+/** Indices of every NEW / EXTEND / MODIFIED row plus all of its ancestors — what "Changed only" keeps. */
 export function changedOnlySet(rows: TreeRow[]): Set<number> {
   const keep = new Set<number>();
   rows.forEach((row, index) => {
-    if (row.badge !== 'NEW' && row.badge !== 'EXTEND') return;
+    if (!CHANGED.has(row.badge)) return;
     let cursor: number | null = index;
     while (cursor !== null && !keep.has(cursor)) {
       keep.add(cursor);
@@ -106,7 +112,7 @@ export function changedOnlySet(rows: TreeRow[]): Set<number> {
 export interface TreeCounts {
   files: number;
   folders: number;
-  /** NEW + EXTEND rows. */
+  /** NEW + EXTEND + MODIFIED rows. */
   changed: number;
 }
 
@@ -117,9 +123,59 @@ export function treeCounts(rows: TreeRow[]): TreeCounts {
   for (const row of rows) {
     if (row.dir) folders += 1;
     else files += 1;
-    if (row.badge === 'NEW' || row.badge === 'EXTEND') changed += 1;
+    if (CHANGED.has(row.badge)) changed += 1;
   }
   return { files, folders, changed };
+}
+
+/** Collapses each single-child folder chain into one display row: a folder whose only child is
+ * itself a folder, and which carries no note and no badge, merges with that child, repeating down the
+ * chain. The merged name is the chain's names concatenated; prefix comes from the first folder, note /
+ * badge / dir from the last. Parent links are re-indexed onto the display rows and depth becomes the
+ * parent's display depth + 1. Pure and linear. */
+export function collapseFolderChains(rows: TreeRow[]): TreeRow[] {
+  const children = new Array<number>(rows.length).fill(0);
+  for (const row of rows) if (row.parent !== null) children[row.parent] += 1;
+  const display: TreeRow[] = [];
+  const displayOf = new Array<number>(rows.length).fill(-1);
+  let names: string[] = [];
+  let firstPrefix: string | null = null;
+  let firstParent: number | null | undefined;
+  for (let index = 0; index < rows.length; index++) {
+    const row = rows[index];
+    const next = rows[index + 1];
+    const merges =
+      row.dir &&
+      row.note === '' &&
+      row.badge === null &&
+      children[index] === 1 &&
+      next !== undefined &&
+      next.parent === index &&
+      next.dir;
+    if (merges) {
+      if (names.length === 0) {
+        firstPrefix = row.prefix;
+        firstParent = row.parent;
+      }
+      names.push(row.name);
+      continue;
+    }
+    const chained = names.length > 0;
+    const parent = chained ? (firstParent ?? null) : row.parent;
+    const parentDisplay = parent === null || displayOf[parent] < 0 ? null : displayOf[parent];
+    display.push({
+      ...row,
+      name: chained ? names.join('') + row.name : row.name,
+      prefix: chained ? (firstPrefix ?? row.prefix) : row.prefix,
+      depth: parentDisplay === null ? 0 : display[parentDisplay].depth + 1,
+      parent: parentDisplay,
+    });
+    displayOf[index] = display.length - 1;
+    names = [];
+    firstPrefix = null;
+    firstParent = undefined;
+  }
+  return display;
 }
 
 /** A misdetection guard: only text with three or more `├──` / `└──` lines is a directory tree. */
