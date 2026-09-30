@@ -129,6 +129,16 @@ describe('extractPatternMap — degrade', () => {
     expect(map.classification.map((r) => r.quality)).toEqual(['service', 'model']);
   });
 
+  it('a numbered list whose items are blank-line separated, with indented sub-bullets, stays one list', () => {
+    const body = '## Notes\n\n1. **One.** first\n\n2. **Two.** second\n\n3. **Three:**\n   - a sub point\n   - another\n\n4. **Four.** last\n';
+    const map = extractPatternMap(body);
+    const blocks = map.other[0].blocks;
+    expect(blocks).toHaveLength(1);
+    const list = blocks[0];
+    expect(list.kind === 'list' && list.ordered && list.items.length).toBe(4);
+    expect(list.kind === 'list' && list.items[2]).toContain('a sub point');
+  });
+
   it('a title that is not "Phase N: X - Pattern Map" keeps the H1 text and no phase', () => {
     const map = extractPatternMap('# Something else\n\n## File Classification\n');
     expect(map.meta.phase).toBeNull();

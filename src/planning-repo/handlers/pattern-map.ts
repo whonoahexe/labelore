@@ -394,7 +394,7 @@ function guidanceOf(lines: string[], fields: Field[]): { blocks: Block[]; excerp
     prepared.push(line);
   }
   const blocks: Block[] = [];
-  for (const block of parseBlocks(prepared.join('\n'))) {
+  for (const block of parseBlocks(foldSubBullets(prepared.join('\n')))) {
     if (block.kind === 'paragraph') {
       if (block.text.startsWith(SUBHEAD_MARK)) {
         blocks.push({ kind: 'paragraph', text: clip(block.text.slice(SUBHEAD_MARK.length)) });
@@ -406,19 +406,49 @@ function guidanceOf(lines: string[], fields: Field[]): { blocks: Block[]; excerp
       blocks.push({ kind: 'list', ordered: block.ordered, items: block.items.map(clip) });
     }
   }
-  return { blocks, excerpts: stripped.count };
+  return { blocks: mergeOrderedLists(blocks), excerpts: stripped.count };
+}
+
+/** Indented sub-bullets under a list item become part of that item's text (`• …`) instead of
+ * items of their own, so a numbered list keeps its numbering. */
+function foldSubBullets(text: string): string {
+  return text
+    .split('\n')
+    .map((line) => {
+      const trimmed = line.trimStart();
+      const indent = line.length - trimmed.length;
+      if (indent >= 2 && (trimmed.startsWith('- ') || trimmed.startsWith('* '))) {
+        return `${line.slice(0, indent)}• ${trimmed.slice(2)}`;
+      }
+      return line;
+    })
+    .join('\n');
+}
+
+/** Blank-line-separated items of one numbered list arrive as adjacent ordered lists; join them. */
+function mergeOrderedLists(blocks: Block[]): Block[] {
+  const out: Block[] = [];
+  for (const block of blocks) {
+    const last = out.at(-1);
+    if (block.kind === 'list' && block.ordered && last && last.kind === 'list' && last.ordered) {
+      out[out.length - 1] = { kind: 'list', ordered: true, items: [...last.items, ...block.items] };
+    } else {
+      out.push(block);
+    }
+  }
+  return out;
 }
 
 /** Blocks of a prose region with code dropped and horizontal rules removed. */
 function proseBlocks(text: string, keepTables: boolean): Block[] {
   const out: Block[] = [];
-  for (const block of parseBlocks(text)) {
+  for (const block of parseBlocks(foldSubBullets(text))) {
     if (block.kind === 'code') continue;
     if (block.kind === 'table' && !keepTables) continue;
     if (block.kind === 'paragraph' && isRule(block.text)) continue;
     out.push(block);
   }
-  return out;
+  return mergeOrderedLists(out);
 }
 
 // ---------------------------------------------------------------------------
