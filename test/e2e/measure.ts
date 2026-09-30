@@ -241,6 +241,10 @@ const CORNER_SELECTORS = [
   '.figure-frame',
   '.lifted-diagram-card',
   '.clean-tree-row',
+  // quick-260930-mp6: the lanes-by-kind diagram's node, panel and group.
+  '.lane-diagram-node',
+  '.lane-diagram-panel',
+  '.lane-diagram-group',
   '.view-research-recommendation',
   '.view-research-lane',
   '.view-research-pitfall',
