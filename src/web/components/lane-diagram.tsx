@@ -178,6 +178,12 @@ export function LaneDiagram({ graph, fit, label }: { graph: DiagramGraph; fit: b
     return () => observer.disconnect();
   }, [layout, fit]);
 
+  // Opening the panel narrows the canvas column: keep the selected node in view.
+  useLayoutEffect(() => {
+    if (selected === null) return;
+    canvasRef.current?.querySelector('[aria-pressed="true"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [selected]);
+
   const chosen = selected !== null ? graph.nodes[selected] : undefined;
   const hot = new Set<number>();
   if (chosen) {

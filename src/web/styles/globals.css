@@ -6888,6 +6888,7 @@ p.view-research-note {
   gap: var(--space-1-5);
   margin: 0;
   padding: 0 0 0 var(--space-4);
+  list-style: disc;
 }
 
 .lane-diagram-panel-list em {

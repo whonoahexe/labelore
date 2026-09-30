@@ -296,6 +296,23 @@ function routeWire(
       });
     const at = ins.findIndex((p) => p.id === a.id);
     const x2 = ins.length > 1 ? tx - nw * 0.3 + nw * 0.6 * (at / (ins.length - 1)) : tx;
+    // A source with another node stacked directly under it (a wrapped lane) leaves by its side, toward
+    // the target, so its wire never runs behind the nodes below it.
+    const blocked = placed.some((p) => p.id !== a.id && p.x === a.x && p.y > a.y && p.y < ty);
+    if (blocked && Math.abs(tx - sx) >= 1) {
+      const rightward = tx > sx;
+      const ex = rightward ? a.x + nw : a.x;
+      const ay = a.y + NODE_H / 2;
+      return wire(
+        elbow([
+          [ex, ay],
+          [x2, ay],
+          [x2, ty],
+        ]),
+        { x: x2, y: ty, dir: 'd' },
+        { x: x2 + 8, y: ty - 26 },
+      );
+    }
     const layer = layers[a.layer];
     const isLastRow = a.row >= layer.rows - 1;
     const gap = isLastRow && layers[a.layer + 1] ? layers[a.layer + 1].y - (layer.y + layer.height) : ROW_GAP;
