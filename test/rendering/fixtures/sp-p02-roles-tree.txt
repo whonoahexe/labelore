@@ -1,0 +1,33 @@
+backend/
+├── src/
+│   ├── authz/
+│   │   └── mod.rs          # NEW — Capability, Permission, Role, require(), require_admin(), AuthzError
+│   ├── auth/
+│   │   └── mod.rs          # MODIFIED — Identity gains role/permissions; from_request_parts resolves them
+│   ├── api/
+│   │   ├── browse.rs       # MODIFIED — authz::require call; parse_tier deleted, TierId::from_str used
+│   │   ├── jobs.rs         # MODIFIED — authz::require calls (create/cancel/retry/resume/folder); parse_tier deleted
+│   │   ├── audit.rs        # MODIFIED — authz::require_admin call
+│   │   ├── admin.rs        # NEW — user list/detail, role toggle, grant/revoke, mirrors api::jobs's handler idiom
+│   │   └── mod.rs          # MODIFIED — whoami payload gains role/permissions (Identity already carries them)
+│   ├── tickets/
+│   │   └── mint.rs         # MODIFIED — authz::require call; parse_tier deleted, TierId::from_str used
+│   ├── ws/
+│   │   ├── bus.rs          # MODIFIED — Event gains PermissionsChanged variant (or a new bus, see D-13 note)
+│   │   └── mod.rs          # MODIFIED — handle_socket retains user_id, gains a select! arm
+│   ├── bin/
+│   │   └── backstage.rs    # MODIFIED — promote/demote/grant/revoke subcommands + shared last-admin guard
+│   └── lib.rs              # MODIFIED — new admin routes registered; AppState gains the D-13 bus
+└── migrations/
+    └── 0004_roles_and_permissions.sql   # NEW
+
+frontend/
+├── app/
+│   └── admin/
+│       ├── page.tsx                 # NEW — user list (D-20)
+│       └── users/[id]/page.tsx      # NEW — role toggle + permission grid
+├── components/
+│   └── nav-shell.tsx                # MODIFIED — Admin nav item (admins only), /audit gated (D-16)
+└── lib/
+    ├── use-whoami.ts / permissions.ts   # NEW (pure) — derive per-tier/per-action affordances from whoami payload
+    └── use-jobs-socket.ts (or sibling)  # MODIFIED — handle PermissionsChanged, trigger whoami refetch

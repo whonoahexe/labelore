@@ -135,6 +135,12 @@
   /* The missing tone softened toward the border, mirroring --in-flight-border. It outlines the
      missing chip and the RESEARCH Removed lane (sketch 010 B). */
   --missing-border: color-mix(in oklch, var(--missing-fill) 50%, var(--border));
+  /* RESEARCH figures (quick-260930-jzt, sketch 009): a box card's border, strong enough to read in
+     light mode; the quieter node-card fill and border; and the Grid toggle's paper line. */
+  --figure-card-border: color-mix(in oklch, var(--foreground) 22%, var(--border));
+  --figure-node-fill: color-mix(in oklch, var(--primary-tint) 60%, var(--background));
+  --figure-node-border: color-mix(in oklch, var(--primary) 40%, var(--border));
+  --figure-grid-line: color-mix(in oklch, var(--border) 35%, transparent);
   --shadow-popover: 0 1rem 2.5rem color-mix(in oklab, var(--foreground) 18%, transparent);
   --scrollbar-thumb: color-mix(in oklch, var(--muted-foreground) 30%, transparent);
   --scrollbar-thumb-strong: color-mix(in oklch, var(--muted-foreground) 55%, transparent);
@@ -6433,9 +6439,15 @@ p.view-research-note {
 }
 
 .figure-frame-body {
-  overflow: auto;
+  overflow-x: auto;
   padding: var(--space-5);
-  max-height: 34rem;
+}
+
+.figure-frame-body[data-grid='true'] {
+  background-image:
+    linear-gradient(var(--figure-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--figure-grid-line) 1px, transparent 1px);
+  background-size: var(--space-6) var(--space-6);
 }
 
 .figure-frame-caption {
@@ -6476,12 +6488,17 @@ p.view-research-note {
 }
 
 .figure-frame-dialog .figure-frame-body {
-  max-height: none;
+  overflow: auto;
 }
 
 /* Lifted diagram (sketch 009 B): the author's ASCII as real text, cards positioned behind it. */
 .lifted-diagram-fit {
   min-width: 0;
+}
+
+/* Fit to width scales the host, but its unscaled layout box would still widen the scroller. */
+.lifted-diagram-fit[data-fit='true'] {
+  overflow: hidden;
 }
 
 .lifted-diagram {
@@ -6493,11 +6510,21 @@ p.view-research-note {
 .lifted-diagram-card {
   position: absolute;
   z-index: 0;
-  border: 1px solid var(--border);
+  border: 1px solid var(--figure-card-border);
   background: var(--background);
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease;
 }
 
 .lifted-diagram-card[data-kind='node'] {
+  border-color: var(--figure-node-border);
+  background: var(--figure-node-fill);
+}
+
+/* Only the innermost card under the pointer lights up (set by lifted-diagram.tsx). */
+.lifted-diagram-card[data-hot='true'] {
+  border-color: var(--primary);
   background: var(--primary-tint);
 }
 
@@ -6519,6 +6546,11 @@ p.view-research-note {
   white-space: pre;
 }
 
+/* A spacer row (aria-hidden) keeps stacked step cards apart; its trunk glyphs are not for copying. */
+.lifted-diagram-row[data-spacer='true'] {
+  user-select: none;
+}
+
 .lifted-diagram-text [data-glyph='line'],
 .figure-frame-plain [data-glyph='line'] {
   color: var(--muted-foreground);
@@ -6538,31 +6570,17 @@ p.view-research-note {
   color: var(--muted-foreground);
 }
 
+/* The root turns font synthesis off and the mono face ships no italic, so notes would otherwise render
+   upright. A synthetic oblique keeps every advance width, so the monospace grid holds. */
 .lifted-diagram-note {
   color: var(--muted-foreground);
   font-style: italic;
+  font-synthesis-style: auto;
 }
 
-/* Clean-list tree (sketch 009 B): icons, indentation, collapsible folders, notes, badges. */
-.clean-tree-tools {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  align-items: center;
-  margin-bottom: var(--space-3);
-}
-
-.clean-tree-tools button.status-chip {
-  cursor: pointer;
-}
-
-.clean-tree-tools button.status-chip[aria-pressed='true'] {
-  border-color: var(--foreground);
-  color: var(--foreground);
-}
-
+/* Clean-list tree (sketch 009 B): icons, indentation, collapsible folders, notes, badges. The count sits
+   in the figure frame bar (quick-260930-jzt). */
 .clean-tree-count {
-  margin-left: auto;
   color: var(--muted-foreground);
   font-family: var(--font-mono);
   font-size: var(--fs-1);
@@ -6582,12 +6600,23 @@ p.view-research-note {
   grid-template-columns: minmax(0, 18rem) minmax(0, 1fr);
   gap: var(--space-4);
   align-items: baseline;
-  padding: var(--space-1-5) 0;
-  border-bottom: 1px solid var(--border);
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--border-faint);
+  /* Faint indent guides: one hairline per ancestor level, at a --space-6 step. The inline
+     background-size sets how many. */
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--border-faint) 0,
+    var(--border-faint) 1px,
+    transparent 1px,
+    transparent var(--space-6)
+  );
+  background-repeat: no-repeat;
+  background-position: var(--space-2) 0;
 }
 
 .clean-tree-row:hover {
-  background: var(--state-hover);
+  background-color: var(--state-hover);
 }
 
 .clean-tree-name {
@@ -6609,7 +6638,8 @@ p.view-research-note {
 }
 
 .clean-tree-row[data-badge='NEW'] .clean-tree-name,
-.clean-tree-row[data-badge='EXTEND'] .clean-tree-name {
+.clean-tree-row[data-badge='EXTEND'] .clean-tree-name,
+.clean-tree-row[data-badge='MODIFIED'] .clean-tree-name {
   color: var(--foreground);
   font-weight: var(--fw-medium);
 }
@@ -6622,7 +6652,7 @@ p.view-research-note {
   padding: 0;
   border: 0;
   background: none;
-  color: var(--primary);
+  color: var(--muted-foreground);
   cursor: pointer;
   font: inherit;
   text-align: left;
@@ -6641,6 +6671,12 @@ p.view-research-note {
   color: var(--muted-foreground);
   font-size: var(--fs-3);
   overflow-wrap: anywhere;
+}
+
+/* A chip must not make its row taller than a plain one: it takes a negative block margin (never a
+   line-height or padding change on the chip or its ancestors — the F-05 chip signature). */
+.clean-tree-note .status-chip {
+  margin-block: calc(-1 * var(--space-1-5));
 }
 
 @media (max-width: 62rem) {
