@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-09-30T18:39:29.149Z"
+last_updated: "2026-09-30T18:44:56.140Z"
 last_activity: 2026-09-30
 last_activity_desc: Completed quick task 260929-3x3 (RESEARCH page view)
-state_head: 20a73203c747ec3954f5d15816e7cf691e8f8442
+state_head: cce34d6de3f1396d5050bac884e57af7ccf3684b
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -146,6 +146,7 @@ None.
 | 260930-jzt | RESEARCH figure renderers: uncapped frames with Grid/hover, drift-tolerant and open-left box detection, box-less flows as padded step cards, slanted notes; tree gains MODIFIED badge, folder-chain collapse, indent guides, calmer rows, and the same frame as the diagram | 2026-09-30 | d72d6b0 | [260930-jzt-improve-research-figure-renderers-uncapp](./quick/260930-jzt-improve-research-figure-renderers-uncapp/) |
 | 260930-mp6 | Build sketch 012 B (lanes by kind) as the RESEARCH architecture diagram | 2026-09-30 | b1ddaeb | [260930-mp6-build-sketch-012-b-lanes-by-kind-as-the-](./quick/260930-mp6-build-sketch-012-b-lanes-by-kind-as-the-/) |
 | 260930-wfs | Build sketch 013 B (by location + panel) as the PATTERNS page view | 2026-09-30 | 20a7320 | [260930-wfs-build-sketch-013-b-by-location-panel-as-](./quick/260930-wfs-build-sketch-013-b-by-location-panel-as-/) |
+| 34 | Global style: --font-heading uses the sans font, not mono | 2026-09-30 | cce34d6 | — |
 
 ## Deferred Items
 
