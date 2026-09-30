@@ -292,7 +292,7 @@ const nodeFrames = (figure: LiftedFigure): LiftFrame[] =>
 const EPS = 1e-9;
 
 describe('liftDiagram — drifting and open-left boxes (JZT-M4, JZT-M5)', () => {
-  it('M4: the outer AUTH MIDDLEWARE box lifts as one card that encloses the four boxes nested in it', async () => {
+  it('M4: the outer AUTH MIDDLEWARE box lifts as one card, painted before the boxes nested in it', async () => {
     const figure = must(liftDiagram(await fixture('sp-v1-01-identity-diagram')));
     const boxes = figure.cards.filter((c) => c.kind === 'box');
     expect(boxes).toHaveLength(8);
@@ -301,6 +301,9 @@ describe('liftDiagram — drifting and open-left boxes (JZT-M4, JZT-M5)', () => 
     expect(outer.c2).toBeGreaterThanOrEqual(89);
     // The outer frame's bottom holds the row-37 "hard-panics…" text.
     expect(outer.frame.top + outer.frame.height).toBeGreaterThanOrEqual(38);
+    // The nested boxes come after the outer card in paint order and lie within its rows and right edge.
+    // The two side-by-side boxes on row 25 begin left of the outer card's clamped left edge (below), so
+    // only their order and vertical extent are pinned here.
     for (const [r1, c1] of [
       [16, 47],
       [25, 25],
@@ -312,11 +315,30 @@ describe('liftDiagram — drifting and open-left boxes (JZT-M4, JZT-M5)', () => 
       );
       expect(innerIndex, `inner box at row ${r1}, column ${c1}`).toBeGreaterThan(outerIndex);
       const inner = figure.cards[innerIndex].frame;
-      expect(inner.left).toBeGreaterThanOrEqual(outer.frame.left);
       expect(inner.left + inner.width).toBeLessThanOrEqual(outer.frame.left + outer.frame.width);
       expect(inner.top).toBeGreaterThanOrEqual(outer.frame.top);
       expect(inner.top + inner.height).toBeLessThanOrEqual(outer.frame.top + outer.frame.height);
     }
+    // The box the connector enters (row 16, column 47) is enclosed on the left too.
+    const entered = figure.cards.find((c) => c.kind === 'box' && c.r1 === 16)!.frame;
+    expect(entered.left).toBeGreaterThanOrEqual(outer.frame.left);
+  });
+
+  it('M4: the open-left card never covers the outside note or the connector that enters it', async () => {
+    const figure = must(liftDiagram(await fixture('sp-v1-01-identity-diagram')));
+    const outer = figure.cards.find((c) => c.kind === 'box' && c.r1 === 14)!;
+    const note = locate(figure, '(2) POST /api/ws-ticket');
+    const note2 = locate(figure, 'JWT verified independently');
+    // The └────► connector runs from column 11 to the ► tip at 47; the shaft is what must stay outside.
+    const tip = locate(figure, '►');
+    const connector = { row: tip.row, c1: locate(figure, '└').c1, c2: tip.c1 - 1 };
+    expect(cellAt(figure, tip.row, tip.c1)).toEqual({ ch: '►', kind: 'arrow' });
+    for (const at of [note, note2, connector]) {
+      expect(insideFrame(outer.frame, at), `row ${at.row}, columns ${at.c1}-${at.c2}`).toBe(false);
+      expect(outer.frame.left, `row ${at.row}`).toBeGreaterThanOrEqual(at.c2 + 1 - EPS);
+    }
+    // The heading text of the box itself stays inside it.
+    expect(insideFrame(outer.frame, locate(figure, 'AUTH MIDDLEWARE (axum)'))).toBe(true);
   });
 
   it("M4: no staircase of loose │ ticks — each row's rightmost │ is blanked, the ► stays an arrow", async () => {
