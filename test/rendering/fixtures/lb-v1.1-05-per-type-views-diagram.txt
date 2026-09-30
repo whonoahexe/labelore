@@ -1,0 +1,36 @@
+Browser (React SPA)                         Node/Hono server (per request)
+┌─────────────────────────┐                 ┌──────────────────────────────────┐
+│ ArtifactPage             │  GET            │ /api/documents?route=...          │
+│  useQuery(loadDocument)  │ ───────────────▶│  artifactIndex.lookup(route)      │
+│                          │                 │   -> ParsedArtifact (from         │
+│                          │                 │      HANDLERS dispatch, already   │
+│                          │                 │      run at snapshot-build time)  │
+│                          │                 │  renderer.render(artifact, {      │
+│                          │                 │    referenceRegistry })            │
+│                          │                 │   -> unified/remark/rehype        │
+│                          │                 │      pipeline (sanitize, slug,    │
+│                          │                 │      linkify mentions, shiki)     │
+│                          │◀─────────────── │  -> RenderedDocument { html,      │
+│  response.artifact.kind  │  JSON           │       headings, references }      │
+│  response.artifact       │                 │  -> artifact.structured (NEW:     │
+│    .structured (wired,   │                 │       populated by the new        │
+│    currently dropped)    │                 │       section-projection          │
+│  response.artifact       │                 │       extractor for 11 types)     │
+│    .frontmatter (used    │                 └──────────────────────────────────┘
+│    today)                │
+│         │                │
+│         ▼                │
+│  NEW: View Registry       │  dispatches on artifact.kind (already granular)
+│   lookup(kind) -> manifest│  falls back to: nested-frontmatter -> frontmatter
+│         │                │  projection; stable `##` -> section projection;
+│         ▼                │  else -> plain (VIEW-06 speculative read)
+│  Manifest-driven view     │
+│   promoted region (D-04)  │
+│   + collapsed remainder   │
+│   (D-02, doc order)       │
+│         │                │
+│         ▼                │
+│  "Document source" toggle │  renders document.html (existing pipeline,
+│   (D-01, D-03)            │  unchanged) via the existing DocumentCanvas/
+│                           │  DocumentView machinery
+└───────────────────────────┘

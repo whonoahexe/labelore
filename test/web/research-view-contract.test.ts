@@ -13,8 +13,11 @@ const RAW_HTML_PROP = 'dangerously' + 'SetInnerHTML';
 const FIGURE_FILES = [
   'src/rendering/ascii-lift.ts',
   'src/rendering/ascii-tree.ts',
+  'src/rendering/ascii-graph.ts',
+  'src/rendering/lane-layout.ts',
   'src/web/components/figure-frame.tsx',
   'src/web/components/lifted-diagram.tsx',
+  'src/web/components/lane-diagram.tsx',
   'src/web/components/clean-tree.tsx',
 ];
 
@@ -79,6 +82,31 @@ describe('research view contract', () => {
     expect(css).toContain("lifted-diagram-card[data-hot='true'] {");
     const frame = await source('src/web/components/figure-frame.tsx');
     expect(frame).toMatch(/aria-pressed=\{grid\}/);
+  });
+
+  it('the lane diagram reads named :root figure tokens, tints only the Client icon, and stays in the 3x3 block (quick-260930-mp6)', async () => {
+    const css = await source('src/web/styles/globals.css');
+    for (const token of ['--figure-wire', '--figure-lane', '--figure-icon']) {
+      expect(css, token).toMatch(new RegExp(`^  ${token}:`, 'm'));
+    }
+    const rule = (selector: string): string => {
+      const start = css.indexOf(`${selector} {`);
+      expect(start, selector).toBeGreaterThan(-1);
+      return css.slice(start, css.indexOf('}', start));
+    };
+    const clientIcon = rule(".lane-diagram-node[data-kind='client'] .lane-diagram-icon");
+    expect(clientIcon).toContain('var(--primary-tint)');
+    expect(clientIcon).toContain('color: var(--primary)');
+    expect(rule('.lane-diagram-wire')).toContain('var(--figure-wire)');
+    expect(rule('.lane-diagram-lane[data-shade=\'true\']')).toContain('var(--figure-lane)');
+    const start = css.indexOf('/* quick-260929-3x3:start */');
+    const end = css.indexOf('/* quick-260929-3x3:end */');
+    const lanes = [...css.matchAll(/^\.lane-diagram[\w-]*/gm)].map((m) => m.index ?? -1);
+    expect(lanes.length).toBeGreaterThan(10);
+    for (const index of lanes) {
+      expect(index).toBeGreaterThan(start);
+      expect(index).toBeLessThan(end);
+    }
   });
 
   it('legitimacy lanes stay toned when empty and outline Removed on --missing-border', async () => {

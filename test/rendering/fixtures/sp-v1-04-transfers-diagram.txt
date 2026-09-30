@@ -1,0 +1,63 @@
+Browser (Next.js client)
+  │
+  │ (1) selects files in BrowseTable (D-01), opens Send to… dialog
+  ▼
+POST /api/jobs  { action, source_tier, source_paths[], dest_tier, dest_path, on_collision }
+  │
+  ▼
+axum handler (api/jobs.rs)
+  │ tiers::scope::resolve(source)  ── validates every source path
+  │ tiers::scope::resolve(dest)    ── validates the destination folder
+  │ pre-flight collision listing (reuses tiers::browse::* read path)
+  ▼
+INSERT INTO jobs (status='queued', …) ──────────────► SQLite (WAL, synchronous=FULL)
+  │
+  ▼
+Job worker pool (small fixed set of tokio tasks, polling `queued` rows)
+  │  tries: acquire global Semaphore(2) permit + per-tier locks (source, dest)
+  │  on success: UPDATE jobs SET status='running' … WHERE id=? AND status='queued' RETURNING id
+  ▼
+        ┌─────────────────────────────┬───────────────────────────────────┐
+        │  dest/source touches a      │  neither side touches `cloud:`    │
+        │  `cloud:` remote            │                                    │
+        ▼                             ▼
+  jobs::executors::rclone       jobs::executors::rsync
+  POST sync/copy (or sync/move)  tokio::process::Command("rsync", …)
+  to the ONE supervised          .stdout(Stdio::piped())
+  `rclone rcd` daemon,            byte-stream parse "\r"/"\n",
+  _async=true, _group=job/{id}    regex-parse progress2 lines
+        │                             │
+        ▼                             ▼
+  poll core/stats?group=job/{id}  drain stdout continuously,
+  + job/status?jobid={rc_jobid}   throttle to 1/sec (D-19)
+  throttle to 1/sec (D-19)             │
+        └──────────────┬───────────────┘
+                        ▼
+        UPDATE jobs SET bytes_done, progress_pct, current_file, …
+                        │
+                        ▼
+        ws::bus::HealthBus.emit(Event::JobProgress { .. })  ── fan-out, ticket-authorized WS
+                        │
+                        ▼
+                  Browser: docked tray (D-14) + /jobs page update live
+                        │
+        (tool process exits) ──► verification step, if applicable (D-05/D-11/D-13)
+                        │           rclone: operations/check   |   rsync: verify-then-delete pass
+                        ▼
+        UPDATE jobs SET status='completed'|'failed', verification_state=…
+                        │
+                        ▼
+        INSERT INTO audit_log (actor, action, source_tier/path, dest_tier/path, job_id, bytes, outcome)
+
+Boot / crash-recovery path (independent of the flow above):
+systemd (Restart=always) restarts backend
+        │
+        ▼
+Recovery pass: SELECT * FROM jobs WHERE status IN ('running','verifying')
+        │
+        ├── action='copy', no confirmed overwrite ─► UPDATE status='queued' (D-23: safe to auto-resume)
+        └── action='move' OR has confirmed overwrite ─► UPDATE status='interrupted' (D-23: wait for a human)
+        │
+        ▼
+For rsync-tagged rows: check /proc/{pid}/cmdline against the persisted argv — a real orphan gets killed
+For rclone-tagged rows: no live process can exist (the rcd daemon itself died with the backend) — DB row alone is truth

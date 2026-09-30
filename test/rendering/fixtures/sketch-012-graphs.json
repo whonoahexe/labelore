@@ -1,0 +1,1945 @@
+{
+ "sp-v1-02": {
+  "quality": 0.7770334928229665,
+  "dangling": 0,
+  "nodes": [
+   {
+    "kind": "data",
+    "main": "Health registry",
+    "sub": "async task",
+    "code": false,
+    "full": "HEALTH REGISTRY (async task)",
+    "details": [
+     "• per-tier latest snapshot map  → on-connect snapshot D-19",
+     "• staleness watchdog: no reading in N → `unreachable`",
+     "(D-15: the TIMEOUT is the signal; thread stays leaked)",
+     "• change-detect → emit only on change (D-19)"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "external",
+    "main": "Host kernel / devices",
+    "sub": "",
+    "code": false,
+    "full": "HOST KERNEL / DEVICES",
+    "details": [
+     "/proc/self/mountinfo   (procfs —",
+     "0.14 ms, NEVER blocks)",
+     "/mnt/{stage,vault,archive} (statvfs",
+     "0.002 ms healthy / ∞ if wedged)",
+     "/dev/disk/by-id/... (smartctl+sudo)",
+     "Google Drive API   (rclone about)"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "client",
+    "main": "Browser",
+    "sub": "Next.js client component, D-03",
+    "code": false,
+    "full": "BROWSER / (Next.js client component, D-03)",
+    "details": [
+     "4 cards, fixed order (D-04) · skeleton until first frame",
+     "(D-13) · probed_at ticks client-side (D-20) · reconnect",
+     "w/ fresh ticket mint + capped backoff (D-21)"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "channel",
+    "main": "Broadcast bus",
+    "sub": "tokio::broadcast::Sender<Event> (ws/bus.rs",
+    "code": false,
+    "full": "BROADCAST BUS tokio::broadcast::Sender<Event> (ws/bus.rs)",
+    "details": [
+     "Lagged → receiver survives; resend full snapshot (F12)"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "service",
+    "main": "/ws handler",
+    "sub": "axum, EXISTING — ticket-authorized, Phase 1",
+    "code": true,
+    "full": "/ws HANDLER (axum, EXISTING — ticket-authorized, Phase 1)",
+    "details": [
+     "replace placeholder echo loop with: snapshot → subscribe"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "worker",
+    "main": "Prober thread:stage",
+    "sub": "",
+    "code": false,
+    "full": "PROBER THREAD:stage",
+    "details": [
+     "(dedicated OS thread",
+     "NOT spawn_blocking)"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "worker",
+    "main": "Prober thread:cloud",
+    "sub": "",
+    "code": false,
+    "full": "PROBER THREAD:cloud",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "worker",
+    "main": "Prober thread:vault",
+    "sub": "",
+    "code": false,
+    "full": "PROBER THREAD:vault",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "worker",
+    "main": "Prober thread:archive",
+    "sub": "",
+    "code": false,
+    "full": "PROBER THREAD:archive",
+    "details": [],
+    "notes": [],
+    "group": null
+   }
+  ],
+  "edges": [
+   {
+    "from": 1,
+    "to": 5,
+    "label": "",
+    "directed": false,
+    "implied": false
+   },
+   {
+    "from": 1,
+    "to": 7,
+    "label": "",
+    "directed": false,
+    "implied": false
+   },
+   {
+    "from": 1,
+    "to": 8,
+    "label": "",
+    "directed": false,
+    "implied": false
+   },
+   {
+    "from": 5,
+    "to": 0,
+    "label": "mpsc/watch (non-blocking send; a wedged thread simply stops sending — no other tier notices)",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 7,
+    "to": 0,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 8,
+    "to": 0,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 6,
+    "to": 0,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 0,
+    "to": 3,
+    "label": "Event::TierHealth { tier, state, .. , probed_at }",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 3,
+    "to": 4,
+    "label": "fan-out",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 4,
+    "to": 2,
+    "label": "WSS, direct cross-origin (bypasses Vercel)",
+    "directed": true,
+    "implied": false
+   }
+  ],
+  "groups": []
+ },
+ "lab-v1-02": {
+  "quality": 1,
+  "dangling": 0,
+  "nodes": [
+   {
+    "kind": "external",
+    "main": "CLI project path",
+    "sub": "",
+    "code": false,
+    "full": "CLI project path",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "service",
+    "main": "resolveTargetPath",
+    "sub": "",
+    "code": false,
+    "full": "resolveTargetPath",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "external",
+    "main": "LocalFsPlanningFilesystem",
+    "sub": "",
+    "code": false,
+    "full": "LocalFsPlanningFilesystem",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "PlanningRepository.load",
+    "sub": "",
+    "code": false,
+    "full": "PlanningRepository.load()",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "immutable ProjectSnapshot",
+    "sub": "",
+    "code": false,
+    "full": "immutable ProjectSnapshot",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "cycle-free ProjectPresentation",
+    "sub": "",
+    "code": false,
+    "full": "cycle-free ProjectPresentation",
+    "details": [
+     "(IDs/keys, no object cycles)"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "data",
+    "main": "Artifact lookup by path",
+    "sub": "",
+    "code": false,
+    "full": "Artifact lookup by path",
+    "details": [
+     "(snapshot only; no fs read)"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "service",
+    "main": "Hono JSON endpoints",
+    "sub": "",
+    "code": false,
+    "full": "Hono JSON endpoints",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "client",
+    "main": "React Query + canonical route codec",
+    "sub": "",
+    "code": false,
+    "full": "React Query + canonical route codec",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "client",
+    "main": "Dashboard",
+    "sub": "",
+    "code": false,
+    "full": "Dashboard",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "client",
+    "main": "Roadmap/history",
+    "sub": "",
+    "code": false,
+    "full": "Roadmap/history",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "client",
+    "main": "Artifact page",
+    "sub": "",
+    "code": false,
+    "full": "Artifact page",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "client",
+    "main": "Preview",
+    "sub": "",
+    "code": false,
+    "full": "Preview",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "data",
+    "main": "artifact-view registry",
+    "sub": "known → generic fallback",
+    "code": false,
+    "full": "artifact-view registry (known → generic fallback)",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "PLAN pseudo-XML segmenter",
+    "sub": "",
+    "code": false,
+    "full": "PLAN pseudo-XML segmenter",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "normal markdown body",
+    "sub": "",
+    "code": false,
+    "full": "normal markdown body",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "remark/GFM",
+    "sub": "",
+    "code": false,
+    "full": "remark/GFM",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "raw HTML parse",
+    "sub": "",
+    "code": false,
+    "full": "raw HTML parse",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "sanitize",
+    "sub": "",
+    "code": false,
+    "full": "sanitize",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "slug/linkify/Shiki",
+    "sub": "",
+    "code": false,
+    "full": "slug/linkify/Shiki",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "sanitized document HTML",
+    "sub": "",
+    "code": false,
+    "full": "sanitized document HTML",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "strict Mermaid.run()",
+    "sub": "",
+    "code": true,
+    "full": "strict Mermaid.run()",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "anchors/ref popover",
+    "sub": "",
+    "code": false,
+    "full": "anchors/ref popover",
+    "details": [],
+    "notes": [],
+    "group": null
+   }
+  ],
+  "edges": [
+   {
+    "from": 0,
+    "to": 1,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 1,
+    "to": 2,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 2,
+    "to": 3,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 2,
+    "to": 4,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 4,
+    "to": 5,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 4,
+    "to": 6,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 5,
+    "to": 7,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 6,
+    "to": 7,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 7,
+    "to": 8,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 8,
+    "to": 12,
+    "label": "",
+    "directed": true,
+    "implied": true
+   },
+   {
+    "from": 8,
+    "to": 11,
+    "label": "",
+    "directed": true,
+    "implied": true
+   },
+   {
+    "from": 8,
+    "to": 10,
+    "label": "",
+    "directed": true,
+    "implied": true
+   },
+   {
+    "from": 8,
+    "to": 9,
+    "label": "",
+    "directed": true,
+    "implied": true
+   },
+   {
+    "from": 11,
+    "to": 13,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 13,
+    "to": 14,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 13,
+    "to": 15,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 14,
+    "to": 19,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 15,
+    "to": 19,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 16,
+    "to": 17,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 17,
+    "to": 18,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 18,
+    "to": 19,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 19,
+    "to": 20,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 20,
+    "to": 21,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 20,
+    "to": 22,
+    "label": "",
+    "directed": true,
+    "implied": false
+   }
+  ],
+  "groups": []
+ },
+ "sp-v1-01": {
+  "quality": 0.7210526315789474,
+  "dangling": 2,
+  "nodes": [
+   {
+    "kind": "edge",
+    "main": "Cloudflare Access",
+    "sub": "edge",
+    "code": false,
+    "full": "Cloudflare Access (edge)",
+    "details": [
+     "• gates BOTH hostnames as",
+     "one multi-domain app",
+     "• attaches Cf-Access-Jwt-",
+     "Assertion header on every",
+     "request that reaches origin"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "edge",
+    "main": "api.cinedise.com",
+    "sub": "cloudflared tunnel",
+    "code": false,
+    "full": "api.cinedise.com (cloudflared tunnel)",
+    "details": [
+     "• NOT reachable except via tunnel",
+     "• axum backend"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "Fetch/refresh JWKS bg task",
+    "sub": "",
+    "code": false,
+    "full": "Fetch/refresh JWKS bg task",
+    "details": [
+     "2. Verify sig + aud+iss+exp",
+     "3. On success: mint ticket",
+     "(CSPRNG, 60s TTL, 1x use)"
+    ],
+    "notes": [],
+    "group": "Auth middleware"
+   },
+   {
+    "kind": "data",
+    "main": "SQLite",
+    "sub": "WAL, synchronous=FULL) · sqlx pool",
+    "code": false,
+    "full": "SQLite (WAL, synchronous=FULL) — sqlx pool",
+    "details": [
+     "audit_log(id, actor, action, target, ts)"
+    ],
+    "notes": [
+     "hard-panics at startup if bound to tunnel interface"
+    ],
+    "group": "Auth middleware"
+   },
+   {
+    "kind": "client",
+    "main": "Browser",
+    "sub": "studio member",
+    "code": false,
+    "full": "BROWSER (studio member)",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "data",
+    "main": "In-memory ticket",
+    "sub": "",
+    "code": false,
+    "full": "In-memory ticket",
+    "details": [
+     "map (HashMap,",
+     "delete-on-use)"
+    ],
+    "notes": [],
+    "group": "Auth middleware"
+   },
+   {
+    "kind": "channel",
+    "main": "WS upgrade / download handler",
+    "sub": "",
+    "code": false,
+    "full": "WS upgrade / download handler",
+    "details": [
+     "consumes ticket"
+    ],
+    "notes": [],
+    "group": "Auth middleware"
+   }
+  ],
+  "edges": [
+   {
+    "from": 4,
+    "to": 0,
+    "label": "(1) page load -> CF Access redirects to login if unauthed",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 4,
+    "to": 1,
+    "label": "(3) WS connect (ticket as 1st message)",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 1,
+    "to": 2,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 0,
+    "to": 2,
+    "label": "(2) POST /api/ws-ticket JWT verified independently",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 2,
+    "to": 5,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 2,
+    "to": 6,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 6,
+    "to": 3,
+    "label": "",
+    "directed": true,
+    "implied": true
+   }
+  ],
+  "groups": [
+   {
+    "main": "Auth middleware",
+    "sub": "axum",
+    "details": [
+     "check",
+     "AUTH_MODE=dev: bypasses all of the above with fixed identity,"
+    ]
+   }
+  ]
+ },
+ "sp-v1-03": {
+  "quality": 0.9654924514737598,
+  "dangling": 0,
+  "nodes": [
+   {
+    "kind": "service",
+    "main": "Rust/axum backend",
+    "sub": "",
+    "code": false,
+    "full": "RUST/AXUM BACKEND",
+    "details": [
+     "GET /api/browse/{tier}/{path}",
+     "├─ VerifiedIdentity extractor (existing)",
+     "├─ TierId::from_str(tier) — closed enum, reject unknown",
+     "├─ tiers::scope::resolve(tier_root_dir, path)  ◄── THE boundary",
+     "│     Local:  cap_std::fs::Dir::open_ambient_dir(mount_path)",
+     "│             → dir.read_dir(relative_path)",
+     "│             bridged onto a dedicated std::thread (D-16),",
+     "│             awaited via a channel with a wall-clock deadline",
+     "│     Cloud:  bounded_proc::run_bounded(rclone lsjson ...)",
+     "│             bridged the SAME way — never called inline in the",
+     "│             async handler (it is a blocking, sleep-polling fn)",
+     "├─ D-05 cruft/dotfile filter, D-08 sort, D-09 kind derivation",
+     "└─ full JSON array response (D-07 — no pagination)",
+     "POST /api/dl-ticket {tier, path}",
+     "├─ VerifiedIdentity extractor",
+     "├─ SAME tiers::scope::resolve() as browse — one implementation",
+     "├─ size-cap check (local: cap_std metadata; cloud: lsjson --stat)",
+     "└─ tickets.mint(..., TicketPurpose::Download { tier, path })",
+     "GET /dl/{ticket}",
+     "├─ tickets.consume(ticket, Download{..}) → (tier, path)",
+     "├─ tiers::scope::resolve() AGAIN at serve time (defense in depth)",
+     "├─ Local:  tokio::fs::File::from_std(cap_file) → ReaderStream",
+     "└─ Cloud:  tokio::process::Command(\"rclone\",\"cat\",...)",
+     ".stdout(Stdio::piped()) → ReaderStream, streamed live",
+     "into the response body — no temp file (D-12)"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "client",
+    "main": "Browser",
+    "sub": "browse/{tier}/{path}",
+    "code": false,
+    "full": "BROWSER — /browse/{tier}/{path}",
+    "details": [
+     "1. GET /api/browse/{tier}/{path}  (VerifiedIdentity, credentials)",
+     "2. renders full listing via @tanstack/react-virtual (windowed)",
+     "3. click \"download\" → POST /api/dl-ticket {tier, path}",
+     "4. GET /dl/{ticket}  (no path in URL — D-13)"
+    ],
+    "notes": [],
+    "group": null
+   }
+  ],
+  "edges": [
+   {
+    "from": 1,
+    "to": 0,
+    "label": "(1)(3)(4) direct, credentialed",
+    "directed": true,
+    "implied": false
+   }
+  ],
+  "groups": []
+ },
+ "sp-v1-04": {
+  "quality": 0.9690982776089159,
+  "dangling": 2,
+  "nodes": [
+   {
+    "kind": "client",
+    "main": "Browser",
+    "sub": "Next.js client",
+    "code": false,
+    "full": "Browser (Next.js client)",
+    "details": [
+     "(1) selects files in BrowseTable (D-01), opens Send to… dialog"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "service",
+    "main": "POST /api/jobs",
+    "sub": "",
+    "code": false,
+    "full": "POST /api/jobs",
+    "details": [
+     "{ action, source_tier, source_paths[], dest_tier, dest_path, on_collision }"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "service",
+    "main": "axum handler",
+    "sub": "api/jobs.rs",
+    "code": false,
+    "full": "axum handler (api/jobs.rs)",
+    "details": [
+     "tiers::scope::resolve(source)  ── validates every source path",
+     "tiers::scope::resolve(dest)    ── validates the destination fold",
+     "pre-flight collision listing (reuses tiers::browse::* read path)"
+    ],
+    "notes": [
+     "er"
+    ],
+    "group": null
+   },
+   {
+    "kind": "data",
+    "main": "Insert into jobs",
+    "sub": "status='queued', …",
+    "code": false,
+    "full": "INSERT INTO jobs (status='queued', …)",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "data",
+    "main": "SQLite",
+    "sub": "WAL, synchronous=FULL",
+    "code": false,
+    "full": "SQLite (WAL, synchronous=FULL)",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "worker",
+    "main": "Job worker pool",
+    "sub": "small fixed set of tokio tasks, polling `queued` rows",
+    "code": false,
+    "full": "Job worker pool (small fixed set of tokio tasks, polling `queued` rows)",
+    "details": [
+     "tries: acquire global Semaphore(2) permit + per-tier locks (source, dest)",
+     "on success: UPDATE jobs SET status='running' … WHERE id=? AND status='queued' RETURNING id"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "worker",
+    "main": "jobs::executors::rclone",
+    "sub": "",
+    "code": true,
+    "full": "jobs::executors::rclone",
+    "details": [
+     "POST sync/copy (or sync/move)",
+     "to the ONE supervised",
+     "`rclone rcd` daemon,",
+     "_async=true, _group=job/{id}"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "worker",
+    "main": "jobs::executors::rsync",
+    "sub": "",
+    "code": true,
+    "full": "jobs::executors::rsync",
+    "details": [
+     "tokio::process::Command(\"rsync\", …)",
+     ".stdout(Stdio::piped())",
+     "byte-stream parse \"\\r\"/\"\\n\",",
+     "regex-parse progress2 lines"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "poll core/stats?group=job",
+    "sub": "{id}",
+    "code": true,
+    "full": "poll core/stats?group=job/{id}",
+    "details": [
+     "+ job/status?jobid={rc_jobid}",
+     "throttle to 1/sec (D-19)"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "drain stdout continuously, throttle to 1/sec",
+    "sub": "D-19",
+    "code": false,
+    "full": "drain stdout continuously, throttle to 1/sec (D-19)",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "data",
+    "main": "UPDATE jobs",
+    "sub": "SET bytes_done, progress_pct, current_file, …",
+    "code": false,
+    "full": "UPDATE jobs SET bytes_done, progress_pct, current_file, …",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "channel",
+    "main": "ws::bus::HealthBus.emit",
+    "sub": "Event::JobProgress { .. }",
+    "code": true,
+    "full": "ws::bus::HealthBus.emit(Event::JobProgress { .. })",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "fan-out, ticket-authorized WS",
+    "sub": "",
+    "code": false,
+    "full": "fan-out, ticket-authorized WS",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "client",
+    "main": "Browser",
+    "sub": "docked tray (D-14) + /jobs page update live",
+    "code": false,
+    "full": "Browser: docked tray (D-14) + /jobs page update live",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "(tool process exits)",
+    "sub": "",
+    "code": false,
+    "full": "(tool process exits)",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "service",
+    "main": "verification step, if applicable",
+    "sub": "D-05/D-11/D-13",
+    "code": false,
+    "full": "verification step, if applicable (D-05/D-11/D-13)",
+    "details": [
+     "rclone: operations/check   |   rsync: verify-then-delete pass"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "data",
+    "main": "UPDATE jobs",
+    "sub": "SET status='completed'|'failed', verification_state=…",
+    "code": false,
+    "full": "UPDATE jobs SET status='completed'|'failed', verification_state=…",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "data",
+    "main": "INSERT INTO audit_log",
+    "sub": "actor, action, source_tier/path, dest_tier/path, job_id, bytes, outcome",
+    "code": true,
+    "full": "INSERT INTO audit_log (actor, action, source_tier/path, dest_tier/path, job_id, bytes, outcome)",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "Boot / crash-recovery path",
+    "sub": "independent of the flow above",
+    "code": false,
+    "full": "Boot / crash-recovery path (independent of the flow above)",
+    "details": [
+     "systemd (Restart=always) restarts backend"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "data",
+    "main": "Recovery pass",
+    "sub": "SELECT * FROM jobs WHERE status IN ('running','verifying'",
+    "code": false,
+    "full": "Recovery pass: SELECT * FROM jobs WHERE status IN ('running','verifying')",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "action='copy', no confirmed overwrite ─►",
+    "sub": "",
+    "code": true,
+    "full": "action='copy', no confirmed overwrite ─►",
+    "details": [
+     "action='move' OR has confirmed overwrite"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "UPDATE status='queued'",
+    "sub": "D-23: safe to auto-resume",
+    "code": true,
+    "full": "UPDATE status='queued' (D-23: safe to auto-resume)",
+    "details": [
+     "─► UPDATE status='interrupted' (D-23: wait for a human)"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "external",
+    "main": "For rsync-tagged rows",
+    "sub": "check /proc/{pid}/cmdline against the persisted argv — a real orphan gets killed",
+    "code": false,
+    "full": "For rsync-tagged rows: check /proc/{pid}/cmdline against the persisted argv — a real orphan gets killed",
+    "details": [
+     "For rclone-tagged rows: no live process can exist (the rcd daemon itself died with the backend) — DB row alone is truth"
+    ],
+    "notes": [],
+    "group": null
+   }
+  ],
+  "edges": [
+   {
+    "from": 0,
+    "to": 1,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 1,
+    "to": 2,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 2,
+    "to": 3,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 3,
+    "to": 4,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 3,
+    "to": 5,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 5,
+    "to": 7,
+    "label": "dest/source touches a `cloud:` remote · neither side touches `cloud:`",
+    "directed": true,
+    "implied": true
+   },
+   {
+    "from": 5,
+    "to": 6,
+    "label": "",
+    "directed": true,
+    "implied": true
+   },
+   {
+    "from": 6,
+    "to": 8,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 7,
+    "to": 9,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 9,
+    "to": 10,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 8,
+    "to": 10,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 10,
+    "to": 11,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 11,
+    "to": 13,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 13,
+    "to": 16,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 14,
+    "to": 16,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 14,
+    "to": 15,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 16,
+    "to": 17,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 18,
+    "to": 19,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 19,
+    "to": 22,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 20,
+    "to": 22,
+    "label": "",
+    "directed": true,
+    "implied": false
+   }
+  ],
+  "groups": []
+ },
+ "sp-01": {
+  "quality": 0.9338959212376934,
+  "dangling": 1,
+  "nodes": [
+   {
+    "kind": "client",
+    "main": "Browser",
+    "sub": "",
+    "code": false,
+    "full": "Browser",
+    "details": [
+     "1. GET /browse/stage"
+    ],
+    "notes": [
+     "(portal_session cookie attached automatically)"
+    ],
+    "group": null
+   },
+   {
+    "kind": "edge",
+    "main": "Vercel edge",
+    "sub": "Next.js proxy.ts · route gate, D-09/D-10",
+    "code": false,
+    "full": "Vercel edge — Next.js proxy.ts (route gate, D-09/D-10)",
+    "details": [
+     "reads portal_session cookie",
+     "2. validates cookie against backend ─────────────",
+     "(short timeout; fail-closed → /login, D-11)"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "(cookie valid)",
+    "sub": "",
+    "code": false,
+    "full": "(cookie valid)",
+    "details": [
+     "renders page"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "service",
+    "main": "Rust backend",
+    "sub": "api/whoami-shaped",
+    "code": false,
+    "full": "Rust backend — /api/whoami-shaped",
+    "details": [
+     "validation endpoint",
+     "SELECT ... FROM sessions",
+     "WHERE id=? AND revoked_at IS NULL",
+     "AND expires_at > now()"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "client",
+    "main": "Next.js page",
+    "sub": "client component",
+    "code": false,
+    "full": "Next.js page (client component)",
+    "details": [
+     "3. fetch(`${API_ORIGIN}/api/browse/...`,",
+     "{ credentials: \"include\" })"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "service",
+    "main": "Rust backend",
+    "sub": "build_router · lib.rs",
+    "code": false,
+    "full": "Rust backend — build_router (lib.rs)",
+    "details": [
+     "4. VerifiedIdentity::from_request_parts",
+     "- reads Cookie header (axum-extra CookieJar)",
+     "- session lookup (same query shape as above)",
+     "- checks must_change_password (D-12) → 403-shaped if set",
+     "- checks revoked_at / expires_at (fail closed)"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "service",
+    "main": "Handler",
+    "sub": "browse_handler / mint_ws_ticket / mint_dl_ticket / ...",
+    "code": false,
+    "full": "Handler (browse_handler / mint_ws_ticket / mint_dl_ticket / ...)",
+    "details": [
+     "UNCHANGED — takes VerifiedIdentity as a parameter, doesn't know",
+     "or care what produced it (D-05's whole point)"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "service",
+    "main": "tiers::scope::resolve",
+    "sub": "",
+    "code": true,
+    "full": "tiers::scope::resolve",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "external",
+    "main": "filesystem / rclone",
+    "sub": "",
+    "code": false,
+    "full": "filesystem / rclone",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "service",
+    "main": "Login path",
+    "sub": "separate, rate-limited",
+    "code": false,
+    "full": "Login path (separate, rate-limited)",
+    "details": [
+     "Browser → POST /login {handle, password}"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "service",
+    "main": "tower_governor GovernorLayer",
+    "sub": "scoped to /login only, D-19",
+    "code": true,
+    "full": "tower_governor GovernorLayer (scoped to /login only, D-19)",
+    "details": [
+     "keyed on (Cf-Connecting-Ip, submitted handle) — two independent limits",
+     "429 + Retry-After if either limit is exceeded (D-16/D-17)"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "service",
+    "main": "Login handler",
+    "sub": "",
+    "code": false,
+    "full": "Login handler",
+    "details": [
+     "lookup user by normalized (lowercased) handle",
+     "found  → argon2::verify_password(real hash)",
+     "NOT found → argon2::verify_password(fixed dummy hash) anyway (D-18)",
+     "either way: identical timing, identical response on failure"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "(success)",
+    "sub": "",
+    "code": false,
+    "full": "(success)",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "data",
+    "main": "INSERT INTO sessions",
+    "sub": "...",
+    "code": false,
+    "full": "INSERT INTO sessions (...)",
+    "details": [],
+    "notes": [
+     "(HttpOnly; Secure; SameSite=Lax; Domain=.cinedise.com)"
+    ],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "Set-Cookie",
+    "sub": "portal_session=...",
+    "code": false,
+    "full": "Set-Cookie: portal_session=...",
+    "details": [],
+    "notes": [],
+    "group": null
+   }
+  ],
+  "edges": [
+   {
+    "from": 0,
+    "to": 1,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 1,
+    "to": 2,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 1,
+    "to": 3,
+    "label": "",
+    "directed": true,
+    "implied": true
+   },
+   {
+    "from": 2,
+    "to": 4,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 3,
+    "to": 5,
+    "label": "",
+    "directed": false,
+    "implied": false
+   },
+   {
+    "from": 4,
+    "to": 5,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 5,
+    "to": 6,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 6,
+    "to": 7,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 7,
+    "to": 8,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 9,
+    "to": 10,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 10,
+    "to": 11,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 11,
+    "to": 12,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 12,
+    "to": 13,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 13,
+    "to": 14,
+    "label": "",
+    "directed": true,
+    "implied": false
+   }
+  ],
+  "groups": []
+ },
+ "sp-02": {
+  "quality": 0.9498843484965305,
+  "dangling": 0,
+  "nodes": [
+   {
+    "kind": "client",
+    "main": "Browser",
+    "sub": "member",
+    "code": false,
+    "full": "Browser (member)",
+    "details": [
+     "1. every request carries `portal_session` cookie"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "service",
+    "main": "axum handler",
+    "sub": "browse / mint_dl_ticket / create_job / create_folder / cancel|retry|resume / audit / new admin routes",
+    "code": false,
+    "full": "axum handler (browse / mint_dl_ticket / create_job / create_folder / cancel|retry|resume / audit / new admin routes)",
+    "details": [
+     "2. VerifiedIdentity::from_request_parts (auth/mod.rs)",
+     "- resolves session -> user_id, role (users.role)     [1 query, extended]",
+     "- role == User -> resolves full permission set        [1 query, skipped for Admin]",
+     "- unrecognized role/permission string -> AuthError    (fail closed, ROLE-07)"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "Identity",
+    "sub": "{ user_id, handle, role: Role, permissions: HashSet<Permission>, .. }",
+    "code": false,
+    "full": "Identity { user_id, handle, role: Role, permissions: HashSet<Permission>, .. }",
+    "details": [
+     "3. path/body tier string parsed: TierId::from_str(raw)   (HARDEN-02, single canonical parser)",
+     "unrecognized -> 404/400, never cast"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "service",
+    "main": "authz::require",
+    "sub": "&identity, Capability::Read|Write, tier) (sync, pure, D-05/D-04",
+    "code": true,
+    "full": "authz::require(&identity, Capability::Read|Write, tier) (sync, pure, D-05/D-04)",
+    "details": [
+     "authz::require_admin(&identity)                                 (sync, pure, admin-only routes)",
+     "4. Ok(()) -> proceed          Err(AuthzError::Denied) -> 403 (D-06), identical body regardless of WHICH check failed (D-08)"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "service",
+    "main": "tiers::scope::resolve",
+    "sub": "...",
+    "code": true,
+    "full": "tiers::scope::resolve(...)",
+    "details": [],
+    "notes": [
+     "UNCHANGED, identity-free, called only AFTER authz::require (D-05)"
+    ],
+    "group": null
+   },
+   {
+    "kind": "data",
+    "main": "filesystem / subprocess / job insert / audit row",
+    "sub": "",
+    "code": false,
+    "full": "filesystem / subprocess / job insert / audit row",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "Admin permission-grant path",
+    "sub": "new",
+    "code": false,
+    "full": "Admin permission-grant path (new)",
+    "details": [
+     "Browser -> POST/PATCH /api/admin/users/{id}/... -> authz::require_admin"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "data",
+    "main": "SQLite transaction",
+    "sub": "last-admin COUNT(*) guard (D-17) + role/permission write (D-18",
+    "code": false,
+    "full": "SQLite transaction: last-admin COUNT(*) guard (D-17) + role/permission write (D-18)",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "channel",
+    "main": "revocation/permission bus.send",
+    "sub": "PermissionsChanged { user_id }",
+    "code": false,
+    "full": "revocation/permission bus.send(PermissionsChanged { user_id })",
+    "details": [],
+    "notes": [
+     "(D-13)"
+    ],
+    "group": null
+   },
+   {
+    "kind": "channel",
+    "main": "/ws connection for that user_id -> pushes event -> client refetches /api/whoami",
+    "sub": "",
+    "code": true,
+    "full": "/ws connection for that user_id -> pushes event -> client refetches /api/whoami",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "re-derives every affordance from the fresh role+permissions payload",
+    "sub": "",
+    "code": false,
+    "full": "re-derives every affordance from the fresh role+permissions payload",
+    "details": [],
+    "notes": [],
+    "group": null
+   }
+  ],
+  "edges": [
+   {
+    "from": 0,
+    "to": 1,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 1,
+    "to": 2,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 2,
+    "to": 3,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 3,
+    "to": 4,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 4,
+    "to": 5,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 6,
+    "to": 7,
+    "label": "",
+    "directed": true,
+    "implied": true
+   },
+   {
+    "from": 7,
+    "to": 8,
+    "label": "",
+    "directed": true,
+    "implied": true
+   },
+   {
+    "from": 8,
+    "to": 9,
+    "label": "",
+    "directed": true,
+    "implied": false
+   },
+   {
+    "from": 9,
+    "to": 10,
+    "label": "",
+    "directed": true,
+    "implied": true
+   }
+  ],
+  "groups": []
+ },
+ "sp-04": {
+  "quality": 0.9352791878172588,
+  "dangling": 2,
+  "nodes": [
+   {
+    "kind": "step",
+    "main": "/browse selection",
+    "sub": "",
+    "code": true,
+    "full": "/browse selection",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "POST create archive",
+    "sub": "identity + source Read",
+    "code": false,
+    "full": "POST create archive (identity + source Read)",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "validate closed payload / selection bounds",
+    "sub": "",
+    "code": false,
+    "full": "validate closed payload / selection bounds",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "external",
+    "main": "bounded recursive walk",
+    "sub": "",
+    "code": false,
+    "full": "bounded recursive walk",
+    "details": [
+     "local: TierRoot read_dir/open_file",
+     "cloud: one rclone lsjson -R -- remote:path"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "canonicalize safe ZIP entry names + stable sort",
+    "sub": "",
+    "code": false,
+    "full": "canonicalize safe ZIP entry names + stable sort",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "step",
+    "main": "sum <= 400 GB?",
+    "sub": "",
+    "code": true,
+    "full": "sum <= 400 GB?",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "service",
+    "main": "stage avail >= conservative required bytes?",
+    "sub": "",
+    "code": true,
+    "full": "stage avail >= conservative required bytes?",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "data",
+    "main": "one DB transaction",
+    "sub": "jobs row + archive_entries + owner",
+    "code": false,
+    "full": "one DB transaction: jobs row + archive_entries + owner",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "worker",
+    "main": "existing worker + TierLocks",
+    "sub": "source, stage",
+    "code": false,
+    "full": "existing worker + TierLocks(source, stage)",
+    "details": [],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "worker",
+    "main": "ArchiveExecutor dedicated thread",
+    "sub": "",
+    "code": false,
+    "full": "ArchiveExecutor dedicated thread",
+    "details": [
+     "re-open each source through containment boundary",
+     "missing? -> archive_omissions row; continue",
+     "present? -> ZipWriter -> _archives/{job_id}.partial",
+     "progress -> existing job fields / WS",
+     "finish + sync + atomic rename to {job_id}.zip"
+    ],
+    "notes": [],
+    "group": null
+   },
+   {
+    "kind": "service",
+    "main": "completed WS -> job-scoped ticket mint -> /dl/{ticket}",
+    "sub": "",
+    "code": true,
+    "full": "completed WS -> job-scoped ticket mint -> /dl/{ticket}",
+    "details": [
+     "full 200 or single-range 206 -> staged file",
+     "EOF -> unlink; early disconnect -> retain for re-mint/range",
+     "never collected -> 24h sweep"
+    ],
+    "notes": [],
+    "group": null
+   }
+  ],
+  "edges": [
+   {
+    "from": 0,
+    "to": 1,
+    "label": "",
+    "directed": true,
+    "implied": true
+   },
+   {
+    "from": 1,
+    "to": 2,
+    "label": "",
+    "directed": true,
+    "implied": true
+   },
+   {
+    "from": 2,
+    "to": 3,
+    "label": "",
+    "directed": true,
+    "implied": true
+   },
+   {
+    "from": 3,
+    "to": 4,
+    "label": "",
+    "directed": true,
+    "implied": true
+   },
+   {
+    "from": 4,
+    "to": 5,
+    "label": "",
+    "directed": true,
+    "implied": true
+   },
+   {
+    "from": 5,
+    "to": 6,
+    "label": "",
+    "directed": true,
+    "implied": true
+   },
+   {
+    "from": 6,
+    "to": 7,
+    "label": "",
+    "directed": true,
+    "implied": true
+   },
+   {
+    "from": 7,
+    "to": 8,
+    "label": "",
+    "directed": true,
+    "implied": true
+   },
+   {
+    "from": 8,
+    "to": 9,
+    "label": "",
+    "directed": true,
+    "implied": true
+   },
+   {
+    "from": 9,
+    "to": 10,
+    "label": "",
+    "directed": true,
+    "implied": true
+   }
+  ],
+  "groups": []
+ }
+}

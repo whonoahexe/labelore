@@ -30,7 +30,8 @@ import type {
 } from './research-briefing.ts';
 import { FigureFrame } from '../components/figure-frame.tsx';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog.tsx';
-import { LiftedDiagram, PlainDiagram } from '../components/lifted-diagram.tsx';
+import { LaneDiagramFigure } from '../components/lane-diagram.tsx';
+import { PlainDiagram } from '../components/lifted-diagram.tsx';
 import { CleanTreeFigure } from '../components/clean-tree.tsx';
 
 // ---------------------------------------------------------------------------
@@ -343,12 +344,20 @@ function ArchitectureChapter({
     <section id={chapter.id} className="view-block view-research-chapter" tabIndex={-1}>
       <ChapterHeading chapter={chapter} />
       {diagram ? (
-        <FigureFrame
-          title="System architecture"
-          caption={diagram.caption.length > 0 ? <ResearchBlocks blocks={diagram.caption} /> : undefined}
-        >
-          {(fit) => (diagram.lifted ? <LiftedDiagram text={diagram.text} fit={fit} /> : <PlainDiagram text={diagram.text} />)}
-        </FigureFrame>
+        diagram.lifted ? (
+          <LaneDiagramFigure
+            title="System architecture"
+            text={diagram.text}
+            caption={diagram.caption.length > 0 ? <ResearchBlocks blocks={diagram.caption} /> : undefined}
+          />
+        ) : (
+          <FigureFrame
+            title="System architecture"
+            caption={diagram.caption.length > 0 ? <ResearchBlocks blocks={diagram.caption} /> : undefined}
+          >
+            {() => <PlainDiagram text={diagram.text} />}
+          </FigureFrame>
+        )
       ) : null}
       {structure ? (
         <div className="view-research-sub">

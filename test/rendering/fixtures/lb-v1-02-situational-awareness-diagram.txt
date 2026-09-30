@@ -1,0 +1,39 @@
+CLI project path
+      │
+      ▼
+resolveTargetPath → LocalFsPlanningFilesystem → PlanningRepository.load()
+                                              │
+                                              ▼
+                                   immutable ProjectSnapshot
+                                              │
+                  ┌───────────────────────────┴──────────────────────────┐
+                  ▼                                                      ▼
+       cycle-free ProjectPresentation                         Artifact lookup by path
+       (IDs/keys, no object cycles)                           (snapshot only; no fs read)
+                  │                                                      │
+                  └───────────────────────────┬──────────────────────────┘
+                                              ▼
+                                      Hono JSON endpoints
+                                              │
+                                              ▼
+                              React Query + canonical route codec
+                  ┌───────────────────┬──────────────────────┬───────────┐
+                  ▼                   ▼                      ▼           ▼
+              Dashboard          Roadmap/history      Artifact page   Preview
+                                                           │
+                                                           ▼
+                           artifact-view registry (known → generic fallback)
+                                                           │
+                              ┌────────────────────────────┴────────────┐
+                              ▼                                         ▼
+                    PLAN pseudo-XML segmenter                 normal markdown body
+                              └────────────────────────────┬────────────┘
+                                                           ▼
+                  remark/GFM → raw HTML parse → sanitize → slug/linkify/Shiki
+                                                           │
+                                                           ▼
+                                      sanitized document HTML
+                                                           │
+                                          ┌────────────────┴──────────────┐
+                                          ▼                               ▼
+                                  strict Mermaid.run()            anchors/ref popover

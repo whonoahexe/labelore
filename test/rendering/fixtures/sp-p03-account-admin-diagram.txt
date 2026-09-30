@@ -1,0 +1,48 @@
+                     ┌─────────────────────────────┐
+                     │   Admin: /admin/users/{id}  │
+                     │  Disable / Enable / Delete  │
+                     └──────────────┬───────────────┘
+                                    │ PUT/POST /api/admin/users/{id}/...
+                                    ▼
+                     ┌─────────────────────────────┐
+                     │   api::admin handler         │
+                     │   authz::require_admin(...)  │◄── 403 if not admin
+                     └──────────────┬───────────────┘
+                                    │
+                                    ▼
+                     ┌─────────────────────────────┐
+                     │  authz::store::disable_user  │
+                     │  (ONE sqlx transaction)      │
+                     │  1. self-action refused?     │◄── D-11 (before D-12)
+                     │  2. D-12 post-state predicate│◄── "≥1 enabled admin after"
+                     │  3. UPDATE disabled_at       │
+                     │  4. DELETE FROM sessions     │◄── D-05 cascade
+                     │  5. tx.commit()               │
+                     └──────────────┬───────────────┘
+                                    │ (after commit — never before)
+                    ┌───────────────┼────────────────────┐
+                    ▼               ▼                    ▼
+        ┌──────────────────┐ ┌──────────────┐  ┌─────────────────────┐
+        │ identity_bus.send │ │ tickets.     │  │ jobs::audit::record │
+        │ (SessionRevoked)  │ │ purge_by_user│  │ (AccountDisabled)   │
+        └─────────┬─────────┘ └──────────────┘  └─────────────────────┘
+                  │ (in-process broadcast, every /ws connection subscribed)
+                  ▼
+     ┌─────────────────────────────────────┐
+     │ ws::mod::handle_socket (per connection)│
+     │ tokio::select! {                      │
+     │   ...health arm...                    │
+     │   identity_event = identity_rx.recv() │
+     │     => match event {                  │
+     │          SessionRevoked { user_id }   │
+     │            if user_id==connection_id  │
+     │            => close(1008), break       │◄── NEW match arm, same
+     │        }                              │    select! arm as today
+     │   ...incoming socket arm...           │
+     │ }                                     │
+     └─────────────────────────────────────┘
+
+  Independently, on the member's NEXT REST request (any route):
+     VerifiedIdentity::from_request_parts
+       → SELECT ... FROM sessions WHERE id = ? AND expires_at > ?
+       → row now absent (deleted by step 4 above) → 401, no cache to invalidate
