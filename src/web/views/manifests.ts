@@ -13,6 +13,7 @@ import type { ViewKind } from './kinds.ts';
 import type { PromotedBlock, ViewInput, ViewManifest } from './manifest.ts';
 import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
+import { composePatternMap } from './pattern-map.ts';
 
 /**
  * `select` and `consumes` run back to back, synchronously, within the same `composeView` call
@@ -172,6 +173,7 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
       { type: 'section', heading: /^shared patterns/i },
       { type: 'section', heading: /^no analog found/i },
     ],
+    patternMap: composePatternMap,
   },
   'ui-spec': {
     kind: 'ui-spec',

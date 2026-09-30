@@ -11,6 +11,8 @@ import type { DocumentLayoutSpec } from './layout.ts';
 import type { ComposedContextBrief } from './context-brief.ts';
 // Type-only import — same reason as `brief` above (quick-260929-3x3, sketch-008 A).
 import type { ComposedResearchBriefing } from './research-briefing.ts';
+// Type-only import — same reason as `brief` above (quick-260930-wfs, sketch-013 B).
+import type { ComposedPatternMap } from './pattern-map.ts';
 
 /** Declared now so 05-05 can add components without widening this union a second time — only
  * `discussion-questions` has a real component in this plan (see `blocks.tsx`). */
@@ -60,6 +62,11 @@ export interface ViewManifest {
    * (an older server's payload has no `structured.briefing`), and the page falls back to the
    * promoted-block view, which the manifest keeps as `promote`. */
   briefing?: (input: ViewInput) => ComposedResearchBriefing | null;
+  /** quick-260930-wfs (sketch-013 B): the PATTERNS file map a manifest opts into instead of
+   * `promote` — currently only `patterns`. Returns `null` when the input can't compose a map (no
+   * `structured.map`, or a document with no File Classification rows), and the page falls back to
+   * the promoted-block view, which the manifest keeps as `promote`. */
+  patternMap?: (input: ViewInput) => ComposedPatternMap | null;
 }
 
 export interface ViewInput {

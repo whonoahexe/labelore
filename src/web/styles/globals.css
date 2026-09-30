@@ -8022,3 +8022,558 @@ a.view-research-id:hover {
   }
 }
 /* quick-260929-3x3:end */
+
+/* quick-260930-wfs:start */
+/* ==========================================================================
+   quick-260930-wfs (sketch 013 B): the PATTERNS pattern map — every .view-patterns-* rule. Additive
+   only, one contiguous block. Tokens throughout (space, type, line height), squared corners with no
+   corner rounding declared, no literal colour of any kind, --fw-medium / --fw-semibold only.
+   Colour comes from the shared tones and the theme tokens: exact is --primary, a role match is
+   --muted-foreground, partial is --in-flight-fill, no analog is --missing-fill, and the surfaces
+   are --border, --border-faint, --card-veil, --primary-tint and --state-hover. Nothing here names a
+   parse-degradation tone, and this block makes no colour-mix recipe of its own. Ancestors of a
+   .status-chip set no line-height, so every chip keeps the inherited body value (F-05). Media
+   overrides sit directly after their base rules (css-source-order).
+   ========================================================================== */
+
+/* Cover: the facts line, the match-quality meter and the quiet Searched line sit inside
+   ArtifactHeader's .artifact-meta-row and take its full width. */
+.view-patterns-cover {
+  display: grid;
+  flex-basis: 100%;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.view-patterns-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  align-items: baseline;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-patterns-facts b {
+  margin-left: var(--space-1-5);
+  color: var(--foreground);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.view-patterns-qualifier {
+  margin-left: var(--space-1-5);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.view-patterns-key {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+/* The meter: one bar sized by the classification's counts, and a four-entry key. */
+.view-patterns-meter {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 44rem;
+}
+
+.view-patterns-meter-bar {
+  display: flex;
+  height: 0.6rem;
+  border: 1px solid var(--border);
+}
+
+.view-patterns-meter-bar > span {
+  display: block;
+  height: 100%;
+}
+
+.view-patterns-meter-bar > [data-quality='exact'],
+.view-patterns-meter-key [data-quality='exact'] > i {
+  background: var(--primary);
+}
+
+.view-patterns-meter-bar > [data-quality='role'],
+.view-patterns-meter-key [data-quality='role'] > i {
+  background: var(--muted-foreground);
+}
+
+.view-patterns-meter-bar > [data-quality='partial'],
+.view-patterns-meter-key [data-quality='partial'] > i {
+  background: var(--in-flight-fill);
+}
+
+.view-patterns-meter-bar > [data-quality='none'],
+.view-patterns-meter-key [data-quality='none'] > i {
+  background: var(--missing-fill);
+}
+
+.view-patterns-meter-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+  padding: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  list-style: none;
+  text-transform: uppercase;
+}
+
+.view-patterns-meter-key i {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-right: var(--space-1-5);
+}
+
+.view-patterns-meter-key b {
+  margin-right: var(--space-1);
+  color: var(--foreground);
+  font-weight: var(--fw-medium);
+}
+
+/* Searched: one quiet mono line that truncates, with a more / less toggle. */
+.view-patterns-scope {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  min-width: 0;
+  max-width: 80ch;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-2);
+}
+
+.view-patterns-scope .view-patterns-key {
+  flex: none;
+  opacity: 0.8;
+}
+
+.view-patterns-scope-text {
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  opacity: 0.85;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.view-patterns-scope[data-open='true'] .view-patterns-scope-text {
+  white-space: normal;
+}
+
+.view-patterns-scope code,
+.view-patterns-analog code {
+  padding: 0;
+  background: none;
+}
+
+.view-patterns-scope button {
+  flex: none;
+}
+
+.view-patterns-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-align: left;
+  text-transform: uppercase;
+  transition: color 0.15s ease;
+}
+
+.view-patterns-link:hover {
+  color: var(--primary);
+}
+
+/* The mapper's note and the picked rule's explanation: a flagged notice. */
+.view-patterns-note,
+.view-patterns-rule-note {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: 0;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--fs-4);
+}
+
+.view-patterns-note {
+  border-left: 3px solid var(--in-flight-fill);
+}
+
+.view-patterns-rule-note {
+  margin-bottom: var(--space-5);
+}
+
+.view-patterns-note p,
+.view-patterns-rule-note p {
+  margin: 0;
+  color: var(--foreground);
+}
+
+.view-patterns-prose {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  font-size: var(--fs-4);
+}
+
+.view-patterns-rule-note .view-patterns-prose {
+  font-size: var(--fs-3);
+}
+
+/* The file map. */
+.view-patterns-aside {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-patterns-map > .section-heading {
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.view-patterns-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  align-items: center;
+}
+
+.view-patterns-strip .view-patterns-key {
+  margin-right: var(--space-2);
+}
+
+.view-patterns-strip button.status-chip,
+.view-patterns-rule-chips button.status-chip,
+.view-patterns-source-only button.status-chip {
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.view-patterns-strip button.status-chip,
+.view-patterns-rule-chips button.status-chip {
+  white-space: normal;
+}
+
+.view-patterns-strip button.status-chip:hover,
+.view-patterns-rule-chips button.status-chip:hover,
+.view-patterns-source-only button.status-chip:hover {
+  background: var(--state-hover);
+}
+
+.view-patterns-strip button.status-chip[aria-pressed='true'],
+.view-patterns-rule-chips button.status-chip[aria-pressed='true'] {
+  border-color: var(--foreground);
+  color: var(--foreground);
+}
+
+.view-patterns-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 25rem);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+@media (max-width: 62rem) {
+  .view-patterns-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.view-patterns-areas {
+  min-width: 0;
+}
+
+.view-patterns-area + .view-patterns-area {
+  margin-top: var(--space-6);
+}
+
+.view-patterns-label {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  margin: 0 0 var(--space-3);
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-patterns-count {
+  font-weight: var(--fw-medium);
+}
+
+.view-patterns-rows {
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--border);
+  list-style: none;
+}
+
+.view-patterns-row {
+  display: grid;
+  grid-template-columns: 5.2rem minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: baseline;
+  width: 100%;
+  padding: var(--space-2);
+  border: 0;
+  border-bottom: 1px solid var(--border-faint);
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background 0.15s ease,
+    opacity 0.15s ease;
+}
+
+@media (max-width: 42rem) {
+  .view-patterns-row {
+    grid-template-columns: 5.2rem minmax(0, 1fr);
+  }
+
+  .view-patterns-row .view-patterns-analog {
+    grid-column: 2;
+  }
+}
+
+.view-patterns-row:hover {
+  background: var(--state-hover);
+}
+
+.view-patterns-row[data-selected='true'] {
+  background: var(--primary-tint);
+  box-shadow: inset 2px 0 0 var(--primary);
+}
+
+.view-patterns-row[data-dim='true'] {
+  opacity: 0.35;
+}
+
+.view-patterns-who {
+  display: grid;
+  min-width: 0;
+}
+
+.view-patterns-name,
+.view-patterns-panel-name {
+  font-family: var(--font-mono);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+  overflow-wrap: anywhere;
+}
+
+.view-patterns-dir {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  overflow-wrap: anywhere;
+}
+
+.view-patterns-analog {
+  min-width: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.view-patterns-analog code {
+  color: var(--foreground);
+}
+
+.view-patterns-arrow {
+  margin-right: var(--space-1);
+  color: var(--primary);
+  font-family: var(--font-mono);
+}
+
+.view-patterns-muted {
+  color: var(--muted-foreground);
+}
+
+.view-patterns-part {
+  color: var(--missing-fill);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+/* The side panel: sticky beside the map, stacked after it on narrow widths. */
+.view-patterns-panel {
+  position: sticky;
+  top: var(--space-22);
+  max-height: calc(100vh - 7rem);
+  overflow: auto;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--card-veil);
+}
+
+@media (max-width: 62rem) {
+  .view-patterns-panel {
+    position: static;
+    max-height: none;
+  }
+}
+
+.view-patterns-detail {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.view-patterns-panel-name {
+  font-size: var(--fs-6);
+}
+
+.view-patterns-panel-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.view-patterns-kv {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: baseline;
+  font-size: var(--fs-4);
+}
+
+.view-patterns-kv > .view-patterns-key {
+  padding-top: var(--space-0-5);
+}
+
+.view-patterns-value {
+  min-width: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.view-patterns-value code {
+  padding: 0;
+  background: none;
+  color: var(--foreground);
+}
+
+.view-patterns-rule-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+}
+
+.view-patterns-reason {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--missing-border);
+  border-left: 3px solid var(--missing-fill);
+  background: var(--card-veil);
+  font-size: var(--fs-4);
+  overflow-wrap: anywhere;
+}
+
+.view-patterns-reason .view-patterns-key {
+  color: var(--missing-fill);
+}
+
+/* Back matter: planner notes, collapsed. */
+.view-patterns-back {
+  gap: var(--space-3);
+}
+
+.view-patterns-back details {
+  border: 1px solid var(--border);
+  background: var(--card-veil);
+}
+
+.view-patterns-back summary {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  list-style: none;
+  text-transform: uppercase;
+}
+
+.view-patterns-back summary::-webkit-details-marker {
+  display: none;
+}
+
+.view-patterns-back summary::after {
+  margin-left: auto;
+  content: '▾';
+}
+
+.view-patterns-back details[open] > summary::after {
+  content: '▴';
+}
+
+.view-patterns-back summary:hover {
+  color: var(--foreground);
+}
+
+.view-patterns-back details > .view-patterns-prose {
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+/* "In the source only": what the view leaves to Source mode, one click away. */
+.view-patterns-source-only {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  padding-top: var(--space-4);
+  border-top: 1px dashed var(--border);
+}
+
+.view-patterns-source-only ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The blocks sit a fluid step apart, the way the page's own gap does. */
+.document-canvas
+  > :is(.view-patterns-note, .view-patterns-map, .view-patterns-back, .view-patterns-source-only)
+  ~ :is(.view-patterns-map, .view-patterns-back, .view-patterns-source-only) {
+  margin-top: var(--space-10);
+}
+/* quick-260930-wfs:end */
