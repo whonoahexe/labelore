@@ -86,7 +86,7 @@ describe('research view contract', () => {
 
   it('the lane diagram reads named :root figure tokens, tints only the Client icon, and stays in the 3x3 block (quick-260930-mp6)', async () => {
     const css = await source('src/web/styles/globals.css');
-    for (const token of ['--figure-wire', '--figure-lane', '--figure-icon']) {
+    for (const token of ['--figure-wire', '--figure-lane', '--figure-icon', '--figure-group-fill']) {
       expect(css, token).toMatch(new RegExp(`^  ${token}:`, 'm'));
     }
     const rule = (selector: string): string => {
@@ -98,6 +98,10 @@ describe('research view contract', () => {
     expect(clientIcon).toContain('var(--primary-tint)');
     expect(clientIcon).toContain('color: var(--primary)');
     expect(rule('.lane-diagram-wire')).toContain('var(--figure-wire)');
+    expect(rule(".lane-diagram-wire[data-hot='true']")).toContain('var(--primary)');
+    expect(rule(".lane-diagram-arrow[data-hot='true']")).toContain('var(--primary)');
+    expect(rule(".lane-diagram-node[aria-pressed='true']")).toContain('var(--primary)');
+    expect(rule('.lane-diagram-group')).toContain('var(--figure-group-fill)');
     expect(rule('.lane-diagram-lane[data-shade=\'true\']')).toContain('var(--figure-lane)');
     const start = css.indexOf('/* quick-260929-3x3:start */');
     const end = css.indexOf('/* quick-260929-3x3:end */');
