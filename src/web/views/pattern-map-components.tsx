@@ -8,6 +8,7 @@
 // parse-degradation tones never appear on document content.
 import { useEffect, useMemo, useState } from 'react';
 import { ResearchBlocks, ResearchInline } from './research-briefing-components.tsx';
+import type { Block } from '../../planning-repo/handlers/context-brief.ts';
 import { QUALITY_LABEL, QUALITY_ORDER } from './pattern-map.ts';
 import type {
   ComposedPatternIntro,
@@ -49,7 +50,11 @@ export function PatternIntroMeta({ intro }: { intro: ComposedPatternIntro }): Re
           </span>
         ) : null}
       </p>
-      <div className="view-patterns-meter" role="group" aria-label={`Match quality across ${intro.total} mapped files`}>
+      <div
+        className="view-patterns-meter"
+        role="group"
+        aria-label={`Match quality across ${intro.total} mapped files`}
+      >
         <div className="view-patterns-meter-bar" aria-hidden="true">
           {QUALITY_ORDER.map((quality) =>
             intro.counts[quality] > 0 ? (
@@ -84,7 +89,12 @@ export function PatternIntroMeta({ intro }: { intro: ComposedPatternIntro }): Re
               </>
             ) : null}
           </span>
-          <button type="button" className="view-patterns-link" aria-expanded={open} onClick={() => setOpen(!open)}>
+          <button
+            type="button"
+            className="view-patterns-link"
+            aria-expanded={open}
+            onClick={() => setOpen(!open)}
+          >
             {open ? 'less' : 'more'}
           </button>
         </p>
@@ -163,6 +173,24 @@ function RowButton({
   );
 }
 
+/** A lone bold line (`**Do NOT copy:**`, a sub-head) — it heads what follows rather than saying anything. */
+function isSubHead(block: Block): boolean {
+  return (
+    block.kind === 'paragraph' &&
+    block.text.startsWith('**') &&
+    block.text.endsWith('**') &&
+    !block.text.slice(2, -2).includes('**')
+  );
+}
+
+/** How many guidance blocks open the panel: any sub-heads plus the first real paragraph or list,
+ * so a warning's headline never sits alone above its own explanation. */
+export function leadCount(blocks: Block[]): number {
+  let count = 0;
+  while (count < blocks.length && isSubHead(blocks[count])) count += 1;
+  return Math.min(blocks.length, count + 1);
+}
+
 function Panel({
   row,
   rules,
@@ -178,7 +206,8 @@ function Panel({
   moreOpen: boolean;
   onToggleMore: () => void;
 }): React.JSX.Element {
-  const [first, ...rest] = row.guidance;
+  const lead = leadCount(row.guidance);
+  const hasMore = row.guidance.length > lead;
   const rowRules = rules.filter((rule) => row.ruleIds.includes(rule.id));
   const showCopyFrom = row.copyFrom !== null && row.quality !== 'none';
   return (
@@ -219,19 +248,26 @@ function Panel({
         ) : null}
         {row.reason ? (
           <div className="view-patterns-reason">
-            <span className="view-patterns-key">{row.partNew ? 'No analog for part of it' : 'Why nothing matches'}</span>
+            <span className="view-patterns-key">
+              {row.partNew ? 'No analog for part of it' : 'Why nothing matches'}
+            </span>
             <span>
               <ResearchInline text={row.reason} />
             </span>
           </div>
         ) : null}
-        {first ? (
+        {row.guidance.length > 0 ? (
           <>
             <div className="view-patterns-prose">
-              <ResearchBlocks blocks={moreOpen ? row.guidance : [first]} />
+              <ResearchBlocks blocks={moreOpen ? row.guidance : row.guidance.slice(0, lead)} />
             </div>
-            {rest.length > 0 ? (
-              <button type="button" className="view-patterns-link" aria-expanded={moreOpen} onClick={onToggleMore}>
+            {hasMore ? (
+              <button
+                type="button"
+                className="view-patterns-link"
+                aria-expanded={moreOpen}
+                onClick={onToggleMore}
+              >
                 {moreOpen ? 'Less ▴' : 'More guidance ▾'}
               </button>
             ) : null}
@@ -293,7 +329,10 @@ export function PatternMapView({
   }, [pickedRule]);
 
   const selected = useMemo(
-    () => map.rows.find((row) => row.id === selectedId) ?? map.rows.find((row) => row.id === map.defaultSelection) ?? map.rows[0],
+    () =>
+      map.rows.find((row) => row.id === selectedId) ??
+      map.rows.find((row) => row.id === map.defaultSelection) ??
+      map.rows[0],
     [map, selectedId],
   );
   const rule = pickedRule === null ? null : (map.rules.find((r) => r.id === pickedRule) ?? null);
@@ -322,7 +361,8 @@ export function PatternMapView({
           <header className="section-heading">
             <h2>File map</h2>
             <span className="view-patterns-aside">
-              {map.intro.total} files · {map.areas.length} {map.areas.length === 1 ? 'area' : 'areas'}
+              {map.intro.total} files · {map.areas.length}{' '}
+              {map.areas.length === 1 ? 'area' : 'areas'}
             </span>
           </header>
           {map.rules.length > 0 ? (
@@ -356,12 +396,15 @@ export function PatternMapView({
                 ) : null}
                 {rule.applyTo ? (
                   <p className="view-patterns-text">
-                    <span className="view-patterns-key">Apply to</span> <ResearchInline text={rule.applyTo} />
+                    <span className="view-patterns-key">Apply to</span>{' '}
+                    <ResearchInline text={rule.applyTo} />
                   </p>
                 ) : null}
               </div>
               {rule.hits.length === 0 ? (
-                <span className="view-patterns-key">Not tied to specific files — applies broadly</span>
+                <span className="view-patterns-key">
+                  Not tied to specific files — applies broadly
+                </span>
               ) : null}
             </div>
           ) : null}
@@ -411,12 +454,20 @@ export function PatternMapView({
           </section>
         ) : null}
         {map.sourceOnly.length > 0 ? (
-          <nav id="pattern-source-only" className="view-block view-patterns-source-only" aria-label="In the source only">
+          <nav
+            id="pattern-source-only"
+            className="view-block view-patterns-source-only"
+            aria-label="In the source only"
+          >
             <span className="view-patterns-key">In the source only</span>
             <ul>
               {map.sourceOnly.map((entry) => (
                 <li key={entry.label}>
-                  <button type="button" className="status-chip" onClick={() => onShowSource(entry.targetId)}>
+                  <button
+                    type="button"
+                    className="status-chip"
+                    onClick={() => onShowSource(entry.targetId)}
+                  >
                     {entry.label}
                   </button>
                 </li>
