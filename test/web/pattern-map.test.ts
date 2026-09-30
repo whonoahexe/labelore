@@ -18,18 +18,32 @@ import {
   shortRuleName,
 } from '../../src/web/views/pattern-map.ts';
 import type { ComposedPatternMap } from '../../src/web/views/pattern-map.ts';
-import { PatternIntroMeta, PatternMapView } from '../../src/web/views/pattern-map-components.tsx';
+import {
+  leadCount,
+  PatternIntroMeta,
+  PatternMapView,
+} from '../../src/web/views/pattern-map-components.tsx';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 
 const LB05 = new URL(
   '../../.planning/milestones/v1.1-phases/05-per-type-document-views/05-PATTERNS.md',
   import.meta.url,
 );
-const DENSE = new URL('../../fixtures/dense/.planning/phases/01-identity-slice/01-PATTERNS.md', import.meta.url);
+const DENSE = new URL(
+  '../../fixtures/dense/.planning/phases/01-identity-slice/01-PATTERNS.md',
+  import.meta.url,
+);
 const SP02 = `${SP_PLANNING}/milestones/v1.0-phases/02-storage-health-status/02-PATTERNS.md`;
 
 function inputOf(map: unknown, overrides: Partial<ViewInput> = {}): ViewInput {
-  return { kind: 'patterns', frontmatter: {}, structured: { map }, groups: [], planSegments: [], ...overrides };
+  return {
+    kind: 'patterns',
+    frontmatter: {},
+    structured: { map },
+    groups: [],
+    planSegments: [],
+    ...overrides,
+  };
 }
 
 function mapOf(path: URL | string): unknown {
@@ -54,13 +68,18 @@ describe('pattern matching helpers', () => {
       'frontend/components/tier-card.tsx',
       'frontend/components/nav-shell.tsx',
     ]);
-    expect(pathsOf('`backend/src/a.rs::spawn` and `b/c.ts:12-30`')).toEqual(['backend/src/a.rs', 'b/c.ts']);
+    expect(pathsOf('`backend/src/a.rs::spawn` and `b/c.ts:12-30`')).toEqual([
+      'backend/src/a.rs',
+      'b/c.ts',
+    ]);
     expect(pathsOf(null)).toEqual([]);
   });
 
   it('globMatch is a hand-written wildcard matcher', () => {
     expect(globMatch('backend/src/**', 'backend/src/health/mod.rs')).toBe(true);
-    expect(globMatch('frontend/components/ui/*.tsx', 'frontend/components/ui/button.tsx')).toBe(true);
+    expect(globMatch('frontend/components/ui/*.tsx', 'frontend/components/ui/button.tsx')).toBe(
+      true,
+    );
     expect(globMatch('a/*.ts', 'a/b.rs')).toBe(false);
     // Adversarial input stays linear: no catastrophic backtracking.
     const started = performance.now();
@@ -82,7 +101,9 @@ describe('pattern matching helpers', () => {
     expect(qualityOf('exact (structural mirror)')).toBe('exact');
     expect(qualityOf('no analog')).toBe('none');
     expect(qualityOf('data-flow match')).toBe('role');
-    expect(shortRuleName('Reject/fail identically — never leak internals')).toBe('Reject/fail identically');
+    expect(shortRuleName('Reject/fail identically — never leak internals')).toBe(
+      'Reject/fail identically',
+    );
     expect(shortRuleName('Collapsed disclosure (`<details>`)')).toBe('Collapsed disclosure');
   });
 });
@@ -101,7 +122,18 @@ describe('composePatternMap — degrade', () => {
 
   it('an older payload with only a classification still composes', () => {
     const composed = composePatternMap(
-      inputOf({ classification: [{ group: null, file: '`a/b.ts`', role: 'x', flow: 'y', analog: '`c.ts`', quality: 'exact' }] }),
+      inputOf({
+        classification: [
+          {
+            group: null,
+            file: '`a/b.ts`',
+            role: 'x',
+            flow: 'y',
+            analog: '`c.ts`',
+            quality: 'exact',
+          },
+        ],
+      }),
     );
     expect(composed?.rows).toHaveLength(1);
     expect(composed?.rules).toEqual([]);
@@ -129,7 +161,9 @@ describe('composePatternMap — LB v1.1/05', () => {
     expect(designLanguage?.tone).toBe('missing');
     expect(composed.defaultSelection).toBe(designLanguage?.id);
     expect(designLanguage?.reason).toBeTruthy();
-    expect(composed.rows.find((r) => r.name === 'artifact-page.tsx')?.analogShort).toEqual({ kind: 'itself' });
+    expect(composed.rows.find((r) => r.name === 'artifact-page.tsx')?.analogShort).toEqual({
+      kind: 'itself',
+    });
   });
 
   it('the no-analog entries and assignments that match no file stay visible as unplaced rows', () => {
@@ -137,7 +171,9 @@ describe('composePatternMap — LB v1.1/05', () => {
     const fileCount = composed.rows.filter((r) => r.origin === 'file').length;
     expect(fileCount).toBe(17);
     for (const row of unplaced) expect(row.area).toBe('Outside the file table');
-    expect(composed.areas.at(-1)?.label === 'Outside the file table' || unplaced.length === 0).toBe(true);
+    expect(composed.areas.at(-1)?.label === 'Outside the file table' || unplaced.length === 0).toBe(
+      true,
+    );
   });
 
   it('source-only entries and back matter', () => {
@@ -185,7 +221,9 @@ describe('composePatternMap — SP v1.0/02 (real file, when present)', () => {
     const reject = composed.rules.find((r) => r.name === 'Reject/fail identically');
     expect(reject?.hits.length).toBeGreaterThan(0);
     expect(composed.intro.counts).toEqual({ exact: 7, role: 3, partial: 5, none: 11 });
-    expect(composed.backMatter.map((b) => b.heading)).toContain('Cross-Cutting Notes for the Planner');
+    expect(composed.backMatter.map((b) => b.heading)).toContain(
+      'Cross-Cutting Notes for the Planner',
+    );
   });
 });
 
@@ -203,17 +241,20 @@ describe('PatternMapView static markup', () => {
     expect(nav).toContain('Metadata');
   });
 
-  it.runIf(existsSync(SP02))('SP v1.0/02: the note, six rule chips, the default panel, a closed back-matter details', () => {
-    const html = render(compose(SP02));
-    expect(html).toContain("Mapper&#x27;s note");
-    const strip = html.slice(html.indexOf('House rules'), html.indexOf('view-patterns-grid'));
-    expect((strip.match(/<button/g) ?? []).length).toBe(6);
-    expect(html).toContain('Why nothing matches');
-    expect(html).toMatch(/<details><summary>Cross-Cutting Notes for the Planner/);
-    expect(html).not.toMatch(/<details open/);
-    expect(html).not.toContain('<pre');
-    expect(html).not.toContain('<code>fn ');
-  });
+  it.runIf(existsSync(SP02))(
+    'SP v1.0/02: the note, six rule chips, the default panel, a closed back-matter details',
+    () => {
+      const html = render(compose(SP02));
+      expect(html).toContain('Mapper&#x27;s note');
+      const strip = html.slice(html.indexOf('House rules'), html.indexOf('view-patterns-grid'));
+      expect((strip.match(/<button/g) ?? []).length).toBe(6);
+      expect(html).toContain('Why nothing matches');
+      expect(html).toMatch(/<details><summary>Cross-Cutting Notes for the Planner/);
+      expect(html).not.toMatch(/<details open/);
+      expect(html).not.toContain('<pre');
+      expect(html).not.toContain('<code>fn ');
+    },
+  );
 
   it('the cover renders the facts, the four-entry meter key and the Searched line', () => {
     const composed = compose(LB05);
@@ -235,11 +276,31 @@ describe('PatternMapView static markup', () => {
       milestoneVersion: null,
       quickTaskId: null,
     };
-    const parsed = PatternsHandler.parse({ path: ref.path, content, mtimeMs: 0, size: content.length }, ref);
-    const composed = composePatternMap({ ...inputOf(null), structured: parsed.structured as Record<string, unknown> });
+    const parsed = PatternsHandler.parse(
+      { path: ref.path, content, mtimeMs: 0, size: content.length },
+      ref,
+    );
+    const composed = composePatternMap({
+      ...inputOf(null),
+      structured: parsed.structured as Record<string, unknown>,
+    });
     expect(composed).not.toBeNull();
     const html = render(composed as ComposedPatternMap);
-    expect((html.match(/data-quality="(exact|role|partial|none)"/g) ?? []).length).toBeGreaterThanOrEqual(17);
+    expect(
+      (html.match(/data-quality="(exact|role|partial|none)"/g) ?? []).length,
+    ).toBeGreaterThanOrEqual(17);
     expect(html).not.toContain('<pre');
+  });
+});
+
+describe('panel guidance lead', () => {
+  it('opens on the sub-heads plus the first real block, so a warning keeps its explanation', () => {
+    const p = (text: string) => ({ kind: 'paragraph' as const, text });
+    expect(leadCount([])).toBe(0);
+    expect(leadCount([p('plain'), p('more')])).toBe(1);
+    expect(
+      leadCount([p('**Warning headline**'), p('The explanation.'), p('**Do NOT copy:**')]),
+    ).toBe(2);
+    expect(leadCount([p('**Only a head**')])).toBe(1);
   });
 });
