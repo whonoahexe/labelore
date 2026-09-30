@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-09-30T18:44:56.140Z"
+last_updated: "2026-09-30T18:48:35.910Z"
 last_activity: 2026-09-30
 last_activity_desc: Completed quick task 260929-3x3 (RESEARCH page view)
-state_head: cce34d6de3f1396d5050bac884e57af7ccf3684b
+state_head: 09f931187f675babb34f42442ce9b35d2b0589b8
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -147,6 +147,7 @@ None.
 | 260930-mp6 | Build sketch 012 B (lanes by kind) as the RESEARCH architecture diagram | 2026-09-30 | b1ddaeb | [260930-mp6-build-sketch-012-b-lanes-by-kind-as-the-](./quick/260930-mp6-build-sketch-012-b-lanes-by-kind-as-the-/) |
 | 260930-wfs | Build sketch 013 B (by location + panel) as the PATTERNS page view | 2026-09-30 | 20a7320 | [260930-wfs-build-sketch-013-b-by-location-panel-as-](./quick/260930-wfs-build-sketch-013-b-by-location-panel-as-/) |
 | 34 | Global style: --font-heading uses the sans font, not mono | 2026-09-30 | cce34d6 | — |
+| 35 | PATTERNS cover: Copy file path and view toggle on the same line as the Searched scope | 2026-09-30 | 09f9311 | — |
 
 ## Deferred Items
 
