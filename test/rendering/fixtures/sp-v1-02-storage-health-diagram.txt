@@ -1,0 +1,46 @@
+                        ┌──────────────────────────────────────┐
+  HOST KERNEL / DEVICES │                                      │
+                        │  /proc/self/mountinfo   (procfs —    │
+                        │       0.14 ms, NEVER blocks)         │
+                        │  /mnt/{stage,vault,archive} (statvfs │
+                        │       0.002 ms healthy / ∞ if wedged)│
+                        │  /dev/disk/by-id/... (smartctl+sudo) │
+                        │  Google Drive API   (rclone about)   │
+                        └───┬────────┬────────┬────────┬───────┘
+                            │        │        │        │
+        ┌───────────────────┴─┐ ┌────┴─────┐ ┌┴───────┐ ┌┴──────────┐
+        │ PROBER THREAD:stage │ │ :vault   │ │:archive│ │ :cloud    │   ← one dedicated
+        │ (dedicated OS thread│ │          │ │        │ │           │     std::thread each;
+        │  NOT spawn_blocking)│ │          │ │        │ │           │     a wedge here is
+        └──────────┬──────────┘ └────┬─────┘ └───┬────┘ └─────┬─────┘     CONTAINED
+                   │                 │           │            │
+                   │  mpsc/watch (non-blocking send; a wedged thread
+                   │  simply stops sending — no other tier notices)
+                   ▼                 ▼           ▼            ▼
+        ┌────────────────────────────────────────────────────────────┐
+        │  HEALTH REGISTRY  (async task)                             │
+        │  • per-tier latest snapshot map  → on-connect snapshot D-19│
+        │  • staleness watchdog: no reading in N → `unreachable`     │
+        │    (D-15: the TIMEOUT is the signal; thread stays leaked)  │
+        │  • change-detect → emit only on change (D-19)              │
+        └───────────────────────────┬────────────────────────────────┘
+                                    │ Event::TierHealth { tier, state, .. , probed_at }
+                                    ▼
+        ┌────────────────────────────────────────────────────────────┐
+        │  BROADCAST BUS  tokio::broadcast::Sender<Event>  (ws/bus.rs)│
+        │  Lagged → receiver survives; resend full snapshot (F12)     │
+        └───────────────────────────┬────────────────────────────────┘
+                                    │ fan-out
+                                    ▼
+        ┌────────────────────────────────────────────────────────────┐
+        │  /ws HANDLER (axum, EXISTING — ticket-authorized, Phase 1) │
+        │  replace placeholder echo loop with: snapshot → subscribe  │
+        └───────────────────────────┬────────────────────────────────┘
+                                    │ WSS, direct cross-origin (bypasses Vercel)
+                                    ▼
+        ┌────────────────────────────────────────────────────────────┐
+        │  BROWSER  /  (Next.js client component, D-03)              │
+        │  4 cards, fixed order (D-04) · skeleton until first frame  │
+        │  (D-13) · probed_at ticks client-side (D-20) · reconnect   │
+        │  w/ fresh ticket mint + capped backoff (D-21)              │
+        └────────────────────────────────────────────────────────────┘

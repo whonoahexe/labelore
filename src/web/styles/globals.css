@@ -141,6 +141,11 @@
   --figure-node-fill: color-mix(in oklch, var(--primary-tint) 60%, var(--background));
   --figure-node-border: color-mix(in oklch, var(--primary) 40%, var(--border));
   --figure-grid-line: color-mix(in oklch, var(--border) 35%, transparent);
+  /* Lanes-by-kind diagram (quick-260930-mp6, sketch 012 B): a wire and its arrowhead, a lane band, and a
+     kind icon's glyph colour. Named here so the figure block holds no colour recipe of its own. */
+  --figure-wire: color-mix(in oklch, var(--muted-foreground) 60%, transparent);
+  --figure-lane: color-mix(in oklch, var(--muted) 42%, transparent);
+  --figure-icon: color-mix(in oklch, var(--foreground) 75%, transparent);
   --shadow-popover: 0 1rem 2.5rem color-mix(in oklab, var(--foreground) 18%, transparent);
   --scrollbar-thumb: color-mix(in oklch, var(--muted-foreground) 30%, transparent);
   --scrollbar-thumb-strong: color-mix(in oklch, var(--muted-foreground) 55%, transparent);
@@ -6576,6 +6581,178 @@ p.view-research-note {
   color: var(--muted-foreground);
   font-style: italic;
   font-synthesis-style: auto;
+}
+
+/* Lanes-by-kind diagram (quick-260930-mp6, sketch 012 B): the author's ASCII read as a graph and drawn
+   as typed nodes in one lane per kind. Geometry is inline (from src/rendering/lane-layout.ts); colour is
+   the --figure-* tokens and the theme. Only the Client icon takes the accent. No line-height on the
+   containers, so a status chip inside inherits the page's (F-05). */
+.lane-diagram {
+  min-width: 0;
+}
+
+.lane-diagram-canvas {
+  min-width: 0;
+}
+
+/* Fit to width scales the stage, but its unscaled layout box would still widen the scroller. */
+.lane-diagram-canvas[data-fit='true'] {
+  overflow: hidden;
+}
+
+.lane-diagram-stage {
+  position: relative;
+  margin-inline: auto;
+  transform-origin: top left;
+}
+
+.lane-diagram-lane {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
+.lane-diagram-lane[data-shade='true'] {
+  background: var(--figure-lane);
+}
+
+.lane-diagram-lane-head {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  display: flex;
+  gap: var(--space-1-5);
+  align-items: center;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.lane-diagram-lane-head svg {
+  width: 0.8rem;
+  height: 0.8rem;
+}
+
+.lane-diagram-wires {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.lane-diagram-wire {
+  fill: none;
+  stroke: var(--figure-wire);
+  stroke-width: 1.25;
+}
+
+.lane-diagram-arrow {
+  fill: var(--figure-wire);
+}
+
+.lane-diagram-node {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: var(--space-7) minmax(0, 1fr);
+  gap: var(--space-2-5);
+  align-items: center;
+  padding: var(--space-2) var(--space-2-5);
+  border: 1px solid var(--figure-card-border);
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    opacity 120ms ease;
+}
+
+.lane-diagram-node:hover {
+  border-color: var(--figure-node-border);
+}
+
+.lane-diagram-icon {
+  display: grid;
+  place-items: center;
+  width: var(--space-7);
+  height: var(--space-7);
+  background: var(--muted);
+  color: var(--figure-icon);
+}
+
+.lane-diagram-icon svg {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.lane-diagram-node[data-kind='client'] .lane-diagram-icon {
+  background: var(--primary-tint);
+  color: var(--primary);
+}
+
+.lane-diagram-text {
+  display: grid;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+
+.lane-diagram-label {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.lane-diagram-label[data-code='true'],
+.lane-diagram-node[data-compact='true'] .lane-diagram-label {
+  font-size: var(--fs-3);
+}
+
+.lane-diagram-label[data-code='true'] {
+  font-family: var(--font-mono);
+}
+
+.lane-diagram-sub {
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lane-diagram-more {
+  position: absolute;
+  top: calc(-1 * var(--space-2));
+  right: var(--space-2);
+  padding: 0 var(--space-1);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  line-height: var(--lh-snug);
+}
+
+/* The quiet note over the lifted figure (a thin graph, or Shown as drawn). */
+.lane-diagram-fallback {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  margin: 0 0 var(--space-4);
+  color: var(--muted-foreground);
+  font-size: var(--fs-2);
 }
 
 /* Clean-list tree (sketch 009 B): icons, indentation, collapsible folders, notes, badges. The count sits
