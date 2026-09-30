@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 012 — Architecture diagram as a product diagram</title>
+<link rel="stylesheet" href="../themes/default.css?v=012">
+<style>
+/* Sketch 012: the author's ASCII read as DATA (graph.js) and drawn as a product-doc diagram —
+   few nodes, short labels, typed nodes (icon + micro label, no new hues), uniform sizes, aligned
+   layers, orthogonal wires, details on click. System tones only; squared corners. */
+*, *::before, *::after { box-sizing: border-box; }
+:root {
+  --card-edge: color-mix(in oklch, var(--foreground) 16%, var(--border));
+  --wire: color-mix(in oklch, var(--muted-foreground) 60%, transparent);
+  --lane: color-mix(in oklch, var(--muted) 45%, transparent);
+}
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-5); line-height: var(--lh-normal); padding-top: 3rem; }
+h1, h2, h3, p, figure, ol { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+code { font-family: var(--font-mono); font-size: 0.88em; padding: 0 0.2em; background: color-mix(in oklch, var(--muted) 70%, transparent); }
+#variant-nav { position: fixed; inset: 0 0 auto 0; z-index: 50; display: flex; gap: var(--space-1); align-items: center; padding: var(--space-2) var(--space-4); background: var(--background); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; overflow-x: auto; }
+#variant-nav .label { color: var(--muted-foreground); margin: 0 var(--space-2); white-space: nowrap; }
+.variant-tab { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; background: none; white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; color: var(--muted-foreground); transition: all .15s ease; }
+.variant-tab:hover { color: var(--foreground); background: var(--state-hover); }
+.variant-tab.active { color: var(--primary); border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); background: var(--primary-tint); }
+.page { width: min(90rem, 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); display: grid; gap: var(--space-5); }
+.eyebrow { font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.docs { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.chip { display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: none; font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); transition: all .15s ease; }
+button.chip:hover { background: var(--state-hover); color: var(--foreground); }
+.chip[aria-pressed='true'] { color: var(--foreground); border-color: var(--foreground); }
+.chip.doc[aria-pressed='true'] { color: var(--primary); border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); background: var(--primary-tint); }
+.figure { border: 1px solid var(--border); background: var(--card); min-width: 0; }
+.figure-bar { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); }
+.figure-bar .t { font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); margin-right: auto; }
+.figure-main { display: grid; grid-template-columns: minmax(0, 1fr); position: relative; }
+.figure-main.has-panel { grid-template-columns: minmax(0, 1fr) 22rem; }
+.figure-body { overflow-x: auto; padding: var(--space-8) var(--space-6); }
+.figure-caption { padding: var(--space-3); border-top: 1px dashed var(--border); color: var(--muted-foreground); font-size: var(--fs-3); }
+.meta { display: flex; flex-wrap: wrap; gap: var(--space-3); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+
+/* The diagram */
+.dia { position: relative; margin: 0 auto; }
+.dia > svg { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
+.dia .w { fill: none; stroke: var(--wire); stroke-width: 1.25; transition: stroke .15s ease; }
+.dia .w.soft { stroke-dasharray: 3 3; }
+.dia .w.hot { stroke: var(--primary); stroke-width: 1.5; }
+.dia .h { fill: var(--wire); transition: fill .15s ease; }
+.dia .h.hot { fill: var(--primary); }
+.node { position: absolute; display: grid; grid-template-columns: 1.75rem minmax(0, 1fr); gap: 0.6rem; align-items: center; padding: 0.55rem 0.7rem; border: 1px solid var(--card-edge); background: var(--background); cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease, opacity .15s ease; }
+.node:hover, .node.hot { border-color: color-mix(in oklch, var(--primary) 70%, var(--border)); }
+.node.sel { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-tint); }
+.dim .node:not(.hot):not(.sel) { opacity: 0.45; }
+.ic { width: 1.75rem; height: 1.75rem; display: grid; place-items: center; background: var(--muted); color: color-mix(in oklch, var(--foreground) 75%, transparent); }
+.ic svg { width: 0.95rem; height: 0.95rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.node[data-kind='client'] .ic { background: var(--primary-tint); color: var(--primary); }
+.nt { min-width: 0; display: grid; gap: 0.1rem; }
+.nk { font-family: var(--font-mono); font-size: 0.56rem; letter-spacing: var(--ls-widest); text-transform: uppercase; color: var(--muted-foreground); line-height: 1.1; }
+.nl { font-size: 0.84rem; font-weight: var(--fw-semibold); line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.nl.code { font-family: var(--font-mono); font-size: 0.76rem; }
+.ns { font-size: 0.72rem; color: var(--muted-foreground); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.more { position: absolute; top: -0.5rem; right: 0.5rem; padding: 0 0.3rem; font-family: var(--font-mono); font-size: 0.56rem; letter-spacing: var(--ls-wider); color: var(--muted-foreground); background: var(--card); border: 1px solid var(--border); line-height: 1.4; }
+.elbl { position: absolute; max-width: 15rem; padding: 0 0.3rem; font-size: 0.7rem; font-style: italic; line-height: 1.3; color: var(--muted-foreground); background: var(--card); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: auto; }
+.grp { position: absolute; border: 1px dashed color-mix(in oklch, var(--foreground) 22%, var(--border)); background: color-mix(in oklch, var(--muted) 25%, transparent); }
+.grp span { position: absolute; top: 0.45rem; left: 0.7rem; font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.lanebg { position: absolute; top: 0; bottom: 0; background: var(--lane); }
+.lanehd { position: absolute; top: 0.4rem; display: flex; gap: 0.4rem; align-items: center; font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.lanehd svg { width: 0.8rem; height: 0.8rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.num { position: absolute; top: -0.55rem; left: -0.55rem; width: 1.2rem; height: 1.2rem; display: grid; place-items: center; font-family: var(--font-mono); font-size: 0.6rem; background: var(--card); border: 1px solid var(--card-edge); color: var(--foreground); }
+.node.mini { grid-template-columns: 1.25rem minmax(0, 1fr); padding: 0.4rem 0.6rem; }
+.node.mini .nl { -webkit-line-clamp: 1; font-size: 0.8rem; }
+.node.mini .ic { width: 1.25rem; height: 1.25rem; }
+.node.mini .ic svg { width: 0.75rem; height: 0.75rem; }
+
+/* C: walkthrough list */
+.walk { display: grid; grid-template-columns: minmax(0, 1fr) minmax(18rem, 26rem); gap: var(--space-8); align-items: start; }
+.steps { list-style: none; padding: 0; display: grid; gap: 0; border-top: 1px solid var(--border); }
+.steps li { display: grid; grid-template-columns: 1.6rem minmax(0, 1fr); gap: var(--space-2); padding: var(--space-2-5) 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: background .15s ease; }
+.steps li:hover, .steps li.hot { background: var(--state-hover); }
+.steps b { font-family: var(--font-mono); font-size: 0.66rem; font-weight: 400; width: 1.25rem; height: 1.25rem; display: grid; place-items: center; border: 1px solid var(--card-edge); }
+.steps li.hot b { border-color: var(--primary); color: var(--primary); }
+.steps .sl { font-weight: var(--fw-semibold); font-size: 0.84rem; }
+.steps .ss { color: var(--muted-foreground); font-size: 0.76rem; }
+.steps .sv { color: var(--muted-foreground); font-size: 0.72rem; font-style: italic; margin-top: 0.15rem; }
+
+/* Details panel */
+.panel { border-left: 1px solid var(--border); padding: var(--space-4); display: grid; gap: var(--space-3); align-content: start; font-size: var(--fs-3); max-height: 46rem; overflow: auto; }
+.panel .ph { display: flex; gap: var(--space-2); align-items: start; }
+.panel .ph h3 { font-size: 0.95rem; line-height: 1.25; flex: 1; }
+.panel .ph h3.code { font-family: var(--font-mono); font-size: 0.85rem; }
+.panel .sub { color: var(--muted-foreground); }
+.panel pre { margin: 0; padding: var(--space-2); background: var(--background); border: 1px solid var(--border); font-family: var(--font-mono); font-size: 0.7rem; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+.panel .sec { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.panel ul { margin: 0; padding-left: 1rem; display: grid; gap: 0.3rem; }
+.panel li { color: var(--foreground); }
+.panel li i { color: var(--muted-foreground); }
+.panel .x { border: 1px solid var(--border); background: none; padding: 0 0.4rem; color: var(--muted-foreground); }
+
+.fallback-note { display: flex; gap: var(--space-2); align-items: baseline; margin-bottom: var(--space-4); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.fallback-note .chip { color: var(--in-flight-fill); border-color: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border)); }
+pre.ascii { margin: 0; font-family: var(--font-mono); font-size: 0.78rem; line-height: 1.2; color: var(--foreground); }
+pre.ascii .g { color: color-mix(in oklch, var(--muted-foreground) 55%, transparent); }
+pre.ascii .a { color: var(--primary); }
+.source { border: 1px dashed var(--border); padding: var(--space-4); overflow-x: auto; }
+.source .eyebrow { margin-bottom: var(--space-3); }
+</style>
+</head>
+<body>
+<div id="variant-nav">
+  <span class="label">Sketch 012</span>
+  <button class="variant-tab" data-v="a">A: Layered</button>
+  <button class="variant-tab" data-v="b">B: Lanes by kind ★</button>
+  <button class="variant-tab" data-v="c">C: Numbered walkthrough</button>
+</div>
+<main class="page" id="root"></main>
+
+<div id="sketch-tools" style="position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:12px;background:rgba(0,0,0,0.78);color:white;padding:8px 10px;opacity:0.55;transition:opacity 0.2s;display:grid;gap:6px;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.55'">
+  <div>Theme: <button data-theme="light">Light</button><button data-theme="dark">Dark</button></div>
+  <div>Width: <button data-width="375">Phone</button><button data-width="768">Tablet</button><button data-width="full">Desktop</button></div>
+</div>
+<style>
+#sketch-tools button { background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 2px 7px; margin-left: 3px; font: inherit; cursor: pointer; }
+#sketch-tools button.on { background: #c2410c; border-color: #c2410c; }
+</style>
+
+<script src="../011-diagram-redraw/data.js?v=2"></script>
+<script src="shapes.js?v=1"></script>
+<script src="graph.js?v=2"></script>
+<script>
+const state = { v: 'b', doc: 0, sel: null, source: false, fallback: false, theme: 'dark', width: 'full' };
+
+// lucide shapes (24×24), one per node kind.
+const ICON = {
+  client: '<rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/>',
+  edge: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
+  service: '<rect width="20" height="8" x="2" y="2" rx="2" ry="2"/><rect width="20" height="8" x="2" y="14" rx="2" ry="2"/><line x1="6" x2="6.01" y1="6" y2="6"/><line x1="6" x2="6.01" y1="18" y2="18"/>',
+  data: '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/>',
+  channel: '<path d="M16.247 7.761a6 6 0 0 1 0 8.478"/><path d="M19.075 4.933a10 10 0 0 1 0 14.134"/><path d="M4.925 19.067a10 10 0 0 1 0-14.134"/><path d="M7.753 16.239a6 6 0 0 1 0-8.478"/><circle cx="12" cy="12" r="2"/>',
+  worker: '<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M15 2v2M15 20v2M2 15h2M2 9h2M20 15h2M20 9h2M9 2v2M9 20v2"/>',
+  external: '<line x1="22" x2="2" y1="12" y2="12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" x2="6.01" y1="16" y2="16"/><line x1="10" x2="10.01" y1="16" y2="16"/>',
+  step: '<path d="m9 18 6-6-6-6"/>',
+};
+const KIND_NAME = { client: 'Client', edge: 'Edge', service: 'Service', data: 'Data', channel: 'Channel', worker: 'Worker', external: 'External', step: 'Step' };
+const LANES = ['client', 'edge', 'service', 'worker', 'channel', 'data', 'external'];
+const svgIcon = k => `<svg viewBox="0 0 24 24">${ICON[k] || ICON.step}</svg>`;
+function esc(s) { return String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]); }
+function md(s) { return esc(s).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*]+)\*/g, '<em>$1</em>').replace(/`([^`]+)`/g, '<code>$1</code>'); }
+function asciiHTML(text) { return esc(text).replace(/([─│┌┐└┘├┤┬┴┼]+)/g, '<span class="g">$1</span>').replace(/([▼▲►◄→←↑↓])/g, '<span class="a">$1</span>'); }
+
+/* ---------- Layout ----------
+   Layers come from the author's rows (a row of titles is a layer), so the picture still resembles
+   theirs; order within a layer is the author's left-to-right. Sizes are uniform, x is snapped to
+   the author's column and then straightened so single-file chains line up. */
+function layout(g, opts) {
+  const NW = opts.w, NH = opts.h;
+  const ns = [...g.nodes].sort((a, b) => a.card.titleRow - b.card.titleRow || a.card.c1 - b.card.c1);
+  const layers = [];
+  ns.forEach(n => { const L = layers[layers.length - 1]; if (L && n.card.titleRow <= L.row + 1) L.nodes.push(n); else layers.push({ row: n.card.titleRow, nodes: [n] }); });
+  layers.forEach((L, i) => L.nodes.forEach(n => { n.layer = i; }));
+  const parents = id => g.edges.filter(e => e.to === id).map(e => g.nodes.find(n => n.id === e.from)).filter(Boolean);
+  const kids = id => g.edges.filter(e => e.from === id).map(e => g.nodes.find(n => n.id === e.to)).filter(Boolean);
+  const GAP = opts.gapX;
+  if (opts.lanes) {
+    const present = LANES.filter(k => g.nodes.some(n => (n.kind === 'step' ? 'service' : n.kind) === k));
+    const laneOf = n => present.indexOf(n.kind === 'step' ? 'service' : n.kind);
+    const perLane = present.map(() => 1);
+    layers.forEach(L => { const cnt = {}; L.nodes.forEach(n => { const l = laneOf(n); cnt[l] = (cnt[l] || 0) + 1; perLane[l] = Math.max(perLane[l], cnt[l]); }); });
+    const laneX = []; let acc = 0; perLane.forEach((c, i) => { laneX[i] = acc; acc += c * NW + (c - 1) * 12 + 48; });
+    layers.forEach(L => { const cnt = {}; L.nodes.sort((a, b) => a.card.c1 - b.card.c1).forEach(n => { const l = laneOf(n); const k = cnt[l] = (cnt[l] || 0) + 1; n.x = laneX[l] + 24 + (k - 1) * (NW + 12); }); });
+    g.lanes = present.map((k, i) => ({ kind: k, x: laneX[i], w: perLane[i] * NW + (perLane[i] - 1) * 12 + 48 }));
+  } else {
+    const minC = Math.min(...ns.map(n => n.card.c1)), unit = opts.unit;
+    ns.forEach(n => { n.x = ((n.card.c1 + n.card.c2) / 2 - minC) * unit - NW / 2; });
+    // Straighten: an only child sits under its only parent.
+    for (let pass = 0; pass < 2; pass++) layers.forEach(L => L.nodes.forEach(n => { const ps = parents(n.id); if (ps.length === 1 && kids(ps[0].id).length === 1 && ps[0].layer < n.layer) n.x = ps[0].x; }));
+    // Parents with several children centre over them; children of a single parent spread under it.
+    layers.forEach(L => {
+      L.nodes.sort((a, b) => a.x - b.x);
+      for (let k = 1; k < L.nodes.length; k++) { const a = L.nodes[k - 1], b = L.nodes[k]; if (b.x < a.x + NW + GAP) b.x = a.x + NW + GAP; }
+    });
+    const minX = Math.min(...ns.map(n => n.x)); ns.forEach(n => { n.x -= minX; });
+  }
+  // y: each layer's height is the node height plus room for the labels leaving it.
+  let y = opts.top || 0;
+  layers.forEach((L, i) => {
+    L.y = y; L.nodes.forEach(n => { n.y = y; });
+    const labelled = g.edges.some(e => e.label && L.nodes.some(n => n.id === e.from));
+    y += NH + (i < layers.length - 1 ? (labelled ? opts.gapY + 22 : opts.gapY) : 0);
+  });
+  g.width = Math.max(...ns.map(n => n.x + NW)) + (opts.lanes ? 24 : 0);
+  if (opts.lanes) g.width = Math.max(g.width, ...g.lanes.map(l => l.x + l.w));
+  g.height = y;
+  g.layers = layers; g.NW = NW; g.NH = NH;
+  return g;
+}
+
+/* Orthogonal routing with rounded elbows. Down: out of the bottom, across at a shared height, into
+   the top. Same layer: side to side. Up (a loop back): around the right. */
+function route(g, e) {
+  const a = g.nodes.find(n => n.id === e.from), b = g.nodes.find(n => n.id === e.to);
+  if (!a || !b) return null;
+  const NW = g.NW, NH = g.NH, R = 7;
+  const elbow = (pts) => {
+    let d = `M${pts[0][0]},${pts[0][1]}`;
+    for (let i = 1; i < pts.length - 1; i++) {
+      const [px, py] = pts[i - 1], [cx, cy] = pts[i], [nx, ny] = pts[i + 1];
+      const r = Math.min(R, Math.hypot(cx - px, cy - py) / 2, Math.hypot(nx - cx, ny - cy) / 2);
+      const ux = Math.sign(cx - px), uy = Math.sign(cy - py), vx = Math.sign(nx - cx), vy = Math.sign(ny - cy);
+      d += `L${cx - ux * r},${cy - uy * r}Q${cx},${cy} ${cx + vx * r},${cy + vy * r}`;
+    }
+    const last = pts[pts.length - 1]; return d + `L${last[0]},${last[1]}`;
+  };
+  if (a.layer === b.layer) {
+    const lr = a.x < b.x; const sx = lr ? a.x + NW : a.x, tx = lr ? b.x : b.x + NW, yy = a.y + NH / 2;
+    return { d: `M${sx},${yy}L${tx},${yy}`, tip: [tx, yy, lr ? 'r' : 'l'], lab: [Math.min(sx, tx) + 4, yy - 16] };
+  }
+  if (b.layer > a.layer) {
+    const sx = a.x + NW / 2, sy = a.y + NH, tx = b.x + NW / 2, ty = b.y;
+    // Spread several wires leaving one node / entering one node across its edge.
+    const outs = g.edges.filter(q => q.from === a.id && g.nodes.find(n => n.id === q.to)?.layer > a.layer).map(q => g.nodes.find(n => n.id === q.to)).sort((p, q) => p.x - q.x);
+    const ins = g.edges.filter(q => q.to === b.id && g.nodes.find(n => n.id === q.from)?.layer < b.layer).map(q => g.nodes.find(n => n.id === q.from)).sort((p, q) => p.x - q.x);
+    const spread = (list, n, base) => list.length > 1 ? base - NW * 0.3 + (NW * 0.6) * (list.indexOf(n) / (list.length - 1)) : base;
+    const x1 = outs.length > 1 && Math.abs(tx - sx) < 4 ? sx : (outs.length > 1 ? sx : sx), x2 = ins.length > 1 ? spread(ins, a, tx) : tx;
+    const my = sy + (g.layers[a.layer + 1].y - sy) / 2;
+    if (Math.abs(x1 - x2) < 1) return { d: `M${x1},${sy}L${x2},${ty}`, tip: [x2, ty, 'd'], lab: [x1 + 8, sy + (ty - sy) / 2 - 8] };
+    return { d: elbow([[x1, sy], [x1, my], [x2, my], [x2, ty]]), tip: [x2, ty, 'd'], lab: [x2 + 8, my + 3] };
+  }
+  const right = Math.max(a.x, b.x) + NW + 26;
+  return { d: elbow([[a.x + NW, a.y + NH / 2], [right, a.y + NH / 2], [right, b.y + NH / 2], [b.x + NW, b.y + NH / 2]]), tip: [b.x + NW, b.y + NH / 2, 'l'], lab: [right + 6, (a.y + b.y) / 2 + NH / 2] };
+}
+function head([x, y, dir], hot) {
+  const s = 4, L = 7;
+  const p = dir === 'd' ? [[x - s, y - L], [x + s, y - L], [x, y]] : dir === 'r' ? [[x - L, y - s], [x - L, y + s], [x, y]] : dir === 'l' ? [[x + L, y - s], [x + L, y + s], [x, y]] : [[x - s, y + L], [x + s, y + L], [x, y]];
+  return `<path class="h${hot ? ' hot' : ''}" d="M${p.map(q => q.join(',')).join('L')}Z"/>`;
+}
+
+function renderDiagram(g, opts) {
+  const host = document.createElement('div'); host.className = 'dia';
+  host.style.width = `${g.width}px`; host.style.height = `${g.height}px`;
+  if (opts.lanes) g.lanes.forEach((l, i) => { if (i % 2 === 0) host.insertAdjacentHTML('beforeend', `<div class="lanebg" style="left:${l.x}px;width:${l.w}px;top:-12px;bottom:-12px"></div>`); host.insertAdjacentHTML('beforeend', `<div class="lanehd" style="left:${l.x + 24}px">${svgIcon(l.kind)}${KIND_NAME[l.kind]}${l.kind === 'service' ? ' & steps' : ''}</div>`); });
+  // Groups: a dashed region around their members.
+  g.groups.forEach(gr => {
+    const m = g.nodes.filter(n => n.group === gr.id); if (!m.length) return;
+    const x1 = Math.min(...m.map(n => n.x)) - 18, x2 = Math.max(...m.map(n => n.x + g.NW)) + 18, y1 = Math.min(...m.map(n => n.y)) - 34, y2 = Math.max(...m.map(n => n.y + g.NH)) + 18;
+    host.insertAdjacentHTML('beforeend', `<div class="grp" style="left:${x1}px;top:${y1}px;width:${x2 - x1}px;height:${y2 - y1}px"><span>${esc(gr.label.main)}${gr.label.sub ? ' · ' + esc(gr.label.sub) : ''}</span></div>`);
+  });
+  const sel = state.sel, related = new Set();
+  if (sel != null) { related.add(sel); g.edges.forEach(e => { if (e.from === sel) related.add(e.to); if (e.to === sel) related.add(e.from); }); }
+  let wires = '', heads = '';
+  const labels = [];
+  g.edges.forEach(e => {
+    const r = route(g, e); if (!r) return;
+    const hot = sel != null && (e.from === sel || e.to === sel);
+    wires += `<path class="w${e.implied ? '' : ''}${hot ? ' hot' : ''}" d="${r.d}"/>`;
+    if (e.directed !== false) heads += head(r.tip, hot);
+    if (e.label && opts.labels) labels.push({ x: r.lab[0], y: r.lab[1], t: e.label });
+  });
+  host.insertAdjacentHTML('beforeend', `<svg width="${g.width}" height="${g.height}">${wires}${heads}</svg>`);
+  labels.forEach(l => host.insertAdjacentHTML('beforeend', `<div class="elbl" style="left:${l.x}px;top:${l.y}px" title="${esc(l.t)}">${esc(l.t)}</div>`));
+  g.nodes.forEach((n, k) => {
+    const extra = n.details.length + n.notes.length;
+    const el = document.createElement('div');
+    el.className = 'node' + (opts.mini ? ' mini' : '') + (sel === n.id ? ' sel' : '') + (related.has(n.id) && sel !== n.id ? ' hot' : '');
+    el.dataset.kind = n.kind; el.dataset.id = n.id;
+    el.style.cssText = `left:${n.x}px;top:${n.y}px;width:${g.NW}px;height:${g.NH}px`;
+    el.innerHTML = `<span class="ic">${opts.numbers ? `<b style="font-family:var(--font-mono);font-size:0.66rem;font-weight:500">${n.num}</b>` : svgIcon(n.kind)}</span><span class="nt" title="${KIND_NAME[n.kind]}"><span class="nl${n.label.code ? ' code' : ''}" title="${esc(n.label.full)}">${esc(n.label.main)}</span>${n.label.sub && !opts.mini && !(n.label.main.length > 24) ? `<span class="ns">${esc(n.label.sub)}</span>` : ''}</span>${extra && !opts.mini ? `<span class="more">+${extra}</span>` : ''}`;
+    host.appendChild(el);
+  });
+  if (sel != null) host.classList.add('dim');
+  return host;
+}
+
+function panel(g) {
+  const n = g.nodes.find(x => x.id === state.sel); if (!n) return '';
+  const name = id => { const m = g.nodes.find(x => x.id === id); return m ? m.label.main : '?'; };
+  const ins = g.edges.filter(e => e.to === n.id), outs = g.edges.filter(e => e.from === n.id);
+  return `<aside class="panel">
+    <div class="ph"><span class="ic">${svgIcon(n.kind)}</span><h3 class="${n.label.code ? 'code' : ''}">${esc(n.label.main)}</h3><button class="x" data-close="1">✕</button></div>
+    <div class="sec">${KIND_NAME[n.kind]}</div>
+    ${n.label.sub ? `<div class="sub">${esc(n.label.sub)}</div>` : ''}
+    ${n.details.length ? `<div class="sec">Details</div><pre>${esc(n.details.join('\n'))}</pre>` : ''}
+    ${n.notes.length ? `<div class="sec">Notes</div><ul>${n.notes.map(t => `<li><i>${esc(t)}</i></li>`).join('')}</ul>` : ''}
+    ${ins.length ? `<div class="sec">From</div><ul>${ins.map(e => `<li>${esc(name(e.from))}${e.label ? ` — <i>${esc(e.label)}</i>` : ''}</li>`).join('')}</ul>` : ''}
+    ${outs.length ? `<div class="sec">To</div><ul>${outs.map(e => `<li>${esc(name(e.to))}${e.label ? ` — <i>${esc(e.label)}</i>` : ''}</li>`).join('')}</ul>` : ''}
+    <div class="sec">As written</div><pre>${esc(n.label.full)}</pre>
+  </aside>`;
+}
+
+function render() {
+  document.documentElement.classList.toggle('dark', state.theme === 'dark');
+  document.querySelectorAll('.variant-tab').forEach(b => b.classList.toggle('active', b.dataset.v === state.v));
+  document.querySelectorAll('#sketch-tools button').forEach(b => b.classList.toggle('on', b.dataset.theme === state.theme || b.dataset.width === state.width));
+  const d = DIAGRAMS[state.doc];
+  const S = d.model ? shapes(d) : null;
+  const g = S ? buildGraph(S) : null;
+  const confident = g && g.nodes.length >= 2 && (g.edges.length >= g.nodes.length * 0.5 || g.nodes.length <= 3);
+  const root = document.getElementById('root');
+  root.style.width = state.width === 'full' ? '' : `${state.width}px`;
+  root.innerHTML = `
+    <div class="eyebrow">Sketch 012 · ${state.v === 'a' ? 'A · Layered' : state.v === 'b' ? 'B · Lanes by kind' : 'C · Numbered walkthrough'}</div>
+    <div class="docs">${DIAGRAMS.map((x, i) => `<button class="chip doc" data-doc="${i}" aria-pressed="${i === state.doc}">${esc(x.label)}</button>`).join('')}</div>
+    <figure class="figure">
+      <div class="figure-bar"><span class="t">System architecture</span>
+        <button class="chip" data-toggle="source" aria-pressed="${state.source}">Source</button>
+        <button class="chip" data-toggle="fallback" aria-pressed="${state.fallback}">Shown as drawn</button>
+      </div>
+      <div class="figure-main" id="main"><div class="figure-body" id="body"></div></div>
+      ${d.caption ? `<figcaption class="figure-caption">${md(d.caption)}</figcaption>` : ''}
+    </figure>
+    <div class="meta">${g ? `<span>${g.nodes.length} nodes</span><span>${g.edges.length} wires</span><span>${g.groups.length} groups</span><span>${confident ? 'confident → drawn' : 'low confidence → shown as drawn'}</span>` : '<span>model rejected</span>'}<span>click a node for its details</span></div>
+    ${state.source ? `<div class="source"><div class="eyebrow">Author's source</div><pre class="ascii">${asciiHTML(d.text)}</pre></div>` : ''}`;
+  const body = document.getElementById('body');
+  if (state.fallback || !confident) { body.innerHTML = `<div class="fallback-note"><span class="chip">Shown as drawn</span><span>This figure keeps the author's layout.</span></div><pre class="ascii">${asciiHTML(d.text)}</pre>`; return; }
+  if (state.v === 'c') {
+    const order = [...g.nodes].sort((a, b) => a.card.titleRow - b.card.titleRow || a.card.c1 - b.card.c1);
+    order.forEach((n, k) => { n.num = k + 1; });
+    layout(g, { w: 188, h: 38, gapX: 22, gapY: 30, unit: 9.5 });
+    const wrap = document.createElement('div'); wrap.className = 'walk';
+    const left = document.createElement('div'); left.style.overflowX = 'auto'; left.appendChild(renderDiagram(g, { mini: true, numbers: true, labels: false }));
+    wrap.appendChild(left);
+    const name = id => g.nodes.find(x => x.id === id)?.label.main || '';
+    wrap.insertAdjacentHTML('beforeend', `<ol class="steps">${order.map(n => { const outs = g.edges.filter(e => e.from === n.id); const via = outs.filter(e => e.label).map(e => `→ ${name(e.to)}: ${e.label}`); return `<li data-id="${n.id}" class="${state.sel === n.id ? 'hot' : ''}"><b>${n.num}</b><div><div class="sl">${esc(n.label.main)}</div>${n.label.sub ? `<div class="ss">${esc(n.label.sub)}</div>` : ''}${via.map(v => `<div class="sv">${esc(v)}</div>`).join('')}</div></li>`; }).join('')}</ol>`);
+    body.appendChild(wrap);
+  } else {
+    layout(g, state.v === 'b' ? { w: 196, h: 58, gapX: 28, gapY: 40, lanes: true, top: 44 } : { w: 224, h: 58, gapX: 28, gapY: 48, unit: 10.5 });
+    body.appendChild(renderDiagram(g, { lanes: state.v === 'b', labels: true }));
+  }
+  if (state.sel != null && state.v !== 'c') { document.getElementById('main').classList.add('has-panel'); document.getElementById('main').insertAdjacentHTML('beforeend', panel(g)); }
+}
+
+document.addEventListener('mouseover', e => {
+  const n = e.target.closest('[data-id]');
+  document.querySelectorAll('[data-id]').forEach(x => x.classList.toggle('hot', !!n && x.dataset.id === n.dataset.id));
+});
+document.addEventListener('click', e => {
+  const t = e.target.closest('button, [data-id]');
+  if (!t) return;
+  if (t.dataset.v) { state.v = t.dataset.v; state.sel = null; }
+  else if (t.dataset.doc !== undefined) { state.doc = +t.dataset.doc; state.sel = null; }
+  else if (t.dataset.toggle) state[t.dataset.toggle] = !state[t.dataset.toggle];
+  else if (t.dataset.theme) state.theme = t.dataset.theme;
+  else if (t.dataset.width) state.width = t.dataset.width;
+  else if (t.dataset.close) state.sel = null;
+  else if (t.dataset.id !== undefined) { const id = +t.dataset.id; state.sel = state.sel === id ? null : id; }
+  else return;
+  render();
+});
+document.fonts.ready.then(render);
+render();
+</script>
+</body>
+</html>

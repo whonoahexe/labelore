@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 011 — Diagram redraw: real cards and connectors from the author's ASCII</title>
+<link rel="stylesheet" href="../themes/default.css?v=011">
+<style>
+/* Sketch 011: redraw each RESEARCH architecture diagram from the SHIPPED lift model
+   (data.js is liftDiagram() output, generated from src/rendering/ascii-lift.ts). The author's
+   arrangement is the skeleton; cards, connectors and row heights are drawn for real.
+   System tones only (docs/design-language.md ## Tones): cards quiet, arrows primary, nothing else. */
+*, *::before, *::after { box-sizing: border-box; }
+:root {
+  --card-edge: color-mix(in oklch, var(--foreground) 22%, var(--border));
+  --wire: color-mix(in oklch, var(--muted-foreground) 70%, transparent);
+  --dg-fs: 0.8rem;
+}
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-5); line-height: var(--lh-normal); padding-top: 3rem; }
+h1, h2, p, figure { margin: 0; }
+code { font-family: var(--font-mono); font-size: 0.88em; padding: 0 0.2em; background: color-mix(in oklch, var(--muted) 70%, transparent); }
+button { font: inherit; color: inherit; cursor: pointer; }
+#variant-nav { position: fixed; inset: 0 0 auto 0; z-index: 50; display: flex; gap: var(--space-1); align-items: center; padding: var(--space-2) var(--space-4); background: var(--background); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; overflow-x: auto; }
+#variant-nav .label { color: var(--muted-foreground); margin: 0 var(--space-2); white-space: nowrap; }
+.variant-tab { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; background: none; white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; color: var(--muted-foreground); transition: all .15s ease; }
+.variant-tab:hover { color: var(--foreground); background: var(--state-hover); }
+.variant-tab.active { color: var(--primary); border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); background: var(--primary-tint); }
+.page { width: min(88rem, 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); display: grid; gap: var(--space-6); }
+.eyebrow { font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.docs { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.chip { display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: none; font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); transition: all .15s ease; }
+button.chip:hover { background: var(--state-hover); color: var(--foreground); }
+.chip[aria-pressed='true'] { color: var(--foreground); border-color: var(--foreground); }
+.chip.doc[aria-pressed='true'] { color: var(--primary); border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); background: var(--primary-tint); }
+
+.figure { border: 1px solid var(--border); background: var(--card); min-width: 0; }
+.figure-bar { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); }
+.figure-bar .t { font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); margin-right: auto; }
+.figure-body { overflow-x: auto; padding: var(--space-6); }
+.figure-caption { padding: var(--space-3); border-top: 1px dashed var(--border); color: var(--muted-foreground); font-size: var(--fs-3); }
+.meta { display: flex; flex-wrap: wrap; gap: var(--space-3); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+
+/* Redraw canvas (A and B): absolutely placed cards over one SVG of connectors. */
+.dg { position: relative; font-family: var(--font-mono); font-size: var(--dg-fs); }
+.dg svg { position: absolute; inset: 0; z-index: 1; overflow: visible; pointer-events: none; }
+.dg svg .wire { fill: none; stroke: var(--wire); stroke-width: 1.25; stroke-linecap: square; stroke-linejoin: round; }
+.dg svg .head { fill: var(--primary); }
+.card { position: absolute; z-index: 2; border: 1px solid var(--card-edge); background: var(--background); transition: border-color .15s ease, background .15s ease; }
+.card.group { z-index: 0; background: color-mix(in oklch, var(--card) 70%, var(--background)); border-style: dashed; }
+.card:hover, .card.hot { border-color: var(--primary); }
+.card.expandable { cursor: pointer; }
+.ln { position: absolute; z-index: 3; white-space: pre; line-height: 1; display: flex; align-items: center; }
+.ln.title { font-weight: var(--fw-semibold); color: var(--foreground); }
+.ln.detail { color: var(--muted-foreground); }
+.more { position: absolute; font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); color: var(--muted-foreground); border: 1px solid var(--border); background: var(--card); padding: 0 0.3rem; line-height: 1.35; }
+.card:hover .more { color: var(--primary); border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); }
+.note { position: absolute; z-index: 3; font-family: var(--font-sans); font-style: italic; font-size: 0.74rem; line-height: 1.25; color: var(--muted-foreground); white-space: pre; background: var(--card); padding: 0 0.2rem; margin-left: -0.2rem; }
+.note-dot { position: absolute; z-index: 3; width: 1.1rem; height: 1.1rem; display: grid; place-items: center; font-family: var(--font-mono); font-size: 0.6rem; font-style: normal; color: var(--muted-foreground); border: 1px solid var(--border); background: var(--card); cursor: help; }
+.note-dot:hover { color: var(--primary); border-color: var(--primary); }
+.tip { position: fixed; z-index: 80; max-width: 28rem; padding: var(--space-2) var(--space-3); border: 1px solid var(--border); background: var(--card); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-3); white-space: pre-wrap; box-shadow: 0 8px 24px color-mix(in oklch, var(--foreground) 12%, transparent); pointer-events: none; }
+
+/* B: margin notes */
+.b-wrap { display: grid; grid-template-columns: max-content minmax(14rem, 22rem); gap: var(--space-8); align-items: start; }
+.b-notes { position: relative; font-family: var(--font-sans); font-size: var(--fs-3); color: var(--muted-foreground); }
+.b-note { position: absolute; left: 0; right: 0; display: grid; grid-template-columns: 1.4rem 1fr; gap: var(--space-2); line-height: 1.35; }
+.b-note b { font-family: var(--font-mono); font-size: 0.62rem; font-weight: 400; width: 1.1rem; height: 1.1rem; display: grid; place-items: center; border: 1px solid var(--border); font-style: normal; }
+.b-note.hot b, .note-dot.hot { color: var(--primary); border-color: var(--primary); }
+.b-note.hot { color: var(--foreground); }
+
+/* C: flow rail */
+.rail { display: grid; gap: 0; justify-items: start; font-family: var(--font-mono); font-size: var(--dg-fs); }
+.tier { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: stretch; }
+.tier .rc { border: 1px solid var(--card-edge); background: var(--background); padding: var(--space-2) var(--space-3); min-width: 12rem; max-width: 34rem; transition: border-color .15s ease; }
+.tier .rc:hover { border-color: var(--primary); }
+.rc .rt { font-weight: var(--fw-semibold); white-space: pre-wrap; }
+.rc .rd { margin-top: var(--space-1-5); color: var(--muted-foreground); white-space: pre-wrap; font-size: 0.76rem; }
+.rc .rn { margin-top: var(--space-1-5); font-family: var(--font-sans); font-style: italic; font-size: 0.74rem; color: var(--muted-foreground); white-space: pre-wrap; }
+.join { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1) 0 var(--space-1) 1.1rem; min-height: 1.6rem; }
+.join .stem { width: 1px; align-self: stretch; background: var(--wire); position: relative; min-height: 1.4rem; }
+.join .stem::after { content: ''; position: absolute; bottom: -1px; left: -4px; border: 4.5px solid transparent; border-top: 6px solid var(--primary); border-bottom: 0; }
+.join .lbl { font-family: var(--font-sans); font-style: italic; font-size: 0.74rem; color: var(--muted-foreground); white-space: pre-wrap; }
+.tier .hop { align-self: center; color: var(--primary); }
+
+/* Fallback: the author's text, framed, glyphs dimmed (009 A). */
+.fallback-note { display: flex; gap: var(--space-2); align-items: baseline; margin-bottom: var(--space-4); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.fallback-note .chip { color: var(--in-flight-fill); border-color: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border)); }
+pre.ascii { margin: 0; font-family: var(--font-mono); font-size: var(--dg-fs); line-height: 1.2; color: var(--foreground); }
+pre.ascii .g { color: color-mix(in oklch, var(--muted-foreground) 55%, transparent); }
+pre.ascii .a { color: var(--primary); }
+.source { border: 1px dashed var(--border); padding: var(--space-4); overflow-x: auto; }
+.source .eyebrow { margin-bottom: var(--space-3); }
+</style>
+</head>
+<body>
+<div id="variant-nav">
+  <span class="label">Sketch 011</span>
+  <button class="variant-tab" data-v="a">A: Faithful redraw</button>
+  <button class="variant-tab" data-v="b">B: Tidy grid + margin notes</button>
+  <button class="variant-tab" data-v="c">C: Flow rail</button>
+</div>
+
+<main class="page" id="root"></main>
+
+<div id="sketch-tools" style="position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:12px;background:rgba(0,0,0,0.78);color:white;padding:8px 10px;opacity:0.55;transition:opacity 0.2s;display:grid;gap:6px;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.55'">
+  <div>Theme: <button data-theme="light">Light</button><button data-theme="dark">Dark</button></div>
+  <div>Width: <button data-width="375">Phone</button><button data-width="768">Tablet</button><button data-width="full">Desktop</button></div>
+  <div>Debug: <button data-debug="1">Row classes</button></div>
+</div>
+<style>
+#sketch-tools button { background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 2px 7px; margin-left: 3px; font: inherit; cursor: pointer; }
+#sketch-tools button.on { background: #c2410c; border-color: #c2410c; }
+</style>
+
+<script src="data.js?v=1"></script>
+<script>
+const state = { v: 'a', doc: 0, detail: 'compact', open: new Set(), source: false, fallback: false, redrawAnyway: false, theme: 'dark', width: 'full', debug: false };
+
+/* ---------- Model → shapes (shared by all variants) ----------
+   The lift model (data.js) gives per-row typed segments and card rectangles in grid coordinates.
+   From it: every card's title + detail lines, every note block outside cards, and every
+   connector cell (line/arrow glyphs outside card interiors). */
+const LINE = '─│┌┐└┘├┤┬┴┼', ARROW = '▼▲►◄→←↑↓';
+const CONN = { '─':'lr','│':'ud','┌':'rd','┐':'ld','└':'ur','┘':'ul','├':'udr','┤':'udl','┬':'lrd','┴':'lru','┼':'udlr',
+  '▼':'u','▲':'d','►':'l','◄':'r','→':'l','←':'r','↓':'u','↑':'d' };
+const TIP = { '▼':'d','▲':'u','►':'r','◄':'l','→':'r','←':'l','↓':'d','↑':'u' };
+
+function shapes(d) {
+  // A widened box can end a column or two past the longest text line: pad the grid to cover it.
+  const m = d.model, H = m.height, W = Math.max(m.width, ...m.cards.map(c => c.c2 + 2));
+  const G = m.rows.map(segs => { const s = segs.map(x => x[0]).join(''); return (s + ' '.repeat(W)).slice(0, W).split(''); });
+  const K = m.rows.map(segs => { const k = []; segs.forEach(([t, kind]) => { for (const _ of t) k.push(kind); }); while (k.length < W) k.push(null); return k; });
+  // Cards, innermost wins ownership. Box interior excludes its (blanked) border; a node card is its text rect.
+  const cards = m.cards.map((c, i) => ({ ...c, i, area: (c.r2 - c.r1 + 1) * (c.c2 - c.c1 + 1) }));
+  // Groups first (pure geometry): a box that encloses another card. Its frame always encloses
+  // its children, even when the model clamped an open left edge.
+  cards.forEach(c => {
+    const kids = cards.filter(o => o !== c && o.r1 > c.r1 && o.r2 < c.r2 && o.c2 <= c.c2 + 1 && o.c1 >= c.c1 - 1);
+    c.group = c.kind === 'box' && kids.length > 0;
+    if (c.group && c.frame) { const l = Math.min(c.frame.left, ...kids.map(k => (k.frame ? k.frame.left : k.c1) - 1.5)); c.frame = { ...c.frame, width: c.frame.width + (c.frame.left - l), left: l }; }
+  });
+  const own = Array.from({ length: H }, () => new Array(W).fill(-1));
+  [...cards].sort((a, b) => b.area - a.area).forEach(c => {
+    const [r1, r2, c1, c2] = c.kind === 'box' ? [c.r1 + 1, c.r2 - 1, c.c1 + 1, c.c2 - 1] : [c.r1, c.r2, c.c1, c.c2];
+    for (let r = r1; r <= r2; r++) for (let x = Math.max(0, c1); x <= Math.min(W - 1, c2); x++) {
+      // A group owns only its own words: the wires and cards inside it stay what they are.
+      if (c.group && (LINE.includes(G[r][x]) || ARROW.includes(G[r][x]))) continue;
+      own[r][x] = c.i;
+    }
+    if (c.group) for (let r = r1; r <= r2; r++) {
+      // ...and a note that starts outside the group and runs into it stays a note.
+      let x = 0;
+      while (x < W) {
+        if (G[r][x] === ' ' || LINE.includes(G[r][x]) || ARROW.includes(G[r][x])) { x++; continue; }
+        let e = x, gap = 0; while (e < W && !LINE.includes(G[r][e]) && !ARROW.includes(G[r][e])) { if (G[r][e] === ' ') { if (++gap >= 2) break; } else gap = 0; e++; }
+        if (x < c1) for (let q = x; q < e; q++) if (own[r][q] === c.i) own[r][q] = -1;
+        x = e;
+      }
+    }
+  });
+  // Card text lines: per owned row, the owned cells' text (node cards drop trunk glyphs).
+  cards.forEach(c => {
+    c.lines = [];
+    for (let r = c.r1; r <= c.r2; r++) {
+      let s = '';
+      let start = -1;
+      for (let x = 0; x < W; x++) if (own[r][x] === c.i) { if (start < 0) start = x; s += G[r][x]; } else if (start >= 0 && s !== '') s += ' ';
+      if (c.kind === 'node') s = s.replace(/[│┆]/g, ' ');
+      const lead = s.length - s.trimStart().length;
+      s = s.replace(/\s+$/, '');
+      if (s.trim() === '') continue;
+      c.lines.push({ r, col: start + lead, text: s.trimStart() });
+    }
+    if (!c.lines.length) c.lines.push({ r: c.r1 + (c.kind === 'box' ? 1 : 0), col: c.c1 + 1, text: '' });
+    c.titleRow = c.lines[0].r;
+    // A title line that ends mid-thought ("… /", "… (") continues onto the next line.
+    let t = 1; while (t < c.lines.length && /[\/(,]$|\bthe$/.test(c.lines[t - 1].text) && t < 3) t++;
+    c.titleCount = t;
+  });
+  // Notes: text outside any card. Runs split on 2+ spaces, then stacked runs merge into blocks.
+  const runs = [];
+  for (let r = 0; r < H; r++) {
+    let x = 0;
+    while (x < W) {
+      const ch = G[r][x];
+      if (ch === ' ' || own[r][x] >= 0 || LINE.includes(ch) || ARROW.includes(ch)) { x++; continue; }
+      let e = x, gap = 0;
+      while (e < W && own[r][e] < 0 && !LINE.includes(G[r][e]) && !(ARROW.includes(G[r][e]) )) { if (G[r][e] === ' ') { if (++gap >= 2) break; } else gap = 0; e++; }
+      const text = G[r].slice(x, e).join('').trimEnd();
+      if (text) runs.push({ r, c1: x, c2: x + text.length - 1, text });
+      x = e;
+    }
+  }
+  const notes = [];
+  runs.forEach(run => {
+    const b = notes.find(n => n.r2 === run.r - 1 && run.c1 >= n.c1 - 1 && run.c1 <= n.c1 + 8);
+    if (b) { b.r2 = run.r; b.lines.push(run.text); b.c2 = Math.max(b.c2, run.c2); }
+    else notes.push({ r1: run.r, r2: run.r, c1: run.c1, c2: run.c2, lines: [run.text] });
+  });
+  // Connector cells: glyphs outside card interiors.
+  let conn = [];
+  for (let r = 0; r < H; r++) for (let x = 0; x < W; x++) {
+    const ch = G[r][x];
+    if ((LINE.includes(ch) || ARROW.includes(ch)) && own[r][x] < 0) conn.push({ r, c: x, ch });
+  }
+  // Stray fragments: a small connected piece of line that carries no arrow and touches no card is
+  // a hand-drawing wobble (a ragged edge, a stub). Drop it; count it against confidence.
+  const at = new Map(conn.map(k => [`${k.r},${k.c}`, k]));
+  const nearCard = (r, x) => { for (let dr = -1; dr <= 1; dr++) for (let dx = -1; dx <= 1; dx++) { const rr = r + dr, xx = x + dx; if (rr >= 0 && rr < H && xx >= 0 && xx < W && ((own[rr][xx] >= 0 && !cards[own[rr][xx]].group) || cards.some(c => !c.group && rr >= c.r1 && rr <= c.r2 && xx >= c.c1 && xx <= c.c2))) return true; } return false; };
+  const seen = new Set(); let dangling = 0; const drop = new Set();
+  conn.forEach(k0 => {
+    const key0 = `${k0.r},${k0.c}`; if (seen.has(key0)) return;
+    const comp = [], stack = [k0]; seen.add(key0);
+    while (stack.length) { const k = stack.pop(); comp.push(k); for (const [dr, dx] of [[1,0],[-1,0],[0,1],[0,-1]]) { const q = at.get(`${k.r + dr},${k.c + dx}`); if (q && !seen.has(`${q.r},${q.c}`)) { seen.add(`${q.r},${q.c}`); stack.push(q); } } }
+    const arrow = comp.some(k => ARROW.includes(k.ch)), touches = comp.some(k => nearCard(k.r, k.c));
+    if (!arrow && comp.length <= 3 && !touches) { dangling++; comp.forEach(k => drop.add(k)); }
+    else if (!arrow && !touches) dangling++;
+  });
+  conn = conn.filter(k => !drop.has(k));
+  // Quality: how much of the author's text landed in a card (vs loose notes).
+  const inCards = cards.reduce((n, c) => n + c.lines.reduce((m2, l) => m2 + l.text.replace(/\s/g, '').length, 0), 0);
+  const loose = notes.reduce((n, b) => n + b.lines.join('').replace(/\s/g, '').length, 0);
+  const quality = inCards / Math.max(1, inCards + loose);
+  return { H, W, G, K, own, cards, notes, conn, quality, dangling, confident: quality >= 0.6 && dangling <= 2 };
+}
+
+/* ---------- Row heights: the redraw's one real layout decision ----------
+   title rows are tall, detail rows collapse in compact mode (unless a card on them is opened),
+   pure connector rows are short, blank rows almost vanish. */
+function rowPlan(S, opts) {
+  const kind = new Array(S.H).fill('blank');
+  const hasConnHoriz = new Array(S.H).fill(false), hasVert = new Array(S.H).fill(false), hasNote = new Array(S.H).fill(false);
+  S.conn.forEach(({ r, ch }) => { if ('─┌┐└┘├┤┬┴┼►◄→←'.includes(ch)) hasConnHoriz[r] = true; else hasVert[r] = true; if ('▼▲↓↑'.includes(ch)) hasConnHoriz[r] = true; });
+  S.notes.forEach(n => { for (let r = n.r1; r <= n.r2; r++) hasNote[r] = true; });
+  const titleRows = new Set(), detailRows = new Map();
+  S.cards.forEach(c => c.lines.forEach((l, k) => { if (k < c.titleCount) titleRows.add(l.r); else { if (!detailRows.has(l.r)) detailRows.set(l.r, []); detailRows.get(l.r).push(c.i); } }));
+  const collapsed = new Array(S.H).fill(false);
+  for (let r = 0; r < S.H; r++) {
+    if (titleRows.has(r)) kind[r] = 'title';
+    else if (detailRows.has(r)) {
+      kind[r] = 'detail';
+      const allClosed = detailRows.get(r).every(i => !opts.open.has(i));
+      if (opts.detail === 'compact' && allClosed && !hasConnHoriz[r]) collapsed[r] = true;
+    } else if (!hasConnHoriz[r] && !hasNote[r] && S.cards.some(c => !c.group && r > c.r1 && r < c.r2 && S.G[r].some((ch, x) => ch !== ' ' && S.own[r][x] === c.i))) {
+      // A row inside a card holding only the card's own trunk glyphs: padding, collapsible.
+      kind[r] = 'inner';
+      const holders = S.cards.filter(c => !c.group && r > c.r1 && r < c.r2).map(c => c.i);
+      if (opts.detail === 'compact' && holders.every(i => !opts.open.has(i))) collapsed[r] = true;
+    } else if (hasNote[r]) kind[r] = 'note';
+    else if (hasConnHoriz[r]) kind[r] = 'conn';
+    else if (hasVert[r]) kind[r] = 'vert';
+  }
+  const HGT = { title: 24, detail: 17, note: 17, conn: 18, vert: 12, blank: 10, inner: 6 };
+  const top = [], h = [];
+  let y = 0;
+  for (let r = 0; r < S.H; r++) { top[r] = y; h[r] = collapsed[r] ? 0 : HGT[kind[r]]; y += h[r]; }
+  return { kind, collapsed, top, h, total: y };
+}
+
+/* Column widths: A keeps the author's grid exactly; B squashes whitespace-only columns and
+   gives horizontal arrows room to breathe. */
+function colPlan(S, cw, tidy) {
+  const w = new Array(S.W).fill(cw);
+  if (tidy) {
+    const empty = new Array(S.W).fill(true), arrowCol = new Array(S.W).fill(false);
+    for (let r = 0; r < S.H; r++) for (let x = 0; x < S.W; x++) { if (S.G[r][x] !== ' ') empty[x] = false; if ('►◄→←'.includes(S.G[r][x]) && S.own[r][x] < 0) arrowCol[x] = true; }
+    let run = 0;
+    for (let x = 0; x < S.W; x++) { if (empty[x]) { run++; if (run > 2) w[x] = 0; } else run = 0; if (arrowCol[x]) w[x] = cw * 2.4; }
+  }
+  const left = []; let acc = 0;
+  for (let x = 0; x < S.W; x++) { left[x] = acc; acc += w[x]; }
+  left[S.W] = acc;
+  return { w, left, total: acc };
+}
+
+/* ---------- A / B renderer ---------- */
+function measure() {
+  const probe = document.createElement('span');
+  probe.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;font-family:var(--font-mono);font-size:var(--dg-fs)';
+  probe.textContent = 'M'.repeat(100); document.body.appendChild(probe);
+  const cw = probe.getBoundingClientRect().width / 100; probe.remove(); return cw;
+}
+
+function renderCanvas(S, tidy) {
+  const cw = measure();
+  const R = rowPlan(S, state), C = colPlan(S, cw, tidy);
+  const X = x => C.left[Math.max(0, Math.min(S.W, x))], XC = x => X(x) + C.w[x] / 2;
+  const YT = r => R.top[r], YC = r => R.top[r] + R.h[r] / 2, YB = r => R.top[r] + R.h[r];
+  const host = document.createElement('div'); host.className = 'dg';
+  host.style.width = `${C.total + 24}px`; host.style.height = `${R.total + 8}px`;
+
+  // Card rectangles in pixels, from the model's own padded, non-overlapping frames (grid units,
+  // fractional) mapped through this variant's column widths and row heights.
+  const Xf = v => { const i = Math.floor(v); if (i < 0) return X(0) + v * cw; return X(i) + (v - i) * (C.w[i] ?? cw); };
+  const Yf = v => { const i = Math.floor(v); if (i < 0) return R.top[0] + v * 12; if (i >= S.H) return R.total; return R.top[i] + (v - i) * R.h[i]; };
+  const rects = S.cards.map(c => {
+    const f = c.frame || { left: c.c1 + 0.5, top: c.r1 + 0.5, width: c.c2 - c.c1, height: c.r2 - c.r1 };
+    return { l: Xf(f.left), r: Xf(f.left + f.width), t: Yf(f.top), b: Yf(f.top + f.height) };
+  });
+
+  // Connectors: each glyph cell draws half-segments from its centre toward its connected sides.
+  const hit = (px, py) => rects.findIndex(k => px >= k.l - 1 && px <= k.r + 1 && py >= k.t - 1 && py <= k.b + 1);
+  let path = '', heads = '';
+  const isConn = new Set(S.conn.map(k => `${k.r},${k.c}`));
+  S.conn.forEach(({ r, c, ch }) => {
+    if (R.h[r] === 0 && !'─┌┐└┘├┤┬┴┼'.includes(ch)) {
+      // A collapsed row still passes its vertical through (the path above and below joins).
+      path += `M${XC(c)},${YT(r)}V${YT(r)}`;
+    }
+    const cx = XC(c), cy = YC(r);
+    for (const dir of CONN[ch] || '') {
+      let ex = cx, ey = cy;
+      if (dir === 'u') ey = YT(r); if (dir === 'd') ey = YB(r); if (dir === 'l') ex = X(c); if (dir === 'r') ex = X(c + 1);
+      // Reach into an adjacent card edge when the next cell in that direction is not a connector.
+      const nr = r + (dir === 'd') - (dir === 'u'), nc = c + (dir === 'r') - (dir === 'l');
+      // A vertical the author interrupted with a note ("│ mpsc/watch …" then "│" again) runs on
+      // behind the note, which knocks the line out with its own background.
+      if (dir === 'd' && !isConn.has(`${nr},${nc}`)) {
+        let k = 1;
+        while (k <= 4 && r + k < S.H && !isConn.has(`${r + k},${c}`) && S.own[r + k][c] < 0) k++;
+        const below = S.conn.find(q => q.r === r + k && q.c === c);
+        if (k > 1 && k <= 4 && below && (CONN[below.ch] || '').includes('u')) { path += `M${cx},${cy}L${cx},${YC(r + k)}`; continue; }
+      }
+      if (!isConn.has(`${nr},${nc}`)) {
+        const k = rects.find(q => (dir === 'd' && q.t >= ey - 2 && q.t <= ey + 30 && cx > q.l && cx < q.r) || (dir === 'u' && q.b <= ey + 2 && q.b >= ey - 30 && cx > q.l && cx < q.r) || (dir === 'r' && q.l >= ex - 2 && q.l <= ex + 3 * cw && cy > q.t && cy < q.b) || (dir === 'l' && q.r <= ex + 2 && q.r >= ex - 3 * cw && cy > q.t && cy < q.b));
+        if (k) { if (dir === 'd') ey = k.t; if (dir === 'u') ey = k.b; if (dir === 'r') ex = k.l; if (dir === 'l') ex = k.r; }
+      }
+      path += `M${cx},${cy}L${ex},${ey}`;
+    }
+    const tip = TIP[ch];
+    if (tip) {
+      // The arrowhead lands on the card it points at, if one is close in that direction.
+      let tx = cx, ty = cy;
+      if (tip === 'd') ty = YB(r); if (tip === 'u') ty = YT(r); if (tip === 'r') tx = X(c + 1); if (tip === 'l') tx = X(c);
+      const k = rects.find(q => (tip === 'd' && q.t >= ty - 2 && q.t <= ty + 30 && cx > q.l && cx < q.r) || (tip === 'u' && q.b <= ty + 2 && q.b >= ty - 30 && cx > q.l && cx < q.r) || (tip === 'r' && q.l >= tx - 4 && q.l <= tx + 3 * cw && cy > q.t && cy < q.b) || (tip === 'l' && q.r <= tx + 4 && q.r >= tx - 3 * cw && cy > q.t && cy < q.b));
+      if (k) { if (tip === 'd') ty = k.t; if (tip === 'u') ty = k.b; if (tip === 'r') tx = k.l; if (tip === 'l') tx = k.r; }
+      path += `M${cx},${cy}L${tx},${ty}`;
+      const s = 4.5;
+      const pts = tip === 'd' ? [[tx - s, ty - 7], [tx + s, ty - 7], [tx, ty]] : tip === 'u' ? [[tx - s, ty + 7], [tx + s, ty + 7], [tx, ty]] : tip === 'r' ? [[tx - 7, ty - s], [tx - 7, ty + s], [tx, ty]] : [[tx + 7, ty - s], [tx + 7, ty + s], [tx, ty]];
+      heads += `<path class="head" d="M${pts.map(p => p.join(',')).join('L')}Z"/>`;
+    }
+  });
+  host.innerHTML = `<svg width="${C.total + 24}" height="${R.total + 8}"><path class="wire" d="${path}"/>${heads}</svg>`;
+
+  // Cards: title and detail lines placed on their own rows; hidden detail shows as "+N".
+  S.cards.forEach((c, i) => {
+    const k = rects[i];
+    const el = document.createElement('div');
+    el.className = 'card' + (c.group ? ' group' : '');
+    el.style.cssText = `left:${k.l}px;top:${k.t}px;width:${k.r - k.l}px;height:${k.b - k.t}px`;
+    el.dataset.i = i;
+    host.appendChild(el);
+    // Compact hides every detail line of a closed card, even on a row something else keeps open.
+    const showDetail = state.detail === 'expanded' || state.open.has(i);
+    let hidden = 0, lastTitle = null;
+    c.lines.forEach((l, n) => {
+      const isTitle = n < c.titleCount;
+      if (R.h[l.r] === 0 || (!isTitle && !showDetail)) { hidden++; return; }
+      const t = document.createElement('div');
+      t.className = 'ln ' + (isTitle ? 'title' : 'detail');
+      t.textContent = l.text;
+      t.style.cssText = `left:${X(l.col)}px;top:${YT(l.r)}px;height:${R.h[l.r]}px`;
+      host.appendChild(t);
+      if (isTitle) lastTitle = t;
+    });
+    const details = c.lines.length - c.titleCount;
+    if (details > 0) {
+      el.classList.add('expandable');
+      el.title = showDetail ? 'Click to fold details' : `Click to show ${details} detail line${details > 1 ? 's' : ''}`;
+      if (hidden > 0 && lastTitle) {
+        const mo = document.createElement('span'); mo.className = 'more'; mo.textContent = `+${hidden}`;
+        mo.style.cssText = 'position:static;margin-left:0.6ch';
+        lastTitle.appendChild(mo);
+        // No room after the title: the badge sits on the card's bottom edge instead.
+        requestAnimationFrame(() => { const lr = mo.getBoundingClientRect(), cr = el.getBoundingClientRect(); if (lr.right > cr.right - 2) { mo.style.cssText = 'position:absolute;right:6px;bottom:0;transform:translateY(50%)'; el.appendChild(mo); } });
+      }
+    }
+  });
+
+  // Notes: A draws them in place (collapsed rows turn a note into a marker); B lists them in the margin.
+  const marginNotes = [];
+  S.notes.forEach((n, j) => {
+    const vis = [];
+    for (let r = n.r1; r <= n.r2; r++) if (R.h[r] > 0) vis.push(r);
+    const whole = vis.length === n.r2 - n.r1 + 1;
+    if (tidy) {
+      const dot = document.createElement('span'); dot.className = 'note-dot'; dot.textContent = marginNotes.length + 1; dot.dataset.n = marginNotes.length;
+      const y = vis.length ? YC(vis[0]) : YT(n.r1);
+      dot.style.cssText = `left:${X(n.c1)}px;top:${y - 9}px`;
+      host.appendChild(dot);
+      marginNotes.push({ y: y - 9, text: n.lines.join(' ').replace(/\s+/g, ' ') });
+    } else if (whole) {
+      n.lines.forEach((line, q) => {
+        const t = document.createElement('div'); t.className = 'note'; t.textContent = line;
+        const r = n.r1 + q; t.style.cssText = `left:${X(n.c1)}px;top:${YT(r)}px;height:${R.h[r]}px;display:flex;align-items:center`;
+        host.appendChild(t);
+      });
+    } else {
+      const dot = document.createElement('span'); dot.className = 'note-dot'; dot.textContent = 'i';
+      dot.dataset.tip = n.lines.join('\n');
+      dot.style.cssText = `left:${X(n.c1)}px;top:${(vis.length ? YC(vis[0]) : YT(n.r1)) - 9}px`;
+      host.appendChild(dot);
+    }
+  });
+
+  if (state.debug) {
+    R.kind.forEach((kd, r) => { const t = document.createElement('div'); t.className = 'note'; t.textContent = `${r} ${kd}${R.collapsed[r] ? '·x' : ''}`; t.style.cssText = `left:-5.5rem;top:${YT(r)}px;font-size:0.55rem;opacity:.6`; if (R.h[r]) host.appendChild(t); });
+  }
+  return { host, marginNotes };
+}
+
+/* ---------- C: flow rail ---------- */
+function renderRail(S) {
+  const cards = [...S.cards].filter(c => !c.group).sort((a, b) => a.r1 - b.r1 || a.c1 - b.c1);
+  const tiers = [];
+  cards.forEach(c => {
+    const t = tiers.find(t => t.some(o => c.r1 <= o.r2 && c.r2 >= o.r1));
+    if (t) t.push(c); else tiers.push([c]);
+  });
+  tiers.forEach(t => t.sort((a, b) => a.c1 - b.c1));
+  const span = t => [Math.min(...t.map(c => c.r1)), Math.max(...t.map(c => c.r2))];
+  const beside = new Map();
+  const between = new Map();
+  S.notes.forEach(n => {
+    const owner = cards.find(c => n.r1 <= c.r2 && n.r2 >= c.r1);
+    if (owner) { if (!beside.has(owner.i)) beside.set(owner.i, []); beside.get(owner.i).push(n.lines.join('\n')); return; }
+    const k = tiers.findIndex(t => span(t)[0] > n.r1);
+    const key = k < 0 ? tiers.length : k;
+    if (!between.has(key)) between.set(key, []); between.get(key).push(n.lines.join(' ').replace(/\s+/g, ' '));
+  });
+  const groups = S.cards.filter(c => c.group);
+  const rail = document.createElement('div'); rail.className = 'rail';
+  const card = c => {
+    const open = state.detail === 'expanded' || state.open.has(c.i);
+    const det = c.lines.slice(c.titleCount).map(l => l.text);
+    return `<div class="rc" data-i="${c.i}" ${det.length ? 'style="cursor:pointer"' : ''}>
+      <div class="rt">${esc(c.lines.slice(0, c.titleCount).map(l => l.text).join(' '))}</div>
+      ${det.length ? (open ? `<div class="rd">${esc(det.join('\n'))}</div>` : `<div class="rd">+${det.length} detail line${det.length > 1 ? 's' : ''}</div>`) : ''}
+      ${beside.has(c.i) && open ? `<div class="rn">${esc(beside.get(c.i).join('\n'))}</div>` : ''}
+    </div>`;
+  };
+  let html = '';
+  tiers.forEach((t, k) => {
+    if (k > 0 || between.has(0)) html += `<div class="join"><span class="stem"></span>${between.has(k) ? `<span class="lbl">${esc(between.get(k).join('\n'))}</span>` : ''}</div>`;
+    const g = groups.find(g => t.every(c => c.r1 > g.r1 && c.r2 < g.r2));
+    html += `<div class="tier">${g && !t._g ? '' : ''}${t.map((c, j) => (j > 0 && S.G[c.titleRow].slice(t[j - 1].c2 + 1, c.c1).some(ch => '→►'.includes(ch)) ? '<span class="hop">→</span>' : '') + card(c)).join('')}</div>`;
+  });
+  if (between.has(tiers.length)) html += `<div class="join"><span class="lbl">${esc(between.get(tiers.length).join('\n'))}</span></div>`;
+  rail.innerHTML = html;
+  return rail;
+}
+
+/* ---------- Fallback + source ---------- */
+function md(s) { return esc(s).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*]+)\*/g, '<em>$1</em>').replace(/`([^`]+)`/g, '<code>$1</code>'); }
+function esc(s) { return String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]); }
+function asciiHTML(text) {
+  return esc(text).replace(/([─│┌┐└┘├┤┬┴┼]+)/g, '<span class="g">$1</span>').replace(/([▼▲►◄→←↑↓])/g, '<span class="a">$1</span>');
+}
+
+/* ---------- Page ---------- */
+function render() {
+  document.documentElement.classList.toggle('dark', state.theme === 'dark');
+  document.querySelectorAll('.variant-tab').forEach(b => b.classList.toggle('active', b.dataset.v === state.v));
+  document.querySelectorAll('#sketch-tools button').forEach(b => b.classList.toggle('on', b.dataset.theme === state.theme || b.dataset.width === state.width || (b.dataset.debug && state.debug)));
+  const d = DIAGRAMS[state.doc];
+  const S = d.model ? shapes(d) : null;
+  const confident = S && S.confident;
+  const autoFallback = !!S && !confident && !state.redrawAnyway;
+  const useFallback = state.fallback || !S || autoFallback;
+  const root = document.getElementById('root');
+  root.style.width = state.width === 'full' ? '' : `${state.width}px`;
+  root.innerHTML = `
+    <div class="eyebrow">Sketch 011 · ${state.v === 'a' ? 'A · Faithful redraw' : state.v === 'b' ? 'B · Tidy grid + margin notes' : 'C · Flow rail'}</div>
+    <div class="docs">${DIAGRAMS.map((x, i) => `<button class="chip doc" data-doc="${i}" aria-pressed="${i === state.doc}">${esc(x.label)}</button>`).join('')}</div>
+    <figure class="figure">
+      <div class="figure-bar"><span class="t">System architecture</span>
+        <button class="chip" data-detail="compact" aria-pressed="${state.detail === 'compact'}">Compact</button>
+        <button class="chip" data-detail="expanded" aria-pressed="${state.detail === 'expanded'}">Expanded</button>
+        <button class="chip" data-toggle="source" aria-pressed="${state.source}">Source</button>
+        <button class="chip" data-toggle="fallback" aria-pressed="${state.fallback}">Shown as drawn</button>
+      </div>
+      <div class="figure-body" id="body"></div>
+      ${d.caption ? `<figcaption class="figure-caption">${md(d.caption)}</figcaption>` : ''}
+    </figure>
+    <div class="meta">${S ? `<span>${S.cards.length} cards</span><span>${S.conn.length} connector cells</span><span>${S.notes.length} notes</span><span>text in cards ${(S.quality * 100).toFixed(0)}%</span><span>${S.dangling} stray line pieces</span><span>${confident ? 'confident → redraw' : 'low confidence → shown as drawn'}</span>` : '<span>model rejected → fallback</span>'}<span>${esc(d.source)}</span></div>
+    ${state.source ? `<div class="source"><div class="eyebrow">Author's source</div><pre class="ascii">${asciiHTML(d.text)}</pre></div>` : ''}`;
+  const body = document.getElementById('body');
+  if (useFallback) {
+    body.innerHTML = `<div class="fallback-note"><span class="chip">Shown as drawn</span><span>This figure couldn't be redrawn reliably, so it keeps the author's layout.</span>${autoFallback && !state.fallback ? '<button class="chip" data-toggle="redrawAnyway">Redraw anyway</button>' : ''}</div><pre class="ascii">${asciiHTML(d.text)}</pre>`;
+  } else if (state.v === 'c') {
+    body.appendChild(renderRail(S));
+  } else {
+    const { host, marginNotes } = renderCanvas(S, state.v === 'b');
+    if (state.v === 'b') {
+      const wrap = document.createElement('div'); wrap.className = 'b-wrap';
+      wrap.appendChild(host);
+      const side = document.createElement('div'); side.className = 'b-notes';
+      let y = 0;
+      marginNotes.forEach((n, k) => { const top = Math.max(n.y, y); const el = document.createElement('div'); el.className = 'b-note'; el.dataset.n = k; el.style.top = `${top}px`; el.innerHTML = `<b>${k + 1}</b><span>${esc(n.text)}</span>`; side.appendChild(el); y = top + 20 * Math.ceil(n.text.length / 38) + 6; });
+      side.style.height = `${y}px`;
+      wrap.appendChild(side);
+      body.appendChild(wrap);
+    } else body.appendChild(host);
+  }
+}
+
+let tipEl = null;
+document.addEventListener('mouseover', e => {
+  const dot = e.target.closest('[data-tip]');
+  if (dot) { tipEl = tipEl || document.body.appendChild(Object.assign(document.createElement('div'), { className: 'tip' })); tipEl.textContent = dot.dataset.tip; const r = dot.getBoundingClientRect(); tipEl.style.left = `${r.right + 8}px`; tipEl.style.top = `${r.top - 4}px`; tipEl.hidden = false; }
+  else if (tipEl) tipEl.hidden = true;
+  const n = e.target.closest('[data-n]');
+  document.querySelectorAll('[data-n]').forEach(x => x.classList.toggle('hot', !!n && x.dataset.n === n.dataset.n));
+});
+document.addEventListener('click', e => {
+  const t = e.target.closest('button, .card, .rc');
+  if (!t) return;
+  if (t.dataset.v) { state.v = t.dataset.v; state.open.clear(); }
+  else if (t.dataset.doc !== undefined) { state.doc = +t.dataset.doc; state.open.clear(); state.redrawAnyway = false; }
+  else if (t.dataset.detail) { state.detail = t.dataset.detail; state.open.clear(); }
+  else if (t.dataset.toggle) state[t.dataset.toggle] = !state[t.dataset.toggle];
+  else if (t.dataset.theme) state.theme = t.dataset.theme;
+  else if (t.dataset.width) state.width = t.dataset.width;
+  else if (t.dataset.debug) state.debug = !state.debug;
+  else if (t.dataset.i !== undefined && state.detail === 'compact') { const i = +t.dataset.i; state.open.has(i) ? state.open.delete(i) : state.open.add(i); }
+  else return;
+  render();
+});
+document.fonts.ready.then(render);
+render();
+</script>
+</body>
+</html>
