@@ -1,0 +1,35 @@
+Browser (member)
+   |
+   |  1. every request carries `portal_session` cookie
+   v
+axum handler (browse / mint_dl_ticket / create_job / create_folder /
+              cancel|retry|resume / audit / new admin routes)
+   |
+   |  2. VerifiedIdentity::from_request_parts (auth/mod.rs)
+   |     - resolves session -> user_id, role (users.role)     [1 query, extended]
+   |     - role == User -> resolves full permission set        [1 query, skipped for Admin]
+   |     - unrecognized role/permission string -> AuthError    (fail closed, ROLE-07)
+   v
+Identity { user_id, handle, role: Role, permissions: HashSet<Permission>, .. }
+   |
+   |  3. path/body tier string parsed: TierId::from_str(raw)   (HARDEN-02, single canonical parser)
+   |     unrecognized -> 404/400, never cast
+   v
+authz::require(&identity, Capability::Read|Write, tier)         (sync, pure, D-05/D-04)
+authz::require_admin(&identity)                                 (sync, pure, admin-only routes)
+   |
+   |  4. Ok(()) -> proceed          Err(AuthzError::Denied) -> 403 (D-06), identical body regardless of WHICH check failed (D-08)
+   v
+tiers::scope::resolve(...)   <- UNCHANGED, identity-free, called only AFTER authz::require (D-05)
+   |
+   v
+filesystem / subprocess / job insert / audit row
+
+Admin permission-grant path (new):
+Browser -> POST/PATCH /api/admin/users/{id}/... -> authz::require_admin
+   -> SQLite transaction: last-admin COUNT(*) guard (D-17) + role/permission write (D-18)
+   -> revocation/permission bus.send(PermissionsChanged { user_id })   (D-13)
+        |
+        v
+   /ws connection for that user_id -> pushes event -> client refetches /api/whoami
+        -> re-derives every affordance from the fresh role+permissions payload

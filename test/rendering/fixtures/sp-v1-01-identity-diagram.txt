@@ -1,0 +1,38 @@
+┌────────────────────────────────────────────────────────────────────┐
+│ BROWSER (studio member)                                             │
+└──────────┬───────────────────────────────┬──────────────────────────┘
+           │ (1) page load                 │ (3) WS connect (ticket    │ (4) GET /dl/<ticket>/file
+           │     -> CF Access redirects    │     as 1st message)       │     (one-time path segment)
+           │     to login if unauthed      │                          │
+           ▼                               ▼                          ▼
+┌─────────────────────────────┐   ┌────────────────────────────────────────────┐
+│ Cloudflare Access (edge)     │   │ api.cinedise.com (cloudflared tunnel)      │
+│ • gates BOTH hostnames as    │   │ • NOT reachable except via tunnel          │
+│   one multi-domain app       │   │ • axum backend                             │
+│ • attaches Cf-Access-Jwt-    │   └───────────────┬─────────────────────────────┘
+│   Assertion header on every  │                   │
+│   request that reaches origin│                   ▼
+└──────────┬───────────────────┘   ┌──────────────────────────────────────────────┐
+           │ (2) POST /api/ws-ticket           AUTH MIDDLEWARE (axum)             │
+           │     JWT verified independently    ┌──────────────────────────────┐   │
+           └───────────────────────────────────►│ 1. Fetch/refresh JWKS bg task│   │
+                                                │ 2. Verify sig + aud+iss+exp   │   │
+                                                │ 3. On success: mint ticket    │   │
+                                                │    (CSPRNG, 60s TTL, 1x use)  │   │
+                                                └──────────────┬────────────────┘   │
+                                                                │                    │
+                                    ┌───────────────────────────┼────────────────┐   │
+                                    ▼                           ▼                │   │
+                         ┌──────────────────┐        ┌──────────────────┐        │   │
+                         │ In-memory ticket  │        │ WS upgrade /     │        │   │
+                         │ map (HashMap,     │◄──────►│ download handler │        │   │
+                         │ delete-on-use)    │  check │ consumes ticket  │        │   │
+                         └──────────────────┘         └──────────────────┘        │   │
+                                                                                    │   │
+                         ┌──────────────────────────────────────────────────────┐  │   │
+                         │ SQLite (WAL, synchronous=FULL) — sqlx pool           │  │   │
+                         │ audit_log(id, actor, action, target, ts)             │◄─┘   │
+                         └──────────────────────────────────────────────────────┘      │
+                                                                                         │
+                         AUTH_MODE=dev: bypasses all of the above with fixed identity,   │
+                         hard-panics at startup if bound to tunnel interface ────────────┘

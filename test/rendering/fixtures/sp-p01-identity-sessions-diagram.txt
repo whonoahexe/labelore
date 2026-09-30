@@ -1,0 +1,44 @@
+Browser
+  │  1. GET /browse/stage  (portal_session cookie attached automatically)
+  ▼
+Vercel edge — Next.js proxy.ts (route gate, D-09/D-10)
+  │  reads portal_session cookie
+  │  2. validates cookie against backend ─────────────┐
+  │     (short timeout; fail-closed → /login, D-11)    │
+  ▼                                                      ▼
+(cookie valid)                              Rust backend — /api/whoami-shaped
+  │                                          validation endpoint
+  │ renders page                             │  SELECT ... FROM sessions
+  ▼                                          │  WHERE id=? AND revoked_at IS NULL
+Next.js page (client component)              │  AND expires_at > now()
+  │  3. fetch(`${API_ORIGIN}/api/browse/...`, │
+  │     { credentials: "include" })            │
+  ▼                                            ▼
+Rust backend — build_router (lib.rs)
+  │  4. VerifiedIdentity::from_request_parts
+  │     - reads Cookie header (axum-extra CookieJar)
+  │     - session lookup (same query shape as above)
+  │     - checks must_change_password (D-12) → 403-shaped if set
+  │     - checks revoked_at / expires_at (fail closed)
+  ▼
+Handler (browse_handler / mint_ws_ticket / mint_dl_ticket / ...)
+  │  UNCHANGED — takes VerifiedIdentity as a parameter, doesn't know
+  │  or care what produced it (D-05's whole point)
+  ▼
+tiers::scope::resolve  →  filesystem / rclone
+
+Login path (separate, rate-limited):
+Browser → POST /login {handle, password}
+  ▼
+tower_governor GovernorLayer (scoped to /login only, D-19)
+  │  keyed on (Cf-Connecting-Ip, submitted handle) — two independent limits
+  │  429 + Retry-After if either limit is exceeded (D-16/D-17)
+  ▼
+Login handler
+  │  lookup user by normalized (lowercased) handle
+  │  found  → argon2::verify_password(real hash)
+  │  NOT found → argon2::verify_password(fixed dummy hash) anyway (D-18)
+  │  either way: identical timing, identical response on failure
+  ▼
+(success) → INSERT INTO sessions (...) → Set-Cookie: portal_session=...
+            (HttpOnly; Secure; SameSite=Lax; Domain=.cinedise.com)

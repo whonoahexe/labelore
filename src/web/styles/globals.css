@@ -6519,6 +6519,11 @@ p.view-research-note {
   white-space: pre;
 }
 
+/* A spacer row (aria-hidden) keeps stacked step cards apart; its trunk glyphs are not for copying. */
+.lifted-diagram-row[data-spacer='true'] {
+  user-select: none;
+}
+
 .lifted-diagram-text [data-glyph='line'],
 .figure-frame-plain [data-glyph='line'] {
   color: var(--muted-foreground);
