@@ -53,6 +53,8 @@ import type { ComposedContextBrief } from '../views/context-brief.ts';
 import { ContextBriefView, ContextIntroMeta } from '../views/context-brief-components.tsx';
 import type { ComposedResearchBriefing } from '../views/research-briefing.ts';
 import { ResearchBriefingView, ResearchIntroMeta } from '../views/research-briefing-components.tsx';
+import type { ComposedPatternMap } from '../views/pattern-map.ts';
+import { PatternIntroMeta, PatternMapView } from '../views/pattern-map-components.tsx';
 export {
   handleDocumentReferenceActivation,
   restoreDocumentReferenceFocus,
@@ -590,6 +592,13 @@ export function ArtifactPage(): React.JSX.Element {
     if (!manifest || !viewInput) return null;
     return manifest.briefing?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // quick-260930-wfs (sketch-013 B): the PATTERNS file map, when the resolved manifest opts into
+  // one — `null` for every other kind, and for a document with no File Classification rows (the
+  // promoted-block view then renders).
+  const patternMap = useMemo<ComposedPatternMap | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.patternMap?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // "In the source only" entries switch to Source mode, then scroll to the named heading once the
   // source document has mounted. The pending id lives in a ref and is cleared only when the frame
   // callback fires, so a re-run of the effect (StrictMode) still lands on it.
@@ -620,7 +629,7 @@ export function ArtifactPage(): React.JSX.Element {
     [shown],
   );
   const viewAvailable =
-    layout !== null || brief !== null || briefing !== null || (composed !== null && composed.blocks.length > 0);
+    layout !== null || brief !== null || briefing !== null || patternMap !== null || (composed !== null && composed.blocks.length > 0);
 
   if (query.isPending) {
     return (
@@ -684,6 +693,7 @@ export function ArtifactPage(): React.JSX.Element {
   // The RESEARCH briefing's cover replaces the header's copy in View mode only; Source mode keeps
   // the plain header (the same rule the CONTEXT brief follows).
   const cover = briefing && mode === 'view' ? briefing : null;
+  const mapCover = patternMap && mode === 'view' ? patternMap : null;
   return (
     <main className="artifact-page page-stack">
       <ArtifactHeader
@@ -693,18 +703,22 @@ export function ArtifactPage(): React.JSX.Element {
             ? brief.intro.eyebrow
             : cover
               ? cover.intro.eyebrow
-              : coverTitle?.phase
+              : mapCover
+                ? mapCover.intro.eyebrow
+                : coverTitle?.phase
                 ? `${coverTitle.phase} · ${kindLabel}`
                 : kindLabel
         }
-        title={brief?.intro.title ?? cover?.intro.title ?? coverTitle?.title ?? artifact.title}
+        title={brief?.intro.title ?? cover?.intro.title ?? mapCover?.intro.title ?? coverTitle?.title ?? artifact.title}
         path={artifact.path}
-        lead={brief || cover ? null : (manifest?.lead ?? null)}
+        lead={brief || cover || mapCover ? null : (manifest?.lead ?? null)}
         meta={
           brief ? (
             <ContextIntroMeta intro={brief.intro} />
           ) : cover ? (
             <ResearchIntroMeta intro={cover.intro} />
+          ) : mapCover ? (
+            <PatternIntroMeta intro={mapCover.intro} />
           ) : undefined
         }
         cover={
@@ -818,6 +832,8 @@ export function ArtifactPage(): React.JSX.Element {
         </div>
       ) : briefing && mode === 'view' ? (
         <ResearchBriefingView briefing={briefing} onShowSource={showSource} title={artifact.title} />
+      ) : patternMap && mode === 'view' ? (
+        <PatternMapView key={artifact.path} map={patternMap} onShowSource={showSource} title={artifact.title} />
       ) : viewAvailable && mode === 'view' && composed && shown ? (
         <ViewReader title={artifact.title} composed={composed} shown={shown} />
       ) : (

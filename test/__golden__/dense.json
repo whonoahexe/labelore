@@ -3372,7 +3372,74 @@
                 "bodyHash": "8439fc842a27c5bb391cf69294f421e96e868192c4f6587ac2ce88caea3a6309",
                 "mtimeMs": 0,
                 "warnings": [],
-                "structured": {}
+                "structured": {
+                  "map": {
+                    "meta": {
+                      "phase": "1",
+                      "title": "Identity Slice - Patterns",
+                      "mapped": null,
+                      "filesAnalyzed": null,
+                      "analogsFound": null,
+                      "notes": [
+                        {
+                          "kind": "paragraph",
+                          "text": "Analog file mapping for the identity slice phase. This is a fixture — there is no real codebase to map patterns against, so this file records the structural patterns the fixture itself establishes."
+                        }
+                      ]
+                    },
+                    "classification": [],
+                    "assignments": [],
+                    "shared": [],
+                    "noAnalog": [],
+                    "noAnalogNote": [],
+                    "other": [
+                      {
+                        "heading": "Established Patterns",
+                        "blocks": [
+                          {
+                            "kind": "list",
+                            "ordered": false,
+                            "items": [
+                              "**Registry-dispatched handlers**: every artifact handler registers into an ordered list with a generic, unconditional handler always last (`GenericMarkdownHandler`).",
+                              "**Frontmatter/body independence**: a file's frontmatter can fail to parse while its body remains fully readable — the two are separate pipeline stages (`stage: frontmatter` vs `stage: structured-extraction`)."
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "heading": "Analogs",
+                        "blocks": [
+                          {
+                            "kind": "table",
+                            "rows": [
+                              {
+                                "This fixture's shape": "`phases/01-identity-slice/` full artifact spread",
+                                "Mirrors": "`~/studio-portal/.planning/phases/01-portal-owned-identity-sessions/`'s ~19-artifact-type spread"
+                              },
+                              {
+                                "This fixture's shape": "`milestones/v1.0-phases/01-bootstrap/`",
+                                "Mirrors": "`~/studio-portal/.planning/milestones/v1.0-phases/01-identity-persistence-foundation/`"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ],
+                    "scope": null,
+                    "scanned": null,
+                    "excerpts": 0,
+                    "sections": [
+                      {
+                        "heading": "Established Patterns",
+                        "claimed": false
+                      },
+                      {
+                        "heading": "Analogs",
+                        "claimed": false
+                      }
+                    ]
+                  }
+                }
               },
               ".planning/phases/01-identity-slice/01-RESEARCH.md": {
                 "id": ".planning/phases/01-identity-slice/01-RESEARCH.md",
@@ -6504,7 +6571,74 @@
             "bodyHash": "8439fc842a27c5bb391cf69294f421e96e868192c4f6587ac2ce88caea3a6309",
             "mtimeMs": 0,
             "warnings": [],
-            "structured": {}
+            "structured": {
+              "map": {
+                "meta": {
+                  "phase": "1",
+                  "title": "Identity Slice - Patterns",
+                  "mapped": null,
+                  "filesAnalyzed": null,
+                  "analogsFound": null,
+                  "notes": [
+                    {
+                      "kind": "paragraph",
+                      "text": "Analog file mapping for the identity slice phase. This is a fixture — there is no real codebase to map patterns against, so this file records the structural patterns the fixture itself establishes."
+                    }
+                  ]
+                },
+                "classification": [],
+                "assignments": [],
+                "shared": [],
+                "noAnalog": [],
+                "noAnalogNote": [],
+                "other": [
+                  {
+                    "heading": "Established Patterns",
+                    "blocks": [
+                      {
+                        "kind": "list",
+                        "ordered": false,
+                        "items": [
+                          "**Registry-dispatched handlers**: every artifact handler registers into an ordered list with a generic, unconditional handler always last (`GenericMarkdownHandler`).",
+                          "**Frontmatter/body independence**: a file's frontmatter can fail to parse while its body remains fully readable — the two are separate pipeline stages (`stage: frontmatter` vs `stage: structured-extraction`)."
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "heading": "Analogs",
+                    "blocks": [
+                      {
+                        "kind": "table",
+                        "rows": [
+                          {
+                            "This fixture's shape": "`phases/01-identity-slice/` full artifact spread",
+                            "Mirrors": "`~/studio-portal/.planning/phases/01-portal-owned-identity-sessions/`'s ~19-artifact-type spread"
+                          },
+                          {
+                            "This fixture's shape": "`milestones/v1.0-phases/01-bootstrap/`",
+                            "Mirrors": "`~/studio-portal/.planning/milestones/v1.0-phases/01-identity-persistence-foundation/`"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "scope": null,
+                "scanned": null,
+                "excerpts": 0,
+                "sections": [
+                  {
+                    "heading": "Established Patterns",
+                    "claimed": false
+                  },
+                  {
+                    "heading": "Analogs",
+                    "claimed": false
+                  }
+                ]
+              }
+            }
           },
           ".planning/phases/01-identity-slice/01-RESEARCH.md": {
             "id": ".planning/phases/01-identity-slice/01-RESEARCH.md",
@@ -8511,7 +8645,74 @@
                   "bodyHash": "8439fc842a27c5bb391cf69294f421e96e868192c4f6587ac2ce88caea3a6309",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "map": {
+                      "meta": {
+                        "phase": "1",
+                        "title": "Identity Slice - Patterns",
+                        "mapped": null,
+                        "filesAnalyzed": null,
+                        "analogsFound": null,
+                        "notes": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Analog file mapping for the identity slice phase. This is a fixture — there is no real codebase to map patterns against, so this file records the structural patterns the fixture itself establishes."
+                          }
+                        ]
+                      },
+                      "classification": [],
+                      "assignments": [],
+                      "shared": [],
+                      "noAnalog": [],
+                      "noAnalogNote": [],
+                      "other": [
+                        {
+                          "heading": "Established Patterns",
+                          "blocks": [
+                            {
+                              "kind": "list",
+                              "ordered": false,
+                              "items": [
+                                "**Registry-dispatched handlers**: every artifact handler registers into an ordered list with a generic, unconditional handler always last (`GenericMarkdownHandler`).",
+                                "**Frontmatter/body independence**: a file's frontmatter can fail to parse while its body remains fully readable — the two are separate pipeline stages (`stage: frontmatter` vs `stage: structured-extraction`)."
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "heading": "Analogs",
+                          "blocks": [
+                            {
+                              "kind": "table",
+                              "rows": [
+                                {
+                                  "This fixture's shape": "`phases/01-identity-slice/` full artifact spread",
+                                  "Mirrors": "`~/studio-portal/.planning/phases/01-portal-owned-identity-sessions/`'s ~19-artifact-type spread"
+                                },
+                                {
+                                  "This fixture's shape": "`milestones/v1.0-phases/01-bootstrap/`",
+                                  "Mirrors": "`~/studio-portal/.planning/milestones/v1.0-phases/01-identity-persistence-foundation/`"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "scope": null,
+                      "scanned": null,
+                      "excerpts": 0,
+                      "sections": [
+                        {
+                          "heading": "Established Patterns",
+                          "claimed": false
+                        },
+                        {
+                          "heading": "Analogs",
+                          "claimed": false
+                        }
+                      ]
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-RESEARCH.md": {
                   "id": ".planning/phases/01-identity-slice/01-RESEARCH.md",
@@ -10115,7 +10316,74 @@
                   "bodyHash": "8439fc842a27c5bb391cf69294f421e96e868192c4f6587ac2ce88caea3a6309",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "map": {
+                      "meta": {
+                        "phase": "1",
+                        "title": "Identity Slice - Patterns",
+                        "mapped": null,
+                        "filesAnalyzed": null,
+                        "analogsFound": null,
+                        "notes": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Analog file mapping for the identity slice phase. This is a fixture — there is no real codebase to map patterns against, so this file records the structural patterns the fixture itself establishes."
+                          }
+                        ]
+                      },
+                      "classification": [],
+                      "assignments": [],
+                      "shared": [],
+                      "noAnalog": [],
+                      "noAnalogNote": [],
+                      "other": [
+                        {
+                          "heading": "Established Patterns",
+                          "blocks": [
+                            {
+                              "kind": "list",
+                              "ordered": false,
+                              "items": [
+                                "**Registry-dispatched handlers**: every artifact handler registers into an ordered list with a generic, unconditional handler always last (`GenericMarkdownHandler`).",
+                                "**Frontmatter/body independence**: a file's frontmatter can fail to parse while its body remains fully readable — the two are separate pipeline stages (`stage: frontmatter` vs `stage: structured-extraction`)."
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "heading": "Analogs",
+                          "blocks": [
+                            {
+                              "kind": "table",
+                              "rows": [
+                                {
+                                  "This fixture's shape": "`phases/01-identity-slice/` full artifact spread",
+                                  "Mirrors": "`~/studio-portal/.planning/phases/01-portal-owned-identity-sessions/`'s ~19-artifact-type spread"
+                                },
+                                {
+                                  "This fixture's shape": "`milestones/v1.0-phases/01-bootstrap/`",
+                                  "Mirrors": "`~/studio-portal/.planning/milestones/v1.0-phases/01-identity-persistence-foundation/`"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "scope": null,
+                      "scanned": null,
+                      "excerpts": 0,
+                      "sections": [
+                        {
+                          "heading": "Established Patterns",
+                          "claimed": false
+                        },
+                        {
+                          "heading": "Analogs",
+                          "claimed": false
+                        }
+                      ]
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-RESEARCH.md": {
                   "id": ".planning/phases/01-identity-slice/01-RESEARCH.md",
@@ -11719,7 +11987,74 @@
                   "bodyHash": "8439fc842a27c5bb391cf69294f421e96e868192c4f6587ac2ce88caea3a6309",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "map": {
+                      "meta": {
+                        "phase": "1",
+                        "title": "Identity Slice - Patterns",
+                        "mapped": null,
+                        "filesAnalyzed": null,
+                        "analogsFound": null,
+                        "notes": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Analog file mapping for the identity slice phase. This is a fixture — there is no real codebase to map patterns against, so this file records the structural patterns the fixture itself establishes."
+                          }
+                        ]
+                      },
+                      "classification": [],
+                      "assignments": [],
+                      "shared": [],
+                      "noAnalog": [],
+                      "noAnalogNote": [],
+                      "other": [
+                        {
+                          "heading": "Established Patterns",
+                          "blocks": [
+                            {
+                              "kind": "list",
+                              "ordered": false,
+                              "items": [
+                                "**Registry-dispatched handlers**: every artifact handler registers into an ordered list with a generic, unconditional handler always last (`GenericMarkdownHandler`).",
+                                "**Frontmatter/body independence**: a file's frontmatter can fail to parse while its body remains fully readable — the two are separate pipeline stages (`stage: frontmatter` vs `stage: structured-extraction`)."
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "heading": "Analogs",
+                          "blocks": [
+                            {
+                              "kind": "table",
+                              "rows": [
+                                {
+                                  "This fixture's shape": "`phases/01-identity-slice/` full artifact spread",
+                                  "Mirrors": "`~/studio-portal/.planning/phases/01-portal-owned-identity-sessions/`'s ~19-artifact-type spread"
+                                },
+                                {
+                                  "This fixture's shape": "`milestones/v1.0-phases/01-bootstrap/`",
+                                  "Mirrors": "`~/studio-portal/.planning/milestones/v1.0-phases/01-identity-persistence-foundation/`"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "scope": null,
+                      "scanned": null,
+                      "excerpts": 0,
+                      "sections": [
+                        {
+                          "heading": "Established Patterns",
+                          "claimed": false
+                        },
+                        {
+                          "heading": "Analogs",
+                          "claimed": false
+                        }
+                      ]
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-RESEARCH.md": {
                   "id": ".planning/phases/01-identity-slice/01-RESEARCH.md",
