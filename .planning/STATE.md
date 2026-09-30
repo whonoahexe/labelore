@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-09-29T10:54:35.583Z"
+last_updated: "2026-09-30T10:14:15.740Z"
 last_activity: 2026-09-29
 last_activity_desc: Completed quick task 260929-3x3 (RESEARCH page view)
-state_head: 3ac56cff8c78fb1d768edb121e1af5e2649608b4
+state_head: d72d6b0eb8c77a1622129ab2a5813104265cccc8
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-09-21)
 Phase: Milestone v1.1 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-09-29 - Completed quick task 260929-mih: Bring the RESEARCH package legitimacy lanes back in line with sketch 010-B
+Last activity: 2026-09-30 - Completed quick task 260930-jzt: Improve RESEARCH figure renderers (diagram + directory tree)
 
 ## Performance Metrics
 
@@ -143,6 +143,7 @@ None.
 | 28 | RESEARCH summary: decongested (spacing, leading, measure) | 2026-09-29 | b34d25d | — |
 | 260929-m30 | Restructure the RESEARCH page summary into a calm lead plus numbered findings | 2026-09-29 | b085ab7 | [260929-m30-restructure-the-research-page-summary-so](./quick/260929-m30-restructure-the-research-page-summary-so/) |
 | 260929-mih | Bring the RESEARCH package legitimacy lanes back in line with sketch 010-B | 2026-09-29 | 3ac56cf | [260929-mih-bring-the-research-package-legitimacy-la](./quick/260929-mih-bring-the-research-package-legitimacy-la/) |
+| 260930-jzt | RESEARCH figure renderers: uncapped frames with Grid/hover, drift-tolerant and open-left box detection, box-less flows as padded step cards, slanted notes; tree gains MODIFIED badge, folder-chain collapse, indent guides, calmer rows, and the same frame as the diagram | 2026-09-30 | d72d6b0 | [260930-jzt-improve-research-figure-renderers-uncapp](./quick/260930-jzt-improve-research-figure-renderers-uncapp/) |
 
 ## Deferred Items
 
