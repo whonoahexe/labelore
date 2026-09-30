@@ -1,0 +1,1 @@
+No external API integration: the task ports a local ASCII-diagram graph extractor and SVG/DOM lanes layout into src/rendering and src/web/components. The detector matched "Node API" (a no-Node-API purity note) and "wires … rest" (diagram wires, and "the rest dim") — no external service, SDK, endpoint or webhook is integrated.

@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-09-30T10:14:15.740Z"
-last_activity: 2026-09-29
+last_updated: "2026-09-30T11:34:54.667Z"
+last_activity: 2026-09-30
 last_activity_desc: Completed quick task 260929-3x3 (RESEARCH page view)
-state_head: d72d6b0eb8c77a1622129ab2a5813104265cccc8
+state_head: b1ddaeb081f2b9a8ea721a07af67be469e2c58ce
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-09-21)
 Phase: Milestone v1.1 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-09-30 - Completed quick task 260930-jzt: Improve RESEARCH figure renderers (diagram + directory tree)
+Last activity: 2026-09-30 - Completed quick task 260930-mp6: Build sketch 012 B (lanes by kind) as the RESEARCH architecture diagram
 
 ## Performance Metrics
 
@@ -144,6 +144,7 @@ None.
 | 260929-m30 | Restructure the RESEARCH page summary into a calm lead plus numbered findings | 2026-09-29 | b085ab7 | [260929-m30-restructure-the-research-page-summary-so](./quick/260929-m30-restructure-the-research-page-summary-so/) |
 | 260929-mih | Bring the RESEARCH package legitimacy lanes back in line with sketch 010-B | 2026-09-29 | 3ac56cf | [260929-mih-bring-the-research-package-legitimacy-la](./quick/260929-mih-bring-the-research-package-legitimacy-la/) |
 | 260930-jzt | RESEARCH figure renderers: uncapped frames with Grid/hover, drift-tolerant and open-left box detection, box-less flows as padded step cards, slanted notes; tree gains MODIFIED badge, folder-chain collapse, indent guides, calmer rows, and the same frame as the diagram | 2026-09-30 | d72d6b0 | [260930-jzt-improve-research-figure-renderers-uncapp](./quick/260930-jzt-improve-research-figure-renderers-uncapp/) |
+| 260930-mp6 | Build sketch 012 B (lanes by kind) as the RESEARCH architecture diagram | 2026-09-30 | b1ddaeb | [260930-mp6-build-sketch-012-b-lanes-by-kind-as-the-](./quick/260930-mp6-build-sketch-012-b-lanes-by-kind-as-the-/) |
 
 ## Deferred Items
 
