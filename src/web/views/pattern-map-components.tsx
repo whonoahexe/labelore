@@ -359,7 +359,10 @@ export function PatternMapView({
         ) : null}
         <section id="pattern-file-map" className="view-block view-patterns-map">
           <header className="section-heading">
-            <h2>File map</h2>
+            <h2>
+              <span className="view-patterns-section-number">01</span>
+              File map
+            </h2>
             <span className="view-patterns-aside">
               {map.intro.total} files · {map.areas.length}{' '}
               {map.areas.length === 1 ? 'area' : 'areas'}

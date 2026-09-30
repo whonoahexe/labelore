@@ -8269,9 +8269,21 @@ a.view-research-id:hover {
   text-transform: uppercase;
 }
 
+/* Sketch 013 B: a mono title with a muted section number, the aside on the title's baseline row,
+   and a rule below. Size, weight and tracking stay the shared section h2 (F-04). */
 .view-patterns-map > .section-heading {
+  align-items: flex-end;
   padding-bottom: var(--space-3);
   border-bottom: 1px solid var(--border);
+}
+
+.view-patterns-map > .section-heading h2 {
+  font-family: var(--font-mono);
+}
+
+.view-patterns-section-number {
+  margin-right: var(--space-3);
+  color: var(--muted-foreground);
 }
 
 .view-patterns-strip {
