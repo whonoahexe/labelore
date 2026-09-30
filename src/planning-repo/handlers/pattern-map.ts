@@ -113,7 +113,7 @@ function fenceCloses(trimmed: string, fence: { ch: string; len: number }): boole
 }
 
 /** `text` with every fenced block replaced by one blank line, plus the number of blocks removed. */
-function stripFences(text: string): { text: string; count: number } {
+function stripFences(text: string, marker: string | null = null): { text: string; count: number } {
   const out: string[] = [];
   let fence: { ch: string; len: number } | null = null;
   let count = 0;
@@ -127,7 +127,8 @@ function stripFences(text: string): { text: string; count: number } {
     if (opened) {
       fence = opened;
       count += 1;
-      out.push('');
+      if (marker === null) out.push('');
+      else out.push('', marker, '');
       continue;
     }
     out.push(line);
@@ -207,7 +208,8 @@ function boldFields(lines: string[]): Field[] {
     let j = i + 1;
     while (j < lines.length) {
       const next = lines[j].trim();
-      if (next === '' || fenceOpener(next) || isHeadingLine(next) || boldLabel(next) !== null) break;
+      if (next === '' || fenceOpener(next) || isHeadingLine(next) || boldLabel(next) !== null)
+        break;
       parts.push(next);
       j += 1;
     }
@@ -317,7 +319,10 @@ function columnIndex(headers: string[], ...needles: string[]): number {
   return -1;
 }
 
-function classificationRowsOf(table: RawTable, group: string | null): PatternMapClassificationRow[] {
+function classificationRowsOf(
+  table: RawTable,
+  group: string | null,
+): PatternMapClassificationRow[] {
   const file = Math.max(0, columnIndex(table.headers, 'new/modified file', 'file'));
   const role = columnIndex(table.headers, 'role');
   const flow = columnIndex(table.headers, 'data flow');
@@ -347,6 +352,9 @@ function classificationRowsOf(table: RawTable, group: string | null): PatternMap
 
 /** Marks a `####` sub-head paragraph so the caption filter does not mistake it for a caption. */
 const SUBHEAD_MARK = '\u0001';
+
+/** Stands where a fenced excerpt was, so a caption is dropped only when it captioned one. */
+const EXCERPT_MARK = '\u0002';
 
 const FIELD_KEYS = ['analog', 'apply to', 'use instead', 'source', 'sources'];
 
@@ -381,11 +389,13 @@ function guidanceOf(lines: string[], fields: Field[]): { blocks: Block[]; excerp
     if (dropped.has(index)) return;
     kept.push(line);
   });
-  const stripped = stripFences(kept.join('\n'));
+  const stripped = stripFences(kept.join('\n'), EXCERPT_MARK);
   const prepared: string[] = [];
-  for (const line of stripped.text.split('\n')) {
+  for (const rawLine of stripped.text.split('\n')) {
+    // A blockquoted warning keeps its prose: the `>` markers go, the lines stay.
+    const line = rawLine.trimStart().startsWith('>') ? unquote(rawLine) : rawLine;
     const trimmed = line.trim();
-    if (trimmed.startsWith('####') && isHeadingLine(trimmed)) {
+    if (trimmed.startsWith('###') && isHeadingLine(trimmed)) {
       let text = trimmed;
       while (text.startsWith('#')) text = text.slice(1);
       prepared.push('', `${SUBHEAD_MARK}**${text.trim()}**`, '');
@@ -394,18 +404,22 @@ function guidanceOf(lines: string[], fields: Field[]): { blocks: Block[]; excerp
     prepared.push(line);
   }
   const blocks: Block[] = [];
-  for (const block of parseBlocks(foldSubBullets(prepared.join('\n')))) {
+  const parsed = parseBlocks(foldSubBullets(prepared.join('\n')));
+  parsed.forEach((block, index) => {
     if (block.kind === 'paragraph') {
+      if (block.text === EXCERPT_MARK) return;
       if (block.text.startsWith(SUBHEAD_MARK)) {
         blocks.push({ kind: 'paragraph', text: clip(block.text.slice(SUBHEAD_MARK.length)) });
-        continue;
+        return;
       }
-      if (isRule(block.text) || isCaption(block.text)) continue;
+      const next = parsed[index + 1];
+      const beforeExcerpt = next?.kind === 'paragraph' && next.text === EXCERPT_MARK;
+      if (isRule(block.text) || (beforeExcerpt && isCaption(block.text))) return;
       blocks.push({ kind: 'paragraph', text: clip(block.text) });
     } else if (block.kind === 'list') {
       blocks.push({ kind: 'list', ordered: block.ordered, items: block.items.map(clip) });
     }
-  }
+  });
   return { blocks: mergeOrderedLists(blocks), excerpts: stripped.count };
 }
 
@@ -442,7 +456,14 @@ function mergeOrderedLists(blocks: Block[]): Block[] {
 /** Blocks of a prose region with code dropped and horizontal rules removed. */
 function proseBlocks(text: string, keepTables: boolean): Block[] {
   const out: Block[] = [];
-  for (const block of parseBlocks(foldSubBullets(text))) {
+  for (const block of parseBlocks(
+    foldSubBullets(
+      text
+        .split('\n')
+        .map((l) => (l.trimStart().startsWith('>') ? unquote(l) : l))
+        .join('\n'),
+    ),
+  )) {
     if (block.kind === 'code') continue;
     if (block.kind === 'table' && !keepTables) continue;
     if (block.kind === 'paragraph' && isRule(block.text)) continue;
@@ -477,7 +498,8 @@ function parseTitle(h1: string): { phase: string | null; title: string } {
   const lower = title.toLowerCase();
   if (lower.endsWith('pattern map')) {
     let head = title.slice(0, title.length - 'pattern map'.length).trimEnd();
-    if (head.endsWith('-') || head.endsWith('—') || head.endsWith('–')) head = head.slice(0, -1).trimEnd();
+    if (head.endsWith('-') || head.endsWith('—') || head.endsWith('–'))
+      head = head.slice(0, -1).trimEnd();
     if (head !== '') title = head;
   }
   return { phase, title };
@@ -507,7 +529,10 @@ function parsePreamble(preamble: string): PatternMap['meta'] {
       continue;
     }
     const label = boldLabel(unquote(line));
-    if (label && (label.key === 'mapped' || label.key === 'files analyzed' || label.key === 'analogs found')) {
+    if (
+      label &&
+      (label.key === 'mapped' || label.key === 'files analyzed' || label.key === 'analogs found')
+    ) {
       if (!(label.key in facts)) facts[label.key] = clip(label.rest);
       continue;
     }
