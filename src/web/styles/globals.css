@@ -8036,13 +8036,22 @@ a.view-research-id:hover {
    overrides sit directly after their base rules (css-source-order).
    ========================================================================== */
 
-/* Cover: the facts line, the match-quality meter and the quiet Searched line sit inside
-   ArtifactHeader's .artifact-meta-row and take its full width. */
+/* Cover: the facts line and the match-quality meter sit inside ArtifactHeader's .artifact-meta-row
+   at its full width; the quiet Searched line shares the last line with Copy file path and the
+   view toggle. The wrapper dissolves so all three are flex items of the row. */
 .view-patterns-cover {
-  display: grid;
+  display: contents;
+}
+
+.artifact-meta-row:has(> .view-patterns-cover) {
+  row-gap: var(--space-4);
+}
+
+.view-patterns-cover > .view-patterns-facts,
+.view-patterns-cover > .view-patterns-meter {
   flex-basis: 100%;
-  gap: var(--space-4);
   min-width: 0;
+  max-width: none;
 }
 
 .view-patterns-facts {
@@ -8085,6 +8094,10 @@ a.view-research-id:hover {
 .view-patterns-meter {
   display: grid;
   gap: var(--space-2);
+  max-width: 44rem;
+}
+
+.view-patterns-meter > * {
   max-width: 44rem;
 }
 
@@ -8147,8 +8160,11 @@ a.view-research-id:hover {
 }
 
 /* Searched: one quiet mono line that truncates, with a more / less toggle. */
+/* contain: inline-size keeps the unwrapped path list out of the header row's min-content width. */
 .view-patterns-scope {
   display: flex;
+  flex: 1 1 24ch;
+  contain: inline-size;
   gap: var(--space-2);
   align-items: baseline;
   min-width: 0;
