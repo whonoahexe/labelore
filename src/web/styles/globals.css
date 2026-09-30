@@ -6578,26 +6578,9 @@ p.view-research-note {
   font-synthesis-style: auto;
 }
 
-/* Clean-list tree (sketch 009 B): icons, indentation, collapsible folders, notes, badges. */
-.clean-tree-tools {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  align-items: center;
-  margin-bottom: var(--space-3);
-}
-
-.clean-tree-tools button.status-chip {
-  cursor: pointer;
-}
-
-.clean-tree-tools button.status-chip[aria-pressed='true'] {
-  border-color: var(--foreground);
-  color: var(--foreground);
-}
-
+/* Clean-list tree (sketch 009 B): icons, indentation, collapsible folders, notes, badges. The count sits
+   in the figure frame bar (quick-260930-jzt). */
 .clean-tree-count {
-  margin-left: auto;
   color: var(--muted-foreground);
   font-family: var(--font-mono);
   font-size: var(--fs-1);
@@ -6617,12 +6600,23 @@ p.view-research-note {
   grid-template-columns: minmax(0, 18rem) minmax(0, 1fr);
   gap: var(--space-4);
   align-items: baseline;
-  padding: var(--space-1-5) 0;
-  border-bottom: 1px solid var(--border);
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--border-faint);
+  /* Faint indent guides: one hairline per ancestor level, at a --space-6 step. The inline
+     background-size sets how many. */
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--border-faint) 0,
+    var(--border-faint) 1px,
+    transparent 1px,
+    transparent var(--space-6)
+  );
+  background-repeat: no-repeat;
+  background-position: var(--space-2) 0;
 }
 
 .clean-tree-row:hover {
-  background: var(--state-hover);
+  background-color: var(--state-hover);
 }
 
 .clean-tree-name {
@@ -6644,7 +6638,8 @@ p.view-research-note {
 }
 
 .clean-tree-row[data-badge='NEW'] .clean-tree-name,
-.clean-tree-row[data-badge='EXTEND'] .clean-tree-name {
+.clean-tree-row[data-badge='EXTEND'] .clean-tree-name,
+.clean-tree-row[data-badge='MODIFIED'] .clean-tree-name {
   color: var(--foreground);
   font-weight: var(--fw-medium);
 }
@@ -6657,7 +6652,7 @@ p.view-research-note {
   padding: 0;
   border: 0;
   background: none;
-  color: var(--primary);
+  color: var(--muted-foreground);
   cursor: pointer;
   font: inherit;
   text-align: left;
@@ -6676,6 +6671,12 @@ p.view-research-note {
   color: var(--muted-foreground);
   font-size: var(--fs-3);
   overflow-wrap: anywhere;
+}
+
+/* A chip must not make its row taller than a plain one: it takes a negative block margin (never a
+   line-height or padding change on the chip or its ancestors — the F-05 chip signature). */
+.clean-tree-note .status-chip {
+  margin-block: calc(-1 * var(--space-1-5));
 }
 
 @media (max-width: 62rem) {

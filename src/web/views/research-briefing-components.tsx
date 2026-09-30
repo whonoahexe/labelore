@@ -31,7 +31,7 @@ import type {
 import { FigureFrame } from '../components/figure-frame.tsx';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog.tsx';
 import { LiftedDiagram, PlainDiagram } from '../components/lifted-diagram.tsx';
-import { CleanTree } from '../components/clean-tree.tsx';
+import { CleanTreeFigure } from '../components/clean-tree.tsx';
 
 // ---------------------------------------------------------------------------
 // Inline rendering, with the [VERIFIED] / [CITED] / [ASSUMED] evidence markers (S-12)
@@ -352,9 +352,8 @@ function ArchitectureChapter({
       ) : null}
       {structure ? (
         <div className="view-research-sub">
-          <ChapterLabel>Directory structure</ChapterLabel>
           {structure.isTree ? (
-            <CleanTree text={structure.text} />
+            <CleanTreeFigure text={structure.text} title="Directory structure" />
           ) : (
             <FigureFrame title="Directory structure">{() => <PlainDiagram text={structure.text} />}</FigureFrame>
           )}
