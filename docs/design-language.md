@@ -119,20 +119,20 @@ is always to add the missing name to this document, never to edit the reference 
 | `artifact-path-copy` | ArtifactHeader's copy-path icon button, replacing the printed file-path caption on every artifact page | globals.css — discussion-log review fixes (quick-260923-jxp) |
 | `artifact-meta-row` | ArtifactHeader's optional `meta` prop row (plain variant only) — holds the caller's meta content, then the copy-path button, then `children` | globals.css — CONTEXT brief (quick-260923-lju) |
 | `figure-frame` | The titled figure wrapper (`<figure>`): bar, scrolling body, caption — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
-| `figure-frame-bar` | The frame's top bar — title left, Fit / Actual size and Expand chips right — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `figure-frame-bar` | The frame's top bar — title left, the `tools` slot, then (when scalable) Fit / Actual size and Grid chips, and Expand — sketch-009 B figure, view-agnostic (quick-260929-3x3, quick-260930-jzt) | globals.css — quick-260929-3x3 block |
 | `figure-frame-title` | The frame bar's uppercase mono title — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
-| `figure-frame-body` | The frame's scrolling body (scrolls at actual size; `document-overflow-boundary` alongside) — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `figure-frame-body` | The frame's body: no height cap, so the whole figure shows; scrolls horizontally when wider than the frame (both axes in the Expand dialog); `data-grid` draws a grid-paper backdrop (`document-overflow-boundary` alongside) — sketch-009 B figure, view-agnostic (quick-260929-3x3, quick-260930-jzt) | globals.css — quick-260929-3x3 block |
 | `figure-frame-caption` | The dashed-rule caption under the body — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
 | `figure-frame-dialog` | The Expand dialog popup — the same figure at actual size (Base UI Dialog, mirrors `sidebar-drawer`) — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
 | `figure-frame-plain` | A figure the lift rejects (or a non-diagram block): plain text with its glyphs dimmed — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
 | `lifted-diagram` | The lifted diagram host: `position: relative`, holds the cards behind the text — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
-| `lifted-diagram-fit` | The wrapper the Fit to width scale is measured against — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
-| `lifted-diagram-card` | One decorative card behind the text (`data-kind` box / node), positioned from the measured character width and row height — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `lifted-diagram-fit` | The wrapper the Fit to width scale is measured against; `data-fit` clips the unscaled layout box so Fit never shows a horizontal scrollbar — sketch-009 B figure, view-agnostic (quick-260929-3x3, quick-260930-jzt) | globals.css — quick-260929-3x3 block |
+| `lifted-diagram-card` | One decorative card behind the text (`data-kind` box / node), placed from the model's `frame`; `data-hot` marks the innermost card under the pointer; borders and fills read `--figure-card-border` and `--figure-node-*` — sketch-009 B figure, view-agnostic (quick-260929-3x3, quick-260930-jzt) | globals.css — quick-260929-3x3 block |
 | `lifted-diagram-text` | The `<pre>` of real ASCII text, above the cards — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
-| `lifted-diagram-row` | One fixed-height line of the diagram — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `lifted-diagram-row` | One fixed-height line of the diagram; `data-spacer` rows (`aria-hidden`) keep stacked step cards apart — sketch-009 B figure, view-agnostic (quick-260929-3x3, quick-260930-jzt) | globals.css — quick-260929-3x3 block |
 | `lifted-diagram-node` | A node/box title — semibold — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
 | `lifted-diagram-sub` | A second line inside a node — muted — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
-| `lifted-diagram-note` | Free text beside boxes — muted italic annotation — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
+| `lifted-diagram-note` | Free text beside boxes — muted annotation, slanted by a synthetic oblique scoped to notes (`font-synthesis-style`), so the monospace grid holds — sketch-009 B figure, view-agnostic (quick-260929-3x3, quick-260930-jzt) | globals.css — quick-260929-3x3 block |
 | `clean-tree` | The clean-list directory tree (`<ul>`) — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
 | `clean-tree-tools` | The tree's tools row — Changed only chip, file/folder counts — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
 | `clean-tree-count` | The `F files · D folders` count — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
@@ -288,10 +288,15 @@ element is actually written, regardless of class name:
   `ascii-tree.ts`) and their components in `src/web/components/` with no research-specific import,
   so the `lifted-figures-everywhere` todo can reuse them unchanged for every document. Detection is
   conservative (a real `┌…┐└…┘` rectangle or a connector flow; three or more `├──`/`└──` lines) and
-  Source mode is always the way back to the raw text.
+  Source mode is always the way back to the raw text. (quick-260930-jzt) Hand-drawn drift is
+  followed: ragged right edges are walked row by row, an open-left outer box is inferred when its
+  shape rules out a connector, nested cards paint over their container, an arrow drawn into a side
+  stays an arrow, and `├─`/`└─`/`│` tree guides inside a box stay content. A box-less flow becomes
+  padded step cards that absorb the detail lines under or beside their trunk, with aria-hidden spacer
+  rows between stacked steps; edge labels and asides stay outside every card.
 - **The 10% accent reservation extends to the figures.** (quick-260929-3x3) The lifted diagram's
-  arrows and node-card tint, and the clean tree's folder names and icons, take `--primary` (the
-  NEW chip uses the shared `active` tone). Box cards, connector glyphs, notes and file names stay on
+  arrows, the hovered card, and the clean tree's folder icons, take `--primary` (the NEW chip uses
+  the shared `active` tone); node cards sit on the quieter `--figure-node-fill` / `--figure-node-border`. Box cards, connector glyphs, notes and file names stay on
   `--border`, `--background` and the muted foreground.
 - **RESEARCH uses the sketch-008 A briefing, not B3 and not CONTEXT's brief.** (quick-260929-3x3)
   The `research` manifest declares a `briefing` hook (`composeResearchBriefing`) and keeps its

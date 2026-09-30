@@ -4,7 +4,8 @@
 // from src/rendering/ascii-lift.ts; a figure the model rejects (over the size caps) renders as
 // plain text with only its glyphs dimmed. View-agnostic: no research-specific import.
 // Card geometry is written imperatively through refs (no setState in effect bodies), on mount, on
-// resize, and again once web fonts settle.
+// resize, and again once web fonts settle. Hover lights only the innermost card under the pointer
+// (data-hot, set imperatively); Fit to width scales the host and clips its unscaled layout box.
 import { useLayoutEffect, useMemo, useRef } from 'react';
 import { liftDiagram } from '../../rendering/ascii-lift.ts';
 import type { LiftCard, LiftedFigure, LiftSegment } from '../../rendering/ascii-lift.ts';
@@ -69,6 +70,43 @@ function LiftedFigureView({ figure, fit }: { figure: LiftedFigure; fit: boolean 
     const pre = preRef.current;
     if (!wrap || !host || !pre) return;
     let disposed = false;
+    // Measured by place(): the fit scale and the character cell, for the hover hit test.
+    let metrics = { scale: 1, cw: 0, lh: 0 };
+    let hot = -1;
+    let frame = 0;
+    let pointer: { x: number; y: number } | null = null;
+
+    const setHot = (next: number): void => {
+      if (next === hot) return;
+      if (hot >= 0) cardRefs.current[hot]?.removeAttribute('data-hot');
+      hot = next;
+      if (hot >= 0) cardRefs.current[hot]?.setAttribute('data-hot', 'true');
+    };
+    // Hover: only the innermost card under the pointer lights up — the last card in paint order whose
+    // frame contains it. Imperative (no React state) and throttled to one hit test per frame.
+    const hitTest = (): void => {
+      frame = 0;
+      if (!pointer || metrics.cw <= 0 || metrics.lh <= 0) return setHot(-1);
+      const rect = host.getBoundingClientRect();
+      const x = (pointer.x - rect.left) / metrics.scale / metrics.cw;
+      const y = (pointer.y - rect.top) / metrics.scale / metrics.lh;
+      let found = -1;
+      figure.cards.forEach((card, index) => {
+        const f = card.frame;
+        if (x >= f.left && x <= f.left + f.width && y >= f.top && y <= f.top + f.height) found = index;
+      });
+      setHot(found);
+    };
+    const onMove = (event: PointerEvent): void => {
+      pointer = { x: event.clientX, y: event.clientY };
+      if (frame === 0) frame = requestAnimationFrame(hitTest);
+    };
+    const onLeave = (): void => {
+      pointer = null;
+      if (frame !== 0) cancelAnimationFrame(frame);
+      frame = 0;
+      setHot(-1);
+    };
 
     const place = (): void => {
       if (disposed) return;
@@ -82,6 +120,7 @@ function LiftedFigureView({ figure, fit }: { figure: LiftedFigure; fit: boolean 
       probe.remove();
       const firstRow = pre.querySelector('.lifted-diagram-row');
       const lh = firstRow ? firstRow.getBoundingClientRect().height / scale : 0;
+      metrics = { scale, cw, lh };
       if (cw > 0 && lh > 0) {
         figure.cards.forEach((card, index) => {
           const element = cardRefs.current[index];
@@ -102,17 +141,23 @@ function LiftedFigureView({ figure, fit }: { figure: LiftedFigure; fit: boolean 
     };
 
     place();
+    wrap.addEventListener('pointermove', onMove);
+    wrap.addEventListener('pointerleave', onLeave);
     const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => place());
     observer?.observe(wrap);
     if (typeof document !== 'undefined' && document.fonts) void document.fonts.ready.then(place);
     return () => {
       disposed = true;
       observer?.disconnect();
+      wrap.removeEventListener('pointermove', onMove);
+      wrap.removeEventListener('pointerleave', onLeave);
+      if (frame !== 0) cancelAnimationFrame(frame);
+      setHot(-1);
     };
   }, [figure, fit]);
 
   return (
-    <div className="lifted-diagram-fit" ref={wrapRef}>
+    <div className="lifted-diagram-fit" data-fit={fit ? 'true' : undefined} ref={wrapRef}>
       <div className="lifted-diagram" ref={hostRef}>
         {figure.cards.map((card, index) => (
           <div
