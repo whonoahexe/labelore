@@ -139,6 +139,36 @@ describe('extractPatternMap — degrade', () => {
     expect(list.kind === 'list' && list.items[2]).toContain('a sub point');
   });
 
+  it('a blockquoted warning in an assignment keeps its headline, prose and labelled lists', () => {
+    const body = [
+      '## Pattern Assignments',
+      '',
+      '### `a/b.rs` (service)',
+      '',
+      '**Analog:** `c/d.rs`',
+      '',
+      '> ### ⚠ WARNING — do not copy',
+      '>',
+      '> It uses `spawn`.',
+      '>',
+      '> **Copy from this analog:**',
+      '> - the shape',
+      '> - the idiom',
+      '',
+      '**Imports pattern** (source: `x.rs:1-5`):',
+      '```rust',
+      'use x;',
+      '```',
+      '',
+    ].join('\n');
+    const guidance = extractPatternMap(body).assignments[0].guidance;
+    expect(guidance.map((b) => b.kind)).toEqual(['paragraph', 'paragraph', 'paragraph', 'list']);
+    expect(guidance[0].kind === 'paragraph' && guidance[0].text).toBe('**⚠ WARNING — do not copy**');
+    expect(guidance[2].kind === 'paragraph' && guidance[2].text).toBe('**Copy from this analog:**');
+    // The caption of the removed excerpt is gone; the excerpt is counted.
+    expect(extractPatternMap(body).assignments[0].excerpts).toBe(1);
+  });
+
   it('a title that is not "Phase N: X - Pattern Map" keeps the H1 text and no phase', () => {
     const map = extractPatternMap('# Something else\n\n## File Classification\n');
     expect(map.meta.phase).toBeNull();
