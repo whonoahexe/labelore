@@ -48,20 +48,12 @@ function Segment({ segment }: { segment: LiftSegment }): React.JSX.Element {
   }
 }
 
+/** Cards are placed from the model's own frame (grid units, padding and clamping already applied). */
 function placeCard(element: HTMLElement, card: LiftCard, cw: number, lh: number): void {
-  if (card.kind === 'box') {
-    element.style.left = `${(card.c1 + 0.5) * cw}px`;
-    element.style.top = `${(card.r1 + 0.5) * lh}px`;
-    element.style.width = `${(card.c2 - card.c1) * cw}px`;
-    element.style.height = `${(card.r2 - card.r1) * lh}px`;
-    return;
-  }
-  // Nodes on consecutive rows (a step list) must not overlap: keep the vertical bleed under half
-  // the inter-row gap so each card keeps its own border.
-  element.style.left = `${(card.c1 - 0.7) * cw}px`;
-  element.style.top = `${(card.r1 - 0.08) * lh}px`;
-  element.style.width = `${(card.c2 - card.c1 + 2.4) * cw}px`;
-  element.style.height = `${(card.r2 - card.r1 + 1.16) * lh}px`;
+  element.style.left = `${card.frame.left * cw}px`;
+  element.style.top = `${card.frame.top * lh}px`;
+  element.style.width = `${card.frame.width * cw}px`;
+  element.style.height = `${card.frame.height * lh}px`;
 }
 
 function LiftedFigureView({ figure, fit }: { figure: LiftedFigure; fit: boolean }): React.JSX.Element {
@@ -69,6 +61,7 @@ function LiftedFigureView({ figure, fit }: { figure: LiftedFigure; fit: boolean 
   const hostRef = useRef<HTMLDivElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const spacers = useMemo(() => new Set(figure.spacers), [figure]);
 
   useLayoutEffect(() => {
     const wrap = wrapRef.current;
@@ -135,7 +128,12 @@ function LiftedFigureView({ figure, fit }: { figure: LiftedFigure; fit: boolean 
         ))}
         <pre className="lifted-diagram-text" ref={preRef}>
           {figure.rows.map((segments, row) => (
-            <span key={row} className="lifted-diagram-row">
+            <span
+              key={row}
+              className="lifted-diagram-row"
+              data-spacer={spacers.has(row) ? 'true' : undefined}
+              aria-hidden={spacers.has(row) ? 'true' : undefined}
+            >
               {segments.map((segment, index) => (
                 <Segment key={index} segment={segment} />
               ))}
