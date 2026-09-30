@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 013 — PATTERNS page</title>
+<link rel="stylesheet" href="../themes/default.css?v=013">
+<style>
+/* Sketch 013: the PATTERNS (pattern map) page. One cover for every variant (mapped date, files
+   analyzed, analogs found, a quiet search-scope line); the question is how File Classification,
+   Pattern Assignments, Shared Patterns and No Analog Found read once merged into one file map.
+   Data: ./data.js, generated from four real PATTERNS.md files by gen-data.mjs. Code excerpts are
+   counted and left to Source mode. Tones only (docs/design-language.md ## Tones):
+   exact → complete, role-match → quiet, partial → in-flight, no analog → missing. */
+*, *::before, *::after { box-sizing: border-box; }
+:root { --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border)); --missing-border: color-mix(in oklch, var(--missing-fill) 50%, var(--border)); --missing-tint: color-mix(in oklch, var(--muted) 55%, transparent); }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-5); line-height: var(--lh-normal); padding-top: 3rem; }
+h1, h2, h3, p, ul, ol { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+code { font-family: var(--font-mono); font-size: 0.88em; padding: 0 0.2em; background: color-mix(in oklch, var(--muted) 70%, transparent); overflow-wrap: anywhere; }
+strong { font-weight: var(--fw-semibold); }
+#variant-nav { position: fixed; inset: 0 0 auto 0; z-index: 50; display: flex; gap: var(--space-1); align-items: center; padding: var(--space-2) var(--space-4); background: var(--background); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; overflow-x: auto; }
+#variant-nav .lbl { color: var(--muted-foreground); margin-right: var(--space-2); white-space: nowrap; }
+.variant-tab { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; background: none; white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; color: var(--muted-foreground); transition: all .15s ease; }
+.variant-tab:hover { color: var(--foreground); background: var(--state-hover); }
+.variant-tab.active { color: var(--primary); border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); background: var(--primary-tint); }
+.shell-header { display: flex; align-items: center; gap: var(--space-4); height: 3.75rem; padding: 0 var(--space-4); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.brand-mark { width: 2.25rem; height: 2.25rem; background: var(--primary); display: grid; place-items: center; color: white; font-weight: 700; }
+#frame { margin: 0 auto; container-type: inline-size; transition: max-width .2s ease; background: var(--background); min-height: 100vh; }
+#frame.narrow-frame { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+.page { width: min(80rem, 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); display: grid; gap: var(--space-10); }
+.fade { animation: fade .18s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .fade { animation: none; } }
+
+/* shared vocabulary */
+.ref-note, .mono-note { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.muted { color: var(--muted-foreground); }
+.label { display: flex; gap: var(--space-2); align-items: baseline; margin-bottom: var(--space-3); color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.label .count { font-weight: var(--fw-medium); }
+.section-heading { display: flex; gap: var(--space-4); align-items: flex-end; justify-content: space-between; padding-bottom: var(--space-3); margin-bottom: var(--space-5); border-bottom: 1px solid var(--border); }
+.section-heading h2 { font-family: var(--font-mono); font-size: var(--fs-fluid-3); font-weight: var(--fw-medium); letter-spacing: var(--ls-tight); }
+.section-heading .num { color: var(--muted-foreground); margin-right: var(--space-3); }
+.section-heading .aside { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.chip { display: inline-flex; align-items: center; gap: var(--space-1); padding: 0.1rem var(--space-1-5); border: 1px solid var(--border); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; color: var(--muted-foreground); background: none; line-height: 1.5; }
+.chip[data-tone='complete'] { color: var(--primary); border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); background: var(--primary-tint); }
+.chip[data-tone='in-flight'] { color: var(--in-flight-fill); border-color: var(--in-flight-border); }
+.chip[data-tone='missing'] { color: var(--missing-fill); border-color: var(--missing-border); }
+button.chip { cursor: pointer; transition: all .15s ease; }
+button.chip:hover { background: var(--state-hover); }
+button.chip[aria-pressed='true'] { color: var(--foreground); border-color: var(--foreground); }
+.link-btn { padding: 0; border: 0; background: none; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; transition: color .15s ease; }
+.link-btn:hover { color: var(--primary); }
+.prose { display: grid; gap: var(--space-2); font-size: var(--fs-4); }
+.prose ul { padding-left: 1.1rem; display: grid; gap: var(--space-0-5); }
+.prose .h { font-weight: var(--fw-semibold); }
+.fname { font-family: var(--font-mono); font-size: var(--fs-4); font-weight: var(--fw-medium); overflow-wrap: anywhere; }
+.fdir { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); overflow-wrap: anywhere; }
+.analog { font-size: var(--fs-3); color: var(--muted-foreground); }
+.analog .arrow { color: var(--primary); font-family: var(--font-mono); margin-right: var(--space-1); }
+.analog code { background: none; padding: 0; color: var(--foreground); }
+.notice { padding: var(--space-3) var(--space-4); border: 1px solid var(--border); background: var(--card-veil); font-size: var(--fs-4); display: grid; gap: var(--space-2); }
+.notice.flag { border-left: 3px solid var(--in-flight-fill); }
+
+/* cover (shared) */
+.cover { display: grid; gap: var(--space-4); padding-bottom: var(--space-fluid-9); border-bottom: 1px solid var(--border); }
+.eyebrow { color: var(--primary); font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+.cover h1 { font-size: var(--fs-display-3); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); max-width: 22ch; }
+.facts { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); align-items: baseline; font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.facts b { color: var(--foreground); font-weight: var(--fw-medium); font-size: var(--fs-4); margin-left: var(--space-1-5); text-transform: none; letter-spacing: 0; }
+.facts .qual { text-transform: none; letter-spacing: 0; }
+.meter { display: grid; gap: var(--space-2); max-width: 44rem; }
+.meter-bar { display: flex; height: 0.6rem; border: 1px solid var(--border); }
+.meter-bar span { display: block; height: 100%; transition: opacity .15s ease; }
+.q-exact { background: var(--primary); }
+.q-role { background: color-mix(in oklch, var(--foreground) 32%, transparent); }
+.q-partial { background: var(--in-flight-fill); }
+.q-none { background: var(--missing-fill); }
+.meter-key { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.meter-key i { display: inline-block; width: 0.55rem; height: 0.55rem; margin-right: var(--space-1-5); vertical-align: 0; }
+.meter-key b { color: var(--foreground); font-weight: var(--fw-medium); margin-right: var(--space-1); }
+.scope-line { display: flex; gap: var(--space-2); align-items: baseline; font-size: var(--fs-2); color: var(--muted-foreground); max-width: 80ch; min-width: 0; }
+.scope-line .k { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; opacity: .8; flex: none; }
+.scope-line .v { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-mono); opacity: .85; }
+.scope-line.open .v { white-space: normal; }
+.scope-line code { background: none; padding: 0; }
+.scope-line button { flex: none; }
+
+/* back matter (shared) */
+.back { display: grid; gap: var(--space-3); }
+.back details { border: 1px solid var(--border); background: var(--card-veil); }
+.back summary { cursor: pointer; padding: var(--space-3) var(--space-4); font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); list-style: none; display: flex; gap: var(--space-2); }
+.back summary::-webkit-details-marker { display: none; }
+.back summary::after { content: '▾'; margin-left: auto; }
+.back details[open] summary::after { content: '▴'; }
+.back summary:hover { color: var(--foreground); }
+.back ol { padding: 0 var(--space-4) var(--space-4) 2.2rem; display: grid; gap: var(--space-3); font-size: var(--fs-4); }
+.source-strip { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; padding-top: var(--space-4); border-top: 1px dashed var(--border); }
+
+/* file detail (shared by A inline, B panel, C) */
+.detail { display: grid; gap: var(--space-3); }
+.detail .kv { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: var(--space-2); align-items: baseline; font-size: var(--fs-4); }
+.detail .kv > .mono-note { padding-top: 0.15rem; }
+.rules .chip { white-space: normal; text-align: left; }
+.rules { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.reason { padding: var(--space-2) var(--space-3); border: 1px solid var(--missing-border); border-left: 3px solid var(--missing-fill); background: var(--missing-tint); font-size: var(--fs-4); display: grid; gap: var(--space-1); }
+
+/* ============ A: lanes by match quality ============ */
+.a-lanes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); align-items: start; }
+@container (max-width: 1180px) { .a-lanes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@container (max-width: 640px) { .a-lanes { grid-template-columns: 1fr; } }
+.lane { border: 1px solid var(--border); background: var(--card-veil); min-width: 0; }
+.lane-head { display: flex; gap: var(--space-2); align-items: baseline; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border); }
+.lane-head .t { font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.lane-head .n { margin-left: auto; font-family: var(--font-mono); font-size: var(--fs-6); line-height: 1; }
+.lane-sub { padding: var(--space-2) var(--space-4); font-size: var(--fs-2); color: var(--muted-foreground); border-bottom: 1px dashed var(--border); }
+.lane[data-q='exact'] { box-shadow: inset 0 3px 0 var(--primary); } .lane[data-q='exact'] .lane-head .n, .lane[data-q='exact'] .lane-head .t { color: var(--primary); }
+.lane[data-q='partial'] { box-shadow: inset 0 3px 0 var(--in-flight-fill); } .lane[data-q='partial'] .lane-head .n, .lane[data-q='partial'] .lane-head .t { color: var(--in-flight-fill); }
+.lane[data-q='none'] { box-shadow: inset 0 3px 0 var(--missing-fill); border-color: var(--missing-border); } .lane[data-q='none'] .lane-head .n, .lane[data-q='none'] .lane-head .t { color: var(--missing-fill); }
+.lane[data-q='role'] .lane-head .n { color: var(--muted-foreground); }
+.lane ul { list-style: none; padding: 0; margin: 0; }
+.lane li { border-bottom: 1px solid color-mix(in oklch, var(--border) 55%, transparent); transition: opacity .15s ease, background .15s ease; }
+.lane li:last-child { border-bottom: 0; }
+.lane li > button { display: grid; gap: var(--space-0-5); width: 100%; text-align: left; padding: var(--space-2-5) var(--space-4); border: 0; background: none; transition: background .15s ease; }
+.lane li > button:hover { background: var(--state-hover); }
+.lane li.open { background: color-mix(in oklch, var(--muted) 45%, transparent); }
+.lane li .detail { padding: 0 var(--space-4) var(--space-4); }
+.lane .empty { padding: var(--space-4); font-size: var(--fs-3); color: var(--muted-foreground); }
+.more { display: block; width: 100%; padding: var(--space-2-5) var(--space-4); border: 0; border-top: 1px solid var(--border); background: none; text-align: left; font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); transition: all .15s ease; }
+.more:hover { color: var(--primary); background: var(--state-hover); }
+.hl-on .lit { background: var(--primary-tint); box-shadow: inset 2px 0 0 var(--primary); }
+.hl-on .dim { opacity: .35; }
+.part-flag { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--missing-fill); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.a-rules { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: var(--space-3); }
+.rule-card { display: grid; gap: var(--space-2); align-content: start; padding: var(--space-3) var(--space-4); border: 1px solid var(--border); background: var(--card-veil); transition: border-color .15s ease; }
+.rule-card:hover, .rule-card.on { border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); }
+.rule-card h3 { font-size: var(--fs-5); font-weight: var(--fw-semibold); line-height: var(--lh-snug); }
+.rule-card .body { font-size: var(--fs-3); color: var(--muted-foreground); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.rule-card.expanded .body { display: block; }
+.rule-card .foot { display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; }
+
+/* ============ B: by location + panel ============ */
+.b-strip { display: flex; flex-wrap: wrap; gap: var(--space-1-5); align-items: center; margin-bottom: var(--space-5); }
+.b-strip .mono-note { margin-right: var(--space-2); }
+.b-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(18rem, 25rem); gap: var(--space-6); align-items: start; }
+@container (max-width: 900px) { .b-grid { grid-template-columns: 1fr; } }
+.b-group + .b-group { margin-top: var(--space-6); }
+.b-rows { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--border); }
+.b-row { display: grid; grid-template-columns: 5.2rem minmax(0, 1.2fr) minmax(0, 1fr); gap: var(--space-3); align-items: baseline; width: 100%; text-align: left; padding: var(--space-2) var(--space-2); border: 0; border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); background: none; transition: background .15s ease, opacity .15s ease; }
+.b-row:hover { background: var(--state-hover); }
+.b-row.sel { background: var(--primary-tint); box-shadow: inset 2px 0 0 var(--primary); }
+.b-row .who { display: grid; min-width: 0; }
+@container (max-width: 640px) { .b-row { grid-template-columns: 5.2rem minmax(0, 1fr); } .b-row .analog { grid-column: 2; } }
+.b-panel { position: sticky; top: 4rem; border: 1px solid var(--border); background: var(--card-veil); padding: var(--space-4); display: grid; gap: var(--space-4); max-height: calc(100vh - 5rem); overflow: auto; }
+@container (max-width: 900px) { .b-panel { position: static; max-height: none; } }
+.b-panel .fname { font-size: var(--fs-6); }
+
+/* ============ C: copies from ============ */
+.c-new { display: grid; grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr)); gap: var(--space-3); }
+.c-newcard { display: grid; gap: var(--space-2); align-content: start; padding: var(--space-3) var(--space-4); border: 1px solid var(--missing-border); border-left: 3px solid var(--missing-fill); background: var(--missing-tint); }
+.c-newcard .why { font-size: var(--fs-3); color: var(--muted-foreground); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.c-newcard.expanded .why { display: block; }
+.c-templates { display: grid; gap: var(--space-3); }
+.c-tpl { display: grid; grid-template-columns: minmax(12rem, 18rem) minmax(0, 1fr); gap: var(--space-2) var(--space-6); padding: var(--space-4) 0; border-bottom: 1px solid var(--border); }
+@container (max-width: 700px) { .c-tpl { grid-template-columns: 1fr; } }
+.c-tpl .src { display: grid; gap: var(--space-1); align-content: start; }
+.c-tpl .src .uses { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--primary); }
+.c-users { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-2); }
+.c-users li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-0-5) var(--space-2); align-items: baseline; }
+.c-users .g { grid-column: 2; font-size: var(--fs-3); color: var(--muted-foreground); }
+.c-users .g button { margin-left: var(--space-1); }
+.c-self { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.c-self button { font-family: var(--font-mono); font-size: var(--fs-2); padding: 0.15rem var(--space-2); border: 1px solid var(--border); background: none; color: var(--foreground); transition: all .15s ease; }
+.c-self button:hover, .c-self button[aria-pressed='true'] { border-color: var(--primary); color: var(--primary); }
+.c-rules { list-style: none; padding: 0; margin: 0; display: grid; }
+.c-rules li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-1) var(--space-4); padding: var(--space-3) 0; border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); }
+.c-rules .body { grid-column: 1; font-size: var(--fs-3); color: var(--muted-foreground); }
+.c-rules h3 { font-size: var(--fs-5); font-weight: var(--fw-semibold); }
+</style>
+</head>
+<body>
+<div id="variant-nav" role="tablist">
+  <span class="lbl">Sketch 013</span>
+  <button class="variant-tab" data-variant="a">A: Lanes by match</button>
+  <button class="variant-tab" data-variant="b">B: By location + panel ★</button>
+  <button class="variant-tab" data-variant="c">C: Copies from</button>
+</div>
+<div id="frame">
+  <header class="shell-header"><span class="brand-mark">L</span><span>Labelore</span></header>
+  <main id="root"></main>
+</div>
+<div id="sketch-tools" style="position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:12px;background:rgba(0,0,0,0.78);color:white;padding:8px 10px;opacity:0.55;transition:opacity 0.2s;display:grid;gap:6px;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.55'">
+  <div>Doc: <span id="doc-btns"></span></div>
+  <div>Theme: <button data-theme="light">Light</button><button data-theme="dark">Dark</button></div>
+  <div>Width: <button data-width="390">Phone</button><button data-width="820">Tablet</button><button data-width="full">Desktop</button></div>
+</div>
+<style>
+#sketch-tools button { background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 2px 7px; margin-left: 3px; font: inherit; cursor: pointer; }
+#sketch-tools button.on { background: #c2410c; border-color: #c2410c; }
+</style>
+<script src="./data.js?v=1"></script>
+<script>
+const state = { variant: 'b', doc: 'sp02', theme: 'dark', width: 'full', open: new Set(), sel: null, rule: null };
+const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const inline = s => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/(^|[^*\w])\*([^*\n]+)\*(?!\w)/g, '$1<em>$2</em>');
+const plain = s => String(s ?? '').replace(/\*\*|`|\*/g, '');
+function prose(src) { // tiny block renderer: "- " lists, lone **bold** lines as sub-heads, the rest joined into paragraphs
+  const out = []; let list = null, para = [];
+  const flush = () => { if (para.length) out.push(`<p>${inline(para.join(' '))}</p>`); para = []; if (list) out.push(`<ul>${list.map(i => `<li>${inline(i)}</li>`).join('')}</ul>`); list = null; };
+  for (const line of String(src ?? '').split('\n')) {
+    if (/^[-*]\s/.test(line)) { if (para.length) { out.push(`<p>${inline(para.join(' '))}</p>`); para = []; } (list ||= []).push(line.slice(2)); }
+    else if (/^\*\*[^*]+\*\*:?$/.test(line.trim())) { flush(); out.push(`<p class="h">${inline(line.replace(/\*\*/g, ''))}</p>`); }
+    else { if (list) flush(); para.push(line); }
+  }
+  flush(); return out.join('');
+}
+const firstSentence = s => { const t = plain(s).replace(/\s+/g, ' ').trim(); const m = t.match(/^(.{20,170}?[.;])\s/); return m ? m[1] : t.length > 170 ? t.slice(0, 168) + '…' : t; };
+
+/* ---------- model: one entry per file, classification + assignment + no-analog + rules ---------- */
+const Q = { exact: { label: 'Exact', short: 'Exact', tone: 'complete', sub: 'Copy the analog as it is' }, role: { label: 'Role match', short: 'Role', tone: 'quiet', sub: 'Same job, different shape' }, partial: { label: 'Partial', short: 'Partial', tone: 'in-flight', sub: 'Copy with care — read the note' }, none: { label: 'New ground', short: 'New', tone: 'missing', sub: 'No precedent in the codebase' } };
+const ORDER = ['exact', 'role', 'partial', 'none'];
+const pathsOf = s => [...String(s ?? '').matchAll(/`([^`]+)`/g)].map(m => m[1]).flatMap(p => { const b = p.match(/^(.*)\{([^}]+)\}(.*)$/); return b ? b[2].split(',').map(x => b[1] + x + b[3]) : [p]; }).map(p => p.replace(/::.*$/, '').replace(/:\d.*$/, ''));
+const base = p => p.replace(/\/$/, '').split('/').pop();
+function refMatches(ref, fps) {
+  return fps.some(fp => fp === ref || fp.endsWith('/' + ref) || (ref.includes('/') && ref.endsWith('/' + base(fp))) || (ref.endsWith('/') && fp.includes(ref)) || (ref.includes('*') && new RegExp('^' + ref.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*\*?/g, '.*') + '$').test(fp)) || (!ref.includes('/') && base(fp) === ref));
+}
+function analogKey(a) {
+  const t = plain(a).trim();
+  if (/^(itself|same file|its |\*\*itself)/i.test(t) || /^itself/i.test(plain(a))) return 'itself';
+  if (/^(none|n\/a)/i.test(t)) return null;
+  return pathsOf(a)[0] ?? null;
+}
+function model(d) {
+  const files = d.files.map((f, i) => {
+    const real = pathsOf(f.file).filter(p => /[/.]/.test(p)); // `health::*` or a word in backticks is not a path
+    const fps = real.length ? real : [plain(f.file)];
+    const name = real.length ? real.map(base).join(', ') : plain(f.file).replace(/\s*\(.*\)\s*$/, '');
+    const dir = real[0]?.split('/').slice(0, -1).join('/') ?? '';
+    const tag = (plain(f.file).match(/\(([^)]*)\)\s*$/) || [])[1] ?? null;
+    return { id: 'f' + i, ...f, fps, name, dir, tag };
+  });
+  for (const f of files) {
+    f.assign = d.assignments.find(a => a.targets.some(t => refMatches(t, f.fps)) || pathsOf(a.applyTo).some(t => refMatches(t, f.fps))) ?? null;
+    const na = d.noAnalog.find(n => { const ps = pathsOf(n.file); return ps.length ? ps.some(p => refMatches(p, f.fps)) : plain(f.file).toLowerCase().includes(plain(n.file).toLowerCase().trim()); });
+    f.reason = na?.reason ?? null;
+    f.partNew = !!na && f.q !== 'none';
+    f.key = f.q === 'none' ? null : analogKey(f.analog);
+  }
+  const rules = d.shared.map((s, i) => {
+    const refs = pathsOf(s.applyTo);
+    const hits = refs.length ? files.filter(f => refs.some(r => refMatches(r, f.fps))) : [];
+    return { id: 'r' + i, ...s, hits, everywhere: !refs.length || /every|all /i.test(plain(s.applyTo)) };
+  });
+  for (const f of files) f.rules = rules.filter(r => r.hits.includes(f));
+  const counts = Object.fromEntries(ORDER.map(q => [q, files.filter(f => f.q === q).length]));
+  return { files, rules, counts };
+}
+
+/* ---------- cover + back matter (same in every variant) ---------- */
+function cover(d, M) {
+  const n = M.files.length, pct = x => (100 * x / n).toFixed(2) + '%';
+  const scopeOpen = state.open.has('scope');
+  return `<header class="cover">
+    <p class="ref-note">${esc(d.project)} · ${esc(d.file)} · ${d.lines} lines</p>
+    <p class="eyebrow">Pattern map · Phase ${esc(d.phase)}</p>
+    <h1>${esc(d.title)}</h1>
+    <div class="facts">
+      <span>Mapped<b>${esc(d.mapped)}</b></span>
+      <span>Files analyzed<b>${esc(plain(d.filesAnalyzed).replace(/^(\S+)\s.*$/, '$1'))}</b>${/\s/.test(d.filesAnalyzed ?? '') ? ` <span class="qual muted">${esc(plain(d.filesAnalyzed).replace(/^\S+\s/, ''))}</span>` : ''}</span>
+      <span>Analogs found<b>${esc(plain(d.analogsFound).replace(/\s*\(.*$/, ''))}</b></span>
+    </div>
+    <div class="meter" aria-label="Match quality across ${n} mapped files">
+      <div class="meter-bar">${ORDER.map(q => M.counts[q] ? `<span class="q-${q}" style="width:${pct(M.counts[q])}" title="${Q[q].label}: ${M.counts[q]}"></span>` : '').join('')}</div>
+      <div class="meter-key">${ORDER.map(q => `<span><i class="q-${q}"></i><b>${M.counts[q]}</b>${Q[q].label}</span>`).join('')}</div>
+    </div>
+    ${d.scope ? `<p class="scope-line ${scopeOpen ? 'open' : ''}"><span class="k">Searched</span><span class="v">${inline(d.scope)}${scopeOpen && d.scanned ? ` <span class="muted">· ${inline(d.scanned)}</span>` : ''}</span><button class="link-btn" data-open="scope">${scopeOpen ? 'less' : 'more'}</button></p>` : ''}
+  </header>
+  ${d.preNotes.length ? `<aside class="notice flag"><span class="mono-note">Mapper's note</span><div class="prose">${d.preNotes.map(prose).join('')}</div></aside>` : ''}`;
+}
+function backMatter(d, M) {
+  const ex = d.assignments.reduce((a, x) => a + x.excerpts, 0) + d.shared.reduce((a, x) => a + x.excerpts, 0);
+  return `<section class="back">
+    ${d.other.map(o => `<details><summary>${esc(o.title)} <span class="count">${o.items.length}</span></summary><ol>${o.items.map(i => `<li class="prose">${prose(i)}</li>`).join('')}</ol></details>`).join('')}
+    <div class="source-strip"><span class="mono-note">In the source only</span>
+      <button class="chip" data-toast>${ex} code excerpts</button><button class="chip" data-toast>Line citations</button><button class="chip" data-toast>Data-flow labels</button><button class="chip" data-toast>Metadata</button></div>
+  </section>`;
+}
+function detail(f, { showName = false } = {}) {
+  const a = f.assign;
+  const guid = a?.guidance ?? [];
+  const k = 'g-' + f.id, more = state.open.has(k);
+  return `<div class="detail fade">
+    ${showName ? `<div><div class="fname">${esc(f.name)}</div><div class="fdir">${esc(f.dir)}${f.tag ? ' · ' + esc(f.tag) : ''}</div></div>
+      <div style="display:flex;gap:var(--space-2);flex-wrap:wrap"><span class="chip" data-tone="${Q[f.q].tone}">${Q[f.q].label}</span>${f.qNote ? `<span class="mono-note">${esc(f.qNote)}</span>` : ''}<span class="mono-note">${esc(plain(f.role))}</span></div>` : ''}
+    ${f.q !== 'none' ? `<div class="kv"><span class="mono-note">Copy from</span><span class="analog">${inline(a?.analog ?? f.analog)}</span></div>` : ''}
+    ${a?.useInstead ? `<div class="kv"><span class="mono-note">Use instead</span><span class="analog">${inline(a.useInstead)}</span></div>` : ''}
+    ${f.reason ? `<div class="reason"><span class="mono-note" style="color:var(--missing-fill)">${f.partNew ? 'No analog for part of it' : 'Why nothing matches'}</span><span>${inline(f.reason)}</span></div>` : ''}
+    ${guid.length ? `<div class="prose">${prose(guid[0])}${more ? guid.slice(1).map(prose).join('') : ''}</div>${guid.length > 1 ? `<button class="link-btn" data-open="${k}">${more ? 'Less' : 'More guidance'} ${more ? '▴' : '▾'}</button>` : ''}` : ''}
+    ${f.rules.length ? `<div class="kv"><span class="mono-note">Rules</span><span class="rules">${f.rules.map(r => `<button class="chip" data-rule="${r.id}" aria-pressed="${state.rule === r.id}">${esc(shortRule(r.name))}</button>`).join('')}</span></div>` : ''}
+    ${a && a.excerpts ? `<span class="mono-note">${a.excerpts} code excerpt${a.excerpts > 1 ? 's' : ''} in source</span>` : ''}
+  </div>`;
+}
+const shortRule = n => plain(n).replace(/\s*\(.*\)\s*$/, '').replace(/ — .*$/, '');
+const analogShort = f => f.q === 'none' ? '' : f.key === 'itself' ? '<span class="arrow">↺</span>extends itself' : f.key ? `<span class="arrow">←</span><code>${esc(base(f.key))}</code>` : `<span class="arrow">←</span>${esc(firstSentence(f.analog).slice(0, 60))}`;
+const litClass = f => state.rule ? (M_().rules.find(r => r.id === state.rule).hits.includes(f) ? 'lit' : 'dim') : '';
+let _M = null; const M_ = () => _M;
+
+/* ---------- A: lanes by match quality ---------- */
+const CAP = 5;
+function variantA(d, M) {
+  const lane = q => {
+    const all = M.files.filter(f => f.q === q), k = 'lane-' + q;
+    const forced = state.rule ? all.filter(f => litClass(f) === 'lit') : [];
+    const shown = state.open.has(k) ? all : [...new Set([...all.slice(0, CAP), ...forced])];
+    return `<section class="lane" data-q="${q}"><div class="lane-head"><span class="t">${Q[q].label}</span><span class="n">${all.length}</span></div>
+      <p class="lane-sub">${Q[q].sub}</p>
+      ${all.length ? `<ul>${shown.map(f => { const o = state.sel === f.id; return `<li class="${o ? 'open' : ''} ${litClass(f)}"><button data-sel="${f.id}" aria-expanded="${o}"><span class="fname">${esc(f.name)}</span><span class="fdir">${esc(f.dir)}</span>${q === 'none' ? `<span class="analog">${esc(firstSentence(f.reason ?? f.analog))}</span>` : `<span class="analog">${analogShort(f)}</span>`}${f.partNew ? '<span class="part-flag">＋ part has no analog</span>' : ''}</button>${o ? detail(f) : ''}</li>`; }).join('')}</ul>
+        ${all.length > shown.length || state.open.has(k) ? `<button class="more" data-open="${k}">${state.open.has(k) ? 'Show fewer ▴' : `Show ${all.length - shown.length} more ▾`}</button>` : ''}` : `<p class="empty">None.</p>`}</section>`;
+  };
+  return `<section class="${state.rule ? 'hl-on' : ''}">
+      <div class="section-heading"><h2><span class="num">01</span>Files</h2><span class="aside">Click a file for its guidance</span></div>
+      <div class="a-lanes">${ORDER.map(lane).join('')}</div></section>
+    <section><div class="section-heading"><h2><span class="num">02</span>House rules</h2><span class="aside">${M.rules.length} conventions every file follows</span></div>
+      <div class="a-rules">${M.rules.map(r => { const ex = state.open.has('rx-' + r.id); return `<article class="rule-card ${state.rule === r.id ? 'on' : ''} ${ex ? 'expanded' : ''}"><h3>${inline(shortRule(r.name))}</h3><div class="body">${inline(plain(r.applyTo) && !r.rule ? r.applyTo : r.rule ?? r.applyTo ?? '')}</div>
+        <div class="foot">${r.hits.length ? `<button class="chip" data-rule="${r.id}" aria-pressed="${state.rule === r.id}">${state.rule === r.id ? 'Showing' : 'Show'} ${r.hits.length} file${r.hits.length > 1 ? 's' : ''}</button>` : `<span class="mono-note">${r.applyTo ? 'Applies broadly' : 'Applies to every file'}</span>`}<button class="link-btn" data-open="rx-${r.id}">${ex ? 'Less' : 'Read'}</button></div>
+        ${ex ? `<div class="prose fade" style="font-size:var(--fs-3)">${r.applyTo ? `<p><span class="mono-note">Apply to</span> ${inline(r.applyTo)}</p>` : ''}${r.source ? `<p><span class="mono-note">Source</span> ${inline(r.source)}</p>` : ''}</div>` : ''}</article>`; }).join('')}</div></section>`;
+}
+
+/* ---------- B: by location + side panel ---------- */
+function groupOf(f) {
+  if (f.group) return f.group;
+  const p = f.fps[0] ?? ''; const seg = p.split('/');
+  if (/^(test|tests)$/.test(seg[0]) || /^backend$/.test(seg[0]) && seg[1] === 'tests') return 'Tests';
+  if (seg[0] === 'src' || seg[0] === 'frontend' || seg[0] === 'backend') return seg.slice(0, seg[0] === 'src' ? 2 : 1).join('/');
+  return seg.length > 1 ? seg[0] : 'Other';
+}
+function variantB(d, M) {
+  const groups = []; for (const f of M.files) { const g = groupOf(f); let e = groups.find(x => x.g === g); if (!e) groups.push(e = { g, files: [] }); e.files.push(f); }
+  const sel = M.files.find(f => f.id === state.sel) ?? M.files.find(f => f.q === 'none') ?? M.files[0];
+  const rowCls = f => `b-row ${f.id === sel.id ? 'sel' : ''} ${state.rule ? (litClass(f) === 'lit' ? '' : 'dim') : ''}`;
+  return `<section class="${state.rule ? 'hl-on' : ''}">
+    <div class="section-heading"><h2><span class="num">01</span>File map</h2><span class="aside">${M.files.length} files · ${groups.length} areas</span></div>
+    <div class="b-strip"><span class="mono-note">House rules</span>${M.rules.map(r => `<button class="chip" data-rule="${r.id}" aria-pressed="${state.rule === r.id}" title="${esc(plain(r.rule ?? r.applyTo ?? ''))}">${esc(shortRule(r.name))}${r.hits.length ? ` · ${r.hits.length}` : ''}</button>`).join('')}</div>
+    ${state.rule ? (() => { const r = M.rules.find(x => x.id === state.rule); return `<div class="notice fade" style="margin-bottom:var(--space-5)"><strong>${inline(shortRule(r.name))}</strong><div class="prose" style="font-size:var(--fs-3)">${r.rule ? `<p>${inline(r.rule)}</p>` : ''}${r.applyTo ? `<p><span class="mono-note">Apply to</span> ${inline(r.applyTo)}</p>` : ''}</div>${r.hits.length ? '' : '<span class="mono-note">Not tied to specific files — applies broadly</span>'}</div>`; })() : ''}
+    <div class="b-grid"><div>
+      ${groups.map(g => `<div class="b-group"><p class="label">${esc(g.g)} <span class="count">${g.files.length}</span></p><ul class="b-rows">${g.files.map(f => `<li><button class="${rowCls(f)}" data-sel="${f.id}"><span><span class="chip" data-tone="${Q[f.q].tone}">${Q[f.q].short}</span></span><span class="who"><span class="fname">${esc(f.name)}</span><span class="fdir">${esc(f.dir)}</span></span><span class="analog">${f.q === 'none' ? '<span class="muted">no analog</span>' : analogShort(f)}${f.partNew ? ' <span class="part-flag">＋ part new</span>' : ''}</span></button></li>`).join('')}</ul></div>`).join('')}
+    </div><aside class="b-panel">${detail(sel, { showName: true })}</aside></div></section>`;
+}
+
+/* ---------- C: copies from (organised by template) ---------- */
+function variantC(d, M) {
+  const news = M.files.filter(f => f.q === 'none' || f.partNew);
+  const self = M.files.filter(f => f.key === 'itself');
+  const tpl = []; for (const f of M.files) { if (!f.key || f.key === 'itself' || f.q === 'none') continue; let t = tpl.find(x => x.key === f.key); if (!t) tpl.push(t = { key: f.key, files: [] }); t.files.push(f); }
+  tpl.sort((a, b) => b.files.length - a.files.length);
+  const orphans = M.files.filter(f => f.q !== 'none' && !f.key);
+  const selSelf = self.find(f => f.id === state.sel);
+  return `<section><div class="section-heading"><h2><span class="num">01</span>New ground</h2><span class="aside">${news.length} with no precedent to copy</span></div>
+      ${news.length ? `<div class="c-new">${news.map(f => { const ex = state.open.has('nx-' + f.id); return `<article class="c-newcard ${ex ? 'expanded' : ''}"><div><div class="fname">${esc(f.name)}</div><div class="fdir">${esc(f.dir)}</div></div>${f.partNew ? '<span class="part-flag">Part of it only — the rest copies an analog</span>' : ''}<div class="why">${inline(f.reason ?? f.analog)}</div><button class="link-btn" data-open="nx-${f.id}" style="justify-self:start">${ex ? 'Less' : 'Read why'}</button></article>`; }).join('')}</div>` : `<p class="muted">Every file has an analog to copy.</p>`}</section>
+    <section><div class="section-heading"><h2><span class="num">02</span>Copies from</h2><span class="aside">${tpl.length} existing files serve as templates</span></div>
+      <div class="c-templates">${tpl.map(t => `<div class="c-tpl"><div class="src"><span class="fname">${esc(base(t.key))}</span><span class="fdir">${esc(t.key.split('/').slice(0, -1).join('/'))}</span><span class="uses">Template for ${t.files.length}</span></div>
+        <ul class="c-users">${t.files.map(f => { const k = 'cu-' + f.id, o = state.open.has(k), g = f.assign?.guidance?.[0]; return `<li><span class="chip" data-tone="${Q[f.q].tone}">${Q[f.q].short}</span><span class="fname" style="font-size:var(--fs-3)">${esc(f.name)} <span class="fdir">${esc(f.dir)}</span></span><span class="g">${g ? (o ? `<span class="prose fade">${prose(g)}</span>` : esc(firstSentence(g))) : f.qNote ? esc(f.qNote) : ''}${g ? `<button class="link-btn" data-open="${k}">${o ? 'less' : 'more'}</button>` : ''}</span></li>`; }).join('')}</ul></div>`).join('')}
+        ${orphans.length ? `<div class="c-tpl"><div class="src"><span class="fname muted">Described, not a file</span><span class="uses">Template for ${orphans.length}</span></div><ul class="c-users">${orphans.map(f => `<li><span class="chip" data-tone="${Q[f.q].tone}">${Q[f.q].short}</span><span class="fname" style="font-size:var(--fs-3)">${esc(f.name)}</span><span class="g">${inline(f.analog)}</span></li>`).join('')}</ul></div>` : ''}</div></section>
+    ${self.length ? `<section><div class="section-heading"><h2><span class="num">03</span>Extended in place</h2><span class="aside">${self.length} files that are their own analog</span></div>
+      <div class="c-self">${self.map(f => `<button data-sel="${f.id}" aria-pressed="${state.sel === f.id}">${esc(f.name)}</button>`).join('')}</div>
+      ${selSelf ? `<div class="notice fade" style="margin-top:var(--space-3)">${detail(selSelf, { showName: true })}</div>` : ''}</section>` : ''}
+    <section><div class="section-heading"><h2><span class="num">${self.length ? '04' : '03'}</span>House rules</h2><span class="aside">${M.rules.length} conventions</span></div>
+      <ul class="c-rules">${M.rules.map(r => `<li><h3>${inline(shortRule(r.name))}</h3><span class="mono-note">${r.hits.length ? `${r.hits.length} file${r.hits.length > 1 ? 's' : ''}` : 'broad'}</span><span class="body">${inline(firstSentence(r.rule ?? r.applyTo ?? ''))}</span></li>`).join('')}</ul></section>`;
+}
+
+const RENDER = { a: variantA, b: variantB, c: variantC };
+function render() {
+  const d = DOCS[state.doc]; _M = model(d);
+  document.getElementById('root').innerHTML = `<div class="page fade">${cover(d, _M)}${RENDER[state.variant](d, _M)}${backMatter(d, _M)}</div>`;
+  document.documentElement.classList.toggle('dark', state.theme === 'dark');
+  const f = document.getElementById('frame');
+  f.style.maxWidth = state.width === 'full' ? 'none' : state.width + 'px';
+  f.classList.toggle('narrow-frame', state.width !== 'full');
+  document.querySelectorAll('.variant-tab').forEach(t => t.classList.toggle('active', t.dataset.variant === state.variant));
+  document.querySelectorAll('#sketch-tools button').forEach(b => b.classList.toggle('on', b.dataset.doc === state.doc || b.dataset.theme === state.theme || b.dataset.width === state.width));
+}
+document.getElementById('doc-btns').innerHTML = Object.entries(DOCS).map(([k, d]) => `<button data-doc="${k}">${esc(d.label)}</button>`).join('');
+function toast(msg) { const t = document.createElement('div'); t.textContent = msg; t.style.cssText = 'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--foreground);color:var(--background);padding:8px 16px;font-family:var(--font-mono);font-size:var(--fs-2);z-index:9999'; document.body.appendChild(t); setTimeout(() => t.remove(), 1400); }
+document.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.variant) { state.variant = t.dataset.variant; state.open.clear(); state.sel = null; state.rule = null; }
+  else if (t.dataset.doc) { state.doc = t.dataset.doc; state.open.clear(); state.sel = null; state.rule = null; }
+  else if (t.dataset.theme) state.theme = t.dataset.theme;
+  else if (t.dataset.width) state.width = t.dataset.width;
+  else if (t.dataset.sel) state.sel = state.sel === t.dataset.sel && state.variant !== 'b' ? null : t.dataset.sel;
+  else if (t.dataset.rule) state.rule = state.rule === t.dataset.rule ? null : t.dataset.rule;
+  else if (t.dataset.open) { const k = t.dataset.open; state.open.has(k) ? state.open.delete(k) : state.open.add(k); }
+  else if ('toast' in t.dataset) return toast('Opens Source mode at this section');
+  else return;
+  const y = window.scrollY; render(); window.scrollTo(0, y);
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && (state.rule || state.sel)) { state.rule = null; if (state.variant !== 'b') state.sel = null; render(); } });
+render();
+</script>
+</body>
+</html>
