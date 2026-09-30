@@ -1,0 +1,21 @@
+/browse selection
+  -> POST create archive (identity + source Read)
+  -> validate closed payload / selection bounds
+  -> bounded recursive walk
+       local: TierRoot read_dir/open_file
+       cloud: one rclone lsjson -R -- remote:path
+  -> canonicalize safe ZIP entry names + stable sort
+  -> sum <= 400 GB? ----no----> refusal dialog (selection intact)
+  -> stage avail >= conservative required bytes? --no--> same refusal dialog
+  -> one DB transaction: jobs row + archive_entries + owner
+  -> existing worker + TierLocks(source, stage)
+  -> ArchiveExecutor dedicated thread
+       re-open each source through containment boundary
+       missing? -> archive_omissions row; continue
+       present? -> ZipWriter -> _archives/{job_id}.partial
+       progress -> existing job fields / WS
+       finish + sync + atomic rename to {job_id}.zip
+  -> completed WS -> job-scoped ticket mint -> /dl/{ticket}
+       full 200 or single-range 206 -> staged file
+       EOF -> unlink; early disconnect -> retain for re-mint/range
+       never collected -> 24h sweep

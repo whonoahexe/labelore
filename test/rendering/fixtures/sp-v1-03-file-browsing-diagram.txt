@@ -1,0 +1,40 @@
+┌────────────────────────────────────────────────────────────────────┐
+│ BROWSER — /browse/{tier}/{path}                                     │
+│  1. GET /api/browse/{tier}/{path}  (VerifiedIdentity, credentials)  │
+│  2. renders full listing via @tanstack/react-virtual (windowed)     │
+│  3. click "download" → POST /api/dl-ticket {tier, path}             │
+│  4. GET /dl/{ticket}  (no path in URL — D-13)                       │
+└───────────────┬───────────────────────────────────────┬─────────────┘
+                │ (1)(3)(4) direct, credentialed          │ WS (unchanged,
+                ▼                                          │  Phase 2)
+┌────────────────────────────────────────────────────────────────────┐
+│ RUST/AXUM BACKEND                                                    │
+│                                                                        │
+│  GET /api/browse/{tier}/{path}                                       │
+│    ├─ VerifiedIdentity extractor (existing)                          │
+│    ├─ TierId::from_str(tier) — closed enum, reject unknown           │
+│    ├─ tiers::scope::resolve(tier_root_dir, path)  ◄── THE boundary   │
+│    │     Local:  cap_std::fs::Dir::open_ambient_dir(mount_path)      │
+│    │             → dir.read_dir(relative_path)                       │
+│    │             bridged onto a dedicated std::thread (D-16),        │
+│    │             awaited via a channel with a wall-clock deadline    │
+│    │     Cloud:  bounded_proc::run_bounded(rclone lsjson ...)        │
+│    │             bridged the SAME way — never called inline in the   │
+│    │             async handler (it is a blocking, sleep-polling fn)  │
+│    ├─ D-05 cruft/dotfile filter, D-08 sort, D-09 kind derivation     │
+│    └─ full JSON array response (D-07 — no pagination)                │
+│                                                                        │
+│  POST /api/dl-ticket {tier, path}                                    │
+│    ├─ VerifiedIdentity extractor                                     │
+│    ├─ SAME tiers::scope::resolve() as browse — one implementation    │
+│    ├─ size-cap check (local: cap_std metadata; cloud: lsjson --stat) │
+│    └─ tickets.mint(..., TicketPurpose::Download { tier, path })      │
+│                                                                        │
+│  GET /dl/{ticket}                                                     │
+│    ├─ tickets.consume(ticket, Download{..}) → (tier, path)           │
+│    ├─ tiers::scope::resolve() AGAIN at serve time (defense in depth) │
+│    ├─ Local:  tokio::fs::File::from_std(cap_file) → ReaderStream     │
+│    └─ Cloud:  tokio::process::Command("rclone","cat",...)            │
+│               .stdout(Stdio::piped()) → ReaderStream, streamed live  │
+│               into the response body — no temp file (D-12)           │
+└────────────────────────────────────────────────────────────────────┘
