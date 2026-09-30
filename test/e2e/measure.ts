@@ -251,6 +251,11 @@ const CORNER_SELECTORS = [
   '.view-research-alt',
   '.view-research-back-rows',
   '.view-research-breakdown',
+  // quick-260930-wfs: the PATTERNS pattern map's side panel, file rows, mapper's note and reason box.
+  '.view-patterns-panel',
+  '.view-patterns-row',
+  '.view-patterns-note',
+  '.view-patterns-reason',
 ];
 
 /** F-06: squared corners — every element matching one of the shared "boxy chrome" selectors,
