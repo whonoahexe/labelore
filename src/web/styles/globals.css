@@ -8228,6 +8228,11 @@ a.view-research-id:hover {
   color: var(--foreground);
 }
 
+.view-patterns-text {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
 .view-patterns-prose {
   display: grid;
   gap: var(--space-2);

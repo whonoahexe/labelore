@@ -350,12 +350,12 @@ export function PatternMapView({
               </strong>
               <div className="view-patterns-prose">
                 {rule.text ? (
-                  <p className="view-research-text">
+                  <p className="view-patterns-text">
                     <ResearchInline text={rule.text} />
                   </p>
                 ) : null}
                 {rule.applyTo ? (
-                  <p className="view-research-text">
+                  <p className="view-patterns-text">
                     <span className="view-patterns-key">Apply to</span> <ResearchInline text={rule.applyTo} />
                   </p>
                 ) : null}
