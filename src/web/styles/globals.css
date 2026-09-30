@@ -146,6 +146,7 @@
   --figure-wire: color-mix(in oklch, var(--muted-foreground) 60%, transparent);
   --figure-lane: color-mix(in oklch, var(--muted) 42%, transparent);
   --figure-icon: color-mix(in oklch, var(--foreground) 75%, transparent);
+  --figure-group-fill: color-mix(in oklch, var(--muted) 25%, transparent);
   --shadow-popover: 0 1rem 2.5rem color-mix(in oklab, var(--foreground) 18%, transparent);
   --scrollbar-thumb: color-mix(in oklch, var(--muted-foreground) 30%, transparent);
   --scrollbar-thumb-strong: color-mix(in oklch, var(--muted-foreground) 55%, transparent);
@@ -6591,12 +6592,29 @@ p.view-research-note {
   min-width: 0;
 }
 
+/* A selected node opens the details panel beside the canvas (stacked below on a narrow screen). */
+.lane-diagram[data-panel='true'] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22rem;
+}
+
+@media (max-width: 42rem) {
+  .lane-diagram[data-panel='true'] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .lane-diagram-canvas {
   min-width: 0;
 }
 
+/* The layout is measured on the root, so with the panel open the canvas column scrolls. */
+.lane-diagram[data-panel='true'] .lane-diagram-canvas {
+  overflow-x: auto;
+}
+
 /* Fit to width scales the stage, but its unscaled layout box would still widen the scroller. */
-.lane-diagram-canvas[data-fit='true'] {
+.lane-diagram .lane-diagram-canvas[data-fit='true'] {
   overflow: hidden;
 }
 
@@ -6654,6 +6672,49 @@ p.view-research-note {
   fill: var(--figure-wire);
 }
 
+.lane-diagram-wire[data-hot='true'] {
+  stroke: var(--primary);
+  stroke-width: 1.5;
+}
+
+.lane-diagram-arrow[data-hot='true'] {
+  fill: var(--primary);
+}
+
+/* A wire's label sits near its target, over the wire's own gap; one line, never wider than the stage. */
+.lane-diagram-wire-label {
+  position: absolute;
+  z-index: 1;
+  overflow: hidden;
+  padding: 0 var(--space-1);
+  background: var(--card);
+  color: var(--muted-foreground);
+  font-size: var(--fs-2);
+  font-style: italic;
+  font-synthesis-style: auto;
+  line-height: var(--lh-snug);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A group the author boxed around several nodes: a dashed region under the wires. */
+.lane-diagram-group {
+  position: absolute;
+  border: 1px dashed var(--figure-card-border);
+  background: var(--figure-group-fill);
+}
+
+.lane-diagram-group-label {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-3);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
 .lane-diagram-node {
   position: absolute;
   z-index: 2;
@@ -6673,8 +6734,19 @@ p.view-research-note {
     opacity 120ms ease;
 }
 
-.lane-diagram-node:hover {
+.lane-diagram-node:hover,
+.lane-diagram-node[data-hot='true'] {
   border-color: var(--figure-node-border);
+}
+
+/* The selected node: accent border and ring; its wires and arrowheads turn accent; the rest dims. */
+.lane-diagram-node[aria-pressed='true'] {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-tint);
+}
+
+.lane-diagram-stage[data-selecting='true'] .lane-diagram-node:not([aria-pressed='true']):not([data-hot='true']) {
+  opacity: 0.45;
 }
 
 .lane-diagram-icon {
@@ -6743,6 +6815,85 @@ p.view-research-note {
   font-size: var(--fs-1);
   letter-spacing: var(--ls-wider);
   line-height: var(--lh-snug);
+}
+
+/* The details panel: a node's details, notes, what feeds and follows it, and its own words. */
+.lane-diagram-panel {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  min-width: 0;
+  max-height: 46rem;
+  padding: var(--space-4);
+  overflow: auto;
+  border-left: 1px solid var(--border);
+  font-size: var(--fs-3);
+}
+
+@media (max-width: 42rem) {
+  .lane-diagram-panel {
+    border-top: 1px solid var(--border);
+    border-left: 0;
+  }
+}
+
+.lane-diagram-panel-head {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+
+.lane-diagram-panel-title {
+  flex: 1;
+  margin: 0;
+  font-size: var(--fs-5);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  overflow-wrap: anywhere;
+}
+
+.lane-diagram-panel-title[data-code='true'] {
+  font-family: var(--font-mono);
+  font-size: var(--fs-4);
+}
+
+.lane-diagram-panel-sub {
+  margin: 0;
+  color: var(--muted-foreground);
+}
+
+.lane-diagram-panel-section {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.lane-diagram-panel-pre {
+  margin: 0;
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  background: var(--background);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.lane-diagram-panel-list {
+  display: grid;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding: 0 0 0 var(--space-4);
+}
+
+.lane-diagram-panel-list em {
+  color: var(--muted-foreground);
+  font-style: italic;
+  font-synthesis-style: auto;
 }
 
 /* The quiet note over the lifted figure (a thin graph, or Shown as drawn). */

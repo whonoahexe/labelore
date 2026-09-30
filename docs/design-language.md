@@ -133,7 +133,7 @@ is always to add the missing name to this document, never to edit the reference 
 | `lifted-diagram-node` | A node/box title — semibold — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
 | `lifted-diagram-sub` | A second line inside a node — muted — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
 | `lifted-diagram-note` | Free text beside boxes — muted annotation, slanted by a synthetic oblique scoped to notes (`font-synthesis-style`), so the monospace grid holds — sketch-009 B figure, view-agnostic (quick-260929-3x3, quick-260930-jzt) | globals.css — quick-260929-3x3 block |
-| `lane-diagram` | The lanes-by-kind diagram root: the canvas plus (Task 2) the details panel beside it — sketch-012 B figure, view-agnostic (quick-260930-mp6) | globals.css — quick-260929-3x3 block |
+| `lane-diagram` | The lanes-by-kind diagram root: the canvas plus the details panel beside it (`data-panel` while a node is selected) — sketch-012 B figure, view-agnostic (quick-260930-mp6) | globals.css — quick-260929-3x3 block |
 | `lane-diagram-canvas` | The lane diagram's measured column; `data-fit` clips the unscaled layout box so Fit never shows a horizontal scrollbar — sketch-012 B figure, view-agnostic (quick-260930-mp6) | globals.css — quick-260929-3x3 block |
 | `lane-diagram-stage` | The positioned stage the lanes, wires and nodes sit in, sized from the layout (`role="group"`, labelled with the node and wire counts) — sketch-012 B figure, view-agnostic (quick-260930-mp6) | globals.css — quick-260929-3x3 block |
 | `lane-diagram-lane` | One kind's column band (`data-shade` on every other lane) — muted `--figure-lane` fill behind its nodes — sketch-012 B figure, view-agnostic (quick-260930-mp6) | globals.css — quick-260929-3x3 block |
@@ -148,6 +148,16 @@ is always to add the missing name to this document, never to edit the reference 
 | `lane-diagram-sub` | A node's one-line muted subtitle — sketch-012 B figure, view-agnostic (quick-260930-mp6) | globals.css — quick-260929-3x3 block |
 | `lane-diagram-more` | The `+N` hidden-detail count on a node's top edge — mono, muted — sketch-012 B figure, view-agnostic (quick-260930-mp6) | globals.css — quick-260929-3x3 block |
 | `lane-diagram-fallback` | The quiet "Shown as drawn" line over the lifted figure — a `quiet` chip and "This figure keeps the author's layout." — sketch-012 B figure, view-agnostic (quick-260930-mp6) | globals.css — quick-260929-3x3 block |
+| `lane-diagram-wire-label` | A wire's label near its target — one line, italic, muted, ellipsised, with the full text in `title` — sketch-012 B figure, view-agnostic (quick-260930-mp6) | globals.css — quick-260929-3x3 block |
+| `lane-diagram-group` | A group the author boxed around several nodes: a dashed `--figure-card-border` region on `--figure-group-fill`, under the wires — sketch-012 B figure, view-agnostic (quick-260930-mp6) | globals.css — quick-260929-3x3 block |
+| `lane-diagram-group-label` | A group's mono uppercase label (`Auth middleware`) at its top left — sketch-012 B figure, view-agnostic (quick-260930-mp6) | globals.css — quick-260929-3x3 block |
+| `lane-diagram-panel` | The details `<aside>` beside the diagram (below it under 42rem) for the selected node — its details, notes, From and To with wire labels, and As written — sketch-012 B figure, view-agnostic (quick-260930-mp6) | globals.css — quick-260929-3x3 block |
+| `lane-diagram-panel-head` | The panel's top row: kind icon, title and the Close chip — sketch-012 B figure, view-agnostic (quick-260930-mp6) | globals.css — quick-260929-3x3 block |
+| `lane-diagram-panel-title` | The selected node's label — a paragraph, not a heading, so the page outline does not change (`data-code` sets it in mono) — sketch-012 B figure, view-agnostic (quick-260930-mp6) | globals.css — quick-260929-3x3 block |
+| `lane-diagram-panel-sub` | The selected node's subtitle, muted — sketch-012 B figure, view-agnostic (quick-260930-mp6) | globals.css — quick-260929-3x3 block |
+| `lane-diagram-panel-section` | A panel section label (kind, Details, Notes, From, To, As written) in mono uppercase — sketch-012 B figure, view-agnostic (quick-260930-mp6) | globals.css — quick-260929-3x3 block |
+| `lane-diagram-panel-pre` | A panel `<pre>` block: the node's details, or its text as the author wrote it — sketch-012 B figure, view-agnostic (quick-260930-mp6) | globals.css — quick-260929-3x3 block |
+| `lane-diagram-panel-list` | The From / To / Notes lists — a wire's label follows the node name in italic muted — sketch-012 B figure, view-agnostic (quick-260930-mp6) | globals.css — quick-260929-3x3 block |
 | `clean-tree` | The clean-list directory tree (`<ul>`), rendered inside the same `FigureFrame` as the diagram (titled Directory structure); a single-child folder chain with no intermediate notes collapses into one collapsible row — sketch-009 B figure, view-agnostic (quick-260929-3x3, quick-260930-jzt) | globals.css — quick-260929-3x3 block |
 | `clean-tree-count` | The `F files · D folders` count — now in the figure frame bar — sketch-009 B figure, view-agnostic (quick-260929-3x3, quick-260930-jzt) | globals.css — quick-260929-3x3 block |
 | `clean-tree-row` | One tree row: name column, notes column (`data-badge` NEW / EXTEND / MODIFIED / EXISTING, `data-dir` on folders); faint hairline separators and faint indent guides at a --space-6 step — sketch-009 B figure, view-agnostic (quick-260929-3x3, quick-260930-jzt) | globals.css — quick-260929-3x3 block |
@@ -161,7 +171,7 @@ is always to add the missing name to this document, never to edit the reference 
 |------|---------|----------|
 | `active` | In progress / currently selected — accent-tinted | A chosen discussion-log option, the current phase while in progress, an active outline entry, a sketch-004 B3 item's "Chosen"/"Claude chose" state chip, (quick-260923-jxp) a discussion item's "Custom answer" state chip, and (quick-260925-3ug) a CONTEXT specific idea's Rule chip, and (quick-260929-3x3) a RESEARCH tree's NEW badge |
 | `complete` | Finished / matched — accent-tinted (shares styling with `active`) | A completed phase or plan, an exact traceability match, a sketch-004 B3 document's "N of N decided"/"Passed" cover status and a fully-verified item's state chip, and (quick-260929-3x3) a RESEARCH viable alternative and high (or medium-high) confidence |
-| `quiet` | Neutral coverage gap — muted-foreground, never alarming | An unrecognized/unmanifested type, a non-exact traceability match, a phase not yet started, every sketch-004 B3 roll-up chip and Also-chapter panel chip, and (quick-260923-jxp) an unresolved discussion item's "Open" state chip, a chosen answer's qualifier chip, a declined-area ghost row's "Not discussed" chip, and (quick-260925-3ug) a CONTEXT specific idea's Note chip, and (quick-260929-3x3) on a RESEARCH page a rejected alternative, a resolved open question, an EXISTING tree badge, MEDIUM/LOW pitfall chips, F-codes, already-pinned / host-binary package badges and an OK seam verdict |
+| `quiet` | Neutral coverage gap — muted-foreground, never alarming | An unrecognized/unmanifested type, a non-exact traceability match, a phase not yet started, every sketch-004 B3 roll-up chip and Also-chapter panel chip, and (quick-260923-jxp) an unresolved discussion item's "Open" state chip, a chosen answer's qualifier chip, a declined-area ghost row's "Not discussed" chip, and (quick-260925-3ug) a CONTEXT specific idea's Note chip, and (quick-260929-3x3) on a RESEARCH page a rejected alternative, a resolved open question, an EXISTING tree badge, MEDIUM/LOW pitfall chips, F-codes, already-pinned / host-binary package badges and an OK seam verdict, and (quick-260930-mp6) the RESEARCH diagram's Shown as drawn fallback chip |
 | `destructive` | Genuine read/parse failure only | The "Unreadable" artifact-parse chip; never used for a merely-unrecognized type; never used by any sketch-004 B3 document-content chip (state/rollup/pill), which stay within `active`/`complete`/`quiet`/`in-flight`/`missing` |
 | `warning` | Partial read/parse degradation only | The "Warning" artifact-parse chip; never used by any sketch-004 B3 document-content chip, same rule as `destructive` above |
 | `in-flight` | A phase or item currently being worked, or waiting on someone | Traceability covering-phase signal, a sketch-004 B3 document's "Awaiting checkpoint"/"Gaps found" cover status, and the CONTEXT brief's open questions (open-question chips, an area's "N open" chip, the "open for the researcher" stat and panel rule), and (quick-260925-3ug) a CONTEXT specific idea's Leaning chip plus a deferred idea's "Revisit if" label, and (quick-260929-3x3) on a RESEARCH page a SUS package badge and the Flagged lane, a HIGH pitfall, an open question, an EXTEND or MODIFIED tree badge, mid/mixed confidence, a later-phase alternative, and the ASSUMED evidence marker |
@@ -308,11 +318,30 @@ element is actually written, regardless of class name:
   stays an arrow, and `├─`/`└─`/`│` tree guides inside a box stay content. A box-less flow becomes
   padded step cards that absorb the detail lines under or beside their trunk, with aria-hidden spacer
   rows between stacked steps; edge labels and asides stay outside every card.
+  (quick-260930-mp6, sketch 012 B) A RESEARCH architecture diagram whose graph is confident is
+  redrawn as lanes by kind, from a graph read out of the author's ASCII (`src/rendering/ascii-graph.ts`
+  for the typed nodes, short labels, wires, wire labels and groups; `src/rendering/lane-layout.ts` for
+  the lanes, `.lane-diagram-*`): one column per kind present — Client, Edge, Service (& steps), Worker,
+  Channel, Data, External — with an icon header and alternate lanes shaded, layers following the
+  author's rows, and uniform nodes (icon, a label of at most two lines, a one-line subtitle, `+N` for
+  hidden detail). A graph is **thin** — never drawn — when it has fewer than 4 nodes, fewer wires than
+  half the nodes, quality under 0.6, more than 2 dangling wire fragments, or more than 60 nodes. The
+  lanes fit the frame body's measured width: the per-lane column cap falls from uncapped to 2 to 1 until
+  nodes reach a comfortable width, and same-lane nodes wrap into further rows rather than widening the
+  lane; a narrower budget shortens subtitles (compact) instead. A node click opens the details panel
+  beside the diagram (details, notes, From and To with wire labels, As written) and lights the node's
+  wires and arrowheads; Escape, the same node again, or Close clears it. A thin figure, and every drawn
+  one through the **Shown as drawn** chip in the frame bar, shows the lifted diagram under a quiet note
+  ("This figure keeps the author's layout."). Source mode stays the way back to the raw text.
 - **The 10% accent reservation extends to the figures.** (quick-260929-3x3) The lifted diagram's
   arrows, the hovered card, and the clean tree's folder icons, take `--primary`; folder names sit on
   `--muted-foreground` (the NEW chip uses
   the shared `active` tone); node cards sit on the quieter `--figure-node-fill` / `--figure-node-border`. Box cards, connector glyphs, notes and file names stay on
-  `--border`, `--background` and the muted foreground.
+  `--border`, `--background` and the muted foreground. (quick-260930-mp6) The lane diagram extends it:
+  the Client icon well, the selected node's border and ring (`--primary`, `--primary-tint`), and the
+  selected node's wires and arrowheads take the accent; lanes, wires, node edges, groups and the other
+  icons stay on the `--figure-*` tokens and the muted foreground. `destructive` and `warning` never
+  colour a figure.
 - **RESEARCH uses the sketch-008 A briefing, not B3 and not CONTEXT's brief.** (quick-260929-3x3)
   The `research` manifest declares a `briefing` hook (`composeResearchBriefing`) and keeps its
   `promote` list only as the fallback for a server payload with no `structured.briefing`. The page
