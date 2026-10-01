@@ -8611,3 +8611,585 @@ a.view-research-id:hover {
   margin-top: var(--space-10);
 }
 /* quick-260930-wfs:end */
+
+/* quick-261001-qk6:start */
+/* ==========================================================================
+   quick-261001-qk6 (sketch 014 winner): the UI-SPEC contract page — every .view-ui-spec-* rule.
+   Additive only, one contiguous block. Tokens throughout (space, type, line height), squared
+   corners with no corner rounding declared, no literal colour of any kind, --fw-medium /
+   --fw-semibold only. Colour comes from the shared tones and the theme tokens: covered is --primary,
+   a backstop is --in-flight-fill, unresolved is --missing-fill, dismissed is a quiet --muted-foreground
+   dash, and the surfaces are --border, --card-veil, --primary-tint and --state-hover. The one
+   exception is content: a swatch or a type sample paints the document's own validated value,
+   handed over as a --swatch custom property and nothing else. Nothing here names a
+   parse-degradation tone, and this block makes no colour-mix recipe of its own. Ancestors of a
+   .status-chip set no line-height, so every chip keeps the inherited body value (F-05). Media
+   overrides sit directly after their base rules (css-source-order).
+   ========================================================================== */
+
+/* Cover: Created and Status sit in ArtifactHeader's .artifact-meta-row beside the sign-off chip. */
+.view-ui-spec-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  align-items: center;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-ui-spec-facts b {
+  margin-left: var(--space-1-5);
+  color: var(--foreground);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+button.view-ui-spec-signoff {
+  cursor: pointer;
+}
+
+button.view-ui-spec-signoff:hover {
+  background: var(--state-hover);
+}
+
+.view-ui-spec-key {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+/* The sign-off modal is shadcn's DialogContent; only its width, header and body are ours. */
+.view-ui-spec-signoff-dialog {
+  max-height: 88vh;
+  overflow-y: auto;
+}
+
+@media (min-width: 40rem) {
+  .view-ui-spec-signoff-dialog {
+    max-width: 44rem;
+  }
+}
+
+.view-ui-spec-signoff-dialog-head {
+  padding-right: var(--space-10);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.view-ui-spec-signoff-dialog-title {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.view-ui-spec-signoff-list {
+  display: grid;
+  margin: 0;
+}
+
+.view-ui-spec-signoff-row {
+  display: grid;
+  grid-template-columns: 12rem minmax(0, 1fr);
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+@media (max-width: 42rem) {
+  .view-ui-spec-signoff-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
+}
+
+.view-ui-spec-signoff-row:last-child {
+  border-bottom: 0;
+}
+
+.view-ui-spec-signoff-row dt {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+}
+
+.view-ui-spec-signoff-row[data-bare='true'] {
+  padding: var(--space-2) 0;
+}
+
+.view-ui-spec-signoff-row[data-bare='true'] dt {
+  display: flex;
+  grid-column: 1 / -1;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.view-ui-spec-signoff-row dd {
+  margin: 0;
+  font-size: var(--fs-4);
+  overflow-wrap: anywhere;
+}
+
+.view-ui-spec-signoff-name {
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+}
+
+.view-ui-spec-signoff-verdict {
+  display: inline-flex;
+  gap: var(--space-1-5);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-ui-spec-signoff-verdict[data-verdict='complete'] {
+  color: var(--primary);
+}
+
+.view-ui-spec-signoff-verdict[data-verdict='in-flight'] {
+  color: var(--in-flight-fill);
+}
+
+.view-ui-spec-signoff-verdict[data-verdict='missing'] {
+  color: var(--missing-fill);
+}
+
+.view-ui-spec-signoff-approval {
+  margin: 0;
+  padding-top: var(--space-3);
+  border-top: 1px dashed var(--border);
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+/* Chapter headings: a mono title with a muted number, the aside on the title's baseline row, and a
+   rule below. Size, weight and tracking stay the shared section h2 (F-04). */
+.view-ui-spec-chapter > .section-heading {
+  align-items: flex-end;
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.view-ui-spec-chapter > .section-heading h2 {
+  font-family: var(--font-mono);
+}
+
+.view-ui-spec-number {
+  margin-right: var(--space-3);
+  color: var(--muted-foreground);
+}
+
+.view-ui-spec-aside {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-ui-spec-code {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-ui-spec-tag {
+  color: var(--primary);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-ui-spec-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  transition: color 0.15s ease;
+}
+
+.view-ui-spec-link:hover {
+  color: var(--primary);
+}
+
+/* UI considerations: the coverage meter and its key, the author's own count. */
+.view-ui-spec-considerations {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.view-ui-spec-meter {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 52rem;
+}
+
+.view-ui-spec-meter-bar {
+  display: flex;
+  height: 0.6rem;
+  border: 1px solid var(--border);
+}
+
+.view-ui-spec-meter-bar > span {
+  display: block;
+  height: 100%;
+}
+
+.view-ui-spec-meter-bar > [data-status='covered'],
+.view-ui-spec-meter-key [data-status='covered'] > i {
+  background: var(--primary);
+}
+
+.view-ui-spec-meter-bar > [data-status='backstop'],
+.view-ui-spec-meter-key [data-status='backstop'] > i {
+  background: var(--in-flight-fill);
+}
+
+.view-ui-spec-meter-bar > [data-status='unresolved'],
+.view-ui-spec-meter-key [data-status='unresolved'] > i {
+  background: var(--missing-fill);
+}
+
+.view-ui-spec-meter-bar > [data-status='dismissed'],
+.view-ui-spec-meter-key [data-status='dismissed'] > i {
+  background: var(--border);
+}
+
+.view-ui-spec-meter-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-ui-spec-meter-key i {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-right: var(--space-1-5);
+}
+
+.view-ui-spec-meter-key b {
+  margin-right: var(--space-1);
+  color: var(--foreground);
+  font-weight: var(--fw-medium);
+}
+
+.view-ui-spec-author {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+/* Needs a person: one chip per backstop or unresolved state, each opening its cell. */
+.view-ui-spec-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  align-items: center;
+}
+
+.view-ui-spec-strip .view-ui-spec-key {
+  margin-right: var(--space-2);
+}
+
+.view-ui-spec-strip button.status-chip {
+  background: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.view-ui-spec-strip button.status-chip:hover {
+  background: var(--state-hover);
+}
+
+.view-ui-spec-strip button.status-chip[aria-pressed='true'] {
+  border-color: var(--foreground);
+  color: var(--foreground);
+}
+
+/* The element x state matrix: a scrolling wrapper, a sticky element column, one square per state. */
+.view-ui-spec-matrix-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+}
+
+.view-ui-spec-matrix {
+  width: 100%;
+  min-width: 46rem;
+  border-collapse: collapse;
+  font-size: var(--fs-3);
+}
+
+@media (max-width: 42rem) {
+  .view-ui-spec-matrix {
+    min-width: 34rem;
+  }
+}
+
+.view-ui-spec-matrix th {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.view-ui-spec-matrix th.view-ui-spec-matrix-el {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--background);
+  text-align: left;
+}
+
+.view-ui-spec-matrix tbody th.view-ui-spec-matrix-el {
+  max-width: 16rem;
+  padding: var(--space-1-5) var(--space-3);
+  border-right: 1px solid var(--border);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: var(--fs-3);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: normal;
+}
+
+@media (max-width: 42rem) {
+  .view-ui-spec-matrix tbody th.view-ui-spec-matrix-el {
+    max-width: 8.5rem;
+    font-size: var(--fs-2);
+  }
+}
+
+.view-ui-spec-matrix-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.view-ui-spec-matrix td {
+  height: 2.4rem;
+  padding: 0;
+  border-bottom: 1px solid var(--border-faint);
+  text-align: center;
+}
+
+.view-ui-spec-matrix td button {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-height: 2.4rem;
+  place-items: center;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.view-ui-spec-matrix td button:hover {
+  background: var(--state-hover);
+}
+
+.view-ui-spec-matrix td button[aria-pressed='true'] {
+  background: var(--primary-tint);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.view-ui-spec-mark {
+  display: inline-block;
+  position: relative;
+  width: 0.8rem;
+  height: 0.8rem;
+}
+
+.view-ui-spec-mark[data-status='covered'] {
+  background: var(--primary);
+}
+
+.view-ui-spec-mark[data-status='backstop'] {
+  background: linear-gradient(135deg, var(--in-flight-fill) 50%, transparent 50%);
+  outline: 1.5px solid var(--in-flight-fill);
+  outline-offset: -1.5px;
+}
+
+.view-ui-spec-mark[data-status='unresolved'] {
+  outline: 2px solid var(--missing-fill);
+  outline-offset: -2px;
+}
+
+.view-ui-spec-mark[data-status='dismissed'] {
+  width: 0.5rem;
+  height: 1px;
+  background: var(--muted-foreground);
+}
+
+.view-ui-spec-mark-count {
+  margin-left: var(--space-0-5);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  vertical-align: top;
+}
+
+.view-ui-spec-matrix-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  align-items: center;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-ui-spec-matrix-key > span {
+  display: inline-flex;
+  gap: var(--space-1-5);
+  align-items: center;
+}
+
+/* The selected cell: how that state is handled, or the hint to click one. */
+.view-ui-spec-detail {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--card-veil);
+}
+
+.view-ui-spec-detail-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: baseline;
+}
+
+.view-ui-spec-detail-head h3 {
+  margin: 0;
+  font-size: var(--fs-6);
+  font-weight: var(--fw-semibold);
+}
+
+.view-ui-spec-detail-head .view-ui-spec-link {
+  margin-left: auto;
+}
+
+.view-ui-spec-res {
+  display: grid;
+  gap: var(--space-1-5);
+  padding-top: var(--space-3);
+  border-top: 1px dashed var(--border);
+}
+
+.view-ui-spec-res-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.view-ui-spec-res-text {
+  font-size: var(--fs-4);
+  overflow-wrap: anywhere;
+}
+
+.view-ui-spec-hint {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+/* The tracer's plain fact lists for the chapters Task 2 draws properly. */
+.view-ui-spec-facts-list {
+  margin: 0;
+  padding-left: var(--space-5);
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+}
+
+.view-ui-spec-verdict-line {
+  margin: 0;
+}
+
+/* "In the source only": what the view leaves to Source mode, one click away. */
+.view-ui-spec-source-only {
+  grid-template-columns: 12rem minmax(0, 1fr);
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+  border-top: 1px dashed var(--border);
+  border-bottom: 1px dashed var(--border);
+}
+
+.view-ui-spec-source-only ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5) var(--space-5);
+  margin: 0;
+  padding: 0;
+  font-size: var(--fs-3);
+  list-style: none;
+}
+
+.view-ui-spec-source-only button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  text-decoration: underline dotted;
+  text-underline-offset: var(--space-0-5);
+}
+
+.view-ui-spec-source-only button:hover {
+  color: var(--foreground);
+}
+
+@media (max-width: 42rem) {
+  .view-ui-spec-source-only {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+}
+
+/* The chapters sit a fluid step apart, the way the page's own gap does. */
+.document-canvas > :is(.view-ui-spec-chapter, .view-ui-spec-source-only) ~ :is(.view-ui-spec-chapter, .view-ui-spec-source-only) {
+  margin-top: var(--space-fluid-10);
+}
+/* quick-261001-qk6:end */
