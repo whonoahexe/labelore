@@ -677,9 +677,16 @@ function reservedOf(lines: string[]): Record<string, string[]> {
       continue;
     }
     const colon = lead.after.indexOf(':');
-    const inline = colon === -1 ? '' : lead.after.slice(colon + 1).replace(/\*\*\s*$/, '').trim();
+    const inline = colon === -1 ? '' : lead.after.slice(colon + 1).replace(/^\s*\*+\s*/, '').replace(/\*\*\s*$/, '').trim();
     if (inline !== '') {
-      out[lead.key] = [clip(inline, MAX_CELL)];
+      // The lead's sentence can wrap onto following lines.
+      const parts = [inline];
+      for (let k = i + 1; k < lines.length; k++) {
+        const t = lines[k].trim();
+        if (t === '' || t.startsWith('**') || t.startsWith('#') || reservedLead(lines[k]) || listItem(lines[k]) !== null) break;
+        parts.push(t);
+      }
+      out[lead.key] = [clip(parts.join(' '), MAX_CELL)];
       continue;
     }
     const tail: string[] = [];
