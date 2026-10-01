@@ -157,6 +157,13 @@ describe('extractUiSpec — degrade', () => {
     expect(spec.signoff?.hasNotes).toBe(true);
   });
 
+  it('a reserved-for lead with its text on the same line drops the bold marker and keeps wrapped lines', () => {
+    const spec = extractUiSpec(
+      '## Color\n\n| Role | Value |\n|---|---|\n| Accent (10%) | x |\n\n**Accent reserved for:** progress fill on cards\nand the live icon only.\n\n**Other:** words\n',
+    );
+    expect(spec.reserved.accent).toEqual(['progress fill on cards and the live icon only.']);
+  });
+
   it('an unchecked PASS with a real approval stays PASS', () => {
     const spec = extractUiSpec('---\nstatus: approved\n---\n## Checker Sign-Off\n\n- [ ] Dimension 1 Copywriting: PASS\n\n**Approval:** approved\n');
     expect(spec.signoff?.dims[0].verdict).toBe('PASS');

@@ -256,6 +256,12 @@ const CORNER_SELECTORS = [
   '.view-patterns-row',
   '.view-patterns-note',
   '.view-patterns-reason',
+  // quick-261001-qk6: the UI-SPEC page's choice cards, colour role cards, registry cards and the
+  // matrix wrapper.
+  '.view-ui-spec-choice',
+  '.view-ui-spec-role',
+  '.view-ui-spec-reg',
+  '.view-ui-spec-matrix-wrap',
 ];
 
 /** F-06: squared corners — every element matching one of the shared "boxy chrome" selectors,

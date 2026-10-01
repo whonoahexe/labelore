@@ -8773,8 +8773,13 @@ button.view-ui-spec-signoff:hover {
 
 /* Chapter headings: a mono title with a muted number, the aside on the title's baseline row, and a
    rule below. Size, weight and tracking stay the shared section h2 (F-04). */
+.view-ui-spec-chapter {
+  gap: 0;
+}
+
 .view-ui-spec-chapter > .section-heading {
   align-items: flex-end;
+  margin-bottom: var(--space-5);
   padding-bottom: var(--space-3);
   border-bottom: 1px solid var(--border);
 }
@@ -8937,6 +8942,7 @@ button.view-ui-spec-signoff:hover {
 }
 
 .view-ui-spec-matrix {
+  display: table;
   width: 100%;
   min-width: 46rem;
   border-collapse: collapse;
@@ -9305,14 +9311,16 @@ button.view-ui-spec-signoff:hover {
 /* Spacing: a tick ruler to scale, a fluid step drawn as a range, the usage folded under a button. */
 .view-ui-spec-compact {
   display: grid;
-  gap: var(--space-2);
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
   padding: var(--space-5) var(--space-6) var(--space-3);
   border: 1px solid var(--border);
   background: var(--card-veil);
 }
 
-.view-ui-spec-compact > .view-ui-spec-link {
-  justify-self: start;
+.view-ui-spec-compact > .view-ui-spec-detail-list {
+  grid-column: 1 / -1;
 }
 
 .view-ui-spec-ticks {
@@ -9679,6 +9687,7 @@ button.view-ui-spec-signoff:hover {
   gap: var(--space-0-5);
   margin: 0;
   padding-left: var(--space-5);
+  list-style: decimal;
 }
 
 /* Registry safety: a verdict line, then one card per registry with its blocks grouped. */
