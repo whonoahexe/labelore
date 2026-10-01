@@ -25,6 +25,7 @@ const LB05 = new URL(
 );
 const DENSE = new URL('../../fixtures/dense/.planning/phases/01-identity-slice/01-UI-SPEC.md', import.meta.url);
 const SP04 = `${SP_PLANNING}/milestones/v1.0-phases/04-tier-to-tier-transfers/04-UI-SPEC.md`;
+const SP02 = `${SP_PLANNING}/milestones/v1.0-phases/02-storage-health-status/02-UI-SPEC.md`;
 const HAVE_SP = existsSync(SP_PLANNING);
 
 function inputOf(uiSpec: unknown, overrides: Partial<ViewInput> = {}): ViewInput {
@@ -225,5 +226,118 @@ describe('composeUiSpec — labels, status and degrade', () => {
     expect(html).toContain('Sign-off not run');
     expect(html).toContain('Created <b>2026-09-20</b>');
     expect(html).toContain('Status <b>draft</b>');
+  });
+});
+
+describe.runIf(HAVE_SP)('UiSpecView — design system, registry and source-only (sp v1.0/04)', () => {
+  const html = (): string => render(compose(SP04));
+
+  it('four choice cards in order, the shadcn card with its chips and a preset copy button', () => {
+    const out = html();
+    const labels = [...out.matchAll(/<article class="view-ui-spec-choice"[^>]*><span class="view-ui-spec-key">([^<]*)<\/span>/g)].map((m) => m[1]);
+    expect(labels).toEqual(['Design system', 'Component library', 'Icon library', 'Font']);
+    expect(out).toContain('shadcn/ui');
+    expect(out).toContain('>Initialized<');
+    expect(out).toContain('>Preset locked<');
+    expect(out).toMatch(/<button[^>]*aria-label="Copy preset b3Dqcuo4na"[^>]*>[\s\S]*?b3Dqcuo4na/);
+    expect(out).toContain('<i>style</i> base-sera');
+    expect(out).toContain('<i>base</i> neutral');
+    expect(out).toContain('<i>theme</i> orange');
+  });
+
+  it('draws each loaded family in its own face', () => {
+    const out = html();
+    expect(out).toMatch(/data-face="sans"[^>]*>Space Grotesk</);
+    expect(out).toMatch(/data-face="mono"[^>]*>JetBrains Mono</);
+  });
+
+  it('seven spacing ticks, four type rungs, four role cards', () => {
+    const out = html();
+    expect((out.match(/class="view-ui-spec-tick"/g) ?? []).length + (out.match(/class="view-ui-spec-tick" data-alt/g) ?? []).length).toBeGreaterThanOrEqual(7);
+    expect((out.match(/view-ui-spec-tick[^>]*style="left:/g) ?? []).length).toBe(7);
+    expect((out.match(/class="view-ui-spec-rung"/g) ?? []).length).toBe(4);
+    expect((out.match(/<article class="view-ui-spec-role"/g) ?? []).length).toBe(4);
+    expect(out).toContain('Spacing · 7 steps');
+    expect(out).toContain('Typography · 4 roles');
+    expect(out).toContain('Colour · 60 / 30 / 10');
+  });
+
+  it('a type sample takes only a numeric size, weight and line height', () => {
+    const out = html();
+    const styles = [...out.matchAll(/class="view-ui-spec-sample"[^>]*style="([^"]*)"/g)].map((m) => m[1]);
+    expect(styles.length).toBe(4);
+    for (const style of styles) expect(style).toMatch(/^font-size:\d+(\.\d+)?px;font-weight:\d+;line-height:\d+(\.\d+)?$/);
+  });
+
+  it('a colour role that says never --primary shows a Never chip, with the token as code', () => {
+    const out = html();
+    expect(out).toMatch(/>Never<\/span> <code>--primary<\/code>/);
+    expect(out).toContain('Reserved for');
+  });
+
+  it('the registry reads No vetting needed with a block count and grouped cards', () => {
+    const out = html();
+    expect(out).toContain('>03<');
+    expect(out).toContain('No vetting needed');
+    expect(out).toContain('14 blocks');
+    expect(out).toContain('New this phase · 4');
+    expect(out).toContain('Reused · 10');
+  });
+
+  it('no copy deck, no pre, and the source-only strip lists Copywriting Contract and Frontmatter', () => {
+    const out = html();
+    expect(out).not.toContain('<pre');
+    expect(out).not.toMatch(/Copy deck|view-ui-spec-copy/);
+    const nav = out.slice(out.indexOf('<nav'));
+    expect(nav).toContain('aria-label="In the source only"');
+    expect(nav).toContain('>Copywriting Contract<');
+    expect(nav).toContain('>Frontmatter<');
+    expect(nav).toContain('>Layout<');
+  });
+
+  it('every inline style is numbers, percentages or a validated swatch value', () => {
+    const out = html();
+    for (const m of out.matchAll(/style="([^"]*)"/g)) {
+      const style = m[1];
+      for (const declaration of style.split(';').filter((d) => d !== '')) {
+        const [prop, value] = declaration.split(/:(.*)/s);
+        expect(['flex-grow', 'left', 'width', 'font-size', 'font-weight', 'line-height', '--swatch-light', '--swatch-dark']).toContain(prop);
+        if (prop.startsWith('--swatch')) expect(safeColor(value)).toBe(value);
+        else expect(value).toMatch(/^-?\d+(\.\d+)?(px|%)?$/);
+      }
+    }
+  });
+});
+
+describe.runIf(HAVE_SP)('UiSpecView — hex light and dark columns (sp v1.0/02)', () => {
+  it('a role with both values carries both swatch halves', () => {
+    const out = render(compose(SP02));
+    expect(out).toMatch(/data-half="light"[^>]*style="--swatch-light:#FFFFFF"/i);
+    expect(out).toMatch(/data-half="dark"[^>]*style="--swatch-dark:#0A0A0A"/i);
+  });
+});
+
+describe('UiSpecView — the dense fixture and a hostile colour', () => {
+  it('shows No shadcn, Not initialized and Preset: none; token-only roles are hatched', () => {
+    const out = render(compose(DENSE));
+    expect(out).toContain('No shadcn');
+    expect(out).toContain('Not initialized');
+    expect(out).toContain('Preset: none');
+    expect(out).toContain('Spacing · 1 steps');
+  });
+
+  it('a document value that is not a plain hex or oklch never reaches a style', () => {
+    const contract = extractUiSpec(
+      '## Color\n\n| Role | Value | Usage |\n|---|---|---|\n| Dominant (60%) | `--background` url(javascript:alert(1)) | page |\n| Secondary (30%) | `--card` #fff;background:url(x) | cards |\n| Accent (10%) | `--primary` oklch(1 0 0) url(http://x) | cta |\n',
+    );
+    const spec = composeUiSpec(inputOf(contract));
+    expect(spec).not.toBeNull();
+    const out = render(spec as ComposedUiSpec);
+    expect(out).not.toContain('url(');
+    expect(out).not.toMatch(/style="[^"]*javascript/);
+    // No value at all -> hatched; a valid literal is taken whole and nothing after it.
+    expect(out).toContain('Value not in doc');
+    expect(out).toContain('--swatch-light:#fff"');
+    expect(out).toContain('--swatch-light:oklch(1 0 0)"');
   });
 });

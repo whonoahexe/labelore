@@ -778,17 +778,22 @@ export function ArtifactPage(): React.JSX.Element {
         {viewAvailable ? <DocumentViewToggle mode={mode} onChange={setMode} /> : null}
       </ArtifactHeader>
 
-      {panels.length > 0 && !specCover ? (
-        <details className="artifact-metadata">
-          <summary>
-            Document metadata <span>{panels.length} sections</span>
-          </summary>
-          <div className="metadata-panels" aria-label="Structured artifact metadata">
-            {panels.map((panel) => (
-              <MetadataPanel key={panel.key} panel={panel} />
-            ))}
-          </div>
-        </details>
+      {panels.length > 0 ? (
+        // The UI-SPEC page's cover and shadcn card already carry the frontmatter facts, and the
+        // Winner lists the frontmatter as source-only — View mode hides the disclosure (Source
+        // mode keeps it).
+        specCover ? null : (
+          <details className="artifact-metadata">
+            <summary>
+              Document metadata <span>{panels.length} sections</span>
+            </summary>
+            <div className="metadata-panels" aria-label="Structured artifact metadata">
+              {panels.map((panel) => (
+                <MetadataPanel key={panel.key} panel={panel} />
+              ))}
+            </div>
+          </details>
+        )
       ) : null}
 
       {warningTone ? (
