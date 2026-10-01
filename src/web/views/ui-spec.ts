@@ -149,8 +149,10 @@ export interface ComposedFontFace {
 
 export interface ComposedFontCard {
   families: ComposedFontFace[];
-  /** The cell text when no known family is named. */
-  text: string;
+  /** The headline and the rest of the cell, for a Font row that names no known family. */
+  head: string;
+  rest: string;
+  /** True when the row says there is no font. */
   none: boolean;
 }
 
@@ -648,7 +650,9 @@ function composeChoices(contract: UiSpecContract): ComposedChoices {
   let font: ComposedFontCard | null = null;
   if (rows.font) {
     const families = fontsOf(rows.font);
-    font = { families, text: plain(rows.font), none: families.length === 0 };
+    const c = choiceOf(rows.font);
+    const none = families.length === 0 && /^none$/i.test(c.head);
+    font = { families, head: none ? 'None' : c.head, rest: families.length === 0 ? c.rest : '', none };
   }
   return {
     shadcn: presetInfo(contract, rows),
@@ -896,10 +900,11 @@ function parentheticals(part: string): { labels: string[]; bare: string } {
   return { labels, bare };
 }
 
+/** "already installed, reused" reads as Reused — checked first, since it also contains "install". */
 function groupLabel(label: string | null): string {
   if (!label) return 'Blocks';
-  if (/new|install|added|to be added/i.test(label)) return 'New this phase';
   if (/already|reuse/i.test(label)) return 'Reused';
+  if (/new|install|added|to be added/i.test(label)) return 'New this phase';
   return label;
 }
 
@@ -931,7 +936,12 @@ function composeRegistry(table: UiSpecTable | null): ComposedRegistry | null {
             .filter((x) => /^[A-Z]\w+$/.test(x));
         }
         texts.push(plain(part));
-        if (names.length > 0) groups.push({ label: groupLabel(label), names });
+        if (names.length > 0) {
+          const name = groupLabel(label);
+          const existing = groups.find((g) => g.label === name);
+          if (existing) existing.names.push(...names);
+          else groups.push({ label: name, names: [...names] });
+        }
       }
     }
     return {
