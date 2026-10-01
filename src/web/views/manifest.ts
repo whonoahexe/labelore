@@ -15,6 +15,8 @@ import type { ComposedResearchBriefing } from './research-briefing.ts';
 import type { ComposedPatternMap } from './pattern-map.ts';
 // Type-only import — same reason as `brief` above (quick-261001-qk6, sketch-014 winner).
 import type { ComposedUiSpec } from './ui-spec.ts';
+// Type-only import — same reason as `brief` above (quick-261001-qk7, sketch-015 winner).
+import type { ComposedUatSession } from './uat-session.ts';
 
 /** Declared now so 05-05 can add components without widening this union a second time — only
  * `discussion-questions` has a real component in this plan (see `blocks.tsx`). */
@@ -74,6 +76,11 @@ export interface ViewManifest {
    * `structured.uiSpec`, or a contract with none of the recognised sections), and the page falls
    * back to the promoted-block view, which the manifest keeps as `promote`. */
   uiSpec?: (input: ViewInput) => ComposedUiSpec | null;
+  /** quick-261001-qk7 (sketch-015 winner): the UAT session page a manifest opts into instead of
+   * `promote` — currently only `uat`. Returns `null` when the input can't compose one (no
+   * `structured.uat`, or a document with no tests), and the page falls back to the promoted-block
+   * view, which the manifest keeps as `promote`. */
+  uatSession?: (input: ViewInput) => ComposedUatSession | null;
 }
 
 export interface ViewInput {
