@@ -10110,7 +10110,7 @@ button.view-ui-spec-signoff:hover {
   place-items: center;
   border: 0;
   background: var(--muted-foreground);
-  color: var(--primary-foreground);
+  color: var(--background);
   cursor: pointer;
   font-family: var(--font-mono);
   font-size: var(--fs-2);
@@ -10414,6 +10414,10 @@ button.view-ui-spec-signoff:hover {
   border-bottom: 1px solid var(--border-faint);
   overflow-wrap: anywhere;
   vertical-align: baseline;
+}
+
+.view-uat-register .status-chip {
+  white-space: nowrap;
 }
 
 .view-uat-register tr[data-gap] {
