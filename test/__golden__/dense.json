@@ -3709,7 +3709,97 @@
                 "bodyHash": "be7d157ad2aa1e2640f2a5bd95d677fbc6694c2d28dac791e7021c3d1b87c82e",
                 "mtimeMs": 0,
                 "warnings": [],
-                "structured": {}
+                "structured": {
+                  "uat": {
+                    "current": null,
+                    "currentLine": "testing complete",
+                    "tests": [
+                      {
+                        "number": 1,
+                        "name": "Identity slice loads",
+                        "result": "pass",
+                        "resultRaw": "pass",
+                        "fields": [
+                          {
+                            "key": "expected",
+                            "value": "The identity slice's fixture artifacts load through the parser without error",
+                            "blocks": [
+                              {
+                                "kind": "paragraph",
+                                "text": "The identity slice's fixture artifacts load through the parser without error"
+                              }
+                            ]
+                          },
+                          {
+                            "key": "result",
+                            "value": "pass",
+                            "blocks": []
+                          }
+                        ],
+                        "lead": []
+                      },
+                      {
+                        "number": 2,
+                        "name": "Unfamiliar artifact types render",
+                        "result": "pass",
+                        "resultRaw": "pass",
+                        "fields": [
+                          {
+                            "key": "expected",
+                            "value": "`01-SPEC.md`, `01-AI-SPEC.md`, and `01-COST-MODEL.md` all appear in the snapshot",
+                            "blocks": [
+                              {
+                                "kind": "paragraph",
+                                "text": "`01-SPEC.md`, `01-AI-SPEC.md`, and `01-COST-MODEL.md` all appear in the snapshot"
+                              }
+                            ]
+                          },
+                          {
+                            "key": "result",
+                            "value": "pass",
+                            "blocks": []
+                          }
+                        ],
+                        "lead": []
+                      }
+                    ],
+                    "testsNote": [],
+                    "summary": {
+                      "total": "2",
+                      "passed": "2",
+                      "issues": "0",
+                      "pending": "0",
+                      "skipped": "0"
+                    },
+                    "gaps": {
+                      "mode": "none",
+                      "heading": "Gaps",
+                      "lead": "None — all tests passed.",
+                      "items": [],
+                      "cards": []
+                    },
+                    "extras": [],
+                    "sections": [
+                      {
+                        "heading": "Current Test",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Tests",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Summary",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Gaps",
+                        "claimed": true
+                      }
+                    ],
+                    "commentCount": 0
+                  }
+                }
               },
               ".planning/phases/01-identity-slice/01-UI-SPEC.md": {
                 "id": ".planning/phases/01-identity-slice/01-UI-SPEC.md",
@@ -7136,7 +7226,97 @@
             "bodyHash": "be7d157ad2aa1e2640f2a5bd95d677fbc6694c2d28dac791e7021c3d1b87c82e",
             "mtimeMs": 0,
             "warnings": [],
-            "structured": {}
+            "structured": {
+              "uat": {
+                "current": null,
+                "currentLine": "testing complete",
+                "tests": [
+                  {
+                    "number": 1,
+                    "name": "Identity slice loads",
+                    "result": "pass",
+                    "resultRaw": "pass",
+                    "fields": [
+                      {
+                        "key": "expected",
+                        "value": "The identity slice's fixture artifacts load through the parser without error",
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "The identity slice's fixture artifacts load through the parser without error"
+                          }
+                        ]
+                      },
+                      {
+                        "key": "result",
+                        "value": "pass",
+                        "blocks": []
+                      }
+                    ],
+                    "lead": []
+                  },
+                  {
+                    "number": 2,
+                    "name": "Unfamiliar artifact types render",
+                    "result": "pass",
+                    "resultRaw": "pass",
+                    "fields": [
+                      {
+                        "key": "expected",
+                        "value": "`01-SPEC.md`, `01-AI-SPEC.md`, and `01-COST-MODEL.md` all appear in the snapshot",
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "`01-SPEC.md`, `01-AI-SPEC.md`, and `01-COST-MODEL.md` all appear in the snapshot"
+                          }
+                        ]
+                      },
+                      {
+                        "key": "result",
+                        "value": "pass",
+                        "blocks": []
+                      }
+                    ],
+                    "lead": []
+                  }
+                ],
+                "testsNote": [],
+                "summary": {
+                  "total": "2",
+                  "passed": "2",
+                  "issues": "0",
+                  "pending": "0",
+                  "skipped": "0"
+                },
+                "gaps": {
+                  "mode": "none",
+                  "heading": "Gaps",
+                  "lead": "None — all tests passed.",
+                  "items": [],
+                  "cards": []
+                },
+                "extras": [],
+                "sections": [
+                  {
+                    "heading": "Current Test",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Tests",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Summary",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Gaps",
+                    "claimed": true
+                  }
+                ],
+                "commentCount": 0
+              }
+            }
           },
           ".planning/phases/01-identity-slice/01-UI-SPEC.md": {
             "id": ".planning/phases/01-identity-slice/01-UI-SPEC.md",
@@ -9438,7 +9618,97 @@
                   "bodyHash": "be7d157ad2aa1e2640f2a5bd95d677fbc6694c2d28dac791e7021c3d1b87c82e",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "uat": {
+                      "current": null,
+                      "currentLine": "testing complete",
+                      "tests": [
+                        {
+                          "number": 1,
+                          "name": "Identity slice loads",
+                          "result": "pass",
+                          "resultRaw": "pass",
+                          "fields": [
+                            {
+                              "key": "expected",
+                              "value": "The identity slice's fixture artifacts load through the parser without error",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "The identity slice's fixture artifacts load through the parser without error"
+                                }
+                              ]
+                            },
+                            {
+                              "key": "result",
+                              "value": "pass",
+                              "blocks": []
+                            }
+                          ],
+                          "lead": []
+                        },
+                        {
+                          "number": 2,
+                          "name": "Unfamiliar artifact types render",
+                          "result": "pass",
+                          "resultRaw": "pass",
+                          "fields": [
+                            {
+                              "key": "expected",
+                              "value": "`01-SPEC.md`, `01-AI-SPEC.md`, and `01-COST-MODEL.md` all appear in the snapshot",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "`01-SPEC.md`, `01-AI-SPEC.md`, and `01-COST-MODEL.md` all appear in the snapshot"
+                                }
+                              ]
+                            },
+                            {
+                              "key": "result",
+                              "value": "pass",
+                              "blocks": []
+                            }
+                          ],
+                          "lead": []
+                        }
+                      ],
+                      "testsNote": [],
+                      "summary": {
+                        "total": "2",
+                        "passed": "2",
+                        "issues": "0",
+                        "pending": "0",
+                        "skipped": "0"
+                      },
+                      "gaps": {
+                        "mode": "none",
+                        "heading": "Gaps",
+                        "lead": "None — all tests passed.",
+                        "items": [],
+                        "cards": []
+                      },
+                      "extras": [],
+                      "sections": [
+                        {
+                          "heading": "Current Test",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Tests",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Summary",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Gaps",
+                          "claimed": true
+                        }
+                      ],
+                      "commentCount": 0
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-UI-SPEC.md": {
                   "id": ".planning/phases/01-identity-slice/01-UI-SPEC.md",
@@ -11337,7 +11607,97 @@
                   "bodyHash": "be7d157ad2aa1e2640f2a5bd95d677fbc6694c2d28dac791e7021c3d1b87c82e",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "uat": {
+                      "current": null,
+                      "currentLine": "testing complete",
+                      "tests": [
+                        {
+                          "number": 1,
+                          "name": "Identity slice loads",
+                          "result": "pass",
+                          "resultRaw": "pass",
+                          "fields": [
+                            {
+                              "key": "expected",
+                              "value": "The identity slice's fixture artifacts load through the parser without error",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "The identity slice's fixture artifacts load through the parser without error"
+                                }
+                              ]
+                            },
+                            {
+                              "key": "result",
+                              "value": "pass",
+                              "blocks": []
+                            }
+                          ],
+                          "lead": []
+                        },
+                        {
+                          "number": 2,
+                          "name": "Unfamiliar artifact types render",
+                          "result": "pass",
+                          "resultRaw": "pass",
+                          "fields": [
+                            {
+                              "key": "expected",
+                              "value": "`01-SPEC.md`, `01-AI-SPEC.md`, and `01-COST-MODEL.md` all appear in the snapshot",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "`01-SPEC.md`, `01-AI-SPEC.md`, and `01-COST-MODEL.md` all appear in the snapshot"
+                                }
+                              ]
+                            },
+                            {
+                              "key": "result",
+                              "value": "pass",
+                              "blocks": []
+                            }
+                          ],
+                          "lead": []
+                        }
+                      ],
+                      "testsNote": [],
+                      "summary": {
+                        "total": "2",
+                        "passed": "2",
+                        "issues": "0",
+                        "pending": "0",
+                        "skipped": "0"
+                      },
+                      "gaps": {
+                        "mode": "none",
+                        "heading": "Gaps",
+                        "lead": "None — all tests passed.",
+                        "items": [],
+                        "cards": []
+                      },
+                      "extras": [],
+                      "sections": [
+                        {
+                          "heading": "Current Test",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Tests",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Summary",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Gaps",
+                          "claimed": true
+                        }
+                      ],
+                      "commentCount": 0
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-UI-SPEC.md": {
                   "id": ".planning/phases/01-identity-slice/01-UI-SPEC.md",
@@ -13236,7 +13596,97 @@
                   "bodyHash": "be7d157ad2aa1e2640f2a5bd95d677fbc6694c2d28dac791e7021c3d1b87c82e",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "uat": {
+                      "current": null,
+                      "currentLine": "testing complete",
+                      "tests": [
+                        {
+                          "number": 1,
+                          "name": "Identity slice loads",
+                          "result": "pass",
+                          "resultRaw": "pass",
+                          "fields": [
+                            {
+                              "key": "expected",
+                              "value": "The identity slice's fixture artifacts load through the parser without error",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "The identity slice's fixture artifacts load through the parser without error"
+                                }
+                              ]
+                            },
+                            {
+                              "key": "result",
+                              "value": "pass",
+                              "blocks": []
+                            }
+                          ],
+                          "lead": []
+                        },
+                        {
+                          "number": 2,
+                          "name": "Unfamiliar artifact types render",
+                          "result": "pass",
+                          "resultRaw": "pass",
+                          "fields": [
+                            {
+                              "key": "expected",
+                              "value": "`01-SPEC.md`, `01-AI-SPEC.md`, and `01-COST-MODEL.md` all appear in the snapshot",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "`01-SPEC.md`, `01-AI-SPEC.md`, and `01-COST-MODEL.md` all appear in the snapshot"
+                                }
+                              ]
+                            },
+                            {
+                              "key": "result",
+                              "value": "pass",
+                              "blocks": []
+                            }
+                          ],
+                          "lead": []
+                        }
+                      ],
+                      "testsNote": [],
+                      "summary": {
+                        "total": "2",
+                        "passed": "2",
+                        "issues": "0",
+                        "pending": "0",
+                        "skipped": "0"
+                      },
+                      "gaps": {
+                        "mode": "none",
+                        "heading": "Gaps",
+                        "lead": "None — all tests passed.",
+                        "items": [],
+                        "cards": []
+                      },
+                      "extras": [],
+                      "sections": [
+                        {
+                          "heading": "Current Test",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Tests",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Summary",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Gaps",
+                          "claimed": true
+                        }
+                      ],
+                      "commentCount": 0
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-UI-SPEC.md": {
                   "id": ".planning/phases/01-identity-slice/01-UI-SPEC.md",

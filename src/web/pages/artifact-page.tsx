@@ -57,6 +57,8 @@ import type { ComposedPatternMap } from '../views/pattern-map.ts';
 import { PatternIntroMeta, PatternMapView } from '../views/pattern-map-components.tsx';
 import type { ComposedUiSpec } from '../views/ui-spec.ts';
 import { UiSpecIntroMeta, UiSpecView } from '../views/ui-spec-components.tsx';
+import type { ComposedUatSession } from '../views/uat-session.ts';
+import { UatIntroMeta, UatSessionView } from '../views/uat-session-components.tsx';
 export {
   handleDocumentReferenceActivation,
   restoreDocumentReferenceFocus,
@@ -609,6 +611,13 @@ export function ArtifactPage(): React.JSX.Element {
     if (!manifest || !viewInput) return null;
     return manifest.uiSpec?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // quick-261001-qk7 (sketch-015 winner): the UAT session page, when the resolved manifest opts
+  // into one — `null` for every other kind, for a document with no tests and for a payload from a
+  // server that predates `structured.uat` (the promoted-block view then renders).
+  const uatSession = useMemo<ComposedUatSession | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.uatSession?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // "In the source only" entries switch to Source mode, then scroll to the named heading once the
   // source document has mounted. The pending id lives in a ref and is cleared only when the frame
   // callback fires, so a re-run of the effect (StrictMode) still lands on it.
@@ -644,6 +653,7 @@ export function ArtifactPage(): React.JSX.Element {
     briefing !== null ||
     patternMap !== null ||
     uiSpec !== null ||
+    uatSession !== null ||
     (composed !== null && composed.blocks.length > 0);
 
   if (query.isPending) {
@@ -710,6 +720,7 @@ export function ArtifactPage(): React.JSX.Element {
   const cover = briefing && mode === 'view' ? briefing : null;
   const mapCover = patternMap && mode === 'view' ? patternMap : null;
   const specCover = uiSpec && mode === 'view' ? uiSpec : null;
+  const uatCover = uatSession && mode === 'view' ? uatSession : null;
   return (
     <main className="artifact-page page-stack">
       <ArtifactHeader
@@ -723,20 +734,23 @@ export function ArtifactPage(): React.JSX.Element {
                 ? mapCover.intro.eyebrow
                 : specCover
                   ? specCover.intro.eyebrow
-                  : coverTitle?.phase
-                    ? `${coverTitle.phase} · ${kindLabel}`
-                    : kindLabel
+                  : uatCover
+                    ? uatCover.intro.eyebrow
+                    : coverTitle?.phase
+                      ? `${coverTitle.phase} · ${kindLabel}`
+                      : kindLabel
         }
         title={
           brief?.intro.title ??
           cover?.intro.title ??
           mapCover?.intro.title ??
           specCover?.intro.title ??
+          uatCover?.intro.title ??
           coverTitle?.title ??
           artifact.title
         }
         path={artifact.path}
-        lead={brief || cover || mapCover || specCover ? null : (manifest?.lead ?? null)}
+        lead={brief || cover || mapCover || specCover || uatCover ? null : (manifest?.lead ?? null)}
         meta={
           brief ? (
             <ContextIntroMeta intro={brief.intro} />
@@ -746,6 +760,8 @@ export function ArtifactPage(): React.JSX.Element {
             <PatternIntroMeta intro={mapCover.intro} />
           ) : specCover ? (
             <UiSpecIntroMeta intro={specCover.intro} />
+          ) : uatCover ? (
+            <UatIntroMeta intro={uatCover.intro} />
           ) : undefined
         }
         cover={
@@ -781,8 +797,9 @@ export function ArtifactPage(): React.JSX.Element {
       {panels.length > 0 ? (
         // The UI-SPEC page's cover and shadcn card already carry the frontmatter facts, and the
         // Winner lists the frontmatter as source-only — View mode hides the disclosure (Source
-        // mode keeps it).
-        specCover ? null : (
+        // mode keeps it). The UAT page's cover carries its facts and its "In the source only"
+        // strip names the frontmatter, so it hides the disclosure the same way.
+        specCover || uatCover ? null : (
           <details className="artifact-metadata">
             <summary>
               Document metadata <span>{panels.length} sections</span>
@@ -868,6 +885,8 @@ export function ArtifactPage(): React.JSX.Element {
         <PatternMapView key={artifact.path} map={patternMap} onShowSource={showSource} title={artifact.title} />
       ) : uiSpec && mode === 'view' ? (
         <UiSpecView key={artifact.path} spec={uiSpec} onShowSource={showSource} title={artifact.title} />
+      ) : uatSession && mode === 'view' ? (
+        <UatSessionView key={artifact.path} session={uatSession} onShowSource={showSource} title={artifact.title} />
       ) : viewAvailable && mode === 'view' && composed && shown ? (
         <ViewReader title={artifact.title} composed={composed} shown={shown} />
       ) : (
