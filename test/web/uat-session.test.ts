@@ -21,7 +21,7 @@ import {
   statusOf,
 } from '../../src/web/views/uat-session.ts';
 import type { ComposedUatSession } from '../../src/web/views/uat-session.ts';
-import { UatIntroMeta, UatSessionView } from '../../src/web/views/uat-session-components.tsx';
+import { GapDetail, UatIntroMeta, UatSessionView } from '../../src/web/views/uat-session-components.tsx';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 
 const SYN = new URL('../../.planning/sketches/015-uat-page/synthetic-testing-UAT.md', import.meta.url);
@@ -68,7 +68,7 @@ function compose(path: URL | string, headings?: ViewInput['headings']): Composed
 
 function render(composed: ComposedUatSession): string {
   return renderToStaticMarkup(
-    createElement(UatSessionView, { session: composed, title: 'UAT' }),
+    createElement(UatSessionView, { session: composed, title: 'UAT', onShowSource: () => undefined }),
   );
 }
 
@@ -367,5 +367,92 @@ describe('UatSessionView — static markup', () => {
     expect(html).toContain('(35 min later)');
     expect(html).toContain('Tested from');
     expect(html).toContain('01-01-SUMMARY.md · 01-02-SUMMARY.md');
+  });
+});
+
+describe('UatSessionView — gaps, extras and the source-only strip', () => {
+  const noop = (): void => undefined;
+  const detail = (composed: ComposedUatSession, index: number): string =>
+    renderToStaticMarkup(createElement(GapDetail, { item: composed.gaps.items[index], onJump: noop }));
+
+  it('the synthetic register has two rows and the "2 · 2 open" aside', () => {
+    const html = render(compose(SYN));
+    expect(html).toContain('id="uat-gaps"');
+    expect(html).toContain('2 · 2 open');
+    expect(html.match(/<tr[^>]*data-gap/g)).toHaveLength(2);
+    expect(html).not.toContain('data-detail');
+  });
+
+  it('an opened diagnosed gap shows the reason, root cause, artifacts, missing and debug session as text', () => {
+    const html = detail(compose(SYN), 0);
+    expect(html).toContain('Refresh works but Back from a subfolder jumps straight to /browse');
+    expect(html).not.toContain('User reported');
+    expect(html).toContain('Root cause');
+    expect(html).toContain('frontend/components/browse-pane.tsx');
+    expect(html).toContain('line 88 uses router.replace');
+    expect(html.match(/<li>/g)?.length).toBeGreaterThanOrEqual(4);
+    expect(html).toContain('.planning/debug/back-skips-parent.md');
+    expect(html).not.toContain('<a');
+    expect(html).toContain('Test 1 ↑');
+  });
+
+  it('an undiagnosed gap says so', () => {
+    const html = detail(compose(SYN), 1);
+    expect(html).toContain('Not diagnosed yet');
+    expect(html).toContain('Root cause, artifacts and missing work fill in after diagnosis.');
+  });
+
+  it.runIf(existsSync(SP103))('studio-portal v1.0/03: six rows; G-03-1 opens to a Resolved strip', () => {
+    const composed = compose(SP103);
+    expect(render(composed).match(/<tr[^>]*data-gap/g)).toHaveLength(6);
+    const html = detail(composed, 0);
+    expect(html).toContain('Resolved');
+    expect(html).toContain('2026-07-21');
+    expect(html).toContain('Direct fix.');
+    expect(html).toContain('backend/src/lib.rs:82');
+  });
+
+  it.runIf(existsSync(SP3))('studio-portal P3: the strip shows reverified and the re-check text', () => {
+    const html = detail(compose(SP3), 0);
+    expect(html).toContain('reverified');
+    expect(html).toContain('Re-check:');
+  });
+
+  it('labelore v1.0/02: twelve cards and no table, four closed extras in order', () => {
+    const html = render(compose(LB02));
+    expect(html).not.toContain('view-uat-register');
+    expect(html.match(/class="view-uat-card"/g)).toHaveLength(12);
+    expect(html.match(/<details>/g)).toHaveLength(4);
+    const order = ['Result', 'Round-1 detail (historical)', 'Gap Reconciliation — 2026-09-09', 'Notes'].map((h) =>
+      html.indexOf(`<summary>${h}</summary>`),
+    );
+    expect(order.every((i) => i > -1)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+  });
+
+  it('labelore v1.0/01: gaps read none; two source-only buttons and no comments item', () => {
+    const html = render(compose(LB01));
+    expect(html).toContain('No gaps — no test reported an issue.');
+    expect(html).toContain('>none<');
+    const nav = html.slice(html.indexOf('id="uat-source-only"'));
+    expect(nav.match(/<button/g)).toHaveLength(2);
+    expect(nav).toContain('Summary block');
+    expect(nav).toContain('Frontmatter');
+    expect(nav).not.toContain('Template comments');
+  });
+
+  it('the synthetic nav lists Template comments as a non-button item', () => {
+    const html = render(compose(SYN));
+    const nav = html.slice(html.indexOf('id="uat-source-only"'));
+    expect(nav).toContain('Template comments');
+    expect(nav.match(/<button/g)).toHaveLength(2);
+  });
+
+  it('long expected text gets a more toggle; extra fields sit under a More toggle', () => {
+    expect(compose(LB01).tests.some((t) => t.expectedLong)).toBe(true);
+    const html = render(compose(LB01));
+    expect(html).toContain('>more</button>');
+    expect(html).toMatch(/More · executed by, evidence/);
+    expect(html).toContain('data-clamp="true"');
   });
 });

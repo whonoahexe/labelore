@@ -797,8 +797,9 @@ export function ArtifactPage(): React.JSX.Element {
       {panels.length > 0 ? (
         // The UI-SPEC page's cover and shadcn card already carry the frontmatter facts, and the
         // Winner lists the frontmatter as source-only — View mode hides the disclosure (Source
-        // mode keeps it).
-        specCover ? null : (
+        // mode keeps it). The UAT page's cover carries its facts and its "In the source only"
+        // strip names the frontmatter, so it hides the disclosure the same way.
+        specCover || uatCover ? null : (
           <details className="artifact-metadata">
             <summary>
               Document metadata <span>{panels.length} sections</span>

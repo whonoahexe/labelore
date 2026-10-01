@@ -10172,8 +10172,9 @@ button.view-ui-spec-signoff:hover {
 
 .view-uat-bar-block {
   display: grid;
-  flex: 1 1 18rem;
+  flex: 0 1 auto;
   gap: var(--space-2);
+  min-width: 16rem;
   max-width: 44rem;
 }
 
@@ -10277,6 +10278,11 @@ button.view-ui-spec-signoff:hover {
   overflow-wrap: anywhere;
 }
 
+.view-uat-md :is(.view-research-text, .view-research-list) {
+  margin: 0;
+  font-size: var(--fs-4);
+}
+
 .view-uat-md[data-clamp='true'] {
   display: -webkit-box;
   overflow: hidden;
@@ -10327,6 +10333,16 @@ button.view-ui-spec-signoff:hover {
   background: var(--card-veil);
 }
 
+.view-uat-reported > :first-child::before {
+  color: var(--muted-foreground);
+  content: '“';
+}
+
+.view-uat-reported > :last-child::after {
+  color: var(--muted-foreground);
+  content: '”';
+}
+
 .view-uat-reason {
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--border);
@@ -10365,10 +10381,269 @@ button.view-ui-spec-signoff:hover {
   }
 }
 
+/* Gaps: a register that opens to its diagnosis, or prose cards. */
+.view-uat-lead,
+.view-uat-muted-text {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  overflow-wrap: anywhere;
+}
+
+.view-uat-register {
+  display: table;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-4);
+}
+
+.view-uat-register th {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.view-uat-register td {
+  padding: var(--space-2-5) var(--space-2);
+  border-bottom: 1px solid var(--border-faint);
+  overflow-wrap: anywhere;
+  vertical-align: baseline;
+}
+
+.view-uat-register tr[data-gap] {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.view-uat-register tr[data-gap]:hover {
+  background: var(--state-hover);
+}
+
+.view-uat-register tr[data-gap][data-open='true'] {
+  background: var(--muted);
+}
+
+.view-uat-register tr[data-detail] > td {
+  padding: var(--space-3) var(--space-2) var(--space-4);
+}
+
+.view-uat-truth {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+@media (max-width: 42rem) {
+  .view-uat-register [data-narrow='hide'] {
+    display: none;
+  }
+}
+
+.view-uat-gap-detail {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.view-uat-gap-detail > .view-uat-link {
+  justify-self: start;
+}
+
+.view-uat-diagnosis {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px dashed var(--border);
+}
+
+.view-uat-diagnosis[data-none='true'] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.view-uat-artifacts,
+.view-uat-todo {
+  display: grid;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-uat-artifacts li {
+  display: grid;
+  gap: var(--space-0-5);
+}
+
+.view-uat-path {
+  justify-self: start;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  overflow-wrap: anywhere;
+}
+
+.view-uat-muted-text .view-uat-path,
+.view-uat-artifacts .view-uat-muted-text {
+  font-size: var(--fs-3);
+}
+
+.view-uat-todo li {
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr);
+  gap: var(--space-2);
+  font-size: var(--fs-4);
+}
+
+.view-uat-todo li::before {
+  color: var(--muted-foreground);
+  content: '○';
+  font-family: var(--font-mono);
+}
+
+.view-uat-todo[data-done='true'] li::before {
+  color: var(--primary);
+  content: '✓';
+}
+
+.view-uat-resolved {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  background: var(--primary-tint);
+  font-size: var(--fs-3);
+}
+
+.view-uat-resolved-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: baseline;
+}
+
+.view-uat-cards {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.view-uat-card {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--card-veil);
+  overflow-wrap: anywhere;
+}
+
+.view-uat-card h3 {
+  margin: 0;
+  font-size: var(--fs-6);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+}
+
+/* Extras: the sections the view does not place, folded. */
+.view-uat-extras {
+  gap: var(--space-2);
+}
+
+.view-uat-extras details {
+  border: 1px solid var(--border);
+  background: var(--card-veil);
+}
+
+.view-uat-extras summary {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  list-style: none;
+  text-transform: uppercase;
+}
+
+.view-uat-extras summary::-webkit-details-marker {
+  display: none;
+}
+
+.view-uat-extras summary::after {
+  margin-left: auto;
+  content: '▾';
+}
+
+.view-uat-extras details[open] > summary::after {
+  content: '▴';
+}
+
+.view-uat-extras summary:hover {
+  color: var(--foreground);
+}
+
+.view-uat-extras details > .view-uat-md {
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+/* "In the source only": what the view leaves to Source mode, one click away. */
+.view-uat-source-only {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  padding-top: var(--space-4);
+  border-top: 1px dashed var(--border);
+}
+
+.view-uat-source-only ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-uat-source-only button.status-chip {
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.view-uat-source-only button.status-chip:hover {
+  background: var(--state-hover);
+}
+
+.view-uat-source-note {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
 /* The blocks sit a fluid step apart, the way the page's own gap does. */
 .document-canvas
-  > :is(.view-uat-now, .view-uat-done, .view-uat-summary, .view-uat-tests)
-  ~ :is(.view-uat-summary, .view-uat-tests) {
+  > :is(.view-uat-now, .view-uat-done, .view-uat-summary, .view-uat-tests, .view-uat-gaps, .view-uat-extras, .view-uat-source-only)
+  ~ :is(.view-uat-summary, .view-uat-tests, .view-uat-gaps, .view-uat-extras, .view-uat-source-only) {
   margin-top: var(--space-fluid-10);
 }
 /* quick-261001-qk7:end */

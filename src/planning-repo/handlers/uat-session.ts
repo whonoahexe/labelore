@@ -221,9 +221,9 @@ function unbracket(text: string): string {
 // `key: value` fields
 // ---------------------------------------------------------------------------
 
-/** A lowercase key of 2-25 characters (letters and underscores) at column 0, then a colon and
+/** A lowercase key of 2-25 characters (letters, digits and underscores; `round_1`) at column 0, then a colon and
  * either nothing or whitespace and a value. */
-const KEY_RE = /^([a-z][a-z_]{1,24}):(?:\s(.*)|\s*)$/;
+const KEY_RE = /^([a-z][a-z0-9_]{1,24}):(?:\s(.*)|\s*)$/;
 
 /** One pair of surrounding double quotes removed (escaped quotes unescaped inside). */
 function unquote(value: string): string {
@@ -321,8 +321,8 @@ function testsOf(body: string, tests: UatTest[]): Block[] {
 // Gaps
 // ---------------------------------------------------------------------------
 
-const ITEM_START_RE = /^- ([a-z_]{1,40}):\s*(.*)$/;
-const ITEM_KEY_RE = /^ {2}([a-z_]{1,40}):\s*(.*)$/;
+const ITEM_START_RE = /^- ([a-z][a-z0-9_]{0,39}):\s*(.*)$/;
+const ITEM_KEY_RE = /^ {2}([a-z][a-z0-9_]{0,39}):\s*(.*)$/;
 const ITEM_LIST_RE = /^ {4}- (.*)$/;
 const ITEM_ISSUE_RE = /^ {6}issue:\s*(.*)$/;
 
