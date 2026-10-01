@@ -1,0 +1,1008 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 014 — UI-SPEC page (round 2)</title>
+<link rel="stylesheet" href="../themes/default.css?v=014">
+<style>
+/* Sketch 014: the UI-SPEC (UI design contract) page. Shared across variants: cover (created date,
+   status, a quiet shadcn · preset line, sign-off dimensions), copy deck, folded phase-specific
+   chapters, registry safety, collapsed agent notes. The question is how the design system
+   (spacing, type, colour) and UI considerations read. Data: ./data.js from six real UI-SPEC.md
+   files (gen-data.mjs). Tones only (docs/design-language.md ## Tones): PASS / covered → complete,
+   FLAG / backstop → in-flight, BLOCK / unresolved → missing, pending / dismissed → quiet.
+   Colour swatches paint the document's own stated values (content, not design). */
+*, *::before, *::after { box-sizing: border-box; }
+:root { --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border)); --missing-border: color-mix(in oklch, var(--missing-fill) 50%, var(--border)); --missing-tint: color-mix(in oklch, var(--muted) 55%, transparent); --in-flight-tint: color-mix(in oklch, var(--in-flight-fill) 10%, transparent); --hatch: repeating-linear-gradient(135deg, color-mix(in oklch, var(--muted-foreground) 22%, transparent) 0 1px, transparent 1px 7px); }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-5); line-height: var(--lh-normal); padding-top: 3rem; }
+h1, h2, h3, h4, p, ul, ol { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+code { font-family: var(--font-mono); font-size: 0.88em; padding: 0 0.2em; background: color-mix(in oklch, var(--muted) 70%, transparent); overflow-wrap: anywhere; }
+strong { font-weight: var(--fw-semibold); }
+#variant-nav { position: fixed; inset: 0 0 auto 0; z-index: 50; display: flex; gap: var(--space-1); align-items: center; padding: var(--space-2) var(--space-4); background: var(--background); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; overflow-x: auto; }
+#variant-nav .lbl { color: var(--muted-foreground); margin-right: var(--space-2); white-space: nowrap; }
+.variant-tab { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; background: none; white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; color: var(--muted-foreground); transition: all .15s ease; }
+.variant-tab:hover { color: var(--foreground); background: var(--state-hover); }
+.variant-tab.active { color: var(--primary); border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); background: var(--primary-tint); }
+.shell-header { display: flex; align-items: center; gap: var(--space-4); height: 3.75rem; padding: 0 var(--space-4); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.brand-mark { width: 2.25rem; height: 2.25rem; background: var(--primary); display: grid; place-items: center; color: white; font-weight: 700; }
+#frame { margin: 0 auto; container-type: inline-size; transition: max-width .2s ease; background: var(--background); min-height: 100vh; }
+#frame.narrow-frame { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+.page { width: min(80rem, 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); display: grid; gap: var(--space-10); min-width: 0; }
+.page > * { min-width: 0; }
+.fade { animation: fade .18s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .fade { animation: none; } }
+
+/* shared vocabulary (as 013) */
+.ref-note, .mono-note { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.muted { color: var(--muted-foreground); }
+.label { display: flex; gap: var(--space-2); align-items: baseline; margin-bottom: var(--space-3); color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.label .count { font-weight: var(--fw-medium); }
+.section-heading { display: flex; gap: var(--space-4); align-items: flex-end; justify-content: space-between; flex-wrap: wrap; padding-bottom: var(--space-3); margin-bottom: var(--space-5); border-bottom: 1px solid var(--border); }
+.section-heading h2 { font-family: var(--font-mono); font-size: var(--fs-fluid-3); font-weight: var(--fw-medium); letter-spacing: var(--ls-tight); }
+.section-heading .num { color: var(--muted-foreground); margin-right: var(--space-3); }
+.section-heading .aside { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.sub-heading { display: flex; gap: var(--space-3); align-items: baseline; justify-content: space-between; margin-bottom: var(--space-3); }
+.sub-heading h3 { font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.chip { display: inline-flex; align-items: center; gap: var(--space-1); padding: 0.1rem var(--space-1-5); border: 1px solid var(--border); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; color: var(--muted-foreground); background: none; line-height: 1.5; }
+.chip[data-tone='complete'], .chip[data-tone='active'] { color: var(--primary); border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); background: var(--primary-tint); }
+.chip[data-tone='in-flight'] { color: var(--in-flight-fill); border-color: var(--in-flight-border); }
+.chip[data-tone='missing'] { color: var(--missing-fill); border-color: var(--missing-border); }
+button.chip { cursor: pointer; transition: all .15s ease; }
+button.chip:hover { background: var(--state-hover); }
+button.chip[aria-pressed='true'] { color: var(--foreground); border-color: var(--foreground); }
+.link-btn { padding: 0; border: 0; background: none; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; transition: color .15s ease; }
+.link-btn:hover { color: var(--primary); }
+.md { display: grid; gap: var(--space-3); font-size: var(--fs-4); min-width: 0; }
+.md ul, .md ol { padding-left: 1.2rem; display: grid; gap: var(--space-1); }
+.md h4 { font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); margin-top: var(--space-2); }
+.md blockquote { margin: 0; padding-left: var(--space-3); border-left: 2px solid var(--border); color: var(--muted-foreground); }
+.md pre { margin: 0; padding: var(--space-3); background: color-mix(in oklch, var(--muted) 60%, transparent); overflow-x: auto; font-size: var(--fs-2); }
+.md pre code { background: none; padding: 0; }
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--border); }
+.md table { border-collapse: collapse; width: 100%; font-size: var(--fs-3); }
+.md th { text-align: left; font-family: var(--font-heading); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); font-weight: var(--fw-semibold); background: color-mix(in oklch, var(--muted) 45%, transparent); }
+.md th, .md td { padding: var(--space-2) var(--space-3); border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); vertical-align: top; min-width: 8rem; }
+.notice { padding: var(--space-3) var(--space-4); border: 1px solid var(--border); background: var(--card-veil); font-size: var(--fs-4); display: grid; gap: var(--space-2); }
+.notice.flag { border-left: 3px solid var(--in-flight-fill); }
+.clamp2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.clamp3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* cover (shared) */
+.cover { display: grid; gap: var(--space-4); padding-bottom: var(--space-fluid-9); border-bottom: 1px solid var(--border); }
+.eyebrow { color: var(--primary); font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+.cover h1 { font-size: var(--fs-display-3); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); max-width: 20ch; overflow-wrap: anywhere; }
+.facts { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); align-items: baseline; font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.facts b { color: var(--foreground); font-weight: var(--fw-medium); font-size: var(--fs-4); margin-left: var(--space-1-5); text-transform: none; letter-spacing: 0; }
+.tool-line { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); opacity: .85; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); align-items: baseline; }
+.tool-line .sep { opacity: .5; }
+.tool-line button { font-family: inherit; }
+.lead { max-width: 72ch; font-size: var(--fs-5); color: var(--muted-foreground); }
+.signoff { display: grid; gap: var(--space-2); }
+.dims { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.dim { display: inline-flex; gap: var(--space-1-5); align-items: center; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: none; font-size: var(--fs-3); transition: all .15s ease; }
+.dim .g { font-family: var(--font-mono); font-size: var(--fs-2); width: 1rem; text-align: center; }
+.dim .v { font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.dim[data-tone='complete'] .g { color: var(--primary); }
+.dim[data-tone='in-flight'] { border-color: var(--in-flight-border); } .dim[data-tone='in-flight'] .g, .dim[data-tone='in-flight'] .v { color: var(--in-flight-fill); }
+.dim[data-tone='missing'] { border-color: var(--missing-border); } .dim[data-tone='missing'] .g, .dim[data-tone='missing'] .v { color: var(--missing-fill); }
+.dim[data-tone='quiet'] { border-style: dashed; color: var(--muted-foreground); }
+button.dim:hover { background: var(--state-hover); }
+button.dim[aria-expanded='true'] { border-color: var(--foreground); }
+.approval { font-size: var(--fs-3); color: var(--muted-foreground); max-width: 80ch; }
+.approval b { color: var(--foreground); font-weight: var(--fw-semibold); }
+
+/* design-system tool facts */
+.tool-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--space-2) var(--space-6); margin-bottom: var(--space-8); }
+.tool-grid > div { display: grid; gap: var(--space-0-5); min-width: 0; }
+.tool-grid .v { font-size: var(--fs-4); overflow-wrap: anywhere; }
+.ds-block + .ds-block { margin-top: var(--space-10); }
+
+/* ===== A: specimen sheet ===== */
+.stair { display: flex; align-items: flex-end; gap: var(--space-4); flex-wrap: wrap; padding: var(--space-5) var(--space-4); border: 1px solid var(--border); background: var(--card-veil); margin-bottom: var(--space-4); }
+.stair figure { margin: 0; display: grid; gap: var(--space-1-5); justify-items: start; }
+.stair .sq { background: var(--primary-tint); outline: 1px solid color-mix(in oklch, var(--primary) 65%, var(--border)); position: relative; }
+.stair .sq .ext { position: absolute; left: 0; bottom: 0; outline: 1px dashed color-mix(in oklch, var(--primary) 55%, var(--border)); pointer-events: none; }
+.stair figcaption { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.stair figcaption b { color: var(--foreground); font-weight: var(--fw-medium); text-transform: none; letter-spacing: 0; }
+.rulers { display: grid; gap: 0; }
+.ruler { display: grid; grid-template-columns: 6rem 11rem minmax(0, 1fr); gap: var(--space-4); align-items: center; padding: var(--space-2) 0; border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); text-align: left; background: none; border-left: 0; border-right: 0; border-top: 0; width: 100%; }
+.ruler .tok { font-family: var(--font-mono); font-size: var(--fs-3); font-weight: var(--fw-medium); overflow-wrap: anywhere; }
+.ruler .bar { display: block; max-width: 100%; height: 0.5rem; background: var(--primary); position: relative; min-width: 1px; }
+.ruler .bar.fluid { background: linear-gradient(90deg, var(--primary) var(--min), transparent var(--min)), repeating-linear-gradient(90deg, color-mix(in oklch, var(--primary) 55%, transparent) 0 3px, transparent 3px 6px); }
+.ruler .bar.none { background: var(--hatch); border: 1px dashed var(--border); height: 0.7rem; }
+.ruler .val { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); }
+.ruler .use { grid-column: 3; font-size: var(--fs-3); color: var(--muted-foreground); }
+.ruler .left { display: grid; gap: var(--space-1); }
+@container (max-width: 640px) { .ruler { grid-template-columns: 4.5rem minmax(0, 1fr); } .ruler .use { grid-column: 1 / -1; } }
+.exceptions { margin-top: var(--space-4); }
+.type-row { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: var(--space-5); padding: var(--space-4) 0; border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); align-items: baseline; }
+.type-row .meta { display: grid; gap: var(--space-1); }
+.type-row .meta .role { font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.type-row .meta .spec { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); }
+.type-row .sample { overflow-wrap: anywhere; min-width: 0; }
+.type-row .used { font-size: var(--fs-3); color: var(--muted-foreground); margin-top: var(--space-2); font-family: var(--font-sans); font-weight: 400; letter-spacing: 0; text-transform: none; line-height: var(--lh-normal); }
+.type-row.na .sample { color: var(--muted-foreground); font-size: var(--fs-4); font-style: italic; }
+@container (max-width: 640px) { .type-row { grid-template-columns: 1fr; gap: var(--space-2); } }
+.split-bar { display: flex; height: 3.25rem; border: 1px solid var(--border); margin-bottom: var(--space-2); }
+.split-bar > div { position: relative; display: flex; align-items: flex-end; padding: var(--space-1-5) var(--space-2); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; min-width: 0; overflow: hidden; }
+.split-bar > div + div { border-left: 1px solid var(--border); }
+.split-bar .lab { background: color-mix(in oklch, var(--background) 82%, transparent); color: var(--foreground); padding: 0 var(--space-1); white-space: nowrap; }
+.split-key { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); margin-bottom: var(--space-6); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: var(--space-3); }
+.role-card { border: 1px solid var(--border); background: var(--card-veil); display: grid; align-content: start; min-width: 0; }
+.role-card.accent { box-shadow: inset 0 3px 0 var(--primary); }
+.role-card header { display: flex; gap: var(--space-2); align-items: baseline; justify-content: space-between; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border); }
+.role-card header .t { font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.role-card header .pct { font-family: var(--font-mono); font-size: var(--fs-6); }
+.role-card .body { padding: var(--space-3) var(--space-4); display: grid; gap: var(--space-3); }
+.swatches { display: grid; gap: var(--space-2); }
+.swatch { display: grid; grid-template-columns: 3.5rem minmax(0, 1fr); gap: var(--space-3); align-items: center; }
+.swatch .chipbox { height: 2.25rem; display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--border); }
+.swatch .chipbox.one { grid-template-columns: 1fr; }
+.swatch .chipbox span { display: block; }
+.swatch .chipbox .none { background: var(--hatch); }
+.swatch .nm { font-family: var(--font-mono); font-size: var(--fs-3); overflow-wrap: anywhere; }
+.swatch .vals { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); overflow-wrap: anywhere; }
+.role-card .usage { font-size: var(--fs-3); color: var(--muted-foreground); }
+.role-card .reserved { display: grid; gap: var(--space-1); font-size: var(--fs-3); }
+.role-card .reserved ol { padding-left: 1.1rem; display: grid; gap: var(--space-0-5); }
+.nodoc { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.color-more { margin-top: var(--space-4); }
+.color-more > summary, .fold > summary { cursor: pointer; list-style: none; font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); padding: var(--space-2) 0; }
+.color-more > summary::-webkit-details-marker, .fold > summary::-webkit-details-marker { display: none; }
+.color-more > summary:hover, .fold > summary:hover { color: var(--primary); }
+.color-more[open] > summary::after, .fold[open] > summary::after { content: ' ▴'; } .color-more:not([open]) > summary::after, .fold:not([open]) > summary::after { content: ' ▾'; }
+
+/* ===== B: compact ===== */
+.compact { border: 1px solid var(--border); background: var(--card-veil); }
+.crow { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr) auto; gap: var(--space-4); align-items: center; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border); }
+.crow:last-child { border-bottom: 0; }
+.crow > .k { font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.crow .more-area { grid-column: 1 / -1; }
+@container (max-width: 640px) { .crow { grid-template-columns: 1fr auto; } .crow > .k { grid-column: 1 / -1; } }
+.tickline { position: relative; height: 2.6rem; border-bottom: 1px solid var(--foreground); margin: 0 var(--space-3); min-width: 0; }
+.tickline .tk { position: absolute; bottom: -1px; transform: translateX(-50%); display: grid; justify-items: center; font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); }
+.tickline .tk i { width: 1px; height: 0.6rem; background: var(--foreground); order: 2; }
+.tickline .tk span { order: 1; white-space: nowrap; }
+.tickline .tk.alt { bottom: auto; top: calc(100% + 1px); } .tickline .tk.alt i { order: 1; } .tickline .tk.alt span { order: 2; }
+.tickline .range { position: absolute; bottom: -2px; height: 3px; background: color-mix(in oklch, var(--primary) 55%, transparent); }
+.tick-wrap { padding-bottom: 1.4rem; min-width: 0; }
+.typeline { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-6); align-items: baseline; min-width: 0; }
+.typeline .t { display: inline-flex; gap: var(--space-2); align-items: baseline; }
+.typeline .t small { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); font-weight: 400; letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.colorline { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+.cchip { display: inline-flex; gap: var(--space-1-5); align-items: center; font-family: var(--font-mono); font-size: var(--fs-2); }
+.cchip .sw { width: 1.4rem; height: 1.4rem; display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--border); }
+.cchip .sw.one { grid-template-columns: 1fr; }
+.cchip .sw .none { background: var(--hatch); }
+.cchip small { color: var(--muted-foreground); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.detail-list { display: grid; gap: var(--space-1); padding-top: var(--space-3); font-size: var(--fs-3); }
+.detail-list > div { display: grid; grid-template-columns: 7rem minmax(0, 1fr); gap: var(--space-3); padding: var(--space-1) 0; border-top: 1px dashed color-mix(in oklch, var(--border) 70%, transparent); }
+.detail-list .dk { font-family: var(--font-mono); color: var(--foreground); overflow-wrap: anywhere; }
+.detail-list .dv { color: var(--muted-foreground); }
+
+/* ===== C: tabbed specimen + applied mock ===== */
+.tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: var(--space-5); }
+.tabs button { padding: var(--space-2) var(--space-4); border: 0; border-bottom: 2px solid transparent; background: none; font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); margin-bottom: -1px; transition: all .15s ease; }
+.tabs button:hover { color: var(--foreground); }
+.tabs button[aria-selected='true'] { color: var(--primary); border-bottom-color: var(--primary); }
+.tabs button .n { font-weight: var(--fw-medium); opacity: .7; margin-left: var(--space-1); }
+.ladder { display: grid; gap: 0; border: 1px solid var(--border); }
+.ladder .rung { display: grid; grid-template-columns: minmax(0, 1fr) 13rem; gap: var(--space-4); align-items: center; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border); }
+.ladder .rung:last-child { border-bottom: 0; }
+.ladder .rung .spec { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); text-align: right; }
+.ladder .rung .spec b { display: block; color: var(--foreground); font-weight: var(--fw-medium); font-family: var(--font-heading); letter-spacing: var(--ls-wider); text-transform: uppercase; font-size: var(--fs-1); }
+@container (max-width: 640px) { .ladder .rung { grid-template-columns: 1fr; } .ladder .rung .spec { text-align: left; } }
+.mock-wrap { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: var(--space-4); }
+.mock { border: 1px solid var(--border); padding: var(--space-5); display: grid; gap: var(--space-3); position: relative; }
+.mock .mock-card { padding: var(--space-4); display: grid; gap: var(--space-2); }
+.mock .mock-btn { justify-self: start; padding: var(--space-1-5) var(--space-3); font-size: var(--fs-3); font-weight: var(--fw-semibold); border: 0; }
+.mock .mock-err { font-size: var(--fs-3); }
+.mock .mock-muted { height: 0.45rem; }
+.mock .tag { position: absolute; top: var(--space-2); right: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; padding: 0 var(--space-1); }
+.mock.nodoc-mock { background: var(--hatch); display: grid; place-items: center; min-height: 11rem; }
+.pins { display: grid; gap: var(--space-2); margin-top: var(--space-4); }
+.pin { display: grid; grid-template-columns: 1.6rem minmax(0, 1fr); gap: var(--space-3); font-size: var(--fs-3); align-items: baseline; }
+.pin .n { font-family: var(--font-mono); font-size: var(--fs-1); border: 1px solid var(--border); text-align: center; }
+
+/* ===== UI considerations (shared summary) ===== */
+.cov { display: grid; gap: var(--space-2); margin-bottom: var(--space-6); max-width: 52rem; }
+.cov-bar { display: flex; height: 0.6rem; border: 1px solid var(--border); }
+.cov-bar span { display: block; height: 100%; }
+.s-covered { background: var(--primary); }
+.s-backstop { background: var(--in-flight-fill); }
+.s-unresolved { background: var(--missing-fill); }
+.s-dismissed { background: color-mix(in oklch, var(--foreground) 18%, transparent); }
+.cov-key { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.cov-key i { display: inline-block; width: 0.55rem; height: 0.55rem; margin-right: var(--space-1-5); }
+.cov-key b { color: var(--foreground); font-weight: var(--fw-medium); margin-right: var(--space-1); }
+.cov-author { font-size: var(--fs-2); color: var(--muted-foreground); font-family: var(--font-mono); }
+.el-code { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); letter-spacing: var(--ls-wider); }
+.p-tag { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--primary); letter-spacing: var(--ls-wider); }
+
+/* A: matrix */
+.matrix-wrap { overflow-x: auto; border: 1px solid var(--border); }
+.matrix { border-collapse: collapse; width: 100%; min-width: 46rem; font-size: var(--fs-3); }
+.matrix th { font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); padding: var(--space-2); text-align: center; border-bottom: 1px solid var(--border); background: color-mix(in oklch, var(--muted) 40%, transparent); white-space: nowrap; }
+.matrix th.el { text-align: left; position: sticky; left: 0; z-index: 1; background: var(--background); }
+.matrix td { border-bottom: 1px solid color-mix(in oklch, var(--border) 55%, transparent); padding: 0; text-align: center; height: 2.4rem; }
+.matrix td.el { text-align: left; padding: var(--space-1-5) var(--space-3); position: sticky; left: 0; background: var(--background); z-index: 1; max-width: 16rem; border-right: 1px solid var(--border); }
+.matrix td.el .nm { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@container (max-width: 640px) { .matrix td.el { max-width: 8.5rem; font-size: var(--fs-2); } .matrix { min-width: 34rem; } }
+.matrix tr:hover td.el { background: color-mix(in oklch, var(--muted) 40%, var(--background)); }
+.cell { width: 100%; height: 100%; min-height: 2.4rem; border: 0; background: none; display: grid; place-items: center; transition: background .15s ease; }
+.cell:hover { background: var(--state-hover); }
+.cell[aria-pressed='true'] { background: var(--primary-tint); box-shadow: inset 0 0 0 1px var(--primary); }
+.mk { width: 0.8rem; height: 0.8rem; display: inline-block; position: relative; }
+.mk.covered { background: var(--primary); }
+.mk.backstop { background: linear-gradient(135deg, var(--in-flight-fill) 50%, transparent 50%); outline: 1.5px solid var(--in-flight-fill); outline-offset: -1.5px; }
+.mk.unresolved { outline: 2px solid var(--missing-fill); outline-offset: -2px; }
+.mk.dismissed { width: 0.5rem; height: 1px; background: var(--muted-foreground); }
+.mk-n { font-family: var(--font-mono); font-size: 0.55rem; color: var(--muted-foreground); margin-left: 2px; vertical-align: top; }
+.matrix-key { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); margin: var(--space-3) 0 var(--space-4); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); align-items: center; }
+.matrix-key span { display: inline-flex; gap: var(--space-1-5); align-items: center; }
+.cell-detail { margin-top: var(--space-4); border: 1px solid var(--border); background: var(--card-veil); padding: var(--space-4); display: grid; gap: var(--space-3); }
+.cell-detail .hd { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: baseline; }
+.cell-detail .hd h3 { font-size: var(--fs-6); font-weight: var(--fw-semibold); }
+.res { display: grid; gap: var(--space-1-5); padding-top: var(--space-3); border-top: 1px dashed var(--border); }
+.res:first-of-type { border-top: 0; padding-top: 0; }
+.res .txt { font-size: var(--fs-4); }
+.attn-strip { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; margin-bottom: var(--space-3); }
+
+/* B: attention first */
+.attn { display: grid; gap: var(--space-3); margin-bottom: var(--space-8); }
+.attn-card { display: grid; grid-template-columns: minmax(10rem, 15rem) minmax(0, 1fr); gap: var(--space-2) var(--space-5); padding: var(--space-3) var(--space-4); border: 1px solid var(--border); background: var(--card-veil); }
+.attn-card[data-s='backstop'] { border-left: 3px solid var(--in-flight-fill); }
+.attn-card[data-s='unresolved'] { border-left: 3px solid var(--missing-fill); }
+.attn-card .who { display: grid; gap: var(--space-1); align-content: start; }
+.attn-card .who .nm { font-weight: var(--fw-semibold); font-size: var(--fs-4); }
+.attn-card .txt { font-size: var(--fs-4); }
+@container (max-width: 700px) { .attn-card { grid-template-columns: 1fr; } }
+.el-list { border-top: 1px solid var(--border); }
+.el-row > button { display: grid; grid-template-columns: 3rem minmax(0, 1fr) auto auto; gap: var(--space-3); align-items: center; width: 100%; padding: var(--space-2-5) var(--space-2); border: 0; border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); background: none; text-align: left; transition: background .15s ease; }
+.el-row > button:hover { background: var(--state-hover); }
+.el-row.open > button { background: color-mix(in oklch, var(--muted) 45%, transparent); }
+.el-row .nm { font-size: var(--fs-4); font-weight: var(--fw-medium); min-width: 0; overflow-wrap: anywhere; }
+.mini { display: inline-flex; gap: 2px; }
+.mini i { width: 0.55rem; height: 0.55rem; display: block; }
+.mini i.none { outline: 1px dashed color-mix(in oklch, var(--border) 90%, transparent); outline-offset: -1px; }
+.el-body { padding: var(--space-3) var(--space-2) var(--space-5) 3.75rem; display: grid; gap: 0; }
+.cons { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr); gap: var(--space-3); padding: var(--space-2) 0; border-bottom: 1px dashed color-mix(in oklch, var(--border) 70%, transparent); font-size: var(--fs-4); }
+.cons:last-child { border-bottom: 0; }
+.cons .c { display: grid; gap: var(--space-1); align-content: start; }
+.cons .c .cat { font-family: var(--font-mono); font-size: var(--fs-2); }
+.cons.dis { color: var(--muted-foreground); }
+@container (max-width: 640px) { .el-body { padding-left: var(--space-2); } .cons { grid-template-columns: 1fr; gap: var(--space-1); } .el-row > button { grid-template-columns: 2.5rem minmax(0, 1fr) auto; } .el-row .mini { display: none; } }
+.dismissed-toggle { margin-top: var(--space-5); }
+
+/* C: element cards + filters */
+.filters { display: flex; flex-wrap: wrap; gap: var(--space-1-5); align-items: center; margin-bottom: var(--space-2); }
+.filters .mono-note { margin-right: var(--space-2); min-width: 4rem; }
+.el-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr)); gap: var(--space-3); align-items: start; margin-top: var(--space-4); }
+@container (max-width: 520px) { .el-cards { grid-template-columns: 1fr; } }
+.el-card { border: 1px solid var(--border); background: var(--card-veil); min-width: 0; }
+.el-card > button { display: grid; gap: var(--space-2); width: 100%; padding: var(--space-3) var(--space-4); border: 0; background: none; text-align: left; transition: background .15s ease; }
+.el-card > button:hover { background: var(--state-hover); }
+.el-card .top { display: flex; gap: var(--space-2); align-items: baseline; }
+.el-card .nm { font-weight: var(--fw-semibold); font-size: var(--fs-4); overflow-wrap: anywhere; }
+.el-card .kinds { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); }
+.strip { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 3px; }
+.strip > span { display: grid; gap: 2px; justify-items: center; }
+.strip i { width: 100%; height: 0.5rem; display: block; }
+.strip i.none { background: none; outline: 1px dashed color-mix(in oklch, var(--border) 90%, transparent); outline-offset: -1px; }
+.strip small { font-family: var(--font-mono); font-size: 0.5rem; color: var(--muted-foreground); letter-spacing: 0.04em; text-transform: uppercase; }
+.el-card.flagged { border-color: var(--in-flight-border); }
+.el-card .el-body { padding: 0 var(--space-4) var(--space-4); }
+.el-card.dim { opacity: .4; }
+
+/* copy deck (shared) */
+.deck { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: var(--space-3); }
+.line-card { border: 1px solid var(--border); background: var(--card-veil); padding: var(--space-3) var(--space-4); display: grid; gap: var(--space-2); align-content: start; min-width: 0; }
+.line-card .say { font-size: var(--fs-6); font-weight: var(--fw-medium); line-height: var(--lh-snug); overflow-wrap: anywhere; }
+.line-card .say q { quotes: '“' '”'; }
+.line-card .say + .say { font-size: var(--fs-4); }
+.line-card .note { font-size: var(--fs-3); color: var(--muted-foreground); }
+.line-card.none .say { color: var(--muted-foreground); font-style: italic; font-size: var(--fs-4); }
+.deck-more { margin-top: var(--space-4); }
+
+/* chapters (shared) */
+.chapters { display: grid; border-top: 1px solid var(--border); }
+.chapter > summary { cursor: pointer; list-style: none; display: grid; grid-template-columns: 2.5rem minmax(0, 1fr) auto; gap: var(--space-3); align-items: baseline; padding: var(--space-3) var(--space-2); border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); transition: background .15s ease; }
+.chapter > summary::-webkit-details-marker { display: none; }
+.chapter > summary:hover { background: var(--state-hover); }
+.chapter > summary .n { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); }
+.chapter > summary .t { display: grid; gap: var(--space-0-5); min-width: 0; }
+.chapter > summary .t b { font-weight: var(--fw-semibold); font-size: var(--fs-5); }
+.chapter > summary .t span { font-size: var(--fs-3); color: var(--muted-foreground); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chapter > summary::after { content: '▾'; color: var(--muted-foreground); }
+.chapter[open] > summary::after { content: '▴'; }
+.chapter[open] > summary .t span { display: none; }
+.chapter .md { padding: var(--space-4) var(--space-2) var(--space-6) 3.25rem; }
+@container (max-width: 640px) { .chapter .md { padding-left: var(--space-2); } }
+.rev { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--in-flight-fill); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+
+/* registry (shared) */
+.reg { display: grid; gap: var(--space-2); }
+.reg-row { display: grid; grid-template-columns: 11rem minmax(0, 1fr) auto; gap: var(--space-4); align-items: start; padding: var(--space-3) var(--space-4); border: 1px solid var(--border); background: var(--card-veil); }
+.reg-row .name { font-weight: var(--fw-semibold); font-size: var(--fs-4); }
+.reg-row .blocks { display: flex; flex-wrap: wrap; gap: var(--space-1); align-items: baseline; font-size: var(--fs-3); }
+.reg-row .blocks code { font-size: var(--fs-2); }
+.reg-row .blocks .grp { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); letter-spacing: var(--ls-wider); text-transform: uppercase; margin: 0 var(--space-1) 0 var(--space-2); }
+.reg-row .gate { justify-self: end; display: grid; gap: var(--space-1); justify-items: end; text-align: right; max-width: 18rem; }
+.reg-row .gate small { font-size: var(--fs-2); color: var(--muted-foreground); }
+@container (max-width: 700px) { .reg-row { grid-template-columns: 1fr; } .reg-row .gate { justify-self: start; justify-items: start; text-align: left; } }
+
+/* back matter (shared) */
+.back { display: grid; gap: var(--space-3); }
+.back details { border: 1px solid var(--border); background: var(--card-veil); }
+.back > details > summary { cursor: pointer; padding: var(--space-3) var(--space-4); font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); list-style: none; display: flex; gap: var(--space-2); }
+.back > details > summary::-webkit-details-marker { display: none; }
+.back > details > summary::after { content: '▾'; margin-left: auto; }
+.back > details[open] > summary::after { content: '▴'; }
+.back > details > summary:hover { color: var(--foreground); }
+.back .inner { padding: 0 var(--space-4) var(--space-4); display: grid; gap: var(--space-4); }
+.back .inner pre { white-space: pre-wrap; font-size: var(--fs-2); color: var(--muted-foreground); margin: 0; font-family: var(--font-mono); }
+.source-strip { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; padding-top: var(--space-4); border-top: 1px dashed var(--border); }
+
+/* ===== round 2 ===== */
+.crow.sp-row { grid-template-columns: minmax(0, 1fr) auto; padding: var(--space-5) var(--space-6) var(--space-3); }
+.sp-row .tickline { height: 2.2rem; }
+.meta-row { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-6); align-items: center; justify-content: space-between; }
+.meta-row .facts { align-items: center; }
+.signoff-chip { gap: var(--space-1-5); padding: var(--space-1) var(--space-2); font-size: var(--fs-2); }
+.signoff-chip svg { opacity: .8; }
+.doc-tools { display: flex; gap: var(--space-4); align-items: center; }
+.icon-btn { display: grid; place-items: center; width: 2rem; height: 2rem; padding: 0; border: 0; background: none; color: var(--muted-foreground); transition: color .15s ease, background .15s ease; }
+.icon-btn:hover { color: var(--foreground); background: var(--state-hover); }
+.seg { display: inline-flex; }
+.seg button { padding: var(--space-1) var(--space-3); border: 0; background: none; font-family: var(--font-mono); font-size: var(--fs-4); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--foreground); }
+.seg button[aria-pressed='true'] { background: color-mix(in oklch, var(--muted) 85%, transparent); }
+.preset-quiet { display: inline-flex; gap: var(--space-1-5); align-items: center; text-transform: none; letter-spacing: 0; opacity: .85; }
+.preset-copy { display: inline-flex; gap: var(--space-1); align-items: center; padding: 0 var(--space-1); border: 1px dashed var(--border); background: none; color: var(--muted-foreground); transition: all .15s ease; }
+.preset-copy code { background: none; padding: 0; }
+.preset-copy:hover { color: var(--foreground); border-color: var(--muted-foreground); }
+/* modal (Base UI dialog look, as the RESEARCH confidence modal) */
+.modal-back { position: fixed; inset: 0; z-index: 9000; display: grid; place-items: center; padding: var(--space-4); background: color-mix(in oklch, var(--background) 55%, transparent); backdrop-filter: blur(4px); }
+.modal { width: min(44rem, 100%); max-height: 88vh; overflow-y: auto; background: var(--card); border: 1px solid var(--border); padding: var(--space-6); display: grid; gap: var(--space-4); box-shadow: 0 20px 60px oklch(0 0 0 / 35%); }
+.modal-head { display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); padding-bottom: var(--space-4); border-bottom: 1px solid var(--border); }
+.modal-head h2 { display: flex; gap: var(--space-2); align-items: center; font-family: var(--font-heading); font-size: var(--fs-5); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.modal-x { border: 1px solid var(--border); }
+.so-list { margin: 0; display: grid; }
+.so-row { display: grid; grid-template-columns: 12rem minmax(0, 1fr); gap: var(--space-4); padding: var(--space-3) 0; border-bottom: 1px solid var(--border); }
+.so-row:last-child { border-bottom: 0; }
+.so-row.bare { padding: var(--space-2) 0; } .so-row.bare dt { grid-column: 1 / -1; display: flex; justify-content: space-between; }
+.so-row dt { display: grid; gap: var(--space-1); align-content: start; }
+.so-row dd { margin: 0; font-size: var(--fs-4); }
+.so-name { font-weight: var(--fw-semibold); font-size: var(--fs-4); }
+.so-verdict { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); display: inline-flex; gap: var(--space-1-5); }
+.so-verdict[data-tone='complete'] { color: var(--primary); } .so-verdict[data-tone='in-flight'] { color: var(--in-flight-fill); } .so-verdict[data-tone='missing'] { color: var(--missing-fill); }
+.so-approval { font-size: var(--fs-3); color: var(--muted-foreground); padding-top: var(--space-3); border-top: 1px dashed var(--border); }
+@media (max-width: 40rem) { .so-row { grid-template-columns: 1fr; gap: var(--space-1); } }
+/* choices */
+.choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); margin-bottom: var(--space-10); }
+.choices.four { grid-template-columns: 1.15fr 1fr 1fr 1.3fr; }
+@container (max-width: 1000px) { .choices, .choices.four { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@container (max-width: 560px) { .choices, .choices.four { grid-template-columns: 1fr; } }
+.choice { display: grid; gap: var(--space-2); align-content: start; padding: var(--space-4); border: 1px solid color-mix(in oklch, var(--primary) 45%, var(--border)); background: var(--primary-tint); box-shadow: inset 0 3px 0 var(--primary); min-width: 0; }
+.choice.is-none { border-color: var(--border); background: var(--card-veil); box-shadow: none; }
+.choice-v { font-size: var(--fs-7); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tight); line-height: var(--lh-tight); overflow-wrap: anywhere; }
+.choice-v.none { color: var(--muted-foreground); font-weight: var(--fw-medium); }
+.choice-rest { font-size: var(--fs-3); color: var(--muted-foreground); overflow-wrap: anywhere; }
+.choice .link-btn { justify-self: start; }
+.faces { display: grid; gap: var(--space-3); }
+.face { display: grid; gap: var(--space-0-5); }
+.face + .face { padding-top: var(--space-3); border-top: 1px dashed color-mix(in oklch, var(--primary) 30%, var(--border)); }
+.face .aa { font-size: var(--fs-4); color: var(--foreground); opacity: .7; }
+.shadcn-state { display: flex; gap: var(--space-1-5); flex-wrap: wrap; }
+.preset-field { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--space-2); align-items: center; padding: var(--space-1-5) var(--space-2); border: 1px solid var(--border); background: var(--background); text-align: left; transition: border-color .15s ease; }
+.preset-field code { background: none; padding: 0; font-size: var(--fs-4); overflow-wrap: anywhere; }
+.preset-field svg { color: var(--muted-foreground); }
+.preset-field:hover { border-color: var(--primary); }
+.kvs { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); font-family: var(--font-mono); font-size: var(--fs-2); }
+.kvs i { font-style: normal; color: var(--muted-foreground); }
+/* copy gallery (B) */
+.gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6) var(--space-8); align-items: start; }
+@container (max-width: 820px) { .gallery { grid-template-columns: 1fr; } }
+.g-group { min-width: 0; }
+.g-action, .g-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.g-actions + .g-cap { margin-top: var(--space-2); }
+.g-cap { font-size: var(--fs-2); color: var(--muted-foreground); }
+.fake-btn { display: inline-flex; align-items: center; padding: var(--space-1-5) var(--space-3); border: 1px solid var(--border); background: var(--card-veil); font-size: var(--fs-3); font-weight: var(--fw-medium); color: var(--foreground); transition: all .15s ease; }
+button.fake-btn:hover { border-color: var(--foreground); }
+.fake-btn.primary { background: var(--primary); border-color: var(--primary); color: white; }
+.fake-btn.danger { border-color: var(--missing-border); color: var(--missing-fill); }
+.g-empties { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: var(--space-2); }
+.g-empty { display: grid; justify-items: center; gap: var(--space-1-5); text-align: center; padding: var(--space-6) var(--space-4); border: 1px dashed var(--border); }
+.g-ico { font-family: var(--font-mono); font-size: var(--fs-7); color: var(--muted-foreground); }
+.g-h { font-weight: var(--fw-semibold); font-size: var(--fs-5); cursor: copy; }
+.g-b { font-size: var(--fs-3); color: var(--muted-foreground); max-width: 40ch; cursor: copy; }
+.g-errors { display: grid; gap: var(--space-2); }
+.g-err { display: grid; gap: var(--space-1); padding: var(--space-2) var(--space-3); border: 1px solid var(--missing-border); border-left: 3px solid var(--missing-fill); background: var(--missing-tint); }
+.g-err p { font-size: var(--fs-4); cursor: copy; }
+.g-confirms { display: grid; gap: var(--space-3); }
+.g-dialog { display: grid; gap: var(--space-2); padding: var(--space-4); border: 1px solid var(--border); background: var(--card); box-shadow: 0 8px 24px oklch(0 0 0 / 18%); }
+.g-dbtns { display: flex; gap: var(--space-2); justify-content: flex-end; }
+.g-text { margin: 0; display: grid; }
+.g-text > div { display: grid; gap: var(--space-0-5); padding: var(--space-2) 0; border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); }
+.g-text dd { margin: 0; font-size: var(--fs-4); display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); }
+.g-text q, .g-h, .g-b, .g-err p { transition: color .15s ease; }
+.g-text q { cursor: copy; quotes: '“' '”'; }
+.g-text q:hover, .g-h:hover, .g-b:hover, .g-err p:hover { color: var(--primary); }
+.g-none { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-2); font-size: var(--fs-3); }
+/* copy list (C) */
+.strings { display: grid; border-top: 1px solid var(--border); margin-top: var(--space-3); }
+.str-row { display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: var(--space-4); padding: var(--space-2-5) 0; border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); align-items: baseline; }
+@container (max-width: 640px) { .str-row { grid-template-columns: 1fr; gap: var(--space-1); } }
+.str { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); align-items: baseline; }
+.str-q { padding: 0; border: 0; background: none; font-size: var(--fs-5); font-weight: var(--fw-medium); text-align: left; cursor: copy; transition: color .15s ease; }
+.str-q::before { content: '“'; color: var(--muted-foreground); } .str-q::after { content: '”'; color: var(--muted-foreground); }
+.str-q:hover { color: var(--primary); }
+.str-note { flex-basis: 100%; font-size: var(--fs-3); color: var(--muted-foreground); }
+/* registry */
+.reg-verdict { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); align-items: center; padding: var(--space-3) var(--space-4); border: 1px solid var(--border); border-left: 3px solid var(--primary); background: var(--card-veil); font-size: var(--fs-4); margin-bottom: var(--space-3); }
+.reg-verdict.req { border-left-color: var(--in-flight-fill); }
+.reg-verdict .mono-note { margin-left: auto; }
+.regs { display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); gap: var(--space-3); }
+.reg-card { display: grid; gap: var(--space-3); align-content: start; padding: var(--space-4); border: 1px solid var(--border); background: var(--card-veil); }
+.reg-card.req { border-color: var(--in-flight-border); }
+.reg-card header { display: flex; justify-content: space-between; gap: var(--space-3); align-items: baseline; }
+.reg-card .name { font-weight: var(--fw-semibold); }
+.reg-group { display: grid; gap: var(--space-1-5); }
+.reg-group .blocks { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.reg-group code { font-size: var(--fs-2); padding: 0.1rem var(--space-1-5); border: 1px solid var(--border); background: var(--background); }
+.reg-text, .reg-why { font-size: var(--fs-3); color: var(--muted-foreground); }
+.reg-note { margin-top: var(--space-3); font-size: var(--fs-3); color: var(--muted-foreground); max-width: 80ch; }
+/* in the source only (as RESEARCH / PATTERNS) */
+.source-only { display: grid; grid-template-columns: 12rem minmax(0, 1fr); gap: var(--space-4); padding: var(--space-3) 0; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border); }
+.source-only ul { display: flex; flex-wrap: wrap; gap: var(--space-1-5) var(--space-5); margin: 0; padding: 0; font-size: var(--fs-3); list-style: none; }
+.source-only button { padding: 0; border: 0; background: none; color: var(--muted-foreground); cursor: pointer; font: inherit; text-align: left; text-decoration: underline dotted; text-underline-offset: var(--space-0-5); }
+.source-only button:hover { color: var(--foreground); }
+@container (max-width: 760px) { .source-only { grid-template-columns: minmax(0, 1fr); gap: var(--space-2); } }
+</style>
+</head>
+<body>
+<div id="variant-nav" role="tablist">
+  <span class="lbl">Sketch 014</span>
+  <span class="lbl">Round 2</span>
+  <button class="variant-tab" data-variant="w">B card + A no copy ★ Selected</button>
+  <button class="variant-tab" data-variant="a">A: Quiet preset · no copy</button>
+  <button class="variant-tab" data-variant="b">B: shadcn card · copy as UI</button>
+  <button class="variant-tab" data-variant="c">C: shadcn card · copy as list</button>
+  <a class="variant-tab" href="index-r1.html" style="text-decoration:none">Round 1 ↗</a>
+</div>
+<div id="frame">
+  <header class="shell-header"><span class="brand-mark">L</span><span>Labelore</span></header>
+  <main id="root"></main>
+</div>
+<div id="sketch-tools" style="position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:12px;background:rgba(0,0,0,0.78);color:white;padding:8px 10px;opacity:0.55;transition:opacity 0.2s;display:grid;gap:6px;max-width:calc(100vw - 24px)" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.55'">
+  <div>Doc: <span id="doc-btns"></span></div>
+  <div>Theme: <button data-theme="light">Light</button><button data-theme="dark">Dark</button></div>
+  <div>Width: <button data-width="390">Phone</button><button data-width="820">Tablet</button><button data-width="full">Desktop</button></div>
+</div>
+<style>
+#sketch-tools button { background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 2px 7px; margin: 2px 0 0 3px; font: inherit; cursor: pointer; }
+#sketch-tools button.on { background: #c2410c; border-color: #c2410c; }
+</style>
+<script src="./data.js?v=1"></script>
+<script>
+const DOCS = window.UISPEC_DOCS;
+const state = { variant: 'w', doc: 'sp04', theme: 'dark', width: 'full', open: new Set(), cell: null, tab: 'spacing', fStatus: 'all', fCat: null, kind: null, modal: null };
+const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const inline = s => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/(^|[^*\w])\*([^*\n]+)\*(?!\w)/g, '$1<em>$2</em>').replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="#" onclick="return false">$1</a>');
+const plain = s => String(s ?? '').replace(/\*\*|`|\*/g, '');
+const firstSentence = s => { const t = plain(s).replace(/\s+/g, ' ').trim(); const m = t.match(/^(.{20,180}?[.;:])\s/); return m ? m[1] : t.length > 180 ? t.slice(0, 178) + '…' : t; };
+const humanize = s => String(s ?? '').replace(/-/g, ' ').replace(/^./, c => c.toUpperCase());
+
+/* small markdown block renderer: ###/#### headings, tables, lists, blockquotes, fences, paragraphs */
+function md(src) {
+  const lines = String(src ?? '').split('\n'), out = []; let i = 0;
+  const isTbl = k => /^\s*\|/.test(lines[k] ?? '') && /^\s*\|[\s:|-]+\|\s*$/.test(lines[k + 1] ?? '');
+  const cells = l => l.trim().replace(/^\||\|$/g, '').split(/(?<!\\)\|/).map(c => c.trim());
+  while (i < lines.length) {
+    const l = lines[i];
+    if (!l.trim()) { i++; continue; }
+    if (/^```/.test(l)) { const b = []; i++; while (i < lines.length && !/^```/.test(lines[i])) b.push(lines[i++]); i++; out.push(`<pre><code>${esc(b.join('\n'))}</code></pre>`); continue; }
+    if (/^#{3,6}\s/.test(l)) { out.push(`<h4>${inline(l.replace(/^#+\s/, ''))}</h4>`); i++; continue; }
+    if (isTbl(i)) { const h = cells(l); i += 2; const rows = []; while (i < lines.length && /^\s*\|/.test(lines[i])) rows.push(cells(lines[i++])); out.push(`<div class="tbl-wrap"><table><thead><tr>${h.map(c => `<th>${inline(c)}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`); continue; }
+    if (/^>/.test(l)) { const b = []; while (i < lines.length && /^>/.test(lines[i])) b.push(lines[i++].replace(/^>\s?/, '')); out.push(`<blockquote>${md(b.join('\n'))}</blockquote>`); continue; }
+    if (/^\s*([-*]|\d+\.)\s/.test(l)) { const ord = /^\s*\d+\./.test(l); const items = []; while (i < lines.length && (/^\s*([-*]|\d+\.)\s/.test(lines[i]) || (/^\s{2,}\S/.test(lines[i]) && items.length))) { if (/^\s*([-*]|\d+\.)\s/.test(lines[i]) && !/^\s{4,}/.test(lines[i])) items.push(lines[i].replace(/^\s*([-*]|\d+\.)\s/, '')); else items[items.length - 1] += ' ' + lines[i].trim(); i++; } out.push(`<${ord ? 'ol' : 'ul'}>${items.map(x => `<li>${inline(x)}</li>`).join('')}</${ord ? 'ol' : 'ul'}>`); continue; }
+    const p = []; while (i < lines.length && lines[i].trim() && !/^(```|#{3,6}\s|>|\s*([-*]|\d+\.)\s)/.test(lines[i]) && !isTbl(i)) p.push(lines[i++].trim());
+    out.push(`<p>${inline(p.join(' '))}</p>`);
+  }
+  return `<div class="md">${out.join('')}</div>`;
+}
+
+/* ---------- value parsing ---------- */
+function sizePx(s) { // -> { min, max, fluid } in px, or null
+  const t = plain(s);
+  let m = t.match(/(\d+(?:\.\d+)?)\s*[–-]\s*(\d+(?:\.\d+)?)\s*px/); if (m) return { min: +m[1], max: +m[2], fluid: true };
+  m = t.match(/(\d+(?:\.\d+)?)\s*px/); if (m) return { min: +m[1], max: +m[1], fluid: false };
+  m = t.match(/clamp\(\s*(\d*\.?\d+)rem\s*,[^,]+,\s*(\d*\.?\d+)rem/); if (m) return { min: m[1] * 16, max: m[2] * 16, fluid: true };
+  m = t.match(/(\d*\.?\d+)rem\s*[–-]\s*(\d*\.?\d+)rem/); if (m) return { min: m[1] * 16, max: m[2] * 16, fluid: true };
+  m = t.match(/(\d*\.?\d+)rem/); if (m) return { min: m[1] * 16, max: m[1] * 16, fluid: false };
+  return null;
+}
+const fmtPx = v => v ? (v.fluid ? `${+v.min.toFixed(1)}–${+v.max.toFixed(1)}px` : `${+v.min.toFixed(1)}px`) : '—';
+function weightOf(s) { const m = plain(s).match(/\b([1-9]00|650|550|450)\b/); return m ? +m[1] : null; }
+function lhOf(s) { const m = plain(s).match(/(\d(?:\.\d+)?)/); return m ? +m[1] : null; }
+const LIT = /#[0-9a-f]{6}\b|#[0-9a-f]{3}\b|oklch\([^)]*\)/gi;
+// A colour cell -> [{ tokens:[...], light, dark }]; token groups own the literals that follow them.
+function swatchesOf(cell, darkCell) {
+  const s = String(cell ?? '');
+  const re = /`(--[\w-]+)`|(#[0-9a-f]{6}\b|#[0-9a-f]{3}\b|oklch\([^)]*\))\s*`?\s*(light|dark)?/gi;
+  const out = []; let cur = null, m, lastTok = false;
+  while ((m = re.exec(s))) {
+    if (m[1] && /\b(never|not|instead of)\W*$/i.test(s.slice(Math.max(0, m.index - 14), m.index))) { (out.avoid ||= []).push(m[1]); continue; }
+    if (m[1]) { if (!cur || !lastTok || cur.light || cur.dark) out.push(cur = { tokens: [], light: null, dark: null }); cur.tokens.push(m[1]); lastTok = true; }
+    else { if (!cur) out.push(cur = { tokens: [], light: null, dark: null }); const which = (m[3] || '').toLowerCase(); if (which === 'dark' || (cur.light && !which)) cur.dark = cur.dark ?? m[2]; else cur.light = cur.light ?? m[2]; lastTok = false; }
+  }
+  if (darkCell) for (const g of swatchesOf(darkCell)) {
+    const tgt = out.find(o => g.tokens.some(t => o.tokens.includes(t))) ?? (g.tokens.length ? null : out.find(o => !o.dark));
+    if (tgt) tgt.dark = tgt.dark ?? g.light; else out.push({ tokens: g.tokens, light: null, dark: g.light, darkOnly: true });
+  }
+  return out;
+}
+function colorModel(d) {
+  const h = d.color.head.map(x => x.toLowerCase());
+  const lightI = h.findIndex(x => /value/.test(x)), darkI = h.findIndex(x => /dark/.test(x) && !/light/.test(x));
+  const useI = h.findIndex(x => /usage/.test(x));
+  const roles = d.color.rows.map(r => {
+    const name = plain(r[0]).replace(/\s*\(.*\)\s*/, '').trim();
+    const pct = +((r[0].match(/(\d+)%/) || [])[1] ?? 0) || null;
+    const sw = swatchesOf(r[lightI], darkI > lightI ? r[darkI] : null);
+    const note = plain(r[lightI]).replace(LIT, '').replace(/--[\w-]+/g, '').replace(/[—\-/,:()]+/g, ' ').replace(/\b(light|dark)\b/gi, '').trim();
+    return { name, pct, key: name.toLowerCase().split(' ')[0], sw, avoid: sw.avoid ?? [], note: (n2 => n2.length > 3 && !/see note/i.test(n2) ? n2 : null)(note.replace(/\b(never|not)\b/gi, '').trim()), usage: r[useI] ?? '' };
+  });
+  // "**Accent reserved for...:**" / "**Destructive (`--destructive`) reserved for...**" numbered lists in the prose
+  const res = {}; const blocks = d.color.prose.split(/\n(?=\*\*|[A-Z][^\n]*reserved for)/);
+  for (const b of blocks) {
+    const m = b.match(/^\**\s*(Accent|Destructive)[^\n]*?reserved for[^\n]*/i); if (!m) continue;
+    const items = [...b.matchAll(/^\s*(?:\d+\.|[-*])\s+(.+)$/gm)].map(x => x[1]);
+    const tail = b.slice(m[0].length).split('\n\n')[0];
+    res[m[1].toLowerCase()] = items.length ? items : [plain(m[0]).replace(/^.*reserved for[^:]*:?\s*/i, '') || tail];
+  }
+  const rest = d.color.prose;
+  return { roles, reserved: res, prose: rest };
+}
+const litCss = v => v; // doc values are valid CSS as written (hex / oklch)
+function swBox(sw, cls = 'chipbox') {
+  const one = !(sw.light && sw.dark);
+  const L = sw.light ? `<span style="background:${esc(litCss(sw.light))}" title="light ${esc(sw.light)}"></span>` : '';
+  const D = sw.dark ? `<span style="background:${esc(litCss(sw.dark))}" title="dark ${esc(sw.dark)}"></span>` : '';
+  return `<span class="${cls} ${one ? 'one' : ''}">${L || D ? L + D : '<span class="none" title="Value not in the document"></span>'}</span>`;
+}
+
+/* ---------- tones ---------- */
+const DIM_TONE = { PASS: 'complete', FLAG: 'in-flight', BLOCK: 'missing', FAIL: 'missing', PENDING: 'quiet' };
+const DIM_GLYPH = { PASS: '✓', FLAG: '⚑', BLOCK: '✗', FAIL: '✗', PENDING: '○' };
+const S = { covered: { label: 'Covered', tone: 'complete' }, backstop: { label: 'Backstop', tone: 'in-flight', hint: 'a person checks this at verify time' }, unresolved: { label: 'Unresolved', tone: 'missing', hint: 'the planner treats it as an assumption' }, dismissed: { label: 'Dismissed', tone: 'quiet' } };
+const SORDER = ['covered', 'backstop', 'unresolved', 'dismissed'];
+const CATS = ['empty', 'loading', 'error', 'populated', 'partial', 'overflow', 'zero-one-many', 'long-text'];
+const CAT_SHORT = { 'zero-one-many': '0·1·n', 'long-text': 'long', 'populated': 'full', 'overflow': 'ovfl', 'loading': 'load' };
+const SCOLOR = { covered: 'var(--primary)', backstop: 'var(--in-flight-fill)', unresolved: 'var(--missing-fill)', dismissed: 'color-mix(in oklch, var(--foreground) 18%, transparent)' };
+const worst = rows => ['unresolved', 'backstop', 'covered', 'dismissed'].find(s => rows.some(r => r.status === s));
+
+/* ---------- icons (lucide paths) ---------- */
+const ICON = {
+  link: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" x2="16" y1="12" y2="12"/></svg>',
+  check: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>',
+  max: '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="m21 3-7 7"/><path d="m3 21 7-7"/></svg>',
+  copy: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="0"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>',
+  x: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
+};
+
+/* ---------- cover: eyebrow, title, meta row (sign-off chip → modal, created, copy path, View/Source) ---------- */
+function signoffSummary(so) {
+  const c = so.dims.reduce((a, x) => (a[x.verdict] = (a[x.verdict] || 0) + 1, a), {});
+  const n = so.dims.length;
+  if (!n) return { label: 'No sign-off', tone: 'quiet' };
+  if (c.BLOCK || c.FAIL) return { label: `Sign-off · ${(c.BLOCK || 0) + (c.FAIL || 0)} blocked`, tone: 'missing' };
+  if (c.PENDING === n) return { label: 'Sign-off not run', tone: 'quiet' };
+  if (c.FLAG) return { label: `Sign-off ${c.PASS || 0}/${n} · ${c.FLAG} flag`, tone: 'in-flight' };
+  if (c.PENDING) return { label: `Sign-off ${c.PASS || 0}/${n}`, tone: 'quiet' };
+  return { label: `Signed off ${n}/${n}`, tone: 'complete' };
+}
+function presetInfo(d) {
+  const fm = d.fm;
+  const shadcn = fm.shadcn_initialized === 'true';
+  const raw = d.designSystem?.rows.find(r => /^preset$/i.test(plain(r.k)))?.v ?? '';
+  const code = (raw.match(/`([^`]+)`/) || [])[1] ?? plain(fm.preset ?? '').split(/[\s(]/)[0];
+  const usable = code && !/^(none|not applicable)$/i.test(code);
+  const kv = [];
+  for (const m of raw.matchAll(/\b(style|baseColor|base|theme|radius)\s+[`"]([\w-]+)[`"]|`(style|baseColor|base|theme|radius):\s*([\w-]+)`/g)) kv.push([(m[1] ?? m[3]).replace(/Color$/, ''), m[2] ?? m[4]]);
+  if (!kv.some(x => x[0] === 'style')) { const st = raw.match(/`(base-[\w-]+|sera|new-york|default)`/); if (st) kv.unshift(['style', st[1]]); }
+  const locked = /locked|non-negotiable|standing directive/i.test(raw);
+  return { shadcn, code: usable ? code : null, kv: kv.filter((x, i, a) => a.findIndex(y => y[0] === x[0]) === i).slice(0, 4), locked, raw };
+}
+function cover(d) {
+  const fm = d.fm, so = d.signoff;
+  const title = fm.slug ? humanize(fm.slug) : d.title.replace(/^Phase \S+\s*—\s*/, '');
+  const sum = signoffSummary(so);
+  const P = presetInfo(d);
+  const quietPreset = state.variant === 'a';
+  return `<header class="cover">
+    <p class="eyebrow">UI design contract · Phase ${esc(fm.phase ?? '')}</p>
+    <h1>${esc(title)}</h1>
+    <div class="meta-row">
+      <div class="facts">
+        <button class="chip signoff-chip" data-tone="${sum.tone}" data-modal="signoff">${esc(sum.label)} ${ICON.max}</button>
+        <span>Created<b>${esc(fm.created ?? '—')}</b></span>
+        ${/approved/i.test(fm.status) ? '' : `<span>Status<b>${esc(fm.status ?? '—')}</b></span>`}
+        ${quietPreset ? `<span class="preset-quiet">${P.shadcn ? `shadcn${P.code ? ` <button class="preset-copy" data-copy="${esc(P.code)}" title="Copy preset ${esc(P.code)}"><code>${esc(P.code)}</code>${ICON.copy}</button>` : ''}` : 'No shadcn'}</span>` : ''}
+      </div>
+      <div class="doc-tools">
+        <button class="icon-btn" data-copy="${esc(d.file)}" title="${esc(d.file)}" aria-label="Copy file path">${ICON.link}</button>
+        <span class="seg"><button aria-pressed="true">View</button><button data-toast>Source</button></span>
+      </div>
+    </div>
+  </header>`;
+}
+function signoffModal(d) {
+  const so = d.signoff, sum = signoffSummary(so);
+  return `<div class="modal-back fade" data-close>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="so-title">
+      <header class="modal-head"><h2 id="so-title"><span class="chip" data-tone="${sum.tone}">${esc(sum.label.replace(/^Sign(ed)?[- ]off\s*/i, '') || '—')}</span>Checker sign-off</h2><button class="icon-btn modal-x" data-close aria-label="Close">${ICON.x}</button></header>
+      <dl class="so-list">${so.dims.map(x => `<div class="so-row ${x.note ? '' : 'bare'}"><dt><span class="so-name">${esc(plain(x.name))}</span><span class="so-verdict" data-tone="${DIM_TONE[x.verdict]}"><span class="g">${DIM_GLYPH[x.verdict]}</span>${x.verdict === 'PENDING' ? 'Not run' : x.verdict}${x.qual ? ` · ${esc(x.qual)}` : ''}</span></dt>${x.note ? `<dd>${inline(x.note)}</dd>` : ''}</div>`).join('')}</dl>
+      ${so.approval ? `<p class="so-approval"><span class="mono-note">Approval</span> ${inline(so.approval)}</p>` : ''}
+    </div></div>`;
+}
+
+/* ---------- design system: the choices ---------- */
+const LOADED_FACES = { 'space grotesk': 'var(--font-sans)', 'jetbrains mono': 'var(--font-mono)' };
+function choiceOf(v) { // headline value + the rest
+  const t = String(v ?? '');
+  const tick = (t.match(/`([^`]+)`/) || [])[1];
+  const lead = plain(t).split(/\s+[—(]|\s+-\s|,\s/)[0].trim();
+  const head = /^\*\*/.test(t) ? plain(t.match(/\*\*([^*]+)\*\*/)[1]) : lead.length && lead.length < 40 ? lead : tick ?? lead.slice(0, 38);
+  return { head: head.replace(/\s*\(.*$/, ''), rest: plain(t).slice(plain(t).indexOf(head) + head.length).replace(/^[\s—:,(-]+/, '').replace(/\)$/, '') };
+}
+function fontsOf(v) {
+  const t = plain(v);
+  const fams = [...t.matchAll(/(Space Grotesk|JetBrains Mono|Inter|Geist(?: Mono)?|IBM Plex \w+|Roboto(?: Mono)?|system-ui)/g)].map(m => m[1]);
+  return [...new Set(fams)].map(f => {
+    const after = t.slice(t.indexOf(f) + f.length, t.indexOf(f) + f.length + 140);
+    const role = (after.match(/\(([^)]*)\)/) || [])[1] ?? (after.match(/--font-[\w-]+/) || [])[0] ?? '';
+    return { f, role: role.replace(/^[\s—-]+/, ''), face: LOADED_FACES[f.toLowerCase()] ?? 'inherit' };
+  });
+}
+function choiceCards(d, withShadcn) {
+  const rows = Object.fromEntries((d.designSystem?.rows ?? []).map(r => [plain(r.k).toLowerCase(), r.v]));
+  const P = presetInfo(d);
+  const card = (label, inner, cls = '') => `<article class="choice ${cls}"><span class="mono-note">${label}</span>${inner}</article>`;
+  const plainCard = (label, v) => { if (!v) return ''; const c = choiceOf(v); const none = /^none$/i.test(c.head); const k = 'ch-' + label; const o = state.open.has(k); return card(label, `<p class="choice-v ${none ? 'none' : ''}">${esc(none ? 'None' : c.head)}</p>${c.rest ? `<p class="choice-rest ${o ? '' : 'clamp2'}">${esc(c.rest)}</p>${c.rest.length > 90 ? `<button class="link-btn" data-open="${esc(k)}">${o ? 'less' : 'more'}</button>` : ''}` : ''}`, none ? 'is-none' : ''); };
+  const font = rows.font; const F = font ? fontsOf(font) : [];
+  const fontCard = font ? card('Font', F.length ? `<div class="faces">${F.map(x => `<div class="face"><p class="choice-v" style="font-family:${x.face}">${esc(x.f)}</p><span class="choice-rest">${esc(x.role)}</span><span class="aa" style="font-family:${x.face}">Aa Bb 0123</span></div>`).join('')}</div>` : `<p class="choice-v none">${esc(plain(font))}</p>`, F.length ? '' : 'is-none') : '';
+  const shadcnCard = withShadcn ? card('Design system', `<p class="choice-v ${P.shadcn ? '' : 'none'}">${P.shadcn ? 'shadcn/ui' : 'No shadcn'}</p>
+      <span class="shadcn-state"><span class="chip" data-tone="${P.shadcn ? 'complete' : 'quiet'}">${P.shadcn ? 'Initialized' : 'Not initialized'}</span>${P.locked ? '<span class="chip">Preset locked</span>' : ''}</span>
+      ${P.code ? `<button class="preset-field" data-copy="${esc(P.code)}" title="Copy preset"><span class="mono-note">Preset</span><code>${esc(P.code)}</code>${ICON.copy}</button>` : `<span class="choice-rest">Preset: none</span>`}
+      ${P.kv.length ? `<span class="kvs">${P.kv.map(([k, v]) => `<span><i>${esc(k)}</i> ${esc(v)}</span>`).join('')}</span>` : ''}`, `shadcn ${P.shadcn ? '' : 'is-none'}`) : '';
+  return `<div class="choices ${withShadcn ? 'four' : ''}">${shadcnCard}${plainCard('Component library', rows['component library'])}${plainCard('Icon library', rows['icon library'])}${fontCard}</div>`;
+}
+
+/* ---------- A: specimen sheet ---------- */
+function spacingSpecimen(d) {
+  const rows = d.spacing.rows.map(r => ({ ...r, px: sizePx(r.value) }));
+  const maxPx = Math.max(64, ...rows.map(r => r.px?.max ?? 0));
+  const scale = Math.min(1, 96 / maxPx);
+  return `<div class="stair">${rows.map(r => r.px ? `<figure><span class="sq" style="width:${r.px.min * scale}px;height:${r.px.min * scale}px">${r.px.fluid ? `<span class="ext" style="width:${r.px.max * scale}px;height:${r.px.max * scale}px"></span>` : ''}</span><figcaption><b>${esc(plain(r.token))}</b> ${fmtPx(r.px)}</figcaption></figure>` : '').join('')}</div>
+  <div class="rulers">${rows.map(r => `<div class="ruler"><span class="left"><span class="tok">${esc(plain(r.token))}</span><span class="val">${fmtPx(r.px)}</span></span><span>${r.px ? `<span class="bar ${r.px.fluid ? 'fluid' : ''}" style="width:${Math.max(r.px.max, 1) * Math.min(1.5, 170 / maxPx)}px;--min:${(100 * r.px.min / r.px.max).toFixed(1)}%" title="${esc(plain(r.value))}"></span>` : `<span class="bar none" style="width:4rem" title="Not a size"></span>`}</span><span class="use" style="grid-column:auto">${inline(r.usage)}</span></div>`).join('')}</div>
+  ${d.spacing.prose ? `<details class="fold exceptions"><summary>Exceptions &amp; notes</summary>${md(d.spacing.prose)}</details>` : ''}`;
+}
+function typeRows(d) {
+  const h = d.typography.head.map(x => x.toLowerCase());
+  const col = re => h.findIndex(x => re.test(x));
+  const [ri, si, wi, li, ui, fi] = [col(/role/), col(/size/), col(/weight/), col(/line/), col(/used|notes/), col(/^font/)];
+  return d.typography.rows.map(r => {
+    const px = sizePx(r[si] ?? ''); const w = weightOf(r[wi] ?? ''); const lh = lhOf(r[li] ?? '');
+    const mono = /mono|heading/i.test((r[wi] ?? '') + (fi >= 0 ? r[fi] : '')) && !/sans/i.test(fi >= 0 ? r[fi] : '');
+    const upper = /uppercase/i.test(r[si] ?? '');
+    return { role: plain(r[ri]), sizeRaw: r[si], px, w, lh, mono, upper, used: ui >= 0 ? r[ui] : '', na: !px };
+  });
+}
+const SAMPLE = { display: 'Tiers at a glance', heading: 'Where the work stands', body: 'Open the dashboard and know where the work stands without reading a single file by hand.', label: 'Last seen 14:32 · 6 min ago' };
+const sampleFor = role => SAMPLE[Object.keys(SAMPLE).find(k => role.toLowerCase().includes(k))] ?? 'The quick brown fox jumps over the lazy dog';
+const typeStyle = t => `font-size:${Math.min(t.px.max, 72)}px;font-weight:${t.w ?? 400};line-height:${t.lh ?? 1.4};${t.mono ? 'font-family:var(--font-mono);' : ''}${t.upper ? 'text-transform:uppercase;letter-spacing:0.08em;' : ''}`;
+function typeSpecimen(d) {
+  const rows = typeRows(d).sort((a, b) => (b.px?.max ?? 0) - (a.px?.max ?? 0));
+  return rows.map(t => `<div class="type-row ${t.na ? 'na' : ''}"><div class="meta"><span class="role">${esc(t.role)}</span><span class="spec">${t.na ? esc(plain(t.sizeRaw)) : `${fmtPx(t.px)} · ${t.w ?? '—'} · ${t.lh ?? '—'}`}</span>${t.mono ? '<span class="mono-note">Mono</span>' : ''}</div>
+    <div class="sample" ${t.na ? '' : `style="${typeStyle(t)}"`}>${t.na ? 'Not used in this phase' : esc(sampleFor(t.role))}${t.used ? `<div class="used">${inline(firstSentence(t.used))}</div>` : ''}</div></div>`).join('')
+    + (d.typography.prose ? `<details class="fold exceptions"><summary>Weights &amp; notes</summary>${md(d.typography.prose)}</details>` : '');
+}
+function splitBar(C) {
+  const shares = C.roles.filter(r => r.pct);
+  if (!shares.length) return '';
+  const fillOf = r => { const s = r.sw.find(x => x.light || x.dark); const v = state.theme === 'dark' ? (s?.dark ?? s?.light) : (s?.light ?? s?.dark); return v ? `background:${esc(v)}` : 'background:var(--hatch)'; };
+  return `<div class="split-bar">${shares.map(r => `<div style="flex:${r.pct};${fillOf(r)}"><span class="lab">${esc(r.name)} ${r.pct}%</span></div>`).join('')}</div>
+    <div class="split-key"><span>Proportion of the screen · painted with the doc's ${state.theme} values</span><span>${C.roles.filter(r => !r.pct).map(r => esc(r.name)).join(' · ')}${C.roles.some(r => !r.pct) ? ' — not a share' : ''}</span></div>`;
+}
+function roleCard(r, C) {
+  const res = C.reserved[r.key];
+  return `<article class="role-card ${r.key === 'accent' ? 'accent' : ''}"><header><span class="t">${esc(r.name)}</span>${r.pct ? `<span class="pct">${r.pct}%</span>` : ''}</header>
+    <div class="body"><div class="swatches">${r.sw.length ? r.sw.map(s => `<div class="swatch">${swBox(s)}<div><div class="nm">${s.tokens.length ? s.tokens.map(esc).join(' · ') : 'literal'}</div><div class="vals">${s.light || s.dark ? [s.light && (s.dark ? 'L ' : '') + s.light, s.dark && 'D ' + s.dark].filter(Boolean).map(esc).join('  ') : '<span class="nodoc">Value not in doc</span>'}</div></div></div>`).join('') : '<span class="nodoc">No token or value</span>'}</div>
+      ${r.avoid.length ? `<p class="usage"><span class="chip" data-tone="missing">Never</span> ${r.avoid.map(t => `<code>${esc(t)}</code>`).join(' ')}</p>` : ''}${r.note ? `<p class="usage"><em>${esc(r.note)}</em></p>` : ''}
+      <p class="usage">${inline(r.usage)}</p>
+      ${res ? `<div class="reserved"><span class="mono-note">Reserved for</span><ol>${res.map(x => `<li>${inline(x)}</li>`).join('')}</ol></div>` : ''}</div></article>`;
+}
+function colorSpecimen(d) {
+  const C = colorModel(d);
+  return `${splitBar(C)}<div class="roles">${C.roles.map(r => roleCard(r, C)).join('')}</div>
+    ${C.prose ? `<details class="fold color-more"><summary>Colour notes${/\|/.test(C.prose) ? ' · contrast tables' : ''}</summary>${md(C.prose)}</details>` : ''}`;
+}
+function designA(d) {
+  return `<section><div class="section-heading"><h2><span class="num">01</span>Design system</h2><span class="aside">Specimen · drawn from the doc's own values</span></div>
+    ${toolFacts(d)}
+    <div class="ds-block"><div class="sub-heading"><h3>Spacing · ${d.spacing.rows.length} steps</h3><span class="mono-note">to scale</span></div>${spacingSpecimen(d)}</div>
+    <div class="ds-block"><div class="sub-heading"><h3>Typography · ${d.typography.rows.length} roles</h3><span class="mono-note">live samples</span></div>${typeSpecimen(d)}</div>
+    <div class="ds-block"><div class="sub-heading"><h3>Colour · 60 / 30 / 10</h3></div>${colorSpecimen(d)}</div></section>`;
+}
+
+/* ---------- B: compact ---------- */
+function designB(d) {
+  const sp = d.spacing.rows.map(r => ({ ...r, px: sizePx(r.value) })).filter(r => r.px);
+  const max = Math.max(...sp.map(r => r.px.max), 1);
+  const ty = typeRows(d).sort((a, b) => (b.px?.max ?? 0) - (a.px?.max ?? 0));
+  const C = colorModel(d);
+  const o = k => state.open.has(k);
+  const tog = k => `<button class="link-btn" data-open="${k}">${o(k) ? 'Hide' : 'Usage'} ${o(k) ? '▴' : '▾'}</button>`;
+  return `<section><div class="section-heading"><h2><span class="num">01</span>Design system</h2><span class="aside">${esc(plain(d.designSystem?.rows.find(r => /component/i.test(r.k))?.v ?? '').split(/[(—]/)[0])}</span></div>
+    ${toolFacts(d)}
+    <div class="compact">
+      <div class="crow"><span class="k">Spacing</span><div class="tick-wrap"><div class="tickline">${sp.map((r, i) => `${r.px.fluid ? `<span class="range" style="left:${100 * r.px.min / max}%;width:${100 * (r.px.max - r.px.min) / max}%"></span>` : ''}<span class="tk ${i % 2 ? 'alt' : ''}" style="left:${100 * r.px.min / max}%"><span>${esc(plain(r.token))}</span><i></i></span>`).join('')}</div></div>${tog('b-sp')}
+        ${o('b-sp') ? `<div class="more-area detail-list fade">${d.spacing.rows.map(r => `<div><span class="dk">${esc(plain(r.token))} · ${fmtPx(sizePx(r.value))}</span><span class="dv">${inline(r.usage)}</span></div>`).join('')}${d.spacing.prose ? `<div><span class="dk">Notes</span><span class="dv">${md(d.spacing.prose)}</span></div>` : ''}</div>` : ''}</div>
+      <div class="crow"><span class="k">Type</span><div class="typeline">${ty.map(t => t.na ? `<span class="t muted"><small>${esc(t.role)}</small> n/a</span>` : `<span class="t"><span style="${typeStyle({ ...t, px: { max: Math.min(t.px.max, 30) } })}">Aa</span><small>${esc(t.role)} ${fmtPx(t.px)}/${t.lh ?? '—'} ${t.w ?? ''}</small></span>`).join('')}</div>${tog('b-ty')}
+        ${o('b-ty') ? `<div class="more-area detail-list fade">${ty.map(t => `<div><span class="dk">${esc(t.role)}</span><span class="dv">${inline(t.used || plain(t.sizeRaw))}</span></div>`).join('')}${d.typography.prose ? `<div><span class="dk">Notes</span><span class="dv">${md(d.typography.prose)}</span></div>` : ''}</div>` : ''}</div>
+      <div class="crow"><span class="k">Colour</span><div class="colorline">${C.roles.map(r => `<span class="cchip">${swBox(r.sw.find(s => s.light || s.dark) ?? r.sw[0] ?? {}, 'sw')}<span>${esc(r.name)}${r.pct ? ` <small>${r.pct}%</small>` : ''}<br><small>${esc(r.sw.flatMap(s => s.tokens).slice(0, 2).join(' '))}</small></span></span>`).join('')}</div>${tog('b-co')}
+        ${o('b-co') ? `<div class="more-area detail-list fade">${C.roles.map(r => `<div><span class="dk">${esc(r.name)}</span><span class="dv">${inline(r.usage)}${C.reserved[r.key] ? `<br><strong>Reserved for:</strong> ${C.reserved[r.key].map(inline).join(' · ')}` : ''}</span></div>`).join('')}${C.prose ? `<div><span class="dk">Notes</span><span class="dv">${md(C.prose)}</span></div>` : ''}</div>` : ''}</div>
+    </div></section>`;
+}
+
+/* ---------- C: tabbed specimen + applied mock ---------- */
+function mock(C, theme) {
+  const pick = key => { const r = C.roles.find(x => x.key === key); if (!r) return null; const s = r.sw.find(x => x[theme]) ?? r.sw.find(x => x.light || x.dark); return s ? s[theme] ?? s.light ?? s.dark : null; };
+  const bg = pick('dominant'), sec = pick('secondary'), acc = pick('accent'), des = pick('destructive');
+  const any = bg || sec || acc || des;
+  if (!any) return `<div class="mock nodoc-mock"><span class="nodoc">The doc names tokens only — no ${theme} values to paint</span></div>`;
+  const fg = theme === 'dark' ? 'oklch(0.95 0 0)' : 'oklch(0.2 0 0)';
+  const hatch = 'var(--hatch)';
+  return `<div class="mock" style="background:${bg ?? hatch};color:${fg}"><span class="tag" style="background:${bg ?? 'var(--background)'};color:${fg}">${theme}</span>
+    <span style="font-size:var(--fs-2);opacity:.7;font-family:var(--font-mono)">Dominant — the page</span>
+    <div class="mock-card" style="background:${sec ?? hatch};${sec ? '' : 'outline:1px dashed var(--border)'}"><strong style="font-size:var(--fs-4)">Secondary — a card</strong><span class="mock-muted" style="background:${fg};opacity:.15;width:80%"></span><span class="mock-muted" style="background:${fg};opacity:.15;width:55%"></span>
+      <button class="mock-btn" style="background:${acc ?? hatch};color:white" data-toast="accent">Accent action</button>
+      <span class="mock-err" style="color:${des ?? 'inherit'}">${des ? 'Destructive — an error line' : 'Destructive — value not in doc'}</span></div></div>`;
+}
+function designC(d) {
+  const C = colorModel(d); const tab = state.tab;
+  const T = [['spacing', 'Spacing', d.spacing.rows.length], ['type', 'Type', d.typography.rows.length], ['colour', 'Colour', C.roles.length]];
+  let body = '';
+  if (tab === 'spacing') body = spacingSpecimen(d);
+  if (tab === 'type') { const rows = typeRows(d).sort((a, b) => (b.px?.max ?? 0) - (a.px?.max ?? 0)); body = `<div class="ladder">${rows.map(t => `<div class="rung"><div ${t.na ? 'class="muted" style="font-style:italic"' : `style="${typeStyle(t)};min-width:0;overflow-wrap:anywhere"`}>${t.na ? 'Not used in this phase' : esc(sampleFor(t.role))}</div><div class="spec"><b>${esc(t.role)}</b>${t.na ? esc(plain(t.sizeRaw)) : `${fmtPx(t.px)} / ${t.lh ?? '—'} · ${t.w ?? '—'}${t.mono ? ' · mono' : ''}`}</div></div>`).join('')}</div>${d.typography.prose ? `<details class="fold exceptions"><summary>Weights &amp; notes</summary>${md(d.typography.prose)}</details>` : ''}`; }
+  if (tab === 'colour') {
+    const pins = [];
+    C.roles.forEach(r => { if (C.reserved[r.key]) C.reserved[r.key].forEach(x => pins.push([r.name, x])); });
+    body = `<div class="mock-wrap">${mock(C, 'light')}${mock(C, 'dark')}</div>
+      <div class="roles" style="margin-top:var(--space-5)">${C.roles.map(r => `<div class="role-card"><header><span class="t">${esc(r.name)}</span>${r.pct ? `<span class="pct">${r.pct}%</span>` : ''}</header><div class="body"><div class="swatches">${r.sw.map(s => `<div class="swatch">${swBox(s)}<div><div class="nm">${s.tokens.map(esc).join(' · ') || 'literal'}</div><div class="vals">${s.light || s.dark ? esc([s.light, s.dark].filter(Boolean).join(' / ')) : '<span class="nodoc">Value not in doc</span>'}</div></div></div>`).join('')}</div><p class="usage clamp3">${inline(r.usage)}</p></div></div>`).join('')}</div>
+      ${pins.length ? `<div class="pins"><span class="mono-note">Reserved for</span>${pins.map(([n, x], i) => `<div class="pin"><span class="n">${i + 1}</span><span><strong>${esc(n)}</strong> — ${inline(x)}</span></div>`).join('')}</div>` : ''}
+      ${C.prose ? `<details class="fold color-more"><summary>Colour notes</summary>${md(C.prose)}</details>` : ''}`;
+  }
+  return `<section><div class="section-heading"><h2><span class="num">01</span>Design system</h2><span class="aside">Specimen · one topic at a time</span></div>
+    ${toolFacts(d)}
+    <div class="tabs" role="tablist">${T.map(([k, l, n]) => `<button role="tab" data-tab="${k}" aria-selected="${tab === k}">${l}<span class="n">${n}</span></button>`).join('')}</div>
+    <div class="fade">${body}</div></section>`;
+}
+
+/* ---------- UI considerations ---------- */
+function uicModel(d) {
+  const els = d.uic?.elements ?? [];
+  const all = els.flatMap(e => e.rows.map(r => ({ ...r, el: e })));
+  const counts = Object.fromEntries(SORDER.map(s => [s, all.filter(r => r.status === s).length]));
+  return { els, all, counts };
+}
+function covSummary(d, U) {
+  const n = U.all.length || 1;
+  return `<div class="cov"><div class="cov-bar">${SORDER.map(s => U.counts[s] ? `<span class="s-${s}" style="width:${100 * U.counts[s] / n}%" title="${S[s].label}: ${U.counts[s]}"></span>` : '').join('')}</div>
+    <div class="cov-key">${SORDER.map(s => `<span><i class="s-${s}"></i><b>${U.counts[s]}</b>${S[s].label}</span>`).join('')}<span>· ${U.els.length} elements</span></div>
+    ${d.uic?.coverage ? `<p class="cov-author">Author's count: ${inline(d.uic.coverage)}</p>` : ''}</div>`;
+}
+function probeNotes(d) {
+  const parts = [d.uic?.intro, ...(d.uic?.notes ?? []).map(n => `### ${n.title}\n\n${n.body}`)].filter(x => x && x.trim());
+  return parts.length ? `<details class="fold" style="margin-top:var(--space-5)"><summary>How coverage was probed${d.uic.notes?.length ? ` · ${d.uic.notes.map(n => esc(n.title)).join(' · ')}` : ''}</summary>${md(parts.join('\n\n'))}</details>` : '';
+}
+const tidy = t => String(t ?? '').replace(/^\s*(⚠|✅|🧪|⊘)?\s*\**\s*(unresolved|backstop|covered|dismissed)\b[^.]{0,60}\.\**\s*/i, '');
+const consRow = r => `<div class="cons ${r.status === 'dismissed' ? 'dis' : ''}"><span class="c"><span class="cat">${esc(r.label)}</span><span><span class="chip" data-tone="${S[r.status].tone}">${S[r.status].label}</span>${r.tag ? ` <span class="p-tag">${r.tag}</span>` : ''}</span></span><span>${r.target && r.target !== r.el?.name ? `<span class="el-code">${esc(r.target)}</span><br>` : ''}${inline(tidy(r.note))}</span></div>`;
+const elHead = e => `<span class="el-code">${esc(e.code ?? '')}</span>`;
+function mini(e) { return `<span class="mini">${CATS.map(c => { const rs = e.rows.filter(r => r.cats.includes(c)); const w = rs.length ? worst(rs) : null; return `<i class="${w ? '' : 'none'}" style="${w ? `background:${SCOLOR[w]}` : ''}" title="${c}: ${w ?? 'not raised'}"></i>`; }).join('')}</span>`; }
+function emptyUic() { return `<p class="muted">No UI considerations recorded in this document.</p>`; }
+
+function uicA(d, U) {
+  if (!U.all.length) return emptyUic();
+  const hasOther = U.all.some(r => r.cats[0] === 'other');
+  const cols = hasOther ? [...CATS, 'other'] : CATS;
+  const [ek, ck] = (state.cell ?? '').split('|');
+  const cellRows = (e, c) => e.rows.filter(r => r.cats.includes(c));
+  const sel = state.cell ? { e: U.els.find(e => e.key === ek), c: ck } : null;
+  const attn = U.all.filter(r => r.status === 'backstop' || r.status === 'unresolved');
+  return `${covSummary(d, U)}
+    ${attn.length ? `<div class="attn-strip"><span class="mono-note">Needs a person</span>${attn.map(r => `<button class="chip" data-tone="${S[r.status].tone}" data-cell="${esc(r.el.key)}|${esc(r.cats[0])}" aria-pressed="${state.cell === r.el.key + '|' + r.cats[0]}">${esc(r.el.code ?? r.el.name.slice(0, 14))} · ${esc(CAT_SHORT[r.cats[0]] ?? r.cats[0])}</button>`).join('')}</div>` : ''}
+    <div class="matrix-wrap"><table class="matrix"><thead><tr><th class="el">Element</th>${cols.map(c => `<th title="${c}">${CAT_SHORT[c] ?? c}</th>`).join('')}</tr></thead>
+    <tbody>${U.els.map(e => `<tr><td class="el">${elHead(e)} <span class="nm" title="${esc(e.name)}">${esc(e.name)}</span></td>${cols.map(c => { const rs = cellRows(e, c); if (!rs.length) return '<td></td>'; const w = worst(rs); const k = e.key + '|' + c; return `<td><button class="cell" data-cell="${esc(k)}" aria-pressed="${state.cell === k}" title="${c}: ${rs.map(r => S[r.status].label).join(', ')}"><span><span class="mk ${w}"></span>${rs.length > 1 ? `<span class="mk-n">${rs.length}</span>` : ''}</span></button></td>`; }).join('')}</tr>`).join('')}</tbody></table></div>
+    <div class="matrix-key">${SORDER.map(s => `<span><span class="mk ${s}"></span>${S[s].label}${S[s].hint ? ` — ${S[s].hint}` : ''}</span>`).join('')}<span>blank — not raised</span></div>
+    ${sel?.e ? `<div class="cell-detail fade"><div class="hd">${elHead(sel.e)}<h3>${esc(sel.e.name)}</h3><span class="mono-note">· ${esc(sel.c)}</span><button class="link-btn" data-cell="${esc(state.cell)}" style="margin-left:auto">Close ✕</button></div>${sel.e.kinds ? `<span class="mono-note">Kinds: ${esc(sel.e.kinds)}</span>` : ''}
+      ${cellRows(sel.e, sel.c).map(r => `<div class="res"><span><span class="chip" data-tone="${S[r.status].tone}">${S[r.status].label}</span>${r.tag ? ` <span class="p-tag">${r.tag}</span>` : ''} ${r.target && r.target !== sel.e.name ? `<span class="el-code">${esc(r.target)}</span>` : ''}</span><div class="txt">${inline(tidy(r.note))}</div></div>`).join('')}</div>` : `<p class="mono-note" style="margin-top:var(--space-3)">Click a square to read how that state is handled</p>`}
+    ${probeNotes(d)}`;
+}
+function uicB(d, U) {
+  if (!U.all.length) return emptyUic();
+  const attn = U.all.filter(r => r.status === 'unresolved' || r.status === 'backstop').sort((a, b) => (a.status === 'unresolved' ? 0 : 1) - (b.status === 'unresolved' ? 0 : 1));
+  const dis = U.all.filter(r => r.status === 'dismissed'); const showDis = state.open.has('dis');
+  return `${covSummary(d, U)}
+    ${attn.length ? `<p class="label">Needs a person <span class="count">${attn.length}</span></p><div class="attn">${attn.map(r => `<article class="attn-card" data-s="${r.status}"><div class="who">${elHead(r.el)}<span class="nm">${esc(r.el.name)}</span><span><span class="chip" data-tone="${S[r.status].tone}">${S[r.status].label}</span> <span class="mono-note">${esc(r.label)}</span></span></div><div class="txt">${inline(tidy(r.note))}</div></article>`).join('')}</div>` : `<div class="notice" style="margin-bottom:var(--space-6)"><span class="mono-note">Nothing needs a person</span><span>Every raised state is covered or dismissed with a reason.</span></div>`}
+    <p class="label">Covered, by element <span class="count">${U.counts.covered}</span></p>
+    <div class="el-list">${U.els.map(e => { const k = 'el-' + e.key, o = state.open.has(k); const cov = e.rows.filter(r => r.status === 'covered'); const flag = e.rows.some(r => r.status === 'backstop' || r.status === 'unresolved'); return `<div class="el-row ${o ? 'open' : ''}"><button data-open="${esc(k)}" aria-expanded="${o}">${elHead(e)}<span class="nm">${esc(e.name)}${flag ? ' <span class="chip" data-tone="in-flight">flagged</span>' : ''}</span>${mini(e)}<span class="mono-note">${cov.length}/${e.rows.length} ${o ? '▴' : '▾'}</span></button>${o ? `<div class="el-body fade">${e.rows.filter(r => r.status !== 'dismissed' || showDis).map(consRow).join('')}</div>` : ''}</div>`; }).join('')}</div>
+    ${dis.length ? `<div class="dismissed-toggle"><button class="link-btn" data-open="dis">${showDis ? 'Hide' : 'Show'} ${dis.length} dismissed ${showDis ? '▴' : '▾'}</button>${showDis ? `<div class="el-body fade" style="padding-left:0">${dis.map(r => consRow({ ...r, target: r.target ?? r.el.name })).join('')}</div>` : ''}</div>` : ''}
+    ${probeNotes(d)}`;
+}
+function uicC(d, U) {
+  if (!U.all.length) return emptyUic();
+  const fs = state.fStatus, fc = state.fCat;
+  const match = r => (fs === 'all' || r.status === fs) && (!fc || r.cats.includes(fc));
+  const cnt = s => U.all.filter(r => (s === 'all' || r.status === s) && (!fc || r.cats.includes(fc))).length;
+  return `${covSummary(d, U)}
+    <div class="filters"><span class="mono-note">Status</span>${['all', ...SORDER].map(s => `<button class="chip" ${s !== 'all' ? `data-tone="${S[s].tone}"` : ''} data-fs="${s}" aria-pressed="${fs === s}">${s === 'all' ? 'All' : S[s].label} · ${cnt(s)}</button>`).join('')}</div>
+    <div class="filters"><span class="mono-note">State</span>${CATS.filter(c => U.all.some(r => r.cats.includes(c))).map(c => `<button class="chip" data-fc="${c}" aria-pressed="${fc === c}">${c}</button>`).join('')}</div>
+    <div class="el-cards">${U.els.map(e => { const k = 'ec-' + e.key, o = state.open.has(k) || ((fs !== 'all' || fc) && e.rows.some(match)); const any = e.rows.some(match); const flag = e.rows.some(r => r.status === 'backstop' || r.status === 'unresolved');
+      return `<div class="el-card ${flag ? 'flagged' : ''} ${any ? '' : 'dim'}"><button data-open="${esc(k)}" aria-expanded="${o}"><span class="top">${elHead(e)}<span class="nm">${esc(e.name)}</span></span>${e.kinds ? `<span class="kinds">${esc(e.kinds)}</span>` : ''}
+        <span class="strip">${CATS.map(c => { const rs = e.rows.filter(r => r.cats.includes(c)); const w = rs.length ? worst(rs) : null; return `<span><i class="${w ? '' : 'none'}" style="${w ? `background:${SCOLOR[w]}` : ''}"></i><small>${CAT_SHORT[c] ?? c}</small></span>`; }).join('')}</span></button>
+        ${o ? `<div class="el-body fade">${e.rows.filter(r => fs === 'all' && !fc ? true : match(r)).map(consRow).join('')}</div>` : ''}</div>`; }).join('')}</div>
+    ${probeNotes(d)}`;
+}
+
+/* ---------- design system section: B's spacing ruler, C's type ladder, A's colour ---------- */
+function spacingRuler(d) {
+  const sp = d.spacing.rows.map(r => ({ ...r, px: sizePx(r.value) }));
+  const ok = sp.filter(r => r.px); const max = Math.max(...ok.map(r => r.px.max), 1);
+  const o = state.open.has('sp-use');
+  return `<div class="compact"><div class="crow sp-row"><div class="tick-wrap"><div class="tickline">${ok.map((r, i) => `${r.px.fluid ? `<span class="range" style="left:${100 * r.px.min / max}%;width:${100 * (r.px.max - r.px.min) / max}%"></span>` : ''}<span class="tk ${i % 2 ? 'alt' : ''}" style="left:${100 * r.px.min / max}%"><span>${esc(plain(r.token))}</span><i></i></span>`).join('')}</div></div>
+    <button class="link-btn" data-open="sp-use">${o ? 'Hide' : 'Usage'} ${o ? '▴' : '▾'}</button>
+    ${o ? `<div class="more-area detail-list fade">${sp.map(r => `<div><span class="dk">${esc(plain(r.token))} · ${fmtPx(r.px)}</span><span class="dv">${inline(r.usage)}</span></div>`).join('')}${d.spacing.prose ? `<div><span class="dk">Notes</span><span class="dv">${md(d.spacing.prose)}</span></div>` : ''}</div>` : ''}</div></div>`;
+}
+function typeLadder(d) {
+  const rows = typeRows(d).sort((a, b) => (b.px?.max ?? 0) - (a.px?.max ?? 0));
+  return `<div class="ladder">${rows.map(t => `<div class="rung"><div ${t.na ? 'class="muted" style="font-style:italic"' : `style="${typeStyle(t)};min-width:0;overflow-wrap:anywhere"`}>${t.na ? 'Not used in this phase' : esc(sampleFor(t.role))}</div><div class="spec"><b>${esc(t.role)}</b>${t.na ? esc(plain(t.sizeRaw)) : `${fmtPx(t.px)} / ${t.lh ?? '—'} · ${t.w ?? '—'}${t.mono ? ' · mono' : ''}`}</div></div>`).join('')}</div>${d.typography.prose ? `<details class="fold exceptions"><summary>Weights &amp; notes</summary>${md(d.typography.prose)}</details>` : ''}`;
+}
+function designSection(d) {
+  return `<section><div class="section-heading"><h2><span class="num">01</span>Design system</h2><span class="aside">The choices, then the scales</span></div>
+    ${choiceCards(d, state.variant !== 'a')}
+    <div class="ds-block"><div class="sub-heading"><h3>Spacing · ${d.spacing.rows.length} steps</h3><span class="mono-note">px, to scale</span></div>${spacingRuler(d)}</div>
+    <div class="ds-block"><div class="sub-heading"><h3>Typography · ${d.typography.rows.length} roles</h3><span class="mono-note">live samples</span></div>${typeLadder(d)}</div>
+    <div class="ds-block"><div class="sub-heading"><h3>Colour · 60 / 30 / 10</h3></div>${colorSpecimen(d)}</div></section>`;
+}
+
+/* ---------- copy deck ---------- */
+function copyItems(d) {
+  return (d.copy?.rows ?? []).map((r, i) => {
+    const bold = [...r.copy.matchAll(/\*\*([^*]+?)\*\*/g)].map(m => m[1]).filter(x => /^["“]/.test(x.trim()) || x.length < 60);
+    const fromBold = bold.flatMap(x => x.split(/["”]\s*\/\s*["“]/)).map(x => x.replace(/^["“\s]+|["”\s]+$/g, '')).filter(x => x && x.length < 160 && !/^none\b/i.test(x));
+    const quoted = fromBold.length ? fromBold : [...r.copy.matchAll(/"([^"]{2,140})"/g)].map(m => m[1]);
+    const txt = plain(r.copy).trim();
+    const none = /^(none|not applicable|n\/a)\b/i.test(txt);
+    const say = none ? [] : quoted;
+    const note = (none ? txt : plain(r.copy.replace(/\*\*[^*]+?\*\*/g, ''))).replace(/^[\s—:–\-.,]+/, '').replace(/\s+/g, ' ').trim();
+    const el = plain(r.element);
+    const kind = none ? 'none' : !say.length ? 'described' : /empty/i.test(el) ? 'empty' : /error|fail|timeout|unreachable|denied|invalid|refus/i.test(el) && !/button|cta|action/i.test(el) ? 'error' : /confirm|destructive|dialog title|delete/i.test(el) && !/actions?$/i.test(el) ? 'confirm' : (/cta|button|action|retry|refresh|clear|toggle|download|cancel|submit|copy|link|nav/i.test(el) && say.every(x => x.length < 32)) ? 'action' : 'text';
+    return { i, el, say, note, kind };
+  });
+}
+const KIND = { action: 'Buttons & actions', empty: 'Empty states', error: 'Errors', confirm: 'Confirmations', text: 'Labels & messages', described: 'Described, not worded', none: 'Deliberately absent' };
+function copyGallery(d) {
+  const items = copyItems(d); if (!items.length) return '';
+  const groups = Object.keys(KIND).map(k => [k, items.filter(x => x.kind === k)]).filter(([, xs]) => xs.length);
+  const s = (x, j = 0) => esc(x.say[j] ?? '');
+  const tip = x => esc([x.el, x.note].filter(Boolean).join(' — '));
+  const render = (k, xs) => {
+    if (k === 'action') return `<div class="g-actions">${xs.map(x => x.say.map((_, j) => `<button class="fake-btn ${/primary/i.test(x.el) && j === 0 ? 'primary' : ''}" data-copy="${s(x, j)}" title="${tip(x)}">${s(x, j)}</button>`).join('')).join('')}</div><p class="g-cap">${xs.map(x => esc(x.el)).join(' · ')}</p>`;
+    if (k === 'empty') { const head = xs.find(x => /heading/i.test(x.el)), body = xs.find(x => /body/i.test(x.el)); const panels = head && body ? [[head, body], ...xs.filter(x => x !== head && x !== body).map(x => [x])] : xs.map(x => [x]); return `<div class="g-empties">${panels.map(([h, b]) => `<div class="g-empty" title="${tip(h)}"><span class="g-ico">∅</span><p class="g-h" data-copy="${s(h)}">${s(h)}</p>${b ? `<p class="g-b" data-copy="${s(b)}">${s(b)}</p>` : h.say[1] ? `<p class="g-b" data-copy="${s(h, 1)}">${s(h, 1)}</p>` : ''}${b ? '' : `<span class="mono-note">${esc(h.el)}</span>`}</div>`).join('')}</div>`; }
+    if (k === 'error') return `<div class="g-errors">${xs.map(x => `<div class="g-err" title="${tip(x)}"><p data-copy="${s(x)}">${s(x)}</p><span class="mono-note">${esc(x.el)}</span></div>`).join('')}</div>`;
+    if (k === 'confirm') return `<div class="g-confirms">${xs.map(x => `<div class="g-dialog" title="${tip(x)}"><p class="g-h" data-copy="${s(x)}">${s(x)}</p>${x.say[1] ? `<p class="g-b">${s(x, 1)}</p>` : x.note ? `<p class="g-b clamp2">${esc(x.note)}</p>` : ''}<div class="g-dbtns"><span class="fake-btn">Cancel</span><span class="fake-btn danger">Confirm</span></div><span class="mono-note">${esc(x.el)}</span></div>`).join('')}</div>`;
+    if (k === 'described') return `<dl class="g-text">${xs.map(x => `<div><dt class="mono-note">${esc(x.el)}</dt><dd class="muted"><em>${esc(x.note.slice(0, 220))}</em></dd></div>`).join('')}</dl>`;
+    if (k === 'none') return `<ul class="g-none">${xs.map(x => `<li><span class="mono-note">${esc(x.el)}</span> <span class="muted">${esc(x.note.slice(0, 160))}</span></li>`).join('')}</ul>`;
+    return `<dl class="g-text">${xs.map(x => `<div title="${tip(x)}"><dt class="mono-note">${esc(x.el)}</dt><dd>${x.say.map((_, j) => `<q data-copy="${s(x, j)}">${s(x, j)}</q>`).join(' ')}</dd></div>`).join('')}</dl>`;
+  };
+  return `<section><div class="section-heading"><h2><span class="num">03</span>Copy</h2><span class="aside">${items.length} strings, shown as the UI element they become · click to copy</span></div>
+    <div class="gallery">${groups.map(([k, xs]) => `<div class="g-group gk-${k}"><p class="label">${KIND[k]} <span class="count">${xs.length}</span></p>${render(k, xs)}</div>`).join('')}</div></section>`;
+}
+function copyList(d) {
+  const items = copyItems(d); if (!items.length) return '';
+  const f = state.kind;
+  const kinds = Object.keys(KIND).filter(k => items.some(x => x.kind === k));
+  const shown = items.filter(x => !f || x.kind === f);
+  return `<section><div class="section-heading"><h2><span class="num">03</span>Copy</h2><span class="aside">${items.length} strings · click a string to copy it</span></div>
+    <div class="filters"><span class="mono-note">Kind</span>${kinds.map(k => `<button class="chip" data-kind="${k}" aria-pressed="${f === k}">${KIND[k]} · ${items.filter(x => x.kind === k).length}</button>`).join('')}</div>
+    <div class="strings">${shown.map(x => `<div class="str-row"><span class="mono-note">${esc(x.el)}</span><span class="str">${x.say.length ? x.say.map((t, j) => `<button class="str-q" data-copy="${esc(t)}">${esc(t)}</button>`).join('') : '<span class="muted">None this phase</span>'}${x.note && x.note.length > 2 ? `<span class="str-note">${esc(x.note.slice(0, 200))}</span>` : ''}</span></div>`).join('')}</div></section>`;
+}
+
+/* ---------- registry safety ---------- */
+const blocks0 = r => r.raw;
+function registryR2(d, num) {
+  if (!d.registry?.rows.length) return '';
+  const h = d.registry.head.map(x => x.toLowerCase());
+  const [ni, bi, gi] = [h.findIndex(x => /registry/.test(x)), h.findIndex(x => /block/.test(x)), h.findIndex(x => /gate/.test(x))];
+  const regs = d.registry.rows.map(r => {
+    const blocks = r[bi] ?? '', gate = plain(r[gi] ?? '');
+    const required = /required/i.test(gate) && !/not required/i.test(gate);
+    const none = /^(none|not applicable|n\/a)\b/i.test(plain(blocks).trim());
+    const groups = none ? [] : blocks.split(/;\s*/).map(part => { const lab = (part.match(/\(([^)]*(?:new|install|added|already|reuse)[^)]*)\)/i) || [])[1] ?? null; const bare = part.replace(/\([^)]*\)/g, ''); const ticks = [...bare.matchAll(/`([^`]+)`/g)].map(m => m[1]); const names = ticks.length ? ticks : /^[A-Z][\w]+(,\s*[A-Z][\w]+)+/.test(plain(bare).trim()) ? plain(bare).split(/,\s*/).map(x => x.trim()).filter(x => /^[A-Z]\w+$/.test(x)) : []; return { names, label: lab, text: plain(part) }; });
+    const named = groups.some(g => g.names.length);
+    return { name: plain(r[ni]), groups, named, none, raw: blocks, gate, required, official: /official/i.test(r[ni] ?? '') };
+  });
+  const third = regs.filter(r => !r.official);
+  const anyReq = regs.some(r => r.required);
+  const total = regs.reduce((n, r) => n + r.groups.reduce((m, g) => m + g.names.length, 0), 0);
+  const gl = g => !g.label ? 'Blocks' : /new|install|added|to be added/i.test(g.label) ? 'New this phase' : /already|reuse/i.test(g.label) ? 'Reused' : g.label;
+  return `<section><div class="section-heading"><h2><span class="num">${num}</span>Registry safety</h2><span class="aside">Where the components come from</span></div>
+    <div class="reg-verdict ${anyReq ? 'req' : ''}"><span class="chip" data-tone="${anyReq ? 'in-flight' : 'complete'}">${anyReq ? 'Vetting required' : 'No vetting needed'}</span><span>${anyReq ? 'A third-party registry is in use — its blocks need <code>shadcn view</code> + diff before use.' : third.every(r => r.none) ? `Official shadcn registry only${third.length ? ' — no third-party registries declared' : ''}.` : 'No third-party registry needs a gate.'}</span><span class="mono-note">${total} block${total === 1 ? '' : 's'}</span></div>
+    <div class="regs">${regs.filter(r => !r.none || r.official).map(r => `<article class="reg-card ${r.required ? 'req' : ''}"><header><span class="name">${esc(r.name)}</span><span class="chip" data-tone="${r.required ? 'in-flight' : 'quiet'}">${esc(r.required ? 'Gate: view + diff' : r.gate.split(/\s+—\s+/)[0].slice(0, 26) || '—')}</span></header>
+      ${r.none ? `<p class="muted reg-text">${esc(plain(blocks0(r)))}</p>` : r.named ? r.groups.filter(g => g.names.length).map(g => `<div class="reg-group"><span class="mono-note">${esc(gl(g))} · ${g.names.length}</span><span class="blocks">${g.names.map(n => `<code>${esc(n)}</code>`).join('')}</span></div>`).join('') : `<p class="muted reg-text">${inline(r.groups.map(g => g.text).join('; '))}</p>`}
+      ${r.gate.includes(' — ') ? `<p class="reg-why clamp2">${esc(r.gate.split(/\s+—\s+/).slice(1).join(' — '))}</p>` : ''}</article>`).join('')}</div>
+    ${d.registry.prose ? `<p class="reg-note">${inline(firstSentence(d.registry.prose))}</p>` : ''}</section>`;
+}
+
+/* ---------- in the source only (RESEARCH / PATTERNS strip) ---------- */
+function sourceOnly(d) {
+  const e = [];
+  d.chapters.forEach(c => e.push(c.title.replace(/\s*\(Revision[^)]*\)/, '')));
+  if ((state.variant === 'a' || state.variant === 'w') && d.copy?.rows.length) e.push('Copywriting Contract');
+  if (d.signoff?.extra) e.push("Checker's notes");
+  if (d.uic?.intro || d.uic?.notes?.length) e.push('How coverage was probed');
+  if (d.uic?.quote) e.push('UI Considerations lift rule');
+  if (d.uic?.comments?.length) e.push('Status vocabulary');
+  if (d.tagline) e.push('Generator note');
+  e.push('Frontmatter');
+  return `<nav class="source-only" aria-label="In the source only"><span class="mono-note">In the source only</span><ul>${e.map(x => `<li><button data-toast>${esc(x)}</button></li>`).join('')}</ul></nav>`;
+}
+
+function render() {
+  const d = DOCS[state.doc]; const U = uicModel(d);
+  const copy = state.variant === 'b' ? copyGallery(d) : state.variant === 'c' ? copyList(d) : '';
+  const regNum = copy ? '04' : '03';
+  document.getElementById('root').innerHTML = `<div class="page fade">${cover(d)}${designSection(d)}
+    <section><div class="section-heading"><h2><span class="num">02</span>UI considerations</h2><span class="aside">Element × state · click a square</span></div>${uicA(d, U)}</section>
+    ${copy}${registryR2(d, regNum)}${sourceOnly(d)}</div>${state.modal === 'signoff' ? signoffModal(d) : ''}`;
+  document.documentElement.classList.toggle('dark', state.theme === 'dark');
+  const f = document.getElementById('frame');
+  f.style.maxWidth = state.width === 'full' ? 'none' : state.width + 'px';
+  f.classList.toggle('narrow-frame', state.width !== 'full');
+  document.querySelectorAll('.variant-tab').forEach(t => t.classList.toggle('active', t.dataset.variant === state.variant));
+  document.querySelectorAll('#sketch-tools button').forEach(b => b.classList.toggle('on', b.dataset.doc === state.doc || b.dataset.theme === state.theme || b.dataset.width === state.width));
+}
+document.getElementById('doc-btns').innerHTML = Object.entries(DOCS).map(([k, d]) => `<button data-doc="${k}">${esc(d.label)}</button>`).join('');
+function toast(msg) { const t = document.createElement('div'); t.textContent = msg; t.style.cssText = 'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--foreground);color:var(--background);padding:8px 16px;font-family:var(--font-mono);font-size:var(--fs-2);z-index:10000'; document.body.appendChild(t); setTimeout(() => t.remove(), 1400); }
+function copyText(txt, el) {
+  const done = () => { toast('Copied'); if (el?.classList.contains('icon-btn')) { const h = el.innerHTML; el.innerHTML = ICON.check; setTimeout(() => (el.innerHTML = h), 1500); } };
+  try { navigator.clipboard.writeText(txt).then(done, done); } catch { done(); }
+}
+document.addEventListener('click', e => {
+  if (e.target.closest('[data-close]') && (e.target.matches('[data-close]') || e.target.closest('.modal-x'))) { state.modal = null; return render(); }
+  const c = e.target.closest('[data-copy]'); if (c) return copyText(c.dataset.copy, c);
+  const t = e.target.closest('button'); if (!t) return;
+  const reset = () => { state.open.clear(); state.cell = null; state.kind = null; state.modal = null; };
+  if (t.dataset.variant) { state.variant = t.dataset.variant; reset(); }
+  else if (t.dataset.doc) { state.doc = t.dataset.doc; reset(); }
+  else if (t.dataset.theme) state.theme = t.dataset.theme;
+  else if (t.dataset.width) state.width = t.dataset.width;
+  else if (t.dataset.modal) state.modal = t.dataset.modal;
+  else if (t.dataset.cell) state.cell = state.cell === t.dataset.cell ? null : t.dataset.cell;
+  else if (t.dataset.kind) state.kind = state.kind === t.dataset.kind ? null : t.dataset.kind;
+  else if (t.dataset.open) { const k = t.dataset.open; state.open.has(k) ? state.open.delete(k) : state.open.add(k); }
+  else if ('toast' in t.dataset) return toast('Opens Source mode at this section');
+  else return;
+  const y = window.scrollY; render(); window.scrollTo(0, y);
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (state.modal) state.modal = null; else if (state.cell) state.cell = null; else return; render(); } });
+render();
+</script>
+</body>
+</html>
