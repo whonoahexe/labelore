@@ -15,6 +15,7 @@ import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
 import { composePatternMap } from './pattern-map.ts';
 import { composeUiSpec } from './ui-spec.ts';
+import { composeUatSession } from './uat-session.ts';
 
 /**
  * `select` and `consumes` run back to back, synchronously, within the same `composeView` call
@@ -198,6 +199,7 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
       { type: 'section', heading: /^tests$/i },
       { type: 'section', heading: /^current test/i },
     ],
+    uatSession: composeUatSession,
   },
   validation: {
     kind: 'validation',
