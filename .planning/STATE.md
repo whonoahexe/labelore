@@ -149,6 +149,7 @@ None.
 | 34 | Global style: --font-heading uses the sans font, not mono | 2026-09-30 | cce34d6 | — |
 | 35 | PATTERNS cover: Copy file path and view toggle on the same line as the Searched scope | 2026-09-30 | 09f9311 | — |
 | 36 | PATTERNS File map section heading matches sketch 013 B (mono title, muted 01, bottom-aligned aside) | 2026-09-30 | b917ec5 | — |
+| 261001-qk7 | Build sketch 015 B as the UAT page view | 2026-10-01 | 7d4aa57 | .planning/quick/261001-qk7-uat-page-view |
 
 ## Deferred Items
 
