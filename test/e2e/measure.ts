@@ -262,6 +262,14 @@ const CORNER_SELECTORS = [
   '.view-ui-spec-role',
   '.view-ui-spec-reg',
   '.view-ui-spec-matrix-wrap',
+  // quick-261001-qk7: the UAT page's attention card, summary squares, test pairs, gap register and
+  // cards, and the source-only strip.
+  '.view-uat-now',
+  '.view-uat-square',
+  '.view-uat-pair',
+  '.view-uat-register',
+  '.view-uat-card',
+  '.view-uat-source-only',
 ];
 
 /** F-06: squared corners — every element matching one of the shared "boxy chrome" selectors,
