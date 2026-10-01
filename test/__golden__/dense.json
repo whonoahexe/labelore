@@ -3730,7 +3730,235 @@
                 "bodyHash": "af850bb35800baf82eada51952f3df0f072ff17a90ca274157232a1db693540f",
                 "mtimeMs": 0,
                 "warnings": [],
-                "structured": {}
+                "structured": {
+                  "uiSpec": {
+                    "meta": {
+                      "phase": "1",
+                      "slug": "identity-slice",
+                      "status": "draft",
+                      "created": "2026-06-07",
+                      "shadcnInitialized": "false",
+                      "preset": "none"
+                    },
+                    "title": "Phase 1 — UI Design Contract",
+                    "tagline": "Visual and interaction contract for frontend phases. This is a fixture document — the identity slice has no real UI.",
+                    "scope": [],
+                    "designSystem": [
+                      {
+                        "key": "Tool",
+                        "value": "none"
+                      },
+                      {
+                        "key": "Preset",
+                        "value": "not applicable"
+                      },
+                      {
+                        "key": "Component library",
+                        "value": "none"
+                      },
+                      {
+                        "key": "Icon library",
+                        "value": "none"
+                      },
+                      {
+                        "key": "Font",
+                        "value": "none"
+                      }
+                    ],
+                    "spacing": {
+                      "head": [
+                        "Token",
+                        "Value",
+                        "Usage"
+                      ],
+                      "rows": [
+                        [
+                          "md",
+                          "16px",
+                          "Fixture placeholder"
+                        ]
+                      ],
+                      "prose": [
+                        {
+                          "kind": "paragraph",
+                          "text": "Declared values (must be multiples of 4):"
+                        },
+                        {
+                          "kind": "paragraph",
+                          "text": "Exceptions: none"
+                        }
+                      ]
+                    },
+                    "typography": {
+                      "head": [
+                        "Role",
+                        "Size",
+                        "Weight",
+                        "Line Height"
+                      ],
+                      "rows": [
+                        [
+                          "Body",
+                          "16px",
+                          "400",
+                          "1.5"
+                        ]
+                      ],
+                      "prose": []
+                    },
+                    "color": {
+                      "head": [
+                        "Role",
+                        "Value",
+                        "Usage"
+                      ],
+                      "rows": [
+                        [
+                          "Dominant (60%)",
+                          "#ffffff",
+                          "Background, surfaces"
+                        ],
+                        [
+                          "Secondary (30%)",
+                          "#e5e5e5",
+                          "Cards"
+                        ],
+                        [
+                          "Accent (10%)",
+                          "#3366ff",
+                          "Primary actions only"
+                        ],
+                        [
+                          "Destructive",
+                          "#cc3333",
+                          "Destructive actions only"
+                        ]
+                      ],
+                      "prose": [
+                        {
+                          "kind": "paragraph",
+                          "text": "Accent reserved for: primary CTA button"
+                        }
+                      ]
+                    },
+                    "reserved": {
+                      "accent": [
+                        "primary CTA button"
+                      ]
+                    },
+                    "considerations": {
+                      "quote": null,
+                      "intro": [],
+                      "coverage": "none applicable (fixture)",
+                      "elements": [],
+                      "notes": [],
+                      "comments": []
+                    },
+                    "registry": {
+                      "head": [
+                        "Registry",
+                        "Blocks Used",
+                        "Safety Gate"
+                      ],
+                      "rows": [
+                        [
+                          "shadcn official",
+                          "none",
+                          "not required"
+                        ]
+                      ],
+                      "prose": []
+                    },
+                    "signoff": {
+                      "dims": [
+                        {
+                          "n": 1,
+                          "name": "Copywriting",
+                          "checked": false,
+                          "verdict": "PENDING",
+                          "qual": null,
+                          "note": ""
+                        },
+                        {
+                          "n": 2,
+                          "name": "Visuals",
+                          "checked": false,
+                          "verdict": "PENDING",
+                          "qual": null,
+                          "note": ""
+                        },
+                        {
+                          "n": 3,
+                          "name": "Color",
+                          "checked": false,
+                          "verdict": "PENDING",
+                          "qual": null,
+                          "note": ""
+                        },
+                        {
+                          "n": 4,
+                          "name": "Typography",
+                          "checked": false,
+                          "verdict": "PENDING",
+                          "qual": null,
+                          "note": ""
+                        },
+                        {
+                          "n": 5,
+                          "name": "Spacing",
+                          "checked": false,
+                          "verdict": "PENDING",
+                          "qual": null,
+                          "note": ""
+                        },
+                        {
+                          "n": 6,
+                          "name": "Registry Safety",
+                          "checked": false,
+                          "verdict": "PENDING",
+                          "qual": null,
+                          "note": ""
+                        }
+                      ],
+                      "approval": "pending",
+                      "hasNotes": false
+                    },
+                    "sections": [
+                      {
+                        "heading": "Design System",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Spacing Scale",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Typography",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Color",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Copywriting Contract",
+                        "claimed": false
+                      },
+                      {
+                        "heading": "UI Considerations",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Registry Safety",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Checker Sign-Off",
+                        "claimed": true
+                      }
+                    ]
+                  }
+                }
               },
               ".planning/phases/01-identity-slice/01-VALIDATION.md": {
                 "id": ".planning/phases/01-identity-slice/01-VALIDATION.md",
@@ -6929,7 +7157,235 @@
             "bodyHash": "af850bb35800baf82eada51952f3df0f072ff17a90ca274157232a1db693540f",
             "mtimeMs": 0,
             "warnings": [],
-            "structured": {}
+            "structured": {
+              "uiSpec": {
+                "meta": {
+                  "phase": "1",
+                  "slug": "identity-slice",
+                  "status": "draft",
+                  "created": "2026-06-07",
+                  "shadcnInitialized": "false",
+                  "preset": "none"
+                },
+                "title": "Phase 1 — UI Design Contract",
+                "tagline": "Visual and interaction contract for frontend phases. This is a fixture document — the identity slice has no real UI.",
+                "scope": [],
+                "designSystem": [
+                  {
+                    "key": "Tool",
+                    "value": "none"
+                  },
+                  {
+                    "key": "Preset",
+                    "value": "not applicable"
+                  },
+                  {
+                    "key": "Component library",
+                    "value": "none"
+                  },
+                  {
+                    "key": "Icon library",
+                    "value": "none"
+                  },
+                  {
+                    "key": "Font",
+                    "value": "none"
+                  }
+                ],
+                "spacing": {
+                  "head": [
+                    "Token",
+                    "Value",
+                    "Usage"
+                  ],
+                  "rows": [
+                    [
+                      "md",
+                      "16px",
+                      "Fixture placeholder"
+                    ]
+                  ],
+                  "prose": [
+                    {
+                      "kind": "paragraph",
+                      "text": "Declared values (must be multiples of 4):"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "text": "Exceptions: none"
+                    }
+                  ]
+                },
+                "typography": {
+                  "head": [
+                    "Role",
+                    "Size",
+                    "Weight",
+                    "Line Height"
+                  ],
+                  "rows": [
+                    [
+                      "Body",
+                      "16px",
+                      "400",
+                      "1.5"
+                    ]
+                  ],
+                  "prose": []
+                },
+                "color": {
+                  "head": [
+                    "Role",
+                    "Value",
+                    "Usage"
+                  ],
+                  "rows": [
+                    [
+                      "Dominant (60%)",
+                      "#ffffff",
+                      "Background, surfaces"
+                    ],
+                    [
+                      "Secondary (30%)",
+                      "#e5e5e5",
+                      "Cards"
+                    ],
+                    [
+                      "Accent (10%)",
+                      "#3366ff",
+                      "Primary actions only"
+                    ],
+                    [
+                      "Destructive",
+                      "#cc3333",
+                      "Destructive actions only"
+                    ]
+                  ],
+                  "prose": [
+                    {
+                      "kind": "paragraph",
+                      "text": "Accent reserved for: primary CTA button"
+                    }
+                  ]
+                },
+                "reserved": {
+                  "accent": [
+                    "primary CTA button"
+                  ]
+                },
+                "considerations": {
+                  "quote": null,
+                  "intro": [],
+                  "coverage": "none applicable (fixture)",
+                  "elements": [],
+                  "notes": [],
+                  "comments": []
+                },
+                "registry": {
+                  "head": [
+                    "Registry",
+                    "Blocks Used",
+                    "Safety Gate"
+                  ],
+                  "rows": [
+                    [
+                      "shadcn official",
+                      "none",
+                      "not required"
+                    ]
+                  ],
+                  "prose": []
+                },
+                "signoff": {
+                  "dims": [
+                    {
+                      "n": 1,
+                      "name": "Copywriting",
+                      "checked": false,
+                      "verdict": "PENDING",
+                      "qual": null,
+                      "note": ""
+                    },
+                    {
+                      "n": 2,
+                      "name": "Visuals",
+                      "checked": false,
+                      "verdict": "PENDING",
+                      "qual": null,
+                      "note": ""
+                    },
+                    {
+                      "n": 3,
+                      "name": "Color",
+                      "checked": false,
+                      "verdict": "PENDING",
+                      "qual": null,
+                      "note": ""
+                    },
+                    {
+                      "n": 4,
+                      "name": "Typography",
+                      "checked": false,
+                      "verdict": "PENDING",
+                      "qual": null,
+                      "note": ""
+                    },
+                    {
+                      "n": 5,
+                      "name": "Spacing",
+                      "checked": false,
+                      "verdict": "PENDING",
+                      "qual": null,
+                      "note": ""
+                    },
+                    {
+                      "n": 6,
+                      "name": "Registry Safety",
+                      "checked": false,
+                      "verdict": "PENDING",
+                      "qual": null,
+                      "note": ""
+                    }
+                  ],
+                  "approval": "pending",
+                  "hasNotes": false
+                },
+                "sections": [
+                  {
+                    "heading": "Design System",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Spacing Scale",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Typography",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Color",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Copywriting Contract",
+                    "claimed": false
+                  },
+                  {
+                    "heading": "UI Considerations",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Registry Safety",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Checker Sign-Off",
+                    "claimed": true
+                  }
+                ]
+              }
+            }
           },
           ".planning/phases/01-identity-slice/01-VALIDATION.md": {
             "id": ".planning/phases/01-identity-slice/01-VALIDATION.md",
@@ -9003,7 +9459,235 @@
                   "bodyHash": "af850bb35800baf82eada51952f3df0f072ff17a90ca274157232a1db693540f",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "uiSpec": {
+                      "meta": {
+                        "phase": "1",
+                        "slug": "identity-slice",
+                        "status": "draft",
+                        "created": "2026-06-07",
+                        "shadcnInitialized": "false",
+                        "preset": "none"
+                      },
+                      "title": "Phase 1 — UI Design Contract",
+                      "tagline": "Visual and interaction contract for frontend phases. This is a fixture document — the identity slice has no real UI.",
+                      "scope": [],
+                      "designSystem": [
+                        {
+                          "key": "Tool",
+                          "value": "none"
+                        },
+                        {
+                          "key": "Preset",
+                          "value": "not applicable"
+                        },
+                        {
+                          "key": "Component library",
+                          "value": "none"
+                        },
+                        {
+                          "key": "Icon library",
+                          "value": "none"
+                        },
+                        {
+                          "key": "Font",
+                          "value": "none"
+                        }
+                      ],
+                      "spacing": {
+                        "head": [
+                          "Token",
+                          "Value",
+                          "Usage"
+                        ],
+                        "rows": [
+                          [
+                            "md",
+                            "16px",
+                            "Fixture placeholder"
+                          ]
+                        ],
+                        "prose": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Declared values (must be multiples of 4):"
+                          },
+                          {
+                            "kind": "paragraph",
+                            "text": "Exceptions: none"
+                          }
+                        ]
+                      },
+                      "typography": {
+                        "head": [
+                          "Role",
+                          "Size",
+                          "Weight",
+                          "Line Height"
+                        ],
+                        "rows": [
+                          [
+                            "Body",
+                            "16px",
+                            "400",
+                            "1.5"
+                          ]
+                        ],
+                        "prose": []
+                      },
+                      "color": {
+                        "head": [
+                          "Role",
+                          "Value",
+                          "Usage"
+                        ],
+                        "rows": [
+                          [
+                            "Dominant (60%)",
+                            "#ffffff",
+                            "Background, surfaces"
+                          ],
+                          [
+                            "Secondary (30%)",
+                            "#e5e5e5",
+                            "Cards"
+                          ],
+                          [
+                            "Accent (10%)",
+                            "#3366ff",
+                            "Primary actions only"
+                          ],
+                          [
+                            "Destructive",
+                            "#cc3333",
+                            "Destructive actions only"
+                          ]
+                        ],
+                        "prose": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Accent reserved for: primary CTA button"
+                          }
+                        ]
+                      },
+                      "reserved": {
+                        "accent": [
+                          "primary CTA button"
+                        ]
+                      },
+                      "considerations": {
+                        "quote": null,
+                        "intro": [],
+                        "coverage": "none applicable (fixture)",
+                        "elements": [],
+                        "notes": [],
+                        "comments": []
+                      },
+                      "registry": {
+                        "head": [
+                          "Registry",
+                          "Blocks Used",
+                          "Safety Gate"
+                        ],
+                        "rows": [
+                          [
+                            "shadcn official",
+                            "none",
+                            "not required"
+                          ]
+                        ],
+                        "prose": []
+                      },
+                      "signoff": {
+                        "dims": [
+                          {
+                            "n": 1,
+                            "name": "Copywriting",
+                            "checked": false,
+                            "verdict": "PENDING",
+                            "qual": null,
+                            "note": ""
+                          },
+                          {
+                            "n": 2,
+                            "name": "Visuals",
+                            "checked": false,
+                            "verdict": "PENDING",
+                            "qual": null,
+                            "note": ""
+                          },
+                          {
+                            "n": 3,
+                            "name": "Color",
+                            "checked": false,
+                            "verdict": "PENDING",
+                            "qual": null,
+                            "note": ""
+                          },
+                          {
+                            "n": 4,
+                            "name": "Typography",
+                            "checked": false,
+                            "verdict": "PENDING",
+                            "qual": null,
+                            "note": ""
+                          },
+                          {
+                            "n": 5,
+                            "name": "Spacing",
+                            "checked": false,
+                            "verdict": "PENDING",
+                            "qual": null,
+                            "note": ""
+                          },
+                          {
+                            "n": 6,
+                            "name": "Registry Safety",
+                            "checked": false,
+                            "verdict": "PENDING",
+                            "qual": null,
+                            "note": ""
+                          }
+                        ],
+                        "approval": "pending",
+                        "hasNotes": false
+                      },
+                      "sections": [
+                        {
+                          "heading": "Design System",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Spacing Scale",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Typography",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Color",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Copywriting Contract",
+                          "claimed": false
+                        },
+                        {
+                          "heading": "UI Considerations",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Registry Safety",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Checker Sign-Off",
+                          "claimed": true
+                        }
+                      ]
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-VALIDATION.md": {
                   "id": ".planning/phases/01-identity-slice/01-VALIDATION.md",
@@ -10674,7 +11358,235 @@
                   "bodyHash": "af850bb35800baf82eada51952f3df0f072ff17a90ca274157232a1db693540f",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "uiSpec": {
+                      "meta": {
+                        "phase": "1",
+                        "slug": "identity-slice",
+                        "status": "draft",
+                        "created": "2026-06-07",
+                        "shadcnInitialized": "false",
+                        "preset": "none"
+                      },
+                      "title": "Phase 1 — UI Design Contract",
+                      "tagline": "Visual and interaction contract for frontend phases. This is a fixture document — the identity slice has no real UI.",
+                      "scope": [],
+                      "designSystem": [
+                        {
+                          "key": "Tool",
+                          "value": "none"
+                        },
+                        {
+                          "key": "Preset",
+                          "value": "not applicable"
+                        },
+                        {
+                          "key": "Component library",
+                          "value": "none"
+                        },
+                        {
+                          "key": "Icon library",
+                          "value": "none"
+                        },
+                        {
+                          "key": "Font",
+                          "value": "none"
+                        }
+                      ],
+                      "spacing": {
+                        "head": [
+                          "Token",
+                          "Value",
+                          "Usage"
+                        ],
+                        "rows": [
+                          [
+                            "md",
+                            "16px",
+                            "Fixture placeholder"
+                          ]
+                        ],
+                        "prose": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Declared values (must be multiples of 4):"
+                          },
+                          {
+                            "kind": "paragraph",
+                            "text": "Exceptions: none"
+                          }
+                        ]
+                      },
+                      "typography": {
+                        "head": [
+                          "Role",
+                          "Size",
+                          "Weight",
+                          "Line Height"
+                        ],
+                        "rows": [
+                          [
+                            "Body",
+                            "16px",
+                            "400",
+                            "1.5"
+                          ]
+                        ],
+                        "prose": []
+                      },
+                      "color": {
+                        "head": [
+                          "Role",
+                          "Value",
+                          "Usage"
+                        ],
+                        "rows": [
+                          [
+                            "Dominant (60%)",
+                            "#ffffff",
+                            "Background, surfaces"
+                          ],
+                          [
+                            "Secondary (30%)",
+                            "#e5e5e5",
+                            "Cards"
+                          ],
+                          [
+                            "Accent (10%)",
+                            "#3366ff",
+                            "Primary actions only"
+                          ],
+                          [
+                            "Destructive",
+                            "#cc3333",
+                            "Destructive actions only"
+                          ]
+                        ],
+                        "prose": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Accent reserved for: primary CTA button"
+                          }
+                        ]
+                      },
+                      "reserved": {
+                        "accent": [
+                          "primary CTA button"
+                        ]
+                      },
+                      "considerations": {
+                        "quote": null,
+                        "intro": [],
+                        "coverage": "none applicable (fixture)",
+                        "elements": [],
+                        "notes": [],
+                        "comments": []
+                      },
+                      "registry": {
+                        "head": [
+                          "Registry",
+                          "Blocks Used",
+                          "Safety Gate"
+                        ],
+                        "rows": [
+                          [
+                            "shadcn official",
+                            "none",
+                            "not required"
+                          ]
+                        ],
+                        "prose": []
+                      },
+                      "signoff": {
+                        "dims": [
+                          {
+                            "n": 1,
+                            "name": "Copywriting",
+                            "checked": false,
+                            "verdict": "PENDING",
+                            "qual": null,
+                            "note": ""
+                          },
+                          {
+                            "n": 2,
+                            "name": "Visuals",
+                            "checked": false,
+                            "verdict": "PENDING",
+                            "qual": null,
+                            "note": ""
+                          },
+                          {
+                            "n": 3,
+                            "name": "Color",
+                            "checked": false,
+                            "verdict": "PENDING",
+                            "qual": null,
+                            "note": ""
+                          },
+                          {
+                            "n": 4,
+                            "name": "Typography",
+                            "checked": false,
+                            "verdict": "PENDING",
+                            "qual": null,
+                            "note": ""
+                          },
+                          {
+                            "n": 5,
+                            "name": "Spacing",
+                            "checked": false,
+                            "verdict": "PENDING",
+                            "qual": null,
+                            "note": ""
+                          },
+                          {
+                            "n": 6,
+                            "name": "Registry Safety",
+                            "checked": false,
+                            "verdict": "PENDING",
+                            "qual": null,
+                            "note": ""
+                          }
+                        ],
+                        "approval": "pending",
+                        "hasNotes": false
+                      },
+                      "sections": [
+                        {
+                          "heading": "Design System",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Spacing Scale",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Typography",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Color",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Copywriting Contract",
+                          "claimed": false
+                        },
+                        {
+                          "heading": "UI Considerations",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Registry Safety",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Checker Sign-Off",
+                          "claimed": true
+                        }
+                      ]
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-VALIDATION.md": {
                   "id": ".planning/phases/01-identity-slice/01-VALIDATION.md",
@@ -12345,7 +13257,235 @@
                   "bodyHash": "af850bb35800baf82eada51952f3df0f072ff17a90ca274157232a1db693540f",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "uiSpec": {
+                      "meta": {
+                        "phase": "1",
+                        "slug": "identity-slice",
+                        "status": "draft",
+                        "created": "2026-06-07",
+                        "shadcnInitialized": "false",
+                        "preset": "none"
+                      },
+                      "title": "Phase 1 — UI Design Contract",
+                      "tagline": "Visual and interaction contract for frontend phases. This is a fixture document — the identity slice has no real UI.",
+                      "scope": [],
+                      "designSystem": [
+                        {
+                          "key": "Tool",
+                          "value": "none"
+                        },
+                        {
+                          "key": "Preset",
+                          "value": "not applicable"
+                        },
+                        {
+                          "key": "Component library",
+                          "value": "none"
+                        },
+                        {
+                          "key": "Icon library",
+                          "value": "none"
+                        },
+                        {
+                          "key": "Font",
+                          "value": "none"
+                        }
+                      ],
+                      "spacing": {
+                        "head": [
+                          "Token",
+                          "Value",
+                          "Usage"
+                        ],
+                        "rows": [
+                          [
+                            "md",
+                            "16px",
+                            "Fixture placeholder"
+                          ]
+                        ],
+                        "prose": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Declared values (must be multiples of 4):"
+                          },
+                          {
+                            "kind": "paragraph",
+                            "text": "Exceptions: none"
+                          }
+                        ]
+                      },
+                      "typography": {
+                        "head": [
+                          "Role",
+                          "Size",
+                          "Weight",
+                          "Line Height"
+                        ],
+                        "rows": [
+                          [
+                            "Body",
+                            "16px",
+                            "400",
+                            "1.5"
+                          ]
+                        ],
+                        "prose": []
+                      },
+                      "color": {
+                        "head": [
+                          "Role",
+                          "Value",
+                          "Usage"
+                        ],
+                        "rows": [
+                          [
+                            "Dominant (60%)",
+                            "#ffffff",
+                            "Background, surfaces"
+                          ],
+                          [
+                            "Secondary (30%)",
+                            "#e5e5e5",
+                            "Cards"
+                          ],
+                          [
+                            "Accent (10%)",
+                            "#3366ff",
+                            "Primary actions only"
+                          ],
+                          [
+                            "Destructive",
+                            "#cc3333",
+                            "Destructive actions only"
+                          ]
+                        ],
+                        "prose": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Accent reserved for: primary CTA button"
+                          }
+                        ]
+                      },
+                      "reserved": {
+                        "accent": [
+                          "primary CTA button"
+                        ]
+                      },
+                      "considerations": {
+                        "quote": null,
+                        "intro": [],
+                        "coverage": "none applicable (fixture)",
+                        "elements": [],
+                        "notes": [],
+                        "comments": []
+                      },
+                      "registry": {
+                        "head": [
+                          "Registry",
+                          "Blocks Used",
+                          "Safety Gate"
+                        ],
+                        "rows": [
+                          [
+                            "shadcn official",
+                            "none",
+                            "not required"
+                          ]
+                        ],
+                        "prose": []
+                      },
+                      "signoff": {
+                        "dims": [
+                          {
+                            "n": 1,
+                            "name": "Copywriting",
+                            "checked": false,
+                            "verdict": "PENDING",
+                            "qual": null,
+                            "note": ""
+                          },
+                          {
+                            "n": 2,
+                            "name": "Visuals",
+                            "checked": false,
+                            "verdict": "PENDING",
+                            "qual": null,
+                            "note": ""
+                          },
+                          {
+                            "n": 3,
+                            "name": "Color",
+                            "checked": false,
+                            "verdict": "PENDING",
+                            "qual": null,
+                            "note": ""
+                          },
+                          {
+                            "n": 4,
+                            "name": "Typography",
+                            "checked": false,
+                            "verdict": "PENDING",
+                            "qual": null,
+                            "note": ""
+                          },
+                          {
+                            "n": 5,
+                            "name": "Spacing",
+                            "checked": false,
+                            "verdict": "PENDING",
+                            "qual": null,
+                            "note": ""
+                          },
+                          {
+                            "n": 6,
+                            "name": "Registry Safety",
+                            "checked": false,
+                            "verdict": "PENDING",
+                            "qual": null,
+                            "note": ""
+                          }
+                        ],
+                        "approval": "pending",
+                        "hasNotes": false
+                      },
+                      "sections": [
+                        {
+                          "heading": "Design System",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Spacing Scale",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Typography",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Color",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Copywriting Contract",
+                          "claimed": false
+                        },
+                        {
+                          "heading": "UI Considerations",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Registry Safety",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Checker Sign-Off",
+                          "claimed": true
+                        }
+                      ]
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-VALIDATION.md": {
                   "id": ".planning/phases/01-identity-slice/01-VALIDATION.md",
