@@ -6,13 +6,24 @@
 // (T-qk7-02). Colour comes only from the tone a composed model carries (the maps in
 // `uat-session.ts`) and the theme tokens; the parse-degradation tones never appear on document
 // content.
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { ResearchBlocks, ResearchInline } from './research-briefing-components.tsx';
-import { NOW_TONE, RESULT_LABEL, RESULT_ORDER, RESULT_TONE } from './uat-session.ts';
+import {
+  NOT_DIAGNOSED_TONE,
+  NOW_TONE,
+  RESOLVED_TONE,
+  RESULT_LABEL,
+  RESULT_ORDER,
+  RESULT_TONE,
+} from './uat-session.ts';
 import type {
   ComposedUatCurrent,
+  ComposedUatExtra,
+  ComposedUatGapItem,
+  ComposedUatGaps,
   ComposedUatIntro,
   ComposedUatSession,
+  ComposedUatSourceOnly,
   ComposedUatTest,
 } from './uat-session.ts';
 
@@ -331,15 +342,302 @@ function Pair({
 }
 
 // ---------------------------------------------------------------------------
+// 03 Gaps: a register that opens to its diagnosis, or prose cards
+// ---------------------------------------------------------------------------
+
+export function GapDetail({
+  item,
+  onJump,
+}: {
+  item: ComposedUatGapItem;
+  onJump: (anchorId: string) => void;
+}): React.JSX.Element {
+  const resolution = item.resolution;
+  return (
+    <div className="view-uat-gap-detail">
+      {item.reason ? (
+        <div className="view-uat-reported">
+          <ResearchBlocks blocks={[{ kind: 'paragraph', text: item.reason }]} />
+        </div>
+      ) : null}
+      {item.diagnosed ? (
+        <div className="view-uat-diagnosis">
+          {item.rootCause ? (
+            <div className="view-uat-kv">
+              <span className="view-uat-key">Root cause</span>
+              <span>
+                <ResearchInline text={item.rootCause} />
+              </span>
+            </div>
+          ) : null}
+          {item.artifacts.length > 0 ? (
+            <div className="view-uat-kv">
+              <span className="view-uat-key">Artifacts</span>
+              <ul className="view-uat-artifacts">
+                {item.artifacts.map((artifact, index) => (
+                  <li key={`${artifact.path}-${index}`}>
+                    <span className="view-uat-path">{artifact.path}</span>
+                    {artifact.issue ? (
+                      <span className="view-uat-muted-text">
+                        <ResearchInline text={artifact.issue} />
+                      </span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {item.missing.length > 0 ? (
+            <div className="view-uat-kv">
+              <span className="view-uat-key">Missing</span>
+              <ul className="view-uat-todo" data-done={item.missingDone ? 'true' : undefined}>
+                {item.missing.map((entry, index) => (
+                  <li key={index}>
+                    <span>
+                      <ResearchInline text={entry} />
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {item.debugSession ? (
+            <div className="view-uat-kv">
+              <span className="view-uat-key">Debug session</span>
+              <span className="view-uat-path">{item.debugSession}</span>
+            </div>
+          ) : null}
+        </div>
+      ) : (
+        <div className="view-uat-diagnosis" data-none="true">
+          <span className="status-chip" data-tone={NOT_DIAGNOSED_TONE}>
+            Not diagnosed yet
+          </span>
+          <span>Root cause, artifacts and missing work fill in after diagnosis.</span>
+        </div>
+      )}
+      {resolution ? (
+        <div className="view-uat-resolved">
+          <div className="view-uat-resolved-top">
+            <span className="status-chip" data-tone={RESOLVED_TONE}>
+              Resolved
+            </span>
+            {resolution.resolvedAt ? <span className="view-uat-key">{resolution.resolvedAt}</span> : null}
+            {resolution.reverifiedAt ? (
+              <span className="view-uat-key">· reverified {resolution.reverifiedAt}</span>
+            ) : null}
+            {resolution.deployedAt ? <span className="view-uat-key">· deployed {resolution.deployedAt}</span> : null}
+          </div>
+          {resolution.resolvedBy ? (
+            <span>
+              <ResearchInline text={resolution.resolvedBy} />
+            </span>
+          ) : null}
+          {resolution.fix ? (
+            <span className="view-uat-muted-text">
+              <ResearchInline text={resolution.fix} />
+            </span>
+          ) : null}
+          {resolution.reverify ? (
+            <span className="view-uat-muted-text">
+              Re-check: <ResearchInline text={resolution.reverify} />
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+      {item.alsoInSource.length > 0 ? (
+        <p className="view-uat-key">Also in source: {item.alsoInSource.join(', ')}</p>
+      ) : null}
+      {item.testAnchor ? (
+        <button
+          type="button"
+          className="view-uat-link"
+          onClick={() => onJump(item.testAnchor as string)}
+        >
+          Test {item.test} ↑
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function Gaps({
+  gaps,
+  open,
+  onToggle,
+  onJump,
+}: {
+  gaps: ComposedUatGaps;
+  open: ReadonlySet<string>;
+  onToggle: (key: string) => void;
+  onJump: (anchorId: string) => void;
+}): React.JSX.Element {
+  return (
+    <section id="uat-gaps" className="view-block view-uat-gaps">
+      <header className="section-heading">
+        <h2>
+          <span className="view-uat-section-number">03</span>
+          Gaps
+        </h2>
+        <span className="view-uat-aside">{gaps.aside}</span>
+      </header>
+      {gaps.lead ? (
+        <p className="view-uat-lead">
+          <ResearchInline text={gaps.lead} />
+        </p>
+      ) : null}
+      {gaps.mode === 'register' ? (
+        <table className="view-uat-register">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Truth</th>
+              <th data-narrow="hide">Severity</th>
+              <th>Status</th>
+              <th data-narrow="hide">Test</th>
+              <th data-narrow="hide">Diagnosis</th>
+            </tr>
+          </thead>
+          <tbody>
+            {gaps.items.map((item) => {
+              const key = `gap-${item.index}`;
+              const isOpen = open.has(key);
+              const detailId = `${item.anchorId}-detail`;
+              return (
+                <Fragment key={item.anchorId}>
+                  <tr
+                    id={item.anchorId}
+                    data-gap=""
+                    data-open={isOpen ? 'true' : undefined}
+                    onClick={() => onToggle(key)}
+                  >
+                    <td className="view-uat-key">{item.gapId}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="view-uat-truth"
+                        aria-expanded={isOpen}
+                        aria-controls={isOpen ? detailId : undefined}
+                      >
+                        <ResearchInline text={item.truth} />
+                      </button>
+                    </td>
+                    <td data-narrow="hide">
+                      {item.severity ? (
+                        <span className="status-chip" data-tone={item.severity.tone}>
+                          {item.severity.value}
+                        </span>
+                      ) : null}
+                    </td>
+                    <td>
+                      <span className="status-chip" data-tone={item.status.tone}>
+                        {item.status.label}
+                      </span>
+                    </td>
+                    <td className="view-uat-key" data-narrow="hide">
+                      {item.test ?? ''}
+                    </td>
+                    <td className="view-uat-key" data-narrow="hide">
+                      {item.rootCause ? 'Root-caused' : '—'}
+                    </td>
+                  </tr>
+                  {isOpen ? (
+                    <tr id={detailId} data-detail="">
+                      <td colSpan={6}>
+                        <GapDetail item={item} onJump={onJump} />
+                      </td>
+                    </tr>
+                  ) : null}
+                </Fragment>
+              );
+            })}
+          </tbody>
+        </table>
+      ) : gaps.mode === 'cards' ? (
+        <div className="view-uat-cards">
+          {gaps.cards.map((card, index) => (
+            <article key={index} className="view-uat-card">
+              {card.title ? (
+                <h3>
+                  <ResearchInline text={card.title} />
+                </h3>
+              ) : null}
+              <div className="view-uat-md">
+                <ResearchBlocks blocks={card.blocks} />
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="view-uat-muted-text">
+          <ResearchInline text={gaps.emptyLine} />
+        </p>
+      )}
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Folded extras and the "In the source only" strip
+// ---------------------------------------------------------------------------
+
+function Extras({ extras }: { extras: ComposedUatExtra[] }): React.JSX.Element | null {
+  if (extras.length === 0) return null;
+  return (
+    <section id="uat-extras" className="view-block view-uat-extras">
+      {extras.map((extra) => (
+        <details key={extra.id}>
+          <summary>{extra.heading}</summary>
+          <div className="view-uat-md">
+            <ResearchBlocks blocks={extra.blocks} />
+          </div>
+        </details>
+      ))}
+    </section>
+  );
+}
+
+function SourceOnly({
+  entries,
+  onShowSource,
+}: {
+  entries: ComposedUatSourceOnly[];
+  onShowSource: (id: string | null) => void;
+}): React.JSX.Element | null {
+  if (entries.length === 0) return null;
+  return (
+    <nav id="uat-source-only" className="view-block view-uat-source-only" aria-label="In the source only">
+      <span className="view-uat-key">In the source only</span>
+      <ul>
+        {entries.map((entry) => (
+          <li key={entry.label}>
+            {entry.interactive ? (
+              <button type="button" className="status-chip" onClick={() => onShowSource(entry.targetId)}>
+                {entry.label}
+              </button>
+            ) : (
+              <span className="view-uat-source-note" title="Only in the raw file — Source mode drops HTML comments">
+                {entry.label}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // The view
 // ---------------------------------------------------------------------------
 
 export function UatSessionView({
   session,
+  onShowSource,
   title,
 }: {
   session: ComposedUatSession;
-  onShowSource?: (id: string | null) => void;
+  onShowSource: (id: string | null) => void;
   title: string;
 }): React.JSX.Element {
   const [open, setOpen] = useState<ReadonlySet<string>>(() => new Set());
@@ -404,6 +702,9 @@ export function UatSessionView({
             ))}
           </div>
         </section>
+        <Gaps gaps={session.gaps} open={open} onToggle={toggle} onJump={jump} />
+        <Extras extras={session.extras} />
+        <SourceOnly entries={session.sourceOnly} onShowSource={onShowSource} />
       </article>
     </div>
   );
