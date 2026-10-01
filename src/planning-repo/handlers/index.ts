@@ -12,6 +12,7 @@ import { ProjectHandler } from './project.ts';
 import { ContextHandler } from './context.ts';
 import { ResearchHandler } from './research.ts';
 import { PatternsHandler } from './patterns.ts';
+import { UiSpecHandler } from './ui-spec.ts';
 import { FrontmatterOnlyHandler } from './frontmatter-only.ts';
 import { JsonConfigHandler } from './json-config.ts';
 import { WindowsHandler } from './windows.ts';
@@ -27,6 +28,7 @@ export const HANDLERS: ArtifactHandler[] = [
   ContextHandler,
   ResearchHandler,
   PatternsHandler,
+  UiSpecHandler,
   FrontmatterOnlyHandler,
   JsonConfigHandler,
   WindowsHandler,

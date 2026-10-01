@@ -20,6 +20,21 @@ function legacyCopy(text: string): boolean {
   }
 }
 
+/** The house copy pattern, shared with the UI-SPEC preset field (quick-261001-qk6): the clipboard
+ * API when it exists, else the execCommand fallback; `false` when neither worked or the clipboard
+ * refused — callers stay silent on failure. */
+export async function copyText(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+    return legacyCopy(text);
+  } catch {
+    return false;
+  }
+}
+
 /**
  * quick-260923-jxp (JXP-09): the copy-path icon button that replaces the raw file-path caption on
  * every artifact page. Mirrors `invalid-project-screen.tsx`'s `CopyField` shape (the house copy
@@ -39,18 +54,12 @@ export function CopyPathButton({ path }: { path: string }): React.JSX.Element {
   }, []);
 
   async function handleCopy(): Promise<void> {
-    try {
-      if (navigator.clipboard) {
-        await navigator.clipboard.writeText(path);
-      } else if (!legacyCopy(path)) {
-        return; // Insecure context (plain http) and no fallback worked — stay inert.
-      }
-      setCopied(true);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      timeoutRef.current = setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // Silent — an unavailable/denied clipboard leaves the button inert, mirroring CopyField.
-    }
+    // Silent on failure — an unavailable/denied clipboard (or plain http with no fallback) leaves
+    // the button inert, mirroring CopyField.
+    if (!(await copyText(path))) return;
+    setCopied(true);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => setCopied(false), 1500);
   }
 
   return (

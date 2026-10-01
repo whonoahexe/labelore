@@ -55,6 +55,8 @@ import type { ComposedResearchBriefing } from '../views/research-briefing.ts';
 import { ResearchBriefingView, ResearchIntroMeta } from '../views/research-briefing-components.tsx';
 import type { ComposedPatternMap } from '../views/pattern-map.ts';
 import { PatternIntroMeta, PatternMapView } from '../views/pattern-map-components.tsx';
+import type { ComposedUiSpec } from '../views/ui-spec.ts';
+import { UiSpecIntroMeta, UiSpecView } from '../views/ui-spec-components.tsx';
 export {
   handleDocumentReferenceActivation,
   restoreDocumentReferenceFocus,
@@ -599,6 +601,14 @@ export function ArtifactPage(): React.JSX.Element {
     if (!manifest || !viewInput) return null;
     return manifest.patternMap?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // quick-261001-qk6 (sketch-014 winner): the UI-SPEC contract page, when the resolved manifest
+  // opts into one — `null` for every other kind, and for a contract with none of the recognised
+  // sections or a payload from a server that predates `structured.uiSpec` (the promoted-block view
+  // then renders).
+  const uiSpec = useMemo<ComposedUiSpec | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.uiSpec?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // "In the source only" entries switch to Source mode, then scroll to the named heading once the
   // source document has mounted. The pending id lives in a ref and is cleared only when the frame
   // callback fires, so a re-run of the effect (StrictMode) still lands on it.
@@ -629,7 +639,12 @@ export function ArtifactPage(): React.JSX.Element {
     [shown],
   );
   const viewAvailable =
-    layout !== null || brief !== null || briefing !== null || patternMap !== null || (composed !== null && composed.blocks.length > 0);
+    layout !== null ||
+    brief !== null ||
+    briefing !== null ||
+    patternMap !== null ||
+    uiSpec !== null ||
+    (composed !== null && composed.blocks.length > 0);
 
   if (query.isPending) {
     return (
@@ -694,6 +709,7 @@ export function ArtifactPage(): React.JSX.Element {
   // the plain header (the same rule the CONTEXT brief follows).
   const cover = briefing && mode === 'view' ? briefing : null;
   const mapCover = patternMap && mode === 'view' ? patternMap : null;
+  const specCover = uiSpec && mode === 'view' ? uiSpec : null;
   return (
     <main className="artifact-page page-stack">
       <ArtifactHeader
@@ -705,13 +721,22 @@ export function ArtifactPage(): React.JSX.Element {
               ? cover.intro.eyebrow
               : mapCover
                 ? mapCover.intro.eyebrow
-                : coverTitle?.phase
-                ? `${coverTitle.phase} · ${kindLabel}`
-                : kindLabel
+                : specCover
+                  ? specCover.intro.eyebrow
+                  : coverTitle?.phase
+                    ? `${coverTitle.phase} · ${kindLabel}`
+                    : kindLabel
         }
-        title={brief?.intro.title ?? cover?.intro.title ?? mapCover?.intro.title ?? coverTitle?.title ?? artifact.title}
+        title={
+          brief?.intro.title ??
+          cover?.intro.title ??
+          mapCover?.intro.title ??
+          specCover?.intro.title ??
+          coverTitle?.title ??
+          artifact.title
+        }
         path={artifact.path}
-        lead={brief || cover || mapCover ? null : (manifest?.lead ?? null)}
+        lead={brief || cover || mapCover || specCover ? null : (manifest?.lead ?? null)}
         meta={
           brief ? (
             <ContextIntroMeta intro={brief.intro} />
@@ -719,6 +744,8 @@ export function ArtifactPage(): React.JSX.Element {
             <ResearchIntroMeta intro={cover.intro} />
           ) : mapCover ? (
             <PatternIntroMeta intro={mapCover.intro} />
+          ) : specCover ? (
+            <UiSpecIntroMeta intro={specCover.intro} />
           ) : undefined
         }
         cover={
@@ -752,16 +779,21 @@ export function ArtifactPage(): React.JSX.Element {
       </ArtifactHeader>
 
       {panels.length > 0 ? (
-        <details className="artifact-metadata">
-          <summary>
-            Document metadata <span>{panels.length} sections</span>
-          </summary>
-          <div className="metadata-panels" aria-label="Structured artifact metadata">
-            {panels.map((panel) => (
-              <MetadataPanel key={panel.key} panel={panel} />
-            ))}
-          </div>
-        </details>
+        // The UI-SPEC page's cover and shadcn card already carry the frontmatter facts, and the
+        // Winner lists the frontmatter as source-only — View mode hides the disclosure (Source
+        // mode keeps it).
+        specCover ? null : (
+          <details className="artifact-metadata">
+            <summary>
+              Document metadata <span>{panels.length} sections</span>
+            </summary>
+            <div className="metadata-panels" aria-label="Structured artifact metadata">
+              {panels.map((panel) => (
+                <MetadataPanel key={panel.key} panel={panel} />
+              ))}
+            </div>
+          </details>
+        )
       ) : null}
 
       {warningTone ? (
@@ -834,6 +866,8 @@ export function ArtifactPage(): React.JSX.Element {
         <ResearchBriefingView briefing={briefing} onShowSource={showSource} title={artifact.title} />
       ) : patternMap && mode === 'view' ? (
         <PatternMapView key={artifact.path} map={patternMap} onShowSource={showSource} title={artifact.title} />
+      ) : uiSpec && mode === 'view' ? (
+        <UiSpecView key={artifact.path} spec={uiSpec} onShowSource={showSource} title={artifact.title} />
       ) : viewAvailable && mode === 'view' && composed && shown ? (
         <ViewReader title={artifact.title} composed={composed} shown={shown} />
       ) : (
