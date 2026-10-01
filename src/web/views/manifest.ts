@@ -13,6 +13,8 @@ import type { ComposedContextBrief } from './context-brief.ts';
 import type { ComposedResearchBriefing } from './research-briefing.ts';
 // Type-only import — same reason as `brief` above (quick-260930-wfs, sketch-013 B).
 import type { ComposedPatternMap } from './pattern-map.ts';
+// Type-only import — same reason as `brief` above (quick-261001-qk6, sketch-014 winner).
+import type { ComposedUiSpec } from './ui-spec.ts';
 
 /** Declared now so 05-05 can add components without widening this union a second time — only
  * `discussion-questions` has a real component in this plan (see `blocks.tsx`). */
@@ -67,6 +69,11 @@ export interface ViewManifest {
    * `structured.map`, or a document with no File Classification rows), and the page falls back to
    * the promoted-block view, which the manifest keeps as `promote`. */
   patternMap?: (input: ViewInput) => ComposedPatternMap | null;
+  /** quick-261001-qk6 (sketch-014 winner): the UI-SPEC contract page a manifest opts into instead of
+   * `promote` — currently only `ui-spec`. Returns `null` when the input can't compose one (no
+   * `structured.uiSpec`, or a contract with none of the recognised sections), and the page falls
+   * back to the promoted-block view, which the manifest keeps as `promote`. */
+  uiSpec?: (input: ViewInput) => ComposedUiSpec | null;
 }
 
 export interface ViewInput {

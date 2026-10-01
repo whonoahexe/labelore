@@ -14,6 +14,7 @@ import type { PromotedBlock, ViewInput, ViewManifest } from './manifest.ts';
 import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
 import { composePatternMap } from './pattern-map.ts';
+import { composeUiSpec } from './ui-spec.ts';
 
 /**
  * `select` and `consumes` run back to back, synchronously, within the same `composeView` call
@@ -185,6 +186,7 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
       { type: 'section', heading: /^ui considerations/i },
       { type: 'section', heading: /^design system/i },
     ],
+    uiSpec: composeUiSpec,
   },
   uat: {
     kind: 'uat',
