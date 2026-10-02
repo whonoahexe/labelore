@@ -212,5 +212,6 @@ describe('ui-spec view contract', () => {
     expect(rule(".view-ui-spec-chipbox > [data-half='light']")).toContain('var(--swatch-light)');
     expect(rule(".view-ui-spec-chipbox > [data-half='dark']")).toContain('var(--swatch-dark)');
     expect(rule(".view-ui-spec-verdict[data-required='true']")).toContain('var(--in-flight-fill)');
+    expect(rule('.view-ui-spec-from')).toContain('uppercase');
   });
 });

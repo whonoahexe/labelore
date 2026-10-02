@@ -9670,6 +9670,12 @@ button.view-ui-spec-signoff:hover {
   text-transform: uppercase;
 }
 
+.view-ui-spec-from {
+  display: block;
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
 .view-ui-spec-usage {
   margin: 0;
   color: var(--muted-foreground);
