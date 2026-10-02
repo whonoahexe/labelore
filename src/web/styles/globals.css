@@ -9382,27 +9382,41 @@ button.view-ui-spec-signoff:hover {
 
 .view-ui-spec-detail-list {
   display: grid;
-  gap: var(--space-1);
-  padding-top: var(--space-3);
+  gap: 0;
+  padding-top: var(--space-4);
   font-size: var(--fs-3);
+  line-height: var(--lh-snug);
 }
 
 .view-ui-spec-detail-list > div {
   display: grid;
-  grid-template-columns: 7rem minmax(0, 1fr);
-  gap: var(--space-3);
-  padding: var(--space-1) 0;
+  grid-template-columns: minmax(7rem, 10rem) minmax(0, 1fr);
+  gap: var(--space-2) var(--space-5);
+  align-items: baseline;
+  padding: var(--space-2-5) 0;
   border-top: 1px dashed var(--border);
+}
+
+.view-ui-spec-detail-list > div:last-child {
+  border-bottom: 1px dashed var(--border);
 }
 
 .view-ui-spec-dk {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
 
 .view-ui-spec-dv {
   min-width: 0;
   color: var(--muted-foreground);
+}
+
+@media (max-width: 30rem) {
+  .view-ui-spec-detail-list > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
 }
 
 /* Typography: a ladder of live samples at each role's declared size, weight and line height. */
