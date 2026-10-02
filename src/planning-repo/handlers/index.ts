@@ -9,6 +9,7 @@ import { RoadmapHandler } from './roadmap.ts';
 import { StateHandler } from './state.ts';
 import { RequirementsHandler } from './requirements.ts';
 import { ProjectHandler } from './project.ts';
+import { UiReviewHandler } from './ui-review.ts';
 import { ContextHandler } from './context.ts';
 import { ResearchHandler } from './research.ts';
 import { SecurityHandler } from './security.ts';
@@ -28,6 +29,7 @@ export const HANDLERS: ArtifactHandler[] = [
   StateHandler,
   RequirementsHandler,
   ProjectHandler,
+  UiReviewHandler,
   ContextHandler,
   ResearchHandler,
   SecurityHandler,

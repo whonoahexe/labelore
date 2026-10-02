@@ -17,6 +17,8 @@ import type { ComposedResearchBriefing } from './research-briefing.ts';
 import type { ComposedPatternMap } from './pattern-map.ts';
 // Type-only import — same reason as `brief` above (quick-261003-526, sketch-016 winner).
 import type { ComposedValidationStrategy } from './validation-strategy.ts';
+// Type-only import — same reason as `brief` above (quick-261003-528, sketch-018 B).
+import type { ComposedUiReview } from './ui-review.ts';
 // Type-only import — same reason as `brief` above (quick-261001-qk6, sketch-014 winner).
 import type { ComposedUiSpec } from './ui-spec.ts';
 // Type-only import — same reason as `brief` above (quick-261001-qk7, sketch-015 winner).
@@ -85,6 +87,11 @@ export interface ViewManifest {
    * one (no `structured.validation`, or a document with none of the six recognised sections), and
    * the page falls back to the promoted-block view, which the manifest keeps as `promote`. */
   validationStrategy?: (input: ViewInput) => ComposedValidationStrategy | null;
+  /** quick-261003-528 (sketch-018 B): the UI-REVIEW scorecard a manifest opts into instead of
+   * `promote` — currently only `ui-review`. Returns `null` when the input can't compose one (no
+   * `structured.uiReview`, or a document with no pillar rows), and the page falls back to the
+   * promoted-block view, which the manifest keeps as `promote`. */
+  uiReview?: (input: ViewInput) => ComposedUiReview | null;
   /** quick-261001-qk6 (sketch-014 winner): the UI-SPEC contract page a manifest opts into instead of
    * `promote` — currently only `ui-spec`. Returns `null` when the input can't compose one (no
    * `structured.uiSpec`, or a contract with none of the recognised sections), and the page falls
