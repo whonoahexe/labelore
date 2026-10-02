@@ -569,9 +569,11 @@ function ContextAsides({
 export function ContextBriefView({
   brief,
   renderHtml,
+  onShowSource,
 }: {
   brief: ComposedContextBrief;
   renderHtml: (html: string) => React.ReactNode;
+  onShowSource: (id: string | null) => void;
 }): React.JSX.Element {
   const interaction = useContextBrief();
   const { refTargets } = brief;
@@ -781,6 +783,25 @@ export function ContextBriefView({
       ) : null}
 
       <ContextAsides asides={brief.asides} refTargets={refTargets} interaction={interaction} />
+
+      {brief.sourceOnly.length > 0 ? (
+        <nav
+          id="context-source-only"
+          className="view-block view-context-source-only"
+          aria-label="In the source only"
+        >
+          <span className="view-context-key">In the source only</span>
+          <ul>
+            {brief.sourceOnly.map((entry) => (
+              <li key={entry.label}>
+                <button type="button" className="status-chip" onClick={() => onShowSource(entry.targetId)}>
+                  {entry.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ) : null}
     </>
   );
 }

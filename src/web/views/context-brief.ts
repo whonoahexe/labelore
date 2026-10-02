@@ -198,6 +198,14 @@ export interface ComposedContextBrief {
    * for a closed "More in this document" disclosure; that disclosure was removed in 1d0baf3 and
    * those sections now surface through `asides` instead. */
   asides: ComposedAside[];
+  /** What the page leaves to Source mode, one chip each — `targetId` is the rendered heading to
+   * scroll to there, or `null` when the entry has none (frontmatter). */
+  sourceOnly: ComposedContextSourceOnly[];
+}
+
+export interface ComposedContextSourceOnly {
+  label: string;
+  targetId: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -772,6 +780,29 @@ export function composeContextBrief(input: ViewInput): ComposedContextBrief | nu
     };
   });
 
+  // "In the source only": what no part of the page renders — settled open questions, planner-only
+  // amendment warnings and the frontmatter. Each resolves to its rendered heading when it has one.
+  const headingIdByKey = new Map<string, string>();
+  for (const heading of input.headings ?? []) {
+    if (heading.depth !== 2) continue;
+    const key = normalizeHeading(stripEmoji(heading.text));
+    if (!headingIdByKey.has(key)) headingIdByKey.set(key, heading.id);
+  }
+  const idOfSection = (section: RawAsideSection | undefined): string | null =>
+    section ? (headingIdByKey.get(normalizeHeading(stripEmoji(section.heading))) ?? null) : null;
+  const sourceOnly: ComposedContextSourceOnly[] = [];
+  const resolvedSections = tolerantAsideSections(briefRecord.resolved);
+  if (resolvedSections.length > 0) {
+    sourceOnly.push({ label: 'Resolved open questions', targetId: idOfSection(resolvedSections[0]) });
+  }
+  const warningSections = tolerantAsideSections(briefRecord.amendments).filter(
+    (section) => !REQUIREMENT_AMENDMENTS_RE.test(stripEmoji(section.heading)),
+  );
+  if (warningSections.length > 0) {
+    sourceOnly.push({ label: 'Planner warnings', targetId: idOfSection(warningSections[0]) });
+  }
+  if (Object.keys(input.frontmatter ?? {}).length > 0) sourceOnly.push({ label: 'Frontmatter', targetId: null });
+
   const asides: ComposedAside[] = [
     ...noteAsides,
     ...amendmentsAsides,
@@ -794,5 +825,6 @@ export function composeContextBrief(input: ViewInput): ComposedContextBrief | nu
     refTargets,
     extras,
     asides,
+    sourceOnly,
   };
 }

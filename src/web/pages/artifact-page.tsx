@@ -870,13 +870,13 @@ export function ArtifactPage(): React.JSX.Element {
         <div className="document-reader-layout" data-outline="false">
           <article className="document-canvas" aria-label={`${artifact.title} document`}>
             <ChapterBar layout={layout} title={artifact.title} mode={mode} onModeChange={setMode} />
-            <FoldedChapters layout={layout} folds={folds} renderHtml={renderHtml} />
+            <FoldedChapters layout={layout} folds={folds} renderHtml={renderHtml} onShowSource={showSource} />
           </article>
         </div>
       ) : brief && mode === 'view' ? (
         <div className="document-reader-layout" data-outline="false">
           <article className="document-canvas" aria-label={`${artifact.title} document`}>
-            <ContextBriefView brief={brief} renderHtml={renderHtml} />
+            <ContextBriefView brief={brief} renderHtml={renderHtml} onShowSource={showSource} />
           </article>
         </div>
       ) : briefing && mode === 'view' ? (
