@@ -725,10 +725,12 @@ export function FoldedChapters({
   layout,
   folds,
   renderHtml,
+  onShowSource,
 }: {
   layout: ComposedDocumentLayout;
   folds: ChapterFolds;
   renderHtml: (html: string) => React.ReactNode;
+  onShowSource: (id: string | null) => void;
 }): React.JSX.Element {
   return (
     <>
@@ -780,6 +782,24 @@ export function FoldedChapters({
             );
           })()
         : null}
+      {layout.sourceOnly.length > 0 ? (
+        <nav
+          id="discussion-log-source-only"
+          className="view-block view-discussion-log-source-only"
+          aria-label="In the source only"
+        >
+          <span className="view-discussion-log-key">In the source only</span>
+          <ul>
+            {layout.sourceOnly.map((entry) => (
+              <li key={entry.label}>
+                <button type="button" className="status-chip" onClick={() => onShowSource(entry.targetId)}>
+                  {entry.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ) : null}
     </>
   );
 }

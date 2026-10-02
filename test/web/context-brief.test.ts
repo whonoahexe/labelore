@@ -631,3 +631,25 @@ describe('asides — canonical references and existing code insights', () => {
     expect(composed?.extras.some((e) => /canonical references|existing code insights/i.test(e.heading ?? ''))).toBe(false);
   });
 });
+
+describe('composeContextBrief — "In the source only"', () => {
+  it('lists only Frontmatter when the document has frontmatter and nothing else is held back', () => {
+    const composed = composeContextBrief(baseInput(minimalBrief(), { frontmatter: { phase: '1' } }));
+    expect(composed?.sourceOnly).toEqual([{ label: 'Frontmatter', targetId: null }]);
+  });
+
+  it('is empty without frontmatter, and names settled questions and planner warnings when present', () => {
+    expect(composeContextBrief(baseInput(minimalBrief()))?.sourceOnly).toEqual([]);
+    const section = { heading: 'Resolved open question', groups: [{ title: null, blocks: [] }] };
+    const warning = { heading: 'Heads up', groups: [{ title: null, blocks: [] }] };
+    const composed = composeContextBrief(
+      baseInput(minimalBrief({ resolved: [section], amendments: [warning] } as unknown as Partial<ContextBrief>), {
+        headings: [{ id: 'resolved-open-question', text: 'Resolved open question', depth: 2 }],
+      }),
+    );
+    expect(composed?.sourceOnly).toEqual([
+      { label: 'Resolved open questions', targetId: 'resolved-open-question' },
+      { label: 'Planner warnings', targetId: null },
+    ]);
+  });
+});

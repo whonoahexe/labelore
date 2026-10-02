@@ -329,4 +329,5 @@ export const discussionLogLayout: DocumentLayoutSpec = {
   cover,
   ghosts: ghostsOf,
   alsoStyle: 'endnotes',
+  sourceOnly: (input) => (Object.keys(input.frontmatter ?? {}).length > 0 ? [{ label: 'Frontmatter', targetId: null }] : []),
 };

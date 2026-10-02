@@ -10671,3 +10671,50 @@ button.view-ui-spec-signoff:hover {
   margin-top: var(--space-fluid-10);
 }
 /* quick-261001-qk7:end */
+
+/* "In the source only": what the view leaves to Source mode, one click away. */
+.view-context-source-only,
+.view-discussion-log-source-only {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  padding-top: var(--space-4);
+  border-top: 1px dashed var(--border);
+}
+
+.view-context-key,
+.view-discussion-log-key {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-context-source-only ul,
+.view-discussion-log-source-only ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-context-source-only button.status-chip,
+.view-discussion-log-source-only button.status-chip {
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.view-context-source-only button.status-chip:hover,
+.view-discussion-log-source-only button.status-chip:hover {
+  background: var(--state-hover);
+}
+
+.document-canvas > :not(.view-context-source-only, .view-discussion-log-source-only) ~ :is(.view-context-source-only, .view-discussion-log-source-only) {
+  margin-top: var(--space-fluid-10);
+}

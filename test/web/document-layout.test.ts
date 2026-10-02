@@ -369,6 +369,7 @@ describe('chapterForTarget', () => {
       },
       remainder: [group({ id: 'leftover', heading: 'Leftover', html: '<p id="embedded-in-remainder">r</p>' })],
       ghosts: [],
+      sourceOnly: [],
     };
   }
 

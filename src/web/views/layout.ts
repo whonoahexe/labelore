@@ -178,6 +178,15 @@ export interface DocumentLayoutSpec {
   /** quick-260923-jxp (JXP-07): 'fold' (default) or 'endnotes'. Only the discussion-log layout
    * opts into 'endnotes' — plan and verification are untouched. */
   alsoStyle?: 'fold' | 'endnotes';
+  /** Extra "In the source only" entries beyond the unclaimed remainder groups the composer adds
+   * itself. Omitted for plan and verification, which render no such strip. */
+  sourceOnly?: (input: ViewInput) => ComposedSourceOnly[];
+}
+
+export interface ComposedSourceOnly {
+  label: string;
+  /** The rendered heading id to scroll to in Source mode; `null` when the entry has none. */
+  targetId: string | null;
 }
 
 export interface ComposedDocumentLayout {
@@ -188,6 +197,8 @@ export interface ComposedDocumentLayout {
   remainder: DocumentSectionGroup[];
   /** quick-260923-jxp (JXP-02): composed declined-area ghost rows — `[]` when the spec has none. */
   ghosts: ComposedGhost[];
+  /** "In the source only" chips — empty for a spec with no `sourceOnly`. */
+  sourceOnly: ComposedSourceOnly[];
 }
 
 export const ALSO_CHAPTER_TITLE = 'Also in this document';
@@ -444,5 +455,16 @@ export function composeDocumentLayout(
 
   const cover = spec.cover(input, { chapters, also: panels, ghosts });
 
-  return { cover, chapters, also, remainder, ghosts };
+  // Only a spec that opts in gets the strip: its unclaimed, headed groups (read in Source) plus its
+  // own extras.
+  const sourceOnly: ComposedSourceOnly[] = spec.sourceOnly
+    ? [
+        ...remainder
+          .filter((group) => group.heading !== null && group.html.trim() !== '')
+          .map((group) => ({ label: group.heading as string, targetId: group.id })),
+        ...spec.sourceOnly(input),
+      ]
+    : [];
+
+  return { cover, chapters, also, remainder, ghosts, sourceOnly };
 }
