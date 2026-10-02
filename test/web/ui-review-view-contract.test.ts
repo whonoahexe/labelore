@@ -172,6 +172,6 @@ describe('ui-review view contract', () => {
     expect(rule(".view-ui-review-fixcard[data-highlight='true']")).toContain('var(--in-flight-fill)');
     expect(rule(".view-ui-review-tab[aria-selected='true']")).toContain('var(--primary)');
     expect(rule(".view-ui-review-bar[data-now='true'] i")).toContain('var(--primary)');
-    expect(rule('.view-ui-review-bar i')).toContain('var(--muted)');
+    expect(rule('.view-ui-review-bar i')).toContain('var(--border)');
   });
 });
