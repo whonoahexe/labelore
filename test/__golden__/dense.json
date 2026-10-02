@@ -4068,7 +4068,189 @@
                 "bodyHash": "5e929747a5f97cefbd5c1fc972c65062a0ccc62ef9ea608a5e3e2dd0520cf312",
                 "mtimeMs": 0,
                 "warnings": [],
-                "structured": {}
+                "structured": {
+                  "validation": {
+                    "infra": {
+                      "heading": "Test Infrastructure",
+                      "rows": [
+                        {
+                          "key": "Framework",
+                          "value": "none — fixture document"
+                        },
+                        {
+                          "key": "Config file",
+                          "value": "none"
+                        },
+                        {
+                          "key": "Quick run command",
+                          "value": "`echo fixture`"
+                        },
+                        {
+                          "key": "Full suite command",
+                          "value": "`echo fixture`"
+                        },
+                        {
+                          "key": "Estimated runtime",
+                          "value": "~0 seconds"
+                        }
+                      ],
+                      "lead": [],
+                      "tail": []
+                    },
+                    "sampling": {
+                      "heading": "Sampling Rate",
+                      "lead": [],
+                      "steps": [
+                        {
+                          "when": "After every task commit",
+                          "what": "Run `echo fixture`"
+                        },
+                        {
+                          "when": "After every plan wave",
+                          "what": "Run `echo fixture`"
+                        },
+                        {
+                          "when": "Before `/gsd-verify-work`",
+                          "what": "Full suite must be green"
+                        },
+                        {
+                          "when": "Max feedback latency",
+                          "what": "0 seconds"
+                        }
+                      ],
+                      "tail": []
+                    },
+                    "map": {
+                      "heading": "Per-Task Verification Map",
+                      "columns": [
+                        "Task ID",
+                        "Plan",
+                        "Wave",
+                        "Requirement",
+                        "Threat Ref",
+                        "Secure Behavior",
+                        "Test Type",
+                        "Automated Command",
+                        "File Exists",
+                        "Status"
+                      ],
+                      "rows": [
+                        {
+                          "index": 0,
+                          "id": "1-01-01",
+                          "plan": "01",
+                          "wave": "1",
+                          "requirements": [
+                            "IDENT-01"
+                          ],
+                          "threats": [
+                            "T-1-01"
+                          ],
+                          "behavior": "N/A",
+                          "testTypeRaw": "unit",
+                          "testKind": "unit",
+                          "command": "`echo fixture`",
+                          "fileKind": "yes",
+                          "fileNote": "",
+                          "status": "green",
+                          "statusRaw": "✅ green",
+                          "prerequisite": ""
+                        }
+                      ],
+                      "preface": [],
+                      "notes": [],
+                      "legend": [],
+                      "template": false
+                    },
+                    "wave0": {
+                      "heading": "Wave 0 Requirements",
+                      "lead": [],
+                      "items": [
+                        {
+                          "text": "Existing infrastructure covers all phase requirements.",
+                          "box": false,
+                          "checked": false
+                        }
+                      ],
+                      "tail": []
+                    },
+                    "manual": {
+                      "heading": "Manual-Only Verifications",
+                      "lead": [],
+                      "tail": [],
+                      "rows": [],
+                      "prose": [
+                        {
+                          "kind": "list",
+                          "ordered": false,
+                          "items": [
+                            "All phase behaviors have automated verification."
+                          ]
+                        }
+                      ]
+                    },
+                    "signoff": {
+                      "heading": "Validation Sign-Off",
+                      "items": [
+                        {
+                          "text": "All tasks have `<automated>` verify or Wave 0 dependencies",
+                          "checked": true
+                        },
+                        {
+                          "text": "Sampling continuity: no 3 consecutive tasks without automated verify",
+                          "checked": true
+                        },
+                        {
+                          "text": "Wave 0 covers all MISSING references",
+                          "checked": true
+                        },
+                        {
+                          "text": "No watch-mode flags",
+                          "checked": true
+                        },
+                        {
+                          "text": "Feedback latency < 1s",
+                          "checked": true
+                        },
+                        {
+                          "text": "`nyquist_compliant: true` set in frontmatter",
+                          "checked": false
+                        }
+                      ],
+                      "approval": "pending",
+                      "extra": []
+                    },
+                    "extras": [],
+                    "sections": [
+                      {
+                        "heading": "Test Infrastructure",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Sampling Rate",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Per-Task Verification Map",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Wave 0 Requirements",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Manual-Only Verifications",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Validation Sign-Off",
+                        "claimed": true
+                      }
+                    ],
+                    "preamble": true,
+                    "commentCount": 0
+                  }
+                }
               },
               ".planning/phases/01-identity-slice/01-VERIFICATION.md": {
                 "id": ".planning/phases/01-identity-slice/01-VERIFICATION.md",
@@ -7585,7 +7767,189 @@
             "bodyHash": "5e929747a5f97cefbd5c1fc972c65062a0ccc62ef9ea608a5e3e2dd0520cf312",
             "mtimeMs": 0,
             "warnings": [],
-            "structured": {}
+            "structured": {
+              "validation": {
+                "infra": {
+                  "heading": "Test Infrastructure",
+                  "rows": [
+                    {
+                      "key": "Framework",
+                      "value": "none — fixture document"
+                    },
+                    {
+                      "key": "Config file",
+                      "value": "none"
+                    },
+                    {
+                      "key": "Quick run command",
+                      "value": "`echo fixture`"
+                    },
+                    {
+                      "key": "Full suite command",
+                      "value": "`echo fixture`"
+                    },
+                    {
+                      "key": "Estimated runtime",
+                      "value": "~0 seconds"
+                    }
+                  ],
+                  "lead": [],
+                  "tail": []
+                },
+                "sampling": {
+                  "heading": "Sampling Rate",
+                  "lead": [],
+                  "steps": [
+                    {
+                      "when": "After every task commit",
+                      "what": "Run `echo fixture`"
+                    },
+                    {
+                      "when": "After every plan wave",
+                      "what": "Run `echo fixture`"
+                    },
+                    {
+                      "when": "Before `/gsd-verify-work`",
+                      "what": "Full suite must be green"
+                    },
+                    {
+                      "when": "Max feedback latency",
+                      "what": "0 seconds"
+                    }
+                  ],
+                  "tail": []
+                },
+                "map": {
+                  "heading": "Per-Task Verification Map",
+                  "columns": [
+                    "Task ID",
+                    "Plan",
+                    "Wave",
+                    "Requirement",
+                    "Threat Ref",
+                    "Secure Behavior",
+                    "Test Type",
+                    "Automated Command",
+                    "File Exists",
+                    "Status"
+                  ],
+                  "rows": [
+                    {
+                      "index": 0,
+                      "id": "1-01-01",
+                      "plan": "01",
+                      "wave": "1",
+                      "requirements": [
+                        "IDENT-01"
+                      ],
+                      "threats": [
+                        "T-1-01"
+                      ],
+                      "behavior": "N/A",
+                      "testTypeRaw": "unit",
+                      "testKind": "unit",
+                      "command": "`echo fixture`",
+                      "fileKind": "yes",
+                      "fileNote": "",
+                      "status": "green",
+                      "statusRaw": "✅ green",
+                      "prerequisite": ""
+                    }
+                  ],
+                  "preface": [],
+                  "notes": [],
+                  "legend": [],
+                  "template": false
+                },
+                "wave0": {
+                  "heading": "Wave 0 Requirements",
+                  "lead": [],
+                  "items": [
+                    {
+                      "text": "Existing infrastructure covers all phase requirements.",
+                      "box": false,
+                      "checked": false
+                    }
+                  ],
+                  "tail": []
+                },
+                "manual": {
+                  "heading": "Manual-Only Verifications",
+                  "lead": [],
+                  "tail": [],
+                  "rows": [],
+                  "prose": [
+                    {
+                      "kind": "list",
+                      "ordered": false,
+                      "items": [
+                        "All phase behaviors have automated verification."
+                      ]
+                    }
+                  ]
+                },
+                "signoff": {
+                  "heading": "Validation Sign-Off",
+                  "items": [
+                    {
+                      "text": "All tasks have `<automated>` verify or Wave 0 dependencies",
+                      "checked": true
+                    },
+                    {
+                      "text": "Sampling continuity: no 3 consecutive tasks without automated verify",
+                      "checked": true
+                    },
+                    {
+                      "text": "Wave 0 covers all MISSING references",
+                      "checked": true
+                    },
+                    {
+                      "text": "No watch-mode flags",
+                      "checked": true
+                    },
+                    {
+                      "text": "Feedback latency < 1s",
+                      "checked": true
+                    },
+                    {
+                      "text": "`nyquist_compliant: true` set in frontmatter",
+                      "checked": false
+                    }
+                  ],
+                  "approval": "pending",
+                  "extra": []
+                },
+                "extras": [],
+                "sections": [
+                  {
+                    "heading": "Test Infrastructure",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Sampling Rate",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Per-Task Verification Map",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Wave 0 Requirements",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Manual-Only Verifications",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Validation Sign-Off",
+                    "claimed": true
+                  }
+                ],
+                "preamble": true,
+                "commentCount": 0
+              }
+            }
           },
           ".planning/phases/01-identity-slice/01-VERIFICATION.md": {
             "id": ".planning/phases/01-identity-slice/01-VERIFICATION.md",
@@ -9977,7 +10341,189 @@
                   "bodyHash": "5e929747a5f97cefbd5c1fc972c65062a0ccc62ef9ea608a5e3e2dd0520cf312",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "validation": {
+                      "infra": {
+                        "heading": "Test Infrastructure",
+                        "rows": [
+                          {
+                            "key": "Framework",
+                            "value": "none — fixture document"
+                          },
+                          {
+                            "key": "Config file",
+                            "value": "none"
+                          },
+                          {
+                            "key": "Quick run command",
+                            "value": "`echo fixture`"
+                          },
+                          {
+                            "key": "Full suite command",
+                            "value": "`echo fixture`"
+                          },
+                          {
+                            "key": "Estimated runtime",
+                            "value": "~0 seconds"
+                          }
+                        ],
+                        "lead": [],
+                        "tail": []
+                      },
+                      "sampling": {
+                        "heading": "Sampling Rate",
+                        "lead": [],
+                        "steps": [
+                          {
+                            "when": "After every task commit",
+                            "what": "Run `echo fixture`"
+                          },
+                          {
+                            "when": "After every plan wave",
+                            "what": "Run `echo fixture`"
+                          },
+                          {
+                            "when": "Before `/gsd-verify-work`",
+                            "what": "Full suite must be green"
+                          },
+                          {
+                            "when": "Max feedback latency",
+                            "what": "0 seconds"
+                          }
+                        ],
+                        "tail": []
+                      },
+                      "map": {
+                        "heading": "Per-Task Verification Map",
+                        "columns": [
+                          "Task ID",
+                          "Plan",
+                          "Wave",
+                          "Requirement",
+                          "Threat Ref",
+                          "Secure Behavior",
+                          "Test Type",
+                          "Automated Command",
+                          "File Exists",
+                          "Status"
+                        ],
+                        "rows": [
+                          {
+                            "index": 0,
+                            "id": "1-01-01",
+                            "plan": "01",
+                            "wave": "1",
+                            "requirements": [
+                              "IDENT-01"
+                            ],
+                            "threats": [
+                              "T-1-01"
+                            ],
+                            "behavior": "N/A",
+                            "testTypeRaw": "unit",
+                            "testKind": "unit",
+                            "command": "`echo fixture`",
+                            "fileKind": "yes",
+                            "fileNote": "",
+                            "status": "green",
+                            "statusRaw": "✅ green",
+                            "prerequisite": ""
+                          }
+                        ],
+                        "preface": [],
+                        "notes": [],
+                        "legend": [],
+                        "template": false
+                      },
+                      "wave0": {
+                        "heading": "Wave 0 Requirements",
+                        "lead": [],
+                        "items": [
+                          {
+                            "text": "Existing infrastructure covers all phase requirements.",
+                            "box": false,
+                            "checked": false
+                          }
+                        ],
+                        "tail": []
+                      },
+                      "manual": {
+                        "heading": "Manual-Only Verifications",
+                        "lead": [],
+                        "tail": [],
+                        "rows": [],
+                        "prose": [
+                          {
+                            "kind": "list",
+                            "ordered": false,
+                            "items": [
+                              "All phase behaviors have automated verification."
+                            ]
+                          }
+                        ]
+                      },
+                      "signoff": {
+                        "heading": "Validation Sign-Off",
+                        "items": [
+                          {
+                            "text": "All tasks have `<automated>` verify or Wave 0 dependencies",
+                            "checked": true
+                          },
+                          {
+                            "text": "Sampling continuity: no 3 consecutive tasks without automated verify",
+                            "checked": true
+                          },
+                          {
+                            "text": "Wave 0 covers all MISSING references",
+                            "checked": true
+                          },
+                          {
+                            "text": "No watch-mode flags",
+                            "checked": true
+                          },
+                          {
+                            "text": "Feedback latency < 1s",
+                            "checked": true
+                          },
+                          {
+                            "text": "`nyquist_compliant: true` set in frontmatter",
+                            "checked": false
+                          }
+                        ],
+                        "approval": "pending",
+                        "extra": []
+                      },
+                      "extras": [],
+                      "sections": [
+                        {
+                          "heading": "Test Infrastructure",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Sampling Rate",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Per-Task Verification Map",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Wave 0 Requirements",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Manual-Only Verifications",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Validation Sign-Off",
+                          "claimed": true
+                        }
+                      ],
+                      "preamble": true,
+                      "commentCount": 0
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-VERIFICATION.md": {
                   "id": ".planning/phases/01-identity-slice/01-VERIFICATION.md",
@@ -11966,7 +12512,189 @@
                   "bodyHash": "5e929747a5f97cefbd5c1fc972c65062a0ccc62ef9ea608a5e3e2dd0520cf312",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "validation": {
+                      "infra": {
+                        "heading": "Test Infrastructure",
+                        "rows": [
+                          {
+                            "key": "Framework",
+                            "value": "none — fixture document"
+                          },
+                          {
+                            "key": "Config file",
+                            "value": "none"
+                          },
+                          {
+                            "key": "Quick run command",
+                            "value": "`echo fixture`"
+                          },
+                          {
+                            "key": "Full suite command",
+                            "value": "`echo fixture`"
+                          },
+                          {
+                            "key": "Estimated runtime",
+                            "value": "~0 seconds"
+                          }
+                        ],
+                        "lead": [],
+                        "tail": []
+                      },
+                      "sampling": {
+                        "heading": "Sampling Rate",
+                        "lead": [],
+                        "steps": [
+                          {
+                            "when": "After every task commit",
+                            "what": "Run `echo fixture`"
+                          },
+                          {
+                            "when": "After every plan wave",
+                            "what": "Run `echo fixture`"
+                          },
+                          {
+                            "when": "Before `/gsd-verify-work`",
+                            "what": "Full suite must be green"
+                          },
+                          {
+                            "when": "Max feedback latency",
+                            "what": "0 seconds"
+                          }
+                        ],
+                        "tail": []
+                      },
+                      "map": {
+                        "heading": "Per-Task Verification Map",
+                        "columns": [
+                          "Task ID",
+                          "Plan",
+                          "Wave",
+                          "Requirement",
+                          "Threat Ref",
+                          "Secure Behavior",
+                          "Test Type",
+                          "Automated Command",
+                          "File Exists",
+                          "Status"
+                        ],
+                        "rows": [
+                          {
+                            "index": 0,
+                            "id": "1-01-01",
+                            "plan": "01",
+                            "wave": "1",
+                            "requirements": [
+                              "IDENT-01"
+                            ],
+                            "threats": [
+                              "T-1-01"
+                            ],
+                            "behavior": "N/A",
+                            "testTypeRaw": "unit",
+                            "testKind": "unit",
+                            "command": "`echo fixture`",
+                            "fileKind": "yes",
+                            "fileNote": "",
+                            "status": "green",
+                            "statusRaw": "✅ green",
+                            "prerequisite": ""
+                          }
+                        ],
+                        "preface": [],
+                        "notes": [],
+                        "legend": [],
+                        "template": false
+                      },
+                      "wave0": {
+                        "heading": "Wave 0 Requirements",
+                        "lead": [],
+                        "items": [
+                          {
+                            "text": "Existing infrastructure covers all phase requirements.",
+                            "box": false,
+                            "checked": false
+                          }
+                        ],
+                        "tail": []
+                      },
+                      "manual": {
+                        "heading": "Manual-Only Verifications",
+                        "lead": [],
+                        "tail": [],
+                        "rows": [],
+                        "prose": [
+                          {
+                            "kind": "list",
+                            "ordered": false,
+                            "items": [
+                              "All phase behaviors have automated verification."
+                            ]
+                          }
+                        ]
+                      },
+                      "signoff": {
+                        "heading": "Validation Sign-Off",
+                        "items": [
+                          {
+                            "text": "All tasks have `<automated>` verify or Wave 0 dependencies",
+                            "checked": true
+                          },
+                          {
+                            "text": "Sampling continuity: no 3 consecutive tasks without automated verify",
+                            "checked": true
+                          },
+                          {
+                            "text": "Wave 0 covers all MISSING references",
+                            "checked": true
+                          },
+                          {
+                            "text": "No watch-mode flags",
+                            "checked": true
+                          },
+                          {
+                            "text": "Feedback latency < 1s",
+                            "checked": true
+                          },
+                          {
+                            "text": "`nyquist_compliant: true` set in frontmatter",
+                            "checked": false
+                          }
+                        ],
+                        "approval": "pending",
+                        "extra": []
+                      },
+                      "extras": [],
+                      "sections": [
+                        {
+                          "heading": "Test Infrastructure",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Sampling Rate",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Per-Task Verification Map",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Wave 0 Requirements",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Manual-Only Verifications",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Validation Sign-Off",
+                          "claimed": true
+                        }
+                      ],
+                      "preamble": true,
+                      "commentCount": 0
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-VERIFICATION.md": {
                   "id": ".planning/phases/01-identity-slice/01-VERIFICATION.md",
@@ -13955,7 +14683,189 @@
                   "bodyHash": "5e929747a5f97cefbd5c1fc972c65062a0ccc62ef9ea608a5e3e2dd0520cf312",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "validation": {
+                      "infra": {
+                        "heading": "Test Infrastructure",
+                        "rows": [
+                          {
+                            "key": "Framework",
+                            "value": "none — fixture document"
+                          },
+                          {
+                            "key": "Config file",
+                            "value": "none"
+                          },
+                          {
+                            "key": "Quick run command",
+                            "value": "`echo fixture`"
+                          },
+                          {
+                            "key": "Full suite command",
+                            "value": "`echo fixture`"
+                          },
+                          {
+                            "key": "Estimated runtime",
+                            "value": "~0 seconds"
+                          }
+                        ],
+                        "lead": [],
+                        "tail": []
+                      },
+                      "sampling": {
+                        "heading": "Sampling Rate",
+                        "lead": [],
+                        "steps": [
+                          {
+                            "when": "After every task commit",
+                            "what": "Run `echo fixture`"
+                          },
+                          {
+                            "when": "After every plan wave",
+                            "what": "Run `echo fixture`"
+                          },
+                          {
+                            "when": "Before `/gsd-verify-work`",
+                            "what": "Full suite must be green"
+                          },
+                          {
+                            "when": "Max feedback latency",
+                            "what": "0 seconds"
+                          }
+                        ],
+                        "tail": []
+                      },
+                      "map": {
+                        "heading": "Per-Task Verification Map",
+                        "columns": [
+                          "Task ID",
+                          "Plan",
+                          "Wave",
+                          "Requirement",
+                          "Threat Ref",
+                          "Secure Behavior",
+                          "Test Type",
+                          "Automated Command",
+                          "File Exists",
+                          "Status"
+                        ],
+                        "rows": [
+                          {
+                            "index": 0,
+                            "id": "1-01-01",
+                            "plan": "01",
+                            "wave": "1",
+                            "requirements": [
+                              "IDENT-01"
+                            ],
+                            "threats": [
+                              "T-1-01"
+                            ],
+                            "behavior": "N/A",
+                            "testTypeRaw": "unit",
+                            "testKind": "unit",
+                            "command": "`echo fixture`",
+                            "fileKind": "yes",
+                            "fileNote": "",
+                            "status": "green",
+                            "statusRaw": "✅ green",
+                            "prerequisite": ""
+                          }
+                        ],
+                        "preface": [],
+                        "notes": [],
+                        "legend": [],
+                        "template": false
+                      },
+                      "wave0": {
+                        "heading": "Wave 0 Requirements",
+                        "lead": [],
+                        "items": [
+                          {
+                            "text": "Existing infrastructure covers all phase requirements.",
+                            "box": false,
+                            "checked": false
+                          }
+                        ],
+                        "tail": []
+                      },
+                      "manual": {
+                        "heading": "Manual-Only Verifications",
+                        "lead": [],
+                        "tail": [],
+                        "rows": [],
+                        "prose": [
+                          {
+                            "kind": "list",
+                            "ordered": false,
+                            "items": [
+                              "All phase behaviors have automated verification."
+                            ]
+                          }
+                        ]
+                      },
+                      "signoff": {
+                        "heading": "Validation Sign-Off",
+                        "items": [
+                          {
+                            "text": "All tasks have `<automated>` verify or Wave 0 dependencies",
+                            "checked": true
+                          },
+                          {
+                            "text": "Sampling continuity: no 3 consecutive tasks without automated verify",
+                            "checked": true
+                          },
+                          {
+                            "text": "Wave 0 covers all MISSING references",
+                            "checked": true
+                          },
+                          {
+                            "text": "No watch-mode flags",
+                            "checked": true
+                          },
+                          {
+                            "text": "Feedback latency < 1s",
+                            "checked": true
+                          },
+                          {
+                            "text": "`nyquist_compliant: true` set in frontmatter",
+                            "checked": false
+                          }
+                        ],
+                        "approval": "pending",
+                        "extra": []
+                      },
+                      "extras": [],
+                      "sections": [
+                        {
+                          "heading": "Test Infrastructure",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Sampling Rate",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Per-Task Verification Map",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Wave 0 Requirements",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Manual-Only Verifications",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Validation Sign-Off",
+                          "claimed": true
+                        }
+                      ],
+                      "preamble": true,
+                      "commentCount": 0
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-VERIFICATION.md": {
                   "id": ".planning/phases/01-identity-slice/01-VERIFICATION.md",

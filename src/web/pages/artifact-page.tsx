@@ -55,6 +55,8 @@ import type { ComposedResearchBriefing } from '../views/research-briefing.ts';
 import { ResearchBriefingView, ResearchIntroMeta } from '../views/research-briefing-components.tsx';
 import type { ComposedPatternMap } from '../views/pattern-map.ts';
 import { PatternIntroMeta, PatternMapView } from '../views/pattern-map-components.tsx';
+import type { ComposedValidationStrategy } from '../views/validation-strategy.ts';
+import { ValidationStrategyView, validationHeaderProps } from '../views/validation-strategy-components.tsx';
 import type { ComposedUiSpec } from '../views/ui-spec.ts';
 import { UiSpecIntroMeta, UiSpecView } from '../views/ui-spec-components.tsx';
 import type { ComposedUatSession } from '../views/uat-session.ts';
@@ -603,6 +605,14 @@ export function ArtifactPage(): React.JSX.Element {
     if (!manifest || !viewInput) return null;
     return manifest.patternMap?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // quick-261003-526 (sketch-016 winner A): the VALIDATION strategy page, when the resolved manifest
+  // opts into one — `null` for every other kind, for a document with none of the six recognised
+  // sections and for a payload from a server that predates `structured.validation` (the
+  // promoted-block view then renders).
+  const validationStrategy = useMemo<ComposedValidationStrategy | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.validationStrategy?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // quick-261001-qk6 (sketch-014 winner): the UI-SPEC contract page, when the resolved manifest
   // opts into one — `null` for every other kind, and for a contract with none of the recognised
   // sections or a payload from a server that predates `structured.uiSpec` (the promoted-block view
@@ -652,6 +662,7 @@ export function ArtifactPage(): React.JSX.Element {
     brief !== null ||
     briefing !== null ||
     patternMap !== null ||
+    validationStrategy !== null ||
     uiSpec !== null ||
     uatSession !== null ||
     (composed !== null && composed.blocks.length > 0);
@@ -719,6 +730,10 @@ export function ArtifactPage(): React.JSX.Element {
   // the plain header (the same rule the CONTEXT brief follows).
   const cover = briefing && mode === 'view' ? briefing : null;
   const mapCover = patternMap && mode === 'view' ? patternMap : null;
+  // The VALIDATION page's header override (eyebrow, slug title, no lead, no breadcrumb row, the
+  // cover as `meta`) is one prop spread, so no shared eyebrow / title / lead / meta chain grows.
+  const validationHeader =
+    validationStrategy && mode === 'view' ? validationHeaderProps(validationStrategy, artifact.title) : null;
   const specCover = uiSpec && mode === 'view' ? uiSpec : null;
   const uatCover = uatSession && mode === 'view' ? uatSession : null;
   return (
@@ -791,11 +806,12 @@ export function ArtifactPage(): React.JSX.Element {
             {layout ? <CoverStatusChip status={layout.cover.status} /> : null}
           </>
         }
+        {...(validationHeader ?? {})}
       >
         {viewAvailable ? <DocumentViewToggle mode={mode} onChange={setMode} /> : null}
       </ArtifactHeader>
 
-      {panels.length > 0 ? (
+      {panels.length > 0 && !validationHeader ? (
         // The UI-SPEC page's cover and shadcn card already carry the frontmatter facts, and the
         // Winner lists the frontmatter as source-only — View mode hides the disclosure (Source
         // mode keeps it). The UAT page's cover carries its facts and its "In the source only"
@@ -884,6 +900,13 @@ export function ArtifactPage(): React.JSX.Element {
         <ResearchBriefingView briefing={briefing} onShowSource={showSource} title={artifact.title} />
       ) : patternMap && mode === 'view' ? (
         <PatternMapView key={artifact.path} map={patternMap} onShowSource={showSource} title={artifact.title} />
+      ) : validationStrategy && mode === 'view' ? (
+        <ValidationStrategyView
+          key={artifact.path}
+          strategy={validationStrategy}
+          onShowSource={showSource}
+          title={artifact.title}
+        />
       ) : uiSpec && mode === 'view' ? (
         <UiSpecView key={artifact.path} spec={uiSpec} onShowSource={showSource} title={artifact.title} />
       ) : uatSession && mode === 'view' ? (
