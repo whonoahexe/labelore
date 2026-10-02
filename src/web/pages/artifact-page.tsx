@@ -811,7 +811,7 @@ export function ArtifactPage(): React.JSX.Element {
         {viewAvailable ? <DocumentViewToggle mode={mode} onChange={setMode} /> : null}
       </ArtifactHeader>
 
-      {panels.length > 0 && !validationHeader ? (
+      {panels.length > 0 ? (
         // The UI-SPEC page's cover and shadcn card already carry the frontmatter facts, and the
         // Winner lists the frontmatter as source-only — View mode hides the disclosure (Source
         // mode keeps it). The UAT page's cover carries its facts and its "In the source only"
