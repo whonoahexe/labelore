@@ -3,13 +3,17 @@
 // compose step on literal ViewInputs: the document wins, the theme fills token-only swatches, a
 // token group splits per token, no theme leaves the output unchanged, and a hostile theme payload
 // is rejected client-side.
+import { existsSync, readFileSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
+import { SP_PLANNING, STUDIO_PORTAL_ROOT } from '../helpers/studio-portal.ts';
 import { InMemoryPlanningFilesystem } from '../../src/planning-fs/in-memory-fs.ts';
+import { LocalFsPlanningFilesystem } from '../../src/planning-fs/local-fs.ts';
+import { loadThemeTokens } from '../../src/planning-repo/theme-tokens.ts';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
 import { extractUiSpec } from '../../src/planning-repo/handlers/ui-spec-contract.ts';
-import { composeUiSpec } from '../../src/web/views/ui-spec.ts';
+import { composeUiSpec, safeColor } from '../../src/web/views/ui-spec.ts';
 import type { ComposedColourRole, ComposedUiSpec } from '../../src/web/views/ui-spec.ts';
 import { UiSpecView } from '../../src/web/views/ui-spec-components.tsx';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
@@ -235,3 +239,61 @@ describe('composeColour with a theme', () => {
     expect(composed(ownMd, THEME).colour?.paintedWith).toBe("painted with the doc's own values");
   });
 });
+
+describe('UiSpecView — provenance of a stylesheet-painted swatch', () => {
+  const resolved = (): string => render(composed(SPEC, THEME));
+
+  it('a resolved swatch says where it came from, with the full path in the tooltip', () => {
+    const out = resolved();
+    expect(out).toContain('class="view-ui-spec-from"');
+    expect(out).toContain('>From globals.css<');
+    expect(out).toContain('title="Read from app/globals.css');
+    expect(out).toContain('· from app/globals.css');
+  });
+
+  it('the colour bar key names the source', () => {
+    expect(resolved()).toContain('Proportion of the screen · painted from app/globals.css');
+  });
+
+  it('a swatch painted by the document carries no from line and no source in its titles', () => {
+    const md =
+      '## Color\n\n| Role | Value | Usage |\n|---|---|---|\n| Dominant (60%) | `--background` #FFFFFF light #0A0A0A dark | page |\n';
+    const out = render(composed(md, THEME));
+    expect(out).not.toContain('view-ui-spec-from');
+    expect(out).not.toContain('· from ');
+    expect(out).toContain('painted with the doc');
+  });
+
+  it('every inline style stays on the allowlist and every swatch value passes safeColor', () => {
+    for (const m of resolved().matchAll(/style="([^"]*)"/g)) {
+      for (const declaration of m[1].split(';').filter((d) => d !== '')) {
+        const [prop, value] = declaration.split(/:(.*)/s);
+        expect(['flex-grow', 'left', 'width', 'font-size', 'font-weight', 'line-height', '--swatch-light', '--swatch-dark']).toContain(prop);
+        if (prop.startsWith('--swatch')) expect(safeColor(value)).toBe(value);
+      }
+    }
+  });
+});
+
+const SP_UI_SPEC = `${SP_PLANNING}/phases/01-portal-owned-identity-sessions/01-UI-SPEC.md`;
+
+describe.runIf(existsSync(SP_UI_SPEC) && existsSync(`${STUDIO_PORTAL_ROOT}/frontend/app/globals.css`))(
+  'the studio-portal 01-UI-SPEC painted from its own globals.css',
+  () => {
+    it('every token-only role resolves and nothing is hatched', async () => {
+      const theme = await loadThemeTokens(new LocalFsPlanningFilesystem(STUDIO_PORTAL_ROOT));
+      expect(theme?.source).toBe('frontend/app/globals.css');
+      const spec = composed(readFileSync(SP_UI_SPEC, 'utf8'), theme);
+
+      expect(roleOf(spec, 'Dominant').swatches[0]).toMatchObject({ light: 'oklch(1 0 0)', dark: 'oklch(0.145 0 0)' });
+      expect(roleOf(spec, 'Secondary').swatches.map((s) => s.tokens)).toEqual([['--card'], ['--border']]);
+      expect(roleOf(spec, 'Accent').swatches[0]).toMatchObject({ tokens: ['--primary'] });
+      expect(roleOf(spec, 'Accent').swatches[0].light).not.toBeNull();
+      expect(roleOf(spec, 'Destructive').swatches[0].light).not.toBeNull();
+
+      const out = render(spec);
+      expect(out).not.toContain('Value not in doc');
+      expect(out).toContain('painted from frontend/app/globals.css');
+    });
+  },
+);

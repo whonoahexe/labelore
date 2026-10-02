@@ -391,6 +391,131 @@ element is actually written, regardless of class name:
   notes, how coverage was probed, the lift rule, the status vocabulary, the scope and generator
   notes and the frontmatter, each switching to Source mode at its heading. The Document metadata
   disclosure is not shown in View mode — its facts sit on the cover and in the shadcn card.
+- **Swatches and type samples are content.** (quick-261001-qk6, quick-261002-li5) A colour role's
+  swatch, and the colour bar's segments, paint the value the document itself states. A value reaches
+  the page only after `safeColor` accepts it (a hex colour, or an `oklch(…)` of digits, dots,
+  percent signs, spaces, slashes, minus signs or `none`, at most 64 characters) and only as the
+  value of a `--swatch-light` / `--swatch-dark` custom property; the stylesheet picks one per theme
+  with the `.dark` selector. A value the document states always wins. A token the document gives no
+  value for is painted from the target project's own stylesheet: the `:root` value for light and
+  the `.dark` value for dark. The stylesheet is found through components.json's `tailwind.css`,
+  else a short fixed list of conventional paths. Its values pass through the same `safeColor`, the
+  swatch splits into one per token, and it reads "From globals.css" with the project-relative path
+  in its tooltip. Only a token that resolves in neither place is hatched and reads "Value not in
+  doc". The colour-bar key says which source painted it. A type sample takes only the parsed size
+  (capped at 72px), weight and line height. These, and the target project's resolved values shown as
+  content, are the only colours outside the theme tokens anywhere in the app, and they never come
+  from a tone.
+- **The 10% accent reservation extends to the CONTEXT brief's In-this-phase card.** (quick-260923-lju)
+  `.immediate-work`'s existing top rule is reused verbatim for the brief's accent "In this phase"
+  card, plus the ✓ marks in its list and the "Claude decides" label under a tagged decision. No
+  other brief element (the leftover-discretion hanging rule, chips, stats) uses `--primary`.
+  (quick-260925-3ug, sketch-007 C) It extends once more, to the ideas block: the Specific ideas
+  column's top rule and its scope label, the specifics' Rule chip (via the shared `active` tone)
+  and a deferred fate-group header's hover colour. Nothing else in the ideas block — not the
+  Deferred column's own top rule, not its group notes, destinations or bodies — uses `--primary`.
+- **The CONTEXT brief has no tone of its own.** (quick-260923-lju, retoned 2026-09-25) Open
+  questions — the open-question chips, an area's "N open" chip, the "open for the researcher" stat
+  and the open panel's rule/eyebrow/tags — use the shared `in-flight` tone (`--in-flight-fill`):
+  they are waiting on someone, like "Awaiting checkpoint". A costly/one-way/irreversible
+  reversibility chip is the plain untoned `.status-chip` (foreground text, one step above `quiet`),
+  matching the neutral "hard to undo" stat; any other reversibility chip is `quiet`. The
+  `destructive`/`warning` tones stay reserved for the artifact-parse badge. Cross-references
+  (`.view-context-ref`) and the "Claude decides" label stay muted like `.document-reference`. The
+  amendments back-matter row (quick-260925-3ob) carries no `warning`/`destructive`/`in-flight`
+  tone either, despite its source heading's own ⚠️ — the row is as quiet as its references/code
+  siblings.
+- **CONTEXT Deferred is grouped by fate, never by source order.** (quick-260925-3ug, sketch-007 C)
+  The groups render in one fixed order — handed, declined, passed, out, carried, then the Parked
+  default for an idea whose outcome the brief could not recognise — and an empty group is omitted
+  rather than rendered empty. Each header is a collapsible button in the same uppercase
+  label-plus-count style as the In/Out scope labels, and every group starts expanded.
+- **ASCII figures are lifted, not redrawn.** (quick-260929-3x3, sketch 009) A box-drawing diagram
+  keeps its source text as real, selectable text; the cards behind it are decoration, positioned
+  from the measured character width and row height (`.lifted-diagram-*`). A directory tree becomes
+  a clean list (`.clean-tree-*`). Their pure models live in `src/rendering/` (`ascii-lift.ts`,
+  `ascii-tree.ts`) and their components in `src/web/components/` with no research-specific import,
+  so the `lifted-figures-everywhere` todo can reuse them unchanged for every document. Detection is
+  conservative (a real `┌…┐└…┘` rectangle or a connector flow; three or more `├──`/`└──` lines) and
+  Source mode is always the way back to the raw text. (quick-260930-jzt) Hand-drawn drift is
+  followed: ragged right edges are walked row by row, an open-left outer box is inferred when its
+  shape rules out a connector, nested cards paint over their container, an arrow drawn into a side
+  stays an arrow, and `├─`/`└─`/`│` tree guides inside a box stay content. A box-less flow becomes
+  padded step cards that absorb the detail lines under or beside their trunk, with aria-hidden spacer
+  rows between stacked steps; edge labels and asides stay outside every card.
+  (quick-260930-mp6, sketch 012 B) A RESEARCH architecture diagram whose graph is confident is
+  redrawn as lanes by kind, from a graph read out of the author's ASCII (`src/rendering/ascii-graph.ts`
+  for the typed nodes, short labels, wires, wire labels and groups; `src/rendering/lane-layout.ts` for
+  the lanes, `.lane-diagram-*`): one column per kind present — Client, Edge, Service (& steps), Worker,
+  Channel, Data, External — with an icon header and alternate lanes shaded, layers following the
+  author's rows, and uniform nodes (icon, a label of at most two lines, a one-line subtitle, `+N` for
+  hidden detail). A graph is **thin** — never drawn — when it has fewer than 4 nodes, fewer wires than
+  half the nodes, quality under 0.6, more than 2 dangling wire fragments, or more than 60 nodes. The
+  lanes fit the frame body's measured width: the per-lane column cap falls from uncapped to 2 to 1 until
+  nodes reach a comfortable width, and same-lane nodes wrap into further rows rather than widening the
+  lane; a narrower budget shortens subtitles (compact) instead. A node click opens the details panel
+  beside the diagram (details, notes, From and To with wire labels, As written) and lights the node's
+  wires and arrowheads; Escape, the same node again, or Close clears it. A thin figure, and every drawn
+  one through the **Shown as drawn** chip in the frame bar, shows the lifted diagram under a quiet note
+  ("This figure keeps the author's layout."). Source mode stays the way back to the raw text.
+- **The 10% accent reservation extends to the figures.** (quick-260929-3x3) The lifted diagram's
+  arrows, the hovered card, and the clean tree's folder icons, take `--primary`; folder names sit on
+  `--muted-foreground` (the NEW chip uses
+  the shared `active` tone); node cards sit on the quieter `--figure-node-fill` / `--figure-node-border`. Box cards, connector glyphs, notes and file names stay on
+  `--border`, `--background` and the muted foreground. (quick-260930-mp6) The lane diagram extends it:
+  the Client icon well, the selected node's border and ring (`--primary`, `--primary-tint`), and the
+  selected node's wires and arrowheads take the accent; lanes, wires, node edges, groups and the other
+  icons stay on the `--figure-*` tokens and the muted foreground. `destructive` and `warning` never
+  colour a figure.
+- **RESEARCH uses the sketch-008 A briefing, not B3 and not CONTEXT's brief.** (quick-260929-3x3)
+  The `research` manifest declares a `briefing` hook (`composeResearchBriefing`) and keeps its
+  `promote` list only as the fallback for a server payload with no `structured.briefing`. The page
+  opens on a cover — a facts line (Researched date, a confidence chip that opens the per-area
+  breakdown, Valid until) and a quiet muted Domain caption — then the Summary beside a Primary
+  recommendation callout and an At a glance column (each row jumps to its chapter). The Summary's
+  framing paragraph is a calm lead (`--fs-5`, at most 60ch, foreground colour); every later
+  paragraph is a numbered finding row — 01, 02 … as muted mono ordinals, each on a hairline, the body
+  in the foreground colour with bold phrases in semibold as the scan path — and a block that is not
+  a paragraph (list, table, code) stays with the paragraph it follows (quick-260929-m30). Then chapters
+  numbered in order over the sections actually present (01 Standard stack … 06 Sources; a document
+  with no architecture renumbers with no gap), collapsed back-matter rows, and an "In the source
+  only" strip. That strip lists every `##` (and unrecognised `###`) the view does not render, in
+  document order, each a link into Source mode at that heading — so nothing is dropped silently.
+- **The legitimacy audit is lanes by verdict.** (quick-260929-3x3, sketch-010 B; restored to the
+  sketch in quick-260929-mih) Removed · slop, Flagged · suspicious and Approved, at most four items
+  per lane and then "Show N more removed / flagged / approved ▾" (and "Show fewer ▴"), the caret
+  `aria-hidden` so the accessible name is unchanged; a dashed Approved chip marks a disposition that
+  is not a plain "Approved"; the full seam table sits behind a toggle reading "Show the seam output
+  (N rows) ▾"; a "Not applicable" audit degrades to its prose lines. An empty lane keeps its tone —
+  Removed keeps its `--missing-border` outline, missing top rule and heading; Flagged keeps its
+  in-flight top rule and heading — and reads "Nothing removed." / "Nothing flagged." / "Nothing
+  approved.". A removed item's replacement reads "Use instead" (a mono uppercase label, then the
+  replacement in the foreground colour); lane items sit on `--border-faint` hairlines; inline code
+  inside the block is a mono chip on `--code-veil` (the seam table's package names stay plain); and
+  the notes after the lanes stack tightly at `--fs-3` in the muted foreground. Document content never
+  takes the parse-degradation tones — the Removed lane and a CRITICAL pitfall use `missing`, the
+  Flagged lane and a HIGH pitfall use `in-flight`.
+- **The 10% accent reservation extends to the RESEARCH briefing.** (quick-260929-3x3) The
+  recommendation callout's left rule and tint, the Core stack label, and the pressed state of the
+  Patterns ⇄ Anti-patterns control take `--primary`. The Summary's finding ordinals stay on the muted foreground and never
+  take `--primary` (quick-260929-m30). Evidence markers ([VERIFIED] / [CITED] / [ASSUMED]) render as small V / C / A superscripts in the muted foreground, with the ASSUMED
+  marker on `in-flight`; the citation is in the tooltip. (quick-260929-mih, sketch-010 B) The hover colour of the legitimacy lanes' Show more / Show
+  fewer rows and of the seam-output toggle takes `--primary`; nothing else in the audit block does.
+- **UI-SPEC uses the sketch-014 contract page.** (quick-261001-qk6, sketch 014 round-2 winner) The
+  cover carries the eyebrow "UI design contract · Phase N", the title from the slug, and a meta row:
+  the sign-off chip (a plain `status-chip`, tone from the worst dimension, opening a "Checker
+  sign-off" dialog with each dimension's verdict, notes only where written, and the approval last),
+  then Created, and Status only when the document is not approved. Chapters number in order over
+  the sections present: 01 Design system (four accent-ruled choice cards — shadcn first, then
+  Component library, Icon library and Font — followed by a spacing tick ruler, a type ladder of live
+  samples and the 60/30/10 colour bar with a card per role), 02 UI considerations (a coverage meter
+  with the author's own count, a "Needs a person" chip row, and the element x state matrix whose
+  squares open that state's resolutions below it), and 03 Registry safety (a verdict line, then a
+  card per registry with its blocks grouped New this phase / Reused). There is no copy deck: an "In
+  the source only" strip lists Copywriting Contract, the phase-specific chapters, the checker's
+  notes, how coverage was probed, the lift rule, the status vocabulary, the scope and generator
+  notes and the frontmatter, each switching to Source mode at its heading. The Document metadata
+  disclosure is not shown in View mode — its facts sit on the cover and in the shadcn card.
 - **Swatches and type samples are content.** (quick-261001-qk6) A colour role's swatch, and the
   colour bar's segments, paint the value the document itself states. A value reaches the page only
   after `safeColor` accepts it (a hex colour, or an `oklch(…)` of digits, dots, percent signs,
