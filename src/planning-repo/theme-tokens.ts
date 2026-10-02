@@ -215,6 +215,8 @@ function collectRaw(css: string): RawTokens {
     }
     i++;
   }
+  // A block cut off at the end of the file still contributes its last declaration.
+  if (stack.length > 0 && fragment.trim() !== '') flushDeclaration();
   return raw;
 }
 
