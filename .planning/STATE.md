@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-09-30T18:50:38.790Z"
+last_updated: "2026-10-02T10:15:49.685Z"
 last_activity: 2026-09-30
 last_activity_desc: Completed quick task 260929-3x3 (RESEARCH page view)
-state_head: b917ec52a8c3047151ac59d68fb584c60b8abc38
+state_head: 262888cb18427afed74a382a9d54cd30e58cde88
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-09-21)
 Phase: Milestone v1.1 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-09-30 - Completed quick task 260930-wfs: Build sketch 013 B (by location + panel) as the PATTERNS page view
+Last activity: 2026-10-02 - Completed quick task 261002-li5: ui-spec view token swatches from globals.css
 
 ## Performance Metrics
 
@@ -150,6 +150,7 @@ None.
 | 35 | PATTERNS cover: Copy file path and view toggle on the same line as the Searched scope | 2026-09-30 | 09f9311 | — |
 | 36 | PATTERNS File map section heading matches sketch 013 B (mono title, muted 01, bottom-aligned aside) | 2026-09-30 | b917ec5 | — |
 | 261001-qk7 | Build sketch 015 B as the UAT page view | 2026-10-01 | 7d4aa57 | .planning/quick/261001-qk7-uat-page-view |
+| 261002-li5 | ui-spec view: resolve token-only colour roles to real swatches from the target project's globals.css (light and dark), hatched when not found | 2026-10-02 | 262888c | [261002-li5-ui-spec-view-resolve-token-only-colour-r](./quick/261002-li5-ui-spec-view-resolve-token-only-colour-r/) |
 
 ## Deferred Items
 
