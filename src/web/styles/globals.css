@@ -10658,10 +10658,11 @@ button.view-ui-spec-signoff:hover {
   background: var(--state-hover);
 }
 
+/* A chip with no click target: painted exactly like its button siblings; the cursor and the
+   tooltip are the only difference. */
 .view-uat-source-note {
-  color: var(--muted-foreground);
-  font-family: var(--font-mono);
-  font-size: var(--fs-2);
+  background: none;
+  cursor: help;
 }
 
 /* The blocks sit a fluid step apart, the way the page's own gap does. */

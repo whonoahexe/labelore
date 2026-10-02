@@ -616,7 +616,7 @@ function SourceOnly({
                 {entry.label}
               </button>
             ) : (
-              <span className="view-uat-source-note" title="Only in the raw file — Source mode drops HTML comments">
+              <span className="status-chip view-uat-source-note" title="Only in the raw file — Source mode drops HTML comments">
                 {entry.label}
               </span>
             )}
