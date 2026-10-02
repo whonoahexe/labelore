@@ -70,6 +70,8 @@ test.describe('UI review page', () => {
     const inspector = page.locator('#ui-review-inspector');
     await expect(inspector.locator('h2')).toContainText('Color');
     await expect(inspector.locator('.view-ui-review-found-card')).toHaveCount(1);
+    // Squared corners on the found card, checked here while Color (the only pillar with one) is open.
+    expect(await inspector.locator('.view-ui-review-found-card').evaluate((el) => getComputedStyle(el).borderRadius)).toBe('0px');
     await expect(inspector.locator('#ui-review-fix-1')).toBeVisible();
 
     // ← → step through the pillars.
@@ -84,6 +86,12 @@ test.describe('UI review page', () => {
     const card = page.locator('#ui-review-fix-3');
     await expect.poll(() => inViewport(page, card)).toBe(true);
     await expect(card).toHaveAttribute('data-highlight', 'true');
+    const pin3 = page.locator('.view-ui-review-pin[data-fixpin="3"]');
+    await expect(pin3).toHaveAttribute('aria-pressed', 'true');
+    // Pressing the same pin again clears it.
+    await pin3.click();
+    await expect(pin3).toHaveAttribute('aria-pressed', 'false');
+    await expect(card).not.toHaveAttribute('data-highlight', 'true');
 
     // Back matter: three folded sections.
     const back = page.locator('.view-ui-review-back details');
@@ -104,7 +112,6 @@ test.describe('UI review page', () => {
     for (const selector of [
       '.view-ui-review-tab',
       '.view-ui-review-pin',
-      '.view-ui-review-found-card',
       '.view-ui-review-fixcard',
       '#ui-review-source-only .status-chip',
     ]) {
