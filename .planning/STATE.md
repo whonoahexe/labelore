@@ -151,6 +151,9 @@ None.
 | 36 | PATTERNS File map section heading matches sketch 013 B (mono title, muted 01, bottom-aligned aside) | 2026-09-30 | b917ec5 | — |
 | 261001-qk7 | Build sketch 015 B as the UAT page view | 2026-10-01 | 7d4aa57 | .planning/quick/261001-qk7-uat-page-view |
 | 261002-li5 | ui-spec view: resolve token-only colour roles to real swatches from the target project's globals.css (light and dark), hatched when not found | 2026-10-02 | 262888c | [261002-li5-ui-spec-view-resolve-token-only-colour-r](./quick/261002-li5-ui-spec-view-resolve-token-only-colour-r/) |
+| 261003-526 | Build sketch 016 A as the VALIDATION page view. Use gsd-browser whenever you need verification or to improve the UI. | 2026-10-03 | 6930a2e | .planning/quick/261003-526-build-sketch-016-a-as-the-validation-page-view-use-gsd-brows |
+| 261003-527 | Build sketch 017 D as the SECURITY page view. Use gsd-browser whenever you need verification or to improve the UI. | 2026-10-03 | 629b939 | .planning/quick/261003-527-build-sketch-017-d-as-the-security-page-view-use-gsd-browser |
+| 261003-528 | Build sketch 018 B as the UI-REVIEW page view. Use gsd-browser whenever you need verification or to improve the UI. | 2026-10-03 | 8a8638b | .planning/quick/261003-528-build-sketch-018-b-as-the-ui-review-page-view-use-gsd-browse |
 
 ## Deferred Items
 
