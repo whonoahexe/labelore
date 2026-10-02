@@ -11,6 +11,7 @@ import { planLayout } from './layout-plan.ts';
 import { verificationLayout } from './layout-verification.ts';
 import type { ViewKind } from './kinds.ts';
 import type { PromotedBlock, ViewInput, ViewManifest } from './manifest.ts';
+import { composeSecurityConsole } from './security-console.ts';
 import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
 import { composePatternMap } from './pattern-map.ts';
@@ -222,6 +223,7 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
       { type: 'section', heading: /^accepted risks/i },
       { type: 'section', heading: /^sign-off/i },
     ],
+    securityConsole: composeSecurityConsole,
   },
   'ui-review': {
     kind: 'ui-review',

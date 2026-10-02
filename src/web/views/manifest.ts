@@ -9,6 +9,8 @@ import type { DocumentLayoutSpec } from './layout.ts';
 // Type-only import — mirrors the DocumentLayoutSpec pattern above so `brief` below introduces no
 // runtime cycle with context-brief.ts (quick-260923-lju, sketch-006 D1).
 import type { ComposedContextBrief } from './context-brief.ts';
+// Type-only import — same reason as `brief` above (quick-261003-527, sketch-017 winner D).
+import type { ComposedSecurityConsole } from './security-console.ts';
 // Type-only import — same reason as `brief` above (quick-260929-3x3, sketch-008 A).
 import type { ComposedResearchBriefing } from './research-briefing.ts';
 // Type-only import — same reason as `brief` above (quick-260930-wfs, sketch-013 B).
@@ -61,6 +63,11 @@ export interface ViewManifest {
    * currently only `context`. Returns `null` when the input can't compose a brief, and the page
    * falls back to the promoted-block view. */
   brief?: (input: ViewInput) => ComposedContextBrief | null;
+  /** quick-261003-527 (sketch-017 D): the SECURITY console a manifest opts into instead of `promote`
+   * — currently only `security`. Returns `null` when the input can't compose one (no
+   * `structured.security`, or a document with neither register rows nor register prose), and the
+   * page falls back to the promoted-block view, which the manifest keeps as `promote`. */
+  securityConsole?: (input: ViewInput) => ComposedSecurityConsole | null;
   /** quick-260929-3x3 (sketch-008 A): the RESEARCH briefing layout a manifest opts into instead of
    * `promote` — currently only `research`. Returns `null` when the input can't compose a briefing
    * (an older server's payload has no `structured.briefing`), and the page falls back to the
