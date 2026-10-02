@@ -151,9 +151,11 @@ describe('ui-spec view contract', () => {
     expect(foreignStyleExpressions('<i style={somethingElse(x)} />')).toEqual(['somethingElse(x)']);
   });
 
-  it('the composer and the extractor never build a regular expression from document text', async () => {
+  it('the composer, the extractor and the stylesheet resolver never build a regular expression from document text', async () => {
     expect(buildsRegExp(await source('src/web/views/ui-spec.ts'))).toBe(false);
     expect(buildsRegExp(await source('src/planning-repo/handlers/ui-spec-contract.ts'))).toBe(false);
+    expect(buildsRegExp(await source('src/planning-repo/theme-tokens.ts'))).toBe(false);
+    expect(buildsRegExp(await source('src/planning-repo/css-color.ts'))).toBe(false);
   });
 
   it('the composer chooses tones in typed maps and never a parse-degradation tone', async () => {
