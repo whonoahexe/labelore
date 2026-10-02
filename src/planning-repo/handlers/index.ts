@@ -12,6 +12,7 @@ import { ProjectHandler } from './project.ts';
 import { ContextHandler } from './context.ts';
 import { ResearchHandler } from './research.ts';
 import { PatternsHandler } from './patterns.ts';
+import { ValidationHandler } from './validation.ts';
 import { UiSpecHandler } from './ui-spec.ts';
 import { UatHandler } from './uat.ts';
 import { FrontmatterOnlyHandler } from './frontmatter-only.ts';
@@ -29,6 +30,7 @@ export const HANDLERS: ArtifactHandler[] = [
   ContextHandler,
   ResearchHandler,
   PatternsHandler,
+  ValidationHandler,
   UiSpecHandler,
   UatHandler,
   FrontmatterOnlyHandler,
