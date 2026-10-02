@@ -14,6 +14,7 @@ import type { PromotedBlock, ViewInput, ViewManifest } from './manifest.ts';
 import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
 import { composePatternMap } from './pattern-map.ts';
+import { composeValidationStrategy } from './validation-strategy.ts';
 import { composeUiSpec } from './ui-spec.ts';
 import { composeUatSession } from './uat-session.ts';
 
@@ -211,6 +212,7 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
       { type: 'section', heading: /^wave 0 requirements/i },
       { type: 'section', heading: /^validation sign-off/i },
     ],
+    validationStrategy: composeValidationStrategy,
   },
   security: {
     kind: 'security',

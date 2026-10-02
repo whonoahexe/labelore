@@ -9851,6 +9851,1333 @@ button.view-ui-spec-signoff:hover {
 }
 /* quick-261001-qk6:end */
 
+/* quick-261003-526:start */
+/* ==========================================================================
+   quick-261003-526 (sketch 016 winner A): the VALIDATION strategy page — every .view-validation-*
+   rule. Additive only, one contiguous block. Tokens throughout (space, type, line height), squared
+   corners with no corner rounding declared, no literal colour of any kind, --fw-medium /
+   --fw-semibold only. Colour comes from the shared tones and the theme tokens: a green task is
+   --primary, a red one --missing-fill, a flaky one --in-flight-fill, a pending one a dashed outline
+   in --muted-foreground and a task with no status a quiet --border rail. The Draft status, the
+   not-Nyquist dim, the HUMAN glyph, a Not observed outcome and the template notice are
+   --in-flight-fill with --in-flight-border; the surfaces are --border, --border-faint, --card-veil,
+   --primary-tint, --muted and --state-hover. Nothing here names a parse-degradation tone, and this
+   block makes no mixed-colour recipe of its own. Ancestors of a .status-chip set no line-height, so
+   every chip keeps the inherited body value (F-05). Media overrides sit directly after their base
+   rules (css-source-order).
+   ========================================================================== */
+
+/* Cover: the facts line shares ArtifactHeader's .artifact-meta-row with Copy file path and the view
+   toggle; the quiet dims, the three cells and the expanded checks wrap beneath. The wrapper
+   dissolves so all of them are flex items of the row. */
+.view-validation-cover {
+  display: contents;
+}
+
+.artifact-meta-row:has(> .view-validation-cover) {
+  row-gap: var(--space-4);
+}
+
+.view-validation-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  align-items: center;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-validation-facts b {
+  margin-left: var(--space-1-5);
+  color: var(--foreground);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.view-validation-key {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-validation-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-align: left;
+  text-transform: uppercase;
+  transition: color 0.15s ease;
+}
+
+.view-validation-link:hover {
+  color: var(--primary);
+}
+
+.view-validation-muted {
+  color: var(--muted-foreground);
+}
+
+.view-validation-number {
+  margin-right: var(--space-3);
+  color: var(--muted-foreground);
+}
+
+.view-validation-aside {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-validation-dims {
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  order: 1;
+  gap: var(--space-1-5);
+  min-width: 0;
+}
+
+.view-validation-dim {
+  display: inline-flex;
+  gap: var(--space-1-5);
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  border: 1px dashed var(--border);
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.view-validation-dim[data-tone='complete'] {
+  border-style: solid;
+  color: var(--foreground);
+}
+
+.view-validation-dim[data-tone='in-flight'] {
+  border-style: solid;
+  border-color: var(--in-flight-border);
+  color: var(--in-flight-fill);
+}
+
+.view-validation-dim-glyph {
+  width: var(--space-4);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  text-align: center;
+}
+
+.view-validation-dim[data-tone='complete'] .view-validation-dim-glyph {
+  color: var(--primary);
+}
+
+/* The three verdict cells. */
+.view-validation-cells {
+  display: grid;
+  flex: 1 1 100%;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  order: 2;
+  min-width: 0;
+  border: 1px solid var(--border);
+}
+
+.view-validation-cell {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  min-width: 0;
+  padding: var(--space-4);
+  border-right: 1px solid var(--border);
+}
+
+.view-validation-cell:last-child {
+  border-right: 0;
+}
+
+.view-validation-cell[data-cell='tasks'] {
+  box-shadow: inset 0 2px 0 var(--primary);
+}
+
+@media (max-width: 42rem) {
+  .view-validation-cell {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .view-validation-cell:last-child {
+    border-bottom: 0;
+  }
+}
+
+.view-validation-big {
+  font-family: var(--font-mono);
+  font-size: var(--fs-display-3);
+  letter-spacing: var(--ls-tighter);
+  line-height: var(--lh-none);
+}
+
+.view-validation-big small {
+  margin-left: var(--space-1);
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  letter-spacing: 0;
+}
+
+.view-validation-approval {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.view-validation-squares {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-0-5);
+}
+
+.view-validation-square {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border: 1px dashed var(--muted-foreground);
+}
+
+.view-validation-square[data-tone='complete'] {
+  border-style: solid;
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.view-validation-square[data-tone='missing'] {
+  border-style: solid;
+  border-color: var(--missing-fill);
+  background: var(--missing-fill);
+}
+
+.view-validation-square[data-tone='in-flight'] {
+  border-style: solid;
+  border-color: var(--in-flight-fill);
+  background: var(--in-flight-fill);
+}
+
+/* The sign-off checks, expanded in place under the cells. */
+.view-validation-cover-checks {
+  flex: 1 1 100%;
+  order: 3;
+  min-width: 0;
+}
+
+/* Sections: numbered heading, then the content. */
+.view-validation-map > .section-heading,
+.view-validation-rig-section > .section-heading,
+.view-validation-manual > .section-heading,
+.view-validation-signoff > .section-heading {
+  align-items: flex-end;
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.view-validation-map > .section-heading h2,
+.view-validation-rig-section > .section-heading h2,
+.view-validation-manual > .section-heading h2,
+.view-validation-signoff > .section-heading h2 {
+  font-family: var(--font-mono);
+}
+
+.view-validation-prose {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.view-validation-prose :is(.view-research-text, .view-research-list) {
+  margin: 0;
+}
+
+.view-validation-subheading {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+/* 01 How it's tested: the spec list and command blocks beside the cadence ladder. */
+.view-validation-rig {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: var(--space-6);
+}
+
+@media (max-width: 62rem) {
+  .view-validation-rig {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.view-validation-rig-left,
+.view-validation-rig-right {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-validation-spec {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  margin: 0;
+  font-size: var(--fs-4);
+}
+
+.view-validation-spec-row {
+  display: grid;
+  grid-template-columns: 8.5rem minmax(0, 1fr);
+  gap: var(--space-4);
+}
+
+.view-validation-spec dt {
+  padding-top: var(--space-0-5);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-validation-spec dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-validation-spec-row[data-muted='true'] dd {
+  color: var(--muted-foreground);
+}
+
+.view-validation-runs {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.view-validation-run {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  gap: var(--space-3);
+  padding: var(--space-2-5) var(--space-3);
+  border: 1px solid var(--border);
+  background: var(--card-veil);
+}
+
+.view-validation-run-key {
+  padding-top: var(--space-0-5);
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-validation-run[data-run='quick'] .view-validation-run-key {
+  color: var(--primary);
+}
+
+.view-validation-cmds {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  font-size: var(--fs-3);
+}
+
+.view-validation-cmd {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.view-validation-cmd-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-validation-cmd code,
+.view-validation-cmd-box code {
+  padding: 0;
+  background: none;
+}
+
+.view-validation-qualifier {
+  padding: 0 var(--space-1);
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-validation-copy {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  padding: 0 var(--space-1);
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  opacity: 0.7;
+  transition: all 0.15s ease;
+}
+
+.view-validation-copy:hover {
+  color: var(--primary);
+  opacity: 1;
+}
+
+.view-validation-copy svg {
+  width: 0.8rem;
+  height: 0.8rem;
+}
+
+.view-validation-runtime {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+/* Sampling: a ladder of ticks that grow, then the latency meter. */
+.view-validation-cadence {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-validation-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: var(--space-3);
+  padding-bottom: var(--space-4);
+}
+
+.view-validation-step::before {
+  position: absolute;
+  top: var(--space-5);
+  bottom: 0;
+  left: var(--space-4);
+  border-left: 1px solid var(--border);
+  content: '';
+}
+
+.view-validation-step:last-child::before {
+  display: none;
+}
+
+.view-validation-tick {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 1.4rem;
+}
+
+.view-validation-tick > i {
+  display: block;
+  border: 1.5px solid var(--primary);
+  background: var(--background);
+}
+
+.view-validation-step[data-size='0'] .view-validation-tick > i {
+  width: 0.5rem;
+  height: 0.5rem;
+}
+
+.view-validation-step[data-size='1'] .view-validation-tick > i {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.view-validation-step[data-size='2'] .view-validation-tick > i {
+  width: 1rem;
+  height: 1rem;
+  background: var(--primary-tint);
+}
+
+.view-validation-step[data-size='3'] .view-validation-tick > i {
+  width: 1rem;
+  height: 1rem;
+  background: var(--primary);
+}
+
+.view-validation-when {
+  color: var(--foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-validation-what {
+  margin-top: var(--space-1);
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.view-validation-what code {
+  color: var(--foreground);
+}
+
+.view-validation-latency {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-2-5) var(--space-3);
+  border: 1px dashed var(--border);
+  font-size: var(--fs-3);
+}
+
+.view-validation-meter {
+  position: relative;
+  flex: 1;
+  min-width: 6rem;
+  height: 0.375rem;
+  background: var(--muted);
+}
+
+.view-validation-meter > i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--primary);
+}
+
+.view-validation-latency-value {
+  font-family: var(--font-mono);
+  font-size: var(--fs-4);
+}
+
+/* 02 Task verification: the strip and filters. */
+.view-validation-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  align-items: center;
+  font-size: var(--fs-3);
+}
+
+.view-validation-strip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  align-items: center;
+}
+
+.view-validation-filters {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  background: var(--card-veil);
+}
+
+.view-validation-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  align-items: center;
+}
+
+.view-validation-filter-row > .view-validation-key:first-child {
+  flex: none;
+  width: 6.5rem;
+}
+
+.view-validation-key-inline {
+  margin-left: var(--space-4);
+}
+
+.view-validation-filter {
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.view-validation-filter:hover {
+  background: var(--state-hover);
+}
+
+.view-validation-filter[aria-pressed='true'] {
+  border-color: var(--foreground);
+  color: var(--foreground);
+}
+
+.view-validation-count {
+  font-weight: var(--fw-medium);
+  opacity: 0.7;
+}
+
+.view-validation-clear {
+  margin-left: auto;
+}
+
+.view-validation-marker {
+  display: inline-block;
+  flex: none;
+  width: 0.55rem;
+  height: 0.55rem;
+  border: 1px dashed var(--muted-foreground);
+}
+
+.view-validation-marker[data-file='extend'] {
+  border-style: solid;
+  background: linear-gradient(90deg, var(--muted-foreground) 50%, transparent 50%);
+  opacity: 0.7;
+}
+
+/* The wave lanes beside the sticky inspector. */
+.view-validation-board {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22rem;
+  gap: var(--space-5);
+  align-items: start;
+}
+
+@media (max-width: 62rem) {
+  .view-validation-board {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.view-validation-lanes {
+  min-width: 0;
+}
+
+.view-validation-lane {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  border-top: 1px solid var(--border);
+}
+
+.view-validation-lane:last-child {
+  border-bottom: 1px solid var(--border);
+}
+
+.view-validation-lane-head {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  padding: var(--space-3) var(--space-2) var(--space-3) 0;
+}
+
+.view-validation-lane-wave {
+  font-family: var(--font-mono);
+  font-size: var(--fs-fluid-3);
+  line-height: var(--lh-none);
+}
+
+.view-validation-lane-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-4);
+  min-width: 0;
+  padding: var(--space-3) 0;
+}
+
+.view-validation-plan {
+  display: grid;
+  gap: var(--space-1-5);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-validation-plan-label {
+  padding-bottom: var(--space-1);
+  border-bottom: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-validation-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+}
+
+.view-validation-tile {
+  position: relative;
+  display: grid;
+  gap: var(--space-1);
+  width: 9.5rem;
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  background: var(--card-veil);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.view-validation-tile::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  background: var(--border);
+  content: '';
+}
+
+.view-validation-tile[data-tone='complete']::before {
+  background: var(--primary);
+}
+
+.view-validation-tile[data-tone='missing']::before {
+  background: var(--missing-fill);
+}
+
+.view-validation-tile[data-tone='in-flight']::before {
+  background: var(--in-flight-fill);
+}
+
+.view-validation-tile[data-file='create'] {
+  border-style: dashed;
+}
+
+.view-validation-tile:hover {
+  background: var(--state-hover);
+}
+
+.view-validation-tile[aria-pressed='true'] {
+  border-style: solid;
+  border-color: var(--foreground);
+}
+
+.view-validation-tile[data-dim='true'] {
+  opacity: 0.28;
+}
+
+.view-validation-tile-top {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.view-validation-tile-id {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-validation-tile-text {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: var(--fs-2);
+  line-height: var(--lh-snug);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.view-validation-tile-reqs {
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The type glyph: a mono tag; HUMAN is dashed in-flight. */
+.view-validation-glyph {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2.25rem;
+  height: 1.25rem;
+  padding: 0 var(--space-1);
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-validation-glyph[data-tone='in-flight'] {
+  border-style: dashed;
+  border-color: var(--in-flight-border);
+  color: var(--in-flight-fill);
+}
+
+/* The sticky inspector. */
+.view-validation-inspector {
+  position: sticky;
+  top: var(--space-22);
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--card-veil);
+}
+
+@media (max-width: 62rem) {
+  .view-validation-inspector {
+    position: static;
+  }
+}
+
+.view-validation-inspector-empty {
+  display: grid;
+  gap: var(--space-2);
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.view-validation-inspector-empty p {
+  margin: 0;
+}
+
+.view-validation-inspector-hint {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+}
+
+.view-validation-inspector-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.view-validation-inspector-head > .view-validation-link {
+  margin-left: auto;
+}
+
+.view-validation-inspector-title {
+  margin: 0;
+  font-size: var(--fs-5);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+}
+
+.view-validation-kv {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  gap: var(--space-2) var(--space-3);
+  margin: 0;
+  font-size: var(--fs-3);
+}
+
+.view-validation-kv dt {
+  padding-top: var(--space-0-5);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-validation-kv dd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  align-items: baseline;
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-validation-ref {
+  padding: 0 var(--space-1);
+  border: 1px solid var(--border);
+  background: none;
+  color: inherit;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  white-space: nowrap;
+}
+
+button.view-validation-ref {
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+button.view-validation-ref:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+button.view-validation-ref[aria-pressed='true'] {
+  border-color: var(--foreground);
+  color: var(--foreground);
+}
+
+.view-validation-command {
+  display: grid;
+  gap: var(--space-1-5);
+}
+
+.view-validation-cmd-box {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  padding: var(--space-2) var(--space-3);
+  background: var(--muted);
+  font-size: var(--fs-2);
+  overflow-wrap: anywhere;
+}
+
+.view-validation-cmd-box > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.view-validation-prereq {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.view-validation-command > .view-validation-link {
+  justify-self: start;
+}
+
+.view-validation-note {
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.view-validation-note :is(.view-research-text, .view-research-list) {
+  margin: 0;
+}
+
+.view-validation-template {
+  border-left: 3px solid var(--border);
+}
+
+.view-validation-template[data-tone='in-flight'] {
+  border-left-color: var(--in-flight-fill);
+}
+
+/* Wave 0: one quiet dashed line, folded. */
+.view-validation-wave0 {
+  border-top: 1px dashed var(--border);
+  border-bottom: 1px dashed var(--border);
+}
+
+.view-validation-wave0-toggle {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  width: 100%;
+  padding: var(--space-3) 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--fs-3);
+  text-align: left;
+}
+
+.view-validation-wave0-toggle:hover {
+  color: var(--foreground);
+}
+
+.view-validation-chevron {
+  margin-left: auto;
+}
+
+.view-validation-mini {
+  display: inline-flex;
+  gap: var(--space-0-5);
+}
+
+.view-validation-mini > i {
+  width: 0.5rem;
+  height: 0.5rem;
+  border: 1px dashed var(--muted-foreground);
+}
+
+.view-validation-mini > i[data-on='true'] {
+  border-style: solid;
+  background: var(--muted-foreground);
+}
+
+.view-validation-wave0-body {
+  display: grid;
+  gap: var(--space-3);
+  padding-bottom: var(--space-4);
+}
+
+.view-validation-wave0-list {
+  display: grid;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-validation-wave0-list li {
+  display: grid;
+  grid-template-columns: 1.25rem minmax(0, 1fr);
+  gap: var(--space-2);
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.view-validation-mark {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+}
+
+.view-validation-wave0-list li[data-done='true'] .view-validation-mark {
+  color: var(--primary);
+}
+
+/* 03 Checked by a human: cards with an outcome footer. */
+.view-validation-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+  gap: var(--space-3);
+}
+
+@media (max-width: 42rem) {
+  .view-validation-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.view-validation-card {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-width: 0;
+  border: 1px solid var(--border);
+  background: var(--card-veil);
+}
+
+.view-validation-card-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  align-items: center;
+  padding: var(--space-3) var(--space-4) 0;
+}
+
+.view-validation-card-main {
+  display: grid;
+  gap: var(--space-2-5);
+  align-content: start;
+  padding: var(--space-2) var(--space-4) var(--space-3);
+}
+
+.view-validation-card-main h3 {
+  margin: 0;
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+}
+
+.view-validation-card-text {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.view-validation-how {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-2);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.view-validation-how > .view-validation-key {
+  padding-top: var(--space-0-5);
+}
+
+.view-validation-outcome {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2-5) var(--space-4);
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-3);
+}
+
+.view-validation-outcome[data-tone='complete'] {
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+
+.view-validation-outcome[data-tone='in-flight'] {
+  box-shadow: inset 3px 0 0 var(--in-flight-fill);
+}
+
+.view-validation-outcome-head {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.view-validation-outcome-date {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-validation-outcome-text {
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+
+.view-validation-outcome-text[data-clamped='true'] {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+.view-validation-outcome > .view-validation-link {
+  justify-self: start;
+}
+
+.view-validation-notice :is(.view-research-text, .view-research-list) {
+  margin: 0;
+}
+
+/* 04 Sign-off: the checklist beside the Approval stamp. */
+.view-validation-signoff-box {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 18rem);
+  gap: var(--space-5);
+  align-items: start;
+}
+
+@media (max-width: 42rem) {
+  .view-validation-signoff-box {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.view-validation-checklist {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--border);
+  list-style: none;
+}
+
+.view-validation-checklist li {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr);
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-faint);
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  overflow-wrap: anywhere;
+}
+
+.view-validation-checklist li[data-done='true'] {
+  color: var(--foreground);
+}
+
+.view-validation-checklist li[data-done='true'] .view-validation-mark {
+  color: var(--primary);
+}
+
+.view-validation-stamp {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+}
+
+.view-validation-stamp[data-tone='complete'] {
+  border-color: var(--primary);
+  background: var(--primary-tint);
+}
+
+.view-validation-stamp[data-tone='active'] {
+  border-color: var(--primary);
+}
+
+.view-validation-stamp[data-tone='in-flight'] {
+  border-color: var(--in-flight-border);
+}
+
+.view-validation-stamp .view-validation-big {
+  font-size: var(--fs-fluid-3);
+}
+
+/* Extras: the sections the view does not place, folded. */
+.view-validation-extras {
+  gap: var(--space-2);
+}
+
+.view-validation-extras details {
+  border: 1px solid var(--border);
+  background: var(--card-veil);
+}
+
+.view-validation-extras summary {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  list-style: none;
+  text-transform: uppercase;
+}
+
+.view-validation-extras summary::-webkit-details-marker {
+  display: none;
+}
+
+.view-validation-extras summary::after {
+  margin-left: auto;
+  content: '▾';
+}
+
+.view-validation-extras details[open] > summary::after {
+  content: '▴';
+}
+
+.view-validation-extras summary:hover {
+  color: var(--foreground);
+}
+
+.view-validation-extras details > .view-validation-prose {
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+/* "In the source only": what the view leaves to Source mode, one click away. */
+.view-validation-source-only {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  padding-top: var(--space-4);
+  border-top: 1px dashed var(--border);
+}
+
+.view-validation-source-only ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-validation-source-only button.status-chip {
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.view-validation-source-only button.status-chip:hover {
+  background: var(--state-hover);
+}
+
+/* A chip with no click target: painted exactly like its button siblings; the cursor and the
+   tooltip are the only difference. */
+.view-validation-source-note {
+  background: none;
+  cursor: help;
+}
+
+/* A jump target outlines itself briefly, then fades. */
+.view-validation-tile[data-flash='true'],
+.view-validation-manual[data-flash='true'] {
+  animation: view-validation-flash 0.9s ease;
+}
+
+@keyframes view-validation-flash {
+  0%,
+  60% {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  100% {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .view-validation-tile[data-flash='true'],
+  .view-validation-manual[data-flash='true'] {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    animation: none;
+  }
+}
+
+/* The sections sit a fluid step apart, the way the page's own gap does. */
+.document-canvas
+  > :is(
+    .view-validation-rig-section,
+    .view-validation-map,
+    .view-validation-wave0,
+    .view-validation-manual,
+    .view-validation-signoff,
+    .view-validation-extras,
+    .view-validation-source-only
+  )
+  ~ :is(
+    .view-validation-map,
+    .view-validation-wave0,
+    .view-validation-manual,
+    .view-validation-signoff,
+    .view-validation-extras,
+    .view-validation-source-only
+  ) {
+  margin-top: var(--space-fluid-10);
+}
+/* quick-261003-526:end */
+
 /* quick-261001-qk7:start */
 /* ==========================================================================
    quick-261001-qk7 (sketch 015 winner B): the UAT session page — every .view-uat-* rule. Additive
