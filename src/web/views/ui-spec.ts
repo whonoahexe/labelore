@@ -786,6 +786,10 @@ function composeTypography(table: UiSpecTable | null, title: string): ComposedTy
 
 const LITERAL_RE = /#[0-9a-f]{6}\b|#[0-9a-f]{3}\b|oklch\([^)]*\)/gi;
 
+/** A usage cell that only points at the reserved-for list ("See reserved-for list below") says nothing
+ * the page's own reserved-for block does not, so it is dropped. */
+const POINTER_USAGE_RE = /^see\b[^.]*\breserved[- ]for\b[^.]*\.?$/i;
+
 function composeColour(
   table: UiSpecTable | null,
   reserved: Record<string, string[]>,
@@ -818,7 +822,7 @@ function composeColour(
       swatches: scan.swatches.map(safeSwatch).flatMap((swatch) => paintFromTheme(swatch, theme)),
       never: scan.avoid,
       note,
-      usage: r[useI] ?? '',
+      usage: POINTER_USAGE_RE.test(plain(r[useI] ?? '')) ? '' : (r[useI] ?? ''),
       reserved: reserved[key] ?? null,
     };
   });
