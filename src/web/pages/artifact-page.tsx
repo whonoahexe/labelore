@@ -725,6 +725,7 @@ export function ArtifactPage(): React.JSX.Element {
     <main className="artifact-page page-stack">
       <ArtifactHeader
         crumbs={crumbs}
+        hideCrumbs={Boolean(specCover || uatCover)}
         eyebrow={
           brief
             ? brief.intro.eyebrow
