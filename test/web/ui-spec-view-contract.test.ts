@@ -151,9 +151,11 @@ describe('ui-spec view contract', () => {
     expect(foreignStyleExpressions('<i style={somethingElse(x)} />')).toEqual(['somethingElse(x)']);
   });
 
-  it('the composer and the extractor never build a regular expression from document text', async () => {
+  it('the composer, the extractor and the stylesheet resolver never build a regular expression from document text', async () => {
     expect(buildsRegExp(await source('src/web/views/ui-spec.ts'))).toBe(false);
     expect(buildsRegExp(await source('src/planning-repo/handlers/ui-spec-contract.ts'))).toBe(false);
+    expect(buildsRegExp(await source('src/planning-repo/theme-tokens.ts'))).toBe(false);
+    expect(buildsRegExp(await source('src/planning-repo/css-color.ts'))).toBe(false);
   });
 
   it('the composer chooses tones in typed maps and never a parse-degradation tone', async () => {
@@ -210,5 +212,6 @@ describe('ui-spec view contract', () => {
     expect(rule(".view-ui-spec-chipbox > [data-half='light']")).toContain('var(--swatch-light)');
     expect(rule(".view-ui-spec-chipbox > [data-half='dark']")).toContain('var(--swatch-dark)');
     expect(rule(".view-ui-spec-verdict[data-required='true']")).toContain('var(--in-flight-fill)');
+    expect(rule('.view-ui-spec-from')).toContain('uppercase');
   });
 });

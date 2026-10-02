@@ -567,14 +567,27 @@ function swatchVars(light: string | null, dark: string | null): CSSProperties {
   return vars as CSSProperties;
 }
 
-function SwatchBox({ light, dark }: { light: string | null; dark: string | null }): React.JSX.Element {
+/** Where a stylesheet-painted value came from, appended to a chip half's title. */
+function fromSuffix(from: string | null): string {
+  return from ? ` · from ${from}` : '';
+}
+
+function SwatchBox({
+  light,
+  dark,
+  from,
+}: {
+  light: string | null;
+  dark: string | null;
+  from: string | null;
+}): React.JSX.Element {
   const one = !(light && dark);
   return (
     <span className="view-ui-spec-chipbox" data-one={one}>
       {light || dark ? (
         <>
-          {light ? <span data-half="light" style={swatchVars(light, null)} title={`light ${light}`} /> : null}
-          {dark ? <span data-half="dark" style={swatchVars(null, dark)} title={`dark ${dark}`} /> : null}
+          {light ? <span data-half="light" style={swatchVars(light, null)} title={`light ${light}${fromSuffix(from)}`} /> : null}
+          {dark ? <span data-half="dark" style={swatchVars(null, dark)} title={`dark ${dark}${fromSuffix(from)}`} /> : null}
         </>
       ) : (
         <span data-none="true" title="Value not in the document" />
@@ -595,7 +608,7 @@ function RoleCard({ role }: { role: ComposedColourRole }): React.JSX.Element {
           {role.swatches.length > 0 ? (
             role.swatches.map((swatch, index) => (
               <div key={index} className="view-ui-spec-swatch">
-                <SwatchBox light={swatch.light} dark={swatch.dark} />
+                <SwatchBox light={swatch.light} dark={swatch.dark} from={swatch.resolvedFrom} />
                 <div>
                   <div className="view-ui-spec-swatch-name">
                     {swatch.tokens.length > 0 ? swatch.tokens.join(' · ') : 'literal'}
@@ -608,6 +621,14 @@ function RoleCard({ role }: { role: ComposedColourRole }): React.JSX.Element {
                     ) : (
                       <span className="view-ui-spec-nodoc">Value not in doc</span>
                     )}
+                    {swatch.resolvedFrom ? (
+                      <span
+                        className="view-ui-spec-from"
+                        title={`Read from ${swatch.resolvedFrom} — the document names the token only`}
+                      >
+                        From {swatch.resolvedFrom.split('/').pop()}
+                      </span>
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -672,7 +693,7 @@ function ColourSpecimen({ colour }: { colour: ComposedColour }): React.JSX.Eleme
             ))}
           </div>
           <div className="view-ui-spec-split-key">
-            <span>Proportion of the screen · painted with the doc&apos;s own values</span>
+            <span>Proportion of the screen · {colour.paintedWith}</span>
             <span>
               {colour.notShare.join(' · ')}
               {colour.notShare.length > 0 ? ' — not a share' : ''}
