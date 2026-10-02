@@ -51,6 +51,9 @@ import { fetchPresentation } from '../components/app-shell.tsx';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
 import type { ComposedContextBrief } from '../views/context-brief.ts';
 import { ContextBriefView, ContextIntroMeta } from '../views/context-brief-components.tsx';
+import type { ComposedSecurityConsole } from '../views/security-console.ts';
+import { SecurityConsoleView } from '../views/security-console-components.tsx';
+import { WarningChip } from '../components/warning-chip.tsx';
 import type { ComposedResearchBriefing } from '../views/research-briefing.ts';
 import { ResearchBriefingView, ResearchIntroMeta } from '../views/research-briefing-components.tsx';
 import type { ComposedPatternMap } from '../views/pattern-map.ts';
@@ -590,6 +593,14 @@ export function ArtifactPage(): React.JSX.Element {
     if (!manifest || !viewInput) return null;
     return manifest.brief?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // quick-261003-527 (sketch-017 winner D): the SECURITY console, when the resolved manifest opts
+  // into one — `null` for every other kind, for a document with neither register rows nor register
+  // prose and for a payload from a server that predates `structured.security` (the promoted-block
+  // view then renders).
+  const securityConsole = useMemo<ComposedSecurityConsole | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.securityConsole?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // quick-260929-3x3 (sketch-008 A): the RESEARCH briefing, when the resolved manifest opts into
   // one — `null` for every kind that keeps the pre-existing promoted-block/B3/brief view, and for
   // a payload from a server that predates `structured.briefing` (the promoted-block view then
@@ -659,6 +670,7 @@ export function ArtifactPage(): React.JSX.Element {
   );
   const viewAvailable =
     layout !== null ||
+    securityConsole !== null ||
     brief !== null ||
     briefing !== null ||
     patternMap !== null ||
@@ -707,6 +719,26 @@ export function ArtifactPage(): React.JSX.Element {
     structuralWarningCount: artifact.warnings.length,
     renderWarningCount: document.warnings.length,
   });
+  // quick-261003-527: the SECURITY console's rail replaces the header, the breadcrumb row and the
+  // Document metadata disclosure in View mode (the rail carries the facts and the source-only strip
+  // names the frontmatter); a parse warning shows as its chip in the rail. Source mode falls
+  // through to the unchanged page below.
+  if (securityConsole && mode === 'view') {
+    return (
+      <main className="artifact-page page-stack">
+        <SecurityConsoleView
+          key={artifact.path}
+          model={securityConsole}
+          fallbackTitle={artifact.title}
+          path={artifact.path}
+          mode={mode}
+          onModeChange={setMode}
+          onShowSource={showSource}
+          chip={<WarningChip tone={warningTone} />}
+        />
+      </main>
+    );
+  }
   const crumbs: ArtifactCrumb[] = [
     { label: 'Dashboard', to: presentationRoutePatterns.dashboard },
     { label: 'Roadmap', to: presentationRoutePatterns.roadmap },

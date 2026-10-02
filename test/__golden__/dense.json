@@ -3674,7 +3674,115 @@
                 "bodyHash": "d4d6349540788f308ec18ec823a7eff231e2ab481e936b7201556caad276fb32",
                 "mtimeMs": 0,
                 "warnings": [],
-                "structured": {}
+                "structured": {
+                  "security": {
+                    "lead": [],
+                    "boundaries": {
+                      "rows": [
+                        {
+                          "name": "Fixture file → the parser under test",
+                          "from": "Fixture file",
+                          "to": "the parser under test",
+                          "description": "Deliberately malformed input in sibling phases",
+                          "data": "Markdown/YAML/JSON text"
+                        }
+                      ],
+                      "note": []
+                    },
+                    "register": {
+                      "grouped": false,
+                      "rows": [
+                        {
+                          "id": "T-1-01",
+                          "ids": [
+                            "T-1-01"
+                          ],
+                          "group": null,
+                          "category": "Tampering",
+                          "component": "Identity slice artifacts",
+                          "severity": {
+                            "top": "medium",
+                            "raw": "medium"
+                          },
+                          "disposition": "mitigate",
+                          "status": "open",
+                          "statusRaw": "open",
+                          "mitigation": "Per-file parse isolation (plan 01-01)"
+                        }
+                      ],
+                      "note": [],
+                      "legend": "*Status: open · closed · open — below high threshold (non-blocking)*\n*Severity: critical > high > medium > low — only open threats at or above workflow.security_block_on count toward threats_open*\n*Disposition: mitigate (implementation required) · accept (documented risk) · transfer (third-party)*\n\n---",
+                      "prose": null
+                    },
+                    "risks": {
+                      "rows": [],
+                      "note": [
+                        {
+                          "kind": "paragraph",
+                          "text": "*No accepted risks.*"
+                        }
+                      ]
+                    },
+                    "audit": {
+                      "rows": [
+                        {
+                          "date": "2026-06-07",
+                          "total": "1",
+                          "closed": "0",
+                          "open": "1",
+                          "by": "fixture-author"
+                        }
+                      ],
+                      "note": []
+                    },
+                    "signoff": {
+                      "items": [
+                        {
+                          "checked": false,
+                          "text": "All threats have a disposition (mitigate / accept / transfer)"
+                        },
+                        {
+                          "checked": true,
+                          "text": "Accepted risks documented in Accepted Risks Log"
+                        },
+                        {
+                          "checked": false,
+                          "text": "`threats_open: 0` confirmed"
+                        },
+                        {
+                          "checked": false,
+                          "text": "`status: verified` set in frontmatter"
+                        }
+                      ],
+                      "approval": "pending",
+                      "note": []
+                    },
+                    "extras": [],
+                    "blockOn": "high",
+                    "sections": [
+                      {
+                        "heading": "Trust Boundaries",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Threat Register",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Accepted Risks Log",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Security Audit Trail",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Sign-Off",
+                        "claimed": true
+                      }
+                    ]
+                  }
+                }
               },
               ".planning/phases/01-identity-slice/01-SPEC.md": {
                 "id": ".planning/phases/01-identity-slice/01-SPEC.md",
@@ -7373,7 +7481,115 @@
             "bodyHash": "d4d6349540788f308ec18ec823a7eff231e2ab481e936b7201556caad276fb32",
             "mtimeMs": 0,
             "warnings": [],
-            "structured": {}
+            "structured": {
+              "security": {
+                "lead": [],
+                "boundaries": {
+                  "rows": [
+                    {
+                      "name": "Fixture file → the parser under test",
+                      "from": "Fixture file",
+                      "to": "the parser under test",
+                      "description": "Deliberately malformed input in sibling phases",
+                      "data": "Markdown/YAML/JSON text"
+                    }
+                  ],
+                  "note": []
+                },
+                "register": {
+                  "grouped": false,
+                  "rows": [
+                    {
+                      "id": "T-1-01",
+                      "ids": [
+                        "T-1-01"
+                      ],
+                      "group": null,
+                      "category": "Tampering",
+                      "component": "Identity slice artifacts",
+                      "severity": {
+                        "top": "medium",
+                        "raw": "medium"
+                      },
+                      "disposition": "mitigate",
+                      "status": "open",
+                      "statusRaw": "open",
+                      "mitigation": "Per-file parse isolation (plan 01-01)"
+                    }
+                  ],
+                  "note": [],
+                  "legend": "*Status: open · closed · open — below high threshold (non-blocking)*\n*Severity: critical > high > medium > low — only open threats at or above workflow.security_block_on count toward threats_open*\n*Disposition: mitigate (implementation required) · accept (documented risk) · transfer (third-party)*\n\n---",
+                  "prose": null
+                },
+                "risks": {
+                  "rows": [],
+                  "note": [
+                    {
+                      "kind": "paragraph",
+                      "text": "*No accepted risks.*"
+                    }
+                  ]
+                },
+                "audit": {
+                  "rows": [
+                    {
+                      "date": "2026-06-07",
+                      "total": "1",
+                      "closed": "0",
+                      "open": "1",
+                      "by": "fixture-author"
+                    }
+                  ],
+                  "note": []
+                },
+                "signoff": {
+                  "items": [
+                    {
+                      "checked": false,
+                      "text": "All threats have a disposition (mitigate / accept / transfer)"
+                    },
+                    {
+                      "checked": true,
+                      "text": "Accepted risks documented in Accepted Risks Log"
+                    },
+                    {
+                      "checked": false,
+                      "text": "`threats_open: 0` confirmed"
+                    },
+                    {
+                      "checked": false,
+                      "text": "`status: verified` set in frontmatter"
+                    }
+                  ],
+                  "approval": "pending",
+                  "note": []
+                },
+                "extras": [],
+                "blockOn": "high",
+                "sections": [
+                  {
+                    "heading": "Trust Boundaries",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Threat Register",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Accepted Risks Log",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Security Audit Trail",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Sign-Off",
+                    "claimed": true
+                  }
+                ]
+              }
+            }
           },
           ".planning/phases/01-identity-slice/01-SPEC.md": {
             "id": ".planning/phases/01-identity-slice/01-SPEC.md",
@@ -9947,7 +10163,115 @@
                   "bodyHash": "d4d6349540788f308ec18ec823a7eff231e2ab481e936b7201556caad276fb32",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "security": {
+                      "lead": [],
+                      "boundaries": {
+                        "rows": [
+                          {
+                            "name": "Fixture file → the parser under test",
+                            "from": "Fixture file",
+                            "to": "the parser under test",
+                            "description": "Deliberately malformed input in sibling phases",
+                            "data": "Markdown/YAML/JSON text"
+                          }
+                        ],
+                        "note": []
+                      },
+                      "register": {
+                        "grouped": false,
+                        "rows": [
+                          {
+                            "id": "T-1-01",
+                            "ids": [
+                              "T-1-01"
+                            ],
+                            "group": null,
+                            "category": "Tampering",
+                            "component": "Identity slice artifacts",
+                            "severity": {
+                              "top": "medium",
+                              "raw": "medium"
+                            },
+                            "disposition": "mitigate",
+                            "status": "open",
+                            "statusRaw": "open",
+                            "mitigation": "Per-file parse isolation (plan 01-01)"
+                          }
+                        ],
+                        "note": [],
+                        "legend": "*Status: open · closed · open — below high threshold (non-blocking)*\n*Severity: critical > high > medium > low — only open threats at or above workflow.security_block_on count toward threats_open*\n*Disposition: mitigate (implementation required) · accept (documented risk) · transfer (third-party)*\n\n---",
+                        "prose": null
+                      },
+                      "risks": {
+                        "rows": [],
+                        "note": [
+                          {
+                            "kind": "paragraph",
+                            "text": "*No accepted risks.*"
+                          }
+                        ]
+                      },
+                      "audit": {
+                        "rows": [
+                          {
+                            "date": "2026-06-07",
+                            "total": "1",
+                            "closed": "0",
+                            "open": "1",
+                            "by": "fixture-author"
+                          }
+                        ],
+                        "note": []
+                      },
+                      "signoff": {
+                        "items": [
+                          {
+                            "checked": false,
+                            "text": "All threats have a disposition (mitigate / accept / transfer)"
+                          },
+                          {
+                            "checked": true,
+                            "text": "Accepted risks documented in Accepted Risks Log"
+                          },
+                          {
+                            "checked": false,
+                            "text": "`threats_open: 0` confirmed"
+                          },
+                          {
+                            "checked": false,
+                            "text": "`status: verified` set in frontmatter"
+                          }
+                        ],
+                        "approval": "pending",
+                        "note": []
+                      },
+                      "extras": [],
+                      "blockOn": "high",
+                      "sections": [
+                        {
+                          "heading": "Trust Boundaries",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Threat Register",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Accepted Risks Log",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Security Audit Trail",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Sign-Off",
+                          "claimed": true
+                        }
+                      ]
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-SPEC.md": {
                   "id": ".planning/phases/01-identity-slice/01-SPEC.md",
@@ -12118,7 +12442,115 @@
                   "bodyHash": "d4d6349540788f308ec18ec823a7eff231e2ab481e936b7201556caad276fb32",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "security": {
+                      "lead": [],
+                      "boundaries": {
+                        "rows": [
+                          {
+                            "name": "Fixture file → the parser under test",
+                            "from": "Fixture file",
+                            "to": "the parser under test",
+                            "description": "Deliberately malformed input in sibling phases",
+                            "data": "Markdown/YAML/JSON text"
+                          }
+                        ],
+                        "note": []
+                      },
+                      "register": {
+                        "grouped": false,
+                        "rows": [
+                          {
+                            "id": "T-1-01",
+                            "ids": [
+                              "T-1-01"
+                            ],
+                            "group": null,
+                            "category": "Tampering",
+                            "component": "Identity slice artifacts",
+                            "severity": {
+                              "top": "medium",
+                              "raw": "medium"
+                            },
+                            "disposition": "mitigate",
+                            "status": "open",
+                            "statusRaw": "open",
+                            "mitigation": "Per-file parse isolation (plan 01-01)"
+                          }
+                        ],
+                        "note": [],
+                        "legend": "*Status: open · closed · open — below high threshold (non-blocking)*\n*Severity: critical > high > medium > low — only open threats at or above workflow.security_block_on count toward threats_open*\n*Disposition: mitigate (implementation required) · accept (documented risk) · transfer (third-party)*\n\n---",
+                        "prose": null
+                      },
+                      "risks": {
+                        "rows": [],
+                        "note": [
+                          {
+                            "kind": "paragraph",
+                            "text": "*No accepted risks.*"
+                          }
+                        ]
+                      },
+                      "audit": {
+                        "rows": [
+                          {
+                            "date": "2026-06-07",
+                            "total": "1",
+                            "closed": "0",
+                            "open": "1",
+                            "by": "fixture-author"
+                          }
+                        ],
+                        "note": []
+                      },
+                      "signoff": {
+                        "items": [
+                          {
+                            "checked": false,
+                            "text": "All threats have a disposition (mitigate / accept / transfer)"
+                          },
+                          {
+                            "checked": true,
+                            "text": "Accepted risks documented in Accepted Risks Log"
+                          },
+                          {
+                            "checked": false,
+                            "text": "`threats_open: 0` confirmed"
+                          },
+                          {
+                            "checked": false,
+                            "text": "`status: verified` set in frontmatter"
+                          }
+                        ],
+                        "approval": "pending",
+                        "note": []
+                      },
+                      "extras": [],
+                      "blockOn": "high",
+                      "sections": [
+                        {
+                          "heading": "Trust Boundaries",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Threat Register",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Accepted Risks Log",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Security Audit Trail",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Sign-Off",
+                          "claimed": true
+                        }
+                      ]
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-SPEC.md": {
                   "id": ".planning/phases/01-identity-slice/01-SPEC.md",
@@ -14289,7 +14721,115 @@
                   "bodyHash": "d4d6349540788f308ec18ec823a7eff231e2ab481e936b7201556caad276fb32",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "security": {
+                      "lead": [],
+                      "boundaries": {
+                        "rows": [
+                          {
+                            "name": "Fixture file → the parser under test",
+                            "from": "Fixture file",
+                            "to": "the parser under test",
+                            "description": "Deliberately malformed input in sibling phases",
+                            "data": "Markdown/YAML/JSON text"
+                          }
+                        ],
+                        "note": []
+                      },
+                      "register": {
+                        "grouped": false,
+                        "rows": [
+                          {
+                            "id": "T-1-01",
+                            "ids": [
+                              "T-1-01"
+                            ],
+                            "group": null,
+                            "category": "Tampering",
+                            "component": "Identity slice artifacts",
+                            "severity": {
+                              "top": "medium",
+                              "raw": "medium"
+                            },
+                            "disposition": "mitigate",
+                            "status": "open",
+                            "statusRaw": "open",
+                            "mitigation": "Per-file parse isolation (plan 01-01)"
+                          }
+                        ],
+                        "note": [],
+                        "legend": "*Status: open · closed · open — below high threshold (non-blocking)*\n*Severity: critical > high > medium > low — only open threats at or above workflow.security_block_on count toward threats_open*\n*Disposition: mitigate (implementation required) · accept (documented risk) · transfer (third-party)*\n\n---",
+                        "prose": null
+                      },
+                      "risks": {
+                        "rows": [],
+                        "note": [
+                          {
+                            "kind": "paragraph",
+                            "text": "*No accepted risks.*"
+                          }
+                        ]
+                      },
+                      "audit": {
+                        "rows": [
+                          {
+                            "date": "2026-06-07",
+                            "total": "1",
+                            "closed": "0",
+                            "open": "1",
+                            "by": "fixture-author"
+                          }
+                        ],
+                        "note": []
+                      },
+                      "signoff": {
+                        "items": [
+                          {
+                            "checked": false,
+                            "text": "All threats have a disposition (mitigate / accept / transfer)"
+                          },
+                          {
+                            "checked": true,
+                            "text": "Accepted risks documented in Accepted Risks Log"
+                          },
+                          {
+                            "checked": false,
+                            "text": "`threats_open: 0` confirmed"
+                          },
+                          {
+                            "checked": false,
+                            "text": "`status: verified` set in frontmatter"
+                          }
+                        ],
+                        "approval": "pending",
+                        "note": []
+                      },
+                      "extras": [],
+                      "blockOn": "high",
+                      "sections": [
+                        {
+                          "heading": "Trust Boundaries",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Threat Register",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Accepted Risks Log",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Security Audit Trail",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Sign-Off",
+                          "claimed": true
+                        }
+                      ]
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-SPEC.md": {
                   "id": ".planning/phases/01-identity-slice/01-SPEC.md",
