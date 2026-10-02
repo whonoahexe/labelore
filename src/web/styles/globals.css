@@ -5972,6 +5972,969 @@ button.view-context-summary:hover {
   font-size: var(--fs-2);
 }
 
+/* quick-261003-527:start */
+/* ==========================================================================
+   quick-261003-527 (sketch 017 winner D): the SECURITY console — every .view-security-* rule.
+   Additive only, one contiguous block. Tokens throughout (space, type, line height), squared corners
+   with no corner rounding declared, no literal colour of any kind, --fw-medium / --fw-semibold
+   only. Colour comes from the shared tones and the theme tokens, on status only: a closed threat
+   is --primary, an open blocking one is --missing-fill, an open non-blocking one is
+   --in-flight-fill, an unrecognised one is a quiet --muted with a --muted-foreground outline, and
+   an accepted one is the same square drawn dashed and hollow. Severity is a neutral four-pip scale
+   in --foreground, never a hue. Surfaces are --border, --border-faint, --card-veil, --primary-tint,
+   --figure-node-border, --figure-grid-line and --state-hover. Nothing here names a
+   parse-degradation tone, and this block makes no colour-mix recipe of its own. Ancestors of a
+   .status-chip set no line-height, so every chip keeps the inherited body value (F-05). Media
+   overrides sit directly after their base rules (css-source-order).
+   ========================================================================== */
+
+/* The console: a sticky rail beside the content column. */
+.view-security-console {
+  display: grid;
+  grid-template-columns: 19rem minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: start;
+  min-width: 0;
+}
+
+@media (max-width: 62rem) {
+  .view-security-console {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.view-security-rail {
+  position: sticky;
+  top: var(--space-22);
+  display: grid;
+  gap: var(--space-5);
+  min-width: 0;
+  max-height: calc(100vh - var(--space-22));
+  padding-right: var(--space-6);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+}
+
+@media (max-width: 62rem) {
+  .view-security-rail {
+    position: static;
+    max-height: none;
+    padding-right: 0;
+    padding-bottom: var(--space-5);
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    overflow-y: visible;
+  }
+}
+
+.view-security-identity {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+  min-width: 0;
+}
+
+.view-security-identity h1 {
+  margin: 0;
+  font-size: var(--fs-fluid-4);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+  overflow-wrap: anywhere;
+}
+
+.view-security-facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+  align-items: flex-start;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-security-facts b {
+  margin-left: var(--space-1-5);
+  color: var(--foreground);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* The threats-open gauge: a vertical closed / open-low / open bar beside the big number. */
+.view-security-gauge {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: end;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+}
+
+.view-security-gauge[data-alarm='true'] {
+  border-color: var(--missing-border);
+}
+
+.view-security-gauge-read {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.view-security-gauge-n {
+  font-family: var(--font-mono);
+  font-size: var(--fs-display-3);
+  line-height: var(--lh-display);
+}
+
+.view-security-gauge[data-alarm='true'] .view-security-gauge-n {
+  color: var(--missing-fill);
+}
+
+.view-security-gauge-t {
+  display: grid;
+  gap: var(--space-1);
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.view-security-gauge-t b {
+  color: var(--foreground);
+  font-weight: var(--fw-medium);
+}
+
+.view-security-vbar {
+  display: flex;
+  flex-direction: column-reverse;
+  width: 0.6rem;
+  height: 4.5rem;
+  background: var(--muted);
+}
+
+.view-security-vbar i {
+  display: block;
+  width: 100%;
+}
+
+.view-security-vbar i[data-tone='complete'],
+.view-security-dist i[data-tone='complete'] {
+  background: var(--primary);
+}
+
+.view-security-vbar i[data-tone='missing'],
+.view-security-dist i[data-tone='missing'] {
+  background: var(--missing-fill);
+}
+
+.view-security-vbar i[data-tone='in-flight'],
+.view-security-dist i[data-tone='in-flight'] {
+  background: var(--in-flight-fill);
+}
+
+.view-security-nav {
+  display: grid;
+  border-top: 1px solid var(--border);
+}
+
+.view-security-nav button {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-2) 0;
+  border: 0;
+  border-bottom: 1px solid var(--border-faint);
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-align: left;
+  text-transform: uppercase;
+  transition: color 0.15s ease;
+}
+
+.view-security-nav button:hover {
+  color: var(--primary);
+}
+
+.view-security-stamp {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3);
+  border: 1px dashed var(--border);
+  font-size: var(--fs-3);
+}
+
+.view-security-stamp[data-tone='complete'] {
+  border-style: solid;
+  border-color: var(--figure-node-border);
+}
+
+.view-security-stamp-glyph {
+  font-family: var(--font-mono);
+  font-size: var(--fs-fluid-3);
+}
+
+.view-security-audit-switch {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.view-security-switch {
+  position: relative;
+  flex: none;
+  width: 2rem;
+  height: 1.1rem;
+  border: 1px solid var(--border);
+  transition: border-color 0.15s ease;
+}
+
+.view-security-switch::after {
+  position: absolute;
+  top: var(--space-0-5);
+  left: var(--space-0-5);
+  width: 0.75rem;
+  height: 0.75rem;
+  background: var(--muted-foreground);
+  content: '';
+}
+
+.view-security-switch[data-on='true'] {
+  border-color: var(--primary);
+}
+
+.view-security-switch[data-on='true']::after {
+  right: var(--space-0-5);
+  left: auto;
+  background: var(--primary);
+}
+
+.view-security-tools {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+/* Small shared parts. */
+.view-security-key {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-security-muted {
+  color: var(--muted-foreground);
+}
+
+.view-security-disp {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-security-pips {
+  display: inline-flex;
+  gap: var(--space-0-5);
+  vertical-align: middle;
+}
+
+.view-security-pips i {
+  display: block;
+  width: 0.45rem;
+  height: 0.8rem;
+  border: 1px solid var(--muted-foreground);
+}
+
+.view-security-pips i[data-on='true'] {
+  border-color: var(--foreground);
+  background: var(--foreground);
+}
+
+.view-security-sevline {
+  display: inline-flex;
+  gap: var(--space-1-5);
+  align-items: center;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.view-security-ref {
+  padding: 0 var(--space-1);
+  border: 1px solid var(--border);
+  background: none;
+  color: inherit;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  white-space: nowrap;
+}
+
+button.view-security-ref {
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+button.view-security-ref:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.view-security-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  transition: color 0.15s ease;
+}
+
+.view-security-link:hover {
+  color: var(--primary);
+}
+
+.view-security-md {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+
+.view-security-md :is(.view-research-text, .view-research-list),
+.view-security-note :is(.view-research-text, .view-research-list),
+.view-security-lead :is(.view-research-text, .view-research-list) {
+  margin: 0;
+  font-size: var(--fs-4);
+}
+
+.view-security-why {
+  display: block;
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+
+.view-security-why[data-clamp='true'] {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+.view-security-note {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+
+.view-security-lead {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 78ch;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  overflow-wrap: anywhere;
+}
+
+/* The content column. */
+.view-security-content {
+  display: grid;
+  gap: var(--space-10);
+  min-width: 0;
+}
+
+.view-security-block {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.view-security-block[data-flash='true'] {
+  background: var(--primary-tint);
+}
+
+.view-security-title {
+  display: flex;
+  gap: var(--space-3);
+  align-items: baseline;
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-security-title .view-security-muted {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-medium);
+}
+
+/* The threat board: severity rows by STRIDE columns, one square per threat. */
+.view-security-board-wrap {
+  overflow-x: auto;
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+}
+
+.view-security-board {
+  display: grid;
+  grid-template-columns: 7rem;
+  min-width: 40rem;
+}
+
+.view-security-board[data-cols='1'] {
+  grid-template-columns: 7rem repeat(1, minmax(5.5rem, 1fr));
+}
+
+.view-security-board[data-cols='2'] {
+  grid-template-columns: 7rem repeat(2, minmax(5.5rem, 1fr));
+}
+
+.view-security-board[data-cols='3'] {
+  grid-template-columns: 7rem repeat(3, minmax(5.5rem, 1fr));
+}
+
+.view-security-board[data-cols='4'] {
+  grid-template-columns: 7rem repeat(4, minmax(5.5rem, 1fr));
+}
+
+.view-security-board[data-cols='5'] {
+  grid-template-columns: 7rem repeat(5, minmax(5.5rem, 1fr));
+}
+
+.view-security-board[data-cols='6'] {
+  grid-template-columns: 7rem repeat(6, minmax(5.5rem, 1fr));
+}
+
+.view-security-board[data-cols='7'] {
+  grid-template-columns: 7rem repeat(7, minmax(5.5rem, 1fr));
+}
+
+.view-security-board-row {
+  display: contents;
+}
+
+.view-security-bh,
+.view-security-br,
+.view-security-cell {
+  padding: var(--space-2);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.view-security-bh {
+  display: flex;
+  gap: var(--space-1-5);
+  align-items: baseline;
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-security-bh-letter {
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-4);
+}
+
+.view-security-br {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  justify-content: center;
+  min-height: 3.25rem;
+}
+
+.view-security-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-0-5);
+  align-content: flex-start;
+  min-height: 3.25rem;
+}
+
+.view-security-cell[data-empty='true'] {
+  background: repeating-linear-gradient(135deg, var(--figure-grid-line) 0 1px, transparent 1px 8px);
+}
+
+.view-security-square,
+.view-security-key-sq {
+  display: block;
+  box-sizing: border-box;
+  width: 1.15rem;
+  height: 1.15rem;
+  padding: 0;
+  border: 1px solid var(--primary);
+  background: var(--primary);
+}
+
+.view-security-square {
+  cursor: pointer;
+}
+
+/* A closed square rests a step quieter than an open one, so a handful of open threats read at a glance
+   against dozens of closed ones; the other tones below stand at full strength. */
+.view-security-square,
+.view-security-key-sq {
+  opacity: 0.72;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .view-security-square {
+    transition: transform 0.12s ease;
+  }
+
+  .view-security-square:hover {
+    transform: scale(1.25);
+  }
+}
+
+.view-security-square[data-tone='missing'],
+.view-security-key-sq[data-tone='missing'] {
+  border-color: var(--missing-fill);
+  background: var(--missing-fill);
+  opacity: 1;
+}
+
+.view-security-square[data-tone='in-flight'],
+.view-security-key-sq[data-tone='in-flight'] {
+  border-color: var(--in-flight-fill);
+  background: var(--in-flight-fill);
+  opacity: 1;
+}
+
+.view-security-square[data-tone='quiet'],
+.view-security-key-sq[data-tone='quiet'] {
+  border-color: var(--muted-foreground);
+  background: var(--muted);
+  opacity: 1;
+}
+
+.view-security-square[data-accepted='true'],
+.view-security-key-sq[data-accepted='true'] {
+  border-style: dashed;
+  background: transparent;
+}
+
+.view-security-square[aria-pressed='true'] {
+  opacity: 1;
+  outline: 2px solid var(--foreground);
+  outline-offset: 1px;
+}
+
+.view-security-key-sq {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-right: var(--space-1-5);
+  vertical-align: middle;
+}
+
+.view-security-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+}
+
+/* The detail panel for the picked square. */
+.view-security-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: var(--space-5);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--card-veil);
+}
+
+@media (max-width: 42rem) {
+  .view-security-detail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.view-security-detail[data-empty='true'] {
+  grid-template-columns: minmax(0, 1fr);
+  font-size: var(--fs-3);
+}
+
+.view-security-detail-head {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-security-detail-head h3 {
+  margin: 0;
+  font-size: var(--fs-5);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+}
+
+.view-security-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.view-security-detail-body {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  min-width: 0;
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.view-security-detail-body p {
+  margin: 0;
+}
+
+.view-security-quote {
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--border);
+  color: var(--muted-foreground);
+}
+
+/* The waiver ledger. */
+.view-security-waivers {
+  display: grid;
+  border-top: 1px solid var(--border);
+}
+
+.view-security-waiver {
+  display: grid;
+  grid-template-columns: 5.5rem 5.5rem minmax(0, 1fr) 12rem;
+  gap: var(--space-4);
+  align-items: baseline;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border-faint);
+  font-size: var(--fs-3);
+}
+
+.view-security-waiver[data-flash='true'] {
+  background: var(--primary-tint);
+}
+
+.view-security-rid {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-security-waiver-refs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  justify-self: start;
+}
+
+.view-security-waiver-text {
+  display: grid;
+  gap: var(--space-1);
+  justify-items: start;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-security-waiver-text b {
+  font-weight: var(--fw-medium);
+}
+
+.view-security-who {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.view-security-who i,
+.view-security-content em {
+  font-synthesis-style: auto;
+}
+
+.view-security-who i {
+  display: block;
+  font-style: italic;
+  color: var(--foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-3);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+@media (max-width: 42rem) {
+  .view-security-waiver {
+    grid-template-columns: 5rem minmax(0, 1fr);
+  }
+
+  .view-security-waiver-text,
+  .view-security-who {
+    grid-column: 1 / -1;
+    text-align: left;
+  }
+}
+
+.view-security-notice {
+  margin: 0;
+}
+
+/* Trust boundaries as flow chips. */
+.view-security-flows {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.view-security-flow-row {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.view-security-flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  font-size: var(--fs-3);
+}
+
+.view-security-node {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  overflow-wrap: anywhere;
+}
+
+.view-security-node[data-side='into'] {
+  border-color: var(--figure-node-border);
+}
+
+.view-security-node[data-store='true'] {
+  border-style: dashed;
+}
+
+.view-security-arrow {
+  display: inline-flex;
+  gap: var(--space-1-5);
+  align-items: center;
+  color: var(--muted-foreground);
+  font-size: var(--fs-2);
+}
+
+.view-security-arrow::before,
+.view-security-arrow::after {
+  width: 1.25rem;
+  height: 1px;
+  background: var(--muted-foreground);
+  content: '';
+}
+
+.view-security-flow-desc {
+  max-width: 78ch;
+  margin: 0;
+  padding-left: var(--space-2);
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+/* Extras: the sections the console does not place, folded. */
+.view-security-extras {
+  gap: var(--space-2);
+}
+
+.view-security-extras details {
+  border: 1px solid var(--border);
+  background: var(--card-veil);
+}
+
+.view-security-extras summary {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  list-style: none;
+  text-transform: uppercase;
+}
+
+.view-security-extras summary::-webkit-details-marker {
+  display: none;
+}
+
+.view-security-extras summary::after {
+  margin-left: auto;
+  content: '▾';
+}
+
+.view-security-extras details[open] > summary::after {
+  content: '▴';
+}
+
+.view-security-extras summary:hover {
+  color: var(--foreground);
+}
+
+.view-security-extras details > .view-security-md {
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+/* Sign-off checklist. */
+.view-security-checks {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--border);
+  list-style: none;
+}
+
+.view-security-checks li {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr);
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-faint);
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  overflow-wrap: anywhere;
+}
+
+.view-security-checks li[data-done='true'] {
+  color: var(--foreground);
+}
+
+.view-security-ck {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+}
+
+.view-security-checks li[data-done='true'] .view-security-ck {
+  color: var(--primary);
+}
+
+/* Audit trail runs. */
+.view-security-runs {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.view-security-run {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(8rem, 1fr) 13rem minmax(0, 1.5fr);
+  gap: var(--space-4);
+  align-items: center;
+  font-size: var(--fs-3);
+}
+
+@media (max-width: 42rem) {
+  .view-security-run {
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+  }
+
+  .view-security-run-n,
+  .view-security-run-by {
+    grid-column: 1 / -1;
+  }
+}
+
+.view-security-run-date,
+.view-security-run-n {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-security-run-n,
+.view-security-run-by {
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+
+.view-security-dist {
+  display: flex;
+  height: 0.5rem;
+  background: var(--muted);
+}
+
+.view-security-dist i {
+  display: block;
+  height: 100%;
+  border-right: 1px solid var(--background);
+}
+
+/* "In the source only": what the console leaves to Source mode, one click away. */
+.view-security-source-only {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  padding-top: var(--space-4);
+  border-top: 1px dashed var(--border);
+}
+
+.view-security-source-only ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-security-source-only button.status-chip {
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.view-security-source-only button.status-chip:hover {
+  background: var(--state-hover);
+}
+/* quick-261003-527:end */
+
 /* quick-260929-3x3:start */
 /* ==========================================================================
    quick-260929-3x3 (sketches 008 A, 009 B+B, 010 B): the RESEARCH briefing — every .view-research-*

@@ -11,6 +11,7 @@ import { RequirementsHandler } from './requirements.ts';
 import { ProjectHandler } from './project.ts';
 import { ContextHandler } from './context.ts';
 import { ResearchHandler } from './research.ts';
+import { SecurityHandler } from './security.ts';
 import { PatternsHandler } from './patterns.ts';
 import { ValidationHandler } from './validation.ts';
 import { UiSpecHandler } from './ui-spec.ts';
@@ -29,6 +30,7 @@ export const HANDLERS: ArtifactHandler[] = [
   ProjectHandler,
   ContextHandler,
   ResearchHandler,
+  SecurityHandler,
   PatternsHandler,
   ValidationHandler,
   UiSpecHandler,
