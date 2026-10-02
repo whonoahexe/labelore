@@ -8797,6 +8797,8 @@ a.view-research-id:hover {
 .view-ui-review-label .view-ui-review-label-fix {
   fill: var(--in-flight-fill);
   font-size: var(--fs-1);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
 }
 
 .view-ui-review-label:hover text,
@@ -8929,7 +8931,7 @@ a.view-research-id:hover {
   width: 100%;
   height: calc(var(--view-ui-review-bar) * var(--space-10));
   min-height: var(--space-1);
-  background: var(--muted);
+  background: var(--border);
 }
 
 .view-ui-review-bar[data-now='true'] {
@@ -9297,8 +9299,16 @@ a.view-research-id:hover {
 }
 
 .view-ui-review-back summary {
+  color: var(--muted-foreground);
   cursor: pointer;
-  font-size: var(--fs-4);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-ui-review-back summary:hover {
+  color: var(--foreground);
 }
 
 .view-ui-review-back-body {
