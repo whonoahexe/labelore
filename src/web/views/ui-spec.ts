@@ -19,6 +19,7 @@ import type {
   UiSpecTable,
   UiSpecVerdict,
 } from '../../planning-repo/handlers/ui-spec-contract.ts';
+import { safeColor } from '../../planning-repo/css-color.ts';
 import type { ViewInput } from './manifest.ts';
 
 // ---------------------------------------------------------------------------
@@ -208,6 +209,8 @@ export interface ComposedSwatch {
   /** Validated CSS colour values, or null when the document states none. */
   light: string | null;
   dark: string | null;
+  /** The project-relative stylesheet the values were read from, or null when the document states them (or no value resolved). */
+  resolvedFrom: string | null;
 }
 
 export interface ComposedColourRole {
@@ -226,6 +229,8 @@ export interface ComposedColourShare {
   pct: number;
   light: string | null;
   dark: string | null;
+  /** The stylesheet that painted this share, or null when the document's own values did. */
+  resolvedFrom: string | null;
 }
 
 export interface ComposedColour {
@@ -234,6 +239,8 @@ export interface ComposedColour {
   notShare: string[];
   prose: Block[];
   hasContrastTable: boolean;
+  /** What the proportion bar's key says painted it: the document's values, the stylesheet, or both. */
+  paintedWith: string;
 }
 
 export interface ComposedConsiderationRow {
@@ -373,28 +380,7 @@ export function firstSentence(text: string): string {
   return t.length > 180 ? `${t.slice(0, 178)}…` : t;
 }
 
-/** A document colour value that is safe to hand to CSS as a custom-property value: a hex colour
- * with 3, 4, 6 or 8 digits, or an `oklch(…)` of digits, dots, percent signs, spaces, slashes,
- * minus signs or the word `none`, at most 64 characters. Everything else is null (T-qk6-03). */
-export function safeColor(value: string | null | undefined): string | null {
-  if (typeof value !== 'string') return null;
-  const v = value.trim();
-  if (v.length === 0 || v.length > 64) return null;
-  if (v[0] === '#') {
-    const digits = v.slice(1);
-    if (![3, 4, 6, 8].includes(digits.length)) return null;
-    for (const ch of digits) if (!/[0-9a-fA-F]/.test(ch)) return null;
-    return v;
-  }
-  if (v.startsWith('oklch(') && v.endsWith(')')) {
-    const inner = v.slice(6, -1);
-    if (inner.trim() === '') return null;
-    const stripped = inner.split('none').join('');
-    for (const ch of stripped) if (!/[0-9.% /+-]/.test(ch)) return null;
-    return v;
-  }
-  return null;
-}
+export { safeColor };
 
 // ---------------------------------------------------------------------------
 // Value parsing — sizes, weights, swatches
@@ -502,7 +488,58 @@ function swatchesOf(cell: string, darkCell: string | null): SwatchScan {
 }
 
 function safeSwatch(raw: RawSwatch): ComposedSwatch {
-  return { tokens: raw.tokens, light: safeColor(raw.light), dark: safeColor(raw.dark) };
+  return { tokens: raw.tokens, light: safeColor(raw.light), dark: safeColor(raw.dark), resolvedFrom: null };
+}
+
+// ---------------------------------------------------------------------------
+// Project-stylesheet theme (quick-261002-li5) — the values a token-only colour role is painted from
+// ---------------------------------------------------------------------------
+
+/** `structured.uiSpecTheme` as the repository attached it. It crossed the API, so nothing in it is
+ * trusted: every value is looked up by an own-property check and passes `safeColor` again (T-li5-01). */
+interface UiSpecTheme {
+  source: string;
+  light: Record<string, unknown>;
+  dark: Record<string, unknown>;
+}
+
+function plainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function themeOf(value: unknown): UiSpecTheme | null {
+  if (!plainObject(value)) return null;
+  const { source, light, dark } = value;
+  if (typeof source !== 'string' || source === '' || source.length > 200) return null;
+  if (!plainObject(light) || !plainObject(dark)) return null;
+  return { source, light, dark };
+}
+
+function themeValue(map: Record<string, unknown>, token: string): string | null {
+  if (!Object.prototype.hasOwnProperty.call(map, token)) return null;
+  const value = map[token];
+  return typeof value === 'string' ? safeColor(value) : null;
+}
+
+/** A swatch the document gives no value for, painted from the theme: one swatch per token when at
+ * least one of them resolves, otherwise the swatch unchanged. A swatch with any document value is
+ * never touched, so one chip never mixes sources. */
+function paintFromTheme(swatch: ComposedSwatch, theme: UiSpecTheme | null): ComposedSwatch[] {
+  if (swatch.light || swatch.dark || !theme || swatch.tokens.length === 0) return [swatch];
+  const resolved = swatch.tokens.map((token): ComposedSwatch => {
+    const light = themeValue(theme.light, token);
+    const dark = themeValue(theme.dark, token);
+    return { tokens: [token], light, dark, resolvedFrom: light || dark ? theme.source : null };
+  });
+  return resolved.some((s) => s.light || s.dark) ? resolved : [swatch];
+}
+
+function paintedWithOf(split: ComposedColourShare[]): string {
+  const own = "painted with the doc's own values";
+  const painted = split.filter((share) => share.light || share.dark);
+  const source = painted.find((share) => share.resolvedFrom !== null)?.resolvedFrom ?? null;
+  if (source === null) return own;
+  return painted.every((share) => share.resolvedFrom !== null) ? `painted from ${source}` : `${own}, tokens from ${source}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -749,7 +786,11 @@ function composeTypography(table: UiSpecTable | null, title: string): ComposedTy
 
 const LITERAL_RE = /#[0-9a-f]{6}\b|#[0-9a-f]{3}\b|oklch\([^)]*\)/gi;
 
-function composeColour(table: UiSpecTable | null, reserved: Record<string, string[]>): ComposedColour | null {
+function composeColour(
+  table: UiSpecTable | null,
+  reserved: Record<string, string[]>,
+  theme: UiSpecTheme | null,
+): ComposedColour | null {
   if (!table || table.rows.length === 0) return null;
   const lightI = columnOf(table, (h) => h.includes('value'));
   const darkI = columnOf(table, (h) => h.includes('dark') && !h.includes('light'));
@@ -774,7 +815,7 @@ function composeColour(table: UiSpecTable | null, reserved: Record<string, strin
       name,
       pct,
       accent: key === 'accent',
-      swatches: scan.swatches.map(safeSwatch),
+      swatches: scan.swatches.map(safeSwatch).flatMap((swatch) => paintFromTheme(swatch, theme)),
       never: scan.avoid,
       note,
       usage: r[useI] ?? '',
@@ -790,6 +831,7 @@ function composeColour(table: UiSpecTable | null, reserved: Record<string, strin
         pct: r.pct ?? 0,
         light: first ? (first.light ?? first.dark) : null,
         dark: first ? (first.dark ?? first.light) : null,
+        resolvedFrom: first ? first.resolvedFrom : null,
       };
     });
   const prose = arrayOf<Block>(table.prose);
@@ -799,6 +841,7 @@ function composeColour(table: UiSpecTable | null, reserved: Record<string, strin
     notShare: roles.filter((r) => r.pct === null).map((r) => r.name),
     prose,
     hasContrastTable: prose.some((b) => b.kind === 'table'),
+    paintedWith: paintedWithOf(split),
   };
 }
 
@@ -1076,7 +1119,7 @@ export function composeUiSpec(input: ViewInput): ComposedUiSpec | null {
   const meta = contract.meta;
   const spacing = composeSpacing(contract.spacing);
   const typography = composeTypography(contract.typography, title);
-  const colour = composeColour(contract.color, contract.reserved);
+  const colour = composeColour(contract.color, contract.reserved, themeOf(input.structured?.uiSpecTheme));
   const considerations = composeConsiderations(contract.considerations);
   const registry = composeRegistry(contract.registry);
   const hasDesign = hasDesignRows || spacing !== null || typography !== null || colour !== null;
