@@ -1,0 +1,831 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 017 — SECURITY page</title>
+<link rel="stylesheet" href="../themes/default.css?v=017">
+<style>
+/* Sketch 017: the SECURITY page. Shared vocabulary copied from 016. Data: ./data.js from real SECURITY.md files (gen-data.mjs). */
+*, *::before, *::after { box-sizing: border-box; }
+:root { --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border)); --missing-border: color-mix(in oklch, var(--missing-fill) 50%, var(--border)); --missing-tint: color-mix(in oklch, var(--muted) 55%, transparent); --in-flight-tint: color-mix(in oklch, var(--in-flight-fill) 10%, transparent); --hatch: repeating-linear-gradient(135deg, color-mix(in oklch, var(--muted-foreground) 22%, transparent) 0 1px, transparent 1px 7px); }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-5); line-height: var(--lh-normal); padding-top: 3rem; }
+h1, h2, h3, h4, p, ul, ol { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+code { font-family: var(--font-mono); font-size: 0.88em; padding: 0 0.2em; background: color-mix(in oklch, var(--muted) 70%, transparent); overflow-wrap: anywhere; }
+strong { font-weight: var(--fw-semibold); }
+#variant-nav { position: fixed; inset: 0 0 auto 0; z-index: 50; display: flex; gap: var(--space-1); align-items: center; padding: var(--space-2) var(--space-4); background: var(--background); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; overflow-x: auto; }
+#variant-nav .lbl { color: var(--muted-foreground); margin-right: var(--space-2); white-space: nowrap; }
+.variant-tab { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; background: none; white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; color: var(--muted-foreground); transition: all .15s ease; }
+.variant-tab:hover { color: var(--foreground); background: var(--state-hover); }
+.variant-tab.active { color: var(--primary); border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); background: var(--primary-tint); }
+.shell-header { display: flex; align-items: center; gap: var(--space-4); height: 3.75rem; padding: 0 var(--space-4); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.brand-mark { width: 2.25rem; height: 2.25rem; background: var(--primary); display: grid; place-items: center; color: white; font-weight: 700; }
+#frame { margin: 0 auto; container-type: inline-size; transition: max-width .2s ease; background: var(--background); min-height: 100vh; }
+#frame.narrow-frame { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+.page { width: min(80rem, 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); display: grid; gap: var(--space-10); min-width: 0; grid-template-columns: minmax(0, 1fr); }
+.page > * { min-width: 0; }
+.fade { animation: fade .18s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .fade { animation: none; } }
+
+/* shared vocabulary (as 013) */
+.ref-note, .mono-note { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.muted { color: var(--muted-foreground); }
+.label { display: flex; gap: var(--space-2); align-items: baseline; margin-bottom: var(--space-3); color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.label .count { font-weight: var(--fw-medium); }
+.section-heading { display: flex; gap: var(--space-4); align-items: flex-end; justify-content: space-between; flex-wrap: wrap; padding-bottom: var(--space-3); margin-bottom: var(--space-5); border-bottom: 1px solid var(--border); }
+.section-heading h2 { font-family: var(--font-mono); font-size: var(--fs-fluid-3); font-weight: var(--fw-medium); letter-spacing: var(--ls-tight); }
+.section-heading .num { color: var(--muted-foreground); margin-right: var(--space-3); }
+.section-heading .aside { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.sub-heading { display: flex; gap: var(--space-3); align-items: baseline; justify-content: space-between; margin-bottom: var(--space-3); }
+.sub-heading h3 { font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.chip { display: inline-flex; align-items: center; gap: var(--space-1); padding: 0.1rem var(--space-1-5); border: 1px solid var(--border); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; color: var(--muted-foreground); background: none; line-height: 1.5; }
+.chip[data-tone='complete'], .chip[data-tone='active'] { color: var(--primary); border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); background: var(--primary-tint); }
+.chip[data-tone='in-flight'] { color: var(--in-flight-fill); border-color: var(--in-flight-border); }
+.chip[data-tone='missing'] { color: var(--missing-fill); border-color: var(--missing-border); }
+button.chip { cursor: pointer; transition: all .15s ease; }
+button.chip:hover { background: var(--state-hover); }
+button.chip[aria-pressed='true'] { color: var(--foreground); border-color: var(--foreground); }
+.link-btn { padding: 0; border: 0; background: none; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; transition: color .15s ease; }
+.link-btn:hover { color: var(--primary); }
+.md { display: grid; gap: var(--space-3); font-size: var(--fs-4); min-width: 0; }
+.md ul, .md ol { padding-left: 1.2rem; display: grid; gap: var(--space-1); }
+.md h4 { font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); margin-top: var(--space-2); }
+.md blockquote { margin: 0; padding-left: var(--space-3); border-left: 2px solid var(--border); color: var(--muted-foreground); }
+.md pre { margin: 0; padding: var(--space-3); background: color-mix(in oklch, var(--muted) 60%, transparent); overflow-x: auto; font-size: var(--fs-2); }
+.md pre code { background: none; padding: 0; }
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--border); }
+.md table { border-collapse: collapse; width: 100%; font-size: var(--fs-3); }
+.md th { text-align: left; font-family: var(--font-heading); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); font-weight: var(--fw-semibold); background: color-mix(in oklch, var(--muted) 45%, transparent); }
+.md th, .md td { padding: var(--space-2) var(--space-3); border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); vertical-align: top; min-width: 8rem; }
+.notice { padding: var(--space-3) var(--space-4); border: 1px solid var(--border); background: var(--card-veil); font-size: var(--fs-4); display: grid; gap: var(--space-2); }
+.notice.flag { border-left: 3px solid var(--in-flight-fill); }
+.clamp2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.clamp3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* cover (shared) */
+.cover { display: grid; gap: var(--space-4); padding-bottom: var(--space-fluid-9); border-bottom: 1px solid var(--border); }
+.eyebrow { color: var(--primary); font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+.cover h1 { font-size: var(--fs-display-3); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); max-width: 20ch; overflow-wrap: anywhere; }
+.facts { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); align-items: baseline; font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.facts b { color: var(--foreground); font-weight: var(--fw-medium); font-size: var(--fs-4); margin-left: var(--space-1-5); text-transform: none; letter-spacing: 0; }
+.tool-line { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); opacity: .85; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); align-items: baseline; }
+.tool-line .sep { opacity: .5; }
+.tool-line button { font-family: inherit; }
+.lead { max-width: 72ch; font-size: var(--fs-5); color: var(--muted-foreground); }
+.signoff { display: grid; gap: var(--space-2); }
+.dims { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.dim { display: inline-flex; gap: var(--space-1-5); align-items: center; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: none; font-size: var(--fs-3); transition: all .15s ease; }
+.dim .g { font-family: var(--font-mono); font-size: var(--fs-2); width: 1rem; text-align: center; }
+.dim .v { font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.dim[data-tone='complete'] .g { color: var(--primary); }
+.dim[data-tone='in-flight'] { border-color: var(--in-flight-border); } .dim[data-tone='in-flight'] .g, .dim[data-tone='in-flight'] .v { color: var(--in-flight-fill); }
+.dim[data-tone='missing'] { border-color: var(--missing-border); } .dim[data-tone='missing'] .g, .dim[data-tone='missing'] .v { color: var(--missing-fill); }
+.dim[data-tone='quiet'] { border-style: dashed; color: var(--muted-foreground); }
+button.dim:hover { background: var(--state-hover); }
+button.dim[aria-expanded='true'] { border-color: var(--foreground); }
+.approval { font-size: var(--fs-3); color: var(--muted-foreground); max-width: 80ch; }
+.approval b { color: var(--foreground); font-weight: var(--fw-semibold); }
+
+.meta-row { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-6); align-items: center; justify-content: space-between; }
+.meta-row .facts { align-items: center; }
+.signoff-chip { gap: var(--space-1-5); padding: var(--space-1) var(--space-2); font-size: var(--fs-2); }
+.signoff-chip svg { opacity: .8; }
+.doc-tools { display: flex; gap: var(--space-4); align-items: center; }
+.icon-btn { display: grid; place-items: center; width: 2rem; height: 2rem; padding: 0; border: 0; background: none; color: var(--muted-foreground); transition: color .15s ease, background .15s ease; }
+.icon-btn:hover { color: var(--foreground); background: var(--state-hover); }
+.seg { display: inline-flex; }
+.seg button { padding: var(--space-1) var(--space-3); border: 0; background: none; font-family: var(--font-mono); font-size: var(--fs-4); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--foreground); }
+.seg button[aria-pressed='true'] { background: color-mix(in oklch, var(--muted) 85%, transparent); }
+/* in the source only (as RESEARCH / PATTERNS) */
+.source-only { display: grid; grid-template-columns: 12rem minmax(0, 1fr); gap: var(--space-4); padding: var(--space-3) 0; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border); }
+.source-only ul { display: flex; flex-wrap: wrap; gap: var(--space-1-5) var(--space-5); margin: 0; padding: 0; font-size: var(--fs-3); list-style: none; }
+.source-only button { padding: 0; border: 0; background: none; color: var(--muted-foreground); cursor: pointer; font: inherit; text-align: left; text-decoration: underline dotted; text-underline-offset: var(--space-0-5); }
+.source-only button:hover { color: var(--foreground); }
+@container (max-width: 760px) { .source-only { grid-template-columns: minmax(0, 1fr); gap: var(--space-2); } }
+
+.cover-cells { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 0; border: 1px solid var(--border); }
+.cover-cell { padding: var(--space-4); border-right: 1px solid var(--border); display: grid; gap: var(--space-2); align-content: start; min-width: 0; }
+.cover-cell:last-child { border-right: 0; }
+.cover-cell.glance { box-shadow: inset 0 2px 0 var(--primary); }
+.big-num { font-family: var(--font-mono); font-size: var(--fs-display-3); line-height: 1; letter-spacing: var(--ls-tighter); }
+.big-num small { font-size: var(--fs-4); color: var(--muted-foreground); margin-left: var(--space-1); letter-spacing: 0; }
+@container (max-width: 760px) { .cover-cell { border-right: 0; border-bottom: 1px solid var(--border); } .cover-cell:last-child { border-bottom: 0; } }
+.checks { list-style: none; padding: 0; margin: 0; display: grid; gap: 0; border-top: 1px solid var(--border); }
+.checks li { display: grid; grid-template-columns: 1.5rem minmax(0, 1fr); gap: var(--space-2); padding: var(--space-2) 0; border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); font-size: var(--fs-4); }
+.checks .ck { font-family: var(--font-mono); color: var(--muted-foreground); }
+.checks li.done .ck { color: var(--primary); }
+.checks li:not(.done) { color: var(--muted-foreground); }
+.stamp { border: 1px solid var(--border); padding: var(--space-4); display: grid; gap: var(--space-2); }
+.stamp[data-tone='complete'] { border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); background: var(--primary-tint); }
+.stamp[data-tone='in-flight'] { border-color: var(--in-flight-border); }
+.stamp .big-num { font-size: var(--fs-fluid-3); }
+.flash { animation: flash .9s ease; }
+@keyframes flash { 0%, 60% { box-shadow: 0 0 0 2px var(--primary); } 100% { box-shadow: none; } }
+
+/* ===== sketch 017: SECURITY ===== */
+/* Tones only on STATUS: open (blocking) → missing, open below threshold → in-flight, closed →
+   complete. Severity is a neutral 4-pip scale (critical 4 · high 3 · medium 2 · low 1) in
+   foreground, never a hue. verified → complete, draft/open → in-flight. */
+.cover-cells { grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); }
+.cover-cell.alarm { box-shadow: inset 0 2px 0 var(--missing-fill); }
+.cover-cell.alarm .big-num { color: var(--missing-fill); }
+.lead-box { max-width: 78ch; font-size: var(--fs-4); color: var(--muted-foreground); display: grid; gap: var(--space-1-5); }
+.lead-box .md { font-size: var(--fs-4); }
+.pips { display: inline-flex; gap: 2px; vertical-align: middle; }
+.pips i { width: .45rem; height: .8rem; border: 1px solid color-mix(in oklch, var(--foreground) 45%, transparent); }
+.pips i.on { background: var(--foreground); border-color: var(--foreground); }
+.sevline { display: inline-flex; gap: var(--space-1-5); align-items: center; font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); white-space: nowrap; }
+.disp { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.ref { font-family: var(--font-mono); font-size: var(--fs-2); padding: 0 var(--space-1); border: 1px solid var(--border); white-space: nowrap; background: none; }
+button.ref { transition: all .15s ease; } button.ref:hover { border-color: var(--primary); color: var(--primary); }
+.dist { display: flex; height: .5rem; width: 100%; background: color-mix(in oklch, var(--muted) 60%, transparent); }
+.dist i { display: block; height: 100%; border-right: 1px solid var(--background); }
+.dist i[data-tone='complete'] { background: var(--primary); } .dist i[data-tone='missing'] { background: var(--missing-fill); } .dist i[data-tone='in-flight'] { background: var(--in-flight-fill); }
+.mini-legend { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); }
+
+/* matrix: severity × disposition */
+.sd-grid { display: inline-grid; grid-template-columns: 8.5rem repeat(var(--cols), 5.5rem); border: 1px solid var(--border); margin-bottom: var(--space-4); max-width: 100%; overflow-x: auto; }
+.sd-grid > * { padding: var(--space-2) var(--space-3); border-right: 1px solid color-mix(in oklch, var(--border) 60%, transparent); border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); }
+.sd-grid .h { font-family: var(--font-heading); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); font-weight: var(--fw-semibold); background: color-mix(in oklch, var(--muted) 35%, transparent); }
+.sd-grid .rh { display: flex; gap: var(--space-2); align-items: center; }
+.sd-cell { font-family: var(--font-mono); font-size: var(--fs-4); text-align: right; background: none; border-top: 0; border-left: 0; transition: background .15s ease; position: relative; }
+.sd-cell:hover { background: var(--state-hover); }
+.sd-cell[aria-pressed='true'] { outline: 1px solid var(--foreground); outline-offset: -1px; }
+.sd-cell.zero { color: color-mix(in oklch, var(--muted-foreground) 50%, transparent); }
+.sd-cell .op { position: absolute; left: var(--space-2); top: 50%; transform: translateY(-50%); width: .45rem; height: .45rem; background: var(--missing-fill); }
+.sd-cell .op.low { background: var(--in-flight-fill); }
+
+/* threat rows (A/C) */
+.threats { border-top: 1px solid var(--border); }
+.trow { border-bottom: 1px solid color-mix(in oklch, var(--border) 70%, transparent); position: relative; }
+.trow[data-tone='missing'] { box-shadow: inset 3px 0 0 var(--missing-fill); }
+.trow[data-tone='in-flight'] { box-shadow: inset 3px 0 0 var(--in-flight-fill); }
+.trow-head { display: grid; grid-template-columns: 7.5rem 4.25rem minmax(0, 1fr) 9rem 6rem 1rem; gap: var(--space-4); align-items: center; width: 100%; padding: var(--space-2-5) var(--space-3); border: 0; background: none; text-align: left; transition: background .15s ease; }
+.trow-head:hover { background: var(--state-hover); }
+.trow-head .id { font-family: var(--font-mono); font-size: var(--fs-2); }
+.trow-head .what { min-width: 0; display: grid; gap: 2px; }
+.trow-head .what b { font-weight: var(--fw-medium); font-size: var(--fs-4); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trow-head .what span { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.trow-head .chip { justify-self: end; }
+.trow-head .chev { color: var(--muted-foreground); transition: transform .15s ease; }
+.trow[data-open='true'] .chev { transform: rotate(180deg); }
+.trow-body { padding: 0 var(--space-3) var(--space-4) calc(7.5rem + 4.25rem + var(--space-3) + var(--space-8)); display: grid; gap: var(--space-2); font-size: var(--fs-3); }
+.trow-body .accept { border-left: 2px solid var(--border); padding-left: var(--space-3); color: var(--muted-foreground); }
+.grp-label { display: flex; gap: var(--space-3); align-items: baseline; padding: var(--space-5) 0 var(--space-2); font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.grp-label.alarm { color: var(--missing-fill); }
+.closed-toggle { display: flex; gap: var(--space-3); width: 100%; align-items: center; padding: var(--space-3); border: 1px dashed var(--border); background: none; color: var(--muted-foreground); font-size: var(--fs-3); margin-top: var(--space-3); }
+.closed-toggle:hover { color: var(--foreground); }
+@container (max-width: 760px) { .trow-head { grid-template-columns: 5.5rem minmax(0, 1fr) auto; } .trow-head .sevline, .trow-head .disp, .trow-head .chev { display: none; } .trow-body { padding-left: var(--space-3); } }
+.flash { animation: flash .9s ease; }
+
+/* accepted risks: signed slips (A) */
+.slips { display: grid; grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr)); gap: var(--space-3); }
+@container (max-width: 760px) { .slips { grid-template-columns: minmax(0, 1fr); } }
+.slip { border: 1px solid var(--border); background: var(--card-veil); display: grid; grid-template-rows: auto 1fr auto; position: relative; }
+.slip::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 3px; background: repeating-linear-gradient(180deg, var(--border) 0 4px, transparent 4px 8px); }
+.slip .top { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4) 0; }
+.slip .rid { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); }
+.slip .about { padding: var(--space-2) var(--space-4) 0; font-size: var(--fs-3); color: var(--muted-foreground); }
+.slip blockquote { margin: 0; padding: var(--space-2) var(--space-4) var(--space-4); font-size: var(--fs-4); line-height: var(--lh-relaxed); }
+.slip blockquote::before { content: '“'; font-family: Georgia, serif; font-size: var(--fs-fluid-3); line-height: 0; vertical-align: -0.35em; color: var(--muted-foreground); margin-right: 2px; }
+.slip .sig { display: flex; justify-content: space-between; gap: var(--space-3); align-items: baseline; padding: var(--space-2-5) var(--space-4); border-top: 1px dashed var(--border); }
+.slip .sig .who { font-family: var(--font-heading); font-style: italic; font-size: var(--fs-4); }
+.slip .sig .when { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+
+/* boundaries: crossings list (A) */
+.crossings { display: grid; border-top: 1px solid var(--border); }
+.cross { display: grid; grid-template-columns: minmax(0, 1fr) 2.5rem minmax(0, 1fr) minmax(0, 1.2fr); gap: var(--space-3); align-items: center; padding: var(--space-2-5) 0; border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); font-size: var(--fs-3); }
+.cross .end { font-family: var(--font-mono); font-size: var(--fs-3); overflow-wrap: anywhere; }
+.cross .end.src { text-align: right; }
+.cross .arrow { text-align: center; color: var(--muted-foreground); font-family: var(--font-mono); position: relative; }
+.cross .data { color: var(--muted-foreground); }
+.cross .data b { display: block; font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; font-weight: var(--fw-medium); margin-bottom: 2px; }
+.cross.rest .end.src { grid-column: 1 / 4; text-align: left; }
+.cross.rest .arrow { display: none; }
+.cross-desc { grid-column: 1 / -1; color: var(--muted-foreground); font-size: var(--fs-3); padding: 0 0 0 var(--space-2); }
+@container (max-width: 760px) { .cross { grid-template-columns: minmax(0, 1fr); gap: var(--space-1); } .cross .end.src { text-align: left; } .cross .arrow { text-align: left; } .cross.rest .end.src { grid-column: auto; } }
+
+/* boundaries: map (B) */
+.bmap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1fr); gap: 0; border: 1px solid var(--border); }
+.bmap .col-h { padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); font-family: var(--font-heading); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); font-weight: var(--fw-semibold); background: color-mix(in oklch, var(--muted) 35%, transparent); }
+.bmap .col-h.mid { text-align: center; border-left: 1px dashed var(--border); border-right: 1px dashed var(--border); }
+.bm-row { display: contents; }
+.bm-row > * { padding: var(--space-2-5) var(--space-3); border-bottom: 1px solid color-mix(in oklch, var(--border) 50%, transparent); }
+.bm-node { font-family: var(--font-mono); font-size: var(--fs-3); display: flex; align-items: center; overflow-wrap: anywhere; min-width: 0; }
+.bm-node span { border: 1px solid var(--border); padding: var(--space-1) var(--space-2); background: var(--card-veil); }
+.bm-node.out { justify-content: flex-end; text-align: right; }
+.bm-node.in span { border-color: color-mix(in oklch, var(--primary) 45%, var(--border)); }
+.bm-wire { border-left: 1px dashed var(--border); border-right: 1px dashed var(--border); display: grid; align-content: center; gap: var(--space-1); text-align: center; position: relative; }
+.bm-wire .line { height: 1px; background: var(--muted-foreground); position: relative; margin: 0 var(--space-1); }
+.bm-wire .line::after { content: ''; position: absolute; right: -1px; top: -3px; border: 3.5px solid transparent; border-left: 6px solid var(--muted-foreground); border-right: 0; }
+.bm-wire .cargo { font-size: var(--fs-2); color: var(--foreground); }
+.bm-wire .why { font-size: var(--fs-1); color: var(--muted-foreground); }
+.bm-row:hover > * { background: var(--state-hover); }
+.stores { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+.store { border: 1px dashed var(--border); padding: var(--space-2) var(--space-3); font-size: var(--fs-3); display: grid; gap: 2px; max-width: 26rem; }
+.store b { font-family: var(--font-mono); font-weight: var(--fw-medium); }
+.store span { color: var(--muted-foreground); font-size: var(--fs-2); }
+@container (max-width: 760px) { .bmap { grid-template-columns: minmax(0, 1fr); } .bmap .col-h { display: none; } .bm-node.out { justify-content: flex-start; } .bm-wire { border: 0; text-align: left; } .bm-row > * { border-bottom: 0; } .bm-row > :last-child { border-bottom: 1px solid var(--border); } }
+
+/* STRIDE lanes (B) */
+.stride { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); }
+@container (max-width: 980px) { .stride { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@container (max-width: 640px) { .stride { grid-template-columns: minmax(0, 1fr); } }
+.lane-s { border-top: 2px solid var(--foreground); display: grid; gap: var(--space-1-5); align-content: start; }
+.lane-s h3 { display: flex; justify-content: space-between; align-items: baseline; padding: var(--space-2) 0; font-family: var(--font-heading); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; font-weight: var(--fw-semibold); }
+.lane-s h3 .l { font-family: var(--font-mono); font-size: var(--fs-fluid-3); line-height: 1; margin-right: var(--space-2); color: var(--muted-foreground); }
+.tcard { display: grid; gap: var(--space-1); padding: var(--space-2) var(--space-3); border: 1px solid var(--border); background: var(--card-veil); text-align: left; transition: all .15s ease; position: relative; }
+.tcard:hover { background: var(--state-hover); }
+.tcard[data-tone='missing'] { border-color: var(--missing-border); box-shadow: inset 3px 0 0 var(--missing-fill); }
+.tcard[data-tone='in-flight'] { border-color: var(--in-flight-border); box-shadow: inset 3px 0 0 var(--in-flight-fill); }
+.tcard .r1 { display: flex; justify-content: space-between; gap: var(--space-2); align-items: center; }
+.tcard .id { font-family: var(--font-mono); font-size: var(--fs-2); }
+.tcard .c { font-size: var(--fs-3); line-height: var(--lh-snug); }
+.tcard .more { font-size: var(--fs-3); color: var(--muted-foreground); border-top: 1px dashed var(--border); padding-top: var(--space-1-5); display: grid; gap: var(--space-1); }
+
+/* accepted risks: timeline (B) */
+.tl { display: grid; gap: 0; border-left: 1px solid var(--border); margin-left: .4rem; }
+.tl-date { position: relative; padding: 0 0 var(--space-2) var(--space-5); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.tl-date::before { content: ''; position: absolute; left: -.4rem; top: .15rem; width: .75rem; height: .75rem; background: var(--background); border: 1.5px solid var(--foreground); }
+.tl-item { padding: 0 0 var(--space-4) var(--space-5); display: grid; grid-template-columns: 6rem minmax(0, 1fr); gap: var(--space-3); font-size: var(--fs-3); }
+.tl-item .k { display: grid; gap: var(--space-1); align-content: start; }
+.tl-item .k span { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); }
+.tl-item .c b { display: block; font-weight: var(--fw-medium); font-size: var(--fs-4); margin-bottom: 2px; }
+.tl-item .c .muted { font-size: var(--fs-3); }
+
+/* C: attention + ledger */
+.attn { display: grid; gap: var(--space-3); }
+.attn-card { border: 1px solid var(--border); display: grid; grid-template-columns: 9rem minmax(0, 1fr); background: var(--card-veil); }
+.attn-card[data-tone='missing'] { border-color: var(--missing-border); }
+.attn-card[data-tone='in-flight'] { border-color: var(--in-flight-border); }
+.attn-card .side { padding: var(--space-3); border-right: 1px solid var(--border); display: grid; gap: var(--space-2); align-content: start; }
+.attn-card .main { padding: var(--space-3) var(--space-4); display: grid; gap: var(--space-2); font-size: var(--fs-3); }
+.attn-card .main b { font-size: var(--fs-4); font-weight: var(--fw-medium); }
+.attn-card .sig { font-family: var(--font-heading); font-style: italic; color: var(--muted-foreground); }
+@container (max-width: 760px) { .attn-card { grid-template-columns: minmax(0, 1fr); } .attn-card .side { border-right: 0; border-bottom: 1px solid var(--border); grid-auto-flow: column; justify-content: start; } }
+.ledger-wrap { overflow-x: auto; border: 1px solid var(--border); }
+.ledger { border-collapse: collapse; width: 100%; font-size: var(--fs-3); }
+.ledger th { position: sticky; top: 0; text-align: left; padding: var(--space-2) var(--space-3); font-family: var(--font-heading); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); font-weight: var(--fw-semibold); background: color-mix(in oklch, var(--muted) 45%, var(--background)); white-space: nowrap; }
+.ledger th button { border: 0; background: none; padding: 0; font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; }
+.ledger th button:hover, .ledger th button[aria-pressed='true'] { color: var(--foreground); }
+.ledger td { padding: var(--space-2) var(--space-3); border-top: 1px solid color-mix(in oklch, var(--border) 55%, transparent); vertical-align: top; }
+.ledger tr[data-tone='missing'] td:first-child { box-shadow: inset 3px 0 0 var(--missing-fill); }
+.ledger tr[data-tone='in-flight'] td:first-child { box-shadow: inset 3px 0 0 var(--in-flight-fill); }
+.ledger td.mono { font-family: var(--font-mono); font-size: var(--fs-2); white-space: nowrap; }
+.ledger td.mit { color: var(--muted-foreground); min-width: 20rem; }
+.ledger tr:hover td { background: var(--state-hover); }
+
+/* audit trail (toggle) + extras */
+.audit-toggle { display: flex; gap: var(--space-3); align-items: center; width: 100%; padding: var(--space-3) 0; border: 0; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border); background: none; color: var(--muted-foreground); font-size: var(--fs-3); text-align: left; }
+.audit-toggle:hover { color: var(--foreground); }
+.switch { width: 2rem; height: 1.1rem; border: 1px solid var(--border); position: relative; flex: none; transition: all .15s ease; }
+.switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: .75rem; height: .75rem; background: var(--muted-foreground); transition: all .15s ease; }
+.switch[data-on='true'] { border-color: var(--primary); }
+.switch[data-on='true']::after { left: calc(100% - .75rem - 2px); background: var(--primary); }
+.runs { display: grid; gap: var(--space-2); padding: var(--space-4) 0; }
+.run { display: grid; grid-template-columns: 7.5rem minmax(8rem, 1fr) 7rem minmax(0, 1.5fr); gap: var(--space-4); align-items: center; font-size: var(--fs-3); }
+.run .d { font-family: var(--font-mono); font-size: var(--fs-2); }
+.run .n { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); }
+.run .by { color: var(--muted-foreground); }
+@container (max-width: 760px) { .run { grid-template-columns: 6.5rem minmax(0, 1fr); } .run .by { grid-column: 1 / -1; } }
+.extras { display: grid; gap: var(--space-2); }
+.extras details { border: 1px solid var(--border); background: var(--card-veil); }
+.extras summary { cursor: pointer; padding: var(--space-3) var(--space-4); list-style: none; display: flex; gap: var(--space-2); font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.extras summary::-webkit-details-marker { display: none; }
+.extras summary::after { content: '▾'; margin-left: auto; } .extras details[open] summary::after { content: '▴'; }
+.extras summary:hover { color: var(--foreground); }
+.extras .md { padding: 0 var(--space-4) var(--space-4); }
+.signoff-box { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 18rem); gap: var(--space-5); align-items: start; }
+@container (max-width: 760px) { .signoff-box { grid-template-columns: minmax(0, 1fr); } }
+.synthetic { color: var(--in-flight-fill); }
+
+/* ===== round 2: fresh layouts D / E / F ===== */
+.page.wide { width: min(92rem, 100%); }
+.dot-sq { display: inline-block; width: .8rem; height: .8rem; border: 1px solid var(--primary); background: var(--primary); }
+.dot-sq[data-tone='missing'] { background: var(--missing-fill); border-color: var(--missing-fill); }
+.dot-sq[data-tone='in-flight'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.dot-sq[data-tone='quiet'] { background: none; border: 1px dashed var(--muted-foreground); }
+
+/* D: console — sticky rail + board */
+.console { display: grid; grid-template-columns: 19rem minmax(0, 1fr); gap: var(--space-8); align-items: start; }
+@container (max-width: 980px) { .console { grid-template-columns: minmax(0, 1fr); } .rail { position: static !important; } }
+.rail { position: sticky; top: var(--space-4); display: grid; gap: var(--space-5); padding-right: var(--space-6); border-right: 1px solid var(--border); }
+@container (max-width: 980px) { .rail { border-right: 0; padding-right: 0; border-bottom: 1px solid var(--border); padding-bottom: var(--space-5); } }
+.rail h1 { font-size: var(--fs-fluid-4); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.rail .facts { flex-direction: column; align-items: flex-start; gap: var(--space-1-5); }
+.gauge { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-4); align-items: end; padding: var(--space-4); border: 1px solid var(--border); }
+.gauge.alarm { border-color: var(--missing-border); }
+.gauge .n { font-family: var(--font-mono); font-size: var(--fs-display-3); line-height: .85; }
+.gauge.alarm .n { color: var(--missing-fill); }
+.gauge .t { display: grid; gap: var(--space-1); font-size: var(--fs-3); color: var(--muted-foreground); }
+.gauge .t b { color: var(--foreground); font-weight: var(--fw-medium); }
+.vbar { display: flex; flex-direction: column-reverse; height: 4.5rem; width: .6rem; background: color-mix(in oklch, var(--muted) 60%, transparent); }
+.vbar i { display: block; width: 100%; } .vbar i[data-tone='complete'] { background: var(--primary); } .vbar i[data-tone='missing'] { background: var(--missing-fill); } .vbar i[data-tone='in-flight'] { background: var(--in-flight-fill); }
+.rail-nav { display: grid; border-top: 1px solid var(--border); }
+.rail-nav button { display: flex; justify-content: space-between; padding: var(--space-2) 0; border: 0; border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); background: none; font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); text-align: left; transition: color .15s ease; }
+.rail-nav button:hover { color: var(--primary); }
+.rail-stamp { display: flex; gap: var(--space-3); align-items: center; padding: var(--space-3); border: 1px dashed var(--border); font-size: var(--fs-3); }
+.rail-stamp[data-tone='complete'] { border-style: solid; border-color: color-mix(in oklch, var(--primary) 60%, var(--border)); }
+.rail-stamp .big { font-family: var(--font-mono); font-size: var(--fs-fluid-3); }
+.cblock { display: grid; gap: var(--space-4); }
+.cblock + .cblock { margin-top: var(--space-10); }
+.ctitle { display: flex; gap: var(--space-3); align-items: baseline; font-family: var(--font-heading); font-size: var(--fs-4); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.ctitle .muted { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-medium); }
+.board { display: grid; grid-template-columns: 7rem repeat(var(--cols), minmax(5.5rem, 1fr)); border-top: 1px solid var(--border); border-left: 1px solid var(--border); overflow-x: auto; }
+.board > * { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: var(--space-2); min-height: 3.25rem; }
+.board .bh { min-height: 0; font-family: var(--font-heading); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); font-weight: var(--fw-semibold); display: flex; gap: var(--space-1-5); align-items: baseline; }
+.board .bh .l { font-family: var(--font-mono); font-size: var(--fs-4); color: var(--foreground); }
+.board .br { display: flex; flex-direction: column; gap: var(--space-1); justify-content: center; }
+.board .cellb { display: flex; flex-wrap: wrap; gap: 3px; align-content: flex-start; }
+.board .cellb.empty { background: repeating-linear-gradient(135deg, color-mix(in oklch, var(--muted-foreground) 10%, transparent) 0 1px, transparent 1px 8px); }
+.tsq { width: 1.15rem; height: 1.15rem; border: 1px solid var(--primary); background: color-mix(in oklch, var(--primary) 70%, transparent); padding: 0; transition: transform .12s ease; }
+.tsq:hover { transform: scale(1.25); }
+.tsq[data-tone='missing'] { background: var(--missing-fill); border-color: var(--missing-fill); }
+.tsq[data-tone='in-flight'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.tsq[data-disp='accept'] { background: none; border-style: dashed; }
+.tsq[aria-pressed='true'] { outline: 2px solid var(--foreground); outline-offset: 1px; }
+.pick { border: 1px solid var(--border); background: var(--card-veil); padding: var(--space-4); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: var(--space-5); }
+@container (max-width: 760px) { .pick { grid-template-columns: minmax(0, 1fr); } }
+.pick h3 { font-size: var(--fs-5); font-weight: var(--fw-semibold); line-height: var(--lh-snug); }
+.pick .meta { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+.waivers { display: grid; border-top: 1px solid var(--border); }
+.waiver { display: grid; grid-template-columns: 5.5rem 5.5rem minmax(0, 1fr) 12rem; gap: var(--space-4); padding: var(--space-3) 0; border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); font-size: var(--fs-3); align-items: baseline; }
+.waiver .rid { font-family: var(--font-mono); color: var(--muted-foreground); font-size: var(--fs-2); }
+.waiver .who { text-align: right; font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.waiver .who i { display: block; font-family: var(--font-heading); font-style: italic; text-transform: none; letter-spacing: 0; font-size: var(--fs-3); color: var(--foreground); }
+@container (max-width: 760px) { .waiver { grid-template-columns: 5rem minmax(0, 1fr); } .waiver .who { grid-column: 1 / -1; text-align: left; } }
+.flows { display: grid; gap: var(--space-1-5); }
+.flow { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; font-size: var(--fs-3); }
+.flow .nd { font-family: var(--font-mono); font-size: var(--fs-2); padding: var(--space-1) var(--space-2); border: 1px solid var(--border); }
+.flow .nd.in { border-color: color-mix(in oklch, var(--primary) 45%, var(--border)); }
+.flow .ar { color: var(--muted-foreground); font-size: var(--fs-2); display: inline-flex; align-items: center; gap: var(--space-1-5); }
+.flow .ar::before, .flow .ar::after { content: ''; width: 1.25rem; height: 1px; background: var(--muted-foreground); }
+
+/* E: perimeter — banner + diagram + disposition columns */
+.banner { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-6); align-items: end; padding: var(--space-6) 0 var(--space-5); border-bottom: 2px solid var(--foreground); }
+@container (max-width: 760px) { .banner { grid-template-columns: minmax(0, 1fr); } }
+.banner h1 { font-size: var(--fs-fluid-4); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); margin-top: var(--space-2); }
+.verdict-word { text-align: right; display: grid; gap: var(--space-1); }
+@container (max-width: 760px) { .verdict-word { text-align: left; } }
+.verdict-word b { font-family: var(--font-mono); font-size: var(--fs-fluid-4); font-weight: var(--fw-medium); letter-spacing: var(--ls-tight); line-height: 1; color: var(--primary); }
+.verdict-word[data-tone='missing'] b { color: var(--missing-fill); }
+.verdict-word[data-tone='in-flight'] b { color: var(--in-flight-fill); }
+.statusbar { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-6); align-items: center; padding: var(--space-3) 0; border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.statusbar b { color: var(--foreground); font-weight: var(--fw-medium); text-transform: none; letter-spacing: 0; font-size: var(--fs-3); margin-left: var(--space-1); }
+.statusbar .push { margin-left: auto; display: flex; gap: var(--space-3); align-items: center; }
+.perim { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(8rem, 1.1fr) minmax(0, 1fr); gap: 0; padding: var(--space-6) 0; }
+@container (max-width: 760px) { .perim { grid-template-columns: minmax(0, 1fr) 3rem minmax(0, 1fr); } }
+.perim .side-h { font-family: var(--font-heading); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; font-weight: var(--fw-semibold); color: var(--muted-foreground); margin-bottom: var(--space-3); }
+.perim .side { display: grid; gap: var(--space-3); align-content: center; position: relative; z-index: 1; }
+.perim .side.r { text-align: left; }
+.perim .side.l { text-align: right; justify-items: end; }
+.pnode { border: 1px solid var(--border); background: var(--background); padding: var(--space-2) var(--space-3); font-family: var(--font-mono); font-size: var(--fs-2); max-width: 100%; overflow-wrap: anywhere; transition: all .15s ease; text-align: inherit; }
+.pnode.in { border-color: color-mix(in oklch, var(--primary) 50%, var(--border)); }
+.pnode:hover, .pnode.hot { border-color: var(--foreground); }
+.pnode.dim { opacity: .35; }
+.trustline { position: relative; display: grid; place-items: center; }
+.trustline::before { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; border-left: 2px dashed var(--muted-foreground); opacity: .6; }
+.trustline span { position: relative; writing-mode: vertical-rl; transform: rotate(180deg); background: var(--background); padding: var(--space-2) 0; font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-widest); text-transform: uppercase; color: var(--muted-foreground); }
+.wires { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+.wires path { fill: none; stroke: var(--muted-foreground); stroke-width: 1; opacity: .55; transition: all .15s ease; }
+.wires path.hot { stroke: var(--foreground); stroke-width: 1.75; opacity: 1; }
+.wires path.dim { opacity: .12; }
+.wire-caption { min-height: 4.5rem; border: 1px solid var(--border); background: var(--card-veil); padding: var(--space-3) var(--space-4); display: grid; gap: var(--space-1); font-size: var(--fs-3); }
+.wire-caption .k { font-family: var(--font-mono); font-size: var(--fs-2); }
+.stores-e { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+.dcols { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: var(--space-5); align-items: start; }
+@container (max-width: 900px) { .dcols { grid-template-columns: minmax(0, 1fr); } }
+.dcol h3 { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: var(--space-2); border-bottom: 2px solid var(--foreground); font-family: var(--font-heading); font-size: var(--fs-3); letter-spacing: var(--ls-wider); text-transform: uppercase; font-weight: var(--fw-semibold); margin-bottom: var(--space-2); }
+.dcol h3 .n { font-family: var(--font-mono); font-size: var(--fs-fluid-3); font-weight: var(--fw-medium); }
+.dcol .sub { font-size: var(--fs-2); color: var(--muted-foreground); margin-bottom: var(--space-3); }
+.ditem { display: grid; gap: var(--space-1); padding: var(--space-2) 0; border-bottom: 1px dashed color-mix(in oklch, var(--border) 70%, transparent); width: 100%; text-align: left; background: none; border-left: 0; border-right: 0; border-top: 0; }
+.ditem .r1 { display: flex; justify-content: space-between; gap: var(--space-2); align-items: center; }
+.ditem .id { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); }
+.ditem .c { font-size: var(--fs-3); }
+.ditem[data-tone='missing'] { border: 1px solid var(--missing-border); padding: var(--space-2) var(--space-3); margin-bottom: var(--space-2); }
+.ditem[data-tone='in-flight'] { border: 1px solid var(--in-flight-border); padding: var(--space-2) var(--space-3); margin-bottom: var(--space-2); }
+.ditem .why { font-size: var(--fs-3); color: var(--muted-foreground); border-left: 2px solid var(--border); padding-left: var(--space-2); margin-top: var(--space-1); }
+.ditem .sig { font-family: var(--font-heading); font-style: italic; font-size: var(--fs-2); color: var(--muted-foreground); }
+.footer-stamp { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-6); align-items: center; padding: var(--space-4) 0; border-top: 2px solid var(--foreground); }
+.footer-stamp .ticks { display: flex; gap: var(--space-1); }
+.footer-stamp .ticks i { width: .8rem; height: .8rem; border: 1px dashed var(--muted-foreground); }
+.footer-stamp .ticks i.on { border: 1px solid var(--primary); background: var(--primary); }
+.eh { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); margin-bottom: var(--space-3); }
+.eh h2 { font-family: var(--font-heading); font-size: var(--fs-fluid-3); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tight); }
+
+/* F: audit report — verdict sentence, strip, margin labels, footnotes */
+.report { display: grid; gap: var(--space-10); max-width: 70rem; }
+.rp-head { display: grid; gap: var(--space-3); }
+.rp-head .line { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); align-items: center; }
+.rp-head .line b { color: var(--foreground); font-weight: var(--fw-medium); }
+.rp-verdict { font-family: var(--font-heading); font-size: var(--fs-fluid-4); line-height: var(--lh-snug); letter-spacing: var(--ls-tight); max-width: 34ch; font-weight: var(--fw-medium); }
+.rp-verdict .hl-m { color: var(--missing-fill); } .rp-verdict .hl-f { color: var(--in-flight-fill); } .rp-verdict .hl-c { color: var(--primary); }
+.rp-sub { font-size: var(--fs-3); color: var(--muted-foreground); max-width: 78ch; }
+.strip { display: grid; gap: var(--space-2); }
+.strip .cells { display: flex; gap: 2px; align-items: flex-end; flex-wrap: wrap; }
+.strip .cells button { width: .85rem; padding: 0; border: 0; background: color-mix(in oklch, var(--primary) 75%, transparent); transition: transform .12s ease; }
+.strip .cells button:hover { transform: scaleY(1.15); }
+.strip .cells button[data-tone='missing'] { background: var(--missing-fill); } .strip .cells button[data-tone='in-flight'] { background: var(--in-flight-fill); }
+.strip .cells button[data-disp='accept'] { background: none; outline: 1px dashed color-mix(in oklch, var(--primary) 75%, transparent); outline-offset: -1px; }
+.strip .cells .gap { width: var(--space-3); }
+.strip .key { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); }
+.strip .key span { display: inline-flex; gap: var(--space-1-5); align-items: center; }
+.rp-sec { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: var(--space-6); border-top: 1px solid var(--border); padding-top: var(--space-4); }
+@container (max-width: 760px) { .rp-sec { grid-template-columns: minmax(0, 1fr); gap: var(--space-3); } }
+.rp-margin { display: grid; gap: var(--space-1); align-content: start; }
+.rp-margin .n { font-family: var(--font-mono); font-size: var(--fs-fluid-3); color: var(--muted-foreground); line-height: 1; }
+.rp-margin .t { font-family: var(--font-heading); font-size: var(--fs-3); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.rp-margin .s { font-size: var(--fs-2); color: var(--muted-foreground); }
+.band { display: grid; gap: 0; margin-bottom: var(--space-4); }
+.band-h { display: flex; gap: var(--space-2); align-items: center; padding: var(--space-1-5) 0; font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); border-bottom: 1px solid var(--border); }
+.tline { display: grid; grid-template-columns: .8rem 6.5rem minmax(0, 1fr) auto; gap: var(--space-3); align-items: baseline; padding: var(--space-1-5) 0; border-bottom: 1px solid color-mix(in oklch, var(--border) 40%, transparent); font-size: var(--fs-3); width: 100%; text-align: left; background: none; border-left: 0; border-right: 0; border-top: 0; }
+.tline:hover { background: var(--state-hover); }
+.tline .id { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); }
+.tline .dot-sq { width: .6rem; height: .6rem; align-self: center; }
+.tline sup { font-family: var(--font-mono); font-size: .65rem; color: var(--primary); margin-left: 2px; }
+.tline .tail { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); white-space: nowrap; }
+.tline-more { padding: var(--space-2) 0 var(--space-3) calc(.8rem + 6.5rem + var(--space-6)); font-size: var(--fs-3); color: var(--muted-foreground); }
+.fnotes { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); counter-reset: fn; }
+.fnotes li { display: grid; grid-template-columns: 2rem minmax(0, 1fr); gap: var(--space-2); font-size: var(--fs-3); }
+.fnotes .fn { font-family: var(--font-mono); color: var(--primary); font-size: var(--fs-3); }
+.fnotes .by { display: block; margin-top: var(--space-1); font-family: var(--font-heading); font-style: italic; color: var(--muted-foreground); font-size: var(--fs-2); }
+.prose-flow { font-size: var(--fs-4); line-height: var(--lh-relaxed); display: grid; gap: var(--space-2); }
+.prose-flow p { max-width: 80ch; }
+.prose-flow code { font-size: .85em; }
+.sigblock { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-6); }
+@container (max-width: 760px) { .sigblock { grid-template-columns: minmax(0, 1fr); } }
+.sigline { border-bottom: 1px solid var(--foreground); padding-bottom: var(--space-1); font-family: var(--font-heading); font-style: italic; font-size: var(--fs-5); min-height: 2.2rem; }
+.sigcap { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); margin-top: var(--space-1); }
+</style>
+</head>
+<body>
+<div id="variant-nav" role="tablist">
+  <span class="lbl">Sketch 017</span>
+  <button class="variant-tab" data-variant="a">A: Register first · matrix + rows · signed slips</button>
+  <button class="variant-tab" data-variant="b">B: Map first · boundary map · STRIDE lanes · risk timeline</button>
+  <button class="variant-tab" data-variant="c">C: Attention first · open + accepted · sortable ledger</button>
+  <span class="lbl" style="margin-left:var(--space-4)">Round 2</span>
+  <button class="variant-tab" data-variant="d">D: Console · rail + threat board ★ Selected</button>
+  <button class="variant-tab" data-variant="e">E: Perimeter · attack-surface diagram</button>
+  <button class="variant-tab" data-variant="f">F: Audit report · verdict + footnotes</button>
+</div>
+<div id="frame">
+  <header class="shell-header"><span class="brand-mark">L</span><span>Labelore</span></header>
+  <main id="root"></main>
+</div>
+<div id="sketch-tools" style="position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:12px;background:rgba(0,0,0,0.78);color:white;padding:8px 10px;opacity:0.55;transition:opacity 0.2s;display:grid;gap:6px;max-width:calc(100vw - 24px)" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.55'">
+  <div>Doc: <span id="doc-btns"></span></div>
+  <div>Theme: <button data-theme="light">Light</button><button data-theme="dark">Dark</button></div>
+  <div>Width: <button data-width="390">Phone</button><button data-width="820">Tablet</button><button data-width="full">Desktop</button></div>
+</div>
+<style>
+#sketch-tools button { background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 2px 7px; margin: 2px 0 0 3px; font: inherit; cursor: pointer; }
+#sketch-tools button.on { background: #c2410c; border-color: #c2410c; }
+</style>
+<script src="./data.js?v=1"></script>
+<script>
+const DOCS = window.SEC_DOCS;
+const state = { pick: null, wire: null, variant: 'd', doc: 'syn', theme: 'dark', width: 'full', open: new Set(), f: null, sort: 'sev', audit: false };
+const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const inline = s => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/(^|[^*\w])\*([^*\n]+)\*(?!\w)/g, '$1<em>$2</em>').replace(/\\\|/g, '|');
+const plain = s => String(s ?? '').replace(/\*\*|`|\*/g, '');
+const humanize = s => String(s ?? '').replace(/^\d+-/, '').replace(/-/g, ' ').replace(/^./, c => c.toUpperCase());
+const fmtD = s => { if (!s) return '—'; const d = new Date(s); return isNaN(d) ? s : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }); };
+const ICON = {
+  link: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" x2="16" y1="12" y2="12"/></svg>',
+  chev: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',
+};
+function md(src) {
+  const lines = String(src ?? '').split('\n'), out = []; let i = 0;
+  const isTbl = k => /^\s*\|/.test(lines[k] ?? '') && /^\s*\|[\s:|-]+\|\s*$/.test(lines[k + 1] ?? '');
+  const cells = l => l.trim().replace(/^\||\|$/g, '').split(/(?<!\\)\|/).map(c => c.trim());
+  while (i < lines.length) {
+    const l = lines[i];
+    if (!l.trim() || /^---\s*$/.test(l)) { i++; continue; }
+    if (/^```/.test(l)) { const b = []; i++; while (i < lines.length && !/^```/.test(lines[i])) b.push(lines[i++]); i++; out.push(`<pre><code>${esc(b.join('\n'))}</code></pre>`); continue; }
+    if (/^#{3,6}\s/.test(l)) { out.push(`<h4>${inline(l.replace(/^#+\s/, ''))}</h4>`); i++; continue; }
+    if (isTbl(i)) { const h = cells(l); i += 2; const rows = []; while (i < lines.length && /^\s*\|/.test(lines[i])) rows.push(cells(lines[i++])); out.push(`<div class="tbl-wrap"><table><thead><tr>${h.map(c => `<th>${inline(c)}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`); continue; }
+    if (/^>/.test(l)) { const b = []; while (i < lines.length && /^>/.test(lines[i])) b.push(lines[i++].replace(/^>\s?/, '')); out.push(`<blockquote>${md(b.join('\n'))}</blockquote>`); continue; }
+    if (/^\s*([-*]|\d+\.)\s/.test(l)) { const ord = /^\s*\d+\./.test(l); const items = []; while (i < lines.length && (/^\s*([-*]|\d+\.)\s/.test(lines[i]) || (/^\s{2,}\S/.test(lines[i]) && items.length))) { if (/^\s*([-*]|\d+\.)\s/.test(lines[i]) && !/^\s{4,}/.test(lines[i])) items.push(lines[i].replace(/^\s*([-*]|\d+\.)\s/, '')); else items[items.length - 1] += ' ' + lines[i].trim(); i++; } out.push(`<${ord ? 'ol' : 'ul'}>${items.map(x => `<li>${inline(x)}</li>`).join('')}</${ord ? 'ol' : 'ul'}>`); continue; }
+    const p = []; while (i < lines.length && lines[i].trim() && !/^(```|#{3,6}\s|>|\s*([-*]|\d+\.)\s)/.test(lines[i]) && !isTbl(i)) p.push(lines[i++].trim());
+    out.push(`<p>${inline(p.join(' '))}</p>`);
+  }
+  return `<div class="md">${out.join('')}</div>`;
+}
+
+/* ---------- model ---------- */
+const SEV_N = { critical: 4, high: 3, medium: 2, low: 1, unknown: 0 };
+const ST = { open: ['Open', 'missing'], 'open-low': ['Open · non-blocking', 'in-flight'], closed: ['Closed', 'complete'], unknown: ['—', 'quiet'] };
+const DOCSTATUS = s => /verified/.test(s) ? ['Verified', 'complete'] : /draft/.test(s) ? ['Draft', 'in-flight'] : /open/.test(s) ? ['Open', 'in-flight'] : [s || 'Unknown', 'quiet'];
+const STRIDE = [['S', 'Spoofing'], ['T', 'Tampering'], ['R', 'Repudiation'], ['I', 'Information Disclosure'], ['D', 'Denial of Service'], ['E', 'Elevation of Privilege']];
+const pips = sev => `<span class="pips" title="${esc(sev)}">${[1, 2, 3, 4].map(n => `<i class="${n <= SEV_N[sev] ? 'on' : ''}"></i>`).join('')}</span>`;
+const sevline = t => `<span class="sevline">${pips(t.sev.top)}${esc(t.sev.top === 'unknown' ? '—' : (t.sev.raw.includes('/') ? t.sev.raw : t.sev.top))}</span>`;
+const dispOf = t => { const s = plain(t.disposition).toLowerCase(); return /accept/.test(s) && /mitigate/.test(s) ? 'mixed' : /accept/.test(s) ? 'accept' : /transfer/.test(s) ? 'transfer' : /mitigate/.test(s) ? 'mitigate' : '—'; };
+function model(d) {
+  const rows = (d.register?.rows ?? []).map((t, i) => ({ ...t, i, disp: dispOf(t), tone: ST[t.status][1], key: (t.id.match(/T-[\w-]+/) ?? [t.id])[0] }));
+  const threshold = (d.legend.match(/block_on:?\s*`?(critical|high|medium|low)/) ?? d.legend.match(/at or above `?(critical|high|medium|low)/) ?? [])[1] ?? 'high';
+  const openB = rows.filter(r => r.status === 'open'), openL = rows.filter(r => r.status === 'open-low');
+  const risks = d.risks?.rows ?? [];
+  const riskFor = id => risks.find(r => r.ref && r.ref.includes(id));
+  return { rows, threshold, openB, openL, risks, riskFor, grouped: d.register?.grouped, closed: rows.filter(r => r.status === 'closed').length };
+}
+const threatTitle = t => t.group ?? t.component ?? '';
+
+/* ---------- shared ---------- */
+function cover(d, M) {
+  const [st, tone] = DOCSTATUS(d.fm.status);
+  const phase = String(d.fm.phase ?? '').replace(/^0+(?=\d)/, '');
+  const open = +(d.fm.threats_open ?? M.openB.length);
+  const so = d.signoff?.items ?? []; const done = so.filter(i => i.checked).length;
+  const n = M.rows.length; const sevCount = s => M.rows.filter(r => r.sev.top === s).length;
+  return `<header class="cover">
+    <p class="eyebrow">Security · Phase ${esc(phase)}${d.synthetic ? ' <span class="synthetic">· synthetic</span>' : ''}</p>
+    <h1>${esc(humanize(d.fm.slug || d.title.replace(/^.*—\s*/, '')))}</h1>
+    <div class="meta-row">
+      <div class="facts"><span class="chip" data-tone="${tone}">${esc(st)}</span><span>Created<b>${esc(fmtD(d.fm.created))}</b></span><span>ASVS<b>Level ${esc(d.fm.asvs_level ?? '—')}</b></span><span>Blocks at<b>${esc(M.threshold)}+</b></span></div>
+      <div class="doc-tools"><button class="icon-btn" data-copy="${esc(d.file)}" title="${esc(d.file)}" aria-label="Copy file path">${ICON.link}</button><span class="seg"><button aria-pressed="true">View</button><button data-toast>Source</button></span></div>
+    </div>
+    <div class="cover-cells">
+      <div class="cover-cell ${open > 0 ? 'alarm' : 'glance'}"><span class="mono-note">Threats open</span><span class="big-num">${open}<small>${open ? `blocking · ${M.threshold}+` : M.openL.length ? `${M.openL.length} below ${M.threshold}, non-blocking` : 'nothing blocking'}</small></span>${open ? `<button class="link-btn" data-jump="th-${M.openB[0]?.key}" style="justify-self:start">See open threats ↓</button>` : ''}</div>
+      <div class="cover-cell"><span class="mono-note">Threat register</span><span class="big-num">${n}<small>${M.grouped ? 'groups' : 'threats'} · ${M.closed} closed</small></span>
+        <span class="dist">${['closed', 'open-low', 'open'].map(s => { const c = M.rows.filter(r => r.status === s).length; return c ? `<i data-tone="${ST[s][1]}" style="width:${c / n * 100}%"></i>` : ''; }).join('')}</span>
+        <span class="mini-legend">${['critical', 'high', 'medium', 'low'].filter(sevCount).map(s => `<span>${pips(s)} ${sevCount(s)} ${s}</span>`).join('')}</span></div>
+      <div class="cover-cell"><span class="mono-note">Accepted risks</span><span class="big-num">${M.risks.length}<small>${M.risks.length ? 'signed off' : d.risks?.note ? 'noted in prose' : 'none'}</small></span>${M.risks.length ? `<button class="link-btn" data-jump="risks" style="justify-self:start">Read the log ↓</button>` : ''}</div>
+      <div class="cover-cell"><span class="mono-note">Sign-off</span><span class="big-num">${done}<small>of ${so.length} checks</small></span><span class="approval clamp2">${inline(d.signoff?.approval ?? '—')}</span></div>
+    </div>
+    ${d.lead ? `<div class="lead-box"><div class="${state.open.has('lead') ? '' : 'clamp3'}">${md(d.lead)}</div>${d.lead.length > 320 ? `<button class="link-btn" data-open="lead" style="justify-self:start">${state.open.has('lead') ? 'less' : 'more'}</button>` : ''}</div>` : ''}
+  </header>`;
+}
+function heading(num, title, aside) { return `<div class="section-heading"><h2><span class="num">${num}</span>${title}</h2>${aside ? `<span class="aside">${aside}</span>` : ''}</div>`; }
+function splitB(name) { const m = String(name).split(/\s*→\s*/); return m.length >= 2 ? { from: m[0], to: m.slice(1).join(' → ') } : null; }
+function signoff(d, num) {
+  const so = d.signoff; if (!so) return '';
+  const done = so.items.filter(i => i.checked).length;
+  const ok = /verified|approved/i.test(so.approval ?? '') && !/pending/i.test(so.approval ?? '');
+  return `<section id="signoff">${heading(num, 'Sign-off', `${done} of ${so.items.length} checks`)}
+    <div class="signoff-box"><ul class="checks">${so.items.map(i => `<li class="${i.checked ? 'done' : ''}"><span class="ck">${i.checked ? '✓' : '○'}</span><span>${inline(i.text)}</span></li>`).join('')}</ul>
+    <div class="stamp" data-tone="${ok ? 'complete' : 'in-flight'}"><span class="mono-note">Approval</span><span class="big-num">${ok ? 'Verified' : 'Pending'}</span><span class="approval">${inline(so.approval ?? '—')}</span></div></div></section>`;
+}
+function audit(d) {
+  const a = d.audit; if (!a) return '';
+  const on = state.audit;
+  const num = s => +(String(s).match(/\d+/) ?? [0])[0];
+  return `<section id="audit"><button class="audit-toggle" data-audit aria-pressed="${on}"><span class="switch" data-on="${on}"></span><span class="mono-note">Security audit trail</span><span>${a.rows.length} run${a.rows.length === 1 ? '' : 's'} · last ${esc(fmtD(a.rows[a.rows.length - 1]?.date))}</span></button>
+    ${on ? `<div class="runs fade">${a.rows.map(r => { const t = num(r.total), c = num(r.closed), o = num(r.open); return `<div class="run"><span class="d">${esc(fmtD(r.date))}</span><span class="dist"><i data-tone="complete" style="width:${t ? c / t * 100 : 0}%"></i><i data-tone="${o ? 'missing' : 'complete'}" style="width:${t ? o / t * 100 : 0}%"></i></span><span class="n">${c} / ${t} closed${o ? ` · ${esc(r.open)} open` : ''}</span><span class="by">${inline(r.by)}</span></div>`; }).join('')}${a.note ? md(a.note) : ''}</div>` : ''}</section>`;
+}
+function extras(d) { return d.extras.length ? `<div class="extras">${d.extras.map(e => `<details><summary>${esc(e.title)}</summary>${md(e.body)}</details>`).join('')}</div>` : ''; }
+function sourceOnly() { return `<nav class="source-only" aria-label="In the source only"><span class="mono-note">In the source only</span><ul>${['Frontmatter', 'Register legend'].map(x => `<li><button data-toast>${x}</button></li>`).join('')}</ul></nav>`; }
+
+/* ---------- A: register first ---------- */
+function sdMatrix(M) {
+  const disps = ['mitigate', 'accept', 'transfer', 'mixed'].filter(x => M.rows.some(r => r.disp === x));
+  const sevs = ['critical', 'high', 'medium', 'low'].filter(s => M.rows.some(r => r.sev.top === s));
+  return `<div class="sd-grid" style="--cols:${disps.length}"><span class="h">Severity</span>${disps.map(x => `<span class="h" style="text-align:right">${x}</span>`).join('')}
+    ${sevs.map(s => `<span class="rh">${pips(s)}<span class="disp">${s}</span></span>${disps.map(x => { const rs = M.rows.filter(r => r.sev.top === s && r.disp === x); const k = s + '|' + x; const ob = rs.some(r => r.status === 'open'), ol = rs.some(r => r.status === 'open-low');
+      return `<button class="sd-cell ${rs.length ? '' : 'zero'}" data-f="${k}" aria-pressed="${state.f === k}" ${rs.length ? '' : 'disabled'}>${ob ? '<span class="op"></span>' : ol ? '<span class="op low"></span>' : ''}${rs.length}</button>`; }).join('')}`).join('')}</div>`;
+}
+function trow(t, M) {
+  const open = state.open.has('t-' + t.i); const risk = M.riskFor(t.key);
+  return `<div class="trow" id="th-${esc(t.key)}" data-tone="${t.tone === 'complete' ? '' : t.tone}" data-open="${open}"><button class="trow-head" data-open="t-${t.i}">
+    <span class="id">${esc(t.group ? t.id.split(',').length + ' threats' : t.id)}</span>${sevline(t)}
+    <span class="what"><b>${inline(threatTitle(t))}</b><span>${esc(t.category || (t.group ? t.id : ''))}</span></span>
+    <span class="disp">${esc(t.disp)}</span><span class="chip" data-tone="${t.tone}">${ST[t.status][0]}</span><span class="chev">${ICON.chev}</span></button>
+    ${open ? `<div class="trow-body fade"><div><span class="mono-note">${t.disp === 'accept' ? 'Why it is acceptable' : 'Mitigation'} · </span>${inline(t.mitigation)}</div>${t.group ? `<div class="muted"><span class="mono-note">Threats · </span>${inline(t.id)}</div>` : ''}${risk ? `<div class="accept"><span class="mono-note">Accepted as ${esc(risk.id)} · </span>${inline(risk.why)} <button class="ref" data-jump="risk-${esc(risk.id)}">${esc(risk.id)} ↓</button></div>` : ''}</div>` : ''}</div>`;
+}
+function registerA(d, M) {
+  if (!M.rows.length) return md(d.register?.prose ?? '');
+  const [fs, fd] = (state.f ?? '|').split('|');
+  const vis = M.rows.filter(r => !state.f || (r.sev.top === fs && r.disp === fd));
+  const byS = (a, b) => SEV_N[b.sev.top] - SEV_N[a.sev.top];
+  const opens = vis.filter(r => r.status !== 'closed').sort(byS); const closed = vis.filter(r => r.status === 'closed').sort(byS);
+  const showClosed = state.open.has('closed') || !!state.f || !opens.length;
+  return `${sdMatrix(M)}${state.f ? `<p class="mono-note" style="margin-bottom:var(--space-2)">Showing ${esc(fs)} · ${esc(fd)} <button class="link-btn" data-f="${state.f}">clear ✕</button></p>` : ''}
+    ${d.registerNote ? `<div class="md muted" style="font-size:var(--fs-3);margin-bottom:var(--space-3)">${md(d.registerNote)}</div>` : ''}
+    ${opens.length ? `<div class="grp-label ${M.openB.length ? 'alarm' : ''}">Open<span class="count">${opens.length}</span></div><div class="threats">${opens.map(t => trow(t, M)).join('')}</div>` : ''}
+    ${showClosed ? `${opens.length ? `<div class="grp-label">Closed<span class="count">${closed.length}</span></div>` : ''}<div class="threats">${closed.map(t => trow(t, M)).join('')}</div>${state.open.has('closed') ? `<button class="closed-toggle" data-open="closed">Hide closed ▴</button>` : ''}` : `<button class="closed-toggle" data-open="closed"><span class="dist" style="width:6rem"><i data-tone="complete" style="width:100%"></i></span><span>${closed.length} closed threats</span><span style="margin-left:auto">Show ▾</span></button>`}`;
+}
+function risksA(d, M) {
+  if (!M.risks.length) return d.risks?.note ? `<div class="notice">${md(d.risks.note)}</div>` : '<p class="empty-note muted">No accepted risks.</p>';
+  return `<div class="slips">${M.risks.map(r => { const t = M.rows.find(x => r.ref && r.ref.includes(x.key));
+    return `<article class="slip" id="risk-${esc(r.id)}"><div class="top"><span class="rid">${esc(r.id)}</span><span style="display:flex;gap:var(--space-1-5);align-items:center">${t ? sevline(t) : ''}<button class="ref" data-jump="th-${esc(t?.key ?? '')}" data-openthreat="${t?.i ?? ''}">${esc(r.ref)}</button></span></div>
+      ${t ? `<p class="about">${inline(threatTitle(t))}${t.category ? ` · ${esc(t.category)}` : ''}</p>` : ''}
+      <blockquote>${inline(r.why)}</blockquote>
+      <div class="sig"><span class="who">${esc(r.by || '—')}</span><span class="when">accepted ${esc(fmtD(r.date))}</span></div></article>`; }).join('')}</div>${d.risks?.note ? `<div class="md muted" style="margin-top:var(--space-3);font-size:var(--fs-3)">${md(d.risks.note)}</div>` : ''}`;
+}
+function boundariesA(d) {
+  const b = d.boundaries; if (!b) return '';
+  return `<div class="crossings">${b.rows.map(r => { const s = splitB(r.name);
+    return s ? `<div class="cross"><span class="end src">${inline(s.from)}</span><span class="arrow">→</span><span class="end">${inline(s.to)}</span><span class="data"><b>Crossing</b>${inline(r.data)}</span><span class="cross-desc">${inline(r.desc)}</span></div>`
+      : `<div class="cross rest"><span class="end src">${inline(r.name)} <span class="mono-note">· at rest / in-process</span></span><span class="arrow"></span><span class="data"><b>Holds</b>${inline(r.data)}</span><span class="cross-desc">${inline(r.desc)}</span></div>`; }).join('')}</div>`;
+}
+
+/* ---------- B: map first ---------- */
+function boundaryMap(d) {
+  const b = d.boundaries; if (!b) return '';
+  const pairs = b.rows.map(r => ({ r, s: splitB(r.name) })); const wires = pairs.filter(p => p.s); const rest = pairs.filter(p => !p.s);
+  return `<div class="bmap"><span class="col-h">From</span><span class="col-h mid">What crosses</span><span class="col-h">Into</span>
+    ${wires.map(({ r, s }) => `<div class="bm-row" title="${esc(plain(r.desc))}"><span class="bm-node out"><span>${inline(s.from)}</span></span><span class="bm-wire"><span class="cargo">${inline(r.data)}</span><span class="line"></span><span class="why clamp2">${inline(r.desc)}</span></span><span class="bm-node in"><span>${inline(s.to)}</span></span></div>`).join('')}</div>
+    ${rest.length ? `<div class="stores">${rest.map(({ r }) => `<div class="store"><b>${inline(r.name)}</b><span>${inline(r.data)} — ${inline(r.desc)}</span></div>`).join('')}</div>` : ''}`;
+}
+function strideLanes(d, M) {
+  if (!M.rows.length) return md(d.register?.prose ?? '');
+  const cat = r => { const c = r.category.toLowerCase(); return STRIDE.find(([, n]) => c.startsWith(n.toLowerCase().slice(0, 6)))?.[1] ?? (r.group ? 'Grouped' : 'Other'); };
+  const lanes = [...STRIDE.map(x => x[1]), 'Other', 'Grouped'].map(n => ({ n, l: STRIDE.find(x => x[1] === n)?.[0] ?? '·', rs: M.rows.filter(r => cat(r) === n).sort((a, b) => (a.status === 'closed') - (b.status === 'closed') || SEV_N[b.sev.top] - SEV_N[a.sev.top]) })).filter(x => x.rs.length);
+  return `<div class="stride">${lanes.map(L => `<div class="lane-s"><h3><span><span class="l">${L.l}</span>${esc(L.n)}</span><span class="mono-note">${L.rs.length}${L.rs.some(r => r.status !== 'closed') ? ` · ${L.rs.filter(r => r.status !== 'closed').length} open` : ''}</span></h3>
+    ${L.rs.slice(0, state.open.has('lane-' + L.n) ? 99 : 5).map(t => { const o = state.open.has('t-' + t.i); return `<button class="tcard" id="th-${esc(t.key)}" data-open="t-${t.i}" data-tone="${t.tone === 'complete' ? '' : t.tone}"><span class="r1"><span class="id">${esc(t.group ? t.id.split(',')[0] + '…' : t.id)}</span>${sevline(t)}</span><span class="c ${o ? '' : 'clamp2'}">${inline(threatTitle(t))}</span><span class="r1"><span class="disp">${esc(t.disp)}</span><span class="chip" data-tone="${t.tone}">${ST[t.status][0]}</span></span>${o ? `<span class="more">${inline(t.mitigation)}</span>` : ''}</button>`; }).join('')}
+    ${L.rs.length > 5 ? `<button class="link-btn" data-open="lane-${L.n}" style="justify-self:start">${state.open.has('lane-' + L.n) ? 'Show fewer' : `+${L.rs.length - 5} more`}</button>` : ''}</div>`).join('')}</div>`;
+}
+function riskTimeline(d, M) {
+  if (!M.risks.length) return d.risks?.note ? `<div class="notice">${md(d.risks.note)}</div>` : '<p class="muted">No accepted risks.</p>';
+  const dates = [...new Set(M.risks.map(r => r.date))];
+  return `<div class="tl">${dates.map(dt => `<div class="tl-date">${esc(fmtD(dt))} · ${esc(M.risks.find(r => r.date === dt)?.by ?? '')} accepted ${M.risks.filter(r => r.date === dt).length}</div>
+    ${M.risks.filter(r => r.date === dt).map(r => { const t = M.rows.find(x => r.ref && r.ref.includes(x.key)); return `<div class="tl-item" id="risk-${esc(r.id)}"><div class="k"><span>${esc(r.id)}</span><button class="ref" data-jump="th-${esc(t?.key ?? '')}" data-openthreat="${t?.i ?? ''}" style="justify-self:start">${esc(r.ref)}</button>${t ? sevline(t) : ''}</div><div class="c"><b>${inline(t ? threatTitle(t) : r.ref)}</b><span class="muted">${inline(r.why)}</span></div></div>`; }).join('')}`).join('')}</div>`;
+}
+
+/* ---------- C: attention first ---------- */
+function attention(d, M) {
+  const opens = [...M.openB, ...M.openL];
+  const cards = [
+    ...opens.map(t => `<article class="attn-card" data-tone="${t.tone}" id="th-${esc(t.key)}"><div class="side"><span class="chip" data-tone="${t.tone}">${ST[t.status][0]}</span><span class="ref">${esc(t.id)}</span>${sevline(t)}</div><div class="main"><b>${inline(threatTitle(t))}</b><span class="mono-note">${esc(t.category)} · ${esc(t.disp)}</span><div class="muted">${inline(t.mitigation)}</div></div></article>`),
+    ...M.risks.map(r => { const t = M.rows.find(x => r.ref && r.ref.includes(x.key)); return `<article class="attn-card" id="risk-${esc(r.id)}"><div class="side"><span class="chip">Accepted</span><span class="ref">${esc(r.ref)}</span>${t ? sevline(t) : ''}</div><div class="main"><b>${inline(t ? threatTitle(t) : r.ref)}</b><div class="muted">${inline(r.why)}</div><span class="sig">— ${esc(r.by)}, ${esc(fmtD(r.date))} · ${esc(r.id)}</span></div></article>`; }),
+  ];
+  return `${!opens.length ? `<p class="muted" style="margin-bottom:var(--space-3)">✓ Nothing open. ${M.risks.length ? `${M.risks.length} risks were accepted rather than mitigated:` : ''}</p>` : ''}<div class="attn">${cards.join('') || (d.risks?.note ? `<div class="notice">${md(d.risks.note)}</div>` : '')}</div>`;
+}
+function ledger(d, M) {
+  if (!M.rows.length) return md(d.register?.prose ?? '');
+  const key = { sev: (a, b) => SEV_N[b.sev.top] - SEV_N[a.sev.top] || a.i - b.i, status: (a, b) => (a.status === 'closed') - (b.status === 'closed') || a.i - b.i, id: (a, b) => a.i - b.i, cat: (a, b) => a.category.localeCompare(b.category) || a.i - b.i }[state.sort];
+  const rows = [...M.rows].sort(key);
+  const th = (k, l) => k ? `<th><button data-sort="${k}" aria-pressed="${state.sort === k}">${l}${state.sort === k ? ' ↓' : ''}</button></th>` : `<th>${l}</th>`;
+  return `<div class="ledger-wrap"><table class="ledger"><thead><tr>${th('id', 'Threat')}${th('sev', 'Severity')}${th('cat', 'Category')}${th(null, M.grouped ? 'Group' : 'Component')}${th(null, 'Disposition')}${th(null, 'Mitigation')}${th('status', 'Status')}</tr></thead>
+    <tbody>${rows.map(t => `<tr data-tone="${t.tone === 'complete' ? '' : t.tone}"><td class="mono">${esc(t.group ? t.id.split(',')[0] + '…' : t.id)}</td><td>${sevline(t)}</td><td>${esc(t.category)}</td><td>${inline(threatTitle(t))}</td><td class="disp">${esc(t.disp)}</td><td class="mit"><span class="${state.open.has('m-' + t.i) ? '' : 'clamp2'}">${inline(t.mitigation)}</span></td><td><span class="chip" data-tone="${t.tone}">${ST[t.status][0]}</span></td></tr>`).join('')}</tbody></table></div>`;
+}
+
+/* ===== round 2: fresh layouts ===== */
+const CAT = r => { const c = (r.category || '').toLowerCase(); const hit = STRIDE.find(([, n]) => c.startsWith(n.toLowerCase().slice(0, 6))); return hit ? hit[0] : '·'; };
+const verdictOf = (d, M) => { const open = +(d.fm.threats_open ?? M.openB.length); return open ? ['missing', `${open} open`, 'blocking sign-off'] : M.openL.length ? ['in-flight', 'Clear', `${M.openL.length} non-blocking open`] : ['complete', 'All clear', `${M.closed} of ${M.rows.length} closed`]; };
+function pickPanel(M) {
+  const t = M.rows.find(r => r.i === state.pick);
+  if (!t) return `<div class="pick" style="grid-template-columns:1fr"><span class="muted" style="font-size:var(--fs-3)">Pick a square for the threat, its mitigation and, if it was accepted, why.</span></div>`;
+  const risk = M.riskFor(t.key);
+  return `<div class="pick fade"><div style="display:grid;gap:var(--space-2);align-content:start"><div class="meta"><span class="ref">${esc(t.group ? t.id.split(',')[0] + '…' : t.id)}</span>${sevline(t)}<span class="chip" data-tone="${t.tone}">${ST[t.status][0]}</span><span class="disp">${esc(t.disp)}</span></div><h3>${inline(threatTitle(t))}</h3><span class="mono-note">${esc(t.category)}</span></div>
+    <div style="display:grid;gap:var(--space-2);font-size:var(--fs-3)"><div><span class="mono-note">${t.disp === 'accept' ? 'Why acceptable · ' : 'Mitigation · '}</span>${inline(t.mitigation)}</div>${risk ? `<div class="muted" style="border-left:2px solid var(--border);padding-left:var(--space-3)"><span class="mono-note">${esc(risk.id)} · </span>${inline(risk.why)} <em>— ${esc(risk.by)}, ${esc(fmtD(risk.date))}</em></div>` : ''}</div></div>`;
+}
+function signoffList(d) { const so = d.signoff; return so ? `<ul class="checks">${so.items.map(i => `<li class="${i.checked ? 'done' : ''}"><span class="ck">${i.checked ? '✓' : '○'}</span><span>${inline(i.text)}</span></li>`).join('')}</ul>` : ''; }
+
+/* D: console */
+function viewD(d, M) {
+  const [vt, vw, vs] = verdictOf(d, M); const open = +(d.fm.threats_open ?? M.openB.length);
+  const [st, tone] = DOCSTATUS(d.fm.status); const n = M.rows.length || 1;
+  const so = d.signoff?.items ?? []; const done = so.filter(i => i.checked).length; const ok = done === so.length && so.length && !/pending/i.test(d.signoff?.approval ?? '');
+  const cats = STRIDE.filter(([l]) => M.rows.some(r => CAT(r) === l)).map(x => x[0]); if (M.rows.some(r => CAT(r) === '·')) cats.push('·');
+  const sevs = ['critical', 'high', 'medium', 'low'].filter(s => M.rows.some(r => r.sev.top === s));
+  const nav = [['board', 'Threats', M.rows.length], ['waivers', 'Accepted risks', M.risks.length], ['flows', 'Trust boundaries', d.boundaries?.rows.length ?? 0], ['signoff', 'Sign-off', `${done}/${so.length}`]];
+  const rail = `<aside class="rail"><div style="display:grid;gap:var(--space-2)"><p class="eyebrow">Security · Phase ${esc(String(d.fm.phase ?? '').replace(/^0+(?=\d)/, ''))}${d.synthetic ? ' <span class="synthetic">· synthetic</span>' : ''}</p><h1>${esc(humanize(d.fm.slug))}</h1></div>
+    <div class="facts"><span class="chip" data-tone="${tone}">${esc(st)}</span><span>Created<b>${esc(fmtD(d.fm.created))}</b></span><span>ASVS<b>Level ${esc(d.fm.asvs_level ?? '—')}</b></span><span>Blocks at<b>${esc(M.threshold)}+</b></span></div>
+    <div class="gauge ${open ? 'alarm' : ''}"><span class="vbar">${['closed', 'open-low', 'open'].map(s => { const c = M.rows.filter(r => r.status === s).length; return c ? `<i data-tone="${ST[s][1]}" style="height:${c / n * 100}%"></i>` : ''; }).join('')}</span><div style="display:grid;gap:var(--space-2)"><span class="n">${open}</span><span class="t"><b>threats open</b><span>${esc(vs)}</span><span>${M.closed} of ${M.rows.length} closed</span></span></div></div>
+    <nav class="rail-nav">${nav.map(([id, l, c]) => `<button data-jumpto="${id}"><span>${l}</span><span>${c}</span></button>`).join('')}</nav>
+    <div class="rail-stamp" data-tone="${ok ? 'complete' : ''}"><span class="big">${ok ? '✓' : '○'}</span><span><b>${ok ? 'Signed off' : 'Not signed off'}</b><br><span class="muted">${inline(d.signoff?.approval ?? '—')}</span></span></div>
+    <button class="audit-toggle" data-audit aria-pressed="${state.audit}" style="border:0;padding:0"><span class="switch" data-on="${state.audit}"></span><span class="mono-note">Audit trail · ${d.audit?.rows.length ?? 0}</span></button>
+    <div style="display:flex;gap:var(--space-3)"><button class="icon-btn" data-copy="${esc(d.file)}" aria-label="Copy file path">${ICON.link}</button><span class="seg"><button aria-pressed="true">View</button><button data-toast>Source</button></span></div></aside>`;
+  const board = M.rows.length ? `<div class="board" style="--cols:${cats.length}"><span class="bh">Severity</span>${cats.map(l => `<span class="bh"><span class="l">${l}</span>${esc((STRIDE.find(x => x[0] === l) ?? [, M.grouped ? 'Grouped' : 'Other'])[1])}</span>`).join('')}
+      ${sevs.map(s => `<span class="br">${pips(s)}<span class="disp">${s}</span></span>${cats.map(l => { const rs = M.rows.filter(r => r.sev.top === s && CAT(r) === l); return `<span class="cellb ${rs.length ? '' : 'empty'}">${rs.map(t => `<button class="tsq" data-pick="${t.i}" data-tone="${t.tone === 'complete' ? '' : t.tone}" data-disp="${t.disp}" aria-pressed="${state.pick === t.i}" title="${esc(t.id)} · ${esc(plain(threatTitle(t)))}"></button>`).join('')}</span>`; }).join('')}`).join('')}</div>
+    <div class="mini-legend"><span><span class="dot-sq" style="width:.6rem;height:.6rem"></span> closed · mitigated</span><span><span class="dot-sq" style="width:.6rem;height:.6rem;background:none;border-style:dashed"></span> closed · accepted</span><span><span class="dot-sq" data-tone="missing" style="width:.6rem;height:.6rem"></span> open</span><span><span class="dot-sq" data-tone="in-flight" style="width:.6rem;height:.6rem"></span> open · non-blocking</span></div>${pickPanel(M)}` : md(d.register?.prose ?? '');
+  const waivers = M.risks.length ? `<div class="waivers">${M.risks.map(r => { const t = M.rows.find(x => r.ref && r.ref.includes(x.key)); return `<div class="waiver"><span class="rid">${esc(r.id)}</span><button class="ref" data-pick="${t?.i ?? ''}" style="justify-self:start">${esc(r.ref)}</button><span><b style="font-weight:var(--fw-medium)">${inline(t ? threatTitle(t) : '')}</b><br><span class="muted">${inline(r.why)}</span></span><span class="who"><i>${esc(r.by)}</i>${esc(fmtD(r.date))}</span></div>`; }).join('')}</div>` : `<div class="notice">${md(d.risks?.note || 'No accepted risks.')}</div>`;
+  const flows = d.boundaries ? `<div class="flows">${d.boundaries.rows.map(b => { const s = splitB(b.name); return s ? `<div class="flow" title="${esc(plain(b.desc))}"><span class="nd">${inline(s.from)}</span><span class="ar">${inline(b.data)}</span><span class="nd in">${inline(s.to)}</span></div>` : `<div class="flow"><span class="nd" style="border-style:dashed">${inline(b.name)}</span><span class="muted">holds ${inline(b.data)}</span></div>`; }).join('')}</div>` : '';
+  const content = `<div>${d.lead ? `<div class="lead-box" style="margin-bottom:var(--space-8)">${md(d.lead)}</div>` : ''}
+    <section class="cblock" id="board"><div class="ctitle">Threat board<span class="muted">${M.rows.length} ${M.grouped ? 'groups' : 'threats'} · severity × STRIDE</span></div>${board}</section>
+    <section class="cblock" id="waivers"><div class="ctitle">Accepted risks<span class="muted">${M.risks.length}</span></div>${waivers}</section>
+    ${flows ? `<section class="cblock" id="flows"><div class="ctitle">Trust boundaries<span class="muted">what crosses where</span></div>${flows}</section>` : ''}
+    ${d.extras.length ? `<section class="cblock">${extras(d)}</section>` : ''}
+    <section class="cblock" id="signoff"><div class="ctitle">Sign-off<span class="muted">${done} of ${so.length}</span></div>${signoffList(d)}</section>
+    ${state.audit ? `<section class="cblock">${audit(d)}</section>` : ''}</div>`;
+  return `<div class="console">${rail}${content}</div>`;
+}
+
+/* E: perimeter */
+function viewE(d, M) {
+  const [vt, vw, vs] = verdictOf(d, M); const [st, tone] = DOCSTATUS(d.fm.status);
+  const so = d.signoff?.items ?? []; const done = so.filter(i => i.checked).length;
+  const b = d.boundaries?.rows ?? []; const wires = b.map((r, i) => ({ r, i, s: splitB(r.name) })).filter(x => x.s); const stores = b.filter(r => !splitB(r.name));
+  const norm = x => plain(x).trim(); const L = [...new Set(wires.map(w => norm(w.s.from)))], R = [...new Set(wires.map(w => norm(w.s.to)))];
+  const hot = state.wire; const hw = wires.find(w => w.i === hot);
+  const banner = `<header class="banner"><div><p class="eyebrow">Security · Phase ${esc(String(d.fm.phase ?? '').replace(/^0+(?=\d)/, ''))}${d.synthetic ? ' <span class="synthetic">· synthetic</span>' : ''}</p><h1>${esc(humanize(d.fm.slug))}</h1></div>
+    <div class="verdict-word" data-tone="${vt}"><b>${esc(vw)}</b><span class="mono-note">${esc(vs)}</span></div></header>
+    <div class="statusbar"><span class="chip" data-tone="${tone}">${esc(st)}</span><span>Created<b>${esc(fmtD(d.fm.created))}</b></span><span>ASVS<b>L${esc(d.fm.asvs_level ?? '—')}</b></span><span>Blocks at<b>${esc(M.threshold)}+</b></span><span>Sign-off<b>${done}/${so.length}</b></span>
+      <span class="push"><button class="audit-toggle" data-audit aria-pressed="${state.audit}" style="border:0;padding:0;width:auto"><span class="switch" data-on="${state.audit}"></span><span>Audit trail</span></button><button class="icon-btn" data-copy="${esc(d.file)}" aria-label="Copy file path">${ICON.link}</button><span class="seg"><button aria-pressed="true">View</button><button data-toast>Source</button></span></span></div>
+    ${state.audit ? audit(d).replace('class="audit-toggle"', 'class="audit-toggle" style="display:none"') : ''}
+    ${d.lead ? `<div class="lead-box" style="margin-top:var(--space-4)">${md(d.lead)}</div>` : ''}`;
+  const diagram = wires.length ? `<section><div class="eh"><h2>Attack surface</h2><span class="mono-note">${wires.length} crossings · hover or tap a node</span></div>
+    <div class="perim" id="perim"><div class="side l"><span class="side-h">Outside · untrusted</span>${L.map((n, k) => `<button class="pnode out ${hw ? (norm(hw.s.from) === n ? 'hot' : 'dim') : ''}" data-node="L${k}" data-wirefrom="${esc(n)}">${inline(n)}</button>`).join('')}</div>
+      <div class="trustline"><span>trust boundary</span></div>
+      <div class="side r"><span class="side-h">Inside · trusted</span>${R.map((n, k) => `<button class="pnode in ${hw ? (norm(hw.s.to) === n ? 'hot' : 'dim') : ''}" data-node="R${k}" data-wireto="${esc(n)}">${inline(n)}</button>`).join('')}</div>
+      <svg class="wires" id="wires"></svg></div>
+    <div class="wire-caption">${hw ? `<span class="k">${inline(hw.s.from)} → ${inline(hw.s.to)}</span><span><span class="mono-note">Carries · </span>${inline(hw.r.data)}</span><span class="muted">${inline(hw.r.desc)}</span>` : `<span class="muted">Pick a node to see what crosses the boundary there and why it matters.</span>`}</div>
+    ${stores.length ? `<div class="stores-e">${stores.map(r => `<div class="store"><b>${inline(r.name)}</b><span>${inline(r.data)} — ${inline(r.desc)}</span></div>`).join('')}</div>` : ''}</section>` : '';
+  window.__wires = { wires: wires.map(w => ({ i: w.i, from: L.indexOf(norm(w.s.from)), to: R.indexOf(norm(w.s.to)) })), hot };
+  const groups = [['mitigate', 'Mitigated', 'Fixed in code'], ['accept', 'Accepted', 'Risk taken on purpose — signed'], ['transfer', 'Transferred', 'Someone else carries it'], ['mixed', 'Mixed', 'Groups with several dispositions']].map(([k, l, sub]) => ({ k, l, sub, rs: M.rows.filter(r => r.disp === k).sort((a, b) => (a.status === 'closed') - (b.status === 'closed') || SEV_N[b.sev.top] - SEV_N[a.sev.top]) })).filter(g => g.rs.length);
+  const item = t => { const risk = M.riskFor(t.key); const o = state.open.has('e-' + t.i);
+    return `<button class="ditem" data-open="e-${t.i}" data-tone="${t.tone === 'complete' ? '' : t.tone}"><span class="r1"><span class="id">${esc(t.group ? t.id.split(',')[0] + '…' : t.id)}</span>${sevline(t)}</span><span class="c">${inline(threatTitle(t))}</span>${t.status !== 'closed' ? `<span class="r1"><span class="chip" data-tone="${t.tone}">${ST[t.status][0]}</span></span>` : ''}${risk ? `<span class="why">${inline(risk.why)}</span><span class="sig">— ${esc(risk.by)}, ${esc(fmtD(risk.date))} · ${esc(risk.id)}</span>` : ''}${o && !risk ? `<span class="why">${inline(t.mitigation)}</span>` : ''}</button>`; };
+  const cols = M.rows.length ? `<section><div class="eh"><h2>Threats, by what was done about them</h2><span class="mono-note">${M.rows.length} · open first</span></div>
+    <div class="dcols" style="--cols:${groups.length}">${groups.map(g => { const lim = state.open.has('col-' + g.k) ? 999 : (g.k === 'accept' ? 999 : 8); return `<div class="dcol"><h3><span>${g.l}</span><span class="n">${g.rs.length}</span></h3><p class="sub">${g.sub}</p>${g.rs.slice(0, lim).map(item).join('')}${g.rs.length > lim ? `<button class="link-btn" data-open="col-${g.k}" style="margin-top:var(--space-2)">+${g.rs.length - lim} more</button>` : ''}</div>`; }).join('')}</div>
+    ${!M.risks.length && d.risks?.note ? `<div class="notice" style="margin-top:var(--space-4)">${md(d.risks.note)}</div>` : ''}</section>` : md(d.register?.prose ?? '');
+  const foot = `<footer class="footer-stamp" id="signoff"><span class="mono-note">Sign-off</span><span class="ticks">${so.map(i => `<i class="${i.checked ? 'on' : ''}" title="${esc(plain(i.text))}"></i>`).join('')}</span><span>${inline(d.signoff?.approval ?? '—')}</span><button class="link-btn" data-open="e-so" style="margin-left:auto">${state.open.has('e-so') ? 'Hide checks ▴' : 'Checks ▾'}</button></footer>${state.open.has('e-so') ? signoffList(d) : ''}`;
+  return `${banner}${diagram}${cols}${extras(d)}${foot}`;
+}
+function drawWires() {
+  const svg = document.getElementById('wires'), box = document.getElementById('perim'); if (!svg || !box || !window.__wires) return;
+  const B = box.getBoundingClientRect(); const { wires, hot } = window.__wires;
+  svg.setAttribute('viewBox', `0 0 ${B.width} ${B.height}`); svg.setAttribute('width', B.width); svg.setAttribute('height', B.height);
+  svg.innerHTML = wires.map(w => { const a = box.querySelector(`[data-node="L${w.from}"]`).getBoundingClientRect(), b = box.querySelector(`[data-node="R${w.to}"]`).getBoundingClientRect();
+    const x1 = a.right - B.left, y1 = a.top + a.height / 2 - B.top, x2 = b.left - B.left, y2 = b.top + b.height / 2 - B.top, mx = (x1 + x2) / 2;
+    return `<path class="${hot == null ? '' : hot === w.i ? 'hot' : 'dim'}" d="M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}"/>`; }).join('');
+}
+window.addEventListener('resize', drawWires);
+
+/* F: audit report */
+function viewF(d, M) {
+  const [st, tone] = DOCSTATUS(d.fm.status); const open = +(d.fm.threats_open ?? M.openB.length);
+  const so = d.signoff?.items ?? []; const done = so.filter(i => i.checked).length;
+  const acc = M.rows.filter(r => r.disp === 'accept').length, mit = M.rows.filter(r => r.disp === 'mitigate').length;
+  const verdict = !M.rows.length ? `The register is written as prose.` : open
+    ? `<span class="hl-m">${open} ${M.openB[0]?.sev.top ?? ''} threat${open === 1 ? '' : 's'}</span> still open and blocking sign-off. ${M.closed} of ${M.rows.length} are closed.`
+    : M.openL.length ? `Nothing blocks sign-off. <span class="hl-f">${M.openL.length} low threat${M.openL.length === 1 ? ' is' : 's are'} still open</span>, below the ${esc(M.threshold)} threshold.`
+    : `<span class="hl-c">All ${M.rows.length} ${M.grouped ? 'threat groups' : 'threats'} are closed.</span> ${mit} mitigated in code${acc ? `, ${acc} accepted as risks` : ''}.`;
+  const sorted = [...M.rows].sort((a, b) => SEV_N[b.sev.top] - SEV_N[a.sev.top] || (a.status === 'closed') - (b.status === 'closed') || a.i - b.i);
+  const h = { critical: '3.2rem', high: '2.4rem', medium: '1.6rem', low: '1rem', unknown: '1rem' };
+  let prev = null;
+  const strip = M.rows.length ? `<div class="strip"><div class="cells">${sorted.map(t => { const g = prev && prev !== t.sev.top ? '<span class="gap"></span>' : ''; prev = t.sev.top; return `${g}<button data-tline="${t.i}" data-tone="${t.tone === 'complete' ? '' : t.tone}" data-disp="${t.disp}" style="height:${h[t.sev.top]}" title="${esc(t.id)} · ${t.sev.top} · ${ST[t.status][0]}"></button>`; }).join('')}</div>
+    <div class="key"><span>one bar per threat · height = severity</span><span><span class="dot-sq" style="width:.6rem;height:.6rem"></span>mitigated</span><span><span class="dot-sq" style="width:.6rem;height:.6rem;background:none;border-style:dashed"></span>accepted</span><span><span class="dot-sq" data-tone="missing" style="width:.6rem;height:.6rem"></span>open</span><span><span class="dot-sq" data-tone="in-flight" style="width:.6rem;height:.6rem"></span>open · non-blocking</span></div></div>` : '';
+  const fnum = new Map(M.risks.map((r, k) => [r.ref, k + 1]));
+  const fnFor = t => { const r = M.riskFor(t.key); return r ? fnum.get(r.ref) : null; };
+  const sec = (n, t, s, body, id) => `<section class="rp-sec" id="${id}"><div class="rp-margin"><span class="n">${n}</span><span class="t">${t}</span>${s ? `<span class="s">${s}</span>` : ''}</div><div>${body}</div></section>`;
+  const bands = ['critical', 'high', 'medium', 'low', 'unknown'].map(s => ({ s, rs: sorted.filter(t => t.sev.top === s) })).filter(b => b.rs.length);
+  const tl = t => { const o = state.open.has('f-' + t.i); const fn = fnFor(t); return `<button class="tline" id="tl-${t.i}" data-open="f-${t.i}"><span class="dot-sq" data-tone="${t.tone === 'complete' ? (t.disp === 'accept' ? 'quiet' : '') : t.tone}"></span><span class="id">${esc(t.group ? t.id.split(',')[0] + '…' : t.id)}</span><span>${inline(threatTitle(t))}${fn ? `<sup>${fn}</sup>` : ''}</span><span class="tail">${t.status === 'closed' ? esc(t.disp) : ST[t.status][0]}</span></button>${o ? `<div class="tline-more fade">${inline(t.mitigation)}</div>` : ''}`; };
+  const register = M.rows.length ? bands.map(b => { const lim = state.open.has('band-' + b.s) ? 999 : 6; const rs = [...b.rs].sort((a, c) => (a.status === 'closed') - (c.status === 'closed')); return `<div class="band"><div class="band-h">${pips(b.s)} ${b.s} · ${b.rs.length}</div>${rs.slice(0, lim).map(tl).join('')}${rs.length > lim ? `<button class="link-btn" data-open="band-${b.s}" style="padding:var(--space-2) 0">+${rs.length - lim} more ${b.s}</button>` : ''}</div>`; }).join('') : md(d.register?.prose ?? '');
+  const notes = M.risks.length ? `<ol class="fnotes">${M.risks.map((r, k) => { const t = M.rows.find(x => r.ref && r.ref.includes(x.key)); return `<li id="fn-${k + 1}"><span class="fn">${k + 1}</span><span><b style="font-weight:var(--fw-medium)">${esc(r.ref)}${t ? ` · ${inline(threatTitle(t))}` : ''}</b><br>${inline(r.why)}<span class="by">Accepted by ${esc(r.by)}, ${esc(fmtD(r.date))} · ${esc(r.id)}</span></span></li>`; }).join('')}</ol>` : `<div class="prose-flow">${md(d.risks?.note || 'No risks were accepted.')}</div>`;
+  const bounds = d.boundaries ? `<div class="prose-flow"><p>Untrusted input crosses into the system at <b>${d.boundaries.rows.length}</b> points.</p>${md(d.boundaries.rows.map(b => { const s = splitB(b.name); return s ? `- **${plain(s.from)}** → **${plain(s.to)}**, carrying *${plain(b.data)}*. ${b.desc}` : `- **${plain(b.name)}** holds *${plain(b.data)}*. ${b.desc}`; }).join('\n'))}</div>` : '';
+  const sig = `<div class="sigblock"><div><div class="sigline">${/verified|approved/i.test(d.signoff?.approval ?? '') && !/pending/i.test(d.signoff?.approval ?? '') ? esc(d.signoff.approval) : ''}</div><div class="sigcap">Approval · ${inline(d.signoff?.approval ?? '—')}</div></div><div>${signoffList(d)}</div></div>`;
+  return `<div class="report"><header class="rp-head"><div class="line"><span class="eyebrow" style="letter-spacing:var(--ls-widest)">Security report · Phase ${esc(String(d.fm.phase ?? '').replace(/^0+(?=\d)/, ''))}${d.synthetic ? ' <span class="synthetic">· synthetic</span>' : ''}</span><span class="chip" data-tone="${tone}">${esc(st)}</span><span>Created <b>${esc(fmtD(d.fm.created))}</b></span><span>ASVS <b>L${esc(d.fm.asvs_level ?? '—')}</b></span><span>Blocks at <b>${esc(M.threshold)}+</b></span><span style="margin-left:auto;display:flex;gap:var(--space-3);align-items:center"><button class="icon-btn" data-copy="${esc(d.file)}" aria-label="Copy file path">${ICON.link}</button><span class="seg"><button aria-pressed="true">View</button><button data-toast>Source</button></span></span></div>
+      <p class="mono-note" style="text-transform:none;letter-spacing:0;font-size:var(--fs-4);color:var(--foreground)">${esc(humanize(d.fm.slug))}</p>
+      <p class="rp-verdict">${verdict}</p>${d.lead ? `<div class="rp-sub">${md(d.lead)}</div>` : ''}${strip}</header>
+    ${sec('01', 'Threats', `${M.rows.length} by severity · superscripts point to accepted-risk notes`, register, 'register')}
+    ${sec('02', 'Accepted risks', M.risks.length ? `${M.risks.length} notes` : '', notes, 'risks')}
+    ${bounds ? sec('03', 'Trust boundaries', 'In plain words', bounds, 'bounds') : ''}
+    ${d.extras.length ? sec('·', 'Also recorded', '', extras(d), 'extras') : ''}
+    ${sec(bounds ? '04' : '03', 'Sign-off', `${done} of ${so.length}`, sig, 'signoff')}
+    ${sec('', 'Audit trail', 'Off by default', audit(d), 'audit')}</div>`;
+}
+
+/* ---------- render ---------- */
+function render() {
+  const d = DOCS[state.doc]; const M = model(d); const v = state.variant;
+  const sec = (id, n, title, aside, body) => body ? `<section id="${id}">${heading(n, title, aside)}${body}</section>` : '';
+  const bAside = d.boundaries ? `${d.boundaries.rows.length} places untrusted input crosses in` : '';
+  if ('def'.includes(v)) { document.getElementById('root').innerHTML = `<div class="page wide fade">${v === 'd' ? viewD(d, M) : v === 'e' ? viewE(d, M) : viewF(d, M)}</div>`; return finish(); }
+  let html = cover(d, M);
+  if (v === 'a') html += sec('register', '01', 'Threat register', 'Open first · severity × disposition', registerA(d, M)) + sec('risks', '02', 'Accepted risks', `${M.risks.length} signed off`, risksA(d, M)) + sec('bounds', '03', 'Trust boundaries', bAside, boundariesA(d)) + extras(d) + signoff(d, '04') + audit(d);
+  if (v === 'b') html += sec('bounds', '01', 'Where it can be attacked', bAside, boundaryMap(d)) + sec('register', '02', 'Threats by kind', 'STRIDE · open first in each lane', strideLanes(d, M)) + sec('risks', '03', 'Accepted risks', 'When and why', riskTimeline(d, M)) + extras(d) + signoff(d, '04') + audit(d);
+  if (v === 'c') html += sec('risks', '01', 'Needs a human eye', 'Open threats · accepted risks', attention(d, M)) + sec('register', '02', 'Threat register', 'Click a heading to sort', ledger(d, M)) + (d.boundaries ? `<div class="extras"><details><summary>Trust boundaries · ${d.boundaries.rows.length}</summary><div style="padding:0 var(--space-4) var(--space-4)">${boundariesA(d)}</div></details></div>` : '') + extras(d) + signoff(d, '03') + audit(d);
+  document.getElementById('root').innerHTML = `<div class="page fade">${html}${sourceOnly()}</div>`;
+  finish();
+}
+function finish() {
+  document.documentElement.classList.toggle('dark', state.theme === 'dark');
+  const f = document.getElementById('frame');
+  f.style.maxWidth = state.width === 'full' ? 'none' : state.width + 'px';
+  f.classList.toggle('narrow-frame', state.width !== 'full');
+  document.querySelectorAll('.variant-tab').forEach(t => t.classList.toggle('active', t.dataset.variant === state.variant));
+  document.querySelectorAll('#sketch-tools button').forEach(b => b.classList.toggle('on', b.dataset.doc === state.doc || b.dataset.theme === state.theme || b.dataset.width === state.width));
+  requestAnimationFrame(drawWires);
+}
+document.getElementById('doc-btns').innerHTML = Object.entries(DOCS).map(([k, d]) => `<button data-doc="${k}">${esc(d.label)}</button>`).join('');
+function toast(msg) { const t = document.createElement('div'); t.textContent = msg; t.style.cssText = 'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--foreground);color:var(--background);padding:8px 16px;font-family:var(--font-mono);font-size:var(--fs-2);z-index:10000'; document.body.appendChild(t); setTimeout(() => t.remove(), 1400); }
+function jumpTo(id) { const el = document.getElementById(id); if (!el) return; el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 900); }
+document.addEventListener('click', e => {
+  const c = e.target.closest('[data-copy]'); if (c) { try { navigator.clipboard.writeText(c.dataset.copy); } catch {} toast('Path copied'); return; }
+  const t = e.target.closest('button'); if (!t) return;
+  const y = window.scrollY;
+  if (t.dataset.variant) { state.variant = t.dataset.variant; state.open.clear(); state.f = null; state.pick = null; state.wire = null; }
+  else if (t.dataset.doc) { state.doc = t.dataset.doc; state.open.clear(); state.f = null; state.pick = null; state.wire = null; }
+  else if (t.dataset.theme) state.theme = t.dataset.theme;
+  else if (t.dataset.width) state.width = t.dataset.width;
+  else if (t.dataset.jump) { if (t.dataset.openthreat) { state.open.add('t-' + t.dataset.openthreat); state.open.add('closed'); } if (/^th-/.test(t.dataset.jump)) state.open.add('closed'); render(); return jumpTo(t.dataset.jump); }
+  else if (t.dataset.pick !== undefined && t.dataset.pick !== '') { const i = +t.dataset.pick; state.pick = state.pick === i ? null : i; }
+  else if (t.dataset.jumpto) return jumpTo(t.dataset.jumpto);
+  else if (t.dataset.tline) { state.open.add('f-' + t.dataset.tline); const r = model(DOCS[state.doc]).rows.find(x => x.i === +t.dataset.tline); if (r) state.open.add('band-' + r.sev.top); render(); return jumpTo('tl-' + t.dataset.tline); }
+  else if (t.dataset.node) { const w = window.__wires?.wires.find(x => (t.dataset.node[0] === 'L' ? 'L' + x.from : 'R' + x.to) === t.dataset.node && x.i !== state.wire) ?? null; state.wire = w ? w.i : null; }
+  else if (t.dataset.f) state.f = state.f === t.dataset.f ? null : t.dataset.f;
+  else if (t.dataset.sort) state.sort = t.dataset.sort;
+  else if ('audit' in t.dataset) state.audit = !state.audit;
+  else if (t.dataset.open) { const k = t.dataset.open; state.open.has(k) ? state.open.delete(k) : state.open.add(k); }
+  else if ('toast' in t.dataset) return toast('Opens Source mode at this section');
+  else return;
+  render(); window.scrollTo(0, y);
+});
+render();
+</script>
+</body>
+</html>
