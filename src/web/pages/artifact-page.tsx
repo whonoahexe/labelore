@@ -55,6 +55,8 @@ import type { ComposedResearchBriefing } from '../views/research-briefing.ts';
 import { ResearchBriefingView, ResearchIntroMeta } from '../views/research-briefing-components.tsx';
 import type { ComposedPatternMap } from '../views/pattern-map.ts';
 import { PatternIntroMeta, PatternMapView } from '../views/pattern-map-components.tsx';
+import type { ComposedUiReview } from '../views/ui-review.ts';
+import { UiReviewIntroMeta, UiReviewView } from '../views/ui-review-components.tsx';
 import type { ComposedUiSpec } from '../views/ui-spec.ts';
 import { UiSpecIntroMeta, UiSpecView } from '../views/ui-spec-components.tsx';
 import type { ComposedUatSession } from '../views/uat-session.ts';
@@ -603,6 +605,13 @@ export function ArtifactPage(): React.JSX.Element {
     if (!manifest || !viewInput) return null;
     return manifest.patternMap?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // quick-261003-528 (sketch-018 B): the UI-REVIEW scorecard, when the resolved manifest opts into
+  // one — `null` for every other kind, for a document with no pillar rows and for a payload from a
+  // server that predates `structured.uiReview` (the promoted-block view then renders).
+  const uiReview = useMemo<ComposedUiReview | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.uiReview?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // quick-261001-qk6 (sketch-014 winner): the UI-SPEC contract page, when the resolved manifest
   // opts into one — `null` for every other kind, and for a contract with none of the recognised
   // sections or a payload from a server that predates `structured.uiSpec` (the promoted-block view
@@ -652,6 +661,7 @@ export function ArtifactPage(): React.JSX.Element {
     brief !== null ||
     briefing !== null ||
     patternMap !== null ||
+    uiReview !== null ||
     uiSpec !== null ||
     uatSession !== null ||
     (composed !== null && composed.blocks.length > 0);
@@ -710,6 +720,28 @@ export function ArtifactPage(): React.JSX.Element {
       : []),
     { label: artifact.title },
   ];
+  // quick-261003-528 (sketch-018 B): the UI-REVIEW scorecard opens straight on its own header (no
+  // breadcrumb row, manifest lead or metadata disclosure) and replaces the page in View mode. A
+  // review carrying a parse warning falls through to the normal page, whose chip and disclosure
+  // already say so.
+  if (uiReview && mode === 'view' && warningTone === null) {
+    return (
+      <main className="artifact-page page-stack">
+        <ArtifactHeader
+          crumbs={crumbs}
+          hideCrumbs
+          eyebrow={uiReview.intro.eyebrow}
+          title={uiReview.intro.title ?? artifact.title}
+          path={artifact.path}
+          lead={null}
+          meta={<UiReviewIntroMeta intro={uiReview.intro} />}
+        >
+          <DocumentViewToggle mode={mode} onChange={setMode} />
+        </ArtifactHeader>
+        <UiReviewView key={artifact.path} review={uiReview} onShowSource={showSource} />
+      </main>
+    );
+  }
   // A cover page's eyebrow already names the kind: move `Phase N` up beside it and keep only the
   // phase name in the H1. The CONTEXT brief's eyebrow already carries the phase, so it only takes
   // the stripped H1.

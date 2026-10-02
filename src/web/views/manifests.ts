@@ -14,6 +14,7 @@ import type { PromotedBlock, ViewInput, ViewManifest } from './manifest.ts';
 import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
 import { composePatternMap } from './pattern-map.ts';
+import { composeUiReview } from './ui-review.ts';
 import { composeUiSpec } from './ui-spec.ts';
 import { composeUatSession } from './uat-session.ts';
 
@@ -238,6 +239,7 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
       { type: 'section', heading: /^detailed findings/i },
       { type: 'section', heading: /^summary$/i },
     ],
+    uiReview: composeUiReview,
   },
   coverage: {
     kind: 'coverage',
