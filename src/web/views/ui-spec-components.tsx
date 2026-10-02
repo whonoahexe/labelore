@@ -501,14 +501,6 @@ function SpacingRuler({
               </span>
             </div>
           ))}
-          {spacing.prose.length > 0 ? (
-            <div>
-              <span className="view-ui-spec-dk">Notes</span>
-              <span className="view-ui-spec-dv">
-                <ResearchBlocks blocks={spacing.prose} />
-              </span>
-            </div>
-          ) : null}
         </div>
       ) : null}
     </div>
