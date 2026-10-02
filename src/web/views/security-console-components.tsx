@@ -291,7 +291,7 @@ function Waiver({
             <ResearchInline text={waiver.title} />
           </b>
         ) : null}
-        <span className="view-security-md" data-clamp={clamped ? 'true' : 'false'}>
+        <span className="view-security-why" data-clamp={clamped ? 'true' : 'false'}>
           <ResearchInline text={waiver.rationale} />
         </span>
         {waiver.long ? (

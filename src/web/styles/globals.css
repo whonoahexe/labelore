@@ -6329,7 +6329,13 @@ button.view-security-ref:hover {
   font-size: var(--fs-4);
 }
 
-.view-security-md[data-clamp='true'] {
+.view-security-why {
+  display: block;
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+
+.view-security-why[data-clamp='true'] {
   display: -webkit-box;
   overflow: hidden;
   -webkit-box-orient: vertical;
@@ -6399,8 +6405,7 @@ button.view-security-ref:hover {
 .view-security-board {
   display: grid;
   grid-template-columns: 7rem;
-  width: max-content;
-  min-width: 100%;
+  min-width: 40rem;
 }
 
 .view-security-board[data-cols='1'] {
@@ -6496,6 +6501,13 @@ button.view-security-ref:hover {
   cursor: pointer;
 }
 
+/* A closed square rests a step quieter than an open one, so a handful of open threats read at a glance
+   against dozens of closed ones; the other tones below stand at full strength. */
+.view-security-square,
+.view-security-key-sq {
+  opacity: 0.72;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .view-security-square {
     transition: transform 0.12s ease;
@@ -6510,18 +6522,21 @@ button.view-security-ref:hover {
 .view-security-key-sq[data-tone='missing'] {
   border-color: var(--missing-fill);
   background: var(--missing-fill);
+  opacity: 1;
 }
 
 .view-security-square[data-tone='in-flight'],
 .view-security-key-sq[data-tone='in-flight'] {
   border-color: var(--in-flight-fill);
   background: var(--in-flight-fill);
+  opacity: 1;
 }
 
 .view-security-square[data-tone='quiet'],
 .view-security-key-sq[data-tone='quiet'] {
   border-color: var(--muted-foreground);
   background: var(--muted);
+  opacity: 1;
 }
 
 .view-security-square[data-accepted='true'],
@@ -6531,6 +6546,7 @@ button.view-security-ref:hover {
 }
 
 .view-security-square[aria-pressed='true'] {
+  opacity: 1;
   outline: 2px solid var(--foreground);
   outline-offset: 1px;
 }
@@ -6669,8 +6685,14 @@ button.view-security-ref:hover {
   text-transform: uppercase;
 }
 
+.view-security-who i,
+.view-security-content em {
+  font-synthesis-style: auto;
+}
+
 .view-security-who i {
   display: block;
+  font-style: italic;
   color: var(--foreground);
   font-family: var(--font-heading);
   font-size: var(--fs-3);
@@ -6841,7 +6863,7 @@ button.view-security-ref:hover {
 
 .view-security-run {
   display: grid;
-  grid-template-columns: 7.5rem minmax(8rem, 1fr) 9rem minmax(0, 1.5fr);
+  grid-template-columns: 7.5rem minmax(8rem, 1fr) 13rem minmax(0, 1.5fr);
   gap: var(--space-4);
   align-items: center;
   font-size: var(--fs-3);
