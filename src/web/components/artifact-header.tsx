@@ -39,6 +39,7 @@ export function ArtifactHeader({
   children,
   cover,
   meta,
+  hideCrumbs = false,
 }: {
   crumbs: ArtifactCrumb[];
   eyebrow: string;
@@ -49,8 +50,10 @@ export function ArtifactHeader({
   children?: React.ReactNode;
   cover?: { facts?: React.ReactNode; cells: React.ReactNode };
   meta?: React.ReactNode;
+  /** Drops the breadcrumb row — the UI-SPEC and UAT pages open straight on their cover. */
+  hideCrumbs?: boolean;
 }): React.JSX.Element {
-  const breadcrumbs = (
+  const breadcrumbs = hideCrumbs ? null : (
     <nav className="artifact-breadcrumbs" aria-label="Breadcrumb">
       {crumbs.map((crumb, index) => (
         <Fragment key={`${index}-${crumb.label}`}>
