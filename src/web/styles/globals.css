@@ -9878,6 +9878,14 @@ button.view-ui-spec-signoff:hover {
   row-gap: var(--space-4);
 }
 
+/* The cover carries the frontmatter facts and the "In the source only" strip names the frontmatter,
+   so View mode hides the Document metadata disclosure (Source mode has no cover and keeps it). A
+   style rule instead of an edit to the page's shared metadata condition keeps the sibling merges
+   conflict-free; the warning disclosure shares the class and stays. */
+.artifact-page:has(.view-validation-cover) > .artifact-metadata:not(.artifact-warning-disclosure) {
+  display: none;
+}
+
 .view-validation-facts {
   display: flex;
   flex-wrap: wrap;
@@ -9941,6 +9949,12 @@ button.view-ui-spec-signoff:hover {
   font-size: var(--fs-1);
   letter-spacing: var(--ls-wider);
   text-transform: uppercase;
+}
+
+@media (max-width: 42rem) {
+  .view-validation-aside {
+    flex-basis: 100%;
+  }
 }
 
 .view-validation-dims {
@@ -10784,6 +10798,8 @@ button.view-validation-ref[aria-pressed='true'] {
 }
 
 .view-validation-template {
+  display: grid;
+  gap: var(--space-2);
   border-left: 3px solid var(--border);
 }
 
@@ -11045,6 +11061,12 @@ button.view-validation-ref[aria-pressed='true'] {
   font-size: var(--fs-fluid-3);
 }
 
+/* The stamp states the whole approval line; only the cover cell clamps it. */
+.view-validation-stamp .view-validation-approval {
+  display: block;
+  overflow: visible;
+}
+
 /* Extras: the sections the view does not place, folded. */
 .view-validation-extras {
   gap: var(--space-2);
@@ -11174,7 +11196,7 @@ button.view-validation-ref[aria-pressed='true'] {
     .view-validation-extras,
     .view-validation-source-only
   ) {
-  margin-top: var(--space-fluid-10);
+  margin-top: var(--space-10);
 }
 /* quick-261003-526:end */
 
