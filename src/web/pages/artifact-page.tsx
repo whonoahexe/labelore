@@ -53,6 +53,7 @@ import type { ComposedContextBrief } from '../views/context-brief.ts';
 import { ContextBriefView, ContextIntroMeta } from '../views/context-brief-components.tsx';
 import type { ComposedSecurityConsole } from '../views/security-console.ts';
 import { SecurityConsoleView } from '../views/security-console-components.tsx';
+import { WarningChip } from '../components/warning-chip.tsx';
 import type { ComposedResearchBriefing } from '../views/research-briefing.ts';
 import { ResearchBriefingView, ResearchIntroMeta } from '../views/research-briefing-components.tsx';
 import type { ComposedPatternMap } from '../views/pattern-map.ts';
@@ -722,16 +723,7 @@ export function ArtifactPage(): React.JSX.Element {
           mode={mode}
           onModeChange={setMode}
           onShowSource={showSource}
-          chip={
-            warningTone ? (
-              <span
-                className="status-chip"
-                data-tone={warningTone === 'unreadable' ? 'destructive' : 'warning'}
-              >
-                {warningTone === 'unreadable' ? 'Unreadable' : 'Warning'}
-              </span>
-            ) : null
-          }
+          chip={<WarningChip tone={warningTone} />}
         />
       </main>
     );
