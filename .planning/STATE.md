@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-05T13:08:52.472Z"
+last_updated: "2026-10-05T14:00:42.480Z"
 last_activity: 2026-10-05
 last_activity_desc: Completed quick task 260929-3x3 (RESEARCH page view)
-state_head: 9fde49b3fa69334567e570fc3d0413cd1867aca7
+state_head: 48e4896288e229e5d6204d235a95379c8b5ba1f3
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -158,6 +158,7 @@ None.
 | 261005-p1x | SECURITY page: trust boundaries grouped by destination, residual observations as a closed toggle with threat cross-links | 2026-10-05 | e737d0c | [261005-p1x-security-page-trust-boundaries-grouped-b](./quick/261005-p1x-security-page-trust-boundaries-grouped-b/) |
 | 44 | UI-REVIEW page: restyle back-matter summary body (muted fs-3 prose, ruled list, paragraph spacing, part dividers) | 2026-10-05 | 8d164f0 | — |
 | 45 | UI-REVIEW page: found-card lead text gets muted prose with foreground code chips and bold spans | 2026-10-05 | 9fde49b | — |
+| 46 | add a toggle open/collapse all in the sidebar-drawer-header | 2026-10-05 | 48e4896 | — |
 
 ## Deferred Items
 
