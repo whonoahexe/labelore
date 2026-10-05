@@ -2,7 +2,7 @@
 // (identity, status chip and facts, the threats-open gauge, nav with counts, the sign-off stamp, the
 // audit-trail switch, copy-path and View/Source) beside a content column — the lead Summary, the
 // severity x STRIDE threat board with its legend and detail panel, the waiver ledger, the trust
-// boundaries as destination blocks, the folded extras, the sign-off checklist, the audit trail when
+// boundaries as destination blocks, the residual-observations toggle, the folded extras, the sign-off checklist, the audit trail when
 // switched on and the "In the source only" strip. Every string derived from the document renders
 // only through `ResearchInline` / `ResearchBlocks` (tokenizeInline output mapped to React nodes) or
 // as plain React text — never React's raw-HTML injection prop (T-527-02), and no href is built from
@@ -19,6 +19,7 @@ import type {
   ComposedSecurityConsole,
   ComposedSecurityCrossing,
   ComposedSecurityDestination,
+  ComposedSecurityResiduals,
   ComposedSecurityThreat,
   ComposedSecurityWaiver,
 } from './security-console.ts';
@@ -183,10 +184,12 @@ function Detail({
   model,
   pick,
   onJump,
+  onResidual,
 }: {
   model: ComposedSecurityConsole;
   pick: number | null;
   onJump: (anchorId: string) => void;
+  onResidual: (anchorId: string) => void;
 }): React.JSX.Element {
   const threat = pick === null ? undefined : model.threats[pick];
   if (!threat) {
@@ -199,6 +202,9 @@ function Detail({
     );
   }
   const risks = threat.riskIndexes.map((i) => model.waivers.rows[i]).filter((r) => r !== undefined);
+  const residualItems = threat.residualIndexes
+    .map((i) => model.residuals?.items[i])
+    .filter((item) => item !== undefined);
   return (
     <div id="security-detail" className="view-security-detail" aria-live="polite">
       <div className="view-security-detail-head">
@@ -242,6 +248,18 @@ function Detail({
             </button>
           </p>
         ))}
+        {residualItems.length > 0 ? (
+          <p>
+            <button
+              type="button"
+              className="view-security-link"
+              onClick={() => onResidual(residualItems[0].anchorId)}
+            >
+              {residualItems.length === 1 ? '1 residual observation' : `${residualItems.length} residual observations`}
+            </button>
+            {' ↓'}
+          </p>
+        ) : null}
       </div>
     </div>
   );
@@ -378,6 +396,79 @@ function Destination({ dest }: { dest: ComposedSecurityDestination }): React.JSX
 }
 
 // ---------------------------------------------------------------------------
+// Residual observations
+// ---------------------------------------------------------------------------
+
+function Residuals({
+  residuals,
+  expanded,
+  flashed,
+  onToggle,
+  onPickRef,
+}: {
+  residuals: ComposedSecurityResiduals;
+  expanded: boolean;
+  flashed: string | null;
+  onToggle: (key: string) => void;
+  onPickRef: (threatIndex: number) => void;
+}): React.JSX.Element {
+  return (
+    <section id="security-residuals" className="view-security-block view-security-residuals">
+      <button
+        type="button"
+        className="view-security-residuals-toggle"
+        aria-expanded={expanded}
+        aria-controls={expanded ? 'security-residuals-list' : undefined}
+        data-open={expanded ? 'true' : 'false'}
+        onClick={() => onToggle('residuals')}
+      >
+        {residuals.label}
+      </button>
+      {residuals.lead.length > 0 ? (
+        <div className="view-security-residuals-lead">
+          <ResearchBlocks blocks={residuals.lead} />
+        </div>
+      ) : null}
+      {expanded ? (
+        <ol id="security-residuals-list" className="view-security-residual-list">
+          {residuals.items.map((item) => (
+            <li
+              key={item.anchorId}
+              id={item.anchorId}
+              className="view-security-residual"
+              data-flash={flashed === item.anchorId ? 'true' : 'false'}
+            >
+              <div className="view-security-residual-head">
+                <h3>
+                  <ResearchInline text={item.title} />
+                </h3>
+                {item.refs.map((ref) =>
+                  ref.threatIndex === null ? (
+                    <span key={ref.text} className="view-security-ref" data-plain="true">
+                      {ref.text}
+                    </span>
+                  ) : (
+                    <button
+                      key={ref.text}
+                      type="button"
+                      className="view-security-ref"
+                      onClick={() => onPickRef(ref.threatIndex as number)}
+                    >
+                      {ref.text}
+                    </button>
+                  ),
+                )}
+              </div>
+              {item.blocks.length > 0 ? <Prose blocks={item.blocks} /> : null}
+            </li>
+          ))}
+        </ol>
+      ) : null}
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // The view
 // ---------------------------------------------------------------------------
 
@@ -448,6 +539,16 @@ export function SecurityConsoleView({
     (index: number): void => {
       setPick(index);
       jump('security-detail');
+    },
+    [jump],
+  );
+
+  // The items mount only while the toggle is open: open it (never close it), then scroll to the
+  // item once it has mounted.
+  const openResidual = useCallback(
+    (anchorId: string): void => {
+      setOpen((current) => (current.has('residuals') ? current : new Set(current).add('residuals')));
+      window.requestAnimationFrame(() => jump(anchorId));
     },
     [jump],
   );
@@ -553,7 +654,7 @@ export function SecurityConsoleView({
             <>
               <Board model={model} pick={pick} onPick={onPickSquare} />
               <Legend />
-              <Detail model={model} pick={pick} onJump={jump} />
+              <Detail model={model} pick={pick} onJump={jump} onResidual={openResidual} />
             </>
           ) : model.board.prose ? (
             <Prose blocks={model.board.prose} />
@@ -611,6 +712,16 @@ export function SecurityConsoleView({
               </div>
             ) : null}
           </section>
+        ) : null}
+
+        {model.residuals ? (
+          <Residuals
+            residuals={model.residuals}
+            expanded={open.has('residuals')}
+            flashed={flashed}
+            onToggle={toggle}
+            onPickRef={onPickRef}
+          />
         ) : null}
 
         {model.extras.length > 0 ? (
