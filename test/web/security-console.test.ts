@@ -10,6 +10,8 @@ import { synthesize } from '../helpers/security-synthetic.ts';
 import { SecurityHandler } from '../../src/planning-repo/handlers/security.ts';
 import type { ArtifactRef, RawArtifact } from '../../src/planning-repo/types.ts';
 import {
+  AT_REST_LABEL,
+  BOUNDARY_TONE,
   DOC_STATUS,
   RUN_TONE,
   SEV_PIPS,
@@ -73,7 +75,7 @@ function composed(path: URL | string, headings: ViewInput['headings'] = []): Com
 
 function render(
   model: ComposedSecurityConsole,
-  extra: { initialPick?: number | null; initialAudit?: boolean } = {},
+  extra: { initialPick?: number | null; initialAudit?: boolean; initialOpen?: readonly string[] } = {},
 ): string {
   return renderToStaticMarkup(
     createElement(SecurityConsoleView, {
@@ -156,7 +158,7 @@ describe('composeSecurityConsole — LB v1.1/05', () => {
     expect(model.nav).toEqual([
       { id: 'security-board', label: 'Threats', count: '19' },
       { id: 'security-waivers', label: 'Accepted risks', count: '8' },
-      { id: 'security-flows', label: 'Trust boundaries', count: '8' },
+      { id: 'security-boundaries', label: 'Trust boundaries', count: '8' },
       { id: 'security-signoff', label: 'Sign-off', count: '4/4' },
     ]);
   });
@@ -244,6 +246,160 @@ describe('composeSecurityConsole — literal inputs', () => {
   });
 });
 
+const REGISTER = [
+  '## Threat Register',
+  '',
+  '| Threat ID | Category | Component | Severity | Disposition | Mitigation | Status |',
+  '|---|---|---|---|---|---|---|',
+  '| T-1-01 | Tampering | c | high | mitigate | m | closed |',
+  '',
+].join('\n');
+
+/** A literal doc through the real handler, with a Trust Boundaries table built from the rows. */
+function boundaryDoc(rows: [string, string, string][], after = ''): ViewInput {
+  const table = [
+    '## Trust Boundaries',
+    '',
+    '| Boundary | Description | Data Crossing |',
+    '|---|---|---|',
+    ...rows.map(([name, description, data]) => `| ${name} | ${description} | ${data} |`),
+    after,
+    '',
+  ].join('\n');
+  return inputOf(`---\nstatus: verified\n---\n\n# Doc\n\n${table}\n${REGISTER}`);
+}
+
+describe('composeSecurityConsole — trust boundaries by destination', () => {
+  const doc = boundaryDoc([
+    ['browser → backend (via tunnel)', 'front door', 'cookies'],
+    ['Edge -> Backend (session validation)', 'hot path', 'session'],
+    ['unauthenticated caller → `POST /login`', 'guessing surface', 'password'],
+    ['cache (in-process)', 'shared state', 'addresses'],
+    ['client → `POST /login`', 'normal login', 'handle'],
+    ['Untrusted CI → build', 'third-party code', 'packages'],
+  ]);
+  const model = composeSecurityConsole(doc);
+  const blocks = model?.boundaries?.destinations ?? [];
+
+  it('groups shared destinations, gathers single ones into one list and ends at rest', () => {
+    expect(model?.boundaries?.total).toBe(6);
+    expect(blocks.map((b) => [b.label, b.countText, b.kind])).toEqual([
+      ['Backend', '2 ways in', 'shared'],
+      ['`POST /login`', '2 ways in', 'shared'],
+      ['Other crossings', '1', 'single'],
+      [AT_REST_LABEL, '1', 'at-rest'],
+    ]);
+    expect(blocks.map((b) => b.anchorId)).toEqual(['security-dest-0', 'security-dest-1', 'security-dest-2', 'security-dest-3']);
+  });
+
+  it('merges the -> arrow with the → arrow, case-insensitively, keeping qualifiers as asides', () => {
+    const backend = blocks[0];
+    expect(backend.crossings.map((c) => c.source)).toEqual(['browser', 'Edge']);
+    expect(backend.crossings.map((c) => c.qualifier)).toEqual(['via tunnel', 'session validation']);
+    expect(blocks[1].crossings.map((c) => c.qualifier)).toEqual([null, null]);
+  });
+
+  it('lands singletons in the single list with their destination, and no-arrow rows at rest', () => {
+    const single = blocks[2].crossings[0];
+    expect(single).toMatchObject({ source: 'Untrusted CI', destination: 'Build', data: 'packages' });
+    const rest = blocks[3].crossings[0];
+    expect(rest).toMatchObject({ source: 'cache (in-process)', qualifier: null, tone: 'quiet' });
+  });
+
+  it('tones only the unauthenticated, untrusted and anonymous sources; every data chip is quiet', () => {
+    const all = blocks.flatMap((b) => b.crossings);
+    expect(all.filter((c) => c.tone === 'in-flight').map((c) => c.source)).toEqual(['unauthenticated caller', 'Untrusted CI']);
+    expect(all.every((c) => c.dataTone === 'quiet')).toBe(true);
+    expect(BOUNDARY_TONE).toEqual({ exposed: 'in-flight', internal: 'quiet', crossing: 'quiet' });
+  });
+
+  it('counts the table rows in the nav, under the boundaries id', () => {
+    expect(model?.nav.find((n) => n.label === 'Trust boundaries')).toEqual({
+      id: 'security-boundaries',
+      label: 'Trust boundaries',
+      count: '6',
+    });
+  });
+
+  it('orders ties by first appearance, and reads a lone destination as "Crossings"', () => {
+    const tie = composeSecurityConsole(
+      boundaryDoc([
+        ['x → A', 'd', 'k'],
+        ['y → B', 'd', 'k'],
+        ['z → B', 'd', 'k'],
+        ['w → A', 'd', 'k'],
+      ]),
+    )?.boundaries?.destinations;
+    expect(tie?.map((b) => b.label)).toEqual(['A', 'B']);
+    const lone = composeSecurityConsole(boundaryDoc([['x → A', 'd', 'k'], ['y → B', 'd', 'k']]))?.boundaries?.destinations;
+    expect(lone?.map((b) => [b.label, b.countText, b.kind])).toEqual([['Crossings', '2', 'single']]);
+  });
+
+  it('falls back to the raw text for an unbalanced parenthesis and for a row with an empty side', () => {
+    const odd = composeSecurityConsole(boundaryDoc([['a → (open', 'd', 'k'], ['→ b', 'd', 'k']]))?.boundaries?.destinations ?? [];
+    expect(odd[0].crossings[0].destination).toBe('(open');
+    expect(odd[0].crossings[0].qualifier).toBe('open');
+    expect(odd[1]).toMatchObject({ kind: 'at-rest' });
+    expect(odd[1].crossings[0].source).toBe('→ b');
+  });
+
+  it('degrades to no section and no nav entry without a table, or without boundaries at all', () => {
+    const noTable = inputOf(`---\nstatus: verified\n---\n\n# Doc\n\n## Trust Boundaries\n\nJust prose here.\n\n${REGISTER}`);
+    const none = composeSecurityConsole(noTable);
+    expect(none?.boundaries).toBeNull();
+    expect(none?.nav.some((n) => n.label === 'Trust boundaries')).toBe(false);
+    const raw = composeSecurityConsole({
+      ...noTable,
+      structured: { security: { register: (noTable.structured.security as { register: unknown }).register } },
+    });
+    expect(raw?.boundaries).toBeNull();
+  });
+
+  it('keeps the prose around the table as the note, rendered under the blocks', () => {
+    const withNote = composeSecurityConsole(boundaryDoc([['x → A', 'd', 'k']], '\nThe dominant threat classes are listed above.'));
+    expect(JSON.stringify(withNote?.boundaries?.note)).toContain('dominant threat classes');
+    expect(render(withNote as ComposedSecurityConsole)).toContain('dominant threat classes');
+  });
+
+  it.runIf(existsSync(SP1))('SP P1: Backend (2), the other six crossings in document order, then at rest (2)', () => {
+    const sp = composed(SP1).boundaries?.destinations ?? [];
+    expect(sp.map((b) => [b.label, b.countText, b.kind])).toEqual([
+      ['Backend', '2 ways in', 'shared'],
+      ['Other crossings', '6', 'single'],
+      [AT_REST_LABEL, '2', 'at-rest'],
+    ]);
+    expect(sp[0].crossings.map((c) => [c.source, c.qualifier])).toEqual([
+      ['browser', 'via Cloudflare tunnel'],
+      ['Vercel edge', 'session validation'],
+    ]);
+    expect(sp[1].crossings.map((c) => c.destination)).toEqual([
+      '`POST /api/login`',
+      'Every handler',
+      'Filesystem',
+      'Vercel edge',
+      '`backstage` process',
+      'Build',
+    ]);
+    expect(sp[1].crossings[3].qualifier).toBe('route gate');
+    expect(sp.flatMap((b) => b.crossings).filter((c) => c.tone === 'in-flight').map((c) => c.source)).toEqual([
+      'unauthenticated caller',
+    ]);
+  });
+
+  it.runIf(existsSync(SP3))('SP P3: one "Crossings · 10" block and one toned source', () => {
+    const sp = composed(SP3).boundaries?.destinations ?? [];
+    expect(sp.map((b) => [b.label, b.countText, b.kind])).toEqual([['Crossings', '10', 'single']]);
+    expect(sp[0].crossings.filter((c) => c.tone === 'in-flight').map((c) => c.source)).toEqual(['unauthenticated browser']);
+  });
+
+  it('composes a pathological destination and source in well under 250 ms without throwing', () => {
+    const started = performance.now();
+    const huge = composeSecurityConsole(boundaryDoc([[`${'x'.repeat(100_000)} → ${'('.repeat(100_000)}`, 'd', 'k']]));
+    expect(performance.now() - started).toBeLessThan(250);
+    expect(huge?.boundaries?.destinations).toHaveLength(1);
+  });
+});
+
 describe('SecurityConsoleView — static markup', () => {
   it('renders the dense fixture as the blocking console', () => {
     const html = render(composed(FX));
@@ -302,12 +458,38 @@ describe('SecurityConsoleView — static markup', () => {
     }
   });
 
-  it.runIf(existsSync(SP1))('SP P1: ten flows, two stores that hold their data, a disclosure for each', () => {
+  it.runIf(existsSync(SP1))('SP P1: three blocks, descriptions always visible, one toned source', () => {
     const html = render(composed(SP1));
-    expect(count(html, 'view-security-flow-row"')).toBe(10);
-    expect(count(html, 'view-security-flow-row" data-store="true"')).toBe(2);
-    expect(count(html, 'holds ')).toBe(2);
-    expect(count(html, 'aria-controls="flow-')).toBe(10);
+    expect(count(html, '<div id="security-dest-')).toBe(3);
+    expect(html).toContain('id="security-dest-0"');
+    expect(html).toContain('id="security-dest-2"');
+    expect(html).not.toContain('id="security-dest-3"');
+    const first = html.slice(html.indexOf('id="security-dest-0"'), html.indexOf('id="security-dest-1"'));
+    expect(first).toContain('Backend');
+    expect(first).toContain(' · 2 ways in');
+    expect(first).toContain('via Cloudflare tunnel');
+    expect(html).toContain(' · 6');
+    expect(html).toContain('Other crossings');
+    expect(html).toContain('At rest / in-process');
+    expect(html.lastIndexOf('At rest / in-process')).toBeGreaterThan(html.indexOf('Other crossings'));
+    // The at-rest block is the last block.
+    expect(html.indexOf('data-at-rest="true"')).toBeGreaterThan(html.indexOf('id="security-dest-1"'));
+    expect(count(html, 'class="view-security-from" data-tone="in-flight"')).toBe(1);
+    expect(count(html, 'class="view-security-carries" data-tone="quiet"')).toBe(10);
+    expect(count(html, 'class="view-security-crossing-desc"')).toBe(10);
+    expect(html).not.toContain('>why<');
+    expect(html).not.toContain('>hide<');
+    expect(count(html, 'aria-controls="flow-')).toBe(0);
+  });
+
+  it('a boundary section renders the single list with source → destination leads', () => {
+    const html = render(composed(LB05));
+    expect(count(html, 'id="security-boundaries"')).toBe(1);
+    expect(html).toContain('Crossings');
+    expect(html).not.toContain('Other crossings');
+    expect(count(html, '<div id="security-dest-')).toBe(1);
+    expect(count(html, 'class="view-security-to-arrow"')).toBe(8);
+    expect(count(html, 'class="view-security-from" data-tone="in-flight"')).toBe(0);
   });
 
   it('shows the sign-off checklist and the rail stamp for a signed and an unsigned doc', () => {
