@@ -835,6 +835,12 @@ summary.tree-node-row:focus-visible {
   border-bottom: 1px solid var(--sidebar-border);
 }
 
+.sidebar-drawer-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
 .sidebar-drawer-title {
   margin: 0;
   color: var(--sidebar-foreground);
