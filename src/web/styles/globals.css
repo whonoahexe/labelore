@@ -12523,15 +12523,6 @@ button.view-validation-ref[aria-pressed='true'] {
   justify-self: start;
 }
 
-.view-validation-note {
-  color: var(--muted-foreground);
-  font-size: var(--fs-3);
-}
-
-.view-validation-note :is(.view-research-text, .view-research-list) {
-  margin: 0;
-}
-
 .view-validation-template {
   display: grid;
   gap: var(--space-2);

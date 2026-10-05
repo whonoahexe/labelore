@@ -766,11 +766,6 @@ function MapSection({
               onJumpManual={onJumpManual}
             />
           </div>
-          {map.notes.length > 0 ? (
-            <div className="view-validation-note">
-              <ResearchBlocks blocks={map.notes} />
-            </div>
-          ) : null}
         </>
       )}
     </section>

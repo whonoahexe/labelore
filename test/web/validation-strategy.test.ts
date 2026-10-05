@@ -405,9 +405,9 @@ describe.runIf(hasSp)('composeValidationStrategy — the other studio-portal doc
     expect(count(html, 'Observed · pass')).toBe(3);
     expect(count(html, 'Not observed')).toBe(1);
     expect(html).toContain('10 of 10 in place');
-    // The suite state authored after the map table and the infrastructure prose still render.
+    // The suite state authored after the map table is still parsed, but the page no longer shows it.
     expect(c.map?.notes).toHaveLength(2);
-    expect(count(html, 'view-validation-note')).toBeGreaterThanOrEqual(1);
+    expect(count(html, 'view-validation-note')).toBe(0);
   });
 
   it('v1.0/02: lanes 0, 5, TBD in that order and a Map preface entry', () => {
