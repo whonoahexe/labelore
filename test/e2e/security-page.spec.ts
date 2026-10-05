@@ -75,6 +75,12 @@ test.describe('SECURITY page', () => {
     await expect.poll(() => inViewport(page, waiver)).toBe(true);
     await expect(waiver).toHaveAttribute('data-flash', 'true');
 
+    // Trust boundaries: eight single-crossing destinations gather into one list block, none toned.
+    await expect(page.locator('.view-security-dest')).toHaveCount(1);
+    await expect(page.locator('.view-security-dest')).toContainText('Crossings');
+    await expect(page.locator('.view-security-crossing')).toHaveCount(8);
+    await expect(page.locator('.view-security-from[data-tone="in-flight"]')).toHaveCount(0);
+
     // Audit trail: absent until the switch is on, then one run and its note.
     await expect(page.locator('#security-audit')).toHaveCount(0);
     await page.getByRole('switch').click();
@@ -99,6 +105,7 @@ test.describe('SECURITY page', () => {
       '.view-security-square',
       '.view-security-detail',
       '.view-security-waiver',
+      '.view-security-dest',
       '.view-security-source-only',
     ]) {
       const radii = await page
@@ -138,6 +145,54 @@ test.describe('SECURITY page', () => {
     expect(layout.mainScroll).toBeLessThanOrEqual(layout.mainClient + 1);
   });
 
+  test('SP P1 security page', async ({ page }) => {
+    test.skip(!STUDIO_PORTAL_AVAILABLE, 'studio-portal checkout not present');
+    const url = await resolveFixtureUrl(SP_BASE_URL, '/phases/01-portal-owned-identity-sessions/01-SECURITY.md');
+    await page.goto(`${SP_BASE_URL}${url}`);
+    await page.locator('.view-security-board').waitFor({ state: 'visible' });
+
+    // Trust boundaries: Backend (2 ways in), the six single crossings, then the at-rest block.
+    const dests = page.locator('.view-security-dest');
+    await expect(dests).toHaveCount(3);
+    await expect(dests.first()).toContainText('Backend');
+    await expect(dests.first()).toContainText('2 ways in');
+    await expect(dests.nth(1)).toContainText('Other crossings');
+    await expect(dests.nth(1).locator('.view-security-crossing')).toHaveCount(6);
+    await expect(dests.last()).toContainText('At rest / in-process');
+    await expect(page.locator('.view-security-from[data-tone="in-flight"]')).toHaveCount(1);
+
+    // Residual observations: closed by default, three items when opened.
+    const toggle = page.getByRole('button', { name: /Residual observations · 3/ });
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.locator('.view-security-residual')).toHaveCount(0);
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.locator('.view-security-residual')).toHaveCount(3);
+
+    // The ref chip picks the threat's square and brings the detail panel into view.
+    await page.locator('#security-residuals').getByRole('button', { name: 'T-01-07', exact: true }).click();
+    await expect(page.locator('.view-security-square[data-threat="T-01-07"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect.poll(() => inViewport(page, page.locator('#security-detail'))).toBe(true);
+    await expect(page.locator('#security-detail')).toContainText('1 residual observation');
+
+    // Closing the toggle removes the items; the detail's link reopens it and flashes the first.
+    await toggle.click();
+    await expect(page.locator('.view-security-residual')).toHaveCount(0);
+    await page.locator('#security-detail').getByRole('button', { name: /1 residual observation/ }).click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    const first = page.locator('#security-residual-0');
+    await expect.poll(() => inViewport(page, first)).toBe(true);
+    await expect(first).toHaveAttribute('data-flash', 'true');
+
+    for (const selector of ['.view-security-dest', '.view-security-residuals-toggle']) {
+      const radii = await page
+        .locator(selector)
+        .evaluateAll((els) => els.map((el) => getComputedStyle(el).borderRadius));
+      expect(radii.length, selector).toBeGreaterThan(0);
+      expect(radii.every((r) => r === '0px'), selector).toBe(true);
+    }
+  });
+
   test('SP P3 security page', async ({ page }) => {
     test.skip(!STUDIO_PORTAL_AVAILABLE, 'studio-portal checkout not present');
     const url = await resolveFixtureUrl(SP_BASE_URL, '/phases/03-account-administration-session-control/03-SECURITY.md');
@@ -149,5 +204,9 @@ test.describe('SECURITY page', () => {
     await expect(page.locator('.view-security-waiver')).toHaveCount(11);
     await expect(page.locator('.view-security-gauge')).toContainText('nothing blocking');
     await expect(page.locator('.view-security-stamp')).toContainText('Signed off');
+    // Ten single-crossing destinations gather into one "Crossings · 10" block, one source toned.
+    await expect(page.locator('.view-security-dest')).toHaveCount(1);
+    await expect(page.locator('.view-security-dest')).toContainText('Crossings · 10');
+    await expect(page.locator('.view-security-from[data-tone="in-flight"]')).toHaveCount(1);
   });
 });

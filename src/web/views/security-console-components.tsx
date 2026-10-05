@@ -2,7 +2,7 @@
 // (identity, status chip and facts, the threats-open gauge, nav with counts, the sign-off stamp, the
 // audit-trail switch, copy-path and View/Source) beside a content column — the lead Summary, the
 // severity x STRIDE threat board with its legend and detail panel, the waiver ledger, the trust
-// boundaries as flow chips, the folded extras, the sign-off checklist, the audit trail when
+// boundaries as destination blocks, the residual-observations toggle, the folded extras, the sign-off checklist, the audit trail when
 // switched on and the "In the source only" strip. Every string derived from the document renders
 // only through `ResearchInline` / `ResearchBlocks` (tokenizeInline output mapped to React nodes) or
 // as plain React text — never React's raw-HTML injection prop (T-527-02), and no href is built from
@@ -17,7 +17,9 @@ import { ResearchBlocks, ResearchInline } from './research-briefing-components.t
 import { STATUS_TONE } from './security-console.ts';
 import type {
   ComposedSecurityConsole,
-  ComposedSecurityFlow,
+  ComposedSecurityCrossing,
+  ComposedSecurityDestination,
+  ComposedSecurityResiduals,
   ComposedSecurityThreat,
   ComposedSecurityWaiver,
 } from './security-console.ts';
@@ -182,10 +184,12 @@ function Detail({
   model,
   pick,
   onJump,
+  onResidual,
 }: {
   model: ComposedSecurityConsole;
   pick: number | null;
   onJump: (anchorId: string) => void;
+  onResidual: (anchorId: string) => void;
 }): React.JSX.Element {
   const threat = pick === null ? undefined : model.threats[pick];
   if (!threat) {
@@ -198,6 +202,9 @@ function Detail({
     );
   }
   const risks = threat.riskIndexes.map((i) => model.waivers.rows[i]).filter((r) => r !== undefined);
+  const residualItems = threat.residualIndexes
+    .map((i) => model.residuals?.items[i])
+    .filter((item) => item !== undefined);
   return (
     <div id="security-detail" className="view-security-detail" aria-live="polite">
       <div className="view-security-detail-head">
@@ -241,6 +248,18 @@ function Detail({
             </button>
           </p>
         ))}
+        {residualItems.length > 0 ? (
+          <p>
+            <button
+              type="button"
+              className="view-security-link"
+              onClick={() => onResidual(residualItems[0].anchorId)}
+            >
+              {residualItems.length === 1 ? '1 residual observation' : `${residualItems.length} residual observations`}
+            </button>
+            {' ↓'}
+          </p>
+        ) : null}
       </div>
     </div>
   );
@@ -314,63 +333,138 @@ function Waiver({
 }
 
 // ---------------------------------------------------------------------------
-// Flows
+// Trust boundaries
 // ---------------------------------------------------------------------------
 
-function Flow({
-  flow,
-  expanded,
-  onToggle,
+function Crossing({
+  crossing,
+  showDestination,
 }: {
-  flow: ComposedSecurityFlow;
-  expanded: boolean;
-  onToggle: (key: string) => void;
+  crossing: ComposedSecurityCrossing;
+  showDestination: boolean;
 }): React.JSX.Element {
-  const key = `flow-${flow.index}`;
-  const hasDescription = flow.description.trim() !== '';
   return (
-    <div className="view-security-flow-row" data-store={flow.store ? 'true' : 'false'}>
-      <div className="view-security-flow" title={flow.description.replace(/[*`]/g, '')}>
-        {flow.store ? (
+    <li className="view-security-crossing">
+      <div className="view-security-crossing-line">
+        <span className="view-security-from" data-tone={crossing.tone}>
+          <ResearchInline text={crossing.source} />
+        </span>
+        {showDestination ? (
           <>
-            <span className="view-security-node" data-store="true">
-              <ResearchInline text={flow.name} />
+            <span className="view-security-to-arrow" aria-hidden="true">
+              →
             </span>
-            <span className="view-security-muted">
-              holds <ResearchInline text={flow.data} />
+            <span className="view-security-to">
+              <ResearchInline text={crossing.destination} />
             </span>
           </>
-        ) : (
-          <>
-            <span className="view-security-node">
-              <ResearchInline text={flow.from} />
-            </span>
-            <span className="view-security-arrow">
-              <ResearchInline text={flow.data} />
-            </span>
-            <span className="view-security-node" data-side="into">
-              <ResearchInline text={flow.to} />
-            </span>
-          </>
-        )}
-        {hasDescription ? (
-          <button
-            type="button"
-            className="view-security-link"
-            aria-expanded={expanded}
-            aria-controls={`${key}-description`}
-            onClick={() => onToggle(key)}
-          >
-            {expanded ? 'hide' : 'why'}
-          </button>
+        ) : null}
+        {crossing.qualifier !== null ? (
+          <span className="view-security-muted">
+            (<ResearchInline text={crossing.qualifier} />)
+          </span>
+        ) : null}
+        {crossing.data.trim() !== '' ? (
+          <span className="view-security-carries" data-tone={crossing.dataTone}>
+            <ResearchInline text={crossing.data} />
+          </span>
         ) : null}
       </div>
-      {hasDescription && expanded ? (
-        <p id={`${key}-description`} className="view-security-flow-desc">
-          <ResearchInline text={flow.description} />
+      {crossing.description.trim() !== '' ? (
+        <p className="view-security-crossing-desc">
+          <ResearchInline text={crossing.description} />
         </p>
       ) : null}
+    </li>
+  );
+}
+
+function Destination({ dest }: { dest: ComposedSecurityDestination }): React.JSX.Element {
+  return (
+    <div id={dest.anchorId} className="view-security-dest" data-kind={dest.kind} data-at-rest={dest.kind === 'at-rest' ? 'true' : 'false'}>
+      <h3 className="view-security-dest-head">
+        <ResearchInline text={dest.label} />
+        <span className="view-security-muted">{` · ${dest.countText}`}</span>
+      </h3>
+      <ul className="view-security-crossings">
+        {dest.crossings.map((crossing) => (
+          <Crossing key={crossing.index} crossing={crossing} showDestination={dest.kind === 'single'} />
+        ))}
+      </ul>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Residual observations
+// ---------------------------------------------------------------------------
+
+function Residuals({
+  residuals,
+  expanded,
+  flashed,
+  onToggle,
+  onPickRef,
+}: {
+  residuals: ComposedSecurityResiduals;
+  expanded: boolean;
+  flashed: string | null;
+  onToggle: (key: string) => void;
+  onPickRef: (threatIndex: number) => void;
+}): React.JSX.Element {
+  return (
+    <section id="security-residuals" className="view-security-block view-security-residuals">
+      <button
+        type="button"
+        className="view-security-residuals-toggle"
+        aria-expanded={expanded}
+        aria-controls={expanded ? 'security-residuals-list' : undefined}
+        data-open={expanded ? 'true' : 'false'}
+        onClick={() => onToggle('residuals')}
+      >
+        {residuals.label}
+      </button>
+      {residuals.lead.length > 0 ? (
+        <div className="view-security-residuals-lead">
+          <ResearchBlocks blocks={residuals.lead} />
+        </div>
+      ) : null}
+      {expanded ? (
+        <ol id="security-residuals-list" className="view-security-residual-list">
+          {residuals.items.map((item) => (
+            <li
+              key={item.anchorId}
+              id={item.anchorId}
+              className="view-security-residual"
+              data-flash={flashed === item.anchorId ? 'true' : 'false'}
+            >
+              <div className="view-security-residual-head">
+                <h3>
+                  <ResearchInline text={item.title} />
+                </h3>
+                {item.refs.map((ref) =>
+                  ref.threatIndex === null ? (
+                    <span key={ref.text} className="view-security-ref" data-plain="true">
+                      {ref.text}
+                    </span>
+                  ) : (
+                    <button
+                      key={ref.text}
+                      type="button"
+                      className="view-security-ref"
+                      onClick={() => onPickRef(ref.threatIndex as number)}
+                    >
+                      {ref.text}
+                    </button>
+                  ),
+                )}
+              </div>
+              {item.blocks.length > 0 ? <Prose blocks={item.blocks} /> : null}
+            </li>
+          ))}
+        </ol>
+      ) : null}
+    </section>
   );
 }
 
@@ -445,6 +539,16 @@ export function SecurityConsoleView({
     (index: number): void => {
       setPick(index);
       jump('security-detail');
+    },
+    [jump],
+  );
+
+  // The items mount only while the toggle is open: open it (never close it), then scroll to the
+  // item once it has mounted.
+  const openResidual = useCallback(
+    (anchorId: string): void => {
+      setOpen((current) => (current.has('residuals') ? current : new Set(current).add('residuals')));
+      window.requestAnimationFrame(() => jump(anchorId));
     },
     [jump],
   );
@@ -550,7 +654,7 @@ export function SecurityConsoleView({
             <>
               <Board model={model} pick={pick} onPick={onPickSquare} />
               <Legend />
-              <Detail model={model} pick={pick} onJump={jump} />
+              <Detail model={model} pick={pick} onJump={jump} onResidual={openResidual} />
             </>
           ) : model.board.prose ? (
             <Prose blocks={model.board.prose} />
@@ -591,23 +695,33 @@ export function SecurityConsoleView({
           ) : null}
         </section>
 
-        {model.flows ? (
-          <section id="security-flows" className="view-security-block">
+        {model.boundaries ? (
+          <section id="security-boundaries" className="view-security-block">
             <h2 className="view-security-title">
               Trust boundaries
               <span className="view-security-muted">what crosses where</span>
             </h2>
-            <div className="view-security-flows">
-              {model.flows.rows.map((flow) => (
-                <Flow key={flow.index} flow={flow} expanded={open.has(`flow-${flow.index}`)} onToggle={toggle} />
+            <div className="view-security-dests">
+              {model.boundaries.destinations.map((dest) => (
+                <Destination key={dest.anchorId} dest={dest} />
               ))}
             </div>
-            {model.flows.note.length > 0 ? (
+            {model.boundaries.note.length > 0 ? (
               <div className="view-security-note">
-                <ResearchBlocks blocks={model.flows.note} />
+                <ResearchBlocks blocks={model.boundaries.note} />
               </div>
             ) : null}
           </section>
+        ) : null}
+
+        {model.residuals ? (
+          <Residuals
+            residuals={model.residuals}
+            expanded={open.has('residuals')}
+            flashed={flashed}
+            onToggle={toggle}
+            onPickRef={onPickRef}
+          />
         ) : null}
 
         {model.extras.length > 0 ? (

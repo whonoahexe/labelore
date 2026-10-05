@@ -3,7 +3,7 @@
 // `src/planning-repo/handlers/security-register.ts`). It decides the rail (identity, status chip,
 // Created, ASVS, Blocks at, the threats-open gauge, the nav counts and the sign-off stamp), the
 // severity x STRIDE board with one square per threat, the waiver ledger and its two-way links to the
-// squares, the trust-boundary flow chips, the folded extras, the sign-off checklist, the audit runs
+// squares, the trust boundaries grouped by destination, the folded extras, the sign-off checklist, the audit runs
 // and the "In the source only" targets. No DOM, no rendering — `security-console-components.tsx` is
 // the only consumer. Returns `null` when the model is missing or holds neither register rows nor
 // register prose, and the page then keeps the pre-existing promoted-block view (T-527-04). Dates
@@ -73,6 +73,17 @@ export const RUN_TONE: Record<'clear' | 'non-blocking' | 'blocking', SecurityTon
   'non-blocking': 'in-flight',
   blocking: 'missing',
 };
+
+/** A trust-boundary source that reads as unauthenticated, untrusted or anonymous is exposed
+ * (in-flight); every other source, an at-rest holder and every data-crossing chip stays quiet.
+ * Never destructive or warning, and boundaries never link to threats. */
+export const BOUNDARY_TONE: Record<'exposed' | 'internal' | 'crossing', SecurityTone> = {
+  exposed: 'in-flight',
+  internal: 'quiet',
+  crossing: 'quiet',
+};
+
+export const AT_REST_LABEL = 'At rest / in-process';
 
 /** Neutral pips, never a hue: critical 4, high 3, medium 2, low 1, unrated 0. */
 export const SEV_PIPS: Record<SecuritySeverityLevel, number> = {
@@ -171,6 +182,8 @@ export interface ComposedSecurityThreat {
   mitigationLabel: string;
   mitigation: string;
   riskIndexes: number[];
+  /** Indexes into `residuals.items` that name this threat. */
+  residualIndexes: number[];
 }
 
 export interface ComposedSecurityBoard {
@@ -206,20 +219,59 @@ export interface ComposedSecurityWaivers {
   prose: Block[];
 }
 
-export interface ComposedSecurityFlow {
+export interface ComposedSecurityCrossing {
+  /** Table row index. */
   index: number;
-  from: string;
-  to: string;
+  source: string;
+  /** The destination as a block header would read it (backticks kept); the whole name at rest. */
+  destination: string;
+  /** Parenthetical text stripped from the destination, shown as a muted aside. */
+  qualifier: string | null;
   data: string;
   description: string;
-  /** No arrow in the name: a dashed store node that holds the data. */
-  store: boolean;
-  name: string;
+  tone: SecurityTone;
+  dataTone: SecurityTone;
 }
 
-export interface ComposedSecurityFlows {
-  rows: ComposedSecurityFlow[];
+/** shared: a destination with two or more crossings. single: every one-crossing destination,
+ * gathered into one list. at-rest: rows with no arrow, always last. */
+export type SecurityBlockKind = 'shared' | 'single' | 'at-rest';
+
+export interface ComposedSecurityDestination {
+  /** Normalised destination; '' for the at-rest block, 'singles' for the single list. */
+  key: string;
+  /** security-dest-<n>, in render order. */
+  anchorId: string;
+  label: string;
+  countText: string;
+  kind: SecurityBlockKind;
+  crossings: ComposedSecurityCrossing[];
+}
+
+export interface ComposedSecurityBoundaries {
+  /** Boundary table rows (the nav count). */
+  total: number;
+  destinations: ComposedSecurityDestination[];
   note: Block[];
+}
+
+export interface ComposedSecurityResidual {
+  index: number;
+  /** security-residual-<index>. */
+  anchorId: string;
+  title: string;
+  refs: { text: string; threatIndex: number | null }[];
+  blocks: Block[];
+}
+
+export interface ComposedSecurityResiduals {
+  /** The section heading as written. */
+  heading: string;
+  /** 'Residual observations · N'. */
+  label: string;
+  /** The prose before the first bold-titled paragraph. */
+  lead: Block[];
+  items: ComposedSecurityResidual[];
 }
 
 export interface ComposedSecurityExtra {
@@ -266,7 +318,8 @@ export interface ComposedSecurityConsole {
   threats: ComposedSecurityThreat[];
   board: ComposedSecurityBoard;
   waivers: ComposedSecurityWaivers;
-  flows: ComposedSecurityFlows | null;
+  boundaries: ComposedSecurityBoundaries | null;
+  residuals: ComposedSecurityResiduals | null;
   extras: ComposedSecurityExtra[];
   signoff: ComposedSecuritySignoff | null;
   audit: ComposedSecurityAudit | null;
@@ -371,6 +424,243 @@ function levelKey(value: unknown): SecuritySeverityLevel {
 }
 
 // ---------------------------------------------------------------------------
+// Trust boundaries (linear index scans only: no RegExp is ever built from text)
+// ---------------------------------------------------------------------------
+
+const EXPOSED_SOURCE = /unauthenticated|untrusted|anonymous/i;
+
+/** Splits the text into what sits outside parentheses and the segments inside them. Parentheses
+ * inside a backtick span are ignored, an unclosed '(' takes the rest of the text, and a stray ')'
+ * stays in the outside text. */
+function splitParentheticals(text: string): { outside: string; inside: string[] } {
+  const inside: string[] = [];
+  let outside = '';
+  let depth = 0;
+  let start = 0;
+  let chunk = 0;
+  let code = false;
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    if (ch === '`') {
+      code = !code;
+    } else if (code) {
+      continue;
+    } else if (ch === '(') {
+      if (depth === 0) {
+        outside += text.slice(chunk, i);
+        start = i + 1;
+      }
+      depth += 1;
+    } else if (ch === ')' && depth > 0) {
+      depth -= 1;
+      if (depth === 0) {
+        inside.push(text.slice(start, i));
+        chunk = i + 1;
+      }
+    }
+  }
+  if (depth > 0) inside.push(text.slice(start));
+  else outside += text.slice(chunk);
+  return { outside, inside };
+}
+
+function collapse(text: string): string {
+  return text
+    .split(/\s+/)
+    .filter((word) => word !== '')
+    .join(' ');
+}
+
+/** Backticks and parentheticals stripped, whitespace collapsed, lower-cased. When stripping leaves
+ * nothing (an unbalanced '(' swallows the whole destination) the raw text is the key instead, so
+ * the row still groups under a readable label. */
+function destinationKey(to: string): string {
+  const stripped = collapse(splitParentheticals(to).outside.split('`').join(''));
+  return (stripped === '' ? collapse(to.split('`').join('')) : stripped).toLowerCase();
+}
+
+/** The first occurrence's destination minus its parentheticals, with a leading lowercase letter
+ * raised; backticks stay (they render as code). Falls back to the raw text when nothing is left. */
+function destinationLabel(to: string): string {
+  const stripped = collapse(splitParentheticals(to).outside);
+  const label = stripped === '' ? collapse(to) : stripped;
+  const first = label[0];
+  return first !== undefined && first >= 'a' && first <= 'z' ? first.toUpperCase() + label.slice(1) : label;
+}
+
+function qualifierOf(to: string): string | null {
+  const parts = splitParentheticals(to)
+    .inside.map((part) => collapse(part))
+    .filter((part) => part !== '');
+  return parts.length === 0 ? null : parts.join('; ');
+}
+
+function crossingOf(
+  row: SecurityBoundaryRow,
+  index: number,
+  atRest: boolean,
+  source: string,
+  to: string,
+): ComposedSecurityCrossing {
+  return {
+    index,
+    source,
+    destination: atRest ? source : destinationLabel(to),
+    qualifier: atRest ? null : qualifierOf(to),
+    data: stringOr(row.data, ''),
+    description: stringOr(row.description, ''),
+    tone: atRest ? BOUNDARY_TONE.internal : EXPOSED_SOURCE.test(source) ? BOUNDARY_TONE.exposed : BOUNDARY_TONE.crossing,
+    dataTone: BOUNDARY_TONE.crossing,
+  };
+}
+
+/** Destinations with two or more crossings get their own block (count descending, ties by first
+ * appearance); every one-crossing destination goes into one list after them; rows with no arrow
+ * form the final at-rest block. Null when the table has no rows. */
+function boundariesOf(rawRows: SecurityBoundaryRow[], note: Block[]): ComposedSecurityBoundaries | null {
+  if (rawRows.length === 0) return null;
+  const groups = new Map<string, { label: string; crossings: ComposedSecurityCrossing[] }>();
+  const atRestRows: ComposedSecurityCrossing[] = [];
+  rawRows.forEach((row, index) => {
+    const from = typeof row.from === 'string' ? row.from.trim() : null;
+    const to = typeof row.to === 'string' ? row.to : null;
+    const key = to === null ? '' : destinationKey(to);
+    if (from === null || to === null || from === '' || key === '') {
+      atRestRows.push(crossingOf(row, index, true, stringOr(row.name, '').trim(), ''));
+      return;
+    }
+    const group = groups.get(key) ?? { label: destinationLabel(to), crossings: [] };
+    group.crossings.push(crossingOf(row, index, false, from, to));
+    groups.set(key, group);
+  });
+  const all = [...groups.entries()];
+  const shared = all.filter(([, group]) => group.crossings.length >= 2);
+  // Array.prototype.sort is stable, so ties keep first appearance.
+  shared.sort((a, b) => b[1].crossings.length - a[1].crossings.length);
+  // Map order is first appearance, so the single list keeps document order.
+  const singles = all.filter(([, group]) => group.crossings.length === 1).flatMap(([, group]) => group.crossings);
+  const blocks: Omit<ComposedSecurityDestination, 'anchorId'>[] = shared.map(([key, group]) => ({
+    key,
+    label: group.label,
+    countText: `${group.crossings.length} ways in`,
+    kind: 'shared',
+    crossings: group.crossings,
+  }));
+  if (singles.length > 0) {
+    blocks.push({
+      key: 'singles',
+      label: shared.length > 0 ? 'Other crossings' : 'Crossings',
+      countText: String(singles.length),
+      kind: 'single',
+      crossings: singles,
+    });
+  }
+  if (atRestRows.length > 0) {
+    blocks.push({
+      key: '',
+      label: AT_REST_LABEL,
+      countText: String(atRestRows.length),
+      kind: 'at-rest',
+      crossings: atRestRows,
+    });
+  }
+  return {
+    total: rawRows.length,
+    destinations: blocks.map((block, n) => ({ ...block, anchorId: `security-dest-${n}` })),
+    note,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Residual observations (linear scans and fixed literal regexes only)
+// ---------------------------------------------------------------------------
+
+const RELATES = '(relates to';
+const NO_REF = '(no threat ref';
+const MAX_REFS = 20;
+
+interface ParsedResidual {
+  title: string;
+  refTexts: string[];
+  blocks: Block[];
+}
+
+/** A paragraph that opens with a closing-delimited bold title: the title's end index, or -1. */
+function boldTitleEnd(block: Block): number {
+  if (block.kind !== 'paragraph') return -1;
+  const text = block.text.trim();
+  if (!text.startsWith('**')) return -1;
+  const close = text.indexOf('**', 2);
+  return close >= 3 ? close : -1;
+}
+
+function stripTitleTail(title: string): string {
+  let end = title.length;
+  while (end > 0 && (title[end - 1] === '.' || title[end - 1] === ':' || title[end - 1].trim() === '')) end -= 1;
+  return title.slice(0, end).trim();
+}
+
+/** Up to MAX_REFS distinct T-ids inside a "(relates to ...)" parenthetical. */
+function refsIn(paren: string): string[] {
+  if (!paren.toLowerCase().startsWith(RELATES)) return [];
+  const refs: string[] = [];
+  for (const match of paren.matchAll(/T-[\w-]+/g)) {
+    if (!refs.includes(match[0])) refs.push(match[0]);
+    if (refs.length >= MAX_REFS) break;
+  }
+  return refs;
+}
+
+function residualOf(block: Block): Omit<ParsedResidual, 'blocks'> & { rest: string } {
+  const text = block.kind === 'paragraph' ? block.text.trim() : '';
+  const close = text.indexOf('**', 2);
+  let title = text.slice(2, close);
+  let rest = text.slice(close + 2);
+  let paren = '';
+  const lower = title.toLowerCase();
+  const at = Math.max(lower.lastIndexOf(RELATES), lower.lastIndexOf(NO_REF));
+  if (at >= 0) {
+    const closeParen = title.indexOf(')', at);
+    const end = closeParen < 0 ? title.length : closeParen + 1;
+    paren = title.slice(at, end);
+    title = title.slice(0, at) + title.slice(end);
+  } else {
+    const opening = rest.trimStart();
+    const head = opening.slice(0, NO_REF.length).toLowerCase();
+    if (head.startsWith(RELATES) || head === NO_REF) {
+      const closeParen = opening.indexOf(')');
+      const end = closeParen < 0 ? opening.length : closeParen + 1;
+      paren = opening.slice(0, end);
+      rest = opening.slice(end);
+      if (rest.startsWith('.')) rest = rest.slice(1);
+    }
+  }
+  return { title: stripTitleTail(title), refTexts: refsIn(paren), rest: rest.trim() };
+}
+
+/** The lead (everything before the first bold-titled paragraph) and one item per bold-titled
+ * paragraph, each owning the blocks that follow it up to the next title. */
+function residualsOf(blocks: Block[]): { lead: Block[]; items: ParsedResidual[] } {
+  const lead: Block[] = [];
+  const items: ParsedResidual[] = [];
+  for (const block of blocks) {
+    if (boldTitleEnd(block) >= 0) {
+      const parsed = residualOf(block);
+      items.push({
+        title: parsed.title,
+        refTexts: parsed.refTexts,
+        blocks: parsed.rest === '' ? [] : [{ kind: 'paragraph', text: parsed.rest }],
+      });
+    } else if (items.length > 0) {
+      items[items.length - 1].blocks.push(block);
+    } else {
+      lead.push(block);
+    }
+  }
+  return { lead, items };
+}
+
+// ---------------------------------------------------------------------------
 // Composition
 // ---------------------------------------------------------------------------
 
@@ -412,6 +702,7 @@ function threatOf(row: SecurityThreatRow, index: number, grouped: boolean): Comp
     mitigationLabel: accepted ? 'Why acceptable' : 'Mitigation',
     mitigation: stringOr(row.mitigation, ''),
     riskIndexes: [],
+    residualIndexes: [],
   };
 }
 
@@ -570,7 +861,7 @@ export function composeSecurityConsole(input: ViewInput): ComposedSecurityConsol
       .filter((segment) => segment.count > 0),
   };
 
-  // ---- board, waivers, flows, extras, sign-off, audit ------------------------------------------
+  // ---- board, waivers, boundaries, extras, sign-off, audit ------------------------------------------
   const board = boardOf(
     threats,
     grouped,
@@ -586,27 +877,44 @@ export function composeSecurityConsole(input: ViewInput): ComposedSecurityConsol
   };
 
   const rawBoundaries = raw.boundaries && typeof raw.boundaries === 'object' ? raw.boundaries : null;
-  const flowRows: ComposedSecurityFlow[] = arrayOf<SecurityBoundaryRow>(rawBoundaries?.rows).map((row, index) => {
-    const from = typeof row.from === 'string' ? row.from : null;
-    const to = typeof row.to === 'string' ? row.to : null;
-    return {
-      index,
-      from: from ?? '',
-      to: to ?? '',
-      data: stringOr(row.data, ''),
-      description: stringOr(row.description, ''),
-      store: from === null || to === null,
-      name: stringOr(row.name, ''),
-    };
-  });
-  const flows: ComposedSecurityFlows | null =
-    flowRows.length > 0 ? { rows: flowRows, note: arrayOf<Block>(rawBoundaries?.note) } : null;
+  const boundaries = boundariesOf(arrayOf<SecurityBoundaryRow>(rawBoundaries?.rows), arrayOf<Block>(rawBoundaries?.note));
 
-  const extras: ComposedSecurityExtra[] = arrayOf<SecurityExtra>(raw.extras).map((extra, index) => ({
+  let extras: ComposedSecurityExtra[] = arrayOf<SecurityExtra>(raw.extras).map((extra, index) => ({
     id: `security-extra-${index}`,
     heading: stringOr(extra.heading, ''),
     blocks: arrayOf<Block>(extra.blocks),
   }));
+
+  // The first "Residual Observations" extra with at least one bold-titled paragraph becomes its own
+  // toggle; without one it stays a folded extra.
+  let residuals: ComposedSecurityResiduals | null = null;
+  const residualExtra = extras.find((extra) => extra.heading.toLowerCase().includes('residual observation'));
+  if (residualExtra) {
+    const parsed = residualsOf(residualExtra.blocks);
+    if (parsed.items.length > 0) {
+      const items: ComposedSecurityResidual[] = parsed.items.map((item, index) => {
+        const refs = item.refTexts.map((text) => {
+          const at = threats.findIndex((t) => t.ids.includes(text));
+          if (at >= 0 && !threats[at].residualIndexes.includes(index)) threats[at].residualIndexes.push(index);
+          return { text, threatIndex: at >= 0 ? at : null };
+        });
+        return {
+          index,
+          anchorId: `security-residual-${index}`,
+          title: item.title === '' ? `Observation ${index + 1}` : item.title,
+          refs,
+          blocks: item.blocks,
+        };
+      });
+      residuals = {
+        heading: residualExtra.heading,
+        label: `Residual observations · ${items.length}`,
+        lead: parsed.lead,
+        items,
+      };
+      extras = extras.filter((extra) => extra !== residualExtra);
+    }
+  }
 
   const rawSignoff = raw.signoff && typeof raw.signoff === 'object' ? raw.signoff : null;
   const items = arrayOf<SecuritySignoffItem>(rawSignoff?.items).map((item) => ({
@@ -637,7 +945,7 @@ export function composeSecurityConsole(input: ViewInput): ComposedSecurityConsol
     { id: 'security-board', label: 'Threats', count: String(total) },
     { id: 'security-waivers', label: 'Accepted risks', count: String(waiverRows.length) },
   ];
-  if (flows) nav.push({ id: 'security-flows', label: 'Trust boundaries', count: String(flows.rows.length) });
+  if (boundaries) nav.push({ id: 'security-boundaries', label: 'Trust boundaries', count: String(boundaries.total) });
   if (signoff) nav.push({ id: 'security-signoff', label: 'Sign-off', count: `${done}/${signoff.total}` });
 
   const lead = arrayOf<Block>(raw.lead);
@@ -658,7 +966,8 @@ export function composeSecurityConsole(input: ViewInput): ComposedSecurityConsol
     threats,
     board,
     waivers,
-    flows,
+    boundaries,
+    residuals,
     extras,
     signoff,
     audit,
