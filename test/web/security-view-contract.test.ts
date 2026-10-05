@@ -104,6 +104,8 @@ describe('security view contract', () => {
     expect(writesForbiddenTone(components)).toBe(false);
     expect(buildsHref(components)).toBe(false);
     expect(components).toContain('data-tone={threat.tone}');
+    expect(components).toContain('data-tone={crossing.tone}');
+    expect(components).toContain('data-tone={crossing.dataTone}');
   });
 
   it('the composer and the extractor never build a regular expression from document text', async () => {
@@ -119,6 +121,17 @@ describe('security view contract', () => {
     );
     expect(tonesIn(mapBody(composer, 'DOC_STATUS'))).toEqual(['complete', 'in-flight', 'in-flight']);
     expect(writesForbiddenTone(composer)).toBe(false);
+  });
+
+  it('trust-boundary tones come from exactly one map: exposed in-flight, everything else quiet', async () => {
+    const composer = await source('src/web/views/security-console.ts');
+    expect(tonesIn(mapBody(composer, 'BOUNDARY_TONE'))).toEqual(['in-flight', 'quiet', 'quiet']);
+    expect(composer).toMatch(
+      /BOUNDARY_TONE: Record<'exposed' \| 'internal' \| 'crossing', SecurityTone> = \{\s*exposed: 'in-flight',\s*internal: 'quiet',\s*crossing: 'quiet',\s*\}/,
+    );
+    // A crossing's tone is read from the map, never written as a literal.
+    expect(composer).toContain('BOUNDARY_TONE.exposed');
+    expect(composer).toContain('BOUNDARY_TONE.crossing');
   });
 
   it('severity has no tone map: the pips are neutral', async () => {
@@ -184,5 +197,14 @@ describe('security view contract', () => {
     expect(rule(".view-security-pips i[data-on='true']")).toContain('var(--foreground)');
     expect(rule(".view-security-pips i[data-on='true']")).not.toMatch(/missing|in-flight|primary/);
     expect(rule(".view-security-waiver[data-flash='true']")).toContain('var(--primary-tint)');
+    expect(rule(".view-security-from[data-tone='in-flight']")).toContain('var(--in-flight-fill)');
+    expect(rule(".view-security-residual[data-flash='true']")).toContain('var(--primary-tint)');
+  });
+
+  it('the security block no longer defines the flow-chip selectors it replaced', async () => {
+    const block = securityBlock(await source('src/web/styles/globals.css'));
+    for (const old of ['.view-security-flows', '.view-security-flow-row', '.view-security-node', '.view-security-arrow {']) {
+      expect(block, old).not.toContain(old);
+    }
   });
 });
