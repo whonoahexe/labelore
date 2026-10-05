@@ -718,10 +718,12 @@ plan's "no AST tooling" constraint.
 | `shell-notice` | Shell and navigation | |
 | `shell-outlet` | Shell and navigation | |
 | `sidebar-drawer` | Shell and navigation | |
+| `sidebar-drawer-actions` | Shell and navigation | |
 | `sidebar-drawer-backdrop` | Shell and navigation | |
 | `sidebar-drawer-close` | Shell and navigation | |
 | `sidebar-drawer-header` | Shell and navigation | |
 | `sidebar-drawer-title` | Shell and navigation | |
+| `sidebar-drawer-toggle-all` | Shell and navigation | |
 | `sidebar-trigger` | Shell and navigation | |
 | `skip-link` | Shell and navigation | |
 | `sm` | Shell and navigation | `Button` `size` prop value, not a CSS class — see appendix note above |
