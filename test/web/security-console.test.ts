@@ -400,6 +400,168 @@ describe('composeSecurityConsole — trust boundaries by destination', () => {
   });
 });
 
+function residualDoc(body: string, heading = 'Residual Observations'): ViewInput {
+  return inputOf(`---\nstatus: verified\n---\n\n# Doc\n\n${REGISTER}\n## ${heading}\n\n${body}\n`);
+}
+
+const RESIDUAL_BODY = [
+  'Not open threats — recorded so they are not rediscovered.',
+  '',
+  '**Title one** (relates to T-1-01, T-9-99). First prose.',
+  '',
+  'More prose paragraph.',
+  '',
+  '- item a',
+  '- item b',
+  '',
+  '**Title two (relates to T-1-01).** Second prose.',
+  '',
+  '**Title three (no threat ref).** Third prose.',
+].join('\n');
+
+describe('composeSecurityConsole — residual observations', () => {
+  const model = composeSecurityConsole(residualDoc(RESIDUAL_BODY));
+
+  it('splits the lead from the items and strips the ref parenthetical from each title', () => {
+    expect(model?.residuals?.label).toBe('Residual observations · 3');
+    expect(model?.residuals?.lead).toEqual([{ kind: 'paragraph', text: 'Not open threats — recorded so they are not rediscovered.' }]);
+    expect(model?.residuals?.items.map((i) => [i.anchorId, i.title])).toEqual([
+      ['security-residual-0', 'Title one'],
+      ['security-residual-1', 'Title two'],
+      ['security-residual-2', 'Title three'],
+    ]);
+  });
+
+  it('wires one ref per T-id, leaves an unknown id unmatched and gives no-ref items none', () => {
+    const items = model?.residuals?.items ?? [];
+    expect(items[0].refs).toEqual([
+      { text: 'T-1-01', threatIndex: 0 },
+      { text: 'T-9-99', threatIndex: null },
+    ]);
+    expect(items[1].refs).toEqual([{ text: 'T-1-01', threatIndex: 0 }]);
+    expect(items[2].refs).toEqual([]);
+    expect(model?.threats[0].residualIndexes).toEqual([0, 1]);
+  });
+
+  it('gives each item its own prose, with following blocks owned until the next title', () => {
+    const items = model?.residuals?.items ?? [];
+    expect(items[0].blocks.map((b) => b.kind)).toEqual(['paragraph', 'paragraph', 'list']);
+    expect(items[0].blocks[0]).toEqual({ kind: 'paragraph', text: 'First prose.' });
+    expect(items[1].blocks).toEqual([{ kind: 'paragraph', text: 'Second prose.' }]);
+    expect(model?.extras).toEqual([]);
+  });
+
+  it('keeps a list-only Residual Observations section, and a Hardening Notes one, folded', () => {
+    const listOnly = composeSecurityConsole(residualDoc('- one\n- two'));
+    expect(listOnly?.residuals).toBeNull();
+    expect(listOnly?.extras.map((e) => e.heading)).toEqual(['Residual Observations']);
+    const hardening = composeSecurityConsole(residualDoc(RESIDUAL_BODY, 'Hardening Notes'));
+    expect(hardening?.residuals).toBeNull();
+    expect(hardening?.extras.map((e) => e.heading)).toEqual(['Hardening Notes']);
+  });
+
+  it('reads a ref parenthetical that follows the bold title, and stays null without structured data', () => {
+    const outside = composeSecurityConsole(residualDoc('**Title** (relates to T-1-01). prose'));
+    expect(outside?.residuals?.items[0]).toMatchObject({ title: 'Title', refs: [{ text: 'T-1-01', threatIndex: 0 }] });
+    expect(outside?.residuals?.items[0].blocks).toEqual([{ kind: 'paragraph', text: 'prose' }]);
+    const none = composeSecurityConsole({ ...residualDoc(RESIDUAL_BODY), structured: { security: { register: (residualDoc('x').structured.security as { register: unknown }).register } } });
+    expect(none?.residuals).toBeNull();
+  });
+
+  it('composes pathological titles and ref lists quickly, capping refs at 20 per item', () => {
+    const refs = Array.from({ length: 50_000 }, (_, i) => `T-${i}`).join(', ');
+    const started = performance.now();
+    // Built by hand: the extractor already caps a line at 8000 characters, but the composer must
+    // not depend on that.
+    const base = residualDoc('x');
+    const security = base.structured.security as Record<string, unknown>;
+    const huge = composeSecurityConsole({
+      ...base,
+      structured: {
+        security: {
+          ...security,
+          extras: [
+            {
+              heading: 'Residual Observations',
+              blocks: [
+                { kind: 'paragraph', text: `**${'('.repeat(100_000)}** body` },
+                { kind: 'paragraph', text: `**x (relates to ${refs})** y` },
+              ],
+            },
+          ],
+        },
+      },
+    });
+    expect(performance.now() - started).toBeLessThan(250);
+    expect(huge?.residuals?.items).toHaveLength(2);
+    expect(huge?.residuals?.items[1].refs).toHaveLength(20);
+  });
+
+  it.runIf(existsSync(SP1))('SP P1: three observations, two of them wired to register rows', () => {
+    const sp = composed(SP1);
+    expect(sp.residuals?.label).toBe('Residual observations · 3');
+    expect(sp.residuals?.items.map((i) => i.title)).toEqual([
+      '`AUTH_MODE=dev` guard scope',
+      '`Cf-Connecting-Ip` tunnel dependency',
+      'Unobserved fault windows',
+    ]);
+    expect(sp.residuals?.items.map((i) => i.refs.map((r) => r.text))).toEqual([['T-01-07'], ['T-01-24'], []]);
+    expect(sp.residuals?.items.flatMap((i) => i.refs).every((r) => r.threatIndex !== null)).toBe(true);
+    expect(JSON.stringify(sp.residuals?.lead[0])).toContain('Not open threats — no register entry is unmitigated.');
+    expect(sp.extras).toEqual([]);
+    const index = (ref: string): number => sp.threats.findIndex((t) => t.ref === ref);
+    expect(sp.threats[index('T-01-07')].residualIndexes).toEqual([0]);
+    expect(sp.threats[index('T-01-24')].residualIndexes).toEqual([1]);
+  });
+});
+
+describe('SecurityConsoleView — residual observations markup', () => {
+  const literal = composeSecurityConsole(residualDoc(RESIDUAL_BODY)) as ComposedSecurityConsole;
+
+  it('is closed by default: a collapsed toggle with its lead, and no items', () => {
+    const html = render(literal);
+    expect(html).toContain('aria-expanded="false"');
+    expect(html).toContain('Residual observations · 3');
+    expect(html).toContain('recorded so they are not rediscovered');
+    expect(html).not.toContain('id="security-residual-0"');
+    expect(html).not.toContain('aria-controls="security-residuals-list"');
+  });
+
+  it('open: anchored items, stripped titles, ref buttons only for matched refs', () => {
+    const html = render(literal, { initialOpen: ['residuals'] });
+    expect(html).toContain('aria-expanded="true"');
+    for (const n of [0, 1, 2]) expect(html).toContain(`id="security-residual-${n}"`);
+    expect(html).toContain('<h3>Title one</h3>');
+    expect(html).not.toContain('(relates to');
+    const list = html.slice(html.indexOf('id="security-residuals-list"'));
+    expect(count(list, '<button type="button" class="view-security-ref">T-1-01</button>')).toBe(2);
+    expect(count(list, 'data-plain="true">T-9-99<')).toBe(1);
+    expect(count(list, 'view-security-ref')).toBe(3);
+  });
+
+  it('the picked threat links back to its observations, and other threats show nothing', () => {
+    expect(render(literal, { initialPick: 0 })).toContain('2 residual observations');
+    const one = composeSecurityConsole(residualDoc('**Only (relates to T-1-01).** prose')) as ComposedSecurityConsole;
+    expect(render(one, { initialPick: 0 })).toContain('1 residual observation');
+    expect(render(composed(LB05), { initialPick: 0 })).not.toContain('residual observation');
+  });
+
+  it.runIf(existsSync(SP1))('SP P1: closed toggle with 3 items when open, T-01-07 reverse link, no <details>', () => {
+    const model = composed(SP1);
+    expect(count(render(model), '<details>')).toBe(0);
+    const closed = render(model);
+    expect(closed).toContain('Residual observations · 3');
+    expect(closed).toContain('Not open threats — no register entry is unmitigated.');
+    expect(closed).not.toContain('id="security-residual-0"');
+    const open = render(model, { initialOpen: ['residuals'] });
+    expect(count(open, 'class="view-security-residual"')).toBe(3);
+    const list = open.slice(open.indexOf('id="security-residuals-list"'));
+    expect(count(list, 'class="view-security-ref">T-01-')).toBe(2);
+    const at = model.threats.findIndex((t) => t.ref === 'T-01-07');
+    expect(render(model, { initialPick: at })).toContain('1 residual observation');
+  });
+});
+
 describe('SecurityConsoleView — static markup', () => {
   it('renders the dense fixture as the blocking console', () => {
     const html = render(composed(FX));

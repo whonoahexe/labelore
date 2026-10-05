@@ -182,6 +182,8 @@ export interface ComposedSecurityThreat {
   mitigationLabel: string;
   mitigation: string;
   riskIndexes: number[];
+  /** Indexes into `residuals.items` that name this threat. */
+  residualIndexes: number[];
 }
 
 export interface ComposedSecurityBoard {
@@ -253,6 +255,25 @@ export interface ComposedSecurityBoundaries {
   note: Block[];
 }
 
+export interface ComposedSecurityResidual {
+  index: number;
+  /** security-residual-<index>. */
+  anchorId: string;
+  title: string;
+  refs: { text: string; threatIndex: number | null }[];
+  blocks: Block[];
+}
+
+export interface ComposedSecurityResiduals {
+  /** The section heading as written. */
+  heading: string;
+  /** 'Residual observations · N'. */
+  label: string;
+  /** The prose before the first bold-titled paragraph. */
+  lead: Block[];
+  items: ComposedSecurityResidual[];
+}
+
 export interface ComposedSecurityExtra {
   id: string;
   heading: string;
@@ -298,6 +319,7 @@ export interface ComposedSecurityConsole {
   board: ComposedSecurityBoard;
   waivers: ComposedSecurityWaivers;
   boundaries: ComposedSecurityBoundaries | null;
+  residuals: ComposedSecurityResiduals | null;
   extras: ComposedSecurityExtra[];
   signoff: ComposedSecuritySignoff | null;
   audit: ComposedSecurityAudit | null;
@@ -550,6 +572,95 @@ function boundariesOf(rawRows: SecurityBoundaryRow[], note: Block[]): ComposedSe
 }
 
 // ---------------------------------------------------------------------------
+// Residual observations (linear scans and fixed literal regexes only)
+// ---------------------------------------------------------------------------
+
+const RELATES = '(relates to';
+const NO_REF = '(no threat ref';
+const MAX_REFS = 20;
+
+interface ParsedResidual {
+  title: string;
+  refTexts: string[];
+  blocks: Block[];
+}
+
+/** A paragraph that opens with a closing-delimited bold title: the title's end index, or -1. */
+function boldTitleEnd(block: Block): number {
+  if (block.kind !== 'paragraph') return -1;
+  const text = block.text.trim();
+  if (!text.startsWith('**')) return -1;
+  const close = text.indexOf('**', 2);
+  return close >= 3 ? close : -1;
+}
+
+function stripTitleTail(title: string): string {
+  let end = title.length;
+  while (end > 0 && (title[end - 1] === '.' || title[end - 1] === ':' || title[end - 1].trim() === '')) end -= 1;
+  return title.slice(0, end).trim();
+}
+
+/** Up to MAX_REFS distinct T-ids inside a "(relates to ...)" parenthetical. */
+function refsIn(paren: string): string[] {
+  if (!paren.toLowerCase().startsWith(RELATES)) return [];
+  const refs: string[] = [];
+  for (const match of paren.matchAll(/T-[\w-]+/g)) {
+    if (!refs.includes(match[0])) refs.push(match[0]);
+    if (refs.length >= MAX_REFS) break;
+  }
+  return refs;
+}
+
+function residualOf(block: Block): Omit<ParsedResidual, 'blocks'> & { rest: string } {
+  const text = block.kind === 'paragraph' ? block.text.trim() : '';
+  const close = text.indexOf('**', 2);
+  let title = text.slice(2, close);
+  let rest = text.slice(close + 2);
+  let paren = '';
+  const lower = title.toLowerCase();
+  const at = Math.max(lower.lastIndexOf(RELATES), lower.lastIndexOf(NO_REF));
+  if (at >= 0) {
+    const closeParen = title.indexOf(')', at);
+    const end = closeParen < 0 ? title.length : closeParen + 1;
+    paren = title.slice(at, end);
+    title = title.slice(0, at) + title.slice(end);
+  } else {
+    const opening = rest.trimStart();
+    const head = opening.slice(0, NO_REF.length).toLowerCase();
+    if (head.startsWith(RELATES) || head === NO_REF) {
+      const closeParen = opening.indexOf(')');
+      const end = closeParen < 0 ? opening.length : closeParen + 1;
+      paren = opening.slice(0, end);
+      rest = opening.slice(end);
+      if (rest.startsWith('.')) rest = rest.slice(1);
+    }
+  }
+  return { title: stripTitleTail(title), refTexts: refsIn(paren), rest: rest.trim() };
+}
+
+/** The lead (everything before the first bold-titled paragraph) and one item per bold-titled
+ * paragraph, each owning the blocks that follow it up to the next title. */
+function residualsOf(blocks: Block[]): { lead: Block[]; items: ParsedResidual[] } {
+  const lead: Block[] = [];
+  const items: ParsedResidual[] = [];
+  for (const block of blocks) {
+    if (boldTitleEnd(block) >= 0) {
+      const parsed = residualOf(block);
+      items.push({
+        title: parsed.title,
+        refTexts: parsed.refTexts,
+        blocks: parsed.rest === '' ? [] : [{ kind: 'paragraph', text: parsed.rest }],
+      });
+    } else if (items.length > 0) {
+      items[items.length - 1].blocks.push(block);
+    } else {
+      lead.push(block);
+    }
+  }
+  return { lead, items };
+}
+
+// ---------------------------------------------------------------------------
 // Composition
 // ---------------------------------------------------------------------------
 
@@ -591,6 +702,7 @@ function threatOf(row: SecurityThreatRow, index: number, grouped: boolean): Comp
     mitigationLabel: accepted ? 'Why acceptable' : 'Mitigation',
     mitigation: stringOr(row.mitigation, ''),
     riskIndexes: [],
+    residualIndexes: [],
   };
 }
 
@@ -767,11 +879,42 @@ export function composeSecurityConsole(input: ViewInput): ComposedSecurityConsol
   const rawBoundaries = raw.boundaries && typeof raw.boundaries === 'object' ? raw.boundaries : null;
   const boundaries = boundariesOf(arrayOf<SecurityBoundaryRow>(rawBoundaries?.rows), arrayOf<Block>(rawBoundaries?.note));
 
-  const extras: ComposedSecurityExtra[] = arrayOf<SecurityExtra>(raw.extras).map((extra, index) => ({
+  let extras: ComposedSecurityExtra[] = arrayOf<SecurityExtra>(raw.extras).map((extra, index) => ({
     id: `security-extra-${index}`,
     heading: stringOr(extra.heading, ''),
     blocks: arrayOf<Block>(extra.blocks),
   }));
+
+  // The first "Residual Observations" extra with at least one bold-titled paragraph becomes its own
+  // toggle; without one it stays a folded extra.
+  let residuals: ComposedSecurityResiduals | null = null;
+  const residualExtra = extras.find((extra) => extra.heading.toLowerCase().includes('residual observation'));
+  if (residualExtra) {
+    const parsed = residualsOf(residualExtra.blocks);
+    if (parsed.items.length > 0) {
+      const items: ComposedSecurityResidual[] = parsed.items.map((item, index) => {
+        const refs = item.refTexts.map((text) => {
+          const at = threats.findIndex((t) => t.ids.includes(text));
+          if (at >= 0 && !threats[at].residualIndexes.includes(index)) threats[at].residualIndexes.push(index);
+          return { text, threatIndex: at >= 0 ? at : null };
+        });
+        return {
+          index,
+          anchorId: `security-residual-${index}`,
+          title: item.title === '' ? `Observation ${index + 1}` : item.title,
+          refs,
+          blocks: item.blocks,
+        };
+      });
+      residuals = {
+        heading: residualExtra.heading,
+        label: `Residual observations · ${items.length}`,
+        lead: parsed.lead,
+        items,
+      };
+      extras = extras.filter((extra) => extra !== residualExtra);
+    }
+  }
 
   const rawSignoff = raw.signoff && typeof raw.signoff === 'object' ? raw.signoff : null;
   const items = arrayOf<SecuritySignoffItem>(rawSignoff?.items).map((item) => ({
@@ -824,6 +967,7 @@ export function composeSecurityConsole(input: ViewInput): ComposedSecurityConsol
     board,
     waivers,
     boundaries,
+    residuals,
     extras,
     signoff,
     audit,

@@ -59,6 +59,8 @@ interface Pinned {
   audit: number;
   signoff: [number, number];
   extras: string[];
+  /** Residual-observation items (the toggle); omitted means 0. */
+  residuals?: number;
   grouped: boolean;
   status: string;
 }
@@ -76,8 +78,8 @@ const PINNED: Record<string, Pinned> = {
   'SP:phases/01-portal-owned-identity-sessions/01-SECURITY.md': {
     rows: 44, open: 0, openLow: 0, closed: 44, severity: { critical: 2, high: 20, medium: 11, low: 11 },
     disposition: { mitigate: 34, accept: 9, transfer: 1 }, columns: { S: 9, T: 7, R: 2, I: 8, D: 9, E: 9 },
-    boundaries: 10, destinations: 1, singles: 6, stores: 2, risks: 9, audit: 1, signoff: [4, 4], extras: ['Residual Observations'],
-    grouped: false, status: 'verified',
+    boundaries: 10, destinations: 1, singles: 6, stores: 2, risks: 9, audit: 1, signoff: [4, 4], extras: [],
+    residuals: 3, grouped: false, status: 'verified',
   },
   'SP:phases/03-account-administration-session-control/03-SECURITY.md': {
     rows: 42, open: 0, openLow: 0, closed: 42, severity: SEV_HIGH_MED_LOW,
@@ -221,6 +223,7 @@ describe('security console corpus (Q527-09)', () => {
       expect(model.audit?.runs ?? []).toHaveLength(pinned.audit);
       expect(model.signoff ? [model.signoff.done, model.signoff.total] : null).toEqual(pinned.signoff);
       expect(model.extras.map((e) => e.heading)).toEqual(pinned.extras);
+      expect(model.residuals?.items ?? []).toHaveLength(pinned.residuals ?? 0);
       expect(model.board.unit).toBe(pinned.grouped ? 'groups' : 'threats');
       expect(model.intro.status.label.toLowerCase()).toBe(pinned.status);
       // Every register row has a square on the board.
