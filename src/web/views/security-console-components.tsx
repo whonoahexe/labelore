@@ -2,7 +2,7 @@
 // (identity, status chip and facts, the threats-open gauge, nav with counts, the sign-off stamp, the
 // audit-trail switch, copy-path and View/Source) beside a content column — the lead Summary, the
 // severity x STRIDE threat board with its legend and detail panel, the waiver ledger, the trust
-// boundaries as flow chips, the folded extras, the sign-off checklist, the audit trail when
+// boundaries as destination blocks, the folded extras, the sign-off checklist, the audit trail when
 // switched on and the "In the source only" strip. Every string derived from the document renders
 // only through `ResearchInline` / `ResearchBlocks` (tokenizeInline output mapped to React nodes) or
 // as plain React text — never React's raw-HTML injection prop (T-527-02), and no href is built from
@@ -17,7 +17,8 @@ import { ResearchBlocks, ResearchInline } from './research-briefing-components.t
 import { STATUS_TONE } from './security-console.ts';
 import type {
   ComposedSecurityConsole,
-  ComposedSecurityFlow,
+  ComposedSecurityCrossing,
+  ComposedSecurityDestination,
   ComposedSecurityThreat,
   ComposedSecurityWaiver,
 } from './security-console.ts';
@@ -314,62 +315,64 @@ function Waiver({
 }
 
 // ---------------------------------------------------------------------------
-// Flows
+// Trust boundaries
 // ---------------------------------------------------------------------------
 
-function Flow({
-  flow,
-  expanded,
-  onToggle,
+function Crossing({
+  crossing,
+  showDestination,
 }: {
-  flow: ComposedSecurityFlow;
-  expanded: boolean;
-  onToggle: (key: string) => void;
+  crossing: ComposedSecurityCrossing;
+  showDestination: boolean;
 }): React.JSX.Element {
-  const key = `flow-${flow.index}`;
-  const hasDescription = flow.description.trim() !== '';
   return (
-    <div className="view-security-flow-row" data-store={flow.store ? 'true' : 'false'}>
-      <div className="view-security-flow" title={flow.description.replace(/[*`]/g, '')}>
-        {flow.store ? (
+    <li className="view-security-crossing">
+      <div className="view-security-crossing-line">
+        <span className="view-security-from" data-tone={crossing.tone}>
+          <ResearchInline text={crossing.source} />
+        </span>
+        {showDestination ? (
           <>
-            <span className="view-security-node" data-store="true">
-              <ResearchInline text={flow.name} />
+            <span className="view-security-to-arrow" aria-hidden="true">
+              →
             </span>
-            <span className="view-security-muted">
-              holds <ResearchInline text={flow.data} />
+            <span className="view-security-to">
+              <ResearchInline text={crossing.destination} />
             </span>
           </>
-        ) : (
-          <>
-            <span className="view-security-node">
-              <ResearchInline text={flow.from} />
-            </span>
-            <span className="view-security-arrow">
-              <ResearchInline text={flow.data} />
-            </span>
-            <span className="view-security-node" data-side="into">
-              <ResearchInline text={flow.to} />
-            </span>
-          </>
-        )}
-        {hasDescription ? (
-          <button
-            type="button"
-            className="view-security-link"
-            aria-expanded={expanded}
-            aria-controls={`${key}-description`}
-            onClick={() => onToggle(key)}
-          >
-            {expanded ? 'hide' : 'why'}
-          </button>
+        ) : null}
+        {crossing.qualifier !== null ? (
+          <span className="view-security-muted">
+            (<ResearchInline text={crossing.qualifier} />)
+          </span>
+        ) : null}
+        {crossing.data.trim() !== '' ? (
+          <span className="view-security-carries" data-tone={crossing.dataTone}>
+            <ResearchInline text={crossing.data} />
+          </span>
         ) : null}
       </div>
-      {hasDescription && expanded ? (
-        <p id={`${key}-description`} className="view-security-flow-desc">
-          <ResearchInline text={flow.description} />
+      {crossing.description.trim() !== '' ? (
+        <p className="view-security-crossing-desc">
+          <ResearchInline text={crossing.description} />
         </p>
       ) : null}
+    </li>
+  );
+}
+
+function Destination({ dest }: { dest: ComposedSecurityDestination }): React.JSX.Element {
+  return (
+    <div id={dest.anchorId} className="view-security-dest" data-kind={dest.kind} data-at-rest={dest.kind === 'at-rest' ? 'true' : 'false'}>
+      <h3 className="view-security-dest-head">
+        <ResearchInline text={dest.label} />
+        <span className="view-security-muted">{` · ${dest.countText}`}</span>
+      </h3>
+      <ul className="view-security-crossings">
+        {dest.crossings.map((crossing) => (
+          <Crossing key={crossing.index} crossing={crossing} showDestination={dest.kind === 'single'} />
+        ))}
+      </ul>
     </div>
   );
 }
@@ -591,20 +594,20 @@ export function SecurityConsoleView({
           ) : null}
         </section>
 
-        {model.flows ? (
-          <section id="security-flows" className="view-security-block">
+        {model.boundaries ? (
+          <section id="security-boundaries" className="view-security-block">
             <h2 className="view-security-title">
               Trust boundaries
               <span className="view-security-muted">what crosses where</span>
             </h2>
-            <div className="view-security-flows">
-              {model.flows.rows.map((flow) => (
-                <Flow key={flow.index} flow={flow} expanded={open.has(`flow-${flow.index}`)} onToggle={toggle} />
+            <div className="view-security-dests">
+              {model.boundaries.destinations.map((dest) => (
+                <Destination key={dest.anchorId} dest={dest} />
               ))}
             </div>
-            {model.flows.note.length > 0 ? (
+            {model.boundaries.note.length > 0 ? (
               <div className="view-security-note">
-                <ResearchBlocks blocks={model.flows.note} />
+                <ResearchBlocks blocks={model.boundaries.note} />
               </div>
             ) : null}
           </section>

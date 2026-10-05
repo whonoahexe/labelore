@@ -49,6 +49,11 @@ interface Pinned {
   disposition: Record<string, number>;
   columns: Record<string, number>;
   boundaries: number;
+  /** Shared destination blocks (two or more crossings). */
+  destinations: number;
+  /** Rows gathered into the one-crossing list. */
+  singles: number;
+  /** Rows with no arrow, held in the at-rest block. */
   stores: number;
   risks: number;
   audit: number;
@@ -65,28 +70,28 @@ const SP3_COLS = { S: 4, T: 10, R: 5, I: 12, D: 4, E: 7 };
 const PINNED: Record<string, Pinned> = {
   'SYN:synthetic': {
     rows: 42, open: 2, openLow: 0, closed: 40, severity: SEV_HIGH_MED_LOW,
-    disposition: { mitigate: 31, accept: 11 }, columns: SP3_COLS, boundaries: 10, stores: 0, risks: 11,
-    audit: 2, signoff: [0, 4], extras: [], grouped: false, status: 'open',
+    disposition: { mitigate: 31, accept: 11 }, columns: SP3_COLS, boundaries: 10, destinations: 0, singles: 10,
+    stores: 0, risks: 11, audit: 2, signoff: [0, 4], extras: [], grouped: false, status: 'open',
   },
   'SP:phases/01-portal-owned-identity-sessions/01-SECURITY.md': {
     rows: 44, open: 0, openLow: 0, closed: 44, severity: { critical: 2, high: 20, medium: 11, low: 11 },
     disposition: { mitigate: 34, accept: 9, transfer: 1 }, columns: { S: 9, T: 7, R: 2, I: 8, D: 9, E: 9 },
-    boundaries: 10, stores: 2, risks: 9, audit: 1, signoff: [4, 4], extras: ['Residual Observations'],
+    boundaries: 10, destinations: 1, singles: 6, stores: 2, risks: 9, audit: 1, signoff: [4, 4], extras: ['Residual Observations'],
     grouped: false, status: 'verified',
   },
   'SP:phases/03-account-administration-session-control/03-SECURITY.md': {
     rows: 42, open: 0, openLow: 0, closed: 42, severity: SEV_HIGH_MED_LOW,
-    disposition: { mitigate: 31, accept: 11 }, columns: SP3_COLS, boundaries: 10, stores: 0, risks: 11,
-    audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
+    disposition: { mitigate: 31, accept: 11 }, columns: SP3_COLS, boundaries: 10, destinations: 0, singles: 10,
+    stores: 0, risks: 11, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
   },
   'LB:milestones/v1.1-phases/05-per-type-document-views/05-SECURITY.md': {
     rows: 19, open: 0, openLow: 1, closed: 18, severity: { high: 4, medium: 5, low: 10 },
     disposition: { mitigate: 11, accept: 8 }, columns: { S: 1, T: 8, I: 3, D: 6, E: 1 }, boundaries: 8,
-    stores: 0, risks: 8, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
+    destinations: 0, singles: 8, stores: 0, risks: 8, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
   },
   'LB:milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-SECURITY.md': {
     rows: 14, open: 0, openLow: 0, closed: 14, severity: { high: 11, medium: 3 },
-    disposition: { mitigate: 11, mixed: 3 }, columns: { other: 14 }, boundaries: 4, stores: 0, risks: 1,
+    disposition: { mitigate: 11, mixed: 3 }, columns: { other: 14 }, boundaries: 4, destinations: 0, singles: 4, stores: 0, risks: 1,
     audit: 2, signoff: [3, 3],
     extras: ['Hardening Notes (not threat status changes)', 'Unregistered Flags', 'Register Scope Note'],
     grouped: true, status: 'verified',
@@ -94,21 +99,21 @@ const PINNED: Record<string, Pinned> = {
   'LB:milestones/v1.0-phases/04-portability-degradation-hardening/04-SECURITY.md': {
     rows: 29, open: 0, openLow: 0, closed: 29, severity: { high: 5, medium: 8, low: 16 },
     disposition: { mitigate: 15, accept: 14 }, columns: { T: 15, R: 2, I: 6, D: 5, E: 1 }, boundaries: 3,
-    stores: 0, risks: 0, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
+    destinations: 0, singles: 3, stores: 0, risks: 0, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
   },
   'LB:milestones/v1.0-phases/01-read-layer-domain-model/01-SECURITY.md': {
     rows: 16, open: 0, openLow: 0, closed: 16, severity: { high: 8, medium: 4, low: 4 },
     disposition: { mitigate: 12, accept: 4 }, columns: { S: 1, T: 7, R: 1, I: 4, D: 3 }, boundaries: 4,
-    stores: 0, risks: 4, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
+    destinations: 0, singles: 4, stores: 0, risks: 4, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
   },
   'LB:milestones/v1.0-phases/03-search-browsing-traceability/03-SECURITY.md': {
     rows: 21, open: 0, openLow: 0, closed: 21, severity: { high: 12, medium: 3, low: 6 },
     disposition: { mitigate: 17, accept: 4 }, columns: { T: 10, R: 1, I: 4, D: 6 }, boundaries: 4,
-    stores: 0, risks: 4, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
+    destinations: 0, singles: 4, stores: 0, risks: 4, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
   },
   'FX:phases/01-identity-slice/01-SECURITY.md': {
     rows: 1, open: 1, openLow: 0, closed: 0, severity: { medium: 1 }, disposition: { mitigate: 1 },
-    columns: { T: 1 }, boundaries: 1, stores: 0, risks: 0, audit: 1, signoff: [1, 4], extras: [],
+    columns: { T: 1 }, boundaries: 1, destinations: 0, singles: 1, stores: 0, risks: 0, audit: 1, signoff: [1, 4], extras: [],
     grouped: false, status: 'draft',
   },
 };
@@ -203,8 +208,15 @@ describe('security console corpus (Q527-09)', () => {
       expect(model.board.columns.map((c) => c.key).filter((k) => k !== 'other')).toEqual(
         ['S', 'T', 'R', 'I', 'D', 'E'].filter((k) => k in pinned.columns),
       );
-      expect(model.flows?.rows).toHaveLength(pinned.boundaries);
-      expect(model.flows?.rows.filter((r) => r.store)).toHaveLength(pinned.stores);
+      const blocks = model.boundaries?.destinations ?? [];
+      expect(model.boundaries?.total ?? 0).toBe(pinned.boundaries);
+      expect(blocks.filter((b) => b.kind === 'shared')).toHaveLength(pinned.destinations);
+      expect(blocks.filter((b) => b.kind === 'single').flatMap((b) => b.crossings)).toHaveLength(pinned.singles);
+      expect(blocks.filter((b) => b.kind === 'at-rest').flatMap((b) => b.crossings)).toHaveLength(pinned.stores);
+      // Every boundary row lands in exactly one block.
+      expect(blocks.flatMap((b) => b.crossings.map((c) => c.index)).sort((a, b) => a - b)).toEqual(
+        Array.from({ length: pinned.boundaries }, (_, i) => i),
+      );
       expect(model.waivers.rows).toHaveLength(pinned.risks);
       expect(model.audit?.runs ?? []).toHaveLength(pinned.audit);
       expect(model.signoff ? [model.signoff.done, model.signoff.total] : null).toEqual(pinned.signoff);
