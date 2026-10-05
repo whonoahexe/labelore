@@ -317,7 +317,7 @@ function ItemBody({ item }: { item: ComposedUiReviewItem }): React.JSX.Element {
   return (
     <div className="view-ui-review-item-body">
       {item.text !== '' ? (
-        <span>
+        <span className="view-ui-review-item-text">
           <ResearchInline text={item.text} />
         </span>
       ) : null}
