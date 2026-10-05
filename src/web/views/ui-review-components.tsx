@@ -679,7 +679,7 @@ export function UiReviewView({
                   ) : null}
                   {!section.files
                     ? section.parts.map((part, partIndex) => (
-                        <div key={partIndex}>
+                        <div key={partIndex} className="view-ui-review-part">
                           {part.heading ? (
                             <p className="view-ui-review-part-title">
                               <ResearchInline text={part.heading} />

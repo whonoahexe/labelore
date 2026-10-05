@@ -10415,8 +10415,42 @@ a.view-research-id:hover {
   margin-top: var(--space-3);
 }
 
+.view-ui-review-part {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 90ch;
+  min-width: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  line-height: var(--lh-relaxed);
+}
+
+.view-ui-review-part + .view-ui-review-part {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-faint);
+}
+
+.view-ui-review-part :is(.view-research-text, .view-research-list) {
+  margin: 0;
+}
+
+/* Lists take the file list's left rule, so the folded sections read as one family. */
+.view-ui-review-part .view-research-list {
+  display: grid;
+  gap: var(--space-1);
+  padding-left: var(--space-4);
+  border-left: 1px solid var(--border);
+  list-style: none;
+}
+
+.view-ui-review-part strong {
+  color: var(--foreground);
+  font-weight: var(--fw-semibold);
+}
+
 .view-ui-review-part-title {
   margin: 0;
+  color: var(--foreground);
   font-weight: var(--fw-semibold);
 }
 
