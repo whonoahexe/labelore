@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-02T10:15:49.685Z"
-last_activity: 2026-09-30
+last_updated: "2026-10-05T12:26:21.902Z"
+last_activity: 2026-10-02
 last_activity_desc: Completed quick task 260929-3x3 (RESEARCH page view)
-state_head: 262888cb18427afed74a382a9d54cd30e58cde88
+state_head: dd2ccafb3f18e2c4d36cfb0d00a90023c3878db5
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -154,6 +154,7 @@ None.
 | 261003-526 | Build sketch 016 A as the VALIDATION page view. Use gsd-browser whenever you need verification or to improve the UI. | 2026-10-03 | 6930a2e | .planning/quick/261003-526-build-sketch-016-a-as-the-validation-page-view-use-gsd-brows |
 | 261003-527 | Build sketch 017 D as the SECURITY page view. Use gsd-browser whenever you need verification or to improve the UI. | 2026-10-03 | 629b939 | .planning/quick/261003-527-build-sketch-017-d-as-the-security-page-view-use-gsd-browser |
 | 261003-528 | Build sketch 018 B as the UI-REVIEW page view. Use gsd-browser whenever you need verification or to improve the UI. | 2026-10-03 | 8a8638b | .planning/quick/261003-528-build-sketch-018-b-as-the-ui-review-page-view-use-gsd-browse |
+| 42 | VALIDATION page: no longer show view-validation-note | 2026-10-05 | dd2ccaf | — |
 
 ## Deferred Items
 
