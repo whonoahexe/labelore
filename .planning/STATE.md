@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-05T12:26:21.902Z"
+last_updated: "2026-10-05T12:59:41.275Z"
 last_activity: 2026-10-02
 last_activity_desc: Completed quick task 260929-3x3 (RESEARCH page view)
-state_head: dd2ccafb3f18e2c4d36cfb0d00a90023c3878db5
+state_head: e737d0c4a6662b59333bb37b9a1a9099c4c466eb
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-09-21)
 Phase: Milestone v1.1 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-10-02 - Completed quick task 261002-li5: ui-spec view token swatches from globals.css
+Last activity: 2026-10-05 - Completed quick task 261005-p1x: SECURITY page: trust boundaries grouped by destination, residual observations as a closed toggle with threat cross-links
 
 ## Performance Metrics
 
@@ -155,6 +155,7 @@ None.
 | 261003-527 | Build sketch 017 D as the SECURITY page view. Use gsd-browser whenever you need verification or to improve the UI. | 2026-10-03 | 629b939 | .planning/quick/261003-527-build-sketch-017-d-as-the-security-page-view-use-gsd-browser |
 | 261003-528 | Build sketch 018 B as the UI-REVIEW page view. Use gsd-browser whenever you need verification or to improve the UI. | 2026-10-03 | 8a8638b | .planning/quick/261003-528-build-sketch-018-b-as-the-ui-review-page-view-use-gsd-browse |
 | 42 | VALIDATION page: no longer show view-validation-note | 2026-10-05 | dd2ccaf | — |
+| 261005-p1x | SECURITY page: trust boundaries grouped by destination, residual observations as a closed toggle with threat cross-links | 2026-10-05 | e737d0c | [261005-p1x-security-page-trust-boundaries-grouped-b](./quick/261005-p1x-security-page-trust-boundaries-grouped-b/) |
 
 ## Deferred Items
 
