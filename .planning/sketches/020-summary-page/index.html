@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 020 — SUMMARY page</title>
+<link rel="stylesheet" href="../themes/default.css?v=020">
+<style>
+/* Sketch 020: the SUMMARY page. Shared vocabulary as 013–019 (chips, tones, meta row, View/Source, modals, in the source only); fresh page structure per variant. Data: ./data.js from real SUMMARY.md files (gen-data.mjs). */
+*, *::before, *::after { box-sizing: border-box; }
+:root { --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border)); --missing-border: color-mix(in oklch, var(--missing-fill) 50%, var(--border)); --in-flight-tint: color-mix(in oklch, var(--in-flight-fill) 8%, transparent); }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-5); line-height: var(--lh-normal); padding-top: 3rem; }
+h1, h2, h3, h4, p, ul, ol { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+code { font-family: var(--font-mono); font-size: 0.86em; padding: 0 0.2em; background: color-mix(in oklch, var(--muted) 70%, transparent); overflow-wrap: anywhere; }
+.dark code { background: color-mix(in oklch, var(--foreground) 9%, transparent); }
+strong { font-weight: var(--fw-semibold); }
+#variant-nav { position: fixed; inset: 0 0 auto 0; z-index: 50; display: flex; gap: var(--space-1); align-items: center; padding: var(--space-2) var(--space-4); background: var(--background); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; overflow-x: auto; }
+#variant-nav .lbl { color: var(--muted-foreground); margin-right: var(--space-2); white-space: nowrap; }
+.variant-tab { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; background: none; white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; color: var(--muted-foreground); transition: all .15s ease; }
+.variant-tab:hover { color: var(--foreground); background: var(--state-hover); }
+.variant-tab.active { color: var(--primary); border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); background: var(--primary-tint); }
+#frame { margin: 0 auto; container-type: inline-size; transition: max-width .2s ease; background: var(--background); min-height: 100vh; }
+#frame.narrow-frame { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+.page { width: min(78rem, 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); display: grid; gap: var(--space-10); grid-template-columns: minmax(0, 1fr); }
+.page > * { min-width: 0; }
+.fade { animation: fade .18s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .fade { animation: none; } }
+
+/* ---------- shared vocabulary ---------- */
+.eyebrow { color: var(--primary); font-family: var(--font-heading); font-size: var(--fs-2); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+.kicker { color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.muted { color: var(--muted-foreground); }
+.mono { font-family: var(--font-mono); }
+.section-heading { display: flex; gap: var(--space-4); align-items: flex-end; justify-content: space-between; flex-wrap: wrap; padding-bottom: var(--space-3); margin-bottom: var(--space-5); border-bottom: 1px solid var(--border); }
+.section-heading h2 { font-family: var(--font-mono); font-size: var(--fs-fluid-3); font-weight: var(--fw-medium); letter-spacing: var(--ls-tight); }
+.section-heading .aside { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.chip { display: inline-flex; align-items: center; gap: var(--space-1); padding: 0.1rem var(--space-1-5); border: 1px solid var(--border); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); white-space: nowrap; background: none; }
+.chip[data-tone='complete'], .chip[data-tone='active'] { color: var(--primary); border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); background: var(--primary-tint); }
+.chip[data-tone='in-flight'] { color: var(--in-flight-fill); border-color: var(--in-flight-border); }
+.chip[data-tone='missing'] { color: var(--missing-fill); border-color: var(--missing-border); }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-1-5); align-items: center; }
+.link-btn { padding: 0; border: 0; background: none; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; transition: color .15s ease; }
+.link-btn:hover { color: var(--primary); }
+.md { display: grid; gap: var(--space-2-5); font-size: var(--fs-4); min-width: 0; }
+.md p, .md li { overflow-wrap: anywhere; }
+.md ul, .md ol { padding-left: var(--space-5); display: grid; gap: var(--space-1-5); }
+.md pre { margin: 0; padding: var(--space-3); background: var(--sidebar); border: 1px solid var(--border); overflow-x: auto; font-size: var(--fs-2); }
+.md pre code { background: none; padding: 0; overflow-wrap: normal; white-space: pre; }
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--border); }
+.md table { border-collapse: collapse; width: 100%; font-size: var(--fs-3); }
+.md th, .md td { text-align: left; padding: var(--space-1-5) var(--space-2-5); border-bottom: 1px solid var(--border); vertical-align: top; }
+.md th { font-family: var(--font-heading); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); font-weight: var(--fw-semibold); }
+.md h4 { font-family: var(--font-heading); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); margin-top: var(--space-2); }
+.flash { animation: flash 1.2s ease; }
+@keyframes flash { 0%, 40% { box-shadow: 0 0 0 2px var(--primary); } 100% { box-shadow: 0 0 0 2px transparent; } }
+
+/* header (shared content) */
+.meta-row { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-5); align-items: center; justify-content: space-between; }
+.meta-left { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); align-items: baseline; }
+.date { font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.date b { color: var(--foreground); font-weight: var(--fw-medium); }
+.doc-tools { display: flex; gap: var(--space-4); align-items: center; }
+.icon-btn { display: grid; place-items: center; width: 2rem; height: 2rem; padding: 0; border: 0; background: none; color: var(--muted-foreground); transition: color .15s ease, background .15s ease; }
+.icon-btn:hover { color: var(--foreground); background: var(--state-hover); }
+.seg { display: inline-flex; }
+.seg button { padding: var(--space-1) var(--space-3); border: 0; background: none; font-family: var(--font-mono); font-size: var(--fs-4); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); transition: all .15s ease; }
+.seg button:hover { color: var(--foreground); }
+.seg button[aria-pressed='true'] { color: var(--foreground); background: color-mix(in oklch, var(--muted) 85%, transparent); }
+.dark .seg button[aria-pressed='true'] { background: color-mix(in oklch, var(--foreground) 12%, transparent); }
+.trigger { display: inline-flex; align-items: baseline; gap: var(--space-1-5); padding: var(--space-1-5) var(--space-2-5); border: 1px solid var(--border); background: var(--card); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); transition: all .15s ease; }
+.trigger b { color: var(--foreground); font-size: var(--fs-4); letter-spacing: 0; font-weight: var(--fw-semibold); }
+.trigger b.pend { color: var(--in-flight-fill); }
+.trigger:hover { border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); color: var(--primary); }
+.trigger[disabled] { opacity: .5; cursor: default; }
+.trigger[disabled]:hover { border-color: var(--border); color: var(--muted-foreground); }
+.stat { display: grid; gap: 0.1rem; }
+.stat b { font-family: var(--font-mono); font-size: var(--fs-6); font-weight: var(--fw-medium); }
+.stat b small { font-size: var(--fs-2); color: var(--muted-foreground); font-weight: 400; margin-left: var(--space-1); }
+.oneliner { font-size: var(--fs-fluid-1); line-height: 1.45; max-width: 60rem; }
+.setup { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-4); border: 1px solid var(--in-flight-border); border-left: 3px solid var(--in-flight-fill); background: var(--in-flight-tint); }
+
+/* source-only + raw */
+.source-only { display: grid; grid-template-columns: 12rem minmax(0, 1fr); gap: var(--space-4); padding: var(--space-3) 0; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border); }
+.source-only ul { display: flex; flex-wrap: wrap; gap: var(--space-1-5) var(--space-5); margin: 0; padding: 0; font-size: var(--fs-3); list-style: none; }
+.source-only button { padding: 0; border: 0; background: none; color: var(--muted-foreground); cursor: pointer; font: inherit; text-align: left; text-decoration: underline dotted; text-underline-offset: var(--space-0-5); }
+.source-only button:hover { color: var(--foreground); }
+@container (max-width: 760px) { .source-only { grid-template-columns: minmax(0, 1fr); gap: var(--space-2); } }
+.raw { margin: 0; border: 1px solid var(--border); background: var(--sidebar); font-family: var(--font-mono); font-size: var(--fs-2); line-height: 1.6; overflow-x: auto; padding: var(--space-3) 0; }
+.raw span { display: block; padding: 0 var(--space-4) 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.raw span::before { content: attr(data-n); display: inline-block; width: 3.5rem; padding-right: var(--space-3); text-align: right; color: var(--muted-foreground); opacity: .6; user-select: none; }
+.raw span.hit { background: var(--primary-tint); }
+
+/* modal */
+dialog.modal { padding: 0; border: 1px solid var(--border); background: var(--card); color: var(--foreground); width: min(44rem, calc(100vw - 2rem)); max-height: min(80vh, 46rem); opacity: 0; transform: translateY(6px); transition: opacity .15s ease, transform .15s ease, overlay .15s allow-discrete, display .15s allow-discrete; }
+dialog.modal[open] { opacity: 1; transform: none; }
+@starting-style { dialog.modal[open] { opacity: 0; transform: translateY(6px); } }
+dialog.modal::backdrop { background: color-mix(in oklch, var(--foreground) 22%, transparent); }
+.m-head { position: sticky; top: 0; display: flex; justify-content: space-between; gap: var(--space-4); align-items: baseline; padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--border); background: var(--card); }
+.m-head h3 { font-family: var(--font-mono); font-size: var(--fs-6); font-weight: var(--fw-medium); }
+.m-body { padding: var(--space-4) var(--space-5) var(--space-5); display: grid; gap: var(--space-5); }
+.m-group { display: grid; gap: var(--space-1-5); }
+.m-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-1) var(--space-3); align-items: baseline; padding: var(--space-2) 0; border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); font-size: var(--fs-3); }
+.m-row .fn { font-family: var(--font-mono); overflow-wrap: anywhere; }
+.m-row .note { grid-column: 1 / -1; color: var(--muted-foreground); font-size: var(--fs-3); }
+.hash { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--primary); padding: 0 var(--space-1); border: 1px solid color-mix(in oklch, var(--primary) 45%, var(--border)); background: none; transition: all .15s ease; }
+.hash:hover { background: var(--primary-tint); }
+.req { display: grid; grid-template-columns: 7rem minmax(0, 1fr); gap: var(--space-3); padding: var(--space-2) 0; border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); align-items: baseline; }
+.req .id { font-family: var(--font-mono); font-size: var(--fs-3); color: var(--primary); }
+.req .id.pend { color: var(--in-flight-fill); }
+
+/* shared blocks */
+.pill { display: inline-flex; align-items: center; gap: var(--space-1); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); padding: 0.05rem var(--space-1); border: 1px solid var(--border); background: none; white-space: nowrap; transition: all .15s ease; }
+.pill::before { content: ''; width: 0.45rem; height: 0.45rem; background: var(--muted-foreground); }
+.pill[data-s='pass']::before { background: var(--primary); }
+.pill[data-s='fail']::before { background: var(--missing-fill); }
+.pill[data-s='unknown']::before { background: none; border: 1px dashed var(--muted-foreground); width: calc(0.45rem - 2px); height: calc(0.45rem - 2px); }
+button.pill:hover { border-color: var(--primary); color: var(--foreground); }
+.human { color: var(--in-flight-fill); border-color: var(--in-flight-border); }
+.human::before { background: var(--in-flight-fill) !important; }
+.dev { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-4); border: 1px solid var(--border); background: var(--card); }
+.dev h4 { font-family: var(--font-sans); font-size: var(--fs-4); font-weight: var(--fw-medium); }
+.dev dl { display: grid; grid-template-columns: 6rem minmax(0, 1fr); gap: var(--space-1-5) var(--space-3); margin: 0; font-size: var(--fs-3); }
+.dev dt { padding-top: 0.15rem; }
+.dev dd { margin: 0; overflow-wrap: anywhere; }
+.to-plan { display: flex; gap: var(--space-2); align-items: baseline; font-size: var(--fs-4); }
+.to-plan::before { content: '✓'; color: var(--primary); font-family: var(--font-mono); }
+.pat { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-2) var(--space-3); padding: var(--space-2-5) 0; border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); font-size: var(--fs-3); align-items: baseline; }
+.dec { list-style: none; padding: 0; display: grid; gap: var(--space-3); counter-reset: d; }
+.dec li { counter-increment: d; display: grid; grid-template-columns: 2rem minmax(0, 1fr); gap: var(--space-2); font-size: var(--fs-4); overflow-wrap: anywhere; }
+.dec li::before { content: counter(d, decimal-leading-zero); font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); padding-top: 0.15rem; }
+.clamp2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.lineage { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto minmax(0, 1fr); gap: var(--space-4); align-items: center; }
+@container (max-width: 44rem) { .lineage { grid-template-columns: minmax(0, 1fr); } .lineage .arrow { transform: rotate(90deg); justify-self: start; } }
+.lineage .side { display: grid; gap: var(--space-2); }
+.lineage .arrow { font-family: var(--font-mono); color: var(--muted-foreground); }
+.lineage .self { padding: var(--space-2) var(--space-3); border: 1px solid color-mix(in oklch, var(--primary) 65%, var(--border)); background: var(--primary-tint); font-family: var(--font-mono); font-size: var(--fs-3); color: var(--primary); white-space: nowrap; }
+.node-chip { display: grid; gap: 0.1rem; padding: var(--space-1-5) var(--space-2-5); border: 1px solid var(--border); background: var(--card); text-align: left; font-size: var(--fs-3); transition: all .15s ease; }
+.node-chip:hover { border-color: var(--primary); }
+.node-chip .id { font-family: var(--font-mono); font-size: var(--fs-2); }
+.node-chip .why { color: var(--muted-foreground); font-size: var(--fs-2); }
+.loose { display: grid; gap: var(--space-3); }
+.loose details { border: 1px solid var(--border); background: var(--card); }
+.loose details[data-tone='in-flight'] { border-color: var(--in-flight-border); border-left: 3px solid var(--in-flight-fill); }
+.loose summary { list-style: none; cursor: pointer; display: flex; gap: var(--space-3); justify-content: space-between; align-items: baseline; padding: var(--space-2-5) var(--space-4); font-size: var(--fs-4); transition: background .15s ease; }
+.loose summary::-webkit-details-marker { display: none; }
+.loose summary:hover { background: var(--state-hover); }
+.loose summary .t::before { content: '+ '; font-family: var(--font-mono); color: var(--muted-foreground); }
+.loose details[open] summary .t::before { content: '− '; }
+.loose .lb { padding: 0 var(--space-4) var(--space-4); }
+.ready { display: flex; gap: var(--space-3); align-items: baseline; padding: var(--space-3) 0; border-top: 1px solid var(--border); font-size: var(--fs-4); }
+
+/* ============ A — release notes ============ */
+.a-col { width: min(60rem, 100%); margin: 0 auto; display: grid; gap: var(--space-10); }
+.a-head { display: grid; gap: var(--space-5); }
+.a-head h1 { font-family: var(--font-mono); font-size: var(--fs-fluid-3); font-weight: var(--fw-medium); letter-spacing: var(--ls-tight); line-height: 1.2; }
+.a-head h1 .id { color: var(--primary); margin-right: var(--space-2); }
+.a-strip { display: flex; flex-wrap: wrap; gap: var(--space-5) var(--space-8); align-items: end; justify-content: space-between; padding: var(--space-4) 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.a-stats { display: flex; gap: var(--space-6); flex-wrap: wrap; }
+.notes { list-style: none; padding: 0; counter-reset: n; display: grid; }
+.note-item { counter-increment: n; display: grid; grid-template-columns: 2.5rem minmax(0, 1fr); gap: var(--space-3); padding: var(--space-4) 0; border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); }
+.note-item::before { content: counter(n, decimal-leading-zero); font-family: var(--font-mono); font-size: var(--fs-4); color: var(--primary); padding-top: 0.1rem; }
+.note-item .hd { font-size: var(--fs-6); font-weight: var(--fw-medium); line-height: 1.4; overflow-wrap: anywhere; }
+.note-item .rs { color: var(--muted-foreground); font-size: var(--fs-4); margin-top: var(--space-1-5); overflow-wrap: anywhere; }
+.note-item .rs.clamp2 { cursor: pointer; }
+.note-item .proof { display: flex; flex-wrap: wrap; gap: var(--space-1-5); align-items: center; margin-top: var(--space-2-5); }
+.a-along { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-8); }
+@container (max-width: 52rem) { .a-along { grid-template-columns: minmax(0, 1fr); } }
+
+/* ============ B — deliverables board ============ */
+.b-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-6); align-items: start; }
+@container (max-width: 52rem) { .b-head { grid-template-columns: minmax(0, 1fr); } }
+.b-head h1 { font-family: var(--font-sans); font-size: var(--fs-fluid-3); font-weight: var(--fw-medium); letter-spacing: var(--ls-tight); line-height: 1.2; }
+.b-metrics { display: grid; grid-template-columns: repeat(3, auto); gap: var(--space-2) var(--space-6); padding: var(--space-4) var(--space-5); border: 1px solid var(--border); background: var(--card); }
+.b-metrics .full { grid-column: 1 / -1; display: flex; gap: var(--space-2); flex-wrap: wrap; padding-top: var(--space-3); border-top: 1px solid var(--border); }
+.b-grid { display: grid; grid-template-columns: minmax(0, 1fr) 21rem; gap: var(--space-8); align-items: start; }
+@container (max-width: 60rem) { .b-grid { grid-template-columns: minmax(0, 1fr); } }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: var(--space-3); }
+.card { display: grid; gap: var(--space-3); align-content: start; padding: var(--space-4); border: 1px solid var(--border); background: var(--card); }
+.card[data-human] { border-color: var(--in-flight-border); }
+.card .top { display: flex; justify-content: space-between; gap: var(--space-2); align-items: center; }
+.card .did { font-family: var(--font-mono); font-size: var(--fs-4); color: var(--primary); }
+.card p { font-size: var(--fs-3); overflow-wrap: anywhere; }
+.card .why { padding-left: var(--space-3); border-left: 2px solid var(--in-flight-border); color: var(--muted-foreground); font-size: var(--fs-3); }
+.b-side { position: sticky; top: 4rem; display: grid; gap: var(--space-6); }
+@container (max-width: 60rem) { .b-side { position: static; } }
+.shipped { list-style: none; padding: 0; display: grid; gap: var(--space-2-5); }
+.shipped li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-2); font-size: var(--fs-3); }
+.shipped li::before { content: '✓'; color: var(--primary); font-family: var(--font-mono); }
+.shipped li button { padding: 0; border: 0; background: none; text-align: left; font: inherit; color: var(--foreground); transition: color .15s ease; }
+.shipped li button:hover { color: var(--primary); }
+.vlineage { display: grid; gap: var(--space-2); }
+.vlineage .arrow { font-family: var(--font-mono); color: var(--muted-foreground); padding-left: var(--space-3); }
+.b-tabs { display: flex; border-bottom: 1px solid var(--border); overflow-x: auto; margin-bottom: var(--space-5); }
+.b-tabs button { border: 0; background: none; padding: var(--space-2) var(--space-3); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); border-bottom: 2px solid transparent; white-space: nowrap; transition: all .15s ease; }
+.b-tabs button:hover { color: var(--foreground); }
+.b-tabs button[aria-selected='true'] { color: var(--foreground); border-bottom-color: var(--primary); }
+.b-tabs button .n { margin-left: var(--space-1); color: var(--muted-foreground); }
+.b-tabs button .n.f { color: var(--in-flight-fill); }
+
+/* ============ C — run timeline ============ */
+.c-head { display: grid; grid-template-columns: minmax(0, 1fr) 16rem; gap: var(--space-8); }
+@container (max-width: 52rem) { .c-head { grid-template-columns: minmax(0, 1fr); } }
+.c-head h1 { font-family: var(--font-sans); font-size: var(--fs-fluid-3); font-weight: var(--fw-medium); letter-spacing: var(--ls-tight); line-height: 1.2; }
+.c-clock { display: grid; gap: var(--space-3); padding-left: var(--space-5); border-left: 1px solid var(--border); align-content: start; }
+@container (max-width: 52rem) { .c-clock { padding-left: 0; border-left: 0; grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)); } }
+.c-out { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: 0; border: 1px solid var(--border); }
+.c-out > div { padding: var(--space-4); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); display: grid; gap: var(--space-2); align-content: start; margin: 0 -1px -1px 0; }
+.c-out .k { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--primary); }
+.c-out p { font-size: var(--fs-4); font-weight: var(--fw-medium); line-height: 1.4; overflow-wrap: anywhere; }
+.tl { position: relative; display: grid; gap: 0; }
+.tl::before { content: ''; position: absolute; left: 0.55rem; top: 0.6rem; bottom: 0.6rem; width: 1px; background: var(--border); }
+.ev { position: relative; display: grid; grid-template-columns: 1.1rem minmax(0, 1fr) minmax(0, 20rem); gap: var(--space-4); padding: var(--space-3) 0; }
+@container (max-width: 52rem) { .ev { grid-template-columns: 1.1rem minmax(0, 1fr); } .ev .margin { grid-column: 2; } }
+.ev .dot { width: 1.1rem; height: 1.1rem; margin-top: 0.15rem; border: 1px solid var(--border); background: var(--background); display: grid; place-items: center; font-family: var(--font-mono); font-size: 0.6rem; color: var(--muted-foreground); z-index: 1; }
+.ev[data-k='task'] .dot { border-color: color-mix(in oklch, var(--primary) 65%, var(--border)); color: var(--primary); }
+.ev[data-k='end'] .dot, .ev[data-k='start'] .dot { background: var(--muted-foreground); border-color: var(--muted-foreground); }
+.ev[data-k='wait'] .dot { border-color: var(--in-flight-fill); background: var(--in-flight-tint); }
+.ev .body { display: grid; gap: var(--space-2); min-width: 0; }
+.ev .body h3 { font-family: var(--font-sans); font-size: var(--fs-5); font-weight: var(--fw-medium); }
+.ev .when { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.ev .margin { display: grid; gap: var(--space-2); align-content: start; }
+.fix { display: grid; gap: var(--space-1); padding: var(--space-2) var(--space-3); border: 1px solid var(--border); border-left: 2px solid var(--in-flight-fill); background: var(--card); font-size: var(--fs-3); text-align: left; transition: all .15s ease; }
+.fix:hover { border-color: var(--in-flight-border); }
+.fix .ft { font-weight: var(--fw-medium); }
+.c-matrix { border: 1px solid var(--border); overflow-x: auto; }
+.c-matrix table { border-collapse: collapse; width: 100%; font-size: var(--fs-3); }
+.c-matrix th, .c-matrix td { text-align: left; padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); vertical-align: top; }
+.c-matrix th { font-family: var(--font-heading); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); font-weight: var(--fw-semibold); }
+.c-matrix tr[data-human] td:first-child { box-shadow: inset 3px 0 0 var(--in-flight-fill); }
+.c-two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-8); }
+@container (max-width: 52rem) { .c-two { grid-template-columns: minmax(0, 1fr); } }
+
+/* ============ D — synthesis: B head + C body, reworked outcome ============ */
+.d-metrics { grid-template-columns: repeat(3, auto); }
+.type-chip .k { color: var(--muted-foreground); margin-right: var(--space-1); font-weight: var(--fw-medium); }
+.oc { display: grid; border-top: 1px solid var(--border); }
+.oc-row { display: grid; grid-template-columns: 2.25rem minmax(0, 17rem) minmax(0, 1fr) auto; gap: var(--space-2) var(--space-6); padding: var(--space-4) 0; border-bottom: 1px solid var(--border); align-items: start; }
+@container (max-width: 52rem) { .oc-row { grid-template-columns: 2.25rem minmax(0, 1fr); } .oc-row .det, .oc-row .ev-links { grid-column: 2; } }
+.oc-row .n { font-family: var(--font-mono); font-size: var(--fs-6); color: var(--primary); line-height: 1.3; }
+.oc-row .hd { font-size: var(--fs-5); font-weight: var(--fw-medium); line-height: 1.35; overflow-wrap: anywhere; }
+.oc-row .det { color: var(--muted-foreground); font-size: var(--fs-4); overflow-wrap: anywhere; }
+.oc-row .det.clamp3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.oc-row .more { margin-top: var(--space-1); }
+.oc-row .ev-links { display: flex; flex-direction: column; gap: var(--space-1); align-items: flex-end; }
+@container (max-width: 52rem) { .oc-row .ev-links { flex-direction: row; align-items: center; } }
+.oc-row:hover .hd { color: var(--primary); }
+.oc-sum { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); align-items: baseline; margin-bottom: var(--space-4); font-size: var(--fs-4); }
+.oc-sum b { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-medium); }
+/* requirement trigger + preview (as the app's .document-reference / .reference-preview) */
+.document-reference { padding: 0; border: 0; background: none; font: inherit; color: var(--primary); text-decoration: underline dotted; text-underline-offset: var(--space-0-5); cursor: pointer; }
+.document-reference.pend { color: var(--in-flight-fill); }
+.document-reference:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.reference-preview { position: fixed; z-index: 10001; display: grid; width: min(24rem, calc(100vw - 2rem)); gap: var(--space-4); border: 1px solid var(--border); background: var(--card); padding: var(--space-4); color: var(--foreground); box-shadow: 0 8px 24px color-mix(in oklch, var(--foreground) 14%, transparent); transition: opacity 120ms ease, transform 120ms ease; }
+.reference-preview.enter { opacity: 0; transform: translateY(-0.25rem) scale(0.98); }
+.reference-preview-heading { display: flex; align-items: start; justify-content: space-between; gap: var(--space-4); }
+.reference-preview-heading h2 { margin-top: var(--space-0-5); font-size: var(--fs-6); font-family: var(--font-mono); font-weight: var(--fw-medium); }
+.reference-preview p.t { font-size: var(--fs-4); }
+.reference-preview-facts { display: grid; gap: var(--space-2); margin: 0; }
+.reference-preview-facts div { display: grid; grid-template-columns: 5rem minmax(0, 1fr); gap: var(--space-3); }
+.reference-preview-facts dt { color: var(--muted-foreground); font-size: var(--fs-3); font-weight: var(--fw-semibold); text-transform: uppercase; }
+.reference-preview-facts dd { margin: 0; font-size: var(--fs-3); overflow-wrap: anywhere; }
+.reference-preview-open { display: inline-flex; gap: var(--space-1); align-items: center; justify-self: start; color: var(--primary); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; text-decoration: none; }
+.reference-preview-open:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<nav id="variant-nav">
+  <span class="lbl">Sketch 020 · SUMMARY</span>
+  <button class="variant-tab" data-variant="a">A: Release notes</button>
+  <button class="variant-tab" data-variant="b">B: Deliverables board</button>
+  <button class="variant-tab" data-variant="c">C: Run timeline</button>
+  <button class="variant-tab" data-variant="d">D: B head + C body ★ Selected</button>
+</nav>
+<div id="frame"><div id="root"></div></div>
+<dialog class="modal" id="modal"></dialog>
+
+<div id="sketch-tools" style="position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:12px;background:rgba(0,0,0,0.78);color:white;padding:8px 10px;opacity:0.55;transition:opacity 0.2s;display:grid;gap:6px;max-width:calc(100vw - 24px)" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.55'">
+  <div>Doc: <span id="doc-btns"></span></div>
+  <div>Theme: <button data-theme="light">Light</button><button data-theme="dark">Dark</button></div>
+  <div>Width: <button data-width="390">Phone</button><button data-width="820">Tablet</button><button data-width="full">Desktop</button></div>
+</div>
+<style>
+#sketch-tools button { background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 2px 7px; margin: 2px 0 0 3px; font: inherit; cursor: pointer; }
+#sketch-tools button.on { background: #c2410c; border-color: #c2410c; }
+</style>
+<script src="./data.js?v=3"></script>
+<script>
+const DOCS = window.DOCS;
+const Q = new URLSearchParams(location.search);
+const state = { variant: ['a', 'b', 'c', 'd'].includes(Q.get('v')) ? Q.get('v') : 'd', doc: DOCS[Q.get('doc')] ? Q.get('doc') : '0501', theme: Q.get('theme') === 'light' ? 'light' : 'dark', width: 'full', mode: 'view', hit: null, open: new Set(), tab: null };
+const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const inline = s => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/(^|[^*\w])\*([^*\n<]+)\*(?!\w)/g, '$1<em>$2</em>');
+const humanize = s => String(s ?? '').replace(/[_-]/g, ' ').replace(/^./, c => c.toUpperCase());
+const cap = s => String(s ?? '').replace(/^([^A-Za-z`*]*)([a-z])/, (m, a, b) => a + b.toUpperCase());
+function md(src) {
+  const lines = String(src ?? '').split('\n'), out = []; let i = 0;
+  const isTbl = k => /^\s*\|/.test(lines[k] ?? '') && /^\s*\|[\s:|-]+\|\s*$/.test(lines[k + 1] ?? '');
+  const cells = l => l.trim().replace(/^\||\|$/g, '').split(/(?<!\\)\|/).map(c => c.trim());
+  while (i < lines.length) {
+    const l = lines[i];
+    if (!l.trim() || /^---\s*$/.test(l)) { i++; continue; }
+    if (/^```/.test(l)) { const b = []; i++; while (i < lines.length && !/^```/.test(lines[i])) b.push(lines[i++]); i++; out.push(`<pre><code>${esc(b.join('\n'))}</code></pre>`); continue; }
+    if (/^#{2,6}\s/.test(l)) { out.push(`<h4>${inline(l.replace(/^#+\s/, ''))}</h4>`); i++; continue; }
+    if (isTbl(i)) { const h = cells(l); i += 2; const rows = []; while (i < lines.length && /^\s*\|/.test(lines[i])) rows.push(cells(lines[i++])); out.push(`<div class="tbl-wrap"><table><thead><tr>${h.map(c => `<th>${inline(c)}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`); continue; }
+    if (/^\s*([-*]|\d+\.)\s/.test(l)) { const ord = /^\s*\d+\./.test(l); const items = []; while (i < lines.length && (/^\s*([-*]|\d+\.)\s/.test(lines[i]) || (/^\s{2,}\S/.test(lines[i]) && items.length))) { if (/^\s*([-*]|\d+\.)\s/.test(lines[i]) && !/^\s{4,}/.test(lines[i])) items.push(lines[i].replace(/^\s*([-*]|\d+\.)\s/, '')); else items[items.length - 1] += ' ' + lines[i].trim(); i++; } out.push(`<${ord ? 'ol' : 'ul'}>${items.map(x => `<li>${inline(x)}</li>`).join('')}</${ord ? 'ol' : 'ul'}>`); continue; }
+    const p = []; while (i < lines.length && lines[i].trim() && !/^(```|#{2,6}\s|\s*([-*]|\d+\.)\s)/.test(lines[i]) && !isTbl(i)) p.push(lines[i++].trim());
+    out.push(`<p>${inline(p.join(' '))}</p>`);
+  }
+  return `<div class="md">${out.join('')}</div>`;
+}
+
+/* ---------- model ---------- */
+const fmtD = s => { if (!s) return null; const d = new Date(s); return isNaN(d) ? s : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); };
+const fmtT = s => { const m = String(s ?? '').match(/T(\d\d:\d\d)/); return m ? m[1] : null; };
+function planId(d) { const ph = d.phase.match(/^(\d+)/); return ph ? `${ph[1]}-${d.plan}` : d.phase.replace(/^quick-/, ''); }
+function eyebrow(d) { const ph = d.phase.match(/^(\d+)-(.*)$/); return ph ? `Summary · Phase ${ph[1]} · ${humanize(ph[2])}` : `Quick summary · ${d.phase.replace(/^quick-/, '')}`; }
+function title(d) { return String(d.h1 ?? planId(d)).replace(/^(Phase\s+\d+\s+Plan\s+\d+|Quick\s+\S+|[\w-]+)\s*:\s*/i, m => /:/.test(m) ? '' : m).replace(/\s*[—–-]?\s*Summary(\s*\([^)]*\))?$/i, '').replace(/^Summary\s*[-—:]\s*/i, ''); }
+const STATUS = s => /complete|done|pass/.test(s ?? '') ? ['Complete', 'complete'] : /await|pending|checkpoint/.test(s ?? '') ? ['Awaiting checkpoint', 'in-flight'] : /fail|block/.test(s ?? '') ? ['Blocked', 'missing'] : [humanize(s ?? 'Unknown'), 'quiet'];
+const RULE = { 1: 'Bug', 2: 'Missing piece', 3: 'Blocker', 4: 'Architecture' };
+function filesCount(d) { return d.files.created.length + d.files.modified.length; }
+const SHIPPED_ALT = /^(what (was )?built|what shipped|what changed|.*outcome table)/i;
+function shippedAlt(d) { return d.other.find(o => SHIPPED_ALT.test(o.title)) ?? null; }
+function looseEnds(d) { return d.other.filter(o => !o.none && !(state.variant !== 'd' && SHIPPED_ALT.test(o.title) && !d.accomplishments.length)); }
+const isHumanish = t => /pending|human|awaiting|not yet|checkpoint/i.test(t);
+// Proof matching (variant A): attach coverage deliverables to the accomplishment sharing the most code identifiers / words.
+function tokens(s) { return new Set(String(s ?? '').toLowerCase().match(/`[^`]+`|[a-z][a-z0-9_.-]{4,}/g) ?? []); }
+function matchProof(d) {
+  const acc = d.accomplishments.map(a => ({ ...a, cov: [] })); const left = [];
+  d.coverage.forEach(c => {
+    const ct = tokens(c.description); let best = -1, score = 1;
+    acc.forEach((a, i) => { const at = tokens(a.head + ' ' + a.rest); let s = 0; ct.forEach(t => { if (at.has(t)) s += t.startsWith('`') ? 3 : 1; }); if (s > score) { score = s; best = i; } });
+    best >= 0 ? acc[best].cov.push(c) : left.push(c);
+  });
+  return { acc, left };
+}
+function checkPills(c) { return c.checks.map(v => `<button class="pill" data-s="${esc(v.status)}" data-toast="${esc(v.ref)}" title="${esc(v.ref)}">${esc(v.kind?.replace(/_/g, ' '))}</button>`).join('') + (c.human ? `<span class="pill human">Needs a human</span>` : ''); }
+
+/* ---------- shared fragments ---------- */
+const ICON_LINK = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" x2="16" y1="12" y2="12"/></svg>';
+function metaRow(d) { const f = fmtD(d.completed); return `<div class="meta-row"><div class="meta-left"><span class="eyebrow">${esc(eyebrow(d))}</span>${f ? `<span class="date">Completed <b>${esc(f)}</b></span>` : `<span class="date">Not completed yet</span>`}</div><div class="doc-tools"><button class="icon-btn" data-copy="${esc(d.path)}" title="Copy path" aria-label="Copy path">${ICON_LINK}</button><div class="seg" role="group" aria-label="Document display"><button data-mode="view" aria-pressed="${state.mode === 'view'}">View</button><button data-mode="source" aria-pressed="${state.mode === 'source'}">Source</button></div></div></div>`; }
+function statusChips(d) { const [l, t] = STATUS(d.status); return `<span class="chip" data-tone="${t}">${esc(l)}</span>${d.subsystem ? `<span class="chip">${esc(humanize(d.subsystem))}</span>` : ''}${d.selfCheck ? `<span class="chip" data-tone="${d.selfCheck === 'passed' ? 'complete' : 'missing'}">Self-check ${esc(d.selfCheck)}</span>` : ''}`; }
+function triggers(d) {
+  const t = (k, label, n, pend) => `<button class="trigger" data-modal="${k}" ${n || pend ? '' : 'disabled'}>${label} <b>${n}</b>${pend ? `<b class="pend">+${pend} pending</b>` : ''}</button>`;
+  const tasks = d.tasks.length || d.commitCount || 0;
+  return t('tasks', d.tasks.length ? 'Tasks' : 'Commits', tasks) + t('files', 'Files', filesCount(d)) + t('reqs', 'Requirements', d.reqDone.length, d.reqPending.length + d.reqPartial.length);
+}
+function stats(d) {
+  const s = fmtT(d.started), e = d.started && d.duration ? null : null;
+  return [['Duration', d.duration ?? '—'], ['Started', s ? `${s}` : '—'], ['Files', filesCount(d) || '—']].map(([k, v]) => `<div class="stat"><span class="kicker">${k}</span><b>${esc(v)}</b></div>`).join('');
+}
+function setup(d) { return d.userSetup ? `<div class="setup"><span class="kicker" style="color:var(--in-flight-fill)">You need to set something up</span>${md(d.userSetup)}</div>` : ''; }
+function accomplishmentsList(items, withProof) {
+  return `<ol class="notes">${items.map((a, i) => { const k = 'acc' + i; const open = state.open.has(k); return `<li class="note-item" id="acc-${i}"><div><p class="hd">${inline(cap(a.head))}</p>${a.rest ? `<p class="rs ${open ? '' : 'clamp2'}" data-toggle="${k}" title="${open ? '' : 'Click to read all'}">${inline(a.rest)}</p>` : ''}${withProof && a.cov?.length ? `<div class="proof">${a.cov.map(c => `<span class="kicker" style="margin-right:var(--space-1)">${esc(c.id)}${c.requirement ? ' · ' + esc(c.requirement) : ''}</span>${checkPills(c)}`).join('<span class="muted">·</span>')}</div>` : ''}</div></li>`; }).join('')}</ol>`;
+}
+function decisionsBlock(d) { return d.decisions.length ? `<ol class="dec">${d.decisions.map(x => `<li><span>${inline(x)}</span></li>`).join('')}</ol>` : (d.decisionsBody ? md(d.decisionsBody) : `<p class="muted">No decisions recorded.</p>`); }
+function devCard(x) {
+  const rows = [['Found', x.found], ['Problem', x.issue], ['Fix', x.fix], ['Files', x.files ? x.files.replace(/`/g, '') : null]].filter(([, v]) => v);
+  return `<article class="dev"><div class="chips"><span class="chip">Rule ${x.rule} · ${esc(RULE[x.rule] ?? x.type)}</span>${x.commit ? `<button class="hash" data-toast="Opens commit ${esc(x.commit)}">${esc(x.commit.slice(0, 7))}</button>` : ''}</div><h4>${inline(x.title)}</h4>${rows.length ? `<dl>${rows.map(([k, v]) => `<dt class="kicker">${k}</dt><dd>${inline(v)}</dd>`).join('')}</dl>` : `<p class="muted" style="font-size:var(--fs-3)">${inline(x.text)}</p>`}</article>`;
+}
+function deviationsBlock(d) {
+  const v = d.deviations;
+  if (v.none && !v.items.length) return `<p class="to-plan"><span>Went to plan.${v.note ? ` <span class="muted">${inline(cap(v.note))}</span>` : ''}</span></p>`;
+  return `<div style="display:grid;gap:var(--space-3)">${v.items.map(devCard).join('')}${v.extra.map(e => `<details class="loose-x"><summary class="link-btn">+ ${esc(e.title)}</summary><div style="margin-top:var(--space-2)">${md(e.body)}</div></details>`).join('')}</div>`;
+}
+function patternsBlock(d) {
+  if (!d.patterns.length && !d.added.length) return '';
+  return `${d.added.length ? `<div style="display:grid;gap:var(--space-2);margin-bottom:var(--space-4)"><span class="kicker">New dependencies · ${d.added.length}</span><div class="chips">${d.added.map(a => `<span class="chip">${esc(a)}</span>`).join('')}</div></div>` : ''}
+    <div>${d.patterns.map(p => `<div class="pat"><span class="chip" ${p.established ? 'data-tone="active"' : ''}>${p.established ? 'Convention' : 'Approach'}</span><span>${inline(p.text)}</span></div>`).join('')}</div>`;
+}
+function lineage(d, vertical = false) {
+  if (!d.requires.length && !d.affects.length) return '';
+  const up = d.requires.length ? d.requires.map(r => `<button class="node-chip" data-toast="Opens ${esc(r.phase)}"><span class="id">${esc(String(r.phase).replace(/^(\d+)-.*$/, 'Phase $1'))}</span>${r.provides ? `<span class="why clamp2">${inline(r.provides)}</span>` : ''}</button>`).join('') : `<span class="muted" style="font-size:var(--fs-3)">Nothing — a starting point</span>`;
+  const down = d.affects.length ? d.affects.map(a => `<button class="node-chip" data-toast="Opens ${esc(a)}"><span class="id">${esc(a.length > 40 ? a.slice(0, 60) + '…' : a)}</span></button>`).join('') : `<span class="muted" style="font-size:var(--fs-3)">Nothing downstream</span>`;
+  if (vertical) return `<div class="vlineage"><span class="kicker">Built on</span>${up}<span class="arrow">↓</span><span class="self node-chip" style="border-color:var(--primary);color:var(--primary)">${esc(planId(d))}</span><span class="arrow">↓</span><span class="kicker">Unblocks</span>${down}</div>`;
+  return `<div class="lineage"><div class="side"><span class="kicker">Built on</span>${up}</div><span class="arrow">→</span><span class="self">${esc(planId(d))}</span><span class="arrow">→</span><div class="side"><span class="kicker">Unblocks · ${d.affects.length}</span>${down}</div></div>`;
+}
+function looseBlock(d) {
+  const L = looseEnds(d); if (!L.length) return '';
+  return `<div class="loose">${L.map((o, i) => { const k = 'le' + i; const hum = isHumanish(o.title); return `<details data-det="${k}" ${state.open.has(k) || hum ? 'open' : ''} ${hum ? 'data-tone="in-flight"' : ''}><summary><span class="t">${inline(o.title)}</span>${hum ? '<span class="chip" data-tone="in-flight">Waits on a human</span>' : ''}</summary><div class="lb">${md(o.body)}</div></details>`; }).join('')}</div>`;
+}
+function ready(d) { return d.nextReady && !/^none/i.test(d.nextReady) ? `<div class="ready"><span class="kicker" style="white-space:nowrap">Next</span><span>${inline(d.nextReady.split(/\n\s*\n/)[0].replace(/\s+/g, ' '))}</span></div>` : ''; }
+function lineOf(d, re) { const L = d.raw.split('\n'); for (let i = 0; i < L.length; i++) if (re.test(L[i])) return i + 1; return null; }
+function blockEnd(d, n) { const L = d.raw.split('\n'); const l = L[n - 1]; if (/^## /.test(l)) { for (let i = n; i < L.length; i++) if (/^## /.test(L[i])) return i; return L.length; } if (/^[a-z_-]+:/.test(l)) { for (let i = n; i < L.length; i++) if (/^([a-z_-]+:|---\s*$|#)/.test(L[i])) return i; } return n; }
+function sourceOnly(d) {
+  const items = [['Tags', /^tags:/], ['Provides', /^provides:|^\s+provides:\s*$/], ['Actuals', /^actuals:|^metrics:/], ['Performance', /^## Performance/], ['Self-check', /^## Self-Check/], ['Frontmatter', /^---\s*$/]]
+    .map(([l, re]) => [l, lineOf(d, re)]).filter(([, n]) => n);
+  return `<nav class="source-only" aria-label="In the source only"><span class="kicker">In the source only</span><ul>${items.map(([l, n]) => `<li><button data-src="${n}">${l}</button></li>`).join('')}</ul></nav>`;
+}
+function sourceView(d) { return `<pre class="raw">${d.raw.split('\n').map((l, i) => `<span id="L${i + 1}" data-n="${i + 1}" class="${state.hit && i + 1 >= state.hit[0] && i + 1 <= state.hit[1] ? 'hit' : ''}">${esc(l) || ' '}</span>`).join('')}</pre>`; }
+function heading(t, aside = '') { return `<div class="section-heading"><h2>${t}</h2>${aside ? `<span class="aside">${aside}</span>` : ''}</div>`; }
+
+/* ---------- modals ---------- */
+function openModal(kind) {
+  const d = DOCS[state.doc]; const m = document.getElementById('modal'); let h = '', body = '';
+  if (kind === 'tasks') {
+    h = d.tasks.length ? `Tasks · ${d.tasks.length}` : `Commits · ${d.commitCount}`;
+    body = d.tasks.length ? `<div>${d.tasks.map(t => `<div class="m-row"><span>${t.name ? inline(t.name) : `<span class="muted">Task ${t.n}</span>`}</span><span class="chips">${t.kind ? `<span class="chip">${esc(t.kind)}</span>` : ''}<button class="hash" data-toast="Opens commit ${esc(t.hash)}">${esc(t.hash)}</button></span></div>`).join('')}</div><p class="muted" style="font-size:var(--fs-3)">Each hash opens the commit. Tasks come from the Task Commits list${d.tasks.some(t => !t.name) ? ' (this summary only lists hashes)' : ''}.</p>`
+      : `<p class="muted">This summary records ${esc(d.commitCount)} commits but no per-task list. The outcome table in the page names them per item.</p>`;
+  } else if (kind === 'files') {
+    h = `Files · ${filesCount(d)}`;
+    const grp = (label, list, tone) => list.length ? `<div class="m-group"><span class="kicker">${label} · ${list.length}</span>${list.map(p => `<div class="m-row"><span class="fn">${esc(p)}</span>${tone ? `<span class="chip" data-tone="${tone}">New</span>` : ''}${d.files.notes[p] ? `<span class="note">${inline(d.files.notes[p])}</span>` : ''}</div>`).join('')}</div>` : '';
+    body = grp('Created', d.files.created, 'active') + grp('Modified', d.files.modified, null);
+  } else if (kind === 'reqs') {
+    h = `Requirements · ${d.reqDone.length + d.reqPending.length + d.reqPartial.length}`;
+    body = `<div>${d.reqDone.map(r => `<div class="req"><span><button class="document-reference" data-ref="${esc(r)}">${esc(r)}</button></span><span class="chip" data-tone="complete" style="justify-self:start">Completed</span></div>`).join('')}${[...d.reqPartial.map(r => [r, 'Partial']), ...d.reqPending.map(r => [r, 'Pending'])].map(([r, l]) => `<div class="req"><span><button class="document-reference pend" data-ref="${esc(r)}">${esc(r)}</button></span><span class="chip" data-tone="in-flight" style="justify-self:start">${l}</span></div>`).join('')}</div><p class="muted" style="font-size:var(--fs-3)">Hover or focus an ID for its preview; Open goes to the requirement.</p>`;
+  }
+  m.innerHTML = `<div class="m-head"><h3>${h}</h3><button class="link-btn" data-close>Close · Esc</button></div><div class="m-body">${body}</div>`;
+  m.showModal();
+}
+
+/* ---------- A — release notes ---------- */
+function viewA(d) {
+  const { acc, left } = matchProof(d);
+  const shipped = acc.length ? accomplishmentsList(acc, true) + (left.length ? `<div style="display:grid;gap:var(--space-2);margin-top:var(--space-4)"><span class="kicker">Also verified</span>${left.map(c => `<div class="pat" style="grid-template-columns:auto minmax(0,1fr)"><span class="kicker">${esc(c.id)}</span><div style="display:grid;gap:var(--space-1-5)"><span class="clamp2">${inline(c.description)}</span><div class="chips">${checkPills(c)}</div></div></div>`).join('')}</div>` : '')
+    : (d.coverage.length ? accomplishmentsList(d.coverage.map(c => ({ head: c.description.split(/\s[—–]\s|;\s/)[0], rest: c.description.split(/\s[—–]\s|;\s/).slice(1).join(' — '), cov: [c] })), true) : shippedAlt(d) ? `<p class="kicker" style="margin-bottom:var(--space-3)">From “${esc(shippedAlt(d).title)}”</p>${md(shippedAlt(d).body)}` : `<p class="muted">This summary has no Accomplishments list — see the sections below.</p>`);
+  return `<div class="a-col">
+    <header class="a-head">${metaRow(d)}<h1><span class="id">${esc(planId(d))}</span>${inline(title(d))}</h1>
+      ${d.oneLiner ? `<p class="oneliner">${inline(d.oneLiner)}</p>` : ''}
+      <div class="a-strip"><div style="display:grid;gap:var(--space-3)"><div class="chips">${statusChips(d)}</div><div class="chips">${triggers(d)}</div></div><div class="a-stats">${stats(d)}</div></div>
+      ${setup(d)}</header>
+    <section>${heading('What shipped', `${acc.length || d.coverage.length} items${d.coverage.length ? ' · proof attached' : ''}`)}${shipped}</section>
+    ${looseEnds(d).filter(o => isHumanish(o.title)).length ? `<section>${heading('Waiting on a human')}${looseBlock({ ...d, other: looseEnds(d).filter(o => isHumanish(o.title)) })}</section>` : ''}
+    <section>${heading('Along the way')}<div class="a-along"><div style="display:grid;gap:var(--space-3);align-content:start"><span class="kicker">Decisions · ${d.decisions.length}</span>${decisionsBlock(d)}</div><div style="display:grid;gap:var(--space-3);align-content:start"><span class="kicker">Deviations · ${d.deviations.items.length}</span>${deviationsBlock(d)}</div></div></section>
+    ${d.patterns.length || d.added.length ? `<section>${heading('Patterns', `${d.patterns.filter(p => p.established).length} new conventions`)}${patternsBlock(d)}</section>` : ''}
+    ${looseEnds(d).filter(o => !isHumanish(o.title)).length ? `<section>${heading('Also in this summary')}${looseBlock({ ...d, other: looseEnds(d).filter(o => !isHumanish(o.title)) })}</section>` : ''}
+    ${lineage(d) ? `<section>${heading('Where it sits')}${lineage(d)}</section>` : ''}
+    ${ready(d)}${sourceOnly(d)}</div>`;
+}
+
+/* ---------- B — deliverables board ---------- */
+function viewB(d) {
+  const tabs = [['dec', 'Decisions', d.decisions.length], ['dev', 'Deviations', d.deviations.items.length], ['pat', 'Patterns', d.patterns.length + d.added.length], ['loose', 'Still open', looseEnds(d).length]].filter(t => t[2] || t[0] === 'dev');
+  const tab = tabs.find(t => t[0] === state.tab)?.[0] ?? tabs[0][0];
+  const pane = tab === 'dec' ? decisionsBlock(d) : tab === 'dev' ? deviationsBlock(d) : tab === 'pat' ? patternsBlock(d) : looseBlock(d);
+  const cards = d.coverage.length ? `<div class="cards">${d.coverage.map(c => `<article class="card" ${c.human ? 'data-human' : ''} id="cov-${esc(c.id)}"><div class="top"><span class="did">${esc(c.id)}</span>${c.requirement ? `<span class="chip">${esc(c.requirement)}</span>` : ''}</div><p>${inline(c.description)}</p><div class="chips">${checkPills(c)}</div>${c.human && c.rationale ? `<p class="why clamp2" title="${esc(c.rationale)}">${inline(c.rationale)}</p>` : ''}</article>`).join('')}</div>`
+    : (shippedAlt(d) ? `<p class="kicker" style="margin-bottom:var(--space-3)">From “${esc(shippedAlt(d).title)}”</p>${md(shippedAlt(d).body)}` : `<p class="muted" style="font-size:var(--fs-4)">No coverage block in this summary — what shipped is listed on the right.</p>`);
+  const [sl, st] = STATUS(d.status);
+  return `${metaRow(d)}
+    <header class="b-head"><div style="display:grid;gap:var(--space-4)"><h1>${inline(title(d))}</h1>${d.oneLiner ? `<p class="oneliner">${inline(d.oneLiner)}</p>` : ''}<div class="chips">${triggers(d)}</div></div>
+      <div class="b-metrics"><div class="stat"><span class="kicker">Status</span><b style="color:${st === 'complete' ? 'var(--primary)' : st === 'in-flight' ? 'var(--in-flight-fill)' : 'inherit'};font-size:var(--fs-4)">${esc(sl)}</b></div>${stats(d)}<div class="full">${d.subsystem ? `<span class="chip">${esc(humanize(d.subsystem))}</span>` : ''}${d.selfCheck ? `<span class="chip" data-tone="${d.selfCheck === 'passed' ? 'complete' : 'missing'}">Self-check ${esc(d.selfCheck)}</span>` : ''}</div></div></header>
+    ${setup(d)}
+    <div class="b-grid"><section>${heading('Deliverables', d.coverage.length ? `${d.coverage.length} · ${d.coverage.filter(c => c.human).length} need a human` : '')}${cards}</section>
+      <aside class="b-side">${d.accomplishments.length ? `<div style="display:grid;gap:var(--space-3)"><span class="kicker">What shipped · ${d.accomplishments.length}</span><ul class="shipped">${d.accomplishments.map((a, i) => `<li><button data-toast="${esc(a.rest || a.head)}">${inline(cap(a.head))}</button></li>`).join('')}</ul></div>` : ''}${lineage(d, true)}</aside></div>
+    <section><div class="b-tabs" role="tablist">${tabs.map(([k, l, n]) => `<button role="tab" data-tab="${k}" aria-selected="${k === tab}">${l}<span class="n ${k === 'loose' && n ? 'f' : ''}">${n}</span></button>`).join('')}</div><div class="fade">${pane}</div></section>
+    ${ready(d)}${sourceOnly(d)}`;
+}
+
+/* ---------- C — run timeline ---------- */
+function viewC(d) {
+  const devFor = n => d.deviations.items.filter(x => new RegExp('Task\\s*' + n + '\\b').test(x.found ?? ''));
+  const floating = d.deviations.items.filter(x => !/Task\s*\d/.test(x.found ?? ''));
+  const waits = looseEnds(d).filter(o => isHumanish(o.title));
+  const evs = [];
+  evs.push(`<div class="ev" data-k="start"><span class="dot"></span><div class="body"><span class="when">Started${fmtT(d.started) ? ' · ' + fmtT(d.started) : ''}</span></div><div class="margin"></div></div>`);
+  (d.tasks.length ? d.tasks : []).forEach(t => {
+    const ds = devFor(t.n);
+    evs.push(`<div class="ev" data-k="task"><span class="dot">${t.n}</span><div class="body"><span class="when">Task ${t.n}${t.kind ? ' · ' + esc(t.kind) : ''} · <button class="hash" data-toast="Opens commit ${esc(t.hash)}">${esc(t.hash)}</button></span><h3>${t.name ? inline(t.name) : `<span class="muted">Task ${t.n}</span>`}</h3></div>
+      <div class="margin">${ds.map(x => `<button class="fix" data-jump="dev-${d.deviations.items.indexOf(x)}"><span class="kicker" style="color:var(--in-flight-fill)">Rule ${x.rule} · ${esc(RULE[x.rule] ?? x.type)} · fixed on the way</span><span class="ft">${inline(x.title)}</span></button>`).join('')}</div></div>`);
+  });
+  if (!d.tasks.length) evs.push(`<div class="ev" data-k="task"><span class="dot">·</span><div class="body"><h3>${esc(d.commitCount ?? 'Several')} commits</h3><span class="muted" style="font-size:var(--fs-3)">No per-task list in this summary.</span></div><div class="margin">${floating.map(x => `<button class="fix" data-jump="dev-${d.deviations.items.indexOf(x)}"><span class="kicker" style="color:var(--in-flight-fill)">Rule ${x.rule} · ${esc(RULE[x.rule] ?? x.type)}</span><span class="ft">${inline(x.title)}</span></button>`).join('')}</div></div>`);
+  waits.forEach(w => evs.push(`<div class="ev" data-k="wait"><span class="dot"></span><div class="body"><span class="when" style="color:var(--in-flight-fill)">Waiting on a human</span><h3>${inline(w.title)}</h3></div><div class="margin"></div></div>`));
+  evs.push(`<div class="ev" data-k="end"><span class="dot"></span><div class="body"><span class="when">${d.completed ? 'Completed · ' + esc(fmtD(d.completed)) : 'Not completed yet'}${d.duration ? ' · ' + esc(d.duration) : ''}</span></div><div class="margin"></div></div>`);
+  const out = d.accomplishments.length ? `<div class="c-out">${d.accomplishments.map((a, i) => `<div><span class="k">${String(i + 1).padStart(2, '0')}</span><p>${inline(cap(a.head))}</p>${a.rest ? `<span class="muted clamp2" style="font-size:var(--fs-3)" title="${esc(a.rest)}">${inline(a.rest)}</span>` : ''}</div>`).join('')}</div>` : '';
+  const matrix = d.coverage.length ? `<div class="c-matrix"><table><thead><tr><th>ID</th><th>Deliverable</th><th>Req</th><th>Proof</th></tr></thead><tbody>${d.coverage.map(c => `<tr id="proof-${esc(c.id)}" ${c.human ? 'data-human' : ''}><td class="mono">${esc(c.id)}</td><td><span class="clamp2" title="${esc(c.description)}">${inline(c.description)}</span></td><td class="mono">${esc(c.requirement ?? '—')}</td><td><div class="chips">${checkPills(c)}</div></td></tr>`).join('')}</tbody></table></div>` : '';
+  const [sl, st] = STATUS(d.status);
+  return `${metaRow(d)}
+    <header class="c-head"><div style="display:grid;gap:var(--space-4);align-content:start"><h1>${inline(title(d))}</h1>${d.oneLiner ? `<p class="oneliner muted" style="color:var(--foreground)">${inline(d.oneLiner)}</p>` : ''}<div class="chips">${triggers(d)}</div></div>
+      <div class="c-clock"><div class="stat"><span class="kicker">Status</span><span class="chip" data-tone="${st}" style="justify-self:start">${esc(sl)}</span></div>${stats(d)}<div class="chips">${d.subsystem ? `<span class="chip">${esc(humanize(d.subsystem))}</span>` : ''}${d.selfCheck ? `<span class="chip" data-tone="${d.selfCheck === 'passed' ? 'complete' : 'missing'}">Self-check ${esc(d.selfCheck)}</span>` : ''}</div></div></header>
+    ${setup(d)}
+    ${out ? `<section>${heading('Outcome', d.accomplishments.length + ' things')}${out}</section>` : ''}
+    ${cRest(d)}`;
+}
+function cRest(d) {
+
+  const devFor = n => d.deviations.items.filter(x => new RegExp('Task\\s*' + n + '\\b').test(x.found ?? ''));
+  const floating = d.deviations.items.filter(x => !/Task\s*\d/.test(x.found ?? ''));
+  const waits = looseEnds(d).filter(o => isHumanish(o.title));
+  const evs = [];
+  evs.push(`<div class="ev" data-k="start"><span class="dot"></span><div class="body"><span class="when">Started${fmtT(d.started) ? ' · ' + fmtT(d.started) : ''}</span></div><div class="margin"></div></div>`);
+  (d.tasks.length ? d.tasks : []).forEach(t => {
+    const ds = devFor(t.n);
+    evs.push(`<div class="ev" data-k="task"><span class="dot">${t.n}</span><div class="body"><span class="when">Task ${t.n}${t.kind ? ' · ' + esc(t.kind) : ''} · <button class="hash" data-toast="Opens commit ${esc(t.hash)}">${esc(t.hash)}</button></span><h3>${t.name ? inline(t.name) : `<span class="muted">Task ${t.n}</span>`}</h3></div>
+      <div class="margin">${ds.map(x => `<button class="fix" data-jump="dev-${d.deviations.items.indexOf(x)}"><span class="kicker" style="color:var(--in-flight-fill)">Rule ${x.rule} · ${esc(RULE[x.rule] ?? x.type)} · fixed on the way</span><span class="ft">${inline(x.title)}</span></button>`).join('')}</div></div>`);
+  });
+  if (!d.tasks.length) evs.push(`<div class="ev" data-k="task"><span class="dot">·</span><div class="body"><h3>${esc(d.commitCount ?? 'Several')} commits</h3><span class="muted" style="font-size:var(--fs-3)">No per-task list in this summary.</span></div><div class="margin">${floating.map(x => `<button class="fix" data-jump="dev-${d.deviations.items.indexOf(x)}"><span class="kicker" style="color:var(--in-flight-fill)">Rule ${x.rule} · ${esc(RULE[x.rule] ?? x.type)}</span><span class="ft">${inline(x.title)}</span></button>`).join('')}</div></div>`);
+  waits.forEach(w => evs.push(`<div class="ev" data-k="wait"><span class="dot"></span><div class="body"><span class="when" style="color:var(--in-flight-fill)">Waiting on a human</span><h3>${inline(w.title)}</h3></div><div class="margin"></div></div>`));
+  evs.push(`<div class="ev" data-k="end"><span class="dot"></span><div class="body"><span class="when">${d.completed ? 'Completed · ' + esc(fmtD(d.completed)) : 'Not completed yet'}${d.duration ? ' · ' + esc(d.duration) : ''}</span></div><div class="margin"></div></div>`);
+  const out = d.accomplishments.length ? `<div class="c-out">${d.accomplishments.map((a, i) => `<div><span class="k">${String(i + 1).padStart(2, '0')}</span><p>${inline(cap(a.head))}</p>${a.rest ? `<span class="muted clamp2" style="font-size:var(--fs-3)" title="${esc(a.rest)}">${inline(a.rest)}</span>` : ''}</div>`).join('')}</div>` : '';
+  const matrix = d.coverage.length ? `<div class="c-matrix"><table><thead><tr><th>ID</th><th>Deliverable</th><th>Req</th><th>Proof</th></tr></thead><tbody>${d.coverage.map(c => `<tr id="proof-${esc(c.id)}" ${c.human ? 'data-human' : ''}><td class="mono">${esc(c.id)}</td><td><span class="clamp2" title="${esc(c.description)}">${inline(c.description)}</span></td><td class="mono">${esc(c.requirement ?? '—')}</td><td><div class="chips">${checkPills(c)}</div></td></tr>`).join('')}</tbody></table></div>` : '';
+  return `    <section>${heading('How the run went', `${d.tasks.length || d.commitCount || 0} ${d.tasks.length ? 'tasks' : 'commits'} · ${d.deviations.items.length} fixed on the way`)}<div class="tl">${evs.join('')}</div>
+      ${d.deviations.items.length ? `<div style="display:grid;gap:var(--space-3);margin-top:var(--space-6)"><span class="kicker">Deviations in full</span>${d.deviations.items.map((x, i) => `<div id="dev-${i}">${devCard(x)}</div>`).join('')}${d.deviations.extra.map(e => `<details><summary class="link-btn">+ ${esc(e.title)}</summary><div style="margin-top:var(--space-2)">${md(e.body)}</div></details>`).join('')}</div>` : `<div style="margin-top:var(--space-4)">${deviationsBlock(d)}</div>`}</section>
+    ${matrix ? `<section>${heading('Proof', `${d.coverage.length} deliverables · ${d.coverage.filter(c => c.human).length} need a human`)}${matrix}</section>` : ''}
+    <section class="c-two"><div>${heading('Decisions', d.decisions.length + '')}${decisionsBlock(d)}</div><div>${d.patterns.length || d.added.length ? heading('Patterns', d.patterns.length + '') + patternsBlock(d) : ''}</div></section>
+    ${looseEnds(d).filter(o => !isHumanish(o.title)).length ? `<section>${heading('Also in this summary')}${looseBlock({ ...d, other: d.other.filter(o => !isHumanish(o.title)) })}</section>` : ''}
+    ${waits.length ? `<section>${heading('Waiting on a human')}${looseBlock({ ...d, other: waits })}</section>` : ''}
+    ${lineage(d) ? `<section>${heading('Where it sits')}${lineage(d)}</section>` : ''}
+    ${ready(d)}${sourceOnly(d)}`;
+}
+
+
+/* ---------- D — synthesis ---------- */
+function outcome(d) {
+  // Accomplishments only: no fallback to "What Was Built" or an outcome table (sketch 020 round 3).
+  if (!d.accomplishments.length) return '';
+  // Which deliverables back each item (same overlap heuristic as A) — shown as quiet D-links that jump to the Proof table.
+  const { acc } = matchProof(d);
+  const human = d.coverage.filter(c => c.human).length;
+  return `<section>${heading('Outcome')}<div class="oc-sum"><span><b>${acc.length}</b> things shipped</span>${d.coverage.length ? `<span class="muted">${d.coverage.length} deliverables proven${human ? ` · <span style="color:var(--in-flight-fill)">${human} need a human</span>` : ''}</span>` : ''}${d.deviations.items.length ? `<span class="muted">${d.deviations.items.length} fixed on the way</span>` : ''}</div>
+    <div class="oc">${acc.map((a, i) => { const k = 'oc' + i; const open = state.open.has(k); const long = a.rest.length > 220; return `<div class="oc-row"><span class="n">${String(i + 1).padStart(2, '0')}</span><p class="hd">${inline(cap(a.head))}</p><div>${a.rest ? `<p class="det ${long && !open ? 'clamp3' : ''}">${inline(a.rest)}</p>${long ? `<button class="link-btn more" data-toggle="${k}">${open ? '− Less' : '+ More'}</button>` : ''}` : ''}</div><div class="ev-links">${a.cov.map(c => `<button class="pill ${c.human ? 'human' : ''}" data-s="${c.checks.every(x => x.status === 'pass') ? 'pass' : 'unknown'}" data-jump="proof-${esc(c.id)}" title="${esc(c.description)}">${esc(c.id)}</button>`).join('')}</div></div>`; }).join('')}</div></section>`;
+}
+function viewD(d) {
+  const [sl, st] = STATUS(d.status);
+  return `${metaRow(d)}
+    <header class="b-head"><div style="display:grid;gap:var(--space-4)"><h1>${inline(title(d))}</h1>${d.oneLiner ? `<p class="oneliner">${inline(d.oneLiner)}</p>` : ''}<div class="chips">${triggers(d)}</div></div>
+      <div class="b-metrics d-metrics"><div class="stat"><span class="kicker">Status</span><b style="color:${st === 'complete' ? 'var(--primary)' : st === 'in-flight' ? 'var(--in-flight-fill)' : 'inherit'};font-size:var(--fs-4)">${esc(sl)}</b></div>
+        <div class="stat"><span class="kicker">Duration</span><b>${esc(d.duration ?? '—')}</b></div><div class="stat"><span class="kicker">Started</span><b>${esc(fmtT(d.started) ?? '—')}</b></div>
+        <div class="full">${d.subsystem ? `<span class="chip type-chip"><span class="k">Type:</span>${esc(humanize(d.subsystem))}</span>` : ''}${d.selfCheck ? `<span class="chip" data-tone="${d.selfCheck === 'passed' ? 'complete' : 'missing'}">Self-check ${esc(d.selfCheck)}</span>` : ''}</div></div></header>
+    ${setup(d)}
+    ${outcome(d)}
+    ${cRest(d)}`;
+}
+/* requirement hover preview — mirrors src/web/components/reference-preview.tsx */
+let previewEl = null, previewFor = null, hideT = null;
+function showPreview(btn) {
+  clearTimeout(hideT); const id = btn.dataset.ref; if (previewFor === btn && previewEl) return;
+  hidePreview(true); const d = DOCS[state.doc]; const r = d.reqInfo?.[id];
+  const pending = d.reqPending.includes(id) || d.reqPartial.includes(id);
+  const el = document.createElement('div'); el.className = 'reference-preview enter'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', id);
+  el.innerHTML = `<div class="reference-preview-heading"><div><p class="eyebrow">Requirement</p><h2>${esc(id)}</h2></div></div>
+    <p class="t">${r ? inline(r.text) : '<span class="muted">Not in this project’s REQUIREMENTS.md — a quick-task ID.</span>'}</p>
+    <dl class="reference-preview-facts"><div><dt>Status</dt><dd>${esc(r?.status ?? (pending ? 'Pending' : 'Complete in this summary'))}</dd></div><div><dt>Location</dt><dd>${esc(r?.file ?? '—')}</dd></div><div><dt>Phase</dt><dd>${esc(r?.phase ?? '—')}</dd></div></dl>
+    <a class="reference-preview-open" href="#" data-open-ref="${esc(id)}">Open <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg></a>`;
+  const host = document.getElementById('modal'); (host.open && host.contains(btn) ? host : document.body).appendChild(el); const rc = btn.getBoundingClientRect();
+  el.style.left = Math.min(rc.left, window.innerWidth - el.offsetWidth - 16) + 'px'; el.style.top = (rc.bottom + 8 + el.offsetHeight > window.innerHeight ? rc.top - el.offsetHeight - 8 : rc.bottom + 8) + 'px';
+  requestAnimationFrame(() => el.classList.remove('enter'));
+  el.addEventListener('mouseenter', () => clearTimeout(hideT)); el.addEventListener('mouseleave', () => { hideT = setTimeout(hidePreview, 150); });
+  previewEl = el; previewFor = btn;
+}
+function hidePreview(now) { if (previewEl) { const e = previewEl; previewEl = null; previewFor = null; if (now === true) e.remove(); else { e.classList.add('enter'); setTimeout(() => e.remove(), 130); } } }
+document.addEventListener('mouseover', e => { const b = e.target.closest('[data-ref]'); if (b) showPreview(b); });
+document.addEventListener('mouseout', e => { const b = e.target.closest('[data-ref]'); if (b && !b.contains(e.relatedTarget)) hideT = setTimeout(hidePreview, 150); });
+document.addEventListener('focusin', e => { const b = e.target.closest('[data-ref]'); if (b) showPreview(b); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') hidePreview(); });
+document.addEventListener('click', e => { const o = e.target.closest('[data-open-ref]'); if (o) { e.preventDefault(); toast('Opens ' + o.dataset.openRef + ' on the requirements page'); hidePreview(); } }, true);
+
+/* ---------- render ---------- */
+function render() {
+  const d = DOCS[state.doc]; const v = state.variant;
+  document.getElementById('root').innerHTML = `<div class="page fade">${state.mode === 'source' ? metaRow(d) + sourceView(d) : v === 'a' ? viewA(d) : v === 'b' ? viewB(d) : v === 'c' ? viewC(d) : viewD(d)}</div>`;
+  document.documentElement.classList.toggle('dark', state.theme === 'dark');
+  const f = document.getElementById('frame');
+  f.style.maxWidth = state.width === 'full' ? 'none' : state.width + 'px';
+  f.classList.toggle('narrow-frame', state.width !== 'full');
+  document.querySelectorAll('.variant-tab').forEach(t => t.classList.toggle('active', t.dataset.variant === state.variant));
+  document.querySelectorAll('#sketch-tools button').forEach(b => b.classList.toggle('on', b.dataset.doc === state.doc || b.dataset.theme === state.theme || b.dataset.width === state.width));
+}
+document.getElementById('doc-btns').innerHTML = Object.entries(DOCS).map(([k, d]) => `<button data-doc="${k}">${esc(d.label)}</button>`).join('');
+function toast(msg) { const t = document.createElement('div'); t.textContent = msg; t.style.cssText = 'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);max-width:min(40rem,90vw);background:var(--foreground);color:var(--background);padding:8px 14px;font-family:var(--font-mono);font-size:var(--fs-2);z-index:10000'; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); }
+document.addEventListener('toggle', e => { const el = e.target; if (el.dataset?.det) { el.open ? state.open.add(el.dataset.det) : state.open.delete(el.dataset.det); } }, true);
+document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') e.target.close(); });
+document.getElementById('modal').addEventListener('close', () => hidePreview(true));
+document.addEventListener('click', e => {
+  const tg = e.target.closest('[data-toggle]'); if (tg) { const k = tg.dataset.toggle; state.open.has(k) ? state.open.delete(k) : state.open.add(k); const y = window.scrollY; render(); window.scrollTo(0, y); return; }
+  const t = e.target.closest('button'); if (!t || t.disabled) return;
+  const y = window.scrollY; const d = DOCS[state.doc];
+  if (t.dataset.variant) { state.variant = t.dataset.variant; state.mode = 'view'; state.tab = null; }
+  else if (t.dataset.doc) { state.doc = t.dataset.doc; state.mode = 'view'; state.hit = null; state.open.clear(); state.tab = null; }
+  else if (t.dataset.theme) state.theme = t.dataset.theme;
+  else if (t.dataset.width) state.width = t.dataset.width;
+  else if (t.dataset.modal) return openModal(t.dataset.modal);
+  else if ('close' in t.dataset) return document.getElementById('modal').close();
+  else if (t.dataset.mode) { state.mode = t.dataset.mode; state.hit = null; render(); window.scrollTo(0, 0); return; }
+  else if (t.dataset.src) { const n = +t.dataset.src; state.mode = 'source'; state.hit = [n, blockEnd(d, n)]; render(); document.getElementById('L' + n)?.scrollIntoView({ block: 'start' }); window.scrollBy(0, -80); return; }
+  else if (t.dataset.copy) { try { navigator.clipboard.writeText(t.dataset.copy); } catch {} return toast('Path copied'); }
+  else if (t.dataset.tab) state.tab = t.dataset.tab;
+  else if (t.dataset.jump) { const el = document.getElementById(t.dataset.jump); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 1300); } return; }
+  else if ('toast' in t.dataset) return toast(t.dataset.toast);
+  else return;
+  render(); window.scrollTo(0, y);
+});
+render();
+</script>
+</body>
+</html>
