@@ -11,6 +11,9 @@ import type { DocumentLayoutSpec } from './layout.ts';
 import type { ComposedContextBrief } from './context-brief.ts';
 // Type-only import — same reason as `brief` above (quick-261003-527, sketch-017 winner D).
 import type { ComposedSecurityConsole } from './security-console.ts';
+// Type-only import — same reason as `brief` above (quick-261006-iz6, sketch-019 B).
+import type { ComposedPlanNavigator } from './plan-navigator.ts';
+import type { PlanContext } from './plan-context.ts';
 // Type-only import — same reason as `brief` above (quick-260929-3x3, sketch-008 A).
 import type { ComposedResearchBriefing } from './research-briefing.ts';
 // Type-only import — same reason as `brief` above (quick-260930-wfs, sketch-013 B).
@@ -72,6 +75,11 @@ export interface ViewManifest {
    * `structured.security`, or a document with neither register rows nor register prose), and the
    * page falls back to the promoted-block view, which the manifest keeps as `promote`. */
   securityConsole?: (input: ViewInput) => ComposedSecurityConsole | null;
+  /** quick-261006-iz6 (sketch-019 B): the PLAN task navigator a manifest opts into instead of
+   * `layout` — currently only `plan`. Returns `null` when the input can't compose one (no
+   * `structured.plan`, or a plan with no task), and the page falls back to the B3 `layout` / the
+   * promoted-block view, which the manifest keeps. */
+  planNavigator?: (input: ViewInput) => ComposedPlanNavigator | null;
   /** quick-260929-3x3 (sketch-008 A): the RESEARCH briefing layout a manifest opts into instead of
    * `promote` — currently only `research`. Returns `null` when the input can't compose a briefing
    * (an older server's payload has no `structured.briefing`), and the page falls back to the
@@ -114,6 +122,10 @@ export interface ViewInput {
    * `path` (no new `artifact.kind === '` branch) — `null` when the artifact isn't a plan, or a
    * plan with no paired summary yet. */
   planProgress?: { complete: boolean; summaryStatus: string | null } | null;
+  /** quick-261006-iz6: a PLAN's file dates, resolved dependencies and requirement texts, matched
+   * generically by path in artifact-page.tsx (`findPlanContext`) — `null` when the artifact isn't a
+   * PLAN file. */
+  planContext?: PlanContext | null;
   /** quick-260923-lju: the phase's own ROADMAP requirement IDs (in ROADMAP order), matched
    * generically by path — `null`/absent when the artifact isn't phase-scoped or the phase carries
    * none. Feeds the CONTEXT brief intro's "Covers …" note. */

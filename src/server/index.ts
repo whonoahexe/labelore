@@ -16,6 +16,7 @@ import { buildTreeViewModel } from '../presentation/tree.ts';
 import { createArtifactRenderer } from '../rendering/markdown.ts';
 import { resolveTargetPath } from '../cli/target-path.ts';
 import { buildArtifactIndex } from './artifact-index.ts';
+import { createFileDates } from './file-dates.ts';
 import { jsonRecord, toProjectPresentation } from './project-presentation.ts';
 import { createSearchIndexState, searchIndex } from './search-index.ts';
 
@@ -73,6 +74,7 @@ export function createApp(
   // Replacing `derived` with a freshly built bundle in one assignment is the atomic swap D-05
   // requires - never mutate the existing bundle field by field.
   let derived = buildDerivedViews();
+  const fileDates = createFileDates(derived.presentation.rootPath);
   let inFlight: Promise<ProjectSnapshot> | null = null;
 
   const artifactResponse = async (
@@ -99,6 +101,9 @@ export function createApp(
         // D-12/TGT-06: forwarded unchanged so the client can compute the same
         // artifactWarningTone() the tree and search rows already show for this artifact.
         bodyLength: lookup.artifact.bodyLength,
+        // quick-261006-iz6: the PLAN page's Planned date (git add-date, cached; null on any failure).
+        mtimeMs: lookup.artifact.mtimeMs,
+        addedAt: await fileDates.addedAt(lookup.artifact.path),
       },
       phaseIdentity: lookup.phaseIdentity,
       document,
