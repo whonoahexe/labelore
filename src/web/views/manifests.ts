@@ -16,6 +16,7 @@ import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
 import { composePatternMap } from './pattern-map.ts';
 import { composeValidationStrategy } from './validation-strategy.ts';
+import { composeSummaryRun } from './summary-run.ts';
 import { composeUiReview } from './ui-review.ts';
 import { composeUiSpec } from './ui-spec.ts';
 import { composeUatSession } from './uat-session.ts';
@@ -130,6 +131,7 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
       ]),
       { type: 'section', heading: /^next phase readiness/i },
     ],
+    summaryRun: composeSummaryRun,
   },
   review: {
     kind: 'review',
