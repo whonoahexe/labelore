@@ -53,6 +53,9 @@ import type { ComposedContextBrief } from '../views/context-brief.ts';
 import { ContextBriefView, ContextIntroMeta } from '../views/context-brief-components.tsx';
 import type { ComposedSecurityConsole } from '../views/security-console.ts';
 import { SecurityConsoleView } from '../views/security-console-components.tsx';
+import type { ComposedPlanNavigator } from '../views/plan-navigator.ts';
+import { PlanIntroMeta, PlanNavigatorView } from '../views/plan-navigator-components.tsx';
+import { findPlanContext } from '../views/plan-context.ts';
 import { WarningChip } from '../components/warning-chip.tsx';
 import type { ComposedResearchBriefing } from '../views/research-briefing.ts';
 import { ResearchBriefingView, ResearchIntroMeta } from '../views/research-briefing-components.tsx';
@@ -154,6 +157,10 @@ interface ArtifactDocumentResponse {
     /** D-12/TGT-06: the did-the-body-survive signal artifactWarningTone() needs to compute the
      * same tone the tree and search rows already show for this artifact. */
     bodyLength: number;
+    /** quick-261006-iz6: the PLAN page's Planned date — the file's modification time and the git
+     * author date of the commit that added it (null outside a repository or on any git failure). */
+    mtimeMs?: number;
+    addedAt?: string | null;
   };
   phaseIdentity: PhaseIdentity | null;
   document: RenderedDocument;
@@ -547,6 +554,12 @@ export function ArtifactPage(): React.JSX.Element {
     () => findPlanProgress(presentationQuery.data, query.data?.artifact.path),
     [presentationQuery.data, query.data],
   );
+  // quick-261006-iz6: a PLAN's file dates, dependencies and requirement texts, resolved against the
+  // cached presentation by path — `null` for every artifact that is not a PLAN file.
+  const planContext = useMemo(
+    () => findPlanContext(presentationQuery.data, query.data?.artifact, query.data?.phaseIdentity),
+    [presentationQuery.data, query.data],
+  );
   const phaseRequirementIds = useMemo(
     () => findPhaseRequirementIds(presentationQuery.data, query.data?.phaseIdentity),
     [presentationQuery.data, query.data],
@@ -565,11 +578,12 @@ export function ArtifactPage(): React.JSX.Element {
       groups,
       planSegments,
       planProgress,
+      planContext,
       phaseRequirementIds,
       headings: shown?.headings ?? [],
       siblingArtifacts,
     };
-  }, [query.data, groups, planSegments, planProgress, phaseRequirementIds, shown, siblingArtifacts]);
+  }, [query.data, groups, planSegments, planProgress, planContext, phaseRequirementIds, shown, siblingArtifacts]);
   // VIEW-06: a registered manifest, or fallback.ts's synthesized structural-read manifest — one
   // dispatch path either way (`resolveView` itself stays registry-only, for 05-06's completeness
   // test).
@@ -583,12 +597,21 @@ export function ArtifactPage(): React.JSX.Element {
     if (!manifest || !viewInput) return null;
     return composeView(manifest, viewInput);
   }, [manifest, viewInput]);
+  // quick-261006-iz6 (sketch-019 B): the PLAN task navigator, when the resolved manifest opts into
+  // one — `null` for every other kind, for a plan with no task and for a payload from a server that
+  // predates `structured.plan` (the sketch-004 B3 layout below then renders). A composed navigator
+  // also switches the B3 layout off in both modes: its cover cells would jump into folds that no
+  // longer exist, so Source mode shows the plain page instead.
+  const planNavigator = useMemo<ComposedPlanNavigator | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.planNavigator?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // sketch-004 B3: the cover/chapter-index/folded-chapter layout, when the resolved manifest opts
   // into one — `null` for every kind that keeps the pre-existing promoted-block view.
   const layout = useMemo(() => {
-    if (!manifest || !viewInput) return null;
+    if (!manifest || !viewInput || planNavigator !== null) return null;
     return composeDocumentLayout(manifest, viewInput);
-  }, [manifest, viewInput]);
+  }, [manifest, viewInput, planNavigator]);
   // quick-260923-lju (sketch-006 D1): the CONTEXT brief, when the resolved manifest opts into one
   // — `null` for every kind that keeps the pre-existing promoted-block/B3 view.
   const brief = useMemo<ComposedContextBrief | null>(() => {
@@ -665,9 +688,14 @@ export function ArtifactPage(): React.JSX.Element {
       const reducedMotion =
         typeof window.matchMedia === 'function' &&
         window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      window.document
-        .getElementById(id)
-        ?.scrollIntoView({ block: 'start', behavior: reducedMotion ? 'auto' : 'smooth' });
+      // quick-261006-iz6 (T-iz6-08): the target section is marked `data-source-hit` (and any earlier
+      // mark cleared) — only an attribute is set on an existing element, nothing is injected.
+      const target = window.document.getElementById(id);
+      for (const previous of window.document.querySelectorAll('[data-source-hit]')) {
+        previous.removeAttribute('data-source-hit');
+      }
+      target?.setAttribute('data-source-hit', 'true');
+      target?.scrollIntoView({ block: 'start', behavior: reducedMotion ? 'auto' : 'smooth' });
     });
     return () => window.cancelAnimationFrame(frame);
   }, [mode]);
@@ -680,6 +708,7 @@ export function ArtifactPage(): React.JSX.Element {
   const viewAvailable =
     layout !== null ||
     securityConsole !== null ||
+    planNavigator !== null ||
     brief !== null ||
     briefing !== null ||
     patternMap !== null ||
@@ -763,6 +792,29 @@ export function ArtifactPage(): React.JSX.Element {
       : []),
     { label: artifact.title },
   ];
+  // quick-261006-iz6 (sketch-019 B): the PLAN task navigator opens straight on its own header (no
+  // breadcrumb row, manifest lead or metadata disclosure) and replaces the page in View mode. Unlike
+  // the other views, a plan carrying a parse warning keeps the navigator — wrapper warnings are common
+  // and the projection skips the malformed segments — and shows the shared warning chip instead.
+  if (planNavigator && mode === 'view') {
+    return (
+      <main className="artifact-page page-stack">
+        <ArtifactHeader
+          crumbs={crumbs}
+          hideCrumbs
+          eyebrow={planNavigator.intro.eyebrow}
+          title={planNavigator.intro.title ?? artifact.title}
+          path={artifact.path}
+          lead={null}
+          meta={<PlanIntroMeta intro={planNavigator.intro} />}
+          chip={<WarningChip tone={warningTone} />}
+        >
+          <DocumentViewToggle mode={mode} onChange={setMode} />
+        </ArtifactHeader>
+        <PlanNavigatorView key={artifact.path} plan={planNavigator} onShowSource={showSource} />
+      </main>
+    );
+  }
   // quick-261003-528 (sketch-018 B): the UI-REVIEW scorecard opens straight on its own header (no
   // breadcrumb row, manifest lead or metadata disclosure) and replaces the page in View mode. A
   // review carrying a parse warning falls through to the normal page, whose chip and disclosure

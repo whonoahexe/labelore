@@ -96,7 +96,9 @@ test.describe('artifact-header copy-path button (quick-260923-jxp)', () => {
     await assertCopyPathContract(page, path);
   });
 
-  test('cover-layout PLAN: copy button present, no raw path caption', async ({ page, baseURL }) => {
+  // quick-261006-iz6: the PLAN page moved from the B3 cover to the task navigator; the copy-path
+  // contract is unchanged.
+  test('navigator PLAN: copy button present, no raw path caption', async ({ page, baseURL }) => {
     const { url, path } = await resolveArtifact(
       baseURL ?? 'http://127.0.0.1:4199',
       '01-read-layer-domain-model/01-01-PLAN.md',
@@ -104,7 +106,7 @@ test.describe('artifact-header copy-path button (quick-260923-jxp)', () => {
     await setTheme(page, 'light');
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(url);
-    await page.locator('.document-cover').first().waitFor({ state: 'visible' });
+    await page.locator('#plan-task-workspace').waitFor({ state: 'visible' });
     await assertCopyPathContract(page, path);
   });
 
