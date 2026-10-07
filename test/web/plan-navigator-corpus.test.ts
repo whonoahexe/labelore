@@ -163,7 +163,9 @@ const ROWS: Row[] = [
       sourceRows: [['Pre-condition'], [], [], ['Pre-condition'], ['Pre-condition'], [], ['Pre-condition']],
       planned: '10 Sep 2026',
       plannedSource: 'quick-id',
-      objectiveRows: [false, true, true],
+      // The paragraph after Output ("No tracer task. …") is the objective's own rest.
+      objectiveRows: [true, true, true],
+      restStarts: 'No tracer task.',
     },
   },
   {

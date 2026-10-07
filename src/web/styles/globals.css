@@ -6027,11 +6027,13 @@ button.view-context-summary:hover {
   gap: var(--space-fluid-8);
 }
 
-/* The h1 is the objective's first sentence, not a short name: a step below the display size, and a
-   wider measure, so a long sentence reads as a title and not as a wall. */
+/* The h1 is the objective's first sentence, not a short name: the sketch's mono title size and a wide
+   measure, so a long sentence reads as a title and not as a wall. */
 .artifact-page:has(.view-plan-nav-page) .artifact-heading h1 {
-  max-width: 44ch;
-  font-size: var(--fs-display-1);
+  max-width: 62rem;
+  font-family: var(--font-mono);
+  font-size: var(--fs-fluid-3);
+  font-weight: var(--fw-medium);
   letter-spacing: var(--ls-tight);
   line-height: var(--lh-tight);
 }
@@ -6544,6 +6546,27 @@ button.view-context-summary:hover {
   pointer-events: none;
 }
 
+.view-plan-nav-text :is(ul, ol),
+.view-plan-nav-brief :is(ul, ol),
+.view-plan-nav-note :is(ul, ol) {
+  display: grid;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.view-plan-nav-text ul,
+.view-plan-nav-brief ul,
+.view-plan-nav-note ul {
+  list-style: disc;
+}
+
+.view-plan-nav-text ol,
+.view-plan-nav-brief ol,
+.view-plan-nav-note ol {
+  list-style: decimal;
+}
+
 .view-plan-nav-text pre {
   margin: 0;
   padding: var(--space-3);
@@ -6771,6 +6794,14 @@ button.view-context-summary:hover {
 }
 
 /* Done when: what is true afterwards beside the checks that must pass. */
+.view-plan-nav-done > .section-heading {
+  flex-wrap: wrap;
+  align-items: flex-end;
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-5);
+  border-bottom: 1px solid var(--border);
+}
+
 .view-plan-nav-done > .section-heading h2 {
   font-family: var(--font-mono);
 }
@@ -6851,19 +6882,19 @@ button.view-context-summary:hover {
 
 /* The three modals: Depends on, Files, Requirements. */
 .view-plan-nav-modal {
+  display: flex;
+  flex-direction: column;
   gap: 0;
   width: min(42rem, calc(100vw - 2rem));
   max-width: min(42rem, calc(100vw - 2rem));
   max-height: min(80vh, 46rem);
   padding: 0;
-  overflow-y: auto;
+  overflow: hidden;
   background: var(--card);
 }
 
 .view-plan-nav-modal-head {
-  position: sticky;
-  top: 0;
-  z-index: 1;
+  flex: none;
   padding: var(--space-4) var(--space-10) var(--space-4) var(--space-5);
   border-bottom: 1px solid var(--border);
   background: var(--card);
@@ -6879,8 +6910,11 @@ button.view-context-summary:hover {
 
 .view-plan-nav-modal-body {
   display: grid;
+  flex: 1 1 auto;
   gap: var(--space-5);
+  min-height: 0;
   padding: var(--space-4) var(--space-5) var(--space-5);
+  overflow-y: auto;
 }
 
 .view-plan-nav-group {
@@ -6965,12 +6999,14 @@ a.view-plan-nav-row:hover {
 }
 
 .view-plan-nav-modal-text {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  align-items: center;
-  font-size: var(--fs-4);
   min-width: 0;
+  font-size: var(--fs-4);
+  overflow-wrap: anywhere;
+}
+
+.view-plan-nav-modal-text .status-chip {
+  display: inline-flex;
+  margin-left: var(--space-2);
 }
 
 .view-plan-nav-req p {

@@ -375,7 +375,8 @@ function wordsToTens(words: number): number {
 
 function blocksSection(key: string, label: string, field: PlanBlocks | null | undefined, aside: string | null = null): PlanSection | null {
   if (!field || !Array.isArray(field.blocks) || field.blocks.length === 0) return null;
-  const long = typeof field.chars === 'number' && field.chars > CLAMP_CHARS;
+  // Only an action clamps: the steps a person follows at a checkpoint, and the checks they run, read in full.
+  const long = key === 'action' && typeof field.chars === 'number' && field.chars > CLAMP_CHARS;
   return { kind: 'blocks', key, label, aside, blocks: field.blocks, clamp: long, words: wordsToTens(field.words ?? 0) };
 }
 
