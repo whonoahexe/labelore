@@ -63,6 +63,8 @@ import type { ComposedPatternMap } from '../views/pattern-map.ts';
 import { PatternIntroMeta, PatternMapView } from '../views/pattern-map-components.tsx';
 import type { ComposedValidationStrategy } from '../views/validation-strategy.ts';
 import { ValidationStrategyView, validationHeaderProps } from '../views/validation-strategy-components.tsx';
+import type { ComposedSummaryRun } from '../views/summary-run.ts';
+import { SummaryRunView } from '../views/summary-run-components.tsx';
 import type { ComposedUiReview } from '../views/ui-review.ts';
 import { UiReviewIntroMeta, UiReviewView } from '../views/ui-review-components.tsx';
 import type { ComposedUiSpec } from '../views/ui-spec.ts';
@@ -649,6 +651,13 @@ export function ArtifactPage(): React.JSX.Element {
     if (!manifest || !viewInput) return null;
     return manifest.validationStrategy?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // quick-261006-iz7 (sketch-020 winner D): the SUMMARY page, when the resolved manifest opts into
+  // one — `null` for every other kind, for a summary with nothing beyond the head and for a payload
+  // from a server that predates `structured.summary` (the promoted-block view then renders).
+  const summaryRun = useMemo<ComposedSummaryRun | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.summaryRun?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // quick-261003-528 (sketch-018 B): the UI-REVIEW scorecard, when the resolved manifest opts into
   // one — `null` for every other kind, for a document with no pillar rows and for a payload from a
   // server that predates `structured.uiReview` (the promoted-block view then renders).
@@ -713,6 +722,7 @@ export function ArtifactPage(): React.JSX.Element {
     briefing !== null ||
     patternMap !== null ||
     validationStrategy !== null ||
+    summaryRun !== null ||
     uiReview !== null ||
     uiSpec !== null ||
     uatSession !== null ||
@@ -770,6 +780,27 @@ export function ArtifactPage(): React.JSX.Element {
           model={securityConsole}
           fallbackTitle={artifact.title}
           path={artifact.path}
+          mode={mode}
+          onModeChange={setMode}
+          onShowSource={showSource}
+          chip={<WarningChip tone={warningTone} />}
+        />
+      </main>
+    );
+  }
+  // quick-261006-iz7: the SUMMARY page opens on its own head (the meta row, the title with its
+  // metrics box, the modal triggers) with no breadcrumb row, manifest lead or Document metadata
+  // disclosure in View mode — the source-only strip names the frontmatter, and a parse warning
+  // shows as its chip in the head. Source mode falls through to the unchanged page below.
+  if (summaryRun && mode === 'view') {
+    return (
+      <main className="artifact-page page-stack">
+        <SummaryRunView
+          key={artifact.path}
+          model={summaryRun}
+          fallbackTitle={artifact.title}
+          path={artifact.path}
+          presentation={presentationQuery.data ?? null}
           mode={mode}
           onModeChange={setMode}
           onShowSource={showSource}

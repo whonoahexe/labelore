@@ -258,8 +258,10 @@ describe('RoadmapHandler', () => {
   });
 
   // 0YP-01 negative: other milestone-root document tokens (REQUIREMENTS, MILESTONE-AUDIT) are not
-  // claimed by RoadmapHandler and still fall through to GenericMarkdownHandler.
-  it('does not claim milestone-root REQUIREMENTS or MILESTONE-AUDIT files', () => {
+  // claimed by RoadmapHandler. quick-261006-iz7: the REQUIREMENTS snapshot now resolves to
+  // RequirementsHandler (a read-only lookup for the SUMMARY page's requirement previews); the
+  // MILESTONE-AUDIT file still falls through to GenericMarkdownHandler.
+  it('does not claim milestone-root REQUIREMENTS or MILESTONE-AUDIT files for the roadmap', () => {
     const reqRef = ref('.planning/milestones/v1.0-REQUIREMENTS.md', {
       location: 'milestone-root',
       kind: 'requirements',
@@ -272,7 +274,7 @@ describe('RoadmapHandler', () => {
     });
     expect(RoadmapHandler.match(reqRef)).toBe(false);
     expect(RoadmapHandler.match(auditRef)).toBe(false);
-    expect(HANDLERS.find((h) => h.match(reqRef))).toBe(GenericMarkdownHandler);
+    expect(HANDLERS.find((h) => h.match(reqRef))).toBe(RequirementsHandler);
     expect(HANDLERS.find((h) => h.match(auditRef))).toBe(GenericMarkdownHandler);
   });
 });
@@ -329,6 +331,27 @@ describe('RequirementsHandler', () => {
       { requirementId: 'AUTH-01', phase: 'Phase 1', status: 'Pending' },
     ]);
   });
+
+  // quick-261006-iz7: archived vX.Y-REQUIREMENTS.md snapshots parse through the same handler, and a
+  // wrapped item line is joined onto its item.
+  it('claims a milestone-root vX.Y-REQUIREMENTS.md snapshot and the root file, not a MILESTONE-AUDIT', () => {
+    const snapshot = ref('.planning/milestones/v1.1-REQUIREMENTS.md', { location: 'milestone-root', kind: 'requirements', milestoneVersion: 'v1.1' });
+    const audit = ref('.planning/milestones/v1.1-MILESTONE-AUDIT.md', { location: 'milestone-root', kind: 'milestone-audit', milestoneVersion: 'v1.1' });
+    expect(RequirementsHandler.match(snapshot)).toBe(true);
+    expect(RequirementsHandler.match(ref('.planning/REQUIREMENTS.md'))).toBe(true);
+    expect(RequirementsHandler.match(audit)).toBe(false);
+  });
+
+  it('joins an indented continuation line onto its item with one space and leaves single lines alone', () => {
+    const wrapped = `# Requirements\n\n## v1 Requirements\n\n### Views\n\n- [x] **VIEW-01**: Each artifact type renders through a view selected for that type, rather than one\n      undifferentiated reader\n- [ ] **VIEW-02**: Single line\n\n- [ ] **VIEW-03**: After a blank\n  continued\n  twice\n`;
+    const result = RequirementsHandler.parse(raw('.planning/milestones/v1.1-REQUIREMENTS.md', wrapped), ref('.planning/milestones/v1.1-REQUIREMENTS.md', { location: 'milestone-root', kind: 'requirements' }));
+    const items = result.structured?.items as { id: string; text: string }[];
+    expect(items.map((i) => [i.id, i.text])).toEqual([
+      ['VIEW-01', 'Each artifact type renders through a view selected for that type, rather than one undifferentiated reader'],
+      ['VIEW-02', 'Single line'],
+      ['VIEW-03', 'After a blank continued twice'],
+    ]);
+  });
 });
 
 describe('PlanHandler', () => {
@@ -354,6 +377,47 @@ describe('SummaryHandler', () => {
     );
     expect(withCoverage.frontmatter.coverage).toEqual([]);
     expect(withoutCoverage.frontmatter.coverage).toBeUndefined();
+  });
+
+  // quick-261006-iz7: the quick-task twins are claimed too; research/SUMMARY.md and a quick PLAN
+  // are not.
+  it('claims phase, archived-phase, quick and archived-quick summaries only', () => {
+    const phase = ref('.planning/phases/01-x/01-01-SUMMARY.md', { location: 'phase', kind: 'summary' });
+    const archived = ref('.planning/milestones/v1.0-phases/01-x/01-01-SUMMARY.md', { location: 'archived-phase', kind: 'summary' });
+    const quick = ref('.planning/quick/260101-abc-x/260101-abc-SUMMARY.md', { location: 'quick', kind: 'summary' });
+    const archivedQuick = ref('.planning/milestones/v1.0-quick/260101-abc-x/260101-abc-SUMMARY.md', { location: 'milestone-root', kind: 'summary' });
+    const research = ref('.planning/research/SUMMARY.md', { location: 'research', kind: 'summary' });
+    const other = ref('.planning/other/SUMMARY.md', { location: 'other', kind: 'summary' });
+    const quickPlan = ref('.planning/quick/260101-abc-x/260101-abc-PLAN.md', { location: 'quick', kind: 'plan' });
+    for (const claimed of [phase, archived, quick, archivedQuick]) expect(SummaryHandler.match(claimed)).toBe(true);
+    for (const rejected of [research, other, quickPlan]) expect(SummaryHandler.match(rejected)).toBe(false);
+    expect(HANDLERS.find((h) => h.match(quick))).toBe(SummaryHandler);
+    expect(HANDLERS.find((h) => h.match(archivedQuick))).toBe(SummaryHandler);
+    expect(HANDLERS.find((h) => h.match(research))).not.toBe(SummaryHandler);
+  });
+
+  it('adds structured.summary with pathPhase and quickId and keeps the base shape', () => {
+    const body = '---\nphase: 01-x\nplan: 01\n---\n\n# Phase 1 Plan 01: Thing Summary\n\n**One liner.**\n\n## Accomplishments\n\n- First — thing\n';
+    const phase = SummaryHandler.parse(
+      raw('x', body),
+      ref('.planning/phases/01-x/01-01-SUMMARY.md', {
+        location: 'phase',
+        kind: 'summary',
+        phaseIdentity: { milestoneVersion: null, number: '01', projectCode: null, slug: 'x' },
+      }),
+    );
+    expect(phase.title).toBe('Phase 1 Plan 01: Thing Summary');
+    expect(phase.frontmatter.phase).toBe('01-x');
+    const summary = phase.structured?.summary as { oneLiner: string; pathPhase: unknown; quickId: unknown; accomplishments: unknown[] };
+    expect(summary.oneLiner).toBe('One liner.');
+    expect(summary.pathPhase).toEqual({ number: '01', slug: 'x' });
+    expect(summary.quickId).toBeNull();
+    expect(summary.accomplishments).toHaveLength(1);
+    const live = SummaryHandler.parse(raw('x', body), ref('.planning/quick/260101-abc-x/260101-abc-SUMMARY.md', { location: 'quick', kind: 'summary', quickTaskId: '260101-abc' }));
+    expect((live.structured?.summary as { quickId: string; pathPhase: unknown }).quickId).toBe('260101-abc');
+    expect((live.structured?.summary as { pathPhase: unknown }).pathPhase).toBeNull();
+    const archivedQuick = SummaryHandler.parse(raw('x', body), ref('.planning/milestones/v1.0-quick/260101-abc-x/260101-abc-SUMMARY.md', { location: 'milestone-root', kind: 'summary' }));
+    expect((archivedQuick.structured?.summary as { quickId: string }).quickId).toBe('260101-abc');
   });
 });
 
