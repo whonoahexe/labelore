@@ -409,7 +409,7 @@ function parenWords(text: string, from: number): string[] {
     .slice(p + 1, close)
     .split(',')
     .map((w) => w.trim())
-    .filter((w) => w !== '')
+    .filter((w) => w !== '' && w.length <= 20)
     .slice(0, 8);
 }
 
@@ -780,7 +780,9 @@ function deviationsOf(body: string): SummaryDeviations {
     extras.push({ title: section.heading.replace(/[*`]/g, '').trim(), blocks: blocksOf(section.body) });
   }
   const lead = split.preamble;
-  const none = items.length === 0 && isNoneText(firstParagraph(lead));
+  // A section that opens straight on a `###` subsection has no lead paragraph and is not "none".
+  const leadPara = firstParagraph(lead);
+  const none = items.length === 0 && leadPara !== '' && isNoneText(leadPara);
   let note: string | null = null;
   if (none) {
     const para = squash(firstParagraph(lead));

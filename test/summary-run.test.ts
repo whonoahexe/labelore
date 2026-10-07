@@ -346,3 +346,12 @@ describe('RequirementsHandler invariant — project.requirements reads only the 
     expect(project.requirements.map((r) => [r.id, r.text])).toEqual([['AUTH-01', 'Root text']]);
   });
 });
+
+describe('extractSummaryRun — deviations without a lead paragraph', () => {
+  it('does not read a section that opens on a ### subsection as none', () => {
+    const run = extractSummaryRun('# T\n\n## Deviations from Plan\n\n### 1. The phase had never been deployed\n\nIt had not.\n');
+    expect(run.deviations?.none).toBe(false);
+    expect(run.deviations?.note).toBeNull();
+    expect(run.deviations?.extras.map((e) => e.title)).toEqual(['1. The phase had never been deployed']);
+  });
+});

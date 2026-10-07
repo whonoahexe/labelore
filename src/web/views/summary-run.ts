@@ -895,7 +895,7 @@ function runOf(
     stops.push({ kind: 'wait', label: 'Waiting on a human', n: null, hashes: [], name: wait.title, deviations: [] });
   }
   const endBits: string[] = [head.completed === null ? 'Not completed yet' : `Completed · ${head.completed}`];
-  if (head.duration !== null) endBits.push(head.duration);
+  if (head.duration !== null) endBits.push(clip(head.duration, 40));
   stops.push({
     kind: 'end',
     label: endBits.join(' · '),
