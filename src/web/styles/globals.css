@@ -13302,6 +13302,7 @@ button.view-validation-ref[aria-pressed='true'] {
 
 .view-summary-metrics {
   display: grid;
+  max-width: 28rem;
   grid-template-columns: repeat(3, auto);
   gap: var(--space-2) var(--space-6);
   padding: var(--space-4) var(--space-5);
@@ -13322,9 +13323,14 @@ button.view-validation-ref[aria-pressed='true'] {
 }
 
 .view-summary-stat b {
+  display: -webkit-box;
+  overflow: hidden;
   font-family: var(--font-mono);
   font-size: var(--fs-6);
   font-weight: var(--fw-medium);
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .view-summary-stat:first-child b {

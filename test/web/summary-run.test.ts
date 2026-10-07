@@ -351,7 +351,7 @@ describe('0501 through the real handler', () => {
     expect(html).toContain('Summary · Phase 5 · Per type document views');
     expect(html).toContain('Completed <b>20 Sep 2026</b>');
     expect(html).toContain('<b data-tone="complete">Complete</b>');
-    expect(html).toContain('<b>26min</b>');
+    expect(html).toContain('title="26min">26min</b>');
     expect(html).toContain('<b>20:34</b>');
     expect(html).toContain('Type:</span> UI');
     expect(html).toContain('Self-check passed');
