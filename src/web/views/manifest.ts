@@ -20,6 +20,8 @@ import type { ComposedResearchBriefing } from './research-briefing.ts';
 import type { ComposedPatternMap } from './pattern-map.ts';
 // Type-only import — same reason as `brief` above (quick-261003-526, sketch-016 winner).
 import type { ComposedValidationStrategy } from './validation-strategy.ts';
+// Type-only import — same reason as `brief` above (quick-261006-iz7, sketch-020 D).
+import type { ComposedSummaryRun } from './summary-run.ts';
 // Type-only import — same reason as `brief` above (quick-261003-528, sketch-018 B).
 import type { ComposedUiReview } from './ui-review.ts';
 // Type-only import — same reason as `brief` above (quick-261001-qk6, sketch-014 winner).
@@ -95,6 +97,11 @@ export interface ViewManifest {
    * one (no `structured.validation`, or a document with none of the six recognised sections), and
    * the page falls back to the promoted-block view, which the manifest keeps as `promote`. */
   validationStrategy?: (input: ViewInput) => ComposedValidationStrategy | null;
+  /** quick-261006-iz7 (sketch-020 winner D): the SUMMARY page a manifest opts into instead of
+   * `promote` — currently only `summary`. Returns `null` when the input can't compose one (no
+   * `structured.summary`, or a document with nothing beyond the head), and the page falls back to the
+   * promoted-block view, which the manifest keeps as `promote`. */
+  summaryRun?: (input: ViewInput) => ComposedSummaryRun | null;
   /** quick-261003-528 (sketch-018 B): the UI-REVIEW scorecard a manifest opts into instead of
    * `promote` — currently only `ui-review`. Returns `null` when the input can't compose one (no
    * `structured.uiReview`, or a document with no pillar rows), and the page falls back to the

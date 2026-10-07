@@ -619,7 +619,30 @@
         "bodyHash": "bc0c1985fd0271ab21becc8e997744fc2477dbcab97e05a7d410d6f410e40fce",
         "mtimeMs": 0,
         "warnings": [],
-        "structured": {}
+        "structured": {
+          "items": [
+            {
+              "id": "BOOT-01",
+              "category": "Bootstrap",
+              "text": "The scaffolding runs end to end",
+              "tier": "v1",
+              "checked": true
+            }
+          ],
+          "outOfScope": [
+            {
+              "feature": "Legacy ingest",
+              "reason": "Deferred to v2.0"
+            }
+          ],
+          "traceability": [
+            {
+              "requirementId": "BOOT-01",
+              "phase": "Phase 1",
+              "status": "Complete"
+            }
+          ]
+        }
       },
       ".planning/milestones/v1.0-ROADMAP.md": {
         "id": ".planning/milestones/v1.0-ROADMAP.md",
@@ -683,7 +706,35 @@
         "bodyHash": "e4403d8e29b9f9fa1fb9d9384af3b5467cb65ae707e053b60e4f6642d3e0ecdf",
         "mtimeMs": 0,
         "warnings": [],
-        "structured": {}
+        "structured": {
+          "items": [
+            {
+              "id": "LEGACY-01",
+              "category": "Legacy",
+              "text": "Legacy records are readable in the new store",
+              "tier": "v2",
+              "checked": true
+            }
+          ],
+          "outOfScope": [
+            {
+              "feature": "Retry logic on ingest failure",
+              "reason": "Deferred to backlog"
+            }
+          ],
+          "traceability": [
+            {
+              "requirementId": "LEGACY-01",
+              "phase": "Phase 1",
+              "status": "Complete"
+            },
+            {
+              "requirementId": "XPORT-LEGACY-01",
+              "phase": "Phase 2",
+              "status": "Complete"
+            }
+          ]
+        }
       },
       ".planning/milestones/v2.0-ROADMAP.md": {
         "id": ".planning/milestones/v2.0-ROADMAP.md",
@@ -1244,7 +1295,93 @@
                 "bodyHash": "cf278b3c3ffc6998f3efa909f8116ca77cf94c886062dbf5a6a2a350958ed9d6",
                 "mtimeMs": 0,
                 "warnings": [],
-                "structured": {}
+                "structured": {
+                  "summary": {
+                    "h1": "Phase 1 Plan 1: Bootstrap Summary",
+                    "oneLiner": "Minimal entry point proving the fixture project's earliest scaffolding runs end to end.",
+                    "preamble": [],
+                    "performance": {
+                      "started": "2025-10-25T09:00:00Z",
+                      "completed": "2025-10-25T09:15:00Z",
+                      "duration": "15 min"
+                    },
+                    "accomplishments": [
+                      {
+                        "head": "Built the bootstrap entry point",
+                        "rest": ""
+                      }
+                    ],
+                    "tasks": [],
+                    "taskSource": null,
+                    "fileNotes": [
+                      {
+                        "path": "src/bootstrap/init.ts",
+                        "note": "Entry point"
+                      }
+                    ],
+                    "decisionsBody": null,
+                    "deviations": {
+                      "none": true,
+                      "note": "plan executed exactly as written.",
+                      "items": [],
+                      "prose": [],
+                      "extras": []
+                    },
+                    "userSetup": null,
+                    "next": "Ready to ship v1.0.",
+                    "selfCheck": null,
+                    "others": [
+                      {
+                        "title": "Issues Encountered",
+                        "blocks": [],
+                        "none": true
+                      }
+                    ],
+                    "sections": [
+                      {
+                        "heading": "Performance",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Accomplishments",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Task Commits",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Files Created/Modified",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Decisions Made",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Deviations from Plan",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Issues Encountered",
+                        "claimed": false
+                      },
+                      {
+                        "heading": "User Setup Required",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Next Phase Readiness",
+                        "claimed": true
+                      }
+                    ],
+                    "pathPhase": {
+                      "number": "01",
+                      "slug": "bootstrap"
+                    },
+                    "quickId": null
+                  }
+                }
               },
               ".planning/milestones/v1.0-phases/01-bootstrap/01-CONTEXT.md": {
                 "id": ".planning/milestones/v1.0-phases/01-bootstrap/01-CONTEXT.md",
@@ -1808,7 +1945,98 @@
                 "bodyHash": "a83803ae8813bfb28a901a0b01fbe8ca038a148b91542e686b7f0c589fdb3a86",
                 "mtimeMs": 0,
                 "warnings": [],
-                "structured": {}
+                "structured": {
+                  "summary": {
+                    "h1": "Phase 1 Plan 1: Legacy Ingest Summary",
+                    "oneLiner": "Legacy ingest pipeline proving legacy records are readable in the new store.",
+                    "preamble": [],
+                    "performance": {
+                      "started": "2026-02-10T09:00:00Z",
+                      "completed": "2026-02-10T09:18:00Z",
+                      "duration": "18 min"
+                    },
+                    "accomplishments": [
+                      {
+                        "head": "Built the legacy ingest pipeline",
+                        "rest": ""
+                      }
+                    ],
+                    "tasks": [],
+                    "taskSource": null,
+                    "fileNotes": [
+                      {
+                        "path": "src/legacy/ingest.ts",
+                        "note": "Legacy ingest pipeline"
+                      }
+                    ],
+                    "decisionsBody": null,
+                    "deviations": {
+                      "none": true,
+                      "note": "plan executed exactly as written.",
+                      "items": [],
+                      "prose": [],
+                      "extras": []
+                    },
+                    "userSetup": null,
+                    "next": "Ready for Phase 2 (Batch Export).",
+                    "selfCheck": null,
+                    "others": [
+                      {
+                        "title": "Issues Encountered",
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "No retry logic on network failure — deferred to backlog."
+                          }
+                        ],
+                        "none": false
+                      }
+                    ],
+                    "sections": [
+                      {
+                        "heading": "Performance",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Accomplishments",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Task Commits",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Files Created/Modified",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Decisions Made",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Deviations from Plan",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Issues Encountered",
+                        "claimed": false
+                      },
+                      {
+                        "heading": "User Setup Required",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Next Phase Readiness",
+                        "claimed": true
+                      }
+                    ],
+                    "pathPhase": {
+                      "number": "01",
+                      "slug": "legacy-ingest"
+                    },
+                    "quickId": null
+                  }
+                }
               },
               ".planning/milestones/v2.0-phases/01-legacy-ingest/01-CONTEXT.md": {
                 "id": ".planning/milestones/v2.0-phases/01-legacy-ingest/01-CONTEXT.md",
@@ -2383,7 +2611,93 @@
                 "bodyHash": "6549a10939143855a1cfb20661eeebaff27031d4bd194801e44c8e2b20542399",
                 "mtimeMs": 0,
                 "warnings": [],
-                "structured": {}
+                "structured": {
+                  "summary": {
+                    "h1": "Phase 2 Plan 1: Batch Export Summary",
+                    "oneLiner": "Batch export job proving ingested records can be exported to the downstream consumer.",
+                    "preamble": [],
+                    "performance": {
+                      "started": "2026-03-15T09:00:00Z",
+                      "completed": "2026-03-15T09:16:00Z",
+                      "duration": "16 min"
+                    },
+                    "accomplishments": [
+                      {
+                        "head": "Built the batch export job",
+                        "rest": ""
+                      }
+                    ],
+                    "tasks": [],
+                    "taskSource": null,
+                    "fileNotes": [
+                      {
+                        "path": "src/legacy/export.ts",
+                        "note": "Batch export job"
+                      }
+                    ],
+                    "decisionsBody": null,
+                    "deviations": {
+                      "none": true,
+                      "note": "plan executed exactly as written.",
+                      "items": [],
+                      "prose": [],
+                      "extras": []
+                    },
+                    "userSetup": null,
+                    "next": "v2.0 ready to ship.",
+                    "selfCheck": null,
+                    "others": [
+                      {
+                        "title": "Issues Encountered",
+                        "blocks": [],
+                        "none": true
+                      }
+                    ],
+                    "sections": [
+                      {
+                        "heading": "Performance",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Accomplishments",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Task Commits",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Files Created/Modified",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Decisions Made",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Deviations from Plan",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Issues Encountered",
+                        "claimed": false
+                      },
+                      {
+                        "heading": "User Setup Required",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Next Phase Readiness",
+                        "claimed": true
+                      }
+                    ],
+                    "pathPhase": {
+                      "number": "02",
+                      "slug": "batch-export"
+                    },
+                    "quickId": null
+                  }
+                }
               }
             }
           }
@@ -3489,7 +3803,119 @@
                 "bodyHash": "6d51941c9be33046147cfcfc362b77924f47a93665131f3417db409b84c012a2",
                 "mtimeMs": 0,
                 "warnings": [],
-                "structured": {}
+                "structured": {
+                  "summary": {
+                    "h1": "Phase 1 Plan 1: Identity Slice Tracer Summary",
+                    "oneLiner": "In-memory identity resolver proving the identity slice mechanism end to end before hardening.",
+                    "preamble": [],
+                    "performance": {
+                      "started": "2026-06-08T09:00:00Z",
+                      "completed": "2026-06-08T09:20:00Z",
+                      "duration": "20 min"
+                    },
+                    "accomplishments": [
+                      {
+                        "head": "Built a minimal in-memory identity resolver",
+                        "rest": ""
+                      },
+                      {
+                        "head": "Proved the tracer resolves a known id and returns null for an unknown one",
+                        "rest": ""
+                      }
+                    ],
+                    "tasks": [
+                      {
+                        "n": 1,
+                        "name": "Build the identity tracer",
+                        "hashes": [
+                          "a1b2c3d",
+                          "f00dbabe"
+                        ],
+                        "kinds": [
+                          "feat",
+                          "docs: complete plan"
+                        ]
+                      }
+                    ],
+                    "taskSource": "list",
+                    "fileNotes": [
+                      {
+                        "path": "src/identity/types.ts",
+                        "note": "`Identity` type definition"
+                      },
+                      {
+                        "path": "src/identity/slice.ts",
+                        "note": "`resolveIdentity` tracer function"
+                      }
+                    ],
+                    "decisionsBody": [
+                      {
+                        "kind": "paragraph",
+                        "text": "Used an in-memory map for the tracer instead of a real backend — none exists yet."
+                      }
+                    ],
+                    "deviations": {
+                      "none": true,
+                      "note": "plan executed exactly as written.",
+                      "items": [],
+                      "prose": [],
+                      "extras": []
+                    },
+                    "userSetup": null,
+                    "next": "Ready for plan 01-02 hardening.",
+                    "selfCheck": null,
+                    "others": [
+                      {
+                        "title": "Issues Encountered",
+                        "blocks": [],
+                        "none": true
+                      }
+                    ],
+                    "sections": [
+                      {
+                        "heading": "Performance",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Accomplishments",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Task Commits",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Files Created/Modified",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Decisions Made",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Deviations from Plan",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Issues Encountered",
+                        "claimed": false
+                      },
+                      {
+                        "heading": "User Setup Required",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Next Phase Readiness",
+                        "claimed": true
+                      }
+                    ],
+                    "pathPhase": {
+                      "number": "01",
+                      "slug": "identity-slice"
+                    },
+                    "quickId": null
+                  }
+                }
               },
               ".planning/phases/01-identity-slice/01-02-PLAN.md": {
                 "id": ".planning/phases/01-identity-slice/01-02-PLAN.md",
@@ -3791,7 +4217,137 @@
                 "bodyHash": "f182fbb36bf38ecfec9075a4b70658f08e774c8d56baa989835807b9c05f2eb4",
                 "mtimeMs": 0,
                 "warnings": [],
-                "structured": {}
+                "structured": {
+                  "summary": {
+                    "h1": "Phase 1 Plan 2: Identity Slice Hardening Summary",
+                    "oneLiner": "Regression-tested identity resolver plus the full unfamiliar/invented artifact type spread for phase 01.",
+                    "preamble": [],
+                    "performance": {
+                      "started": "2026-06-09T09:00:00Z",
+                      "completed": "2026-06-09T09:24:00Z",
+                      "duration": "24 min"
+                    },
+                    "accomplishments": [
+                      {
+                        "head": "Added regression tests covering known/unknown/malformed resolver input",
+                        "rest": ""
+                      },
+                      {
+                        "head": "Authored `01-SPEC.md`, `01-AI-SPEC.md`, and the invented `01-COST-MODEL.md`",
+                        "rest": ""
+                      }
+                    ],
+                    "tasks": [
+                      {
+                        "n": 1,
+                        "name": "Add regression tests for the resolver",
+                        "hashes": [
+                          "b2c3d4e"
+                        ],
+                        "kinds": [
+                          "test"
+                        ]
+                      },
+                      {
+                        "n": 2,
+                        "name": "Author the unfamiliar artifact types",
+                        "hashes": [
+                          "c3d4e5f",
+                          "deadc0de"
+                        ],
+                        "kinds": [
+                          "docs",
+                          "docs: complete plan"
+                        ]
+                      }
+                    ],
+                    "taskSource": "list",
+                    "fileNotes": [
+                      {
+                        "path": "test/identity/slice.test.ts",
+                        "note": "Resolver regression tests"
+                      },
+                      {
+                        "path": ".planning/phases/01-identity-slice/01-SPEC.md",
+                        "note": "Fixture spec artifact"
+                      },
+                      {
+                        "path": ".planning/phases/01-identity-slice/01-AI-SPEC.md",
+                        "note": "Fixture AI-spec artifact (no frontmatter)"
+                      },
+                      {
+                        "path": ".planning/phases/01-identity-slice/01-COST-MODEL.md",
+                        "note": "Invented artifact type"
+                      }
+                    ],
+                    "decisionsBody": [
+                      {
+                        "kind": "paragraph",
+                        "text": "Tested malformed input explicitly rather than only the happy path."
+                      }
+                    ],
+                    "deviations": {
+                      "none": true,
+                      "note": "plan executed exactly as written.",
+                      "items": [],
+                      "prose": [],
+                      "extras": []
+                    },
+                    "userSetup": null,
+                    "next": "Phase 1 is fully authored. Phase 2 (Transport Layer) can begin.",
+                    "selfCheck": null,
+                    "others": [
+                      {
+                        "title": "Issues Encountered",
+                        "blocks": [],
+                        "none": true
+                      }
+                    ],
+                    "sections": [
+                      {
+                        "heading": "Performance",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Accomplishments",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Task Commits",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Files Created/Modified",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Decisions Made",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Deviations from Plan",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Issues Encountered",
+                        "claimed": false
+                      },
+                      {
+                        "heading": "User Setup Required",
+                        "claimed": true
+                      },
+                      {
+                        "heading": "Next Phase Readiness",
+                        "claimed": true
+                      }
+                    ],
+                    "pathPhase": {
+                      "number": "01",
+                      "slug": "identity-slice"
+                    },
+                    "quickId": null
+                  }
+                }
               },
               ".planning/phases/01-identity-slice/01-AI-SPEC.md": {
                 "id": ".planning/phases/01-identity-slice/01-AI-SPEC.md",
@@ -5851,7 +6407,93 @@
             "bodyHash": "cf278b3c3ffc6998f3efa909f8116ca77cf94c886062dbf5a6a2a350958ed9d6",
             "mtimeMs": 0,
             "warnings": [],
-            "structured": {}
+            "structured": {
+              "summary": {
+                "h1": "Phase 1 Plan 1: Bootstrap Summary",
+                "oneLiner": "Minimal entry point proving the fixture project's earliest scaffolding runs end to end.",
+                "preamble": [],
+                "performance": {
+                  "started": "2025-10-25T09:00:00Z",
+                  "completed": "2025-10-25T09:15:00Z",
+                  "duration": "15 min"
+                },
+                "accomplishments": [
+                  {
+                    "head": "Built the bootstrap entry point",
+                    "rest": ""
+                  }
+                ],
+                "tasks": [],
+                "taskSource": null,
+                "fileNotes": [
+                  {
+                    "path": "src/bootstrap/init.ts",
+                    "note": "Entry point"
+                  }
+                ],
+                "decisionsBody": null,
+                "deviations": {
+                  "none": true,
+                  "note": "plan executed exactly as written.",
+                  "items": [],
+                  "prose": [],
+                  "extras": []
+                },
+                "userSetup": null,
+                "next": "Ready to ship v1.0.",
+                "selfCheck": null,
+                "others": [
+                  {
+                    "title": "Issues Encountered",
+                    "blocks": [],
+                    "none": true
+                  }
+                ],
+                "sections": [
+                  {
+                    "heading": "Performance",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Accomplishments",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Task Commits",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Files Created/Modified",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Decisions Made",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Deviations from Plan",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Issues Encountered",
+                    "claimed": false
+                  },
+                  {
+                    "heading": "User Setup Required",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Next Phase Readiness",
+                    "claimed": true
+                  }
+                ],
+                "pathPhase": {
+                  "number": "01",
+                  "slug": "bootstrap"
+                },
+                "quickId": null
+              }
+            }
           },
           ".planning/milestones/v1.0-phases/01-bootstrap/01-CONTEXT.md": {
             "id": ".planning/milestones/v1.0-phases/01-bootstrap/01-CONTEXT.md",
@@ -6408,7 +7050,98 @@
             "bodyHash": "a83803ae8813bfb28a901a0b01fbe8ca038a148b91542e686b7f0c589fdb3a86",
             "mtimeMs": 0,
             "warnings": [],
-            "structured": {}
+            "structured": {
+              "summary": {
+                "h1": "Phase 1 Plan 1: Legacy Ingest Summary",
+                "oneLiner": "Legacy ingest pipeline proving legacy records are readable in the new store.",
+                "preamble": [],
+                "performance": {
+                  "started": "2026-02-10T09:00:00Z",
+                  "completed": "2026-02-10T09:18:00Z",
+                  "duration": "18 min"
+                },
+                "accomplishments": [
+                  {
+                    "head": "Built the legacy ingest pipeline",
+                    "rest": ""
+                  }
+                ],
+                "tasks": [],
+                "taskSource": null,
+                "fileNotes": [
+                  {
+                    "path": "src/legacy/ingest.ts",
+                    "note": "Legacy ingest pipeline"
+                  }
+                ],
+                "decisionsBody": null,
+                "deviations": {
+                  "none": true,
+                  "note": "plan executed exactly as written.",
+                  "items": [],
+                  "prose": [],
+                  "extras": []
+                },
+                "userSetup": null,
+                "next": "Ready for Phase 2 (Batch Export).",
+                "selfCheck": null,
+                "others": [
+                  {
+                    "title": "Issues Encountered",
+                    "blocks": [
+                      {
+                        "kind": "paragraph",
+                        "text": "No retry logic on network failure — deferred to backlog."
+                      }
+                    ],
+                    "none": false
+                  }
+                ],
+                "sections": [
+                  {
+                    "heading": "Performance",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Accomplishments",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Task Commits",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Files Created/Modified",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Decisions Made",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Deviations from Plan",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Issues Encountered",
+                    "claimed": false
+                  },
+                  {
+                    "heading": "User Setup Required",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Next Phase Readiness",
+                    "claimed": true
+                  }
+                ],
+                "pathPhase": {
+                  "number": "01",
+                  "slug": "legacy-ingest"
+                },
+                "quickId": null
+              }
+            }
           },
           ".planning/milestones/v2.0-phases/01-legacy-ingest/01-CONTEXT.md": {
             "id": ".planning/milestones/v2.0-phases/01-legacy-ingest/01-CONTEXT.md",
@@ -6983,7 +7716,93 @@
             "bodyHash": "6549a10939143855a1cfb20661eeebaff27031d4bd194801e44c8e2b20542399",
             "mtimeMs": 0,
             "warnings": [],
-            "structured": {}
+            "structured": {
+              "summary": {
+                "h1": "Phase 2 Plan 1: Batch Export Summary",
+                "oneLiner": "Batch export job proving ingested records can be exported to the downstream consumer.",
+                "preamble": [],
+                "performance": {
+                  "started": "2026-03-15T09:00:00Z",
+                  "completed": "2026-03-15T09:16:00Z",
+                  "duration": "16 min"
+                },
+                "accomplishments": [
+                  {
+                    "head": "Built the batch export job",
+                    "rest": ""
+                  }
+                ],
+                "tasks": [],
+                "taskSource": null,
+                "fileNotes": [
+                  {
+                    "path": "src/legacy/export.ts",
+                    "note": "Batch export job"
+                  }
+                ],
+                "decisionsBody": null,
+                "deviations": {
+                  "none": true,
+                  "note": "plan executed exactly as written.",
+                  "items": [],
+                  "prose": [],
+                  "extras": []
+                },
+                "userSetup": null,
+                "next": "v2.0 ready to ship.",
+                "selfCheck": null,
+                "others": [
+                  {
+                    "title": "Issues Encountered",
+                    "blocks": [],
+                    "none": true
+                  }
+                ],
+                "sections": [
+                  {
+                    "heading": "Performance",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Accomplishments",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Task Commits",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Files Created/Modified",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Decisions Made",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Deviations from Plan",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Issues Encountered",
+                    "claimed": false
+                  },
+                  {
+                    "heading": "User Setup Required",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Next Phase Readiness",
+                    "claimed": true
+                  }
+                ],
+                "pathPhase": {
+                  "number": "02",
+                  "slug": "batch-export"
+                },
+                "quickId": null
+              }
+            }
           }
         }
       },
@@ -8082,7 +8901,119 @@
             "bodyHash": "6d51941c9be33046147cfcfc362b77924f47a93665131f3417db409b84c012a2",
             "mtimeMs": 0,
             "warnings": [],
-            "structured": {}
+            "structured": {
+              "summary": {
+                "h1": "Phase 1 Plan 1: Identity Slice Tracer Summary",
+                "oneLiner": "In-memory identity resolver proving the identity slice mechanism end to end before hardening.",
+                "preamble": [],
+                "performance": {
+                  "started": "2026-06-08T09:00:00Z",
+                  "completed": "2026-06-08T09:20:00Z",
+                  "duration": "20 min"
+                },
+                "accomplishments": [
+                  {
+                    "head": "Built a minimal in-memory identity resolver",
+                    "rest": ""
+                  },
+                  {
+                    "head": "Proved the tracer resolves a known id and returns null for an unknown one",
+                    "rest": ""
+                  }
+                ],
+                "tasks": [
+                  {
+                    "n": 1,
+                    "name": "Build the identity tracer",
+                    "hashes": [
+                      "a1b2c3d",
+                      "f00dbabe"
+                    ],
+                    "kinds": [
+                      "feat",
+                      "docs: complete plan"
+                    ]
+                  }
+                ],
+                "taskSource": "list",
+                "fileNotes": [
+                  {
+                    "path": "src/identity/types.ts",
+                    "note": "`Identity` type definition"
+                  },
+                  {
+                    "path": "src/identity/slice.ts",
+                    "note": "`resolveIdentity` tracer function"
+                  }
+                ],
+                "decisionsBody": [
+                  {
+                    "kind": "paragraph",
+                    "text": "Used an in-memory map for the tracer instead of a real backend — none exists yet."
+                  }
+                ],
+                "deviations": {
+                  "none": true,
+                  "note": "plan executed exactly as written.",
+                  "items": [],
+                  "prose": [],
+                  "extras": []
+                },
+                "userSetup": null,
+                "next": "Ready for plan 01-02 hardening.",
+                "selfCheck": null,
+                "others": [
+                  {
+                    "title": "Issues Encountered",
+                    "blocks": [],
+                    "none": true
+                  }
+                ],
+                "sections": [
+                  {
+                    "heading": "Performance",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Accomplishments",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Task Commits",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Files Created/Modified",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Decisions Made",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Deviations from Plan",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Issues Encountered",
+                    "claimed": false
+                  },
+                  {
+                    "heading": "User Setup Required",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Next Phase Readiness",
+                    "claimed": true
+                  }
+                ],
+                "pathPhase": {
+                  "number": "01",
+                  "slug": "identity-slice"
+                },
+                "quickId": null
+              }
+            }
           },
           ".planning/phases/01-identity-slice/01-02-PLAN.md": {
             "id": ".planning/phases/01-identity-slice/01-02-PLAN.md",
@@ -8384,7 +9315,137 @@
             "bodyHash": "f182fbb36bf38ecfec9075a4b70658f08e774c8d56baa989835807b9c05f2eb4",
             "mtimeMs": 0,
             "warnings": [],
-            "structured": {}
+            "structured": {
+              "summary": {
+                "h1": "Phase 1 Plan 2: Identity Slice Hardening Summary",
+                "oneLiner": "Regression-tested identity resolver plus the full unfamiliar/invented artifact type spread for phase 01.",
+                "preamble": [],
+                "performance": {
+                  "started": "2026-06-09T09:00:00Z",
+                  "completed": "2026-06-09T09:24:00Z",
+                  "duration": "24 min"
+                },
+                "accomplishments": [
+                  {
+                    "head": "Added regression tests covering known/unknown/malformed resolver input",
+                    "rest": ""
+                  },
+                  {
+                    "head": "Authored `01-SPEC.md`, `01-AI-SPEC.md`, and the invented `01-COST-MODEL.md`",
+                    "rest": ""
+                  }
+                ],
+                "tasks": [
+                  {
+                    "n": 1,
+                    "name": "Add regression tests for the resolver",
+                    "hashes": [
+                      "b2c3d4e"
+                    ],
+                    "kinds": [
+                      "test"
+                    ]
+                  },
+                  {
+                    "n": 2,
+                    "name": "Author the unfamiliar artifact types",
+                    "hashes": [
+                      "c3d4e5f",
+                      "deadc0de"
+                    ],
+                    "kinds": [
+                      "docs",
+                      "docs: complete plan"
+                    ]
+                  }
+                ],
+                "taskSource": "list",
+                "fileNotes": [
+                  {
+                    "path": "test/identity/slice.test.ts",
+                    "note": "Resolver regression tests"
+                  },
+                  {
+                    "path": ".planning/phases/01-identity-slice/01-SPEC.md",
+                    "note": "Fixture spec artifact"
+                  },
+                  {
+                    "path": ".planning/phases/01-identity-slice/01-AI-SPEC.md",
+                    "note": "Fixture AI-spec artifact (no frontmatter)"
+                  },
+                  {
+                    "path": ".planning/phases/01-identity-slice/01-COST-MODEL.md",
+                    "note": "Invented artifact type"
+                  }
+                ],
+                "decisionsBody": [
+                  {
+                    "kind": "paragraph",
+                    "text": "Tested malformed input explicitly rather than only the happy path."
+                  }
+                ],
+                "deviations": {
+                  "none": true,
+                  "note": "plan executed exactly as written.",
+                  "items": [],
+                  "prose": [],
+                  "extras": []
+                },
+                "userSetup": null,
+                "next": "Phase 1 is fully authored. Phase 2 (Transport Layer) can begin.",
+                "selfCheck": null,
+                "others": [
+                  {
+                    "title": "Issues Encountered",
+                    "blocks": [],
+                    "none": true
+                  }
+                ],
+                "sections": [
+                  {
+                    "heading": "Performance",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Accomplishments",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Task Commits",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Files Created/Modified",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Decisions Made",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Deviations from Plan",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Issues Encountered",
+                    "claimed": false
+                  },
+                  {
+                    "heading": "User Setup Required",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Next Phase Readiness",
+                    "claimed": true
+                  }
+                ],
+                "pathPhase": {
+                  "number": "01",
+                  "slug": "identity-slice"
+                },
+                "quickId": null
+              }
+            }
           },
           ".planning/phases/01-identity-slice/01-AI-SPEC.md": {
             "id": ".planning/phases/01-identity-slice/01-AI-SPEC.md",
@@ -10221,7 +11282,101 @@
             "bodyHash": "ca9e94e41e6694a59a94063c5c5c71a8892c35a3261a4c91f121ccce17e9283e",
             "mtimeMs": 0,
             "warnings": [],
-            "structured": {}
+            "structured": {
+              "summary": {
+                "h1": "Quick Task 260615-1a2: Add Transport Adapter Stub Summary",
+                "oneLiner": "One-line no-op stub ahead of Phase 2's real transport layer work.",
+                "preamble": [],
+                "performance": {
+                  "started": "2026-06-15T14:00:00Z",
+                  "completed": "2026-06-15T14:05:00Z",
+                  "duration": "5 min"
+                },
+                "accomplishments": [
+                  {
+                    "head": "Added a one-line no-op transport adapter stub",
+                    "rest": ""
+                  }
+                ],
+                "tasks": [
+                  {
+                    "n": 1,
+                    "name": "Add the stub",
+                    "hashes": [
+                      "a1b2c3d"
+                    ],
+                    "kinds": [
+                      "feat"
+                    ]
+                  }
+                ],
+                "taskSource": "list",
+                "fileNotes": [
+                  {
+                    "path": "src/transport/adapter-stub.ts",
+                    "note": "No-op stub"
+                  }
+                ],
+                "decisionsBody": null,
+                "deviations": {
+                  "none": true,
+                  "note": "plan executed exactly as written.",
+                  "items": [],
+                  "prose": [],
+                  "extras": []
+                },
+                "userSetup": null,
+                "next": null,
+                "selfCheck": null,
+                "others": [
+                  {
+                    "title": "Issues Encountered",
+                    "blocks": [],
+                    "none": true
+                  }
+                ],
+                "sections": [
+                  {
+                    "heading": "Performance",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Accomplishments",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Task Commits",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Files Created/Modified",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Decisions Made",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Deviations from Plan",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Issues Encountered",
+                    "claimed": false
+                  },
+                  {
+                    "heading": "User Setup Required",
+                    "claimed": true
+                  },
+                  {
+                    "heading": "Next Phase Readiness",
+                    "claimed": true
+                  }
+                ],
+                "pathPhase": null,
+                "quickId": "260615-1a2"
+              }
+            }
           }
         }
       },
@@ -11441,7 +12596,119 @@
                   "bodyHash": "6d51941c9be33046147cfcfc362b77924f47a93665131f3417db409b84c012a2",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "summary": {
+                      "h1": "Phase 1 Plan 1: Identity Slice Tracer Summary",
+                      "oneLiner": "In-memory identity resolver proving the identity slice mechanism end to end before hardening.",
+                      "preamble": [],
+                      "performance": {
+                        "started": "2026-06-08T09:00:00Z",
+                        "completed": "2026-06-08T09:20:00Z",
+                        "duration": "20 min"
+                      },
+                      "accomplishments": [
+                        {
+                          "head": "Built a minimal in-memory identity resolver",
+                          "rest": ""
+                        },
+                        {
+                          "head": "Proved the tracer resolves a known id and returns null for an unknown one",
+                          "rest": ""
+                        }
+                      ],
+                      "tasks": [
+                        {
+                          "n": 1,
+                          "name": "Build the identity tracer",
+                          "hashes": [
+                            "a1b2c3d",
+                            "f00dbabe"
+                          ],
+                          "kinds": [
+                            "feat",
+                            "docs: complete plan"
+                          ]
+                        }
+                      ],
+                      "taskSource": "list",
+                      "fileNotes": [
+                        {
+                          "path": "src/identity/types.ts",
+                          "note": "`Identity` type definition"
+                        },
+                        {
+                          "path": "src/identity/slice.ts",
+                          "note": "`resolveIdentity` tracer function"
+                        }
+                      ],
+                      "decisionsBody": [
+                        {
+                          "kind": "paragraph",
+                          "text": "Used an in-memory map for the tracer instead of a real backend — none exists yet."
+                        }
+                      ],
+                      "deviations": {
+                        "none": true,
+                        "note": "plan executed exactly as written.",
+                        "items": [],
+                        "prose": [],
+                        "extras": []
+                      },
+                      "userSetup": null,
+                      "next": "Ready for plan 01-02 hardening.",
+                      "selfCheck": null,
+                      "others": [
+                        {
+                          "title": "Issues Encountered",
+                          "blocks": [],
+                          "none": true
+                        }
+                      ],
+                      "sections": [
+                        {
+                          "heading": "Performance",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Accomplishments",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Task Commits",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Files Created/Modified",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Decisions Made",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Deviations from Plan",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Issues Encountered",
+                          "claimed": false
+                        },
+                        {
+                          "heading": "User Setup Required",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Next Phase Readiness",
+                          "claimed": true
+                        }
+                      ],
+                      "pathPhase": {
+                        "number": "01",
+                        "slug": "identity-slice"
+                      },
+                      "quickId": null
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-02-PLAN.md": {
                   "id": ".planning/phases/01-identity-slice/01-02-PLAN.md",
@@ -11743,7 +13010,137 @@
                   "bodyHash": "f182fbb36bf38ecfec9075a4b70658f08e774c8d56baa989835807b9c05f2eb4",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "summary": {
+                      "h1": "Phase 1 Plan 2: Identity Slice Hardening Summary",
+                      "oneLiner": "Regression-tested identity resolver plus the full unfamiliar/invented artifact type spread for phase 01.",
+                      "preamble": [],
+                      "performance": {
+                        "started": "2026-06-09T09:00:00Z",
+                        "completed": "2026-06-09T09:24:00Z",
+                        "duration": "24 min"
+                      },
+                      "accomplishments": [
+                        {
+                          "head": "Added regression tests covering known/unknown/malformed resolver input",
+                          "rest": ""
+                        },
+                        {
+                          "head": "Authored `01-SPEC.md`, `01-AI-SPEC.md`, and the invented `01-COST-MODEL.md`",
+                          "rest": ""
+                        }
+                      ],
+                      "tasks": [
+                        {
+                          "n": 1,
+                          "name": "Add regression tests for the resolver",
+                          "hashes": [
+                            "b2c3d4e"
+                          ],
+                          "kinds": [
+                            "test"
+                          ]
+                        },
+                        {
+                          "n": 2,
+                          "name": "Author the unfamiliar artifact types",
+                          "hashes": [
+                            "c3d4e5f",
+                            "deadc0de"
+                          ],
+                          "kinds": [
+                            "docs",
+                            "docs: complete plan"
+                          ]
+                        }
+                      ],
+                      "taskSource": "list",
+                      "fileNotes": [
+                        {
+                          "path": "test/identity/slice.test.ts",
+                          "note": "Resolver regression tests"
+                        },
+                        {
+                          "path": ".planning/phases/01-identity-slice/01-SPEC.md",
+                          "note": "Fixture spec artifact"
+                        },
+                        {
+                          "path": ".planning/phases/01-identity-slice/01-AI-SPEC.md",
+                          "note": "Fixture AI-spec artifact (no frontmatter)"
+                        },
+                        {
+                          "path": ".planning/phases/01-identity-slice/01-COST-MODEL.md",
+                          "note": "Invented artifact type"
+                        }
+                      ],
+                      "decisionsBody": [
+                        {
+                          "kind": "paragraph",
+                          "text": "Tested malformed input explicitly rather than only the happy path."
+                        }
+                      ],
+                      "deviations": {
+                        "none": true,
+                        "note": "plan executed exactly as written.",
+                        "items": [],
+                        "prose": [],
+                        "extras": []
+                      },
+                      "userSetup": null,
+                      "next": "Phase 1 is fully authored. Phase 2 (Transport Layer) can begin.",
+                      "selfCheck": null,
+                      "others": [
+                        {
+                          "title": "Issues Encountered",
+                          "blocks": [],
+                          "none": true
+                        }
+                      ],
+                      "sections": [
+                        {
+                          "heading": "Performance",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Accomplishments",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Task Commits",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Files Created/Modified",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Decisions Made",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Deviations from Plan",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Issues Encountered",
+                          "claimed": false
+                        },
+                        {
+                          "heading": "User Setup Required",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Next Phase Readiness",
+                          "claimed": true
+                        }
+                      ],
+                      "pathPhase": {
+                        "number": "01",
+                        "slug": "identity-slice"
+                      },
+                      "quickId": null
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-AI-SPEC.md": {
                   "id": ".planning/phases/01-identity-slice/01-AI-SPEC.md",
@@ -14091,7 +15488,119 @@
                   "bodyHash": "6d51941c9be33046147cfcfc362b77924f47a93665131f3417db409b84c012a2",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "summary": {
+                      "h1": "Phase 1 Plan 1: Identity Slice Tracer Summary",
+                      "oneLiner": "In-memory identity resolver proving the identity slice mechanism end to end before hardening.",
+                      "preamble": [],
+                      "performance": {
+                        "started": "2026-06-08T09:00:00Z",
+                        "completed": "2026-06-08T09:20:00Z",
+                        "duration": "20 min"
+                      },
+                      "accomplishments": [
+                        {
+                          "head": "Built a minimal in-memory identity resolver",
+                          "rest": ""
+                        },
+                        {
+                          "head": "Proved the tracer resolves a known id and returns null for an unknown one",
+                          "rest": ""
+                        }
+                      ],
+                      "tasks": [
+                        {
+                          "n": 1,
+                          "name": "Build the identity tracer",
+                          "hashes": [
+                            "a1b2c3d",
+                            "f00dbabe"
+                          ],
+                          "kinds": [
+                            "feat",
+                            "docs: complete plan"
+                          ]
+                        }
+                      ],
+                      "taskSource": "list",
+                      "fileNotes": [
+                        {
+                          "path": "src/identity/types.ts",
+                          "note": "`Identity` type definition"
+                        },
+                        {
+                          "path": "src/identity/slice.ts",
+                          "note": "`resolveIdentity` tracer function"
+                        }
+                      ],
+                      "decisionsBody": [
+                        {
+                          "kind": "paragraph",
+                          "text": "Used an in-memory map for the tracer instead of a real backend — none exists yet."
+                        }
+                      ],
+                      "deviations": {
+                        "none": true,
+                        "note": "plan executed exactly as written.",
+                        "items": [],
+                        "prose": [],
+                        "extras": []
+                      },
+                      "userSetup": null,
+                      "next": "Ready for plan 01-02 hardening.",
+                      "selfCheck": null,
+                      "others": [
+                        {
+                          "title": "Issues Encountered",
+                          "blocks": [],
+                          "none": true
+                        }
+                      ],
+                      "sections": [
+                        {
+                          "heading": "Performance",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Accomplishments",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Task Commits",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Files Created/Modified",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Decisions Made",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Deviations from Plan",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Issues Encountered",
+                          "claimed": false
+                        },
+                        {
+                          "heading": "User Setup Required",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Next Phase Readiness",
+                          "claimed": true
+                        }
+                      ],
+                      "pathPhase": {
+                        "number": "01",
+                        "slug": "identity-slice"
+                      },
+                      "quickId": null
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-02-PLAN.md": {
                   "id": ".planning/phases/01-identity-slice/01-02-PLAN.md",
@@ -14393,7 +15902,137 @@
                   "bodyHash": "f182fbb36bf38ecfec9075a4b70658f08e774c8d56baa989835807b9c05f2eb4",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "summary": {
+                      "h1": "Phase 1 Plan 2: Identity Slice Hardening Summary",
+                      "oneLiner": "Regression-tested identity resolver plus the full unfamiliar/invented artifact type spread for phase 01.",
+                      "preamble": [],
+                      "performance": {
+                        "started": "2026-06-09T09:00:00Z",
+                        "completed": "2026-06-09T09:24:00Z",
+                        "duration": "24 min"
+                      },
+                      "accomplishments": [
+                        {
+                          "head": "Added regression tests covering known/unknown/malformed resolver input",
+                          "rest": ""
+                        },
+                        {
+                          "head": "Authored `01-SPEC.md`, `01-AI-SPEC.md`, and the invented `01-COST-MODEL.md`",
+                          "rest": ""
+                        }
+                      ],
+                      "tasks": [
+                        {
+                          "n": 1,
+                          "name": "Add regression tests for the resolver",
+                          "hashes": [
+                            "b2c3d4e"
+                          ],
+                          "kinds": [
+                            "test"
+                          ]
+                        },
+                        {
+                          "n": 2,
+                          "name": "Author the unfamiliar artifact types",
+                          "hashes": [
+                            "c3d4e5f",
+                            "deadc0de"
+                          ],
+                          "kinds": [
+                            "docs",
+                            "docs: complete plan"
+                          ]
+                        }
+                      ],
+                      "taskSource": "list",
+                      "fileNotes": [
+                        {
+                          "path": "test/identity/slice.test.ts",
+                          "note": "Resolver regression tests"
+                        },
+                        {
+                          "path": ".planning/phases/01-identity-slice/01-SPEC.md",
+                          "note": "Fixture spec artifact"
+                        },
+                        {
+                          "path": ".planning/phases/01-identity-slice/01-AI-SPEC.md",
+                          "note": "Fixture AI-spec artifact (no frontmatter)"
+                        },
+                        {
+                          "path": ".planning/phases/01-identity-slice/01-COST-MODEL.md",
+                          "note": "Invented artifact type"
+                        }
+                      ],
+                      "decisionsBody": [
+                        {
+                          "kind": "paragraph",
+                          "text": "Tested malformed input explicitly rather than only the happy path."
+                        }
+                      ],
+                      "deviations": {
+                        "none": true,
+                        "note": "plan executed exactly as written.",
+                        "items": [],
+                        "prose": [],
+                        "extras": []
+                      },
+                      "userSetup": null,
+                      "next": "Phase 1 is fully authored. Phase 2 (Transport Layer) can begin.",
+                      "selfCheck": null,
+                      "others": [
+                        {
+                          "title": "Issues Encountered",
+                          "blocks": [],
+                          "none": true
+                        }
+                      ],
+                      "sections": [
+                        {
+                          "heading": "Performance",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Accomplishments",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Task Commits",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Files Created/Modified",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Decisions Made",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Deviations from Plan",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Issues Encountered",
+                          "claimed": false
+                        },
+                        {
+                          "heading": "User Setup Required",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Next Phase Readiness",
+                          "claimed": true
+                        }
+                      ],
+                      "pathPhase": {
+                        "number": "01",
+                        "slug": "identity-slice"
+                      },
+                      "quickId": null
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-AI-SPEC.md": {
                   "id": ".planning/phases/01-identity-slice/01-AI-SPEC.md",
@@ -16741,7 +18380,119 @@
                   "bodyHash": "6d51941c9be33046147cfcfc362b77924f47a93665131f3417db409b84c012a2",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "summary": {
+                      "h1": "Phase 1 Plan 1: Identity Slice Tracer Summary",
+                      "oneLiner": "In-memory identity resolver proving the identity slice mechanism end to end before hardening.",
+                      "preamble": [],
+                      "performance": {
+                        "started": "2026-06-08T09:00:00Z",
+                        "completed": "2026-06-08T09:20:00Z",
+                        "duration": "20 min"
+                      },
+                      "accomplishments": [
+                        {
+                          "head": "Built a minimal in-memory identity resolver",
+                          "rest": ""
+                        },
+                        {
+                          "head": "Proved the tracer resolves a known id and returns null for an unknown one",
+                          "rest": ""
+                        }
+                      ],
+                      "tasks": [
+                        {
+                          "n": 1,
+                          "name": "Build the identity tracer",
+                          "hashes": [
+                            "a1b2c3d",
+                            "f00dbabe"
+                          ],
+                          "kinds": [
+                            "feat",
+                            "docs: complete plan"
+                          ]
+                        }
+                      ],
+                      "taskSource": "list",
+                      "fileNotes": [
+                        {
+                          "path": "src/identity/types.ts",
+                          "note": "`Identity` type definition"
+                        },
+                        {
+                          "path": "src/identity/slice.ts",
+                          "note": "`resolveIdentity` tracer function"
+                        }
+                      ],
+                      "decisionsBody": [
+                        {
+                          "kind": "paragraph",
+                          "text": "Used an in-memory map for the tracer instead of a real backend — none exists yet."
+                        }
+                      ],
+                      "deviations": {
+                        "none": true,
+                        "note": "plan executed exactly as written.",
+                        "items": [],
+                        "prose": [],
+                        "extras": []
+                      },
+                      "userSetup": null,
+                      "next": "Ready for plan 01-02 hardening.",
+                      "selfCheck": null,
+                      "others": [
+                        {
+                          "title": "Issues Encountered",
+                          "blocks": [],
+                          "none": true
+                        }
+                      ],
+                      "sections": [
+                        {
+                          "heading": "Performance",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Accomplishments",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Task Commits",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Files Created/Modified",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Decisions Made",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Deviations from Plan",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Issues Encountered",
+                          "claimed": false
+                        },
+                        {
+                          "heading": "User Setup Required",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Next Phase Readiness",
+                          "claimed": true
+                        }
+                      ],
+                      "pathPhase": {
+                        "number": "01",
+                        "slug": "identity-slice"
+                      },
+                      "quickId": null
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-02-PLAN.md": {
                   "id": ".planning/phases/01-identity-slice/01-02-PLAN.md",
@@ -17043,7 +18794,137 @@
                   "bodyHash": "f182fbb36bf38ecfec9075a4b70658f08e774c8d56baa989835807b9c05f2eb4",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "summary": {
+                      "h1": "Phase 1 Plan 2: Identity Slice Hardening Summary",
+                      "oneLiner": "Regression-tested identity resolver plus the full unfamiliar/invented artifact type spread for phase 01.",
+                      "preamble": [],
+                      "performance": {
+                        "started": "2026-06-09T09:00:00Z",
+                        "completed": "2026-06-09T09:24:00Z",
+                        "duration": "24 min"
+                      },
+                      "accomplishments": [
+                        {
+                          "head": "Added regression tests covering known/unknown/malformed resolver input",
+                          "rest": ""
+                        },
+                        {
+                          "head": "Authored `01-SPEC.md`, `01-AI-SPEC.md`, and the invented `01-COST-MODEL.md`",
+                          "rest": ""
+                        }
+                      ],
+                      "tasks": [
+                        {
+                          "n": 1,
+                          "name": "Add regression tests for the resolver",
+                          "hashes": [
+                            "b2c3d4e"
+                          ],
+                          "kinds": [
+                            "test"
+                          ]
+                        },
+                        {
+                          "n": 2,
+                          "name": "Author the unfamiliar artifact types",
+                          "hashes": [
+                            "c3d4e5f",
+                            "deadc0de"
+                          ],
+                          "kinds": [
+                            "docs",
+                            "docs: complete plan"
+                          ]
+                        }
+                      ],
+                      "taskSource": "list",
+                      "fileNotes": [
+                        {
+                          "path": "test/identity/slice.test.ts",
+                          "note": "Resolver regression tests"
+                        },
+                        {
+                          "path": ".planning/phases/01-identity-slice/01-SPEC.md",
+                          "note": "Fixture spec artifact"
+                        },
+                        {
+                          "path": ".planning/phases/01-identity-slice/01-AI-SPEC.md",
+                          "note": "Fixture AI-spec artifact (no frontmatter)"
+                        },
+                        {
+                          "path": ".planning/phases/01-identity-slice/01-COST-MODEL.md",
+                          "note": "Invented artifact type"
+                        }
+                      ],
+                      "decisionsBody": [
+                        {
+                          "kind": "paragraph",
+                          "text": "Tested malformed input explicitly rather than only the happy path."
+                        }
+                      ],
+                      "deviations": {
+                        "none": true,
+                        "note": "plan executed exactly as written.",
+                        "items": [],
+                        "prose": [],
+                        "extras": []
+                      },
+                      "userSetup": null,
+                      "next": "Phase 1 is fully authored. Phase 2 (Transport Layer) can begin.",
+                      "selfCheck": null,
+                      "others": [
+                        {
+                          "title": "Issues Encountered",
+                          "blocks": [],
+                          "none": true
+                        }
+                      ],
+                      "sections": [
+                        {
+                          "heading": "Performance",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Accomplishments",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Task Commits",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Files Created/Modified",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Decisions Made",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Deviations from Plan",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Issues Encountered",
+                          "claimed": false
+                        },
+                        {
+                          "heading": "User Setup Required",
+                          "claimed": true
+                        },
+                        {
+                          "heading": "Next Phase Readiness",
+                          "claimed": true
+                        }
+                      ],
+                      "pathPhase": {
+                        "number": "01",
+                        "slug": "identity-slice"
+                      },
+                      "quickId": null
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-AI-SPEC.md": {
                   "id": ".planning/phases/01-identity-slice/01-AI-SPEC.md",
