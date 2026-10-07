@@ -5978,6 +5978,1056 @@ button.view-context-summary:hover {
   font-size: var(--fs-2);
 }
 
+/* quick-261006-iz6:start */
+/* ==========================================================================
+   quick-261006-iz6 (sketch 019 winner B): the PLAN task navigator — every .view-plan-nav-* rule.
+   Additive only, one contiguous block. Tokens throughout (space, type, line height), squared corners
+   with no corner rounding declared, no literal colour of any kind, --fw-medium / --fw-semibold only.
+   Colour comes from the shared tones and the theme tokens: the tracer chip and glyph, the selected
+   task's bar, the selected tab's underline, the New file chip and the source-hit highlight are
+   --primary (on --primary-tint where a fill is wanted); a checkpoint, a medium confidence and a
+   costly undo are --in-flight-fill on --in-flight-border; a low confidence is --missing-fill; a
+   high confidence and an executed plan are --primary; everything else is a quiet --muted-foreground.
+   Surfaces are --border, --border-faint, --card, --sidebar, --background and --state-hover. Nothing
+   here names a parse-degradation tone, and this block makes no colour-mix recipe of its own.
+   Ancestors of a .status-chip set no line-height, so every chip keeps the inherited body value
+   (F-05). Media overrides sit directly after their base rules (css-source-order).
+   ========================================================================== */
+
+/* Header: the Planned fact shares ArtifactHeader's .artifact-meta-row with Copy file path and the
+   view toggle. The wrapper dissolves so the fact is a flex item of the row. */
+.view-plan-nav-cover {
+  display: contents;
+}
+
+.view-plan-nav-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  align-items: center;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-plan-nav-facts b {
+  margin-left: var(--space-1-5);
+  color: var(--foreground);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.view-plan-nav-page {
+  display: grid;
+  gap: var(--space-fluid-8);
+}
+
+/* The h1 is the objective's first sentence, not a short name: the sketch's mono title size and a wide
+   measure, so a long sentence reads as a title and not as a wall. */
+.artifact-page:has(.view-plan-nav-page) .artifact-heading h1 {
+  max-width: 62rem;
+  font-family: var(--font-mono);
+  font-size: var(--fs-fluid-3);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+}
+
+.view-plan-nav-key {
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-plan-nav-muted {
+  color: var(--muted-foreground);
+}
+
+.view-plan-nav-aside,
+.view-plan-nav-aside-inline {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-plan-nav-aside-inline {
+  font-weight: normal;
+}
+
+/* Head row: chips on the left, the three triggers and the stats on the right. */
+.view-plan-nav-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-6);
+  align-items: end;
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--border);
+}
+
+@media (max-width: 62rem) {
+  .view-plan-nav-head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.view-plan-nav-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  align-items: center;
+}
+
+.view-plan-nav-tools {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: end;
+}
+
+@media (max-width: 62rem) {
+  .view-plan-nav-tools {
+    justify-items: start;
+  }
+}
+
+.view-plan-nav-triggers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+@media (max-width: 62rem) {
+  .view-plan-nav-triggers {
+    justify-content: flex-start;
+  }
+}
+
+.view-plan-nav-trigger {
+  display: inline-flex;
+  gap: var(--space-1-5);
+  align-items: baseline;
+  padding: var(--space-1-5) var(--space-2-5);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.view-plan-nav-trigger b {
+  color: var(--foreground);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0;
+}
+
+.view-plan-nav-trigger:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.view-plan-nav-trigger:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.view-plan-nav-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+}
+
+.view-plan-nav-stat {
+  display: grid;
+  gap: var(--space-0-5);
+}
+
+.view-plan-nav-stat b {
+  font-family: var(--font-mono);
+  font-size: var(--fs-6);
+  font-weight: var(--fw-medium);
+}
+
+.view-plan-nav-stat b[data-tone='complete'] {
+  color: var(--primary);
+}
+
+.view-plan-nav-stat b[data-tone='in-flight'] {
+  color: var(--in-flight-fill);
+}
+
+.view-plan-nav-stat b[data-tone='missing'] {
+  color: var(--missing-fill);
+}
+
+/* Objective: a definition list — Objective / Why / You get. */
+.view-plan-nav-brief {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  gap: var(--space-3) var(--space-5);
+  max-width: 62rem;
+  margin: 0;
+}
+
+@media (max-width: 42rem) {
+  .view-plan-nav-brief {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1) 0;
+  }
+}
+
+.view-plan-nav-brief dt {
+  padding-top: var(--space-0-5);
+}
+
+@media (max-width: 42rem) {
+  .view-plan-nav-brief dt {
+    padding-top: var(--space-2);
+  }
+}
+
+.view-plan-nav-brief dd {
+  display: grid;
+  gap: var(--space-2-5);
+  min-width: 0;
+  margin: 0;
+  font-size: var(--fs-4);
+}
+
+.view-plan-nav-brief .view-plan-nav-lead-row {
+  font-size: var(--fs-5);
+}
+
+/* Workspace: a sticky task list beside the selected task. */
+.view-plan-nav-work {
+  display: grid;
+  grid-template-columns: 19rem minmax(0, 1fr);
+  min-height: 32rem;
+  border: 1px solid var(--border);
+  background: linear-gradient(to right, var(--sidebar) 19rem, transparent 19rem);
+  scroll-margin-top: var(--space-22);
+}
+
+@media (max-width: 62rem) {
+  .view-plan-nav-work {
+    grid-template-columns: minmax(0, 1fr);
+    background: none;
+  }
+}
+
+.view-plan-nav-work[data-flash='true'] {
+  animation: view-plan-nav-flash 1.2s ease;
+}
+
+@keyframes view-plan-nav-flash {
+  0%,
+  40% {
+    box-shadow: 0 0 0 2px var(--primary);
+  }
+
+  100% {
+    box-shadow: 0 0 0 2px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .view-plan-nav-work[data-flash='true'] {
+    animation: none;
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+}
+
+.view-plan-nav-list {
+  position: sticky;
+  top: var(--space-22);
+  display: grid;
+  align-content: start;
+  align-self: start;
+  max-height: calc(100vh - 7rem);
+  overflow-y: auto;
+  background: var(--sidebar);
+}
+
+@media (max-width: 62rem) {
+  .view-plan-nav-list {
+    position: static;
+    grid-auto-columns: minmax(12rem, 1fr);
+    grid-auto-flow: column;
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: visible;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+.view-plan-nav-list-head {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+@media (max-width: 62rem) {
+  .view-plan-nav-list-head {
+    display: none;
+  }
+}
+
+.view-plan-nav-waits-count {
+  color: var(--in-flight-fill);
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-plan-nav-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-left: 2px solid transparent;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.view-plan-nav-item:hover {
+  background: var(--state-hover);
+}
+
+.view-plan-nav-item[aria-selected='true'] {
+  border-left-color: var(--primary);
+  background: var(--background);
+}
+
+.view-plan-nav-item-text {
+  min-width: 0;
+}
+
+.view-plan-nav-name {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: var(--fs-3);
+  line-height: var(--lh-snug);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.view-plan-nav-sub {
+  display: block;
+  margin-top: var(--space-0-5);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-plan-nav-sub[data-gate='true'] {
+  color: var(--in-flight-fill);
+}
+
+/* One square per task type: a tracer is --primary, a checkpoint is an in-flight outline. */
+.view-plan-nav-glyph {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-bold);
+}
+
+.view-plan-nav-glyph[data-type='tracer'] {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.view-plan-nav-glyph[data-gate='true'] {
+  border-color: var(--in-flight-border);
+  color: var(--in-flight-fill);
+}
+
+/* The selected task. */
+.view-plan-nav-detail {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  min-width: 0;
+  border-left: 1px solid var(--border);
+}
+
+@media (max-width: 62rem) {
+  .view-plan-nav-detail {
+    border-left: 0;
+  }
+}
+
+.view-plan-nav-dhead {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-5) var(--space-6) var(--space-3);
+}
+
+@media (max-width: 42rem) {
+  .view-plan-nav-dhead {
+    padding: var(--space-4) var(--space-4) var(--space-3);
+  }
+}
+
+.view-plan-nav-dhead h2 {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-fluid-1);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+}
+
+.view-plan-nav-position {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-plan-nav-waits {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  color: var(--in-flight-fill);
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-plan-nav-waits::before {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  background: var(--in-flight-fill);
+}
+
+.view-plan-nav-tabs {
+  display: flex;
+  padding: 0 var(--space-4);
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+}
+
+.view-plan-nav-tabs button {
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  transition: color 0.15s ease;
+  white-space: nowrap;
+}
+
+.view-plan-nav-tabs button:hover {
+  color: var(--foreground);
+}
+
+.view-plan-nav-tabs button[aria-selected='true'] {
+  border-bottom-color: var(--primary);
+  color: var(--foreground);
+}
+
+.view-plan-nav-count {
+  margin-left: var(--space-1);
+  color: var(--muted-foreground);
+}
+
+.view-plan-nav-pane {
+  min-width: 0;
+  padding: var(--space-5) var(--space-6);
+}
+
+@media (max-width: 42rem) {
+  .view-plan-nav-pane {
+    padding: var(--space-4);
+  }
+}
+
+.view-plan-nav-body {
+  display: grid;
+  gap: var(--space-5);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-plan-nav-sec {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.view-plan-nav-sec > .view-plan-nav-key {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+}
+
+.view-plan-nav-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.view-plan-nav-file {
+  padding: var(--space-0-5) var(--space-1-5);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  overflow-wrap: anywhere;
+}
+
+.view-plan-nav-dir {
+  color: var(--muted-foreground);
+}
+
+/* Prose fields: author text through ResearchBlocks, clamped when long. */
+.view-plan-nav-text {
+  display: grid;
+  gap: var(--space-2-5);
+  min-width: 0;
+  font-size: var(--fs-4);
+}
+
+.view-plan-nav-text[data-clamp='true'] {
+  position: relative;
+  max-height: 14rem;
+  overflow: hidden;
+}
+
+.view-plan-nav-text[data-clamp='true']::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 4rem;
+  background: linear-gradient(transparent, var(--background));
+  pointer-events: none;
+}
+
+.view-plan-nav-text :is(ul, ol),
+.view-plan-nav-brief :is(ul, ol),
+.view-plan-nav-note :is(ul, ol) {
+  display: grid;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.view-plan-nav-text ul,
+.view-plan-nav-brief ul,
+.view-plan-nav-note ul {
+  list-style: disc;
+}
+
+.view-plan-nav-text ol,
+.view-plan-nav-brief ol,
+.view-plan-nav-note ol {
+  list-style: decimal;
+}
+
+.view-plan-nav-text pre {
+  margin: 0;
+  padding: var(--space-3);
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  background: var(--sidebar);
+  font-size: var(--fs-2);
+}
+
+.view-plan-nav-more {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  transition: color 0.15s ease;
+}
+
+.view-plan-nav-more:hover {
+  color: var(--primary);
+}
+
+.view-plan-nav-lead {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.view-plan-nav-checks {
+  display: grid;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-plan-nav-checks li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-2);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.view-plan-nav-checks li::before {
+  content: '';
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-top: var(--space-1-5);
+  border: 1px solid var(--muted-foreground);
+}
+
+.view-plan-nav-verify {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.view-plan-nav-cmd {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.view-plan-nav-cmd pre {
+  max-height: 9rem;
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  overflow: auto;
+  border: 1px solid var(--border);
+  background: var(--sidebar);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.view-plan-nav-fails {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.view-plan-nav-fails::before {
+  content: 'Fails when · ';
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-plan-nav-note {
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--fs-3);
+}
+
+.view-plan-nav-line {
+  margin: 0;
+  font-size: var(--fs-4);
+}
+
+.view-plan-nav-line[data-large='true'] {
+  font-size: var(--fs-fluid-1);
+}
+
+.view-plan-nav-line[data-done='true'] {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-2);
+}
+
+.view-plan-nav-line[data-done='true']::before {
+  content: '✓';
+  color: var(--primary);
+  font-family: var(--font-mono);
+}
+
+.view-plan-nav-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-3);
+}
+
+.view-plan-nav-option {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--card);
+  text-align: left;
+  transition: border-color 0.15s ease;
+}
+
+.view-plan-nav-option:hover {
+  border-color: var(--in-flight-border);
+}
+
+.view-plan-nav-option p {
+  margin: 0;
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.view-plan-nav-option-name {
+  font-family: var(--font-mono);
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+.view-plan-nav-option p[data-kind='pro']::before {
+  content: '+ ';
+  color: var(--primary);
+  font-family: var(--font-mono);
+}
+
+.view-plan-nav-option p[data-kind='con']::before {
+  content: '− ';
+  color: var(--missing-fill);
+  font-family: var(--font-mono);
+}
+
+/* The one-line "In the source only" row of a task. */
+.view-plan-nav-src {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5) var(--space-2);
+  align-items: center;
+  padding-top: var(--space-3);
+  border-top: 1px dashed var(--border);
+}
+
+.view-plan-nav-src button.status-chip,
+.view-plan-nav-source-only button.status-chip {
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.view-plan-nav-src button.status-chip:hover,
+.view-plan-nav-source-only button.status-chip:hover {
+  background: var(--state-hover);
+}
+
+.view-plan-nav-foot {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3) var(--space-6);
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 42rem) {
+  .view-plan-nav-foot {
+    padding: var(--space-3) var(--space-4);
+  }
+}
+
+.view-plan-nav-step {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  transition: color 0.15s ease;
+}
+
+.view-plan-nav-step:hover:not(:disabled) {
+  color: var(--primary);
+}
+
+.view-plan-nav-step:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Done when: what is true afterwards beside the checks that must pass. */
+.view-plan-nav-done > .section-heading {
+  flex-wrap: wrap;
+  align-items: flex-end;
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-5);
+  border-bottom: 1px solid var(--border);
+}
+
+.view-plan-nav-done > .section-heading h2 {
+  font-family: var(--font-mono);
+}
+
+.view-plan-nav-done-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: var(--space-8);
+}
+
+.view-plan-nav-outcomes,
+.view-plan-nav-checkset {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-plan-nav-outcomes ul,
+.view-plan-nav-checkset ul {
+  display: grid;
+  gap: var(--space-2-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-plan-nav-outcomes li,
+.view-plan-nav-checkset li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-2-5);
+  font-size: var(--fs-4);
+  overflow-wrap: anywhere;
+}
+
+.view-plan-nav-outcomes li::before {
+  content: '';
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-top: var(--space-1-5);
+  border: 1px solid var(--primary);
+  background: var(--primary-tint);
+}
+
+.view-plan-nav-checkset li::before {
+  content: '›';
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+}
+
+/* "In the source only": what the view leaves to Source mode, one click away. */
+.view-plan-nav-source-only {
+  display: grid;
+  grid-template-columns: 12rem minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: center;
+  padding: var(--space-3) 0;
+  border-top: 1px dashed var(--border);
+  border-bottom: 1px dashed var(--border);
+}
+
+@media (max-width: 42rem) {
+  .view-plan-nav-source-only {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+}
+
+.view-plan-nav-source-only ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The three modals: Depends on, Files, Requirements. */
+.view-plan-nav-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: min(42rem, calc(100vw - 2rem));
+  max-width: min(42rem, calc(100vw - 2rem));
+  max-height: min(80vh, 46rem);
+  padding: 0;
+  overflow: hidden;
+  background: var(--card);
+}
+
+.view-plan-nav-modal-head {
+  flex: none;
+  padding: var(--space-4) var(--space-10) var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border);
+  background: var(--card);
+}
+
+.view-plan-nav-modal-title {
+  font-family: var(--font-mono);
+  font-size: var(--fs-6);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.view-plan-nav-modal-body {
+  display: grid;
+  flex: 1 1 auto;
+  gap: var(--space-5);
+  min-height: 0;
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  overflow-y: auto;
+}
+
+.view-plan-nav-group {
+  display: grid;
+  gap: var(--space-1-5);
+}
+
+.view-plan-nav-filerow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: baseline;
+  padding: var(--space-1-5) 0;
+  border-bottom: 1px solid var(--border-faint);
+  font-size: var(--fs-3);
+}
+
+.view-plan-nav-filename {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  align-items: center;
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.view-plan-nav-by {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  justify-content: flex-end;
+}
+
+.view-plan-nav-nobody {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+}
+
+.view-plan-nav-tref {
+  padding: 0 var(--space-1);
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.view-plan-nav-tref[data-gate='true'] {
+  border-color: var(--in-flight-border);
+  color: var(--in-flight-fill);
+}
+
+.view-plan-nav-tref:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.view-plan-nav-row,
+.view-plan-nav-req {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-faint);
+  color: inherit;
+  text-decoration: none;
+}
+
+a.view-plan-nav-row:hover {
+  background: var(--state-hover);
+}
+
+.view-plan-nav-modal-id {
+  color: var(--primary);
+  font-family: var(--font-mono);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.view-plan-nav-modal-text {
+  min-width: 0;
+  font-size: var(--fs-4);
+  overflow-wrap: anywhere;
+}
+
+.view-plan-nav-modal-text .status-chip {
+  display: inline-flex;
+  margin-left: var(--space-2);
+}
+
+.view-plan-nav-req p {
+  margin: 0;
+  font-size: var(--fs-4);
+  overflow-wrap: anywhere;
+}
+
+.view-plan-nav-footnote {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+/* Source mode: the section a strip entry named. */
+.artifact-document .plan-section[data-source-hit='true'] {
+  background: var(--primary-tint);
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+/* quick-261006-iz6:end */
+
 /* quick-261003-527:start */
 /* ==========================================================================
    quick-261003-527 (sketch 017 winner D): the SECURITY console — every .view-security-* rule.

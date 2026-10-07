@@ -394,3 +394,58 @@ Beta.
     expect(ordinals).toHaveLength(sections.length);
   });
 });
+
+// quick-261006-iz6 (QKIZ6-02): every rendered plan section carries `id="plan-at-<offset>"`, the same
+// anchor the PLAN projection records from the same `segmentPlanBody` over the same body, so a Source
+// jump never has to recompute an ordinal. The segmenter stays linear on a line of repeated `<a `.
+describe('plan section anchors (quick-261006-iz6)', () => {
+  const BODY = `<objective>
+Do the thing.
+</objective>
+
+<tasks>
+<task type="auto">
+<name>One</name>
+<verify>
+<automated>true</automated>
+</verify>
+</task>
+<winner_spec>
+Unknown wrapper.
+</winner_spec>
+</tasks>
+`;
+
+  it('gives each well-formed section an id equal to the start of its segment', async () => {
+    const { segmentPlanBody } = await import('../../src/rendering/plan-segments.ts');
+    const renderer = await createArtifactRenderer();
+    const rendered = await renderer.render(artifact(BODY));
+    const segments = segmentPlanBody(BODY).filter((segment) => !segment.malformed);
+    expect(segments.length).toBeGreaterThan(5);
+    for (const segment of segments) {
+      expect(rendered.html).toContain(`id="plan-at-${segment.start}"`);
+      expect(rendered.html).toContain(`data-plan-section="${segment.tag}"`);
+    }
+    // The id follows the existing attributes, so the long-standing prefix assertions keep their shape.
+    expect(rendered.html).toContain(
+      '<section class="plan-section plan-section-objective" data-plan-section="objective"',
+    );
+    const ids = rendered.html.match(/id="plan-at-\d+"/g) ?? [];
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('segments a 1 MB body holding pathological tag lines in linear time', async () => {
+    const { segmentPlanBody } = await import('../../src/rendering/plan-segments.ts');
+    const bodies = [
+      `x\n${'<a '.repeat(200_000)}\n${'y'.repeat(400_000)}`,
+      `${'``<a '.repeat(50_000)}\n${'z'.repeat(400_000)}`,
+      `<${'a'.repeat(200_000)}\n${'b'.repeat(400_000)}`,
+      `<${'a-'.repeat(100_000)}\n`,
+    ];
+    for (const body of bodies) {
+      const started = performance.now();
+      segmentPlanBody(body);
+      expect(performance.now() - started).toBeLessThan(250);
+    }
+  });
+});
