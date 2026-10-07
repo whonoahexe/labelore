@@ -1081,7 +1081,106 @@
                 "bodyHash": "7cb4c3179bc563d16d8767e760ba7776d748f2665a9b4216727943baee3e25ce",
                 "mtimeMs": 0,
                 "warnings": [],
-                "structured": {}
+                "structured": {
+                  "plan": {
+                    "objective": {
+                      "anchor": "plan-at-1",
+                      "title": "Stand up the earliest scaffolding for the fixture project",
+                      "rest": [],
+                      "why": null,
+                      "youGet": [
+                        {
+                          "kind": "paragraph",
+                          "text": "`Src/bootstrap/init.ts` runs without error."
+                        }
+                      ]
+                    },
+                    "tasks": [
+                      {
+                        "n": 1,
+                        "anchor": "plan-at-192",
+                        "type": "auto",
+                        "gate": null,
+                        "tdd": false,
+                        "name": "Build the bootstrap entry point",
+                        "files": [
+                          "src/bootstrap/init.ts"
+                        ],
+                        "fields": {
+                          "action": {
+                            "anchor": "plan-at-307",
+                            "blocks": [
+                              {
+                                "kind": "paragraph",
+                                "text": "Write a minimal entry point that prints a single startup line and exits 0."
+                              }
+                            ],
+                            "chars": 74,
+                            "words": 14
+                          },
+                          "context": null,
+                          "whatBuilt": null,
+                          "howToVerify": null,
+                          "instructions": null,
+                          "verification": null,
+                          "behavior": null,
+                          "acceptance": null,
+                          "done": {
+                            "anchor": "plan-at-500",
+                            "text": "The bootstrap entry point runs and exits 0."
+                          },
+                          "decision": null,
+                          "options": null,
+                          "reversibility": null,
+                          "verify": {
+                            "anchor": "plan-at-405",
+                            "items": [
+                              {
+                                "kind": "text",
+                                "text": "node --experimental-strip-types src/bootstrap/init.ts prints a startup line"
+                              }
+                            ]
+                          }
+                        },
+                        "sourceChildren": []
+                      }
+                    ],
+                    "success": {
+                      "anchor": "plan-at-666",
+                      "lead": null,
+                      "items": [
+                        "The scaffolding runs end to end."
+                      ]
+                    },
+                    "verification": {
+                      "anchor": "plan-at-576",
+                      "lead": null,
+                      "items": [
+                        "`src/bootstrap/init.ts` exists and runs without error."
+                      ]
+                    },
+                    "sourceBlocks": [
+                      {
+                        "tag": "context",
+                        "anchor": "plan-at-139",
+                        "fileCount": 1
+                      },
+                      {
+                        "tag": "output",
+                        "anchor": "plan-at-741",
+                        "fileCount": null
+                      }
+                    ],
+                    "loose": [],
+                    "wrapperWarnings": 0,
+                    "ref": {
+                      "planId": "01-01",
+                      "phaseNumber": "01",
+                      "phaseSlug": "bootstrap",
+                      "quickId": null
+                    }
+                  }
+                }
               },
               ".planning/milestones/v1.0-phases/01-bootstrap/01-01-SUMMARY.md": {
                 "id": ".planning/milestones/v1.0-phases/01-bootstrap/01-01-SUMMARY.md",
@@ -1544,7 +1643,106 @@
                 "bodyHash": "875e33132d66bdf44da18f528ea9a10fd4eb46d585a33628a1bb19cc608b616d",
                 "mtimeMs": 0,
                 "warnings": [],
-                "structured": {}
+                "structured": {
+                  "plan": {
+                    "objective": {
+                      "anchor": "plan-at-1",
+                      "title": "Pull legacy records into the new store",
+                      "rest": [],
+                      "why": null,
+                      "youGet": [
+                        {
+                          "kind": "paragraph",
+                          "text": "`Src/legacy/ingest.ts` reads a legacy export file and writes it into the new store's format."
+                        }
+                      ]
+                    },
+                    "tasks": [
+                      {
+                        "n": 1,
+                        "anchor": "plan-at-222",
+                        "type": "auto",
+                        "gate": null,
+                        "tdd": false,
+                        "name": "Build the ingest pipeline",
+                        "files": [
+                          "src/legacy/ingest.ts"
+                        ],
+                        "fields": {
+                          "action": {
+                            "anchor": "plan-at-330",
+                            "blocks": [
+                              {
+                                "kind": "paragraph",
+                                "text": "Write a minimal function that reads a legacy export and writes it into the new store's shape."
+                              }
+                            ],
+                            "chars": 93,
+                            "words": 17
+                          },
+                          "context": null,
+                          "whatBuilt": null,
+                          "howToVerify": null,
+                          "instructions": null,
+                          "verification": null,
+                          "behavior": null,
+                          "acceptance": null,
+                          "done": {
+                            "anchor": "plan-at-543",
+                            "text": "Legacy records are readable in the new store."
+                          },
+                          "decision": null,
+                          "options": null,
+                          "reversibility": null,
+                          "verify": {
+                            "anchor": "plan-at-447",
+                            "items": [
+                              {
+                                "kind": "text",
+                                "text": "node --experimental-strip-types src/legacy/ingest.ts ingests a sample record"
+                              }
+                            ]
+                          }
+                        },
+                        "sourceChildren": []
+                      }
+                    ],
+                    "success": {
+                      "anchor": "plan-at-715",
+                      "lead": null,
+                      "items": [
+                        "Legacy records are readable in the new store."
+                      ]
+                    },
+                    "verification": {
+                      "anchor": "plan-at-621",
+                      "lead": null,
+                      "items": [
+                        "`src/legacy/ingest.ts` exists and ingests a sample record."
+                      ]
+                    },
+                    "sourceBlocks": [
+                      {
+                        "tag": "context",
+                        "anchor": "plan-at-169",
+                        "fileCount": 1
+                      },
+                      {
+                        "tag": "output",
+                        "anchor": "plan-at-803",
+                        "fileCount": null
+                      }
+                    ],
+                    "loose": [],
+                    "wrapperWarnings": 0,
+                    "ref": {
+                      "planId": "01-01",
+                      "phaseNumber": "01",
+                      "phaseSlug": "legacy-ingest",
+                      "quickId": null
+                    }
+                  }
+                }
               },
               ".planning/milestones/v2.0-phases/01-legacy-ingest/01-01-SUMMARY.md": {
                 "id": ".planning/milestones/v2.0-phases/01-legacy-ingest/01-01-SUMMARY.md",
@@ -2017,7 +2215,106 @@
                 "bodyHash": "6aabfb8b00a4a8c639ce4f768f57d9ab529ad9daa4e948f2cedd9e0dd7fc2035",
                 "mtimeMs": 0,
                 "warnings": [],
-                "structured": {}
+                "structured": {
+                  "plan": {
+                    "objective": {
+                      "anchor": "plan-at-1",
+                      "title": "Export ingested batches to the downstream consumer",
+                      "rest": [],
+                      "why": null,
+                      "youGet": [
+                        {
+                          "kind": "paragraph",
+                          "text": "`Src/legacy/export.ts` reads ingested records and writes a batch export file."
+                        }
+                      ]
+                    },
+                    "tasks": [
+                      {
+                        "n": 1,
+                        "anchor": "plan-at-265",
+                        "type": "auto",
+                        "gate": null,
+                        "tdd": false,
+                        "name": "Build the export job",
+                        "files": [
+                          "src/legacy/export.ts"
+                        ],
+                        "fields": {
+                          "action": {
+                            "anchor": "plan-at-368",
+                            "blocks": [
+                              {
+                                "kind": "paragraph",
+                                "text": "Write a minimal function that reads ingested records and writes a batch export file."
+                              }
+                            ],
+                            "chars": 84,
+                            "words": 14
+                          },
+                          "context": null,
+                          "whatBuilt": null,
+                          "howToVerify": null,
+                          "instructions": null,
+                          "verification": null,
+                          "behavior": null,
+                          "acceptance": null,
+                          "done": {
+                            "anchor": "plan-at-571",
+                            "text": "A batch export job runs against ingested records."
+                          },
+                          "decision": null,
+                          "options": null,
+                          "reversibility": null,
+                          "verify": {
+                            "anchor": "plan-at-476",
+                            "items": [
+                              {
+                                "kind": "text",
+                                "text": "node --experimental-strip-types src/legacy/export.ts exports a sample batch"
+                              }
+                            ]
+                          }
+                        },
+                        "sourceChildren": []
+                      }
+                    ],
+                    "success": {
+                      "anchor": "plan-at-746",
+                      "lead": null,
+                      "items": [
+                        "A batch export job runs against ingested records."
+                      ]
+                    },
+                    "verification": {
+                      "anchor": "plan-at-653",
+                      "lead": null,
+                      "items": [
+                        "`src/legacy/export.ts` exists and exports a sample batch."
+                      ]
+                    },
+                    "sourceBlocks": [
+                      {
+                        "tag": "context",
+                        "anchor": "plan-at-166",
+                        "fileCount": 1
+                      },
+                      {
+                        "tag": "output",
+                        "anchor": "plan-at-838",
+                        "fileCount": null
+                      }
+                    ],
+                    "loose": [],
+                    "wrapperWarnings": 0,
+                    "ref": {
+                      "planId": "02-01",
+                      "phaseNumber": "02",
+                      "phaseSlug": "batch-export",
+                      "quickId": null
+                    }
+                  }
+                }
               },
               ".planning/milestones/v2.0-phases/02-batch-export/02-01-SUMMARY.md": {
                 "id": ".planning/milestones/v2.0-phases/02-batch-export/02-01-SUMMARY.md",
@@ -2890,7 +3187,219 @@
                 "bodyHash": "f63e7425d4f2fd0f2c47aa897e9d470370019a22be15fc02c062384b6aae9251",
                 "mtimeMs": 0,
                 "warnings": [],
-                "structured": {}
+                "structured": {
+                  "plan": {
+                    "objective": {
+                      "anchor": "plan-at-1",
+                      "title": "Deliver a minimal end-to-end tracer for the identity slice",
+                      "rest": [],
+                      "why": [
+                        {
+                          "kind": "paragraph",
+                          "text": "Prove the identity mechanism works before hardening it in plan 01-02."
+                        }
+                      ],
+                      "youGet": [
+                        {
+                          "kind": "paragraph",
+                          "text": "`Src/identity/slice.ts` runs and resolves a synthetic identity end to end."
+                        }
+                      ]
+                    },
+                    "tasks": [
+                      {
+                        "n": 1,
+                        "anchor": "plan-at-1192",
+                        "type": "auto",
+                        "gate": null,
+                        "tdd": false,
+                        "name": "Build the identity tracer",
+                        "files": [
+                          "src/identity/types.ts",
+                          "src/identity/slice.ts"
+                        ],
+                        "fields": {
+                          "action": {
+                            "anchor": "plan-at-1324",
+                            "blocks": [
+                              {
+                                "kind": "paragraph",
+                                "text": "Define a minimal `Identity` type and an in-memory resolver function. Keep it small:"
+                              },
+                              {
+                                "kind": "list",
+                                "ordered": false,
+                                "items": [
+                                  "A single exported `resolveIdentity(id: string): Identity | null` function",
+                                  "Properties it must satisfy:",
+                                  "Returns `null` for an unknown id, never throws",
+                                  "Returns a fully-populated `Identity` for a known id"
+                                ]
+                              },
+                              {
+                                "kind": "paragraph",
+                                "text": "Example invocation:"
+                              },
+                              {
+                                "kind": "code",
+                                "text": "import { resolveIdentity } from \"./slice\";\nconst identity = resolveIdentity(\"user-1\");"
+                              },
+                              {
+                                "kind": "paragraph",
+                                "text": "A synthetic trace id from the resolver's log output, reproduced verbatim for the reader:"
+                              },
+                              {
+                                "kind": "code",
+                                "text": "hbrpoig8f1cbfno6b9m80o2rak1vrjnvgfygwwqc38hyf9sxmecosfogyr3xkxwnrek8pk3yr9oudocuzrenun5z3jqip98q1zxoi65fdhjk1eyy37q9ah8rvhs1k3aq6l6gt6mjxk87au5bhxtpdpff5e8ii49kq71n8mtzx272hpoevb9ooaedoecve6pr5n8i4p40mgg1w103dgdzvgpmm82i"
+                              },
+                              {
+                                "kind": "paragraph",
+                                "text": "The resolver's dependency shape, for reference:"
+                              },
+                              {
+                                "kind": "code",
+                                "text": "flowchart TD\n    A[resolveIdentity] --> B[in-memory map lookup]\n    B --> C{found?}\n    C -->|yes| D[return Identity]\n    C -->|no| E[return null]"
+                              },
+                              {
+                                "kind": "paragraph",
+                                "text": "A renderer-recognized diagram that deliberately fails browser parsing, preserving its source:"
+                              },
+                              {
+                                "kind": "code",
+                                "text": "flowchart TD\n    A[unterminated"
+                              }
+                            ],
+                            "chars": 1095,
+                            "words": 119
+                          },
+                          "context": null,
+                          "whatBuilt": null,
+                          "howToVerify": null,
+                          "instructions": null,
+                          "verification": null,
+                          "behavior": null,
+                          "acceptance": null,
+                          "done": {
+                            "anchor": "plan-at-2536",
+                            "text": "The tracer resolves a known identity and returns null for an unknown one."
+                          },
+                          "decision": null,
+                          "options": null,
+                          "reversibility": null,
+                          "verify": {
+                            "anchor": "plan-at-2443",
+                            "items": [
+                              {
+                                "kind": "text",
+                                "text": "node --experimental-strip-types src/identity/slice.ts resolves a known id"
+                              }
+                            ]
+                          }
+                        },
+                        "sourceChildren": []
+                      },
+                      {
+                        "n": 2,
+                        "anchor": "plan-at-2632",
+                        "type": "checkpoint:human-verify",
+                        "gate": "blocking",
+                        "tdd": false,
+                        "name": "The identity tracer",
+                        "files": [],
+                        "fields": {
+                          "action": null,
+                          "context": null,
+                          "whatBuilt": {
+                            "anchor": "plan-at-2688",
+                            "blocks": [
+                              {
+                                "kind": "paragraph",
+                                "text": "The identity tracer — a single resolver function with no UI"
+                              }
+                            ],
+                            "chars": 59,
+                            "words": 11
+                          },
+                          "howToVerify": {
+                            "anchor": "plan-at-2775",
+                            "blocks": [
+                              {
+                                "kind": "paragraph",
+                                "text": "This is a fixture PLAN.md and is never executed. The checkpoint type here exists only to prove the parser recognizes `type=\"checkpoint:human-verify\"` and its `<what-built>`/`<how-to-verify>`/ `<resume-signal>` tag set, per `GSD-DOMAIN.md`'s PLAN.md task structure section."
+                              }
+                            ],
+                            "chars": 272,
+                            "words": 33
+                          },
+                          "instructions": null,
+                          "verification": null,
+                          "behavior": null,
+                          "acceptance": null,
+                          "done": null,
+                          "decision": null,
+                          "options": null,
+                          "reversibility": null,
+                          "verify": null
+                        },
+                        "sourceChildren": [
+                          {
+                            "tag": "resume-signal",
+                            "anchor": "plan-at-3097"
+                          }
+                        ]
+                      }
+                    ],
+                    "success": {
+                      "anchor": "plan-at-3304",
+                      "lead": null,
+                      "items": [
+                        "The identity slice's full artifact spread loads cleanly."
+                      ]
+                    },
+                    "verification": {
+                      "anchor": "plan-at-3207",
+                      "lead": null,
+                      "items": [
+                        "`src/identity/slice.ts` exists and exports `resolveIdentity`."
+                      ]
+                    },
+                    "sourceBlocks": [
+                      {
+                        "tag": "context",
+                        "anchor": "plan-at-250",
+                        "fileCount": 2
+                      },
+                      {
+                        "tag": "decision",
+                        "anchor": "plan-at-344",
+                        "fileCount": null
+                      },
+                      {
+                        "tag": "read_first",
+                        "anchor": "plan-at-742",
+                        "fileCount": null
+                      },
+                      {
+                        "tag": "execution_context",
+                        "anchor": "plan-at-1046",
+                        "fileCount": 0
+                      },
+                      {
+                        "tag": "output",
+                        "anchor": "plan-at-3403",
+                        "fileCount": null
+                      }
+                    ],
+                    "loose": [],
+                    "wrapperWarnings": 0,
+                    "ref": {
+                      "planId": "01-01",
+                      "phaseNumber": "01",
+                      "phaseSlug": "identity-slice",
+                      "quickId": null
+                    }
+                  }
+                }
               },
               ".planning/phases/01-identity-slice/01-01-SUMMARY.md": {
                 "id": ".planning/phases/01-identity-slice/01-01-SUMMARY.md",
@@ -3028,7 +3537,166 @@
                 "bodyHash": "8fcbb059e52b0f5f7ecae055d85430c5033be51c20e18d332d5b6cef47f0fb72",
                 "mtimeMs": 0,
                 "warnings": [],
-                "structured": {}
+                "structured": {
+                  "plan": {
+                    "objective": {
+                      "anchor": "plan-at-1",
+                      "title": "Harden the identity slice tracer and finish authoring the phase's unfamiliar/invented artifact types",
+                      "rest": [],
+                      "why": null,
+                      "youGet": [
+                        {
+                          "kind": "paragraph",
+                          "text": "A tested `src/identity/slice.ts`, plus `01-SPEC.md`, `01-AI-SPEC.md`, `01-COST-MODEL.md`."
+                        }
+                      ]
+                    },
+                    "tasks": [
+                      {
+                        "n": 1,
+                        "anchor": "plan-at-312",
+                        "type": "auto",
+                        "gate": null,
+                        "tdd": false,
+                        "name": "Add regression tests for the resolver",
+                        "files": [
+                          "test/identity/slice.test.ts"
+                        ],
+                        "fields": {
+                          "action": {
+                            "anchor": "plan-at-439",
+                            "blocks": [
+                              {
+                                "kind": "paragraph",
+                                "text": "Add tests covering the resolver's documented behavior:"
+                              },
+                              {
+                                "kind": "list",
+                                "ordered": false,
+                                "items": [
+                                  "Known id resolves",
+                                  "Unknown id returns null",
+                                  "Never throws for malformed input (empty string, non-string coerced to string)"
+                                ]
+                              }
+                            ],
+                            "chars": 181,
+                            "words": 28
+                          },
+                          "context": null,
+                          "whatBuilt": null,
+                          "howToVerify": null,
+                          "instructions": null,
+                          "verification": null,
+                          "behavior": null,
+                          "acceptance": null,
+                          "done": {
+                            "anchor": "plan-at-690",
+                            "text": "All resolver tests pass."
+                          },
+                          "decision": null,
+                          "options": null,
+                          "reversibility": null,
+                          "verify": {
+                            "anchor": "plan-at-644",
+                            "items": [
+                              {
+                                "kind": "text",
+                                "text": "npm test -- identity/slice"
+                              }
+                            ]
+                          }
+                        },
+                        "sourceChildren": []
+                      },
+                      {
+                        "n": 2,
+                        "anchor": "plan-at-737",
+                        "type": "auto",
+                        "gate": null,
+                        "tdd": false,
+                        "name": "Author the unfamiliar artifact types",
+                        "files": [
+                          ".planning/phases/01-identity-slice/01-SPEC.md",
+                          ".planning/phases/01-identity-slice/01-AI-SPEC.md",
+                          ".planning/phases/01-identity-slice/01-COST-MODEL.md"
+                        ],
+                        "fields": {
+                          "action": {
+                            "anchor": "plan-at-984",
+                            "blocks": [
+                              {
+                                "kind": "paragraph",
+                                "text": "Author `01-SPEC.md` from `gsd-core/templates/spec.md`, `01-AI-SPEC.md` from `gsd-core/templates/AI-SPEC.md` (no frontmatter), and `01-COST-MODEL.md` as a genuinely invented type with no template at all."
+                              }
+                            ],
+                            "chars": 202,
+                            "words": 21
+                          },
+                          "context": null,
+                          "whatBuilt": null,
+                          "howToVerify": null,
+                          "instructions": null,
+                          "verification": null,
+                          "behavior": null,
+                          "acceptance": null,
+                          "done": {
+                            "anchor": "plan-at-1288",
+                            "text": "All three unfamiliar/invented artifact types exist under phases/01-identity-slice/."
+                          },
+                          "decision": null,
+                          "options": null,
+                          "reversibility": null,
+                          "verify": {
+                            "anchor": "plan-at-1210",
+                            "items": [
+                              {
+                                "kind": "text",
+                                "text": "All three files exist and 01-AI-SPEC.md has no frontmatter"
+                              }
+                            ]
+                          }
+                        },
+                        "sourceChildren": []
+                      }
+                    ],
+                    "success": {
+                      "anchor": "plan-at-1540",
+                      "lead": null,
+                      "items": [
+                        "Every artifact type studio-portal has never produced is represented and renders."
+                      ]
+                    },
+                    "verification": {
+                      "anchor": "plan-at-1404",
+                      "lead": null,
+                      "items": [
+                        "`npm test -- identity/slice` passes.",
+                        "`01-SPEC.md`, `01-AI-SPEC.md`, `01-COST-MODEL.md` all exist."
+                      ]
+                    },
+                    "sourceBlocks": [
+                      {
+                        "tag": "context",
+                        "anchor": "plan-at-228",
+                        "fileCount": 1
+                      },
+                      {
+                        "tag": "output",
+                        "anchor": "plan-at-1663",
+                        "fileCount": null
+                      }
+                    ],
+                    "loose": [],
+                    "wrapperWarnings": 0,
+                    "ref": {
+                      "planId": "01-02",
+                      "phaseNumber": "01",
+                      "phaseSlug": "identity-slice",
+                      "quickId": null
+                    }
+                  }
+                }
               },
               ".planning/phases/01-identity-slice/01-02-SUMMARY.md": {
                 "id": ".planning/phases/01-identity-slice/01-02-SUMMARY.md",
@@ -4492,7 +5160,125 @@
                     "salvage": "body intact, frontmatter unavailable"
                   }
                 ],
-                "structured": {}
+                "structured": {
+                  "plan": {
+                    "objective": {
+                      "anchor": "plan-at-511",
+                      "title": "Deliver a minimal end-to-end tracer for the transport layer, calling into Phase 1's identity resolver",
+                      "rest": [],
+                      "why": null,
+                      "youGet": [
+                        {
+                          "kind": "paragraph",
+                          "text": "`Src/transport/client.ts` sends a request and receives a resolved identity back."
+                        }
+                      ]
+                    },
+                    "tasks": [
+                      {
+                        "n": 1,
+                        "anchor": "plan-at-865",
+                        "type": "auto",
+                        "gate": null,
+                        "tdd": false,
+                        "name": "Build the transport tracer",
+                        "files": [
+                          "src/transport/client.ts"
+                        ],
+                        "fields": {
+                          "action": {
+                            "anchor": "plan-at-977",
+                            "blocks": [
+                              {
+                                "kind": "paragraph",
+                                "text": "Write a minimal client that calls `resolveIdentity` from Phase 1's slice and returns its result over an in-process \"transport\" (a plain function call standing in for a real network boundary). Keep it small:"
+                              },
+                              {
+                                "kind": "list",
+                                "ordered": false,
+                                "items": [
+                                  "A single exported `fetchIdentity(id: string): Identity | null` function",
+                                  "Properties it must satisfy:",
+                                  "Delegates to `resolveIdentity` without transformation",
+                                  "Never throws"
+                                ]
+                              },
+                              {
+                                "kind": "code",
+                                "text": "import { fetchIdentity } from \"./client\";\nconst identity = fetchIdentity(\"user-1\");"
+                              }
+                            ],
+                            "chars": 481,
+                            "words": 69
+                          },
+                          "context": null,
+                          "whatBuilt": null,
+                          "howToVerify": null,
+                          "instructions": null,
+                          "verification": null,
+                          "behavior": null,
+                          "acceptance": null,
+                          "done": {
+                            "anchor": "plan-at-1580",
+                            "text": "The transport tracer round-trips a known identity through Phase 1's resolver."
+                          },
+                          "decision": null,
+                          "options": null,
+                          "reversibility": null,
+                          "verify": {
+                            "anchor": "plan-at-1482",
+                            "items": [
+                              {
+                                "kind": "text",
+                                "text": "node --experimental-strip-types src/transport/client.ts round-trips a known id"
+                              }
+                            ]
+                          }
+                        },
+                        "sourceChildren": []
+                      }
+                    ],
+                    "success": {
+                      "anchor": "plan-at-1787",
+                      "lead": null,
+                      "items": [
+                        "Transport requests round-trip through the identity slice."
+                      ]
+                    },
+                    "verification": {
+                      "anchor": "plan-at-1690",
+                      "lead": null,
+                      "items": [
+                        "`src/transport/client.ts` exists and exports `fetchIdentity`."
+                      ]
+                    },
+                    "sourceBlocks": [
+                      {
+                        "tag": "context",
+                        "anchor": "plan-at-730",
+                        "fileCount": 2
+                      },
+                      {
+                        "tag": "output",
+                        "anchor": "plan-at-1887",
+                        "fileCount": null
+                      }
+                    ],
+                    "loose": [
+                      {
+                        "kind": "between",
+                        "heading": null
+                      }
+                    ],
+                    "wrapperWarnings": 0,
+                    "ref": {
+                      "planId": "02-01",
+                      "phaseNumber": "02",
+                      "phaseSlug": "transport-layer",
+                      "quickId": null
+                    }
+                  }
+                }
               },
               ".planning/phases/02-transport-layer/02-CONTEXT.md": {
                 "id": ".planning/phases/02-transport-layer/02-CONTEXT.md",
@@ -4902,7 +5688,106 @@
             "bodyHash": "7cb4c3179bc563d16d8767e760ba7776d748f2665a9b4216727943baee3e25ce",
             "mtimeMs": 0,
             "warnings": [],
-            "structured": {}
+            "structured": {
+              "plan": {
+                "objective": {
+                  "anchor": "plan-at-1",
+                  "title": "Stand up the earliest scaffolding for the fixture project",
+                  "rest": [],
+                  "why": null,
+                  "youGet": [
+                    {
+                      "kind": "paragraph",
+                      "text": "`Src/bootstrap/init.ts` runs without error."
+                    }
+                  ]
+                },
+                "tasks": [
+                  {
+                    "n": 1,
+                    "anchor": "plan-at-192",
+                    "type": "auto",
+                    "gate": null,
+                    "tdd": false,
+                    "name": "Build the bootstrap entry point",
+                    "files": [
+                      "src/bootstrap/init.ts"
+                    ],
+                    "fields": {
+                      "action": {
+                        "anchor": "plan-at-307",
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Write a minimal entry point that prints a single startup line and exits 0."
+                          }
+                        ],
+                        "chars": 74,
+                        "words": 14
+                      },
+                      "context": null,
+                      "whatBuilt": null,
+                      "howToVerify": null,
+                      "instructions": null,
+                      "verification": null,
+                      "behavior": null,
+                      "acceptance": null,
+                      "done": {
+                        "anchor": "plan-at-500",
+                        "text": "The bootstrap entry point runs and exits 0."
+                      },
+                      "decision": null,
+                      "options": null,
+                      "reversibility": null,
+                      "verify": {
+                        "anchor": "plan-at-405",
+                        "items": [
+                          {
+                            "kind": "text",
+                            "text": "node --experimental-strip-types src/bootstrap/init.ts prints a startup line"
+                          }
+                        ]
+                      }
+                    },
+                    "sourceChildren": []
+                  }
+                ],
+                "success": {
+                  "anchor": "plan-at-666",
+                  "lead": null,
+                  "items": [
+                    "The scaffolding runs end to end."
+                  ]
+                },
+                "verification": {
+                  "anchor": "plan-at-576",
+                  "lead": null,
+                  "items": [
+                    "`src/bootstrap/init.ts` exists and runs without error."
+                  ]
+                },
+                "sourceBlocks": [
+                  {
+                    "tag": "context",
+                    "anchor": "plan-at-139",
+                    "fileCount": 1
+                  },
+                  {
+                    "tag": "output",
+                    "anchor": "plan-at-741",
+                    "fileCount": null
+                  }
+                ],
+                "loose": [],
+                "wrapperWarnings": 0,
+                "ref": {
+                  "planId": "01-01",
+                  "phaseNumber": "01",
+                  "phaseSlug": "bootstrap",
+                  "quickId": null
+                }
+              }
+            }
           },
           ".planning/milestones/v1.0-phases/01-bootstrap/01-01-SUMMARY.md": {
             "id": ".planning/milestones/v1.0-phases/01-bootstrap/01-01-SUMMARY.md",
@@ -5358,7 +6243,106 @@
             "bodyHash": "875e33132d66bdf44da18f528ea9a10fd4eb46d585a33628a1bb19cc608b616d",
             "mtimeMs": 0,
             "warnings": [],
-            "structured": {}
+            "structured": {
+              "plan": {
+                "objective": {
+                  "anchor": "plan-at-1",
+                  "title": "Pull legacy records into the new store",
+                  "rest": [],
+                  "why": null,
+                  "youGet": [
+                    {
+                      "kind": "paragraph",
+                      "text": "`Src/legacy/ingest.ts` reads a legacy export file and writes it into the new store's format."
+                    }
+                  ]
+                },
+                "tasks": [
+                  {
+                    "n": 1,
+                    "anchor": "plan-at-222",
+                    "type": "auto",
+                    "gate": null,
+                    "tdd": false,
+                    "name": "Build the ingest pipeline",
+                    "files": [
+                      "src/legacy/ingest.ts"
+                    ],
+                    "fields": {
+                      "action": {
+                        "anchor": "plan-at-330",
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Write a minimal function that reads a legacy export and writes it into the new store's shape."
+                          }
+                        ],
+                        "chars": 93,
+                        "words": 17
+                      },
+                      "context": null,
+                      "whatBuilt": null,
+                      "howToVerify": null,
+                      "instructions": null,
+                      "verification": null,
+                      "behavior": null,
+                      "acceptance": null,
+                      "done": {
+                        "anchor": "plan-at-543",
+                        "text": "Legacy records are readable in the new store."
+                      },
+                      "decision": null,
+                      "options": null,
+                      "reversibility": null,
+                      "verify": {
+                        "anchor": "plan-at-447",
+                        "items": [
+                          {
+                            "kind": "text",
+                            "text": "node --experimental-strip-types src/legacy/ingest.ts ingests a sample record"
+                          }
+                        ]
+                      }
+                    },
+                    "sourceChildren": []
+                  }
+                ],
+                "success": {
+                  "anchor": "plan-at-715",
+                  "lead": null,
+                  "items": [
+                    "Legacy records are readable in the new store."
+                  ]
+                },
+                "verification": {
+                  "anchor": "plan-at-621",
+                  "lead": null,
+                  "items": [
+                    "`src/legacy/ingest.ts` exists and ingests a sample record."
+                  ]
+                },
+                "sourceBlocks": [
+                  {
+                    "tag": "context",
+                    "anchor": "plan-at-169",
+                    "fileCount": 1
+                  },
+                  {
+                    "tag": "output",
+                    "anchor": "plan-at-803",
+                    "fileCount": null
+                  }
+                ],
+                "loose": [],
+                "wrapperWarnings": 0,
+                "ref": {
+                  "planId": "01-01",
+                  "phaseNumber": "01",
+                  "phaseSlug": "legacy-ingest",
+                  "quickId": null
+                }
+              }
+            }
           },
           ".planning/milestones/v2.0-phases/01-legacy-ingest/01-01-SUMMARY.md": {
             "id": ".planning/milestones/v2.0-phases/01-legacy-ingest/01-01-SUMMARY.md",
@@ -5831,7 +6815,106 @@
             "bodyHash": "6aabfb8b00a4a8c639ce4f768f57d9ab529ad9daa4e948f2cedd9e0dd7fc2035",
             "mtimeMs": 0,
             "warnings": [],
-            "structured": {}
+            "structured": {
+              "plan": {
+                "objective": {
+                  "anchor": "plan-at-1",
+                  "title": "Export ingested batches to the downstream consumer",
+                  "rest": [],
+                  "why": null,
+                  "youGet": [
+                    {
+                      "kind": "paragraph",
+                      "text": "`Src/legacy/export.ts` reads ingested records and writes a batch export file."
+                    }
+                  ]
+                },
+                "tasks": [
+                  {
+                    "n": 1,
+                    "anchor": "plan-at-265",
+                    "type": "auto",
+                    "gate": null,
+                    "tdd": false,
+                    "name": "Build the export job",
+                    "files": [
+                      "src/legacy/export.ts"
+                    ],
+                    "fields": {
+                      "action": {
+                        "anchor": "plan-at-368",
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Write a minimal function that reads ingested records and writes a batch export file."
+                          }
+                        ],
+                        "chars": 84,
+                        "words": 14
+                      },
+                      "context": null,
+                      "whatBuilt": null,
+                      "howToVerify": null,
+                      "instructions": null,
+                      "verification": null,
+                      "behavior": null,
+                      "acceptance": null,
+                      "done": {
+                        "anchor": "plan-at-571",
+                        "text": "A batch export job runs against ingested records."
+                      },
+                      "decision": null,
+                      "options": null,
+                      "reversibility": null,
+                      "verify": {
+                        "anchor": "plan-at-476",
+                        "items": [
+                          {
+                            "kind": "text",
+                            "text": "node --experimental-strip-types src/legacy/export.ts exports a sample batch"
+                          }
+                        ]
+                      }
+                    },
+                    "sourceChildren": []
+                  }
+                ],
+                "success": {
+                  "anchor": "plan-at-746",
+                  "lead": null,
+                  "items": [
+                    "A batch export job runs against ingested records."
+                  ]
+                },
+                "verification": {
+                  "anchor": "plan-at-653",
+                  "lead": null,
+                  "items": [
+                    "`src/legacy/export.ts` exists and exports a sample batch."
+                  ]
+                },
+                "sourceBlocks": [
+                  {
+                    "tag": "context",
+                    "anchor": "plan-at-166",
+                    "fileCount": 1
+                  },
+                  {
+                    "tag": "output",
+                    "anchor": "plan-at-838",
+                    "fileCount": null
+                  }
+                ],
+                "loose": [],
+                "wrapperWarnings": 0,
+                "ref": {
+                  "planId": "02-01",
+                  "phaseNumber": "02",
+                  "phaseSlug": "batch-export",
+                  "quickId": null
+                }
+              }
+            }
           },
           ".planning/milestones/v2.0-phases/02-batch-export/02-01-SUMMARY.md": {
             "id": ".planning/milestones/v2.0-phases/02-batch-export/02-01-SUMMARY.md",
@@ -6697,7 +7780,219 @@
             "bodyHash": "f63e7425d4f2fd0f2c47aa897e9d470370019a22be15fc02c062384b6aae9251",
             "mtimeMs": 0,
             "warnings": [],
-            "structured": {}
+            "structured": {
+              "plan": {
+                "objective": {
+                  "anchor": "plan-at-1",
+                  "title": "Deliver a minimal end-to-end tracer for the identity slice",
+                  "rest": [],
+                  "why": [
+                    {
+                      "kind": "paragraph",
+                      "text": "Prove the identity mechanism works before hardening it in plan 01-02."
+                    }
+                  ],
+                  "youGet": [
+                    {
+                      "kind": "paragraph",
+                      "text": "`Src/identity/slice.ts` runs and resolves a synthetic identity end to end."
+                    }
+                  ]
+                },
+                "tasks": [
+                  {
+                    "n": 1,
+                    "anchor": "plan-at-1192",
+                    "type": "auto",
+                    "gate": null,
+                    "tdd": false,
+                    "name": "Build the identity tracer",
+                    "files": [
+                      "src/identity/types.ts",
+                      "src/identity/slice.ts"
+                    ],
+                    "fields": {
+                      "action": {
+                        "anchor": "plan-at-1324",
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Define a minimal `Identity` type and an in-memory resolver function. Keep it small:"
+                          },
+                          {
+                            "kind": "list",
+                            "ordered": false,
+                            "items": [
+                              "A single exported `resolveIdentity(id: string): Identity | null` function",
+                              "Properties it must satisfy:",
+                              "Returns `null` for an unknown id, never throws",
+                              "Returns a fully-populated `Identity` for a known id"
+                            ]
+                          },
+                          {
+                            "kind": "paragraph",
+                            "text": "Example invocation:"
+                          },
+                          {
+                            "kind": "code",
+                            "text": "import { resolveIdentity } from \"./slice\";\nconst identity = resolveIdentity(\"user-1\");"
+                          },
+                          {
+                            "kind": "paragraph",
+                            "text": "A synthetic trace id from the resolver's log output, reproduced verbatim for the reader:"
+                          },
+                          {
+                            "kind": "code",
+                            "text": "hbrpoig8f1cbfno6b9m80o2rak1vrjnvgfygwwqc38hyf9sxmecosfogyr3xkxwnrek8pk3yr9oudocuzrenun5z3jqip98q1zxoi65fdhjk1eyy37q9ah8rvhs1k3aq6l6gt6mjxk87au5bhxtpdpff5e8ii49kq71n8mtzx272hpoevb9ooaedoecve6pr5n8i4p40mgg1w103dgdzvgpmm82i"
+                          },
+                          {
+                            "kind": "paragraph",
+                            "text": "The resolver's dependency shape, for reference:"
+                          },
+                          {
+                            "kind": "code",
+                            "text": "flowchart TD\n    A[resolveIdentity] --> B[in-memory map lookup]\n    B --> C{found?}\n    C -->|yes| D[return Identity]\n    C -->|no| E[return null]"
+                          },
+                          {
+                            "kind": "paragraph",
+                            "text": "A renderer-recognized diagram that deliberately fails browser parsing, preserving its source:"
+                          },
+                          {
+                            "kind": "code",
+                            "text": "flowchart TD\n    A[unterminated"
+                          }
+                        ],
+                        "chars": 1095,
+                        "words": 119
+                      },
+                      "context": null,
+                      "whatBuilt": null,
+                      "howToVerify": null,
+                      "instructions": null,
+                      "verification": null,
+                      "behavior": null,
+                      "acceptance": null,
+                      "done": {
+                        "anchor": "plan-at-2536",
+                        "text": "The tracer resolves a known identity and returns null for an unknown one."
+                      },
+                      "decision": null,
+                      "options": null,
+                      "reversibility": null,
+                      "verify": {
+                        "anchor": "plan-at-2443",
+                        "items": [
+                          {
+                            "kind": "text",
+                            "text": "node --experimental-strip-types src/identity/slice.ts resolves a known id"
+                          }
+                        ]
+                      }
+                    },
+                    "sourceChildren": []
+                  },
+                  {
+                    "n": 2,
+                    "anchor": "plan-at-2632",
+                    "type": "checkpoint:human-verify",
+                    "gate": "blocking",
+                    "tdd": false,
+                    "name": "The identity tracer",
+                    "files": [],
+                    "fields": {
+                      "action": null,
+                      "context": null,
+                      "whatBuilt": {
+                        "anchor": "plan-at-2688",
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "The identity tracer — a single resolver function with no UI"
+                          }
+                        ],
+                        "chars": 59,
+                        "words": 11
+                      },
+                      "howToVerify": {
+                        "anchor": "plan-at-2775",
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "This is a fixture PLAN.md and is never executed. The checkpoint type here exists only to prove the parser recognizes `type=\"checkpoint:human-verify\"` and its `<what-built>`/`<how-to-verify>`/ `<resume-signal>` tag set, per `GSD-DOMAIN.md`'s PLAN.md task structure section."
+                          }
+                        ],
+                        "chars": 272,
+                        "words": 33
+                      },
+                      "instructions": null,
+                      "verification": null,
+                      "behavior": null,
+                      "acceptance": null,
+                      "done": null,
+                      "decision": null,
+                      "options": null,
+                      "reversibility": null,
+                      "verify": null
+                    },
+                    "sourceChildren": [
+                      {
+                        "tag": "resume-signal",
+                        "anchor": "plan-at-3097"
+                      }
+                    ]
+                  }
+                ],
+                "success": {
+                  "anchor": "plan-at-3304",
+                  "lead": null,
+                  "items": [
+                    "The identity slice's full artifact spread loads cleanly."
+                  ]
+                },
+                "verification": {
+                  "anchor": "plan-at-3207",
+                  "lead": null,
+                  "items": [
+                    "`src/identity/slice.ts` exists and exports `resolveIdentity`."
+                  ]
+                },
+                "sourceBlocks": [
+                  {
+                    "tag": "context",
+                    "anchor": "plan-at-250",
+                    "fileCount": 2
+                  },
+                  {
+                    "tag": "decision",
+                    "anchor": "plan-at-344",
+                    "fileCount": null
+                  },
+                  {
+                    "tag": "read_first",
+                    "anchor": "plan-at-742",
+                    "fileCount": null
+                  },
+                  {
+                    "tag": "execution_context",
+                    "anchor": "plan-at-1046",
+                    "fileCount": 0
+                  },
+                  {
+                    "tag": "output",
+                    "anchor": "plan-at-3403",
+                    "fileCount": null
+                  }
+                ],
+                "loose": [],
+                "wrapperWarnings": 0,
+                "ref": {
+                  "planId": "01-01",
+                  "phaseNumber": "01",
+                  "phaseSlug": "identity-slice",
+                  "quickId": null
+                }
+              }
+            }
           },
           ".planning/phases/01-identity-slice/01-01-SUMMARY.md": {
             "id": ".planning/phases/01-identity-slice/01-01-SUMMARY.md",
@@ -6835,7 +8130,166 @@
             "bodyHash": "8fcbb059e52b0f5f7ecae055d85430c5033be51c20e18d332d5b6cef47f0fb72",
             "mtimeMs": 0,
             "warnings": [],
-            "structured": {}
+            "structured": {
+              "plan": {
+                "objective": {
+                  "anchor": "plan-at-1",
+                  "title": "Harden the identity slice tracer and finish authoring the phase's unfamiliar/invented artifact types",
+                  "rest": [],
+                  "why": null,
+                  "youGet": [
+                    {
+                      "kind": "paragraph",
+                      "text": "A tested `src/identity/slice.ts`, plus `01-SPEC.md`, `01-AI-SPEC.md`, `01-COST-MODEL.md`."
+                    }
+                  ]
+                },
+                "tasks": [
+                  {
+                    "n": 1,
+                    "anchor": "plan-at-312",
+                    "type": "auto",
+                    "gate": null,
+                    "tdd": false,
+                    "name": "Add regression tests for the resolver",
+                    "files": [
+                      "test/identity/slice.test.ts"
+                    ],
+                    "fields": {
+                      "action": {
+                        "anchor": "plan-at-439",
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Add tests covering the resolver's documented behavior:"
+                          },
+                          {
+                            "kind": "list",
+                            "ordered": false,
+                            "items": [
+                              "Known id resolves",
+                              "Unknown id returns null",
+                              "Never throws for malformed input (empty string, non-string coerced to string)"
+                            ]
+                          }
+                        ],
+                        "chars": 181,
+                        "words": 28
+                      },
+                      "context": null,
+                      "whatBuilt": null,
+                      "howToVerify": null,
+                      "instructions": null,
+                      "verification": null,
+                      "behavior": null,
+                      "acceptance": null,
+                      "done": {
+                        "anchor": "plan-at-690",
+                        "text": "All resolver tests pass."
+                      },
+                      "decision": null,
+                      "options": null,
+                      "reversibility": null,
+                      "verify": {
+                        "anchor": "plan-at-644",
+                        "items": [
+                          {
+                            "kind": "text",
+                            "text": "npm test -- identity/slice"
+                          }
+                        ]
+                      }
+                    },
+                    "sourceChildren": []
+                  },
+                  {
+                    "n": 2,
+                    "anchor": "plan-at-737",
+                    "type": "auto",
+                    "gate": null,
+                    "tdd": false,
+                    "name": "Author the unfamiliar artifact types",
+                    "files": [
+                      ".planning/phases/01-identity-slice/01-SPEC.md",
+                      ".planning/phases/01-identity-slice/01-AI-SPEC.md",
+                      ".planning/phases/01-identity-slice/01-COST-MODEL.md"
+                    ],
+                    "fields": {
+                      "action": {
+                        "anchor": "plan-at-984",
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Author `01-SPEC.md` from `gsd-core/templates/spec.md`, `01-AI-SPEC.md` from `gsd-core/templates/AI-SPEC.md` (no frontmatter), and `01-COST-MODEL.md` as a genuinely invented type with no template at all."
+                          }
+                        ],
+                        "chars": 202,
+                        "words": 21
+                      },
+                      "context": null,
+                      "whatBuilt": null,
+                      "howToVerify": null,
+                      "instructions": null,
+                      "verification": null,
+                      "behavior": null,
+                      "acceptance": null,
+                      "done": {
+                        "anchor": "plan-at-1288",
+                        "text": "All three unfamiliar/invented artifact types exist under phases/01-identity-slice/."
+                      },
+                      "decision": null,
+                      "options": null,
+                      "reversibility": null,
+                      "verify": {
+                        "anchor": "plan-at-1210",
+                        "items": [
+                          {
+                            "kind": "text",
+                            "text": "All three files exist and 01-AI-SPEC.md has no frontmatter"
+                          }
+                        ]
+                      }
+                    },
+                    "sourceChildren": []
+                  }
+                ],
+                "success": {
+                  "anchor": "plan-at-1540",
+                  "lead": null,
+                  "items": [
+                    "Every artifact type studio-portal has never produced is represented and renders."
+                  ]
+                },
+                "verification": {
+                  "anchor": "plan-at-1404",
+                  "lead": null,
+                  "items": [
+                    "`npm test -- identity/slice` passes.",
+                    "`01-SPEC.md`, `01-AI-SPEC.md`, `01-COST-MODEL.md` all exist."
+                  ]
+                },
+                "sourceBlocks": [
+                  {
+                    "tag": "context",
+                    "anchor": "plan-at-228",
+                    "fileCount": 1
+                  },
+                  {
+                    "tag": "output",
+                    "anchor": "plan-at-1663",
+                    "fileCount": null
+                  }
+                ],
+                "loose": [],
+                "wrapperWarnings": 0,
+                "ref": {
+                  "planId": "01-02",
+                  "phaseNumber": "01",
+                  "phaseSlug": "identity-slice",
+                  "quickId": null
+                }
+              }
+            }
           },
           ".planning/phases/01-identity-slice/01-02-SUMMARY.md": {
             "id": ".planning/phases/01-identity-slice/01-02-SUMMARY.md",
@@ -8299,7 +9753,125 @@
                 "salvage": "body intact, frontmatter unavailable"
               }
             ],
-            "structured": {}
+            "structured": {
+              "plan": {
+                "objective": {
+                  "anchor": "plan-at-511",
+                  "title": "Deliver a minimal end-to-end tracer for the transport layer, calling into Phase 1's identity resolver",
+                  "rest": [],
+                  "why": null,
+                  "youGet": [
+                    {
+                      "kind": "paragraph",
+                      "text": "`Src/transport/client.ts` sends a request and receives a resolved identity back."
+                    }
+                  ]
+                },
+                "tasks": [
+                  {
+                    "n": 1,
+                    "anchor": "plan-at-865",
+                    "type": "auto",
+                    "gate": null,
+                    "tdd": false,
+                    "name": "Build the transport tracer",
+                    "files": [
+                      "src/transport/client.ts"
+                    ],
+                    "fields": {
+                      "action": {
+                        "anchor": "plan-at-977",
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Write a minimal client that calls `resolveIdentity` from Phase 1's slice and returns its result over an in-process \"transport\" (a plain function call standing in for a real network boundary). Keep it small:"
+                          },
+                          {
+                            "kind": "list",
+                            "ordered": false,
+                            "items": [
+                              "A single exported `fetchIdentity(id: string): Identity | null` function",
+                              "Properties it must satisfy:",
+                              "Delegates to `resolveIdentity` without transformation",
+                              "Never throws"
+                            ]
+                          },
+                          {
+                            "kind": "code",
+                            "text": "import { fetchIdentity } from \"./client\";\nconst identity = fetchIdentity(\"user-1\");"
+                          }
+                        ],
+                        "chars": 481,
+                        "words": 69
+                      },
+                      "context": null,
+                      "whatBuilt": null,
+                      "howToVerify": null,
+                      "instructions": null,
+                      "verification": null,
+                      "behavior": null,
+                      "acceptance": null,
+                      "done": {
+                        "anchor": "plan-at-1580",
+                        "text": "The transport tracer round-trips a known identity through Phase 1's resolver."
+                      },
+                      "decision": null,
+                      "options": null,
+                      "reversibility": null,
+                      "verify": {
+                        "anchor": "plan-at-1482",
+                        "items": [
+                          {
+                            "kind": "text",
+                            "text": "node --experimental-strip-types src/transport/client.ts round-trips a known id"
+                          }
+                        ]
+                      }
+                    },
+                    "sourceChildren": []
+                  }
+                ],
+                "success": {
+                  "anchor": "plan-at-1787",
+                  "lead": null,
+                  "items": [
+                    "Transport requests round-trip through the identity slice."
+                  ]
+                },
+                "verification": {
+                  "anchor": "plan-at-1690",
+                  "lead": null,
+                  "items": [
+                    "`src/transport/client.ts` exists and exports `fetchIdentity`."
+                  ]
+                },
+                "sourceBlocks": [
+                  {
+                    "tag": "context",
+                    "anchor": "plan-at-730",
+                    "fileCount": 2
+                  },
+                  {
+                    "tag": "output",
+                    "anchor": "plan-at-1887",
+                    "fileCount": null
+                  }
+                ],
+                "loose": [
+                  {
+                    "kind": "between",
+                    "heading": null
+                  }
+                ],
+                "wrapperWarnings": 0,
+                "ref": {
+                  "planId": "02-01",
+                  "phaseNumber": "02",
+                  "phaseSlug": "transport-layer",
+                  "quickId": null
+                }
+              }
+            }
           },
           ".planning/phases/02-transport-layer/02-CONTEXT.md": {
             "id": ".planning/phases/02-transport-layer/02-CONTEXT.md",
@@ -8508,7 +10080,101 @@
             "bodyHash": "f4e828b586e3618fb6323b9792f3fb1b0ee2e55111da38bace5297885b5ff37d",
             "mtimeMs": 0,
             "warnings": [],
-            "structured": {}
+            "structured": {
+              "plan": {
+                "objective": {
+                  "anchor": "plan-at-1",
+                  "title": "Add a small transport adapter stub ahead of Phase 2's real transport layer work",
+                  "rest": [],
+                  "why": null,
+                  "youGet": [
+                    {
+                      "kind": "paragraph",
+                      "text": "`Src/transport/adapter-stub.ts`."
+                    }
+                  ]
+                },
+                "tasks": [
+                  {
+                    "n": 1,
+                    "anchor": "plan-at-159",
+                    "type": "auto",
+                    "gate": null,
+                    "tdd": false,
+                    "name": "Add the stub",
+                    "files": [
+                      "src/transport/adapter-stub.ts"
+                    ],
+                    "fields": {
+                      "action": {
+                        "anchor": "plan-at-263",
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Write a one-line no-op stub function."
+                          }
+                        ],
+                        "chars": 37,
+                        "words": 6
+                      },
+                      "context": null,
+                      "whatBuilt": null,
+                      "howToVerify": null,
+                      "instructions": null,
+                      "verification": null,
+                      "behavior": null,
+                      "acceptance": null,
+                      "done": {
+                        "anchor": "plan-at-420",
+                        "text": "Stub exists and runs."
+                      },
+                      "decision": null,
+                      "options": null,
+                      "reversibility": null,
+                      "verify": {
+                        "anchor": "plan-at-320",
+                        "items": [
+                          {
+                            "kind": "text",
+                            "text": "node --experimental-strip-types src/transport/adapter-stub.ts runs without error"
+                          }
+                        ]
+                      }
+                    },
+                    "sourceChildren": []
+                  }
+                ],
+                "success": {
+                  "anchor": "plan-at-549",
+                  "lead": null,
+                  "items": [
+                    "Stub exists and runs."
+                  ]
+                },
+                "verification": {
+                  "anchor": "plan-at-474",
+                  "lead": null,
+                  "items": [
+                    "`src/transport/adapter-stub.ts` exists."
+                  ]
+                },
+                "sourceBlocks": [
+                  {
+                    "tag": "output",
+                    "anchor": "plan-at-613",
+                    "fileCount": null
+                  }
+                ],
+                "loose": [],
+                "wrapperWarnings": 0,
+                "ref": {
+                  "planId": "260615-1a2",
+                  "phaseNumber": null,
+                  "phaseSlug": null,
+                  "quickId": "260615-1a2"
+                }
+              }
+            }
           },
           ".planning/quick/260615-1a2-add-transport-adapter/260615-1a2-SUMMARY.md": {
             "id": ".planning/quick/260615-1a2-add-transport-adapter/260615-1a2-SUMMARY.md",
@@ -8588,7 +10254,101 @@
             "bodyHash": "05074f2fdff31c61ce4b1785854e17f63b7697e2069b7953ae4476c73e8255ba",
             "mtimeMs": 0,
             "warnings": [],
-            "structured": {}
+            "structured": {
+              "plan": {
+                "objective": {
+                  "anchor": "plan-at-1",
+                  "title": "Fix a typo left over from the transport adapter stub's docstring",
+                  "rest": [],
+                  "why": null,
+                  "youGet": [
+                    {
+                      "kind": "paragraph",
+                      "text": "Corrected comment in `src/transport/adapter-stub.ts`."
+                    }
+                  ]
+                },
+                "tasks": [
+                  {
+                    "n": 1,
+                    "anchor": "plan-at-165",
+                    "type": "auto",
+                    "gate": null,
+                    "tdd": false,
+                    "name": "Fix the typo",
+                    "files": [
+                      "src/transport/adapter-stub.ts"
+                    ],
+                    "fields": {
+                      "action": {
+                        "anchor": "plan-at-269",
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Correct the misspelled comment."
+                          }
+                        ],
+                        "chars": 31,
+                        "words": 4
+                      },
+                      "context": null,
+                      "whatBuilt": null,
+                      "howToVerify": null,
+                      "instructions": null,
+                      "verification": null,
+                      "behavior": null,
+                      "acceptance": null,
+                      "done": {
+                        "anchor": "plan-at-387",
+                        "text": "Typo fixed."
+                      },
+                      "decision": null,
+                      "options": null,
+                      "reversibility": null,
+                      "verify": {
+                        "anchor": "plan-at-320",
+                        "items": [
+                          {
+                            "kind": "text",
+                            "text": "grep -v \"recieve\" src/transport/adapter-stub.ts"
+                          }
+                        ]
+                      }
+                    },
+                    "sourceChildren": []
+                  }
+                ],
+                "success": {
+                  "anchor": "plan-at-506",
+                  "lead": null,
+                  "items": [
+                    "Typo fixed."
+                  ]
+                },
+                "verification": {
+                  "anchor": "plan-at-431",
+                  "lead": null,
+                  "items": [
+                    "The typo no longer appears in the file."
+                  ]
+                },
+                "sourceBlocks": [
+                  {
+                    "tag": "output",
+                    "anchor": "plan-at-560",
+                    "fileCount": null
+                  }
+                ],
+                "loose": [],
+                "wrapperWarnings": 0,
+                "ref": {
+                  "planId": "260701-3xz",
+                  "phaseNumber": null,
+                  "phaseSlug": null,
+                  "quickId": "260701-3xz"
+                }
+              }
+            }
           }
         }
       }
@@ -9379,7 +11139,219 @@
                   "bodyHash": "f63e7425d4f2fd0f2c47aa897e9d470370019a22be15fc02c062384b6aae9251",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "plan": {
+                      "objective": {
+                        "anchor": "plan-at-1",
+                        "title": "Deliver a minimal end-to-end tracer for the identity slice",
+                        "rest": [],
+                        "why": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Prove the identity mechanism works before hardening it in plan 01-02."
+                          }
+                        ],
+                        "youGet": [
+                          {
+                            "kind": "paragraph",
+                            "text": "`Src/identity/slice.ts` runs and resolves a synthetic identity end to end."
+                          }
+                        ]
+                      },
+                      "tasks": [
+                        {
+                          "n": 1,
+                          "anchor": "plan-at-1192",
+                          "type": "auto",
+                          "gate": null,
+                          "tdd": false,
+                          "name": "Build the identity tracer",
+                          "files": [
+                            "src/identity/types.ts",
+                            "src/identity/slice.ts"
+                          ],
+                          "fields": {
+                            "action": {
+                              "anchor": "plan-at-1324",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "Define a minimal `Identity` type and an in-memory resolver function. Keep it small:"
+                                },
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "A single exported `resolveIdentity(id: string): Identity | null` function",
+                                    "Properties it must satisfy:",
+                                    "Returns `null` for an unknown id, never throws",
+                                    "Returns a fully-populated `Identity` for a known id"
+                                  ]
+                                },
+                                {
+                                  "kind": "paragraph",
+                                  "text": "Example invocation:"
+                                },
+                                {
+                                  "kind": "code",
+                                  "text": "import { resolveIdentity } from \"./slice\";\nconst identity = resolveIdentity(\"user-1\");"
+                                },
+                                {
+                                  "kind": "paragraph",
+                                  "text": "A synthetic trace id from the resolver's log output, reproduced verbatim for the reader:"
+                                },
+                                {
+                                  "kind": "code",
+                                  "text": "hbrpoig8f1cbfno6b9m80o2rak1vrjnvgfygwwqc38hyf9sxmecosfogyr3xkxwnrek8pk3yr9oudocuzrenun5z3jqip98q1zxoi65fdhjk1eyy37q9ah8rvhs1k3aq6l6gt6mjxk87au5bhxtpdpff5e8ii49kq71n8mtzx272hpoevb9ooaedoecve6pr5n8i4p40mgg1w103dgdzvgpmm82i"
+                                },
+                                {
+                                  "kind": "paragraph",
+                                  "text": "The resolver's dependency shape, for reference:"
+                                },
+                                {
+                                  "kind": "code",
+                                  "text": "flowchart TD\n    A[resolveIdentity] --> B[in-memory map lookup]\n    B --> C{found?}\n    C -->|yes| D[return Identity]\n    C -->|no| E[return null]"
+                                },
+                                {
+                                  "kind": "paragraph",
+                                  "text": "A renderer-recognized diagram that deliberately fails browser parsing, preserving its source:"
+                                },
+                                {
+                                  "kind": "code",
+                                  "text": "flowchart TD\n    A[unterminated"
+                                }
+                              ],
+                              "chars": 1095,
+                              "words": 119
+                            },
+                            "context": null,
+                            "whatBuilt": null,
+                            "howToVerify": null,
+                            "instructions": null,
+                            "verification": null,
+                            "behavior": null,
+                            "acceptance": null,
+                            "done": {
+                              "anchor": "plan-at-2536",
+                              "text": "The tracer resolves a known identity and returns null for an unknown one."
+                            },
+                            "decision": null,
+                            "options": null,
+                            "reversibility": null,
+                            "verify": {
+                              "anchor": "plan-at-2443",
+                              "items": [
+                                {
+                                  "kind": "text",
+                                  "text": "node --experimental-strip-types src/identity/slice.ts resolves a known id"
+                                }
+                              ]
+                            }
+                          },
+                          "sourceChildren": []
+                        },
+                        {
+                          "n": 2,
+                          "anchor": "plan-at-2632",
+                          "type": "checkpoint:human-verify",
+                          "gate": "blocking",
+                          "tdd": false,
+                          "name": "The identity tracer",
+                          "files": [],
+                          "fields": {
+                            "action": null,
+                            "context": null,
+                            "whatBuilt": {
+                              "anchor": "plan-at-2688",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "The identity tracer — a single resolver function with no UI"
+                                }
+                              ],
+                              "chars": 59,
+                              "words": 11
+                            },
+                            "howToVerify": {
+                              "anchor": "plan-at-2775",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "This is a fixture PLAN.md and is never executed. The checkpoint type here exists only to prove the parser recognizes `type=\"checkpoint:human-verify\"` and its `<what-built>`/`<how-to-verify>`/ `<resume-signal>` tag set, per `GSD-DOMAIN.md`'s PLAN.md task structure section."
+                                }
+                              ],
+                              "chars": 272,
+                              "words": 33
+                            },
+                            "instructions": null,
+                            "verification": null,
+                            "behavior": null,
+                            "acceptance": null,
+                            "done": null,
+                            "decision": null,
+                            "options": null,
+                            "reversibility": null,
+                            "verify": null
+                          },
+                          "sourceChildren": [
+                            {
+                              "tag": "resume-signal",
+                              "anchor": "plan-at-3097"
+                            }
+                          ]
+                        }
+                      ],
+                      "success": {
+                        "anchor": "plan-at-3304",
+                        "lead": null,
+                        "items": [
+                          "The identity slice's full artifact spread loads cleanly."
+                        ]
+                      },
+                      "verification": {
+                        "anchor": "plan-at-3207",
+                        "lead": null,
+                        "items": [
+                          "`src/identity/slice.ts` exists and exports `resolveIdentity`."
+                        ]
+                      },
+                      "sourceBlocks": [
+                        {
+                          "tag": "context",
+                          "anchor": "plan-at-250",
+                          "fileCount": 2
+                        },
+                        {
+                          "tag": "decision",
+                          "anchor": "plan-at-344",
+                          "fileCount": null
+                        },
+                        {
+                          "tag": "read_first",
+                          "anchor": "plan-at-742",
+                          "fileCount": null
+                        },
+                        {
+                          "tag": "execution_context",
+                          "anchor": "plan-at-1046",
+                          "fileCount": 0
+                        },
+                        {
+                          "tag": "output",
+                          "anchor": "plan-at-3403",
+                          "fileCount": null
+                        }
+                      ],
+                      "loose": [],
+                      "wrapperWarnings": 0,
+                      "ref": {
+                        "planId": "01-01",
+                        "phaseNumber": "01",
+                        "phaseSlug": "identity-slice",
+                        "quickId": null
+                      }
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-01-SUMMARY.md": {
                   "id": ".planning/phases/01-identity-slice/01-01-SUMMARY.md",
@@ -9517,7 +11489,166 @@
                   "bodyHash": "8fcbb059e52b0f5f7ecae055d85430c5033be51c20e18d332d5b6cef47f0fb72",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "plan": {
+                      "objective": {
+                        "anchor": "plan-at-1",
+                        "title": "Harden the identity slice tracer and finish authoring the phase's unfamiliar/invented artifact types",
+                        "rest": [],
+                        "why": null,
+                        "youGet": [
+                          {
+                            "kind": "paragraph",
+                            "text": "A tested `src/identity/slice.ts`, plus `01-SPEC.md`, `01-AI-SPEC.md`, `01-COST-MODEL.md`."
+                          }
+                        ]
+                      },
+                      "tasks": [
+                        {
+                          "n": 1,
+                          "anchor": "plan-at-312",
+                          "type": "auto",
+                          "gate": null,
+                          "tdd": false,
+                          "name": "Add regression tests for the resolver",
+                          "files": [
+                            "test/identity/slice.test.ts"
+                          ],
+                          "fields": {
+                            "action": {
+                              "anchor": "plan-at-439",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "Add tests covering the resolver's documented behavior:"
+                                },
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "Known id resolves",
+                                    "Unknown id returns null",
+                                    "Never throws for malformed input (empty string, non-string coerced to string)"
+                                  ]
+                                }
+                              ],
+                              "chars": 181,
+                              "words": 28
+                            },
+                            "context": null,
+                            "whatBuilt": null,
+                            "howToVerify": null,
+                            "instructions": null,
+                            "verification": null,
+                            "behavior": null,
+                            "acceptance": null,
+                            "done": {
+                              "anchor": "plan-at-690",
+                              "text": "All resolver tests pass."
+                            },
+                            "decision": null,
+                            "options": null,
+                            "reversibility": null,
+                            "verify": {
+                              "anchor": "plan-at-644",
+                              "items": [
+                                {
+                                  "kind": "text",
+                                  "text": "npm test -- identity/slice"
+                                }
+                              ]
+                            }
+                          },
+                          "sourceChildren": []
+                        },
+                        {
+                          "n": 2,
+                          "anchor": "plan-at-737",
+                          "type": "auto",
+                          "gate": null,
+                          "tdd": false,
+                          "name": "Author the unfamiliar artifact types",
+                          "files": [
+                            ".planning/phases/01-identity-slice/01-SPEC.md",
+                            ".planning/phases/01-identity-slice/01-AI-SPEC.md",
+                            ".planning/phases/01-identity-slice/01-COST-MODEL.md"
+                          ],
+                          "fields": {
+                            "action": {
+                              "anchor": "plan-at-984",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "Author `01-SPEC.md` from `gsd-core/templates/spec.md`, `01-AI-SPEC.md` from `gsd-core/templates/AI-SPEC.md` (no frontmatter), and `01-COST-MODEL.md` as a genuinely invented type with no template at all."
+                                }
+                              ],
+                              "chars": 202,
+                              "words": 21
+                            },
+                            "context": null,
+                            "whatBuilt": null,
+                            "howToVerify": null,
+                            "instructions": null,
+                            "verification": null,
+                            "behavior": null,
+                            "acceptance": null,
+                            "done": {
+                              "anchor": "plan-at-1288",
+                              "text": "All three unfamiliar/invented artifact types exist under phases/01-identity-slice/."
+                            },
+                            "decision": null,
+                            "options": null,
+                            "reversibility": null,
+                            "verify": {
+                              "anchor": "plan-at-1210",
+                              "items": [
+                                {
+                                  "kind": "text",
+                                  "text": "All three files exist and 01-AI-SPEC.md has no frontmatter"
+                                }
+                              ]
+                            }
+                          },
+                          "sourceChildren": []
+                        }
+                      ],
+                      "success": {
+                        "anchor": "plan-at-1540",
+                        "lead": null,
+                        "items": [
+                          "Every artifact type studio-portal has never produced is represented and renders."
+                        ]
+                      },
+                      "verification": {
+                        "anchor": "plan-at-1404",
+                        "lead": null,
+                        "items": [
+                          "`npm test -- identity/slice` passes.",
+                          "`01-SPEC.md`, `01-AI-SPEC.md`, `01-COST-MODEL.md` all exist."
+                        ]
+                      },
+                      "sourceBlocks": [
+                        {
+                          "tag": "context",
+                          "anchor": "plan-at-228",
+                          "fileCount": 1
+                        },
+                        {
+                          "tag": "output",
+                          "anchor": "plan-at-1663",
+                          "fileCount": null
+                        }
+                      ],
+                      "loose": [],
+                      "wrapperWarnings": 0,
+                      "ref": {
+                        "planId": "01-02",
+                        "phaseNumber": "01",
+                        "phaseSlug": "identity-slice",
+                        "quickId": null
+                      }
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-02-SUMMARY.md": {
                   "id": ".planning/phases/01-identity-slice/01-02-SUMMARY.md",
@@ -11658,7 +13789,219 @@
                   "bodyHash": "f63e7425d4f2fd0f2c47aa897e9d470370019a22be15fc02c062384b6aae9251",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "plan": {
+                      "objective": {
+                        "anchor": "plan-at-1",
+                        "title": "Deliver a minimal end-to-end tracer for the identity slice",
+                        "rest": [],
+                        "why": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Prove the identity mechanism works before hardening it in plan 01-02."
+                          }
+                        ],
+                        "youGet": [
+                          {
+                            "kind": "paragraph",
+                            "text": "`Src/identity/slice.ts` runs and resolves a synthetic identity end to end."
+                          }
+                        ]
+                      },
+                      "tasks": [
+                        {
+                          "n": 1,
+                          "anchor": "plan-at-1192",
+                          "type": "auto",
+                          "gate": null,
+                          "tdd": false,
+                          "name": "Build the identity tracer",
+                          "files": [
+                            "src/identity/types.ts",
+                            "src/identity/slice.ts"
+                          ],
+                          "fields": {
+                            "action": {
+                              "anchor": "plan-at-1324",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "Define a minimal `Identity` type and an in-memory resolver function. Keep it small:"
+                                },
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "A single exported `resolveIdentity(id: string): Identity | null` function",
+                                    "Properties it must satisfy:",
+                                    "Returns `null` for an unknown id, never throws",
+                                    "Returns a fully-populated `Identity` for a known id"
+                                  ]
+                                },
+                                {
+                                  "kind": "paragraph",
+                                  "text": "Example invocation:"
+                                },
+                                {
+                                  "kind": "code",
+                                  "text": "import { resolveIdentity } from \"./slice\";\nconst identity = resolveIdentity(\"user-1\");"
+                                },
+                                {
+                                  "kind": "paragraph",
+                                  "text": "A synthetic trace id from the resolver's log output, reproduced verbatim for the reader:"
+                                },
+                                {
+                                  "kind": "code",
+                                  "text": "hbrpoig8f1cbfno6b9m80o2rak1vrjnvgfygwwqc38hyf9sxmecosfogyr3xkxwnrek8pk3yr9oudocuzrenun5z3jqip98q1zxoi65fdhjk1eyy37q9ah8rvhs1k3aq6l6gt6mjxk87au5bhxtpdpff5e8ii49kq71n8mtzx272hpoevb9ooaedoecve6pr5n8i4p40mgg1w103dgdzvgpmm82i"
+                                },
+                                {
+                                  "kind": "paragraph",
+                                  "text": "The resolver's dependency shape, for reference:"
+                                },
+                                {
+                                  "kind": "code",
+                                  "text": "flowchart TD\n    A[resolveIdentity] --> B[in-memory map lookup]\n    B --> C{found?}\n    C -->|yes| D[return Identity]\n    C -->|no| E[return null]"
+                                },
+                                {
+                                  "kind": "paragraph",
+                                  "text": "A renderer-recognized diagram that deliberately fails browser parsing, preserving its source:"
+                                },
+                                {
+                                  "kind": "code",
+                                  "text": "flowchart TD\n    A[unterminated"
+                                }
+                              ],
+                              "chars": 1095,
+                              "words": 119
+                            },
+                            "context": null,
+                            "whatBuilt": null,
+                            "howToVerify": null,
+                            "instructions": null,
+                            "verification": null,
+                            "behavior": null,
+                            "acceptance": null,
+                            "done": {
+                              "anchor": "plan-at-2536",
+                              "text": "The tracer resolves a known identity and returns null for an unknown one."
+                            },
+                            "decision": null,
+                            "options": null,
+                            "reversibility": null,
+                            "verify": {
+                              "anchor": "plan-at-2443",
+                              "items": [
+                                {
+                                  "kind": "text",
+                                  "text": "node --experimental-strip-types src/identity/slice.ts resolves a known id"
+                                }
+                              ]
+                            }
+                          },
+                          "sourceChildren": []
+                        },
+                        {
+                          "n": 2,
+                          "anchor": "plan-at-2632",
+                          "type": "checkpoint:human-verify",
+                          "gate": "blocking",
+                          "tdd": false,
+                          "name": "The identity tracer",
+                          "files": [],
+                          "fields": {
+                            "action": null,
+                            "context": null,
+                            "whatBuilt": {
+                              "anchor": "plan-at-2688",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "The identity tracer — a single resolver function with no UI"
+                                }
+                              ],
+                              "chars": 59,
+                              "words": 11
+                            },
+                            "howToVerify": {
+                              "anchor": "plan-at-2775",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "This is a fixture PLAN.md and is never executed. The checkpoint type here exists only to prove the parser recognizes `type=\"checkpoint:human-verify\"` and its `<what-built>`/`<how-to-verify>`/ `<resume-signal>` tag set, per `GSD-DOMAIN.md`'s PLAN.md task structure section."
+                                }
+                              ],
+                              "chars": 272,
+                              "words": 33
+                            },
+                            "instructions": null,
+                            "verification": null,
+                            "behavior": null,
+                            "acceptance": null,
+                            "done": null,
+                            "decision": null,
+                            "options": null,
+                            "reversibility": null,
+                            "verify": null
+                          },
+                          "sourceChildren": [
+                            {
+                              "tag": "resume-signal",
+                              "anchor": "plan-at-3097"
+                            }
+                          ]
+                        }
+                      ],
+                      "success": {
+                        "anchor": "plan-at-3304",
+                        "lead": null,
+                        "items": [
+                          "The identity slice's full artifact spread loads cleanly."
+                        ]
+                      },
+                      "verification": {
+                        "anchor": "plan-at-3207",
+                        "lead": null,
+                        "items": [
+                          "`src/identity/slice.ts` exists and exports `resolveIdentity`."
+                        ]
+                      },
+                      "sourceBlocks": [
+                        {
+                          "tag": "context",
+                          "anchor": "plan-at-250",
+                          "fileCount": 2
+                        },
+                        {
+                          "tag": "decision",
+                          "anchor": "plan-at-344",
+                          "fileCount": null
+                        },
+                        {
+                          "tag": "read_first",
+                          "anchor": "plan-at-742",
+                          "fileCount": null
+                        },
+                        {
+                          "tag": "execution_context",
+                          "anchor": "plan-at-1046",
+                          "fileCount": 0
+                        },
+                        {
+                          "tag": "output",
+                          "anchor": "plan-at-3403",
+                          "fileCount": null
+                        }
+                      ],
+                      "loose": [],
+                      "wrapperWarnings": 0,
+                      "ref": {
+                        "planId": "01-01",
+                        "phaseNumber": "01",
+                        "phaseSlug": "identity-slice",
+                        "quickId": null
+                      }
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-01-SUMMARY.md": {
                   "id": ".planning/phases/01-identity-slice/01-01-SUMMARY.md",
@@ -11796,7 +14139,166 @@
                   "bodyHash": "8fcbb059e52b0f5f7ecae055d85430c5033be51c20e18d332d5b6cef47f0fb72",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "plan": {
+                      "objective": {
+                        "anchor": "plan-at-1",
+                        "title": "Harden the identity slice tracer and finish authoring the phase's unfamiliar/invented artifact types",
+                        "rest": [],
+                        "why": null,
+                        "youGet": [
+                          {
+                            "kind": "paragraph",
+                            "text": "A tested `src/identity/slice.ts`, plus `01-SPEC.md`, `01-AI-SPEC.md`, `01-COST-MODEL.md`."
+                          }
+                        ]
+                      },
+                      "tasks": [
+                        {
+                          "n": 1,
+                          "anchor": "plan-at-312",
+                          "type": "auto",
+                          "gate": null,
+                          "tdd": false,
+                          "name": "Add regression tests for the resolver",
+                          "files": [
+                            "test/identity/slice.test.ts"
+                          ],
+                          "fields": {
+                            "action": {
+                              "anchor": "plan-at-439",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "Add tests covering the resolver's documented behavior:"
+                                },
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "Known id resolves",
+                                    "Unknown id returns null",
+                                    "Never throws for malformed input (empty string, non-string coerced to string)"
+                                  ]
+                                }
+                              ],
+                              "chars": 181,
+                              "words": 28
+                            },
+                            "context": null,
+                            "whatBuilt": null,
+                            "howToVerify": null,
+                            "instructions": null,
+                            "verification": null,
+                            "behavior": null,
+                            "acceptance": null,
+                            "done": {
+                              "anchor": "plan-at-690",
+                              "text": "All resolver tests pass."
+                            },
+                            "decision": null,
+                            "options": null,
+                            "reversibility": null,
+                            "verify": {
+                              "anchor": "plan-at-644",
+                              "items": [
+                                {
+                                  "kind": "text",
+                                  "text": "npm test -- identity/slice"
+                                }
+                              ]
+                            }
+                          },
+                          "sourceChildren": []
+                        },
+                        {
+                          "n": 2,
+                          "anchor": "plan-at-737",
+                          "type": "auto",
+                          "gate": null,
+                          "tdd": false,
+                          "name": "Author the unfamiliar artifact types",
+                          "files": [
+                            ".planning/phases/01-identity-slice/01-SPEC.md",
+                            ".planning/phases/01-identity-slice/01-AI-SPEC.md",
+                            ".planning/phases/01-identity-slice/01-COST-MODEL.md"
+                          ],
+                          "fields": {
+                            "action": {
+                              "anchor": "plan-at-984",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "Author `01-SPEC.md` from `gsd-core/templates/spec.md`, `01-AI-SPEC.md` from `gsd-core/templates/AI-SPEC.md` (no frontmatter), and `01-COST-MODEL.md` as a genuinely invented type with no template at all."
+                                }
+                              ],
+                              "chars": 202,
+                              "words": 21
+                            },
+                            "context": null,
+                            "whatBuilt": null,
+                            "howToVerify": null,
+                            "instructions": null,
+                            "verification": null,
+                            "behavior": null,
+                            "acceptance": null,
+                            "done": {
+                              "anchor": "plan-at-1288",
+                              "text": "All three unfamiliar/invented artifact types exist under phases/01-identity-slice/."
+                            },
+                            "decision": null,
+                            "options": null,
+                            "reversibility": null,
+                            "verify": {
+                              "anchor": "plan-at-1210",
+                              "items": [
+                                {
+                                  "kind": "text",
+                                  "text": "All three files exist and 01-AI-SPEC.md has no frontmatter"
+                                }
+                              ]
+                            }
+                          },
+                          "sourceChildren": []
+                        }
+                      ],
+                      "success": {
+                        "anchor": "plan-at-1540",
+                        "lead": null,
+                        "items": [
+                          "Every artifact type studio-portal has never produced is represented and renders."
+                        ]
+                      },
+                      "verification": {
+                        "anchor": "plan-at-1404",
+                        "lead": null,
+                        "items": [
+                          "`npm test -- identity/slice` passes.",
+                          "`01-SPEC.md`, `01-AI-SPEC.md`, `01-COST-MODEL.md` all exist."
+                        ]
+                      },
+                      "sourceBlocks": [
+                        {
+                          "tag": "context",
+                          "anchor": "plan-at-228",
+                          "fileCount": 1
+                        },
+                        {
+                          "tag": "output",
+                          "anchor": "plan-at-1663",
+                          "fileCount": null
+                        }
+                      ],
+                      "loose": [],
+                      "wrapperWarnings": 0,
+                      "ref": {
+                        "planId": "01-02",
+                        "phaseNumber": "01",
+                        "phaseSlug": "identity-slice",
+                        "quickId": null
+                      }
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-02-SUMMARY.md": {
                   "id": ".planning/phases/01-identity-slice/01-02-SUMMARY.md",
@@ -13937,7 +16439,219 @@
                   "bodyHash": "f63e7425d4f2fd0f2c47aa897e9d470370019a22be15fc02c062384b6aae9251",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "plan": {
+                      "objective": {
+                        "anchor": "plan-at-1",
+                        "title": "Deliver a minimal end-to-end tracer for the identity slice",
+                        "rest": [],
+                        "why": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Prove the identity mechanism works before hardening it in plan 01-02."
+                          }
+                        ],
+                        "youGet": [
+                          {
+                            "kind": "paragraph",
+                            "text": "`Src/identity/slice.ts` runs and resolves a synthetic identity end to end."
+                          }
+                        ]
+                      },
+                      "tasks": [
+                        {
+                          "n": 1,
+                          "anchor": "plan-at-1192",
+                          "type": "auto",
+                          "gate": null,
+                          "tdd": false,
+                          "name": "Build the identity tracer",
+                          "files": [
+                            "src/identity/types.ts",
+                            "src/identity/slice.ts"
+                          ],
+                          "fields": {
+                            "action": {
+                              "anchor": "plan-at-1324",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "Define a minimal `Identity` type and an in-memory resolver function. Keep it small:"
+                                },
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "A single exported `resolveIdentity(id: string): Identity | null` function",
+                                    "Properties it must satisfy:",
+                                    "Returns `null` for an unknown id, never throws",
+                                    "Returns a fully-populated `Identity` for a known id"
+                                  ]
+                                },
+                                {
+                                  "kind": "paragraph",
+                                  "text": "Example invocation:"
+                                },
+                                {
+                                  "kind": "code",
+                                  "text": "import { resolveIdentity } from \"./slice\";\nconst identity = resolveIdentity(\"user-1\");"
+                                },
+                                {
+                                  "kind": "paragraph",
+                                  "text": "A synthetic trace id from the resolver's log output, reproduced verbatim for the reader:"
+                                },
+                                {
+                                  "kind": "code",
+                                  "text": "hbrpoig8f1cbfno6b9m80o2rak1vrjnvgfygwwqc38hyf9sxmecosfogyr3xkxwnrek8pk3yr9oudocuzrenun5z3jqip98q1zxoi65fdhjk1eyy37q9ah8rvhs1k3aq6l6gt6mjxk87au5bhxtpdpff5e8ii49kq71n8mtzx272hpoevb9ooaedoecve6pr5n8i4p40mgg1w103dgdzvgpmm82i"
+                                },
+                                {
+                                  "kind": "paragraph",
+                                  "text": "The resolver's dependency shape, for reference:"
+                                },
+                                {
+                                  "kind": "code",
+                                  "text": "flowchart TD\n    A[resolveIdentity] --> B[in-memory map lookup]\n    B --> C{found?}\n    C -->|yes| D[return Identity]\n    C -->|no| E[return null]"
+                                },
+                                {
+                                  "kind": "paragraph",
+                                  "text": "A renderer-recognized diagram that deliberately fails browser parsing, preserving its source:"
+                                },
+                                {
+                                  "kind": "code",
+                                  "text": "flowchart TD\n    A[unterminated"
+                                }
+                              ],
+                              "chars": 1095,
+                              "words": 119
+                            },
+                            "context": null,
+                            "whatBuilt": null,
+                            "howToVerify": null,
+                            "instructions": null,
+                            "verification": null,
+                            "behavior": null,
+                            "acceptance": null,
+                            "done": {
+                              "anchor": "plan-at-2536",
+                              "text": "The tracer resolves a known identity and returns null for an unknown one."
+                            },
+                            "decision": null,
+                            "options": null,
+                            "reversibility": null,
+                            "verify": {
+                              "anchor": "plan-at-2443",
+                              "items": [
+                                {
+                                  "kind": "text",
+                                  "text": "node --experimental-strip-types src/identity/slice.ts resolves a known id"
+                                }
+                              ]
+                            }
+                          },
+                          "sourceChildren": []
+                        },
+                        {
+                          "n": 2,
+                          "anchor": "plan-at-2632",
+                          "type": "checkpoint:human-verify",
+                          "gate": "blocking",
+                          "tdd": false,
+                          "name": "The identity tracer",
+                          "files": [],
+                          "fields": {
+                            "action": null,
+                            "context": null,
+                            "whatBuilt": {
+                              "anchor": "plan-at-2688",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "The identity tracer — a single resolver function with no UI"
+                                }
+                              ],
+                              "chars": 59,
+                              "words": 11
+                            },
+                            "howToVerify": {
+                              "anchor": "plan-at-2775",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "This is a fixture PLAN.md and is never executed. The checkpoint type here exists only to prove the parser recognizes `type=\"checkpoint:human-verify\"` and its `<what-built>`/`<how-to-verify>`/ `<resume-signal>` tag set, per `GSD-DOMAIN.md`'s PLAN.md task structure section."
+                                }
+                              ],
+                              "chars": 272,
+                              "words": 33
+                            },
+                            "instructions": null,
+                            "verification": null,
+                            "behavior": null,
+                            "acceptance": null,
+                            "done": null,
+                            "decision": null,
+                            "options": null,
+                            "reversibility": null,
+                            "verify": null
+                          },
+                          "sourceChildren": [
+                            {
+                              "tag": "resume-signal",
+                              "anchor": "plan-at-3097"
+                            }
+                          ]
+                        }
+                      ],
+                      "success": {
+                        "anchor": "plan-at-3304",
+                        "lead": null,
+                        "items": [
+                          "The identity slice's full artifact spread loads cleanly."
+                        ]
+                      },
+                      "verification": {
+                        "anchor": "plan-at-3207",
+                        "lead": null,
+                        "items": [
+                          "`src/identity/slice.ts` exists and exports `resolveIdentity`."
+                        ]
+                      },
+                      "sourceBlocks": [
+                        {
+                          "tag": "context",
+                          "anchor": "plan-at-250",
+                          "fileCount": 2
+                        },
+                        {
+                          "tag": "decision",
+                          "anchor": "plan-at-344",
+                          "fileCount": null
+                        },
+                        {
+                          "tag": "read_first",
+                          "anchor": "plan-at-742",
+                          "fileCount": null
+                        },
+                        {
+                          "tag": "execution_context",
+                          "anchor": "plan-at-1046",
+                          "fileCount": 0
+                        },
+                        {
+                          "tag": "output",
+                          "anchor": "plan-at-3403",
+                          "fileCount": null
+                        }
+                      ],
+                      "loose": [],
+                      "wrapperWarnings": 0,
+                      "ref": {
+                        "planId": "01-01",
+                        "phaseNumber": "01",
+                        "phaseSlug": "identity-slice",
+                        "quickId": null
+                      }
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-01-SUMMARY.md": {
                   "id": ".planning/phases/01-identity-slice/01-01-SUMMARY.md",
@@ -14075,7 +16789,166 @@
                   "bodyHash": "8fcbb059e52b0f5f7ecae055d85430c5033be51c20e18d332d5b6cef47f0fb72",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "plan": {
+                      "objective": {
+                        "anchor": "plan-at-1",
+                        "title": "Harden the identity slice tracer and finish authoring the phase's unfamiliar/invented artifact types",
+                        "rest": [],
+                        "why": null,
+                        "youGet": [
+                          {
+                            "kind": "paragraph",
+                            "text": "A tested `src/identity/slice.ts`, plus `01-SPEC.md`, `01-AI-SPEC.md`, `01-COST-MODEL.md`."
+                          }
+                        ]
+                      },
+                      "tasks": [
+                        {
+                          "n": 1,
+                          "anchor": "plan-at-312",
+                          "type": "auto",
+                          "gate": null,
+                          "tdd": false,
+                          "name": "Add regression tests for the resolver",
+                          "files": [
+                            "test/identity/slice.test.ts"
+                          ],
+                          "fields": {
+                            "action": {
+                              "anchor": "plan-at-439",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "Add tests covering the resolver's documented behavior:"
+                                },
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "Known id resolves",
+                                    "Unknown id returns null",
+                                    "Never throws for malformed input (empty string, non-string coerced to string)"
+                                  ]
+                                }
+                              ],
+                              "chars": 181,
+                              "words": 28
+                            },
+                            "context": null,
+                            "whatBuilt": null,
+                            "howToVerify": null,
+                            "instructions": null,
+                            "verification": null,
+                            "behavior": null,
+                            "acceptance": null,
+                            "done": {
+                              "anchor": "plan-at-690",
+                              "text": "All resolver tests pass."
+                            },
+                            "decision": null,
+                            "options": null,
+                            "reversibility": null,
+                            "verify": {
+                              "anchor": "plan-at-644",
+                              "items": [
+                                {
+                                  "kind": "text",
+                                  "text": "npm test -- identity/slice"
+                                }
+                              ]
+                            }
+                          },
+                          "sourceChildren": []
+                        },
+                        {
+                          "n": 2,
+                          "anchor": "plan-at-737",
+                          "type": "auto",
+                          "gate": null,
+                          "tdd": false,
+                          "name": "Author the unfamiliar artifact types",
+                          "files": [
+                            ".planning/phases/01-identity-slice/01-SPEC.md",
+                            ".planning/phases/01-identity-slice/01-AI-SPEC.md",
+                            ".planning/phases/01-identity-slice/01-COST-MODEL.md"
+                          ],
+                          "fields": {
+                            "action": {
+                              "anchor": "plan-at-984",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "Author `01-SPEC.md` from `gsd-core/templates/spec.md`, `01-AI-SPEC.md` from `gsd-core/templates/AI-SPEC.md` (no frontmatter), and `01-COST-MODEL.md` as a genuinely invented type with no template at all."
+                                }
+                              ],
+                              "chars": 202,
+                              "words": 21
+                            },
+                            "context": null,
+                            "whatBuilt": null,
+                            "howToVerify": null,
+                            "instructions": null,
+                            "verification": null,
+                            "behavior": null,
+                            "acceptance": null,
+                            "done": {
+                              "anchor": "plan-at-1288",
+                              "text": "All three unfamiliar/invented artifact types exist under phases/01-identity-slice/."
+                            },
+                            "decision": null,
+                            "options": null,
+                            "reversibility": null,
+                            "verify": {
+                              "anchor": "plan-at-1210",
+                              "items": [
+                                {
+                                  "kind": "text",
+                                  "text": "All three files exist and 01-AI-SPEC.md has no frontmatter"
+                                }
+                              ]
+                            }
+                          },
+                          "sourceChildren": []
+                        }
+                      ],
+                      "success": {
+                        "anchor": "plan-at-1540",
+                        "lead": null,
+                        "items": [
+                          "Every artifact type studio-portal has never produced is represented and renders."
+                        ]
+                      },
+                      "verification": {
+                        "anchor": "plan-at-1404",
+                        "lead": null,
+                        "items": [
+                          "`npm test -- identity/slice` passes.",
+                          "`01-SPEC.md`, `01-AI-SPEC.md`, `01-COST-MODEL.md` all exist."
+                        ]
+                      },
+                      "sourceBlocks": [
+                        {
+                          "tag": "context",
+                          "anchor": "plan-at-228",
+                          "fileCount": 1
+                        },
+                        {
+                          "tag": "output",
+                          "anchor": "plan-at-1663",
+                          "fileCount": null
+                        }
+                      ],
+                      "loose": [],
+                      "wrapperWarnings": 0,
+                      "ref": {
+                        "planId": "01-02",
+                        "phaseNumber": "01",
+                        "phaseSlug": "identity-slice",
+                        "quickId": null
+                      }
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-02-SUMMARY.md": {
                   "id": ".planning/phases/01-identity-slice/01-02-SUMMARY.md",
@@ -15534,7 +18407,125 @@
                       "salvage": "body intact, frontmatter unavailable"
                     }
                   ],
-                  "structured": {}
+                  "structured": {
+                    "plan": {
+                      "objective": {
+                        "anchor": "plan-at-511",
+                        "title": "Deliver a minimal end-to-end tracer for the transport layer, calling into Phase 1's identity resolver",
+                        "rest": [],
+                        "why": null,
+                        "youGet": [
+                          {
+                            "kind": "paragraph",
+                            "text": "`Src/transport/client.ts` sends a request and receives a resolved identity back."
+                          }
+                        ]
+                      },
+                      "tasks": [
+                        {
+                          "n": 1,
+                          "anchor": "plan-at-865",
+                          "type": "auto",
+                          "gate": null,
+                          "tdd": false,
+                          "name": "Build the transport tracer",
+                          "files": [
+                            "src/transport/client.ts"
+                          ],
+                          "fields": {
+                            "action": {
+                              "anchor": "plan-at-977",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "Write a minimal client that calls `resolveIdentity` from Phase 1's slice and returns its result over an in-process \"transport\" (a plain function call standing in for a real network boundary). Keep it small:"
+                                },
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "A single exported `fetchIdentity(id: string): Identity | null` function",
+                                    "Properties it must satisfy:",
+                                    "Delegates to `resolveIdentity` without transformation",
+                                    "Never throws"
+                                  ]
+                                },
+                                {
+                                  "kind": "code",
+                                  "text": "import { fetchIdentity } from \"./client\";\nconst identity = fetchIdentity(\"user-1\");"
+                                }
+                              ],
+                              "chars": 481,
+                              "words": 69
+                            },
+                            "context": null,
+                            "whatBuilt": null,
+                            "howToVerify": null,
+                            "instructions": null,
+                            "verification": null,
+                            "behavior": null,
+                            "acceptance": null,
+                            "done": {
+                              "anchor": "plan-at-1580",
+                              "text": "The transport tracer round-trips a known identity through Phase 1's resolver."
+                            },
+                            "decision": null,
+                            "options": null,
+                            "reversibility": null,
+                            "verify": {
+                              "anchor": "plan-at-1482",
+                              "items": [
+                                {
+                                  "kind": "text",
+                                  "text": "node --experimental-strip-types src/transport/client.ts round-trips a known id"
+                                }
+                              ]
+                            }
+                          },
+                          "sourceChildren": []
+                        }
+                      ],
+                      "success": {
+                        "anchor": "plan-at-1787",
+                        "lead": null,
+                        "items": [
+                          "Transport requests round-trip through the identity slice."
+                        ]
+                      },
+                      "verification": {
+                        "anchor": "plan-at-1690",
+                        "lead": null,
+                        "items": [
+                          "`src/transport/client.ts` exists and exports `fetchIdentity`."
+                        ]
+                      },
+                      "sourceBlocks": [
+                        {
+                          "tag": "context",
+                          "anchor": "plan-at-730",
+                          "fileCount": 2
+                        },
+                        {
+                          "tag": "output",
+                          "anchor": "plan-at-1887",
+                          "fileCount": null
+                        }
+                      ],
+                      "loose": [
+                        {
+                          "kind": "between",
+                          "heading": null
+                        }
+                      ],
+                      "wrapperWarnings": 0,
+                      "ref": {
+                        "planId": "02-01",
+                        "phaseNumber": "02",
+                        "phaseSlug": "transport-layer",
+                        "quickId": null
+                      }
+                    }
+                  }
                 },
                 ".planning/phases/02-transport-layer/02-CONTEXT.md": {
                   "id": ".planning/phases/02-transport-layer/02-CONTEXT.md",
@@ -15818,7 +18809,125 @@
                       "salvage": "body intact, frontmatter unavailable"
                     }
                   ],
-                  "structured": {}
+                  "structured": {
+                    "plan": {
+                      "objective": {
+                        "anchor": "plan-at-511",
+                        "title": "Deliver a minimal end-to-end tracer for the transport layer, calling into Phase 1's identity resolver",
+                        "rest": [],
+                        "why": null,
+                        "youGet": [
+                          {
+                            "kind": "paragraph",
+                            "text": "`Src/transport/client.ts` sends a request and receives a resolved identity back."
+                          }
+                        ]
+                      },
+                      "tasks": [
+                        {
+                          "n": 1,
+                          "anchor": "plan-at-865",
+                          "type": "auto",
+                          "gate": null,
+                          "tdd": false,
+                          "name": "Build the transport tracer",
+                          "files": [
+                            "src/transport/client.ts"
+                          ],
+                          "fields": {
+                            "action": {
+                              "anchor": "plan-at-977",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "Write a minimal client that calls `resolveIdentity` from Phase 1's slice and returns its result over an in-process \"transport\" (a plain function call standing in for a real network boundary). Keep it small:"
+                                },
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "A single exported `fetchIdentity(id: string): Identity | null` function",
+                                    "Properties it must satisfy:",
+                                    "Delegates to `resolveIdentity` without transformation",
+                                    "Never throws"
+                                  ]
+                                },
+                                {
+                                  "kind": "code",
+                                  "text": "import { fetchIdentity } from \"./client\";\nconst identity = fetchIdentity(\"user-1\");"
+                                }
+                              ],
+                              "chars": 481,
+                              "words": 69
+                            },
+                            "context": null,
+                            "whatBuilt": null,
+                            "howToVerify": null,
+                            "instructions": null,
+                            "verification": null,
+                            "behavior": null,
+                            "acceptance": null,
+                            "done": {
+                              "anchor": "plan-at-1580",
+                              "text": "The transport tracer round-trips a known identity through Phase 1's resolver."
+                            },
+                            "decision": null,
+                            "options": null,
+                            "reversibility": null,
+                            "verify": {
+                              "anchor": "plan-at-1482",
+                              "items": [
+                                {
+                                  "kind": "text",
+                                  "text": "node --experimental-strip-types src/transport/client.ts round-trips a known id"
+                                }
+                              ]
+                            }
+                          },
+                          "sourceChildren": []
+                        }
+                      ],
+                      "success": {
+                        "anchor": "plan-at-1787",
+                        "lead": null,
+                        "items": [
+                          "Transport requests round-trip through the identity slice."
+                        ]
+                      },
+                      "verification": {
+                        "anchor": "plan-at-1690",
+                        "lead": null,
+                        "items": [
+                          "`src/transport/client.ts` exists and exports `fetchIdentity`."
+                        ]
+                      },
+                      "sourceBlocks": [
+                        {
+                          "tag": "context",
+                          "anchor": "plan-at-730",
+                          "fileCount": 2
+                        },
+                        {
+                          "tag": "output",
+                          "anchor": "plan-at-1887",
+                          "fileCount": null
+                        }
+                      ],
+                      "loose": [
+                        {
+                          "kind": "between",
+                          "heading": null
+                        }
+                      ],
+                      "wrapperWarnings": 0,
+                      "ref": {
+                        "planId": "02-01",
+                        "phaseNumber": "02",
+                        "phaseSlug": "transport-layer",
+                        "quickId": null
+                      }
+                    }
+                  }
                 },
                 ".planning/phases/02-transport-layer/02-CONTEXT.md": {
                   "id": ".planning/phases/02-transport-layer/02-CONTEXT.md",
