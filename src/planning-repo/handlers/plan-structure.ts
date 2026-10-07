@@ -519,10 +519,18 @@ function extractObjective(node: Node): PlanObjective {
   const lead = text.slice(0, leadEnd).trim();
   let why: string | null = null;
   let youGet: string | null = null;
+  // A labelled section ends at its first blank line (or the next label); any paragraphs after it
+  // belong to the objective itself and follow the lead's rest.
+  const leftovers: string[] = [];
   for (let index = 0; index < labels.length; index += 1) {
     const label = labels[index];
     const stop = index + 1 < labels.length ? labels[index + 1].start : text.length;
-    const section = text.slice(label.end, stop).trim();
+    const lines = text.slice(label.end, stop).trim().split('\n');
+    let end = 0;
+    while (end < lines.length && !isBlank(lines[end])) end += 1;
+    const section = lines.slice(0, end).join('\n').trim();
+    const after = lines.slice(end).join('\n').trim();
+    if (after !== '') leftovers.push(after);
     if (section === '') continue;
     if (label.name === 'Purpose') why = section;
     else youGet = section;
@@ -537,6 +545,7 @@ function extractObjective(node: Node): PlanObjective {
     title = plain === '' ? null : plain;
     restText = [remainder, ...paragraphs.slice(1)].filter((part) => part !== '').join('\n\n');
   }
+  if (leftovers.length > 0) restText = [restText, ...leftovers].filter((part) => part !== '').join('\n\n');
   return {
     anchor: anchorOf(node.segment),
     title,

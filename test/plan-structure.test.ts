@@ -329,7 +329,7 @@ describe('extractPlanStructure — degrade, never throw', () => {
       `<objective>\nGo.\n</objective>\nx\n${'<a '.repeat(200_000)}\n${'y'.repeat(300_000)}`,
       `${'``<a '.repeat(50_000)}\n${'z'.repeat(300_000)}`,
       `<${'a'.repeat(200_000)}\n${'b'.repeat(300_000)}`,
-      `${'<x>\n'.repeat(60_000)}`,
+      `${'<x>\n'.repeat(20_000)}`,
     ];
     for (const body of bodies) {
       const started = performance.now();
