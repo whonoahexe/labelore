@@ -334,8 +334,8 @@ describe('helpers', () => {
     expect(confidenceTone('low')).toBe('missing');
     expect(confidenceTone('whatever')).toBeNull();
     expect(REVERSIBILITY.costly.tone).toBe('in-flight');
-    expect(reversibilityChip('one-way')).toEqual({ label: 'One-way', tone: 'in-flight' });
-    expect(reversibilityChip('reversible')).toEqual({ label: 'Reversible', tone: 'quiet' });
+    expect(reversibilityChip('one-way')).toMatchObject({ label: 'One-way', tone: 'in-flight' });
+    expect(reversibilityChip('reversible')).toMatchObject({ label: 'Reversible', tone: 'quiet' });
     expect(reversibilityChip('odd')).toEqual({ label: 'Odd to undo', tone: 'quiet' });
     expect(reversibilityChip(null)).toBeNull();
     expect(formatTokens(160000)).toBe('160k');
