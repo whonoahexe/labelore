@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-05T14:00:42.480Z"
+last_updated: "2026-10-08T15:46:12.220Z"
 last_activity: 2026-10-05
 last_activity_desc: Completed quick task 260929-3x3 (RESEARCH page view)
-state_head: 48e4896288e229e5d6204d235a95379c8b5ba1f3
+state_head: 2fb2b90b8758307ca2394a041233b594c1697c99
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -161,6 +161,7 @@ None.
 | 46 | add a toggle open/collapse all in the sidebar-drawer-header | 2026-10-05 | 48e4896 | — |
 | 261006-iz6 | Build sketch 019 B as the PLAN page view | 2026-10-07 | b621b9e | .planning/quick/261006-iz6-build-sketch-019-b-as-the-plan-page-view |
 | 261006-iz7 | Build sketch 020 D as the SUMMARY page view | 2026-10-07 | 3400faa | .planning/quick/261006-iz7-build-sketch-020-d-as-the-summary-page-view |
+| 49 | PLAN page Files/Requirements modals use the shared dialog frame (match SUMMARY) | 2026-10-08 | 2fb2b90 | — |
 
 ## Deferred Items
 
