@@ -15040,7 +15040,7 @@ button.view-validation-ref[aria-pressed='true'] {
 .view-summary-added {
   display: grid;
   gap: var(--space-2);
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-8);
 }
 
 /* One chip column across every row (subgrid), so the text starts at the same x whether the chip
