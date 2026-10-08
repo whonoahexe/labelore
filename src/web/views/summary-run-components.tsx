@@ -451,13 +451,9 @@ function StopView({
 function DeviationCardView({
   card,
   flashed,
-  copiedHash,
-  onCopy,
 }: {
   card: ComposedDeviationCard;
   flashed: boolean;
-  copiedHash: string | null;
-  onCopy: (hash: string) => void;
 }): React.JSX.Element {
   return (
     <article id={card.anchorId} className="view-summary-card" data-flash={flashed ? 'true' : undefined}>
@@ -465,7 +461,6 @@ function DeviationCardView({
         <span className="status-chip" data-tone={DEVIATION_TONE}>
           {card.kicker}
         </span>
-        {card.commit !== null ? <HashButton hash={card.commit} copied={copiedHash === card.commit} onCopy={onCopy} /> : null}
       </div>
       <h4>
         <ResearchInline text={card.title} />
@@ -520,8 +515,6 @@ function RunSection({
               key={card.anchorId}
               card={card}
               flashed={flashed === card.anchorId}
-              copiedHash={copiedHash}
-              onCopy={onCopy}
             />
           ))}
         </div>
