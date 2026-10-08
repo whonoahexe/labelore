@@ -772,8 +772,8 @@ export function PlanNavigatorView({
         <DialogContent className="view-plan-nav-modal">
           {modal !== null ? (
             <>
-              <DialogHeader className="view-plan-nav-modal-head">
-                <DialogTitle className="view-plan-nav-modal-title">{modalTitle(plan, modal)}</DialogTitle>
+              <DialogHeader>
+                <DialogTitle>{modalTitle(plan, modal)}</DialogTitle>
               </DialogHeader>
               <PlanModalBody plan={plan} modal={modal} onGoto={onGoto} onClose={() => setModal(null)} />
             </>
