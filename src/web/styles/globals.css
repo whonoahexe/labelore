@@ -14236,7 +14236,13 @@ button.view-validation-ref[aria-pressed='true'] {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2) var(--space-4);
-  align-items: center;
+  align-items: baseline;
+}
+
+/* The global eyebrow's bottom margin would lift it off the date's line; the row aligns on the
+   text baseline because the eyebrow (heading face) and the date (mono) differ in line height. */
+.view-summary-meta-left .eyebrow {
+  margin: 0;
 }
 
 .view-summary-date {
