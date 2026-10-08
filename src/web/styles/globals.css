@@ -15043,14 +15043,37 @@ button.view-validation-ref[aria-pressed='true'] {
   margin-bottom: var(--space-4);
 }
 
+/* One chip column across every row (subgrid), so the text starts at the same x whether the chip
+   reads Approach or Convention; text at the Decisions column's size, the first row level with its
+   first item, and no rule under the last. */
+.view-summary-patterns {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+}
+
 .view-summary-pattern {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: var(--space-2) var(--space-3);
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  gap: var(--space-2) var(--space-4);
   align-items: baseline;
-  padding: var(--space-2-5) 0;
+  padding: var(--space-3) 0;
   border-bottom: 1px solid var(--border-faint);
-  font-size: var(--fs-3);
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+  overflow-wrap: anywhere;
+}
+
+.view-summary-pattern:first-child {
+  padding-top: 0;
+}
+
+.view-summary-pattern:last-child {
+  border-bottom: 0;
+}
+
+.view-summary-pattern .status-chip {
+  justify-self: start;
 }
 
 /* Also in this summary, Waiting on a human. */
