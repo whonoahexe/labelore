@@ -14687,7 +14687,7 @@ button.view-validation-ref[aria-pressed='true'] {
   transition: background 0.15s ease;
 }
 
-/* Beside chips (Tasks modal rows, deviation cards) the hash takes a .status-chip box, its padding and
+/* Beside chips (Tasks modal rows) the hash takes a .status-chip box, its padding and
    --fs-1, so it stands the same height; inline in the timeline's meta line it stays compact. */
 .view-summary-chips .view-summary-hash {
   display: inline-flex;
