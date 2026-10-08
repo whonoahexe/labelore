@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-08T16:08:05.249Z"
+last_updated: "2026-10-08T16:09:55.450Z"
 last_activity: 2026-10-05
 last_activity_desc: Completed quick task 260929-3x3 (RESEARCH page view)
-state_head: 4906abefe5e7d40a2375fa27034f52096e8d3b12
+state_head: de720b75d99ec6d5910fc0520214e6387dbfa743
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -166,6 +166,7 @@ None.
 | 51 | PLAN task body: text size, measure and spacing | 2026-10-08 | 8ba2a31 | — |
 | 52 | SUMMARY meta row: align eyebrow with completed date | 2026-10-08 | 18ed66d | — |
 | 53 | SUMMARY commit hash matches chip height beside chips | 2026-10-08 | 4906abe | — |
+| 54 | SUMMARY deviation cards: hide Files and Verification fields | 2026-10-08 | de720b7 | — |
 
 ## Deferred Items
 
