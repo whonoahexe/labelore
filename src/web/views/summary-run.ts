@@ -812,14 +812,21 @@ function isHumanTitle(title: string): boolean {
   );
 }
 
+/** Deviation fields the card leaves out: the Files modal already lists files, and Proof carries verification. */
+const HIDDEN_DEVIATION_FIELD = /^\s*(files?\b|verif)/i;
+
 function cardOf(dev: SummaryDeviation, index: number): ComposedDeviationCard {
   const fields: { label: string; value: string }[] = [];
   if (dev.found) fields.push({ label: 'Found', value: dev.found });
   if (dev.issue) fields.push({ label: 'Problem', value: dev.issue });
   if (dev.fix) fields.push({ label: 'Fix', value: dev.fix });
-  if (dev.files) fields.push({ label: 'Files', value: dev.files });
   for (const other of arr<{ label: string; value: string }>(dev.others)) {
-    if (typeof other.label === 'string' && typeof other.value === 'string' && other.value !== '') {
+    if (
+      typeof other.label === 'string' &&
+      typeof other.value === 'string' &&
+      other.value !== '' &&
+      !HIDDEN_DEVIATION_FIELD.test(other.label)
+    ) {
       fields.push({ label: other.label, value: other.value });
     }
   }
