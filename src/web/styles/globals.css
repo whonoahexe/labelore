@@ -6880,41 +6880,22 @@ button.view-context-summary:hover {
   list-style: none;
 }
 
-/* The three modals: Depends on, Files, Requirements. */
+/* The three modals: Depends on, Files, Requirements. shadcn's DialogContent frame, the same as the
+   SUMMARY page's modals; only their width, scroll and rows are ours. */
 .view-plan-nav-modal {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  width: min(42rem, calc(100vw - 2rem));
-  max-width: min(42rem, calc(100vw - 2rem));
-  max-height: min(80vh, 46rem);
-  padding: 0;
-  overflow: hidden;
-  background: var(--card);
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
-.view-plan-nav-modal-head {
-  flex: none;
-  padding: var(--space-4) var(--space-10) var(--space-4) var(--space-5);
-  border-bottom: 1px solid var(--border);
-  background: var(--card);
-}
-
-.view-plan-nav-modal-title {
-  font-family: var(--font-mono);
-  font-size: var(--fs-6);
-  font-weight: var(--fw-medium);
-  letter-spacing: 0;
-  text-transform: none;
+@media (min-width: 40rem) {
+  .view-plan-nav-modal {
+    max-width: 44rem;
+  }
 }
 
 .view-plan-nav-modal-body {
   display: grid;
-  flex: 1 1 auto;
   gap: var(--space-5);
-  min-height: 0;
-  padding: var(--space-4) var(--space-5) var(--space-5);
-  overflow-y: auto;
 }
 
 .view-plan-nav-group {
@@ -6927,7 +6908,7 @@ button.view-context-summary:hover {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--space-3);
   align-items: baseline;
-  padding: var(--space-1-5) 0;
+  padding: var(--space-2) 0;
   border-bottom: 1px solid var(--border-faint);
   font-size: var(--fs-3);
 }
