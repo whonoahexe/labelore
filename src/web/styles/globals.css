@@ -6476,7 +6476,7 @@ button.view-context-summary:hover {
 
 .view-plan-nav-pane {
   min-width: 0;
-  padding: var(--space-5) var(--space-6);
+  padding: var(--space-6) var(--space-6) var(--space-8);
 }
 
 @media (max-width: 42rem) {
@@ -6487,15 +6487,17 @@ button.view-context-summary:hover {
 
 .view-plan-nav-body {
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-8);
   align-content: start;
   min-width: 0;
 }
 
+/* One reading size (--fs-5) and a capped line length for every section's text. */
 .view-plan-nav-sec {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-3);
   min-width: 0;
+  max-width: 46rem;
 }
 
 .view-plan-nav-sec > .view-plan-nav-key {
@@ -6524,12 +6526,18 @@ button.view-context-summary:hover {
   color: var(--muted-foreground);
 }
 
+/* Inline code a step under the prose around it, as in the document view (0.86em). */
+.view-plan-nav-body :not(pre) > code {
+  font-size: 0.86em;
+}
+
 /* Prose fields: author text through ResearchBlocks, clamped when long. */
 .view-plan-nav-text {
   display: grid;
-  gap: var(--space-2-5);
+  gap: var(--space-3);
   min-width: 0;
-  font-size: var(--fs-4);
+  font-size: var(--fs-5);
+  line-height: var(--lh-relaxed);
 }
 
 .view-plan-nav-text[data-clamp='true'] {
@@ -6551,7 +6559,7 @@ button.view-context-summary:hover {
 .view-plan-nav-brief :is(ul, ol),
 .view-plan-nav-note :is(ul, ol) {
   display: grid;
-  gap: var(--space-1-5);
+  gap: var(--space-2);
   margin: 0;
   padding-left: var(--space-5);
 }
@@ -6598,12 +6606,13 @@ button.view-context-summary:hover {
 .view-plan-nav-lead {
   margin: 0;
   color: var(--muted-foreground);
-  font-size: var(--fs-3);
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
 }
 
 .view-plan-nav-checks {
   display: grid;
-  gap: var(--space-1-5);
+  gap: var(--space-2-5);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -6612,27 +6621,29 @@ button.view-context-summary:hover {
 .view-plan-nav-checks li {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: var(--space-2);
-  font-size: var(--fs-3);
+  gap: var(--space-3);
+  font-size: var(--fs-5);
+  line-height: var(--lh-normal);
   overflow-wrap: anywhere;
 }
 
+/* Centred on the first line: (0.9rem x 1.55 - 0.55rem) / 2. */
 .view-plan-nav-checks li::before {
   content: '';
   width: 0.55rem;
   height: 0.55rem;
-  margin-top: var(--space-1-5);
+  margin-top: 0.42rem;
   border: 1px solid var(--muted-foreground);
 }
 
 .view-plan-nav-verify {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-5);
 }
 
 .view-plan-nav-cmd {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--space-2);
 }
 
 .view-plan-nav-cmd pre {
@@ -6651,7 +6662,8 @@ button.view-context-summary:hover {
 .view-plan-nav-fails {
   margin: 0;
   color: var(--muted-foreground);
-  font-size: var(--fs-3);
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
 }
 
 .view-plan-nav-fails::before {
@@ -6664,13 +6676,15 @@ button.view-context-summary:hover {
 
 .view-plan-nav-note {
   display: grid;
-  gap: var(--space-1);
-  font-size: var(--fs-3);
+  gap: var(--space-2);
+  font-size: var(--fs-5);
+  line-height: var(--lh-relaxed);
 }
 
 .view-plan-nav-line {
   margin: 0;
-  font-size: var(--fs-4);
+  font-size: var(--fs-5);
+  line-height: var(--lh-normal);
 }
 
 .view-plan-nav-line[data-large='true'] {
@@ -6712,7 +6726,7 @@ button.view-context-summary:hover {
 
 .view-plan-nav-option p {
   margin: 0;
-  font-size: var(--fs-3);
+  font-size: var(--fs-4);
   overflow-wrap: anywhere;
 }
 
