@@ -39,15 +39,49 @@ export interface PlanTypeInfo {
   tone: PlanTone;
   /** The "Waits for …" label of a checkpoint; null for work the executor does alone. */
   waits: string | null;
+  /** One sentence on what the type means, shown on hover. */
+  hint?: string;
 }
 
 export const TYPE_INFO: Record<string, PlanTypeInfo> = {
-  auto: { glyph: 'A', label: 'Auto', tone: 'quiet', waits: null },
-  tracer: { glyph: 'T', label: 'Tracer', tone: 'active', waits: null },
-  'checkpoint:decision': { glyph: '?', label: 'Decision', tone: 'in-flight', waits: 'Waits for your choice' },
-  'checkpoint:human-verify': { glyph: 'V', label: 'Verify', tone: 'in-flight', waits: 'Waits for you to look' },
-  'checkpoint:human-action': { glyph: 'H', label: 'Action', tone: 'in-flight', waits: 'Waits for you to do it' },
+  auto: {
+    glyph: 'A',
+    label: 'Auto',
+    tone: 'quiet',
+    waits: null,
+    hint: 'The executor does this task on its own, without stopping for you.',
+  },
+  tracer: {
+    glyph: 'T',
+    label: 'Tracer',
+    tone: 'active',
+    waits: null,
+    hint: 'The thinnest end-to-end slice through every layer, proven first; the other tasks build out from it.',
+  },
+  'checkpoint:decision': {
+    glyph: '?',
+    label: 'Decision',
+    tone: 'in-flight',
+    waits: 'Waits for your choice',
+    hint: 'Execution stops here until you pick one of the options.',
+  },
+  'checkpoint:human-verify': {
+    glyph: 'V',
+    label: 'Verify',
+    tone: 'in-flight',
+    waits: 'Waits for you to look',
+    hint: 'Execution stops here until you check the result and approve it.',
+  },
+  'checkpoint:human-action': {
+    glyph: 'H',
+    label: 'Action',
+    tone: 'in-flight',
+    waits: 'Waits for you to do it',
+    hint: 'Execution stops here until you do a step the executor cannot do for you.',
+  },
 };
+
+export const TDD_HINT = 'Test-first: a failing test for the behavior is written before the code that makes it pass.';
 
 export const CHECKPOINT_TONE: PlanTone = 'in-flight';
 export const TRACER_TONE: PlanTone = 'active';
@@ -69,17 +103,25 @@ export function confidenceTone(text: string): PlanTone | null {
 }
 export const CONFIDENCE_TONE = confidenceTone;
 
-export const REVERSIBILITY: Record<string, { label: string; tone: PlanTone }> = {
-  costly: { label: 'Costly to undo', tone: 'in-flight' },
-  'one-way': { label: 'One-way', tone: 'in-flight' },
-  reversible: { label: 'Reversible', tone: 'quiet' },
+export const REVERSIBILITY: Record<string, { label: string; tone: PlanTone; hint: string }> = {
+  costly: {
+    label: 'Costly to undo',
+    tone: 'in-flight',
+    hint: 'Undoing this decision later touches many call sites or needs a coordinated change.',
+  },
+  'one-way': {
+    label: 'One-way',
+    tone: 'in-flight',
+    hint: 'Undoing this decision later needs a migration or breaks a contract, so it gets a decision checkpoint first.',
+  },
+  reversible: { label: 'Reversible', tone: 'quiet', hint: 'This decision is local and cheap to change later.' },
 };
 
 export function reversibilityChip(rating: string | null): PlanChip | null {
   if (rating === null || rating.trim() === '') return null;
   const key = rating.trim().toLowerCase();
   const known = REVERSIBILITY[key];
-  if (known) return { label: known.label, tone: known.tone };
+  if (known) return { label: known.label, tone: known.tone, hint: known.hint };
   return { label: `${humanize(key)} to undo`, tone: 'quiet' };
 }
 
@@ -90,6 +132,8 @@ export function reversibilityChip(rating: string | null): PlanChip | null {
 export interface PlanChip {
   label: string;
   tone: PlanTone;
+  /** One sentence on what the chip means, shown on hover. */
+  hint?: string;
 }
 
 export interface PlanStat {
@@ -587,8 +631,8 @@ function composeTask(task: PlanTask, fallbackName: string): ComposedPlanTask {
   const info = infoOf(task.type);
   const gate = task.type.startsWith('checkpoint');
   const sections = sectionsOf(task);
-  const chips: PlanChip[] = [{ label: info.label, tone: info.tone }];
-  if (task.tdd) chips.push({ label: 'TDD', tone: 'quiet' });
+  const chips: PlanChip[] = [{ label: info.label, tone: info.tone, hint: info.hint }];
+  if (task.tdd) chips.push({ label: 'TDD', tone: 'quiet', hint: TDD_HINT });
   const reversibility = reversibilityChip(task.fields.reversibility?.rating ?? null);
   if (reversibility !== null) chips.push(reversibility);
   const subParts = [`T${task.n}`, info.label];

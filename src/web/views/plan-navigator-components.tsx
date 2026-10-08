@@ -69,7 +69,7 @@ export function stepTask(key: string, current: number, count: number, context: S
 
 function Chip({ chip }: { chip: PlanChip }): React.JSX.Element {
   return (
-    <span className="status-chip" data-tone={chip.tone}>
+    <span className="status-chip" data-tone={chip.tone} title={chip.hint}>
       {chip.label}
     </span>
   );
