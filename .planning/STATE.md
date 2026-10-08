@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-08T15:46:12.220Z"
+last_updated: "2026-10-08T15:52:01.136Z"
 last_activity: 2026-10-05
 last_activity_desc: Completed quick task 260929-3x3 (RESEARCH page view)
-state_head: 2fb2b90b8758307ca2394a041233b594c1697c99
+state_head: a90cf61dec4f78e86065b9635606664eaf60bdb5
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -162,6 +162,7 @@ None.
 | 261006-iz6 | Build sketch 019 B as the PLAN page view | 2026-10-07 | b621b9e | .planning/quick/261006-iz6-build-sketch-019-b-as-the-plan-page-view |
 | 261006-iz7 | Build sketch 020 D as the SUMMARY page view | 2026-10-07 | 3400faa | .planning/quick/261006-iz7-build-sketch-020-d-as-the-summary-page-view |
 | 49 | PLAN page Files/Requirements modals use the shared dialog frame (match SUMMARY) | 2026-10-08 | 2fb2b90 | — |
+| 50 | PLAN task chips: gap after task number, hover hint per badge | 2026-10-08 | a90cf61 | — |
 
 ## Deferred Items
 
