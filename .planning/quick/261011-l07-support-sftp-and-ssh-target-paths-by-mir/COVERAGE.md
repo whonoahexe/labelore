@@ -1,0 +1,1 @@
+No external API integration: the task spawns the locally installed OpenSSH client and GNU tar as child processes to mirror a remote `.planning/` directory read-only; no third-party API, SDK, or service surface is integrated.
