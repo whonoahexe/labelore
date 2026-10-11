@@ -37,6 +37,9 @@ const HOST_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,252}$/;
 const IPV6_PATTERN = /^\[[0-9A-Fa-f:.]+\]$/;
 const USER_PATTERN = /^[A-Za-z0-9_][A-Za-z0-9._-]{0,63}$/;
 const URL_PATTERN = /^(sftp|ssh):\/\//i;
+// Optional `user@`, host of 2+ characters (a one-character "host" is a Windows drive letter), a
+// colon, then a path that starts with `/` or `~`.
+const SCP_PATTERN = /^(?:([^@/:\s]+)@)?(\[[^\]]+\]|[^@/:\s[\]]{2,}):([/~].*)$/;
 
 export const REMOTE_EXIT = { pathMissing: 65, notDirectory: 66, cannotEnter: 67, noPlanning: 68 } as const;
 
@@ -165,13 +168,41 @@ function parseUrlTarget(raw: string): RemoteParse {
   };
 }
 
+function parseScpTarget(raw: string): RemoteParse | null {
+  const match = SCP_PATTERN.exec(raw);
+  if (!match) return null;
+  const [, user, hostPart, path] = match;
+  const isIpv6 = IPV6_PATTERN.test(hostPart);
+  if (!isIpv6 && !HOST_PATTERN.test(hostPart)) return null;
+  // `sftp:/x` and `ssh:/x` are a malformed URL, not a host named sftp; leave them to the local branch.
+  if (/^(sftp|ssh)$/i.test(hostPart)) return null;
+  if (user !== undefined && !USER_PATTERN.test(user)) return null;
+  // From here on the argument is unmistakably scp-style, so problems are reported, not ignored.
+  if (hasControlCharacter(path)) return invalid(raw, 'the path contains control characters');
+  const home = path === '~' || path.startsWith('~/');
+  const root = normalizeRoot(path, home, home ? path.slice(2) : '');
+  if (!root) return invalid(raw, 'the path must name a project directory');
+  return {
+    kind: 'remote',
+    target: {
+      scheme: 'scp',
+      user: user ?? null,
+      host: isIpv6 ? hostPart.slice(1, -1) : hostPart,
+      port: null,
+      remoteRoot: root.remoteRoot,
+      label: `${user !== undefined ? `${user}@` : ''}${hostPart}:${root.display}`,
+      rawPath: raw,
+    },
+  };
+}
+
 /**
  * Classifies the raw CLI argument. `local` means "not a remote address": it flows on to
  * resolveTargetPath unchanged. `invalid` carries a ready-made FailedLoadStatus (never throws).
  */
 export function parseRemoteTarget(raw: string): RemoteParse {
   if (URL_PATTERN.test(raw)) return parseUrlTarget(raw);
-  return { kind: 'local' };
+  return parseScpTarget(raw) ?? { kind: 'local' };
 }
 
 /** POSIX single-quote quoting: nothing but the closing quote can break out of single quotes. */
