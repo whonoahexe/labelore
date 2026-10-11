@@ -1,8 +1,19 @@
 // Layer A — Node-backed implementation. This is the ONLY file under src/ permitted to import the
 // Node filesystem module (DATA-01's boundary — enforced by an acceptance-criteria grep, not just
 // convention).
-import { readdirSync, readFileSync, statSync, existsSync, realpathSync, accessSync, constants } from 'node:fs';
-import { join, relative, sep } from 'node:path';
+import {
+  readdirSync,
+  readFileSync,
+  statSync,
+  existsSync,
+  realpathSync,
+  accessSync,
+  constants,
+  mkdtempSync,
+  rmSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
+import { basename, dirname, join, relative, sep } from 'node:path';
 import type { DirEntry, FileRead, FsCapabilities, PlanningFilesystem } from './types.ts';
 
 /** Thrown when a resolved read/list target lies outside the canonicalized project root. */
@@ -84,7 +95,7 @@ export function toProjectRelative(rootPath: string, absPath: string): string {
   return relative(rootPath, absPath) || '.';
 }
 
-// The three raw fs primitives src/cli/target-path.ts needs to canonicalize the user-supplied CLI
+// The raw fs primitives src/cli/target-path.ts needs to canonicalize the user-supplied CLI
 // argument BEFORE any PlanningFilesystem can be constructed. Exported from here — not called
 // directly from node:fs anywhere else under src/ — so this file stays the sole node:fs importer
 // (DATA-01's boundary, enforced by an acceptance-criteria grep over `from 'node:fs'`).
@@ -143,4 +154,31 @@ export function checkReadAccessSync(absPath: string): AccessOutcome {
     if (code === 'EACCES' || code === 'EPERM') return { ok: false, code };
     return { ok: false, code: 'OTHER' };
   }
+}
+
+// Guarded temp-dir primitives for the remote mirror (src/server/remote-source.ts). They live here so
+// this file stays the sole node:fs importer. Creation is restricted to a validated prefix directly
+// under the OS temp dir, and removal refuses anything that is not exactly such a directory.
+
+const TEMP_PREFIX_PATTERN = /^[a-z0-9-]+$/;
+
+/** Creates a fresh 0700 directory `<os tmpdir>/<prefix>XXXXXX` and returns its path. */
+export function createTempDirSync(prefix: string): string {
+  if (!TEMP_PREFIX_PATTERN.test(prefix)) throw new Error(`Invalid temp dir prefix: ${prefix}`);
+  return mkdtempSync(join(tmpdir(), prefix));
+}
+
+/**
+ * Recursively removes a directory created by createTempDirSync. Returns false and touches nothing
+ * unless the path is a direct child of the OS temp dir whose name starts with the validated prefix.
+ */
+export function removeTempDirSync(absPath: string, prefix: string): boolean {
+  if (!TEMP_PREFIX_PATTERN.test(prefix)) return false;
+  const parent = dirname(absPath);
+  const temp = tmpdir();
+  const canonicalTemp = canonicalizePath(temp);
+  const parentOk = parent === temp || (canonicalTemp.ok && parent === canonicalTemp.resolved);
+  if (!parentOk || !basename(absPath).startsWith(prefix)) return false;
+  rmSync(absPath, { recursive: true, force: true });
+  return true;
 }
