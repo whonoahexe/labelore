@@ -199,6 +199,23 @@ export class RemoteSnapshotSource {
     return result.mirror.snapshot;
   }
 
+  /** Re-mirrors into a NEW temp dir. On success the new mirror replaces the current one in a single
+   * assignment and only then is the old directory removed (served data is all in memory after load,
+   * so this is safe). On failure the new dir is already gone and `current` is untouched, so the last
+   * good snapshot keeps serving; the failure snapshot is returned for POST /api/refresh to report. */
+  async refresh(): Promise<ProjectSnapshot> {
+    const result = await this.mirror();
+    if ('failure' in result) {
+      if (!this.current) this.lastFailure = result.failure;
+      return result.failure;
+    }
+    const previous = this.current;
+    this.current = result.mirror;
+    this.lastFailure = null;
+    if (previous) removeTempDirSync(previous.dir, MIRROR_PREFIX);
+    return result.mirror.snapshot;
+  }
+
   getSnapshot(): ProjectSnapshot {
     if (this.current) return this.current.snapshot;
     if (this.lastFailure) return this.lastFailure;
