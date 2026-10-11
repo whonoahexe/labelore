@@ -3,7 +3,7 @@ import { pathToFileURL } from 'node:url';
 import { getRequestListener, serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';
-import type { ProjectSnapshot } from '../planning-repo/types.ts';
+import type { FailedLoadStatus, ProjectSnapshot } from '../planning-repo/types.ts';
 import { LocalFsPlanningFilesystem } from '../planning-fs/local-fs.ts';
 import { PlanningRepository } from '../planning-repo/snapshot.ts';
 import { buildDashboardViewModel } from '../presentation/dashboard.ts';
@@ -15,6 +15,8 @@ import { buildSearchGroups, extractSnippets } from '../presentation/search.ts';
 import { buildTreeViewModel } from '../presentation/tree.ts';
 import { createArtifactRenderer } from '../rendering/markdown.ts';
 import { resolveTargetPath } from '../cli/target-path.ts';
+import { parseRemoteTarget } from '../cli/remote-target.ts';
+import { RemoteSnapshotSource } from './remote-source.ts';
 import { buildArtifactIndex } from './artifact-index.ts';
 import { jsonRecord, toProjectPresentation } from './project-presentation.ts';
 import { createSearchIndexState, searchIndex } from './search-index.ts';
@@ -28,6 +30,9 @@ interface SnapshotSource {
    * simply omits this member. TGT-08 empty edge: POST /api/refresh against such a source is not
    * an error - it answers 200 with `refreshed: false`. */
   refresh?(): Promise<ProjectSnapshot>;
+  /** Optional: a source that owns resources (the remote ssh mirror's temp directory) releases them
+   * here. startServer calls it at most once, on server close, process exit, SIGINT and SIGTERM. */
+  dispose?(): void;
 }
 
 interface ServerOptions {
@@ -270,24 +275,56 @@ export function createApp(
   return app;
 }
 
+function failedSource(status: FailedLoadStatus): SnapshotSource {
+  const snapshot: ProjectSnapshot = {
+    loadStatus: status,
+    readAt: new Date().toISOString(),
+    rootPath: status.pathChecked,
+    project: null,
+    warnings: [],
+    exclusions: [],
+  };
+  return { getSnapshot: () => snapshot };
+}
+
 async function createSnapshotSource(rawPath: string): Promise<SnapshotSource> {
-  const resolved = resolveTargetPath(rawPath);
-  if (!('rootPath' in resolved)) {
-    const snapshot: ProjectSnapshot = {
-      loadStatus: resolved,
-      readAt: new Date().toISOString(),
-      rootPath: resolved.pathChecked,
-      project: null,
-      warnings: [],
-      exclusions: [],
-    };
-    return { getSnapshot: () => snapshot };
+  const remote = parseRemoteTarget(rawPath);
+  if (remote.kind === 'invalid') return failedSource(remote.status);
+  if (remote.kind === 'remote') {
+    const source = new RemoteSnapshotSource(remote.target);
+    await source.load();
+    return source;
   }
+
+  const resolved = resolveTargetPath(rawPath);
+  if (!('rootPath' in resolved)) return failedSource(resolved);
 
   const planningFilesystem = new LocalFsPlanningFilesystem(resolved.rootPath);
   const repository = new PlanningRepository(planningFilesystem, resolved.rootPath);
   await repository.load();
   return repository;
+}
+
+/** Releases the source's resources at most once, on close, exit, SIGINT and SIGTERM. */
+function registerDisposal(source: SnapshotSource, server: Server): void {
+  if (!source.dispose) return;
+  const dispose = source.dispose.bind(source);
+  let disposed = false;
+  const disposeOnce = (): void => {
+    if (disposed) return;
+    disposed = true;
+    dispose();
+  };
+  server.on('close', disposeOnce);
+  process.once('exit', disposeOnce);
+  process.once('SIGINT', () => {
+    disposeOnce();
+    process.exit(130);
+  });
+  process.once('SIGTERM', () => {
+    disposeOnce();
+    process.exit(143);
+  });
 }
 
 export async function startServer(rawPath: string, options: ServerOptions = {}): Promise<Server> {
@@ -298,6 +335,7 @@ export async function startServer(rawPath: string, options: ServerOptions = {}):
 
   if (production) {
     const server = serve({ fetch: app.fetch, hostname: HOSTNAME, port }) as Server;
+    registerDisposal(source, server);
     if (server.listening) return server;
     return await new Promise((resolve, reject) => {
       server.once('error', reject);
@@ -326,6 +364,7 @@ export async function startServer(rawPath: string, options: ServerOptions = {}):
     });
   });
   server.on('close', () => void vite.close());
+  registerDisposal(source, server);
   return await new Promise((resolve, reject) => {
     server.once('error', reject);
     server.listen(port, HOSTNAME, () => {
@@ -392,7 +431,7 @@ async function runCli(): Promise<void> {
       if (!dashboard.ok || !root.ok || !payload.readAt || !payload.loadStatus) {
         throw new Error('Smoke response contract failed');
       }
-      console.log(`Labelore smoke passed for ${options.rawPath}`);
+      console.log(`Labelore smoke passed for ${options.rawPath} (load status: ${payload.loadStatus.status})`);
     } finally {
       server.close();
     }
@@ -400,6 +439,12 @@ async function runCli(): Promise<void> {
   }
 
   console.log(`Labelore is reading ${options.rawPath}`);
+  const remoteParse = parseRemoteTarget(options.rawPath);
+  if (remoteParse.kind === 'remote') {
+    console.log(
+      `Remote target ${remoteParse.target.label}: .planning mirrored read-only over ssh; Refresh pulls it again`,
+    );
+  }
   // debug/loading-state-regression: the tunnel origin had been running this file with NODE_ENV
   // unset since Sep 15, silently serving the Vite dev middleware. Over a ~150 ms-RTT tunnel that
   // is 55 unbundled module round-trips and ~11.8 s of fully blank page, versus ~0.77 s from
