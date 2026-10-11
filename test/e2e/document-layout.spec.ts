@@ -250,9 +250,8 @@ async function runFullBehaviorChecks(
 
 // quick-260922-3us Task 3: PLAN and VERIFICATION fixtures appended to the same full-behavior
 // helper Task 1 wrote — the whole cover/fold/bar/jump/source/420 contract, proven type-agnostic.
+// quick-261006-iz6: the PLAN page moved to the task navigator, covered by test/e2e/plan-page.spec.ts.
 const PLAN_AND_VERIFICATION_FULL_FIXTURES: Fixture[] = [
-  { id: '01-01-plan-full', pathIncludes: '01-read-layer-domain-model/01-01-PLAN.md', glance: true },
-  { id: '01-02-plan-full', pathIncludes: '01-read-layer-domain-model/01-02-PLAN.md', glance: false },
   {
     id: '05-verification-full',
     pathIncludes: '05-per-type-document-views/05-VERIFICATION.md',
@@ -513,18 +512,8 @@ interface SmokeFixture {
   foldsAbsent?: string[];
 }
 
+// quick-261006-iz6: the PLAN page moved to the task navigator, covered by test/e2e/plan-page.spec.ts.
 const PLAN_AND_VERIFICATION_SMOKE_FIXTURES: SmokeFixture[] = [
-  {
-    id: '01-01-plan',
-    pathIncludes: '01-read-layer-domain-model/01-01-PLAN.md',
-    glance: true,
-    foldsPresent: [{ title: 'Tasks', minItems: 1 }, { title: 'Must be true when done' }],
-  },
-  {
-    id: '01-02-plan',
-    pathIncludes: '01-read-layer-domain-model/01-02-PLAN.md',
-    glance: false,
-  },
   {
     id: '05-verification',
     pathIncludes: '05-per-type-document-views/05-VERIFICATION.md',
@@ -607,8 +596,9 @@ test.describe('document layout — PLAN/VERIFICATION cover/glance smoke (quick-2
     page,
     baseURL,
   }) => {
+    // quick-261006-iz6: 01-01-PLAN left the list — the PLAN page moved to the task navigator
+    // (test/e2e/plan-page.spec.ts).
     const candidates = [
-      '01-read-layer-domain-model/01-01-PLAN.md',
       '05-per-type-document-views/05-VERIFICATION.md',
       '01-read-layer-domain-model/01-VERIFICATION.md',
     ];

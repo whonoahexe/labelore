@@ -12,10 +12,12 @@ import { verificationLayout } from './layout-verification.ts';
 import type { ViewKind } from './kinds.ts';
 import type { PromotedBlock, ViewInput, ViewManifest } from './manifest.ts';
 import { composeSecurityConsole } from './security-console.ts';
+import { composePlanNavigator } from './plan-navigator.ts';
 import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
 import { composePatternMap } from './pattern-map.ts';
 import { composeValidationStrategy } from './validation-strategy.ts';
+import { composeSummaryRun } from './summary-run.ts';
 import { composeUiReview } from './ui-review.ts';
 import { composeUiSpec } from './ui-spec.ts';
 import { composeUatSession } from './uat-session.ts';
@@ -112,6 +114,7 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
       ]),
     ],
     layout: planLayout,
+    planNavigator: composePlanNavigator,
   },
   summary: {
     kind: 'summary',
@@ -130,6 +133,7 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
       ]),
       { type: 'section', heading: /^next phase readiness/i },
     ],
+    summaryRun: composeSummaryRun,
   },
   review: {
     kind: 'review',
