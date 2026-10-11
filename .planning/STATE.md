@@ -159,6 +159,17 @@ None.
 | 44 | UI-REVIEW page: restyle back-matter summary body (muted fs-3 prose, ruled list, paragraph spacing, part dividers) | 2026-10-05 | 8d164f0 | — |
 | 45 | UI-REVIEW page: found-card lead text gets muted prose with foreground code chips and bold spans | 2026-10-05 | 9fde49b | — |
 | 46 | add a toggle open/collapse all in the sidebar-drawer-header | 2026-10-05 | 48e4896 | — |
+| 261006-iz6 | Build sketch 019 B as the PLAN page view | 2026-10-07 | b621b9e | .planning/quick/261006-iz6-build-sketch-019-b-as-the-plan-page-view |
+| 261006-iz7 | Build sketch 020 D as the SUMMARY page view | 2026-10-07 | 3400faa | .planning/quick/261006-iz7-build-sketch-020-d-as-the-summary-page-view |
+| 49 | PLAN page Files/Requirements modals use the shared dialog frame (match SUMMARY) | 2026-10-08 | 2fb2b90 | — |
+| 50 | PLAN task chips: gap after task number, hover hint per badge | 2026-10-08 | a90cf61 | — |
+| 51 | PLAN task body: text size, measure and spacing | 2026-10-08 | 8ba2a31 | — |
+| 52 | SUMMARY meta row: align eyebrow with completed date | 2026-10-08 | 18ed66d | — |
+| 53 | SUMMARY commit hash matches chip height beside chips | 2026-10-08 | 4906abe | — |
+| 54 | SUMMARY deviation cards: hide Files and Verification fields | 2026-10-08 | de720b7 | — |
+| 55 | SUMMARY deviation cards: hide commit hash | 2026-10-08 | 79ee0c7 | — |
+| 56 | SUMMARY Patterns column alignment and text size | 2026-10-08 | b65cf50 | — |
+| 57 | SUMMARY Patterns: gap below New dependencies | 2026-10-08 | fac2ff1 | — |
 | 261011-l07 | Support sftp:// and ssh:// target paths by mirroring the remote .planning over ssh | 2026-10-11 | 45c02e5 | [261011-l07-support-sftp-and-ssh-target-paths-by-mir](./quick/261011-l07-support-sftp-and-ssh-target-paths-by-mir/) |
 
 ## Deferred Items

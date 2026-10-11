@@ -182,7 +182,10 @@ export function segmentPlanBody(body: string): PlanSegment[] {
       continue;
     }
 
-    const tagPattern = /<(\/)?([A-Za-z][\w-]*)([^>]*)>/g;
+    // The attribute run excludes `<` as well as `>`, and the name may not give back characters to it
+    // (the lookahead): together a failed attempt costs one scan to the next `<` instead of a
+    // re-scan per way of splitting name from attributes (T-iz6-01).
+    const tagPattern = /<(\/)?([A-Za-z][\w-]*)(?![\w-])([^<>]*)>/g;
     const scanLine = maskInlineCode(line);
     let match: RegExpExecArray | null;
     while ((match = tagPattern.exec(scanLine)) !== null) {

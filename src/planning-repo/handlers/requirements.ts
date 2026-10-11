@@ -6,6 +6,7 @@ import type { ArtifactHandler, RawArtifact, ArtifactRef } from '../types.ts';
 import { tryParseFrontmatter } from '../frontmatter.ts';
 import { deriveTitle } from './title.ts';
 import { splitSections, splitSubsections, parseMarkdownTable } from './markdown-sections.ts';
+import { parseMilestoneFileName } from '../naming.ts';
 
 export interface RequirementItem {
   id: string;
@@ -27,22 +28,45 @@ function tierOf(sectionHeading: string): string {
   return sectionHeading;
 }
 
+/** Two or more leading spaces, then text that is not a list marker (`-`, `*`, `N.`) or a table row. */
+function isContinuation(line: string): boolean {
+  if (line.length < 3 || line[0] !== ' ' || line[1] !== ' ') return false;
+  const t = line.trim();
+  if (t === '' || t.startsWith('|') || t.startsWith('- ') || t.startsWith('* ') || t.startsWith('#')) return false;
+  let i = 0;
+  while (i < t.length && t[i] >= '0' && t[i] <= '9') i += 1;
+  if (i > 0 && (t[i] === '.' || t[i] === ')') && t[i + 1] === ' ') return false;
+  return true;
+}
+
 function parseRequirementItems(body: string): RequirementItem[] {
   const items: RequirementItem[] = [];
   for (const section of splitSections(body)) {
     if (!/requirement/i.test(section.heading)) continue;
     const tier = tierOf(section.heading);
     for (const category of splitSubsections(section.body)) {
+      // quick-261006-iz7: an indented, non-list line right under an item (or under another such
+      // continuation) belongs to that item — labelore's archived v1.1 snapshot wraps 13 items. One
+      // linear pass; single-line items are unchanged.
+      let last: RequirementItem | null = null;
       for (const line of category.body.split('\n')) {
         const m = line.match(REQUIREMENT_ITEM_RE);
-        if (!m) continue;
-        items.push({
-          id: m[2],
-          category: category.heading,
-          text: m[3].trim(),
-          tier,
-          checked: m[1] === undefined ? null : m[1].toLowerCase() === 'x',
-        });
+        if (m) {
+          last = {
+            id: m[2],
+            category: category.heading,
+            text: m[3].trim(),
+            tier,
+            checked: m[1] === undefined ? null : m[1].toLowerCase() === 'x',
+          };
+          items.push(last);
+          continue;
+        }
+        if (last !== null && isContinuation(line)) {
+          last.text = `${last.text} ${line.trim()}`.trim();
+          continue;
+        }
+        last = null;
       }
     }
   }
@@ -81,7 +105,15 @@ function parseTraceability(body: string): TraceabilityRow[] {
 
 export const RequirementsHandler: ArtifactHandler = {
   kind: 'requirements',
-  match: (ref) => ref.location === 'root' && basename(ref.path) === 'REQUIREMENTS.md',
+  match: (ref) => {
+    if (ref.location === 'root') return basename(ref.path) === 'REQUIREMENTS.md';
+    // quick-261006-iz7: the archived `milestones/vX.Y-REQUIREMENTS.md` snapshots parse the same way,
+    // so a SUMMARY's requirement IDs can preview their text. They stay a read-only lookup — every
+    // project-level consumer keeps reading only the root file.
+    if (ref.location !== 'milestone-root') return false;
+    const parsed = parseMilestoneFileName(basename(ref.path));
+    return parsed.matched && parsed.document === 'REQUIREMENTS';
+  },
   parse(raw: RawArtifact, ref: ArtifactRef) {
     const fm = tryParseFrontmatter(raw.content);
     const title = deriveTitle(fm.data, fm.body, ref.path);

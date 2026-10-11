@@ -419,7 +419,122 @@
                 "bodyHash": "9518aa8fbcb565284322278a014129ebe3fc583dfcd16fef48c9f1546ec8deac",
                 "mtimeMs": 0,
                 "warnings": [],
-                "structured": {}
+                "structured": {
+                  "plan": {
+                    "objective": {
+                      "anchor": "plan-at-1",
+                      "title": "Deliver a minimal end-to-end tracer for the fixture project's first slice",
+                      "rest": [],
+                      "why": null,
+                      "youGet": [
+                        {
+                          "kind": "paragraph",
+                          "text": "`Src/slice.ts` runs and produces observable output."
+                        }
+                      ]
+                    },
+                    "tasks": [
+                      {
+                        "n": 1,
+                        "anchor": "plan-at-216",
+                        "type": "auto",
+                        "gate": null,
+                        "tdd": false,
+                        "name": "Build the tracer",
+                        "files": [
+                          "src/slice.ts"
+                        ],
+                        "fields": {
+                          "action": {
+                            "anchor": "plan-at-307",
+                            "blocks": [
+                              {
+                                "kind": "paragraph",
+                                "text": "Write a minimal function that demonstrates the slice mechanism end to end. Keep it small:"
+                              },
+                              {
+                                "kind": "list",
+                                "ordered": false,
+                                "items": [
+                                  "A single exported function",
+                                  "A short list of the properties it must satisfy:",
+                                  "Runs without a network dependency",
+                                  "Prints a single observable line of output",
+                                  "An example invocation in a fenced code block:"
+                                ]
+                              },
+                              {
+                                "kind": "code",
+                                "text": "import { runSlice } from \"./slice\";\nrunSlice();"
+                              }
+                            ],
+                            "chars": 360,
+                            "words": 62
+                          },
+                          "context": null,
+                          "whatBuilt": null,
+                          "howToVerify": null,
+                          "instructions": null,
+                          "verification": null,
+                          "behavior": null,
+                          "acceptance": null,
+                          "done": {
+                            "anchor": "plan-at-771",
+                            "text": "The tracer runs and prints its output."
+                          },
+                          "decision": null,
+                          "options": null,
+                          "reversibility": null,
+                          "verify": {
+                            "anchor": "plan-at-691",
+                            "items": [
+                              {
+                                "kind": "text",
+                                "text": "node --experimental-strip-types src/slice.ts prints one line"
+                              }
+                            ]
+                          }
+                        },
+                        "sourceChildren": []
+                      }
+                    ],
+                    "success": {
+                      "anchor": "plan-at-932",
+                      "lead": null,
+                      "items": [
+                        "The first slice runs end to end without a real backend.",
+                        "A human can observe the slice working before further phases begin."
+                      ]
+                    },
+                    "verification": {
+                      "anchor": "plan-at-842",
+                      "lead": null,
+                      "items": [
+                        "`src/slice.ts` exists and exports a runnable function."
+                      ]
+                    },
+                    "sourceBlocks": [
+                      {
+                        "tag": "context",
+                        "anchor": "plan-at-163",
+                        "fileCount": 1
+                      },
+                      {
+                        "tag": "output",
+                        "anchor": "plan-at-1099",
+                        "fileCount": null
+                      }
+                    ],
+                    "loose": [],
+                    "wrapperWarnings": 0,
+                    "ref": {
+                      "planId": "01-01",
+                      "phaseNumber": "01",
+                      "phaseSlug": "first-slice",
+                      "quickId": null
+                    }
+                  }
+                }
               },
               ".planning/phases/01-first-slice/01-CONTEXT.md": {
                 "id": ".planning/phases/01-first-slice/01-CONTEXT.md",
@@ -767,7 +882,122 @@
             "bodyHash": "9518aa8fbcb565284322278a014129ebe3fc583dfcd16fef48c9f1546ec8deac",
             "mtimeMs": 0,
             "warnings": [],
-            "structured": {}
+            "structured": {
+              "plan": {
+                "objective": {
+                  "anchor": "plan-at-1",
+                  "title": "Deliver a minimal end-to-end tracer for the fixture project's first slice",
+                  "rest": [],
+                  "why": null,
+                  "youGet": [
+                    {
+                      "kind": "paragraph",
+                      "text": "`Src/slice.ts` runs and produces observable output."
+                    }
+                  ]
+                },
+                "tasks": [
+                  {
+                    "n": 1,
+                    "anchor": "plan-at-216",
+                    "type": "auto",
+                    "gate": null,
+                    "tdd": false,
+                    "name": "Build the tracer",
+                    "files": [
+                      "src/slice.ts"
+                    ],
+                    "fields": {
+                      "action": {
+                        "anchor": "plan-at-307",
+                        "blocks": [
+                          {
+                            "kind": "paragraph",
+                            "text": "Write a minimal function that demonstrates the slice mechanism end to end. Keep it small:"
+                          },
+                          {
+                            "kind": "list",
+                            "ordered": false,
+                            "items": [
+                              "A single exported function",
+                              "A short list of the properties it must satisfy:",
+                              "Runs without a network dependency",
+                              "Prints a single observable line of output",
+                              "An example invocation in a fenced code block:"
+                            ]
+                          },
+                          {
+                            "kind": "code",
+                            "text": "import { runSlice } from \"./slice\";\nrunSlice();"
+                          }
+                        ],
+                        "chars": 360,
+                        "words": 62
+                      },
+                      "context": null,
+                      "whatBuilt": null,
+                      "howToVerify": null,
+                      "instructions": null,
+                      "verification": null,
+                      "behavior": null,
+                      "acceptance": null,
+                      "done": {
+                        "anchor": "plan-at-771",
+                        "text": "The tracer runs and prints its output."
+                      },
+                      "decision": null,
+                      "options": null,
+                      "reversibility": null,
+                      "verify": {
+                        "anchor": "plan-at-691",
+                        "items": [
+                          {
+                            "kind": "text",
+                            "text": "node --experimental-strip-types src/slice.ts prints one line"
+                          }
+                        ]
+                      }
+                    },
+                    "sourceChildren": []
+                  }
+                ],
+                "success": {
+                  "anchor": "plan-at-932",
+                  "lead": null,
+                  "items": [
+                    "The first slice runs end to end without a real backend.",
+                    "A human can observe the slice working before further phases begin."
+                  ]
+                },
+                "verification": {
+                  "anchor": "plan-at-842",
+                  "lead": null,
+                  "items": [
+                    "`src/slice.ts` exists and exports a runnable function."
+                  ]
+                },
+                "sourceBlocks": [
+                  {
+                    "tag": "context",
+                    "anchor": "plan-at-163",
+                    "fileCount": 1
+                  },
+                  {
+                    "tag": "output",
+                    "anchor": "plan-at-1099",
+                    "fileCount": null
+                  }
+                ],
+                "loose": [],
+                "wrapperWarnings": 0,
+                "ref": {
+                  "planId": "01-01",
+                  "phaseNumber": "01",
+                  "phaseSlug": "first-slice",
+                  "quickId": null
+                }
+              }
+            }
           },
           ".planning/phases/01-first-slice/01-CONTEXT.md": {
             "id": ".planning/phases/01-first-slice/01-CONTEXT.md",
@@ -1106,7 +1336,122 @@
                   "bodyHash": "9518aa8fbcb565284322278a014129ebe3fc583dfcd16fef48c9f1546ec8deac",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "plan": {
+                      "objective": {
+                        "anchor": "plan-at-1",
+                        "title": "Deliver a minimal end-to-end tracer for the fixture project's first slice",
+                        "rest": [],
+                        "why": null,
+                        "youGet": [
+                          {
+                            "kind": "paragraph",
+                            "text": "`Src/slice.ts` runs and produces observable output."
+                          }
+                        ]
+                      },
+                      "tasks": [
+                        {
+                          "n": 1,
+                          "anchor": "plan-at-216",
+                          "type": "auto",
+                          "gate": null,
+                          "tdd": false,
+                          "name": "Build the tracer",
+                          "files": [
+                            "src/slice.ts"
+                          ],
+                          "fields": {
+                            "action": {
+                              "anchor": "plan-at-307",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "Write a minimal function that demonstrates the slice mechanism end to end. Keep it small:"
+                                },
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "A single exported function",
+                                    "A short list of the properties it must satisfy:",
+                                    "Runs without a network dependency",
+                                    "Prints a single observable line of output",
+                                    "An example invocation in a fenced code block:"
+                                  ]
+                                },
+                                {
+                                  "kind": "code",
+                                  "text": "import { runSlice } from \"./slice\";\nrunSlice();"
+                                }
+                              ],
+                              "chars": 360,
+                              "words": 62
+                            },
+                            "context": null,
+                            "whatBuilt": null,
+                            "howToVerify": null,
+                            "instructions": null,
+                            "verification": null,
+                            "behavior": null,
+                            "acceptance": null,
+                            "done": {
+                              "anchor": "plan-at-771",
+                              "text": "The tracer runs and prints its output."
+                            },
+                            "decision": null,
+                            "options": null,
+                            "reversibility": null,
+                            "verify": {
+                              "anchor": "plan-at-691",
+                              "items": [
+                                {
+                                  "kind": "text",
+                                  "text": "node --experimental-strip-types src/slice.ts prints one line"
+                                }
+                              ]
+                            }
+                          },
+                          "sourceChildren": []
+                        }
+                      ],
+                      "success": {
+                        "anchor": "plan-at-932",
+                        "lead": null,
+                        "items": [
+                          "The first slice runs end to end without a real backend.",
+                          "A human can observe the slice working before further phases begin."
+                        ]
+                      },
+                      "verification": {
+                        "anchor": "plan-at-842",
+                        "lead": null,
+                        "items": [
+                          "`src/slice.ts` exists and exports a runnable function."
+                        ]
+                      },
+                      "sourceBlocks": [
+                        {
+                          "tag": "context",
+                          "anchor": "plan-at-163",
+                          "fileCount": 1
+                        },
+                        {
+                          "tag": "output",
+                          "anchor": "plan-at-1099",
+                          "fileCount": null
+                        }
+                      ],
+                      "loose": [],
+                      "wrapperWarnings": 0,
+                      "ref": {
+                        "planId": "01-01",
+                        "phaseNumber": "01",
+                        "phaseSlug": "first-slice",
+                        "quickId": null
+                      }
+                    }
+                  }
                 },
                 ".planning/phases/01-first-slice/01-CONTEXT.md": {
                   "id": ".planning/phases/01-first-slice/01-CONTEXT.md",
@@ -1445,7 +1790,122 @@
                   "bodyHash": "9518aa8fbcb565284322278a014129ebe3fc583dfcd16fef48c9f1546ec8deac",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "plan": {
+                      "objective": {
+                        "anchor": "plan-at-1",
+                        "title": "Deliver a minimal end-to-end tracer for the fixture project's first slice",
+                        "rest": [],
+                        "why": null,
+                        "youGet": [
+                          {
+                            "kind": "paragraph",
+                            "text": "`Src/slice.ts` runs and produces observable output."
+                          }
+                        ]
+                      },
+                      "tasks": [
+                        {
+                          "n": 1,
+                          "anchor": "plan-at-216",
+                          "type": "auto",
+                          "gate": null,
+                          "tdd": false,
+                          "name": "Build the tracer",
+                          "files": [
+                            "src/slice.ts"
+                          ],
+                          "fields": {
+                            "action": {
+                              "anchor": "plan-at-307",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "Write a minimal function that demonstrates the slice mechanism end to end. Keep it small:"
+                                },
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "A single exported function",
+                                    "A short list of the properties it must satisfy:",
+                                    "Runs without a network dependency",
+                                    "Prints a single observable line of output",
+                                    "An example invocation in a fenced code block:"
+                                  ]
+                                },
+                                {
+                                  "kind": "code",
+                                  "text": "import { runSlice } from \"./slice\";\nrunSlice();"
+                                }
+                              ],
+                              "chars": 360,
+                              "words": 62
+                            },
+                            "context": null,
+                            "whatBuilt": null,
+                            "howToVerify": null,
+                            "instructions": null,
+                            "verification": null,
+                            "behavior": null,
+                            "acceptance": null,
+                            "done": {
+                              "anchor": "plan-at-771",
+                              "text": "The tracer runs and prints its output."
+                            },
+                            "decision": null,
+                            "options": null,
+                            "reversibility": null,
+                            "verify": {
+                              "anchor": "plan-at-691",
+                              "items": [
+                                {
+                                  "kind": "text",
+                                  "text": "node --experimental-strip-types src/slice.ts prints one line"
+                                }
+                              ]
+                            }
+                          },
+                          "sourceChildren": []
+                        }
+                      ],
+                      "success": {
+                        "anchor": "plan-at-932",
+                        "lead": null,
+                        "items": [
+                          "The first slice runs end to end without a real backend.",
+                          "A human can observe the slice working before further phases begin."
+                        ]
+                      },
+                      "verification": {
+                        "anchor": "plan-at-842",
+                        "lead": null,
+                        "items": [
+                          "`src/slice.ts` exists and exports a runnable function."
+                        ]
+                      },
+                      "sourceBlocks": [
+                        {
+                          "tag": "context",
+                          "anchor": "plan-at-163",
+                          "fileCount": 1
+                        },
+                        {
+                          "tag": "output",
+                          "anchor": "plan-at-1099",
+                          "fileCount": null
+                        }
+                      ],
+                      "loose": [],
+                      "wrapperWarnings": 0,
+                      "ref": {
+                        "planId": "01-01",
+                        "phaseNumber": "01",
+                        "phaseSlug": "first-slice",
+                        "quickId": null
+                      }
+                    }
+                  }
                 },
                 ".planning/phases/01-first-slice/01-CONTEXT.md": {
                   "id": ".planning/phases/01-first-slice/01-CONTEXT.md",
@@ -1801,7 +2261,122 @@
                   "bodyHash": "9518aa8fbcb565284322278a014129ebe3fc583dfcd16fef48c9f1546ec8deac",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "plan": {
+                      "objective": {
+                        "anchor": "plan-at-1",
+                        "title": "Deliver a minimal end-to-end tracer for the fixture project's first slice",
+                        "rest": [],
+                        "why": null,
+                        "youGet": [
+                          {
+                            "kind": "paragraph",
+                            "text": "`Src/slice.ts` runs and produces observable output."
+                          }
+                        ]
+                      },
+                      "tasks": [
+                        {
+                          "n": 1,
+                          "anchor": "plan-at-216",
+                          "type": "auto",
+                          "gate": null,
+                          "tdd": false,
+                          "name": "Build the tracer",
+                          "files": [
+                            "src/slice.ts"
+                          ],
+                          "fields": {
+                            "action": {
+                              "anchor": "plan-at-307",
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": "Write a minimal function that demonstrates the slice mechanism end to end. Keep it small:"
+                                },
+                                {
+                                  "kind": "list",
+                                  "ordered": false,
+                                  "items": [
+                                    "A single exported function",
+                                    "A short list of the properties it must satisfy:",
+                                    "Runs without a network dependency",
+                                    "Prints a single observable line of output",
+                                    "An example invocation in a fenced code block:"
+                                  ]
+                                },
+                                {
+                                  "kind": "code",
+                                  "text": "import { runSlice } from \"./slice\";\nrunSlice();"
+                                }
+                              ],
+                              "chars": 360,
+                              "words": 62
+                            },
+                            "context": null,
+                            "whatBuilt": null,
+                            "howToVerify": null,
+                            "instructions": null,
+                            "verification": null,
+                            "behavior": null,
+                            "acceptance": null,
+                            "done": {
+                              "anchor": "plan-at-771",
+                              "text": "The tracer runs and prints its output."
+                            },
+                            "decision": null,
+                            "options": null,
+                            "reversibility": null,
+                            "verify": {
+                              "anchor": "plan-at-691",
+                              "items": [
+                                {
+                                  "kind": "text",
+                                  "text": "node --experimental-strip-types src/slice.ts prints one line"
+                                }
+                              ]
+                            }
+                          },
+                          "sourceChildren": []
+                        }
+                      ],
+                      "success": {
+                        "anchor": "plan-at-932",
+                        "lead": null,
+                        "items": [
+                          "The first slice runs end to end without a real backend.",
+                          "A human can observe the slice working before further phases begin."
+                        ]
+                      },
+                      "verification": {
+                        "anchor": "plan-at-842",
+                        "lead": null,
+                        "items": [
+                          "`src/slice.ts` exists and exports a runnable function."
+                        ]
+                      },
+                      "sourceBlocks": [
+                        {
+                          "tag": "context",
+                          "anchor": "plan-at-163",
+                          "fileCount": 1
+                        },
+                        {
+                          "tag": "output",
+                          "anchor": "plan-at-1099",
+                          "fileCount": null
+                        }
+                      ],
+                      "loose": [],
+                      "wrapperWarnings": 0,
+                      "ref": {
+                        "planId": "01-01",
+                        "phaseNumber": "01",
+                        "phaseSlug": "first-slice",
+                        "quickId": null
+                      }
+                    }
+                  }
                 },
                 ".planning/phases/01-first-slice/01-CONTEXT.md": {
                   "id": ".planning/phases/01-first-slice/01-CONTEXT.md",

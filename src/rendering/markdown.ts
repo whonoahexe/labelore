@@ -281,7 +281,7 @@ function planSectionOpen(segment: PlanSegment, ordinal: string): string {
   // The ordinal is the section's dotted position among its siblings ("2", "2.1", "2.1.3"). A
   // plan nests plan > tasks > task > task, and the label alone gave no way to tell which one you
   // were reading.
-  return `<section class="plan-section plan-section-${escapeHtml(segment.tag)}" data-plan-section="${escapeHtml(segment.tag)}" data-plan-recognized="${recognized}" data-plan-ordinal="${escapeHtml(ordinal)}"${attributes}><div class="plan-section-label"><span class="plan-section-ordinal">${escapeHtml(ordinal)}</span>${escapeHtml(planSectionLabel(segment.tag))}</div>`;
+  return `<section class="plan-section plan-section-${escapeHtml(segment.tag)}" data-plan-section="${escapeHtml(segment.tag)}" data-plan-recognized="${recognized}" data-plan-ordinal="${escapeHtml(ordinal)}"${attributes} id="plan-at-${segment.start}"><div class="plan-section-label"><span class="plan-section-ordinal">${escapeHtml(ordinal)}</span>${escapeHtml(planSectionLabel(segment.tag))}</div>`;
 }
 
 async function renderMarkdownChunk(
