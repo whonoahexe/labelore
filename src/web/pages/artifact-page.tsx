@@ -525,9 +525,14 @@ async function loadDocument(route: string): Promise<ArtifactDocumentResponse> {
   return (await response.json()) as ArtifactDocumentResponse;
 }
 
-export function ArtifactPage(): React.JSX.Element {
+/** `route` and `switcher` let PlanPairPage mount this page for a plan's PLAN or SUMMARY under its
+ * own `/plans/:planId` URL, with the pair's Plan/Summary/Coverage switch first in every `<main>`. */
+export function ArtifactPage({
+  route: routeOverride,
+  switcher = null,
+}: { route?: string; switcher?: React.ReactNode } = {}): React.JSX.Element {
   const location = useLocation();
-  const route = location.pathname;
+  const route = routeOverride ?? location.pathname;
   const query = useQuery({
     queryKey: ['artifact-document', route],
     queryFn: () => loadDocument(route),
@@ -745,6 +750,7 @@ export function ArtifactPage(): React.JSX.Element {
   if (query.isError) {
     return (
       <main className="page-stack">
+        {switcher}
         <p className="eyebrow">Artifact reading</p>
         <h1>This document could not be opened.</h1>
         <section className="notice destructive" role="alert">
@@ -775,6 +781,7 @@ export function ArtifactPage(): React.JSX.Element {
   if (securityConsole && mode === 'view') {
     return (
       <main className="artifact-page page-stack">
+        {switcher}
         <SecurityConsoleView
           key={artifact.path}
           model={securityConsole}
@@ -795,6 +802,7 @@ export function ArtifactPage(): React.JSX.Element {
   if (summaryRun && mode === 'view') {
     return (
       <main className="artifact-page page-stack">
+        {switcher}
         <SummaryRunView
           key={artifact.path}
           model={summaryRun}
@@ -830,6 +838,7 @@ export function ArtifactPage(): React.JSX.Element {
   if (planNavigator && mode === 'view') {
     return (
       <main className="artifact-page page-stack">
+        {switcher}
         <ArtifactHeader
           crumbs={crumbs}
           hideCrumbs
@@ -853,6 +862,7 @@ export function ArtifactPage(): React.JSX.Element {
   if (uiReview && mode === 'view' && warningTone === null) {
     return (
       <main className="artifact-page page-stack">
+        {switcher}
         <ArtifactHeader
           crumbs={crumbs}
           hideCrumbs
@@ -885,6 +895,7 @@ export function ArtifactPage(): React.JSX.Element {
   const uatCover = uatSession && mode === 'view' ? uatSession : null;
   return (
     <main className="artifact-page page-stack">
+        {switcher}
       <ArtifactHeader
         crumbs={crumbs}
         hideCrumbs={Boolean(specCover || uatCover)}
