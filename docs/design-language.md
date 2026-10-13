@@ -787,6 +787,7 @@ plan's "no AST tooling" constraint.
 | `plan-pair-jumps` | Document pages | |
 | `plan-pair-loading` | Document pages | |
 | `plan-pair-page` | Document pages | |
+| `plan-pair-switch` | Document pages | |
 | `warning-disclosure-body` | Document pages | |
 | `warning-disclosure-chevron` | Document pages | |
 | `warning-disclosure-label` | Document pages | |

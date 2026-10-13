@@ -4119,6 +4119,14 @@ pre {
   gap: var(--space-8);
 }
 
+/* The Plan / Summary / Coverage switch PlanPairPage mounts first in each tab's page. */
+.plan-pair-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  align-items: center;
+}
+
 .plan-open-notice {
   margin-top: 0;
   border-left: 3px solid var(--primary);

@@ -119,7 +119,7 @@ test.describe('artifact-header copy-path button (quick-260923-jxp)', () => {
     await assertCopyPathContract(page, path);
   });
 
-  test('plan-pair page: copy button present on both header cards, no raw path caption', async ({
+  test('plan-pair page: copy button present on the plan tab header, no raw path caption', async ({
     page,
     baseURL,
   }) => {
@@ -129,7 +129,9 @@ test.describe('artifact-header copy-path button (quick-260923-jxp)', () => {
     await setTheme(page, 'light');
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(planPair!.url);
-    await page.locator('.plan-pair-page').first().waitFor({ state: 'visible' });
+    // The pair opens on its Plan tab: the PLAN's own per-type page with the pair switch first.
+    await page.locator('.plan-pair-switch').first().waitFor({ state: 'visible' });
+    await page.locator('.artifact-heading').first().waitFor({ state: 'visible' });
 
     const captions = page.locator('.artifact-path');
     expect(await captions.count()).toBe(0);

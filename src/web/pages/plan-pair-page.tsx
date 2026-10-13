@@ -1,6 +1,5 @@
-import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Link, useLocation } from 'react-router';
+import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { Link, useLocation, useSearchParams } from 'react-router';
 import { buildCoverageMatrix, type CoverageStatement } from '../../presentation/coverage.ts';
 import {
   buildMilestoneUrl,
@@ -10,8 +9,8 @@ import {
 } from '../../presentation/routes.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
 import { ArtifactHeader, type ArtifactCrumb } from '../components/artifact-header.tsx';
-import { DocumentView } from './artifact-page.tsx';
-import { dropLeadingTitle } from './document-title.ts';
+import { buttonVariants } from '../components/ui/button.tsx';
+import { ArtifactPage, DocumentView } from './artifact-page.tsx';
 
 interface DocumentResponse {
   found: true;
@@ -30,6 +29,8 @@ interface PlanPairResponse {
    * one-line description of the plan when it has one. A plan file carries no title of its own — its
    * derived title is the file path — so the path must not be what the page is named. */
   meta: { id: string; description: string | null };
+  /** The SUMMARY's artifact route, which the Summary tab hands to ArtifactPage. */
+  summaryRoute?: string;
 }
 
 function records(value: unknown): Record<string, unknown>[] {
@@ -78,7 +79,7 @@ async function fetchJson<T>(url: string): Promise<T> {
   return (await response.json()) as T;
 }
 
-async function loadPair(route: string): Promise<PlanPairResponse> {
+async function loadPair(route: string, queryClient: QueryClient): Promise<PlanPairResponse> {
   const presentation = await fetchJson<ProjectPresentation>('/api/presentation');
   const plan = presentation.milestones
     .flatMap((milestone) => milestone.phases)
@@ -88,6 +89,9 @@ async function loadPair(route: string): Promise<PlanPairResponse> {
   const planDocument = await fetchJson<DocumentResponse>(
     `/api/documents?route=${encodeURIComponent(route)}`,
   );
+  // The same `/api/documents` payload ArtifactPage queries for, so the tab it mounts opens without
+  // a second request.
+  queryClient.setQueryData(['artifact-document', route], planDocument);
   const meta = { id: plan.id, description: plan.description };
   if (!plan.summary) return { plan: planDocument, summary: null, meta };
   const summaryRoute = presentation.artifacts.find(
@@ -97,34 +101,67 @@ async function loadPair(route: string): Promise<PlanPairResponse> {
   const summaryDocument = await fetchJson<DocumentResponse>(
     `/api/documents?route=${encodeURIComponent(summaryRoute)}`,
   );
-  return { plan: planDocument, summary: summaryDocument, meta };
+  queryClient.setQueryData(['artifact-document', summaryRoute], summaryDocument);
+  return { plan: planDocument, summary: summaryDocument, meta, summaryRoute };
+}
+
+type PairDoc = 'plan' | 'summary' | 'coverage';
+
+/** The pair's Plan / Summary / Coverage switch, first in whichever page the tab mounts. The tab
+ * lives in `?doc=` so each half of the pair is deep-linkable and the back button walks tabs. */
+function PairSwitch({
+  id,
+  active,
+  hasSummary,
+  hasCoverage,
+}: {
+  id: string;
+  active: PairDoc;
+  hasSummary: boolean;
+  hasCoverage: boolean;
+}): React.JSX.Element {
+  const tab = (doc: PairDoc, label: string): React.JSX.Element => {
+    // The same button treatment as the View/Source toggle beside it in the header.
+    const look = buttonVariants({ size: 'xs', variant: active === doc ? 'secondary' : 'ghost' });
+    return (
+      <Link
+        key={doc}
+        to={{ search: doc === 'plan' ? '' : `?doc=${doc}` }}
+        className={look}
+        aria-current={active === doc ? 'page' : undefined}
+      >
+        {label}
+      </Link>
+    );
+  };
+  return (
+    <nav className="plan-pair-switch" aria-label={`Plan ${id} documents`}>
+      {tab('plan', 'Plan')}
+      {hasSummary ? (
+        tab('summary', 'Summary')
+      ) : (
+        <span
+          className="status-chip"
+          data-tone="quiet"
+          title="Outcome not recorded yet: this plan is still open, so there is no paired summary."
+        >
+          No summary yet
+        </span>
+      )}
+      {hasCoverage ? tab('coverage', 'Coverage') : null}
+    </nav>
+  );
 }
 
 export function PlanPairPage(): React.JSX.Element {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ['plan-pair', location.pathname],
-    queryFn: () => loadPair(location.pathname),
+    queryFn: () => loadPair(location.pathname, queryClient),
     staleTime: Number.POSITIVE_INFINITY,
   });
-  // F-02 (quick-260921-l4e): every GSD SUMMARY.md opens with its own `# Phase X Plan Y: … Summary`
-  // title (the summary template's own convention) — rendered unmodified, that produces a second
-  // <h1> directly under this page's own "Full summary" <h2>, duplicating the same words twice in
-  // the accessibility tree. `dropLeadingTitle` is the same fix `ArtifactPage` already applies to
-  // every single-document view; applied here to both halves of the pair for symmetry, even though
-  // PLAN.md bodies don't normally carry a leading H1 of their own.
-  const planDocument = useMemo(
-    () =>
-      query.data ? dropLeadingTitle(query.data.plan.document, query.data.plan.artifact.title) : null,
-    [query.data],
-  );
-  const summaryDocument = useMemo(
-    () =>
-      query.data?.summary
-        ? dropLeadingTitle(query.data.summary.document, query.data.summary.artifact.title)
-        : null,
-    [query.data],
-  );
 
   if (query.isPending)
     return (
@@ -155,6 +192,29 @@ export function PlanPairPage(): React.JSX.Element {
   const matrix = pair.summary
     ? buildCoverageMatrix(truthRows(pair.plan), coverageRows(pair.summary))
     : null;
+  const requested = searchParams.get('doc');
+  const active: PairDoc =
+    requested === 'summary' && pair.summaryRoute
+      ? 'summary'
+      : requested === 'coverage' && matrix
+        ? 'coverage'
+        : 'plan';
+  const switcher = (
+    <PairSwitch
+      id={pair.meta.id}
+      active={active}
+      hasSummary={Boolean(pair.summaryRoute)}
+      hasCoverage={matrix !== null}
+    />
+  );
+
+  // The PLAN and SUMMARY tabs are the same per-type pages their artifact URLs open (the task
+  // navigator, the run view), keyed by route so View/Source mode resets between them.
+  if (active === 'plan')
+    return <ArtifactPage key="plan" route={location.pathname} switcher={switcher} />;
+  if (active === 'summary' && pair.summaryRoute)
+    return <ArtifactPage key="summary" route={pair.summaryRoute} switcher={switcher} />;
+
   const parsed = parsePresentationUrl(location.pathname);
   const planRoute = parsed.ok && parsed.route.kind === 'plan' ? parsed.route : null;
   const crumbs: ArtifactCrumb[] = [
@@ -176,28 +236,14 @@ export function PlanPairPage(): React.JSX.Element {
   ];
   return (
     <main className="artifact-page plan-pair-page page-stack">
+      {switcher}
       <ArtifactHeader
         crumbs={crumbs}
         eyebrow="Plan and outcome"
         title={`Plan ${pair.meta.id}`}
         lead={pair.meta.description}
         path={pair.plan.artifact.path}
-      >
-        <nav className="plan-pair-jumps" aria-label="Plan review sections">
-          {matrix ? <a href="#coverage-matrix">Coverage matrix</a> : null}
-          <a href="#plan-document">Plan</a>
-          {pair.summary ? <a href="#summary-document">Summary</a> : null}
-        </nav>
-      </ArtifactHeader>
-      {!pair.summary ? (
-        <aside className="notice plan-open-notice" role="status">
-          <strong>Outcome not recorded yet</strong>
-          <p>
-            This plan is still open, so there is no paired summary. The complete authored plan
-            remains available below.
-          </p>
-        </aside>
-      ) : null}
+      />
       {matrix ? (
         <section id="coverage-matrix" className="coverage-matrix document-overflow-boundary">
           <h2>Truth to coverage</h2>
@@ -246,18 +292,6 @@ export function PlanPairPage(): React.JSX.Element {
               </tbody>
             </table>
           </div>
-        </section>
-      ) : null}
-      <section id="plan-document" className="plan-pair-document document-overflow-boundary">
-        <p className="eyebrow">Authored intent</p>
-        <h2>Full plan</h2>
-        <DocumentView document={planDocument ?? pair.plan.document} />
-      </section>
-      {pair.summary ? (
-        <section id="summary-document" className="plan-pair-document document-overflow-boundary">
-          <p className="eyebrow">Recorded outcome</p>
-          <h2>Full summary</h2>
-          <DocumentView document={summaryDocument ?? pair.summary.document} />
         </section>
       ) : null}
     </main>
