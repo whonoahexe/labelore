@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-11T09:58:37.531Z"
-last_activity: 2026-10-05
+last_updated: "2026-10-13T09:23:11.503Z"
+last_activity: 2026-10-11
 last_activity_desc: Completed quick task 260929-3x3 (RESEARCH page view)
-state_head: 45c02e5a02cf78995dfdf6f13044e6b281daaa2d
+state_head: 1fea530584dde046cc1a58657acc04e9f3abfce6
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -171,6 +171,7 @@ None.
 | 56 | SUMMARY Patterns column alignment and text size | 2026-10-08 | b65cf50 | — |
 | 57 | SUMMARY Patterns: gap below New dependencies | 2026-10-08 | fac2ff1 | — |
 | 261011-l07 | Support sftp:// and ssh:// target paths by mirroring the remote .planning over ssh | 2026-10-11 | 45c02e5 | [261011-l07-support-sftp-and-ssh-target-paths-by-mir](./quick/261011-l07-support-sftp-and-ssh-target-paths-by-mir/) |
+| 59 | PlanPairPage renders the polished PLAN navigator and SUMMARY run views (Plan/Summary/Coverage switch) | 2026-10-13 | 1fea530 | — |
 
 ## Deferred Items
 
