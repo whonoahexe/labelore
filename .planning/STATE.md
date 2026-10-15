@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-15T20:04:10.916Z"
+last_updated: "2026-10-15T20:07:20.493Z"
 last_activity: 2026-10-11
 last_activity_desc: Completed quick task 260929-3x3 (RESEARCH page view)
-state_head: c6c7ef76162ad708be90126e122724218c646546
+state_head: cf5378f42940537f18a617e57f85dca5a482ccd4
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -174,6 +174,7 @@ None.
 | 59 | PlanPairPage renders the polished PLAN navigator and SUMMARY run views (Plan/Summary/Coverage switch) | 2026-10-13 | 1fea530 | — |
 | 60 | Dashboard handles a project with no milestone recorded: hides the milestone label and still finds the current phase | 2026-10-16 | 50af849 | — |
 | 61 | History empty state: gap between the heading separator and 'Nothing here yet.' | 2026-10-16 | c6c7ef7 | — |
+| 62 | Roadmap phase card: a lone fact (e.g. Depends on) spans the full row | 2026-10-16 | cf5378f | — |
 
 ## Deferred Items
 
