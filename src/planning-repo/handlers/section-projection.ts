@@ -13,7 +13,10 @@ export interface DiscussionOption {
 /** quick-260923-jxp (JXP-05): how a question was settled. 'chosen' — a ✓ row in the option table
  * (any qualifier that doesn't name Claude). 'claude' — the qualifier names Claude, or the user's
  * words / chosen option literally read "you decide". 'custom' — no ✓ row, but a free-text choice
- * line. 'open' — nothing resolves it; still returned (JXP-05: no dropped questions). */
+ * line. 'open' — nothing resolves it; still returned (JXP-05: no dropped questions).
+ *
+ * quick-261016-2j6 (S4, compact table): the Selected cell maps as 'claude' for `You decide`,
+ * 'custom' for `Other: <text>`, 'chosen' for any other non-empty value, and 'open' when empty. */
 export type DiscussionResolution = 'chosen' | 'claude' | 'custom' | 'open';
 
 export interface DiscussionQuestion {
@@ -27,14 +30,16 @@ export interface DiscussionQuestion {
    * underneath, and it is the resolution anchor itself for a 'custom' question (JXP-05). */
   userChoice: string | null;
   /** 1-based source-table row of the first ✓-prefixed cell in the option table; null when the
-   * option table has no ✓ row (or there is no option table at all). */
+   * option table has no ✓ row (or there is no option table at all). For S4 it is the 1-based
+   * position of the matched option within the Options cell. */
   chosenIndex: number | null;
   /** The parenthetical after a `✓ (…)` cell — `'renamed'`, `"Claude's call"`, `'superseded'`, … —
    * capped at 60 characters; null when the cell is a bare `✓` or there is no ✓ row. */
   qualifier: string | null;
   resolution: DiscussionResolution;
   /** The ✓ row of a *later* table in the same question block, used only when the option table
-   * itself has no ✓ (S3's "no-✓ table, then a bold-label follow-up table with a ✓ row" shape). */
+   * itself has no ✓ (S3's "no-✓ table, then a bold-label follow-up table with a ✓ row" shape).
+   * For S4 it carries the Selected text when that text names no single option. */
   settled: { option: string; description: string; prompt: string | null } | null;
   /** The `**Notes:**`/`**Note:**` paragraph, continuation lines joined by a single space; null
    * when absent. */
@@ -431,6 +436,7 @@ function extractS2Topic(section: { heading: string; body: string }): {
 /** A slash with one whitespace character on each side. A single `\s` per side (not `\s+`) keeps the
  * scan linear on a long whitespace run; `trim()` removes any extra padding afterwards. */
 const OPTIONS_SEPARATOR_RE = /\s\/\s/;
+const OTHER_PREFIX_RE = /^other:\s*/i;
 
 /** Lowercases, drops markdown emphasis / code ticks / straight and curly quotes, and collapses
  * whitespace runs — so `**Both**` and `"both"` compare equal. */
@@ -493,11 +499,35 @@ function parseCompactRow(
   };
   if (selected === '') return result;
 
+  const pick = (index: number): void => {
+    options[index].chosen = true;
+    result.chosenIndex = index + 1;
+    result.chosenOption = optionTexts[index];
+  };
+
+  // "You decide" — Claude's call. A literal "You decide" option still gets marked chosen.
+  if (readsYouDecide(selected)) {
+    result.resolution = 'claude';
+    result.userChoice = selected;
+    const matched = matchCompactOption(selected, optionTexts);
+    if (matched !== -1) pick(matched);
+    return result;
+  }
+
+  // "Other: <text>" — the user's own words; no option is chosen. Nothing after the colon is open.
+  const otherMatch = OTHER_PREFIX_RE.exec(selected);
+  if (otherMatch) {
+    const remainder = selected.slice(otherMatch[0].length).trim();
+    if (remainder !== '') {
+      result.resolution = 'custom';
+      result.userChoice = remainder;
+    }
+    return result;
+  }
+
   const matched = matchCompactOption(selected, optionTexts);
   if (matched !== -1) {
-    options[matched].chosen = true;
-    result.chosenIndex = matched + 1;
-    result.chosenOption = optionTexts[matched];
+    pick(matched);
   } else {
     result.settled = { option: selected, description: '', prompt: null };
   }
@@ -550,7 +580,9 @@ function extractS4Topic(section: { heading: string; body: string }): {
  * Composes `splitSections` → `splitSubsections` → `parseMarkdownTable` over every corpus question
  * shape (JXP-05): S1 (`##` topic → `###` question → option table), S2 (the canonical GSD template
  * — a table directly under `##`, no `###`), and S3 (bold `**Q<n>:**` lines inside a `##` topic,
- * some table-less). No question is dropped — an unresolved question still comes back with
+ * some table-less), and S4 (a compact `| Question | Options | Selected |` table directly under
+ * `##`, one row per question — an agent-improvised variant tolerated alongside the canonical
+ * template). No question is dropped — an unresolved question still comes back with
  * `resolution: 'open'`.
  */
 export function extractDiscussionLog(body: string): DiscussionLogProjection {

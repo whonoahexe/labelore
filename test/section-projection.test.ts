@@ -417,9 +417,198 @@ describe('extractDiscussionLog — S3 (bold **Q<n>:** lines)', () => {
   });
 });
 
+// quick-261016-2j6: S4 — a compact table agents improvise. Synthetic text only.
+const S4_BODY = [
+  '# Phase 9: Widgets - Discussion Log',
+  '',
+  '**Date:** 2026-10-01',
+  '**Areas discussed:** Gestures, Media, Voice notes',
+  '',
+  '---',
+  '',
+  '## Gestures',
+  '',
+  '| Question | Options | Selected |',
+  '|---|---|---|',
+  '| Reply gesture | Both (swipe + long-press) / Long-press only | Both |',
+  '| Read receipts | Under last message / Ticks on every bubble | Under last message |',
+  '| Timestamps | Day separators / Time on every bubble / You decide | You decide |',
+  '| Reactions | Fixed six / Fixed six + more | Other: a custom set of six |',
+  '',
+  '## Media',
+  '',
+  '| Question | Options | Selected |',
+  '|---|---|---|',
+  '| After picking | Preview + optional caption / Send immediately | Preview + caption |',
+  '| Video cap | ~3 min/200 MB / ~1 min/100 MB / ~1 GB | ~3 min/200 MB |',
+  '| Stacking | One notification, updated / One per message | One |',
+  '| Max length | 5 min / 15 min / No limit |  |',
+  '',
+  '## Voice notes',
+  '',
+  '| question | option | selected |',
+  '|---|---|---|',
+  '| Record gesture | Tap / Hold / Both | **Both** |',
+  '',
+  '**Notes:** Upload size cap stays as a backstop.',
+  '',
+  "## Claude's Discretion",
+  '',
+  '- Spacing between bubbles',
+  '',
+  '## Deferred Ideas',
+  '',
+  '- Voice transcription',
+  '',
+].join('\n');
+
+function s4Question(name: string) {
+  const found = extractDiscussionLog(S4_BODY).questions.find((q) => q.question === name);
+  expect(found, name).toBeDefined();
+  return found!;
+}
+
+describe('extractDiscussionLog — S4 (compact Question | Options | Selected table, one row per question)', () => {
+  it('yields one question per data row, in source order, with topic counts', () => {
+    const { questions, topics } = extractDiscussionLog(S4_BODY);
+    expect(questions).toHaveLength(9);
+    expect(questions.map((q) => q.question)).toEqual([
+      'Reply gesture',
+      'Read receipts',
+      'Timestamps',
+      'Reactions',
+      'After picking',
+      'Video cap',
+      'Stacking',
+      'Max length',
+      'Record gesture',
+    ]);
+    expect(topics).toEqual([
+      { heading: 'Gestures', questionCount: 4, resolvedCount: 4, leftover: false },
+      { heading: 'Media', questionCount: 4, resolvedCount: 3, leftover: false },
+      { heading: 'Voice notes', questionCount: 1, resolvedCount: 1, leftover: true },
+    ]);
+  });
+
+  it('picks the option a prefix Selected value names', () => {
+    const q = s4Question('Reply gesture');
+    expect(q.topic).toBe('Gestures');
+    expect(q.resolution).toBe('chosen');
+    expect(q.chosenIndex).toBe(1);
+    expect(q.chosenOption).toBe('Both (swipe + long-press)');
+    expect(q.options.map((o) => o.chosen)).toEqual([true, false]);
+    expect(q.options.every((o) => o.description === '')).toBe(true);
+    expect(q.settled).toBeNull();
+  });
+
+  it('picks an exact match', () => {
+    const q = s4Question('Read receipts');
+    expect(q.resolution).toBe('chosen');
+    expect(q.chosenIndex).toBe(1);
+  });
+
+  it('resolves "You decide" to claude and still matches the literal option', () => {
+    const q = s4Question('Timestamps');
+    expect(q.resolution).toBe('claude');
+    expect(q.chosenIndex).toBe(3);
+    expect(q.chosenOption).toBe('You decide');
+    expect(q.userChoice).toBe('You decide');
+  });
+
+  it('resolves "Other: …" to custom with the text after the prefix', () => {
+    const q = s4Question('Reactions');
+    expect(q.resolution).toBe('custom');
+    expect(q.userChoice).toBe('a custom set of six');
+    expect(q.chosenIndex).toBeNull();
+    expect(q.options.some((o) => o.chosen)).toBe(false);
+    expect(q.settled).toBeNull();
+  });
+
+  it('settles on the Selected text when it names no option', () => {
+    const q = s4Question('After picking');
+    expect(q.resolution).toBe('chosen');
+    expect(q.chosenIndex).toBeNull();
+    expect(q.settled).toEqual({ option: 'Preview + caption', description: '', prompt: null });
+  });
+
+  it('keeps a slash without spaces inside one option', () => {
+    const q = s4Question('Video cap');
+    expect(q.options.map((o) => o.option)).toEqual(['~3 min/200 MB', '~1 min/100 MB', '~1 GB']);
+    expect(q.chosenIndex).toBe(1);
+  });
+
+  it('settles when the Selected text is a prefix of more than one option', () => {
+    const q = s4Question('Stacking');
+    expect(q.resolution).toBe('chosen');
+    expect(q.chosenIndex).toBeNull();
+    expect(q.settled?.option).toBe('One');
+  });
+
+  it('leaves an empty Selected cell open', () => {
+    const q = s4Question('Max length');
+    expect(q.resolution).toBe('open');
+    expect(q.chosenIndex).toBeNull();
+    expect(q.settled).toBeNull();
+    expect(q.userChoice).toBeNull();
+    expect(q.options).toHaveLength(3);
+  });
+
+  it('reads a lowercase header and strips markdown marks from Selected', () => {
+    const q = s4Question('Record gesture');
+    expect(q.resolution).toBe('chosen');
+    expect(q.chosenIndex).toBe(3);
+  });
+
+  it('never attaches notes or a qualifier, and emits no topic for bullet-list sections', () => {
+    const { questions, topics } = extractDiscussionLog(S4_BODY);
+    expect(questions.every((q) => q.notes === null && q.qualifier === null)).toBe(true);
+    const headings = topics.map((t) => t.heading);
+    expect(headings).not.toContain("Claude's Discretion");
+    expect(headings).not.toContain('Deferred Ideas');
+  });
+
+  it('resolves "Other:" with nothing after it to open', () => {
+    const body = ['## Topic', '', '| Question | Options | Selected |', '|---|---|---|', '| Q | A / B | Other: |', ''].join('\n');
+    const { questions } = extractDiscussionLog(body);
+    expect(questions).toHaveLength(1);
+    expect(questions[0].resolution).toBe('open');
+    expect(questions[0].userChoice).toBeNull();
+  });
+
+  it('prefers an exact option match over prefix matches', () => {
+    const body = ['## Topic', '', '| Question | Options | Selected |', '|---|---|---|', '| Q | Both / Both + extra | Both |', ''].join('\n');
+    const { questions } = extractDiscussionLog(body);
+    expect(questions[0].chosenIndex).toBe(1);
+    expect(questions[0].settled).toBeNull();
+  });
+
+  it('keeps a Question | Answer table (no Selected column) on the S2 path', () => {
+    const body = ['## Topic', '', '| Question | Answer |', '|---|---|', '| Q | A |', ''].join('\n');
+    const { questions } = extractDiscussionLog(body);
+    expect(questions).toHaveLength(1);
+    expect(questions[0].question).toBe('Topic');
+    expect(questions[0].resolution).toBe('open');
+  });
+});
+
 describe('extractDiscussionLog — timing (T-jxp-02: bounded regexes, no ReDoS)', () => {
   it('runs a 100k-character hostile single line through in under 200ms', () => {
     const hostile = `## Topic\n\n### Q1\n\n${'|'.repeat(1000)}${'*'.repeat(50000)}✓${'*'.repeat(49000)}\n`;
+    const start = performance.now();
+    extractDiscussionLog(hostile);
+    const elapsed = performance.now() - start;
+    expect(elapsed).toBeLessThan(200);
+  });
+
+  it('runs a hostile S4 row (100k-character Options cell, 50k-asterisk Selected cell) in under 200ms', () => {
+    const hostile = [
+      '## Topic',
+      '',
+      '| Question | Options | Selected |',
+      '|---|---|---|',
+      `| Q | ${'a / '.repeat(25000)}a | ${'*'.repeat(50000)} |`,
+      '',
+    ].join('\n');
     const start = performance.now();
     extractDiscussionLog(hostile);
     const elapsed = performance.now() - start;
