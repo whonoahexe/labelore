@@ -5277,9 +5277,9 @@ pre {
   line-height: var(--lh-snug);
 }
 
+/* No measure cap: the prose fallback fills its scope column, the same width the In list uses. */
 .view-context-rest {
   margin-top: var(--space-4);
-  max-width: 62ch;
   color: var(--muted-foreground);
   font-size: var(--fs-4);
 }
