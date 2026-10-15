@@ -282,6 +282,17 @@ describe('buildDashboardViewModel', () => {
     expect(view.completion.currentPhaseKey).toBeNull();
   });
 
+  it('no milestone recorded: the current phase still resolves from the unversioned live milestone', () => {
+    const source = presentation();
+    if (!source.state) throw new Error('test fixture requires state');
+    source.state = { ...source.state, milestone: null };
+    source.milestones[0] = { ...source.milestones[0], key: 'milestone:current', version: null };
+    const view = buildDashboardViewModel(source);
+
+    expect(view.current.milestone.value).toBeNull();
+    expect(view.completion.currentPhaseKey).toBe(source.milestones[0].phases[0].key);
+  });
+
   it('blocked dependency: excludes blocked plans from next work and reports dependency attention', () => {
     const blocked = plan('01-02', false, [{ raw: '01-99', targetPlanKey: null }]);
     const later = phase({

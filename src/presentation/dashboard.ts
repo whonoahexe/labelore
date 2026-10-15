@@ -145,9 +145,12 @@ function samePhaseNumber(left: string, right: string): boolean {
 
 function currentPhaseOf(presentation: ProjectPresentation): PhaseDto | null {
   const state = presentation.state;
-  if (!state?.milestone || !state.phaseNumber) return null;
+  if (!state?.phaseNumber) return null;
+  // A STATE.md with no milestone recorded still has a live milestone: assemble.ts keys it with a
+  // null version (normalizing blank values the same way), so match that instead of giving up.
+  const version = state.milestone?.trim() || null;
   const milestone = presentation.milestones.find(
-    (candidate) => !candidate.archived && candidate.version === state.milestone,
+    (candidate) => !candidate.archived && candidate.version === version,
   );
   return (
     milestone?.phases.find((phase) => samePhaseNumber(phase.identity.number, state.phaseNumber!)) ??
