@@ -1767,6 +1767,12 @@ summary.tree-node-row:focus-visible {
   line-height: var(--fs-3--lh);
 }
 
+/* An empty note directly under a section heading sits clear of the heading's separator, matching
+ * the gap the populated list leaves (e.g. History's .history-list margin-top). */
+.section-heading + .empty-note {
+  margin-top: var(--space-4);
+}
+
 .empty-flow {
   margin-top: var(--space-6);
   padding: var(--space-5);
@@ -1799,7 +1805,6 @@ summary.tree-node-row:focus-visible {
   gap: var(--space-3);
   margin-top: var(--space-4);
 }
-
 .history-milestone {
   border: 1px solid var(--border);
   background: var(--background);
