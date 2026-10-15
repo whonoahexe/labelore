@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-15T20:16:20.595Z"
-last_activity: 2026-10-11
-last_activity_desc: Completed quick task 260929-3x3 (RESEARCH page view)
-state_head: e01731e08ba0557a2737c00d9f5951e676469232
+last_updated: "2026-10-15T20:30:32.920Z"
+last_activity: 2026-10-16
+last_activity_desc: Completed quick task 261016-2j6 (compact discussion-log tables)
+state_head: aab294fd71a737e473447bb62a2a2bd11c43e414
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-09-21)
 Phase: Milestone v1.1 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-10-11 - Completed quick task 261011-l07: Support sftp:// and ssh:// target paths by mirroring the remote .planning over ssh
+Last activity: 2026-10-16 - Completed quick task 261016-2j6: Discussion log parser: support the compact one-row-per-question table layout
 
 ## Performance Metrics
 
@@ -176,6 +176,7 @@ None.
 | 61 | History empty state: gap between the heading separator and 'Nothing here yet.' | 2026-10-16 | c6c7ef7 | — |
 | 62 | Roadmap phase card: a lone fact (e.g. Depends on) spans the full row | 2026-10-16 | cf5378f | — |
 | 63 | Context page: In this phase prose fills its card width (dropped 62ch cap) | 2026-10-16 | e01731e | — |
+| 261016-2j6 | Discussion log parser: support the compact one-row-per-question table layout (Question \| Options \| Selected) | 2026-10-16 | aab294f | [261016-2j6-discussion-log-parser-support-the-compac](./quick/261016-2j6-discussion-log-parser-support-the-compac/) |
 
 ## Deferred Items
 
