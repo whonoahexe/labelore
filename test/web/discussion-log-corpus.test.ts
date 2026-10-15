@@ -232,3 +232,43 @@ describe('discussion-log corpus — cover numbers equal rendered counts (JXP-08)
     });
   }
 });
+
+// ---------------------------------------------------------------------------
+// quick-261016-2j6: synthetic case. The S4 compact `| Question | Options | Selected |` layout is an
+// agent-improvised variant, not GSD's template — one table row per question.
+// ---------------------------------------------------------------------------
+
+describe('discussion-log S4 compact table — composed page (quick-261016-2j6)', () => {
+  const body = [
+    '# Phase 9: Widgets - Discussion Log',
+    '',
+    '**Date:** 2026-10-01',
+    '',
+    '---',
+    '',
+    '## Sending media',
+    '',
+    '| Question | Options | Selected |',
+    '|---|---|---|',
+    '| Multiple at once | One at a time / Album grid | Album grid |',
+    '| Attach UI | One + button → OS picker / Separate camera + gallery | One + button |',
+    '| After picking | Preview + optional caption / Send immediately | Preview + caption |',
+    '| Max length | 5 min / No limit |  |',
+    '',
+  ].join('\n');
+
+  it('renders one item per row with the picked answer and a truthful decided headline', () => {
+    const layout = composedFor(body);
+    expect(layout.chapters).toHaveLength(1);
+    expect(layout.chapters[0].title).toBe('Sending media');
+    const items = layout.chapters[0].items ?? [];
+    expect(items.map((i) => i.title)).toEqual(['Multiple at once', 'Attach UI', 'After picking', 'Max length']);
+    expect(items.map((i) => i.state?.label)).toEqual(['Chosen', 'Chosen', 'Chosen', 'Open']);
+    expect(items[0].answerCard?.option).toMatchObject({ number: 2, title: 'Album grid' });
+    expect(items[1].answerCard?.option).toMatchObject({ number: 1, title: 'One + button → OS picker' });
+    expect(items[2].answerCard?.option).toMatchObject({ number: null, title: 'Preview + caption' });
+    expect(items[3].answerCard ?? null).toBeNull();
+    expect(layout.cover.headline?.value).toBe('3');
+    expect(layout.cover.headline?.label).toBe('of 4 questions decided');
+  });
+});

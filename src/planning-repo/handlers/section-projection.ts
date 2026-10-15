@@ -152,6 +152,15 @@ function tableHasOptionAndSelected(headerLine: string): boolean {
   return cells.includes('option') && cells.includes('selected');
 }
 
+/** S4's compact table: a header with a Question column and a Selected column (case-insensitive). */
+function tableHasQuestionAndSelected(headerLine: string): boolean {
+  const cells = headerLine
+    .split('|')
+    .slice(1, -1)
+    .map((c) => c.trim().toLowerCase());
+  return cells.includes('question') && cells.includes('selected');
+}
+
 /** The first ✓-prefixed `Selected` cell in `rows`, its 1-based index, and its bounded qualifier. */
 function findChosen(
   rows: Record<string, string>[],
@@ -413,6 +422,130 @@ function extractS2Topic(section: { heading: string; body: string }): {
   return { questions: [{ topic: section.heading, ...result.question }], leftover: result.hasLeftover };
 }
 
+// ---------------------------------------------------------------------------
+// quick-261016-2j6: S4 — the compact `| Question | Options | Selected |` table agents improvise.
+// One row per question; the options sit in one cell separated by " / "; Selected is free text.
+// Every pattern is a single character class or one quantifier applied per cell (T-2j6-01).
+// ---------------------------------------------------------------------------
+
+/** A slash with one whitespace character on each side. A single `\s` per side (not `\s+`) keeps the
+ * scan linear on a long whitespace run; `trim()` removes any extra padding afterwards. */
+const OPTIONS_SEPARATOR_RE = /\s\/\s/;
+
+/** Lowercases, drops markdown emphasis / code ticks / straight and curly quotes, and collapses
+ * whitespace runs — so `**Both**` and `"both"` compare equal. */
+function normalizeChoiceText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[*_`"'\u2018\u2019\u201C\u201D]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function splitCompactOptions(cell: string): string[] {
+  return cell
+    .split(OPTIONS_SEPARATOR_RE)
+    .map((part) => part.trim())
+    .filter((part) => part !== '');
+}
+
+/** 0-based index of the one option the Selected text names, or -1. An exact match wins; otherwise
+ * exactly one option must start with the Selected text (or be a prefix of it). Nothing fuzzier. */
+function matchCompactOption(selected: string, options: string[]): number {
+  const target = normalizeChoiceText(selected);
+  if (target === '') return -1;
+  const normalized = options.map(normalizeChoiceText);
+
+  const exact: number[] = [];
+  normalized.forEach((option, i) => {
+    if (option === target) exact.push(i);
+  });
+  if (exact.length === 1) return exact[0];
+  if (exact.length > 1) return -1;
+
+  const prefixed: number[] = [];
+  normalized.forEach((option, i) => {
+    if (option !== '' && (option.startsWith(target) || target.startsWith(option))) prefixed.push(i);
+  });
+  return prefixed.length === 1 ? prefixed[0] : -1;
+}
+
+function parseCompactRow(
+  questionText: string,
+  optionsCell: string,
+  selectedCell: string,
+): Omit<DiscussionQuestion, 'topic'> {
+  const optionTexts = splitCompactOptions(optionsCell);
+  const options: DiscussionOption[] = optionTexts.map((option) => ({ option, description: '', chosen: false }));
+  const selected = selectedCell.trim();
+
+  const result: Omit<DiscussionQuestion, 'topic'> = {
+    question: questionText,
+    options,
+    chosenOption: '',
+    chosenDescription: '',
+    userChoice: null,
+    chosenIndex: null,
+    qualifier: null,
+    resolution: 'open',
+    settled: null,
+    notes: null,
+  };
+  if (selected === '') return result;
+
+  const matched = matchCompactOption(selected, optionTexts);
+  if (matched !== -1) {
+    options[matched].chosen = true;
+    result.chosenIndex = matched + 1;
+    result.chosenOption = optionTexts[matched];
+  } else {
+    result.settled = { option: selected, description: '', prompt: null };
+  }
+  result.resolution = 'chosen';
+  return result;
+}
+
+/** S4: a compact `Question | Options | Selected` table directly under `##` — one question per row.
+ * Any other non-blank, non-`---` line (a `**Notes:**` line, a non-qualifying table) is leftover. */
+function extractS4Topic(section: { heading: string; body: string }): {
+  questions: DiscussionQuestion[];
+  leftover: boolean;
+} {
+  const lines = section.body.split('\n');
+  const consumed = new Set<number>();
+  const questions: DiscussionQuestion[] = [];
+
+  for (const run of splitIntoTableRuns(lines)) {
+    const headerLine = run.text.split('\n')[0] ?? '';
+    if (!tableHasQuestionAndSelected(headerLine)) continue;
+    for (let i = run.startIndex; i <= run.endIndex; i++) consumed.add(i);
+
+    const headers = headerLine
+      .split('|')
+      .slice(1, -1)
+      .map((c) => c.trim());
+    const keyFor = (...names: string[]): string | undefined =>
+      headers.find((h) => names.includes(h.toLowerCase()));
+    const questionKey = keyFor('question')!;
+    const selectedKey = keyFor('selected')!;
+    const optionsKey = keyFor('options', 'option');
+
+    for (const row of parseMarkdownTable(run.text)) {
+      const questionText = row[questionKey] ?? '';
+      const optionsCell = optionsKey !== undefined ? (row[optionsKey] ?? '') : '';
+      const selectedCell = row[selectedKey] ?? '';
+      if (questionText.trim() === '' && optionsCell.trim() === '' && selectedCell.trim() === '') continue;
+      questions.push({ topic: section.heading, ...parseCompactRow(questionText.trim(), optionsCell, selectedCell) });
+    }
+  }
+
+  const leftover = lines.some((line, i) => {
+    const trimmed = line.trim();
+    return trimmed !== '' && trimmed !== '---' && !consumed.has(i);
+  });
+  return { questions, leftover };
+}
+
 /**
  * Composes `splitSections` → `splitSubsections` → `parseMarkdownTable` over every corpus question
  * shape (JXP-05): S1 (`##` topic → `###` question → option table), S2 (the canonical GSD template
@@ -431,12 +564,17 @@ export function extractDiscussionLog(body: string): DiscussionLogProjection {
     );
     const hasBoldQLine = section.body.split('\n').some((l) => BOLD_Q_LINE_RE.test(l.trim()));
     const hasDirectTable = section.body.split('\n').some((l) => l.trim().startsWith('|'));
+    const hasCompactTable = splitIntoTableRuns(section.body.split('\n')).some((run) =>
+      tableHasQuestionAndSelected(run.text.split('\n')[0] ?? ''),
+    );
 
     let extracted: { questions: DiscussionQuestion[]; leftover: boolean };
     if (subsections.length > 0 && hasTableSubsection) {
       extracted = extractS1Topic(section);
     } else if (hasBoldQLine) {
       extracted = extractS3Topic(section);
+    } else if (hasCompactTable) {
+      extracted = extractS4Topic(section);
     } else if (hasDirectTable && subsections.length === 0) {
       extracted = extractS2Topic(section);
     } else {
