@@ -130,7 +130,9 @@ export function DashboardPage(): React.JSX.Element {
           <p className="eyebrow">
             <MapPin aria-hidden="true" /> Current position
           </p>
-          <p className="milestone-label">{view.current.milestone.display}</p>
+          {view.current.milestone.value !== null && (
+            <p className="milestone-label">{view.current.milestone.display}</p>
+          )}
           <h1 id="current-position-heading">
             <span>Phase {view.current.phaseNumber.display}</span>
             {view.current.phaseName.display}
