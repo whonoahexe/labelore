@@ -1586,6 +1586,12 @@ summary.tree-node-row:focus-visible {
   border-left: 1px solid var(--border);
 }
 
+/* The columns assume Plan completion (narrow) beside Depends on (wide). A phase with no plans yet
+ * shows Depends on alone, so a lone fact takes the whole row instead of the narrow first column. */
+.phase-facts > div:only-child {
+  grid-column: 1 / -1;
+}
+
 .phase-facts dt {
   margin-bottom: var(--space-1);
   color: var(--muted-foreground);
