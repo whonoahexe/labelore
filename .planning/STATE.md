@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-13T09:23:11.503Z"
+last_updated: "2026-10-15T19:58:52.614Z"
 last_activity: 2026-10-11
 last_activity_desc: Completed quick task 260929-3x3 (RESEARCH page view)
-state_head: 1fea530584dde046cc1a58657acc04e9f3abfce6
+state_head: 50af849edf89c7b9ed7bab953f4085775976ec1e
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -172,6 +172,7 @@ None.
 | 57 | SUMMARY Patterns: gap below New dependencies | 2026-10-08 | fac2ff1 | — |
 | 261011-l07 | Support sftp:// and ssh:// target paths by mirroring the remote .planning over ssh | 2026-10-11 | 45c02e5 | [261011-l07-support-sftp-and-ssh-target-paths-by-mir](./quick/261011-l07-support-sftp-and-ssh-target-paths-by-mir/) |
 | 59 | PlanPairPage renders the polished PLAN navigator and SUMMARY run views (Plan/Summary/Coverage switch) | 2026-10-13 | 1fea530 | — |
+| 60 | Dashboard handles a project with no milestone recorded: hides the milestone label and still finds the current phase | 2026-10-16 | 50af849 | — |
 
 ## Deferred Items
 
