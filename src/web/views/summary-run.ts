@@ -117,7 +117,10 @@ export interface ComposedSummaryHead {
   completed: string | null;
   oneLiner: string | null;
   status: { label: string; tone: SummaryTone };
+  /** The leading length alone ("50min", "7h 46m"), or the text as written when none leads it. */
   duration: string | null;
+  /** The duration as written, when it says more than `duration` (shown on hover); else null. */
+  durationNote: string | null;
   /** HH:MM as written, or null. */
   started: string | null;
   type: string | null;
@@ -515,6 +518,14 @@ function planIdOf(id: Identity, fm: Rec): string {
     return plan === '' ? id.number : `${id.number}-${pad2(plan)}`;
   }
   return id.quickId ?? '';
+}
+
+const LEADING_DURATION_RE = /^(?:\d+(?:\.\d+)?\s*(?:days?|d|hours?|hrs?|h|minutes?|mins?|m|seconds?|secs?|s)\b\s*)+/i;
+
+/** "50min active (wall clock 14h 30m …)" -> "50min"; text with no leading length is kept whole. */
+function shortDuration(raw: string): string {
+  const match = LEADING_DURATION_RE.exec(raw.trim());
+  return match ? match[0].trim() : raw;
 }
 
 function stripParenSuffix(text: string): string {
@@ -1002,7 +1013,9 @@ export function composeSummaryRun(input: ViewInput): ComposedSummaryRun | null {
   const statusText = maybeString(fm.status) ?? (factStatus ? maybeString(factStatus.value) : null);
   const completedRaw = maybeString(fm.completed) ?? maybeString(metrics?.completed) ?? summary.performance.completed;
   const completed = dateOf(completedRaw);
-  const duration = maybeString(fm.duration) ?? maybeString(metrics?.duration) ?? summary.performance.duration;
+  const durationRaw = maybeString(fm.duration) ?? maybeString(metrics?.duration) ?? summary.performance.duration;
+  const duration = durationRaw === null ? null : shortDuration(durationRaw);
+  const durationNote = durationRaw !== null && duration !== durationRaw.trim() ? durationRaw : null;
   const started = startedOf(summary.performance.started);
 
   const tasks = tasksOf(fm, summary);
@@ -1061,6 +1074,7 @@ export function composeSummaryRun(input: ViewInput): ComposedSummaryRun | null {
       oneLiner: summary.oneLiner,
       status: statusOf(statusText),
       duration,
+      durationNote,
       started,
       type: typeOf(fm.subsystem),
       selfCheck: selfCheckOf(summary.selfCheck),

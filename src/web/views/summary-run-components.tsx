@@ -939,7 +939,7 @@ export function SummaryRunView({
               </div>
               <div className="view-summary-stat">
                 <span className="view-summary-key">Duration</span>
-                <b title={head.duration ?? undefined}>{head.duration ?? '—'}</b>
+                <b title={head.durationNote ?? head.duration ?? undefined}>{head.duration ?? '—'}</b>
               </div>
               <div className="view-summary-stat">
                 <span className="view-summary-key">Started</span>

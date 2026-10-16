@@ -128,6 +128,18 @@ describe('composeSummaryRun — literal inputs', () => {
     ).toBeNull();
   });
 
+  it('shows the leading length of a duration and keeps the full text as its note', () => {
+    const base = { kind: 'summary', structured: { summary: MINIMAL }, groups: [], planSegments: [] };
+    const head = (duration: string) => composeSummaryRun({ ...base, frontmatter: { duration } })?.head;
+    expect(head('50min active (wall clock 14h 30m including a rate-limit pause)')).toMatchObject({
+      duration: '50min',
+      durationNote: '50min active (wall clock 14h 30m including a rate-limit pause)',
+    });
+    expect(head('7h 46m (wall clock, includes an API session-limit pause mid-plan)')?.duration).toBe('7h 46m');
+    expect(head('12min')).toMatchObject({ duration: '12min', durationNote: null });
+    expect(head('about an hour')).toMatchObject({ duration: 'about an hour', durationNote: null });
+  });
+
   it('formats a Date, an ISO string and a bare date alike and reads numeric phase and plan', () => {
     const base = { kind: 'summary', structured: { summary: MINIMAL }, groups: [], planSegments: [] };
     for (const completed of ['2026-09-20', '2026-09-20T00:00:00.000Z', new Date('2026-09-20T00:00:00Z')]) {
