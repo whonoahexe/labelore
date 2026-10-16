@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-16T10:25:05.435Z"
+last_updated: "2026-10-16T10:45:20.113Z"
 last_activity: 2026-10-16
 last_activity_desc: Completed quick task 261016-2j6 (compact discussion-log tables)
-state_head: d052b2184bc11fe3c65afd8bf98b5319a7c3dbbb
+state_head: ffb891894f4f0b00643a9eb3d8773ea0f60963b3
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -181,6 +181,7 @@ None.
 | 66 | in the summary page, view-summary-meta-left has 'summary' - it should say summary of xx - xx (wave-plan) - like the plan page | 2026-10-16 | 137a9c6 | — |
 | 67 | in the summary page, there's no need for view-summary-also section. we can just show them in summary-source-only | 2026-10-16 | 7a7b603 | — |
 | 68 | summary page Duration stat shows just the leading length (50min), not the wall-clock note | 2026-10-16 | d052b21 | — |
+| 69 | VALIDATION cover notes a passed phase verification the strategy never caught up with | 2026-10-16 | ffb8918 | — |
 
 ## Deferred Items
 
