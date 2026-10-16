@@ -127,7 +127,7 @@ describe('sketch docs — labelore', () => {
   it('05-01: the canonical summary', () => {
     const a = artifactAt(lb, 'v1.1-phases/05-per-type-document-views/05-01-SUMMARY.md');
     const m = compose(a);
-    expect(m.head.eyebrow).toBe('Summary · Phase 5 · Per type document views');
+    expect(m.head.eyebrow).toBe('Summary of 05-01 · Phase 5 · Per type document views');
     expect(m.head.title).toBe('Discussion-log view, section-projection extractor, view registry');
     expect([m.head.completed, m.head.duration, m.head.started, m.head.type]).toEqual(['20 Sep 2026', '26min', '20:34', 'UI']);
     expect(m.head.status).toEqual({ label: 'Complete', tone: 'complete' });
@@ -188,7 +188,7 @@ describe.runIf(hasSp)('sketch docs — studio-portal', () => {
   it('04-06: awaiting a checkpoint', () => {
     const a = artifactAt(sp as ProjectPresentation, 'phases/04-bulk-archive-downloads/04-06-SUMMARY.md');
     const m = compose(a);
-    expect(m.head.eyebrow).toBe('Summary · Phase 4 · Bulk archive downloads');
+    expect(m.head.eyebrow).toBe('Summary of 04-06 · Phase 4 · Bulk archive downloads');
     expect(m.head.title).toBe('Archive Job Presentation, Auto-Collection & Omission Disclosure');
     expect(m.head.status).toEqual({ label: 'Awaiting checkpoint', tone: 'in-flight' });
     expect([m.head.completed, m.head.duration, m.head.started, m.head.type]).toEqual([null, null, null, 'Frontend']);
@@ -206,7 +206,7 @@ describe.runIf(hasSp)('sketch docs — studio-portal', () => {
   it('01-01: deps added, five rule-tagged deviations', () => {
     const a = artifactAt(sp as ProjectPresentation, 'phases/01-portal-owned-identity-sessions/01-01-SUMMARY.md');
     const m = compose(a);
-    expect(m.head.eyebrow).toBe('Summary · Phase 1 · Portal owned identity sessions');
+    expect(m.head.eyebrow).toBe('Summary of 01-01 · Phase 1 · Portal owned identity sessions');
     expect(m.head.title).toBe('Portal-Owned Password Sessions');
     expect([m.head.completed, m.head.duration, m.head.started, m.head.type]).toEqual(['3 Aug 2026', '36min', '16:50', 'Auth']);
     expect(m.triggers).toEqual({ tasks: { label: 'Tasks', count: 3 }, files: { count: 16 }, requirements: { done: 3, pending: 0 } });

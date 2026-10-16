@@ -499,9 +499,11 @@ function identityOf(fm: Rec, summary: SafeSummary): Identity {
   return { number: null, slug: null, quickId: null };
 }
 
-function eyebrowOf(id: Identity): string {
+/** "Summary of 05-01 · Phase 5 · Slug", as the plan page's "Plan 05-01 · …"; plain "Summary" without a plan number. */
+function eyebrowOf(id: Identity, planId: string): string {
   if (id.number !== null) {
-    const base = `Summary · Phase ${stripLeadingZeros(id.number)}`;
+    const lead = planId !== id.number ? `Summary of ${planId}` : 'Summary';
+    const base = `${lead} · Phase ${stripLeadingZeros(id.number)}`;
     return id.slug === null ? base : `${base} · ${humanize(id.slug)}`;
   }
   if (id.quickId !== null) return `Quick summary · ${id.quickId}`;
@@ -1048,7 +1050,7 @@ export function composeSummaryRun(input: ViewInput): ComposedSummaryRun | null {
   return {
     quick,
     head: {
-      eyebrow: eyebrowOf(identity),
+      eyebrow: eyebrowOf(identity, planId),
       title: titleOf(summary.h1),
       planId,
       completed,

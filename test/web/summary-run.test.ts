@@ -136,7 +136,7 @@ describe('composeSummaryRun — literal inputs', () => {
       expect(model?.head.planId).toBe('3-02');
     }
     const named = composeSummaryRun({ ...base, frontmatter: { phase: '03-the-slug', plan: 2 } });
-    expect(named?.head.eyebrow).toBe('Summary · Phase 3 · The slug');
+    expect(named?.head.eyebrow).toBe('Summary of 03-02 · Phase 3 · The slug');
     expect(named?.head.planId).toBe('03-02');
     expect(named?.head.completed).toBeNull();
     expect(named?.head.status).toEqual({ label: '—', tone: 'quiet' });
@@ -284,7 +284,7 @@ describe('0501 through the real handler', () => {
 
   it('composes the pinned head, triggers and modals', () => {
     expect(model.head).toMatchObject({
-      eyebrow: 'Summary · Phase 5 · Per type document views',
+      eyebrow: 'Summary of 05-01 · Phase 5 · Per type document views',
       title: 'Discussion-log view, section-projection extractor, view registry',
       planId: '05-01',
       completed: '20 Sep 2026',
@@ -348,7 +348,7 @@ describe('0501 through the real handler', () => {
     const html = view(model);
     expect(count(html, '<h1')).toBe(1);
     expect(html).toContain('Discussion-log view, section-projection extractor, view registry</h1>');
-    expect(html).toContain('Summary · Phase 5 · Per type document views');
+    expect(html).toContain('Summary of 05-01 · Phase 5 · Per type document views');
     expect(html).toContain('Completed <b>20 Sep 2026</b>');
     expect(html).toContain('<b data-tone="complete">Complete</b>');
     expect(html).toContain('title="26min">26min</b>');
