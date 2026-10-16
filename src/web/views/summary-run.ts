@@ -291,7 +291,6 @@ export interface ComposedSummaryRun {
   proof: ComposedProofRow[] | null;
   decisions: ComposedDecisions;
   patterns: ComposedPatterns | null;
-  also: ComposedLooseSection[];
   waits: ComposedLooseSection[];
   lineage: ComposedLineage | null;
   next: string | null;
@@ -961,7 +960,8 @@ function headingIdOf(headings: ViewInput['headings'], predicate: (normalized: st
   return null;
 }
 
-function sourceOnlyOf(fm: Rec, summary: SafeSummary, headings: ViewInput['headings']): ComposedSourceOnly[] {
+/** The B footer chips; a loose section that waits on no human is named here rather than rendered. */
+function sourceOnlyOf(fm: Rec, summary: SafeSummary, also: string[], headings: ViewInput['headings']): ComposedSourceOnly[] {
   const graph = rec(fm['dependency-graph']);
   const out: ComposedSourceOnly[] = [];
   if (strList(fm.tags).length > 0) out.push({ label: 'Tags', targetId: null });
@@ -972,6 +972,10 @@ function sourceOnlyOf(fm: Rec, summary: SafeSummary, headings: ViewInput['headin
   }
   if (summary.sections.some((s) => normalizeHeading(asStr(s.heading)).startsWith('self-check'))) {
     out.push({ label: 'Self-check', targetId: headingIdOf(headings, (t) => t.startsWith('self-check')) });
+  }
+  for (const title of also) {
+    const normalized = normalizeHeading(title);
+    out.push({ label: title, targetId: headingIdOf(headings, (t) => t === normalized) });
   }
   if (Object.keys(fm).length > 0) out.push({ label: 'Frontmatter', targetId: null });
   return out;
@@ -1011,11 +1015,11 @@ export function composeSummaryRun(input: ViewInput): ComposedSummaryRun | null {
   const outcome = outcomeOf(summary.accomplishments, proof, fixed);
 
   const waits: ComposedLooseSection[] = [];
-  const also: ComposedLooseSection[] = [];
+  const also: string[] = [];
   summary.others.forEach((section, index) => {
     if (typeof section.title !== 'string' || section.none === true) return;
-    const entry = { key: `summary-also-${index}`, title: section.title, blocks: arr<Block>(section.blocks) };
-    (isHumanTitle(section.title) ? waits : also).push(entry);
+    if (isHumanTitle(section.title)) waits.push({ key: `summary-wait-${index}`, title: section.title, blocks: arr<Block>(section.blocks) });
+    else also.push(section.title);
   });
 
   const run = runOf(summary, tasks, commitCount, { started, completed, duration }, waits);
@@ -1080,11 +1084,10 @@ export function composeSummaryRun(input: ViewInput): ComposedSummaryRun | null {
     proof,
     decisions,
     patterns,
-    also,
     waits,
     lineage: lineageOf(fm, planId),
     next: summary.next === null ? null : summary.next,
-    sourceOnly: sourceOnlyOf(fm, summary, input.headings),
+    sourceOnly: sourceOnlyOf(fm, summary, also, input.headings),
   };
 }
 

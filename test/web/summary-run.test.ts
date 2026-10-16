@@ -210,7 +210,7 @@ describe('composeSummaryRun — literal inputs', () => {
       groups: [],
       planSegments: [],
     });
-    expect(model?.also.map((s) => s.title)).toEqual(['Verification']);
+    expect(model?.sourceOnly.map((s) => s.label)).toEqual(expect.arrayContaining(['Verification']));
     expect(model?.waits.map((s) => s.title)).toEqual(['Task 3 — Pending Human Verification']);
     expect(model?.run.stops.map((s) => s.kind)).toEqual(['start', 'commits', 'wait', 'end']);
   });
@@ -219,16 +219,17 @@ describe('composeSummaryRun — literal inputs', () => {
     const model = composeSummaryRun({
       kind: 'summary',
       frontmatter: { tags: ['a'], actuals: { commits: 1 }, phase: '01-x' },
-      structured: { summary: { ...MINIMAL, sections: [{ heading: 'Performance', claimed: true }, { heading: 'Self-Check: PASSED', claimed: true }] } },
+      structured: { summary: { ...MINIMAL, sections: [{ heading: 'Performance', claimed: true }, { heading: 'Self-Check: PASSED', claimed: true }], others: [{ title: 'Note on STATE.md', blocks: [], none: false }] } },
       groups: [],
       planSegments: [],
-      headings: [{ id: 'performance', text: 'Performance', depth: 2 }, { id: 'self-check-passed', text: 'Self-Check: PASSED', depth: 2 }],
+      headings: [{ id: 'performance', text: 'Performance', depth: 2 }, { id: 'self-check-passed', text: 'Self-Check: PASSED', depth: 2 }, { id: 'note-on-statemd', text: 'Note on STATE.md', depth: 2 }],
     });
     expect(model?.sourceOnly).toEqual([
       { label: 'Tags', targetId: null },
       { label: 'Actuals', targetId: null },
       { label: 'Performance', targetId: 'performance' },
       { label: 'Self-check', targetId: 'self-check-passed' },
+      { label: 'Note on STATE.md', targetId: 'note-on-statemd' },
       { label: 'Frontmatter', targetId: null },
     ]);
   });
@@ -334,14 +335,14 @@ describe('0501 through the real handler', () => {
     expect(model.patterns?.items).toHaveLength(4);
     expect(model.patterns?.items.filter((p) => p.kind === 'convention')).toHaveLength(1);
     expect(model.patterns?.added).toEqual([]);
-    expect(model.also.map((s) => s.title)).toEqual(['Known Stubs']);
+    expect(model.sourceOnly.map((s) => s.label)).toEqual(expect.arrayContaining(['Known Stubs']));
     expect(model.waits).toEqual([]);
     expect(model.lineage?.planId).toBe('05-01');
     expect(model.lineage?.requires).toHaveLength(1);
     expect(model.lineage?.requires[0].label).toBe('Phase 2');
     expect(model.lineage?.affects).toHaveLength(5);
     expect(model.next).toContain('view-registry seam');
-    expect(model.sourceOnly.map((s) => s.label)).toEqual(['Tags', 'Provides', 'Actuals', 'Performance', 'Self-check', 'Frontmatter']);
+    expect(model.sourceOnly.map((s) => s.label)).toEqual(['Tags', 'Provides', 'Actuals', 'Performance', 'Self-check', 'Known Stubs', 'Frontmatter']);
   });
 
   it('renders the head, outcome, timeline and proof as static markup', () => {
@@ -503,7 +504,7 @@ describe.runIf(hasSp)('studio-portal summaries through the real handler', () => 
     expect(model.run.stops.find((s) => s.kind === 'task' && s.n === 1)?.deviations).toHaveLength(1);
     expect(model.run.stops.find((s) => s.kind === 'task' && s.n === 2)?.deviations).toHaveLength(1);
     expect(model.run.stops[model.run.stops.length - 1].label).toBe('Not completed yet');
-    expect(model.also.map((s) => s.title)).toEqual(['What Was Built', 'Verification', 'Flagged Conflict — D-04 vs. D-14/D-16 — RESOLVED (E1, 2026-08-25)']);
+    expect(model.sourceOnly.map((s) => s.label)).toEqual(expect.arrayContaining(['What Was Built', 'Verification', 'Flagged Conflict — D-04 vs. D-14/D-16 — RESOLVED (E1, 2026-08-25)']));
     expect(model.waits.map((s) => s.title)).toEqual(['Task 3 — Pending Human Verification']);
     expect(model.run.extras.map((e) => e.title)).toHaveLength(2);
     expect(model.lineage?.requires).toHaveLength(2);

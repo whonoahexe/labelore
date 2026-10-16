@@ -163,7 +163,7 @@ describe('sketch docs — labelore', () => {
     expect(m.proof).toHaveLength(7);
     expect(m.proof?.filter((p) => p.human)).toHaveLength(1);
     expect(m.decisions.items).toHaveLength(8);
-    expect(m.also.map((s) => s.title)).toEqual(['Fourteen-Item Outcome Table', 'Note on STATE.md']);
+    expect(m.sourceOnly.map((s) => s.label)).toEqual(expect.arrayContaining(['Fourteen-Item Outcome Table', 'Note on STATE.md']));
     expect(m.lineage?.affects).toHaveLength(3);
     const previews = requirementPreviews(lb, a.path, m.modals.requirements, m.quick);
     expect(Object.values(previews).every((p) => !p.found)).toBe(true);
@@ -180,7 +180,7 @@ describe('sketch docs — labelore', () => {
     const previews = requirementPreviews(lb, a.path, m.modals.requirements, m.quick);
     expect(previews['B3-01']).toMatchObject({ found: false, status: 'Complete in this summary', location: '—', phase: '—', url: null });
     expect(m.waits.map((s) => s.title)).toEqual(['Human check (pending)']);
-    expect(m.also.map((s) => s.title)).toEqual(['Verification']);
+    expect(m.sourceOnly.map((s) => s.label)).toEqual(expect.arrayContaining(['Verification']));
   });
 });
 
