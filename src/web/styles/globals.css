@@ -15427,6 +15427,1152 @@ a.view-summary-node:hover {
 }
 /* quick-261006-iz7:end */
 
+/* quick-261017-18a:start */
+/* ==========================================================================
+   VERIFICATION page (quick-261017-18a, sketch 021 winner E): the console rail beside the main
+   column - the phase goal, the Gap -> fix ledger, the Truth and Requirement boards, the numbered
+   human steps, the anti-patterns, the Also row and the footer. Colours are theme tokens and the
+   design-language tones only: no parse-degradation tone, no colour-mix, no radius (corners stay
+   squared), and no motion beyond a colour change on hover and the jump highlight (`data-flash`).
+   Ancestors of a .status-chip set no line-height, so every chip keeps the inherited body value
+   (F-05). Media overrides sit directly after their base rules (css-source-order).
+   ========================================================================== */
+
+.view-verification-board-page {
+  display: grid;
+  grid-template-columns: 21rem minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: start;
+  min-width: 0;
+}
+
+@media (max-width: 62rem) {
+  .view-verification-board-page {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.view-verification-rail {
+  position: sticky;
+  top: var(--space-22);
+  display: grid;
+  gap: var(--space-5);
+  min-width: 0;
+  max-height: calc(100vh - var(--space-22));
+  padding-right: var(--space-6);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+}
+
+@media (max-width: 62rem) {
+  .view-verification-rail {
+    position: static;
+    max-height: none;
+    padding-right: 0;
+    padding-bottom: var(--space-5);
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    overflow-y: visible;
+  }
+}
+
+.view-verification-identity {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+  min-width: 0;
+}
+
+.view-verification-identity h1 {
+  margin: 0;
+  font-size: var(--fs-fluid-4);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+  overflow-wrap: anywhere;
+}
+
+.view-verification-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-verification-facts b {
+  margin-left: var(--space-1-5);
+  color: var(--foreground);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* The big-number frame: a tone bar, the number, what it counts and the context line. */
+.view-verification-big {
+  display: grid;
+  grid-template-columns: var(--space-1-5) minmax(0, 1fr);
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+}
+
+.view-verification-big-bar {
+  background: var(--muted-foreground);
+}
+
+.view-verification-big-number {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-display-1);
+  letter-spacing: var(--ls-tighter);
+  line-height: var(--lh-display);
+}
+
+.view-verification-big-label {
+  margin-top: var(--space-2);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+}
+
+.view-verification-big-sub {
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.view-verification-big[data-tone='complete'] {
+  border-color: var(--primary);
+}
+
+.view-verification-big[data-tone='complete'] .view-verification-big-bar {
+  background: var(--primary);
+}
+
+.view-verification-big[data-tone='complete'] .view-verification-big-number {
+  color: var(--primary);
+}
+
+.view-verification-big[data-tone='in-flight'] {
+  border-color: var(--in-flight-border);
+}
+
+.view-verification-big[data-tone='in-flight'] .view-verification-big-bar {
+  background: var(--in-flight-fill);
+}
+
+.view-verification-big[data-tone='in-flight'] .view-verification-big-number {
+  color: var(--in-flight-fill);
+}
+
+.view-verification-big[data-tone='missing'] {
+  border-color: var(--missing-border);
+}
+
+.view-verification-big[data-tone='missing'] .view-verification-big-bar {
+  background: var(--missing-fill);
+}
+
+.view-verification-big[data-tone='missing'] .view-verification-big-number {
+  color: var(--missing-fill);
+}
+
+/* Stat rows: a label and its value; the ones with a target jump to it. */
+.view-verification-stats {
+  display: grid;
+  border-top: 1px solid var(--border);
+}
+
+.view-verification-stat {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-align: left;
+  text-transform: uppercase;
+}
+
+button.view-verification-stat {
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+button.view-verification-stat:hover {
+  color: var(--primary);
+}
+
+.view-verification-stat b {
+  color: var(--foreground);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0;
+  text-align: right;
+  text-transform: none;
+}
+
+.view-verification-stat b[data-tone='missing'] {
+  color: var(--missing-fill);
+}
+
+.view-verification-stat b[data-tone='in-flight'] {
+  color: var(--in-flight-fill);
+}
+
+/* The human-check slips: a dashed pointer to each numbered step. */
+.view-verification-slips {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.view-verification-slip {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--in-flight-border);
+  background: none;
+  font-size: var(--fs-3);
+  text-align: left;
+  transition: border-color 0.15s ease;
+}
+
+.view-verification-slip:hover {
+  border-style: solid;
+}
+
+.view-verification-slip-dot {
+  width: var(--space-3);
+  height: var(--space-3);
+  margin-top: var(--space-1);
+  border: 1.5px solid var(--in-flight-fill);
+}
+
+.view-verification-slip b {
+  display: block;
+  font-weight: var(--fw-medium);
+}
+
+.view-verification-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.view-verification-main {
+  display: grid;
+  gap: var(--space-10);
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+
+.view-verification-key {
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-verification-muted {
+  color: var(--muted-foreground);
+}
+
+.view-verification-mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.view-verification-lead {
+  max-width: 62ch;
+  margin: 0;
+  font-size: var(--fs-5);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
+}
+
+.view-verification-lead .view-verification-key {
+  display: block;
+  margin-bottom: var(--space-1);
+}
+
+.view-verification-section {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.view-verification-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.view-verification-heading h2 {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-fluid-3);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tight);
+}
+
+.view-verification-aside {
+  display: flex;
+  gap: var(--space-4);
+  align-items: baseline;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-verification-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.view-verification-link:hover {
+  color: var(--primary);
+}
+
+.view-verification-empty {
+  padding: var(--space-4);
+  border: 1px dashed var(--border);
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+}
+
+.view-verification-note {
+  max-width: 70ch;
+  margin: 0;
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  overflow-wrap: anywhere;
+}
+
+/* The Gap -> fix ledger: one row per gap, the tasks that close it, the scope of that plan. */
+.view-verification-ledger {
+  display: grid;
+  border-top: 1px solid var(--border);
+}
+
+.view-verification-gap[data-flash='true'] {
+  background: var(--primary-tint);
+}
+
+.view-verification-row {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1.2fr) 1.5rem minmax(0, 1fr) auto;
+  gap: var(--space-2) var(--space-4);
+  align-items: start;
+  width: 100%;
+  padding: var(--space-4) 0;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.view-verification-row:hover {
+  background: var(--state-hover);
+}
+
+@media (max-width: 42rem) {
+  .view-verification-row {
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+  }
+}
+
+.view-verification-gap-number {
+  color: var(--missing-fill);
+  font-family: var(--font-mono);
+  font-size: var(--fs-6);
+  line-height: var(--lh-tight);
+}
+
+.view-verification-gap[data-kind='noncritical'] .view-verification-gap-number {
+  color: var(--in-flight-fill);
+}
+
+.view-verification-gap-name {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.view-verification-gap-name b {
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+  overflow-wrap: anywhere;
+}
+
+.view-verification-preview {
+  display: -webkit-box;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.view-verification-arrow {
+  padding-top: var(--space-0-5);
+  color: var(--primary);
+  font-family: var(--font-mono);
+}
+
+@media (max-width: 42rem) {
+  .view-verification-arrow {
+    display: none;
+  }
+}
+
+.view-verification-chips {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.view-verification-task-chip {
+  display: block;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--primary);
+  background: var(--primary-tint);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.view-verification-task-prefix {
+  margin-right: var(--space-1-5);
+  color: var(--primary);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+}
+
+.view-verification-nofix {
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  font-style: italic;
+}
+
+@media (max-width: 42rem) {
+  .view-verification-chips,
+  .view-verification-scope {
+    grid-column: 2;
+  }
+}
+
+.view-verification-scope {
+  display: inline-flex;
+  gap: var(--space-1-5);
+  align-items: center;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.view-verification-scope i {
+  display: inline-block;
+  width: 0.9rem;
+  height: 0.45rem;
+  border: 1px solid var(--primary);
+}
+
+.view-verification-scope i[data-filled='true'] {
+  background: var(--primary);
+}
+
+.view-verification-scope[data-stated='false'] i {
+  border-style: dashed;
+  border-color: var(--border);
+}
+
+.view-verification-scope b {
+  color: var(--foreground);
+  font-weight: var(--fw-medium);
+}
+
+/* The opened gap: three spaced columns, the where-notes under a hairline, then the tickets. */
+.view-verification-detail {
+  display: grid;
+  gap: var(--space-6);
+  padding: var(--space-2) 0 var(--space-8) calc(var(--space-10) + var(--space-4));
+  border-bottom: 1px solid var(--border);
+}
+
+@media (max-width: 42rem) {
+  .view-verification-detail {
+    padding-left: 0;
+  }
+}
+
+.view-verification-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-8);
+}
+
+@media (max-width: 62rem) {
+  .view-verification-columns {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+  }
+}
+
+.view-verification-columns > div,
+.view-verification-step-columns > div {
+  display: grid;
+  gap: var(--space-2-5);
+  align-content: start;
+  min-width: 0;
+  font-size: var(--fs-4);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
+}
+
+.view-verification-columns ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.view-verification-columns em {
+  color: var(--foreground);
+  font-style: normal;
+}
+
+.view-verification-where {
+  display: grid;
+  gap: var(--space-2-5);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+.view-verification-where > div {
+  display: grid;
+  gap: var(--space-0-5);
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.view-verification-where code {
+  color: var(--foreground);
+}
+
+.view-verification-ticket {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3) var(--space-4);
+  align-items: start;
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--primary);
+  border-left-width: 3px;
+  background: var(--card);
+}
+
+.view-verification-ticket-title {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.view-verification-ticket-name {
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+  overflow-wrap: anywhere;
+}
+
+.view-verification-file {
+  margin-right: var(--space-2);
+  color: var(--primary);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-verification-ticket-tasks {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: var(--space-2);
+}
+
+.view-verification-task {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr);
+  gap: var(--space-2);
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.view-verification-task[data-hit='true'] {
+  color: var(--foreground);
+}
+
+.view-verification-task-n {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+}
+
+.view-verification-task[data-hit='true'] .view-verification-task-n {
+  color: var(--primary);
+}
+
+.view-verification-more {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.view-verification-unmapped {
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.view-verification-unmapped summary {
+  padding: var(--space-2-5) var(--space-4);
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  cursor: pointer;
+}
+
+.view-verification-unmapped ul {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0 var(--space-4) var(--space-4) var(--space-8);
+  font-size: var(--fs-3);
+}
+
+/* The boards: a scrolling table of numbered squares and an inspector below it. */
+.view-verification-board-title {
+  display: flex;
+  gap: var(--space-3);
+  align-items: baseline;
+  font-family: var(--font-mono);
+  font-size: var(--fs-3);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-verification-board-title .view-verification-muted {
+  font-size: var(--fs-2);
+}
+
+.view-verification-board {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+}
+
+.view-verification-board table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.view-verification-board th,
+.view-verification-board td {
+  padding: var(--space-2-5) var(--space-3);
+  border: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.view-verification-board thead th {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.view-verification-board tbody th {
+  width: 8rem;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-verification-board tr[data-row='failed'] th,
+.view-verification-board tr[data-row='blocked'] th {
+  color: var(--missing-fill);
+}
+
+.view-verification-board tr[data-row='open'] th,
+.view-verification-board tr[data-row='human'] th {
+  color: var(--in-flight-fill);
+}
+
+.view-verification-board tr[data-row='ok'] th,
+.view-verification-board tr[data-row='partial'] th,
+.view-verification-board tr[data-row='satisfied'] th {
+  color: var(--primary);
+}
+
+.view-verification-board td[data-empty='true'] {
+  background: repeating-linear-gradient(135deg, transparent 0 6px, var(--border-faint) 6px 7px);
+}
+
+.view-verification-meter {
+  display: flex;
+  gap: var(--space-0-5);
+  margin-bottom: var(--space-1-5);
+}
+
+.view-verification-meter i {
+  width: 0.55rem;
+  height: 0.8rem;
+  border: 1px solid currentColor;
+}
+
+.view-verification-meter i[data-filled='true'] {
+  background: currentColor;
+}
+
+.view-verification-squares {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.view-verification-square {
+  display: grid;
+  place-items: center;
+  min-width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  border: 1px solid transparent;
+  background: var(--muted-foreground);
+  color: var(--background);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  cursor: pointer;
+}
+
+.view-verification-square[data-wide='true'] {
+  padding: 0 var(--space-2);
+  font-size: var(--fs-2);
+}
+
+.view-verification-square[data-state='verified'],
+.view-verification-square[data-state='satisfied'] {
+  background: var(--primary);
+}
+
+.view-verification-square[data-state='coincidental'] {
+  border-color: var(--primary);
+  background: var(--primary-tint);
+  color: var(--foreground);
+}
+
+.view-verification-square[data-state='override'] {
+  border-color: var(--primary);
+  background: none;
+  color: var(--primary);
+}
+
+.view-verification-square[data-state='failed'],
+.view-verification-square[data-state='blocked'] {
+  background: var(--missing-fill);
+}
+
+.view-verification-square[data-state='unverified'],
+.view-verification-square[data-state='mixed'],
+.view-verification-square[data-state='human'] {
+  background: var(--in-flight-fill);
+}
+
+.view-verification-square[data-state='uncertain'] {
+  border: 1px dashed var(--in-flight-fill);
+  background: none;
+  color: var(--in-flight-fill);
+}
+
+.view-verification-square[data-state='partial'] {
+  background: repeating-linear-gradient(135deg, var(--primary) 0 4px, var(--in-flight-fill) 4px 8px);
+}
+
+.view-verification-square:hover {
+  outline: 1px solid var(--foreground);
+  outline-offset: 1px;
+}
+
+.view-verification-square[aria-pressed='true'] {
+  outline: 2px solid var(--foreground);
+  outline-offset: 1px;
+}
+
+.view-verification-inspector {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.view-verification-inspector-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.view-verification-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.view-verification-inspector h3 {
+  margin: 0;
+  font-size: var(--fs-6);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+}
+
+.view-verification-inspector dl {
+  display: grid;
+  grid-template-columns: 8rem minmax(0, 1fr);
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  font-size: var(--fs-4);
+}
+
+@media (max-width: 42rem) {
+  .view-verification-inspector dl {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
+}
+
+.view-verification-inspector dt {
+  padding-top: var(--space-0-5);
+}
+
+.view-verification-inspector dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-verification-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+}
+
+.view-verification-xlink {
+  display: inline-flex;
+  gap: var(--space-1-5);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  background: none;
+  font-size: var(--fs-3);
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.view-verification-xlink:hover {
+  color: var(--primary);
+}
+
+.view-verification-xlink[data-tone='missing'] {
+  border-color: var(--missing-border);
+}
+
+.view-verification-xlink[data-tone='in-flight'] {
+  border-color: var(--in-flight-border);
+}
+
+/* The human checks as numbered steps. */
+.view-verification-resolved {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  overflow-wrap: anywhere;
+}
+
+.view-verification-steps {
+  display: grid;
+  border: 1px solid var(--in-flight-border);
+}
+
+.view-verification-steps[data-resolved='true'] {
+  border-color: var(--border);
+}
+
+.view-verification-step {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-6) var(--space-5) var(--space-4);
+  border-bottom: 1px solid var(--in-flight-border);
+}
+
+.view-verification-steps[data-resolved='true'] .view-verification-step {
+  border-bottom-color: var(--border);
+}
+
+.view-verification-step:last-child {
+  border-bottom: 0;
+}
+
+.view-verification-step-number {
+  color: var(--in-flight-fill);
+  font-family: var(--font-mono);
+  font-size: var(--fs-display-3);
+  letter-spacing: var(--ls-tighter);
+  line-height: var(--lh-display);
+  text-align: right;
+}
+
+.view-verification-steps[data-resolved='true'] .view-verification-step-number {
+  color: var(--muted-foreground);
+}
+
+@media (max-width: 42rem) {
+  .view-verification-step {
+    grid-template-columns: 3.5rem minmax(0, 1fr);
+    gap: var(--space-3);
+  }
+
+  .view-verification-step-number {
+    font-size: var(--fs-7);
+  }
+}
+
+.view-verification-step h3 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--fs-6);
+  font-weight: var(--fw-medium);
+  overflow-wrap: anywhere;
+}
+
+.view-verification-step-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-5);
+}
+
+@media (max-width: 62rem) {
+  .view-verification-step-columns {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
+  }
+}
+
+/* Anti-patterns: blockers as cards, everything else as ruled rows. */
+.view-verification-blockers {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+  gap: var(--space-3);
+}
+
+.view-verification-blocker {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  padding: var(--space-4);
+  border: 1px solid var(--missing-border);
+}
+
+.view-verification-blocker p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-verification-blocker-where {
+  color: var(--missing-fill);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-verification-blocker-pattern {
+  font-family: var(--font-mono);
+  font-size: var(--fs-4);
+}
+
+.view-verification-blocker-impact {
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.view-verification-anti-rows {
+  display: grid;
+  gap: var(--space-0-5);
+}
+
+.view-verification-anti-row {
+  display: grid;
+  grid-template-columns: minmax(0, 14rem) minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-2-5) var(--space-3);
+  border-left: 3px solid var(--in-flight-fill);
+  background: var(--card);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.view-verification-anti-row[data-severity='info'],
+.view-verification-anti-row[data-severity='clear'] {
+  border-left-color: var(--border);
+  color: var(--muted-foreground);
+}
+
+@media (max-width: 62rem) {
+  .view-verification-anti-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Also in this report: one labelled row of chips that each open their section in Source. */
+.view-verification-also {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+  padding: var(--space-3) 0;
+  border-top: 1px dashed var(--border);
+  border-bottom: 1px dashed var(--border);
+}
+
+.view-verification-also ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-verification-also button.status-chip {
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.view-verification-also button.status-chip:hover {
+  background: var(--state-hover);
+}
+
+.view-verification-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  justify-content: space-between;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  overflow-wrap: anywhere;
+}
+
+/* The spot-check modal is shadcn's DialogContent; only its width, scroll and rows are ours. */
+.view-verification-modal {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+@media (min-width: 40rem) {
+  .view-verification-modal {
+    max-width: 48rem;
+  }
+}
+
+.view-verification-spot-list {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.view-verification-spot {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--space-1) var(--space-3);
+  align-items: baseline;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-faint);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.view-verification-spot-result {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  text-align: right;
+}
+
+.view-verification-spot-command {
+  grid-column: 2 / -1;
+  color: var(--muted-foreground);
+  font-size: var(--fs-2);
+}
+
+.view-verification-dot {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  background: var(--muted-foreground);
+}
+
+.view-verification-dot[data-state='verified'] {
+  background: var(--primary);
+}
+
+.view-verification-dot[data-state='failed'] {
+  background: var(--missing-fill);
+}
+
+.view-verification-dot[data-state='uncertain'] {
+  border: 1px dashed var(--in-flight-fill);
+  background: none;
+}
+/* quick-261017-18a:end */
+
 /* quick-261001-qk7:start */
 /* ==========================================================================
    quick-261001-qk7 (sketch 015 winner B): the UAT session page — every .view-uat-* rule. Additive

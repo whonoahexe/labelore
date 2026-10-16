@@ -24,6 +24,8 @@ import type { ComposedPatternMap } from './pattern-map.ts';
 import type { ComposedValidationStrategy } from './validation-strategy.ts';
 // Type-only import — same reason as `brief` above (quick-261006-iz7, sketch-020 D).
 import type { ComposedSummaryRun } from './summary-run.ts';
+// Type-only import - same reason as `brief` above (quick-261017-18a, sketch-021 E).
+import type { ComposedVerificationBoard } from './verification-board.ts';
 // Type-only import — same reason as `brief` above (quick-261003-528, sketch-018 B).
 import type { ComposedUiReview } from './ui-review.ts';
 // Type-only import — same reason as `brief` above (quick-261001-qk6, sketch-014 winner).
@@ -104,6 +106,11 @@ export interface ViewManifest {
    * `structured.summary`, or a document with nothing beyond the head), and the page falls back to the
    * promoted-block view, which the manifest keeps as `promote`. */
   summaryRun?: (input: ViewInput) => ComposedSummaryRun | null;
+  /** quick-261017-18a (sketch-021 winner E): the VERIFICATION board + ledger page a manifest opts
+   * into in View mode - currently only `verification`. Returns `null` when the input can't compose
+   * one (no `structured.verification`), and the page falls back to the sketch-004 B3 `layout`, which
+   * the manifest keeps. */
+  verificationBoard?: (input: ViewInput) => ComposedVerificationBoard | null;
   /** quick-261003-528 (sketch-018 B): the UI-REVIEW scorecard a manifest opts into instead of
    * `promote` — currently only `ui-review`. Returns `null` when the input can't compose one (no
    * `structured.uiReview`, or a document with no pillar rows), and the page falls back to the

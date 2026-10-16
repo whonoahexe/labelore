@@ -18,6 +18,7 @@ import { composeResearchBriefing } from './research-briefing.ts';
 import { composePatternMap } from './pattern-map.ts';
 import { composeValidationStrategy } from './validation-strategy.ts';
 import { composeSummaryRun } from './summary-run.ts';
+import { composeVerificationBoard } from './verification-board.ts';
 import { composeUiReview } from './ui-review.ts';
 import { composeUiSpec } from './ui-spec.ts';
 import { composeUatSession } from './uat-session.ts';
@@ -98,6 +99,7 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
       { type: 'section', heading: /^human verification/i },
     ],
     layout: verificationLayout,
+    verificationBoard: composeVerificationBoard,
   },
   plan: {
     kind: 'plan',

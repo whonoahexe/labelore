@@ -17,6 +17,7 @@ import { PatternsHandler } from './patterns.ts';
 import { ValidationHandler } from './validation.ts';
 import { UiSpecHandler } from './ui-spec.ts';
 import { UatHandler } from './uat.ts';
+import { VerificationHandler } from './verification.ts';
 import { FrontmatterOnlyHandler } from './frontmatter-only.ts';
 import { JsonConfigHandler } from './json-config.ts';
 import { WindowsHandler } from './windows.ts';
@@ -37,6 +38,7 @@ export const HANDLERS: ArtifactHandler[] = [
   ValidationHandler,
   UiSpecHandler,
   UatHandler,
+  VerificationHandler,
   FrontmatterOnlyHandler,
   JsonConfigHandler,
   WindowsHandler,
