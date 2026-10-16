@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-16T10:45:20.113Z"
+last_updated: "2026-10-16T17:06:19.508Z"
 last_activity: 2026-10-16
 last_activity_desc: Completed quick task 261016-2j6 (compact discussion-log tables)
-state_head: ffb891894f4f0b00643a9eb3d8773ea0f60963b3
+state_head: 4eb65fb1f30b6d192e8ef8bfec63a5e2ae4be85b
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-09-21)
 Phase: Milestone v1.1 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-10-16 - Completed quick task 261016-2j6: Discussion log parser: support the compact one-row-per-question table layout
+Last activity: 2026-10-16 - Completed quick task 261016-ujo: What to check panel for manual checks
 
 ## Performance Metrics
 
@@ -182,6 +182,7 @@ None.
 | 67 | in the summary page, there's no need for view-summary-also section. we can just show them in summary-source-only | 2026-10-16 | 7a7b603 | — |
 | 68 | summary page Duration stat shows just the leading length (50min), not the wall-clock note | 2026-10-16 | d052b21 | — |
 | 69 | VALIDATION cover notes a passed phase verification the strategy never caught up with | 2026-10-16 | ffb8918 | — |
+| 261016-ujo | What to check panel: a plan task needing a manual check gathers its own steps, requirement-matched VALIDATION manual rows (skipping other plans' rows), UI-SPEC backstops, Read first links and the UAT pointer | 2026-10-16 | 4eb65fb | [261016-ujo-add-a-what-to-check-panel-for-manual-che](./quick/261016-ujo-add-a-what-to-check-panel-for-manual-che/) |
 
 ## Deferred Items
 
