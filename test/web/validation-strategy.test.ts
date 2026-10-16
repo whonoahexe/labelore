@@ -4,6 +4,7 @@
 // view. A missing studio-portal checkout skips its documents.
 import { existsSync, readFileSync } from 'node:fs';
 import { createElement } from 'react';
+import { MemoryRouter } from 'react-router';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { SP_PLANNING } from '../helpers/studio-portal.ts';
@@ -139,6 +140,35 @@ describe('composeValidationStrategy — degenerate input', () => {
     ]);
     expect(composed?.intro.eyebrow).toBe('Validation strategy');
     expect(composed?.intro.title).toBeNull();
+  });
+
+  it('notes a passed VERIFICATION when the strategy is still a draft or its map was never filled in', () => {
+    const draft = inputOf('---\nstatus: draft\n---\n\n## Validation Sign-Off\n\n- [ ] one\n');
+    const verification = (status: string) => ({
+      kind: 'verification',
+      path: '.planning/phases/01-x/01-VERIFICATION.md',
+      url: '/verification',
+      frontmatter: { status, verified: '2026-07-20T21:07:07Z' },
+    });
+    const composed = composeValidationStrategy({ ...draft, siblingArtifacts: [verification('passed')] });
+    expect(composed?.intro.unreconciled).toEqual({ verified: '20 Jul 2026', url: '/verification' });
+    const html = renderToStaticMarkup(
+      createElement(
+        MemoryRouter,
+        null,
+        createElement(ValidationIntroMeta, { intro: composed!.intro, cells: composed!.cells }),
+      ),
+    );
+    expect(html).toContain('Phase verified 20 Jul 2026</a> · this strategy was never reconciled');
+
+    expect(composeValidationStrategy(draft)?.intro.unreconciled).toBeNull();
+    expect(
+      composeValidationStrategy({ ...draft, siblingArtifacts: [verification('gaps_found')] })?.intro.unreconciled,
+    ).toBeNull();
+    const validated = inputOf('---\nstatus: validated\n---\n\n## Validation Sign-Off\n\n- [x] one\n');
+    expect(
+      composeValidationStrategy({ ...validated, siblingArtifacts: [verification('passed')] })?.intro.unreconciled,
+    ).toBeNull();
   });
 
   it('keeps ID text inside a backticked Wave 0 item as code, not a task link', () => {

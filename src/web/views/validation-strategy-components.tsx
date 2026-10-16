@@ -11,6 +11,7 @@
 // `validation-strategy.ts`) and the theme tokens; the parse-degradation tones never appear on
 // document content.
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router';
 import { Check, Copy } from 'lucide-react';
 import { copyText } from '../components/copy-path-button.tsx';
 import type { ValidationRowStatus, ValidationTestKind } from '../../planning-repo/handlers/validation-strategy.ts';
@@ -191,6 +192,14 @@ export function ValidationIntroMeta({
             </span>
           ))}
         </div>
+      ) : null}
+      {intro.unreconciled ? (
+        <p className="view-validation-unreconciled">
+          <Link to={intro.unreconciled.url}>
+            Phase verified{intro.unreconciled.verified ? ` ${intro.unreconciled.verified}` : ''}
+          </Link>
+          {' · this strategy was never reconciled'}
+        </p>
       ) : null}
       <div className="view-validation-cells">
         <div className="view-validation-cell" data-cell="tasks">
