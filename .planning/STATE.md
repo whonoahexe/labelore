@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-16T10:03:16.422Z"
+last_updated: "2026-10-16T10:17:40.801Z"
 last_activity: 2026-10-16
 last_activity_desc: Completed quick task 261016-2j6 (compact discussion-log tables)
-state_head: 00f2658a4648930444ae8bd7acf7c7302e13b2d6
+state_head: 137a9c63fcd8d3ac2cfb7e51582bad36df0e10ea
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -178,6 +178,7 @@ None.
 | 63 | Context page: In this phase prose fills its card width (dropped 62ch cap) | 2026-10-16 | e01731e | — |
 | 261016-2j6 | Discussion log parser: support the compact one-row-per-question table layout (Question \| Options \| Selected) | 2026-10-16 | aab294f | [261016-2j6-discussion-log-parser-support-the-compac](./quick/261016-2j6-discussion-log-parser-support-the-compac/) |
 | 65 | in the plan page, no need to mention the wave status chip in view-plan-nav-chips | 2026-10-16 | 00f2658 | — |
+| 66 | in the summary page, view-summary-meta-left has 'summary' - it should say summary of xx - xx (wave-plan) - like the plan page | 2026-10-16 | 137a9c6 | — |
 
 ## Deferred Items
 
