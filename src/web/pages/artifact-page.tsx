@@ -66,6 +66,8 @@ import type { ComposedValidationStrategy } from '../views/validation-strategy.ts
 import { ValidationStrategyView, validationHeaderProps } from '../views/validation-strategy-components.tsx';
 import type { ComposedSummaryRun } from '../views/summary-run.ts';
 import { SummaryRunView } from '../views/summary-run-components.tsx';
+import type { ComposedVerificationBoard } from '../views/verification-board.ts';
+import { VerificationBoardView } from '../views/verification-board-components.tsx';
 import type { ComposedUiReview } from '../views/ui-review.ts';
 import { UiReviewIntroMeta, UiReviewView } from '../views/ui-review-components.tsx';
 import type { ComposedUiSpec } from '../views/ui-spec.ts';
@@ -618,12 +620,20 @@ export function ArtifactPage({
     if (!manifest || !viewInput) return null;
     return manifest.planNavigator?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // quick-261017-18a (sketch-021 E): the VERIFICATION board + ledger, when the resolved manifest opts
+  // into one — `null` for every other kind and for a payload from a server that predates
+  // `structured.verification` (the B3 layout below then renders). A composed board also switches the
+  // B3 layout off in both modes, so Source mode shows the plain page.
+  const verificationBoard = useMemo<ComposedVerificationBoard | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.verificationBoard?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // sketch-004 B3: the cover/chapter-index/folded-chapter layout, when the resolved manifest opts
   // into one — `null` for every kind that keeps the pre-existing promoted-block view.
   const layout = useMemo(() => {
-    if (!manifest || !viewInput || planNavigator !== null) return null;
+    if (!manifest || !viewInput || planNavigator !== null || verificationBoard !== null) return null;
     return composeDocumentLayout(manifest, viewInput);
-  }, [manifest, viewInput, planNavigator]);
+  }, [manifest, viewInput, planNavigator, verificationBoard]);
   // quick-260923-lju (sketch-006 D1): the CONTEXT brief, when the resolved manifest opts into one
   // — `null` for every kind that keeps the pre-existing promoted-block/B3 view.
   const brief = useMemo<ComposedContextBrief | null>(() => {
@@ -733,6 +743,7 @@ export function ArtifactPage({
     patternMap !== null ||
     validationStrategy !== null ||
     summaryRun !== null ||
+    verificationBoard !== null ||
     uiReview !== null ||
     uiSpec !== null ||
     uatSession !== null ||
@@ -814,6 +825,27 @@ export function ArtifactPage({
           fallbackTitle={artifact.title}
           path={artifact.path}
           presentation={presentationQuery.data ?? null}
+          mode={mode}
+          onModeChange={setMode}
+          onShowSource={showSource}
+          chip={<WarningChip tone={warningTone} />}
+        />
+      </main>
+    );
+  }
+  // quick-261017-18a: the VERIFICATION page opens on its own console rail (eyebrow, title, status,
+  // big number, stats, slips) with no breadcrumb row, manifest lead or Document metadata disclosure in
+  // View mode; a parse warning shows as its chip in the rail. Source mode falls through to the
+  // unchanged page below.
+  if (verificationBoard && mode === 'view') {
+    return (
+      <main className="artifact-page page-stack">
+        {switcher}
+        <VerificationBoardView
+          key={artifact.path}
+          model={verificationBoard}
+          fallbackTitle={artifact.title}
+          path={artifact.path}
           mode={mode}
           onModeChange={setMode}
           onShowSource={showSource}

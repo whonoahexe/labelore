@@ -5615,7 +5615,52 @@
                 "bodyHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                 "mtimeMs": 0,
                 "warnings": [],
-                "structured": {}
+                "structured": {
+                  "verification": {
+                    "h1": null,
+                    "goal": null,
+                    "reVerification": null,
+                    "scoreLine": null,
+                    "verifier": null,
+                    "truths": [],
+                    "requirements": [],
+                    "antiPatterns": [],
+                    "antiNote": null,
+                    "humanChecks": [],
+                    "humanTitles": [],
+                    "humanNote": null,
+                    "gaps": {
+                      "critical": [],
+                      "nonCritical": []
+                    },
+                    "gapProse": null,
+                    "fixPlans": [],
+                    "fixShape": null,
+                    "metadata": {
+                      "approach": null,
+                      "source": null,
+                      "automatedPassed": null,
+                      "automatedFailed": null,
+                      "duration": null
+                    },
+                    "spotChecks": [],
+                    "anchors": {
+                      "truths": null,
+                      "requirements": null,
+                      "anti": null,
+                      "human": null,
+                      "gaps": null,
+                      "fixPlans": null,
+                      "spot": null
+                    },
+                    "sections": [],
+                    "pathPhase": {
+                      "number": "01",
+                      "slug": "identity-slice"
+                    },
+                    "quickId": null
+                  }
+                }
               }
             }
           },
@@ -10729,7 +10774,52 @@
             "bodyHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
             "mtimeMs": 0,
             "warnings": [],
-            "structured": {}
+            "structured": {
+              "verification": {
+                "h1": null,
+                "goal": null,
+                "reVerification": null,
+                "scoreLine": null,
+                "verifier": null,
+                "truths": [],
+                "requirements": [],
+                "antiPatterns": [],
+                "antiNote": null,
+                "humanChecks": [],
+                "humanTitles": [],
+                "humanNote": null,
+                "gaps": {
+                  "critical": [],
+                  "nonCritical": []
+                },
+                "gapProse": null,
+                "fixPlans": [],
+                "fixShape": null,
+                "metadata": {
+                  "approach": null,
+                  "source": null,
+                  "automatedPassed": null,
+                  "automatedFailed": null,
+                  "duration": null
+                },
+                "spotChecks": [],
+                "anchors": {
+                  "truths": null,
+                  "requirements": null,
+                  "anti": null,
+                  "human": null,
+                  "gaps": null,
+                  "fixPlans": null,
+                  "spot": null
+                },
+                "sections": [],
+                "pathPhase": {
+                  "number": "01",
+                  "slug": "identity-slice"
+                },
+                "quickId": null
+              }
+            }
           }
         }
       },
@@ -14438,7 +14528,52 @@
                   "bodyHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "verification": {
+                      "h1": null,
+                      "goal": null,
+                      "reVerification": null,
+                      "scoreLine": null,
+                      "verifier": null,
+                      "truths": [],
+                      "requirements": [],
+                      "antiPatterns": [],
+                      "antiNote": null,
+                      "humanChecks": [],
+                      "humanTitles": [],
+                      "humanNote": null,
+                      "gaps": {
+                        "critical": [],
+                        "nonCritical": []
+                      },
+                      "gapProse": null,
+                      "fixPlans": [],
+                      "fixShape": null,
+                      "metadata": {
+                        "approach": null,
+                        "source": null,
+                        "automatedPassed": null,
+                        "automatedFailed": null,
+                        "duration": null
+                      },
+                      "spotChecks": [],
+                      "anchors": {
+                        "truths": null,
+                        "requirements": null,
+                        "anti": null,
+                        "human": null,
+                        "gaps": null,
+                        "fixPlans": null,
+                        "spot": null
+                      },
+                      "sections": [],
+                      "pathPhase": {
+                        "number": "01",
+                        "slug": "identity-slice"
+                      },
+                      "quickId": null
+                    }
+                  }
                 }
               }
             }
@@ -17338,7 +17473,52 @@
                   "bodyHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "verification": {
+                      "h1": null,
+                      "goal": null,
+                      "reVerification": null,
+                      "scoreLine": null,
+                      "verifier": null,
+                      "truths": [],
+                      "requirements": [],
+                      "antiPatterns": [],
+                      "antiNote": null,
+                      "humanChecks": [],
+                      "humanTitles": [],
+                      "humanNote": null,
+                      "gaps": {
+                        "critical": [],
+                        "nonCritical": []
+                      },
+                      "gapProse": null,
+                      "fixPlans": [],
+                      "fixShape": null,
+                      "metadata": {
+                        "approach": null,
+                        "source": null,
+                        "automatedPassed": null,
+                        "automatedFailed": null,
+                        "duration": null
+                      },
+                      "spotChecks": [],
+                      "anchors": {
+                        "truths": null,
+                        "requirements": null,
+                        "anti": null,
+                        "human": null,
+                        "gaps": null,
+                        "fixPlans": null,
+                        "spot": null
+                      },
+                      "sections": [],
+                      "pathPhase": {
+                        "number": "01",
+                        "slug": "identity-slice"
+                      },
+                      "quickId": null
+                    }
+                  }
                 }
               }
             }
@@ -20238,7 +20418,52 @@
                   "bodyHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "verification": {
+                      "h1": null,
+                      "goal": null,
+                      "reVerification": null,
+                      "scoreLine": null,
+                      "verifier": null,
+                      "truths": [],
+                      "requirements": [],
+                      "antiPatterns": [],
+                      "antiNote": null,
+                      "humanChecks": [],
+                      "humanTitles": [],
+                      "humanNote": null,
+                      "gaps": {
+                        "critical": [],
+                        "nonCritical": []
+                      },
+                      "gapProse": null,
+                      "fixPlans": [],
+                      "fixShape": null,
+                      "metadata": {
+                        "approach": null,
+                        "source": null,
+                        "automatedPassed": null,
+                        "automatedFailed": null,
+                        "duration": null
+                      },
+                      "spotChecks": [],
+                      "anchors": {
+                        "truths": null,
+                        "requirements": null,
+                        "anti": null,
+                        "human": null,
+                        "gaps": null,
+                        "fixPlans": null,
+                        "spot": null
+                      },
+                      "sections": [],
+                      "pathPhase": {
+                        "number": "01",
+                        "slug": "identity-slice"
+                      },
+                      "quickId": null
+                    }
+                  }
                 }
               }
             }
