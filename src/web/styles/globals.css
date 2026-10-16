@@ -15095,7 +15095,7 @@ button.view-validation-ref[aria-pressed='true'] {
   justify-self: start;
 }
 
-/* Also in this summary, Waiting on a human. */
+/* Waiting on a human. */
 .view-summary-loose {
   display: grid;
   gap: var(--space-3);

@@ -666,36 +666,21 @@ function TwoColumns({ model }: { model: ComposedSummaryRun }): React.JSX.Element
   );
 }
 
-function LooseSections({
-  title,
-  sections,
-  waiting,
-}: {
-  title: string;
-  sections: ComposedLooseSection[];
-  waiting: boolean;
-}): React.JSX.Element | null {
+function WaitSections({ sections }: { sections: ComposedLooseSection[] }): React.JSX.Element | null {
   if (sections.length === 0) return null;
   return (
-    <section className={waiting ? 'view-summary-waits' : 'view-summary-also'}>
-      <Heading title={title} />
+    <section className="view-summary-waits">
+      <Heading title="Waiting on a human" />
       <div className="view-summary-loose">
         {sections.map((section) => (
-          <details
-            key={section.key}
-            open={waiting ? true : undefined}
-            data-tone={waiting ? WAIT_TONE : undefined}
-            className="view-summary-detail-box"
-          >
+          <details key={section.key} open data-tone={WAIT_TONE} className="view-summary-detail-box">
             <summary>
               <span className="view-summary-detail-title">
                 <ResearchInline text={section.title} />
               </span>
-              {waiting ? (
-                <span className="status-chip" data-tone={WAIT_TONE}>
-                  Waits on a human
-                </span>
-              ) : null}
+              <span className="status-chip" data-tone={WAIT_TONE}>
+                Waits on a human
+              </span>
             </summary>
             <div className="view-summary-loose-body">
               <ResearchBlocks blocks={section.blocks} />
@@ -783,8 +768,8 @@ function SourceOnly({
     <nav id="summary-source-only" className="view-summary-source-only" aria-label="In the source only">
       <span className="view-summary-key">In the source only</span>
       <ul>
-        {entries.map((entry) => (
-          <li key={entry.label}>
+        {entries.map((entry, index) => (
+          <li key={`${entry.label}-${index}`}>
             <button type="button" className="status-chip" onClick={() => onShowSource(entry.targetId)}>
               {entry.label}
             </button>
@@ -991,8 +976,7 @@ export function SummaryRunView({
         <RunSection run={model.run} flashed={flashed} copiedHash={copiedHash} onCopy={(hash) => void onCopy(hash)} onJump={onJump} />
         {model.proof !== null ? <ProofSection proof={model.proof} flashed={flashed} /> : null}
         <TwoColumns model={model} />
-        <LooseSections title="Also in this summary" sections={model.also} waiting={false} />
-        <LooseSections title="Waiting on a human" sections={model.waits} waiting />
+        <WaitSections sections={model.waits} />
         {model.lineage !== null ? <LineageSection lineage={model.lineage} links={links} /> : null}
         {model.next !== null ? (
           <div className="view-summary-next">
