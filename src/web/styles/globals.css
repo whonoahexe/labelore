@@ -7041,6 +7041,114 @@ a.view-plan-nav-row:hover {
   background: var(--primary-tint);
   box-shadow: inset 3px 0 0 var(--primary);
 }
+
+/* quick-261016-ujo: the What to check panel */
+.view-plan-nav-manual {
+  display: grid;
+  gap: var(--space-8);
+  min-width: 0;
+  max-width: 46rem;
+}
+
+.view-plan-nav-manual-group {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.view-plan-nav-manual-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  align-items: baseline;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-faint);
+}
+
+.view-plan-nav-manual-path {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  overflow-wrap: anywhere;
+}
+
+.view-plan-nav-manual-head .source-link {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  overflow-wrap: anywhere;
+}
+
+.view-plan-nav-manual-lead {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+.view-plan-nav-manual-items {
+  display: grid;
+  gap: var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-plan-nav-manual-item {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-faint);
+  font-size: var(--fs-5);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
+}
+
+.view-plan-nav-manual-item:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.view-plan-nav-manual-title {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: baseline;
+  font-weight: var(--fw-semibold);
+}
+
+.view-plan-nav-manual-item :is(ul, ol) {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.view-plan-nav-manual-item ul {
+  list-style: disc;
+}
+
+.view-plan-nav-manual-item ol {
+  list-style: decimal;
+}
+
+.view-plan-nav-manual-item p {
+  margin: 0;
+}
+
+.view-plan-nav-manual-why {
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+}
+
+.view-plan-nav-manual-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
 /* quick-261006-iz6:end */
 
 /* quick-261003-527:start */

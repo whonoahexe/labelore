@@ -7,6 +7,8 @@ import type { FailedLoadStatus, ProjectSnapshot } from '../planning-repo/types.t
 import { LocalFsPlanningFilesystem } from '../planning-fs/local-fs.ts';
 import { PlanningRepository } from '../planning-repo/snapshot.ts';
 import { buildDashboardViewModel } from '../presentation/dashboard.ts';
+import { buildPlanManualChecks } from '../presentation/manual-checks.ts';
+import type { PlanManualChecks } from '../presentation/manual-checks.ts';
 import { buildRoadmapViewModel } from '../presentation/roadmap.ts';
 import { buildReferenceRegistry } from '../presentation/references.ts';
 import { parsePresentationUrl } from '../presentation/routes.ts';
@@ -87,6 +89,16 @@ export function createApp(
     activeDerived: DerivedViews,
   ) => {
     if (!lookup.found) return lookup;
+    // quick-261016-ujo: a PLAN's What to check model, built from this request's own bundle (null elsewhere).
+    const manualChecks = ((): PlanManualChecks | null => {
+      try {
+        return lookup.artifact.kind === 'plan'
+          ? buildPlanManualChecks(activeDerived.presentation, activeDerived.referenceRegistry, lookup.artifact.path)
+          : null;
+      } catch {
+        return null;
+      }
+    })();
     const document = await (
       await renderer
     ).render(lookup.artifact, { referenceRegistry: activeDerived.referenceRegistry });
@@ -112,6 +124,7 @@ export function createApp(
       },
       phaseIdentity: lookup.phaseIdentity,
       document,
+      manualChecks,
     };
   };
 

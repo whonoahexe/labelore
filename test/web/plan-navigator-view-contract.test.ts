@@ -96,11 +96,13 @@ describe('plan navigator view contract', () => {
     expect(components).toContain('data-tone={chip.tone}');
   });
 
-  it('the only Link targets are a dependency row url and the fixed traceability route', async () => {
+  it('the only Link targets are a dependency row url, the fixed traceability route and a presentation-resolved check reference', async () => {
     const components = await source('src/web/views/plan-navigator-components.tsx');
     const links = [...components.matchAll(/<Link\b[\s\S]*?>/g)].map((m) => m[0]);
-    expect(links).toHaveLength(2);
+    expect(links).toHaveLength(3);
     expect(links.some((link) => link.includes('to={dep.url}'))).toBe(true);
+    // quick-261016-ujo: the What to check panel's file links, whose url the server took from the presentation.
+    expect(links.some((link) => link.includes('to={reference.url}'))).toBe(true);
     expect(links.some((link) => link.includes('to={presentationRoutePatterns.traceability}'))).toBe(true);
   });
 
@@ -109,6 +111,7 @@ describe('plan navigator view contract', () => {
       'src/planning-repo/handlers/plan-structure.ts',
       'src/web/views/plan-navigator.ts',
       'src/web/views/plan-context.ts',
+      'src/presentation/manual-checks.ts',
     ]) {
       expect(buildsRegExp(await source(file)), file).toBe(false);
     }
