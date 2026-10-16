@@ -14,7 +14,7 @@ export interface ArtifactCrumb {
  * so a later restyle of the page header is one edit, not two.
  *
  * `chip` sits between the eyebrow and the title (the Warning/Unreadable badge); `lead` is one
- * sentence of human-authored context under the title; `path` is the file it came from — offered as
+ * sentence of context under the title (plain text, or a page's own inline note); `path` is the file it came from — offered as
  * a copy-path icon button (quick-260923-jxp, JXP-09), not printed; `children` render last inside
  * the header (the plan page's section jump links).
  *
@@ -44,7 +44,7 @@ export function ArtifactHeader({
   crumbs: ArtifactCrumb[];
   eyebrow: string;
   title: string;
-  lead?: string | null;
+  lead?: React.ReactNode;
   path?: string | null;
   chip?: React.ReactNode;
   children?: React.ReactNode;
