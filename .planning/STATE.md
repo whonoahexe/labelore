@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-16T10:23:34.160Z"
+last_updated: "2026-10-16T10:25:05.435Z"
 last_activity: 2026-10-16
 last_activity_desc: Completed quick task 261016-2j6 (compact discussion-log tables)
-state_head: 7a7b60334452bec7d47b411cc451ced47860bb83
+state_head: d052b2184bc11fe3c65afd8bf98b5319a7c3dbbb
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -180,6 +180,7 @@ None.
 | 65 | in the plan page, no need to mention the wave status chip in view-plan-nav-chips | 2026-10-16 | 00f2658 | — |
 | 66 | in the summary page, view-summary-meta-left has 'summary' - it should say summary of xx - xx (wave-plan) - like the plan page | 2026-10-16 | 137a9c6 | — |
 | 67 | in the summary page, there's no need for view-summary-also section. we can just show them in summary-source-only | 2026-10-16 | 7a7b603 | — |
+| 68 | summary page Duration stat shows just the leading length (50min), not the wall-clock note | 2026-10-16 | d052b21 | — |
 
 ## Deferred Items
 
