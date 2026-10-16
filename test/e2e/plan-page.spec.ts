@@ -71,7 +71,7 @@ test.describe('Plan page', () => {
     await expect(meta).toContainText('20 Sep 2026');
 
     // Head row: chips, triggers, stats.
-    await expect(page.locator('.view-plan-nav-head .status-chip')).toHaveText(['Execute', 'Wave 1', 'Autonomous', 'Executed']);
+    await expect(page.locator('.view-plan-nav-head .status-chip')).toHaveText(['Execute', 'Autonomous', 'Executed']);
     await expect(page.locator('[data-modal="deps"]')).toBeDisabled();
     await expect(page.locator('[data-modal="files"]')).toContainText('18');
     await expect(page.locator('[data-modal="reqs"]')).toContainText('3');

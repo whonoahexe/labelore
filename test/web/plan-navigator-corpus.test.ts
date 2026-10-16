@@ -117,7 +117,7 @@ const ROWS: Row[] = [
     expect: {
       eyebrow: 'Plan 05-01 · Phase 5 · Per type document views',
       title: "Prove the per-type view architecture end to end on the phase's flagship case",
-      chips: ['Execute', 'Wave 1', 'Autonomous', 'Executed'],
+      chips: ['Execute', 'Autonomous', 'Executed'],
       triggers: [0, 18, 3],
       stats: ['2', 'low', '160k'],
       types: ['tracer', 'auto'],
@@ -151,7 +151,7 @@ const ROWS: Row[] = [
       eyebrow: 'Quick plan 260910-0x4',
       title:
         'Close the fourteen tech-debt items recorded in .planning/v1.0-MILESTONE-AUDIT.md so a re-audit reads zero open debt — or, for any item that does not genuinely close, leave it listed with an honest reason and do not flip the audit status',
-      chips: ['Execute', 'Wave 1', 'Autonomous', 'Executed'],
+      chips: ['Execute', 'Autonomous', 'Executed'],
       triggers: [0, 23, 14],
       stats: ['7', 'low', '190k'],
       types: ['auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
@@ -176,7 +176,7 @@ const ROWS: Row[] = [
     expect: {
       eyebrow: 'Plan 01-06 · Phase 1 · Portal owned identity sessions',
       title: 'Close the loop',
-      chips: ['Execute', 'Wave 4', '1 checkpoint', 'Executed'],
+      chips: ['Execute', '1 checkpoint', 'Executed'],
       triggers: [3, 8, 3],
       stats: ['3', 'low', '54k'],
       types: ['auto', 'auto', 'checkpoint:human-action'],
@@ -212,7 +212,7 @@ const ROWS: Row[] = [
     expect: {
       eyebrow: 'Plan 04-02 · Phase 4 · Bulk archive downloads',
       title: 'Persist the irreversible ordered-manifest contract and enforce authoritative preflight',
-      chips: ['Execute', 'Wave 2', '1 checkpoint', 'Executed'],
+      chips: ['Execute', '1 checkpoint', 'Executed'],
       triggers: [1, 8, 2],
       stats: ['2', '—', '—'],
       types: ['checkpoint:decision', 'auto'],
@@ -243,7 +243,7 @@ const ROWS: Row[] = [
     expect: {
       eyebrow: 'Quick plan 260802-sya',
       title: 'Make the header stop reading as undesigned chrome, using only the design language already present in this codebase',
-      chips: ['Execute', 'Wave 1', '1 checkpoint', 'Executed'],
+      chips: ['Execute', '1 checkpoint', 'Executed'],
       triggers: [0, 1, 1],
       stats: ['3', 'low', '40k'],
       types: ['tracer', 'auto', 'checkpoint:human-verify'],
@@ -265,7 +265,7 @@ const ROWS: Row[] = [
     expect: {
       eyebrow: 'Quick plan 261003-528',
       title: "Build sketch 018's winner, B: Scorecard — hexagon radar + pillar inspector, as the UI-REVIEW page view",
-      chips: ['Execute', 'Wave 1', 'Autonomous', 'Executed'],
+      chips: ['Execute', 'Autonomous', 'Executed'],
       triggers: [0, 16, 9],
       stats: ['3', '—', '—'],
       types: ['tracer', 'auto', 'auto'],
@@ -301,7 +301,7 @@ const ROWS: Row[] = [
     expect: {
       eyebrow: 'Plan 02-17 · Phase 2 · Situational awareness artifact reading',
       title: 'Re-run the Phase 02 human gate on a fresh build with a complete matrix that closes the six process shortfalls from 02-13',
-      chips: ['Execute', 'Wave 13', '1 checkpoint', 'Gap closure', 'Executed'],
+      chips: ['Execute', '1 checkpoint', 'Gap closure', 'Executed'],
       triggers: [3, 0, 10],
       stats: ['1', 'low', '14k'],
       types: ['checkpoint:human-verify'],

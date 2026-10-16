@@ -672,8 +672,6 @@ function headChips(
   const chips: PlanChip[] = [];
   const type = stringOf(fm.type);
   if (type !== null) chips.push({ label: type.toLowerCase() === 'tdd' ? 'TDD' : humanize(type), tone: 'quiet' });
-  const wave = stringOf(fm.wave);
-  if (wave !== null) chips.push({ label: `Wave ${wave}`, tone: 'quiet' });
   const checkpoints = tasks.filter((task) => task.type.startsWith('checkpoint')).length;
   if (checkpoints > 0) chips.push({ label: plural(checkpoints, 'checkpoint', 'checkpoints'), tone: CHECKPOINT_TONE });
   else if (fm.autonomous === false) chips.push({ label: 'Not autonomous', tone: 'quiet' });
