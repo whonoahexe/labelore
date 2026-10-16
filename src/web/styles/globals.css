@@ -15505,6 +15505,7 @@ a.view-summary-node:hover {
 
 .view-verification-facts span:not(.status-chip) {
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
   gap: var(--space-3);
   width: 100%;
