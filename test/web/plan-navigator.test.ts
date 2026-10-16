@@ -167,7 +167,6 @@ describe('composePlanNavigator — the synthetic plan', () => {
   it('builds the chips with their tones', () => {
     expect(plan.head.chips).toEqual([
       { label: 'Execute', tone: 'quiet' },
-      { label: 'Wave 4', tone: 'quiet' },
       { label: '3 checkpoints', tone: 'in-flight' },
       { label: 'Gap closure', tone: 'in-flight' },
       { label: 'Executed', tone: 'complete' },
