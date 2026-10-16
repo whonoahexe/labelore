@@ -165,6 +165,24 @@ describe('buildPlanManualChecks — VALIDATION rows matched by requirement', () 
     expect(validation?.items[1].requirements).toEqual(['dl-07']);
   });
 
+  it('keeps a row whose only dash-joined numbers are dates, not task references', async () => {
+    const validation = `# Phase 4 - Validation Strategy
+
+## Manual-Only Verifications
+
+| Behavior | Requirement | Why Manual | Test Instructions |
+|----------|-------------|------------|-------------------|
+| Release notes read well (checked 2026-10-16) | DL-08 | Needs eyes | Compare against the 16-10-2026 draft. |
+| Production resume (04-01-02, BLOCKING) | DL-08 | Needs production | Resume it. |
+`;
+    const checks = await checksOf({
+      [PLAN]: planFile('[DL-08]', VERIFY_TASK),
+      [`${DIR}/04-VALIDATION.md`]: validation,
+    });
+    const group = entryOf(checks, 1).groups.find((candidate) => candidate.key === 'validation');
+    expect(group?.items.map((item) => item.title)).toEqual(['Release notes read well (checked 2026-10-16)']);
+  });
+
   it('names the file and section, and links to the VALIDATION page', async () => {
     const presentation = await presentationOf(studioFiles());
     const key = presentation.artifacts.find((artifact) => artifact.path === `${DIR}/04-VALIDATION.md`)?.key;
