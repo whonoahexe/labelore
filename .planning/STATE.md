@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-15T20:30:32.920Z"
+last_updated: "2026-10-16T10:03:16.422Z"
 last_activity: 2026-10-16
 last_activity_desc: Completed quick task 261016-2j6 (compact discussion-log tables)
-state_head: aab294fd71a737e473447bb62a2a2bd11c43e414
+state_head: 00f2658a4648930444ae8bd7acf7c7302e13b2d6
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -177,6 +177,7 @@ None.
 | 62 | Roadmap phase card: a lone fact (e.g. Depends on) spans the full row | 2026-10-16 | cf5378f | — |
 | 63 | Context page: In this phase prose fills its card width (dropped 62ch cap) | 2026-10-16 | e01731e | — |
 | 261016-2j6 | Discussion log parser: support the compact one-row-per-question table layout (Question \| Options \| Selected) | 2026-10-16 | aab294f | [261016-2j6-discussion-log-parser-support-the-compac](./quick/261016-2j6-discussion-log-parser-support-the-compac/) |
+| 65 | in the plan page, no need to mention the wave status chip in view-plan-nav-chips | 2026-10-16 | 00f2658 | — |
 
 ## Deferred Items
 
