@@ -125,7 +125,14 @@ function isTaskReferenceChar(ch: string): boolean {
   return (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch === '-' || ch === '.';
 }
 
-/** `04-06-03` or `04.1-02-01`: exactly three dash-joined digit groups, the first holding at most one dot. */
+/** Phase, plan and task numbers are short; a four-digit group is a year, so `2026-10-16` is a date. */
+const MAX_TASK_GROUP_DIGITS = 3;
+
+function isTaskGroup(text: string): boolean {
+  return isDigits(text) && text.length <= MAX_TASK_GROUP_DIGITS;
+}
+
+/** `04-06-03` or `04.1-02-01`: exactly three dash-joined groups of at most three digits, the first holding at most one dot. */
 function asTaskReference(token: string): string | null {
   let start = 0;
   let end = token.length;
@@ -138,11 +145,11 @@ function asTaskReference(token: string): string | null {
   if (dot >= 0) {
     const head = groups[0].slice(0, dot);
     const tail = groups[0].slice(dot + 1);
-    if (!isDigits(head) || !isDigits(tail)) return null;
-  } else if (!isDigits(groups[0])) {
+    if (!isTaskGroup(head) || !isDigits(tail)) return null;
+  } else if (!isTaskGroup(groups[0])) {
     return null;
   }
-  return isDigits(groups[1]) && isDigits(groups[2]) ? ref : null;
+  return isTaskGroup(groups[1]) && isTaskGroup(groups[2]) ? ref : null;
 }
 
 function taskReferences(text: string): string[] {
