@@ -1,0 +1,1220 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 021 — VERIFICATION page</title>
+<link rel="stylesheet" href="../themes/default.css?v=021">
+<style>
+/* Sketch 021: the VERIFICATION page. Shared vocabulary as 013–020 (eyebrow + date meta row, View/Source, chips, tones, modals, back-matter rows); fresh structure per variant. Data: ./data.js from real VERIFICATION.md files + one synthetic template-shaped report (gen-data.mjs). */
+*, *::before, *::after { box-sizing: border-box; }
+:root { --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border)); --missing-border: color-mix(in oklch, var(--missing-fill) 50%, var(--border)); --in-flight-tint: color-mix(in oklch, var(--in-flight-fill) 9%, transparent); --missing-tint: color-mix(in oklch, var(--missing-fill) 9%, transparent); --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border)); }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-5); line-height: var(--lh-normal); padding-top: 3rem; }
+h1, h2, h3, h4, p, ul, ol, dl, dd { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+code { font-family: var(--font-mono); font-size: 0.86em; padding: 0 0.2em; background: color-mix(in oklch, var(--muted) 70%, transparent); overflow-wrap: anywhere; }
+.dark code { background: color-mix(in oklch, var(--foreground) 9%, transparent); }
+strong { font-weight: var(--fw-semibold); }
+#variant-nav { position: fixed; inset: 0 0 auto 0; z-index: 50; display: flex; gap: var(--space-1); align-items: center; padding: var(--space-2) var(--space-4); background: var(--background); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; overflow-x: auto; }
+#variant-nav .lbl { color: var(--muted-foreground); margin-right: var(--space-2); white-space: nowrap; }
+.variant-tab { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; background: none; white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; color: var(--muted-foreground); transition: all .15s ease; }
+.variant-tab:hover { color: var(--foreground); background: var(--state-hover); }
+.variant-tab.active { color: var(--primary); border-color: var(--primary-border); background: var(--primary-tint); }
+#frame { margin: 0 auto; container-type: inline-size; transition: max-width .2s ease; background: var(--background); min-height: 100vh; }
+#frame.narrow-frame { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+.page { width: min(78rem, 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); display: grid; gap: var(--space-10); grid-template-columns: minmax(0, 1fr); }
+.page > * { min-width: 0; }
+.fade { animation: fade .18s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .fade { animation: none; } }
+
+/* ---------- shared vocabulary ---------- */
+.eyebrow { color: var(--primary); font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+.kicker { color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.muted { color: var(--muted-foreground); }
+.mono { font-family: var(--font-mono); }
+.section-heading { display: flex; gap: var(--space-4); align-items: flex-end; justify-content: space-between; flex-wrap: wrap; padding-bottom: var(--space-3); margin-bottom: var(--space-5); border-bottom: 1px solid var(--border); }
+.section-heading h2 { font-family: var(--font-mono); font-size: var(--fs-fluid-3); font-weight: var(--fw-medium); letter-spacing: var(--ls-tight); }
+.section-heading h2 .n { color: var(--muted-foreground); margin-right: var(--space-2); }
+.section-heading .aside { display: flex; gap: var(--space-4); align-items: baseline; font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.chip { display: inline-flex; align-items: center; gap: var(--space-1); padding: 0.1rem var(--space-1-5); border: 1px solid var(--border); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); white-space: nowrap; background: none; transition: all .15s ease; }
+.chip[data-tone='complete'] { color: var(--primary); border-color: var(--primary-border); background: var(--primary-tint); }
+.chip[data-tone='in-flight'] { color: var(--in-flight-fill); border-color: var(--in-flight-border); }
+.chip[data-tone='missing'] { color: var(--missing-fill); border-color: var(--missing-border); }
+button.chip:hover { border-color: var(--primary-border); color: var(--foreground); }
+.chip .k { color: var(--muted-foreground); font-weight: var(--fw-medium); }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-1-5); align-items: center; }
+.link-btn { padding: 0; border: 0; background: none; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; transition: color .15s ease; }
+.link-btn:hover { color: var(--primary); }
+.md { display: grid; gap: var(--space-2-5); font-size: var(--fs-4); min-width: 0; }
+.md p, .md li { overflow-wrap: anywhere; }
+.md ul, .md ol { padding-left: var(--space-5); display: grid; gap: var(--space-1-5); }
+.md pre { margin: 0; padding: var(--space-3); background: var(--sidebar); border: 1px solid var(--border); overflow-x: auto; font-size: var(--fs-2); }
+.md pre code { background: none; padding: 0; overflow-wrap: normal; white-space: pre; }
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--border); }
+.md table { border-collapse: collapse; width: 100%; font-size: var(--fs-3); }
+.md th, .md td { text-align: left; padding: var(--space-1-5) var(--space-2-5); border-bottom: 1px solid var(--border); vertical-align: top; }
+.md th { font-family: var(--font-heading); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); font-weight: var(--fw-semibold); }
+.md h4 { font-family: var(--font-heading); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); margin-top: var(--space-2); }
+.flash { animation: flash 1.2s ease; }
+@keyframes flash { 0%, 40% { box-shadow: 0 0 0 2px var(--primary); } 100% { box-shadow: 0 0 0 2px transparent; } }
+.empty { padding: var(--space-4); border: 1px dashed var(--border); color: var(--muted-foreground); font-size: var(--fs-4); }
+.prose { font-size: var(--fs-4); color: var(--muted-foreground); max-width: 70ch; overflow-wrap: anywhere; }
+.clamp2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.clamp3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* glyph squares (status) */
+.sq { display: inline-block; width: 0.6rem; height: 0.6rem; flex: none; background: var(--muted-foreground); }
+.sq[data-s='verified'] { background: var(--primary); }
+.sq[data-s='coincidental'] { background: repeating-linear-gradient(45deg, var(--primary) 0 2px, transparent 2px 4px); outline: 1px solid var(--primary); outline-offset: -1px; }
+.sq[data-s='override'] { background: none; outline: 1px solid var(--primary); outline-offset: -1px; }
+.sq[data-s='failed'], .sq[data-s='blocked'], .sq[data-s='blocker'] { background: var(--missing-fill); }
+.sq[data-s='unverified'], .sq[data-s='human'], .sq[data-s='warning'] { background: var(--in-flight-fill); }
+.sq[data-s='uncertain'] { background: none; outline: 1px dashed var(--in-flight-fill); outline-offset: -1px; }
+.sq[data-s='mixed'], .sq[data-s='partial'] { background: linear-gradient(135deg, var(--primary) 50%, var(--in-flight-fill) 50%); }
+.sq[data-s='info'], .sq[data-s='clear'] { background: none; outline: 1px solid var(--muted-foreground); outline-offset: -1px; }
+
+/* ---------- header (shared) ---------- */
+.meta-row { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-5); align-items: center; justify-content: space-between; }
+.meta-left { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); align-items: baseline; }
+.date { font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.date b { color: var(--foreground); font-weight: var(--fw-medium); }
+.doc-tools { display: flex; gap: var(--space-4); align-items: center; }
+.icon-btn { display: grid; place-items: center; width: 2rem; height: 2rem; padding: 0; border: 0; background: none; color: var(--muted-foreground); transition: color .15s ease, background .15s ease; }
+.icon-btn:hover { color: var(--foreground); background: var(--state-hover); }
+.seg { display: inline-flex; }
+.seg button { padding: var(--space-1) var(--space-3); border: 0; background: none; font-family: var(--font-mono); font-size: var(--fs-4); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); transition: all .15s ease; }
+.seg button:hover { color: var(--foreground); }
+.seg button[aria-pressed='true'] { color: var(--foreground); background: color-mix(in oklch, var(--muted) 85%, transparent); }
+.dark .seg button[aria-pressed='true'] { background: color-mix(in oklch, var(--foreground) 12%, transparent); }
+.head { display: grid; gap: var(--space-5); }
+.head h1 { font-family: var(--font-sans); font-size: var(--fs-fluid-3); font-weight: var(--fw-medium); letter-spacing: var(--ls-tight); line-height: 1.2; max-width: 52rem; }
+.goal { display: grid; gap: var(--space-1); max-width: 60rem; }
+.goal p { font-size: var(--fs-fluid-1); line-height: 1.45; overflow-wrap: anywhere; }
+.badges { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+.status-badge { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-2-5); border: 1px solid var(--border); font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+.status-badge::before { content: ''; width: 0.55rem; height: 0.55rem; background: currentColor; }
+.status-badge[data-tone='complete'] { color: var(--primary); border-color: var(--primary-border); background: var(--primary-tint); }
+.status-badge[data-tone='missing'] { color: var(--missing-fill); border-color: var(--missing-border); background: var(--missing-tint); }
+.status-badge[data-tone='in-flight'] { color: var(--in-flight-fill); border-color: var(--in-flight-border); background: var(--in-flight-tint); }
+.badge { display: inline-flex; align-items: baseline; gap: var(--space-1-5); padding: var(--space-1) var(--space-2-5); border: 1px solid var(--border); background: var(--card); font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); white-space: nowrap; transition: all .15s ease; }
+.badge .k { font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.badge b { color: var(--foreground); font-weight: var(--fw-medium); }
+.badge b.bad { color: var(--missing-fill); }
+.badge b.wait { color: var(--in-flight-fill); }
+button.badge:hover { border-color: var(--primary-border); color: var(--foreground); }
+.badge[data-tone='in-flight'] { border-color: var(--in-flight-border); }
+
+/* human check card (shared) */
+.hc { display: grid; gap: var(--space-3); padding: var(--space-4) var(--space-5); border: 1px solid var(--in-flight-border); border-left: 3px solid var(--in-flight-fill); background: var(--card); }
+.hc-top { display: flex; gap: var(--space-3); align-items: baseline; justify-content: space-between; }
+.hc-top h3 { font-family: var(--font-sans); font-size: var(--fs-5); font-weight: var(--fw-medium); overflow-wrap: anywhere; }
+.hc-top .num { font-family: var(--font-mono); color: var(--in-flight-fill); margin-right: var(--space-2); }
+.hc-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5); }
+@container (max-width: 52rem) { .hc-grid { grid-template-columns: minmax(0, 1fr); gap: var(--space-3); } }
+.hc-grid > div { min-width: 0; display: grid; gap: var(--space-1); align-content: start; font-size: var(--fs-4); overflow-wrap: anywhere; }
+.hc-grid .why { color: var(--muted-foreground); }
+.note { font-size: var(--fs-4); color: var(--muted-foreground); padding-left: var(--space-3); border-left: 2px solid var(--border); max-width: 70ch; overflow-wrap: anywhere; }
+
+/* truth inspector (shared) */
+.insp { display: grid; gap: var(--space-3); padding: var(--space-4) var(--space-5); border: 1px solid var(--border); background: var(--card); }
+.insp-top { display: flex; justify-content: space-between; gap: var(--space-3); align-items: baseline; flex-wrap: wrap; }
+.insp h3 { font-family: var(--font-sans); font-size: var(--fs-6); font-weight: var(--fw-medium); line-height: 1.35; overflow-wrap: anywhere; }
+.insp dl { display: grid; grid-template-columns: 8rem minmax(0, 1fr); gap: var(--space-2) var(--space-4); font-size: var(--fs-4); }
+@container (max-width: 40rem) { .insp dl { grid-template-columns: minmax(0, 1fr); gap: var(--space-1); } }
+.insp dt { padding-top: 0.15rem; }
+.insp dd { overflow-wrap: anywhere; }
+.xlink { display: inline-flex; gap: var(--space-1-5); align-items: baseline; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: none; font-size: var(--fs-3); text-align: left; transition: all .15s ease; }
+.xlink:hover { border-color: var(--primary-border); color: var(--primary); }
+.xlink[data-tone='missing'] { border-color: var(--missing-border); }
+.xlink[data-tone='in-flight'] { border-color: var(--in-flight-border); }
+
+/* gap body + fix plan mapping (shared) */
+.gap-body { display: grid; gap: var(--space-4); }
+.gap-dl { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: var(--space-2-5) var(--space-4); font-size: var(--fs-4); }
+@container (max-width: 40rem) { .gap-dl { grid-template-columns: minmax(0, 1fr); gap: var(--space-1); } }
+.gap-dl dt { padding-top: 0.15rem; }
+.gap-dl dd { overflow-wrap: anywhere; }
+.gap-dl ul { margin: 0; padding-left: var(--space-5); display: grid; gap: var(--space-1); }
+.where { display: grid; gap: var(--space-1); margin-top: var(--space-1-5); }
+.where div { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-2); font-size: var(--fs-3); color: var(--muted-foreground); }
+.where code { color: var(--foreground); }
+.fp { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-4); border: 1px solid var(--primary-border); background: color-mix(in oklch, var(--primary) 4%, var(--card)); }
+.fp-top { display: flex; gap: var(--space-3); justify-content: space-between; align-items: baseline; flex-wrap: wrap; }
+.fp-top .t { font-size: var(--fs-4); font-weight: var(--fw-medium); }
+.fp-top .t .file { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--primary); margin-right: var(--space-2); }
+.fp ol { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--space-1-5); }
+.fp li { display: grid; grid-template-columns: 1.6rem minmax(0, 1fr) auto; gap: var(--space-2); font-size: var(--fs-3); color: var(--muted-foreground); align-items: baseline; overflow-wrap: anywhere; }
+.fp li .i { font-family: var(--font-mono); font-size: var(--fs-2); }
+.fp li[data-hit] { color: var(--foreground); }
+.fp li[data-hit] .i { color: var(--primary); }
+.fp li .tag { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--primary); white-space: nowrap; }
+.fp .obj { font-size: var(--fs-3); color: var(--muted-foreground); }
+.scope { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; padding: 0.05rem var(--space-1-5); border: 1px solid var(--border); color: var(--muted-foreground); white-space: nowrap; }
+.scope b { color: var(--foreground); font-weight: var(--fw-medium); }
+
+/* anti-patterns (shared parts) */
+.ap-file { display: grid; gap: 0; border: 1px solid var(--border); background: var(--card); }
+.ap-file > header { display: flex; justify-content: space-between; gap: var(--space-3); align-items: baseline; padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); }
+.ap-file > header code { background: none; padding: 0; font-size: var(--fs-3); }
+.ap-row { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr) minmax(0, 16rem); gap: var(--space-2) var(--space-4); padding: var(--space-2-5) var(--space-4); border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); font-size: var(--fs-3); align-items: baseline; }
+.ap-row:last-child { border-bottom: 0; }
+@container (max-width: 52rem) { .ap-row { grid-template-columns: 4.5rem minmax(0, 1fr); } .ap-row .imp { grid-column: 2; } }
+.ap-row .ln { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); display: flex; gap: var(--space-1-5); align-items: center; }
+.ap-row .pat { overflow-wrap: anywhere; }
+.ap-row .imp { color: var(--muted-foreground); overflow-wrap: anywhere; }
+.ap-row[data-sev='blocker'] { box-shadow: inset 3px 0 0 var(--missing-fill); }
+.sev-sum { display: flex; gap: var(--space-4); flex-wrap: wrap; font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); align-items: center; }
+.sev-sum span { display: inline-flex; gap: var(--space-1-5); align-items: center; }
+.sev-sum b { color: var(--foreground); font-weight: var(--fw-medium); }
+
+/* back matter + source */
+.source-only { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); align-items: center; padding: var(--space-3) 0; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border); }
+.source-only ul { display: flex; flex-wrap: wrap; gap: var(--space-1-5); margin: 0; padding: 0; list-style: none; }
+.source-only .chip { cursor: pointer; text-transform: none; letter-spacing: 0; font-family: var(--font-sans); font-weight: var(--fw-medium); font-size: var(--fs-2); }
+.loose { display: grid; gap: var(--space-2); }
+.loose details { border: 1px solid var(--border); background: var(--card); }
+.loose summary { list-style: none; cursor: pointer; display: flex; gap: var(--space-3); justify-content: space-between; align-items: baseline; padding: var(--space-2-5) var(--space-4); font-size: var(--fs-4); transition: background .15s ease; }
+.loose summary::-webkit-details-marker { display: none; }
+.loose summary:hover { background: var(--state-hover); }
+.loose summary .t::before { content: '+ '; font-family: var(--font-mono); color: var(--muted-foreground); }
+.loose details[open] summary .t::before { content: '− '; }
+.loose .lb { padding: 0 var(--space-4) var(--space-4); }
+.footer { display: flex; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; padding-top: var(--space-3); border-top: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); }
+.raw { margin: 0; border: 1px solid var(--border); background: var(--sidebar); font-family: var(--font-mono); font-size: var(--fs-2); line-height: 1.6; overflow-x: auto; padding: var(--space-3) 0; }
+.raw span { display: block; padding: 0 var(--space-4) 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.raw span::before { content: attr(data-n); display: inline-block; width: 3.5rem; padding-right: var(--space-3); text-align: right; color: var(--muted-foreground); opacity: .6; user-select: none; }
+.raw span.hit { background: var(--primary-tint); }
+
+/* modal */
+dialog.modal { padding: 0; border: 1px solid var(--border); background: var(--card); color: var(--foreground); width: min(48rem, calc(100vw - 2rem)); max-height: min(80vh, 46rem); opacity: 0; transform: translateY(6px); transition: opacity .15s ease, transform .15s ease, overlay .15s allow-discrete, display .15s allow-discrete; }
+dialog.modal[open] { opacity: 1; transform: none; }
+@starting-style { dialog.modal[open] { opacity: 0; transform: translateY(6px); } }
+dialog.modal::backdrop { background: color-mix(in oklch, var(--foreground) 22%, transparent); }
+.m-head { position: sticky; top: 0; display: flex; justify-content: space-between; gap: var(--space-4); align-items: baseline; padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--border); background: var(--card); }
+.m-head h3 { font-family: var(--font-mono); font-size: var(--fs-6); font-weight: var(--fw-medium); }
+.m-body { padding: var(--space-4) var(--space-5) var(--space-5); display: grid; gap: var(--space-3); }
+.spot { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--space-1) var(--space-3); align-items: baseline; padding: var(--space-2) 0; border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); font-size: var(--fs-3); }
+.spot .cmd { grid-column: 2 / -1; color: var(--muted-foreground); font-size: var(--fs-2); }
+.spot .res { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); text-align: right; }
+
+/* ============ A — verdict sheet ============ */
+.a-col { width: min(62rem, 100%); margin: 0 auto; display: grid; gap: var(--space-10); }
+.a-hcs { display: grid; gap: var(--space-3); }
+.score-line { display: flex; flex-wrap: wrap; gap: var(--space-4) var(--space-8); align-items: end; margin-bottom: var(--space-5); }
+.big-score { font-family: var(--font-mono); font-size: var(--fs-display-3); line-height: 1; font-weight: var(--fw-medium); letter-spacing: var(--ls-tighter); }
+.big-score small { font-size: 0.45em; color: var(--muted-foreground); }
+.score-cap { font-size: var(--fs-3); color: var(--muted-foreground); max-width: 34rem; }
+.cells { display: flex; gap: 2px; flex-wrap: wrap; margin-bottom: var(--space-4); }
+.cells button { flex: 1 1 0.9rem; max-width: 3.5rem; min-width: 0.7rem; height: 1.4rem; padding: 0; border: 0; background: var(--muted-foreground); transition: transform .12s ease, opacity .12s ease; }
+.cells button[data-s='verified'] { background: var(--primary); }
+.cells button[data-s='coincidental'] { background: repeating-linear-gradient(45deg, var(--primary) 0 3px, color-mix(in oklch, var(--primary) 40%, transparent) 3px 6px); }
+.cells button[data-s='override'] { background: color-mix(in oklch, var(--primary) 35%, transparent); }
+.cells button[data-s='failed'] { background: var(--missing-fill); }
+.cells button[data-s='unverified'] { background: var(--in-flight-fill); }
+.cells button[data-s='uncertain'] { background: repeating-linear-gradient(-45deg, var(--in-flight-fill) 0 3px, transparent 3px 6px); }
+.cells button[data-s='mixed'] { background: linear-gradient(90deg, var(--primary) 50%, var(--in-flight-fill) 50%); }
+.cells button:hover, .cells button[aria-pressed='true'] { transform: scaleY(1.35); }
+.cells button.dim { opacity: .18; }
+.filters { display: flex; flex-wrap: wrap; gap: var(--space-1-5); margin-bottom: var(--space-4); }
+.filters button { display: inline-flex; gap: var(--space-1-5); align-items: center; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: none; font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); transition: all .15s ease; }
+.filters button:hover { color: var(--foreground); }
+.filters button[aria-pressed='true'] { color: var(--foreground); border-color: var(--primary-border); background: var(--primary-tint); }
+.filters b { color: var(--foreground); font-weight: var(--fw-medium); }
+.wall-group { display: grid; gap: var(--space-2); margin-bottom: var(--space-5); }
+.wall { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 13.5rem), 1fr)); gap: var(--space-2); }
+.tile { display: grid; gap: var(--space-2); align-content: start; padding: var(--space-3); border: 1px solid var(--border); background: var(--card); text-align: left; font-size: var(--fs-3); min-height: 6.5rem; transition: all .15s ease; }
+.tile:hover { border-color: var(--primary-border); }
+.tile .tt { display: flex; gap: var(--space-2); align-items: center; font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.tile p { overflow-wrap: anywhere; }
+.tile[data-s='failed'] { border-color: var(--missing-border); background: var(--missing-tint); }
+.tile[data-s='unverified'], .tile[data-s='uncertain'], .tile[data-s='mixed'] { border-color: var(--in-flight-border); }
+.tile[aria-pressed='true'] { outline: 2px solid var(--primary); outline-offset: -1px; }
+.tile.dim { opacity: .28; }
+.tile-insp { grid-column: 1 / -1; }
+.req-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: var(--space-2); }
+.rt { display: grid; gap: var(--space-2); align-content: start; padding: var(--space-3) var(--space-4); border: 1px solid var(--border); border-top: 3px solid var(--muted-foreground); background: var(--card); text-align: left; transition: all .15s ease; }
+.rt:hover { border-color: var(--primary-border); }
+.rt[data-s='satisfied'] { border-top-color: var(--primary); }
+.rt[data-s='partial'] { border-top-color: color-mix(in oklch, var(--primary) 55%, var(--in-flight-fill)); }
+.rt[data-s='human'] { border-top-color: var(--in-flight-fill); }
+.rt[data-s='blocked'] { border-top-color: var(--missing-fill); background: var(--missing-tint); }
+.rt .top { display: flex; justify-content: space-between; gap: var(--space-2); align-items: baseline; }
+.rt .id { font-family: var(--font-mono); font-size: var(--fs-5); }
+.rt .d { font-size: var(--fs-3); overflow-wrap: anywhere; }
+.rt .nt { font-size: var(--fs-3); color: var(--muted-foreground); overflow-wrap: anywhere; }
+.rt .pl { display: flex; gap: var(--space-1); flex-wrap: wrap; }
+.rt .pl span { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); border: 1px solid var(--border); padding: 0 var(--space-1); }
+.a-gaps { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-6); align-items: start; }
+@container (max-width: 56rem) { .a-gaps { grid-template-columns: minmax(0, 1fr); } }
+.gcol { display: grid; gap: var(--space-2); }
+.gcol > header { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); padding-bottom: var(--space-2); border-bottom: 2px solid var(--missing-fill); }
+.gcol[data-k='noncritical'] > header { border-bottom-color: var(--in-flight-fill); }
+.gcol > header h3 { font-family: var(--font-mono); font-size: var(--fs-4); font-weight: var(--fw-medium); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.gap { border: 1px solid var(--border); background: var(--card); }
+.gap > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 1.75rem minmax(0, 1fr) auto; gap: var(--space-2); align-items: baseline; padding: var(--space-3) var(--space-4); transition: background .15s ease; }
+.gap > summary::-webkit-details-marker { display: none; }
+.gap > summary:hover { background: var(--state-hover); }
+.gap > summary .n { font-family: var(--font-mono); font-size: var(--fs-3); color: var(--missing-fill); }
+.gap[data-k='noncritical'] > summary .n { color: var(--in-flight-fill); }
+.gap > summary .t { font-size: var(--fs-4); font-weight: var(--fw-medium); overflow-wrap: anywhere; }
+.gap > summary .x { font-family: var(--font-mono); color: var(--muted-foreground); }
+.gap[open] > summary .x { transform: rotate(45deg); }
+.gap > .gb { padding: 0 var(--space-4) var(--space-4); }
+.gap[open] { border-color: var(--primary-border); }
+
+/* ============ B — console ============ */
+.b-grid { display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: var(--space-8); align-items: start; }
+@container (max-width: 60rem) { .b-grid { grid-template-columns: minmax(0, 1fr); } }
+.b-rail { position: sticky; top: 4rem; display: grid; gap: var(--space-5); }
+@container (max-width: 60rem) { .b-rail { position: static; grid-template-columns: auto minmax(0, 1fr); align-items: start; } }
+.ring { position: relative; width: 11rem; height: 11rem; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring .c { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.ring .c b { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-medium); line-height: 1; }
+.ring .c span { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); margin-top: var(--space-1); }
+.legend { display: grid; gap: 2px; }
+.legend button { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--space-2); align-items: center; padding: var(--space-1) var(--space-2); border: 1px solid transparent; background: none; text-align: left; font-size: var(--fs-3); transition: all .15s ease; }
+.legend button:hover { background: var(--state-hover); }
+.legend button[aria-pressed='true'] { border-color: var(--primary-border); background: var(--primary-tint); }
+.legend b { font-family: var(--font-mono); font-weight: var(--fw-medium); }
+.toc { display: grid; gap: 0; border-top: 1px solid var(--border); }
+@container (max-width: 60rem) { .toc { display: none; } }
+.toc button { display: flex; justify-content: space-between; gap: var(--space-2); padding: var(--space-1-5) 0; border: 0; border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); background: none; font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); transition: color .15s ease; }
+.toc button:hover { color: var(--primary); }
+.toc button b { color: var(--foreground); font-weight: var(--fw-medium); }
+.toc button b.bad { color: var(--missing-fill); }
+.toc button b.wait { color: var(--in-flight-fill); }
+.b-main { display: grid; gap: var(--space-10); min-width: 0; grid-template-columns: minmax(0, 1fr); }
+.stepper { display: grid; grid-template-columns: 16rem minmax(0, 1fr); border: 1px solid var(--in-flight-border); background: var(--card); }
+@container (max-width: 52rem) { .stepper { grid-template-columns: minmax(0, 1fr); } }
+.stepper ol { list-style: none; margin: 0; padding: 0; border-right: 1px solid var(--border); }
+@container (max-width: 52rem) { .stepper ol { border-right: 0; border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; } }
+.stepper li button { width: 100%; display: grid; grid-template-columns: 1.75rem minmax(0, 1fr); gap: var(--space-2); padding: var(--space-2-5) var(--space-3); border: 0; border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); background: none; text-align: left; font-size: var(--fs-3); transition: background .15s ease; }
+@container (max-width: 52rem) { .stepper li button { min-width: 13rem; border-bottom: 0; border-right: 1px solid var(--border); } }
+.stepper li button:hover { background: var(--state-hover); }
+.stepper li button[aria-selected='true'] { background: var(--in-flight-tint); box-shadow: inset 3px 0 0 var(--in-flight-fill); }
+.stepper li .i { font-family: var(--font-mono); color: var(--in-flight-fill); }
+.step-pane { display: grid; gap: var(--space-4); padding: var(--space-4) var(--space-5); align-content: start; }
+.step-pane h3 { font-size: var(--fs-6); font-weight: var(--fw-medium); overflow-wrap: anywhere; }
+.step-pane .row { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr); gap: var(--space-3); font-size: var(--fs-4); overflow-wrap: anywhere; }
+@container (max-width: 40rem) { .step-pane .row { grid-template-columns: minmax(0, 1fr); gap: var(--space-1); } }
+.step-nav { display: flex; gap: var(--space-2); justify-content: flex-end; }
+.step-nav button { padding: var(--space-1) var(--space-2-5); border: 1px solid var(--border); background: none; font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); transition: all .15s ease; }
+.step-nav button:hover:not([disabled]) { color: var(--foreground); border-color: var(--primary-border); }
+.step-nav button[disabled] { opacity: .4; cursor: default; }
+.lanes { display: grid; grid-template-columns: repeat(var(--lanes, 4), minmax(0, 1fr)); gap: var(--space-3); align-items: start; }
+@container (max-width: 60rem) { .lanes { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+@container (max-width: 36rem) { .lanes { grid-template-columns: minmax(0, 1fr); } }
+.lane { display: grid; gap: var(--space-2); align-content: start; }
+.lane > header { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); padding-bottom: var(--space-2); border-bottom: 2px solid var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.lane[data-s='verified'] > header { border-bottom-color: var(--primary); }
+.lane[data-s='failed'] > header, .lane[data-s='blocker'] > header { border-bottom-color: var(--missing-fill); }
+.lane[data-s='open'] > header, .lane[data-s='warning'] > header { border-bottom-color: var(--in-flight-fill); }
+.lane > header b { font-weight: var(--fw-medium); }
+.lane .empty { padding: var(--space-3); font-size: var(--fs-3); }
+.kcard { display: grid; gap: var(--space-1-5); padding: var(--space-2-5) var(--space-3); border: 1px solid var(--border); background: var(--card); text-align: left; font-size: var(--fs-3); transition: all .15s ease; }
+.kcard:hover { border-color: var(--primary-border); }
+.kcard[aria-pressed='true'] { outline: 2px solid var(--primary); outline-offset: -1px; }
+.kcard .tt { display: flex; gap: var(--space-2); align-items: center; justify-content: space-between; font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.kcard p { overflow-wrap: anywhere; }
+.drawer { position: fixed; top: 3rem; right: 0; bottom: 0; z-index: 40; width: min(30rem, 100vw); border-left: 1px solid var(--border); background: var(--card); box-shadow: -12px 0 32px color-mix(in oklch, var(--foreground) 10%, transparent); overflow-y: auto; transform: translateX(100%); transition: transform .2s ease; }
+.drawer.open { transform: none; }
+.drawer .insp { border: 0; }
+.drawer-head { position: sticky; top: 0; display: flex; justify-content: space-between; align-items: center; padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); background: var(--card); }
+.matrix { overflow-x: auto; border: 1px solid var(--border); }
+.matrix table { border-collapse: collapse; width: 100%; font-size: var(--fs-3); }
+.matrix th, .matrix td { padding: var(--space-2) var(--space-3); border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent); text-align: left; vertical-align: middle; }
+.matrix thead th { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); font-weight: var(--fw-medium); white-space: nowrap; }
+.matrix thead th.pc { text-align: center; padding: var(--space-2) var(--space-1); }
+.matrix td.pc { text-align: center; padding: var(--space-2) var(--space-1); }
+.matrix td.pc .dot { display: inline-block; width: 0.65rem; height: 0.65rem; background: var(--muted-foreground); }
+.matrix tr[data-s='satisfied'] td.pc .dot { background: var(--primary); }
+.matrix tr[data-s='partial'] td.pc .dot { background: linear-gradient(135deg, var(--primary) 50%, var(--in-flight-fill) 50%); }
+.matrix tr[data-s='human'] td.pc .dot { background: var(--in-flight-fill); }
+.matrix tr[data-s='blocked'] td.pc .dot { background: var(--missing-fill); }
+.matrix tbody tr { cursor: pointer; transition: background .15s ease; }
+.matrix tbody tr:hover { background: var(--state-hover); }
+.matrix tbody tr[aria-selected='true'] { background: var(--primary-tint); }
+.matrix .rid { font-family: var(--font-mono); white-space: nowrap; }
+.matrix .rd { color: var(--muted-foreground); min-width: 14rem; }
+.matrix tr.det td { cursor: default; background: var(--card); color: var(--muted-foreground); font-size: var(--fs-3); }
+.gboard { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-4) var(--space-16, 4.5rem); align-items: start; }
+@container (max-width: 56rem) { .gboard { grid-template-columns: minmax(0, 1fr); } .gboard svg.wires { display: none; } }
+.gboard svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.gboard svg.wires path { fill: none; stroke: var(--border); stroke-width: 1.5; transition: stroke .15s ease, opacity .15s ease; }
+.gboard svg.wires path.on { stroke: var(--primary); stroke-width: 2; }
+.gboard svg.wires path.off { opacity: .25; }
+.gstack { display: grid; gap: var(--space-2); align-content: start; }
+.gstack .sub { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); padding: var(--space-2) 0 var(--space-1); }
+.gcard { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-4); border: 1px solid var(--border); border-left: 3px solid var(--missing-fill); background: var(--card); text-align: left; transition: all .15s ease; }
+.gcard[data-k='noncritical'] { border-left-color: var(--in-flight-fill); }
+.gcard:hover { border-color: var(--primary-border); }
+.gcard[aria-expanded='true'] { border-color: var(--primary-border); box-shadow: 0 0 0 1px var(--primary-border); }
+.gcard .t { font-size: var(--fs-4); font-weight: var(--fw-medium); overflow-wrap: anywhere; }
+.gcard .s { font-size: var(--fs-3); color: var(--muted-foreground); overflow-wrap: anywhere; }
+.pcard { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-4); border: 1px solid var(--border); background: var(--card); transition: all .15s ease; }
+.pcard.on { border-color: var(--primary-border); }
+.pcard ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
+.pcard li { display: grid; grid-template-columns: 1.4rem minmax(0, 1fr); gap: var(--space-2); padding: var(--space-1) var(--space-1-5); font-size: var(--fs-3); color: var(--muted-foreground); overflow-wrap: anywhere; transition: all .15s ease; }
+.pcard li .i { font-family: var(--font-mono); font-size: var(--fs-2); }
+.pcard li.on { color: var(--foreground); background: var(--primary-tint); }
+.pcard li.on .i { color: var(--primary); }
+.pcard li.loose-task { font-style: italic; }
+.b-detail { margin-top: var(--space-4); }
+
+/* ============ C — goal trace ============ */
+.c-head { display: grid; grid-template-columns: minmax(0, 1fr) 19rem; gap: var(--space-8); align-items: start; }
+@container (max-width: 56rem) { .c-head { grid-template-columns: minmax(0, 1fr); } }
+.verdict { display: grid; gap: var(--space-3); padding: var(--space-4) var(--space-5); border: 1px solid var(--border); background: var(--card); }
+.verdict[data-tone='missing'] { border-color: var(--missing-border); border-top: 3px solid var(--missing-fill); }
+.verdict[data-tone='in-flight'] { border-color: var(--in-flight-border); border-top: 3px solid var(--in-flight-fill); }
+.verdict[data-tone='complete'] { border-color: var(--primary-border); border-top: 3px solid var(--primary); }
+.verdict .say { font-size: var(--fs-5); line-height: 1.4; }
+.verdict .facts { display: grid; gap: var(--space-1-5); }
+.verdict .facts div { display: flex; justify-content: space-between; gap: var(--space-3); font-size: var(--fs-3); align-items: baseline; }
+.verdict .facts dt { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.verdict .facts dd { font-family: var(--font-mono); font-size: var(--fs-3); text-align: right; }
+.verdict .facts button { padding: 0; border: 0; background: none; font: inherit; color: var(--foreground); text-decoration: underline dotted; text-underline-offset: 3px; }
+.todo { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(min(100%, 22rem), 1fr); gap: var(--space-3); overflow-x: auto; padding-bottom: var(--space-2); scroll-snap-type: x mandatory; }
+.todo .hc { scroll-snap-align: start; }
+.todo .hc .hc-grid { grid-template-columns: minmax(0, 1fr); gap: var(--space-3); }
+.meter { position: relative; display: grid; gap: var(--space-2); margin-bottom: var(--space-5); }
+.meter .bar { display: flex; height: 0.75rem; border: 1px solid var(--border); }
+.meter .bar span { height: 100%; }
+.meter .lbls { display: flex; gap: var(--space-4); flex-wrap: wrap; font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); }
+.meter .lbls span { display: inline-flex; gap: var(--space-1-5); align-items: center; }
+.meter .lbls b { color: var(--foreground); font-weight: var(--fw-medium); }
+.trace { position: relative; display: grid; gap: 0; padding-left: var(--space-6); }
+.trace::before { content: ''; position: absolute; left: 0.45rem; top: 0; bottom: 0.8rem; width: 1px; background: var(--border); }
+.trace .root { position: relative; padding: 0 0 var(--space-4); font-size: var(--fs-4); color: var(--muted-foreground); }
+.trace .root::before { content: ''; position: absolute; left: calc(-1 * var(--space-6) + 0.1rem); top: 0.35rem; width: 0.75rem; height: 0.75rem; background: var(--foreground); }
+.trace .grp { position: relative; display: grid; gap: 0; padding: var(--space-2) 0 var(--space-3); }
+.trace .grp > .gl { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); padding: var(--space-1) 0; display: flex; gap: var(--space-3); align-items: center; }
+.node { position: relative; width: calc(100% - var(--space-1)); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-1) var(--space-3); padding: var(--space-2) var(--space-3); margin-left: var(--space-1); border: 1px solid transparent; text-align: left; background: none; font-size: var(--fs-4); transition: all .15s ease; }
+.node::before { content: ''; position: absolute; left: calc(-1 * var(--space-6) - var(--space-1) + 0.2rem); top: 0.9rem; width: 0.55rem; height: 0.55rem; background: var(--muted-foreground); }
+.node::after { content: ''; position: absolute; left: calc(-1 * var(--space-6) - var(--space-1) + 0.75rem); top: 1.15rem; width: calc(var(--space-6) - 0.6rem); height: 1px; background: var(--border); }
+.node[data-s='verified']::before { background: var(--primary); }
+.node[data-s='coincidental']::before { background: repeating-linear-gradient(45deg, var(--primary) 0 2px, transparent 2px 4px); outline: 1px solid var(--primary); }
+.node[data-s='override']::before { background: none; outline: 1px solid var(--primary); }
+.node[data-s='failed']::before { background: var(--missing-fill); }
+.node[data-s='unverified']::before, .node[data-s='mixed']::before { background: var(--in-flight-fill); }
+.node[data-s='uncertain']::before { background: none; outline: 1px dashed var(--in-flight-fill); }
+.node:hover { background: var(--state-hover); }
+.node .t { overflow-wrap: anywhere; }
+.node[data-s='verified'] .t, .node[data-s='coincidental'] .t, .node[data-s='override'] .t { color: var(--muted-foreground); }
+.node[data-s='failed'] { border-color: var(--missing-border); background: var(--missing-tint); }
+.node[data-s='unverified'], .node[data-s='uncertain'], .node[data-s='mixed'] { border-color: var(--in-flight-border); }
+.node .st { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); white-space: nowrap; }
+.node[data-s='failed'] .st { color: var(--missing-fill); }
+.node[data-s='unverified'] .st, .node[data-s='uncertain'] .st, .node[data-s='mixed'] .st { color: var(--in-flight-fill); }
+.node-x { grid-column: 1 / -1; margin-top: var(--space-2); }
+.node-x .insp { padding: var(--space-3) var(--space-4); }
+.collapsed-ok { position: relative; margin-left: var(--space-1); padding: var(--space-1-5) var(--space-3); border: 1px dashed var(--border); background: none; text-align: left; font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); transition: all .15s ease; }
+.collapsed-ok:hover { color: var(--primary); border-color: var(--primary-border); }
+.collapsed-ok::before { content: ''; position: absolute; left: calc(-1 * var(--space-6) - var(--space-1) + 0.2rem); top: 0.65rem; width: 0.55rem; height: 0.55rem; background: var(--primary); }
+.stack { display: flex; height: 2.5rem; border: 1px solid var(--border); margin-bottom: var(--space-3); }
+.stack span { display: grid; place-items: center; height: 100%; font-family: var(--font-mono); font-size: var(--fs-3); color: var(--background); min-width: 1.75rem; transition: opacity .15s ease; overflow: hidden; }
+.stack span[data-s='satisfied'] { background: var(--primary); }
+.stack span[data-s='partial'] { background: color-mix(in oklch, var(--primary) 55%, var(--in-flight-fill)); }
+.stack span[data-s='human'] { background: var(--in-flight-fill); }
+.stack span[data-s='blocked'] { background: var(--missing-fill); }
+.rchips { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.rchip { display: inline-flex; align-items: center; gap: var(--space-1-5); padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: var(--card); font-family: var(--font-mono); font-size: var(--fs-3); transition: all .15s ease; }
+.rchip:hover, .rchip[aria-expanded='true'] { border-color: var(--primary-border); color: var(--primary); }
+.rchip[data-s='blocked'] { border-color: var(--missing-border); }
+.rpop { position: fixed; z-index: 10001; display: grid; width: min(24rem, calc(100vw - 2rem)); gap: var(--space-3); border: 1px solid var(--border); background: var(--card); padding: var(--space-4); box-shadow: 0 8px 24px color-mix(in oklch, var(--foreground) 14%, transparent); transition: opacity 120ms ease, transform 120ms ease; }
+.rpop.enter { opacity: 0; transform: translateY(-0.25rem) scale(0.98); }
+.rpop h2 { font-family: var(--font-mono); font-size: var(--fs-6); font-weight: var(--fw-medium); }
+.rpop dl { display: grid; grid-template-columns: 5rem minmax(0, 1fr); gap: var(--space-2) var(--space-3); font-size: var(--fs-3); }
+.rpop dt { color: var(--muted-foreground); font-weight: var(--fw-semibold); text-transform: uppercase; font-size: var(--fs-2); }
+.rpop dd { overflow-wrap: anywhere; }
+.ap-c { display: grid; gap: 0; border-top: 1px solid var(--border); }
+.ap-c details { border-bottom: 1px solid var(--border); }
+.ap-c summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-3); align-items: center; padding: var(--space-2-5) var(--space-1); transition: background .15s ease; }
+.ap-c summary::-webkit-details-marker { display: none; }
+.ap-c summary:hover { background: var(--state-hover); }
+.ap-c summary code { background: none; padding: 0; font-size: var(--fs-3); }
+.ap-c .pips { display: flex; gap: 3px; }
+.ap-c .ap-rows { padding: 0 0 var(--space-3); }
+.ap-c .ap-row { border: 0; padding-left: var(--space-1); }
+.ctabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: var(--space-5); overflow-x: auto; }
+.ctabs button { border: 0; background: none; padding: var(--space-2) var(--space-3); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); border-bottom: 2px solid transparent; white-space: nowrap; transition: all .15s ease; }
+.ctabs button:hover { color: var(--foreground); }
+.ctabs button[aria-selected='true'] { color: var(--foreground); border-bottom-color: var(--missing-fill); }
+.ctabs button[data-k='noncritical'][aria-selected='true'] { border-bottom-color: var(--in-flight-fill); }
+.ctabs .n { margin-left: var(--space-1); }
+.cgap { display: grid; gap: var(--space-3); padding: var(--space-4) 0; border-bottom: 1px solid var(--border); }
+.cgap-head { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr) auto; gap: var(--space-3); align-items: baseline; padding: 0; border: 0; background: none; text-align: left; }
+.cgap-head .n { font-family: var(--font-mono); font-size: var(--fs-6); color: var(--missing-fill); line-height: 1.2; }
+.cgap[data-k='noncritical'] .cgap-head .n { color: var(--in-flight-fill); }
+.cgap-head .t { font-size: var(--fs-5); font-weight: var(--fw-medium); overflow-wrap: anywhere; }
+.cgap-head:hover .t { color: var(--primary); }
+.flow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin-left: 2.25rem; border: 1px solid var(--border); }
+@container (max-width: 52rem) { .flow { grid-template-columns: minmax(0, 1fr); margin-left: 0; } }
+.flow > div { position: relative; display: grid; gap: var(--space-1-5); align-content: start; padding: var(--space-3) var(--space-4); font-size: var(--fs-3); overflow-wrap: anywhere; border-right: 1px solid var(--border); }
+.flow > div:last-child { border-right: 0; background: color-mix(in oklch, var(--primary) 4%, transparent); }
+@container (max-width: 52rem) { .flow > div { border-right: 0; border-bottom: 1px solid var(--border); } .flow > div:last-child { border-bottom: 0; } }
+.flow > div:not(:last-child)::after { content: '→'; position: absolute; right: -0.55rem; top: var(--space-3); font-family: var(--font-mono); color: var(--muted-foreground); background: var(--background); line-height: 1; z-index: 1; }
+@container (max-width: 52rem) { .flow > div:not(:last-child)::after { content: '↓'; right: auto; left: var(--space-4); top: auto; bottom: -0.55rem; } }
+.flow ul { margin: 0; padding-left: var(--space-4); display: grid; gap: var(--space-1); }
+.cgap .fp { margin-left: 2.25rem; }
+@container (max-width: 52rem) { .cgap .fp { margin-left: 0; } }
+
+/* ================= ROUND 2 — shared ================= */
+.shell-header { display: flex; align-items: center; gap: var(--space-4); height: 3.75rem; padding: 0 var(--space-4); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.brand-mark { width: 2.25rem; height: 2.25rem; background: var(--primary); display: grid; place-items: center; color: white; font-weight: 700; }
+.head .disp, .disp { font-family: var(--font-sans); font-size: var(--fs-display-3); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); font-weight: var(--fw-medium); max-width: 20ch; overflow-wrap: anywhere; }
+.disp-sub { font-size: var(--fs-fluid-1); line-height: 1.45; max-width: 58rem; color: var(--muted-foreground); overflow-wrap: anywhere; }
+.disp-sub b { color: var(--foreground); font-weight: var(--fw-medium); }
+.verdict-big { font-size: var(--fs-fluid-3); line-height: var(--lh-snug); letter-spacing: var(--ls-tight); max-width: 30ch; overflow-wrap: anywhere; }
+.verdict-big em { font-style: normal; color: var(--missing-fill); }
+.verdict-big em.w { color: var(--in-flight-fill); }
+.verdict-big em.ok { color: var(--primary); }
+.verdict-sub { font-size: var(--fs-5); color: var(--muted-foreground); max-width: 46ch; overflow-wrap: anywhere; }
+.status-badge.lg { font-size: var(--fs-3); padding: var(--space-1-5) var(--space-3); justify-self: start; }
+.pins { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.pin { display: inline-flex; gap: var(--space-2); align-items: baseline; padding: var(--space-1-5) var(--space-3); border: 1px solid var(--missing-border); background: none; font-size: var(--fs-3); text-align: left; max-width: 100%; overflow-wrap: anywhere; transition: all .15s ease; }
+.pin .k { font-family: var(--font-mono); color: var(--missing-fill); }
+.pin[data-tone='in-flight'] { border-color: var(--in-flight-border); }
+.pin[data-tone='in-flight'] .k { color: var(--in-flight-fill); }
+.pin:hover { background: var(--state-hover); border-color: var(--foreground); }
+.scope-m { display: inline-flex; gap: var(--space-1-5); align-items: center; font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); white-space: nowrap; }
+.scope-m i { display: inline-block; width: 0.9rem; height: 0.45rem; border: 1px solid var(--primary-border); }
+.scope-m i.f { background: var(--primary); border-color: var(--primary); }
+.scope-m.unk i { border-style: dashed; border-color: var(--border); }
+.scope-m b { color: var(--foreground); font-weight: var(--fw-medium); }
+.caption { min-height: 1.6rem; font-size: var(--fs-4); color: var(--muted-foreground); overflow-wrap: anywhere; }
+.caption b { color: var(--foreground); font-weight: var(--fw-medium); }
+
+/* human steps (big numbers) */
+.steps { display: grid; gap: 0; border: 1px solid var(--in-flight-border); background: linear-gradient(90deg, var(--in-flight-tint), transparent 60%); }
+.step { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: var(--space-5); padding: var(--space-5) var(--space-6) var(--space-5) var(--space-4); border-bottom: 1px solid var(--in-flight-border); }
+.step:last-child { border-bottom: 0; }
+@container (max-width: 40rem) { .step { grid-template-columns: 3.5rem minmax(0, 1fr); gap: var(--space-3); } }
+.step .big { font-family: var(--font-mono); font-size: var(--fs-display-3); line-height: .85; color: var(--in-flight-fill); letter-spacing: var(--ls-tighter); text-align: right; }
+@container (max-width: 40rem) { .step .big { font-size: var(--fs-7); } }
+.step h3 { font-size: var(--fs-6); font-weight: var(--fw-medium); margin-bottom: var(--space-3); overflow-wrap: anywhere; }
+.step .three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5); }
+@container (max-width: 52rem) { .step .three { grid-template-columns: minmax(0, 1fr); gap: var(--space-3); } }
+.step .three > div { display: grid; gap: var(--space-1); align-content: start; font-size: var(--fs-4); min-width: 0; overflow-wrap: anywhere; }
+.step .three .why { color: var(--muted-foreground); }
+
+/* big gap panels */
+.gpanels { display: grid; gap: var(--space-4); }
+.gpanel { display: grid; grid-template-columns: 5rem minmax(0, 1fr); gap: var(--space-2) var(--space-5); padding: var(--space-5) var(--space-6) var(--space-5) var(--space-4); border: 1px solid var(--missing-border); background: linear-gradient(90deg, var(--missing-tint), transparent 55%); }
+@container (max-width: 40rem) { .gpanel { grid-template-columns: minmax(0, 1fr); padding: var(--space-4); } }
+.gpanel .big { font-family: var(--font-mono); font-size: var(--fs-display-3); line-height: .85; color: var(--missing-fill); letter-spacing: var(--ls-tighter); text-align: right; }
+@container (max-width: 40rem) { .gpanel .big { text-align: left; font-size: var(--fs-7); } }
+.gpanel h3 { font-size: var(--fs-6); font-weight: var(--fw-medium); line-height: 1.3; overflow-wrap: anywhere; }
+.gpanel .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5); margin-top: var(--space-3); }
+@container (max-width: 56rem) { .gpanel .cols { grid-template-columns: minmax(0, 1fr); gap: var(--space-3); } }
+.gpanel .cols > div { display: grid; gap: var(--space-1); align-content: start; font-size: var(--fs-4); min-width: 0; overflow-wrap: anywhere; }
+.gpanel .cols ul { margin: 0; padding-left: var(--space-4); display: grid; gap: var(--space-1); }
+.gpanel .body { display: grid; gap: var(--space-4); min-width: 0; }
+.ticket { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2) var(--space-4); align-items: start; padding: var(--space-3) var(--space-4); border: 1px solid var(--primary-border); border-left: 3px solid var(--primary); background: var(--card); }
+.ticket .tt { display: grid; gap: var(--space-1); min-width: 0; }
+.ticket .nm { font-size: var(--fs-4); font-weight: var(--fw-medium); overflow-wrap: anywhere; }
+.ticket .nm .file { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--primary); margin-right: var(--space-2); }
+.ticket .task { display: grid; grid-template-columns: 1.5rem minmax(0, 1fr); gap: var(--space-2); font-size: var(--fs-3); overflow-wrap: anywhere; }
+.ticket .task .i { font-family: var(--font-mono); color: var(--primary); }
+.ticket .task.v { color: var(--muted-foreground); }
+.ticket .more { grid-column: 1 / -1; justify-self: start; margin-top: var(--space-1); }
+.gpanel.minor { grid-template-columns: 5rem minmax(0, 1fr); border-color: var(--in-flight-border); background: none; padding-top: var(--space-3); padding-bottom: var(--space-3); cursor: pointer; transition: background .15s ease; }
+.gpanel.minor:hover { background: var(--state-hover); }
+.gpanel.minor .big { font-size: var(--fs-7); color: var(--in-flight-fill); }
+.gpanel.minor h3 { font-size: var(--fs-5); }
+.gpanel.minor[data-open] { background: linear-gradient(90deg, var(--in-flight-tint), transparent 55%); cursor: default; }
+
+/* anti-patterns by severity */
+.apb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr)); gap: var(--space-3); margin-bottom: var(--space-4); }
+.apb { display: grid; gap: var(--space-2); align-content: start; padding: var(--space-4); border: 1px solid var(--missing-border); background: var(--missing-tint); }
+.apb .where { margin: 0; font-family: var(--font-mono); font-size: var(--fs-2); color: var(--missing-fill); overflow-wrap: anywhere; }
+.apb .pat { font-family: var(--font-mono); font-size: var(--fs-4); line-height: 1.4; overflow-wrap: anywhere; }
+.apb .pat code { background: none; padding: 0; }
+.apb .imp { font-size: var(--fs-3); color: var(--muted-foreground); overflow-wrap: anywhere; }
+.apw { display: grid; grid-template-columns: minmax(0, 14rem) minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-2) var(--space-4); padding: var(--space-2-5) var(--space-3); border-left: 3px solid var(--in-flight-fill); font-size: var(--fs-3); background: var(--card); margin-bottom: 2px; overflow-wrap: anywhere; }
+.apw[data-sev='info'] { border-left-color: var(--border); color: var(--muted-foreground); }
+@container (max-width: 52rem) { .apw { grid-template-columns: minmax(0, 1fr); } }
+.apw .f { font-family: var(--font-mono); font-size: var(--fs-2); }
+
+/* ================= D — target ================= */
+.d-hero { display: grid; grid-template-columns: minmax(18rem, 30rem) minmax(0, 1fr); gap: var(--space-fluid-8); align-items: center; }
+@container (max-width: 860px) { .d-hero { grid-template-columns: minmax(0, 1fr); } .d-hero .tg-wrap { max-width: 26rem; margin: 0 auto; width: 100%; } }
+.tg-wrap { position: relative; }
+.tg-wrap svg { width: 100%; height: auto; display: block; overflow: visible; }
+.tg-guide { fill: none; stroke: var(--border); stroke-width: 1; stroke-dasharray: 2 4; }
+.tg-band { fill: none; stroke-width: 0; }
+.tg-band.failed { fill: color-mix(in oklch, var(--missing-fill) 6%, transparent); }
+.tg-band.open { fill: color-mix(in oklch, var(--in-flight-fill) 6%, transparent); }
+.tg-band.ok { fill: color-mix(in oklch, var(--primary) 7%, transparent); }
+.tg-spoke { stroke: var(--border); stroke-width: 1; }
+.tg-core { fill: var(--card); stroke: var(--primary-border); stroke-width: 1.5; }
+.tg-score { font-family: var(--font-mono); text-anchor: middle; }
+.tg-score .a { font-size: 34px; fill: var(--foreground); letter-spacing: -0.03em; }
+.tg-score .b { font-size: 10px; fill: var(--muted-foreground); letter-spacing: .1em; text-transform: uppercase; }
+.tg-lbl { font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; fill: var(--muted-foreground); }
+.tg-sq { cursor: pointer; transform-box: fill-box; transform-origin: center; transition: stroke .12s ease; stroke: var(--background); stroke-width: 1.5; }
+.tg-sq[data-s='verified'] { fill: var(--primary); }
+.tg-sq[data-s='coincidental'] { fill: color-mix(in oklch, var(--primary) 55%, var(--background)); }
+.tg-sq[data-s='override'] { fill: var(--background); stroke: var(--primary); }
+.tg-sq[data-s='failed'] { fill: var(--missing-fill); }
+.tg-sq[data-s='unverified'], .tg-sq[data-s='mixed'] { fill: var(--in-flight-fill); }
+.tg-sq[data-s='uncertain'] { fill: var(--background); stroke: var(--in-flight-fill); stroke-dasharray: 2 2; }
+.tg-sq:hover { stroke: var(--foreground); stroke-width: 2; }
+.tg-sq.sel { stroke: var(--foreground); stroke-width: 2.5; }
+.tg-sq.dim { opacity: .18; }
+.tg-key { display: flex; gap: var(--space-4); flex-wrap: wrap; justify-content: center; margin-top: var(--space-3); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.tg-key span { display: inline-flex; gap: var(--space-1-5); align-items: center; }
+.tg-key i { width: 0.8rem; height: 0.55rem; }
+.d-side { display: grid; gap: var(--space-5); align-content: center; min-width: 0; }
+.d-side .insp { }
+.ribbon { display: flex; flex-wrap: wrap; gap: 3px; }
+.rb { flex: 1 1 7.5rem; display: grid; align-content: space-between; gap: var(--space-3); min-height: 5.5rem; padding: var(--space-2-5) var(--space-3); border: 0; text-align: left; color: var(--background); transition: filter .15s ease, transform .15s ease; }
+.rb .id { font-family: var(--font-mono); font-size: var(--fs-5); font-weight: var(--fw-medium); }
+.rb .st { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; opacity: .85; }
+.rb[data-s='satisfied'] { background: var(--primary); }
+.rb[data-s='partial'] { background: repeating-linear-gradient(135deg, var(--primary) 0 10px, color-mix(in oklch, var(--primary) 70%, var(--in-flight-fill)) 10px 20px); }
+.rb[data-s='human'] { background: var(--in-flight-fill); }
+.rb[data-s='blocked'] { background: var(--missing-fill); }
+.rb:hover { filter: brightness(1.12); }
+.rb[aria-pressed='true'] { outline: 2px solid var(--foreground); outline-offset: 2px; }
+.rdet { margin-top: var(--space-3); display: grid; grid-template-columns: 8rem minmax(0, 1fr); gap: var(--space-2) var(--space-4); padding: var(--space-4); border: 1px solid var(--border); background: var(--card); font-size: var(--fs-4); }
+@container (max-width: 40rem) { .rdet { grid-template-columns: minmax(0, 1fr); } }
+.rdet dd { overflow-wrap: anywhere; }
+
+/* ================= E — board ================= */
+.e-grid { display: grid; grid-template-columns: 21rem minmax(0, 1fr); gap: var(--space-fluid-8); align-items: start; }
+@container (max-width: 62rem) { .e-grid { grid-template-columns: minmax(0, 1fr); } }
+.e-rail { position: sticky; top: 4rem; display: grid; gap: var(--space-5); padding-right: var(--space-6); border-right: 1px solid var(--border); }
+@container (max-width: 62rem) { .e-rail { position: static; border-right: 0; padding-right: 0; } }
+.e-rail h1 { font-size: var(--fs-7); line-height: 1.15; letter-spacing: var(--ls-tight); font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.e-big { display: grid; grid-template-columns: 0.4rem minmax(0, 1fr); gap: var(--space-4); padding: var(--space-5); border: 1px solid var(--missing-border); }
+.e-big[data-tone='in-flight'] { border-color: var(--in-flight-border); }
+.e-big[data-tone='complete'] { border-color: var(--primary-border); }
+.e-big .bar { background: var(--missing-fill); }
+.e-big[data-tone='in-flight'] .bar { background: var(--in-flight-fill); }
+.e-big[data-tone='complete'] .bar { background: var(--primary); }
+.e-big .n { font-family: var(--font-mono); font-size: var(--fs-display-1); line-height: .9; color: var(--missing-fill); letter-spacing: var(--ls-tighter); }
+.e-big[data-tone='in-flight'] .n { color: var(--in-flight-fill); }
+.e-big[data-tone='complete'] .n { color: var(--primary); }
+.e-big .l { font-size: var(--fs-4); font-weight: var(--fw-medium); margin-top: var(--space-2); }
+.e-big .s { font-size: var(--fs-3); color: var(--muted-foreground); }
+.e-stats { display: grid; border-top: 1px solid var(--border); }
+.e-stats > * { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) 0; border: 0; border-bottom: 1px solid var(--border); background: none; font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); text-align: left; }
+button.e-stat:hover { color: var(--primary); }
+.e-stats b { color: var(--foreground); font-weight: var(--fw-medium); text-align: right; text-transform: none; letter-spacing: 0; }
+.e-stats b.bad { color: var(--missing-fill); }
+.e-stats b.wait { color: var(--in-flight-fill); }
+.slip { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px dashed var(--in-flight-border); background: none; text-align: left; font-size: var(--fs-3); transition: all .15s ease; }
+.slip:hover { border-style: solid; background: var(--in-flight-tint); }
+.slip .o { width: 0.9rem; height: 0.9rem; border: 1.5px solid var(--in-flight-fill); border-radius: 50%; margin-top: 0.2rem; }
+.slip b { font-weight: var(--fw-medium); display: block; }
+.e-main { display: grid; gap: var(--space-10); min-width: 0; grid-template-columns: minmax(0, 1fr); }
+.e-lead { font-size: var(--fs-5); line-height: 1.55; max-width: 62ch; overflow-wrap: anywhere; }
+.e-lead .k { display: block; margin-bottom: var(--space-1); }
+.board-title { display: flex; gap: var(--space-3); align-items: baseline; margin-bottom: var(--space-3); font-family: var(--font-mono); font-size: var(--fs-3); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.board-title .m { color: var(--muted-foreground); font-size: var(--fs-2); }
+.board { overflow-x: auto; border: 1px solid var(--border); }
+.board table { border-collapse: collapse; width: 100%; }
+.board th, .board td { border: 1px solid var(--border); padding: var(--space-2-5) var(--space-3); vertical-align: top; text-align: left; }
+.board thead th { font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); font-weight: var(--fw-medium); white-space: nowrap; }
+.board tbody th { width: 8rem; font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; font-weight: var(--fw-medium); }
+.board tbody th .meter4 { display: flex; gap: 2px; margin-bottom: var(--space-1-5); }
+.board tbody th .meter4 i { width: 0.55rem; height: 0.8rem; border: 1px solid currentColor; }
+.board tbody th .meter4 i.f { background: currentColor; }
+.board tr[data-row='failed'] th, .board tr[data-row='blocked'] th, .board tr[data-row='blocker'] th { color: var(--missing-fill); }
+.board tr[data-row='open'] th, .board tr[data-row='human'] th, .board tr[data-row='warning'] th { color: var(--in-flight-fill); }
+.board tr[data-row='ok'] th, .board tr[data-row='satisfied'] th { color: var(--primary); }
+.board td.none { background: repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in oklch, var(--border) 60%, transparent) 6px 7px); }
+.cellsq { display: flex; flex-wrap: wrap; gap: 4px; }
+.bsq { display: grid; place-items: center; width: 1.6rem; height: 1.6rem; padding: 0; border: 1px solid transparent; font-family: var(--font-mono); font-size: 10px; color: var(--background); background: var(--muted-foreground); transition: transform .12s ease; }
+.bsq[data-s='verified'], .bsq[data-s='satisfied'] { background: var(--primary); }
+.bsq[data-s='coincidental'] { background: color-mix(in oklch, var(--primary) 55%, var(--background)); color: var(--foreground); }
+.bsq[data-s='override'] { background: none; border-color: var(--primary); color: var(--primary); }
+.bsq[data-s='failed'], .bsq[data-s='blocked'] { background: var(--missing-fill); }
+.bsq[data-s='unverified'], .bsq[data-s='mixed'], .bsq[data-s='human'] { background: var(--in-flight-fill); }
+.bsq[data-s='uncertain'] { background: none; border: 1px dashed var(--in-flight-fill); color: var(--in-flight-fill); }
+.bsq[data-s='partial'] { background: repeating-linear-gradient(135deg, var(--primary) 0 4px, var(--in-flight-fill) 4px 8px); }
+.bsq.wide { width: auto; padding: 0 var(--space-2); font-size: var(--fs-2); }
+.bsq:hover { outline: 1px solid var(--foreground); outline-offset: 1px; }
+.bsq[aria-pressed='true'] { outline: 2px solid var(--foreground); outline-offset: 1px; }
+.pick { margin-top: var(--space-3); }
+.pick .empty { font-size: var(--fs-3); }
+.ledger { display: grid; border-top: 1px solid var(--border); }
+.lrow { display: grid; grid-template-columns: 2.5rem minmax(0, 1.2fr) 1.5rem minmax(0, 1fr) auto; gap: var(--space-2) var(--space-4); align-items: start; padding: var(--space-4) 0; border: 0; border-bottom: 1px solid var(--border); background: none; text-align: left; transition: background .15s ease; }
+@container (max-width: 56rem) { .lrow { grid-template-columns: 2.5rem minmax(0, 1fr); } .lrow .arr { display: none; } .lrow .tasks, .lrow .scope-m { grid-column: 2; } }
+.lrow:hover { background: var(--state-hover); }
+.lrow .n { font-family: var(--font-mono); font-size: var(--fs-6); line-height: 1.1; color: var(--missing-fill); }
+.lrow[data-k='noncritical'] .n { color: var(--in-flight-fill); }
+.lrow .g { display: grid; gap: var(--space-1); min-width: 0; }
+.lrow .g b { font-size: var(--fs-4); font-weight: var(--fw-medium); overflow-wrap: anywhere; }
+.lrow .g span { font-size: var(--fs-3); color: var(--muted-foreground); overflow-wrap: anywhere; }
+.lrow .arr { font-family: var(--font-mono); color: var(--primary); padding-top: 0.15rem; }
+.lrow .tasks { display: grid; gap: var(--space-1); min-width: 0; }
+.lrow .tchip { display: block; padding: var(--space-1) var(--space-2); border: 1px solid var(--primary-border); background: var(--primary-tint); font-size: var(--fs-3); overflow-wrap: anywhere; }
+.lrow .tchip .pf { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--primary); margin-right: var(--space-1-5); }
+.lrow .nofix { font-size: var(--fs-3); color: var(--muted-foreground); font-style: italic; }
+.ldet { display: grid; gap: var(--space-6); padding: var(--space-2) 0 var(--space-8) calc(2.5rem + var(--space-4)); border-bottom: 1px solid var(--border); }
+.ldet .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-8); }
+@container (max-width: 56rem) { .ldet .cols { grid-template-columns: minmax(0, 1fr); gap: var(--space-5); } }
+.ldet .cols > div { display: grid; gap: var(--space-2-5); align-content: start; font-size: var(--fs-4); line-height: var(--lh-relaxed); min-width: 0; overflow-wrap: anywhere; }
+.ldet .cols ul { margin: 0; padding-left: var(--space-5); display: grid; gap: var(--space-2); }
+.ldet .cols em { font-style: normal; color: var(--foreground); }
+.ldet .where { display: grid; gap: var(--space-2-5); margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--border); }
+.ldet .where div { grid-template-columns: minmax(0, 1fr); gap: var(--space-0-5); }
+.ldet .ticket { gap: var(--space-3) var(--space-4); padding: var(--space-4) var(--space-5); }
+.ldet .ticket .tt { gap: var(--space-2); }
+@container (max-width: 56rem) { .ldet { padding-left: 0; } }
+
+/* ================= F — road to done ================= */
+.f-hero { display: grid; gap: var(--space-6); }
+.route { position: relative; display: flex; gap: var(--space-3); align-items: stretch; padding-top: var(--space-6); overflow-x: auto; padding-bottom: var(--space-2); }
+.route .track { position: absolute; left: 0; right: 0; top: calc(var(--space-6) / 2 - 1px); height: 3px; background: var(--border); }
+.route .fill { position: absolute; left: 0; top: calc(var(--space-6) / 2 - 1px); height: 3px; background: var(--primary); }
+.stop { position: relative; flex: var(--g, 1) 1 0; min-width: 9.5rem; display: grid; gap: var(--space-2); align-content: start; padding: var(--space-3) var(--space-4) var(--space-4); border: 1px solid var(--border); background: var(--card); text-align: left; transition: border-color .15s ease, background .15s ease; }
+.stop::before { content: ''; position: absolute; top: calc(-1 * var(--space-6) / 2 - 0.45rem); left: var(--space-4); width: 0.9rem; height: 0.9rem; background: var(--background); border: 2px solid var(--border); }
+.stop[data-st='done']::before { background: var(--primary); border-color: var(--primary); }
+.stop[data-st='here']::before { background: var(--missing-fill); border-color: var(--missing-fill); box-shadow: 0 0 0 4px var(--missing-tint); }
+.stop[data-st='here'][data-tone='in-flight']::before { background: var(--in-flight-fill); border-color: var(--in-flight-fill); box-shadow: 0 0 0 4px var(--in-flight-tint); }
+.stop:hover { border-color: var(--primary-border); }
+.stop[aria-pressed='true'] { border-color: var(--foreground); background: color-mix(in oklch, var(--foreground) 4%, var(--card)); }
+.stop[data-k='plan'] { border-top: 3px solid var(--primary); }
+.stop[data-k='plan'][data-unk] { border-top-style: dashed; }
+.stop[data-k='human'], .stop[data-k='hc'] { border-top: 3px solid var(--in-flight-fill); }
+.stop[data-k='now'][data-tone='missing'] { border-top: 3px solid var(--missing-fill); background: linear-gradient(180deg, var(--missing-tint), var(--card)); }
+.stop[data-k='now'][data-tone='in-flight'] { border-top: 3px solid var(--in-flight-fill); background: linear-gradient(180deg, var(--in-flight-tint), var(--card)); }
+.stop[data-k='done'] { border-style: dashed; }
+.stop[data-k='done'][data-st='done'] { border-style: solid; border-color: var(--primary-border); background: var(--primary-tint); }
+.stop .k { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.stop .t { font-size: var(--fs-5); font-weight: var(--fw-medium); line-height: 1.3; overflow-wrap: anywhere; }
+.stop .s { font-size: var(--fs-3); color: var(--muted-foreground); overflow-wrap: anywhere; }
+.toks { display: flex; flex-wrap: wrap; gap: 4px; }
+.tok { display: grid; place-items: center; min-width: 1.6rem; height: 1.6rem; padding: 0 var(--space-1); font-family: var(--font-mono); font-size: var(--fs-2); color: var(--background); background: var(--missing-fill); }
+.tok[data-k='noncritical'] { background: var(--in-flight-fill); }
+.stop-det { padding: var(--space-5); border: 1px solid var(--border); background: var(--card); display: grid; gap: var(--space-4); }
+.stop-det h3 { font-size: var(--fs-6); font-weight: var(--fw-medium); overflow-wrap: anywhere; }
+.stop-det .gl { display: grid; gap: var(--space-3); }
+.stop-det .gi { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr); gap: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--border); }
+.stop-det .gi .tok { width: 1.9rem; height: 1.9rem; font-size: var(--fs-3); }
+.waffle-wrap { display: grid; gap: var(--space-3); }
+.wgroup { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: var(--space-3); align-items: start; }
+@container (max-width: 40rem) { .wgroup { grid-template-columns: minmax(0, 1fr); gap: var(--space-1-5); } }
+.wgroup .gl { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); padding-top: var(--space-2); }
+.wgroup .gl b { color: var(--foreground); font-weight: var(--fw-medium); margin-left: var(--space-1); }
+.waffle { display: flex; flex-wrap: wrap; gap: 5px; }
+.wf { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; padding: 0; border: 1px solid transparent; font-family: var(--font-mono); font-size: var(--fs-2); color: var(--background); background: var(--muted-foreground); transition: transform .12s ease, outline-color .12s ease; }
+.wf[data-s='verified'] { background: var(--primary); }
+.wf[data-s='coincidental'] { background: repeating-linear-gradient(135deg, var(--primary) 0 5px, color-mix(in oklch, var(--primary) 55%, var(--background)) 5px 10px); }
+.wf[data-s='override'] { background: none; border-color: var(--primary); color: var(--primary); }
+.wf[data-s='failed'] { background: var(--missing-fill); }
+.wf[data-s='unverified'], .wf[data-s='mixed'] { background: var(--in-flight-fill); }
+.wf[data-s='uncertain'] { background: none; border: 1px dashed var(--in-flight-fill); color: var(--in-flight-fill); }
+.wf:hover { outline: 1px solid var(--foreground); outline-offset: 1px; }
+.wf[aria-pressed='true'] { outline: 2px solid var(--foreground); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<nav id="variant-nav">
+  <span class="lbl">Sketch 021 · VERIFICATION · Round 1 ·</span>
+  <button class="variant-tab" data-variant="a">A: Verdict sheet</button>
+  <button class="variant-tab" data-variant="b">B: Console</button>
+  <button class="variant-tab" data-variant="c">C: Goal trace</button>
+  <span class="lbl" style="margin-left:var(--space-4)">Round 2 ·</span>
+  <button class="variant-tab" data-variant="d">D: Target</button>
+  <button class="variant-tab" data-variant="e">E: Board + ledger ★ Selected</button>
+  <button class="variant-tab" data-variant="f">F: Road to done</button>
+</nav>
+<div id="frame"><div id="root"></div></div>
+<aside class="drawer" id="drawer" aria-label="Details"></aside>
+<dialog class="modal" id="modal"></dialog>
+
+<div id="sketch-tools" style="position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:12px;background:rgba(0,0,0,0.78);color:white;padding:8px 10px;opacity:0.55;transition:opacity 0.2s;display:grid;gap:6px;max-width:calc(100vw - 24px)" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.55'">
+  <div>Doc: <span id="doc-btns"></span></div>
+  <div>Theme: <button data-theme="light">Light</button><button data-theme="dark">Dark</button></div>
+  <div>Width: <button data-width="390">Phone</button><button data-width="820">Tablet</button><button data-width="full">Desktop</button></div>
+</div>
+<style>
+#sketch-tools button { background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 2px 7px; margin: 2px 0 0 3px; font: inherit; cursor: pointer; }
+#sketch-tools button.on { background: #c2410c; border-color: #c2410c; }
+</style>
+<script src="./data.js?v=1"></script>
+<script>
+const DOCS = window.DOCS;
+const Q = new URLSearchParams(location.search);
+const state = { variant: ['a', 'b', 'c', 'd', 'e', 'f'].includes(Q.get('v')) ? Q.get('v') : 'e', stop: null, hoverT: null, doc: DOCS[Q.get('doc')] ? Q.get('doc') : 'syn', theme: Q.get('theme') === 'light' ? 'light' : 'dark', width: 'full', mode: 'view', hit: null, sel: null, filter: null, req: null, hv: 0, gap: null, gtab: 'critical', showOk: false, open: new Set() };
+const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const inline = s => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/(^|[^*\w])\*([^*\n<]+)\*(?!\w)/g, '$1<em>$2</em>');
+const humanize = s => String(s ?? '').replace(/[_-]/g, ' ').replace(/^./, c => c.toUpperCase());
+const cap = s => String(s ?? '').replace(/^([^A-Za-z`*]*)([a-z])/, (m, a, b) => a + b.toUpperCase());
+const strip = s => String(s ?? '').replace(/^[✓✗⚠️?🛑ℹ️\s]+/u, '');
+function md(src) {
+  const lines = String(src ?? '').split('\n'), out = []; let i = 0;
+  const isTbl = k => /^\s*\|/.test(lines[k] ?? '') && /^\s*\|[\s:|-]+\|\s*$/.test(lines[k + 1] ?? '');
+  const cells = l => l.trim().replace(/^\||\|$/g, '').split(/(?<!\\)\|/).map(c => c.trim());
+  while (i < lines.length) {
+    const l = lines[i];
+    if (!l.trim() || /^---\s*$/.test(l)) { i++; continue; }
+    if (/^```/.test(l)) { const b = []; i++; while (i < lines.length && !/^```/.test(lines[i])) b.push(lines[i++]); i++; out.push(`<pre><code>${esc(b.join('\n'))}</code></pre>`); continue; }
+    if (/^#{2,6}\s/.test(l)) { out.push(`<h4>${inline(l.replace(/^#+\s/, ''))}</h4>`); i++; continue; }
+    if (isTbl(i)) { const h = cells(l); i += 2; const rows = []; while (i < lines.length && /^\s*\|/.test(lines[i])) rows.push(cells(lines[i++])); out.push(`<div class="tbl-wrap"><table><thead><tr>${h.map(c => `<th>${inline(c)}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`); continue; }
+    if (/^\s*([-*]|\d+\.)\s/.test(l)) { const ord = /^\s*\d+\./.test(l); const items = []; while (i < lines.length && (/^\s*([-*]|\d+\.)\s/.test(lines[i]) || (/^\s{2,}\S/.test(lines[i]) && items.length))) { if (/^\s*([-*]|\d+\.)\s/.test(lines[i]) && !/^\s{4,}/.test(lines[i])) items.push(lines[i].replace(/^\s*([-*]|\d+\.)\s/, '')); else items[items.length - 1] += ' ' + lines[i].trim(); i++; } out.push(`<${ord ? 'ol' : 'ul'}>${items.map(x => `<li>${inline(x)}</li>`).join('')}</${ord ? 'ol' : 'ul'}>`); continue; }
+    const p = []; while (i < lines.length && lines[i].trim() && !/^(```|#{2,6}\s|\s*([-*]|\d+\.)\s)/.test(lines[i]) && !isTbl(i)) p.push(lines[i++].trim());
+    out.push(`<p>${inline(p.join(' '))}</p>`);
+  }
+  return `<div class="md">${out.join('')}</div>`;
+}
+const ICON_LINK = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" x2="16" y1="12" y2="12"/></svg>';
+
+/* ---------- model ---------- */
+const fmtD = s => { if (!s) return null; const d = new Date(s); return isNaN(d) ? s : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); };
+const fmtT = s => { const m = String(s ?? '').match(/T(\d\d:\d\d)/); return m ? m[1] : null; };
+function phaseOf(d) { const m = d.phase.match(/^(\d+(?:\.\d+)?)-(.*)$/); return m ? { n: m[1], name: humanize(m[2]) } : { n: d.phase, name: '' }; }
+function title(d) { return String(d.h1 ?? 'Verification report').replace(/^Phase\s+[\d.]+\s*:\s*/i, '').replace(/\s*\((RE-)?VERIFICATION\)\s*$/i, '').replace(/\s*[—–-]\s*Verification Report$/i, ' verification report').replace(/ Verification Report$/, ' verification report'); }
+const STATUS = s => s === 'passed' ? ['Passed', 'complete'] : s === 'gaps_found' ? ['Gaps found', 'missing'] : s === 'human_needed' ? ['Human needed', 'in-flight'] : [humanize(s), 'quiet'];
+const TS = {
+  verified: { l: 'Verified', tone: 'complete', ok: true },
+  coincidental: { l: 'Holds incidentally', tone: 'complete', ok: true },
+  override: { l: 'Accepted by override', tone: 'complete', ok: true },
+  mixed: { l: 'Partly verified', tone: 'in-flight' },
+  unverified: { l: 'Built, behaviour unchecked', tone: 'in-flight' },
+  uncertain: { l: 'Could not check', tone: 'in-flight' },
+  failed: { l: 'Failed', tone: 'missing' },
+};
+const TS_ORDER = ['failed', 'unverified', 'mixed', 'uncertain', 'override', 'coincidental', 'verified'];
+const RS = { satisfied: ['Satisfied', 'complete'], partial: ['Satisfied, with a caveat', 'complete'], human: ['Needs a human', 'in-flight'], blocked: ['Blocked', 'missing'] };
+const RS_ORDER = ['blocked', 'human', 'partial', 'satisfied'];
+const SEV = { blocker: 'Blocker', warning: 'Warning', info: 'Info', clear: 'Clear' };
+function score(d) { const m = d.score.match(/(\d+)\s*\/\s*(\d+)/); const ok = d.truths.filter(t => TS[t.status]?.ok).length; return m ? { n: +m[1], m: +m[2], rest: d.score.replace(m[0], '').replace(/^\s*(must-haves?|truths?)\s*/i, '').trim() } : { n: ok, m: d.truths.length, rest: '' }; }
+function counts(list, key, order) { const c = {}; for (const x of list) c[x[key]] = (c[x[key]] ?? 0) + 1; return order.filter(k => c[k]).map(k => [k, c[k]]); }
+function gapsAll(d) { return [...d.critical.map((g, i) => ({ ...g, key: 'c' + i, idx: i })), ...d.noncritical.map((g, i) => ({ ...g, key: 'n' + i, idx: i }))]; }
+function gapsForTruth(d, i) { return gapsAll(d).filter(g => g.truthIdx === i); }
+function bvFor(d, t) { const k = t.text.slice(0, 30).toLowerCase(); return d.behaviorUnverified.find(b => b.truth.toLowerCase().includes(k) || k.includes(b.truth.slice(0, 30).toLowerCase())); }
+function ccFor(d, t) { const k = t.text.slice(0, 30).toLowerCase(); return d.coincidental.find(b => b.truth.toLowerCase().startsWith(k.slice(0, 24))); }
+function groups(d) { const g = []; for (const [i, t] of d.truths.entries()) { let x = g.find(y => y.name === t.group); if (!x) g.push(x = { name: t.group, items: [] }); x.items.push(i); } return g; }
+function reqPlans(d) { return [...new Set(d.reqs.flatMap(r => r.plans))].sort(); }
+
+/* ---------- shared pieces ---------- */
+function metaRow(d) {
+  const ph = phaseOf(d); const f = fmtD(d.verified); const t = fmtT(d.verified);
+  return `<div class="meta-row"><div class="meta-left"><span class="eyebrow">Verification · Phase ${esc(ph.n)}${ph.name ? ' · ' + esc(ph.name) : ''}</span>${f ? `<span class="date">Verified <b>${esc(f)}</b>${t ? ` · ${esc(t)}` : ''}</span>` : ''}${d.synthetic ? '<span class="chip">Synthetic</span>' : ''}</div><div class="doc-tools"><button class="icon-btn" data-copy="${esc(d.path)}" title="Copy path" aria-label="Copy path">${ICON_LINK}</button><div class="seg" role="group" aria-label="Display mode"><button data-mode="view" aria-pressed="${state.mode === 'view'}">View</button><button data-mode="source" aria-pressed="${state.mode === 'source'}">Source</button></div></div></div>`;
+}
+function badges(d, { status = true } = {}) {
+  const [l, tone] = STATUS(d.status); const a = d.meta.automated; const out = [];
+  if (status) out.push(`<span class="status-badge" data-tone="${tone}">${esc(l)}</span>`);
+  if (d.meta.approach) out.push(`<span class="badge"><span class="k">Approach</span><b>${esc(d.meta.approach.replace(/\s*\(.*\)$/, ''))}</b></span>`);
+  if (a) out.push(`<button class="badge" ${d.spot.length ? 'data-modal="auto"' : `data-toast="Counts from the Verification Metadata section"`} title="${a.source === 'spot-checks' ? 'From the behavioral spot-checks' : 'From Verification Metadata'}"><span class="k">${a.source === 'spot-checks' ? 'Spot-checks' : 'Automated'}</span><b>${a.passed} passed</b>${a.failed ? `· <b class="bad">${a.failed} failed</b>` : '· <b>0 failed</b>'}${a.skipped ? `· ${a.skipped} skipped` : ''}</button>`);
+  if (d.human.length) out.push(`<button class="badge" data-tone="in-flight" data-jump="sec-human"><span class="k">Human checks</span><b class="wait">${d.human.length}</b></button>`);
+  if (d.meta.duration) out.push(`<span class="badge"><span class="k">Took</span><b>${esc(d.meta.duration)}</b></span>`);
+  return `<div class="badges">${out.join('')}</div>`;
+}
+function headBlock(d, opts) { return `<header class="head">${metaRow(d)}<h1>${esc(title(d))}</h1>${d.goal ? `<div class="goal"><span class="kicker">Phase goal</span><p>${inline(d.goal)}</p></div>` : ''}${badges(d, opts)}</header>`; }
+function heading(t, aside = '', n = '', src = null) { return `<div class="section-heading"><h2>${n ? `<span class="n">${n}</span>` : ''}${t}</h2><span class="aside">${aside}${src ? `<button class="link-btn" data-src="${src}">Source ↗</button>` : ''}</span></div>`; }
+function humanNoteHtml(d) { return d.status === 'gaps_found' && d.human.length && d.critical.length ? `<p class="note">These still need a person after the gaps close; the gaps come first.</p>` : ''; }
+function hcCard(h, i) {
+  return `<article class="hc" id="hc-${i}"><div class="hc-top"><h3><span class="num">${String(i + 1).padStart(2, '0')}</span>${inline(h.title)}</h3><button class="link-btn" data-toast="Copied the steps for check ${i + 1}">Copy steps</button></div>
+    <div class="hc-grid"><div><span class="kicker">What to do</span><span>${inline(h.test ?? '—')}</span></div><div><span class="kicker">What should happen</span><span>${inline(h.expected ?? '—')}</span></div><div class="why"><span class="kicker">Why a human</span><span>${inline(h.why ?? '—')}</span></div></div></article>`;
+}
+function truthInsp(d, i, { close = true } = {}) {
+  const t = d.truths[i]; if (!t) return ''; const s = TS[t.status]; const gs = gapsForTruth(d, i); const bv = bvFor(d, t); const cc = ccFor(d, t);
+  const rows = [['Evidence', inline(t.evidence || '—')]];
+  if (t.statusRaw && !/^[✓✗⚠️?\s]*(VERIFIED|FAILED|PRESENT_BEHAVIOR_UNVERIFIED|UNCERTAIN)\s*$/u.test(t.statusRaw)) rows.unshift(['As written', `<span class="mono" style="font-size:var(--fs-3)">${esc(t.statusRaw)}</span>`]);
+  if (bv) rows.push(['To check it', `${inline(bv.test)} <span class="muted">— expect: ${inline(bv.expected)}</span>`]);
+  if (cc) rows.push(['Why by luck', `<span class="chip">${esc(humanize(cc.reason))}</span> ${inline(cc.harden)}`]);
+  const links = gs.map(g => `<button class="xlink" data-tone="${g.kind === 'critical' ? 'missing' : 'in-flight'}" data-gap="${g.key}">→ ${g.kind === 'critical' ? 'Critical gap' : 'Gap'}: ${inline(g.name)}</button>`);
+  if (bv && d.human.length) links.push(`<button class="xlink" data-tone="in-flight" data-jump="sec-human">→ In the human checks</button>`);
+  return `<div class="insp"><div class="insp-top"><span class="chips"><span class="chip" data-tone="${s.tone}">${esc(s.l)}</span><span class="kicker">${esc(t.group)} · #${esc(t.n)}</span></span>${close ? '<button class="link-btn" data-sel="">Close ×</button>' : ''}</div><h3>${inline(t.text)}</h3><dl>${rows.map(([k, v]) => `<dt class="kicker">${k}</dt><dd>${v}</dd>`).join('')}</dl>${links.length ? `<div class="chips">${links.join('')}</div>` : ''}</div>`;
+}
+function fixPlansFor(d, g) {
+  if (!d.fixPlans.length) return '';
+  if (!g.fixes.length) return `<p class="note">No task in the ${d.fixPlans[0].file ? 'recommended fix plans' : 'recommended gap-closure shape'} names this gap.</p>`;
+  const byPlan = [...new Set(g.fixes.map(f => f.plan))];
+  return byPlan.map(pi => { const p = d.fixPlans[pi]; const hit = new Set(g.fixes.filter(f => f.plan === pi).map(f => f.task));
+    return `<div class="fp"><div class="fp-top"><span class="t">${p.file ? `<span class="file">${esc(p.file)}</span>` : '<span class="kicker" style="margin-right:var(--space-2)">Gap-closure plan</span>'}${inline(p.name)}</span><span class="scope">Scope <b>${esc(p.scope ?? 'not stated')}</b></span></div>${p.objective ? `<p class="obj">${inline(p.objective)}</p>` : ''}
+      <ol>${p.tasks.map((t, ti) => `<li ${hit.has(ti) ? 'data-hit' : ''}><span class="i">${ti + 1}.</span><span>${inline(t.text)}</span>${hit.has(ti) ? `<span class="tag">${t.verify ? 'Proves it' : 'Fixes this'}</span>` : '<span></span>'}</li>`).join('')}</ol></div>`; }).join('');
+}
+function gapDl(d, g) {
+  const rows = [];
+  if (g.missing) rows.push([g.fixLabel === 'Recommendation' ? 'What’s wrong' : 'What’s missing', inline(cap(g.missing))]);
+  if (g.impact) rows.push([g.kind === 'critical' ? 'Why it blocks' : 'Why it can wait', inline(cap(g.impact))]);
+  else if (g.truth) rows.push(['Why it blocks', `This must hold for the goal, and doesn’t: <em>${inline(g.truth)}</em>${g.artifacts.length ? `<div class="where">${g.artifacts.map(a => `<div><code>${esc(a.path)}</code><span>${inline(a.issue)}</span></div>`).join('')}</div>` : ''}`]);
+  if (g.fix) rows.push([g.fixLabel === 'Recommendation' ? 'Recommendation' : 'Fix', inline(cap(g.fix))]);
+  else if (g.missingList.length) rows.push(['Fix', `<ul>${g.missingList.map(m => `<li>${inline(m)}</li>`).join('')}</ul>`]);
+  const t = g.truthIdx != null ? d.truths[g.truthIdx] : null;
+  return `<dl class="gap-dl">${rows.map(([k, v]) => `<dt class="kicker">${k}</dt><dd>${v}</dd>`).join('')}${t && !g.truth ? `<dt class="kicker">Truth</dt><dd><button class="xlink" data-sel="${g.truthIdx}">#${esc(t.n)} ${inline(t.text)}</button></dd>` : ''}</dl>`;
+}
+function gapBody(d, g) { return `<div class="gap-body">${gapDl(d, g)}${fixPlansFor(d, g)}</div>`; }
+function noGaps(d) { return `<div class="empty">${d.gapProse ? inline(d.gapProse.split(/(?<=\.)\s/)[0]) : 'No gaps found.'}</div>`; }
+function apByFile(d) { const m = new Map(); for (const a of d.anti) { if (!m.has(a.file)) m.set(a.file, []); m.get(a.file).push(a); } const rank = { blocker: 0, warning: 1, info: 2, clear: 3 }; return [...m.entries()].sort((x, y) => Math.min(...x[1].map(a => rank[a.severity])) - Math.min(...y[1].map(a => rank[a.severity]))); }
+function sevSum(d) { return `<span class="sev-sum">${counts(d.anti, 'severity', ['blocker', 'warning', 'info', 'clear']).map(([k, n]) => `<span><i class="sq" data-s="${k}"></i><b>${n}</b> ${SEV[k].toLowerCase()}${n > 1 && k !== 'clear' ? 's' : ''}</span>`).join('')}</span>`; }
+function apRow(a) { return `<div class="ap-row" data-sev="${a.severity}"><span class="ln"><i class="sq" data-s="${a.severity}" title="${SEV[a.severity]}"></i>${a.line ? 'L' + esc(a.line) : '—'}</span><span class="pat">${inline(a.pattern)}</span><span class="imp">${inline(a.impact)}</span></div>`; }
+function antiFiles(d) { if (!d.anti.length) return `<div class="empty">${d.antiNote ? inline(d.antiNote.slice(0, 260)) : 'None found.'}</div>`; return `<div style="display:grid;gap:var(--space-2)">${apByFile(d).map(([f, rows]) => `<section class="ap-file"><header><code>${esc(f)}</code><span class="kicker">${rows.length}</span></header>${rows.map(apRow).join('')}</section>`).join('')}</div>${d.antiNote ? `<p class="note" style="margin-top:var(--space-3)">${inline(d.antiNote)}</p>` : ''}`; }
+function alsoRows(d) {
+  const L = d.raw.split('\n'); const fmLine = re => { const i = L.findIndex(l => re.test(l)); return i >= 0 ? i + 1 : null; };
+  const rows = [];
+  if (d.gapsClosed.length) rows.push({ title: `Closed since last verification · ${d.gapsClosed.length}`, line: fmLine(/^\s+gaps_closed:/) });
+  if (d.dataBlocked.length) rows.push({ title: `Blocked by missing data · ${d.dataBlocked.length}`, line: fmLine(/^data_blocked:/) });
+  if (d.gapProse && d.gapShape === 'frontmatter') rows.push({ title: 'Verifier’s gap summary', line: d.gapLine });
+  rows.push(...d.other.filter(o => !o.none).map(o => ({ title: o.title.replace(/\s*\(.*?\)\s*$/, ''), line: o.line })));
+  if (!rows.length) return '';
+  return `<nav class="source-only" aria-label="Also in this report"><span class="kicker">Also in this report</span><ul>${rows.map(o => `<li><button class="chip" ${o.line ? `data-src="${o.line}"` : 'disabled'}>${inline(o.title)}</button></li>`).join('')}</ul></nav>`;
+}
+function footer(d) { const m = d.raw.match(/^[_*]*Verifier:?[_*]*:?\s*([^_*\n]+)/m); return `<div class="footer"><span>${m ? 'Verifier · ' + esc(m[1].trim()) : ''}</span><span>${d.meta.source ? 'Must-haves from · ' + esc(d.meta.source) : ''}</span></div>`; }
+function sourceView(d) { return `<pre class="raw">${d.raw.split('\n').map((l, i) => `<span id="L${i + 1}" data-n="${i + 1}" class="${state.hit && i + 1 >= state.hit[0] && i + 1 <= state.hit[1] ? 'hit' : ''}">${esc(l) || ' '}</span>`).join('')}</pre>`; }
+function blockEnd(d, n) { const L = d.raw.split('\n'); const lvl = (L[n - 1].match(/^#+/) ?? [''])[0].length || 6; for (let i = n; i < L.length; i++) { const m = L[i].match(/^(#+)\s/); if (m && m[1].length <= lvl) return i; } return L.length; }
+
+/* ============ A — verdict sheet ============ */
+function viewA(d) {
+  const sc = score(d); const tc = counts(d.truths, 'status', TS_ORDER); let sec = 0; const n = () => String(++sec).padStart(2, '0');
+  const human = d.human.length ? `<section id="sec-human">${heading('Needs a person first', `${d.human.length} check${d.human.length > 1 ? 's' : ''}`, n(), d.hvLine)}${humanNoteHtml(d)}<div class="a-hcs">${d.human.map(hcCard).join('')}</div></section>` : '';
+  const f = state.filter;
+  const tiles = groups(d).map(g => { const sel = state.sel; let html = '';
+    const items = g.items; const cols = 1; // inspector placed after the tile's row is approximated by placing it after the tile group
+    html += `<div class="wall-group">${groups(d).length > 1 ? `<span class="kicker">${esc(g.name)} · ${items.filter(i => TS[d.truths[i].status].ok).length}/${items.length}</span>` : ''}<div class="wall">${items.map(i => { const t = d.truths[i]; return `<button class="tile ${f && t.status !== f ? 'dim' : ''}" data-s="${t.status}" data-sel="${i}" aria-pressed="${sel === i}" id="truth-${i}"><span class="tt"><i class="sq" data-s="${t.status}"></i>#${esc(t.n)} · ${esc(TS[t.status].l)}</span><p class="clamp3">${inline(t.text)}</p></button>`; }).join('')}${sel != null && items.includes(sel) ? `<div class="tile-insp">${truthInsp(d, sel)}</div>` : ''}</div></div>`;
+    return html; }).join('');
+  const truths = `<section id="sec-truths">${heading('Observable truths', esc(sc.rest || ''), n(), d.truths[0]?.line)}
+    <div class="score-line"><span class="big-score">${sc.n}<small>/${sc.m}</small></span><span class="score-cap">${esc(d.scoreLine ? d.scoreLine.replace(/\*\*/g, '') : `${sc.n} of ${sc.m} must-haves verified`)}</span></div>
+    <div class="cells" aria-label="One cell per truth">${d.truths.map((t, i) => `<button data-s="${t.status}" data-sel="${i}" title="#${esc(t.n)} ${esc(TS[t.status].l)}: ${esc(t.text.slice(0, 90))}" aria-pressed="${state.sel === i}" class="${f && t.status !== f ? 'dim' : ''}"></button>`).join('')}</div>
+    <div class="filters">${tc.map(([k, c]) => `<button data-filter="${k}" aria-pressed="${f === k}"><i class="sq" data-s="${k}"></i>${esc(TS[k].l)} <b>${c}</b></button>`).join('')}${f ? '<button data-filter="">Show all</button>' : ''}</div>
+    ${tiles}</section>`;
+  const rc = counts(d.reqs, 'status', RS_ORDER); const sat = d.reqs.filter(r => r.status === 'satisfied' || r.status === 'partial').length;
+  const reqs = d.reqs.length ? `<section id="sec-reqs">${heading('Requirements coverage', `${sat}/${d.reqs.length} satisfied`, n(), d.reqLine)}
+    <div class="filters" style="pointer-events:none">${rc.map(([k, c]) => `<button><i class="sq" data-s="${k}"></i>${RS[k][0]} <b>${c}</b></button>`).join('')}</div>
+    <div class="req-tiles">${[...d.reqs].sort((a, b) => RS_ORDER.indexOf(a.status) - RS_ORDER.indexOf(b.status)).map(r => `<button class="rt" data-s="${r.status}" data-req="${esc(r.id)}"><span class="top"><span class="id">${esc(r.id)}</span><span class="chip" data-tone="${RS[r.status][1] === 'complete' && r.status === 'partial' ? 'in-flight' : RS[r.status][1]}">${RS[r.status][0]}</span></span>${r.desc ? `<span class="d">${inline(r.desc)}</span>` : ''}${r.note && (state.req === r.id || r.status !== 'satisfied') ? `<span class="nt ${state.req === r.id ? '' : 'clamp2'}">${inline(r.note)}</span>` : ''}${r.plans.length ? `<span class="pl">${r.plans.map(p => `<span>${esc(p)}</span>`).join('')}</span>` : ''}</button>`).join('')}</div>
+    ${d.coverage ? `<p class="note" style="margin-top:var(--space-3)">${inline(d.coverage)}</p>` : ''}</section>` : '';
+  const anti = `<section id="sec-anti">${heading('Anti-patterns found', d.anti.length ? sevSum(d) : '0', n(), d.antiLine)}${antiFiles(d)}</section>`;
+  const gcol = (k, list, label) => `<div class="gcol" data-k="${k}"><header><h3>${label}</h3><span class="kicker">${list.length}</span></header>${list.length ? list.map((g, i) => { const key = (k === 'critical' ? 'c' : 'n') + i; return `<details class="gap" data-k="${k}" id="gap-${key}" data-det="gap-${key}" ${state.open.has('gap-' + key) ? 'open' : ''}><summary><span class="n">${String(i + 1).padStart(2, '0')}</span><span class="t">${inline(g.name)}</span><span class="x">+</span></summary><div class="gb">${gapBody(d, { ...g, key })}</div></details>`; }).join('') : `<div class="empty">None recorded.</div>`}</div>`;
+  const has = d.critical.length + d.noncritical.length;
+  const gaps = `<section id="sec-gaps">${heading('Gaps summary', has ? `${d.critical.length} critical · ${d.noncritical.length} can defer${d.fixPlans.length ? ` · ${d.fixPlans.length} fix plan${d.fixPlans.length > 1 ? 's' : ''}` : ''}` : 'none', n(), d.gapLine)}${has ? `<div class="a-gaps">${gcol('critical', d.critical, 'Critical · blocks progress')}${gcol('noncritical', d.noncritical, 'Non-critical · can defer')}</div>${unmappedTasks(d)}` : noGaps(d)}</section>`;
+  return `<div class="a-col">${headBlock(d)}${human}${truths}${reqs}${anti}${gaps}${alsoRows(d)}${footer(d)}</div>`;
+}
+function unmappedTasks(d) {
+  const used = new Set(gapsAll(d).flatMap(g => g.fixes.map(f => f.plan + '.' + f.task)));
+  const rest = d.fixPlans.flatMap((p, pi) => p.tasks.map((t, ti) => ({ p, t, k: pi + '.' + ti }))).filter(x => !used.has(x.k) && !x.t.verify);
+  if (!rest.length) return '';
+  return `<details class="gap" style="margin-top:var(--space-4)" data-det="unmapped" ${state.open.has('unmapped') ? 'open' : ''}><summary><span class="n muted">··</span><span class="t muted" style="font-weight:400">${rest.length} plan task${rest.length > 1 ? 's' : ''} not tied to a listed gap (anti-patterns, human checks)</span><span class="x">+</span></summary><div class="gb"><ul style="margin:0;padding-left:var(--space-5);display:grid;gap:var(--space-1);font-size:var(--fs-3)">${rest.map(x => `<li>${inline(x.t.text)} <span class="muted">— ${inline(x.p.name)}</span></li>`).join('')}</ul></div></details>`;
+}
+
+/* ============ B — console ============ */
+const TONE_COL = { verified: 'var(--primary)', coincidental: 'color-mix(in oklch, var(--primary) 70%, transparent)', override: 'color-mix(in oklch, var(--primary) 40%, transparent)', mixed: 'color-mix(in oklch, var(--primary) 50%, var(--in-flight-fill))', unverified: 'var(--in-flight-fill)', uncertain: 'color-mix(in oklch, var(--in-flight-fill) 55%, transparent)', failed: 'var(--missing-fill)' };
+function ring(d) {
+  const sc = score(d); const tc = counts(d.truths, 'status', ['verified', 'coincidental', 'override', 'mixed', 'unverified', 'uncertain', 'failed']); const tot = d.truths.length || 1; const R = 42, C = 2 * Math.PI * R; let off = 0;
+  const segs = tc.map(([k, c]) => { const len = c / tot * C; const s = `<circle r="${R}" cx="50" cy="50" fill="none" stroke="${TONE_COL[k]}" stroke-width="9" stroke-dasharray="${Math.max(len - 1.2, 0.5)} ${C}" stroke-dashoffset="${-off}" opacity="${state.filter && state.filter !== k ? .2 : 1}"/>`; off += len; return s; }).join('');
+  return `<div class="ring"><svg viewBox="0 0 100 100" aria-hidden="true"><circle r="${R}" cx="50" cy="50" fill="none" stroke="var(--border)" stroke-width="9"/>${segs}</svg><div class="c"><b>${sc.n}/${sc.m}</b><span>${esc(/requirement/i.test(d.score) ? 'requirements' : 'must-haves')}</span></div></div>`;
+}
+function viewB(d) {
+  const tc = counts(d.truths, 'status', TS_ORDER); const f = state.filter;
+  const sat = d.reqs.filter(r => r.status === 'satisfied' || r.status === 'partial').length;
+  const toc = [['sec-human', 'Human checks', d.human.length, 'wait'], ['sec-truths', 'Truths', `${score(d).n}/${score(d).m}`], ['sec-reqs', 'Requirements', d.reqs.length ? `${sat}/${d.reqs.length}` : '—'], ['sec-anti', 'Anti-patterns', d.anti.filter(a => a.severity !== 'clear').length], ['sec-gaps', 'Gaps', `${d.critical.length}+${d.noncritical.length}`, d.critical.length ? 'bad' : '']].filter(x => x[0] !== 'sec-human' || d.human.length);
+  const rail = `<aside class="b-rail">${ring(d)}<div style="display:grid;gap:var(--space-4)"><div class="legend">${tc.map(([k, c]) => `<button data-filter="${k}" aria-pressed="${f === k}"><i class="sq" data-s="${k}"></i><span>${esc(TS[k].l)}</span><b>${c}</b></button>`).join('')}</div><nav class="toc">${toc.map(([id, l, v, cls]) => `<button data-jump="${id}">${l}<b class="${cls ?? ''}">${v}</b></button>`).join('')}</nav></div></aside>`;
+  const hv = Math.min(state.hv, Math.max(d.human.length - 1, 0)); const h = d.human[hv];
+  const human = d.human.length ? `<section id="sec-human">${heading('Human checks', `${d.human.length} to do`, '', d.hvLine)}${humanNoteHtml(d)}<div class="stepper"><ol role="tablist">${d.human.map((x, i) => `<li><button role="tab" aria-selected="${i === hv}" data-hv="${i}"><span class="i">${String(i + 1).padStart(2, '0')}</span><span class="clamp2">${inline(x.title)}</span></button></li>`).join('')}</ol>
+    <div class="step-pane" role="tabpanel"><span class="kicker" style="color:var(--in-flight-fill)">Check ${hv + 1} of ${d.human.length}</span><h3>${inline(h.title)}</h3><div class="row"><span class="kicker">What to do</span><span>${inline(h.test ?? '—')}</span></div><div class="row"><span class="kicker">Should happen</span><span>${inline(h.expected ?? '—')}</span></div><div class="row muted"><span class="kicker">Why a human</span><span>${inline(h.why ?? '—')}</span></div><div class="step-nav"><button data-hv="${hv - 1}" ${hv === 0 ? 'disabled' : ''}>← Prev</button><button data-hv="${hv + 1}" ${hv >= d.human.length - 1 ? 'disabled' : ''}>Next →</button></div></div></div></section>` : '';
+  // truths as lanes by outcome
+  const LANES = [['failed', 'Failed', ['failed']], ['open', 'Not proven', ['unverified', 'uncertain', 'mixed']], ['verified', 'Verified', ['verified', 'coincidental', 'override']]];
+  const truths = `<section id="sec-truths">${heading('Observable truths', esc(score(d).rest || `${score(d).n} of ${score(d).m} verified`), '', d.truths[0]?.line)}<div class="lanes" style="--lanes:3">${LANES.map(([k, l, ss]) => { const items = d.truths.map((t, i) => [t, i]).filter(([t]) => ss.includes(t.status)); const lim = state.open.has('lane-' + k) ? items.length : 8;
+    return `<div class="lane" data-s="${k}"><header><span>${l}</span><b>${items.length}</b></header>${items.length ? items.slice(0, lim).map(([t, i]) => `<button class="kcard" data-sel="${i}" aria-pressed="${state.sel === i}" style="${f && t.status !== f ? 'opacity:.25' : ''}"><span class="tt"><span>${esc(t.group === 'Observable truths' ? '#' + t.n : t.group.replace('Roadmap success criteria', 'Roadmap') + ' · ' + t.n)}</span><i class="sq" data-s="${t.status}" title="${esc(TS[t.status].l)}"></i></span><p class="clamp3">${inline(t.text)}</p></button>`).join('') + (items.length > lim ? `<button class="link-btn" data-toggle="lane-${k}">+ ${items.length - lim} more</button>` : '') : '<div class="empty">None.</div>'}</div>`; }).join('')}</div></section>`;
+  // requirements matrix
+  const plans = reqPlans(d);
+  const reqs = d.reqs.length ? `<section id="sec-reqs">${heading('Requirements coverage', `${sat}/${d.reqs.length} satisfied${plans.length ? ' · by plan' : ''}`, '', d.reqLine)}<div class="matrix"><table><thead><tr><th>ID</th><th>Requirement</th>${plans.map(p => `<th class="pc">${esc(p.replace(/^\d+-/, '·'))}</th>`).join('')}<th>Status</th></tr></thead><tbody>${d.reqs.map(r => `<tr data-s="${r.status}" data-req="${esc(r.id)}" aria-selected="${state.req === r.id}"><td class="rid">${esc(r.id)}</td><td class="rd">${inline(r.desc || '—')}</td>${plans.map(p => `<td class="pc">${r.plans.includes(p) ? '<i class="dot"></i>' : ''}</td>`).join('')}<td><span class="chip" data-tone="${r.status === 'partial' ? 'in-flight' : RS[r.status][1]}">${RS[r.status][0]}</span></td></tr>${state.req === r.id && r.note ? `<tr class="det"><td></td><td colspan="${plans.length + 2}">${inline(r.note)}</td></tr>` : ''}`).join('')}</tbody></table></div>${d.coverage ? `<p class="note" style="margin-top:var(--space-3)">${inline(d.coverage)}</p>` : ''}</section>` : '';
+  // anti-patterns as severity lanes
+  const sevs = ['blocker', 'warning', 'info'].filter(s => d.anti.some(a => a.severity === s));
+  const anti = `<section id="sec-anti">${heading('Anti-patterns found', d.anti.length ? sevSum(d) : '0', '', d.antiLine)}${sevs.length ? `<div class="lanes" style="--lanes:${sevs.length}">${sevs.map(s => `<div class="lane" data-s="${s}"><header><span>${SEV[s]}</span><b>${d.anti.filter(a => a.severity === s).length}</b></header>${d.anti.filter(a => a.severity === s).map(a => `<div class="kcard" style="cursor:default"><span class="tt"><code style="background:none;padding:0;text-transform:none;letter-spacing:0">${esc(a.file.split('/').pop())}${a.line ? ':' + esc(a.line) : ''}</code></span><p>${inline(a.pattern)}</p><p class="muted">${inline(a.impact)}</p></div>`).join('')}</div>`).join('')}</div>` : antiFiles(d)}</section>`;
+  // gaps → fix plans board
+  const has = d.critical.length + d.noncritical.length; const all = gapsAll(d); const open = state.gap;
+  const gcards = (list, k) => list.map((g, i) => { const key = (k === 'critical' ? 'c' : 'n') + i; const on = open === key; return `<button class="gcard" data-k="${k}" data-bgap="${key}" id="gap-${key}" aria-expanded="${on}"><span class="t">${inline(g.name)}</span>${!on ? `<span class="s clamp2">${inline(g.missing ?? g.fix ?? '')}</span>` : ''}</button>${on ? `<div class="b-detail">${gapDl(d, { ...g, key })}</div>` : ''}`; }).join('');
+  const onSet = open ? new Set((all.find(g => g.key === open)?.fixes ?? []).map(f => f.plan + '.' + f.task)) : null;
+  const used = new Set(all.flatMap(g => g.fixes.map(f => f.plan + '.' + f.task)));
+  const pcards = d.fixPlans.map((p, pi) => `<div class="pcard ${onSet && [...onSet].some(k => k.startsWith(pi + '.')) ? 'on' : ''}"><div class="fp-top"><span class="t" style="font-size:var(--fs-4);font-weight:var(--fw-medium)">${p.file ? `<span class="mono" style="font-size:var(--fs-2);color:var(--primary);margin-right:var(--space-2)">${esc(p.file)}</span>` : ''}${inline(p.name)}</span><span class="scope">Scope <b>${esc(p.scope ?? 'not stated')}</b></span></div><ol>${p.tasks.map((t, ti) => `<li class="${onSet?.has(pi + '.' + ti) ? 'on' : ''} ${!used.has(pi + '.' + ti) && !t.verify ? 'loose-task' : ''}" data-task="${pi}.${ti}" title="${!used.has(pi + '.' + ti) && !t.verify ? 'Not tied to a listed gap' : ''}"><span class="i">${ti + 1}.</span><span>${inline(t.text)}</span></li>`).join('')}</ol></div>`).join('');
+  const gaps = `<section id="sec-gaps">${heading('Gaps → fixes', has ? `${d.critical.length} critical · ${d.noncritical.length} can defer` : 'none', '', d.gapLine)}${has ? `<div class="gboard" id="gboard"><div class="gstack">${d.critical.length ? `<div class="sub">Critical · blocks progress</div>${gcards(d.critical, 'critical')}` : ''}${d.noncritical.length ? `<div class="sub">Non-critical · can defer</div>${gcards(d.noncritical, 'noncritical')}` : ''}</div><div class="gstack"><div class="sub">${d.fixPlans.length ? (d.fixPlans[0].file ? 'Recommended fix plans' : 'Recommended gap-closure shape') : 'No fix plans recommended'}</div>${pcards || '<div class="empty">The report recommends no fix plans; each gap carries its own fix.</div>'}</div><svg class="wires" id="wires"></svg></div>` : noGaps(d)}</section>`;
+  return `${headBlock(d)}<div class="b-grid">${rail}<div class="b-main">${human}${truths}${reqs}${anti}${gaps}${alsoRows(d)}${footer(d)}</div></div>`;
+}
+function drawWires() {
+  const svg = document.getElementById('wires'); const board = document.getElementById('gboard'); if (!svg || !board) return;
+  if (getComputedStyle(svg).display === 'none') return;
+  const d = DOCS[state.doc]; const B = board.getBoundingClientRect(); let out = '';
+  for (const g of gapsAll(d)) { const el = document.getElementById('gap-' + g.key); if (!el) continue; const a = el.getBoundingClientRect();
+    for (const f of g.fixes) { const t = board.querySelector(`[data-task="${f.plan}.${f.task}"]`); if (!t) continue; const b = t.getBoundingClientRect();
+      const x1 = a.right - B.left, y1 = a.top - B.top + Math.min(a.height / 2, 22), x2 = b.left - B.left, y2 = b.top - B.top + b.height / 2, mx = (x1 + x2) / 2;
+      const cls = state.gap ? (state.gap === g.key ? 'on' : 'off') : '';
+      out += `<path class="${cls}" d="M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}"/>`; } }
+  svg.innerHTML = out;
+}
+function drawer() {
+  const el = document.getElementById('drawer'); const d = DOCS[state.doc];
+  if (state.variant === 'b' && state.sel != null && state.mode === 'view') { el.innerHTML = `<div class="drawer-head"><span class="kicker">Truth</span><button class="link-btn" data-sel="">Close ×</button></div>${truthInsp(d, state.sel, { close: false })}`; el.classList.add('open'); }
+  else el.classList.remove('open');
+}
+
+/* ============ C — goal trace ============ */
+function verdictSay(d) {
+  const sc = score(d);
+  if (d.status === 'gaps_found') return `<b>Not achieved yet.</b> ${d.critical.length} gap${d.critical.length === 1 ? '' : 's'} block${d.critical.length === 1 ? 's' : ''} the goal${d.noncritical.length ? `, ${d.noncritical.length} can wait` : ''}.`;
+  if (d.status === 'human_needed') return `<b>Built and checked by machine.</b> ${d.human.length} thing${d.human.length === 1 ? '' : 's'} need${d.human.length === 1 ? 's' : ''} a person before it counts.`;
+  if (d.status === 'passed') return `<b>Goal achieved.</b> ${sc.n} of ${sc.m} verified${d.human.length ? `; ${d.human.length} human check${d.human.length > 1 ? 's' : ''} recorded` : ''}.`;
+  return esc(humanize(d.status));
+}
+function viewC(d) {
+  const [l, tone] = STATUS(d.status); const a = d.meta.automated; const sc = score(d);
+  const facts = [['Score', `${sc.n}/${sc.m}`], d.meta.approach && ['Approach', esc(d.meta.approach.replace(/\s*\(.*\)$/, ''))], a && [a.source === 'spot-checks' ? 'Spot-checks' : 'Automated', d.spot.length ? `<button data-modal="auto">${a.passed} passed · ${a.failed} failed${a.skipped ? ` · ${a.skipped} skipped` : ''}</button>` : `${a.passed} passed · ${a.failed} failed`], d.human.length && ['Human checks', `<button data-jump="sec-human">${d.human.length}</button>`], d.meta.duration && ['Took', esc(d.meta.duration)]].filter(Boolean);
+  const head = `<div class="head">${metaRow(d)}<div class="c-head"><div style="display:grid;gap:var(--space-5)"><h1>${esc(title(d))}</h1>${d.goal ? `<div class="goal"><span class="kicker">Phase goal</span><p>${inline(d.goal)}</p></div>` : ''}</div><aside class="verdict" data-tone="${tone}"><span class="status-badge" data-tone="${tone}" style="justify-self:start">${esc(l)}</span><p class="say">${verdictSay(d)}</p><dl class="facts">${facts.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl></aside></div></div>`;
+  const human = d.human.length ? `<section id="sec-human">${heading('Do these first', `${d.human.length} · scroll →`, '', d.hvLine)}${humanNoteHtml(d)}<div class="todo">${d.human.map(hcCard).join('')}</div></section>` : '';
+  // meter + trace
+  const tc = counts(d.truths, 'status', ['verified', 'coincidental', 'override', 'mixed', 'unverified', 'uncertain', 'failed']); const tot = d.truths.length || 1;
+  const meter = `<div class="meter"><div class="bar">${tc.map(([k, c]) => `<span style="width:${c / tot * 100}%;background:${TONE_COL[k]}" title="${esc(TS[k].l)}: ${c}"></span>`).join('')}</div><div class="lbls">${tc.map(([k, c]) => `<span><i class="sq" data-s="${k}"></i><b>${c}</b> ${esc(TS[k].l.toLowerCase())}</span>`).join('')}</div></div>`;
+  const trace = `<div class="trace"><div class="root"><span class="kicker">The goal holds if all of these do</span></div>${groups(d).map(g => { const bad = g.items.filter(i => !TS[d.truths[i].status].ok); const ok = g.items.filter(i => TS[d.truths[i].status].ok); const showOk = state.showOk || state.open.has('ok-' + g.name);
+    const node = i => { const t = d.truths[i]; const open = state.sel === i; return `<div><button class="node" data-s="${t.status}" data-sel="${open ? '' : i}" id="truth-${i}"><span class="t">${inline(t.text)}</span><span class="st">${esc(TS[t.status].l)}</span>${open ? `<span class="node-x">${truthInsp(d, i, { close: false })}</span>` : ''}</button></div>`; };
+    return `<div class="grp">${groups(d).length > 1 ? `<div class="gl"><span>${esc(g.name)}</span><span>${ok.length}/${g.items.length}</span></div>` : ''}${bad.map(node).join('')}${ok.length ? (showOk ? ok.map(node).join('') : `<button class="collapsed-ok" data-toggle="ok-${esc(g.name)}">${ok.length} verified — show</button>`) : ''}</div>`; }).join('')}</div>`;
+  const truths = `<section id="sec-truths">${heading('Observable truths', `${sc.n}/${sc.m} · <button class="link-btn" data-showok>${state.showOk ? 'Fold verified' : 'Show all'}</button>`, '', d.truths[0]?.line)}${meter}${trace}</section>`;
+  // requirements: stacked bar + chips with popover
+  const rc = counts(d.reqs, 'status', ['satisfied', 'partial', 'human', 'blocked']); const sat = d.reqs.filter(r => r.status === 'satisfied' || r.status === 'partial').length;
+  const reqs = d.reqs.length ? `<section id="sec-reqs">${heading('Requirements coverage', `${sat}/${d.reqs.length} satisfied`, '', d.reqLine)}<div class="stack">${rc.map(([k, c]) => `<span data-s="${k}" style="flex:${c}" title="${RS[k][0]}: ${c}">${c}</span>`).join('')}</div><div class="meter"><div class="lbls">${rc.map(([k, c]) => `<span><i class="sq" data-s="${k}"></i><b>${c}</b> ${RS[k][0].toLowerCase()}</span>`).join('')}</div></div><div class="rchips">${[...d.reqs].sort((a, b) => RS_ORDER.indexOf(a.status) - RS_ORDER.indexOf(b.status)).map(r => `<button class="rchip" data-s="${r.status}" data-rpop="${esc(r.id)}"><i class="sq" data-s="${r.status}"></i>${esc(r.id)}</button>`).join('')}</div>${d.coverage ? `<p class="note" style="margin-top:var(--space-3)">${inline(d.coverage)}</p>` : ''}</section>` : '';
+  const anti = `<section id="sec-anti">${heading('Anti-patterns found', d.anti.length ? sevSum(d) : '0', '', d.antiLine)}${d.anti.length ? `<div class="ap-c">${apByFile(d).map(([f, rows], i) => `<details data-det="apc-${i}" ${state.open.has('apc-' + i) || rows.some(r => r.severity === 'blocker') ? 'open' : ''}><summary><code>${esc(f)}</code><span class="pips">${rows.map(r => `<i class="sq" data-s="${r.severity}"></i>`).join('')}</span></summary><div class="ap-rows">${rows.map(apRow).join('')}</div></details>`).join('')}</div>${d.antiNote ? `<p class="note" style="margin-top:var(--space-3)">${inline(d.antiNote)}</p>` : ''}` : antiFiles(d)}</section>`;
+  const has = d.critical.length + d.noncritical.length; const tab = state.gtab === 'noncritical' && d.noncritical.length ? 'noncritical' : d.critical.length ? 'critical' : 'noncritical'; const list = tab === 'critical' ? d.critical : d.noncritical;
+  const gaps = `<section id="sec-gaps">${heading('Gaps summary', has && d.fixPlans.length ? `${d.fixPlans.length} fix plan${d.fixPlans.length > 1 ? 's' : ''} mapped` : '', '', d.gapLine)}${has ? `<div class="ctabs" role="tablist"><button role="tab" data-k="critical" data-gtab="critical" aria-selected="${tab === 'critical'}">Critical · blocks progress<span class="n">${d.critical.length}</span></button><button role="tab" data-k="noncritical" data-gtab="noncritical" aria-selected="${tab === 'noncritical'}">Non-critical · can defer<span class="n">${d.noncritical.length}</span></button></div>
+    ${list.length ? list.map((g, i) => { const key = (tab === 'critical' ? 'c' : 'n') + i; const on = state.gap === key || (state.gap == null && i === 0); const why = g.impact ? inline(cap(g.impact)) : g.truth ? `Must hold, doesn’t: <em>${inline(g.truth)}</em>` : '—'; const fix = g.fix ? inline(cap(g.fix)) : g.missingList.length ? `<ul>${g.missingList.map(m => `<li>${inline(m)}</li>`).join('')}</ul>` : '—';
+      return `<div class="cgap" data-k="${tab}" id="gap-${key}"><button class="cgap-head" data-cgap="${on ? '-' : key}"><span class="n">${String(i + 1).padStart(2, '0')}</span><span class="t">${inline(g.name)}</span><span class="link-btn">${on ? 'Fold −' : 'Open +'}</span></button>${on ? `<div class="flow fade"><div><span class="kicker">${g.fixLabel === 'Recommendation' ? 'What’s wrong' : 'What’s missing'}</span><span>${inline(cap(g.missing ?? '—'))}</span>${g.artifacts.length ? `<div class="where">${g.artifacts.map(a => `<div><code>${esc(a.path.split('/').pop())}</code><span>${inline(a.issue)}</span></div>`).join('')}</div>` : ''}</div><div><span class="kicker">${tab === 'critical' ? 'Why it blocks' : 'Why it can wait'}</span><span>${why}</span></div><div><span class="kicker">${g.fixLabel}</span><div>${fix}</div></div></div>${fixPlansFor(d, { ...g, key })}` : ''}</div>`; }).join('') : '<div class="empty">None recorded.</div>'}${unmappedTasks(d)}` : noGaps(d)}</section>`;
+  return `${head}${human}${truths}${reqs}${anti}${gaps}${alsoRows(d)}${footer(d)}`;
+}
+let pop = null;
+function showRpop(btn) {
+  hideRpop(); const d = DOCS[state.doc]; const r = d.reqs.find(x => x.id === btn.dataset.rpop); if (!r) return;
+  const el = document.createElement('div'); el.className = 'rpop enter'; el.setAttribute('role', 'dialog');
+  el.innerHTML = `<div><p class="eyebrow">Requirement</p><h2>${esc(r.id)}</h2></div>${r.desc ? `<p style="font-size:var(--fs-4)">${inline(r.desc)}</p>` : ''}<dl><dt>Status</dt><dd><span class="chip" data-tone="${r.status === 'partial' ? 'in-flight' : RS[r.status][1]}">${RS[r.status][0]}</span></dd>${r.plans.length ? `<dt>Plans</dt><dd class="mono">${esc(r.plans.join(', '))}</dd>` : ''}${r.note ? `<dt>${r.status === 'blocked' ? 'Blocking' : 'Evidence'}</dt><dd>${inline(r.note)}</dd>` : ''}</dl>`;
+  document.body.appendChild(el); const rc = btn.getBoundingClientRect();
+  el.style.left = Math.max(16, Math.min(rc.left, innerWidth - el.offsetWidth - 16)) + 'px'; el.style.top = (rc.bottom + 8 + el.offsetHeight > innerHeight ? rc.top - el.offsetHeight - 8 : rc.bottom + 8) + 'px';
+  requestAnimationFrame(() => el.classList.remove('enter')); btn.setAttribute('aria-expanded', 'true'); pop = { el, btn };
+}
+function hideRpop() { if (pop) { pop.el.remove(); pop.btn.removeAttribute('aria-expanded'); pop = null; } }
+
+/* ---------- modal ---------- */
+function openModal(kind) {
+  const d = DOCS[state.doc]; const m = document.getElementById('modal');
+  if (kind === 'auto') m.innerHTML = `<div class="m-head"><h3>Behavioral spot-checks · ${d.spot.length}</h3><button class="link-btn" data-close>Close ×</button></div><div class="m-body"><div>${d.spot.map(s => `<div class="spot"><i class="sq" data-s="${s.status === 'pass' ? 'verified' : s.status === 'fail' ? 'failed' : 'uncertain'}"></i><span>${inline(s.behavior)}</span><span class="res">${inline(s.result)}</span><span class="cmd">${inline(s.command)}${/\(/.test(s.statusRaw) ? ` · ${inline(s.statusRaw.replace(/^[^(]*/, ''))}` : ''}</span></div>`).join('')}</div>${d.spotLine ? `<button class="link-btn" data-src="${d.spotLine}" style="justify-self:start">Open in source ↗</button>` : ''}</div>`;
+  m.showModal();
+}
+
+
+/* ================= ROUND 2 — shared ================= */
+const shell = () => `<div class="shell-header"><span class="brand-mark">L</span><span>Labelore</span></div>`;
+const SCOPE_N = s => /small/i.test(s ?? '') ? 1 : /medium/i.test(s ?? '') ? 2 : /large/i.test(s ?? '') ? 3 : 0;
+function scopeMeter(scope) { const n = SCOPE_N(scope); return `<span class="scope-m ${n ? '' : 'unk'}">${[1, 2, 3].map(k => `<i class="${k <= n ? 'f' : ''}"></i>`).join('')}<b>${esc(scope ?? 'Scope not stated')}</b></span>`; }
+const lc = s => String(s ?? '').replace(/^([A-Z])(?=[a-z])/, c => c.toLowerCase()).replace(/\.$/, '');
+function verdictHtml(d) {
+  const sc = score(d); const crit = d.critical.length, non = d.noncritical.length, hn = d.human.length;
+  if (d.status === 'gaps_found') {
+    const big = `Not done. <em>${crit} gap${crit === 1 ? '' : 's'}</em> block${crit === 1 ? 's' : ''} the goal${non ? `, <em class="w">${non}</em> can wait` : ''}.`;
+    const names = d.critical.slice(0, 2).map(g => lc(g.name));
+    const plans = d.fixPlans.length; const scopes = [...new Set(d.fixPlans.map(p => (p.scope ?? '').toLowerCase()).filter(Boolean))];
+    const sub = `${names.length ? cap(names.join('; ')) + (crit > 2 ? `; and ${crit - 2} more.` : '.') : ''} ${plans ? `${plans} fix plan${plans > 1 ? 's' : ''} recommended${scopes.length === 1 ? `, ${plans > 1 ? 'all' : ''} ${scopes[0]}` : ''}.` : ''}`;
+    return { tone: 'missing', big, sub };
+  }
+  if (d.status === 'human_needed') return { tone: 'in-flight', big: `Built and machine-checked. <em class="w">${hn} thing${hn === 1 ? '' : 's'}</em> need${hn === 1 ? 's' : ''} you before it counts.`, sub: `${sc.n} of ${sc.m} ${/requirement/i.test(d.score) ? 'requirements met in code' : 'must-haves verified'}${d.anti.filter(a => a.severity === 'blocker').length ? '' : ', no blocking anti-patterns'}.` };
+  if (d.status === 'passed') return { tone: 'complete', big: `<em class="ok">Goal achieved.</em> ${sc.n} of ${sc.m} truths hold.`, sub: `${d.truths.filter(t => !TS[t.status].ok).length ? `${d.truths.filter(t => !TS[t.status].ok).length} were built but only a person can confirm them. ` : ''}${hn ? `${hn} human check${hn > 1 ? 's' : ''} recorded for that.` : 'Nothing is waiting on a person.'}` };
+  return { tone: 'quiet', big: esc(humanize(d.status)), sub: '' };
+}
+function howChecked(d) { return `<div style="display:grid;gap:var(--space-2)"><span class="kicker">How it was checked</span>${badges(d, { status: false })}</div>`; }
+function humanSteps(d) {
+  if (!d.human.length) return '';
+  return `<section id="sec-human" style="--i:2">${heading(d.status === 'gaps_found' ? 'Needs a person, after the gaps' : 'Needs a person first', `${d.human.length} check${d.human.length > 1 ? 's' : ''}`, '', d.hvLine)}<div class="steps">${d.human.map((h, i) => `<article class="step" id="hc-${i}"><span class="big">${i + 1}</span><div><h3>${inline(h.title)}</h3><div class="three"><div><span class="kicker">Do this</span><span>${inline(h.test ?? '—')}</span></div><div><span class="kicker">You should see</span><span>${inline(h.expected ?? '—')}</span></div><div class="why"><span class="kicker">Why a person</span><span>${inline(h.why ?? '—')}</span></div></div></div></article>`).join('')}</div></section>`;
+}
+function ticket(d, g) {
+  if (!d.fixPlans.length) return '';
+  if (!g.fixes.length) return `<p class="note">No recommended plan task names this gap.</p>`;
+  return [...new Set(g.fixes.map(f => f.plan))].map(pi => { const p = d.fixPlans[pi]; const hit = g.fixes.filter(f => f.plan === pi); const all = state.open.has(`tk-${g.key}-${pi}`);
+    const shown = all ? p.tasks.map((t, ti) => [t, ti]) : hit.map(f => [p.tasks[f.task], f.task]);
+    return `<div class="ticket"><div class="tt"><span class="kicker">Fixed by</span><span class="nm">${p.file ? `<span class="file">${esc(p.file)}</span>` : ''}${inline(p.name)}</span></div>${scopeMeter(p.scope)}<div class="tt" style="grid-column:1/-1">${shown.map(([t, ti]) => `<div class="task ${hit.some(f => f.task === ti) ? '' : 'v'}"><span class="i">${ti + 1}.</span><span>${inline(t.text)}</span></div>`).join('')}</div>${p.tasks.length > hit.length ? `<button class="link-btn more" data-toggle="tk-${g.key}-${pi}">${all ? 'Only the tasks for this gap' : `Whole plan · ${p.tasks.length} tasks`}</button>` : ''}</div>`; }).join('');
+}
+function gapCols(d, g) {
+  const why = g.impact ? inline(cap(g.impact)) : g.truth ? `This has to hold, and doesn’t: <em>${inline(g.truth)}</em>${g.artifacts.length ? `<div class="where">${g.artifacts.map(a => `<div><code>${esc(a.path.split('/').pop())}</code><span>${inline(a.issue)}</span></div>`).join('')}</div>` : ''}` : '—';
+  const fix = g.fix ? inline(cap(g.fix)) : g.missingList.length ? `<ul>${g.missingList.map(m => `<li>${inline(m)}</li>`).join('')}</ul>` : '—';
+  return `<div class="cols"><div><span class="kicker">${g.fixLabel === 'Recommendation' ? 'What’s wrong' : 'What’s missing'}</span><span>${inline(cap(g.missing ?? '—'))}</span></div><div><span class="kicker">${g.kind === 'critical' ? 'Why it blocks' : 'Why it can wait'}</span><div>${why}</div></div><div><span class="kicker">${g.fixLabel}</span><div>${fix}</div></div></div>`;
+}
+function gapPanels(d) {
+  const has = d.critical.length + d.noncritical.length;
+  if (!has) return `<section id="sec-gaps">${heading('Gaps', 'none', '', d.gapLine)}${noGaps(d)}</section>`;
+  const crit = d.critical.map((g0, i) => { const g = { ...g0, key: 'c' + i }; return `<article class="gpanel" id="gap-${g.key}" style="--i:${i}"><span class="big">${i + 1}</span><div class="body"><h3>${inline(g.name)}</h3>${gapCols(d, g)}${ticket(d, g)}</div></article>`; }).join('');
+  const non = d.noncritical.map((g0, i) => { const g = { ...g0, key: 'n' + i }; const open = state.open.has('gp-' + g.key); return `<article class="gpanel minor" id="gap-${g.key}" ${open ? 'data-open' : `data-toggle="gp-${g.key}"`}><span class="big">${i + 1}</span><div class="body"><h3>${inline(g.name)} ${open ? '' : '<span class="link-btn" style="margin-left:var(--space-2)">Open +</span>'}</h3>${open ? gapCols(d, g) + ticket(d, g) + `<button class="link-btn" data-toggle="gp-${g.key}" style="justify-self:start">Fold −</button>` : ''}</div></article>`; }).join('');
+  return `<section id="sec-gaps">${heading('What blocks the goal', `${d.critical.length} critical${d.fixPlans.length ? ` · ${d.fixPlans.length} fix plan${d.fixPlans.length > 1 ? 's' : ''}` : ''}`, '', d.gapLine)}<div class="gpanels">${crit || '<div class="empty">No critical gaps.</div>'}</div>${d.noncritical.length ? `<div style="margin-top:var(--space-8)">${heading('Can wait', `${d.noncritical.length} non-critical`)}<div class="gpanels">${non}</div></div>` : ''}${unmappedTasks(d)}</section>`;
+}
+function antiSev(d) {
+  if (!d.anti.length) return `<section id="sec-anti">${heading('Anti-patterns', 'none', '', d.antiLine)}${antiFiles(d)}</section>`;
+  const bl = d.anti.filter(a => a.severity === 'blocker'); const rest = d.anti.filter(a => a.severity !== 'blocker');
+  return `<section id="sec-anti">${heading('Anti-patterns', sevSum(d), '', d.antiLine)}${bl.length ? `<div class="apb-grid">${bl.map((a, i) => `<div class="apb" style="--i:${i}"><p class="where">${esc(a.file)}${a.line ? ':' + esc(a.line) : ''}</p><p class="pat">${inline(a.pattern)}</p><p class="imp">${inline(a.impact)}</p></div>`).join('')}</div>` : ''}${rest.map(a => `<div class="apw" data-sev="${a.severity}"><span class="f">${esc(a.file.split('/').pop())}${a.line ? ':' + esc(a.line) : ''}</span><span>${inline(a.pattern)}</span><span class="muted">${inline(a.impact)}</span></div>`).join('')}${d.antiNote ? `<p class="note" style="margin-top:var(--space-3)">${inline(d.antiNote)}</p>` : ''}</section>`;
+}
+function ribbon(d) {
+  if (!d.reqs.length) return '';
+  const sat = d.reqs.filter(r => r.status === 'satisfied' || r.status === 'partial').length; const r = d.reqs.find(x => x.id === state.req);
+  const sorted = [...d.reqs].sort((a, b) => RS_ORDER.indexOf(a.status) - RS_ORDER.indexOf(b.status));
+  return `<section id="sec-reqs">${heading('Requirements', `${sat} of ${d.reqs.length} satisfied`, '', d.reqLine)}<div class="ribbon">${sorted.map((x, i) => `<button class="rb" data-s="${x.status}" data-rq="${esc(x.id)}" style="--i:${i}" aria-pressed="${state.req === x.id}"><span class="id">${esc(x.id)}</span><span class="st">${RS[x.status][0]}</span></button>`).join('')}</div>
+    ${r ? `<dl class="rdet"><dt class="kicker">${esc(r.id)}</dt><dd>${inline(r.desc || '—')}</dd><dt class="kicker">Status</dt><dd>${esc(r.statusRaw.replace(/^[✓✗?⚠️\s]+/u, '') || RS[r.status][0])}</dd>${r.plans.length ? `<dt class="kicker">Delivered by</dt><dd class="mono">${esc(r.plans.join(' · '))}</dd>` : ''}${r.note ? `<dt class="kicker">${r.status === 'blocked' ? 'Blocking' : 'Evidence'}</dt><dd>${inline(r.note)}</dd>` : ''}</dl>` : `<p class="caption" style="margin-top:var(--space-2)">Pick a requirement to see what it is and why it stands where it does.</p>`}</section>`;
+}
+
+/* ================= D — target ================= */
+function target(d) {
+  const S = 460, C = S / 2; const gs = groups(d); const total = d.truths.length || 1;
+  const BANDS = { ok: [60, 112], open: [120, 158], failed: [166, 204] };
+  const band = s => TS[s].ok ? 'ok' : s === 'failed' ? 'failed' : 'open';
+  const sz = total > 24 ? 11 : total > 12 ? 15 : 20, pad = 5, gap = gs.length > 1 ? 0.05 : 0;
+  let a = -Math.PI / 2; const secs = gs.map(g => { const w = 2 * Math.PI * g.items.length / total; const s = { g, a0: a + gap / 2, a1: a + w - gap / 2 }; a += w; return s; });
+  let sq = '', k = 0;
+  for (const sec of secs) for (const b of ['ok', 'open', 'failed']) {
+    const items = sec.g.items.filter(i => band(d.truths[i].status) === b); let placed = 0; let r = BANDS[b][0] + sz / 2 + 2;
+    while (placed < items.length) {
+      const per = Math.max(1, Math.floor(r * (sec.a1 - sec.a0) / (sz + pad))); const n = Math.min(per, items.length - placed); const mid = (sec.a0 + sec.a1) / 2;
+      for (let j = 0; j < n; j++) { const i = items[placed + j]; const t = d.truths[i]; const ang = n === items.length - placed && placed === 0 && per > n * 2 ? sec.a0 + (sec.a1 - sec.a0) * (j + 0.5) / n : mid + (j - (n - 1) / 2) * (sz + pad) / r; const x = C + r * Math.cos(ang) - sz / 2, y = C + r * Math.sin(ang) - sz / 2;
+        sq += `<rect class="tg-sq ${state.sel === i ? 'sel' : ''} ${state.filter && t.status !== state.filter ? 'dim' : ''}" data-s="${t.status}" data-sel="${i}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${sz}" height="${sz}" style="--i:${k++}"><title>#${t.n} · ${TS[t.status].l} — ${t.text}</title></rect>`; }
+      placed += n; r += sz + pad;
+    }
+  }
+  const ring = (r0, r1, cls) => `<path class="tg-band ${cls}" fill-rule="evenodd" d="M${C - r1},${C}a${r1},${r1} 0 1,0 ${2 * r1},0a${r1},${r1} 0 1,0 ${-2 * r1},0M${C - r0},${C}a${r0},${r0} 0 1,0 ${2 * r0},0a${r0},${r0} 0 1,0 ${-2 * r0},0"/>`;
+  const spokes = gs.length > 1 ? secs.map(s => `<line class="tg-spoke" x1="${C + 54 * Math.cos(s.a0 - gap / 2)}" y1="${C + 54 * Math.sin(s.a0 - gap / 2)}" x2="${C + 212 * Math.cos(s.a0 - gap / 2)}" y2="${C + 212 * Math.sin(s.a0 - gap / 2)}"/>`).join('') : '';
+  const lbls = gs.length > 1 ? secs.map(s => { const m = (s.a0 + s.a1) / 2, R = 222; const x = C + R * Math.cos(m), y = C + R * Math.sin(m); const anchor = Math.abs(Math.cos(m)) < .3 ? 'middle' : Math.cos(m) > 0 ? 'start' : 'end'; const ok = s.g.items.filter(i => TS[d.truths[i].status].ok).length; return `<text class="tg-lbl" x="${x}" y="${y + 3}" text-anchor="${anchor}">${esc(s.g.name.replace('Roadmap success criteria', 'Roadmap').replace('Plan ', ''))} ${ok}/${s.g.items.length}</text>`; }).join('') : '';
+  const sc = score(d);
+  return `<div class="tg-wrap"><svg viewBox="-60 -20 ${S + 120} ${S + 40}" role="img" aria-label="Truths placed by how close they are to the goal">${ring(166, 206, 'failed')}${ring(118, 160, 'open')}${ring(56, 114, 'ok')}<circle class="tg-guide" cx="${C}" cy="${C}" r="116"/><circle class="tg-guide" cx="${C}" cy="${C}" r="162"/><circle class="tg-guide" cx="${C}" cy="${C}" r="208"/>${spokes}<circle class="tg-core" cx="${C}" cy="${C}" r="50"/><text class="tg-score" x="${C}" y="${C + 6}"><tspan class="a">${sc.n}/${sc.m}</tspan></text><text class="tg-score" x="${C}" y="${C + 24}"><tspan class="b">the goal</tspan></text>${sq}${lbls}</svg>
+    <div class="tg-key"><span><i style="background:var(--primary)"></i>Inner · holds</span><span><i style="background:var(--in-flight-fill)"></i>Middle · not proven</span><span><i style="background:var(--missing-fill)"></i>Outer · failed</span></div></div>`;
+}
+function viewD(d) {
+  const v = verdictHtml(d); const [l, tone] = STATUS(d.status);
+  const side = state.sel != null ? `<div class="d-side">${truthInsp(d, state.sel)}</div>` : `<div class="d-side"><span class="status-badge lg" data-tone="${tone}">${esc(l)}</span><p class="verdict-big">${v.big}</p>${v.sub.trim() ? `<p class="verdict-sub">${inline(v.sub)}</p>` : ''}
+    ${d.critical.length ? `<div style="display:grid;gap:var(--space-2)"><span class="kicker">Blocks the goal · click to open</span><div class="pins">${d.critical.slice(0, 5).map((g, i) => `<button class="pin" data-gap="c${i}"><span class="k">${i + 1}</span>${inline(g.name.length > 70 ? g.name.slice(0, 68) + '…' : g.name)}</button>`).join('')}${d.critical.length > 5 ? `<button class="pin" data-jump="sec-gaps"><span class="k">+${d.critical.length - 5}</span>more</button>` : ''}</div></div>` : ''}
+    ${d.human.length ? `<div style="display:grid;gap:var(--space-2)"><span class="kicker">Needs you</span><div class="pins">${d.human.map((h, i) => `<button class="pin" data-tone="in-flight" data-jump="hc-${i}"><span class="k">${i + 1}</span>${inline(h.title.length > 60 ? h.title.slice(0, 58) + '…' : h.title)}</button>`).join('')}</div></div>` : ''}
+    ${howChecked(d)}<p class="caption">Each square is one truth. Pick one to see its evidence.</p></div>`;
+  return `${shell()}<div class="page fade"><header class="head">${metaRow(d)}<h1 class="disp">${esc(title(d).replace(/ verification report$/i, ''))}</h1>${d.goal ? `<p class="disp-sub"><b>Goal:</b> ${inline(d.goal)}</p>` : ''}</header>
+    <section class="d-hero" style="--i:1" id="sec-truths">${target(d)}${side}</section>
+    ${humanSteps(d)}${gapPanels(d)}${ribbon(d)}${antiSev(d)}${alsoRows(d)}${footer(d)}</div>`;
+}
+
+/* ================= E — board ================= */
+function bigNumber(d) {
+  if (d.status === 'gaps_found') return { tone: 'missing', n: d.critical.length, l: `gap${d.critical.length === 1 ? '' : 's'} block${d.critical.length === 1 ? 's' : ''} the goal`, s: `${d.noncritical.length ? d.noncritical.length + ' more can wait · ' : ''}${score(d).n} of ${score(d).m} truths hold` };
+  if (d.status === 'human_needed') return { tone: 'in-flight', n: d.human.length, l: `check${d.human.length === 1 ? '' : 's'} left for a person`, s: `machine checks done · ${score(d).n} of ${score(d).m}` };
+  return { tone: 'complete', n: `${score(d).n}/${score(d).m}`, l: 'truths hold · goal achieved', s: d.human.length ? `${d.human.length} human checks recorded` : 'nothing left for a person' };
+}
+function viewE(d) {
+  const [l, tone] = STATUS(d.status); const B = bigNumber(d); const a = d.meta.automated; const sc = score(d);
+  const sat = d.reqs.filter(r => r.status === 'satisfied' || r.status === 'partial').length; const bl = d.anti.filter(x => x.severity === 'blocker').length;
+  const stats = [['Truths', `${sc.n}/${sc.m}`, sc.n < sc.m ? 'bad' : '', 'sec-truths'], d.reqs.length && ['Requirements', `${sat}/${d.reqs.length}`, sat < d.reqs.length ? 'wait' : '', 'sec-reqs'], ['Anti-patterns', d.anti.length ? `${bl} blocking · ${d.anti.length}` : '0', bl ? 'bad' : '', 'sec-anti'], a && [a.source === 'spot-checks' ? 'Spot-checks' : 'Automated', `${a.passed} ✓ · ${a.failed} ✗${a.skipped ? ` · ${a.skipped} skip` : ''}`, a.failed ? 'bad' : '', d.spot.length ? 'auto' : null], d.meta.approach && ['Approach', esc(d.meta.approach.replace(/\s*\(.*\)$/, ''))], d.meta.duration && ['Took', esc(d.meta.duration)]].filter(Boolean);
+  const rail = `<aside class="e-rail"><div class="meta-left" style="display:grid;gap:var(--space-2)"><span class="eyebrow">Verification · Phase ${esc(phaseOf(d).n)}${d.synthetic ? ' · synthetic' : ''}</span><h1>${esc(title(d).replace(/ verification report$/i, ''))}</h1></div>
+    <span class="status-badge" data-tone="${tone}" style="justify-self:start">${esc(l)}</span><div class="e-stats" style="border:0"><div style="border:0;padding:0">Verified<b>${esc(fmtD(d.verified) ?? '—')}${fmtT(d.verified) ? ' · ' + fmtT(d.verified) : ''}</b></div></div>
+    <div class="e-big" data-tone="${B.tone}"><span class="bar"></span><div><div class="n">${B.n}</div><div class="l">${esc(B.l)}</div><div class="s">${esc(B.s)}</div></div></div>
+    <div class="e-stats">${stats.map(([k, v, cls, target]) => target ? `<button class="e-stat" ${target === 'auto' ? 'data-modal="auto"' : `data-jump="${target}"`}>${k}<b class="${cls ?? ''}">${v}</b></button>` : `<div>${k}<b>${v}</b></div>`).join('')}</div>
+    ${d.human.length ? `<div style="display:grid;gap:var(--space-2)"><span class="kicker">For a person${d.status === 'gaps_found' ? ' · after the gaps' : ''}</span>${d.human.map((h, i) => `<button class="slip" data-jump="hc-${i}"><span class="o"></span><span><b>${inline(h.title)}</b><span class="muted">${inline((h.expected ?? '').slice(0, 90))}${(h.expected ?? '').length > 90 ? '…' : ''}</span></span></button>`).join('')}</div>` : ''}
+    <div class="doc-tools">${metaRow(d).match(/<div class="doc-tools">([\s\S]*)<\/div><\/div>$/)?.[1] ?? ''}</div></aside>`;
+  // truth board
+  const gs = groups(d); const ROWS = [['failed', 'Failed', s => s === 'failed'], ['open', 'Not proven', s => ['unverified', 'uncertain', 'mixed'].includes(s)], ['ok', 'Holds', s => TS[s].ok]];
+  let k = 0;
+  const tb = `<div class="board-title"><span>Truth board</span><span class="m">${d.truths.length} truths · ${gs.length > 1 ? 'by plan' : 'by outcome'}</span></div><div class="board"><table><thead><tr><th></th>${gs.map(g => `<th>${esc(g.name.replace('Roadmap success criteria', 'Roadmap').replace('Observable truths', 'Truths'))}</th>`).join('')}</tr></thead><tbody>${ROWS.map(([rk, rl, f]) => { const n = d.truths.filter(t => f(t.status)).length; return `<tr data-row="${rk}"><th><div class="meter4">${[0, 1, 2, 3].map(j => `<i class="${j < Math.ceil(n / Math.max(d.truths.length, 1) * 4) ? 'f' : ''}"></i>`).join('')}</div>${rl} · ${n}</th>${gs.map(g => { const items = g.items.filter(i => f(d.truths[i].status)); return `<td class="${items.length ? '' : 'none'}"><div class="cellsq">${items.map(i => `<button class="bsq" data-s="${d.truths[i].status}" data-sel="${i}" aria-pressed="${state.sel === i}" style="--i:${k++}" title="${esc(TS[d.truths[i].status].l)}: ${esc(d.truths[i].text.slice(0, 100))}">${esc(d.truths[i].n)}</button>`).join('')}</div></td>`; }).join('')}</tr>`; }).join('')}</tbody></table></div><div class="pick">${state.sel != null ? truthInsp(d, state.sel) : '<div class="empty">Pick a square for the truth, its evidence and, if it failed, the gap it opens.</div>'}</div>`;
+  // requirement board
+  const RR = [['blocked', 'Blocked'], ['human', 'Needs a person'], ['partial', 'With a caveat'], ['satisfied', 'Satisfied']].filter(([s]) => d.reqs.some(r => r.status === s));
+  const rsel = d.reqs.find(r => r.id === state.req);
+  const rb = d.reqs.length ? `<div class="board-title"><span>Requirement board</span><span class="m">${sat} of ${d.reqs.length} satisfied</span></div><div class="board"><table><tbody>${RR.map(([s, lbl]) => `<tr data-row="${s === 'partial' ? 'satisfied' : s}"><th>${lbl} · ${d.reqs.filter(r => r.status === s).length}</th><td><div class="cellsq">${d.reqs.filter(r => r.status === s).map(r => `<button class="bsq wide" data-s="${r.status}" data-rq="${esc(r.id)}" aria-pressed="${state.req === r.id}" style="--i:${k++}">${esc(r.id)}</button>`).join('')}</div></td></tr>`).join('')}</tbody></table></div><div class="pick">${rsel ? `<dl class="rdet"><dt class="kicker">${esc(rsel.id)}</dt><dd>${inline(rsel.desc || '—')}</dd>${rsel.plans.length ? `<dt class="kicker">Delivered by</dt><dd class="mono">${esc(rsel.plans.join(' · '))}</dd>` : ''}${rsel.note ? `<dt class="kicker">${rsel.status === 'blocked' ? 'Blocking' : 'Evidence'}</dt><dd>${inline(rsel.note)}</dd>` : ''}</dl>` : ''}</div>` : '';
+  // gap ledger
+  const all = gapsAll(d);
+  const ledger = all.length ? `<div class="ledger">${all.map((g, i) => { const open = state.gap === g.key; const hits = g.fixes.filter(f => !f.verify).map(f => [d.fixPlans[f.plan], d.fixPlans[f.plan].tasks[f.task]]); const plan = g.fixes.length ? d.fixPlans[g.fixes[0].plan] : null;
+    return `<button class="lrow" data-k="${g.kind}" data-bgap="${g.key}" id="gap-${g.key}" aria-expanded="${open}"><span class="n">${g.kind === 'critical' ? 'C' : 'N'}${g.idx + 1}</span><span class="g"><b>${inline(g.name)}</b>${open ? '' : `<span class="clamp2">${inline(g.missing ?? '')}</span>`}</span><span class="arr">→</span><span class="tasks">${hits.length ? hits.map(([p, t]) => `<span class="tchip"><span class="pf">${esc(p.file ? p.file.replace(/-PLAN\.md$/, '') : p.name.split(/[ /]/)[0])}</span>${inline(t.text)}</span>`).join('') : `<span class="nofix">${d.fixPlans.length ? 'No plan task names it' : 'Fix in the gap itself'}</span>`}</span>${plan ? scopeMeter(plan.scope) : '<span></span>'}</button>${open ? `<div class="ldet">${gapCols(d, g)}${ticket(d, g)}</div>` : ''}`; }).join('')}</div>` : noGaps(d);
+  const main = `<div class="e-main">${d.goal ? `<p class="e-lead"><span class="kicker k">Phase goal</span>${inline(d.goal)}</p>` : ''}
+    <section id="sec-gaps" style="--i:1">${heading('Gap → fix ledger', all.length ? `${d.critical.length} critical · ${d.noncritical.length} can wait` : 'none', '', d.gapLine)}${ledger}${all.length ? unmappedTasks(d) : ''}</section>
+    <section id="sec-truths" style="--i:2">${tb}</section>${d.reqs.length ? `<section id="sec-reqs">${rb}</section>` : ''}${humanSteps(d)}${antiSev(d)}${alsoRows(d)}${footer(d)}</div>`;
+  return `${shell()}<div class="page fade"><div class="e-grid">${rail}${main}</div></div>`;
+}
+
+/* ================= F — road to done ================= */
+function stops(d) {
+  const sc = score(d); const out = []; const all = gapsAll(d);
+  if (d.status === 'gaps_found') {
+    const unmapped = all.filter(g => !g.fixes.length);
+    out.push({ k: 'now', st: 'here', tone: 'missing', kk: 'Today', t: `${d.critical.length} gap${d.critical.length === 1 ? '' : 's'} block the goal`, s: `${sc.n}/${sc.m} truths hold`, toks: unmapped, g: 1.4 });
+    d.fixPlans.forEach((p, pi) => out.push({ k: 'plan', pi, kk: p.file ? p.file.replace(/\.md$/, '') : `Plan ${pi + 1}`, t: p.name, s: '', scope: p.scope, toks: all.filter(g => g.fixes.some(f => f.plan === pi && !f.verify)), g: SCOPE_N(p.scope) ? 1 + SCOPE_N(p.scope) * 0.7 : 1.8 }));
+    if (!d.fixPlans.length) out.push({ k: 'plan', pi: null, kk: 'Plan the fixes', t: '/gsd-plan-phase --gaps', s: 'No fix plans recommended in the report', toks: all, g: 1.8, unk: true });
+    out.push({ k: 'reverify', kk: 'Then', t: 'Re-verify', s: 'Run verification again', g: 1 });
+    if (d.human.length) out.push({ k: 'human', kk: 'Then', t: `${d.human.length} human check${d.human.length > 1 ? 's' : ''}`, s: 'Already written down', g: 1.1 });
+    out.push({ k: 'done', kk: 'Then', t: 'Phase done', s: '', g: 1 });
+  } else if (d.status === 'human_needed') {
+    out.push({ k: 'now', st: 'done', tone: 'in-flight', kk: 'Done', t: 'Built and machine-checked', s: `${sc.n}/${sc.m}`, g: 1.4 });
+    d.human.forEach((h, i) => out.push({ k: 'hc', hi: i, st: i === 0 ? 'here' : '', tone: 'in-flight', kk: `Check ${i + 1}`, t: h.title.length > 60 ? h.title.slice(0, 58) + '…' : h.title, s: '', g: 1.2 }));
+    out.push({ k: 'done', kk: 'Then', t: 'Phase done', s: '', g: 1 });
+  } else {
+    out.push({ k: 'now', st: 'done', tone: 'complete', kk: 'Done', t: 'Built', s: `${d.reqs.length ? d.reqs.length + ' requirements' : ''}`, g: 1 });
+    out.push({ k: 'verified', st: 'done', kk: 'Done', t: `Verified ${sc.n}/${sc.m}`, s: d.meta.automated ? `${d.meta.automated.passed} automated checks passed` : '', g: 1.3 });
+    if (d.human.length) out.push({ k: 'human', st: 'done', kk: 'Recorded', t: `${d.human.length} human check${d.human.length > 1 ? 's' : ''}`, s: 'Listed for a person', g: 1.2 });
+    out.push({ k: 'done', st: 'done', kk: 'Reached', t: 'Goal achieved', s: fmtD(d.verified) ?? '', g: 1.2 });
+  }
+  return out;
+}
+function viewF(d) {
+  const v = verdictHtml(d); const [l, tone] = STATUS(d.status); const S = stops(d);
+  const here = S.findIndex(s => s.st === 'here'); const doneTo = d.status === 'passed' ? 1 : here >= 0 ? (here + 0.15) / S.length : 0.1;
+  const sel = state.stop ?? (here >= 0 ? here : null);
+  const route = `<div class="route" role="list">${'<span class="track"></span>'}<span class="fill" style="width:${(doneTo * 100).toFixed(1)}%"></span>${S.map((s, i) => `<button class="stop" role="listitem" data-k="${s.k}" data-st="${s.st ?? ''}" data-tone="${s.tone ?? ''}" ${s.k === 'plan' && !SCOPE_N(s.scope) ? 'data-unk' : ''} data-stop="${i}" aria-pressed="${sel === i}" style="--g:${s.g};--i:${i}"><span class="k">${esc(s.kk)}</span><span class="t">${inline(s.t)}</span>${s.k === 'plan' && s.pi != null ? scopeMeter(s.scope) : ''}${s.s ? `<span class="s">${inline(s.s)}</span>` : ''}${s.toks?.length ? `<span class="toks">${s.toks.map(g => `<span class="tok" data-k="${g.kind}" title="${esc(g.name)}">${g.kind === 'critical' ? 'C' : 'N'}${g.idx + 1}</span>`).join('')}</span>` : ''}</button>`).join('')}</div>`;
+  const s = S[sel]; let det = '';
+  if (s) {
+    if (s.k === 'now' && d.status === 'gaps_found') det = `<div class="stop-det"><h3>Where it stands today</h3><div class="gl">${gapsAll(d).map(g => `<div class="gi"><span class="tok" data-k="${g.kind}">${g.kind === 'critical' ? 'C' : 'N'}${g.idx + 1}</span><div style="display:grid;gap:var(--space-1)"><b style="font-weight:var(--fw-medium)">${inline(g.name)}</b><span class="muted" style="font-size:var(--fs-3)">${inline(g.missing ?? '')}</span><span>${g.fixes.length ? `<span class="kicker">Closed by</span> <span class="mono" style="font-size:var(--fs-2);color:var(--primary)">${esc([...new Set(g.fixes.map(f => d.fixPlans[f.plan].file ?? d.fixPlans[f.plan].name))].join(', '))}</span>` : '<span class="kicker">No plan names it yet</span>'} · <button class="link-btn" data-gap="${g.key}">Details ↓</button></span></div></div>`).join('')}</div></div>`;
+    else if (s.k === 'plan') { const p = s.pi != null ? d.fixPlans[s.pi] : null; det = `<div class="stop-det"><div class="fp-top"><h3>${p?.file ? `<span class="mono" style="color:var(--primary);font-size:var(--fs-3);margin-right:var(--space-2)">${esc(p.file)}</span>` : ''}${inline(p ? p.name : 'Plan the fixes')}</h3>${p ? scopeMeter(p.scope) : ''}</div>${p?.objective ? `<p class="prose">${inline(p.objective)}</p>` : ''}${p ? `<div class="gl">${p.tasks.map((t, ti) => { const gg = gapsAll(d).filter(g => g.fixes.some(f => f.plan === s.pi && f.task === ti)); return `<div class="gi"><span class="tok" style="background:${gg.length ? 'var(--primary)' : 'var(--muted-foreground)'}">${ti + 1}</span><div style="display:grid;gap:var(--space-1)"><span>${inline(t.text)}</span>${gg.length ? `<span class="toks">${gg.map(g => `<button class="pin" style="padding:0.1rem var(--space-2)" data-gap="${g.key}" data-tone="${g.kind === 'critical' ? '' : 'in-flight'}"><span class="k">${g.kind === 'critical' ? 'C' : 'N'}${g.idx + 1}</span>${t.verify ? 'proves' : 'closes'} ${inline(g.name)}</button>`).join('')}</span>` : `<span class="muted" style="font-size:var(--fs-3)">${t.verify ? 'Verification step' : 'Not tied to a listed gap'}</span>`}</div></div>`; }).join('')}</div>` : `<p class="prose">The report recommends no fix plans. Each gap carries its own fix below.</p>`}</div>`; }
+    else if (s.k === 'hc' || s.k === 'human') det = `<div class="stop-det">${(s.k === 'hc' ? [d.human[s.hi]] : d.human).map((h, i) => hcCard(h, s.k === 'hc' ? s.hi : i)).join('')}</div>`;
+    else if (s.k === 'reverify') det = `<div class="stop-det"><h3>Re-verify</h3><p class="prose">Once the fix plans run, the verifier checks the goal again. Today’s score: ${score(d).n}/${score(d).m}.</p></div>`;
+  }
+  const gs = groups(d); let k = 0; const hv = state.hoverT != null ? d.truths[state.hoverT] : null;
+  const waffle = `<section id="sec-truths">${heading('What holds', `${score(d).n} of ${score(d).m}`, '', d.truths[0]?.line)}<div class="waffle-wrap">${gs.map(g => `<div class="wgroup">${gs.length > 1 ? `<span class="gl">${esc(g.name.replace('Roadmap success criteria', 'Roadmap'))}<b>${g.items.filter(i => TS[d.truths[i].status].ok).length}/${g.items.length}</b></span>` : `<span class="gl">All truths<b>${g.items.length}</b></span>`}<div class="waffle">${g.items.map(i => `<button class="wf" data-s="${d.truths[i].status}" data-sel="${i}" data-hov="${i}" aria-pressed="${state.sel === i}" style="--i:${k++}">${esc(d.truths[i].n)}</button>`).join('')}</div></div>`).join('')}<p class="caption" id="wcap">${hv ? `<b>#${esc(hv.n)} · ${esc(TS[hv.status].l)}</b> — ${inline(hv.text)}` : 'Hover a square to read the truth; click for its evidence.'}</p>${state.sel != null ? truthInsp(d, state.sel) : ''}</div></section>`;
+  return `${shell()}<div class="page fade"><header class="head f-hero">${metaRow(d)}<h1 class="disp">${esc(title(d).replace(/ verification report$/i, ''))}</h1>${d.goal ? `<p class="disp-sub" style="--i:1"><b>Goal:</b> ${inline(d.goal)}</p>` : ''}
+    <div style="--i:2;display:grid;gap:var(--space-3)"><span class="status-badge lg" data-tone="${tone}">${esc(l)}</span><p class="verdict-big" style="max-width:none">${v.big}</p></div>
+    ${route}${det}${badges(d, { status: false })}</header>
+    ${d.status === 'gaps_found' ? gapPanels(d) + humanSteps(d) : humanSteps(d) + gapPanels(d)}${waffle}${ribbon(d)}${antiSev(d)}${alsoRows(d)}${footer(d)}</div>`;
+}
+
+/* ---------- render ---------- */
+function render() {
+  const d = DOCS[state.doc]; const v = state.variant;
+  hideRpop();
+  const R2 = { d: viewD, e: viewE, f: viewF };
+  document.getElementById('root').innerHTML = state.mode === 'view' && R2[v] ? R2[v](d) : `<div class="page fade">${state.mode === 'source' ? metaRow(d) + sourceView(d) : v === 'a' ? viewA(d) : v === 'b' ? viewB(d) : viewC(d)}</div>`;
+  document.documentElement.classList.toggle('dark', state.theme === 'dark');
+  const f = document.getElementById('frame'); f.style.maxWidth = state.width === 'full' ? 'none' : state.width + 'px'; f.classList.toggle('narrow-frame', state.width !== 'full');
+  document.querySelectorAll('.variant-tab').forEach(t => t.classList.toggle('active', t.dataset.variant === state.variant));
+  document.querySelectorAll('#sketch-tools button').forEach(b => b.classList.toggle('on', b.dataset.doc === state.doc || b.dataset.theme === state.theme || b.dataset.width === state.width));
+  drawer(); requestAnimationFrame(drawWires);
+}
+document.getElementById('doc-btns').innerHTML = Object.entries(DOCS).map(([k, d]) => `<button data-doc="${k}">${esc(d.label)}</button>`).join('');
+function toast(msg) { const t = document.createElement('div'); t.textContent = msg; t.style.cssText = 'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);max-width:min(40rem,90vw);background:var(--foreground);color:var(--background);padding:8px 14px;font-family:var(--font-mono);font-size:var(--fs-2);z-index:10000'; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); }
+function jump(id) { const el = document.getElementById(id); if (!el) return; el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 1300); }
+document.addEventListener('toggle', e => { const el = e.target; if (el.dataset?.det) { el.open ? state.open.add(el.dataset.det) : state.open.delete(el.dataset.det); requestAnimationFrame(drawWires); } }, true);
+document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') e.target.close(); });
+addEventListener('resize', () => requestAnimationFrame(drawWires));
+document.addEventListener('mouseover', e => { const h = e.target.closest('[data-hov]'); const cap = document.getElementById('wcap'); if (!h || !cap) return; const t = DOCS[state.doc].truths[+h.dataset.hov]; state.hoverT = +h.dataset.hov; cap.innerHTML = `<b>#${esc(t.n)} · ${esc(TS[t.status].l)}</b> — ${inline(t.text)}`; });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { hideRpop(); if (state.sel != null && state.variant === 'b') { state.sel = null; drawer(); } } });
+document.addEventListener('click', e => {
+  if (pop && !e.target.closest('.rpop') && !e.target.closest('[data-rpop]')) hideRpop();
+  const tg = e.target.closest('[data-toggle]'); if (tg) { const k = tg.dataset.toggle; state.open.has(k) ? state.open.delete(k) : state.open.add(k); const y = scrollY; render(); scrollTo(0, y); return; }
+  const rq2 = e.target.closest('[data-rq]'); if (rq2) { state.req = state.req === rq2.dataset.rq ? null : rq2.dataset.rq; const y = scrollY; render(); scrollTo(0, y); return; }
+  const st = e.target.closest('[data-stop]'); if (st && !e.target.closest('[data-gap]')) { state.stop = +st.dataset.stop; const y = scrollY; render(); scrollTo(0, y); return; }
+  const rq = e.target.closest('[data-req]'); if (rq) { state.req = state.req === rq.dataset.req ? null : rq.dataset.req; const y = scrollY; render(); scrollTo(0, y); return; }
+  const t = e.target.closest('button'); if (!t || t.disabled) return;
+  const y = scrollY; const d = DOCS[state.doc];
+  if (t.dataset.variant) { state.variant = t.dataset.variant; state.mode = 'view'; state.sel = null; state.gap = null; state.stop = null; }
+  else if (t.dataset.doc) { state.doc = t.dataset.doc; state.mode = 'view'; state.hit = null; state.open.clear(); state.sel = null; state.filter = null; state.req = null; state.hv = 0; state.gap = null; state.gtab = 'critical'; state.stop = null; }
+  else if (t.dataset.theme) state.theme = t.dataset.theme;
+  else if (t.dataset.width) state.width = t.dataset.width;
+  else if (t.dataset.rpop) { if (pop?.btn === t) return hideRpop(); return showRpop(t); }
+  else if (t.dataset.modal) return openModal(t.dataset.modal);
+  else if ('close' in t.dataset) return document.getElementById('modal').close();
+  else if (t.dataset.mode) { state.mode = t.dataset.mode; state.hit = null; render(); scrollTo(0, 0); return; }
+  else if (t.dataset.src) { e.stopPropagation(); e.preventDefault(); document.getElementById('modal').close(); const n = +t.dataset.src; state.mode = 'source'; state.hit = [n, blockEnd(d, n)]; render(); document.getElementById('L' + n)?.scrollIntoView({ block: 'start' }); scrollBy(0, -80); return; }
+  else if (t.dataset.copy) { try { navigator.clipboard.writeText(t.dataset.copy); } catch {} return toast('Path copied'); }
+  else if ('sel' in t.dataset) { state.sel = t.dataset.sel === '' || +t.dataset.sel === state.sel ? null : +t.dataset.sel; if (state.variant === 'b') return drawer(); }
+  else if ('filter' in t.dataset) state.filter = t.dataset.filter && t.dataset.filter !== state.filter ? t.dataset.filter : null;
+  else if (t.dataset.hv) state.hv = +t.dataset.hv;
+  else if (t.dataset.bgap) state.gap = state.gap === t.dataset.bgap ? null : t.dataset.bgap;
+  else if (t.dataset.cgap) state.gap = t.dataset.cgap;
+  else if (t.dataset.gtab) { state.gtab = t.dataset.gtab; state.gap = null; }
+  else if ('showok' in t.dataset) state.showOk = !state.showOk;
+  else if (t.dataset.gap) { const key = t.dataset.gap; const g = gapsAll(d).find(x => x.key === key); state.sel = null; if (state.variant === 'a') state.open.add('gap-' + key); else if (state.variant === 'b' || state.variant === 'e') state.gap = key; else if (state.variant === 'c') { state.gtab = g.kind; state.gap = key; } else if (g.kind !== 'critical') state.open.add('gp-' + key); render(); return setTimeout(() => jump('gap-' + key), 30); }
+  else if (t.dataset.jump) return jump(t.dataset.jump);
+  else if ('toast' in t.dataset) return toast(t.dataset.toast);
+  else return;
+  render(); scrollTo(0, y);
+});
+render();
+</script>
+</body>
+</html>
