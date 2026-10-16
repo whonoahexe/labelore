@@ -12996,12 +12996,9 @@ button.view-ui-spec-signoff:hover {
 
 /* The three verdict cells. */
 .view-validation-unreconciled {
-  flex: 1 1 100%;
-  order: 1;
-  margin: 0;
+  display: inline-block;
   padding: var(--space-1) var(--space-2);
   border-left: 2px solid var(--in-flight-border);
-  color: var(--muted-foreground);
   font-size: var(--fs-3);
 }
 

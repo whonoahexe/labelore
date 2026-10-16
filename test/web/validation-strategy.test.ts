@@ -22,6 +22,7 @@ import type { ComposedValidationStrategy } from '../../src/web/views/validation-
 import {
   ValidationIntroMeta,
   ValidationStrategyView,
+  validationHeaderProps,
 } from '../../src/web/views/validation-strategy-components.tsx';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 
@@ -153,14 +154,11 @@ describe('composeValidationStrategy — degenerate input', () => {
     const composed = composeValidationStrategy({ ...draft, siblingArtifacts: [verification('passed')] });
     expect(composed?.intro.unreconciled).toEqual({ verified: '20 Jul 2026', url: '/verification' });
     const html = renderToStaticMarkup(
-      createElement(
-        MemoryRouter,
-        null,
-        createElement(ValidationIntroMeta, { intro: composed!.intro, cells: composed!.cells }),
-      ),
+      createElement(MemoryRouter, null, validationHeaderProps(composed!, 'Fallback').lead),
     );
     expect(html).toContain('Phase verified 20 Jul 2026</a> · this strategy was never reconciled');
 
+    expect(validationHeaderProps(composeValidationStrategy(draft)!, 'Fallback').lead).toBeNull();
     expect(composeValidationStrategy(draft)?.intro.unreconciled).toBeNull();
     expect(
       composeValidationStrategy({ ...draft, siblingArtifacts: [verification('gaps_found')] })?.intro.unreconciled,

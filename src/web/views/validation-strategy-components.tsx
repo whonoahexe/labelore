@@ -193,14 +193,6 @@ export function ValidationIntroMeta({
           ))}
         </div>
       ) : null}
-      {intro.unreconciled ? (
-        <p className="view-validation-unreconciled">
-          <Link to={intro.unreconciled.url}>
-            Phase verified{intro.unreconciled.verified ? ` ${intro.unreconciled.verified}` : ''}
-          </Link>
-          {' · this strategy was never reconciled'}
-        </p>
-      ) : null}
       <div className="view-validation-cells">
         <div className="view-validation-cell" data-cell="tasks">
           <span className="view-validation-key">Tasks proven</span>
@@ -254,18 +246,32 @@ export function ValidationIntroMeta({
   );
 }
 
+/** The phase verified while this strategy stayed a draft: the line under the title. */
+function UnreconciledNote({
+  note,
+}: {
+  note: NonNullable<ComposedValidationIntro['unreconciled']>;
+}): React.JSX.Element {
+  return (
+    <span className="view-validation-unreconciled">
+      <Link to={note.url}>Phase verified{note.verified ? ` ${note.verified}` : ''}</Link>
+      {' · this strategy was never reconciled'}
+    </span>
+  );
+}
+
 /** Every field optional on purpose: the page spreads this over ArtifactHeader's own props, and a
  * Partial keeps TypeScript from flagging the intentional override. */
 export type ValidationHeaderProps = Partial<{
   eyebrow: string;
   title: string;
-  lead: null;
+  lead: React.ReactNode;
   hideCrumbs: boolean;
   meta: React.ReactNode;
 }>;
 
-/** The ArtifactHeader override View mode spreads over its props: the eyebrow, the slug title, no
- * lead, no breadcrumb row, and the cover as `meta`. */
+/** The ArtifactHeader override View mode spreads over its props: the eyebrow, the slug title, the
+ * unreconciled note as the lead (else none), no breadcrumb row, and the cover as `meta`. */
 export function validationHeaderProps(
   strategy: ComposedValidationStrategy,
   fallbackTitle: string,
@@ -273,7 +279,7 @@ export function validationHeaderProps(
   return {
     eyebrow: strategy.intro.eyebrow,
     title: strategy.intro.title ?? fallbackTitle,
-    lead: null,
+    lead: strategy.intro.unreconciled ? <UnreconciledNote note={strategy.intro.unreconciled} /> : null,
     hideCrumbs: true,
     meta: <ValidationIntroMeta intro={strategy.intro} cells={strategy.cells} />,
   };
