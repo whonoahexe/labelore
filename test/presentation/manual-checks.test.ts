@@ -254,6 +254,144 @@ describe('buildPlanManualChecks — degradation', () => {
   });
 });
 
+const STUDIO_TASK = `<task type="checkpoint:human-verify" gate="blocking-human">
+  <name>Task 3: Look at it</name>
+  <read_first>
+    - .planning/phases/04-demo/04-UI-SPEC.md
+    - 04-VALIDATION.md
+    - 04-06-PLAN.md
+    - frontend/x.tsx
+  </read_first>
+  <action>Run the accessibility checks.</action>
+  <how-to-verify>
+1. Open the page.
+  </how-to-verify>
+  <acceptance_criteria>
+    - It reads well
+  </acceptance_criteria>
+  <resume-signal>Type "approved" or describe what is wrong.</resume-signal>
+</task>`;
+
+const UI_SPEC = `---
+phase: 4
+---
+
+# Phase 4 - UI Design Contract
+
+## UI Considerations
+
+| Element | Category | Status | Resolution |
+|---------|----------|--------|------------|
+| E1 selection bar | overflow | 🧪 backstop (P-01) | Long names wrap. |
+| E1 selection bar | empty | ✅ covered | Shows a hint. |
+| E2 list | overflow | 🧪 backstop | Scrolls sideways. |
+| E3 detail | long-text | ⚠ unresolved | Not decided. |
+| E4 footer | focus | dismissed | Not shown. |
+`;
+
+const UI_SPEC_NO_BACKSTOP = UI_SPEC.split('🧪 backstop (P-01)').join('✅ covered').split('🧪 backstop').join('✅ covered');
+
+function fullFiles(): Record<string, string> {
+  return {
+    [PLAN]: planFile('[DL-04, DL-07, DL-08, DL-09]', `${AUTO_TASK}\n${STUDIO_TASK}`),
+    [`${DIR}/04-VALIDATION.md`]: VALIDATION,
+    [`${DIR}/04-UI-SPEC.md`]: UI_SPEC,
+  };
+}
+
+describe('buildPlanManualChecks — UI-SPEC backstops, Read first, the resume signal and the UAT pointer', () => {
+  it('lists the UI-SPEC backstop rows only, each titled with its category and element', async () => {
+    const presentation = await presentationOf(fullFiles());
+    const checks = buildPlanManualChecks(presentation, buildReferenceRegistry(presentation), PLAN);
+    const group = entryOf(checks, 2).groups.find((candidate) => candidate.key === 'ui-spec');
+    expect(group?.label).toBe('Screen states to check by hand');
+    expect(group?.items.map((item) => item.title)).toEqual(['Overflow · E1 selection bar', 'Overflow · E2 list']);
+    expect(group?.items[0].blocks).toEqual([{ kind: 'paragraph', text: 'Long names wrap.' }]);
+    const key = presentation.artifacts.find((artifact) => artifact.path === `${DIR}/04-UI-SPEC.md`)?.key;
+    expect(group?.source).toEqual({ text: '04-UI-SPEC.md · UI Considerations', title: `${DIR}/04-UI-SPEC.md`, url: key });
+  });
+
+  it('shows the task, read-first, validation and ui-spec groups in that order, ending on When you are done', async () => {
+    const checks = await checksOf(fullFiles());
+    const entry = entryOf(checks, 2);
+    expect(entry.groups.map((group) => group.key)).toEqual(['task', 'read-first', 'validation', 'ui-spec']);
+    const items = entry.groups[0].items.map((item) => item.title);
+    expect(items).toEqual(['How to check it', 'What to do', 'Accept when', 'When you are done']);
+    expect(entry.groups[0].items[3].blocks).toEqual([{ kind: 'paragraph', text: 'Type "approved" or describe what is wrong.' }]);
+  });
+
+  it('links Read first entries that name a known artifact, by exact path or a bare sibling name', async () => {
+    const presentation = await presentationOf(fullFiles());
+    const keyOf = (path: string): string | undefined => presentation.artifacts.find((artifact) => artifact.path === path)?.key;
+    const checks = buildPlanManualChecks(presentation, buildReferenceRegistry(presentation), PLAN);
+    const group = entryOf(checks, 2).groups.find((candidate) => candidate.key === 'read-first');
+    // frontend/x.tsx resolves to nothing and the plan's own name is skipped.
+    expect(group?.links).toEqual([
+      { text: '04-UI-SPEC.md', title: `${DIR}/04-UI-SPEC.md`, url: keyOf(`${DIR}/04-UI-SPEC.md`) },
+      { text: '04-VALIDATION.md', title: `${DIR}/04-VALIDATION.md`, url: keyOf(`${DIR}/04-VALIDATION.md`) },
+    ]);
+    expect(group?.items).toEqual([]);
+    expect(group?.source).toBeNull();
+  });
+
+  it('leaves out the ui-spec group without a UI-SPEC or without a backstop row', async () => {
+    const withoutFile = { ...fullFiles() };
+    delete withoutFile[`${DIR}/04-UI-SPEC.md`];
+    expect(entryOf(await checksOf(withoutFile), 2).groups.map((group) => group.key)).not.toContain('ui-spec');
+    const noBackstop = await checksOf({ ...fullFiles(), [`${DIR}/04-UI-SPEC.md`]: UI_SPEC_NO_BACKSTOP });
+    expect(entryOf(noBackstop, 2).groups.map((group) => group.key)).not.toContain('ui-spec');
+  });
+
+  it('points to the phase UAT file on every task with checks, without adding to the count', async () => {
+    const before = await checksOf(fullFiles());
+    const presentation = await presentationOf({ ...fullFiles(), [`${DIR}/04-UAT.md`]: '---\nstatus: testing\n---\n\n# UAT\n' });
+    const after = buildPlanManualChecks(presentation, buildReferenceRegistry(presentation), PLAN);
+    const entry = entryOf(after, 2);
+    const last = entry.groups[entry.groups.length - 1];
+    const uatKey = presentation.artifacts.find((artifact) => artifact.path === `${DIR}/04-UAT.md`)?.key;
+    expect(last).toEqual({
+      key: 'uat',
+      label: 'Phase checklist',
+      source: { text: '04-UAT.md', title: `${DIR}/04-UAT.md`, url: uatKey },
+      lead: 'This phase also collects its hand checks in one checklist.',
+      items: [],
+      links: [],
+    });
+    expect(entry.count).toBe(entryOf(before, 2).count);
+    expect(after?.total).toBe(before?.total);
+    expect(entryOf(before, 2).groups.map((group) => group.key)).not.toContain('uat');
+  });
+
+  it('renders the full panel for the studio-portal shape', async () => {
+    const snapshot = await snapshotOf(fullFiles());
+    const app = createApp({ getSnapshot: () => snapshot }, true, '.');
+    const presentation = (await (await app.request('/api/presentation')).json()) as ProjectPresentation;
+    const planKey = presentation.artifacts.find((artifact) => artifact.path === PLAN)?.key ?? '';
+    const uiKey = presentation.artifacts.find((artifact) => artifact.path === `${DIR}/04-UI-SPEC.md`)?.key ?? '';
+    const served = (await (await app.request(`/api/documents?route=${encodeURIComponent(planKey)}`)).json()) as DocumentPayload;
+    const plan = composePlanNavigator({
+      kind: 'plan',
+      frontmatter: served.artifact.frontmatter,
+      structured: served.artifact.structured,
+      groups: [],
+      planSegments: [],
+      headings: [],
+      manualChecks: served.manualChecks,
+    });
+    const markup = renderToStaticMarkup(
+      createElement(
+        MemoryRouter,
+        null,
+        createElement(PlanNavigatorView, { plan: plan!, onShowSource: () => undefined, initialTask: 2 }),
+      ),
+    );
+    expect(markup).toContain('04-UI-SPEC.md · UI Considerations');
+    expect(markup).toContain('Overflow · E1 selection bar');
+    expect(markup).toContain(`href="${uiKey}"`);
+    expect(markup).toContain('When you are done');
+  });
+});
+
 interface DocumentPayload {
   artifact: { frontmatter: Record<string, unknown>; structured: Record<string, unknown> };
   manualChecks: PlanManualChecks | null;
