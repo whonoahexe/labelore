@@ -529,6 +529,19 @@ element is actually written, regardless of class name:
   matrix square (and the covered meter segment) and the selected matrix cell take `--primary`.
   Backstop uses `--in-flight-fill`, unresolved `--missing-fill`, and a dismissed state is a quiet
   `--muted-foreground` dash; `destructive` and `warning` never appear on this page.
+- **The PLAN page's What to check tab gathers only standard GSD sources.** (quick-261016-ujo) A task that
+  needs a person to check it (a `checkpoint:human-verify`, or a `<verify>` that carries a
+  `<human-check>`) opens on a first tab, What to check, with the count. It is built on the server from
+  the task's own How to check it, Steps, What to do, Human check, Accept when and When you are done;
+  the VALIDATION Manual-Only rows that share a requirement ID with the plan (task IDs never match a
+  row in; they only leave out a row that names solely other plans' tasks); the UI-SPEC 🧪 backstop
+  rows; the task's Read first files, as links only; and the phase UAT file, as a pointer. Each group
+  names its file and section as plain text and links back through the shared `source-link` wherever
+  the presentation resolves one. A requirement chip on an item is `quiet`. The panel takes no
+  `--primary` and never a parse-degradation tone, and absence is silent: a source that is missing or
+  unreadable leaves its group out with no empty copy. The plan header's What to check control, which
+  opens the first task that needs a check, is the plan view's counterpart of the cover's needs-a-human
+  card. Every class is in the reserved `view-plan-` namespace, so no vocabulary row is added.
 
 ## Surface-scoped registered names
 

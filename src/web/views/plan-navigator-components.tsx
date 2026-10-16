@@ -644,6 +644,7 @@ export function PlanNavigatorView({
 
   const task = plan.tasks.find((candidate) => candidate.n === selected) ?? plan.tasks[0];
   const { head, objective } = plan;
+  const checksControl = head.checks;
   const triggers: { key: ModalKey; label: string; count: number; disabled: boolean }[] = [
     { key: 'deps', label: 'Depends on', count: head.triggers.deps.count, disabled: head.triggers.deps.disabled },
     { key: 'files', label: 'Files', count: head.triggers.files.count, disabled: head.triggers.files.disabled },
@@ -673,6 +674,17 @@ export function PlanNavigatorView({
                   {trigger.label} <b>{trigger.count}</b>
                 </button>
               ))}
+              {checksControl ? (
+                <button
+                  type="button"
+                  className="view-plan-nav-trigger"
+                  data-jump="checks"
+                  title={checksControl.title}
+                  onClick={() => onGoto(checksControl.task)}
+                >
+                  What to check <b>{checksControl.count}</b>
+                </button>
+              ) : null}
             </div>
             <div className="view-plan-nav-stats">
               {head.stats.map((stat) => (

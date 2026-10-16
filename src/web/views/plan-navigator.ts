@@ -312,6 +312,8 @@ export interface ComposedPlanNavigator {
     chips: PlanChip[];
     triggers: { deps: PlanTrigger; files: PlanTrigger; requirements: PlanTrigger };
     stats: PlanStat[];
+    /** quick-261016-ujo: the What to check control — the plan's total and the first task needing a check. */
+    checks: { count: number; task: number; title: string } | null;
   };
   objective: { rest: Block[] | null; why: Block[] | null; youGet: Block[] | null };
   listHead: { count: number; waits: number };
@@ -763,6 +765,7 @@ function composeTask(task: PlanTask, fallbackName: string, checks: ComposedPlanC
   if (task.tdd) subParts.push('TDD');
   if (gate) subParts.push('waits');
   else if (task.files.length > 0) subParts.push(plural(task.files.length, 'file', 'files'));
+  if (checks !== null && checks.count > 0) subParts.push(`${checks.count} to check`);
   return {
     n: task.n,
     anchor: task.anchor,
@@ -972,6 +975,17 @@ export function composePlanNavigator(input: ViewInput): ComposedPlanNavigator | 
   const checkRead = readManualChecks(input.manualChecks);
   const tasks = plan.tasks.map((task, index) => composeTask(task, taskNames[index], checkRead.byTask.get(task.n) ?? null));
 
+  // The What to check control opens the first task that needs a person to check it.
+  const firstChecked = tasks.find((task) => task.checks !== null);
+  const headChecks =
+    firstChecked && firstChecked.checks
+      ? {
+          count: checkRead.total ?? firstChecked.checks.count,
+          task: firstChecked.n,
+          title: `Task ${firstChecked.n} needs a person to check it — open what to check`,
+        }
+      : null;
+
   // Header.
   let eyebrow = 'Plan';
   if (quickId !== null) eyebrow = `Quick plan ${quickId}`;
@@ -1044,6 +1058,7 @@ export function composePlanNavigator(input: ViewInput): ComposedPlanNavigator | 
         requirements: { count: requirementIds.length, disabled: requirementIds.length === 0 },
       },
       stats,
+      checks: headChecks,
     },
     objective: {
       rest: objective && objective.rest.length > 0 ? objective.rest : null,

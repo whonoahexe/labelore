@@ -420,3 +420,70 @@ describe('PlanNavigatorView — static markup', () => {
     expect(deps).toContain('Executed');
   });
 });
+
+// quick-261016-ujo: the plan header's What to check control and the task list's "N to check" marker,
+// over a hand-built manualChecks on the synthetic plan above.
+describe('What to check — header control and task list marker', () => {
+  const group = (items: number) => ({
+    key: 'task' as const,
+    label: 'From this task',
+    source: { text: '01-06-PLAN.md · Task 2', title: PATH, url: null },
+    lead: null,
+    items: Array.from({ length: items }, (_, index) => ({ title: `Check ${index + 1}`, blocks: [], note: null, requirements: [] })),
+    links: [],
+  });
+  const manualChecks = {
+    total: 5,
+    tasks: [
+      { n: 2, count: 2, groups: [group(2)] },
+      { n: 3, count: 3, groups: [group(3)] },
+    ],
+  };
+
+  it('builds head.checks from the first task with checks and the plan total', () => {
+    const plan = composePlanNavigator(inputOf({ manualChecks }))!;
+    expect(plan.head.checks).toEqual({ count: 5, task: 2, title: 'Task 2 needs a person to check it — open what to check' });
+  });
+
+  it('has no head.checks without manualChecks or with a malformed one', () => {
+    expect(composePlanNavigator(inputOf())!.head.checks).toBeNull();
+    expect(composePlanNavigator(inputOf({ manualChecks: null }))!.head.checks).toBeNull();
+    for (const junk of ['nope', { tasks: 'x' }, { tasks: [{ n: 'a', groups: [] }, { n: 2, groups: 'x' }, null] }, { total: 3, tasks: [{ n: 2, groups: [{ key: 'task' }] }] }]) {
+      expect(composePlanNavigator(inputOf({ manualChecks: junk as never }))!.head.checks, JSON.stringify(junk)).toBeNull();
+    }
+  });
+
+  it('falls back to the first task\'s own count when the total is not a number', () => {
+    const plan = composePlanNavigator(inputOf({ manualChecks: { ...manualChecks, total: 'many' as never } }))!;
+    expect(plan.head.checks?.count).toBe(2);
+  });
+
+  it('ends a checked task\'s sub-line with its count, and leaves the others exactly as they were', () => {
+    const plan = composePlanNavigator(inputOf({ manualChecks }))!;
+    const plain = composePlanNavigator(inputOf())!;
+    expect(plan.tasks.map((task) => task.sub)).toEqual([
+      plain.tasks[0].sub,
+      `${plain.tasks[1].sub} · 2 to check`,
+      `${plain.tasks[2].sub} · 3 to check`,
+      plain.tasks[3].sub,
+    ]);
+  });
+
+  it('opens a checked task on its What to check tab and lists the tab first with the count', () => {
+    const plan = composePlanNavigator(inputOf({ manualChecks }))!;
+    expect(plan.tasks[2].tabs[0]).toEqual({ key: 'checks', label: 'What to check', count: 3 });
+    const out = html(plan, { initialTask: 3 });
+    expect(out).toContain('data-tab="checks"');
+    expect(out).toContain('Check 1');
+    expect(out).toContain('From this task');
+    // A task without checks keeps its first tab.
+    expect(html(plan, { initialTask: 1 })).not.toContain('view-plan-nav-manual-group');
+  });
+
+  it('renders the header control with the count, and nothing without checks', () => {
+    const withChecks = html(composePlanNavigator(inputOf({ manualChecks }))!);
+    expect(withChecks).toContain('data-jump="checks"');
+    expect(withChecks).toMatch(/data-jump="checks"[^>]*>What to check <b>5<\/b>/);
+    expect(html(composePlanNavigator(inputOf())!)).not.toContain('data-jump="checks"');
+  });
+});
