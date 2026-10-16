@@ -444,6 +444,8 @@
                         "files": [
                           "src/slice.ts"
                         ],
+                        "readFirst": [],
+                        "resumeSignal": null,
                         "fields": {
                           "action": {
                             "anchor": "plan-at-307",
@@ -907,6 +909,8 @@
                     "files": [
                       "src/slice.ts"
                     ],
+                    "readFirst": [],
+                    "resumeSignal": null,
                     "fields": {
                       "action": {
                         "anchor": "plan-at-307",
@@ -1361,6 +1365,8 @@
                           "files": [
                             "src/slice.ts"
                           ],
+                          "readFirst": [],
+                          "resumeSignal": null,
                           "fields": {
                             "action": {
                               "anchor": "plan-at-307",
@@ -1815,6 +1821,8 @@
                           "files": [
                             "src/slice.ts"
                           ],
+                          "readFirst": [],
+                          "resumeSignal": null,
                           "fields": {
                             "action": {
                               "anchor": "plan-at-307",
@@ -2286,6 +2294,8 @@
                           "files": [
                             "src/slice.ts"
                           ],
+                          "readFirst": [],
+                          "resumeSignal": null,
                           "fields": {
                             "action": {
                               "anchor": "plan-at-307",

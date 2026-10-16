@@ -338,3 +338,44 @@ describe('extractPlanStructure — degrade, never throw', () => {
     }
   });
 });
+
+// quick-261016-ujo: a task's Read first entries and resume signal, read tolerantly from its own children.
+describe('extractPlanStructure — readFirst and resumeSignal (quick-261016-ujo)', () => {
+  const task = (children: string, type = 'auto'): ReturnType<typeof extractPlanStructure>['tasks'][number] =>
+    extractPlanStructure(`<tasks>\n<task type="${type}">\n<name>T</name>\n${children}\n</task>\n</tasks>\n`).tasks[0];
+
+  it('reads a comma-separated read_first in source order, without duplicates', () => {
+    const read = task('<read_first>src/a.ts, 04-UI-SPEC.md, src/a.ts</read_first>');
+    expect(read.readFirst).toEqual(['src/a.ts', '04-UI-SPEC.md']);
+  });
+
+  it('reads a bulleted read_first with backticks and note tails, skipping a colon-ended lead line', () => {
+    const read = task(
+      '<read_first>\n  Read these before starting:\n  - `src/a.ts` — the entry point\n  - ./b.md (the contract)\n  - Some prose line that is not a path\n</read_first>',
+    );
+    expect(read.readFirst).toEqual(['src/a.ts', 'b.md']);
+  });
+
+  it('strips a leading @ and adds the @ lines of the task\'s own context', () => {
+    const read = task('<read_first>@src/a.ts</read_first>\n<context>\nSome prose.\n@.planning/phases/04-x/04-UI-SPEC.md\n@src/a.ts\n</context>');
+    expect(read.readFirst).toEqual(['src/a.ts', '.planning/phases/04-x/04-UI-SPEC.md']);
+  });
+
+  it('caps the list at 50 entries', () => {
+    const many = Array.from({ length: 80 }, (_, index) => `src/f${index}.ts`).join('\n');
+    expect(task(`<read_first>\n${many}\n</read_first>`).readFirst).toHaveLength(50);
+  });
+
+  it('reads the resume signal as one trimmed line, and null without one', () => {
+    const signal = task('<resume-signal>\n  Type "approved"\n  or describe issues\n</resume-signal>', 'checkpoint:human-verify');
+    expect(signal.resumeSignal).toBe('Type "approved" or describe issues');
+    const bare = task('<action>Do.</action>');
+    expect(bare.readFirst).toEqual([]);
+    expect(bare.resumeSignal).toBeNull();
+  });
+
+  it('keeps read_first and resume-signal in sourceChildren', () => {
+    const read = task('<read_first>src/a.ts</read_first>\n<resume-signal>go</resume-signal>');
+    expect(read.sourceChildren.map((child) => child.tag)).toEqual(['read_first', 'resume-signal']);
+  });
+});

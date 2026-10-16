@@ -95,6 +95,11 @@ export interface PlanTask {
   tdd: boolean;
   name: string | null;
   files: string[];
+  /** quick-261016-ujo: the paths the task's `<read_first>` and the `@` lines of its own `<context>` name,
+   * in source order, without duplicates (at most 50). Still listed in `sourceChildren` as well. */
+  readFirst: string[];
+  /** quick-261016-ujo: the task's `<resume-signal>` as one line; null when absent. Also in `sourceChildren`. */
+  resumeSignal: string | null;
   fields: PlanTaskFields;
   /** read_first, precondition, pre-condition, resume-signal and every unknown child, in document order. */
   sourceChildren: PlanSourceChild[];
@@ -686,6 +691,45 @@ function leadingTaskNumberRemoved(name: string): string {
   return name;
 }
 
+const MAX_READ_FIRST = 50;
+
+function hasWhitespace(text: string): boolean {
+  for (const ch of text) if (ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r') return true;
+  return false;
+}
+
+/**
+ * A task's Read first entries (quick-261016-ujo): every path its `<read_first>` bodies name (bullets,
+ * commas, backticks and note tails as `parseFiles` reads them; colon-ended lead lines skipped) followed by
+ * the `@` lines of its own `<context>` bodies. A leading `@` or `./` is dropped, an entry holding
+ * whitespace is prose and dropped, duplicates keep their first place, and the list stops at 50.
+ */
+function readFirstEntries(readFirstBodies: string[], contextBodies: string[]): string[] {
+  const entries: string[] = [];
+  const seen = new Set<string>();
+  const add = (raw: string): void => {
+    let entry = raw.trim();
+    if (entry.startsWith('@')) entry = entry.slice(1);
+    if (entry.startsWith('./')) entry = entry.slice(2);
+    if (entry === '' || hasWhitespace(entry) || seen.has(entry) || entries.length >= MAX_READ_FIRST) return;
+    seen.add(entry);
+    entries.push(entry);
+  };
+  for (const body of readFirstBodies) {
+    const lines = dedent(body)
+      .split('\n')
+      .filter((line) => !line.trim().endsWith(':'));
+    for (const entry of parseFiles(lines.join('\n'))) add(entry);
+  }
+  for (const body of contextBodies) {
+    for (const line of dedent(body).split('\n')) {
+      if (!line.trim().startsWith('@')) continue;
+      for (const entry of parseFiles(line.trim())) add(entry);
+    }
+  }
+  return entries;
+}
+
 function extractTask(node: Node, n: number): PlanTask {
   const fields: PlanTaskFields = {
     action: null,
@@ -705,6 +749,9 @@ function extractTask(node: Node, n: number): PlanTask {
   let name: string | null = null;
   let files: string[] | null = null;
   const sourceChildren: PlanSourceChild[] = [];
+  const readFirstBodies: string[] = [];
+  const contextBodies: string[] = [];
+  let resumeSignal: string | null = null;
   const overflow = (child: Node): void => {
     sourceChildren.push({ tag: child.segment.tag, anchor: anchorOf(child.segment) });
   };
@@ -713,8 +760,11 @@ function extractTask(node: Node, n: number): PlanTask {
     const tag = child.segment.tag;
     if (SOURCE_CHILD_TAGS.has(tag)) {
       overflow(child);
+      if (tag === 'read_first') readFirstBodies.push(child.segment.body);
+      else if (tag === 'resume-signal' && resumeSignal === null) resumeSignal = oneLine(dedent(child.segment.body)) || null;
       continue;
     }
+    if (tag === 'context') contextBodies.push(ownText(child));
     switch (tag) {
       case 'name': {
         if (name !== null) overflow(child);
@@ -798,6 +848,8 @@ function extractTask(node: Node, n: number): PlanTask {
     tdd: (attributes.tdd ?? '').trim().toLowerCase() === 'true',
     name: cleanedName === null || cleanedName === '' ? derivedName(fields.whatBuilt) : cleanedName,
     files: files ?? [],
+    readFirst: readFirstEntries(readFirstBodies, contextBodies),
+    resumeSignal,
     fields,
     sourceChildren,
   };
