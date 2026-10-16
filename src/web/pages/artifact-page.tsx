@@ -57,6 +57,7 @@ import type { ComposedPlanNavigator } from '../views/plan-navigator.ts';
 import { PlanIntroMeta, PlanNavigatorView } from '../views/plan-navigator-components.tsx';
 import { findPlanContext } from '../views/plan-context.ts';
 import { WarningChip } from '../components/warning-chip.tsx';
+import type { PlanManualChecks } from '../../presentation/manual-checks.ts';
 import type { ComposedResearchBriefing } from '../views/research-briefing.ts';
 import { ResearchBriefingView, ResearchIntroMeta } from '../views/research-briefing-components.tsx';
 import type { ComposedPatternMap } from '../views/pattern-map.ts';
@@ -167,6 +168,8 @@ interface ArtifactDocumentResponse {
   };
   phaseIdentity: PhaseIdentity | null;
   document: RenderedDocument;
+  /** quick-261016-ujo: the PLAN page's What to check model (null for every other document). */
+  manualChecks?: PlanManualChecks | null;
 }
 
 const WARNING_DISCLOSURE_LABELS: Record<Exclude<ArtifactWarningTone, null>, string> = {
@@ -590,6 +593,7 @@ export function ArtifactPage({
       phaseRequirementIds,
       headings: shown?.headings ?? [],
       siblingArtifacts,
+      manualChecks: query.data.manualChecks ?? null,
     };
   }, [query.data, groups, planSegments, planProgress, planContext, phaseRequirementIds, shown, siblingArtifacts]);
   // VIEW-06: a registered manifest, or fallback.ts's synthesized structural-read manifest — one

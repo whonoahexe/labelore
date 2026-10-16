@@ -86,6 +86,8 @@ export const TDD_HINT = 'Test-first: a failing test for the behavior is written 
 export const CHECKPOINT_TONE: PlanTone = 'in-flight';
 export const TRACER_TONE: PlanTone = 'active';
 export const NEW_FILE_TONE: PlanTone = 'active';
+/** quick-261016-ujo: a requirement ID chip on a What to check item. */
+export const REQUIREMENT_TONE: PlanTone = 'quiet';
 
 export const STATUS: Record<'executed' | 'awaiting' | 'not-run', { label: string; tone: PlanTone }> = {
   executed: { label: 'Executed', tone: 'complete' },
@@ -189,13 +191,41 @@ export type PlanSection =
   | (SectionBase & { kind: 'line'; text: string; large: boolean; done: boolean });
 
 export interface PlanTab {
-  key: 'main' | 'side' | 'done';
+  key: 'checks' | 'main' | 'side' | 'done';
   label: string;
   count: number | null;
 }
 
 export interface PlanSourceRow {
   labels: { label: string; anchor: string }[];
+}
+
+/** quick-261016-ujo: a file the What to check panel names; `url` is set only for an in-app route. */
+export interface PlanCheckReference {
+  text: string;
+  title: string | null;
+  url: string | null;
+}
+
+export interface PlanCheckItem {
+  title: string;
+  blocks: Block[];
+  note: string | null;
+  chips: PlanChip[];
+}
+
+export interface PlanCheckGroup {
+  key: string;
+  label: string;
+  source: PlanCheckReference | null;
+  lead: string | null;
+  items: PlanCheckItem[];
+  links: PlanCheckReference[];
+}
+
+export interface ComposedPlanChecks {
+  count: number;
+  groups: PlanCheckGroup[];
 }
 
 export interface ComposedPlanTask {
@@ -215,6 +245,8 @@ export interface ComposedPlanTask {
   tabs: PlanTab[];
   sections: { main: PlanSection[]; side: PlanSection[]; done: PlanSection[] };
   sourceRow: PlanSourceRow | null;
+  /** quick-261016-ujo: the What to check panel; set only on a task that needs a person to check it. */
+  checks: ComposedPlanChecks | null;
 }
 
 export interface PlanDependencyRow {
@@ -627,7 +659,99 @@ function taskSourceRow(task: PlanTask): PlanSourceRow | null {
   return { labels };
 }
 
-function composeTask(task: PlanTask, fallbackName: string): ComposedPlanTask {
+// ---------------------------------------------------------------------------
+// What to check (quick-261016-ujo)
+// ---------------------------------------------------------------------------
+
+/** T-ujo-02: a url is kept only when it is a root-relative route, never `//host`, `/\host` or a scheme. */
+function routeOf(value: unknown): string | null {
+  if (typeof value !== 'string' || !value.startsWith('/')) return null;
+  if (value[1] === '/' || value[1] === '\\') return null;
+  return value;
+}
+
+function readBlocks(value: unknown): Block[] | null {
+  if (!Array.isArray(value)) return null;
+  const blocks: Block[] = [];
+  for (const block of value) {
+    if (!isRecord(block)) return null;
+    if ((block.kind === 'paragraph' || block.kind === 'code') && typeof block.text === 'string') {
+      blocks.push({ kind: block.kind, text: block.text });
+    } else if (block.kind === 'list' && Array.isArray(block.items) && block.items.every((item) => typeof item === 'string')) {
+      blocks.push({ kind: 'list', ordered: block.ordered === true, items: block.items as string[] });
+    } else if (
+      block.kind === 'table' &&
+      Array.isArray(block.rows) &&
+      block.rows.every((row) => isRecord(row) && Object.values(row).every((cell) => typeof cell === 'string'))
+    ) {
+      blocks.push({ kind: 'table', rows: block.rows as Record<string, string>[] });
+    } else {
+      return null;
+    }
+  }
+  return blocks;
+}
+
+function readCheckReference(value: unknown): PlanCheckReference | null {
+  if (!isRecord(value)) return null;
+  const text = stringOf(value.text);
+  if (text === null) return null;
+  return { text, title: stringOf(value.title), url: routeOf(value.url) };
+}
+
+function readCheckItem(value: unknown): PlanCheckItem | null {
+  if (!isRecord(value) || typeof value.title !== 'string') return null;
+  const blocks = readBlocks(value.blocks);
+  if (blocks === null) return null;
+  const requirements = Array.isArray(value.requirements)
+    ? value.requirements.filter((id): id is string => typeof id === 'string' && id.trim() !== '')
+    : [];
+  return {
+    title: value.title,
+    blocks,
+    note: stringOf(value.note),
+    chips: requirements.map((id) => ({ label: id, tone: REQUIREMENT_TONE })),
+  };
+}
+
+function readCheckGroup(value: unknown): PlanCheckGroup | null {
+  if (!isRecord(value)) return null;
+  const key = stringOf(value.key);
+  const label = stringOf(value.label);
+  if (key === null || label === null) return null;
+  const items = (Array.isArray(value.items) ? value.items : []).map(readCheckItem).filter((item): item is PlanCheckItem => item !== null);
+  const links = (Array.isArray(value.links) ? value.links : [])
+    .map(readCheckReference)
+    .filter((link): link is PlanCheckReference => link !== null);
+  const lead = stringOf(value.lead);
+  if (items.length === 0 && links.length === 0 && lead === null) return null;
+  return { key, label, source: readCheckReference(value.source), lead, items, links };
+}
+
+interface ReadChecks {
+  /** The validated plan total, null when the server value is not a finite number. */
+  total: number | null;
+  byTask: Map<number, ComposedPlanChecks>;
+}
+
+/** Validates the server's `manualChecks` the way `readPlan` validates the projection: malformed
+ * entries, groups and items are dropped, nothing throws. */
+function readManualChecks(value: unknown): ReadChecks {
+  const byTask = new Map<number, ComposedPlanChecks>();
+  if (!isRecord(value) || !Array.isArray(value.tasks)) return { total: null, byTask };
+  for (const entry of value.tasks) {
+    if (!isRecord(entry) || typeof entry.n !== 'number' || !Number.isFinite(entry.n) || !Array.isArray(entry.groups)) continue;
+    const groups = entry.groups.map(readCheckGroup).filter((group): group is PlanCheckGroup => group !== null);
+    if (groups.length === 0 || byTask.has(entry.n)) continue;
+    const counted = groups.reduce((sum, group) => sum + group.items.length, 0);
+    const count = typeof entry.count === 'number' && Number.isFinite(entry.count) ? entry.count : counted;
+    byTask.set(entry.n, { count, groups });
+  }
+  const total = typeof value.total === 'number' && Number.isFinite(value.total) ? value.total : null;
+  return { total, byTask };
+}
+
+function composeTask(task: PlanTask, fallbackName: string, checks: ComposedPlanChecks | null): ComposedPlanTask {
   const info = infoOf(task.type);
   const gate = task.type.startsWith('checkpoint');
   const sections = sectionsOf(task);
@@ -653,9 +777,10 @@ function composeTask(task: PlanTask, fallbackName: string): ComposedPlanTask {
     name: task.name ?? fallbackName,
     chips,
     sub: subParts.join(' · '),
-    tabs: sections.tabs,
+    tabs: checks === null ? sections.tabs : [{ key: 'checks', label: 'What to check', count: checks.count > 0 ? checks.count : null }, ...sections.tabs],
     sections: { main: sections.main, side: sections.side, done: sections.done },
     sourceRow: taskSourceRow(task),
+    checks,
   };
 }
 
@@ -844,7 +969,8 @@ export function composePlanNavigator(input: ViewInput): ComposedPlanNavigator | 
   const quickId = stringOf(ref.quickId);
 
   const taskNames = plan.tasks.map((task, index) => task.name ?? `Task ${index + 1}`);
-  const tasks = plan.tasks.map((task, index) => composeTask(task, taskNames[index]));
+  const checkRead = readManualChecks(input.manualChecks);
+  const tasks = plan.tasks.map((task, index) => composeTask(task, taskNames[index], checkRead.byTask.get(task.n) ?? null));
 
   // Header.
   let eyebrow = 'Plan';

@@ -14,6 +14,8 @@ import type { ComposedSecurityConsole } from './security-console.ts';
 // Type-only import — same reason as `brief` above (quick-261006-iz6, sketch-019 B).
 import type { ComposedPlanNavigator } from './plan-navigator.ts';
 import type { PlanContext } from './plan-context.ts';
+// Type-only import — the What to check model is built server-side (quick-261016-ujo).
+import type { PlanManualChecks } from '../../presentation/manual-checks.ts';
 // Type-only import — same reason as `brief` above (quick-260929-3x3, sketch-008 A).
 import type { ComposedResearchBriefing } from './research-briefing.ts';
 // Type-only import — same reason as `brief` above (quick-260930-wfs, sketch-013 B).
@@ -143,6 +145,10 @@ export interface ViewInput {
   /** quick-260929-3x3: the other artifacts in the same directory, matched generically by path in
    * artifact-page.tsx (no per-kind branch) — a RESEARCH page links its sibling CONTEXT.md. */
   siblingArtifacts?: { kind: string; path: string; url: string; frontmatter?: Record<string, unknown> }[];
+  /** quick-261016-ujo: a PLAN's What to check model, built server-side from the plan, VALIDATION, UI-SPEC,
+   * Read first and UAT sources and passed through from the document response — `null`/absent when the
+   * artifact is not a PLAN or no task needs a person to check it. */
+  manualChecks?: PlanManualChecks | null;
 }
 
 export type ComposedBlock = { id: string; label: string } & (

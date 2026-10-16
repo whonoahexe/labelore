@@ -6,7 +6,8 @@
 // React nodes) or as plain React text — never React's raw-HTML injection prop (T-iz6-02). Colour comes
 // only from the tone a composed model carries (the maps in `plan-navigator.ts`) and the theme tokens;
 // the parse-degradation tones never appear on document content. The only links are a dependency row's
-// `Link` to the in-app URL the presentation generated and the fixed traceability route (T-iz6-03).
+// `Link` to the in-app URL the presentation generated, the fixed traceability route (T-iz6-03) and a
+// What to check file reference whose URL the server took from the presentation (T-ujo-02).
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
@@ -15,7 +16,9 @@ import { ResearchBlocks, ResearchInline } from './research-briefing-components.t
 import type {
   ComposedPlanIntro,
   ComposedPlanNavigator,
+  ComposedPlanChecks,
   ComposedPlanTask,
+  PlanCheckReference,
   PlanChip,
   PlanSection,
   PlanTab,
@@ -224,6 +227,73 @@ function SectionView({
   );
 }
 
+/** A file the What to check panel names: a link when the presentation resolved one, plain text otherwise. */
+function CheckReference({ reference }: { reference: PlanCheckReference }): React.JSX.Element {
+  if (reference.url !== null) {
+    return (
+      <Link className="source-link" to={reference.url} title={reference.title ?? undefined}>
+        {reference.text}
+      </Link>
+    );
+  }
+  return (
+    <span className="view-plan-nav-manual-path" title={reference.title ?? undefined}>
+      {reference.text}
+    </span>
+  );
+}
+
+/** The What to check tab body (quick-261016-ujo): each group names the file and section it came from. */
+export function ManualChecksPanel({ checks }: { checks: ComposedPlanChecks }): React.JSX.Element {
+  return (
+    <div className="view-plan-nav-manual">
+      {checks.groups.map((group, groupIndex) => (
+        <section
+          key={`${group.key}-${groupIndex}`}
+          className="view-plan-nav-manual-group"
+          data-group={group.key}
+          aria-label={group.label}
+        >
+          <div className="view-plan-nav-manual-head">
+            <span className="view-plan-nav-key">{group.label}</span>
+            {group.source ? <CheckReference reference={group.source} /> : null}
+          </div>
+          {group.lead ? <p className="view-plan-nav-manual-lead">{group.lead}</p> : null}
+          {group.items.length > 0 ? (
+            <ol className="view-plan-nav-manual-items">
+              {group.items.map((item, index) => (
+                <li key={index} className="view-plan-nav-manual-item">
+                  <div className="view-plan-nav-manual-title">
+                    <ResearchInline text={item.title} />
+                    {item.chips.map((chip, chipIndex) => (
+                      <Chip key={`${chip.label}-${chipIndex}`} chip={chip} />
+                    ))}
+                  </div>
+                  <ResearchBlocks blocks={item.blocks} />
+                  {item.note ? (
+                    <p className="view-plan-nav-manual-why">
+                      Why by hand: <ResearchInline text={item.note} />
+                    </p>
+                  ) : null}
+                </li>
+              ))}
+            </ol>
+          ) : null}
+          {group.links.length > 0 ? (
+            <ul className="view-plan-nav-manual-links">
+              {group.links.map((link, index) => (
+                <li key={`${link.text}-${index}`}>
+                  <CheckReference reference={link} />
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+      ))}
+    </div>
+  );
+}
+
 function TaskDetail({
   task,
   count,
@@ -244,7 +314,8 @@ function TaskDetail({
   onShowSource: (id: string | null) => void;
 }): React.JSX.Element {
   const active = task.tabs.find((candidate) => candidate.key === tab) ?? task.tabs[0] ?? null;
-  const sections = active ? task.sections[active.key] : [];
+  const showChecks = active?.key === 'checks' && task.checks !== null;
+  const sections = active && active.key !== 'checks' ? task.sections[active.key] : [];
   return (
     <div
       id="plan-task-panel"
@@ -286,6 +357,7 @@ function TaskDetail({
       ) : null}
       <div className="view-plan-nav-pane">
         <div className="view-plan-nav-body">
+          {showChecks && task.checks ? <ManualChecksPanel checks={task.checks} /> : null}
           {sections.map((section) => (
             <SectionView
               key={section.key}
@@ -473,7 +545,11 @@ export function PlanNavigatorView({
 }): React.JSX.Element {
   const count = plan.tasks.length;
   const [selected, setSelected] = useState<number>(initialTask ?? plan.initialTask);
-  const [tab, setTab] = useState<PlanTab['key']>('main');
+  const firstTab = useCallback(
+    (n: number): PlanTab['key'] => plan.tasks.find((candidate) => candidate.n === n)?.tabs[0]?.key ?? 'main',
+    [plan],
+  );
+  const [tab, setTab] = useState<PlanTab['key']>(() => firstTab(initialTask ?? plan.initialTask));
   const [modal, setModal] = useState<ModalKey | null>(initialModal ?? null);
   const [opened, setOpened] = useState<ReadonlySet<string>>(() => new Set());
   const [flashed, setFlashed] = useState(false);
@@ -488,10 +564,13 @@ export function PlanNavigatorView({
     [],
   );
 
-  const select = useCallback((n: number): void => {
-    setSelected(n);
-    setTab('main');
-  }, []);
+  const select = useCallback(
+    (n: number): void => {
+      setSelected(n);
+      setTab(firstTab(n));
+    },
+    [firstTab],
+  );
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
