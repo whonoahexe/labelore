@@ -55,7 +55,7 @@ test.describe('Summary page', () => {
     // Header.
     await expect(page.locator('h1')).toHaveCount(1);
     await expect(page.locator('h1')).toHaveText('Discussion-log view, section-projection extractor, view registry');
-    await expect(page.locator('.view-summary-meta .eyebrow')).toHaveText('Summary · Phase 5 · Per type document views');
+    await expect(page.locator('.view-summary-meta .eyebrow')).toHaveText('Summary of 05-01 · Phase 5 · Per type document views');
     await expect(page.locator('.view-summary-date')).toContainText('Completed 20 Sep 2026');
     const metrics = page.locator('.view-summary-metrics');
     await expect(metrics).toContainText('Complete');
