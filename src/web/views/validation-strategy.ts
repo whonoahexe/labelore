@@ -135,6 +135,9 @@ export interface ComposedValidationIntro {
   reconciled: string | null;
   updated: string | null;
   dims: ComposedValidationDim[];
+  /** The phase's VERIFICATION passed while this strategy is still a draft or its map was never
+   * filled in — validate-phase never ran. `verified` is the verification's date, when it has one. */
+  unreconciled: { verified: string | null; url: string } | null;
 }
 
 export interface ComposedValidationSquare {
@@ -868,6 +871,23 @@ function introOf(input: ViewInput): ComposedValidationIntro {
     reconciled: stamp(fm.reconciled),
     updated: stamp(fm.updated),
     dims,
+    unreconciled: null,
+  };
+}
+
+/** A sibling VERIFICATION that passed, unless this strategy was validated or its map filled in. */
+function unreconciledOf(input: ViewInput, map: ComposedValidationMap | null): ComposedValidationIntro['unreconciled'] {
+  const status = (scalarText((input.frontmatter ?? {}).status) ?? '').toLowerCase();
+  if (status.includes('validated')) return null;
+  if (!status.includes('draft') && map !== null && map.template === null) return null;
+  const verification = (input.siblingArtifacts ?? []).find((sibling) => sibling.kind === 'verification');
+  if (!verification) return null;
+  const fm = verification.frontmatter ?? {};
+  if (!/pass/i.test(scalarText(fm.status) ?? '')) return null;
+  const verified = scalarText(fm.verified);
+  return {
+    verified: verified === null ? null : formatStamp(/^\d{4}-\d{2}-\d{2}/.test(verified) ? verified.slice(0, 10) : verified),
+    url: verification.url,
   };
 }
 
@@ -977,7 +997,7 @@ export function composeValidationStrategy(input: ViewInput): ComposedValidationS
   if (signoff) addSection('validation-signoff', 'Sign-off', `${checkedCount} of ${signoffItems.length} checks`);
 
   return {
-    intro: introOf(input),
+    intro: { ...introOf(input), unreconciled: unreconciledOf(input, map) },
     cells,
     rig,
     map,

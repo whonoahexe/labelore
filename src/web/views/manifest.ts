@@ -142,7 +142,7 @@ export interface ViewInput {
   headings?: { id: string; text: string; depth: number }[];
   /** quick-260929-3x3: the other artifacts in the same directory, matched generically by path in
    * artifact-page.tsx (no per-kind branch) — a RESEARCH page links its sibling CONTEXT.md. */
-  siblingArtifacts?: { kind: string; path: string; url: string }[];
+  siblingArtifacts?: { kind: string; path: string; url: string; frontmatter?: Record<string, unknown> }[];
 }
 
 export type ComposedBlock = { id: string; label: string } & (

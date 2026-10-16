@@ -121,16 +121,16 @@ function findPhaseRequirementIds(
 }
 
 /** quick-260929-3x3: every other artifact in the same directory as `path`, reduced to what
- * `ViewInput.siblingArtifacts` carries (kind, path, in-app URL) — matched generically by path so a
+ * `ViewInput.siblingArtifacts` carries (kind, path, in-app URL, frontmatter) — matched generically by path so a
  * RESEARCH page can link its sibling CONTEXT.md with no per-kind branch. */
 function findSiblingArtifacts(
   presentation: ProjectPresentation | undefined,
   path: string | undefined,
   phaseIdentity: PhaseIdentity | null | undefined,
-): { kind: string; path: string; url: string }[] {
+): NonNullable<ViewInput['siblingArtifacts']> {
   if (!presentation || !path) return [];
   const directory = path.slice(0, path.lastIndexOf('/') + 1);
-  const siblings: { kind: string; path: string; url: string }[] = [];
+  const siblings: NonNullable<ViewInput['siblingArtifacts']> = [];
   for (const artifact of presentation.artifacts) {
     if (artifact.path === path) continue;
     if (artifact.path.slice(0, artifact.path.lastIndexOf('/') + 1) !== directory) continue;
@@ -138,6 +138,7 @@ function findSiblingArtifacts(
       kind: artifact.kind,
       path: artifact.path,
       url: buildArtifactUrl(phaseIdentity ?? null, artifact.path),
+      frontmatter: artifact.frontmatter,
     });
   }
   return siblings;
