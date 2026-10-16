@@ -248,29 +248,11 @@ async function runFullBehaviorChecks(
   }
 }
 
-// quick-260922-3us Task 3: PLAN and VERIFICATION fixtures appended to the same full-behavior
-// helper Task 1 wrote — the whole cover/fold/bar/jump/source/420 contract, proven type-agnostic.
 // quick-261006-iz6: the PLAN page moved to the task navigator, covered by test/e2e/plan-page.spec.ts.
-const PLAN_AND_VERIFICATION_FULL_FIXTURES: Fixture[] = [
-  {
-    id: '05-verification-full',
-    pathIncludes: '05-per-type-document-views/05-VERIFICATION.md',
-    glance: true,
-  },
-  {
-    id: '01-verification-full',
-    pathIncludes: '01-read-layer-domain-model/01-VERIFICATION.md',
-    glance: false,
-  },
-  {
-    id: '02-verification-full',
-    pathIncludes: '02-situational-awareness-artifact-reading/02-VERIFICATION.md',
-    glance: false,
-  },
-];
+// quick-261017-18a: the VERIFICATION page moved to the board + ledger view, covered by test/e2e/verification-page.spec.ts.
 
 test.describe('document layout — sketch-004 B3 (quick-260922-3us)', () => {
-  for (const fixture of [...DISCUSSION_LOG_FIXTURES, ...PLAN_AND_VERIFICATION_FULL_FIXTURES]) {
+  for (const fixture of DISCUSSION_LOG_FIXTURES) {
     test(fixture.id, async ({ page, baseURL }) => {
       await runFullBehaviorChecks(page, baseURL ?? 'http://127.0.0.1:4199', fixture);
     });
@@ -488,139 +470,5 @@ test.describe('discussion-log review fixes (quick-260923-jxp)', () => {
   }
 });
 
-// ---------------------------------------------------------------------------
-// PLAN/VERIFICATION cover/glance smoke (quick-260922-3us Task 2) — a lighter check than
-// `runFullBehaviorChecks` above: cover/glance presence, specific folds present/absent (with an
-// item-count assertion where the fixture's shape is pinned), and the parsed headline. Archived
-// fixtures are immutable, so hardcoded expected values are safe.
-// ---------------------------------------------------------------------------
-
-interface SmokeFoldExpectation {
-  title: string;
-  /** Asserted with `toBeGreaterThanOrEqual` — "at least one item". */
-  minItems?: number;
-  /** Asserted with `toBe` — an exact, pinned item count. */
-  exactItems?: number;
-}
-
-interface SmokeFixture {
-  id: string;
-  pathIncludes: string;
-  glance: boolean;
-  headline?: string;
-  foldsPresent?: SmokeFoldExpectation[];
-  foldsAbsent?: string[];
-}
-
-// quick-261006-iz6: the PLAN page moved to the task navigator, covered by test/e2e/plan-page.spec.ts.
-const PLAN_AND_VERIFICATION_SMOKE_FIXTURES: SmokeFixture[] = [
-  {
-    id: '05-verification',
-    pathIncludes: '05-per-type-document-views/05-VERIFICATION.md',
-    glance: true,
-    headline: '5/7',
-    foldsPresent: [{ title: 'Needs a human', exactItems: 4 }],
-  },
-  {
-    id: '01-verification',
-    pathIncludes: '01-read-layer-domain-model/01-VERIFICATION.md',
-    glance: false,
-    headline: '5/5',
-    foldsAbsent: ['Needs a human'],
-  },
-  {
-    id: '02-verification',
-    pathIncludes: '02-situational-awareness-artifact-reading/02-VERIFICATION.md',
-    glance: false,
-    headline: '6/6',
-  },
-];
-
-async function runCoverGlanceSmoke(page: Page, baseURL: string, fixture: SmokeFixture): Promise<void> {
-  const url = await resolveFixtureUrl(baseURL, fixture.pathIncludes);
-  await setTheme(page, 'light');
-  await page.setViewportSize({ width: 1280, height: 900 });
-  await page.goto(url);
-  await waitForCover(page);
-
-  const glanceCount = await page.locator('.document-cover-glance').count();
-  const dataGlance = await page.locator('.document-cover-cells').first().getAttribute('data-glance');
-  if (fixture.glance) {
-    expect(glanceCount).toBeGreaterThan(0);
-    expect(dataGlance).toBe('true');
-  } else {
-    expect(glanceCount).toBe(0);
-    expect(dataGlance).toBe('false');
-  }
-
-  if (fixture.headline !== undefined) {
-    const headlineText = (
-      await page.locator('.document-cover-headline strong').first().innerText()
-    ).trim();
-    expect(headlineText).toBe(fixture.headline);
-  }
-
-  for (const fold of fixture.foldsPresent ?? []) {
-    const foldSection = page
-      .locator('.document-fold')
-      .filter({ has: page.locator('.document-fold-name', { hasText: fold.title }) })
-      .first();
-    await expect(foldSection).toHaveCount(1);
-    if (fold.minItems !== undefined || fold.exactItems !== undefined) {
-      await foldSection.locator('.document-fold-head').click();
-      const itemCount = await foldSection.locator('.document-item').count();
-      if (fold.exactItems !== undefined) {
-        expect(itemCount).toBe(fold.exactItems);
-      } else if (fold.minItems !== undefined) {
-        expect(itemCount).toBeGreaterThanOrEqual(fold.minItems);
-      }
-    }
-  }
-
-  for (const title of fixture.foldsAbsent ?? []) {
-    expect(await page.locator('.document-fold-name', { hasText: title }).count()).toBe(0);
-  }
-}
-
-test.describe('document layout — PLAN/VERIFICATION cover/glance smoke (quick-260922-3us)', () => {
-  for (const fixture of PLAN_AND_VERIFICATION_SMOKE_FIXTURES) {
-    test(fixture.id, async ({ page, baseURL }) => {
-      await runCoverGlanceSmoke(page, baseURL ?? 'http://127.0.0.1:4199', fixture);
-    });
-  }
-
-  // quick-260922-3us Task 3: a reference preview reachable from inside an expanded PLAN or
-  // VERIFICATION chapter/panel. Tries each candidate fixture's every fold and Also panel in turn
-  // (expanded first) — fails, never skips, if no `[data-reference-key]` is found anywhere.
-  test('a reference preview opens from inside an expanded PLAN or VERIFICATION chapter/panel', async ({
-    page,
-    baseURL,
-  }) => {
-    // quick-261006-iz6: 01-01-PLAN left the list — the PLAN page moved to the task navigator
-    // (test/e2e/plan-page.spec.ts).
-    const candidates = [
-      '05-per-type-document-views/05-VERIFICATION.md',
-      '01-read-layer-domain-model/01-VERIFICATION.md',
-    ];
-    let opened = false;
-    for (const pathIncludes of candidates) {
-      const url = await resolveFixtureUrl(baseURL ?? 'http://127.0.0.1:4199', pathIncludes);
-      await setTheme(page, 'light');
-      await page.setViewportSize({ width: 1280, height: 900 });
-      await page.goto(url);
-      await waitForCover(page);
-      await page.locator('.document-fold-tools button').click(); // Expand all
-      const referenceTrigger = page.locator('[data-reference-key]').first();
-      if ((await referenceTrigger.count()) > 0) {
-        await referenceTrigger.click();
-        await expect(page.locator('.reference-preview')).toBeVisible();
-        opened = true;
-        break;
-      }
-    }
-    expect(
-      opened,
-      `expected at least one [data-reference-key] reachable inside an expanded PLAN/VERIFICATION document among: ${candidates.join(', ')}`,
-    ).toBe(true);
-  });
-});
+// quick-261017-18a: the VERIFICATION page moved to the board + ledger view, covered by test/e2e/verification-page.spec.ts.
+// The PLAN/VERIFICATION cover/glance smoke and the expanded-chapter reference preview that lived here ran only over VERIFICATION fixtures, so they left with it.

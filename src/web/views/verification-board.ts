@@ -890,6 +890,24 @@ function mapTasks(gaps: WorkGap[], plans: VerificationFixPlan[]): void {
   }
 }
 
+/** Lower-case letters and digits only, runs of anything else folded to one space - so "UI-06 - x"
+ * and "UI-06: x" compare equal when a frontmatter item restates a table truth. */
+function fold(text: string): string {
+  let out = '';
+  let gap = false;
+  for (const ch of text.slice(0, 400).toLowerCase()) {
+    const alnum = (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9');
+    if (alnum) {
+      if (gap && out !== '') out += ' ';
+      gap = false;
+      out += ch;
+    } else {
+      gap = true;
+    }
+  }
+  return out;
+}
+
 function plainText(text: string): string {
   return text.replace(/[*`_]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
 }
@@ -1120,18 +1138,18 @@ function composeTruths(
   const behaviorItems = listOf(fm.behavior_unverified_items).map(rec).filter((r): r is Rec => r !== null);
   const coincidentalItems = listOf(fm.coincidental_reliance_items).map(rec).filter((r): r is Rec => r !== null);
   const details: ComposedTruthDetail[] = truths.map((truth, index) => {
-    const key = truth.text.slice(0, 30).toLowerCase();
+    const key = fold(truth.text).slice(0, 30);
     const behavior =
       key.length < 8
         ? undefined
         : behaviorItems.find((item) => {
-            const t = clean(item.truth).toLowerCase();
+            const t = fold(clean(item.truth));
             return t !== '' && (t.includes(key) || key.includes(t.slice(0, 30)));
           });
     const coincidental =
       key.length < 8
         ? undefined
-        : coincidentalItems.find((item) => clean(item.truth).toLowerCase().startsWith(key.slice(0, 24)));
+        : coincidentalItems.find((item) => fold(clean(item.truth)).startsWith(key.slice(0, 24)));
     return {
       index,
       n: truth.n,
@@ -1484,14 +1502,14 @@ export function composeVerificationBoard(input: ViewInput): ComposedVerification
   // --- the anti-patterns ---------------------------------------------------------------------
   let anti: ComposedAnti | null = null;
   if (hasAnti) {
-    const whereOf = (a: VerificationAntiPattern): string => {
-      const file = a.file;
+    const whereOf = (a: VerificationAntiPattern, short: boolean): string => {
+      const file = short ? baseName(a.file) : a.file;
       const line = a.line === '—' || a.line === '-' ? '' : a.line;
       return line === '' ? file : `${file}:${line}`;
     };
     const rowOf = (a: VerificationAntiPattern): ComposedAntiRow => ({
       severity: a.severity,
-      where: whereOf(a),
+      where: whereOf(a, a.severity !== 'blocker'),
       pattern: a.pattern,
       impact: a.impact,
     });

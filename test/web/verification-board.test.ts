@@ -384,6 +384,13 @@ describe('the Truth board', () => {
     expect(failed).toContain('Failed');
   });
 
+  it('matches a frontmatter behaviour item that restates a truth with different punctuation', () => {
+    const unchecked = lb05.truths?.details.filter((d) => d.state === 'unverified') ?? [];
+    expect(unchecked.map((d) => d.n)).toEqual(['4b', '5b']);
+    expect(unchecked.every((d) => d.behavior !== null)).toBe(true);
+    expect(unchecked[0].behavior?.test).toContain('Open the dashboard, roadmap');
+  });
+
   it('shows the status cell as written when it is not a standard form', () => {
     const insufficient = sp04.truths?.details.find((d) => d.raw !== null);
     expect(insufficient?.raw).toContain('insufficient_spec');
