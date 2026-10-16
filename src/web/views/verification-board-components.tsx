@@ -725,6 +725,15 @@ function SpotChecksBody({
 }): React.JSX.Element {
   return (
     <div className="view-verification-spot-list">
+      {spot.sourceId !== null ? (
+        <button
+          type="button"
+          className="view-verification-link"
+          onClick={() => onShowSource(spot.sourceId)}
+        >
+          Open in source ↗
+        </button>
+      ) : null}
       {spot.rows.map((row, index) => (
         <div key={index} className="view-verification-spot">
           <i className="view-verification-dot" data-state={row.state} aria-hidden="true" />
@@ -740,15 +749,6 @@ function SpotChecksBody({
           </span>
         </div>
       ))}
-      {spot.sourceId !== null ? (
-        <button
-          type="button"
-          className="view-verification-link"
-          onClick={() => onShowSource(spot.sourceId)}
-        >
-          Open in source ↗
-        </button>
-      ) : null}
     </div>
   );
 }

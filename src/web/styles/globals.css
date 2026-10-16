@@ -15485,17 +15485,17 @@ a.view-summary-node:hover {
 
 .view-verification-identity h1 {
   margin: 0;
-  font-size: var(--fs-fluid-4);
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
   letter-spacing: var(--ls-tight);
   line-height: var(--lh-tight);
   overflow-wrap: anywhere;
 }
 
 .view-verification-facts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-4);
-  align-items: center;
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
   color: var(--muted-foreground);
   font-family: var(--font-mono);
   font-size: var(--fs-2);
@@ -15503,8 +15503,14 @@ a.view-summary-node:hover {
   text-transform: uppercase;
 }
 
+.view-verification-facts span:not(.status-chip) {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+}
+
 .view-verification-facts b {
-  margin-left: var(--space-1-5);
   color: var(--foreground);
   font-size: var(--fs-4);
   font-weight: var(--fw-medium);
@@ -16099,7 +16105,9 @@ button.view-verification-stat:hover {
 }
 
 .view-verification-board table {
+  display: table;
   width: 100%;
+  min-width: 0;
   border-collapse: collapse;
 }
 
