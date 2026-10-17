@@ -1,6 +1,6 @@
 import { createServer as createHttpServer, type Server } from 'node:http';
 import { pathToFileURL } from 'node:url';
-import { getRequestListener, serve } from '@hono/node-server';
+import { createAdaptorServer, getRequestListener } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';
 import type { FailedLoadStatus, ProjectSnapshot } from '../planning-repo/types.ts';
@@ -28,6 +28,8 @@ import { createSearchIndexState, searchIndex } from './search-index.ts';
 
 const DEFAULT_PORT = 4173;
 const HOSTNAME = '127.0.0.1';
+/** How many consecutive ports an auto-port start tries before giving up (4173 → 4182). */
+const PORT_ATTEMPTS = 10;
 
 interface SnapshotSource {
   getSnapshot(): ProjectSnapshot;
@@ -42,6 +44,9 @@ interface SnapshotSource {
 
 interface ServerOptions {
   port?: number;
+  /** When the port is taken, try the next one up instead of failing — for a default port, so a
+   * second instance on another project just starts. An explicit `--port` never moves. */
+  autoPort?: boolean;
   production?: boolean;
 }
 
@@ -358,23 +363,37 @@ function registerDisposal(source: SnapshotSource, server: Server): void {
   });
 }
 
+async function listen(server: Server, port: number, autoPort: boolean): Promise<void> {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      await new Promise<void>((resolve, reject) => {
+        server.once('error', reject);
+        server.listen(port + attempt, HOSTNAME, () => {
+          server.off('error', reject);
+          resolve();
+        });
+      });
+      return;
+    } catch (error) {
+      const inUse = (error as NodeJS.ErrnoException).code === 'EADDRINUSE';
+      if (!autoPort || !inUse || port === 0 || attempt + 1 >= PORT_ATTEMPTS) throw error;
+    }
+  }
+}
+
 export async function startServer(rawPath: string, options: ServerOptions = {}): Promise<Server> {
   const production = options.production ?? process.env.NODE_ENV === 'production';
   const port = options.port ?? DEFAULT_PORT;
   const source = await createSnapshotSource(rawPath);
   const app = createApp(source, production);
 
+  const autoPort = options.autoPort ?? false;
+
   if (production) {
-    const server = serve({ fetch: app.fetch, hostname: HOSTNAME, port }) as Server;
+    const server = createAdaptorServer({ fetch: app.fetch, hostname: HOSTNAME }) as Server;
     registerDisposal(source, server);
-    if (server.listening) return server;
-    return await new Promise((resolve, reject) => {
-      server.once('error', reject);
-      server.once('listening', () => {
-        server.off('error', reject);
-        resolve(server);
-      });
-    });
+    await listen(server, port, autoPort);
+    return server;
   }
 
   const { createServer: createViteServer } = await import('vite');
@@ -396,24 +415,22 @@ export async function startServer(rawPath: string, options: ServerOptions = {}):
   });
   server.on('close', () => void vite.close());
   registerDisposal(source, server);
-  return await new Promise((resolve, reject) => {
-    server.once('error', reject);
-    server.listen(port, HOSTNAME, () => {
-      server.off('error', reject);
-      resolve(server);
-    });
-  });
+  await listen(server, port, autoPort);
+  return server;
 }
 
 interface CliOptions {
   rawPath: string;
   port: number;
+  /** True unless `--port` was given. */
+  autoPort: boolean;
   smoke: boolean;
 }
 
 function parseCli(args: string[]): CliOptions {
   let rawPath = process.cwd();
   let port = DEFAULT_PORT;
+  let autoPort = true;
   let smoke = false;
 
   for (let index = 0; index < args.length; index += 1) {
@@ -424,9 +441,11 @@ function parseCli(args: string[]): CliOptions {
       const value = args[index + 1];
       if (!value) throw new Error('--port requires a numeric value');
       port = Number(value);
+      autoPort = false;
       index += 1;
     } else if (arg.startsWith('--port=')) {
       port = Number(arg.slice('--port='.length));
+      autoPort = false;
     } else if (!arg.startsWith('-')) {
       rawPath = arg;
     }
@@ -435,7 +454,7 @@ function parseCli(args: string[]): CliOptions {
   if (!Number.isInteger(port) || port < 0 || port > 65_535) {
     throw new Error(`Invalid port: ${port}`);
   }
-  return { rawPath, port: smoke && port === DEFAULT_PORT ? 0 : port, smoke };
+  return { rawPath, port: smoke && port === DEFAULT_PORT ? 0 : port, autoPort, smoke };
 }
 
 async function runCli(): Promise<void> {
@@ -443,6 +462,7 @@ async function runCli(): Promise<void> {
   const production = process.env.NODE_ENV === 'production';
   const server = await startServer(options.rawPath, {
     port: options.port,
+    autoPort: options.autoPort,
     production,
   });
   const address = server.address();
@@ -488,6 +508,7 @@ async function runCli(): Promise<void> {
       'Mode: DEVELOPMENT — serving unbundled modules through Vite. Expect a slow first paint over any network hop; run `npm start` (NODE_ENV=production) after `npm run build` to serve ./dist instead.',
     );
   }
+  if (port !== options.port) console.log(`Port ${options.port} is in use — using ${port} instead`);
   console.log(`Open ${baseUrl}`);
 }
 
