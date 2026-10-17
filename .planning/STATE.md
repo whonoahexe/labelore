@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-17T18:56:26.064Z"
+last_updated: "2026-10-17T18:58:31.037Z"
 last_activity: 2026-10-17
 last_activity_desc: Completed quick task 261016-2j6 (compact discussion-log tables)
-state_head: e76320a20837b42c4944afa902e5104c3c74bcb7
+state_head: 955c5c06942d13217195b23f4bb7c8e561f0c64d
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -193,6 +193,7 @@ None.
 | 78 | Remove the dashboard progress panel | 2026-10-18 | 227689f | — |
 | 79 | Match the dashboard head's top offset to the Roadmap and Traceability pages | 2026-10-18 | 6253d3d | — |
 | 80 | Add a Project overview eyebrow above the dashboard project name | 2026-10-18 | e76320a | — |
+| 81 | Shrink the header's home link to the brand's own content | 2026-10-18 | 955c5c0 | — |
 
 ## Deferred Items
 
