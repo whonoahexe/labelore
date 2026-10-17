@@ -7,6 +7,7 @@ import { buildReferenceRegistry, type ReferenceRegistry } from '../../src/presen
 import { phaseKeyOf, buildPlanUrl } from '../../src/presentation/routes.ts';
 import { createArtifactRenderer } from '../../src/rendering/markdown.ts';
 import type { PhaseDto, ProjectPresentation } from '../../src/server/project-presentation.ts';
+import { emptyLedger } from '../../src/server/dashboard-ledger.ts';
 
 const CORPUS_PLAN_PATH =
   process.env.LABELORE_CORPUS ??
@@ -37,6 +38,7 @@ function basePresentation(overrides: Partial<ProjectPresentation> = {}): Project
     coverageWaits: [],
     mentions: { byId: {}, all: [] },
     exclusions: [],
+    ledger: emptyLedger(),
     ...overrides,
   };
 }

@@ -14,6 +14,7 @@ import {
   extractSnippets,
   type SearchHitLike,
 } from '../../src/presentation/search.ts';
+import { emptyLedger } from '../../src/server/dashboard-ledger.ts';
 
 function phase(overrides: Partial<PhaseDto> & Pick<PhaseDto, 'key' | 'milestoneKey' | 'name'>): PhaseDto {
   return {
@@ -82,6 +83,7 @@ function presentation(overrides: Partial<ProjectPresentation> = {}): ProjectPres
     coverageWaits: [],
     mentions: { byId: {}, all: [] },
     exclusions: [],
+    ledger: emptyLedger(),
     ...overrides,
   };
 }

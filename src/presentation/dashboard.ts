@@ -7,6 +7,7 @@ import type {
 import { buildArtifactUrl, buildPhaseUrl } from './routes.ts';
 import { buildDashboardHead, type DashboardHead } from './dashboard-head.ts';
 import { stableSlug } from '../rendering/slug.ts';
+import type { LedgerBlockerDto } from '../server/dashboard-ledger.ts';
 
 export interface SourceProvenance {
   kind: 'state' | 'roadmap' | 'summary' | 'derived';
@@ -127,7 +128,8 @@ export interface DashboardViewModel {
   };
   next: { immediate: NextWorkItem | null; previews: NextWorkItem[] };
   decisions: StateLog;
-  blockers: StateLog;
+  /** Open and resolved blockers with the documents each one names, built server-side. */
+  blockers: LedgerBlockerDto[];
 }
 
 function stateText(value: string | null, ref: string): SourcedValue<string> {
@@ -526,11 +528,6 @@ export function buildDashboardViewModel(presentation: ProjectPresentation): Dash
       [...presentation.decisions].reverse(),
       'Recorded decision',
     ),
-    blockers: stateLog(
-      state?.blockersConcerns ?? null,
-      statePath,
-      presentation.blockers.filter((blocker) => !isPlaceholderBlocker(blocker.text)),
-      'Open blocker',
-    ),
+    blockers: presentation.ledger.blockers,
   };
 }

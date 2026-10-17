@@ -7,6 +7,7 @@ import type {
 } from '../../src/server/project-presentation.ts';
 import { buildPhaseUrl, buildPlanUrl } from '../../src/presentation/routes.ts';
 import { buildRoadmapViewModel } from '../../src/presentation/roadmap.ts';
+import { emptyLedger } from '../../src/server/dashboard-ledger.ts';
 
 function plan(
   id: string,
@@ -97,6 +98,7 @@ function presentation(milestones: MilestoneDto[]): ProjectPresentation {
     coverageWaits: [],
     mentions: { byId: {}, all: [] },
     exclusions: [],
+    ledger: emptyLedger(),
   };
 }
 

@@ -62,12 +62,18 @@ describe('empty-state contract (D-06, D-07, D-08, D-09)', () => {
   });
 
   it('leaves dashboard-page.tsx untouched — its all-clear sentences and on-deck sentence still exist (scope rule)', async () => {
-    const dashboard = await source('src/web/pages/dashboard-page.tsx');
+    // The dashboard's sections moved into dashboard-*.tsx modules (quick-261018-4tb); the
+    // sentences are read from the page and its modules together.
+    const dashboard = (
+      await Promise.all(
+        ['dashboard-page', 'dashboard-ledger'].map((name) => source(`src/web/pages/${name}.tsx`)),
+      )
+    ).join('\n');
     expect(dashboard).toContain(
       'No dependency-ready work is reported in the active milestone.',
     );
     expect(dashboard).toContain('No decisions are recorded.');
-    expect(dashboard).toContain('No blockers are recorded.');
+    expect(dashboard).toContain('No open blockers are recorded');
     expect(dashboard).toContain('No additional work is queued after this item.');
     expect(dashboard).not.toContain('EmptyState');
   });

@@ -13,6 +13,7 @@ import {
   matchesTraceabilityFilter,
   type TraceabilityFilterState,
 } from '../../src/web/pages/traceability-filter.ts';
+import { emptyLedger } from '../../src/server/dashboard-ledger.ts';
 
 const PHASE_1_IDENTITY = { milestoneVersion: null, number: '01', projectCode: null, slug: 'first' };
 const PHASE_2_IDENTITY = { milestoneVersion: null, number: '02', projectCode: null, slug: 'second' };
@@ -72,6 +73,7 @@ function presentationWith(requirements: RequirementDto[], phases: PhaseDto[] = [
     coverageWaits: [],
     mentions: { byId: {}, all: [] },
     exclusions: [],
+    ledger: emptyLedger(),
   };
 }
 
