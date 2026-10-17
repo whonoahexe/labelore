@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { InMemoryPlanningFilesystem } from '../../src/planning-fs/in-memory-fs.ts';
+import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
+import { toProjectPresentation } from '../../src/server/project-presentation.ts';
 import type {
   MilestoneDto,
   PhaseDto,
@@ -100,6 +103,23 @@ function presentation(milestones: MilestoneDto[]): ProjectPresentation {
 }
 
 describe('buildRoadmapViewModel', () => {
+  it("takes the lede from the first paragraph of ROADMAP.md's Overview, and has none without one", async () => {
+    const viewOf = async (roadmap: string) =>
+      buildRoadmapViewModel(
+        toProjectPresentation(
+          await new PlanningRepository(
+            new InMemoryPlanningFilesystem({ '.planning/ROADMAP.md': roadmap }),
+            '/project',
+          ).load(),
+        ),
+      );
+    const withOverview = await viewOf(
+      '# Roadmap: Demo\n\n## Overview\n\nShip the **reader** first,\nthen the `views`.\n\nA second paragraph.\n\n## Phases\n',
+    );
+    expect(withOverview.overview).toBe('Ship the reader first, then the `views`.');
+    expect((await viewOf('# Roadmap: Demo\n\n## Phases\n')).overview).toBeNull();
+  });
+
   it('keeps the active milestone first and history in a separate subordinate collection', () => {
     const source = presentation([
       milestone('v1.0', true, [phase('01', { milestoneVersion: 'v1.0', archived: true })]),
