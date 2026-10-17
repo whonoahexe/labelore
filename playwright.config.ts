@@ -24,7 +24,9 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   reporter: 'list',
-  timeout: 300_000,
+  // A page loads in ~2s, so a minute is plenty; a broken wait fails in a minute, not five.
+  // The foundation sweep, which loops the whole page matrix in one test, raises its own.
+  timeout: 60_000,
   expect: {
     timeout: 10_000,
   },
