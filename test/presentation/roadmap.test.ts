@@ -9,6 +9,7 @@ import type {
   ProjectPresentation,
 } from '../../src/server/project-presentation.ts';
 import { buildPhaseUrl, buildPlanUrl } from '../../src/presentation/routes.ts';
+import { twoLineLead } from '../../src/presentation/dashboard-head.ts';
 import { buildRoadmapViewModel } from '../../src/presentation/roadmap.ts';
 
 function plan(
@@ -118,6 +119,19 @@ describe('buildRoadmapViewModel', () => {
     );
     expect(withOverview.overview).toBe('Ship the reader first, then the `views`.');
     expect((await viewOf('# Roadmap: Demo\n\n## Phases\n')).overview).toBeNull();
+  });
+
+  it('cuts the Overview lede to whole sentences that fit two lines, never an ellipsis', async () => {
+    const longSecond =
+      'Phase 1 stands up a real HTTPS origin on the new domain, the self-hosted app and database, password login, and an installable app on both phones.';
+    expect(twoLineLead(`duet goes from nothing to a private two-person messenger in three coarse phases. ${longSecond}`)).toBe(
+      'duet goes from nothing to a private two-person messenger in three coarse phases.',
+    );
+    expect(twoLineLead('Short first. Short second.')).toBe('Short first. Short second.');
+    expect(twoLineLead(longSecond.replace(/\.$/, ' with a tail that runs it well past two lines of text.'))).toBe(
+      'Phase 1 stands up a real HTTPS origin on the new domain, the self-hosted app and database, password login.',
+    );
+    expect(twoLineLead('x'.repeat(200))).toBeNull();
   });
 
   it('keeps the active milestone first and history in a separate subordinate collection', () => {

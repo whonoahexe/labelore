@@ -5,7 +5,7 @@ import type {
   PlanDto,
   ProjectPresentation,
 } from '../server/project-presentation.ts';
-import { sectionParagraph } from './dashboard-head.ts';
+import { twoLineLead } from './dashboard-head.ts';
 import { buildMilestoneUrl, buildPhaseUrl, buildPlanUrl } from './routes.ts';
 
 export interface RoadmapPlanRow {
@@ -63,7 +63,7 @@ export interface MilestoneFlow {
 export interface RoadmapViewModel {
   readAt: string;
   projectName: string | null;
-  /** The first paragraph of ROADMAP.md's Overview section — the page's lede — or null without one. */
+  /** ROADMAP.md's Overview cut to two lines — the page's lede — or null when there is none to cut. */
   overview: string | null;
   active: MilestoneFlow | null;
   history: MilestoneFlow[];
@@ -241,7 +241,7 @@ export function buildRoadmapViewModel(presentation: ProjectPresentation): Roadma
   return {
     readAt: presentation.readAt,
     projectName: presentation.projectName,
-    overview: typeof overview === 'string' ? sectionParagraph(overview) : null,
+    overview: typeof overview === 'string' ? twoLineLead(overview) : null,
     active: active ? milestoneFlow(active, presentation) : null,
     history: presentation.milestones
       .filter((milestone) => milestone.archived)
