@@ -163,6 +163,13 @@ strong { font-weight: var(--fw-semibold); }
 /* ================= round 3: B1, left grouped as one flow, core value inside the nx card ================= */
 .r3 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(19rem, 0.9fr); gap: var(--space-fluid-9); align-items: start; }
 .r3-left { display: grid; gap: var(--space-8); align-content: start; }
+/* R3b (picked): both sides share a top and a bottom — the name meets the card's top rule, the Now
+   block meets its bottom edge, and the card's next step settles to the bottom when the left is taller */
+.r3b { align-items: stretch; }
+.r3b .r3-left { align-content: space-between; }
+.r3b .nx { display: flex; flex-direction: column; }
+.r3b .nx-sec { flex: 1; display: flex; flex-direction: column; }
+.r3b .nx-step { margin-top: auto; }
 @container (max-width: 760px) { .r3 { grid-template-columns: minmax(0, 1fr); } }
 
 /* core value inside the card: as its opening section, as a tinted band, or as a footer */
@@ -329,7 +336,7 @@ function viewR3a(d) {
 }
 function viewR3b(d) {
   const pos = d.state ? `<div class="r3b-now"><span class="kicker">Now</span>${positionBlock(d.state)}</div>` : '';
-  return `<section class="r3"><div class="r3-left">${idBlock(d, 'b1-id')}${pos}</div>${nxWithCore(d, 'lead', true)}</section>`;
+  return `<section class="r3 r3b"><div class="r3-left">${idBlock(d, 'b1-id')}${pos}</div>${nextCard2(d.state, true)}</section>`;
 }
 function viewR3c(d) {
   const s = d.state;

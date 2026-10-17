@@ -65,6 +65,10 @@ The next step shows its whole first sentence, not a two-line clamp.
 
 **Winner: R3b with the Lead text.**
 
+After the pick: Core Value is removed from the dashboard. The two sides share a top and a bottom edge:
+the name meets the card's top rule, and the Now block's status chip meets the card's bottom, where
+the next step is pinned.
+
 ## Extraction (same in every variant)
 `gen-data.mjs` reads PROJECT.md without rewriting anything:
 - **Name:** the H1. A title like `Harbor Ledger — Customs Filing Automation` splits into a name and
