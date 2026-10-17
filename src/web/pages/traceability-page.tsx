@@ -350,18 +350,6 @@ export function TraceabilityPage(): React.JSX.Element {
                 <dd>{view.coverage.unresolvedPhase}</dd>
               </div>
             ) : null}
-            <div className="trace-requirement-stat-tiles">
-              <div className="trace-stat-tile">
-                <dt>Checked</dt>
-                <dd>{view.coverage.claimedComplete}</dd>
-              </div>
-              {view.coverage.mismatched > 0 ? (
-                <div className="trace-stat-tile">
-                  <dt>Status mismatch</dt>
-                  <dd>{view.coverage.mismatched}</dd>
-                </div>
-              ) : null}
-            </div>
           </dl>
         </div>
 

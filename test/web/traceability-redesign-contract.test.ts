@@ -90,8 +90,10 @@ describe('traceability redesign — summary strip (NS4-01, NS4-04, D-02, Task 1)
     expect(page).toContain('{view.coverage.missingPhase}');
     expect(page).toContain('{view.coverage.uncovered}');
     expect(page).toContain('{view.coverage.unresolvedPhase}');
-    expect(page).toContain('{view.coverage.claimedComplete}');
-    expect(page).toContain('{view.coverage.mismatched}');
+    // The requirement-side Checked and Status mismatch tiles were removed: the summary reports
+    // only the phase-side partition, and the Status mismatch filter still finds those rows.
+    expect(page).not.toContain('{view.coverage.claimedComplete}');
+    expect(page).not.toContain('trace-requirement-stat-tiles');
   });
 
   it('quick-260918-qkd Task 1: renders a data-bucket attribute per partition tile and reads completePhasePercent for the hero value', async () => {
