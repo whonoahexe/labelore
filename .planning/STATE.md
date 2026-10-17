@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-17T19:31:01.685Z"
+last_updated: "2026-10-17T19:45:02.413Z"
 last_activity: 2026-10-17
 last_activity_desc: Completed quick task 261016-2j6 (compact discussion-log tables)
-state_head: e8907042d4423bbca73899e3997d2edcffe9793e
+state_head: ee8837b3b319b06d948099d3320542a6a3d8c446
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -198,6 +198,7 @@ None.
 | 83 | Replace the Traceability lede with PROJECT.md's Core Value | 2026-10-18 | e567b6f | — |
 | 84 | Remove the Checked and Status mismatch figures from the Traceability summary | 2026-10-18 | dd550ca | — |
 | 85 | Rename No directory to Not started and hide zero figures on Traceability | 2026-10-18 | e890704 | — |
+| 86 | Roadmap lede is the first paragraph of ROADMAP.md's Overview, replacing the fixed text | 2026-10-18 | ee8837b | — |
 
 ## Deferred Items
 
