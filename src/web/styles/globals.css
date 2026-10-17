@@ -1442,7 +1442,8 @@ summary.tree-node-row:focus-visible {
 }
 
 .roadmap-page .page-intro,
-.traceability-page .page-intro {
+.traceability-page .page-intro,
+.project-head {
   margin-top: var(--space-fluid-14);
 }
 
@@ -2067,7 +2068,8 @@ pre {
   }
 
   .roadmap-page .page-intro,
-  .traceability-page .page-intro {
+  .traceability-page .page-intro,
+  .project-head {
     margin-top: 0;
   }
 }
