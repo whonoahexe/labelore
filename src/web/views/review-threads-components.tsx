@@ -12,10 +12,14 @@
 // document content. States are `data-*` attributes (data-outcome, data-severity, data-tone), never
 // new class names.
 import { useCallback, useState } from 'react';
+import { Link } from 'react-router';
 import { CopyPathButton } from '../components/copy-path-button.tsx';
 import { DocumentViewToggle } from '../components/document-view-toggle.tsx';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog.tsx';
 import { ResearchBlocks, ResearchInline } from './research-briefing-components.tsx';
+import { OUTSIDE_SCOPE_TONE } from './review-threads.ts';
 import type {
+  ComposedReviewFileBlock,
   ComposedReviewFinding,
   ComposedReviewStamp,
   ComposedReviewThreads,
@@ -105,6 +109,17 @@ function Thread({
             </button>
           ) : null}
         </div>
+        {finding.locations.length > 0 ? (
+          <div className="view-review-locs">
+            {finding.locations.map((location, index) => (
+              <span key={`${location.name}-${index}`} className="view-review-loc">
+                <b>{location.name}</b>
+                {location.spans !== '' ? `:${location.spans}` : ''}{' '}
+                <span className="view-review-muted">{location.dir}</span>
+              </span>
+            ))}
+          </div>
+        ) : null}
         <div className="view-review-md">
           {finding.issue.length > 0 ? <ResearchBlocks blocks={finding.issue} /> : <p className="view-research-text">—</p>}
         </div>
@@ -116,6 +131,14 @@ function Thread({
             </div>
           </div>
         ) : null}
+        {finding.extra.map((extra, index) => (
+          <div key={`${extra.label}-${index}`} className="view-review-extra">
+            <span className="view-review-kicker">{extra.label}</span>
+            <div className="view-review-md">
+              <ResearchBlocks blocks={extra.blocks} />
+            </div>
+          </div>
+        ))}
         <Reply finding={finding} />
       </div>
     </article>
@@ -137,6 +160,98 @@ function ResolvedRow({ finding, onUnfold }: { finding: ComposedReviewFinding; on
       </span>
       <Stamp stamp={finding.stamp} />
     </button>
+  );
+}
+
+function FileHead({ file }: { file: ComposedReviewFileBlock }): React.JSX.Element {
+  return (
+    <header className="view-review-file-head">
+      <code>{file.label}</code>
+      {file.ruler.length > 0 ? (
+        <span className="view-review-ruler" title="Where the findings sit in the file">
+          {file.ruler.map((mark, index) => (
+            <i
+              key={`${mark.label}-${index}`}
+              data-severity={mark.severity}
+              data-outcome={mark.outcome}
+              title={mark.label}
+              style={{ left: `${mark.left}%`, width: `${mark.width}%` }}
+            />
+          ))}
+        </span>
+      ) : (
+        <span aria-hidden="true" />
+      )}
+      <span className="view-review-file-meta">
+        {file.outsideScope ? (
+          <span className="status-chip" data-tone={OUTSIDE_SCOPE_TONE}>
+            Outside scope
+          </span>
+        ) : null}
+        <span className="view-review-file-count">{file.count}</span>
+      </span>
+    </header>
+  );
+}
+
+const QUIET_SHOWN = 14;
+
+function QuietFiles({ quiet }: { quiet: NonNullable<ComposedReviewThreads['quiet']> }): React.JSX.Element {
+  const [all, setAll] = useState(false);
+  const shown = all ? quiet.files : quiet.files.slice(0, QUIET_SHOWN);
+  return (
+    <div className="view-review-quiet">
+      <span className="view-review-kicker">{quiet.label}</span>
+      <div className="view-review-quiet-files">
+        {shown.map((file, index) => (
+          <code key={`${file.path}-${index}`} title={file.path}>
+            {file.name}
+          </code>
+        ))}
+        {quiet.files.length > QUIET_SHOWN ? (
+          <button type="button" className="view-review-link" onClick={() => setAll((current) => !current)}>
+            {all ? 'Fewer' : `+${quiet.files.length - QUIET_SHOWN} more`}
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function AlsoRow({
+  items,
+  onOpenFiles,
+  onShowSource,
+}: {
+  items: ComposedReviewThreads['also'];
+  onOpenFiles: () => void;
+  onShowSource: (id: string | null) => void;
+}): React.JSX.Element {
+  return (
+    <nav className="view-review-also" aria-label="Also in this report">
+      <span className="view-review-kicker">Also in this report</span>
+      <ul>
+        {items.map((item, index) => (
+          <li key={`${item.kind}-${item.label}-${index}`}>
+            {item.kind === 'fix' && item.url !== null ? (
+              <Link className="status-chip" to={item.url}>
+                {item.label}
+              </Link>
+            ) : item.kind === 'fix' ? (
+              <span className="status-chip">{item.label}</span>
+            ) : (
+              <button
+                type="button"
+                className="status-chip"
+                onClick={() => (item.kind === 'files' ? onOpenFiles() : onShowSource(item.targetId))}
+              >
+                {item.label}
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </nav>
   );
 }
 
@@ -168,7 +283,8 @@ export function ReviewThreadsView({
 }: ReviewThreadsViewProps): React.JSX.Element {
   // The fold model: with "Show fixed threads" off the set holds the fixed threads a person
   // unfolded; with it on the set holds the ones they folded back. Switching resets the set.
-  const [showFixed] = useState(false);
+  const [showFixed, setShowFixed] = useState(false);
+  const [filesOpen, setFilesOpen] = useState(false);
   const [overrides, setOverrides] = useState<ReadonlySet<string>>(() => new Set(initialUnfolded));
 
   const flip = useCallback((id: string): void => {
@@ -180,7 +296,11 @@ export function ReviewThreadsView({
     });
   }, []);
 
-  const { head, verdict, facts, tally, quote, threads } = model;
+  const onToggleFixed = useCallback((): void => {
+    setShowFixed((current) => !current);
+    setOverrides(new Set());
+  }, []);
+  const { head, verdict, facts, tally, quote, threads, quiet, filesDialog, also, footer } = model;
   const title = head.title ?? fallbackTitle;
   const foldedNow = (finding: ComposedReviewFinding): boolean =>
     finding.defaultFolded && (showFixed ? overrides.has(finding.id) : !overrides.has(finding.id));
@@ -227,7 +347,15 @@ export function ReviewThreadsView({
               {facts.map((fact) => (
                 <span key={fact.label}>
                   {fact.label}
-                  <b>{fact.value}</b>
+                  <b>
+                    {fact.opensFiles ? (
+                      <button type="button" onClick={() => setFilesOpen(true)}>
+                        {fact.value}
+                      </button>
+                    ) : (
+                      fact.value
+                    )}
+                  </b>
                 </span>
               ))}
             </div>
@@ -272,13 +400,15 @@ export function ReviewThreadsView({
           <>
             <div className="view-review-bar">
               <span className="view-review-muted">{threads.note}</span>
+              {threads.fixedCount > 0 ? (
+                <button type="button" className="view-review-toggle" aria-pressed={showFixed} onClick={onToggleFixed}>
+                  Show fixed threads ({threads.fixedCount})
+                </button>
+              ) : null}
             </div>
             {threads.files.map((file) => (
               <section key={file.path || 'no-file'} className="view-review-file">
-                <header className="view-review-file-head">
-                  <code>{file.label}</code>
-                  <span className="view-review-file-count">{file.count}</span>
-                </header>
+                <FileHead file={file} />
                 {file.findings.map((finding) =>
                   foldedNow(finding) ? (
                     <ResolvedRow key={finding.id} finding={finding} onUnfold={flip} />
@@ -297,7 +427,46 @@ export function ReviewThreadsView({
         ) : (
           <p className="view-review-empty">{threads.empty === null ? 'No issues found.' : <ResearchInline text={threads.empty} />}</p>
         )}
+        {quiet !== null ? <QuietFiles quiet={quiet} /> : null}
       </section>
+
+      <AlsoRow items={also} onOpenFiles={() => setFilesOpen(true)} onShowSource={onShowSource} />
+
+      {footer !== null ? (
+        <div className="view-review-footer">
+          <span>{footer.reviewer !== null ? `Reviewer · ${footer.reviewer}` : ''}</span>
+          <span>{footer.depth !== null ? `Depth · ${footer.depth}` : ''}</span>
+        </div>
+      ) : null}
+
+      {filesDialog !== null ? (
+        <Dialog open={filesOpen} onOpenChange={setFilesOpen}>
+          <DialogContent className="view-review-modal">
+            <DialogHeader>
+              <DialogTitle>{filesDialog.title}</DialogTitle>
+            </DialogHeader>
+            {filesDialog.note !== null ? <p className="view-review-muted">{filesDialog.note}</p> : null}
+            <div className="view-review-modal-rows">
+              {filesDialog.rows.map((row, index) => (
+                <div key={`${row.path}-${index}`} className="view-review-modal-row">
+                  <span className="view-review-modal-path">
+                    {row.path}
+                    {row.outsideScope ? (
+                      <>
+                        {' '}
+                        <span className="status-chip" data-tone={OUTSIDE_SCOPE_TONE}>
+                          Outside declared scope
+                        </span>
+                      </>
+                    ) : null}
+                  </span>
+                  <span className="view-review-muted">{row.ids.length > 0 ? row.ids.join(' ') : '—'}</span>
+                </div>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
+      ) : null}
     </div>
   );
 }

@@ -43,6 +43,9 @@ export const SEVERITY_TONE: Record<ReviewSeverityKey, ReviewTone> = {
   info: 'quiet',
 };
 
+/** The "Outside scope" chip: quiet, never a warning. */
+export const OUTSIDE_SCOPE_TONE: ReviewTone = 'quiet';
+
 export const OUTCOME_LABEL: Record<ReviewOutcomeKind, string> = {
   fixed: 'Fixed',
   skipped: 'Skipped',
@@ -113,6 +116,17 @@ export interface ComposedReviewFinding {
   defaultFolded: boolean;
   /** "L116" for the resolved row, or ''. */
   firstLine: string;
+  /** Every file after the first the finding names: "name:spans" and its directory. */
+  locations: { name: string; spans: string; dir: string }[];
+}
+
+/** One finding's span in a file, positioned along the file header's line ruler. */
+export interface ComposedReviewRulerMark {
+  left: number;
+  width: number;
+  severity: ReviewSeverityKey;
+  outcome: ReviewOutcomeKind;
+  label: string;
 }
 
 export interface ComposedReviewFileBlock {
@@ -120,7 +134,19 @@ export interface ComposedReviewFileBlock {
   /** The path as shown ("No file named" when a finding names none). */
   label: string;
   count: number;
+  /** True for a file the declared review list does not name (never when no list was declared). */
+  outsideScope: boolean;
+  ruler: ComposedReviewRulerMark[];
   findings: ComposedReviewFinding[];
+}
+
+export interface ComposedReviewAlso {
+  label: string;
+  kind: 'fix' | 'files' | 'section' | 'frontmatter';
+  /** A heading id for Source mode (section, frontmatter), or null for the top. */
+  targetId: string | null;
+  /** The fix report's in-app route (fix), or null. */
+  url: string | null;
 }
 
 export interface ComposedReviewVerdictPart {
@@ -152,6 +178,15 @@ export interface ComposedReviewThreads {
     /** The Summary's last paragraph (or a plain line) when the review found nothing. */
     empty: string | null;
   };
+  /** The reviewed files no finding names. */
+  quiet: { label: string; files: { name: string; path: string }[] } | null;
+  filesDialog: {
+    title: string;
+    note: string | null;
+    rows: { path: string; outsideScope: boolean; ids: string[] }[];
+  } | null;
+  also: ComposedReviewAlso[];
+  footer: { reviewer: string | null; depth: string | null } | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -642,6 +677,74 @@ function frontmatterFindingCount(fm: Rec): number {
   return (asNum(fm.critical_count) ?? 0) + (asNum(fm.warning_count) ?? 0) + (asNum(fm.info_count) ?? 0);
 }
 
+
+// ---------------------------------------------------------------------------
+// Files, ruler and the Also row
+// ---------------------------------------------------------------------------
+
+function baseName(path: string): string {
+  const slash = path.lastIndexOf('/');
+  return slash === -1 ? path : path.slice(slash + 1);
+}
+
+function dirName(path: string): string {
+  const slash = path.lastIndexOf('/');
+  return slash === -1 ? '' : path.slice(0, slash);
+}
+
+function trimDot(path: string): string {
+  return path.startsWith('./') ? path.slice(2) : path;
+}
+
+/** The same file: equal after dropping a leading "./", or one path ending with "/" + the other. */
+function sameFile(a: string, b: string): boolean {
+  const na = trimDot(a);
+  const nb = trimDot(b);
+  return na === nb || na.endsWith(`/${nb}`) || nb.endsWith(`/${na}`);
+}
+
+function spanText(spans: { from: number; to: number }[]): string {
+  return spans.map((span) => (span.to !== span.from ? `${span.from}–${span.to}` : `${span.from}`)).join(', ');
+}
+
+function rulerOf(
+  findings: ReadFinding[],
+  path: string,
+  outcomeOfId: (id: string) => Outcome,
+): ComposedReviewRulerMark[] {
+  if (path === '') return [];
+  const marks: { from: number; to: number; finding: ReadFinding }[] = [];
+  for (const finding of findings) {
+    for (const ref of finding.refs) {
+      if (ref.path !== path) continue;
+      for (const span of ref.spans) marks.push({ ...span, finding });
+    }
+  }
+  if (marks.length === 0) return [];
+  const max = Math.max(...marks.map((mark) => mark.to)) * 1.08;
+  const round = (value: number): number => Math.round(value * 10) / 10;
+  return marks.map((mark) => ({
+    left: round((mark.from / max) * 100),
+    width: round(Math.max(((mark.to - mark.from) / max) * 100, 0.8)),
+    severity: mark.finding.severity,
+    outcome: outcomeOfId(mark.finding.id).kind,
+    label: `${mark.finding.id} · ${spanLabel(mark)}`,
+  }));
+}
+
+const MAX_LISTED = 1000;
+const QUIET_NOTE = 'Reviewed with nothing to say';
+
+/** "Structural Findings (fallow)" -> "Structural Findings". */
+function withoutParenthetical(heading: string): string {
+  const text = heading.trim();
+  if (text.endsWith(')')) {
+    const open = text.lastIndexOf('(');
+    if (open > 0) return text.slice(0, open).trim();
+  }
+  return text;
+}
+
 // ---------------------------------------------------------------------------
 // Composition
 // ---------------------------------------------------------------------------
@@ -751,9 +854,56 @@ export function composeReviewThreads(input: ViewInput): ComposedReviewThreads | 
     }
   }
 
+  // The reviewed files: the declared list in order, then any file a finding names that the list
+  // does not (looked up through a basename index, never a nested scan).
+  const listedFiles = listed.slice(0, MAX_LISTED);
+  const rows: { path: string; outsideScope: boolean; ids: string[] }[] = listedFiles.map((path) => ({
+    path,
+    outsideScope: false,
+    ids: [],
+  }));
+  const byBase = new Map<string, number[]>();
+  const indexRow = (index: number): void => {
+    const key = baseName(trimDot(rows[index].path));
+    const bucket = byBase.get(key);
+    if (bucket === undefined) byBase.set(key, [index]);
+    else bucket.push(index);
+  };
+  rows.forEach((_, index) => indexRow(index));
+  const rowsFor = (path: string): number[] =>
+    (byBase.get(baseName(trimDot(path))) ?? []).filter((index) => sameFile(rows[index].path, path));
+  if (listedFiles.length > 0) {
+    for (const finding of findings) {
+      for (const ref of finding.refs) {
+        let matched = rowsFor(ref.path);
+        if (matched.length === 0) {
+          rows.push({ path: ref.path, outsideScope: true, ids: [] });
+          indexRow(rows.length - 1);
+          matched = [rows.length - 1];
+        }
+        for (const index of matched) if (!rows[index].ids.includes(finding.id)) rows[index].ids.push(finding.id);
+      }
+    }
+  }
+  const hasDialog = listedFiles.length > 0;
+  const outsideScopePath = (path: string): boolean =>
+    hasDialog && path !== '' && !listedFiles.some((entry) => sameFile(entry, path));
+  const filesDialog: ComposedReviewThreads['filesDialog'] = hasDialog
+    ? {
+        title: `Files reviewed · ${listedFiles.length}`,
+        note: filesFm !== null && filesFm !== listedFiles.length ? `The frontmatter counts ${filesFm}.` : null,
+        rows,
+      }
+    : null;
+  const quietRows = hasDialog ? rows.filter((row) => !row.outsideScope && row.ids.length === 0) : [];
+  const quiet: ComposedReviewThreads['quiet'] =
+    quietRows.length > 0
+      ? { label: `${QUIET_NOTE} · ${quietRows.length}`, files: quietRows.map((row) => ({ name: baseName(row.path), path: row.path })) }
+      : null;
+
   // Facts.
   const facts: ComposedReviewThreads['facts'] = [];
-  if (filesCount !== null) facts.push({ label: 'Files', value: String(filesCount), opensFiles: false });
+  if (filesCount !== null) facts.push({ label: 'Files', value: String(filesCount), opensFiles: filesDialog !== null });
   if (depth !== null) facts.push({ label: 'Depth', value: humanize(depth), opensFiles: false });
   if (fixContext !== null) {
     const fmFix = rec(fixContext.frontmatter) ?? {};
@@ -818,6 +968,8 @@ export function composeReviewThreads(input: ViewInput): ComposedReviewThreads | 
     path,
     label: path === '' ? 'No file named' : path,
     count: members.length,
+    outsideScope: outsideScopePath(path),
+    ruler: rulerOf(findings, path, outcomeOfId),
     findings: members.map((finding): ComposedReviewFinding => {
       const outcome = outcomeOfId(finding.id);
       const firstRef = finding.refs[0];
@@ -842,11 +994,42 @@ export function composeReviewThreads(input: ViewInput): ComposedReviewThreads | 
         reply: replyOf(outcome),
         defaultFolded: outcome.kind === 'fixed',
         firstLine: firstRef !== undefined && firstRef.spans[0] !== undefined ? `L${firstRef.spans[0].from}` : '',
+        locations: finding.refs.slice(1).map((ref) => ({ name: baseName(ref.path), spans: spanText(ref.spans), dir: dirName(ref.path) })),
       };
     }),
   }));
   const lastParagraph = summaryParagraphs[summaryParagraphs.length - 1];
   const emptyLine = lastParagraph === undefined ? 'No issues found.' : squash(blockTextOf(lastParagraph));
+
+  // Also in this report: the fix report, the files list, every other section, the frontmatter.
+  const also: ComposedReviewAlso[] = [];
+  if (fixContext !== null) {
+    const status = strOrNull((rec(fixContext.frontmatter) ?? {}).status);
+    also.push({
+      label: status === null ? 'Fix report' : `Fix report · ${humanize(status)}`,
+      kind: 'fix',
+      targetId: null,
+      url: strOrNull(fixContext.url),
+    });
+  }
+  if (filesDialog !== null) {
+    also.push({ label: `Files reviewed · ${filesCount ?? filesDialog.rows.length}`, kind: 'files', targetId: null, url: null });
+  }
+  for (const raw of list(review.sections)) {
+    const section = rec(raw);
+    if (section === null || section.handled === true || section.none === true) continue;
+    const heading = asStr(section.heading).trim();
+    if (heading === '') continue;
+    const wanted = normalizeHeading(heading);
+    also.push({
+      label: withoutParenthetical(heading),
+      kind: 'section',
+      targetId: headIdOf(input.headings, (t) => t === wanted),
+      url: null,
+    });
+  }
+  if (Object.keys(fm).length > 0) also.push({ label: 'Frontmatter', kind: 'frontmatter', targetId: null, url: null });
+  const reviewer = strOrNull(review.reviewer);
 
   // Head.
   const phaseName = context === null ? null : strOrNull(context.phaseName);
@@ -878,5 +1061,9 @@ export function composeReviewThreads(input: ViewInput): ComposedReviewThreads | 
       files,
       empty: n === 0 ? emptyLine : null,
     },
+    quiet,
+    filesDialog,
+    also,
+    footer: reviewer === null && depth === null ? null : { reviewer, depth },
   };
 }

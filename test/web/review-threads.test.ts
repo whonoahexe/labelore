@@ -467,3 +467,96 @@ describe('the view', () => {
     expect(markup).not.toContain('href=');
   });
 });
+
+describe('the line ruler, locations and extra fields', () => {
+  it('positions one mark per span in the file header', () => {
+    const dockerfile = sb02.threads.files[0];
+    expect(dockerfile.ruler).toHaveLength(7);
+    const cr01 = dockerfile.ruler.find((mark) => mark.label === 'CR-01 · L1');
+    expect(cr01).toMatchObject({ severity: 'critical', outcome: 'fixed' });
+    // from / (max to x 1.08): the largest span ends at line 20, so line 1 sits at 1 / 21.6 = 4.6%.
+    expect(cr01?.left).toBe(4.6);
+    expect(cr01?.width).toBe(0.8);
+    expect(dockerfile.ruler.find((mark) => mark.label.startsWith('IN-03'))?.label).toBe('IN-03 · L17–18');
+    expect(sb02.threads.files[2].ruler).toHaveLength(1);
+    const noLines = composeReviewThreads({
+      ...inputOf(F('clean-REVIEW.md'), null),
+      structured: { review: { findings: [{ id: 'IN-01', title: 't', severity: 'info', refs: [{ path: 'a.ts', spans: [] }] }] } },
+    });
+    expect(noLines?.threads.files[0].ruler).toEqual([]);
+  });
+
+  it('lists the other files a finding names, and shows its extra labelled blocks', () => {
+    expect(findingOf(sp01, 'WR-01').locations.map((l) => `${l.name}:${l.spans} ${l.dir}`)).toEqual([
+      'mint.rs:18–32 backend/src/tickets',
+      'mod.rs:41–47 backend/src/ws',
+      'mod.rs:44–46 backend/src/download',
+    ]);
+    expect(findingOf(sp01, 'CR-01').locations).toEqual([]);
+    expect(findingOf(sp03, 'WR-01').extra.map((e) => e.label)).toEqual(['Failure scenario']);
+    const markup = markupOf(sp03);
+    expect(markup).toContain('Failure scenario');
+  });
+});
+
+describe('quiet files, the files dialog, the Also row and the footer', () => {
+  it('lists the reviewed files no finding names', () => {
+    expect(lb05.quiet?.label).toBe('Reviewed with nothing to say · 39');
+    expect(lb05.quiet?.files).toHaveLength(39);
+    expect(sp01.quiet?.files).toHaveLength(11);
+    expect(lb01.quiet?.files).toHaveLength(40);
+    expect(dd01.quiet?.files).toHaveLength(6);
+    expect(clean.quiet?.files).toHaveLength(4);
+    expect(sb02.quiet).toBeNull();
+    expect(sp03.quiet).toBeNull();
+    const markup = markupOf(lb05);
+    expect(markup).toContain('+25 more');
+    expect(markup.match(/<code title=/g)).toHaveLength(14);
+  });
+
+  it('builds the files dialog and the Outside scope marks', () => {
+    expect(lb01.filesDialog?.title).toBe('Files reviewed · 46');
+    expect(lb01.filesDialog?.note).toBe('The frontmatter counts 45.');
+    expect(sb02.filesDialog?.title).toBe('Files reviewed · 2');
+    expect(sb02.filesDialog?.rows).toHaveLength(3);
+    expect(sb02.filesDialog?.rows[2]).toEqual({ path: 'lens.sideby.me/src/extraction/ytdlp.ts', outsideScope: true, ids: ['WR-01', 'IN-01'] });
+    expect(sb02.filesDialog?.note).toBeNull();
+    expect(sb02.threads.files.map((f) => f.outsideScope)).toEqual([false, true, false]);
+    expect(sb02.facts[0].opensFiles).toBe(true);
+    expect(sp03.filesDialog).toBeNull();
+    expect(sp03.facts[0].opensFiles).toBe(false);
+    expect(sp03.threads.files.some((f) => f.outsideScope)).toBe(false);
+    expect(markupOf(sb02)).toContain('Outside scope');
+  });
+
+  it('lists the Also chips in order', () => {
+    const chips = (m: ComposedReviewThreads): string[] => m.also.map((a) => a.label);
+    expect(chips(sp01)).toEqual(['Files reviewed · 20', 'Frontmatter']);
+    expect(chips(sb02)).toEqual(['Fix report · Partial', 'Files reviewed · 2', 'Frontmatter']);
+    expect(chips(lb01)).toEqual(['Fix report · All fixed', 'Files reviewed · 45', 'Frontmatter']);
+    expect(chips(dd01)).toEqual(['Files reviewed · 20', 'Frontmatter']);
+    expect(chips(lb05)).toEqual(['Files reviewed · 33', 'Frontmatter']);
+    expect(chips(clean)).toEqual(['Files reviewed · 4', 'Frontmatter']);
+    expect(chips(sp03)).toEqual(['Areas Reviewed Clean', 'Frontmatter']);
+    expect(chips(dd02)).toEqual(['Fix report · All fixed', 'Files reviewed · 21', 'Frontmatter']);
+    expect(chips(lb04)).toEqual(['Files reviewed · 36', 'Frontmatter']);
+    expect(sb02.also[0]).toMatchObject({ kind: 'fix', url: '/artifacts/fix' });
+    expect(sp03.also[0]).toMatchObject({ kind: 'section', targetId: 'areas-reviewed-clean' });
+    expect(sp03.also[1]).toMatchObject({ kind: 'frontmatter', targetId: null });
+  });
+
+  it('renders the Also row with the fix report as a link and the footer', () => {
+    const markup = markupOf(sb02);
+    expect(markup).toContain('aria-label="Also in this report"');
+    expect(markup).toContain('href="/artifacts/fix"');
+    expect(markup).toContain('Fix report · Partial');
+    expect(markup).toContain('Show fixed threads (4)');
+    expect(markup).toContain('Reviewer · Claude (gsd-code-reviewer)');
+    expect(markup).toContain('Depth · standard');
+    expect(markupOf(lb04)).toContain('Reviewer · the agent (gsd-code-reviewer)');
+    expect(markupOf(clean)).toContain('Depth · quick');
+    expect(markupOf(dd01)).not.toContain('Show fixed threads');
+    expect(markupOf(lb05)).not.toContain('Show fixed threads');
+    expect(markupOf(sb02).match(/href=/g)).toHaveLength(1);
+  });
+});
