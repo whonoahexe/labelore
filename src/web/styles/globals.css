@@ -380,6 +380,11 @@
 .blocking-main,
 .ledger-rows,
 .ledger-row,
+.decisions-section,
+.decisions-rail,
+.pace-rail,
+.pace-hero,
+.pace-main,
 .milestone-flow,
 .roadmap-spine,
 .roadmap-phase,
@@ -1353,53 +1358,6 @@ summary.tree-node-row:focus-visible {
   place-items: center;
   border: 1px solid var(--border);
   font-family: var(--font-heading);
-}
-
-.attention-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.attention-list li {
-  display: grid;
-  grid-template-columns: 1rem minmax(0, 1fr);
-  gap: var(--space-3);
-  padding: var(--space-5) 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.attention-list li:last-child {
-  border-bottom: 0;
-}
-
-.attention-list svg {
-  width: 1rem;
-  height: 1rem;
-  margin-top: var(--space-0-5);
-}
-
-.attention-list strong {
-  display: block;
-  margin-top: var(--space-1-5);
-  color: var(--foreground);
-  font-family: var(--font-heading);
-  font-size: var(--fs-4);
-}
-
-/* No <small> is rendered in an attention row — a row is item-kind span, strong, p and the
-   source note — so the selector that used to sit alongside this one matched nothing. */
-.attention-list p {
-  margin: var(--space-1-5) 0;
-  color: var(--muted-foreground);
-  font-size: var(--fs-3);
-  line-height: var(--fs-3--lh);
-}
-
-.attention-list > li > .source-note {
-  grid-column: 2;
-  justify-self: start;
-  min-width: 0;
 }
 
 .preview-list {
@@ -2573,6 +2531,404 @@ a.ledger-source-sum:hover {
   font-weight: var(--fw-medium);
 }
 
+/* Decisions: a per-phase bar chart that filters, then the log grouped by phase on a rail. */
+.ledger-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: end;
+  justify-content: space-between;
+}
+
+.ledger-head h2 {
+  margin: var(--space-1-5) 0 0;
+  font-size: var(--fs-fluid-3);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+}
+
+.ledger-head .eyebrow {
+  margin: 0;
+}
+
+.ledger-head-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  align-items: end;
+}
+
+.ledger-count {
+  font-family: var(--font-mono);
+  font-size: var(--fs-fluid-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-none);
+}
+
+.ledger-row-id {
+  padding: 0 var(--space-1-5);
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  white-space: nowrap;
+}
+
+.ledger-row-id:empty {
+  visibility: hidden;
+  padding: 0;
+  border: 0;
+}
+
+.decisions-section {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.decisions-histogram {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.decisions-histogram-bars {
+  display: flex;
+  height: 7.5rem;
+  gap: var(--space-2);
+  align-items: end;
+  padding-bottom: var(--space-1);
+  border-bottom: 1px solid var(--border);
+}
+
+.decisions-histogram-bars button {
+  display: flex;
+  max-width: 6rem;
+  height: 100%;
+  flex: 1 1 0;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--space-1-5);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.decisions-histogram-bar {
+  display: block;
+  width: 100%;
+  min-height: 3px;
+  background: color-mix(in oklch, var(--muted-foreground) 26%, transparent);
+}
+
+.decisions-histogram-bars button:hover .decisions-histogram-bar {
+  background: var(--in-flight-fill);
+}
+
+.decisions-histogram-bars button[data-on='true'] .decisions-histogram-bar {
+  background: var(--primary);
+}
+
+.decisions-histogram-value {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  text-align: center;
+}
+
+.decisions-histogram-bars button[data-on='true'] .decisions-histogram-value {
+  color: var(--primary);
+}
+
+.decisions-histogram-labels {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.decisions-histogram-labels span {
+  max-width: 6rem;
+  flex: 1 1 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.decisions-histogram-labels span[data-on='true'] {
+  color: var(--primary);
+}
+
+.decisions-rail {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.decisions-phase {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  gap: var(--space-5);
+}
+
+.decisions-phase-mark {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  padding-top: var(--space-3);
+}
+
+.decisions-phase-number {
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-none);
+}
+
+.decisions-phase-mark .ledger-quiet {
+  font-size: var(--fs-3);
+}
+
+.decisions-phase .ledger-rows {
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--primary);
+}
+
+.decisions-phase[data-none='true'] .ledger-rows {
+  border-left-color: var(--border);
+}
+
+.decisions-phase .ledger-row:first-child {
+  border-top: 0;
+}
+
+.decisions-phase .ledger-row:last-child {
+  border-bottom: 0;
+}
+
+/* Pace: the total as the hero of a rail, then the trend and a dot for every timed plan. */
+.pace-rail {
+  display: grid;
+  grid-template-columns: minmax(15rem, 0.5fr) minmax(0, 1.5fr);
+  gap: var(--space-fluid-9);
+  padding: var(--space-fluid-3);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--primary);
+  background: var(--card-veil);
+}
+
+.pace-hero {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+}
+
+.pace-hero .eyebrow {
+  margin: 0;
+}
+
+.pace-total {
+  font-size: var(--fs-display-3);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tighter);
+  line-height: var(--lh-display);
+  white-space: nowrap;
+}
+
+.pace-facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-2-5) var(--space-4);
+  align-items: baseline;
+  margin: var(--space-5) 0 0;
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border);
+}
+
+.pace-facts dt {
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.pace-facts dd {
+  margin: 0;
+  font-size: var(--fs-6);
+  font-weight: var(--fw-semibold);
+  text-align: right;
+}
+
+.pace-facts dd .ledger-quiet {
+  display: block;
+  font-size: var(--fs-2);
+  font-weight: var(--fw-medium);
+}
+
+.pace-main {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-4);
+  align-content: start;
+}
+
+.pace-scope {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.pace-verdict {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.pace-verdict p {
+  max-width: 60ch;
+  margin: 0;
+  font-size: var(--fs-fluid-1);
+  line-height: var(--lh-snug);
+}
+
+.pace-trend {
+  display: inline-flex;
+  gap: var(--space-1-5);
+  align-items: center;
+  width: fit-content;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.pace-trend svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.pace-trend[data-verdict='faster'] {
+  border-color: var(--primary-border);
+  background: var(--primary-tint);
+  color: var(--primary);
+}
+
+.pace-trend[data-verdict='slower'] {
+  border-color: var(--destructive-border);
+  background: var(--destructive-tint);
+  color: var(--destructive);
+}
+
+.pace-trend[data-verdict='steady'] {
+  color: var(--foreground);
+}
+
+.pace-chart {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.pace-chart svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.pace-band {
+  fill: transparent;
+}
+
+.pace-band[data-alt='true'] {
+  fill: color-mix(in oklch, var(--muted-foreground) 7%, transparent);
+}
+
+.pace-band-label,
+.pace-tick {
+  fill: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+}
+
+.pace-gridline {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.pace-median {
+  fill: none;
+  stroke: var(--foreground);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-opacity: 0.55;
+  stroke-width: 2;
+}
+
+.pace-dot-mark {
+  fill: var(--primary);
+  stroke: var(--card);
+  stroke-width: 2;
+}
+
+.pace-dot[data-approx='true'] .pace-dot-mark {
+  fill: var(--card);
+  stroke: var(--primary);
+}
+
+.pace-dot-hit {
+  fill: transparent;
+}
+
+.pace-dot:hover .pace-dot-mark {
+  r: 6;
+}
+
+.pace-over {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 2;
+}
+
+.pace-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  color: var(--muted-foreground);
+  font-size: var(--fs-2);
+}
+
+.pace-key span {
+  display: inline-flex;
+  gap: var(--space-1-5);
+  align-items: center;
+}
+
+.pace-key-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.pace-key-dot[data-hollow='true'] {
+  border: 2px solid var(--primary);
+  background: none;
+}
+
+.pace-key-line {
+  width: 14px;
+  height: 2px;
+  background: var(--foreground);
+  opacity: 0.55;
+}
+
+.pace-empty {
+  display: grid;
+  gap: var(--space-4);
+}
+
 @media (max-width: 62rem) {
   .shell-header {
     grid-template-areas: 'menu brand controls' 'nav nav nav';
@@ -2604,7 +2960,8 @@ a.ledger-source-sum:hover {
   .position-hero,
   .project-head,
   .dashboard-grid,
-  .blocking-band {
+  .blocking-band,
+  .pace-rail {
     grid-template-columns: 1fr;
   }
 
@@ -2632,6 +2989,22 @@ a.ledger-source-sum:hover {
 
   .ledger-row-facts dd + dt {
     margin-top: var(--space-3);
+  }
+
+  .decisions-phase {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+
+  .decisions-phase-mark {
+    display: flex;
+    gap: var(--space-3);
+    align-items: baseline;
+    padding-top: 0;
+  }
+
+  .pace-total {
+    font-size: var(--fs-display-narrow);
   }
 
   .blocking-band .ledger-row-head {
@@ -3148,43 +3521,6 @@ a.ledger-source-sum:hover {
 .source-link:hover {
   color: var(--foreground);
   text-decoration-color: var(--primary);
-}
-
-.attention-list li {
-  grid-template-columns: 1.15rem minmax(0, 1fr);
-  gap: var(--space-3-5);
-  align-items: start;
-}
-
-.attention-list svg {
-  margin-top: var(--space-0-5);
-}
-
-.attention-list .item-kind {
-  line-height: var(--lh-relaxed);
-}
-
-.attention-list strong {
-  margin-top: var(--space-1-5);
-  font-size: var(--fs-5);
-  line-height: var(--lh-snug);
-}
-
-/* Every row is one height: the title and the detail stop at two lines each, and the source note
-   sits on the row's floor. 11rem is the tallest row those clamps allow, at every width. */
-.attention-list li {
-  grid-template-rows: minmax(0, 1fr) auto;
-  row-gap: var(--space-1-5);
-  height: 11rem;
-  padding: var(--space-4) 0;
-}
-
-.attention-list strong,
-.attention-list p {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
 }
 
 .attention-pagination,

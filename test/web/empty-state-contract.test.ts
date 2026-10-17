@@ -3,6 +3,7 @@
 // imported: tsconfig.server.json (which this test runs under) includes test/**/*.ts but excludes
 // src/web/**, and sets no --jsx option.
 import { readFile } from 'node:fs/promises';
+import { dashboardSources } from '../helpers/dashboard-sources.ts';
 import { describe, expect, it } from 'vitest';
 
 async function source(path: string): Promise<string> {
@@ -64,11 +65,7 @@ describe('empty-state contract (D-06, D-07, D-08, D-09)', () => {
   it('leaves dashboard-page.tsx untouched — its all-clear sentences and on-deck sentence still exist (scope rule)', async () => {
     // The dashboard's sections moved into dashboard-*.tsx modules (quick-261018-4tb); the
     // sentences are read from the page and its modules together.
-    const dashboard = (
-      await Promise.all(
-        ['dashboard-page', 'dashboard-ledger'].map((name) => source(`src/web/pages/${name}.tsx`)),
-      )
-    ).join('\n');
+    const dashboard = dashboardSources();
     expect(dashboard).toContain(
       'No dependency-ready work is reported in the active milestone.',
     );

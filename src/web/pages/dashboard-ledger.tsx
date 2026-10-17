@@ -3,22 +3,35 @@
 // renders as React text through MarkedText (T-4tb-01): code spans stay code, emphasis is flattened,
 // a search hit becomes <mark>, and there is no raw-HTML prop anywhere on this page.
 import { useEffect, useRef, useState } from 'react';
-import { ArrowUpRight, CheckCircle2, ChevronLeft, ChevronRight, Search, TriangleAlert } from 'lucide-react';
+import {
+  ArrowUpRight,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Gavel,
+  Search,
+  TriangleAlert,
+} from 'lucide-react';
 import { Link } from 'react-router';
 import {
+  NO_PHASE,
   blockerGroups,
   blockingLead,
+  decisionPhaseCounts,
   filterBlockers,
+  filterDecisions,
+  groupByPhase,
   isUntagged,
   pageOf,
   type Pager,
 } from '../../presentation/dashboard-ledger-view.ts';
-import type { LedgerBlockerDto } from '../../server/dashboard-ledger.ts';
+import type { LedgerBlockerDto, LedgerDecisionDto } from '../../server/dashboard-ledger.ts';
 import type { LedgerMentionDto, LedgerSourceDto } from '../../server/document-sources.ts';
 import { tokenizeInline, type InlineToken } from '../views/inline-markdown.ts';
 import { stripEmoji, stripMarkdown } from './strip-emoji.ts';
 
 export const BLOCKER_PAGE_SIZE = 5;
+export const DECISION_PAGE_SIZE = 8;
 
 const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -532,6 +545,207 @@ export function BlockingBand({ blockers }: { blockers: LedgerBlockerDto[] }): Re
           <p className="empty-note">{`Nothing matches${query.trim() ? ` “${query.trim()}”` : ''}.`}</p>
         ) : null}
       </div>
+    </section>
+  );
+}
+
+// ---------- Decisions ----------
+
+function DecisionRow({
+  decision,
+  open,
+  query,
+  onToggle,
+}: {
+  decision: LedgerDecisionDto;
+  open: boolean;
+  query: string;
+  onToggle: () => void;
+}): React.JSX.Element {
+  return (
+    <LedgerRow
+      open={open}
+      onToggle={onToggle}
+      head={
+        <>
+          <span className="ledger-row-id">{decision.plan ?? ''}</span>
+          <span className="ledger-row-title">
+            <MarkedText text={decision.title} query={query} />
+          </span>
+        </>
+      }
+    >
+      <dl className="ledger-row-facts">
+        {decision.why ? (
+          <>
+            <dt className="ledger-kicker">Why</dt>
+            <dd>
+              <MarkedText text={decision.why} query={query} />
+            </dd>
+          </>
+        ) : null}
+        <dt className="ledger-kicker">Logged</dt>
+        <dd>{decision.logged}</dd>
+        {decision.source ? (
+          <>
+            <dt className="ledger-kicker">Source</dt>
+            <dd>
+              <div className="ledger-sources">
+                <SourceCard source={decision.source} />
+              </div>
+            </dd>
+          </>
+        ) : !decision.phase ? (
+          <>
+            <dt className="ledger-kicker">Source</dt>
+            <dd>
+              <UntaggedNote
+                message="Untagged — names no plan, quick task or phase. This text is the whole record."
+                text={decision.text}
+              />
+            </dd>
+          </>
+        ) : null}
+      </dl>
+      {decision.phase && decision.phaseUrl ? (
+        <div className="ledger-row-links">
+          <Link className="ledger-go" to={decision.phaseUrl}>
+            {`Phase ${decision.phase}`}
+            <ArrowUpRight aria-hidden="true" />
+          </Link>
+        </div>
+      ) : null}
+    </LedgerRow>
+  );
+}
+
+const plural = (count: number, noun: string): string => `${count} ${noun}${count === 1 ? '' : 's'}`;
+
+/** Decisions: a per-phase bar chart that filters, a search, and the log newest first, grouped by
+ * phase on a rail within each page. */
+export function DecisionsSection({ decisions }: { decisions: LedgerDecisionDto[] }): React.JSX.Element {
+  const [phase, setPhase] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(0);
+  const [openKey, setOpenKey] = useState<string | null>(null);
+
+  const counts = decisionPhaseCounts(decisions);
+  const filtered = filterDecisions(decisions, { phase, query });
+  const pager = pageOf(filtered.length, DECISION_PAGE_SIZE, page);
+  const pageItems = filtered.slice(pager.start, pager.end);
+  const maxCount = Math.max(1, ...counts.histogram.map((entry) => entry.count));
+  const phaseWords = phase === NO_PHASE ? 'no phase' : `phase ${phase}`;
+
+  function pickPhase(next: string | null): void {
+    setPhase(next);
+    setPage(0);
+  }
+
+  return (
+    <section className="decisions-section" aria-labelledby="decisions-heading">
+      <header className="ledger-head">
+        <div>
+          <p className="eyebrow">
+            <Gavel aria-hidden="true" />
+            Settled
+          </p>
+          <h2 id="decisions-heading">Decisions</h2>
+        </div>
+        {decisions.length > 0 ? (
+          <div className="ledger-head-tools">
+            <LedgerSearch
+              label="Search decisions"
+              value={query}
+              onChange={(value) => {
+                setQuery(value);
+                setPage(0);
+              }}
+            />
+            <span className="ledger-count">
+              {phase ? `${filtered.length} in ${phaseWords}` : `${decisions.length} logged`}
+            </span>
+          </div>
+        ) : null}
+      </header>
+      {counts.rail.length > 1 ? (
+        <div className="decisions-histogram">
+          <div className="decisions-histogram-bars">
+            {counts.histogram.map((entry) => (
+              <button
+                key={entry.key}
+                type="button"
+                data-on={phase === entry.key}
+                title={`${entry.count} in ${entry.key === NO_PHASE ? 'no phase' : `phase ${entry.key}`}`}
+                onClick={() => pickPhase(phase === entry.key ? null : entry.key)}
+              >
+                <span className="decisions-histogram-value">{entry.count}</span>
+                <span
+                  className="decisions-histogram-bar"
+                  style={{ height: `${(entry.count / maxCount) * 100}%` }}
+                />
+              </button>
+            ))}
+          </div>
+          <div className="decisions-histogram-labels">
+            {counts.histogram.map((entry) => (
+              <span key={entry.key} data-on={phase === entry.key}>
+                {entry.key === NO_PHASE ? 'None' : `P${entry.key}`}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
+      {decisions.length === 0 ? (
+        <div className="quiet-state">
+          <CheckCircle2 aria-hidden="true" />
+          <p>No decisions are recorded.</p>
+        </div>
+      ) : filtered.length === 0 ? (
+        <p className="empty-note">
+          {`Nothing matches${query.trim() ? ` “${query.trim()}”` : ''}${
+            phase ? ` in ${phase === NO_PHASE ? 'entries with no phase' : `phase ${phase}`}` : ''
+          }.`}
+        </p>
+      ) : (
+        <>
+          <div className="decisions-rail">
+            {groupByPhase(pageItems).map((group) => (
+              <div
+                key={group.key}
+                className="decisions-phase"
+                data-none={group.key === NO_PHASE}
+              >
+                <div className="decisions-phase-mark">
+                  <span className="ledger-kicker">{group.key === NO_PHASE ? 'No phase' : 'Phase'}</span>
+                  <span className="decisions-phase-number">{group.key === NO_PHASE ? '—' : group.key}</span>
+                  <span className="ledger-quiet">
+                    {plural(counts.rail.find((entry) => entry.key === group.key)?.count ?? 0, 'decision')}
+                  </span>
+                </div>
+                <ol className="ledger-rows">
+                  {group.items.map((decision) => (
+                    <DecisionRow
+                      key={decision.key}
+                      decision={decision}
+                      open={openKey === decision.key}
+                      query={query}
+                      onToggle={() => setOpenKey(openKey === decision.key ? null : decision.key)}
+                    />
+                  ))}
+                </ol>
+              </div>
+            ))}
+          </div>
+          <LedgerPager
+            pager={pager}
+            label="Decisions pagination"
+            onPage={(next) => {
+              setPage(next);
+              setOpenKey(null);
+            }}
+          />
+        </>
+      )}
     </section>
   );
 }

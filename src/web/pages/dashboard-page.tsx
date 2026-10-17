@@ -1,27 +1,12 @@
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {
-  ArrowRight,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  CircleDot,
-  Gavel,
-  ShieldAlert,
-} from 'lucide-react';
+import { ArrowRight, CircleDot } from 'lucide-react';
 import { Link } from 'react-router';
-import {
-  provenanceLabel,
-  sourceDestination,
-  type DashboardViewModel,
-  type NextWorkItem,
-  type SourceProvenance,
-  type StateLog,
-} from '../../presentation/dashboard.ts';
+import { type DashboardViewModel, type NextWorkItem } from '../../presentation/dashboard.ts';
 import type { DashboardHead } from '../../presentation/dashboard-head.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
 import { LeadText } from '../components/lead-tokens.tsx';
-import { BlockingBand } from './dashboard-ledger.tsx';
+import { BlockingBand, DecisionsSection } from './dashboard-ledger.tsx';
+import { PaceSection } from './dashboard-pace.tsx';
 import { InvalidProjectScreen } from './invalid-project-screen.tsx';
 import { stripEmoji, stripMarkdown } from './strip-emoji.ts';
 
@@ -35,22 +20,8 @@ async function fetchDashboard(): Promise<DashboardResponse> {
   return (await response.json()) as DashboardResponse;
 }
 
-const STATE_LOG_PAGE_SIZE = 4;
-
 function kindLabel(kind: NextWorkItem['kind']): string {
   return kind.replaceAll('-', ' ');
-}
-
-function SourceLink({ provenance, children }: { provenance: SourceProvenance; children?: string }) {
-  const to = sourceDestination(provenance);
-  const label = children ?? `View ${provenanceLabel(provenance).toLowerCase()} source`;
-  return to ? (
-    <Link className="source-note source-link" to={to}>
-      {label}
-    </Link>
-  ) : (
-    <span className="source-note">{label}</span>
-  );
 }
 
 function NextWork({ item: rawItem }: { item: NextWorkItem }) {
@@ -171,93 +142,6 @@ function ProjectHead({ head }: { head: DashboardHead }): React.JSX.Element {
   );
 }
 
-/** Decisions and Blockers keep the retired Needs attention panel's look: its panel, rows, icon
- * column and pagination, with the row's kind label carrying the entry's phase tag when it has one. */
-function StateLogPanel({
-  id,
-  eyebrow,
-  title,
-  kind,
-  log,
-  empty,
-}: {
-  id: string;
-  eyebrow: string;
-  title: string;
-  kind: 'decision' | 'blocker';
-  log: StateLog;
-  empty: string;
-}): React.JSX.Element {
-  const [page, setPage] = useState(1);
-  const Icon = kind === 'blocker' ? ShieldAlert : Gavel;
-  const total = log.items.length;
-  const totalPages = Math.ceil(total / STATE_LOG_PAGE_SIZE);
-  const currentPage = Math.min(Math.max(1, page), totalPages || 1);
-  const start = (currentPage - 1) * STATE_LOG_PAGE_SIZE;
-  const end = Math.min(start + STATE_LOG_PAGE_SIZE, total);
-  return (
-    <section className="attention-panel" aria-labelledby={id}>
-      <header className="section-heading compact">
-        <div>
-          <p className="eyebrow">{eyebrow}</p>
-          <h2 id={id}>{title}</h2>
-        </div>
-        <span aria-label={`${total} items`}>{total}</span>
-      </header>
-      {total > 0 ? (
-        <>
-          <ol className="attention-list">
-            {log.items.slice(start, end).map((item) => (
-              <li key={item.key}>
-                <Icon aria-hidden="true" />
-                <div>
-                  <span className="item-kind">{item.label ?? kind}</span>
-                  <strong>{stripMarkdown(stripEmoji(item.title))}</strong>
-                  <p>{stripMarkdown(stripEmoji(item.detail))}</p>
-                </div>
-                {log.provenance ? <SourceLink provenance={log.provenance} /> : null}
-              </li>
-            ))}
-          </ol>
-          {totalPages > 1 ? (
-            <nav className="attention-pagination" aria-label={`${title} pagination`}>
-              <span>
-                Showing {start + 1}–{end} of {total}
-              </span>
-              <div className="attention-pagination-actions">
-                <button
-                  type="button"
-                  aria-label="Previous page"
-                  onClick={() => setPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage <= 1}
-                >
-                  <ChevronLeft aria-hidden="true" />
-                </button>
-                <span className="attention-page-status" aria-live="polite">
-                  {currentPage} / {totalPages}
-                </span>
-                <button
-                  type="button"
-                  aria-label="Next page"
-                  onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage >= totalPages}
-                >
-                  <ChevronRight aria-hidden="true" />
-                </button>
-              </div>
-            </nav>
-          ) : null}
-        </>
-      ) : (
-        <div className="quiet-state">
-          <CheckCircle2 aria-hidden="true" />
-          <p>{empty}</p>
-        </div>
-      )}
-    </section>
-  );
-}
-
 function DashboardLoading(): React.JSX.Element {
   return (
     <main className="page-stack" aria-busy="true">
@@ -305,16 +189,11 @@ export function DashboardPage(): React.JSX.Element {
 
       <BlockingBand blockers={view.blockers} />
 
-      <section className="dashboard-grid">
-        <StateLogPanel
-          id="decisions-heading"
-          eyebrow="Settled"
-          title="Decisions"
-          kind="decision"
-          log={view.decisions}
-          empty="No decisions are recorded."
-        />
+      <DecisionsSection decisions={view.decisions} />
 
+      <PaceSection pace={view.pace} readAt={view.readAt} />
+
+      <section className="dashboard-grid">
         <section className="preview-panel" aria-labelledby="preview-heading">
           <header className="section-heading compact">
             <div>

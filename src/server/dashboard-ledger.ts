@@ -8,6 +8,7 @@
 // T-4tb-03: every function below is total; the tests cover each degradation.
 // T-4tb-04: links come from the source resolver (route builders over discovered artifacts).
 import type { Project } from '../domain/model.ts';
+import { parseDuration } from '../presentation/dashboard-pace.ts';
 import {
   createSourceResolver,
   type LedgerMentionDto,
@@ -36,12 +37,49 @@ export interface LedgerBlockerDto {
   moreMentions: number;
 }
 
+export interface LedgerDecisionDto {
+  key: string;
+  /** The phase number as the entry wrote it, padded to two digits, or null. */
+  phase: string | null;
+  /** The plan, quick task or context document the entry names (`01-02`, `260714-3tp`, `01-CONTEXT`). */
+  plan: string | null;
+  title: string;
+  why: string | null;
+  /** The whitespace-collapsed entry, for the Copy text button. */
+  text: string;
+  /** "Phase 03 · while executing plan 03-01", "No phase", ... */
+  logged: string;
+  source: LedgerSourceDto | null;
+  /** The phase's page, when the entry has a phase that exists. */
+  phaseUrl: string | null;
+}
+
+/** One plan's recorded duration, rebuilt from its own SUMMARY.md. */
+export interface PacePlanDto {
+  id: string;
+  /** The phase directory's number as written (`01`, `4`). */
+  phase: string;
+  /** The roadmap's name for the phase. */
+  phaseName: string;
+  milestone: string | null;
+  /** The summary's completed date as YYYY-MM-DD, or null when it has none. */
+  date: string | null;
+  minutes: number | null;
+  approx: boolean;
+  /** Why the plan counts as untimed ("wall-clock time", "no duration", ...), or null when timed. */
+  untimedReason: string | null;
+  tasks: number | null;
+}
+
 export interface DashboardLedgerDto {
   blockers: LedgerBlockerDto[];
+  /** Newest first. */
+  decisions: LedgerDecisionDto[];
+  pace: { current: string | null; plans: PacePlanDto[] };
 }
 
 export function emptyLedger(): DashboardLedgerDto {
-  return { blockers: [] };
+  return { blockers: [], decisions: [], pace: { current: null, plans: [] } };
 }
 
 interface Bullet {
@@ -153,6 +191,105 @@ function parseBlocker(raw: string): ParsedBlocker {
   return { urgent, resolved, tag, ...parts };
 }
 
+const DECISION_PLAN_ID = /^(\d+(?:\.\d+)?-(?:\d+|CONTEXT|RESEARCH)|\d{6}-[a-z0-9]{3})\s*:\s*(.*)$/i;
+
+interface ParsedDecision {
+  phase: string | null;
+  plan: string | null;
+  title: string;
+  why: string | null;
+}
+
+/** A decision bullet: "[Phase 05]: 05-02: **Title** — why", with the tag and the plan id each
+ * optional, a `[Quick id]` nested under `[Phase ?]`, and a plan id used as the tag itself. */
+function parseDecision(text: string): ParsedDecision {
+  const tag = text.match(/^\[Phase\s+([^\]]*)\]:\s*(.*)$/i);
+  const quickTag = (tag ? tag[2] : text).match(/^\[Quick\s+(\d{6}-[a-z0-9]{3})[^\]]*\]:\s*(.*)$/i);
+  if (quickTag) return { phase: null, plan: quickTag[1], ...splitTitle(quickTag[2]) };
+  let tagValue = tag ? tag[1] : null;
+  const tagPlan = tagValue?.trim().match(/^(?:quick-)?(\d{6}-[a-z0-9]{3}|\d+(?:\.\d+)?-\d+)$/i) ?? null;
+  if (tagPlan) tagValue = /^\d{6}-/.test(tagPlan[1]) ? '?' : tagPlan[1].split('-')[0];
+  const rest = tag ? tag[2] : text;
+  const plan = rest.match(DECISION_PLAN_ID);
+  const body = plan ? plan[2] : rest;
+  const raw =
+    tagValue !== null && tagValue.trim() !== '?'
+      ? tagValue
+      : plan && !/^\d{6}-/.test(plan[1])
+        ? plan[1].split('-')[0]
+        : null;
+  const phase = raw ? String(+raw || raw).padStart(2, '0') : null;
+  const id = plan ? plan[1] : tagPlan ? tagPlan[1] : null;
+  return { phase, plan: id, ...splitTitle(body) };
+}
+
+function loggedOf(phase: string | null, plan: string | null): string {
+  const where = phase ? `Phase ${phase}` : 'No phase';
+  if (!plan) return where;
+  if (/CONTEXT|RESEARCH/i.test(plan)) return `${where} · while gathering context`;
+  if (/^\d{6}-/.test(plan)) return `${where} · during quick task ${plan}`;
+  return `${where} · while executing plan ${plan}`;
+}
+
+function isoDay(value: unknown): string | null {
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value.toISOString().slice(0, 10);
+  if (typeof value !== 'string') return null;
+  const day = value.slice(0, 10);
+  return /^\d{4}-\d\d-\d\d$/.test(day) ? day : null;
+}
+
+function recordOf(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function taskCount(planBody: string | undefined, summary: Record<string, unknown>): number | null {
+  const counted = ((planBody ?? '').slice(0, MAX_SECTION_CHARS).match(/<task\b/g) ?? []).length;
+  if (counted > 0) return counted;
+  const metrics = recordOf(summary.metrics);
+  const authored = Number(metrics?.tasks_completed ?? summary.tasks_completed ?? 0);
+  return Number.isFinite(authored) && authored > 0 ? authored : null;
+}
+
+/** Every phase plan's recorded duration, from the plan's own SUMMARY.md rather than STATE.md's
+ * hand-appended metrics table: `duration` and `completed`, top level or under `metrics`. */
+function paceOf(project: Project): { current: string | null; plans: PacePlanDto[] } {
+  const state = Object.values(project.artifacts).find((artifact) => artifact.kind === 'state');
+  const milestone = state?.frontmatter.milestone;
+  const current = typeof milestone === 'string' && milestone.trim() ? milestone.trim() : null;
+  const plans: PacePlanDto[] = [];
+  for (const entry of project.milestones) {
+    for (const phase of entry.phases) {
+      for (const plan of phase.plans) {
+        if (!plan.summary) continue;
+        const summary = plan.summary.frontmatter;
+        const metrics = recordOf(summary.metrics);
+        const parsed = parseDuration(summary.duration ?? metrics?.duration);
+        plans.push({
+          id: plan.id,
+          phase: phase.identity.number,
+          phaseName: phase.name,
+          milestone: entry.version,
+          date: isoDay(summary.completed ?? metrics?.completed),
+          minutes: parsed.minutes,
+          approx: parsed.approx,
+          untimedReason: parsed.untimedReason,
+          tasks: taskCount(phase.artifacts[plan.path]?.body, summary),
+        });
+      }
+    }
+  }
+  const text = (value: string | null) => value ?? '';
+  plans.sort(
+    (left, right) =>
+      (left.date ?? '9').localeCompare(right.date ?? '9') ||
+      text(left.milestone).localeCompare(text(right.milestone)) ||
+      left.id.localeCompare(right.id, undefined, { numeric: true }),
+  );
+  return { current, plans };
+}
+
 export function buildDashboardLedger(project: Project): DashboardLedgerDto {
   const resolver = createSourceResolver(project);
   const blockersBody = sectionBody(project, 'blockersConcerns');
@@ -169,5 +306,21 @@ export function buildDashboardLedger(project: Project): DashboardLedgerDto {
         };
       })
     : [];
-  return { blockers };
+  const decisionsBody = sectionBody(project, 'decisions');
+  const decisions = decisionsBody
+    ? readBullets(decisionsBody)
+        .map((bullet, index): LedgerDecisionDto => {
+          const parsed = parseDecision(bullet.text);
+          return {
+            key: `decision-${index}`,
+            ...parsed,
+            text: bullet.text,
+            logged: loggedOf(parsed.phase, parsed.plan),
+            source: resolver.decisionSource(parsed.plan),
+            phaseUrl: parsed.phase ? resolver.phaseUrl(parsed.phase) : null,
+          };
+        })
+        .reverse()
+    : [];
+  return { blockers, decisions, pace: paceOf(project) };
 }

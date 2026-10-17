@@ -1,7 +1,7 @@
 // Pure filter, lead, paging and date helpers for the dashboard ledger sections (quick-261018-4tb,
 // sketch 026 B + P1). Shared by the view model and the page, with no node:* or React imports, so a
 // section's rules (which blocker leads, what a page holds) are testable without rendering.
-import type { LedgerBlockerDto } from '../server/dashboard-ledger.ts';
+import type { LedgerBlockerDto, LedgerDecisionDto } from '../server/dashboard-ledger.ts';
 import { activityDateLabel } from './dashboard-head.ts';
 
 /** Trimmed, case-insensitive substring match across the parts; an empty query matches anything. */
@@ -109,4 +109,55 @@ export function relativeDay(iso: string | null, readAt: string): string {
   if (days === 1) return 'Yesterday';
   if (days < 7) return `${days} days ago`;
   return activityDateLabel(day, readAt) ?? '';
+}
+
+// ---------- decisions ----------
+
+/** The phase key of a decision with no phase. */
+export const NO_PHASE = '—';
+
+const phaseKeyOf = (decision: LedgerDecisionDto): string => decision.phase ?? NO_PHASE;
+
+export interface DecisionFilter {
+  /** A phase key (`01`, or NO_PHASE), or null for every phase. */
+  phase: string | null;
+  query: string;
+}
+
+export function filterDecisions(decisions: LedgerDecisionDto[], filter: DecisionFilter): LedgerDecisionDto[] {
+  return decisions.filter(
+    (decision) =>
+      (filter.phase === null || phaseKeyOf(decision) === filter.phase) &&
+      matchesQuery(filter.query, decision.title, decision.why, decision.plan, decision.phase),
+  );
+}
+
+export interface PhaseCount {
+  key: string;
+  count: number;
+}
+
+/** Decisions per phase. `rail` is the order of the phase rail (newest phase first, no phase last);
+ * `histogram` is its reverse, left to right. */
+export function decisionPhaseCounts(decisions: LedgerDecisionDto[]): {
+  rail: PhaseCount[];
+  histogram: PhaseCount[];
+} {
+  const counts = new Map<string, number>();
+  for (const decision of decisions) counts.set(phaseKeyOf(decision), (counts.get(phaseKeyOf(decision)) ?? 0) + 1);
+  const rail = [...counts]
+    .map(([key, count]) => ({ key, count }))
+    .sort((left, right) => {
+      const noneFirst = Number(left.key === NO_PHASE) - Number(right.key === NO_PHASE);
+      return noneFirst || parseFloat(right.key) - parseFloat(left.key);
+    });
+  return { rail, histogram: [...rail].reverse() };
+}
+
+/** A page of decisions grouped by phase, in rail order, keeping each group's newest-first order. */
+export function groupByPhase(items: LedgerDecisionDto[]): { key: string; items: LedgerDecisionDto[] }[] {
+  return decisionPhaseCounts(items).rail.map(({ key }) => ({
+    key,
+    items: items.filter((decision) => phaseKeyOf(decision) === key),
+  }));
 }

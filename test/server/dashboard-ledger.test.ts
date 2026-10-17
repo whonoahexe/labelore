@@ -180,6 +180,156 @@ describe('dashboard ledger: blockers', () => {
   }, 30_000);
 });
 
+describe('dashboard ledger: decisions', () => {
+  it('reads the ledger fixture newest first with its sources and phase links', async () => {
+    const { presentation, ledger } = await ledgerOfDirectory(LEDGER_ROOT);
+    const decisions = ledger.decisions;
+    expect(decisions.map((d) => [d.phase, d.plan, d.title, d.why, d.logged])).toEqual([
+      [null, null, 'Keep the retry queue in Postgres, not Redis.', null, 'No phase'],
+      ['02', null, 'Corrections are new filings, never edits in place.', null, 'Phase 02'],
+      ['03', '03-01', 'Key filings by entry number', 'the gateway echoes it on every rejection.', 'Phase 03 · while executing plan 03-01'],
+      [null, '260714-3tp', 'Cache tariff lookups per session', 'the form refetched on every keystroke.', 'No phase · during quick task 260714-3tp'],
+      ['01', '01-CONTEXT', 'Reconcile on entry number plus line number.', null, 'Phase 01 · while gathering context'],
+      ['01', '01-02', 'Store the raw response beside the parsed one', 'parse failures must stay recoverable.', 'Phase 01 · while executing plan 01-02'],
+    ]);
+    expect(decisions.map((d) => (d.source ? [d.source.kind, d.source.label, d.source.meta, d.source.detail, d.source.path] : null))).toEqual([
+      null,
+      null,
+      ['Plan', '03-01', null, 'Key filings by entry number across the gateway client.', `${PHASE3}/03-01-PLAN.md`],
+      [
+        'Quick task',
+        '260714-3tp',
+        null,
+        'Cache tariff lookups for the session.',
+        '.planning/quick/260714-3tp-cache-tariff-lookups/260714-3tp-SUMMARY.md',
+      ],
+      ['Context', 'Phase 01', 'v1.0', null, '.planning/milestones/v1.0-phases/01-filing-gateway/01-CONTEXT.md'],
+      ['Plan', '01-02', 'v1.0', 'Store each raw ACE response beside its parsed form.', '.planning/milestones/v1.0-phases/01-filing-gateway/01-02-PLAN.md'],
+    ]);
+
+    const phases = presentation.milestones.flatMap((m) => m.phases);
+    const phaseKey = (version: string, number: string) =>
+      phases.find((p) => p.identity.milestoneVersion === version && p.identity.number === number)?.key;
+    const urlOfPhase = (key: string | undefined) => presentation.milestones.flatMap((m) => m.phases).find((p) => p.key === key);
+    expect(decisions.map((d) => d.phaseUrl !== null)).toEqual([false, true, true, false, true, true]);
+    expect(decisions[1].phaseUrl).toContain(phaseKey('v1.0', '02'));
+    expect(decisions[2].phaseUrl).toContain(phaseKey('v2.0', '03'));
+    expect(decisions[5].phaseUrl).toContain(phaseKey('v1.0', '01'));
+    expect(urlOfPhase(phaseKey('v1.0', '02'))).toBeDefined();
+    // The plan source links to the plan's page; the others to the artifact page.
+    const plan0301 = phases.flatMap((p) => p.plans).find((p) => p.id === '03-01');
+    expect(decisions[2].source?.url).toBe(plan0301?.key);
+    expect(decisions[3].source?.url).toBe(keyOf(presentation, decisions[3].source!.path));
+    expect(JSON.stringify(decisions)).not.toContain('STATE.md');
+  });
+
+  it('reads the synthetic and dense fixtures', async () => {
+    const synthetic = (await ledgerOfDirectory(SYNTHETIC_ROOT)).ledger.decisions;
+    expect(synthetic).toHaveLength(9);
+    expect(synthetic.every((d) => d.source === null)).toBe(true);
+    expect(synthetic[0].title).toBe(
+      "Duty differences under ₹500 auto-reconcile; anything above waits for a broker's sign-off.",
+    );
+    expect([synthetic[0].phase, synthetic[0].plan]).toEqual(['03', '03-CONTEXT']);
+
+    const dense = (await ledgerOfDirectory(DENSE_ROOT)).ledger.decisions;
+    expect(dense.map((d) => [d.phase, d.title, d.source, d.phaseUrl !== null])).toEqual([
+      [null, 'Corruption deliberately isolated to two files, per D-02.', null, false],
+      ['01', 'Included every artifact type studio-portal has never produced, per D-01.', null, true],
+    ]);
+  });
+
+  it('splits plan-id tags and quick tags the way the sketch does', async () => {
+    const snapshot = await snapshotOf({
+      '.planning/STATE.md': [
+        '---',
+        'status: x',
+        '---',
+        '',
+        '## Accumulated Context',
+        '',
+        '### Decisions',
+        '',
+        'Prose above the log is a note, not a decision.',
+        '',
+        '- [Phase 01-01]: Plan-id tag',
+        '- [Phase quick-260709-rk9]: Quick-id tag',
+        '- [Quick 260718-x5s follow-up]: Bare quick tag',
+        '- [Phase ?]: 02-03: Plan id after an unknown phase',
+        '- [Phase 2.1]: Decimal phase',
+        '',
+      ].join('\n'),
+    });
+    const decisions = toProjectPresentation(snapshot).ledger.decisions.reverse();
+    expect(decisions.map((d) => [d.phase, d.plan, d.title])).toEqual([
+      ['01', '01-01', 'Plan-id tag'],
+      [null, '260709-rk9', 'Quick-id tag'],
+      [null, '260718-x5s', 'Bare quick tag'],
+      ['02', '02-03', 'Plan id after an unknown phase'],
+      ['2.1', null, 'Decimal phase'],
+    ]);
+  });
+
+  it('gives no decisions for a missing or prose-only section', async () => {
+    const none = await snapshotOf({ '.planning/STATE.md': '---\nstatus: x\n---\n\n## Accumulated Context\n\n### Blockers/Concerns\n\nNone.\n' });
+    expect(toProjectPresentation(none).ledger.decisions).toEqual([]);
+    const prose = await snapshotOf({
+      '.planning/STATE.md': '---\nstatus: x\n---\n\n## Accumulated Context\n\n### Decisions\n\nDecisions are logged in PROJECT.md.\n',
+    });
+    expect(toProjectPresentation(prose).ledger.decisions).toEqual([]);
+  });
+});
+
+describe('dashboard ledger: pace rows', () => {
+  const shape = (plans: { id: string; milestone: string | null; date: string | null; minutes: number | null; approx: boolean; untimedReason: string | null; tasks: number | null }[]) =>
+    plans.map((p) => [p.id, p.milestone, p.date, p.minutes, p.approx, p.untimedReason, p.tasks]);
+
+  it('rebuilds the ledger fixture from each SUMMARY.md, in finish order', async () => {
+    const { ledger } = await ledgerOfDirectory(LEDGER_ROOT);
+    expect(ledger.pace.current).toBe('v2.0');
+    expect(shape(ledger.pace.plans)).toEqual([
+      ['01-01', 'v1.0', '2026-05-30', 60, false, null, 1],
+      ['01-02', 'v1.0', '2026-06-01', 35, true, null, 3],
+      ['02-01', 'v1.0', '2026-06-10', null, false, 'wall-clock time', 1],
+      ['03-01', 'v2.0', '2026-07-10', 20, false, null, 2],
+    ]);
+    expect(ledger.pace.plans[0].phaseName).toBe('Filing Gateway');
+  });
+
+  it('rebuilds the dense fixture', async () => {
+    const { ledger } = await ledgerOfDirectory(DENSE_ROOT);
+    expect(ledger.pace.current).toBe('v3.0');
+    expect(shape(ledger.pace.plans)).toEqual([
+      ['01-01', 'v1.0', '2025-10-25', 15, false, null, 1],
+      ['01-01', 'v2.0', '2026-02-10', 18, false, null, 1],
+      ['02-01', 'v2.0', '2026-03-15', 16, false, null, 1],
+      ['01-01', 'v3.0', '2026-06-08', 20, false, null, 2],
+      ['01-02', 'v3.0', '2026-06-09', 24, false, null, 2],
+    ]);
+  });
+
+  it('has no rows when no plan has a summary', async () => {
+    const { ledger } = await ledgerOfDirectory(SYNTHETIC_ROOT);
+    expect(ledger.pace.plans).toEqual([]);
+  });
+
+  it('reads duration and completed under metrics, and falls back to tasks_completed', async () => {
+    const snapshot = await snapshotOf({
+      '.planning/STATE.md': '---\nmilestone: v1.0\n---\n',
+      '.planning/phases/01-a/01-01-PLAN.md': '<objective>\nDo.\n</objective>\n',
+      '.planning/phases/01-a/01-01-SUMMARY.md':
+        '---\nmetrics:\n  duration: 25min\n  completed: 2026-09-01\n  tasks_completed: 4\n---\n',
+      '.planning/phases/01-a/01-02-PLAN.md': '<objective>\nDo.\n</objective>\n',
+      '.planning/phases/01-a/01-02-SUMMARY.md': '---\nduration: 10min\ncompleted: someday\n---\n',
+    });
+    const plans = toProjectPresentation(snapshot).ledger.pace.plans;
+    expect(shape(plans)).toEqual([
+      ['01-01', 'v1.0', '2026-09-01', 25, false, null, 4],
+      ['01-02', 'v1.0', null, 10, false, null, null],
+    ]);
+  });
+});
+
 describe('GET /api/dashboard', () => {
   let staticRoot = '';
   beforeAll(async () => {

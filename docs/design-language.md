@@ -594,11 +594,33 @@ element is actually written, regardless of class name:
   whole record, and Copy text. The band never names the file the blockers were read from. Its
   accent is the destructive family (`--destructive`, `--destructive-border`, `--destructive-tint`)
   as a content colour for open blockers only, never as a `data-tone` and never for parse state.
-- **Below the blockers, STATE.md's Decisions sit beside On deck.** Decisions keep the retired
-  Needs attention panel's look (`attention-panel`, `attention-list`, `attention-pagination`) until
-  the phase rail replaces it (quick-261018-4tb): an eyebrow "Settled", an icon column, an
-  `item-kind` label, a bold title, a muted detail and a source note linking to the section in
-  STATE.md, four rows to a page, newest first. Rows are not links.
+- **Decisions follow on a phase rail.** (quick-261018-4tb, sketch 026 B) A "Settled" eyebrow, the
+  h2 "Decisions", a search box and the count ("N logged", or "M in phase X"). With two or more phase
+  groups a bar chart sits above the log, one bar per phase (the left-to-right order is no phase,
+  then the oldest phase to the newest), and a bar filters the log. Entries run newest first, eight
+  to a page, grouped by phase on a rail within the page ("Phase" over a large number and "N
+  decisions", or "No phase"). A row opens to Why, Logged and Source: a card for the plan (with its
+  objective's first sentence), the quick task, or the phase's CONTEXT or RESEARCH, resolved in live
+  phases first and then the newest archived milestone, plus a Phase link when the entry has a
+  phase. An entry with neither a phase nor a source is Untagged and offers Copy text. Changing the
+  filter or search goes back to page 1, and paging closes an open row. The selected bar and the rail
+  rule take `--primary`; a hovered bar takes `--in-flight-fill`. Nothing in the section names the
+  file the log was read from.
+- **Pace is rebuilt from SUMMARY durations.** (quick-261018-4tb, sketch 026 P1) A rail panel with a
+  `--primary` left rule: the total execution time as the hero, then Plans completed (with the
+  untimed count), Average (with the median) and Per task. On the right sit the milestone chips
+  (with two or more milestones), the trend chip and its sentence, and every timed plan as a dot in
+  finish order over shaded phase bands with a running median of five; approximate plans are hollow,
+  and a plan above the cap is drawn at the top with a caret. Hovering a dot names the plan, through
+  a native SVG title. Every number is rebuilt from each plan's own SUMMARY.md (`duration` and
+  `completed`, top level or under `metrics`) and the plan's task count, never from the hand-appended
+  metrics table. "7h 7m elapsed" is wall-clock time and "recovered" says nothing, so those plans
+  count as untimed. The trend compares the median minutes a task of the last plans with the plans
+  before them, only with at least four on each side. The default scope is the current milestone once
+  it has four timed plans, else all. The faster chip is primary-tinted, the slower chip is
+  destructive-tinted (a content colour, never a `data-tone`), and steady stays foreground. With no
+  timed plan the section says "No completed plan has a recorded duration yet." The On deck panel
+  sits beside it until the bottom row replaces that (quick-261018-4tb).
 
 ## Surface-scoped registered names
 
@@ -615,11 +637,10 @@ plan's "no AST tooling" constraint.
 
 | Class | Surface | Note |
 |---|---|---|
-| `attention-list` | Dashboard | the Decisions and Blockers rows |
 | `attention-page-status` | Dashboard | every dashboard pager |
 | `attention-pagination` | Dashboard | every dashboard pager (Blocking, Decisions, On deck, Recent work); shared with the requirement lists |
 | `attention-pagination-actions` | Dashboard | every dashboard pager |
-| `attention-panel` | Dashboard | the Decisions and Blockers panels; shared with the CONTEXT brief (quick-260923-lju) |
+| `attention-panel` | Dashboard | the CONTEXT brief's open-questions panel alone; the dashboard's Decisions and Blockers left it (quick-261018-4tb) |
 | `blocking-band` | Dashboard | the full-width red band under the head that leads with the most urgent open blocker (quick-261018-4tb) |
 | `blocking-calm` | Dashboard | the one quiet line shown when no blocker is open |
 | `blocking-dot` | Dashboard | a blocker row's square marker; filled when urgent, a turned hollow diamond when resolved |
@@ -635,11 +656,24 @@ plan's "no AST tooling" constraint.
 | `dashboard-grid` | Dashboard | |
 | `dashboard-loading` | Dashboard | |
 | `dashboard-page` | Dashboard | |
+| `decisions-histogram` | Dashboard | the per-phase bar chart; a bar filters the log |
+| `decisions-histogram-bar` | Dashboard | |
+| `decisions-histogram-bars` | Dashboard | buttons carry `data-on` |
+| `decisions-histogram-labels` | Dashboard | |
+| `decisions-histogram-value` | Dashboard | |
+| `decisions-phase` | Dashboard | one phase's group on the rail; `data-none` for entries with no phase |
+| `decisions-phase-mark` | Dashboard | the group's kicker, number and decision count |
+| `decisions-phase-number` | Dashboard | |
+| `decisions-rail` | Dashboard | the phase groups of one page of decisions |
+| `decisions-section` | Dashboard | the Decisions section (quick-261018-4tb) |
 | `immediate-work` | Dashboard | shared with the CONTEXT brief (quick-260923-lju) |
 | `item-kind` | Dashboard | |
 | `ledger-chip` | Dashboard | a filter or toggle chip, and a link chip for a file that also mentions the entry; `data-on` marks the active one |
 | `ledger-chips` | Dashboard | |
+| `ledger-count` | Dashboard | the section's count: N logged, or M in phase X |
 | `ledger-go` | Dashboard | a small bordered mono link or button (Copy text, a source link) |
+| `ledger-head` | Dashboard | a ledger section's header: eyebrow, h2 and tools |
+| `ledger-head-tools` | Dashboard | |
 | `ledger-kicker` | Dashboard | the shared mono uppercase micro-label |
 | `ledger-mentions` | Dashboard | the Also mentioned in chips and their 'and N more' note |
 | `ledger-quiet` | Dashboard | muted text inside a ledger section |
@@ -648,6 +682,7 @@ plan's "no AST tooling" constraint.
 | `ledger-row-chevron` | Dashboard | turns a quarter turn when its row is open, without a transition |
 | `ledger-row-facts` | Dashboard | the expanded row's label and value list |
 | `ledger-row-head` | Dashboard | the button that opens and closes a row |
+| `ledger-row-id` | Dashboard | a decision row's plan, quick task or context id |
 | `ledger-row-links` | Dashboard | the row's go-links |
 | `ledger-row-title` | Dashboard | a row's title; one line closed, wrapped and semibold open |
 | `ledger-rows` | Dashboard | the hairline-ruled list of rows |
@@ -660,6 +695,28 @@ plan's "no AST tooling" constraint.
 | `ledger-tools` | Dashboard | the search and toggle row |
 | `ledger-untagged` | Dashboard | the dashed note on an entry that names no source, with Copy text |
 | `next-preview` | Dashboard | |
+| `pace-band` | Dashboard | a shaded phase band behind the dots; `data-alt` marks every other one |
+| `pace-band-label` | Dashboard | |
+| `pace-chart` | Dashboard | the dot timeline figure |
+| `pace-dot` | Dashboard | one plan's dot; `data-approx` makes it hollow |
+| `pace-dot-hit` | Dashboard | |
+| `pace-dot-mark` | Dashboard | |
+| `pace-empty` | Dashboard | the Pace section when no plan has a recorded duration |
+| `pace-facts` | Dashboard | plans completed, average with its median, and per task |
+| `pace-gridline` | Dashboard | |
+| `pace-hero` | Dashboard | the total execution time and the facts under it |
+| `pace-key` | Dashboard | the chart's key |
+| `pace-key-dot` | Dashboard | `data-hollow` for the approximate marker |
+| `pace-key-line` | Dashboard | |
+| `pace-main` | Dashboard | the rail's right side: milestone chips, trend and chart |
+| `pace-median` | Dashboard | the running median of 5 |
+| `pace-over` | Dashboard | the caret on a plan above the cap, drawn at the top |
+| `pace-rail` | Dashboard | the Pace panel, with a `--primary` left rule |
+| `pace-scope` | Dashboard | the milestone chips |
+| `pace-tick` | Dashboard | |
+| `pace-total` | Dashboard | the total as the hero, in `--fs-display-3` |
+| `pace-trend` | Dashboard | the trend chip; `data-verdict` is faster, steady or slower |
+| `pace-verdict` | Dashboard | the trend chip and its sentence |
 | `position-hero` | Dashboard | now used by the CONTEXT brief alone; the dashboard opens on `project-head` (quick-261017-wlg) |
 | `preview-empty` | Dashboard | |
 | `preview-list` | Dashboard | |

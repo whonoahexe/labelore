@@ -7,7 +7,8 @@ import type {
 import { buildArtifactUrl, buildPhaseUrl } from './routes.ts';
 import { buildDashboardHead, type DashboardHead } from './dashboard-head.ts';
 import { stableSlug } from '../rendering/slug.ts';
-import type { LedgerBlockerDto } from '../server/dashboard-ledger.ts';
+import type { LedgerBlockerDto, LedgerDecisionDto, PacePlanDto } from '../server/dashboard-ledger.ts';
+import { paceScope, type PaceScopeKey } from './dashboard-pace.ts';
 
 export interface SourceProvenance {
   kind: 'state' | 'roadmap' | 'summary' | 'derived';
@@ -48,23 +49,6 @@ export interface SourcedValue<T> {
   value: T | null;
   display: string;
   provenance: SourceProvenance;
-}
-
-/**
- * One bullet from a STATE.md log section. A leading `[Phase 05]:` tag becomes the label; see
- * `splitEntry` for how the text becomes a title and a detail.
- */
-export interface StateLogItem {
-  key: string;
-  label: string | null;
-  title: string;
-  detail: string;
-}
-
-/** A STATE.md log section; provenance is null when STATE.md has no such section. */
-export interface StateLog {
-  items: StateLogItem[];
-  provenance: SourceProvenance | null;
 }
 
 export interface NextWorkItem {
@@ -127,7 +111,10 @@ export interface DashboardViewModel {
     observed: CompletionSignal;
   };
   next: { immediate: NextWorkItem | null; previews: NextWorkItem[] };
-  decisions: StateLog;
+  /** Decisions from STATE.md, newest first, each with the document it was logged from. */
+  decisions: LedgerDecisionDto[];
+  /** Every plan's recorded duration, rebuilt from its own SUMMARY.md, and the scopes the page can pick. */
+  pace: { current: string | null; plans: PacePlanDto[]; milestones: string[]; defaultScope: PaceScopeKey };
   /** Open and resolved blockers with the documents each one names, built server-side. */
   blockers: LedgerBlockerDto[];
 }
@@ -428,46 +415,6 @@ function nextWork(
   return { immediate: ordered[0] ?? null, previews: ordered.slice(1, 3) };
 }
 
-/**
- * Splits an entry into a title and a detail: at a leading **bold** lead, else at the first spaced
- * em dash, else after the first sentence. A single-clause entry has nothing to split, so it
- * becomes the detail under a generic title, the way the Needs attention panel titled a blocker.
- */
-function splitEntry(text: string, fallbackTitle: string): { title: string; detail: string } {
-  const bold = text.match(/^[^\p{L}\p{N}*]*\*\*(.+?)\*\*[\s:—-]*(\S.*)$/u);
-  if (bold) return { title: bold[1], detail: bold[2] };
-  const dash = text.indexOf(' — ');
-  if (dash > 0 && text.slice(dash + 3).trim()) {
-    return { title: text.slice(0, dash), detail: text.slice(dash + 3).trim() };
-  }
-  const sentence = text.match(/^(.+?[.!?])\s+(\S.*)$/);
-  if (sentence) return { title: sentence[1], detail: sentence[2] };
-  return { title: fallbackTitle, detail: text };
-}
-
-function stateLogItem(key: string, text: string, fallbackTitle: string): StateLogItem {
-  const tagged = text.match(/^\[([^\]]+)\]:\s*(.*)$/);
-  return {
-    key,
-    label: tagged ? tagged[1] : null,
-    ...splitEntry(tagged ? tagged[2] : text, fallbackTitle),
-  };
-}
-
-function stateLog(
-  section: { heading: string } | null,
-  sourcePath: string,
-  entries: { key: string; text: string }[],
-  fallbackTitle: string,
-): StateLog {
-  return {
-    items: entries.map((entry) => stateLogItem(entry.key, entry.text, fallbackTitle)),
-    provenance: section
-      ? { kind: 'state', ref: `${sourcePath}#${stableSlug(section.heading)}` }
-      : null,
-  };
-}
-
 export function buildDashboardViewModel(presentation: ProjectPresentation): DashboardViewModel {
   const state = presentation.state;
   const statePath = state?.sourcePath ?? '.planning/STATE.md';
@@ -521,13 +468,12 @@ export function buildDashboardViewModel(presentation: ProjectPresentation): Dash
       ...completion,
     },
     next: nextWork(presentation, currentPhase),
-    // Newest first: STATE.md appends decisions at the bottom of the log.
-    decisions: stateLog(
-      state?.decisions ?? null,
-      statePath,
-      [...presentation.decisions].reverse(),
-      'Recorded decision',
-    ),
+    decisions: presentation.ledger.decisions,
+    pace: {
+      current: presentation.ledger.pace.current,
+      plans: presentation.ledger.pace.plans,
+      ...paceScope(presentation.ledger.pace.plans, presentation.ledger.pace.current),
+    },
     blockers: presentation.ledger.blockers,
   };
 }

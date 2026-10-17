@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
+import { dashboardSources } from '../helpers/dashboard-sources.ts';
 
 async function source(path: string): Promise<string> {
   return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
@@ -71,7 +72,8 @@ describe('authorized Studio Portal shell contract', () => {
   });
 
   it('keeps provenance secondary and uses plain-language dashboard and roadmap labels', async () => {
-    const dashboard = await source('src/web/pages/dashboard-page.tsx');
+    // The dashboard's sections live in dashboard-*.tsx modules (quick-261018-4tb): read together.
+    const dashboard = dashboardSources();
     const roadmap = await source('src/web/pages/roadmap-page.tsx');
 
     expect(dashboard).toContain('Next up');

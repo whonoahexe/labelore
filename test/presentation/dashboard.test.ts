@@ -151,7 +151,7 @@ describe('buildDashboardViewModel', () => {
       url: 'plan:01-02',
     });
     expect(view.next.previews).toHaveLength(0);
-    expect(view.decisions).toEqual({ items: [], provenance: null });
+    expect(view.decisions).toEqual([]);
     expect(view.blockers).toEqual([]);
   });
 
@@ -480,46 +480,6 @@ describe('buildDashboardViewModel', () => {
     expect(zeroTotalView.current.progress.computedPercent).toMatchObject({
       value: null,
       display: 'Not recorded',
-    });
-  });
-
-  it('decisions log reads newest first, splitting the phase tag and the rationale', () => {
-    const source = presentation({
-      decisions: [
-        {
-          key: 'state:decision-1',
-          sourcePath: '.planning/STATE.md',
-          heading: 'Decisions',
-          text: '[Phase 01]: 01-01: Keep the reader read-only — it must not damage planning state',
-        },
-        {
-          key: 'state:decision-2',
-          sourcePath: '.planning/STATE.md',
-          heading: 'Decisions',
-          text: 'Untagged decision with no rationale',
-        },
-      ],
-    });
-    if (!source.state) throw new Error('test fixture requires state');
-    source.state.decisions = { heading: 'Decisions', body: '' };
-    const view = buildDashboardViewModel(source);
-    expect(view.decisions.items).toEqual([
-      {
-        key: 'state:decision-2',
-        label: null,
-        title: 'Recorded decision',
-        detail: 'Untagged decision with no rationale',
-      },
-      {
-        key: 'state:decision-1',
-        label: 'Phase 01',
-        title: '01-01: Keep the reader read-only',
-        detail: 'it must not damage planning state',
-      },
-    ]);
-    expect(view.decisions.provenance).toEqual({
-      kind: 'state',
-      ref: '.planning/STATE.md#decisions',
     });
   });
 
