@@ -41,13 +41,20 @@ describe('stripEmoji', () => {
 });
 
 describe('dashboard-page emoji sanitization contract', () => {
-  it('imports and applies stripEmoji to the head and STATE.md log entries', async () => {
+  it('imports and applies stripEmoji to the head, and routes STATE.md entries through MarkedText', async () => {
     const page = await source('src/web/pages/dashboard-page.tsx');
     expect(page).toMatch(/import \{.*stripEmoji.*\} from '\.\/strip-emoji\.ts';/);
     expect(page).toContain('stripMarkdown(stripEmoji(last.text))');
     expect(page).toContain('<h1 id="project-name-heading">{stripEmoji(head.name)}</h1>');
-    expect(page).toContain('<strong>{stripMarkdown(stripEmoji(item.title))}</strong>');
-    expect(page).toContain('<p>{stripMarkdown(stripEmoji(item.detail))}</p>');
+    // quick-261018-4tb: blockers and decisions render in dashboard-ledger.tsx, and every title and
+    // rationale reaches the page through MarkedText, which strips emoji before it tokenizes.
+    const ledger = await source('src/web/pages/dashboard-ledger.tsx');
+    expect(ledger).toContain('tokenizeInline(stripEmoji(text))');
+    expect(ledger).toContain('<MarkedText text={blocker.title} query={query} />');
+    expect(ledger).toContain('<MarkedText text={blocker.why} query={query} />');
+    expect(ledger).toContain('<MarkedText text={lead.title} query={query} />');
+    expect(ledger).toContain('<MarkedText text={decision.title} query={query} />');
+    expect(ledger).toContain('<MarkedText text={decision.why} query={query} />');
     // Ensure the G2-08 invariant that prevents slice/substr truncation is still intact
     expect(page).toContain('<p>{item.description}</p>');
     expect(page).not.toMatch(/item\.description\.(slice|substring|substr)\(/);

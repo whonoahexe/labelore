@@ -9,12 +9,17 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { InMemoryPlanningFilesystem } from '../../src/planning-fs/in-memory-fs.ts';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
+import { paceScope } from '../../src/presentation/dashboard-pace.ts';
 import { buildDashboardLedger } from '../../src/server/dashboard-ledger.ts';
-import { BlockingBand } from '../../src/web/pages/dashboard-ledger.tsx';
+import { BlockingBand, DecisionsSection } from '../../src/web/pages/dashboard-ledger.tsx';
+import { PaceSection } from '../../src/web/pages/dashboard-pace.tsx';
 import { fromDirectory } from '../helpers/from-directory.ts';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const LEDGER_ROOT = join(REPO_ROOT, 'test/fixtures/dashboard/ledger');
+const SYNTHETIC_ROOT = join(REPO_ROOT, 'test/fixtures/dashboard/synthetic');
+const DENSE_ROOT = join(REPO_ROOT, 'fixtures/dense');
+const READ_AT = '2026-10-18T12:00:00.000Z';
 
 async function ledgerOf(root: string) {
   const snapshot = await new PlanningRepository(await fromDirectory(root), root).load();
@@ -106,5 +111,76 @@ describe('Blocking band', () => {
     expect(markup).not.toContain('<b onclick');
     expect(markup).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
     expect(markup).toContain('<code>code</code>');
+  });
+});
+
+describe('Decisions section', () => {
+  it('shows the count, the phase bars and the phase rail, never naming STATE.md', async () => {
+    const ledger = await ledgerOf(LEDGER_ROOT);
+    const markup = render(createElement(DecisionsSection, { decisions: ledger.decisions }));
+    expect(markup).toContain('Settled');
+    expect(markup).toContain('Decisions');
+    expect(markup).toContain('6 logged');
+    for (const label of ['None', 'P01', 'P02', 'P03']) expect(markup).toContain(`>${label}<`);
+    expect(markup).toContain('>Phase<');
+    expect(markup).toContain('>No phase<');
+    expect(markup).toContain('2 decisions');
+    expect(markup.match(/ledger-row-head/g)).toHaveLength(6);
+    expect(markup).toContain('Search decisions');
+    expect(markup).not.toContain('Showing');
+    expect(markup).not.toContain('STATE.md');
+  });
+
+  it('pages eight at a time', async () => {
+    const ledger = await ledgerOf(SYNTHETIC_ROOT);
+    const markup = render(createElement(DecisionsSection, { decisions: ledger.decisions }));
+    expect(markup).toContain('9 logged');
+    expect(markup.match(/ledger-row-head/g)).toHaveLength(8);
+    expect(markup).toContain('Showing 1–8 of 9');
+    expect(markup).toContain('1 / 2');
+  });
+
+  it('says so when nothing is recorded', () => {
+    const markup = render(createElement(DecisionsSection, { decisions: [] }));
+    expect(markup).toContain('No decisions are recorded.');
+    expect(markup).not.toContain('Search decisions');
+  });
+});
+
+describe('Pace section', () => {
+  const viewOf = async (root: string) => {
+    const { pace } = await ledgerOf(root);
+    return { ...pace, ...paceScope(pace.plans, pace.current) };
+  };
+
+  it('shows the dense fixture as a rail and a dot for every timed plan', async () => {
+    const markup = render(createElement(PaceSection, { pace: await viewOf(DENSE_ROOT), readAt: READ_AT }));
+    expect(markup).toContain('Pace');
+    expect(markup).toContain('1h 33m');
+    expect(markup).toContain('of execution across 5 timed plans');
+    expect(markup).toContain('Plans completed');
+    expect(markup).toContain('median 18 min');
+    expect(markup).toContain('13.3 min');
+    expect(markup).toContain('All milestones');
+    expect(markup).toContain('Not enough plans yet');
+    expect(markup).toContain('<svg');
+    expect(markup.match(/pace-dot-mark/g)).toHaveLength(5);
+    expect(markup).toContain('<title>01-01 · Phase 01 Bootstrap');
+    expect(markup).toContain('Running median of 5');
+    expect(markup).not.toContain('STATE.md');
+  });
+
+  it('counts the untimed plan in the ledger fixture without charting it', async () => {
+    const markup = render(createElement(PaceSection, { pace: await viewOf(LEDGER_ROOT), readAt: READ_AT }));
+    expect(markup).toContain('1h 55m');
+    expect(markup).toContain('1 untimed');
+    expect(markup.match(/pace-dot-mark/g)).toHaveLength(3);
+  });
+
+  it('says so when no completed plan has a recorded duration', async () => {
+    const markup = render(createElement(PaceSection, { pace: await viewOf(SYNTHETIC_ROOT), readAt: READ_AT }));
+    expect(markup).toContain('How fast plans land');
+    expect(markup).toContain('No completed plan has a recorded duration yet.');
+    expect(markup).not.toContain('<svg role');
   });
 });

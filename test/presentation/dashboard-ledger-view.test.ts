@@ -6,9 +6,13 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
 import {
+  NO_PHASE,
   blockerGroups,
   blockingLead,
+  decisionPhaseCounts,
   filterBlockers,
+  filterDecisions,
+  groupByPhase,
   isUntagged,
   matchesQuery,
   pageOf,
@@ -150,5 +154,56 @@ describe('relativeDay', () => {
   it('is empty for a value that is not date-shaped', () => {
     expect(relativeDay('soon', READ_AT)).toBe('');
     expect(relativeDay(null, READ_AT)).toBe('');
+  });
+});
+
+describe('decision helpers', () => {
+  async function decisions() {
+    const snapshot = await new PlanningRepository(await fromDirectory(LEDGER_ROOT), LEDGER_ROOT).load();
+    return buildDashboardLedger(snapshot.project!).decisions;
+  }
+  const decisionTitle = (list: { title: string }[]) => list.map((d) => d.title);
+
+  it('counts decisions per phase for the rail and the histogram', async () => {
+    const counts = decisionPhaseCounts(await decisions());
+    expect(counts.rail).toEqual([
+      { key: '03', count: 1 },
+      { key: '02', count: 1 },
+      { key: '01', count: 2 },
+      { key: NO_PHASE, count: 2 },
+    ]);
+    expect(counts.histogram.map((entry) => `${entry.key}:${entry.count}`)).toEqual(['—:2', '01:2', '02:1', '03:1']);
+  });
+
+  it('filters by phase and by a search over title, rationale, plan and phase', async () => {
+    const all = await decisions();
+    expect(decisionTitle(filterDecisions(all, { phase: '01', query: '' }))).toEqual([
+      'Reconcile on entry number plus line number.',
+      'Store the raw response beside the parsed one',
+    ]);
+    expect(decisionTitle(filterDecisions(all, { phase: NO_PHASE, query: '' }))).toEqual([
+      'Keep the retry queue in Postgres, not Redis.',
+      'Cache tariff lookups per session',
+    ]);
+    expect(decisionTitle(filterDecisions(all, { phase: null, query: 'entry' }))).toEqual([
+      'Key filings by entry number',
+      'Reconcile on entry number plus line number.',
+    ]);
+    expect(filterDecisions(all, { phase: '03', query: 'postgres' })).toEqual([]);
+  });
+
+  it('groups a page by phase in rail order, keeping newest first inside a group', async () => {
+    const groups = groupByPhase(await decisions());
+    expect(groups.map((g) => [g.key, decisionTitle(g.items)])).toEqual([
+      ['03', ['Key filings by entry number']],
+      ['02', ['Corrections are new filings, never edits in place.']],
+      ['01', ['Reconcile on entry number plus line number.', 'Store the raw response beside the parsed one']],
+      [NO_PHASE, ['Keep the retry queue in Postgres, not Redis.', 'Cache tariff lookups per session']],
+    ]);
+  });
+
+  it('pages 17 decisions as three pages of eight', () => {
+    expect(pageOf(17, 8, 0)).toMatchObject({ pages: 3, start: 0, end: 8, label: 'Showing 1–8 of 17' });
+    expect(pageOf(17, 8, 2)).toMatchObject({ start: 16, end: 17, label: 'Showing 17 of 17' });
   });
 });

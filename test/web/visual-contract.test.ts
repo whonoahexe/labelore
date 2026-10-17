@@ -5,6 +5,7 @@
 // legibility) are authored as `backstop` truths in 02-12-PLAN.md and handed to the human gate.
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
+import { dashboardSources } from '../helpers/dashboard-sources.ts';
 
 async function source(path: string): Promise<string> {
   return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
@@ -394,19 +395,23 @@ describe('muted surface contrast and dead selectors (F2, F5)', () => {
 
   it('carries no rule for the removed Needs attention row link', async () => {
     const css = await source('src/web/styles/globals.css');
-    const dashboard = await source('src/web/pages/dashboard-page.tsx');
+    const dashboard = dashboardSources();
     expect(css).not.toContain('.attention-action');
     expect(dashboard).not.toMatch(/<small/);
   });
 
-  it('gives every Decisions and Blockers row one height, clamping title and detail to two lines', async () => {
+  // quick-261018-4tb: the Needs attention rows (one 11rem height, two clamped lines) are gone. A
+  // ledger row keeps its title to one line while closed, and a source card clamps its detail.
+  it('keeps a closed ledger row to one line and clamps a source card detail to two', async () => {
     const css = await source('src/web/styles/globals.css');
-    const rows = ruleBlocks(css, '.attention-list li {');
-    expect(rows.some((block) => block.includes('height: 11rem;'))).toBe(true);
-    const [clamp] = ruleBlocks(css, '.attention-list p {').filter((block) =>
-      block.includes('-webkit-line-clamp'),
-    );
-    expect(clamp ?? css).toContain('-webkit-line-clamp: 2;');
+    expect(css).not.toContain('.attention-list');
+    const [title] = ruleBlocks(css, '.ledger-row-title {');
+    expect(title).toContain('white-space: nowrap;');
+    expect(title).toContain('text-overflow: ellipsis;');
+    const [open] = ruleBlocks(css, ".ledger-row[data-open='true'] .ledger-row-title {");
+    expect(open).toContain('white-space: normal;');
+    const [detail] = ruleBlocks(css, '.ledger-source-detail {');
+    expect(detail).toContain('-webkit-line-clamp: 2;');
   });
 });
 
