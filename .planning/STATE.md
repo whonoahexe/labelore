@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-17T19:53:39.337Z"
+last_updated: "2026-10-17T19:56:40.524Z"
 last_activity: 2026-10-17
 last_activity_desc: Completed quick task 261016-2j6 (compact discussion-log tables)
-state_head: 0a5c7e42ca1d727a75634d247371f880c95d387e
+state_head: 0d43a3094b6d9438384c2cda5aff22ebf7539b41
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -200,6 +200,7 @@ None.
 | 85 | Rename No directory to Not started and hide zero figures on Traceability | 2026-10-18 | e890704 | — |
 | 86 | Roadmap lede is the first paragraph of ROADMAP.md's Overview, replacing the fixed text | 2026-10-18 | ee8837b | — |
 | 87 | Roadmap Overview lede capped at two lines of whole sentences; original lede when there is no Overview | 2026-10-18 | 0a5c7e4 | — |
+| 88 | Removed the Roadmap Overview lede; the page keeps its original sentence | 2026-10-18 | 0d43a30 | — |
 
 ## Deferred Items
 
