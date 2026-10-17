@@ -20,6 +20,7 @@ import { composeValidationStrategy } from './validation-strategy.ts';
 import { composeSummaryRun } from './summary-run.ts';
 import { composeVerificationBoard } from './verification-board.ts';
 import { composeUiReview } from './ui-review.ts';
+import { composeReviewThreads } from './review-threads.ts';
 import { composeUiSpec } from './ui-spec.ts';
 import { composeUatSession } from './uat-session.ts';
 
@@ -147,6 +148,7 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
       { type: 'section', heading: /^info$/i },
       factsBlock('review-facts', 'Review facts', ['depth', 'files_reviewed', 'reviewed']),
     ],
+    reviewThreads: composeReviewThreads,
   },
   'milestone-audit': {
     kind: 'milestone-audit',

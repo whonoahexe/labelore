@@ -11716,6 +11716,593 @@ a.view-research-id:hover {
 }
 /* quick-261003-528:end */
 
+/* quick-261017-k44:start */
+/* ==========================================================================
+   REVIEW page (quick-261017-k44, sketch 022 winner C): the own head, the hero (verdict, facts, tally
+   and the reviewer's pull quote) and the review threads - one block per file with a line gutter,
+   the finding, its suggested change and a reply saying what the fix run did with it. Colours are
+   theme tokens and the design-language tones only: no parse-degradation tone, no mixed colours, no
+   rounded corners and no motion beyond a colour change on hover. A fixed finding's stamp, a skipped
+   or not-attempted one's border style and the severity marks are driven by data attributes. Ancestors
+   of a .status-chip set no line-height, so every chip keeps the inherited body value (F-05).
+   Media overrides sit directly after their base rules (css-source-order).
+   ========================================================================== */
+
+.view-review-page {
+  display: grid;
+  gap: var(--space-fluid-10);
+  min-width: 0;
+}
+
+.view-review-page > * {
+  min-width: 0;
+}
+
+.view-review-kicker {
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-review-muted {
+  color: var(--muted-foreground);
+}
+
+.view-review-mono {
+  font-family: var(--font-mono);
+}
+
+.view-review-loc {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.view-review-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.view-review-link:hover {
+  color: var(--primary);
+}
+
+/* Head: the meta row, then the display title. */
+.view-review-head {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.view-review-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.view-review-meta-left {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: baseline;
+}
+
+/* The global eyebrow's bottom margin would lift it off the date's line. */
+.view-review-meta-left .eyebrow {
+  margin: 0;
+}
+
+.view-review-date {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-review-date b {
+  color: var(--foreground);
+  font-weight: var(--fw-medium);
+}
+
+.view-review-tools {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.view-review-title {
+  max-width: 20ch;
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-display-3);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tighter);
+  line-height: var(--lh-display);
+  overflow-wrap: anywhere;
+}
+
+/* Hero: the verdict column beside the reviewer's pull quote. */
+.view-review-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: var(--space-fluid-8);
+  align-items: start;
+}
+
+@media (max-width: 62rem) {
+  .view-review-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.view-review-hero-main {
+  display: grid;
+  gap: var(--space-5);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-review-verdict {
+  max-width: 32ch;
+  margin: 0;
+  font-size: var(--fs-fluid-3);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+}
+
+.view-review-verdict [data-tone='missing'] {
+  color: var(--missing-fill);
+}
+
+.view-review-verdict [data-tone='in-flight'] {
+  color: var(--in-flight-fill);
+}
+
+.view-review-verdict [data-tone='complete'] {
+  color: var(--primary);
+}
+
+.view-review-sub {
+  max-width: 52ch;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-5);
+  overflow-wrap: anywhere;
+}
+
+.view-review-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-review-facts b {
+  margin-left: var(--space-1-5);
+  color: var(--foreground);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* The tally: four cells, two columns when narrow. */
+.view-review-tally {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid var(--border);
+}
+
+@media (max-width: 42rem) {
+  .view-review-tally {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.view-review-tally > div {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border-right: 1px solid var(--border);
+}
+
+.view-review-tally > div:last-child {
+  border-right: 0;
+}
+
+.view-review-tally b {
+  font-family: var(--font-mono);
+  font-size: var(--fs-7);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-none);
+}
+
+.view-review-tally b[data-tone='missing'] {
+  color: var(--missing-fill);
+}
+
+.view-review-tally b[data-tone='complete'] {
+  color: var(--primary);
+}
+
+/* The reviewer's pull quote. */
+.view-review-quote {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: var(--space-5) var(--space-6);
+  border-left: 3px solid var(--primary);
+  background: var(--card-veil);
+}
+
+.view-review-quote-text {
+  margin: 0;
+  font-size: var(--fs-5);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
+}
+
+.view-review-quote-by {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+/* Section heading. */
+.view-review-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-5);
+  border-bottom: 1px solid var(--border);
+}
+
+.view-review-heading h2 {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-fluid-3);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tight);
+}
+
+.view-review-aside {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-review-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+  font-size: var(--fs-3);
+}
+
+/* One block per file. */
+.view-review-file {
+  margin-bottom: var(--space-5);
+  border: 1px solid var(--border);
+}
+
+.view-review-file-head {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  background: var(--card);
+}
+
+.view-review-file-head code {
+  padding: 0;
+  background: none;
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.view-review-file-count {
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+/* A thread: the line gutter, then the finding. */
+.view-review-thread {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  border-bottom: 1px solid var(--border);
+}
+
+.view-review-thread:last-child {
+  border-bottom: 0;
+}
+
+@media (max-width: 42rem) {
+  .view-review-thread {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.view-review-gutter {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  padding: var(--space-4) var(--space-3);
+  border-right: 1px solid var(--border);
+  background: var(--card-veil);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  text-align: right;
+}
+
+@media (max-width: 42rem) {
+  .view-review-gutter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-4);
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+}
+
+.view-review-gutter b {
+  color: var(--foreground);
+  font-weight: var(--fw-medium);
+}
+
+.view-review-thread-body {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+  padding: var(--space-4) var(--space-6) var(--space-5);
+}
+
+@media (max-width: 42rem) {
+  .view-review-thread-body {
+    padding: var(--space-4);
+  }
+}
+
+.view-review-thread-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: baseline;
+}
+
+.view-review-thread-title {
+  flex: 1 1 20rem;
+  margin: 0;
+  font-size: var(--fs-5);
+  font-weight: var(--fw-medium);
+  overflow-wrap: anywhere;
+}
+
+/* Severity mark: a square before the ID. */
+.view-review-sev {
+  display: inline-flex;
+  gap: var(--space-1-5);
+  align-items: center;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-3);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-review-sev::before {
+  width: 0.6rem;
+  height: 0.6rem;
+  background: var(--muted-foreground);
+  content: '';
+}
+
+.view-review-sev[data-severity='critical'] {
+  color: var(--missing-fill);
+}
+
+.view-review-sev[data-severity='critical']::before {
+  background: var(--missing-fill);
+}
+
+.view-review-sev[data-severity='warning'] {
+  color: var(--in-flight-fill);
+}
+
+.view-review-sev[data-severity='warning']::before {
+  background: var(--in-flight-fill);
+}
+
+.view-review-sev[data-severity='info']::before {
+  background: none;
+  outline: 1px solid var(--muted-foreground);
+  outline-offset: -1px;
+}
+
+/* Outcome stamp: the shared chip, with a dashed (skipped) or dotted (not attempted) border. */
+.view-review-stamp[data-outcome='fixed']::before {
+  content: '\2713';
+}
+
+.view-review-stamp[data-outcome='skipped'] {
+  border-style: dashed;
+}
+
+.view-review-stamp[data-outcome='deferred'] {
+  border-style: dotted;
+}
+
+.view-review-commit {
+  font-family: var(--font-mono);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* Author text blocks. */
+.view-review-md {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  font-size: var(--fs-4);
+  line-height: var(--lh-relaxed);
+}
+
+.view-review-md :is(.view-research-text, .view-research-list) {
+  margin: 0;
+}
+
+.view-review-md pre {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--sidebar);
+  font-size: var(--fs-2);
+  line-height: var(--lh-relaxed);
+  overflow-x: auto;
+}
+
+.view-review-md pre code {
+  padding: 0;
+  background: none;
+  overflow-wrap: normal;
+  white-space: pre;
+}
+
+.view-review-suggest {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.view-review-suggest > .view-review-kicker {
+  color: var(--primary);
+}
+
+/* The reply: a mark, then what the fix run did. */
+.view-review-reply {
+  display: grid;
+  grid-template-columns: 1.75rem minmax(0, 1fr);
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px dashed var(--border);
+}
+
+.view-review-reply-mark {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+}
+
+.view-review-reply[data-outcome='fixed'] .view-review-reply-mark {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--background);
+}
+
+.view-review-reply-body {
+  display: grid;
+  gap: var(--space-1-5);
+  min-width: 0;
+  font-size: var(--fs-4);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
+}
+
+.view-review-kicker[data-outcome='fixed'] {
+  color: var(--primary);
+}
+
+/* A fixed finding folded to one line. */
+.view-review-resolved {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr) auto;
+  gap: var(--space-4);
+  align-items: center;
+  width: 100%;
+  padding: var(--space-2-5) var(--space-4);
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--card-veil);
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  text-align: left;
+  cursor: pointer;
+}
+
+.view-review-resolved:hover {
+  background: var(--state-hover);
+}
+
+.view-review-resolved:last-child {
+  border-bottom: 0;
+}
+
+.view-review-resolved-line {
+  font-family: var(--font-mono);
+}
+
+@media (max-width: 42rem) {
+  .view-review-resolved {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .view-review-resolved-line {
+    display: none;
+  }
+}
+
+.view-review-resolved-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-review-empty {
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px dashed var(--border);
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+}
+/* quick-261017-k44:end */
+
 /* quick-261001-qk6:start */
 /* ==========================================================================
    quick-261001-qk6 (sketch 014 winner): the UI-SPEC contract page — every .view-ui-spec-* rule.

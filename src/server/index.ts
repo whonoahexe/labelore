@@ -9,6 +9,8 @@ import { PlanningRepository } from '../planning-repo/snapshot.ts';
 import { buildDashboardViewModel } from '../presentation/dashboard.ts';
 import { buildPlanManualChecks } from '../presentation/manual-checks.ts';
 import type { PlanManualChecks } from '../presentation/manual-checks.ts';
+import { buildReviewContext } from '../presentation/review-context.ts';
+import type { ReviewContext } from '../presentation/review-context.ts';
 import { buildRoadmapViewModel } from '../presentation/roadmap.ts';
 import { buildReferenceRegistry } from '../presentation/references.ts';
 import { parsePresentationUrl } from '../presentation/routes.ts';
@@ -99,6 +101,16 @@ export function createApp(
         return null;
       }
     })();
+    // quick-261017-k44: a REVIEW's phase name and sibling REVIEW-FIX, from this request's own bundle (null elsewhere).
+    const reviewContext = ((): ReviewContext | null => {
+      try {
+        return lookup.artifact.kind === 'review'
+          ? buildReviewContext(activeDerived.presentation, activeDerived.referenceRegistry, lookup.artifact.path)
+          : null;
+      } catch {
+        return null;
+      }
+    })();
     const document = await (
       await renderer
     ).render(lookup.artifact, { referenceRegistry: activeDerived.referenceRegistry });
@@ -125,6 +137,7 @@ export function createApp(
       phaseIdentity: lookup.phaseIdentity,
       document,
       manualChecks,
+      reviewContext,
     };
   };
 

@@ -70,6 +70,9 @@ import type { ComposedVerificationBoard } from '../views/verification-board.ts';
 import { VerificationBoardView } from '../views/verification-board-components.tsx';
 import type { ComposedUiReview } from '../views/ui-review.ts';
 import { UiReviewIntroMeta, UiReviewView } from '../views/ui-review-components.tsx';
+import type { ReviewContext } from '../../presentation/review-context.ts';
+import type { ComposedReviewThreads } from '../views/review-threads.ts';
+import { ReviewThreadsView } from '../views/review-threads-components.tsx';
 import type { ComposedUiSpec } from '../views/ui-spec.ts';
 import { UiSpecIntroMeta, UiSpecView } from '../views/ui-spec-components.tsx';
 import type { ComposedUatSession } from '../views/uat-session.ts';
@@ -172,6 +175,8 @@ interface ArtifactDocumentResponse {
   document: RenderedDocument;
   /** quick-261016-ujo: the PLAN page's What to check model (null for every other document). */
   manualChecks?: PlanManualChecks | null;
+  /** quick-261017-k44: a REVIEW's phase name and sibling REVIEW-FIX (null for every other document). */
+  reviewContext?: ReviewContext | null;
 }
 
 const WARNING_DISCLOSURE_LABELS: Record<Exclude<ArtifactWarningTone, null>, string> = {
@@ -595,6 +600,7 @@ export function ArtifactPage({
       phaseRequirementIds,
       headings: shown?.headings ?? [],
       siblingArtifacts,
+      reviewContext: query.data.reviewContext ?? null,
       manualChecks: query.data.manualChecks ?? null,
     };
   }, [query.data, groups, planSegments, planProgress, planContext, phaseRequirementIds, shown, siblingArtifacts]);
@@ -685,6 +691,13 @@ export function ArtifactPage({
     if (!manifest || !viewInput) return null;
     return manifest.uiReview?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // quick-261017-k44 (sketch-022 C): the REVIEW threads page, when the resolved manifest opts into one
+  // - `null` for every other kind and for a payload from a server that predates `structured.review`
+  // (the promoted-block view then renders).
+  const reviewThreads = useMemo<ComposedReviewThreads | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.reviewThreads?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // quick-261001-qk6 (sketch-014 winner): the UI-SPEC contract page, when the resolved manifest
   // opts into one — `null` for every other kind, and for a contract with none of the recognised
   // sections or a payload from a server that predates `structured.uiSpec` (the promoted-block view
@@ -745,6 +758,7 @@ export function ArtifactPage({
     summaryRun !== null ||
     verificationBoard !== null ||
     uiReview !== null ||
+    reviewThreads !== null ||
     uiSpec !== null ||
     uatSession !== null ||
     (composed !== null && composed.blocks.length > 0);
@@ -801,6 +815,27 @@ export function ArtifactPage({
         <SecurityConsoleView
           key={artifact.path}
           model={securityConsole}
+          fallbackTitle={artifact.title}
+          path={artifact.path}
+          mode={mode}
+          onModeChange={setMode}
+          onShowSource={showSource}
+          chip={<WarningChip tone={warningTone} />}
+        />
+      </main>
+    );
+  }
+  // quick-261017-k44: the REVIEW page opens on its own head (eyebrow, Reviewed stamp, the title) and
+  // hero (the verdict and the tally) with no breadcrumb row, manifest lead or Document metadata
+  // disclosure in View mode - the Also row names the frontmatter, and a parse warning shows as its
+  // chip in the head. Source mode falls through to the unchanged page below.
+  if (reviewThreads && mode === 'view') {
+    return (
+      <main className="artifact-page page-stack">
+        {switcher}
+        <ReviewThreadsView
+          key={artifact.path}
+          model={reviewThreads}
           fallbackTitle={artifact.title}
           path={artifact.path}
           mode={mode}

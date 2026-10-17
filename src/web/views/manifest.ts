@@ -28,6 +28,10 @@ import type { ComposedSummaryRun } from './summary-run.ts';
 import type { ComposedVerificationBoard } from './verification-board.ts';
 // Type-only import — same reason as `brief` above (quick-261003-528, sketch-018 B).
 import type { ComposedUiReview } from './ui-review.ts';
+// Type-only import — same reason as `brief` above (quick-261017-k44, sketch-022 C).
+import type { ComposedReviewThreads } from './review-threads.ts';
+// Type-only import — the review context is built server-side (quick-261017-k44).
+import type { ReviewContext } from '../../presentation/review-context.ts';
 // Type-only import — same reason as `brief` above (quick-261001-qk6, sketch-014 winner).
 import type { ComposedUiSpec } from './ui-spec.ts';
 // Type-only import — same reason as `brief` above (quick-261001-qk7, sketch-015 winner).
@@ -116,6 +120,11 @@ export interface ViewManifest {
    * `structured.uiReview`, or a document with no pillar rows), and the page falls back to the
    * promoted-block view, which the manifest keeps as `promote`. */
   uiReview?: (input: ViewInput) => ComposedUiReview | null;
+  /** quick-261017-k44 (sketch-022 C): the REVIEW threads page a manifest opts into instead of
+   * `promote` — currently only `review`. Returns `null` when the input can't compose one (no
+   * `structured.review`), and the page falls back to the promoted-block view, which the manifest
+   * keeps as `promote`. */
+  reviewThreads?: (input: ViewInput) => ComposedReviewThreads | null;
   /** quick-261001-qk6 (sketch-014 winner): the UI-SPEC contract page a manifest opts into instead of
    * `promote` — currently only `ui-spec`. Returns `null` when the input can't compose one (no
    * `structured.uiSpec`, or a contract with none of the recognised sections), and the page falls
@@ -156,6 +165,10 @@ export interface ViewInput {
    * Read first and UAT sources and passed through from the document response — `null`/absent when the
    * artifact is not a PLAN or no task needs a person to check it. */
   manualChecks?: PlanManualChecks | null;
+  /** quick-261017-k44: a REVIEW's ROADMAP phase name and sibling REVIEW-FIX (path, in-app url, fix-run
+   * frontmatter, parsed report), built server-side and passed through from the document response —
+   * `null`/absent when the artifact is not a REVIEW. */
+  reviewContext?: ReviewContext | null;
 }
 
 export type ComposedBlock = { id: string; label: string } & (
