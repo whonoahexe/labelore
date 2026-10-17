@@ -662,7 +662,8 @@ export function DecisionsSection({ decisions }: { decisions: LedgerDecisionDto[]
               }}
             />
             <span className="ledger-count">
-              {phase ? `${filtered.length} in ${phaseWords}` : `${decisions.length} logged`}
+              <b>{phase ? filtered.length : decisions.length}</b>{' '}
+              <span>{phase ? `in ${phaseWords}` : 'logged'}</span>
             </span>
           </div>
         ) : null}

@@ -1,7 +1,12 @@
 // Pure filter, lead, paging and date helpers for the dashboard ledger sections (quick-261018-4tb,
 // sketch 026 B + P1). Shared by the view model and the page, with no node:* or React imports, so a
 // section's rules (which blocker leads, what a page holds) are testable without rendering.
-import type { LedgerBlockerDto, LedgerDecisionDto } from '../server/dashboard-ledger.ts';
+import type {
+  LedgerBlockerDto,
+  LedgerDecisionDto,
+  LedgerTaskDto,
+  TodoSeverity,
+} from '../server/dashboard-ledger.ts';
 import { activityDateLabel } from './dashboard-head.ts';
 
 /** Trimmed, case-insensitive substring match across the parts; an empty query matches anything. */
@@ -160,4 +165,58 @@ export function groupByPhase(items: LedgerDecisionDto[]): { key: string; items: 
     key,
     items: items.filter((decision) => phaseKeyOf(decision) === key),
   }));
+}
+
+// ---------- todos and recent work ----------
+
+export function severityLabel(severity: TodoSeverity): string {
+  return { high: 'High', medium: 'Medium', low: 'Low', unrated: 'Unrated' }[severity];
+}
+
+export interface ActivityDay {
+  day: string;
+  quick: number;
+  fast: number;
+}
+
+const DAY_MS = 86_400_000;
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+/** Twenty-one days ending on the newest task's day, with the quick and fast tasks of each, and
+ * how many tasks fall inside the window. Empty for no tasks. */
+export function activityWindow(tasks: LedgerTaskDto[]): { days: ActivityDay[]; total: number; max: number } {
+  if (tasks.length === 0) return { days: [], total: 0, max: 0 };
+  const newest = tasks.reduce((latest, task) => (task.date > latest ? task.date : latest), tasks[0].date);
+  const end = Date.parse(newest);
+  const days = Array.from({ length: 21 }, (_, index): ActivityDay => {
+    const day = new Date(end - (20 - index) * DAY_MS).toISOString().slice(0, 10);
+    return {
+      day,
+      quick: tasks.filter((task) => task.date === day && task.kind === 'quick').length,
+      fast: tasks.filter((task) => task.date === day && task.kind === 'fast').length,
+    };
+  });
+  return {
+    days,
+    total: days.reduce((sum, day) => sum + day.quick + day.fast, 0),
+    max: Math.max(1, ...days.map((day) => day.quick + day.fast)),
+  };
+}
+
+/** Consecutive tasks of one day, in the order given. */
+export function groupByDay(tasks: LedgerTaskDto[]): { day: string; items: LedgerTaskDto[] }[] {
+  const groups: { day: string; items: LedgerTaskDto[] }[] = [];
+  for (const task of tasks) {
+    const last = groups[groups.length - 1];
+    if (last && last.day === task.date) last.items.push(task);
+    else groups.push({ day: task.date, items: [task] });
+  }
+  return groups;
+}
+
+/** The date gutter of a day group: the day number over "Oct · Fri". */
+export function dayMark(iso: string): { number: number; label: string } {
+  const date = new Date(`${iso}T12:00:00Z`);
+  return { number: date.getUTCDate(), label: `${MONTHS[date.getUTCMonth()]} · ${WEEKDAYS[date.getUTCDay()]}` };
 }

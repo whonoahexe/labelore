@@ -29,6 +29,10 @@ function isDecisionsHeading(heading: string): boolean {
   return /^decisions$/i.test(heading.trim());
 }
 
+function isPendingTodosHeading(heading: string): boolean {
+  return /^pending todos$/i.test(heading.trim());
+}
+
 /** First `##` section, or `###` subsection inside one, whose heading passes `matches`. */
 function findSection(
   sections: { heading: string; body: string }[],
@@ -54,6 +58,7 @@ export const StateHandler: ArtifactHandler = {
     const quickTasksBody = findQuickTasksTable(sections);
     const blockersConcerns = findSection(sections, isBlockersHeading);
     const decisions = findSection(sections, isDecisionsHeading);
+    const pendingTodos = findSection(sections, isPendingTodosHeading);
 
     return {
       title,
@@ -64,6 +69,7 @@ export const StateHandler: ArtifactHandler = {
         sections,
         blockersConcerns,
         decisions,
+        pendingTodos,
         quickTasksCompleted: quickTasksBody ? parseMarkdownTable(quickTasksBody) : [],
       },
     };

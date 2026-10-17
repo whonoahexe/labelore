@@ -140,6 +140,9 @@
           "decisions": {
             "heading": "Decisions"
           },
+          "pendingTodos": {
+            "heading": "Pending Todos"
+          },
           "quickTasksCompleted": []
         }
       }

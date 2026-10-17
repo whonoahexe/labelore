@@ -576,8 +576,8 @@ element is actually written, regardless of class name:
   complete or start a milestone), and an execute step names its first open plan as an inline link
   ("Execute phase 5, from 05-01"). Absences are silent, except the card's "No plans in this phase
   yet." and "No STATE.md yet" lines. Core Value is not shown here (it is the Traceability page's
-  lede, cut by the same lead rules, and absent without a Core Value section), and blockers live in
-  their own panel below. The accent goes to the Now block's left rule and label, the
+  lede, cut by the same lead rules, and absent without a Core Value section), and open blockers lead
+  in the red band below it. The accent goes to the Now block's left rule and label, the
   card's top rule, the done bar segments, and the plan link on hover. The next plan's segment
   takes `--in-flight-fill`. Status chips use only `active` and `complete`. No motion.
 - **Blockers lead below the head.** (quick-261018-4tb, sketch 026 B) Directly under the head, open
@@ -619,8 +619,26 @@ element is actually written, regardless of class name:
   before them, only with at least four on each side. The default scope is the current milestone once
   it has four timed plans, else all. The faster chip is primary-tinted, the slower chip is
   destructive-tinted (a content colour, never a `data-tone`), and steady stays foreground. With no
-  timed plan the section says "No completed plan has a recorded duration yet." The On deck panel
-  sits beside it until the bottom row replaces that (quick-261018-4tb).
+  timed plan the section says "No completed plan has a recorded duration yet."
+- **On deck and Recent work share the bottom row.** (quick-261018-4tb, sketch 026 B round 2) Two
+  panels sit 24px apart and stretch to the taller one, with each pager (and On deck's "N todos
+  done." line) pinned to the panel's floor. On deck reads "After the next step" and has Next, Todos
+  and Notes tabs with counts (Notes counts the unpromoted ones); it opens on the first tab that has
+  anything, and each tab keeps its own page of five. Next lists the unfinished plans from the current
+  phase on, then the phases not yet finished, minus the plan the head already names, at most six.
+  Todos come from `todos/pending/` and STATE.md's pending list, High before Medium before Low
+  before Unrated (however the project spells severity or priority), newest first within a level.
+  Each has a severity gutter (a square marker, filled for High, dashed for Unrated), a title, a
+  two-line detail and one quiet line (area · Added … · the first file's name, with the full path on
+  hover and +N for the rest). Only a file-backed todo links out and shows the arrow; a STATE.md
+  todo shows a chip for each document it names, or a dashed Untagged. Notes list the unpromoted
+  ones newest first, then promoted ones dimmed with "Now a todo". Recent work reads "Quick and fast
+  tasks", counts "N in 3 weeks", and draws 21 days ending on the newest task's day (quick stacked
+  over fast, quick in `--primary`, fast in `--in-flight-fill`), then five tasks a page grouped by
+  day under a date gutter (a large day number over "Oct · Fri"). A row has a Q or F badge, a
+  two-line title, the status, the commit, and Plan and Summary links only where those files exist.
+  High takes the destructive family and Medium takes `--primary`, as content colours and never as a
+  `data-tone`. Nothing animates.
 
 ## Surface-scoped registered names
 
@@ -653,8 +671,8 @@ plan's "no AST tooling" constraint.
 | `blocking-summary` | Dashboard | the band's left column: the eyebrow, the open count and the legend |
 | `blocking-tag` | Dashboard | a blocker's caps lead or Time-bound label; `data-quiet` for a resolved one |
 | `blocking-total` | Dashboard | the open count, in the destructive colour |
-| `dashboard-grid` | Dashboard | |
 | `dashboard-loading` | Dashboard | |
+| `dashboard-lower` | Dashboard | the bottom row: On deck beside Recent work, 24px apart and stretched to the taller (quick-261018-4tb) |
 | `dashboard-page` | Dashboard | |
 | `decisions-histogram` | Dashboard | the per-phase bar chart; a bar filters the log |
 | `decisions-histogram-bar` | Dashboard | |
@@ -666,8 +684,17 @@ plan's "no AST tooling" constraint.
 | `decisions-phase-number` | Dashboard | |
 | `decisions-rail` | Dashboard | the phase groups of one page of decisions |
 | `decisions-section` | Dashboard | the Decisions section (quick-261018-4tb) |
+| `deck-chip` | Dashboard | the Now a todo mark on a promoted note |
+| `deck-foot` | Dashboard | 'N todos done.', pinned to the floor of the panel |
+| `deck-item` | Dashboard | a Next item or a note, as a link; `data-promoted` dims a promoted note |
+| `deck-item-detail` | Dashboard | a two-line clamp |
+| `deck-item-meta` | Dashboard | |
+| `deck-item-title` | Dashboard | |
+| `deck-list` | Dashboard | |
+| `deck-panel` | Dashboard | On deck and Recent work; a flex column so the pager sits on the floor |
+| `deck-tab` | Dashboard | a Next, Todos or Notes tab; `aria-selected` marks the open one |
+| `deck-tabs` | Dashboard | |
 | `immediate-work` | Dashboard | shared with the CONTEXT brief (quick-260923-lju) |
-| `item-kind` | Dashboard | |
 | `ledger-chip` | Dashboard | a filter or toggle chip, and a link chip for a file that also mentions the entry; `data-on` marks the active one |
 | `ledger-chips` | Dashboard | |
 | `ledger-count` | Dashboard | the section's count: N logged, or M in phase X |
@@ -694,7 +721,6 @@ plan's "no AST tooling" constraint.
 | `ledger-sources` | Dashboard | |
 | `ledger-tools` | Dashboard | the search and toggle row |
 | `ledger-untagged` | Dashboard | the dashed note on an entry that names no source, with Copy text |
-| `next-preview` | Dashboard | |
 | `pace-band` | Dashboard | a shaded phase band behind the dots; `data-alt` marks every other one |
 | `pace-band-label` | Dashboard | |
 | `pace-chart` | Dashboard | the dot timeline figure |
@@ -718,9 +744,7 @@ plan's "no AST tooling" constraint.
 | `pace-trend` | Dashboard | the trend chip; `data-verdict` is faster, steady or slower |
 | `pace-verdict` | Dashboard | the trend chip and its sentence |
 | `position-hero` | Dashboard | now used by the CONTEXT brief alone; the dashboard opens on `project-head` (quick-261017-wlg) |
-| `preview-empty` | Dashboard | |
-| `preview-list` | Dashboard | |
-| `preview-panel` | Dashboard | shared with the CONTEXT brief (quick-260923-lju) |
+| `preview-panel` | Dashboard | the CONTEXT brief and the document endnotes alone; the dashboard's On deck left it (quick-261018-4tb) |
 | `project-head` | Dashboard | |
 | `project-head-copy` | Dashboard | |
 | `project-identity` | Dashboard | |
@@ -740,6 +764,27 @@ plan's "no AST tooling" constraint.
 | `project-now-label` | Dashboard | |
 | `project-now-line` | Dashboard | |
 | `project-tagline` | Dashboard | |
+| `recent-activity` | Dashboard | the 21-day activity chart with its axis and key |
+| `recent-axis` | Dashboard | |
+| `recent-bars` | Dashboard | one slot a day, quick stacked over fast; `data-empty` for a quiet day |
+| `recent-date` | Dashboard | the date gutter of a day group |
+| `recent-date-number` | Dashboard | |
+| `recent-day` | Dashboard | one day's tasks under a date gutter |
+| `recent-key` | Dashboard | Quick and Fast |
+| `recent-log` | Dashboard | |
+| `recent-status` | Dashboard | |
+| `recent-task` | Dashboard | |
+| `recent-task-kind` | Dashboard | the Q or F badge; `data-kind` |
+| `recent-task-meta` | Dashboard | the status, commit and Plan and Summary links |
+| `recent-task-title` | Dashboard | a two-line clamp |
+| `todo-detail` | Dashboard | a two-line clamp |
+| `todo-files` | Dashboard | the first file's name, with +N for the rest |
+| `todo-go` | Dashboard | the arrow on a file-backed todo |
+| `todo-main` | Dashboard | |
+| `todo-meta` | Dashboard | area, when it was added, and the files, or a STATE.md todo's source chips |
+| `todo-row` | Dashboard | a pending todo; `data-severity` is high, medium, low or unrated |
+| `todo-severity` | Dashboard | the severity gutter: a square marker (filled for High, dashed for Unrated) and the label |
+| `todo-title` | Dashboard | a link only when the todo is a file |
 
 ### Roadmap
 

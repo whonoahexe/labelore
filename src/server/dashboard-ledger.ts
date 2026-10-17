@@ -7,10 +7,13 @@
 // (MAX_SECTION_CHARS, MAX_ENTRIES, MAX_ENTRY_CHARS) and only linear or bounded regexes are used.
 // T-4tb-03: every function below is total; the tests cover each degradation.
 // T-4tb-04: links come from the source resolver (route builders over discovered artifacts).
-import type { Project } from '../domain/model.ts';
+import type { Artifact, Phase, Project } from '../domain/model.ts';
 import { parseDuration } from '../presentation/dashboard-pace.ts';
+import { buildPhaseUrl, buildPlanUrl } from '../presentation/routes.ts';
 import {
   createSourceResolver,
+  objectiveSentence,
+  objectiveText,
   type LedgerMentionDto,
   type LedgerSourceDto,
   type SourceGroup,
@@ -71,15 +74,88 @@ export interface PacePlanDto {
   tasks: number | null;
 }
 
+export type TodoSeverity = 'high' | 'medium' | 'low' | 'unrated';
+
+/** A pending todo: a file under todos/pending/, or a bullet of STATE.md's Pending Todos. */
+export interface LedgerTodoDto {
+  key: string;
+  title: string;
+  /** The first body paragraph that is not the title (a file-backed todo only). */
+  detail: string | null;
+  area: string | null;
+  severity: TodoSeverity;
+  /** The severity or priority as the project wrote it ("major", "P2"), or null. */
+  weight: string | null;
+  /** YYYY-MM-DD, or null. */
+  created: string | null;
+  /** Files the todo points at, as written (`src/retry.ts:88-140`). */
+  files: string[];
+  /** The todo file's page. Null for a STATE.md todo, which has no file. */
+  url: string | null;
+  /** Documents a STATE.md todo names (empty for a file-backed todo). */
+  sources: LedgerSourceDto[];
+}
+
+export interface LedgerNoteDto {
+  key: string;
+  title: string;
+  detail: string | null;
+  /** "2026-10-17 09:12", "2026-10-16", or the file name's date. */
+  date: string;
+  promoted: boolean;
+  url: string;
+}
+
+/** A row of STATE.md's Quick Tasks Completed table: a quick task (a folder id) or a fast one. */
+export interface LedgerTaskDto {
+  key: string;
+  id: string;
+  kind: 'quick' | 'fast';
+  /** YYYY-MM-DD. */
+  date: string;
+  title: string;
+  status: string | null;
+  commit: string | null;
+  /** The quick task's PLAN and SUMMARY pages, only where those files exist. */
+  planUrl: string | null;
+  summaryUrl: string | null;
+}
+
+/** Work queued after the next step: a plan not yet summarised, or a phase not yet finished. */
+export interface LedgerQueueItemDto {
+  kind: 'plan' | 'phase';
+  /** The plan id (`03-02`), or "Phase 4". */
+  id: string;
+  label: string;
+  title: string;
+  detail: string | null;
+  url: string;
+}
+
 export interface DashboardLedgerDto {
   blockers: LedgerBlockerDto[];
   /** Newest first. */
   decisions: LedgerDecisionDto[];
   pace: { current: string | null; plans: PacePlanDto[] };
+  /** Highest severity first, newest first within a level. */
+  todos: { items: LedgerTodoDto[]; done: number };
+  /** Newest first. */
+  notes: LedgerNoteDto[];
+  /** Newest first. */
+  recent: LedgerTaskDto[];
+  queue: LedgerQueueItemDto[];
 }
 
 export function emptyLedger(): DashboardLedgerDto {
-  return { blockers: [], decisions: [], pace: { current: null, plans: [] } };
+  return {
+    blockers: [],
+    decisions: [],
+    pace: { current: null, plans: [] },
+    todos: { items: [], done: 0 },
+    notes: [],
+    recent: [],
+    queue: [],
+  };
 }
 
 interface Bullet {
@@ -290,6 +366,207 @@ function paceOf(project: Project): { current: string | null; plans: PacePlanDto[
   return { current, plans };
 }
 
+const baseName = (path: string): string => path.split('/').pop() ?? path;
+const SEVERITY_RANK: Record<TodoSeverity, number> = { high: 0, medium: 1, low: 2, unrated: 3 };
+
+/** Todo severity however a project spells it ("severity: major", "priority: P2"), as three levels. */
+export function severityOf(weight: string | null): TodoSeverity {
+  if (/^(blocker|critical|major|high|p0|p1)$/i.test(weight ?? '')) return 'high';
+  if (/^(medium|moderate|normal|p2)$/i.test(weight ?? '')) return 'medium';
+  if (/^(minor|low|cosmetic|trivial|p3|p4)$/i.test(weight ?? '')) return 'low';
+  return 'unrated';
+}
+
+function textOf(value: unknown): string | null {
+  if (typeof value === 'string') return value.trim() || null;
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  return null;
+}
+
+/** The first body paragraph that is not a heading or a quote, whitespace collapsed. */
+function paragraphsOf(body: string): string[] {
+  return body
+    .slice(0, MAX_SECTION_CHARS)
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter((paragraph) => paragraph && !paragraph.startsWith('#'));
+}
+
+function artifactsUnder(project: Project, prefix: string, resolverHas: (path: string) => boolean): Artifact[] {
+  return Object.values(project.artifacts)
+    .filter((artifact) => artifact.path.startsWith(prefix) && artifact.path.endsWith('.md') && resolverHas(artifact.path))
+    .sort((left, right) => (left.path < right.path ? -1 : left.path > right.path ? 1 : 0));
+}
+
+function dayOf(value: unknown): string | null {
+  return isoDay(value);
+}
+
+function todosOf(
+  project: Project,
+  resolver: ReturnType<typeof createSourceResolver>,
+): { items: LedgerTodoDto[]; done: number } {
+  const has = (path: string) => resolver.artifactUrl(path) !== null;
+  const files = artifactsUnder(project, '.planning/todos/pending/', has).map((artifact, index): LedgerTodoDto => {
+    const front = artifact.frontmatter;
+    const title = textOf(front.title) ?? baseName(artifact.path).replace(/\.md$/, '');
+    const paragraph = paragraphsOf(artifact.body).find((candidate) => !candidate.startsWith('>'));
+    const detail = paragraph?.replace(/\s+/g, ' ');
+    const weight = textOf(front.severity) ?? textOf(front.priority);
+    return {
+      key: `todo-file-${index}`,
+      title,
+      detail: detail && detail !== title ? detail : null,
+      area: textOf(front.area) ?? textOf(front.theme),
+      severity: severityOf(weight),
+      weight,
+      created: dayOf(front.created) ?? dayOf(front.date),
+      files: Array.isArray(front.files) ? front.files.filter((file): file is string => typeof file === 'string') : [],
+      url: resolver.artifactUrl(artifact.path),
+      sources: [],
+    };
+  });
+  const body = sectionBody(project, 'pendingTodos');
+  const listed = body
+    ? readBullets(body).map(
+        (bullet, index): LedgerTodoDto => ({
+          key: `todo-state-${index}`,
+          title: bullet.text,
+          detail: null,
+          area: null,
+          severity: 'unrated',
+          weight: null,
+          created: null,
+          files: [],
+          url: null,
+          sources: resolver.sourcesOf(bullet.text, bullet.group).sources,
+        }),
+      )
+    : [];
+  const items = [...files, ...listed].sort(
+    (left, right) =>
+      SEVERITY_RANK[left.severity] - SEVERITY_RANK[right.severity] ||
+      (right.created ?? '').localeCompare(left.created ?? ''),
+  );
+  const done =
+    artifactsUnder(project, '.planning/todos/done/', has).length +
+    artifactsUnder(project, '.planning/todos/completed/', has).length;
+  return { items, done };
+}
+
+function notesOf(project: Project, resolver: ReturnType<typeof createSourceResolver>): LedgerNoteDto[] {
+  const has = (path: string) => resolver.artifactUrl(path) !== null;
+  return artifactsUnder(project, '.planning/notes/', has)
+    .map((artifact, index): LedgerNoteDto => {
+      const front = artifact.frontmatter;
+      const paragraphs = paragraphsOf(artifact.body);
+      const name = baseName(artifact.path);
+      const title = textOf(front.title) ?? paragraphs.shift() ?? name;
+      const date = front.date instanceof Date
+        ? Number.isNaN(front.date.getTime())
+          ? null
+          : front.date.toISOString().slice(0, 16).replace('T', ' ')
+        : textOf(front.date)?.slice(0, 16) ?? null;
+      const context = textOf(front.context) ?? paragraphs[0] ?? null;
+      return {
+        key: `note-${index}`,
+        title: title.replace(/\s+/g, ' '),
+        detail: context ? context.replace(/\s+/g, ' ') : null,
+        date: (date ?? name.slice(0, 10)).replace(' 00:00', ''),
+        promoted: front.promoted === true,
+        url: resolver.artifactUrl(artifact.path) ?? '',
+      };
+    })
+    .sort((left, right) => right.date.localeCompare(left.date));
+}
+
+const lowerKeys = (row: Record<string, unknown>): Record<string, string> =>
+  Object.fromEntries(
+    Object.entries(row).map(([key, value]) => [key.trim().toLowerCase(), typeof value === 'string' ? value.trim() : '']),
+  );
+
+/** The rows of STATE.md's Quick Tasks Completed table with a valid date, newest first. */
+function recentOf(project: Project, resolver: ReturnType<typeof createSourceResolver>): LedgerTaskDto[] {
+  const state = Object.values(project.artifacts).find((artifact) => artifact.kind === 'state');
+  const rows = state?.structured.quickTasksCompleted;
+  if (!Array.isArray(rows)) return [];
+  const tasks: (LedgerTaskDto & { order: number })[] = [];
+  rows.slice(0, MAX_ENTRIES).forEach((raw, order) => {
+    if (raw === null || typeof raw !== 'object') return;
+    const row = lowerKeys(raw as Record<string, unknown>);
+    const date = (row.date ?? '').match(/^\d{4}-\d\d-\d\d/)?.[0];
+    const id = row['#'] ?? '';
+    if (!date || !id) return;
+    const folder = (row.directory ?? '').slice(0, 400).match(/\]\(([^)]+)\)/)?.[1]?.replace(/\/$/, '').split('/').pop();
+    const quick =
+      project.quickTasks.find((candidate) => folder && baseName(candidate.path) === folder) ??
+      project.quickTasks.find((candidate) => candidate.id === id) ??
+      null;
+    const artifactOf = (suffix: string) =>
+      quick ? Object.values(quick.artifacts).find((artifact) => artifact.path.endsWith(suffix)) : undefined;
+    const planPath = artifactOf('-PLAN.md')?.path;
+    const summaryPath = artifactOf('-SUMMARY.md')?.path;
+    const status = (row.status ?? '').replace(/^[—-]$/, '');
+    tasks.push({
+      key: `task-${order}`,
+      id,
+      kind: /^\d{6}-[a-z0-9]{3}$/.test(id) ? 'quick' : 'fast',
+      date,
+      title: splitTitle((row.description ?? '').replace(/\*\*/g, '')).title,
+      status: status ? status.replace(/\*\*/g, '').split(/[(;—:.,]/)[0].trim().slice(0, 28) || null : null,
+      commit: (row.commit ?? '').match(/[0-9a-f]{7}/)?.[0] ?? null,
+      planUrl: planPath ? resolver.artifactUrl(planPath) : null,
+      summaryUrl: summaryPath ? resolver.artifactUrl(summaryPath) : null,
+      order,
+    });
+  });
+  return tasks
+    .sort((left, right) => right.date.localeCompare(left.date) || right.order - left.order)
+    .map(({ order: _order, ...task }) => task);
+}
+
+/** Unfinished plans from the current phase on, then phases that are not finished and have no plan
+ * queued. The reader does not parse ROADMAP's checklist bullets, so "unchecked" reads as "not
+ * finished": a live phase that is not complete. */
+function queueOf(project: Project): LedgerQueueItemDto[] {
+  const state = Object.values(project.artifacts).find((artifact) => artifact.kind === 'state');
+  const current = parseFloat(String(state?.frontmatter.current_phase ?? ''));
+  if (Number.isNaN(current)) return [];
+  const phases: Phase[] = project.milestones
+    .filter((milestone) => !milestone.archived)
+    .flatMap((milestone) => milestone.phases)
+    .filter((phase) => parseFloat(phase.identity.number) >= current)
+    .sort((left, right) => parseFloat(left.identity.number) - parseFloat(right.identity.number));
+  const queue: LedgerQueueItemDto[] = [];
+  const queued = new Set<string>();
+  for (const phase of phases) {
+    const open = phase.plans
+      .filter((plan) => plan.summary === null)
+      .sort((left, right) => left.id.localeCompare(right.id, undefined, { numeric: true }));
+    for (const plan of open) {
+      const body = phase.artifacts[plan.path]?.body ?? '';
+      queued.add(phase.identity.number);
+      queue.push({
+        kind: 'plan',
+        id: plan.id,
+        label: plan.id,
+        title: objectiveSentence(body) ?? objectiveText(body) ?? baseName(plan.path),
+        detail: null,
+        url: buildPlanUrl(phase.identity, plan.id),
+      });
+    }
+  }
+  for (const phase of phases) {
+    if (phase.roadmapComplete === true || phase.diskStatus === 'complete') continue;
+    if (queued.has(phase.identity.number)) continue;
+    const number = parseFloat(phase.identity.number);
+    if (number === current && queue.length > 0) continue;
+    const label = `Phase ${phase.identity.number.replace(/^0+(?=\d)/, '')}`;
+    queue.push({ kind: 'phase', id: label, label, title: phase.name, detail: phase.goal, url: buildPhaseUrl(phase.identity) });
+  }
+  return queue;
+}
+
 export function buildDashboardLedger(project: Project): DashboardLedgerDto {
   const resolver = createSourceResolver(project);
   const blockersBody = sectionBody(project, 'blockersConcerns');
@@ -322,5 +599,13 @@ export function buildDashboardLedger(project: Project): DashboardLedgerDto {
         })
         .reverse()
     : [];
-  return { blockers, decisions, pace: paceOf(project) };
+  return {
+    blockers,
+    decisions,
+    pace: paceOf(project),
+    todos: todosOf(project, resolver),
+    notes: notesOf(project, resolver),
+    recent: recentOf(project, resolver),
+    queue: queueOf(project),
+  };
 }

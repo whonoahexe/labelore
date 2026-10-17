@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, CircleDot } from 'lucide-react';
+import { CircleDot } from 'lucide-react';
 import { Link } from 'react-router';
-import { type DashboardViewModel, type NextWorkItem } from '../../presentation/dashboard.ts';
+import type { DashboardViewModel } from '../../presentation/dashboard.ts';
 import type { DashboardHead } from '../../presentation/dashboard-head.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
 import { LeadText } from '../components/lead-tokens.tsx';
 import { BlockingBand, DecisionsSection } from './dashboard-ledger.tsx';
+import { OnDeckPanel, RecentWorkPanel } from './dashboard-deck.tsx';
 import { PaceSection } from './dashboard-pace.tsx';
 import { InvalidProjectScreen } from './invalid-project-screen.tsx';
 import { stripEmoji, stripMarkdown } from './strip-emoji.ts';
@@ -18,24 +19,6 @@ async function fetchDashboard(): Promise<DashboardResponse> {
   const response = await fetch('/api/dashboard', { headers: { Accept: 'application/json' } });
   if (!response.ok) throw new Error(`Dashboard request failed (${response.status})`);
   return (await response.json()) as DashboardResponse;
-}
-
-function kindLabel(kind: NextWorkItem['kind']): string {
-  return kind.replaceAll('-', ' ');
-}
-
-function NextWork({ item: rawItem }: { item: NextWorkItem }) {
-  const item = { ...rawItem, description: stripMarkdown(rawItem.description) };
-  return (
-    <Link className="next-preview" to={item.url}>
-      <div>
-        <span className="item-kind">{kindLabel(item.kind)}</span>
-        <strong>{stripMarkdown(item.title)}</strong>
-        <p>{item.description}</p>
-      </div>
-      <ArrowRight aria-hidden="true" />
-    </Link>
-  );
 }
 
 function ProjectNext({ next }: { next: DashboardHead['next'] }): React.JSX.Element {
@@ -193,24 +176,9 @@ export function DashboardPage(): React.JSX.Element {
 
       <PaceSection pace={view.pace} readAt={view.readAt} />
 
-      <section className="dashboard-grid">
-        <section className="preview-panel" aria-labelledby="preview-heading">
-          <header className="section-heading compact">
-            <div>
-              <p className="eyebrow">After the immediate item</p>
-              <h2 id="preview-heading">On deck</h2>
-            </div>
-          </header>
-          <div className="preview-list">
-            {view.next.previews.length > 0 ? (
-              view.next.previews.map((item) => <NextWork key={item.key} item={item} />)
-            ) : (
-              <p className="empty-note preview-empty">
-                No additional work is queued after this item.
-              </p>
-            )}
-          </div>
-        </section>
+      <section className="dashboard-lower">
+        <OnDeckPanel onDeck={view.onDeck} readAt={view.readAt} />
+        <RecentWorkPanel recent={view.recent} readAt={view.readAt} />
       </section>
     </main>
   );

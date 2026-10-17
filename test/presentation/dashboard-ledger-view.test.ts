@@ -7,19 +7,23 @@ import { describe, expect, it } from 'vitest';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
 import {
   NO_PHASE,
+  activityWindow,
   blockerGroups,
   blockingLead,
   decisionPhaseCounts,
   filterBlockers,
+  dayMark,
   filterDecisions,
+  groupByDay,
   groupByPhase,
   isUntagged,
   matchesQuery,
   pageOf,
   relativeDay,
+  severityLabel,
   type BlockerFilter,
 } from '../../src/presentation/dashboard-ledger-view.ts';
-import { buildDashboardLedger } from '../../src/server/dashboard-ledger.ts';
+import { buildDashboardLedger, severityOf } from '../../src/server/dashboard-ledger.ts';
 import { fromDirectory } from '../helpers/from-directory.ts';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -205,5 +209,79 @@ describe('decision helpers', () => {
   it('pages 17 decisions as three pages of eight', () => {
     expect(pageOf(17, 8, 0)).toMatchObject({ pages: 3, start: 0, end: 8, label: 'Showing 1–8 of 17' });
     expect(pageOf(17, 8, 2)).toMatchObject({ start: 16, end: 17, label: 'Showing 17 of 17' });
+  });
+});
+
+describe('todo severity', () => {
+  it.each([
+    ['major', 'high'],
+    ['high', 'high'],
+    ['critical', 'high'],
+    ['blocker', 'high'],
+    ['P0', 'high'],
+    ['p1', 'high'],
+    ['medium', 'medium'],
+    ['moderate', 'medium'],
+    ['normal', 'medium'],
+    ['P2', 'medium'],
+    ['minor', 'low'],
+    ['low', 'low'],
+    ['cosmetic', 'low'],
+    ['trivial', 'low'],
+    ['p3', 'low'],
+    ['P4', 'low'],
+    ['whenever', 'unrated'],
+    [null, 'unrated'],
+  ] as const)('%s reads %s', (weight, severity) => {
+    expect(severityOf(weight)).toBe(severity);
+  });
+
+  it('labels the four levels', () => {
+    expect(['high', 'medium', 'low', 'unrated'].map((level) => severityLabel(level as 'high'))).toEqual([
+      'High',
+      'Medium',
+      'Low',
+      'Unrated',
+    ]);
+  });
+});
+
+describe('recent work helpers', () => {
+  const SYNTHETIC_ROOT = join(REPO_ROOT, 'test/fixtures/dashboard/synthetic');
+  async function recent() {
+    const snapshot = await new PlanningRepository(await fromDirectory(SYNTHETIC_ROOT), SYNTHETIC_ROOT).load();
+    return buildDashboardLedger(snapshot.project!).recent;
+  }
+
+  it('windows twenty-one days ending on the newest task', async () => {
+    const window = activityWindow(await recent());
+    expect(window.days).toHaveLength(21);
+    expect(window.days[0].day).toBe('2026-09-26');
+    expect(window.days[20].day).toBe('2026-10-16');
+    expect(window.total).toBe(7);
+    expect(window.days.find((d) => d.day === '2026-10-11')).toMatchObject({ quick: 1, fast: 1 });
+    expect(window.max).toBe(2);
+    expect(activityWindow([])).toEqual({ days: [], total: 0, max: 0 });
+  });
+
+  it('counts only tasks inside the window', async () => {
+    const tasks = await recent();
+    const old = { ...tasks[0], key: 'old', date: '2026-08-01' };
+    expect(activityWindow([...tasks, old]).total).toBe(7);
+  });
+
+  it('groups a first page of five by day', async () => {
+    const page = (await recent()).slice(0, 5);
+    expect(groupByDay(page).map((g) => [g.day, g.items.length])).toEqual([
+      ['2026-10-16', 1],
+      ['2026-10-14', 1],
+      ['2026-10-13', 1],
+      ['2026-10-11', 2],
+    ]);
+  });
+
+  it('marks a day with its number, month and weekday', () => {
+    expect(dayMark('2026-10-16')).toEqual({ number: 16, label: 'Oct · Fri' });
+    expect(dayMark('2026-01-01')).toEqual({ number: 1, label: 'Jan · Thu' });
   });
 });

@@ -10,6 +10,7 @@ import { InMemoryPlanningFilesystem } from '../../src/planning-fs/in-memory-fs.t
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
 import type { ProjectSnapshot } from '../../src/planning-repo/types.ts';
 import { buildDashboardLedger, emptyLedger } from '../../src/server/dashboard-ledger.ts';
+import { buildDashboardViewModel } from '../../src/presentation/dashboard.ts';
 import { createApp } from '../../src/server/index.ts';
 import { toProjectPresentation } from '../../src/server/project-presentation.ts';
 import { fromDirectory } from '../helpers/from-directory.ts';
@@ -327,6 +328,210 @@ describe('dashboard ledger: pace rows', () => {
       ['01-01', 'v1.0', '2026-09-01', 25, false, null, 4],
       ['01-02', 'v1.0', null, 10, false, null, null],
     ]);
+  });
+});
+
+describe('dashboard ledger: todos and notes', () => {
+  it('lists the synthetic todos by severity, then newest, with STATE.md todos last', async () => {
+    const { presentation, ledger } = await ledgerOfDirectory(SYNTHETIC_ROOT);
+    const { items, done } = ledger.todos;
+    expect(done).toBe(1);
+    expect(items.map((t) => [t.title, t.severity, t.weight, t.area, t.created, t.files, t.detail])).toEqual([
+      [
+        'Move filings that fail five retries into a dead-letter view brokers can see',
+        'high',
+        'major',
+        'gateway',
+        '2026-10-12',
+        ['src/gateway/retry-queue.ts:88-140', 'src/web/pages/filings.tsx'],
+        'After five failed retries a filing just stops. Nothing tells the broker.',
+      ],
+      ["show the tariff schedule's own notes as tooltips on HS codes", 'medium', 'P2', 'general', '2026-10-16', [], null],
+      [
+        "Export the reconciliation report as a PDF for the importer's records",
+        'low',
+        'minor',
+        'reporting',
+        '2026-10-15',
+        ['src/reports/reconciliation.ts'],
+        'Importers ask for a printable record of each reconciliation.',
+      ],
+      ['Swap the tariff snapshot loader to stream instead of reading the whole file (memory spikes on the 2026 schedule)', 'unrated', null, null, null, [], null],
+      ['Decide whether reconciliation emails go to the broker or the importer of record', 'unrated', null, null, null, [], null],
+    ]);
+    // Only a todo that is a file links out; a STATE.md todo has no url and names no source here.
+    expect(items.map((t) => t.url !== null)).toEqual([true, true, true, false, false]);
+    expect(items[0].url).toBe(keyOf(presentation, '.planning/todos/pending/2026-10-12-retry-queue-dead-letter.md'));
+    expect(items.slice(3).every((t) => t.sources.length === 0)).toBe(true);
+  });
+
+  it('reads the ledger fixture todos, with the Security source on the first STATE.md todo', async () => {
+    const { ledger } = await ledgerOfDirectory(LEDGER_ROOT);
+    expect(ledger.todos.done).toBe(1);
+    expect(ledger.todos.items.map((t) => [t.title, t.severity])).toEqual([
+      ['Show filings that fail five retries in a dead-letter view', 'high'],
+      ['Add timing tests for the scanners (03-SECURITY notes 1–2)', 'unrated'],
+      ['Decide whether reconciliation emails go to the broker or the importer', 'unrated'],
+    ]);
+    expect(ledger.todos.items[0]).toMatchObject({ area: 'gateway', created: '2026-07-18', files: ['src/gateway/retry.ts:88-140', 'src/web/filings.tsx'], detail: 'After five failed retries a filing just stops.' });
+    expect(ledger.todos.items[1].sources.map((s) => [s.kind, s.label, s.meta])).toEqual([['Security', '03-SECURITY', 'Phase 03']]);
+    expect(ledger.todos.items[2].sources).toEqual([]);
+  });
+
+  it('reads notes newest first, with the promoted flag', async () => {
+    const { ledger } = await ledgerOfDirectory(SYNTHETIC_ROOT);
+    expect(ledger.notes.map((n) => [n.date, n.promoted, n.title.slice(0, 24)])).toEqual([
+      ['2026-10-17 09:12', false, 'phase 4 might be too big'],
+      ['2026-10-16 14:47', true, "show the tariff schedule"],
+      ['2026-10-13 11:05', false, 'sandbox empty-body respo'],
+      ['2026-10-08 18:20', false, 'brokers keep asking for '],
+    ]);
+    const led = (await ledgerOfDirectory(LEDGER_ROOT)).ledger.notes;
+    expect(led.map((n) => [n.title, n.date, n.promoted])).toEqual([
+      ['03-REVIEW WR-02 needs a regression test before it closes.', '2026-07-20 10:00', false],
+    ]);
+  });
+
+  it('degrades without a todos folder, a notes folder or a STATE.md', async () => {
+    const bare = await snapshotOf({ '.planning/PROJECT.md': '# P\n' });
+    const ledger = toProjectPresentation(bare).ledger;
+    expect(ledger.todos).toEqual({ items: [], done: 0 });
+    expect(ledger.notes).toEqual([]);
+    expect(ledger.recent).toEqual([]);
+    expect(ledger.queue).toEqual([]);
+  });
+
+  it('survives a todo with a non-string title, files or severity, and a note with no frontmatter', async () => {
+    const snapshot = await snapshotOf({
+      '.planning/PROJECT.md': '# P\n',
+      '.planning/todos/pending/odd.md':
+        '---\ntitle: 42\nseverity: [a, b]\npriority: 3\nfiles: nope\narea: {x: 1}\ncreated: notadate\n---\n\nBody paragraph.\n',
+      '.planning/todos/pending/bare.md': 'No frontmatter at all.\n',
+      '.planning/notes/plain.md': 'First paragraph is the title.\n\nSecond paragraph is the detail.\n',
+      '.planning/notes/2026-09-01-empty.md': '---\n---\n',
+    });
+    const { todos, notes } = toProjectPresentation(snapshot).ledger;
+    expect(todos.items.map((t) => [t.title, t.severity, t.weight, t.files, t.area, t.created])).toEqual([
+      ['bare', 'unrated', null, [], null, null],
+      ['42', 'unrated', '3', [], null, null],
+    ]);
+    expect(todos.items[0].detail).toBe('No frontmatter at all.');
+    expect(notes.map((n) => [n.title, n.detail, n.date])).toEqual([
+      ['First paragraph is the title.', 'Second paragraph is the detail.', 'plain.md'],
+      ['2026-09-01-empty.md', null, '2026-09-01'],
+    ]);
+  });
+});
+
+describe('dashboard ledger: recent work', () => {
+  it('reads the synthetic quick and fast tasks newest first with links only where files exist', async () => {
+    const { presentation, ledger } = await ledgerOfDirectory(SYNTHETIC_ROOT);
+    expect(ledger.recent.map((t) => [t.id, t.kind, t.date, t.status])).toEqual([
+      ['12', 'fast', '2026-10-16', null],
+      ['261014-k2p', 'quick', '2026-10-14', null],
+      ['10', 'fast', '2026-10-13', null],
+      ['9', 'fast', '2026-10-11', null],
+      ['261011-a7q', 'quick', '2026-10-11', 'Needs Review'],
+      ['7', 'fast', '2026-10-10', null],
+      ['261009-m3d', 'quick', '2026-10-09', 'Verified'],
+    ]);
+    const byId = (id: string) => ledger.recent.find((t) => t.id === id)!;
+    expect(byId('261014-k2p').planUrl).toBe(
+      keyOf(presentation, '.planning/quick/261014-k2p-retry-banner-copy/261014-k2p-PLAN.md'),
+    );
+    expect(byId('261014-k2p').summaryUrl).toBeNull();
+    expect(byId('261011-a7q').summaryUrl).toBe(
+      keyOf(presentation, '.planning/quick/261011-a7q-broker-csv-export/261011-a7q-SUMMARY.md'),
+    );
+    expect(byId('12').planUrl).toBeNull();
+    expect(byId('261009-m3d').commit).toBe('4e1a9c2');
+  });
+
+  it('reads the ledger and dense fixtures', async () => {
+    const led = (await ledgerOfDirectory(LEDGER_ROOT)).ledger.recent;
+    expect(led.map((t) => [t.id, t.kind, t.date, t.commit, t.status, t.planUrl !== null, t.summaryUrl !== null])).toEqual([
+      ['3', 'fast', '2026-07-15', '9b03d17', null, false, false],
+      ['260714-3tp', 'quick', '2026-07-14', '4e1a9c2', 'Verified', true, true],
+    ]);
+    const dense = (await ledgerOfDirectory(DENSE_ROOT)).ledger.recent;
+    expect(dense.map((t) => [t.id, t.kind, t.date, t.title, t.status, t.commit, t.planUrl !== null, t.summaryUrl !== null])).toEqual([
+      ['2', 'fast', '2026-07-01', 'Fix quick task typo', 'Needs Review', null, true, false],
+      ['1', 'fast', '2026-06-15', 'Add transport adapter stub', null, 'a1b2c3d', true, true],
+    ]);
+  });
+
+  it('drops a row with a malformed date and keeps the rest', async () => {
+    const snapshot = await snapshotOf({
+      '.planning/STATE.md': [
+        '---', 'status: x', '---', '', '## Accumulated Context', '', '### Quick Tasks Completed', '',
+        '| # | Description | Date | Commit | Status | Directory |',
+        '|---|-------------|------|--------|--------|-----------|',
+        '| 1 | Good one | 2026-10-01 | abcdef1 | Verified | — |',
+        '| 2 | Bad date | someday | abcdef2 | — | — |',
+        '| 3 | **Bold** title (extra) | 2026-10-02 | | **Shipped (partly)** | — |',
+        '',
+      ].join('\n'),
+    });
+    const recent = toProjectPresentation(snapshot).ledger.recent;
+    expect(recent.map((t) => [t.id, t.title, t.status])).toEqual([
+      ['3', 'Bold title (extra)', 'Shipped'],
+      ['1', 'Good one', 'Verified'],
+    ]);
+  });
+});
+
+describe('dashboard ledger: the queue', () => {
+  it('queues the synthetic plans and phase, and the view drops the plan the head names', async () => {
+    const { presentation, ledger } = await ledgerOfDirectory(SYNTHETIC_ROOT);
+    expect(ledger.queue.map((q) => [q.kind, q.id])).toEqual([
+      ['plan', '03-01'],
+      ['plan', '03-02'],
+      ['plan', '03-03'],
+      ['phase', 'Phase 4'],
+    ]);
+    const view = buildDashboardViewModel(presentation);
+    expect(view.head.next?.step?.plan?.id).toBe('03-01');
+    expect(view.onDeck.queue.map((q) => [q.kind, q.id, q.title, q.detail])).toEqual([
+      ['plan', '03-02', 'Show unreconciled corrections in a broker review queue with the duty difference.', null],
+      ['plan', '03-03', 'Auto-reconcile differences under the threshold and record who signed off the rest.', null],
+      ['phase', 'Phase 4', 'Importer Reporting', 'Importers can see their own filings, corrections and reconciliation reports without asking the broker.'],
+    ]);
+    const phases = presentation.milestones.flatMap((m) => m.phases);
+    const plan32 = phases.flatMap((p) => p.plans).find((p) => p.id === '03-02');
+    expect(view.onDeck.queue[0].url).toBe(plan32?.key);
+    const phase4 = phases.find((p) => p.identity.number === '4');
+    expect(view.onDeck.queue[2].url).toContain(phase4!.key);
+    expect(view.onDeck.todosDone).toBe(1);
+    expect(view.onDeck.notes.map((n) => n.promoted)).toEqual([false, false, false, true]);
+    expect(view.recent).toHaveLength(7);
+  });
+
+  it('queues Phase 4 after the head drops the ledger fixture plan', async () => {
+    const { presentation } = await ledgerOfDirectory(LEDGER_ROOT);
+    const view = buildDashboardViewModel(presentation);
+    expect(view.head.next?.step?.plan?.id).toBe('03-02');
+    expect(view.onDeck.queue.map((q) => [q.kind, q.id, q.title, q.detail])).toEqual([
+      ['phase', 'Phase 4', 'Importer Portal', 'Importers see their own filings without asking the broker.'],
+    ]);
+  });
+
+  it('keeps at most six, and drops nothing when the head names no plan', async () => {
+    const plans = Object.fromEntries(
+      Array.from({ length: 8 }, (_, i) => [
+        `.planning/phases/01-a/01-0${i + 1}-PLAN.md`,
+        `<objective>\nPlan ${i + 1}.\n</objective>\n`,
+      ]),
+    );
+    const open = await snapshotOf({
+      '.planning/STATE.md': '---\nstatus: x\ncurrent_phase: 1\n---\n',
+      ...plans,
+    });
+    const view = buildDashboardViewModel(toProjectPresentation(open));
+    expect(view.onDeck.queue).toHaveLength(6);
+    expect(view.onDeck.queue[0].id).not.toBe('01-01');
+
+    const noStep = buildDashboardViewModel(toProjectPresentation(await snapshotOf({ '.planning/PROJECT.md': '# P\n' })));
+    expect(noStep.onDeck).toEqual({ queue: [], todos: [], todosDone: 0, notes: [] });
   });
 });
 

@@ -91,8 +91,9 @@ describe('production SPA deep-link delivery', () => {
     expect(payloads.map((payload) => payload.readAt)).toEqual(Array(4).fill(snapshot.readAt));
     expect(payloads[1]).toMatchObject({
       loadStatus: { status: 'ok' },
-      decisions: { items: [] },
-      blockers: { items: [] },
+      // quick-261018-4tb: decisions and blockers are plain lists built from the ledger.
+      decisions: [],
+      blockers: [],
     });
     expect(payloads[2]).toMatchObject({ active: null, history: [] });
     expect(payloads[3]).toMatchObject({ history: [] });
