@@ -575,10 +575,11 @@ element is actually written, regardless of class name:
   step follows `/gsd-next`'s routing from the files on disk (execute, discuss, plan, verify,
   complete or start a milestone), and an execute step names its first open plan as an inline link
   ("Execute phase 5, from 05-01"). Absences are silent, except the card's "No plans in this phase
-  yet." and "No STATE.md yet" lines. Core Value is not shown, and blockers and gates stay in Needs
-  attention. The accent goes to the Now block's left rule and label, the card's top rule, the done
-  bar segments, and the plan link on hover. The next plan's segment takes `--in-flight-fill`.
-  Status chips use only `active` and `complete`. No motion.
+  yet." and "No STATE.md yet" lines. Core Value is not shown here (it is the Traceability page's
+  lede, cut by the same lead rules, and absent without a Core Value section), and blockers and
+  gates stay in Needs attention. The accent goes to the Now block's left rule and label, the
+  card's top rule, the done bar segments, and the plan link on hover. The next plan's segment
+  takes `--in-flight-fill`. Status chips use only `active` and `complete`. No motion.
 
 ## Surface-scoped registered names
 
