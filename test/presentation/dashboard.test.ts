@@ -112,7 +112,6 @@ function presentation(
       milestoneName: null,
       lastActivity: null,
       lastActivityDescription: null,
-      currentFocus: null,
       progress: {
         totalPhases: 4,
         completedPhases: 1,

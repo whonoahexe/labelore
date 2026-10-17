@@ -90,7 +90,6 @@ function ProjectNext({ next }: { next: DashboardHead['next'] }): React.JSX.Eleme
     );
   }
   const { plans, step, last } = next;
-  const stepTitle = step ? <strong>{stripEmoji(step.title)}</strong> : null;
   return (
     <aside className="immediate-work project-next" aria-labelledby="project-next-heading">
       <p className="eyebrow" id="project-next-heading">Next up</p>
@@ -122,14 +121,19 @@ function ProjectNext({ next }: { next: DashboardHead['next'] }): React.JSX.Eleme
           {last.text ? stripMarkdown(stripEmoji(last.text)) : null}
         </p>
       ) : null}
-      {step?.kind === 'plan' && step.url ? (
-        <Link className="project-next-step" to={step.url}>
-          {step.id ? <span className="project-next-id">{step.id}</span> : null}
-          {stepTitle}
-        </Link>
-      ) : step ? (
-        <div className="project-next-step" data-done={step.kind === 'milestone'}>
-          {stepTitle}
+      {step ? (
+        <div className="project-next-step" data-done={step.kind === 'new-milestone'}>
+          <strong>
+            {step.title}
+            {step.plan ? (
+              <>
+                , from{' '}
+                <Link className="project-next-plan" to={step.plan.url}>
+                  {step.plan.id}
+                </Link>
+              </>
+            ) : null}
+          </strong>
         </div>
       ) : (
         <p className="empty-note">No dependency-ready work is reported in the active milestone.</p>

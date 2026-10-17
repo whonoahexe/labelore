@@ -571,10 +571,12 @@ element is actually written, regardless of class name:
   What This Is lead: a leading bold sentence, or sentences up to about 70 characters (never more
   than two). Then comes a "Now" block: milestone · phase, the phase title and the status chip on
   its own line. Beside it, centred on it, one card reads Next up, then this phase's own plan
-  progress, the last activity and the next step in full. Absences are silent, except the card's
-  "No plans in this phase yet." and "No STATE.md yet" lines. Core Value is not shown, and blockers
-  and gates stay in Needs attention. The accent goes to the Now block's left rule and label, the
-  card's top rule, the done bar segments, and the step title on hover. The next plan's segment
+  progress, the last activity and the next step. The step follows `/gsd-next`'s routing from the
+  files on disk (execute, discuss, plan, verify, complete or start a milestone), and an execute
+  step names its first open plan as an inline link ("Execute phase 5, from 05-01"). Absences are
+  silent, except the card's "No plans in this phase yet." and "No STATE.md yet" lines. Core Value
+  is not shown, and blockers and gates stay in Needs attention. The accent goes to the Now block's
+  left rule and label, the card's top rule, the done bar segments, and the plan link on hover. The next plan's segment
   takes `--in-flight-fill`. Status chips use only `active` and `complete`. No motion.
 
 ## Surface-scoped registered names
@@ -629,10 +631,10 @@ plan's "no AST tooling" constraint.
 | `project-next-bar` | Dashboard | |
 | `project-next-counts` | Dashboard | |
 | `project-next-figure` | Dashboard | |
-| `project-next-id` | Dashboard | |
 | `project-next-label` | Dashboard | |
 | `project-next-last` | Dashboard | |
 | `project-next-percent` | Dashboard | |
+| `project-next-plan` | Dashboard | |
 | `project-next-progress` | Dashboard | |
 | `project-next-step` | Dashboard | |
 | `project-next-unit` | Dashboard | |
