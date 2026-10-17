@@ -7,6 +7,7 @@ import type { ArtifactHandler, RawArtifact, ArtifactRef } from '../types.ts';
 import { tryParseFrontmatter } from '../frontmatter.ts';
 import { deriveTitle } from './title.ts';
 import { parseMilestoneFileName } from '../naming.ts';
+import { splitSections } from './markdown-sections.ts';
 
 export interface RoadmapPlanEntry {
   id: string;
@@ -185,6 +186,8 @@ export const RoadmapHandler: ArtifactHandler = {
         /** Live/current-milestone phase blocks — outside any collapsed <details> group. */
         phases,
         dependencyShape: extractDependencyShape(remainder),
+        /** The `## Overview` section's body, or null without one. */
+        overview: splitSections(fm.body).find((section) => /^overview\b/i.test(section.heading))?.body ?? null,
       },
     };
   },

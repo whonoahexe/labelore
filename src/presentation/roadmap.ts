@@ -5,6 +5,7 @@ import type {
   PlanDto,
   ProjectPresentation,
 } from '../server/project-presentation.ts';
+import { sectionParagraph } from './dashboard-head.ts';
 import { buildMilestoneUrl, buildPhaseUrl, buildPlanUrl } from './routes.ts';
 
 export interface RoadmapPlanRow {
@@ -62,6 +63,8 @@ export interface MilestoneFlow {
 export interface RoadmapViewModel {
   readAt: string;
   projectName: string | null;
+  /** The first paragraph of ROADMAP.md's Overview section — the page's lede — or null without one. */
+  overview: string | null;
   active: MilestoneFlow | null;
   history: MilestoneFlow[];
 }
@@ -232,9 +235,13 @@ function milestoneFlow(milestone: MilestoneDto, presentation: ProjectPresentatio
 
 export function buildRoadmapViewModel(presentation: ProjectPresentation): RoadmapViewModel {
   const active = presentation.milestones.find((milestone) => !milestone.archived) ?? null;
+  const overview = presentation.artifacts.find(
+    (artifact) => artifact.kind === 'roadmap' && artifact.location === 'root',
+  )?.structured.overview;
   return {
     readAt: presentation.readAt,
     projectName: presentation.projectName,
+    overview: typeof overview === 'string' ? sectionParagraph(overview) : null,
     active: active ? milestoneFlow(active, presentation) : null,
     history: presentation.milestones
       .filter((milestone) => milestone.archived)

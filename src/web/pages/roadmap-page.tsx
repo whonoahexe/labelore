@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
 import { EmptyState } from '../components/empty-state.tsx';
+import { LeadText } from '../components/lead-tokens.tsx';
 import type {
   MilestoneFlow,
   RoadmapPhaseRow,
@@ -343,10 +344,11 @@ export function RoadmapPage(): React.JSX.Element {
         <div>
           <p className="eyebrow">Execution narrative</p>
           <h1>Roadmap</h1>
-          <p className="lede">
-            Follow each phase from intent to completion. Waves group plans that can be executed at
-            the same stage; their titles come directly from the roadmap.
-          </p>
+          {view.overview ? (
+            <p className="lede">
+              <LeadText text={stripEmoji(view.overview)} />
+            </p>
+          ) : null}
         </div>
         <Link className="text-link" to={view.active?.url ?? '/roadmap'}>
           <Link2 aria-hidden="true" />

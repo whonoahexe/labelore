@@ -115,6 +115,12 @@ export function sectionLead(sectionBody: string): string | null {
   return withoutEmphasis(lead);
 }
 
+/** A section's first paragraph, emphasis flattened, or null when it has none. */
+export function sectionParagraph(sectionBody: string): string | null {
+  const [first] = paragraphs(sectionBody);
+  return first ? withoutEmphasis(first) : null;
+}
+
 /** A short activity clause: quick-task ids dropped, cut at the first " — ", unclosed " (" or "; ",
  * and capped at 72 characters. */
 export function activityClause(text: string | null): string | null {
