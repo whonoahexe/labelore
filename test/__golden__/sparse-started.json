@@ -174,8 +174,7 @@
               "roadmapComplete": false
             }
           ],
-          "dependencyShape": "Phase 1 (identity) ──► Phase 2 (roles) ──► Phase 3 (admin + revocation)\n                              │\n                              └──────────► Phase 4 (bulk archive)   [∥ Phase 3]",
-          "overview": "This project has exactly one phase planned and no execution history yet — the shape of any real\nproject in its first weeks, before a single plan has been executed. The dependency shape below is\nfree-form ASCII carried through from `~/.claude/gsd-core/templates/roadmap.md` verbatim; it is opaque\ntext, never structurally parsed by this dashboard.\n\n**Dependency shape:**\n```\nPhase 1 (identity) ──► Phase 2 (roles) ──► Phase 3 (admin + revocation)\n                              │\n                              └──────────► Phase 4 (bulk archive)   [∥ Phase 3]\n```"
+          "dependencyShape": "Phase 1 (identity) ──► Phase 2 (roles) ──► Phase 3 (admin + revocation)\n                              │\n                              └──────────► Phase 4 (bulk archive)   [∥ Phase 3]"
         }
       },
       ".planning/STATE.md": {
