@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-17T19:28:32.952Z"
+last_updated: "2026-10-17T19:31:01.685Z"
 last_activity: 2026-10-17
 last_activity_desc: Completed quick task 261016-2j6 (compact discussion-log tables)
-state_head: dd550cae8c21b6110b406c877c50fb09fc30829e
+state_head: e8907042d4423bbca73899e3997d2edcffe9793e
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -197,6 +197,7 @@ None.
 | 82 | Auto-increase the server port when 4173 is taken | 2026-10-18 | 85883d1 | — |
 | 83 | Replace the Traceability lede with PROJECT.md's Core Value | 2026-10-18 | e567b6f | — |
 | 84 | Remove the Checked and Status mismatch figures from the Traceability summary | 2026-10-18 | dd550ca | — |
+| 85 | Rename No directory to Not started and hide zero figures on Traceability | 2026-10-18 | e890704 | — |
 
 ## Deferred Items
 
