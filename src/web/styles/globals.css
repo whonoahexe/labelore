@@ -1092,6 +1092,10 @@ summary.tree-node-row:focus-visible {
   box-shadow: none;
 }
 
+.project-next .eyebrow {
+  margin-bottom: 0;
+}
+
 .project-next-progress {
   display: grid;
   gap: var(--space-2);
