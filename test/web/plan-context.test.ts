@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { buildArtifactUrl, buildPlanUrl } from '../../src/presentation/routes.ts';
 import type { ArtifactDto, PhaseDto, PlanDto, ProjectPresentation } from '../../src/server/project-presentation.ts';
 import { findPlanContext } from '../../src/web/views/plan-context.ts';
+import { emptyLedger } from '../../src/server/dashboard-ledger.ts';
 
 const IDENTITY = { milestoneVersion: null, number: '01', projectCode: null, slug: 'identity' } as const;
 
@@ -96,6 +97,7 @@ function presentation(overrides: Partial<ProjectPresentation> = {}): ProjectPres
     coverageWaits: [],
     mentions: { byId: {}, all: [] },
     exclusions: [],
+    ledger: emptyLedger(),
     ...overrides,
   };
 }

@@ -25,6 +25,7 @@ import {
   handleDocumentReferenceActivation,
   restoreDocumentReferenceFocus,
 } from '../../src/web/pages/document-reference-activation.ts';
+import { emptyLedger } from '../../src/server/dashboard-ledger.ts';
 
 const activeIdentity = {
   milestoneVersion: 'v2.0',
@@ -156,6 +157,7 @@ function presentation(): ProjectPresentation {
     coverageWaits: [],
     mentions: { byId: {}, all: [] },
     exclusions: [],
+    ledger: emptyLedger(),
   };
 }
 
@@ -556,6 +558,7 @@ describe('BACK-02 — decision/warning mentions, phase-local-then-corpus resolut
       coverageWaits: [],
       mentions: { byId: {}, all: [] },
       exclusions: [],
+      ledger: emptyLedger(),
     };
   }
 

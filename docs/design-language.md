@@ -580,17 +580,25 @@ element is actually written, regardless of class name:
   their own panel below. The accent goes to the Now block's left rule and label, the
   card's top rule, the done bar segments, and the plan link on hover. The next plan's segment
   takes `--in-flight-fill`. Status chips use only `active` and `complete`. No motion.
-- **Below the head, STATE.md's Decisions and Blockers sit side by side, with On deck under them.**
-  Both keep the retired Needs attention panel's look (`attention-panel`, `attention-list`,
-  `attention-pagination`): eyebrows "Settled" and "Unresolved", an icon column (a gavel for a
-  decision, a shield for a blocker), an `item-kind` label, a bold title, a muted detail and a
-  source note linking to the section in STATE.md, four rows to a page. The label is the bullet's
-  leading `[Phase 05]:` tag, or the kind when it has none. Every row has a detail: the text splits
-  at a leading bold lead, else its first spaced em dash, else after its first sentence, and a
-  single-clause entry becomes the detail under "Recorded decision" or "Open blocker". Every row
-  is 11rem tall, with title and detail clamped to two lines each and the source note on the
-  row's floor. Decisions read newest first. An empty section shows a `quiet-state` line. Rows
-  are not links.
+- **Blockers lead below the head.** (quick-261018-4tb, sketch 026 B) Directly under the head, open
+  blockers fill one full-width red band: a "Blocking" eyebrow, the open count and "open blockers,
+  plus N marked resolved", a group legend that filters (All, each group, Untagged), the most urgent
+  blocker in the current filter as a large sentence with its sources, a search box, a "Show
+  resolved" toggle, and the rest as one-line rows that expand in place, five to a page. With nothing
+  open the band is one quiet line, "Nothing blocking. No open blockers are recorded". The lead is the
+  first urgent open blocker in view, else the first open one. A blocker links only to documents it
+  names that resolve to a real file (a review finding, a phase document, a plan, a quick task, a
+  requirement, a named `.md` path, including one on its group line), and lists up to eight other
+  files that cite the same finding, quick task or requirement under "Also mentioned in". One that
+  names nothing is Untagged: a dashed marker, its own legend entry, a note that its text is the
+  whole record, and Copy text. The band never names the file the blockers were read from. Its
+  accent is the destructive family (`--destructive`, `--destructive-border`, `--destructive-tint`)
+  as a content colour for open blockers only, never as a `data-tone` and never for parse state.
+- **Below the blockers, STATE.md's Decisions sit beside On deck.** Decisions keep the retired
+  Needs attention panel's look (`attention-panel`, `attention-list`, `attention-pagination`) until
+  the phase rail replaces it (quick-261018-4tb): an eyebrow "Settled", an icon column, an
+  `item-kind` label, a bold title, a muted detail and a source note linking to the section in
+  STATE.md, four rows to a page, newest first. Rows are not links.
 
 ## Surface-scoped registered names
 
@@ -608,15 +616,49 @@ plan's "no AST tooling" constraint.
 | Class | Surface | Note |
 |---|---|---|
 | `attention-list` | Dashboard | the Decisions and Blockers rows |
-| `attention-page-status` | Dashboard | |
-| `attention-pagination` | Dashboard | |
-| `attention-pagination-actions` | Dashboard | |
+| `attention-page-status` | Dashboard | every dashboard pager |
+| `attention-pagination` | Dashboard | every dashboard pager (Blocking, Decisions, On deck, Recent work); shared with the requirement lists |
+| `attention-pagination-actions` | Dashboard | every dashboard pager |
 | `attention-panel` | Dashboard | the Decisions and Blockers panels; shared with the CONTEXT brief (quick-260923-lju) |
+| `blocking-band` | Dashboard | the full-width red band under the head that leads with the most urgent open blocker (quick-261018-4tb) |
+| `blocking-calm` | Dashboard | the one quiet line shown when no blocker is open |
+| `blocking-dot` | Dashboard | a blocker row's square marker; filled when urgent, a turned hollow diamond when resolved |
+| `blocking-lead` | Dashboard | the most urgent blocker in the current filter, as a large sentence |
+| `blocking-lead-sources` | Dashboard | the lead's source links, or its Untagged note |
+| `blocking-lead-title` | Dashboard | |
+| `blocking-lead-why` | Dashboard | |
+| `blocking-legend` | Dashboard | the group filter beside the count; buttons carry `data-on` and `data-untagged` |
+| `blocking-main` | Dashboard | |
+| `blocking-summary` | Dashboard | the band's left column: the eyebrow, the open count and the legend |
+| `blocking-tag` | Dashboard | a blocker's caps lead or Time-bound label; `data-quiet` for a resolved one |
+| `blocking-total` | Dashboard | the open count, in the destructive colour |
 | `dashboard-grid` | Dashboard | |
 | `dashboard-loading` | Dashboard | |
 | `dashboard-page` | Dashboard | |
 | `immediate-work` | Dashboard | shared with the CONTEXT brief (quick-260923-lju) |
 | `item-kind` | Dashboard | |
+| `ledger-chip` | Dashboard | a filter or toggle chip, and a link chip for a file that also mentions the entry; `data-on` marks the active one |
+| `ledger-chips` | Dashboard | |
+| `ledger-go` | Dashboard | a small bordered mono link or button (Copy text, a source link) |
+| `ledger-kicker` | Dashboard | the shared mono uppercase micro-label |
+| `ledger-mentions` | Dashboard | the Also mentioned in chips and their 'and N more' note |
+| `ledger-quiet` | Dashboard | muted text inside a ledger section |
+| `ledger-row` | Dashboard | one expandable row; `data-open`, and on a blocker `data-urgent` and `data-resolved` |
+| `ledger-row-body` | Dashboard | |
+| `ledger-row-chevron` | Dashboard | turns a quarter turn when its row is open, without a transition |
+| `ledger-row-facts` | Dashboard | the expanded row's label and value list |
+| `ledger-row-head` | Dashboard | the button that opens and closes a row |
+| `ledger-row-links` | Dashboard | the row's go-links |
+| `ledger-row-title` | Dashboard | a row's title; one line closed, wrapped and semibold open |
+| `ledger-rows` | Dashboard | the hairline-ruled list of rows |
+| `ledger-search` | Dashboard | the search box shared by Blocking and Decisions |
+| `ledger-source` | Dashboard | a card linking to a document an entry names |
+| `ledger-source-detail` | Dashboard | a source card's two-line clamp |
+| `ledger-source-head` | Dashboard | |
+| `ledger-source-sum` | Dashboard | the collapsed row's source chip; `data-untagged` is dashed |
+| `ledger-sources` | Dashboard | |
+| `ledger-tools` | Dashboard | the search and toggle row |
+| `ledger-untagged` | Dashboard | the dashed note on an entry that names no source, with Copy text |
 | `next-preview` | Dashboard | |
 | `position-hero` | Dashboard | now used by the CONTEXT brief alone; the dashboard opens on `project-head` (quick-261017-wlg) |
 | `preview-empty` | Dashboard | |

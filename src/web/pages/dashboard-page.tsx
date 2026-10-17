@@ -21,6 +21,7 @@ import {
 import type { DashboardHead } from '../../presentation/dashboard-head.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
 import { LeadText } from '../components/lead-tokens.tsx';
+import { BlockingBand } from './dashboard-ledger.tsx';
 import { InvalidProjectScreen } from './invalid-project-screen.tsx';
 import { stripEmoji, stripMarkdown } from './strip-emoji.ts';
 
@@ -302,6 +303,8 @@ export function DashboardPage(): React.JSX.Element {
     <main className="dashboard-page page-stack">
       <ProjectHead head={view.head} />
 
+      <BlockingBand blockers={view.blockers} />
+
       <section className="dashboard-grid">
         <StateLogPanel
           id="decisions-heading"
@@ -310,14 +313,6 @@ export function DashboardPage(): React.JSX.Element {
           kind="decision"
           log={view.decisions}
           empty="No decisions are recorded."
-        />
-        <StateLogPanel
-          id="blockers-heading"
-          eyebrow="Unresolved"
-          title="Blockers"
-          kind="blocker"
-          log={view.blockers}
-          empty="No blockers are recorded."
         />
 
         <section className="preview-panel" aria-labelledby="preview-heading">

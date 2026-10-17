@@ -12,6 +12,7 @@ import {
   parsePresentationUrl,
   phaseKeyOf,
 } from '../../src/presentation/routes.ts';
+import { emptyLedger } from '../../src/server/dashboard-ledger.ts';
 
 const LIVE_IDENTITY = { milestoneVersion: 'v2.0', number: '01', projectCode: null, slug: 'live' };
 const LATER_IDENTITY = { milestoneVersion: 'v2.0', number: '02', projectCode: null, slug: 'later' };
@@ -123,6 +124,7 @@ function presentation(
     coverageWaits: [],
     mentions: { byId: {}, all: [] },
     exclusions: [],
+    ledger: emptyLedger(),
     ...overrides,
   };
 }
@@ -150,7 +152,7 @@ describe('buildDashboardViewModel', () => {
     });
     expect(view.next.previews).toHaveLength(0);
     expect(view.decisions).toEqual({ items: [], provenance: null });
-    expect(view.blockers).toEqual({ items: [], provenance: null });
+    expect(view.blockers).toEqual([]);
   });
 
   it('discrepant: keeps formal roadmap and observed SUMMARY counts separate with provenance', () => {
@@ -360,7 +362,7 @@ describe('buildDashboardViewModel', () => {
     );
 
     expect(view.next.immediate).not.toMatchObject({ kind: 'blocker' });
-    expect(view.blockers.items).toEqual([]);
+    expect(view.blockers).toEqual([]);
   });
 
   it('blocker-kind next-work url routes directly to blocker source artifact even when no current phase is resolvable (CR-01)', () => {
@@ -479,54 +481,6 @@ describe('buildDashboardViewModel', () => {
       value: null,
       display: 'Not recorded',
     });
-  });
-
-  it('blockers log links to its STATE.md heading anchor (LFI-01)', () => {
-    const source = presentation({
-      blockers: [
-        {
-          key: 'state:blocker',
-          sourcePath: '.planning/STATE.md',
-          heading: 'Blockers/Concerns',
-          text: 'Authored blocker',
-        },
-      ],
-    });
-    if (!source.state) throw new Error('test fixture requires state');
-    source.state.blockersConcerns = { heading: 'Blockers/Concerns', body: '- Authored blocker' };
-    const view = buildDashboardViewModel(source);
-    expect(view.blockers.items).toEqual([
-      { key: 'state:blocker', label: null, title: 'Open blocker', detail: 'Authored blocker' },
-    ]);
-    expect(view.blockers.provenance?.ref).toBe('.planning/STATE.md#blockersconcerns');
-    expect(sourceDestination(view.blockers.provenance!)).toBe(
-      '/artifacts/a~.planning%2FSTATE.md#blockersconcerns',
-    );
-  });
-
-  it('every log row has a detail: split at a bold lead, an em dash, or the first sentence', () => {
-    const entry = (key: string, text: string) => ({
-      key,
-      sourcePath: '.planning/STATE.md',
-      heading: 'Blockers',
-      text,
-    });
-    const view = buildDashboardViewModel(
-      presentation({
-        blockers: [
-          entry('a', '⚠️ **Cert expires soon.** Add a bypass policy.'),
-          entry('b', 'Plan has no summary — mid-flight shape.'),
-          entry('c', 'Fixtures are a Phase 1 deliverable. Phase 4 depends on them.'),
-          entry('d', 'Dependency is unavailable'),
-        ],
-      }),
-    );
-    expect(view.blockers.items.map(({ title, detail }) => [title, detail])).toEqual([
-      ['Cert expires soon.', 'Add a bypass policy.'],
-      ['Plan has no summary', 'mid-flight shape.'],
-      ['Fixtures are a Phase 1 deliverable.', 'Phase 4 depends on them.'],
-      ['Open blocker', 'Dependency is unavailable'],
-    ]);
   });
 
   it('decisions log reads newest first, splitting the phase tag and the rationale', () => {

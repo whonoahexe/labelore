@@ -17,6 +17,7 @@ import {
   phaseKeyOf,
 } from '../presentation/routes.ts';
 import { projectPlanCheckpoints } from '../rendering/plan-segments.ts';
+import { buildDashboardLedger, emptyLedger, type DashboardLedgerDto } from './dashboard-ledger.ts';
 
 /** The canonical root roadmap path — looked up by identity, never by first-artifact-with-kind
  * 'roadmap', since a per-milestone `vX.Y-ROADMAP.md` snapshot now also carries `kind: 'roadmap'`
@@ -179,6 +180,10 @@ export interface ProjectPresentation {
    * and the empty presentation paths — a failed load still carries an empty array, never an absent
    * key. */
   exclusions: DiscoveryExclusion[];
+  /** Everything the dashboard shows below the project head (blockers, decisions, pace, todos,
+   * notes, recent tasks, the queue), built server-side from the snapshot so the page never reads
+   * a file. */
+  ledger: DashboardLedgerDto;
 }
 
 interface PassingEvidence {
@@ -575,6 +580,7 @@ function emptyPresentation(snapshot: ProjectSnapshot): ProjectPresentation {
     coverageWaits: [],
     mentions: { byId: {}, all: [] },
     exclusions: snapshot.exclusions,
+    ledger: emptyLedger(),
   };
 }
 
@@ -723,5 +729,6 @@ export function toProjectPresentation(snapshot: ProjectSnapshot): ProjectPresent
     coverageWaits,
     mentions: project.mentions,
     exclusions: snapshot.exclusions,
+    ledger: buildDashboardLedger(project),
   };
 }
