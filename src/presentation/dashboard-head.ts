@@ -115,10 +115,25 @@ export function sectionLead(sectionBody: string): string | null {
   return withoutEmphasis(lead);
 }
 
-/** A section's first paragraph, emphasis flattened, or null when it has none. */
-export function sectionParagraph(sectionBody: string): string | null {
+/** About two lines of a 48rem lede. */
+const MAX_TWO_LINE_CHARS = 150;
+
+/** A section's first paragraph, emphasis flattened, cut to the whole sentences that fit two lede
+ * lines. A first sentence too long on its own is cut at its last " — ", ":", ";" or "," that fits
+ * and closed with a full stop; null when even that does not fit, never an ellipsis. */
+export function twoLineLead(sectionBody: string): string | null {
   const [first] = paragraphs(sectionBody);
-  return first ? withoutEmphasis(first) : null;
+  if (!first) return null;
+  const text = withoutEmphasis(first);
+  let lead = '';
+  for (const sentence of sentences(text)) {
+    const next = lead ? `${lead} ${sentence}` : sentence;
+    if (next.length > MAX_TWO_LINE_CHARS) break;
+    lead = next;
+  }
+  if (lead) return lead;
+  const clause = text.slice(0, MAX_TWO_LINE_CHARS).match(/^(.{20,})(?:\s+—\s+|[:;,]\s+)/);
+  return clause ? `${clause[1]}.` : null;
 }
 
 /** A short activity clause: quick-task ids dropped, cut at the first " — ", unclosed " (" or "; ",

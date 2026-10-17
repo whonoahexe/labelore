@@ -344,11 +344,16 @@ export function RoadmapPage(): React.JSX.Element {
         <div>
           <p className="eyebrow">Execution narrative</p>
           <h1>Roadmap</h1>
-          {view.overview ? (
-            <p className="lede">
+          <p className="lede">
+            {view.overview ? (
               <LeadText text={stripEmoji(view.overview)} />
-            </p>
-          ) : null}
+            ) : (
+              <>
+                Follow each phase from intent to completion. Waves group plans that can be executed
+                at the same stage; their titles come directly from the roadmap.
+              </>
+            )}
+          </p>
         </div>
         <Link className="text-link" to={view.active?.url ?? '/roadmap'}>
           <Link2 aria-hidden="true" />
