@@ -233,7 +233,7 @@ element is actually written, regardless of class name:
   is the pre-existing `.eyebrow` rule reused verbatim, not a new accent use. The discussion log's
   endnote panel titles (Claude's Discretion, Deferred Ideas) take the same accent as those panel
   eyebrows.
-- **Squared corners.** `border-radius` is unset (0) everywhere except 3 existing call sites of
+- **Squared corners.** `border-radius` is unset (0) everywhere except 1 existing call site of
   `--radius-sm`. Treat radius as the exception, never the default, for any new element.
 - **The discussion log ends on an Endnotes sheet.** (quick-260923-jxp, JXP-07) An opt-in
   `alsoStyle: 'endnotes'` on `DocumentLayoutSpec` replaces the folded "Also in this document"
@@ -600,29 +600,16 @@ plan's "no AST tooling" constraint.
 | `attention-pagination` | Dashboard | |
 | `attention-pagination-actions` | Dashboard | |
 | `attention-panel` | Dashboard | shared with the CONTEXT brief (quick-260923-lju) |
-| `checkpoint-badge` | Dashboard | |
-| `checkpoint-callout` | Dashboard | |
-| `checkpoint-content` | Dashboard | |
-| `checkpoint-header` | Dashboard | |
-| `checkpoint-link` | Dashboard | |
 | `dashboard-grid` | Dashboard | |
 | `dashboard-loading` | Dashboard | |
 | `dashboard-page` | Dashboard | |
 | `immediate-work` | Dashboard | shared with the CONTEXT brief (quick-260923-lju) |
 | `item-kind` | Dashboard | |
 | `next-preview` | Dashboard | |
-| `plan-breakdown-pills` | Dashboard | |
-| `plan-pill` | Dashboard | |
-| `plan-progress-headline` | Dashboard | |
-| `plan-progress-summary` | Dashboard | |
 | `position-hero` | Dashboard | now used by the CONTEXT brief alone; the dashboard opens on `project-head` (quick-261017-wlg) |
 | `preview-empty` | Dashboard | |
 | `preview-list` | Dashboard | |
 | `preview-panel` | Dashboard | shared with the CONTEXT brief (quick-260923-lju) |
-| `progress-empty` | Dashboard | |
-| `progress-panel` | Dashboard | |
-| `progress-panel-header` | Dashboard | |
-| `progress-panel-meta` | Dashboard | |
 | `project-head` | Dashboard | |
 | `project-head-copy` | Dashboard | |
 | `project-identity` | Dashboard | |

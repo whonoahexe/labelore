@@ -75,7 +75,6 @@ describe('authorized Studio Portal shell contract', () => {
     const roadmap = await source('src/web/pages/roadmap-page.tsx');
 
     expect(dashboard).toContain('Next up');
-    expect(dashboard).toContain('phaseMode');
     expect(dashboard).toContain('attention-pagination');
     expect(dashboard).toContain('Previous page');
     expect(dashboard).not.toContain('Show more');
