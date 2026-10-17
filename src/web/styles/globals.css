@@ -18217,6 +18217,469 @@ button.view-verification-stat:hover {
 }
 /* quick-261001-qk7:end */
 
+/* quick-261017-k45:start */
+/* ==========================================================================
+   LEARNINGS page (quick-261017-k45, sketch 024 winner E): the own head (meta row, display title,
+   one-sentence lede, the dashed missing-artifacts note and the labelled source bar), the chapter
+   tabs and their numbered entries (body on the left, side note on the right) and the Also row.
+   Colours are theme tokens only. The four kinds ride data-kind as identity colours (decision
+   --primary, lesson --in-flight-fill, pattern --foreground, surprise --missing-fill), not tones: the
+   page writes no data-tone and never uses a parse-degradation tone. No colour-mix, no corner radius
+   (corners stay squared) and no motion, only a colour change on hover. Ancestors of a .status-chip
+   set no line-height, so every chip keeps the inherited body value (F-05). Media overrides sit
+   directly after their base rules (css-source-order).
+   ========================================================================== */
+
+.view-learnings-page {
+  display: grid;
+  gap: var(--space-fluid-10);
+  min-width: 0;
+}
+
+.view-learnings-page > * {
+  min-width: 0;
+}
+
+.view-learnings-key {
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-learnings-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.view-learnings-link:hover {
+  color: var(--primary);
+}
+
+/* Head: the meta row, the display title, the lede, the missing note and the source bar. */
+.view-learnings-head {
+  display: grid;
+  gap: var(--space-5);
+  justify-items: start;
+}
+
+.view-learnings-head > * {
+  min-width: 0;
+}
+
+.view-learnings-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+  align-items: center;
+  justify-content: space-between;
+  justify-self: stretch;
+}
+
+.view-learnings-meta-left {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: baseline;
+}
+
+/* The global eyebrow's bottom margin would lift it off the date's line. */
+.view-learnings-meta-left .eyebrow {
+  margin: 0;
+}
+
+.view-learnings-date {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-learnings-date b {
+  color: var(--foreground);
+  font-weight: var(--fw-medium);
+}
+
+.view-learnings-tools {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.view-learnings-title {
+  max-width: 20ch;
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-display-3);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tighter);
+  line-height: var(--lh-display);
+  overflow-wrap: anywhere;
+}
+
+.view-learnings-lede {
+  max-width: 60ch;
+  margin: 0;
+  font-size: var(--fs-fluid-1);
+  line-height: var(--lh-normal);
+}
+
+.view-learnings-missing {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px dashed var(--in-flight-border);
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.view-learnings-missing b {
+  color: var(--in-flight-fill);
+  font-family: var(--font-mono);
+  font-weight: var(--fw-medium);
+}
+
+/* The source bar: segments grow by count, are never narrower than their label and wrap. */
+.view-learnings-trail {
+  display: grid;
+  gap: var(--space-2);
+  justify-self: stretch;
+}
+
+.view-learnings-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-0-5);
+}
+
+.view-learnings-segment {
+  display: inline-flex;
+  flex: 1 1 auto;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.view-learnings-segment b {
+  color: var(--foreground);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-normal);
+}
+
+.view-learnings-segment:hover,
+.view-learnings-segment[aria-pressed='true'] {
+  background: var(--primary-tint);
+  color: var(--primary);
+}
+
+.view-learnings-segment:hover b,
+.view-learnings-segment[aria-pressed='true'] b {
+  color: var(--primary);
+}
+
+.view-learnings-filterline {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.view-learnings-filterline b {
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-weight: var(--fw-medium);
+}
+
+/* Chapter tabs: one chapter at a time; the row scrolls sideways inside itself. */
+.view-learnings-tabs {
+  display: flex;
+  margin-bottom: var(--space-6);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scroll-margin-top: var(--space-22);
+}
+
+.view-learnings-tab {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: none;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.view-learnings-tab:hover:not([disabled]) {
+  color: var(--foreground);
+}
+
+.view-learnings-tab[aria-selected='true'] {
+  color: var(--foreground);
+}
+
+.view-learnings-tab b {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-medium);
+}
+
+.view-learnings-tab-no {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-learnings-tab[disabled] {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.view-learnings-tab[data-kind='decision'][aria-selected='true'] {
+  border-bottom-color: var(--primary);
+}
+
+.view-learnings-tab[data-kind='lesson'][aria-selected='true'] {
+  border-bottom-color: var(--in-flight-fill);
+}
+
+.view-learnings-tab[data-kind='pattern'][aria-selected='true'] {
+  border-bottom-color: var(--foreground);
+}
+
+.view-learnings-tab[data-kind='surprise'][aria-selected='true'] {
+  border-bottom-color: var(--missing-fill);
+}
+
+.view-learnings-tab[data-kind='decision'] .view-learnings-tab-no {
+  color: var(--primary);
+}
+
+.view-learnings-tab[data-kind='lesson'] .view-learnings-tab-no {
+  color: var(--in-flight-fill);
+}
+
+.view-learnings-tab[data-kind='pattern'] .view-learnings-tab-no {
+  color: var(--foreground);
+}
+
+.view-learnings-tab[data-kind='surprise'] .view-learnings-tab-no {
+  color: var(--missing-fill);
+}
+
+.view-learnings-empty {
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px dashed var(--border);
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+}
+
+/* A chapter: its kind rule, number, title and count, then the entries. */
+.view-learnings-chapter {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.view-learnings-chapter-head {
+  display: flex;
+  gap: var(--space-4);
+  align-items: baseline;
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 2px solid var(--border);
+}
+
+.view-learnings-chapter-head h2 {
+  margin: 0;
+  font-size: var(--fs-fluid-3);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tight);
+}
+
+.view-learnings-chapter-no {
+  font-family: var(--font-mono);
+  font-size: var(--fs-fluid-3);
+}
+
+.view-learnings-count {
+  margin-left: auto;
+}
+
+.view-learnings-chapter[data-kind='decision'] .view-learnings-chapter-head {
+  border-bottom-color: var(--primary);
+}
+
+.view-learnings-chapter[data-kind='lesson'] .view-learnings-chapter-head {
+  border-bottom-color: var(--in-flight-fill);
+}
+
+.view-learnings-chapter[data-kind='pattern'] .view-learnings-chapter-head {
+  border-bottom-color: var(--foreground);
+}
+
+.view-learnings-chapter[data-kind='surprise'] .view-learnings-chapter-head {
+  border-bottom-color: var(--missing-fill);
+}
+
+.view-learnings-chapter[data-kind='decision'] .view-learnings-chapter-no {
+  color: var(--primary);
+}
+
+.view-learnings-chapter[data-kind='lesson'] .view-learnings-chapter-no {
+  color: var(--in-flight-fill);
+}
+
+.view-learnings-chapter[data-kind='pattern'] .view-learnings-chapter-no {
+  color: var(--foreground);
+}
+
+.view-learnings-chapter[data-kind='surprise'] .view-learnings-chapter-no {
+  color: var(--missing-fill);
+}
+
+/* An entry: its document number, the body column and the side note. */
+.view-learnings-entry {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: var(--space-2) var(--space-6);
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--border-faint);
+}
+
+@media (max-width: 62rem) {
+  .view-learnings-entry {
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+  }
+
+  .view-learnings-side {
+    grid-column: 2;
+  }
+}
+
+.view-learnings-entry[data-bare='true'] {
+  grid-template-columns: 2.5rem minmax(0, 1fr);
+}
+
+.view-learnings-no {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-4);
+}
+
+.view-learnings-main {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  font-size: var(--fs-4);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
+}
+
+.view-learnings-main h3 {
+  margin: 0;
+  font-size: var(--fs-5);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-snug);
+}
+
+.view-learnings-side {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
+}
+
+.view-learnings-field {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.view-learnings-source {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  overflow-wrap: anywhere;
+}
+
+.view-learnings-source b {
+  color: var(--foreground);
+  font-weight: var(--fw-medium);
+}
+
+.view-learnings-graduated {
+  display: inline-flex;
+  justify-self: start;
+  gap: var(--space-1-5);
+  align-items: center;
+  padding: var(--space-0-5) var(--space-2);
+  border: 1px solid var(--primary);
+  background: var(--primary-tint);
+  color: var(--primary);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-learnings-graduated::before {
+  content: '↑';
+}
+
+/* Also in this file: one labelled row of chips that each open that place in Source. */
+.view-learnings-also {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+  padding: var(--space-3) 0;
+  border-top: 1px dashed var(--border);
+  border-bottom: 1px dashed var(--border);
+}
+
+.view-learnings-also ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-learnings-also button.status-chip {
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.view-learnings-also button.status-chip:hover {
+  background: var(--state-hover);
+}
+/* quick-261017-k45:end */
+
 /* "In the source only": what the view leaves to Source mode, one click away. */
 .view-context-source-only,
 .view-discussion-log-source-only {

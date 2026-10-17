@@ -150,7 +150,121 @@
         "bodyHash": "8faea677c88d125aa92f5246cbf95544e74626db31d835e488cdef46b3684186",
         "mtimeMs": 0,
         "warnings": [],
-        "structured": {}
+        "structured": {
+          "learnings": {
+            "h1": "Learnings: Dense Fixture Project",
+            "entries": [
+              {
+                "kind": "decision",
+                "title": "Three milestones, not two — multi-milestone identity logic must not be validated only at N=2.",
+                "fields": [],
+                "sources": [],
+                "graduated": null,
+                "listItem": true
+              },
+              {
+                "kind": "decision",
+                "title": "Corruption lives inside the healthy tree, isolated to exactly two files",
+                "fields": [],
+                "sources": [
+                  {
+                    "artifact": "D-02",
+                    "note": null
+                  }
+                ],
+                "graduated": null,
+                "listItem": true
+              },
+              {
+                "kind": "decision",
+                "title": "Every fixture shape traces to a `gsd-core` template or source line",
+                "fields": [],
+                "sources": [
+                  {
+                    "artifact": "D-01",
+                    "note": null
+                  }
+                ],
+                "graduated": null,
+                "listItem": true
+              },
+              {
+                "kind": "lesson",
+                "title": "A phase number alone is never a stable identity key once `phase_numbering: restarts-per-milestone` is in effect — always pair it with the milestone.",
+                "fields": [],
+                "sources": [],
+                "graduated": null,
+                "listItem": true
+              },
+              {
+                "kind": "lesson",
+                "title": "An unfamiliar artifact type (`01-COST-MODEL.md`) must still render as generic markdown rather than disappear from the tree.",
+                "fields": [],
+                "sources": [],
+                "graduated": null,
+                "listItem": true
+              },
+              {
+                "kind": "pattern",
+                "title": "Archived phase trees under `milestones/vX.Y-phases/` are byte-identical in internal shape to a live `phases/NN-slug/` directory.",
+                "fields": [],
+                "sources": [],
+                "graduated": null,
+                "listItem": true
+              },
+              {
+                "kind": "pattern",
+                "title": "`SUMMARY.md`'s `coverage[].id` values (`D1`, `D2`, ...) visually collide with `CONTEXT.md`'s `D-NN` decision IDs but occupy a separate namespace.",
+                "fields": [],
+                "sources": [],
+                "graduated": null,
+                "listItem": true
+              },
+              {
+                "kind": "surprise",
+                "title": "The dense fixture's golden snapshot permanently carries warnings once corruption is introduced — \"zero warnings\" can never be asserted against it again",
+                "fields": [],
+                "sources": [
+                  {
+                    "artifact": "D-02",
+                    "note": null
+                  }
+                ],
+                "graduated": null,
+                "listItem": true
+              }
+            ],
+            "sections": [
+              {
+                "heading": "Decisions",
+                "kind": "decision",
+                "leftover": false,
+                "blank": false
+              },
+              {
+                "heading": "Lessons",
+                "kind": "lesson",
+                "leftover": false,
+                "blank": false
+              },
+              {
+                "heading": "Patterns",
+                "kind": "pattern",
+                "leftover": false,
+                "blank": false
+              },
+              {
+                "heading": "Surprises",
+                "kind": "surprise",
+                "leftover": false,
+                "blank": false
+              }
+            ],
+            "pathPhase": null,
+            "quickId": null,
+            "scope": "project"
+          }
+        }
       },
       ".planning/MILESTONES.md": {
         "id": ".planning/MILESTONES.md",
@@ -4597,7 +4711,74 @@
                 "bodyHash": "5e233477f253105c600107d65739b94b7b4188fecf8b939ef67a53210ad3c93a",
                 "mtimeMs": 0,
                 "warnings": [],
-                "structured": {}
+                "structured": {
+                  "learnings": {
+                    "h1": "Phase 1 Learnings: Identity Slice",
+                    "entries": [
+                      {
+                        "kind": "decision",
+                        "title": "Every unfamiliar artifact type is authored from its own `gsd-core` template",
+                        "fields": [],
+                        "sources": [
+                          {
+                            "artifact": "D-01",
+                            "note": null
+                          }
+                        ],
+                        "graduated": null,
+                        "listItem": true
+                      },
+                      {
+                        "kind": "lesson",
+                        "title": "A phase directory can legitimately hold both templated artifact types (`SPEC.md`) and a genuinely invented one (`01-COST-MODEL.md`) side by side.",
+                        "fields": [],
+                        "sources": [],
+                        "graduated": null,
+                        "listItem": true
+                      },
+                      {
+                        "kind": "pattern",
+                        "title": "Registry-dispatched artifact handlers with an unconditional generic handler always last.",
+                        "fields": [],
+                        "sources": [],
+                        "graduated": null,
+                        "listItem": true
+                      }
+                    ],
+                    "sections": [
+                      {
+                        "heading": "Decisions",
+                        "kind": "decision",
+                        "leftover": false,
+                        "blank": false
+                      },
+                      {
+                        "heading": "Lessons",
+                        "kind": "lesson",
+                        "leftover": false,
+                        "blank": false
+                      },
+                      {
+                        "heading": "Patterns",
+                        "kind": "pattern",
+                        "leftover": false,
+                        "blank": false
+                      },
+                      {
+                        "heading": "Surprises",
+                        "kind": "surprise",
+                        "leftover": false,
+                        "blank": true
+                      }
+                    ],
+                    "pathPhase": {
+                      "number": "01",
+                      "slug": "identity-slice"
+                    },
+                    "quickId": null,
+                    "scope": "phase"
+                  }
+                }
               },
               ".planning/phases/01-identity-slice/01-PATTERNS.md": {
                 "id": ".planning/phases/01-identity-slice/01-PATTERNS.md",
@@ -9756,7 +9937,74 @@
             "bodyHash": "5e233477f253105c600107d65739b94b7b4188fecf8b939ef67a53210ad3c93a",
             "mtimeMs": 0,
             "warnings": [],
-            "structured": {}
+            "structured": {
+              "learnings": {
+                "h1": "Phase 1 Learnings: Identity Slice",
+                "entries": [
+                  {
+                    "kind": "decision",
+                    "title": "Every unfamiliar artifact type is authored from its own `gsd-core` template",
+                    "fields": [],
+                    "sources": [
+                      {
+                        "artifact": "D-01",
+                        "note": null
+                      }
+                    ],
+                    "graduated": null,
+                    "listItem": true
+                  },
+                  {
+                    "kind": "lesson",
+                    "title": "A phase directory can legitimately hold both templated artifact types (`SPEC.md`) and a genuinely invented one (`01-COST-MODEL.md`) side by side.",
+                    "fields": [],
+                    "sources": [],
+                    "graduated": null,
+                    "listItem": true
+                  },
+                  {
+                    "kind": "pattern",
+                    "title": "Registry-dispatched artifact handlers with an unconditional generic handler always last.",
+                    "fields": [],
+                    "sources": [],
+                    "graduated": null,
+                    "listItem": true
+                  }
+                ],
+                "sections": [
+                  {
+                    "heading": "Decisions",
+                    "kind": "decision",
+                    "leftover": false,
+                    "blank": false
+                  },
+                  {
+                    "heading": "Lessons",
+                    "kind": "lesson",
+                    "leftover": false,
+                    "blank": false
+                  },
+                  {
+                    "heading": "Patterns",
+                    "kind": "pattern",
+                    "leftover": false,
+                    "blank": false
+                  },
+                  {
+                    "heading": "Surprises",
+                    "kind": "surprise",
+                    "leftover": false,
+                    "blank": true
+                  }
+                ],
+                "pathPhase": {
+                  "number": "01",
+                  "slug": "identity-slice"
+                },
+                "quickId": null,
+                "scope": "phase"
+              }
+            }
           },
           ".planning/phases/01-identity-slice/01-PATTERNS.md": {
             "id": ".planning/phases/01-identity-slice/01-PATTERNS.md",
@@ -13510,7 +13758,74 @@
                   "bodyHash": "5e233477f253105c600107d65739b94b7b4188fecf8b939ef67a53210ad3c93a",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "learnings": {
+                      "h1": "Phase 1 Learnings: Identity Slice",
+                      "entries": [
+                        {
+                          "kind": "decision",
+                          "title": "Every unfamiliar artifact type is authored from its own `gsd-core` template",
+                          "fields": [],
+                          "sources": [
+                            {
+                              "artifact": "D-01",
+                              "note": null
+                            }
+                          ],
+                          "graduated": null,
+                          "listItem": true
+                        },
+                        {
+                          "kind": "lesson",
+                          "title": "A phase directory can legitimately hold both templated artifact types (`SPEC.md`) and a genuinely invented one (`01-COST-MODEL.md`) side by side.",
+                          "fields": [],
+                          "sources": [],
+                          "graduated": null,
+                          "listItem": true
+                        },
+                        {
+                          "kind": "pattern",
+                          "title": "Registry-dispatched artifact handlers with an unconditional generic handler always last.",
+                          "fields": [],
+                          "sources": [],
+                          "graduated": null,
+                          "listItem": true
+                        }
+                      ],
+                      "sections": [
+                        {
+                          "heading": "Decisions",
+                          "kind": "decision",
+                          "leftover": false,
+                          "blank": false
+                        },
+                        {
+                          "heading": "Lessons",
+                          "kind": "lesson",
+                          "leftover": false,
+                          "blank": false
+                        },
+                        {
+                          "heading": "Patterns",
+                          "kind": "pattern",
+                          "leftover": false,
+                          "blank": false
+                        },
+                        {
+                          "heading": "Surprises",
+                          "kind": "surprise",
+                          "leftover": false,
+                          "blank": true
+                        }
+                      ],
+                      "pathPhase": {
+                        "number": "01",
+                        "slug": "identity-slice"
+                      },
+                      "quickId": null,
+                      "scope": "phase"
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-PATTERNS.md": {
                   "id": ".planning/phases/01-identity-slice/01-PATTERNS.md",
@@ -16455,7 +16770,74 @@
                   "bodyHash": "5e233477f253105c600107d65739b94b7b4188fecf8b939ef67a53210ad3c93a",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "learnings": {
+                      "h1": "Phase 1 Learnings: Identity Slice",
+                      "entries": [
+                        {
+                          "kind": "decision",
+                          "title": "Every unfamiliar artifact type is authored from its own `gsd-core` template",
+                          "fields": [],
+                          "sources": [
+                            {
+                              "artifact": "D-01",
+                              "note": null
+                            }
+                          ],
+                          "graduated": null,
+                          "listItem": true
+                        },
+                        {
+                          "kind": "lesson",
+                          "title": "A phase directory can legitimately hold both templated artifact types (`SPEC.md`) and a genuinely invented one (`01-COST-MODEL.md`) side by side.",
+                          "fields": [],
+                          "sources": [],
+                          "graduated": null,
+                          "listItem": true
+                        },
+                        {
+                          "kind": "pattern",
+                          "title": "Registry-dispatched artifact handlers with an unconditional generic handler always last.",
+                          "fields": [],
+                          "sources": [],
+                          "graduated": null,
+                          "listItem": true
+                        }
+                      ],
+                      "sections": [
+                        {
+                          "heading": "Decisions",
+                          "kind": "decision",
+                          "leftover": false,
+                          "blank": false
+                        },
+                        {
+                          "heading": "Lessons",
+                          "kind": "lesson",
+                          "leftover": false,
+                          "blank": false
+                        },
+                        {
+                          "heading": "Patterns",
+                          "kind": "pattern",
+                          "leftover": false,
+                          "blank": false
+                        },
+                        {
+                          "heading": "Surprises",
+                          "kind": "surprise",
+                          "leftover": false,
+                          "blank": true
+                        }
+                      ],
+                      "pathPhase": {
+                        "number": "01",
+                        "slug": "identity-slice"
+                      },
+                      "quickId": null,
+                      "scope": "phase"
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-PATTERNS.md": {
                   "id": ".planning/phases/01-identity-slice/01-PATTERNS.md",
@@ -19400,7 +19782,74 @@
                   "bodyHash": "5e233477f253105c600107d65739b94b7b4188fecf8b939ef67a53210ad3c93a",
                   "mtimeMs": 0,
                   "warnings": [],
-                  "structured": {}
+                  "structured": {
+                    "learnings": {
+                      "h1": "Phase 1 Learnings: Identity Slice",
+                      "entries": [
+                        {
+                          "kind": "decision",
+                          "title": "Every unfamiliar artifact type is authored from its own `gsd-core` template",
+                          "fields": [],
+                          "sources": [
+                            {
+                              "artifact": "D-01",
+                              "note": null
+                            }
+                          ],
+                          "graduated": null,
+                          "listItem": true
+                        },
+                        {
+                          "kind": "lesson",
+                          "title": "A phase directory can legitimately hold both templated artifact types (`SPEC.md`) and a genuinely invented one (`01-COST-MODEL.md`) side by side.",
+                          "fields": [],
+                          "sources": [],
+                          "graduated": null,
+                          "listItem": true
+                        },
+                        {
+                          "kind": "pattern",
+                          "title": "Registry-dispatched artifact handlers with an unconditional generic handler always last.",
+                          "fields": [],
+                          "sources": [],
+                          "graduated": null,
+                          "listItem": true
+                        }
+                      ],
+                      "sections": [
+                        {
+                          "heading": "Decisions",
+                          "kind": "decision",
+                          "leftover": false,
+                          "blank": false
+                        },
+                        {
+                          "heading": "Lessons",
+                          "kind": "lesson",
+                          "leftover": false,
+                          "blank": false
+                        },
+                        {
+                          "heading": "Patterns",
+                          "kind": "pattern",
+                          "leftover": false,
+                          "blank": false
+                        },
+                        {
+                          "heading": "Surprises",
+                          "kind": "surprise",
+                          "leftover": false,
+                          "blank": true
+                        }
+                      ],
+                      "pathPhase": {
+                        "number": "01",
+                        "slug": "identity-slice"
+                      },
+                      "quickId": null,
+                      "scope": "phase"
+                    }
+                  }
                 },
                 ".planning/phases/01-identity-slice/01-PATTERNS.md": {
                   "id": ".planning/phases/01-identity-slice/01-PATTERNS.md",
