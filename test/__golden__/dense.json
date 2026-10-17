@@ -564,8 +564,7 @@
               "roadmapComplete": false
             }
           ],
-          "dependencyShape": null,
-          "overview": null
+          "dependencyShape": null
         }
       },
       ".planning/STATE.md": {
@@ -794,8 +793,7 @@
               "roadmapComplete": true
             }
           ],
-          "dependencyShape": null,
-          "overview": "Snapshot of the roadmap as it stood at v1.0's close. v1.0 shipped a single bootstrap phase."
+          "dependencyShape": null
         }
       },
       ".planning/milestones/v2.0-MILESTONE-AUDIT.md": {
@@ -907,8 +905,7 @@
               "roadmapComplete": true
             }
           ],
-          "dependencyShape": null,
-          "overview": "Snapshot of the roadmap as it stood at v2.0's close. v2.0 shipped legacy ingest and batch export,\nrestarting phase numbering at 1 per `phase_numbering: restarts-per-milestone`."
+          "dependencyShape": null
         }
       },
       ".planning/research/PITFALLS.md": {
