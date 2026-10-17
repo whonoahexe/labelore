@@ -148,7 +148,10 @@ function ProjectHead({ head }: { head: DashboardHead }): React.JSX.Element {
     <section className="project-head" aria-labelledby="project-name-heading">
       <div className="project-head-copy">
         <div className="project-identity">
-          <h1 id="project-name-heading">{stripEmoji(head.name)}</h1>
+          <hgroup>
+            <p className="eyebrow">Project overview</p>
+            <h1 id="project-name-heading">{stripEmoji(head.name)}</h1>
+          </hgroup>
           {head.tagline ? <p className="project-tagline">{stripEmoji(head.tagline)}</p> : null}
           {head.lead ? (
             <p className="project-lead">

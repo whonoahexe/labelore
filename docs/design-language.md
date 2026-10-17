@@ -566,8 +566,8 @@ element is actually written, regardless of class name:
   `--in-flight-border` with `--in-flight-fill` names. The page writes no `data-tone`, the
   parse-degradation tones never appear on it, and every class is in the reserved `view-learnings-`
   namespace, so no vocabulary row is added.
-- **The dashboard opens on the project.** (quick-261017-wlg, sketch 025 R3b) The PROJECT.md H1 is
-  the page's only h1, split at its first spaced dash into a name and a tagline. Under it sits the
+- **The dashboard opens on the project.** (quick-261017-wlg, sketch 025 R3b) A "Project overview"
+  eyebrow sits above the PROJECT.md H1, which is the page's only h1, split at its first spaced dash into a name and a tagline. Under it sits the
   What This Is lead: a leading bold sentence, or sentences up to about 70 characters (never more
   than two). Then comes a "Now" block: milestone · phase, the phase title and the status chip on
   its own line. Beside it, centred on it, one card reads Next up, then this phase's own plan
