@@ -1,0 +1,1 @@
+No external API integration: this item parses LEARNINGS markdown from the target project's `.planning/` directory on the local server and renders it in the browser; it calls no outside service, SDK or remote endpoint.

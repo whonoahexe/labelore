@@ -185,6 +185,8 @@ None.
 | 261016-ujo | What to check panel: a plan task needing a manual check gathers its own steps, requirement-matched VALIDATION manual rows (skipping other plans' rows), UI-SPEC backstops, Read first links and the UAT pointer | 2026-10-16 | 4eb65fb | [261016-ujo-add-a-what-to-check-panel-for-manual-che](./quick/261016-ujo-add-a-what-to-check-panel-for-manual-che/) |
 | 261017-18a | Build sketch 021 E as the VERIFICATION page view | 2026-10-17 | b81a057 | [261017-18a-build-sketch-021-e-as-the-verification-p](./quick/261017-18a-build-sketch-021-e-as-the-verification-p/) |
 | 72 | Verification rail: Verified label and date share a baseline | 2026-10-17 | 25f02ab | — |
+| 261017-k44 | Build sketch 022 C as the REVIEW page view, with each finding's fix outcome taken from the matching REVIEW-FIX file | 2026-10-17 | a790a28 | .planning/quick/261017-k44-build-sketch-022-c-as-the-review-page-view-with-each-finding |
+| 261017-k45 | Build sketch 024 E (round 2) as the LEARNINGS page view | 2026-10-17 | a5b0d6c | .planning/quick/261017-k45-build-sketch-024-e-round-2-as-the-learnings-page-view-use-pl |
 
 ## Deferred Items
 
