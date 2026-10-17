@@ -25,13 +25,19 @@ function isBlockersHeading(heading: string): boolean {
   return /^blockers(?:\s*\/\s*concerns)?$/i.test(heading.trim());
 }
 
-function findBlockersConcerns(
+function isDecisionsHeading(heading: string): boolean {
+  return /^decisions$/i.test(heading.trim());
+}
+
+/** First `##` section, or `###` subsection inside one, whose heading passes `matches`. */
+function findSection(
   sections: { heading: string; body: string }[],
+  matches: (heading: string) => boolean,
 ): { heading: string; body: string } | null {
   for (const section of sections) {
-    if (isBlockersHeading(section.heading)) return section;
+    if (matches(section.heading)) return section;
     const subsection = splitSubsections(section.body).find((candidate) =>
-      isBlockersHeading(candidate.heading),
+      matches(candidate.heading),
     );
     if (subsection) return subsection;
   }
@@ -46,7 +52,8 @@ export const StateHandler: ArtifactHandler = {
     const title = deriveTitle(fm.data, fm.body, ref.path);
     const sections = splitSections(fm.body);
     const quickTasksBody = findQuickTasksTable(sections);
-    const blockersConcerns = findBlockersConcerns(sections);
+    const blockersConcerns = findSection(sections, isBlockersHeading);
+    const decisions = findSection(sections, isDecisionsHeading);
 
     return {
       title,
@@ -56,6 +63,7 @@ export const StateHandler: ArtifactHandler = {
       structured: {
         sections,
         blockersConcerns,
+        decisions,
         quickTasksCompleted: quickTasksBody ? parseMarkdownTable(quickTasksBody) : [],
       },
     };

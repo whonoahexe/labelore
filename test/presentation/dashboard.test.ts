@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import type {
-  CoverageWaitDto,
   PhaseDto,
   PlanCheckpointDto,
   PlanDto,
@@ -9,7 +8,6 @@ import type {
 import { buildDashboardViewModel, sourceDestination } from '../../src/presentation/dashboard.ts';
 import {
   buildPhaseUrl,
-  buildPlanUrl,
   milestoneKeyOf,
   parsePresentationUrl,
   phaseKeyOf,
@@ -78,20 +76,6 @@ function checkpoint(overrides: Partial<PlanCheckpointDto> = {}): PlanCheckpointD
   };
 }
 
-function coverageWait(overrides: Partial<CoverageWaitDto> = {}): CoverageWaitDto {
-  return {
-    key: 'coverage:01-01:D1',
-    planKey: 'plan:01-01',
-    planId: '01-01',
-    phaseKey: LIVE_PHASE_KEY,
-    coverageId: 'D1',
-    description: 'Needs visual judgment',
-    status: 'pending',
-    evidenceKey: null,
-    ...overrides,
-  };
-}
-
 function presentation(
   overrides: Partial<ProjectPresentation> = {},
   phaseOverrides: Partial<PhaseDto> = {},
@@ -120,6 +104,7 @@ function presentation(
         percent: 28.5714285714,
       },
       blockersConcerns: null,
+      decisions: null,
     },
     milestones: [
       {
@@ -133,6 +118,7 @@ function presentation(
     requirements: [],
     artifacts: [],
     blockers: [],
+    decisions: [],
     checkpoints: [],
     coverageWaits: [],
     mentions: { byId: {}, all: [] },
@@ -163,7 +149,8 @@ describe('buildDashboardViewModel', () => {
       url: 'plan:01-02',
     });
     expect(view.next.previews).toHaveLength(0);
-    expect(view.attention).toEqual([]);
+    expect(view.decisions).toEqual({ items: [], provenance: null });
+    expect(view.blockers).toEqual({ items: [], provenance: null });
   });
 
   it('discrepant: keeps formal roadmap and observed SUMMARY counts separate with provenance', () => {
@@ -190,8 +177,6 @@ describe('buildDashboardViewModel', () => {
       status: 'in_progress',
       provenance: { kind: 'summary', ref: LIVE_PHASE_KEY },
     });
-    expect(view.attention[0]).toMatchObject({ type: 'discrepancy', sourceKey: LIVE_PHASE_KEY });
-    expect(view.attention.filter((item) => item.type === 'discrepancy')).toHaveLength(1);
   });
 
   it('zero-plan: retains observed disk status and exact 0/0 without manufacturing completion', () => {
@@ -217,7 +202,6 @@ describe('buildDashboardViewModel', () => {
       total: 0,
       status: 'researched',
     });
-    expect(view.attention.some((item) => item.type === 'discrepancy')).toBe(false);
   });
 
   it('null-formal: preserves absence and never defaults it from observed completion', () => {
@@ -235,7 +219,6 @@ describe('buildDashboardViewModel', () => {
 
     expect(view.completion.formal.status).toBeNull();
     expect(view.completion.observed.status).toBe('complete');
-    expect(view.attention).toEqual([]);
   });
 
   it('Unicode: preserves milestone, phase, project, and open status values byte-for-byte', () => {
@@ -296,7 +279,7 @@ describe('buildDashboardViewModel', () => {
     expect(view.completion.currentPhaseKey).toBe(source.milestones[0].phases[0].key);
   });
 
-  it('blocked dependency: excludes blocked plans from next work and reports dependency attention', () => {
+  it('blocked dependency: excludes blocked plans from next work', () => {
     const blocked = plan('01-02', false, [{ raw: '01-99', targetPlanKey: null }]);
     const later = phase({
       key: LATER_PHASE_KEY,
@@ -312,9 +295,6 @@ describe('buildDashboardViewModel', () => {
     const view = buildDashboardViewModel(source);
 
     expect(view.next.immediate).toMatchObject({ kind: 'phase', key: LATER_PHASE_KEY });
-    expect(view.attention).toContainEqual(
-      expect.objectContaining({ type: 'dependency', sourceKey: 'plan:01-02' }),
-    );
   });
 
   it('phase-kind next-work url round-trips through the canonical phase-URL builder (CR-01)', () => {
@@ -380,7 +360,7 @@ describe('buildDashboardViewModel', () => {
     );
 
     expect(view.next.immediate).not.toMatchObject({ kind: 'blocker' });
-    expect(view.attention).not.toContainEqual(expect.objectContaining({ type: 'blocker' }));
+    expect(view.blockers.items).toEqual([]);
   });
 
   it('blocker-kind next-work url routes directly to blocker source artifact even when no current phase is resolvable (CR-01)', () => {
@@ -403,14 +383,6 @@ describe('buildDashboardViewModel', () => {
     const parsed = parsePresentationUrl(url);
     expect(parsed.ok).toBe(true);
     if (parsed.ok) expect(parsed.route.kind).toBe('artifact');
-  });
-
-  it('checkpoint wait: reports each pending blocking-human checkpoint once', () => {
-    const wait = checkpoint();
-    const view = buildDashboardViewModel(presentation({ checkpoints: [wait, wait] }));
-    expect(view.attention.filter((item) => item.type === 'checkpoint')).toEqual([
-      expect.objectContaining({ sourceKey: wait.key }),
-    ]);
   });
 
   it('makes a pending human verification the typed next action ahead of routine plan work', () => {
@@ -444,89 +416,6 @@ describe('buildDashboardViewModel', () => {
       kind: 'phase',
       description: 'Ship the live phase',
     });
-  });
-
-  it('unsatisfied human_judgment: reports the exact pending coverage identity', () => {
-    const wait = coverageWait();
-    const view = buildDashboardViewModel(presentation({ coverageWaits: [wait] }));
-    expect(view.attention).toContainEqual(
-      expect.objectContaining({ type: 'coverage', sourceKey: wait.key }),
-    );
-  });
-
-  it('matching pass suppression: suppresses only the checkpoint and coverage records marked passed', () => {
-    const view = buildDashboardViewModel(
-      presentation({
-        checkpoints: [checkpoint({ status: 'passed', evidenceKey: 'uat:checkpoint' })],
-        coverageWaits: [coverageWait({ status: 'passed', evidenceKey: 'uat:coverage' })],
-      }),
-    );
-    expect(view.attention.filter((item) => ['checkpoint', 'coverage'].includes(item.type))).toEqual(
-      [],
-    );
-  });
-
-  it('unrelated pass non-suppression: pending identities remain visible beside other passed records', () => {
-    const pendingCheckpoint = checkpoint();
-    const pendingCoverage = coverageWait();
-    const view = buildDashboardViewModel(
-      presentation({
-        checkpoints: [
-          pendingCheckpoint,
-          checkpoint({
-            key: 'checkpoint:other',
-            name: 'Other',
-            status: 'passed',
-            evidenceKey: 'uat:x',
-          }),
-        ],
-        coverageWaits: [
-          pendingCoverage,
-          coverageWait({
-            key: 'coverage:other',
-            coverageId: 'OTHER',
-            status: 'passed',
-            evidenceKey: 'uat:y',
-          }),
-        ],
-      }),
-    );
-    expect(view.attention.map((item) => item.sourceKey)).toEqual([
-      pendingCheckpoint.key,
-      pendingCoverage.key,
-    ]);
-  });
-
-  it('stable priority: discrepancy, authored blocker, dependency, then waits', () => {
-    const blocked = plan('01-02', false, [{ raw: '01-99', targetPlanKey: null }]);
-    const view = buildDashboardViewModel(
-      presentation(
-        {
-          blockers: [
-            {
-              key: 'state:blocker',
-              sourcePath: '.planning/STATE.md',
-              heading: 'Blockers',
-              text: 'Authored blocker',
-            },
-          ],
-          checkpoints: [checkpoint()],
-          coverageWaits: [coverageWait()],
-        },
-        {
-          roadmapComplete: true,
-          formalPlanProgress: { completed: 2, total: 2, sourcePath: '.planning/ROADMAP.md' },
-          plans: [plan('01-01', true), blocked],
-        },
-      ),
-    );
-    expect(view.attention.map((item) => item.type)).toEqual([
-      'discrepancy',
-      'blocker',
-      'dependency',
-      'checkpoint',
-      'coverage',
-    ]);
   });
 
   it('returns at most two deterministic quieter previews after the immediate item', () => {
@@ -592,44 +481,92 @@ describe('buildDashboardViewModel', () => {
     });
   });
 
-  it('discrepancy attention destination is buildPhaseUrl(currentPhase.identity) and round-trips (DASH-04)', () => {
-    const view = buildDashboardViewModel(
-      presentation(
-        {},
+  it('blockers log links to its STATE.md heading anchor (LFI-01)', () => {
+    const source = presentation({
+      blockers: [
         {
-          roadmapComplete: true,
-          formalPlanProgress: { completed: 2, total: 2, sourcePath: '.planning/ROADMAP.md' },
-          plans: [plan('01-01', true), plan('01-02', false)],
+          key: 'state:blocker',
+          sourcePath: '.planning/STATE.md',
+          heading: 'Blockers/Concerns',
+          text: 'Authored blocker',
         },
-      ),
+      ],
+    });
+    if (!source.state) throw new Error('test fixture requires state');
+    source.state.blockersConcerns = { heading: 'Blockers/Concerns', body: '- Authored blocker' };
+    const view = buildDashboardViewModel(source);
+    expect(view.blockers.items).toEqual([
+      { key: 'state:blocker', label: null, title: 'Open blocker', detail: 'Authored blocker' },
+    ]);
+    expect(view.blockers.provenance?.ref).toBe('.planning/STATE.md#blockersconcerns');
+    expect(sourceDestination(view.blockers.provenance!)).toBe(
+      '/artifacts/a~.planning%2FSTATE.md#blockersconcerns',
     );
-    const discrepancy = view.attention.find((item) => item.type === 'discrepancy');
-    expect(discrepancy?.url).toBe(buildPhaseUrl(LIVE_IDENTITY));
-    const parsed = parsePresentationUrl(discrepancy?.url ?? '');
-    expect(parsed.ok).toBe(true);
-    if (parsed.ok && parsed.route.kind === 'phase') {
-      expect(phaseKeyOf(parsed.route.phaseIdentity)).toBe(LIVE_PHASE_KEY);
-    }
   });
 
-  it('blocker attention items populate provenance.ref with heading anchor slug and sourceDestination resolves to artifact with anchor (LFI-01)', () => {
+  it('every log row has a detail: split at a bold lead, an em dash, or the first sentence', () => {
+    const entry = (key: string, text: string) => ({
+      key,
+      sourcePath: '.planning/STATE.md',
+      heading: 'Blockers',
+      text,
+    });
     const view = buildDashboardViewModel(
       presentation({
         blockers: [
-          {
-            key: 'state:blocker',
-            sourcePath: '.planning/STATE.md',
-            heading: 'Blockers/Concerns',
-            text: 'Authored blocker',
-          },
+          entry('a', '⚠️ **Cert expires soon.** Add a bypass policy.'),
+          entry('b', 'Plan has no summary — mid-flight shape.'),
+          entry('c', 'Fixtures are a Phase 1 deliverable. Phase 4 depends on them.'),
+          entry('d', 'Dependency is unavailable'),
         ],
       }),
     );
-    const blocker = view.attention.find((item) => item.type === 'blocker');
-    expect(blocker?.provenance.ref).toBe('.planning/STATE.md#blockersconcerns');
-    expect(sourceDestination(blocker!.provenance)).toBe(
-      '/artifacts/a~.planning%2FSTATE.md#blockersconcerns',
-    );
+    expect(view.blockers.items.map(({ title, detail }) => [title, detail])).toEqual([
+      ['Cert expires soon.', 'Add a bypass policy.'],
+      ['Plan has no summary', 'mid-flight shape.'],
+      ['Fixtures are a Phase 1 deliverable.', 'Phase 4 depends on them.'],
+      ['Open blocker', 'Dependency is unavailable'],
+    ]);
+  });
+
+  it('decisions log reads newest first, splitting the phase tag and the rationale', () => {
+    const source = presentation({
+      decisions: [
+        {
+          key: 'state:decision-1',
+          sourcePath: '.planning/STATE.md',
+          heading: 'Decisions',
+          text: '[Phase 01]: 01-01: Keep the reader read-only — it must not damage planning state',
+        },
+        {
+          key: 'state:decision-2',
+          sourcePath: '.planning/STATE.md',
+          heading: 'Decisions',
+          text: 'Untagged decision with no rationale',
+        },
+      ],
+    });
+    if (!source.state) throw new Error('test fixture requires state');
+    source.state.decisions = { heading: 'Decisions', body: '' };
+    const view = buildDashboardViewModel(source);
+    expect(view.decisions.items).toEqual([
+      {
+        key: 'state:decision-2',
+        label: null,
+        title: 'Recorded decision',
+        detail: 'Untagged decision with no rationale',
+      },
+      {
+        key: 'state:decision-1',
+        label: 'Phase 01',
+        title: '01-01: Keep the reader read-only',
+        detail: 'it must not damage planning state',
+      },
+    ]);
+    expect(view.decisions.provenance).toEqual({
+      kind: 'state',
+      ref: '.planning/STATE.md#decisions',
+    });
   });
 
   it('sourceDestination preserves heading hash anchors on state and roadmap provenance (LFI-01)', () => {
@@ -639,102 +576,6 @@ describe('buildDashboardViewModel', () => {
     expect(
       sourceDestination({ kind: 'roadmap', ref: '.planning/ROADMAP.md#phase-01' }),
     ).toBe('/artifacts/a~.planning%2FROADMAP.md#phase-01');
-  });
-
-  it('authored-blocker attention destination points to blocker source artifact anchor (G-02)', () => {
-    const view = buildDashboardViewModel(
-      presentation({
-        blockers: [
-          {
-            key: 'state:blocker',
-            sourcePath: '.planning/STATE.md',
-            heading: 'Blockers',
-            text: 'Authored blocker',
-          },
-        ],
-      }),
-    );
-    const blocker = view.attention.find((item) => item.type === 'blocker');
-    expect(blocker?.url).toBe('/artifacts/a~.planning%2FSTATE.md#blockers');
-  });
-
-  it('authored-blocker attention destination points to blocker source artifact anchor when no current phase resolves (G-02)', () => {
-    const source = presentation({
-      blockers: [
-        {
-          key: 'state:blocker',
-          sourcePath: '.planning/STATE.md',
-          heading: 'Blockers',
-          text: 'Authored blocker',
-        },
-      ],
-    });
-    if (!source.state) throw new Error('test fixture requires state');
-    source.state = { ...source.state, milestone: null, phaseNumber: null };
-    const view = buildDashboardViewModel(source);
-    const blocker = view.attention.find((item) => item.type === 'blocker');
-    expect(blocker?.url).toBe('/artifacts/a~.planning%2FSTATE.md#blockers');
-  });
-
-  it('dependency attention destination is the blocked plan own route', () => {
-    const blocked = plan('01-02', false, [{ raw: '01-99', targetPlanKey: null }]);
-    const view = buildDashboardViewModel(
-      presentation({}, { plans: [plan('01-01', true), blocked] }),
-    );
-    const dependency = view.attention.find((item) => item.type === 'dependency');
-    expect(dependency?.url).toBe(blocked.key);
-  });
-
-  it('checkpoint and coverage attention destinations equal the owning plan route', () => {
-    const wait = checkpoint();
-    const coverage = coverageWait();
-    const view = buildDashboardViewModel(
-      presentation({ checkpoints: [wait], coverageWaits: [coverage] }),
-    );
-    const checkpointItem = view.attention.find((item) => item.type === 'checkpoint');
-    const coverageItem = view.attention.find((item) => item.type === 'coverage');
-    expect(checkpointItem?.url).toBe(wait.planKey);
-    expect(coverageItem?.url).toBe(coverage.planKey);
-  });
-
-  it('no attention destination is ever a bare phase token, and every non-null destination round-trips through parsePresentationUrl', () => {
-    // Dependency/checkpoint/coverage destinations are the owning plan's own key, which
-    // production code (project-presentation.ts) always assigns from buildPlanUrl — so this
-    // fixture builds a realistic plan key the same way, instead of the opaque `plan:01-02`
-    // shorthand the other fixtures in this file use for identity-comparison-only tests.
-    const realPlanKey = buildPlanUrl(LIVE_IDENTITY, '01-02');
-    const blocked: PlanDto = {
-      ...plan('01-02', false, [{ raw: '01-99', targetPlanKey: null }]),
-      key: realPlanKey,
-    };
-    const view = buildDashboardViewModel(
-      presentation(
-        {
-          blockers: [
-            {
-              key: 'state:blocker',
-              sourcePath: '.planning/STATE.md',
-              heading: 'Blockers',
-              text: 'Authored blocker',
-            },
-          ],
-          checkpoints: [checkpoint({ planKey: realPlanKey })],
-          coverageWaits: [coverageWait({ planKey: realPlanKey })],
-        },
-        {
-          roadmapComplete: true,
-          formalPlanProgress: { completed: 2, total: 2, sourcePath: '.planning/ROADMAP.md' },
-          plans: [plan('01-01', true), blocked],
-        },
-      ),
-    );
-    expect(view.attention.length).toBeGreaterThan(0);
-    for (const item of view.attention) {
-      if (item.url === null) continue;
-      expect(item.url.startsWith('p~')).toBe(false);
-      const parsed = parsePresentationUrl(item.url);
-      expect(parsed.ok).toBe(true);
-    }
   });
 
   it('old/new snapshot isolation: repeated builds are deterministic and do not mix readAt values', () => {

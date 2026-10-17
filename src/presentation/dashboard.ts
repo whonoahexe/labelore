@@ -14,7 +14,7 @@ export interface SourceProvenance {
 }
 
 /**
- * Human-readable label for an attention/next-work row's provenance. This is deliberately a
+ * Human-readable label for a dashboard source link's provenance. This is deliberately a
  * pure, side-effect-free function (not a component) so both the dashboard page and the
  * G2-07 destination-matrix contract test can call it directly without importing JSX.
  */
@@ -32,8 +32,8 @@ export function provenanceLabel(provenance: SourceProvenance): string {
 }
 
 /**
- * Resolves a row's provenance to a navigable in-app destination, independently of the row's
- * primary `AttentionItem.url`/`NextWorkItem.url`. Only `state` and `roadmap` provenance kinds
+ * Resolves a provenance to a navigable in-app destination, independently of any row's primary
+ * `NextWorkItem.url`. Only `state` and `roadmap` provenance kinds
  * name an on-disk markdown source that can be linked to; `summary` and `derived` provenance
  * never produce a second navigable link (G2-07: the two destinations must never be conflated).
  */
@@ -49,14 +49,21 @@ export interface SourcedValue<T> {
   provenance: SourceProvenance;
 }
 
-export interface AttentionItem {
-  type: 'discrepancy' | 'blocker' | 'dependency' | 'checkpoint' | 'coverage';
+/**
+ * One bullet from a STATE.md log section. A leading `[Phase 05]:` tag becomes the label; see
+ * `splitEntry` for how the text becomes a title and a detail.
+ */
+export interface StateLogItem {
   key: string;
-  sourceKey: string;
+  label: string | null;
   title: string;
   detail: string;
-  url: string | null;
-  provenance: SourceProvenance;
+}
+
+/** A STATE.md log section; provenance is null when STATE.md has no such section. */
+export interface StateLog {
+  items: StateLogItem[];
+  provenance: SourceProvenance | null;
 }
 
 export interface NextWorkItem {
@@ -119,7 +126,8 @@ export interface DashboardViewModel {
     observed: CompletionSignal;
   };
   next: { immediate: NextWorkItem | null; previews: NextWorkItem[] };
-  attention: AttentionItem[];
+  decisions: StateLog;
+  blockers: StateLog;
 }
 
 function stateText(value: string | null, ref: string): SourcedValue<string> {
@@ -196,16 +204,6 @@ function completionOf(phase: PhaseDto | null): {
       provenance: { kind: 'summary', ref: phase.key },
     },
   };
-}
-
-function hasDiscrepancy(formal: CompletionSignal, observed: CompletionSignal): boolean {
-  return (
-    formal.completed !== null &&
-    formal.total !== null &&
-    observed.completed !== null &&
-    observed.total !== null &&
-    (formal.completed !== observed.completed || formal.total !== observed.total)
-  );
 }
 
 function phaseCompletionConsolidated(
@@ -428,92 +426,44 @@ function nextWork(
   return { immediate: ordered[0] ?? null, previews: ordered.slice(1, 3) };
 }
 
-function attentionItems(
-  presentation: ProjectPresentation,
-  currentPhase: PhaseDto | null,
-  formal: CompletionSignal,
-  observed: CompletionSignal,
-): AttentionItem[] {
-  const items: AttentionItem[] = [];
-  if (currentPhase && hasDiscrepancy(formal, observed)) {
-    items.push({
-      type: 'discrepancy',
-      key: `discrepancy:${currentPhase.key}`,
-      sourceKey: currentPhase.key,
-      title: 'Roadmap and observed completion disagree',
-      detail: `ROADMAP records ${formal.completed}/${formal.total}; matching SUMMARY files record ${observed.completed}/${observed.total}.`,
-      url: buildPhaseUrl(currentPhase.identity),
-      provenance: { kind: 'derived', ref: presentation.readAt },
-    });
+/**
+ * Splits an entry into a title and a detail: at a leading **bold** lead, else at the first spaced
+ * em dash, else after the first sentence. A single-clause entry has nothing to split, so it
+ * becomes the detail under a generic title, the way the Needs attention panel titled a blocker.
+ */
+function splitEntry(text: string, fallbackTitle: string): { title: string; detail: string } {
+  const bold = text.match(/^[^\p{L}\p{N}*]*\*\*(.+?)\*\*[\s:—-]*(\S.*)$/u);
+  if (bold) return { title: bold[1], detail: bold[2] };
+  const dash = text.indexOf(' — ');
+  if (dash > 0 && text.slice(dash + 3).trim()) {
+    return { title: text.slice(0, dash), detail: text.slice(dash + 3).trim() };
   }
-  for (const blocker of presentation.blockers) {
-    if (isPlaceholderBlocker(blocker.text)) continue;
-    items.push({
-      type: 'blocker',
-      key: `blocker:${blocker.key}`,
-      sourceKey: blocker.key,
-      title: 'Authored blocker',
-      detail: blocker.text,
-      url: blockerUrl(blocker),
-      provenance: {
-        kind: 'state',
-        ref: blocker.heading
-          ? `${blocker.sourcePath}#${stableSlug(blocker.heading)}`
-          : blocker.sourcePath,
-      },
-    });
-  }
-  const plans = planIndex(presentation);
-  for (const milestone of presentation.milestones) {
-    if (milestone.archived) continue;
-    for (const phase of milestone.phases) {
-      for (const plan of phase.plans) {
-        if (plan.complete) continue;
-        const blockers = dependencyBlockers(plan, plans);
-        if (blockers.length === 0) continue;
-        items.push({
-          type: 'dependency',
-          key: `dependency:${plan.key}`,
-          sourceKey: plan.key,
-          title: `${plan.id} is dependency-blocked`,
-          detail: `Blocked by ${blockers.join(', ')}.`,
-          url: plan.key,
-          provenance: { kind: 'derived', ref: plan.key },
-        });
-      }
-    }
-  }
-  for (const checkpoint of presentation.checkpoints) {
-    if (checkpoint.status !== 'pending') continue;
-    items.push({
-      type: 'checkpoint',
-      key: `checkpoint:${checkpoint.key}`,
-      sourceKey: checkpoint.key,
-      title: checkpoint.name,
-      detail: `${checkpoint.type}${checkpoint.gate ? ` (${checkpoint.gate})` : ''}`,
-      url: checkpoint.planKey,
-      provenance: { kind: 'derived', ref: checkpoint.key },
-    });
-  }
-  for (const coverage of presentation.coverageWaits) {
-    if (coverage.status !== 'pending') continue;
-    items.push({
-      type: 'coverage',
-      key: `coverage:${coverage.key}`,
-      sourceKey: coverage.key,
-      title: coverage.description,
-      detail: `Coverage ${coverage.coverageId} requires human judgment.`,
-      url: coverage.planKey,
-      provenance: { kind: 'derived', ref: coverage.key },
-    });
-  }
-  const seen = new Set<string>();
-  return items.filter((item) => {
-    const identity = `${item.type}:${item.sourceKey}`;
-    if (seen.has(identity)) return false;
-    seen.add(identity);
-    return true;
-  });
+  const sentence = text.match(/^(.+?[.!?])\s+(\S.*)$/);
+  if (sentence) return { title: sentence[1], detail: sentence[2] };
+  return { title: fallbackTitle, detail: text };
+}
+
+function stateLogItem(key: string, text: string, fallbackTitle: string): StateLogItem {
+  const tagged = text.match(/^\[([^\]]+)\]:\s*(.*)$/);
+  return {
+    key,
+    label: tagged ? tagged[1] : null,
+    ...splitEntry(tagged ? tagged[2] : text, fallbackTitle),
+  };
+}
+
+function stateLog(
+  section: { heading: string } | null,
+  sourcePath: string,
+  entries: { key: string; text: string }[],
+  fallbackTitle: string,
+): StateLog {
+  return {
+    items: entries.map((entry) => stateLogItem(entry.key, entry.text, fallbackTitle)),
+    provenance: section
+      ? { kind: 'state', ref: `${sourcePath}#${stableSlug(section.heading)}` }
+      : null,
+  };
 }
 
 export function buildDashboardViewModel(presentation: ProjectPresentation): DashboardViewModel {
@@ -569,6 +519,18 @@ export function buildDashboardViewModel(presentation: ProjectPresentation): Dash
       ...completion,
     },
     next: nextWork(presentation, currentPhase),
-    attention: attentionItems(presentation, currentPhase, completion.formal, completion.observed),
+    // Newest first: STATE.md appends decisions at the bottom of the log.
+    decisions: stateLog(
+      state?.decisions ?? null,
+      statePath,
+      [...presentation.decisions].reverse(),
+      'Recorded decision',
+    ),
+    blockers: stateLog(
+      state?.blockersConcerns ?? null,
+      statePath,
+      presentation.blockers.filter((blocker) => !isPlaceholderBlocker(blocker.text)),
+      'Open blocker',
+    ),
   };
 }

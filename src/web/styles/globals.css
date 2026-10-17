@@ -1309,9 +1309,15 @@ summary.tree-node-row:focus-visible {
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(18rem, 0.7fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
   gap: var(--space-5);
   margin-top: var(--space-fluid-10);
+}
+
+/* Decisions and Blockers sit side by side; On deck spans the row beneath them. */
+.dashboard-grid > .preview-panel {
+  grid-column: 1 / -1;
 }
 
 .attention-panel,
@@ -1360,10 +1366,6 @@ summary.tree-node-row:focus-visible {
   border-bottom: 0;
 }
 
-.attention-list li[data-type='discrepancy'] {
-  color: var(--destructive);
-}
-
 .attention-list svg {
   width: 1rem;
   height: 1rem;
@@ -1385,11 +1387,6 @@ summary.tree-node-row:focus-visible {
   color: var(--muted-foreground);
   font-size: var(--fs-3);
   line-height: var(--fs-3--lh);
-}
-
-.attention-action {
-  grid-column: 2;
-  text-decoration: none;
 }
 
 .attention-list > li > .source-note {
@@ -2598,6 +2595,21 @@ pre {
   margin-top: var(--space-1-5);
   font-size: var(--fs-5);
   line-height: var(--lh-snug);
+}
+
+/* Every row is one height: the title and the detail stop at two lines each, and the source note
+   sits on the row's floor. 12rem is the tallest row those clamps allow, at every width. */
+.attention-list li {
+  grid-template-rows: minmax(0, 1fr) auto;
+  height: 12rem;
+}
+
+.attention-list strong,
+.attention-list p {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .attention-pagination,

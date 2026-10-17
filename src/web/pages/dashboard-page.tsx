@@ -1,22 +1,22 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  AlertTriangle,
   ArrowRight,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
   CircleDot,
+  Gavel,
   ShieldAlert,
 } from 'lucide-react';
 import { Link } from 'react-router';
 import {
   provenanceLabel,
   sourceDestination,
-  type AttentionItem,
   type DashboardViewModel,
   type NextWorkItem,
   type SourceProvenance,
+  type StateLog,
 } from '../../presentation/dashboard.ts';
 import type { DashboardHead } from '../../presentation/dashboard-head.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
@@ -34,7 +34,7 @@ async function fetchDashboard(): Promise<DashboardResponse> {
   return (await response.json()) as DashboardResponse;
 }
 
-const ATTENTION_PAGE_SIZE = 4;
+const STATE_LOG_PAGE_SIZE = 4;
 
 function kindLabel(kind: NextWorkItem['kind']): string {
   return kind.replaceAll('-', ' ');
@@ -170,11 +170,90 @@ function ProjectHead({ head }: { head: DashboardHead }): React.JSX.Element {
   );
 }
 
-function AttentionIcon({ type }: { type: AttentionItem['type'] }): React.JSX.Element {
-  return type === 'blocker' || type === 'dependency' ? (
-    <ShieldAlert aria-hidden="true" />
-  ) : (
-    <AlertTriangle aria-hidden="true" />
+/** Decisions and Blockers keep the retired Needs attention panel's look: its panel, rows, icon
+ * column and pagination, with the row's kind label carrying the entry's phase tag when it has one. */
+function StateLogPanel({
+  id,
+  eyebrow,
+  title,
+  kind,
+  log,
+  empty,
+}: {
+  id: string;
+  eyebrow: string;
+  title: string;
+  kind: 'decision' | 'blocker';
+  log: StateLog;
+  empty: string;
+}): React.JSX.Element {
+  const [page, setPage] = useState(1);
+  const Icon = kind === 'blocker' ? ShieldAlert : Gavel;
+  const total = log.items.length;
+  const totalPages = Math.ceil(total / STATE_LOG_PAGE_SIZE);
+  const currentPage = Math.min(Math.max(1, page), totalPages || 1);
+  const start = (currentPage - 1) * STATE_LOG_PAGE_SIZE;
+  const end = Math.min(start + STATE_LOG_PAGE_SIZE, total);
+  return (
+    <section className="attention-panel" aria-labelledby={id}>
+      <header className="section-heading compact">
+        <div>
+          <p className="eyebrow">{eyebrow}</p>
+          <h2 id={id}>{title}</h2>
+        </div>
+        <span aria-label={`${total} items`}>{total}</span>
+      </header>
+      {total > 0 ? (
+        <>
+          <ol className="attention-list">
+            {log.items.slice(start, end).map((item) => (
+              <li key={item.key}>
+                <Icon aria-hidden="true" />
+                <div>
+                  <span className="item-kind">{item.label ?? kind}</span>
+                  <strong>{stripMarkdown(stripEmoji(item.title))}</strong>
+                  <p>{stripMarkdown(stripEmoji(item.detail))}</p>
+                </div>
+                {log.provenance ? <SourceLink provenance={log.provenance} /> : null}
+              </li>
+            ))}
+          </ol>
+          {totalPages > 1 ? (
+            <nav className="attention-pagination" aria-label={`${title} pagination`}>
+              <span>
+                Showing {start + 1}–{end} of {total}
+              </span>
+              <div className="attention-pagination-actions">
+                <button
+                  type="button"
+                  aria-label="Previous page"
+                  onClick={() => setPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage <= 1}
+                >
+                  <ChevronLeft aria-hidden="true" />
+                </button>
+                <span className="attention-page-status" aria-live="polite">
+                  {currentPage} / {totalPages}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Next page"
+                  onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage >= totalPages}
+                >
+                  <ChevronRight aria-hidden="true" />
+                </button>
+              </div>
+            </nav>
+          ) : null}
+        </>
+      ) : (
+        <div className="quiet-state">
+          <CheckCircle2 aria-hidden="true" />
+          <p>{empty}</p>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -195,7 +274,6 @@ function DashboardLoading(): React.JSX.Element {
 
 export function DashboardPage(): React.JSX.Element {
   const dashboard = useQuery({ queryKey: ['dashboard'], queryFn: fetchDashboard });
-  const [attentionPage, setAttentionPage] = useState(1);
 
   if (dashboard.isPending) return <DashboardLoading />;
   if (dashboard.isError) {
@@ -220,88 +298,27 @@ export function DashboardPage(): React.JSX.Element {
     return <InvalidProjectScreen loadStatus={view.loadStatus} />;
   }
 
-  const totalAttentionPages = Math.ceil(view.attention.length / ATTENTION_PAGE_SIZE);
-  const currentAttentionPage = Math.min(Math.max(1, attentionPage), totalAttentionPages || 1);
-  const attentionStart = (currentAttentionPage - 1) * ATTENTION_PAGE_SIZE;
-  const attentionEnd = Math.min(attentionStart + ATTENTION_PAGE_SIZE, view.attention.length);
-  const visibleAttention = view.attention.slice(attentionStart, attentionEnd);
-
   return (
     <main className="dashboard-page page-stack">
       <ProjectHead head={view.head} />
 
       <section className="dashboard-grid">
-        <section className="attention-panel" aria-labelledby="attention-heading">
-          <header className="section-heading compact">
-            <div>
-              <p className="eyebrow">Prioritized</p>
-              <h2 id="attention-heading">Needs attention</h2>
-            </div>
-            <span aria-label={`${view.attention.length} items`}>{view.attention.length}</span>
-          </header>
-          {view.attention.length > 0 ? (
-            <>
-              <ol className="attention-list">
-                {visibleAttention.map((item) => (
-                  <li key={item.key} data-type={item.type}>
-                    <AttentionIcon type={item.type} />
-                    {item.url ? (
-                      <Link
-                        className="attention-action"
-                        to={item.url}
-                        aria-label={`Open ${item.type}: ${stripMarkdown(item.title)}`}
-                      >
-                        <span className="item-kind">{item.type}</span>
-                        <strong>{stripMarkdown(item.title)}</strong>
-                        <p>{stripMarkdown(stripEmoji(item.detail))}</p>
-                      </Link>
-                    ) : (
-                      <div>
-                        <span className="item-kind">{item.type}</span>
-                        <strong>{stripMarkdown(item.title)}</strong>
-                        <p>{stripMarkdown(stripEmoji(item.detail))}</p>
-                      </div>
-                    )}
-                    <SourceLink provenance={item.provenance} />
-                  </li>
-                ))}
-              </ol>
-              {totalAttentionPages > 1 ? (
-                <nav className="attention-pagination" aria-label="Needs attention pagination">
-                  <span>
-                    Showing {attentionStart + 1}–{attentionEnd} of {view.attention.length}
-                  </span>
-                  <div className="attention-pagination-actions">
-                    <button
-                      type="button"
-                      aria-label="Previous page"
-                      onClick={() => setAttentionPage((page) => Math.max(1, page - 1))}
-                      disabled={currentAttentionPage <= 1}
-                    >
-                      <ChevronLeft aria-hidden="true" />
-                    </button>
-                    <span className="attention-page-status" aria-live="polite">
-                      {currentAttentionPage} / {totalAttentionPages}
-                    </span>
-                    <button
-                      type="button"
-                      aria-label="Next page"
-                      onClick={() => setAttentionPage((page) => Math.min(totalAttentionPages, page + 1))}
-                      disabled={currentAttentionPage >= totalAttentionPages}
-                    >
-                      <ChevronRight aria-hidden="true" />
-                    </button>
-                  </div>
-                </nav>
-              ) : null}
-            </>
-          ) : (
-            <div className="quiet-state">
-              <CheckCircle2 aria-hidden="true" />
-              <p>No discrepancy, blocker, dependency wait, or human gate needs attention.</p>
-            </div>
-          )}
-        </section>
+        <StateLogPanel
+          id="decisions-heading"
+          eyebrow="Settled"
+          title="Decisions"
+          kind="decision"
+          log={view.decisions}
+          empty="No decisions are recorded."
+        />
+        <StateLogPanel
+          id="blockers-heading"
+          eyebrow="Unresolved"
+          title="Blockers"
+          kind="blocker"
+          log={view.blockers}
+          empty="No blockers are recorded."
+        />
 
         <section className="preview-panel" aria-labelledby="preview-heading">
           <header className="section-heading compact">

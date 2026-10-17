@@ -89,7 +89,11 @@ describe('production SPA deep-link delivery', () => {
     ])) as Array<Record<string, unknown>>;
 
     expect(payloads.map((payload) => payload.readAt)).toEqual(Array(4).fill(snapshot.readAt));
-    expect(payloads[1]).toMatchObject({ loadStatus: { status: 'ok' }, attention: [] });
+    expect(payloads[1]).toMatchObject({
+      loadStatus: { status: 'ok' },
+      decisions: { items: [] },
+      blockers: { items: [] },
+    });
     expect(payloads[2]).toMatchObject({ active: null, history: [] });
     expect(payloads[3]).toMatchObject({ history: [] });
   });

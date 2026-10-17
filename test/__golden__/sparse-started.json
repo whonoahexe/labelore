@@ -226,6 +226,9 @@
           "blockersConcerns": {
             "heading": "Blockers/Concerns"
           },
+          "decisions": {
+            "heading": "Decisions"
+          },
           "quickTasksCompleted": []
         }
       }

@@ -92,6 +92,7 @@ function presentation(milestones: MilestoneDto[]): ProjectPresentation {
     requirements: [],
     artifacts: [],
     blockers: [],
+    decisions: [],
     checkpoints: [],
     coverageWaits: [],
     mentions: { byId: {}, all: [] },
