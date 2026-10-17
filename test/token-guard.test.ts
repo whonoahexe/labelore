@@ -559,12 +559,6 @@ export const ALLOWLIST: AllowlistEntry[] = [
     reason: 'em-relative heading margin — scales with the heading\'s own resolved font-size, not a fixed step',
   },
   {
-    selector: '.position-copy h1 span',
-    property: 'font-size',
-    value: 'max(0.2em, var(--fs-1))',
-    reason: 'P-04: em-relative hero label with a floor — 0.2em of the hero clamp, never below --fs-1',
-  },
-  {
     selector: '.artifact-document :not(pre) > code',
     property: 'font-size',
     value: '0.86em',

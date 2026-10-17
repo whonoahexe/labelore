@@ -566,6 +566,16 @@ element is actually written, regardless of class name:
   `--in-flight-border` with `--in-flight-fill` names. The page writes no `data-tone`, the
   parse-degradation tones never appear on it, and every class is in the reserved `view-learnings-`
   namespace, so no vocabulary row is added.
+- **The dashboard opens on the project.** (quick-261017-wlg, sketch 025 R3b) The PROJECT.md H1 is
+  the page's only h1, split at its first spaced dash into a name and a tagline. Under it sits the
+  What This Is lead: a leading bold sentence, or sentences up to about 70 characters (never more
+  than two). Then comes a "Now" block: milestone · phase, the phase title and the status chip on
+  its own line. Beside it, centred on it, one card reads Next up, then this phase's own plan
+  progress, the last activity and the next step in full. Absences are silent, except the card's
+  "No plans in this phase yet." and "No STATE.md yet" lines. Core Value is not shown, and blockers
+  and gates stay in Needs attention. The accent goes to the Now block's left rule and label, the
+  card's top rule, the done bar segments, and the step title on hover. The next plan's segment
+  takes `--in-flight-fill`. Status chips use only `active` and `complete`. No motion.
 
 ## Surface-scoped registered names
 
@@ -598,16 +608,12 @@ plan's "no AST tooling" constraint.
 | `dashboard-page` | Dashboard | |
 | `immediate-work` | Dashboard | shared with the CONTEXT brief (quick-260923-lju) |
 | `item-kind` | Dashboard | |
-| `milestone-label` | Dashboard | |
 | `next-preview` | Dashboard | |
-| `next-primary` | Dashboard | |
 | `plan-breakdown-pills` | Dashboard | |
 | `plan-pill` | Dashboard | |
 | `plan-progress-headline` | Dashboard | |
 | `plan-progress-summary` | Dashboard | |
-| `position-copy` | Dashboard | |
-| `position-hero` | Dashboard | shared with the CONTEXT brief (quick-260923-lju) |
-| `position-meta` | Dashboard | |
+| `position-hero` | Dashboard | now used by the CONTEXT brief alone; the dashboard opens on `project-head` (quick-261017-wlg) |
 | `preview-empty` | Dashboard | |
 | `preview-list` | Dashboard | |
 | `preview-panel` | Dashboard | shared with the CONTEXT brief (quick-260923-lju) |
@@ -615,6 +621,25 @@ plan's "no AST tooling" constraint.
 | `progress-panel` | Dashboard | |
 | `progress-panel-header` | Dashboard | |
 | `progress-panel-meta` | Dashboard | |
+| `project-head` | Dashboard | |
+| `project-head-copy` | Dashboard | |
+| `project-identity` | Dashboard | |
+| `project-lead` | Dashboard | |
+| `project-next` | Dashboard | |
+| `project-next-bar` | Dashboard | |
+| `project-next-counts` | Dashboard | |
+| `project-next-figure` | Dashboard | |
+| `project-next-id` | Dashboard | |
+| `project-next-label` | Dashboard | |
+| `project-next-last` | Dashboard | |
+| `project-next-percent` | Dashboard | |
+| `project-next-progress` | Dashboard | |
+| `project-next-step` | Dashboard | |
+| `project-next-unit` | Dashboard | |
+| `project-now` | Dashboard | |
+| `project-now-label` | Dashboard | |
+| `project-now-line` | Dashboard | |
+| `project-tagline` | Dashboard | |
 
 ### Roadmap
 

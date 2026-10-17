@@ -5,6 +5,7 @@ import type {
   ProjectPresentation,
 } from '../server/project-presentation.ts';
 import { buildArtifactUrl, buildPhaseUrl } from './routes.ts';
+import { buildDashboardHead, type DashboardHead } from './dashboard-head.ts';
 import { stableSlug } from '../rendering/slug.ts';
 
 export interface SourceProvenance {
@@ -93,6 +94,7 @@ export interface CompletionSignal {
 export interface DashboardViewModel {
   readAt: string;
   projectName: string | null;
+  head: DashboardHead;
   current: {
     milestone: SourcedValue<string>;
     phaseNumber: SourcedValue<string>;
@@ -529,6 +531,7 @@ export function buildDashboardViewModel(presentation: ProjectPresentation): Dash
   return {
     readAt: presentation.readAt,
     projectName: presentation.projectName,
+    head: buildDashboardHead(presentation),
     current: {
       milestone: stateText(state?.milestone ?? null, `${statePath}#milestone`),
       phaseNumber: stateText(state?.phaseNumber ?? null, `${statePath}#current_phase`),
