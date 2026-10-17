@@ -11,8 +11,9 @@ import {
   activityClause,
   activityDateLabel,
   buildDashboardHead,
+  projectSectionLead,
   splitProjectTitle,
-  whatThisIsLead,
+  sectionLead,
 } from '../../src/presentation/dashboard-head.ts';
 import { fromDirectory } from '../helpers/from-directory.ts';
 
@@ -116,6 +117,18 @@ describe('dashboard head', () => {
     expect(head.next?.step).toEqual({ kind: 'new-milestone', title: 'Start the next milestone', plan: null });
   });
 
+  it('cuts any PROJECT.md section to a lead, such as Core Value for the Traceability lede', async () => {
+    const snapshot = await new PlanningRepository(
+      new InMemoryPlanningFilesystem({ '.planning/PROJECT.md': fixture('synthetic-PROJECT.md') }),
+      '/project',
+    ).load();
+    const presentation = toProjectPresentation(snapshot);
+    expect(projectSectionLead(presentation, /^core value\b/i)).toBe(
+      'Every manifest line becomes a cited filing row or a visible exception, with nothing silently dropped.',
+    );
+    expect(projectSectionLead(presentation, /^no such section\b/i)).toBeNull();
+  });
+
   it('shows just the name for a project with a bare PROJECT.md', async () => {
     const head = await headOf({ '.planning/PROJECT.md': fixture('sparse-PROJECT.md') });
     expect(head).toEqual({ name: 'Untitled Spike', tagline: null, lead: null, now: null, next: null });
@@ -211,14 +224,14 @@ describe('dashboard head extractors', () => {
   });
 
   it('cuts What This Is to a lead', () => {
-    expect(whatThisIsLead('**Bold lead here.** Then more text follows here.')).toBe('Bold lead here.');
-    expect(whatThisIsLead('Short one. Second sentence here that adds detail to make it longer than seventy chars.')).toBe(
+    expect(sectionLead('**Bold lead here.** Then more text follows here.')).toBe('Bold lead here.');
+    expect(sectionLead('Short one. Second sentence here that adds detail to make it longer than seventy chars.')).toBe(
       'Short one. Second sentence here that adds detail to make it longer than seventy chars.',
     );
-    expect(whatThisIsLead('*Reviewed at v1.0 close.*\n\nThe real lead sentence, long enough to stand alone as a lead here.')).toBe(
+    expect(sectionLead('*Reviewed at v1.0 close.*\n\nThe real lead sentence, long enough to stand alone as a lead here.')).toBe(
       'The real lead sentence, long enough to stand alone as a lead here.',
     );
-    expect(whatThisIsLead('### Sub\n\nNever used.')).toBeNull();
+    expect(sectionLead('### Sub\n\nNever used.')).toBeNull();
   });
 
   it('shortens the last activity to one clause', () => {

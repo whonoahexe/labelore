@@ -97,10 +97,10 @@ function withoutEmphasis(text: string): string {
     .join('');
 }
 
-/** What This Is, cut to a lead: a leading bold sentence if there is one, otherwise sentences until
- * the lead reaches 70 characters (never more than two); a lead over 160 characters is cut at its
- * first " — " or ": ". */
-export function whatThisIsLead(sectionBody: string): string | null {
+/** A PROJECT.md section cut to a lead: a leading bold sentence if there is one, otherwise sentences
+ * until the lead reaches 70 characters (never more than two); a lead over 160 characters is cut at
+ * its first " — " or ": ". */
+export function sectionLead(sectionBody: string): string | null {
   const [first] = paragraphs(sectionBody);
   if (!first) return null;
   const bold = first.match(/^\*\*(.+?)\*\*/);
@@ -294,27 +294,35 @@ function nextOf(presentation: ProjectPresentation, phase: PhaseDto | null): Dash
   };
 }
 
+/** The lead of the root PROJECT.md's `## ` section whose heading matches, or null. */
+export function projectSectionLead(presentation: ProjectPresentation, heading: RegExp): string | null {
+  const project = presentation.artifacts.find(
+    (artifact) => artifact.kind === 'project' && artifact.location === 'root',
+  );
+  const sections = project?.structured.sections;
+  const section = Array.isArray(sections)
+    ? (sections as unknown[]).find(
+        (candidate): candidate is { heading: string; body: string } =>
+          typeof candidate === 'object' &&
+          candidate !== null &&
+          typeof (candidate as { heading?: unknown }).heading === 'string' &&
+          typeof (candidate as { body?: unknown }).body === 'string' &&
+          heading.test((candidate as { heading: string }).heading),
+      )
+    : undefined;
+  return section ? sectionLead(section.body) : null;
+}
+
 export function buildDashboardHead(presentation: ProjectPresentation): DashboardHead {
   const project = presentation.artifacts.find(
     (artifact) => artifact.kind === 'project' && artifact.location === 'root',
   );
   const { name, tagline } = splitProjectTitle(project ? presentation.projectName : null, presentation.rootPath);
-  const sections = project?.structured.sections;
-  const whatThisIs = Array.isArray(sections)
-    ? (sections as unknown[]).find(
-        (section): section is { heading: string; body: string } =>
-          typeof section === 'object' &&
-          section !== null &&
-          typeof (section as { heading?: unknown }).heading === 'string' &&
-          typeof (section as { body?: unknown }).body === 'string' &&
-          /^what this is\b/i.test((section as { heading: string }).heading),
-      )
-    : undefined;
   const phase = headPhaseOf(presentation);
   return {
     name,
     tagline,
-    lead: whatThisIs ? whatThisIsLead(whatThisIs.body) : null,
+    lead: projectSectionLead(presentation, /^what this is\b/i),
     now: nowOf(presentation.state, phase),
     next: nextOf(presentation, phase),
   };

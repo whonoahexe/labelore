@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ChevronRight, History } from 'lucide-react';
 import { Link } from 'react-router';
 import { EmptyState } from '../components/empty-state.tsx';
+import { LeadText } from '../components/lead-tokens.tsx';
 import type {
   TraceabilityCoverage,
   TraceabilityCoveringPhase,
@@ -22,6 +23,7 @@ import {
   coveringRollup,
   isResolvedCovering,
 } from './traceability-rollup.ts';
+import { stripEmoji } from './strip-emoji.ts';
 
 // Re-exported so the filter predicate stays reachable directly from the page module (its natural
 // call site) while its DOM-free definition lives in traceability-filter.ts — the same seam
@@ -304,11 +306,11 @@ export function TraceabilityPage(): React.JSX.Element {
         <div>
           <p className="eyebrow">Requirement coverage</p>
           <h1>Traceability</h1>
-          <p className="lede">
-            Every requirement beside the state of the phase covering it — the requirement&rsquo;s
-            own claimed status and the covering phase&rsquo;s own state travel as two separate
-            signals, never merged into one verdict.
-          </p>
+          {view.coreValue ? (
+            <p className="lede">
+              <LeadText text={stripEmoji(view.coreValue)} />
+            </p>
+          ) : null}
         </div>
       </header>
 

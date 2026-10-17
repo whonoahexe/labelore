@@ -9,6 +9,7 @@ import type {
   ProjectPresentation,
   RequirementDto,
 } from '../server/project-presentation.ts';
+import { projectSectionLead } from './dashboard-head.ts';
 import { buildPhaseUrl } from './routes.ts';
 
 export interface TraceabilityCoveringPhase {
@@ -91,6 +92,8 @@ export interface TraceabilityDeferredTier {
 }
 
 export interface TraceabilityViewModel {
+  /** The lead of PROJECT.md's Core Value section — the page's lede — or null without one. */
+  coreValue: string | null;
   groups: TraceabilityGroup[];
   deferredRows: TraceabilityRow[];
   deferredTiers: TraceabilityDeferredTier[];
@@ -286,6 +289,7 @@ export function buildTraceabilityViewModel(
   }));
   const allRows = groups.flatMap((group) => group.rows);
   return {
+    coreValue: projectSectionLead(presentation, /^core value\b/i),
     groups,
     deferredRows,
     deferredTiers,

@@ -20,7 +20,7 @@ import {
 } from '../../presentation/dashboard.ts';
 import type { DashboardHead } from '../../presentation/dashboard-head.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
-import { tokenizeInline, type InlineToken } from '../views/inline-markdown.ts';
+import { LeadText } from '../components/lead-tokens.tsx';
 import { InvalidProjectScreen } from './invalid-project-screen.tsx';
 import { stripEmoji, stripMarkdown } from './strip-emoji.ts';
 
@@ -63,20 +63,6 @@ function NextWork({ item: rawItem }: { item: NextWorkItem }) {
       </div>
       <ArrowRight aria-hidden="true" />
     </Link>
-  );
-}
-
-/** The lead's inline markdown: code spans stay code, emphasis is flattened into the sentence. */
-function LeadTokens({ tokens }: { tokens: InlineToken[] }): React.JSX.Element {
-  return (
-    <>
-      {tokens.map((token, index) => {
-        const key = `${token.type}-${index}`;
-        if (token.type === 'strong' || token.type === 'em') return <LeadTokens key={key} tokens={token.value} />;
-        if (token.type === 'code') return <code key={key}>{token.value}</code>;
-        return <span key={key}>{token.value}</span>;
-      })}
-    </>
   );
 }
 
@@ -155,7 +141,7 @@ function ProjectHead({ head }: { head: DashboardHead }): React.JSX.Element {
           {head.tagline ? <p className="project-tagline">{stripEmoji(head.tagline)}</p> : null}
           {head.lead ? (
             <p className="project-lead">
-              <LeadTokens tokens={tokenizeInline(stripEmoji(head.lead))} />
+              <LeadText text={stripEmoji(head.lead)} />
             </p>
           ) : null}
         </div>
