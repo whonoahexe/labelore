@@ -12,6 +12,7 @@ import { verificationLayout } from './layout-verification.ts';
 import type { ViewKind } from './kinds.ts';
 import type { PromotedBlock, ViewInput, ViewManifest } from './manifest.ts';
 import { composeSecurityConsole } from './security-console.ts';
+import { composeLearningsRetro } from './learnings-retro.ts';
 import { composePlanNavigator } from './plan-navigator.ts';
 import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
@@ -273,6 +274,8 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
       { type: 'section', heading: /^surprises$/i },
       factsBlock('counts', 'Counts', ['counts']),
     ],
+    // quick-261017-k45 (sketch-024 E): the retrospective page; `promote` above is the fallback.
+    learningsRetro: composeLearningsRetro,
   },
   context: {
     kind: 'context',

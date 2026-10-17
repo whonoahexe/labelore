@@ -53,6 +53,8 @@ import type { ComposedContextBrief } from '../views/context-brief.ts';
 import { ContextBriefView, ContextIntroMeta } from '../views/context-brief-components.tsx';
 import type { ComposedSecurityConsole } from '../views/security-console.ts';
 import { SecurityConsoleView } from '../views/security-console-components.tsx';
+import type { ComposedLearningsRetro } from '../views/learnings-retro.ts';
+import { LearningsRetroView } from '../views/learnings-retro-components.tsx';
 import type { ComposedPlanNavigator } from '../views/plan-navigator.ts';
 import { PlanIntroMeta, PlanNavigatorView } from '../views/plan-navigator-components.tsx';
 import { findPlanContext } from '../views/plan-context.ts';
@@ -713,6 +715,13 @@ export function ArtifactPage({
     if (!manifest || !viewInput) return null;
     return manifest.uatSession?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // quick-261017-k45 (sketch-024 E): the LEARNINGS retrospective page, when the resolved manifest opts
+  // into one - `null` for every other kind, for a file with no parsed entry and for a payload from a
+  // server that predates `structured.learnings` (the promoted-block view then renders).
+  const learningsRetro = useMemo<ComposedLearningsRetro | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.learningsRetro?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // "In the source only" entries switch to Source mode, then scroll to the named heading once the
   // source document has mounted. The pending id lives in a ref and is cleared only when the frame
   // callback fires, so a re-run of the effect (StrictMode) still lands on it.
@@ -761,6 +770,7 @@ export function ArtifactPage({
     reviewThreads !== null ||
     uiSpec !== null ||
     uatSession !== null ||
+    learningsRetro !== null ||
     (composed !== null && composed.blocks.length > 0);
 
   if (query.isPending) {
@@ -836,6 +846,27 @@ export function ArtifactPage({
         <ReviewThreadsView
           key={artifact.path}
           model={reviewThreads}
+          fallbackTitle={artifact.title}
+          path={artifact.path}
+          mode={mode}
+          onModeChange={setMode}
+          onShowSource={showSource}
+          chip={<WarningChip tone={warningTone} />}
+        />
+      </main>
+    );
+  }
+  // quick-261017-k45: the LEARNINGS page opens on its own head (eyebrow, extraction date, the title and
+  // one-sentence lede) with no breadcrumb row, manifest lead or Document metadata disclosure in View
+  // mode - the Also row names the frontmatter, and a parse warning shows as its chip in the head.
+  // Source mode falls through to the unchanged page below.
+  if (learningsRetro && mode === 'view') {
+    return (
+      <main className="artifact-page page-stack">
+        {switcher}
+        <LearningsRetroView
+          key={artifact.path}
+          model={learningsRetro}
           fallbackTitle={artifact.title}
           path={artifact.path}
           mode={mode}
