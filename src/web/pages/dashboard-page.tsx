@@ -7,7 +7,6 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleDot,
-  MapPin,
   ShieldAlert,
 } from 'lucide-react';
 import { Link } from 'react-router';
@@ -19,7 +18,9 @@ import {
   type NextWorkItem,
   type SourceProvenance,
 } from '../../presentation/dashboard.ts';
+import type { DashboardHead } from '../../presentation/dashboard-head.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
+import { tokenizeInline, type InlineToken } from '../views/inline-markdown.ts';
 import { InvalidProjectScreen } from './invalid-project-screen.tsx';
 import { stripEmoji, stripMarkdown } from './strip-emoji.ts';
 
@@ -51,12 +52,10 @@ function SourceLink({ provenance, children }: { provenance: SourceProvenance; ch
   );
 }
 
-function NextWork({ item: rawItem, primary = false }: { item: NextWorkItem; primary?: boolean }) {
-  const item = primary
-    ? { ...rawItem, description: stripMarkdown(stripEmoji(rawItem.description)) }
-    : { ...rawItem, description: stripMarkdown(rawItem.description) };
+function NextWork({ item: rawItem }: { item: NextWorkItem }) {
+  const item = { ...rawItem, description: stripMarkdown(rawItem.description) };
   return (
-    <Link className={primary ? 'next-primary' : 'next-preview'} to={item.url}>
+    <Link className="next-preview" to={item.url}>
       <div>
         <span className="item-kind">{kindLabel(item.kind)}</span>
         <strong>{stripMarkdown(item.title)}</strong>
@@ -64,6 +63,117 @@ function NextWork({ item: rawItem, primary = false }: { item: NextWorkItem; prim
       </div>
       <ArrowRight aria-hidden="true" />
     </Link>
+  );
+}
+
+/** The lead's inline markdown: code spans stay code, emphasis is flattened into the sentence. */
+function LeadTokens({ tokens }: { tokens: InlineToken[] }): React.JSX.Element {
+  return (
+    <>
+      {tokens.map((token, index) => {
+        const key = `${token.type}-${index}`;
+        if (token.type === 'strong' || token.type === 'em') return <LeadTokens key={key} tokens={token.value} />;
+        if (token.type === 'code') return <code key={key}>{token.value}</code>;
+        return <span key={key}>{token.value}</span>;
+      })}
+    </>
+  );
+}
+
+function ProjectNext({ next }: { next: DashboardHead['next'] }): React.JSX.Element {
+  if (!next) {
+    return (
+      <aside className="immediate-work project-next" aria-labelledby="project-next-heading">
+        <p className="eyebrow" id="project-next-heading">Next up</p>
+        <p className="empty-note">No STATE.md yet — nothing to report.</p>
+      </aside>
+    );
+  }
+  const { plans, step, last } = next;
+  const stepTitle = step ? <strong>{stripEmoji(step.title)}</strong> : null;
+  return (
+    <aside className="immediate-work project-next" aria-labelledby="project-next-heading">
+      <p className="eyebrow" id="project-next-heading">Next up</p>
+      {plans.length > 0 ? (
+        <div className="project-next-progress">
+          <div className="project-next-figure">
+            <span className="project-next-percent">
+              {next.percent}
+              <span className="project-next-unit">%</span>
+            </span>
+            <span className="project-next-counts">
+              <b>{next.completed}</b> of {plans.length} {plans.length === 1 ? 'plan' : 'plans'}
+            </span>
+          </div>
+          <div className="project-next-bar" aria-hidden="true">
+            {plans.map((plan) => (
+              <span key={plan.id} data-state={plan.done ? 'done' : plan.next ? 'next' : 'open'} />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <p className="empty-note">No plans in this phase yet.</p>
+      )}
+      {last ? (
+        <p className="project-next-last">
+          <span className="project-next-label">Last</span>
+          {last.dateLabel}
+          {last.dateLabel && last.text ? ' — ' : null}
+          {last.text ? stripMarkdown(stripEmoji(last.text)) : null}
+        </p>
+      ) : null}
+      {step?.kind === 'plan' && step.url ? (
+        <Link className="project-next-step" to={step.url}>
+          {step.id ? <span className="project-next-id">{step.id}</span> : null}
+          {stepTitle}
+        </Link>
+      ) : step ? (
+        <div className="project-next-step" data-done={step.kind === 'milestone'}>
+          {stepTitle}
+        </div>
+      ) : (
+        <p className="empty-note">No dependency-ready work is reported in the active milestone.</p>
+      )}
+    </aside>
+  );
+}
+
+function ProjectHead({ head }: { head: DashboardHead }): React.JSX.Element {
+  const { now } = head;
+  return (
+    <section className="project-head" aria-labelledby="project-name-heading">
+      <div className="project-head-copy">
+        <div className="project-identity">
+          <h1 id="project-name-heading">{stripEmoji(head.name)}</h1>
+          {head.tagline ? <p className="project-tagline">{stripEmoji(head.tagline)}</p> : null}
+          {head.lead ? (
+            <p className="project-lead">
+              <LeadTokens tokens={tokenizeInline(stripEmoji(head.lead))} />
+            </p>
+          ) : null}
+        </div>
+        {now ? (
+          <div className="project-now">
+            <span className="project-now-label">Now</span>
+            {now.milestone || now.phase ? (
+              <p className="project-now-line">
+                {now.milestone ? <b>{stripEmoji(now.milestone)}</b> : null}
+                {now.milestone && now.phase ? ' · ' : null}
+                {now.phase ? `Phase ${now.phase}` : null}
+              </p>
+            ) : null}
+            {now.title ? <h2>{stripEmoji(now.title)}</h2> : null}
+            {now.status ? (
+              <span className="status-chip" data-tone={now.done ? 'complete' : 'active'}>
+                <CircleDot aria-hidden="true" />
+                {now.status}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+      <ProjectNext next={head.next} />
+    </section>
   );
 }
 
@@ -125,40 +235,7 @@ export function DashboardPage(): React.JSX.Element {
 
   return (
     <main className="dashboard-page page-stack">
-      <section className="position-hero" aria-labelledby="current-position-heading">
-        <div className="position-copy">
-          <p className="eyebrow">
-            <MapPin aria-hidden="true" /> Current position
-          </p>
-          {view.current.milestone.value !== null && (
-            <p className="milestone-label">{view.current.milestone.display}</p>
-          )}
-          <h1 id="current-position-heading">
-            <span>Phase {view.current.phaseNumber.display}</span>
-            {view.current.phaseName.display}
-          </h1>
-          <div className="position-meta">
-            <span className="status-chip" data-tone="active">
-              <CircleDot aria-hidden="true" />
-              {view.current.status.display}
-            </span>
-            <SourceLink provenance={view.current.status.provenance}>View project state</SourceLink>
-          </div>
-        </div>
-
-        <aside className="immediate-work" aria-labelledby="immediate-work-heading">
-          <p className="eyebrow">Recommended action</p>
-          <h2 id="immediate-work-heading">Next up</h2>
-          {view.next.immediate ? (
-            <NextWork item={view.next.immediate} primary />
-          ) : (
-            <div className="quiet-state">
-              <CheckCircle2 aria-hidden="true" />
-              <p>No dependency-ready work is reported in the active milestone.</p>
-            </div>
-          )}
-        </aside>
-      </section>
+      <ProjectHead head={view.head} />
 
       <section className="progress-panel" aria-labelledby="phase-progress-heading">
         <header className="progress-panel-header">

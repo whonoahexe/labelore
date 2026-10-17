@@ -109,6 +109,10 @@ function presentation(
       phaseNumber: '01',
       phaseName: '現在地 🧭',
       status: 'custom-future-status',
+      milestoneName: null,
+      lastActivity: null,
+      lastActivityDescription: null,
+      currentFocus: null,
       progress: {
         totalPhases: 4,
         completedPhases: 1,
