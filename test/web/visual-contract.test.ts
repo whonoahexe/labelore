@@ -141,12 +141,19 @@ describe('revised visual contract (G-08, G-10, G-05, G-07, G-03, E9 long-text)',
     expect(css).toContain('.coverage-table-boundary tbody tr:nth-child(even) td');
   });
 
-  it('sets On deck beneath the Decisions and Blockers panels, spanning both columns', async () => {
+  // quick-261018-4tb: On deck and Recent work share the bottom row (sketch 026 B), two columns 24px
+  // apart that stretch to the taller one.
+  it('sets On deck beside Recent work in one stretched row', async () => {
     const css = await source('src/web/styles/globals.css');
-    const [grid] = ruleBlocks(css, '.dashboard-grid {');
-    expect(grid).toContain('grid-template-columns: repeat(2, minmax(0, 1fr));');
-    const [onDeck] = ruleBlocks(css, '.dashboard-grid > .preview-panel {');
-    expect(onDeck).toContain('grid-column: 1 / -1;');
+    const [lower] = ruleBlocks(css, '.dashboard-lower {');
+    expect(lower).toContain('grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);');
+    expect(lower).toContain('gap: var(--space-6);');
+    expect(lower).toContain('align-items: stretch;');
+    expect(css).not.toContain('.dashboard-grid');
+    const [panel] = ruleBlocks(css, '.deck-panel {');
+    expect(panel).toContain('flex-direction: column;');
+    const [floor] = ruleBlocks(css, '.deck-panel > :is(.attention-pagination, .deck-foot) {');
+    expect(floor).toContain('margin-top: auto;');
   });
 
   it('fills every status chip as a shape, with active/complete reading more clearly on', async () => {
@@ -231,23 +238,27 @@ describe('revised visual contract (G-08, G-10, G-05, G-07, G-03, E9 long-text)',
 // bounded while the complete authored text stays present in the DOM/accessible tree — only
 // the visual presentation is clipped, never the underlying string.
 describe('G2-08 bounded Next descriptions', () => {
-  // The dashboard head's next step deliberately shows its whole first sentence (sketch 025), so
-  // only the On deck previews keep a clamp, and the old clamped primary card is gone.
-  it('clamps preview descriptions at two visual lines', async () => {
+  // The dashboard head's next step deliberately shows its whole first sentence (sketch 025). On
+  // deck keeps a two-line clamp on each queue and todo detail, and the old preview rule is gone.
+  it('clamps queue and todo details at two visual lines', async () => {
     const css = await source('src/web/styles/globals.css');
-    const [preview] = ruleBlocks(css, '.next-preview p {');
-    expect(preview).toBeDefined();
-    expect(preview).toContain('display: -webkit-box;');
-    expect(preview).toContain('-webkit-box-orient: vertical;');
-    expect(preview).toContain('overflow: hidden;');
-    expect(preview).toContain('-webkit-line-clamp: 2;');
+    for (const selector of ['.deck-item-detail {', '.todo-detail {']) {
+      const [rule] = ruleBlocks(css, selector);
+      expect(rule, selector).toBeDefined();
+      expect(rule).toContain('display: -webkit-box;');
+      expect(rule).toContain('-webkit-box-orient: vertical;');
+      expect(rule).toContain('overflow: hidden;');
+      expect(rule).toContain('-webkit-line-clamp: 2;');
+    }
+    expect(css).not.toContain('.next-preview');
     expect(css).not.toContain('.next-primary');
   });
 
-  it('never truncates the underlying description string in the component itself', async () => {
-    const page = await source('src/web/pages/dashboard-page.tsx');
-    expect(page).toContain('<p>{item.description}</p>');
-    expect(page).not.toMatch(/item\.description\.(slice|substring|substr)\(/);
+  it('never truncates the underlying detail string in the component itself', async () => {
+    const deck = await source('src/web/pages/dashboard-deck.tsx');
+    expect(deck).toContain('<MarkedText text={item.detail} />');
+    expect(deck).toContain('<MarkedText text={todo.detail} />');
+    expect(deck).not.toMatch(/(?:item|todo|note)\.detail\.(slice|substring|substr)\(/);
   });
 });
 
@@ -298,11 +309,10 @@ describe('G2-10 status-chip semantic tone contract', () => {
   });
 
   it('never assigns a raw/unrecognized status-chip tone at any call site', async () => {
-    const files = await Promise.all(
-      ['src/web/pages/dashboard-page.tsx', 'src/web/pages/roadmap-page.tsx', 'src/web/pages/plan-pair-page.tsx'].map(
-        source,
-      ),
-    );
+    const files = [
+      dashboardSources(),
+      ...(await Promise.all(['src/web/pages/roadmap-page.tsx', 'src/web/pages/plan-pair-page.tsx'].map(source))),
+    ];
     const recognizedTones = ['active', 'complete', 'quiet'];
     for (const file of files) {
       const toneLiterals = [...file.matchAll(/data-tone=(?:"([\w-]+)"|\{[^}]*'([\w-]+)'[^}]*\})/g)]

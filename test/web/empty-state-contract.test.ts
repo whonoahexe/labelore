@@ -71,7 +71,7 @@ describe('empty-state contract (D-06, D-07, D-08, D-09)', () => {
     );
     expect(dashboard).toContain('No decisions are recorded.');
     expect(dashboard).toContain('No open blockers are recorded');
-    expect(dashboard).toContain('No additional work is queued after this item.');
+    expect(dashboard).toContain('Nothing is queued after the next step.');
     expect(dashboard).not.toContain('EmptyState');
   });
 

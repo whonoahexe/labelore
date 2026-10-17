@@ -7,7 +7,15 @@ import type {
 import { buildArtifactUrl, buildPhaseUrl } from './routes.ts';
 import { buildDashboardHead, type DashboardHead } from './dashboard-head.ts';
 import { stableSlug } from '../rendering/slug.ts';
-import type { LedgerBlockerDto, LedgerDecisionDto, PacePlanDto } from '../server/dashboard-ledger.ts';
+import type {
+  LedgerBlockerDto,
+  LedgerDecisionDto,
+  LedgerNoteDto,
+  LedgerQueueItemDto,
+  LedgerTaskDto,
+  LedgerTodoDto,
+  PacePlanDto,
+} from '../server/dashboard-ledger.ts';
 import { paceScope, type PaceScopeKey } from './dashboard-pace.ts';
 
 export interface SourceProvenance {
@@ -117,6 +125,11 @@ export interface DashboardViewModel {
   pace: { current: string | null; plans: PacePlanDto[]; milestones: string[]; defaultScope: PaceScopeKey };
   /** Open and resolved blockers with the documents each one names, built server-side. */
   blockers: LedgerBlockerDto[];
+  /** After the next step: the work queued behind the plan the head already names (at most six),
+   * the pending todos (highest severity first), and the notes (unpromoted first). */
+  onDeck: { queue: LedgerQueueItemDto[]; todos: LedgerTodoDto[]; todosDone: number; notes: LedgerNoteDto[] };
+  /** Quick and fast tasks from STATE.md's table, newest first. */
+  recent: LedgerTaskDto[];
 }
 
 function stateText(value: string | null, ref: string): SourcedValue<string> {
@@ -427,10 +440,14 @@ export function buildDashboardViewModel(presentation: ProjectPresentation): Dash
   const currentPhase = currentPhaseOf(presentation);
   const completion = completionOf(currentPhase);
   const consolidated = phaseCompletionConsolidated(currentPhase, presentation);
+  const head = buildDashboardHead(presentation);
+  // The head already names its plan, so On deck lists what comes after it.
+  const headPlanId = head.next?.step?.plan?.id ?? null;
+  const ledger = presentation.ledger;
   return {
     readAt: presentation.readAt,
     projectName: presentation.projectName,
-    head: buildDashboardHead(presentation),
+    head,
     current: {
       milestone: stateText(state?.milestone ?? null, `${statePath}#milestone`),
       phaseNumber: stateText(state?.phaseNumber ?? null, `${statePath}#current_phase`),
@@ -468,12 +485,21 @@ export function buildDashboardViewModel(presentation: ProjectPresentation): Dash
       ...completion,
     },
     next: nextWork(presentation, currentPhase),
-    decisions: presentation.ledger.decisions,
+    decisions: ledger.decisions,
     pace: {
-      current: presentation.ledger.pace.current,
-      plans: presentation.ledger.pace.plans,
-      ...paceScope(presentation.ledger.pace.plans, presentation.ledger.pace.current),
+      current: ledger.pace.current,
+      plans: ledger.pace.plans,
+      ...paceScope(ledger.pace.plans, ledger.pace.current),
     },
-    blockers: presentation.ledger.blockers,
+    blockers: ledger.blockers,
+    onDeck: {
+      queue: ledger.queue
+        .filter((item) => !(item.kind === 'plan' && item.id === headPlanId))
+        .slice(0, 6),
+      todos: ledger.todos.items,
+      todosDone: ledger.todos.done,
+      notes: [...ledger.notes.filter((note) => !note.promoted), ...ledger.notes.filter((note) => note.promoted)],
+    },
+    recent: ledger.recent,
   };
 }

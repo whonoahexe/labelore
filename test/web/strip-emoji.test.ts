@@ -55,9 +55,12 @@ describe('dashboard-page emoji sanitization contract', () => {
     expect(ledger).toContain('<MarkedText text={lead.title} query={query} />');
     expect(ledger).toContain('<MarkedText text={decision.title} query={query} />');
     expect(ledger).toContain('<MarkedText text={decision.why} query={query} />');
-    // Ensure the G2-08 invariant that prevents slice/substr truncation is still intact
-    expect(page).toContain('<p>{item.description}</p>');
-    expect(page).not.toMatch(/item\.description\.(slice|substring|substr)\(/);
+    // The G2-08 invariant that prevents slice/substr truncation is intact in On deck, whose queue
+    // and todo details also reach the page through MarkedText.
+    const deck = await source('src/web/pages/dashboard-deck.tsx');
+    expect(deck).toContain('<MarkedText text={item.detail} />');
+    expect(deck).toContain('<MarkedText text={todo.detail} />');
+    expect(deck).not.toMatch(/(?:item|todo|note)\.detail\.(slice|substring|substr)\(/);
   });
 });
 
