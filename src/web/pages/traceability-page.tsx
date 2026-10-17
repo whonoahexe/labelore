@@ -328,22 +328,30 @@ export function TraceabilityPage(): React.JSX.Element {
               <dt>Total</dt>
               <dd>{view.coverage.total}</dd>
             </div>
-            <div className="trace-stat-tile" data-bucket="complete">
-              <dt>Complete phase</dt>
-              <dd>{view.coverage.completePhase}</dd>
-            </div>
-            <div className="trace-stat-tile" data-bucket="in-flight">
-              <dt>In flight</dt>
-              <dd>{view.coverage.inFlightPhase}</dd>
-            </div>
-            <div className="trace-stat-tile" data-bucket="missing">
-              <dt>No directory</dt>
-              <dd>{view.coverage.missingPhase}</dd>
-            </div>
-            <div className="trace-stat-tile" data-bucket="uncovered">
-              <dt>Uncovered</dt>
-              <dd>{view.coverage.uncovered}</dd>
-            </div>
+            {view.coverage.completePhase > 0 ? (
+              <div className="trace-stat-tile" data-bucket="complete">
+                <dt>Complete phase</dt>
+                <dd>{view.coverage.completePhase}</dd>
+              </div>
+            ) : null}
+            {view.coverage.inFlightPhase > 0 ? (
+              <div className="trace-stat-tile" data-bucket="in-flight">
+                <dt>In flight</dt>
+                <dd>{view.coverage.inFlightPhase}</dd>
+              </div>
+            ) : null}
+            {view.coverage.missingPhase > 0 ? (
+              <div className="trace-stat-tile" data-bucket="missing">
+                <dt>Not started</dt>
+                <dd>{view.coverage.missingPhase}</dd>
+              </div>
+            ) : null}
+            {view.coverage.uncovered > 0 ? (
+              <div className="trace-stat-tile" data-bucket="uncovered">
+                <dt>Uncovered</dt>
+                <dd>{view.coverage.uncovered}</dd>
+              </div>
+            ) : null}
             {view.coverage.unresolvedPhase > 0 ? (
               <div className="trace-stat-tile" data-bucket="unresolved">
                 <dt>Unresolved</dt>
