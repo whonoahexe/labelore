@@ -12012,13 +12012,58 @@ a.view-research-id:hover {
 }
 
 .view-review-file-head {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 12rem auto;
   gap: var(--space-4);
   align-items: center;
-  justify-content: space-between;
   padding: var(--space-3) var(--space-4);
   border-bottom: 1px solid var(--border);
   background: var(--card);
+}
+
+@media (max-width: 42rem) {
+  .view-review-file-head {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .view-review-file-head .view-review-ruler {
+    display: none;
+  }
+}
+
+.view-review-file-meta {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+/* The line ruler: where the file's findings sit, one mark per span. */
+.view-review-ruler {
+  position: relative;
+  height: 0.5rem;
+  min-width: 6rem;
+  background: var(--border-faint);
+}
+
+.view-review-ruler i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  min-width: 3px;
+  background: var(--muted-foreground);
+}
+
+.view-review-ruler i[data-severity='critical'] {
+  background: var(--missing-fill);
+}
+
+.view-review-ruler i[data-severity='warning'] {
+  background: var(--in-flight-fill);
+}
+
+.view-review-ruler i[data-outcome='fixed'] {
+  background: var(--primary);
+  opacity: 0.55;
 }
 
 .view-review-file-head code {
@@ -12300,6 +12345,163 @@ a.view-research-id:hover {
   border: 1px dashed var(--border);
   color: var(--muted-foreground);
   font-size: var(--fs-4);
+}
+
+/* Other files a finding names, and its extra labelled fields. */
+.view-review-locs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+}
+
+.view-review-loc b {
+  color: var(--foreground);
+  font-weight: var(--fw-medium);
+}
+
+.view-review-extra {
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* "Show fixed threads (N)": a square that fills when pressed. */
+.view-review-toggle {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-1) var(--space-2-5);
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  cursor: pointer;
+}
+
+.view-review-toggle::before {
+  width: 0.7rem;
+  height: 0.7rem;
+  border: 1px solid currentcolor;
+  content: '';
+}
+
+.view-review-toggle:hover {
+  background: var(--state-hover);
+}
+
+.view-review-toggle[aria-pressed='true'] {
+  border-color: var(--primary);
+  background: var(--primary-tint);
+  color: var(--foreground);
+}
+
+.view-review-toggle[aria-pressed='true']::before {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+/* Files reviewed with nothing to say. */
+.view-review-quiet {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-6);
+}
+
+.view-review-quiet-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  align-items: center;
+}
+
+.view-review-quiet-files code {
+  font-size: var(--fs-2);
+}
+
+/* "Also in this report": what the view leaves to Source, one chip row. */
+.view-review-also {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+  padding: var(--space-3) 0;
+  border-top: 1px dashed var(--border);
+  border-bottom: 1px dashed var(--border);
+}
+
+.view-review-also ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-review-also .status-chip {
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+}
+
+.view-review-also .status-chip:hover {
+  background: var(--state-hover);
+}
+
+.view-review-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  justify-content: space-between;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-review-facts button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.view-review-facts button:hover {
+  color: var(--primary);
+}
+
+/* The files dialog is shadcn's DialogContent; only its width, scroll and rows are ours. */
+.view-review-modal {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+@media (min-width: 40rem) {
+  .view-review-modal {
+    max-width: 44rem;
+  }
+}
+
+.view-review-modal-rows {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.view-review-modal-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  padding: var(--space-1-5) 0;
+  border-bottom: 1px solid var(--border-faint);
+  font-family: var(--font-mono);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
 }
 /* quick-261017-k44:end */
 
