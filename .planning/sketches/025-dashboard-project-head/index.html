@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 025 — Dashboard project head</title>
+<link rel="stylesheet" href="../themes/default.css?v=025">
+<style>
+/* Sketch 025: the dashboard's project head from PROJECT.md — name first, then What This Is and Core
+   Value, each cut to a short lead. Same vocabulary as the app's dashboard; no entrance or hover motion.
+   A and B make the project the hero and step the current position down; C keeps the position hero
+   and gives the project a band above it. Data: ./data.js (gen-data.mjs). */
+
+*, *::before, *::after { box-sizing: border-box; }
+:root { --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border)); --font-heading: var(--font-sans); } /* the app moved headings to sans; the shared theme still says mono */
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-5); line-height: var(--lh-normal); padding-top: 3rem; }
+h1, h2, h3, p { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+a { color: inherit; }
+code { font-family: var(--font-mono); font-size: 0.82em; padding: 0 0.2em; background: color-mix(in oklch, var(--muted) 70%, transparent); overflow-wrap: anywhere; }
+.dark code { background: color-mix(in oklch, var(--foreground) 9%, transparent); }
+strong { font-weight: var(--fw-semibold); }
+
+#variant-nav { position: fixed; inset: 0 0 auto 0; z-index: 50; display: flex; gap: var(--space-1); align-items: center; padding: var(--space-2) var(--space-4); background: var(--background); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; overflow-x: auto; }
+#variant-nav .lbl { color: var(--muted-foreground); margin-right: var(--space-2); white-space: nowrap; }
+.variant-tab { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; background: none; white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; color: var(--muted-foreground); }
+.variant-tab:hover { color: var(--foreground); background: var(--state-hover); }
+.variant-tab.active { color: var(--primary); border-color: var(--primary-border); background: var(--primary-tint); }
+
+#frame { margin: 0 auto; container-type: inline-size; background: var(--background); min-height: 100vh; }
+#frame.narrow-frame { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+.shell-header { display: flex; align-items: center; gap: var(--space-3); height: 3.75rem; padding: 0 var(--space-4); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; overflow: hidden; }
+.brand-mark { flex: none; width: 2.25rem; height: 2.25rem; background: var(--primary); display: grid; place-items: center; color: white; font-weight: 700; }
+.shell-header .crumb { color: var(--muted-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shell-tabs { margin-left: auto; display: flex; gap: var(--space-4); color: var(--muted-foreground); }
+.shell-tabs b { color: var(--foreground); font-weight: inherit; }
+@container (max-width: 700px) { .shell-tabs { display: none; } }
+
+.page { width: min(80rem, 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); display: grid; gap: var(--space-fluid-10); grid-template-columns: minmax(0, 1fr); }
+.page > * { min-width: 0; }
+
+/* ---------- shared vocabulary ---------- */
+.eyebrow { display: inline-flex; gap: var(--space-1-5); align-items: center; color: var(--primary); font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+.kicker { color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.source-link { color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-1); text-underline-offset: 0.2em; }
+.source-link:hover { color: var(--primary); }
+.status-chip { display: inline-flex; gap: var(--space-1-5); align-items: center; width: fit-content; padding: var(--space-1-5) var(--space-2); border: 1px solid var(--primary-border); background: var(--primary-tint); color: var(--primary); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.status-chip::before { content: ''; width: 0.45rem; height: 0.45rem; border: 1.5px solid currentColor; border-radius: 50%; }
+.empty-line { color: var(--muted-foreground); font-size: var(--fs-4); font-style: italic; }
+.full-text { display: grid; gap: var(--space-3); }
+
+/* ---------- the current position, shared by every variant ---------- */
+.next-card { padding: var(--space-fluid-3); border: 1px solid var(--border); border-top: 3px solid var(--primary); background: var(--card-veil); box-shadow: 0.7rem 0.7rem 0 color-mix(in oklch, var(--muted) 65%, transparent); }
+.next-card h2 { margin-top: var(--space-2); font-size: var(--fs-fluid-3); font-weight: var(--fw-medium); letter-spacing: var(--ls-tight); }
+.next-card a { display: block; margin-top: var(--space-6); padding-top: var(--space-5); border-top: 1px solid var(--border); text-decoration: none; }
+.next-card .kind { color: var(--primary); font-family: var(--font-heading); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.next-card strong { display: block; margin-top: var(--space-2); font-family: var(--font-heading); font-size: var(--fs-7); line-height: var(--lh-tight); }
+.next-card p { margin-top: var(--space-2); color: var(--muted-foreground); font-size: var(--fs-4); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* compact (A, B): the position steps down to a display-1 band */
+.pos-band { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(18rem, 0.75fr); gap: var(--space-fluid-9); align-items: center; }
+.pos-band .where { display: grid; gap: var(--space-3); }
+.pos-band .line { color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-3); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.pos-band h2 { font-size: var(--fs-display-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tight); line-height: var(--lh-tight); max-width: 20ch; }
+.pos-meta { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; margin-top: var(--space-2); }
+
+/* full (C): the dashboard's hero exactly as it ships today */
+.pos-hero { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(18rem, 0.75fr); gap: var(--space-fluid-9); align-items: end; padding-bottom: var(--space-fluid-13); border-bottom: 1px solid var(--border); }
+.pos-hero .ms { margin: var(--space-3) 0; color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-3); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.pos-hero h1 { max-width: 13ch; overflow-wrap: anywhere; font-size: var(--fs-display-3); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tighter); line-height: var(--lh-display); }
+.pos-hero h1 span { display: block; margin-bottom: var(--space-2-5); color: var(--muted-foreground); font-size: max(0.2em, var(--fs-1)); letter-spacing: var(--ls-wider); line-height: var(--lh-none); text-transform: uppercase; }
+.pos-hero .pos-meta { margin-top: var(--space-7); }
+@container (max-width: 760px) { .pos-band, .pos-hero { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- A: masthead — the project is the hero ---------- */
+.a-head { display: grid; gap: var(--space-6); padding-bottom: var(--space-fluid-13); border-bottom: 1px solid var(--border); }
+.a-name { font-size: var(--fs-display-3); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tighter); line-height: var(--lh-display); overflow-wrap: anywhere; max-width: 16ch; }
+.a-tag { margin-top: calc(var(--space-2) * -1); color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-3); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.a-what { max-width: 38ch; font-size: var(--fs-fluid-3); line-height: var(--lh-snug); letter-spacing: var(--ls-tight); overflow-wrap: anywhere; }
+.a-what.full { font-size: var(--fs-fluid-1); line-height: var(--lh-relaxed); max-width: 62ch; letter-spacing: 0; }
+.a-core { display: grid; gap: var(--space-2); max-width: 60ch; padding-left: var(--space-4); border-left: 2px solid var(--primary); }
+.a-core p { font-size: var(--fs-fluid-1); line-height: var(--lh-snug); color: var(--muted-foreground); }
+.a-core p strong { color: var(--foreground); }
+
+/* ---------- B: name + promise — core value gets its own panel ---------- */
+.b-head { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(18rem, 0.9fr); gap: var(--space-fluid-9); align-items: end; padding-bottom: var(--space-fluid-13); border-bottom: 1px solid var(--border); }
+.b-id { display: grid; gap: var(--space-5); }
+.b-name { font-size: var(--fs-display-3); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tighter); line-height: var(--lh-display); overflow-wrap: anywhere; }
+.b-tag { color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-3); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.b-what { max-width: 46ch; color: var(--muted-foreground); font-size: var(--fs-fluid-1); line-height: var(--lh-relaxed); overflow-wrap: anywhere; }
+.b-core { display: grid; gap: var(--space-4); align-content: start; padding: var(--space-fluid-3); background: var(--primary-tint); border: 1px solid var(--primary-border); }
+.b-core p { font-size: var(--fs-fluid-3); line-height: var(--lh-snug); letter-spacing: var(--ls-tight); overflow-wrap: anywhere; }
+.b-core p.full { font-size: var(--fs-fluid-1); letter-spacing: 0; line-height: var(--lh-relaxed); }
+.b-core .kicker { color: var(--primary); }
+@container (max-width: 760px) { .b-head { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- C: cover line — a band above the position hero ---------- */
+.c-band { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-2) var(--space-fluid-9); align-items: baseline; padding-bottom: var(--space-6); border-bottom: 1px solid var(--border); }
+.c-name { font-size: var(--fs-display-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tight); line-height: var(--lh-tight); white-space: nowrap; }
+.c-name small { display: block; margin-top: var(--space-1); color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: normal; }
+.c-copy { display: grid; gap: var(--space-2); max-width: 70ch; }
+.c-what { font-size: var(--fs-fluid-1); line-height: var(--lh-snug); overflow-wrap: anywhere; }
+.c-core { display: flex; gap: var(--space-3); align-items: baseline; color: var(--muted-foreground); font-size: var(--fs-4); line-height: var(--lh-snug); }
+.c-core .kicker { flex: none; color: var(--primary); }
+.c-band + .pos-hero { margin-top: calc(var(--space-fluid-13) * -0.5); }
+@container (max-width: 760px) { .c-band { grid-template-columns: minmax(0, 1fr); } .c-name { white-space: normal; } .c-core { display: grid; gap: var(--space-1); } }
+
+/* ================= round 2: B with the position folded in ================= */
+/* shared: position line, phase title + status, and the reworked Next up card */
+.r2-pos { display: grid; gap: var(--space-2-5); }
+.r2-line { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.r2-line b { color: var(--foreground); font-weight: var(--fw-medium); }
+.r2-phase { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-4); align-items: center; }
+.r2-phase h2 { font-size: var(--fs-display-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tight); line-height: var(--lh-tight); overflow-wrap: anywhere; }
+.status-chip[data-tone='complete'] { color: var(--foreground); border-color: var(--border); background: color-mix(in oklch, var(--muted) 55%, transparent); }
+.status-chip[data-tone='complete']::before { border-color: var(--primary); background: var(--primary); }
+
+.nx { display: grid; gap: var(--space-5); padding: var(--space-fluid-3); border: 1px solid var(--border); border-top: 3px solid var(--primary); background: var(--card-veil); min-width: 0; }
+.nx-next { display: grid; gap: var(--space-2); }
+.nx-next .k { display: flex; gap: var(--space-2); align-items: center; }
+.nx-id { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); border: 1px solid var(--border); padding: 0 var(--space-1-5); }
+.nx-next strong { font-size: var(--fs-7); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); font-weight: var(--fw-semibold); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.nx-next.done strong { color: var(--muted-foreground); font-weight: var(--fw-medium); }
+.nx-prog { display: grid; gap: var(--space-2); padding-top: var(--space-5); border-top: 1px solid var(--border); }
+.nx-prog .row { display: flex; gap: var(--space-3); align-items: baseline; flex-wrap: wrap; }
+.nx-pct { font-size: var(--fs-display-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tight); line-height: var(--lh-none); }
+.nx-pct small { font-size: 0.5em; color: var(--muted-foreground); font-weight: var(--fw-medium); }
+.nx-counts { color: var(--muted-foreground); font-size: var(--fs-4); }
+.nx-counts b { color: var(--foreground); font-weight: var(--fw-semibold); }
+.nx-bar { display: flex; gap: 3px; height: 0.4rem; }
+.nx-bar i { flex: 1; background: color-mix(in oklch, var(--muted-foreground) 22%, transparent); }
+.nx-bar i.on { background: var(--primary); }
+.nx-bar i.cur { background: var(--in-flight-fill); }
+.nx-last { color: var(--muted-foreground); font-size: var(--fs-3); line-height: var(--lh-snug); overflow-wrap: anywhere; }
+.nx-last .kicker { margin-right: var(--space-2); }
+.nx-empty { color: var(--muted-foreground); font-size: var(--fs-4); }
+.b-core p.empty-line { font-size: var(--fs-4); letter-spacing: 0; color: var(--muted-foreground); }
+
+/* B1: one spread — left: identity then position; right: core value over Next up */
+.b1 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(19rem, 0.9fr); gap: var(--space-fluid-9); align-items: stretch; }
+.b1-left { display: grid; gap: var(--space-fluid-10); align-content: space-between; }
+.b1-id { display: grid; gap: var(--space-5); }
+.b1-right { display: grid; gap: var(--space-5); align-content: start; }
+/* narrow: name, what, core value, then the phase and the card — the reading order the head asks for */
+@container (max-width: 760px) { .b1 { grid-template-columns: minmax(0, 1fr); gap: var(--space-8); } .b1-left, .b1-right { display: contents; } .b1 .b1-id { order: 1; } .b1 .b-core { order: 2; } .b1 .r2-pos { order: 3; } .b1 .nx { order: 4; } }
+
+/* B2: two tiers in one frame — identity | core value, then a full-width position + state strip */
+.b2 { display: grid; gap: 0; border-bottom: 1px solid var(--border); }
+.b2-top { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(18rem, 0.9fr); gap: var(--space-fluid-9); align-items: end; padding-bottom: var(--space-fluid-10); }
+.b2-strip { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.9fr); gap: var(--space-fluid-9); align-items: center; padding: var(--space-fluid-3) 0 var(--space-fluid-10); border-top: 1px solid var(--border); }
+.b2-strip .nx { border: 0; border-left: 3px solid var(--primary); background: none; padding: 0 0 0 var(--space-fluid-3); }
+@container (max-width: 760px) { .b2-top, .b2-strip { grid-template-columns: minmax(0, 1fr); } }
+
+/* B3: one panel — the tinted panel holds core value and Next up; left holds identity and position */
+.b3 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(19rem, 0.9fr); gap: var(--space-fluid-9); align-items: stretch; }
+.b3-left { display: grid; gap: var(--space-fluid-10); align-content: space-between; }
+.b3-panel { display: grid; align-content: start; border: 1px solid var(--primary-border); background: var(--primary-tint); }
+.b3-panel .b-core { border: 0; background: none; }
+.b3-panel .nx { border: 0; border-top: 1px solid var(--primary-border); background: color-mix(in oklch, var(--card) 60%, transparent); }
+@container (max-width: 760px) { .b3 { grid-template-columns: minmax(0, 1fr); } }
+
+/* ================= round 3: B1, left grouped as one flow, core value inside the nx card ================= */
+.r3 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(19rem, 0.9fr); gap: var(--space-fluid-9); align-items: start; }
+.r3-left { display: grid; gap: var(--space-8); align-content: start; }
+@container (max-width: 760px) { .r3 { grid-template-columns: minmax(0, 1fr); } }
+
+/* core value inside the card: as its opening section, as a tinted band, or as a footer */
+.nx-core { display: grid; gap: var(--space-2); }
+.nx-core p { font-size: var(--fs-fluid-1); line-height: var(--lh-snug); overflow-wrap: anywhere; }
+.nx-core .kicker { color: var(--primary); }
+.nx-core.top { padding-bottom: var(--space-5); border-bottom: 1px solid var(--border); }
+.nx-core.band { margin: calc(var(--space-fluid-3) * -1) calc(var(--space-fluid-3) * -1) 0; padding: var(--space-fluid-3); background: var(--primary-tint); border-bottom: 1px solid var(--primary-border); }
+.nx-core.band p { font-size: var(--fs-fluid-3); letter-spacing: var(--ls-tight); }
+.nx-core.foot { padding-top: var(--space-5); border-top: 1px solid var(--border); }
+.nx-core.foot p { color: var(--muted-foreground); font-size: var(--fs-4); }
+/* R3b (picked): the footer's quiet treatment, moved to open the card */
+.r3b-now .r2-phase { flex-direction: column; align-items: flex-start; }
+.nx-sec { display: grid; gap: var(--space-4); }
+.nx-sec .nx-prog { padding-top: 0; border-top: 0; }
+.nx-step { display: grid; gap: var(--space-2); justify-items: start; padding-top: var(--space-4); border-top: 1px solid var(--border); }
+.nx-step strong { font-size: var(--fs-7); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.nx-step.done strong { color: var(--muted-foreground); font-weight: var(--fw-medium); }
+.nx-core.lead { padding-bottom: var(--space-5); border-bottom: 1px solid var(--border); }
+.nx-core.lead p { color: var(--muted-foreground); font-size: var(--fs-4); }
+
+/* R3a: stacked flow — identity, a hairline, then the phase straight under it */
+.r3a-pos { padding-top: var(--space-6); border-top: 1px solid var(--border); }
+
+/* R3b: a "Now" block — the phase under a primary rule, labelled */
+.r3b-now { display: grid; gap: var(--space-2-5); padding-left: var(--space-4); border-left: 2px solid var(--primary); }
+.r3b-now .kicker { color: var(--primary); }
+
+/* R3c: the phase as one line — status chip, phase, milestone */
+.r3c-line { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); align-items: center; padding-top: var(--space-5); border-top: 1px solid var(--border); font-size: var(--fs-fluid-1); }
+.r3c-line strong { font-weight: var(--fw-semibold); }
+.r3c-line .ms { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+</style>
+</head>
+<body>
+<nav id="variant-nav">
+  <span class="lbl">Sketch 025 · Dashboard project head</span>
+  <button class="variant-tab" data-v="r3a">R3a: Stacked flow</button>
+  <button class="variant-tab" data-v="r3b">R3b: Now block ★ Selected</button>
+  <button class="variant-tab" data-v="r3c">R3c: One line</button>
+  <span class="lbl" style="margin-left:var(--space-4)">Round 2</span>
+  <button class="variant-tab" data-v="b1">B1: One spread · base</button>
+  <button class="variant-tab" data-v="b2">B2: Two tiers</button>
+  <button class="variant-tab" data-v="b3">B3: One panel</button>
+  <span class="lbl" style="margin-left:var(--space-4)">Round 1</span>
+  <button class="variant-tab" data-v="a">A: Masthead</button>
+  <button class="variant-tab" data-v="b">B: Name + promise · base</button>
+  <button class="variant-tab" data-v="c">C: Cover line</button>
+</nav>
+<div id="frame"></div>
+
+<div id="sketch-tools" style="position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:12px;background:rgba(0,0,0,0.78);color:white;padding:8px 10px;opacity:0.55;transition:opacity 0.2s;display:grid;gap:6px;max-width:calc(100vw - 24px)" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.55'">
+  <div>Doc: <span id="doc-btns"></span></div>
+  <div>Text: <button data-text="lead">Lead</button><button data-text="full">Full section</button></div>
+  <div>Theme: <button data-theme="dark">Dark</button><button data-theme="light">Light</button> · Width: <button data-width="full">Full</button><button data-width="768">768</button><button data-width="375">375</button></div>
+</div>
+<style>
+#sketch-tools button { background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 2px 7px; margin: 2px 0 0 3px; font: inherit; cursor: pointer; }
+#sketch-tools button.on { background: #c2410c; border-color: #c2410c; }
+</style>
+
+<script src="data.js"></script>
+<script>
+const qs = new URLSearchParams(location.search);
+const state = { v: qs.get('v') ?? 'r3b', doc: qs.get('doc') ?? 'lab', text: qs.get('text') ?? 'lead', theme: qs.get('theme') ?? 'dark', width: qs.get('width') ?? 'full' };
+
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+// Inline markdown only: code spans and bold. Bold is flattened in leads so the lead reads as one voice.
+function inline(s, keepBold = true) {
+  return esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*(.+?)\*\*/g, keepBold ? '<strong>$1</strong>' : '$1').replace(/\*(.+?)\*/g, '$1');
+}
+// The lead, or the whole section (each paragraph) when the toolbar says Full section.
+function text(sec, cls = '') {
+  if (!sec) return null;
+  if (state.text === 'full') return `<div class="full-text ${cls}">${sec.full.split('\n\n').map((p) => `<p class="${cls}">${inline(p)}</p>`).join('')}</div>`;
+  return null;
+}
+const leadOf = (sec) => (sec ? inline(sec.lead, false) : null);
+
+// The current position — the same Labelore values for every doc; the sketch is about the head.
+const POS = { ms: 'v1.1 Legible Documents', phase: '5', name: 'Per-Type Document Views', status: 'Awaiting next milestone',
+  next: { kind: 'Human verification', title: 'Gate: approve per-surface light and dark contrast on real long-form content, and the repaired navigation flow', detail: 'Review is required before completing: blocking per-surface light/dark contrast gate on real long-form content and the repaired navigation flow.' } };
+const nextCard = () => `<aside class="next-card"><p class="eyebrow">Recommended action</p><h2>Next up</h2><a href="#"><span class="kind">${esc(POS.next.kind)}</span><strong>${esc(POS.next.title)}</strong><p>${esc(POS.next.detail)}</p></a></aside>`;
+const posBand = () => `<section class="pos-band"><div class="where"><p class="eyebrow">◎ Current position</p><p class="line">${esc(POS.ms)} · Phase ${POS.phase}</p><h2>${esc(POS.name)}</h2><div class="pos-meta"><span class="status-chip">${esc(POS.status)}</span><a class="source-link" href="#">View project state</a></div></div>${nextCard()}</section>`;
+const posHero = () => `<section class="pos-hero"><div><p class="eyebrow">◎ Current position</p><p class="ms">v1.1</p><h1><span>Phase ${POS.phase}</span>${esc(POS.name)}</h1><div class="pos-meta"><span class="status-chip">${esc(POS.status)}</span><a class="source-link" href="#">View project state</a></div></div>${nextCard()}</section>`;
+const srcLink = (d) => `<a class="source-link" href="#" title="${esc(d.path)}">Open PROJECT.md</a>`;
+const missing = (what) => `<p class="empty-line">PROJECT.md has no ${what} section.</p>`;
+
+function viewA(d) {
+  const what = d.what ? (text(d.what, 'a-what full') ?? `<p class="a-what">${leadOf(d.what)}</p>`) : missing('What This Is');
+  const core = d.core ? `<div class="a-core"><span class="kicker">Core value</span>${text(d.core) ?? `<p><strong>${leadOf(d.core)}</strong></p>`}</div>` : '';
+  return `<section class="a-head"><p class="eyebrow">Project</p><h1 class="a-name">${esc(d.name ?? 'Untitled project')}</h1>${d.tagline ? `<p class="a-tag">${esc(d.tagline)}</p>` : ''}${what}${core}<div>${srcLink(d)}</div></section>${posBand()}`;
+}
+
+function viewB(d) {
+  const what = d.what ? (text(d.what, 'b-what') ?? `<p class="b-what">${leadOf(d.what)}</p>`) : missing('What This Is');
+  const core = d.core ? `<aside class="b-core"><span class="kicker">Core value</span>${text(d.core, 'full') ?? `<p>${leadOf(d.core)}</p>`}</aside>` : `<aside class="b-core"><span class="kicker">Core value</span>${missing('Core Value')}</aside>`;
+  return `<section class="b-head"><div class="b-id"><p class="eyebrow">Project</p><h1 class="b-name">${esc(d.name ?? 'Untitled project')}</h1>${d.tagline ? `<p class="b-tag">${esc(d.tagline)}</p>` : ''}${what}<div>${srcLink(d)}</div></div>${core}</section>${posBand()}`;
+}
+
+function viewC(d) {
+  const what = d.what ? (text(d.what, 'c-what') ?? `<p class="c-what">${leadOf(d.what)}</p>`) : missing('What This Is');
+  const core = d.core ? `<div class="c-core"><span class="kicker">Core value</span>${text(d.core) ?? `<span>${leadOf(d.core)}</span>`}</div>` : '';
+  return `<section class="c-band"><h1 class="c-name">${esc(d.name ?? 'Untitled project')}${d.tagline ? `<small>${esc(d.tagline)}</small>` : ''}</h1><div class="c-copy">${what}${core}</div></section>${posHero()}`;
+}
+
+
+// ---------- round 2 ----------
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const fmtD = (iso) => { const [y, m, d] = iso.split('-').map(Number); return `${d} ${MON[m - 1]}${y !== 2026 ? ' ' + y : ''}`; };
+const humanStatus = (st) => (st ? st.charAt(0).toUpperCase() + st.slice(1) : null);
+function positionBlock(s) {
+  if (!s) return '';
+  const ms = [s.milestone, s.milestoneName].filter(Boolean).map(esc).join(' ');
+  const line = [ms ? `<b>${ms}</b>` : '', s.phase ? `Phase ${esc(s.phase)}` : ''].filter(Boolean).join(' · ');
+  const tone = s.done ? 'complete' : 'active';
+  return `<div class="r2-pos">${line ? `<p class="r2-line">${line}</p>` : ''}<div class="r2-phase"><h2>${esc(s.phaseName ?? `Phase ${s.phase ?? '—'}`)}</h2>${s.status ? `<span class="status-chip" data-tone="${tone}">${esc(humanStatus(s.status))}</span>` : ''}</div></div>`;
+}
+// R3b: progress for the current phase only — its own plans, one bar segment per plan.
+function phaseProg(s) {
+  const pp = s.phasePlans;
+  if (!pp || !pp.length) return `<div class="nx-prog"><span class="nx-counts">No plans in this phase yet.</span></div>`;
+  const done = pp.filter((x) => x.done).length; const pct = Math.round((done / pp.length) * 100);
+  const nextId = s.next?.id;
+  const bar = `<div class="nx-bar" aria-hidden="true">${pp.map((x) => `<i class="${x.done ? 'on' : x.id === nextId ? 'cur' : ''}"></i>`).join('')}</div>`;
+  return `<div class="nx-prog"><div class="row"><span class="nx-pct">${pct}<small>%</small></span><span class="nx-counts"><b>${done}</b> of ${pp.length} plans</span></div>${bar}</div>`;
+}
+function nextCard2(s, phaseOnly = false) {
+  if (!s) return `<section class="nx"><p class="eyebrow">Next up</p><p class="nx-empty">No STATE.md yet — nothing to report.</p></section>`;
+  const n = s.next; const pr = s.progress;
+  const cur = s.done ? -1 : pr.phases[0];
+  const bar = pr.phases[1] ? `<div class="nx-bar" aria-hidden="true">${Array.from({ length: pr.phases[1] }, (_, i) => `<i class="${i < pr.phases[0] ? 'on' : i === cur ? 'cur' : ''}"></i>`).join('')}</div>` : '';
+  const next = n ? `<div class="nx-next${s.done ? ' done' : ''}"><div class="k"><p class="eyebrow">Next up</p>${n.id ? `<span class="nx-id">${esc(n.id)}</span>` : ''}</div><strong>${esc(n.title)}</strong></div>` : '';
+  const pct = pr.percent ?? (pr.plans[1] ? Math.round((pr.plans[0] / pr.plans[1]) * 100) : null);
+  const prog = `<div class="nx-prog"><div class="row">${pct != null ? `<span class="nx-pct">${pct}<small>%</small></span>` : ''}<span class="nx-counts"><b>${pr.plans[0]}</b> of ${pr.plans[1]} plans · <b>${pr.phases[0]}</b> of ${pr.phases[1]} phases</span></div>${bar}</div>`;
+  const last = s.last ? `<p class="nx-last"><span class="kicker">Last</span>${s.last.date ? esc(fmtD(s.last.date)) : ''}${s.last.date && s.last.what ? ' — ' : ''}${s.last.what ? esc(s.last.what) : ''}</p>` : '';
+  if (phaseOnly) {
+    // R3b: "Next up" heads the section, then progress, last activity, and the next step at the end.
+    const step = n ? `<div class="nx-step${s.done ? ' done' : ''}">${n.id ? `<span class="nx-id">${esc(n.id)}</span>` : ''}<strong>${esc(n.title)}</strong></div>` : '';
+    return `<section class="nx"><div class="nx-sec"><p class="eyebrow">Next up</p>${phaseProg(s)}${last}${step}</div></section>`;
+  }
+  return `<section class="nx">${next}${prog}${last}</section>`;
+}
+function idBlock(d, cls = 'b-id') {
+  const what = d.what ? (text(d.what, 'b-what') ?? `<p class="b-what">${leadOf(d.what)}</p>`) : missing('What This Is');
+  return `<div class="${cls}"><h1 class="b-name">${esc(d.name ?? 'Untitled project')}</h1>${d.tagline ? `<p class="b-tag">${esc(d.tagline)}</p>` : ''}${what}</div>`;
+}
+const corePanel = (d) => `<aside class="b-core"><span class="kicker">Core value</span>${d.core ? text(d.core, 'full') ?? `<p>${leadOf(d.core)}</p>` : missing('Core Value')}</aside>`;
+
+function viewB1(d) { return `<section class="b1"><div class="b1-left">${idBlock(d, 'b1-id')}${positionBlock(d.state)}</div><div class="b1-right">${corePanel(d)}${nextCard2(d.state)}</div></section>`; }
+function viewB2(d) { return `<section class="b2"><div class="b2-top">${idBlock(d)}${corePanel(d)}</div><div class="b2-strip">${positionBlock(d.state) || '<span></span>'}${nextCard2(d.state)}</div></section>`; }
+function viewB3(d) { return `<section class="b3"><div class="b3-left">${idBlock(d, 'b1-id')}${positionBlock(d.state)}</div><div class="b3-panel">${corePanel(d)}${nextCard2(d.state)}</div></section>`; }
+
+// ---------- round 3 ----------
+// The nx card with the core value folded in at `where`: 'top' | 'band' | 'foot'.
+function nxWithCore(d, where, phaseOnly = false) {
+  const core = `<div class="nx-core ${where}"><span class="kicker">Core value</span>${d.core ? text(d.core) ?? `<p>${leadOf(d.core)}</p>` : missing('Core Value')}</div>`;
+  const card = nextCard2(d.state, phaseOnly);
+  return where === 'foot' ? card.replace(/<\/section>$/, core + '</section>') : card.replace('<section class="nx">', '<section class="nx">' + core);
+}
+function viewR3a(d) {
+  const pos = d.state ? `<div class="r3a-pos">${positionBlock(d.state)}</div>` : '';
+  return `<section class="r3"><div class="r3-left">${idBlock(d, 'b1-id')}${pos}</div>${nxWithCore(d, 'top')}</section>`;
+}
+function viewR3b(d) {
+  const pos = d.state ? `<div class="r3b-now"><span class="kicker">Now</span>${positionBlock(d.state)}</div>` : '';
+  return `<section class="r3"><div class="r3-left">${idBlock(d, 'b1-id')}${pos}</div>${nxWithCore(d, 'lead', true)}</section>`;
+}
+function viewR3c(d) {
+  const s = d.state;
+  const ms = s ? [s.milestone, s.milestoneName].filter(Boolean).map(esc).join(' ') : '';
+  const line = s ? `<div class="r3c-line">${s.status ? `<span class="status-chip" data-tone="${s.done ? 'complete' : 'active'}">${esc(humanStatus(s.status))}</span>` : ''}<span>Phase ${esc(s.phase ?? '—')} · <strong>${esc(s.phaseName ?? '')}</strong></span>${ms ? `<span class="ms">${ms}</span>` : ''}</div>` : '';
+  return `<section class="r3"><div class="r3-left">${idBlock(d, 'b1-id')}${line}</div>${nxWithCore(d, 'band')}</section>`;
+}
+
+function render() {
+  const d = window.DOCS[state.doc];
+  document.documentElement.classList.toggle('dark', state.theme === 'dark');
+  const frame = document.getElementById('frame');
+  frame.style.maxWidth = state.width === 'full' ? '' : state.width + 'px';
+  frame.classList.toggle('narrow-frame', state.width !== 'full');
+  const body = { a: viewA, b: viewB, c: viewC, b1: viewB1, b2: viewB2, b3: viewB3, r3a: viewR3a, r3b: viewR3b, r3c: viewR3c }[state.v](d);
+  frame.innerHTML = `<header class="shell-header"><span class="brand-mark">L</span><span>Labelore</span><span class="crumb">/ ${esc(d.name ?? 'Untitled project')}</span><span class="shell-tabs"><b>Dashboard</b><span>Roadmap</span><span>Traceability</span></span></header><main class="page">${body}</main>`;
+  document.querySelectorAll('.variant-tab').forEach((t) => t.classList.toggle('active', t.dataset.v === state.v));
+  document.querySelectorAll('#sketch-tools button').forEach((b) => b.classList.toggle('on', b.dataset.doc === state.doc || b.dataset.theme === state.theme || b.dataset.width === state.width || b.dataset.text === state.text));
+  const p = new URLSearchParams({ v: state.v, doc: state.doc }); if (state.text !== 'lead') p.set('text', state.text); if (state.theme !== 'dark') p.set('theme', state.theme); if (state.width !== 'full') p.set('width', state.width);
+  history.replaceState(null, '', '?' + p);
+}
+
+document.getElementById('doc-btns').innerHTML = Object.values(window.DOCS).map((d) => `<button data-doc="${d.key}">${esc(d.label)}</button>`).join('');
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('button, a'); if (!t) return;
+  if (t.tagName === 'A') { e.preventDefault(); return; }
+  if (t.dataset.v) state.v = t.dataset.v;
+  else if (t.dataset.doc) state.doc = t.dataset.doc;
+  else if (t.dataset.text) state.text = t.dataset.text;
+  else if (t.dataset.theme) state.theme = t.dataset.theme;
+  else if (t.dataset.width) state.width = t.dataset.width;
+  else return;
+  render();
+});
+render();
+</script>
+</body>
+</html>
