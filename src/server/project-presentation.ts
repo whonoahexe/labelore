@@ -40,8 +40,6 @@ export interface ProjectStateDto {
   /** `last_activity` as YYYY-MM-DD — gray-matter hands an unquoted date over as a Date. */
   lastActivity: string | null;
   lastActivityDescription: string | null;
-  /** The text after the body's `**Current focus:**` line. */
-  currentFocus: string | null;
   progress: {
     totalPhases: number | null;
     completedPhases: number | null;
@@ -251,15 +249,6 @@ function isoDateOf(value: unknown): string | null {
   return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value) ? value.slice(0, 10) : null;
 }
 
-/** Line-scans the STATE body for `**Current focus:**` rather than running a whole-document regex. */
-function currentFocusOf(body: string): string | null {
-  for (const line of body.split('\n')) {
-    const text = line.trim();
-    if (text.startsWith('**Current focus:**')) return text.slice('**Current focus:**'.length).trim() || null;
-  }
-  return null;
-}
-
 function stateOf(project: Project): ProjectStateDto | null {
   const artifact = Object.values(project.artifacts).find((candidate) => candidate.kind === 'state');
   if (!artifact) return null;
@@ -274,7 +263,6 @@ function stateOf(project: Project): ProjectStateDto | null {
     milestoneName: trimmedString(artifact.frontmatter.milestone_name),
     lastActivity: isoDateOf(artifact.frontmatter.last_activity),
     lastActivityDescription: trimmedString(artifact.frontmatter.last_activity_desc),
-    currentFocus: currentFocusOf(artifact.body),
     progress: {
       totalPhases: asNumber(progress.total_phases),
       completedPhases: asNumber(progress.completed_phases),

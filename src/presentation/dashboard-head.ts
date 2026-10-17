@@ -23,11 +23,13 @@ export interface DashboardHeadNow {
   done: boolean;
 }
 
+/** GSD's next action, routed the way `/gsd-next` routes it — from the plan, summary, context and
+ * verification files on disk, never from STATE.md's wording. `plan` is set only on an execute step:
+ * the first plan in that phase with no SUMMARY.md. */
 export interface DashboardHeadStep {
-  kind: 'plan' | 'milestone' | 'focus' | 'phase';
-  id: string | null;
+  kind: 'execute' | 'discuss' | 'plan' | 'verify' | 'complete-milestone' | 'new-milestone';
   title: string;
-  url: string | null;
+  plan: { id: string; url: string } | null;
 }
 
 export interface DashboardHeadNext {
@@ -210,54 +212,75 @@ function nowOf(state: ProjectStateDto | null, phase: PhaseDto | null): Dashboard
   return { milestone, phase: number, title, status, done: stateDone(state) };
 }
 
-function planTitleOf(artifacts: ArtifactDto[], path: string): string | null {
-  const plan = artifacts.find((artifact) => artifact.path === path)?.structured.plan;
-  const objective = plan && typeof plan === 'object' ? (plan as { objective?: unknown }).objective : null;
-  const title = objective && typeof objective === 'object' ? (objective as { title?: unknown }).title : null;
-  return typeof title === 'string' && title.trim() ? title.trim() : null;
+function byPhaseNumber(left: PhaseDto, right: PhaseDto): number {
+  return Number(left.identity.number) - Number(right.identity.number);
 }
 
-function stepOf(presentation: ProjectPresentation, state: ProjectStateDto, done: boolean): DashboardHeadStep | null {
+function firstOpenPlan(phase: PhaseDto) {
+  return [...phase.plans].sort((left, right) => left.id.localeCompare(right.id)).find((plan) => plan.summary === null);
+}
+
+function phaseArtifacts(presentation: ProjectPresentation, phase: PhaseDto, kind: string): ArtifactDto[] {
+  return presentation.artifacts.filter((artifact) => artifact.phaseKey === phase.key && artifact.kind === kind);
+}
+
+/** A phase is verified once its VERIFICATION.md passed or its UAT.md is complete. */
+function phaseVerified(presentation: ProjectPresentation, phase: PhaseDto): boolean {
+  const statusIs = (kind: string, value: string) =>
+    phaseArtifacts(presentation, phase, kind).some(
+      (artifact) => typeof artifact.frontmatter.status === 'string' && artifact.frontmatter.status.trim().toLowerCase() === value,
+    );
+  return statusIs('verification', 'passed') || statusIs('uat', 'complete');
+}
+
+function phaseLabel(phase: PhaseDto): string {
+  return displayPhaseNumber(phase.identity.number) ?? phase.identity.number;
+}
+
+function executeStep(phase: PhaseDto): DashboardHeadStep | null {
+  const plan = firstOpenPlan(phase);
+  return plan
+    ? { kind: 'execute', title: `Execute phase ${phaseLabel(phase)}`, plan: { id: plan.id, url: plan.key } }
+    : null;
+}
+
+function stepOf(presentation: ProjectPresentation, state: ProjectStateDto, current: PhaseDto | null): DashboardHeadStep | null {
+  if (current?.archived) return { kind: 'new-milestone', title: 'Start the next milestone', plan: null };
+  const version = state.milestone?.trim() || null;
+  const phases = [
+    ...(presentation.milestones.find((milestone) => !milestone.archived && milestone.version === version)?.phases ?? []),
+  ].sort(byPhaseNumber);
+  // A phase anywhere in the milestone with plans still missing summaries comes first, even below
+  // the current one — a session that died mid-execution can leave STATE.md already moved on.
+  for (const phase of phases) {
+    const step = executeStep(phase);
+    if (step) return step;
+  }
   const number = displayPhaseNumber(state.phaseNumber);
-  if (!done && number !== null && Number.isFinite(Number(number))) {
-    const phases = presentation.milestones
-      .filter((milestone) => !milestone.archived)
-      .flatMap((milestone) => milestone.phases)
-      .filter((phase) => Number(phase.identity.number) >= Number(number))
-      .sort((left, right) => Number(left.identity.number) - Number(right.identity.number));
-    for (const phase of phases) {
-      const plan = [...phase.plans].sort((left, right) => left.id.localeCompare(right.id)).find((candidate) => candidate.summary === null);
-      if (plan) {
-        return {
-          kind: 'plan',
-          id: plan.id,
-          title: planTitleOf(presentation.artifacts, plan.path) ?? plan.description ?? `Plan ${plan.id}`,
-          url: plan.key,
-        };
-      }
-    }
+  if (!current) return number ? { kind: 'discuss', title: `Discuss phase ${number}`, plan: null } : null;
+  const label = phaseLabel(current);
+  if (current.plans.length === 0) {
+    const ready =
+      phaseArtifacts(presentation, current, 'context').length > 0 || phaseArtifacts(presentation, current, 'research').length > 0;
+    return { kind: ready ? 'plan' : 'discuss', title: `${ready ? 'Plan' : 'Discuss'} phase ${label}`, plan: null };
   }
-  if (done) return { kind: 'milestone', id: null, title: 'Start the next milestone', url: null };
-  const focus = state.currentFocus?.replace(/`/g, '') ?? null;
-  const focusClause = focus && !/^Phase\s/i.test(focus) ? activityClause(focus) : null;
-  if (focusClause) return { kind: 'focus', id: null, title: focusClause, url: null };
-  if (number !== null) {
-    const verb = /plan/i.test(state.status ?? '') ? 'Plan' : 'Continue';
-    return { kind: 'phase', id: null, title: `${verb} phase ${number}`, url: null };
-  }
-  return null;
+  if (!phaseVerified(presentation, current)) return { kind: 'verify', title: `Verify phase ${label}`, plan: null };
+  const following = phases.find((phase) => Number(phase.identity.number) > Number(current.identity.number));
+  return following
+    ? { kind: 'discuss', title: `Discuss phase ${phaseLabel(following)}`, plan: null }
+    : { kind: 'complete-milestone', title: 'Complete the milestone', plan: null };
 }
 
 function nextOf(presentation: ProjectPresentation, phase: PhaseDto | null): DashboardHeadNext | null {
   const state = presentation.state;
   if (!state) return null;
-  const step = stepOf(presentation, state, stateDone(state));
+  const step = stepOf(presentation, state, phase);
   const plans = [...(phase?.plans ?? [])]
     .sort((left, right) => left.id.localeCompare(right.id))
     .map((plan) => ({
       id: plan.id,
       done: plan.summary !== null,
-      next: step?.kind === 'plan' && step.id === plan.id,
+      next: step?.plan?.url === plan.key,
     }));
   const completed = plans.filter((plan) => plan.done).length;
   const text = activityClause(state.lastActivityDescription);

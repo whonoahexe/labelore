@@ -1168,8 +1168,6 @@ summary.tree-node-row:focus-visible {
   justify-items: start;
   padding-top: var(--space-4);
   border-top: 1px solid var(--border);
-  color: inherit;
-  text-decoration: none;
 }
 
 .project-next-step strong {
@@ -1185,17 +1183,17 @@ summary.tree-node-row:focus-visible {
   font-weight: var(--fw-medium);
 }
 
-a.project-next-step:hover strong,
-a.project-next-step:focus-visible strong {
-  color: var(--primary);
+.project-next-plan {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklch, var(--foreground) 35%, transparent);
+  text-underline-offset: 0.15em;
 }
 
-.project-next-id {
-  padding: 0 var(--space-1-5);
-  border: 1px solid var(--border);
-  color: var(--muted-foreground);
-  font-family: var(--font-mono);
-  font-size: var(--fs-1);
+.project-next-plan:hover,
+.project-next-plan:focus-visible {
+  color: var(--primary);
+  text-decoration-color: var(--primary);
 }
 
 .next-preview {

@@ -71,15 +71,11 @@ describe('dashboard head', () => {
       dateLabel: '22 Aug',
       text: 'Phase 1 hardening task committed',
     });
-    expect(head.next?.step).toMatchObject({
-      kind: 'plan',
-      id: '02-01',
-      title: "Deliver a minimal end-to-end tracer for the transport layer, calling into Phase 1's identity resolver",
-    });
-    expect(head.next?.step?.url).toContain('/plans/02-01');
+    expect(head.next?.step).toMatchObject({ kind: 'execute', title: 'Execute phase 2', plan: { id: '02-01' } });
+    expect(head.next?.step?.plan?.url).toContain('/plans/02-01');
   });
 
-  it('splits a tagline off the title and asks to plan a phase that has no plans yet', async () => {
+  it('splits a tagline off the title, and asks to discuss a phase with no folder yet', async () => {
     const head = await headOf({
       '.planning/PROJECT.md': fixture('synthetic-PROJECT.md'),
       '.planning/STATE.md': fixture('synthetic-STATE.md'),
@@ -94,7 +90,7 @@ describe('dashboard head', () => {
       plans: [],
       percent: null,
       last: { dateLabel: '14 Oct', text: 'Phase 3 context gathered' },
-      step: { kind: 'phase', id: null, title: 'Plan phase 3', url: null },
+      step: { kind: 'discuss', title: 'Discuss phase 3', plan: null },
     });
   });
 
@@ -117,7 +113,7 @@ describe('dashboard head', () => {
     });
     expect(head.next?.plans.map((entry) => entry.done)).toEqual([true, true]);
     expect(head.next?.last?.text).toBe('Quick task: compact discussion-log tables');
-    expect(head.next?.step).toEqual({ kind: 'milestone', id: null, title: 'Start the next milestone', url: null });
+    expect(head.next?.step).toEqual({ kind: 'new-milestone', title: 'Start the next milestone', plan: null });
   });
 
   it('shows just the name for a project with a bare PROJECT.md', async () => {
@@ -128,6 +124,80 @@ describe('dashboard head', () => {
   it('never throws on malformed STATE frontmatter', async () => {
     const head = await headOf({ '.planning/STATE.md': '---\nmilestone: [unclosed\n---\n' });
     expect(head.name).toBe('project');
+  });
+});
+
+const liveState = (phase: string, status = 'executing') => `---
+milestone: v1.0
+current_phase: ${phase}
+status: ${status}
+---
+`;
+
+const ROADMAP = `# Roadmap
+
+## Phase Details
+
+### Phase 1: First Slice
+**Goal**: First.
+
+### Phase 2: Second Slice
+**Goal**: Second.
+`;
+
+const phaseFile = (dir: string, name: string, body = '# File\n') => ({ [`.planning/phases/${dir}/${name}`]: body });
+const planFile = (dir: string, id: string) =>
+  phaseFile(dir, `${id}-PLAN.md`, `---\nphase: ${dir}\nplan: ${id.slice(3)}\n---\n<objective>\nBuild ${id}.\n</objective>\n`);
+const summaryFile = (dir: string, id: string) => phaseFile(dir, `${id}-SUMMARY.md`);
+const stepFor = async (files: Record<string, string>) => (await headOf({ '.planning/ROADMAP.md': ROADMAP, ...files })).next?.step;
+
+describe('dashboard head next step, routed as /gsd-next routes it', () => {
+  it('executes the lowest phase with a plan missing its summary, from that plan', async () => {
+    const step = await stepFor({
+      '.planning/STATE.md': liveState('2'),
+      ...planFile('01-first-slice', '01-01'),
+      ...planFile('01-first-slice', '01-02'),
+      ...summaryFile('01-first-slice', '01-01'),
+      ...planFile('02-second-slice', '02-01'),
+    });
+    expect(step).toMatchObject({ kind: 'execute', title: 'Execute phase 1', plan: { id: '01-02' } });
+  });
+
+  it('verifies a phase whose plans all have summaries but nothing is verified yet', async () => {
+    const step = await stepFor({
+      '.planning/STATE.md': liveState('1', 'verifying'),
+      ...planFile('01-first-slice', '01-01'),
+      ...summaryFile('01-first-slice', '01-01'),
+    });
+    expect(step).toEqual({ kind: 'verify', title: 'Verify phase 1', plan: null });
+  });
+
+  it('moves on to discuss the next phase once verification passed', async () => {
+    const step = await stepFor({
+      '.planning/STATE.md': liveState('1'),
+      ...planFile('01-first-slice', '01-01'),
+      ...summaryFile('01-first-slice', '01-01'),
+      ...phaseFile('01-first-slice', '01-VERIFICATION.md', '---\nstatus: passed\n---\n# Verification\n'),
+    });
+    expect(step).toEqual({ kind: 'discuss', title: 'Discuss phase 2', plan: null });
+  });
+
+  it('completes the milestone after its last phase is verified', async () => {
+    const step = await stepFor({
+      '.planning/STATE.md': liveState('2'),
+      ...phaseFile('01-first-slice', '01-UAT.md', '---\nstatus: complete\n---\n# UAT\n'),
+      ...planFile('02-second-slice', '02-01'),
+      ...summaryFile('02-second-slice', '02-01'),
+      ...phaseFile('02-second-slice', '02-UAT.md', '---\nstatus: complete\n---\n# UAT\n'),
+    });
+    expect(step).toEqual({ kind: 'complete-milestone', title: 'Complete the milestone', plan: null });
+  });
+
+  it('plans a phase with context but no plans, and discusses one without context', async () => {
+    const planned = await stepFor({ '.planning/STATE.md': liveState('1', 'planning'), ...phaseFile('01-first-slice', '01-CONTEXT.md') });
+    expect(planned).toEqual({ kind: 'plan', title: 'Plan phase 1', plan: null });
+    const bare = await stepFor({ '.planning/STATE.md': liveState('1', 'planning'), ...phaseFile('01-first-slice', '01-NOTES.md') });
+    expect(bare).toEqual({ kind: 'discuss', title: 'Discuss phase 1', plan: null });
   });
 });
 

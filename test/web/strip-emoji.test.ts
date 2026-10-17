@@ -44,7 +44,6 @@ describe('dashboard-page emoji sanitization contract', () => {
   it('imports and applies stripEmoji to the head and attention panel descriptions', async () => {
     const page = await source('src/web/pages/dashboard-page.tsx');
     expect(page).toMatch(/import \{.*stripEmoji.*\} from '\.\/strip-emoji\.ts';/);
-    expect(page).toContain('<strong>{stripEmoji(step.title)}</strong>');
     expect(page).toContain('stripMarkdown(stripEmoji(last.text))');
     expect(page).toContain('<h1 id="project-name-heading">{stripEmoji(head.name)}</h1>');
     expect(page).toContain('<p>{stripMarkdown(stripEmoji(item.detail))}</p>');
