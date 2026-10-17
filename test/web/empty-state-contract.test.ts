@@ -61,14 +61,13 @@ describe('empty-state contract (D-06, D-07, D-08, D-09)', () => {
     expect(artifact).toMatch(/\{panels\.length > 0 \? \([\s\S]*?\) : null\}/);
   });
 
-  it('leaves dashboard-page.tsx untouched — its two all-clear sentences and on-deck sentence still exist (scope rule)', async () => {
+  it('leaves dashboard-page.tsx untouched — its all-clear sentences and on-deck sentence still exist (scope rule)', async () => {
     const dashboard = await source('src/web/pages/dashboard-page.tsx');
     expect(dashboard).toContain(
       'No dependency-ready work is reported in the active milestone.',
     );
-    expect(dashboard).toContain(
-      'No discrepancy, blocker, dependency wait, or human gate needs attention.',
-    );
+    expect(dashboard).toContain('No decisions are recorded.');
+    expect(dashboard).toContain('No blockers are recorded.');
     expect(dashboard).toContain('No additional work is queued after this item.');
     expect(dashboard).not.toContain('EmptyState');
   });

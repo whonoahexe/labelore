@@ -73,6 +73,40 @@ describe('structured STATE and PLAN projection', () => {
     expect(presentation.blockers.some((blocker) => blocker.text.includes('Decisions'))).toBe(false);
   });
 
+  it('projects the Decisions subsection bullets, never its prose or the blockers', async () => {
+    const presentation = await presentationOf({
+      '.planning/STATE.md': state(`### Blockers/Concerns
+
+- Waiting for exact approval`).replace(
+        '### Decisions\n',
+        '### Decisions\n\nDecisions are logged in PROJECT.md.\n',
+      ),
+      '.planning/phases/01-live/01-01-PLAN.md': plan(''),
+    });
+
+    expect(presentation.state?.decisions?.heading).toBe('Decisions');
+    expect(presentation.decisions.map((decision) => decision.text)).toEqual([
+      'Keep this out of blockers.',
+    ]);
+  });
+
+  it('joins a wrapped or nested bullet into one entry', async () => {
+    const presentation = await presentationOf({
+      '.planning/STATE.md': state(`### Blockers/Concerns
+
+- **Phase 2 is externally gated.** The client owns
+  the staging environment.
+  - Needs an ops window.
+- Second blocker`),
+      '.planning/phases/01-live/01-01-PLAN.md': plan(''),
+    });
+
+    expect(presentation.blockers.map((blocker) => blocker.text)).toEqual([
+      '**Phase 2 is externally gated.** The client owns the staging environment. Needs an ops window.',
+      'Second blocker',
+    ]);
+  });
+
   it('returns normalized checkpoint syntax and degrades malformed wrappers locally', () => {
     const body = `<tasks>
 <task type="checkpoint:human-verify" gate="blocking-human">

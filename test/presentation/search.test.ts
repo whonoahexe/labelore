@@ -77,6 +77,7 @@ function presentation(overrides: Partial<ProjectPresentation> = {}): ProjectPres
     requirements: [],
     artifacts: [],
     blockers: [],
+    decisions: [],
     checkpoints: [],
     coverageWaits: [],
     mentions: { byId: {}, all: [] },

@@ -576,10 +576,21 @@ element is actually written, regardless of class name:
   complete or start a milestone), and an execute step names its first open plan as an inline link
   ("Execute phase 5, from 05-01"). Absences are silent, except the card's "No plans in this phase
   yet." and "No STATE.md yet" lines. Core Value is not shown here (it is the Traceability page's
-  lede, cut by the same lead rules, and absent without a Core Value section), and blockers and
-  gates stay in Needs attention. The accent goes to the Now block's left rule and label, the
+  lede, cut by the same lead rules, and absent without a Core Value section), and blockers live in
+  their own panel below. The accent goes to the Now block's left rule and label, the
   card's top rule, the done bar segments, and the plan link on hover. The next plan's segment
   takes `--in-flight-fill`. Status chips use only `active` and `complete`. No motion.
+- **Below the head, STATE.md's Decisions and Blockers sit side by side, with On deck under them.**
+  Both keep the retired Needs attention panel's look (`attention-panel`, `attention-list`,
+  `attention-pagination`): eyebrows "Settled" and "Unresolved", an icon column (a gavel for a
+  decision, a shield for a blocker), an `item-kind` label, a bold title, a muted detail and a
+  source note linking to the section in STATE.md, four rows to a page. The label is the bullet's
+  leading `[Phase 05]:` tag, or the kind when it has none. Every row has a detail: the text splits
+  at a leading bold lead, else its first spaced em dash, else after its first sentence, and a
+  single-clause entry becomes the detail under "Recorded decision" or "Open blocker". Every row
+  is 12rem tall, with title and detail clamped to two lines each and the source note on the
+  row's floor. Decisions read newest first. An empty section shows a `quiet-state` line. Rows
+  are not links.
 
 ## Surface-scoped registered names
 
@@ -596,12 +607,11 @@ plan's "no AST tooling" constraint.
 
 | Class | Surface | Note |
 |---|---|---|
-| `attention-action` | Dashboard | |
-| `attention-list` | Dashboard | |
+| `attention-list` | Dashboard | the Decisions and Blockers rows |
 | `attention-page-status` | Dashboard | |
 | `attention-pagination` | Dashboard | |
 | `attention-pagination-actions` | Dashboard | |
-| `attention-panel` | Dashboard | shared with the CONTEXT brief (quick-260923-lju) |
+| `attention-panel` | Dashboard | the Decisions and Blockers panels; shared with the CONTEXT brief (quick-260923-lju) |
 | `dashboard-grid` | Dashboard | |
 | `dashboard-loading` | Dashboard | |
 | `dashboard-page` | Dashboard | |

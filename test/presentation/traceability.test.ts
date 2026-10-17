@@ -67,6 +67,7 @@ function presentationWith(requirements: RequirementDto[], phases: PhaseDto[] = [
     requirements,
     artifacts: [],
     blockers: [],
+    decisions: [],
     checkpoints: [],
     coverageWaits: [],
     mentions: { byId: {}, all: [] },

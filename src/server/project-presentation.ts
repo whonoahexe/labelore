@@ -30,6 +30,13 @@ export interface ProjectBlockerDto {
   text: string;
 }
 
+export interface ProjectDecisionDto {
+  key: string;
+  sourcePath: string;
+  heading: string;
+  text: string;
+}
+
 export interface ProjectStateDto {
   sourcePath: string;
   milestone: string | null;
@@ -48,6 +55,7 @@ export interface ProjectStateDto {
     percent: number | null;
   };
   blockersConcerns: { heading: string; body: string } | null;
+  decisions: { heading: string; body: string } | null;
 }
 
 export interface PlanCheckpointDto {
@@ -161,6 +169,7 @@ export interface ProjectPresentation {
   requirements: RequirementDto[];
   artifacts: ArtifactDto[];
   blockers: ProjectBlockerDto[];
+  decisions: ProjectDecisionDto[];
   checkpoints: PlanCheckpointDto[];
   coverageWaits: CoverageWaitDto[];
   mentions: MentionIndex;
@@ -253,7 +262,8 @@ function stateOf(project: Project): ProjectStateDto | null {
   const artifact = Object.values(project.artifacts).find((candidate) => candidate.kind === 'state');
   if (!artifact) return null;
   const progress = asRecord(artifact.frontmatter.progress) ?? {};
-  const blockers = asRecord(artifact.structured.blockersConcerns);
+  const blockers = sectionOf(artifact.structured.blockersConcerns);
+  const decisions = sectionOf(artifact.structured.decisions);
   return {
     sourcePath: artifact.path,
     milestone: asString(artifact.frontmatter.milestone),
@@ -270,20 +280,41 @@ function stateOf(project: Project): ProjectStateDto | null {
       completedPlans: asNumber(progress.completed_plans),
       percent: asNumber(progress.percent),
     },
-    blockersConcerns:
-      blockers && typeof blockers.heading === 'string' && typeof blockers.body === 'string'
-        ? { heading: blockers.heading, body: blockers.body }
-        : null,
+    blockersConcerns: blockers,
+    decisions,
   };
+}
+
+function sectionOf(value: unknown): { heading: string; body: string } | null {
+  const record = asRecord(value);
+  return record && typeof record.heading === 'string' && typeof record.body === 'string'
+    ? { heading: record.heading, body: record.body }
+    : null;
+}
+
+/** Top-level bullets, each joined with its wrapped and nested continuation lines. */
+function bulletsOf(body: string): string[] {
+  const bullets: string[] = [];
+  let open = false;
+  for (const line of body.split('\n')) {
+    const bullet = line.match(/^ ?[-*+]\s+(.*)$/);
+    if (bullet) {
+      bullets.push(bullet[1].trim());
+      open = true;
+    } else if (open && /^\s+\S/.test(line)) {
+      const text = line.trim().replace(/^[-*+]\s+/, '');
+      bullets[bullets.length - 1] = `${bullets[bullets.length - 1]} ${text}`;
+    } else {
+      open = false;
+    }
+  }
+  return bullets.filter(Boolean);
 }
 
 function blockersOf(state: ProjectStateDto | null): ProjectBlockerDto[] {
   if (!state?.blockersConcerns) return [];
   const { heading, body } = state.blockersConcerns;
-  const bullets = body
-    .split('\n')
-    .map((line) => line.match(/^\s*[-*+]\s+(.*)$/)?.[1]?.trim() ?? '')
-    .filter(Boolean);
+  const bullets = bulletsOf(body);
   const candidates = bullets.length > 0 ? bullets : [body.trim()];
   const absentMarkers = new Set(['none', 'none yet', '*(none)*', 'no blockers', 'n/a']);
   return candidates
@@ -294,6 +325,18 @@ function blockersOf(state: ProjectStateDto | null): ProjectBlockerDto[] {
       heading,
       text,
     }));
+}
+
+/** Decisions are bullets only — the prose above them is a note about the log, not a decision. */
+function decisionsOf(state: ProjectStateDto | null): ProjectDecisionDto[] {
+  if (!state?.decisions) return [];
+  const { heading, body } = state.decisions;
+  return bulletsOf(body).map((text, index) => ({
+    key: `${state.sourcePath}#decision-${index + 1}`,
+    sourcePath: state.sourcePath,
+    heading,
+    text,
+  }));
 }
 
 function samePhaseNumber(left: string, right: string): boolean {
@@ -527,6 +570,7 @@ function emptyPresentation(snapshot: ProjectSnapshot): ProjectPresentation {
     requirements: [],
     artifacts: [],
     blockers: [],
+    decisions: [],
     checkpoints: [],
     coverageWaits: [],
     mentions: { byId: {}, all: [] },
@@ -674,6 +718,7 @@ export function toProjectPresentation(snapshot: ProjectSnapshot): ProjectPresent
     requirements: project.requirements.map(projectRequirement),
     artifacts: artifactDtos(project),
     blockers: blockersOf(state),
+    decisions: decisionsOf(state),
     checkpoints: allCheckpoints,
     coverageWaits,
     mentions: project.mentions,

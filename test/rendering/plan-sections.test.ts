@@ -32,6 +32,7 @@ function basePresentation(overrides: Partial<ProjectPresentation> = {}): Project
     requirements: [],
     artifacts: [],
     blockers: [],
+    decisions: [],
     checkpoints: [],
     coverageWaits: [],
     mentions: { byId: {}, all: [] },

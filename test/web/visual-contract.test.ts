@@ -91,11 +91,8 @@ describe('revised visual contract (G-08, G-10, G-05, G-07, G-03, E9 long-text)',
     expect(mermaidFallback).toContain('white-space: pre;');
   });
 
-  it('carries the cross-plan named fragments (attention-action, roadmap deep-link settle)', async () => {
+  it('carries the cross-plan named fragments (roadmap deep-link settle)', async () => {
     const css = await source('src/web/styles/globals.css');
-    expect(css).toContain('.attention-action');
-    const [attentionAction] = ruleBlocks(css, '.attention-action {');
-    expect(attentionAction).toContain('text-decoration: none;');
     const [roadmapPhase] = ruleBlocks(css, '.roadmap-phase {');
     expect(roadmapPhase).toContain('scroll-margin-top: 6rem;');
   });
@@ -143,13 +140,12 @@ describe('revised visual contract (G-08, G-10, G-05, G-07, G-03, E9 long-text)',
     expect(css).toContain('.coverage-table-boundary tbody tr:nth-child(even) td');
   });
 
-  it('places an attention-row provenance note in the content column', async () => {
+  it('sets On deck beneath the Decisions and Blockers panels, spanning both columns', async () => {
     const css = await source('src/web/styles/globals.css');
-    const [block] = ruleBlocks(css, '.attention-list > li > .source-note {');
-    expect(block).toBeDefined();
-    expect(block).toContain('grid-column: 2;');
-    expect(block).toContain('justify-self: start;');
-    expect(block).toContain('min-width: 0;');
+    const [grid] = ruleBlocks(css, '.dashboard-grid {');
+    expect(grid).toContain('grid-template-columns: repeat(2, minmax(0, 1fr));');
+    const [onDeck] = ruleBlocks(css, '.dashboard-grid > .preview-panel {');
+    expect(onDeck).toContain('grid-column: 1 / -1;');
   });
 
   it('fills every status chip as a shape, with active/complete reading more clearly on', async () => {
@@ -396,11 +392,21 @@ describe('muted surface contrast and dead selectors (F2, F5)', () => {
     expect(blocks[0]).toMatch(/color-mix\(in oklch, var\(--muted-foreground\).*var\(--foreground\)\)/);
   });
 
-  it('carries no attention-list rule for an element the dashboard never renders', async () => {
+  it('carries no rule for the removed Needs attention row link', async () => {
     const css = await source('src/web/styles/globals.css');
     const dashboard = await source('src/web/pages/dashboard-page.tsx');
-    expect(css).not.toContain('.attention-list small');
+    expect(css).not.toContain('.attention-action');
     expect(dashboard).not.toMatch(/<small/);
+  });
+
+  it('gives every Decisions and Blockers row one height, clamping title and detail to two lines', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const rows = ruleBlocks(css, '.attention-list li {');
+    expect(rows.some((block) => block.includes('height: 12rem;'))).toBe(true);
+    const [clamp] = ruleBlocks(css, '.attention-list p {').filter((block) =>
+      block.includes('-webkit-line-clamp'),
+    );
+    expect(clamp ?? css).toContain('-webkit-line-clamp: 2;');
   });
 });
 
