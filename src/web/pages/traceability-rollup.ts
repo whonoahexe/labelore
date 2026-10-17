@@ -36,6 +36,8 @@ export function coveringPhaseSignal(covering: TraceabilityCoveringPhase): Coveri
 /** The words a covering phase's status is shown as, everywhere it is shown as text. */
 export function coveringPhaseStatusLabel(covering: TraceabilityCoveringPhase): string {
   if (!isResolvedCovering(covering)) return 'Unresolved';
+  // A roadmap phase with no folder on disk has not been started: GSD creates it at discuss time.
+  if (covering.phaseDiskStatus === 'no_directory') return 'not started';
   return (covering.phaseDiskStatus ?? 'unknown').replaceAll('_', ' ');
 }
 

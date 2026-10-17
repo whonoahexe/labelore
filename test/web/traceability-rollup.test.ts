@@ -44,7 +44,7 @@ describe('coveringPhaseSignal / coveringPhaseStatusLabel', () => {
 
   it('a resolved phase carries its disk status as words, underscores spaced out', () => {
     expect(coveringPhaseStatusLabel(phase('in_progress'))).toBe('in progress');
-    expect(coveringPhaseStatusLabel(phase('no_directory'))).toBe('no directory');
+    expect(coveringPhaseStatusLabel(phase('no_directory'))).toBe('not started');
     expect(coveringPhaseStatusLabel(phase(null))).toBe('unknown');
   });
 
