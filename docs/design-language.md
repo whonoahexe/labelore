@@ -529,6 +529,16 @@ element is actually written, regardless of class name:
   matrix square (and the covered meter segment) and the selected matrix cell take `--primary`.
   Backstop uses `--in-flight-fill`, unresolved `--missing-fill`, and a dismissed state is a quiet
   `--muted-foreground` dash; `destructive` and `warning` never appear on this page.
+- **The REVIEW page's tones and accent.** (quick-261017-k44, sketch 022 C) On a REVIEW page `complete`
+  marks the Clean or all-fixed verdict, a Fixed stamp, the Fixed tally count and the fixed reply mark;
+  `in-flight` marks a warning severity mark, an open warning stamp and the "still in the code" phrase when
+  no critical remains; `missing` marks a critical severity mark, an open critical stamp, a non-zero Open
+  or Critical tally count and the "still in the code" or "K critical" phrase while a critical remains;
+  `quiet` marks an info severity mark, the Skipped (dashed) and Not attempted (dotted) stamps, an open info
+  stamp, the Outside scope chip and the Also chips. The pull-quote rule, the Suggested change kicker, the
+  fixed reply mark, the pressed "Show fixed threads" square and the fixed ruler marks take `--primary`.
+  The parse-degradation tones never appear on this page, and every class is in the reserved
+  `view-review-` namespace, so no vocabulary row is added.
 - **The PLAN page's What to check tab gathers only standard GSD sources.** (quick-261016-ujo) A task that
   needs a person to check it (a `checkpoint:human-verify`, or a `<verify>` that carries a
   `<human-check>`) opens on a first tab, What to check, with the count. It is built on the server from

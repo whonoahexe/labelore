@@ -11927,6 +11927,16 @@ a.view-research-id:hover {
   border-right: 0;
 }
 
+@media (max-width: 42rem) {
+  .view-review-tally > div:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .view-review-tally > div:nth-child(n + 3) {
+    border-top: 1px solid var(--border);
+  }
+}
+
 .view-review-tally b {
   font-family: var(--font-mono);
   font-size: var(--fs-7);
@@ -12230,6 +12240,18 @@ a.view-research-id:hover {
   margin: 0;
 }
 
+.view-review-md ul.view-research-list {
+  display: grid;
+  gap: var(--space-1);
+  list-style: disc;
+}
+
+.view-review-md ol.view-research-list {
+  display: grid;
+  gap: var(--space-1);
+  list-style: decimal;
+}
+
 .view-review-md pre {
   margin: 0;
   padding: var(--space-3) var(--space-4);
@@ -12415,6 +12437,8 @@ a.view-research-id:hover {
 }
 
 .view-review-quiet-files code {
+  padding: 0 var(--space-1);
+  background: var(--muted);
   font-size: var(--fs-2);
 }
 
