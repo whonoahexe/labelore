@@ -588,7 +588,7 @@ element is actually written, regardless of class name:
   leading `[Phase 05]:` tag, or the kind when it has none. Every row has a detail: the text splits
   at a leading bold lead, else its first spaced em dash, else after its first sentence, and a
   single-clause entry becomes the detail under "Recorded decision" or "Open blocker". Every row
-  is 12rem tall, with title and detail clamped to two lines each and the source note on the
+  is 11rem tall, with title and detail clamped to two lines each and the source note on the
   row's floor. Decisions read newest first. An empty section shows a `quiet-state` line. Rows
   are not links.
 

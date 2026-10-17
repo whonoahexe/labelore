@@ -402,7 +402,7 @@ describe('muted surface contrast and dead selectors (F2, F5)', () => {
   it('gives every Decisions and Blockers row one height, clamping title and detail to two lines', async () => {
     const css = await source('src/web/styles/globals.css');
     const rows = ruleBlocks(css, '.attention-list li {');
-    expect(rows.some((block) => block.includes('height: 12rem;'))).toBe(true);
+    expect(rows.some((block) => block.includes('height: 11rem;'))).toBe(true);
     const [clamp] = ruleBlocks(css, '.attention-list p {').filter((block) =>
       block.includes('-webkit-line-clamp'),
     );

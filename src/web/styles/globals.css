@@ -2598,10 +2598,12 @@ pre {
 }
 
 /* Every row is one height: the title and the detail stop at two lines each, and the source note
-   sits on the row's floor. 12rem is the tallest row those clamps allow, at every width. */
+   sits on the row's floor. 11rem is the tallest row those clamps allow, at every width. */
 .attention-list li {
   grid-template-rows: minmax(0, 1fr) auto;
-  height: 12rem;
+  row-gap: var(--space-1-5);
+  height: 11rem;
+  padding: var(--space-4) 0;
 }
 
 .attention-list strong,
