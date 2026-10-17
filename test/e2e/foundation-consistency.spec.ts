@@ -33,6 +33,9 @@ const REPO_ROOT = join(__dirname, '..', '..');
 
 let matrix: PageMatrix;
 
+// Each test here walks the whole page matrix, so it keeps the old five-minute budget.
+test.describe.configure({ timeout: 300_000 });
+
 test.beforeAll(async ({ baseURL }) => {
   matrix = await buildPageMatrix(baseURL ?? 'http://127.0.0.1:4199');
 });
