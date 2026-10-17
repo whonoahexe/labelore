@@ -454,12 +454,16 @@
   align-items: center;
 }
 
-/* The left padding mirrors .shell-controls' gap: the drawer trigger sits as far from the brand
-   mark as the theme toggle sits from the search trigger. */
+/* The left margin mirrors .shell-controls' gap: the drawer trigger sits as far from the brand
+   mark as the theme toggle sits from the search trigger. Margin rather than padding, and sized to
+   its content, so only the mark, wordmark and project name are the home link — not the empty rest
+   of the brand column. */
 .brand {
   grid-area: brand;
+  justify-self: start;
+  align-self: center;
   gap: var(--space-2-5);
-  padding: var(--space-3) var(--space-fluid-4) var(--space-3) var(--space-2);
+  margin: var(--space-3) var(--space-fluid-4) var(--space-3) var(--space-2);
   min-width: 0;
   text-decoration: none;
 }
@@ -2080,7 +2084,7 @@ pre {
   }
 
   .brand {
-    padding: var(--space-3) var(--space-4) var(--space-3) var(--space-2);
+    margin: var(--space-3) var(--space-4) var(--space-3) var(--space-2);
   }
 
   /* Mirrors .shell-controls' padding-inline at this width. */
