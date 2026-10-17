@@ -558,6 +558,14 @@ element is actually written, regardless of class name:
   task-chip prefix and the Fixed-by ticket rule take `--primary`. The parse-degradation tones never
   appear on this page. Every class is in the reserved `view-verification-` namespace, so no
   vocabulary row is added.
+- **The LEARNINGS page marks the four kinds by identity colour, not tone.** (quick-261017-k45, sketch
+  024 E) A decision takes `--primary`, a lesson `--in-flight-fill`, a pattern `--foreground` and a
+  surprise `--missing-fill`, keyed on `data-kind` and used only on the selected tab's underline and
+  number and on the chapter rule and number. The picked or hovered source segment and the graduated
+  badge take `--primary` on `--primary-tint`; the missing-artifacts note takes a dashed
+  `--in-flight-border` with `--in-flight-fill` names. The page writes no `data-tone`, the
+  parse-degradation tones never appear on it, and every class is in the reserved `view-learnings-`
+  namespace, so no vocabulary row is added.
 
 ## Surface-scoped registered names
 
