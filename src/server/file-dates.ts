@@ -15,15 +15,17 @@ const TIMEOUT_MS = 3000;
 const MAX_BUFFER = 1024 * 1024;
 const MAX_CACHE_ENTRIES = 4096;
 
-const defaultRunner: GitRunner = (args, { cwd }) =>
+/** A hardened `git` runner: no shell, no optional locks, no prompt, no pager. Shared with the
+ * commit log (quick-261018-hbd), which needs a larger buffer. */
+export const createGitRunner = (timeoutMs: number, maxBuffer: number): GitRunner => (args, { cwd }) =>
   new Promise<string>((resolve, reject) => {
     execFile(
       'git',
       args,
       {
         cwd,
-        timeout: TIMEOUT_MS,
-        maxBuffer: MAX_BUFFER,
+        timeout: timeoutMs,
+        maxBuffer,
         windowsHide: true,
         env: { ...process.env, GIT_OPTIONAL_LOCKS: '0', GIT_TERMINAL_PROMPT: '0', GIT_PAGER: 'cat' },
       },
@@ -33,6 +35,8 @@ const defaultRunner: GitRunner = (args, { cwd }) =>
       },
     );
   });
+
+const defaultRunner = createGitRunner(TIMEOUT_MS, MAX_BUFFER);
 
 function isDigit(ch: string | undefined): boolean {
   return ch !== undefined && ch >= '0' && ch <= '9';
