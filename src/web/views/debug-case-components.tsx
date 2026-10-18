@@ -511,6 +511,8 @@ export function DebugCaseView({
 }: DebugCaseViewProps): React.JSX.Element {
   const [trigOpen, setTrigOpen] = useState(false);
   const [dialog, setDialog] = useState<DialogState>(null);
+  // Focus lands on the dialog's header, not on its last button: that would scroll a long resolution to its end.
+  const headRef = useRef<HTMLDivElement | null>(null);
 
   const { head, status, trigger, facts, lead, resolution, symptoms, suspects, evidence, also } = model;
   const title = head.title ?? fallbackTitle;
@@ -603,17 +605,17 @@ export function DebugCaseView({
         <AlsoRow items={also} onShowSource={showSource} />
 
         <Dialog open={dialog !== null} onOpenChange={(next) => (next ? undefined : setDialog(null))}>
-          <DialogContent className="view-debug-modal">
+          <DialogContent className="view-debug-modal" initialFocus={headRef}>
             {dialog !== null && dialog.kind === 'more' ? (
               <>
-                <DialogHeader>
+                <DialogHeader ref={headRef} tabIndex={-1}>
                   <DialogTitle>{dialog.title}</DialogTitle>
                 </DialogHeader>
                 <ValueView value={dialog.value} />
               </>
             ) : dialog !== null && resolution !== null ? (
               <>
-                <DialogHeader>
+                <DialogHeader ref={headRef} tabIndex={-1}>
                   <DialogTitle>Resolution in full</DialogTitle>
                 </DialogHeader>
                 {resolution.parts.map((part) => (
@@ -642,7 +644,7 @@ export function DebugCaseView({
                 </button>
               </>
             ) : (
-              <DialogHeader>
+              <DialogHeader ref={headRef} tabIndex={-1}>
                 <DialogTitle>Resolution in full</DialogTitle>
               </DialogHeader>
             )}

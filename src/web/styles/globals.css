@@ -20386,13 +20386,24 @@ button.view-verification-stat:hover {
 
 .view-debug-modal-file {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   gap: var(--space-3);
   padding: var(--space-1-5) 0;
   border-bottom: 1px solid var(--border-faint);
   font-family: var(--font-mono);
   font-size: var(--fs-3);
   overflow-wrap: anywhere;
+}
+
+@media (max-width: 42rem) {
+  .view-debug-modal-file {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
+}
+
+.view-debug-modal [tabindex='-1'] {
+  outline: none;
 }
 
 .view-debug-note {
@@ -20797,6 +20808,32 @@ button.view-verification-stat:hover {
 
 .view-debug-also button.status-chip:hover {
   background: var(--state-hover);
+}
+
+/* Lists in author text keep their markers (numbered symptoms stay numbered), in the page and the dialog. */
+.view-debug-page :is(.view-research-text, .view-research-list),
+.view-debug-modal :is(.view-research-text, .view-research-list) {
+  margin: 0;
+}
+
+.view-debug-page ul.view-research-list,
+.view-debug-modal ul.view-research-list {
+  display: grid;
+  gap: var(--space-1);
+  list-style: disc;
+}
+
+.view-debug-page ol.view-research-list,
+.view-debug-modal ol.view-research-list {
+  display: grid;
+  gap: var(--space-1);
+  list-style: decimal;
+}
+
+/* An empty column reads as a dashed box, like the sketch's. */
+.view-debug-column > .view-debug-none {
+  padding: var(--space-4);
+  border: 1px dashed var(--border);
 }
 /* quick-261018-j5h:end */
 
