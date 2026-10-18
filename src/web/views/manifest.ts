@@ -13,6 +13,8 @@ import type { ComposedContextBrief } from './context-brief.ts';
 import type { ComposedSecurityConsole } from './security-console.ts';
 // Type-only import — same reason as `brief` above (quick-261017-k45, sketch-024 E).
 import type { ComposedLearningsRetro } from './learnings-retro.ts';
+// Type-only import — same reason as `brief` above (quick-261018-j5h, sketch-023 A).
+import type { ComposedDebugCase } from './debug-case.ts';
 // Type-only import — same reason as `brief` above (quick-261006-iz6, sketch-019 B).
 import type { ComposedPlanNavigator } from './plan-navigator.ts';
 import type { PlanContext } from './plan-context.ts';
@@ -92,6 +94,11 @@ export interface ViewManifest {
    * `structured.learnings`, or a file with no parsed entry), and the page falls back to the
    * promoted-block view, which the manifest keeps as `promote`. */
   learningsRetro?: (input: ViewInput) => ComposedLearningsRetro | null;
+  /** quick-261018-j5h (sketch-023 A): the DEBUG case-file page a manifest opts into in View mode -
+   * currently only `debug`. Returns `null` when the input can't compose one (no `structured.debug`, or
+   * a session with nothing to show), and the page falls back to the promoted-block view, which the
+   * manifest keeps as `promote`. */
+  debugCase?: (input: ViewInput) => ComposedDebugCase | null;
   /** quick-261006-iz6 (sketch-019 B): the PLAN task navigator a manifest opts into instead of
    * `layout` — currently only `plan`. Returns `null` when the input can't compose one (no
    * `structured.plan`, or a plan with no task), and the page falls back to the B3 `layout` / the

@@ -4,6 +4,8 @@
 // dedicated route (RESEARCH.md § Open Question 1's recommended spot-check). Every one of these
 // is already a granular `artifact.kind` string on the wire (RESEARCH.md § Corrected
 // Understanding) — this module adds no new server-side splitting, only a client-side name list.
+// `debug` is discovery's directory-position kind for GSD debug sessions under `.planning/debug/`
+// (quick-261018-j5h).
 export const VIEW_KINDS = [
   'discussion-log',
   'verification',
@@ -23,6 +25,7 @@ export const VIEW_KINDS = [
   'context',
   'review-fix',
   'findings',
+  'debug',
 ] as const;
 
 export type ViewKind = (typeof VIEW_KINDS)[number];
