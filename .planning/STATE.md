@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-17T22:53:29.951Z"
-last_activity: 2026-10-17
+last_updated: "2026-10-18T07:03:30.816Z"
+last_activity: 2026-10-18
 last_activity_desc: Completed quick task 261016-2j6 (compact discussion-log tables)
-state_head: 77d3226834671166bf43697f9c5de4645c311c5a
+state_head: 15071ee02080bb82ec86ab18bae6e0699fad3b24
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-09-21)
 Phase: Milestone v1.1 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-10-18 - Completed quick task 261018-4tb: build sketch 026 winner (B + P1) as the dashboard below the project head
+Last activity: 2026-10-18 - Completed quick task 261018-hbd: Pace timing from git commit gaps, falling back to SUMMARY duration
 
 ## Performance Metrics
 
@@ -202,6 +202,7 @@ None.
 | 87 | Roadmap Overview lede capped at two lines of whole sentences; original lede when there is no Overview | 2026-10-18 | 0a5c7e4 | — |
 | 88 | Removed the Roadmap Overview lede; the page keeps its original sentence | 2026-10-18 | 0d43a30 | — |
 | 261018-4tb | build sketch 026 winner (B + P1) as the dashboard below the project head | 2026-10-18 | 77d3226 | [261018-4tb-build-sketch-026-winner-b-p1-as-the-dash](./quick/261018-4tb-build-sketch-026-winner-b-p1-as-the-dash/) |
+| 261018-hbd | Pace timing from git commit gaps, falling back to SUMMARY duration | 2026-10-18 | 15071ee | [261018-hbd-pace-timing-from-git-commit-gaps-falling](./quick/261018-hbd-pace-timing-from-git-commit-gaps-falling/) |
 
 ## Deferred Items
 
