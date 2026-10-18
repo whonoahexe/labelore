@@ -22,6 +22,7 @@ import { resolveTargetPath } from '../cli/target-path.ts';
 import { parseRemoteTarget } from '../cli/remote-target.ts';
 import { RemoteSnapshotSource } from './remote-source.ts';
 import { buildArtifactIndex } from './artifact-index.ts';
+import { applyCommitTimes, createCommitLog, type CommitLog } from './commit-times.ts';
 import { createFileDates } from './file-dates.ts';
 import { jsonRecord, toProjectPresentation } from './project-presentation.ts';
 import { createSearchIndexState, searchIndex } from './search-index.ts';
@@ -63,6 +64,7 @@ export function createApp(
   source: SnapshotSource,
   production = process.env.NODE_ENV === 'production',
   staticRoot = './dist',
+  commitLog?: CommitLog,
 ): Hono {
   const app = new Hono();
   const renderer = createArtifactRenderer();
@@ -89,6 +91,8 @@ export function createApp(
   // requires - never mutate the existing bundle field by field.
   let derived = buildDerivedViews();
   const fileDates = createFileDates(derived.presentation.rootPath);
+  // quick-261018-hbd: Pace times plans from the target's commits; read once, reset on refresh.
+  const commits = commitLog ?? createCommitLog(derived.presentation.rootPath);
   let inFlight: Promise<ProjectSnapshot> | null = null;
 
   const artifactResponse = async (
@@ -147,10 +151,15 @@ export function createApp(
   };
 
   app.get('/api/presentation', (c) => c.json(derived.presentation));
-  app.get('/api/dashboard', (c) => {
+  app.get('/api/dashboard', async (c) => {
+    // Bound before the await, so a refresh that completes meanwhile cannot mix two bundles.
+    const { presentation } = derived;
+    const log = await commits.load();
+    const { pace } = presentation.ledger;
+    const timed = { ...pace, plans: applyCommitTimes(pace.plans, log) };
     return c.json({
-      ...buildDashboardViewModel(derived.presentation),
-      loadStatus: derived.presentation.loadStatus,
+      ...buildDashboardViewModel({ ...presentation, ledger: { ...presentation.ledger, pace: timed } }),
+      loadStatus: presentation.loadStatus,
     });
   });
   app.get('/api/roadmap', (c) => {
@@ -288,6 +297,7 @@ export function createApp(
       // passed explicitly (WR-03) - it is already the resolved post-refresh value, so re-reading
       // `source.getSnapshot()` here would be a redundant second read of the same snapshot.
       derived = buildDerivedViews(snapshot);
+      commits.reset();
       return c.json({
         refreshed: true as const,
         readAt: snapshot.readAt,

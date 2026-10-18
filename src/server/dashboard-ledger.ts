@@ -72,6 +72,10 @@ export interface PacePlanDto {
   /** Why the plan counts as untimed ("wall-clock time", "no duration", ...), or null when timed. */
   untimedReason: string | null;
   tasks: number | null;
+  /** Where `minutes` came from: the plan's commits (quick-261018-hbd), its SUMMARY, or nowhere. */
+  timing: 'commits' | 'summary' | null;
+  /** How many commits timed the plan, when `timing` is 'commits'. */
+  commits: number | null;
 }
 
 export type TodoSeverity = 'high' | 'medium' | 'low' | 'unrated';
@@ -352,6 +356,8 @@ function paceOf(project: Project): { current: string | null; plans: PacePlanDto[
           approx: parsed.approx,
           untimedReason: parsed.untimedReason,
           tasks: taskCount(phase.artifacts[plan.path]?.body, summary),
+          timing: parsed.minutes === null ? null : 'summary',
+          commits: null,
         });
       }
     }

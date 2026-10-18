@@ -245,6 +245,11 @@ export function paceChart(plans: PacePlanDto[], readAt: string): PaceChart {
     const over = minutesOf(plan) > cap;
     const detail = [
       `${plan.approx ? '~' : ''}${formatMinutes(minutesOf(plan))}`,
+      plan.timing === 'commits' && plan.commits
+        ? `${plan.commits} commits`
+        : plan.timing === 'summary'
+          ? 'from its summary'
+          : null,
       plan.tasks ? `${plan.tasks} ${plan.tasks === 1 ? 'task' : 'tasks'}` : null,
       activityDateLabel(plan.date, readAt),
       plan.milestone,

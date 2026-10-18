@@ -162,11 +162,11 @@ export function PaceSection({
           <figcaption className="pace-key">
             <span>
               <i className="pace-key-dot" />
-              One plan, minutes
+              One plan, active time from its commits
             </span>
             <span>
               <i className="pace-key-dot" data-hollow="true" />
-              Approximate (~)
+              From its summary (~)
             </span>
             <span>
               <i className="pace-key-line" />

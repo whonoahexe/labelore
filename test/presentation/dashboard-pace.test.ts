@@ -35,6 +35,8 @@ function plan(overrides: Partial<PacePlanDto> & { id: string }): PacePlanDto {
     approx: false,
     untimedReason: null,
     tasks: 1,
+    timing: null,
+    commits: null,
     ...overrides,
   };
 }
@@ -170,7 +172,7 @@ describe('paceChart', () => {
     // Left to right in finish order, and a longer plan sits higher (a smaller y).
     expect(chart.dots.map((dot) => dot.x)).toEqual([...chart.dots.map((dot) => dot.x)].sort((a, b) => a - b));
     expect(chart.dots[4].y).toBeLessThan(chart.dots[0].y);
-    expect(chart.dots[0].tip).toBe('01-01 · Phase 01 Bootstrap\n15 min · 1 task · 25 Oct 2025 · v1.0');
+    expect(chart.dots[0].tip).toBe('01-01 · Phase 01 Bootstrap\n15 min · from its summary · 1 task · 25 Oct 2025 · v1.0');
   });
 
   it('flags a plan above the cap and draws it at the top', () => {
