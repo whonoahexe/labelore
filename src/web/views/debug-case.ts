@@ -11,7 +11,7 @@
 // browser agree.
 // T-j5h-06: the only navigation targets are heading ids taken from `input.headings`, or null; no URL is
 // built from document text, and no RegExp is built from it either.
-import type { DebugValue } from '../../planning-repo/handlers/debug-session.ts';
+import type { DebugEvidenceTag, DebugValue } from '../../planning-repo/handlers/debug-session.ts';
 import type { Block } from '../../planning-repo/handlers/context-brief.ts';
 import type { ViewInput } from './manifest.ts';
 import { normalizeHeading } from './pattern-map.ts';
@@ -118,6 +118,60 @@ export interface ComposedDebugHead {
   archived: boolean;
 }
 
+export interface ComposedDebugSymptoms {
+  expected: { value: DebugValue } | null;
+  actual: { value: DebugValue } | null;
+  /** The other symptom fields, labelled by their humanized key. */
+  rest: { label: string; value: DebugValue }[];
+  targetId: string | null;
+}
+
+export type DebugColumnKey = 'confirmed' | 'ruled' | 'considered';
+
+export interface ComposedDebugSuspect {
+  kind: string | null;
+  text: string;
+  /** What disproved a ruled-out suspect. */
+  why: string | null;
+}
+
+export interface ComposedDebugSuspects {
+  /** The "N considered" aside. */
+  total: number;
+  columns: { key: DebugColumnKey; label: string; items: ComposedDebugSuspect[] }[];
+}
+
+export type DebugEvidenceFilter = DebugEvidenceTag | 'all';
+
+export interface ComposedDebugEvidenceEntry {
+  /** 1-based document position across all rounds. */
+  no: number;
+  ts: string;
+  round: string;
+  tag: DebugEvidenceTag;
+  checked: string;
+  found: string;
+  text: string;
+  implication: string;
+}
+
+export interface ComposedDebugEvidence {
+  entries: ComposedDebugEvidenceEntry[];
+  counts: Record<DebugEvidenceTag, number>;
+  total: number;
+  defaultFilter: DebugEvidenceFilter;
+  /** True when the entries span more than one section: round dividers show. */
+  multiRound: boolean;
+  targetId: string | null;
+}
+
+export interface ComposedDebugAlso {
+  label: string;
+  /** The full heading, for the tooltip. */
+  title: string;
+  targetId: string | null;
+}
+
 export interface ComposedDebugCase {
   head: ComposedDebugHead;
   status: { label: string; tone: DebugTone };
@@ -125,6 +179,10 @@ export interface ComposedDebugCase {
   facts: { label: string; value: string }[];
   lead: ComposedDebugLead;
   resolution: ComposedDebugResolution | null;
+  symptoms: ComposedDebugSymptoms | null;
+  suspects: ComposedDebugSuspects;
+  evidence: ComposedDebugEvidence | null;
+  also: ComposedDebugAlso[];
 }
 
 // ---------------------------------------------------------------------------
@@ -451,6 +509,205 @@ function resolutionOf(
   return { parts, files, targetId: heading === null ? null : headingId(headings, heading) };
 }
 
+// ---------------------------------------------------------------------------
+// The trail: symptoms, suspects, evidence, the Also row
+// ---------------------------------------------------------------------------
+
+const TAGS: readonly DebugEvidenceTag[] = ['confirms', 'eliminates', 'fix', 'finding'];
+
+function isTag(value: unknown): value is DebugEvidenceTag {
+  return value === 'confirms' || value === 'eliminates' || value === 'fix' || value === 'finding';
+}
+
+/** First sentence, never ending inside a `code span`; at most 260 characters. */
+function firstSentence(text: string): string {
+  const t = squash(text);
+  let code = false;
+  for (let i = 0; i < t.length && i < 260; i++) {
+    const ch = t[i];
+    if (ch === '`') code = !code;
+    else if (!code && i >= 30 && (ch === '.' || ch === '!' || ch === '?') && (i + 1 === t.length || t[i + 1] === ' ')) {
+      return t.slice(0, i + 1);
+    }
+  }
+  if (t.length <= 260) return t;
+  const cut = t.slice(0, 260);
+  const at = cut.lastIndexOf(' ');
+  return `${at === -1 ? cut : cut.slice(0, at).trimEnd()}…`;
+}
+
+function symptomsOf(value: unknown, heading: unknown, headings: ViewInput['headings']): ComposedDebugSymptoms | null {
+  const fields = fieldsOf(value);
+  if (fields.length === 0) return null;
+  const startsWith = (f: FieldRec, word: string): boolean => f.key.slice(0, word.length).toLowerCase() === word;
+  const exp = fields.find((f) => startsWith(f, 'expected')) ?? null;
+  const act = fields.find((f) => startsWith(f, 'actual')) ?? null;
+  const rest = fields
+    .filter((f) => f !== exp && f !== act && f.key !== '')
+    .map((f) => ({ label: humanize(f.key), value: f.value }));
+  const text = asStr(heading);
+  return {
+    expected: exp === null ? null : { value: exp.value },
+    actual: act === null ? null : { value: act.value },
+    rest,
+    targetId: text === null ? null : headingId(headings, text),
+  };
+}
+
+function suspectsOf(report: Record<string, unknown>, status: { key: string }, focus: FieldRec[], rootCause: string): ComposedDebugSuspects {
+  const confirmed: ComposedDebugSuspect[] = [];
+  const ruled: ComposedDebugSuspect[] = [];
+  const considered: ComposedDebugSuspect[] = [];
+  for (const raw of list(report.eliminated)) {
+    const e = rec(raw);
+    const text = e === null ? null : asStr(e.hypothesis);
+    if (e === null || text === null) continue;
+    ruled.push({ kind: null, text: squash(text), why: asStr(e.evidence) });
+  }
+  const reasoning = rec(report.reasoning);
+  const settled = status.key === 'resolved' || status.key === 'awaiting_human_verify' || status.key === 'diagnosed';
+  for (const raw of list(reasoning?.candidates)) {
+    const c = rec(raw);
+    const text = c === null ? null : asStr(c.text);
+    if (c === null || text === null) continue;
+    const suspect = { kind: asStr(c.kind), text: squash(text), why: null };
+    if (c.verdict === 'eliminated') ruled.push(suspect);
+    else if (c.verdict === 'confirmed' || settled) confirmed.push(suspect);
+    else considered.push(suspect);
+  }
+  if (confirmed.length === 0 && !isEmpty(rootCause)) {
+    confirmed.push({ kind: 'root cause', text: firstSentence(rootCause), why: null });
+  }
+  const hypothesis = focusField(focus, 'hypothesis');
+  if (confirmed.length === 0 && OPEN_STATUSES.includes(status.key) && hypothesis !== null && squash(hypothesis.text) !== '') {
+    considered.unshift({ kind: 'testing now', text: squash(hypothesis.text), why: null });
+  }
+  const open = OPEN_STATUSES.includes(status.key);
+  return {
+    total: confirmed.length + ruled.length + considered.length,
+    columns: [
+      { key: 'confirmed', label: open ? 'Leading' : 'Confirmed', items: confirmed },
+      { key: 'ruled', label: 'Ruled out', items: ruled },
+      { key: 'considered', label: open ? 'Still open' : 'Also considered', items: considered },
+    ],
+  };
+}
+
+function evidenceOf(value: unknown, headings: ViewInput['headings']): ComposedDebugEvidence | null {
+  const entries: ComposedDebugEvidenceEntry[] = [];
+  for (const raw of list(value)) {
+    const e = rec(raw);
+    if (e === null) continue;
+    entries.push({
+      no: entries.length + 1,
+      ts: typeof e.ts === 'string' ? e.ts : '',
+      round: typeof e.round === 'string' ? e.round : '',
+      tag: isTag(e.tag) ? e.tag : 'finding',
+      checked: typeof e.checked === 'string' ? e.checked : '',
+      found: typeof e.found === 'string' ? e.found : '',
+      text: typeof e.text === 'string' ? e.text : '',
+      implication: typeof e.implication === 'string' ? e.implication : '',
+    });
+  }
+  if (entries.length === 0) return null;
+  const counts: Record<DebugEvidenceTag, number> = { confirms: 0, eliminates: 0, fix: 0, finding: 0 };
+  for (const e of entries) counts[e.tag] += 1;
+  const rounds = new Set(entries.map((e) => e.round));
+  return {
+    entries,
+    counts,
+    total: entries.length,
+    defaultFilter: counts.confirms > 0 ? 'confirms' : 'all',
+    multiRound: rounds.size > 1,
+    targetId: entries[0].round === '' ? null : headingId(headings, entries[0].round),
+  };
+}
+
+/** The filter buttons: tags that are present in the order Confirms, Rules out, Fix, Finding, then All. */
+export function evidenceFilters(model: ComposedDebugEvidence): { filter: DebugEvidenceFilter; label: string; count: number }[] {
+  const out: { filter: DebugEvidenceFilter; label: string; count: number }[] = [];
+  for (const tag of TAGS) if (model.counts[tag] > 0) out.push({ filter: tag, label: TAG_LABEL[tag], count: model.counts[tag] });
+  out.push({ filter: 'all', label: 'All', count: model.total });
+  return out;
+}
+
+export function entriesFor(model: ComposedDebugEvidence, filter: DebugEvidenceFilter): ComposedDebugEvidenceEntry[] {
+  return filter === 'all' ? model.entries : model.entries.filter((e) => e.tag === filter);
+}
+
+/** The round heading a divider shows before each entry number, only when the evidence spans rounds: the
+ * first shown entry gets one, then each entry whose round differs from the previous shown entry's. */
+export function roundBreaks(model: ComposedDebugEvidence, filter: DebugEvidenceFilter): Map<number, string> {
+  const breaks = new Map<number, string>();
+  if (!model.multiRound) return breaks;
+  let round: string | null = null;
+  for (const e of entriesFor(model, filter)) {
+    if (e.round !== round) {
+      round = e.round;
+      breaks.set(e.no, e.round);
+    }
+  }
+  return breaks;
+}
+
+function stripTrailingParen(text: string): string {
+  const t = text.trimEnd();
+  if (!t.endsWith(')')) return t;
+  let depth = 0;
+  for (let i = t.length - 1; i >= 0; i--) {
+    if (t[i] === ')') depth += 1;
+    else if (t[i] === '(') {
+      depth -= 1;
+      if (depth === 0) return t.slice(0, i).trimEnd();
+    }
+  }
+  return t;
+}
+
+/** Cuts at the first spaced dash (" - ", " – ", " — ") that sits outside parentheses. */
+function cutAtDash(text: string): string {
+  let depth = 0;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '(') depth += 1;
+    else if (ch === ')') depth = Math.max(0, depth - 1);
+    else if (depth === 0 && (ch === '-' || ch === '–' || ch === '—') && text[i - 1] === ' ' && text[i + 1] === ' ') {
+      return text.slice(0, i).trimEnd();
+    }
+  }
+  return text;
+}
+
+function alsoOf(report: Record<string, unknown>, fm: Record<string, unknown>, headings: ViewInput['headings']): ComposedDebugAlso[] {
+  const raw: { heading: string; label: string; short: string; targetId: string | null }[] = [];
+  for (const s of list(report.sections)) {
+    const section = rec(s);
+    const heading = section === null ? null : asStr(section.heading);
+    if (section === null || heading === null || section.role !== 'other') continue;
+    const short = stripTrailingParen(heading.slice(0, 300));
+    const label = stripTrailingParen(cutAtDash(short)) || short;
+    raw.push({ heading, label, short, targetId: headingId(headings, heading) });
+  }
+  const counts = new Map<string, number>();
+  for (const r of raw) counts.set(r.label, (counts.get(r.label) ?? 0) + 1);
+  const out: ComposedDebugAlso[] = raw.map((r) => ({
+    label: (counts.get(r.label) ?? 0) > 1 ? r.short : r.label,
+    title: r.heading,
+    targetId: r.targetId,
+  }));
+  const reasoning = rec(report.reasoning);
+  if (reasoning !== null && (list(reasoning.fields).length > 0 || list(reasoning.candidates).length > 0)) {
+    const focusHeading = asStr(report.focusHeading);
+    out.push({
+      label: 'Reasoning checkpoint',
+      title: focusHeading ?? 'Reasoning checkpoint',
+      targetId: focusHeading === null ? null : headingId(headings, focusHeading),
+    });
+  }
+  if (Object.keys(fm).length > 0) out.push({ label: 'Frontmatter', title: 'Frontmatter', targetId: null });
+  return out;
+}
+
 export function composeDebugCase(input: ViewInput): ComposedDebugCase | null {
   const report = rec(input.structured?.debug);
   if (report === null) return null;
@@ -512,6 +769,7 @@ export function composeDebugCase(input: ViewInput): ComposedDebugCase | null {
   for (const e of evidence) rounds.add(String(rec(e)?.round ?? ''));
   if (rounds.size > 1) facts.push({ label: 'Rounds', value: String(rounds.size) });
 
+  const rootCauseField = resolution === null ? undefined : fieldsOf(resolution.fields).find((f) => f.key === 'root_cause');
   return {
     head,
     status: { label: status.label, tone: status.tone },
@@ -519,5 +777,9 @@ export function composeDebugCase(input: ViewInput): ComposedDebugCase | null {
     facts,
     lead: leadOf(status, focus, resolution),
     resolution: resolutionOf(resolution, input.headings),
+    symptoms: symptomsOf(report.symptoms, report.symptomsHeading, input.headings),
+    suspects: suspectsOf(report, status, focus, rootCauseField === undefined ? '' : rootCauseField.text),
+    evidence: evidenceOf(report.evidence, input.headings),
+    also: alsoOf(report, fm, input.headings),
   };
 }

@@ -16,7 +16,15 @@ import { DocumentViewToggle } from '../components/document-view-toggle.tsx';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog.tsx';
 import type { DebugValue } from '../../planning-repo/handlers/debug-session.ts';
 import { ResearchBlocks, ResearchInline } from './research-briefing-components.tsx';
-import type { ComposedDebugCase, ComposedDebugLead } from './debug-case.ts';
+import { entriesFor, evidenceFilters, roundBreaks, TAG_LABEL } from './debug-case.ts';
+import type {
+  ComposedDebugCase,
+  ComposedDebugEvidence,
+  ComposedDebugLead,
+  ComposedDebugSuspects,
+  ComposedDebugSymptoms,
+  DebugEvidenceFilter,
+} from './debug-case.ts';
 
 // ---------------------------------------------------------------------------
 // Small parts
@@ -267,6 +275,215 @@ function Lead({
 }
 
 // ---------------------------------------------------------------------------
+// The trail: Expected vs actual, Suspects, Evidence log, Also in this session
+// ---------------------------------------------------------------------------
+
+function SectionHead({
+  title,
+  aside,
+  targetId,
+  onShowSource,
+}: {
+  title: string;
+  aside: string | null;
+  /** Omit the Source button by passing `undefined`. */
+  targetId: string | null | undefined;
+  onShowSource: (id: string | null) => void;
+}): React.JSX.Element {
+  return (
+    <div className="view-debug-section-head">
+      <h2>{title}</h2>
+      <span>
+        {aside}
+        {targetId !== undefined ? (
+          <button type="button" className="view-debug-link" onClick={() => onShowSource(targetId)}>
+            Source ↗
+          </button>
+        ) : null}
+      </span>
+    </div>
+  );
+}
+
+function Symptoms({
+  symptoms,
+  onShowSource,
+}: {
+  symptoms: ComposedDebugSymptoms;
+  onShowSource: (id: string | null) => void;
+}): React.JSX.Element {
+  const both = symptoms.expected !== null || symptoms.actual !== null;
+  return (
+    <section>
+      <SectionHead title="Expected vs actual" aside={null} targetId={symptoms.targetId} onShowSource={onShowSource} />
+      {both ? (
+        <div className="view-debug-ea">
+          <div className="view-debug-expected">
+            <span className="view-debug-kicker">Should happen</span>
+            {symptoms.expected === null ? <p>—</p> : <ValueView value={symptoms.expected.value} />}
+          </div>
+          <div className="view-debug-actual">
+            <span className="view-debug-kicker">What happens</span>
+            {symptoms.actual === null ? <p>—</p> : <ValueView value={symptoms.actual.value} />}
+          </div>
+        </div>
+      ) : null}
+      {symptoms.rest.length > 0 ? (
+        <div className="view-debug-symptoms">
+          {symptoms.rest.map((row, index) => (
+            <div key={`${row.label}-${index}`}>
+              <span className="view-debug-kicker">{row.label}</span>
+              <div>
+                <ValueView value={row.value} />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function Suspects({ suspects }: { suspects: ComposedDebugSuspects }): React.JSX.Element | null {
+  if (suspects.total === 0) return null;
+  return (
+    <section>
+      <SectionHead title="Suspects" aside={`${suspects.total} considered`} targetId={undefined} onShowSource={() => undefined} />
+      <div className="view-debug-suspects">
+        {suspects.columns.map((column) => (
+          <div key={column.key} className="view-debug-column" data-column={column.key}>
+            <header>
+              <span>{column.label}</span>
+              <span>{column.items.length}</span>
+            </header>
+            {column.items.length === 0 ? (
+              <p className="view-debug-none">None.</p>
+            ) : (
+              column.items.map((item, index) => (
+                <div key={`${item.text}-${index}`} className="view-debug-suspect" data-column={column.key}>
+                  {item.kind !== null ? <span className="view-debug-kind">{item.kind}</span> : null}
+                  <span className="view-debug-suspect-text">
+                    <ResearchInline text={item.text} />
+                  </span>
+                  {item.why !== null ? (
+                    <span className="view-debug-why">
+                      <b>Ruled out by</b> <ResearchInline text={item.why} />
+                    </span>
+                  ) : null}
+                </div>
+              ))
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function EvidenceLog({
+  evidence,
+  initialFilter,
+  onShowSource,
+}: {
+  evidence: ComposedDebugEvidence;
+  initialFilter: DebugEvidenceFilter | undefined;
+  onShowSource: (id: string | null) => void;
+}): React.JSX.Element {
+  const [filter, setFilter] = useState<DebugEvidenceFilter>(initialFilter ?? evidence.defaultFilter);
+  const filters = evidenceFilters(evidence);
+  const shown = entriesFor(evidence, filter);
+  const breaks = roundBreaks(evidence, filter);
+  return (
+    <section>
+      <SectionHead
+        title="Evidence log"
+        aside={`${evidence.total} ${evidence.total === 1 ? 'entry' : 'entries'}`}
+        targetId={evidence.targetId}
+        onShowSource={onShowSource}
+      />
+      <div className="view-debug-filters">
+        {filters.map((f) => (
+          <button
+            key={f.filter}
+            type="button"
+            className="view-debug-filter"
+            aria-pressed={filter === f.filter}
+            onClick={() => setFilter(f.filter)}
+          >
+            {f.filter !== 'all' ? <span className="view-debug-tag" data-tag={f.filter} aria-hidden="true" /> : null}
+            {f.label} <b>{f.count}</b>
+          </button>
+        ))}
+      </div>
+      <div className="view-debug-evlist">
+        {shown.length === 0 ? <p className="view-debug-none">Nothing with this tag.</p> : null}
+        {shown.map((entry) => (
+          <Fragment key={entry.no}>
+            {breaks.has(entry.no) ? <div className="view-debug-round">{breaks.get(entry.no)}</div> : null}
+            <article className="view-debug-ev" data-tag={entry.tag}>
+              <div className="view-debug-ev-top">
+                <span className="view-debug-ts">
+                  #{entry.no} · {entry.ts}
+                </span>
+                <span className="view-debug-tag" data-tag={entry.tag}>
+                  {TAG_LABEL[entry.tag]}
+                </span>
+              </div>
+              {entry.checked !== '' ? (
+                <p className="view-debug-checked">
+                  <ResearchInline text={entry.checked} />
+                </p>
+              ) : null}
+              {entry.found !== '' ? (
+                <p className="view-debug-found">
+                  <ResearchInline text={entry.found} />
+                </p>
+              ) : null}
+              {entry.text !== '' ? (
+                <p className="view-debug-found">
+                  <ResearchInline text={entry.text} />
+                </p>
+              ) : null}
+              {entry.implication !== '' ? (
+                <p className="view-debug-impl">
+                  <span>
+                    <ResearchInline text={entry.implication} />
+                  </span>
+                </p>
+              ) : null}
+            </article>
+          </Fragment>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AlsoRow({
+  items,
+  onShowSource,
+}: {
+  items: ComposedDebugCase['also'];
+  onShowSource: (id: string | null) => void;
+}): React.JSX.Element | null {
+  if (items.length === 0) return null;
+  return (
+    <nav className="view-debug-also" aria-label="Also in this session">
+      <span className="view-debug-key">Also in this session</span>
+      <ul>
+        {items.map((item, index) => (
+          <li key={`${item.label}-${index}`}>
+            <button type="button" className="status-chip" title={item.title} onClick={() => onShowSource(item.targetId)}>
+              {item.label}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // The view
 // ---------------------------------------------------------------------------
 
@@ -278,6 +495,8 @@ export interface DebugCaseViewProps {
   onModeChange: (mode: 'view' | 'source') => void;
   onShowSource: (id: string | null) => void;
   chip: React.ReactNode;
+  /** Static-markup tests only: the evidence filter the view opens on. */
+  initialFilter?: DebugEvidenceFilter;
 }
 
 export function DebugCaseView({
@@ -288,11 +507,12 @@ export function DebugCaseView({
   onModeChange,
   onShowSource,
   chip,
+  initialFilter,
 }: DebugCaseViewProps): React.JSX.Element {
   const [trigOpen, setTrigOpen] = useState(false);
   const [dialog, setDialog] = useState<DialogState>(null);
 
-  const { head, status, trigger, facts, lead, resolution } = model;
+  const { head, status, trigger, facts, lead, resolution, symptoms, suspects, evidence, also } = model;
   const title = head.title ?? fallbackTitle;
   const showSource = (id: string | null): void => {
     setDialog(null);
@@ -376,6 +596,11 @@ export function DebugCaseView({
             onResolution={() => setDialog({ kind: 'resolution' })}
           />
         </section>
+
+        {symptoms !== null ? <Symptoms symptoms={symptoms} onShowSource={showSource} /> : null}
+        <Suspects suspects={suspects} />
+        {evidence !== null ? <EvidenceLog evidence={evidence} initialFilter={initialFilter} onShowSource={showSource} /> : null}
+        <AlsoRow items={also} onShowSource={showSource} />
 
         <Dialog open={dialog !== null} onOpenChange={(next) => (next ? undefined : setDialog(null))}>
           <DialogContent className="view-debug-modal">
