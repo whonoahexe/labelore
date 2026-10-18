@@ -13,6 +13,7 @@ import type { ViewKind } from './kinds.ts';
 import type { PromotedBlock, ViewInput, ViewManifest } from './manifest.ts';
 import { composeSecurityConsole } from './security-console.ts';
 import { composeLearningsRetro } from './learnings-retro.ts';
+import { composeDebugCase } from './debug-case.ts';
 import { composePlanNavigator } from './plan-navigator.ts';
 import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
@@ -317,6 +318,20 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
       { type: 'section', heading: /^regression floor/i },
       { type: 'section', heading: /^not a defect/i },
     ],
+  },
+  debug: {
+    kind: 'debug',
+    lead: 'Where the investigation stands, what it ruled out, and what fixed it.',
+    promote: [
+      { type: 'section', heading: /^current focus/i },
+      { type: 'section', heading: /^symptoms/i },
+      { type: 'section', heading: /^eliminated/i },
+      { type: 'section', heading: /evidence/i, all: true },
+      { type: 'section', heading: /^resolution/i },
+    ],
+    // The case-file page is the View-mode render path; `promote` above is the fallback when it
+    // composes nothing (quick-261018-j5h).
+    debugCase: composeDebugCase,
   },
 });
 

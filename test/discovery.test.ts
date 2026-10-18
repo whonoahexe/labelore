@@ -80,6 +80,23 @@ describe('discover — position-aware classification', () => {
     expect(refs[0].phaseIdentity).toBeNull();
   });
 
+  it('gives a markdown file under debug/ the debug kind by position, location still other (quick-261018-j5h)', async () => {
+    const fs = fsFrom({
+      '.planning/debug/a-b.md': '# a',
+      '.planning/debug/resolved/c-d.md': '# c',
+      '.planning/debug/knowledge-base.md': '# kb',
+      '.planning/debug/resolved/c-d.1.13.10.diff': 'diff',
+      '.planning/spikes/idea.md': '# idea',
+    });
+    const { refs } = await discover(fs);
+    const by = (path: string) => refs.find((r) => r.path === `.planning/${path}`);
+    expect(by('debug/a-b.md')).toMatchObject({ kind: 'debug', location: 'other' });
+    expect(by('debug/resolved/c-d.md')).toMatchObject({ kind: 'debug', location: 'other' });
+    expect(by('debug/knowledge-base.md')?.kind).toBe('unknown');
+    expect(by('debug/resolved/c-d.1.13.10.diff')?.kind).toBe('unknown');
+    expect(by('spikes/idea.md')?.kind).toBe('unknown');
+  });
+
   it('still discovers files inside a subdirectory whose name does not match the phase grammar', async () => {
     const fs = fsFrom({ '.planning/phases/not-a-phase-dir/notes.md': '# notes' });
     const { refs } = await discover(fs);

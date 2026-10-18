@@ -19946,6 +19946,460 @@ button.view-verification-stat:hover {
 }
 /* quick-261017-k45:end */
 
+/* quick-261018-j5h:start */
+/* ==========================================================================
+   DEBUG page (quick-261018-j5h, sketch 023 A: the case file): the own head (meta row, display title),
+   the hero (status badge, reported quote and facts on the left, the status-adaptive lead on the right),
+   the sections below it and the dialog. Colours are theme tokens only. The status badge and the lead
+   ride the documented tones (complete, in-flight, quiet) on data-tone; evidence tags (data-tag),
+   suspect columns (data-column) and verification results (data-result) are identity colours on their
+   own data attributes, not tones. The parse-degradation tones never appear. No colour-mix recipe, no
+   corner radius (corners stay squared) and no motion, only a colour change on hover. Ancestors of a
+   .status-chip set no line-height, so every chip keeps the inherited body value (F-05); the big status
+   badge is its own element, not a status chip. Media overrides sit directly after their base rules
+   (css-source-order).
+   ========================================================================== */
+
+.view-debug-page {
+  display: grid;
+  gap: var(--space-10);
+  min-width: 0;
+}
+
+.view-debug-page > * {
+  min-width: 0;
+}
+
+/* Head: the meta row and the display title. */
+.view-debug-head {
+  display: grid;
+  gap: var(--space-5);
+  justify-items: start;
+}
+
+.view-debug-head > * {
+  min-width: 0;
+}
+
+.view-debug-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+  align-items: center;
+  justify-content: space-between;
+  justify-self: stretch;
+}
+
+.view-debug-meta-left {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: baseline;
+}
+
+/* The global eyebrow's bottom margin would lift it off the date's line. */
+.view-debug-meta-left .eyebrow {
+  margin: 0;
+}
+
+.view-debug-date {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-debug-date b {
+  color: var(--foreground);
+  font-weight: var(--fw-medium);
+}
+
+.view-debug-tools {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.view-debug-title {
+  max-width: 20ch;
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-display-3);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tighter);
+  line-height: var(--lh-display);
+  overflow-wrap: anywhere;
+}
+
+/* Shared small parts: kickers, link buttons, More. */
+.view-debug-kicker,
+.view-debug-key {
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-debug-link,
+.view-debug-more {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.view-debug-link:hover,
+.view-debug-more:hover {
+  color: var(--primary);
+}
+
+.view-debug-more {
+  justify-self: start;
+  white-space: nowrap;
+}
+
+.view-debug-link {
+  justify-self: start;
+}
+
+/* Hero: the case on the left, the lead on the right. */
+.view-debug-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: var(--space-fluid-8);
+  align-items: start;
+}
+
+.view-debug-hero > * {
+  min-width: 0;
+}
+
+@media (max-width: 62rem) {
+  .view-debug-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.view-debug-case {
+  display: grid;
+  gap: var(--space-5);
+  align-content: start;
+  justify-items: start;
+}
+
+.view-debug-case > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.view-debug-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2-5);
+  border: 1px solid var(--border);
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  text-transform: uppercase;
+}
+
+.view-debug-status::before {
+  content: '';
+  width: var(--space-2);
+  height: var(--space-2);
+  background: currentcolor;
+}
+
+.view-debug-status[data-tone='complete'] {
+  border-color: var(--primary-border);
+  background: var(--primary-tint);
+  color: var(--primary);
+}
+
+.view-debug-status[data-tone='in-flight'] {
+  border-color: var(--in-flight-border);
+  background: var(--card);
+  color: var(--in-flight-fill);
+}
+
+.view-debug-status[data-tone='quiet'] {
+  color: var(--muted-foreground);
+}
+
+.view-debug-reported {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-5) var(--space-6);
+  border-left: 3px solid var(--foreground);
+  background: var(--card-veil);
+}
+
+.view-debug-quote {
+  margin: 0;
+  font-size: var(--fs-fluid-1);
+  line-height: var(--lh-normal);
+  overflow-wrap: anywhere;
+}
+
+.view-debug-quote::before {
+  content: '“';
+}
+
+.view-debug-quote::after {
+  content: '”';
+}
+
+.view-debug-by {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-debug-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-debug-facts b {
+  margin-left: var(--space-1-5);
+  color: var(--foreground);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* The lead: a card with a 3px top rule in the tone's colour. */
+.view-debug-lead {
+  display: grid;
+  gap: var(--space-5);
+  align-content: start;
+  padding: var(--space-6);
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.view-debug-lead[data-tone='in-flight'] {
+  border-color: var(--in-flight-border);
+  border-top: 3px solid var(--in-flight-fill);
+}
+
+.view-debug-lead[data-tone='complete'] {
+  border-color: var(--primary-border);
+  border-top: 3px solid var(--primary);
+}
+
+.view-debug-lead > .view-debug-kicker:first-child {
+  font-size: var(--fs-2);
+}
+
+.view-debug-field {
+  display: grid;
+  gap: var(--space-1-5);
+  min-width: 0;
+  font-size: var(--fs-4);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
+}
+
+.view-debug-big {
+  margin: 0;
+  font-size: var(--fs-6);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+}
+
+/* A line clamped to three; its More button shows only when the clamp actually cuts. */
+.view-debug-lead [data-clamp] {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.view-debug-two {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-5);
+}
+
+@media (max-width: 42rem) {
+  .view-debug-two {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.view-debug-next {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--in-flight-border);
+  background: var(--card-veil);
+  font-size: var(--fs-5);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+}
+
+.view-debug-next > span {
+  color: var(--in-flight-fill);
+  font-family: var(--font-mono);
+  font-size: var(--fs-6);
+}
+
+.view-debug-next .view-debug-kicker {
+  display: block;
+  margin-bottom: var(--space-1);
+  color: var(--in-flight-fill);
+}
+
+.view-debug-causes {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-debug-causes li {
+  display: grid;
+  grid-template-columns: 9.5rem minmax(0, 1fr);
+  gap: var(--space-3);
+  font-size: var(--fs-4);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 42rem) {
+  .view-debug-causes li {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
+}
+
+.view-debug-cause-label {
+  padding-top: var(--space-1);
+  color: var(--primary);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.view-debug-vchips,
+.view-debug-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+}
+
+.view-debug-vchip {
+  display: inline-flex;
+  gap: var(--space-1);
+  align-items: center;
+  padding: var(--space-0-5) var(--space-2);
+  border: 1px solid var(--primary-border);
+  background: var(--primary-tint);
+  color: var(--primary);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-debug-vchip[data-result='open'] {
+  border-color: var(--in-flight-border);
+  background: var(--card);
+  color: var(--in-flight-fill);
+}
+
+.view-debug-vchip[data-result='fail'] {
+  border-color: var(--missing-border);
+  background: var(--card);
+  color: var(--missing-fill);
+}
+
+.view-debug-file {
+  padding: var(--space-0-5) var(--space-1-5);
+  background: var(--code-veil);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+/* The dialog is shadcn's DialogContent; only its width, scroll and rows are ours. */
+.view-debug-modal {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+@media (min-width: 40rem) {
+  .view-debug-modal {
+    max-width: 48rem;
+  }
+}
+
+.view-debug-dl {
+  display: grid;
+  grid-template-columns: minmax(7rem, 11rem) minmax(0, 1fr);
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  font-size: var(--fs-3);
+}
+
+@media (max-width: 42rem) {
+  .view-debug-dl {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
+}
+
+.view-debug-dl dt {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  overflow-wrap: anywhere;
+}
+
+.view-debug-dl dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-debug-modal-file {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  padding: var(--space-1-5) 0;
+  border-bottom: 1px solid var(--border-faint);
+  font-family: var(--font-mono);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.view-debug-note {
+  color: var(--muted-foreground);
+}
+/* quick-261018-j5h:end */
+
 /* "In the source only": what the view leaves to Source mode, one click away. */
 .view-context-source-only,
 .view-discussion-log-source-only {

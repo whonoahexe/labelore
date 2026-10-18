@@ -78,6 +78,20 @@ function deriveKind(fileName: string): string {
   return 'unknown';
 }
 
+// The directory-position half of the dispatch signal named in this module's header: GSD's `/gsd-debug`
+// writes each session as `.planning/debug/<slug>.md` (archived to `debug/resolved/`) with a free-form
+// slug, so no filename grammar can recognise it. A markdown file under `debug/` is therefore a debug
+// session by position - except `knowledge-base.md`, GSD's cross-session notes file, which is not a
+// session (a false positive STATE.md once logged). The location stays 'other'; nothing else in the
+// domain model, tree or search grouping moves (quick-261018-j5h).
+export function isDebugSessionPath(relPathUnderPlanning: string): boolean {
+  const segments = relPathUnderPlanning.split('/');
+  if (segments.length < 2 || segments[0] !== 'debug') return false;
+  const name = segments[segments.length - 1];
+  if (!name.toLowerCase().endsWith('.md')) return false;
+  return name.toLowerCase() !== 'knowledge-base.md';
+}
+
 interface Classification {
   location: ArtifactLocation;
   phaseIdentity: PhaseIdentity | null;
@@ -170,7 +184,7 @@ export async function discover(fs: PlanningFilesystem): Promise<DiscoveryResult>
         const classification = classify(childRelUnderPlanning);
         refs.push({
           path: childRel,
-          kind: deriveKind(entry.name),
+          kind: isDebugSessionPath(childRelUnderPlanning) ? 'debug' : deriveKind(entry.name),
           location: classification.location,
           phaseIdentity: classification.phaseIdentity,
           milestoneVersion: classification.milestoneVersion,

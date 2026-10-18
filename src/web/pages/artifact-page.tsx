@@ -55,6 +55,8 @@ import type { ComposedSecurityConsole } from '../views/security-console.ts';
 import { SecurityConsoleView } from '../views/security-console-components.tsx';
 import type { ComposedLearningsRetro } from '../views/learnings-retro.ts';
 import { LearningsRetroView } from '../views/learnings-retro-components.tsx';
+import type { ComposedDebugCase } from '../views/debug-case.ts';
+import { DebugCaseView } from '../views/debug-case-components.tsx';
 import type { ComposedPlanNavigator } from '../views/plan-navigator.ts';
 import { PlanIntroMeta, PlanNavigatorView } from '../views/plan-navigator-components.tsx';
 import { findPlanContext } from '../views/plan-context.ts';
@@ -722,6 +724,13 @@ export function ArtifactPage({
     if (!manifest || !viewInput) return null;
     return manifest.learningsRetro?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // quick-261018-j5h (sketch-023 A): the DEBUG case-file page, when the resolved manifest opts into one -
+  // `null` for every other kind, for a session with nothing to show and for a payload from a server
+  // that predates `structured.debug` (the promoted-block view then renders).
+  const debugCase = useMemo<ComposedDebugCase | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.debugCase?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // "In the source only" entries switch to Source mode, then scroll to the named heading once the
   // source document has mounted. The pending id lives in a ref and is cleared only when the frame
   // callback fires, so a re-run of the effect (StrictMode) still lands on it.
@@ -771,6 +780,7 @@ export function ArtifactPage({
     uiSpec !== null ||
     uatSession !== null ||
     learningsRetro !== null ||
+    debugCase !== null ||
     (composed !== null && composed.blocks.length > 0);
 
   if (query.isPending) {
@@ -867,6 +877,27 @@ export function ArtifactPage({
         <LearningsRetroView
           key={artifact.path}
           model={learningsRetro}
+          fallbackTitle={artifact.title}
+          path={artifact.path}
+          mode={mode}
+          onModeChange={setMode}
+          onShowSource={showSource}
+          chip={<WarningChip tone={warningTone} />}
+        />
+      </main>
+    );
+  }
+  // quick-261018-j5h: the DEBUG page opens on its own head (eyebrow, dates, the title) and the status
+  // lead with no breadcrumb row, manifest lead or Document metadata disclosure in View mode - the Also
+  // row names the frontmatter, and a parse warning shows as its chip in the head. Source mode falls
+  // through to the unchanged page below.
+  if (debugCase && mode === 'view') {
+    return (
+      <main className="artifact-page page-stack">
+        {switcher}
+        <DebugCaseView
+          key={artifact.path}
+          model={debugCase}
           fallbackTitle={artifact.title}
           path={artifact.path}
           mode={mode}
