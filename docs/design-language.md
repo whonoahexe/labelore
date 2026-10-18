@@ -566,6 +566,16 @@ element is actually written, regardless of class name:
   `--in-flight-border` with `--in-flight-fill` names. The page writes no `data-tone`, the
   parse-degradation tones never appear on it, and every class is in the reserved `view-learnings-`
   namespace, so no vocabulary row is added.
+- **The DEBUG page leads with the session's status.** (quick-261018-j5h, sketch 023 A) The status
+  badge and the lead beside it take `complete` for a resolved session, `in-flight` for an open,
+  awaiting-check or diagnosed one and `quiet` for an unrecognised status, and the Archived chip is
+  `quiet`. Evidence tags are identity colours on `data-tag`, not tones: Confirms takes `--primary`,
+  Rules out `--missing-fill`, Fix `--in-flight-fill` and Finding a muted outline square. The confirmed
+  suspect column, the expected kicker and a passed verification chip take `--primary`; the ruled-out
+  column, its strike-through and the actual kicker take `--missing-fill`; the next-action call-out
+  and a not-settled chip take `--in-flight-fill` on `--in-flight-border`. The parse-degradation
+  tones never appear on this page. Every class is in the reserved `view-debug-` namespace, so no
+  vocabulary row is added.
 - **The dashboard opens on the project.** (quick-261017-wlg, sketch 025 R3b) A "Project overview"
   eyebrow sits above the PROJECT.md H1, which is the page's only h1, split at its first spaced
   dash into a name and a tagline. Under it sits the What This Is lead: a leading bold sentence, or

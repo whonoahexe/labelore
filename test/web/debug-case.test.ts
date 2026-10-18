@@ -17,7 +17,7 @@ import { DebugHandler } from '../../src/planning-repo/handlers/debug.ts';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
 import { toProjectPresentation } from '../../src/server/project-presentation.ts';
 import type { ArtifactRef } from '../../src/planning-repo/types.ts';
-import { composeDebugCase } from '../../src/web/views/debug-case.ts';
+import { composeDebugCase, entriesFor, evidenceFilters, roundBreaks } from '../../src/web/views/debug-case.ts';
 import type { ComposedDebugCase } from '../../src/web/views/debug-case.ts';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 import { DebugCaseView } from '../../src/web/views/debug-case-components.tsx';
@@ -361,5 +361,177 @@ describe('from disk: discovery, handler, composer and view', () => {
     const kb = find('knowledge-base.md');
     expect(kb.kind).toBe('unknown');
     expect((kb.structured as Record<string, unknown>).debug).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The trail below the hero
+// ---------------------------------------------------------------------------
+
+const columnCounts = (m: ComposedDebugCase): string => m.suspects.columns.map((c) => c.items.length).join(' / ');
+const filterLine = (m: ComposedDebugCase): string[] =>
+  m.evidence === null ? [] : evidenceFilters(m.evidence).map((f) => `${f.label} ${f.count}`);
+const shownNumbers = (m: ComposedDebugCase, filter: Parameters<typeof entriesFor>[1]): number[] =>
+  m.evidence === null ? [] : entriesFor(m.evidence, filter).map((e) => e.no);
+
+describe('Expected vs actual', () => {
+  it('reads both columns and the other fields as rows', () => {
+    expect(lb.symptoms?.rest.map((r) => r.label)).toEqual(['Errors', 'Timeline', 'Environment', 'Reproduction']);
+    const actual = lb.symptoms?.actual?.value;
+    expect(actual?.shape).toBe('blocks');
+    if (actual?.shape === 'blocks') {
+      const list = actual.blocks.find((b) => b.kind === 'list');
+      expect(list && list.kind === 'list' ? [list.ordered, list.items.length] : null).toEqual([true, 4]);
+    }
+    expect(syn.symptoms?.rest.map((r) => r.label)).toEqual(['Errors', 'Reproduction', 'Started']);
+  });
+
+  it('has no section for a session without Symptoms, and the heading targets the Symptoms id', () => {
+    expect(inline('status: investigating', '## Current Focus\n\nhypothesis: h\n')?.symptoms).toBeNull();
+    const headed = page(LB, [{ id: 'symptoms', text: 'Symptoms', depth: 2 }]);
+    expect(headed.symptoms?.targetId).toBe('symptoms');
+  });
+
+  it('renders the columns, the numbered list and the rows', () => {
+    const html = render(lb);
+    expect(html).toContain('Expected vs actual');
+    expect(html).toContain('Should happen');
+    expect(html).toContain('What happens');
+    expect(html).toMatch(/<ol[^>]*>[\s\S]*?Page skeletons/);
+    expect(textOf(html)).toContain('Errors');
+    expect(textOf(html)).toContain('Reproduction');
+  });
+});
+
+describe('Suspects', () => {
+  it('builds the board for the always-present sessions', () => {
+    expect(columnCounts(lb)).toBe('4 / 2 / 0');
+    expect(lb.suspects.columns.map((c) => c.label)).toEqual(['Confirmed', 'Ruled out', 'Also considered']);
+    expect(lb.suspects.columns[0].items.map((i) => i.kind)).toEqual(['environment', 'code', 'code', 'data']);
+    expect(lb.suspects.total).toBe(6);
+    expect(columnCounts(syn)).toBe('0 / 1 / 1');
+    expect(syn.suspects.columns.map((c) => c.label)).toEqual(['Leading', 'Ruled out', 'Still open']);
+    expect(syn.suspects.columns[1].items[0]).toMatchObject({ text: 'The client query cache serves stale search results' });
+    expect(syn.suspects.columns[1].items[0].why?.startsWith("`queryClient.invalidateQueries(['search'])` fires on the SSE event")).toBe(true);
+    expect(syn.suspects.columns[2].items[0].kind).toBe('testing now');
+    expect(syn.suspects.total).toBe(2);
+  });
+
+  it.runIf(existsSync(DD) && existsSync(SA) && existsSync(RS) && existsSync(SR))('matches the sibling sessions', () => {
+    expect(columnCounts(page(DD))).toBe('2 / 5 / 0');
+    expect(columnCounts(page(SA))).toBe('1 / 2 / 0');
+    expect(page(SA).suspects.columns[0].items[0].kind).toBe('root cause');
+    expect(columnCounts(page(RS))).toBe('4 / 3 / 0');
+    expect(columnCounts(page(SR))).toBe('1 / 2 / 0');
+    expect(page(SR).suspects.columns[0].items[0].kind).toBe('root cause');
+  });
+
+  it('renders None. for an empty column and the ruled-out reason', () => {
+    const html = render(syn);
+    expect(html).toContain('None.');
+    expect(html).toContain('Ruled out by');
+    expect(html).toContain('2 considered');
+    expect(html.match(/class="view-debug-suspect"/g)).toHaveLength(2);
+  });
+});
+
+describe('Evidence log', () => {
+  it('filters labelore by tag, defaulting to Confirms', () => {
+    const ev = lb.evidence!;
+    expect(filterLine(lb)).toEqual(['Confirms 2', 'Rules out 2', 'Finding 8', 'All 12']);
+    expect(ev.defaultFilter).toBe('confirms');
+    expect(shownNumbers(lb, 'confirms')).toEqual([4, 6]);
+    expect(shownNumbers(lb, 'eliminates')).toEqual([2, 9]);
+    expect(shownNumbers(lb, 'all')).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    expect(ev.multiRound).toBe(false);
+    expect(roundBreaks(ev, 'all').size).toBe(0);
+  });
+
+  it('opens the synthetic session on All', () => {
+    expect(filterLine(syn)).toEqual(['Finding 3', 'All 3']);
+    expect(syn.evidence?.defaultFilter).toBe('all');
+  });
+
+  it.runIf(existsSync(DD) && existsSync(SR))('marks round dividers across rounds', () => {
+    const dd = page(DD).evidence!;
+    expect(dd.multiRound).toBe(true);
+    const all = roundBreaks(dd, 'all');
+    expect([...all.keys()]).toEqual([1, 5]);
+    expect(entriesFor(dd, 'all').filter((e) => e.round === [...all.values()][0])).toHaveLength(4);
+    expect(entriesFor(dd, 'all').filter((e) => e.round === [...all.values()][1])).toHaveLength(11);
+    expect(shownNumbers(page(DD), 'confirms')).toEqual([4, 7, 10, 14]);
+    expect(roundBreaks(dd, 'confirms').has(7)).toBe(true);
+    expect(roundBreaks(page(SR).evidence!, 'all').size).toBe(5);
+  });
+
+  it('renders the pressed filter and only matching cards, with the card parts', () => {
+    const html = render(lb);
+    expect(html).toMatch(/aria-pressed="true"[^>]*>[\s\S]*?Confirms/);
+    expect(html.match(/<article class="view-debug-ev"/g)).toHaveLength(2);
+    expect(textOf(html)).toContain('#4 · 2026-09-16');
+    expect(textOf(html)).toContain('Rules out');
+    const all = render(lb, { initialFilter: 'all' });
+    expect(all.match(/<article class="view-debug-ev"/g)).toHaveLength(12);
+    const elim = render(lb, { initialFilter: 'eliminates' });
+    expect(elim.match(/<article class="view-debug-ev"/g)).toHaveLength(2);
+    expect(elim).toMatch(/view-debug-impl/);
+    expect(render(syn).match(/<article class="view-debug-ev"/g)).toHaveLength(3);
+  });
+});
+
+describe('Also in this session', () => {
+  it('lists the other sections, the reasoning checkpoint and the frontmatter', () => {
+    expect(lb.also.map((a) => a.label)).toEqual(['Postmortem', 'Reasoning checkpoint', 'Frontmatter']);
+    expect(syn.also.map((a) => a.label)).toEqual(['Frontmatter']);
+  });
+
+  it('points each chip at its heading id, null for Frontmatter', () => {
+    const m = page(LB, [
+      { id: 'postmortem', text: 'Postmortem', depth: 2 },
+      { id: 'current-focus', text: 'Current Focus', depth: 2 },
+    ]);
+    expect(m.also.map((a) => a.targetId)).toEqual(['postmortem', 'current-focus', null]);
+  });
+
+  it('shows no Frontmatter chip without frontmatter, and no row when empty', () => {
+    const parsed = DebugHandler.parse(
+      { path: '.planning/debug/a.md', content: '## Current Focus\n\nhypothesis: h\n', mtimeMs: 0, size: 1 },
+      refOf('.planning/debug/a.md'),
+    );
+    const m = composeDebugCase({
+      kind: 'debug',
+      frontmatter: {},
+      structured: JSON.parse(JSON.stringify(parsed.structured)) as Record<string, unknown>,
+      groups: [],
+      planSegments: [],
+    });
+    expect(m?.also).toEqual([]);
+    expect(render(m!)).not.toContain('Also in this session');
+  });
+
+  it.runIf(existsSync(SR) && existsSync(RS))('uses distinct short names for the long sessions', () => {
+    expect(page(SR).also.map((a) => a.label)).toEqual([
+      'Confirmed root-cause chain',
+      'Secondary watch defects',
+      'Cross-repo release note',
+      'Round 2',
+      'Round 2 deployment state',
+      'Round 3 — UAT evidence',
+      'Round 3 — Validation against code',
+      'Round 3 — Fixes applied',
+      'Round 3 deployment state',
+      'Round 4',
+      'Round 4 UAT',
+      'Frontmatter',
+    ]);
+    expect(page(RS).also.map((a) => a.label)).toEqual([
+      'Context',
+      'Answers to open questions',
+      'Follow-up hook points',
+      'Field diagnostics',
+      'Reasoning checkpoint',
+      'Frontmatter',
+    ]);
+    expect(page(RS).also[2].title).toContain('NOT implemented');
   });
 });

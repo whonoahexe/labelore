@@ -20398,6 +20398,406 @@ button.view-verification-stat:hover {
 .view-debug-note {
   color: var(--muted-foreground);
 }
+/* Section heads: a mono h2, a muted aside and a Source button on one ruled line. */
+.view-debug-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.view-debug-section-head h2 {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-fluid-3);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tight);
+}
+
+.view-debug-section-head > span {
+  display: flex;
+  gap: var(--space-4);
+  align-items: baseline;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+/* Expected vs actual: two columns with a border between, then the other symptom fields as rows. */
+.view-debug-ea {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  border: 1px solid var(--border);
+}
+
+.view-debug-ea > div {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  min-width: 0;
+  padding: var(--space-4) var(--space-5);
+  font-size: var(--fs-4);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
+}
+
+.view-debug-ea > div + div {
+  border-left: 1px solid var(--border);
+}
+
+@media (max-width: 42rem) {
+  .view-debug-ea {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .view-debug-ea > div + div {
+    border-top: 1px solid var(--border);
+    border-left: 0;
+  }
+}
+
+.view-debug-expected .view-debug-kicker {
+  color: var(--primary);
+}
+
+.view-debug-actual {
+  background: var(--card-veil);
+  outline: 1px solid var(--missing-border);
+  outline-offset: -1px;
+}
+
+.view-debug-actual .view-debug-kicker {
+  color: var(--missing-fill);
+}
+
+.view-debug-symptoms {
+  display: grid;
+  border: 1px solid var(--border);
+  border-top: 0;
+}
+
+.view-debug-symptoms > div {
+  display: grid;
+  grid-template-columns: 9rem minmax(0, 1fr);
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-5);
+  border-top: 1px solid var(--border-faint);
+  font-size: var(--fs-3);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
+}
+
+.view-debug-symptoms > div:first-child {
+  border-top: 0;
+}
+
+@media (max-width: 42rem) {
+  .view-debug-symptoms > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
+}
+
+.view-debug-ea + .view-debug-symptoms {
+  margin-top: 0;
+}
+
+/* Suspects: a three-column board, a 2px rule per column coloured by data-column. */
+.view-debug-suspects {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+@media (max-width: 62rem) {
+  .view-debug-suspects {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.view-debug-column {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-debug-column > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: var(--space-2);
+  border-bottom: 2px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-debug-column[data-column='confirmed'] > header {
+  border-bottom-color: var(--primary);
+  color: var(--primary);
+}
+
+.view-debug-column[data-column='ruled'] > header {
+  border-bottom-color: var(--missing-fill);
+  color: var(--missing-fill);
+}
+
+.view-debug-suspect {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: var(--fs-4);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
+}
+
+.view-debug-suspect[data-column='confirmed'] {
+  border-color: var(--primary-border);
+  background: var(--primary-tint);
+}
+
+.view-debug-suspect[data-column='ruled'] .view-debug-suspect-text {
+  color: var(--muted-foreground);
+  text-decoration: line-through;
+  text-decoration-color: var(--missing-fill);
+}
+
+.view-debug-kind {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-debug-why {
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.view-debug-why b {
+  margin-right: var(--space-2);
+  color: var(--missing-fill);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-debug-none {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+/* Evidence log: filters, tag swatches, cards and round dividers. */
+.view-debug-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  margin-bottom: var(--space-4);
+}
+
+.view-debug-filter {
+  display: inline-flex;
+  gap: var(--space-1-5);
+  align-items: center;
+  padding: var(--space-1) var(--space-2-5);
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  cursor: pointer;
+}
+
+.view-debug-filter:hover {
+  color: var(--foreground);
+}
+
+.view-debug-filter[aria-pressed='true'] {
+  border-color: var(--primary-border);
+  background: var(--primary-tint);
+  color: var(--foreground);
+}
+
+.view-debug-filter b {
+  color: var(--foreground);
+  font-weight: var(--fw-medium);
+}
+
+.view-debug-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.view-debug-tag::before {
+  content: '';
+  width: var(--space-2);
+  height: var(--space-2);
+  background: var(--muted-foreground);
+}
+
+.view-debug-tag[data-tag='confirms'] {
+  color: var(--primary);
+}
+
+.view-debug-tag[data-tag='confirms']::before {
+  background: var(--primary);
+}
+
+.view-debug-tag[data-tag='eliminates'] {
+  color: var(--missing-fill);
+}
+
+.view-debug-tag[data-tag='eliminates']::before {
+  background: var(--missing-fill);
+}
+
+.view-debug-tag[data-tag='fix'] {
+  color: var(--in-flight-fill);
+}
+
+.view-debug-tag[data-tag='fix']::before {
+  background: var(--in-flight-fill);
+}
+
+.view-debug-tag[data-tag='finding']::before {
+  background: none;
+  outline: 1px solid var(--muted-foreground);
+  outline-offset: -1px;
+}
+
+.view-debug-evlist {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.view-debug-ev {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.view-debug-ev[data-tag='confirms'] {
+  border-left: 3px solid var(--primary);
+}
+
+.view-debug-ev[data-tag='eliminates'] {
+  border-left: 3px solid var(--missing-fill);
+}
+
+.view-debug-ev[data-tag='fix'] {
+  border-left: 3px solid var(--in-flight-fill);
+}
+
+.view-debug-ev-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.view-debug-ts {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-debug-ev p {
+  margin: 0;
+}
+
+.view-debug-checked {
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+  overflow-wrap: anywhere;
+}
+
+.view-debug-found {
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
+}
+
+.view-debug-impl {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-2);
+  font-size: var(--fs-4);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
+}
+
+.view-debug-impl::before {
+  content: '→';
+  color: var(--primary);
+  font-family: var(--font-mono);
+}
+
+.view-debug-round {
+  margin-bottom: var(--space-2);
+  padding: var(--space-4) 0 var(--space-2);
+  border-bottom: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+/* Also in this session: one labelled row of chips that each open that place in Source. */
+.view-debug-also {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+  padding: var(--space-3) 0;
+  border-top: 1px dashed var(--border);
+  border-bottom: 1px dashed var(--border);
+}
+
+.view-debug-also ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-debug-also button.status-chip {
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.view-debug-also button.status-chip:hover {
+  background: var(--state-hover);
+}
 /* quick-261018-j5h:end */
 
 /* "In the source only": what the view leaves to Source mode, one click away. */
