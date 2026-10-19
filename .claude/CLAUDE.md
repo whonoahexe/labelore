@@ -148,7 +148,7 @@ artifact lives — without reading a single file by hand.
 ## Sources
 
 - Live `npm view <pkg> version` / `dist-tags` queries against the npm registry (2026-08-21) — every
-- `/home/cinedise/studio-portal/frontend/package.json`, `components.json`, `app/globals.css` — theme
+- `/home/cinedise/codebases/studio-portal/frontend/package.json`, `components.json`, `app/globals.css` — theme
 - Official Vite docs, "Backend Integration" guide (`vite.dev/guide/backend-integration`) — confirmed the
 - Official Next.js docs, "Guides: Custom Server" (`nextjs.org/docs/app/guides/custom-server`) — confirmed
 - shadcn/ui official Vite installation docs (`ui.shadcn.com/docs/installation/vite`) and Tailwind v4 docs

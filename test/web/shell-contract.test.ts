@@ -60,7 +60,7 @@ describe('authorized Studio Portal shell contract', () => {
     expect(files[1]).toContain('presentationRoutePatterns.dashboard');
     expect(files[1]).toContain('presentationRoutePatterns.roadmap');
     expect(files[2]).toContain('rounded-none');
-    expect(files.join('\n')).not.toContain('/home/cinedise/studio-portal');
+    expect(files.join('\n')).not.toContain('/home/cinedise/codebases/studio-portal');
   });
 
   it('uses local copies of the same Studio Portal font families', async () => {

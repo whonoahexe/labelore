@@ -6,7 +6,7 @@ import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-const CANDIDATES = [join(homedir(), 'Work/Cinedise/studio-portal'), '/home/cinedise/studio-portal'];
+const CANDIDATES = [join(homedir(), 'Work/Cinedise/studio-portal'), '/home/cinedise/codebases/studio-portal'];
 
 export const STUDIO_PORTAL_ROOT =
   process.env.STUDIO_PORTAL_ROOT ?? CANDIDATES.find((dir) => existsSync(dir)) ?? CANDIDATES[0];
