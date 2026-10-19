@@ -60,7 +60,7 @@ describe('authorized reference-portal shell contract', () => {
     expect(files[1]).toContain('presentationRoutePatterns.dashboard');
     expect(files[1]).toContain('presentationRoutePatterns.roadmap');
     expect(files[2]).toContain('rounded-none');
-    expect(files.join('\n')).not.toContain('/home/user/reference-portal');
+    expect(files.join('\n')).not.toContain('/home/user/codebases/reference-portal');
   });
 
   it('uses local copies of the same reference-portal font families', async () => {
