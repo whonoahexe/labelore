@@ -26,7 +26,7 @@ describe('authorized Studio Portal shell contract', () => {
     expect(css).toContain('--primary: oklch(0.47 0.157 37.304);');
     expect(css).toMatch(/:root\s*\{/);
     expect(css).toMatch(/\.dark\s*\{/);
-    expect(css).not.toMatch(/studio-portal\//);
+    expect(css).not.toMatch(/(studio|cinedise)-portal\//);
   });
 
   it('uses the DOM dark class as the theme truth and keeps storage failure non-fatal', async () => {
@@ -60,7 +60,7 @@ describe('authorized Studio Portal shell contract', () => {
     expect(files[1]).toContain('presentationRoutePatterns.dashboard');
     expect(files[1]).toContain('presentationRoutePatterns.roadmap');
     expect(files[2]).toContain('rounded-none');
-    expect(files.join('\n')).not.toContain('/home/cinedise/codebases/studio-portal');
+    expect(files.join('\n')).not.toContain('/home/cinedise/codebases/cinedise-portal');
   });
 
   it('uses local copies of the same Studio Portal font families', async () => {
