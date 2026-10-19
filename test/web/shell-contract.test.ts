@@ -26,7 +26,7 @@ describe('authorized reference-portal shell contract', () => {
     expect(css).toContain('--primary: oklch(0.47 0.157 37.304);');
     expect(css).toMatch(/:root\s*\{/);
     expect(css).toMatch(/\.dark\s*\{/);
-    expect(css).not.toMatch(/reference-portal\//);
+    expect(css).not.toMatch(/(studio|user)-portal\//);
   });
 
   it('uses the DOM dark class as the theme truth and keeps storage failure non-fatal', async () => {

@@ -6,7 +6,11 @@ import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-const CANDIDATES = [join(homedir(), 'Work/user/reference-portal'), '/home/user/codebases/reference-portal'];
+const CANDIDATES = [
+  join(homedir(), 'Work/user/reference-portal'),
+  join(homedir(), 'Work/user/reference-portal'),
+  '/home/user/codebases/reference-portal',
+];
 
 export const reference-portal_ROOT =
   process.env.reference-portal_ROOT ?? CANDIDATES.find((dir) => existsSync(dir)) ?? CANDIDATES[0];
