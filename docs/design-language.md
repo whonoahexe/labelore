@@ -809,6 +809,11 @@ plan's "no AST tooling" constraint.
 | `history-tree` | Roadmap | shared with Traceability |
 | `milestone-flow` | Roadmap | |
 | `milestone-version` | Roadmap | |
+| `milestone-delivered` | Roadmap | a History milestone's MILESTONES.md Delivered line in its summary, at the card's full width |
+| `milestone-record` | Roadmap | a History milestone's MILESTONES.md entry, above its phase tree |
+| `milestone-record-facts` | Roadmap | Stats, Git range and What's next, as hairline-divided cells |
+| `milestone-record-more` | Roadmap | Show all / Show fewer under Key accomplishments |
+| `milestone-record-section` | Roadmap | Key accomplishments |
 | `phase-detail-grid` | Roadmap | |
 | `phase-disclosure` | Roadmap | |
 | `phase-facts` | Roadmap | |

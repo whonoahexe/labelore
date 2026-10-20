@@ -71,6 +71,7 @@ describe('roadmap-page emoji sanitization contract', () => {
     // e.g. "<summary>✅ v1.0 Portal (v1.0 Phases 1-4) — SHIPPED 2026-07-26</summary>".
     const page = await source('src/web/pages/roadmap-page.tsx');
     expect(page).toMatch(/import \{ stripEmoji \} from '\.\/strip-emoji\.ts';/);
-    expect(page).toContain('<strong>{stripEmoji(milestone.name)}</strong>');
+    // A MILESTONES.md entry's version and name, when there is one, replace the <summary> text.
+    expect(page).toContain('<strong>{stripEmoji(title)}</strong>');
   });
 });
