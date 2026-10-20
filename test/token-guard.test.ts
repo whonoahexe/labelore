@@ -541,6 +541,12 @@ export const ALLOWLIST: AllowlistEntry[] = [
     reason: 'grid-gap hairline exposing the container background as a 1px divider, same category as a border',
   },
   {
+    selector: '.milestone-record-facts',
+    property: 'gap',
+    value: '1px',
+    reason: 'grid-gap hairline exposing the container background as a 1px divider, same category as a border',
+  },
+  {
     selector: '.artifact-document :is(h1, h2, h3, h4, h5, h6)',
     property: 'margin',
     value: '1.8em 0 0.65em',

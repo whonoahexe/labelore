@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type {
+  ArtifactDto,
   MilestoneDto,
   PhaseDto,
   PlanDto,
@@ -79,6 +80,39 @@ function milestone(
   name = archived ? `Archive ${version}` : `Milestone ${version}`,
 ): MilestoneDto {
   return { key: `milestone:${version}`, version, name, archived, phases };
+}
+
+function milestonesArtifact(entries: unknown[]): ArtifactDto {
+  return {
+    key: '/artifacts/a~.planning%2FMILESTONES.md',
+    path: '.planning/MILESTONES.md',
+    kind: 'milestones',
+    title: 'Milestones',
+    location: 'root',
+    frontmatter: {},
+    structured: { entries },
+    milestoneKey: null,
+    phaseKey: null,
+    warnings: [],
+    bodyLength: 1,
+  };
+}
+
+function entry(version: string, overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    version,
+    name: `Name ${version}`,
+    shipped: '2026-09-10',
+    status: null,
+    delivered: `Delivered ${version}`,
+    phases: '1-2 (2 plans total)',
+    accomplishments: ['First'],
+    stats: null,
+    gitRange: null,
+    whatsNext: null,
+    extra: [],
+    ...overrides,
+  };
 }
 
 function presentation(milestones: MilestoneDto[]): ProjectPresentation {
@@ -388,5 +422,57 @@ describe('buildRoadmapViewModel', () => {
 
     expect(source).toEqual(before);
     expect(second).toEqual(first);
+  });
+
+  it('attaches each History milestone its MILESTONES.md entry by version, case-insensitively', () => {
+    const source = {
+      ...presentation([
+        milestone('v1.0', true, [phase('01', { milestoneVersion: 'v1.0', archived: true })]),
+        milestone('V1.1', true, [phase('02', { milestoneVersion: 'V1.1', archived: true })]),
+        milestone('v0.9', true, [phase('01', { milestoneVersion: 'v0.9', archived: true })]),
+        milestone('v2.0', false, [phase('03')]),
+      ]),
+      artifacts: [
+        milestonesArtifact([
+          entry('v1.1'),
+          entry('v1.0'),
+          entry('v1.0', { name: 'Older duplicate' }),
+          { version: 'v3.0' },
+        ]),
+      ],
+    };
+
+    const view = buildRoadmapViewModel(source);
+    const [v10, v11, v09] = view.history;
+
+    expect(v10.record).toMatchObject({
+      name: 'Name v1.0',
+      shipped: '10 Sep 2026',
+      delivered: 'Delivered v1.0',
+      accomplishments: ['First'],
+    });
+    expect(v11.record?.name).toBe('Name v1.1');
+    expect(v09.record).toBeNull();
+    expect(view.active?.record).toBeNull();
+    expect(buildRoadmapViewModel(presentation([milestone('v1.0', true, [])])).history[0].record).toBeNull();
+  });
+
+  it('counts days from a stated figure, then a date range in the stats, then the previous ship date', () => {
+    const archived = ['v1.3', 'v1.2', 'v1.1', 'v1.0'].map((version) =>
+      milestone(version, true, [phase('01', { milestoneVersion: version, archived: true })]),
+    );
+    const view = buildRoadmapViewModel({
+      ...presentation(archived),
+      artifacts: [
+        milestonesArtifact([
+          entry('v1.3', { shipped: '2026-10-01', stats: { label: 'Stats', text: '', items: ['8 days from v1.2 to v1.3'] } }),
+          entry('v1.2', { shipped: '2026-09-21', stats: { label: 'Stats', text: '127 commits, 2026-09-10 → 2026-09-21', items: [] } }),
+          entry('v1.1', { shipped: '2026-09-05' }),
+          entry('v1.0', { shipped: '2026-08-30' }),
+        ]),
+      ],
+    });
+
+    expect(view.history.map((flow) => flow.record?.days)).toEqual([8, 11, 6, null]);
   });
 });

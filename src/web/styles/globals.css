@@ -1740,6 +1740,104 @@ summary.tree-node-row:focus-visible {
   opacity: 0.82;
 }
 
+/* A History milestone's MILESTONES.md entry. Delivered sits in the summary at the card's full
+ * width; the record panel sits above the phase tree and, unlike it, is not dimmed. */
+.milestone-delivered {
+  margin-top: var(--space-2);
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  letter-spacing: var(--ls-normal);
+  line-height: var(--fs-3--lh);
+  text-transform: none;
+  white-space: normal;
+}
+
+[open] > summary .milestone-delivered {
+  color: var(--foreground);
+}
+
+.milestone-record {
+  display: grid;
+  gap: var(--space-6);
+  padding: var(--space-5) var(--space-6) var(--space-6);
+  border-top: 1px solid var(--border);
+}
+
+.milestone-record-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1px;
+  margin: 0;
+  border: 1px solid var(--border);
+  background: var(--border);
+}
+
+.milestone-record-facts > div {
+  min-width: 0;
+  padding: var(--space-3-5) var(--space-5);
+  background: var(--background);
+}
+
+.milestone-record-facts dt {
+  margin-bottom: var(--space-1);
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--font-size-micro-label);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.milestone-record-facts dd {
+  max-width: 72ch;
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: var(--fs-3);
+  line-height: var(--fs-3--lh);
+}
+
+.milestone-record-facts dd ul {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.milestone-record-section {
+  min-width: 0;
+}
+
+.milestone-record-section h4 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+}
+
+.milestone-record-section .criteria-list {
+  max-width: 80ch;
+  margin: 0;
+  font-size: var(--fs-3);
+  line-height: var(--fs-3--lh);
+}
+
+.milestone-record-more {
+  margin-top: var(--space-3);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+}
+
+.milestone-record-more:hover {
+  color: var(--primary);
+}
+
 .notice {
   margin-top: var(--space-8);
   padding: var(--space-6);
@@ -5510,6 +5608,10 @@ a.todo-title:hover {
   }
 
   .phase-facts > div {
+    padding-inline: var(--space-4);
+  }
+
+  .milestone-record {
     padding-inline: var(--space-4);
   }
 

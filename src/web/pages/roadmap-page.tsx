@@ -11,8 +11,10 @@ import {
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
 import { EmptyState } from '../components/empty-state.tsx';
+import { LeadText } from '../components/lead-tokens.tsx';
 import type {
   MilestoneFlow,
+  MilestoneRecord,
   RoadmapPhaseRow,
   RoadmapViewModel,
 } from '../../presentation/roadmap.ts';
@@ -26,6 +28,7 @@ import { scrollWhenSettled } from './scroll-settle.ts';
 import { stripEmoji } from './strip-emoji.ts';
 
 const REQUIREMENT_PAGE_SIZE = 4;
+const ACCOMPLISHMENT_PREVIEW = 5;
 
 async function fetchRoadmap(): Promise<RoadmapViewModel> {
   const response = await fetch('/api/roadmap', { headers: { Accept: 'application/json' } });
@@ -275,6 +278,95 @@ function MilestoneTree({
   );
 }
 
+function plural(count: number, noun: string): string {
+  return `${count} ${noun}${count === 1 ? '' : 's'}`;
+}
+
+/** The line under the milestone's title: when it shipped, how long it took, how many phases. */
+function historyCaption(milestone: MilestoneFlow): string {
+  const record = milestone.record;
+  const parts = [record?.shipped ? `Shipped ${record.shipped}` : (record?.status ?? 'Archived')];
+  if (record?.days != null) parts.push(plural(record.days, 'day'));
+  parts.push(plural(milestone.phases.length, 'phase'));
+  return parts.join(' · ');
+}
+
+function RecordText({ text, items }: { text: string; items: string[] }): React.JSX.Element {
+  return (
+    <>
+      {text ? <LeadText text={text} /> : null}
+      {items.length > 0 ? (
+        <ul>
+          {items.map((item, index) => (
+            <li key={index}>
+              <LeadText text={item} />
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </>
+  );
+}
+
+function MilestoneRecordPanel({ record }: { record: MilestoneRecord }): React.JSX.Element | null {
+  const [showAll, setShowAll] = useState(false);
+  const facts = [
+    record.stats ? { label: 'Stats', text: record.stats.text, items: record.stats.items } : null,
+    record.gitRange ? { label: 'Git range', text: record.gitRange, items: [] } : null,
+    record.whatsNext ? { label: "What's next", text: record.whatsNext, items: [] } : null,
+  ].filter((fact) => fact !== null);
+  // Collapsing to hide a single item saves nothing, so a list one past the preview shows whole.
+  const collapsible = record.accomplishments.length > ACCOMPLISHMENT_PREVIEW + 1;
+  const accomplishments =
+    showAll || !collapsible
+      ? record.accomplishments
+      : record.accomplishments.slice(0, ACCOMPLISHMENT_PREVIEW);
+  // An entry with only a Delivered line has nothing for the panel; Delivered sits in the summary.
+  if (facts.length === 0 && record.accomplishments.length === 0) return null;
+
+  return (
+    <div className="milestone-record">
+      {facts.length > 0 ? (
+        <dl className="milestone-record-facts">
+          {facts.map((fact) => (
+            <div key={fact.label}>
+              <dt>{fact.label}</dt>
+              <dd>
+                <RecordText text={fact.text} items={fact.items} />
+              </dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+      {record.accomplishments.length > 0 ? (
+        <section className="milestone-record-section">
+          <h4>Key accomplishments</h4>
+          <ul className="criteria-list">
+            {accomplishments.map((item, index) => (
+              <li key={index}>
+                <Check aria-hidden="true" />
+                <span>
+                  <LeadText text={item} />
+                </span>
+              </li>
+            ))}
+          </ul>
+          {collapsible ? (
+            <button
+              type="button"
+              className="milestone-record-more"
+              aria-expanded={showAll}
+              onClick={() => setShowAll((value) => !value)}
+            >
+              {showAll ? 'Show fewer' : `Show all ${record.accomplishments.length}`}
+            </button>
+          ) : null}
+        </section>
+      ) : null}
+    </div>
+  );
+}
+
 function HistoryMilestone({
   milestone,
   target,
@@ -285,6 +377,9 @@ function HistoryMilestone({
   const detailsRef = useRef<HTMLDetailsElement | null>(null);
   const openedRef = useRef(false);
   const contained = milestoneContainsDeepLink(milestone, target);
+  const record = milestone.record;
+  // The <summary> text ROADMAP.md archived carries the version already; a MILESTONES.md name does not.
+  const title = record && milestone.version ? `${milestone.version} ${record.name}` : milestone.name;
 
   useEffect(() => {
     if (!contained || openedRef.current) return;
@@ -297,10 +392,16 @@ function HistoryMilestone({
       <summary>
         <ChevronRight aria-hidden="true" />
         <span>
-          <strong>{stripEmoji(milestone.name)}</strong>
-          <small>{milestone.version ?? 'Unversioned archive'} · Archived</small>
+          <strong>{stripEmoji(title)}</strong>
+          <small>{historyCaption(milestone)}</small>
+          {record?.delivered ? (
+            <span className="milestone-delivered">
+              <LeadText text={record.delivered} />
+            </span>
+          ) : null}
         </span>
       </summary>
+      {record ? <MilestoneRecordPanel record={record} /> : null}
       <div className="history-tree">
         <MilestoneTree milestone={milestone} target={target} />
       </div>

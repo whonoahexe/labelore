@@ -10,6 +10,8 @@ import { SummaryHandler } from '../src/planning-repo/handlers/summary.ts';
 import { ContextHandler } from '../src/planning-repo/handlers/context.ts';
 import { JsonConfigHandler } from '../src/planning-repo/handlers/json-config.ts';
 import { WindowsHandler } from '../src/planning-repo/handlers/windows.ts';
+import { MilestonesHandler } from '../src/planning-repo/handlers/milestones.ts';
+import type { MilestoneEntry } from '../src/planning-repo/handlers/milestones.ts';
 import { parseWithRegistry } from '../src/planning-repo/registry.ts';
 import { WarningCollector } from '../src/planning-repo/warnings.ts';
 import { InMemoryPlanningFilesystem } from '../src/planning-fs/in-memory-fs.ts';
@@ -573,6 +575,100 @@ describe('WindowsHandler', () => {
     );
     expect(result.structured?.rowSource).toBe('table');
     expect(result.warning).toBeUndefined();
+  });
+});
+
+describe('MilestonesHandler', () => {
+  const path = '.planning/MILESTONES.md';
+  const entriesOf = (content: string): MilestoneEntry[] =>
+    MilestonesHandler.parse(raw(path, content), ref(path)).structured?.entries as MilestoneEntry[];
+
+  it('claims only the root MILESTONES.md', () => {
+    expect(HANDLERS.find((h) => h.match(ref(path)))).toBe(MilestonesHandler);
+    expect(MilestonesHandler.match(ref('.planning/milestones/MILESTONES.md', { location: 'milestone-root' }))).toBe(false);
+  });
+
+  it('reads the template entry: heading, labelled fields, lists and wrapped bullets', () => {
+    const [entry] = entriesOf(
+      [
+        '# Project Milestones: Demo',
+        '',
+        '## v1.1 Security & Polish (Shipped: 2025-12-10)',
+        '',
+        '**Delivered:** Security hardening with Keychain integration',
+        '',
+        '**Phases completed:** 5-6 (3 plans total)',
+        '',
+        '**Key accomplishments:**',
+        '- Migrated API key storage',
+        '- Fixed memory leak in the',
+        '  auto-refresh timer',
+        '',
+        '**Stats:**',
+        '- 23 files modified',
+        '- 8 days from v1.0 to v1.1',
+        '',
+        '**Git range:** `feat(05-01)` → `feat(06-02)`',
+        '',
+        "**What's next:** v2.0 SwiftUI redesign",
+        '',
+        '---',
+      ].join('\n'),
+    );
+    expect(entry).toEqual({
+      version: 'v1.1',
+      name: 'Security & Polish',
+      shipped: '2025-12-10',
+      status: null,
+      delivered: 'Security hardening with Keychain integration',
+      phases: '5-6 (3 plans total)',
+      accomplishments: ['Migrated API key storage', 'Fixed memory leak in the auto-refresh timer'],
+      stats: { label: 'Stats', text: '', items: ['23 files modified', '8 days from v1.0 to v1.1'] },
+      gitRange: '`feat(05-01)` → `feat(06-02)`',
+      whatsNext: 'v2.0 SwiftUI redesign',
+      extra: [],
+    });
+  });
+
+  it('joins wrapped prose, keeps unknown labels in order, and reads an in-progress heading', () => {
+    const entries = entriesOf(
+      [
+        '## v2.0 Next (In Progress)',
+        '',
+        '**Delivering:** Still underway.',
+        '',
+        '## v1.0 MVP (Shipped: 2026-09-10)',
+        '',
+        '**Phases completed:** 4 phases, 30 plans',
+        '',
+        '**Delivered:** A dashboard that renders',
+        'any planning tree.',
+        '',
+        '**Stats:** 309 commits; 590 tests.',
+        '',
+        '**Closeout:** override accepted.',
+        '',
+        '**Archive:** `milestones/v1.0-ROADMAP.md`',
+      ].join('\n'),
+    );
+    expect(entries.map((entry) => [entry.version, entry.shipped, entry.status])).toEqual([
+      ['v2.0', null, 'In Progress'],
+      ['v1.0', '2026-09-10', null],
+    ]);
+    expect(entries[0].delivered).toBe('Still underway.');
+    expect(entries[1]).toMatchObject({
+      delivered: 'A dashboard that renders any planning tree.',
+      phases: '4 phases, 30 plans',
+      stats: { text: '309 commits; 590 tests.', items: [] },
+      accomplishments: [],
+    });
+    expect(entries[1].extra.map((field) => field.label)).toEqual(['Closeout', 'Archive']);
+  });
+
+  it('degrades to no entries, never a throw, on a file with no version headings', () => {
+    expect(entriesOf('# Milestones\n\nNothing shipped yet.\n')).toEqual([]);
+    expect(entriesOf('')).toEqual([]);
+    expect(entriesOf('## Notes\n\n**Delivered:** orphan field\n')).toEqual([]);
   });
 });
 

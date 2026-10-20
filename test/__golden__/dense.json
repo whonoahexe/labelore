@@ -277,7 +277,71 @@
         "bodyHash": "8a8da3aaaf9c5aedbf584c8426b8430535fa1f2772c03f2ddddfc31aa628e3a3",
         "mtimeMs": 0,
         "warnings": [],
-        "structured": {}
+        "structured": {
+          "entries": [
+            {
+              "version": "v3.0",
+              "name": "Live Read Surface",
+              "shipped": null,
+              "status": "In Progress",
+              "delivered": "A dense, adversarial `.planning/` shape exercising every artifact type the parser must tolerate.",
+              "phases": "1-2",
+              "accomplishments": [],
+              "stats": null,
+              "gitRange": null,
+              "whatsNext": null,
+              "extra": []
+            },
+            {
+              "version": "v2.0",
+              "name": "Legacy Bridge",
+              "shipped": "2026-03-15",
+              "status": null,
+              "delivered": "Legacy record ingestion and downstream batch export.",
+              "phases": "1-2 (2 plans total)",
+              "accomplishments": [
+                "Legacy ingest pipeline reading the old store's export format",
+                "Batch export job feeding the downstream consumer",
+                "Archived phase-number collision with v1.0's own \"Phase 1\" — the exact case this fixture exists to exercise"
+              ],
+              "stats": {
+                "label": "Stats",
+                "text": "",
+                "items": [
+                  "12 files created/modified",
+                  "4 phases, 2 plans, 6 tasks (fixture-synthetic counts)",
+                  "134 days from v1.0 to v2.0"
+                ]
+              },
+              "gitRange": "`feat(01-01)` → `feat(02-01)`",
+              "whatsNext": "v3.0 Live Read Surface",
+              "extra": []
+            },
+            {
+              "version": "v1.0",
+              "name": "Bootstrap",
+              "shipped": "2025-11-01",
+              "status": null,
+              "delivered": "The earliest scaffolding for the fixture project.",
+              "phases": "1 (1 plan total)",
+              "accomplishments": [
+                "Bootstrap scaffolding proving the project's shape end to end"
+              ],
+              "stats": {
+                "label": "Stats",
+                "text": "",
+                "items": [
+                  "5 files created",
+                  "1 phase, 1 plan, 3 tasks (fixture-synthetic counts)",
+                  "9 days from start to ship"
+                ]
+              },
+              "gitRange": "`feat(01-01)` → `feat(01-01)`",
+              "whatsNext": "v2.0 Legacy Bridge",
+              "extra": []
+            }
+          ]
+        }
       },
       ".planning/PROJECT.md": {
         "id": ".planning/PROJECT.md",

@@ -1,3 +1,4 @@
+import type { MilestoneEntry } from '../planning-repo/handlers/milestones.ts';
 import { comparePhaseNumbers } from '../planning-repo/naming.ts';
 import type {
   MilestoneDto,
@@ -5,6 +6,7 @@ import type {
   PlanDto,
   ProjectPresentation,
 } from '../server/project-presentation.ts';
+import { activityDateLabel } from './dashboard-head.ts';
 import { buildMilestoneUrl, buildPhaseUrl, buildPlanUrl } from './routes.ts';
 
 export interface RoadmapPlanRow {
@@ -49,6 +51,22 @@ export interface RoadmapPhaseRow {
   waveBands: WaveBand[];
 }
 
+/** A milestone's entry in MILESTONES.md: what shipped, when, and what the author noted at close. */
+export interface MilestoneRecord {
+  name: string;
+  /** "21 Sep 2026", or null when the entry carries no ship date. */
+  shipped: string | null;
+  /** The heading's parenthetical when it is not a ship date, e.g. "In Progress". */
+  status: string | null;
+  /** Days from start to ship, or null when nothing in the entry or the file dates it. */
+  days: number | null;
+  delivered: string | null;
+  accomplishments: string[];
+  stats: { text: string; items: string[] } | null;
+  gitRange: string | null;
+  whatsNext: string | null;
+}
+
 export interface MilestoneFlow {
   key: string;
   url: string;
@@ -57,6 +75,8 @@ export interface MilestoneFlow {
   archived: boolean;
   empty: boolean;
   phases: RoadmapPhaseRow[];
+  /** The milestone's MILESTONES.md entry, matched by version; null when there is none. */
+  record: MilestoneRecord | null;
 }
 
 export interface RoadmapViewModel {
@@ -215,7 +235,72 @@ function phaseRow(phase: PhaseDto, presentation: ProjectPresentation): RoadmapPh
   };
 }
 
-function milestoneFlow(milestone: MilestoneDto, presentation: ProjectPresentation): MilestoneFlow {
+function isMilestoneEntry(value: unknown): value is MilestoneEntry {
+  if (typeof value !== 'object' || value === null) return false;
+  const entry = value as Partial<MilestoneEntry>;
+  return (
+    typeof entry.version === 'string' &&
+    typeof entry.name === 'string' &&
+    Array.isArray(entry.accomplishments) &&
+    Array.isArray(entry.extra)
+  );
+}
+
+const DAY_MS = 86_400_000;
+
+function daysBetween(start: string, end: string): number | null {
+  const from = Date.parse(`${start}T00:00:00Z`);
+  const to = Date.parse(`${end}T00:00:00Z`);
+  return Number.isNaN(from) || Number.isNaN(to) || to < from ? null : Math.round((to - from) / DAY_MS);
+}
+
+/** Days from start to ship: the template's "N days from start to ship" stat when the entry has
+ * one, else a "YYYY-MM-DD → YYYY-MM-DD" range in its stats, else the gap since the previous
+ * milestone shipped. */
+function milestoneDays(entry: MilestoneEntry, previousShipped: string | null): number | null {
+  const stats = entry.stats ? [entry.stats.text, ...entry.stats.items].join('; ') : '';
+  const stated = stats.match(/\b(\d{1,5})\s+days?\b/i);
+  if (stated) return Number(stated[1]);
+  const range = stats.match(/(\d{4}-\d{2}-\d{2})\s*(?:→|->|–|—|to)\s*(\d{4}-\d{2}-\d{2})/);
+  if (range) return daysBetween(range[1], range[2]);
+  return entry.shipped && previousShipped ? daysBetween(previousShipped, entry.shipped) : null;
+}
+
+/** The root MILESTONES.md entries, keyed by lower-cased version; the first entry wins a repeat,
+ * since the file is newest first. */
+function milestoneRecords(presentation: ProjectPresentation): Map<string, MilestoneRecord> {
+  const records = new Map<string, MilestoneRecord>();
+  const artifact = presentation.artifacts.find(
+    (candidate) => candidate.kind === 'milestones' && candidate.location === 'root',
+  );
+  const entries = artifact?.structured.entries;
+  if (!artifact || !Array.isArray(entries)) return records;
+  const valid = entries.filter(isMilestoneEntry);
+  for (const [index, entry] of valid.entries()) {
+    const key = entry.version.toLowerCase();
+    if (records.has(key)) continue;
+    records.set(key, {
+      name: entry.name,
+      // An empty readAt never matches the entry's year, so the label always keeps it.
+      shipped: activityDateLabel(entry.shipped, ''),
+      status: entry.status,
+      // Newest first, so the milestone shipped before this one is the next entry with a date.
+      days: milestoneDays(entry, valid.slice(index + 1).find((older) => older.shipped)?.shipped ?? null),
+      delivered: entry.delivered,
+      accomplishments: [...entry.accomplishments],
+      stats: entry.stats ? { text: entry.stats.text, items: [...entry.stats.items] } : null,
+      gitRange: entry.gitRange,
+      whatsNext: entry.whatsNext,
+    });
+  }
+  return records;
+}
+
+function milestoneFlow(
+  milestone: MilestoneDto,
+  presentation: ProjectPresentation,
+  records: ReadonlyMap<string, MilestoneRecord>,
+): MilestoneFlow {
   const phases = milestone.phases
     .map((phase) => phaseRow(phase, presentation))
     .sort((left, right) => comparePhaseNumbers(left.number, right.number));
@@ -227,17 +312,19 @@ function milestoneFlow(milestone: MilestoneDto, presentation: ProjectPresentatio
     archived: milestone.archived,
     empty: phases.length === 0,
     phases,
+    record: milestone.version ? (records.get(milestone.version.toLowerCase()) ?? null) : null,
   };
 }
 
 export function buildRoadmapViewModel(presentation: ProjectPresentation): RoadmapViewModel {
   const active = presentation.milestones.find((milestone) => !milestone.archived) ?? null;
+  const records = milestoneRecords(presentation);
   return {
     readAt: presentation.readAt,
     projectName: presentation.projectName,
-    active: active ? milestoneFlow(active, presentation) : null,
+    active: active ? milestoneFlow(active, presentation, records) : null,
     history: presentation.milestones
       .filter((milestone) => milestone.archived)
-      .map((milestone) => milestoneFlow(milestone, presentation)),
+      .map((milestone) => milestoneFlow(milestone, presentation, records)),
   };
 }
