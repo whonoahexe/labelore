@@ -5,6 +5,7 @@ import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';
 import type { FailedLoadStatus, ProjectSnapshot } from '../planning-repo/types.ts';
 import { LocalFsPlanningFilesystem } from '../planning-fs/local-fs.ts';
+import type { PlanningFilesystem } from '../planning-fs/types.ts';
 import { PlanningRepository } from '../planning-repo/snapshot.ts';
 import { buildDashboardViewModel } from '../presentation/dashboard.ts';
 import { buildPlanManualChecks } from '../presentation/manual-checks.ts';
@@ -26,6 +27,7 @@ import { applyCommitTimes, createCommitLog, type CommitLog } from './commit-time
 import { createFileDates } from './file-dates.ts';
 import { jsonRecord, toProjectPresentation } from './project-presentation.ts';
 import { createSearchIndexState, searchIndex } from './search-index.ts';
+import { createSketchFileMiddleware } from './sketch-files.ts';
 
 const DEFAULT_PORT = 4173;
 const HOSTNAME = '127.0.0.1';
@@ -41,6 +43,15 @@ interface SnapshotSource {
   /** Optional: a source that owns resources (the remote ssh mirror's temp directory) releases them
    * here. startServer calls it at most once, on server close, process exit, SIGINT and SIGTERM. */
   dispose?(): void;
+  /** Optional: the live filesystem behind the snapshot, for the read-only /sketches/* route. Sources
+   * without one (the failed-load literal, test doubles) answer 404 on /sketches/*. */
+  planningFilesystem?(): PlanningFilesystem | null;
+}
+
+/** True for the URLs the Hono app owns (the API and the sketch files). In dev mode everything else
+ * goes to Vite; the bare /sketches stays the client page. */
+export function routesToApp(url: string | undefined): boolean {
+  return url !== undefined && (url.startsWith('/api/') || url.startsWith('/sketches/'));
 }
 
 interface ServerOptions {
@@ -310,6 +321,8 @@ export function createApp(
     }
   });
   app.all('/api/*', (c) => c.json({ error: 'API route not found' }, 404));
+  // Called as a method on `source` (never an extracted reference), so `this` survives.
+  app.use('/sketches/*', createSketchFileMiddleware(() => source.planningFilesystem?.() ?? null));
 
   if (production) {
     app.use('/assets/*', serveStatic({ root: staticRoot }));
@@ -411,10 +424,10 @@ export async function startServer(rawPath: string, options: ServerOptions = {}):
     appType: 'spa',
     server: { middlewareMode: true, hmr: false },
   });
-  const apiListener = getRequestListener(app.fetch, { hostname: HOSTNAME });
+  const appListener = getRequestListener(app.fetch, { hostname: HOSTNAME });
   const server = createHttpServer((request, response) => {
-    if (request.url?.startsWith('/api/')) {
-      void apiListener(request, response);
+    if (routesToApp(request.url)) {
+      void appListener(request, response);
       return;
     }
 

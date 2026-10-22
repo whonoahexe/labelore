@@ -162,6 +162,25 @@ describe('RemoteSnapshotSource lifecycle', () => {
   });
 });
 
+describe('RemoteSnapshotSource planningFilesystem', () => {
+  it('hands out the current mirror filesystem, and null after a failed load or dispose', async () => {
+    const { state, runner } = makeRunner();
+    const source = track(new RemoteSnapshotSource(target(), { runner }));
+    expect(source.planningFilesystem()).toBeNull();
+    await source.load();
+    const fs = source.planningFilesystem();
+    expect(fs).not.toBeNull();
+    expect(await fs?.exists('.planning')).toBe(true);
+    source.dispose();
+    expect(source.planningFilesystem()).toBeNull();
+
+    state.failure = { sshExit: 255, sshStderr: 'Permission denied (publickey).' };
+    const failing = track(new RemoteSnapshotSource(target(), { runner }));
+    await failing.load();
+    expect(failing.planningFilesystem()).toBeNull();
+  });
+});
+
 describe('removeTempDirSync guard', () => {
   it('refuses a foreign prefix, a nested path and the fixtures directory', async () => {
     const foreign = await mkdtemp(join(tmpdir(), 'other-prefix-'));

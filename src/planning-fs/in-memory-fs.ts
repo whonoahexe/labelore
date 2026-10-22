@@ -7,7 +7,8 @@
 // under src/ that does. The real-directory-walking loader that once lived here as a static
 // fromDirectory() method now lives at test/helpers/from-directory.ts, since it existed only to
 // support D-08's fs-equivalence test fixture loading, not this class's own runtime behavior.
-import type { DirEntry, FileRead, FsCapabilities, PlanningFilesystem } from './types.ts';
+import { PathEscapeError } from './types.ts';
+import type { DirEntry, FileBytes, FileRead, FsCapabilities, PlanningFilesystem } from './types.ts';
 
 function normalizeRelPath(relPath: string): string {
   // Strip a genuine "./" prefix only — NOT a bare leading dot, which would corrupt a real
@@ -53,6 +54,25 @@ export class InMemoryPlanningFilesystem implements PlanningFilesystem {
       throw err;
     }
     return { content, mtimeMs: this.mtimeMs, size: Buffer.byteLength(content, 'utf8') };
+  }
+
+  async readBytesWithin(baseRelDir: string, relPath: string): Promise<FileBytes> {
+    const base = normalizeRelPath(baseRelDir);
+    const key = normalizeRelPath(relPath);
+    const segments = key.split('/');
+    if (segments.some((s) => s === '' || s === '.' || s === '..') || !key.startsWith(`${base}/`)) {
+      throw new PathEscapeError(relPath, key);
+    }
+    const content = this.files.get(key);
+    if (content !== undefined) {
+      const bytes = new Uint8Array(Buffer.from(content, 'utf8'));
+      return { bytes, mtimeMs: this.mtimeMs, size: bytes.length };
+    }
+    const prefix = `${key}/`;
+    const code = [...this.files.keys()].some((p) => p.startsWith(prefix)) ? 'EISDIR' : 'ENOENT';
+    const err = new Error(`${code}: ${relPath}`) as NodeJS.ErrnoException;
+    err.code = code;
+    throw err;
   }
 
   async exists(relPath: string): Promise<boolean> {
