@@ -339,16 +339,16 @@ describe('GET /api/sketches', () => {
       sketches: { number: string; viewUrl: string | null; readmeUrl: string | null; tags: string[] }[];
     };
     expect(model.available).toBe(true);
-    expect(model.sketches.map((s) => s.number)).toEqual(['001', '009']);
-    expect(model.sketches[0].tags).toEqual(['one', 'two']);
-    expect(model.sketches[1].viewUrl).toBeNull();
+    expect(model.sketches.map((s) => s.number)).toEqual(['009', '001']);
+    expect(model.sketches[1].tags).toEqual(['one', 'two']);
+    expect(model.sketches[0].viewUrl).toBeNull();
 
     for (const sketch of model.sketches) {
       if (!sketch.viewUrl) continue;
       expect((await freshApp.request(sketch.viewUrl)).status).toBe(200);
     }
 
-    const readmeUrl = model.sketches[0].readmeUrl ?? '';
+    const readmeUrl = model.sketches[1].readmeUrl ?? '';
     const doc = await freshApp.request(`/api/documents?route=${encodeURIComponent(readmeUrl)}`);
     expect(doc.status).toBe(200);
     const body = (await doc.json()) as { found: boolean; artifact: { title: string } };

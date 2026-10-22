@@ -99,13 +99,13 @@ describe('buildSketchesViewModel', () => {
     ref('.planning/sketches/003-gamma/index.html'),
   ];
 
-  it('lists manifest rows, folder-only sketches and folderless rows in number order', () => {
+  it('lists manifest rows, folder-only sketches and folderless rows newest first', () => {
     const model = buildSketchesViewModel({ manifestBody, artifacts });
     expect(model.available).toBe(true);
     expect(model.manifestUrl).toBe(artifacts[0].key);
-    expect(model.sketches.map((s) => s.number)).toEqual(['001', '002', '003', '005']);
+    expect(model.sketches.map((s) => s.number)).toEqual(['005', '003', '002', '001']);
 
-    const [one, two, three, five] = model.sketches;
+    const [five, three, two, one] = model.sketches;
     expect(one.viewUrl).toBe('/sketches/001-alpha/');
     expect(one.readmeUrl).toBe(artifacts[1].key);
     expect(two.viewUrl).toBeNull();
@@ -167,7 +167,7 @@ describe('buildSketchesViewModel', () => {
     });
     expect(model.available).toBe(true);
     expect(model.manifestUrl).toBeNull();
-    expect(model.sketches.map((s) => s.name)).toEqual(['a', 'b']);
+    expect(model.sketches.map((s) => s.name)).toEqual(['b', 'a']);
   });
 
   it('matches by numeric prefix, falls back to name when ambiguous, and claims a folder once', () => {
