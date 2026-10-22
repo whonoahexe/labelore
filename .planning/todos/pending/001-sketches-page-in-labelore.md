@@ -17,10 +17,18 @@ Promoted from quick note captured on 2026-10-23 03:11 (`.planning/notes/2026-10-
 
 ## Acceptance Criteria
 
-- [ ] A Sketches page lists every sketch from `.planning/sketches/MANIFEST.md` with number, name, design question, winner and tags
-- [ ] Each sketch's README.md renders as a document page (question, intake, variants, winner)
-- [ ] A View button opens the sketch, served read-only at `/sketches/<folder>/` from the target project
-- [ ] The sketch route serves only files under `.planning/sketches/`; paths that resolve outside it are refused, and nothing is written
-- [ ] The sketch runs in an iframe with `sandbox="allow-scripts"` and no `allow-same-origin`
+- [x] A Sketches page lists every sketch from `.planning/sketches/MANIFEST.md` with number, name, design question, winner and tags
+- [x] Each sketch's README.md renders as a document page (question, intake, variants, winner)
+- [x] A View button opens the sketch, served read-only at `/sketches/<folder>/` from the target project
+- [x] The sketch route serves only files under `.planning/sketches/`; paths that resolve outside it are refused, and nothing is written
+- [x] The sketch runs in an iframe with `sandbox="allow-scripts"` and no `allow-same-origin`
 - [ ] Decided before any public exposure: whether labelore.brkn.me sits behind Cloudflare Access, since sketch data files carry other projects' planning text verbatim
 - [ ] Decided: how Labelore's own sketches are reachable (second instance aimed at this repo, or multi-project targeting)
+
+## Progress
+
+Built in quick task 261023-4wn (2026-10-23): the Sketches page, the per-sketch README link, the
+in-page viewer, and read-only serving at `/sketches/<folder>/` with path containment and a
+sandboxed frame. The two decisions above are still open. Also open: Labelore's own sketches load
+fallback fonts, because `.planning/sketches/themes/fonts` is a symlink that points outside the
+sketches folder and the server refuses it.
