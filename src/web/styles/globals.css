@@ -1804,41 +1804,6 @@ summary.tree-node-row:focus-visible {
   list-style: none;
 }
 
-.milestone-record-section {
-  min-width: 0;
-}
-
-.milestone-record-section h4 {
-  margin: 0 0 var(--space-3);
-  font-size: var(--fs-2);
-  letter-spacing: var(--ls-wide);
-  text-transform: uppercase;
-}
-
-.milestone-record-section .criteria-list {
-  max-width: 80ch;
-  margin: 0;
-  font-size: var(--fs-3);
-  line-height: var(--fs-3--lh);
-}
-
-.milestone-record-more {
-  margin-top: var(--space-3);
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--muted-foreground);
-  cursor: pointer;
-  font-family: var(--font-heading);
-  font-size: var(--fs-2);
-  letter-spacing: var(--ls-wide);
-  text-transform: uppercase;
-}
-
-.milestone-record-more:hover {
-  color: var(--primary);
-}
-
 .notice {
   margin-top: var(--space-8);
   padding: var(--space-6);
