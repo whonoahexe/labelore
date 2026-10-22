@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-22T22:45:15.680Z"
+last_updated: "2026-10-22T22:48:40.441Z"
 last_activity: 2026-10-23
 last_activity_desc: Completed quick task 261016-2j6 (compact discussion-log tables)
-state_head: 2d5acd9a6bed3611264c9b67c88b3abf0e728b79
+state_head: 5b650bbccc2858f26490b4fc3639a02b93fb8b42
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -208,6 +208,7 @@ None.
 | 261023-4wn | Sketches page: list every sketch, view it in a sandboxed frame, serve sketch files read-only | 2026-10-23 | 88f585e | [261023-4wn-sketches-page-in-labelore](./quick/261023-4wn-sketches-page-in-labelore/) |
 | 94 | Sketches page: match the dashboard's top spacing above the title | 2026-10-23 | a88d555 | — |
 | 95 | Sketches page: newest first, no README buttons | 2026-10-23 | 2d5acd9 | — |
+| 96 | History milestones no longer show Stats or Key accomplishments | 2026-10-23 | 5b650bb | — |
 
 ## Deferred Items
 
