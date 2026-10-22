@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 028 — NOTE page</title>
+<link rel="stylesheet" href="../themes/default.css?v=028">
+<style>
+/* Sketch 028: the NOTE page. Shared vocabulary and helpers copied from 027 (build.mjs). A quick-capture note is one verbatim paragraph; every variant lifts its "Decided:" / "Bug:" / "Want:" … clauses and file references, and shows the todo it became. Three page structures: A annotated (reading order kept, a label gutter, refs in the margin), B brief (regrouped by kind: decided, problem, plan, limits), C note → todo (the note beside what it turned into). Explore notes (titled, with headings) render as documents in each frame. Tones: Decided = complete; Bug / Cause / Observed / Suggested = in-flight; everything else quiet. */
+*, *::before, *::after { box-sizing: border-box; }
+:root { --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border)); --missing-border: color-mix(in oklch, var(--missing-fill) 50%, var(--border)); --in-flight-tint: color-mix(in oklch, var(--in-flight-fill) 9%, transparent); --missing-tint: color-mix(in oklch, var(--missing-fill) 9%, transparent); --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border)); --hair: color-mix(in oklch, var(--border) 60%, transparent); }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-5); line-height: var(--lh-normal); padding-top: 3rem; }
+h1, h2, h3, h4, p, ul, ol, dl, dd { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+code { font-family: var(--font-mono); font-size: 0.86em; padding: 0 0.2em; background: color-mix(in oklch, var(--muted) 70%, transparent); overflow-wrap: anywhere; }
+.dark code { background: color-mix(in oklch, var(--foreground) 9%, transparent); }
+strong { font-weight: var(--fw-semibold); }
+#variant-nav { position: fixed; inset: 0 0 auto 0; z-index: 50; display: flex; gap: var(--space-1); align-items: center; padding: var(--space-2) var(--space-4); background: var(--background); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; overflow-x: auto; }
+#variant-nav .lbl { color: var(--muted-foreground); margin-right: var(--space-2); white-space: nowrap; }
+.variant-tab { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; background: none; white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; color: var(--muted-foreground); }
+.variant-tab:hover { color: var(--foreground); background: var(--state-hover); }
+.variant-tab.active { color: var(--primary); border-color: var(--primary-border); background: var(--primary-tint); }
+#frame { margin: 0 auto; container-type: inline-size; background: var(--background); min-height: 100vh; }
+#frame.narrow-frame { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+.shell-header { display: flex; align-items: center; gap: var(--space-4); height: 3.75rem; padding: 0 var(--space-4); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.brand-mark { width: 2.25rem; height: 2.25rem; background: var(--primary); display: grid; place-items: center; color: white; font-weight: 700; }
+.page { width: min(80rem, 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); display: grid; gap: var(--space-10); grid-template-columns: minmax(0, 1fr); }
+.page > * { min-width: 0; }
+
+/* ---------- shared vocabulary ---------- */
+.eyebrow { color: var(--primary); font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+.kicker { color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.muted { color: var(--muted-foreground); }
+.mono { font-family: var(--font-mono); }
+.chip { display: inline-flex; align-items: center; gap: var(--space-1); padding: 0.1rem var(--space-1-5); border: 1px solid var(--border); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); white-space: nowrap; background: none; }
+.chip[data-tone='complete'] { color: var(--primary); border-color: var(--primary-border); background: var(--primary-tint); }
+.chip[data-tone='in-flight'] { color: var(--in-flight-fill); border-color: var(--in-flight-border); }
+.chip[data-tone='missing'] { color: var(--missing-fill); border-color: var(--missing-border); }
+button.chip:hover { border-color: var(--primary-border); color: var(--foreground); }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-1-5); align-items: center; }
+.link-btn { padding: 0; border: 0; background: none; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.link-btn:hover { color: var(--primary); }
+.md { display: grid; gap: var(--space-3); font-size: var(--fs-4); line-height: var(--lh-relaxed); min-width: 0; }
+.md p, .md li { overflow-wrap: anywhere; }
+.md ul, .md ol { padding-left: var(--space-5); display: grid; gap: var(--space-1-5); }
+.md ul.checks { list-style: none; padding-left: 0; }
+.md pre { margin: 0; padding: var(--space-3) var(--space-4); background: var(--sidebar); border: 1px solid var(--border); overflow-x: auto; font-size: var(--fs-2); line-height: 1.6; }
+.md pre code { background: none; padding: 0; overflow-wrap: normal; white-space: pre; }
+.md blockquote { margin: 0; padding-left: var(--space-3); border-left: 2px solid var(--border); color: var(--muted-foreground); }
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--border); }
+.md table { border-collapse: collapse; width: 100%; font-size: var(--fs-3); }
+.md th, .md td { text-align: left; padding: var(--space-1-5) var(--space-2-5); border-bottom: 1px solid var(--border); vertical-align: top; }
+.md h4 { font-family: var(--font-heading); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); margin-top: var(--space-2); }
+.clamp3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.ref { padding: 0 var(--space-1); border: 1px solid var(--primary-border); background: none; font-family: var(--font-mono); font-size: 0.84em; color: var(--primary); }
+.ref:hover { background: var(--primary-tint); }
+
+/* checklist squares (read only) */
+.ck { display: grid; grid-template-columns: 1rem minmax(0, 1fr); gap: var(--space-2-5); align-items: start; }
+.ck::before { content: ''; width: 0.8rem; height: 0.8rem; margin-top: 0.35em; border: 1.5px solid var(--muted-foreground); }
+.ck[data-done='true']::before { background: var(--primary); border-color: var(--primary); }
+.ck[data-done='true'] > span { color: var(--muted-foreground); }
+
+/* header (shared) */
+.meta-row { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-5); align-items: center; justify-content: space-between; }
+.meta-left { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); align-items: baseline; }
+.date { font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.date b { color: var(--foreground); font-weight: var(--fw-medium); }
+.doc-tools { display: flex; gap: var(--space-4); align-items: center; }
+.icon-btn { display: grid; place-items: center; width: 2rem; height: 2rem; padding: 0; border: 0; background: none; color: var(--muted-foreground); }
+.icon-btn:hover { color: var(--foreground); background: var(--state-hover); }
+.seg { display: inline-flex; }
+.seg button { padding: var(--space-1) var(--space-3); border: 0; background: none; font-family: var(--font-mono); font-size: var(--fs-4); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.seg button:hover { color: var(--foreground); }
+.seg button[aria-pressed='true'] { color: var(--foreground); background: color-mix(in oklch, var(--foreground) 12%, transparent); }
+html:not(.dark) .seg button[aria-pressed='true'] { background: color-mix(in oklch, var(--muted) 85%, transparent); }
+.disp { font-family: var(--font-sans); font-size: var(--fs-display-3); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); font-weight: var(--fw-medium); max-width: 22ch; overflow-wrap: anywhere; }
+.disp.long { font-size: var(--fs-display-1); line-height: 1.05; letter-spacing: var(--ls-tight); max-width: 34ch; }
+
+/* severity pip — same squares as the dashboard's On deck todo rows, tones from ## Tones */
+.pip { display: inline-flex; align-items: center; gap: var(--space-1-5); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); white-space: nowrap; }
+.pip i { flex: none; width: 0.6rem; height: 0.6rem; border: 1.5px solid currentColor; }
+.pip[data-sev='hi'] { color: var(--missing-fill); } .pip[data-sev='hi'] i { background: currentColor; }
+.pip[data-sev='mid'] { color: var(--in-flight-fill); } .pip[data-sev='mid'] i { background: currentColor; }
+.pip[data-sev='none'] i { border-style: dashed; }
+.pip .w { color: var(--muted-foreground); letter-spacing: 0; text-transform: none; }
+
+/* files */
+.file { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); align-items: baseline; font-family: var(--font-mono); font-size: var(--fs-3); overflow-wrap: anywhere; }
+.file .dir { color: var(--muted-foreground); }
+.file .rng { font-size: var(--fs-2); color: var(--muted-foreground); white-space: nowrap; }
+
+/* note preview (relatives) */
+.nprev { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-4); border: 1px solid var(--border); border-left: 3px solid var(--muted-foreground); background: var(--card); font-size: var(--fs-3); line-height: var(--lh-relaxed); }
+.nprev .nh { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-1) var(--space-3); align-items: baseline; }
+.nprev .nt { overflow-wrap: anywhere; }
+.nprev .nt b { font-weight: var(--fw-medium); }
+.nprev .nf { display: flex; gap: var(--space-4); }
+
+/* back matter, source, modal */
+.source-only { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); align-items: center; padding: var(--space-3) 0; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border); }
+.source-only ul { display: flex; flex-wrap: wrap; gap: var(--space-1-5); margin: 0; padding: 0; list-style: none; }
+.raw { margin: 0; border: 1px solid var(--border); background: var(--sidebar); font-family: var(--font-mono); font-size: var(--fs-2); line-height: 1.6; overflow-x: auto; padding: var(--space-3) 0; }
+.raw span { display: block; padding: 0 var(--space-4) 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.raw span::before { content: attr(data-n); display: inline-block; width: 3.5rem; padding-right: var(--space-3); text-align: right; color: var(--muted-foreground); opacity: .6; user-select: none; }
+.raw span.hit { background: var(--primary-tint); }
+dialog.modal { padding: 0; border: 1px solid var(--border); background: var(--card); color: var(--foreground); width: min(44rem, calc(100vw - 2rem)); max-height: min(80vh, 46rem); }
+dialog.modal::backdrop { background: color-mix(in oklch, var(--foreground) 22%, transparent); }
+.m-head { position: sticky; top: 0; display: flex; justify-content: space-between; gap: var(--space-4); align-items: baseline; padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--border); background: var(--card); }
+.m-head h3 { font-family: var(--font-mono); font-size: var(--fs-4); font-weight: var(--fw-medium); overflow-wrap: anywhere; }
+.m-body { padding: var(--space-4) var(--space-5) var(--space-5); display: grid; gap: var(--space-3); }
+
+
+
+/* clause labels */
+.lbl { display: inline-flex; align-items: center; padding: 0.05rem var(--space-1-5); border: 1px solid var(--border); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); white-space: nowrap; }
+.lbl[data-tone='complete'] { color: var(--primary); border-color: var(--primary-border); background: var(--primary-tint); }
+.lbl[data-tone='in-flight'] { color: var(--in-flight-fill); border-color: var(--in-flight-border); }
+.fref { margin: 0; line-height: inherit; text-transform: none; letter-spacing: 0; font-family: var(--font-mono); font-size: 0.86em; padding: 0 0.15em; border-bottom: 1px dotted var(--muted-foreground); background: none; border-top: 0; border-left: 0; border-right: 0; color: inherit; }
+button.fref:hover { color: var(--primary); border-bottom-color: var(--primary); }
+.fref.hl { background: var(--primary-tint); color: var(--primary); }
+.idf { font-family: var(--font-mono); font-size: 0.86em; }
+.note-title { font-size: var(--fs-display-1); line-height: 1.1; letter-spacing: var(--ls-tight); font-weight: var(--fw-medium); max-width: 32ch; overflow-wrap: anywhere; }
+.note-title.short { font-size: var(--fs-display-3); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); max-width: 20ch; }
+.lede-ctx { font-size: var(--fs-fluid-1); line-height: 1.5; color: var(--muted-foreground); max-width: 60ch; }
+.whole { padding: var(--space-3) var(--space-4); border: 1px dashed var(--border); color: var(--muted-foreground); font-size: var(--fs-4); justify-self: start; }
+
+/* todo card (relative) */
+.tcard { display: grid; gap: var(--space-2-5); padding: var(--space-4) var(--space-5); border: 1px solid var(--border); border-top: 3px solid var(--in-flight-fill); background: var(--card); }
+.tcard[data-s='done'] { border-top-color: var(--primary); }
+.tcard[data-s='none'] { border-top: 1px dashed var(--border); background: none; }
+.tcard h3 { font-size: var(--fs-5); font-weight: var(--fw-medium); line-height: 1.35; overflow-wrap: anywhere; }
+.tcard .row { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); align-items: center; }
+.tcard .res { font-size: var(--fs-3); color: var(--muted-foreground); line-height: var(--lh-relaxed); overflow-wrap: anywhere; }
+.tcard .sib { display: grid; gap: var(--space-1); padding-top: var(--space-2-5); border-top: 1px solid var(--hair); font-size: var(--fs-3); }
+.tcard .sib button { padding: 0; border: 0; background: none; text-align: left; color: var(--foreground); overflow-wrap: anywhere; }
+.tcard .sib button:hover { color: var(--primary); }
+.tcard .none { font-size: var(--fs-4); color: var(--muted-foreground); }
+
+/* ============ A — annotated ============ */
+.a-grid { display: grid; grid-template-columns: minmax(0, 1fr) 18rem; gap: var(--space-fluid-8); align-items: start; }
+@container (max-width: 56rem) { .a-grid { grid-template-columns: minmax(0, 1fr); } }
+.a-grid > * { min-width: 0; }
+.clauses { display: grid; border-top: 1px solid var(--border); }
+.clause { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: var(--space-2) var(--space-5); padding: var(--space-4) 0; border-bottom: 1px solid var(--hair); }
+@container (max-width: 40rem) { .clause { grid-template-columns: minmax(0, 1fr); } }
+.clause .g { padding-top: 0.3em; }
+.clause .t { font-size: var(--fs-5); line-height: var(--lh-relaxed); overflow-wrap: anywhere; }
+.clause.lead .t { font-size: var(--fs-fluid-1); }
+.clause:target, .clause.flash { background: var(--primary-tint); }
+.margin { position: sticky; top: 4rem; display: grid; gap: var(--space-6); }
+.margin section { display: grid; gap: var(--space-2); }
+.margin .refl { display: grid; gap: var(--space-1); }
+.margin .refl button { display: flex; justify-content: space-between; gap: var(--space-2); padding: var(--space-1) 0; border: 0; border-bottom: 1px solid var(--hair); background: none; text-align: left; font-family: var(--font-mono); font-size: var(--fs-2); color: var(--foreground); overflow-wrap: anywhere; }
+.margin .refl button span { color: var(--muted-foreground); }
+.margin .refl button:hover, .margin .refl button.on { color: var(--primary); }
+.verb-toggle { justify-self: start; }
+.verbatim { padding: var(--space-5) var(--space-6); border: 1px solid var(--border); background: var(--card); font-size: var(--fs-5); line-height: var(--lh-relaxed); overflow-wrap: anywhere; max-width: 72ch; }
+.toc { display: grid; border-top: 1px solid var(--border); }
+.toc button { padding: var(--space-1-5) 0; border: 0; border-bottom: 1px solid var(--hair); background: none; text-align: left; font-size: var(--fs-3); color: var(--muted-foreground); }
+.toc button:hover { color: var(--primary); }
+.doc-md .md { font-size: var(--fs-5); max-width: 74ch; }
+.doc-md .md h4 { scroll-margin-top: 4rem; font-family: var(--font-mono); font-size: var(--fs-fluid-1); font-weight: var(--fw-medium); letter-spacing: var(--ls-tight); text-transform: none; color: var(--foreground); margin-top: var(--space-6); padding-bottom: var(--space-2); border-bottom: 1px solid var(--border); }
+
+/* ============ B — brief ============ */
+.b-head { display: grid; gap: var(--space-5); }
+.b-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+@container (max-width: 52rem) { .b-groups { grid-template-columns: minmax(0, 1fr); } }
+.grp { display: grid; gap: var(--space-3); align-content: start; padding: var(--space-5); border: 1px solid var(--border); background: var(--card); }
+.grp[data-g='decided'] { border-left: 3px solid var(--primary); grid-column: 1 / -1; }
+.grp[data-g='problem'] { border-left: 3px solid var(--in-flight-fill); }
+.grp[data-g='plan'] { border-left: 3px solid var(--foreground); }
+.grp[data-g='limits'] { border-left: 3px dashed var(--border); }
+.grp > header { display: flex; justify-content: space-between; gap: var(--space-3); align-items: baseline; }
+.grp h2 { font-family: var(--font-mono); font-size: var(--fs-5); font-weight: var(--fw-medium); }
+.grp ul { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--space-3); }
+.grp li { display: grid; gap: var(--space-1); font-size: var(--fs-4); line-height: var(--lh-relaxed); overflow-wrap: anywhere; }
+.grp[data-g='decided'] li { font-size: var(--fs-5); }
+.b-refs { display: flex; flex-wrap: wrap; gap: var(--space-1-5); align-items: center; }
+.b-refs .fc { padding: 0.15rem var(--space-2); border: 1px solid var(--border); background: none; font-family: var(--font-mono); font-size: var(--fs-2); color: var(--foreground); }
+.b-refs .fc:hover { border-color: var(--primary-border); color: var(--primary); }
+.b-foot { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-fluid-8); align-items: start; }
+@container (max-width: 52rem) { .b-foot { grid-template-columns: minmax(0, 1fr); } }
+.b-foot > section { display: grid; gap: var(--space-3); }
+details.verb { border: 1px solid var(--border); }
+details.verb > summary { padding: var(--space-3) var(--space-4); cursor: pointer; font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+details.verb > summary:hover { color: var(--primary); }
+details.verb > div { padding: 0 var(--space-4) var(--space-4); font-size: var(--fs-4); line-height: var(--lh-relaxed); overflow-wrap: anywhere; }
+.secgrid { display: grid; gap: 0; }
+details.fold { border-top: 1px solid var(--border); }
+details.fold:last-child { border-bottom: 1px solid var(--border); }
+details.fold > summary { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) 0; cursor: pointer; list-style: none; font-size: var(--fs-5); }
+details.fold > summary::-webkit-details-marker { display: none; }
+details.fold > summary::after { content: '+'; font-family: var(--font-mono); color: var(--muted-foreground); }
+details.fold[open] > summary::after { content: '–'; }
+details.fold > summary:hover { color: var(--primary); }
+details.fold > summary .n { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); margin-left: auto; margin-right: var(--space-3); }
+details.fold > .md { padding-bottom: var(--space-5); }
+
+/* ============ C — note → todo ============ */
+.c-split { display: grid; grid-template-columns: minmax(0, 1.25fr) 3rem minmax(0, 1fr); align-items: start; }
+@container (max-width: 60rem) { .c-split { grid-template-columns: minmax(0, 1fr); } .c-arrow { transform: rotate(90deg); justify-self: center; padding: var(--space-3) 0; } }
+.c-split > * { min-width: 0; }
+.c-pane { display: grid; gap: var(--space-4); padding: var(--space-6); border: 1px solid var(--border); background: var(--card); }
+.c-pane.todo { border-top: 3px solid var(--in-flight-fill); position: sticky; top: 4rem; }
+.c-pane.todo[data-s='done'] { border-top-color: var(--primary); }
+.c-pane.todo[data-s='none'] { border: 1px dashed var(--border); background: none; }
+.c-arrow { align-self: center; justify-self: center; font-family: var(--font-mono); font-size: var(--fs-fluid-3); color: var(--muted-foreground); }
+.c-flow { font-size: var(--fs-5); line-height: 1.9; overflow-wrap: anywhere; }
+.c-flow .lbl { margin-right: var(--space-1); vertical-align: 0.1em; }
+.c-flow .cl { display: inline; }
+.c-flow .cl[data-tone='complete'] { background: linear-gradient(transparent 62%, var(--primary-tint) 62%); }
+.c-todo-title { font-size: var(--fs-fluid-3); line-height: var(--lh-snug); letter-spacing: var(--ls-tight); font-weight: var(--fw-medium); overflow-wrap: anywhere; }
+.c-meta { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-2) var(--space-4); font-size: var(--fs-4); }
+.c-meta dt { font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); padding-top: 0.2em; }
+.c-tabs { display: flex; gap: var(--space-1); flex-wrap: wrap; }
+.c-tabs button { padding: var(--space-1) var(--space-2-5); border: 1px solid var(--border); background: none; font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); }
+.c-tabs button[aria-pressed='true'] { color: var(--foreground); border-color: var(--primary-border); background: var(--primary-tint); }
+.kept { display: grid; gap: var(--space-2); padding-top: var(--space-3); border-top: 1px solid var(--hair); }
+.kept .row { display: grid; grid-template-columns: 1rem minmax(0, 1fr); gap: var(--space-2); font-size: var(--fs-3); line-height: var(--lh-relaxed); overflow-wrap: anywhere; }
+.kept .row::before { content: '✓'; color: var(--primary); font-family: var(--font-mono); }
+.kept .row.changed::before { content: '≠'; color: var(--in-flight-fill); }
+</style>
+</head>
+<body>
+<nav id="variant-nav">
+  <span class="lbl" style="border:0;padding:0;margin-right:var(--space-2)">Sketch 028 · NOTE ·</span>
+  <button class="variant-tab" data-variant="a">A: Annotated ★ Selected</button>
+  <button class="variant-tab" data-variant="b">B: Brief</button>
+  <button class="variant-tab" data-variant="c">C: Note → todo</button>
+</nav>
+<div id="frame"><div id="root"></div></div>
+<dialog class="modal" id="modal"></dialog>
+<div id="sketch-tools" style="position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:12px;background:rgba(0,0,0,0.78);color:white;padding:8px 10px;opacity:0.55;transition:opacity 0.2s;display:grid;gap:6px;max-width:calc(100vw - 24px)" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.55'">
+  <div>Doc: <span id="doc-btns"></span></div>
+  <div>Theme: <button data-theme="light">Light</button><button data-theme="dark">Dark</button></div>
+  <div>Width: <button data-width="390">Phone</button><button data-width="820">Tablet</button><button data-width="full">Desktop</button></div>
+</div>
+<style>
+#sketch-tools button { background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 2px 7px; margin: 2px 0 0 3px; font: inherit; cursor: pointer; }
+#sketch-tools button.on { background: #c2410c; border-color: #c2410c; }
+</style>
+<script src="./data.js?v=1"></script>
+<script>
+const DOCS = window.DATA;
+const Q = new URLSearchParams(location.search);
+const state = { variant: ['a', 'b', 'c'].includes(Q.get('v')) ? Q.get('v') : 'a', doc: DOCS[Q.get('doc')] ? Q.get('doc') : 'dcrop', theme: Q.get('theme') === 'light' ? 'light' : 'dark', width: Q.get('width') ?? 'full', mode: 'view', verbatim: false, ref: null, todo: 0 };
+const NOW = new Date('2026-10-23T12:00:00');
+const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+// Inline markdown, plus note references ([[slug]] and notes/…md) as buttons that preview the note.
+const inline = s => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/(^|[^*\w])\*([^*\n<]+)\*(?!\w)/g, '$1<em>$2</em>')
+  .replace(/\[\[([\w-]+)\]\]/g, (m, s) => `<button class="ref" data-note="notes/${s}.md">${s}</button>`)
+  .replace(/(^|[\s(])((?:\.planning\/)?notes\/[\w.-]+\.md)/g, (m, a, p) => `${a}<button class="ref" data-note="${p.replace(/^\.planning\//, '')}">${p.replace(/^\.planning\//, '')}</button>`);
+function md(src) {
+  const lines = String(src ?? '').split('\n'), out = []; let i = 0;
+  const isTbl = k => /^\s*\|/.test(lines[k] ?? '') && /^\s*\|[\s:|-]+\|\s*$/.test(lines[k + 1] ?? '');
+  const cells = l => l.trim().replace(/^\||\|$/g, '').split(/(?<!\\)\|/).map(c => c.trim());
+  while (i < lines.length) {
+    const l = lines[i];
+    if (!l.trim() || /^---\s*$/.test(l)) { i++; continue; }
+    if (/^```/.test(l)) { const b = []; i++; while (i < lines.length && !/^```/.test(lines[i])) b.push(lines[i++]); i++; out.push(`<pre><code>${esc(b.join('\n'))}</code></pre>`); continue; }
+    if (/^>\s?/.test(l)) { const b = []; while (i < lines.length && /^>\s?/.test(lines[i])) b.push(lines[i++].replace(/^>\s?/, '')); out.push(`<blockquote>${inline(b.join(' '))}</blockquote>`); continue; }
+    if (/^#{1,6}\s/.test(l)) { out.push(`<h4>${inline(l.replace(/^#+\s/, ''))}</h4>`); i++; continue; }
+    if (isTbl(i)) { const h = cells(l); i += 2; const rows = []; while (i < lines.length && /^\s*\|/.test(lines[i])) rows.push(cells(lines[i++])); out.push(`<div class="tbl-wrap"><table><thead><tr>${h.map(c => `<th>${inline(c)}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`); continue; }
+    if (/^\s*([-*]|\d+\.)\s/.test(l)) { const ord = /^\s*\d+\./.test(l); const items = []; while (i < lines.length && (/^\s*([-*]|\d+\.)\s/.test(lines[i]) || (/^\s{2,}\S/.test(lines[i]) && items.length))) { if (/^\s*([-*]|\d+\.)\s/.test(lines[i]) && !/^\s{4,}/.test(lines[i])) items.push(lines[i].replace(/^\s*([-*]|\d+\.)\s/, '')); else items[items.length - 1] += ' ' + lines[i].trim(); i++; }
+      const checks = items.every(x => /^\[[ xX]\]\s/.test(x));
+      out.push(checks ? `<ul class="checks">${items.map(x => `<li class="ck" data-done="${/^\[[xX]\]/.test(x)}"><span>${inline(x.slice(4))}</span></li>`).join('')}</ul>` : `<${ord ? 'ol' : 'ul'}>${items.map(x => `<li>${inline(x)}</li>`).join('')}</${ord ? 'ol' : 'ul'}>`); continue; }
+    const p = []; while (i < lines.length && lines[i].trim() && !/^(```|#{1,6}\s|>|\s*([-*]|\d+\.)\s)/.test(lines[i]) && !isTbl(i)) p.push(lines[i++].trim());
+    out.push(`<p>${inline(p.join(' '))}</p>`);
+  }
+  return `<div class="md">${out.join('')}</div>`;
+}
+const ICON_LINK = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" x2="16" y1="12" y2="12"/></svg>';
+const shell = () => `<div class="shell-header"><span class="brand-mark">L</span><span>Labelore</span></div>`;
+
+/* ---------- model ---------- */
+const parseD = s => { if (!s) return null; const d = new Date(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(s) ? s.replace(' ', 'T') : s); return isNaN(d) ? null : d; };
+const fmtD = s => { const d = parseD(s); return d ? d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : s; };
+const fmtDT = s => { const d = parseD(s); if (!d) return s; const t = /\d{2}:\d{2}/.test(s) ? ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : ''; return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + t; };
+const daysSince = s => { const d = parseD(s); return d ? Math.max(0, Math.round((NOW - d) / 864e5)) : null; };
+const ago = s => { const n = daysSince(s); return n == null ? '' : n === 0 ? 'today' : n === 1 ? 'yesterday' : `${n} days ago`; };
+const sevOf = w => /^(blocker|critical|major|high|p0|p1)$/i.test(w ?? '') ? 'hi' : /^(medium|moderate|normal|p2)$/i.test(w ?? '') ? 'mid' : /^(minor|low|cosmetic|trivial|p3|p4)$/i.test(w ?? '') ? 'lo' : 'none';
+const SEV_LABEL = { hi: 'High', mid: 'Medium', lo: 'Low', none: 'Unrated' };
+const plural = (n, w) => n == null ? "?" : n === 0 && w === "day" ? "less than a day" : `${n} ${w}${n === 1 ? "" : "s"}`;
+const cap = s => String(s ?? '').replace(/^./, c => c.toUpperCase());
+// The written value leads; the three-level reading is the pip.
+function pip(d) {
+  const w = d.severity ?? d.priority; const s = sevOf(w);
+  return `<span class="pip" data-sev="${s}" title="${esc(w ? (d.severity ? 'severity: ' : 'priority: ') + w : 'No severity recorded')}"><i></i>${w ? esc(cap(w)) : 'Unrated'}${d.severity && d.priority ? ` <span class="w">· priority ${esc(d.priority)}</span>` : ''}</span>`;
+}
+const area = d => d.area ?? d.theme;
+const quickDate = id => { const m = id?.match(/^(\d{2})(\d{2})(\d{2})-/); return m ? `20${m[1]}-${m[2]}-${m[3]}` : null; };
+
+
+/* ---------- lifting a quick note ---------- */
+// A clause starts at a sentence that opens with a short "Label:" (Decided:, Bug:, Want:, Off limits:,
+// Decided 2026-10-21:) or with a few known openers (Today …, Estimated …, Batch with …). Sentences
+// without one continue the clause before them; whatever comes before the first label is the lead.
+const GROUP = { decided: 'decided', bug: 'problem', cause: 'problem', today: 'problem', observed: 'problem', problem: 'problem', fix: 'plan', want: 'plan', wanted: 'plan', how: 'plan', ui: 'plan', output: 'plan', suggested: 'plan', plan: 'plan', limits: 'limits', 'off limits': 'limits', 'known gap': 'limits', 'preset constraint': 'limits', estimated: 'limits', batch: 'limits' };
+const TONE = { decided: 'complete', bug: 'in-flight', cause: 'in-flight', observed: 'in-flight', suggested: 'in-flight' };
+const GROUP_TITLE = { decided: 'Decided', problem: 'The problem', plan: 'What to do', limits: 'Limits and constraints', other: 'Also' };
+const OPENERS = [[/^Today\b/, 'Today'], [/^Estimated\b/, 'Estimated'], [/^Batch with\b/, 'Batch']];
+function sentences(text) {
+  const prot = text.replace(/\b(e\.g|i\.e|etc|vs|approx)\./g, '$1․');
+  return prot.split(/(?<=[.!?])\s+(?=[A-Z(“"])/).map(s => s.replace(/․/g, '.').trim()).filter(Boolean);
+}
+function lift(text) {
+  const out = []; let cur = null;
+  for (const s of sentences(text.replace(/\s+/g, ' ').trim())) {
+    const m = s.match(/^([A-Z][A-Za-z]*(?: [a-z]+){0,2})( \d{4}-\d{2}-\d{2})?:\s+(.*)$/);
+    const op = OPENERS.find(([re]) => re.test(s));
+    if (m && m[1].length <= 22) { cur = { label: m[1], date: m[2]?.trim() ?? null, text: m[3] }; out.push(cur); }
+    else if (op) { cur = { label: op[1], date: null, text: s }; out.push(cur); }
+    else if (cur) cur.text += ' ' + s;
+    else { cur = { label: null, text: s }; out.push(cur); }
+  }
+  return out.map((c, i) => ({ ...c, i, key: (c.label ?? '').toLowerCase(), group: c.label ? (GROUP[c.label.toLowerCase()] ?? 'other') : 'lead', tone: TONE[(c.label ?? '').toLowerCase()] ?? null }));
+}
+// File paths, file names and code identifiers in a note's plain text.
+const REF_RE = /((?:[\w.-]+\/)+[\w.-]+\.[a-z]{1,5}(?::\d+(?:-\d+)?)?|\b[\w-]+\.(?:ts|tsx|js|mjs|rs|md|json|css|py)(?::\d+)?\b)|(\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+\b|\b[a-z]+(?:_[a-z0-9]+){2,}\b|\b[a-z]+[A-Z]\w*\(\)?)/g;
+function refsOf(text) { const files = new Map(); for (const m of text.matchAll(REF_RE)) if (m[1]) files.set(m[1], (files.get(m[1]) ?? 0) + 1); return [...files]; }
+const withRefs = s => esc(s).replace(REF_RE, (m, f, id) => f ? `<button class="fref ${state.ref === f ? 'hl' : ''}" data-ref="${esc(f)}" title="Copy ${esc(f)}">${f}</button>` : `<span class="idf">${id}</span>`);
+const label = c => c.label ? `<span class="lbl" ${c.tone ? `data-tone="${c.tone}"` : ''}>${esc(c.label)}${c.date ? ' · ' + esc(fmtD(c.date)) : ''}</span>` : '';
+
+/* ---------- shared pieces ---------- */
+const isDoc = d => d.kind === 'document';
+const headline = d => isDoc(d) ? d.title : lift(d.body)[0];
+function metaRow(d) {
+  const promoted = d.promoted === true ? `<span class="chip" data-tone="complete">${d.todos.length ? 'Now a todo' : 'Promoted'}</span>` : d.promoted === false ? '<span class="chip">Not promoted</span>' : '';
+  return `<div class="meta-row"><div class="meta-left"><span class="eyebrow">Note · ${esc(d.project)}</span>${d.date ? `<span class="date">Noted <b>${esc(fmtD(d.date))}</b>${/\d{2}:\d{2}/.test(d.date) ? ` · ${esc(d.date.slice(11, 16))}` : ''}</span>` : ''}${promoted}${d.project === 'synthetic' ? '<span class="chip">Synthetic</span>' : ''}</div><div class="doc-tools"><button class="icon-btn" data-copy="${esc(d.path)}" title="Copy path" aria-label="Copy path">${ICON_LINK}</button><div class="seg" role="group" aria-label="Display mode"><button data-mode="view" aria-pressed="${state.mode === 'view'}">View</button><button data-mode="source" aria-pressed="${state.mode === 'source'}">Source</button></div></div></div>`;
+}
+function titleBlock(d) {
+  if (isDoc(d)) return `<h1 class="note-title">${inline(d.title ?? d.path.split('/').pop())}</h1>${d.context ? `<p class="lede-ctx">${inline(d.context)}</p>` : ''}`;
+  const h = lift(d.body)[0];
+  return `<h1 class="note-title ${h.text.length < 70 ? 'short' : ''}">${withRefs(h.label ? `${h.label}: ${h.text}` : h.text)}</h1>`;
+}
+const statusChip = s => s === 'done' ? '<span class="chip" data-tone="complete">Done</span>' : s === 'pending' ? '<span class="chip" data-tone="in-flight">Pending</span>' : '<span class="chip">Unfiled</span>';
+const VIA = { frontmatter: 'Names this note in notes:', 'wiki link': 'Links this note in its text', mentioned: 'Mentions this note in its text', promoted: 'Promoted from this note word for word' };
+function todoCard(d, t) {
+  if (!t) return `<article class="tcard" data-s="none"><span class="kicker">${d.promoted ? 'Promoted' : 'Still a note'}</span><p class="none">${d.promoted ? 'Marked <code>promoted: true</code>, but no todo names this note or carries its text.' : isDoc(d) ? 'No todo names this note.' : 'Not promoted to a todo.'}</p></article>`;
+  return `<article class="tcard" data-s="${t.status}"><div class="row"><span class="kicker">${t.via === 'frontmatter' || t.via === 'promoted' ? 'Became a todo' : 'Related todo'}</span>${statusChip(t.status)}${pip({ severity: t.weight })}${t.area ? `<span class="chip">${esc(t.area)}</span>` : ''}</div><h3>${inline(t.title)}</h3><span class="kicker" style="font-weight:400">${esc(VIA[t.via] ?? t.via)}</span>${t.resolution ? `<p class="res clamp3">${inline(t.resolution.replace(/\n+\s*[-*]\s/g, ' · ').replace(/\n+/g, ' '))}</p>` : ''}${t.batchedWith.length ? `<div class="sib"><span class="kicker">Batched with</span>${t.batchedWith.map(n => `<button data-sibling="${esc(n.path)}">${esc(fmtDT(n.date) ?? '')} · ${inline((n.title ?? n.text).slice(0, 110))}${(n.title ?? n.text).length > 110 ? '…' : ''}</button>`).join('')}</div>` : ''}<button class="link-btn" data-todo="${esc(t.path)}" style="justify-self:start">Open todo ↗</button></article>`;
+}
+function alsoRow() { return `<nav class="source-only" aria-label="Also in this file"><span class="kicker">Also in this file</span><ul><li><button class="chip" data-src="1">Frontmatter</button></li></ul></nav>`; }
+function sourceView(d) { return `<pre class="raw">${d.raw.split('\n').map((l, i) => `<span data-n="${i + 1}" class="${state.hit && i + 1 >= state.hit[0] && i + 1 <= state.hit[1] ? 'hit' : ''}">${esc(l) || ' '}</span>`).join('')}</pre>`; }
+const headings = d => d.body.split('\n').filter(l => /^#{2,3}\s/.test(l)).map(l => l.replace(/^#+\s/, ''));
+const docBody = d => d.body.replace(/^#\s.*\n/, '');
+function docSections(d) { const out = []; let cur = { h: null, lines: [] }; for (const l of docBody(d).split('\n')) { if (/^##\s/.test(l)) { out.push(cur); cur = { h: l.replace(/^##\s/, ''), lines: [] }; } else cur.lines.push(l); } out.push(cur); return out.filter(s => s.h || s.lines.join('').trim()); }
+
+/* ============ A — annotated ============ */
+function viewA(d) {
+  const head = `<header style="display:grid;gap:var(--space-5)">${metaRow(d)}${titleBlock(d)}</header>`;
+  const todos = d.todos.length ? d.todos.map(t => todoCard(d, t)).join('') : todoCard(d, null);
+  if (isDoc(d)) {
+    const hs = headings(d);
+    return `${shell()}<div class="page">${head}<div class="a-grid"><div class="doc-md">${md(docBody(d))}</div><aside class="margin">${hs.length ? `<section><span class="kicker">In this note · ${hs.length}</span><div class="toc">${hs.map(h => `<button data-head="${esc(h)}">${inline(h)}</button>`).join('')}</div></section>` : ''}<section>${todos}</section></aside></div>${alsoRow()}</div>`;
+  }
+  const cs = lift(d.body); const refs = refsOf(d.body);
+  const rows = cs.slice(1);
+  const body = state.verbatim
+    ? `<p class="verbatim">${withRefs(d.body)}</p>`
+    : rows.length ? `<div class="clauses">${rows.map(c => `<div class="clause" id="c${c.i}"><span class="g">${label(c) || '<span class="kicker">Then</span>'}</span><p class="t">${withRefs(c.text)}</p></div>`).join('')}</div>` : `<p class="whole">That’s the whole note — one line.</p>`;
+  return `${shell()}<div class="page">${head}<div class="a-grid"><div style="display:grid;gap:var(--space-4)">${rows.length ? `<div class="seg verb-toggle" role="group" aria-label="Note view"><button data-verb="0" aria-pressed="${!state.verbatim}">Lifted</button><button data-verb="1" aria-pressed="${state.verbatim}">As written</button></div>` : ''}${body}</div><aside class="margin"><section>${todos}</section>${refs.length ? `<section><span class="kicker">Mentions · ${refs.length}</span><div class="refl">${refs.map(([f, n]) => `<button class="${state.ref === f ? 'on' : ''}" data-ref="${esc(f)}">${esc(f)}${n > 1 ? `<span>×${n}</span>` : ''}</button>`).join('')}</div></section>` : ''}</aside></div>${alsoRow()}</div>`;
+}
+
+/* ============ B — brief ============ */
+function viewB(d) {
+  const head = `<header class="b-head">${metaRow(d)}${titleBlock(d)}</header>`;
+  const todos = d.todos.length ? d.todos.map(t => todoCard(d, t)).join('') : todoCard(d, null);
+  if (isDoc(d)) {
+    const secs = docSections(d);
+    const intro = secs[0] && !secs[0].h ? secs.shift() : null;
+    return `${shell()}<div class="page">${head}${intro ? `<div class="doc-md">${md(intro.lines.join('\n'))}</div>` : ''}<div class="secgrid">${secs.map((s, i) => `<details class="fold" ${i === 0 ? 'open' : ''}><summary>${inline(s.h)}<span class="n">${s.lines.filter(l => l.trim()).length} lines</span></summary>${md(s.lines.join('\n'))}</details>`).join('')}</div><div class="b-foot"><section><span class="kicker">Todos that point here</span>${todos}</section></div>${alsoRow()}</div>`;
+  }
+  const cs = lift(d.body); const rest = cs.slice(1); const refs = refsOf(d.body);
+  const groups = ['decided', 'problem', 'plan', 'limits', 'other'].map(g => [g, rest.filter(c => c.group === g || (g === 'other' && c.group === 'lead'))]).filter(([, cs]) => cs.length);
+  const grid = groups.length ? `<div class="b-groups">${groups.map(([g, cs]) => `<section class="grp" data-g="${g}"><header><h2>${GROUP_TITLE[g]}</h2><span class="kicker">${cs.length}</span></header><ul>${cs.map(c => `<li>${g === 'decided' && !c.date ? '' : `<span>${label(c)}</span>`}<span>${withRefs(c.text)}</span></li>`).join('')}</ul></section>`).join('')}</div>` : `<p class="whole">That’s the whole note — nothing more to lift.</p>`;
+  const refRow = refs.length ? `<div class="b-refs"><span class="kicker" style="margin-right:var(--space-2)">Mentions</span>${refs.map(([f]) => `<button class="fc" data-ref="${esc(f)}">${esc(f)}</button>`).join('')}</div>` : '';
+  return `${shell()}<div class="page">${head}${refRow}${grid}<div class="b-foot"><section><span class="kicker">What it became</span>${todos}</section><section><span class="kicker">As written</span><details class="verb"><summary>The note, word for word · ${d.body.split(/\s+/).length} words</summary><div>${withRefs(d.body)}</div></details></section></div>${alsoRow()}</div>`;
+}
+
+/* ============ C — note → todo ============ */
+function viewC(d) {
+  const ts = d.todos; const t = ts[Math.min(state.todo, ts.length - 1)] ?? null;
+  const head = `<header style="display:grid;gap:var(--space-5)">${metaRow(d)}${isDoc(d) ? titleBlock(d) : ''}</header>`;
+  const left = isDoc(d)
+    ? `<div class="c-pane"><div class="doc-md">${md(docBody(d))}</div></div>`
+    : `<div class="c-pane"><span class="kicker">The note · ${esc(fmtDT(d.date) ?? '')}</span><p class="c-flow">${lift(d.body).map(c => `<span class="cl" ${c.tone ? `data-tone="${c.tone}"` : ''}>${label(c)}${withRefs(c.text)}</span>`).join(' ')}</p></div>`;
+  let right;
+  if (!t) right = `<div class="c-pane todo" data-s="none"><span class="kicker">${d.promoted ? 'Promoted, but untraced' : 'Not a todo yet'}</span><p class="muted" style="font-size:var(--fs-4)">${d.promoted ? 'The note says <code>promoted: true</code>, but no todo in <code>todos/</code> names it or carries its text. It may have gone straight into a quick task or a phase.' : isDoc(d) ? 'No todo names this note.' : 'This note hasn’t been promoted. It stays here until it is.'}</p></div>`;
+  else {
+    // Which of the note's decisions the todo kept, by shared wording (a rough read for the sketch).
+    const words = s => new Set(s.toLowerCase().match(/[a-z]{5,}/g) ?? []);
+    const tw = words(`${t.title} ${t.resolution ?? ''}`);
+    const decided = isDoc(d) ? [] : lift(d.body).filter(c => c.group === 'decided' || c.label === 'Suggested');
+    const kept = decided.map(c => { const w = [...words(c.text)]; const hit = w.filter(x => tw.has(x)).length / Math.max(1, w.length); return { c, ok: hit > 0.12 }; });
+    right = `<div class="c-pane todo" data-s="${t.status}">${ts.length > 1 ? `<div class="c-tabs">${ts.map((x, i) => `<button data-ctodo="${i}" aria-pressed="${x === t}">${esc(x.path.split('/').pop().replace(/\.md$/, ''))}</button>`).join('')}</div>` : ''}<span class="kicker">${t.via === 'frontmatter' || t.via === 'promoted' ? 'Became' : 'Related'} · ${esc(VIA[t.via] ?? t.via)}</span><h2 class="c-todo-title">${inline(t.title)}</h2><dl class="c-meta"><dt>Status</dt><dd>${statusChip(t.status)}</dd>${t.weight ? `<dt>Weight</dt><dd>${pip({ severity: t.weight })}</dd>` : ''}${t.area ? `<dt>Area</dt><dd>${esc(t.area)}</dd>` : ''}</dl>${t.resolution ? `<div style="display:grid;gap:var(--space-2)"><span class="kicker">Resolution</span><p class="res" style="font-size:var(--fs-3);color:var(--muted-foreground);line-height:var(--lh-relaxed)">${inline(t.resolution.replace(/\n+\s*[-*]\s/g, ' · ').replace(/\n+/g, ' ').slice(0, 320))}${t.resolution.length > 320 ? '…' : ''}</p></div>` : ''}${kept.length && t.resolution ? `<div class="kept"><span class="kicker">The note’s calls, in what shipped</span>${kept.map(k => `<div class="row ${k.ok ? '' : 'changed'}">${esc(k.c.text.slice(0, 120))}${k.c.text.length > 120 ? '…' : ''}</div>`).join('')}</div>` : ''}${t.batchedWith.length ? `<div class="kept"><span class="kicker">Batched with</span>${t.batchedWith.map(n => `<button class="link-btn" style="text-transform:none;letter-spacing:0;font-size:var(--fs-3);text-align:left" data-sibling="${esc(n.path)}">${esc((n.title ?? n.text).slice(0, 100))}…</button>`).join('')}</div>` : ''}<button class="link-btn" data-todo="${esc(t.path)}" style="justify-self:start">Open todo ↗</button></div>`;
+  }
+  return `${shell()}<div class="page">${head}<div class="c-split">${left}<span class="c-arrow" aria-hidden="true">→</span>${right}</div>${alsoRow()}</div>`;
+}
+
+/* ---------- render ---------- */
+function render() {
+  const d = DOCS[state.doc];
+  document.getElementById('root').innerHTML = state.mode === 'source' ? `${shell()}<div class="page">${metaRow(d)}${sourceView(d)}</div>` : ({ a: viewA, b: viewB, c: viewC })[state.variant](d);
+  document.documentElement.classList.toggle('dark', state.theme === 'dark');
+  const f = document.getElementById('frame'); f.style.maxWidth = state.width === 'full' ? 'none' : state.width + 'px'; f.classList.toggle('narrow-frame', state.width !== 'full');
+  document.querySelectorAll('.variant-tab').forEach(t => t.classList.toggle('active', t.dataset.variant === state.variant));
+  document.querySelectorAll('#sketch-tools button').forEach(b => b.classList.toggle('on', b.dataset.doc === state.doc || b.dataset.theme === state.theme || b.dataset.width === state.width));
+}
+document.getElementById('doc-btns').innerHTML = Object.entries(DOCS).map(([k, d]) => `<button data-doc="${k}">${esc(d.label)}</button>`).join('');
+function toast(msg) { const t = document.createElement('div'); t.textContent = msg; t.style.cssText = 'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);max-width:min(40rem,90vw);background:var(--foreground);color:var(--background);padding:8px 14px;font-family:var(--font-mono);font-size:var(--fs-2);z-index:10000'; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); }
+document.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t || t.disabled) return; const y = scrollY; const d = DOCS[state.doc];
+  if (t.dataset.variant) { state.variant = t.dataset.variant; state.mode = 'view'; }
+  else if (t.dataset.doc) { state.doc = t.dataset.doc; state.mode = 'view'; state.verbatim = false; state.ref = null; state.todo = 0; }
+  else if (t.dataset.theme) state.theme = t.dataset.theme;
+  else if (t.dataset.width) state.width = t.dataset.width;
+  else if (t.dataset.verb) state.verbatim = t.dataset.verb === '1';
+  else if (t.dataset.ref) { state.ref = state.ref === t.dataset.ref ? null : t.dataset.ref; try { navigator.clipboard.writeText(t.dataset.ref); } catch {} toast('Copied ' + t.dataset.ref); }
+  else if (t.dataset.ctodo) state.todo = +t.dataset.ctodo;
+  else if (t.dataset.head) { const h = [...document.querySelectorAll('.doc-md h4')].find(x => x.textContent === t.textContent); h?.scrollIntoView({ block: 'start' }); return; }
+  else if (t.dataset.sibling) { const k = Object.keys(DOCS).find(k => DOCS[k].path === t.dataset.sibling); if (k) { state.doc = k; state.verbatim = false; state.ref = null; render(); scrollTo(0, 0); } else toast('Not in this sketch’s data: ' + t.dataset.sibling); return; }
+  else if (t.dataset.todo) return toast('Opens the todo page (sketch 027): ' + t.dataset.todo);
+  else if (t.dataset.mode) { state.mode = t.dataset.mode; state.hit = null; render(); scrollTo(0, 0); return; }
+  else if (t.dataset.src) { state.mode = 'source'; state.hit = [1, d.raw.split('\n').indexOf('---', 1) + 1]; render(); return; }
+  else if (t.dataset.copy) { try { navigator.clipboard.writeText(t.dataset.copy); } catch {} return toast('Copied ' + t.dataset.copy); }
+  else return;
+  render(); scrollTo(0, y);
+});
+render();
+</script>
+</body>
+</html>
