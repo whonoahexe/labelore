@@ -1345,6 +1345,7 @@ summary.tree-node-row:focus-visible {
 
 .roadmap-page .page-intro,
 .traceability-page .page-intro,
+.sketches-page .page-intro,
 .project-head {
   margin-top: var(--space-fluid-14);
 }
