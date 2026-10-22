@@ -255,12 +255,25 @@ function DeferredTierDisclosure({
  * never counted in the summary. */
 function ArchivedMilestoneDisclosure({
   archive,
+  defaultOpen,
 }: {
   archive: TraceabilityArchivedMilestone;
+  defaultOpen: boolean;
 }): React.JSX.Element {
+  const detailsRef = useRef<HTMLDetailsElement | null>(null);
+  const openedRef = useRef(false);
+
+  // Opens once on first render when asked to, and only ever assigns true — a disclosure the user
+  // closed stays closed across react-query refetches.
+  useEffect(() => {
+    if (!defaultOpen || openedRef.current) return;
+    openedRef.current = true;
+    if (detailsRef.current) detailsRef.current.open = true;
+  }, [defaultOpen]);
+
   const versionSlug = archive.version.replaceAll(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
   return (
-    <details className="history-milestone">
+    <details className="history-milestone" ref={detailsRef}>
       <summary>
         <ChevronRight aria-hidden="true" />
         <span>
@@ -339,6 +352,9 @@ export function TraceabilityPage(): React.JSX.Element {
   }
 
   const view = traceability.data;
+  // No current requirements but at least one archive: the project is between milestones, so the
+  // 0% headline over nothing is replaced by a note and the newest previous milestone opens.
+  const betweenMilestones = view.groups.length === 0 && view.archivedMilestones.length > 0;
   return (
     <main className="traceability-page page-stack">
       <header className="page-intro">
@@ -353,110 +369,114 @@ export function TraceabilityPage(): React.JSX.Element {
         </div>
       </header>
 
-      <section className="trace-summary" aria-label="Requirement coverage summary">
-        <div className="trace-summary-headline">
-          <div className="trace-coverage-percent">
-            <span className="trace-coverage-percent-value">
-              {view.coverage.completePhasePercent}%
-            </span>
-            <span className="trace-coverage-percent-label">Covered by complete phases</span>
-          </div>
-          <CoverageBar coverage={view.coverage} label="Overall coverage" onlyComplete />
-          <dl className="trace-stat-tiles">
-            <div className="trace-stat-tile" data-bucket="total">
-              <dt>Total</dt>
-              <dd>{view.coverage.total}</dd>
+      {betweenMilestones ? null : (
+        <section className="trace-summary" aria-label="Requirement coverage summary">
+          <div className="trace-summary-headline">
+            <div className="trace-coverage-percent">
+              <span className="trace-coverage-percent-value">
+                {view.coverage.completePhasePercent}%
+              </span>
+              <span className="trace-coverage-percent-label">Covered by complete phases</span>
             </div>
-            {view.coverage.completePhase > 0 ? (
-              <div className="trace-stat-tile" data-bucket="complete">
-                <dt>Complete phase</dt>
-                <dd>{view.coverage.completePhase}</dd>
+            <CoverageBar coverage={view.coverage} label="Overall coverage" onlyComplete />
+            <dl className="trace-stat-tiles">
+              <div className="trace-stat-tile" data-bucket="total">
+                <dt>Total</dt>
+                <dd>{view.coverage.total}</dd>
               </div>
-            ) : null}
-            {view.coverage.inFlightPhase > 0 ? (
-              <div className="trace-stat-tile" data-bucket="in-flight">
-                <dt>In flight</dt>
-                <dd>{view.coverage.inFlightPhase}</dd>
-              </div>
-            ) : null}
-            {view.coverage.missingPhase > 0 ? (
-              <div className="trace-stat-tile" data-bucket="missing">
-                <dt>Not started</dt>
-                <dd>{view.coverage.missingPhase}</dd>
-              </div>
-            ) : null}
-            {view.coverage.uncovered > 0 ? (
-              <div className="trace-stat-tile" data-bucket="uncovered">
-                <dt>Uncovered</dt>
-                <dd>{view.coverage.uncovered}</dd>
-              </div>
-            ) : null}
-            {view.coverage.unresolvedPhase > 0 ? (
-              <div className="trace-stat-tile" data-bucket="unresolved">
-                <dt>Unresolved</dt>
-                <dd>{view.coverage.unresolvedPhase}</dd>
-              </div>
-            ) : null}
-          </dl>
-        </div>
-
-        <section className="trace-filters" aria-label="Filter requirements">
-          <input
-            type="search"
-            className="trace-filter-input"
-            placeholder="Filter by ID or text"
-            aria-label="Filter by requirement ID or text"
-            value={filter.query}
-            onChange={(event) =>
-              setFilter((current) => ({ ...current, query: event.target.value }))
-            }
-          />
-          <div className="trace-status-filters" role="group" aria-label="Filter by status">
-            <button
-              type="button"
-              className="trace-filter-button"
-              data-active={filter.status === 'all' ? 'true' : undefined}
-              onClick={() => setFilter((current) => ({ ...current, status: 'all' }))}
-            >
-              All
-            </button>
-            <button
-              type="button"
-              className="trace-filter-button"
-              data-active={filter.status === 'uncovered' ? 'true' : undefined}
-              onClick={() => setFilter((current) => ({ ...current, status: 'uncovered' }))}
-            >
-              Uncovered
-            </button>
-            <button
-              type="button"
-              className="trace-filter-button"
-              data-active={filter.status === 'disagreement' ? 'true' : undefined}
-              disabled={view.coverage.mismatched === 0}
-              onClick={() => setFilter((current) => ({ ...current, status: 'disagreement' }))}
-            >
-              Status mismatch
-            </button>
+              {view.coverage.completePhase > 0 ? (
+                <div className="trace-stat-tile" data-bucket="complete">
+                  <dt>Complete phase</dt>
+                  <dd>{view.coverage.completePhase}</dd>
+                </div>
+              ) : null}
+              {view.coverage.inFlightPhase > 0 ? (
+                <div className="trace-stat-tile" data-bucket="in-flight">
+                  <dt>In flight</dt>
+                  <dd>{view.coverage.inFlightPhase}</dd>
+                </div>
+              ) : null}
+              {view.coverage.missingPhase > 0 ? (
+                <div className="trace-stat-tile" data-bucket="missing">
+                  <dt>Not started</dt>
+                  <dd>{view.coverage.missingPhase}</dd>
+                </div>
+              ) : null}
+              {view.coverage.uncovered > 0 ? (
+                <div className="trace-stat-tile" data-bucket="uncovered">
+                  <dt>Uncovered</dt>
+                  <dd>{view.coverage.uncovered}</dd>
+                </div>
+              ) : null}
+              {view.coverage.unresolvedPhase > 0 ? (
+                <div className="trace-stat-tile" data-bucket="unresolved">
+                  <dt>Unresolved</dt>
+                  <dd>{view.coverage.unresolvedPhase}</dd>
+                </div>
+              ) : null}
+            </dl>
           </div>
-          <button
-            type="button"
-            className="trace-toggle"
-            role="switch"
-            data-active={filter.includeHistory ? 'true' : undefined}
-            aria-checked={filter.includeHistory}
-            onClick={() =>
-              setFilter((current) => ({ ...current, includeHistory: !current.includeHistory }))
-            }
-          >
-            <span className="trace-toggle-track" aria-hidden="true">
-              <span className="trace-toggle-thumb" />
-            </span>
-            Filter deferred tiers too
-          </button>
-        </section>
-      </section>
 
-      {filteredGroups.length > 0 ? (
+          <section className="trace-filters" aria-label="Filter requirements">
+            <input
+              type="search"
+              className="trace-filter-input"
+              placeholder="Filter by ID or text"
+              aria-label="Filter by requirement ID or text"
+              value={filter.query}
+              onChange={(event) =>
+                setFilter((current) => ({ ...current, query: event.target.value }))
+              }
+            />
+            <div className="trace-status-filters" role="group" aria-label="Filter by status">
+              <button
+                type="button"
+                className="trace-filter-button"
+                data-active={filter.status === 'all' ? 'true' : undefined}
+                onClick={() => setFilter((current) => ({ ...current, status: 'all' }))}
+              >
+                All
+              </button>
+              <button
+                type="button"
+                className="trace-filter-button"
+                data-active={filter.status === 'uncovered' ? 'true' : undefined}
+                onClick={() => setFilter((current) => ({ ...current, status: 'uncovered' }))}
+              >
+                Uncovered
+              </button>
+              <button
+                type="button"
+                className="trace-filter-button"
+                data-active={filter.status === 'disagreement' ? 'true' : undefined}
+                disabled={view.coverage.mismatched === 0}
+                onClick={() => setFilter((current) => ({ ...current, status: 'disagreement' }))}
+              >
+                Status mismatch
+              </button>
+            </div>
+            <button
+              type="button"
+              className="trace-toggle"
+              role="switch"
+              data-active={filter.includeHistory ? 'true' : undefined}
+              aria-checked={filter.includeHistory}
+              onClick={() =>
+                setFilter((current) => ({ ...current, includeHistory: !current.includeHistory }))
+              }
+            >
+              <span className="trace-toggle-track" aria-hidden="true">
+                <span className="trace-toggle-thumb" />
+              </span>
+              Filter deferred tiers too
+            </button>
+          </section>
+        </section>
+      )}
+
+      {betweenMilestones ? (
+        <p className="empty-note">This project is between milestones, so there are no current requirements. The previous milestones' requirements are shown below for reference.</p>
+      ) : filteredGroups.length > 0 ? (
         filteredGroups.map((group) => {
           const headingId = `trace-category-${group.category.replaceAll(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}`;
           return (
@@ -512,8 +532,12 @@ export function TraceabilityPage(): React.JSX.Element {
             <History aria-hidden="true" />
           </header>
           <div className="history-list">
-            {view.archivedMilestones.map((archive) => (
-              <ArchivedMilestoneDisclosure key={archive.sourcePath} archive={archive} />
+            {view.archivedMilestones.map((archive, index) => (
+              <ArchivedMilestoneDisclosure
+                key={archive.sourcePath}
+                archive={archive}
+                defaultOpen={betweenMilestones && index === 0}
+              />
             ))}
           </div>
         </section>

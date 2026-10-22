@@ -6290,8 +6290,14 @@ a.todo-title:hover {
 }
 
 .trace-category > h2,
+.trace-category > h3,
 .trace-deferred > h2 {
   margin-bottom: var(--space-3);
+}
+
+/* Lets the first archived category sit flush under its disclosure's padding. */
+.trace-category:first-child {
+  margin-top: 0;
 }
 
 /* NS4 Task 2 — each category's own proportion cue, dropped beneath the heading rather than
