@@ -1,6 +1,8 @@
-import { resolve } from 'node:path';
-import { describe, expect, it } from 'vitest';
-import type { PhaseDto, ProjectPresentation, RequirementDto } from '../../src/server/project-presentation.ts';
+import { cp, mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { afterAll, describe, expect, it } from 'vitest';
+import type { ArtifactDto, PhaseDto, ProjectPresentation, RequirementDto } from '../../src/server/project-presentation.ts';
 import { LocalFsPlanningFilesystem } from '../../src/planning-fs/local-fs.ts';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
 import { toProjectPresentation } from '../../src/server/project-presentation.ts';
@@ -656,5 +658,214 @@ describe('includeHistory filter axis (NS4 Task 3)', () => {
       false,
     );
     expect(matchesDeferredTraceabilityFilter(row, filterState({ query: 'deferred', includeHistory: true }))).toBe(true);
+  });
+});
+
+describe('archivedMilestones (quick-261022-ms1)', () => {
+  const DENSE_ROOT = resolve(import.meta.dirname, '../../fixtures/dense');
+  const tempRoots: string[] = [];
+
+  afterAll(async () => {
+    for (const root of tempRoots) await rm(root, { recursive: true, force: true });
+  });
+
+  async function presentationOf(root: string): Promise<{
+    presentation: ProjectPresentation;
+    snapshot: Awaited<ReturnType<PlanningRepository['load']>>;
+  }> {
+    const repo = new PlanningRepository(new LocalFsPlanningFilesystem(root), root);
+    const snapshot = await repo.load();
+    return { presentation: toProjectPresentation(snapshot), snapshot };
+  }
+
+  function phaseKeyIn(presentation: ProjectPresentation, version: string, number: string): string {
+    const milestone = presentation.milestones.find((candidate) => candidate.version === version);
+    const found = milestone?.phases.find((candidate) => candidate.identity.number === number);
+    if (!found) throw new Error(`no phase ${number} in ${version}`);
+    return found.key;
+  }
+
+  function archiveArtifact(version: string, structured: Record<string, unknown>): ArtifactDto {
+    const path = `.planning/milestones/${version}-REQUIREMENTS.md`;
+    return {
+      key: `artifact:${path}`,
+      path,
+      kind: 'requirements',
+      title: `${version} Requirements`,
+      location: 'milestone-root',
+      frontmatter: {},
+      structured,
+      milestoneKey: null,
+      phaseKey: null,
+      warnings: [],
+      bodyLength: 1,
+    };
+  }
+
+  function archivedPhase(version: string, key: string): PhaseDto {
+    return phase({
+      key,
+      milestoneKey: `milestone-${version}`,
+      identity: { milestoneVersion: version, number: '01', projectCode: null, slug: 'first' },
+      name: 'Archived First',
+      archived: true,
+      roadmapComplete: true,
+      diskStatus: 'complete',
+    });
+  }
+
+  function item(id: string, category: string, checked: boolean | null): Record<string, unknown> {
+    return { id, category, text: `${id} text`, tier: 'v1', checked };
+  }
+
+  it('fixtures/dense: lists v2.0 then v1.0, titled from MILESTONES.md, each row resolved against its own archive', async () => {
+    const { presentation } = await presentationOf(DENSE_ROOT);
+    const view = buildTraceabilityViewModel(presentation);
+
+    expect(view.archivedMilestones.map((archive) => archive.version)).toEqual(['v2.0', 'v1.0']);
+    expect(view.archivedMilestones.map((archive) => archive.title)).toEqual([
+      'v2.0 Legacy Bridge',
+      'v1.0 Bootstrap',
+    ]);
+    expect(view.archivedMilestones.map((archive) => archive.total)).toEqual([1, 1]);
+    expect(view.archivedMilestones.map((archive) => archive.sourcePath)).toEqual([
+      '.planning/milestones/v2.0-REQUIREMENTS.md',
+      '.planning/milestones/v1.0-REQUIREMENTS.md',
+    ]);
+
+    const legacy = view.archivedMilestones[0].groups[0].rows.find((row) => row.id === 'LEGACY-01');
+    const v2Phase = phaseKeyIn(presentation, 'v2.0', '01');
+    expect(legacy?.coveringPhases).toHaveLength(1);
+    expect(legacy?.coveringPhases[0].resolved).toBe(true);
+    expect(legacy?.coveringPhases[0].phaseKey).toBe(v2Phase);
+    expect(legacy?.coveringPhases[0].phaseKey).not.toBe(phaseKeyIn(presentation, 'v3.0', '01'));
+    const v2PhaseDto = presentation.milestones
+      .flatMap((milestone) => milestone.phases)
+      .find((candidate) => candidate.key === v2Phase)!;
+    expect(legacy?.coveringPhases[0].url).toBe(buildPhaseUrl(v2PhaseDto.identity));
+
+    const boot = view.archivedMilestones[1].groups[0].rows.find((row) => row.id === 'BOOT-01');
+    expect(boot?.coveringPhases[0].phaseKey).toBe(phaseKeyIn(presentation, 'v1.0', '01'));
+  });
+
+  it('fixtures/dense: archived rows never change any pre-existing view-model field', async () => {
+    const { presentation } = await presentationOf(DENSE_ROOT);
+    const withArchives = buildTraceabilityViewModel(presentation);
+    const without = buildTraceabilityViewModel({
+      ...presentation,
+      artifacts: presentation.artifacts.filter(
+        (artifact) => !(artifact.kind === 'requirements' && artifact.location === 'milestone-root'),
+      ),
+    });
+
+    const { archivedMilestones, ...rest } = withArchives;
+    const { archivedMilestones: none, ...restWithout } = without;
+    expect(archivedMilestones.length).toBe(2);
+    expect(none).toEqual([]);
+    expect(rest).toEqual(restWithout);
+    const ids = [...rest.groups.flatMap((group) => group.rows), ...rest.deferredRows].map((row) => row.id);
+    expect(ids).not.toContain('BOOT-01');
+    expect(ids).not.toContain('LEGACY-01');
+  });
+
+  it('between milestones: a copy of dense without REQUIREMENTS.md keeps the archives and serves them over the API', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'labelore-ms1-'));
+    tempRoots.push(root);
+    await cp(DENSE_ROOT, root, { recursive: true });
+    await rm(join(root, '.planning', 'REQUIREMENTS.md'));
+
+    const { presentation, snapshot } = await presentationOf(root);
+    const view = buildTraceabilityViewModel(presentation);
+    expect(view.groups).toEqual([]);
+    expect(view.coverage.total).toBe(0);
+    expect(view.archivedMilestones.map((archive) => archive.version)).toEqual(['v2.0', 'v1.0']);
+    const legacy = view.archivedMilestones[0].groups[0].rows[0];
+    expect(legacy.id).toBe('LEGACY-01');
+    expect(legacy.coveringPhases[0].phaseKey).toBe(phaseKeyIn(presentation, 'v2.0', '01'));
+
+    const app = createApp({ getSnapshot: () => snapshot });
+    const response = await app.request('/api/traceability');
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as ReturnType<typeof buildTraceabilityViewModel>;
+    expect(body.groups).toHaveLength(0);
+    expect(body.archivedMilestones[0].version).toBe('v2.0');
+  });
+
+  it('degrades on malformed, empty and live-milestone archives without throwing', () => {
+    const base = presentationWith([]);
+    const archivedKey = 'archived-v1-phase-01';
+    const liveKey = 'live-v09-phase-01';
+    const presentation: ProjectPresentation = {
+      ...base,
+      milestones: [
+        {
+          key: 'milestone-v1.0',
+          version: 'v1.0',
+          name: 'v1.0 First Milestone',
+          archived: true,
+          phases: [archivedPhase('v1.0', archivedKey)],
+        },
+        {
+          key: 'milestone-v0.9',
+          version: 'v0.9',
+          name: 'v0.9',
+          archived: false,
+          phases: [
+            phase({
+              key: liveKey,
+              milestoneKey: 'milestone-v0.9',
+              identity: { milestoneVersion: 'v0.9', number: '01', projectCode: null, slug: 'live' },
+            }),
+          ],
+        },
+      ],
+      artifacts: [
+        archiveArtifact('v1.0', {
+          items: [
+            item('A-01', 'X', true),
+            item('A-02', 'Y', false),
+            item('A-03', 'X', null),
+            { id: 'BAD-01' },
+            null,
+          ],
+          traceability: [
+            { requirementId: 'A-01', phase: 'Phase 1 — First', status: 'Complete' },
+            { requirementId: 'A-02', phase: 'Phase 9', status: 'Pending' },
+            { requirementId: 'A-02', phase: 'TBD', status: 'Pending' },
+            { nope: true },
+          ],
+        }),
+        archiveArtifact('v0.9', {
+          items: [item('B-01', 'Z', true)],
+          traceability: [{ requirementId: 'B-01', phase: 'Phase 1', status: 'Complete' }],
+        }),
+        archiveArtifact('v10.0', { items: [item('C-01', 'W', true)], traceability: [] }),
+        archiveArtifact('v1.1', { items: 'not an array', traceability: 'nope' }),
+        archiveArtifact('v1.2', { items: [item('D-01', 'V', null)], traceability: [] }),
+      ],
+    };
+
+    const view = buildTraceabilityViewModel(presentation);
+    expect(view.archivedMilestones.map((archive) => archive.version)).toEqual(['v10.0', 'v1.0', 'v0.9']);
+    expect(view.archivedMilestones.map((archive) => archive.title)).toEqual([
+      'v10.0',
+      'v1.0 First Milestone',
+      'v0.9',
+    ]);
+
+    const v1 = view.archivedMilestones[1];
+    expect(v1.groups.map((group) => group.category)).toEqual(['X', 'Y']);
+    expect(v1.groups[0].rows.map((row) => row.id)).toEqual(['A-01']);
+    expect(v1.total).toBe(2);
+    expect(v1.groups[0].rows[0].coveringPhases[0].phaseKey).toBe(archivedKey);
+    expect(v1.groups[1].rows[0].coveringPhases.map((covering) => [covering.raw, covering.resolved])).toEqual([
+      ['Phase 9', false],
+      ['TBD', false],
+    ]);
+
+    const v09 = view.archivedMilestones[2];
+    expect(v09.groups[0].rows[0].coveringPhases[0]).toMatchObject({ raw: 'Phase 1', resolved: false, phaseKey: null });
+    expect(view.archivedMilestones[0].groups[0].rows[0].uncovered).toBe(true);
+    expect(view.coverage.total).toBe(0);
   });
 });

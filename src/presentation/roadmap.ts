@@ -268,7 +268,7 @@ function milestoneDays(entry: MilestoneEntry, previousShipped: string | null): n
 
 /** The root MILESTONES.md entries, keyed by lower-cased version; the first entry wins a repeat,
  * since the file is newest first. */
-function milestoneRecords(presentation: ProjectPresentation): Map<string, MilestoneRecord> {
+export function milestoneRecords(presentation: ProjectPresentation): Map<string, MilestoneRecord> {
   const records = new Map<string, MilestoneRecord>();
   const artifact = presentation.artifacts.find(
     (candidate) => candidate.kind === 'milestones' && candidate.location === 'root',

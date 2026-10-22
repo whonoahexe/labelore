@@ -36,8 +36,10 @@ interface TraceabilityRowLike {
   status: string;
 }
 
-/** Extracts the phase-number token from a Traceability row's free-text "Phase N" cell. */
-function phaseNumberFromTraceabilityText(raw: string): string | null {
+/** Extracts the phase-number token from a Traceability row's free-text "Phase N" cell. Exported so
+ * the traceability projection's archived-milestone path (presentation/traceability.ts) reads a
+ * "Phase N" cell by this one rule, exactly as the live-milestone resolution below does. */
+export function phaseNumberFromTraceabilityText(raw: string): string | null {
   const m = raw.match(/Phase\s+([\w.]+)/i);
   return m ? m[1] : null;
 }
