@@ -1032,7 +1032,11 @@ plan's "no AST tooling" constraint.
 | `sketch-meta` | Sketches | The winner-and-tags line under the question |
 | `sketch-winner` | Sketches | The Winner / No winner chip followed by the winner text |
 | `sketch-tags` | Sketches | A sketch's tags as a quiet mono list |
-| `sketch-actions` | Sketches | The README / Open actions at a row's trailing edge |
+| `sketch-actions` | Sketches | The View / README / Open full size actions at a row's trailing edge |
+| `sketch-viewer` | Sketches | The in-page viewer that replaces the list while one sketch is open (`?view=<folder>`) |
+| `sketch-viewer-head` | Sketches | The viewer's header: back link, eyebrow, name, question, winner line and actions |
+| `sketch-viewer-actions` | Sketches | The viewer's README / Open full size actions |
+| `sketch-viewer-frame` | Sketches | The sandboxed `iframe` (scripts only, no same-origin grant) that shows the sketch |
 
 ## How to extend
 
