@@ -1017,6 +1017,23 @@ plan's "no AST tooling" constraint.
 | `warning-fields-label` | Document pages | |
 | `warning-technical-details` | Document pages | |
 
+### Sketches
+
+| Class | Surface | Note |
+|---|---|---|
+| `sketches-page` | Sketches | The `<main>` of the Sketches page; its `.page-intro` stacks block-wise so the tally and Manifest link sit under the lede |
+| `sketches-tally` | Sketches | The "N sketches · M with a winner" line in the page intro, in large numerals |
+| `sketch-list` | Sketches | The `<ol>` of sketch rows: one hairline-bordered card, rows separated by hairlines |
+| `sketch-row` | Sketches | One sketch: number, main column and actions in a three-column grid (a single column under 42rem) |
+| `sketch-number` | Sketches | A sketch's number in mono, muted |
+| `sketch-main` | Sketches | A row's middle column: name, design question, winner and tags |
+| `sketch-name` | Sketches | A sketch's name (an `h2`) |
+| `sketch-question` | Sketches | A sketch's design question, muted body text capped at a readable measure |
+| `sketch-meta` | Sketches | The winner-and-tags line under the question |
+| `sketch-winner` | Sketches | The Winner / No winner chip followed by the winner text |
+| `sketch-tags` | Sketches | A sketch's tags as a quiet mono list |
+| `sketch-actions` | Sketches | The README / Open actions at a row's trailing edge |
+
 ## How to extend
 
 1. **New shared name** — a new class two or more views/pages will use identically: add a row to
