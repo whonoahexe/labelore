@@ -50,11 +50,6 @@ function SketchListRow({ sketch }: { sketch: SketchRow }): React.JSX.Element {
             View
           </Link>
         ) : null}
-        {sketch.readmeUrl ? (
-          <Link className={actionClass} to={sketch.readmeUrl}>
-            README
-          </Link>
-        ) : null}
         {/* The sketch itself is a server file, not a client route: a plain anchor, never a router Link. */}
         {sketch.viewUrl ? (
           <a className={actionClass} href={sketch.viewUrl} target="_blank" rel="noopener noreferrer">
@@ -81,11 +76,6 @@ function SketchViewer({ sketch, viewUrl }: { sketch: SketchRow; viewUrl: string 
         </div>
         <WinnerLine sketch={sketch} />
         <div className="sketch-viewer-actions">
-          {sketch.readmeUrl ? (
-            <Link className={actionClass} to={sketch.readmeUrl}>
-              README
-            </Link>
-          ) : null}
           <a className={actionClass} href={viewUrl} target="_blank" rel="noopener noreferrer">
             Open full size
           </a>

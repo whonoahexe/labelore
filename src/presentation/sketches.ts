@@ -292,7 +292,7 @@ export function buildSketchesViewModel(input: {
       if (a.n === null && b.n === null) return a.position - b.position;
       if (a.n === null) return 1;
       if (b.n === null) return -1;
-      return a.n - b.n || a.position - b.position;
+      return b.n - a.n || a.position - b.position;
     })
     .map((entry) => entry.row);
 
