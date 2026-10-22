@@ -5,6 +5,7 @@ import { Link } from 'react-router';
 import { EmptyState } from '../components/empty-state.tsx';
 import { LeadText } from '../components/lead-tokens.tsx';
 import type {
+  TraceabilityArchivedMilestone,
   TraceabilityCoverage,
   TraceabilityCoveringPhase,
   TraceabilityDeferredTier,
@@ -249,6 +250,44 @@ function DeferredTierDisclosure({
   );
 }
 
+/** One previous milestone's requirements, a collapsed disclosure in the same History treatment as
+ * the deferred tiers. Read-only reference: its rows never pass through the page's filter and are
+ * never counted in the summary. */
+function ArchivedMilestoneDisclosure({
+  archive,
+}: {
+  archive: TraceabilityArchivedMilestone;
+}): React.JSX.Element {
+  const versionSlug = archive.version.replaceAll(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
+  return (
+    <details className="history-milestone">
+      <summary>
+        <ChevronRight aria-hidden="true" />
+        <span>
+          <strong>{stripEmoji(archive.title)}</strong>
+          <small>
+            {archive.total} {archive.total === 1 ? 'requirement' : 'requirements'} ·{' '}
+            {archive.sourcePath.split('/').pop()}
+          </small>
+        </span>
+      </summary>
+      <div className="history-tree">
+        {archive.groups.map((group) => {
+          const headingId = `trace-archive-${versionSlug}-${group.category.replaceAll(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}`;
+          return (
+            <section key={group.category} className="trace-category" aria-labelledby={headingId}>
+              <h3 id={headingId} className="search-group-label">
+                {group.category}
+              </h3>
+              <TraceabilityRowList rows={group.rows} labelledBy={headingId} />
+            </section>
+          );
+        })}
+      </div>
+    </details>
+  );
+}
+
 /** E2: the deferred-tier switch governs whether the query/status filter *reaches* the deferred
  * tiers, not whether they're shown — "engaged" means the filter would actually narrow anything if
  * it did reach them, so the unfiltered-tiers note (E1/E2) only appears when there's something to
@@ -458,6 +497,23 @@ export function TraceabilityPage(): React.JSX.Element {
           <div className="history-list">
             {view.deferredTiers.map((tier) => (
               <DeferredTierDisclosure key={tier.tier} tier={tier} filter={filter} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {view.archivedMilestones.length > 0 ? (
+        <section className="history-section" aria-labelledby="trace-archive-heading">
+          <header className="section-heading">
+            <div>
+              <p className="eyebrow">Reference, not current state</p>
+              <h2 id="trace-archive-heading">Previous milestones</h2>
+            </div>
+            <History aria-hidden="true" />
+          </header>
+          <div className="history-list">
+            {view.archivedMilestones.map((archive) => (
+              <ArchivedMilestoneDisclosure key={archive.sourcePath} archive={archive} />
             ))}
           </div>
         </section>

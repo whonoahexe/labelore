@@ -4,12 +4,17 @@
 // computes a merged/derived verdict from them (see 03-04-PLAN.md's prohibitions and
 // T-03-04-04). No filesystem I/O, no second walk of the planning tree — same shape as
 // roadmap.ts and coverage.ts.
+import { phaseNumberFromTraceabilityText } from '../planning-repo/crossref.ts';
+import type { RequirementItem } from '../planning-repo/handlers/requirements.ts';
+import { comparePhaseNumbers, parseMilestoneFileName } from '../planning-repo/naming.ts';
 import type {
+  ArtifactDto,
   PhaseDto,
   ProjectPresentation,
   RequirementDto,
 } from '../server/project-presentation.ts';
 import { projectSectionLead } from './dashboard-head.ts';
+import { milestoneRecords } from './roadmap.ts';
 import { buildPhaseUrl } from './routes.ts';
 
 export interface TraceabilityCoveringPhase {
@@ -84,11 +89,28 @@ export interface TraceabilityGroup {
 }
 
 /** Deferred (checkbox-less) rows grouped by their raw tier heading string — the discretion
- * resolution in 260917-ns4-PLAN.md fixes History grouping to the tier string alone, since the
- * archived per-milestone REQUIREMENTS.md corpora never reach this projection. */
+ * resolution in 260917-ns4-PLAN.md fixes History grouping to the tier string alone. The archived
+ * per-milestone REQUIREMENTS.md corpora reach this projection only as `archivedMilestones`, never
+ * as deferred tiers. */
 export interface TraceabilityDeferredTier {
   tier: string;
   rows: TraceabilityRow[];
+}
+
+/** One category of an archived milestone's checkbox requirements, in first-appearance order. */
+export interface TraceabilityArchivedCategory {
+  category: string;
+  rows: TraceabilityRow[];
+}
+
+/** One archived `milestones/vX.Y-REQUIREMENTS.md`, projected for reference. Each row's covering
+ * phases are resolved against THAT archived milestone's own phases. */
+export interface TraceabilityArchivedMilestone {
+  version: string;
+  title: string;
+  sourcePath: string;
+  total: number;
+  groups: TraceabilityArchivedCategory[];
 }
 
 export interface TraceabilityViewModel {
@@ -99,6 +121,9 @@ export interface TraceabilityViewModel {
   deferredTiers: TraceabilityDeferredTier[];
   counts: TraceabilityCounts;
   coverage: TraceabilityCoverage;
+  /** Previous milestones' requirements, newest version first — read-only reference. Never counted
+   * in groups, deferredRows, deferredTiers, counts or coverage. */
+  archivedMilestones: TraceabilityArchivedMilestone[];
 }
 
 function phasesByKey(presentation: ProjectPresentation): Map<string, PhaseDto> {
@@ -235,6 +260,122 @@ function traceabilityRow(
   };
 }
 
+function isRequirementItem(value: unknown): value is RequirementItem {
+  if (typeof value !== 'object' || value === null) return false;
+  const entry = value as Partial<RequirementItem>;
+  return (
+    typeof entry.id === 'string' &&
+    typeof entry.category === 'string' &&
+    typeof entry.text === 'string' &&
+    typeof entry.tier === 'string' &&
+    (typeof entry.checked === 'boolean' || entry.checked === null)
+  );
+}
+
+interface TraceabilityCellLike {
+  requirementId: string;
+  phase: string;
+}
+
+function isTraceabilityCell(value: unknown): value is TraceabilityCellLike {
+  if (typeof value !== 'object' || value === null) return false;
+  const entry = value as Partial<TraceabilityCellLike>;
+  return typeof entry.requirementId === 'string' && typeof entry.phase === 'string';
+}
+
+function archivedMilestoneOf(
+  artifact: ArtifactDto,
+  presentation: ProjectPresentation,
+  phaseByKey: Map<string, PhaseDto>,
+  records: ReturnType<typeof milestoneRecords>,
+): TraceabilityArchivedMilestone | null {
+  const parsed = parseMilestoneFileName(artifact.path.split('/').pop() ?? '');
+  if (!parsed.matched || parsed.document.toUpperCase() !== 'REQUIREMENTS') return null;
+  const version = parsed.version;
+
+  const rawItems = artifact.structured.items;
+  const items = (Array.isArray(rawItems) ? rawItems : [])
+    .filter(isRequirementItem)
+    .filter((entry) => entry.checked !== null);
+  if (items.length === 0) return null;
+
+  // A live milestone is never used: its "Phase 1" is the current work, not this archive's.
+  const milestone =
+    presentation.milestones.find(
+      (candidate) => candidate.archived && candidate.version?.toLowerCase() === version.toLowerCase(),
+    ) ?? null;
+
+  const rawCells = artifact.structured.traceability;
+  const referencesById = new Map<string, RequirementDto['coveringPhases']>();
+  for (const cell of (Array.isArray(rawCells) ? rawCells : []).filter(isTraceabilityCell)) {
+    const number = phaseNumberFromTraceabilityText(cell.phase);
+    const target =
+      milestone && number !== null
+        ? (milestone.phases.find((candidate) => comparePhaseNumbers(candidate.identity.number, number) === 0) ??
+          null)
+        : null;
+    const reference = { raw: cell.phase, targetPhaseKey: target?.key ?? null };
+    const existing = referencesById.get(cell.requirementId);
+    if (existing) existing.push(reference);
+    else referencesById.set(cell.requirementId, [reference]);
+  }
+
+  const categoryOrder: string[] = [];
+  const rowsByCategory = new Map<string, TraceabilityRow[]>();
+  for (const entry of items) {
+    const row = traceabilityRow(
+      {
+        id: entry.id,
+        category: entry.category,
+        text: entry.text,
+        tier: entry.tier,
+        checked: entry.checked,
+        coveringPhases: referencesById.get(entry.id) ?? [],
+      },
+      phaseByKey,
+    );
+    let rows = rowsByCategory.get(row.category);
+    if (!rows) {
+      rows = [];
+      rowsByCategory.set(row.category, rows);
+      categoryOrder.push(row.category);
+    }
+    rows.push(row);
+  }
+
+  const record = records.get(version.toLowerCase());
+  const title = record
+    ? `${version} ${record.name}`
+    : milestone && milestone.name !== version
+      ? milestone.name
+      : version;
+  return {
+    version,
+    title,
+    sourcePath: artifact.path,
+    total: items.length,
+    groups: categoryOrder.map((category) => ({ category, rows: rowsByCategory.get(category) ?? [] })),
+  };
+}
+
+/** Archived `milestones/vX.Y-REQUIREMENTS.md` snapshots, newest version first. Reads only the
+ * presentation DTO (no filesystem), and skips anything malformed rather than throwing. */
+function archivedMilestonesOf(
+  presentation: ProjectPresentation,
+  phaseByKey: Map<string, PhaseDto>,
+): TraceabilityArchivedMilestone[] {
+  const records = milestoneRecords(presentation);
+  const archives: TraceabilityArchivedMilestone[] = [];
+  for (const artifact of presentation.artifacts) {
+    if (artifact.kind !== 'requirements' || artifact.location !== 'milestone-root') continue;
+    const archive = archivedMilestoneOf(artifact, presentation, phaseByKey, records);
+    if (archive) archives.push(archive);
+  }
+  return archives.sort((left, right) =>
+    right.version.localeCompare(left.version, undefined, { numeric: true }),
+  );
+}
+
 export function buildTraceabilityViewModel(
   presentation: ProjectPresentation,
 ): TraceabilityViewModel {
@@ -299,5 +440,6 @@ export function buildTraceabilityViewModel(
       disagreement: allRows.filter((row) => row.statusDisagreement).length,
     },
     coverage: coverageOf(allRows),
+    archivedMilestones: archivedMilestonesOf(presentation, phaseByKey),
   };
 }
