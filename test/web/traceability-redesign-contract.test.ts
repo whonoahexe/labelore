@@ -604,10 +604,10 @@ describe('traceability — previous milestones (quick-261022-ms1)', () => {
   it('renders the Previous milestones section from view.archivedMilestones', async () => {
     const page = await source('src/web/pages/traceability-page.tsx');
     expect(page).toContain('<h2 id="trace-archive-heading">Previous milestones</h2>');
-    expect(page).toContain('view.archivedMilestones.map((archive,');
+    expect(page).toContain('view.archivedMilestones.map((archive)');
   });
 
-  it('the archived disclosure reuses the row list and the history treatment, and only ever opens', async () => {
+  it('the archived disclosure reuses the row list and the history treatment, and starts closed', async () => {
     const page = await source('src/web/pages/traceability-page.tsx');
     const start = page.indexOf('function ArchivedMilestoneDisclosure');
     const end = page.indexOf('\nexport function TraceabilityPage');
@@ -616,11 +616,11 @@ describe('traceability — previous milestones (quick-261022-ms1)', () => {
     const body = page.slice(start, end);
     expect(body).toContain('<TraceabilityRowList rows={group.rows}');
     expect(body).toContain('className="history-milestone"');
-    expect(body).not.toMatch(/\.open\s*=\s*false/);
-    expect(body).toMatch(/\.open\s*=\s*true/);
+    expect(body).not.toMatch(/\.open\s*=/);
+    expect(body).not.toMatch(/<details[^>]*\sopen\b/);
   });
 
-  it('between milestones the summary is not rendered, a note replaces the empty state, and the newest opens', async () => {
+  it('between milestones the summary is not rendered and a note replaces the empty state', async () => {
     const page = await source('src/web/pages/traceability-page.tsx');
     expect(page).toContain('view.groups.length === 0 && view.archivedMilestones.length > 0');
     expect(page).toContain(
@@ -630,7 +630,7 @@ describe('traceability — previous milestones (quick-261022-ms1)', () => {
     const gate = page.indexOf('{betweenMilestones ? null : (');
     expect(gate).toBeGreaterThan(-1);
     expect(gate).toBeLessThan(page.indexOf('<section className="trace-summary"'));
-    expect(page).toContain('defaultOpen={betweenMilestones && index === 0}');
+    expect(page).not.toContain('defaultOpen');
     expect(page).toContain('<EmptyState />');
     expect(page).toContain('No active-tier requirements match the current filter.');
   });
