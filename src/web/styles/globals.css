@@ -20991,3 +20991,118 @@ button.view-verification-stat:hover {
 .document-canvas > :not(.view-context-source-only, .view-discussion-log-source-only) ~ :is(.view-context-source-only, .view-discussion-log-source-only) {
   margin-top: var(--space-fluid-10);
 }
+
+/* Sketches page (quick-261023-4wn, todo 001). One hairline-separated row per design sketch:
+   number | question and winner | actions. Squared corners, tokens only. The 42rem block closes the
+   section so no later top-level rule can beat it (test/web/css-source-order.test.ts). */
+.sketches-page .page-intro {
+  display: block;
+}
+
+.sketches-tally {
+  margin: var(--space-4) 0 var(--space-3);
+  font-family: var(--font-heading);
+  font-size: var(--fs-fluid-3);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tighter);
+}
+
+.sketch-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  background: var(--card);
+  list-style: none;
+}
+
+.sketch-row {
+  display: grid;
+  grid-template-columns: var(--space-10) minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+}
+
+.sketch-row:hover {
+  background: var(--state-hover);
+}
+
+.sketch-row + .sketch-row {
+  border-top: 1px solid var(--border);
+}
+
+.sketch-number {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-5);
+  font-weight: var(--fw-semibold);
+}
+
+.sketch-main {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-2);
+}
+
+.sketch-name {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: var(--fs-6);
+  font-weight: var(--fw-semibold);
+}
+
+.sketch-question {
+  max-width: 48rem;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  line-height: var(--lh-relaxed);
+}
+
+.sketch-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+}
+
+.sketch-winner {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: var(--fs-4);
+}
+
+.sketch-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  padding: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  list-style: none;
+}
+
+.sketch-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  justify-content: flex-end;
+}
+
+@media (max-width: 42rem) {
+  .sketch-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+
+  .sketch-actions {
+    justify-content: flex-start;
+  }
+}

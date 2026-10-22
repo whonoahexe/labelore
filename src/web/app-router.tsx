@@ -27,6 +27,11 @@ const TraceabilityPage = lazy(
     import('./pages/traceability-page.tsx').then((m) => ({ default: m.TraceabilityPage })),
   ),
 );
+const SketchesPage = lazy(
+  trackRouteChunk(() =>
+    import('./pages/sketches-page.tsx').then((m) => ({ default: m.SketchesPage })),
+  ),
+);
 const ArtifactPage = lazy(
   trackRouteChunk(() =>
     import('./pages/artifact-page.tsx').then((m) => ({ default: m.ArtifactPage })),
@@ -98,6 +103,7 @@ export const appRouter = createBrowserRouter([
       { path: presentationRoutePatterns.roadmap, element: <RoadmapPage /> },
       { path: presentationRoutePatterns.search, element: <SearchPage /> },
       { path: presentationRoutePatterns.traceability, element: <TraceabilityPage /> },
+      { path: presentationRoutePatterns.sketches, element: <SketchesPage /> },
       { path: presentationRoutePatterns.milestone, element: <RoadmapPage /> },
       { path: presentationRoutePatterns.phase, element: <RoadmapPage /> },
       { path: presentationRoutePatterns.plan, element: <PlanPairPage /> },

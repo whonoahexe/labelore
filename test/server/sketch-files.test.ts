@@ -313,3 +313,54 @@ describe('readBytesWithin', () => {
     });
   });
 });
+
+describe('GET /api/sketches', () => {
+  it('lists the manifest rows and folders, and every view URL is served', async () => {
+    const manifest = [
+      '# Sketch Manifest',
+      '',
+      '## Sketches',
+      '',
+      '| # | Name | Design Question | Winner | Tags |',
+      '|---|------|-----------------|--------|------|',
+      '| 001 | alpha | Which alpha? | A — first | one, two |',
+      '| 009 | ghost | No folder here | | |',
+      '',
+    ].join('\n');
+    await writeFile(join(root, '.planning', 'sketches', 'MANIFEST.md'), manifest);
+    const fresh = new PlanningRepository(new LocalFsPlanningFilesystem(root), root);
+    await fresh.load();
+    const freshApp = createApp(fresh, true, staticRoot);
+
+    const res = await freshApp.request('/api/sketches');
+    expect(res.status).toBe(200);
+    const model = (await res.json()) as {
+      available: boolean;
+      sketches: { number: string; viewUrl: string | null; readmeUrl: string | null; tags: string[] }[];
+    };
+    expect(model.available).toBe(true);
+    expect(model.sketches.map((s) => s.number)).toEqual(['001', '009']);
+    expect(model.sketches[0].tags).toEqual(['one', 'two']);
+    expect(model.sketches[1].viewUrl).toBeNull();
+
+    for (const sketch of model.sketches) {
+      if (!sketch.viewUrl) continue;
+      expect((await freshApp.request(sketch.viewUrl)).status).toBe(200);
+    }
+
+    const readmeUrl = model.sketches[0].readmeUrl ?? '';
+    const doc = await freshApp.request(`/api/documents?route=${encodeURIComponent(readmeUrl)}`);
+    expect(doc.status).toBe(200);
+    const body = (await doc.json()) as { found: boolean; artifact: { title: string } };
+    expect(body.found).toBe(true);
+    expect(body.artifact.title.length).toBeGreaterThan(0);
+  });
+
+  it('answers available:false for a project without sketches', async () => {
+    const dense = new PlanningRepository(new LocalFsPlanningFilesystem(join(FIXTURES, 'dense')), join(FIXTURES, 'dense'));
+    await dense.load();
+    const res = await createApp(dense, true, staticRoot).request('/api/sketches');
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ available: false, sketches: [] });
+  });
+});

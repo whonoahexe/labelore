@@ -109,6 +109,12 @@ describe('milestone-qualified presentation route codec', () => {
     });
   });
 
+  it('round-trips the /sketches route, and leaves the sketch file URLs to the server', () => {
+    expect(presentationRoutePatterns.sketches).toBe('/sketches');
+    expect(parsePresentationUrl('/sketches')).toEqual({ ok: true, route: { kind: 'sketches' } });
+    expect(parsePresentationUrl('/sketches/001-alpha/').ok).toBe(false);
+  });
+
   it.each([
     ['/milestones/current/phases', 'truncated'],
     ['/milestones//phases/anything', 'empty-token'],

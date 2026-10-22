@@ -17,6 +17,7 @@ import { buildReferenceRegistry } from '../presentation/references.ts';
 import { parsePresentationUrl } from '../presentation/routes.ts';
 import { buildTraceabilityViewModel } from '../presentation/traceability.ts';
 import { buildSearchGroups, extractSnippets } from '../presentation/search.ts';
+import { buildSketchesViewModel, SKETCH_MANIFEST_PATH } from '../presentation/sketches.ts';
 import { buildTreeViewModel } from '../presentation/tree.ts';
 import { createArtifactRenderer } from '../rendering/markdown.ts';
 import { resolveTargetPath } from '../cli/target-path.ts';
@@ -319,6 +320,17 @@ export function createApp(
       // defensive boundary. `derived` is left untouched - D-04 retains the previous snapshot.
       return c.json({ refreshed: false as const, error: 'Refresh failed' }, 500);
     }
+  });
+  app.get('/api/sketches', (c) => {
+    // D-05: one bundle for the whole response (the manifest body and the artifact list must agree).
+    const activeDerived = derived;
+    const lookup = activeDerived.artifactIndex.lookup(SKETCH_MANIFEST_PATH);
+    return c.json(
+      buildSketchesViewModel({
+        manifestBody: lookup.found ? lookup.artifact.body : null,
+        artifacts: activeDerived.presentation.artifacts,
+      }),
+    );
   });
   app.all('/api/*', (c) => c.json({ error: 'API route not found' }, 404));
   // Called as a method on `source` (never an extracted reference), so `this` survives.
