@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
+import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import type { SketchRow, SketchesViewModel } from '../../presentation/sketches.ts';
 import { EmptyState } from '../components/empty-state.tsx';
 import { buttonVariants } from '../components/ui/button.tsx';
@@ -43,6 +45,11 @@ function SketchListRow({ sketch }: { sketch: SketchRow }): React.JSX.Element {
         </div>
       </div>
       <div className="sketch-actions">
+        {sketch.viewUrl && sketch.folder ? (
+          <Link className={actionClass} to={{ search: `?view=${encodeURIComponent(sketch.folder)}` }}>
+            View
+          </Link>
+        ) : null}
         {sketch.readmeUrl ? (
           <Link className={actionClass} to={sketch.readmeUrl}>
             README
@@ -51,7 +58,7 @@ function SketchListRow({ sketch }: { sketch: SketchRow }): React.JSX.Element {
         {/* The sketch itself is a server file, not a client route: a plain anchor, never a router Link. */}
         {sketch.viewUrl ? (
           <a className={actionClass} href={sketch.viewUrl} target="_blank" rel="noopener noreferrer">
-            Open
+            Open full size
           </a>
         ) : null}
       </div>
@@ -59,10 +66,56 @@ function SketchListRow({ sketch }: { sketch: SketchRow }): React.JSX.Element {
   );
 }
 
+function SketchViewer({ sketch, viewUrl }: { sketch: SketchRow; viewUrl: string }): React.JSX.Element {
+  const actionClass = buttonVariants({ variant: 'ghost', size: 'sm' });
+  return (
+    <section className="sketch-viewer">
+      <header className="sketch-viewer-head">
+        <Link className="text-link" to={presentationRoutePatterns.sketches}>
+          All sketches
+        </Link>
+        <div>
+          <p className="eyebrow">Sketch {sketch.number}</p>
+          <h1>{sketch.name}</h1>
+          {sketch.question ? <p className="lede">{sketch.question}</p> : null}
+        </div>
+        <WinnerLine sketch={sketch} />
+        <div className="sketch-viewer-actions">
+          {sketch.readmeUrl ? (
+            <Link className={actionClass} to={sketch.readmeUrl}>
+              README
+            </Link>
+          ) : null}
+          <a className={actionClass} href={viewUrl} target="_blank" rel="noopener noreferrer">
+            Open full size
+          </a>
+        </div>
+      </header>
+      {/* sandbox is scripts only: the sketch runs in an opaque origin, so its own JS cannot reach the
+          app, its DOM or its API (todo 001). The server's Content-Security-Policy sandbox header on
+          every /sketches/* response gives the same guarantee to the full-size tab. */}
+      <iframe
+        className="sketch-viewer-frame"
+        src={viewUrl}
+        title={`Sketch ${sketch.number}: ${sketch.name}`}
+        referrerPolicy="no-referrer"
+        sandbox="allow-scripts"
+      />
+    </section>
+  );
+}
+
 /** The /sketches route (todo 001): one row per design sketch under .planning/sketches/. Every value
  * is a React text node - MANIFEST and README text is never turned into markup. */
 export function SketchesPage(): React.JSX.Element {
   const sketches = useQuery({ queryKey: ['sketches'], queryFn: fetchSketches });
+  const [searchParams] = useSearchParams();
+  const view = searchParams.get('view');
+
+  // Opening or leaving a sketch swaps the whole page body; start it at the top.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [view]);
 
   if (sketches.isPending) {
     return (
@@ -95,6 +148,16 @@ export function SketchesPage(): React.JSX.Element {
         <p className="eyebrow">Design sketches</p>
         <h1>Sketches</h1>
         <EmptyState />
+      </main>
+    );
+  }
+
+  // A `view` that names no viewable sketch silently shows the list.
+  const viewing = view ? model.sketches.find((sketch) => sketch.folder === view && sketch.viewUrl) : undefined;
+  if (viewing?.viewUrl) {
+    return (
+      <main className="page-stack sketches-page">
+        <SketchViewer sketch={viewing} viewUrl={viewing.viewUrl} />
       </main>
     );
   }

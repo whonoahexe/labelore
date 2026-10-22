@@ -21096,6 +21096,32 @@ button.view-verification-stat:hover {
   justify-content: flex-end;
 }
 
+.sketch-viewer {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.sketch-viewer-head {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+}
+
+.sketch-viewer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.sketch-viewer-frame {
+  display: block;
+  width: 100%;
+  min-height: 24rem;
+  height: 78dvh;
+  border: 1px solid var(--border);
+  background: var(--background);
+}
+
 @media (max-width: 42rem) {
   .sketch-row {
     grid-template-columns: minmax(0, 1fr);
@@ -21104,5 +21130,19 @@ button.view-verification-stat:hover {
 
   .sketch-actions {
     justify-content: flex-start;
+  }
+  .sketch-viewer-frame {
+    min-height: 20rem;
+    height: 70dvh;
+  }
+
+  /* Four tabs (the Sketches tab is present) do not fit a 360px header with icons: hide the icons and
+     tighten the padding only then, so the three-tab header is unchanged for projects without sketches. */
+  .shell-nav:has(> :nth-child(4)) .shell-nav-link svg {
+    display: none;
+  }
+
+  .shell-nav:has(> :nth-child(4)) .shell-nav-link {
+    padding-inline: var(--space-1);
   }
 }

@@ -1,9 +1,10 @@
 import { Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { LayoutDashboard, ListChecks, Map } from 'lucide-react';
+import { LayoutDashboard, ListChecks, Map, PencilRuler } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router';
 import { formatProjectMeta, projectDisplayName } from '../../presentation/shell-header.ts';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
+import { projectHasSketches } from '../../presentation/sketches.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
 import { LabeloreMark } from './labelore-mark.tsx';
 import { RouteFallback, RouteProgress } from './route-progress.tsx';
@@ -32,6 +33,8 @@ export function AppShell(): React.JSX.Element {
     presentation.data?.rootPath ?? '',
   );
   const projectMeta = formatProjectMeta(presentation.data?.state ?? null);
+  // The Sketches tab appears only for a project that has sketches (todo 001).
+  const showSketches = projectHasSketches(presentation.data?.artifacts ?? []);
 
   return (
     <ToastProvider>
@@ -78,6 +81,12 @@ export function AppShell(): React.JSX.Element {
               <ListChecks aria-hidden="true" />
               Traceability
             </NavLink>
+            {showSketches ? (
+              <NavLink className={navigationClass} to={presentationRoutePatterns.sketches}>
+                <PencilRuler aria-hidden="true" />
+                Sketches
+              </NavLink>
+            ) : null}
           </nav>
 
           <div className="shell-controls">
