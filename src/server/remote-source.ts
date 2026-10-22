@@ -14,6 +14,7 @@ import {
   pathExistsSync,
   removeTempDirSync,
 } from '../planning-fs/local-fs.ts';
+import type { PlanningFilesystem } from '../planning-fs/types.ts';
 import { PlanningRepository } from '../planning-repo/snapshot.ts';
 import type { FailedLoadStatus, ProjectSnapshot } from '../planning-repo/types.ts';
 import {
@@ -102,6 +103,8 @@ export const spawnMirrorRunner: MirrorRunner = (commands, { timeoutMs }) =>
 interface Mirror {
   dir: string;
   snapshot: ProjectSnapshot;
+  /** The filesystem over the mirror directory, swapped together with the snapshot on refresh. */
+  fs: PlanningFilesystem;
 }
 
 function failureSnapshot(status: FailedLoadStatus, label: string): ProjectSnapshot {
@@ -168,9 +171,10 @@ export class RemoteSnapshotSource {
       // canonical or a symlinked TMPDIR would reject every read.
       const canonical = canonicalizePath(dir);
       const canonicalDir = canonical.ok ? canonical.resolved : dir;
-      const repository = new PlanningRepository(new LocalFsPlanningFilesystem(canonicalDir), this.target.label);
+      const fs = new LocalFsPlanningFilesystem(canonicalDir);
+      const repository = new PlanningRepository(fs, this.target.label);
       const snapshot = await repository.load();
-      return { mirror: { dir, snapshot } };
+      return { mirror: { dir, snapshot, fs } };
     } catch (error) {
       removeTempDirSync(dir, MIRROR_PREFIX);
       const message = error instanceof Error ? error.message : String(error);
@@ -220,6 +224,12 @@ export class RemoteSnapshotSource {
     if (this.current) return this.current.snapshot;
     if (this.lastFailure) return this.lastFailure;
     throw new Error('RemoteSnapshotSource.getSnapshot() called before load()');
+  }
+
+  /** The filesystem over the current mirror, for the read-only sketch route; null before a good load
+   * and after dispose(). */
+  planningFilesystem(): PlanningFilesystem | null {
+    return this.current?.fs ?? null;
   }
 
   /** Removes the current mirror directory. Idempotent. */

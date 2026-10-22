@@ -29,6 +29,11 @@ export class PlanningRepository {
     this.loadTheme = options.loadTheme === undefined ? loadThemeTokens : options.loadTheme;
   }
 
+  /** The live filesystem the snapshot was read from, used by the server's read-only sketch file route. */
+  planningFilesystem(): PlanningFilesystem {
+    return this.fs;
+  }
+
   /** Attaches `structured.uiSpecTheme` to every artifact that carries `structured.uiSpec`, and only
    * to those, when the target project's stylesheet resolves. Returns `parsed` untouched otherwise,
    * so a project without a stylesheet produces a byte-identical snapshot. Never throws (D-12). */

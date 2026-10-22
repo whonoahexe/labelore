@@ -14,20 +14,12 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, relative, sep } from 'node:path';
-import type { DirEntry, FileRead, FsCapabilities, PlanningFilesystem } from './types.ts';
+import { PathEscapeError } from './types.ts';
+import type { DirEntry, FileBytes, FileRead, FsCapabilities, PlanningFilesystem } from './types.ts';
 
-/** Thrown when a resolved read/list target lies outside the canonicalized project root. */
-export class PathEscapeError extends Error {
-  readonly relPath: string;
-  readonly resolvedTarget: string;
-
-  constructor(relPath: string, resolvedTarget: string) {
-    super(`Path escapes project root: ${relPath} resolved to ${resolvedTarget}`);
-    this.name = 'PathEscapeError';
-    this.relPath = relPath;
-    this.resolvedTarget = resolvedTarget;
-  }
-}
+// Re-exported so existing imports of PathEscapeError from this module keep working; the class itself
+// lives in types.ts so non-Node code can use it.
+export { PathEscapeError };
 
 /**
  * Node-backed PlanningFilesystem. Constructed from an already-canonicalized absolute root path
@@ -77,6 +69,27 @@ export class LocalFsPlanningFilesystem implements PlanningFilesystem {
     const abs = this.resolveContained(relPath);
     const stat = statSync(abs);
     return { content: readFileSync(abs, 'utf8'), mtimeMs: stat.mtimeMs, size: stat.size };
+  }
+
+  /**
+   * Reads raw bytes of a regular file whose CANONICAL path lies strictly inside the canonical base
+   * directory, which itself must lie inside the project root. The canonical path is the one read, so
+   * the check and the read name the same file (no symlink swap between them).
+   */
+  async readBytesWithin(baseRelDir: string, relPath: string): Promise<FileBytes> {
+    const rootWithSep = this.rootPath.endsWith(sep) ? this.rootPath : this.rootPath + sep;
+    const base = realpathSync(join(this.rootPath, baseRelDir));
+    if (base !== this.rootPath && !base.startsWith(rootWithSep)) throw new PathEscapeError(baseRelDir, base);
+    const target = realpathSync(join(this.rootPath, relPath));
+    const baseWithSep = base.endsWith(sep) ? base : base + sep;
+    if (!target.startsWith(baseWithSep)) throw new PathEscapeError(relPath, target);
+    const stat = statSync(target);
+    if (!stat.isFile()) {
+      const err = new Error(`${stat.isDirectory() ? 'EISDIR: is a directory' : 'EINVAL: not a regular file'}: ${relPath}`) as NodeJS.ErrnoException;
+      err.code = stat.isDirectory() ? 'EISDIR' : 'EINVAL';
+      throw err;
+    }
+    return { bytes: new Uint8Array(readFileSync(target)), mtimeMs: stat.mtimeMs, size: stat.size };
   }
 
   async exists(relPath: string): Promise<boolean> {
