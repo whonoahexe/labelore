@@ -255,25 +255,12 @@ function DeferredTierDisclosure({
  * never counted in the summary. */
 function ArchivedMilestoneDisclosure({
   archive,
-  defaultOpen,
 }: {
   archive: TraceabilityArchivedMilestone;
-  defaultOpen: boolean;
 }): React.JSX.Element {
-  const detailsRef = useRef<HTMLDetailsElement | null>(null);
-  const openedRef = useRef(false);
-
-  // Opens once on first render when asked to, and only ever assigns true — a disclosure the user
-  // closed stays closed across react-query refetches.
-  useEffect(() => {
-    if (!defaultOpen || openedRef.current) return;
-    openedRef.current = true;
-    if (detailsRef.current) detailsRef.current.open = true;
-  }, [defaultOpen]);
-
   const versionSlug = archive.version.replaceAll(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
   return (
-    <details className="history-milestone" ref={detailsRef}>
+    <details className="history-milestone">
       <summary>
         <ChevronRight aria-hidden="true" />
         <span>
@@ -353,7 +340,7 @@ export function TraceabilityPage(): React.JSX.Element {
 
   const view = traceability.data;
   // No current requirements but at least one archive: the project is between milestones, so the
-  // 0% headline over nothing is replaced by a note and the newest previous milestone opens.
+  // 0% headline over nothing is replaced by a note pointing at the previous milestones below.
   const betweenMilestones = view.groups.length === 0 && view.archivedMilestones.length > 0;
   return (
     <main className="traceability-page page-stack">
@@ -532,12 +519,8 @@ export function TraceabilityPage(): React.JSX.Element {
             <History aria-hidden="true" />
           </header>
           <div className="history-list">
-            {view.archivedMilestones.map((archive, index) => (
-              <ArchivedMilestoneDisclosure
-                key={archive.sourcePath}
-                archive={archive}
-                defaultOpen={betweenMilestones && index === 0}
-              />
+            {view.archivedMilestones.map((archive) => (
+              <ArchivedMilestoneDisclosure key={archive.sourcePath} archive={archive} />
             ))}
           </div>
         </section>
