@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-22T22:30:43.106Z"
-last_activity: 2026-10-22
+last_updated: "2026-10-22T22:42:04.699Z"
+last_activity: 2026-10-23
 last_activity_desc: Completed quick task 261016-2j6 (compact discussion-log tables)
-state_head: 88f585e8bab338048c9936af80d2d6adb6ab6f6c
+state_head: a88d555b372fa04854cf3682592d2e9d352fcec7
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -206,6 +206,7 @@ None.
 | 261018-j5h | Build sketch 023 A as the DEBUG page view | 2026-10-19 | daba71f | [261018-j5h-build-sketch-023-a-as-the-debug-page-vie](./quick/261018-j5h-build-sketch-023-a-as-the-debug-page-vie/) |
 | 261022-ms1 | Traceability page: show previous milestones' requirements for reference when between milestones | 2026-10-22 | e43791a | [261022-ms1-traceability-page-show-previous-mileston](./quick/261022-ms1-traceability-page-show-previous-mileston/) |
 | 261023-4wn | Sketches page: list every sketch, view it in a sandboxed frame, serve sketch files read-only | 2026-10-23 | 88f585e | [261023-4wn-sketches-page-in-labelore](./quick/261023-4wn-sketches-page-in-labelore/) |
+| 94 | Sketches page: match the dashboard's top spacing above the title | 2026-10-23 | a88d555 | — |
 
 ## Deferred Items
 
