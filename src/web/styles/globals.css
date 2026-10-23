@@ -20997,25 +20997,19 @@ button.view-verification-stat:hover {
   overflow-wrap: anywhere;
 }
 
-/* The chip row: the status chip, the severity square, the area chip. */
+/* The chip row: the status chip, the severity square, the area chip, three even chips in one frame. */
 .view-todo-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-1-5);
-  align-items: center;
+  gap: var(--space-2);
+  align-items: stretch;
 }
 
-/* The severity square: the same squares as the dashboard's On deck todo rows. The written value leads;
-   the three-level reading is the square's colour. */
+/* The severity square: the same squares as the dashboard's On deck todo rows, worn on a status chip so
+   it sits evenly between the status and area chips. The written value leads; the three-level reading
+   is the square's colour. */
 .view-todo-pip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1-5);
   color: var(--muted-foreground);
-  font-family: var(--font-mono);
-  font-size: var(--fs-1);
-  letter-spacing: var(--ls-wider);
-  text-transform: uppercase;
   white-space: nowrap;
 }
 
