@@ -1,7 +1,9 @@
 # Sketch Manifest
 
 ## Design Direction
-Squared, token-driven layouts in light and dark, built on the app's real theme.
+Labelore's own visual language: studio-portal oklch tokens, base-sera, squared corners, light and
+dark, mono micro-labels over Space Grotesk body text. Sketches reuse the app's real tokens (see
+themes/default.css) so a layout that reads well in a sketch reads the same in the app.
 
 ## Reference Points
 The dashboard (`src/web/pages/dashboard-page.tsx`) for sketch 002. The shipped traceability page (`src/web/pages/traceability-page.tsx`, `.trace-row*` in
