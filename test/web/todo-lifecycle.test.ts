@@ -4,6 +4,7 @@
 // sketch's own rendering and data.js, never from the composer's output. The clock is fixed at the
 // sketch's NOW (23 Oct 2026 12:00, Asia/Kolkata).
 process.env.TZ = 'Asia/Kolkata';
+import { existsSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router';
@@ -17,7 +18,7 @@ import type { ViewInput } from '../../src/web/views/manifest.ts';
 import { daysOpen, composeTodoLifecycle, formatDay, formatShort, readStamp } from '../../src/web/views/todo-lifecycle.ts';
 import type { ComposedTodoLifecycle } from '../../src/web/views/todo-lifecycle.ts';
 import { TodoLifecycleView } from '../../src/web/views/todo-lifecycle-components.tsx';
-import { TODO_KEYS, NOTE_KEYS, loadProject, readKeyed } from '../helpers/todo-corpus.ts';
+import { LB_ROOT, TODO_KEYS, NOTE_KEYS, loadProject, readKeyed } from '../helpers/todo-corpus.ts';
 import type { LoadedProject } from '../helpers/todo-corpus.ts';
 
 const NOW = new Date('2026-10-23T12:00:00+05:30');
@@ -477,6 +478,165 @@ describe('the view', () => {
     const markup = render({ ...model, also: [] }, { chip: createElement('span', { className: 'status-chip', 'data-tone': 'warning' }, 'Warning') });
     expect(markup).toMatch(/data-tone="warning">Warning<\/span>/);
     expect(markup).not.toContain('Also in this file');
+  });
+});
+
+/** Every element in a React tree whose type is the given tag, found without rendering (function
+ * components are not expanded, so only the view's own host elements are visited). */
+function findElements(node: unknown, tag: string, out: { props: Record<string, unknown> }[] = []): { props: Record<string, unknown> }[] {
+  if (Array.isArray(node)) {
+    for (const child of node) findElements(child, tag, out);
+    return out;
+  }
+  if (node !== null && typeof node === 'object' && 'props' in node) {
+    const element = node as { type: unknown; props: Record<string, unknown> };
+    if (element.type === tag) out.push(element);
+    findElements(element.props.children, tag, out);
+  }
+  return out;
+}
+
+describe('the view, more', () => {
+  const base = (structured: unknown, frontmatter: unknown = { title: 'T' }, todoContext: unknown = null): ViewInput =>
+    ({ kind: 'todo', frontmatter, structured, groups: [], planSegments: [], todoContext }) as unknown as ViewInput;
+
+  it('the Also chip opens the whole file in Source, with no target', () => {
+    const calls: (string | null)[] = [];
+    const tree = TodoLifecycleView({
+      model: compose('dcrop'),
+      fallbackTitle: 'Todo',
+      path: 'x',
+      mode: 'view',
+      onModeChange: () => undefined,
+      onShowSource: (id) => calls.push(id),
+      chip: null,
+    });
+    const nav = findElements(tree, 'nav');
+    expect(nav).toHaveLength(1);
+    const buttons = findElements(nav[0].props.children, 'button');
+    expect(buttons).toHaveLength(1);
+    (buttons[0].props.onClick as () => void)();
+    expect(calls).toEqual([null]);
+  });
+
+  it('a missing listed note is a quiet card with its path and no Open note link', () => {
+    const model = composeTodoLifecycle(
+      base(
+        { todo: { status: 'pending', created: '2026-10-12', lead: { heading: 'Problem', blocks: [{ kind: 'paragraph', text: 'x' }] } } },
+        { title: 'T' },
+        { notes: [{ path: '.planning/notes/gone.md', url: null, via: 'listed', exists: false, date: null, text: '' }], closedBy: null },
+      ),
+      KOLKATA,
+    )!;
+    const markup = render(model);
+    expect(markup).toContain('Not in .planning/notes/');
+    expect(markup).toContain('.planning/notes/gone.md');
+    expect(markup).toContain('data-missing="true"');
+    expect(markup).not.toContain('Open note');
+    expect(markup).not.toContain('Unfold');
+  });
+
+  it('a todo whose only content is a Notes section shows that fold open and no empty line', () => {
+    const model = composeTodoLifecycle(
+      base({ todo: { status: 'pending', created: '2026-10-12', extras: [{ heading: 'Notes', blocks: [{ kind: 'paragraph', text: 'Some words.' }], sourceHeading: 'Notes' }] } }),
+      KOLKATA,
+    )!;
+    const markup = render(model);
+    expect(markup).toMatch(/<details class="view-todo-fold" open="">/);
+    expect(markup).not.toContain('Nothing below the frontmatter');
+    expect(markup).not.toContain('view-todo-pair');
+  });
+
+  it('a Problem section with preamble prose shows a Details fold', () => {
+    const model = composeTodoLifecycle(
+      base({
+        todo: {
+          status: 'pending',
+          created: '2026-10-12',
+          lead: { heading: 'Problem', blocks: [{ kind: 'paragraph', text: 'It breaks.' }] },
+          extras: [{ heading: 'Details', blocks: [{ kind: 'paragraph', text: 'Before the problem.' }], sourceHeading: null }],
+        },
+      }),
+      KOLKATA,
+    )!;
+    const markup = render(model);
+    expect(markup).toContain('<summary>Details</summary>');
+    expect(markup).not.toMatch(/<details class="view-todo-fold" open/);
+    expect(markup).toContain('Before the problem.');
+  });
+
+  it('turns a resolved note reference into a link and leaves one inside backticks as code', () => {
+    const context = {
+      notes: [{ path: '.planning/notes/real-note.md', url: '/artifacts/real', via: 'listed', exists: true, date: '2026-10-01', text: 'x' }],
+      closedBy: null,
+    };
+    const model = composeTodoLifecycle(
+      base(
+        {
+          todo: {
+            status: 'pending',
+            created: '2026-10-12',
+            lead: {
+              heading: null,
+              blocks: [
+                {
+                  kind: 'paragraph',
+                  text: 'See [[real-note]], notes/real-note.md, .planning/notes/real-note.md, `[[real-note]]`, `notes/real-note.md`, [[other]] and xnotes/real-note.md.',
+                },
+              ],
+            },
+          },
+        },
+        { title: 'T' },
+        context,
+      ),
+      KOLKATA,
+    )!;
+    const markup = render(model);
+    const links = [...markup.matchAll(/<a class="view-todo-ref" href="\/artifacts\/real"[^>]*>([^<]*)<\/a>/g)].map((match) => match[1]);
+    expect(links).toEqual(['real-note', 'notes/real-note.md', 'notes/real-note.md']);
+    expect(markup).toContain('<code>[[real-note]]</code>');
+    expect(markup).toContain('<code>notes/real-note.md</code>');
+    expect(markup).toContain('[[other]]');
+    expect(markup).toContain('xnotes/real-note.md');
+  });
+
+  it('keeps a clamped card clamped until it is unfolded', () => {
+    const long = 'Word '.repeat(80);
+    const model = composeTodoLifecycle(
+      base({ todo: { status: 'pending', created: '2026-10-12' } }, { title: 'T' }, {
+        notes: [{ path: '.planning/notes/a.md', url: '/artifacts/a', via: 'listed', exists: true, date: '2026-10-01', text: long.trim() }],
+        closedBy: null,
+      }),
+      KOLKATA,
+    )!;
+    const markup = render(model);
+    expect(markup).toContain('data-clamped="true"');
+    expect(markup).toContain('Unfold ↓');
+  });
+});
+
+const LB001 = new URL('../../.planning/todos/pending/001-sketches-page-in-labelore.md', import.meta.url).pathname;
+describe("labelore's own promoted todo (001), checklist squares", () => {
+  it.runIf(existsSync(LB001))('renders its acceptance list as squares with some done', async () => {
+    const project = await loadProject(LB_ROOT);
+    const path = '.planning/todos/pending/001-sketches-page-in-labelore.md';
+    const artifact = project.presentation.artifacts.find((candidate) => candidate.path === path)!;
+    const model = composeTodoLifecycle(
+      {
+        kind: 'todo',
+        frontmatter: wire(artifact.frontmatter),
+        structured: wire(artifact.structured),
+        groups: [],
+        planSegments: [],
+        todoContext: wire(buildTodoContext(project.presentation, project.registry, project.bodyOf, path)),
+      },
+      KOLKATA,
+    )!;
+    const markup = render(model);
+    const squares = markup.match(/class="view-todo-check" data-done="(true|false)"/g) ?? [];
+    expect(squares.length).toBe(model.captured.plan!.checks!.total);
+    expect(squares.filter((square) => square.includes('"true"')).length).toBe(model.captured.plan!.checks!.done);
   });
 });
 
