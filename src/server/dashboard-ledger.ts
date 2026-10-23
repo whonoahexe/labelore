@@ -8,6 +8,7 @@
 // T-4tb-03: every function below is total; the tests cover each degradation.
 // T-4tb-04: links come from the source resolver (route builders over discovered artifacts).
 import type { Artifact, Phase, Project } from '../domain/model.ts';
+import { fileTitleOf, sentencesOf } from '../planning-repo/handlers/note-lift.ts';
 import { parseDuration } from '../presentation/dashboard-pace.ts';
 import { buildPhaseUrl, buildPlanUrl } from '../presentation/routes.ts';
 import {
@@ -467,13 +468,18 @@ function notesOf(project: Project, resolver: ReturnType<typeof createSourceResol
       const front = artifact.frontmatter;
       const paragraphs = paragraphsOf(artifact.body);
       const name = baseName(artifact.path);
-      const title = textOf(front.title) ?? paragraphs.shift() ?? name;
+      // An untitled note whose opening paragraph runs past one sentence is the note itself, not its
+      // title: name it from the file and lead the detail with that paragraph's first sentence.
+      const lead = textOf(front.title) ? null : paragraphs.shift() ?? null;
+      const leadSentences = lead === null ? [] : sentencesOf(lead);
+      const multiSentence = leadSentences.length > 1;
+      const title = textOf(front.title) ?? (multiSentence ? null : lead) ?? fileTitleOf(artifact.path) ?? name;
       const date = front.date instanceof Date
         ? Number.isNaN(front.date.getTime())
           ? null
           : front.date.toISOString().slice(0, 16).replace('T', ' ')
         : textOf(front.date)?.slice(0, 16) ?? null;
-      const context = textOf(front.context) ?? paragraphs[0] ?? null;
+      const context = textOf(front.context) ?? (multiSentence ? leadSentences[0] : paragraphs[0]) ?? null;
       return {
         key: `note-${index}`,
         title: title.replace(/\s+/g, ' '),

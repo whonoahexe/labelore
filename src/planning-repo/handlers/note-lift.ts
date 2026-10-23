@@ -360,7 +360,7 @@ function lineCountOf(value: unknown): number | undefined {
 }
 
 /** The sketch's `slugTitle`: the last path segment without `.md` and a leading date, hyphens as spaces. */
-function fileTitleOf(path: unknown): string | undefined {
+export function fileTitleOf(path: unknown): string | undefined {
   if (typeof path !== 'string') return undefined;
   let name = path.slice(path.lastIndexOf('/') + 1);
   if (name.endsWith('.md')) name = name.slice(0, -3);
@@ -451,7 +451,7 @@ function splitSentences(text: string): string[] {
 }
 
 /** The sentences of free text (whitespace collapsed first). */
-function sentencesOf(text: string): string[] {
+export function sentencesOf(text: string): string[] {
   return splitSentences(collapse(text.length > MAX_PIECE ? text.slice(0, MAX_PIECE) : text));
 }
 
