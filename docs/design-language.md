@@ -1048,7 +1048,7 @@ plan's "no AST tooling" constraint.
 
 | Class | Surface | Note |
 |---|---|---|
-| `sketches-page` | Sketches | The `<main>` of the Sketches page; its `.page-intro` stacks block-wise so the tally and Manifest link sit under the lede |
+| `sketches-page` | Sketches | The `<main>` of the Sketches page; its `.page-intro` stacks block-wise so the tally sits under the lede |
 | `sketches-tally` | Sketches | The "N sketches · M with a winner" line in the page intro, in large numerals |
 | `sketch-list` | Sketches | The `<ol>` of sketch rows: one hairline-bordered card, rows separated by hairlines |
 | `sketch-row` | Sketches | One sketch: number, main column and actions in a three-column grid with generous padding (a single column under 42rem) |
