@@ -500,7 +500,72 @@
         "bodyHash": "a22706ad977ff7cc36a71455a3d48af6a83702253a285d341fae61c823beb346",
         "mtimeMs": 0,
         "warnings": [],
-        "structured": {}
+        "structured": {
+          "entries": [
+            {
+              "version": "v2.0",
+              "name": "Legacy Bridge",
+              "heading": "Milestone: v2.0 — Legacy Bridge",
+              "sections": {
+                "worked": [
+                  {
+                    "lead": null,
+                    "text": "Archiving `phases/` under `milestones/v2.0-phases/` kept the live tree small"
+                  }
+                ],
+                "inefficient": [
+                  {
+                    "lead": null,
+                    "text": "No retry logic in the ingest pipeline — deferred to backlog"
+                  }
+                ],
+                "patterns": [
+                  {
+                    "lead": null,
+                    "text": "Every archived milestone carries its own `vX.Y-ROADMAP.md` and `vX.Y-REQUIREMENTS.md` snapshot"
+                  }
+                ],
+                "lessons": [
+                  {
+                    "lead": null,
+                    "text": "Phase numbers reset at 1 per milestone — always scope by (milestone, phase number)"
+                  }
+                ]
+              }
+            },
+            {
+              "version": "v1.0",
+              "name": "Bootstrap",
+              "heading": "Milestone: v1.0 — Bootstrap",
+              "sections": {
+                "worked": [
+                  {
+                    "lead": null,
+                    "text": "Kept the milestone tiny — one phase, one plan"
+                  }
+                ],
+                "inefficient": [
+                  {
+                    "lead": null,
+                    "text": "N/A — first milestone, no baseline to compare against"
+                  }
+                ],
+                "patterns": [
+                  {
+                    "lead": null,
+                    "text": "N/A"
+                  }
+                ],
+                "lessons": [
+                  {
+                    "lead": null,
+                    "text": "Start small, prove the mechanism end to end"
+                  }
+                ]
+              }
+            }
+          ]
+        }
       },
       ".planning/ROADMAP.md": {
         "id": ".planning/ROADMAP.md",

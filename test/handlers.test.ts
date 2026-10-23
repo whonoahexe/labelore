@@ -12,6 +12,8 @@ import { JsonConfigHandler } from '../src/planning-repo/handlers/json-config.ts'
 import { WindowsHandler } from '../src/planning-repo/handlers/windows.ts';
 import { MilestonesHandler } from '../src/planning-repo/handlers/milestones.ts';
 import type { MilestoneEntry } from '../src/planning-repo/handlers/milestones.ts';
+import { RetrospectiveHandler } from '../src/planning-repo/handlers/retrospective.ts';
+import type { RetrospectiveEntry } from '../src/planning-repo/handlers/retrospective.ts';
 import { parseWithRegistry } from '../src/planning-repo/registry.ts';
 import { WarningCollector } from '../src/planning-repo/warnings.ts';
 import { InMemoryPlanningFilesystem } from '../src/planning-fs/in-memory-fs.ts';
@@ -669,6 +671,96 @@ describe('MilestonesHandler', () => {
     expect(entriesOf('# Milestones\n\nNothing shipped yet.\n')).toEqual([]);
     expect(entriesOf('')).toEqual([]);
     expect(entriesOf('## Notes\n\n**Delivered:** orphan field\n')).toEqual([]);
+  });
+});
+
+describe('RetrospectiveHandler', () => {
+  const path = '.planning/RETROSPECTIVE.md';
+  const entriesOf = (content: string): RetrospectiveEntry[] =>
+    RetrospectiveHandler.parse(raw(path, content), ref(path)).structured?.entries as RetrospectiveEntry[];
+
+  it('claims only the root RETROSPECTIVE.md', () => {
+    expect(HANDLERS.find((h) => h.match(ref(path)))).toBe(RetrospectiveHandler);
+    expect(
+      RetrospectiveHandler.match(ref('.planning/milestones/RETROSPECTIVE.md', { location: 'milestone-root' })),
+    ).toBe(false);
+  });
+
+  it('lifts the four sections per milestone: bold leads, wrapped lines, numbered lessons', () => {
+    const entries = entriesOf(
+      [
+        '# Project Retrospective',
+        '',
+        '## Milestone: v1.0 — MVP',
+        '',
+        '### What Was Built',
+        '- A read layer.',
+        '',
+        '### What Worked',
+        '- **Data before pixels.** Phase 1 shipped no UI',
+        '  and proved the snapshot first.',
+        '- **Tracer-first waves.** Every phase opened with a slice.',
+        '',
+        '### What Was Inefficient',
+        '- **Phase 02 ran to 16 plans** (02-06 → 02-17). Found at gates.',
+        '',
+        '### Patterns Established',
+        '- Sanitize immediately after `rehype-raw`.',
+        '',
+        '### Key Lessons',
+        '1. Run code review before phase verification.',
+        '2. Batch documentation reconciliation *before* the final pass,',
+        '   not after.',
+        '',
+        '### Cost Observations',
+        '- Sessions: not tracked',
+        '',
+        '---',
+        '',
+        '## Milestone: v1.1 — Legible Documents',
+        '',
+        '### What Worked',
+        '- **Survey first.** 425 files surveyed.',
+        '',
+        '## Cross-Milestone Trends',
+        '',
+        '### Key Lessons',
+        '1. Not a milestone.',
+      ].join('\n'),
+    );
+
+    expect(entries.map((entry) => [entry.version, entry.name, entry.heading])).toEqual([
+      ['v1.0', 'MVP', 'Milestone: v1.0 — MVP'],
+      ['v1.1', 'Legible Documents', 'Milestone: v1.1 — Legible Documents'],
+    ]);
+    const [v10, v11] = entries;
+    expect(v10.sections.worked).toEqual([
+      { lead: 'Data before pixels.', text: 'Phase 1 shipped no UI and proved the snapshot first.' },
+      { lead: 'Tracer-first waves.', text: 'Every phase opened with a slice.' },
+    ]);
+    expect(v10.sections.inefficient).toEqual([
+      { lead: 'Phase 02 ran to 16 plans', text: '(02-06 → 02-17). Found at gates.' },
+    ]);
+    expect(v10.sections.patterns).toEqual([{ lead: null, text: 'Sanitize immediately after `rehype-raw`.' }]);
+    expect(v10.sections.lessons).toEqual([
+      { lead: null, text: 'Run code review before phase verification.' },
+      { lead: null, text: 'Batch documentation reconciliation *before* the final pass, not after.' },
+    ]);
+    expect(v11.sections).toEqual({
+      worked: [{ lead: 'Survey first.', text: '425 files surveyed.' }],
+      inefficient: [],
+      patterns: [],
+      lessons: [],
+    });
+  });
+
+  it('reads a heading without the Milestone: prefix and returns no entries for a file without any', () => {
+    expect(entriesOf('## v2.0 Next\n\n### What Worked\n- Fine.\n')[0]).toMatchObject({
+      version: 'v2.0',
+      name: 'Next',
+      sections: { worked: [{ lead: null, text: 'Fine.' }] },
+    });
+    expect(entriesOf('# Retrospective\n\nNothing yet.\n')).toEqual([]);
   });
 });
 
