@@ -11,9 +11,15 @@ import { LocalFsPlanningFilesystem } from '../../src/planning-fs/local-fs.ts';
 import { PathEscapeError } from '../../src/planning-fs/types.ts';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
 import { createApp, routesToApp } from '../../src/server/index.ts';
-import { sketchContentType, sketchRequestPath } from '../../src/server/sketch-files.ts';
+import {
+  SKETCH_TOOLS_STYLE,
+  sketchContentType,
+  sketchRequestPath,
+  withSketchToolsStyle,
+} from '../../src/server/sketch-files.ts';
 
 const FIXTURES = resolve(import.meta.dirname, '../../fixtures');
+const TOOLS_HTML = '<!doctype html><head><title>t</title></head><body><div id="sketch-tools">Width</div></body>';
 const SHELL = '<!doctype html><html><body><div id="root">Labelore shell</div></body></html>';
 const CSP = 'sandbox allow-scripts';
 const WOFF2_BYTES = Uint8Array.from([0x77, 0x4f, 0x46, 0x32, 0x00, 0xff, 0xfe, 0x01, 0x80]);
@@ -52,6 +58,7 @@ beforeAll(async () => {
   await mkdir(join(sketches, 'themes', 'fonts'), { recursive: true });
   await mkdir(alpha, { recursive: true });
   await writeFile(join(alpha, 'index.html'), '<!doctype html><title>a</title><p>SKETCH-ALPHA-INDEX</p>');
+  await writeFile(join(alpha, 'tools.html'), TOOLS_HTML);
   await writeFile(join(alpha, 'data.js'), 'window.DATA = 1;');
   await writeFile(join(alpha, 'data.json'), '{"a":1}');
   await writeFile(join(alpha, 'pic.svg'), '<svg xmlns="http://www.w3.org/2000/svg"/>');
@@ -212,6 +219,22 @@ describe('write methods on /sketches/*', () => {
       expect(res.headers.get('content-security-policy')).toBe(CSP);
     }
     expect(await listTree(sketches)).toEqual(before);
+  });
+});
+
+describe('the sketch tools panel', () => {
+  it('folds the panel in served HTML and leaves the file on disk unchanged', async () => {
+    const res = await app.request('/sketches/001-alpha/tools.html');
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe(withSketchToolsStyle(TOOLS_HTML));
+    const onDisk = await readFile(join(root, '.planning', 'sketches', '001-alpha', 'tools.html'), 'utf8');
+    expect(onDisk).toBe(TOOLS_HTML);
+  });
+
+  it('puts the style before </head>, or first when there is no head, and skips HTML without the panel', () => {
+    expect(withSketchToolsStyle(TOOLS_HTML)).toBe(TOOLS_HTML.replace('</head>', `${SKETCH_TOOLS_STYLE}</head>`));
+    expect(withSketchToolsStyle('<div id="sketch-tools"></div>')).toBe(`${SKETCH_TOOLS_STYLE}<div id="sketch-tools"></div>`);
+    expect(withSketchToolsStyle('<p>plain</p>')).toBe('<p>plain</p>');
   });
 });
 

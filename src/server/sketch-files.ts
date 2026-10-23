@@ -86,6 +86,23 @@ export function sketchContentType(fileName: string): string {
   return CONTENT_TYPES[fileName.slice(dot + 1).toLowerCase()] ?? 'application/octet-stream';
 }
 
+/** Sketches built by GSD's sketch tool share a fixed bottom-right `#sketch-tools` panel (doc, theme
+ * and width switches) that covers the content it switches. Served HTML that contains it gets this
+ * stylesheet, which folds the panel to a small tab until it is hovered or a control inside it has
+ * focus. The controls stay in the DOM and in tab order, and the file on disk is never changed. */
+export const SKETCH_TOOLS_STYLE = `<style data-labelore="sketch-tools">
+#sketch-tools{opacity:1!important;max-width:min(34rem,calc(100vw - 24px))!important;max-height:calc(100vh - 24px);overflow:auto;background:#141414!important;border:1px solid rgba(255,255,255,.18);box-shadow:0 8px 24px rgba(0,0,0,.45)}
+#sketch-tools::before{content:"Sketch options";font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+#sketch-tools:not(:hover):not(:focus-within){max-width:9.5rem!important;max-height:30px;overflow:hidden;opacity:.85!important;cursor:default}
+</style>`;
+
+/** Adds SKETCH_TOOLS_STYLE to sketch HTML that has the tools panel; any other HTML is returned as is. */
+export function withSketchToolsStyle(html: string): string {
+  if (!html.includes('id="sketch-tools"')) return html;
+  const head = html.search(/<\/head>/i);
+  return head < 0 ? SKETCH_TOOLS_STYLE + html : html.slice(0, head) + SKETCH_TOOLS_STYLE + html.slice(head);
+}
+
 function plain(status: number, text: string, extra: Record<string, string> = {}): Response {
   return new Response(text, {
     status,
@@ -119,6 +136,10 @@ export function createSketchFileMiddleware(getFilesystem: () => PlanningFilesyst
       // A sandboxed (opaque-origin) document loads fonts in CORS mode, so font responses - and only
       // those - allow any origin. Font bytes carry no planning text.
       if (type.startsWith('font/')) headers['Access-Control-Allow-Origin'] = '*';
+      if (type.startsWith('text/html')) {
+        const html = withSketchToolsStyle(new TextDecoder().decode(bytes));
+        return new Response(html, { status: 200, headers });
+      }
       return new Response(new Uint8Array(bytes), { status: 200, headers });
     } catch (error) {
       if (error instanceof PathEscapeError) return plain(403, 'Forbidden');
