@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-23T20:25:19.201Z"
+last_updated: "2026-10-23T20:29:21.470Z"
 last_activity: 2026-10-24
 last_activity_desc: Completed quick task 261016-2j6 (compact discussion-log tables)
-state_head: e2bd0ec4dc230e8e0479fd208632c93d0c655f18
+state_head: 2cb3f8694e59f1947960ef6b259cd807d41d28d3
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -222,6 +222,7 @@ None.
 | 107 | Todo page: the severity mark is a chip like its neighbours, with an even gap between the three chips | 2026-10-24 | 91eaeb8 | — |
 | 108 | Ultrawide screens: the page column grows from 86rem to 120rem at 150rem and wider | 2026-10-24 | bc7b1f4 | — |
 | 109 | Removed the foundation-consistency browser sweep (timed out every run, ~20 min per full suite) | 2026-10-24 | e2bd0ec | — |
+| 110 | Header copy-button browser test for SUMMARY pages waits for the page title instead of a retired element; no longer times out | 2026-10-24 | 2cb3f86 | — |
 
 ## Deferred Items
 
