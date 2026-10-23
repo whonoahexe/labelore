@@ -22363,16 +22363,6 @@ a.view-note-open:hover {
   line-height: var(--lh-relaxed);
 }
 
-.sketch-winner {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  align-items: center;
-  min-width: 0;
-  overflow-wrap: anywhere;
-  font-size: var(--fs-4);
-}
-
 .sketch-tags {
   display: flex;
   flex-wrap: wrap;
@@ -22398,19 +22388,26 @@ a.view-note-open:hover {
 
 .sketch-viewer {
   display: grid;
-  gap: var(--space-5);
 }
 
-.sketch-viewer-head {
+/* The viewer's header is a .page-intro, so its top margin and title scale match the Roadmap and
+   Traceability pages; only the gap to the frame is tightened so the sketch starts on screen. */
+.sketches-page .sketch-viewer-head {
+  margin-bottom: var(--space-8);
+}
+
+.sketch-viewer-bar {
   display: grid;
-  gap: var(--space-3);
-  justify-items: start;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-6);
+  align-items: end;
+  margin-top: var(--space-6);
 }
 
 .sketch-viewer-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-1);
+  gap: var(--space-2);
 }
 
 .sketch-viewer-frame {
@@ -22439,6 +22436,11 @@ a.view-note-open:hover {
     display: flex;
     flex-wrap: wrap;
   }
+  .sketch-viewer-bar {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+
   .sketch-viewer-frame {
     min-height: 20rem;
     height: 70dvh;
