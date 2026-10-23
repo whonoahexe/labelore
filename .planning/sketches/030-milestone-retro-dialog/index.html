@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 030 — milestone retrospective dialog</title>
+<link rel="stylesheet" href="../themes/default.css?v=030">
+<style>
+/* Sketch 030: a small Retrospective button on each History milestone of the roadmap page opens a
+   dialog with RETROSPECTIVE.md's four sections for that milestone as tabs: What worked, What was
+   inefficient, Patterns established, Key lessons. Points are verbatim (data.js, generated from the
+   real file). The user chose a dialog over an inline panel; the three variants are dialog shapes:
+   A tabbed list, B side rail, C count strip. History cards copy the shipped .history-milestone CSS. */
+*, *::before, *::after { box-sizing: border-box; }
+:root { --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border)); --hair: color-mix(in oklch, var(--border) 60%, transparent); --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border)); --missing-border: color-mix(in oklch, var(--missing-fill) 50%, var(--border)); }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-5); line-height: var(--lh-normal); padding-top: 3rem; }
+h1, h2, h3, h4, p, ul, ol, dl, dd { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+code { font-family: var(--font-mono); font-size: 0.86em; padding: 0 0.2em; background: color-mix(in oklch, var(--muted) 70%, transparent); overflow-wrap: anywhere; }
+.dark code { background: color-mix(in oklch, var(--foreground) 9%, transparent); }
+strong { font-weight: var(--fw-semibold); }
+svg.i { width: 1em; height: 1em; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+#variant-nav { position: fixed; inset: 0 0 auto 0; z-index: 50; display: flex; gap: var(--space-1); align-items: center; padding: var(--space-2) var(--space-4); background: var(--background); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; overflow-x: auto; }
+#variant-nav .lbl { color: var(--muted-foreground); margin-right: var(--space-2); white-space: nowrap; }
+.variant-tab { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; background: none; white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; color: var(--muted-foreground); }
+.variant-tab:hover { color: var(--foreground); background: var(--state-hover); }
+.variant-tab.active { color: var(--primary); border-color: var(--primary-border); background: var(--primary-tint); }
+#frame { margin: 0 auto; background: var(--background); min-height: 100vh; }
+#frame.narrow-frame { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+.shell-header { display: flex; align-items: center; gap: var(--space-4); height: 3.75rem; padding: 0 var(--space-4); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.brand-mark { width: 2.25rem; height: 2.25rem; background: var(--primary); display: grid; place-items: center; color: white; font-weight: 700; }
+.page { width: min(80rem, 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); }
+.eyebrow { color: var(--primary); font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+.kicker { color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.page h1 { margin-top: var(--space-2); font-size: var(--fs-fluid-4); font-weight: var(--fw-medium); letter-spacing: var(--ls-tight); }
+.active-stub { margin-top: var(--space-8); padding: var(--space-6); border: 1px dashed var(--border); color: var(--muted-foreground); font-size: var(--fs-3); }
+
+/* ---------- History, as shipped (src/web/styles/globals.css) ---------- */
+.history-section { margin-top: var(--space-8); padding: var(--space-6); background: color-mix(in oklch, var(--muted) 55%, var(--background)); }
+.section-heading { display: flex; justify-content: space-between; gap: var(--space-4); align-items: center; padding-bottom: var(--space-6); border-bottom: 1px solid var(--border); }
+.section-heading h2 { margin-top: var(--space-1); font-size: var(--fs-6); font-weight: var(--fw-medium); }
+.section-heading > svg { width: 1.15rem; height: 1.15rem; color: var(--muted-foreground); }
+.history-list { display: grid; gap: var(--space-3); margin-top: var(--space-4); }
+.history-milestone { border: 1px solid var(--border); background: var(--background); }
+.history-milestone > summary { display: flex; min-width: 0; gap: var(--space-2-5); align-items: center; padding: var(--space-3-5) var(--space-6); cursor: pointer; font-family: var(--font-heading); font-size: var(--fs-2); letter-spacing: var(--ls-wider); list-style: none; text-transform: uppercase; }
+.history-milestone > summary::-webkit-details-marker { display: none; }
+.history-milestone > summary > svg.chev { width: 0.85rem; transition: transform 160ms ease; }
+.history-milestone[open] > summary > svg.chev { transform: rotate(90deg); }
+.history-milestone > summary:hover { background: var(--muted); }
+.history-milestone > summary > span.t { display: grid; min-width: 0; flex: 1; }
+.history-milestone > summary strong, .history-milestone > summary small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.history-milestone > summary small { margin-top: var(--space-1); color: var(--muted-foreground); font-size: var(--fs-1); }
+.milestone-delivered { margin-top: var(--space-2); color: var(--muted-foreground); font-family: var(--font-sans); font-size: var(--fs-3); letter-spacing: normal; line-height: var(--lh-relaxed); text-transform: none; white-space: normal; }
+[open] > summary .milestone-delivered { color: var(--foreground); }
+.history-tree { padding: var(--space-5); border-top: 1px solid var(--border); opacity: 0.82; display: grid; gap: var(--space-2); font-size: var(--fs-3); }
+.history-tree div { display: flex; gap: var(--space-3); align-items: baseline; }
+.history-tree b { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-medium); color: var(--primary); }
+
+/* the new button — sits at the summary's right edge, top-aligned with the title */
+.retro-btn { align-self: flex-start; display: inline-flex; gap: var(--space-1-5); align-items: center; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: var(--background); color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; transition: color .15s ease, border-color .15s ease, background .15s ease; }
+.retro-btn:hover { color: var(--primary); border-color: var(--primary-border); background: var(--primary-tint); }
+.retro-btn:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.narrow .retro-btn .w { display: none; }
+
+/* ---------- dialog: shared ---------- */
+dialog.retro { padding: 0; border: 1px solid var(--border); background: var(--card); color: var(--foreground); max-height: min(86vh, 52rem); overflow: hidden; }
+dialog.retro[open] { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+dialog.retro::backdrop { background: color-mix(in oklch, black 45%, transparent); }
+.d-head { display: flex; justify-content: space-between; gap: var(--space-4); align-items: flex-start; padding: var(--space-5) var(--space-6) var(--space-4); border-bottom: 1px solid var(--border); }
+.d-head h2 { margin-top: var(--space-1); font-size: var(--fs-6); font-weight: var(--fw-medium); letter-spacing: var(--ls-tight); }
+.d-head .cap { margin-top: var(--space-1); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.icon-btn { display: grid; place-items: center; width: 2rem; height: 2rem; padding: 0; border: 0; background: none; color: var(--muted-foreground); flex: none; }
+.icon-btn:hover { color: var(--foreground); background: var(--state-hover); }
+.icon-btn svg { width: 1.1rem; height: 1.1rem; }
+.d-scroll { overflow-y: auto; min-height: 0; }
+.d-foot { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); justify-content: space-between; align-items: center; padding: var(--space-3) var(--space-6); border-top: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.src-chip { display: inline-flex; gap: var(--space-1-5); align-items: center; padding: 0.1rem var(--space-2); border: 1px solid var(--border); background: none; font: inherit; letter-spacing: inherit; text-transform: none; color: var(--foreground); }
+.src-chip:hover { border-color: var(--primary-border); color: var(--primary); }
+.src-chip span { color: var(--muted-foreground); }
+.walk { display: flex; gap: var(--space-1); }
+.walk button { padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: none; font: inherit; letter-spacing: inherit; text-transform: uppercase; color: var(--muted-foreground); }
+.walk button:hover:not(:disabled) { color: var(--foreground); border-color: var(--primary-border); }
+.walk button:disabled { opacity: .35; cursor: default; }
+.empty-sec { padding: var(--space-6); color: var(--muted-foreground); font-size: var(--fs-4); }
+.keys { display: inline-flex; gap: var(--space-1); align-items: center; }
+.keys kbd { padding: 0 var(--space-1); border: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-1); }
+.narrow .keys { display: none; }
+
+/* ============ A — tabbed list ============ */
+dialog.retro.vA { width: min(46rem, var(--dw)); }
+.a-tabs { display: flex; overflow-x: auto; padding: 0 var(--space-6); border-bottom: 1px solid var(--border); }
+.a-tab { display: inline-flex; gap: var(--space-2); align-items: baseline; padding: var(--space-3) var(--space-3) calc(var(--space-3) - 2px); border: 0; border-bottom: 2px solid transparent; background: none; font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); white-space: nowrap; }
+.a-tab:first-child { margin-left: calc(-1 * var(--space-3)); }
+.a-tab .n { font-weight: var(--fw-medium); color: var(--muted-foreground); }
+.a-tab:hover:not(:disabled) { color: var(--foreground); }
+.a-tab[aria-selected='true'] { color: var(--foreground); border-bottom-color: var(--primary); }
+.a-tab[aria-selected='true'] .n { color: var(--primary); }
+.a-tab:disabled { opacity: .4; cursor: default; }
+.a-list { list-style: none; padding: var(--space-2) var(--space-6) var(--space-5); }
+.a-list li { display: grid; gap: var(--space-1); padding: var(--space-4) 0; border-bottom: 1px solid var(--hair); }
+.a-list li:last-child { border-bottom: 0; }
+.a-list .lead { font-size: var(--fs-4); font-weight: var(--fw-semibold); line-height: var(--lh-snug); }
+.a-list .body { font-size: var(--fs-3); line-height: var(--lh-relaxed); color: var(--muted-foreground); overflow-wrap: anywhere; }
+.a-list .body.solo { font-size: var(--fs-4); color: var(--foreground); }
+.a-list.numbered { counter-reset: n; }
+.a-list.numbered li { grid-template-columns: 2rem minmax(0, 1fr); counter-increment: n; }
+.a-list.numbered li::before { content: counter(n) '.'; font-family: var(--font-mono); font-size: var(--fs-4); color: var(--primary); line-height: var(--lh-relaxed); }
+
+/* ============ B — side rail ============ */
+dialog.retro.vB { width: min(62rem, var(--dw)); }
+.b-body { display: grid; grid-template-columns: 16rem minmax(0, 1fr); min-height: 0; }
+.b-rail { display: grid; align-content: start; gap: 1px; padding: var(--space-4); border-right: 1px solid var(--border); background: color-mix(in oklch, var(--muted) 45%, var(--card)); overflow-y: auto; }
+.b-tab { display: grid; grid-template-columns: 1.1rem minmax(0, 1fr) auto; gap: var(--space-2-5); align-items: center; padding: var(--space-3) var(--space-3); border: 0; border-left: 3px solid transparent; background: none; text-align: left; color: var(--muted-foreground); }
+.b-tab svg { width: 1rem; height: 1rem; }
+.b-tab .l { font-size: var(--fs-3); font-weight: var(--fw-medium); }
+.b-tab .n { font-family: var(--font-mono); font-size: var(--fs-4); }
+.b-tab:hover:not(:disabled) { color: var(--foreground); background: var(--state-hover); }
+.b-tab[aria-selected='true'] { color: var(--foreground); border-left-color: var(--primary); background: var(--card); }
+.b-tab[aria-selected='true'] svg, .b-tab[aria-selected='true'] .n { color: var(--primary); }
+.b-tab:disabled { opacity: .4; cursor: default; }
+.b-pane { overflow-y: auto; padding: var(--space-6) var(--space-8) var(--space-8); }
+.b-pane h3 { font-size: var(--fs-fluid-3); font-weight: var(--fw-medium); letter-spacing: var(--ls-tight); }
+.b-pane .sub { margin-top: var(--space-1); color: var(--muted-foreground); font-size: var(--fs-3); }
+.b-list { list-style: none; padding: 0; margin-top: var(--space-5); display: grid; gap: var(--space-5); }
+.b-list li { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr); gap: var(--space-3); }
+.b-list .num { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); padding-top: 0.2em; }
+.b-list p { font-size: var(--fs-4); line-height: var(--lh-relaxed); max-width: 68ch; overflow-wrap: anywhere; }
+.b-list p strong { color: var(--foreground); }
+.narrow .b-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+.narrow .b-rail { display: flex; overflow-x: auto; padding: 0 var(--space-3); border-right: 0; border-bottom: 1px solid var(--border); }
+.narrow .b-tab { grid-template-columns: auto auto; border-left: 0; border-bottom: 2px solid transparent; white-space: nowrap; }
+.narrow .b-tab svg { display: none; }
+.narrow .b-tab[aria-selected='true'] { border-bottom-color: var(--primary); }
+.narrow .b-pane { padding: var(--space-5); }
+
+/* ============ C — count strip ============ */
+dialog.retro.vC { width: min(56rem, var(--dw)); }
+.vC .d-head { border-bottom: 0; padding-bottom: var(--space-2); }
+.vC .d-head h2 { font-size: var(--fs-fluid-4); line-height: var(--lh-snug); }
+.c-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; margin: var(--space-3) var(--space-6) 0; background: var(--border); border: 1px solid var(--border); }
+.c-cell { display: grid; gap: var(--space-1); align-content: start; padding: var(--space-3) var(--space-4) var(--space-3-5); border: 0; border-top: 3px solid transparent; background: var(--card); text-align: left; color: var(--muted-foreground); }
+.c-cell .big { font-family: var(--font-sans); font-size: var(--fs-display-3); line-height: var(--lh-none); letter-spacing: var(--ls-tighter); font-weight: var(--fw-medium); }
+.c-cell .l { font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.c-cell:hover:not(:disabled) { color: var(--foreground); background: color-mix(in oklch, var(--muted) 50%, var(--card)); }
+.c-cell[aria-selected='true'] { color: var(--foreground); border-top-color: var(--primary); background: color-mix(in oklch, var(--primary) 6%, var(--card)); }
+.c-cell[aria-selected='true'] .big { color: var(--primary); }
+.c-cell:disabled { cursor: default; }
+.c-cell:disabled .big { opacity: .35; }
+.c-ledger { list-style: none; padding: var(--space-3) var(--space-6) var(--space-6); }
+.c-ledger li { display: grid; grid-template-columns: 3rem minmax(0, 1fr); gap: var(--space-4); padding: var(--space-4) 0; border-bottom: 1px solid var(--hair); }
+.c-ledger li:last-child { border-bottom: 0; }
+.c-ledger .num { font-family: var(--font-mono); font-size: var(--fs-5); color: var(--muted-foreground); line-height: var(--lh-snug); }
+.c-ledger .lead { font-size: var(--fs-5); font-weight: var(--fw-medium); line-height: var(--lh-snug); }
+.c-ledger .body { margin-top: var(--space-1-5); font-size: var(--fs-3); line-height: var(--lh-relaxed); color: var(--muted-foreground); overflow-wrap: anywhere; max-width: 70ch; }
+.c-ledger .body.solo { margin-top: 0; font-size: var(--fs-4); color: var(--foreground); }
+.narrow .c-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: var(--space-3) var(--space-4) 0; }
+.narrow .c-cell .big { font-size: var(--fs-fluid-4); }
+.narrow .c-ledger { padding: var(--space-2) var(--space-4) var(--space-5); }
+.narrow .c-ledger li { grid-template-columns: 2rem minmax(0, 1fr); gap: var(--space-3); }
+
+.narrow .d-head { padding: var(--space-4) var(--space-4) var(--space-3); }
+.narrow .a-tabs { padding: 0 var(--space-4); }
+.narrow .a-list { padding: var(--space-1) var(--space-4) var(--space-4); }
+.narrow .d-foot { padding: var(--space-3) var(--space-4); }
+
+#toast { position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%); z-index: 10000; padding: var(--space-2) var(--space-4); border: 1px solid var(--border); background: var(--card); font-family: var(--font-mono); font-size: var(--fs-2); opacity: 0; pointer-events: none; transition: opacity .15s ease; }
+#toast.on { opacity: 1; }
+</style>
+</head>
+<body>
+<nav id="variant-nav">
+  <span class="lbl">030 · retro dialog</span>
+  <button class="variant-tab active" data-v="A">A: Tabbed list</button>
+  <button class="variant-tab" data-v="B">B: Side rail ★ Selected</button>
+  <button class="variant-tab" data-v="C">C: Count strip</button>
+</nav>
+
+<div id="frame">
+  <header class="shell-header"><span class="brand-mark">L</span><span>Labelore</span><span style="color:var(--muted-foreground)">/ Roadmap</span></header>
+  <main class="page">
+    <p class="eyebrow">Roadmap</p>
+    <h1>Labelore</h1>
+    <div class="active-stub">Current milestone and its phases — unchanged, not part of this sketch.</div>
+
+    <section class="history-section" aria-labelledby="history-heading">
+      <div class="section-heading">
+        <div><p class="kicker">Archived milestones</p><h2 id="history-heading">History</h2></div>
+        <svg class="i" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+      </div>
+      <div class="history-list" id="history-list"></div>
+    </section>
+  </main>
+</div>
+
+<dialog class="retro" id="retro" aria-labelledby="retro-title"></dialog>
+<div id="toast" role="status"></div>
+
+<div id="sketch-tools" style="position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:12px;background:rgba(0,0,0,0.78);color:white;padding:8px 10px;opacity:0.55;transition:opacity 0.2s;display:grid;gap:6px;max-width:calc(100vw - 24px)" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.55'">
+  <div>Theme: <button data-theme="light">Light</button><button data-theme="dark">Dark</button></div>
+  <div>Width: <button data-width="375">Phone</button><button data-width="768">Tablet</button><button data-width="full">Full</button></div>
+  <div>Data: <button data-state="real">As is</button><button data-state="no-retro">v1.1 has no retro</button><button data-state="gap">v1.0 missing a section</button></div>
+</div>
+<style>
+#sketch-tools button { background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 2px 7px; margin: 2px 0 0 3px; font: inherit; cursor: pointer; }
+#sketch-tools button.on { background: #c2410c; border-color: #c2410c; }
+</style>
+
+<script src="data.js"></script>
+<script>
+// History cards, newest first, as the roadmap page orders them. Captions and Delivered lines are
+// MILESTONES.md's; phase lines are the archived ROADMAPs'.
+const MILESTONES = [
+  { v: 'v1.1', name: 'Legible Documents', caption: 'Shipped 21 Sep 2026 · 11 days · 1 phase',
+    delivered: 'Every planning document type opens into a view built for that type — a discussion log as questions and chosen options, a verification as what still needs a human, a plan as its task structure — behind a client-side view registry keyed on a granularised <code>kind</code>, all speaking one written-down and test-enforced design language.',
+    phases: [['05', 'Per-Type Document Views']] },
+  { v: 'v1.0', name: 'MVP', caption: 'Shipped 10 Sep 2026 · 21 days · 4 phases',
+    delivered: 'A read-only local dashboard (Vite + React 19 + Hono) that renders any GSD <code>.planning/</code> tree: current position, roadmap, safe PLAN-aware markdown reading, full-text search, a tree navigator, requirements traceability, and honest degradation on sparse, unknown, broken, or invalid projects.',
+    phases: [['01', 'Read Layer & Domain Model'], ['02', 'Situational Awareness & Artifact Reading'], ['03', 'Search, Browsing & Traceability'], ['04', 'Portability & Degradation Hardening']] },
+];
+const SECTIONS = [
+  { key: 'worked', label: 'What worked', short: 'Worked', icon: '<path d="M20 6 9 17l-5-5"/>' },
+  { key: 'inefficient', label: 'What was inefficient', short: 'Inefficient', icon: '<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>' },
+  { key: 'patterns', label: 'Patterns established', short: 'Patterns', icon: '<path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>' },
+  { key: 'lessons', label: 'Key lessons', short: 'Lessons', icon: '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>' },
+];
+const ICON = (d) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
+const X = ICON('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>');
+const BULB = SECTIONS[3].icon;
+
+const state = { variant: 'A', theme: 'dark', width: 'full', data: 'real', open: null, tab: 'worked' };
+const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const inline = (s) => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>');
+const pad = (n) => String(n).padStart(2, '0');
+
+// What the page reads for a milestone, after the Data toggle's edits.
+function retroFor(v) {
+  const r = window.RETRO[v];
+  if (!r) return null;
+  if (state.data === 'no-retro' && v === 'v1.1') return null;
+  if (state.data === 'gap' && v === 'v1.0') return { ...r, sections: { ...r.sections, inefficient: undefined } };
+  return r;
+}
+const items = (r, key) => r.sections[key]?.items ?? [];
+
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  list.innerHTML = MILESTONES.map((m) => {
+    const has = !!retroFor(m.v);
+    return `<details class="history-milestone">
+      <summary>
+        <svg class="i chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+        <span class="t"><strong>${m.v} ${m.name}</strong><small>${m.caption}</small><span class="milestone-delivered">${m.delivered}</span></span>
+        ${has ? `<button type="button" class="retro-btn" data-open="${m.v}" aria-haspopup="dialog" title="Open the ${m.v} retrospective">${ICON(BULB)}<span class="w">Retrospective</span></button>` : ''}
+      </summary>
+      <div class="history-tree">${m.phases.map(([n, t]) => `<div><b>${n}</b><span>${t}</span></div>`).join('')}</div>
+    </details>`;
+  }).join('');
+}
+
+function dialogHead(m) {
+  return `<header class="d-head">
+    <div><p class="eyebrow">Retrospective</p><h2 id="retro-title">${m.v} ${m.name}</h2><p class="cap">${m.caption}</p></div>
+    <button class="icon-btn" data-close aria-label="Close">${X}</button>
+  </header>`;
+}
+function dialogFoot(m, r) {
+  const i = MILESTONES.findIndex((x) => x.v === m.v);
+  const older = MILESTONES.slice(i + 1).find((x) => retroFor(x.v));
+  const newer = MILESTONES.slice(0, i).reverse().find((x) => retroFor(x.v));
+  const at = r.sections[state.tab]?.at ?? r.at;
+  return `<footer class="d-foot">
+    <button class="src-chip" data-src="${at}">RETROSPECTIVE.md <span>· line ${at}</span></button>
+    <span class="keys"><kbd>←</kbd><kbd>→</kbd> tabs</span>
+    <span class="walk">
+      <button data-walk="${older?.v ?? ''}" ${older ? '' : 'disabled'}>← ${older ? older.v : 'Older'}</button>
+      <button data-walk="${newer?.v ?? ''}" ${newer ? '' : 'disabled'}>${newer ? newer.v : 'Newer'} →</button>
+    </span>
+  </footer>`;
+}
+const emptyNote = (s) => `<p class="empty-sec">This milestone's retrospective has no “${s.label}” section.</p>`;
+
+function bodyA(r) {
+  const tabs = SECTIONS.map((s) => {
+    const n = items(r, s.key).length;
+    return `<button class="a-tab" role="tab" data-tab="${s.key}" aria-selected="${state.tab === s.key}" ${n ? '' : 'disabled'}>${s.label} <span class="n">${n}</span></button>`;
+  }).join('');
+  const s = SECTIONS.find((x) => x.key === state.tab);
+  const list = items(r, s.key);
+  const rows = list.map((it) => it.lead
+    ? `<li><span><span class="lead">${inline(it.lead)}</span></span><span class="body">${inline(it.body)}</span></li>`
+    : `<li><span class="body solo">${inline(it.body)}</span></li>`).join('');
+  return `<div class="a-tabs" role="tablist">${tabs}</div>
+    <div class="d-scroll" role="tabpanel">${list.length ? `<ol class="a-list ${s.key === 'lessons' ? 'numbered' : ''}">${rows}</ol>` : emptyNote(s)}</div>`;
+}
+
+function bodyB(r) {
+  const tabs = SECTIONS.map((s) => {
+    const n = items(r, s.key).length;
+    return `<button class="b-tab" role="tab" data-tab="${s.key}" aria-selected="${state.tab === s.key}" ${n ? '' : 'disabled'}>${ICON(s.icon)}<span class="l">${s.label}</span><span class="n">${n}</span></button>`;
+  }).join('');
+  const s = SECTIONS.find((x) => x.key === state.tab);
+  const list = items(r, s.key);
+  const rows = list.map((it, i) => `<li><span class="num">${pad(i + 1)}</span><p>${it.lead ? `<strong>${inline(it.lead)}</strong> ` : ''}${inline(it.body)}</p></li>`).join('');
+  return `<div class="b-body">
+    <div class="b-rail" role="tablist" aria-orientation="vertical">${tabs}</div>
+    <div class="b-pane" role="tabpanel"><h3>${s.label}</h3><p class="sub">${list.length} point${list.length === 1 ? '' : 's'} from the ${r.line.split(' — ')[0]} retrospective</p>
+      ${list.length ? `<ol class="b-list">${rows}</ol>` : emptyNote(s)}</div>
+  </div>`;
+}
+
+function bodyC(r) {
+  const cells = SECTIONS.map((s) => {
+    const n = items(r, s.key).length;
+    return `<button class="c-cell" role="tab" data-tab="${s.key}" aria-selected="${state.tab === s.key}" ${n ? '' : 'disabled'}><span class="big">${n}</span><span class="l">${s.label}</span></button>`;
+  }).join('');
+  const s = SECTIONS.find((x) => x.key === state.tab);
+  const list = items(r, s.key);
+  const rows = list.map((it, i) => `<li><span class="num">${pad(i + 1)}</span><div>${it.lead
+    ? `<p class="lead">${inline(it.lead)}</p><p class="body">${inline(it.body)}</p>`
+    : `<p class="body solo">${inline(it.body)}</p>`}</div></li>`).join('');
+  return `<div class="d-scroll"><div class="c-strip" role="tablist">${cells}</div>
+    <div role="tabpanel">${list.length ? `<ol class="c-ledger">${rows}</ol>` : emptyNote(s)}</div></div>`;
+}
+
+function renderDialog() {
+  const dlg = document.getElementById('retro');
+  if (!state.open) return;
+  const m = MILESTONES.find((x) => x.v === state.open);
+  const r = retroFor(m.v);
+  // Land on the first section that has points when the current one is missing.
+  if (!items(r, state.tab).length) state.tab = SECTIONS.find((s) => items(r, s.key).length)?.key ?? 'worked';
+  const frameW = document.getElementById('frame').getBoundingClientRect().width;
+  dlg.style.setProperty('--dw', `calc(${Math.min(frameW, window.innerWidth)}px - 2rem)`);
+  dlg.className = `retro v${state.variant}${frameW < 640 ? ' narrow' : ''}`;
+  const body = { A: bodyA, B: bodyB, C: bodyC }[state.variant](r);
+  // Variant A/B put the head above the scrolling body; C scrolls the strip with the list.
+  dlg.innerHTML = dialogHead(m) + body + dialogFoot(m, r);
+  if (state.variant === 'B') dlg.style.gridTemplateRows = 'auto minmax(0, 1fr) auto';
+  else dlg.style.gridTemplateRows = state.variant === 'A' ? 'auto auto minmax(0, 1fr) auto' : 'auto minmax(0, 1fr) auto';
+}
+
+function openRetro(v, tab) {
+  state.open = v;
+  if (tab) state.tab = tab;
+  renderDialog();
+  const dlg = document.getElementById('retro');
+  if (!dlg.open) dlg.showModal();
+  dlg.querySelector('[aria-selected="true"]')?.focus();
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('on');
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('on'), 1800);
+}
+
+document.addEventListener('click', (e) => {
+  const open = e.target.closest('[data-open]');
+  if (open) { e.preventDefault(); e.stopPropagation(); openRetro(open.dataset.open, 'worked'); return; }
+  const dlg = document.getElementById('retro');
+  if (e.target === dlg) { dlg.close(); return; }
+  if (e.target.closest('[data-close]')) { dlg.close(); return; }
+  const tab = e.target.closest('[data-tab]');
+  if (tab && !tab.disabled) { state.tab = tab.dataset.tab; renderDialog(); dlg.querySelector('[aria-selected="true"]')?.focus(); return; }
+  const walk = e.target.closest('[data-walk]');
+  if (walk && walk.dataset.walk) { openRetro(walk.dataset.walk); return; }
+  const src = e.target.closest('[data-src]');
+  if (src) { toast(`Opens RETROSPECTIVE.md in the reader at line ${src.dataset.src}`); return; }
+  const v = e.target.closest('.variant-tab');
+  if (v) { state.variant = v.dataset.v; document.querySelectorAll('.variant-tab').forEach((b) => b.classList.toggle('active', b === v)); if (dlg.open) renderDialog(); return; }
+  const tool = e.target.closest('#sketch-tools button');
+  if (tool) {
+    if (tool.dataset.theme) { state.theme = tool.dataset.theme; document.documentElement.classList.toggle('dark', state.theme === 'dark'); }
+    if (tool.dataset.width) { state.width = tool.dataset.width; const f = document.getElementById('frame'); f.style.maxWidth = state.width === 'full' ? '' : state.width + 'px'; f.classList.toggle('narrow-frame', state.width !== 'full'); f.classList.toggle('narrow', state.width === '375'); }
+    if (tool.dataset.state) { state.data = tool.dataset.state; renderHistory(); if (dlg.open) dlg.close(); }
+    syncTools();
+    if (dlg.open) renderDialog();
+  }
+});
+
+// ← → move between the sections that have points, wrapping; Home/End jump to the ends.
+document.getElementById('retro').addEventListener('keydown', (e) => {
+  if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key)) return;
+  if (!e.target.closest('[role="tablist"]') && !['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+  const r = retroFor(state.open);
+  const live = SECTIONS.filter((s) => items(r, s.key).length).map((s) => s.key);
+  let i = live.indexOf(state.tab);
+  if (e.key === 'Home') i = 0;
+  else if (e.key === 'End') i = live.length - 1;
+  else i = (i + (['ArrowRight', 'ArrowDown'].includes(e.key) ? 1 : -1) + live.length) % live.length;
+  e.preventDefault();
+  state.tab = live[i]; renderDialog();
+  document.querySelector('#retro [aria-selected="true"]')?.focus();
+});
+document.getElementById('retro').addEventListener('close', () => { state.open = null; });
+
+function syncTools() {
+  document.querySelectorAll('#sketch-tools button').forEach((b) => b.classList.toggle('on', b.dataset.theme === state.theme || b.dataset.width === state.width || b.dataset.state === state.data));
+}
+renderHistory();
+syncTools();
+</script>
+</body>
+</html>
