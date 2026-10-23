@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-23T20:08:54.443Z"
+last_updated: "2026-10-23T20:18:02.044Z"
 last_activity: 2026-10-24
 last_activity_desc: Completed quick task 261016-2j6 (compact discussion-log tables)
-state_head: b7c4a885120fbad6f86c493071ebd8fbf5f71a24
+state_head: 91eaeb84786d0bd0c5fdd127154407bc8dd6ca32
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -219,6 +219,7 @@ None.
 | 104 | Sketches: restyle the in-sketch options panel | 2026-10-23 | 8cca40b | — |
 | 261023-u13 | Build sketch 029 A (gist console) as the NOTE page view, replacing the 028 A layout | 2026-10-24 | da3ca73 | [261023-u13-build-sketch-029-a-gist-console-as-the-n](./quick/261023-u13-build-sketch-029-a-gist-console-as-the-n/) |
 | 106 | On deck notes: an untitled note shows a file-name title and its first sentence, not the whole note | 2026-10-24 | b7c4a88 | — |
+| 107 | Todo page: the severity mark is a chip like its neighbours, with an even gap between the three chips | 2026-10-24 | 91eaeb8 | — |
 
 ## Deferred Items
 
