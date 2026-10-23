@@ -1,4 +1,11 @@
 import type { MilestoneEntry } from '../planning-repo/handlers/milestones.ts';
+import type {
+  RetroPoint,
+  RetroSectionKey,
+  RetrospectiveEntry,
+} from '../planning-repo/handlers/retrospective.ts';
+
+export type { RetroPoint, RetroSectionKey };
 import { comparePhaseNumbers } from '../planning-repo/naming.ts';
 import type {
   MilestoneDto,
@@ -67,6 +74,12 @@ export interface MilestoneRecord {
   whatsNext: string | null;
 }
 
+/** A milestone's RETROSPECTIVE.md section: its four point lists, always in this order, an absent
+ * subsection as an empty list. */
+export interface MilestoneRetrospective {
+  sections: Array<{ key: RetroSectionKey; label: string; points: RetroPoint[] }>;
+}
+
 export interface MilestoneFlow {
   key: string;
   url: string;
@@ -77,6 +90,9 @@ export interface MilestoneFlow {
   phases: RoadmapPhaseRow[];
   /** The milestone's MILESTONES.md entry, matched by version; null when there is none. */
   record: MilestoneRecord | null;
+  /** The milestone's RETROSPECTIVE.md section, matched by version; null when there is none or it
+   * has no points. */
+  retrospective: MilestoneRetrospective | null;
 }
 
 export interface RoadmapViewModel {
@@ -296,10 +312,54 @@ export function milestoneRecords(presentation: ProjectPresentation): Map<string,
   return records;
 }
 
+const RETRO_SECTIONS: Array<{ key: RetroSectionKey; label: string }> = [
+  { key: 'worked', label: 'What worked' },
+  { key: 'inefficient', label: 'What was inefficient' },
+  { key: 'patterns', label: 'Patterns established' },
+  { key: 'lessons', label: 'Key lessons' },
+];
+
+function isRetrospectiveEntry(value: unknown): value is RetrospectiveEntry {
+  if (typeof value !== 'object' || value === null) return false;
+  const entry = value as Partial<RetrospectiveEntry>;
+  return (
+    typeof entry.version === 'string' &&
+    typeof entry.heading === 'string' &&
+    typeof entry.sections === 'object' &&
+    entry.sections !== null
+  );
+}
+
+/** The root RETROSPECTIVE.md sections, keyed by lower-cased version; the first section wins a
+ * repeat. A section without a single point is left out. */
+export function milestoneRetrospectives(
+  presentation: ProjectPresentation,
+): Map<string, MilestoneRetrospective> {
+  const retrospectives = new Map<string, MilestoneRetrospective>();
+  const artifact = presentation.artifacts.find(
+    (candidate) => candidate.kind === 'retrospective' && candidate.location === 'root',
+  );
+  const entries = artifact?.structured.entries;
+  if (!artifact || !Array.isArray(entries)) return retrospectives;
+  for (const entry of entries.filter(isRetrospectiveEntry)) {
+    const key = entry.version.toLowerCase();
+    if (retrospectives.has(key)) continue;
+    const sections = RETRO_SECTIONS.map(({ key: section, label }) => ({
+      key: section,
+      label,
+      points: Array.isArray(entry.sections[section]) ? [...entry.sections[section]] : [],
+    }));
+    if (sections.every((section) => section.points.length === 0)) continue;
+    retrospectives.set(key, { sections });
+  }
+  return retrospectives;
+}
+
 function milestoneFlow(
   milestone: MilestoneDto,
   presentation: ProjectPresentation,
   records: ReadonlyMap<string, MilestoneRecord>,
+  retrospectives: ReadonlyMap<string, MilestoneRetrospective>,
 ): MilestoneFlow {
   const phases = milestone.phases
     .map((phase) => phaseRow(phase, presentation))
@@ -313,18 +373,22 @@ function milestoneFlow(
     empty: phases.length === 0,
     phases,
     record: milestone.version ? (records.get(milestone.version.toLowerCase()) ?? null) : null,
+    retrospective: milestone.version
+      ? (retrospectives.get(milestone.version.toLowerCase()) ?? null)
+      : null,
   };
 }
 
 export function buildRoadmapViewModel(presentation: ProjectPresentation): RoadmapViewModel {
   const active = presentation.milestones.find((milestone) => !milestone.archived) ?? null;
   const records = milestoneRecords(presentation);
+  const retrospectives = milestoneRetrospectives(presentation);
   return {
     readAt: presentation.readAt,
     projectName: presentation.projectName,
-    active: active ? milestoneFlow(active, presentation, records) : null,
+    active: active ? milestoneFlow(active, presentation, records, retrospectives) : null,
     history: presentation.milestones
       .filter((milestone) => milestone.archived)
-      .map((milestone) => milestoneFlow(milestone, presentation, records)),
+      .map((milestone) => milestoneFlow(milestone, presentation, records, retrospectives)),
   };
 }

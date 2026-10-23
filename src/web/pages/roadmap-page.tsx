@@ -25,6 +25,12 @@ import {
   type RoadmapDeepLinkTarget,
 } from './roadmap-deep-link.ts';
 import { scrollWhenSettled } from './scroll-settle.ts';
+import {
+  historyName,
+  RetrospectiveButton,
+  RetrospectiveDialog,
+  type RetrospectiveTarget,
+} from './roadmap-retrospective.tsx';
 import { stripEmoji } from './strip-emoji.ts';
 
 const REQUIREMENT_PAGE_SIZE = 4;
@@ -334,16 +340,17 @@ function MilestoneRecordPanel({ record }: { record: MilestoneRecord }): React.JS
 function HistoryMilestone({
   milestone,
   target,
+  onOpenRetrospective,
 }: {
   milestone: MilestoneFlow;
   target: RoadmapDeepLinkTarget | null;
+  onOpenRetrospective: () => void;
 }): React.JSX.Element {
   const detailsRef = useRef<HTMLDetailsElement | null>(null);
   const openedRef = useRef(false);
   const contained = milestoneContainsDeepLink(milestone, target);
   const record = milestone.record;
-  // The <summary> text ROADMAP.md archived carries the version already; a MILESTONES.md name does not.
-  const title = record && milestone.version ? `${milestone.version} ${record.name}` : milestone.name;
+  const title = historyName(milestone);
 
   useEffect(() => {
     if (!contained || openedRef.current) return;
@@ -364,6 +371,9 @@ function HistoryMilestone({
             </span>
           ) : null}
         </span>
+        {milestone.retrospective ? (
+          <RetrospectiveButton milestone={milestone} onOpen={onOpenRetrospective} />
+        ) : null}
       </summary>
       {record ? <MilestoneRecordPanel record={record} /> : null}
       <div className="history-tree">
@@ -377,6 +387,7 @@ export function RoadmapPage(): React.JSX.Element {
   const { pathname } = useLocation();
   const target = useMemo(() => resolveRoadmapDeepLink(pathname), [pathname]);
   const roadmap = useQuery({ queryKey: ['roadmap'], queryFn: fetchRoadmap });
+  const [retrospective, setRetrospective] = useState<RetrospectiveTarget | null>(null);
 
   if (roadmap.isPending) {
     return (
@@ -449,12 +460,23 @@ export function RoadmapPage(): React.JSX.Element {
         {view.history.length > 0 ? (
           <div className="history-list">
             {view.history.map((milestone) => (
-              <HistoryMilestone key={milestone.key} milestone={milestone} target={target} />
+              <HistoryMilestone
+                key={milestone.key}
+                milestone={milestone}
+                target={target}
+                onOpenRetrospective={() => setRetrospective({ key: milestone.key, tab: null })}
+              />
             ))}
           </div>
         ) : (
           <EmptyState />
         )}
+        <RetrospectiveDialog
+          milestones={view.history}
+          target={retrospective}
+          caption={historyCaption}
+          onChange={setRetrospective}
+        />
       </section>
     </main>
   );

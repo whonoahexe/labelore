@@ -851,6 +851,18 @@ plan's "no AST tooling" constraint.
 | `milestone-delivered` | Roadmap | a History milestone's MILESTONES.md Delivered line in its summary, at the card's full width |
 | `milestone-record` | Roadmap | a History milestone's MILESTONES.md entry, above its phase tree |
 | `milestone-record-facts` | Roadmap | Git range and What's next, as hairline-divided cells |
+| `milestone-retro-button` | Roadmap | a History milestone's Retrospective button at the summary's right edge; icon only on phones, and it never toggles the card |
+| `milestone-retro` | Roadmap | the dialog holding a milestone's RETROSPECTIVE.md section: head, rail beside pane, foot |
+| `milestone-retro-head` | Roadmap | the dialog's eyebrow, milestone title and History caption |
+| `milestone-retro-body` | Roadmap | the rail and the pane, side by side; stacked on phones |
+| `milestone-retro-rail` | Roadmap | the vertical tablist of What worked / What was inefficient / Patterns established / Key lessons; a tab row on phones |
+| `milestone-retro-tab` | Roadmap | one section in the rail: icon, label, count; an empty section is disabled |
+| `milestone-retro-pane` | Roadmap | the open section: its label large, the point count, the numbered points |
+| `milestone-retro-count` | Roadmap | "N points from the vX.Y retrospective" under the pane heading |
+| `milestone-retro-points` | Roadmap | the open section's points, a mono 01 gutter and the bold lead inline |
+| `milestone-retro-foot` | Roadmap | the arrow-key hint at the left and the Older / Newer walk at the right |
+| `milestone-retro-keys` | Roadmap | the arrow-key hint in the foot; hidden on phones |
+| `milestone-retro-walk` | Roadmap | Older / Newer buttons that move between milestones, keeping the open section |
 | `phase-detail-grid` | Roadmap | |
 | `phase-disclosure` | Roadmap | |
 | `phase-facts` | Roadmap | |

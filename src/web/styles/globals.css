@@ -1804,6 +1804,300 @@ summary.tree-node-row:focus-visible {
   list-style: none;
 }
 
+/* A History milestone's RETROSPECTIVE.md section (sketch 030, side rail). The button sits at the
+ * summary's right edge, top-aligned with the title; the dialog is a head, a rail of the four
+ * sections beside the open list, and a foot with the arrow-key hint and the Older / Newer walk. */
+.milestone-retro-button {
+  display: inline-flex;
+  flex: none;
+  gap: var(--space-1-5);
+  align-items: center;
+  align-self: flex-start;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color 150ms ease,
+    border-color 150ms ease,
+    background 150ms ease;
+}
+
+.milestone-retro-button > svg {
+  width: 0.8rem;
+  height: 0.8rem;
+}
+
+.milestone-retro-button:hover {
+  border-color: var(--primary-border);
+  background: var(--primary-tint);
+  color: var(--primary);
+}
+
+.milestone-retro {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 0;
+  max-height: min(86vh, 52rem);
+  padding: 0;
+  overflow: hidden;
+}
+
+@media (min-width: 40rem) {
+  .milestone-retro {
+    max-width: 62rem;
+  }
+}
+
+.milestone-retro-head {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-5) var(--space-10) var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--border);
+}
+
+.milestone-retro-head [data-slot='dialog-title'] {
+  font-family: var(--font-sans);
+  font-size: var(--fs-6);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-snug);
+  text-transform: none;
+}
+
+.milestone-retro-head [data-slot='dialog-description'] {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.milestone-retro-body {
+  display: grid;
+  grid-template-columns: 16rem minmax(0, 1fr);
+  min-height: 0;
+}
+
+.milestone-retro-rail {
+  display: grid;
+  align-content: start;
+  padding: var(--space-4);
+  border-right: 1px solid var(--border);
+  background: color-mix(in oklch, var(--muted) 45%, var(--popover));
+  overflow-y: auto;
+}
+
+.milestone-retro-tab {
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr) auto;
+  gap: var(--space-2-5);
+  align-items: center;
+  padding: var(--space-3);
+  border: 0;
+  border-left: 3px solid transparent;
+  background: none;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  font-weight: var(--fw-medium);
+  text-align: left;
+  cursor: pointer;
+}
+
+.milestone-retro-tab > svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.milestone-retro-tab > b {
+  font-family: var(--font-mono);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+}
+
+.milestone-retro-tab:hover:not(:disabled) {
+  background: var(--state-hover);
+  color: var(--foreground);
+}
+
+.milestone-retro-tab[aria-selected='true'] {
+  border-left-color: var(--primary);
+  background: var(--popover);
+  color: var(--foreground);
+}
+
+.milestone-retro-tab[aria-selected='true'] > svg,
+.milestone-retro-tab[aria-selected='true'] > b {
+  color: var(--primary);
+}
+
+.milestone-retro-tab:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.milestone-retro-pane {
+  min-width: 0;
+  padding: var(--space-6) var(--space-8) var(--space-8);
+  overflow-y: auto;
+}
+
+.milestone-retro-pane > h3 {
+  margin: 0;
+  font-size: var(--fs-fluid-3);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tight);
+}
+
+.milestone-retro-count {
+  margin: var(--space-1) 0 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.milestone-retro-points {
+  display: grid;
+  gap: var(--space-5);
+  margin: var(--space-5) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.milestone-retro-points > li {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.milestone-retro-points > li > span {
+  padding-top: var(--space-0-5);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.milestone-retro-points p {
+  max-width: 68ch;
+  margin: 0;
+  font-size: var(--fs-4);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
+}
+
+.milestone-retro-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+  padding: var(--space-3) var(--space-6);
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.milestone-retro-keys {
+  display: inline-flex;
+  gap: var(--space-1);
+  align-items: center;
+}
+
+.milestone-retro-keys kbd {
+  padding: 0 var(--space-1);
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+}
+
+.milestone-retro-walk {
+  display: flex;
+  gap: var(--space-1);
+  margin-left: auto;
+}
+
+.milestone-retro-walk button {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--muted-foreground);
+  font: inherit;
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.milestone-retro-walk button:hover:not(:disabled) {
+  border-color: var(--primary-border);
+  color: var(--foreground);
+}
+
+.milestone-retro-walk button:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+
+/* Phones: the button keeps only its icon, and the rail becomes a scrolling tab row. */
+@media (max-width: 40rem) {
+  .milestone-retro-button > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .milestone-retro-head {
+    padding: var(--space-4) var(--space-10) var(--space-3) var(--space-4);
+  }
+
+  .milestone-retro-body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .milestone-retro-rail {
+    display: flex;
+    padding: 0 var(--space-3);
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .milestone-retro-tab {
+    grid-template-columns: auto auto;
+    border-bottom: 2px solid transparent;
+    border-left: 0;
+    white-space: nowrap;
+  }
+
+  .milestone-retro-tab > svg,
+  .milestone-retro-keys {
+    display: none;
+  }
+
+  .milestone-retro-tab[aria-selected='true'] {
+    border-bottom-color: var(--primary);
+  }
+
+  .milestone-retro-pane {
+    padding: var(--space-5) var(--space-4);
+  }
+
+  .milestone-retro-foot {
+    padding: var(--space-3) var(--space-4);
+  }
+}
+
 .notice {
   margin-top: var(--space-8);
   padding: var(--space-6);

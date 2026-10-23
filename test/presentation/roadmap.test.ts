@@ -457,6 +457,57 @@ describe('buildRoadmapViewModel', () => {
     expect(buildRoadmapViewModel(presentation([milestone('v1.0', true, [])])).history[0].record).toBeNull();
   });
 
+  it('attaches each History milestone its RETROSPECTIVE.md section by version', () => {
+    const points = (text: string) => [{ lead: null, text }];
+    const retrospectiveArtifact: ArtifactDto = {
+      ...milestonesArtifact([]),
+      key: '/artifacts/a~.planning%2FRETROSPECTIVE.md',
+      path: '.planning/RETROSPECTIVE.md',
+      kind: 'retrospective',
+      title: 'Project Retrospective',
+      structured: {
+        entries: [
+          {
+            version: 'v1.0',
+            name: 'MVP',
+            heading: 'Milestone: v1.0 — MVP',
+            sections: { worked: points('A'), inefficient: [], patterns: points('B'), lessons: points('C') },
+          },
+          {
+            version: 'V1.1',
+            name: 'Docs',
+            heading: 'Milestone: V1.1 — Docs',
+            sections: { worked: [], inefficient: [], patterns: [], lessons: [] },
+          },
+          { version: 'v1.0', heading: 'Milestone: v1.0 — Duplicate', sections: { worked: points('Z') } },
+          { version: 'v3.0' },
+        ],
+      },
+    };
+    const view = buildRoadmapViewModel({
+      ...presentation([
+        milestone('V1.0', true, [phase('01', { milestoneVersion: 'V1.0', archived: true })]),
+        milestone('v1.1', true, [phase('02', { milestoneVersion: 'v1.1', archived: true })]),
+        milestone('v2.0', false, [phase('03')]),
+      ]),
+      artifacts: [retrospectiveArtifact],
+    });
+    const [v10, v11] = view.history;
+
+    expect(v10.retrospective).toEqual({
+      sections: [
+        { key: 'worked', label: 'What worked', points: points('A') },
+        { key: 'inefficient', label: 'What was inefficient', points: [] },
+        { key: 'patterns', label: 'Patterns established', points: points('B') },
+        { key: 'lessons', label: 'Key lessons', points: points('C') },
+      ],
+    });
+    // A section with no points at all is no retrospective.
+    expect(v11.retrospective).toBeNull();
+    expect(view.active?.retrospective).toBeNull();
+    expect(buildRoadmapViewModel(presentation([milestone('v1.0', true, [])])).history[0].retrospective).toBeNull();
+  });
+
   it('counts days from a stated figure, then a date range in the stats, then the previous ship date', () => {
     const archived = ['v1.3', 'v1.2', 'v1.1', 'v1.0'].map((version) =>
       milestone(version, true, [phase('01', { milestoneVersion: version, archived: true })]),
