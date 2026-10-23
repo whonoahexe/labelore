@@ -418,7 +418,7 @@ describe('dashboard ledger: todos and notes', () => {
     expect(todos.items[0].detail).toBe('No frontmatter at all.');
     expect(notes.map((n) => [n.title, n.detail, n.date])).toEqual([
       ['First paragraph is the title.', 'Second paragraph is the detail.', 'plain.md'],
-      ['2026-09-01-empty.md', null, '2026-09-01'],
+      ['Empty', null, '2026-09-01'],
     ]);
   });
 });
