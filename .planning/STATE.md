@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-23T15:35:53.186Z"
+last_updated: "2026-10-23T15:38:57.579Z"
 last_activity: 2026-10-23
 last_activity_desc: Completed quick task 261016-2j6 (compact discussion-log tables)
-state_head: 03a5fdf0e419b9ccbb5e4a14c159d48e00575c28
+state_head: fc7b795c30d01bb43c5d832852b5f4d069e3e07a
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -212,6 +212,7 @@ None.
 | 261023-61k | Build sketch 027 C (Lifecycle) as the TODO page view | 2026-10-23 | 788dbdb | /home/noah/Work/Personal/labelore/.planning/quick/261023-61k-build-sketch-027-c-lifecycle-as-the-todo-page-view |
 | 261023-61l | Build sketch 028 A (Annotated) as the NOTE page view | 2026-10-23 | c44c2ed | /home/noah/Work/Personal/labelore/.planning/quick/261023-61l-build-sketch-028-a-annotated-as-the-note-page-view |
 | 99 | Sketches page: roomier sketch rows with a verdict panel | 2026-10-23 | 03a5fdf | — |
+| 100 | Shorten the sketches manifest's design direction | 2026-10-23 | fc7b795 | — |
 
 ## Deferred Items
 
