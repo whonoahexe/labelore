@@ -104,11 +104,25 @@ export function isTodoPath(relPathUnderPlanning: string): boolean {
   return segments[segments.length - 1].toLowerCase().endsWith('.md');
 }
 
+// The directory-position half of the dispatch signal for GSD notes: `/gsd-note` and `/gsd-explore` write
+// `.planning/notes/<anything>.md` with free-form names (`2026-10-21-round-profile-photos.md`,
+// `per-kind-artifact-rendering.md`), so no filename grammar can recognise them. A markdown file whose
+// first path segment under `.planning/` is `notes` is a note by position, at any depth. A file that is
+// merely named `notes.md` elsewhere (`phases/01-a/notes.md`) is not one, because the first segment is the
+// test, not the file name. The location stays 'other': the tree, search grouping and goldens do not move
+// (quick-261023-61l, sketch 028 A).
+export function isNotePath(relPathUnderPlanning: string): boolean {
+  const segments = relPathUnderPlanning.split('/');
+  if (segments.length < 2 || segments[0] !== 'notes') return false;
+  return segments[segments.length - 1].toLowerCase().endsWith('.md');
+}
+
 /** The directory-position kind of a path under `.planning/`, or null when position says nothing. The
  * debug predicate above keeps its own pinned line in the walk; this is where a later position kind
- * (the notes folder) goes. */
+ * goes. */
 export function positionKind(relPathUnderPlanning: string): string | null {
   if (isTodoPath(relPathUnderPlanning)) return 'todo';
+  if (isNotePath(relPathUnderPlanning)) return 'note';
   return null;
 }
 

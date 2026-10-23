@@ -59,6 +59,8 @@ import type { ComposedDebugCase } from '../views/debug-case.ts';
 import { DebugCaseView } from '../views/debug-case-components.tsx';
 import type { ComposedTodoLifecycle } from '../views/todo-lifecycle.ts';
 import { TodoLifecycleView } from '../views/todo-lifecycle-components.tsx';
+import type { ComposedNotePage } from '../views/note-page.ts';
+import { NotePageView } from '../views/note-page-components.tsx';
 import type { ComposedPlanNavigator } from '../views/plan-navigator.ts';
 import { PlanIntroMeta, PlanNavigatorView } from '../views/plan-navigator-components.tsx';
 import { findPlanContext } from '../views/plan-context.ts';
@@ -78,6 +80,7 @@ import type { ComposedUiReview } from '../views/ui-review.ts';
 import { UiReviewIntroMeta, UiReviewView } from '../views/ui-review-components.tsx';
 import type { ReviewContext } from '../../presentation/review-context.ts';
 import type { TodoContext } from '../../presentation/todo-context.ts';
+import type { NoteContext } from '../../presentation/note-context.ts';
 import type { ComposedReviewThreads } from '../views/review-threads.ts';
 import { ReviewThreadsView } from '../views/review-threads-components.tsx';
 import type { ComposedUiSpec } from '../views/ui-spec.ts';
@@ -186,6 +189,8 @@ interface ArtifactDocumentResponse {
   reviewContext?: ReviewContext | null;
   /** quick-261023-61k: a todo's source notes and closing quick task link (null for every other document). */
   todoContext?: TodoContext | null;
+  /** quick-261023-61l: the todos a note became or is related to (null for every other document). */
+  noteContext?: NoteContext | null;
 }
 
 const WARNING_DISCLOSURE_LABELS: Record<Exclude<ArtifactWarningTone, null>, string> = {
@@ -612,6 +617,7 @@ export function ArtifactPage({
       reviewContext: query.data.reviewContext ?? null,
       manualChecks: query.data.manualChecks ?? null,
       todoContext: query.data.todoContext ?? null,
+      noteContext: query.data.noteContext ?? null,
     };
   }, [query.data, groups, planSegments, planProgress, planContext, phaseRequirementIds, shown, siblingArtifacts]);
   // VIEW-06: a registered manifest, or fallback.ts's synthesized structural-read manifest — one
@@ -744,6 +750,13 @@ export function ArtifactPage({
     if (!manifest || !viewInput) return null;
     return manifest.todoLifecycle?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // quick-261023-61l (sketch-028 A): the NOTE annotated page, when the resolved manifest opts into one -
+  // `null` for every other kind and for a note the handler produced no projection for (the
+  // promoted-section view then renders).
+  const notePage = useMemo<ComposedNotePage | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.notePage?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // "In the source only" entries switch to Source mode, then scroll to the named heading once the
   // source document has mounted. The pending id lives in a ref and is cleared only when the frame
   // callback fires, so a re-run of the effect (StrictMode) still lands on it.
@@ -795,6 +808,7 @@ export function ArtifactPage({
     learningsRetro !== null ||
     debugCase !== null ||
     todoLifecycle !== null ||
+    notePage !== null ||
     (composed !== null && composed.blocks.length > 0);
 
   if (query.isPending) {
@@ -938,6 +952,29 @@ export function ArtifactPage({
           mode={mode}
           onModeChange={setMode}
           onShowSource={showSource}
+          chip={<WarningChip tone={warningTone} />}
+        />
+      </main>
+    );
+  }
+  // quick-261023-61l: the NOTE page opens on its own head (eyebrow, noted day, the promoted chip, the first
+  // sentence as the title) with no breadcrumb row, manifest lead or Document metadata disclosure in View
+  // mode - the Also row names the frontmatter, and a parse warning shows as its chip in the head. Source
+  // mode falls through to the unchanged page below.
+  if (notePage && mode === 'view') {
+    return (
+      <main className="artifact-page page-stack">
+        {switcher}
+        <NotePageView
+          key={artifact.path}
+          model={notePage}
+          fallbackTitle={artifact.title}
+          path={artifact.path}
+          mode={mode}
+          onModeChange={setMode}
+          onShowSource={showSource}
+          documentHtml={shown?.html ?? ''}
+          renderHtml={renderHtml}
           chip={<WarningChip tone={warningTone} />}
         />
       </main>

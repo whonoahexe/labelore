@@ -21622,6 +21622,563 @@ ul.view-todo-checks {
 }
 /* quick-261023-61k:end */
 
+/* quick-261023-61l:start */
+/* ==========================================================================
+   NOTE page (quick-261023-61l, sketch 028 A: annotated): the own head (meta row, display title, lede), a
+   main column (a quick note's labelled clauses beside a gutter with a Lifted | As written toggle, or an
+   explore note drawn as a document), a sticky margin (the todo card(s) or why there is none, then the
+   files the note mentions or the explore note's contents) and the Also row. Colours are theme tokens only.
+   Clause labels, the promoted chip and the status chips ride the documented tones (complete, in-flight,
+   quiet) on data-tone; the todo card's status rule (data-status) and the weight marker (data-level) are
+   identity colours on their own data attributes, not tones. The parse-degradation tones never appear. No
+   colour-mix recipe, no corner radius (corners stay squared) and no motion, only a colour change on hover.
+   Ancestors of a .status-chip set no line-height, so every chip keeps the inherited body value (F-05); the
+   clause labels and the weight marker are their own elements, not status chips. Media overrides sit
+   directly after their base rules (css-source-order).
+   ========================================================================== */
+
+.view-note-page {
+  display: grid;
+  gap: var(--space-10);
+  min-width: 0;
+}
+
+.view-note-page > * {
+  min-width: 0;
+}
+
+/* Head: the meta row, the display title and (for an explore note) its lede. */
+.view-note-head {
+  display: grid;
+  gap: var(--space-5);
+  justify-items: start;
+}
+
+.view-note-head > * {
+  min-width: 0;
+}
+
+.view-note-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+  align-items: center;
+  justify-content: space-between;
+  justify-self: stretch;
+}
+
+.view-note-meta-left {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: baseline;
+}
+
+/* The global eyebrow's bottom margin would lift it off the date's line. */
+.view-note-meta-left .eyebrow {
+  margin: 0;
+}
+
+.view-note-date {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-note-date b {
+  color: var(--foreground);
+  font-weight: var(--fw-medium);
+}
+
+.view-note-tools {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.view-note-title {
+  max-width: 32ch;
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-display-1);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+  overflow-wrap: anywhere;
+}
+
+.view-note-title[data-short='true'] {
+  max-width: 20ch;
+  font-size: var(--fs-display-3);
+  letter-spacing: var(--ls-tighter);
+  line-height: var(--lh-display);
+}
+
+.view-note-lede {
+  max-width: 60ch;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-fluid-1);
+  line-height: var(--lh-relaxed);
+}
+
+/* The grid: the main column and an 18rem margin. */
+.view-note-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 18rem;
+  gap: var(--space-fluid-8);
+  align-items: start;
+}
+
+.view-note-grid > * {
+  min-width: 0;
+}
+
+@media (max-width: 62rem) {
+  .view-note-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.view-note-main {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+}
+
+.view-note-margin {
+  position: sticky;
+  top: var(--space-22);
+  display: grid;
+  gap: var(--space-6);
+}
+
+@media (max-width: 62rem) {
+  .view-note-margin {
+    position: static;
+  }
+}
+
+.view-note-section {
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* Small caps: kickers and the Also key. */
+.view-note-kicker,
+.view-note-key {
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+/* Lifted | As written. */
+.view-note-toggle {
+  display: inline-flex;
+  width: fit-content;
+  border: 1px solid var(--border);
+}
+
+.view-note-toggle button {
+  padding: var(--space-1) var(--space-3);
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-note-toggle button + button {
+  border-left: 1px solid var(--border);
+}
+
+.view-note-toggle button:hover {
+  background: var(--state-hover);
+}
+
+.view-note-toggle button[aria-pressed='true'] {
+  background: var(--primary-tint);
+  color: var(--primary);
+}
+
+/* Clauses: one row each, the label in a 9rem gutter. */
+.view-note-clauses {
+  display: grid;
+  border-top: 1px solid var(--border);
+}
+
+.view-note-clause {
+  display: grid;
+  grid-template-columns: 9rem minmax(0, 1fr);
+  gap: var(--space-2) var(--space-5);
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--border-faint);
+}
+
+@media (max-width: 42rem) {
+  .view-note-clause {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.view-note-gutter {
+  padding-top: var(--space-1);
+}
+
+.view-note-text {
+  margin: 0;
+  font-size: var(--fs-5);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
+}
+
+.view-note-label {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-0-5) var(--space-1-5);
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.view-note-label[data-tone='complete'] {
+  border-color: var(--primary-border);
+  background: var(--primary-tint);
+  color: var(--primary);
+}
+
+.view-note-label[data-tone='in-flight'] {
+  border-color: var(--in-flight-border);
+  color: var(--in-flight-fill);
+}
+
+.view-note-then {
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+/* File references (copy buttons) and code identifiers. */
+.view-note-ref {
+  margin: 0;
+  padding: 0 var(--space-0-5);
+  border: 0;
+  border-bottom: 1px dotted var(--muted-foreground);
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--fs-3);
+  letter-spacing: 0;
+  line-height: inherit;
+  text-transform: none;
+  overflow-wrap: anywhere;
+}
+
+.view-note-ref:hover {
+  border-bottom-color: var(--primary);
+  color: var(--primary);
+}
+
+.view-note-ref[aria-pressed='true'] {
+  background: var(--primary-tint);
+  color: var(--primary);
+}
+
+.view-note-ident {
+  font-family: var(--font-mono);
+  font-size: var(--fs-3);
+}
+
+/* In the display title a mono reference keeps the title's own size. */
+.view-note-title :is(.view-note-ref, .view-note-ident) {
+  font-size: inherit;
+}
+
+.view-note-whole {
+  justify-self: start;
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--border);
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+}
+
+.view-note-verbatim {
+  max-width: 72ch;
+  margin: 0;
+  padding: var(--space-5) var(--space-6);
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: var(--fs-5);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
+}
+
+/* Mentions: every file the note names, with a count. */
+.view-note-mentions {
+  gap: var(--space-1);
+}
+
+.view-note-mentions .view-note-kicker {
+  margin-bottom: var(--space-1);
+}
+
+.view-note-mention {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  border: 0;
+  border-bottom: 1px solid var(--border-faint);
+  background: none;
+  color: var(--foreground);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.view-note-mention:hover,
+.view-note-mention[aria-pressed='true'] {
+  color: var(--primary);
+}
+
+.view-note-count,
+.view-note-copied {
+  color: var(--muted-foreground);
+}
+
+/* The todo card: a 3px status rule on top, or a dashed box when there is no todo. */
+.view-note-todo {
+  display: grid;
+  gap: var(--space-2-5);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--in-flight-fill);
+  background: var(--card);
+}
+
+.view-note-todo[data-status='done'] {
+  border-top-color: var(--primary);
+}
+
+.view-note-todo[data-status='unfiled'] {
+  border-top-color: var(--border);
+}
+
+.view-note-todo[data-status='none'] {
+  border: 1px dashed var(--border);
+  background: none;
+}
+
+.view-note-todo-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  align-items: center;
+}
+
+.view-note-todo-title {
+  margin: 0;
+  font-size: var(--fs-5);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+}
+
+.view-note-via {
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-note-resolution {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  margin: 0;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
+}
+
+.view-note-none {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+}
+
+.view-note-batched {
+  display: grid;
+  gap: var(--space-1);
+  padding-top: var(--space-2-5);
+  border-top: 1px solid var(--border-faint);
+  font-size: var(--fs-3);
+}
+
+.view-note-sibling {
+  color: var(--foreground);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+a.view-note-sibling:hover {
+  color: var(--primary);
+}
+
+.view-note-open {
+  justify-self: start;
+  color: var(--primary);
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+a.view-note-open:hover {
+  text-decoration: underline;
+}
+
+/* The weight marker: the written value behind a small square; the colours are the TODO page's. */
+.view-note-weight {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.view-note-weight i {
+  flex: none;
+  width: 0.6rem;
+  height: 0.6rem;
+  border: 1.5px solid currentcolor;
+}
+
+.view-note-weight[data-level='high'] {
+  color: var(--missing-fill);
+}
+
+.view-note-weight[data-level='high'] i {
+  background: currentcolor;
+}
+
+.view-note-weight[data-level='medium'] {
+  color: var(--in-flight-fill);
+}
+
+.view-note-weight[data-level='medium'] i {
+  background: currentcolor;
+}
+
+.view-note-weight[data-level='unrated'] i {
+  border-style: dashed;
+}
+
+/* An explore note: the rendered document at a 74ch measure, contents in the margin. */
+.view-note-doc {
+  max-width: 74ch;
+  font-size: var(--fs-5);
+}
+
+.view-note-doc :is(h2, h3) {
+  margin-top: var(--space-6);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: var(--fs-fluid-1);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tight);
+  scroll-margin-top: var(--space-22);
+  text-transform: none;
+}
+
+.view-note-contents {
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--border);
+}
+
+.view-note-contents .view-note-kicker {
+  padding: var(--space-2) 0;
+}
+
+.view-note-contents button {
+  padding: var(--space-1-5) 0;
+  border: 0;
+  border-bottom: 1px solid var(--border-faint);
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-size: var(--fs-3);
+  text-align: left;
+}
+
+.view-note-contents button:hover {
+  color: var(--primary);
+}
+
+/* Also in this file: one labelled row of chips that each open that place in Source. */
+.view-note-also {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+  padding: var(--space-3) 0;
+  border-top: 1px dashed var(--border);
+  border-bottom: 1px dashed var(--border);
+}
+
+.view-note-also ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-note-also button.status-chip {
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.view-note-also button.status-chip:hover {
+  background: var(--state-hover);
+}
+/* quick-261023-61l:end */
+
 /* "In the source only": what the view leaves to Source mode, one click away. */
 .view-context-source-only,
 .view-discussion-log-source-only {
