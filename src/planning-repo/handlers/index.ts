@@ -20,6 +20,7 @@ import { ValidationHandler } from './validation.ts';
 import { UiSpecHandler } from './ui-spec.ts';
 import { LearningsHandler } from './learnings.ts';
 import { DebugHandler } from './debug.ts';
+import { TodoHandler } from './todo.ts';
 import { UatHandler } from './uat.ts';
 import { VerificationHandler } from './verification.ts';
 import { FrontmatterOnlyHandler } from './frontmatter-only.ts';
@@ -46,6 +47,7 @@ export const HANDLERS: ArtifactHandler[] = [
   UiSpecHandler,
   LearningsHandler,
   DebugHandler,
+  TodoHandler,
   UatHandler,
   VerificationHandler,
   FrontmatterOnlyHandler,

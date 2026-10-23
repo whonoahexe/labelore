@@ -92,6 +92,26 @@ export function isDebugSessionPath(relPathUnderPlanning: string): boolean {
   return name.toLowerCase() !== 'knowledge-base.md';
 }
 
+// The directory-position half of the dispatch signal for kinds whose file names are free-form:
+// `/gsd-add-todo` and note promotion write `.planning/todos/{pending,completed,done}/<anything>.md`
+// (`2026-10-12-retry-queue-dead-letter.md`, `004-tariff-note-tooltips.md`, `lifted-figures-everywhere.md`),
+// so no filename grammar can recognise them. A markdown file anywhere under `todos/` is therefore a
+// todo by position. The location stays 'other': the tree, search grouping and goldens do not move
+// (quick-261023-61k, sketch 027 C).
+export function isTodoPath(relPathUnderPlanning: string): boolean {
+  const segments = relPathUnderPlanning.split('/');
+  if (segments.length < 2 || segments[0] !== 'todos') return false;
+  return segments[segments.length - 1].toLowerCase().endsWith('.md');
+}
+
+/** The directory-position kind of a path under `.planning/`, or null when position says nothing. The
+ * debug predicate above keeps its own pinned line in the walk; this is where a later position kind
+ * (the notes folder) goes. */
+export function positionKind(relPathUnderPlanning: string): string | null {
+  if (isTodoPath(relPathUnderPlanning)) return 'todo';
+  return null;
+}
+
 interface Classification {
   location: ArtifactLocation;
   phaseIdentity: PhaseIdentity | null;
@@ -184,7 +204,7 @@ export async function discover(fs: PlanningFilesystem): Promise<DiscoveryResult>
         const classification = classify(childRelUnderPlanning);
         refs.push({
           path: childRel,
-          kind: isDebugSessionPath(childRelUnderPlanning) ? 'debug' : deriveKind(entry.name),
+          kind: isDebugSessionPath(childRelUnderPlanning) ? 'debug' : (positionKind(childRelUnderPlanning) ?? deriveKind(entry.name)),
           location: classification.location,
           phaseIdentity: classification.phaseIdentity,
           milestoneVersion: classification.milestoneVersion,

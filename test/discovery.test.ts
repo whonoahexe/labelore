@@ -97,6 +97,27 @@ describe('discover — position-aware classification', () => {
     expect(by('spikes/idea.md')?.kind).toBe('unknown');
   });
 
+  it('gives a markdown file under todos/ the todo kind by position, location still other (quick-261023-61k)', async () => {
+    const fs = fsFrom({
+      '.planning/todos/pending/a.md': '# a',
+      '.planning/todos/completed/b.md': '# b',
+      '.planning/todos/done/c.md': '# c',
+      '.planning/todos/x.md': '# x',
+      '.planning/todos/pending/sub/d.md': '# d',
+      '.planning/todos/.gitkeep': '',
+      '.planning/todos/pending/e.txt': 'text',
+      '.planning/notes/n.md': '# n',
+    });
+    const { refs } = await discover(fs);
+    const by = (path: string) => refs.find((r) => r.path === `.planning/${path}`);
+    for (const path of ['todos/pending/a.md', 'todos/completed/b.md', 'todos/done/c.md', 'todos/x.md', 'todos/pending/sub/d.md']) {
+      expect(by(path)).toMatchObject({ kind: 'todo', location: 'other' });
+    }
+    expect(by('todos/.gitkeep')?.kind).toBe('unknown');
+    expect(by('todos/pending/e.txt')?.kind).toBe('unknown');
+    expect(by('notes/n.md')?.kind).toBe('unknown');
+  });
+
   it('still discovers files inside a subdirectory whose name does not match the phase grammar', async () => {
     const fs = fsFrom({ '.planning/phases/not-a-phase-dir/notes.md': '# notes' });
     const { refs } = await discover(fs);

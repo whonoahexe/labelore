@@ -3114,7 +3114,7 @@ a.ledger-source-sum:hover {
 }
 
 .todo-row[data-severity='high'] .todo-severity {
-  color: var(--destructive);
+  color: var(--missing-fill);
 }
 
 .todo-row[data-severity='high'] .todo-severity i {
@@ -3122,7 +3122,7 @@ a.ledger-source-sum:hover {
 }
 
 .todo-row[data-severity='medium'] .todo-severity {
-  color: var(--primary);
+  color: var(--in-flight-fill);
 }
 
 .todo-row[data-severity='unrated'] .todo-severity i {
@@ -20910,6 +20910,717 @@ button.view-verification-stat:hover {
   border: 1px dashed var(--border);
 }
 /* quick-261018-j5h:end */
+
+/* quick-261023-61k:start */
+/* ==========================================================================
+   TODO page (quick-261023-61k, sketch 027 C: the lifecycle): the own head (meta row, display title, chip
+   row, the three-step strip) and one numbered spine under it - the notes the todo was made from, the todo
+   itself (lead beside plan, files, other sections folded), then how it closed or how long it has been
+   open - and the Also row. Colours are theme tokens only. The status chip rides the documented tones
+   (complete, in-flight, quiet) on data-tone; the severity square (data-severity) and the step and stage
+   states (data-state) are identity colours on their own data attributes, not tones. The parse-degradation
+   tones never appear. No colour-mix recipe, no corner radius (corners stay squared) and no motion, only a
+   colour change on hover. Ancestors of a .status-chip set no line-height, so every chip keeps the
+   inherited body value (F-05); the severity square is its own element, not a status chip. Media
+   overrides sit directly after their base rules (css-source-order).
+   ========================================================================== */
+
+.view-todo-page {
+  display: grid;
+  gap: var(--space-10);
+  min-width: 0;
+}
+
+.view-todo-page > * {
+  min-width: 0;
+}
+
+/* Head: the meta row, the display title, the chip row and the step strip. */
+.view-todo-head {
+  display: grid;
+  gap: var(--space-4);
+  justify-items: start;
+}
+
+.view-todo-head > * {
+  min-width: 0;
+}
+
+.view-todo-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+  align-items: center;
+  justify-content: space-between;
+  justify-self: stretch;
+}
+
+.view-todo-meta-left {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: baseline;
+}
+
+/* The global eyebrow's bottom margin would lift it off the date's line. */
+.view-todo-meta-left .eyebrow {
+  margin: 0;
+}
+
+.view-todo-date {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-todo-date b {
+  color: var(--foreground);
+  font-weight: var(--fw-medium);
+}
+
+.view-todo-tools {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.view-todo-title {
+  max-width: 30ch;
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-display-1);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-display);
+  overflow-wrap: anywhere;
+}
+
+/* The chip row: the status chip, the severity square, the area chip. */
+.view-todo-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  align-items: center;
+}
+
+/* The severity square: the same squares as the dashboard's On deck todo rows. The written value leads;
+   the three-level reading is the square's colour. */
+.view-todo-pip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.view-todo-pip i {
+  flex: none;
+  width: 0.6rem;
+  height: 0.6rem;
+  border: 1.5px solid currentcolor;
+}
+
+.view-todo-pip[data-severity='high'] {
+  color: var(--missing-fill);
+}
+
+.view-todo-pip[data-severity='high'] i {
+  background: currentcolor;
+}
+
+.view-todo-pip[data-severity='medium'] {
+  color: var(--in-flight-fill);
+}
+
+.view-todo-pip[data-severity='medium'] i {
+  background: currentcolor;
+}
+
+.view-todo-pip[data-severity='unrated'] i {
+  border-style: dashed;
+}
+
+.view-todo-pip span {
+  color: var(--muted-foreground);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* The step strip: three columns in one border, a 3px rule on top of each by state. */
+.view-todo-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  justify-self: stretch;
+  border: 1px solid var(--border);
+}
+
+.view-todo-step {
+  position: relative;
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  padding: var(--space-4) var(--space-5);
+  border: 0;
+  background: var(--card);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.view-todo-step + .view-todo-step {
+  border-left: 1px solid var(--border);
+}
+
+@media (max-width: 42rem) {
+  .view-todo-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .view-todo-step + .view-todo-step {
+    border-top: 1px solid var(--border);
+    border-left: 0;
+  }
+}
+
+.view-todo-step::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 3px;
+  background: var(--border);
+}
+
+.view-todo-step[data-state='done']::before {
+  background: var(--primary);
+}
+
+.view-todo-step[data-state='now']::before {
+  background: var(--in-flight-fill);
+}
+
+.view-todo-step[data-state='none']::before {
+  border-top: 2px dashed var(--border);
+  background: none;
+}
+
+button.view-todo-step {
+  cursor: pointer;
+}
+
+button.view-todo-step:hover {
+  background: var(--state-hover);
+}
+
+.view-todo-step-key {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-todo-step-value {
+  font-family: var(--font-mono);
+  font-size: var(--fs-5);
+  font-weight: var(--fw-medium);
+  overflow-wrap: anywhere;
+}
+
+.view-todo-step-sub {
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+.view-todo-step[data-state='none'] .view-todo-step-value {
+  color: var(--muted-foreground);
+  font-weight: normal;
+}
+
+/* Shared small parts: kickers, link buttons, note and quick-task links. */
+.view-todo-kicker,
+.view-todo-key {
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-todo-kicker[data-quiet='true'] {
+  font-weight: normal;
+}
+
+.view-todo-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-decoration: none;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.view-todo-link:hover {
+  color: var(--primary);
+}
+
+/* The quick task in the Closed kicker links to its page in the primary colour. */
+.view-todo-kicker .view-todo-link {
+  color: var(--primary);
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/* A note reference in the text: an in-app link to that note's page. */
+.view-todo-ref {
+  padding: 0 var(--space-1);
+  border: 1px solid var(--primary-border);
+  color: var(--primary);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.view-todo-ref:hover {
+  background: var(--primary-tint);
+}
+
+/* The spine: a 2.5rem node column, a 2px rail drawn behind it, the stage body beside it. */
+.view-todo-spine {
+  display: grid;
+}
+
+.view-todo-stage {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr);
+  gap: var(--space-4);
+  padding-bottom: var(--space-10);
+  scroll-margin-top: 6rem;
+}
+
+.view-todo-stage:last-child {
+  padding-bottom: 0;
+}
+
+.view-todo-stage::before {
+  content: '';
+  position: absolute;
+  top: var(--space-10);
+  bottom: 0;
+  left: 0;
+  width: 2.5rem;
+  background: linear-gradient(var(--border), var(--border)) center / 2px 100% no-repeat;
+}
+
+.view-todo-stage:last-child::before {
+  display: none;
+}
+
+.view-todo-node {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+.view-todo-stage[data-state='done'] .view-todo-node {
+  border-color: var(--primary-border);
+  background: var(--primary-tint);
+  color: var(--foreground);
+}
+
+.view-todo-stage[data-state='now'] .view-todo-node {
+  border: 1.5px dashed var(--in-flight-fill);
+  color: var(--in-flight-fill);
+}
+
+.view-todo-stage-body {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-todo-stage-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  align-items: baseline;
+  padding-top: var(--space-2);
+}
+
+.view-todo-stage-head h2 {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-fluid-1);
+  font-weight: var(--fw-medium);
+}
+
+/* A note the todo was made from. */
+.view-todo-note {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--muted-foreground);
+  background: var(--card);
+  font-size: var(--fs-3);
+  line-height: var(--lh-relaxed);
+}
+
+.view-todo-note[data-missing='true'] {
+  border-left-style: dashed;
+  color: var(--muted-foreground);
+}
+
+.view-todo-note-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.view-todo-note-text {
+  overflow-wrap: anywhere;
+}
+
+.view-todo-note-text b {
+  font-weight: var(--fw-medium);
+}
+
+.view-todo-note-text[data-clamped='true'] {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.view-todo-note-foot {
+  display: flex;
+  gap: var(--space-4);
+}
+
+/* The todo itself: lead beside plan. */
+.view-todo-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-6);
+}
+
+@media (max-width: 62rem) {
+  .view-todo-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.view-todo-part {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-todo-part:only-child {
+  grid-column: 1 / -1;
+}
+
+.view-todo-empty {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+}
+
+/* The files box. */
+.view-todo-files {
+  display: grid;
+  gap: var(--space-1-5);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+}
+
+.view-todo-file {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  align-items: baseline;
+  font-family: var(--font-mono);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 42rem) {
+  .view-todo-file {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.view-todo-file-dir {
+  color: var(--muted-foreground);
+}
+
+.view-todo-file-range {
+  color: var(--muted-foreground);
+  font-size: var(--fs-2);
+  white-space: nowrap;
+}
+
+/* Other sections, folded. */
+.view-todo-fold {
+  border-top: 1px solid var(--border);
+}
+
+.view-todo-fold:last-child {
+  border-bottom: 1px solid var(--border);
+}
+
+.view-todo-fold > summary {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  font-size: var(--fs-5);
+  list-style: none;
+  cursor: pointer;
+}
+
+.view-todo-fold > summary::-webkit-details-marker {
+  display: none;
+}
+
+.view-todo-fold > summary::after {
+  content: '+';
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+}
+
+.view-todo-fold[open] > summary::after {
+  content: '–';
+}
+
+.view-todo-fold > summary:hover {
+  color: var(--primary);
+}
+
+.view-todo-fold > .view-todo-md {
+  padding-bottom: var(--space-4);
+}
+
+/* How it closed, or that it has not. */
+.view-todo-close {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--primary-border);
+  background: var(--primary-tint);
+}
+
+.view-todo-commits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+}
+
+.view-todo-commit {
+  padding: var(--space-0-5) var(--space-1-5);
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-todo-wait {
+  margin: 0;
+  padding: var(--space-4) var(--space-5);
+  border: 1px dashed var(--in-flight-border);
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+}
+
+.view-todo-wait b {
+  color: var(--in-flight-fill);
+  font-weight: var(--fw-medium);
+}
+
+/* Author text blocks (the lead, the plan, the folds, the close box). */
+.view-todo-md {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  font-size: var(--fs-4);
+  line-height: var(--lh-relaxed);
+}
+
+.view-todo-md :is(p, li) {
+  overflow-wrap: anywhere;
+}
+
+.view-todo-md code {
+  padding: 0 var(--space-1);
+  background: var(--code-veil);
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.view-todo-md .view-todo-commit {
+  padding: var(--space-0-5) var(--space-1-5);
+  background: none;
+}
+
+.view-todo-text,
+.view-todo-list {
+  margin: 0;
+}
+
+.view-todo-list {
+  display: grid;
+  gap: var(--space-1-5);
+  padding-left: var(--space-5);
+}
+
+ul.view-todo-list {
+  list-style: disc;
+}
+
+ol.view-todo-list {
+  list-style: decimal;
+}
+
+ul.view-todo-checks {
+  display: grid;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.view-todo-check {
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr);
+  gap: var(--space-2-5);
+  align-items: start;
+}
+
+.view-todo-check::before {
+  content: '';
+  width: 0.8rem;
+  height: 0.8rem;
+  margin-top: var(--space-1);
+  border: 1.5px solid var(--muted-foreground);
+}
+
+.view-todo-check[data-done='true']::before {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.view-todo-check[data-done='true'] > span {
+  color: var(--muted-foreground);
+}
+
+.view-todo-subhead {
+  margin: 0;
+  padding-top: var(--space-2);
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-todo-quote {
+  margin: 0;
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--border);
+  color: var(--muted-foreground);
+}
+
+.view-todo-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-3);
+}
+
+.view-todo-table :is(th, td) {
+  padding: var(--space-1-5) var(--space-2-5);
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.view-todo-code {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--sidebar);
+  font-size: var(--fs-2);
+  line-height: var(--lh-relaxed);
+  overflow-x: auto;
+}
+
+.view-todo-code code {
+  padding: 0;
+  background: none;
+  overflow-wrap: normal;
+  white-space: pre;
+}
+
+/* Also in this file: one labelled row of chips that open the file in Source. */
+.view-todo-also {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+  padding: var(--space-3) 0;
+  border-top: 1px dashed var(--border);
+  border-bottom: 1px dashed var(--border);
+}
+
+.view-todo-also ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-todo-also button.status-chip {
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.view-todo-also button.status-chip:hover {
+  background: var(--state-hover);
+}
+/* quick-261023-61k:end */
 
 /* "In the source only": what the view leaves to Source mode, one click away. */
 .view-context-source-only,

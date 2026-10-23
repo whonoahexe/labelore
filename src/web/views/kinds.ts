@@ -5,7 +5,8 @@
 // is already a granular `artifact.kind` string on the wire (RESEARCH.md § Corrected
 // Understanding) — this module adds no new server-side splitting, only a client-side name list.
 // `debug` is discovery's directory-position kind for GSD debug sessions under `.planning/debug/`
-// (quick-261018-j5h).
+// (quick-261018-j5h). `todo` is discovery's directory-position kind for files under `.planning/todos/`
+// (quick-261023-61k).
 export const VIEW_KINDS = [
   'discussion-log',
   'verification',
@@ -25,6 +26,7 @@ export const VIEW_KINDS = [
   'context',
   'review-fix',
   'findings',
+  'todo',
   'debug',
 ] as const;
 
