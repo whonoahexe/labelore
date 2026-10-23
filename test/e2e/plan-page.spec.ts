@@ -196,7 +196,7 @@ test.describe('Plan page', () => {
     await openPage(page, url, 'light');
 
     await expect(page.locator('#plan-task-list [role="tab"]')).toHaveCount(1);
-    await expect(page.locator('.view-plan-nav-tabs button')).toHaveText(['Verify', 'Context']);
+    await expect(page.locator('.view-plan-nav-tabs button')).toHaveText([/^What to check/, 'Verify', 'Context']);
     await expect(page.locator('#plan-task-panel')).toContainText('Waits for you to look');
     await expect(page.locator('.view-plan-nav-head .status-chip', { hasText: 'Gap closure' })).toBeVisible();
     await expect(page.locator('[data-modal="files"]')).toBeDisabled();

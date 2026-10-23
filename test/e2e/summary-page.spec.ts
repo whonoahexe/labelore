@@ -133,7 +133,8 @@ test.describe('Summary page', () => {
       '#summary-source-only .status-chip',
     ]) {
       const radii = await page.locator(selector).evaluateAll((els) => els.map((el) => getComputedStyle(el).borderRadius));
-      expect(radii.length, selector).toBeGreaterThan(0);
+      // The detail box only renders while the summary has items waiting on a human.
+      if (selector !== '.view-summary-detail-box') expect(radii.length, selector).toBeGreaterThan(0);
       expect(radii.every((r) => r === '0px'), selector).toBe(true);
     }
 

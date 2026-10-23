@@ -7379,7 +7379,6 @@ button.view-context-summary:hover {
 }
 
 .view-plan-nav-facts b {
-  margin-left: var(--space-1-5);
   color: var(--foreground);
   font-size: var(--fs-4);
   font-weight: var(--fw-medium);
@@ -17357,8 +17356,12 @@ button.view-validation-ref[aria-pressed='true'] {
   padding: var(--space-3) 0;
   border-bottom: 1px solid var(--border-faint);
   font-size: var(--fs-4);
-  line-height: var(--lh-normal);
   overflow-wrap: anywhere;
+}
+
+/* The text sets the row's line height, so the chip keeps the line height every status chip shares. */
+.view-summary-pattern > span:last-child {
+  line-height: var(--lh-normal);
 }
 
 .view-summary-pattern:first-child {
