@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 029 — note gist</title>
+<link rel="stylesheet" href="../themes/default.css?v=029">
+<style>
+/* Sketch 029: the NOTE page, round 2. 028-A shipped, but its first screen is a title and rows: quick
+   one-liners read empty and explore notes read as plain documents. Every variant here opens on the
+   note's gist, said large, with one signature element, and handles every note shape (dense labelled,
+   unlabelled prose, one-liner, unpromoted question, explore notes 42–112 lines). Lifting is
+   deterministic, from the file only: quick notes by 028's Label: rule; explore notes by their lede,
+   ## sections, bold-led list items, tables, measured figures (number + unit) and flag words
+   (Decided / Blocked / open question / rejected / resolved / corrected). Shared vocabulary from 027
+   (build.mjs). A gist console (rail + big number + ledger), B fact board (tiles, one big value each),
+   C the note as a card (ruled index card + verdict line; explore notes as a deck of section cards). */
+/*SHARED_CSS*/
+
+/* ---------- shared to 029 ---------- */
+.lbl { display: inline-flex; align-items: center; padding: 0.05rem var(--space-1-5); border: 1px solid var(--border); font-family: var(--font-heading); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); white-space: nowrap; }
+.lbl[data-tone='complete'] { color: var(--primary); border-color: var(--primary-border); background: var(--primary-tint); }
+.lbl[data-tone='in-flight'] { color: var(--in-flight-fill); border-color: var(--in-flight-border); }
+.lbl[data-tone='missing'] { color: var(--missing-fill); border-color: var(--missing-border); }
+.fref { margin: 0; line-height: inherit; text-transform: none; letter-spacing: 0; font-family: var(--font-mono); font-size: 0.86em; padding: 0 0.15em; border: 0; border-bottom: 1px dotted var(--muted-foreground); background: none; color: inherit; }
+button.fref:hover { color: var(--primary); border-bottom-color: var(--primary); }
+.fref.hl { background: var(--primary-tint); color: var(--primary); }
+.idf { font-family: var(--font-mono); font-size: 0.86em; }
+.verbatim { padding: var(--space-5) var(--space-6); border: 1px solid var(--border); background: var(--card); font-size: var(--fs-5); line-height: var(--lh-relaxed); overflow-wrap: anywhere; max-width: 72ch; }
+.fig-chips { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.fig-chip { display: inline-flex; gap: var(--space-1); align-items: baseline; padding: 0.1rem var(--space-2); border: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); color: var(--foreground); white-space: nowrap; }
+.fig-chip span { color: var(--muted-foreground); }
+.tcard { display: grid; gap: var(--space-2-5); padding: var(--space-4) var(--space-5); border: 1px solid var(--border); border-top: 3px solid var(--in-flight-fill); background: var(--card); }
+.tcard[data-s='done'] { border-top-color: var(--primary); }
+.tcard[data-s='none'] { border-top: 1px dashed var(--border); border-style: dashed; background: none; }
+.tcard h3 { font-size: var(--fs-5); font-weight: var(--fw-medium); line-height: 1.35; overflow-wrap: anywhere; }
+.tcard .row { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); align-items: center; }
+.tcard .res { font-size: var(--fs-3); color: var(--muted-foreground); line-height: var(--lh-relaxed); overflow-wrap: anywhere; }
+.tcard .sib { display: grid; gap: var(--space-1); padding-top: var(--space-2-5); border-top: 1px solid var(--hair); font-size: var(--fs-3); }
+.tcard .sib button { padding: 0; border: 0; background: none; text-align: left; color: var(--foreground); overflow-wrap: anywhere; }
+.tcard .sib button:hover { color: var(--primary); }
+.tcard .none { font-size: var(--fs-4); color: var(--muted-foreground); }
+.refl { display: grid; }
+.refl button { display: flex; justify-content: space-between; gap: var(--space-2); padding: var(--space-1-5) 0; border: 0; border-bottom: 1px solid var(--hair); background: none; text-align: left; font-family: var(--font-mono); font-size: var(--fs-2); color: var(--foreground); overflow-wrap: anywhere; }
+.refl button span { color: var(--muted-foreground); }
+.refl button:hover, .refl button.on { color: var(--primary); }
+.whole { color: var(--muted-foreground); font-size: var(--fs-4); }
+
+/* ============ A — gist console ============ */
+.a-wrap { display: grid; grid-template-columns: 21rem minmax(0, 1fr); gap: var(--space-fluid-9); align-items: start; }
+.a-wrap > * { min-width: 0; }
+@container (max-width: 62rem) { .a-wrap { grid-template-columns: minmax(0, 1fr); } .a-rail { position: static !important; border-right: 0 !important; padding-right: 0 !important; } }
+.a-rail { position: sticky; top: 4rem; display: grid; gap: var(--space-5); align-content: start; padding-right: var(--space-fluid-8); border-right: 1px solid var(--border); }
+.a-rail h1 { font-size: var(--fs-fluid-4); line-height: var(--lh-snug); letter-spacing: var(--ls-tight); font-weight: var(--fw-medium); overflow-wrap: anywhere; }
+.a-rail .ctx { font-size: var(--fs-3); color: var(--muted-foreground); line-height: var(--lh-relaxed); }
+.stage-chip { justify-self: start; display: inline-flex; gap: var(--space-2); align-items: center; padding: var(--space-1-5) var(--space-3); border: 1px solid var(--border); font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; color: var(--muted-foreground); }
+.stage-chip i { width: 0.6rem; height: 0.6rem; background: currentColor; }
+.stage-chip[data-stage='done'] { color: var(--primary); border-color: var(--primary-border); }
+.stage-chip[data-stage='open'] { color: var(--in-flight-fill); border-color: var(--in-flight-border); }
+.stage-chip[data-stage='untraced'] { color: var(--missing-fill); border-color: var(--missing-border); }
+.stage-chip[data-stage='note'] i { background: none; border: 1.5px dashed currentColor; }
+.bignum { display: grid; grid-template-columns: 4px minmax(0, 1fr); gap: var(--space-5); padding: var(--space-5) var(--space-6) var(--space-5) var(--space-5); border: 1px solid var(--border); background: var(--card); }
+.bignum .bar { background: var(--muted-foreground); }
+.bignum[data-stage='done'] { border-color: var(--primary-border); } .bignum[data-stage='done'] .bar { background: var(--primary); }
+.bignum[data-stage='open'] { border-color: var(--in-flight-border); } .bignum[data-stage='open'] .bar { background: var(--in-flight-fill); }
+.bignum[data-stage='untraced'] { border-color: var(--missing-border); } .bignum[data-stage='untraced'] .bar { background: var(--missing-fill); }
+.bignum b { display: block; font-size: var(--fs-display-3); line-height: 1; font-weight: var(--fw-medium); letter-spacing: var(--ls-tighter); }
+.bignum[data-stage='done'] b { color: var(--primary); }
+.bignum .l { margin-top: var(--space-3); font-size: var(--fs-5); font-weight: var(--fw-medium); }
+.bignum .s { margin-top: var(--space-1); font-size: var(--fs-3); color: var(--muted-foreground); }
+.stats { display: grid; }
+.stats div { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) 0; border-bottom: 1px solid var(--hair); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.stats div b { font-weight: var(--fw-medium); color: var(--foreground); letter-spacing: 0; text-transform: none; text-align: right; }
+.stats div b[data-tone='complete'] { color: var(--primary); }
+.stats div b[data-tone='in-flight'] { color: var(--in-flight-fill); }
+.stats div b[data-tone='missing'] { color: var(--missing-fill); }
+.a-main { display: grid; gap: var(--space-10); }
+.gist { display: grid; gap: var(--space-3); }
+.gist .say { font-size: var(--fs-fluid-3); line-height: 1.4; letter-spacing: var(--ls-tight); max-width: 42ch; overflow-wrap: anywhere; }
+.gist .say.long { font-size: var(--fs-fluid-1); line-height: 1.55; max-width: 64ch; }
+.gist .shape { font-size: var(--fs-4); color: var(--muted-foreground); }
+.ledger { display: grid; }
+.ledger-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--space-3); padding-bottom: var(--space-3); border-bottom: 1px solid var(--border); }
+.ledger-head h2 { font-family: var(--font-mono); font-size: var(--fs-fluid-4); font-weight: var(--fw-medium); letter-spacing: var(--ls-tight); }
+.lrow { display: grid; grid-template-columns: 2.75rem 9.5rem minmax(0, 1fr); gap: var(--space-2) var(--space-5); padding: var(--space-5) 0; border-bottom: 1px solid var(--hair); }
+.lrow .ix { font-family: var(--font-mono); font-size: var(--fs-fluid-1); color: var(--muted-foreground); }
+.lrow[data-tone='complete'] .ix { color: var(--primary); }
+.lrow[data-tone='in-flight'] .ix { color: var(--in-flight-fill); }
+.lrow .g { padding-top: 0.25em; }
+.lrow .t { font-size: var(--fs-5); line-height: var(--lh-relaxed); overflow-wrap: anywhere; }
+.lrow .t .first { font-weight: var(--fw-medium); }
+@container (max-width: 40rem) { .lrow { grid-template-columns: 2.25rem minmax(0, 1fr); } .lrow .t { grid-column: 2; } }
+.erow { display: grid; grid-template-columns: 2.75rem minmax(0, 1fr) auto; gap: var(--space-2) var(--space-5); padding: var(--space-5) 0; border-bottom: 1px solid var(--hair); }
+.erow .ix { font-family: var(--font-mono); font-size: var(--fs-fluid-1); color: var(--primary); }
+.erow .body { display: grid; gap: var(--space-5); min-width: 0; }
+.erow h3 { font-size: var(--fs-6); font-weight: var(--fw-medium); line-height: var(--lh-snug); overflow-wrap: anywhere; }
+.erow .key { font-size: var(--fs-4); line-height: var(--lh-relaxed); color: var(--muted-foreground); max-width: 72ch; overflow-wrap: anywhere; }
+.erow .items { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.erow .items li { display: grid; grid-template-columns: 10rem minmax(0, 1fr); gap: var(--space-5); font-size: var(--fs-4); line-height: var(--lh-relaxed); overflow-wrap: anywhere; }
+.erow .items li b { font-weight: var(--fw-medium); }
+.erow .flags .lbl { justify-self: start; }
+@container (max-width: 40rem) { .erow .items li, .erow .flags p { grid-template-columns: minmax(0, 1fr); gap: var(--space-1); } }
+.erow .flags { display: grid; gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--hair); }
+.erow .flags p { display: grid; grid-template-columns: 10rem minmax(0, 1fr); gap: var(--space-5); align-items: baseline; font-size: var(--fs-4); line-height: var(--lh-relaxed); overflow-wrap: anywhere; }
+.erow .side { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); text-align: right; white-space: nowrap; display: grid; gap: var(--space-1); justify-items: end; align-content: start; }
+.erow .full { grid-column: 2 / -1; padding-top: var(--space-2); }
+@container (max-width: 40rem) { .erow { grid-template-columns: 2.25rem minmax(0, 1fr); } .erow .side { grid-column: 2; justify-items: start; text-align: left; } }
+
+/* ============ B — fact board ============ */
+.b-head { display: grid; gap: var(--space-5); }
+.b-lede { font-size: var(--fs-fluid-1); line-height: 1.55; max-width: 66ch; overflow-wrap: anywhere; }
+.b-ctx { font-size: var(--fs-4); color: var(--muted-foreground); }
+.board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-flow: row dense; gap: var(--space-3); }
+@container (max-width: 64rem) { .board { grid-template-columns: repeat(2, minmax(0, 1fr)); } .tile.w3, .tile.w4 { grid-column: 1 / -1 !important; } }
+@container (max-width: 34rem) { .board { grid-template-columns: minmax(0, 1fr); } .tile { grid-column: 1 / -1 !important; } }
+.tile { display: grid; gap: var(--space-3); align-content: start; min-height: 11.5rem; padding: var(--space-5); border: 1px solid var(--border); background: var(--card); text-align: left; min-width: 0; }
+
+.tile.click { cursor: pointer; }
+.tile.click:hover { border-color: var(--primary-border); }
+.tile.w2 { grid-column: span 2; } .tile.w3 { grid-column: span 3; } .tile.w4 { grid-column: 1 / -1; }
+.tile[data-tone='complete'] { border-top: 3px solid var(--primary); }
+.tile[data-tone='in-flight'] { border-top: 3px solid var(--in-flight-fill); }
+.tile[data-tone='missing'] { border-top: 3px solid var(--missing-fill); }
+.tile[data-tone='quiet'] { border-top: 3px solid var(--border); }
+.tile .top { display: flex; justify-content: space-between; gap: var(--space-2); align-items: baseline; }
+.tile .big { font-size: var(--fs-display-1); line-height: 1; letter-spacing: var(--ls-tight); font-weight: var(--fw-medium); overflow-wrap: anywhere; }
+.tile .big.word { font-size: var(--fs-fluid-4); line-height: 1.1; }
+.tile .unit { font-family: var(--font-mono); font-size: var(--fs-3); color: var(--muted-foreground); }
+.tile .say { font-size: var(--fs-fluid-1); line-height: 1.4; overflow-wrap: anywhere; }
+.tile .more { font-size: var(--fs-3); line-height: var(--lh-relaxed); color: var(--muted-foreground); overflow-wrap: anywhere; }
+.tile:not(.open):not(.note-tile) .say { display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+.tile:not(.open) .more { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.tile .phrase { font-size: var(--fs-3); line-height: var(--lh-relaxed); color: var(--muted-foreground); overflow-wrap: anywhere; }
+.tile.note-tile { min-height: 16rem; }
+.tile.note-tile .say { font-size: var(--fs-fluid-4); line-height: 1.25; letter-spacing: var(--ls-tight); }
+.tile .foot { margin-top: auto; }
+.b-sections { display: grid; }
+.b-sections > .kicker { padding-bottom: var(--space-3); }
+details.fold { border-top: 1px solid var(--border); }
+details.fold:last-child { border-bottom: 1px solid var(--border); }
+details.fold > summary { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: var(--space-1) var(--space-4); align-items: baseline; padding: var(--space-4) 0; cursor: pointer; list-style: none; }
+details.fold > summary::-webkit-details-marker { display: none; }
+details.fold > summary::after { content: '+'; font-family: var(--font-mono); color: var(--muted-foreground); }
+details.fold[open] > summary::after { content: '–'; }
+details.fold > summary:hover h3 { color: var(--primary); }
+details.fold > summary h3 { font-size: var(--fs-5); font-weight: var(--fw-medium); overflow-wrap: anywhere; }
+details.fold > summary .key { grid-column: 1; font-size: var(--fs-3); color: var(--muted-foreground); overflow-wrap: anywhere; }
+details.fold > summary .n { font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); grid-row: 1; grid-column: 2; }
+details.fold > .md { padding-bottom: var(--space-5); max-width: 76ch; }
+
+/* ============ C — the note as a card ============ */
+.c-verdict { font-size: var(--fs-display-1); line-height: 1.08; letter-spacing: var(--ls-tight); font-weight: var(--fw-medium); max-width: 26ch; overflow-wrap: anywhere; }
+.c-verdict .q { color: var(--muted-foreground); }
+.c-stage { display: grid; grid-template-columns: minmax(0, 1fr) 19rem; gap: var(--space-fluid-8); align-items: start; }
+.c-stage > * { min-width: 0; }
+@container (max-width: 60rem) { .c-stage { grid-template-columns: minmax(0, 1fr); } }
+.icard { --rule: 2rem; --gutter: 10.5rem; position: relative; display: grid; padding: var(--space-5) var(--space-6) var(--space-8) 0; border: 1px solid var(--border); border-top: 4px solid var(--muted-foreground); background-color: var(--card); background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--rule) - 1px), var(--hair) calc(var(--rule) - 1px), var(--hair) var(--rule)); background-position: 0 calc(var(--space-5) + var(--rule)); }
+.icard::before { content: ''; position: absolute; top: 0; bottom: 0; left: var(--gutter); width: 1px; background: color-mix(in oklch, var(--primary) 55%, transparent); }
+.icard[data-stage='done'] { border-top-color: var(--primary); }
+.icard[data-stage='open'] { border-top-color: var(--in-flight-fill); }
+.icard[data-stage='untraced'] { border-top-color: var(--missing-fill); }
+.icard[data-stage='note'] { border-top-style: dashed; }
+.icard .cl { display: grid; grid-template-columns: var(--gutter) minmax(0, 1fr); }
+.icard .cl .g { padding: 0.35rem var(--space-4) 0 var(--space-3); text-align: right; }
+.icard .cl .g .lbl { white-space: normal; text-align: right; }
+.icard .cl .t { padding-left: var(--space-5); font-size: var(--fs-5); line-height: var(--rule); overflow-wrap: anywhere; }
+.icard .cl.head .t, .icard .cl.head .g { line-height: var(--rule); padding-top: 0; }
+.icard .cl.lead .t { font-size: var(--fs-fluid-3); line-height: var(--rule); letter-spacing: var(--ls-tight); font-weight: var(--fw-medium); }
+.icard.one .cl.lead .t { font-size: var(--fs-display-1); line-height: calc(var(--rule) * 2); }
+.icard .cl.end .t { color: var(--muted-foreground); font-size: var(--fs-4); }
+@container (max-width: 40rem) { .icard { --gutter: 1rem; padding-right: var(--space-4); } .icard .cl { grid-template-columns: minmax(0, 1fr); } .icard .cl .g { display: none; } .icard .cl .t { padding-left: calc(var(--gutter) + var(--space-4)); } .icard .cl .t .lbl { margin-right: var(--space-1-5); } }
+.icard .cl .t .lbl.inline { display: none; }
+@container (max-width: 40rem) { .icard .cl .t .lbl.inline { display: inline-flex; } }
+.c-side { display: grid; gap: var(--space-5); align-content: start; position: sticky; top: 4rem; }
+.c-link { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.c-link::before { content: ''; width: 2rem; height: 1px; background: var(--muted-foreground); }
+.deck { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: var(--space-4); grid-auto-flow: row dense; }
+.scard { position: relative; display: grid; gap: var(--space-3); align-content: start; min-height: 13rem; padding: var(--space-5) var(--space-5) var(--space-5) calc(var(--space-5) + 0.75rem); border: 1px solid var(--border); border-top: 4px solid var(--muted-foreground); background: var(--card); text-align: left; font: inherit; color: inherit; min-width: 0; }
+.scard::before { content: ''; position: absolute; top: 0; bottom: 0; left: var(--space-4); width: 1px; background: color-mix(in oklch, var(--primary) 55%, transparent); }
+
+.scard.click { cursor: pointer; }
+.scard.click:hover { border-color: var(--primary-border); }
+.scard.lede-card { grid-column: span 2; border-top-color: var(--primary); }
+@container (max-width: 40rem) { .scard.lede-card { grid-column: auto; } }
+.scard.open { grid-column: 1 / -1; cursor: default; }
+.scard .n { font-family: var(--font-mono); font-size: var(--fs-fluid-1); color: var(--primary); }
+.scard h3 { font-size: var(--fs-6); font-weight: var(--fw-medium); line-height: var(--lh-snug); overflow-wrap: anywhere; }
+.scard .key { font-size: var(--fs-4); line-height: var(--lh-relaxed); overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+.scard.lede-card .key { font-size: var(--fs-fluid-1); line-height: 1.5; -webkit-line-clamp: 8; }
+.scard .foot { margin-top: auto; display: flex; justify-content: space-between; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-1); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.scard .md { max-width: 78ch; }
+.c-todos { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: var(--space-3); }
+</style>
+</head>
+<body>
+<nav id="variant-nav">
+  <span class="lbl" style="border:0;padding:0;margin-right:var(--space-2)">Sketch 029 · Note gist ·</span>
+  <button class="variant-tab" data-variant="a">A: Gist console ★ Selected</button>
+  <button class="variant-tab" data-variant="b">B: Fact board</button>
+  <button class="variant-tab" data-variant="c">C: The note as a card</button>
+</nav>
+<div id="frame"><div id="root"></div></div>
+<dialog class="modal" id="modal"></dialog>
+<div id="sketch-tools" style="position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:12px;background:rgba(0,0,0,0.78);color:white;padding:8px 10px;opacity:0.55;transition:opacity 0.2s;display:grid;gap:6px;max-width:calc(100vw - 24px)" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.55'">
+  <div>Doc: <span id="doc-btns"></span></div>
+  <div>Theme: <button data-theme="light">Light</button><button data-theme="dark">Dark</button></div>
+  <div>Width: <button data-width="390">Phone</button><button data-width="820">Tablet</button><button data-width="full">Desktop</button></div>
+</div>
+<style>
+#sketch-tools button { background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 2px 7px; margin: 2px 0 0 3px; font: inherit; cursor: pointer; }
+#sketch-tools button.on { background: #c2410c; border-color: #c2410c; }
+</style>
+<script src="./data.js?v=1"></script>
+<script>
+const DOCS = window.DATA;
+const Q = new URLSearchParams(location.search);
+const state = { variant: ['a', 'b', 'c'].includes(Q.get('v')) ? Q.get('v') : 'a', doc: DOCS[Q.get('doc')] ? Q.get('doc') : 'dcrop', theme: Q.get('theme') === 'light' ? 'light' : 'dark', width: Q.get('width') ?? 'full', mode: 'view', verbatim: false, ref: null, open: new Set() };
+const NOW = new Date('2026-10-23T12:00:00');
+//SHARED_JS
+
+/* ---------- lifting a quick note (028's rule, unchanged) ---------- */
+// A clause starts at a sentence that opens with a short "Label:" (Decided:, Bug:, Want:, Off limits:,
+// Decided 2026-10-21:) or a known opener (Today …, Estimated …, Batch with …). Sentences without one
+// continue the clause before them; the first sentence is the gist.
+const GROUP = { decided: 'decided', bug: 'problem', cause: 'problem', today: 'problem', observed: 'problem', problem: 'problem', fix: 'ask', want: 'ask', wanted: 'ask', how: 'ask', ui: 'ask', output: 'ask', suggested: 'ask', plan: 'ask', limits: 'limit', 'off limits': 'limit', 'known gap': 'limit', 'preset constraint': 'limit', estimated: 'limit', batch: 'limit', 'open question': 'open' };
+const TONE = { decided: 'complete', bug: 'in-flight', cause: 'in-flight', observed: 'in-flight', suggested: 'in-flight', 'open question': 'missing' };
+const GROUP_WORD = { decided: ['decided', 'decided'], ask: ['ask', 'asks'], problem: ['problem', 'problems'], limit: ['limit', 'limits'], open: ['open question', 'open questions'], other: ['other', 'other'] };
+const OPENERS = [[/^Today\b/, 'Today'], [/^Estimated\b/, 'Estimated'], [/^Batch with\b/, 'Batch']];
+function sentences(text) {
+  const prot = text.replace(/\b(e\.g|i\.e|etc|vs|approx)\./g, '$1․');
+  return prot.split(/(?<=[.!?])\s+(?=[A-Z(“"*`])/).map(s => s.replace(/․/g, '.').trim()).filter(Boolean);
+}
+function lift(text) {
+  const out = []; let cur = null;
+  for (const s of sentences(text.replace(/\s+/g, ' ').trim())) {
+    const m = s.match(/^([A-Z][A-Za-z]*(?: [a-z]+){0,2})( \d{4}-\d{2}-\d{2})?:\s+(.*)$/);
+    const op = OPENERS.find(([re]) => re.test(s));
+    if (out.length && m && m[1].length <= 22) { cur = { label: m[1], date: m[2]?.trim() ?? null, text: m[3] }; out.push(cur); }
+    else if (out.length && op) { cur = { label: op[1], date: null, text: s }; out.push(cur); }
+    else if (cur && out.length > 1) cur.text += ' ' + s;
+    else { cur = { label: null, text: s }; out.push(cur); }
+  }
+  return out.map((c, i) => { const k = (c.label ?? '').toLowerCase(); return { ...c, i, key: k, group: c.label ? (GROUP[k] ?? 'other') : (i === 0 ? 'gist' : 'other'), tone: TONE[k] ?? null }; });
+}
+const REF_RE = /((?:[\w.-]+\/)+[\w.-]+\.[a-z]{1,5}(?::\d+(?:-\d+)?)?|\b[\w-]+\.(?:ts|tsx|js|mjs|rs|md|json|css|py)(?::\d+)?\b)|(\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+\b|\b[a-z]+(?:_[a-z0-9]+){2,}\b|\b[a-z]+[A-Z]\w*\(\)?)/g;
+function refsOf(text) { const files = new Map(); for (const m of text.replace(/`/g, '').matchAll(REF_RE)) if (m[1]) files.set(m[1], (files.get(m[1]) ?? 0) + 1); return [...files]; }
+const withRefs = s => esc(String(s).replace(/`/g, '')).replace(REF_RE, (m, f, id) => f ? `<button class="fref ${state.ref === f ? 'hl' : ''}" data-ref="${esc(f)}" title="Copy ${esc(f)}">${f}</button>` : `<span class="idf">${id}</span>`);
+const label = (c, extra = '') => c.label ? `<span class="lbl ${extra}" ${c.tone ? `data-tone="${c.tone}"` : ''}>${esc(c.label)}${c.date ? ' · ' + esc(fmtD(c.date)) : ''}</span>` : '';
+const firstSentence = s => sentences(s)[0] ?? s;
+const restOf = s => { const f = firstSentence(s); return s.slice(f.length).trim(); };
+
+/* ---------- figures and flags (both note shapes) ---------- */
+// A figure is a number followed (within two words) by a unit — "~110 MB/s", "67 times", "11 of 16 types".
+const UNIT = String.raw`(?:MB\/s|GB\/s|MiB|GiB|GB|TB|MB|GbE|fps|ms|files|types|times|keys|lines|instances|link events|clips|sketches|days|weeks|%|s\b)`;
+const FIG_RE = new RegExp(String.raw`(~|about |around |under |over |up to )?(?<![×\w.])(\d[\d,.]*(?:\s?(?:of|\/)\s?\d[\d,.]*)?)\s?((?:[a-z][a-z-]*\s){0,2}?)(${UNIT})`, 'g');
+const plain = s => String(s).replace(/\*\*|`|\[\[|\]\]/g, '').replace(/\s+/g, ' ').trim();
+function figures(text, sec = null) {
+  const out = [], seen = new Set();
+  const clean = text.replace(/`[^`]*`/g, m => /^`[\d.,~ ]+[A-Za-z/]*`$/.test(m) ? m.slice(1, -1) : ' ').replace(/^\s*\|[\s:|-]+\|\s*$/gm, '');
+  for (const line of clean.split('\n')) for (const s of sentences(line)) for (const m of s.matchAll(FIG_RE)) {
+    const value = ((m[1] ?? '') + m[2]).replace(/\.$/, '');
+    if (/^\d{4}$/.test(m[2]) && !m[4].trim()) continue;
+    const unit = (m[3] + m[4]).trim();
+    const id = value + ' ' + unit; if (seen.has(id) || seen.has(s)) continue; seen.add(id); seen.add(s);
+    out.push({ value, unit, phrase: plain(s.replace(/^\s*\|/, '').replace(/^\s*([-*]|\d+\.)\s+/, '').replace(/\s*\|\s*/g, ' · ')).slice(0, 140), sec });
+  }
+  return out;
+}
+const FLAG_RULES = [['decided', /\bDecided\b/, 'Decided', 'complete'], ['blocked', /\bBlocked\b/i, 'Blocked', 'missing'], ['open', /\bopen question\b/i, 'Open question', 'missing'], ['rejected', /\brejected\b/i, 'Rejected', 'quiet'], ['resolved', /\bRESOLVED\b|\bresolved \d{4}/, 'Resolved', 'complete'], ['corrected', /\bCorrected\b/, 'Corrected', 'in-flight']];
+function flagsOf(text) {
+  const out = [];
+  for (const line of text.split('\n')) for (const s of sentences(line.replace(/^>\s?/, '').replace(/^\s*([-*]|\d+\.)\s+/, ''))) for (const [kind, re, lab, tone] of FLAG_RULES) if (re.test(s)) { out.push({ kind, label: lab, tone, text: plain(s).replace(/^Decided:\s*/, '') }); break; }
+  return out;
+}
+
+/* ---------- note models ---------- */
+const isDoc = d => d.kind === 'document';
+const slugTitle = p => cap(p.split('/').pop().replace(/\.md$/, '').replace(/^\d{4}-\d{2}-\d{2}-/, '').replace(/-/g, ' '));
+const docBody = d => d.body.replace(/^#\s.*\n/, '');
+function quickModel(d) {
+  const cs = lift(d.body);
+  const rows = cs.slice(1);
+  const counts = {}; for (const c of rows) counts[c.group] = (counts[c.group] ?? 0) + 1;
+  return { gist: cs[0], rows, counts, refs: refsOf(d.body), figs: figures(d.body), words: d.body.split(/\s+/).length };
+}
+const countLine = counts => ['decided', 'ask', 'problem', 'limit', 'open', 'other'].filter(g => counts[g]).map(g => `${counts[g]} ${GROUP_WORD[g][counts[g] === 1 ? 0 : 1]}`).join(' · ');
+function sectionModel(h, lines, idx) {
+  const text = lines.join('\n');
+  const items = []; const paras = []; let table = null; const quotes = []; const subs = [];
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    if (/^\s*$/.test(l)) continue;
+    if (/^###\s/.test(l)) { subs.push(l.replace(/^#+\s/, '')); continue; }
+    if (/^>\s?/.test(l)) { const b = []; while (i < lines.length && /^>\s?/.test(lines[i])) b.push(lines[i++].replace(/^>\s?/, '')); i--; quotes.push(b.join(' ')); continue; }
+    if (/^\s*\|/.test(l)) { const rows = []; while (i < lines.length && /^\s*\|/.test(lines[i])) rows.push(lines[i++]); i--; if (!table) { const cells = r => r.trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim()); table = { head: cells(rows[0]), rows: rows.slice(2).map(cells) }; } continue; }
+    if (/^```/.test(l)) { i++; while (i < lines.length && !/^```/.test(lines[i])) i++; continue; }
+    const li = l.match(/^(\d+\.|[-*])\s+(.*)$/);
+    if (li) { let t = li[2]; while (lines[i + 1] && /^\s{2,}\S/.test(lines[i + 1]) && !/^\s+([-*]|\d+\.)\s/.test(lines[i + 1])) t += ' ' + lines[++i].trim(); const bm = t.match(/^\*\*(.+?)\*\*[.:]?\s*(.*)$/); items.push(bm ? { term: bm[1].replace(/[.:]$/, ''), text: bm[2] } : { term: null, text: t }); continue; }
+    if (/^\s{2,}\S/.test(l)) continue;
+    const p = [l.trim()]; while (lines[i + 1] && lines[i + 1].trim() && !/^(\s*[-*]\s|\s*\d+\.\s|>|#|\s*\||```)/.test(lines[i + 1])) p.push(lines[++i].trim()); paras.push(p.join(' '));
+  }
+  const key = paras[0] ? firstSentence(paras[0]) : items[0] ? (items[0].term ? `${items[0].term}: ${firstSentence(items[0].text)}` : firstSentence(items[0].text)) : table ? `A table of ${table.rows.length} rows: ${table.head.join(' · ')}.` : quotes[0] ? firstSentence(quotes[0]) : '';
+  const flags = flagsOf(h + '\n' + text);
+  const short = h.replace(/\s*\((?:measured|updated|as of)[^)]*\)/i, '').replace(/\s*[:—–-]\s*RESOLVED.*$/, '');
+  const shape = [items.length ? `${items.length} ${items.length === 1 ? 'item' : 'items'}` : '', table ? `table · ${table.rows.length} rows` : '', quotes.length ? `${quotes.length} aside` : '', subs.length ? `${subs.length} sub` : ''].filter(Boolean);
+  const keyFrom = paras[0] ? 'para' : items[0] ? 'item' : table ? 'table' : 'quote';
+  return { idx, h, short, text, items, paras, table, quotes, subs, key, keyFrom, flags, figs: figures(text, idx), shape, lines: text.split('\n').filter(l => l.trim()).length };
+}
+function exploreModel(d) {
+  const all = docBody(d).split('\n'); const secs = []; let cur = { h: null, lines: [] };
+  let fence = false;
+  for (const l of all) { if (/^```/.test(l)) fence = !fence; if (!fence && /^##\s/.test(l)) { secs.push(cur); cur = { h: l.replace(/^##\s/, ''), lines: [] }; } else cur.lines.push(l); }
+  secs.push(cur);
+  const intro = secs[0].h ? null : secs.shift();
+  const introParas = intro ? intro.lines.join('\n').split(/\n\s*\n/).map(p => p.replace(/\n/g, ' ').trim()).filter(p => p && !/^[>|#]/.test(p)) : [];
+  let lede = introParas[0] ?? null;
+  const boiler = lede && /^(Captured from|Notes? from|Written during)/i.test(lede);
+  if (lede && lede.length > 340) lede = sentences(lede).slice(0, 2).join(' ');
+  const sections = secs.filter(s => s.h).map((s, i) => sectionModel(s.h, s.lines, i));
+  const NUM = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'];
+  const name = s => s.short.replace(/^[A-Za-z]+ \d+\s*[—–-]\s*/, '').split(/:\s| [—–] /)[0].trim();
+  const parts = sections.map(s => { const n = name(s); const plural = /^[A-Za-z]+( [A-Za-z]+)?s$/.test(n); return (plural && s.items.length > 2 ? `${s.items.length} ` : '') + n.replace(/^[A-Z](?=[a-z])/, c => c.toLowerCase()); });
+  const shape = `${NUM[sections.length] ?? sections.length} sections: ${parts.length > 1 ? parts.slice(0, -1).join(', ') + ' and ' + parts.at(-1) : parts[0] ?? ''}.`;
+  const figs = [...(intro ? figures(intro.lines.join('\n')) : []), ...sections.flatMap(s => s.figs)];
+  const seen = new Set(); const uniq = figs.filter(f => { const k = f.value + f.unit; if (seen.has(k)) return false; seen.add(k); return true; });
+  return { lede: boiler ? null : lede, boiler: boiler ? lede : null, sections, shape, figs: uniq, flags: sections.flatMap(s => s.flags.map(f => ({ ...f, sec: s.idx }))), points: sections.reduce((n, s) => n + s.items.length + (s.table ? s.table.rows.length : 0) + s.paras.length, 0), tables: sections.filter(s => s.table).length };
+}
+
+/* ---------- where it went ---------- */
+function journey(d) {
+  const became = d.todos.filter(t => t.via === 'frontmatter' || t.via === 'promoted');
+  const t = became[0] ?? null; const days = daysSince(d.date);
+  if (isDoc(d)) { const n = d.todos.length; return { stage: n ? 'open' : 'note', short: 'Explore note', verdict: n ? `${n} todo${n > 1 ? 's' : ''} point here.` : 'No todo points here.', t: null, days }; }
+  if (t && t.status === 'done') { const m = t.resolution?.match(/\((\d{4}-\d{2}-\d{2})\)/); return { stage: 'done', short: 'Shipped', verdict: `Became a todo and shipped${m ? ' ' + fmtD(m[1]) : ''}.`, t, days, shipped: m ? m[1] : null }; }
+  if (t) return { stage: 'open', short: 'Todo open', verdict: 'Became a todo, still open.', t, days };
+  if (d.promoted) return { stage: 'untraced', short: 'Untraced', verdict: 'Promoted, but no todo carries it.', t: null, days };
+  return { stage: 'note', short: 'Still a note', verdict: `Still a note, ${plural(days, 'day')} on.`, t: null, days };
+}
+
+/* ---------- shared pieces ---------- */
+function metaRow(d, { eyebrow = true } = {}) {
+  return `<div class="meta-row"><div class="meta-left">${eyebrow ? `<span class="eyebrow">${isDoc(d) ? 'Explore note' : 'Note'} · ${esc(d.project)}</span>` : ''}${d.date ? `<span class="date">Noted <b>${esc(fmtD(d.date))}</b>${/\d{2}:\d{2}/.test(d.date) ? ` · ${esc(d.date.slice(11, 16))}` : ''}</span>` : ''}${d.project === 'synthetic' ? '<span class="chip">Synthetic</span>' : ''}</div><div class="doc-tools"><button class="icon-btn" data-copy="${esc(d.path)}" title="Copy path" aria-label="Copy path">${ICON_LINK}</button><div class="seg" role="group" aria-label="Display mode"><button data-mode="view" aria-pressed="${state.mode === 'view'}">View</button><button data-mode="source" aria-pressed="${state.mode === 'source'}">Source</button></div></div></div>`;
+}
+const statusChip = s => s === 'done' ? '<span class="chip" data-tone="complete">Done</span>' : s === 'pending' ? '<span class="chip" data-tone="in-flight">Pending</span>' : '<span class="chip">Unfiled</span>';
+const VIA = { frontmatter: 'Names this note in notes:', 'wiki link': 'Links this note in its text', mentioned: 'Mentions this note in its text', promoted: 'Promoted from this note word for word' };
+function todoCard(d, t) {
+  if (!t) { const j = journey(d); return `<article class="tcard" data-s="none"><span class="kicker">${j.stage === 'untraced' ? 'Promoted, but untraced' : isDoc(d) ? 'No todo points here' : 'Still a note'}</span><p class="none">${j.stage === 'untraced' ? 'Marked <code>promoted: true</code>, but no todo names this note or carries its text.' : isDoc(d) ? 'No todo names or mentions this note.' : 'Not promoted to a todo yet.'}</p></article>`; }
+  return `<article class="tcard" data-s="${t.status}"><div class="row"><span class="kicker">${t.via === 'frontmatter' || t.via === 'promoted' ? 'Became a todo' : 'Related todo'}</span>${statusChip(t.status)}${pip({ severity: t.weight })}</div><h3>${inline(t.title)}</h3>${t.resolution ? `<p class="res clamp3">${inline(t.resolution.replace(/\n+\s*[-*]\s/g, ' · ').replace(/\n+/g, ' '))}</p>` : ''}${t.batchedWith.length ? `<div class="sib"><span class="kicker">Batched with</span>${t.batchedWith.map(n => `<button data-sibling="${esc(n.path)}">${esc(fmtDT(n.date) ?? '')} · ${inline((n.title ?? n.text).slice(0, 90))}${(n.title ?? n.text).length > 90 ? '…' : ''}</button>`).join('')}</div>` : ''}<button class="link-btn" data-todo="${esc(t.path)}" style="justify-self:start">Open todo ↗</button></article>`;
+}
+const todoCards = d => d.todos.length ? d.todos.map(t => todoCard(d, t)).join('') : todoCard(d, null);
+const mentions = refs => refs.length ? `<section style="display:grid;gap:var(--space-2)"><span class="kicker">Mentions · ${refs.length}</span><div class="refl">${refs.map(([f, n]) => `<button class="${state.ref === f ? 'on' : ''}" data-ref="${esc(f)}">${esc(f)}${n > 1 ? `<span>×${n}</span>` : ''}</button>`).join('')}</div></section>` : '';
+const verbToggle = (a = 'Lifted') => `<div class="seg" role="group" aria-label="Note view" style="justify-self:start"><button data-verb="0" aria-pressed="${!state.verbatim}">${a}</button><button data-verb="1" aria-pressed="${state.verbatim}">As written</button></div>`;
+const figChips = figs => figs.length ? `<div class="fig-chips">${figs.slice(0, 5).map(f => `<span class="fig-chip" title="${esc(f.phrase)}">${esc(f.value)}<span>${esc(f.unit)}</span></span>`).join('')}${figs.length > 5 ? `<span class="fig-chip"><span>+${figs.length - 5}</span></span>` : ''}</div>` : '';
+function alsoRow() { return `<nav class="source-only" aria-label="Also in this file"><span class="kicker">Also in this file</span><ul><li><button class="chip" data-src="1">Frontmatter</button></li></ul></nav>`; }
+function sourceView(d) { return `<pre class="raw">${d.raw.split('\n').map((l, i) => `<span data-n="${i + 1}" class="${state.hit && i + 1 >= state.hit[0] && i + 1 <= state.hit[1] ? 'hit' : ''}">${esc(l) || ' '}</span>`).join('')}</pre>`; }
+const stats = rows => `<div class="stats">${rows.filter(Boolean).map(([k, v, tone]) => `<div><span>${k}</span><b ${tone ? `data-tone="${tone}"` : ''}>${v}</b></div>`).join('')}</div>`;
+const tone = g => g === 'decided' ? 'complete' : g === 'problem' ? 'in-flight' : g === 'open' ? 'missing' : null;
+
+/* ============ A — gist console ============ */
+function viewA(d) {
+  const j = journey(d);
+  if (isDoc(d)) {
+    const e = exploreModel(d);
+    const rail = `<aside class="a-rail"><span class="eyebrow">Explore note · ${esc(d.project)}</span><h1>${inline(d.title)}</h1>${d.context ? `<p class="ctx">${inline(d.context)}</p>` : ''}<span class="stage-chip" data-stage="${j.stage}"><i></i>${e.sections.length} sections</span><div class="bignum" data-stage="${e.flags.some(f => f.kind === 'blocked' || f.kind === 'open') ? 'untraced' : 'done'}"><i class="bar"></i><div><b>${e.figs.length || e.points}</b><p class="l">${e.figs.length ? 'measured figures' : 'points made'}</p><p class="s">${e.points} points across ${e.sections.length} sections${e.flags.length ? ` · ${e.flags.length} calls flagged` : ''}</p></div></div>${stats([['Noted', esc(fmtD(d.date))], ['Sections', e.sections.length], ['Points', e.points], ['Tables', e.tables], ['Decided', e.flags.filter(f => f.kind === 'decided' || f.kind === 'resolved').length, 'complete'], ['Open / blocked', e.flags.filter(f => f.kind === 'open' || f.kind === 'blocked').length, e.flags.some(f => f.kind === 'open' || f.kind === 'blocked') ? 'missing' : null], ['Lines', d.raw.split('\n').length]])}<section style="display:grid;gap:var(--space-3)">${todoCards(d)}</section>${docTools(d)}</aside>`;
+    const rows = e.sections.map(s => {
+      const open = state.open.has('a' + s.idx);
+      return `<div class="erow" id="s${s.idx}"><span class="ix">${String(s.idx + 1).padStart(2, '0')}</span><div class="body"><h3>${inline(s.h)}</h3>${s.key && !(s.keyFrom === 'item' && s.items.length) ? `<p class="key">${inline(s.key)}</p>` : ''}${s.items.length && !open ? `<ul class="items">${s.items.slice(0, 4).map(it => `<li>${it.term ? `<b>${inline(it.term)}</b><span>${inline(firstSentence(it.text))}</span>` : `<span style="grid-column:1/-1">${inline(firstSentence(it.text))}</span>`}</li>`).join('')}${s.items.length > 4 ? `<li><b></b><span class="muted">+${s.items.length - 4} more</span></li>` : ''}</ul>` : ''}${(() => { const shown = s.items.slice(0, 4).map(it => plain(firstSentence(it.text))); const fl = s.flags.filter(f => !shown.some(x => x && f.text.includes(x))); return fl.length && !open ? `<div class="flags">${fl.slice(0, 3).map(f => `<p><span class="lbl" data-tone="${f.tone}">${f.label}</span><span>${esc(f.text.slice(0, 180))}${f.text.length > 180 ? '…' : ''}</span></p>`).join('')}</div>` : ''; })()}${!open ? figChips(s.figs) : ''}</div><div class="side">${s.shape.map(x => `<span>${x}</span>`).join('')}<button class="link-btn" data-open="a${s.idx}">${open ? 'Fold –' : 'Read +'}</button></div>${open ? `<div class="full">${md(s.text)}</div>` : ''}</div>`;
+    }).join('');
+    const main = `<div class="a-main"><section class="gist"><span class="kicker">The gist</span><p class="say ${(e.lede ?? '').length > 200 ? 'long' : ''}">${inline(e.lede ?? e.shape)}</p>${e.lede ? `<p class="shape">${esc(e.shape)}</p>` : e.boiler ? `<p class="shape">${inline(e.boiler)}</p>` : ''}</section><section class="ledger"><header class="ledger-head"><h2>Section by section</h2><span class="kicker">${e.points} points · ${e.figs.length} figures</span></header>${rows}</section>${alsoRow()}</div>`;
+    return `${shell()}<div class="page"><div class="a-wrap">${rail}${main}</div></div>`;
+  }
+  const q = quickModel(d);
+  const one = !q.rows.length;
+  const big = one ? `<b>1</b><p class="l">line, nothing else to lift</p><p class="s">${q.words} words · ${j.verdict}</p>` : `<b>${q.rows.length}</b><p class="l">${q.rows.length === 1 ? 'thing it says' : 'things it says'}, after the gist</p><p class="s">${countLine(q.counts)}</p>`;
+  const rail = `<aside class="a-rail"><span class="eyebrow">Note · ${esc(d.project)}</span><h1>${esc(slugTitle(d.path))}</h1><span class="stage-chip" data-stage="${j.stage}"><i></i>${j.short}</span><div class="bignum" data-stage="${j.stage}"><i class="bar"></i><div>${big}</div></div>${stats([['Noted', `${esc(fmtD(d.date))}${/\d{2}:\d{2}/.test(d.date) ? ' · ' + d.date.slice(11, 16) : ''}`], ['Age', plural(j.days, 'day')], ['Promoted', d.promoted ? 'Yes' : 'No', d.promoted ? null : 'missing'], j.t ? ['Todo', j.t.status === 'done' ? 'Done' : 'Pending', j.t.status === 'done' ? 'complete' : 'in-flight'] : null, j.shipped ? ['Note → shipped', plural(Math.round((parseD(j.shipped) - parseD(d.date)) / 864e5) + 1, 'day')] : null, ['Mentions', q.refs.length], ['Words', q.words]])}${one ? '' : `<section style="display:grid;gap:var(--space-3)">${todoCards(d)}</section>`}${docTools(d)}</aside>`;
+  const ledger = state.verbatim ? `<p class="verbatim">${withRefs(d.body)}</p>` : one ? `<p class="whole">That’s the whole note: one line.${j.stage === 'note' ? ' It hasn’t been promoted to a todo.' : ''}</p>` : `<section class="ledger"><header class="ledger-head"><h2>What it says</h2><span class="kicker">${countLine(q.counts)}</span></header>${q.rows.map((c, i) => `<div class="lrow" data-tone="${c.tone ?? tone(c.group) ?? ''}" id="c${c.i}"><span class="ix">${String(i + 1).padStart(2, '0')}</span><span class="g">${label(c) || '<span class="kicker">Then</span>'}</span><p class="t"><span class="first">${withRefs(firstSentence(c.text))}</span> ${withRefs(restOf(c.text))}</p></div>`).join('')}</section>`;
+  const main = `<div class="a-main"><section class="gist"><span class="kicker">The gist</span><p class="say">${withRefs(q.gist.text)}</p><p class="shape">${j.verdict}</p></section><div style="display:grid;gap:var(--space-4)">${one ? '' : verbToggle()}${ledger}</div>${one ? `<section class="ledger"><header class="ledger-head"><h2>Where it went</h2><span class="kicker">${esc(j.short)}</span></header><div style="display:grid;gap:var(--space-3);padding-top:var(--space-5);max-width:36rem">${todoCards(d)}</div></section>` : ''}${mentions(q.refs)}${alsoRow()}</div>`;
+  return `${shell()}<div class="page"><div class="a-wrap">${rail}${main}</div></div>`;
+}
+const docTools = d => `<div class="doc-tools" style="justify-content:flex-start"><button class="icon-btn" data-copy="${esc(d.path)}" title="Copy path" aria-label="Copy path">${ICON_LINK}</button><div class="seg" role="group" aria-label="Display mode"><button data-mode="view" aria-pressed="${state.mode === 'view'}">View</button><button data-mode="source" aria-pressed="${state.mode === 'source'}">Source</button></div></div>`;
+
+/* ============ B — fact board ============ */
+function figTile(f) { return `<article class="tile" data-tone="quiet"><span class="kicker">Figure</span><div><div class="big">${esc(f.value)}</div><div class="unit">${esc(f.unit)}</div></div><p class="phrase clamp3">${esc(f.phrase)}</p></article>`; }
+function statusTile(d, j) {
+  const t = j.t ?? d.todos[0];
+  return `<article class="tile" data-tone="${j.stage === 'done' ? 'complete' : j.stage === 'open' ? 'in-flight' : j.stage === 'untraced' ? 'missing' : 'quiet'}"><span class="kicker">Where it went</span><div class="big word">${isDoc(d) ? (d.todos.length ? `${d.todos.length} todo${d.todos.length > 1 ? 's' : ''}` : 'Nowhere yet') : j.short}</div><p class="phrase">${t ? inline(t.title) : esc(j.verdict)}</p>${t ? `<div class="foot chips">${statusChip(t.status)}<button class="link-btn" data-todo="${esc(t.path)}">Open todo ↗</button></div>` : ''}</article>`;
+}
+function viewB(d) {
+  const j = journey(d);
+  if (isDoc(d)) {
+    const e = exploreModel(d);
+    const head = `<header class="b-head">${metaRow(d)}<h1 class="disp ${d.title.length > 40 ? 'long' : ''}">${inline(d.title)}</h1>${e.lede ? `<p class="b-lede">${inline(e.lede)}</p>` : ''}<p class="b-ctx">${esc(e.shape)}${d.context ? ` · ${inline(d.context)}` : ''}</p></header>`;
+    const flagTiles = e.flags.filter(f => f.kind !== 'rejected').slice(0, 3).map(f => `<div role="button" tabindex="0" class="tile click w2 ${state.open.has('bf' + f.text.slice(0, 20)) ? 'open' : ''}" data-tone="${f.tone}" data-open="bf${esc(f.text.slice(0, 20))}"><div class="top"><span class="lbl" data-tone="${f.tone}">${f.label}</span><span class="kicker">${esc(e.sections[f.sec]?.short ?? '')}</span></div><p class="say">${inline(firstSentence(f.text))}</p>${restOf(f.text) ? `<p class="more">${inline(restOf(f.text))}</p>` : ''}</div>`);
+    const figTiles = e.figs.slice(0, 5).map(figTile);
+    const tiles = [figTiles[0], flagTiles[0], ...figTiles.slice(1, 3), flagTiles[1], statusTile(d, j), ...figTiles.slice(3), ...flagTiles.slice(2)].filter(Boolean);
+    const rest = e.figs.length > 5 ? `<p class="kicker">+${e.figs.length - 5} more figures in the text</p>` : '';
+    const secs = `<section class="b-sections"><span class="kicker">The sections · ${e.sections.length}</span>${e.sections.map(s => `<details class="fold" id="s${s.idx}"><summary><h3>${inline(s.h)}</h3><span class="n">${s.shape.join(' · ') || s.lines + ' lines'}</span>${s.key ? `<p class="key">${inline(s.key)}</p>` : ''}</summary>${md(s.text)}</details>`).join('')}</section>`;
+    return `${shell()}<div class="page">${head}<div class="board">${tiles.join('')}</div>${rest}${secs}${d.todos.length ? `<section style="display:grid;gap:var(--space-3)"><span class="kicker">Todos that point here</span><div class="c-todos">${todoCards(d)}</div></section>` : ''}${alsoRow()}</div>`;
+  }
+  const q = quickModel(d);
+  const head = `<header class="b-head">${metaRow(d)}${q.rows.length ? `<h1 class="disp ${q.gist.text.length > 70 ? 'long' : ''}">${withRefs(q.gist.text)}</h1>` : `<h1 class="disp">${esc(slugTitle(d.path))}</h1>`}</header>`;
+  let tiles;
+  if (!q.rows.length) {
+    tiles = [`<article class="tile w3 note-tile" data-tone="${j.stage === 'note' ? 'missing' : 'quiet'}"><span class="kicker">The whole note · ${q.words} words</span><p class="say">${withRefs(d.body)}</p><p class="phrase foot">Nothing else to lift: no labelled clauses, no files, no figures.</p></article>`, statusTile(d, j)];
+  } else {
+    const order = { decided: 0, ask: 1, problem: 2, open: 3, limit: 4, other: 5 };
+    const clauseTiles = [...q.rows].sort((a, b) => order[a.group] - order[b.group] || a.i - b.i).map(c => `<div role="button" tabindex="0" class="tile click ${c.group === 'decided' || c.text.length > 260 ? 'w2' : ''} ${state.open.has('bc' + c.i) ? 'open' : ''}" data-tone="${c.tone ?? tone(c.group) ?? 'quiet'}" data-open="bc${c.i}"><div class="top">${label(c) || '<span class="kicker">Then</span>'}<span class="kicker">${String(c.i).padStart(2, '0')}</span></div><p class="say">${withRefs(firstSentence(c.text))}</p>${restOf(c.text) ? `<p class="more">${withRefs(restOf(c.text))}</p>` : ''}</div>`);
+    const figT = q.figs.slice(0, 3).map(figTile);
+    const ment = q.refs.length ? `<article class="tile" data-tone="quiet"><span class="kicker">Mentions · ${q.refs.length}</span><div class="refl">${q.refs.map(([f]) => `<button class="${state.ref === f ? 'on' : ''}" data-ref="${esc(f)}">${esc(f)}</button>`).join('')}</div></article>` : '';
+    tiles = [clauseTiles[0], statusTile(d, j), ...clauseTiles.slice(1, 3), ...figT, ...clauseTiles.slice(3), ment].filter(Boolean);
+  }
+  const body = state.verbatim ? `<p class="verbatim">${withRefs(d.body)}</p>` : `<div class="board">${tiles.join('')}</div>`;
+  return `${shell()}<div class="page">${head}<div style="display:grid;gap:var(--space-4)">${q.rows.length ? verbToggle('Board') : ''}${body}</div>${q.rows.length && j.t ? `<section style="display:grid;gap:var(--space-3);max-width:34rem"><span class="kicker">What it became</span>${todoCards(d)}</section>` : ''}${alsoRow()}</div>`;
+}
+
+/* ============ C — the note as a card ============ */
+function viewC(d) {
+  const j = journey(d);
+  if (isDoc(d)) {
+    const e = exploreModel(d);
+    const head = `<header class="b-head">${metaRow(d)}<h1 class="c-verdict">${esc(e.shape)}</h1></header>`;
+    const ledeCard = `<article class="scard lede-card"><span class="kicker">${inline(d.title)}</span><p class="key">${inline(e.lede ?? e.boiler ?? '')}</p>${figChips(e.figs)}<div class="foot"><span>${esc(fmtD(d.date))}</span><span>${d.raw.split('\n').length} lines</span></div></article>`;
+    const cards = e.sections.map(s => {
+      const open = state.open.has('c' + s.idx);
+      const tone = s.flags.find(f => f.kind === 'blocked' || f.kind === 'open') ? 'var(--missing-fill)' : s.flags.find(f => f.kind === 'decided' || f.kind === 'resolved') ? 'var(--primary)' : 'var(--muted-foreground)';
+      return open
+        ? `<article class="scard open" id="s${s.idx}" style="border-top-color:${tone}"><div class="top" style="display:flex;justify-content:space-between;gap:var(--space-3)"><span class="n">${String(s.idx + 1).padStart(2, '0')}</span><button class="link-btn" data-open="c${s.idx}">Put back –</button></div><h3>${inline(s.h)}</h3>${md(s.text)}</article>`
+        : `<div role="button" tabindex="0" class="scard click" id="s${s.idx}" data-open="c${s.idx}" style="border-top-color:${tone}"><span class="n">${String(s.idx + 1).padStart(2, '0')}</span><h3>${inline(s.short)}</h3>${s.key ? `<p class="key">${inline(s.key.length > 200 ? s.key.slice(0, 200) + '…' : s.key)}</p>` : ''}${s.flags.length ? `<div class="chips">${[...new Map(s.flags.map(f => [f.kind, f])).values()].map(f => `<span class="lbl" data-tone="${f.tone}">${f.label}</span>`).join('')}</div>` : ''}${figChips(s.figs.slice(0, 3))}<div class="foot"><span>${s.shape.join(' · ') || s.lines + ' lines'}</span><span>Read +</span></div></div>`;
+    }).join('');
+    return `${shell()}<div class="page">${head}<div class="deck">${ledeCard}${cards}</div>${d.todos.length ? `<section style="display:grid;gap:var(--space-3)"><span class="c-link">Todos that point here</span><div class="c-todos">${todoCards(d)}</div></section>` : ''}${alsoRow()}</div>`;
+  }
+  const q = quickModel(d); const one = !q.rows.length;
+  const verdict = j.stage === 'done' ? `Became a todo. <span class="q">Shipped${j.shipped ? ' ' + esc(fmtD(j.shipped)) : ''}.</span>` : j.stage === 'open' ? 'Became a todo. <span class="q">Still open.</span>' : j.stage === 'untraced' ? 'Promoted. <span class="q">No todo carries it.</span>' : `Still a note. <span class="q">${plural(j.days, 'day')} on.</span>`;
+  const head = `<header class="b-head">${metaRow(d)}<h1 class="c-verdict">${verdict}</h1></header>`;
+  const lines = state.verbatim
+    ? `<div class="cl"><span class="g"></span><p class="t">${withRefs(d.body)}</p></div>`
+    : `<div class="cl lead"><span class="g"></span><p class="t">${withRefs(q.gist.text)}</p></div>${q.rows.map(c => `<div class="cl"><span class="g">${label(c)}</span><p class="t">${label(c, 'inline')}${withRefs(c.text)}</p></div>`).join('')}`;
+  const card = `<article class="icard ${one ? 'one' : ''}" data-stage="${j.stage}"><div class="cl head"><span class="g"><span class="kicker">${esc(fmtDT(d.date))}</span></span><p class="t"><span class="kicker">${esc(d.project)} · ${q.words} words${q.rows.length ? ' · ' + countLine(q.counts) : ''}</span></p></div>${lines}${one ? `<div class="cl end"><span class="g"></span><p class="t">One line. Nothing else to lift.</p></div>` : ''}</article>`;
+  const side = `<aside class="c-side"><span class="c-link">${j.t ? 'Became' : d.todos.length ? 'Related' : 'Where it went'}</span>${todoCards(d)}${mentions(q.refs)}</aside>`;
+  return `${shell()}<div class="page">${head}<div style="display:grid;gap:var(--space-4)">${one ? '' : verbToggle('Lifted')}<div class="c-stage">${card}${side}</div></div>${alsoRow()}</div>`;
+}
+
+/* ---------- render ---------- */
+function render() {
+  const d = DOCS[state.doc];
+  document.getElementById('root').innerHTML = state.mode === 'source' ? `${shell()}<div class="page">${metaRow(d)}${sourceView(d)}</div>` : ({ a: viewA, b: viewB, c: viewC })[state.variant](d);
+  document.documentElement.classList.toggle('dark', state.theme === 'dark');
+  const f = document.getElementById('frame'); f.style.maxWidth = state.width === 'full' ? 'none' : state.width + 'px'; f.classList.toggle('narrow-frame', state.width !== 'full');
+  document.querySelectorAll('.variant-tab').forEach(t => t.classList.toggle('active', t.dataset.variant === state.variant));
+  document.querySelectorAll('#sketch-tools button').forEach(b => b.classList.toggle('on', b.dataset.doc === state.doc || b.dataset.theme === state.theme || b.dataset.width === state.width));
+}
+document.getElementById('doc-btns').innerHTML = Object.entries(DOCS).map(([k, d]) => `<button data-doc="${k}">${esc(d.label)}</button>`).join('');
+function toast(msg) { const t = document.createElement('div'); t.textContent = msg; t.style.cssText = 'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);max-width:min(40rem,90vw);background:var(--foreground);color:var(--background);padding:8px 14px;font-family:var(--font-mono);font-size:var(--fs-2);z-index:10000'; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); }
+document.addEventListener('click', e => {
+  const t = e.target.closest('button, [data-open]'); if (!t || t.disabled) return; const y = scrollY; const d = DOCS[state.doc];
+  if (t.dataset.variant) { state.variant = t.dataset.variant; state.mode = 'view'; state.open.clear(); }
+  else if (t.dataset.doc) { state.doc = t.dataset.doc; state.mode = 'view'; state.verbatim = false; state.ref = null; state.open.clear(); }
+  else if (t.dataset.theme) state.theme = t.dataset.theme;
+  else if (t.dataset.width) state.width = t.dataset.width;
+  else if (t.dataset.verb) state.verbatim = t.dataset.verb === '1';
+  else if (t.dataset.ref) { e.stopPropagation(); state.ref = state.ref === t.dataset.ref ? null : t.dataset.ref; try { navigator.clipboard.writeText(t.dataset.ref); } catch {} toast('Copied ' + t.dataset.ref); }
+  else if (t.dataset.open) { const k = t.dataset.open; state.open.has(k) ? state.open.delete(k) : state.open.add(k); }
+  else if (t.dataset.sibling) { const k = Object.keys(DOCS).find(k => DOCS[k].path === t.dataset.sibling); if (k) { state.doc = k; state.verbatim = false; state.ref = null; state.open.clear(); render(); scrollTo(0, 0); } else toast('Not in this sketch’s data: ' + t.dataset.sibling); return; }
+  else if (t.dataset.todo) return toast('Opens the todo page: ' + t.dataset.todo);
+  else if (t.dataset.mode) { state.mode = t.dataset.mode; state.hit = null; render(); scrollTo(0, 0); return; }
+  else if (t.dataset.src) { state.mode = 'source'; state.hit = [1, d.raw.split('\n').indexOf('---', 1) + 1]; render(); return; }
+  else if (t.dataset.copy) { try { navigator.clipboard.writeText(t.dataset.copy); } catch {} return toast('Copied ' + t.dataset.copy); }
+  else return;
+  render(); scrollTo(0, y);
+});
+document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[role=button][data-open]')) { e.preventDefault(); e.target.click(); } });
+render();
+</script>
+</body>
+</html>
