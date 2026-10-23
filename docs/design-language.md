@@ -591,6 +591,20 @@ element is actually written, regardless of class name:
   note card has a 3px `--muted-foreground` left rule on `--card`. A note reference in the text and
   the closing quick task's link are `--primary`. The parse-degradation tones never appear on this
   page, and every class is in the reserved `view-todo-` namespace, so no vocabulary row is added.
+- **The NOTE page lifts a quick note into labelled clauses.** (quick-261023-61l, sketch 028 A) A
+  quick note opens on its first sentence as the title, then one row per clause with its label in a
+  gutter. A Decided label takes `complete` and Bug, Cause, Observed and Suggested labels take
+  `in-flight`; every other label is a plain outline. The promoted chip is `complete` ("Now a todo",
+  "Promoted") or `quiet` ("Not promoted"), and the todo card's status chip reads Done `complete`,
+  Pending `in-flight` and Unfiled `quiet`, with the area chip `quiet`. The card's top rule is an
+  identity colour on `data-status`: pending `--in-flight-fill`, done `--primary`, unfiled `--border`,
+  and a dashed `--border` box when no todo names the note. The weight marker on `data-level` uses the
+  TODO page's colours: High is filled `--missing-fill`, Medium filled `--in-flight-fill`, Low a muted
+  outline and Unrated a dashed outline. A file reference is a dotted underline, and a highlighted one
+  (clicked, in the text or in Mentions) takes `--primary` on `--primary-tint`; code identifiers are
+  mono text. An explore note reads as a document with a contents list in the margin. The
+  parse-degradation tones never appear on this page, and every class is in the reserved `view-note-`
+  namespace, so no vocabulary row is added.
 - **The dashboard opens on the project.** (quick-261017-wlg, sketch 025 R3b) A "Project overview"
   eyebrow sits above the PROJECT.md H1, which is the page's only h1, split at its first spaced
   dash into a name and a tagline. Under it sits the What This Is lead: a leading bold sentence, or
