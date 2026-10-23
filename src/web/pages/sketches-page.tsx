@@ -189,11 +189,6 @@ export function SketchesPage(): React.JSX.Element {
           <p className="sketches-tally">
             {count} {count === 1 ? 'sketch' : 'sketches'} · {model.decidedCount} with a winner
           </p>
-          {model.manifestUrl ? (
-            <Link className="text-link" to={model.manifestUrl}>
-              Manifest
-            </Link>
-          ) : null}
         </div>
       </header>
       <ol className="sketch-list">
