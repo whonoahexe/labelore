@@ -12,6 +12,8 @@ import { buildPlanManualChecks } from '../presentation/manual-checks.ts';
 import type { PlanManualChecks } from '../presentation/manual-checks.ts';
 import { buildReviewContext } from '../presentation/review-context.ts';
 import type { ReviewContext } from '../presentation/review-context.ts';
+import { buildTodoContext } from '../presentation/todo-context.ts';
+import type { TodoContext } from '../presentation/todo-context.ts';
 import { buildRoadmapViewModel } from '../presentation/roadmap.ts';
 import { buildReferenceRegistry } from '../presentation/references.ts';
 import { parsePresentationUrl } from '../presentation/routes.ts';
@@ -132,6 +134,21 @@ export function createApp(
         return null;
       }
     })();
+    // quick-261023-61k: a todo's source notes (url, date, title, text) and its closing quick task link, from
+    // this request's own bundle (null elsewhere). Note bodies come from the artifact index, not the disk.
+    const todoContext = ((): TodoContext | null => {
+      try {
+        const bodyOf = (path: string): string | null => {
+          const found = activeDerived.artifactIndex.lookup(path);
+          return found.found ? found.artifact.body : null;
+        };
+        return lookup.artifact.kind === 'todo'
+          ? buildTodoContext(activeDerived.presentation, activeDerived.referenceRegistry, bodyOf, lookup.artifact.path)
+          : null;
+      } catch {
+        return null;
+      }
+    })();
     const document = await (
       await renderer
     ).render(lookup.artifact, { referenceRegistry: activeDerived.referenceRegistry });
@@ -157,6 +174,7 @@ export function createApp(
       },
       phaseIdentity: lookup.phaseIdentity,
       document,
+      todoContext,
       manualChecks,
       reviewContext,
     };

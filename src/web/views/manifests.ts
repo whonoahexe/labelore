@@ -14,6 +14,7 @@ import type { PromotedBlock, ViewInput, ViewManifest } from './manifest.ts';
 import { composeSecurityConsole } from './security-console.ts';
 import { composeLearningsRetro } from './learnings-retro.ts';
 import { composeDebugCase } from './debug-case.ts';
+import { composeTodoLifecycle } from './todo-lifecycle.ts';
 import { composePlanNavigator } from './plan-navigator.ts';
 import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
@@ -332,6 +333,20 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
     // The case-file page is the View-mode render path; `promote` above is the fallback when it
     // composes nothing (quick-261018-j5h).
     debugCase: composeDebugCase,
+  },
+  todo: {
+    kind: 'todo',
+    lead: 'What the todo is, where it came from, and how it closed.',
+    promote: [
+      { type: 'section', heading: /^problem$/i },
+      { type: 'section', heading: /^goal$/i },
+      { type: 'section', heading: /^solution$/i },
+      { type: 'section', heading: /^acceptance criteria$/i },
+      { type: 'section', heading: /^resolution$/i },
+    ],
+    // The lifecycle page is the View-mode render path; `promote` above is the fallback when it composes
+    // nothing (quick-261023-61k).
+    todoLifecycle: composeTodoLifecycle,
   },
 });
 
