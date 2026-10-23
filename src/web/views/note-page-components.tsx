@@ -205,8 +205,9 @@ export function NotePageView({
 
   const { head, title, shape } = model;
   const documentTitle = title.text ?? fallbackTitle;
+  // The page sets `scroll-behavior: smooth` on the document; a contents jump adds no motion of its own.
   const jumpTo = (id: string): void => {
-    document.getElementById(id)?.scrollIntoView({ block: 'start' });
+    document.getElementById(id)?.scrollIntoView({ block: 'start', behavior: 'instant' });
   };
   const cards =
     model.todos.length > 0

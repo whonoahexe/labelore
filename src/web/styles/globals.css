@@ -21744,8 +21744,13 @@ ul.view-todo-checks {
 
 .view-note-main {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
   align-content: start;
+}
+
+.view-note-main > * {
+  min-width: 0;
 }
 
 .view-note-margin {
@@ -21806,8 +21811,8 @@ ul.view-todo-checks {
 }
 
 .view-note-toggle button[aria-pressed='true'] {
-  background: var(--primary-tint);
-  color: var(--primary);
+  background: var(--muted);
+  color: var(--foreground);
 }
 
 /* Clauses: one row each, the label in a 9rem gutter. */
@@ -22052,7 +22057,7 @@ a.view-note-sibling:hover {
 
 .view-note-open {
   justify-self: start;
-  color: var(--primary);
+  color: var(--muted-foreground);
   font-family: var(--font-heading);
   font-size: var(--fs-2);
   font-weight: var(--fw-semibold);
@@ -22062,7 +22067,7 @@ a.view-note-sibling:hover {
 }
 
 a.view-note-open:hover {
-  text-decoration: underline;
+  color: var(--primary);
 }
 
 /* The weight marker: the written value behind a small square; the colours are the TODO page's. */
