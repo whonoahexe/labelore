@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-23T15:53:27.312Z"
+last_updated: "2026-10-23T15:59:07.654Z"
 last_activity: 2026-10-23
 last_activity_desc: Completed quick task 261016-2j6 (compact discussion-log tables)
-state_head: 7329ae8aea94650abdebdf685eeaab1a0f47ed38
+state_head: 2202b01696ec11836303e7f3cfd021e563b05277
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -215,6 +215,7 @@ None.
 | 100 | Sketches page lede: show only the first sentence of the design direction | 2026-10-23 | 52da885 | — |
 | 101 | Sketches page: remove the Manifest link | 2026-10-23 | ef05cb8 | — |
 | 102 | Sketch viewer: header spacing matches other pages, breadcrumb back link, verdict panel | 2026-10-23 | 7329ae8 | — |
+| 103 | Sketches: fold the in-sketch options panel to a small tab | 2026-10-23 | 2202b01 | — |
 
 ## Deferred Items
 
