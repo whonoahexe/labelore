@@ -22319,7 +22319,7 @@ a.view-note-open:hover {
   padding: var(--space-4) var(--space-5);
   border: 1px solid var(--border);
   border-left: 3px solid var(--primary-border);
-  background: color-mix(in oklch, var(--muted) 40%, transparent);
+  background: var(--muted);
 }
 
 .sketch-verdict[data-decided='false'] {
