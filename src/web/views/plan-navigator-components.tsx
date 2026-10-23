@@ -34,7 +34,7 @@ export function PlanIntroMeta({ intro }: { intro: ComposedPlanIntro }): React.JS
       {intro.planned ? (
         <p className="view-plan-nav-facts">
           <span>
-            Planned<b title={intro.planned.title}>{intro.planned.date}</b>
+            Planned <b title={intro.planned.title}>{intro.planned.date}</b>
           </span>
         </p>
       ) : null}
