@@ -36,6 +36,20 @@ describe('NoteHandler', () => {
     expect(result.frontmatter.promoted).toBe(true);
   });
 
+  it('hands the extractor the path and the raw file\'s line count (quick-261023-u13)', async () => {
+    const { NoteHandler } = await import('../src/planning-repo/handlers/note.ts');
+    const path = '.planning/notes/2026-10-21-crop-images.md';
+    const result = NoteHandler.parse(rawOf(path), refOf(path));
+    const note = (result.structured as { note: { fileTitle?: string; lines?: number } }).note;
+    expect(note.fileTitle).toBe('Crop images');
+    // Six lines in the raw file: the front matter's four, a blank line and the note's text (its final newline starts no line).
+    expect(note.lines).toBe(6);
+    const noFinalNewline = NoteHandler.parse(rawOf(path, 'one\ntwo'), refOf(path));
+    expect((noFinalNewline.structured as { note: { lines?: number } }).note.lines).toBe(2);
+    const empty = NoteHandler.parse(rawOf(path, ''), refOf(path));
+    expect((empty.structured as { note: { lines?: number } }).note.lines).toBe(0);
+  });
+
   it('a titled note is a document', async () => {
     const { NoteHandler } = await import('../src/planning-repo/handlers/note.ts');
     const path = '.planning/notes/b.md';
