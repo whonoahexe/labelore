@@ -1,4 +1,4 @@
-// quick-261023-61l (T-61l-01..08): source-text contract for the NOTE page, in the debug-view-contract idiom
+// quick-261023-61l (T-61l-01..08) and quick-261023-u13 (T-u13-01..08, sketch 029 A): source-text contract for the NOTE page, in the debug-view-contract idiom
 // (readFile + regex, no AST tooling). Nothing renders raw HTML; no link target is built from document text
 // (every Link takes a model url); the only tones written are the documented ones, from the composed
 // model, and never a parse-degradation tone; the extractor, join and composer import no filesystem module
@@ -52,6 +52,25 @@ function linkTargets(text: string): string[] {
   return [...text.matchAll(/<Link\b[^>]*?\bto=(\{[^}]*\}|"[^"]*")/g)].map((m) => m[1]);
 }
 
+/** Every argument a `renderHtml(...)` call in the text takes (balanced parentheses). */
+function renderHtmlArguments(text: string): string[] {
+  const found: string[] = [];
+  let at = text.indexOf('renderHtml(');
+  while (at >= 0) {
+    const start = at + 'renderHtml('.length;
+    let depth = 1;
+    let end = start;
+    while (end < text.length && depth > 0) {
+      if (text[end] === '(') depth += 1;
+      else if (text[end] === ')') depth -= 1;
+      end += 1;
+    }
+    found.push(text.slice(start, end - 1));
+    at = text.indexOf('renderHtml(', end);
+  }
+  return found;
+}
+
 function buildsRegExp(text: string): boolean {
   return /new\s+RegExp\s*\(/.test(text) || /\bRegExp\s*\(/.test(text);
 }
@@ -87,6 +106,7 @@ function noteBlock(css: string): string {
 describe('note view contract - helpers catch planted violations', () => {
   it('flags each forbidden thing in an in-memory string', () => {
     expect(usesRawHtmlProp(`<div ${RAW_HTML_PROP}={{ __html: x }} />`)).toBe(true);
+    expect(renderHtmlArguments('<div>{renderHtml(part.html)}</div>')).toEqual(['part.html']);
     expect(toneExpressions('<span data-tone={tone} data-tone="quiet" />')).toEqual(['{tone}', '"quiet"']);
     expect(writesForbiddenTone("const tone = 'destructive';")).toBe(true);
     expect(writesForbiddenTone('<i data-tone="warning" />')).toBe(true);
@@ -106,6 +126,7 @@ describe('note view contract - helpers catch planted violations', () => {
   it('passes clean strings', () => {
     expect(usesRawHtmlProp('<p>{text}</p>')).toBe(false);
     expect(toneExpressions('<span data-level={c} />')).toEqual([]);
+    expect(renderHtmlArguments('<div>{renderHtml(dropLeadingH1(documentHtml))}</div>')).toEqual(['dropLeadingH1(documentHtml)']);
     expect(writesForbiddenTone("const severity = 'warning';")).toBe(false);
     expect(writesAnchorLinkAttribute('<button onClick={() => jump(id)}>x</button>')).toBe(false);
     expect(linkTargets('<Link to={card.url}>x</Link>')).toEqual(['{card.url}']);
@@ -126,14 +147,29 @@ describe('note view contract - the real sources', () => {
     for (const target of targets) expect(target, target).toMatch(/^\{(card|row)\.url\}$/);
   });
 
+  it('passes only sectionHtml(...) or dropLeadingH1(...) output to renderHtml', async () => {
+    const code = stripSourceComments(await source('src/web/views/note-page-components.tsx'));
+    const args = renderHtmlArguments(code);
+    expect(args.length).toBeGreaterThanOrEqual(2);
+    for (const arg of args) expect(arg, arg).toMatch(/^(sectionHtml\(documentHtml, id\)|dropLeadingH1\(documentHtml\))$/);
+  });
+
   it('writes data-tone only from the composed model or the quiet area chip', async () => {
     const code = stripSourceComments(await source('src/web/views/note-page-components.tsx'));
-    expect(toneExpressions(code).sort()).toEqual(['"quiet"', '{card.status.tone}', '{head.promoted.tone}', '{row.tone ?? undefined}']);
-    // The card status, the weight, the shape and the title size ride their own attributes.
+    expect(toneExpressions(code).sort()).toEqual([
+      '"quiet"',
+      '{card.status.tone}',
+      '{flag.tone}',
+      '{row.mark ?? undefined}',
+      '{row.tone ?? undefined}',
+      '{stat.tone ?? undefined}',
+    ]);
+    // The stage, the card status, the weight, the shape and the gist size ride their own attributes.
+    expect(code).toContain('data-stage=');
     expect(code).toContain('data-status=');
     expect(code).toContain('data-level=');
     expect(code).toContain('data-shape=');
-    expect(code).toContain('data-short=');
+    expect(code).toContain('data-long=');
   });
 
   it('no file writes the destructive or warning tone', async () => {
@@ -154,10 +190,11 @@ describe('note view contract - the real sources', () => {
       expect(buildsRegExp(code), path).toBe(false);
       expect(usesRegexLiteral(code), path).toBe(false);
     }
-    // The extractor builds its two fixed reference patterns once, from constants, never from a body.
+    // The extractor builds its three fixed patterns (references, the whole-file test and figures) once,
+    // from constants, never from a body.
     const lift = stripSourceComments(await source('src/planning-repo/handlers/note-lift.ts'));
     const constructions = lift.split('\n').filter((line) => line.includes('new RegExp('));
-    expect(constructions).toHaveLength(2);
+    expect(constructions).toHaveLength(3);
     for (const line of constructions) expect(line, line).toMatch(/_SOURCE/);
   });
 
@@ -244,15 +281,42 @@ describe('note view contract - the real sources', () => {
     expect(block).toContain(".view-note-weight[data-level='high']");
     expect(block).toContain(".view-note-label[data-tone='complete']");
     expect(block).toContain('.view-note-doc');
-    expect(block).toContain('.view-note-contents');
+    for (const selector of [
+      '.view-note-console {',
+      '.view-note-rail {',
+      ".view-note-stage[data-stage='done']",
+      ".view-note-big[data-stage='untraced']",
+      '.view-note-row {',
+      ".view-note-row[data-tone='missing'] .view-note-index",
+      ".view-note-label[data-tone='missing']",
+      '.view-note-part {',
+      '.view-note-flags {',
+      '.view-note-figure {',
+      '.view-note-read {',
+      '.view-note-full {',
+    ]) {
+      expect(block, selector).toContain(selector);
+    }
+  });
+
+  it('the CSS block holds none of the removed 028 A pieces', async () => {
+    const block = stripCssComments(noteBlock(await source('src/web/styles/globals.css')));
+    expect(block).not.toMatch(/\.view-note-(head|meta|meta-left|date|lede|grid|margin|clauses|clause|contents)\b/);
   });
 
   it('the CSS block stacks both shapes at the two breakpoints, each override beside its base rule', async () => {
     const block = stripCssComments(noteBlock(await source('src/web/styles/globals.css')));
     expect(block).toContain('@media (max-width: 62rem)');
     expect(block).toContain('@media (max-width: 42rem)');
-    // The grid override follows the grid rule; the clause override follows the clause rule.
-    expect(block.indexOf('@media (max-width: 62rem)')).toBeGreaterThan(block.indexOf('.view-note-grid {'));
-    expect(block.indexOf('@media (max-width: 42rem)')).toBeGreaterThan(block.indexOf('.view-note-clause {'));
+    // The console and rail overrides follow their rules; the row and part overrides follow theirs.
+    const consoleAt = block.indexOf('.view-note-console {');
+    expect(block.indexOf('@media (max-width: 62rem)', consoleAt)).toBeGreaterThan(consoleAt);
+    expect(block.indexOf('@media (max-width: 62rem)', consoleAt)).toBeLessThan(block.indexOf('.view-note-rail {'));
+    const railAt = block.indexOf('.view-note-rail {');
+    expect(block.indexOf('@media (max-width: 62rem)', railAt)).toBeGreaterThan(railAt);
+    const rowAt = block.indexOf('.view-note-row {');
+    expect(block.indexOf('@media (max-width: 42rem)', rowAt)).toBeGreaterThan(rowAt);
+    const partAt = block.indexOf('.view-note-part {');
+    expect(block.indexOf('@media (max-width: 42rem)', partAt)).toBeGreaterThan(partAt);
   });
 });

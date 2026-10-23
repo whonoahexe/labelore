@@ -21624,17 +21624,18 @@ ul.view-todo-checks {
 
 /* quick-261023-61l:start */
 /* ==========================================================================
-   NOTE page (quick-261023-61l, sketch 028 A: annotated): the own head (meta row, display title, lede), a
-   main column (a quick note's labelled clauses beside a gutter with a Lifted | As written toggle, or an
-   explore note drawn as a document), a sticky margin (the todo card(s) or why there is none, then the
-   files the note mentions or the explore note's contents) and the Also row. Colours are theme tokens only.
-   Clause labels, the promoted chip and the status chips ride the documented tones (complete, in-flight,
-   quiet) on data-tone; the todo card's status rule (data-status) and the weight marker (data-level) are
-   identity colours on their own data attributes, not tones. The parse-degradation tones never appear. No
-   colour-mix recipe, no corner radius (corners stay squared) and no motion, only a colour change on hover.
-   Ancestors of a .status-chip set no line-height, so every chip keeps the inherited body value (F-05); the
-   clause labels and the weight marker are their own elements, not status chips. Media overrides sit
-   directly after their base rules (css-source-order).
+   NOTE page (quick-261023-61l, sketch 028 A: annotated; quick-261023-u13, sketch 029 A: gist console): a
+   console with a sticky rail (eyebrow, title, where-it-went stage chip, one big number, stat list, the todo
+   card(s), page tools) beside a main column (the gist said large, the Lifted | As written toggle, then a
+   ledger of numbered rows: what a quick note says, or an explore note section by section). Colours are
+   theme tokens only. Labels, flag labels, stat values, the promoted and status chips ride the documented
+   tones (complete, in-flight, missing, quiet) on data-tone; the stage chip and the big number's bar are
+   identity colours on data-stage, the todo card's status rule is data-status and the weight marker is
+   data-level - none of them tones. The parse-degradation tones never appear. No colour-mix recipe, no
+   corner radius (corners stay squared) and no motion, only a colour change on hover. Ancestors of a
+   .status-chip set no line-height, so every chip keeps the inherited body value (F-05); the stage chip, the
+   labels, the figure chips and the weight marker are their own elements, not status chips. Media overrides
+   sit directly after their base rules (css-source-order).
    ========================================================================== */
 
 .view-note-page {
@@ -21647,49 +21648,64 @@ ul.view-todo-checks {
   min-width: 0;
 }
 
-/* Head: the meta row, the display title and (for an explore note) its lede. */
-.view-note-head {
+/* The console: a 21rem rail and the main column. */
+.view-note-console {
   display: grid;
-  gap: var(--space-5);
-  justify-items: start;
+  grid-template-columns: 21rem minmax(0, 1fr);
+  gap: var(--space-fluid-9);
+  align-items: start;
 }
 
-.view-note-head > * {
+.view-note-console > * {
   min-width: 0;
 }
 
-.view-note-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3) var(--space-5);
-  align-items: center;
-  justify-content: space-between;
-  justify-self: stretch;
+@media (max-width: 62rem) {
+  .view-note-console {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
-.view-note-meta-left {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-4);
-  align-items: baseline;
+/* The rail: sticky beside the main column, a plain block above it once stacked. */
+.view-note-rail {
+  position: sticky;
+  top: var(--space-22);
+  display: grid;
+  gap: var(--space-5);
+  align-content: start;
+  padding-right: var(--space-fluid-8);
+  border-right: 1px solid var(--border);
 }
 
-/* The global eyebrow's bottom margin would lift it off the date's line. */
-.view-note-meta-left .eyebrow {
+@media (max-width: 62rem) {
+  .view-note-rail {
+    position: static;
+    padding-right: 0;
+    border-right: 0;
+  }
+}
+
+/* The global eyebrow's bottom margin would double the rail's own gap. */
+.view-note-rail .eyebrow {
   margin: 0;
 }
 
-.view-note-date {
-  color: var(--muted-foreground);
-  font-family: var(--font-mono);
-  font-size: var(--fs-2);
-  letter-spacing: var(--ls-wider);
-  text-transform: uppercase;
+.view-note-title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-fluid-4);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
 }
 
-.view-note-date b {
-  color: var(--foreground);
-  font-weight: var(--fw-medium);
+.view-note-context {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
 }
 
 .view-note-tools {
@@ -21698,54 +21714,166 @@ ul.view-todo-checks {
   align-items: center;
 }
 
-.view-note-title {
-  max-width: 32ch;
-  margin: 0;
-  font-family: var(--font-sans);
-  font-size: var(--fs-display-1);
-  font-weight: var(--fw-medium);
-  letter-spacing: var(--ls-tight);
-  line-height: var(--lh-tight);
-  overflow-wrap: anywhere;
+.view-note-stage-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  align-items: center;
 }
 
-.view-note-title[data-short='true'] {
-  max-width: 20ch;
-  font-size: var(--fs-display-3);
-  letter-spacing: var(--ls-tighter);
-  line-height: var(--lh-display);
-}
-
-.view-note-lede {
-  max-width: 60ch;
-  margin: 0;
+/* Where it went: an identity colour per stage, not a tone. */
+.view-note-stage {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-1-5) var(--space-3);
+  border: 1px solid var(--border);
   color: var(--muted-foreground);
-  font-size: var(--fs-fluid-1);
-  line-height: var(--lh-relaxed);
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  text-transform: uppercase;
 }
 
-/* The grid: the main column and an 18rem margin. */
-.view-note-grid {
+.view-note-stage i {
+  flex: none;
+  width: 0.6rem;
+  height: 0.6rem;
+  background: currentcolor;
+}
+
+.view-note-stage[data-stage='done'] {
+  border-color: var(--primary-border);
+  color: var(--primary);
+}
+
+.view-note-stage[data-stage='open'] {
+  border-color: var(--in-flight-border);
+  color: var(--in-flight-fill);
+}
+
+.view-note-stage[data-stage='untraced'] {
+  border-color: var(--missing-border);
+  color: var(--missing-fill);
+}
+
+.view-note-stage[data-stage='note'] i {
+  border: 1.5px dashed currentcolor;
+  background: none;
+}
+
+/* The one big number: a card with a 4px bar coloured by stage. */
+.view-note-big {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 18rem;
-  gap: var(--space-fluid-8);
-  align-items: start;
+  grid-template-columns: 4px minmax(0, 1fr);
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-6) var(--space-5) var(--space-5);
+  border: 1px solid var(--border);
+  background: var(--card);
 }
 
-.view-note-grid > * {
-  min-width: 0;
+.view-note-bar {
+  background: var(--muted-foreground);
 }
 
-@media (max-width: 62rem) {
-  .view-note-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
+.view-note-big[data-stage='done'] {
+  border-color: var(--primary-border);
 }
 
+.view-note-big[data-stage='done'] .view-note-bar {
+  background: var(--primary);
+}
+
+.view-note-big[data-stage='open'] {
+  border-color: var(--in-flight-border);
+}
+
+.view-note-big[data-stage='open'] .view-note-bar {
+  background: var(--in-flight-fill);
+}
+
+.view-note-big[data-stage='untraced'] {
+  border-color: var(--missing-border);
+}
+
+.view-note-big[data-stage='untraced'] .view-note-bar {
+  background: var(--missing-fill);
+}
+
+.view-note-big b {
+  display: block;
+  font-size: var(--fs-display-3);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tighter);
+  line-height: var(--lh-none);
+}
+
+.view-note-big[data-stage='done'] b {
+  color: var(--primary);
+}
+
+.view-note-big-label {
+  margin: var(--space-3) 0 0;
+  font-size: var(--fs-5);
+  font-weight: var(--fw-medium);
+}
+
+.view-note-big-sub {
+  margin: var(--space-1) 0 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+/* The stat list: mono uppercase labels, the values right-aligned. */
+.view-note-stats {
+  display: grid;
+  margin: 0;
+}
+
+.view-note-stats > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-faint);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-note-stats dt,
+.view-note-stats dd {
+  margin: 0;
+}
+
+.view-note-stats dd {
+  color: var(--foreground);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0;
+  text-align: right;
+  text-transform: none;
+}
+
+.view-note-stats dd[data-tone='complete'] {
+  color: var(--primary);
+}
+
+.view-note-stats dd[data-tone='in-flight'] {
+  color: var(--in-flight-fill);
+}
+
+.view-note-stats dd[data-tone='missing'] {
+  color: var(--missing-fill);
+}
+
+/* The main column. */
 .view-note-main {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-4);
+  gap: var(--space-10);
   align-content: start;
 }
 
@@ -21753,22 +21881,9 @@ ul.view-todo-checks {
   min-width: 0;
 }
 
-.view-note-margin {
-  position: sticky;
-  top: var(--space-22);
-  display: grid;
-  gap: var(--space-6);
-}
-
-@media (max-width: 62rem) {
-  .view-note-margin {
-    position: static;
-  }
-}
-
 .view-note-section {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-3);
 }
 
 /* Small caps: kickers and the Also key. */
@@ -21780,6 +21895,35 @@ ul.view-todo-checks {
   font-weight: var(--fw-semibold);
   letter-spacing: var(--ls-wider);
   text-transform: uppercase;
+}
+
+/* The gist, said large: a quick note's first sentence, an explore note's lede. */
+.view-note-gist {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.view-note-say {
+  max-width: 42ch;
+  margin: 0;
+  font-size: var(--fs-fluid-3);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+}
+
+.view-note-say[data-long='true'] {
+  max-width: 64ch;
+  font-size: var(--fs-fluid-1);
+  letter-spacing: 0;
+  line-height: var(--lh-relaxed);
+}
+
+.view-note-line {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  overflow-wrap: anywhere;
 }
 
 /* Lifted | As written. */
@@ -21815,24 +21959,64 @@ ul.view-todo-checks {
   color: var(--foreground);
 }
 
-/* Clauses: one row each, the label in a 9rem gutter. */
-.view-note-clauses {
+/* The ledger: a head with a rule, then numbered rows. */
+.view-note-ledger {
   display: grid;
-  border-top: 1px solid var(--border);
 }
 
-.view-note-clause {
+.view-note-ledger-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.view-note-ledger-head h2 {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-fluid-4);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tight);
+}
+
+.view-note-index {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-fluid-1);
+}
+
+/* What it says: index, label, then the clause with its first sentence set medium. */
+.view-note-row {
   display: grid;
-  grid-template-columns: 9rem minmax(0, 1fr);
+  grid-template-columns: 2.75rem 9.5rem minmax(0, 1fr);
   gap: var(--space-2) var(--space-5);
-  padding: var(--space-4) 0;
+  padding: var(--space-5) 0;
   border-bottom: 1px solid var(--border-faint);
 }
 
 @media (max-width: 42rem) {
-  .view-note-clause {
-    grid-template-columns: minmax(0, 1fr);
+  .view-note-row {
+    grid-template-columns: 2.25rem minmax(0, 1fr);
   }
+
+  .view-note-row .view-note-text {
+    grid-column: 2;
+  }
+}
+
+.view-note-row[data-tone='complete'] .view-note-index {
+  color: var(--primary);
+}
+
+.view-note-row[data-tone='in-flight'] .view-note-index {
+  color: var(--in-flight-fill);
+}
+
+.view-note-row[data-tone='missing'] .view-note-index {
+  color: var(--missing-fill);
 }
 
 .view-note-gutter {
@@ -21844,6 +22028,10 @@ ul.view-todo-checks {
   font-size: var(--fs-5);
   line-height: var(--lh-relaxed);
   overflow-wrap: anywhere;
+}
+
+.view-note-first {
+  font-weight: var(--fw-medium);
 }
 
 .view-note-label {
@@ -21871,6 +22059,11 @@ ul.view-todo-checks {
   color: var(--in-flight-fill);
 }
 
+.view-note-label[data-tone='missing'] {
+  border-color: var(--missing-border);
+  color: var(--missing-fill);
+}
+
 .view-note-then {
   color: var(--muted-foreground);
   font-family: var(--font-heading);
@@ -21878,6 +22071,186 @@ ul.view-todo-checks {
   font-weight: var(--fw-semibold);
   letter-spacing: var(--ls-wider);
   text-transform: uppercase;
+}
+
+/* Section by section: index, the section's body, its shape on the side. */
+.view-note-part {
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr) auto;
+  gap: var(--space-2) var(--space-5);
+  padding: var(--space-5) 0;
+  border-bottom: 1px solid var(--border-faint);
+}
+
+@media (max-width: 42rem) {
+  .view-note-part {
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+  }
+}
+
+.view-note-part .view-note-index {
+  color: var(--primary);
+}
+
+.view-note-part-body {
+  display: grid;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+.view-note-part-title {
+  margin: 0;
+  font-size: var(--fs-6);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+}
+
+.view-note-part-key {
+  max-width: 72ch;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
+}
+
+.view-note-items {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-note-items li {
+  display: grid;
+  grid-template-columns: 10rem minmax(0, 1fr);
+  gap: var(--space-5);
+  font-size: var(--fs-4);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 42rem) {
+  .view-note-items li {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
+}
+
+.view-note-term {
+  font-weight: var(--fw-medium);
+}
+
+.view-note-item-whole {
+  grid-column: 1 / -1;
+}
+
+.view-note-more {
+  grid-template-columns: minmax(0, 1fr);
+  color: var(--muted-foreground);
+}
+
+.view-note-flags {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-faint);
+}
+
+.view-note-flags p {
+  display: grid;
+  grid-template-columns: 10rem minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: baseline;
+  margin: 0;
+  font-size: var(--fs-4);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 42rem) {
+  .view-note-flags p {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
+}
+
+.view-note-flags .view-note-label {
+  justify-self: start;
+}
+
+.view-note-figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+}
+
+.view-note-figure {
+  display: inline-flex;
+  gap: var(--space-1);
+  align-items: baseline;
+  padding: var(--space-0-5) var(--space-2);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  white-space: nowrap;
+}
+
+.view-note-figure span {
+  color: var(--muted-foreground);
+}
+
+.view-note-side {
+  display: grid;
+  gap: var(--space-1);
+  justify-items: end;
+  align-content: start;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-align: right;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+@media (max-width: 42rem) {
+  .view-note-side {
+    grid-column: 2;
+    justify-items: start;
+    text-align: left;
+  }
+}
+
+.view-note-read {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-note-read:hover {
+  color: var(--primary);
+}
+
+/* An opened section: the app's own render of it, across the body and side columns. */
+.view-note-full {
+  grid-column: 2 / -1;
+  padding-top: var(--space-2);
+  font-size: var(--fs-5);
+  overflow-wrap: anywhere;
+}
+
+.view-note-full > :first-child {
+  margin-top: 0;
 }
 
 /* File references (copy buttons) and code identifiers. */
@@ -21912,8 +22285,8 @@ ul.view-todo-checks {
   font-size: var(--fs-3);
 }
 
-/* In the display title a mono reference keeps the title's own size. */
-.view-note-title :is(.view-note-ref, .view-note-ident) {
+/* In the gist a mono reference keeps the gist's own size. */
+.view-note-say :is(.view-note-ref, .view-note-ident) {
   font-size: inherit;
 }
 
@@ -21937,6 +22310,14 @@ ul.view-todo-checks {
   overflow-wrap: anywhere;
 }
 
+/* A one-liner's "Where it went": the todo card under the ledger head. */
+.view-note-went {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 36rem;
+  padding-top: var(--space-5);
+}
+
 /* Mentions: every file the note names, with a count. */
 .view-note-mentions {
   gap: var(--space-1);
@@ -21950,7 +22331,7 @@ ul.view-todo-checks {
   display: flex;
   justify-content: space-between;
   gap: var(--space-2);
-  padding: var(--space-1) 0;
+  padding: var(--space-1-5) 0;
   border: 0;
   border-bottom: 1px solid var(--border-faint);
   background: none;
@@ -22110,7 +22491,7 @@ a.view-note-open:hover {
   border-style: dashed;
 }
 
-/* An explore note: the rendered document at a 74ch measure, contents in the margin. */
+/* An explore note read as written: the rendered document at a 74ch measure. */
 .view-note-doc {
   max-width: 74ch;
   font-size: var(--fs-5);
@@ -22126,31 +22507,6 @@ a.view-note-open:hover {
   letter-spacing: var(--ls-tight);
   scroll-margin-top: var(--space-22);
   text-transform: none;
-}
-
-.view-note-contents {
-  display: grid;
-  gap: 0;
-  border-top: 1px solid var(--border);
-}
-
-.view-note-contents .view-note-kicker {
-  padding: var(--space-2) 0;
-}
-
-.view-note-contents button {
-  padding: var(--space-1-5) 0;
-  border: 0;
-  border-bottom: 1px solid var(--border-faint);
-  background: none;
-  color: var(--muted-foreground);
-  cursor: pointer;
-  font-size: var(--fs-3);
-  text-align: left;
-}
-
-.view-note-contents button:hover {
-  color: var(--primary);
 }
 
 /* Also in this file: one labelled row of chips that each open that place in Source. */

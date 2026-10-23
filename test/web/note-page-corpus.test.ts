@@ -1,4 +1,4 @@
-// quick-261023-61l (QCORP): real-corpus guards over every note on this machine - labelore's own
+// quick-261023-61l (QCORP) and quick-261023-u13 (sketch 029 A): real-corpus guards over every note on this machine - labelore's own
 // `.planning/notes/`, the dashboard's synthetic fixture, the committed fixture project and each sibling
 // project that has a notes folder (resoundant and resoundant/pyedge today) - built through the real
 // repository load so each file reaches the handler with the ref discovery gives it, served through
@@ -34,9 +34,13 @@ interface Entry {
   context: NoteContext | null;
   headingIds: string[];
   quickRowsAreBounded: boolean;
+  headingTexts: string[];
 }
 
 const entries: Entry[] = [];
+
+/** The sketch's NOW: 23 Oct 2026, 12:00 local. */
+const NOW = new Date(2026, 9, 23, 12, 0);
 
 function markupOf(model: ComposedNotePage | null, html: string): string {
   if (model === null) return '';
@@ -80,7 +84,7 @@ beforeAll(async () => {
         planSegments: [],
         headings: served.document.headings,
         noteContext: served.noteContext,
-      });
+      }, { now: NOW });
       entries.push({
         root,
         path: artifact.path,
@@ -91,6 +95,7 @@ beforeAll(async () => {
         markup: markupOf(model, served.document.html),
         context: served.noteContext,
         headingIds: served.document.headings.map((heading) => heading.id),
+        headingTexts: served.document.headings.filter((heading) => heading.depth === 2).map((heading) => heading.text),
         quickRowsAreBounded: (note?.rows?.length ?? 0) <= 80,
       });
     }
@@ -119,10 +124,13 @@ describe('every note on this machine', () => {
     }
   });
 
-  it('a quick note has a non-empty title, bounded rows, label lengths within 22 and counts of at least one', () => {
+  it('a quick note has a gist, a file-name title, bounded rows, label lengths within 22 and counts of at least one', () => {
     for (const entry of entries.filter((candidate) => candidate.model?.shape === 'quick')) {
       const model = entry.model as ComposedNotePage;
-      expect(model.title.runs.map((run) => run.text).join('').trim(), entry.path).not.toBe('');
+      expect(model.gist.runs.map((run) => run.text).join('').trim(), entry.path).not.toBe('');
+      expect((model.rail.title ?? '').trim(), entry.path).not.toBe('');
+      expect(model.rows.length === 0 ? model.oneLine !== null : model.ledger !== null, entry.path).toBe(true);
+      expect(model.rail.big.value, entry.path).toBe(model.rows.length === 0 ? '1' : String(model.rows.length));
       expect(entry.quickRowsAreBounded, entry.path).toBe(true);
       for (const row of model.rows) {
         if (row.label === null) continue;
@@ -130,16 +138,21 @@ describe('every note on this machine', () => {
         expect(label.length, `${entry.path}: ${row.label}`).toBeLessThanOrEqual(22);
       }
       for (const mention of model.mentions) expect(mention.count, entry.path).toBeGreaterThanOrEqual(1);
-      expect(model.contents, entry.path).toEqual([]);
+      expect(model.parts, entry.path).toEqual([]);
     }
   });
 
-  it('every contents id is a heading id of that file', () => {
+  it('every explore section pairs to a heading id of that file, and its heading is that heading', () => {
     for (const entry of entries.filter((candidate) => candidate.model?.shape === 'document')) {
       const model = entry.model as ComposedNotePage;
-      for (const item of model.contents) expect(entry.headingIds, `${entry.path}: ${item.text}`).toContain(item.id);
       expect(model.rows, entry.path).toEqual([]);
       expect(model.mentions, entry.path).toEqual([]);
+      expect(model.parts.length, entry.path).toBe(entry.headingTexts.length);
+      for (const part of model.parts) {
+        expect(part.id, `${entry.path}: ${part.heading}`).not.toBeNull();
+        expect(entry.headingIds, `${entry.path}: ${part.heading}`).toContain(part.id);
+      }
+      expect(model.parts.map((part) => part.index), entry.path).toEqual(model.parts.map((_, i) => String(i + 1).padStart(2, '0')));
     }
   });
 
@@ -155,8 +168,21 @@ describe('every note on this machine', () => {
   it('a promoted: true note with no todo shows the untraced state', () => {
     for (const entry of entries) {
       if (entry.model === null || (entry.context?.todos.length ?? 0) > 0) continue;
-      const promoted = entry.markup.includes('Promoted</span>') || entry.markup.includes('Now a todo');
-      if (promoted) expect(entry.model.empty?.kicker, entry.path).toBe('Promoted, but untraced');
+      const promoted = entry.model.shape === 'quick' && entry.model.rail.stats.some((stat) => stat.label === 'Promoted' && stat.value === 'Yes');
+      if (promoted) {
+        expect(entry.model.empty?.kicker, entry.path).toBe('Promoted, but untraced');
+        expect(entry.model.rail.stage.text, entry.path).toBe('Untraced');
+      }
+    }
+  });
+
+  it('every note has a stage chip, a big number and a stat list; every explore note a section ledger', () => {
+    for (const entry of entries.filter((candidate) => candidate.model !== null)) {
+      const model = entry.model as ComposedNotePage;
+      expect(model.rail.stage.text, entry.path).not.toBe('');
+      expect(model.rail.big.value, entry.path).toMatch(/^\d+$/);
+      expect(model.rail.stats.length, entry.path).toBeGreaterThanOrEqual(2);
+      if (model.shape === 'document') expect(model.ledger?.title, entry.path).toBe('Section by section');
     }
   });
 
@@ -170,6 +196,7 @@ describe('every note on this machine', () => {
 
 describe('the sketch notes keep the sketch values', () => {
   const labelsOf = (key: keyof typeof NOTE_FILES): (string | null)[] => (find(key).model?.rows ?? []).map((row) => row.label);
+  const titleOf = (key: keyof typeof NOTE_FILES): string | null | undefined => find(key).model?.rail.title;
 
   it('row labels, in reading order', () => {
     expect(labelsOf('dcrop')).toEqual(['Today', 'Decided · 21 Oct 2026', 'How', 'Preset constraint', 'Estimated', 'Batch']);
@@ -183,24 +210,45 @@ describe('the sketch notes keep the sketch values', () => {
     expect(labelsOf('lsk')).toEqual([null, 'Want', 'Open question', 'Open question', 'Today', 'Suggested interim']);
   });
 
-  it('short titles, mentions and the head chips', () => {
-    expect(['dcrop', 'dback', 'sundo'].map((key) => find(key as keyof typeof NOTE_FILES).model?.title.short)).toEqual([false, false, false]);
-    expect(['dround', 'dsfx', 'dcall', 'pcap', 'star', 'lsk'].map((key) => find(key as keyof typeof NOTE_FILES).model?.title.short)).toEqual(
-      [true, true, true, true, true, true],
-    );
+  it('titles from the file names, the big numbers and the stages', () => {
+    expect(titleOf('dcrop')).toBe('Crop images and profile photos');
+    expect(titleOf('dround')).toBe('Round profile photos');
+    expect(titleOf('dsfx')).toBe('Sound effects');
+    expect(titleOf('dcall')).toBe('Call debug logging webrtc turn');
+    expect(titleOf('dback')).toBe('Back button closes app');
+    expect(titleOf('pcap')).toBe('Raise single file download cap');
+    expect(titleOf('star')).toBe('Tariff note tooltips');
+    expect(titleOf('sundo')).toBe('Brokers want undo');
+    expect(titleOf('lsk')).toBe('Sketches page in labelore');
+    const big = (key: keyof typeof NOTE_FILES): string | undefined => find(key).model?.rail.big.value;
+    expect(['dcrop', 'dround', 'dsfx', 'dcall', 'dback', 'pcap', 'star', 'sundo', 'lsk'].map((key) => big(key as keyof typeof NOTE_FILES))).toEqual([
+      '6', '4', '4', '4', '2', '3', '1', '1', '6',
+    ]);
+    const stage = (key: keyof typeof NOTE_FILES): string | undefined => find(key).model?.rail.stage.text;
+    expect(['dcrop', 'dround', 'dsfx', 'dcall', 'dback', 'pcap', 'star', 'sundo', 'lsk'].map((key) => stage(key as keyof typeof NOTE_FILES))).toEqual([
+      'Shipped', 'Shipped', 'Shipped', 'Shipped', 'Untraced', 'Untraced', 'Todo open', 'Still a note', 'Todo open',
+    ]);
+  });
+
+  it('mentions and the stats rows', () => {
     expect(find('pcap').model?.mentions.map((m) => m.path)).toEqual(['backend/src/config.rs:121', 'download/mod.rs:75']);
     expect(find('dround').model?.mentions.map((m) => m.path)).toEqual(['web/public/sw.js', 'server/src/media/image.ts']);
     expect(find('lsk').model?.mentions.map((m) => m.path)).toEqual(['sketches/MANIFEST.md', 'README.md', 'data.js']);
-    expect(find('sundo').model?.head.promoted).toEqual({ label: 'Not promoted', tone: 'quiet' });
-    expect(find('dback').model?.head.promoted).toEqual({ label: 'Promoted', tone: 'complete' });
-    expect(find('dsfx').model?.head.promoted).toEqual({ label: 'Now a todo', tone: 'complete' });
+    const promoted = (key: keyof typeof NOTE_FILES) => find(key).model?.rail.stats.find((stat) => stat.label === 'Promoted');
+    expect(promoted('sundo')).toMatchObject({ value: 'No', tone: 'missing' });
+    expect(promoted('dback')).toMatchObject({ value: 'Yes', tone: null });
+    expect(find('dback').model?.rail.stats.some((stat) => stat.label === 'Todo')).toBe(false);
+    expect(find('dsfx').model?.rail.stats.find((stat) => stat.label === 'Todo')).toMatchObject({ value: 'Done', tone: 'complete' });
   });
 
-  it('explore notes: contents counts and no rows', () => {
-    expect(find('pbrief').model?.contents).toHaveLength(3);
-    expect(find('lperkind').model?.contents).toHaveLength(6);
-    expect(find('lsurvey').model?.contents.length).toBeGreaterThanOrEqual(1);
-    expect(find('lperkind').model?.lede).toContain('/gsd-explore session');
+  it('explore notes: sections, stage chips, big numbers and no rows', () => {
+    expect(find('pbrief').model?.parts).toHaveLength(3);
+    expect(find('lperkind').model?.parts).toHaveLength(5);
+    expect(find('lsurvey').model?.parts).toHaveLength(6);
+    expect([find('pbrief'), find('lperkind'), find('lsurvey')].map((entry) => entry.model?.rail.big.value)).toEqual(['7', '3', '8']);
+    expect([find('pbrief'), find('lperkind'), find('lsurvey')].map((entry) => entry.model?.rail.stage.text)).toEqual(['3 sections', '5 sections', '6 sections']);
+    expect(find('lperkind').model?.gist.text).toContain('Dashboard, Roadmap and Traceability');
+    expect(find('lperkind').model?.gist.long).toBe(true);
   });
 
   it('the cards: Became or Related, counts and the untraced states', () => {
@@ -215,7 +263,7 @@ describe('the sketch notes keep the sketch values', () => {
     expect(kickers('lperkind')).toEqual(['Related todo']);
     for (const key of ['dback', 'pcap'] as const) expect(find(key).model?.empty?.kicker).toBe('Promoted, but untraced');
     expect(find('sundo').model?.empty?.kicker).toBe('Still a note');
-    expect(find('lsurvey').model?.empty?.text).toBe('No todo names this note.');
+    expect(find('lsurvey').model?.empty).toEqual({ kicker: 'No todo points here', text: 'No todo names or mentions this note.' });
   });
 });
 
