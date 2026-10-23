@@ -1,7 +1,6 @@
 // D-08/D-09: the docs/design-language.md parser and the view-local namespace matcher, extracted
-// verbatim from test/web/class-vocabulary.test.ts (quick-260921-l4e Task 2) so the Playwright
-// foundation-consistency sweep can read the same sanctioned-tone table and view-local pattern
-// instead of maintaining a second copy. Behaviour is unchanged from the vitest file's original
+// verbatim from test/web/class-vocabulary.test.ts (quick-260921-l4e Task 2) so one copy serves
+// every reader of the sanctioned-tone table and view-local pattern. Behaviour is unchanged from the vitest file's original
 // inline versions — `test/web/class-vocabulary.test.ts` now imports these from here.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
