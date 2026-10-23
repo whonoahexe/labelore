@@ -11,6 +11,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { InMemoryPlanningFilesystem } from '../../src/planning-fs/in-memory-fs.ts';
 import { LocalFsPlanningFilesystem } from '../../src/planning-fs/local-fs.ts';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
 import { buildNoteContext } from '../../src/presentation/note-context.ts';
@@ -21,7 +22,7 @@ import type { ViewInput } from '../../src/web/views/manifest.ts';
 import { composeNotePage, dropLeadingH1 } from '../../src/web/views/note-page.ts';
 import type { ComposedNotePage } from '../../src/web/views/note-page.ts';
 import { NotePageView } from '../../src/web/views/note-page-components.tsx';
-import { NOTE_FILES, NOTES_FIXTURE_ROOT, loadCombined, notesAndTodos } from '../helpers/note-corpus.ts';
+import { NOTE_FILES, NOTES_FIXTURE_ROOT, combinedFiles, loadCombined, notesAndTodos } from '../helpers/note-corpus.ts';
 import type { LoadedProject } from '../helpers/todo-corpus.ts';
 
 let project: LoadedProject;
@@ -338,6 +339,124 @@ describe('static markup', () => {
     expect(html).toContain('<span class="chip-slot">warn</span>');
     expect(html).not.toContain('view-note-doc');
     expect(html).not.toContain('view-note-contents');
+  });
+});
+
+describe('an explore note', () => {
+  type Served = {
+    artifact: { kind: string; frontmatter: Record<string, unknown>; structured: Record<string, unknown> };
+    noteContext: NoteContext | null;
+    document: { html: string; headings: { id: string; text: string; depth: number }[] };
+  };
+  let documentOf: (key: Key) => Promise<Served>;
+  beforeAll(async () => {
+    const snapshot = await new PlanningRepository(new InMemoryPlanningFilesystem(combinedFiles()), '/project').load();
+    const app = createApp({ getSnapshot: () => snapshot }, true, '.');
+    const presentation = (await (await app.request('/api/presentation')).json()) as ProjectPresentation;
+    documentOf = async (key) => {
+      const dto = presentation.artifacts.find((artifact) => artifact.path === NOTE_FILES[key]);
+      if (!dto) throw new Error(`no artifact ${key}`);
+      return (await (await app.request(`/api/documents?route=${encodeURIComponent(dto.key)}`)).json()) as Served;
+    };
+  });
+
+  async function composed(key: Key): Promise<{ model: ComposedNotePage; served: Served }> {
+    const served = await documentOf(key);
+    const model = composeNotePage({
+      kind: served.artifact.kind,
+      frontmatter: served.artifact.frontmatter,
+      structured: served.artifact.structured,
+      groups: [],
+      planSegments: [],
+      headings: served.document.headings,
+      noteContext: served.noteContext,
+    });
+    if (model === null) throw new Error(`composed null: ${key}`);
+    return { model, served };
+  }
+
+  it('lperkind: the title, the lede, six contents entries in order and one Related card', async () => {
+    const { model } = await composed('lperkind');
+    expect(model.shape).toBe('document');
+    expect(model.title.text).toBe('Per-kind artifact rendering — parsing, design language, and categorization');
+    expect(model.lede).toBe(
+      '/gsd-explore session on how planning artifacts render and why document pages read worse than dashboard/roadmap/traceability',
+    );
+    expect(model.contents.map((entry) => entry.text)).toEqual([
+      'Axis 1 — Parsing: 11 of 16 types have no structured representation',
+      'Structure that IS extracted is discarded at the client boundary',
+      'Axis 2 — Design language: it exists, it is real, it is undocumented',
+      'Axis 3 — Categorization: RESOLVED 2026-09-20',
+      'Delivery shape',
+      'Related',
+    ]);
+    expect(model.contents.every((entry) => entry.id !== '')).toBe(true);
+    expect(model.rows).toEqual([]);
+    expect(model.whole).toBeNull();
+    expect(model.mentions).toEqual([]);
+    expect(model.todos.map((card) => card.kicker)).toEqual(['Related todo']);
+  });
+
+  it('pbrief: three contents entries and two Related cards in path order', async () => {
+    const { model } = await composed('pbrief');
+    expect(model.contents.map((entry) => entry.text)).toEqual([
+      'Features',
+      'Footage facts (measured 2026-10-23)',
+      'Network facts (measured 2026-10-23)',
+    ]);
+    expect(model.todos.map((card) => card.kicker)).toEqual(['Related todo', 'Related todo']);
+    expect(model.todos.map((card) => card.statusKey)).toEqual(['done', 'pending']);
+  });
+
+  it('lsurvey: no todo names it', async () => {
+    const { model } = await composed('lsurvey');
+    expect(model.todos).toEqual([]);
+    expect(model.empty).toEqual({ kicker: 'Still a note', text: 'No todo names this note.' });
+    expect(model.contents.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('lperkind renders one h1, the lede, the document body, the contents and no toggle or mentions', async () => {
+    const { model, served } = await composed('lperkind');
+    const html = render(model, { documentHtml: served.document.html });
+    expect(count(html, '<h1')).toBe(1);
+    expect(html).toContain('Per-kind artifact rendering — parsing, design language, and categorization');
+    expect(html).toContain('<p class="view-note-lede">');
+    expect(html).toContain('/gsd-explore session on how planning artifacts render');
+    // The stub renderHtml sees the html without its leading h1 (the body H1 differs from the title, so the server keeps it).
+    const withoutH1 = dropLeadingH1(served.document.html);
+    expect(served.document.html.trimStart().startsWith('<h1')).toBe(true);
+    expect(html).toContain(`<div class="view-note-doc"><div data-length="${withoutH1.length}"></div></div>`);
+    expect(html).toContain('<nav class="view-note-contents" aria-label="In this note">');
+    expect(html).toContain('In this note · 6');
+    const contents = html.slice(html.indexOf('<nav class="view-note-contents"'));
+    expect(count(contents.slice(0, contents.indexOf('</nav>')), '<button')).toBe(6);
+    expect(html).not.toContain('view-note-toggle');
+    expect(html).not.toContain('view-note-mentions');
+    expect(html).toContain('Related todo');
+  });
+
+  it('an explore note with a frontmatter title but no headings has no contents', () => {
+    const model = composeNotePage({
+      kind: 'note',
+      frontmatter: { title: 'Only a title' },
+      structured: { note: { shape: 'document' } },
+      groups: [],
+      planSegments: [],
+      headings: [{ id: 'only-a-title', text: 'Only a title', depth: 1 }],
+      noteContext: { todos: [] },
+    });
+    expect(model?.contents).toEqual([]);
+    const html = render(model as ComposedNotePage);
+    expect(html).not.toContain('view-note-contents');
+    expect(html).toContain('No todo names this note.');
+  });
+
+  it('falls back to the first H1, then to the artifact title, when the frontmatter has no title', () => {
+    const base = { kind: 'note', frontmatter: {}, structured: { note: { shape: 'document' } }, groups: [], planSegments: [] };
+    expect(composeNotePage({ ...base, headings: [{ id: 'h', text: 'Heading one', depth: 1 }] })?.title.text).toBe('Heading one');
+    const none = composeNotePage({ ...base, headings: [] });
+    expect(none?.title.text).toBeNull();
+    expect(render(none as ComposedNotePage)).toContain('Fallback');
   });
 });
 
