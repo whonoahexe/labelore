@@ -115,7 +115,8 @@ test.describe('artifact-header copy-path button (quick-260923-jxp)', () => {
     await setTheme(page, 'light');
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(url);
-    await page.locator('.artifact-heading').first().waitFor({ state: 'visible' });
+    // SUMMARY now renders its own per-type head, not `.artifact-heading`: wait for the page's title.
+    await page.locator('main h1').first().waitFor({ state: 'visible' });
     await assertCopyPathContract(page, path);
   });
 
