@@ -1051,15 +1051,20 @@ plan's "no AST tooling" constraint.
 | `sketches-page` | Sketches | The `<main>` of the Sketches page; its `.page-intro` stacks block-wise so the tally and Manifest link sit under the lede |
 | `sketches-tally` | Sketches | The "N sketches · M with a winner" line in the page intro, in large numerals |
 | `sketch-list` | Sketches | The `<ol>` of sketch rows: one hairline-bordered card, rows separated by hairlines |
-| `sketch-row` | Sketches | One sketch: number, main column and actions in a three-column grid (a single column under 42rem) |
-| `sketch-number` | Sketches | A sketch's number in mono, muted |
-| `sketch-main` | Sketches | A row's middle column: name, design question, winner and tags |
+| `sketch-row` | Sketches | One sketch: number, main column and actions in a three-column grid with generous padding (a single column under 42rem) |
+| `sketch-number` | Sketches | A sketch's number in large mono, muted |
+| `sketch-main` | Sketches | A row's middle column: heading, verdict panel and tags, capped at a readable width |
+| `sketch-heading` | Sketches | The name-and-question pair at the top of a row |
 | `sketch-name` | Sketches | A sketch's name (an `h2`) |
 | `sketch-question` | Sketches | A sketch's design question, muted body text capped at a readable measure |
-| `sketch-meta` | Sketches | The winner-and-tags line under the question |
-| `sketch-winner` | Sketches | The Winner / No winner chip followed by the winner text |
-| `sketch-tags` | Sketches | A sketch's tags as a quiet mono list |
-| `sketch-actions` | Sketches | The View / README / Open full size actions at a row's trailing edge |
+| `sketch-verdict` | Sketches | A row's verdict panel: the picked variant large beside its description; accent-ruled when `data-decided='true'`, dashed otherwise |
+| `sketch-verdict-pick` | Sketches | The verdict panel's left cell: the Winner / No winner label over the variant |
+| `sketch-verdict-label` | Sketches | The small uppercase Winner / No winner label |
+| `sketch-verdict-variant` | Sketches | The picked variant ("C", "B3") in large accent type, muted when undecided |
+| `sketch-verdict-text` | Sketches | What the winning variant is, in body text |
+| `sketch-winner` | Sketches | The viewer header's Winner / No winner chip followed by the winner text |
+| `sketch-tags` | Sketches | A sketch's tags as small hairline-boxed mono labels |
+| `sketch-actions` | Sketches | A row's View (secondary) and Open full size (ghost) actions, stacked at the trailing edge |
 | `sketch-viewer` | Sketches | The in-page viewer that replaces the list while one sketch is open (`?view=<folder>`) |
 | `sketch-viewer-head` | Sketches | The viewer's header: back link, eyebrow, name, question, winner line and actions |
 | `sketch-viewer-actions` | Sketches | The viewer's README / Open full size actions |
