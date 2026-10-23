@@ -14,6 +14,11 @@ async function fetchSketches(): Promise<SketchesViewModel> {
 
 const DEFAULT_LEDE = 'Every design sketch in .planning/sketches/.';
 
+/** The MANIFEST's design direction can run to a paragraph; the lede keeps only its first sentence. */
+function shortDirection(direction: string): string {
+  return /^.+?[.!?](?=\s|$)/s.exec(direction)?.[0] ?? direction;
+}
+
 function WinnerLine({ sketch }: { sketch: SketchRow }): React.JSX.Element {
   return (
     <span className="sketch-winner">
@@ -180,7 +185,7 @@ export function SketchesPage(): React.JSX.Element {
         <div>
           <p className="eyebrow">Design sketches</p>
           <h1>Sketches</h1>
-          <p className="lede">{model.direction ?? DEFAULT_LEDE}</p>
+          <p className="lede">{model.direction ? shortDirection(model.direction) : DEFAULT_LEDE}</p>
           <p className="sketches-tally">
             {count} {count === 1 ? 'sketch' : 'sketches'} · {model.decidedCount} with a winner
           </p>
