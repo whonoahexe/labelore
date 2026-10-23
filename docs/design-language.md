@@ -1062,12 +1062,12 @@ plan's "no AST tooling" constraint.
 | `sketch-verdict-label` | Sketches | The small uppercase Winner / No winner label |
 | `sketch-verdict-variant` | Sketches | The picked variant ("C", "B3") in large accent type, muted when undecided |
 | `sketch-verdict-text` | Sketches | What the winning variant is, in body text |
-| `sketch-winner` | Sketches | The viewer header's Winner / No winner chip followed by the winner text |
 | `sketch-tags` | Sketches | A sketch's tags as small hairline-boxed mono labels |
 | `sketch-actions` | Sketches | A row's View (secondary) and Open full size (ghost) actions, stacked at the trailing edge |
 | `sketch-viewer` | Sketches | The in-page viewer that replaces the list while one sketch is open (`?view=<folder>`) |
-| `sketch-viewer-head` | Sketches | The viewer's header: back link, eyebrow, name, question, winner line and actions |
-| `sketch-viewer-actions` | Sketches | The viewer's README / Open full size actions |
+| `sketch-viewer-head` | Sketches | The viewer's header, also a `.page-intro` so its top spacing and title match the other pages: eyebrow with the All sketches back link as a breadcrumb, name, question, then the verdict bar |
+| `sketch-viewer-bar` | Sketches | The row under the question: the verdict panel beside the Open full size action (stacked under 42rem) |
+| `sketch-viewer-actions` | Sketches | The viewer's Open full size action |
 | `sketch-viewer-frame` | Sketches | The sandboxed `iframe` (scripts only, no same-origin grant) that shows the sketch |
 
 ## How to extend

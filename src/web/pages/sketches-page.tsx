@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import type { SketchRow, SketchesViewModel } from '../../presentation/sketches.ts';
@@ -17,17 +18,6 @@ const DEFAULT_LEDE = 'Every design sketch in .planning/sketches/.';
 /** The MANIFEST's design direction can run to a paragraph; the lede keeps only its first sentence. */
 function shortDirection(direction: string): string {
   return /^.+?[.!?](?=\s|$)/s.exec(direction)?.[0] ?? direction;
-}
-
-function WinnerLine({ sketch }: { sketch: SketchRow }): React.JSX.Element {
-  return (
-    <span className="sketch-winner">
-      <span className="status-chip" data-tone={sketch.decided ? 'complete' : 'quiet'}>
-        {sketch.decided ? 'Winner' : 'No winner'}
-      </span>
-      {sketch.winner ? <span>{sketch.winner}</span> : null}
-    </span>
-  );
 }
 
 /** Splits a MANIFEST winner cell such as "C — status rail" into the picked variant and its
@@ -88,23 +78,28 @@ function SketchListRow({ sketch }: { sketch: SketchRow }): React.JSX.Element {
 }
 
 function SketchViewer({ sketch, viewUrl }: { sketch: SketchRow; viewUrl: string }): React.JSX.Element {
-  const actionClass = buttonVariants({ variant: 'ghost', size: 'sm' });
+  const openClass = buttonVariants({ variant: 'secondary', size: 'sm' });
   return (
     <section className="sketch-viewer">
-      <header className="sketch-viewer-head">
-        <Link className="text-link" to={presentationRoutePatterns.sketches}>
-          All sketches
-        </Link>
-        <div>
-          <p className="eyebrow">Sketch {sketch.number}</p>
-          <h1>{sketch.name}</h1>
-          {sketch.question ? <p className="lede">{sketch.question}</p> : null}
-        </div>
-        <WinnerLine sketch={sketch} />
-        <div className="sketch-viewer-actions">
-          <a className={actionClass} href={viewUrl} target="_blank" rel="noopener noreferrer">
-            Open full size
-          </a>
+      <header className="page-intro sketch-viewer-head">
+        <p className="eyebrow">
+          <Link className="text-link" to={presentationRoutePatterns.sketches}>
+            <ArrowLeft aria-hidden="true" />
+            All sketches
+          </Link>
+          <span aria-hidden="true">/</span>
+          <span>Sketch {sketch.number}</span>
+        </p>
+        <h1>{sketch.name}</h1>
+        {sketch.question ? <p className="lede">{sketch.question}</p> : null}
+        <div className="sketch-viewer-bar">
+          <SketchVerdict sketch={sketch} />
+          <div className="sketch-viewer-actions">
+            <a className={openClass} href={viewUrl} target="_blank" rel="noopener noreferrer">
+              Open full size
+              <ExternalLink data-icon="inline-end" aria-hidden="true" />
+            </a>
+          </div>
         </div>
       </header>
       {/* sandbox is scripts only: the sketch runs in an opaque origin, so its own JS cannot reach the
