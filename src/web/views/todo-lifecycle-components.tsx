@@ -398,7 +398,7 @@ export function TodoLifecycleView({
             <span className="status-chip" data-tone={chips.status.tone}>
               {chips.status.label}
             </span>
-            <span className="view-todo-pip" data-severity={chips.weight.level} title={chips.weight.title}>
+            <span className="status-chip view-todo-pip" data-severity={chips.weight.level} title={chips.weight.title}>
               <i aria-hidden="true" />
               {chips.weight.lead}
               {chips.weight.tail !== null ? <span> · {chips.weight.tail}</span> : null}

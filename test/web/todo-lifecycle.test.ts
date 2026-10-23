@@ -418,7 +418,7 @@ describe('the view', () => {
     expect(markup).toContain('>Todo</p>');
     expect(markup).toContain('Created <b>21 Oct 2026</b>');
     expect(markup).toMatch(/<span class="status-chip" data-tone="complete">Done<\/span>/);
-    expect(markup).toMatch(/<span class="view-todo-pip" data-severity="low"/);
+    expect(markup).toMatch(/<span class="status-chip view-todo-pip" data-severity="low"/);
     expect(markup).toContain('Minor');
     expect(markup.match(/<button type="button" class="view-todo-step"/g)).toHaveLength(3);
     expect(markup).toMatch(/<section class="view-todo-stage" id="todo-noted" data-state="done"><span class="view-todo-node">1<\/span>/);

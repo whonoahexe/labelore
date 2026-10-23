@@ -91,7 +91,7 @@ test.describe('Todo page', () => {
     await expect(chips.locator('.status-chip').first()).toHaveAttribute('data-tone', 'complete');
     await expect(chips.locator('.view-todo-pip')).toHaveText('Minor · priority low');
     await expect(chips.locator('.view-todo-pip')).toHaveAttribute('data-severity', 'low');
-    await expect(chips.locator('.status-chip').nth(1)).toHaveText('media');
+    await expect(chips.locator('.status-chip:not(.view-todo-pip)').nth(1)).toHaveText('media');
 
     expect(await stepTexts(page, 0)).toEqual(['Noted', '21 Oct 15:58', '2 notes · last 21 Oct 15:58']);
     expect(await stepTexts(page, 1)).toEqual(['Captured', '21 Oct 16:01', 'minor · media']);
