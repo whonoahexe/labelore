@@ -3936,6 +3936,13 @@ a.todo-title:hover {
   width: min(86rem, 100%);
 }
 
+/* Ultrawide screens: the column grows rather than leaving two thirds of the screen empty. */
+@media (min-width: 150rem) {
+  .page-stack {
+    width: min(120rem, 100%);
+  }
+}
+
 .source-link {
   width: fit-content;
   text-decoration: underline;
