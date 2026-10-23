@@ -264,6 +264,20 @@ function plainText(text: string): string {
   return stripped.split(' ').filter((word) => word !== '').join(' ').trim();
 }
 
+/** `[[name]]` wiki links read as code, the way the sketch shows them (the inline renderer has no wiki-link
+ * token, so the brackets would print). Only the brackets change; nothing is read as a link target. */
+function wikiAsCode(text: string): string {
+  let out = '';
+  let at = 0;
+  for (;;) {
+    const open = text.indexOf('[[', at);
+    const close = open < 0 ? -1 : text.indexOf(']]', open + 2);
+    if (open < 0 || close < 0) return out + text.slice(at);
+    out += `${text.slice(at, open)}\`${text.slice(open + 2, close)}\``;
+    at = close + 2;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Dates (literal, no time-zone shift)
 // ---------------------------------------------------------------------------
@@ -633,6 +647,7 @@ function composeDocument(
       term: asStr(item.term),
       text: typeof item.text === 'string' ? item.text : '',
     }));
+    const shownItems = items.map((item) => ({ term: item.term === null ? null : wikiAsCode(item.term), text: wikiAsCode(item.text) }));
     const itemCount = Math.max(asCount(section.itemCount), allItems.length);
     const keyText = asStr(section.key);
     const shownText = items.map((item) => plainText(item.text));
@@ -656,9 +671,9 @@ function composeDocument(
       }));
     return {
       index: pad2(index + 1),
-      heading,
-      key: keyText !== null && !(section.keyFrom === 'item' && items.length > 0) ? keyText : null,
-      items,
+      heading: wikiAsCode(heading),
+      key: keyText !== null && !(section.keyFrom === 'item' && items.length > 0) ? wikiAsCode(keyText) : null,
+      items: shownItems,
       more: Math.max(0, itemCount - MAX_ITEMS_SHOWN),
       flags,
       figures: figures.slice(0, MAX_FIGURES_SHOWN),
@@ -692,7 +707,7 @@ function composeDocument(
   stats.push({ label: 'Open / blocked', value: String(openOrBlocked), tone: openOrBlocked > 0 ? 'missing' : null });
   if (lines !== null) stats.push({ label: 'Lines', value: String(lines), tone: null });
 
-  const gistText = lede ?? summary;
+  const gistText = lede !== null ? wikiAsCode(lede) : summary !== null ? wikiAsCode(summary) : null;
   const sub = `${plural(points, 'point')} across ${plural(sectionCount, 'section')}${flagsAll > 0 ? ` · ${plural(flagsAll, 'call')} flagged` : ''}`;
   return {
     shape: 'document',
