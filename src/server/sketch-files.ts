@@ -89,11 +89,23 @@ export function sketchContentType(fileName: string): string {
 /** Sketches built by GSD's sketch tool share a fixed bottom-right `#sketch-tools` panel (doc, theme
  * and width switches) that covers the content it switches. Served HTML that contains it gets this
  * stylesheet, which folds the panel to a small tab until it is hovered or a control inside it has
- * focus. The controls stay in the DOM and in tab order, and the file on disk is never changed. */
+ * focus, and lays it out as labelled sections: a row label over each button group, segmented
+ * buttons, and the doc switch as a scrolling list. The controls stay in the DOM and in tab order,
+ * and the file on disk is never changed. */
 export const SKETCH_TOOLS_STYLE = `<style data-labelore="sketch-tools">
-#sketch-tools{opacity:1!important;max-width:min(34rem,calc(100vw - 24px))!important;max-height:calc(100vh - 24px);overflow:auto;background:#141414!important;border:1px solid rgba(255,255,255,.18);box-shadow:0 8px 24px rgba(0,0,0,.45)}
-#sketch-tools::before{content:"Sketch options";font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
-#sketch-tools:not(:hover):not(:focus-within){max-width:9.5rem!important;max-height:30px;overflow:hidden;opacity:.85!important;cursor:default}
+:root #sketch-tools{opacity:1!important;border-radius:0!important;width:min(23rem,calc(100vw - 24px));max-width:none!important;max-height:calc(100vh - 24px);overflow:auto;padding:0!important;gap:0!important;background:var(--card,#161616)!important;color:var(--foreground,#f5f5f5)!important;border:1px solid var(--border,#333);box-shadow:0 12px 32px rgb(0 0 0/.35);font-family:var(--font-sans,system-ui,sans-serif)!important}
+:root #sketch-tools::before{content:"Sketch options";display:block;padding:10px 14px;border-bottom:1px solid var(--border,#333);font:600 11px/16px var(--font-mono,ui-monospace,monospace);letter-spacing:.08em;text-transform:uppercase}
+:root #sketch-tools:not(:hover):not(:focus-within){width:auto;max-width:10.5rem!important;max-height:38px;overflow:hidden;cursor:default}
+:root #sketch-tools>div{display:flex;flex-wrap:wrap;gap:0;align-items:center;padding:10px 14px 12px;color:var(--muted-foreground,#a3a3a3);font:10px/14px var(--font-mono,ui-monospace,monospace);letter-spacing:.08em;text-transform:uppercase}
+:root #sketch-tools>div+div{border-top:1px solid var(--border,#333)}
+:root #sketch-tools>div::after{content:"";flex-basis:100%;height:7px}
+:root #sketch-tools>div>*{order:1}
+:root #sketch-tools button{margin:0 -1px 0 0;border-radius:0;padding:5px 10px;border:1px solid var(--border,#333);background:transparent;color:var(--foreground,#f5f5f5);font:12px/16px var(--font-sans,system-ui,sans-serif);letter-spacing:0;text-transform:none;cursor:pointer}
+:root #sketch-tools button:hover{background:color-mix(in oklch,var(--foreground,#fff) 8%,transparent)}
+:root #sketch-tools button.on{position:relative;border-color:var(--primary,#c2410c);background:var(--primary,#c2410c);color:var(--primary-foreground,#fff)}
+:root #doc-btns{display:flex;flex-direction:column;flex-basis:100%;max-height:min(16rem,40vh);overflow:auto}
+:root #doc-btns button{margin:0 0 -1px;padding:7px 10px;text-align:left}
+:root #doc-btns button.on{border-color:var(--border,#333);background:color-mix(in oklch,var(--primary,#c2410c) 14%,transparent);box-shadow:inset 3px 0 0 var(--primary,#c2410c);color:var(--foreground,#f5f5f5)}
 </style>`;
 
 /** Adds SKETCH_TOOLS_STYLE to sketch HTML that has the tools panel; any other HTML is returned as is. */
