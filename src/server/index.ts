@@ -14,6 +14,8 @@ import { buildReviewContext } from '../presentation/review-context.ts';
 import type { ReviewContext } from '../presentation/review-context.ts';
 import { buildTodoContext } from '../presentation/todo-context.ts';
 import type { TodoContext } from '../presentation/todo-context.ts';
+import { buildNoteContext } from '../presentation/note-context.ts';
+import type { NoteContext } from '../presentation/note-context.ts';
 import { buildRoadmapViewModel } from '../presentation/roadmap.ts';
 import { buildReferenceRegistry } from '../presentation/references.ts';
 import { parsePresentationUrl } from '../presentation/routes.ts';
@@ -149,6 +151,21 @@ export function createApp(
         return null;
       }
     })();
+    // quick-261023-61l: the todos a note became or is related to (status, weight, area, resolution, URL and
+    // the notes batched into the same todo), from this request's own bundle (null elsewhere).
+    const noteContext = ((): NoteContext | null => {
+      try {
+        const bodyOf = (path: string): string | null => {
+          const found = activeDerived.artifactIndex.lookup(path);
+          return found.found ? found.artifact.body : null;
+        };
+        return lookup.artifact.kind === 'note'
+          ? buildNoteContext(activeDerived.presentation, activeDerived.referenceRegistry, bodyOf, lookup.artifact.path)
+          : null;
+      } catch {
+        return null;
+      }
+    })();
     const document = await (
       await renderer
     ).render(lookup.artifact, { referenceRegistry: activeDerived.referenceRegistry });
@@ -175,6 +192,7 @@ export function createApp(
       phaseIdentity: lookup.phaseIdentity,
       document,
       todoContext,
+      noteContext,
       manualChecks,
       reviewContext,
     };

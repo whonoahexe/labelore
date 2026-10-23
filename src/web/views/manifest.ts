@@ -17,6 +17,8 @@ import type { ComposedLearningsRetro } from './learnings-retro.ts';
 import type { ComposedDebugCase } from './debug-case.ts';
 // Type-only import — same reason as `brief` above (quick-261023-61k, sketch-027 C).
 import type { ComposedTodoLifecycle, TodoDateOptions } from './todo-lifecycle.ts';
+// Type-only import — same reason as `brief` above (quick-261023-61l, sketch-028 A).
+import type { ComposedNotePage } from './note-page.ts';
 // Type-only import — same reason as `brief` above (quick-261006-iz6, sketch-019 B).
 import type { ComposedPlanNavigator } from './plan-navigator.ts';
 import type { PlanContext } from './plan-context.ts';
@@ -40,6 +42,8 @@ import type { ComposedReviewThreads } from './review-threads.ts';
 import type { ReviewContext } from '../../presentation/review-context.ts';
 // Type-only import — the todo context is built server-side (quick-261023-61k).
 import type { TodoContext } from '../../presentation/todo-context.ts';
+// Type-only import — the note context is built server-side (quick-261023-61l).
+import type { NoteContext } from '../../presentation/note-context.ts';
 // Type-only import — same reason as `brief` above (quick-261001-qk6, sketch-014 winner).
 import type { ComposedUiSpec } from './ui-spec.ts';
 // Type-only import — same reason as `brief` above (quick-261001-qk7, sketch-015 winner).
@@ -107,6 +111,11 @@ export interface ViewManifest {
    * only `todo`. Returns `null` when the input can't compose one (no `structured.todo`), and the page
    * falls back to the promoted-block view, which the manifest keeps as `promote`. */
   todoLifecycle?: (input: ViewInput, options?: TodoDateOptions) => ComposedTodoLifecycle | null;
+  /** quick-261023-61l (sketch-028 A): the NOTE annotated page a manifest opts into in View mode - currently
+   * only `note`. Returns `null` when the input can't compose one (no `structured.note`, or a quick note
+   * with no text), and the page falls back to the promoted-block view, which the manifest keeps as
+   * `promote`. */
+  notePage?: (input: ViewInput) => ComposedNotePage | null;
   /** quick-261006-iz6 (sketch-019 B): the PLAN task navigator a manifest opts into instead of
    * `layout` — currently only `plan`. Returns `null` when the input can't compose one (no
    * `structured.plan`, or a plan with no task), and the page falls back to the B3 `layout` / the
@@ -195,6 +204,10 @@ export interface ViewInput {
    * server-side and passed through from the document response - `null`/absent when the artifact is not a
    * todo. */
   todoContext?: TodoContext | null;
+  /** quick-261023-61l: the todos a note became or is related to (status, weight, area, resolution, URL and
+   * the notes batched into the same todo), built server-side and passed through from the document
+   * response - `null`/absent when the artifact is not a note. */
+  noteContext?: NoteContext | null;
 }
 
 export type ComposedBlock = { id: string; label: string } & (

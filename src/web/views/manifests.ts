@@ -15,6 +15,7 @@ import { composeSecurityConsole } from './security-console.ts';
 import { composeLearningsRetro } from './learnings-retro.ts';
 import { composeDebugCase } from './debug-case.ts';
 import { composeTodoLifecycle } from './todo-lifecycle.ts';
+import { composeNotePage } from './note-page.ts';
 import { composePlanNavigator } from './plan-navigator.ts';
 import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
@@ -347,6 +348,15 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
     // The lifecycle page is the View-mode render path; `promote` above is the fallback when it composes
     // nothing (quick-261023-61k).
     todoLifecycle: composeTodoLifecycle,
+  },
+  note: {
+    kind: 'note',
+    lead: 'What the note says, and the todo it became.',
+    // An explore note's headed sections, the fallback when the annotated page composes nothing.
+    promote: [{ type: 'section', heading: /\S/, all: true }],
+    // The annotated page is the View-mode render path; `promote` above is the fallback when it composes
+    // nothing (quick-261023-61l).
+    notePage: composeNotePage,
   },
 });
 

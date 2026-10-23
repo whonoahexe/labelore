@@ -6,7 +6,8 @@
 // Understanding) — this module adds no new server-side splitting, only a client-side name list.
 // `debug` is discovery's directory-position kind for GSD debug sessions under `.planning/debug/`
 // (quick-261018-j5h). `todo` is discovery's directory-position kind for files under `.planning/todos/`
-// (quick-261023-61k).
+// (quick-261023-61k). `note` is discovery's directory-position kind for GSD notes under `.planning/notes/`
+// (quick-261023-61l).
 export const VIEW_KINDS = [
   'discussion-log',
   'verification',
@@ -27,6 +28,7 @@ export const VIEW_KINDS = [
   'review-fix',
   'findings',
   'todo',
+  'note',
   'debug',
 ] as const;
 

@@ -115,7 +115,26 @@ describe('discover — position-aware classification', () => {
     }
     expect(by('todos/.gitkeep')?.kind).toBe('unknown');
     expect(by('todos/pending/e.txt')?.kind).toBe('unknown');
-    expect(by('notes/n.md')?.kind).toBe('unknown');
+    expect(by('notes/n.md')?.kind).toBe('note'); // since quick-261023-61l; was 'unknown'
+  });
+
+  it('gives a markdown file under notes/ the note kind by position, location still other (quick-261023-61l)', async () => {
+    const fs = fsFrom({
+      '.planning/notes/a.md': 'a',
+      '.planning/notes/sub/b.md': 'b',
+      '.planning/notes/c.txt': 'c',
+      '.planning/notes/.gitkeep': '',
+      '.planning/phases/01-a/notes.md': '# notes',
+      '.planning/phases/not-a-phase-dir/notes.md': '# notes',
+    });
+    const { refs } = await discover(fs);
+    const by = (path: string) => refs.find((r) => r.path === `.planning/${path}`);
+    expect(by('notes/a.md')).toMatchObject({ kind: 'note', location: 'other' });
+    expect(by('notes/sub/b.md')).toMatchObject({ kind: 'note', location: 'other' });
+    expect(by('notes/c.txt')?.kind).toBe('unknown');
+    expect(by('notes/.gitkeep')?.kind).toBe('unknown');
+    expect(by('phases/01-a/notes.md')?.kind).toBe('unknown');
+    expect(by('phases/not-a-phase-dir/notes.md')?.kind).toBe('unknown');
   });
 
   it('still discovers files inside a subdirectory whose name does not match the phase grammar', async () => {
