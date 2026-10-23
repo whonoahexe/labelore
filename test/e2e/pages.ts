@@ -1,7 +1,7 @@
-// The page matrix every foundation-consistency check iterates: the four reference pages, one
+// The page matrix: the four reference pages, one
 // artifact per `artifact.kind` present in the corpus (picked deterministically, never
 // hardcoded), and one plan-pair page. Built once per run from the live `/api/presentation`
-// payload — never from a fixture list — so the sweep always reflects this repo's own
+// payload — never from a fixture list — so it always reflects this repo's own
 // `.planning/` corpus.
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';

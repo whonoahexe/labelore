@@ -3,8 +3,7 @@
 // reflects this repo's own `.planning/` corpus. `runFullBehaviorChecks` is the shared behavior
 // helper Task 2 (plan/verification cover/glance smoke) and Task 3 (full coverage over every type,
 // plus the foundation-sweep updates) build on — Task 3 appends fixtures here rather than
-// duplicating the checks. Uses plain `expect` throughout; `results.json` belongs to the separate
-// foundation-consistency sweep.
+// duplicating the checks. Uses plain `expect` throughout.
 import { expect, test, type Page } from '@playwright/test';
 
 interface Fixture {

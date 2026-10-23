@@ -7071,8 +7071,7 @@ button.view-context-summary:hover {
   color: var(--muted-foreground);
 }
 
-/* Base idea row — kept as the shared target for the e2e corner check (measure.ts
-   CORNER_SELECTORS) now that both columns render their own row layout on top of it. */
+/* Base idea row — both columns render their own row layout on top of it. */
 .view-context-idea {
   min-width: 0;
   overflow-wrap: anywhere;
