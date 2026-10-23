@@ -220,6 +220,62 @@ function trustedEnrichment(highlighter: Highlighter) {
   };
 }
 
+/** Tags that may sit inside a line of prose as real HTML. Any other tag written mid-line (say "the
+ * milestone-grouped <details> form") is prose naming a tag, not markup: left as HTML, an unclosed
+ * `<details>` would fold the rest of the document into a closed disclosure. */
+const INLINE_HTML_TAGS = new Set([
+  'a',
+  'abbr',
+  'b',
+  'br',
+  'code',
+  'del',
+  'em',
+  'i',
+  'img',
+  'ins',
+  'kbd',
+  'mark',
+  'q',
+  's',
+  'samp',
+  'small',
+  'span',
+  'strong',
+  'sub',
+  'sup',
+  'u',
+  'var',
+  'wbr',
+]);
+
+function remarkProseTagsAsText() {
+  const walk = (node: MdastRoot | MdastRoot['children'][number]): void => {
+    if (!('children' in node)) return;
+    const phrasing =
+      node.type !== 'root' &&
+      node.type !== 'blockquote' &&
+      node.type !== 'list' &&
+      node.type !== 'listItem' &&
+      node.type !== 'footnoteDefinition';
+    node.children.forEach((child, index) => {
+      if (phrasing && child.type === 'html') {
+        const tag = /^<\/?([a-zA-Z][a-zA-Z0-9-]*)/.exec(child.value)?.[1]?.toLowerCase();
+        if (tag !== undefined && !INLINE_HTML_TAGS.has(tag)) {
+          (node.children as unknown[])[index] = {
+            type: 'text',
+            value: child.value,
+            position: child.position,
+          };
+          return;
+        }
+      }
+      walk(child);
+    });
+  };
+  return (tree: MdastRoot) => walk(tree);
+}
+
 function createProcessor(highlighter: Highlighter): MarkdownProcessor {
   const schema = {
     ...defaultSchema,
@@ -233,6 +289,7 @@ function createProcessor(highlighter: Highlighter): MarkdownProcessor {
   return unified()
     .use(remarkParse)
     .use(remarkGfm)
+    .use(remarkProseTagsAsText)
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeRaw)
     .use(rehypeSanitize, schema)
