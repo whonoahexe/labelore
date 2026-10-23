@@ -576,6 +576,21 @@ element is actually written, regardless of class name:
   and a not-settled chip take `--in-flight-fill` on `--in-flight-border`. The parse-degradation
   tones never appear on this page. Every class is in the reserved `view-debug-` namespace, so no
   vocabulary row is added.
+- **The TODO page reads as a lifecycle.** (quick-261023-61k, sketch 027 C) A strip of three steps,
+  Noted, Captured and Closed (or Now while the todo is open), sits under the title and the chip row,
+  and one numbered spine runs under it: the notes the todo was made from, the todo itself (the
+  problem beside the plan, the files, the other sections folded), then how it closed or a dashed
+  "still open" line. The status chip takes `complete` for a todo in `completed/` or `done/`,
+  `in-flight` for one in `pending/` and `quiet` for one filed anywhere else; the area chip is
+  `quiet`. The severity square is an identity colour on `data-severity`, shared with the
+  dashboard's On deck rows: High is filled `--missing-fill`, Medium filled `--in-flight-fill`, Low
+  a muted outline and Unrated a dashed outline. A done step or stage takes a `--primary` top rule
+  and a primary-tinted node; an open one takes `--in-flight-fill` and a dashed node; a step with no
+  data takes a dashed `--border` rule. The resolution box is `--primary-border` on `--primary-tint`,
+  and the still-open line is a dashed `--in-flight-border` with its lead in `--in-flight-fill`. A
+  note card has a 3px `--muted-foreground` left rule on `--card`. A note reference in the text and
+  the closing quick task's link are `--primary`. The parse-degradation tones never appear on this
+  page, and every class is in the reserved `view-todo-` namespace, so no vocabulary row is added.
 - **The dashboard opens on the project.** (quick-261017-wlg, sketch 025 R3b) A "Project overview"
   eyebrow sits above the PROJECT.md H1, which is the page's only h1, split at its first spaced
   dash into a name and a tagline. Under it sits the What This Is lead: a leading bold sentence, or
@@ -647,8 +662,8 @@ element is actually written, regardless of class name:
   over fast, quick in `--primary`, fast in `--in-flight-fill`), then five tasks a page grouped by
   day under a date gutter (a large day number over "Oct · Fri"). A row has a Q or F badge, a
   two-line title, the status, the commit, and Plan and Summary links only where those files exist.
-  High takes the destructive family and Medium takes `--primary`, as content colours and never as a
-  `data-tone`. Nothing animates.
+  High takes `--missing-fill` and Medium `--in-flight-fill`, the same severity colours as the TODO
+  page (quick-261023-61k), as content colours and never as a `data-tone`. Nothing animates.
 
 ## Surface-scoped registered names
 
