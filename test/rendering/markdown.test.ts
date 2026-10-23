@@ -56,6 +56,29 @@ const answer: number = 42
     expect(rendered.html).toContain('--shiki-dark');
   });
 
+  it('keeps a block tag named mid-line as text, so it cannot fold the rest of the document', async () => {
+    const renderer = await createArtifactRenderer();
+    const rendered = await renderer.render(
+      artifact(`expected: the milestone-grouped <details> form, with <kbd>Esc</kbd> to close
+
+## Summary
+
+total: 1
+
+<details>
+<summary>Block disclosure</summary>
+
+Inside.
+
+</details>`),
+    );
+
+    expect(rendered.html).toContain('milestone-grouped &#x3C;details> form');
+    expect(rendered.html).toContain('<kbd>Esc</kbd>');
+    expect(rendered.html.indexOf('<h2 id="summary">')).toBeLessThan(rendered.html.indexOf('<details>'));
+    expect(rendered.html).toContain('<summary>Block disclosure</summary>');
+  });
+
   it('adds stable deep-link anchors to authored requirement definitions', async () => {
     const renderer = await createArtifactRenderer();
     const rendered = await renderer.render(
