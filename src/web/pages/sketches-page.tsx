@@ -25,34 +25,55 @@ function WinnerLine({ sketch }: { sketch: SketchRow }): React.JSX.Element {
   );
 }
 
+/** Splits a MANIFEST winner cell such as "C — status rail" into the picked variant and its
+ * description; a cell with no short leading pick stays whole. */
+function splitWinner(winner: string): { pick: string | null; text: string } {
+  const match = /^(.{1,12}?)\s+[—–]\s+(.+)$/s.exec(winner);
+  return match ? { pick: match[1], text: match[2] } : { pick: null, text: winner };
+}
+
+function SketchVerdict({ sketch }: { sketch: SketchRow }): React.JSX.Element {
+  const { pick, text } = sketch.winner ? splitWinner(sketch.winner) : { pick: null, text: 'Not decided yet' };
+  return (
+    <div className="sketch-verdict" data-decided={sketch.decided ? 'true' : 'false'}>
+      <div className="sketch-verdict-pick">
+        <span className="sketch-verdict-label">{sketch.decided ? 'Winner' : 'No winner'}</span>
+        {pick ? <span className="sketch-verdict-variant">{pick}</span> : null}
+      </div>
+      <p className="sketch-verdict-text">{text}</p>
+    </div>
+  );
+}
+
 function SketchListRow({ sketch }: { sketch: SketchRow }): React.JSX.Element {
-  const actionClass = buttonVariants({ variant: 'ghost', size: 'sm' });
+  const viewClass = buttonVariants({ variant: 'secondary', size: 'sm' });
+  const openClass = buttonVariants({ variant: 'ghost', size: 'sm' });
   return (
     <li className="sketch-row">
       <span className="sketch-number">{sketch.number}</span>
       <div className="sketch-main">
-        <h2 className="sketch-name">{sketch.name}</h2>
-        {sketch.question ? <p className="sketch-question">{sketch.question}</p> : null}
-        <div className="sketch-meta">
-          <WinnerLine sketch={sketch} />
-          {sketch.tags.length > 0 ? (
-            <ul className="sketch-tags">
-              {sketch.tags.map((tag) => (
-                <li key={tag}>{tag}</li>
-              ))}
-            </ul>
-          ) : null}
+        <div className="sketch-heading">
+          <h2 className="sketch-name">{sketch.name}</h2>
+          {sketch.question ? <p className="sketch-question">{sketch.question}</p> : null}
         </div>
+        <SketchVerdict sketch={sketch} />
+        {sketch.tags.length > 0 ? (
+          <ul className="sketch-tags">
+            {sketch.tags.map((tag) => (
+              <li key={tag}>{tag}</li>
+            ))}
+          </ul>
+        ) : null}
       </div>
       <div className="sketch-actions">
         {sketch.viewUrl && sketch.folder ? (
-          <Link className={actionClass} to={{ search: `?view=${encodeURIComponent(sketch.folder)}` }}>
+          <Link className={viewClass} to={{ search: `?view=${encodeURIComponent(sketch.folder)}` }}>
             View
           </Link>
         ) : null}
         {/* The sketch itself is a server file, not a client route: a plain anchor, never a router Link. */}
         {sketch.viewUrl ? (
-          <a className={actionClass} href={sketch.viewUrl} target="_blank" rel="noopener noreferrer">
+          <a className={openClass} href={sketch.viewUrl} target="_blank" rel="noopener noreferrer">
             Open full size
           </a>
         ) : null}

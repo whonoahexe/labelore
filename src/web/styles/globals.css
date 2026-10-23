@@ -22257,10 +22257,10 @@ a.view-note-open:hover {
 
 .sketch-row {
   display: grid;
-  grid-template-columns: var(--space-10) minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: start;
-  gap: var(--space-5);
-  padding: var(--space-4) var(--space-5);
+  gap: var(--space-6);
+  padding: var(--space-6) var(--space-6) var(--space-7);
 }
 
 .sketch-row:hover {
@@ -22272,23 +22272,33 @@ a.view-note-open:hover {
 }
 
 .sketch-number {
+  min-width: var(--space-10);
   color: var(--muted-foreground);
   font-family: var(--font-mono);
-  font-size: var(--fs-5);
+  font-size: var(--fs-7);
   font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
 }
 
 .sketch-main {
   display: grid;
   min-width: 0;
-  gap: var(--space-2);
+  max-width: 56rem;
+  gap: var(--space-4);
+}
+
+.sketch-heading {
+  display: grid;
+  gap: var(--space-1-5);
 }
 
 .sketch-name {
   margin: 0;
   overflow-wrap: anywhere;
-  font-size: var(--fs-6);
+  font-size: var(--fs-7);
   font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
 }
 
 .sketch-question {
@@ -22299,11 +22309,58 @@ a.view-note-open:hover {
   line-height: var(--lh-relaxed);
 }
 
-.sketch-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-4);
+/* The verdict panel: the picked variant set large beside what it is, ruled in the accent when a
+   winner is chosen and dashed when the sketch is still open. */
+.sketch-verdict {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-5);
   align-items: center;
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary-border);
+  background: color-mix(in oklch, var(--muted) 40%, transparent);
+}
+
+.sketch-verdict[data-decided='false'] {
+  border-style: dashed;
+  border-left-color: var(--border);
+  background: transparent;
+}
+
+.sketch-verdict-pick {
+  display: grid;
+  gap: var(--space-1);
+  min-width: var(--space-10);
+}
+
+.sketch-verdict-label {
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-1);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.sketch-verdict-variant {
+  color: var(--primary);
+  font-family: var(--font-heading);
+  font-size: var(--fs-fluid-3);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tighter);
+  line-height: var(--lh-none);
+}
+
+.sketch-verdict[data-decided='false'] .sketch-verdict-variant {
+  color: var(--muted-foreground);
+}
+
+.sketch-verdict-text {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: var(--fs-4);
+  line-height: var(--lh-relaxed);
 }
 
 .sketch-winner {
@@ -22319,7 +22376,7 @@ a.view-note-open:hover {
 .sketch-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-1) var(--space-3);
+  gap: var(--space-1-5);
   margin: 0;
   padding: 0;
   color: var(--muted-foreground);
@@ -22328,11 +22385,15 @@ a.view-note-open:hover {
   list-style: none;
 }
 
+.sketch-tags li {
+  padding: var(--space-0-5) var(--space-2);
+  border: 1px solid var(--border);
+}
+
 .sketch-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-  justify-content: flex-end;
+  display: grid;
+  gap: var(--space-2);
+  justify-items: stretch;
 }
 
 .sketch-viewer {
@@ -22364,11 +22425,19 @@ a.view-note-open:hover {
 @media (max-width: 42rem) {
   .sketch-row {
     grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
+    padding: var(--space-5) var(--space-4);
+  }
+
+  .sketch-verdict {
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
   }
 
   .sketch-actions {
-    justify-content: flex-start;
+    display: flex;
+    flex-wrap: wrap;
   }
   .sketch-viewer-frame {
     min-height: 20rem;
