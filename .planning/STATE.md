@@ -1,13 +1,13 @@
 ---
 gsd_state_version: "1.0"
-milestone: v1.1
+milestone: v2.0
 status: Awaiting next milestone
-stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-24T20:06:56.859Z"
-last_activity: 2026-10-24
-last_activity_desc: Completed quick task 261016-2j6 (compact discussion-log tables)
-state_head: b55a1829edffc45343c6759986beadf1b01697da
-milestone_name: Legible Documents
+stopped_at: Milestone v2.0 complete
+last_updated: "2026-10-24T20:32:53.933Z"
+last_activity: 2026-10-25
+last_activity_desc: Milestone v2.0 completed and archived
+state_head: e5c9dd687d1fc586f65008d2526f8deab7e84884
+milestone_name: Fully Labelled
 current_phase: 05
 progress:
   total_phases: 1
@@ -21,17 +21,17 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-09-21)
+See: .planning/PROJECT.md (updated 2026-10-25)
 
 **Core value:** Open the dashboard on a GSD project and immediately know where the work stands and where any planning artifact lives — without reading a single file by hand.
 **Current focus:** Planning next milestone (`/gsd-new-milestone`) — candidates in PROJECT.md Active
 
 ## Current Position
 
-Phase: Milestone v1.1 complete
+Phase: Milestone v2.0 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-10-24 - Completed quick task 261024-vty: the planning-files drawer is two columns — places on the left, the chosen place's files on the right
+Last activity: 2026-10-25 — Milestone v2.0 completed and archived
 
 ## Performance Metrics
 
@@ -113,129 +113,6 @@ None.
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
-| 260925-3ug | CONTEXT ideas block per sketch-007 variant C — specifics tagged RULE/LEANING/NOTE with their full text, Deferred grouped by fate (handed/declined/passed/out/carried/Parked) in collapsible groups with source, destination and a "Revisit if" trigger; also repaired a stale SP 04 e2e assertion left by 3ob | 2026-09-25 | 7082d43 | [260925-3ug-build-sketch-007-c-into-the-context-brie](./quick/260925-3ug-build-sketch-007-c-into-the-context-brie/) |
-| 260925-3ob | CONTEXT page: quiet collapsed back-matter rows for requirement amendments (tag-recognised, emoji stripped), canonical references and existing code insights, grouped by ### heading; unused `more` field removed | 2026-09-25 | 4b9eedd | [260925-3ob-context-page-quietly-surface-canonical-r](./quick/260925-3ob-context-page-quietly-surface-canonical-r/) |
-| 260923-lju | CONTEXT page per sketch 006 D1 — boundary hero with In-this-phase card, quiet out-strip, amber open-questions panel, continuous decision register, Claude's discretion tagged into decisions, ideas panels, More-in-this-document; archived quick-task artifacts now parse; visual-contract canvas test updated (validated: Needs Review — live visual check) | 2026-09-23 | 86daac3 | [260923-lju-context-page-per-sketch-006-d1](./quick/260923-lju-context-page-per-sketch-006-d1/) |
-| 260923-jxp | Discussion-log review fixes on the B3 layout — no dropped questions (✓ variants, custom answers, table-under-area and bold-Q shapes), numbered answer cards with titles, quiet notes toggle, declined-area ghost chapters, log date, endnotes sheet, truthful cover counts; copy-path icon replaces the raw path on every artifact page | 2026-09-23 | 3f74056 | [260923-jxp-discussion-log-page-review-fixes-on-the-](./quick/260923-jxp-discussion-log-page-review-fixes-on-the-/) |
-| 260922-3us | Sketch-004 B3 folded-chapters document layout (cover sheet, chapter index, pinned chapter bar, folded chapters) for DISCUSSION-LOG, PLAN and VERIFICATION | 2026-09-22 | ed62ee0 | [260922-3us-build-sketch-004-b3-folded-chapters-docu](./quick/260922-3us-build-sketch-004-b3-folded-chapters-docu/) |
-| 260921-l4e | Automated UI/UX consistency sweep of the document-page foundation (Playwright, `npm run test:e2e`) — 3 foundation fixes, 1 per-type waiver | 2026-09-21 | d3adb3d | [260921-l4e-automate-ui-ux-consistency-verification-](./quick/260921-l4e-automate-ui-ux-consistency-verification-/) |
-| 5 | CONTEXT brief: In/Out scope as one two-column block | 2026-09-24 | 04e9769 | — |
-| 6 | CONTEXT scope block: top rules meet at the divider | 2026-09-24 | 513822e | — |
-| 7 | CONTEXT In-list: capitalise items | 2026-09-24 | e48bb52 | — |
-| 10 | Loosen spacing in Specific ideas and Deferred on the context page | 2026-09-28 | a211c14 | — |
-| 11 | Keep the scope check/text grid off In's prose fallback on CONTEXT briefs | 2026-09-28 | 81a1859 | — |
-| 12 | Start Deferred fate groups collapsed on CONTEXT briefs | 2026-09-28 | 0bff11a | — |
-| 13 | Fit the CONTEXT amendments table to its row (wrapping, hairline, muted header) | 2026-09-28 | 8d3822b | — |
-| 14 | Show a settled open question (<resolved_open_question>) as a CONTEXT back-matter row, not a raw extra | 2026-09-28 | a68e58e | — |
-| 15 | Stop rendering the settled open question on CONTEXT briefs (recognised, hidden in View) | 2026-09-28 | 9703918 | — |
-| 16 | Hide planner-warning <blocking_amendments> sections on CONTEXT briefs; keep real requirement amendments | 2026-09-28 | 1abfea9 | — |
-| 17 | Fix Claude-decides notes rendering as word-fragment columns on CONTEXT decisions | 2026-09-28 | d6a1442 | — |
-| 18 | Fit CONTEXT boundary-note tables to the page and keep their bold lead-in as the title | 2026-09-28 | 60f2f4a | — |
-| 19 | Fold CONTEXT boundary notes (Locked upstream) into the collapsed back-matter rows | 2026-09-28 | 26dfb32 | — |
-| 20 | Lift the 76ch measure off discussion-log endnote prose | 2026-09-28 | 4019bc4 | — |
-| 260929-3x3 | RESEARCH page view per sketches 008-A (briefing), 009 B+B (lifted diagram + clean tree), 010 B (legitimacy lanes) | 2026-09-28 | b47de57 | [260929-3x3-build-the-research-page-view-per-sketche](./quick/260929-3x3-build-the-research-page-view-per-sketche/) |
-| 22 | Drop the document outline from the RESEARCH briefing (full-width layout, like sketch 008-A) | 2026-09-29 | 67fa914 | — |
-| 23 | RESEARCH confidence chip opens its breakdown in a modal instead of a drop-down | 2026-09-29 | 3c5fe54 | — |
-| 24 | Confidence modal on shadcn dialog; drop Valid-until block; aligned breakdown spacing | 2026-09-29 | 0c5edd2 | — |
-| 25 | RESEARCH facts line: confidence chip first (with modal icon), then researched and valid-until | 2026-09-29 | 09169fb | — |
-| 26 | RESEARCH Domain line: quiet key/value field (hanging indent, veil, hairline rule) | 2026-09-29 | 7b253d5 | — |
-| 27 | RESEARCH Domain key in primary | 2026-09-29 | 48adb0e | — |
-| 28 | RESEARCH summary: decongested (spacing, leading, measure) | 2026-09-29 | b34d25d | — |
-| 260929-m30 | Restructure the RESEARCH page summary into a calm lead plus numbered findings | 2026-09-29 | b085ab7 | [260929-m30-restructure-the-research-page-summary-so](./quick/260929-m30-restructure-the-research-page-summary-so/) |
-| 260929-mih | Bring the RESEARCH package legitimacy lanes back in line with sketch 010-B | 2026-09-29 | 3ac56cf | [260929-mih-bring-the-research-package-legitimacy-la](./quick/260929-mih-bring-the-research-package-legitimacy-la/) |
-| 260930-jzt | RESEARCH figure renderers: uncapped frames with Grid/hover, drift-tolerant and open-left box detection, box-less flows as padded step cards, slanted notes; tree gains MODIFIED badge, folder-chain collapse, indent guides, calmer rows, and the same frame as the diagram | 2026-09-30 | d72d6b0 | [260930-jzt-improve-research-figure-renderers-uncapp](./quick/260930-jzt-improve-research-figure-renderers-uncapp/) |
-| 260930-mp6 | Build sketch 012 B (lanes by kind) as the RESEARCH architecture diagram | 2026-09-30 | b1ddaeb | [260930-mp6-build-sketch-012-b-lanes-by-kind-as-the-](./quick/260930-mp6-build-sketch-012-b-lanes-by-kind-as-the-/) |
-| 260930-wfs | Build sketch 013 B (by location + panel) as the PATTERNS page view | 2026-09-30 | 20a7320 | [260930-wfs-build-sketch-013-b-by-location-panel-as-](./quick/260930-wfs-build-sketch-013-b-by-location-panel-as-/) |
-| 34 | Global style: --font-heading uses the sans font, not mono | 2026-09-30 | cce34d6 | — |
-| 35 | PATTERNS cover: Copy file path and view toggle on the same line as the Searched scope | 2026-09-30 | 09f9311 | — |
-| 36 | PATTERNS File map section heading matches sketch 013 B (mono title, muted 01, bottom-aligned aside) | 2026-09-30 | b917ec5 | — |
-| 261001-qk7 | Build sketch 015 B as the UAT page view | 2026-10-01 | 7d4aa57 | .planning/quick/261001-qk7-uat-page-view |
-| 261002-li5 | ui-spec view: resolve token-only colour roles to real swatches from the target project's globals.css (light and dark), hatched when not found | 2026-10-02 | 262888c | [261002-li5-ui-spec-view-resolve-token-only-colour-r](./quick/261002-li5-ui-spec-view-resolve-token-only-colour-r/) |
-| 261003-526 | Build sketch 016 A as the VALIDATION page view. Use gsd-browser whenever you need verification or to improve the UI. | 2026-10-03 | 6930a2e | .planning/quick/261003-526-build-sketch-016-a-as-the-validation-page-view-use-gsd-brows |
-| 261003-527 | Build sketch 017 D as the SECURITY page view. Use gsd-browser whenever you need verification or to improve the UI. | 2026-10-03 | 629b939 | .planning/quick/261003-527-build-sketch-017-d-as-the-security-page-view-use-gsd-browser |
-| 261003-528 | Build sketch 018 B as the UI-REVIEW page view. Use gsd-browser whenever you need verification or to improve the UI. | 2026-10-03 | 8a8638b | .planning/quick/261003-528-build-sketch-018-b-as-the-ui-review-page-view-use-gsd-browse |
-| 42 | VALIDATION page: no longer show view-validation-note | 2026-10-05 | dd2ccaf | — |
-| 261005-p1x | SECURITY page: trust boundaries grouped by destination, residual observations as a closed toggle with threat cross-links | 2026-10-05 | e737d0c | [261005-p1x-security-page-trust-boundaries-grouped-b](./quick/261005-p1x-security-page-trust-boundaries-grouped-b/) |
-| 44 | UI-REVIEW page: restyle back-matter summary body (muted fs-3 prose, ruled list, paragraph spacing, part dividers) | 2026-10-05 | 8d164f0 | — |
-| 45 | UI-REVIEW page: found-card lead text gets muted prose with foreground code chips and bold spans | 2026-10-05 | 9fde49b | — |
-| 46 | add a toggle open/collapse all in the sidebar-drawer-header | 2026-10-05 | 48e4896 | — |
-| 261006-iz6 | Build sketch 019 B as the PLAN page view | 2026-10-07 | b621b9e | .planning/quick/261006-iz6-build-sketch-019-b-as-the-plan-page-view |
-| 261006-iz7 | Build sketch 020 D as the SUMMARY page view | 2026-10-07 | 3400faa | .planning/quick/261006-iz7-build-sketch-020-d-as-the-summary-page-view |
-| 49 | PLAN page Files/Requirements modals use the shared dialog frame (match SUMMARY) | 2026-10-08 | 2fb2b90 | — |
-| 50 | PLAN task chips: gap after task number, hover hint per badge | 2026-10-08 | a90cf61 | — |
-| 51 | PLAN task body: text size, measure and spacing | 2026-10-08 | 8ba2a31 | — |
-| 52 | SUMMARY meta row: align eyebrow with completed date | 2026-10-08 | 18ed66d | — |
-| 53 | SUMMARY commit hash matches chip height beside chips | 2026-10-08 | 4906abe | — |
-| 54 | SUMMARY deviation cards: hide Files and Verification fields | 2026-10-08 | de720b7 | — |
-| 55 | SUMMARY deviation cards: hide commit hash | 2026-10-08 | 79ee0c7 | — |
-| 56 | SUMMARY Patterns column alignment and text size | 2026-10-08 | b65cf50 | — |
-| 57 | SUMMARY Patterns: gap below New dependencies | 2026-10-08 | fac2ff1 | — |
-| 261011-l07 | Support sftp:// and ssh:// target paths by mirroring the remote .planning over ssh | 2026-10-11 | 45c02e5 | [261011-l07-support-sftp-and-ssh-target-paths-by-mir](./quick/261011-l07-support-sftp-and-ssh-target-paths-by-mir/) |
-| 59 | PlanPairPage renders the polished PLAN navigator and SUMMARY run views (Plan/Summary/Coverage switch) | 2026-10-13 | 1fea530 | — |
-| 60 | Dashboard handles a project with no milestone recorded: hides the milestone label and still finds the current phase | 2026-10-16 | 50af849 | — |
-| 61 | History empty state: gap between the heading separator and 'Nothing here yet.' | 2026-10-16 | c6c7ef7 | — |
-| 62 | Roadmap phase card: a lone fact (e.g. Depends on) spans the full row | 2026-10-16 | cf5378f | — |
-| 63 | Context page: In this phase prose fills its card width (dropped 62ch cap) | 2026-10-16 | e01731e | — |
-| 261016-2j6 | Discussion log parser: support the compact one-row-per-question table layout (Question \| Options \| Selected) | 2026-10-16 | aab294f | [261016-2j6-discussion-log-parser-support-the-compac](./quick/261016-2j6-discussion-log-parser-support-the-compac/) |
-| 65 | in the plan page, no need to mention the wave status chip in view-plan-nav-chips | 2026-10-16 | 00f2658 | — |
-| 66 | in the summary page, view-summary-meta-left has 'summary' - it should say summary of xx - xx (wave-plan) - like the plan page | 2026-10-16 | 137a9c6 | — |
-| 67 | in the summary page, there's no need for view-summary-also section. we can just show them in summary-source-only | 2026-10-16 | 7a7b603 | — |
-| 68 | summary page Duration stat shows just the leading length (50min), not the wall-clock note | 2026-10-16 | d052b21 | — |
-| 69 | VALIDATION cover notes a passed phase verification the strategy never caught up with | 2026-10-16 | ffb8918 | — |
-| 261016-ujo | What to check panel: a plan task needing a manual check gathers its own steps, requirement-matched VALIDATION manual rows (skipping other plans' rows), UI-SPEC backstops, Read first links and the UAT pointer | 2026-10-16 | 4eb65fb | [261016-ujo-add-a-what-to-check-panel-for-manual-che](./quick/261016-ujo-add-a-what-to-check-panel-for-manual-che/) |
-| 261017-18a | Build sketch 021 E as the VERIFICATION page view | 2026-10-17 | b81a057 | [261017-18a-build-sketch-021-e-as-the-verification-p](./quick/261017-18a-build-sketch-021-e-as-the-verification-p/) |
-| 72 | Verification rail: Verified label and date share a baseline | 2026-10-17 | 25f02ab | — |
-| 261017-k44 | Build sketch 022 C as the REVIEW page view, with each finding's fix outcome taken from the matching REVIEW-FIX file | 2026-10-17 | a790a28 | .planning/quick/261017-k44-build-sketch-022-c-as-the-review-page-view-with-each-finding |
-| 261017-k45 | Build sketch 024 E (round 2) as the LEARNINGS page view | 2026-10-17 | a5b0d6c | .planning/quick/261017-k45-build-sketch-024-e-round-2-as-the-learnings-page-view-use-pl |
-| 261017-wlg | Implement sketch 025 (dashboard project head, winner R3b) on the dashboard | 2026-10-17 | 675a82e | [261017-wlg-implement-sketch-025-dashboard-project-h](./quick/261017-wlg-implement-sketch-025-dashboard-project-h/) |
-| 76 | Fix the Next up card spacing on the dashboard | 2026-10-18 | 3e2839d | — |
-| 77 | Route the dashboard Next up step the way /gsd-next does, with the open plan as an inline link | 2026-10-18 | 1e205b2 | — |
-| 78 | Remove the dashboard progress panel | 2026-10-18 | 227689f | — |
-| 79 | Match the dashboard head's top offset to the Roadmap and Traceability pages | 2026-10-18 | 6253d3d | — |
-| 80 | Add a Project overview eyebrow above the dashboard project name | 2026-10-18 | e76320a | — |
-| 81 | Shrink the header's home link to the brand's own content | 2026-10-18 | 955c5c0 | — |
-| 82 | Auto-increase the server port when 4173 is taken | 2026-10-18 | 85883d1 | — |
-| 83 | Replace the Traceability lede with PROJECT.md's Core Value | 2026-10-18 | e567b6f | — |
-| 84 | Remove the Checked and Status mismatch figures from the Traceability summary | 2026-10-18 | dd550ca | — |
-| 85 | Rename No directory to Not started and hide zero figures on Traceability | 2026-10-18 | e890704 | — |
-| 86 | Roadmap lede is the first paragraph of ROADMAP.md's Overview, replacing the fixed text | 2026-10-18 | ee8837b | — |
-| 87 | Roadmap Overview lede capped at two lines of whole sentences; original lede when there is no Overview | 2026-10-18 | 0a5c7e4 | — |
-| 88 | Removed the Roadmap Overview lede; the page keeps its original sentence | 2026-10-18 | 0d43a30 | — |
-| 261018-4tb | build sketch 026 winner (B + P1) as the dashboard below the project head | 2026-10-18 | 77d3226 | [261018-4tb-build-sketch-026-winner-b-p1-as-the-dash](./quick/261018-4tb-build-sketch-026-winner-b-p1-as-the-dash/) |
-| 261018-hbd | Pace timing from git commit gaps, falling back to SUMMARY duration | 2026-10-18 | 15071ee | [261018-hbd-pace-timing-from-git-commit-gaps-falling](./quick/261018-hbd-pace-timing-from-git-commit-gaps-falling/) |
-| 261018-j5h | Build sketch 023 A as the DEBUG page view | 2026-10-19 | daba71f | [261018-j5h-build-sketch-023-a-as-the-debug-page-vie](./quick/261018-j5h-build-sketch-023-a-as-the-debug-page-vie/) |
-| 261022-ms1 | Traceability page: show previous milestones' requirements for reference when between milestones | 2026-10-22 | e43791a | [261022-ms1-traceability-page-show-previous-mileston](./quick/261022-ms1-traceability-page-show-previous-mileston/) |
-| 261023-4wn | Sketches page: list every sketch, view it in a sandboxed frame, serve sketch files read-only | 2026-10-23 | 88f585e | [261023-4wn-sketches-page-in-labelore](./quick/261023-4wn-sketches-page-in-labelore/) |
-| 94 | Sketches page: match the dashboard's top spacing above the title | 2026-10-23 | a88d555 | — |
-| 95 | Sketches page: newest first, no README buttons | 2026-10-23 | 2d5acd9 | — |
-| 96 | History milestones no longer show Stats or Key accomplishments | 2026-10-23 | 5b650bb | — |
-| 261023-61k | Build sketch 027 C (Lifecycle) as the TODO page view | 2026-10-23 | 788dbdb | /home/noah/Work/Personal/labelore/.planning/quick/261023-61k-build-sketch-027-c-lifecycle-as-the-todo-page-view |
-| 261023-61l | Build sketch 028 A (Annotated) as the NOTE page view | 2026-10-23 | c44c2ed | /home/noah/Work/Personal/labelore/.planning/quick/261023-61l-build-sketch-028-a-annotated-as-the-note-page-view |
-| 99 | Sketches page: roomier sketch rows with a verdict panel | 2026-10-23 | 03a5fdf | — |
-| 100 | Sketches page lede: show only the first sentence of the design direction | 2026-10-23 | 52da885 | — |
-| 101 | Sketches page: remove the Manifest link | 2026-10-23 | ef05cb8 | — |
-| 102 | Sketch viewer: header spacing matches other pages, breadcrumb back link, verdict panel | 2026-10-23 | 7329ae8 | — |
-| 103 | Sketches: fold the in-sketch options panel to a small tab | 2026-10-23 | 2202b01 | — |
-| 104 | Sketches: restyle the in-sketch options panel | 2026-10-23 | 8cca40b | — |
-| 261023-u13 | Build sketch 029 A (gist console) as the NOTE page view, replacing the 028 A layout | 2026-10-24 | da3ca73 | [261023-u13-build-sketch-029-a-gist-console-as-the-n](./quick/261023-u13-build-sketch-029-a-gist-console-as-the-n/) |
-| 106 | On deck notes: an untitled note shows a file-name title and its first sentence, not the whole note | 2026-10-24 | b7c4a88 | — |
-| 107 | Todo page: the severity mark is a chip like its neighbours, with an even gap between the three chips | 2026-10-24 | 91eaeb8 | — |
-| 108 | Ultrawide screens: the page column grows from 86rem to 120rem at 150rem and wider | 2026-10-24 | bc7b1f4 | — |
-| 109 | Removed the foundation-consistency browser sweep (timed out every run, ~20 min per full suite) | 2026-10-24 | e2bd0ec | — |
-| 110 | Header copy-button browser test for SUMMARY pages waits for the page title instead of a retired element; no longer times out | 2026-10-24 | 2cb3f86 | — |
-| 111 | Fixed the last failing browser tests: prose that names a <details> tag no longer swallows the rest of a document; plan page Planned spacing; summary chip line height; specs updated for the What to check tab | 2026-10-24 | 28fea2e | — |
-| 261024-k8u | Research page per sketches 031–035: five spines, Summary, Stack, Features, Architecture and Pitfalls panels | 2026-10-24 | 0cce2ea | [261024-k8u-build-the-project-research-page-per-sket](./quick/261024-k8u-build-the-project-research-page-per-sket/) |
-| 261024-o3h | Box diagrams and directory trees draw as lifted figures and clean trees on every document type, through one shared detector and renderer | 2026-10-24 | fd3d326 | [261024-o3h-make-the-lifted-diagram-and-clean-tree-r](./quick/261024-o3h-make-the-lifted-diagram-and-clean-tree-r/) |
-| 261024-vty | Build sketch 038 winner C: two-column planning-files drawer (places left, chosen place's files right) | 2026-10-24 | 605a684 | [261024-vty-build-sketch-038-winner-c-two-column-pla](./quick/261024-vty-build-sketch-038-winner-c-two-column-pla/) |
-| 115 | Give the planning-files drawer breathing space | 2026-10-24 | 98a468c | — |
-| 116 | Pad drawer phase numbers to two digits | 2026-10-24 | c6f741c | — |
-| 117 | Hide other files from the planning-files drawer | 2026-10-24 | 92b77d7 | — |
-| 118 | Remove Coverage from plan pages | 2026-10-24 | 87df896 | — |
-| 119 | Quick task rows open the plan with a Plan / Summary switch | 2026-10-25 | ee3452b | — |
-| 120 | Leave READMEs out of drawer quick tasks | 2026-10-25 | 5a5022c | — |
-| 121 | One Quick tasks place in the drawer, grouped by milestone | 2026-10-25 | b4b7463 | — |
-| 122 | retrospective button in the roadmap page for older milestone is not aligned properly at the end of the card | 2026-10-25 | 74ac0b3 | — |
-| 123 | i still feel like the sidebar content is a bit congested | 2026-10-25 | b55a182 | — |
 
 ## Deferred Items
 

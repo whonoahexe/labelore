@@ -1,7 +1,7 @@
 {
   "contract": "1.0.0",
   "flavor": "core",
-  "milestone": "v1.1 — Legible Documents",
+  "milestone": "v2.0 \u2014 Fully Labelled",
   "phases": [
     {
       "number": "5",
@@ -12,7 +12,7 @@
   "next": {
     "command": "/gsd:progress",
     "label": "Show progress",
-    "reason": "Unsure of state — showing progress"
+    "reason": "Unsure of state \u2014 showing progress"
   },
-  "updated_at": "2026-09-21T09:34:14.323Z"
+  "updated_at": "2026-10-25T00:00:00.000Z"
 }

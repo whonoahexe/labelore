@@ -4,6 +4,7 @@
 
 - ✅ **v1.0 MVP** — Phases 1-4 (shipped 2026-09-10)
 - ✅ **v1.1 Legible Documents** — Phase 5 (shipped 2026-09-21)
+- ✅ **v2.0 Fully Labelled** — quick tasks, no phases (shipped 2026-10-25)
 
 ## Phases
 
@@ -28,6 +29,15 @@ Full phase detail, success criteria, and plan waves: [milestones/v1.1-ROADMAP.md
 
 </details>
 
+<details>
+<summary>✅ v2.0 Fully Labelled (quick tasks) — SHIPPED 2026-10-25</summary>
+
+- [x] 40 directory quick tasks and 90 inline quick tasks: a sketch-built page for every artifact type, dashboard and drawer redesigns, remote ssh targets — completed 2026-10-25
+
+Quick-task index: [milestones/v2.0-quick/README.md](milestones/v2.0-quick/README.md) · summary in [MILESTONES.md](MILESTONES.md)
+
+</details>
+
 *No active milestone. Start the next one with `/gsd-new-milestone`; phase numbering continues from 6.*
 
 ## Progress
@@ -36,6 +46,7 @@ Full phase detail, success criteria, and plan waves: [milestones/v1.1-ROADMAP.md
 |-------|----------------|--------|-----------|
 | 1–4 (v1.0) | 30/30 | Archived | 2026-09-10 |
 | 5 (v1.1) | 6/6 | Archived | 2026-09-21 |
+| quick tasks (v2.0) | 40/40 | Archived | 2026-10-25 |
 
 ## Backlog
 

@@ -15,6 +15,14 @@ artifact lives — without reading a single file by hand.
 
 ## Current State
 
+**v2.0 Fully Labelled shipped 2026-10-25.** A quick-task milestone: no roadmap phases, 40
+directory and 90 inline quick tasks, 490 commits. Every artifact type Labelore meets now opens into
+a page built from a winning sketch: CONTEXT, RESEARCH, PATTERNS, UI-SPEC, UAT, VALIDATION, SECURITY,
+UI-REVIEW, PLAN, SUMMARY, VERIFICATION, REVIEW, LEARNINGS, debug sessions, todos and notes. The
+dashboard, the roadmap's milestone history and the planning-files drawer were all redesigned, and
+Labelore can open a remote project over ssh. The record is in `milestones/v2.0-*` and
+`MILESTONES.md`; the release is tagged `v2.0` (package 2.0.0).
+
 **v1.1 Legible Documents shipped 2026-09-21.** One phase (5), 6 plans, 11/11 v1.1 requirements
 satisfied; Phase 5 verified `passed`, UAT 4/4, security `threats_open: 0`, UI review 22/24. Every
 planning document type now opens into a view built for it, behind a client-side view registry
@@ -25,26 +33,30 @@ full record is in `milestones/v1.1-*` and `MILESTONES.md`.
 record is in `milestones/v1.0-*`.
 
 The shipped app is a Vite 8 + React 19 SPA served by a Hono 4 Node server, started with
-`npm run dev -- /path/to/project`. It contains:
+`npm run dev -- /path/to/project` (or an `ssh://`/`sftp://` target, mirrored read-only over ssh). It contains:
 
 - a headless read layer behind a swappable filesystem seam
 - a sanitized, PLAN-aware markdown pipeline (unified/remark/rehype, Shiki, client-side Mermaid)
-- per-type document views for all 18 registered kinds, with a structural fallback for the rest
+- per-type document views for all 18 registered kinds, most rebuilt from sketches in v2.0, with a structural fallback for the rest
+- shared diagram and directory-tree figures (lanes figure, lifted diagram, clean tree) for any document
 - a documented design language (`docs/design-language.md`) enforced by a class-vocabulary test
 - MiniSearch full-text search
-- a tree navigator
+- a two-column planning-files drawer (it replaced the v1.0 tree navigator in v2.0)
+- Sketches and project Research pages
 - requirements traceability
 - a single `refresh()` seam with an atomic derived-view swap
 
-It has about 35.2k lines of TypeScript/TSX/CSS and 1071 tests across 64 files.
+It has about 158k lines of TypeScript/TSX/CSS (src and tests) and 3,329 tests across 176 files.
+At the v2.0 close, 59 tests in 20 files fail: corpus-pinned tests (note page, PATTERNS and
+similar) whose fixtures read other projects' live `.planning/` trees.
 
 ## Next Milestone Goals
 
 Not yet defined — start with `/gsd-new-milestone`. The candidates carried in Active below fall into
 three groups, roughly in order of how ready they are:
 
-1. **Finish what v1.1 opened** — per-type surface polish against the view registry, the 05-SECURITY
-   regression tests, and the 05-UI-REVIEW polish items. Small, well-specified, no design work.
+1. **Test health and leftovers** — get the 59 corpus-pinned test failures green or re-pinned, plus
+   the 05-SECURITY regression tests and 05-UI-REVIEW polish items still carried from v1.1.
 2. **Findability on top of the granular `kind`** — FIND-06 faceted search and NAV-08 command palette
    both became practical once v1.1 gave every artifact a real kind.
 3. **Platform** — PLAT-01 live file-watching remains the strongest signal; the read layer, the
@@ -100,17 +112,35 @@ three groups, roughly in order of how ready they are:
   a sticky, keyboard-operable disclosure — v1.1
 - ✓ BACK-02: `D-XX` / `WR-XX` mentions resolve phase-local-first-then-corpus-unique and preview
   before navigating — v1.1
+- ✓ Each artifact type's surface perfected against the view registry, one sketch and one quick
+  task per type (CONTEXT, RESEARCH, PATTERNS, UI-SPEC, UAT, VALIDATION, SECURITY, UI-REVIEW,
+  PLAN, SUMMARY, VERIFICATION, REVIEW, LEARNINGS, debug, todos, notes) — v2.0
+- ✓ Diagrams and directory trees in any document draw as figures, decided by one shared
+  detector — v2.0
+
+**Navigation and dashboard**
+
+- ✓ Dashboard project head and body rebuilt from sketches 025 and 026, with pace timing from git
+  commit gaps — v2.0
+- ✓ Roadmap milestone history with retrospectives; traceability covers previous milestones — v2.0
+- ✓ Two-column planning-files drawer (places, then the chosen place's files; quick tasks grouped by
+  milestone) — v2.0
+- ✓ Sketches page and project Research page — v2.0
+
+**Portability**
+
+- ✓ Remote targets: `ssh://` / `sftp://` paths mirror the remote `.planning/` read-only over the
+  system ssh client — v2.0
 
 ### Active
 
-<!-- Candidates carried into the next milestone after the v1.1 close on 2026-09-21. Nothing here is scoped yet. -->
+<!-- Candidates carried into the next milestone after the v2.0 close on 2026-10-25. Nothing here is scoped yet. -->
 
-**Document legibility — follow-on from v1.1 (the seam shipped; per-type polish is next)**
+**Document legibility — leftovers carried from v1.1**
 
-- [ ] Perfect each artifact type's surface against the Phase 5 view registry, one quick task per
-      type (SUMMARY, CONTEXT, UI-SPEC, PATTERNS, UAT, SECURITY, UI-REVIEW, VALIDATION, ROADMAP,
-      REQUIREMENTS, MILESTONE-AUDIT, …) — Phase 5 proved the seam and the flagship types; it did
-      not claim every view is finished (05-UAT deferred follow-up)
+- [ ] Sketch-built views for the types v2.0 did not reach (ROADMAP, REQUIREMENTS, MILESTONE-AUDIT)
+- [ ] Get the 59 corpus-pinned test failures green, or re-pin them to fixtures copied into `test/`
+      so they stop depending on other projects' live `.planning/` trees
 - [ ] Regression tests the Phase 5 threat register promised but never got: 5k-row / 10k-line
       ReDoS timing tests for the section-projection and mention scanners, and a standing assertion
       that `blocks.tsx` stays free of `dangerouslySetInnerHTML` (05-SECURITY audit notes 1–2)
@@ -248,6 +278,8 @@ in Active. R-02-01 from v1.0 stays an accepted medium risk.
 | The per-type view is the page; Source is the escape hatch (D-01) | Promoting structure into a secondary panel would leave the generic reader as the primary surface — the thing v1.1 exists to replace. | ✓ Good — one render path, proven across 18 kinds |
 | Extraction keys on where structure lives, not on document purpose | VERIFICATION and UAT share a purpose but store structure in different places; a purpose taxonomy would still need both paths. | ✓ Good — 3 strategies + 18 manifests, no template tier |
 | Design language is a documented allowlist enforced by a test, not a lint rule | The vocabulary is small and stable; a test that reads the doc's own table keeps the doc and the code from drifting apart. | ✓ Good — every Phase 5 manifest was authored against it |
+| A milestone made of quick tasks, no roadmap phases (v2.0) | Per-type polish was many small, independent, design-led changes; a phase per type would have been ceremony. | ✓ Good — 40 directory quick tasks shipped; the cost is no phase verification or requirements trail at close |
+| Sketch first, then build the winner, then screenshot against the sketch | Design choices were made on throwaway HTML, so builds had a concrete target and a visual check. | ✓ Good — the loop behind every v2.0 view |
 | Phase 5 ships the seam, not the polish | Each type's surface gets its own quick task against the registry; folding all 18 into the phase would have made it a restyle marathon with no shared contract. | ✓ Good — recorded as a deferred follow-up in 05-UAT, carried into Active |
 
 ## Evolution
@@ -268,4 +300,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-21 after v1.1 milestone*
+*Last updated: 2026-10-25 after v2.0 milestone*

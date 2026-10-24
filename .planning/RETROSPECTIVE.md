@@ -151,6 +151,66 @@
 
 ---
 
+## Milestone: v2.0 — Fully Labelled
+
+**Shipped:** 2026-10-25
+**Phases:** 0 | **Plans:** 40 quick-task plans (plus 90 inline quick tasks) | **Sessions:** not tracked
+
+### What Was Built
+- Page views built from winning sketches for CONTEXT, RESEARCH, PATTERNS, UI-SPEC, UAT, VALIDATION,
+  SECURITY, UI-REVIEW, PLAN, SUMMARY, VERIFICATION, REVIEW, LEARNINGS, debug sessions, todos and
+  notes (sketches 004–029).
+- Shared figures: the lanes figure, the lifted diagram and the clean directory tree, chosen by one
+  detector for every fenced block in every document.
+- A rebuilt dashboard (sketches 025–026), roadmap milestone history with retrospective dialogs
+  (030), a project Research page (031–037), a Sketches page, and the two-column planning-files
+  drawer (038).
+- Remote targets: an `ssh://` or `sftp://` path mirrors the remote `.planning/` read-only through
+  the system ssh client.
+
+### What Worked
+- **Sketch, pick, build, compare.** Each type got throwaway HTML sketches; the chosen winner became
+  the build target, and the build was checked by screenshot against the sketch. Design arguments
+  happened on cheap HTML, not in the codebase.
+- **The v1.1 seam paid off.** Every new page plugged into the view registry and the design-language
+  allowlist; none needed a new render path in `artifact-page.tsx`.
+- **Parallel quick-task batches** (`/gsd-quick-batch --jobs 3`) moved independent views forward
+  together once their sketches were settled.
+
+### What Was Inefficient
+- **Many small follow-up rounds per surface.** 90 inline quick tasks against 40 directory ones:
+  after most builds came a string of spacing, alignment and wording fixes. The planning-files
+  drawer alone took six fast tasks right after it shipped, and another spacing pass at close.
+- **Tests that read live corpora drifted red.** At close, 59 tests in 20 files fail because their
+  fixtures pin counts in other projects' `.planning/` trees, which kept changing under them.
+- **A quick task closed without its SUMMARY.** `261024-qhq` shipped its fix but no summary; the
+  artifact audit caught it at close and the summary was written after the fact.
+- **No phases means no verification trail.** Without phases there was no REQUIREMENTS.md, no phase
+  verification and no milestone audit; the only gates were per-task screenshot checks.
+
+### Patterns Established
+- Sketch folders numbered in `.planning/sketches/`, with a MANIFEST and a winner per sketch, as the
+  design source of truth for each view.
+- View-local class namespaces (`view-research-*` and similar) allowed automatically by the
+  class-vocabulary test; any other new class gets a row in `docs/design-language.md`.
+- Read-only remote access by mirroring with `ssh … tar -c` into a guarded temp dir, behind the same
+  filesystem seam as local targets.
+
+### Key Lessons
+1. A milestone of quick tasks moves fast but leaves no requirement or verification trail. If the
+   next milestone has a goal larger than polish, give it phases.
+2. Copy corpus fences into `test/` fixtures (as `261024-qhq` did) instead of reading other projects'
+   live `.planning/` trees; pinned counts against moving data will go red.
+3. Agree spacing and density in the sketch, not after the build: most inline fixes were layout
+   tweaks a sketch review could have caught.
+
+### Cost Observations
+- Model mix: not tracked
+- Sessions: not tracked
+- Notable: 490 commits in 34 days, almost all from quick and fast tasks.
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -159,6 +219,7 @@
 |-----------|----------|--------|------------|
 | v1.0 | not tracked | 4 | Baseline: data-first phase order, tracer-first waves, adversarial fixtures |
 | v1.1 | not tracked | 1 | Blockers cleared before the phase; convention written and tested before surfaces multiplied; survey-driven scoping |
+| v2.0 | not tracked | 0 | Quick tasks only; sketch-first design loop; parallel quick-task batches |
 
 ### Cumulative Quality
 
@@ -166,6 +227,7 @@
 |-----------|-------|----------|-------------------|
 | v1.0 | 590 | not measured | — |
 | v1.1 | 1071 | not measured | — |
+| v2.0 | 3329 (59 failing at close) | not measured | — |
 
 ### Top Lessons (Verified Across Milestones)
 

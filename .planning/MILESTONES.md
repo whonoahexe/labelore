@@ -1,5 +1,44 @@
 # Milestones
 
+## v2.0 Fully Labelled (Shipped: 2026-10-25)
+
+**Phases completed:** 0 phases. A quick-task milestone: 40 directory quick tasks and 90 inline
+quick tasks between the v1.1 close and 2026-10-25, with no roadmap phases or REQUIREMENTS.md.
+
+**Delivered:** Every GSD artifact type Labelore meets now opens into a page designed for it, each
+built from a winning sketch: CONTEXT, RESEARCH, PATTERNS, UI-SPEC, UAT, VALIDATION, SECURITY,
+UI-REVIEW, PLAN, SUMMARY, VERIFICATION, REVIEW, LEARNINGS, debug sessions, todos and notes. The
+dashboard has a new project head and body, the roadmap shows past milestones with their
+retrospectives, and a two-column planning-files drawer replaces the old tree. Labelore can now
+open a remote project over ssh.
+
+**Stats:** 490 commits, 2026-09-21 → 2026-10-25; ~158k lines of TypeScript/TSX/CSS in src and
+tests (455 files changed since v1.1); 3,329 tests across 176 files. At close, 59 tests in 20 files
+fail. The failures predate the close: they are corpus-pinned tests (note page, PATTERNS and
+similar) whose fixtures read other projects' live `.planning/` trees.
+
+**Closeout:** `verified_closeout` for the artifact audit: all clear after the missing
+`261024-qhq` SUMMARY was written at close (its fix landed in `f3253b2`). No phases, so no phase
+verification, and no `v2.0-MILESTONE-AUDIT.md`. Each quick task was verified by its own
+screenshot check against its sketch.
+
+**Known verification overrides:** 0 newly acknowledged, 0 carried forward.
+
+**Archive:** `milestones/v2.0-ROADMAP.md`, `v2.0-quick/`. Release tag `v2.0` on `e5c9dd6`
+(package version 2.0.0).
+
+**Key accomplishments:**
+
+- A sketch-to-view loop: each artifact type got throwaway HTML sketches, a chosen winner, and a quick task building the winner into Labelore, verified by screenshots against the sketch.
+- Page views for 16 artifact types, new or rebuilt (PLAN and VERIFICATION had first views in v1.1): CONTEXT brief, RESEARCH briefing, PATTERNS, UI-SPEC (with real colour swatches from the target project), UAT, VALIDATION, SECURITY, UI-REVIEW scorecard, PLAN, SUMMARY, VERIFICATION, REVIEW, LEARNINGS, debug sessions, todos and notes.
+- Diagrams and directory trees in any document draw as the lanes figure and a clean tree, decided by one shared detector instead of per-page wiring.
+- The dashboard rebuilt from sketches 025 and 026, with pace timing taken from git commit gaps.
+- The roadmap shows previous milestones and their retrospectives, the traceability page covers past milestones, and a Sketches page and a project Research page were added.
+- Remote targets: Labelore opens a project over ssh/sftp by mirroring its `.planning/` read-only.
+- The planning-files drawer became two columns: places on the left, the chosen place's files on the right, with quick tasks grouped by milestone.
+
+---
+
 ## v1.1 Legible Documents (Shipped: 2026-09-21)
 
 **Phases completed:** 1 phase, 6 plans, 13 tasks (plus 13 directory quick tasks and 5 inline
