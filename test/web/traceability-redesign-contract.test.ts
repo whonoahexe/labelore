@@ -173,13 +173,6 @@ describe('traceability redesign — per-category bars and hierarchical rows (NS4
       expect(block).not.toMatch(/\brgb\(/);
     }
   });
-
-  it("still leaves .coverage-table-boundary's rules in place for plan-pair-page.tsx", async () => {
-    const css = await source('src/web/styles/globals.css');
-    expect(ruleBlocks(css, '.coverage-table-boundary {')[0]).toBeDefined();
-    const planPair = await source('src/web/pages/plan-pair-page.tsx');
-    expect(planPair).toContain('coverage-table-boundary');
-  });
 });
 
 /** Blanks out `/* ... *\/` block comments while preserving line counts, mirroring

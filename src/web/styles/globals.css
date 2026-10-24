@@ -2335,12 +2335,12 @@ table,
   background: var(--scrollbar-thumb-strong);
 }
 
-:is(.places-list, .places-files, .document-outline, .search-dialog-results, .coverage-table-boundary, .overflow-x-auto, .table-scroll, .code-scroll, pre, table, .mermaid, .mermaid-fallback) {
+:is(.places-list, .places-files, .document-outline, .search-dialog-results, .overflow-x-auto, .table-scroll, .code-scroll, pre, table, .mermaid, .mermaid-fallback) {
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
-:is(.places-list, .places-files, .document-outline, .search-dialog-results, .coverage-table-boundary, .overflow-x-auto, .table-scroll, .code-scroll, pre, table, .mermaid, .mermaid-fallback)::-webkit-scrollbar {
+:is(.places-list, .places-files, .document-outline, .search-dialog-results, .overflow-x-auto, .table-scroll, .code-scroll, pre, table, .mermaid, .mermaid-fallback)::-webkit-scrollbar {
   width: 4px;
   height: 4px;
 }
@@ -4236,34 +4236,11 @@ a.todo-title:hover {
   text-underline-offset: 0.2em;
 }
 
-.coverage-matrix,
 .plan-pair-document {
   min-width: 0;
   border: 1px solid var(--border);
   background: var(--card);
   padding: var(--space-fluid-2);
-}
-
-.coverage-table-boundary {
-  max-width: 100%;
-  overflow-x: auto;
-}
-
-.coverage-table-boundary table {
-  width: 100%;
-  min-width: 44rem;
-  border-collapse: collapse;
-}
-
-.coverage-table-boundary :is(th, td) {
-  border-bottom: 1px solid var(--border);
-  padding: var(--space-2-5);
-  text-align: left;
-  vertical-align: top;
-}
-
-.coverage-table-boundary tbody tr:nth-child(even) td {
-  background: var(--table-zebra);
 }
 
 .document-reference {
@@ -5934,11 +5911,7 @@ a.todo-title:hover {
   font-family: var(--font-heading);
 }
 
-.plan-pair-page {
-  gap: var(--space-8);
-}
-
-/* The Plan / Summary / Coverage switch PlanPairPage mounts first in each tab's page. */
+/* The Plan / Summary switch PlanPairPage mounts first in each tab's page. */
 .plan-pair-switch {
   display: flex;
   flex-wrap: wrap;
@@ -5955,7 +5928,6 @@ a.todo-title:hover {
   margin: var(--space-2) 0 0;
 }
 
-.coverage-matrix,
 .plan-pair-document {
   padding: var(--space-fluid-5);
 }

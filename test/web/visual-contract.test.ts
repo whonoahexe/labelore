@@ -132,15 +132,6 @@ describe('revised visual contract (G-08, G-10, G-05, G-07, G-03, E9 long-text)',
     expect(css).toContain('.artifact-document tr:nth-child(even) td');
   });
 
-  it('uses bottom-only cell rules and zebra striping in the coverage matrix', async () => {
-    const css = await source('src/web/styles/globals.css');
-    const [block] = ruleBlocks(css, '.coverage-table-boundary :is(th, td) {');
-    expect(block).toBeDefined();
-    expect(block).not.toMatch(/^\s*border\s*:/m);
-    expect(block).toContain('border-bottom: 1px solid var(--border);');
-    expect(css).toContain('.coverage-table-boundary tbody tr:nth-child(even) td');
-  });
-
   // quick-261018-4tb: On deck and Recent work share the bottom row (sketch 026 B), two columns 24px
   // apart that stretch to the taller one.
   it('sets On deck beside Recent work in one stretched row', async () => {
@@ -300,14 +291,6 @@ describe('G2-10 status-chip semantic tone contract', () => {
     expect(quiet).not.toContain('var(--primary)');
   });
 
-  it('assigns inferred coverage matches the quiet treatment, not the active/complete treatment', async () => {
-    const page = await source('src/web/pages/plan-pair-page.tsx');
-    expect(page).toMatch(
-      /data-tone=\{match\.kind === 'exact' \? 'complete' : 'quiet'\}/,
-    );
-    expect(page).not.toMatch(/data-tone=\{match\.kind === 'exact' \? 'complete' : 'active'\}/);
-  });
-
   it('never assigns a raw/unrecognized status-chip tone at any call site', async () => {
     const files = [
       dashboardSources(),
@@ -433,7 +416,7 @@ describe('muted surface contrast and dead selectors (F2, F5)', () => {
 // invisible until hovered, faint-but-grabbable on hover, both themes) are handed to the plan's
 // <human-check> gate, harvested at end-of-phase.
 const SCROLLBAR_CONTAINERS =
-  ':is(.places-list, .places-files, .document-outline, .search-dialog-results, .coverage-table-boundary, .overflow-x-auto, .table-scroll, .code-scroll, pre, table, .mermaid, .mermaid-fallback)';
+  ':is(.places-list, .places-files, .document-outline, .search-dialog-results, .overflow-x-auto, .table-scroll, .code-scroll, pre, table, .mermaid, .mermaid-fallback)';
 
 describe('scrollbar-thumb-hover-revealed scrollbars (QQK-01, QQK-02, QQK-03)', () => {
   it('hides the scrollbar entirely at rest for every untouched container — Firefox', async () => {
@@ -524,14 +507,11 @@ describe('scrollbar-thumb-hover-revealed scrollbars (QQK-01, QQK-02, QQK-03)', (
     expect(mermaidGroup).toContain('overscroll-behavior-inline: contain;');
   });
 
-  it('drives both zebra rules from one declared per-theme source', async () => {
+  it('drives the zebra rule from one declared per-theme source', async () => {
     const css = await source('src/web/styles/globals.css');
     expect(ruleBlocks(css, '.artifact-document tr:nth-child(even) td {')[0]).toMatch(
       /background:\s*var\(--table-zebra\)/,
     );
-    expect(
-      ruleBlocks(css, '.coverage-table-boundary tbody tr:nth-child(even) td {')[0],
-    ).toMatch(/background:\s*var\(--table-zebra\)/);
     // Declared for both grounds, so neither theme falls back to the other's stripe.
     expect(css).toMatch(/:root \{\n {2}--table-zebra:/);
     expect(css).toMatch(/\.dark \{\n {2}--table-zebra:/);

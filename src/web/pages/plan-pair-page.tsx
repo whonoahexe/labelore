@@ -1,14 +1,7 @@
 import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { Link, useLocation, useSearchParams } from 'react-router';
-import { buildCoverageMatrix, type CoverageStatement } from '../../presentation/coverage.ts';
-import {
-  buildMilestoneUrl,
-  buildPhaseUrl,
-  parsePresentationUrl,
-  presentationRoutePatterns,
-} from '../../presentation/routes.ts';
+import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
-import { ArtifactHeader, type ArtifactCrumb } from '../components/artifact-header.tsx';
 import { buttonVariants } from '../components/ui/button.tsx';
 import { ArtifactPage, DocumentView } from './artifact-page.tsx';
 
@@ -31,46 +24,6 @@ interface PlanPairResponse {
   meta: { id: string; description: string | null };
   /** The SUMMARY's artifact route, which the Summary tab hands to ArtifactPage. */
   summaryRoute?: string;
-}
-
-function records(value: unknown): Record<string, unknown>[] {
-  return Array.isArray(value)
-    ? value.filter(
-        (item): item is Record<string, unknown> =>
-          item !== null && typeof item === 'object' && !Array.isArray(item),
-      )
-    : [];
-}
-
-function requirementIds(text: string, explicit?: unknown): string[] {
-  const ids = [
-    ...(typeof explicit === 'string' ? [explicit] : []),
-    ...(text.match(/\b[A-Z][A-Z0-9]+-\d+\b/g) ?? []),
-  ];
-  return [...new Set(ids.map((id) => id.toUpperCase()))];
-}
-
-function truthRows(plan: DocumentResponse): CoverageStatement[] {
-  const mustHaves = plan.artifact.frontmatter.must_haves;
-  if (!mustHaves || typeof mustHaves !== 'object' || Array.isArray(mustHaves)) return [];
-  const truths = (mustHaves as Record<string, unknown>).truths;
-  return Array.isArray(truths)
-    ? truths.flatMap((value, index) => {
-        const text = typeof value === 'string' ? value : '';
-        return text
-          ? [{ key: `truth-${index + 1}`, text, requirementIds: requirementIds(text) }]
-          : [];
-      })
-    : [];
-}
-
-function coverageRows(summary: DocumentResponse): CoverageStatement[] {
-  return records(summary.artifact.frontmatter.coverage).flatMap((value, index) => {
-    const text = typeof value.description === 'string' ? value.description : '';
-    if (!text) return [];
-    const key = typeof value.id === 'string' ? value.id : `coverage-${index + 1}`;
-    return [{ key, text, requirementIds: requirementIds(text, value.requirement) }];
-  });
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
@@ -105,20 +58,18 @@ async function loadPair(route: string, queryClient: QueryClient): Promise<PlanPa
   return { plan: planDocument, summary: summaryDocument, meta, summaryRoute };
 }
 
-type PairDoc = 'plan' | 'summary' | 'coverage';
+type PairDoc = 'plan' | 'summary';
 
-/** The pair's Plan / Summary / Coverage switch, first in whichever page the tab mounts. The tab
+/** The pair's Plan / Summary switch, first in whichever page the tab mounts. The tab
  * lives in `?doc=` so each half of the pair is deep-linkable and the back button walks tabs. */
 function PairSwitch({
   id,
   active,
   hasSummary,
-  hasCoverage,
 }: {
   id: string;
   active: PairDoc;
   hasSummary: boolean;
-  hasCoverage: boolean;
 }): React.JSX.Element {
   const tab = (doc: PairDoc, label: string): React.JSX.Element => {
     // The same button treatment as the View/Source toggle beside it in the header.
@@ -148,7 +99,6 @@ function PairSwitch({
           No summary yet
         </span>
       )}
-      {hasCoverage ? tab('coverage', 'Coverage') : null}
     </nav>
   );
 }
@@ -189,111 +139,15 @@ export function PlanPairPage(): React.JSX.Element {
     );
 
   const pair = query.data;
-  const matrix = pair.summary
-    ? buildCoverageMatrix(truthRows(pair.plan), coverageRows(pair.summary))
-    : null;
-  const requested = searchParams.get('doc');
   const active: PairDoc =
-    requested === 'summary' && pair.summaryRoute
-      ? 'summary'
-      : requested === 'coverage' && matrix
-        ? 'coverage'
-        : 'plan';
+    searchParams.get('doc') === 'summary' && pair.summaryRoute ? 'summary' : 'plan';
   const switcher = (
-    <PairSwitch
-      id={pair.meta.id}
-      active={active}
-      hasSummary={Boolean(pair.summaryRoute)}
-      hasCoverage={matrix !== null}
-    />
+    <PairSwitch id={pair.meta.id} active={active} hasSummary={Boolean(pair.summaryRoute)} />
   );
 
   // The PLAN and SUMMARY tabs are the same per-type pages their artifact URLs open (the task
   // navigator, the run view), keyed by route so View/Source mode resets between them.
-  if (active === 'plan')
-    return <ArtifactPage key="plan" route={location.pathname} switcher={switcher} />;
   if (active === 'summary' && pair.summaryRoute)
     return <ArtifactPage key="summary" route={pair.summaryRoute} switcher={switcher} />;
-
-  const parsed = parsePresentationUrl(location.pathname);
-  const planRoute = parsed.ok && parsed.route.kind === 'plan' ? parsed.route : null;
-  const crumbs: ArtifactCrumb[] = [
-    { label: 'Dashboard', to: presentationRoutePatterns.dashboard },
-    { label: 'Roadmap', to: presentationRoutePatterns.roadmap },
-    ...(planRoute
-      ? [
-          {
-            label: planRoute.milestoneVersion ?? 'Current milestone',
-            to: buildMilestoneUrl(planRoute.milestoneVersion),
-          },
-          {
-            label: `Phase ${planRoute.phaseIdentity.number}`,
-            to: buildPhaseUrl(planRoute.phaseIdentity),
-          },
-        ]
-      : []),
-    { label: `Plan ${pair.meta.id}` },
-  ];
-  return (
-    <main className="artifact-page plan-pair-page page-stack">
-      {switcher}
-      <ArtifactHeader
-        crumbs={crumbs}
-        eyebrow="Plan and outcome"
-        title={`Plan ${pair.meta.id}`}
-        lead={pair.meta.description}
-        path={pair.plan.artifact.path}
-      />
-      {matrix ? (
-        <section id="coverage-matrix" className="coverage-matrix document-overflow-boundary">
-          <h2>Truth to coverage</h2>
-          <p>
-            Exact authored matches precede conservative inferred matches. Unmatched rows remain
-            visible.
-          </p>
-          <div className="coverage-table-boundary">
-            <table>
-              <thead>
-                <tr>
-                  <th>Match</th>
-                  <th>Plan truth</th>
-                  <th>Summary coverage</th>
-                </tr>
-              </thead>
-              <tbody>
-                {matrix.matches.map((match) => (
-                  <tr key={`${match.truth.key}:${match.coverage.key}`}>
-                    <td>
-                      <span
-                        className="status-chip"
-                        data-tone={match.kind === 'exact' ? 'complete' : 'quiet'}
-                      >
-                        {match.kind}
-                      </span>
-                    </td>
-                    <td>{match.truth.text}</td>
-                    <td>{match.coverage.text}</td>
-                  </tr>
-                ))}
-                {matrix.unmatchedTruths.map((truth) => (
-                  <tr key={truth.key}>
-                    <td>unmatched truth</td>
-                    <td>{truth.text}</td>
-                    <td>—</td>
-                  </tr>
-                ))}
-                {matrix.unmatchedCoverage.map((coverage) => (
-                  <tr key={coverage.key}>
-                    <td>unmatched coverage</td>
-                    <td>—</td>
-                    <td>{coverage.text}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      ) : null}
-    </main>
-  );
+  return <ArtifactPage key="plan" route={location.pathname} switcher={switcher} />;
 }

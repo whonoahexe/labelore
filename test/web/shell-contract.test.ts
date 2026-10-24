@@ -141,22 +141,10 @@ describe('authorized Studio Portal shell contract', () => {
 });
 
 describe('shared artifact header', () => {
-  it('ArtifactPage and PlanPairPage both open with ArtifactHeader instead of hand-written breadcrumb and heading markup', async () => {
+  it('ArtifactPage opens with ArtifactHeader instead of hand-written breadcrumb and heading markup', async () => {
     const artifact = await source('src/web/pages/artifact-page.tsx');
-    const pair = await source('src/web/pages/plan-pair-page.tsx');
-    for (const [name, page] of [
-      ['artifact-page.tsx', artifact],
-      ['plan-pair-page.tsx', pair],
-    ] as const) {
-      expect(page, name).toContain('<ArtifactHeader');
-      expect(page, name).not.toContain('className="artifact-breadcrumbs"');
-      expect(page, name).not.toContain('className="artifact-heading"');
-    }
-  });
-
-  it('the plan page is titled by its plan id, never by the file path', async () => {
-    const pair = await source('src/web/pages/plan-pair-page.tsx');
-    expect(pair).toContain('title={`Plan ${pair.meta.id}`}');
-    expect(pair).not.toContain('title={pair.plan.artifact.title}');
+    expect(artifact).toContain('<ArtifactHeader');
+    expect(artifact).not.toContain('className="artifact-breadcrumbs"');
+    expect(artifact).not.toContain('className="artifact-heading"');
   });
 });
