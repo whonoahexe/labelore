@@ -201,13 +201,11 @@ function MilestoneFiles({
 
 function QuickFiles({
   place,
-  pathname,
-  openTaskKey,
+  activeTaskKey,
   onNavigate,
 }: {
   place: DrawerQuickPlace;
-  pathname: string;
-  openTaskKey: string | null;
+  activeTaskKey: string | null;
   onNavigate: () => void;
 }): React.JSX.Element {
   return (
@@ -220,11 +218,19 @@ function QuickFiles({
       {place.months.map((month) => (
         <div key={month.label} className="places-month">
           <Stage label={month.label} count={String(month.tasks.length)} />
-          {month.tasks.map((task) => (
-            // Opened declaratively when the task holds the current page, so the first paint is
-            // already right; nothing re-opens it after the user's own close.
-            <details key={task.key} className="places-quick-task" open={task.key === openTaskKey}>
-              <summary className="places-file-row">
+          {month.tasks.map((task) => {
+            // One row per task, opening its plan; the plan page switches to the summary. The row
+            // stays marked while any of the task's own pages is open.
+            const active = task.key === activeTaskKey;
+            return (
+              <Link
+                key={task.key}
+                to={task.url}
+                className="places-file-row places-quick-task"
+                data-active={active ? 'true' : undefined}
+                aria-current={active ? 'page' : undefined}
+                onClick={onNavigate}
+              >
                 {task.dateBadge !== null ? (
                   <span className="places-badge">{task.dateBadge}</span>
                 ) : (
@@ -233,27 +239,9 @@ function QuickFiles({
                 <span className="places-label" title={task.key}>
                   {task.label}
                 </span>
-              </summary>
-              <div className="places-chips">
-                {task.files.map((file) => {
-                  const active = file.url === pathname;
-                  return (
-                    <Link
-                      key={file.key}
-                      to={file.url}
-                      className="places-chip"
-                      title={file.path}
-                      data-active={active ? 'true' : undefined}
-                      aria-current={active ? 'page' : undefined}
-                      onClick={onNavigate}
-                    >
-                      {file.label}
-                    </Link>
-                  );
-                })}
-              </div>
-            </details>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       ))}
     </>
@@ -436,8 +424,7 @@ export function PlanningPlaces({
         {place?.kind === 'quick' ? (
           <QuickFiles
             place={place}
-            pathname={pathname}
-            openTaskKey={quickTaskKeyForPath(data, pathname)}
+            activeTaskKey={quickTaskKeyForPath(data, pathname)}
             onNavigate={onNavigate}
           />
         ) : null}

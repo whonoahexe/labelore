@@ -91,7 +91,7 @@ describe('authorized Studio Portal shell contract', () => {
 
   it('lets open plans render without manufacturing a missing-summary error', async () => {
     const pair = await source('src/web/pages/plan-pair-page.tsx');
-    expect(pair).toContain('Outcome not recorded yet');
+    expect(await source('src/web/components/pair-switch.tsx')).toContain('Outcome not recorded yet');
     expect(pair).toContain('if (!plan.summary) return { plan: planDocument, summary: null, meta };');
     expect(pair).not.toContain('does not have a paired summary yet');
   });

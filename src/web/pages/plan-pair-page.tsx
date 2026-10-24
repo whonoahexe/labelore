@@ -2,7 +2,7 @@ import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-quer
 import { Link, useLocation, useSearchParams } from 'react-router';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
-import { buttonVariants } from '../components/ui/button.tsx';
+import { PairSwitch } from '../components/pair-switch.tsx';
 import { ArtifactPage, DocumentView } from './artifact-page.tsx';
 
 interface DocumentResponse {
@@ -58,51 +58,6 @@ async function loadPair(route: string, queryClient: QueryClient): Promise<PlanPa
   return { plan: planDocument, summary: summaryDocument, meta, summaryRoute };
 }
 
-type PairDoc = 'plan' | 'summary';
-
-/** The pair's Plan / Summary switch, first in whichever page the tab mounts. The tab
- * lives in `?doc=` so each half of the pair is deep-linkable and the back button walks tabs. */
-function PairSwitch({
-  id,
-  active,
-  hasSummary,
-}: {
-  id: string;
-  active: PairDoc;
-  hasSummary: boolean;
-}): React.JSX.Element {
-  const tab = (doc: PairDoc, label: string): React.JSX.Element => {
-    // The same button treatment as the View/Source toggle beside it in the header.
-    const look = buttonVariants({ size: 'xs', variant: active === doc ? 'secondary' : 'ghost' });
-    return (
-      <Link
-        key={doc}
-        to={{ search: doc === 'plan' ? '' : `?doc=${doc}` }}
-        className={look}
-        aria-current={active === doc ? 'page' : undefined}
-      >
-        {label}
-      </Link>
-    );
-  };
-  return (
-    <nav className="plan-pair-switch" aria-label={`Plan ${id} documents`}>
-      {tab('plan', 'Plan')}
-      {hasSummary ? (
-        tab('summary', 'Summary')
-      ) : (
-        <span
-          className="status-chip"
-          data-tone="quiet"
-          title="Outcome not recorded yet: this plan is still open, so there is no paired summary."
-        >
-          No summary yet
-        </span>
-      )}
-    </nav>
-  );
-}
-
 export function PlanPairPage(): React.JSX.Element {
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -139,10 +94,14 @@ export function PlanPairPage(): React.JSX.Element {
     );
 
   const pair = query.data;
-  const active: PairDoc =
-    searchParams.get('doc') === 'summary' && pair.summaryRoute ? 'summary' : 'plan';
+  const active = searchParams.get('doc') === 'summary' && pair.summaryRoute ? 'summary' : 'plan';
   const switcher = (
-    <PairSwitch id={pair.meta.id} active={active} hasSummary={Boolean(pair.summaryRoute)} />
+    <PairSwitch
+      label={`Plan ${pair.meta.id} documents`}
+      active={active}
+      planTo={{ search: '' }}
+      summaryTo={pair.summaryRoute ? { search: '?doc=summary' } : null}
+    />
   );
 
   // The PLAN and SUMMARY tabs are the same per-type pages their artifact URLs open (the task

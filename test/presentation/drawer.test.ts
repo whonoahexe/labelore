@@ -319,12 +319,29 @@ describe('buildDrawerViewModel — quick tasks', () => {
     expect(task.label).toBe('Some task');
     expect(task.files.map((row) => row.label)).toEqual(['Context', 'Plan', 'Summary']);
     expect(task.files.some((row) => row.path.endsWith('helper.mjs'))).toBe(false);
+    // The row opens the plan even though the context file sorts first.
+    expect(task.url).toBe(task.files[1].url);
 
     expect(model.shipped.map((milestone) => milestone.version)).toEqual(['v1.0']);
     const archived = model.shipped[0].quick;
     expect(archived.count).toBe(1);
     expect(archived.months.map((month) => month.label)).toEqual(['Sep 2026']);
     expect(archived.milestoneVersion).toBe('v1.0');
+  });
+
+  it('points a task without a plan at its summary, and one with neither at its first file', async () => {
+    const model = buildDrawerViewModel(
+      await presentationOf({
+        '.planning/quick/261024-abc-summary-only/261024-abc-CONTEXT.md': '# Context',
+        '.planning/quick/261024-abc-summary-only/261024-abc-SUMMARY.md': '# Summary',
+        '.planning/quick/261023-def-context-only/261023-def-CONTEXT.md': '# Context',
+      }),
+    );
+    const tasks = model.current.quick.months.flatMap((month) => month.tasks);
+    const summaryOnly = tasks.find((task) => task.key.endsWith('summary-only'))!;
+    expect(summaryOnly.url).toBe(summaryOnly.files.find((row) => row.label === 'Summary')!.url);
+    const contextOnly = tasks.find((task) => task.key.endsWith('context-only'))!;
+    expect(contextOnly.url).toBe(contextOnly.files[0].url);
   });
 
   it('lists tasks newest first, one group per month, with unparseable names last as Undated', async () => {

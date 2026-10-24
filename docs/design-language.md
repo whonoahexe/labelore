@@ -1054,10 +1054,8 @@ Sketch 038 C (quick-261024-vty): places on the left, the chosen place's files on
 | `places-plan-square` | Planning files drawer |  |
 | `places-warning` | Planning files drawer |  |
 | `places-back` | Planning files drawer | The phone-only All places link above a place's files; hidden at wider widths |
-| `places-month` | Planning files drawer | One month of quick tasks: its stage label, then its task disclosures |
-| `places-quick-task` | Planning files drawer | A quick task as a native disclosure: date and name, opening to one row of file chips |
-| `places-chips` | Planning files drawer | The wrapping row of file chips inside an open quick task |
-| `places-chip` | Planning files drawer | One file of a quick task; `data-active` marks the current page |
+| `places-month` | Planning files drawer | One month of quick tasks: its stage label, then its task rows |
+| `places-quick-task` | Planning files drawer | A quick task as one row, date and name, that opens its plan; `data-active` marks it while any of its pages is open |
 | `places-fold` | Planning files drawer | One shipped milestone row with its unfolded phases beneath it |
 
 ### Reference preview

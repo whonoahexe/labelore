@@ -22,6 +22,7 @@ import type { RenderedDocument } from '../../rendering/markdown.ts';
 import { ReferencePreview, type ReferencePreviewState } from '../components/reference-preview.tsx';
 import { mountFigureIslands } from '../components/fenced-figure.tsx';
 import { DocumentViewToggle } from '../components/document-view-toggle.tsx';
+import { PairSwitch } from '../components/pair-switch.tsx';
 import { DocumentOutline, type OutlineEntry } from '../components/document-outline.tsx';
 import { useActiveSection } from '../components/use-active-section.ts';
 import { handleDocumentReferenceActivation } from './document-reference-activation.ts';
@@ -571,11 +572,51 @@ async function loadDocument(route: string): Promise<ArtifactDocumentResponse> {
   return (await response.json()) as ArtifactDocumentResponse;
 }
 
+/** A quick task's PLAN or SUMMARY file name (`261024-vty-PLAN.md`): the task id and which half. */
+const QUICK_PAIR_FILE = /^(\d{6}-[0-9a-z]{3})-(PLAN|SUMMARY)\.md$/;
+
+/** A quick task's PLAN and SUMMARY get the same Plan/Summary switch a phase plan's do, here between
+ * their own artifact URLs (the summary found among the same-directory siblings). Null for anything
+ * else — a phase plan's switch comes from PlanPairPage instead. */
+function quickPairSwitch(
+  path: string | undefined,
+  route: string,
+  siblings: NonNullable<ViewInput['siblingArtifacts']>,
+): React.ReactNode {
+  const match = path?.slice(path.lastIndexOf('/') + 1).match(QUICK_PAIR_FILE);
+  if (!match) return null;
+  const [, quickId, half] = match;
+  const other = siblings.find((sibling) =>
+    sibling.path.endsWith(`/${quickId}-${half === 'PLAN' ? 'SUMMARY' : 'PLAN'}.md`),
+  );
+  if (half === 'PLAN') {
+    return (
+      <PairSwitch
+        label={`Quick task ${quickId} documents`}
+        active="plan"
+        planTo={route}
+        summaryTo={other?.url ?? null}
+      />
+    );
+  }
+  // A summary with no plan beside it has nothing to switch to.
+  if (!other) return null;
+  return (
+    <PairSwitch
+      label={`Quick task ${quickId} documents`}
+      active="summary"
+      planTo={other.url}
+      summaryTo={route}
+    />
+  );
+}
+
 /** `route` and `switcher` let PlanPairPage mount this page for a plan's PLAN or SUMMARY under its
- * own `/plans/:planId` URL, with the pair's Plan/Summary/Coverage switch first in every `<main>`. */
+ * own `/plans/:planId` URL, with the pair's Plan/Summary switch first in every `<main>`. A quick
+ * task's PLAN and SUMMARY mount their own switch (quickPairSwitch). */
 export function ArtifactPage({
   route: routeOverride,
-  switcher = null,
+  switcher: pairSwitcher = null,
 }: { route?: string; switcher?: React.ReactNode } = {}): React.JSX.Element {
   const location = useLocation();
   const route = routeOverride ?? location.pathname;
@@ -622,6 +663,8 @@ export function ArtifactPage({
       findSiblingArtifacts(presentationQuery.data, query.data?.artifact.path, query.data?.phaseIdentity),
     [presentationQuery.data, query.data],
   );
+  const switcher =
+    pairSwitcher ?? quickPairSwitch(query.data?.artifact.path, route, siblingArtifacts);
   const viewInput = useMemo<ViewInput | null>(() => {
     if (!query.data) return null;
     return {

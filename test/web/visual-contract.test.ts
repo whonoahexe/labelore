@@ -294,7 +294,7 @@ describe('G2-10 status-chip semantic tone contract', () => {
   it('never assigns a raw/unrecognized status-chip tone at any call site', async () => {
     const files = [
       dashboardSources(),
-      ...(await Promise.all(['src/web/pages/roadmap-page.tsx', 'src/web/pages/plan-pair-page.tsx'].map(source))),
+      ...(await Promise.all(['src/web/pages/roadmap-page.tsx', 'src/web/components/pair-switch.tsx'].map(source))),
     ];
     const recognizedTones = ['active', 'complete', 'quiet'];
     for (const file of files) {
@@ -653,10 +653,11 @@ describe('planning-files drawer (quick-260911-vqe D-01..D-04, SB-04/SB-05)', () 
     expect(fromNarrow).not.toMatch(/\.sidebar-trigger\s*\{[^}]*display:\s*none;/s);
   });
 
-  it('uses native details/summary for the quick-task disclosure, never the headless collapsible primitive, and the drawer holds no client-side persisted state (Test 7)', async () => {
+  it('opens a quick task with one link to its plan, never a disclosure, and the drawer holds no client-side persisted state (Test 7)', async () => {
     const places = await source('src/web/components/planning-places.tsx');
     expect(places).not.toContain('@base-ui/react/collapsible');
-    expect(places).toContain('<details');
+    expect(places).not.toContain('<details');
+    expect(places).toContain('to={task.url}');
     expect(places).not.toMatch(/localStorage|sessionStorage/);
 
     const sidebarDrawer = await source('src/web/components/sidebar-drawer.tsx');
