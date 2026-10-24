@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-23T20:44:47.496Z"
+last_updated: "2026-10-24T10:04:31.645Z"
 last_activity: 2026-10-24
 last_activity_desc: Completed quick task 261016-2j6 (compact discussion-log tables)
-state_head: 28fea2e4d7619c30681b888b7afa0b6606c0048b
+state_head: 0cce2ea93cb68c6d7f88d6326ffc40fa37a5d27f
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-09-21)
 Phase: Milestone v1.1 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-10-24 - Completed quick task 261023-u13: Build sketch 029 A (gist console) as the NOTE page view, replacing the 028 A layout
+Last activity: 2026-10-24 - Completed quick task 261024-k8u: Research page per sketches 031–035
 
 ## Performance Metrics
 
@@ -224,6 +224,7 @@ None.
 | 109 | Removed the foundation-consistency browser sweep (timed out every run, ~20 min per full suite) | 2026-10-24 | e2bd0ec | — |
 | 110 | Header copy-button browser test for SUMMARY pages waits for the page title instead of a retired element; no longer times out | 2026-10-24 | 2cb3f86 | — |
 | 111 | Fixed the last failing browser tests: prose that names a <details> tag no longer swallows the rest of a document; plan page Planned spacing; summary chip line height; specs updated for the What to check tab | 2026-10-24 | 28fea2e | — |
+| 261024-k8u | Research page per sketches 031–035: five spines, Summary, Stack, Features, Architecture and Pitfalls panels | 2026-10-24 | 0cce2ea | [261024-k8u-build-the-project-research-page-per-sket](./quick/261024-k8u-build-the-project-research-page-per-sket/) |
 
 ## Deferred Items
 
