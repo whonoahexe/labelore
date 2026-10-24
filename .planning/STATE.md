@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-24T18:11:54.222Z"
+last_updated: "2026-10-24T18:16:50.480Z"
 last_activity: 2026-10-24
 last_activity_desc: Completed quick task 261016-2j6 (compact discussion-log tables)
-state_head: c6f741ce01bc12ba85061cba6a5b1f2784b732b7
+state_head: 92b77d79a932c4e0a3c9147c863fa3bbe28c83d2
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -229,6 +229,7 @@ None.
 | 261024-vty | Build sketch 038 winner C: two-column planning-files drawer (places left, chosen place's files right) | 2026-10-24 | 605a684 | [261024-vty-build-sketch-038-winner-c-two-column-pla](./quick/261024-vty-build-sketch-038-winner-c-two-column-pla/) |
 | 115 | Give the planning-files drawer breathing space | 2026-10-24 | 98a468c | — |
 | 116 | Pad drawer phase numbers to two digits | 2026-10-24 | c6f741c | — |
+| 117 | Hide other files from the planning-files drawer | 2026-10-24 | 92b77d7 | — |
 
 ## Deferred Items
 
