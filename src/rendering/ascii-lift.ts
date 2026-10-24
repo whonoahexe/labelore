@@ -11,6 +11,9 @@
 //  - the left edge and the right edge are each walked row by row (a progressive walk: every row's
 //    border is looked for around the previous row's border, offsets 0, +1, -1, +2, -2), so a right
 //    edge that staircases a column or two per row is followed to its corner;
+//  - a row whose right bar sits further out than that walk reaches (a title the author let run past
+//    the corner) looks up to 16 columns right for it, across blanks and text only, never into another
+//    box; the box widens to the farthest bar taken (boxes with two or more interior rows only);
 //  - an arrow drawn into a side (`►│`, `│◄`) stays an arrow — the side glyph next to it is the border;
 //    one drawn into the top or bottom edge (`┌──▼──┐`, `└──▲──┘`) is part of that edge and stays an arrow;
 //  - tree guides (`├─ name`, `└─ name`) are content, never a border and never a corner;
@@ -32,7 +35,7 @@
 // bounded pass over the grid and no pass nests a full-grid scan inside a per-card loop.
 
 const BOX = '─│┌┐└┘├┤┬┴┼';
-const ARROWS = '▼▲►◄→←↑↓';
+const ARROWS = '▼▲►◄▶◀→←↑↓';
 const TOP_EDGE = '─┬┴┼';
 /** An arrow drawn into a box's top / bottom edge sits where the border would. */
 const TOP_ARROW = '▼';
@@ -42,7 +45,7 @@ const BOTTOM_ARROW = '▲';
 const DOUBLE = '═║╪╫╬';
 const SIDE_EDGE = '│├┤┼';
 /** An arrow drawn into a box's side sits where the border would. */
-const SIDE_ARROW = '►◄';
+const SIDE_ARROW = '►◄▶◀';
 /** Glyphs that continue a vertical line downward / upward (for spacer rows between steps). */
 const DOWN_GLYPHS = '│├┤┼┬┌┐';
 const UP_GLYPHS = '│├┤┼┴└┘▼';
@@ -51,6 +54,8 @@ const UP_GLYPHS = '│├┤┼┴└┘▼';
 const DRIFT = [0, 1, -1, 2, -2];
 /** How far the bottom-right `┘` may sit from the top-right `┐` when the walk ended elsewhere. */
 const RAGGED_TOLERANCE = 3;
+/** How far past the top-right corner a row the drift walk lost may look for its own right bar. */
+const RAGGED_REACH = 16;
 
 export const LIFT_MAX_ROWS = 250;
 export const LIFT_MAX_COLS = 300;
@@ -349,6 +354,61 @@ export function liftDiagram(text: string): LiftedFigure | null {
     }
   }
 
+  // Right borders past the drift walk: a row the walk lost looks further right, up to RAGGED_REACH
+  // columns past the top-right corner, for its own bar. Only blanks and text may lie between (any
+  // other box, arrow or double glyph ends the look), and a bar inside another box's span is that box's.
+  // A bar is taken when text overruns the corner on its row, or when it lines up with a bar already
+  // taken on the row above or below. Boxes with a single interior row are left alone, so the sketch's
+  // one-row rule (an overrun of 3 or more columns does not widen) still holds.
+  for (const box of boxes) {
+    const geo = geometry.get(box);
+    if (!geo || geo.open || box.r2 - box.r1 - 1 < 2 || !geo.right.includes(-1)) continue;
+    const corner = geo.top.end;
+    const reach = Math.min(width - 1, corner + RAGGED_REACH);
+    const candidates = geo.right.map((found, i): { col: number; overrun: boolean } | null => {
+      if (found >= 0) return null;
+      const r = box.r1 + 1 + i;
+      let overrun = false;
+      for (let x = corner + 1; x <= reach; x++) {
+        if (overBudget()) return null;
+        const ch = at(r, x);
+        if (SIDE_EDGE.includes(ch) && !isGuide(r, x)) {
+          const owned = boxes.some(
+            (other) =>
+              other !== box &&
+              r >= other.r1 &&
+              r <= other.r2 &&
+              x >= other.c1 &&
+              x <= other.c2 &&
+              !(other.r1 < box.r1 && other.r2 > box.r2 && other.c1 < box.c1 && other.c2 > box.c2),
+          );
+          return owned ? null : { col: x, overrun };
+        }
+        if (isBoxGlyph(ch) || isArrowGlyph(ch) || isDoubleGlyph(ch)) return null;
+        if (ch !== ' ') overrun = true;
+      }
+      return null;
+    });
+    if (overBudget()) return null;
+    const taken = candidates.map((candidate) => (candidate?.overrun ? candidate.col : -1));
+    for (let changed = true; changed; ) {
+      changed = false;
+      candidates.forEach((candidate, i) => {
+        if (candidate === null || taken[i] >= 0) return;
+        if ([taken[i - 1], taken[i + 1]].some((nb) => nb !== undefined && nb >= 0 && Math.abs(nb - candidate.col) <= 2)) {
+          taken[i] = candidate.col;
+          changed = true;
+        }
+      });
+    }
+    taken.forEach((col, i) => {
+      if (col < 0) return;
+      geo.right[i] = col;
+      box.c2 = Math.max(box.c2, col + 1);
+      box.widened = true;
+    });
+  }
+
   /** Open-left outer box: the right edge only, walked down to a `┘` (see the file header). */
   function walkOpenLeft(
     r: number,
@@ -533,7 +593,7 @@ export function liftDiagram(text: string): LiftedFigure | null {
     const ledByArrow = (row: string[], to: number): boolean => {
       let x = to - 1;
       while (x >= 0 && row[x] === ' ') x--;
-      if (x < 0 || (row[x] !== '►' && row[x] !== '→')) return false;
+      if (x < 0 || (row[x] !== '►' && row[x] !== '▶' && row[x] !== '→')) return false;
       for (x--; x >= 0; x--) if (row[x] !== '─' && row[x] !== ' ') return false;
       return true;
     };
@@ -546,7 +606,7 @@ export function liftDiagram(text: string): LiftedFigure | null {
         if (row[x] !== '─') break;
         length++;
       }
-      if (x < 0 || row[x] !== '◄') return false;
+      if (x < 0 || (row[x] !== '◄' && row[x] !== '◀')) return false;
       length++;
       for (x--; x >= 0 && length <= 2; x--) if (row[x] !== ' ') length++;
       return length > 2;
@@ -896,9 +956,19 @@ export function isLiftableDiagram(text: string): boolean {
   if (figure === null) return false;
   if (figure.cards.some((card) => card.kind === 'box')) return true;
   // A step list whose connectors are leading arrows (`-> step`) has no glyph-only line, but two or
-  // more nodes joined by arrow glyphs is still a flow.
-  const hasArrow = figure.rows.some((row) => row.some((segment) => segment.kind === 'arrow'));
-  if (hasArrow && figure.cards.filter((card) => card.kind === 'node').length >= 2) return true;
+  // more of its lines start with an arrow: `►`, `─►`, or a sequence diagram's `│─ message ──▶│`. An
+  // arrow inside a line ("a → b" in prose, a `# → out` comment, a `← note` after a table row) is
+  // text, not a connector, and a tree branch (`├── name`) is not a lead.
+  const leadsWithArrow = (row: LiftSegment[]): boolean => {
+    const first = row.find((segment) => segment.text.trim() !== '');
+    if (!first || (first.kind !== 'arrow' && first.kind !== 'line')) return false;
+    const lead = first.text.trim();
+    if (isArrowGlyph(lead[0])) return true;
+    return first.kind === 'line' && /^│?─+$/.test(lead) && row.some((segment) => segment.kind === 'arrow');
+  };
+  if (figure.cards.filter((card) => card.kind === 'node').length >= 2 && figure.rows.filter(leadsWithArrow).length >= 2) {
+    return true;
+  }
   for (const line of figure.rows.map((row) => row.map((segment) => segment.text).join(''))) {
     const trimmed = line.trim();
     if (trimmed === '') continue;

@@ -5,6 +5,8 @@
 // golden of the sketch's own output holds (test/rendering/fixtures/sketch-012-graphs.json). Two
 // additions the sketch lacks, inert on that corpus: double lines (`════╪════`) are wires, and a box cut
 // across by full-width `├────┤` rows is a stack of layers, one node each, joined top to bottom.
+// A third: a label at a wire's open end becomes a node (an arrowhead landing on it from a wire a card
+// starts, or the top or bottom tail of a wire that points into a card); `◄──` pointer notes stay notes.
 //
 // Cost (T-mp6-01): the sketch's per-probe scans (cardAt, noteAt, nearCard, note-beside-a-wire) are
 // replaced by cell -> card / cell -> note / cell -> component index grids built once, so a probe is O(1).
@@ -63,17 +65,20 @@ export interface DiagramGraph {
   thin: boolean;
 }
 
+/** A label written over or under a horizontal wire is at most this long. */
+const WIRE_LABEL_MAX = 24;
+
 /** More nodes than this is not a diagram to redraw. */
 export const MAX_GRAPH_NODES = 60;
 
 const LINE = '─│┌┐└┘├┤┬┴┼═║╪╫╬';
-const ARROW = '▼▲►◄→←↑↓';
+const ARROW = '▼▲►◄▶◀→←↑↓';
 const CONN: Record<string, string> = {
   '─': 'lr', '│': 'ud', '┌': 'rd', '┐': 'ld', '└': 'ur', '┘': 'ul', '├': 'udr', '┤': 'udl', '┬': 'lrd', '┴': 'lru', '┼': 'udlr',
   '═': 'lr', '║': 'ud', '╪': 'udlr', '╫': 'udlr', '╬': 'udlr',
-  '▼': 'u', '▲': 'd', '►': 'l', '◄': 'r', '→': 'l', '←': 'r', '↓': 'u', '↑': 'd',
+  '▼': 'u', '▲': 'd', '►': 'l', '◄': 'r', '▶': 'l', '◀': 'r', '→': 'l', '←': 'r', '↓': 'u', '↑': 'd',
 };
-const TIPDIR: Record<string, string> = { '▼': 'd', '▲': 'u', '►': 'r', '◄': 'l', '→': 'r', '←': 'l', '↓': 'd', '↑': 'u' };
+const TIPDIR: Record<string, string> = { '▼': 'd', '▲': 'u', '►': 'r', '◄': 'l', '▶': 'r', '◀': 'l', '→': 'r', '←': 'l', '↓': 'd', '↑': 'u' };
 const STEP: Record<string, [number, number]> = { u: [-1, 0], d: [1, 0], l: [0, -1], r: [0, 1] };
 
 const isGlyph = (ch: string): boolean => LINE.includes(ch) || ARROW.includes(ch);
@@ -127,6 +132,8 @@ interface Shapes {
   notes: Note[];
   conn: Conn[];
   quality: number;
+  /** Non-blank characters of the author's text, in cards and notes together. */
+  textSize: number;
   dangling: number;
 }
 
@@ -226,6 +233,16 @@ function readShapes(figure: LiftedFigure): Shapes {
         }
       }
     });
+
+  // A wire that runs into a box whose drifting right edge widened its card: the glyphs between the
+  // row's own border and the card's edge are the wire's (`│◀────` with the card one column wider).
+  for (const c of cards) {
+    if (c.kind !== 'box' || c.group) continue;
+    for (let r = Math.max(0, c.r1 + 1); r <= Math.min(H - 1, c.r2 - 1); r++) {
+      if (c.c2 >= W || !glyphAt(r, c.c2) || G[r][c.c2] === '│') continue;
+      for (let x = c.c2 - 1; x > c.c1 && glyphAt(r, x) && G[r][x] !== '│' && own[r * W + x] === c.i; x--) own[r * W + x] = -1;
+    }
+  }
 
   // Card text lines: per owned row, the owned cells' text (node cards drop trunk glyphs).
   for (const c of cards) {
@@ -379,7 +396,7 @@ function readShapes(figure: LiftedFigure): Shapes {
   let loose = 0;
   for (const n of notes) loose += n.lines.join('').replace(/\s/g, '').length;
   const quality = inCards / Math.max(1, inCards + loose);
-  return { H, W, G, cards, notes, conn, quality, dangling };
+  return { H, W, G, cards, notes, conn, quality, textSize: inCards + loose, dangling };
 }
 
 // ---------------------------------------------------------------------------
@@ -393,7 +410,7 @@ const KINDS: [DiagramKind, RegExp][] = [
   ['data', /\b(sqlite|database|sqlx|db transaction|insert into|update jobs|select |audit_log|audit row|snapshot|registry|ticket map|hashmap|table)/i],
   ['channel', /\b(bus|broadcast|websocket|\/ws\b|ws connection|ws upgrade|emit|mpsc|sse|event::|pushes event)/i],
   ['worker', /\b(thread|worker|executor|engine|pool|prober|recovery pass|sweep|task\))/i],
-  ['external', /(\/proc|\/mnt|\/dev|kernel|google drive|rclone|filesystem|subprocess|cli project|\bos\b)/i],
+  ['external', /(\/proc|\/mnt|\/dev|kernel|google drive|rclone|filesystem|subprocess|cli project|\bos\b|\(disk\))/i],
   ['service', /\b(handler|axum|api|router|middleware|endpoint|hono|server|route|backend|require|resolve|verif|mint|login)/i],
 ];
 
@@ -437,7 +454,7 @@ function splitLabel(raw: string): DiagramLabel {
   const t = raw
     .trim()
     .replace(/:$/, '')
-    .replace(/^(─+►|►|→|◄─+)\s*/, '')
+    .replace(/^(─+[►▶]|[►▶]|→|[◄◀]─+)\s*/, '')
     .replace(/^\d+\.\s+/, '');
   let main: string;
   let sub = '';
@@ -540,7 +557,7 @@ export function buildDiagramGraph(figure: LiftedFigure): DiagramGraph {
   const PW = W + 2;
   const cardGrid = new Int32Array(H * PW).fill(-1);
   const areaGrid = new Int32Array(H * PW).fill(0);
-  nodesSrc.forEach((c, k) => {
+  const paintCard = (c: Card, k: number): void => {
     const lo = c.kind === 'box' ? c.c1 : c.c1 - 1;
     const hi = c.kind === 'box' ? c.c2 : c.c2 + 1;
     for (let r = Math.max(0, c.r1); r <= Math.min(H - 1, c.r2); r++) {
@@ -552,7 +569,8 @@ export function buildDiagramGraph(figure: LiftedFigure): DiagramGraph {
         }
       }
     }
-  });
+  };
+  nodesSrc.forEach(paintCard);
   const cardAt = (r: number, x: number): Card | null => {
     if (r < 0 || r >= H || x < -1 || x > W) return null;
     const k = cardGrid[r * PW + x + 1];
@@ -649,8 +667,120 @@ export function buildDiagramGraph(figure: LiftedFigure): DiagramGraph {
         }
       }
     }
+    // A short one-line label right above or below a horizontal wire, across the label's span ("GET"
+    // over `───▶`, "JSON" under `◀───`). A long line there is a heading or a remark, and a `═══`
+    // double line is a boundary, not a wire to label.
+    if (n.r1 === n.r2 && n.lines[0].length <= WIRE_LABEL_MAX) {
+      for (const r of [n.r1 - 1, n.r1 + 1]) {
+        if (r < 0 || r >= H) continue;
+        for (let x = Math.max(0, n.c1); x <= Math.min(W - 1, n.c2); x++) {
+          const id = compOf[r * W + x];
+          if (id >= 0 && (G[r][x] === '─' || TIPDIR[G[r][x]] === 'l' || TIPDIR[G[r][x]] === 'r')) hit.add(id);
+        }
+      }
+    }
     hit.forEach((id) => besideNotes[id].push(j));
   });
+
+  /** A card right above or below a note, across its span, on the far side from a vertical wire: the
+   * note is that card's caption (a heading over a box, a word under a step), and the wire meets the card. */
+  const captionOf = (n: Note, dir: string): Card | null => {
+    if (dir !== 'u' && dir !== 'd') return null;
+    const r = dir === 'u' ? n.r1 - 1 : n.r2 + 1;
+    for (let x = n.c1; x <= n.c2; x++) {
+      const card = cardAt(r, x);
+      if (card) return card;
+    }
+    return null;
+  };
+
+  /** A wire's open ends: each way a cell leads out of the component, what it reaches within 3 cells
+   * (a card, a card through its caption, else the first note), and whether that end is an arrowhead. */
+  const openEnds = (comp: Conn[]): { card: Card | null; note: number; tip: boolean; dir: string }[] => {
+    const out: { card: Card | null; note: number; tip: boolean; dir: string }[] = [];
+    comp.forEach(({ r, c, ch }) => {
+      const dirs = new Set((CONN[ch] ?? '').split('').filter((d) => d !== ''));
+      const tip = TIPDIR[ch];
+      if (tip) dirs.add(tip);
+      dirs.forEach((dir) => {
+        const [dr, dx] = STEP[dir];
+        if (connAt(r + dr, c + dx) >= 0) return;
+        let hit: Card | null = null;
+        let note = -1;
+        for (let k = 1; k <= 3 && !hit; k++) {
+          hit = cardAt(r + dr * k, c + dx * k);
+          if (!hit && note < 0) note = noteAt(r + dr * k, c + dx * k);
+          const rr = r + dr * k;
+          const cc = c + dx * k;
+          if (!hit && rr >= 0 && rr < H && cc >= 0 && cc < W && G[rr][cc] !== ' ' && note >= 0) break;
+        }
+        if (!hit && note >= 0) hit = captionOf(S.notes[note], dir);
+        out.push({ card: hit, note, tip: tip === dir, dir });
+      });
+    });
+    return out;
+  };
+
+  // Unboxed start and end labels are nodes: a note an arrowhead lands on, on a wire a card starts, is
+  // its target; a note at the top or bottom tail of a wire with no card source that points into a card
+  // is its source. A `◄──` pointer note (a horizontal tail) stays an annotation, and a wire that
+  // touches no card promotes nothing. Decided on the cards as drawn, then painted in together.
+  const usedNotes = new Set<number>();
+  /** Notes the graph attached to a card (a promoted label, a `◄──` pointer, a box's name): placed text. */
+  const attached = new Set<number>();
+  const promote = new Set<number>();
+  const firstEnds = comps.map(openEnds);
+  for (const ends of firstEnds) {
+    const sourced = ends.some((e) => !e.tip && e.card);
+    const aimed = ends.some((e) => e.tip && e.card);
+    for (const e of ends) {
+      if (e.card || e.note < 0) continue;
+      if (e.tip ? sourced : (e.dir === 'u' || e.dir === 'd') && !sourced && aimed) promote.add(e.note);
+    }
+  }
+  const cardsBeforePromotion = nodesSrc.length;
+  let promotedText = 0;
+  for (const j of [...promote].sort((a, b) => a - b)) {
+    if (usedNotes.has(j)) continue;
+    const n = S.notes[j];
+    usedNotes.add(j);
+    attached.add(j);
+    // The title row takes a one-line note the author set right after it ("<project>/  (disk)").
+    let title = n.lines[0];
+    let c2 = n.c2;
+    S.notes.forEach((m, k) => {
+      if (k === j || usedNotes.has(k) || m.r1 !== n.r1 || m.r2 !== m.r1 || m.c1 <= c2 || m.c1 - c2 > 3) return;
+      title += `  ${m.lines[0]}`;
+      c2 = Math.max(c2, m.c2);
+      usedNotes.add(k);
+      attached.add(k);
+    });
+    // Wrapped lines are details; a bracket left open carries the next line into the same detail.
+    const lines: CardLine[] = [{ r: n.r1, col: n.c1, text: title }];
+    let depth = 0;
+    n.lines.slice(1).forEach((text, k) => {
+      if (depth > 0 && lines.length > 1) lines[lines.length - 1].text += ` ${text}`;
+      else lines.push({ r: n.r1 + 1 + k, col: n.c1, text });
+      depth = Math.max(0, depth + (text.match(/[([{]/g) ?? []).length - (text.match(/[)\]}]/g) ?? []).length);
+    });
+    promotedText += lines.map((l) => l.text).join('').replace(/\s/g, '').length;
+    const card: Card = {
+      i: S.cards.length + nodesSrc.length,
+      kind: 'node',
+      r1: n.r1,
+      c1: n.c1,
+      r2: n.r2,
+      c2,
+      area: (n.r2 - n.r1 + 1) * (c2 - n.c1 + 1),
+      group: false,
+      lines,
+      titleRow: n.r1,
+      titleCount: 1,
+    };
+    nodesSrc.push(card);
+    paintCard(card, nodesSrc.length - 1);
+  }
+  const quality = S.quality + promotedText / Math.max(1, S.textSize);
 
   const nodes: WorkNode[] = nodesSrc.map((c) => ({
     id: c.i,
@@ -669,35 +799,19 @@ export function buildDiagramGraph(figure: LiftedFigure): DiagramGraph {
     }),
   );
   const edges: WorkEdge[] = [];
-  const usedNotes = new Set<number>();
 
   comps.forEach((comp, compId) => {
-    const tips: { card: Card | null; note: number }[] = [];
-    const ends: { card: Card | null; note: number }[] = [];
-    comp.forEach(({ r, c, ch }) => {
-      const dirs = new Set((CONN[ch] ?? '').split('').filter((d) => d !== ''));
-      const tip = TIPDIR[ch];
-      if (tip) dirs.add(tip);
-      dirs.forEach((dir) => {
-        const [dr, dx] = STEP[dir];
-        if (connAt(r + dr, c + dx) >= 0) return;
-        let hit: Card | null = null;
-        let note = -1;
-        for (let k = 1; k <= 3 && !hit; k++) {
-          hit = cardAt(r + dr * k, c + dx * k);
-          if (!hit && note < 0) note = noteAt(r + dr * k, c + dx * k);
-          const rr = r + dr * k;
-          const cc = c + dx * k;
-          if (!hit && rr >= 0 && rr < H && cc >= 0 && cc < W && G[rr][cc] !== ' ' && note >= 0) break;
-        }
-        (tip === dir ? tips : ends).push({ card: hit, note });
-      });
-    });
+    // Promoted cards change what a probe reaches; with none, the first pass's ends still hold.
+    const probes = nodesSrc.length === cardsBeforePromotion ? firstEnds[compId] : openEnds(comp);
+    const tips = probes.filter((p) => p.tip);
+    const ends = probes.filter((p) => !p.tip);
     // Labels: notes that sit right beside the wire.
     const labels: string[] = [];
+    const labelNotes: number[] = [];
     for (const j of besideNotes[compId]) {
       if (usedNotes.has(j)) continue;
       labels.push(oneLine(S.notes[j].lines));
+      labelNotes.push(j);
       usedNotes.add(j);
     }
     const targets = [...new Set(tips.filter((t) => t.card).map((t) => (t.card as Card).i))];
@@ -710,9 +824,11 @@ export function buildDiagramGraph(figure: LiftedFigure): DiagramGraph {
         .forEach((e) => {
           if (usedNotes.has(e.note)) return;
           usedNotes.add(e.note);
+          attached.add(e.note);
           targets.forEach((t) => byId.get(t)?.notes.push(oneLine(S.notes[e.note].lines)));
         });
       labels.forEach((l) => targets.forEach((t) => byId.get(t)?.notes.push(l)));
+      labelNotes.forEach((j) => attached.add(j));
       return;
     }
     if (targets.length === 0 && sources.length >= 2) {
@@ -797,6 +913,7 @@ export function buildDiagramGraph(figure: LiftedFigure): DiagramGraph {
     box.label = splitLabel(text);
     box.kind = kindOf({ lines: [{ text }], titleCount: 1 });
     usedNotes.add(j);
+    attached.add(j);
   });
   // Siblings written as ":vault" beside "PROBER THREAD:stage" share the prefix.
   nodes.forEach((nd) => {
@@ -871,11 +988,21 @@ export function buildDiagramGraph(figure: LiftedFigure): DiagramGraph {
     label: labelOf(g),
     details: g.lines.map((l) => l.text).slice(1),
   }));
+  // Confidence counts the notes the graph attached to a card (a promoted label, a `◄──` pointer, a
+  // box's name) as placed text; wire labels and notes left over for the nearest card count against it.
+  let placedNotes = 0;
+  attached.forEach((j) => {
+    placedNotes += S.notes[j].lines.join('').replace(/\s/g, '').length;
+  });
+  const placed = S.quality + placedNotes / Math.max(1, S.textSize);
+  // A small figure (two or three cards) draws when every card is joined; a lone card never does.
+  const joined = outNodes.every((n) => outEdges.some((e) => e.from === n.id || e.to === n.id));
   const thin =
-    outNodes.length < 4 ||
+    outNodes.length < 2 ||
+    (outNodes.length < 4 && !joined) ||
     outEdges.length < outNodes.length / 2 ||
-    S.quality < 0.6 ||
+    placed < 0.6 ||
     S.dangling > 2 ||
     outNodes.length > MAX_GRAPH_NODES;
-  return { nodes: outNodes, edges: outEdges, groups: outGroups, quality: S.quality, dangling: S.dangling, thin };
+  return { nodes: outNodes, edges: outEdges, groups: outGroups, quality, dangling: S.dangling, thin };
 }

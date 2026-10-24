@@ -9,6 +9,7 @@ import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
+import { SCREENSHOT_ROOT } from './pages.ts';
 
 const STUDIO_PORTAL_AVAILABLE = existsSync(join(homedir(), 'studio-portal', '.planning'));
 const SP_BASE_URL = 'http://127.0.0.1:4198';
@@ -142,5 +143,96 @@ test.describe('RESEARCH briefing', () => {
     await expect(page.locator('.view-research-env .status-chip', { hasText: 'blocking' })).toHaveCount(3);
     await expect(page.locator('.view-research-pitfall[data-severity="CRITICAL"]')).toHaveCount(3);
     await expect(page.locator('.view-research-approved[data-dashed="true"]')).toHaveCount(4);
+  });
+});
+
+// labelore v1.0/01's system diagram: a CLI box whose right border the author drew past its corner
+// (the as-drawn view must close around it with no stray bars).
+test.describe('RESEARCH briefing figures', () => {
+  test('LB v1.0/01 architecture figures', async ({ page, baseURL }) => {
+    const base = baseURL ?? 'http://127.0.0.1:4199';
+    const url = await resolveFixtureUrl(base, '01-read-layer-domain-model/01-RESEARCH.md');
+    await page.addInitScript(() => window.localStorage.setItem('labelore-theme', 'light'));
+    await page.goto(url);
+    await page.locator('#research-summary').waitFor({ state: 'visible' });
+    const system = page.locator('#research-architecture .figure-frame').first();
+
+    // Lanes by default: the unboxed disk source and both outputs are nodes beside the three boxes.
+    const nodes = system.locator('.lane-diagram-node');
+    await expect(nodes).toHaveCount(6);
+    for (const name of ['Layer A', 'Layer B', 'CLI', 'stdout JSON', 'Vitest golden-file suite']) {
+      await expect(nodes.filter({ hasText: name })).toHaveCount(1);
+    }
+    await expect(nodes.filter({ hasText: '.planning' })).toHaveAttribute('data-kind', 'external');
+
+    // Shown as drawn: three clean cards, the CLI title inside its card.
+    await system.getByRole('button', { name: 'Shown as drawn' }).click();
+    await expect(system.locator('.lifted-diagram-card[data-kind="box"]')).toHaveCount(3);
+    const rows = system.locator('.lifted-diagram-row');
+    for (const row of [25, 26, 27, 28]) await expect(rows.nth(row).locator('[data-glyph="line"]')).toHaveCount(0);
+    const title = await system.locator('.lifted-diagram-node', { hasText: /^CLI \(src\/cli/ }).boundingBox();
+    const cli = await system.locator('.lifted-diagram-card[data-kind="box"]').evaluateAll((cards, top) => {
+      const hit = cards
+        .map((card) => card.getBoundingClientRect())
+        .find((r) => r.top <= (top as number) && r.bottom >= (top as number));
+      return hit ? hit.right : null;
+    }, (title?.y ?? 0) + (title?.height ?? 0) / 2);
+    expect(title).not.toBeNull();
+    expect(cli).not.toBeNull();
+    expect(cli ?? 0).toBeGreaterThanOrEqual((title?.x ?? 0) + (title?.width ?? 0) - 0.5);
+  });
+
+  test('LB v1.0/01: figures fit with no inner scrollbar, and a tree in the structure notes spans the chapter', async ({
+    page,
+    baseURL,
+  }) => {
+    const base = baseURL ?? 'http://127.0.0.1:4199';
+    const url = await resolveFixtureUrl(base, '01-read-layer-domain-model/01-RESEARCH.md');
+    await page.addInitScript(() => window.localStorage.setItem('labelore-theme', 'light'));
+    await page.goto(url);
+    await page.locator('#research-summary').waitFor({ state: 'visible' });
+    const architecture = page.locator('#research-architecture');
+    const system = architecture.locator('.figure-frame').first();
+
+    // Every vertical scroller inside a figure body: none may overflow while the figure fits.
+    const scrollers = () =>
+      architecture.locator('.figure-frame-body').evaluateAll((bodies) =>
+        bodies
+          .flatMap((body) => [body, ...Array.from(body.querySelectorAll('*'))])
+          .filter((el) => ['auto', 'scroll'].includes(getComputedStyle(el).overflowY))
+          .filter((el) => el.scrollHeight > el.clientHeight)
+          .map((el) => `${el.className}: ${el.scrollHeight} > ${el.clientHeight}`),
+      );
+    expect(await scrollers()).toEqual([]);
+    await system.screenshot({ path: join(SCREENSHOT_ROOT, 'qhq', 'system-lanes.png') });
+    await system.getByRole('button', { name: 'Shown as drawn' }).click();
+    await expect(system.locator('.lifted-diagram-card').first()).toBeVisible();
+    expect(await scrollers()).toEqual([]);
+    await system.screenshot({ path: join(SCREENSHOT_ROOT, 'qhq', 'system-as-drawn.png') });
+
+    // The fixtures/test tree sits in the structure notes: as wide as the src/ tree above it, styled the
+    // same, wider than the note's prose; a note with no figure keeps its reading measure.
+    const sub = architecture.locator('.view-research-sub').filter({ has: page.locator('.view-research-note .figure-frame') }).first();
+    const [outer, inner] = await Promise.all([
+      sub.locator(':scope > .figure-frame').boundingBox(),
+      sub.locator('.view-research-note .figure-frame').first().boundingBox(),
+    ]);
+    expect(Math.abs((outer?.width ?? 0) - (inner?.width ?? -10))).toBeLessThanOrEqual(1);
+    const list = await sub.locator('.view-research-note ul').first().boundingBox();
+    if (list) expect(inner?.width ?? 0).toBeGreaterThan(list.width);
+    const look = (frame: string) =>
+      sub.locator(frame).locator('.clean-tree-name').first().evaluate((el) => {
+        const style = getComputedStyle(el);
+        return [style.fontSize, style.color];
+      });
+    expect(await look('.view-research-note .figure-frame >> nth=0')).toEqual(await look(':scope > .figure-frame'));
+    const capped = await page
+      .locator('div.view-research-note')
+      .evaluateAll((notes) =>
+        notes.filter((n) => !n.querySelector('.figure-frame')).map((n) => getComputedStyle(n).maxWidth),
+      );
+    expect(capped.length).toBeGreaterThan(0);
+    for (const value of capped) expect(value).not.toBe('none');
+    await sub.screenshot({ path: join(SCREENSHOT_ROOT, 'qhq', 'directory-structure.png') });
   });
 });

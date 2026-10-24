@@ -84,6 +84,22 @@ describe('research view contract', () => {
     expect(frame).toMatch(/aria-pressed=\{grid\}/);
   });
 
+  it('a figure is never its own scroller, and a figure in a research note spans the chapter', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const rule = (selector: string): string => {
+      const start = css.indexOf(`${selector} {`);
+      expect(start, selector).toBeGreaterThan(-1);
+      return css.slice(start, css.indexOf('}', start));
+    };
+    // The global pre rule's overflow-x would make these blocks scroll vertically on a sub-pixel overflow.
+    for (const selector of ['.lifted-diagram-text', '.figure-frame-plain']) {
+      expect(rule(selector), selector).toContain('overflow: visible');
+      expect(rule(selector), selector).toContain('max-width: none');
+    }
+    expect(rule('div.view-research-note:has(> .figure-frame)')).toContain('max-width: none');
+    expect(rule('div.view-research-note:has(> .figure-frame) > :not(.figure-frame)')).toContain('max-width: 72ch');
+  });
+
   it('the lane diagram reads named :root figure tokens, tints only the Client icon, and stays in the 3x3 block (quick-260930-mp6)', async () => {
     const css = await source('src/web/styles/globals.css');
     for (const token of ['--figure-wire', '--figure-lane', '--figure-icon', '--figure-group-fill']) {

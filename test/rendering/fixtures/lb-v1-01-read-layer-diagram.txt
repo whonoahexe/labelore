@@ -1,0 +1,35 @@
+<project>/.planning/  (disk)
+        │  fs.readdirSync(recursive) / fs.readFileSync / fs.statSync
+        ▼
+┌───────────────────────────────────────────────────────────┐
+│ LAYER A — PlanningFilesystem (planning-fs/)                │
+│  capabilities: { watch: false, write: false }               │
+│  list(dir) · read(path) · exists(path)                       │
+│  v1: LocalFsPlanningFilesystem   (D-08: + InMemoryFs twin)   │
+└───────────────────────┬───────────────────────────────────┘
+                         │ RawArtifact { path, content, mtimeMs }
+                         ▼
+┌───────────────────────────────────────────────────────────┐
+│ LAYER B — PlanningRepository (planning-repo/)               │
+│  1. discover()      → ArtifactRef[] (path, inferred kind)    │
+│  2. registry.parse()→ per-ref, try/catch isolated (DATA-02)  │
+│  3. assemble()      → domain graph, cross-refs resolved      │
+│     (D-10: dangling → {raw, resolved:null}, not a warning)   │
+│  3b. scanMentions() → runs AFTER dispatch (D-14), scans      │
+│     body text outside fences/spans (D-15) for the 4 ID       │
+│     schemes (D-13) → mention records (D-16: ref+pos+excerpt) │
+│  → ProjectSnapshot { project, warnings[], loadStatus }        │
+│     (D-12: load() never throws; loadStatus always present)    │
+└───────────────────────┬───────────────────────────────────┘
+                         ▼
+┌───────────────────────────────────────────────────────────┐
+│ CLI (src/cli/snapshot.ts) — run via `node src/cli/snapshot.ts <path>`│
+│  normalizingSerializer() (D-07): abs→root-relative paths,     │
+│  mtimeMs→placeholder under --stable; body omitted by default  │
+│  (D-06), included under --with-bodies                         │
+└───────────────────────┬───────────────────────────────────┘
+                         ▼
+        stdout JSON  ◄────────────────►  Vitest golden-file suite
+        (manual/smoke use)               (imports the SAME repository
+                                          call — D-05 — diffs against
+                                          committed golden per fixture)

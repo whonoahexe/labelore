@@ -553,3 +553,64 @@ describe('liftDiagram — cost bounds on the new walks (T-jzt-01)', () => {
     expect(performance.now() - started).toBeLessThan(250);
   });
 });
+
+// A right border the author drew further out than the drift walk reaches: the box closes around its
+// longest line and the border's bars are blanked. The fixture is labelore's v1.0 Phase 1 RESEARCH
+// system diagram, verbatim; its CLI box has its top-right corner at column 60, a title-row border at
+// 71 and three rows bordered at 64.
+describe('liftDiagram — right borders past the drift walk', () => {
+  const boxOn = (figure: LiftedFigure, r1: number): LiftCard | undefined =>
+    figure.cards.find((c) => c.kind === 'box' && c.r1 === r1);
+  const linesOn = (figure: LiftedFigure, row: number): string[] =>
+    (figure.rows[row] ?? []).filter((s) => s.kind === 'line').map((s) => s.text);
+
+  it('LB v1.0/01: the CLI box widens to its title and keeps no stray bars; the other boxes are as before', async () => {
+    const figure = must(liftDiagram(await fixture('lb-v1-01-read-layer-diagram')));
+    expect(figure.cards.filter((c) => c.kind === 'box')).toHaveLength(3);
+    expect(boxOn(figure, 3)).toMatchObject({ c2: 64 });
+    expect(boxOn(figure, 11)).toMatchObject({ c2: 65 });
+    const cli = boxOn(figure, 24);
+    expect(cli?.c2).toBeGreaterThanOrEqual(71);
+    expect(cli?.widened).toBe(true);
+    for (const row of [25, 26, 27, 28]) expect(linesOn(figure, row)).toEqual([]);
+    const title = figure.rows[25].find((s) => s.kind === 'node');
+    expect(title?.text.startsWith('CLI (src/cli/snapshot.ts)')).toBe(true);
+    expect(title?.text.endsWith('<path>`')).toBe(true);
+  });
+
+  it('a box whose rows put their bar 4 and 9 columns past the corner widens to the farthest bar + 1', () => {
+    const figure = must(liftDiagram('┌────────┐\n│ abcdefghij │\n│ abcdefghijklmno │\n└────────┘'));
+    const boxes = figure.cards.filter((c) => c.kind === 'box');
+    expect(boxes).toHaveLength(1);
+    expect(boxes[0]).toMatchObject({ c2: 19, widened: true });
+    expect(linesOn(figure, 1)).toEqual([]);
+    expect(linesOn(figure, 2)).toEqual([]);
+  });
+
+  it('a row with no border of its own takes the bar of the row beside it, not a stray one', () => {
+    const figure = must(liftDiagram('┌────────┐\n│ abcdefghij │\n│ ab         │\n└────────┘'));
+    expect(figure.cards[0]).toMatchObject({ c2: 14, widened: true });
+    expect(linesOn(figure, 2)).toEqual([]);
+  });
+
+  it("never takes the left border of the box beside it", () => {
+    const figure = must(liftDiagram('┌────┐    ┌───┐\n│ abcdefg │ c │\n│ de │    │ f │\n└────┘    └───┘'));
+    const boxes = figure.cards.filter((c) => c.kind === 'box').sort((a, b) => a.c1 - b.c1);
+    expect(boxes).toHaveLength(2);
+    expect(boxes[0]).toMatchObject({ c1: 0, c2: 5, widened: false });
+    expect(boxes[1]).toMatchObject({ c1: 10, c2: 14 });
+    expect(cellAt(figure, 1, 10).ch).toBe(' ');
+    expect(cellAt(figure, 2, 10).ch).toBe(' ');
+  });
+
+  it('a bar further out than the reach is not taken', () => {
+    const far = 'x'.repeat(19);
+    const figure = must(liftDiagram(`┌──┐\n│ ${far}│\n│ ${far}│\n└──┘`));
+    expect(figure.cards[0]).toMatchObject({ c2: 3, widened: false });
+  });
+
+  it('a one-row box keeps the overrun rule: 3 or more columns out does not widen', () => {
+    const figure = must(liftDiagram('┌────┐\n│abcdefgh│\n└────┘'));
+    expect(figure.cards[0]).toMatchObject({ c2: 5, widened: false });
+  });
+});

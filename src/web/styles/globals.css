@@ -10198,6 +10198,21 @@ p.view-research-note {
   margin: 0;
 }
 
+/* A figure in a note (a second tree under the directory structure) spans the chapter like the figure
+   above it; the note's prose keeps the reading measure, and the figure keeps the figure's colour. */
+div.view-research-note:has(> .figure-frame) {
+  max-width: none;
+}
+
+div.view-research-note:has(> .figure-frame) > :not(.figure-frame) {
+  max-width: 72ch;
+}
+
+.view-research-note > .figure-frame {
+  color: var(--foreground);
+  font-size: var(--fs-6);
+}
+
 .view-research-text,
 .view-research-list {
   margin: 0;
@@ -10397,7 +10412,11 @@ p.view-research-note {
 
 .figure-frame-plain {
   width: max-content;
+  max-width: none;
   margin: 0;
+  /* Never its own scroller: the global pre rule's overflow-x would also make it scroll vertically on a
+     sub-pixel row overflow. The frame body is the figure's only scroller. */
+  overflow: visible;
   padding: 0;
   background: none;
   color: var(--foreground);
@@ -10465,7 +10484,10 @@ p.view-research-note {
 .lifted-diagram-text {
   position: relative;
   z-index: 1;
+  max-width: none;
   margin: 0;
+  /* Never its own scroller (see .figure-frame-plain). */
+  overflow: visible;
   padding: 0;
   background: none;
   color: var(--foreground);
