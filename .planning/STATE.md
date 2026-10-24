@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-24T19:20:38.096Z"
+last_updated: "2026-10-24T19:28:04.888Z"
 last_activity: 2026-10-24
 last_activity_desc: Completed quick task 261016-2j6 (compact discussion-log tables)
-state_head: 5a5022cda1d572a245ea873878566342fe9a3d5a
+state_head: b4b74633f0b8d6579fd1a755b3fa59e7df17f536
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -233,6 +233,7 @@ None.
 | 118 | Remove Coverage from plan pages | 2026-10-24 | 87df896 | — |
 | 119 | Quick task rows open the plan with a Plan / Summary switch | 2026-10-25 | ee3452b | — |
 | 120 | Leave READMEs out of drawer quick tasks | 2026-10-25 | 5a5022c | — |
+| 121 | One Quick tasks place in the drawer, grouped by milestone | 2026-10-25 | b4b7463 | — |
 
 ## Deferred Items
 
