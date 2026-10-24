@@ -125,12 +125,21 @@ export function CleanTree({ text, changedOnly = false }: { text: string; changed
 }
 
 /** The tree in the diagram's frame: the title, Changed only and the counts in the bar, Expand. */
-export function CleanTreeFigure({ text, title }: { text: string; title: string }): React.JSX.Element {
+export function CleanTreeFigure({
+  text,
+  title,
+  caption,
+}: {
+  text: string;
+  title: string;
+  caption?: React.ReactNode;
+}): React.JSX.Element {
   const counts = useMemo(() => treeCounts(parseTree(text)), [text]);
   const [changedOnly, setChangedOnly] = useState(false);
   return (
     <FigureFrame
       title={title}
+      caption={caption}
       scalable={false}
       tools={
         <>

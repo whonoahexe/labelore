@@ -20,6 +20,7 @@ import { buildFrontmatterPanels } from '../../rendering/frontmatter-views.ts';
 import { MetadataPanel } from '../components/metadata-panel.tsx';
 import type { RenderedDocument } from '../../rendering/markdown.ts';
 import { ReferencePreview, type ReferencePreviewState } from '../components/reference-preview.tsx';
+import { mountFigureIslands } from '../components/fenced-figure.tsx';
 import { DocumentViewToggle } from '../components/document-view-toggle.tsx';
 import { DocumentOutline, type OutlineEntry } from '../components/document-outline.tsx';
 import { useActiveSection } from '../components/use-active-section.ts';
@@ -241,7 +242,15 @@ const DocumentCanvas = memo(function DocumentCanvas({
   );
 });
 
-export function DocumentView({ document }: { document: RenderedDocument }): React.JSX.Element {
+export function DocumentView({
+  document,
+  figures = true,
+}: {
+  document: RenderedDocument;
+  /** Hydrate the server's figure hosts (diagrams and directory trees). Off in Source mode, which
+   * shows each fence as the plain highlighted code block. */
+  figures?: boolean;
+}): React.JSX.Element {
   const mountRef = useRef<HTMLDivElement>(null);
   const [runtimeWarnings, setRuntimeWarnings] = useState<string[]>([]);
   const [referenceState, setReferenceState] = useState<ReferencePreviewState | null>(null);
@@ -407,6 +416,16 @@ export function DocumentView({ document }: { document: RenderedDocument }): Reac
     };
   }, [document, previews, hash]);
 
+  // Its own effect, apart from the references/mermaid one above, so a hash change never re-mounts
+  // the figures. The disposer restores each host's source block (StrictMode replays this cleanly).
+  const documentHtml = document.html;
+  const documentEmpty = document.empty;
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (!figures || documentEmpty || !mount) return;
+    return mountFigureIslands(mount);
+  }, [documentHtml, documentEmpty, figures]);
+
   if (document.empty) {
     return (
       <section className="artifact-empty" role="status">
@@ -440,9 +459,11 @@ export function DocumentView({ document }: { document: RenderedDocument }): Reac
 function ArtifactReader({
   title,
   document,
+  figures = true,
 }: {
   title: string;
   document: RenderedDocument;
+  figures?: boolean;
 }): React.JSX.Element {
   const shown = useMemo(() => dropLeadingTitle(document, title), [document, title]);
   const entries: OutlineEntry[] = useMemo(
@@ -462,7 +483,7 @@ function ArtifactReader({
     >
       <DocumentOutline entries={entries} activeId={activeId} />
       <article className="document-canvas" aria-label={`${title} document`}>
-        <DocumentView document={shown} />
+        <DocumentView document={shown} figures={figures} />
       </article>
     </div>
   );
@@ -1278,7 +1299,11 @@ export function ArtifactPage({
       ) : viewAvailable && mode === 'view' && composed && shown ? (
         <ViewReader title={artifact.title} composed={composed} shown={shown} />
       ) : (
-        <ArtifactReader title={artifact.title} document={document} />
+        <ArtifactReader
+          title={artifact.title}
+          document={document}
+          figures={!(viewAvailable && mode === 'source')}
+        />
       )}
     </main>
   );

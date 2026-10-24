@@ -73,7 +73,7 @@ describe('revised visual contract (G-08, G-10, G-05, G-07, G-03, E9 long-text)',
 
   it('keeps exactly the fenced code block as the surviving Layer-1 box', async () => {
     const css = await source('src/web/styles/globals.css');
-    const blocks = ruleBlocks(css, '.artifact-document pre {');
+    const blocks = ruleBlocks(css, '.artifact-document pre:not([data-figure-island] *) {');
     expect(blocks.length).toBeGreaterThanOrEqual(1);
     expect(blocks.some((block) => block.includes('border: 1px solid var(--border)'))).toBe(true);
   });
@@ -379,7 +379,7 @@ describe('nested prose measure and wrapping (F3, F4)', () => {
     expect(css).not.toMatch(/\.artifact-document > :is\(p, ul, ol, blockquote\) \{/);
     const blocks = ruleBlocks(
       css,
-      '.artifact-document :is(p, ul, ol, blockquote):not(table *):not(pre *):not(.mermaid *) {',
+      '.artifact-document :is(p, ul, ol, blockquote):not(table *):not(pre *):not(.mermaid *):not([data-figure-island] *) {',
     );
     expect(blocks).toHaveLength(1);
     expect(blocks[0]).toMatch(/max-width:\s*76ch/);
@@ -387,7 +387,7 @@ describe('nested prose measure and wrapping (F3, F4)', () => {
 
   it('breaks unbroken .planning paths in prose without touching code blocks', async () => {
     const css = await source('src/web/styles/globals.css');
-    const blocks = ruleBlocks(css, '.artifact-document :is(p, li, dd, blockquote):not(pre *) {');
+    const blocks = ruleBlocks(css, '.artifact-document :is(p, li, dd, blockquote):not(pre *):not([data-figure-island] *) {');
     expect(blocks).toHaveLength(1);
     expect(blocks[0]).toMatch(/overflow-wrap:\s*anywhere/);
   });
@@ -501,7 +501,7 @@ describe('scrollbar-thumb-hover-revealed scrollbars (QQK-01, QQK-02, QQK-03)', (
 
   it('leaves no scrollbar declaration at any of the four legacy sites', async () => {
     const css = await source('src/web/styles/globals.css');
-    for (const selector of ['html {', '.tree-navigator {', '.mermaid {', '.artifact-document pre {']) {
+    for (const selector of ['html {', '.tree-navigator {', '.mermaid {', '.artifact-document pre:not([data-figure-island] *) {']) {
       for (const block of ruleBlocks(css, selector)) {
         expect(block).not.toMatch(/scrollbar/);
       }

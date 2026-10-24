@@ -3969,7 +3969,7 @@ a.todo-title:hover {
   margin-top: 0;
 }
 
-.artifact-document :is(h1, h2, h3, h4, h5, h6) {
+.artifact-document :is(h1, h2, h3, h4, h5, h6):not([data-figure-island] *) {
   position: relative;
   scroll-margin-top: 5rem;
   margin: 1.8em 0 0.65em;
@@ -4011,9 +4011,20 @@ a.todo-title:hover {
   min-width: 8ch;
 }
 
-.artifact-document pre {
+.artifact-document pre:not([data-figure-island] *) {
   border: 1px solid var(--border);
   padding: var(--space-3-5);
+}
+
+/* A mounted host shows its figure and hides the source block beside it, with the vertical spacing
+   the code block had. Keyed on the attribute, not on the hidden attribute, which an author
+   display rule would override. */
+.artifact-document [data-figure-mounted] {
+  margin: var(--space-4) 0;
+}
+
+.artifact-document [data-figure-mounted] > pre {
+  display: none;
 }
 
 .plan-section {
@@ -5528,18 +5539,18 @@ a.todo-title:hover {
 /* Measure cap. The child combinator alone missed every paragraph a plan nests inside
    .plan-section, which ran ~120 characters per line. Descendant-match instead, and exclude the
    block kinds that legitimately want the whole column. */
-.artifact-document :is(p, ul, ol, blockquote):not(table *):not(pre *):not(.mermaid *) {
+.artifact-document :is(p, ul, ol, blockquote):not(table *):not(pre *):not(.mermaid *):not([data-figure-island] *) {
   max-width: 76ch;
 }
 
 /* An unbroken .planning path is longer than a 320px viewport, and prose defaults to
    overflow-wrap: normal — so the text, not any element box, pushed the page wider than the
    screen. Break inside the token rather than letting it set a floor on the layout. */
-.artifact-document :is(p, li, dd, blockquote):not(pre *) {
+.artifact-document :is(p, li, dd, blockquote):not(pre *):not([data-figure-island] *) {
   overflow-wrap: anywhere;
 }
 
-.artifact-document :is(h1, h2, h3, h4, h5, h6) {
+.artifact-document :is(h1, h2, h3, h4, h5, h6):not([data-figure-island] *) {
   margin-top: 2.3em;
   margin-bottom: 0.75em;
   letter-spacing: var(--ls-tight);
@@ -5572,11 +5583,11 @@ a.todo-title:hover {
   color: var(--muted-foreground);
 }
 
-.artifact-document :is(ul, ol) {
+.artifact-document :is(ul, ol):not([data-figure-island] *) {
   padding-left: var(--space-5);
 }
 
-.artifact-document li + li {
+.artifact-document li + li:not([data-figure-island] *) {
   margin-top: var(--space-1-5);
 }
 
@@ -5649,7 +5660,7 @@ a.todo-title:hover {
   background: var(--table-zebra);
 }
 
-.artifact-document pre {
+.artifact-document pre:not([data-figure-island] *) {
   padding: var(--space-4) var(--space-5);
   border: 1px solid var(--border);
   background: var(--secondary) !important;
