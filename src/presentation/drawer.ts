@@ -113,6 +113,12 @@ function lastSegment(path: string): string {
   return segments[segments.length - 1] ?? path;
 }
 
+/** Phases with a directory carry a padded number ("01") and roadmap-only phases a bare one ("3");
+ * the drawer pads the whole part to two digits so every row reads the same ("03", "02.1"). */
+function displayPhaseNumber(number: string): string {
+  return number.replace(/^\d+/, (whole) => whole.padStart(2, '0'));
+}
+
 function byPath(left: { path: string }, right: { path: string }): number {
   return left.path.localeCompare(right.path);
 }
@@ -204,7 +210,7 @@ function phasePlaceOf(phase: PhaseDto, artifactsByPhase: ReadonlyMap<string, Art
     key: phase.key,
     url: buildPhaseUrl(phase.identity),
     milestoneVersion: phase.identity.milestoneVersion,
-    number: phase.identity.number,
+    number: displayPhaseNumber(phase.identity.number),
     name: phase.name,
     status: phaseStatusOf(phase, done, plans.length, tokens),
     done,
