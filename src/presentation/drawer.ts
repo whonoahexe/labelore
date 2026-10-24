@@ -9,6 +9,7 @@ import {
   parseMilestoneFileName,
   parseMilestoneQuickDirName,
   parsePhaseArtifactName,
+  parseQuickArtifactName,
   parseQuickDirName,
 } from '../planning-repo/naming.ts';
 import type { ArtifactDto, MilestoneDto, PhaseDto, ProjectPresentation } from '../server/project-presentation.ts';
@@ -72,6 +73,8 @@ export interface DrawerQuickTask {
   label: string;
   /** The task's short date (`Oct 24`); null when its directory name carries none. */
   dateBadge: string | null;
+  /** Where the task's row goes: its PLAN, else its SUMMARY, else its first file. */
+  url: string;
   files: DrawerFileRow[];
 }
 
@@ -284,8 +287,14 @@ function quickPlaceOf(
       }))
       .sort((left, right) => left.rank - right.rank || byPath(left.row, right.row))
       .map((placed) => placed.row);
+    const named = (artifact: string) =>
+      files.find((row) => {
+        const parsed = parseQuickArtifactName(lastSegment(row.path));
+        return parsed.matched && parsed.artifact === artifact;
+      });
+    const url = (named('PLAN') ?? named('SUMMARY') ?? files[0]).url;
     tasks.push({
-      task: { key: taskDir, label, dateBadge: badge, files },
+      task: { key: taskDir, label, dateBadge: badge, url, files },
       month: (parsedDir.matched ? quickMonthOf(parsedDir.date) : null) ?? 'Undated',
       rank: rankOf({ location: 'quick', nodeType: isFile ? 'file' : 'directory', path: taskDir }),
     });

@@ -865,51 +865,14 @@
   display: none;
 }
 
-/* A quick task is a native disclosure: its summary reads like a file row (date, then name) and its
-   body is one wrapping row of chips, one per file. No marker and no chevron. */
+/* A quick task is one row that opens its plan: date, then name. */
 .places-month {
   display: grid;
   gap: var(--space-0-5);
 }
 
-.places-quick-task > summary {
+.places-file-row.places-quick-task {
   grid-template-columns: var(--space-10) minmax(0, 1fr);
-  list-style: none;
-}
-
-.places-quick-task > summary::-webkit-details-marker {
-  display: none;
-}
-
-.places-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1-5);
-  padding: var(--space-1-5) var(--space-3) var(--space-3);
-}
-
-.places-chip {
-  padding: var(--space-0-5) var(--space-2);
-  border: 1px solid var(--sidebar-border);
-  color: var(--muted-foreground);
-  font-size: var(--fs-2);
-  text-decoration: none;
-}
-
-.places-chip:hover {
-  background: var(--sidebar-accent);
-  color: var(--sidebar-foreground);
-}
-
-.places-chip:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: -2px;
-}
-
-.places-chip[data-active='true'] {
-  border-color: var(--primary-border);
-  background: var(--sidebar-primary);
-  color: var(--sidebar-foreground);
 }
 
 /* A plan's marker is a square, never an icon: it fills once the plan's summary exists. */
