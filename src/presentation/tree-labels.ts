@@ -84,6 +84,14 @@ function shortQuickDate(date: string): string | null {
   return `${MONTH_NAMES[monthIndex]} ${day}`;
 }
 
+/** A quick task's `YYMMDD` date as the month it belongs to ('261024' gives 'Oct 2026'). String
+ * slicing only, never Date; an out-of-range month gives null. */
+export function quickMonthOf(date: string): string | null {
+  const monthIndex = Number(date.slice(2, 4)) - 1;
+  if (!Number.isInteger(monthIndex) || monthIndex < 0 || monthIndex > 11) return null;
+  return `${MONTH_NAMES[monthIndex]} 20${date.slice(0, 2)}`;
+}
+
 function lastSegment(path: string): string {
   const segments = path.split('/');
   return segments[segments.length - 1] ?? path;

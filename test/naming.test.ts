@@ -6,6 +6,7 @@ import {
   parseQuickDirName,
   parseMilestoneFileName,
   parseMilestonePhasesDirName,
+  parseMilestoneQuickDirName,
   comparePhaseNumbers,
   isCanonicalRootFile,
 } from '../src/planning-repo/naming.ts';
@@ -106,6 +107,18 @@ describe('parseMilestonePhasesDirName', () => {
 
   it('does not match a plain phases directory', () => {
     expect(parseMilestonePhasesDirName('phases')).toEqual({ matched: false });
+  });
+});
+
+describe('parseMilestoneQuickDirName', () => {
+  it('parses the archived-quick-tasks directory version', () => {
+    expect(parseMilestoneQuickDirName('v1.1-quick')).toEqual({ matched: true, version: 'v1.1' });
+    expect(parseMilestoneQuickDirName('V2.0.1-QUICK')).toEqual({ matched: true, version: 'V2.0.1' });
+  });
+
+  it('does not match the live quick directory or the archived phases directory', () => {
+    expect(parseMilestoneQuickDirName('quick')).toEqual({ matched: false });
+    expect(parseMilestoneQuickDirName('v1.1-phases')).toEqual({ matched: false });
   });
 });
 

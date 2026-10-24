@@ -183,6 +183,15 @@ export function parseMilestonePhasesDirName(dirName: string): MilestonePhasesDir
   return { matched: true, version: m[1] };
 }
 
+// The archived quick tasks of a shipped milestone: milestones/vX.Y-quick/<task>/...
+const MILESTONE_QUICK_DIR_RE = /^(v\d+\.\d+(?:\.\d+)?)-quick$/i;
+
+export function parseMilestoneQuickDirName(dirName: string): MilestonePhasesDirResult {
+  const m = dirName.match(MILESTONE_QUICK_DIR_RE);
+  if (!m) return { matched: false };
+  return { matched: true, version: m[1] };
+}
+
 interface ParsedPhaseNumber {
   base: number;
   letter: string | null;
