@@ -1,11 +1,12 @@
 // The Pitfalls spine's body (quick-261024-k8u, sketch 035 A): a watch list with one row per
-// pitfall that opens in place, and the "Looks done but isn't" ledger. Warning signs are marked with
+// pitfall that opens in place, the performance, security and UX tables as one section with a kind
+// switch over swaps (sketch 037 B), and the "Looks done but isn't" ledger. Warning signs are marked with
 // small squares drawn by CSS in the pitfall tone (the `missing` family); no icon or glyph marks any
 // list item. `?pitfall=N` opens row N. Every string is a React text node.
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
-import type { PitfallRowModel, PitfallsPanel, PitfallTabKey } from '../../presentation/project-research-panels.ts';
-import { Chev, Meter, PitfallChipView, ResearchInline, SectionHead } from './research-atoms.tsx';
+import type { PitfallRowModel, PitfallsPanel, PitfallTablesPanel, PitfallTabKey } from '../../presentation/project-research-panels.ts';
+import { Chev, Meter, PitfallChipView, ResearchInline, SectionHead, SwapRows } from './research-atoms.tsx';
 
 function Blocks({ blocks }: { blocks: ReadonlyArray<{ bullet: boolean; text: string }> }): React.JSX.Element {
   const groups: Array<{ bullet: boolean; items: string[] }> = [];
@@ -184,6 +185,36 @@ function requestedPitfall(value: string | null): number | null {
   return parsed > 0 ? parsed : null;
 }
 
+/** Sketch 037 B: one kind at a time, each row the item struck through → its fix. */
+function PitfallTablesSection({ tables }: { tables: PitfallTablesPanel }): React.JSX.Element {
+  const [kind, setKind] = useState(tables.kinds[0].key);
+  const chosen = tables.kinds.find((entry) => entry.key === kind) ?? tables.kinds[0];
+  return (
+    <section>
+      <SectionHead title="Performance, security and UX" tally={tables.tally} />
+      <div className="research-kinds" role="group" aria-label="Pitfall kinds">
+        {tables.kinds.map((entry) => (
+          <button key={entry.key} type="button" className="research-kind" aria-pressed={chosen.key === entry.key} onClick={() => setKind(entry.key)}>
+            <b>{String(entry.count).padStart(2, '0')}</b>
+            <span className="research-label">{entry.label}</span>
+          </button>
+        ))}
+      </div>
+      {chosen.lead ? (
+        <p className="research-sec-note">
+          <ResearchInline text={chosen.lead} />
+        </p>
+      ) : null}
+      <p className="research-swap-key" aria-hidden="true">
+        <span className="research-label">{chosen.itemLabel}</span>
+        <span className="research-label">{chosen.fixLabel}</span>
+      </p>
+      {/* Remounted per kind so each table starts with nothing open. */}
+      <SwapRows key={chosen.key} items={chosen.items} />
+    </section>
+  );
+}
+
 export function PitfallsPanelBody({ panel }: { panel: PitfallsPanel }): React.JSX.Element {
   const [searchParams] = useSearchParams();
   const param = requestedPitfall(searchParams.get('pitfall'));
@@ -271,6 +302,7 @@ export function PitfallsPanelBody({ panel }: { panel: PitfallsPanel }): React.JS
           })}
         </ol>
       </section>
+      {panel.tables ? <PitfallTablesSection tables={panel.tables} /> : null}
       {panel.checks.length > 0 ? (
         <section>
           <SectionHead title="Looks done but isn't" tally={panel.checksTally} />

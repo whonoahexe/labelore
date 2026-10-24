@@ -21,6 +21,7 @@ import {
   DRIFT_ARCHITECTURE,
   DRIFT_FEATURES,
   DRIFT_PITFALLS,
+  DRIFT_SCALING,
   DRIFT_STACK,
   DRIFT_SUMMARY,
 } from './helpers/project-research-fixtures.ts';
@@ -106,6 +107,47 @@ describe("Labelore's own research files (the template shape)", () => {
     expect(lift.buildOrder?.steps[1].depends).toEqual(['A']);
     expect(lift.buildOrder?.steps[2].depends).toEqual(['A', 'B']);
     expect(lift.buildOrder?.steps[0].notes).toBe('~1–2 plans');
+  });
+
+  it('ARCHITECTURE scaling: a Scale | Adjustments table is one concern across three tiers', () => {
+    const scaling = liftArchitecture(real('ARCHITECTURE')).scaling!;
+    expect(scaling.byRow).toBe(true);
+    expect(scaling.lead).toBeNull();
+    expect(scaling.tiers).toHaveLength(3);
+    expect(scaling.tiers[0]).toMatch(/^Studio-portal reference scale \(/);
+    expect(scaling.concerns.map((concern) => concern.name)).toEqual(['Architecture Adjustments']);
+    expect(scaling.concerns[0].cells).toHaveLength(3);
+    expect(scaling.priorities.map((priority) => priority.label)).toEqual([
+      'First real bottleneck, if any',
+      "Not a bottleneck at this project's actual scale",
+    ]);
+  });
+
+  it('ARCHITECTURE scaling: a numbered section with a lead and a concerns × tiers matrix', () => {
+    const scaling = liftArchitecture(DRIFT_SCALING).scaling!;
+    expect(scaling.byRow).toBe(false);
+    expect(scaling.lead).toBe('A small studio; scale means data volume on one machine, not users.');
+    expect(scaling.axis).toBe('Concern');
+    expect(scaling.tiers).toEqual(['Today', 'Per shoot (hundreds of GB)', 'Per year']);
+    expect(scaling.concerns.map((concern) => concern.name)).toEqual(['`ingest_rows`', 'Write rate', 'Archive disk']);
+    expect(scaling.concerns[1].cells).toEqual(['low', 'per-file, far below limits', 'unchanged']);
+    expect(scaling.priorities).toEqual([
+      { label: 'First bottleneck', text: 'the archive disk during dual-target ingest. Mitigation is policy, not code.' },
+      { label: 'Second', text: 'render CPU against responsiveness. Mitigated by the lane design.' },
+    ]);
+  });
+
+  it('PITFALLS: the performance, security and UX tables with their headers and the security lead', () => {
+    const { tables } = liftPitfalls(real('PITFALLS'));
+    expect(tables.map((table) => [table.kind, table.rows.length])).toEqual([
+      ['performance', 3],
+      ['security', 3],
+      ['ux', 5],
+    ]);
+    expect(tables[0].head).toEqual(['Trap', 'Symptoms', 'Prevention', 'When It Breaks']);
+    expect(tables[2].head).toEqual(['Pitfall', 'User Impact', 'Better Approach']);
+    expect(tables[0].lead).toBeNull();
+    expect(tables[1].lead).toMatch(/^Even for a single-user, local-only tool/);
   });
 
   it('PITFALLS: ten pitfalls with how-likely, short names from the mapping, and ten checks', () => {
@@ -240,8 +282,8 @@ describe('absent sections degrade to empty lists or null', () => {
     expect(liftSummary(body)).toMatchObject({ exec: [], phases: [], gaps: [], areas: [], overall: null });
     expect(liftStack(body)).toMatchObject({ decision: null, layers: [], alternatives: null });
     expect(liftFeatures(body)).toMatchObject({ competitors: null, expected: { items: [] } });
-    expect(liftArchitecture(body)).toMatchObject({ overview: null, structure: null, buildOrder: null, antiPatterns: [] });
-    expect(liftPitfalls(body)).toMatchObject({ note: null, pitfalls: [], checks: [] });
+    expect(liftArchitecture(body)).toMatchObject({ overview: null, structure: null, scaling: null, buildOrder: null, antiPatterns: [] });
+    expect(liftPitfalls(body)).toMatchObject({ note: null, pitfalls: [], checks: [], tables: [] });
   });
 });
 

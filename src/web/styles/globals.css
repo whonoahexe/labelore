@@ -24150,7 +24150,8 @@ button.research-pf-chip:hover {
 /* ---- Features: the kind switch, feature rows, swaps, the competitor matrix ---- */
 .research-kinds {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
   margin-bottom: var(--space-6);
   border: 1px solid var(--border);
 }
@@ -24300,6 +24301,23 @@ button.research-pf-chip:hover {
   margin-top: var(--space-1);
 }
 
+/* The column labels over a run of swaps (037 B): the item's header over the struck-through text,
+   the fix's header over what to do. Columns match .research-swap-button. */
+.research-swap-key {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) 1.5rem minmax(0, 1fr) 1rem;
+  gap: var(--space-4);
+  padding-bottom: var(--space-2);
+}
+
+.research-swap-key > :first-child {
+  grid-column: 2;
+}
+
+.research-swap-key > :last-child {
+  grid-column: 4;
+}
+
 .research-matrix {
   display: grid;
   overflow-x: auto;
@@ -24399,6 +24417,187 @@ button.research-pf-chip:hover {
 .research-arch > section,
 .research-pitfalls > section {
   min-width: 0;
+}
+
+/* Scaling considerations (036 A): ranked bottlenecks, then every concern at every scale. */
+.research-scale-lead {
+  max-width: 52rem;
+  margin-bottom: var(--space-8);
+  font-size: var(--fs-fluid-3);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-snug);
+}
+
+.research-bns {
+  display: grid;
+  border-top: 1px solid var(--border);
+}
+
+.research-bn {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  gap: var(--space-5);
+  padding: var(--space-6) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.research-bn-number {
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-display-1);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-none);
+}
+
+.research-bn[data-first='true'] .research-bn-number {
+  color: var(--primary);
+}
+
+.research-bn-text {
+  max-width: 50rem;
+  margin-top: var(--space-2);
+  font-size: var(--fs-fluid-3);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-snug);
+}
+
+.research-bn-fix {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: baseline;
+  max-width: 50rem;
+  margin-top: var(--space-4);
+  font-size: var(--fs-4);
+  line-height: var(--lh-relaxed);
+}
+
+.research-bn-fix .research-label {
+  color: var(--primary);
+}
+
+.research-scale-not {
+  display: grid;
+  grid-template-columns: minmax(0, 14rem) minmax(0, 1fr);
+  gap: var(--space-2) var(--space-5);
+  align-items: baseline;
+  margin-top: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  border: 1px dashed var(--border);
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  line-height: var(--lh-relaxed);
+}
+
+.research-scale-sub {
+  margin: var(--space-10) 0 var(--space-4);
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.research-scale-grid {
+  display: grid;
+  grid-template-columns: var(--research-scale-cols);
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+}
+
+.research-scale-grid > * {
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.research-scale-corner {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.research-scale-tier {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: var(--space-2);
+  align-items: baseline;
+  background: var(--figure-lane);
+}
+
+.research-scale-tier i {
+  grid-row: span 2;
+  color: var(--primary);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-style: normal;
+}
+
+.research-scale-tier b {
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+}
+
+.research-scale-tier small {
+  grid-column: 2;
+  color: var(--muted-foreground);
+  font-size: var(--fs-2);
+  line-height: var(--lh-snug);
+}
+
+.research-scale-concern {
+  font-size: var(--fs-3);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+}
+
+.research-scale-cell {
+  font-size: var(--fs-3);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
+}
+
+.research-scale-grid[data-single='true'] .research-scale-cell {
+  padding: var(--space-4);
+  font-size: var(--fs-4);
+}
+
+.research-scale-cell[data-tone='holds'],
+.research-scale-cell[data-tone='na'] {
+  color: var(--muted-foreground);
+}
+
+.research-scale-na {
+  font-style: italic;
+}
+
+.research-scale-cell[data-pin='true'] {
+  background: var(--primary-tint);
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+
+.research-scale-pin {
+  float: right;
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  margin: 0 0 var(--space-1) var(--space-2);
+  padding: 0 var(--space-1);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+}
+
+.research-scale-cell-tier {
+  display: none;
 }
 
 .research-bo {
@@ -24971,6 +25170,39 @@ button.research-step-chip:hover {
 }
 
 @media (max-width: 42rem) {
+  .research-bn,
+  .research-scale-not {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+
+  .research-bn-number {
+    font-size: var(--fs-fluid-4);
+  }
+
+  .research-scale-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .research-scale-corner,
+  .research-scale-tier {
+    display: none;
+  }
+
+  .research-scale-concern {
+    background: var(--figure-lane);
+  }
+
+  .research-scale-cell-tier {
+    display: block;
+    color: var(--muted-foreground);
+    font-family: var(--font-mono);
+    font-size: var(--fs-1);
+    font-style: normal;
+    letter-spacing: var(--ls-wider);
+    text-transform: uppercase;
+  }
+
   .research-page {
     display: block;
     height: auto;
@@ -25108,6 +25340,10 @@ button.research-step-chip:hover {
   }
 
   .research-swap-arrow {
+    display: none;
+  }
+
+  .research-swap-key {
     display: none;
   }
 

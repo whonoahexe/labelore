@@ -7,19 +7,25 @@ import { describe, expect, it } from 'vitest';
 import { ProjectResearchHandler } from '../../src/planning-repo/handlers/project-research.ts';
 import { buildResearchViewModel, formatResearched, splitFinding } from '../../src/presentation/project-research.ts';
 import {
+  composePitfallTables,
+  composeScaling,
   deliverItems,
   deliverTile,
   gateConditions,
   phaseShort,
   placePhases,
+  scalingTone,
+  splitFix,
   splitParenthetical,
   splitSentence,
 } from '../../src/presentation/project-research-panels.ts';
+import { liftArchitecture, liftPitfalls } from '../../src/planning-repo/handlers/project-research-lift.ts';
 import { RESEARCH_FILES, projectHasResearch } from '../../src/presentation/project-research-files.ts';
 import {
   DRIFT_ARCHITECTURE,
   DRIFT_FEATURES,
   DRIFT_PITFALLS,
+  DRIFT_SCALING,
   DRIFT_STACK,
   DRIFT_SUMMARY,
 } from '../helpers/project-research-fixtures.ts';
@@ -555,5 +561,78 @@ describe('the Pitfalls panel', () => {
     expect(labelore.pitfalls.every((pitfall) => pitfall.avoid.every((avoid) => avoid.main.length > 0))).toBe(true);
     const panel = buildResearchViewModel(presentationOf({ PITFALLS: DRIFT_PITFALLS.replace('- Check mountinfo first', '- **Check mountinfo first.** Then trust nothing else') })).pitfalls!;
     expect(panel.pitfalls[0].avoid[0]).toEqual({ main: 'Check mountinfo first', rest: 'Then trust nothing else' });
+  });
+});
+
+describe('the Scaling section (036 A)', () => {
+  it("Labelore: one bottleneck pinned at the second scale, its fix split off, the note kept aside", () => {
+    const scaling = buildResearchViewModel(presentationOf(realContents())).architecture!.scaling!;
+    expect(scaling.single).toBe(true);
+    expect(scaling.tally).toBe('3 scales · 1 bottleneck');
+    expect(scaling.tiers[1]).toEqual({ name: 'A much larger single project', sub: 'thousands of files, tens of MB' });
+    expect(scaling.bottlenecks).toHaveLength(1);
+    expect(scaling.bottlenecks[0].label).toBe('First to break · at A much larger single project');
+    expect(scaling.bottlenecks[0].text).toMatch(/^Full snapshot rebuild latency/);
+    expect(scaling.bottlenecks[0].fix).toMatch(/^Mitigated by incremental re-parse/);
+    expect(scaling.concerns[0].cells.map((cell) => cell.pin)).toEqual([null, 0, null]);
+    expect(scaling.concerns[0].cells[0].tone).toBe('holds');
+    expect(scaling.notBottlenecks.map((note) => note.label)).toEqual(["Not a bottleneck at this project's actual scale"]);
+  });
+
+  it('a matrix: tones, the concern in the label, and an unpinned second bottleneck', () => {
+    const scaling = composeScaling(liftArchitecture(DRIFT_SCALING).scaling!);
+    expect(scaling.single).toBe(false);
+    expect(scaling.tally).toBe('3 scales · 3 concerns · 2 bottlenecks');
+    expect(scaling.concerns.map((concern) => concern.cells.map((cell) => cell.tone))).toEqual([
+      ['na', 'changes', 'changes'],
+      ['holds', 'changes', 'holds'],
+      ['holds', 'changes', 'changes'],
+    ]);
+    expect(scaling.bottlenecks.map((b) => b.label)).toEqual(['First to break · at Per shoot · Archive disk', 'Second to break']);
+    expect(scaling.bottlenecks[0].fix).toBe('Mitigation is policy, not code.');
+    expect(scaling.concerns[2].cells[1].pin).toBe(0);
+  });
+
+  it('reads tones and fixes conservatively', () => {
+    expect(scalingTone('N/A')).toBe('na');
+    expect(scalingTone('Same; allow resume from the last chunk')).toBe('changes');
+    expect(scalingTone('Eager load as designed; no adjustments needed')).toBe('holds');
+    expect(splitFix('slow rebuilds — mitigated by re-parsing changed paths')).toEqual({ text: 'slow rebuilds', fix: 'mitigated by re-parsing changed paths' });
+    expect(splitFix('nothing to fix here')).toEqual({ text: 'nothing to fix here', fix: null });
+  });
+
+  it('has no Scaling section when the file has none', () => {
+    expect(buildResearchViewModel(presentationOf({ ARCHITECTURE: '# Architecture\n' })).architecture!.scaling).toBeNull();
+  });
+});
+
+describe('the performance, security and UX tables (037 B)', () => {
+  it("Labelore: three kinds as swaps, the fix column as the swap's right side, the rest as details", () => {
+    const tables = buildResearchViewModel(presentationOf(realContents())).pitfalls!.tables!;
+    expect(tables.tally).toBe('11 more to avoid');
+    expect(tables.kinds.map((kind) => [kind.label, kind.count, kind.itemLabel, kind.fixLabel])).toEqual([
+      ['Performance traps', 3, 'Trap', 'Prevention'],
+      ['Security mistakes', 3, 'Mistake', 'Prevention'],
+      ['UX pitfalls', 5, 'Pitfall', 'Better approach'],
+    ]);
+    const [performance, security, ux] = tables.kinds;
+    expect(performance.items[1].bad).toBe('Synchronous full-corpus search-index build on startup');
+    expect(performance.items[1].good).toMatch(/^Background\/lazy\/incremental index build/);
+    expect(performance.items[1].details.map((detail) => detail.label)).toEqual(['Symptoms', 'When it breaks']);
+    expect(security.lead).toMatch(/^Even for a single-user/);
+    expect(security.items[0].details.map((detail) => detail.label)).toEqual(['Risk']);
+    expect(ux.items[0].details.map((detail) => detail.label)).toEqual(['User impact']);
+  });
+
+  it('keeps cells as written and leaves out a missing kind', () => {
+    const body = '# Pitfalls\n\n## UX Pitfalls\n\n| Pitfall | User Impact | Better Approach |\n|---|---|---|\n| ffmpeg progress hidden | Re-clicks | Show the job tray |\n';
+    const tables = composePitfallTables(liftPitfalls(body).tables)!;
+    expect(tables.kinds.map((kind) => kind.key)).toEqual(['ux']);
+    expect(tables.kinds[0].items[0]).toEqual({ bad: 'ffmpeg progress hidden', good: 'Show the job tray', details: [{ label: 'User impact', text: 'Re-clicks' }] });
+    expect(tables.tally).toBe('1 more to avoid');
+  });
+
+  it('has no section when the file has none of the three tables', () => {
+    expect(buildResearchViewModel(presentationOf({ PITFALLS: '# Pitfalls\n' })).pitfalls?.tables ?? null).toBeNull();
   });
 });

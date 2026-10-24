@@ -207,6 +207,23 @@ test.describe('Research page: Architecture', () => {
     await expect(page.locator('.clean-tree-count')).toHaveText('12 files · 10 folders');
   });
 
+  test('scaling sits between structure and anti-patterns: what breaks first, then the grid', async ({ page }) => {
+    await openResearch(page, '?open=architecture');
+    const heads = page.locator('.research-arch .research-section-head h3');
+    await expect(heads).toContainText(['Scaling considerations', 'Anti-patterns', 'Suggested build order']);
+    const scale = page.locator('.research-scale');
+    await expect(scale.locator('.research-section-head')).toContainText('3 scales · 1 bottleneck');
+    await expect(scale.locator('.research-bn')).toHaveCount(1);
+    await expect(scale.locator('.research-bn .research-label').first()).toHaveText('First to break · at A much larger single project');
+    await expect(scale.locator('.research-bn-fix')).toContainText('Mitigated by incremental re-parse');
+    await expect(scale.locator('.research-scale-not')).toContainText('Not a bottleneck');
+    await expect(scale.locator('.research-scale-tier')).toHaveCount(3);
+    await expect(scale.locator('.research-scale-cell[data-pin="true"] .research-scale-pin')).toHaveText('01');
+    const structureBox = await page.locator('.research-arch > section').nth(1).boundingBox();
+    const scaleBox = await scale.boundingBox();
+    expect(scaleBox!.y).toBeGreaterThan(structureBox!.y);
+  });
+
   test('three swaps open to "What people do" and "Why it\'s wrong"', async ({ page }) => {
     await openResearch(page, '?open=architecture');
     await expect(page.locator('.research-swap')).toHaveCount(3);
@@ -263,6 +280,21 @@ test.describe('Research page: Pitfalls', () => {
     await page.locator('.research-ledger .research-pf-chip', { hasText: /^02 /i }).first().click();
     await expect(page).toHaveURL(/pitfall=2/);
     await expect(page.locator('.research-wl-row[data-pitfall="2"]')).toHaveAttribute('data-open', 'true');
+  });
+
+  test('performance, security and UX sit between the pitfalls and the checklist as a kind switch over swaps', async ({ page }) => {
+    await openResearch(page, '?open=pitfalls');
+    const heads = page.locator('.research-pitfalls .research-section-head h3');
+    await expect(heads).toHaveText(['Critical pitfalls', 'Performance, security and UX', "Looks done but isn't"]);
+    const kinds = page.locator('.research-pitfalls .research-kind');
+    await expect(kinds.locator('b')).toHaveText(['03', '03', '05']);
+    await expect(kinds.first()).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.research-pitfalls .research-swap-key')).toContainText('Prevention');
+    await kinds.nth(1).click();
+    await expect(page.locator('.research-pitfalls .research-sec-note').last()).toContainText('Even for a single-user');
+    await expect(page.locator('.research-pitfalls .research-swap')).toHaveCount(3);
+    await page.locator('.research-pitfalls .research-swap-button').first().click();
+    await expect(page.locator('.research-pitfalls .research-swap-why .research-label')).toHaveText(['Risk']);
   });
 
   test('?pitfall=3 opens row 03', async ({ page }) => {

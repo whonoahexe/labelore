@@ -12,6 +12,9 @@ import {
   type FeatureItem,
   type FeaturesLift,
   type PitfallsLift,
+  type PitfallTable,
+  type PitfallTableKind,
+  type ScalingLift,
   type StackLift,
   type SummaryLift,
   type SummaryPhase,
@@ -462,9 +465,39 @@ export interface BuildStepModel {
   alsoWaitsFor: string | null;
 }
 
+export type ScalingTone = 'changes' | 'holds' | 'na';
+
+export interface ScalingCell {
+  text: string;
+  tone: ScalingTone;
+  /** The index into `bottlenecks` of the bottleneck that bites here, or null. */
+  pin: number | null;
+}
+
+export interface ScalingBottleneck {
+  number: string;
+  label: string;
+  text: string;
+  fix: string | null;
+}
+
+/** Sketch 036 A: what breaks first leads, then the concerns × scale grid. */
+export interface ScalingPanel {
+  lead: string | null;
+  tally: string;
+  axis: string;
+  /** The table listed one tier per row with a single concern: the grid drops its concern column. */
+  single: boolean;
+  tiers: Array<{ name: string; sub: string | null }>;
+  concerns: Array<{ name: string; cells: ScalingCell[] }>;
+  bottlenecks: ScalingBottleneck[];
+  notBottlenecks: Array<{ label: string; text: string }>;
+}
+
 export interface ArchitecturePanel {
   overview: string | null;
   structure: string | null;
+  scaling: ScalingPanel | null;
   antiPatterns: SwapItem[];
   antiTally: string;
   buildOrder: {
@@ -499,6 +532,78 @@ function stripNamePrefix(deliverable: string, name: string): string {
     if (rest !== deliverable.slice(name.length)) return rest;
   }
   return deliverable;
+}
+
+const ORDINALS = ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth', 'Seventh', 'Eighth', 'Ninth', 'Tenth'];
+
+/** A cell that only says nothing changes reads quiet; "n/a" reads as "doesn't apply". */
+export function scalingTone(text: string): ScalingTone {
+  if (/^n\/?a\.?$/i.test(text.trim())) return 'na';
+  return /^(unchanged|same|low|adequate)\.?$|no adjustments? needed/i.test(plainText(text).trim()) ? 'holds' : 'changes';
+}
+
+/** A priority's problem and its fix: split at "— mitigated …" or ". Mitigated/Mitigation …". */
+export function splitFix(text: string): { text: string; fix: string | null } {
+  const match = /\s*[—–]\s*(mitigated\b.*)$|\.\s+(mitigat(?:ed|ion)\b.*)$/i.exec(text);
+  if (!match) return { text, fix: null };
+  return { text: text.slice(0, match.index).trim(), fix: match[1] ?? match[2] };
+}
+
+const STEM_STOP = /^(with|this|that|only|from|once|than|when|which|relev|reall|first|secon|bottl|mitig)/;
+
+/** Five-letter stems of the words of four letters or more. */
+function stems(text: string): Set<string> {
+  const words = plainText(text).toLowerCase().match(/[a-z]{4,}/g) ?? [];
+  return new Set(words.map((word) => word.slice(0, 5)).filter((stem) => !STEM_STOP.test(stem)));
+}
+
+/** Where a bottleneck bites: the cell sharing the most stems with it, at least two, or nowhere. */
+function pinCell(problem: string, concerns: ScalingLift['concerns']): { concern: number; tier: number } | null {
+  const want = stems(problem);
+  let best: { shared: number; concern: number; tier: number } | null = null;
+  for (let ci = 0; ci < concerns.length; ci += 1) {
+    for (let ti = 0; ti < concerns[ci].cells.length; ti += 1) {
+      const have = stems(`${concerns[ci].name} ${concerns[ci].cells[ti]}`);
+      let shared = 0;
+      for (const stem of want) if (have.has(stem)) shared += 1;
+      if (shared >= 2 && (!best || shared > best.shared)) best = { shared, concern: ci, tier: ti };
+    }
+  }
+  return best ? { concern: best.concern, tier: best.tier } : null;
+}
+
+export function composeScaling(scaling: ScalingLift): ScalingPanel {
+  const tiers = scaling.tiers.map((tier) => splitParenthetical(tier));
+  const pins = new Map<string, number>();
+  const bottlenecks: ScalingBottleneck[] = [];
+  const notBottlenecks: ScalingPanel['notBottlenecks'] = [];
+  for (const priority of scaling.priorities) {
+    if (priority.label && /^not\b/i.test(priority.label)) {
+      notBottlenecks.push({ label: sentenceCase(priority.label), text: `${sentenceCase(priority.text)}.` });
+      continue;
+    }
+    const at = bottlenecks.length;
+    const { text, fix } = splitFix(priority.text);
+    const pin = pinCell(text, scaling.concerns);
+    if (pin) pins.set(`${pin.concern}:${pin.tier}`, at);
+    const where = pin ? ` · at ${tiers[pin.tier].name}${scaling.byRow ? '' : ` · ${plainText(scaling.concerns[pin.concern].name)}`}` : '';
+    bottlenecks.push({
+      number: pad(at + 1),
+      label: `${ORDINALS[at] ?? pad(at + 1)} to break${where}`,
+      text: sentenceCase(text),
+      fix: fix ? `${sentenceCase(fix)}.` : null,
+    });
+  }
+  const concerns = scaling.concerns.map((concern, ci) => ({
+    name: concern.name,
+    cells: concern.cells.map((text, ti) => ({ text: capitalise(text), tone: scalingTone(text), pin: pins.get(`${ci}:${ti}`) ?? null })),
+  }));
+  const tally = [
+    `${tiers.length} scale${tiers.length === 1 ? '' : 's'}`,
+    ...(scaling.byRow || concerns.length === 0 ? [] : [`${concerns.length} concern${concerns.length === 1 ? '' : 's'}`]),
+    ...(bottlenecks.length > 0 ? [`${bottlenecks.length} bottleneck${bottlenecks.length === 1 ? '' : 's'}`] : []),
+  ].join(' · ');
+  return { lead: scaling.lead, tally, axis: scaling.axis, single: scaling.byRow, tiers, concerns, bottlenecks, notBottlenecks };
 }
 
 export function composeArchitecturePanel(architecture: ArchitectureLift): ArchitecturePanel {
@@ -542,6 +647,7 @@ export function composeArchitecturePanel(architecture: ArchitectureLift): Archit
   return {
     overview: architecture.overview,
     structure: architecture.structure,
+    scaling: architecture.scaling ? composeScaling(architecture.scaling) : null,
     antiPatterns: architecture.antiPatterns.map((pattern) => ({
       bad: pattern.title,
       good: sentenceCase(pattern.instead),
@@ -589,12 +695,70 @@ export interface PitfallRowModel {
   verify: string | null;
 }
 
+export interface PitfallTableModel {
+  key: PitfallTableKind;
+  label: string;
+  count: number;
+  lead: string | null;
+  /** The key row over the swaps: the item column's header and the fix column's. */
+  itemLabel: string;
+  fixLabel: string;
+  items: SwapItem[];
+}
+
+/** Sketch 037 B: Performance, security and UX as one section, a kind switch over uniform swaps. */
+export interface PitfallTablesPanel {
+  tally: string;
+  kinds: PitfallTableModel[];
+}
+
 export interface PitfallsPanel {
   note: string | null;
   tally: string;
   pitfalls: PitfallRowModel[];
   checks: Array<{ label: string | null; text: string; chips: PitfallChip[] }>;
   checksTally: string;
+  tables: PitfallTablesPanel | null;
+}
+
+const PITFALL_TABLE_LABELS: Record<PitfallTableKind, string> = {
+  performance: 'Performance traps',
+  security: 'Security mistakes',
+  ux: 'UX pitfalls',
+};
+
+/** A table header as a label: "When It Breaks" → "When it breaks". */
+function headerLabel(header: string): string {
+  const plain = plainText(header).trim();
+  return plain.charAt(0).toUpperCase() + plain.slice(1).toLowerCase();
+}
+
+/** Each table as swaps: the item → its fix (the Prevention / Better approach column, else the
+ * last), every other column a labelled detail. Cells stay as written. */
+export function composePitfallTables(tables: readonly PitfallTable[]): PitfallTablesPanel | null {
+  if (tables.length === 0) return null;
+  const kinds = tables.map((table): PitfallTableModel => {
+    const matched = table.head.findIndex((header, index) => index > 0 && /prevent|better|instead|fix/i.test(header));
+    const fixAt = matched > 0 ? matched : Math.max(1, table.head.length - 1);
+    return {
+      key: table.kind,
+      label: PITFALL_TABLE_LABELS[table.kind],
+      count: table.rows.length,
+      lead: table.lead,
+      itemLabel: headerLabel(table.head[0] ?? ''),
+      fixLabel: headerLabel(table.head[fixAt] ?? ''),
+      items: table.rows.map((row) => ({
+        bad: row[0],
+        good: row[fixAt] ?? '',
+        details: table.head
+          .map((header, index) => ({ index, label: headerLabel(header), text: row[index] ?? '' }))
+          .filter((cell) => cell.index > 0 && cell.index !== fixAt && cell.text !== '')
+          .map(({ label, text }) => ({ label, text })),
+      })),
+    };
+  });
+  const total = kinds.reduce((sum, kind) => sum + kind.count, 0);
+  return { tally: `${total} more to avoid`, kinds };
 }
 
 /** The first sentence of `text` and the rest, never splitting inside code, parentheses or "e.g.". */
@@ -714,5 +878,6 @@ export function composePitfallsPanel(pitfalls: PitfallsLift): PitfallsPanel {
       chips: check.pitfalls.map((n) => pitfallChip(n, pitfalls)),
     })),
     checksTally: `${pitfalls.checks.length} checks before calling it done`,
+    tables: composePitfallTables(pitfalls.tables),
   };
 }

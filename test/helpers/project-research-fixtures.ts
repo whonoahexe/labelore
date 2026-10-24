@@ -319,3 +319,27 @@ Reasons.
 - [ ] **Absent tiers:** often only tested plugged in - verify by unplugging each tier (Pitfall 1)
 - [ ] **Exit codes:** verify the bitmask is decoded (Pitfall 2) (Pitfall 3)
 `;
+
+/** A numbered "Scaling Considerations" with a lead, a concerns × tiers matrix and two priorities,
+ * one of which pins to a cell and one of which does not. */
+export const DRIFT_SCALING = `# Architecture Research
+
+## 11. Scaling Considerations
+
+A small studio; scale means data volume on one machine, not users.
+
+| Concern | Today | Per shoot (hundreds of GB) | Per year |
+|---------|-------|----------------------------|----------|
+| \`ingest_rows\` | n/a | thousands | tens of thousands |
+| Write rate | low | per-file, far below limits | unchanged |
+| Archive disk | adequate | the archive disk throttles dual-target ingest | keep ingest first |
+
+### Scaling priorities
+
+1. **First bottleneck:** the archive disk during dual-target ingest. Mitigation is policy, not code.
+2. **Second:** render CPU against responsiveness. Mitigated by the lane design.
+
+---
+
+## 12. Anti-Patterns
+`;
