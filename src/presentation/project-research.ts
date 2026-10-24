@@ -16,6 +16,14 @@ import type {
   SummaryLift,
 } from '../planning-repo/handlers/project-research-lift.ts';
 import type { ProjectPresentation } from '../server/project-presentation.ts';
+import {
+  composeFeaturesPanel,
+  composeStackPanel,
+  composeSummaryPanel,
+  type FeaturesPanel,
+  type StackPanel,
+  type SummaryPanel,
+} from './project-research-panels.ts';
 import { RESEARCH_FILES, type ResearchFileKey } from './project-research-files.ts';
 
 export type { ResearchFileKey } from './project-research-files.ts';
@@ -56,6 +64,9 @@ export interface ResearchViewModel {
   researched: string | null;
   fileCount: number;
   files: ResearchFileModel[];
+  summary: SummaryPanel | null;
+  stack: StackPanel | null;
+  features: FeaturesPanel | null;
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -122,6 +133,16 @@ function titleOf(summary: SummaryLift | null, projectName: string | null): strin
     const milestone = /^(.{1,200}?),\s*milestone\s+(v[\d.]+)\s+(.{1,200})$/i.exec(project);
     if (milestone) return plain(milestone[3]).trim();
     return plain(project).trim();
+  }
+  return projectName && projectName.trim() !== '' ? projectName : 'Research';
+}
+
+/** The project's own name: the Summary's project line without a trailing milestone. */
+function projectLabel(summary: SummaryLift | null, projectName: string | null): string {
+  const project = summary?.head.project ?? null;
+  if (project) {
+    const milestone = /^(.{1,200}?),\s*milestone\s+v[\d.]+\s+.{1,200}$/i.exec(project);
+    return plain(milestone ? milestone[1] : project).trim();
   }
   return projectName && projectName.trim() !== '' ? projectName : 'Research';
 }
@@ -247,5 +268,10 @@ export function buildResearchViewModel(
     researched: formatResearched(summary?.head.researched ?? null),
     fileCount: files.length,
     files,
+    summary: summary ? composeSummaryPanel(summary, lifts.pitfalls) : null,
+    stack: lifts.stack ? composeStackPanel(lifts.stack) : null,
+    features: lifts.features
+      ? composeFeaturesPanel(lifts.features, projectLabel(summary, presentation.projectName ?? null))
+      : null,
   };
 }

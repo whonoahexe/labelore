@@ -99,3 +99,94 @@ test.describe('Research page: the frame', () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(391);
   });
 });
+
+test.describe('Research page: Summary', () => {
+  test('four phase cards; the inspector follows the selection and arrows walk the track', async ({ page }) => {
+    await openResearch(page);
+    const cards = page.locator('.research-stn');
+    await expect(cards).toHaveCount(4);
+    await expect(page.locator('.research-inspect')).toContainText('Phase 01 of 4');
+    await cards.nth(1).click();
+    await expect(page.locator('.research-inspect')).toContainText('Phase 02 of 4');
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('.research-inspect')).toContainText('Phase 03 of 4');
+    await expect(page).not.toHaveURL(/open=/);
+    await expect(page.locator('.research-leaf')).toHaveAttribute('aria-label', 'Summary');
+  });
+
+  test('phase 01 delivers six tiles and avoids pitfalls 01, 03, 04 and 09', async ({ page }) => {
+    await openResearch(page);
+    await expect(page.locator('.research-dv')).toHaveCount(6);
+    await expect(page.locator('.research-inspect .research-pf-chip')).toHaveText(['01', '03', '04', '09']);
+    await expect(page.getByRole('button', { name: /^Pitfall 03: / })).toBeVisible();
+  });
+
+  test('a pitfall chip lands on the Pitfalls spine and Back returns to the Summary', async ({ page }) => {
+    await openResearch(page);
+    await page.getByRole('button', { name: /^Pitfall 03: / }).click();
+    await expect(page).toHaveURL(/open=pitfalls&pitfall=3/);
+    await expect(page.locator('.research-leaf')).toHaveAttribute('aria-label', 'Pitfalls');
+    await page.goBack();
+    await expect(page.locator('.research-leaf')).toHaveAttribute('aria-label', 'Summary');
+  });
+
+  test('"Why this order" opens four items and the gaps ledger has four rows', async ({ page }) => {
+    await openResearch(page);
+    await page.getByRole('button', { name: 'Why this order · 4' }).click();
+    await expect(page.locator('.research-why-list li')).toHaveCount(4);
+    await expect(page.locator('.research-gap')).toHaveCount(4);
+  });
+});
+
+test.describe('Research page: Stack', () => {
+  test('the verdict leads, the three reasons open, the layer switch counts and a row opens its why', async ({ page }) => {
+    await openResearch(page, '?open=stack');
+    await expect(page.locator('.research-verdict')).toHaveText(/^Vite 8 \+ React 19 SPA/);
+    const reasons = page.locator('.research-reason');
+    await expect(reasons).toHaveCount(3);
+    await reasons.first().locator('button').click();
+    await expect(reasons.first().locator('.research-reason-body')).toBeVisible();
+    await expect(page.locator('.research-chip')).toHaveText(['Core Technologies6', 'Supporting Libraries13', 'Development Tools6']);
+    await page.locator('.research-prow').first().locator('button').click();
+    await expect(page.locator('.research-prow').first().locator('.research-label')).toHaveText('Why');
+    await page.getByRole('button', { name: /^Supporting Libraries/ }).click();
+    await expect(page.locator('.research-prow')).toHaveCount(13);
+  });
+
+  test('the spine foot reads 25 and ten alternatives read "over"', async ({ page }) => {
+    await openResearch(page);
+    await expect(page.getByRole('button', { name: 'Stack: 25 stack entries' }).locator('.research-spine-foot b')).toHaveText('25');
+    await page.getByRole('button', { name: /^Stack:/ }).click();
+    const alts = page.locator('.research-alt');
+    await expect(alts).toHaveCount(10);
+    await expect(alts.locator('.research-alt-over')).toHaveText(Array(10).fill('over'));
+    await alts.first().locator('button').click();
+    await expect(alts.first().locator('.research-row-more .research-label')).toHaveText('Use it instead when');
+  });
+});
+
+test.describe('Research page: Features', () => {
+  test('the kind switch reads 11, 7 and 9 with no group chips, and Not to build shows nine swaps', async ({ page }) => {
+    await openResearch(page, '?open=features');
+    await expect(page.locator('.research-kind b')).toHaveText(['11', '7', '9']);
+    await expect(page.locator('.research-chips')).toHaveCount(0);
+    await expect(page.locator('.research-frow')).toHaveCount(11);
+    await page.locator('.research-kind').nth(2).click();
+    await expect(page.locator('.research-swap')).toHaveCount(9);
+    const decoration = await page.locator('.research-swap-bad').first().evaluate((el) => getComputedStyle(el).textDecorationLine);
+    expect(decoration).toBe('line-through');
+    await page.locator('.research-swap-button').first().click();
+    await expect(page.locator('.research-swap-why .research-label')).toHaveText(['Why it gets asked for', "Why it's a problem"]);
+  });
+
+  test('the matrix has two rivals and our column headed Labelore, and a click unclamps a row', async ({ page }) => {
+    await openResearch(page, '?open=features');
+    const head = page.locator('.research-matrix-row[data-head="true"]');
+    await expect(head.locator('b')).toHaveCount(3);
+    await expect(head.locator('.research-matrix-us b')).toHaveText('Labelore');
+    const row = page.locator('.research-matrix-row:not([data-head="true"])').first();
+    await expect(row).toHaveAttribute('data-open', 'false');
+    await row.click();
+    await expect(row).toHaveAttribute('data-open', 'true');
+  });
+});

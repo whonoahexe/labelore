@@ -707,7 +707,10 @@ element is actually written, regardless of class name:
   no Source chip, file name, line number, artifact link or copy-path button, and every string
   reaches the DOM as a React text node through the inline tokenizer, never as markup. A pitfall is
   drawn in the `missing` family (`--missing-fill`, `--missing-border`), never `destructive` or
-  `warning`; document content never takes those two tones. Nothing animates.
+  `warning`; document content never takes those two tones. Nothing animates. Accent uses inside the
+  panels: the build-order track line, the selected phase card and its number, the gate block's tint
+  and lock tile, the pressed chip or kind, the reasons' numbers, the gaps' numbers and our matrix
+  column's tint.
 
 ## Surface-scoped registered names
 
@@ -1117,7 +1120,6 @@ plan's "no AST tooling" constraint.
 | Class | Surface | Note |
 |---|---|---|
 | `research-page` | Research | The `<main>` of the Research page: a grid of the bar over the spines, filling the viewport under the shell header (`--research-top`, measured) and auto height under 42rem |
-| `research-empty` | Research | The `<main>` of the Research page when the project has no research files |
 | `research-bar` | Research | The slim bar under the shell header: the h1 and the facts line |
 | `research-bar-facts` | Research | The confidence chip, "Researched <date>" and "N research files" in small uppercase |
 | `research-conf` | Research | A confidence chip: a meter and its lowercase level, in the accent |
@@ -1138,6 +1140,90 @@ plan's "no AST tooling" constraint.
 | `research-tail` | Research | The list after the finding's colon, small and muted |
 | `research-more` | Research | The finding's remaining paragraphs, muted, shown once the toggle opens |
 | `research-toggle` | Research | The "Read the full summary" / "Read more" / "Show less" button |
+| `research-leaf-body` | Research | The panel under the finding: the open file's Summary, Stack or Features body (and the later panels) |
+| `research-label` | Research | The mono in-panel label (JetBrains Mono, weight normal, muted, uppercase), as on the plan and summary pages |
+| `research-section-head` | Research | A panel section's head: an h3 title and a mono tally, over a hairline |
+| `research-tally` | Research | The mono tally at a section head's trailing edge ("4 phases · 1 gated") |
+| `research-sec-note` | Research | A muted note under a section head |
+| `research-chev` | Research | The row chevron; it turns a quarter when its button is `aria-expanded` |
+| `research-icon-btn` | Research | A small squared icon button (the phase inspector's previous and next) |
+| `research-chips` | Research | A one-at-a-time chip switch: Stack layers, Features groups |
+| `research-chip` | Research | One chip with its count (`aria-pressed`); pressed takes `--primary-tint` and an accent border |
+| `research-pf-chip` | Research | A pitfall number chip in the `missing` family; a button when it opens that pitfall |
+| `research-pf-chips` | Research | The row of pitfall chips under "Avoids pitfalls" |
+| `research-summary` | Research | The Summary body: the build-order section, then the gaps |
+| `research-entry` | Research | The entry gate block ahead of phase 01 |
+| `research-track-wrap` | Research | The build-order track's horizontal scroller |
+| `research-track` | Research | The track: a grid of phase columns and up to two lanes, with the accent line through the numbers (`--research-cols`) |
+| `research-stn` | Research | One phase on the track: a button with its number square and card (`data-alongside` hangs it on a dashed tick; `aria-pressed` selects it) |
+| `research-stn-num` | Research | A phase's number square; solid accent when selected, dashed when alongside |
+| `research-stn-card` | Research | A phase's card: name and marks |
+| `research-stn-with` | Research | The "Alongside 01" label on a lane-two card |
+| `research-stn-name` | Research | A phase's name, clamped at three lines |
+| `research-stn-marks` | Research | A card's marks: Gate, Research and the number of pitfalls it avoids |
+| `research-inspect` | Research | The phase inspector under the track |
+| `research-inspect-head` | Research | The inspector head: "Phase 02 of 4" kicker over the name, with previous and next |
+| `research-inspect-title` | Research | The inspector's phase name (an h4) |
+| `research-walk` | Research | The inspector's previous and next buttons |
+| `research-inspect-body` | Research | The inspector body: rationale, Delivers and the side facets (one column under 62rem) |
+| `research-inspect-why` | Research | The phase rationale, large, across both columns |
+| `research-facet` | Research | One labelled facet in the inspector |
+| `research-facets-side` | Research | The inspector's right column: gate, avoids, flag and the Uses / Implements / Addresses / Keeps facets |
+| `research-dv-grid` | Research | Delivers as tiles in two columns, an odd last tile spanning both (`data-one` for one column); hairlines are borders |
+| `research-dv` | Research | One Delivers tile |
+| `research-dv-n` | Research | A tile's number |
+| `research-dv-main` | Research | A tile's point |
+| `research-dv-sub` | Research | A tile's closing parenthetical, on a quiet second line |
+| `research-gate` | Research | A barrier block: a lock tile, "Gate" and a checklist; tinted `--primary-tint` with faint diagonal hatching |
+| `research-gate-lock` | Research | The gate's solid lock tile (`--primary` with `--primary-foreground` glyph) |
+| `research-gate-head` | Research | The gate's title and its "Must pass before this phase can finish" sub line |
+| `research-gate-cond` | Research | The gate's conditions, each marked with a small outlined square, never a tick |
+| `research-why` | Research | The "Why this order" fold |
+| `research-why-list` | Research | The numbered ordering rationale |
+| `research-gaps` | Research | The gaps ledger: a numbered two-column list (one column under 62rem) |
+| `research-gap` | Research | One gap: an accent number, a bold lead and its body |
+| `research-stack` | Research | The Stack body: layers and alternatives |
+| `research-features` | Research | The Features body: the landscape and the competitor matrix |
+| `research-reasons-wrap` | Research | The decision's reasons block, inside the leaf under the verdict |
+| `research-reasons` | Research | The decision's numbered reasons |
+| `research-reason` | Research | One reason: a button with its accent number and one-line lead, opening to its body |
+| `research-reason-n` | Research | A reason's accent number |
+| `research-reason-lead` | Research | A reason's bold lead |
+| `research-reason-body` | Research | A reason's opened body |
+| `research-gnote` | Research | The chosen layer's note under the chips |
+| `research-prows` | Research | The chosen layer's package rows |
+| `research-prow` | Research | One package row: name (mono), version (mono, muted) and purpose, opening to its why |
+| `research-prow-name` | Research | A package name in mono |
+| `research-prow-version` | Research | A package version in muted mono |
+| `research-prow-purpose` | Research | A package purpose, muted |
+| `research-row-more` | Research | The opened part of a Stack or Features row: a mono label over its text |
+| `research-alts` | Research | The "chosen over alternative" rows |
+| `research-alt-group` | Research | An alternatives category header (mono label) |
+| `research-alt` | Research | One alternative row, opening to "Use it instead when" or "Why not" |
+| `research-alt-chosen` | Research | The chosen option; hidden (`data-repeat`) when it repeats the row above |
+| `research-alt-over` | Research | The small "over" between the two |
+| `research-alt-other` | Research | The alternative that was passed over, muted |
+| `research-kinds` | Research | The Features kind switch: three big counts |
+| `research-kind` | Research | One kind (expected, differentiators, not to build); pressed takes `--primary-tint`, the accent number and an accent rule |
+| `research-frows` | Research | The chosen kind's feature rows |
+| `research-frow` | Research | One feature row: name, a one-line why and complexity cells, opening to its why and notes |
+| `research-frow-name` | Research | A feature's name |
+| `research-frow-why` | Research | A feature's one-line why, hidden while the row is open |
+| `research-swaps` | Research | Swap rows (032 A): a thing struck through, then what to do instead |
+| `research-swap` | Research | One swap row (`data-open`) |
+| `research-swap-button` | Research | A swap's button: number, struck-through text, arrow, instead, chevron |
+| `research-swap-n` | Research | A swap's number |
+| `research-swap-bad` | Research | The struck-through feature or mistake, in muted text |
+| `research-swap-arrow` | Research | The accent arrow between the two |
+| `research-swap-good` | Research | The better approach |
+| `research-swap-why` | Research | A swap's opened why: mono labels over muted text |
+| `research-matrix` | Research | The competitor matrix: the feature, each rival, then our column (`--research-rivals`); scrolls sideways inside itself |
+| `research-matrix-row` | Research | One matrix row (the head row has `data-head`); a click unclamps its cells (`data-open`) |
+| `research-matrix-feature` | Research | A row's feature cell |
+| `research-matrix-them` | Research | A rival's cell, muted |
+| `research-matrix-us` | Research | Our column, tinted `--primary-tint` and headed with the project's name |
+| `research-matrix-clamp` | Research | A cell's text, clamped at three lines until its row is clicked |
+| `research-matrix-note` | Research | The closing paragraph under the matrix |
 
 ## How to extend
 

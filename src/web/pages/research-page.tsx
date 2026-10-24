@@ -6,6 +6,9 @@ import type { ResearchFileKey } from '../../presentation/project-research-files.
 import type { ResearchFileModel, ResearchViewModel } from '../../presentation/project-research.ts';
 import { EmptyState } from '../components/empty-state.tsx';
 import { ConfidenceChip, ConfidenceMeter, ResearchInline } from './research-atoms.tsx';
+import { FeaturesPanelBody } from './research-features-panel.tsx';
+import { StackPanelBody, StackReasons } from './research-stack-panel.tsx';
+import { SummaryPanelBody } from './research-summary-panel.tsx';
 
 async function fetchResearch(): Promise<ResearchViewModel> {
   const response = await fetch('/api/research', { headers: { Accept: 'application/json' } });
@@ -48,11 +51,16 @@ function Leaf({
   expanded,
   onToggleMore,
   leafRef,
+  lead,
+  children,
 }: {
   file: ResearchFileModel;
   expanded: boolean;
   onToggleMore: () => void;
   leafRef: React.RefObject<HTMLElement | null>;
+  /** Shown between the finding and its more toggle: the Stack decision's reasons. */
+  lead?: React.ReactNode;
+  children?: React.ReactNode;
 }): React.JSX.Element {
   const finding = file.finding;
   return (
@@ -85,6 +93,7 @@ function Leaf({
                 <ResearchInline text={finding.tail} />
               </p>
             ) : null}
+            {lead}
             {expanded && finding.more.length > 0 ? (
               <div className="research-more">
                 {finding.more.map((paragraph, index) => (
@@ -102,6 +111,7 @@ function Leaf({
             ) : null}
           </>
         ) : null}
+        {children ? <div className="research-leaf-body">{children}</div> : null}
       </div>
     </section>
   );
@@ -165,7 +175,7 @@ export function ResearchPage(): React.JSX.Element {
   const model = research.data;
   if (!model.available || !open) {
     return (
-      <main className="page-stack research-empty">
+      <main className="page-stack">
         <p className="eyebrow">Project research</p>
         <h1>Research</h1>
         <EmptyState />
@@ -210,7 +220,12 @@ export function ResearchPage(): React.JSX.Element {
                 expanded={expandedKey === file.key}
                 onToggleMore={() => setExpandedKey(expandedKey === file.key ? null : file.key)}
                 leafRef={leafRef}
-              />
+                lead={file.key === 'stack' && model.stack ? <StackReasons panel={model.stack} /> : undefined}
+              >
+                {file.key === 'summary' && model.summary ? <SummaryPanelBody panel={model.summary} /> : null}
+                {file.key === 'stack' && model.stack ? <StackPanelBody panel={model.stack} /> : null}
+                {file.key === 'features' && model.features ? <FeaturesPanelBody panel={model.features} /> : null}
+              </Leaf>
             );
           }
           const Icon = SPINE_ICONS[file.key];
