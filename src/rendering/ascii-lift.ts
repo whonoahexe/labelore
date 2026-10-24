@@ -12,6 +12,7 @@
 //    border is looked for around the previous row's border, offsets 0, +1, -1, +2, -2), so a right
 //    edge that staircases a column or two per row is followed to its corner;
 //  - an arrow drawn into a side (`►│`, `│◄`) stays an arrow — the side glyph next to it is the border;
+//    one drawn into the top or bottom edge (`┌──▼──┐`, `└──▲──┘`) is part of that edge and stays an arrow;
 //  - tree guides (`├─ name`, `└─ name`) are content, never a border and never a corner;
 //  - an open-left outer box (a top edge and a right edge and a bottom-right corner, no left edge) is
 //    accepted when its shape rules out a connector: a `┘` with a run of `─` to its left that does not
@@ -33,6 +34,12 @@
 const BOX = '─│┌┐└┘├┤┬┴┼';
 const ARROWS = '▼▲►◄→←↑↓';
 const TOP_EDGE = '─┬┴┼';
+/** An arrow drawn into a box's top / bottom edge sits where the border would. */
+const TOP_ARROW = '▼';
+const BOTTOM_ARROW = '▲';
+/** Double lines (`════╪════`): drawn as line, never text — but not box glyphs, so a `═══` rule alone
+ * does not make a block a diagram. */
+const DOUBLE = '═║╪╫╬';
 const SIDE_EDGE = '│├┤┼';
 /** An arrow drawn into a box's side sits where the border would. */
 const SIDE_ARROW = '►◄';
@@ -131,6 +138,10 @@ function isBoxGlyph(ch: string): boolean {
   return BOX.includes(ch);
 }
 
+function isDoubleGlyph(ch: string): boolean {
+  return DOUBLE.includes(ch);
+}
+
 function isArrowGlyph(ch: string): boolean {
   return ARROWS.includes(ch);
 }
@@ -194,7 +205,7 @@ function rowSegments(row: string[], kindRow: LiftKind[]): LiftSegment[] {
   };
   for (let c = 0; c < last; c++) {
     const ch = row[c];
-    const kind: LiftKind = isBoxGlyph(ch) ? 'line' : isArrowGlyph(ch) ? 'arrow' : kindRow[c];
+    const kind: LiftKind = isBoxGlyph(ch) || isDoubleGlyph(ch) ? 'line' : isArrowGlyph(ch) ? 'arrow' : kindRow[c];
     if (buffer !== '' && kind !== current) flush();
     current = kind;
     buffer += ch;
@@ -248,7 +259,7 @@ export function liftDiagram(text: string): LiftedFigure | null {
     for (let c = 0; c < width; c++) {
       if (at(r, c) !== '┌') continue;
       let c2 = c + 1;
-      while (c2 < width && TOP_EDGE.includes(at(r, c2))) c2++;
+      while (c2 < width && (TOP_EDGE.includes(at(r, c2)) || TOP_ARROW.includes(at(r, c2)))) c2++;
       if (at(r, c2) !== '┐') continue;
 
       // The left edge, walked down: each row's border may sit a column or two off the one above, and
@@ -304,7 +315,7 @@ export function liftDiagram(text: string): LiftedFigure | null {
       // …and the right edge, walked the same way from the top-right corner: the `┘` and each row's
       // border may sit a column or two off the one above.
       let cb = lc + 1;
-      while (cb < width && TOP_EDGE.includes(at(r2, cb))) cb++;
+      while (cb < width && (TOP_EDGE.includes(at(r2, cb)) || BOTTOM_ARROW.includes(at(r2, cb)))) cb++;
       if (at(r2, cb) !== '┘') continue;
       const rightBorder: number[] = [];
       let anchor = c2;
@@ -434,15 +445,15 @@ export function liftDiagram(text: string): LiftedFigure | null {
     }
   }
 
-  // Blank each box's border (the card draws it): the top and bottom edge runs outright, and on each
-  // row only the left / right border glyph the walks found. Every other box glyph inside — tree
-  // guides, `│` trunks — stays and renders as line. A row whose right border was not found blanks a
+  // Blank each box's border (the card draws it): the top and bottom edge runs (an arrow drawn into
+  // them stays), and on each row only the left / right border glyph the walks found. Every other box
+  // glyph inside — tree guides, `│` trunks — stays and renders as line. A row whose right border was not found blanks a
   // side glyph within 2 columns of where the previous border was.
   for (const b of boxes) {
     const geo = geometry.get(b);
     if (!geo) continue;
-    for (let c = geo.top.start; c <= geo.top.end; c++) g[b.r1][c] = ' ';
-    for (let c = geo.bottom.start; c <= geo.bottom.end; c++) g[b.r2][c] = ' ';
+    for (let c = geo.top.start; c <= geo.top.end; c++) if (!isArrowGlyph(g[b.r1][c])) g[b.r1][c] = ' ';
+    for (let c = geo.bottom.start; c <= geo.bottom.end; c++) if (!isArrowGlyph(g[b.r2][c])) g[b.r2][c] = ' ';
     let anchor = geo.top.end;
     for (let r = b.r1 + 1; r < b.r2; r++) {
       const lc = geo.left[r - b.r1 - 1];
@@ -470,7 +481,7 @@ export function liftDiagram(text: string): LiftedFigure | null {
     let c = 0;
     while (c < width) {
       const ch = g[r][c];
-      if (ch === ' ' || isBoxGlyph(ch) || isArrowGlyph(ch) || ch === '•') {
+      if (ch === ' ' || isBoxGlyph(ch) || isDoubleGlyph(ch) || isArrowGlyph(ch) || ch === '•') {
         c++;
         continue;
       }
@@ -481,7 +492,7 @@ export function liftDiagram(text: string): LiftedFigure | null {
         const x = g[r][e];
         if (x === '(' || x === '{' || x === '[') depth++;
         if (x === ')' || x === '}' || x === ']') depth = Math.max(0, depth - 1);
-        if (isBoxGlyph(x) || (isArrowGlyph(x) && depth === 0)) break;
+        if (isBoxGlyph(x) || isDoubleGlyph(x) || (isArrowGlyph(x) && depth === 0)) break;
         if (x === ' ') {
           gap++;
           // Two spaces end a run; inside brackets it takes three, so a bracket that only closes on

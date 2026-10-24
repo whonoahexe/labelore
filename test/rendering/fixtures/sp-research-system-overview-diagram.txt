@@ -1,0 +1,28 @@
+ Browser (Vercel, Next 16 App Router)
+ ┌──────────────────────────────────────────────────────────────────────────┐
+ │ Shell (ported)  Dashboard │ Projects │ Ingest │ Browse │ Jobs │ Admin     │
+ │ presentation/*.ts (pure view-models)   use-health-socket (+custody)       │
+ └───────────────┬───────────────────────────────────────┬──────────────────┘
+                 │ REST (cookie)                         │ /ws (ticket)
+ ════════════════╪═══════════════ tunnel ════════════════╪══════════════════
+ Rust backend (systemd, user cinedise-portal, ProtectSystem=strict)
+ ┌───────────────▼───────────────────────────────────────▼──────────────────┐
+ │ api::*  ── VerifiedIdentity ── authz::require ── scope::resolve          │
+ │  NEW: projects  ingest  custody  lifecycle  proxies                       │
+ ├───────────────────────────────────────────────────────────────────────────┤
+ │ Domain services (NEW)                                                     │
+ │  projects/   ingest/   custody/   lifecycle/      jobs::service (MOD)     │
+ ├───────────────────────────────────────────────────────────────────────────┤
+ │ Job engine (MOD)  jobs table ── claim gate ── TierLocks(Vec) ── lanes     │
+ │   Tool::Rsync  Tool::Rclone  Tool::Archive │ NEW Tool::Ingest Tool::Ffmpeg│
+ │   reconcile_on_boot (+2 arms)   RunningHandles   JobProgress frames       │
+ ├───────────────────────────────────────────────────────────────────────────┤
+ │ Host sensing (MOD)  per-tier prober threads ◄── CustodyHandle             │
+ │   HealthRegistry (+custody)   folder-size walkers (+pause)   PSI reader   │
+ ├───────────────────────────────────────────────────────────────────────────┤
+ │ SQLite (WAL, synchronous=FULL, NVMe)                                      │
+ │  jobs* projects project_locations ingests ingest_files ingest_copies      │
+ │  tier_custody lifecycle_proposals proxy_items   (*rebuilt once, 0007)     │
+ └───────────────────────────────────────────────────────────────────────────┘
+   /mnt/stage (ext4 NVMe)  /mnt/vault (exFAT USB SSD, travels)  /mnt/archive
+   /mnt/ingest (NEW, ro, card reader)       cloud: (rclone rcd)

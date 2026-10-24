@@ -19,6 +19,7 @@ const FIXTURE_NAMES = {
   'sp-04': 'sp-p04-bulk-archive',
   'sp-p03': 'sp-p03-account-admin',
   'lb-v1.1-05': 'lb-v1.1-05-per-type-views',
+  'sp-research': 'sp-research-system-overview',
 } as const;
 type FixtureId = keyof typeof FIXTURE_NAMES;
 
@@ -139,6 +140,28 @@ describe('buildDiagramGraph — the named cases (K-bridging)', () => {
     expect(graph.groups).toHaveLength(1);
     expect(graph.groups[0].label.main).toBe('Auth middleware');
     expect(graph.nodes.filter((n) => n.group === 0)).toHaveLength(4);
+  });
+
+  it('studio-portal research system overview: a box cut into layers is one node per layer, stacked, under the browser', () => {
+    const graph = graphOf('sp-research');
+    expect(graph.thin).toBe(false);
+    expect(graph.nodes.map((n) => n.label.main)).toEqual([
+      'api::*',
+      'Domain services',
+      'Job engine',
+      'Host sensing',
+      'SQLite',
+      'Shell (ported) Dashboard │ Projects │ Ingest │ Browse │ Jobs │ Admin',
+    ]);
+    const [api, , , , sqlite, browser] = graph.nodes;
+    expect(sqlite.kind).toBe('data');
+    expect(graph.nodes[2].details[0]).toBe('jobs table ── claim gate ── TierLocks(Vec) ── lanes');
+    // The two wires cross the ═══ tunnel and enter the backend's top edge (▼): one edge, all three labels.
+    const inbound = graph.edges.find((e) => e.from === browser.id && e.to === api.id);
+    expect(inbound?.directed).toBe(true);
+    expect(inbound?.label.split(' · ').sort()).toEqual(['/ws (ticket)', 'REST (cookie)', 'tunnel']);
+    const stack = graph.edges.filter((e) => e.implied);
+    expect(stack.map((e) => `${e.from}-${e.to}|${e.directed}`)).toEqual(['0-1|false', '1-2|false', '2-3|false', '3-4|false']);
   });
 
   it('nodes and groups are addressed by their index in the returned arrays', () => {
