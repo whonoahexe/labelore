@@ -6,6 +6,13 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { ProjectResearchHandler } from '../../src/planning-repo/handlers/project-research.ts';
 import { buildResearchViewModel, formatResearched, splitFinding } from '../../src/presentation/project-research.ts';
+import {
+  deliverItems,
+  deliverTile,
+  gateConditions,
+  placePhases,
+  splitParenthetical,
+} from '../../src/presentation/project-research-panels.ts';
 import { RESEARCH_FILES, projectHasResearch } from '../../src/presentation/project-research-files.ts';
 import {
   DRIFT_ARCHITECTURE,
@@ -209,14 +216,21 @@ describe('buildResearchViewModel with files missing', () => {
 
 describe('the no-source-links rule', () => {
   it('carries no file name, .planning path, line number or artifact URL in the serialised view model', () => {
-    for (const contents of [realContents(), driftContents()]) {
+    // The drift fixtures never mention a research file by name, so any file name here would be the
+    // view model's own. Labelore's files discuss other planning files in prose, which is content.
+    for (const [contents, strict] of [
+      [driftContents(), true],
+      [realContents(), false],
+    ] as const) {
       const json = JSON.stringify(buildResearchViewModel(presentationOf(contents)));
       expect(json).not.toMatch(/\.planning\/research/);
       expect(json).not.toMatch(/\/artifacts\//);
+      expect(json).not.toMatch(/"line(s|Number)?"/);
+      if (!strict) continue;
+      expect(json).not.toMatch(/\.planning/);
       for (const name of ['SUMMARY.md', 'STACK.md', 'FEATURES.md', 'ARCHITECTURE.md', 'PITFALLS.md']) {
         expect(json).not.toContain(name);
       }
-      expect(json).not.toMatch(/"line(s|Number)?"/);
     }
   });
 });
@@ -227,5 +241,203 @@ describe('projectHasResearch', () => {
     expect(projectHasResearch(RESEARCH_FILES.map((file) => ({ path: file.path })))).toBe(true);
     expect(projectHasResearch([{ path: '.planning/research/questions.md' }, { path: '.planning/STATE.md' }])).toBe(false);
     expect(projectHasResearch([])).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// Task 2: the Summary, Stack and Features panels
+
+describe('placePhases', () => {
+  const phase = (n: number, parallelWith: number | null = null) => ({ n: String(n), parallelWith });
+
+  it('hangs a parallel phase under its partner on lane two and gives every other phase the next column', () => {
+    const phases = [1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => phase(n, n === 2 ? 1 : n === 4 ? 3 : n === 6 ? 5 : null));
+    const placed = placePhases(phases);
+    expect(placed.cols).toBe(6);
+    expect(placed.lanes).toBe(2);
+    expect(placed.at.map((entry, index) => [index + 1, entry.col, entry.lane])).toEqual([
+      [1, 1, 1],
+      [2, 1, 2],
+      [3, 2, 1],
+      [4, 2, 2],
+      [5, 3, 1],
+      [6, 3, 2],
+      [7, 4, 1],
+      [8, 5, 1],
+      [9, 6, 1],
+    ]);
+  });
+
+  it('keeps one lane when nothing runs alongside, and treats a missing or later partner as a new column', () => {
+    expect(placePhases([phase(1), phase(2), phase(3)]).lanes).toBe(1);
+    expect(placePhases([phase(1, 9), phase(2, 3), phase(3)]).cols).toBe(3);
+  });
+});
+
+describe('gates, tiles and the Summary panel', () => {
+  const drift = buildResearchViewModel(presentationOf(driftContents()));
+  const summary = drift.summary!;
+
+  it('splits gate conditions at top-level semicolons and "plus" only', () => {
+    expect(gateConditions('a; b, plus c (not; this).')).toEqual(['A', 'B', 'C (not; this)']);
+    expect(summary.inspectors[1].gate).toEqual({
+      title: 'Gate',
+      sub: 'Must pass before this phase can finish',
+      conditions: ['A', 'B', 'C (not; this)'],
+    });
+    expect(summary.inspectors[0].gate).toBeNull();
+  });
+
+  it('shows the entry gate with its lead as the title and the parenthetical as the sub', () => {
+    expect(summary.entryGate).toEqual({
+      title: 'Entry gate',
+      sub: 'Before any phase writes to the vault',
+      conditions: ['The vault is mounted read-write', 'A backup exists'],
+    });
+    expect(buildResearchViewModel(presentationOf(realContents())).summary?.entryGate).toBeNull();
+  });
+
+  it('keeps the first plain preamble paragraph as the note', () => {
+    expect(summary.note).toBe('A plain paragraph that explains the suggested order in one go.');
+  });
+
+  it('splits a one-paragraph Delivers at top-level semicolons and drops a closing parenthetical to a sub line', () => {
+    expect(deliverItems(['a; b; c (d)'])).toEqual(['A', 'B', 'C (d)']);
+    expect(deliverTile('IngestExecutor (single read, tee, hash)')).toEqual({ main: 'IngestExecutor', sub: 'Single read, tee, hash' });
+    expect(deliverTile('Plain item.')).toEqual({ main: 'Plain item', sub: null });
+    expect(deliverTile('a (b)')).toEqual({ main: 'a (b)', sub: null });
+    const first = summary.inspectors[0];
+    expect(first.deliversCount).toBe(3);
+    expect(first.delivers.map((tile) => tile.main)).toEqual(['`IngestExecutor`', 'Manifest schema', 'The `fsync` barrier']);
+    expect(first.delivers[2].sub).toBe('Data and directory');
+    expect(first.oneColumn).toBe(false);
+    expect(summary.inspectors[2].oneColumn).toBe(true);
+  });
+
+  it('places the phases, marks them and tallies the track', () => {
+    expect(summary.phases.map((card) => [card.label, card.col, card.lane, card.alongside])).toEqual([
+      ['01', 1, 1, null],
+      ['02', 1, 2, '01'],
+      ['03', 2, 1, null],
+    ]);
+    expect(summary.phases[1].marks).toEqual({ gate: true, research: true, pitfalls: 3 });
+    expect(summary.phases[0].marks).toEqual({ gate: false, research: false, pitfalls: 1 });
+    expect(summary.tally).toBe('3 phases · 1 gated · 2 alongside · 1 need research');
+    expect(summary.inspectors[1].kicker).toBe('Phase 02 of 3 · alongside phase 01');
+    expect(summary.inspectors[0].kicker).toBe('Phase 01 of 3');
+  });
+
+  it('classifies the research flag', () => {
+    expect(summary.inspectors[1].flag).toMatchObject({ kind: 'needs', label: 'Needs deeper research' });
+    expect(summary.inspectors[0].flag).toMatchObject({ kind: 'standard', label: 'Standard patterns' });
+    const labelore = buildResearchViewModel(presentationOf(realContents())).summary!;
+    expect(labelore.inspectors[0].flag?.kind).toBe('standard');
+    expect(labelore.tally).toBe('4 phases');
+  });
+
+  it('turns Avoids into pitfall chips: named and navigable with PITFALLS, plain without', () => {
+    const labelore = buildResearchViewModel(presentationOf(realContents())).summary!;
+    expect(labelore.inspectors[0].avoids.map((chip) => [chip.label, chip.navigable])).toEqual([
+      ['01', true],
+      ['03', true],
+      ['04', true],
+      ['09', true],
+    ]);
+    expect(labelore.inspectors[0].avoids[0].short).toBe('Overfit to studio-portal');
+    const { PITFALLS: _dropped, ...rest } = realContents();
+    void _dropped;
+    const without = buildResearchViewModel(presentationOf(rest)).summary!;
+    expect(without.inspectors[0].avoids.every((chip) => !chip.navigable && chip.short === null)).toBe(true);
+  });
+
+  it('lists the facets that are present, the ordering rationale and the gaps', () => {
+    expect(summary.inspectors[2].facets.map((facet) => facet.label)).toEqual(['Uses', 'Implements', 'Addresses', 'Keeps']);
+    expect(summary.inspectors[0].facets).toEqual([]);
+    expect(summary.whyOrder).toHaveLength(2);
+    expect(summary.gaps).toHaveLength(2);
+    const labelore = buildResearchViewModel(presentationOf(realContents())).summary!;
+    expect(labelore.inspectors[0].deliversCount).toBe(6);
+    expect(labelore.whyOrder).toHaveLength(4);
+    expect(labelore.gaps).toHaveLength(4);
+  });
+});
+
+describe('the Stack panel', () => {
+  it("Labelore's decision has three reasons with bold leads, and the layers sum to the key number", () => {
+    const model = buildResearchViewModel(presentationOf(realContents()));
+    const stack = model.stack!;
+    expect(stack.reasons).toHaveLength(3);
+    expect(stack.reasons[0].lead).toBe('A CLI-launched path argument is the primary entry point, every single time it runs');
+    expect(stack.reasonsTally).toBe('3 reasons');
+    expect(stack.layers.map((layer) => [layer.title, layer.items.length])).toEqual([
+      ['Core Technologies', 6],
+      ['Supporting Libraries', 13],
+      ['Development Tools', 6],
+    ]);
+    expect(stack.stackTally).toBe('25 entries · 3 layers');
+    const spine = model.files.find((file) => file.key === 'stack')!;
+    expect(spine.keyNumber.value).toBe(stack.layers.reduce((total, layer) => total + layer.items.length, 0));
+    expect(stack.alternatives?.label).toBe('Use it instead when');
+    expect(stack.alternatives?.tally).toBe('10 weighed');
+    expect(stack.alternatives?.rows).toHaveLength(10);
+  });
+
+  it('labels the why column by its header and flags a repeated choice and category headers on the drift shape', () => {
+    const stack = buildResearchViewModel(presentationOf(driftContents())).stack!;
+    expect(stack.layers.map((layer) => layer.whyLabel)).toEqual(['Why', 'Notes', 'When to use', 'Why', 'Why']);
+    expect(stack.alternatives?.label).toBe('Why not');
+    expect(stack.alternatives?.rows.map((row) => [row.header, row.chosen, row.repeat])).toEqual([
+      ['Runtime', 'Rust', false],
+      [null, 'Rust', true],
+      ['HTTP', 'axum', false],
+    ]);
+    expect(stack.reasons.map((reason) => reason.lead)).toEqual(['Streaming without copies', 'One toolchain']);
+  });
+
+  it('uses a reason body first sentence when it has no bold lead', () => {
+    const plainReasons = DRIFT_STACK.replace('1. **Streaming without copies.** Rust', '1. Rust').replace('2. **One toolchain.** The', '2. The');
+    const stack = buildResearchViewModel(presentationOf({ STACK: plainReasons })).stack!;
+    expect(stack.reasons[0].lead).toBe('Rust lets the tee stay zero-copy.');
+  });
+});
+
+describe('the Features panel', () => {
+  it("Labelore's kinds read 11, 7 and 9 with no groups, and nine swaps", () => {
+    const features = buildResearchViewModel(presentationOf(realContents())).features!;
+    expect(features.kinds.map((kind) => [kind.label, kind.count])).toEqual([
+      ['Expected', 11],
+      ['Differentiators', 7],
+      ['Not to build', 9],
+    ]);
+    expect(features.expected.groups).toEqual([]);
+    expect(features.differentiators.groups).toEqual([]);
+    expect(features.anti.items).toHaveLength(9);
+    expect(features.anti.items[0].details.map((detail) => detail.label)).toEqual(['Why it gets asked for', "Why it's a problem"]);
+    expect(features.competitors?.rivals).toHaveLength(2);
+    expect(features.competitors?.ours.name).toBe('Labelore');
+  });
+
+  it('groups only a list with two or more distinct groups, and reads complexity into cells', () => {
+    const features = buildResearchViewModel(presentationOf(driftContents())).features!;
+    expect(features.expected.groups).toEqual([
+      { name: 'Projects', count: 2 },
+      { name: 'Ingest', count: 1 },
+    ]);
+    expect(features.differentiators.groups).toEqual([]);
+    expect(features.expected.items.map((row) => row.cells)).toEqual([1, 2.5, 3]);
+    expect(features.expected.items[1].complexity).toBe('medium-high');
+  });
+
+  it('names our column after the project and splits each rival into a name over its parenthetical', () => {
+    const features = buildResearchViewModel(presentationOf(driftContents())).features!;
+    expect(features.competitors?.ours).toEqual({ name: 'Cinedise Portal', sub: 'Our approach' });
+    expect(features.competitors?.rivals).toEqual([
+      { name: 'Frame.io', sub: 'hosted review' },
+      { name: 'Dropbox', sub: 'sync' },
+      { name: 'Resilio', sub: 'peer to peer' },
+    ]);
+    expect(features.competitors?.tally).toBe('2 features · 3 compared');
+    expect(features.competitors?.note).toBe('The matrix says the gap is verification, not transfer.');
+    expect(splitParenthetical("Labelore's approach")).toEqual({ name: "Labelore's approach", sub: null });
   });
 });
