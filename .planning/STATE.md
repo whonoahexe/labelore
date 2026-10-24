@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-24T18:08:07.086Z"
+last_updated: "2026-10-24T18:11:54.222Z"
 last_activity: 2026-10-24
 last_activity_desc: Completed quick task 261016-2j6 (compact discussion-log tables)
-state_head: 98a468c132a5e6e166effebd968085a41f426dba
+state_head: c6f741ce01bc12ba85061cba6a5b1f2784b732b7
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -228,6 +228,7 @@ None.
 | 261024-o3h | Box diagrams and directory trees draw as lifted figures and clean trees on every document type, through one shared detector and renderer | 2026-10-24 | fd3d326 | [261024-o3h-make-the-lifted-diagram-and-clean-tree-r](./quick/261024-o3h-make-the-lifted-diagram-and-clean-tree-r/) |
 | 261024-vty | Build sketch 038 winner C: two-column planning-files drawer (places left, chosen place's files right) | 2026-10-24 | 605a684 | [261024-vty-build-sketch-038-winner-c-two-column-pla](./quick/261024-vty-build-sketch-038-winner-c-two-column-pla/) |
 | 115 | Give the planning-files drawer breathing space | 2026-10-24 | 98a468c | — |
+| 116 | Pad drawer phase numbers to two digits | 2026-10-24 | c6f741c | — |
 
 ## Deferred Items
 
