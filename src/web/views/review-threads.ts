@@ -241,7 +241,9 @@ function blocksOf(value: unknown): Block[] {
     const block = rec(raw);
     if (block === null) continue;
     if (block.kind === 'paragraph' && typeof block.text === 'string') out.push({ kind: 'paragraph', text: block.text });
-    else if (block.kind === 'code' && typeof block.text === 'string') out.push({ kind: 'code', text: block.text });
+    else if (block.kind === 'code' && typeof block.text === 'string') {
+      out.push(typeof block.lang === 'string' ? { kind: 'code', text: block.text, lang: block.lang } : { kind: 'code', text: block.text });
+    }
     else if (block.kind === 'list' && Array.isArray(block.items)) {
       out.push({ kind: 'list', ordered: block.ordered === true, items: block.items.map((item) => asStr(item)) });
     } else if (block.kind === 'table' && Array.isArray(block.rows)) {

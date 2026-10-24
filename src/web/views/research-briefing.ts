@@ -7,8 +7,6 @@
 // payload from an older server still composes.
 import type { Block } from '../../planning-repo/handlers/context-brief.ts';
 import type { ResearchBriefing } from '../../planning-repo/handlers/research-briefing.ts';
-import { isLiftableDiagram } from '../../rendering/ascii-lift.ts';
-import { isDirectoryTree } from '../../rendering/ascii-tree.ts';
 import type { OutlineEntry, ViewInput } from './manifest.ts';
 import { formatGatheredDate } from './context-brief.ts';
 
@@ -89,11 +87,10 @@ export interface ComposedPattern {
 
 export interface ComposedArchitecture extends ComposedChapterBase {
   kind: 'architecture';
-  /** `lifted` is true only when the figure is a real diagram (a rectangle or a connector flow);
-   * otherwise it stays a plain framed figure. */
-  diagram: { text: string; caption: Block[]; lifted: boolean } | null;
-  /** `isTree` is true only with three or more tree-prefixed lines; otherwise a plain framed block. */
-  structure: { text: string; isTree: boolean; notes: Block[] } | null;
+  /** Whether each renders as a figure or a plain framed block is the shared detector's call
+   * (`classifyFence`, applied by `FencedFigure`), not the composer's. */
+  diagram: { text: string; caption: Block[] } | null;
+  structure: { text: string; notes: Block[] } | null;
   patterns: ComposedPattern[];
   antiPatterns: { lead: string; rest: string }[];
   handRoll: {
@@ -196,6 +193,8 @@ export interface ComposedPitfallRow {
   label: string | null;
   text: string;
   code: string[];
+  /** The fence language of each `code` entry, aligned index for index ('' when untagged). */
+  codeLangs: string[];
 }
 
 export interface ComposedPitfall {
@@ -516,14 +515,12 @@ function architectureOf(briefing: ResearchBriefing, input: ViewInput): Architect
       ? {
           text: diagramSource.text,
           caption: arrayOf<Block>(diagramSource.caption),
-          lifted: isLiftableDiagram(diagramSource.text),
         }
       : null;
   const structure =
     structureSource && typeof structureSource.text === 'string'
       ? {
           text: structureSource.text,
-          isTree: isDirectoryTree(structureSource.text),
           notes: arrayOf<Block>(structureSource.notes),
         }
       : null;
@@ -775,13 +772,23 @@ function pitfallsOf(briefing: ResearchBriefing): Draft<ComposedPitfalls> | null 
     if (severity) chips.push({ label: severity.toLowerCase(), tone: SEVERITY_TONE[severity] });
     if (typeof item.code === 'string' && item.code !== '') chips.push({ label: item.code, tone: 'quiet' });
     if (typeof item.tag === 'string' && item.tag !== '') chips.push({ label: item.tag, tone: 'quiet' });
-    const rows = arrayOf<{ label?: unknown; text?: unknown; code?: unknown }>(item.rows).map(
+    const rows = arrayOf<{ label?: unknown; text?: unknown; code?: unknown; codeLangs?: unknown }>(item.rows).map(
       (row): ComposedPitfallRow => {
         const label = typeof row.label === 'string' ? row.label : null;
+        const codeLangs = arrayOf<unknown>(row.codeLangs);
+        const code: string[] = [];
+        const langs: string[] = [];
+        arrayOf<unknown>(row.code).forEach((entry, index) => {
+          if (typeof entry !== 'string') return;
+          code.push(entry);
+          const lang = codeLangs[index];
+          langs.push(typeof lang === 'string' ? lang : '');
+        });
         return {
           label: label && /^why it happens$/i.test(label) ? 'Why' : label,
           text: typeof row.text === 'string' ? row.text : '',
-          code: arrayOf<string>(row.code).filter((c) => typeof c === 'string'),
+          code,
+          codeLangs: langs,
         };
       },
     );

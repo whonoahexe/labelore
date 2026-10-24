@@ -166,6 +166,14 @@ describe('parseBlocks', () => {
     expect(blocks).toHaveLength(1);
     expect(blocks[0].kind).toBe('paragraph');
   });
+
+  it('records the fence language on a tagged code block and omits it on a bare fence', () => {
+    expect(parseBlocks('```ts\nconst a = 1;\n```\n')).toEqual([{ kind: 'code', text: 'const a = 1;', lang: 'ts' }]);
+    expect(parseBlocks('```Text\nplain\n```\n')).toEqual([{ kind: 'code', text: 'plain', lang: 'text' }]);
+    const bare = parseBlocks('```\nplain\n```\n');
+    expect(bare).toEqual([{ kind: 'code', text: 'plain' }]);
+    expect('lang' in bare[0]).toBe(false);
+  });
 });
 
 // ---------------------------------------------------------------------------

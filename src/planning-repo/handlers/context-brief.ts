@@ -9,6 +9,7 @@
 // A specific idea's kind (rule/leaning/note, sketch-007 C, quick-260925-3ug) is a per-item
 // heuristic classification over its own split title/body text — never a whole-document scan.
 import { splitSections, splitSubsections, parseMarkdownTable } from './markdown-sections.ts';
+import { normalizeFenceLang } from '../../rendering/figure-detect.ts';
 
 // ---------------------------------------------------------------------------
 // Model
@@ -29,7 +30,7 @@ export type Block =
   | { kind: 'paragraph'; text: string }
   | { kind: 'list'; ordered: boolean; items: string[] }
   | { kind: 'table'; rows: Record<string, string>[] }
-  | { kind: 'code'; text: string };
+  | { kind: 'code'; text: string; lang?: string };
 
 export interface OutItem {
   text: string;
@@ -261,13 +262,20 @@ export function parseBlocks(markdown: string): Block[] {
     // Fenced code block.
     if (trimmed.startsWith('```')) {
       const codeLines: string[] = [];
+      // The fence's info string, normalized; set only for a tagged fence so an untagged one keeps
+      // its exact shape.
+      const lang = normalizeFenceLang(trimmed.replace(/^`+/, ''));
       i += 1;
       while (i < lines.length && !lines[i].trim().startsWith('```')) {
         codeLines.push(lines[i]);
         i += 1;
       }
       i += 1; // consume the closing fence
-      blocks.push({ kind: 'code', text: codeLines.join('\n') });
+      blocks.push(
+        lang === ''
+          ? { kind: 'code', text: codeLines.join('\n') }
+          : { kind: 'code', text: codeLines.join('\n'), lang },
+      );
       continue;
     }
 

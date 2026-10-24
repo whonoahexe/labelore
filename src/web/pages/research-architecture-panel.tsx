@@ -6,13 +6,8 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import type { ArchitecturePanel, BuildStepModel } from '../../presentation/project-research-panels.ts';
-import { isLiftableDiagram } from '../../rendering/ascii-lift.ts';
-import { isDirectoryTree } from '../../rendering/ascii-tree.ts';
 import { layoutBuildOrder } from '../../rendering/build-order-layout.ts';
-import { CleanTreeFigure } from '../components/clean-tree.tsx';
-import { FigureFrame } from '../components/figure-frame.tsx';
-import { LaneDiagramFigure } from '../components/lane-diagram.tsx';
-import { PlainDiagram } from '../components/lifted-diagram.tsx';
+import { FencedFigure } from '../components/fenced-figure.tsx';
 import { Chev, ResearchInline, SectionHead, SwapRows } from './research-atoms.tsx';
 
 const DEFAULT_BUDGET = 940;
@@ -151,20 +146,12 @@ export function ArchitecturePanelBody({ panel }: { panel: ArchitecturePanel }): 
     <div className="research-arch">
       {panel.overview ? (
         <section>
-          {isLiftableDiagram(panel.overview) ? (
-            <LaneDiagramFigure title="System overview" text={panel.overview} />
-          ) : (
-            <FigureFrame title="System overview">{() => <PlainDiagram text={panel.overview ?? ''} />}</FigureFrame>
-          )}
+          <FencedFigure text={panel.overview} title="System overview" />
         </section>
       ) : null}
       {panel.structure ? (
         <section>
-          {isDirectoryTree(panel.structure) ? (
-            <CleanTreeFigure text={panel.structure} title="Project structure" />
-          ) : (
-            <FigureFrame title="Project structure">{() => <PlainDiagram text={panel.structure ?? ''} />}</FigureFrame>
-          )}
+          <FencedFigure text={panel.structure} title="Project structure" />
         </section>
       ) : null}
       {panel.antiPatterns.length > 0 ? (

@@ -10,6 +10,7 @@
 // well-typed input; `ResearchHandler.parse` still wraps it in try/catch (T-3x3-04).
 import { firstSentence, parseBlocks, splitIdeaLead } from './context-brief.ts';
 import type { Block } from './context-brief.ts';
+import { normalizeFenceLang } from '../../rendering/figure-detect.ts';
 
 // ---------------------------------------------------------------------------
 // Model
@@ -169,6 +170,9 @@ export interface ResearchPitfallRow {
   label: string | null;
   text: string;
   code: string[];
+  /** The fence info string of each `code` entry, aligned index for index ('' for an untagged fence
+   * and for a pipe-table run). */
+  codeLangs: string[];
 }
 
 export interface ResearchPitfall {
@@ -310,6 +314,8 @@ function clipLines(body: string): string[] {
 interface Fence {
   ch: string;
   len: number;
+  /** The info string after the opening fence run, normalized ('' when untagged). */
+  lang: string;
 }
 
 function openFence(trimmed: string): Fence | null {
@@ -317,7 +323,7 @@ function openFence(trimmed: string): Fence | null {
   if (ch !== '`' && ch !== '~') return null;
   let len = 0;
   while (len < trimmed.length && trimmed[len] === ch) len += 1;
-  return len >= 3 ? { ch, len } : null;
+  return len >= 3 ? { ch, len, lang: normalizeFenceLang(trimmed.slice(len)) } : null;
 }
 
 function closesFence(trimmed: string, fence: Fence): boolean {
@@ -1411,10 +1417,11 @@ function parseLabelRows(body: string): ResearchPitfallRow[] {
   const flushPipes = (): void => {
     if (pipeLines.length === 0) return;
     if (!current) {
-      current = { label: null, text: '', code: [] };
+      current = { label: null, text: '', code: [], codeLangs: [] };
       rows.push(current);
     }
     current.code.push(pipeLines.join('\n'));
+    current.codeLangs.push('');
     pipeLines = [];
   };
   for (const line of clipLines(body)) {
@@ -1422,10 +1429,11 @@ function parseLabelRows(body: string): ResearchPitfallRow[] {
     if (fence) {
       if (closesFence(trimmed, fence)) {
         if (!current) {
-          current = { label: null, text: '', code: [] };
+          current = { label: null, text: '', code: [], codeLangs: [] };
           rows.push(current);
         }
         current.code.push(fenceLines.join('\n'));
+        current.codeLangs.push(fence.lang);
         fence = null;
         fenceLines = [];
       } else fenceLines.push(line);
@@ -1452,7 +1460,7 @@ function parseLabelRows(body: string): ResearchPitfallRow[] {
     flushPipes();
     const label = labelOf(trimmed);
     if (label && label.label.length <= 60) {
-      current = { label: label.label, text: label.rest, code: [] };
+      current = { label: label.label, text: label.rest, code: [], codeLangs: [] };
       rows.push(current);
       blank = false;
       continue;
@@ -1472,7 +1480,7 @@ function parseLabelRows(body: string): ResearchPitfallRow[] {
       blank = false;
       continue;
     }
-    current = { label: null, text: bullet ? bullet[2].trim() : trimmed, code: [] };
+    current = { label: null, text: bullet ? bullet[2].trim() : trimmed, code: [], codeLangs: [] };
     rows.push(current);
     blank = false;
   }
@@ -1518,7 +1526,7 @@ function parsePitfalls(body: string, parent: string, add: AddSource): { items: R
         severity: null,
         code: null,
         tag: null,
-        rows: rest === '' ? [] : [{ label: null, text: rest, code: [] }],
+        rows: rest === '' ? [] : [{ label: null, text: rest, code: [], codeLangs: [] }],
       });
     }
   }

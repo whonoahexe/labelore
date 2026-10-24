@@ -677,8 +677,10 @@ function readBlocks(value: unknown): Block[] | null {
   const blocks: Block[] = [];
   for (const block of value) {
     if (!isRecord(block)) return null;
-    if ((block.kind === 'paragraph' || block.kind === 'code') && typeof block.text === 'string') {
-      blocks.push({ kind: block.kind, text: block.text });
+    if (block.kind === 'code' && typeof block.text === 'string') {
+      blocks.push(typeof block.lang === 'string' ? { kind: 'code', text: block.text, lang: block.lang } : { kind: 'code', text: block.text });
+    } else if (block.kind === 'paragraph' && typeof block.text === 'string') {
+      blocks.push({ kind: 'paragraph', text: block.text });
     } else if (block.kind === 'list' && Array.isArray(block.items) && block.items.every((item) => typeof item === 'string')) {
       blocks.push({ kind: 'list', ordered: block.ordered === true, items: block.items as string[] });
     } else if (

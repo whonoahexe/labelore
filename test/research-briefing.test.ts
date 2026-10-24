@@ -429,3 +429,32 @@ describe('extractResearchBriefing — SP v1.0/02 (real file, when present)', () 
     ]);
   });
 });
+
+describe('pitfall code languages (quick-261024-o3h)', () => {
+  it('records each code entry\'s fence language, aligned with code', () => {
+    const body = [
+      '## Common Pitfalls',
+      '',
+      '### Pitfall 1: Drift',
+      '',
+      '**What goes wrong:** it drifts.',
+      '',
+      '```ts',
+      'const a = 1;',
+      '```',
+      '',
+      '```',
+      'src/',
+      '```',
+      '',
+      '| A | B |',
+      '| --- | --- |',
+      '| 1 | 2 |',
+      '',
+    ].join('\n');
+    const briefing = extractResearchBriefing(body);
+    const row = briefing.pitfalls?.items[0].rows[0];
+    expect(row?.code).toHaveLength(3);
+    expect(row?.codeLangs).toEqual(['ts', '', '']);
+  });
+});
