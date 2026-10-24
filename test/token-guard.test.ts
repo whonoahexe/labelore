@@ -547,19 +547,19 @@ export const ALLOWLIST: AllowlistEntry[] = [
     reason: 'grid-gap hairline exposing the container background as a 1px divider, same category as a border',
   },
   {
-    selector: '.artifact-document :is(h1, h2, h3, h4, h5, h6)',
+    selector: '.artifact-document :is(h1, h2, h3, h4, h5, h6):not([data-figure-island] *)',
     property: 'margin',
     value: '1.8em 0 0.65em',
     reason: 'em-relative heading margin — scales with the heading\'s own resolved font-size, not a fixed step',
   },
   {
-    selector: '.artifact-document :is(h1, h2, h3, h4, h5, h6)',
+    selector: '.artifact-document :is(h1, h2, h3, h4, h5, h6):not([data-figure-island] *)',
     property: 'margin-top',
     value: '2.3em',
     reason: 'em-relative heading margin — scales with the heading\'s own resolved font-size, not a fixed step',
   },
   {
-    selector: '.artifact-document :is(h1, h2, h3, h4, h5, h6)',
+    selector: '.artifact-document :is(h1, h2, h3, h4, h5, h6):not([data-figure-island] *)',
     property: 'margin-bottom',
     value: '0.75em',
     reason: 'em-relative heading margin — scales with the heading\'s own resolved font-size, not a fixed step',

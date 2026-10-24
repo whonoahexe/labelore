@@ -471,3 +471,30 @@ test.describe('discussion-log review fixes (quick-260923-jxp)', () => {
 
 // quick-261017-18a: the VERIFICATION page moved to the board + ledger view, covered by test/e2e/verification-page.spec.ts.
 // The PLAN/VERIFICATION cover/glance smoke and the expanded-chapter reference preview that lived here ran only over VERIFICATION fixtures, so they left with it.
+
+// quick-261024-o3h: every diagram and directory tree in a rendered document is a figure, decided
+// once by the shared detector on the server and hydrated on the client; Source shows the plain code.
+test.describe('rendered figures (quick-261024-o3h)', () => {
+  test('rendered figures: project research ARCHITECTURE.md', async ({ page, baseURL }) => {
+    const url = await resolveFixtureUrl(
+      baseURL ?? 'http://127.0.0.1:4199',
+      '.planning/research/ARCHITECTURE.md',
+    );
+    await setTheme(page, 'light');
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(url);
+
+    const treeHost = page.locator('.artifact-document [data-figure="tree"][data-figure-mounted]').first();
+    const diagramHost = page.locator('.artifact-document [data-figure="diagram"][data-figure-mounted]').first();
+    await expect(treeHost.locator('.clean-tree').first()).toBeVisible();
+    await expect(diagramHost.locator('.figure-frame').first()).toBeVisible();
+    await expect(treeHost.locator('> pre')).toBeHidden();
+    await expect(diagramHost.locator('> pre')).toBeHidden();
+
+    await page.locator('.artifact-heading .document-view-toggle').getByRole('button', { name: 'Source' }).click();
+    await expect(page.locator('.artifact-document [data-figure] .figure-frame')).toHaveCount(0);
+    const sourceTree = page.locator('.artifact-document [data-figure="tree"] > pre').first();
+    await expect(sourceTree).toBeVisible();
+    await expect(sourceTree).toContainText('├──');
+  });
+});

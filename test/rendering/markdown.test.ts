@@ -198,6 +198,56 @@ Inside.
   });
 });
 
+describe('fenced figures', () => {
+  const TREE = ['backend/', '├── src/', '│   └── lib.rs', '└── Cargo.toml'].join('\n');
+  const DIAGRAM = ['┌────────┐', '│ Client │', '└────────┘', '    │', '    ▼', '┌────────┐', '│ Server │', '└────────┘'].join('\n');
+  const fence = (lang: string, text: string): string => '```' + lang + '\n' + text + '\n```';
+
+  it('wraps an untagged tree fence and a text box diagram in a figure host around the highlighted block', async () => {
+    const renderer = await createArtifactRenderer();
+    const tree = await renderer.render(artifact(fence('', TREE)));
+    expect(tree.html).toMatch(/^<div data-figure="tree"><pre [^>]*data-highlighted="shiki"/);
+    expect(tree.html).toContain('Cargo.toml');
+    const diagram = await renderer.render(artifact(fence('text', DIAGRAM)));
+    expect(diagram.html).toContain('<div data-figure="diagram"><pre');
+  });
+
+  it('leaves a language-tagged fence and Mermaid alone', async () => {
+    const renderer = await createArtifactRenderer();
+    const tagged = await renderer.render(artifact(fence('ts', TREE)));
+    expect(tagged.html).not.toContain('data-figure');
+    const mermaid = await renderer.render(artifact(fence('mermaid', 'graph TD\n  A --> B')));
+    expect(mermaid.html).toContain('data-mermaid-pending="true"');
+    expect(mermaid.html).not.toContain('data-figure');
+  });
+
+  it('still wraps a tree inside a PLAN wrapper', async () => {
+    const renderer = await createArtifactRenderer();
+    const rendered = await renderer.render(
+      artifact(`<tasks>\n${fence('', TREE)}\n</tasks>`, 'plan'),
+    );
+    expect(rendered.html).toContain('data-figure="tree"');
+  });
+
+  it('strips an author-written figure host', async () => {
+    const renderer = await createArtifactRenderer();
+    const rendered = await renderer.render(
+      artifact('<div data-figure="tree">forged</div>\n\nafter'),
+    );
+    expect(rendered.html).not.toContain('data-figure');
+    expect(rendered.html).toContain('forged');
+  });
+
+  it('emits tree notes only as escaped text', async () => {
+    const renderer = await createArtifactRenderer();
+    const tree = ['pkg/', '├── a.ts   # <img src=x onerror=alert(1)>', '├── b.ts', '└── c.ts'].join('\n');
+    const rendered = await renderer.render(artifact(fence('', tree)));
+    expect(rendered.html).toContain('data-figure="tree"');
+    expect(rendered.html).not.toMatch(/<img/);
+    expect(rendered.html).toContain('&#x3C;img');
+  });
+});
+
 describe('stableSlug (extracted to src/rendering/slug.ts, 03-02)', () => {
   it('lowercases, strips diacritics, and collapses whitespace/underscores to a single hyphen', () => {
     expect(stableSlug('Some Heading')).toBe('some-heading');

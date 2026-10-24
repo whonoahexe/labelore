@@ -13,6 +13,7 @@ import { unified, type Processor } from 'unified';
 import type { VFile } from 'vfile';
 import type { Artifact } from '../domain/model.ts';
 import type { ReferencePreviewDto, ReferenceRegistry } from '../presentation/references.ts';
+import { classifyFence } from './figure-detect.ts';
 import { rehypeResolvedReferences } from './linkify.ts';
 import { isRecognizedPlanTag, segmentPlanBody, type PlanSegment } from './plan-segments.ts';
 import { stableSlug } from './slug.ts';
@@ -202,7 +203,20 @@ async function enrichTree(root: Root, file: VFile, highlighter: Highlighter): Pr
           );
           if (highlightedPre) {
             highlightedPre.properties.dataHighlighted = 'shiki';
-            parent.children[index] = highlightedPre;
+            // A diagram or directory tree gets a figure host around the usual highlighted block.
+            // Added here, after sanitization, so an author-written host never survives; the host
+            // carries only an allowlisted kind and never document text (the client reads the
+            // source from the escaped code block).
+            const figure = classifyFence(language, source);
+            parent.children[index] =
+              figure === null
+                ? highlightedPre
+                : {
+                    type: 'element',
+                    tagName: 'div',
+                    properties: { dataFigure: figure },
+                    children: [highlightedPre],
+                  };
             continue;
           }
         }
