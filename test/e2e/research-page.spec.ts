@@ -190,3 +190,112 @@ test.describe('Research page: Features', () => {
     await expect(row).toHaveAttribute('data-open', 'true');
   });
 });
+
+test.describe('Research page: Architecture', () => {
+  test('the overview is the shipped lane diagram, with the author layout one chip away', async ({ page }) => {
+    await openResearch(page, '?open=architecture');
+    const nodes = page.locator('.lane-diagram-node');
+    await expect(nodes.first()).toBeVisible();
+    expect(await nodes.count()).toBeGreaterThanOrEqual(3);
+    await page.getByRole('button', { name: 'Shown as drawn' }).first().click();
+    await expect(page.locator('.lifted-diagram-text').first()).toBeVisible();
+    await expect(page.locator('.lane-diagram-node')).toHaveCount(0);
+  });
+
+  test('the project structure is the clean tree with its count', async ({ page }) => {
+    await openResearch(page, '?open=architecture');
+    await expect(page.locator('.clean-tree-count')).toHaveText('12 files · 10 folders');
+  });
+
+  test('three swaps open to "What people do" and "Why it\'s wrong"', async ({ page }) => {
+    await openResearch(page, '?open=architecture');
+    await expect(page.locator('.research-swap')).toHaveCount(3);
+    await page.locator('.research-swap-button').first().click();
+    await expect(page.locator('.research-swap-why .research-label')).toHaveText(['What people do', "Why it's wrong"]);
+  });
+
+  test('the build order is a DAG of four steps; a click lights wires and Escape clears', async ({ page }) => {
+    await openResearch(page, '?open=architecture');
+    const nodes = page.locator('.research-bo-node');
+    await expect(nodes).toHaveCount(4);
+    await expect(page.locator('.research-bo-hint')).toBeVisible();
+    await nodes.nth(1).click();
+    const detail = page.locator('.research-bo-detail');
+    await expect(detail).toContainText('Waits for');
+    await expect(detail.locator('.research-step-chip').first()).toContainText('A');
+    await expect(detail).toContainText('Unlocks');
+    await expect(page.locator('.research-bo-wire[data-hot="true"]')).not.toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await expect(detail).toHaveCount(0);
+    await expect(page.locator('.research-bo-hint')).toBeVisible();
+  });
+});
+
+test.describe('Research page: Pitfalls', () => {
+  test('ten rows; row 01 names its short name, first sign and likelihood', async ({ page }) => {
+    await openResearch(page, '?open=pitfalls');
+    const rows = page.locator('.research-wl-row');
+    await expect(rows).toHaveCount(10);
+    const first = rows.first();
+    await expect(first.locator('.research-wl-name b')).toHaveText('Overfit to studio-portal');
+    await expect(first.locator('.research-wl-watch .research-label')).toHaveText('Watch for');
+    await expect(first.locator('.research-wl-sign em')).toHaveText(/^\+\d+ more$/);
+    await expect(first.locator('.research-likely')).toContainText('Very high');
+  });
+
+  test('opening a row shows signs first, with no icon, and a verify block without a tick', async ({ page }) => {
+    await openResearch(page, '?open=pitfalls');
+    await page.locator('.research-wl-head').first().click();
+    const tabs = page.locator('.research-wl-row').first().getByRole('tab');
+    await expect(tabs.first()).toContainText('Warning signs');
+    await expect(tabs.first()).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('.research-signs svg')).toHaveCount(0);
+    const squares = await page.locator('.research-signs li').first().evaluate((el) => getComputedStyle(el, '::before').backgroundColor);
+    expect(squares).not.toBe('rgba(0, 0, 0, 0)');
+    await tabs.filter({ hasText: 'How to verify' }).click();
+    await expect(page.locator('.research-verify .research-label')).toHaveText("Proves it's prevented");
+    await expect(page.locator('.research-verify svg')).toHaveCount(0);
+  });
+
+  test('the ledger has ten rows and its 02 chip opens pitfall 02', async ({ page }) => {
+    await openResearch(page, '?open=pitfalls');
+    await expect(page.locator('.research-ledger li')).toHaveCount(10);
+    await page.locator('.research-ledger .research-pf-chip', { hasText: /^02 /i }).first().click();
+    await expect(page).toHaveURL(/pitfall=2/);
+    await expect(page.locator('.research-wl-row[data-pitfall="2"]')).toHaveAttribute('data-open', 'true');
+  });
+
+  test('?pitfall=3 opens row 03', async ({ page }) => {
+    await openResearch(page, '?open=pitfalls&pitfall=3');
+    await expect(page.locator('.research-wl-row[data-pitfall="3"]')).toHaveAttribute('data-open', 'true');
+    await expect(page.locator('.research-wl-row[data-open="true"]')).toHaveCount(1);
+  });
+});
+
+test.describe('Research page: every spine at 390px and in the dark theme', () => {
+  for (const key of ['summary', 'stack', 'features', 'architecture', 'pitfalls']) {
+    test(`${key} has no horizontal overflow at 390px`, async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 800 });
+      await openResearch(page, `?open=${key}`);
+      await expect(page.locator('.research-leaf')).toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(391);
+    });
+
+    test(`${key} loads in the dark theme without console errors`, async ({ page }) => {
+      const errors: string[] = [];
+      // The dev server's HMR socket is unrelated to the page.
+      const unrelated = /WebSocket|vite/i;
+      page.on('pageerror', (error) => {
+        if (!unrelated.test(error.message)) errors.push(error.message);
+      });
+      page.on('console', (message) => {
+        if (message.type() === 'error' && !unrelated.test(message.text())) errors.push(message.text());
+      });
+      await page.addInitScript(() => window.localStorage.setItem('labelore-theme', 'dark'));
+      await page.goto(`/research?open=${key}`);
+      await page.locator('.research-leaf').waitFor({ state: 'visible' });
+      expect(await page.evaluate(() => document.documentElement.classList.contains('dark'))).toBe(true);
+      expect(errors).toEqual([]);
+    });
+  }
+});

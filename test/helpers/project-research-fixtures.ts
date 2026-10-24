@@ -239,7 +239,7 @@ S1 schema ──► I1 executor ──► R1 review
 | S1 | Schema: the manifest types | None | First |
 | I1 | Executor: single read, tee | S1 | Core |
 | R1 | Review queue: list and filter | I1, S1 | UI |
-| R2 | Export | I1, spike S1 (needs an answer) | Last |
+| R2 | Export | I1, spike X1 (needs an answer) | Last |
 
 **Roadmap grouping suggestion:** S1 and I1 as one phase; R1 and R2 as the second.
 

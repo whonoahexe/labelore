@@ -197,9 +197,9 @@ describe('drift: the shapes Cinedise Portal uses', () => {
       ['R1', 'review'],
       ['R2', 'export'],
     ]);
-    // "spike S1" names a known id here, so it resolves; unknown ids would be dropped.
-    expect(order?.steps[3].depends).toEqual(['I1', 'S1']);
-    expect(order?.steps[3].dependsText).toBe('I1, spike S1 (needs an answer)');
+    // "spike X1" is not a step, so it is dropped from the wires and kept in the text.
+    expect(order?.steps[3].depends).toEqual(['I1']);
+    expect(order?.steps[3].dependsText).toBe('I1, spike X1 (needs an answer)');
     expect(order?.steps[0].dependsText).toBeNull();
     expect(order?.grouping).toMatch(/^S1 and I1 as one phase/);
   });

@@ -199,9 +199,10 @@ export function SwapRows({ items }: { items: readonly SwapItem[] }): React.JSX.E
 
 /** A pitfall's number as a chip. A navigable one opens that pitfall on the Pitfalls spine (a pushed
  * history entry, so Back returns to the chip); an inert one is a plain span. */
-export function PitfallChipView({ chip }: { chip: PitfallChip }): React.JSX.Element {
+export function PitfallChipView({ chip, withName = false }: { chip: PitfallChip; withName?: boolean }): React.JSX.Element {
   const navigate = useNavigate();
-  if (!chip.navigable) return <span className="research-pf-chip">{chip.label}</span>;
+  const text = withName && chip.short ? `${chip.label} \u00b7 ${chip.short}` : chip.label;
+  if (!chip.navigable) return <span className="research-pf-chip">{text}</span>;
   const name = chip.short ? `Pitfall ${chip.label}: ${chip.short}` : `Pitfall ${chip.label}`;
   return (
     <button
@@ -211,7 +212,7 @@ export function PitfallChipView({ chip }: { chip: PitfallChip }): React.JSX.Elem
       title={chip.short ?? undefined}
       onClick={() => navigate({ search: `?open=pitfalls&pitfall=${chip.n}` })}
     >
-      {chip.label}
+      {text}
     </button>
   );
 }

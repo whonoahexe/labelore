@@ -4,8 +4,10 @@
 //
 // Pure: no node imports, no filesystem, and no file name, path, line number or URL in any output.
 import {
+  normaliseLevel,
   plainText,
   splitTopLevel,
+  type ArchitectureLift,
   type ConfidenceLevel,
   type FeatureItem,
   type FeaturesLift,
@@ -424,5 +426,293 @@ export function composeFeaturesPanel(features: FeaturesLift, projectName: string
           tally: `${competitors.rows.length} features · ${competitors.rivals.length} compared`,
         }
       : null,
+  };
+}
+
+// ---------------------------------------------------------------------------------------------
+// The first screen's sentence
+
+/** The first screen says one thing: the finding's first sentence, cut at a colon when it runs long
+ * (its list then follows quietly). Everything else is `rest`. */
+export function splitFinding(value: string): { head: string; tail: string; rest: string } {
+  const parts = String(value ?? '')
+    .slice(0, 8_000)
+    .split(/(?<=[.!?])\s+(?=[A-Z0-9`*("“])/);
+  let head = parts[0] ?? '';
+  let tail = '';
+  const colon = head.indexOf(': ');
+  if (plainText(head).length > 140 && colon > 20) {
+    tail = head.slice(colon + 2);
+    head = head.slice(0, colon);
+  }
+  return { head, tail, rest: parts.slice(1).join(' ') };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Architecture
+
+export interface BuildStepModel {
+  id: string;
+  name: string;
+  deliverable: string;
+  depends: string[];
+  unlocks: string[];
+  notes: string | null;
+  /** Prerequisites that are not steps ("spike S1"), as the author wrote them. */
+  alsoWaitsFor: string | null;
+}
+
+export interface ArchitecturePanel {
+  overview: string | null;
+  structure: string | null;
+  antiPatterns: SwapItem[];
+  antiTally: string;
+  buildOrder: {
+    tally: string;
+    steps: BuildStepModel[];
+    toggleLabel: string;
+    toggleText: string | null;
+  } | null;
+}
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** 032 `boDetail`: the Depends-on text minus the step ids it names (and their asides). */
+function alsoWaitsFor(dependsText: string | null, ids: readonly string[]): string | null {
+  if (!dependsText) return null;
+  let text = dependsText.slice(0, 1_000);
+  for (const id of ids) text = text.replace(new RegExp(`\\b${escapeRegExp(id)}\\b(\\s*\\([^)]{0,200}\\))?[,;]?\\s*`, 'g'), '');
+  text = text
+    .replace(/^(plus|and)\s+/i, '')
+    .replace(/^for\s+/i, '')
+    .trim();
+  return text !== '' && /[a-z]{3}/i.test(text) ? text : null;
+}
+
+/** A step's deliverable without its leading "Name:" label. */
+function stripNamePrefix(deliverable: string, name: string): string {
+  const lower = deliverable.toLowerCase();
+  if (name !== '' && lower.startsWith(name.toLowerCase())) {
+    const rest = deliverable.slice(name.length).replace(/^\s*:\s*/, '');
+    if (rest !== deliverable.slice(name.length)) return rest;
+  }
+  return deliverable;
+}
+
+export function composeArchitecturePanel(architecture: ArchitectureLift): ArchitecturePanel {
+  const order = architecture.buildOrder;
+  let buildOrder: ArchitecturePanel['buildOrder'] = null;
+  if (order && order.steps.length > 0) {
+    const ids = order.steps.map((step) => step.id);
+    const steps: BuildStepModel[] = order.steps.map((step) => ({
+      id: step.id,
+      name: capitalise(step.name),
+      deliverable: sentenceCase(stripNamePrefix(step.deliverable, step.name)),
+      depends: step.depends,
+      unlocks: order.steps.filter((other) => other.depends.includes(step.id)).map((other) => other.id),
+      notes: step.notes,
+      alsoWaitsFor: alsoWaitsFor(step.dependsText, ids),
+    }));
+    // The deepest chain, as "N deep": columns are counted by the layout, so approximate it here the
+    // same way (longest prerequisite chain with a pass-bounded relaxation).
+    const depth = new Map(ids.map((id) => [id, 0]));
+    for (let pass = 0; pass < ids.length; pass += 1) {
+      let changed = false;
+      for (const step of order.steps) {
+        for (const dep of step.depends) {
+          const next = Math.min(ids.length - 1, (depth.get(dep) ?? 0) + 1);
+          if (next > (depth.get(step.id) ?? 0)) {
+            depth.set(step.id, next);
+            changed = true;
+          }
+        }
+      }
+      if (!changed) break;
+    }
+    const deep = Math.max(...depth.values()) + 1;
+    buildOrder = {
+      tally: `${steps.length} steps · ${deep} deep`,
+      steps,
+      toggleLabel: order.grouping ? 'Roadmap grouping' : 'Why this order',
+      toggleText: order.grouping ?? order.note,
+    };
+  }
+  return {
+    overview: architecture.overview,
+    structure: architecture.structure,
+    antiPatterns: architecture.antiPatterns.map((pattern) => ({
+      bad: pattern.title,
+      good: sentenceCase(pattern.instead),
+      details: [
+        ...(pattern.does ? [{ label: 'What people do', text: `${sentenceCase(pattern.does)}.` }] : []),
+        { label: "Why it's wrong", text: `${sentenceCase(pattern.why)}.` },
+      ],
+    })),
+    antiTally: `${architecture.antiPatterns.length} to avoid`,
+    buildOrder,
+  };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Pitfalls
+
+const LIKELY_CELLS: Record<string, number> = {
+  'very high': 4,
+  high: 3,
+  'medium-high': 2.5,
+  medium: 2,
+  'low-medium': 1.5,
+  low: 1,
+};
+
+export type PitfallTabKey = 'signs' | 'avoid' | 'why' | 'verify';
+
+export interface PitfallRowModel {
+  n: number;
+  label: string;
+  /** The name the row leads with: the mapping's short name, else the title. */
+  name: string;
+  /** The full title under the name, only when a short name exists. */
+  title: string | null;
+  firstSign: string | null;
+  moreSigns: number;
+  /** How likely (4 cells) or, when the file does not say, how sure (3 cells). */
+  meter: { cells: 3 | 4; filled: number; text: string; label: string } | null;
+  phase: string;
+  wrong: { head: string; tail: string; list: string[]; more: Array<{ bullet: boolean; text: string }> };
+  tabs: Array<{ key: PitfallTabKey; label: string }>;
+  signs: string[];
+  avoid: Array<{ main: string; rest: string }>;
+  why: Array<{ bullet: boolean; text: string }>;
+  verify: string | null;
+}
+
+export interface PitfallsPanel {
+  note: string | null;
+  tally: string;
+  pitfalls: PitfallRowModel[];
+  checks: Array<{ label: string | null; text: string; chips: PitfallChip[] }>;
+  checksTally: string;
+}
+
+/** The first sentence of `text` and the rest, never splitting inside code, parentheses or "e.g.". */
+export function splitSentence(text: string): [string, string] {
+  const source = text.slice(0, 4_000);
+  let depth = 0;
+  let tick = false;
+  for (let index = 0; index < source.length - 1; index += 1) {
+    const char = source[index];
+    if (char === '`') tick = !tick;
+    if (tick) continue;
+    if (char === '(') depth += 1;
+    if (char === ')') depth = Math.max(0, depth - 1);
+    if (
+      depth === 0 &&
+      /[.!?]/.test(char) &&
+      /\s/.test(source[index + 1]) &&
+      index > 30 &&
+      !/\b(e\.g|i\.e|vs|etc|cf)$/i.test(source.slice(Math.max(0, index - 8), index)) &&
+      /[A-Z`*("“]/.test(source.slice(index + 1).trimStart()[0] ?? '')
+    ) {
+      return [source.slice(0, index + 1), source.slice(index + 1).trim()];
+    }
+  }
+  return [source, ''];
+}
+
+/** The phase that prevents it: the mapping's, without its asides, cut at a dash or sentence end. */
+export function phaseShort(mapPhase: string | null, phase: string): string {
+  const text = String(mapPhase || phase || '').slice(0, 600).replace(/\s*\([^)]*\)/g, '');
+  return (text.split(/\s+—\s+|[.;:]\s/)[0] ?? '').trim();
+}
+
+function avoidParts(text: string): { main: string; rest: string } {
+  const bold = /^\*\*(.{1,300}?)\*\*[:.]?\s*(.*)$/.exec(text);
+  let [main, rest]: [string, string] = bold ? [bold[1].replace(/[.:]$/, ''), bold[2]] : splitSentence(text);
+  // One long sentence: say it up to its colon or dash, and let the rest clamp.
+  const cut = !bold && plainText(main).length > 140 ? main.search(/(?<=.{40}):\s|\s—\s/) : -1;
+  if (cut > 0) {
+    rest = `${capitalise(main.slice(cut).replace(/^[:\s—]+/, ''))} ${rest}`.trim();
+    main = main.slice(0, cut);
+  }
+  return { main, rest };
+}
+
+function wrongParts(wrong: ReadonlyArray<{ bullet: boolean; text: string }>): PitfallRowModel['wrong'] {
+  const [first, ...others] = wrong;
+  if (!first) return { head: '', tail: '', list: [], more: [] };
+  if (first.bullet) {
+    const list = wrong
+      .filter((block) => block.bullet)
+      .map((block) => {
+        const lead = /^\*\*(.{1,300}?)\*\*/.exec(block.text);
+        return lead ? lead[1].replace(/[.:]$/, '') : splitSentence(block.text)[0];
+      });
+    return { head: '', tail: '', list, more: [...wrong] };
+  }
+  const split = splitFinding(first.text);
+  return {
+    head: split.head,
+    tail: split.tail,
+    list: [],
+    more: [...(split.rest ? [{ bullet: false, text: split.rest }] : []), ...others],
+  };
+}
+
+function pitfallMeter(
+  likely: { level: string } | null,
+  confidence: { level: string } | null,
+): PitfallRowModel['meter'] {
+  if (likely) {
+    const level = likely.level.toLowerCase();
+    const text = capitalise(level);
+    return { cells: 4, filled: LIKELY_CELLS[level] ?? 0, text, label: `How likely: ${text}` };
+  }
+  if (confidence) {
+    const level = normaliseLevel(confidence.level);
+    const text = `${(level ?? confidence.level).toLowerCase().replace('-', '–')} confidence`;
+    return { cells: 3, filled: level ? COMPLEXITY_CELLS[level] : 0, text, label: text };
+  }
+  return null;
+}
+
+export function composePitfallsPanel(pitfalls: PitfallsLift): PitfallsPanel {
+  const rows: PitfallRowModel[] = pitfalls.pitfalls.map((pitfall) => {
+    const tabs: PitfallRowModel['tabs'] = [
+      ...(pitfall.signs.length > 0 ? [{ key: 'signs' as const, label: `Warning signs · ${pitfall.signs.length}` }] : []),
+      ...(pitfall.avoid.length > 0 ? [{ key: 'avoid' as const, label: `How to avoid · ${pitfall.avoid.length}` }] : []),
+      ...(pitfall.why.length > 0 ? [{ key: 'why' as const, label: 'Why it happens' }] : []),
+      ...(pitfall.verify ? [{ key: 'verify' as const, label: 'How to verify' }] : []),
+    ];
+    return {
+      n: pitfall.n,
+      label: pad(pitfall.n),
+      name: pitfall.short ?? pitfall.title,
+      title: pitfall.short ? pitfall.title : null,
+      firstSign: pitfall.signs[0] ?? null,
+      moreSigns: Math.max(0, pitfall.signs.length - 1),
+      meter: pitfallMeter(pitfall.likely, pitfall.confidence),
+      phase: phaseShort(pitfall.mapPhase, pitfall.phase),
+      wrong: wrongParts(pitfall.wrong),
+      tabs,
+      signs: pitfall.signs,
+      avoid: pitfall.avoid.map(avoidParts),
+      why: pitfall.why,
+      verify: pitfall.verify,
+    };
+  });
+  const signs = rows.reduce((total, row) => total + row.signs.length, 0);
+  return {
+    note: pitfalls.note,
+    tally: `${rows.length} · ${signs} warning signs`,
+    pitfalls: rows,
+    checks: pitfalls.checks.map((check) => ({
+      label: check.label,
+      text: check.trap ? `Often ${check.trap}. ${check.check}` : check.check,
+      chips: check.pitfalls.map((n) => pitfallChip(n, pitfalls)),
+    })),
+    checksTally: `${pitfalls.checks.length} checks before calling it done`,
   };
 }

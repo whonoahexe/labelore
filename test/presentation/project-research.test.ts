@@ -10,8 +10,10 @@ import {
   deliverItems,
   deliverTile,
   gateConditions,
+  phaseShort,
   placePhases,
   splitParenthetical,
+  splitSentence,
 } from '../../src/presentation/project-research-panels.ts';
 import { RESEARCH_FILES, projectHasResearch } from '../../src/presentation/project-research-files.ts';
 import {
@@ -439,5 +441,119 @@ describe('the Features panel', () => {
     expect(features.competitors?.tally).toBe('2 features · 3 compared');
     expect(features.competitors?.note).toBe('The matrix says the gap is verification, not transfer.');
     expect(splitParenthetical("Labelore's approach")).toEqual({ name: "Labelore's approach", sub: null });
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// Task 3: the Architecture and Pitfalls panels
+
+describe('the Architecture panel', () => {
+  it("Labelore's prose build order gives steps A to D with dependencies and the inverse", () => {
+    const architecture = buildResearchViewModel(presentationOf(realContents())).architecture!;
+    const order = architecture.buildOrder!;
+    expect(order.steps.map((step) => step.id)).toEqual(['A', 'B', 'C', 'D']);
+    expect(order.steps[1].depends).toEqual(['A']);
+    expect(order.steps[2].depends).toEqual(['A', 'B']);
+    expect(order.steps[0].unlocks).toEqual(['B', 'C', 'D'].filter((id) => order.steps.find((step) => step.id === id)?.depends.includes('A')));
+    expect(order.tally).toMatch(/^4 steps · \d deep$/);
+    expect(order.toggleLabel).toBe('Why this order');
+    expect(order.toggleText).toMatch(/pure-data foundation/);
+    expect(architecture.overview).not.toBeNull();
+    expect(architecture.structure).not.toBeNull();
+  });
+
+  it('parses anti-patterns into swaps in both spellings, with "What people do" only when present', () => {
+    const labelore = buildResearchViewModel(presentationOf(realContents())).architecture!;
+    expect(labelore.antiPatterns).toHaveLength(3);
+    expect(labelore.antiPatterns[0].details.map((detail) => detail.label)).toEqual(['What people do', "Why it's wrong"]);
+    expect(labelore.antiTally).toBe('3 to avoid');
+    const drift = buildResearchViewModel(presentationOf(driftContents())).architecture!;
+    expect(drift.antiPatterns[0].details.map((detail) => detail.label)).toEqual(["Why it's wrong"]);
+    expect(drift.antiPatterns[1].details.map((detail) => detail.label)).toEqual(['What people do', "Why it's wrong"]);
+    expect(drift.antiPatterns[0].good).toBe('Route every write through the executor');
+  });
+
+  it('reads the table shape: short names from the ASCII graph, non-step prerequisites kept as text', () => {
+    const order = buildResearchViewModel(presentationOf(driftContents())).architecture!.buildOrder!;
+    expect(order.steps.map((step) => step.name)).toEqual(['Schema', 'Executor', 'Review', 'Export']);
+    expect(order.steps[3].alsoWaitsFor).toBe('spike X1 (needs an answer)');
+    expect(order.steps[2].alsoWaitsFor).toBeNull();
+    expect(order.steps[0].unlocks).toEqual(['I1', 'R1']);
+    expect(order.steps[1].deliverable).toBe('Single read, tee');
+    expect(order.toggleLabel).toBe('Roadmap grouping');
+    expect(order.toggleText).toMatch(/^S1 and I1 as one phase/);
+  });
+
+  it('expands "Phases A–C" into A, B and C', () => {
+    const body = `# Architecture\n\n## Recommended Build Order\n\n### Phase A — One\nFirst thing.\n\n### Phase B — Two\nSecond.\n\n### Phase C — Three\nDepends on Phases A–B.\n\n### Phase D — Four\nNeeds Phase C.\n`;
+    const order = buildResearchViewModel(presentationOf({ ARCHITECTURE: body })).architecture!.buildOrder!;
+    expect(order.steps[2].depends).toEqual(['A', 'B']);
+    expect(order.steps[3].depends).toEqual(['C']);
+  });
+
+  it('has no build order or anti-patterns when the file has none', () => {
+    const architecture = buildResearchViewModel(presentationOf({ ARCHITECTURE: '# Architecture\n' })).architecture!;
+    expect(architecture.buildOrder).toBeNull();
+    expect(architecture.antiPatterns).toEqual([]);
+    expect(architecture.overview).toBeNull();
+  });
+});
+
+describe('the Pitfalls panel', () => {
+  it("Labelore's first pitfall is Overfit to studio-portal, very high, with a first sign and its other signs counted", () => {
+    const panel = buildResearchViewModel(presentationOf(realContents())).pitfalls!;
+    const first = panel.pitfalls[0];
+    expect(panel.pitfalls).toHaveLength(10);
+    expect(first.name).toBe('Overfit to studio-portal');
+    expect(first.title).toMatch(/^Building the parser against studio-portal/);
+    expect(first.meter).toMatchObject({ cells: 4, filled: 4, text: 'Very high' });
+    expect(first.firstSign!.length).toBeGreaterThan(0);
+    expect(first.moreSigns).toBe(first.signs.length - 1);
+    expect(first.tabs.map((tab) => tab.key)).toEqual(['signs', 'avoid', 'why', 'verify']);
+    expect(first.wrong.head.length).toBeGreaterThan(0);
+    expect(panel.tally).toMatch(/^10 · \d+ warning signs$/);
+    expect(panel.checks).toHaveLength(10);
+    expect(panel.checksTally).toBe('10 checks before calling it done');
+  });
+
+  it('uses the confidence meter when the file does not say how likely, and omits empty tabs in order', () => {
+    const panel = buildResearchViewModel(presentationOf(driftContents())).pitfalls!;
+    expect(panel.pitfalls[0].meter).toMatchObject({ cells: 3, filled: 2.5, text: 'medium–high confidence' });
+    expect(panel.pitfalls[0].tabs.map((tab) => tab.key)).toEqual(['signs', 'avoid', 'why', 'verify']);
+    expect(panel.pitfalls[1].tabs.map((tab) => tab.key)).toEqual(['signs', 'avoid', 'verify']);
+    expect(panel.pitfalls[2].tabs.map((tab) => tab.key)).toEqual(['why']);
+    expect(panel.pitfalls[2].meter).toBeNull();
+    expect(panel.pitfalls[0].firstSign).toBe('A tier shows full capacity while its drive is unplugged');
+    expect(panel.pitfalls[0].moreSigns).toBe(2);
+  });
+
+  it('shortens the phase by dropping parentheticals and asides', () => {
+    expect(phaseShort(null, 'Phase 1 (probe design) - before UI work')).toBe('Phase 1 - before UI work');
+    expect(phaseShort('Phase 2', 'ignored')).toBe('Phase 2');
+    expect(phaseShort('Architectural — the reader layer, before any UI', '')).toBe('Architectural');
+    expect(phaseShort(null, '')).toBe('');
+  });
+
+  it('turns a check with a trap into "Often X. Verify Y" and its pitfall reference into a named chip', () => {
+    const panel = buildResearchViewModel(presentationOf(driftContents())).pitfalls!;
+    expect(panel.checks[0].text).toBe('Often only tested plugged in. Verify by unplugging each tier');
+    expect(panel.checks[0].chips).toEqual([{ n: 1, label: '01', short: 'Absent mounts', navigable: true }]);
+    expect(panel.checks[1].chips.map((chip) => chip.label)).toEqual(['02', '03']);
+    expect(panel.checks[1].chips[1].short).toBe('A pitfall with no signs at all');
+  });
+
+  it('splits the first sentence of What goes wrong from the rest', () => {
+    const panel = buildResearchViewModel(presentationOf(driftContents())).pitfalls!;
+    expect(panel.pitfalls[0].wrong.head).toBe("The mount point degrades to an empty directory, so the probe reports the root filesystem's capacity.");
+    expect(panel.pitfalls[0].wrong.more.map((block) => block.text)).toEqual(['It looks healthy.']);
+    const [first, rest] = splitSentence('A short thing. Another.');
+    expect([first, rest]).toEqual(['A short thing. Another.', '']);
+  });
+
+  it('cuts a long avoid sentence at its dash and leads a bold avoid with its bold part', () => {
+    const labelore = buildResearchViewModel(presentationOf(realContents())).pitfalls!;
+    expect(labelore.pitfalls.every((pitfall) => pitfall.avoid.every((avoid) => avoid.main.length > 0))).toBe(true);
+    const panel = buildResearchViewModel(presentationOf({ PITFALLS: DRIFT_PITFALLS.replace('- Check mountinfo first', '- **Check mountinfo first.** Then trust nothing else') })).pitfalls!;
+    expect(panel.pitfalls[0].avoid[0]).toEqual({ main: 'Check mountinfo first', rest: 'Then trust nothing else' });
   });
 });
