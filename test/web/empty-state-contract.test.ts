@@ -11,11 +11,11 @@ async function source(path: string): Promise<string> {
 }
 
 describe('empty-state contract (D-06, D-07, D-08, D-09)', () => {
-  it('declares EMPTY_STATE_MESSAGE byte-identical to the string tree-navigator.tsx already renders for an empty group (D-08)', async () => {
+  it('declares EMPTY_STATE_MESSAGE byte-identical to the string planning-places.tsx renders for an empty group (D-08)', async () => {
     const emptyState = await source('src/web/components/empty-state.tsx');
-    const tree = await source('src/web/components/tree-navigator.tsx');
+    const places = await source('src/web/components/planning-places.tsx');
     expect(emptyState).toContain("export const EMPTY_STATE_MESSAGE = 'Nothing here yet.';");
-    expect(tree).toContain('<p className="empty-note">Nothing here yet.</p>');
+    expect(places).toContain('<p className="empty-note">Nothing here yet.</p>');
   });
 
   it('is imported by every optional-content surface, none of which re-types the message literal directly (D-08)', async () => {

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { ChevronLeft } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
 import type {
   DrawerFileRow,
@@ -31,15 +32,19 @@ export function useDrawerQuery() {
 /** The drawer half of the shared Warning/Unreadable vocabulary — same tones and labels as the
  * artifact-page badge and the search-page chip. Null tone renders nothing; the row stays a normal,
  * clickable row either way (marked, never disabled and never hidden). */
-function WarningIndicator({ tone }: { tone: DrawerFileRow['warningTone'] }): React.JSX.Element | null {
-  if (tone === null) return null;
+function WarningIndicator({
+  warningTone,
+}: {
+  warningTone: DrawerFileRow['warningTone'];
+}): React.JSX.Element | null {
+  if (warningTone === null) return null;
   return (
     <span
       className="places-warning status-chip"
-      data-tone={tone === 'unreadable' ? 'destructive' : 'warning'}
+      data-tone={warningTone === 'unreadable' ? 'destructive' : 'warning'}
     >
       <span className="sr-only">, status: </span>
-      {tone === 'unreadable' ? 'Unreadable' : 'Warning'}
+      {warningTone === 'unreadable' ? 'Unreadable' : 'Warning'}
     </span>
   );
 }
@@ -66,7 +71,7 @@ function FileRow({
       <span className="places-label" title={row.path}>
         {row.label}
       </span>
-      <WarningIndicator tone={row.warningTone} />
+      <WarningIndicator warningTone={row.warningTone} />
     </Link>
   );
 }
@@ -94,7 +99,7 @@ function PlanRow({
       </span>
       <span className="places-label">{plan.label}</span>
       <span className="places-badge">{plan.badge}</span>
-      <WarningIndicator tone={plan.warningTone} />
+      <WarningIndicator warningTone={plan.warningTone} />
     </Link>
   );
 }
@@ -283,13 +288,19 @@ export function PlanningPlaces({
     pathname: string;
     model: DrawerViewModel | undefined;
     key: string | null;
+    drilled: boolean;
   } | null>(null);
   const routeKey = model ? (placeKeyForPath(model, pathname) ?? model.defaultPlaceKey) : null;
-  const selectedKey =
+  const pickedHere =
     picked !== null && picked.open === open && picked.pathname === pathname && picked.model === model
-      ? picked.key
-      : routeKey;
-  const setSelectedKey = (key: string | null) => setPicked({ open, pathname, model, key });
+      ? picked
+      : null;
+  const selectedKey = pickedHere ? pickedHere.key : routeKey;
+  // On a phone the drawer is one column: false shows the places, true shows the chosen place's
+  // files. It starts false on every open and turns true once any place is chosen.
+  const drilled = pickedHere?.drilled ?? false;
+  const setSelectedKey = (key: string | null) => setPicked({ open, pathname, model, key, drilled: true });
+  const backToPlaces = () => setPicked({ open, pathname, model, key: selectedKey, drilled: false });
 
   // On open, scroll the current page's row and the selected place into view. A rAF defers past
   // the paint that makes the keepMounted popup visible, so the just-unhidden elements have layout.
@@ -316,7 +327,12 @@ export function PlanningPlaces({
   const place = findPlace(data, selectedKey);
 
   return (
-    <nav className="places-navigator" aria-label="Planning files" ref={navRef}>
+    <nav
+      className="places-navigator"
+      aria-label="Planning files"
+      data-drilled={drilled ? 'true' : 'false'}
+      ref={navRef}
+    >
       <div className="places-list">
         <section className="places-group">
           <h2 className="places-group-label">
@@ -406,6 +422,10 @@ export function PlanningPlaces({
         </section>
       </div>
       <div className="places-files">
+        <button type="button" className="places-back" onClick={backToPlaces}>
+          <ChevronLeft aria-hidden="true" />
+          All places
+        </button>
         {place?.kind === 'phase' ? (
           <PhaseFiles phase={place} pathname={pathname} onNavigate={onNavigate} />
         ) : null}

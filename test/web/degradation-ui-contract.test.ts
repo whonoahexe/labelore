@@ -44,9 +44,9 @@ describe('degradation UI contract (D-10, D-11, D-12, D-13)', () => {
     expect(page).toContain('{warning.salvage}');
   });
 
-  it('one Warning/Unreadable vocabulary spans the artifact badge, the tree indicator, and the search chip (D-12)', async () => {
+  it('one Warning/Unreadable vocabulary spans the artifact badge, the drawer indicator, and the search chip (D-12)', async () => {
     const page = await source('src/web/pages/artifact-page.tsx');
-    const tree = await source('src/web/components/tree-navigator.tsx');
+    const places = await source('src/web/components/planning-places.tsx');
     const search = await source('src/web/pages/search-page.tsx');
 
     // The tone is computed, not a static literal: the page imports the shared derivation and
@@ -89,23 +89,26 @@ describe('degradation UI contract (D-10, D-11, D-12, D-13)', () => {
     expect(searchPairs).toContain('destructive|warning');
     expect(searchPairs).toContain('Unreadable|Warning');
 
-    expect(tree).toContain('warningTone');
-    expect(tree).toContain("'Warning'");
-    expect(tree).toContain("'Unreadable'");
+    expect(places).toContain('warningTone');
+    expect(places).toContain("'Warning'");
+    expect(places).toContain("'Unreadable'");
+    expect(places).toContain("warningTone === 'unreadable' ? 'destructive' : 'warning'");
+    expect(places).toContain("warningTone === 'unreadable' ? 'Unreadable' : 'Warning'");
 
     expect(search).toContain('warningTone');
     expect(search).not.toContain('data-tone="quiet"');
   });
 
-  it("tree-navigator.tsx's empty-group branch is untouched by this plan (D-06/D-08)", async () => {
-    const tree = await source('src/web/components/tree-navigator.tsx');
-    expect(tree).toContain('<p className="tree-group-label">{node.label}</p>');
-    expect(tree).toContain('<p className="empty-note">Nothing here yet.</p>');
+  it("planning-places.tsx's empty-group branch renders the one absence copy under a group heading (D-06/D-08)", async () => {
+    const places = await source('src/web/components/planning-places.tsx');
+    expect(places).toContain('<h2 className="places-group-label">Shipped</h2>');
+    expect(places).toContain('<p className="empty-note">Nothing here yet.</p>');
   });
 
   it('never renders a ParseWarning field through dangerouslySetInnerHTML (T-04-03-01)', async () => {
     const page = await source('src/web/pages/artifact-page.tsx');
-    const tree = await source('src/web/components/tree-navigator.tsx');
+    const places = await source('src/web/components/planning-places.tsx');
+    const sidebarDrawer = await source('src/web/components/sidebar-drawer.tsx');
 
     const disclosureStart = page.indexOf('artifact-warning-disclosure');
     const disclosureEnd = page.indexOf('<ArtifactReader');
@@ -114,7 +117,8 @@ describe('degradation UI contract (D-10, D-11, D-12, D-13)', () => {
     const disclosureSource = page.slice(disclosureStart, disclosureEnd);
     expect(disclosureSource).not.toContain('dangerouslySetInnerHTML');
 
-    expect(tree).not.toContain('dangerouslySetInnerHTML');
+    expect(places).not.toContain('dangerouslySetInnerHTML');
+    expect(sidebarDrawer).not.toContain('dangerouslySetInnerHTML');
   });
 
   it('globals.css carries the new warning tone rule and wraps the disclosure fields instead of truncating (UI Considerations)', async () => {

@@ -248,16 +248,17 @@ describe('loading-state contract (quick-260916-o2o)', () => {
 
   // debug/loading-state-regression, third cause: the trigger was gated on the shared ['tree'] query
   // succeeding, so the icon popped in ~500 ms after the rest of the header (120 KB /api/tree
-  // payload) — for nothing, since TreeNavigator already renders its own pending/error states.
-  it('renders the sidebar trigger without waiting on the tree query', async () => {
+  // payload) — for nothing, since PlanningPlaces already renders its own pending/error states.
+  it('renders the sidebar trigger without waiting on the drawer query', async () => {
     const shell = await source('src/web/components/app-shell.tsx');
     expect(shell, 'the drawer trigger is unconditional').toContain('<SidebarDrawer />');
-    expect(shell, 'no tree-query gate around the trigger').not.toMatch(
+    expect(shell, 'no drawer-query gate around the trigger').not.toMatch(
       /tree\.isSuccess\s*\?\s*<SidebarDrawer/,
     );
-    expect(shell, 'the shell no longer reads the tree query at all').not.toContain('useTreeQuery');
+    expect(shell, 'the shell does not read the drawer query at all').not.toContain('useDrawerQuery');
+    expect(shell, 'nor the retired tree query').not.toContain('useTreeQuery');
 
-    const navigator = await source('src/web/components/tree-navigator.tsx');
+    const navigator = await source('src/web/components/planning-places.tsx');
     expect(navigator, 'because the drawer contents own the pending state').toContain(
       'query.isPending',
     );

@@ -50,7 +50,7 @@ export function AppShell(): React.JSX.Element {
           {/* D-01: rendered unconditionally. It used to be gated on the shared `['tree']` query
               succeeding, which made the icon pop in ~500 ms after the rest of the header (measured
               against a 120 KB /api/tree payload) — and the gate bought nothing, because
-              TreeNavigator already renders its own isPending/isError states inside the drawer. */}
+              PlanningPlaces already renders its own isPending/isError states inside the drawer. */}
           <SidebarDrawer />
           <NavLink
             className="brand"
