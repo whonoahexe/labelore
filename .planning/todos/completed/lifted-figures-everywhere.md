@@ -2,7 +2,8 @@
 title: Use the lifted-diagram and clean-list-tree renderers for every ASCII diagram and directory tree in Labelore
 date: 2026-09-29
 priority: medium
-status: pending
+status: completed
+completed: 2026-10-24
 ---
 
 Sketch 009's winners, **Diagram B (Lifted)** and **Tree B (Clean list)**, were designed for the

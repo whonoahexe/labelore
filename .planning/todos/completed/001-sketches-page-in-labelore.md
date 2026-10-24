@@ -1,10 +1,11 @@
 ---
 title: "Show sketches inside Labelore instead of a separate file server"
-status: pending
+status: completed
 priority: P2
 source: "promoted from /gsd-note"
 created: 2026-10-23
 theme: general
+completed: 2026-10-24
 ---
 
 ## Goal
