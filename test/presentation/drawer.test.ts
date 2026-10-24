@@ -344,6 +344,26 @@ describe('buildDrawerViewModel — quick tasks', () => {
     expect(contextOnly.url).toBe(contextOnly.files[0].url);
   });
 
+  it('leaves READMEs out of current and shipped quick tasks', async () => {
+    const model = buildDrawerViewModel(
+      await presentationOf({
+        '.planning/quick/README.md': '# About quick tasks',
+        '.planning/quick/261024-abc-some-task/261024-abc-PLAN.md': '# Plan',
+        '.planning/quick/261024-abc-some-task/README.md': '# Notes',
+        '.planning/milestones/v1.0-quick/README.md': '# About',
+        '.planning/milestones/v1.0-quick/260901-xyz-old-task/260901-xyz-PLAN.md': '# Old plan',
+      }),
+    );
+    expect(model.current.quick.count).toBe(1);
+    expect(everyQuickTask(model).map((task) => task.key)).toEqual([
+      '.planning/quick/261024-abc-some-task',
+      '.planning/milestones/v1.0-quick/260901-xyz-old-task',
+    ]);
+    const paths = everyQuickTask(model).flatMap((task) => task.files.map((row) => row.path));
+    expect(paths.some((path) => /readme\.md$/i.test(path))).toBe(false);
+    expect(model.shipped[0].quick.count).toBe(1);
+  });
+
   it('lists tasks newest first, one group per month, with unparseable names last as Undated', async () => {
     const model = buildDrawerViewModel(
       await presentationOf({
@@ -432,6 +452,10 @@ function expectedPaths(model: DrawerViewModel, presentation: ProjectPresentation
   return presentation.artifacts
     .filter((artifact) => {
       if (!artifact.path.endsWith('.md')) return false;
+      // A README in a quick-task folder is about the folder, not a task.
+      const quickFolder =
+        artifact.location === 'quick' || /^v[\d.]+-quick$/i.test(artifact.path.split('/')[2] ?? '');
+      if (quickFolder && /(^|\/)readme\.md$/i.test(artifact.path)) return false;
       if (artifact.location === 'phase' || artifact.location === 'archived-phase') {
         return artifact.phaseKey !== null && phaseKeys.has(artifact.phaseKey);
       }
