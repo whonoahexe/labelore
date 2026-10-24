@@ -147,10 +147,6 @@ function PhaseFiles({
       {phase.after.map((row) => (
         <FileRow key={row.key} row={row} pathname={pathname} onNavigate={onNavigate} />
       ))}
-      {phase.other.length > 0 ? <Stage label="Other files" /> : null}
-      {phase.other.map((row) => (
-        <FileRow key={row.key} row={row} pathname={pathname} onNavigate={onNavigate} />
-      ))}
     </>
   );
 }
