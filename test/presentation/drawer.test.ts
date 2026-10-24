@@ -84,6 +84,25 @@ describe('buildDrawerViewModel — fixtures/dense', () => {
     expect(v2.documents.map((row) => row.label)).toEqual(['Roadmap', 'Requirements', 'Milestone audit']);
   });
 
+  it('pads every phase number to two digits, including roadmap-only phases with a bare number', async () => {
+    const model = buildDrawerViewModel(
+      await presentationOf({
+        '.planning/ROADMAP.md': [
+          '# Roadmap',
+          '',
+          '### Phase 1: First',
+          '',
+          '### Phase 2.1: Inserted',
+          '',
+          '### Phase 3: Third',
+          '',
+        ].join('\n'),
+        '.planning/phases/01-first/01-01-PLAN.md': '# Plan one',
+      }),
+    );
+    expect(model.current.phases.map((phase) => phase.number)).toEqual(['01', '02.1', '03']);
+  });
+
   it('opens on the state phase when it is current', async () => {
     const presentation = await fixturePresentation('dense');
     const model = buildDrawerViewModel(presentation);
