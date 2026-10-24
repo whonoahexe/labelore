@@ -426,14 +426,14 @@ describe('muted surface contrast and dead selectors (F2, F5)', () => {
 });
 
 // quick-260916-qqk (revised): scrollbar-thumb-hover-revealed contract, not panel-hover. The
-// bar is a constant small footprint for the 11 bounded containers (not zero, and not gated by
+// bar is a constant small footprint for the 12 bounded containers (not zero, and not gated by
 // hovering anywhere in the panel) — invisible in WebKit until the cursor is over the thumb's
 // own rendered box; a small constant dim bar in Firefox, which has no per-thumb hover pseudo
 // at all. These assertions are region-scoped source checks; the perceptual claims (thumb
 // invisible until hovered, faint-but-grabbable on hover, both themes) are handed to the plan's
 // <human-check> gate, harvested at end-of-phase.
 const SCROLLBAR_CONTAINERS =
-  ':is(.tree-navigator, .document-outline, .search-dialog-results, .coverage-table-boundary, .overflow-x-auto, .table-scroll, .code-scroll, pre, table, .mermaid, .mermaid-fallback)';
+  ':is(.places-list, .places-files, .document-outline, .search-dialog-results, .coverage-table-boundary, .overflow-x-auto, .table-scroll, .code-scroll, pre, table, .mermaid, .mermaid-fallback)';
 
 describe('scrollbar-thumb-hover-revealed scrollbars (QQK-01, QQK-02, QQK-03)', () => {
   it('hides the scrollbar entirely at rest for every untouched container — Firefox', async () => {
@@ -452,7 +452,7 @@ describe('scrollbar-thumb-hover-revealed scrollbars (QQK-01, QQK-02, QQK-03)', (
     expect(block).toContain('height: 0;');
   });
 
-  it('gives the 11 bounded containers a small constant Firefox bar (no per-thumb hover pseudo exists there)', async () => {
+  it('gives the 12 bounded containers a small constant Firefox bar (no per-thumb hover pseudo exists there)', async () => {
     const css = await source('src/web/styles/globals.css');
     const [block] = ruleBlocks(css, `${SCROLLBAR_CONTAINERS} {`);
     expect(block).toBeDefined();
@@ -460,7 +460,7 @@ describe('scrollbar-thumb-hover-revealed scrollbars (QQK-01, QQK-02, QQK-03)', (
     expect(block).toContain('scrollbar-color: var(--scrollbar-thumb) transparent;');
   });
 
-  it('gives the 11 bounded containers a small constant 4px WebKit scrollbar track', async () => {
+  it('gives the 12 bounded containers a small constant 4px WebKit scrollbar track', async () => {
     const css = await source('src/web/styles/globals.css');
     const [block] = ruleBlocks(css, `${SCROLLBAR_CONTAINERS}::-webkit-scrollbar {`);
     expect(block).toBeDefined();
@@ -501,7 +501,7 @@ describe('scrollbar-thumb-hover-revealed scrollbars (QQK-01, QQK-02, QQK-03)', (
 
   it('leaves no scrollbar declaration at any of the four legacy sites', async () => {
     const css = await source('src/web/styles/globals.css');
-    for (const selector of ['html {', '.tree-navigator {', '.mermaid {', '.artifact-document pre:not([data-figure-island] *) {']) {
+    for (const selector of ['html {', '.places-list {', '.places-files {', '.mermaid {', '.artifact-document pre:not([data-figure-island] *) {']) {
       for (const block of ruleBlocks(css, selector)) {
         expect(block).not.toMatch(/scrollbar/);
       }
@@ -513,9 +513,11 @@ describe('scrollbar-thumb-hover-revealed scrollbars (QQK-01, QQK-02, QQK-03)', (
     const [html] = ruleBlocks(css, 'html {');
     expect(html).toContain('scroll-behavior: smooth;');
 
-    const [treeNavigator] = ruleBlocks(css, '.tree-navigator {');
-    expect(treeNavigator).toContain('overflow-y: auto;');
-    expect(treeNavigator).toContain('overscroll-behavior: contain;');
+    // Both columns share one scrolling rule.
+    const columns = css.match(/\.places-list,\s*\n\.places-files\s*\{([^}]*)\}/);
+    expect(columns).not.toBeNull();
+    expect(columns![1]).toContain('overflow-y: auto;');
+    expect(columns![1]).toContain('overscroll-behavior: contain;');
 
     const [mermaidGroup] = ruleBlocks(css, '.mermaid {');
     expect(mermaidGroup).toContain('overflow-x: auto;');
@@ -599,7 +601,7 @@ describe('planning-files drawer (quick-260911-vqe D-01..D-04, SB-04/SB-05)', () 
     expect(drawerBlock).toContain('border-right: 1px solid var(--sidebar-border);');
     expect(drawerBlock).toContain('box-shadow: var(--shadow-popover);');
 
-    const [hoverBlock] = ruleBlocks(css, 'summary.tree-node-row:hover {');
+    const [hoverBlock] = ruleBlocks(css, '.places-file-row:hover {');
     expect(hoverBlock).toBeDefined();
     expect(hoverBlock).toContain('background: var(--sidebar-accent);');
     expect(hoverBlock).toContain('color: var(--sidebar-foreground);');
@@ -607,10 +609,15 @@ describe('planning-files drawer (quick-260911-vqe D-01..D-04, SB-04/SB-05)', () 
 
   it('scrolls on its own overflow-y with no sticky positioning, slides in via a --drawer-width token and respects reduced motion (Test 3)', async () => {
     const css = await source('src/web/styles/globals.css');
-    const [treeBlock] = ruleBlocks(css, '.tree-navigator {');
-    expect(treeBlock).toBeDefined();
-    expect(treeBlock).toContain('overflow-y: auto;');
-    expect(treeBlock).not.toContain('position: sticky;');
+    // Each column scrolls on its own, from one shared rule; neither is positioned sticky.
+    const columns = css.match(/\.places-list,\s*\n\.places-files\s*\{([^}]*)\}/);
+    expect(columns).not.toBeNull();
+    expect(columns![1]).toContain('overflow-y: auto;');
+    for (const column of ['.places-list {', '.places-files {']) {
+      for (const block of ruleBlocks(css, column)) {
+        expect(block, column).not.toContain('position: sticky;');
+      }
+    }
 
     expect(css).toContain('--drawer-width: min(38rem, 94vw);');
 
@@ -619,13 +626,13 @@ describe('planning-files drawer (quick-260911-vqe D-01..D-04, SB-04/SB-05)', () 
     );
 
     expect(css).toMatch(
-      /\.sidebar-drawer,\s*\.sidebar-drawer-backdrop,\s*\.tree-chevron\s*\{\s*transition:\s*none;/,
+      /\.sidebar-drawer,\s*\.sidebar-drawer-backdrop\s*\{\s*transition:\s*none;/,
     );
   });
 
   it('highlights the current-route node via --sidebar-primary, not the page-level --primary pair (Test 4)', async () => {
     const css = await source('src/web/styles/globals.css');
-    const [block] = ruleBlocks(css, ".tree-node-row[data-active='true'] {");
+    const [block] = ruleBlocks(css, ".places-file-row[data-active='true'] {");
     expect(block).toBeDefined();
     expect(block).toContain('background: var(--sidebar-primary);');
     expect(block).toContain('color: var(--sidebar-primary-foreground);');
@@ -633,7 +640,7 @@ describe('planning-files drawer (quick-260911-vqe D-01..D-04, SB-04/SB-05)', () 
 
   it('truncates a long node label with an ellipsis, never wrapping it (Test 5)', async () => {
     const css = await source('src/web/styles/globals.css');
-    const [block] = ruleBlocks(css, '.tree-node-label {');
+    const [block] = ruleBlocks(css, '.places-label {');
     expect(block).toBeDefined();
     expect(block).toContain('text-overflow: ellipsis;');
     expect(block).toContain('white-space: nowrap;');
@@ -649,7 +656,7 @@ describe('planning-files drawer (quick-260911-vqe D-01..D-04, SB-04/SB-05)', () 
     expect(pageStackBlock).toContain('width: min(80rem, 100%);');
   });
 
-  it('keeps a menu area in the header grid at both the base and 62rem layouts, and never hides the tree or its trigger from 62rem onward (narrow-viewport)', async () => {
+  it('keeps a menu area in the header grid at both the base and 62rem layouts, and never hides the drawer body or its trigger from 62rem onward (narrow-viewport)', async () => {
     const css = await source('src/web/styles/globals.css');
     const [baseHeader] = ruleBlocks(css, '.shell-header {');
     expect(baseHeader).toBeDefined();
@@ -662,21 +669,21 @@ describe('planning-files drawer (quick-260911-vqe D-01..D-04, SB-04/SB-05)', () 
     expect(narrowSection).toContain("grid-template-areas: 'menu brand controls' 'nav nav nav';");
 
     const fromNarrow = css.slice(css.indexOf('@media (max-width: 62rem)'));
-    expect(fromNarrow).not.toMatch(/\.tree-navigator\s*\{[^}]*display:\s*none;/s);
+    expect(fromNarrow).not.toMatch(/\.places-navigator\s*\{[^}]*display:\s*none;/s);
     expect(fromNarrow).not.toMatch(/\.sidebar-trigger\s*\{[^}]*display:\s*none;/s);
   });
 
-  it('uses native details/summary for disclosure, never the headless collapsible primitive, and the drawer holds no client-side persisted state (Test 7)', async () => {
-    const treeNavigator = await source('src/web/components/tree-navigator.tsx');
-    expect(treeNavigator).not.toContain('@base-ui/react/collapsible');
-    expect(treeNavigator).toContain('<details');
-    expect(treeNavigator).not.toMatch(/localStorage|sessionStorage/);
+  it('uses native details/summary for the quick-task disclosure, never the headless collapsible primitive, and the drawer holds no client-side persisted state (Test 7)', async () => {
+    const places = await source('src/web/components/planning-places.tsx');
+    expect(places).not.toContain('@base-ui/react/collapsible');
+    expect(places).toContain('<details');
+    expect(places).not.toMatch(/localStorage|sessionStorage/);
 
     const sidebarDrawer = await source('src/web/components/sidebar-drawer.tsx');
     expect(sidebarDrawer).not.toMatch(/localStorage|sessionStorage/);
   });
 
-  it('wires the drawer trigger, the base-ui Dialog and the tree body across the three files', async () => {
+  it('wires the drawer trigger, the base-ui Dialog and the two-column body across the three files', async () => {
     const shell = await source('src/web/components/app-shell.tsx');
     expect(shell).toContain('<SidebarDrawer');
     expect(shell).toContain('href="#main-content"');
@@ -690,12 +697,12 @@ describe('planning-files drawer (quick-260911-vqe D-01..D-04, SB-04/SB-05)', () 
     expect(sidebarDrawer).toContain('PanelLeft');
     expect(sidebarDrawer).toContain('Dialog.Title');
 
-    const treeNavigator = await source('src/web/components/tree-navigator.tsx');
-    expect(treeNavigator).toContain('export function useTreeQuery');
-    expect(treeNavigator).toContain('ChevronRight');
-    expect(treeNavigator).toContain('className="tree-badge"');
-    expect(treeNavigator).toContain('title={node.path}');
-    expect(treeNavigator).toContain("scrollIntoView({ block: 'nearest' })");
+    const places = await source('src/web/components/planning-places.tsx');
+    expect(places).toContain('export function useDrawerQuery');
+    expect(places).toContain("'/api/drawer'");
+    expect(places).toContain('className="places-badge"');
+    expect(places).toContain('title={row.path}');
+    expect(places).toContain("scrollIntoView({ block: 'nearest' })");
   });
 });
 

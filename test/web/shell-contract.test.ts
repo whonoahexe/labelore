@@ -101,8 +101,9 @@ describe('authorized Studio Portal shell contract', () => {
     expect(shell).toContain("import { SidebarDrawer } from './sidebar-drawer.tsx';");
     // debug/loading-state-regression: the trigger used to be gated on the shared ['tree'] query
     // succeeding, which delayed the icon ~500 ms past the rest of the header for no benefit —
-    // TreeNavigator already renders its own pending/error states inside the drawer.
-    expect(shell).not.toContain("import { useTreeQuery } from './tree-navigator.tsx';");
+    // PlanningPlaces already renders its own pending/error states inside the drawer.
+    expect(shell).not.toContain('useTreeQuery');
+    expect(shell).not.toContain('useDrawerQuery');
 
     const headerIndex = shell.indexOf('<header className="shell-header"');
     const brandIndex = shell.indexOf('className="brand"');
@@ -126,15 +127,16 @@ describe('authorized Studio Portal shell contract', () => {
     expect(sidebarDrawer).not.toContain('dangerouslySetInnerHTML');
   });
 
-  // IN-01: top-level groups are meant to start open. Applying `open` only from the effect left
-  // them closed for the first paint, so the sidebar visibly snapped open after mount. The
-  // declarative attribute makes the first paint already correct; the effect stays for the
-  // route-reveal case, which must react to navigation and must keep its open-once semantics so
-  // a user's own manual close is never fought.
-  it('opens top-level tree groups declaratively on first paint, not only from the effect', async () => {
-    const navigator = await source('src/web/components/tree-navigator.tsx');
-    expect(navigator).toMatch(/<details[^>]*\sopen=\{node\.nodeType === 'group'\}/);
-    expect(navigator).toContain('if (detailsRef.current) detailsRef.current.open = true;');
+  // The drawer is two columns with nothing nesting, so it has no expand-all control, and its body
+  // lands on the place holding the current page by deriving it from the route on every render.
+  it('resets the drawer place from the route and has no expand-all control', async () => {
+    const places = await source('src/web/components/planning-places.tsx');
+    expect(places).toContain('placeKeyForPath(');
+    expect(places).toContain('model.defaultPlaceKey');
+    const drawer = await source('src/web/components/sidebar-drawer.tsx');
+    expect(drawer).not.toContain('ChevronsUpDown');
+    expect(drawer).not.toContain('ChevronsDownUp');
+    expect(drawer).not.toMatch(/Expand all|Collapse all|toggleAll|allExpanded/);
   });
 });
 

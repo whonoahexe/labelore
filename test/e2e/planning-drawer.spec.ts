@@ -2,7 +2,18 @@
 // label is resolved from `/api/drawer`, never hardcoded, so the spec follows whatever this repo's
 // own `.planning/` holds.
 import { expect, test, type Page } from '@playwright/test';
+import { mkdirSync } from 'node:fs';
+import { join } from 'node:path';
 import type { DrawerPhasePlace, DrawerQuickTask, DrawerViewModel } from '../../src/presentation/drawer.ts';
+import { SCREENSHOT_ROOT } from './pages.ts';
+
+const SHOTS = join(SCREENSHOT_ROOT, 'vty');
+
+async function setTheme(page: Page, theme: 'light' | 'dark'): Promise<void> {
+  await page.addInitScript((t: string) => {
+    window.localStorage.setItem('labelore-theme', t);
+  }, theme);
+}
 
 async function fetchDrawer(baseURL: string): Promise<DrawerViewModel> {
   const response = await fetch(`${baseURL}/api/drawer`);
@@ -14,6 +25,8 @@ async function openDrawer(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Open planning files' }).click();
   await expect(page.locator('.sidebar-drawer')).toBeVisible();
   await expect(page.locator('.places-navigator')).not.toHaveAttribute('data-state', 'loading');
+  // The drawer slides in; wait for it to rest at the left edge before measuring or shooting it.
+  await expect.poll(async () => (await page.locator('.sidebar-drawer').boundingBox())?.x).toBe(0);
 }
 
 function firstShippedPhaseWithPlans(model: DrawerViewModel): {
@@ -91,6 +104,8 @@ test.describe('planning files drawer', () => {
     await details.locator('summary').click();
     await expect(details.locator('.places-chips .places-chip')).toHaveText(task!.files.map((file) => file.label));
     await expect(details.locator('.places-chip', { hasText: 'Plan' })).toBeVisible();
+    mkdirSync(SHOTS, { recursive: true });
+    await page.screenshot({ path: join(SHOTS, 'desktop-quick.png') });
   });
 
   test("a quick task's plan page opens the drawer on that task with its Plan chip active", async ({
@@ -136,4 +151,79 @@ test.describe('planning files drawer', () => {
     // The milestone stays unfolded while its quick tasks are showing.
     await expect(page.locator('.places-row[data-selected="true"]')).toHaveAttribute('data-depth', '1');
   });
+
+  test('on a phone the drawer drills from places into files and back with an All places link', async ({
+    page,
+    baseURL,
+  }) => {
+    const model = await fetchDrawer(baseURL!);
+    const { version, phase } = firstShippedPhaseWithPlans(model);
+
+    mkdirSync(SHOTS, { recursive: true });
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto(phase.plans[0].url);
+    await openDrawer(page);
+
+    const list = page.locator('.places-list');
+    const files = page.locator('.places-files');
+    const back = page.getByRole('button', { name: 'All places' });
+    await expect(list).toBeVisible();
+    await expect(files).toBeHidden();
+    const columns = await page.locator('.places-navigator').evaluate(
+      (element) => getComputedStyle(element).gridTemplateColumns.split(' ').length,
+    );
+    expect(columns).toBe(1);
+    await page.screenshot({ path: join(SHOTS, 'phone-places.png') });
+
+    // Tapping the selected phase drills into its files.
+    await page.locator('.places-row[data-selected="true"]').click();
+    await expect(files).toBeVisible();
+    await expect(list).toBeHidden();
+    await expect(back).toBeVisible();
+    await expect(page.locator('.places-where')).toHaveText(`${version} · Phase ${phase.number}`);
+    await page.screenshot({ path: join(SHOTS, 'phone-files.png') });
+
+    // Back returns to the places with the same place still selected.
+    await back.click();
+    await expect(list).toBeVisible();
+    await expect(files).toBeHidden();
+    const selected = page.locator('.places-row[data-selected="true"]');
+    await expect(selected).toHaveCount(1);
+    await expect(selected.locator('.places-label')).toHaveText(phase.name);
+
+    // Choosing a phase from a milestone place keeps the files showing.
+    await page.locator('.places-list .places-row', { hasText: version }).first().click();
+    await expect(files).toBeVisible();
+    await expect(page.locator('.places-files-title')).toContainText(version);
+    await page.locator('.places-files .places-row', { hasText: phase.name }).first().click();
+    await expect(files).toBeVisible();
+    await expect(page.locator('.places-files-title')).toHaveText(phase.name);
+  });
+
+  test('at desktop width both columns show and the All places control stays hidden', async ({
+    page,
+    baseURL,
+  }) => {
+    const model = await fetchDrawer(baseURL!);
+    const { phase } = firstShippedPhaseWithPlans(model);
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(phase.plans[0].url);
+    await openDrawer(page);
+    await expect(page.locator('.places-list')).toBeVisible();
+    await expect(page.locator('.places-files')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'All places' })).toBeHidden();
+  });
+
+  for (const theme of ['light', 'dark'] as const) {
+    test(`screenshot: the drawer on a shipped plan page, desktop ${theme}`, async ({ page, baseURL }) => {
+      const model = await fetchDrawer(baseURL!);
+      const { phase } = firstShippedPhaseWithPlans(model);
+      mkdirSync(SHOTS, { recursive: true });
+      await setTheme(page, theme);
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await page.goto(phase.plans[0].url);
+      await openDrawer(page);
+      await page.screenshot({ path: join(SHOTS, `desktop-${theme}.png`) });
+    });
+  }
 });

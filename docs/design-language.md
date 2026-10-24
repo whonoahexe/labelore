@@ -1018,7 +1018,6 @@ plan's "no AST tooling" constraint.
 | `sidebar-drawer-close` | Shell and navigation | |
 | `sidebar-drawer-header` | Shell and navigation | |
 | `sidebar-drawer-title` | Shell and navigation | |
-| `sidebar-drawer-toggle-all` | Shell and navigation | |
 | `sidebar-trigger` | Shell and navigation | |
 | `skip-link` | Shell and navigation | |
 | `sm` | Shell and navigation | `Button` `size` prop value, not a CSS class — see appendix note above |
@@ -1029,23 +1028,6 @@ plan's "no AST tooling" constraint.
 | `sun-icon` | Shell and navigation | |
 | `theme-icon` | Shell and navigation | |
 | `theme-toggle` | Shell and navigation | |
-
-### Tree navigator
-
-| Class | Surface | Note |
-|---|---|---|
-| `tree-badge` | Tree navigator | |
-| `tree-chevron` | Tree navigator | |
-| `tree-chevron-spacer` | Tree navigator | |
-| `tree-children` | Tree navigator | |
-| `tree-disclosure` | Tree navigator | |
-| `tree-group-label` | Tree navigator | |
-| `tree-navigator` | Tree navigator | |
-| `tree-node` | Tree navigator | |
-| `tree-node-label` | Tree navigator | |
-| `tree-node-row` | Tree navigator | |
-| `tree-root` | Tree navigator | |
-| `tree-warning-indicator` | Tree navigator | |
 
 ### Planning files drawer
 
@@ -1071,6 +1053,7 @@ Sketch 038 C (quick-261024-vty): places on the left, the chosen place's files on
 | `places-file-row` | Planning files drawer |  |
 | `places-plan-square` | Planning files drawer |  |
 | `places-warning` | Planning files drawer |  |
+| `places-back` | Planning files drawer | The phone-only All places link above a place's files; hidden at wider widths |
 | `places-month` | Planning files drawer | One month of quick tasks: its stage label, then its task disclosures |
 | `places-quick-task` | Planning files drawer | A quick task as a native disclosure: date and name, opening to one row of file chips |
 | `places-chips` | Planning files drawer | The wrapping row of file chips inside an open quick task |

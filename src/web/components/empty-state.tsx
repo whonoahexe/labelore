@@ -2,7 +2,7 @@ import { CircleDashed } from 'lucide-react';
 
 /** D-08: one compact generic message for every surface reporting the absence of optional
  * planning content — a single source string so no call site re-types it. Byte-identical to the
- * string `tree-navigator.tsx`'s empty-group branch already renders. */
+ * string `planning-places.tsx`'s empty-group branch renders. */
 export const EMPTY_STATE_MESSAGE = 'Nothing here yet.';
 
 /**
