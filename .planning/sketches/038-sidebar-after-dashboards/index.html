@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 038 — sidebar after the dashboards</title>
+<link rel="stylesheet" href="../themes/default.css?v=031">
+<style>
+/* Sketch 038: the planning-files drawer once Project and Research are gone (the dashboard, roadmap,
+   traceability and research pages now cover every root and research file). What's left is phase
+   folders, quick tasks and shipped milestones, which today sit in four groups: Phases, Archived
+   phases, Quick tasks and Milestones, so one shipped milestone is split across two groups.
+   A: by milestone (still a tree): the current milestone's phases and quick tasks, then each shipped
+   milestone as one folder holding its documents, phases and quick tasks.
+   B: three tabs (Phases · Quick tasks · Shipped) with big counts, one list at a time.
+   C: two columns: places on the left, the chosen place's files on the right.
+   In all three, a phase's files are grouped Before plans · Plans · After, and a plan is one row
+   (the plan page already pairs PLAN with SUMMARY), with a square that fills once its summary exists. */
+*, *::before, *::after { box-sizing: border-box; }
+:root {
+  --font-heading: var(--font-sans);
+  --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border));
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: color-mix(in oklch, var(--primary) 11%, transparent);
+  --sidebar-accent: color-mix(in oklch, var(--sidebar-foreground) 6%, transparent);
+  --sidebar-border: oklch(0.875 0 0);
+  --guide: color-mix(in oklch, var(--sidebar-border) 78%, transparent);
+  --scrim: oklch(0 0 0 / 0.45);
+  --drawer-width: min(22rem, 88vw);
+}
+.dark { --sidebar-border: oklch(1 0 0 / 16%); }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-5); line-height: var(--lh-normal); padding-top: 3rem; }
+h1, h2, h3, p, ul, ol { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; }
+a { color: inherit; text-decoration: none; }
+svg.i { width: 1em; height: 1em; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+.mono { font-family: var(--font-mono); }
+
+/* ---------- sketch chrome ---------- */
+#variant-nav { position: fixed; inset: 0 0 auto 0; z-index: 90; display: flex; gap: var(--space-1); align-items: center; padding: var(--space-2) var(--space-4); background: var(--background); border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; overflow-x: auto; }
+#variant-nav .lbl { color: var(--muted-foreground); margin-right: var(--space-2); white-space: nowrap; }
+.variant-tab { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; color: var(--muted-foreground); }
+.variant-tab:hover { color: var(--foreground); background: var(--state-hover); }
+.variant-tab.active { color: var(--primary); border-color: var(--primary-border); background: var(--primary-tint); }
+#frame { position: relative; margin: 0 auto; min-height: calc(100vh - 3rem); overflow: hidden; }
+#frame.narrow { border-inline: 1px solid var(--border); }
+
+/* ---------- the app behind the drawer ---------- */
+.shell-header { display: flex; align-items: center; gap: var(--space-3); height: 3.75rem; padding: 0 var(--space-3); border-bottom: 1px solid var(--border); }
+.icon-btn { display: grid; place-items: center; width: 2rem; height: 2rem; color: var(--muted-foreground); }
+.icon-btn:hover { background: var(--state-hover); color: var(--foreground); }
+.brand-mark { width: 2rem; height: 2rem; background: var(--primary); flex: none; }
+.brand b { font-size: var(--fs-4); }
+.shell-nav { display: flex; margin-left: auto; font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.shell-nav span { padding: 0 var(--space-4); border-left: 1px solid var(--border); }
+.page { padding: var(--space-8) var(--space-6); display: grid; gap: var(--space-6); max-width: 70rem; }
+.page .ghost { background: color-mix(in oklch, var(--muted) 60%, transparent); }
+.page h1 { font-size: var(--fs-display-3, 2.5rem); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tight); }
+@media (max-width: 800px) { .shell-nav { display: none; } }
+#frame.narrow .shell-nav { display: none; }
+
+/* ---------- drawer ---------- */
+.scrim { position: absolute; inset: 0; background: var(--scrim); z-index: 10; }
+.drawer { position: absolute; top: 0; bottom: 0; left: 0; z-index: 11; display: grid; grid-template-rows: auto auto minmax(0, 1fr); width: var(--drawer-width); background: var(--sidebar); color: var(--sidebar-foreground); border-right: 1px solid var(--sidebar-border); box-shadow: 0 10px 30px oklch(0 0 0 / 0.35); }
+.drawer.wide { width: min(38rem, 94%); }
+#frame:not(.open) .scrim, #frame:not(.open) .drawer { display: none; }
+.drawer-head { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4); border-bottom: 1px solid var(--sidebar-border); }
+.drawer-title { font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.drawer-actions { display: flex; gap: var(--space-1); }
+.scroll { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+
+/* labels */
+.group-label { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); padding: 0 var(--space-2); color: var(--muted-foreground); font-family: var(--font-heading); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.group-label .v { font-family: var(--font-mono); font-weight: 400; letter-spacing: normal; text-transform: none; }
+.stage { display: flex; justify-content: space-between; padding: var(--space-2) var(--space-2) var(--space-1); color: var(--muted-foreground); font-family: var(--font-mono); font-size: 0.7rem; font-weight: 400; letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.badge { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-1); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.num { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-1); font-variant-numeric: tabular-nums; }
+
+/* one row anatomy, same as the shipped tree: chevron column, ellipsis label, trailing badges */
+.row { display: grid; grid-template-columns: var(--space-4) minmax(0, 1fr); grid-auto-flow: column; grid-auto-columns: auto; align-items: center; gap: var(--space-1-5); min-height: var(--space-8); padding-inline: var(--space-2); color: var(--muted-foreground); font-size: var(--fs-3); line-height: var(--lh-snug); width: 100%; text-align: left; }
+.row .label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row.folder { color: var(--sidebar-foreground); font-weight: var(--fw-medium); }
+.row:hover { background: var(--sidebar-accent); color: var(--sidebar-foreground); }
+.row[data-active='true'] { background: var(--sidebar-primary); color: var(--sidebar-foreground); box-shadow: inset 3px 0 var(--primary); }
+.row .chev { width: 0.875rem; height: 0.875rem; justify-self: center; transition: transform 140ms ease; }
+.open > .row .chev, .row[aria-expanded='true'] .chev { transform: rotate(90deg); }
+.row .lead { display: flex; gap: var(--space-2); align-items: baseline; min-width: 0; }
+.row .lead .num { flex: none; }
+.children { display: grid; gap: var(--space-0-5); margin-left: var(--space-4); padding-left: var(--space-3); border-left: 1px solid var(--guide); }
+.node:not(.open) > .children { display: none; }
+
+/* plan square: filled once the summary exists */
+.sq { width: 0.5rem; height: 0.5rem; justify-self: center; border: 1px solid color-mix(in oklch, var(--muted-foreground) 70%, transparent); }
+.sq.done { background: var(--primary); border-color: var(--primary); }
+
+/* file chips: a quick task's files, a milestone's documents */
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-1); padding: var(--space-1) var(--space-2) var(--space-2); }
+.chip { padding: var(--space-0-5) var(--space-2); border: 1px solid var(--sidebar-border); color: var(--muted-foreground); font-size: var(--fs-2); }
+.chip:hover { color: var(--sidebar-foreground); background: var(--sidebar-accent); }
+.chip[data-active='true'] { color: var(--sidebar-foreground); border-color: var(--primary-border); background: var(--sidebar-primary); }
+
+/* status chip */
+.status { font-family: var(--font-heading); font-size: 0.65rem; font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; padding: 1px var(--space-1-5); border: 1px solid var(--sidebar-border); color: var(--muted-foreground); white-space: nowrap; }
+.status.live { color: var(--primary); border-color: var(--primary-border); background: var(--primary-tint); }
+
+/* ---------- A: by milestone ---------- */
+.a-root { display: grid; gap: var(--space-5); padding: var(--space-4) var(--space-3) var(--space-8); }
+.a-group { display: grid; gap: var(--space-0-5); }
+.a-group > .group-label { margin-bottom: var(--space-1); }
+
+/* ---------- B: tabs ---------- */
+.b-switch { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--sidebar-border); }
+.b-switch button { display: grid; gap: 2px; padding: var(--space-3) var(--space-3) var(--space-2-5); text-align: left; border-right: 1px solid var(--sidebar-border); color: var(--muted-foreground); }
+.b-switch button:last-child { border-right: 0; }
+.b-switch button:hover { background: var(--sidebar-accent); }
+.b-switch .count { font-family: var(--font-mono); font-size: var(--fs-6); line-height: 1; color: var(--sidebar-foreground); font-variant-numeric: tabular-nums; }
+.b-switch .what { font-family: var(--font-heading); font-size: 0.68rem; font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.b-switch button[aria-selected='true'] { background: var(--sidebar-primary); box-shadow: inset 0 -2px var(--primary); color: var(--sidebar-foreground); }
+.b-switch button[aria-selected='true'] .count { color: var(--primary); }
+.b-body { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-3) var(--space-8); align-content: start; }
+.b-phase { border: 1px solid var(--sidebar-border); }
+.b-phase.open { border-color: color-mix(in oklch, var(--primary) 35%, var(--sidebar-border)); }
+.b-phase-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--space-1) var(--space-3); align-items: center; padding: var(--space-3); width: 100%; text-align: left; }
+.b-phase-head:hover { background: var(--sidebar-accent); }
+.b-phase-head .big { grid-row: span 2; font-family: var(--font-mono); font-size: var(--fs-6); line-height: 1; color: var(--muted-foreground); }
+.b-phase.open .b-phase-head .big { color: var(--primary); }
+.b-phase-head .name { font-weight: var(--fw-medium); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.b-phase-head .meta { grid-column: 2 / 4; display: flex; align-items: center; gap: var(--space-2); color: var(--muted-foreground); font-size: var(--fs-2); }
+.segbar { display: flex; gap: 2px; }
+.segbar i { width: 0.75rem; height: 0.25rem; background: color-mix(in oklch, var(--muted-foreground) 30%, transparent); }
+.segbar i.done { background: var(--primary); }
+.b-phase-body { padding: 0 var(--space-2) var(--space-2); border-top: 1px solid var(--sidebar-border); }
+.b-phase:not(.open) .b-phase-body { display: none; }
+.b-filter { display: flex; align-items: center; gap: var(--space-2); padding: 0 var(--space-2); height: 2.25rem; border: 1px solid var(--sidebar-border); color: var(--muted-foreground); }
+.b-filter input { flex: 1; min-width: 0; background: none; border: 0; outline: 0; color: var(--sidebar-foreground); font: inherit; font-size: var(--fs-3); }
+.b-month { margin-top: var(--space-2); }
+.b-quick .row { grid-template-columns: 3.25rem minmax(0, 1fr); }
+.b-quick .row .badge { justify-self: start; }
+.b-ms { border: 1px solid var(--sidebar-border); padding: var(--space-3); display: grid; gap: var(--space-2); }
+.b-ms-head { display: flex; align-items: baseline; gap: var(--space-3); }
+.b-ms-head .ver { font-family: var(--font-mono); font-size: var(--fs-6); line-height: 1; }
+.b-ms-head .name { font-weight: var(--fw-medium); min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.b-ms .chips { padding: 0; }
+.b-ms .sub { display: grid; gap: var(--space-0-5); }
+.empty { padding: var(--space-6) var(--space-2); color: var(--muted-foreground); font-size: var(--fs-3); }
+
+/* ---------- C: two columns ---------- */
+.c-cols { display: grid; grid-template-columns: 15.5rem minmax(0, 1fr); min-height: 0; }
+.c-places { border-right: 1px solid var(--sidebar-border); padding: var(--space-3) var(--space-2) var(--space-8); display: grid; gap: var(--space-4); align-content: start; }
+.c-places .a-group { gap: var(--space-0-5); }
+.c-places .row { grid-template-columns: minmax(0, 1fr); }
+.c-places .row.sub { padding-left: var(--space-5); }
+.c-places .row[data-selected='true'] { background: var(--sidebar-primary); color: var(--sidebar-foreground); box-shadow: inset 3px 0 var(--primary); }
+.c-files { padding: var(--space-3) var(--space-3) var(--space-8); display: grid; gap: var(--space-1); align-content: start; }
+.c-files-head { display: grid; gap: var(--space-1); padding: var(--space-1) var(--space-2) var(--space-2); }
+.c-files-head .where { color: var(--muted-foreground); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.c-files-head h3 { font-size: var(--fs-5); font-weight: var(--fw-semibold); line-height: var(--lh-snug); }
+.c-files .row { grid-template-columns: var(--space-4) minmax(0, 1fr); }
+.c-back { display: none; }
+.drawer.phone .c-cols { grid-template-columns: minmax(0, 1fr); }
+.drawer.phone .c-cols:not(.drilled) .c-files { display: none; }
+.drawer.phone .c-cols.drilled .c-places { display: none; }
+.drawer.phone .c-back { display: flex; gap: var(--space-1); align-items: center; color: var(--muted-foreground); font-size: var(--fs-2); padding: var(--space-1) var(--space-2); }
+
+/* toast */
+#toast { position: fixed; left: 50%; bottom: 1.25rem; transform: translateX(-50%); z-index: 95; background: var(--foreground); color: var(--background); padding: var(--space-2) var(--space-3); font-size: var(--fs-2); font-family: var(--font-mono); opacity: 0; pointer-events: none; transition: opacity 0.15s; max-width: 90vw; }
+#toast.on { opacity: 1; }
+</style>
+</head>
+<body>
+<nav id="variant-nav">
+  <span class="lbl">038 sidebar</span>
+  <button class="variant-tab" data-variant="a">A: By milestone</button>
+  <button class="variant-tab" data-variant="b">B: Three tabs</button>
+  <button class="variant-tab" data-variant="c">C: Two columns ★ Selected</button>
+</nav>
+
+<div id="frame" class="open">
+  <header class="shell-header">
+    <button class="icon-btn" id="open-drawer" aria-label="Open planning files"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18"/><path d="M9 3v18"/></svg></button>
+    <span class="brand-mark"></span>
+    <span class="brand"><b>Labelore</b> <span class="mono badge">/ studio-portal</span></span>
+    <nav class="shell-nav"><span>Dashboard</span><span>Roadmap</span><span>Research</span><span>Traceability</span></nav>
+  </header>
+  <main class="page">
+    <h1>Studio Portal</h1>
+    <div class="ghost" style="height:5rem"></div>
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:var(--space-6)"><div class="ghost" style="height:16rem"></div><div class="ghost" style="height:16rem"></div></div>
+    <div class="ghost" style="height:12rem"></div>
+  </main>
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" id="drawer" role="dialog" aria-label="Planning files"></aside>
+</div>
+
+<div id="toast"></div>
+
+<div id="sketch-tools" style="position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:12px;background:rgba(0,0,0,0.78);color:white;padding:8px 10px;opacity:0.55;transition:opacity 0.2s;display:grid;gap:6px;max-width:calc(100vw - 24px)" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.55'">
+  <div>History: <button data-history="short">Short (screenshot)</button><button data-history="long">Long (6 shipped, 40 quick)</button></div>
+  <div>Theme: <button data-theme="light">Light</button><button data-theme="dark">Dark</button></div>
+  <div>Width: <button data-width="375">Phone</button><button data-width="768">Tablet</button><button data-width="full">Full</button></div>
+</div>
+<style>
+#sketch-tools button { background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 2px 7px; margin: 2px 0 0 3px; font: inherit; cursor: pointer; }
+#sketch-tools button.on { background: #c2410c; border-color: #c2410c; }
+</style>
+
+<script>
+// ---------- data ----------
+const PRE = ['Context', 'Discussion log', 'UI spec', 'Research', 'Patterns', 'Validation'];
+const POST = ['Review', 'Review fix', 'Verification', 'Security', 'UAT', 'Learnings'];
+
+function shippedPhase(n, name, plans) {
+  return { n, name, status: 'Complete', pre: PRE, plans: Array.from({ length: plans }, () => true), post: POST };
+}
+
+const QUICK_NAMES = [
+  'Clean up stage and archive tiers queue after a cancelled transfer',
+  'Detect a vanished tier device under load and mark it offline',
+  'Raise single file download cap to match the archive limit',
+  'Add a toggle to switch between light and dark themes',
+  'Hoist useHealthSocket into a HealthSocket provider',
+  'Improve navbar visual design to match the brand',
+  'Restyle scrollbars to match the design system',
+  'Right-click context menu on file rows',
+  'Show transfer ETA in the activity panel',
+  'Fix double toast on session expiry',
+  'Paginate the audit log table',
+  'Trim whitespace in invite emails',
+  'Debounce the tier search field',
+  'Retry a stalled chunk upload once before failing',
+];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function quickList(count, startMonth, startDay, seed) {
+  const out = [];
+  let m = startMonth, d = startDay;
+  for (let i = 0; i < count; i++) {
+    const files = (i + seed) % 3 === 0 ? ['Context', 'Plan', 'Summary', 'Verification'] : ['Plan', 'Summary'];
+    out.push({ id: `q${seed}-${i}`, name: QUICK_NAMES[(i + seed) % QUICK_NAMES.length], month: MONTHS[m], date: `${MONTHS[m]} ${d}`, files });
+    d -= 1 + ((i * 7 + seed) % 3);
+    if (d < 1) { m = (m + 11) % 12; d = 28; }
+  }
+  return out;
+}
+
+function makeData(history) {
+  const current = {
+    v: 'v3.0', name: 'Write safety', current: true,
+    phases: [
+      { n: '01', name: 'Write Safety & Hardening', status: 'Executing', pre: PRE, plans: [true, true, true, true, false, false], post: [] },
+      { n: '02', name: 'App Shell & Navigation', status: 'Discussed', pre: ['Context', 'Discussion log'], plans: [], post: [] },
+    ],
+    quick: history === 'long' ? quickList(40, 9, 24, 0) : quickList(3, 9, 24, 0),
+  };
+  const shipped = [
+    { v: 'v2.0', name: 'Accounts and archives', when: 'Oct 9', docs: ['Roadmap', 'Requirements', 'Milestone audit'],
+      phases: [shippedPhase('01', 'Portal-owned Identity & Sessions', 6), shippedPhase('02', 'Roles & Permission Enforcement', 6), shippedPhase('03', 'Account Administration & Session Control', 5), shippedPhase('04', 'Bulk Archive Downloads', 4)],
+      quick: quickList(history === 'long' ? 31 : 14, 9, 8, 3) },
+    { v: 'v1.0', name: 'Tiered storage', when: 'Aug 4', docs: ['Roadmap', 'Requirements', 'Milestone audit'],
+      phases: [shippedPhase('01', 'Identity Persistence Foundation', 4), shippedPhase('02', 'Storage Health Status', 3), shippedPhase('03', 'File Browsing', 5), shippedPhase('04', 'Tier-to-Tier Transfers', 6)],
+      quick: quickList(5, 7, 30, 5) },
+  ];
+  if (history === 'long') {
+    ['v1.5', 'v1.4', 'v1.3', 'v1.2'].forEach((v, i) => shipped.splice(1 + i, 0, {
+      v, name: ['Transfer polish', 'Audit trail', 'Quotas', 'Sharing links'][i], when: ['Sep 20', 'Sep 2', 'Aug 25', 'Aug 14'][i],
+      docs: i % 2 ? ['Roadmap', 'Requirements'] : ['Roadmap', 'Requirements', 'Milestone audit'],
+      phases: [shippedPhase('01', ['Resumable Transfers', 'Audit Events', 'Per-tier Quotas', 'Share Tokens'][i], 4), shippedPhase('02', ['Transfer History', 'Audit Viewer', 'Quota Alerts', 'Link Expiry'][i], 3)],
+      quick: quickList(6 + i * 3, 8 - i, 18, 7 + i),
+    }));
+  }
+  return { current, shipped };
+}
+
+// ---------- state ----------
+const state = {
+  variant: (location.hash.slice(1) || 'a'),
+  history: 'short', theme: 'dark', width: 'full',
+  active: 'v3.0/01/plan/4',
+  openA: new Set(['g:v3.0/01']),
+  bTab: 'phases', bOpen: 'v3.0/01', bFilter: '', bQuickOpen: null, bMsOpen: new Set(),
+  cPlace: 'v3.0/01', cExpanded: new Set(), cDrilled: false,
+};
+let data = makeData(state.history);
+
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const chev = '<svg class="i chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>';
+const spacer = '<span></span>';
+const pad2 = (n) => String(n).padStart(2, '0');
+const doneCount = (p) => p.plans.filter(Boolean).length;
+const allMs = () => [data.current, ...data.shipped];
+
+function leaf(key, label, extra = '', lead = spacer) {
+  return `<a href="#" class="row" data-leaf="${esc(key)}" data-active="${state.active === key}">${lead}<span class="label">${esc(label)}</span>${extra}</a>`;
+}
+
+// A phase's files, grouped by stage. Shared by all three variants.
+function phaseFiles(ms, p) {
+  const base = `${ms.v}/${p.n}`;
+  let html = '';
+  if (p.pre.length) {
+    html += `<div class="stage"><span>Before plans</span></div>`;
+    html += p.pre.map((f) => leaf(`${base}/${f}`, f)).join('');
+  }
+  if (p.plans.length) {
+    html += `<div class="stage"><span>Plans</span><span>${doneCount(p)} of ${p.plans.length} done</span></div>`;
+    html += p.plans.map((done, i) => leaf(`${base}/plan/${i + 1}`, `Plan ${pad2(i + 1)}`, `<span class="badge">${p.n}-${pad2(i + 1)}</span>`, `<span class="sq ${done ? 'done' : ''}"></span>`)).join('');
+  } else {
+    html += `<div class="stage"><span>Plans</span><span>none yet</span></div>`;
+  }
+  if (p.post.length) {
+    html += `<div class="stage"><span>After</span></div>`;
+    html += p.post.map((f) => leaf(`${base}/${f}`, f)).join('');
+  }
+  return html;
+}
+
+function quickChips(ms, q) {
+  return `<div class="chips">${q.files.map((f) => `<a href="#" class="chip" data-leaf="${ms.v}/${q.id}/${f}" data-active="${state.active === `${ms.v}/${q.id}/${f}`}">${f}</a>`).join('')}</div>`;
+}
+
+// ---------- A: by milestone ----------
+function aNode(key, rowInner, childrenHtml, cls = 'folder') {
+  const open = state.openA.has(key);
+  return `<div class="node ${open ? 'open' : ''}"><button class="row ${cls}" data-toggle-a="${esc(key)}" aria-expanded="${open}">${chev}${rowInner}</button><div class="children">${childrenHtml}</div></div>`;
+}
+function aPhase(ms, p) {
+  const badge = p.plans.length ? `<span class="badge">${doneCount(p)}/${p.plans.length}</span>` : '';
+  return aNode(`g:${ms.v}/${p.n}`, `<span class="lead label"><span class="num">${p.n}</span><span class="label">${esc(p.name)}</span></span>${badge}`, phaseFiles(ms, p));
+}
+function aQuick(ms) {
+  const inner = ms.quick.map((q) => aNode(`q:${ms.v}/${q.id}`, `<span class="label">${esc(q.name)}</span><span class="badge">${q.date}</span>`, quickChips(ms, q), '')).join('');
+  return aNode(`g:${ms.v}/quick`, `<span class="label">Quick tasks</span><span class="badge">${ms.quick.length}</span>`, inner);
+}
+function renderA() {
+  const cur = data.current;
+  const shipped = data.shipped.map((ms) => aNode(`g:${ms.v}`,
+    `<span class="lead label"><span class="num">${ms.v}</span><span class="label">${esc(ms.name)}</span></span><span class="badge">${ms.when}</span>`,
+    ms.docs.map((d) => leaf(`${ms.v}/${d}`, d)).join('') + aNode(`g:${ms.v}/phases`, `<span class="label">Phases</span><span class="badge">${ms.phases.length}</span>`, ms.phases.map((p) => aPhase(ms, p)).join('')) + aQuick(ms))).join('');
+  return `
+    <div class="drawer-head"><span class="drawer-title">Planning files</span><span class="drawer-actions">
+      <button class="icon-btn" id="a-expand" title="Expand all"><svg class="i" viewBox="0 0 24 24"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg></button>
+      <button class="icon-btn" data-close aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></div>
+    <div></div>
+    <div class="scroll"><div class="a-root">
+      <section class="a-group"><h2 class="group-label"><span>Current milestone</span><span class="v">${cur.v}</span></h2>
+        ${cur.phases.map((p) => aPhase(cur, p)).join('')}
+        ${aQuick(cur)}
+      </section>
+      <section class="a-group"><h2 class="group-label"><span>Shipped</span><span class="v">${data.shipped.length}</span></h2>${shipped}</section>
+    </div></div>`;
+}
+
+// ---------- B: three tabs ----------
+function bPhaseCard(ms, p) {
+  const key = `${ms.v}/${p.n}`;
+  const open = state.bOpen === key;
+  const bar = p.plans.length ? `<span class="segbar">${p.plans.map((d) => `<i class="${d ? 'done' : ''}"></i>`).join('')}</span><span>${doneCount(p)} of ${p.plans.length} plans</span>` : '<span>No plans yet</span>';
+  return `<div class="b-phase ${open ? 'open' : ''}">
+    <button class="b-phase-head" data-b-phase="${key}"><span class="big">${p.n}</span><span class="name">${esc(p.name)}</span><span class="status ${p.status === 'Executing' ? 'live' : ''}">${p.status}</span><span class="meta">${bar}</span></button>
+    <div class="b-phase-body">${phaseFiles(ms, p)}</div></div>`;
+}
+function bQuickRows(ms, list) {
+  let html = '', month = null;
+  for (const q of list) {
+    if (q.month !== month) { month = q.month; html += `<div class="stage b-month"><span>${month}</span></div>`; }
+    const key = `${ms.v}/${q.id}`;
+    const open = state.bQuickOpen === key;
+    html += `<div class="node ${open ? 'open' : ''}"><button class="row" data-b-quick="${key}" aria-expanded="${open}"><span class="badge">${q.date}</span><span class="label">${esc(q.name)}</span></button><div class="children">${quickChips(ms, q)}</div></div>`;
+  }
+  return html;
+}
+function renderB() {
+  const cur = data.current;
+  const tabs = [['phases', cur.phases.length, 'Phases'], ['quick', cur.quick.length, 'Quick tasks'], ['shipped', data.shipped.length, 'Shipped']];
+  let body = '';
+  if (state.bTab === 'phases') {
+    body = `<h2 class="group-label"><span>${cur.v} · ${esc(cur.name)}</span></h2>` + cur.phases.map((p) => bPhaseCard(cur, p)).join('');
+  } else if (state.bTab === 'quick') {
+    const f = state.bFilter.toLowerCase();
+    const list = cur.quick.filter((q) => q.name.toLowerCase().includes(f));
+    body = `<label class="b-filter"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="b-filter" placeholder="Filter ${cur.quick.length} quick tasks" value="${esc(state.bFilter)}"></label>
+      <div class="b-quick">${list.length ? bQuickRows(cur, list) : '<p class="empty">No quick task matches.</p>'}</div>
+      <p class="stage"><span>Older quick tasks sit with their milestone under Shipped</span></p>`;
+  } else {
+    body = data.shipped.map((ms) => {
+      const pk = `${ms.v}/phases`, qk = `${ms.v}/quick`;
+      const po = state.bMsOpen.has(pk), qo = state.bMsOpen.has(qk);
+      return `<div class="b-ms">
+        <div class="b-ms-head"><span class="ver">${ms.v}</span><span class="name">${esc(ms.name)}</span><span class="badge">Shipped ${ms.when}</span></div>
+        <div class="chips">${ms.docs.map((d) => `<a href="#" class="chip" data-leaf="${ms.v}/${d}" data-active="${state.active === `${ms.v}/${d}`}">${d}</a>`).join('')}</div>
+        <div class="sub">
+          <div class="node ${po ? 'open' : ''}"><button class="row folder" data-b-ms="${pk}" aria-expanded="${po}">${chev}<span class="label">Phases</span><span class="badge">${ms.phases.length}</span></button>
+            <div class="children">${ms.phases.map((p) => aPhase(ms, p)).join('')}</div></div>
+          <div class="node ${qo ? 'open' : ''}"><button class="row folder" data-b-ms="${qk}" aria-expanded="${qo}">${chev}<span class="label">Quick tasks</span><span class="badge">${ms.quick.length}</span></button>
+            <div class="children b-quick">${bQuickRows(ms, ms.quick)}</div></div>
+        </div></div>`;
+    }).join('');
+  }
+  return `
+    <div class="drawer-head"><span class="drawer-title">Planning files</span><span class="drawer-actions">
+      <button class="icon-btn" data-close aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></div>
+    <div class="b-switch" role="tablist">${tabs.map(([k, n, l]) => `<button role="tab" data-b-tab="${k}" aria-selected="${state.bTab === k}"><span class="count">${pad2(n)}</span><span class="what">${l}</span></button>`).join('')}</div>
+    <div class="scroll"><div class="b-body">${body}</div></div>`;
+}
+
+// ---------- C: two columns ----------
+function cPlace(key, label, badge, sub = false) {
+  return `<button class="row ${sub ? 'sub' : ''}" data-c-place="${key}" data-selected="${state.cPlace === key}"><span class="lead label">${label}</span>${badge ? `<span class="badge">${badge}</span>` : ''}</button>`;
+}
+function findPlace(key) {
+  for (const ms of allMs()) {
+    if (key === ms.v) return { ms, kind: 'milestone' };
+    if (key === `${ms.v}/quick`) return { ms, kind: 'quick' };
+    const p = ms.phases.find((x) => key === `${ms.v}/${x.n}`);
+    if (p) return { ms, kind: 'phase', p };
+  }
+  return null;
+}
+function renderC() {
+  const cur = data.current;
+  const places = `
+    <section class="a-group"><h2 class="group-label"><span>Current</span><span class="v">${cur.v}</span></h2>
+      ${cur.phases.map((p) => cPlace(`${cur.v}/${p.n}`, `<span class="num">${p.n}</span><span class="label">${esc(p.name)}</span>`, p.plans.length ? `${doneCount(p)}/${p.plans.length}` : '')).join('')}
+      ${cPlace(`${cur.v}/quick`, '<span class="label">Quick tasks</span>', cur.quick.length)}
+    </section>
+    <section class="a-group"><h2 class="group-label"><span>Shipped</span></h2>
+      ${data.shipped.map((ms) => {
+        const ex = state.cExpanded.has(ms.v);
+        return cPlace(ms.v, `<span class="num">${ms.v}</span><span class="label">${esc(ms.name)}</span>`, ms.when)
+          + (ex ? ms.phases.map((p) => cPlace(`${ms.v}/${p.n}`, `<span class="num">${p.n}</span><span class="label">${esc(p.name)}</span>`, '', true)).join('') + cPlace(`${ms.v}/quick`, '<span class="label">Quick tasks</span>', ms.quick.length, true) : '');
+      }).join('')}
+    </section>`;
+  const place = findPlace(state.cPlace);
+  let files = '';
+  if (place) {
+    const { ms, kind, p } = place;
+    if (kind === 'phase') {
+      files = `<div class="c-files-head"><span class="where">${ms.v} · Phase ${p.n}</span><h3>${esc(p.name)}</h3><span><span class="status ${p.status === 'Executing' ? 'live' : ''}">${p.status}</span></span></div>${phaseFiles(ms, p)}`;
+    } else if (kind === 'quick') {
+      files = `<div class="c-files-head"><span class="where">${ms.v}</span><h3>Quick tasks · ${ms.quick.length}</h3></div><div class="b-quick">${bQuickRows(ms, ms.quick)}</div>`;
+    } else {
+      files = `<div class="c-files-head"><span class="where">Shipped ${ms.when}</span><h3>${ms.v} · ${esc(ms.name)}</h3></div>
+        <div class="stage"><span>Milestone documents</span></div>${ms.docs.map((d) => leaf(`${ms.v}/${d}`, d)).join('')}
+        <div class="stage"><span>Phases</span><span>${ms.phases.length}</span></div>${ms.phases.map((x) => `<button class="row folder" data-c-place="${ms.v}/${x.n}"><span class="num">${x.n}</span><span class="label">${esc(x.name)}</span></button>`).join('')}
+        <div class="stage"><span>Quick tasks</span><span>${ms.quick.length}</span></div><button class="row folder" data-c-place="${ms.v}/quick"><span></span><span class="label">All ${ms.quick.length} quick tasks</span></button>`;
+    }
+  }
+  return `
+    <div class="drawer-head"><span class="drawer-title">Planning files</span><span class="drawer-actions">
+      <button class="icon-btn" data-close aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></div>
+    <div></div>
+    <div class="c-cols ${state.cDrilled ? 'drilled' : ''}" style="min-height:0">
+      <div class="c-places scroll">${places}</div>
+      <div class="c-files scroll"><button class="c-back" data-c-back><svg class="i" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg>All places</button>${files}</div>
+    </div>`;
+}
+
+// ---------- render + events ----------
+const drawer = document.getElementById('drawer');
+const frame = document.getElementById('frame');
+function render() {
+  document.documentElement.className = state.theme;
+  frame.style.maxWidth = state.width === 'full' ? '' : `${state.width}px`;
+  frame.classList.toggle('narrow', state.width !== 'full');
+  const phone = state.width === '375';
+  drawer.classList.toggle('wide', state.variant === 'c' && !phone);
+  drawer.classList.toggle('phone', phone);
+  drawer.style.width = phone ? '88%' : '';
+  const scrollers = [...drawer.querySelectorAll('.scroll')].map((s) => s.scrollTop);
+  drawer.innerHTML = state.variant === 'a' ? renderA() : state.variant === 'b' ? renderB() : renderC();
+  drawer.querySelectorAll('.scroll').forEach((s, i) => { s.scrollTop = scrollers[i] || 0; });
+  document.querySelectorAll('.variant-tab').forEach((t) => t.classList.toggle('active', t.dataset.variant === state.variant));
+  document.querySelectorAll('#sketch-tools button').forEach((b) => b.classList.toggle('on', b.dataset.theme === state.theme || b.dataset.width === state.width || b.dataset.history === state.history));
+}
+
+let toastTimer;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('on');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1600);
+}
+
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('button, a');
+  if (!el) { if (e.target.id === 'scrim') { frame.classList.remove('open'); } return; }
+  if (el.dataset.variant) { state.variant = el.dataset.variant; location.hash = state.variant; return render(); }
+  if (el.closest('#sketch-tools')) {
+    if (el.dataset.theme) state.theme = el.dataset.theme;
+    if (el.dataset.width) state.width = el.dataset.width;
+    if (el.dataset.history) { state.history = el.dataset.history; data = makeData(state.history); }
+    return render();
+  }
+  if (el.id === 'open-drawer') { frame.classList.add('open'); return; }
+  if (el.hasAttribute('data-close')) { frame.classList.remove('open'); return; }
+  if (el.dataset.leaf) { e.preventDefault(); state.active = el.dataset.leaf; toast(`Opens ${el.dataset.leaf}`); return render(); }
+  if (el.dataset.toggleA) { const k = el.dataset.toggleA; state.openA.has(k) ? state.openA.delete(k) : state.openA.add(k); return render(); }
+  if (el.id === 'a-expand') {
+    const keys = [];
+    for (const ms of allMs()) {
+      if (!ms.current) keys.push(`g:${ms.v}`, `g:${ms.v}/phases`);
+      keys.push(`g:${ms.v}/quick`, ...ms.phases.map((p) => `g:${ms.v}/${p.n}`));
+    }
+    const allOpen = keys.every((k) => state.openA.has(k));
+    keys.forEach((k) => allOpen ? state.openA.delete(k) : state.openA.add(k));
+    return render();
+  }
+  if (el.dataset.bTab) { state.bTab = el.dataset.bTab; return render(); }
+  if (el.dataset.bPhase) { state.bOpen = state.bOpen === el.dataset.bPhase ? null : el.dataset.bPhase; return render(); }
+  if (el.dataset.bQuick) { state.bQuickOpen = state.bQuickOpen === el.dataset.bQuick ? null : el.dataset.bQuick; return render(); }
+  if (el.dataset.bMs) { const k = el.dataset.bMs; state.bMsOpen.has(k) ? state.bMsOpen.delete(k) : state.bMsOpen.add(k); return render(); }
+  if (el.dataset.cPlace) {
+    const k = el.dataset.cPlace;
+    state.cPlace = k;
+    const ms = data.shipped.find((m) => m.v === k);
+    if (ms) { state.cExpanded.has(k) && state.cDrilled === false && state.width !== '375' ? null : state.cExpanded.add(k); }
+    const owner = data.shipped.find((m) => k.startsWith(`${m.v}/`));
+    if (owner) state.cExpanded.add(owner.v);
+    state.cDrilled = true;
+    return render();
+  }
+  if (el.hasAttribute('data-c-back')) { state.cDrilled = false; return render(); }
+});
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'b-filter') {
+    state.bFilter = e.target.value; render();
+    const input = document.getElementById('b-filter');
+    input.focus(); input.setSelectionRange(input.value.length, input.value.length);
+  }
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') frame.classList.remove('open'); });
+render();
+</script>
+</body>
+</html>
