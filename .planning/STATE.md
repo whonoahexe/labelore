@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-24T18:03:18.629Z"
+last_updated: "2026-10-24T18:08:07.086Z"
 last_activity: 2026-10-24
 last_activity_desc: Completed quick task 261016-2j6 (compact discussion-log tables)
-state_head: 605a68423eb0488f8a5f4dc084d50481f0c0ad7f
+state_head: 98a468c132a5e6e166effebd968085a41f426dba
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -227,6 +227,7 @@ None.
 | 261024-k8u | Research page per sketches 031–035: five spines, Summary, Stack, Features, Architecture and Pitfalls panels | 2026-10-24 | 0cce2ea | [261024-k8u-build-the-project-research-page-per-sket](./quick/261024-k8u-build-the-project-research-page-per-sket/) |
 | 261024-o3h | Box diagrams and directory trees draw as lifted figures and clean trees on every document type, through one shared detector and renderer | 2026-10-24 | fd3d326 | [261024-o3h-make-the-lifted-diagram-and-clean-tree-r](./quick/261024-o3h-make-the-lifted-diagram-and-clean-tree-r/) |
 | 261024-vty | Build sketch 038 winner C: two-column planning-files drawer (places left, chosen place's files right) | 2026-10-24 | 605a684 | [261024-vty-build-sketch-038-winner-c-two-column-pla](./quick/261024-vty-build-sketch-038-winner-c-two-column-pla/) |
+| 115 | Give the planning-files drawer breathing space | 2026-10-24 | 98a468c | — |
 
 ## Deferred Items
 
