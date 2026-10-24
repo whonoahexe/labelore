@@ -291,12 +291,12 @@
   /* quick-260911-vqe: the planning-files drawer's width. Deliberately not `--space-` prefixed,
      same reason as the dialog geometry tokens above — the step check only accepts plain rem
      multiples of 0.125rem, and this is a viewport-relative min() shape. */
-  --drawer-width: min(38rem, 94vw);
+  --drawer-width: min(44rem, 94vw);
 
   /* quick-261024-vty: the places column inside that drawer (sketch 038 C). Not a `--space-` token
      for the same reason as the drawer width above — it is one fixed track of a two-column grid,
      and the step check only accepts plain rem multiples of 0.125rem for the spacing family. */
-  --drawer-places-width: 15.5rem;
+  --drawer-places-width: 17.5rem;
 
   /* quick-260922-3us: sketch-004 B3's folded-chapter number column width, shared between
      `.document-fold-head`'s own grid track and `.document-fold-body`'s indent-to-the-title-column
@@ -703,23 +703,23 @@
 
 .places-list {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-8);
   align-content: start;
-  padding: var(--space-3) var(--space-2) var(--space-8);
+  padding: var(--space-5) var(--space-3) var(--space-10);
   border-right: 1px solid var(--sidebar-border);
 }
 
 .places-files {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--space-0-5);
   align-content: start;
-  padding: var(--space-3) var(--space-3) var(--space-8);
+  padding: var(--space-5) var(--space-5) var(--space-10);
 }
 
 .places-group,
 .places-fold {
   display: grid;
-  gap: var(--space-0-5);
+  gap: var(--space-1);
 }
 
 .places-group-label {
@@ -728,7 +728,7 @@
   justify-content: space-between;
   gap: var(--space-2);
   margin: 0;
-  padding-inline: var(--space-2);
+  padding: 0 var(--space-3) var(--space-2);
   color: var(--muted-foreground);
   font-family: var(--font-heading);
   font-size: var(--fs-2);
@@ -753,10 +753,10 @@
   grid-auto-flow: column;
   grid-auto-columns: auto;
   align-items: center;
-  gap: var(--space-1-5);
+  gap: var(--space-2-5);
   width: 100%;
   min-height: var(--space-8);
-  padding-inline: var(--space-2);
+  padding-inline: var(--space-3);
   border: 0;
   background: none;
   color: var(--muted-foreground);
@@ -779,7 +779,7 @@
 }
 
 .places-row[data-depth='1'] {
-  padding-left: var(--space-5);
+  padding-left: var(--space-6);
 }
 
 .places-row:hover,
@@ -827,8 +827,11 @@
 
 .places-files-head {
   display: grid;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--space-2) var(--space-2);
+  justify-items: start;
+  gap: var(--space-2);
+  padding: 0 var(--space-3) var(--space-4);
+  margin-bottom: var(--space-2);
+  border-bottom: 1px solid var(--sidebar-border);
 }
 
 .places-where,
@@ -853,7 +856,7 @@
   display: flex;
   justify-content: space-between;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-2) var(--space-1);
+  padding: var(--space-6) var(--space-3) var(--space-2);
 }
 
 /* The phone-only back link above a place's files; it stays hidden at wider widths, where both
@@ -881,8 +884,8 @@
 .places-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--space-2) var(--space-2);
+  gap: var(--space-1-5);
+  padding: var(--space-1-5) var(--space-3) var(--space-3);
 }
 
 .places-chip {
@@ -963,7 +966,7 @@
   justify-content: space-between;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  padding: var(--space-4) var(--space-4) var(--space-4) var(--space-5);
   border-bottom: 1px solid var(--sidebar-border);
 }
 
