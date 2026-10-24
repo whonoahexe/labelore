@@ -282,16 +282,22 @@ function milestoneDays(entry: MilestoneEntry, previousShipped: string | null): n
   return entry.shipped && previousShipped ? daysBetween(previousShipped, entry.shipped) : null;
 }
 
-/** The root MILESTONES.md entries, keyed by lower-cased version; the first entry wins a repeat,
- * since the file is newest first. */
-export function milestoneRecords(presentation: ProjectPresentation): Map<string, MilestoneRecord> {
-  const records = new Map<string, MilestoneRecord>();
+/** The valid entries of the root MILESTONES.md, in file order (newest first); empty when the file
+ * is absent or carries no usable entries. */
+export function milestoneEntries(presentation: ProjectPresentation): MilestoneEntry[] {
   const artifact = presentation.artifacts.find(
     (candidate) => candidate.kind === 'milestones' && candidate.location === 'root',
   );
   const entries = artifact?.structured.entries;
-  if (!artifact || !Array.isArray(entries)) return records;
-  const valid = entries.filter(isMilestoneEntry);
+  if (!artifact || !Array.isArray(entries)) return [];
+  return entries.filter(isMilestoneEntry);
+}
+
+/** The root MILESTONES.md entries, keyed by lower-cased version; the first entry wins a repeat,
+ * since the file is newest first. */
+export function milestoneRecords(presentation: ProjectPresentation): Map<string, MilestoneRecord> {
+  const records = new Map<string, MilestoneRecord>();
+  const valid = milestoneEntries(presentation);
   for (const [index, entry] of valid.entries()) {
     const key = entry.version.toLowerCase();
     if (records.has(key)) continue;

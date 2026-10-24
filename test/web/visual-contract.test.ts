@@ -612,7 +612,7 @@ describe('planning-files drawer (quick-260911-vqe D-01..D-04, SB-04/SB-05)', () 
     expect(treeBlock).toContain('overflow-y: auto;');
     expect(treeBlock).not.toContain('position: sticky;');
 
-    expect(css).toContain('--drawer-width: min(22rem, 88vw);');
+    expect(css).toContain('--drawer-width: min(38rem, 94vw);');
 
     expect(css).toMatch(
       /\.sidebar-drawer\[data-starting-style\],\s*\n\.sidebar-drawer\[data-ending-style\]\s*\{[\s\S]*translateX\(-100%\)/,
@@ -683,7 +683,7 @@ describe('planning-files drawer (quick-260911-vqe D-01..D-04, SB-04/SB-05)', () 
     expect(shell).toMatch(/<div className="shell-outlet" id="main-content">/);
 
     const sidebarDrawer = await source('src/web/components/sidebar-drawer.tsx');
-    expect(sidebarDrawer).toContain('<TreeNavigator');
+    expect(sidebarDrawer).toContain('<PlanningPlaces');
     expect(sidebarDrawer).toContain("@base-ui/react/dialog");
     expect(sidebarDrawer).toContain('<Dialog.Portal keepMounted>');
     expect(sidebarDrawer).toContain('aria-label="Open planning files"');

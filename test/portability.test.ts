@@ -26,6 +26,7 @@ const ROUTES = [
   '/api/roadmap',
   '/api/history',
   '/api/tree',
+  '/api/drawer',
   '/api/traceability',
   '/api/search?q=phase',
 ] as const;

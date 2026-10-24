@@ -23,6 +23,7 @@ import { buildTraceabilityViewModel } from '../presentation/traceability.ts';
 import { buildSearchGroups, extractSnippets } from '../presentation/search.ts';
 import { buildResearchViewModel } from '../presentation/project-research.ts';
 import { buildSketchesViewModel, SKETCH_MANIFEST_PATH } from '../presentation/sketches.ts';
+import { buildDrawerViewModel } from '../presentation/drawer.ts';
 import { buildTreeViewModel } from '../presentation/tree.ts';
 import { createArtifactRenderer } from '../rendering/markdown.ts';
 import { resolveTargetPath } from '../cli/target-path.ts';
@@ -222,6 +223,9 @@ export function createApp(
   });
   app.get('/api/tree', (c) => {
     return c.json(buildTreeViewModel(derived.presentation));
+  });
+  app.get('/api/drawer', (c) => {
+    return c.json(buildDrawerViewModel(derived.presentation));
   });
   app.get('/api/traceability', (c) => {
     return c.json(buildTraceabilityViewModel(derived.presentation));

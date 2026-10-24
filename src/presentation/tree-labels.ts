@@ -142,22 +142,22 @@ export function labelOf(
 
 // D-03 lifecycle ordering tables. Each list's array index IS its rank; an unlisted token falls
 // through to the caller's "unknown" rank, per rankOf's own per-location fallback below.
-const PRE_PLAN_ARTIFACT_ORDER = [
+export const PRE_PLAN_ARTIFACT_ORDER = [
   'CONTEXT', 'DISCUSSION-LOG', 'SPEC', 'AI-SPEC', 'UI-SPEC', 'RESEARCH', 'PATTERNS', 'COST-MODEL', 'VALIDATION',
 ];
-const POST_PLAN_ARTIFACT_ORDER = ['REVIEW', 'REVIEW-FIX', 'VERIFICATION', 'SECURITY', 'UAT', 'LEARNINGS'];
+export const POST_PLAN_ARTIFACT_ORDER = ['REVIEW', 'REVIEW-FIX', 'VERIFICATION', 'SECURITY', 'UAT', 'LEARNINGS'];
 const ROOT_FILE_ORDER = [
   'PROJECT.md', 'ROADMAP.md', 'REQUIREMENTS.md', 'STATE.md', 'MILESTONES.md', 'BACKLOG.md',
   'LEARNINGS.md', 'RETROSPECTIVE.md',
 ];
 const RESEARCH_FILE_ORDER = ['SUMMARY.md', 'STACK.md', 'FEATURES.md', 'ARCHITECTURE.md', 'PITFALLS.md'];
-const MILESTONE_DOC_ORDER: Record<string, number> = { ROADMAP: 0, REQUIREMENTS: 1, 'MILESTONE-AUDIT': 2 };
-const QUICK_FILE_ORDER: Record<string, number> = { CONTEXT: 0, PLAN: 1, SUMMARY: 2, VERIFICATION: 3 };
+export const MILESTONE_DOC_ORDER: Record<string, number> = { ROADMAP: 0, REQUIREMENTS: 1, 'MILESTONE-AUDIT': 2 };
+export const QUICK_FILE_ORDER: Record<string, number> = { CONTEXT: 0, PLAN: 1, SUMMARY: 2, VERIFICATION: 3 };
 
 /** Dotted-numeric version key ('v1.0' -> 1_000_000, 'v2.0' -> 2_000_000), computed by splitting on
  * '.' rather than a second regex — no grammar parser owns version comparison, so this stays a
  * plain arithmetic helper local to ranking. */
-function versionKeyOf(version: string): number {
+export function versionKeyOf(version: string): number {
   const [major, minor, patch] = version
     .replace(/^v/i, '')
     .split('.')

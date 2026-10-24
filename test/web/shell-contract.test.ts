@@ -122,7 +122,7 @@ describe('authorized Studio Portal shell contract', () => {
     expect(shell).not.toContain('shell-header-height');
 
     const sidebarDrawer = await source('src/web/components/sidebar-drawer.tsx');
-    expect(sidebarDrawer).toContain('<TreeNavigator open={open} onNavigate={() => setOpen(false)} />');
+    expect(sidebarDrawer).toContain('<PlanningPlaces open={open} onNavigate={() => setOpen(false)} />');
     expect(sidebarDrawer).not.toContain('dangerouslySetInnerHTML');
   });
 

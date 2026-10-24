@@ -1047,6 +1047,32 @@ plan's "no AST tooling" constraint.
 | `tree-root` | Tree navigator | |
 | `tree-warning-indicator` | Tree navigator | |
 
+### Planning files drawer
+
+Sketch 038 C (quick-261024-vty): places on the left, the chosen place's files on the right.
+
+| Class | Surface | Note |
+|---|---|---|
+| `places-navigator` | Planning files drawer | The drawer body: two columns, places left and files right |
+| `places-list` | Planning files drawer |  |
+| `places-files` | Planning files drawer |  |
+| `places-group` | Planning files drawer |  |
+| `places-group-label` | Planning files drawer |  |
+| `places-group-version` | Planning files drawer |  |
+| `places-row` | Planning files drawer |  |
+| `places-number` | Planning files drawer |  |
+| `places-label` | Planning files drawer |  |
+| `places-badge` | Planning files drawer |  |
+| `places-row-spacer` | Planning files drawer |  |
+| `places-files-head` | Planning files drawer |  |
+| `places-where` | Planning files drawer |  |
+| `places-files-title` | Planning files drawer |  |
+| `places-stage` | Planning files drawer |  |
+| `places-file-row` | Planning files drawer |  |
+| `places-plan-square` | Planning files drawer |  |
+| `places-warning` | Planning files drawer |  |
+| `places-fold` | Planning files drawer | One shipped milestone row with its unfolded phases beneath it |
+
 ### Reference preview
 
 | Class | Surface | Note |
