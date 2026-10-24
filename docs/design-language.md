@@ -709,8 +709,10 @@ element is actually written, regardless of class name:
   drawn in the `missing` family (`--missing-fill`, `--missing-border`), never `destructive` or
   `warning`; document content never takes those two tones. Nothing animates. Accent uses inside the
   panels: the build-order track line, the selected phase card and its number, the gate block's tint
-  and lock tile, the pressed chip or kind, the reasons' numbers, the gaps' numbers and our matrix
-  column's tint.
+  and lock tile, the pressed chip or kind, the reasons' numbers, the gaps' numbers, our matrix
+  column's tint, the selected build-order step's border and its lit wires, and How to verify's left rule.
+  The pitfall tone is the `missing` family everywhere: a pitfall's number, the meter cells, the warning-sign
+  squares, the selected tab's underline and the open row's tint.
 
 ## Surface-scoped registered names
 
@@ -1224,6 +1226,53 @@ plan's "no AST tooling" constraint.
 | `research-matrix-us` | Research | Our column, tinted `--primary-tint` and headed with the project's name |
 | `research-matrix-clamp` | Research | A cell's text, clamped at three lines until its row is clicked |
 | `research-matrix-note` | Research | The closing paragraph under the matrix |
+| `research-arch` | Research | The Architecture body: overview, structure, anti-patterns, build order |
+| `research-pitfalls` | Research | The Pitfalls body: the watch list and the check ledger |
+| `research-bo` | Research | The build-order graph and its step panel |
+| `research-bo-canvas` | Research | The DAG's framed canvas; it scrolls sideways inside itself when the steps do not fit |
+| `research-bo-stage` | Research | The canvas's positioned stage (`data-selecting` dims the steps the selection does not touch) |
+| `research-bo-wires` | Research | The aria-hidden svg of wires and arrowheads under the step buttons |
+| `research-bo-wire` | Research | One wire on the transitive reduction; `data-hot` lights it in `--primary` |
+| `research-bo-arrow` | Research | A wire's arrowhead; `data-hot` lights it in `--primary` |
+| `research-bo-node` | Research | One step: an absolutely positioned button with its id and name (`aria-pressed` selected, `data-hot` a neighbour); the selected step takes an accent border |
+| `research-bo-id` | Research | A step's id square in mono |
+| `research-bo-name` | Research | A step's name, up to three lines |
+| `research-bo-detail` | Research | The panel under the graph for the selected step |
+| `research-bo-big` | Research | The selected step's big accent id |
+| `research-bo-title` | Research | The selected step's name (an h4) |
+| `research-bo-what` | Research | What the selected step delivers |
+| `research-bo-rel` | Research | The Waits for and Unlocks rows |
+| `research-bo-note` | Research | A step's notes and its "Also waits for" line, muted |
+| `research-bo-hint` | Research | The hint shown while no step is selected |
+| `research-step-chip` | Research | A step chip in the panel (a button that selects that step, or a plain "Nothing · starts any time") |
+| `research-wl` | Research | The pitfall watch list |
+| `research-wl-row` | Research | One pitfall; an open row takes a faint `--missing-fill` tint (`data-open`) |
+| `research-wl-head` | Research | A row's button: number, names, how likely, phase, chevron |
+| `research-pnum` | Research | A pitfall's number in `--missing-fill` |
+| `research-wl-name` | Research | The short name over the full title and the "Watch for" line |
+| `research-wl-full` | Research | The full title, muted, under the short name |
+| `research-wl-watch` | Research | "Watch for" (mono, `--missing-fill`) with the first warning sign and "+N more" |
+| `research-wl-sign` | Research | The first sign and its "+N more" count |
+| `research-wl-sign-text` | Research | The first sign, on one line with an ellipsis |
+| `research-wl-lk` | Research | The how-likely cell |
+| `research-likely` | Research | A 4-cell how-likely meter (or the 3-cell confidence meter) and its level, in `--missing-fill` |
+| `research-phase-tag` | Research | The phase that prevents the pitfall, muted, two lines at most |
+| `research-wl-open` | Research | An opened row's body, indented under the names |
+| `research-p-wrong` | Research | The first sentence of What goes wrong, large |
+| `research-p-wrong-list` | Research | What goes wrong as a short list when the file bullets it, marked with small squares |
+| `research-p-more` | Research | What goes wrong in full, shown once its toggle opens |
+| `research-ptabs` | Research | The tablist: Warning signs, How to avoid, Why it happens, How to verify (empty ones are not drawn) |
+| `research-ptab` | Research | One tab; the selected one takes a `--missing-fill` underline |
+| `research-ppane` | Research | The selected tab's panel |
+| `research-signs` | Research | Warning signs, each marked with a small filled square in `--missing-fill` (no icon, no glyph) |
+| `research-avoid` | Research | How to avoid as numbered rows |
+| `research-avoid-button` | Research | One way to avoid it: a button whose rest unclamps on click |
+| `research-avoid-n` | Research | A row's number |
+| `research-avoid-main` | Research | The bold lead (or first sentence) of a way to avoid it |
+| `research-avoid-rest` | Research | The rest, clamped at two lines until the row is clicked |
+| `research-p-prose` | Research | Why it happens, as prose |
+| `research-verify` | Research | How to verify: a mono label and the check over an accent (`--primary`) left rule, with no tick icon |
+| `research-ledger` | Research | "Looks done but isn't": a numbered two-column ledger (one column under 62rem), each check with the pitfalls it names as chips |
 
 ## How to extend
 

@@ -17,10 +17,15 @@ import type {
 } from '../planning-repo/handlers/project-research-lift.ts';
 import type { ProjectPresentation } from '../server/project-presentation.ts';
 import {
+  composeArchitecturePanel,
   composeFeaturesPanel,
+  composePitfallsPanel,
   composeStackPanel,
   composeSummaryPanel,
+  splitFinding,
+  type ArchitecturePanel,
   type FeaturesPanel,
+  type PitfallsPanel,
   type StackPanel,
   type SummaryPanel,
 } from './project-research-panels.ts';
@@ -67,6 +72,8 @@ export interface ResearchViewModel {
   summary: SummaryPanel | null;
   stack: StackPanel | null;
   features: FeaturesPanel | null;
+  architecture: ArchitecturePanel | null;
+  pitfalls: PitfallsPanel | null;
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -88,21 +95,7 @@ export function formatResearched(value: string | null): string | null {
   return month ? `${Number(match[3])} ${month} ${match[1]}` : value.trim();
 }
 
-/** The first screen says one thing: the finding's first sentence, cut at a colon when it runs long
- * (its list then follows quietly). Everything else is `rest`. */
-export function splitFinding(value: string): { head: string; tail: string; rest: string } {
-  const parts = String(value ?? '')
-    .slice(0, 8_000)
-    .split(/(?<=[.!?])\s+(?=[A-Z0-9`*("“])/);
-  let head = parts[0] ?? '';
-  let tail = '';
-  const colon = head.indexOf(': ');
-  if (plain(head).length > 140 && colon > 20) {
-    tail = head.slice(colon + 2);
-    head = head.slice(0, colon);
-  }
-  return { head, tail, rest: parts.slice(1).join(' ') };
-}
+export { splitFinding };
 
 interface Lifts {
   summary: SummaryLift | null;
@@ -273,5 +266,7 @@ export function buildResearchViewModel(
     features: lifts.features
       ? composeFeaturesPanel(lifts.features, projectLabel(summary, presentation.projectName ?? null))
       : null,
+    architecture: lifts.architecture ? composeArchitecturePanel(lifts.architecture) : null,
+    pitfalls: lifts.pitfalls ? composePitfallsPanel(lifts.pitfalls) : null,
   };
 }

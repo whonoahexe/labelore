@@ -6,6 +6,8 @@ import type { ResearchFileKey } from '../../presentation/project-research-files.
 import type { ResearchFileModel, ResearchViewModel } from '../../presentation/project-research.ts';
 import { EmptyState } from '../components/empty-state.tsx';
 import { ConfidenceChip, ConfidenceMeter, ResearchInline } from './research-atoms.tsx';
+import { ArchitecturePanelBody } from './research-architecture-panel.tsx';
+import { PitfallsPanelBody } from './research-pitfalls-panel.tsx';
 import { FeaturesPanelBody } from './research-features-panel.tsx';
 import { StackPanelBody, StackReasons } from './research-stack-panel.tsx';
 import { SummaryPanelBody } from './research-summary-panel.tsx';
@@ -225,6 +227,8 @@ export function ResearchPage(): React.JSX.Element {
                 {file.key === 'summary' && model.summary ? <SummaryPanelBody panel={model.summary} /> : null}
                 {file.key === 'stack' && model.stack ? <StackPanelBody panel={model.stack} /> : null}
                 {file.key === 'features' && model.features ? <FeaturesPanelBody panel={model.features} /> : null}
+                {file.key === 'architecture' && model.architecture ? <ArchitecturePanelBody panel={model.architecture} /> : null}
+                {file.key === 'pitfalls' && model.pitfalls ? <PitfallsPanelBody panel={model.pitfalls} /> : null}
               </Leaf>
             );
           }
