@@ -10,7 +10,7 @@ import { useLayoutEffect, useMemo, useRef } from 'react';
 import { liftDiagram } from '../../rendering/ascii-lift.ts';
 import type { LiftCard, LiftedFigure, LiftSegment } from '../../rendering/ascii-lift.ts';
 
-const GLYPH_RUN_RE = /([─│┌┐└┘├┤┬┴┼▼▲►◄→←↑↓]+)/;
+const GLYPH_RUN_RE = /([─│┌┐└┘├┤┬┴┼▼▲►◄▶◀→←↑↓]+)/;
 
 /** Fallback for a figure the lift rejects: the plain text with box glyphs dimmed, arrows accented. */
 function PlainFigure({ text }: { text: string }): React.JSX.Element {
@@ -19,7 +19,7 @@ function PlainFigure({ text }: { text: string }): React.JSX.Element {
       {text.split(GLYPH_RUN_RE).map((part, index) => {
         if (part === '') return null;
         if (index % 2 === 1) {
-          const arrow = /[▼▲►◄→←↑↓]/.test(part);
+          const arrow = /[▼▲►◄▶◀→←↑↓]/.test(part);
           return (
             <span key={index} data-glyph={arrow ? 'arrow' : 'line'}>
               {part}

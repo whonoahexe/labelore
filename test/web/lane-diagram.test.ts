@@ -20,7 +20,7 @@ import type { ViewInput } from '../../src/web/views/manifest.ts';
 
 const fixture = (name: string): Promise<string> => readFile(new URL(`../rendering/fixtures/${name}-diagram.txt`, import.meta.url), 'utf8');
 const STORAGE = await fixture('sp-v1-02-storage-health');
-const FILE_BROWSING = await fixture('sp-v1-03-file-browsing');
+const STORAGE_TILES = await fixture('sp-v1-02-storage-tiles-mockup');
 
 const figure = (text: string): string => renderToStaticMarkup(createElement(LaneDiagramFigure, { text, title: 'System architecture' }));
 const count = (html: string, pattern: RegExp): number => (html.match(pattern) ?? []).length;
@@ -55,8 +55,8 @@ describe('LaneDiagramFigure — storage health (drawn)', () => {
 });
 
 describe('LaneDiagramFigure — a thin graph keeps the author layout (K-fallback)', () => {
-  it('file browsing: the quiet fallback chip over the lifted figure, and no lane nodes', () => {
-    const html = figure(FILE_BROWSING);
+  it('a screen mockup (storage tiles): the quiet fallback chip over the lifted figure, and no lane nodes', () => {
+    const html = figure(STORAGE_TILES);
     expect(html).toContain('<span class="status-chip" data-tone="quiet">Shown as drawn</span>');
     expect(html).toContain("This figure keeps the author&#x27;s layout.");
     expect(html).toContain('lifted-diagram-card');

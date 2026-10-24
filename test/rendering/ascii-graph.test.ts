@@ -20,6 +20,7 @@ const FIXTURE_NAMES = {
   'sp-p03': 'sp-p03-account-admin',
   'lb-v1.1-05': 'lb-v1.1-05-per-type-views',
   'sp-research': 'sp-research-system-overview',
+  'lb-v1-01': 'lb-v1-01-read-layer',
 } as const;
 type FixtureId = keyof typeof FIXTURE_NAMES;
 
@@ -180,8 +181,27 @@ describe('buildDiagramGraph — the named cases (K-bridging)', () => {
 });
 
 describe('buildDiagramGraph — the thin rule (K-fallback)', () => {
-  it('sp-v1-03, sp-p03 and lb-v1.1-05 are thin', () => {
-    for (const id of ['sp-v1-03', 'sp-p03', 'lb-v1.1-05'] as const) expect(graphOf(id).thin, id).toBe(true);
+  it("sp-p03 draws: its ◄── pointer notes are attached to their boxes, so they count as placed text", () => {
+    expect(graphOf('sp-p03').thin).toBe(false);
+  });
+
+  it('a screen mockup (storage tiles, mostly loose text) is thin', async () => {
+    const text = await readFile(new URL('./fixtures/sp-v1-02-storage-tiles-mockup-diagram.txt', import.meta.url), 'utf8');
+    const figure = liftDiagram(text);
+    expect(buildDiagramGraph(figure as NonNullable<typeof figure>).thin).toBe(true);
+  });
+
+  it('a small figure draws when every card is joined: sp-v1-03 and lb-v1.1-05 (two cards, one link)', () => {
+    for (const id of ['sp-v1-03', 'lb-v1.1-05'] as const) expect(graphOf(id).thin, id).toBe(false);
+  });
+
+  it('a lone card, or a small figure with a card left unjoined, stays thin', () => {
+    const lone = liftDiagram('┌─────┐\n│ api │\n└─────┘');
+    expect(buildDiagramGraph(lone as NonNullable<typeof lone>).thin).toBe(true);
+    const loose = liftDiagram('┌─────┐   ┌─────┐\n│ api │   │ cli │\n└──┬──┘   └─────┘\n   ▼\n┌─────┐\n│ db  │\n└─────┘');
+    const graph = buildDiagramGraph(loose as NonNullable<typeof loose>);
+    expect(graph.nodes).toHaveLength(3);
+    expect(graph.thin).toBe(true);
   });
 
   it('the seven drawn corpus diagrams are not thin', () => {
@@ -216,4 +236,99 @@ describe('buildDiagramGraph — cost bounds (T-mp6-01)', () => {
       expect(graph.thin).toBe(true);
     });
   }
+});
+
+// Unboxed start and end labels: a label an arrowhead lands on, from a wire a card starts, is the
+// wire's target; a label at the top or bottom tail of a wire that has no card source and points into a
+// card is its source. lb-v1-01 is labelore's v1.0 Phase 1 RESEARCH system diagram, verbatim.
+describe('buildDiagramGraph — unboxed start and end labels', () => {
+  const graphOfText = (text: string): DiagramGraph => {
+    const figure = liftDiagram(text);
+    if (figure === null) throw new Error('lift rejected');
+    return buildDiagramGraph(figure);
+  };
+  const named = (graph: DiagramGraph, main: string) => graph.nodes.find((n) => n.label.main.startsWith(main));
+
+  it('lb-v1-01: the disk source and both outputs are nodes, so the chain draws (six nodes, not thin)', () => {
+    const graph = graphOf('lb-v1-01');
+    expect(graph.nodes).toHaveLength(6);
+    expect(graph.thin).toBe(false);
+    expect(graph.dangling).toBe(0);
+    const disk = graph.nodes.find((n) => n.label.full === '<project>/.planning/ (disk)');
+    expect(disk?.kind).toBe('external');
+    const [a, b, cli, stdout, vitest] = ['Layer A', 'Layer B', 'CLI', 'stdout JSON', 'Vitest golden-file suite'].map(
+      (main) => named(graph, main),
+    );
+    for (const node of [a, b, cli, stdout, vitest]) expect(node).toBeDefined();
+    const id = (node: (typeof graph.nodes)[number] | undefined): number => node?.id ?? -1;
+    expect(edgeKeys(graph.edges)).toEqual(
+      edgeKeys([
+        { from: id(disk), to: id(a), label: 'fs.readdirSync(recursive) / fs.readFileSync / fs.statSync', directed: true, implied: false },
+        { from: id(a), to: id(b), label: 'RawArtifact { path, content, mtimeMs }', directed: true, implied: false },
+        { from: id(b), to: id(cli), label: '', directed: true, implied: false },
+        { from: id(cli), to: id(stdout), label: '', directed: true, implied: false },
+        { from: id(cli), to: id(vitest), label: '', directed: true, implied: false },
+      ]),
+    );
+    expect(a?.notes.join(' ')).not.toMatch(/planning|readdirSync/);
+    expect(stdout?.details).toEqual(['(manual/smoke use)']);
+    expect(vitest?.details).toEqual([
+      '(imports the SAME repository call — D-05 — diffs against committed golden per fixture)',
+    ]);
+  });
+
+  it('a ◄── pointer note beside a box stays a note on that box', () => {
+    const graph = graphOfText('┌─────┐\n│ api │◄── called by cron\n└─────┘');
+    expect(graph.nodes).toHaveLength(1);
+    expect(graph.nodes[0].notes).toContain('called by cron');
+  });
+
+  it('prose beside a diagram that no wire end reaches stays a note', () => {
+    const graph = graphOfText('┌─────┐      some prose here\n│ api │\n└──┬──┘\n   ▼\n┌─────┐\n│ db  │\n└─────┘');
+    expect(graph.nodes).toHaveLength(2);
+    expect(graph.nodes.flatMap((n) => n.notes)).toContain('some prose here');
+  });
+
+  it("a label right against a box on the arrow's far side is that box's caption: the arrow meets the box", () => {
+    const graph = graphOfText('┌────┐\n│ T3 │\n└────┘\n(compose)\n   ▲\n   │\n┌────┐\n│ T4 │\n└────┘');
+    expect(graph.nodes).toHaveLength(2);
+    expect(graph.nodes.some((n) => n.label.full.includes('compose'))).toBe(false);
+    const id = (main: string) => graph.nodes.find((n) => n.label.main === main)?.id;
+    expect(graph.edges.map((e) => [e.from, e.to])).toEqual([[id('T4'), id('T3')]]);
+  });
+
+  it('labels over and under the wires between two boxes name those wires, even past a drifting edge', () => {
+    const text = [
+      '┌──────────┐         ┌──────────┐',
+      '│ page     │  GET    │ server   │',
+      '│          │ ───────▶│          │',
+      '│          │         │          │',
+      '│          │◀─────── │          │',
+      '│          │  JSON   │          │',
+      '│           │        └──────────┘',
+      '└───────────┘',
+    ].join('\n');
+    const graph = graphOfText(text);
+    const id = (main: string) => graph.nodes.find((n) => n.label.main === main)?.id;
+    expect(graph.nodes.map((n) => n.label.main).sort()).toEqual(['page', 'server']);
+    expect(edgeKeys(graph.edges)).toEqual(
+      edgeKeys([
+        { from: id('page') ?? -1, to: id('server') ?? -1, label: 'GET', directed: true, implied: false },
+        { from: id('server') ?? -1, to: id('page') ?? -1, label: 'JSON', directed: true, implied: false },
+      ]),
+    );
+  });
+
+  it('an arrow landing on the heading over a box meets the box', () => {
+    const graph = graphOfText('┌──────┐\n│ send │\n└──┬───┘\n   ▼\nSERVICE WORKER\n┌──────┐\n│ recv │\n└──────┘');
+    const id = (main: string) => graph.nodes.find((n) => n.label.main === main)?.id;
+    expect(graph.edges.map((e) => [e.from, e.to])).toEqual([[id('send'), id('recv')]]);
+  });
+
+  it('a wire joining two notes, with no card on it, promotes nothing', () => {
+    const graph = graphOfText('┌─────┐   alpha\n│ api │     │\n└─────┘     ▼\n            beta');
+    expect(graph.nodes).toHaveLength(1);
+    expect(graph.nodes[0].notes.join(' ')).toMatch(/alpha/);
+    expect(graph.nodes[0].notes.join(' ')).toMatch(/beta/);
+  });
 });
