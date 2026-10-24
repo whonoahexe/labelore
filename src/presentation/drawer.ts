@@ -4,7 +4,13 @@
 // same discipline as tree.ts. Project-level files (the root documents and research notes) are
 // deliberately left out: the dashboard, roadmap, traceability and research pages cover them.
 // Everything else the old tree showed still lands in exactly one place, so nothing disappears.
-import { comparePhaseNumbers, parseMilestoneFileName, parsePhaseArtifactName } from '../planning-repo/naming.ts';
+import {
+  comparePhaseNumbers,
+  parseMilestoneFileName,
+  parseMilestoneQuickDirName,
+  parsePhaseArtifactName,
+  parseQuickDirName,
+} from '../planning-repo/naming.ts';
 import type { ArtifactDto, MilestoneDto, PhaseDto, ProjectPresentation } from '../server/project-presentation.ts';
 import { artifactWarningTone, type ArtifactWarningTone } from './artifact-warning-tone.ts';
 import { activityDateLabel, headPhaseOf } from './dashboard-head.ts';
@@ -15,6 +21,8 @@ import {
   POST_PLAN_ARTIFACT_ORDER,
   PRE_PLAN_ARTIFACT_ORDER,
   labelOf,
+  quickMonthOf,
+  rankOf,
   sentenceCase,
   versionKeyOf,
 } from './tree-labels.ts';
@@ -58,6 +66,23 @@ export interface DrawerPhasePlace {
   other: DrawerFileRow[];
 }
 
+export interface DrawerQuickTask {
+  key: string;
+  label: string;
+  /** The task's short date (`Oct 24`); null when its directory name carries none. */
+  dateBadge: string | null;
+  files: DrawerFileRow[];
+}
+
+export interface DrawerQuickPlace {
+  kind: 'quick';
+  key: string;
+  /** The milestone these quick tasks were shipped with; null for the current ones. */
+  milestoneVersion: string | null;
+  count: number;
+  months: { label: string; tasks: DrawerQuickTask[] }[];
+}
+
 export interface DrawerMilestonePlace {
   kind: 'milestone';
   key: string;
@@ -67,13 +92,17 @@ export interface DrawerMilestonePlace {
   shippedLabel: string | null;
   documents: DrawerFileRow[];
   phases: DrawerPhasePlace[];
+  quick: DrawerQuickPlace;
 }
 
 export interface DrawerViewModel {
-  current: { version: string | null; phases: DrawerPhasePlace[] };
+  current: { version: string | null; phases: DrawerPhasePlace[]; quick: DrawerQuickPlace };
   shipped: DrawerMilestonePlace[];
   defaultPlaceKey: string | null;
 }
+
+/** The key of the current quick-tasks place. */
+export const CURRENT_QUICK_KEY = 'quick:current';
 
 function isMarkdown(artifact: ArtifactDto): boolean {
   return artifact.path.toLowerCase().endsWith('.md');
@@ -193,19 +222,78 @@ function sortedPhases(milestone: MilestoneDto): PhaseDto[] {
   );
 }
 
-/** The version a file directly under `.planning/milestones/` belongs to, or null. */
-function documentVersionOf(artifact: ArtifactDto): string | null {
+type MilestoneRootClass =
+  | { kind: 'document'; version: string; direct: boolean }
+  | { kind: 'quick'; version: string; taskDir: string };
+
+/** Where a milestone-root file belongs: a document of a shipped milestone (a `vX.Y-*.md` file
+ * directly under `.planning/milestones/`, or anything inside another `vX.Y-<name>/` directory), or
+ * a quick task archived with it (`vX.Y-quick/<task>/...`). Null when no version can be recovered. */
+function classifyMilestoneRoot(artifact: ArtifactDto): MilestoneRootClass | null {
   const segments = artifact.path.split('/');
-  if (artifact.location !== 'milestone-root' || segments.length !== 3 || segments[1] !== 'milestones') {
-    return null;
+  if (artifact.location !== 'milestone-root' || segments[1] !== 'milestones') return null;
+  if (segments.length === 3) {
+    const parsed = parseMilestoneFileName(segments[2]);
+    return parsed.matched ? { kind: 'document', version: parsed.version, direct: true } : null;
   }
-  const parsed = parseMilestoneFileName(segments[2]);
-  return parsed.matched ? parsed.version : null;
+  if (segments.length < 4) return null;
+  const quick = parseMilestoneQuickDirName(segments[2]);
+  if (quick.matched) {
+    // A file sitting directly in vX.Y-quick/ is a one-file task of its own.
+    const taskDir = segments.length === 4 ? artifact.path : segments.slice(0, 4).join('/');
+    return { kind: 'quick', version: quick.version, taskDir };
+  }
+  const named = parseMilestoneFileName(`${segments[2]}.md`);
+  return named.matched ? { kind: 'document', version: named.version, direct: false } : null;
 }
 
 function documentRankOf(artifact: ArtifactDto): number {
+  if (artifact.path.split('/').length !== 3) return 4;
   const parsed = parseMilestoneFileName(lastSegment(artifact.path));
   return parsed.matched ? (MILESTONE_DOC_ORDER[parsed.document] ?? 3) : 3;
+}
+
+/** Groups quick-task files by their task and lays the tasks out newest first, one group per month. */
+function quickPlaceOf(
+  key: string,
+  milestoneVersion: string | null,
+  filesByTask: ReadonlyMap<string, ArtifactDto[]>,
+): DrawerQuickPlace {
+  interface Task {
+    task: DrawerQuickTask;
+    month: string;
+    rank: number;
+  }
+  const tasks: Task[] = [];
+  for (const [taskDir, artifacts] of filesByTask) {
+    const isFile = taskDir.toLowerCase().endsWith('.md');
+    const segment = lastSegment(taskDir);
+    const parsedDir = isFile ? ({ matched: false } as const) : parseQuickDirName(segment);
+    const { label, badge } = labelOf({ location: 'quick', nodeType: isFile ? 'file' : 'directory', path: taskDir }, null);
+    const files = artifacts
+      .map((artifact) => ({
+        row: fileRowOf(artifact),
+        rank: rankOf({ location: 'quick', nodeType: 'file', path: artifact.path }),
+      }))
+      .sort((left, right) => left.rank - right.rank || byPath(left.row, right.row))
+      .map((placed) => placed.row);
+    tasks.push({
+      task: { key: taskDir, label, dateBadge: badge, files },
+      month: (parsedDir.matched ? quickMonthOf(parsedDir.date) : null) ?? 'Undated',
+      rank: rankOf({ location: 'quick', nodeType: isFile ? 'file' : 'directory', path: taskDir }),
+    });
+  }
+  tasks.sort(
+    (left, right) =>
+      left.rank - right.rank || lastSegment(left.task.key).localeCompare(lastSegment(right.task.key)),
+  );
+  const months: DrawerQuickPlace['months'] = [];
+  for (const { task, month } of tasks) {
+    const last = months[months.length - 1];
+    if (last && last.label === month) last.tasks.push(task);
+    else months.push({ label: month, tasks: [task] });
+  }
+  return { kind: 'quick', key, milestoneVersion, count: tasks.length, months };
 }
 
 export function buildDrawerViewModel(presentation: ProjectPresentation): DrawerViewModel {
@@ -231,20 +319,38 @@ export function buildDrawerViewModel(presentation: ProjectPresentation): DrawerV
     liveMilestones.find((milestone) => milestone.version !== null)?.version ??
     null;
 
-  // Shipped: every archived milestone, plus any version only known from a milestone document.
+  // Quick tasks: the current ones live in .planning/quick/, a shipped milestone's in
+  // .planning/milestones/vX.Y-quick/. A task is the directory right under either root, or a
+  // markdown file sitting directly there.
+  const currentQuickFiles = new Map<string, ArtifactDto[]>();
+  const quickFilesByVersion = new Map<string, Map<string, ArtifactDto[]>>();
   const documentsByVersion = new Map<string, ArtifactDto[]>();
+  const versionNames = new Map<string, string>();
   for (const artifact of markdown) {
-    const version = documentVersionOf(artifact);
-    if (version === null) continue;
-    const list = documentsByVersion.get(version.toLowerCase()) ?? [];
-    list.push(artifact);
-    documentsByVersion.set(version.toLowerCase(), list);
+    if (artifact.location === 'quick') {
+      const segments = artifact.path.split('/');
+      if (segments.length < 3) continue;
+      const taskDir = segments.slice(0, 3).join('/');
+      currentQuickFiles.set(taskDir, [...(currentQuickFiles.get(taskDir) ?? []), artifact]);
+      continue;
+    }
+    const placed = classifyMilestoneRoot(artifact);
+    if (placed === null) continue;
+    const lowered = placed.version.toLowerCase();
+    if (!versionNames.has(lowered)) versionNames.set(lowered, placed.version);
+    if (placed.kind === 'document') {
+      documentsByVersion.set(lowered, [...(documentsByVersion.get(lowered) ?? []), artifact]);
+    } else {
+      const byTask = quickFilesByVersion.get(lowered) ?? new Map<string, ArtifactDto[]>();
+      byTask.set(placed.taskDir, [...(byTask.get(placed.taskDir) ?? []), artifact]);
+      quickFilesByVersion.set(lowered, byTask);
+    }
   }
 
+  // Shipped: every archived milestone, plus any version only known from its documents or quick tasks.
   const recordedNames = new Map(
     milestoneEntries(presentation).map((entry) => [entry.version.toLowerCase(), entry] as const),
   );
-
   const known = new Set(
     presentation.milestones
       .map((milestone) => milestone.version?.toLowerCase())
@@ -263,46 +369,51 @@ export function buildDrawerViewModel(presentation: ProjectPresentation): DrawerV
     seen.add(lowered);
     sources.push({ version: milestone.version, milestone });
   }
-  for (const [lowered, artifacts] of documentsByVersion) {
+  for (const [lowered, version] of versionNames) {
     if (known.has(lowered) || seen.has(lowered)) continue;
     seen.add(lowered);
-    const version = documentVersionOf(artifacts[0]);
-    if (version !== null) sources.push({ version, milestone: null });
+    sources.push({ version, milestone: null });
   }
   sources.sort((left, right) => versionKeyOf(right.version) - versionKeyOf(left.version));
 
   const shipped: DrawerMilestonePlace[] = sources.map(({ version, milestone }) => {
     const lowered = version.toLowerCase();
     const entry = recordedNames.get(lowered);
+    const key = milestone?.key ?? milestoneKeyOf(version);
     const documents = [...(documentsByVersion.get(lowered) ?? [])]
       .sort((left, right) => documentRankOf(left) - documentRankOf(right) || byPath(left, right))
       .map((artifact) => {
         const parsed = parseMilestoneFileName(lastSegment(artifact.path));
         const row = fileRowOf(artifact);
-        return parsed.matched ? { ...row, label: sentenceCase(parsed.document) } : row;
+        return parsed.matched && artifact.path.split('/').length === 3
+          ? { ...row, label: sentenceCase(parsed.document) }
+          : row;
       });
     return {
       kind: 'milestone',
-      key: milestone?.key ?? milestoneKeyOf(version),
+      key,
       url: buildMilestoneUrl(version),
       version,
       name: entry?.name || milestone?.name || version,
       shippedLabel: activityDateLabel(entry?.shipped ?? null, presentation.readAt),
       documents,
       phases: milestone ? sortedPhases(milestone).map((phase) => phasePlaceOf(phase, artifactsByPhase)) : [],
+      quick: quickPlaceOf(`quick:${key}`, version, quickFilesByVersion.get(lowered) ?? new Map()),
     };
   });
 
+  const currentQuick = quickPlaceOf(CURRENT_QUICK_KEY, null, currentQuickFiles);
   return {
-    current: { version: currentVersion, phases: currentPhases },
+    current: { version: currentVersion, phases: currentPhases, quick: currentQuick },
     shipped,
-    defaultPlaceKey: defaultPlaceKeyOf(presentation, currentPhases, shipped),
+    defaultPlaceKey: defaultPlaceKeyOf(presentation, currentPhases, currentQuick, shipped),
   };
 }
 
 function defaultPlaceKeyOf(
   presentation: ProjectPresentation,
   currentPhases: DrawerPhasePlace[],
+  currentQuick: DrawerQuickPlace,
   shipped: DrawerMilestonePlace[],
 ): string | null {
   const head = headPhaseOf(presentation);
@@ -311,5 +422,6 @@ function defaultPlaceKeyOf(
   if (unfinished) return unfinished.key;
   const last = currentPhases[currentPhases.length - 1];
   if (last) return last.key;
-  return shipped[0]?.key ?? null;
+  if (currentQuick.count > 0) return currentQuick.key;
+  return shipped[0]?.key ?? currentQuick.key;
 }

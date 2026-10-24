@@ -5,10 +5,11 @@ import type {
   DrawerFileRow,
   DrawerMilestonePlace,
   DrawerPhasePlace,
+  DrawerQuickPlace,
   DrawerViewModel,
 } from './drawer.ts';
 
-export type DrawerPlace = DrawerPhasePlace | DrawerMilestonePlace;
+export type DrawerPlace = DrawerPhasePlace | DrawerMilestonePlace | DrawerQuickPlace;
 
 function holdsFile(rows: readonly DrawerFileRow[], pathname: string): boolean {
   return rows.some((row) => row.url === pathname);
@@ -28,15 +29,30 @@ function milestoneHolds(milestone: DrawerMilestonePlace, pathname: string): bool
   return milestone.url === pathname || holdsFile(milestone.documents, pathname);
 }
 
+function quickHolds(place: DrawerQuickPlace, pathname: string): boolean {
+  return place.months.some((month) =>
+    month.tasks.some((task) => holdsFile(task.files, pathname)),
+  );
+}
+
 /** Every place in the model, in the order the drawer lists them. */
 function allPlaces(model: DrawerViewModel): DrawerPlace[] {
-  return [...model.current.phases, ...model.shipped.flatMap((milestone) => [milestone, ...milestone.phases])];
+  return [
+    ...model.current.phases,
+    model.current.quick,
+    ...model.shipped.flatMap((milestone) => [milestone, ...milestone.phases, milestone.quick]),
+  ];
 }
 
 /** The key of the first place that holds `pathname`, or null when no place does. */
 export function placeKeyForPath(model: DrawerViewModel, pathname: string): string | null {
   for (const place of allPlaces(model)) {
-    const holds = place.kind === 'phase' ? phaseHolds(place, pathname) : milestoneHolds(place, pathname);
+    const holds =
+      place.kind === 'phase'
+        ? phaseHolds(place, pathname)
+        : place.kind === 'milestone'
+          ? milestoneHolds(place, pathname)
+          : quickHolds(place, pathname);
     if (holds) return place.key;
   }
   return null;
@@ -51,8 +67,25 @@ export function findPlace(model: DrawerViewModel, placeKey: string | null): Draw
 export function shippedOwnerOf(model: DrawerViewModel, placeKey: string | null): string | null {
   if (placeKey === null) return null;
   for (const milestone of model.shipped) {
-    if (milestone.key === placeKey || milestone.phases.some((phase) => phase.key === placeKey)) {
+    if (
+      milestone.key === placeKey ||
+      milestone.quick.key === placeKey ||
+      milestone.phases.some((phase) => phase.key === placeKey)
+    ) {
       return milestone.key;
+    }
+  }
+  return null;
+}
+
+/** The key of the quick task whose chip row holds `pathname`, or null. */
+export function quickTaskKeyForPath(model: DrawerViewModel, pathname: string): string | null {
+  for (const place of allPlaces(model)) {
+    if (place.kind !== 'quick') continue;
+    for (const month of place.months) {
+      for (const task of month.tasks) {
+        if (holdsFile(task.files, pathname)) return task.key;
+      }
     }
   }
   return null;

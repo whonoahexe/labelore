@@ -6,9 +6,15 @@ import type {
   DrawerMilestonePlace,
   DrawerPhasePlace,
   DrawerPlanRow,
+  DrawerQuickPlace,
   DrawerViewModel,
 } from '../../presentation/drawer.ts';
-import { findPlace, placeKeyForPath, shippedOwnerOf } from '../../presentation/drawer-route.ts';
+import {
+  findPlace,
+  placeKeyForPath,
+  quickTaskKeyForPath,
+  shippedOwnerOf,
+} from '../../presentation/drawer-route.ts';
 import { stripEmoji } from '../pages/strip-emoji.ts';
 
 async function fetchDrawer(): Promise<DrawerViewModel> {
@@ -182,6 +188,73 @@ function MilestoneFiles({
           <span className="places-label">{phase.name}</span>
         </button>
       ))}
+      <Stage label="Quick tasks" count={milestone.quick.count > 0 ? String(milestone.quick.count) : 'none'} />
+      {milestone.quick.count > 0 ? (
+        <button type="button" className="places-row" onClick={() => onSelect(milestone.quick.key)}>
+          <span className="places-label">All {milestone.quick.count} quick tasks</span>
+        </button>
+      ) : null}
+    </>
+  );
+}
+
+function QuickFiles({
+  place,
+  pathname,
+  openTaskKey,
+  onNavigate,
+}: {
+  place: DrawerQuickPlace;
+  pathname: string;
+  openTaskKey: string | null;
+  onNavigate: () => void;
+}): React.JSX.Element {
+  return (
+    <>
+      <div className="places-files-head">
+        <span className="places-where">{place.milestoneVersion ?? 'Current'}</span>
+        <h3 className="places-files-title">Quick tasks · {place.count}</h3>
+      </div>
+      {place.count === 0 ? <p className="empty-note">Nothing here yet.</p> : null}
+      {place.months.map((month) => (
+        <div key={month.label} className="places-month">
+          <Stage label={month.label} count={String(month.tasks.length)} />
+          {month.tasks.map((task) => (
+            // Opened declaratively when the task holds the current page, so the first paint is
+            // already right; nothing re-opens it after the user's own close.
+            <details key={task.key} className="places-quick-task" open={task.key === openTaskKey}>
+              <summary className="places-file-row">
+                {task.dateBadge !== null ? (
+                  <span className="places-badge">{task.dateBadge}</span>
+                ) : (
+                  <span className="places-row-spacer" aria-hidden="true" />
+                )}
+                <span className="places-label" title={task.key}>
+                  {task.label}
+                </span>
+              </summary>
+              <div className="places-chips">
+                {task.files.map((file) => {
+                  const active = file.url === pathname;
+                  return (
+                    <Link
+                      key={file.key}
+                      to={file.url}
+                      className="places-chip"
+                      title={file.path}
+                      data-active={active ? 'true' : undefined}
+                      aria-current={active ? 'page' : undefined}
+                      onClick={onNavigate}
+                    >
+                      {file.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </details>
+          ))}
+        </div>
+      ))}
     </>
   );
 }
@@ -252,7 +325,6 @@ export function PlanningPlaces({
               <span className="places-group-version">{data.current.version}</span>
             ) : null}
           </h2>
-          {data.current.phases.length === 0 ? <p className="empty-note">Nothing here yet.</p> : null}
           {data.current.phases.map((phase) => (
             <button
               key={phase.key}
@@ -271,6 +343,16 @@ export function PlanningPlaces({
               ) : null}
             </button>
           ))}
+          <button
+            type="button"
+            className="places-row"
+            data-selected={selectedKey === data.current.quick.key ? 'true' : undefined}
+            aria-current={selectedKey === data.current.quick.key ? 'true' : undefined}
+            onClick={() => setSelectedKey(data.current.quick.key)}
+          >
+            <span className="places-label">Quick tasks</span>
+            <span className="places-badge">{data.current.quick.count}</span>
+          </button>
         </section>
         <section className="places-group">
           <h2 className="places-group-label">Shipped</h2>
@@ -290,8 +372,9 @@ export function PlanningPlaces({
                   <span className="places-badge">{milestone.shippedLabel}</span>
                 ) : null}
               </button>
-              {shippedOwner === milestone.key
-                ? milestone.phases.map((phase) => (
+              {shippedOwner === milestone.key ? (
+                <>
+                  {milestone.phases.map((phase) => (
                     <button
                       key={phase.key}
                       type="button"
@@ -304,8 +387,20 @@ export function PlanningPlaces({
                       <span className="places-number">{phase.number}</span>
                       <span className="places-label">{phase.name}</span>
                     </button>
-                  ))
-                : null}
+                  ))}
+                  <button
+                    type="button"
+                    className="places-row"
+                    data-depth="1"
+                    data-selected={selectedKey === milestone.quick.key ? 'true' : undefined}
+                    aria-current={selectedKey === milestone.quick.key ? 'true' : undefined}
+                    onClick={() => setSelectedKey(milestone.quick.key)}
+                  >
+                    <span className="places-label">Quick tasks</span>
+                    <span className="places-badge">{milestone.quick.count}</span>
+                  </button>
+                </>
+              ) : null}
             </div>
           ))}
         </section>
@@ -320,6 +415,14 @@ export function PlanningPlaces({
             pathname={pathname}
             onNavigate={onNavigate}
             onSelect={setSelectedKey}
+          />
+        ) : null}
+        {place?.kind === 'quick' ? (
+          <QuickFiles
+            place={place}
+            pathname={pathname}
+            openTaskKey={quickTaskKeyForPath(data, pathname)}
+            onNavigate={onNavigate}
           />
         ) : null}
       </div>

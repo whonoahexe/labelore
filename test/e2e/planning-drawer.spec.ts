@@ -2,7 +2,7 @@
 // label is resolved from `/api/drawer`, never hardcoded, so the spec follows whatever this repo's
 // own `.planning/` holds.
 import { expect, test, type Page } from '@playwright/test';
-import type { DrawerPhasePlace, DrawerViewModel } from '../../src/presentation/drawer.ts';
+import type { DrawerPhasePlace, DrawerQuickTask, DrawerViewModel } from '../../src/presentation/drawer.ts';
 
 async function fetchDrawer(baseURL: string): Promise<DrawerViewModel> {
   const response = await fetch(`${baseURL}/api/drawer`);
@@ -63,5 +63,77 @@ test.describe('planning files drawer', () => {
 
     const box = await page.locator('.sidebar-drawer').boundingBox();
     expect(box!.width).toBeGreaterThanOrEqual(560);
+  });
+
+  test('lists current quick tasks by month, each opening to one row of file chips', async ({ page, baseURL }) => {
+    const model = await fetchDrawer(baseURL!);
+    const quick = model.current.quick;
+    test.skip(quick.count === 0, 'this corpus has no current quick tasks');
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto('/');
+    await openDrawer(page);
+    await page
+      .locator('.places-group')
+      .first()
+      .locator('.places-row', { hasText: 'Quick tasks' })
+      .click();
+
+    await expect(page.locator('.places-files-title')).toHaveText(`Quick tasks · ${quick.count}`);
+    await expect(page.locator('.places-files .places-stage')).toHaveCount(quick.months.length);
+    await expect(page.locator('.places-quick-task')).toHaveCount(quick.count);
+
+    const task = quick.months.flatMap((month) => month.tasks).find((candidate) =>
+      candidate.files.some((file) => file.label === 'Plan'),
+    );
+    test.skip(task === undefined, 'no current quick task has a plan file');
+    const details = page.locator('.places-quick-task').filter({ has: page.locator(`[title="${task!.key}"]`) });
+    await details.locator('summary').click();
+    await expect(details.locator('.places-chips .places-chip')).toHaveText(task!.files.map((file) => file.label));
+    await expect(details.locator('.places-chip', { hasText: 'Plan' })).toBeVisible();
+  });
+
+  test("a quick task's plan page opens the drawer on that task with its Plan chip active", async ({
+    page,
+    baseURL,
+  }) => {
+    const model = await fetchDrawer(baseURL!);
+    const tasks: DrawerQuickTask[] = model.current.quick.months.flatMap((month) => month.tasks);
+    const task = tasks.find((candidate) => candidate.files.some((file) => file.label === 'Plan'));
+    test.skip(task === undefined, 'no current quick task has a plan file');
+    const planFile = task!.files.find((file) => file.label === 'Plan')!;
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(planFile.url);
+    await openDrawer(page);
+
+    const selected = page.locator('.places-row[data-selected="true"]');
+    await expect(selected).toHaveCount(1);
+    await expect(selected.locator('.places-label')).toHaveText('Quick tasks');
+    const details = page.locator('.places-quick-task[open]');
+    await expect(details).toHaveCount(1);
+    await expect(details.locator('.places-label')).toHaveText(task!.label);
+    const chip = details.locator('.places-chip[data-active="true"]');
+    await expect(chip).toHaveCount(1);
+    await expect(chip).toHaveText('Plan');
+    await expect(chip).toHaveAttribute('aria-current', 'page');
+  });
+
+  test('a shipped milestone links to all of its quick tasks', async ({ page, baseURL }) => {
+    const model = await fetchDrawer(baseURL!);
+    const milestone = model.shipped.find((candidate) => candidate.quick.count > 0);
+    test.skip(milestone === undefined, 'no shipped milestone has quick tasks');
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto('/');
+    await openDrawer(page);
+    await page.locator('.places-list .places-row', { hasText: milestone!.version }).first().click();
+    await page.locator('.places-files .places-row', { hasText: `All ${milestone!.quick.count} quick tasks` }).click();
+
+    await expect(page.locator('.places-where')).toHaveText(milestone!.version);
+    await expect(page.locator('.places-files-title')).toHaveText(`Quick tasks · ${milestone!.quick.count}`);
+    await expect(page.locator('.places-quick-task')).toHaveCount(milestone!.quick.count);
+    // The milestone stays unfolded while its quick tasks are showing.
+    await expect(page.locator('.places-row[data-selected="true"]')).toHaveAttribute('data-depth', '1');
   });
 });
