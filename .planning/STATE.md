@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 status: Awaiting next milestone
 stopped_at: Phase 05 complete — all phases complete
-last_updated: "2026-10-24T12:21:58.841Z"
+last_updated: "2026-10-24T18:03:18.629Z"
 last_activity: 2026-10-24
 last_activity_desc: Completed quick task 261016-2j6 (compact discussion-log tables)
-state_head: fd3d326249249c09a2cf91896de91fef31b16bf3
+state_head: 605a68423eb0488f8a5f4dc084d50481f0c0ad7f
 milestone_name: Legible Documents
 current_phase: 05
 progress:
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-09-21)
 Phase: Milestone v1.1 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-10-24 - Completed quick task 261024-o3h: box diagrams and directory trees draw as lifted figures and clean trees on every document type
+Last activity: 2026-10-24 - Completed quick task 261024-vty: the planning-files drawer is two columns — places on the left, the chosen place's files on the right
 
 ## Performance Metrics
 
@@ -226,6 +226,7 @@ None.
 | 111 | Fixed the last failing browser tests: prose that names a <details> tag no longer swallows the rest of a document; plan page Planned spacing; summary chip line height; specs updated for the What to check tab | 2026-10-24 | 28fea2e | — |
 | 261024-k8u | Research page per sketches 031–035: five spines, Summary, Stack, Features, Architecture and Pitfalls panels | 2026-10-24 | 0cce2ea | [261024-k8u-build-the-project-research-page-per-sket](./quick/261024-k8u-build-the-project-research-page-per-sket/) |
 | 261024-o3h | Box diagrams and directory trees draw as lifted figures and clean trees on every document type, through one shared detector and renderer | 2026-10-24 | fd3d326 | [261024-o3h-make-the-lifted-diagram-and-clean-tree-r](./quick/261024-o3h-make-the-lifted-diagram-and-clean-tree-r/) |
+| 261024-vty | Build sketch 038 winner C: two-column planning-files drawer (places left, chosen place's files right) | 2026-10-24 | 605a684 | [261024-vty-build-sketch-038-winner-c-two-column-pla](./quick/261024-vty-build-sketch-038-winner-c-two-column-pla/) |
 
 ## Deferred Items
 
