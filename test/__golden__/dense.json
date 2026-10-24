@@ -3895,7 +3895,8 @@
                               },
                               {
                                 "kind": "code",
-                                "text": "import { resolveIdentity } from \"./slice\";\nconst identity = resolveIdentity(\"user-1\");"
+                                "text": "import { resolveIdentity } from \"./slice\";\nconst identity = resolveIdentity(\"user-1\");",
+                                "lang": "ts"
                               },
                               {
                                 "kind": "paragraph",
@@ -3903,7 +3904,8 @@
                               },
                               {
                                 "kind": "code",
-                                "text": "hbrpoig8f1cbfno6b9m80o2rak1vrjnvgfygwwqc38hyf9sxmecosfogyr3xkxwnrek8pk3yr9oudocuzrenun5z3jqip98q1zxoi65fdhjk1eyy37q9ah8rvhs1k3aq6l6gt6mjxk87au5bhxtpdpff5e8ii49kq71n8mtzx272hpoevb9ooaedoecve6pr5n8i4p40mgg1w103dgdzvgpmm82i"
+                                "text": "hbrpoig8f1cbfno6b9m80o2rak1vrjnvgfygwwqc38hyf9sxmecosfogyr3xkxwnrek8pk3yr9oudocuzrenun5z3jqip98q1zxoi65fdhjk1eyy37q9ah8rvhs1k3aq6l6gt6mjxk87au5bhxtpdpff5e8ii49kq71n8mtzx272hpoevb9ooaedoecve6pr5n8i4p40mgg1w103dgdzvgpmm82i",
+                                "lang": "text"
                               },
                               {
                                 "kind": "paragraph",
@@ -3911,7 +3913,8 @@
                               },
                               {
                                 "kind": "code",
-                                "text": "flowchart TD\n    A[resolveIdentity] --> B[in-memory map lookup]\n    B --> C{found?}\n    C -->|yes| D[return Identity]\n    C -->|no| E[return null]"
+                                "text": "flowchart TD\n    A[resolveIdentity] --> B[in-memory map lookup]\n    B --> C{found?}\n    C -->|yes| D[return Identity]\n    C -->|no| E[return null]",
+                                "lang": "mermaid"
                               },
                               {
                                 "kind": "paragraph",
@@ -3919,7 +3922,8 @@
                               },
                               {
                                 "kind": "code",
-                                "text": "flowchart TD\n    A[unterminated"
+                                "text": "flowchart TD\n    A[unterminated",
+                                "lang": "mermaid"
                               }
                             ],
                             "chars": 1095,
@@ -5197,22 +5201,26 @@
                             {
                               "label": "What goes wrong",
                               "text": "A parser assumes shapes only `~/studio-portal` happens to have",
-                              "code": []
+                              "code": [],
+                              "codeLangs": []
                             },
                             {
                               "label": "Why it happens",
                               "text": "It's the only real project on the machine",
-                              "code": []
+                              "code": [],
+                              "codeLangs": []
                             },
                             {
                               "label": "How to avoid",
                               "text": "Derive shapes from `gsd-core` templates instead (D-01)",
-                              "code": []
+                              "code": [],
+                              "codeLangs": []
                             },
                             {
                               "label": "Warning signs",
                               "text": "Code comments like \"studio-portal always has...\"",
-                              "code": []
+                              "code": [],
+                              "codeLangs": []
                             }
                           ]
                         }
@@ -6220,7 +6228,8 @@
                               },
                               {
                                 "kind": "code",
-                                "text": "import { fetchIdentity } from \"./client\";\nconst identity = fetchIdentity(\"user-1\");"
+                                "text": "import { fetchIdentity } from \"./client\";\nconst identity = fetchIdentity(\"user-1\");",
+                                "lang": "ts"
                               }
                             ],
                             "chars": 481,
@@ -9121,7 +9130,8 @@
                           },
                           {
                             "kind": "code",
-                            "text": "import { resolveIdentity } from \"./slice\";\nconst identity = resolveIdentity(\"user-1\");"
+                            "text": "import { resolveIdentity } from \"./slice\";\nconst identity = resolveIdentity(\"user-1\");",
+                            "lang": "ts"
                           },
                           {
                             "kind": "paragraph",
@@ -9129,7 +9139,8 @@
                           },
                           {
                             "kind": "code",
-                            "text": "hbrpoig8f1cbfno6b9m80o2rak1vrjnvgfygwwqc38hyf9sxmecosfogyr3xkxwnrek8pk3yr9oudocuzrenun5z3jqip98q1zxoi65fdhjk1eyy37q9ah8rvhs1k3aq6l6gt6mjxk87au5bhxtpdpff5e8ii49kq71n8mtzx272hpoevb9ooaedoecve6pr5n8i4p40mgg1w103dgdzvgpmm82i"
+                            "text": "hbrpoig8f1cbfno6b9m80o2rak1vrjnvgfygwwqc38hyf9sxmecosfogyr3xkxwnrek8pk3yr9oudocuzrenun5z3jqip98q1zxoi65fdhjk1eyy37q9ah8rvhs1k3aq6l6gt6mjxk87au5bhxtpdpff5e8ii49kq71n8mtzx272hpoevb9ooaedoecve6pr5n8i4p40mgg1w103dgdzvgpmm82i",
+                            "lang": "text"
                           },
                           {
                             "kind": "paragraph",
@@ -9137,7 +9148,8 @@
                           },
                           {
                             "kind": "code",
-                            "text": "flowchart TD\n    A[resolveIdentity] --> B[in-memory map lookup]\n    B --> C{found?}\n    C -->|yes| D[return Identity]\n    C -->|no| E[return null]"
+                            "text": "flowchart TD\n    A[resolveIdentity] --> B[in-memory map lookup]\n    B --> C{found?}\n    C -->|yes| D[return Identity]\n    C -->|no| E[return null]",
+                            "lang": "mermaid"
                           },
                           {
                             "kind": "paragraph",
@@ -9145,7 +9157,8 @@
                           },
                           {
                             "kind": "code",
-                            "text": "flowchart TD\n    A[unterminated"
+                            "text": "flowchart TD\n    A[unterminated",
+                            "lang": "mermaid"
                           }
                         ],
                         "chars": 1095,
@@ -10423,22 +10436,26 @@
                         {
                           "label": "What goes wrong",
                           "text": "A parser assumes shapes only `~/studio-portal` happens to have",
-                          "code": []
+                          "code": [],
+                          "codeLangs": []
                         },
                         {
                           "label": "Why it happens",
                           "text": "It's the only real project on the machine",
-                          "code": []
+                          "code": [],
+                          "codeLangs": []
                         },
                         {
                           "label": "How to avoid",
                           "text": "Derive shapes from `gsd-core` templates instead (D-01)",
-                          "code": []
+                          "code": [],
+                          "codeLangs": []
                         },
                         {
                           "label": "Warning signs",
                           "text": "Code comments like \"studio-portal always has...\"",
-                          "code": []
+                          "code": [],
+                          "codeLangs": []
                         }
                       ]
                     }
@@ -11446,7 +11463,8 @@
                           },
                           {
                             "kind": "code",
-                            "text": "import { fetchIdentity } from \"./client\";\nconst identity = fetchIdentity(\"user-1\");"
+                            "text": "import { fetchIdentity } from \"./client\";\nconst identity = fetchIdentity(\"user-1\");",
+                            "lang": "ts"
                           }
                         ],
                         "chars": 481,
@@ -12942,7 +12960,8 @@
                                 },
                                 {
                                   "kind": "code",
-                                  "text": "import { resolveIdentity } from \"./slice\";\nconst identity = resolveIdentity(\"user-1\");"
+                                  "text": "import { resolveIdentity } from \"./slice\";\nconst identity = resolveIdentity(\"user-1\");",
+                                  "lang": "ts"
                                 },
                                 {
                                   "kind": "paragraph",
@@ -12950,7 +12969,8 @@
                                 },
                                 {
                                   "kind": "code",
-                                  "text": "hbrpoig8f1cbfno6b9m80o2rak1vrjnvgfygwwqc38hyf9sxmecosfogyr3xkxwnrek8pk3yr9oudocuzrenun5z3jqip98q1zxoi65fdhjk1eyy37q9ah8rvhs1k3aq6l6gt6mjxk87au5bhxtpdpff5e8ii49kq71n8mtzx272hpoevb9ooaedoecve6pr5n8i4p40mgg1w103dgdzvgpmm82i"
+                                  "text": "hbrpoig8f1cbfno6b9m80o2rak1vrjnvgfygwwqc38hyf9sxmecosfogyr3xkxwnrek8pk3yr9oudocuzrenun5z3jqip98q1zxoi65fdhjk1eyy37q9ah8rvhs1k3aq6l6gt6mjxk87au5bhxtpdpff5e8ii49kq71n8mtzx272hpoevb9ooaedoecve6pr5n8i4p40mgg1w103dgdzvgpmm82i",
+                                  "lang": "text"
                                 },
                                 {
                                   "kind": "paragraph",
@@ -12958,7 +12978,8 @@
                                 },
                                 {
                                   "kind": "code",
-                                  "text": "flowchart TD\n    A[resolveIdentity] --> B[in-memory map lookup]\n    B --> C{found?}\n    C -->|yes| D[return Identity]\n    C -->|no| E[return null]"
+                                  "text": "flowchart TD\n    A[resolveIdentity] --> B[in-memory map lookup]\n    B --> C{found?}\n    C -->|yes| D[return Identity]\n    C -->|no| E[return null]",
+                                  "lang": "mermaid"
                                 },
                                 {
                                   "kind": "paragraph",
@@ -12966,7 +12987,8 @@
                                 },
                                 {
                                   "kind": "code",
-                                  "text": "flowchart TD\n    A[unterminated"
+                                  "text": "flowchart TD\n    A[unterminated",
+                                  "lang": "mermaid"
                                 }
                               ],
                               "chars": 1095,
@@ -14244,22 +14266,26 @@
                               {
                                 "label": "What goes wrong",
                                 "text": "A parser assumes shapes only `~/studio-portal` happens to have",
-                                "code": []
+                                "code": [],
+                                "codeLangs": []
                               },
                               {
                                 "label": "Why it happens",
                                 "text": "It's the only real project on the machine",
-                                "code": []
+                                "code": [],
+                                "codeLangs": []
                               },
                               {
                                 "label": "How to avoid",
                                 "text": "Derive shapes from `gsd-core` templates instead (D-01)",
-                                "code": []
+                                "code": [],
+                                "codeLangs": []
                               },
                               {
                                 "label": "Warning signs",
                                 "text": "Code comments like \"studio-portal always has...\"",
-                                "code": []
+                                "code": [],
+                                "codeLangs": []
                               }
                             ]
                           }
@@ -15954,7 +15980,8 @@
                                 },
                                 {
                                   "kind": "code",
-                                  "text": "import { resolveIdentity } from \"./slice\";\nconst identity = resolveIdentity(\"user-1\");"
+                                  "text": "import { resolveIdentity } from \"./slice\";\nconst identity = resolveIdentity(\"user-1\");",
+                                  "lang": "ts"
                                 },
                                 {
                                   "kind": "paragraph",
@@ -15962,7 +15989,8 @@
                                 },
                                 {
                                   "kind": "code",
-                                  "text": "hbrpoig8f1cbfno6b9m80o2rak1vrjnvgfygwwqc38hyf9sxmecosfogyr3xkxwnrek8pk3yr9oudocuzrenun5z3jqip98q1zxoi65fdhjk1eyy37q9ah8rvhs1k3aq6l6gt6mjxk87au5bhxtpdpff5e8ii49kq71n8mtzx272hpoevb9ooaedoecve6pr5n8i4p40mgg1w103dgdzvgpmm82i"
+                                  "text": "hbrpoig8f1cbfno6b9m80o2rak1vrjnvgfygwwqc38hyf9sxmecosfogyr3xkxwnrek8pk3yr9oudocuzrenun5z3jqip98q1zxoi65fdhjk1eyy37q9ah8rvhs1k3aq6l6gt6mjxk87au5bhxtpdpff5e8ii49kq71n8mtzx272hpoevb9ooaedoecve6pr5n8i4p40mgg1w103dgdzvgpmm82i",
+                                  "lang": "text"
                                 },
                                 {
                                   "kind": "paragraph",
@@ -15970,7 +15998,8 @@
                                 },
                                 {
                                   "kind": "code",
-                                  "text": "flowchart TD\n    A[resolveIdentity] --> B[in-memory map lookup]\n    B --> C{found?}\n    C -->|yes| D[return Identity]\n    C -->|no| E[return null]"
+                                  "text": "flowchart TD\n    A[resolveIdentity] --> B[in-memory map lookup]\n    B --> C{found?}\n    C -->|yes| D[return Identity]\n    C -->|no| E[return null]",
+                                  "lang": "mermaid"
                                 },
                                 {
                                   "kind": "paragraph",
@@ -15978,7 +16007,8 @@
                                 },
                                 {
                                   "kind": "code",
-                                  "text": "flowchart TD\n    A[unterminated"
+                                  "text": "flowchart TD\n    A[unterminated",
+                                  "lang": "mermaid"
                                 }
                               ],
                               "chars": 1095,
@@ -17256,22 +17286,26 @@
                               {
                                 "label": "What goes wrong",
                                 "text": "A parser assumes shapes only `~/studio-portal` happens to have",
-                                "code": []
+                                "code": [],
+                                "codeLangs": []
                               },
                               {
                                 "label": "Why it happens",
                                 "text": "It's the only real project on the machine",
-                                "code": []
+                                "code": [],
+                                "codeLangs": []
                               },
                               {
                                 "label": "How to avoid",
                                 "text": "Derive shapes from `gsd-core` templates instead (D-01)",
-                                "code": []
+                                "code": [],
+                                "codeLangs": []
                               },
                               {
                                 "label": "Warning signs",
                                 "text": "Code comments like \"studio-portal always has...\"",
-                                "code": []
+                                "code": [],
+                                "codeLangs": []
                               }
                             ]
                           }
@@ -18966,7 +19000,8 @@
                                 },
                                 {
                                   "kind": "code",
-                                  "text": "import { resolveIdentity } from \"./slice\";\nconst identity = resolveIdentity(\"user-1\");"
+                                  "text": "import { resolveIdentity } from \"./slice\";\nconst identity = resolveIdentity(\"user-1\");",
+                                  "lang": "ts"
                                 },
                                 {
                                   "kind": "paragraph",
@@ -18974,7 +19009,8 @@
                                 },
                                 {
                                   "kind": "code",
-                                  "text": "hbrpoig8f1cbfno6b9m80o2rak1vrjnvgfygwwqc38hyf9sxmecosfogyr3xkxwnrek8pk3yr9oudocuzrenun5z3jqip98q1zxoi65fdhjk1eyy37q9ah8rvhs1k3aq6l6gt6mjxk87au5bhxtpdpff5e8ii49kq71n8mtzx272hpoevb9ooaedoecve6pr5n8i4p40mgg1w103dgdzvgpmm82i"
+                                  "text": "hbrpoig8f1cbfno6b9m80o2rak1vrjnvgfygwwqc38hyf9sxmecosfogyr3xkxwnrek8pk3yr9oudocuzrenun5z3jqip98q1zxoi65fdhjk1eyy37q9ah8rvhs1k3aq6l6gt6mjxk87au5bhxtpdpff5e8ii49kq71n8mtzx272hpoevb9ooaedoecve6pr5n8i4p40mgg1w103dgdzvgpmm82i",
+                                  "lang": "text"
                                 },
                                 {
                                   "kind": "paragraph",
@@ -18982,7 +19018,8 @@
                                 },
                                 {
                                   "kind": "code",
-                                  "text": "flowchart TD\n    A[resolveIdentity] --> B[in-memory map lookup]\n    B --> C{found?}\n    C -->|yes| D[return Identity]\n    C -->|no| E[return null]"
+                                  "text": "flowchart TD\n    A[resolveIdentity] --> B[in-memory map lookup]\n    B --> C{found?}\n    C -->|yes| D[return Identity]\n    C -->|no| E[return null]",
+                                  "lang": "mermaid"
                                 },
                                 {
                                   "kind": "paragraph",
@@ -18990,7 +19027,8 @@
                                 },
                                 {
                                   "kind": "code",
-                                  "text": "flowchart TD\n    A[unterminated"
+                                  "text": "flowchart TD\n    A[unterminated",
+                                  "lang": "mermaid"
                                 }
                               ],
                               "chars": 1095,
@@ -20268,22 +20306,26 @@
                               {
                                 "label": "What goes wrong",
                                 "text": "A parser assumes shapes only `~/studio-portal` happens to have",
-                                "code": []
+                                "code": [],
+                                "codeLangs": []
                               },
                               {
                                 "label": "Why it happens",
                                 "text": "It's the only real project on the machine",
-                                "code": []
+                                "code": [],
+                                "codeLangs": []
                               },
                               {
                                 "label": "How to avoid",
                                 "text": "Derive shapes from `gsd-core` templates instead (D-01)",
-                                "code": []
+                                "code": [],
+                                "codeLangs": []
                               },
                               {
                                 "label": "Warning signs",
                                 "text": "Code comments like \"studio-portal always has...\"",
-                                "code": []
+                                "code": [],
+                                "codeLangs": []
                               }
                             ]
                           }
@@ -21286,7 +21328,8 @@
                                 },
                                 {
                                   "kind": "code",
-                                  "text": "import { fetchIdentity } from \"./client\";\nconst identity = fetchIdentity(\"user-1\");"
+                                  "text": "import { fetchIdentity } from \"./client\";\nconst identity = fetchIdentity(\"user-1\");",
+                                  "lang": "ts"
                                 }
                               ],
                               "chars": 481,
@@ -21690,7 +21733,8 @@
                                 },
                                 {
                                   "kind": "code",
-                                  "text": "import { fetchIdentity } from \"./client\";\nconst identity = fetchIdentity(\"user-1\");"
+                                  "text": "import { fetchIdentity } from \"./client\";\nconst identity = fetchIdentity(\"user-1\");",
+                                  "lang": "ts"
                                 }
                               ],
                               "chars": 481,

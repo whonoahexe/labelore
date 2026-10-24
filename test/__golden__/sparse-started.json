@@ -473,7 +473,8 @@
                               },
                               {
                                 "kind": "code",
-                                "text": "import { runSlice } from \"./slice\";\nrunSlice();"
+                                "text": "import { runSlice } from \"./slice\";\nrunSlice();",
+                                "lang": "ts"
                               }
                             ],
                             "chars": 360,
@@ -938,7 +939,8 @@
                           },
                           {
                             "kind": "code",
-                            "text": "import { runSlice } from \"./slice\";\nrunSlice();"
+                            "text": "import { runSlice } from \"./slice\";\nrunSlice();",
+                            "lang": "ts"
                           }
                         ],
                         "chars": 360,
@@ -1394,7 +1396,8 @@
                                 },
                                 {
                                   "kind": "code",
-                                  "text": "import { runSlice } from \"./slice\";\nrunSlice();"
+                                  "text": "import { runSlice } from \"./slice\";\nrunSlice();",
+                                  "lang": "ts"
                                 }
                               ],
                               "chars": 360,
@@ -1850,7 +1853,8 @@
                                 },
                                 {
                                   "kind": "code",
-                                  "text": "import { runSlice } from \"./slice\";\nrunSlice();"
+                                  "text": "import { runSlice } from \"./slice\";\nrunSlice();",
+                                  "lang": "ts"
                                 }
                               ],
                               "chars": 360,
@@ -2323,7 +2327,8 @@
                                 },
                                 {
                                   "kind": "code",
-                                  "text": "import { runSlice } from \"./slice\";\nrunSlice();"
+                                  "text": "import { runSlice } from \"./slice\";\nrunSlice();",
+                                  "lang": "ts"
                                 }
                               ],
                               "chars": 360,

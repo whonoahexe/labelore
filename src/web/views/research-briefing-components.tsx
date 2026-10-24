@@ -28,11 +28,8 @@ import type {
   LaneApprovedItem,
   LaneFlaggedItem,
 } from './research-briefing.ts';
-import { FigureFrame } from '../components/figure-frame.tsx';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog.tsx';
-import { LaneDiagramFigure } from '../components/lane-diagram.tsx';
-import { PlainDiagram } from '../components/lifted-diagram.tsx';
-import { CleanTreeFigure } from '../components/clean-tree.tsx';
+import { FencedCode, FencedFigure } from '../components/fenced-figure.tsx';
 
 // ---------------------------------------------------------------------------
 // Inline rendering, with the [VERIFIED] / [CITED] / [ASSUMED] evidence markers (S-12)
@@ -198,11 +195,7 @@ export function ResearchBlocks({ blocks }: { blocks: Block[] }): React.JSX.Eleme
             </div>
           );
         }
-        return (
-          <pre key={key}>
-            <code>{block.text}</code>
-          </pre>
-        );
+        return <FencedCode key={key} text={block.text} lang={block.lang} />;
       })}
     </>
   );
@@ -344,28 +337,15 @@ function ArchitectureChapter({
     <section id={chapter.id} className="view-block view-research-chapter" tabIndex={-1}>
       <ChapterHeading chapter={chapter} />
       {diagram ? (
-        diagram.lifted ? (
-          <LaneDiagramFigure
-            title="System architecture"
-            text={diagram.text}
-            caption={diagram.caption.length > 0 ? <ResearchBlocks blocks={diagram.caption} /> : undefined}
-          />
-        ) : (
-          <FigureFrame
-            title="System architecture"
-            caption={diagram.caption.length > 0 ? <ResearchBlocks blocks={diagram.caption} /> : undefined}
-          >
-            {() => <PlainDiagram text={diagram.text} />}
-          </FigureFrame>
-        )
+        <FencedFigure
+          title="System architecture"
+          text={diagram.text}
+          caption={diagram.caption.length > 0 ? <ResearchBlocks blocks={diagram.caption} /> : undefined}
+        />
       ) : null}
       {structure ? (
         <div className="view-research-sub">
-          {structure.isTree ? (
-            <CleanTreeFigure text={structure.text} title="Directory structure" />
-          ) : (
-            <FigureFrame title="Directory structure">{() => <PlainDiagram text={structure.text} />}</FigureFrame>
-          )}
+          <FencedFigure text={structure.text} title="Directory structure" />
           {structure.notes.length > 0 ? (
             <div className="view-research-note">
               <ResearchBlocks blocks={structure.notes} />
@@ -890,9 +870,7 @@ function PitfallCard({ pitfall }: { pitfall: ComposedPitfall }): React.JSX.Eleme
               <span>
                 <ResearchInline text={row.text} />
                 {row.code.map((code, codeIndex) => (
-                  <pre key={codeIndex}>
-                    <code>{code}</code>
-                  </pre>
+                  <FencedCode key={codeIndex} text={code} lang={row.codeLangs[codeIndex]} />
                 ))}
               </span>
             </div>

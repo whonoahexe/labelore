@@ -6,6 +6,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { tryParseFrontmatter } from '../../src/planning-repo/frontmatter.ts';
+import { classifyFence } from '../../src/rendering/figure-detect.ts';
 import { extractResearchBriefing } from '../../src/planning-repo/handlers/research-briefing.ts';
 import type { ResearchBriefing } from '../../src/planning-repo/handlers/research-briefing.ts';
 import {
@@ -179,9 +180,9 @@ describe('composeResearchBriefing — the Architecture chapter', () => {
     if (!architecture || architecture.kind !== 'architecture') return;
     expect(architecture.id).toBe('research-architecture');
     expect(architecture.number).toBe('02');
-    expect(architecture.diagram?.lifted).toBe(true);
+    expect(classifyFence(undefined, architecture.diagram?.text ?? '')).toBe('diagram');
     expect(architecture.diagram?.text).toContain('CLI project path');
-    expect(architecture.structure?.isTree).toBe(true);
+    expect(classifyFence(undefined, architecture.structure?.text ?? '')).toBe('tree');
     expect(architecture.patterns).toHaveLength(8);
     expect(architecture.antiPatterns).toHaveLength(9);
     expect(architecture.handRoll?.rows).toHaveLength(8);
@@ -195,7 +196,7 @@ describe('composeResearchBriefing — the Architecture chapter', () => {
     );
     const composed = composeResearchBriefing(inputOf(briefing));
     const chapter = composed?.chapters[0];
-    expect(chapter?.kind === 'architecture' && chapter.diagram?.lifted).toBe(false);
+    expect(chapter?.kind === 'architecture' && classifyFence(undefined, chapter.diagram?.text ?? '')).not.toBe('diagram');
   });
 
   it('a structure without three tree-prefixed lines is not a tree', () => {
@@ -203,7 +204,7 @@ describe('composeResearchBriefing — the Architecture chapter', () => {
       '## Architecture Patterns\n\n### Recommended Project Structure\n\n```\nsrc/\n└── guide.md\n```\n',
     );
     const chapter = composeResearchBriefing(inputOf(briefing))?.chapters[0];
-    expect(chapter?.kind === 'architecture' && chapter.structure?.isTree).toBe(false);
+    expect(chapter?.kind === 'architecture' && classifyFence(undefined, chapter.structure?.text ?? '')).not.toBe('tree');
   });
 
   it('a pattern with more than What/When links its ### heading; one without does not', () => {
