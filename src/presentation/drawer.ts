@@ -63,6 +63,7 @@ export interface DrawerPhasePlace {
   before: DrawerFileRow[];
   plans: DrawerPlanRow[];
   after: DrawerFileRow[];
+  /** Not listed in the drawer; kept so a page on one of these files still opens the drawer on its phase. */
   other: DrawerFileRow[];
 }
 
