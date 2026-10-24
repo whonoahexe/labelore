@@ -291,7 +291,12 @@
   /* quick-260911-vqe: the planning-files drawer's width. Deliberately not `--space-` prefixed,
      same reason as the dialog geometry tokens above — the step check only accepts plain rem
      multiples of 0.125rem, and this is a viewport-relative min() shape. */
-  --drawer-width: min(22rem, 88vw);
+  --drawer-width: min(38rem, 94vw);
+
+  /* quick-261024-vty: the places column inside that drawer (sketch 038 C). Not a `--space-` token
+     for the same reason as the drawer width above — it is one fixed track of a two-column grid,
+     and the step check only accepts plain rem multiples of 0.125rem for the spacing family. */
+  --drawer-places-width: 15.5rem;
 
   /* quick-260922-3us: sketch-004 B3's folded-chapter number column width, shared between
      `.document-fold-head`'s own grid track and `.document-fold-body`'s indent-to-the-title-column
@@ -806,6 +811,185 @@ summary.tree-node-row:focus-visible {
 
 .tree-disclosure > summary::-webkit-details-marker {
   display: none;
+}
+
+/* quick-261024-vty (sketch 038 C): the drawer body is two columns that each scroll on their own —
+   places on the left, the chosen place's files on the right. The popup owns position, sizing,
+   border and background. */
+.places-navigator {
+  display: grid;
+  grid-template-columns: var(--drawer-places-width) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 0;
+}
+
+.places-list,
+.places-files {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.places-list {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+  padding: var(--space-3) var(--space-2) var(--space-8);
+  border-right: 1px solid var(--sidebar-border);
+}
+
+.places-files {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  padding: var(--space-3) var(--space-3) var(--space-8);
+}
+
+.places-group,
+.places-fold {
+  display: grid;
+  gap: var(--space-0-5);
+}
+
+.places-group-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin: 0;
+  padding-inline: var(--space-2);
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.places-group-version {
+  font-family: var(--font-mono);
+  font-weight: normal;
+  letter-spacing: var(--ls-normal);
+  text-transform: none;
+}
+
+/* One row anatomy for places and for files: a leading column, an ellipsis label, then trailing
+   auto-sized columns for the badge and the warning indicator. */
+.places-row,
+.places-file-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-auto-flow: column;
+  grid-auto-columns: auto;
+  align-items: center;
+  gap: var(--space-1-5);
+  width: 100%;
+  min-height: var(--space-8);
+  padding-inline: var(--space-2);
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  font-family: inherit;
+  font-size: var(--fs-3);
+  line-height: var(--lh-snug);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.places-file-row {
+  grid-template-columns: var(--space-4) minmax(0, 1fr);
+}
+
+.places-row[data-depth='1'] {
+  padding-left: var(--space-5);
+}
+
+.places-row:hover,
+.places-file-row:hover {
+  background: var(--sidebar-accent);
+  color: var(--sidebar-foreground);
+}
+
+.places-row:focus-visible,
+.places-file-row:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+
+/* The selected place and the current page's row share one treatment, via the sidebar's own token
+   pair rather than the page-level --primary. */
+.places-row[data-selected='true'],
+.places-file-row[data-active='true'] {
+  background: var(--sidebar-primary);
+  color: var(--sidebar-primary-foreground);
+  box-shadow: inset 3px 0 var(--primary);
+}
+
+.places-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.places-number,
+.places-badge {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  font-variant-numeric: tabular-nums;
+  font-weight: normal;
+  letter-spacing: var(--ls-normal);
+  white-space: nowrap;
+}
+
+.places-number {
+  min-width: var(--space-5);
+}
+
+.places-files-head {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2) var(--space-2);
+}
+
+.places-where,
+.places-stage {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  font-weight: normal;
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.places-files-title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: var(--fs-5);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+}
+
+.places-stage {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-2) var(--space-1);
+}
+
+/* A plan's marker is a square, never an icon: it fills once the plan's summary exists. */
+.places-plan-square {
+  width: var(--space-2);
+  height: var(--space-2);
+  justify-self: center;
+  border: 1px solid color-mix(in oklch, var(--muted-foreground) 70%, transparent);
+}
+
+.places-plan-square[data-tone='complete'] {
+  border-color: var(--primary);
+  background: var(--primary);
 }
 
 /* quick-260911-vqe D-01: the overlay drawer that now hosts the planning tree, opened from the
