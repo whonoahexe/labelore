@@ -1,9 +1,10 @@
 import { Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { LayoutDashboard, ListChecks, Map, PencilRuler } from 'lucide-react';
+import { ChartLine, LayoutDashboard, ListChecks, Map, PencilRuler } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router';
 import { formatProjectMeta, projectDisplayName } from '../../presentation/shell-header.ts';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
+import { projectHasResearch } from '../../presentation/project-research-files.ts';
 import { projectHasSketches } from '../../presentation/sketches.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
 import { LabeloreMark } from './labelore-mark.tsx';
@@ -33,6 +34,8 @@ export function AppShell(): React.JSX.Element {
     presentation.data?.rootPath ?? '',
   );
   const projectMeta = formatProjectMeta(presentation.data?.state ?? null);
+  // The Research tab appears only for a project with at least one of the five research files.
+  const showResearch = projectHasResearch(presentation.data?.artifacts ?? []);
   // The Sketches tab appears only for a project that has sketches (todo 001).
   const showSketches = projectHasSketches(presentation.data?.artifacts ?? []);
 
@@ -77,6 +80,12 @@ export function AppShell(): React.JSX.Element {
               <Map aria-hidden="true" />
               Roadmap
             </NavLink>
+            {showResearch ? (
+              <NavLink className={navigationClass} to={presentationRoutePatterns.research}>
+                <ChartLine aria-hidden="true" />
+                Research
+              </NavLink>
+            ) : null}
             <NavLink className={navigationClass} to={presentationRoutePatterns.traceability}>
               <ListChecks aria-hidden="true" />
               Traceability

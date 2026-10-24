@@ -21,6 +21,7 @@ describe('route-level code splitting (entry chunk fix)', () => {
       'artifact-page.tsx',
       'plan-pair-page.tsx',
       'sketches-page.tsx',
+      'research-page.tsx',
     ];
     for (const page of lazyPages) {
       // debug/loading-state-regression: each factory is now wrapped in `trackRouteChunk(...)` so

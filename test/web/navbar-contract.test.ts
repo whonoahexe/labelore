@@ -294,22 +294,32 @@ describe('Strata mark, brand lockup and tabs (D-01, D-02, NAV-01..03)', () => {
   });
 
   // The 260911-243 redesign decided "no new tabs" and scoped out a proposed Lore tab. Todo 001 /
-  // quick-261023-4wn asks for a Sketches entry, shown only when the project has sketches, so the
-  // header is three always-on tabs plus one gated tab - a project without sketches sees exactly
-  // the original three.
-  it('renders Dashboard, Roadmap and Traceability unconditionally, plus one Sketches tab gated on projectHasSketches (D-02)', async () => {
+  // quick-261023-4wn asks for a Sketches entry, shown only when the project has sketches, and
+  // quick-261024-k8u a Research entry, shown only when the project has research files. The header
+  // is three always-on tabs plus two gated ones - a project with neither sees exactly the original
+  // three. Research sits between Roadmap and Traceability.
+  it('renders Dashboard, Roadmap and Traceability unconditionally, plus a Research tab gated on projectHasResearch between Roadmap and Traceability and a Sketches tab gated on projectHasSketches (D-02)', async () => {
     const shell = await source('src/web/components/app-shell.tsx');
     const navLinkMatches = shell.match(/<NavLink className=\{navigationClass\}/g) ?? [];
-    expect(navLinkMatches).toHaveLength(4);
+    expect(navLinkMatches).toHaveLength(5);
+    expect(shell).toContain('projectHasResearch(presentation.data?.artifacts');
     expect(shell).toContain('projectHasSketches(presentation.data?.artifacts');
+    expect(shell).toContain('presentationRoutePatterns.research');
     expect(shell).toContain('presentationRoutePatterns.sketches');
-    const gated = shell.indexOf('{showSketches ?');
-    expect(gated).toBeGreaterThan(0);
-    // The three original tabs sit before the gate; only the fourth is inside it.
-    const before = shell.slice(0, gated).match(/<NavLink className=\{navigationClass\}/g) ?? [];
-    expect(before).toHaveLength(3);
+    const roadmap = shell.indexOf('presentationRoutePatterns.roadmap}');
+    const researchGate = shell.indexOf('{showResearch ?');
+    const traceability = shell.indexOf('presentationRoutePatterns.traceability}');
+    const sketchesGate = shell.indexOf('{showSketches ?');
+    expect(roadmap).toBeGreaterThan(0);
+    expect(researchGate).toBeGreaterThan(roadmap);
+    expect(traceability).toBeGreaterThan(researchGate);
+    expect(sketchesGate).toBeGreaterThan(traceability);
+    // The three original tabs sit outside both gates.
+    const ungated = shell.slice(0, researchGate).match(/<NavLink className=\{navigationClass\}/g) ?? [];
+    expect(ungated.length + 1).toBe(3);
     expect(shell).toContain('Dashboard');
     expect(shell).toContain('Roadmap');
+    expect(shell).toContain('Research');
     expect(shell).toContain('Traceability');
     expect(shell).not.toMatch(/>\s*Lore\s*</);
   });
