@@ -23123,7 +23123,23 @@ a.view-note-open:hover {
   grid-template-rows: auto minmax(0, 1fr);
   height: calc(100dvh - var(--research-top, 4rem));
   min-height: 30rem;
+  /* .page-stack's inset plus the .page-intro margin, less the bar's own padding, so the title row
+     lines up with the Dashboard and Traceability eyebrows. */
+  padding-top: calc(var(--space-fluid-14) * 2 - var(--space-4));
   background: var(--background);
+}
+
+/* Below 62rem the .page-intro margin drops to 0, so only .page-stack's inset remains. */
+@media (max-width: 62rem) {
+  .research-page {
+    padding-top: calc(var(--space-fluid-14) - var(--space-4));
+  }
+}
+
+@media (max-width: 42rem) {
+  .research-page {
+    padding-top: calc(var(--space-10) - var(--space-4));
+  }
 }
 
 .research-page code {
