@@ -30,17 +30,15 @@ function milestoneHolds(milestone: DrawerMilestonePlace, pathname: string): bool
 }
 
 function quickHolds(place: DrawerQuickPlace, pathname: string): boolean {
-  return place.months.some((month) =>
-    month.tasks.some((task) => holdsFile(task.files, pathname)),
-  );
+  return place.groups.some((group) => group.tasks.some((task) => holdsFile(task.files, pathname)));
 }
 
 /** Every place in the model, in the order the drawer lists them. */
 function allPlaces(model: DrawerViewModel): DrawerPlace[] {
   return [
     ...model.current.phases,
-    model.current.quick,
-    ...model.shipped.flatMap((milestone) => [milestone, ...milestone.phases, milestone.quick]),
+    ...model.shipped.flatMap((milestone) => [milestone, ...milestone.phases]),
+    model.quick,
   ];
 }
 
@@ -69,7 +67,6 @@ export function shippedOwnerOf(model: DrawerViewModel, placeKey: string | null):
   for (const milestone of model.shipped) {
     if (
       milestone.key === placeKey ||
-      milestone.quick.key === placeKey ||
       milestone.phases.some((phase) => phase.key === placeKey)
     ) {
       return milestone.key;
@@ -78,14 +75,11 @@ export function shippedOwnerOf(model: DrawerViewModel, placeKey: string | null):
   return null;
 }
 
-/** The key of the quick task whose chip row holds `pathname`, or null. */
+/** The key of the quick task one of whose files is `pathname`, or null. */
 export function quickTaskKeyForPath(model: DrawerViewModel, pathname: string): string | null {
-  for (const place of allPlaces(model)) {
-    if (place.kind !== 'quick') continue;
-    for (const month of place.months) {
-      for (const task of month.tasks) {
-        if (holdsFile(task.files, pathname)) return task.key;
-      }
+  for (const group of model.quick.groups) {
+    for (const task of group.tasks) {
+      if (holdsFile(task.files, pathname)) return task.key;
     }
   }
   return null;

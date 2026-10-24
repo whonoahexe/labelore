@@ -7,6 +7,7 @@ import type {
   DrawerMilestonePlace,
   DrawerPhasePlace,
   DrawerPlanRow,
+  DrawerQuickGroup,
   DrawerQuickPlace,
   DrawerViewModel,
 } from '../../presentation/drawer.ts';
@@ -189,14 +190,15 @@ function MilestoneFiles({
           <span className="places-label">{phase.name}</span>
         </button>
       ))}
-      <Stage label="Quick tasks" count={milestone.quick.count > 0 ? String(milestone.quick.count) : 'none'} />
-      {milestone.quick.count > 0 ? (
-        <button type="button" className="places-row" onClick={() => onSelect(milestone.quick.key)}>
-          <span className="places-label">All {milestone.quick.count} quick tasks</span>
-        </button>
-      ) : null}
     </>
   );
+}
+
+/** A quick-task group's heading: the current milestone's version, or a shipped one's version and name. */
+function quickGroupLabel(group: DrawerQuickGroup): string {
+  if (group.current) return group.version !== null ? `${group.version} · Current` : 'Current';
+  const name = stripEmoji(group.name ?? '');
+  return name === '' || name === group.version ? (group.version ?? '') : `${group.version} · ${name}`;
 }
 
 function QuickFiles({
@@ -211,14 +213,13 @@ function QuickFiles({
   return (
     <>
       <div className="places-files-head">
-        <span className="places-where">{place.milestoneVersion ?? 'Current'}</span>
         <h3 className="places-files-title">Quick tasks · {place.count}</h3>
       </div>
       {place.count === 0 ? <p className="empty-note">Nothing here yet.</p> : null}
-      {place.months.map((month) => (
-        <div key={month.label} className="places-month">
-          <Stage label={month.label} count={String(month.tasks.length)} />
-          {month.tasks.map((task) => {
+      {place.groups.map((group) => (
+        <div key={group.key} className="places-quick-group">
+          <Stage label={quickGroupLabel(group)} count={String(group.tasks.length)} />
+          {group.tasks.map((task) => {
             // One row per task, opening its plan; the plan page switches to the summary. The row
             // stays marked while any of the task's own pages is open.
             const active = task.key === activeTaskKey;
@@ -325,6 +326,7 @@ export function PlanningPlaces({
               <span className="places-group-version">{data.current.version}</span>
             ) : null}
           </h2>
+          {data.current.phases.length === 0 ? <p className="empty-note">Nothing here yet.</p> : null}
           {data.current.phases.map((phase) => (
             <button
               key={phase.key}
@@ -343,16 +345,6 @@ export function PlanningPlaces({
               ) : null}
             </button>
           ))}
-          <button
-            type="button"
-            className="places-row"
-            data-selected={selectedKey === data.current.quick.key ? 'true' : undefined}
-            aria-current={selectedKey === data.current.quick.key ? 'true' : undefined}
-            onClick={() => setSelectedKey(data.current.quick.key)}
-          >
-            <span className="places-label">Quick tasks</span>
-            <span className="places-badge">{data.current.quick.count}</span>
-          </button>
         </section>
         <section className="places-group">
           <h2 className="places-group-label">Shipped</h2>
@@ -372,9 +364,8 @@ export function PlanningPlaces({
                   <span className="places-badge">{milestone.shippedLabel}</span>
                 ) : null}
               </button>
-              {shippedOwner === milestone.key ? (
-                <>
-                  {milestone.phases.map((phase) => (
+              {shippedOwner === milestone.key
+                ? milestone.phases.map((phase) => (
                     <button
                       key={phase.key}
                       type="button"
@@ -387,22 +378,23 @@ export function PlanningPlaces({
                       <span className="places-number">{phase.number}</span>
                       <span className="places-label">{phase.name}</span>
                     </button>
-                  ))}
-                  <button
-                    type="button"
-                    className="places-row"
-                    data-depth="1"
-                    data-selected={selectedKey === milestone.quick.key ? 'true' : undefined}
-                    aria-current={selectedKey === milestone.quick.key ? 'true' : undefined}
-                    onClick={() => setSelectedKey(milestone.quick.key)}
-                  >
-                    <span className="places-label">Quick tasks</span>
-                    <span className="places-badge">{milestone.quick.count}</span>
-                  </button>
-                </>
-              ) : null}
+                  ))
+                : null}
             </div>
           ))}
+        </section>
+        {/* Every quick task, current and shipped, lives in this one place, grouped by milestone. */}
+        <section className="places-group" aria-label="Quick tasks">
+          <button
+            type="button"
+            className="places-row"
+            data-selected={selectedKey === data.quick.key ? 'true' : undefined}
+            aria-current={selectedKey === data.quick.key ? 'true' : undefined}
+            onClick={() => setSelectedKey(data.quick.key)}
+          >
+            <span className="places-label">Quick tasks</span>
+            <span className="places-badge">{data.quick.count}</span>
+          </button>
         </section>
       </div>
       <div className="places-files">

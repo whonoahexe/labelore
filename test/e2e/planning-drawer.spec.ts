@@ -78,32 +78,30 @@ test.describe('planning files drawer', () => {
     expect(box!.width).toBeGreaterThanOrEqual(560);
   });
 
-  test('lists current quick tasks by month, each row opening its plan with a Plan / Summary switch', async ({ page, baseURL }) => {
+  test('keeps every quick task in one place, grouped by milestone, each row opening its plan with a Plan / Summary switch', async ({ page, baseURL }) => {
     const model = await fetchDrawer(baseURL!);
-    const quick = model.current.quick;
-    test.skip(quick.count === 0, 'this corpus has no current quick tasks');
+    const quick = model.quick;
+    test.skip(quick.count === 0, 'this corpus has no quick tasks');
 
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto('/');
     await openDrawer(page);
-    await page
-      .locator('.places-group')
-      .first()
-      .locator('.places-row', { hasText: 'Quick tasks' })
-      .click();
+    // One Quick tasks row in the whole places column, none under Current or a shipped milestone.
+    await expect(page.locator('.places-list .places-row', { hasText: 'Quick tasks' })).toHaveCount(1);
+    await page.locator('.places-list .places-row', { hasText: 'Quick tasks' }).click();
 
     await expect(page.locator('.places-files-title')).toHaveText(`Quick tasks · ${quick.count}`);
-    await expect(page.locator('.places-files .places-stage')).toHaveCount(quick.months.length);
+    await expect(page.locator('.places-files .places-stage')).toHaveCount(quick.groups.length);
     await expect(page.locator('.places-quick-task')).toHaveCount(quick.count);
     mkdirSync(SHOTS, { recursive: true });
     await page.screenshot({ path: join(SHOTS, 'desktop-quick.png') });
 
-    const task = quick.months.flatMap((month) => month.tasks).find(
+    const task = quick.groups.flatMap((group) => group.tasks).find(
       (candidate) =>
         candidate.files.some((file) => file.label === 'Plan') &&
         candidate.files.some((file) => file.label === 'Summary'),
     );
-    test.skip(task === undefined, 'no current quick task has both a plan and a summary');
+    test.skip(task === undefined, 'no quick task has both a plan and a summary');
     const planFile = task!.files.find((file) => file.label === 'Plan')!;
     const summaryFile = task!.files.find((file) => file.label === 'Summary')!;
     await page.locator('.places-quick-task').filter({ has: page.locator(`[title="${task!.key}"]`) }).click();
@@ -116,44 +114,28 @@ test.describe('planning files drawer', () => {
     await expect(page.locator('.plan-pair-switch a[aria-current="page"]')).toHaveText('Summary');
   });
 
-  test("a quick task's plan page opens the drawer on that task with its row active", async ({
+  test("a shipped quick task's page opens the drawer on Quick tasks with its row active", async ({
     page,
     baseURL,
   }) => {
     const model = await fetchDrawer(baseURL!);
-    const tasks: DrawerQuickTask[] = model.current.quick.months.flatMap((month) => month.tasks);
-    const task = tasks.find((candidate) => candidate.files.some((file) => file.label === 'Plan'));
-    test.skip(task === undefined, 'no current quick task has a plan file');
+    const shippedGroup = model.quick.groups.find((group) => !group.current);
+    test.skip(shippedGroup === undefined, 'no shipped milestone has quick tasks');
+    const task: DrawerQuickTask = shippedGroup!.tasks[0];
 
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto(task!.url);
+    await page.goto(task.url);
     await openDrawer(page);
 
     const selected = page.locator('.places-row[data-selected="true"]');
     await expect(selected).toHaveCount(1);
     await expect(selected.locator('.places-label')).toHaveText('Quick tasks');
+    // No shipped milestone unfolds for it.
+    await expect(page.locator('.places-list .places-row[data-depth="1"]')).toHaveCount(0);
     const row = page.locator('.places-quick-task[data-active="true"]');
     await expect(row).toHaveCount(1);
-    await expect(row.locator('.places-label')).toHaveText(task!.label);
+    await expect(row.locator('.places-label')).toHaveText(task.label);
     await expect(row).toHaveAttribute('aria-current', 'page');
-  });
-
-  test('a shipped milestone links to all of its quick tasks', async ({ page, baseURL }) => {
-    const model = await fetchDrawer(baseURL!);
-    const milestone = model.shipped.find((candidate) => candidate.quick.count > 0);
-    test.skip(milestone === undefined, 'no shipped milestone has quick tasks');
-
-    await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto('/');
-    await openDrawer(page);
-    await page.locator('.places-list .places-row', { hasText: milestone!.version }).first().click();
-    await page.locator('.places-files .places-row', { hasText: `All ${milestone!.quick.count} quick tasks` }).click();
-
-    await expect(page.locator('.places-where')).toHaveText(milestone!.version);
-    await expect(page.locator('.places-files-title')).toHaveText(`Quick tasks · ${milestone!.quick.count}`);
-    await expect(page.locator('.places-quick-task')).toHaveCount(milestone!.quick.count);
-    // The milestone stays unfolded while its quick tasks are showing.
-    await expect(page.locator('.places-row[data-selected="true"]')).toHaveAttribute('data-depth', '1');
   });
 
   test('on a phone the drawer drills from places into files and back with an All places link', async ({

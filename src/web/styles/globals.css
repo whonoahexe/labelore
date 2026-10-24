@@ -865,8 +865,8 @@
   display: none;
 }
 
-/* A quick task is one row that opens its plan: date, then name. */
-.places-month {
+/* Quick tasks come in one group per milestone; each task is one row that opens its plan: date, then name. */
+.places-quick-group {
   display: grid;
   gap: var(--space-0-5);
 }
