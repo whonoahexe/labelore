@@ -391,6 +391,26 @@ describe('liftDiagram — drifting and open-left boxes (JZT-M4, JZT-M5)', () => 
     expect(cellAt(figure, 1, 1).ch).toBe(' ');
   });
 
+  it('an arrow drawn into the top or bottom edge is part of that edge and stays an arrow', () => {
+    const figure = must(liftDiagram('┌──▼──┐\n│ a   │\n└──▲──┘'));
+    expect(figure.cards.filter((c) => c.kind === 'box')).toHaveLength(1);
+    expect(cellAt(figure, 0, 3)).toEqual({ ch: '▼', kind: 'arrow' });
+    expect(cellAt(figure, 0, 2).ch).toBe(' ');
+    expect(cellAt(figure, 2, 3)).toEqual({ ch: '▲', kind: 'arrow' });
+  });
+
+  it('a double line is line, not text, and on its own does not make a block a diagram', () => {
+    const figure = must(liftDiagram('┌───┐\n│ a │\n└───┘\n═══╪═══ tunnel ═══'));
+    expect(kindsOf(figure, 3)).toEqual([
+      ['═══╪═══', 'line'],
+      [' ', null],
+      ['tunnel', 'note'],
+      [' ', null],
+      ['═══', 'line'],
+    ]);
+    expect(isLiftableDiagram('Heading\n═══════\nprose under it')).toBe(false);
+  });
+
   it('a fork top over an arrow is not an open-left box', () => {
     const figure = must(liftDiagram('┌───┼───┐\n▼       ▼\n\n└───┬───┘'));
     expect(figure.cards.filter((c) => c.kind === 'box')).toHaveLength(0);

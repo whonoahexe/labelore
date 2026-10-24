@@ -2,7 +2,9 @@
 // shapes.js (cards, notes and connector cells from the lifted model) and graph.js (typed nodes with short
 // labels, directed edges with wire labels, groups, annotations), running on the shipped LiftedFigure model
 // from src/rendering/ascii-lift.ts. The rules and their order are bug-compatible with the sketch so a
-// golden of the sketch's own output holds (test/rendering/fixtures/sketch-012-graphs.json).
+// golden of the sketch's own output holds (test/rendering/fixtures/sketch-012-graphs.json). Two
+// additions the sketch lacks, inert on that corpus: double lines (`════╪════`) are wires, and a box cut
+// across by full-width `├────┤` rows is a stack of layers, one node each, joined top to bottom.
 //
 // Cost (T-mp6-01): the sketch's per-probe scans (cardAt, noteAt, nearCard, note-beside-a-wire) are
 // replaced by cell -> card / cell -> note / cell -> component index grids built once, so a probe is O(1).
@@ -64,10 +66,11 @@ export interface DiagramGraph {
 /** More nodes than this is not a diagram to redraw. */
 export const MAX_GRAPH_NODES = 60;
 
-const LINE = '─│┌┐└┘├┤┬┴┼';
+const LINE = '─│┌┐└┘├┤┬┴┼═║╪╫╬';
 const ARROW = '▼▲►◄→←↑↓';
 const CONN: Record<string, string> = {
   '─': 'lr', '│': 'ud', '┌': 'rd', '┐': 'ld', '└': 'ur', '┘': 'ul', '├': 'udr', '┤': 'udl', '┬': 'lrd', '┴': 'lru', '┼': 'udlr',
+  '═': 'lr', '║': 'ud', '╪': 'udlr', '╫': 'udlr', '╬': 'udlr',
   '▼': 'u', '▲': 'd', '►': 'l', '◄': 'r', '→': 'l', '←': 'r', '↓': 'u', '↑': 'd',
 };
 const TIPDIR: Record<string, string> = { '▼': 'd', '▲': 'u', '►': 'r', '◄': 'l', '→': 'r', '←': 'l', '↓': 'd', '↑': 'u' };
@@ -97,6 +100,9 @@ interface Card {
   lines: CardLine[];
   titleRow: number;
   titleCount: number;
+  /** A layer of a stacked box: the stack's id and the layer's place in it, top first. */
+  stack?: number;
+  layer?: number;
 }
 
 interface Note {
@@ -135,19 +141,40 @@ function readShapes(figure: LiftedFigure): Shapes {
   // Rows beyond the model's own rows stay blank (the model's height counts display rows).
   while (G.length < H) G.push(new Array<string>(W).fill(' '));
 
-  const cards: Card[] = figure.cards.map((c, i) => ({
-    i,
-    kind: c.kind,
-    r1: c.r1,
-    c1: c.c1,
-    r2: c.r2,
-    c2: c.c2,
-    area: (c.r2 - c.r1 + 1) * (c.c2 - c.c1 + 1),
-    group: false,
-    lines: [],
-    titleRow: 0,
-    titleCount: 1,
-  }));
+  // Stacked layers: a box cut across by full-width `├────┤` rows (the lift blanked the ├ and ┤) is
+  // one card per layer, each bordered by the dividers around it. A layer with no rows inside is dropped.
+  const cards: Card[] = [];
+  let stacks = 0;
+  for (const c of figure.cards) {
+    const dividers: number[] = [];
+    if (c.kind === 'box') {
+      for (let r = c.r1 + 1; r < c.r2; r++) {
+        const inside = G[r].slice(Math.max(0, c.c1 + 1), c.c2).join('').trim();
+        if (inside.length >= (c.c2 - c.c1 - 1) * 0.8 && /^[─┼┬┴]+$/.test(inside)) dividers.push(r);
+      }
+    }
+    const cuts = [c.r1, ...dividers, c.r2];
+    const stack = dividers.length > 0 ? stacks++ : undefined;
+    let layer = 0;
+    for (let k = 0; k + 1 < cuts.length; k++) {
+      const [r1, r2] = [cuts[k], cuts[k + 1]];
+      if (stack !== undefined && r2 - r1 < 2) continue;
+      cards.push({
+        i: cards.length,
+        kind: c.kind,
+        r1,
+        c1: c.c1,
+        r2,
+        c2: c.c2,
+        area: (r2 - r1 + 1) * (c.c2 - c.c1 + 1),
+        group: false,
+        lines: [],
+        titleRow: 0,
+        titleCount: 1,
+        ...(stack === undefined ? {} : { stack, layer: layer++ }),
+      });
+    }
+  }
   // Groups first (pure geometry): a box that encloses another card.
   for (const c of cards) {
     let kids = 0;
@@ -218,6 +245,12 @@ function readShapes(figure: LiftedFigure): Shapes {
       c.lines.push({ r, col: start + lead, text: s.trimStart() });
     }
     if (c.lines.length === 0) c.lines.push({ r: c.r1 + (c.kind === 'box' ? 1 : 0), col: c.c1 + 1, text: '' });
+    // A layer's first line is its name, then (past the author's double space) what it holds.
+    const head = c.stack === undefined ? null : /^(.+?)\s{2,}(\S.*)$/.exec(c.lines[0].text);
+    if (head) {
+      const { r, col, text } = c.lines[0];
+      c.lines.splice(0, 1, { r, col, text: head[1] }, { r, col: col + text.indexOf(head[2], head[1].length), text: head[2] });
+    }
     c.titleRow = c.lines[0].r;
     // A title line that ends mid-thought ("… /", "… (") continues onto the next line.
     let t = 1;
@@ -359,7 +392,7 @@ const KINDS: [DiagramKind, RegExp][] = [
   ['edge', /\b(cloudflare|vercel|edge\b|proxy|tunnel|cdn|access \()/i],
   ['data', /\b(sqlite|database|sqlx|db transaction|insert into|update jobs|select |audit_log|audit row|snapshot|registry|ticket map|hashmap|table)/i],
   ['channel', /\b(bus|broadcast|websocket|\/ws\b|ws connection|ws upgrade|emit|mpsc|sse|event::|pushes event)/i],
-  ['worker', /\b(thread|worker|executor|pool|prober|recovery pass|sweep|task\))/i],
+  ['worker', /\b(thread|worker|executor|engine|pool|prober|recovery pass|sweep|task\))/i],
   ['external', /(\/proc|\/mnt|\/dev|kernel|google drive|rclone|filesystem|subprocess|cli project|\bos\b)/i],
   ['service', /\b(handler|axum|api|router|middleware|endpoint|hono|server|route|backend|require|resolve|verif|mint|login)/i],
 ];
@@ -570,6 +603,16 @@ export function buildDiagramGraph(figure: LiftedFigure): DiagramGraph {
           }
         }
       }
+      // A double line the author wrote a word into ("═══ tunnel ═══") continues past the word.
+      if (k.ch === '═' && connAt(k.r, k.c + 1) < 0) {
+        for (let g = 2; g <= 24 && k.c + g < W; g++) {
+          const q = connAt(k.r, k.c + g);
+          if (q >= 0) {
+            if (S.conn[q].ch === '═') next.push(q);
+            break;
+          }
+        }
+      }
       if ((CONN[k.ch] ?? '').includes('u') && connAt(k.r - 1, k.c) < 0) {
         for (let g = 2; g <= 4; g++) {
           const q = connAt(k.r - g, k.c);
@@ -718,6 +761,17 @@ export function buildDiagramGraph(figure: LiftedFigure): DiagramGraph {
       }),
     );
   });
+
+  // Stacked layers touch: each joins the one under it (no arrow drawn, so no arrowhead).
+  const layers = nodes
+    .filter((n) => n.card.stack !== undefined)
+    .sort((a, b) => (a.card.stack as number) - (b.card.stack as number) || (a.card.layer as number) - (b.card.layer as number));
+  for (let k = 1; k < layers.length; k++) {
+    const [upper, lower] = [layers[k - 1], layers[k]];
+    if (upper.card.stack !== lower.card.stack) continue;
+    if (edges.some((e) => (e.from === upper.id && e.to === lower.id) || (e.from === lower.id && e.to === upper.id))) continue;
+    edges.push({ from: upper.id, to: lower.id, label: '', directed: false, implied: true });
+  }
 
   // A SHOUTED note right beside a box that has no heading of its own is that box's name
   // ("HOST KERNEL / DEVICES" beside the /proc… box).
