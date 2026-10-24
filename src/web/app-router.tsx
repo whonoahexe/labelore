@@ -32,6 +32,11 @@ const SketchesPage = lazy(
     import('./pages/sketches-page.tsx').then((m) => ({ default: m.SketchesPage })),
   ),
 );
+const ResearchPage = lazy(
+  trackRouteChunk(() =>
+    import('./pages/research-page.tsx').then((m) => ({ default: m.ResearchPage })),
+  ),
+);
 const ArtifactPage = lazy(
   trackRouteChunk(() =>
     import('./pages/artifact-page.tsx').then((m) => ({ default: m.ArtifactPage })),
@@ -104,6 +109,7 @@ export const appRouter = createBrowserRouter([
       { path: presentationRoutePatterns.search, element: <SearchPage /> },
       { path: presentationRoutePatterns.traceability, element: <TraceabilityPage /> },
       { path: presentationRoutePatterns.sketches, element: <SketchesPage /> },
+      { path: presentationRoutePatterns.research, element: <ResearchPage /> },
       { path: presentationRoutePatterns.milestone, element: <RoadmapPage /> },
       { path: presentationRoutePatterns.phase, element: <RoadmapPage /> },
       { path: presentationRoutePatterns.plan, element: <PlanPairPage /> },

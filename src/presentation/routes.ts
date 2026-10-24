@@ -10,6 +10,7 @@ export const presentationRoutePatterns = {
   search: '/search',
   traceability: '/traceability',
   sketches: '/sketches',
+  research: '/research',
   milestone: '/milestones/:milestoneKey',
   phase: '/milestones/:milestoneKey/phases/:phaseKey',
   plan: '/milestones/:milestoneKey/phases/:phaseKey/plans/:planId',
@@ -23,6 +24,7 @@ export type PresentationRoute =
   | { kind: 'search' }
   | { kind: 'traceability' }
   | { kind: 'sketches' }
+  | { kind: 'research' }
   | { kind: 'milestone'; milestoneVersion: string | null }
   | {
       kind: 'phase';
@@ -242,6 +244,9 @@ export function parsePresentationUrl(input: string): PresentationRouteParseResul
   }
   if (segments.length === 1 && segments[0] === 'sketches') {
     return { ok: true, route: { kind: 'sketches' } };
+  }
+  if (segments.length === 1 && segments[0] === 'research') {
+    return { ok: true, route: { kind: 'research' } };
   }
 
   if (segments[0] === 'artifacts') {

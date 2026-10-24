@@ -109,6 +109,12 @@ describe('milestone-qualified presentation route codec', () => {
     });
   });
 
+  it('round-trips the /research route', () => {
+    expect(presentationRoutePatterns.research).toBe('/research');
+    expect(parsePresentationUrl('/research')).toEqual({ ok: true, route: { kind: 'research' } });
+    expect(parsePresentationUrl('/research/stack').ok).toBe(false);
+  });
+
   it('round-trips the /sketches route, and leaves the sketch file URLs to the server', () => {
     expect(presentationRoutePatterns.sketches).toBe('/sketches');
     expect(parsePresentationUrl('/sketches')).toEqual({ ok: true, route: { kind: 'sketches' } });

@@ -689,6 +689,26 @@ element is actually written, regardless of class name:
   High takes `--missing-fill` and Medium `--in-flight-fill`, the same severity colours as the TODO
   page (quick-261023-61k), as content colours and never as a `data-tone`. Nothing animates.
 
+- **The Research page is five spines, one open.** (quick-261024-k8u, sketches 031 E round 4, 032 A,
+  033 D1, 034 A and 035 A) `/research` shows the five files in `.planning/research/` as one frame: a
+  slim bar (the only h1: the milestone name, else the project name; a confidence chip with a 3-cell
+  meter, "Researched 21 Aug 2026" and "N research files") over full-height spines, one open. Summary
+  is spine 00 and its closed spine carries a faint accent tint (`--primary-tint` over the
+  background). A closed spine shows its number, a vertical title with its lucide icon (icons sit on
+  spine titles only, never as list markers) and its key number over a confidence meter. The open
+  leaf shows a big accent number (`--primary`), a kicker ("Read this first" or "Research", then the
+  confidence), the file's name and its numbers. The first screen says one sentence: when it is long
+  and has a colon, the part before the colon is the large line and the rest sits below in small
+  muted text; everything else waits behind "Read the full summary" or "Read more". Left and right
+  arrows move between spines (`?open=<file>` restores the open one); elements that own their arrows
+  stop them. Under 42rem the spines stack as bars. Type: headings use `--font-heading`; in-panel
+  labels, kickers and counts use JetBrains Mono at weight normal, muted and uppercase; mono is
+  otherwise for code, numbers and badges. **The page links to none of the source research files**:
+  no Source chip, file name, line number, artifact link or copy-path button, and every string
+  reaches the DOM as a React text node through the inline tokenizer, never as markup. A pitfall is
+  drawn in the `missing` family (`--missing-fill`, `--missing-border`), never `destructive` or
+  `warning`; document content never takes those two tones. Nothing animates.
+
 ## Surface-scoped registered names
 
 Enumerated by scanning `className` literals across the reference pages, the shared shell/navigation
@@ -1091,6 +1111,33 @@ plan's "no AST tooling" constraint.
 | `sketch-viewer-bar` | Sketches | The row under the question: the verdict panel beside the Open full size action (stacked under 42rem) |
 | `sketch-viewer-actions` | Sketches | The viewer's Open full size action |
 | `sketch-viewer-frame` | Sketches | The sandboxed `iframe` (scripts only, no same-origin grant) that shows the sketch |
+
+### Research
+
+| Class | Surface | Note |
+|---|---|---|
+| `research-page` | Research | The `<main>` of the Research page: a grid of the bar over the spines, filling the viewport under the shell header (`--research-top`, measured) and auto height under 42rem |
+| `research-empty` | Research | The `<main>` of the Research page when the project has no research files |
+| `research-bar` | Research | The slim bar under the shell header: the h1 and the facts line |
+| `research-bar-facts` | Research | The confidence chip, "Researched <date>" and "N research files" in small uppercase |
+| `research-conf` | Research | A confidence chip: a meter and its lowercase level, in the accent |
+| `research-meter` | Research | A row of squared cells (`data-fill` full, half or empty): a 3-cell confidence meter |
+| `research-spines` | Research | The row of closed spines and the one open leaf (a column of bars under 42rem) |
+| `research-spine` | Research | A closed spine: a button with its number, vertical title and key number (`data-lead` tints Summary) |
+| `research-spine-number` | Research | A spine's two-digit number, muted |
+| `research-spine-title` | Research | A spine's vertical title and its icon (horizontal under 42rem) |
+| `research-spine-foot` | Research | A spine's key number over its confidence meter |
+| `research-leaf` | Research | The open spine: a focusable, internally scrolling section |
+| `research-leaf-in` | Research | The leaf's padded column, capped at a readable width |
+| `research-leaf-head` | Research | The leaf head: the big number, kicker with the file's name, and the numbers, over a hairline |
+| `research-leaf-number` | Research | The leaf's big accent number |
+| `research-kicker` | Research | The mono label above the file's name |
+| `research-leaf-title` | Research | The file's name (an h2) |
+| `research-nums` | Research | The leaf's big numbers, each with a small uppercase label |
+| `research-verdict` | Research | The file's finding: its first sentence, large |
+| `research-tail` | Research | The list after the finding's colon, small and muted |
+| `research-more` | Research | The finding's remaining paragraphs, muted, shown once the toggle opens |
+| `research-toggle` | Research | The "Read the full summary" / "Read more" / "Show less" button |
 
 ## How to extend
 

@@ -1054,7 +1054,46 @@
         "bodyHash": "71bf08ca66d51a3025f0efd6e46a470f0f1c81122a16a9db56334522ddfdb6f6",
         "mtimeMs": 0,
         "warnings": [],
-        "structured": {}
+        "structured": {
+          "projectResearch": {
+            "file": "pitfalls",
+            "head": {
+              "title": "Pitfalls Research: Dense Fixture Project",
+              "project": null,
+              "domain": null,
+              "researched": "2026-05-20",
+              "confidence": {
+                "level": null,
+                "text": null
+              }
+            },
+            "note": null,
+            "pitfalls": [
+              {
+                "n": 1,
+                "title": "Overfitting to one real project",
+                "short": null,
+                "wrong": [
+                  {
+                    "bullet": false,
+                    "text": "A parser assumes shapes only one real project happens to have."
+                  }
+                ],
+                "why": [],
+                "likely": null,
+                "confidence": null,
+                "avoid": [
+                  "Derive shapes from `gsd-core` templates instead (D-01) — which is exactly what this fixture tree does."
+                ],
+                "signs": [],
+                "phase": "",
+                "mapPhase": null,
+                "verify": null
+              }
+            ],
+            "checks": []
+          }
+        }
       },
       ".planning/research/STACK.md": {
         "id": ".planning/research/STACK.md",
@@ -1067,7 +1106,24 @@
         "bodyHash": "ae6d30ba1a4ea87a2e5f4d005460ec4aadddeeeb2d697aa41353b68454738c86",
         "mtimeMs": 0,
         "warnings": [],
-        "structured": {}
+        "structured": {
+          "projectResearch": {
+            "file": "stack",
+            "head": {
+              "title": "Technology Stack: Dense Fixture Project",
+              "project": null,
+              "domain": null,
+              "researched": "2026-05-20",
+              "confidence": {
+                "level": null,
+                "text": null
+              }
+            },
+            "decision": null,
+            "layers": [],
+            "alternatives": null
+          }
+        }
       },
       ".planning/research/SUMMARY.md": {
         "id": ".planning/research/SUMMARY.md",
@@ -1080,7 +1136,33 @@
         "bodyHash": "99f9a8ed81e0d2e28a7ddf991e402dca6c38615f931887cd25ba44ec0ce547f0",
         "mtimeMs": 0,
         "warnings": [],
-        "structured": {}
+        "structured": {
+          "projectResearch": {
+            "file": "summary",
+            "head": {
+              "title": "Research Summary: Dense Fixture Project",
+              "project": null,
+              "domain": null,
+              "researched": "2026-05-20",
+              "confidence": {
+                "level": null,
+                "text": null
+              }
+            },
+            "exec": [],
+            "keyFindings": {},
+            "preamble": [],
+            "phases": [],
+            "rationale": [],
+            "flags": {
+              "needs": [],
+              "standard": []
+            },
+            "gaps": [],
+            "areas": [],
+            "overall": null
+          }
+        }
       },
       ".planning/ui-reviews/.gitignore": {
         "id": ".planning/ui-reviews/.gitignore",
