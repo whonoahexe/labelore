@@ -20,6 +20,7 @@
 // it in try/catch (T-61k-04).
 import { parseBlocks } from './context-brief.ts';
 import type { Block } from './context-brief.ts';
+import { normalizeFenceLang } from '../../rendering/figure-detect.ts';
 
 // ---------------------------------------------------------------------------
 // Model
@@ -352,13 +353,18 @@ function blocksOf(lines: string[]): TodoBlock[] {
     if (isFenceLine(trimmed)) {
       flush();
       const code: string[] = [];
+      const lang = normalizeFenceLang(trimmed.replace(/^[`~]+/, ''));
       i += 1;
       while (i < lines.length && !isFenceLine(lines[i].trim())) {
         code.push(lines[i]);
         i += 1;
       }
       i += 1;
-      out.push({ kind: 'code', text: clip(code.join('\n'), MAX_TEXT) });
+      out.push(
+        lang === ''
+          ? { kind: 'code', text: clip(code.join('\n'), MAX_TEXT) }
+          : { kind: 'code', text: clip(code.join('\n'), MAX_TEXT), lang },
+      );
       continue;
     }
     const heading = headingText(trimmed);

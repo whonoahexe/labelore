@@ -43,6 +43,13 @@ describe('classifyFence', () => {
     expect(classifyFence(undefined, BOXED_WITH_TREE_LINES)).toBe('diagram');
   });
 
+  it('reads a branch-glyph flow with forward arrows as a diagram, but a tree whose comments hold arrows as a tree', () => {
+    const flow = ['watch tab', '│', '├── enabled? ──[no]──→ idle', '├── session.on(join) ──→ tile', '└── session.on(left) ──→ remove'].join('\n');
+    expect(classifyFence(undefined, flow)).toBe('diagram');
+    const tree = ['src/', '├── discovery.ts   # tree walk → refs', '├── assemble.ts    # refs → graph', '└── snapshot.ts    # graph → json'].join('\n');
+    expect(classifyFence(undefined, tree)).toBe('tree');
+  });
+
   it('leaves ordinary code with stray glyphs as code', () => {
     const snippet = ['// │ a note about the next line', 'const total = items.length;', 'return total;'].join('\n');
     expect(classifyFence(undefined, snippet)).toBeNull();

@@ -12,6 +12,7 @@
 // `PatternsHandler.parse` still wraps it in try/catch (T-wfs-04).
 import { parseBlocks } from './context-brief.ts';
 import type { Block } from './context-brief.ts';
+import { classifyFence } from '../../rendering/figure-detect.ts';
 import { splitFenceAware, splitWithPreamble } from './research-briefing.ts';
 
 // ---------------------------------------------------------------------------
@@ -464,7 +465,7 @@ function proseBlocks(text: string, keepTables: boolean): Block[] {
         .join('\n'),
     ),
   )) {
-    if (block.kind === 'code') continue;
+    if (block.kind === 'code' && classifyFence(block.lang, block.text) === null) continue;
     if (block.kind === 'table' && !keepTables) continue;
     if (block.kind === 'paragraph' && isRule(block.text)) continue;
     out.push(block);

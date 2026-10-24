@@ -21,6 +21,7 @@ import type {
   ComposedOpenQuestionRow,
 } from './context-brief.ts';
 import { stripLeadingHeading } from './document-sections.ts';
+import { FencedCode } from '../components/fenced-figure.tsx';
 
 // ---------------------------------------------------------------------------
 // Inline rendering
@@ -160,11 +161,7 @@ function BlockList({
             </div>
           );
         }
-        return (
-          <pre key={key}>
-            <code>{block.text}</code>
-          </pre>
-        );
+        return <FencedCode key={key} text={block.text} lang={block.lang} />;
       })}
     </>
   );

@@ -11,6 +11,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { copyText } from '../components/copy-path-button.tsx';
 import { ResearchBlocks, ResearchInline } from './research-briefing-components.tsx';
+import { FencedCode } from '../components/fenced-figure.tsx';
 import type {
   ComposedUiReview,
   ComposedUiReviewFix,
@@ -331,9 +332,7 @@ function ItemBody({ item }: { item: ComposedUiReviewItem }): React.JSX.Element {
         </ul>
       ) : null}
       {item.code !== null && item.code !== '' ? (
-        <pre className="view-ui-review-code">
-          <code>{item.code}</code>
-        </pre>
+        <FencedCode text={item.code} lang={item.codeLang} className="view-ui-review-code" />
       ) : null}
     </div>
   );

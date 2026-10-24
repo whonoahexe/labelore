@@ -193,3 +193,29 @@ describe('extractUiReview — degrade', () => {
     expect(audit.pillars).toHaveLength(1);
   });
 });
+
+describe('extractUiReview — code fence language (quick-261024-o3h)', () => {
+  it('sets codeLang on an item whose code came from a tagged fence and omits it otherwise', () => {
+    const body = [
+      '## Pillar Scores',
+      '| 1. Color | 2/4 | k |',
+      '## Detailed Findings',
+      '### Pillar 1: Color',
+      '❌ tagged',
+      '```css',
+      'a { color: red }',
+      '```',
+      '',
+      '❌ bare',
+      '```',
+      'plain',
+      '```',
+    ].join('\n');
+    const items = extractUiReview(body).pillars[0].groups.flatMap((group) => group.items);
+    const tagged = items.find((item) => item.text.includes('tagged'));
+    const bare = items.find((item) => item.text.includes('bare'));
+    expect(tagged?.codeLang).toBe('css');
+    expect(bare?.code).toContain('plain');
+    expect(bare && 'codeLang' in bare).toBe(false);
+  });
+});

@@ -14,6 +14,7 @@
 // on a string; `UiReviewHandler.parse` still wraps it in try/catch (T-528-04).
 import { parseBlocks } from './context-brief.ts';
 import type { Block } from './context-brief.ts';
+import { normalizeFenceLang } from '../../rendering/figure-detect.ts';
 import { splitWithPreamble } from './research-briefing.ts';
 
 // ---------------------------------------------------------------------------
@@ -30,6 +31,8 @@ export interface UiReviewItem {
   sub: string[];
   /** A fenced block under the item (its lines, fences removed), or null. */
   code: string | null;
+  /** The first fence's language, normalized; set only for a tagged fence. */
+  codeLang?: string;
 }
 
 export interface UiReviewGroup {
@@ -431,7 +434,11 @@ function findingsOf(body: string): Findings {
     if (opened) {
       fence = opened;
       if (item === null) item = addItem('', 'note');
-      if (item !== null && item.code === null) item.code = '';
+      if (item !== null && item.code === null) {
+        item.code = '';
+        const lang = normalizeFenceLang(trimmed.slice(opened.len));
+        if (lang !== '') item.codeLang = lang;
+      }
       continue;
     }
     if (trimmed === '') {

@@ -17,6 +17,7 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { CopyPathButton } from '../components/copy-path-button.tsx';
 import { DocumentViewToggle } from '../components/document-view-toggle.tsx';
+import { FencedCode } from '../components/fenced-figure.tsx';
 import type { TodoBlock } from '../../planning-repo/handlers/todo-file.ts';
 import { ResearchInline } from './research-briefing-components.tsx';
 import type {
@@ -217,11 +218,7 @@ export function TodoBlocks({ blocks, refs }: { blocks: TodoBlock[]; refs: Compos
           );
         }
         if (block.kind === 'code') {
-          return (
-            <pre key={key} className="view-todo-code">
-              <code>{block.text}</code>
-            </pre>
-          );
+          return <FencedCode key={key} text={block.text} lang={block.lang} className="view-todo-code" />;
         }
         return null;
       })}

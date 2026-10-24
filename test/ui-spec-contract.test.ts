@@ -202,3 +202,17 @@ describe('UiSpecHandler', () => {
     expect(structured.uiSpec?.meta.slug).toBe('identity-slice');
   });
 });
+
+describe('extractUiSpec — fenced figures in prose (quick-261024-o3h)', () => {
+  const TREE_FENCE = '```\nsrc/\n├── a.ts\n├── b.ts\n└── c.ts\n```';
+
+  it('keeps an untagged directory tree as a code block and still drops other fenced code', () => {
+    const spec = extractUiSpec(
+      `# T\n\n## UI Considerations\n\nIntro words.\n\n${TREE_FENCE}\n\n\`\`\`ts\nconst a = 1;\n\`\`\`\n\n\`\`\`\nplain snippet\n\`\`\`\n\n| Category | Element | Status | Resolution |\n|---|---|---|---|\n| empty | E1 thing | ✅ covered | note |\n`,
+    );
+    expect(spec.considerations?.intro).toEqual([
+      { kind: 'paragraph', text: 'Intro words.' },
+      { kind: 'code', text: 'src/\n├── a.ts\n├── b.ts\n└── c.ts' },
+    ]);
+  });
+});

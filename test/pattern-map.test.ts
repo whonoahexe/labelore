@@ -210,3 +210,17 @@ describe('PatternsHandler', () => {
     expect(result.structured).toBeDefined();
   });
 });
+
+describe('extractPatternMap — fenced figures in prose (quick-261024-o3h)', () => {
+  const TREE_FENCE = '```\nsrc/\n├── a.ts\n├── b.ts\n└── c.ts\n```';
+
+  it('keeps an untagged directory tree as a code block and still drops other fenced code', () => {
+    const map = extractPatternMap(
+      `## Notes\n\nWords.\n\n${TREE_FENCE}\n\n\`\`\`ts\nconst a = 1;\n\`\`\`\n\n\`\`\`\nplain snippet\n\`\`\`\n`,
+    );
+    expect(map.other[0].blocks).toEqual([
+      { kind: 'paragraph', text: 'Words.' },
+      { kind: 'code', text: 'src/\n├── a.ts\n├── b.ts\n└── c.ts' },
+    ]);
+  });
+});
