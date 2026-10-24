@@ -291,12 +291,12 @@
   /* quick-260911-vqe: the planning-files drawer's width. Deliberately not `--space-` prefixed,
      same reason as the dialog geometry tokens above — the step check only accepts plain rem
      multiples of 0.125rem, and this is a viewport-relative min() shape. */
-  --drawer-width: min(44rem, 94vw);
+  --drawer-width: min(48rem, 94vw);
 
   /* quick-261024-vty: the places column inside that drawer (sketch 038 C). Not a `--space-` token
      for the same reason as the drawer width above — it is one fixed track of a two-column grid,
      and the step check only accepts plain rem multiples of 0.125rem for the spacing family. */
-  --drawer-places-width: 17.5rem;
+  --drawer-places-width: 19.5rem;
 
   /* quick-260922-3us: sketch-004 B3's folded-chapter number column width, shared between
      `.document-fold-head`'s own grid track and `.document-fold-body`'s indent-to-the-title-column
@@ -705,7 +705,7 @@
   display: grid;
   gap: var(--space-8);
   align-content: start;
-  padding: var(--space-5) var(--space-3) var(--space-10);
+  padding: var(--space-6) var(--space-4) var(--space-10);
   border-right: 1px solid var(--sidebar-border);
 }
 
@@ -713,7 +713,7 @@
   display: grid;
   gap: var(--space-0-5);
   align-content: start;
-  padding: var(--space-5) var(--space-5) var(--space-10);
+  padding: var(--space-6) var(--space-6) var(--space-10);
 }
 
 .places-group,
@@ -755,7 +755,7 @@
   align-items: center;
   gap: var(--space-2-5);
   width: 100%;
-  min-height: var(--space-8);
+  min-height: var(--space-10);
   padding-inline: var(--space-3);
   border: 0;
   background: none;

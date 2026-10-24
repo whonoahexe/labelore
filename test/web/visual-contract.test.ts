@@ -599,7 +599,7 @@ describe('planning-files drawer (quick-260911-vqe D-01..D-04, SB-04/SB-05)', () 
       }
     }
 
-    expect(css).toContain('--drawer-width: min(44rem, 94vw);');
+    expect(css).toContain('--drawer-width: min(48rem, 94vw);');
 
     expect(css).toMatch(
       /\.sidebar-drawer\[data-starting-style\],\s*\n\.sidebar-drawer\[data-ending-style\]\s*\{[\s\S]*translateX\(-100%\)/,
