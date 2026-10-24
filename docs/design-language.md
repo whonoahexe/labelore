@@ -1219,6 +1219,7 @@ plan's "no AST tooling" constraint.
 | `research-swap-arrow` | Research | The accent arrow between the two |
 | `research-swap-good` | Research | The better approach |
 | `research-swap-why` | Research | A swap's opened why: mono labels over muted text |
+| `research-swap-key` | Research | Mono column labels over a run of swaps (037 B): the item's header over the struck-through column, the fix's header over the fix; hidden on phones |
 | `research-matrix` | Research | The competitor matrix: the feature, each rival, then our column (`--research-rivals`); scrolls sideways inside itself |
 | `research-matrix-row` | Research | One matrix row (the head row has `data-head`); a click unclamps its cells (`data-open`) |
 | `research-matrix-feature` | Research | A row's feature cell |
@@ -1226,8 +1227,25 @@ plan's "no AST tooling" constraint.
 | `research-matrix-us` | Research | Our column, tinted `--primary-tint` and headed with the project's name |
 | `research-matrix-clamp` | Research | A cell's text, clamped at three lines until its row is clicked |
 | `research-matrix-note` | Research | The closing paragraph under the matrix |
-| `research-arch` | Research | The Architecture body: overview, structure, anti-patterns, build order |
-| `research-pitfalls` | Research | The Pitfalls body: the watch list and the check ledger |
+| `research-arch` | Research | The Architecture body: overview, structure, scaling, anti-patterns, build order |
+| `research-scale` | Research | Scaling considerations (036 A): what breaks first, then every concern at every scale |
+| `research-scale-lead` | Research | The section's opening sentence, said large |
+| `research-bns` | Research | The ranked bottlenecks |
+| `research-bn` | Research | One bottleneck: big number, mono label (where it bites), the problem said large, its fix (`data-first` colours the first number) |
+| `research-bn-number` | Research | A bottleneck's big number; `--primary` for the first, muted after |
+| `research-bn-text` | Research | The problem, at section-heading size |
+| `research-bn-fix` | Research | The fix line: an accent "Fix" label beside the text |
+| `research-scale-not` | Research | A "not a bottleneck" note in a dashed box |
+| `research-scale-sub` | Research | The "At each scale" subhead over the grid |
+| `research-scale-grid` | Research | The concerns × scale grid (`--research-scale-cols`; `data-single` drops the concern column for a one-concern table); stacks by concern on phones |
+| `research-scale-corner` | Research | The grid's corner: the table's first header in mono |
+| `research-scale-tier` | Research | A scale's column head: number, name, its parenthetical as a quiet second line |
+| `research-scale-concern` | Research | A concern's row head |
+| `research-scale-cell` | Research | One concern at one scale; `data-tone` holds / na reads muted, `data-pin` marks where a bottleneck bites |
+| `research-scale-na` | Research | "Doesn't apply", in italics, for an n/a cell |
+| `research-scale-pin` | Research | The bottleneck's number on the cell where it bites |
+| `research-scale-cell-tier` | Research | A cell's scale name, shown only on phones where the column heads hide |
+| `research-pitfalls` | Research | The Pitfalls body: the watch list, performance / security / UX swaps behind a kind switch, and the check ledger |
 | `research-bo` | Research | The build-order graph and its step panel |
 | `research-bo-canvas` | Research | The DAG's framed canvas; it scrolls sideways inside itself when the steps do not fit |
 | `research-bo-stage` | Research | The canvas's positioned stage (`data-selecting` dims the steps the selection does not touch) |

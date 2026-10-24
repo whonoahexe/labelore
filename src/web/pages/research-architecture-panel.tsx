@@ -1,11 +1,12 @@
 // The Architecture spine's body (quick-261024-k8u, sketch 032 A): the system overview (the shipped
-// lane diagram), the project structure (the shipped clean tree), anti-patterns as swaps, and the
+// lane diagram), the project structure (the shipped clean tree), scaling considerations (sketch 036
+// A: what breaks first, then the concerns × scale grid), anti-patterns as swaps, and the
 // build order as a layered left-to-right DAG. No graph is hand-built: the overview is whatever the
 // shipped extractor lifts, with the author's own layout always one chip away. Every string is a
 // React text node.
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { X } from 'lucide-react';
-import type { ArchitecturePanel, BuildStepModel } from '../../presentation/project-research-panels.ts';
+import type { ArchitecturePanel, BuildStepModel, ScalingCell, ScalingPanel } from '../../presentation/project-research-panels.ts';
 import { layoutBuildOrder } from '../../rendering/build-order-layout.ts';
 import { FencedFigure } from '../components/fenced-figure.tsx';
 import { Chev, ResearchInline, SectionHead, SwapRows } from './research-atoms.tsx';
@@ -139,6 +140,89 @@ function BuildOrderGraph({ steps }: { steps: readonly BuildStepModel[] }): React
   );
 }
 
+function ScaleCellText({ cell }: { cell: ScalingCell }): React.JSX.Element {
+  return cell.tone === 'na' ? <span className="research-scale-na">Doesn’t apply</span> : <ResearchInline text={cell.text} />;
+}
+
+/** Sketch 036 A: the ranked bottlenecks lead, said large with their fix; then every concern at every
+ * scale, with the cell where a bottleneck bites marked by its number. */
+function ScalingSection({ scaling }: { scaling: ScalingPanel }): React.JSX.Element {
+  const { tiers, concerns, single } = scaling;
+  const columns = `${single ? '' : 'minmax(9rem, 0.7fr) '}repeat(${tiers.length}, minmax(0, 1fr))`;
+  return (
+    <section className="research-scale">
+      <SectionHead title="Scaling considerations" tally={scaling.tally} />
+      {scaling.lead ? (
+        <p className="research-scale-lead">
+          <ResearchInline text={scaling.lead} />
+        </p>
+      ) : null}
+      {scaling.bottlenecks.length > 0 ? (
+        <ol className="research-bns">
+          {scaling.bottlenecks.map((bottleneck, at) => (
+            <li key={bottleneck.number} className="research-bn" data-first={at === 0 ? 'true' : 'false'}>
+              <span className="research-bn-number">{bottleneck.number}</span>
+              <div>
+                <p className="research-label">{bottleneck.label}</p>
+                <p className="research-bn-text">
+                  <ResearchInline text={bottleneck.text} />
+                </p>
+                {bottleneck.fix ? (
+                  <p className="research-bn-fix">
+                    <span className="research-label">Fix</span>
+                    <span>
+                      <ResearchInline text={bottleneck.fix} />
+                    </span>
+                  </p>
+                ) : null}
+              </div>
+            </li>
+          ))}
+        </ol>
+      ) : null}
+      {scaling.notBottlenecks.map((item) => (
+        <p key={item.label} className="research-scale-not">
+          <span className="research-label">{item.label}</span>
+          <span>
+            <ResearchInline text={item.text} />
+          </span>
+        </p>
+      ))}
+      {tiers.length > 0 ? (
+        <>
+          {scaling.bottlenecks.length > 0 || scaling.notBottlenecks.length > 0 ? <p className="research-scale-sub">At each scale</p> : null}
+          <div className="research-scale-grid" data-single={single ? 'true' : 'false'} style={{ '--research-scale-cols': columns } as React.CSSProperties}>
+            {single ? null : <span className="research-scale-corner">{scaling.axis}</span>}
+            {tiers.map((tier, at) => (
+              <span key={`t${at}`} className="research-scale-tier">
+                <i>{String(at + 1).padStart(2, '0')}</i>
+                <b>{tier.name}</b>
+                {tier.sub ? <small>{tier.sub}</small> : null}
+              </span>
+            ))}
+            {concerns.map((concern, ci) => (
+              <Fragment key={`c${ci}`}>
+                {single ? null : (
+                  <span className="research-scale-concern">
+                    <ResearchInline text={concern.name} />
+                  </span>
+                )}
+                {concern.cells.map((cell, ti) => (
+                  <span key={`c${ci}-${ti}`} className="research-scale-cell" data-tone={cell.tone} data-pin={cell.pin !== null ? 'true' : 'false'}>
+                    <em className="research-scale-cell-tier">{tiers[ti]?.name}</em>
+                    {cell.pin !== null ? <span className="research-scale-pin">{scaling.bottlenecks[cell.pin].number}</span> : null}
+                    <ScaleCellText cell={cell} />
+                  </span>
+                ))}
+              </Fragment>
+            ))}
+          </div>
+        </>
+      ) : null}
+    </section>
+  );
+}
+
 export function ArchitecturePanelBody({ panel }: { panel: ArchitecturePanel }): React.JSX.Element {
   const [whyOpen, setWhyOpen] = useState(false);
   const order = panel.buildOrder;
@@ -154,6 +238,7 @@ export function ArchitecturePanelBody({ panel }: { panel: ArchitecturePanel }): 
           <FencedFigure text={panel.structure} title="Project structure" />
         </section>
       ) : null}
+      {panel.scaling ? <ScalingSection scaling={panel.scaling} /> : null}
       {panel.antiPatterns.length > 0 ? (
         <section>
           <SectionHead title="Anti-patterns" tally={panel.antiTally} />

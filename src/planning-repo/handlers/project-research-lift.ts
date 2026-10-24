@@ -191,12 +191,25 @@ export interface BuildOrder {
   steps: BuildStep[];
 }
 
+/** "Scaling Considerations" (or "Scalability"): the lead, the table as tiers × concerns, and the
+ * numbered Scaling Priorities. A two-column table (Scale | Adjustments) lists one tier per row and
+ * has a single concern, its second header; `byRow` marks that shape. */
+export interface ScalingLift {
+  lead: string | null;
+  axis: string;
+  byRow: boolean;
+  tiers: string[];
+  concerns: Array<{ name: string; cells: string[] }>;
+  priorities: Array<{ label: string | null; text: string }>;
+}
+
 export interface ArchitectureLift {
   file: 'architecture';
   head: LiftHead;
   overview: string | null;
   components: number;
   structure: string | null;
+  scaling: ScalingLift | null;
   antiPatterns: AntiPattern[];
   buildOrder: BuildOrder | null;
 }
@@ -231,12 +244,24 @@ export interface PitfallCheck {
   pitfalls: number[];
 }
 
+export type PitfallTableKind = 'performance' | 'security' | 'ux';
+
+/** One of the back tables (Performance Traps, Security Mistakes, UX Pitfalls): its lead paragraph,
+ * header and rows, as written. */
+export interface PitfallTable {
+  kind: PitfallTableKind;
+  lead: string | null;
+  head: string[];
+  rows: string[][];
+}
+
 export interface PitfallsLift {
   file: 'pitfalls';
   head: LiftHead;
   note: string | null;
   pitfalls: LiftedPitfall[];
   checks: PitfallCheck[];
+  tables: PitfallTable[];
 }
 
 export type ProjectResearchLift = SummaryLift | StackLift | FeaturesLift | ArchitectureLift | PitfallsLift;
@@ -987,6 +1012,37 @@ function liftBuildOrder(sections: Section[]): BuildOrder | null {
   return { note: why, grouping: null, steps };
 }
 
+function liftScaling(sections: Section[]): ScalingLift | null {
+  const found = findSection(sections, /^Scal(?:ing|ability) Considerations/i);
+  if (!found) return null;
+  const { index, section } = found;
+  const table = firstTable(section.body);
+  const firstRow = section.body.findIndex((line) => line.trim().startsWith('|'));
+  const lead = paragraphsOf(firstRow >= 0 ? section.body.slice(0, firstRow) : section.body)[0] ?? null;
+
+  let tiers: string[] = [];
+  let concerns: ScalingLift['concerns'] = [];
+  const byRow = table !== null && table.head.length === 2;
+  if (table && byRow) {
+    tiers = table.rows.map((row) => clean(row[0]));
+    concerns = [{ name: clean(table.head[1]), cells: table.rows.map((row) => clean(row[1])) }];
+  } else if (table && table.head.length > 2) {
+    tiers = table.head.slice(1).map((cell) => clean(cell));
+    concerns = table.rows.map((row) => ({ name: clean(row[0]), cells: tiers.map((_, at) => clean(row[at + 1])) }));
+  }
+
+  const priorities: ScalingLift['priorities'] = [];
+  const prioritiesAt = kidsOf(sections, index).find((kid) => /Scaling Priorities/i.test(roleTitle(kid.title)));
+  for (const block of prioritiesAt ? readBlocks(prioritiesAt.body) : []) {
+    if (block.kind !== 'number') continue;
+    const { lead: label, body } = leadItem(block.text);
+    priorities.push({ label, text: body });
+  }
+
+  if (tiers.length === 0 && priorities.length === 0) return null;
+  return { lead, axis: table ? clean(table.head[0]) : '', byRow, tiers, concerns, priorities };
+}
+
 export function liftArchitecture(body: string): ArchitectureLift {
   const lines = boundedLines(body);
   const { sections } = readSections(lines);
@@ -1020,6 +1076,7 @@ export function liftArchitecture(body: string): ArchitectureLift {
     overview,
     components,
     structure,
+    scaling: liftScaling(sections),
     antiPatterns: liftAntiPatterns(sections),
     buildOrder: liftBuildOrder(sections),
   };
@@ -1084,6 +1141,27 @@ function liftPitfall(section: Section, match: RegExpExecArray): LiftedPitfall {
   };
 }
 
+const PITFALL_TABLES: ReadonlyArray<[PitfallTableKind, RegExp]> = [
+  ['performance', /^Performance Traps/i],
+  ['security', /^Security Mistakes/i],
+  ['ux', /^UX Pitfalls/i],
+];
+
+function liftPitfallTables(sections: Section[]): PitfallTable[] {
+  const out: PitfallTable[] = [];
+  for (const [kind, re] of PITFALL_TABLES) {
+    const found = findSection(sections, re);
+    const table = found ? firstTable(found.section.body) : null;
+    if (!found || !table) continue;
+    const rows = table.rows.map((row) => row.map((cell) => clean(cell))).filter((row) => row[0] !== '');
+    if (rows.length === 0) continue;
+    const firstRow = found.section.body.findIndex((line) => line.trim().startsWith('|'));
+    const lead = paragraphsOf(found.section.body.slice(0, firstRow))[0] ?? null;
+    out.push({ kind, lead, head: table.head.map((cell) => clean(cell)), rows });
+  }
+  return out;
+}
+
 export function liftPitfalls(body: string): PitfallsLift {
   const lines = boundedLines(body);
   const { sections } = readSections(lines);
@@ -1127,7 +1205,7 @@ export function liftPitfalls(body: string): PitfallsLift {
   const critical = findSection(sections, /^Critical Pitfalls/i);
   const note = critical ? (blocksOf(critical.section.body)[0]?.text ?? null) : null;
 
-  return { file: 'pitfalls', head: liftHead(lines, sections), note, pitfalls, checks };
+  return { file: 'pitfalls', head: liftHead(lines, sections), note, pitfalls, checks, tables: liftPitfallTables(sections) };
 }
 
 // ---------------------------------------------------------------------------------------------
