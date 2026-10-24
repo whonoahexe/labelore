@@ -453,9 +453,7 @@ button.tile:hover .open { color: var(--primary); }
 .avoid button[aria-expanded="true"] .r { display: block; -webkit-line-clamp: unset; }
 .p-prose { max-width: 54rem; display: grid; gap: var(--space-3); }
 .p-prose p { font-size: var(--fs-4); line-height: var(--lh-relaxed); color: var(--ink-soft); }
-.verify-block { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-2) var(--space-4); align-items: center; max-width: 54rem; padding: var(--space-4); border: 1px solid var(--border); background: var(--card); }
-.verify-block .lk { display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border: 1px solid var(--foreground); }
-.verify-block .lk svg { width: 1.05rem; height: 1.05rem; }
+.verify-block { display: grid; gap: var(--space-1-5); max-width: 54rem; padding: var(--space-4); border: 1px solid var(--border); border-left: 2px solid var(--primary); background: var(--card); }
 .verify-block p { font-size: var(--fs-4); line-height: var(--lh-relaxed); }
 .p-meta { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-6); align-items: center; }
 .p-meta .mlabel b { color: var(--foreground); font-weight: 400; }
@@ -1007,7 +1005,6 @@ function renderF(P) {
 // ===================== 035: the Pitfalls panel =====================
 I.check = '<path d="M20 6 9 17l-5-5"/>';
 I.search = '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>';
-I.verify = '<path d="M21 10.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12.5"/><path d="m9 11 3 3L22 4"/>';
 const PK = () => window.PIT[state.project];
 const LIKELY = { 'Very high': 4, High: 3, 'Medium-high': 2.5, Medium: 2, 'Low-medium': 1.5, Low: 1 };
 const shortName = (p) => p.short || p.title;
@@ -1065,7 +1062,7 @@ function avoidHTML(p) {
   }).join('')}</ol>`;
 }
 const whyHTML = (p) => `<div class="p-prose">${p.why.map((b) => `<p>${inline(b.text)}</p>`).join('')}</div>`;
-const verifyHTML = (p) => `<div class="verify-block"><span class="lk">${ICON(I.verify)}</span><div><p class="mlabel">Proves it's prevented</p><p>${inline(p.verify)}</p></div></div>`;
+const verifyHTML = (p) => `<div class="verify-block"><p class="mlabel">Proves it's prevented</p><p>${inline(p.verify)}</p></div>`;
 const metaHTML = (p) => `<div class="p-meta">${likely(p)}${phaseShort(p) ? `<span class="mlabel">Prevented in <b>${esc(phaseShort(p))}</b></span>` : ''}</div>`;
 // A and C: one pitfall's detail behind tabs, warning signs first. A tab with nothing in it isn't drawn.
 function tabsHTML(p) {

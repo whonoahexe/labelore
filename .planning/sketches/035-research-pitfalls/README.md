@@ -76,4 +76,5 @@ reads PITFALLS.md:
   with nothing in them are not drawn.
 - Warning signs are marked with small squares in the pitfall tone. No warning-triangle icons as
   list markers: they read as emoji. The ⚠ markers were replaced in every variant.
+- "How to verify" is a plain block (label + the check) with an accent left rule. No tick icon.
 - The checklist is a numbered two-column ledger: label, the check, and a chip for any pitfall it names.
