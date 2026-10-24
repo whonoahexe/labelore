@@ -10,7 +10,6 @@ import {
   parseMilestoneQuickDirName,
   parsePhaseArtifactName,
   parseQuickArtifactName,
-  parseQuickDirName,
 } from '../planning-repo/naming.ts';
 import type { ArtifactDto, MilestoneDto, PhaseDto, ProjectPresentation } from '../server/project-presentation.ts';
 import { artifactWarningTone, type ArtifactWarningTone } from './artifact-warning-tone.ts';
@@ -22,7 +21,6 @@ import {
   POST_PLAN_ARTIFACT_ORDER,
   PRE_PLAN_ARTIFACT_ORDER,
   labelOf,
-  quickMonthOf,
   rankOf,
   sentenceCase,
   versionKeyOf,
@@ -78,13 +76,25 @@ export interface DrawerQuickTask {
   files: DrawerFileRow[];
 }
 
+/** One milestone's quick tasks, newest first. */
+export interface DrawerQuickGroup {
+  key: string;
+  /** True for the tasks in .planning/quick/, which belong to the milestone still in progress. */
+  current: boolean;
+  /** The milestone's version; null for current tasks when no live milestone has one. */
+  version: string | null;
+  /** A shipped milestone's recorded name; null for the current group. */
+  name: string | null;
+  tasks: DrawerQuickTask[];
+}
+
+/** Every quick task in one place, grouped by milestone: the current ones first, then each shipped
+ * milestone's, newest first. A milestone with no quick tasks has no group. */
 export interface DrawerQuickPlace {
   kind: 'quick';
   key: string;
-  /** The milestone these quick tasks were shipped with; null for the current ones. */
-  milestoneVersion: string | null;
   count: number;
-  months: { label: string; tasks: DrawerQuickTask[] }[];
+  groups: DrawerQuickGroup[];
 }
 
 export interface DrawerMilestonePlace {
@@ -96,17 +106,17 @@ export interface DrawerMilestonePlace {
   shippedLabel: string | null;
   documents: DrawerFileRow[];
   phases: DrawerPhasePlace[];
-  quick: DrawerQuickPlace;
 }
 
 export interface DrawerViewModel {
-  current: { version: string | null; phases: DrawerPhasePlace[]; quick: DrawerQuickPlace };
+  current: { version: string | null; phases: DrawerPhasePlace[] };
   shipped: DrawerMilestonePlace[];
+  quick: DrawerQuickPlace;
   defaultPlaceKey: string | null;
 }
 
-/** The key of the current quick-tasks place. */
-export const CURRENT_QUICK_KEY = 'quick:current';
+/** The key of the one quick-tasks place. */
+export const QUICK_KEY = 'quick';
 
 function isMarkdown(artifact: ArtifactDto): boolean {
   return artifact.path.toLowerCase().endsWith('.md');
@@ -263,22 +273,11 @@ function documentRankOf(artifact: ArtifactDto): number {
   return parsed.matched ? (MILESTONE_DOC_ORDER[parsed.document] ?? 3) : 3;
 }
 
-/** Groups quick-task files by their task and lays the tasks out newest first, one group per month. */
-function quickPlaceOf(
-  key: string,
-  milestoneVersion: string | null,
-  filesByTask: ReadonlyMap<string, ArtifactDto[]>,
-): DrawerQuickPlace {
-  interface Task {
-    task: DrawerQuickTask;
-    month: string;
-    rank: number;
-  }
-  const tasks: Task[] = [];
+/** Groups one milestone's quick-task files by their task and lays the tasks out newest first. */
+function quickTasksOf(filesByTask: ReadonlyMap<string, ArtifactDto[]>): DrawerQuickTask[] {
+  const tasks: { task: DrawerQuickTask; rank: number }[] = [];
   for (const [taskDir, artifacts] of filesByTask) {
     const isFile = taskDir.toLowerCase().endsWith('.md');
-    const segment = lastSegment(taskDir);
-    const parsedDir = isFile ? ({ matched: false } as const) : parseQuickDirName(segment);
     const { label, badge } = labelOf({ location: 'quick', nodeType: isFile ? 'file' : 'directory', path: taskDir }, null);
     const files = artifacts
       .map((artifact) => ({
@@ -295,21 +294,15 @@ function quickPlaceOf(
     const url = (named('PLAN') ?? named('SUMMARY') ?? files[0]).url;
     tasks.push({
       task: { key: taskDir, label, dateBadge: badge, url, files },
-      month: (parsedDir.matched ? quickMonthOf(parsedDir.date) : null) ?? 'Undated',
       rank: rankOf({ location: 'quick', nodeType: isFile ? 'file' : 'directory', path: taskDir }),
     });
   }
-  tasks.sort(
-    (left, right) =>
-      left.rank - right.rank || lastSegment(left.task.key).localeCompare(lastSegment(right.task.key)),
-  );
-  const months: DrawerQuickPlace['months'] = [];
-  for (const { task, month } of tasks) {
-    const last = months[months.length - 1];
-    if (last && last.label === month) last.tasks.push(task);
-    else months.push({ label: month, tasks: [task] });
-  }
-  return { kind: 'quick', key, milestoneVersion, count: tasks.length, months };
+  return tasks
+    .sort(
+      (left, right) =>
+        left.rank - right.rank || lastSegment(left.task.key).localeCompare(lastSegment(right.task.key)),
+    )
+    .map(({ task }) => task);
 }
 
 export function buildDrawerViewModel(presentation: ProjectPresentation): DrawerViewModel {
@@ -416,22 +409,37 @@ export function buildDrawerViewModel(presentation: ProjectPresentation): DrawerV
       shippedLabel: activityDateLabel(entry?.shipped ?? null, presentation.readAt),
       documents,
       phases: milestone ? sortedPhases(milestone).map((phase) => phasePlaceOf(phase, artifactsByPhase)) : [],
-      quick: quickPlaceOf(`quick:${key}`, version, quickFilesByVersion.get(lowered) ?? new Map()),
     };
   });
 
-  const currentQuick = quickPlaceOf(CURRENT_QUICK_KEY, null, currentQuickFiles);
+  const groups: DrawerQuickGroup[] = [
+    { key: 'quick:current', current: true, version: currentVersion, name: null, tasks: quickTasksOf(currentQuickFiles) },
+    ...shipped.map((milestone) => ({
+      key: `quick:${milestone.key}`,
+      current: false,
+      version: milestone.version,
+      name: milestone.name,
+      tasks: quickTasksOf(quickFilesByVersion.get(milestone.version.toLowerCase()) ?? new Map()),
+    })),
+  ].filter((group) => group.tasks.length > 0);
+  const quick: DrawerQuickPlace = {
+    kind: 'quick',
+    key: QUICK_KEY,
+    count: groups.reduce((sum, group) => sum + group.tasks.length, 0),
+    groups,
+  };
   return {
-    current: { version: currentVersion, phases: currentPhases, quick: currentQuick },
+    current: { version: currentVersion, phases: currentPhases },
     shipped,
-    defaultPlaceKey: defaultPlaceKeyOf(presentation, currentPhases, currentQuick, shipped),
+    quick,
+    defaultPlaceKey: defaultPlaceKeyOf(presentation, currentPhases, quick, shipped),
   };
 }
 
 function defaultPlaceKeyOf(
   presentation: ProjectPresentation,
   currentPhases: DrawerPhasePlace[],
-  currentQuick: DrawerQuickPlace,
+  quick: DrawerQuickPlace,
   shipped: DrawerMilestonePlace[],
 ): string | null {
   const head = headPhaseOf(presentation);
@@ -440,6 +448,6 @@ function defaultPlaceKeyOf(
   if (unfinished) return unfinished.key;
   const last = currentPhases[currentPhases.length - 1];
   if (last) return last.key;
-  if (currentQuick.count > 0) return currentQuick.key;
-  return shipped[0]?.key ?? currentQuick.key;
+  if (quick.groups.some((group) => group.current)) return quick.key;
+  return shipped[0]?.key ?? quick.key;
 }

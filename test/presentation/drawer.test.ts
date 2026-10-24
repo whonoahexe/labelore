@@ -16,7 +16,6 @@ import {
   quickTaskKeyForPath,
   shippedOwnerOf,
 } from '../../src/presentation/drawer-route.ts';
-import { quickMonthOf } from '../../src/presentation/tree-labels.ts';
 import { toProjectPresentation, type ProjectPresentation } from '../../src/server/project-presentation.ts';
 
 const ROOT = '/project';
@@ -50,10 +49,8 @@ function everyUrl(model: DrawerViewModel): string[] {
   for (const milestone of model.shipped) {
     urls.push(milestone.url, ...milestone.documents.map((row) => row.url));
   }
-  for (const place of [model.current.quick, ...model.shipped.map((milestone) => milestone.quick)]) {
-    for (const month of place.months) {
-      for (const task of month.tasks) urls.push(...task.files.map((row) => row.url));
-    }
+  for (const group of model.quick.groups) {
+    for (const task of group.tasks) urls.push(...task.files.map((row) => row.url));
   }
   return urls;
 }
@@ -225,8 +222,9 @@ describe('buildDrawerViewModel — degradation', () => {
     const model = buildDrawerViewModel(await fixturePresentation('sparse-empty'));
     expect(model.current.phases).toEqual([]);
     expect(model.shipped).toEqual([]);
-    expect(model.current.quick.count).toBe(0);
-    expect(model.defaultPlaceKey).toBe(model.current.quick.key);
+    expect(model.quick.count).toBe(0);
+    expect(model.quick.groups).toEqual([]);
+    expect(model.defaultPlaceKey).toBe(model.quick.key);
   });
 
   it('does not throw on a stray file', async () => {
@@ -290,43 +288,40 @@ const QUICK_FIXTURE = {
 };
 
 function everyQuickTask(model: DrawerViewModel) {
-  return [model.current.quick, ...model.shipped.map((milestone) => milestone.quick)].flatMap((place) =>
-    place.months.flatMap((month) => month.tasks),
-  );
+  return model.quick.groups.flatMap((group) => group.tasks);
 }
 
-describe('quickMonthOf', () => {
-  it('names the month and year from the YYMMDD date', () => {
-    expect(quickMonthOf('261024')).toBe('Oct 2026');
-    expect(quickMonthOf('260101')).toBe('Jan 2026');
-  });
-
-  it('gives null for a month out of range', () => {
-    expect(quickMonthOf('261324')).toBeNull();
-    expect(quickMonthOf('260024')).toBeNull();
-  });
-});
-
 describe('buildDrawerViewModel — quick tasks', () => {
-  it('groups current and shipped quick tasks by month with a chip per markdown file', async () => {
+  it('puts every quick task in one place, grouped by milestone with the current ones first', async () => {
     const model = buildDrawerViewModel(await presentationOf(QUICK_FIXTURE));
-    const current = model.current.quick;
-    expect(current.key).toBe('quick:current');
-    expect(current.count).toBe(1);
-    expect(current.months.map((month) => month.label)).toEqual(['Oct 2026']);
-    const [task] = current.months[0].tasks;
+    expect(model.quick.key).toBe('quick');
+    expect(model.quick.count).toBe(2);
+    expect(model.quick.groups.map((group) => [group.current, group.version])).toEqual([
+      [true, null],
+      [false, 'v1.0'],
+    ]);
+    const [task] = model.quick.groups[0].tasks;
     expect(task.dateBadge).toBe('Oct 24');
     expect(task.label).toBe('Some task');
     expect(task.files.map((row) => row.label)).toEqual(['Context', 'Plan', 'Summary']);
     expect(task.files.some((row) => row.path.endsWith('helper.mjs'))).toBe(false);
     // The row opens the plan even though the context file sorts first.
     expect(task.url).toBe(task.files[1].url);
-
+    expect(model.quick.groups[1].tasks.map((archived) => archived.key)).toEqual([
+      '.planning/milestones/v1.0-quick/260901-xyz-old-task',
+    ]);
     expect(model.shipped.map((milestone) => milestone.version)).toEqual(['v1.0']);
-    const archived = model.shipped[0].quick;
-    expect(archived.count).toBe(1);
-    expect(archived.months.map((month) => month.label)).toEqual(['Sep 2026']);
-    expect(archived.milestoneVersion).toBe('v1.0');
+  });
+
+  it('leaves out the current group and any milestone that has no quick tasks', async () => {
+    const model = buildDrawerViewModel(
+      await presentationOf({
+        '.planning/milestones/v2.0-ROADMAP.md': '# Roadmap',
+        '.planning/milestones/v1.0-quick/260901-xyz-old-task/260901-xyz-PLAN.md': '# Old plan',
+      }),
+    );
+    expect(model.quick.groups.map((group) => group.version)).toEqual(['v1.0']);
+    expect(model.shipped.map((milestone) => milestone.version)).toEqual(['v2.0', 'v1.0']);
   });
 
   it('points a task without a plan at its summary, and one with neither at its first file', async () => {
@@ -337,7 +332,7 @@ describe('buildDrawerViewModel — quick tasks', () => {
         '.planning/quick/261023-def-context-only/261023-def-CONTEXT.md': '# Context',
       }),
     );
-    const tasks = model.current.quick.months.flatMap((month) => month.tasks);
+    const tasks = everyQuickTask(model);
     const summaryOnly = tasks.find((task) => task.key.endsWith('summary-only'))!;
     expect(summaryOnly.url).toBe(summaryOnly.files.find((row) => row.label === 'Summary')!.url);
     const contextOnly = tasks.find((task) => task.key.endsWith('context-only'))!;
@@ -354,17 +349,16 @@ describe('buildDrawerViewModel — quick tasks', () => {
         '.planning/milestones/v1.0-quick/260901-xyz-old-task/260901-xyz-PLAN.md': '# Old plan',
       }),
     );
-    expect(model.current.quick.count).toBe(1);
+    expect(model.quick.count).toBe(2);
     expect(everyQuickTask(model).map((task) => task.key)).toEqual([
       '.planning/quick/261024-abc-some-task',
       '.planning/milestones/v1.0-quick/260901-xyz-old-task',
     ]);
     const paths = everyQuickTask(model).flatMap((task) => task.files.map((row) => row.path));
     expect(paths.some((path) => /readme\.md$/i.test(path))).toBe(false);
-    expect(model.shipped[0].quick.count).toBe(1);
   });
 
-  it('lists tasks newest first, one group per month, with unparseable names last as Undated', async () => {
+  it('lists a group newest first, with unparseable names last and undated', async () => {
     const model = buildDrawerViewModel(
       await presentationOf({
         '.planning/quick/260901-aaa-first/260901-aaa-PLAN.md': 'a',
@@ -374,10 +368,9 @@ describe('buildDrawerViewModel — quick tasks', () => {
         '.planning/quick/loose-note.md': 'e',
       }),
     );
-    const { months } = model.current.quick;
-    expect(months.map((month) => month.label)).toEqual(['Oct 2026', 'Sep 2026', 'Undated']);
-    expect(months[0].tasks.map((task) => task.label)).toEqual(['Third', 'Second']);
-    const undated = months[2].tasks;
+    const [group] = model.quick.groups;
+    expect(group.tasks.slice(0, 3).map((task) => task.label)).toEqual(['Third', 'Second', 'First']);
+    const undated = group.tasks.slice(3);
     expect(undated.map((task) => task.dateBadge)).toEqual([null, null]);
     expect(undated.flatMap((task) => task.files.map((row) => row.path)).sort()).toEqual([
       '.planning/quick/loose-note.md',
@@ -404,21 +397,21 @@ describe('buildDrawerViewModel — quick tasks', () => {
     expect(model.shipped).toEqual([]);
   });
 
-  it('finds the quick place and task for a chip page, and the shipped owner of an archived one', async () => {
+  it('finds the one quick place and the task for any quick-task page, current or shipped', async () => {
     const model = buildDrawerViewModel(await presentationOf(QUICK_FIXTURE));
-    const [task] = model.current.quick.months[0].tasks;
-    expect(placeKeyForPath(model, task.files[1].url)).toBe('quick:current');
-    expect(quickTaskKeyForPath(model, task.files[1].url)).toBe(task.key);
+    for (const task of everyQuickTask(model)) {
+      expect(placeKeyForPath(model, task.url)).toBe('quick');
+      expect(quickTaskKeyForPath(model, task.url)).toBe(task.key);
+    }
     expect(quickTaskKeyForPath(model, '/nowhere')).toBeNull();
-    const archived = model.shipped[0];
-    expect(shippedOwnerOf(model, archived.quick.key)).toBe(archived.key);
-    expect(findPlace(model, archived.quick.key)).toBe(archived.quick);
-    expect(shippedOwnerOf(model, model.current.quick.key)).toBeNull();
+    expect(findPlace(model, 'quick')).toBe(model.quick);
+    // Quick tasks sit outside the shipped milestones, so none of them unfolds for it.
+    expect(shippedOwnerOf(model, model.quick.key)).toBeNull();
   });
 
-  it('opens on the current quick tasks when there is no live phase and quick tasks exist', async () => {
+  it('opens on the quick tasks when there is no live phase and current quick tasks exist', async () => {
     const model = buildDrawerViewModel(await presentationOf(QUICK_FIXTURE));
-    expect(model.defaultPlaceKey).toBe('quick:current');
+    expect(model.defaultPlaceKey).toBe('quick');
   });
 
   it('opens on the newest shipped milestone when there is nothing current at all', async () => {
@@ -491,8 +484,8 @@ describe('buildDrawerViewModel — coverage', () => {
   it("opens this repository's own corpus on the current quick tasks", async () => {
     const model = buildDrawerViewModel(await diskPresentation(resolve('.')));
     expect(model.current.phases).toEqual([]);
-    expect(model.current.quick.count).toBeGreaterThan(0);
-    expect(model.defaultPlaceKey).toBe(model.current.quick.key);
+    expect(model.quick.groups[0].current).toBe(true);
+    expect(model.defaultPlaceKey).toBe(model.quick.key);
     expect(model.shipped.map((milestone) => milestone.version)).toEqual(['v1.1', 'v1.0']);
     for (const milestone of model.shipped) {
       expect(milestone.shippedLabel).not.toBeNull();
