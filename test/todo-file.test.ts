@@ -412,3 +412,14 @@ describe('extractTodoFile degrades', () => {
     expect(elapsed).toBeLessThan(250);
   });
 });
+
+describe('extractTodoFile fence languages (quick-261024-o3h)', () => {
+  it('sets lang on a tagged fence and omits it on a bare fence', () => {
+    const todo = extract('## Problem\n\n```bash\nnpm test\n```\n\n```\nplain\n```\n');
+    const codes = (todo.lead?.blocks ?? []).filter((block) => block.kind === 'code');
+    expect(codes).toEqual([
+      { kind: 'code', text: 'npm test', lang: 'bash' },
+      { kind: 'code', text: 'plain' },
+    ]);
+  });
+});

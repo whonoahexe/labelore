@@ -14,6 +14,7 @@
 // `UiSpecHandler.parse` still wraps it in try/catch (T-qk6-05).
 import { parseBlocks } from './context-brief.ts';
 import type { Block } from './context-brief.ts';
+import { classifyFence } from '../../rendering/figure-detect.ts';
 import { splitRow } from './pattern-map.ts';
 import { splitWithPreamble } from './research-briefing.ts';
 
@@ -264,7 +265,11 @@ function proseOf(lines: string[]): Block[] {
     if (!fenced && isRuleLine(trimmed)) continue;
     kept.push(line);
   }
-  return parseBlocks(kept.join('\n')).filter((block) => block.kind !== 'code');
+  // A fenced diagram or directory tree stays (the shared figure renderer draws it); any other
+  // fenced code is dropped from the prose, as before.
+  return parseBlocks(kept.join('\n')).filter(
+    (block) => block.kind !== 'code' || classifyFence(block.lang, block.text) !== null,
+  );
 }
 
 function linesOf(body: string): string[] {

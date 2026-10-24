@@ -186,6 +186,8 @@ export interface ComposedUiReviewItem {
   mark: string;
   sub: string[];
   code: string | null;
+  /** The code fence's language ('' when untagged). */
+  codeLang: string;
 }
 
 export interface ComposedUiReviewHeld {
@@ -357,6 +359,7 @@ function itemOf(item: UiReviewItem): ComposedUiReviewItem {
     mark: ITEM_MARK[kind],
     sub: arrayOf<string>(item.sub).filter((s) => typeof s === 'string'),
     code: typeof item.code === 'string' ? item.code : null,
+    codeLang: typeof item.codeLang === 'string' ? item.codeLang : '',
   };
 }
 
