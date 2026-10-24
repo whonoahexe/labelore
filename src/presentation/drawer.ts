@@ -337,7 +337,9 @@ export function buildDrawerViewModel(presentation: ProjectPresentation): DrawerV
 
   // Quick tasks: the current ones live in .planning/quick/, a shipped milestone's in
   // .planning/milestones/vX.Y-quick/. A task is the directory right under either root, or a
-  // markdown file sitting directly there.
+  // markdown file sitting directly there. A README in either is about the folder, not a task, and
+  // is left out of the drawer.
+  const isReadme = (artifact: ArtifactDto) => lastSegment(artifact.path).toLowerCase() === 'readme.md';
   const currentQuickFiles = new Map<string, ArtifactDto[]>();
   const quickFilesByVersion = new Map<string, Map<string, ArtifactDto[]>>();
   const documentsByVersion = new Map<string, ArtifactDto[]>();
@@ -345,13 +347,13 @@ export function buildDrawerViewModel(presentation: ProjectPresentation): DrawerV
   for (const artifact of markdown) {
     if (artifact.location === 'quick') {
       const segments = artifact.path.split('/');
-      if (segments.length < 3) continue;
+      if (segments.length < 3 || isReadme(artifact)) continue;
       const taskDir = segments.slice(0, 3).join('/');
       currentQuickFiles.set(taskDir, [...(currentQuickFiles.get(taskDir) ?? []), artifact]);
       continue;
     }
     const placed = classifyMilestoneRoot(artifact);
-    if (placed === null) continue;
+    if (placed === null || (placed.kind === 'quick' && isReadme(artifact))) continue;
     const lowered = placed.version.toLowerCase();
     if (!versionNames.has(lowered)) versionNames.set(lowered, placed.version);
     if (placed.kind === 'document') {
