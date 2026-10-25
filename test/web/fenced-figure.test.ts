@@ -8,8 +8,8 @@ import { FencedCode, FencedFigure, FigureFor } from '../../src/web/components/fe
 
 const fixture = (name: string): string =>
   readFileSync(new URL(`../rendering/fixtures/${name}`, import.meta.url), 'utf8');
-const TREE = fixture('sp-p02-roles-tree.txt');
-const DIAGRAM = fixture('sp-p02-roles-diagram.txt');
+const TREE = fixture('lendshed-p02-roles-tree.txt');
+const DIAGRAM = fixture('lendshed-p02-roles-diagram.txt');
 
 describe('FencedCode', () => {
   it('renders an untagged directory tree as the clean tree', () => {

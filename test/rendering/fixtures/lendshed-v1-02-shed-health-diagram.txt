@@ -2,14 +2,14 @@
   HOST KERNEL / DEVICES │                                      │
                         │  /proc/self/mountinfo   (procfs —    │
                         │       0.14 ms, NEVER blocks)         │
-                        │  /mnt/{stage,vault,archive} (statvfs │
+                        │  /mnt/{front,depot,toolbox} (statvfs │
                         │       0.002 ms healthy / ∞ if wedged)│
-                        │  /dev/disk/by-id/... (smartctl+sudo) │
-                        │  Google Drive API   (rclone about)   │
+                        │  /dev/disk/by-id/... (healthck+sudo) │
+                        │  Google Drive API   (shedcp about)   │
                         └───┬────────┬────────┬────────┬───────┘
                             │        │        │        │
         ┌───────────────────┴─┐ ┌────┴─────┐ ┌┴───────┐ ┌┴──────────┐
-        │ PROBER THREAD:stage │ │ :vault   │ │:archive│ │ :cloud    │   ← one dedicated
+        │ PROBER THREAD:front │ │ :depot   │ │:toolbox│ │ :annex    │   ← one dedicated
         │ (dedicated OS thread│ │          │ │        │ │           │     std::thread each;
         │  NOT spawn_blocking)│ │          │ │        │ │           │     a wedge here is
         └──────────┬──────────┘ └────┬─────┘ └───┬────┘ └─────┬─────┘     CONTAINED
