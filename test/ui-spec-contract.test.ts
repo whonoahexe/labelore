@@ -2,10 +2,10 @@
 // documents read from disk, degenerate input, and the T-qk6-01 timing guard; plus UiSpecHandler's
 // match and structured.uiSpec. Anchor counts were independently confirmed with awk over the status
 // column of every UI Considerations table (never copied from the extractor's own output).
-import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
-import { SP_PLANNING } from './helpers/studio-portal.ts';
+import { fxPath } from './helpers/fixture-project.ts';
+import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
 import { extractUiSpec } from '../src/planning-repo/handlers/ui-spec-contract.ts';
 import type { UiSpecContract } from '../src/planning-repo/handlers/ui-spec-contract.ts';
 import { UiSpecHandler } from '../src/planning-repo/handlers/ui-spec.ts';
@@ -15,9 +15,9 @@ const REPO_ROOT = new URL('../', import.meta.url);
 const LB02 = '.planning/milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-UI-SPEC.md';
 const LB05 = '.planning/milestones/v1.1-phases/05-per-type-document-views/05-UI-SPEC.md';
 const DENSE = 'fixtures/dense/.planning/phases/01-identity-slice/01-UI-SPEC.md';
-const SP04 = `${SP_PLANNING}/milestones/v1.0-phases/04-tier-to-tier-transfers/04-UI-SPEC.md`;
-const SP_P3 = `${SP_PLANNING}/phases/03-account-administration-session-control/03-UI-SPEC.md`;
-const HAVE_SP = existsSync(SP_PLANNING);
+const FX01 = 'phases/01-member-sign-in-sessions/01-UI-SPEC.md';
+const FX_V04 = 'milestones/v1.0-phases/04-shed-to-shed-transfers/04-UI-SPEC.md';
+const FX_P3 = 'phases/03-account-admin-and-sessions/03-UI-SPEC.md';
 
 async function repoText(path: string): Promise<string> {
   return await readFile(new URL(path, REPO_ROOT), 'utf8');
@@ -32,16 +32,61 @@ function counts(spec: UiSpecContract): { elements: number; rows: number; split: 
   return { elements: elements.length, rows: rows.length, split };
 }
 
-describe.runIf(HAVE_SP)('extractUiSpec — studio-portal v1.0/04 (hard)', () => {
+describe('extractUiSpec — Lendshed phase 01 (hard)', () => {
   it('reads the frontmatter as written, the sign-off, the scales and the registry', async () => {
-    const spec = extractUiSpec(await readFile(SP04, 'utf8'));
+    const spec = extractUiSpec(await readFile(fxPath(FX01), 'utf8'));
+    expect(spec.meta).toEqual({
+      phase: '1',
+      slug: 'member-sign-in-sessions',
+      status: 'approved',
+      created: '2026-03-25',
+      shadcnInitialized: 'true',
+      preset: 'k7Tmw2Qe9x',
+    });
+    expect(spec.title).toBe('Phase 1 — UI Design Contract');
+    expect(spec.tagline).toContain('gsd-ui-researcher');
+    expect(spec.signoff?.dims).toHaveLength(6);
+    expect(spec.signoff?.dims.every((d) => d.verdict === 'PASS')).toBe(true);
+    expect(spec.signoff?.approval).toMatch(/^APPROVED/);
+    expect(spec.signoff?.hasNotes).toBe(true);
+    expect(spec.spacing?.rows).toHaveLength(6);
+    expect(spec.typography?.rows).toHaveLength(4);
+    expect(spec.color?.rows).toHaveLength(4);
+    expect(spec.registry?.rows).toHaveLength(2);
+    expect(spec.designSystem?.map((r) => r.key)).toEqual(['Tool', 'Preset', 'Component library', 'Icon library', 'Font']);
+    expect(spec.reserved.accent?.length).toBe(2);
+    expect(spec.reserved.destructive?.length).toBe(3);
+  });
+
+  it('groups 22 considerations into 3 elements, 16 / 1 / 1 / 4', async () => {
+    const spec = extractUiSpec(await readFile(fxPath(FX01), 'utf8'));
+    expect(counts(spec)).toEqual({ elements: 3, rows: 22, split: [16, 1, 1, 4] });
+    expect(spec.considerations?.elements.map((e) => e.key)).toEqual(['E1', 'E2', 'E3']);
+    expect(spec.considerations?.coverage).toMatch(/^22 applicable/);
+    const e1 = spec.considerations?.elements[0];
+    expect(e1?.rows.find((r) => r.cats.includes('zero-one-many'))?.status).toBe('backstop');
+    const e3 = spec.considerations?.elements[2];
+    expect(e3?.rows.find((r) => r.cats.includes('overflow'))?.status).toBe('unresolved');
+  });
+
+  it('marks the phase-specific chapters and the copywriting contract unclaimed', async () => {
+    const spec = extractUiSpec(await readFile(fxPath(FX01), 'utf8'));
+    const unclaimed = spec.sections.filter((s) => !s.claimed).map((s) => s.heading);
+    expect(unclaimed).toEqual(['Visual Hierarchy', 'Copywriting Contract', 'Sign-In Interaction Contract', 'Top Bar Addition']);
+    expect(spec.sections.find((s) => s.heading === 'Registry Safety')?.claimed).toBe(true);
+  });
+});
+
+describe('extractUiSpec — Lendshed v1.0/04 (the longest document)', () => {
+  it('reads the frontmatter as written, the sign-off, the scales and the registry', async () => {
+    const spec = extractUiSpec(await readFile(fxPath(FX_V04), 'utf8'));
     expect(spec.meta).toEqual({
       phase: '04',
-      slug: 'tier-to-tier-transfers',
+      slug: 'shed-to-shed-transfers',
       status: 'approved',
-      created: '2026-07-24',
+      created: '2026-03-05',
       shadcnInitialized: 'true',
-      preset: 'b3Dqcuo4na',
+      preset: 'k7Tmw2Qe9x',
     });
     expect(spec.title).toBe('Phase 04 — UI Design Contract');
     expect(spec.tagline).toContain('gsd-ui-researcher');
@@ -49,22 +94,20 @@ describe.runIf(HAVE_SP)('extractUiSpec — studio-portal v1.0/04 (hard)', () => 
     expect(spec.signoff?.dims.every((d) => d.verdict === 'PASS')).toBe(true);
     expect(spec.signoff?.approval).toMatch(/^APPROVED/);
     expect(spec.signoff?.hasNotes).toBe(true);
-    expect(spec.spacing?.rows).toHaveLength(7);
+    expect(spec.spacing?.rows).toHaveLength(6);
     expect(spec.typography?.rows).toHaveLength(4);
     expect(spec.color?.rows).toHaveLength(4);
     expect(spec.registry?.rows).toHaveLength(1);
     expect(spec.designSystem?.map((r) => r.key)).toEqual(['Tool', 'Preset', 'Component library', 'Icon library', 'Font']);
     expect(spec.reserved.accent?.length).toBe(6);
-    expect(spec.reserved.destructive?.length).toBe(7);
+    expect(spec.reserved.destructive?.length).toBe(5);
   });
 
-  it('groups 78 considerations into 10 elements, 57 / 6 / 0 / 15', async () => {
-    const spec = extractUiSpec(await readFile(SP04, 'utf8'));
-    expect(counts(spec)).toEqual({ elements: 10, rows: 78, split: [57, 6, 0, 15] });
-    expect(spec.considerations?.elements.map((e) => e.key)).toEqual(
-      Array.from({ length: 10 }, (_, i) => `E${i + 1}`),
-    );
-    expect(spec.considerations?.coverage).toMatch(/^78 applicable/);
+  it('groups 45 considerations into 6 elements, 31 / 3 / 0 / 11', async () => {
+    const spec = extractUiSpec(await readFile(fxPath(FX_V04), 'utf8'));
+    expect(counts(spec)).toEqual({ elements: 6, rows: 45, split: [31, 3, 0, 11] });
+    expect(spec.considerations?.elements.map((e) => e.key)).toEqual(Array.from({ length: 6 }, (_, i) => `E${i + 1}`));
+    expect(spec.considerations?.coverage).toMatch(/^45 applicable/);
     expect(spec.considerations?.quote).toContain('ui-phase UI-consideration probe');
     expect(spec.considerations?.comments.length).toBe(1);
     const e2 = spec.considerations?.elements[1];
@@ -74,7 +117,7 @@ describe.runIf(HAVE_SP)('extractUiSpec — studio-portal v1.0/04 (hard)', () => 
   });
 
   it('marks the phase-specific chapters and the copywriting contract unclaimed', async () => {
-    const spec = extractUiSpec(await readFile(SP04, 'utf8'));
+    const spec = extractUiSpec(await readFile(fxPath(FX_V04), 'utf8'));
     const unclaimed = spec.sections.filter((s) => !s.claimed).map((s) => s.heading);
     expect(unclaimed).toEqual([
       'Layout',
@@ -86,14 +129,14 @@ describe.runIf(HAVE_SP)('extractUiSpec — studio-portal v1.0/04 (hard)', () => 
   });
 });
 
-describe.runIf(HAVE_SP)('extractUiSpec — studio-portal phases/03 (the Element | Kinds trap)', () => {
-  it('reads 7 elements and 42 rows, taking kinds from the table and none of its rows as considerations', async () => {
-    const spec = extractUiSpec(await readFile(SP_P3, 'utf8'));
-    expect(counts(spec)).toEqual({ elements: 7, rows: 42, split: [27, 7, 0, 8] });
-    const e6 = spec.considerations?.elements.find((e) => e.key === 'E6');
-    expect(e6?.kinds).toBe('form, static-content');
-    expect(e6?.name).toBe("/login's disabled-account alert");
-    expect(spec.considerations?.coverage).toMatch(/^42 applicable/);
+describe('extractUiSpec — Lendshed phases/03 (the Element | Kinds trap)', () => {
+  it('reads 5 elements and 35 rows, taking kinds from the table and none of its rows as considerations', async () => {
+    const spec = extractUiSpec(await readFile(fxPath(FX_P3), 'utf8'));
+    expect(counts(spec)).toEqual({ elements: 5, rows: 35, split: [29, 3, 0, 3] });
+    const e2 = spec.considerations?.elements.find((e) => e.key === 'E2');
+    expect(e2?.kinds).toBe('form, interactive-control');
+    expect(e2?.name).toBe('Reset-password dialog');
+    expect(spec.considerations?.coverage).toMatch(/^35 applicable/);
   });
 });
 
@@ -169,15 +212,31 @@ describe('extractUiSpec — degrade', () => {
     expect(spec.signoff?.dims[0].verdict).toBe('PASS');
   });
 
-  it('a 1 MB body with a 200k-character line extracts within 250 ms', () => {
-    const long = 'x'.repeat(200_000);
-    const rows = Array.from({ length: 3000 }, (_, i) => `| empty | E${i % 9} thing | ✅ covered | note ${i} |`).join('\n');
-    const body = `# T\n\n## UI Considerations\n\n${long}\n\n| Category | Element | Status | Resolution |\n|---|---|---|---|\n${rows}\n\n## Color\n\n| Role | Value |\n|---|---|\n| a | ${long} |\n\n${'filler line\n'.repeat(60_000)}`;
+  // A fixed millisecond budget flakes under parallel load (Pitfall 11): the same hostile shape (one very
+  // long line, a table of rows, a long cell, filler) is built at size n and at 8n and timed with
+  // measureGrowth, where a linear scan reads about 8 and a quadratic one about 64. The extractor clips
+  // every line to a fixed length, so the long lines stop growing past it; the rows and filler keep the
+  // ratio honest, and the original 1 MB shape stays below as a no-throw sentinel.
+  const hostileBody = (size: number): string => {
+    const scale = size / 1_000_000;
+    const long = 'x'.repeat(Math.max(1, Math.floor(200_000 * scale)));
+    const rows = Array.from({ length: Math.max(1, Math.floor(3000 * scale)) }, (_, i) => `| empty | E${i % 9} thing | ✅ covered | note ${i} |`).join('\n');
+    return `# T\n\n## UI Considerations\n\n${long}\n\n| Category | Element | Status | Resolution |\n|---|---|---|---|\n${rows}\n\n## Color\n\n| Role | Value |\n|---|---|\n| a | ${long} |\n\n${'filler line\n'.repeat(Math.max(1, Math.floor(60_000 * scale)))}`;
+  };
+
+  it('a 1 MB body with a 200k-character line extracts without throwing and stays bounded', () => {
+    const body = hostileBody(1_000_000);
     expect(body.length).toBeGreaterThan(900_000);
-    const t0 = performance.now();
     const spec = extractUiSpec(body);
-    expect(performance.now() - t0).toBeLessThan(250);
     expect(spec.considerations?.elements.length).toBeLessThanOrEqual(200);
+  });
+
+  it('the same hostile body grows no faster than linearly', () => {
+    const growth = measureGrowth({ make: hostileBody, run: (input) => void extractUiSpec(input) });
+    expect(
+      growth.ratio,
+      `ui-spec: ${growth.t1.toFixed(2)}ms at ${growth.n} characters, ${growth.t2.toFixed(2)}ms at 8x`,
+    ).toBeLessThan(GROWTH_LIMIT);
   });
 });
 

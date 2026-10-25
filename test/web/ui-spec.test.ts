@@ -1,11 +1,11 @@
 // quick-261001-qk6: composeUiSpec, built from literal ViewInput objects and from the real
 // extractions (test/ui-spec-contract.test.ts covers the server extractor; the narrow e2e spec
 // covers the page end to end), plus the static markup of the view.
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { SP_PLANNING } from '../helpers/studio-portal.ts';
+import { fxPath } from '../helpers/fixture-project.ts';
 import { extractUiSpec } from '../../src/planning-repo/handlers/ui-spec-contract.ts';
 import type { UiSpecContract } from '../../src/planning-repo/handlers/ui-spec-contract.ts';
 import { UiSpecHandler } from '../../src/planning-repo/handlers/ui-spec.ts';
@@ -24,9 +24,8 @@ const LB05 = new URL(
   import.meta.url,
 );
 const DENSE = new URL('../../fixtures/dense/.planning/phases/01-identity-slice/01-UI-SPEC.md', import.meta.url);
-const SP04 = `${SP_PLANNING}/milestones/v1.0-phases/04-tier-to-tier-transfers/04-UI-SPEC.md`;
-const SP02 = `${SP_PLANNING}/milestones/v1.0-phases/02-storage-health-status/02-UI-SPEC.md`;
-const HAVE_SP = existsSync(SP_PLANNING);
+const FX_V04 = fxPath('milestones/v1.0-phases/04-shed-to-shed-transfers/04-UI-SPEC.md');
+const FX_V02 = fxPath('milestones/v1.0-phases/02-shed-inventory-health/02-UI-SPEC.md');
 
 function inputOf(uiSpec: unknown, overrides: Partial<ViewInput> = {}): ViewInput {
   return {
@@ -86,7 +85,7 @@ describe('safeColor', () => {
   });
 });
 
-describe.runIf(HAVE_SP)('composeUiSpec — studio-portal v1.0/04', () => {
+describe('composeUiSpec — Lendshed v1.0/04', () => {
   const headings = [
     { id: 'layout', text: 'Layout', depth: 2 },
     { id: 'motion-reduced-motion-contract', text: 'Motion & Reduced-Motion Contract', depth: 2 },
@@ -97,36 +96,36 @@ describe.runIf(HAVE_SP)('composeUiSpec — studio-portal v1.0/04', () => {
   ];
 
   it('the cover: eyebrow, title, a complete-toned sign-off, Created, no Status', () => {
-    const spec = compose(SP04, { headings });
+    const spec = compose(FX_V04, { headings });
     expect(spec.intro.eyebrow).toBe('UI design contract · Phase 04');
-    expect(spec.intro.title).toBe('Tier to tier transfers');
+    expect(spec.intro.title).toBe('Shed to shed transfers');
     expect(spec.intro.signoff?.label).toBe('Signed off 6/6');
     expect(spec.intro.signoff?.tone).toBe('complete');
     expect(spec.intro.signoff?.dims).toHaveLength(6);
     expect(spec.intro.signoff?.dims.every((d) => d.verdict === 'PASS' && d.tone === 'complete')).toBe(true);
     expect(spec.intro.signoff?.approval).toMatch(/^APPROVED/);
-    expect(spec.intro.created).toBe('2026-07-24');
+    expect(spec.intro.created).toBe('2026-03-05');
     expect(spec.intro.status).toBeNull();
   });
 
-  it('numbers the three chapters and counts 57 / 6 / 0 / 15 over 10 elements', () => {
-    const spec = compose(SP04, { headings });
+  it('numbers the three chapters and counts 31 / 3 / 0 / 11 over 6 elements', () => {
+    const spec = compose(FX_V04, { headings });
     expect(spec.chapters.map((c) => `${c.number} ${c.title}`)).toEqual([
       '01 Design system',
       '02 UI considerations',
       '03 Registry safety',
     ]);
     const uic = spec.considerations;
-    expect(uic?.counts).toEqual({ covered: 57, backstop: 6, unresolved: 0, dismissed: 15 });
-    expect(uic?.total).toBe(78);
-    expect(uic?.elements).toHaveLength(10);
-    expect(uic?.needs).toHaveLength(6);
+    expect(uic?.counts).toEqual({ covered: 31, backstop: 3, unresolved: 0, dismissed: 11 });
+    expect(uic?.total).toBe(45);
+    expect(uic?.elements).toHaveLength(6);
+    expect(uic?.needs).toHaveLength(3);
     expect(uic?.needs.every((n) => n.status === 'backstop' && n.tone === 'in-flight')).toBe(true);
-    expect(uic?.coverage).toMatch(/^78 applicable/);
+    expect(uic?.coverage).toMatch(/^45 applicable/);
   });
 
   it('lists the phase-specific chapters and the copywriting contract as source-only, with heading ids', () => {
-    const spec = compose(SP04, { headings });
+    const spec = compose(FX_V04, { headings });
     const labels = spec.sourceOnly.map((e) => e.label);
     expect(labels.slice(0, 5)).toEqual([
       'Layout',
@@ -149,10 +148,10 @@ describe.runIf(HAVE_SP)('composeUiSpec — studio-portal v1.0/04', () => {
     expect(byLabel.Frontmatter).toBeNull();
   });
 
-  it('end to end: handler -> composer -> a matrix of 10 element rows with data-cell buttons and no raw HTML', () => {
-    const content = readFileSync(SP04, 'utf8');
+  it('end to end: handler -> composer -> a matrix of 6 element rows with data-cell buttons and no raw HTML', () => {
+    const content = readFileSync(FX_V04, 'utf8');
     const ref: ArtifactRef = {
-      path: '.planning/milestones/v1.0-phases/04-tier-to-tier-transfers/04-UI-SPEC.md',
+      path: '.planning/milestones/v1.0-phases/04-shed-to-shed-transfers/04-UI-SPEC.md',
       kind: 'ui-spec',
       location: 'phase',
       phaseIdentity: null,
@@ -165,7 +164,7 @@ describe.runIf(HAVE_SP)('composeUiSpec — studio-portal v1.0/04', () => {
     expect(composed).not.toBeNull();
     const html = render(composed as ComposedUiSpec);
     expect((html.match(/<tbody><tr>/g) ?? []).length).toBe(1);
-    expect((html.match(/<th scope="row"/g) ?? []).length).toBe(10);
+    expect((html.match(/<th scope="row"/g) ?? []).length).toBe(6);
     expect(html).toMatch(/data-cell="E6\|[a-z-]+"/);
     expect(html).toContain('Click a square to read how that state is handled');
     expect(html).not.toContain('<script');
@@ -229,8 +228,8 @@ describe('composeUiSpec — labels, status and degrade', () => {
   });
 });
 
-describe.runIf(HAVE_SP)('UiSpecView — design system, registry and source-only (sp v1.0/04)', () => {
-  const html = (): string => render(compose(SP04));
+describe('UiSpecView — design system, registry and source-only (Lendshed v1.0/04)', () => {
+  const html = (): string => render(compose(FX_V04));
 
   it('four choice cards in order, the shadcn card with its chips and a preset copy button', () => {
     const out = html();
@@ -239,10 +238,10 @@ describe.runIf(HAVE_SP)('UiSpecView — design system, registry and source-only 
     expect(out).toContain('shadcn/ui');
     expect(out).toContain('>Initialized<');
     expect(out).toContain('>Preset locked<');
-    expect(out).toMatch(/<button[^>]*aria-label="Copy preset b3Dqcuo4na"[^>]*>[\s\S]*?b3Dqcuo4na/);
-    expect(out).toContain('<i>style</i> base-sera');
-    expect(out).toContain('<i>base</i> neutral');
-    expect(out).toContain('<i>theme</i> orange');
+    expect(out).toMatch(/<button[^>]*aria-label="Copy preset k7Tmw2Qe9x"[^>]*>[\s\S]*?k7Tmw2Qe9x/);
+    expect(out).toContain('<i>style</i> base-linden');
+    expect(out).toContain('<i>base</i> stone');
+    expect(out).toContain('<i>theme</i> green');
   });
 
   it('draws each loaded family in its own face', () => {
@@ -251,13 +250,13 @@ describe.runIf(HAVE_SP)('UiSpecView — design system, registry and source-only 
     expect(out).toMatch(/data-face="mono"[^>]*>JetBrains Mono</);
   });
 
-  it('seven spacing ticks, four type rungs, four role cards', () => {
+  it('six spacing ticks, four type rungs, four role cards', () => {
     const out = html();
-    expect((out.match(/class="view-ui-spec-tick"/g) ?? []).length + (out.match(/class="view-ui-spec-tick" data-alt/g) ?? []).length).toBeGreaterThanOrEqual(7);
-    expect((out.match(/view-ui-spec-tick[^>]*style="left:/g) ?? []).length).toBe(7);
+    expect((out.match(/class="view-ui-spec-tick"/g) ?? []).length + (out.match(/class="view-ui-spec-tick" data-alt/g) ?? []).length).toBeGreaterThanOrEqual(6);
+    expect((out.match(/view-ui-spec-tick[^>]*style="left:/g) ?? []).length).toBe(6);
     expect((out.match(/class="view-ui-spec-rung"/g) ?? []).length).toBe(4);
     expect((out.match(/<article class="view-ui-spec-role"/g) ?? []).length).toBe(4);
-    expect(out).toContain('Spacing · 7 steps');
+    expect(out).toContain('Spacing · 6 steps');
     expect(out).toContain('Typography · 4 roles');
     expect(out).toContain('Colour · 60 / 30 / 10');
   });
@@ -279,9 +278,9 @@ describe.runIf(HAVE_SP)('UiSpecView — design system, registry and source-only 
     const out = html();
     expect(out).toContain('>03<');
     expect(out).toContain('No vetting needed');
-    expect(out).toContain('14 blocks');
-    expect(out).toContain('New this phase · 4');
-    expect(out).toContain('Reused · 10');
+    expect(out).toContain('11 blocks');
+    expect(out).toContain('New this phase · 3');
+    expect(out).toContain('Reused · 8');
   });
 
   it('no copy deck, no pre, and the source-only strip lists Copywriting Contract and Frontmatter', () => {
@@ -309,11 +308,11 @@ describe.runIf(HAVE_SP)('UiSpecView — design system, registry and source-only 
   });
 });
 
-describe.runIf(HAVE_SP)('UiSpecView — hex light and dark columns (sp v1.0/02)', () => {
+describe('UiSpecView — hex light and dark columns (Lendshed v1.0/02)', () => {
   it('a role with both values carries both swatch halves', () => {
-    const out = render(compose(SP02));
-    expect(out).toMatch(/data-half="light"[^>]*style="--swatch-light:#FFFFFF"/i);
-    expect(out).toMatch(/data-half="dark"[^>]*style="--swatch-dark:#0A0A0A"/i);
+    const out = render(compose(FX_V02));
+    expect(out).toMatch(/data-half="light"[^>]*style="--swatch-light:#F9F7EC"/i);
+    expect(out).toMatch(/data-half="dark"[^>]*style="--swatch-dark:#12201A"/i);
   });
 });
 
