@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import { fxPath } from './helpers/fixture-project.ts';
+import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
 import {
   NA_AUDIT,
   PITFALL_LABEL_LINES,
@@ -337,20 +338,44 @@ describe('validUntilShort', () => {
 });
 
 describe('robustness (T-3x3-02, T-3x3-04)', () => {
-  it('a 200,000-character pathological single line extracts in under 250 ms without throwing', () => {
-    const unit = '**`[VERIFIED: x|(├── Pitfall 1 ( - **D-01:** ┌─ ';
-    const body = unit.repeat(Math.ceil(200_000 / unit.length)).slice(0, 200_000);
-    const started = performance.now();
-    const b = extractResearchBriefing(`## Summary\n${body}\n## Common Pitfalls\n### Pitfall 1 (${body}): x\n${body}`);
-    expect(performance.now() - started).toBeLessThan(250);
+  // A fixed millisecond budget flakes under parallel load and proves nothing about the shape of the cost
+  // (T-3x3-02, Pitfall 11). Each hostile shape is built at size n and at 8n and timed with measureGrowth:
+  // a linear scan reads about 8, a quadratic one about 64. Inputs are built in make(), outside the timed
+  // region. The 200,000-character single line stays below as a no-throw sentinel.
+  const PATHOLOGICAL_UNIT = '**`[VERIFIED: x|(├── Pitfall 1 ( - **D-01:** ┌─ ';
+  const pathologicalLine = (size: number): string =>
+    PATHOLOGICAL_UNIT.repeat(Math.ceil(size / PATHOLOGICAL_UNIT.length)).slice(0, size);
+  const pathologicalBody = (size: number): string => {
+    const body = pathologicalLine(size);
+    return `## Summary\n${body}\n## Common Pitfalls\n### Pitfall 1 (${body}): x\n${body}`;
+  };
+
+  it('a 200,000-character pathological single line extracts without throwing', () => {
+    const b = extractResearchBriefing(pathologicalBody(200_000));
     expect(b.sections.length).toBe(2);
   });
 
-  it('many small pathological sections stay linear', () => {
+  it('a pathological single line grows no faster than linearly', () => {
+    const growth = measureGrowth({ make: pathologicalBody, run: (input) => void extractResearchBriefing(input) });
+    expect(
+      growth.ratio,
+      `single line: ${growth.t1.toFixed(2)}ms at ${growth.n} characters, ${growth.t2.toFixed(2)}ms at 8x`,
+    ).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('many small pathological sections grow no faster than linearly', () => {
     const chunk = '## Standard Stack\n| a | b |\n|---|---|\n| ' + '`x` [WARNING: '.repeat(200) + ' |\n';
-    const started = performance.now();
-    extractResearchBriefing(chunk.repeat(200));
-    expect(performance.now() - started).toBeLessThan(500);
+    // Size here counts sections, not characters: 25 sections is about 70 KB, so 8x stays near 560 KB.
+    const growth = measureGrowth({
+      make: (sections) => chunk.repeat(sections),
+      run: (input) => void extractResearchBriefing(input),
+      startSize: 25,
+      maxSize: 1600,
+    });
+    expect(
+      growth.ratio,
+      `small sections: ${growth.t1.toFixed(2)}ms at ${growth.n} sections, ${growth.t2.toFixed(2)}ms at 8x`,
+    ).toBeLessThan(GROWTH_LIMIT);
   });
 
   it('never throws on empty or degenerate input', () => {

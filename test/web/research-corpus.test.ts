@@ -52,7 +52,7 @@ describe('RESEARCH corpus guard', () => {
   it('finds the corpus', () => {
     // At least 5 Labelore files and the Lendshed RESEARCH files (R6, R8: minimums, never a total).
     expect(LB_FILES.length).toBeGreaterThanOrEqual(5);
-    expect(FX_FILES.length).toBeGreaterThanOrEqual(1);
+    expect(FX_FILES.length).toBeGreaterThanOrEqual(4);
   });
 
   for (const file of FILES) {
@@ -126,5 +126,27 @@ describe('RESEARCH corpus guard', () => {
     expect(b.environment?.rows.filter((r) => r.blocking)).toHaveLength(3);
     expect(b.pitfalls?.items.filter((p) => p.severity === 'CRITICAL')).toHaveLength(3);
     expect(b.sourceOnly).toHaveLength(9);
+  });
+
+  // Summary findings are counted in the files themselves: every paragraph after the first one, up to the
+  // bold "Primary recommendation" line (R5). Phase 01 has a lead plus 2, phase 03 a lead plus 1.
+  const findingsOf = (path: string) =>
+    composeResearchBriefing({
+      kind: 'research',
+      frontmatter: {},
+      structured: { briefing: extractResearchBriefing(bodyOf(path)) },
+      groups: [],
+      planSegments: [],
+    })?.summary?.findings ?? [];
+  it('FX phases/01 Summary has 2 findings', () => {
+    expect(findingsOf(fxPath('phases/01-member-sign-in-sessions/01-RESEARCH.md'))).toHaveLength(2);
+  });
+  it('FX phases/03 Summary has 1 finding', () => {
+    expect(findingsOf(fxPath('phases/03-account-admin-and-sessions/03-RESEARCH.md'))).toHaveLength(1);
+  });
+  it('FX v1.0/03 Summary has 2 findings and the diagram section is present', () => {
+    const path = fxPath('milestones/v1.0-phases/03-catalogue-browsing/03-RESEARCH.md');
+    expect(findingsOf(path)).toHaveLength(2);
+    expect(extractResearchBriefing(bodyOf(path)).architecture?.diagram?.text.split('\n')).toHaveLength(40);
   });
 });
