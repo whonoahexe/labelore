@@ -2,15 +2,16 @@
 // fixtures and the two anchor documents read from disk, plus the T-3x3-02 timing guard and the
 // T-3x3-04 handler guard. Anchor counts were independently confirmed with awk/grep against the
 // source files (never copied from the extractor's own output).
-import { existsSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
-import { SP_PLANNING } from './helpers/studio-portal.ts';
+import { fxPath } from './helpers/fixture-project.ts';
+import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
 import {
   NA_AUDIT,
   PITFALL_LABEL_LINES,
-  SP02_SHAPE,
-  SP04_NUMBERED_PITFALLS,
+  LS02_SHAPE,
+  LS04_NUMBERED_PITFALLS,
   SYNTHETIC_SLOP,
 } from './helpers/research-fixtures.ts';
 import {
@@ -25,7 +26,7 @@ import type { ArtifactRef, RawArtifact } from '../src/planning-repo/types.ts';
 
 const REPO_ROOT = new URL('../', import.meta.url);
 const LB02 = '.planning/milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-RESEARCH.md';
-const SP02 = `${SP_PLANNING}/milestones/v1.0-phases/02-storage-health-status/02-RESEARCH.md`;
+const FX02 = fxPath('milestones/v1.0-phases/02-shed-inventory-health/02-RESEARCH.md');
 
 async function repoBody(path: string): Promise<string> {
   return await readFile(new URL(path, REPO_ROOT), 'utf8');
@@ -131,14 +132,14 @@ describe('extractResearchBriefing — LB v1.0/02 (repo file)', () => {
   });
 });
 
-describe('extractResearchBriefing — SP02_SHAPE fixture', () => {
-  const b = extractResearchBriefing(SP02_SHAPE);
+describe('extractResearchBriefing — LS02_SHAPE fixture', () => {
+  const b = extractResearchBriefing(LS02_SHAPE);
 
   it('stack groups, badges and alternative verdicts', () => {
     const [core, supporting] = b.stack?.groups ?? [];
     expect(core.packages).toHaveLength(6);
     expect(supporting.packages).toHaveLength(3);
-    // Only nix ("Equally legitimate …") is viable; libc ("… Not worth it") and spawn_blocking
+    // Only kernix ("Equally legitimate …") is viable; libc ("… Not worth it") and spawn_blocking
     // ("Simpler-looking, but …") were not chosen.
     expect(b.stack?.alternatives.map((a) => a.verdict)).toEqual([
       'viable',
@@ -148,12 +149,12 @@ describe('extractResearchBriefing — SP02_SHAPE fixture', () => {
       'rejected',
       'later',
     ]);
-    const rustix = core.packages.find((p) => p.name === 'rustix');
-    expect(rustix?.version).toBe('1.1.4');
-    expect(core.packages.find((p) => p.name === 'tokio')?.pinned).toBe(true);
-    expect(core.packages.find((p) => p.name.startsWith('smartctl'))?.hostBinary).toBe(true);
-    expect(core.packages.find((p) => p.name.startsWith('rclone'))?.hostBinary).toBe(true);
-    expect(core.packages.find((p) => p.name === 'tokio')?.version).not.toContain('pinned');
+    const fsstat = core.packages.find((p) => p.name === 'fsstat');
+    expect(fsstat?.version).toBe('1.1.4');
+    expect(core.packages.find((p) => p.name === 'evrun')?.pinned).toBe(true);
+    expect(core.packages.find((p) => p.name.startsWith('bayprobe'))?.hostBinary).toBe(true);
+    expect(core.packages.find((p) => p.name.startsWith('hubctl'))?.hostBinary).toBe(true);
+    expect(core.packages.find((p) => p.name === 'evrun')?.version).not.toContain('pinned');
     expect(b.stack?.installation).toBe(true);
     expect(b.stack?.versionVerification).toBe(true);
   });
@@ -188,7 +189,7 @@ describe('extractResearchBriefing — SP02_SHAPE fixture', () => {
       'MEDIUM',
     ]);
     expect(pitfalls.map((p) => p.code)).toEqual(['F1', 'F2', 'F3', 'F4', 'F5', 'F8', 'F9', null]);
-    expect(pitfalls[0].title).toContain('unmounted tier');
+    expect(pitfalls[0].title).toContain('unmounted shed');
     expect(pitfalls[0].rows[0].label).toBe('What goes wrong');
   });
 
@@ -251,7 +252,7 @@ describe('extractResearchBriefing — pitfalls', () => {
   });
 
   it('parses the SP phases/04 numbered-list shape into 11 titled pitfalls', () => {
-    const b = extractResearchBriefing(SP04_NUMBERED_PITFALLS);
+    const b = extractResearchBriefing(LS04_NUMBERED_PITFALLS);
     const items = b.pitfalls?.items ?? [];
     expect(items).toHaveLength(11);
     expect(items[0].title).toBe('D-05 delete-on-drop contradiction.');
@@ -315,7 +316,7 @@ describe('confidenceLevelOf', () => {
     ['HIGH on the MiniSearch API surface; MEDIUM on UI-shell specifics; LOW/ASSUMED on a', 'MIXED'],
     ['MEDIUM-HIGH (crate versions … MEDIUM …)', 'MEDIUM-HIGH'],
     ['MEDIUM — HIGH on the TOCTOU mechanism', 'MEDIUM'],
-    ['MEDIUM-HIGH — the rclone rc HTTP API', 'MEDIUM-HIGH'],
+    ['MEDIUM-HIGH — the hubctl rc HTTP API', 'MEDIUM-HIGH'],
     ['HIGH for codebase architecture and ZIP API; MEDIUM for production-tunnel behavior', 'MIXED'],
     ['LOW-MEDIUM', 'MEDIUM-LOW'],
     ['**HIGH**', 'HIGH'],
@@ -337,20 +338,44 @@ describe('validUntilShort', () => {
 });
 
 describe('robustness (T-3x3-02, T-3x3-04)', () => {
-  it('a 200,000-character pathological single line extracts in under 250 ms without throwing', () => {
-    const unit = '**`[VERIFIED: x|(├── Pitfall 1 ( - **D-01:** ┌─ ';
-    const body = unit.repeat(Math.ceil(200_000 / unit.length)).slice(0, 200_000);
-    const started = performance.now();
-    const b = extractResearchBriefing(`## Summary\n${body}\n## Common Pitfalls\n### Pitfall 1 (${body}): x\n${body}`);
-    expect(performance.now() - started).toBeLessThan(250);
+  // A fixed millisecond budget flakes under parallel load and proves nothing about the shape of the cost
+  // (T-3x3-02, Pitfall 11). Each hostile shape is built at size n and at 8n and timed with measureGrowth:
+  // a linear scan reads about 8, a quadratic one about 64. Inputs are built in make(), outside the timed
+  // region. The 200,000-character single line stays below as a no-throw sentinel.
+  const PATHOLOGICAL_UNIT = '**`[VERIFIED: x|(├── Pitfall 1 ( - **D-01:** ┌─ ';
+  const pathologicalLine = (size: number): string =>
+    PATHOLOGICAL_UNIT.repeat(Math.ceil(size / PATHOLOGICAL_UNIT.length)).slice(0, size);
+  const pathologicalBody = (size: number): string => {
+    const body = pathologicalLine(size);
+    return `## Summary\n${body}\n## Common Pitfalls\n### Pitfall 1 (${body}): x\n${body}`;
+  };
+
+  it('a 200,000-character pathological single line extracts without throwing', () => {
+    const b = extractResearchBriefing(pathologicalBody(200_000));
     expect(b.sections.length).toBe(2);
   });
 
-  it('many small pathological sections stay linear', () => {
+  it('a pathological single line grows no faster than linearly', () => {
+    const growth = measureGrowth({ make: pathologicalBody, run: (input) => void extractResearchBriefing(input) });
+    expect(
+      growth.ratio,
+      `single line: ${growth.t1.toFixed(2)}ms at ${growth.n} characters, ${growth.t2.toFixed(2)}ms at 8x`,
+    ).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('many small pathological sections grow no faster than linearly', () => {
     const chunk = '## Standard Stack\n| a | b |\n|---|---|\n| ' + '`x` [WARNING: '.repeat(200) + ' |\n';
-    const started = performance.now();
-    extractResearchBriefing(chunk.repeat(200));
-    expect(performance.now() - started).toBeLessThan(500);
+    // Size here counts sections, not characters: 25 sections is about 70 KB, so 8x stays near 560 KB.
+    const growth = measureGrowth({
+      make: (sections) => chunk.repeat(sections),
+      run: (input) => void extractResearchBriefing(input),
+      startSize: 25,
+      maxSize: 1600,
+    });
+    expect(
+      growth.ratio,
+      `small sections: ${growth.t1.toFixed(2)}ms at ${growth.n} sections, ${growth.t2.toFixed(2)}ms at 8x`,
+    ).toBeLessThan(GROWTH_LIMIT);
   });
 
   it('never throws on empty or degenerate input', () => {
@@ -393,9 +418,10 @@ describe('robustness (T-3x3-02, T-3x3-04)', () => {
   });
 });
 
-describe('extractResearchBriefing — SP v1.0/02 (real file, when present)', () => {
-  it.runIf(existsSync(SP02))('matches the pinned anchors', async () => {
-    const b = extractResearchBriefing(await readFile(SP02, 'utf8'));
+describe('extractResearchBriefing — Lendshed v1.0/02 (committed fixture file)', () => {
+  // Every number below was counted with grep/awk in the fixture file itself (R5), then compared with the extractor.
+  it('matches the pinned anchors', () => {
+    const b = extractResearchBriefing(readFileSync(FX02, 'utf8'));
     expect(b.meta.confidence?.level).toBe('HIGH');
     expect(b.meta.breakdown).toHaveLength(6);
     expect(b.meta.preamble).toHaveLength(1);
@@ -407,15 +433,15 @@ describe('extractResearchBriefing — SP v1.0/02 (real file, when present)', () 
     expect(b.audit?.rows.filter((r) => !r.plainApproval)).toHaveLength(4);
     expect(b.audit?.extraNotes).toHaveLength(2);
     expect(b.architecture?.patterns).toHaveLength(3);
-    expect(b.architecture?.antiPatterns).toHaveLength(7);
-    expect(b.handRoll?.rows).toHaveLength(7);
+    expect(b.architecture?.antiPatterns).toHaveLength(6);
+    expect(b.handRoll?.rows).toHaveLength(6);
     expect(b.pitfalls?.items).toHaveLength(8);
     expect(b.questions?.items).toHaveLength(4);
-    expect(b.environment?.rows).toHaveLength(15);
+    expect(b.environment?.rows).toHaveLength(14);
     expect(b.environment?.rows.filter((r) => r.available === 'no')).toHaveLength(4);
     expect(b.environment?.rows.filter((r) => r.blocking)).toHaveLength(3);
-    expect(b.sources?.tiers.map((t) => t.items.length)).toEqual([11, 5, 5]);
-    expect(b.userConstraints?.lockedGroups.reduce((n, g) => n + g.ids.length, 0)).toBe(21);
+    expect(b.sources?.tiers.map((t) => t.items.length)).toEqual([10, 5, 4]);
+    expect(b.userConstraints?.lockedGroups.reduce((n, g) => n + g.ids.length, 0)).toBe(11);
     expect(b.sourceOnly.map((s) => s.label)).toEqual([
       'Installation',
       'Version verification',

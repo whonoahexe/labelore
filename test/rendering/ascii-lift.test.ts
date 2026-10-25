@@ -5,7 +5,7 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
-import { SP02_SHAPE } from '../helpers/research-fixtures.ts';
+import { LS02_SHAPE } from '../helpers/research-fixtures.ts';
 import { SP_PLANNING } from '../helpers/studio-portal.ts';
 import { extractResearchBriefing } from '../../src/planning-repo/handlers/research-briefing.ts';
 import { isLiftableDiagram, liftDiagram } from '../../src/rendering/ascii-lift.ts';
@@ -175,7 +175,7 @@ describe('liftDiagram — caps and cost (T-3x3-02)', () => {
 
 describe('liftDiagram — the corpus diagrams', () => {
   it('studio-portal v1.0/02 (fixture): 9 boxes, exactly 1 widened (BROADCAST BUS), 46 rows', () => {
-    const text = extractResearchBriefing(SP02_SHAPE).architecture?.diagram?.text ?? '';
+    const text = extractResearchBriefing(LS02_SHAPE).architecture?.diagram?.text ?? '';
     const figure = must(liftDiagram(text));
     const boxes = figure.cards.filter((c) => c.kind === 'box');
     expect(boxes).toHaveLength(9);
@@ -212,7 +212,7 @@ describe('liftDiagram — the corpus diagrams', () => {
   });
 
   it('isLiftableDiagram: true for the corpus diagrams, false for prose and code', async () => {
-    expect(isLiftableDiagram(extractResearchBriefing(SP02_SHAPE).architecture?.diagram?.text ?? '')).toBe(true);
+    expect(isLiftableDiagram(extractResearchBriefing(LS02_SHAPE).architecture?.diagram?.text ?? '')).toBe(true);
     expect(
       isLiftableDiagram(
         await diagramOf(
