@@ -10,8 +10,8 @@ import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
 import {
   NA_AUDIT,
   PITFALL_LABEL_LINES,
-  SP02_SHAPE,
-  SP04_NUMBERED_PITFALLS,
+  LS02_SHAPE,
+  LS04_NUMBERED_PITFALLS,
   SYNTHETIC_SLOP,
 } from './helpers/research-fixtures.ts';
 import {
@@ -132,14 +132,14 @@ describe('extractResearchBriefing — LB v1.0/02 (repo file)', () => {
   });
 });
 
-describe('extractResearchBriefing — SP02_SHAPE fixture', () => {
-  const b = extractResearchBriefing(SP02_SHAPE);
+describe('extractResearchBriefing — LS02_SHAPE fixture', () => {
+  const b = extractResearchBriefing(LS02_SHAPE);
 
   it('stack groups, badges and alternative verdicts', () => {
     const [core, supporting] = b.stack?.groups ?? [];
     expect(core.packages).toHaveLength(6);
     expect(supporting.packages).toHaveLength(3);
-    // Only nix ("Equally legitimate …") is viable; libc ("… Not worth it") and spawn_blocking
+    // Only kernix ("Equally legitimate …") is viable; libc ("… Not worth it") and spawn_blocking
     // ("Simpler-looking, but …") were not chosen.
     expect(b.stack?.alternatives.map((a) => a.verdict)).toEqual([
       'viable',
@@ -149,12 +149,12 @@ describe('extractResearchBriefing — SP02_SHAPE fixture', () => {
       'rejected',
       'later',
     ]);
-    const rustix = core.packages.find((p) => p.name === 'rustix');
-    expect(rustix?.version).toBe('1.1.4');
-    expect(core.packages.find((p) => p.name === 'tokio')?.pinned).toBe(true);
-    expect(core.packages.find((p) => p.name.startsWith('smartctl'))?.hostBinary).toBe(true);
-    expect(core.packages.find((p) => p.name.startsWith('rclone'))?.hostBinary).toBe(true);
-    expect(core.packages.find((p) => p.name === 'tokio')?.version).not.toContain('pinned');
+    const fsstat = core.packages.find((p) => p.name === 'fsstat');
+    expect(fsstat?.version).toBe('1.1.4');
+    expect(core.packages.find((p) => p.name === 'evrun')?.pinned).toBe(true);
+    expect(core.packages.find((p) => p.name.startsWith('bayprobe'))?.hostBinary).toBe(true);
+    expect(core.packages.find((p) => p.name.startsWith('hubctl'))?.hostBinary).toBe(true);
+    expect(core.packages.find((p) => p.name === 'evrun')?.version).not.toContain('pinned');
     expect(b.stack?.installation).toBe(true);
     expect(b.stack?.versionVerification).toBe(true);
   });
@@ -189,7 +189,7 @@ describe('extractResearchBriefing — SP02_SHAPE fixture', () => {
       'MEDIUM',
     ]);
     expect(pitfalls.map((p) => p.code)).toEqual(['F1', 'F2', 'F3', 'F4', 'F5', 'F8', 'F9', null]);
-    expect(pitfalls[0].title).toContain('unmounted tier');
+    expect(pitfalls[0].title).toContain('unmounted shed');
     expect(pitfalls[0].rows[0].label).toBe('What goes wrong');
   });
 
@@ -252,7 +252,7 @@ describe('extractResearchBriefing — pitfalls', () => {
   });
 
   it('parses the SP phases/04 numbered-list shape into 11 titled pitfalls', () => {
-    const b = extractResearchBriefing(SP04_NUMBERED_PITFALLS);
+    const b = extractResearchBriefing(LS04_NUMBERED_PITFALLS);
     const items = b.pitfalls?.items ?? [];
     expect(items).toHaveLength(11);
     expect(items[0].title).toBe('D-05 delete-on-drop contradiction.');
@@ -316,7 +316,7 @@ describe('confidenceLevelOf', () => {
     ['HIGH on the MiniSearch API surface; MEDIUM on UI-shell specifics; LOW/ASSUMED on a', 'MIXED'],
     ['MEDIUM-HIGH (crate versions … MEDIUM …)', 'MEDIUM-HIGH'],
     ['MEDIUM — HIGH on the TOCTOU mechanism', 'MEDIUM'],
-    ['MEDIUM-HIGH — the rclone rc HTTP API', 'MEDIUM-HIGH'],
+    ['MEDIUM-HIGH — the hubctl rc HTTP API', 'MEDIUM-HIGH'],
     ['HIGH for codebase architecture and ZIP API; MEDIUM for production-tunnel behavior', 'MIXED'],
     ['LOW-MEDIUM', 'MEDIUM-LOW'],
     ['**HIGH**', 'HIGH'],
