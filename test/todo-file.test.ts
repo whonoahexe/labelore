@@ -1,15 +1,16 @@
 // quick-261023-61k: the todo file projection. Every sketch todo is read as a file (byte-equal to the
-// sketch's own data.js) through the real frontmatter parse, and the numbers pinned here come from the
-// sketch's rendering and data, never from this extractor's own output. The degrade cases follow the
-// debug-session idiom: no string makes the extractor throw, and a hostile 1 MB body stays fast.
-import { existsSync, readFileSync } from 'node:fs';
+// committed fixture) through the real frontmatter parse, and the numbers pinned here are counted in the
+// fixture files themselves, never taken from this extractor's own output. The degrade cases follow the
+// debug-session idiom: no string makes the extractor throw, and a hostile body's cost grows linearly.
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { tryParseFrontmatter } from '../src/planning-repo/frontmatter.ts';
 import { extractTodoFile, levelOf, stampText } from '../src/planning-repo/handlers/todo-file.ts';
 import type { TodoBlock, TodoFileBody } from '../src/planning-repo/handlers/todo-file.ts';
 import { severityOf } from '../src/server/dashboard-ledger.ts';
-import { LB_ROOT, TODO_KEYS, readKeyed, sketchTodoRaw } from './helpers/todo-corpus.ts';
+import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
+import { LB_ROOT, TODO_KEYS, readKeyed } from './helpers/todo-corpus.ts';
 
 function read(key: string): TodoFileBody {
   const file = TODO_KEYS[key];
@@ -32,14 +33,6 @@ function extract(body: string, frontmatter: Record<string, unknown> = {}, path =
   return extractTodoFile({ body, frontmatter, path });
 }
 
-describe('the fixtures are the sketch files', () => {
-  for (const key of Object.keys(TODO_KEYS)) {
-    it(`${key} equals the sketch's raw file`, () => {
-      expect(readKeyed(TODO_KEYS[key])).toBe(sketchTodoRaw(key));
-    });
-  }
-});
-
 describe('extractTodoFile on the sketch todos', () => {
   const pinned: Record<
     string,
@@ -54,15 +47,15 @@ describe('extractTodoFile on the sketch todos', () => {
       theme: string | null;
     }
   > = {
-    dcrop: { status: 'done', folder: 'completed', created: '2026-10-21T10:31:14.064Z', level: 'low', severity: 'minor', priority: 'low', area: 'media', theme: null },
-    dsfx: { status: 'done', folder: 'completed', created: '2026-10-20T12:09:13.550Z', level: 'low', severity: 'cosmetic', priority: null, area: 'ui', theme: null },
-    dcall: { status: 'done', folder: 'completed', created: '2026-10-20T12:09:13.550Z', level: 'high', severity: 'major', priority: null, area: 'calls', theme: null },
+    dcrop: { status: 'done', folder: 'completed', created: '2026-03-24T09:47:31.208Z', level: 'low', severity: 'minor', priority: 'low', area: 'media', theme: null },
+    dsfx: { status: 'done', folder: 'completed', created: '2026-03-23T06:14:52.771Z', level: 'low', severity: 'cosmetic', priority: null, area: 'ui', theme: null },
+    dcall: { status: 'done', folder: 'completed', created: '2026-03-23T07:48:20.116Z', level: 'high', severity: 'major', priority: null, area: 'kiosk', theme: null },
     sretry: { status: 'pending', folder: 'pending', created: '2026-10-12T09:41:00.000Z', level: 'high', severity: 'major', priority: null, area: 'gateway', theme: null },
     srec: { status: 'pending', folder: 'pending', created: '2026-10-15T16:02:00.000Z', level: 'low', severity: 'minor', priority: null, area: 'reporting', theme: null },
     star: { status: 'pending', folder: 'pending', created: '2026-10-16', level: 'medium', severity: null, priority: 'P2', area: null, theme: 'general' },
     sport: { status: 'done', folder: 'completed', created: '2026-10-02T10:00:00.000Z', level: 'low', severity: 'minor', priority: null, area: 'data', theme: null },
-    pcheck: { status: 'pending', folder: 'pending', created: '2026-10-23', level: 'high', severity: null, priority: 'high', area: null, theme: null },
-    pdev: { status: 'done', folder: 'completed', created: '2026-10-23', level: 'medium', severity: null, priority: 'medium', area: null, theme: null },
+    pcheck: { status: 'pending', folder: 'pending', created: '2026-03-26', level: 'high', severity: null, priority: 'high', area: null, theme: null },
+    pdev: { status: 'done', folder: 'completed', created: '2026-03-26', level: 'medium', severity: null, priority: 'medium', area: null, theme: null },
     lfig: { status: 'pending', folder: 'pending', created: '2026-09-29', level: 'medium', severity: null, priority: 'medium', area: null, theme: null },
     ldrift: { status: 'done', folder: 'done', created: '2026-09-20', level: 'medium', severity: null, priority: 'medium', area: null, theme: null },
   };
@@ -78,11 +71,11 @@ describe('extractTodoFile on the sketch todos', () => {
       { raw: 'src/web/pages/filings.tsx', dir: 'src/web/pages/', name: 'filings.tsx', from: null, to: null },
     ]);
     expect(read('dcrop').files.map((file) => file.raw)).toEqual([
-      'server/src/media/image.ts',
-      'server/src/media/avatar.ts',
-      'server/src/media/routes.ts',
-      'web/public/sw.js',
-      'web/components/app/composer.tsx',
+      'api/src/photos/resize.ts',
+      'api/src/photos/avatar.ts',
+      'api/src/photos/routes.ts',
+      'web/public/push-worker.js',
+      'web/components/tray/photo-tray.tsx',
     ]);
     expect(read('dsfx').files).toHaveLength(1);
     expect(read('dcall').files).toHaveLength(3);
@@ -91,7 +84,7 @@ describe('extractTodoFile on the sketch todos', () => {
 
   it('reads the lead and the plan', () => {
     expect(read('dcrop').lead?.heading).toBe('Problem');
-    expect(textOf(read('dcrop').lead?.blocks)).toMatch(/^Images can't be cropped/);
+    expect(textOf(read('dcrop').lead?.blocks)).toMatch(/^Tool photos can't be cropped/);
     expect(read('dcrop').plan).toMatchObject({ kind: 'solution', heading: 'Solution', checks: null });
     expect(read('sretry').plan?.kind).toBe('solution');
     expect(read('srec').lead?.heading).toBe('Problem');
@@ -103,13 +96,13 @@ describe('extractTodoFile on the sketch todos', () => {
 
     const pcheck = read('pcheck');
     expect(pcheck.lead?.heading).toBeNull();
-    expect(textOf(pcheck.lead?.blocks)).toMatch(/^Do these before the Studio Media Workflow milestone/);
+    expect(textOf(pcheck.lead?.blocks)).toMatch(/^Do these before the Steward Desk milestone/);
     expect(pcheck.plan).toMatchObject({ kind: 'checklist', heading: null, checks: { done: 0, total: 4 } });
     expect(pcheck.plan?.blocks).toHaveLength(1);
     expect(pcheck.plan?.blocks[0].kind).toBe('checklist');
     expect(pcheck.extras).toEqual([]);
 
-    expect(textOf(read('pdev').lead?.blocks)).toMatch(/^On 2026-10-22 the vault SSD was unplugged while still mounted\./);
+    expect(textOf(read('pdev').lead?.blocks)).toMatch(/^On 2026-03-25 the north shed's door sensor was unplugged while still docked\./);
     expect(textOf(read('lfig').lead?.blocks)).toMatch(/^Sketch 009's winners, \*\*Diagram B \(Lifted\)\*\*/);
     expect(textOf(read('ldrift').lead?.blocks)).toMatch(/^`ArtifactPage` and `PlanPairPage` maintain a second, parallel page-frame system/);
   });
@@ -131,14 +124,14 @@ describe('extractTodoFile on the sketch todos', () => {
   it('reads the closing, the quick task, the commits and the closed-on day', () => {
     const dcrop = read('dcrop');
     expect(dcrop.closing?.from).toBe('resolution');
-    expect(dcrop.closing?.text).toMatch(/^Done in quick task 261022-m25 \(2026-10-22\)\. What shipped:/);
-    expect(dcrop.quickTask).toBe('261022-m25');
-    expect(dcrop.closedOn).toBe('2026-10-22');
+    expect(dcrop.closing?.text).toMatch(/^Done in quick task 260326-m3d \(2026-03-26\)\. What shipped:/);
+    expect(dcrop.quickTask).toBe('260326-m3d');
+    expect(dcrop.closedOn).toBe('2026-03-26');
     expect(dcrop.commits).toEqual([]);
     const dsfx = read('dsfx');
-    expect(dsfx.closing?.text).toMatch(/^Done in quick task 261022-4gf\. Per the user, there is no Sounds on\/off switch/);
-    expect(dsfx.quickTask).toBe('261022-4gf');
-    expect(dsfx.closedOn).toBe('2026-10-22');
+    expect(dsfx.closing?.text).toMatch(/^Done in quick task 260325-q9v\. Per Maya, there is no Sounds on\/off switch/);
+    expect(dsfx.quickTask).toBe('260325-q9v');
+    expect(dsfx.closedOn).toBe('2026-03-25');
 
     const ldrift = read('ldrift');
     expect(ldrift.closing?.from).toBe('callout');
@@ -160,7 +153,7 @@ describe('extractTodoFile on the sketch todos', () => {
 
   it('collects the note references', () => {
     expect(read('dcrop').noteRefs).toEqual({
-      listed: ['.planning/notes/2026-10-21-crop-images-and-profile-photos.md', '.planning/notes/2026-10-21-round-profile-photos.md'],
+      listed: ['.planning/notes/2026-03-24-crop-tool-photos-and-member-avatars.md', '.planning/notes/2026-03-24-round-member-avatars.md'],
       wiki: [],
       mentioned: [],
       promotedText: null,
@@ -171,7 +164,7 @@ describe('extractTodoFile on the sketch todos', () => {
       expect(read(key).noteRefs).toEqual({
         listed: [],
         wiki: [],
-        mentioned: ['.planning/notes/2026-10-23-studio-media-workflow-milestone-brief.md'],
+        mentioned: ['.planning/notes/2026-03-26-steward-desk-milestone-brief.md'],
         promotedText: null,
       });
     }
@@ -183,11 +176,11 @@ describe('extractTodoFile on the sketch todos', () => {
     }
   });
 
-  const live = join(LB_ROOT, '.planning/todos/pending/001-sketches-page-in-labelore.md');
-  it.runIf(existsSync(live))("reads labelore's own promoted todo (001)", () => {
+  const live = join(LB_ROOT, '.planning/todos/completed/001-sketches-page-in-labelore.md');
+  it("reads labelore's own promoted todo (001)", () => {
     const fm = tryParseFrontmatter(readFileSync(live, 'utf8'));
-    const todo = extractTodoFile({ body: fm.body, frontmatter: fm.data, path: '.planning/todos/pending/001-sketches-page-in-labelore.md' });
-    expect(todo).toMatchObject({ status: 'pending', created: '2026-10-23', level: 'medium', priority: 'P2', theme: 'general' });
+    const todo = extractTodoFile({ body: fm.body, frontmatter: fm.data, path: '.planning/todos/completed/001-sketches-page-in-labelore.md' });
+    expect(todo).toMatchObject({ status: 'done', folder: 'completed', created: '2026-10-23', level: 'medium', priority: 'P2', theme: 'general' });
     expect(todo.lead?.heading).toBe('Goal');
     expect(todo.plan).toMatchObject({ kind: 'acceptance', checks: { done: 5, total: 7 } });
     expect(todo.extras.map((extra) => extra.heading)).toEqual(['Context', 'Progress']);
@@ -400,16 +393,18 @@ describe('extractTodoFile degrades', () => {
     for (const body of samples) expect(() => extract(body, { files: [body], notes: [body] })).not.toThrow();
   });
 
-  it('extracts a 1 MB body with a 200k-character line in under 250 ms', () => {
-    const filler = Array.from({ length: 4000 }, (_, i) => `- item ${i} with [[slug-${i}]] and notes/n${i}.md and quick 261101-a1b`).join('\n');
-    const body = `## Problem\n\n${'x'.repeat(200_000)}\n\n${filler}\n\n${'word '.repeat(150_000)}\n\n## Solution\n\n${'[ ] '.repeat(60_000)}\n`;
-    expect(body.length).toBeGreaterThan(900_000);
-    const started = performance.now();
-    const todo = extract(body);
-    const elapsed = performance.now() - started;
-    expect(todo.lead).not.toBeNull();
-    expect(todo.noteRefs.wiki.length).toBeLessThanOrEqual(100);
-    expect(elapsed).toBeLessThan(250);
+  it('extracts a hostile body with a very long line in time that grows linearly with its size', () => {
+    const growth = measureGrowth({
+      make: (n) => {
+        const filler = Array.from({ length: Math.max(1, Math.floor(n / 50)) }, (_, i) => `- item ${i} with [[slug-${i}]] and notes/n${i}.md and quick 261101-a1b`).join('\n');
+        return `## Problem\n\n${'x'.repeat(n)}\n\n${filler}\n\n${'word '.repeat(Math.floor(n / 5))}\n\n## Solution\n\n${'[ ] '.repeat(Math.floor(n / 4))}\n`;
+      },
+      run: (body) => {
+        const todo = extract(body);
+        if (todo.lead === null || todo.noteRefs.wiki.length > 100) throw new Error('the extraction lost its lead or its wiki cap');
+      },
+    });
+    expect(growth.ratio, `extractTodoFile: ${growth.t1.toFixed(2)}ms at ${growth.n}, ${growth.t2.toFixed(2)}ms at 8x`).toBeLessThan(GROWTH_LIMIT);
   });
 });
 

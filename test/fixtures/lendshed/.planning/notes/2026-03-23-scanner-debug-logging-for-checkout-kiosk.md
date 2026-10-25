@@ -1,0 +1,6 @@
+---
+date: "2026-03-23 07:12"
+promoted: true
+---
+
+Scanner debug logging (camera + serial, no personal data). Observed: 2026-03-22 17:40–17:51, four barcode scans in 11 min each ended in "no match" followed by an immediate rescan; the north-shed handheld (Ana's) lost its serial link 1001 during scan 1 and 1006 after scan 3. Server logs could not say which side gave up, whether the camera or the serial reader produced the code, or when the decoder stalled. Want: Server — log which reader sent each scan frame and who closed the session; timing of each lookup step; token lifetime and mint latency; each reader's link state during the session. Client (batched to the server) — decoder, camera and link state changes; the chosen input type (camera, serial, keyboard wedge) and its baud or resolution; frame statistics sampled every few seconds (decode time, miss rate, brightness, frames per second); torch and focus toggles, reader switches, tab visibility; camera permission errors; browser and OS version. Off limits: no member names or card numbers (member IDs only), no raw frames, no barcode payloads beyond the item ID, no session tokens. Output: every entry carries one sessionId so a whole checkout is one grep.
