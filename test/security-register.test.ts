@@ -243,6 +243,7 @@ describe('extractSecurityRegister — degrade', () => {
       startSize: 20,
       minBaseMs: 0.25,
       maxSize: 3000,
+      floorMs: 0,
     });
     expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
     const largest = growth.n * 8;
