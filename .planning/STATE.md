@@ -5,16 +5,16 @@ milestone_name: Wayfinding
 current_phase: 06
 current_phase_name: Trustworthy Tests and Security Baseline
 status: executing
-stopped_at: Completed 06-05-PLAN.md
-last_updated: "2026-10-25T18:19:27.671Z"
+stopped_at: Completed 06-06-PLAN.md
+last_updated: "2026-10-25T18:45:21.746Z"
 last_activity: 2026-10-25
 last_activity_desc: Phase 06 execution started
-state_head: a664bbff048b6cd4125fc79ebd131d89364952d0
+state_head: 3f8ac95976f9a9e30147e0230f04a33aac9416f6
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 22
-  completed_plans: 5
+  completed_plans: 6
   percent: 0
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-10-25)
 ## Current Position
 
 Phase: 06 (Trustworthy Tests and Security Baseline) — EXECUTING
-Plan: 6 of 22
+Plan: 7 of 22
 Status: Ready to execute
 Last activity: 2026-10-25 — Phase 06 execution started
 
@@ -89,6 +89,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06 P03 | 25 min | 2 tasks | 9 files |
 | Phase 06 P04 | 4 min | 2 tasks | 4 files |
 | Phase 06 P05 | 17 min | 2 tasks | 11 files |
+| Phase 06 P06 | 23 min | 3 tasks | 22 files |
 
 ## Accumulated Context
 
@@ -116,6 +117,8 @@ milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) a
 - [Phase 06]: 06-04: an unparseable config.json has secret strings redacted in raw text by one linear regex, including a value cut off before its closing quote
 - [Phase 06]: Wave 1 UI safety gate (no UI-SPEC for Phase 06) overridden by the user: the only UI change was 06-03's muted '+N more sections' outline row, verified in the browser with Playwright (18 entries, +7 row, no Source-mode row, 390px popover). Later waves still run the gate.
 - [Phase 06]: 06-05: CONTEXT corpus guard pins per file and walks LB: and FX: for minimum counts (10 and 9); Lendshed CONTEXT prose reworded to under 15 percent shared word 6-grams with the reference
+- [Phase 06]: Validation corpus keys: LB: Labelore, DN: the in-repo dense fixture, FX: the eight Lendshed files; every file must be pinned and at least 8 Lendshed files found — FX: now means Lendshed, so the dense fixture needed its own key; Labelore has no VALIDATION file today so its minimum is zero and the unpinned rule guards growth
+- [Phase 06]: Lendshed validation fixtures use fewer map rows than the reference (15, 9, 12, 10) and shifted threat IDs; every pin is a Lendshed count recounted by grep/awk — Trim rule (D-17) and D-06: no carried-over numbers or prose; the extractor agreed with the hand counts on the first run
 
 ### Pending Todos
 
@@ -158,8 +161,8 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-10-25T18:19:27.635Z
-Stopped at: Completed 06-05-PLAN.md
+Last session: 2026-10-25T18:45:21.710Z
+Stopped at: Completed 06-06-PLAN.md
 Resume file: None
 
 ## Operator Next Steps
