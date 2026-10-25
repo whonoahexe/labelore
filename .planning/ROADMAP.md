@@ -91,7 +91,7 @@ any page is built to show them.
    raw file, on its file page and in search results and snippets. The full value never reaches the
    search index, so every page built later inherits the masking. *(SEC-04)*
 
-**Plans**: 19 plans
+**Plans**: 22 plans
 
 Plans:
 - [ ] 06-01-PLAN.md — Tracer: the made-up Lendshed project, its throwing loader, the fail-loud 4198 browser server, the zero-skip gate and the shared fixture server, proven on one CONTEXT file
@@ -102,17 +102,20 @@ Plans:
 - [ ] 06-06-PLAN.md — Discussion-log and validation families on Lendshed
 - [ ] 06-07-PLAN.md — Pattern-map family on Lendshed, Labelore phase 6 PATTERNS re-pinned
 - [ ] 06-08-PLAN.md — Research-briefing family on Lendshed, embedded research excerpts made up
-- [ ] 06-09-PLAN.md — Plan and summary families on Lendshed, two Labelore drift fixes
-- [ ] 06-10-PLAN.md — UAT and security-register families on Lendshed
-- [ ] 06-11-PLAN.md — UI-SPEC, theme and UI-review families on Lendshed
-- [ ] 06-12-PLAN.md — Copied review fixtures replaced by made-up Lendshed reviews
-- [ ] 06-13-PLAN.md — Copied verification and learnings fixtures replaced, learnings server retired
-- [ ] 06-14-PLAN.md — Debug sessions on Lendshed, sibling helper and debug server deleted
-- [ ] 06-15-PLAN.md — Todos (and the notes they point at) on Lendshed, provenance tests deleted
-- [ ] 06-16-PLAN.md — Note family on Lendshed, committed notes copy deleted
-- [ ] 06-17-PLAN.md — Diagram fixtures rewritten column for column, sketch-012 golden regenerated
-- [ ] 06-18-PLAN.md — Labelore-own research and drawer tests re-pinned, last timing and tilde-path fixes
-- [ ] 06-19-PLAN.md — Standing leak and no-skips scans, ledgers, and the full-suite phase gate
+- [ ] 06-09-PLAN.md — Plan family on Lendshed, Labelore 528 drift fix
+- [ ] 06-10-PLAN.md — Summary family on Lendshed, Labelore summary-walker drift fix
+- [ ] 06-11-PLAN.md — UAT and security-register families on Lendshed
+- [ ] 06-12-PLAN.md — UI-SPEC, theme and UI-review families on Lendshed
+- [ ] 06-13-PLAN.md — Copied review fixtures replaced by made-up Lendshed reviews
+- [ ] 06-14-PLAN.md — Copied verification and learnings fixtures replaced, learnings server retired
+- [ ] 06-15-PLAN.md — Debug sessions on Lendshed, sibling helper and debug server deleted
+- [ ] 06-16-PLAN.md — Made-up todos and the notes they point at on Lendshed, todo unit tests repointed, provenance tests deleted
+- [ ] 06-17-PLAN.md — Todo browser spec on the shared fixture server, copied todo fixtures and the todo server deleted
+- [ ] 06-18-PLAN.md — Note family on Lendshed, committed notes copy deleted
+- [ ] 06-19-PLAN.md — Diagram fixtures rewritten column for column, sketch-012 golden regenerated
+- [ ] 06-20-PLAN.md — Diagram timing tests converted to growth under the size caps
+- [ ] 06-21-PLAN.md — Labelore-own research and drawer tests re-pinned, last timing and tilde-path fixes
+- [ ] 06-22-PLAN.md — Standing leak and no-skips scans, ledgers, and the full-suite phase gate
 
 ### Phase 7: Recognised Files and Readable URLs
 

@@ -426,26 +426,34 @@ Facts that shaped this:
 | A8 | `--reporter=json` `numPendingTests` is the right zero-skip signal for Vitest 4.1.11 | Validation Architecture | Observed: the field reported 9 for the 9 `runIf` skips this session [VERIFIED], so low risk |
 | A9 | Suggested fiction: a small tool-lending app (sign-in and sessions, roles and permissions, account admin, bulk export; v1.0: data foundation, inventory health, catalogue browsing, loan transfers) maps one-to-one onto the shapes the tests need | Appendix A | Cosmetic; the executor can choose any theme (D-07) |
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+All six were settled at plan time; each carries its resolution below and in `06-CONTEXT.md`.
 
 1. **Q1: How does D-08's deny list treat "studio-portal" inside the made-up dense tree, its README ledger and its golden?**
    - What we know: those 10 places use the name as a reference to the project the parser must not overfit to (60 lines in `dense.json`). D-04 says leave them; D-08 lists the word.
    - What's unclear: whether the user prefers an exemption or rewording.
    - Recommendation: a named exemption list in the leak test (paths and the single word), each entry with a one-line reason, and an assertion that the exemption list has not grown. Rewording would force a golden regeneration that D-04 forbids.
+   - **RESOLVED (D-16):** named exemption for `fixtures/dense/**`, `fixtures/README.md` and the dense golden, one-line reason each, and the test fails if the list grows.
 
 2. **Q2: How faithful must the rewritten documents be in length?**
    - What we know: the private originals total about 15,000 lines (studio-portal, 52 files that tests touch) plus about 6,000 lines in committed fixtures (reviews 2,800, verifications 1,000, learnings 430, notes and todos 400 across duplicates, diagrams 2,500 including the 1,945-line golden).
    - Recommendation: keep every heading, table shape, frontmatter key, malformed spot and formatting quirk; cut prose to a few lines per section; re-pin counts (D-02). Existing evidence this is acceptable: `test/helpers/research-fixtures.ts` already embeds trimmed excerpts for the same purpose. Confirm with the user before authoring, because it changes the volume of work by a large factor.
+   - **RESOLVED (D-17):** keep structure and trim prose; pinned numbers are recalculated on the trimmed files (D-02).
 
 3. **Q3: Should Labelore's own `.planning/` reads be restricted to archived paths?**
    - What we know: D-03 permits reading it. The 24 live-drift failures prove the active paths rot (research, drawer, a `v1.0-research` archive folder the summary walker did not expect). `ui-spec-corpus` will break when Phase 12 adds a UI-SPEC.
    - Recommendation: allow own-repo reads only for `milestones/v*-...` (frozen) with pins, and for invariant-only walks (every file extracts and composes, count at least N) elsewhere. Move the project-research tests (21) onto a fixture `research/` folder. This is within D-03 (it says "may", not "must").
+   - **RESOLVED (D-18):** own-repo reads are re-pinned to today's files, including the 24 failing live-drift tests; the user accepts updating the pins as planning continues.
 
 4. **Q4: Mask the three key names at any depth, or only top level?** Recommendation: top level only (mirrors GSD and D-09); revisit if the settings page (Phase 12) shows nested integrations.
+   - **RESOLVED (CONTEXT, Claude's Discretion):** top level only.
 
 5. **Q5: Private text outside the scope of D-08.** `.planning/sketches/*/data.js` embed `raw` copies of real notes, todos, debug sessions and reviews (for example `026-dashboard-below-the-head` has 108 deny-list hits across 3 files), and archived milestone folders mention the names hundreds of times (546 hits across 88 files in `milestones/v2.0-quick`). `.mcp.json` and `.claude/CLAUDE.md` contain `/home/cinedise/...`. None of this is under `test/` or `fixtures/`, so TEST-03 as written does not reach it, and D-03 explicitly leaves `.planning/` alone. Surface to the user as a follow-up; do not widen this phase unprompted.
+   - **RESOLVED (D-19):** out of scope and recorded as a follow-up; tests that compare fixtures byte for byte with sketch data are deleted, not re-pinned.
 
 6. **Q6: Git history.** Deleting the files does not purge history. Out of scope per the phase text; mention so the user can decide separately.
+   - **RESOLVED (CONTEXT Deferred Ideas):** git history stays out of scope and is listed with the D-19 follow-up.
 
 ## Environment Availability
 
