@@ -33,6 +33,8 @@ import { humanizeKind } from '../views/kinds.ts';
 import { resolveViewFor } from '../views/manifests.ts';
 import { unrecognizedNotice } from '../views/fallback.ts';
 import {
+  OUTLINE_ENTRY_CAP,
+  capOutline,
   composeView,
   outlineEntriesOf,
   type ComposedView,
@@ -202,7 +204,9 @@ const WARNING_DISCLOSURE_LABELS: Record<Exclude<ArtifactWarningTone, null>, stri
 
 /** Headings the outline renders. Shared with the layout so the grid knows whether column 1 is filled. */
 function outlineHeadings(document: RenderedDocument): RenderedDocument['headings'] {
-  const headings = document.headings.filter((heading) => heading.depth <= 3).slice(0, 18);
+  const headings = document.headings
+    .filter((heading) => heading.depth <= 3)
+    .slice(0, OUTLINE_ENTRY_CAP);
   return headings.length < 2 ? [] : headings;
 }
 
@@ -506,14 +510,16 @@ function ViewReader({
   shown: RenderedDocument;
 }): React.JSX.Element {
   const rawEntries = outlineEntriesOf(composed);
-  const entries = rawEntries.length < 2 ? [] : rawEntries;
+  // Only the listing is capped (SEC-03): every block below still renders. Scrolling into an omitted
+  // section keeps the last listed entry active, because only listed ids are observed.
+  const { listed: entries, omitted } = capOutline(rawEntries.length < 2 ? [] : rawEntries);
   const activeId = useActiveSection(entries.map((entry) => entry.id));
   return (
     <div
       className="document-reader-layout"
       data-outline={entries.length > 0 ? 'true' : 'false'}
     >
-      <DocumentOutline entries={entries} activeId={activeId} />
+      <DocumentOutline entries={entries} activeId={activeId} omitted={omitted} />
       <article className="document-canvas" aria-label={`${title} document`}>
         {composed.blocks.map((block) => {
           if (block.kind === 'section') {

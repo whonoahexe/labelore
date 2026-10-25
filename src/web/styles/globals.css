@@ -4678,6 +4678,14 @@ a.todo-title:hover {
   color: var(--primary);
 }
 
+/* SEC-03/D-14: the plain-text "+N more sections" line closing a capped outline. Not a link, so it
+   carries the link colour and size but no hover or active state. */
+.document-outline li[data-overflow='true'] {
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  line-height: var(--lh-snug);
+}
+
 /* READ-07/D-13: the single currently-tracked entry. Same accent transition as
    .source-link:hover, plus a squared left-gutter bar mirroring
    .status-chip[data-signal='phase']::before's marker language (no border-radius). */
