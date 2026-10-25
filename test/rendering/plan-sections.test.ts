@@ -1,7 +1,7 @@
-import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
-import { SP_PLANNING } from '../helpers/studio-portal.ts';
+import { fxPath } from '../helpers/fixture-project.ts';
+import { GROWTH_LIMIT, measureGrowth } from '../helpers/growth.ts';
 import type { Artifact } from '../../src/domain/model.ts';
 import { buildReferenceRegistry, type ReferenceRegistry } from '../../src/presentation/references.ts';
 import { phaseKeyOf, buildPlanUrl } from '../../src/presentation/routes.ts';
@@ -9,9 +9,8 @@ import { createArtifactRenderer } from '../../src/rendering/markdown.ts';
 import type { PhaseDto, ProjectPresentation } from '../../src/server/project-presentation.ts';
 import { emptyLedger } from '../../src/server/dashboard-ledger.ts';
 
-const CORPUS_PLAN_PATH =
-  process.env.LABELORE_CORPUS ??
-  `${SP_PLANNING}/phases/01-portal-owned-identity-sessions/01-01-PLAN.md`;
+// A made-up Lendshed PLAN that uses an unrecognised wrapper (scope_note); a missing file throws.
+const CORPUS_PLAN_PATH = fxPath('phases/01-member-sign-in-sessions/01-01-PLAN.md');
 
 function artifact(
   body: string,
@@ -170,17 +169,16 @@ A line break<br>and an image<img src="x">follow.`),
     expect(rendered.warnings.some((warning) => warning.includes('unclosed'))).toBe(false);
   });
 
-  it.runIf(existsSync(CORPUS_PLAN_PATH))(
-    'renders the exact real GSD PLAN the UAT flagged with no literal wrapper text',
-    async () => {
-      const renderer = await createArtifactRenderer();
-      const body = await readFile(CORPUS_PLAN_PATH, 'utf8');
-      const rendered = await renderer.render(artifact(body.replace(/^---[\s\S]*?---\n/, '')));
+  it('renders a PLAN with a scope_note wrapper and no literal wrapper text', async () => {
+    const renderer = await createArtifactRenderer();
+    const body = await readFile(CORPUS_PLAN_PATH, 'utf8');
+    expect(body).toContain('<scope_note>');
+    const rendered = await renderer.render(artifact(body.replace(/^---[\s\S]*?---\n/, '')));
 
-      expect(rendered.html).not.toMatch(/&lt;\/?[a-z][\w-]*&gt;/i);
-      expect(rendered.html).not.toMatch(/&#x3C;\/?[a-z][\w-]*&#x3E;/i);
-    },
-  );
+    expect(rendered.html).toContain('data-plan-section="scope_note"');
+    expect(rendered.html).not.toMatch(/&lt;\/?[a-z][\w-]*&gt;/i);
+    expect(rendered.html).not.toMatch(/&#x3C;\/?[a-z][\w-]*&#x3E;/i);
+  });
 });
 
 describe('recognition decides presentation only (plan-segments.ts / markdown.ts contract)', () => {
@@ -437,18 +435,32 @@ Unknown wrapper.
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('segments a 1 MB body holding pathological tag lines in linear time', async () => {
+  // A fixed millisecond budget flakes under parallel load and proves nothing about the shape of the cost
+  // (Pitfall 11). Each pathological tag line is built at size n and at 8n, outside the timed region, and
+  // timed with measureGrowth: a linear segmenter reads about 8, a quadratic one about 64. The shapes are
+  // the original 1 MB bodies scaled by n / 1,000,000, so they keep their proportions.
+  const PATHOLOGICAL: [string, (n: number) => string][] = [
+    ['a run of unfinished opening tags', (n) => `x\n${'<a '.repeat(Math.floor(n * 0.2))}\n${'y'.repeat(Math.floor(n * 0.4))}`],
+    ['backticks glued to opening tags', (n) => `${'``<a '.repeat(Math.floor(n * 0.05))}\n${'z'.repeat(Math.floor(n * 0.4))}`],
+    ['one very long tag name', (n) => `<${'a'.repeat(Math.floor(n * 0.2))}\n${'b'.repeat(Math.floor(n * 0.4))}`],
+    ['a tag name of repeated dashes', (n) => `<${'a-'.repeat(Math.floor(n * 0.1))}\n`],
+  ];
+
+  it.each(PATHOLOGICAL)('segments %s with no faster than linear growth', async (_label, make) => {
     const { segmentPlanBody } = await import('../../src/rendering/plan-segments.ts');
-    const bodies = [
-      `x\n${'<a '.repeat(200_000)}\n${'y'.repeat(400_000)}`,
-      `${'``<a '.repeat(50_000)}\n${'z'.repeat(400_000)}`,
-      `<${'a'.repeat(200_000)}\n${'b'.repeat(400_000)}`,
-      `<${'a-'.repeat(100_000)}\n`,
-    ];
-    for (const body of bodies) {
-      const started = performance.now();
-      segmentPlanBody(body);
-      expect(performance.now() - started).toBeLessThan(250);
+    const growth = measureGrowth({ make, run: (body) => void segmentPlanBody(body) });
+    expect(
+      growth.ratio,
+      `segmentPlanBody: ${growth.t1.toFixed(2)}ms at ${growth.n} characters, ${growth.t2.toFixed(2)}ms at 8x`,
+    ).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('still segments the original 1 MB shapes without throwing', async () => {
+    const { segmentPlanBody } = await import('../../src/rendering/plan-segments.ts');
+    for (const [, make] of PATHOLOGICAL) {
+      const body = make(1_000_000);
+      expect(body.length).toBeGreaterThan(200_000);
+      expect(() => segmentPlanBody(body)).not.toThrow();
     }
   });
 });
