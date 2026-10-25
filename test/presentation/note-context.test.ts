@@ -2,7 +2,7 @@
 // became or is related to - status from the folder, weight, area, title, resolution excerpt, in-app URL
 // and the notes batched into the same todo - from the cached presentation alone, through the relation the
 // TODO page shares. Pinned values come from the sketch's gen-data parse of its own data (independent of
-// this module); the fixtures are the committed fixture project, the synthetic fixture and labelore's own
+// this module); the fixtures are Lendshed (the made-up fixture project), the synthetic fixture and labelore's own
 // notes and todos loaded as one in-memory project.
 import { beforeAll, describe, expect, it } from 'vitest';
 import { InMemoryPlanningFilesystem } from '../../src/planning-fs/in-memory-fs.ts';
@@ -31,7 +31,7 @@ describe('the notes that became a todo', () => {
     const { todos } = contextOf('dcrop');
     expect(todos).toHaveLength(1);
     const todo = todos[0];
-    expect(todo.path).toBe(`${TODO}completed/2026-10-21-add-crop-and-round-profile-photos.md`);
+    expect(todo.path).toBe(`${TODO}completed/2026-03-24-add-crop-and-round-member-avatars.md`);
     expect(todo).toMatchObject({
       relation: 'became',
       via: 'frontmatter',
@@ -40,50 +40,50 @@ describe('the notes that became a todo', () => {
       weightKind: 'severity',
       level: 'low',
       area: 'media',
-      title: 'Add crop and round profile photos',
+      title: 'Add crop and round member avatars',
     });
-    expect(todo.resolution?.startsWith('Done in quick task 261022-m25 (2026-10-22). What shipped: · A hand-written cropper')).toBe(true);
+    expect(todo.resolution?.startsWith('Done in quick task 260326-m3d (2026-03-26). What shipped: · A hand-written cropper')).toBe(true);
     expect(todo.url).toEqual(expect.any(String));
     expect(todo.batchedWith).toHaveLength(1);
-    expect(todo.batchedWith[0]).toMatchObject({ path: NOTE_FILES.dround, date: '2026-10-21 15:58' });
-    expect(todo.batchedWith[0].text.startsWith('Round profile photos everywhere, including the notification icon.')).toBe(true);
+    expect(todo.batchedWith[0]).toMatchObject({ path: NOTE_FILES.dround, date: '2026-03-24 09:20' });
+    expect(todo.batchedWith[0].text.startsWith('Round member avatars everywhere, push icon included.')).toBe(true);
     expect(todo.batchedWith[0].text.length).toBeLessThanOrEqual(111);
     expect(todo.batchedWith[0].url).toEqual(expect.any(String));
   });
 
   it('dround: the same todo with dcrop batched in', () => {
     const { todos } = contextOf('dround');
-    expect(todos.map((todo) => todo.path)).toEqual([`${TODO}completed/2026-10-21-add-crop-and-round-profile-photos.md`]);
+    expect(todos.map((todo) => todo.path)).toEqual([`${TODO}completed/2026-03-24-add-crop-and-round-member-avatars.md`]);
     expect(todos[0].batchedWith.map((row) => row.path)).toEqual([NOTE_FILES.dcrop]);
-    expect(todos[0].batchedWith[0].text.startsWith('Crop for images before sending and for profile photos (she asked for it).')).toBe(true);
+    expect(todos[0].batchedWith[0].text.startsWith('Crop tool photos before they are posted, and crop member avatars as well (Teo asked for it).')).toBe(true);
   });
 
   it('dsfx: cosmetic / low, ui, nothing batched', () => {
     const { todos } = contextOf('dsfx');
     expect(todos).toHaveLength(1);
     expect(todos[0]).toMatchObject({
-      path: `${TODO}completed/2026-10-20-sound-effects.md`,
+      path: `${TODO}completed/2026-03-23-checkout-sound-cues.md`,
       relation: 'became',
       via: 'frontmatter',
       status: 'done',
       weight: 'cosmetic',
       level: 'low',
       area: 'ui',
-      title: 'Add synthesised sound effects',
+      title: 'Add synthesised checkout sound cues',
       batchedWith: [],
     });
-    expect(todos[0].resolution?.startsWith('Done in quick task 261022-4gf. Per the user, there is no Sounds on/off switch')).toBe(true);
+    expect(todos[0].resolution?.startsWith('Done in quick task 260325-q9v. Per Maya, there is no Sounds on/off switch')).toBe(true);
   });
 
   it('dcall: major / high, calls, no resolution', () => {
     const { todos } = contextOf('dcall');
     expect(todos).toHaveLength(1);
     expect(todos[0]).toMatchObject({
-      path: `${TODO}completed/2026-10-20-call-debug-logging.md`,
+      path: `${TODO}completed/2026-03-23-scanner-debug-logging.md`,
       weight: 'major',
       level: 'high',
-      area: 'calls',
-      title: 'Add call debug logging (WebRTC + TURN, no personal data)',
+      area: 'kiosk',
+      title: 'Add scanner debug logging (camera + serial, no personal data)',
       resolution: null,
     });
   });
@@ -124,16 +124,16 @@ describe('related todos and the notes with none', () => {
   it('pbrief: two Related todos in path order, both mentioned', () => {
     const { todos } = contextOf('pbrief');
     expect(todos.map((todo) => todo.path)).toEqual([
-      `${TODO}completed/portal-detect-vanished-tier-device.md`,
-      `${TODO}pending/pre-milestone-hardware-and-tier-cleanup.md`,
+      `${TODO}completed/kiosk-detect-vanished-shed-sensor.md`,
+      `${TODO}pending/pre-milestone-sensor-and-shed-cleanup.md`,
     ]);
     expect(todos.map((todo) => [todo.relation, todo.via, todo.status, todo.weight, todo.level, todo.area])).toEqual([
       ['related', 'mentioned', 'done', 'medium', 'medium', null],
       ['related', 'mentioned', 'pending', 'high', 'high', null],
     ]);
     expect(todos.map((todo) => todo.title)).toEqual([
-      "Portal should detect when a tier's device has vanished under its mount",
-      'Pre-milestone: fix server Ethernet, fsck vault, clean up tiers',
+      "Kiosk should detect when a shed's door sensor has vanished from its dock",
+      'Pre-milestone: swap shed Ethernet, re-seat sensors, tidy the shelves',
     ]);
     expect(todos.every((todo) => todo.resolution === null || typeof todo.resolution === 'string')).toBe(true);
   });
@@ -241,9 +241,9 @@ describe('served end to end', () => {
       return (await (await app.request(`/api/documents?route=${encodeURIComponent(dto.key)}`)).json()) as DocumentPayload;
     };
     const served = await documentOf(NOTE_FILES.dcrop);
-    expect(served.noteContext?.todos.map((todo) => todo.path)).toEqual([`${TODO}completed/2026-10-21-add-crop-and-round-profile-photos.md`]);
+    expect(served.noteContext?.todos.map((todo) => todo.path)).toEqual([`${TODO}completed/2026-03-24-add-crop-and-round-member-avatars.md`]);
     expect(served.noteContext).toEqual(JSON.parse(JSON.stringify(contextOf('dcrop'))));
-    expect((await documentOf(`${TODO}completed/2026-10-21-add-crop-and-round-profile-photos.md`)).noteContext).toBeNull();
+    expect((await documentOf(`${TODO}completed/2026-03-24-add-crop-and-round-member-avatars.md`)).noteContext).toBeNull();
     expect((await documentOf(NOTE_FILES.sundo)).noteContext).toEqual({ todos: [] });
   });
 });
