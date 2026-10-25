@@ -4,6 +4,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { SP_PLANNING } from './helpers/studio-portal.ts';
+import { fxPath } from './helpers/fixture-project.ts';
 import { tryParseFrontmatter } from '../src/planning-repo/frontmatter.ts';
 import { extractUatSession } from '../src/planning-repo/handlers/uat-session.ts';
 import type { UatSession } from '../src/planning-repo/handlers/uat-session.ts';
@@ -13,7 +14,7 @@ const LB02 = new URL(
   '../.planning/milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-UAT.md',
   import.meta.url,
 );
-const SP103 = `${SP_PLANNING}/milestones/v1.0-phases/03-file-browsing/03-UAT.md`;
+const FX103 = fxPath('milestones/v1.0-phases/03-catalogue-browsing/03-UAT.md');
 const SP2 = `${SP_PLANNING}/phases/02-roles-permission-enforcement/02-UAT.md`;
 
 function sessionOf(path: URL | string): UatSession {
@@ -85,8 +86,8 @@ describe('extractUatSession — the synthetic testing doc', () => {
 });
 
 describe('extractUatSession — real documents', () => {
-  it.runIf(existsSync(SP103))('studio-portal v1.0/03: six resolved YAML gaps with their resolution fields', () => {
-    const session = sessionOf(SP103);
+  it('Lendshed v1.0/03: six resolved YAML gaps with their resolution fields', () => {
+    const session = sessionOf(FX103);
     expect(session.tests).toHaveLength(6);
     expect(session.tests.every((t) => t.result === 'pass')).toBe(true);
     expect(session.gaps.mode).toBe('items');
@@ -96,7 +97,7 @@ describe('extractUatSession — real documents', () => {
     expect(first.values.resolved_by).toBeTruthy();
     expect(first.values.fix).toBeTruthy();
     expect(first.values.fix_deployed).toBeTruthy();
-    expect(first.artifacts.map((a) => a.path)).toContain('backend/src/lib.rs:82');
+    expect(first.artifacts.map((a) => a.path)).toContain('server/routes.ts:64');
   });
 
   it('labelore v1.0/02: prose gap cards (one with a code block), four extras, the Result line', () => {

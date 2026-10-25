@@ -1,15 +1,15 @@
-// quick-261001-qk7 (QK7-09): real-corpus guards over every UAT.md in this repo's `.planning/`
-// (excluding the sketches), fixtures/dense and `~/studio-portal/.planning/`, plus the sketch's
-// synthetic testing doc named explicitly — the pattern-map-corpus.test.ts idiom (a missing
-// studio-portal checkout skips its files). Every file must extract without throwing, compose to a
-// non-null session through the real handler, and match the counts pinned below. The pinned counts
-// were independently confirmed with awk over the source files (### count and `result:` values
-// inside `## Tests`, `- key:` items and `###` / bullet counts inside `## Gaps…`) — never copied
-// from the extractor's own output.
+// quick-261001-qk7 (QK7-09): corpus guards over every UAT.md in this repo's `.planning/` (excluding the
+// sketches), fixtures/dense and the made-up Lendshed project, plus the sketch's synthetic testing doc
+// named explicitly — the pattern-map-corpus.test.ts idiom. Keys: LB: Labelore's own files, DN: the
+// in-repo dense fixture, FX: Lendshed (walked from FX_PLANNING, so a missing fixture throws instead of
+// skipping), SYN: the sketch doc. Every file must extract without throwing, compose to a non-null
+// session through the real handler, and match the counts pinned below. The Lendshed counts were made by
+// awk over the made-up files themselves (### count and `result:` values inside `## Tests`, `- key:`
+// items and `###` / bullet counts inside `## Gaps…`) — never copied from the extractor's own output.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { SP_PLANNING } from '../helpers/studio-portal.ts';
+import { FX_PLANNING } from '../helpers/fixture-project.ts';
 import { UatHandler } from '../../src/planning-repo/handlers/uat.ts';
 import type { UatSession } from '../../src/planning-repo/handlers/uat-session.ts';
 import type { ArtifactRef, RawArtifact } from '../../src/planning-repo/types.ts';
@@ -21,7 +21,7 @@ const DENSE_PLANNING = new URL('../../fixtures/dense/.planning', import.meta.url
 const SYNTHETIC = new URL('../../.planning/sketches/015-uat-page/synthetic-testing-UAT.md', import.meta.url).pathname;
 
 function walkUat(root: string): string[] {
-  if (!existsSync(root)) return [];
+  if (!existsSync(root)) throw new Error(`UAT corpus root missing: ${root}`);
   const found: string[] = [];
   const stack = [root];
   while (stack.length > 0) {
@@ -66,7 +66,7 @@ const DONE: Omit<Pinned, 'tests' | 'pass'> = {
 /** Keyed by `<repo>:<path suffix>`. */
 const PINNED: Record<string, Pinned> = {
   'SYN:synthetic': { tests: 7, pass: 0, issue: 2, blocked: 1, skipped: 1, pending: 3, gaps: 2, mode: 'items', live: true, extras: [] },
-  'FX:phases/01-identity-slice/01-UAT.md': { ...DONE, tests: 2, pass: 2 },
+  'DN:phases/01-identity-slice/01-UAT.md': { ...DONE, tests: 2, pass: 2 },
   'LB:milestones/v1.0-phases/01-read-layer-domain-model/01-UAT.md': { ...DONE, tests: 23, pass: 23 },
   'LB:milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-UAT.md': {
     ...DONE,
@@ -79,16 +79,13 @@ const PINNED: Record<string, Pinned> = {
   'LB:milestones/v1.0-phases/03-search-browsing-traceability/03-UAT.md': { ...DONE, tests: 4, pass: 4 },
   'LB:milestones/v1.0-phases/04-portability-degradation-hardening/04-UAT.md': { ...DONE, tests: 9, pass: 9 },
   'LB:milestones/v1.1-phases/05-per-type-document-views/05-UAT.md': { ...DONE, tests: 4, pass: 4, extras: ['Deferred Follow-Ups'] },
-  'SP:milestones/v1.0-phases/03-file-browsing/03-UAT.md': { ...DONE, tests: 6, pass: 6, gaps: 6, mode: 'items' },
-  'SP:phases/01-portal-owned-identity-sessions/01-UAT.md': { ...DONE, tests: 7, pass: 6, skipped: 1, extras: ['Notes'] },
-  'SP:phases/02-roles-permission-enforcement/02-UAT.md': { ...DONE, tests: 3, pass: 3, gaps: 4, mode: 'prose' },
-  'SP:phases/03-account-administration-session-control/03-UAT.md': { ...DONE, tests: 5, pass: 5, gaps: 1, mode: 'items' },
+  'FX:milestones/v1.0-phases/03-catalogue-browsing/03-UAT.md': { ...DONE, tests: 6, pass: 6, gaps: 6, mode: 'items' },
 };
 
 const FILES: { key: string; path: string }[] = [
   ...walkUat(REPO_PLANNING).map((path) => ({ key: `LB:${relative(REPO_PLANNING, path)}`, path })),
-  ...walkUat(DENSE_PLANNING).map((path) => ({ key: `FX:${relative(DENSE_PLANNING, path)}`, path })),
-  ...walkUat(SP_PLANNING).map((path) => ({ key: `SP:${relative(SP_PLANNING, path)}`, path })),
+  ...walkUat(DENSE_PLANNING).map((path) => ({ key: `DN:${relative(DENSE_PLANNING, path)}`, path })),
+  ...walkUat(FX_PLANNING).map((path) => ({ key: `FX:${relative(FX_PLANNING, path)}`, path })),
   { key: 'SYN:synthetic', path: SYNTHETIC },
 ];
 
@@ -118,12 +115,11 @@ function parse(path: string): { session: UatSession; input: ViewInput } {
 }
 
 describe('UAT corpus', () => {
-  it('finds the pinned documents (a missing studio-portal checkout drops its four)', () => {
+  it('finds the pinned documents and at least the minimum of each corpus', () => {
     const present = new Set(FILES.map((f) => f.key));
-    for (const key of Object.keys(PINNED)) {
-      if (key.startsWith('SP:') && !existsSync(SP_PLANNING)) continue;
-      expect(present.has(key), key).toBe(true);
-    }
+    for (const key of Object.keys(PINNED)) expect(present.has(key), key).toBe(true);
+    expect(FILES.filter((f) => f.key.startsWith('LB:')).length).toBeGreaterThanOrEqual(5);
+    expect(FILES.filter((f) => f.key.startsWith('FX:')).length).toBeGreaterThanOrEqual(1);
     // Nothing unpinned: a new UAT in the corpus must be pinned here on purpose.
     for (const file of FILES) expect(PINNED[file.key], `unpinned ${file.key}`).toBeDefined();
   });
@@ -154,7 +150,7 @@ describe('UAT corpus', () => {
   });
 
   it('the dense fixture keeps the author\'s own empty-gaps line', () => {
-    const dense = FILES.find((f) => f.key.startsWith('FX:'));
+    const dense = FILES.find((f) => f.key.startsWith('DN:'));
     expect(dense).toBeDefined();
     const { input } = parse((dense as { path: string }).path);
     expect(composeUatSession(input)?.gaps.emptyLine).toBe('None — all tests passed.');
