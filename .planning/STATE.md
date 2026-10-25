@@ -5,16 +5,16 @@ milestone_name: Wayfinding
 current_phase: 06
 current_phase_name: Trustworthy Tests and Security Baseline
 status: executing
-stopped_at: Phase 6 context gathered
-last_updated: "2026-10-25T12:57:09.926Z"
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-10-25T13:17:49.250Z"
 last_activity: 2026-10-25
-last_activity_desc: Roadmap for milestone v2.1 Wayfinding revised to 8 phases (Phases 6-13)
-state_head: eac07ef38c039d71fd4cccd593da79455b36fc78
+last_activity_desc: Phase 06 execution started
+state_head: db7c94598894d9145761417ad8397e17f98bba5b
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 22
-  completed_plans: 0
+  completed_plans: 1
   percent: 0
 ---
 
@@ -25,14 +25,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-25)
 
 **Core value:** Open the dashboard on a GSD project and immediately know where the work stands and where any planning artifact lives — without reading a single file by hand.
-**Current focus:** Milestone v2.1 Wayfinding, Phases 6-13 (8 phases). Next up: Phase 6, Trustworthy Tests and Security Baseline
+**Current focus:** Phase 06 — Trustworthy Tests and Security Baseline
 
 ## Current Position
 
-Phase: 06 (Trustworthy Tests and Security Baseline) — READY TO EXECUTE
-Plan: Not started
+Phase: 06 (Trustworthy Tests and Security Baseline) — EXECUTING
+Plan: 2 of 22
 Status: Ready to execute
-Last activity: 2026-10-25 — Roadmap for v2.1 revised to 8 phases (6-13), 48/48 requirements mapped
+Last activity: 2026-10-25 — Phase 06 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -84,6 +84,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 05 P04 | 20min | 2 tasks | 8 files |
 | Phase 05 P05 | 235min | 3 tasks | 16 files |
 | Phase 05 P06 | 20min | 2 tasks | 6 files |
+| Phase 06 P01 | 10 min | 2 tasks | 22 files |
 
 ## Accumulated Context
 
@@ -101,6 +102,8 @@ milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) a
 - [Phase 05]: 05-05: fallback pattern for unregistered kinds (VIEW-06) — resolveViewFor folds fallback.ts's synthesized structural-read manifest into the one dispatch path ArtifactPage calls; resolveView stays registry-only for 05-06's completeness test. — An unrecognized artifact.kind still gets a real ViewManifest (nested frontmatter -> headed sections -> full document), never a null branch, so the page has exactly one render path and a quiet, honest 'Unrecognized type' marker rather than a silent fallback to the old source reader.
 - [Phase 05]: 05-06: Registered the remaining 15 view manifests (all 18 VIEW_KINDS complete) with a bidirectional registry-completeness test, ran the UI-06 conformance sweep, and fixed a CommonMark HTML-block bug in ContextHandler where the four underscore-free CONTEXT.md wrapper tags (domain/decisions/specifics/deferred) swallowed the immediately-following heading line — the context manifest's own promotion order (Implementation Decisions first) now proves out against the real corpus.
 - [v2.1 roadmap]: Phase order follows research: test health and security first, then file recognition with the URL scheme (one phase, because the folder table drives both), then several projects, then page families most-seen first, then settings and Source mode, then search and the palette last. The codebase-only project requirement sits whole with the codebase-map pages, after the switcher, so a map-only project opens from the command line, the switcher and the folder scan at once. The made-up example rule lands with the spec and check pages, the first phase that builds types never seen on this machine. The three v1.1 UI-review items fold into the Source mode phase, which touches the same outline chrome. The roadmap is capped at eight phases at the user's request, so the page families are merged into three phases: review, audit and root documents (Phase 9); codebase map, specification and check pages (Phase 10); and exploration, handoff, report and workstream pages (Phase 11), with workstreams built last within it.
+- [Phase 06]: 06-01: Lendshed is the single made-up fixture project; tests and Playwright throw when it is missing and never fall back to another project
+- [Phase 06]: 06-01: test:gate fails on any failed, skipped or todo test, an empty run, or a non-zero vitest exit
 
 ### Pending Todos
 
@@ -143,9 +146,9 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-10-25T09:44:31.755Z
-Stopped at: Phase 6 context gathered
-Resume file: .planning/phases/06-trustworthy-tests-and-security-baseline/06-CONTEXT.md
+Last session: 2026-10-25T13:17:49.214Z
+Stopped at: Completed 06-01-PLAN.md
+Resume file: None
 
 ## Operator Next Steps
 
