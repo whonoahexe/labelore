@@ -83,6 +83,15 @@ describe('outline component contract', () => {
     expect(contents).not.toMatch(/pushState|replaceState|location\.hash|useNavigate/);
   });
 
+  it('document-outline.tsx renders the plain overflow row and artifact-page.tsx feeds it the cap', async () => {
+    const outline = await source('src/web/components/document-outline.tsx');
+    expect(outline).toContain('data-overflow');
+    const page = await source('src/web/pages/artifact-page.tsx');
+    expect(page).toContain('capOutline(');
+    expect(page).toContain('OUTLINE_ENTRY_CAP');
+    expect(page).toContain('omitted={omitted}');
+  });
+
   it('use-active-section.ts tracks intersection only, with no URL side effects', async () => {
     const contents = await source('src/web/components/use-active-section.ts');
     expect(contents).toContain('IntersectionObserver');

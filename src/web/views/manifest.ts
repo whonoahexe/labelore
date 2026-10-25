@@ -314,3 +314,17 @@ export function composeView(manifest: ViewManifest, input: ViewInput): ComposedV
 export function outlineEntriesOf(view: ComposedView): OutlineEntry[] {
   return view.blocks.map((block) => ({ id: block.id, label: block.label }));
 }
+
+/** SEC-03 (D-13): the most outline entries either reading mode lists. A hostile or enormous file can
+ * carry thousands of headings; the outline shows this many and says how many it left out. */
+export const OUTLINE_ENTRY_CAP = 18;
+
+/** Caps what the outline LISTS, never what exists (Pitfall 33): `outlineEntriesOf` stays uncapped and
+ * pure, so `composeView` still emits every block and every view-block id is still in the document.
+ * `omitted` is the exact count of entries left off the list. */
+export function capOutline<T>(entries: T[]): { listed: T[]; omitted: number } {
+  return {
+    listed: entries.slice(0, OUTLINE_ENTRY_CAP),
+    omitted: Math.max(0, entries.length - OUTLINE_ENTRY_CAP),
+  };
+}

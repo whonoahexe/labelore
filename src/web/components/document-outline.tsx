@@ -13,14 +13,22 @@ export interface OutlineEntry {
   depth?: number;
 }
 
-function OutlineList({
+/** SEC-03 (D-14): the quiet line that closes a capped outline. Plain text on purpose — not a link,
+ * no class name, no icon or glyph — so it reads as a count, not a control. */
+function overflowLabel(omitted: number): string {
+  return `+${omitted} more ${omitted === 1 ? 'section' : 'sections'}`;
+}
+
+export function OutlineList({
   entries,
   activeId,
   onSelect,
+  omitted = 0,
 }: {
   entries: OutlineEntry[];
   activeId?: string | null;
   onSelect?: () => void;
+  omitted?: number;
 }): React.JSX.Element {
   return (
     <ol>
@@ -35,6 +43,7 @@ function OutlineList({
           </a>
         </li>
       ))}
+      {omitted > 0 ? <li data-overflow="true">{overflowLabel(omitted)}</li> : null}
     </ol>
   );
 }
@@ -42,9 +51,11 @@ function OutlineList({
 export function DocumentOutline({
   entries,
   activeId,
+  omitted = 0,
 }: {
   entries: OutlineEntry[];
   activeId?: string | null;
+  omitted?: number;
 }): React.JSX.Element | null {
   const [open, setOpen] = useState(false);
   if (entries.length === 0) return null;
@@ -54,7 +65,7 @@ export function DocumentOutline({
     <>
       <nav className="document-outline" aria-label="On this page">
         <p>On this page</p>
-        <OutlineList entries={entries} activeId={activeId} />
+        <OutlineList entries={entries} activeId={activeId} omitted={omitted} />
       </nav>
       <Popover.Root open={open} onOpenChange={setOpen}>
         <Popover.Trigger className="document-outline-trigger">
@@ -69,7 +80,12 @@ export function DocumentOutline({
             positionMethod="fixed"
           >
             <Popover.Popup className="document-outline" aria-label="On this page" initialFocus>
-              <OutlineList entries={entries} activeId={activeId} onSelect={() => setOpen(false)} />
+              <OutlineList
+                entries={entries}
+                activeId={activeId}
+                onSelect={() => setOpen(false)}
+                omitted={omitted}
+              />
             </Popover.Popup>
           </Popover.Positioner>
         </Popover.Portal>
