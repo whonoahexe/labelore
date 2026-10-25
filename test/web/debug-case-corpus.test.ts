@@ -16,10 +16,11 @@ import { composeDebugCase } from '../../src/web/views/debug-case.ts';
 import type { ComposedDebugCase } from '../../src/web/views/debug-case.ts';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 import { DEBUG_SIBLING_ROOTS, SKETCH_FILES } from '../helpers/debug-corpus.ts';
+import { FX_ROOT, fxPath } from '../helpers/fixture-project.ts';
 
 const LB_ROOT = new URL('../..', import.meta.url).pathname.replace(/\/$/, '');
 const SYN = join(LB_ROOT, 'test/fixtures/debug/search-index-goes-stale.md');
-const ROOTS = [LB_ROOT, ...DEBUG_SIBLING_ROOTS];
+const ROOTS = [LB_ROOT, FX_ROOT, ...DEBUG_SIBLING_ROOTS];
 
 function walk(dir: string): string[] {
   if (!existsSync(dir)) return [];
@@ -178,16 +179,29 @@ describe('every debug session on this machine', () => {
   });
 });
 
-describe('the four sibling sketch sessions', () => {
-  const find = (file: string): Session | undefined => sessions.find((s) => file.endsWith(s.path) && file.startsWith(s.label.split(':')[0]));
+describe('the Lendshed sessions', () => {
+  const fxSession = (relative: string): Session => {
+    fxPath(`debug/${relative}`);
+    const hit = sessions.find((s) => s.label === `${FX_ROOT}:.planning/debug/${relative}`);
+    if (hit === undefined) throw new Error(`the corpus walk did not find Lendshed debug/${relative}`);
+    return hit;
+  };
 
-  it.runIf(existsSync(SKETCH_FILES.dd))('deid awaiting a check', () => {
-    const m = compose(find(SKETCH_FILES.dd)!)!;
+  it('finds at least one Lendshed session', () => {
+    expect(sessions.filter((s) => s.label.startsWith(`${FX_ROOT}:`)).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('loan history: awaiting a check', () => {
+    const m = compose(fxSession('loan-history-picks-wrong-shed.md'))!;
     expect([m.status.label, m.lead.variant, m.lead.next?.label]).toEqual(['Waiting on you', 'awaiting', 'What you need to check']);
-    expect(m.suspects.columns.map((c) => c.items.length)).toEqual([2, 5, 0]);
-    expect(m.evidence?.total).toBe(15);
+    expect(m.suspects.columns.map((c) => c.items.length)).toEqual([2, 4, 0]);
+    expect(m.evidence?.total).toBe(13);
     expect(m.also.map((a) => a.label)).toEqual(['Constraints', 'Reasoning checkpoint', 'Frontmatter']);
   });
+});
+
+describe('the sibling sketch sessions', () => {
+  const find = (file: string): Session | undefined => sessions.find((s) => file.endsWith(s.path) && file.startsWith(s.label.split(':')[0]));
 
   it.runIf(existsSync(SKETCH_FILES.sa))('sideby diagnosed', () => {
     const m = compose(find(SKETCH_FILES.sa)!)!;

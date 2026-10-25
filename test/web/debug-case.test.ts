@@ -21,11 +21,12 @@ import { composeDebugCase, entriesFor, evidenceFilters, roundBreaks } from '../.
 import type { ComposedDebugCase } from '../../src/web/views/debug-case.ts';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 import { DebugCaseView } from '../../src/web/views/debug-case-components.tsx';
+import { fxPath } from '../helpers/fixture-project.ts';
 
 const LB = new URL('../../.planning/debug/resolved/loading-state-regression.md', import.meta.url).pathname;
 const KB = new URL('../../.planning/debug/knowledge-base.md', import.meta.url).pathname;
 const SYN = new URL('../fixtures/debug/search-index-goes-stale.md', import.meta.url).pathname;
-const DD = join(homedir(), 'Work/Ibis/deid/deid-ui/.planning/debug/mr-series-selection-picks-dwi.md');
+const FX_DD = fxPath('debug/loan-history-picks-wrong-shed.md');
 const SA = join(homedir(), 'Work/Sideby/plan.sideby.me/.planning/debug/sfu-no-audio.md');
 const RS = join(homedir(), 'Work/Ibis/resoundant/.planning/debug/resolved/heartbeat-stops-after-net-drop.md');
 const SR = join(homedir(), 'Work/Sideby/plan.sideby.me/.planning/debug/sfu-reconnect-presence.md');
@@ -159,25 +160,25 @@ describe('the lead of an investigating session', () => {
 });
 
 describe('the sibling sketch sessions, when present', () => {
-  it.runIf(existsSync(DD))('deid: waiting on you, what to check first', () => {
-    const m = page(DD);
+  it('Lendshed loan history: waiting on you, what to check first', () => {
+    const m = page(FX_DD);
     expect(m.status).toEqual({ label: 'Waiting on you', tone: 'in-flight' });
     expect([m.lead.variant, m.lead.kicker]).toEqual(['awaiting', 'Fixed, waiting on your check']);
     expect(m.lead.next?.label).toBe('What you need to check');
-    expect(m.lead.next?.text.startsWith('human opens http://localhost:3001/face-recon/141 (hard reload)')).toBe(true);
+    expect(m.lead.next?.text.startsWith('Ana opens https://steward.lendshed.example/members/88/loans (hard reload)')).toBe(true);
     expect(m.lead.causes?.items.map((c) => c.label)).toEqual(['CODE', 'DATA/ENVIRONMENT']);
     expect(m.lead.fix?.label).toBe('Fix applied');
     expect(m.lead.verification?.chips?.map((c) => c.name)).toEqual([
       'Target test',
       'Mutation check',
-      'No op deletion',
+      'Regression run',
       'Adjacent tests',
       'Revert and reconfirm',
       'Live',
     ]);
     expect(m.lead.files?.items).toHaveLength(5);
-    expect(m.facts.map((f) => `${f.label} ${f.value}`)).toEqual(['Bug class Bohrbug', 'Evidence 15', 'Ruled out 3', 'Rounds 2']);
-    expect(m.head).toMatchObject({ title: 'Mr series selection picks dwi', opened: '23 Sep 2026', updated: '19:40' });
+    expect(m.facts.map((f) => `${f.label} ${f.value}`)).toEqual(['Bug class Bohrbug', 'Evidence 13', 'Ruled out 2', 'Rounds 2']);
+    expect(m.head).toMatchObject({ title: 'Loan history picks wrong shed', opened: '24 Mar 2026', updated: '19:40' });
   });
 
   it.runIf(existsSync(SA))('sideby: diagnosed with a suggestion', () => {
@@ -417,8 +418,11 @@ describe('Suspects', () => {
     expect(syn.suspects.total).toBe(2);
   });
 
-  it.runIf(existsSync(DD) && existsSync(SA) && existsSync(RS) && existsSync(SR))('matches the sibling sessions', () => {
-    expect(columnCounts(page(DD))).toBe('2 / 5 / 0');
+  it('matches the Lendshed awaiting session', () => {
+    expect(columnCounts(page(FX_DD))).toBe('2 / 4 / 0');
+  });
+
+  it.runIf(existsSync(SA) && existsSync(RS) && existsSync(SR))('matches the sibling sessions', () => {
     expect(columnCounts(page(SA))).toBe('1 / 2 / 0');
     expect(page(SA).suspects.columns[0].items[0].kind).toBe('root cause');
     expect(columnCounts(page(RS))).toBe('4 / 3 / 0');
@@ -452,15 +456,18 @@ describe('Evidence log', () => {
     expect(syn.evidence?.defaultFilter).toBe('all');
   });
 
-  it.runIf(existsSync(DD) && existsSync(SR))('marks round dividers across rounds', () => {
-    const dd = page(DD).evidence!;
+  it('marks round dividers across rounds on the Lendshed awaiting session', () => {
+    const dd = page(FX_DD).evidence!;
     expect(dd.multiRound).toBe(true);
     const all = roundBreaks(dd, 'all');
-    expect([...all.keys()]).toEqual([1, 5]);
-    expect(entriesFor(dd, 'all').filter((e) => e.round === [...all.values()][0])).toHaveLength(4);
-    expect(entriesFor(dd, 'all').filter((e) => e.round === [...all.values()][1])).toHaveLength(11);
-    expect(shownNumbers(page(DD), 'confirms')).toEqual([4, 7, 10, 14]);
-    expect(roundBreaks(dd, 'confirms').has(7)).toBe(true);
+    expect([...all.keys()]).toEqual([1, 4]);
+    expect(entriesFor(dd, 'all').filter((e) => e.round === [...all.values()][0])).toHaveLength(3);
+    expect(entriesFor(dd, 'all').filter((e) => e.round === [...all.values()][1])).toHaveLength(10);
+    expect(shownNumbers(page(FX_DD), 'confirms')).toEqual([3, 6, 12]);
+    expect(roundBreaks(dd, 'confirms').has(6)).toBe(true);
+  });
+
+  it.runIf(existsSync(SR))('marks round dividers across five rounds', () => {
     expect(roundBreaks(page(SR).evidence!, 'all').size).toBe(5);
   });
 

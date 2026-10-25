@@ -12,10 +12,11 @@ import { describe, expect, it } from 'vitest';
 import { extractDebugSession, isEmptyValue } from '../src/planning-repo/handlers/debug-session.ts';
 import type { DebugSessionBody } from '../src/planning-repo/handlers/debug-session.ts';
 import { tryParseFrontmatter } from '../src/planning-repo/frontmatter.ts';
+import { fxPath } from './helpers/fixture-project.ts';
 
 const LB = new URL('../.planning/debug/resolved/loading-state-regression.md', import.meta.url).pathname;
 const SYN = new URL('./fixtures/debug/search-index-goes-stale.md', import.meta.url).pathname;
-const DD = join(homedir(), 'Work/Ibis/deid/deid-ui/.planning/debug/mr-series-selection-picks-dwi.md');
+const FX_DD = fxPath('debug/loan-history-picks-wrong-shed.md');
 const SA = join(homedir(), 'Work/Sideby/plan.sideby.me/.planning/debug/sfu-no-audio.md');
 const RS = join(homedir(), 'Work/Ibis/resoundant/.planning/debug/resolved/heartbeat-stops-after-net-drop.md');
 const SR = join(homedir(), 'Work/Sideby/plan.sideby.me/.planning/debug/sfu-reconnect-presence.md');
@@ -162,9 +163,9 @@ describe('synthetic investigating session', () => {
   });
 });
 
-describe('the sibling sketch sessions, when present', () => {
-  it.runIf(existsSync(DD))('deid awaiting a check: two evidence rounds, six verification chips', () => {
-    const r = read(DD);
+describe('Lendshed awaiting a check', () => {
+  it('two evidence rounds, six verification chips', () => {
+    const r = read(FX_DD);
     expect(r.focus.map((f) => f.key)).toEqual([
       'hypothesis',
       'test',
@@ -175,11 +176,12 @@ describe('the sibling sketch sessions, when present', () => {
       'status_now',
       'next_action',
     ]);
-    expect(r.evidence).toHaveLength(15);
-    expect(tagCounts(r)).toBe('4/0/0/11');
+    expect(r.evidence).toHaveLength(13);
+    expect(tagCounts(r)).toBe('3/0/1/9');
     expect(rounds(r)).toBe(2);
-    expect(numbersOf(r, 'confirms')).toEqual([4, 7, 10, 14]);
-    expect(r.eliminated).toHaveLength(3);
+    expect(numbersOf(r, 'confirms')).toEqual([3, 6, 12]);
+    expect(numbersOf(r, 'fix')).toEqual([11]);
+    expect(r.eliminated).toHaveLength(2);
     expect(r.reasoning?.candidates.map((c) => `${c.kind} ${c.verdict}`)).toEqual([
       'code confirmed',
       'data/environment confirmed',
@@ -187,11 +189,14 @@ describe('the sibling sketch sessions, when present', () => {
       'data eliminated',
     ]);
     expect(r.resolution?.causes.map((c) => c.label)).toEqual(['CODE', 'DATA/ENVIRONMENT']);
+    expect(r.resolution?.verification?.verdict).toBe('accepted');
     expect(r.resolution?.verification?.chips).toHaveLength(6);
     expect(r.resolution?.files).toHaveLength(5);
     expect(r.sections.filter((s) => s.role === 'other').map((s) => s.heading)).toEqual(['Constraints']);
   });
+});
 
+describe('the sibling sketch sessions, when present', () => {
   it.runIf(existsSync(SA))('sideby diagnosed: two causes, a fix not applied', () => {
     const r = read(SA);
     expect(r.evidence).toHaveLength(4);
