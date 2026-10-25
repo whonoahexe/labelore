@@ -1,5 +1,11 @@
 // The project Research page (quick-261024-k8u, sketches 031-035), against this repo's own
 // `.planning/research/` on the 4199 server. This is the page's only browser spec.
+//
+// The pins are today's v2.1 research (D-18), which is a different shape from the v1.0 research the
+// page was built on: no phase list, no stack decision, no competitor matrix, no overview diagram,
+// project tree or build order, and no how-likely line on a pitfall. Where the page used to draw one
+// of those, the spec now asserts the page draws nothing for it. The v1.0 shapes stay covered by the
+// lift tests in test/project-research-lift.test.ts, which read the archived v1.0 research.
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 
@@ -25,7 +31,7 @@ test.describe('Research page: the frame', () => {
     await expect(page.locator('h1')).toHaveCount(1);
     await expect(page.locator('h1')).toHaveText('Labelore');
     await expect(page.locator('.research-bar')).toContainText('5 research files');
-    await expect(page.locator('.research-bar')).toContainText('Researched 21 Aug 2026');
+    await expect(page.locator('.research-bar')).toContainText('Researched 25 Oct 2026');
   });
 
   test('five spines 00 to 04 with Summary open and its numbers', async ({ page }) => {
@@ -37,16 +43,16 @@ test.describe('Research page: the frame', () => {
     await expect(leaf).toHaveAttribute('aria-label', 'Summary');
     await expect(leaf.locator('h2')).toHaveText('Summary');
     await expect(leaf.locator('.research-leaf-number')).toHaveText('00');
-    await expect(leaf.locator('.research-nums')).toContainText('4phases');
-    await expect(leaf.locator('.research-nums')).toContainText('4gaps');
-    await expect(page.getByRole('button', { name: 'Stack: 25 stack entries' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Pitfalls: 10 critical pitfalls' })).toBeVisible();
+    await expect(leaf.locator('.research-nums')).toContainText('0phases');
+    await expect(leaf.locator('.research-nums')).toContainText('9gaps');
+    await expect(page.getByRole('button', { name: 'Stack: 8 stack entries' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Pitfalls: 33 critical pitfalls' })).toBeVisible();
   });
 
   test('the verdict is the first sentence and the toggle reveals the rest', async ({ page }) => {
     await openResearch(page);
     const verdict = page.locator('.research-verdict');
-    await expect(verdict).toHaveText(/^Labelore is a read-only web viewer over structured markdown planning directories produced by the GSD orchestration tool\.$/);
+    await expect(verdict).toHaveText(/^v2\.1 is an integration milestone\.$/);
     await expect(page.locator('.research-more')).toHaveCount(0);
     const toggle = page.getByRole('button', { name: 'Read the full summary' });
     await toggle.click();
@@ -101,163 +107,124 @@ test.describe('Research page: the frame', () => {
 });
 
 test.describe('Research page: Summary', () => {
-  test('four phase cards; the inspector follows the selection and arrows walk the track', async ({ page }) => {
+  test('a summary that names no phases draws no phase track and no inspector', async ({ page }) => {
     await openResearch(page);
-    const cards = page.locator('.research-stn');
-    await expect(cards).toHaveCount(4);
-    await expect(page.locator('.research-inspect')).toContainText('Phase 01 of 4');
-    await cards.nth(1).click();
-    await expect(page.locator('.research-inspect')).toContainText('Phase 02 of 4');
-    await page.keyboard.press('ArrowRight');
-    await expect(page.locator('.research-inspect')).toContainText('Phase 03 of 4');
-    await expect(page).not.toHaveURL(/open=/);
-    await expect(page.locator('.research-leaf')).toHaveAttribute('aria-label', 'Summary');
+    await expect(page.locator('.research-stn')).toHaveCount(0);
+    await expect(page.locator('.research-inspect')).toHaveCount(0);
+    await expect(page.locator('.research-dv')).toHaveCount(0);
+    await expect(page.locator('.research-leaf')).toContainText('This summary names no phases.');
   });
 
-  test('phase 01 delivers six tiles and avoids pitfalls 01, 03, 04 and 09', async ({ page }) => {
+  test('a closed spine lands on its panel and the Summary spine returns to the Summary', async ({ page }) => {
     await openResearch(page);
-    await expect(page.locator('.research-dv')).toHaveCount(6);
-    await expect(page.locator('.research-inspect .research-pf-chip')).toHaveText(['01', '03', '04', '09']);
-    await expect(page.getByRole('button', { name: /^Pitfall 03: / })).toBeVisible();
-  });
-
-  test('a pitfall chip lands on the Pitfalls spine and Back returns to the Summary', async ({ page }) => {
-    await openResearch(page);
-    await page.getByRole('button', { name: /^Pitfall 03: / }).click();
-    await expect(page).toHaveURL(/open=pitfalls&pitfall=3/);
+    await page.getByRole('button', { name: /^Pitfalls:/ }).click();
+    await expect(page).toHaveURL(/open=pitfalls/);
     await expect(page.locator('.research-leaf')).toHaveAttribute('aria-label', 'Pitfalls');
-    await page.goBack();
+    await page.getByRole('button', { name: /^Summary/ }).click();
     await expect(page.locator('.research-leaf')).toHaveAttribute('aria-label', 'Summary');
   });
 
-  test('"Why this order" opens four items and the gaps ledger has four rows', async ({ page }) => {
+  test('the gaps ledger has nine rows, the first about the never-seen types', async ({ page }) => {
     await openResearch(page);
-    await page.getByRole('button', { name: 'Why this order · 4' }).click();
-    await expect(page.locator('.research-why-list li')).toHaveCount(4);
-    await expect(page.locator('.research-gap')).toHaveCount(4);
+    await expect(page.locator('.research-why-list li')).toHaveCount(0);
+    await expect(page.locator('.research-gap')).toHaveCount(9);
+    await expect(page.locator('.research-gap').first()).toContainText('About 14 never-seen types');
   });
 });
 
 test.describe('Research page: Stack', () => {
-  test('the verdict leads, the three reasons open, the layer switch counts and a row opens its why', async ({ page }) => {
+  test('no verdict leads, the layer switch counts 6 and 2 and a row opens its why', async ({ page }) => {
     await openResearch(page, '?open=stack');
-    await expect(page.locator('.research-verdict')).toHaveText(/^Vite 8 \+ React 19 SPA/);
-    const reasons = page.locator('.research-reason');
-    await expect(reasons).toHaveCount(3);
-    await reasons.first().locator('button').click();
-    await expect(reasons.first().locator('.research-reason-body')).toBeVisible();
-    await expect(page.locator('.research-chip')).toHaveText(['Core Technologies6', 'Supporting Libraries13', 'Development Tools6']);
+    await expect(page.locator('.research-verdict')).toHaveCount(0);
+    await expect(page.locator('.research-reason')).toHaveCount(0);
+    await expect(page.locator('.research-chip')).toHaveText(['Core Technologies6', 'Development Tools2']);
+    await expect(page.locator('.research-prow')).toHaveCount(6);
     await page.locator('.research-prow').first().locator('button').click();
     await expect(page.locator('.research-prow').first().locator('.research-label')).toHaveText('Why');
-    await page.getByRole('button', { name: /^Supporting Libraries/ }).click();
-    await expect(page.locator('.research-prow')).toHaveCount(13);
+    await page.getByRole('button', { name: /^Development Tools/ }).click();
+    await expect(page.locator('.research-prow')).toHaveCount(2);
   });
 
-  test('the spine foot reads 25 and ten alternatives read "over"', async ({ page }) => {
+  test('the spine foot reads 8 and nine alternatives read "over"', async ({ page }) => {
     await openResearch(page);
-    await expect(page.getByRole('button', { name: 'Stack: 25 stack entries' }).locator('.research-spine-foot b')).toHaveText('25');
+    await expect(page.getByRole('button', { name: 'Stack: 8 stack entries' }).locator('.research-spine-foot b')).toHaveText('8');
     await page.getByRole('button', { name: /^Stack:/ }).click();
     const alts = page.locator('.research-alt');
-    await expect(alts).toHaveCount(10);
-    await expect(alts.locator('.research-alt-over')).toHaveText(Array(10).fill('over'));
+    await expect(alts).toHaveCount(9);
+    await expect(alts.locator('.research-alt-over')).toHaveText(Array(9).fill('over'));
     await alts.first().locator('button').click();
     await expect(alts.first().locator('.research-row-more .research-label')).toHaveText('Use it instead when');
   });
 });
 
 test.describe('Research page: Features', () => {
-  test('the kind switch reads 11, 7 and 9 with no group chips, and Not to build shows nine swaps', async ({ page }) => {
+  test('the kind switch reads 10, 6 and 7 with no group chips, and Not to build shows seven swaps', async ({ page }) => {
     await openResearch(page, '?open=features');
-    await expect(page.locator('.research-kind b')).toHaveText(['11', '7', '9']);
+    await expect(page.locator('.research-kind b')).toHaveText(['10', '6', '7']);
     await expect(page.locator('.research-chips')).toHaveCount(0);
-    await expect(page.locator('.research-frow')).toHaveCount(11);
+    await expect(page.locator('.research-frow')).toHaveCount(10);
     await page.locator('.research-kind').nth(2).click();
-    await expect(page.locator('.research-swap')).toHaveCount(9);
+    await expect(page.locator('.research-swap')).toHaveCount(7);
     const decoration = await page.locator('.research-swap-bad').first().evaluate((el) => getComputedStyle(el).textDecorationLine);
     expect(decoration).toBe('line-through');
     await page.locator('.research-swap-button').first().click();
     await expect(page.locator('.research-swap-why .research-label')).toHaveText(['Why it gets asked for', "Why it's a problem"]);
   });
 
-  test('the matrix has two rivals and our column headed Labelore, and a click unclamps a row', async ({ page }) => {
+  test('a features file with no competitor table draws no matrix', async ({ page }) => {
     await openResearch(page, '?open=features');
-    const head = page.locator('.research-matrix-row[data-head="true"]');
-    await expect(head.locator('b')).toHaveCount(3);
-    await expect(head.locator('.research-matrix-us b')).toHaveText('Labelore');
-    const row = page.locator('.research-matrix-row:not([data-head="true"])').first();
-    await expect(row).toHaveAttribute('data-open', 'false');
-    await row.click();
-    await expect(row).toHaveAttribute('data-open', 'true');
+    await expect(page.locator('.research-frow').first()).toBeVisible();
+    await expect(page.locator('.research-matrix-row')).toHaveCount(0);
   });
 });
 
 test.describe('Research page: Architecture', () => {
-  test('the overview is the shipped lane diagram, with the author layout one chip away', async ({ page }) => {
+  test('no overview diagram and no project tree: the lead sentence stands in for them', async ({ page }) => {
     await openResearch(page, '?open=architecture');
-    const nodes = page.locator('.lane-diagram-node');
-    await expect(nodes.first()).toBeVisible();
-    expect(await nodes.count()).toBeGreaterThanOrEqual(3);
-    await page.getByRole('button', { name: 'Shown as drawn' }).first().click();
-    await expect(page.locator('.lifted-diagram-text').first()).toBeVisible();
+    await expect(page.locator('.research-leaf')).toContainText('Current pipeline: CLI argument');
     await expect(page.locator('.lane-diagram-node')).toHaveCount(0);
+    await expect(page.locator('.lifted-diagram-text')).toHaveCount(0);
+    await expect(page.locator('.clean-tree-count')).toHaveCount(0);
   });
 
-  test('the project structure is the clean tree with its count', async ({ page }) => {
-    await openResearch(page, '?open=architecture');
-    await expect(page.locator('.clean-tree-count')).toHaveText('12 files · 10 folders');
-  });
-
-  test('scaling sits between structure and anti-patterns: what breaks first, then the grid', async ({ page }) => {
+  test('scaling is a grid of five concerns over three scales, with no bottleneck call-out', async ({ page }) => {
     await openResearch(page, '?open=architecture');
     const heads = page.locator('.research-arch .research-section-head h3');
-    await expect(heads).toContainText(['Scaling considerations', 'Anti-patterns', 'Suggested build order']);
+    await expect(heads).toHaveText(['Scaling considerations', 'Anti-patterns']);
     const scale = page.locator('.research-scale');
-    await expect(scale.locator('.research-section-head')).toContainText('3 scales · 1 bottleneck');
-    await expect(scale.locator('.research-bn')).toHaveCount(1);
-    await expect(scale.locator('.research-bn .research-label').first()).toHaveText('First to break · at A much larger single project');
-    await expect(scale.locator('.research-bn-fix')).toContainText('Mitigated by incremental re-parse');
-    await expect(scale.locator('.research-scale-not')).toContainText('Not a bottleneck');
+    await expect(scale.locator('.research-section-head')).toContainText('3 scales · 5 concerns');
+    await expect(scale.locator('.research-bn')).toHaveCount(0);
     await expect(scale.locator('.research-scale-tier')).toHaveCount(3);
-    await expect(scale.locator('.research-scale-cell[data-pin="true"] .research-scale-pin')).toHaveText('01');
-    const structureBox = await page.locator('.research-arch > section').nth(1).boundingBox();
-    const scaleBox = await scale.boundingBox();
-    expect(scaleBox!.y).toBeGreaterThan(structureBox!.y);
+    await expect(scale.locator('.research-scale-cell')).toHaveCount(15);
+    await expect(scale.locator('.research-scale-tier').first()).toContainText('1 project');
+    await expect(scale).toContainText('Add LRU eviction of idle runtimes');
   });
 
-  test('three swaps open to "What people do" and "Why it\'s wrong"', async ({ page }) => {
+  test('six swaps open to "Why it\'s wrong" alone, since the file gives only an instead', async ({ page }) => {
     await openResearch(page, '?open=architecture');
-    await expect(page.locator('.research-swap')).toHaveCount(3);
+    await expect(page.locator('.research-swap')).toHaveCount(6);
     await page.locator('.research-swap-button').first().click();
-    await expect(page.locator('.research-swap-why .research-label')).toHaveText(['What people do', "Why it's wrong"]);
+    await expect(page.locator('.research-swap-why .research-label')).toHaveText(["Why it's wrong"]);
   });
 
-  test('the build order is a DAG of four steps; a click lights wires and Escape clears', async ({ page }) => {
+  test('no build order, so no DAG is drawn', async ({ page }) => {
     await openResearch(page, '?open=architecture');
-    const nodes = page.locator('.research-bo-node');
-    await expect(nodes).toHaveCount(4);
-    await expect(page.locator('.research-bo-hint')).toBeVisible();
-    await nodes.nth(1).click();
-    const detail = page.locator('.research-bo-detail');
-    await expect(detail).toContainText('Waits for');
-    await expect(detail.locator('.research-step-chip').first()).toContainText('A');
-    await expect(detail).toContainText('Unlocks');
-    await expect(page.locator('.research-bo-wire[data-hot="true"]')).not.toHaveCount(0);
-    await page.keyboard.press('Escape');
-    await expect(detail).toHaveCount(0);
-    await expect(page.locator('.research-bo-hint')).toBeVisible();
+    await expect(page.locator('.research-swap').first()).toBeVisible();
+    await expect(page.locator('.research-bo-node')).toHaveCount(0);
+    await expect(page.locator('.research-bo-hint')).toHaveCount(0);
   });
 });
 
 test.describe('Research page: Pitfalls', () => {
-  test('ten rows; row 01 names its short name, first sign and likelihood', async ({ page }) => {
+  test('33 rows; row 01 names its short name and first sign, and none carries a likelihood', async ({ page }) => {
     await openResearch(page, '?open=pitfalls');
     const rows = page.locator('.research-wl-row');
-    await expect(rows).toHaveCount(10);
+    await expect(rows).toHaveCount(33);
     const first = rows.first();
-    await expect(first.locator('.research-wl-name b')).toHaveText('Overfit to studio-portal');
+    await expect(first.locator('.research-wl-name b')).toHaveText('URL is identity');
     await expect(first.locator('.research-wl-watch .research-label')).toHaveText('Watch for');
     await expect(first.locator('.research-wl-sign em')).toHaveText(/^\+\d+ more$/);
-    await expect(first.locator('.research-likely')).toContainText('Very high');
+    await expect(page.locator('.research-likely')).toHaveCount(0);
   });
 
   test('opening a row shows signs first, with no icon, and a verify block without a tick', async ({ page }) => {
@@ -274,11 +241,10 @@ test.describe('Research page: Pitfalls', () => {
     await expect(page.locator('.research-verify svg')).toHaveCount(0);
   });
 
-  test('the ledger has ten rows and its 02 chip opens pitfall 02', async ({ page }) => {
+  test('the ledger has 13 checks and a row opens from its head', async ({ page }) => {
     await openResearch(page, '?open=pitfalls');
-    await expect(page.locator('.research-ledger li')).toHaveCount(10);
-    await page.locator('.research-ledger .research-pf-chip', { hasText: /^02 /i }).first().click();
-    await expect(page).toHaveURL(/pitfall=2/);
+    await expect(page.locator('.research-ledger li')).toHaveCount(13);
+    await page.locator('.research-wl-row[data-pitfall="2"] .research-wl-head').click();
     await expect(page.locator('.research-wl-row[data-pitfall="2"]')).toHaveAttribute('data-open', 'true');
   });
 
@@ -287,12 +253,13 @@ test.describe('Research page: Pitfalls', () => {
     const heads = page.locator('.research-pitfalls .research-section-head h3');
     await expect(heads).toHaveText(['Critical pitfalls', 'Performance, security and UX', "Looks done but isn't"]);
     const kinds = page.locator('.research-pitfalls .research-kind');
-    await expect(kinds.locator('b')).toHaveText(['03', '03', '05']);
+    await expect(kinds.locator('b')).toHaveText(['07', '08', '09']);
     await expect(kinds.first()).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('.research-pitfalls .research-swap-key')).toContainText('Prevention');
+    await expect(page.locator('.research-pitfalls .research-swap')).toHaveCount(7);
     await kinds.nth(1).click();
-    await expect(page.locator('.research-pitfalls .research-sec-note').last()).toContainText('Even for a single-user');
-    await expect(page.locator('.research-pitfalls .research-swap')).toHaveCount(3);
+    await expect(page.locator('.research-pitfalls .research-sec-note')).toHaveCount(0);
+    await expect(page.locator('.research-pitfalls .research-swap')).toHaveCount(8);
     await page.locator('.research-pitfalls .research-swap-button').first().click();
     await expect(page.locator('.research-pitfalls .research-swap-why .research-label')).toHaveText(['Risk']);
   });
