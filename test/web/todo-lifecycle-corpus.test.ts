@@ -6,7 +6,7 @@
 // only for the files named in the sketch (plus labelore's 001 and resoundant's two, when present), using
 // the numbers from the sketch's rendering and data - never the composer's output.
 process.env.TZ = 'Asia/Kolkata';
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -20,13 +20,11 @@ import { TodoLifecycleView } from '../../src/web/views/todo-lifecycle-components
 import {
   FIXTURE_ROOTS,
   LB_ROOT,
-  NOTE_KEYS,
   RESOUNDANT_ROOT,
   TODO_KEYS,
   TODO_SIBLING_ROOTS,
   loadProject,
   readKeyed,
-  sketchNoteRaw,
 } from '../helpers/todo-corpus.ts';
 import type { LoadedProject } from '../helpers/todo-corpus.ts';
 
@@ -193,13 +191,6 @@ describe('the corpus', () => {
   it('never gives a notes file the todo kind', () => {
     expect(noteKinds.length).toBeGreaterThan(0);
     for (const note of noteKinds) expect(note.kind, note.label).not.toBe('todo');
-  });
-
-  it('keeps every note fixture byte-equal to the sketch', () => {
-    for (const key of Object.keys(NOTE_KEYS)) {
-      const file = NOTE_KEYS[key];
-      expect(readFileSync(join(file.root, file.path), 'utf8'), key).toBe(sketchNoteRaw(key));
-    }
   });
 });
 

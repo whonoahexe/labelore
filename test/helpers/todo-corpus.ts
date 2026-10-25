@@ -6,6 +6,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { FX_ROOT } from './fixture-project.ts';
 
 export const LB_ROOT = new URL('../..', import.meta.url).pathname.replace(/\/$/, '');
 const FIXTURES = join(LB_ROOT, 'test/fixtures/todos');
@@ -16,7 +17,7 @@ export const LABELORE_FIXTURE_ROOT = join(FIXTURES, 'labelore');
 export const SYNTHETIC_ROOT = join(LB_ROOT, 'test/fixtures/dashboard/synthetic');
 
 /** The committed fixture projects and the synthetic one. */
-export const FIXTURE_ROOTS: string[] = [DUET_ROOT, PORTAL_ROOT, LABELORE_FIXTURE_ROOT, SYNTHETIC_ROOT];
+export const FIXTURE_ROOTS: string[] = [FX_ROOT, DUET_ROOT, PORTAL_ROOT, LABELORE_FIXTURE_ROOT, SYNTHETIC_ROOT];
 
 const SIBLINGS = [
   join(homedir(), 'Work/Ibis/resoundant'),
@@ -38,7 +39,7 @@ export interface KeyedFile {
 
 /** The eleven sketch todos by the sketch's own keys. */
 export const TODO_KEYS: Record<string, KeyedFile> = {
-  dcrop: { root: DUET_ROOT, path: '.planning/todos/completed/2026-10-21-add-crop-and-round-profile-photos.md' },
+  dcrop: { root: FX_ROOT, path: '.planning/todos/completed/2026-03-24-add-crop-and-round-member-avatars.md' },
   dsfx: { root: DUET_ROOT, path: '.planning/todos/completed/2026-10-20-sound-effects.md' },
   dcall: { root: DUET_ROOT, path: '.planning/todos/completed/2026-10-20-call-debug-logging.md' },
   sretry: { root: SYNTHETIC_ROOT, path: '.planning/todos/pending/2026-10-12-retry-queue-dead-letter.md' },
@@ -53,8 +54,8 @@ export const TODO_KEYS: Record<string, KeyedFile> = {
 
 /** The notes the sketch's todos point at, by the note sketch's own keys. */
 export const NOTE_KEYS: Record<string, KeyedFile> = {
-  dcrop: { root: DUET_ROOT, path: '.planning/notes/2026-10-21-crop-images-and-profile-photos.md' },
-  dround: { root: DUET_ROOT, path: '.planning/notes/2026-10-21-round-profile-photos.md' },
+  dcrop: { root: FX_ROOT, path: '.planning/notes/2026-03-24-crop-tool-photos-and-member-avatars.md' },
+  dround: { root: FX_ROOT, path: '.planning/notes/2026-03-24-round-member-avatars.md' },
   dsfx: { root: DUET_ROOT, path: '.planning/notes/2026-10-20-sound-effects.md' },
   dcall: { root: DUET_ROOT, path: '.planning/notes/2026-10-20-call-debug-logging-webrtc-turn.md' },
   dback: { root: DUET_ROOT, path: '.planning/notes/2026-10-20-back-button-closes-app.md' },

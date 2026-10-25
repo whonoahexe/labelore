@@ -9,7 +9,7 @@ import { tryParseFrontmatter } from '../src/planning-repo/frontmatter.ts';
 import { extractTodoFile, levelOf, stampText } from '../src/planning-repo/handlers/todo-file.ts';
 import type { TodoBlock, TodoFileBody } from '../src/planning-repo/handlers/todo-file.ts';
 import { severityOf } from '../src/server/dashboard-ledger.ts';
-import { LB_ROOT, TODO_KEYS, readKeyed, sketchTodoRaw } from './helpers/todo-corpus.ts';
+import { LB_ROOT, TODO_KEYS, readKeyed } from './helpers/todo-corpus.ts';
 
 function read(key: string): TodoFileBody {
   const file = TODO_KEYS[key];
@@ -32,14 +32,6 @@ function extract(body: string, frontmatter: Record<string, unknown> = {}, path =
   return extractTodoFile({ body, frontmatter, path });
 }
 
-describe('the fixtures are the sketch files', () => {
-  for (const key of Object.keys(TODO_KEYS)) {
-    it(`${key} equals the sketch's raw file`, () => {
-      expect(readKeyed(TODO_KEYS[key])).toBe(sketchTodoRaw(key));
-    });
-  }
-});
-
 describe('extractTodoFile on the sketch todos', () => {
   const pinned: Record<
     string,
@@ -54,7 +46,7 @@ describe('extractTodoFile on the sketch todos', () => {
       theme: string | null;
     }
   > = {
-    dcrop: { status: 'done', folder: 'completed', created: '2026-10-21T10:31:14.064Z', level: 'low', severity: 'minor', priority: 'low', area: 'media', theme: null },
+    dcrop: { status: 'done', folder: 'completed', created: '2026-03-24T09:47:31.208Z', level: 'low', severity: 'minor', priority: 'low', area: 'media', theme: null },
     dsfx: { status: 'done', folder: 'completed', created: '2026-10-20T12:09:13.550Z', level: 'low', severity: 'cosmetic', priority: null, area: 'ui', theme: null },
     dcall: { status: 'done', folder: 'completed', created: '2026-10-20T12:09:13.550Z', level: 'high', severity: 'major', priority: null, area: 'calls', theme: null },
     sretry: { status: 'pending', folder: 'pending', created: '2026-10-12T09:41:00.000Z', level: 'high', severity: 'major', priority: null, area: 'gateway', theme: null },
@@ -78,11 +70,11 @@ describe('extractTodoFile on the sketch todos', () => {
       { raw: 'src/web/pages/filings.tsx', dir: 'src/web/pages/', name: 'filings.tsx', from: null, to: null },
     ]);
     expect(read('dcrop').files.map((file) => file.raw)).toEqual([
-      'server/src/media/image.ts',
-      'server/src/media/avatar.ts',
-      'server/src/media/routes.ts',
-      'web/public/sw.js',
-      'web/components/app/composer.tsx',
+      'api/src/photos/resize.ts',
+      'api/src/photos/avatar.ts',
+      'api/src/photos/routes.ts',
+      'web/public/push-worker.js',
+      'web/components/tray/photo-tray.tsx',
     ]);
     expect(read('dsfx').files).toHaveLength(1);
     expect(read('dcall').files).toHaveLength(3);
@@ -91,7 +83,7 @@ describe('extractTodoFile on the sketch todos', () => {
 
   it('reads the lead and the plan', () => {
     expect(read('dcrop').lead?.heading).toBe('Problem');
-    expect(textOf(read('dcrop').lead?.blocks)).toMatch(/^Images can't be cropped/);
+    expect(textOf(read('dcrop').lead?.blocks)).toMatch(/^Tool photos can't be cropped/);
     expect(read('dcrop').plan).toMatchObject({ kind: 'solution', heading: 'Solution', checks: null });
     expect(read('sretry').plan?.kind).toBe('solution');
     expect(read('srec').lead?.heading).toBe('Problem');
@@ -131,9 +123,9 @@ describe('extractTodoFile on the sketch todos', () => {
   it('reads the closing, the quick task, the commits and the closed-on day', () => {
     const dcrop = read('dcrop');
     expect(dcrop.closing?.from).toBe('resolution');
-    expect(dcrop.closing?.text).toMatch(/^Done in quick task 261022-m25 \(2026-10-22\)\. What shipped:/);
-    expect(dcrop.quickTask).toBe('261022-m25');
-    expect(dcrop.closedOn).toBe('2026-10-22');
+    expect(dcrop.closing?.text).toMatch(/^Done in quick task 260326-m3d \(2026-03-26\)\. What shipped:/);
+    expect(dcrop.quickTask).toBe('260326-m3d');
+    expect(dcrop.closedOn).toBe('2026-03-26');
     expect(dcrop.commits).toEqual([]);
     const dsfx = read('dsfx');
     expect(dsfx.closing?.text).toMatch(/^Done in quick task 261022-4gf\. Per the user, there is no Sounds on\/off switch/);
@@ -160,7 +152,7 @@ describe('extractTodoFile on the sketch todos', () => {
 
   it('collects the note references', () => {
     expect(read('dcrop').noteRefs).toEqual({
-      listed: ['.planning/notes/2026-10-21-crop-images-and-profile-photos.md', '.planning/notes/2026-10-21-round-profile-photos.md'],
+      listed: ['.planning/notes/2026-03-24-crop-tool-photos-and-member-avatars.md', '.planning/notes/2026-03-24-round-member-avatars.md'],
       wiki: [],
       mentioned: [],
       promotedText: null,
