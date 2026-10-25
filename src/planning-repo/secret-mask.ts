@@ -53,3 +53,31 @@ export function maskConfig(data: unknown): { data: unknown; masked: boolean } {
   }
   return { data: out, masked };
 }
+
+// A quoted secret key name, a colon, then a quoted string. The string body is the unambiguous
+// alternation "not a quote or backslash" or "a backslash and the character it escapes", so every
+// character can be consumed in exactly one way and the match is linear, never catastrophic. The
+// closing quote is optional at the very end of the text: a file cut off inside the value must not
+// leak the part that is there.
+const SECRET_STRING_ENTRY = new RegExp(
+  `("(?:${[...SECRET_CONFIG_KEYS].join('|')})"\\s*:\\s*)"((?:[^"\\\\]|\\\\[\\s\\S])*)("|$)`,
+  'g',
+);
+
+function unescapeJsonString(content: string): string {
+  try {
+    return JSON.parse(`"${content}"`) as string;
+  } catch {
+    // Not valid JSON string content (a bad escape, a raw newline): mask the text as it stands.
+    return content;
+  }
+}
+
+/** Masks the string value of any secret key in raw JSON text, for a config.json that does not
+ * parse and so cannot go through maskConfig. Everything else in the text stays byte-identical. */
+export function redactSecretText(raw: string): string {
+  return raw.replace(
+    SECRET_STRING_ENTRY,
+    (_match, head: string, content: string, close: string) => `${head}"${maskSecret(unescapeJsonString(content))}${close}`,
+  );
+}

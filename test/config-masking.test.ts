@@ -2,7 +2,11 @@
 // the presentation payload, the file page response, the search index and every snippet only ever
 // see the masked form. Drives the real PlanningRepository over an in-memory project through
 // createApp + app.request, the same idiom test/server/refresh.test.ts uses.
-import { describe, expect, it } from 'vitest';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, describe, expect, it } from 'vitest';
+import { LocalFsPlanningFilesystem } from '../src/planning-fs/local-fs.ts';
 import { InMemoryPlanningFilesystem } from '../src/planning-fs/in-memory-fs.ts';
 import { PlanningRepository } from '../src/planning-repo/snapshot.ts';
 import { createApp } from '../src/server/index.ts';
@@ -96,5 +100,91 @@ describe('config.json secret masking, end to end (SEC-04)', () => {
     const byKey = await search(app, 'brave_search');
     expect(byKey).toContain('.planning/config.json');
     expect(byKey).toContain(MASKED);
+  });
+});
+
+describe('config.json masking edge cases (SEC-04)', () => {
+  it('keeps the parse warning on a config.json that fails to parse and still ships no planted value', async () => {
+    const broken = `{\n  "brave_search": "${SECRET}",\n  "firecrawl": true,\n}\n`;
+    const { app } = await appFor({ '.planning/config.json': broken });
+
+    const key = await keyFor(app, '.planning/config.json');
+    const page = await pagePayload(app, key);
+    expect(page).not.toContain(SECRET);
+    expect(page).not.toContain(FRAGMENT);
+    expect(page).toContain(MASKED);
+    expect(page).toContain('JSON failed to parse');
+
+    expect(await textOf(app, '/api/presentation')).not.toContain(SECRET);
+    for (const query of ['brave_search', FRAGMENT]) {
+      const found = await search(app, query);
+      expect(found).not.toContain(SECRET);
+      expect(found).not.toContain(FRAGMENT);
+    }
+  });
+
+  it('returns HANDOFF.json and estimation-calibration.json exactly as before (D-09 scopes masking to config.json)', async () => {
+    const handoff = `{"brave_search": "${SECRET}", "note": "handoff"}\n`;
+    const calibration = `{"firecrawl": "${SECRET}"}\n`;
+    const { repo } = await appFor({
+      '.planning/config.json': configText(),
+      '.planning/HANDOFF.json': handoff,
+      '.planning/estimation-calibration.json': calibration,
+    });
+    const project = repo.getSnapshot().project;
+    expect(project?.artifacts['.planning/HANDOFF.json'].body).toBe(handoff);
+    expect(project?.artifacts['.planning/HANDOFF.json'].frontmatter.brave_search).toBe(SECRET);
+    expect(project?.artifacts['.planning/estimation-calibration.json'].body).toBe(calibration);
+    expect(project?.artifacts['.planning/estimation-calibration.json'].frontmatter.firecrawl).toBe(SECRET);
+    // The config.json beside them is still masked.
+    expect(project?.artifacts['.planning/config.json'].frontmatter.brave_search).toBe(MASKED);
+  });
+
+  it('stays masked in every response before and after POST /api/refresh, which re-reads config.json', async () => {
+    const { app } = await appFor({ '.planning/config.json': configText() });
+    const sameOrigin = { method: 'POST', headers: { 'sec-fetch-site': 'same-origin' } };
+
+    expect(await textOf(app, '/api/presentation')).not.toContain(SECRET);
+    const refresh = await app.request('/api/refresh', sameOrigin);
+    expect(refresh.status).toBe(200);
+    const refreshText = await refresh.text();
+    expect(refreshText).not.toContain(SECRET);
+
+    const presentation = await textOf(app, '/api/presentation');
+    expect(presentation).not.toContain(SECRET);
+    expect(presentation).toContain(MASKED);
+    const key = await keyFor(app, '.planning/config.json');
+    expect(await pagePayload(app, key)).not.toContain(SECRET);
+    for (const query of ['brave_search', FRAGMENT]) {
+      const found = await search(app, query);
+      expect(found).not.toContain(SECRET);
+      expect(found).not.toContain(FRAGMENT);
+    }
+  });
+});
+
+describe('loading a project never writes to its config.json (SEC-04, read-only)', () => {
+  const dirs: string[] = [];
+  afterEach(() => {
+    for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('leaves the on-disk content and mtime identical across a load and a refresh', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'labelore-mask-'));
+    dirs.push(root);
+    mkdirSync(join(root, '.planning'), { recursive: true });
+    const config = join(root, '.planning/config.json');
+    writeFileSync(join(root, '.planning/PROJECT.md'), PROJECT_MD);
+    writeFileSync(config, configText());
+    const before = { text: readFileSync(config, 'utf8'), mtimeMs: statSync(config).mtimeMs };
+
+    const repo = new PlanningRepository(new LocalFsPlanningFilesystem(root), root, { loadTheme: null });
+    const snapshot = await repo.load();
+    await repo.refresh();
+
+    expect(snapshot.project?.artifacts['.planning/config.json'].frontmatter.brave_search).toBe(MASKED);
+    expect(readFileSync(config, 'utf8')).toBe(before.text);
+    expect(readFileSync(config, 'utf8')).toContain(SECRET);
+    expect(statSync(config).mtimeMs).toBe(before.mtimeMs);
   });
 });
