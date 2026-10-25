@@ -8,6 +8,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { basename, join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { SP_PLANNING } from '../helpers/studio-portal.ts';
+import { FX_PLANNING } from '../helpers/fixture-project.ts';
 import { PlanHandler } from '../../src/planning-repo/handlers/plan.ts';
 import type { ArtifactLocation, ArtifactRef, RawArtifact } from '../../src/planning-repo/types.ts';
 import { composePlanNavigator } from '../../src/web/views/plan-navigator.ts';
@@ -170,19 +171,19 @@ const ROWS: Row[] = [
   },
   {
     key: '0106',
-    root: SP,
-    file: 'phases/01-portal-owned-identity-sessions/01-06-PLAN.md',
-    addedAt: '2026-08-03T22:12:52+05:30',
+    root: FX_PLANNING,
+    file: 'phases/01-member-sign-in-sessions/01-06-PLAN.md',
+    addedAt: '2026-03-27T09:00:00+00:00',
     expect: {
-      eyebrow: 'Plan 01-06 · Phase 1 · Portal owned identity sessions',
-      title: 'Close the loop',
+      eyebrow: 'Plan 01-06 · Phase 1 · Member sign in sessions',
+      title: 'Seal the handover',
       chips: ['Execute', '1 checkpoint', 'Executed'],
-      triggers: [3, 8, 3],
-      stats: ['3', 'low', '54k'],
+      triggers: [3, 7, 3],
+      stats: ['3', 'low', '48k'],
       types: ['auto', 'auto', 'checkpoint:human-action'],
       gates: [null, null, 'blocking'],
       tdd: [true, false, false],
-      done: [4, 3],
+      done: [3, 4],
       strip: [
         'Must-haves',
         'Threat model',
@@ -198,10 +199,10 @@ const ROWS: Row[] = [
         ['Pre-condition', 'Read first'],
         ['Read first', 'Resume signal', 'After resume'],
       ],
-      planned: '3 Aug 2026',
+      planned: '27 Mar 2026',
       plannedSource: 'git',
       objectiveRows: [true, true, true],
-      restStarts: 'Give a temporary-password holder',
+      restStarts: 'Give a member holding',
     },
   },
   {
@@ -260,7 +261,7 @@ const ROWS: Row[] = [
   {
     key: 'q528',
     root: LB,
-    file: 'quick/261003-528-build-sketch-018-b-as-the-ui-review-page-view-use-gsd-browse/261003-528-PLAN.md',
+    file: 'milestones/v2.0-quick/261003-528-build-sketch-018-b-as-the-ui-review-page-view-use-gsd-browse/261003-528-PLAN.md',
     sibling: true,
     expect: {
       eyebrow: 'Quick plan 261003-528',
@@ -330,6 +331,7 @@ const ROWS: Row[] = [
 
 function compose(row: Row): { plan: ComposedPlanNavigator; built: Built } {
   const abs = join(row.root, row.file);
+  if (!existsSync(abs)) throw new Error(`PLAN corpus row ${row.key}: file missing at ${abs}`);
   const built = refFor(row.root, abs) as Built;
   const content = readFileSync(abs, 'utf8');
   const raw: RawArtifact = { path: built.path, content, mtimeMs: 0, size: content.length };
@@ -355,8 +357,7 @@ function compose(row: Row): { plan: ComposedPlanNavigator; built: Built } {
 
 describe('PLAN corpus — pinned rows', () => {
   for (const row of ROWS) {
-    const available = existsSync(join(row.root, row.file));
-    it.runIf(available)(`${row.key} composes with the pinned values`, () => {
+    it(`${row.key} composes with the pinned values`, () => {
       const { plan } = compose(row);
       const want = row.expect;
       expect(plan.intro.eyebrow).toBe(want.eyebrow);
@@ -385,9 +386,9 @@ describe('PLAN corpus — pinned rows', () => {
     expect(plan.tasks.map((task) => task.tabs.find((tab) => tab.key === 'side')?.count)).toEqual([10, 6]);
   });
 
-  it.runIf(existsSync(join(SP, ROWS[2].file)))('0106 reads Done when from the top-level verification, and T3 reads as an Action checkpoint', () => {
+  it('0106 reads Done when from the top-level verification, and T3 reads as an Action checkpoint', () => {
     const { plan } = compose(ROWS[2]);
-    expect(plan.doneWhen?.checks.items).toHaveLength(3);
+    expect(plan.doneWhen?.checks.items).toHaveLength(4);
     expect(plan.tasks[2].sub).toBe('T3 · Action · waits');
     expect(plan.tasks[2].tabs.map((tab) => tab.label)).toEqual(['Action', 'Afterwards']);
   });
