@@ -577,6 +577,24 @@ export const ALLOWLIST: AllowlistEntry[] = [
     reason:
       'em-relative inline-code chip in the legitimacy block (sketch 010) — scales with its host line (--fs-3 intro and notes, --fs-2 lane note), the same idiom as .artifact-document :not(pre) > code',
   },
+  {
+    selector: '.view-plan-nav-body :not(pre) > code',
+    property: 'font-size',
+    value: '0.86em',
+    reason: 'em-relative inline-code size — the plan navigator matches the document view, the same idiom as .artifact-document :not(pre) > code',
+  },
+  {
+    selector: '.view-ui-review-found-card .view-ui-review-item-text code',
+    property: 'font-size',
+    value: '0.88em',
+    reason: 'em-relative inline-code chip in a UI-review finding — scales with its host line, the same idiom as .view-research-audit :not(td) > code',
+  },
+  {
+    selector: '.view-plan-nav-checks li::before',
+    property: 'margin-top',
+    value: '0.42rem',
+    reason: 'derived centring offset, not a spacing step — (0.9rem line x 1.55 leading - 0.55rem square) / 2 seats the check square on the first line',
+  },
 ];
 
 function isAllowlisted(decl: Declaration, allowlist: AllowlistEntry[]): boolean {

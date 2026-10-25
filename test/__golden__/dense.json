@@ -1091,7 +1091,8 @@
                 "verify": null
               }
             ],
-            "checks": []
+            "checks": [],
+            "tables": []
           }
         }
       },

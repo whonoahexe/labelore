@@ -481,15 +481,14 @@ describe('buildDrawerViewModel — coverage', () => {
     expect([...placed].sort()).toEqual([...expectedPaths(model, presentation)].sort());
   });
 
-  it("opens this repository's own corpus on the current quick tasks", async () => {
+  it("opens this repository's own corpus on the newest shipped milestone", async () => {
     const model = buildDrawerViewModel(await diskPresentation(resolve('.')));
     expect(model.current.phases).toEqual([]);
-    expect(model.quick.groups[0].current).toBe(true);
-    expect(model.defaultPlaceKey).toBe(model.quick.key);
-    expect(model.shipped.map((milestone) => milestone.version)).toEqual(['v1.1', 'v1.0']);
-    for (const milestone of model.shipped) {
-      expect(milestone.shippedLabel).not.toBeNull();
-      expect(milestone.phases.length).toBeGreaterThan(0);
-    }
+    expect(model.quick.groups.some((group) => group.current)).toBe(false);
+    expect(model.defaultPlaceKey).toBe(model.shipped[0].key);
+    expect(model.shipped.map((milestone) => milestone.version)).toEqual(['v2.0', 'v1.1', 'v1.0']);
+    // v2.0 was a quick-task milestone, so it has no phases of its own.
+    expect(model.shipped.map((milestone) => milestone.phases.length)).toEqual([0, 1, 4]);
+    for (const milestone of model.shipped) expect(milestone.shippedLabel).not.toBeNull();
   });
 });
