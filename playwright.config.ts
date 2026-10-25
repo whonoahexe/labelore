@@ -1,21 +1,14 @@
-import { existsSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { join } from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
+import { FIXTURE_ROOT, resolveFixtureRoot } from './test/e2e/fixture-root.ts';
 
-// quick-260921-l4e: dedicated Playwright harness for the Phase 5 document-page foundation
-// sweep. Port 4199 is deliberate — 4173 is owned by the running systemd Labelore instance and
-// must never be reused, restarted, or rebuilt (T-l4e-01). `reuseExistingServer: false` is the
-// enforcement mechanism: Playwright always starts its own fresh server on 4199 rather than
-// attaching to whatever happens to be listening there.
-//
-// quick-260923-lju: a second, read-only webServer entry targets ~/studio-portal on port 4198,
-// added only when that project's `.planning/` exists locally — the CONTEXT brief e2e spec's
-// studio-portal fixtures (SP 01/04, SP quick 2pr, …) resolve against it and `test.skip` when it's
-// absent. 4198 is deliberate, not 4173/4174 (the running labelore.service and the sketch server,
-// which C-5 forbids touching or restarting) and not 4199 (this file's own primary harness server).
-const studioPortalPlanningDir = join(homedir(), 'studio-portal', '.planning');
-const studioPortalAvailable = existsSync(studioPortalPlanningDir);
+// Two servers, both started fresh on every run (`reuseExistingServer: false` is the enforcement:
+// Playwright never attaches to whatever happens to be listening).
+//   4199 is the repo itself (quick-260921-l4e), the harness for the document-page sweep.
+//   4198 is the made-up Lendshed project committed at test/fixtures/lendshed (D-01, D-05). It is always
+//        started; resolveFixtureRoot throws at config load when that folder has no `.planning`, so a
+//        missing fixture fails the run instead of skipping specs.
+// 4173 and 4174 belong to the user's running instances and are never touched.
+const fixtureRoot = resolveFixtureRoot(FIXTURE_ROOT);
 
 export default defineConfig({
   testDir: 'test/e2e',
@@ -47,17 +40,13 @@ export default defineConfig({
       stdout: 'ignore',
       stderr: 'pipe',
     },
-    ...(studioPortalAvailable
-      ? [
-          {
-            command: `node src/server/index.ts ${homedir()}/studio-portal --port 4198`,
-            url: 'http://127.0.0.1:4198/api/dashboard',
-            reuseExistingServer: false,
-            timeout: 90_000,
-            stdout: 'ignore' as const,
-            stderr: 'pipe' as const,
-          },
-        ]
-      : []),
+    {
+      command: `node src/server/index.ts ${fixtureRoot} --port 4198`,
+      url: 'http://127.0.0.1:4198/api/dashboard',
+      reuseExistingServer: false,
+      timeout: 90_000,
+      stdout: 'ignore',
+      stderr: 'pipe',
+    },
   ],
 });

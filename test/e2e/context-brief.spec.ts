@@ -8,6 +8,7 @@ import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
+import { FIXTURE_BASE_URL } from './fixture-root.ts';
 
 const STUDIO_PORTAL_AVAILABLE = existsSync(join(homedir(), 'studio-portal', '.planning'));
 const SP_BASE_URL = 'http://127.0.0.1:4198';
@@ -150,6 +151,25 @@ test.describe('CONTEXT brief — repo fixtures', () => {
     await page.goto(url);
     await page.locator('#context-boundary').waitFor({ state: 'visible' });
     await expect(page.locator('#view-remainder')).toHaveCount(0);
+  });
+});
+
+test.describe('CONTEXT brief — Lendshed fixture (4198)', () => {
+  test('phase 01: attention panel with 3 rows; clicking a blocks-D chip jumps to and expands the decision', async ({
+    page,
+  }) => {
+    const url = await resolveFixtureUrl(FIXTURE_BASE_URL, '01-member-sign-in-sessions/01-CONTEXT.md');
+    await page.goto(`${FIXTURE_BASE_URL}${url}`);
+    await page.locator('#context-open').waitFor({ state: 'visible' });
+    await expect(page.locator('.view-context-open-list li')).toHaveCount(3);
+
+    const blocksChip = page.locator('#question-open-01 button', { hasText: 'blocks D-09' });
+    await blocksChip.click();
+    const target = page.locator('#decision-d-09');
+    await expect(target).toBeFocused();
+    await expect(target.locator('.view-context-detail')).toBeVisible();
+
+    await expect(page.locator('.artifact-meta-row .source-note')).toContainText('SIGN-01');
   });
 });
 

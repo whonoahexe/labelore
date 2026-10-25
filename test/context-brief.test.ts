@@ -5,6 +5,7 @@ import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import { SP_PLANNING } from './helpers/studio-portal.ts';
+import { fxPath } from './helpers/fixture-project.ts';
 import {
   classifyDeferred,
   classifySpecific,
@@ -29,21 +30,21 @@ const SP04_PATH = `${SP_ROOT}/phases/04-bulk-archive-downloads/04-CONTEXT.md`;
 const LB05_PATH = '.planning/milestones/v1.1-phases/05-per-type-document-views/05-CONTEXT.md';
 
 describe('extractContextBrief — SP phases/01 boundary', () => {
-  it.runIf(existsSync(SP01_PATH))('parses statement, inList, outList and drift', async () => {
-    const body = await readFile(SP01_PATH, 'utf8');
+  it('parses statement, inList, outList and drift (Lendshed fixture)', async () => {
+    const body = await readFile(fxPath('phases/01-member-sign-in-sessions/01-CONTEXT.md'), 'utf8');
     const brief = extractContextBrief(body);
     expect(brief.boundary?.statement).toBe(
-      'Members sign in to the portal with a username and password the portal itself holds, and stay signed in across backend restarts and power cuts.',
+      'Members sign in to Lendshed with a username and password Lendshed itself holds, and stay signed in across server restarts and power cuts.',
     );
     expect(brief.boundary?.inList).toHaveLength(9);
-    expect(brief.boundary?.inList[0]).toBe('`users` and `sessions` tables');
-    expect(brief.boundary?.inList[8]).toBe('removal of the Access policy');
+    expect(brief.boundary?.inList[0]).toBe('`members` and `sessions` tables');
+    expect(brief.boundary?.inList[8]).toBe('removal of the kiosk passcode');
     expect(brief.boundary?.outList).toHaveLength(4);
     expect(brief.boundary?.outList[0]).toEqual({
-      text: 'Roles, permissions, or any per-tier gating',
+      text: 'Steward roles, permissions, or any per-shed gating',
       dest: 'Phase 2',
     });
-    expect(brief.boundary?.outList[2].dest).toBe('Phase 3 (ADMIN-03)');
+    expect(brief.boundary?.outList[2].dest).toBe('Phase 3 (ADMN-03)');
     expect(brief.boundary?.drift).toBe(true);
   });
 

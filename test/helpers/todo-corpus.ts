@@ -3,18 +3,9 @@
 // fixture, labelore's own `.planning/` and each sibling project that has a `.planning/todos` folder on
 // this machine. The sibling projects are only ever read; a machine without the checkouts skips the tests
 // that need them (their own `it.runIf(existsSync(...))` gates).
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join, relative } from 'node:path';
-import { InMemoryPlanningFilesystem } from '../../src/planning-fs/in-memory-fs.ts';
-import { LocalFsPlanningFilesystem } from '../../src/planning-fs/local-fs.ts';
-import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
-import type { ProjectSnapshot } from '../../src/planning-repo/types.ts';
-import { buildReferenceRegistry } from '../../src/presentation/references.ts';
-import type { ReferenceRegistry } from '../../src/presentation/references.ts';
-import { buildArtifactIndex } from '../../src/server/artifact-index.ts';
-import { toProjectPresentation } from '../../src/server/project-presentation.ts';
-import type { ProjectPresentation } from '../../src/server/project-presentation.ts';
+import { join } from 'node:path';
 
 export const LB_ROOT = new URL('../..', import.meta.url).pathname.replace(/\/$/, '');
 const FIXTURES = join(LB_ROOT, 'test/fixtures/todos');
@@ -94,56 +85,6 @@ export function readKeyed(file: KeyedFile): string {
   return readFileSync(join(file.root, file.path), 'utf8');
 }
 
-export interface LoadedProject {
-  snapshot: ProjectSnapshot;
-  presentation: ProjectPresentation;
-  registry: ReferenceRegistry;
-  /** A body lookup over the project's artifacts, the way the server reads note bodies. */
-  bodyOf: (path: string) => string | null;
-}
-
-/** A project root loaded through the real repository, the way the server builds a request's bundle. */
-export async function loadProject(root: string): Promise<LoadedProject> {
-  const snapshot = await new PlanningRepository(new LocalFsPlanningFilesystem(root), root).load();
-  const presentation = toProjectPresentation(snapshot);
-  const index = buildArtifactIndex(snapshot);
-  return {
-    snapshot,
-    presentation,
-    registry: buildReferenceRegistry(presentation),
-    bodyOf: (path) => {
-      const found = index.lookup(path);
-      return found.found ? found.artifact.body : null;
-    },
-  };
-}
-
-/** Every file under a root's `.planning/`, keyed by its path relative to the root. */
-export function planningFiles(root: string): Record<string, string> {
-  const out: Record<string, string> = {};
-  const walk = (dir: string): void => {
-    for (const entry of readdirSync(dir).sort()) {
-      const abs = join(dir, entry);
-      if (statSync(abs).isDirectory()) walk(abs);
-      else out[relative(root, abs).split('\\').join('/')] = readFileSync(abs, 'utf8');
-    }
-  };
-  if (existsSync(join(root, '.planning'))) walk(join(root, '.planning'));
-  return out;
-}
-
-/** A project built in memory from a path -> content map, loaded the way the server loads one. */
-export async function loadFiles(files: Record<string, string>): Promise<LoadedProject> {
-  const snapshot = await new PlanningRepository(new InMemoryPlanningFilesystem(files), '/project').load();
-  const presentation = toProjectPresentation(snapshot);
-  const index = buildArtifactIndex(snapshot);
-  return {
-    snapshot,
-    presentation,
-    registry: buildReferenceRegistry(presentation),
-    bodyOf: (path) => {
-      const found = index.lookup(path);
-      return found.found ? found.artifact.body : null;
-    },
-  };
-}
+// The loaders moved to fixture-project.ts (plan 06-01); re-exported so every current importer keeps working.
+export { loadFiles, loadProject, planningFiles } from './fixture-project.ts';
+export type { LoadedProject } from './fixture-project.ts';
