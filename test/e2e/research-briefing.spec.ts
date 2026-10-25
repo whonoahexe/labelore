@@ -1,18 +1,15 @@
-// The RESEARCH briefing e2e (quick-260929-3x3): real corpus files, never a fixture mock. Fixtures
-// resolve by path against the live `/api/presentation` payload (the context-brief.spec.ts idiom) so
-// an archival/rename fails loudly instead of silently skipping. The labelore v1.0/02 test always
-// runs; the studio-portal test runs against the read-only server on port 4198 (playwright.config.ts,
-// present only when ~/studio-portal/.planning exists) and skips itself otherwise. This spec asserts
-// the foundation sweep's key invariants itself (one h1, an eyebrow, squared corners, no 420px
-// overflow), since the full sweep is too slow to run per change.
-import { existsSync } from 'node:fs';
-import { homedir } from 'node:os';
+// The RESEARCH briefing e2e (quick-260929-3x3): real files, never a mock. Fixtures resolve by path
+// against the live `/api/presentation` payload (the context-brief.spec.ts idiom) so an archival/rename
+// fails loudly instead of silently skipping. The Labelore tests run against the repo's own server on
+// port 4199; the Lendshed v1.0/02 test runs against the read-only server on the made-up Lendshed
+// project (port 4198, FIXTURE_BASE_URL; playwright.config.ts always starts it and throws at load when
+// the fixture tree is missing). Nothing in this file skips. This spec asserts the foundation sweep's
+// key invariants itself (one h1, an eyebrow, squared corners, no 420px overflow), since the full
+// sweep is too slow to run per change.
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
+import { FIXTURE_BASE_URL } from './fixture-root.ts';
 import { SCREENSHOT_ROOT } from './pages.ts';
-
-const STUDIO_PORTAL_AVAILABLE = existsSync(join(homedir(), 'studio-portal', '.planning'));
-const SP_BASE_URL = 'http://127.0.0.1:4198';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
@@ -128,13 +125,12 @@ test.describe('RESEARCH briefing', () => {
     expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.innerWidth + 1);
   });
 
-  test('SP v1.0/02 briefing', async ({ page }) => {
-    test.skip(!STUDIO_PORTAL_AVAILABLE, 'studio-portal checkout not present');
-    const url = await resolveFixtureUrl(SP_BASE_URL, 'v1.0-phases/02-storage-health-status/02-RESEARCH.md');
-    await page.goto(`${SP_BASE_URL}${url}`);
+  test('FX v1.0/02 briefing', async ({ page }) => {
+    const url = await resolveFixtureUrl(FIXTURE_BASE_URL, 'v1.0-phases/02-shed-inventory-health/02-RESEARCH.md');
+    await page.goto(`${FIXTURE_BASE_URL}${url}`);
     await page.locator('#research-summary').waitFor({ state: 'visible' });
 
-    // Storage health draws as nine nodes in six kind lanes; Shown as drawn is the nine lifted boxes.
+    // Shed inventory health draws as nine nodes in six kind lanes; Shown as drawn is the nine lifted boxes.
     await expect(page.locator('.lane-diagram-node')).toHaveCount(9);
     await expect(page.locator('.lane-diagram-lane')).toHaveCount(6);
     await page.locator('#research-architecture').getByRole('button', { name: 'Shown as drawn' }).click();

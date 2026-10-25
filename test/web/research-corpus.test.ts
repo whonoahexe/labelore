@@ -1,13 +1,12 @@
-// quick-260929-3x3 (3X3-01, H-3/H-4): real-corpus guards over every RESEARCH.md in this repo's
-// `.planning/` plus `~/studio-portal/.planning/` — the context-brief-corpus.test.ts idiom (a
-// missing studio-portal checkout skips its files). Every file must extract without throwing,
-// compose to a non-null briefing, and leave no `##` section dropped silently. The pinned counts
-// were independently confirmed with awk/grep against the source files (never copied from the
-// extractor's own output).
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+// quick-260929-3x3 (3X3-01, H-3/H-4): corpus guards over every RESEARCH.md in this repo's `.planning/`
+// (keyed LB) plus the made-up Lendshed project (keyed FX, walked through FX_PLANNING; a missing fixture
+// throws instead of skipping). Every file must extract without throwing, compose to a non-null
+// briefing, and leave no `##` section dropped silently. The pinned counts were independently confirmed
+// with awk/grep against the files themselves (never copied from the extractor's own output).
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { SP_PLANNING } from '../helpers/studio-portal.ts';
+import { FX_PLANNING, fxPath } from '../helpers/fixture-project.ts';
 import { tryParseFrontmatter } from '../../src/planning-repo/frontmatter.ts';
 import {
   extractResearchBriefing,
@@ -19,7 +18,6 @@ import type { DocumentSectionGroup } from '../../src/web/views/document-sections
 const REPO_PLANNING = new URL('../../.planning', import.meta.url).pathname;
 
 function walkResearch(root: string): string[] {
-  if (!existsSync(root)) return [];
   const found: string[] = [];
   const stack = [root];
   while (stack.length > 0) {
@@ -38,7 +36,9 @@ function walkResearch(root: string): string[] {
   return found.sort();
 }
 
-const FILES = [...walkResearch(REPO_PLANNING), ...walkResearch(SP_PLANNING)];
+const LB_FILES = walkResearch(REPO_PLANNING);
+const FX_FILES = walkResearch(FX_PLANNING);
+const FILES = [...LB_FILES, ...FX_FILES];
 
 function slug(heading: string): string {
   return heading.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -50,15 +50,15 @@ function bodyOf(path: string): string {
 
 describe('RESEARCH corpus guard', () => {
   it('finds the corpus', () => {
-    // 5 in this repo; the 8 studio-portal files only when that checkout is present.
-    expect(FILES.filter((f) => f.startsWith(REPO_PLANNING)).length).toBeGreaterThanOrEqual(5);
-    if (existsSync(SP_PLANNING)) expect(FILES.length).toBeGreaterThanOrEqual(13);
+    // At least 5 Labelore files and the Lendshed RESEARCH files (R6, R8: minimums, never a total).
+    expect(LB_FILES.length).toBeGreaterThanOrEqual(5);
+    expect(FX_FILES.length).toBeGreaterThanOrEqual(1);
   });
 
   for (const file of FILES) {
     const label = file.startsWith(REPO_PLANNING)
       ? `LB ${relative(REPO_PLANNING, file)}`
-      : `SP ${relative(SP_PLANNING, file)}`;
+      : `FX ${relative(FX_PLANNING, file)}`;
 
     it(`${label}: extracts, composes non-null, and drops no ## section silently`, () => {
       const body = bodyOf(file);
@@ -120,29 +120,11 @@ describe('RESEARCH corpus guard', () => {
     expect(b.sourceOnly).toHaveLength(7);
   });
 
-  const SP02 = `${SP_PLANNING}/milestones/v1.0-phases/02-storage-health-status/02-RESEARCH.md`;
-  it.runIf(existsSync(SP02))('SP v1.0/02 anchors', () => {
-    const b = extractResearchBriefing(bodyOf(SP02));
+  it('FX v1.0/02 anchors', () => {
+    const b = extractResearchBriefing(bodyOf(fxPath('milestones/v1.0-phases/02-shed-inventory-health/02-RESEARCH.md')));
     expect(b.stack?.groups.map((g) => g.packages.length)).toEqual([6, 3]);
     expect(b.environment?.rows.filter((r) => r.blocking)).toHaveLength(3);
     expect(b.pitfalls?.items.filter((p) => p.severity === 'CRITICAL')).toHaveLength(3);
     expect(b.sourceOnly).toHaveLength(9);
-  });
-
-  const SP01 = `${SP_PLANNING}/phases/01-portal-owned-identity-sessions/01-RESEARCH.md`;
-  const SP03 = `${SP_PLANNING}/phases/03-account-administration-session-control/03-RESEARCH.md`;
-  const findingsOf = (path: string) =>
-    composeResearchBriefing({
-      kind: 'research',
-      frontmatter: {},
-      structured: { briefing: extractResearchBriefing(bodyOf(path)) },
-      groups: [],
-      planSegments: [],
-    })?.summary?.findings ?? [];
-  it.runIf(existsSync(SP01))('SP phases/01 Summary has 2 findings', () => {
-    expect(findingsOf(SP01)).toHaveLength(2);
-  });
-  it.runIf(existsSync(SP03))('SP phases/03 Summary has 1 finding', () => {
-    expect(findingsOf(SP03)).toHaveLength(1);
   });
 });

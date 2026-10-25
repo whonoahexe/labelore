@@ -2,10 +2,10 @@
 // fixtures and the two anchor documents read from disk, plus the T-3x3-02 timing guard and the
 // T-3x3-04 handler guard. Anchor counts were independently confirmed with awk/grep against the
 // source files (never copied from the extractor's own output).
-import { existsSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
-import { SP_PLANNING } from './helpers/studio-portal.ts';
+import { fxPath } from './helpers/fixture-project.ts';
 import {
   NA_AUDIT,
   PITFALL_LABEL_LINES,
@@ -25,7 +25,7 @@ import type { ArtifactRef, RawArtifact } from '../src/planning-repo/types.ts';
 
 const REPO_ROOT = new URL('../', import.meta.url);
 const LB02 = '.planning/milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-RESEARCH.md';
-const SP02 = `${SP_PLANNING}/milestones/v1.0-phases/02-storage-health-status/02-RESEARCH.md`;
+const FX02 = fxPath('milestones/v1.0-phases/02-shed-inventory-health/02-RESEARCH.md');
 
 async function repoBody(path: string): Promise<string> {
   return await readFile(new URL(path, REPO_ROOT), 'utf8');
@@ -393,9 +393,10 @@ describe('robustness (T-3x3-02, T-3x3-04)', () => {
   });
 });
 
-describe('extractResearchBriefing — SP v1.0/02 (real file, when present)', () => {
-  it.runIf(existsSync(SP02))('matches the pinned anchors', async () => {
-    const b = extractResearchBriefing(await readFile(SP02, 'utf8'));
+describe('extractResearchBriefing — Lendshed v1.0/02 (committed fixture file)', () => {
+  // Every number below was counted with grep/awk in the fixture file itself (R5), then compared with the extractor.
+  it('matches the pinned anchors', () => {
+    const b = extractResearchBriefing(readFileSync(FX02, 'utf8'));
     expect(b.meta.confidence?.level).toBe('HIGH');
     expect(b.meta.breakdown).toHaveLength(6);
     expect(b.meta.preamble).toHaveLength(1);
@@ -407,15 +408,15 @@ describe('extractResearchBriefing — SP v1.0/02 (real file, when present)', () 
     expect(b.audit?.rows.filter((r) => !r.plainApproval)).toHaveLength(4);
     expect(b.audit?.extraNotes).toHaveLength(2);
     expect(b.architecture?.patterns).toHaveLength(3);
-    expect(b.architecture?.antiPatterns).toHaveLength(7);
-    expect(b.handRoll?.rows).toHaveLength(7);
+    expect(b.architecture?.antiPatterns).toHaveLength(6);
+    expect(b.handRoll?.rows).toHaveLength(6);
     expect(b.pitfalls?.items).toHaveLength(8);
     expect(b.questions?.items).toHaveLength(4);
-    expect(b.environment?.rows).toHaveLength(15);
+    expect(b.environment?.rows).toHaveLength(14);
     expect(b.environment?.rows.filter((r) => r.available === 'no')).toHaveLength(4);
     expect(b.environment?.rows.filter((r) => r.blocking)).toHaveLength(3);
-    expect(b.sources?.tiers.map((t) => t.items.length)).toEqual([11, 5, 5]);
-    expect(b.userConstraints?.lockedGroups.reduce((n, g) => n + g.ids.length, 0)).toBe(21);
+    expect(b.sources?.tiers.map((t) => t.items.length)).toEqual([10, 5, 4]);
+    expect(b.userConstraints?.lockedGroups.reduce((n, g) => n + g.ids.length, 0)).toBe(11);
     expect(b.sourceOnly.map((s) => s.label)).toEqual([
       'Installation',
       'Version verification',
