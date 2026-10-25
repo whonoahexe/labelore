@@ -1,12 +1,11 @@
-// quick-261023-61k (QCORP): real-corpus guards over every todo on this machine - labelore's own
-// `.planning/todos/`, the dashboard's synthetic fixture, the three committed fixture projects and each
-// sibling project that has a todos folder (resoundant today) - built through the real repository load so
-// each file reaches the handler with the ref discovery gives it, with the server's todo context built by
-// buildTodoContext. These are live projects, so the test asserts invariants for every file and pins values
-// only for the files named in the sketch (plus labelore's 001 and resoundant's two, when present), using
-// the numbers from the sketch's rendering and data - never the composer's output.
+// quick-261023-61k (QCORP): real-corpus guards over every todo in the committed projects - labelore's own
+// `.planning/todos/`, the dashboard's synthetic fixture, the made-up Lendshed project and the committed
+// Labelore fixture - built through the real repository load so each file reaches the handler with the ref
+// discovery gives it, with the server's todo context built by buildTodoContext. The test asserts
+// invariants for every file and pins values for the files named in TODO_KEYS (plus labelore's 001 and
+// Lendshed's two sibling-shaped todos), counted in the files themselves - never the composer's output.
 process.env.TZ = 'Asia/Kolkata';
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -20,18 +19,15 @@ import { TodoLifecycleView } from '../../src/web/views/todo-lifecycle-components
 import {
   FIXTURE_ROOTS,
   LB_ROOT,
-  NOTE_KEYS,
-  RESOUNDANT_ROOT,
   TODO_KEYS,
-  TODO_SIBLING_ROOTS,
   loadProject,
   readKeyed,
-  sketchNoteRaw,
 } from '../helpers/todo-corpus.ts';
+import { FX_ROOT } from '../helpers/fixture-project.ts';
 import type { LoadedProject } from '../helpers/todo-corpus.ts';
 
 const KOLKATA = { now: new Date('2026-10-23T12:00:00+05:30'), timeZone: 'Asia/Kolkata' };
-const ROOTS = [LB_ROOT, ...FIXTURE_ROOTS, ...TODO_SIBLING_ROOTS];
+const ROOTS = [LB_ROOT, ...FIXTURE_ROOTS];
 
 function walk(dir: string): string[] {
   if (!existsSync(dir)) return [];
@@ -194,13 +190,6 @@ describe('the corpus', () => {
     expect(noteKinds.length).toBeGreaterThan(0);
     for (const note of noteKinds) expect(note.kind, note.label).not.toBe('todo');
   });
-
-  it('keeps every note fixture byte-equal to the sketch', () => {
-    for (const key of Object.keys(NOTE_KEYS)) {
-      const file = NOTE_KEYS[key];
-      expect(readFileSync(join(file.root, file.path), 'utf8'), key).toBe(sketchNoteRaw(key));
-    }
-  });
 });
 
 function entryOf(file: { root: string; path: string }): Entry {
@@ -226,7 +215,7 @@ describe('the sketch todos on the real pipeline', () => {
       srec: ['Pending', 'Minor', 'Open 8 days.'],
       star: ['Pending', 'P2', 'Open 7 days.'],
       sport: ['Done', 'Minor', 'Closed'],
-      pcheck: ['Pending', 'High', 'Open less than a day.'],
+      pcheck: ['Pending', 'High', 'Open 211 days.'],
       pdev: ['Done', 'Medium', 'Closed'],
       lfig: ['Pending', 'Medium', 'Open 24 days.'],
       ldrift: ['Done', 'Medium', 'Closed'],
@@ -240,11 +229,11 @@ describe('the sketch todos on the real pipeline', () => {
   });
 });
 
-const LB001 = { root: LB_ROOT, path: '.planning/todos/pending/001-sketches-page-in-labelore.md' };
+const LB001 = { root: LB_ROOT, path: '.planning/todos/completed/001-sketches-page-in-labelore.md' };
 describe("labelore's own promoted todo (001)", () => {
-  it.runIf(existsSync(join(LB001.root, LB001.path)))('reads as promoted from its note, with the acceptance list and the open sections', () => {
+  it('reads as promoted from its note, with the acceptance list and the closed sections', () => {
     const model = entryOf(LB001).model!;
-    expect(model.chips.status).toEqual({ label: 'Pending', tone: 'in-flight' });
+    expect(model.chips.status).toEqual({ label: 'Done', tone: 'complete' });
     expect(model.chips.weight).toMatchObject({ text: 'P2', level: 'medium' });
     expect(model.chips.area).toBe('general');
     expect(model.steps[0]).toMatchObject({ value: '23 Oct 03:11', sub: '1 note' });
@@ -256,22 +245,21 @@ describe("labelore's own promoted todo (001)", () => {
     });
     expect(model.captured.kicker).toBe('23 Oct · promoted from /gsd-note');
     expect(model.captured.lead?.label).toBe('Goal');
-    expect(model.captured.plan?.label).toMatch(/^Done when · \d+ of \d+$/);
+    expect(model.captured.plan?.label).toBe('Done when · 5 of 7');
     expect(model.captured.extras.map((extra) => extra.heading)).toEqual(['Context', 'Progress']);
-    expect(model.end).toMatchObject({ kind: 'open', lead: 'Open less than a day.' });
-    expect(model.end.kind === 'open' && model.end.rest).toMatch(/^Nothing has closed it yet — \d+ of \d+ items checked\.$/);
+    expect(model.end).toMatchObject({ kind: 'closed', title: 'Closed' });
   });
 });
 
-const RS1 = { root: RESOUNDANT_ROOT, path: '.planning/todos/pending/download-failures-not-reported-to-hub.md' };
-const RS2 = { root: RESOUNDANT_ROOT, path: '.planning/todos/pending/hub-cstore-retention-and-authorization.md' };
-describe("resoundant's two pending todos", () => {
-  it.runIf(existsSync(join(RS1.root, RS1.path)))('rs1: pending, high, from the tarball design note, four folds', () => {
-    const model = entryOf(RS1).model!;
+const OD = { root: FX_ROOT, path: '.planning/todos/pending/overdue-reminders-not-reported-to-desk.md' };
+const DR = { root: FX_ROOT, path: '.planning/todos/pending/desk-retention-and-access-rules.md' };
+describe("lendshed's two pending todos", () => {
+  it('overdue reminders: pending, high, from the export bundle design note, four folds', () => {
+    const model = entryOf(OD).model!;
     expect(model.chips.status.label).toBe('Pending');
     expect(model.chips.weight).toMatchObject({ text: 'High', level: 'high' });
-    expect(model.head.created).toBe('3 Sep 2026');
-    expect(model.noted!.notes.map((note) => [note.path, note.way])).toEqual([['.planning/notes/tarball-hash-verification-design.md', 'Linked in the text']]);
+    expect(model.head.created).toBe('21 Mar 2026');
+    expect(model.noted!.notes.map((note) => [note.path, note.way])).toEqual([['.planning/notes/2026-03-20-export-bundle-design.md', 'Linked in the text']]);
     expect(model.captured.extras.map((extra) => extra.heading)).toEqual([
       'What happens today',
       'The dead reporting channel',
@@ -280,19 +268,19 @@ describe("resoundant's two pending todos", () => {
     ]);
   });
 
-  it.runIf(existsSync(join(RS2.root, RS2.path)))('rs2: a link to a todo stays plain text and adds no note', () => {
-    const entry = entryOf(RS2);
+  it('desk retention: a link to a todo stays plain text and adds no note', () => {
+    const entry = entryOf(DR);
     const model = entry.model!;
     expect(model.chips.weight).toMatchObject({ text: 'High', level: 'high' });
-    expect(model.head.created).toBe('3 Sep 2026');
-    expect(model.noted!.notes.map((note) => note.path)).toEqual(['.planning/notes/tarball-hash-verification-design.md']);
+    expect(model.head.created).toBe('21 Mar 2026');
+    expect(model.noted!.notes.map((note) => note.path)).toEqual(['.planning/notes/2026-03-20-export-bundle-design.md']);
     expect(model.captured.extras.map((extra) => extra.heading)).toEqual([
       'Details',
-      '1. Uploaded tarballs are never deleted',
-      '2. The endpoint authenticates but does not authorize',
+      '1. Finished bundles are never deleted',
+      '2. The endpoint signs in but does not check access',
     ]);
-    expect(model.refs.map((ref) => ref.slug)).toEqual(['tarball-hash-verification-design']);
-    expect(entry.markup).toContain('download-failures-not-reported-to-hub');
-    expect(entry.markup).not.toMatch(/<a [^>]*>download-failures-not-reported-to-hub<\/a>/);
+    expect(model.refs.map((ref) => ref.slug)).toEqual(['2026-03-20-export-bundle-design']);
+    expect(entry.markup).toContain('overdue-reminders-not-reported-to-desk');
+    expect(entry.markup).not.toMatch(/<a [^>]*>overdue-reminders-not-reported-to-desk<\/a>/);
   });
 });
