@@ -10,13 +10,13 @@ import { DEFAULT_BUDGET, LANE_ORDER, NODE_H, layoutLanes } from '../../src/rende
 import type { LayoutResult } from '../../src/rendering/lane-layout.ts';
 
 const NAMES = {
-  'sp-v1-02': 'sp-v1-02-storage-health',
+  'lendshed-v1-02': 'lendshed-v1-02-shed-health',
   'lab-v1-02': 'lb-v1-02-situational-awareness',
-  'sp-v1-01': 'sp-v1-01-identity',
-  'sp-v1-04': 'sp-v1-04-transfers',
-  'sp-01': 'sp-p01-identity-sessions',
-  'sp-02': 'sp-p02-roles',
-  'sp-04': 'sp-p04-bulk-archive',
+  'lendshed-v1-01': 'lendshed-v1-01-member-data',
+  'lendshed-v1-04': 'lendshed-v1-04-transfers',
+  'lendshed-p01': 'lendshed-p01-sign-in-sessions',
+  'lendshed-p02': 'lendshed-p02-roles',
+  'lendshed-p04': 'lendshed-p04-bulk-export',
 } as const;
 type Id = keyof typeof NAMES;
 
@@ -33,7 +33,7 @@ const kindsOf = (layout: LayoutResult): string[] => layout.lanes.map((lane) => l
 
 describe('layoutLanes — lanes and width at 940px', () => {
   it('storage health: six lanes in LANE_ORDER, compact, and no wider than the budget', () => {
-    const layout = layoutOf('sp-v1-02');
+    const layout = layoutOf('lendshed-v1-02');
     expect(kindsOf(layout)).toEqual(['client', 'service', 'worker', 'channel', 'data', 'external']);
     // floor((940 - 6 * 16) / 6): 140. (The planning note's 141 was round(), which overflows the budget.)
     expect(layout.nodeWidth).toBe(140);
@@ -42,8 +42,8 @@ describe('layoutLanes — lanes and width at 940px', () => {
   });
 
   it('storage health: the four prober threads share one x in the Worker lane, at four distinct y', () => {
-    const graph = graphOf('sp-v1-02');
-    const layout = layoutOf('sp-v1-02');
+    const graph = graphOf('lendshed-v1-02');
+    const layout = layoutOf('lendshed-v1-02');
     const probers = graph.nodes.filter((n) => n.kind === 'worker').map((n) => layout.nodes[n.id]);
     expect(probers).toHaveLength(4);
     expect(new Set(probers.map((p) => p.x)).size).toBe(1);
@@ -58,8 +58,8 @@ describe('layoutLanes — lanes and width at 940px', () => {
     expect(layout.compact).toBe(false);
   });
 
-  it('studio-portal v1.0/01 and phases/01: five lanes, 172px nodes', () => {
-    for (const id of ['sp-v1-01', 'sp-01'] as const) {
+  it('lendshed v1.0/01 and phases/01: five lanes, 172px nodes', () => {
+    for (const id of ['lendshed-v1-01', 'lendshed-p01'] as const) {
       const layout = layoutOf(id);
       expect(layout.lanes, id).toHaveLength(5);
       expect(layout.nodeWidth, id).toBe(172);
@@ -67,7 +67,7 @@ describe('layoutLanes — lanes and width at 940px', () => {
   });
 
   it('roles and bulk archive: four lanes at the 196px cap', () => {
-    for (const id of ['sp-02', 'sp-04'] as const) {
+    for (const id of ['lendshed-p02', 'lendshed-p04'] as const) {
       const layout = layoutOf(id);
       expect(layout.lanes, id).toHaveLength(4);
       expect(layout.nodeWidth, id).toBe(196);
@@ -75,7 +75,7 @@ describe('layoutLanes — lanes and width at 940px', () => {
   });
 
   it('transfers: six lanes, the same narrow nodes as storage health', () => {
-    const layout = layoutOf('sp-v1-04');
+    const layout = layoutOf('lendshed-v1-04');
     expect(layout.lanes).toHaveLength(6);
     expect(layout.nodeWidth).toBe(140);
   });
@@ -139,8 +139,8 @@ describe('layoutLanes — geometry invariants', () => {
 
 describe('layoutLanes — a wider budget (Expand)', () => {
   it('storage health places its probers two per row at 1440', () => {
-    const graph = graphOf('sp-v1-02');
-    const layout = layoutOf('sp-v1-02', 1440);
+    const graph = graphOf('lendshed-v1-02');
+    const layout = layoutOf('lendshed-v1-02', 1440);
     const probers = graph.nodes.filter((n) => n.kind === 'worker').map((n) => layout.nodes[n.id]);
     expect(new Set(probers.map((p) => p.x)).size).toBe(2);
     expect(new Set(probers.map((p) => p.y)).size).toBe(2);

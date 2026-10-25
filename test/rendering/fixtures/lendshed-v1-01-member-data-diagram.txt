@@ -1,19 +1,19 @@
 ┌────────────────────────────────────────────────────────────────────┐
-│ BROWSER (studio member)                                             │
+│ BROWSER (tool borrower)                                             │
 └──────────┬───────────────────────────────┬──────────────────────────┘
            │ (1) page load                 │ (3) WS connect (ticket    │ (4) GET /dl/<ticket>/file
            │     -> CF Access redirects    │     as 1st message)       │     (one-time path segment)
            │     to login if unauthed      │                          │
            ▼                               ▼                          ▼
 ┌─────────────────────────────┐   ┌────────────────────────────────────────────┐
-│ Cloudflare Access (edge)     │   │ api.cinedise.com (cloudflared tunnel)      │
+│ Cloudflare Access (edge)     │   │ lendshed.example (cloudflared tunnel)      │
 │ • gates BOTH hostnames as    │   │ • NOT reachable except via tunnel          │
 │   one multi-domain app       │   │ • axum backend                             │
 │ • attaches Cf-Access-Jwt-    │   └───────────────┬─────────────────────────────┘
 │   Assertion header on every  │                   │
 │   request that reaches origin│                   ▼
 └──────────┬───────────────────┘   ┌──────────────────────────────────────────────┐
-           │ (2) POST /api/ws-ticket           AUTH MIDDLEWARE (axum)             │
+           │ (2) POST /api/ws-ticket           PASS MIDDLEWARE (axum)             │
            │     JWT verified independently    ┌──────────────────────────────┐   │
            └───────────────────────────────────►│ 1. Fetch/refresh JWKS bg task│   │
                                                 │ 2. Verify sig + aud+iss+exp   │   │

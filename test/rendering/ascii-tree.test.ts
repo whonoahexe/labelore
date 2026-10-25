@@ -1,6 +1,6 @@
 // quick-260929-3x3 (3X3-03, S-11): parseTree / changedOnlySet / treeCounts / isDirectoryTree — the
 // pure port of sketch 009's parseTree with parent links. Corpus numbers (14 rows / 10 files / 4
-// folders on studio-portal v1.0/02, 27 rows / 15 files / 12 folders on labelore v1.0/02) came from
+// folders on lendshed v1.0/02, 27 rows / 15 files / 12 folders on labelore v1.0/02) came from
 // the sketch's own reference algorithm.
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
@@ -27,7 +27,7 @@ async function treeOf(path: string): Promise<string> {
 const SP_TREE = extractResearchBriefing(LS02_SHAPE).architecture?.structure?.text ?? '';
 
 describe('parseTree', () => {
-  it('studio-portal v1.0/02: 14 rows (10 files, 4 folders) with NEW / EXTEND / EXISTING badges', () => {
+  it('lendshed v1.0/02: 14 rows (10 files, 4 folders) with NEW / EXTEND / EXISTING badges', () => {
     const rows = parseTree(SP_TREE);
     expect(rows).toHaveLength(14);
     expect(treeCounts(rows)).toEqual({ files: 10, folders: 4, changed: 3 });
@@ -110,9 +110,9 @@ describe('isDirectoryTree', () => {
   });
 });
 
-// quick-260930-jzt: the MODIFIED badge and collapseFolderChains, against the studio-portal phases/02
+// quick-260930-jzt: the MODIFIED badge and collapseFolderChains, against the lendshed phases/02
 // roles tree (a verbatim fixture, 32 rows).
-const ROLES_TREE = await readFile(new URL('./fixtures/sp-p02-roles-tree.txt', import.meta.url), 'utf8');
+const ROLES_TREE = await readFile(new URL('./fixtures/lendshed-p02-roles-tree.txt', import.meta.url), 'utf8');
 
 function treeRow(name: string, parent: number | null, depth: number, extra: Partial<TreeRow> = {}): TreeRow {
   return { depth, prefix: '', name, note: '', dir: name.endsWith('/'), badge: null, parent, ...extra };
@@ -218,7 +218,7 @@ describe('collapseFolderChains', () => {
     expect(rows.map((r) => r.name)).toEqual(['a/', 'b/', 'x.ts', 'c.ts']);
   });
 
-  it('labelore v1.0/02 stays at 27 rows and studio-portal v1.0/02 at 14', async () => {
+  it('labelore v1.0/02 stays at 27 rows and lendshed v1.0/02 at 14', async () => {
     const lb = parseTree(
       await treeOf('.planning/milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-RESEARCH.md'),
     );

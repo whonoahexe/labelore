@@ -1,5 +1,5 @@
 // quick-260930-mp6 (W-lanes, W-nodes, K-fallback): static markup for LaneDiagramFigure against the
-// studio-portal fixtures, and the RESEARCH view drawing labelore v1.0/02 as lanes. The renderer is
+// lendshed fixtures, and the RESEARCH view drawing labelore v1.0/02 as lanes. The renderer is
 // exercised with renderToStaticMarkup (the clean-tree.test.ts idiom); geometry is covered by
 // test/rendering/lane-layout.test.ts, and clicks by the narrow research-briefing e2e spec.
 import { readFile } from 'node:fs/promises';
@@ -19,8 +19,8 @@ import { ResearchBriefingView } from '../../src/web/views/research-briefing-comp
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 
 const fixture = (name: string): Promise<string> => readFile(new URL(`../rendering/fixtures/${name}-diagram.txt`, import.meta.url), 'utf8');
-const STORAGE = await fixture('sp-v1-02-storage-health');
-const STORAGE_TILES = await fixture('sp-v1-02-storage-tiles-mockup');
+const STORAGE = await fixture('lendshed-v1-02-shed-health');
+const STORAGE_TILES = await fixture('lendshed-v1-02-shed-tiles-mockup');
 
 const figure = (text: string): string => renderToStaticMarkup(createElement(LaneDiagramFigure, { text, title: 'System architecture' }));
 const count = (html: string, pattern: RegExp): number => (html.match(pattern) ?? []).length;
@@ -78,10 +78,10 @@ describe('NodeDetails — the panel beside the diagram (W-nodes)', () => {
     expect(html).toContain('Details');
     expect(html).toContain('<pre class="lane-diagram-panel-pre">');
     const from = html.slice(html.indexOf('>From<'), html.indexOf('>To<'));
-    for (const prober of ['Prober thread:stage', 'Prober thread:cloud', 'Prober thread:vault', 'Prober thread:archive']) {
+    for (const prober of ['Prober thread:front', 'Prober thread:annex', 'Prober thread:depot', 'Prober thread:toolbox']) {
       expect(from, prober).toContain(prober);
     }
-    expect(from).toContain('<li>Prober thread:stage — <em>mpsc/watch');
+    expect(from).toContain('<li>Prober thread:front — <em>mpsc/watch');
     const to = html.slice(html.indexOf('>To<'), html.indexOf('>As written<'));
     expect(to).toContain('Broadcast bus');
     expect(to).toContain('Event::TierHealth { tier, state, .. , probed_at }');
@@ -100,12 +100,12 @@ describe('NodeDetails — the panel beside the diagram (W-nodes)', () => {
 });
 
 describe('LaneDiagram — groups, wire labels, stage semantics (W-wires)', () => {
-  it('studio-portal v1.0/01: exactly one dashed group labelled Auth middleware', async () => {
+  it('lendshed v1.0/01: exactly one dashed group labelled Pass middleware', async () => {
     const html = renderToStaticMarkup(
-      createElement(LaneDiagram, { graph: graphOf(await fixture('sp-v1-01-identity')), fit: false, label: 'System architecture' }),
+      createElement(LaneDiagram, { graph: graphOf(await fixture('lendshed-v1-01-member-data')), fit: false, label: 'System architecture' }),
     );
     expect(count(html, /class="lane-diagram-group"/g)).toBe(1);
-    expect(html).toMatch(/class="lane-diagram-group-label"[^>]*>Auth middleware/);
+    expect(html).toMatch(/class="lane-diagram-group-label"[^>]*>Pass middleware/);
   });
 
   it('storage health: the stage counts 9 nodes and 10 wires, and the fan-out wire label carries a title', () => {

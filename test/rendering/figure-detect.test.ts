@@ -10,8 +10,8 @@ import {
 
 const fixture = (name: string): string =>
   readFileSync(new URL(`./fixtures/${name}`, import.meta.url), 'utf8');
-const TREE = fixture('sp-p02-roles-tree.txt');
-const DIAGRAM = fixture('sp-p02-roles-diagram.txt');
+const TREE = fixture('lendshed-p02-roles-tree.txt');
+const DIAGRAM = fixture('lendshed-p02-roles-diagram.txt');
 
 const BOXED_WITH_TREE_LINES = [
   '┌─────────────────────────┐',

@@ -1,4 +1,4 @@
-// quick-260930-jzt (JZT-M2, JZT-D2, JZT-D3): CleanTree static markup against the studio-portal
+// quick-260930-jzt (JZT-M2, JZT-D2, JZT-D3): CleanTree static markup against the lendshed
 // phases/02 roles tree (a verbatim fixture). CleanTree, not CleanTreeFigure, is rendered here — the
 // figure wraps a Base UI Dialog, which is not needed to pin the rows.
 import { readFile } from 'node:fs/promises';
@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { changedOnlySet, collapseFolderChains, parseTree } from '../../src/rendering/ascii-tree.ts';
 import { CleanTree } from '../../src/web/components/clean-tree.tsx';
 
-const ROLES_TREE = await readFile(new URL('../rendering/fixtures/sp-p02-roles-tree.txt', import.meta.url), 'utf8');
+const ROLES_TREE = await readFile(new URL('../rendering/fixtures/lendshed-p02-roles-tree.txt', import.meta.url), 'utf8');
 
 const render = (changedOnly: boolean): string =>
   renderToStaticMarkup(createElement(CleanTree, { text: ROLES_TREE, changedOnly }));

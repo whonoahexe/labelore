@@ -1,6 +1,6 @@
 // quick-260929-3x3 (3X3-03, S-10): liftDiagram / isLiftableDiagram — the pure port of sketch 009's
-// liftModel + liftHTML. The corpus numbers (9 boxes / 1 widened / 46 rows on studio-portal v1.0/02,
-// 0 boxes / 23 nodes on labelore v1.0/02, 3 boxes on LB v1.0/01, 1 box on SP phases/03) were taken
+// liftModel + liftHTML. The corpus numbers (9 boxes / 1 widened / 46 rows on lendshed v1.0/02,
+// 0 boxes / 23 nodes on labelore v1.0/02, 3 boxes on LB v1.0/01, 2 boxes on Lendshed v1.0/03) were taken
 // by running the sketch's own reference algorithm over the source files, not this port.
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
@@ -173,7 +173,7 @@ describe('liftDiagram — caps and cost (T-3x3-02)', () => {
 });
 
 describe('liftDiagram — the corpus diagrams', () => {
-  it('studio-portal v1.0/02 (fixture): 9 boxes, exactly 1 widened (BROADCAST BUS), 46 rows', () => {
+  it('lendshed v1.0/02 (fixture): 9 boxes, exactly 1 widened (BROADCAST BUS), 46 rows', () => {
     const text = extractResearchBriefing(LS02_SHAPE).architecture?.diagram?.text ?? '';
     const figure = must(liftDiagram(text));
     const boxes = figure.cards.filter((c) => c.kind === 'box');
@@ -228,7 +228,7 @@ describe('liftDiagram — the corpus diagrams', () => {
 });
 
 // quick-260930-jzt: drift-tolerant and open-left boxes (M4, M5), box-less step cards with model-owned
-// frames and spacer rows (D1). The fixtures are the studio-portal RESEARCH diagrams, verbatim; every
+// frames and spacer rows (D1). The fixtures are made-up Lendshed diagrams with the original geometry; every
 // row and column below is a 0-based index into that text.
 const fixture = (name: string): Promise<string> =>
   readFile(new URL(`./fixtures/${name}.txt`, import.meta.url), 'utf8');
@@ -290,8 +290,8 @@ const nodeFrames = (figure: LiftedFigure): LiftFrame[] =>
 const EPS = 1e-9;
 
 describe('liftDiagram — drifting and open-left boxes (JZT-M4, JZT-M5)', () => {
-  it('M4: the outer AUTH MIDDLEWARE box lifts as one card, painted before the boxes nested in it', async () => {
-    const figure = must(liftDiagram(await fixture('sp-v1-01-identity-diagram')));
+  it('M4: the outer PASS MIDDLEWARE box lifts as one card, painted before the boxes nested in it', async () => {
+    const figure = must(liftDiagram(await fixture('lendshed-v1-01-member-data-diagram')));
     const boxes = figure.cards.filter((c) => c.kind === 'box');
     expect(boxes).toHaveLength(8);
     const outerIndex = figure.cards.findIndex((c) => c.kind === 'box' && c.r1 === 14);
@@ -323,7 +323,7 @@ describe('liftDiagram — drifting and open-left boxes (JZT-M4, JZT-M5)', () => 
   });
 
   it('M4: the open-left card never covers the outside note or the connector that enters it', async () => {
-    const figure = must(liftDiagram(await fixture('sp-v1-01-identity-diagram')));
+    const figure = must(liftDiagram(await fixture('lendshed-v1-01-member-data-diagram')));
     const outer = figure.cards.find((c) => c.kind === 'box' && c.r1 === 14)!;
     const note = locate(figure, '(2) POST /api/ws-ticket');
     const note2 = locate(figure, 'JWT verified independently');
@@ -336,11 +336,11 @@ describe('liftDiagram — drifting and open-left boxes (JZT-M4, JZT-M5)', () => 
       expect(outer.frame.left, `row ${at.row}`).toBeGreaterThanOrEqual(at.c2 + 1 - EPS);
     }
     // The heading text of the box itself stays inside it.
-    expect(insideFrame(outer.frame, locate(figure, 'AUTH MIDDLEWARE (axum)'))).toBe(true);
+    expect(insideFrame(outer.frame, locate(figure, 'PASS MIDDLEWARE (axum)'))).toBe(true);
   });
 
   it("M4: no staircase of loose │ ticks — each row's rightmost │ is blanked, the ► stays an arrow", async () => {
-    const source = await fixture('sp-v1-01-identity-diagram');
+    const source = await fixture('lendshed-v1-01-member-data-diagram');
     const figure = must(liftDiagram(source));
     const lines = source.split('\n').map((line) => [...line]);
     for (let row = 15; row <= 36; row++) {
@@ -417,7 +417,7 @@ describe('liftDiagram — drifting and open-left boxes (JZT-M4, JZT-M5)', () => 
 
 describe('liftDiagram — box-less step cards (JZT-D1)', () => {
   it('bulk archive: 11 step cards and 10 spacers, no overlap, a half-row gap, one left edge', async () => {
-    const figure = must(liftDiagram(await fixture('sp-p04-bulk-archive-diagram')));
+    const figure = must(liftDiagram(await fixture('lendshed-p04-bulk-export-diagram')));
     const nodes = figure.cards.filter((c) => c.kind === 'node');
     expect(nodes).toHaveLength(11);
     expect(figure.spacers).toHaveLength(10);
@@ -441,9 +441,9 @@ describe('liftDiagram — box-less step cards (JZT-D1)', () => {
   });
 
   it('bulk archive: detail lines sit inside their step frame; edge labels and asides stay outside every frame', async () => {
-    const figure = must(liftDiagram(await fixture('sp-p04-bulk-archive-diagram')));
+    const figure = must(liftDiagram(await fixture('lendshed-p04-bulk-export-diagram')));
     const details: [string, string[]][] = [
-      ['bounded recursive walk', ['local: TierRoot', 'cloud: one rclone']],
+      ['bounded recursive walk', ['local: TierRoot', 'annex: one shedcp']],
       [
         'ArchiveExecutor dedicated thread',
         ['re-open each source', 'missing? ->', 'present? ->', 'progress ->', 'finish + sync + atomic rename'],
@@ -468,7 +468,7 @@ describe('liftDiagram — box-less step cards (JZT-D1)', () => {
   });
 
   it('roles: steps stay apart, details and the admin flow sit inside their cards, the pointer note stays out', async () => {
-    const figure = must(liftDiagram(await fixture('sp-p02-roles-diagram')));
+    const figure = must(liftDiagram(await fixture('lendshed-p02-roles-diagram')));
     const frames = nodeFrames(figure);
     for (let i = 0; i < frames.length; i++) {
       for (let j = i + 1; j < frames.length; j++) expect(overlapArea(frames[i], frames[j]), `${i}/${j}`).toBe(0);
@@ -497,7 +497,7 @@ describe('liftDiagram — box-less step cards (JZT-D1)', () => {
   });
 
   it('phases/01: a step takes its detail lines; only the interleaved pair touches, by a single cell', async () => {
-    const figure = must(liftDiagram(await fixture('sp-p01-identity-sessions-diagram')));
+    const figure = must(liftDiagram(await fixture('lendshed-p01-sign-in-sessions-diagram')));
     const backend = stepCard(figure, 'Rust backend — /api/whoami-shaped');
     for (const needle of [
       'validation endpoint',

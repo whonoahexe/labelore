@@ -3,12 +3,12 @@
   -> validate closed payload / selection bounds
   -> bounded recursive walk
        local: TierRoot read_dir/open_file
-       cloud: one rclone lsjson -R -- remote:path
+       annex: one shedcp lsjson -R -- /mnt/shared
   -> canonicalize safe ZIP entry names + stable sort
   -> sum <= 400 GB? ----no----> refusal dialog (selection intact)
-  -> stage avail >= conservative required bytes? --no--> same refusal dialog
+  -> front avail >= conservative required bytes? --no--> same refusal dialog
   -> one DB transaction: jobs row + archive_entries + owner
-  -> existing worker + TierLocks(source, stage)
+  -> existing worker + TierLocks(source, front)
   -> ArchiveExecutor dedicated thread
        re-open each source through containment boundary
        missing? -> archive_omissions row; continue

@@ -9,17 +9,17 @@ import { buildDiagramGraph, MAX_GRAPH_NODES } from '../../src/rendering/ascii-gr
 import type { DiagramGraph } from '../../src/rendering/ascii-graph.ts';
 
 const FIXTURE_NAMES = {
-  'sp-v1-02': 'sp-v1-02-storage-health',
+  'lendshed-v1-02': 'lendshed-v1-02-shed-health',
   'lab-v1-02': 'lb-v1-02-situational-awareness',
-  'sp-v1-01': 'sp-v1-01-identity',
+  'lendshed-v1-01': 'lendshed-v1-01-member-data',
   'lendshed-v1-03': 'lendshed-v1-03-catalogue',
-  'sp-v1-04': 'sp-v1-04-transfers',
-  'sp-01': 'sp-p01-identity-sessions',
-  'sp-02': 'sp-p02-roles',
-  'sp-04': 'sp-p04-bulk-archive',
-  'sp-p03': 'sp-p03-account-admin',
+  'lendshed-v1-04': 'lendshed-v1-04-transfers',
+  'lendshed-p01': 'lendshed-p01-sign-in-sessions',
+  'lendshed-p02': 'lendshed-p02-roles',
+  'lendshed-p04': 'lendshed-p04-bulk-export',
+  'lendshed-p03': 'lendshed-p03-account-admin',
   'lb-v1.1-05': 'lb-v1.1-05-per-type-views',
-  'sp-research': 'sp-research-system-overview',
+  'lendshed-research': 'lendshed-research-system-overview',
   'lb-v1-01': 'lb-v1-01-read-layer',
 } as const;
 type FixtureId = keyof typeof FIXTURE_NAMES;
@@ -100,7 +100,7 @@ describe('buildDiagramGraph — parity with the sketch (golden)', () => {
 
 describe('buildDiagramGraph — the named cases (K-bridging)', () => {
   it('storage health: the shouted side label names the heading-less box, and all four probers wire to the registry', () => {
-    const graph = graphOf('sp-v1-02');
+    const graph = graphOf('lendshed-v1-02');
     expect(graph.nodes).toHaveLength(9);
     expect(graph.edges).toHaveLength(10);
     const host = graph.nodes.find((n) => n.label.main === 'Host kernel / devices');
@@ -110,15 +110,15 @@ describe('buildDiagramGraph — the named cases (K-bridging)', () => {
     expect(registry).toBeDefined();
     const probers = graph.nodes.filter((n) => n.kind === 'worker');
     expect(probers.map((n) => n.label.main).sort()).toEqual([
-      'Prober thread:archive',
-      'Prober thread:cloud',
-      'Prober thread:stage',
-      'Prober thread:vault',
+      'Prober thread:annex',
+      'Prober thread:depot',
+      'Prober thread:front',
+      'Prober thread:toolbox',
     ]);
     for (const prober of probers) {
       const edge = graph.edges.find((e) => e.from === prober.id && e.to === registry?.id);
       expect(edge, prober.label.main).toBeDefined();
-      if (prober.label.main.endsWith(':stage')) expect(edge?.label.startsWith('mpsc/watch')).toBe(true);
+      if (prober.label.main.endsWith(':front')) expect(edge?.label.startsWith('mpsc/watch')).toBe(true);
     }
     const bus = graph.nodes.find((n) => n.label.main === 'Broadcast bus');
     const registryToBus = graph.edges.find((e) => e.from === registry?.id && e.to === bus?.id);
@@ -136,15 +136,15 @@ describe('buildDiagramGraph — the named cases (K-bridging)', () => {
     expect(graph.edges.filter((e) => e.implied)).toHaveLength(4);
   });
 
-  it('studio-portal v1.0/01: one group, "Auth middleware", around four members', () => {
-    const graph = graphOf('sp-v1-01');
+  it('lendshed v1.0/01: one group, "Pass middleware", around four members', () => {
+    const graph = graphOf('lendshed-v1-01');
     expect(graph.groups).toHaveLength(1);
-    expect(graph.groups[0].label.main).toBe('Auth middleware');
+    expect(graph.groups[0].label.main).toBe('Pass middleware');
     expect(graph.nodes.filter((n) => n.group === 0)).toHaveLength(4);
   });
 
-  it('studio-portal research system overview: a box cut into layers is one node per layer, stacked, under the browser', () => {
-    const graph = graphOf('sp-research');
+  it('lendshed research system overview: a box cut into layers is one node per layer, stacked, under the browser', () => {
+    const graph = graphOf('lendshed-research');
     expect(graph.thin).toBe(false);
     expect(graph.nodes.map((n) => n.label.main)).toEqual([
       'api::*',
@@ -152,7 +152,7 @@ describe('buildDiagramGraph — the named cases (K-bridging)', () => {
       'Job engine',
       'Host sensing',
       'SQLite',
-      'Shell (ported) Dashboard │ Projects │ Ingest │ Browse │ Jobs │ Admin',
+      'Shell (ported) Inventory │ Borrower │ Intake │ Browse │ Jobs │ Admin',
     ]);
     const [api, , , , sqlite, browser] = graph.nodes;
     expect(sqlite.kind).toBe('data');
@@ -181,12 +181,12 @@ describe('buildDiagramGraph — the named cases (K-bridging)', () => {
 });
 
 describe('buildDiagramGraph — the thin rule (K-fallback)', () => {
-  it("sp-p03 draws: its ◄── pointer notes are attached to their boxes, so they count as placed text", () => {
-    expect(graphOf('sp-p03').thin).toBe(false);
+  it("lendshed-p03 draws: its ◄── pointer notes are attached to their boxes, so they count as placed text", () => {
+    expect(graphOf('lendshed-p03').thin).toBe(false);
   });
 
   it('a screen mockup (storage tiles, mostly loose text) is thin', async () => {
-    const text = await readFile(new URL('./fixtures/sp-v1-02-storage-tiles-mockup-diagram.txt', import.meta.url), 'utf8');
+    const text = await readFile(new URL('./fixtures/lendshed-v1-02-shed-tiles-mockup-diagram.txt', import.meta.url), 'utf8');
     const figure = liftDiagram(text);
     expect(buildDiagramGraph(figure as NonNullable<typeof figure>).thin).toBe(true);
   });
@@ -205,7 +205,7 @@ describe('buildDiagramGraph — the thin rule (K-fallback)', () => {
   });
 
   it('the seven drawn corpus diagrams are not thin', () => {
-    for (const id of ['sp-v1-02', 'sp-v1-04', 'sp-v1-01', 'sp-01', 'sp-02', 'sp-04', 'lab-v1-02'] as const) {
+    for (const id of ['lendshed-v1-02', 'lendshed-v1-04', 'lendshed-v1-01', 'lendshed-p01', 'lendshed-p02', 'lendshed-p04', 'lab-v1-02'] as const) {
       expect(graphOf(id).thin, id).toBe(false);
     }
   });

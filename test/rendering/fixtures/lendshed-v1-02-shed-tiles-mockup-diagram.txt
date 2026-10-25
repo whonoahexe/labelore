@@ -1,10 +1,10 @@
-  ┌─ stage ─────────┐  ┌─ vault ─────────┐
+  ┌─ front ─────────┐  ┌─ depot ─────────┐
   │ █████░░░░░  62%  │  │ ███████░░░  71%  │
   │ 1.2TB free/2TB  │  │ 580GB free/2TB  │
-  │ ● SMART PASSED   │  │ ● SMART PASSED   │
+  │ ● CHECK PASSED   │  │ ● CHECK PASSED   │
   └─────────────────┘  └─────────────────┘
-  ┌─ archive ───────┐  ┌─ cloud ─────────┐
+  ┌─ toolbox ───────┐  ┌─ annex ─────────┐
   │ ████████░░  88%  │  │ ███░░░░░░░  31%  │
   │ 600GB free/5TB  │  │ 3.4TB free/5TB  │
-  │ ⚠ SMART FAILED   │  │ ● reachable      │
+  │ ⚠ CHECK FAILED   │  │ ● reachable      │
   └─────────────────┘  └─────────────────┘

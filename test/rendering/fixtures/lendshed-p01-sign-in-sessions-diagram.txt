@@ -1,8 +1,8 @@
 Browser
-  │  1. GET /browse/stage  (portal_session cookie attached automatically)
+  │  1. GET /browse/front  (member_session cookie attached automatically)
   ▼
 Vercel edge — Next.js proxy.ts (route gate, D-09/D-10)
-  │  reads portal_session cookie
+  │  reads member_session cookie
   │  2. validates cookie against backend ─────────────┐
   │     (short timeout; fail-closed → /login, D-11)    │
   ▼                                                      ▼
@@ -25,7 +25,7 @@ Handler (browse_handler / mint_ws_ticket / mint_dl_ticket / ...)
   │  UNCHANGED — takes VerifiedIdentity as a parameter, doesn't know
   │  or care what produced it (D-05's whole point)
   ▼
-tiers::scope::resolve  →  filesystem / rclone
+tiers::scope::resolve  →  filesystem / shedcp
 
 Login path (separate, rate-limited):
 Browser → POST /login {handle, password}
@@ -40,5 +40,5 @@ Login handler
   │  NOT found → argon2::verify_password(fixed dummy hash) anyway (D-18)
   │  either way: identical timing, identical response on failure
   ▼
-(success) → INSERT INTO sessions (...) → Set-Cookie: portal_session=...
-            (HttpOnly; Secure; SameSite=Lax; Domain=.cinedise.com)
+(success) → INSERT INTO sessions (...) → Set-Cookie: member_session=...
+            (HttpOnly; Secure; SameSite=Lax; Domain=lendshed.test)

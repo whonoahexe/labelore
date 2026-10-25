@@ -18,13 +18,13 @@ Job worker pool (small fixed set of tokio tasks, polling `queued` rows)
   │  on success: UPDATE jobs SET status='running' … WHERE id=? AND status='queued' RETURNING id
   ▼
         ┌─────────────────────────────┬───────────────────────────────────┐
-        │  dest/source touches a      │  neither side touches `cloud:`    │
-        │  `cloud:` remote            │                                    │
+        │  dest/source touches a      │  neither side touches `annex:`    │
+        │  `annex:` remote            │                                    │
         ▼                             ▼
-  jobs::executors::rclone       jobs::executors::rsync
+  jobs::executors::shedcp       jobs::executors::rsync
   POST sync/copy (or sync/move)  tokio::process::Command("rsync", …)
   to the ONE supervised          .stdout(Stdio::piped())
-  `rclone rcd` daemon,            byte-stream parse "\r"/"\n",
+  `shedcp rcd` daemon,            byte-stream parse "\r"/"\n",
   _async=true, _group=job/{id}    regex-parse progress2 lines
         │                             │
         ▼                             ▼
@@ -42,7 +42,7 @@ Job worker pool (small fixed set of tokio tasks, polling `queued` rows)
                   Browser: docked tray (D-14) + /jobs page update live
                         │
         (tool process exits) ──► verification step, if applicable (D-05/D-11/D-13)
-                        │           rclone: operations/check   |   rsync: verify-then-delete pass
+                        │           shedcp: operations/check   |   rsync: verify-then-delete pass
                         ▼
         UPDATE jobs SET status='completed'|'failed', verification_state=…
                         │
@@ -60,4 +60,4 @@ Recovery pass: SELECT * FROM jobs WHERE status IN ('running','verifying')
         │
         ▼
 For rsync-tagged rows: check /proc/{pid}/cmdline against the persisted argv — a real orphan gets killed
-For rclone-tagged rows: no live process can exist (the rcd daemon itself died with the backend) — DB row alone is truth
+For shedcp-tagged rows: no live process can exist (the rcd daemon itself died with the backend) — DB row alone is truth

@@ -1,5 +1,5 @@
 {
- "sp-v1-02": {
+ "lendshed-v1-02": {
   "quality": 0.7770334928229665,
   "dangling": 0,
   "nodes": [
@@ -27,10 +27,10 @@
     "details": [
      "/proc/self/mountinfo   (procfs —",
      "0.14 ms, NEVER blocks)",
-     "/mnt/{stage,vault,archive} (statvfs",
+     "/mnt/{front,depot,toolbox} (statvfs",
      "0.002 ms healthy / ∞ if wedged)",
-     "/dev/disk/by-id/... (smartctl+sudo)",
-     "Google Drive API   (rclone about)"
+     "/dev/disk/by-id/... (healthck+sudo)",
+     "Google Drive API   (shedcp about)"
     ],
     "notes": [],
     "group": null
@@ -75,10 +75,10 @@
    },
    {
     "kind": "worker",
-    "main": "Prober thread:stage",
+    "main": "Prober thread:front",
     "sub": "",
     "code": false,
-    "full": "PROBER THREAD:stage",
+    "full": "PROBER THREAD:front",
     "details": [
      "(dedicated OS thread",
      "NOT spawn_blocking)"
@@ -88,30 +88,30 @@
    },
    {
     "kind": "worker",
-    "main": "Prober thread:cloud",
+    "main": "Prober thread:annex",
     "sub": "",
     "code": false,
-    "full": "PROBER THREAD:cloud",
+    "full": "PROBER THREAD:annex",
     "details": [],
     "notes": [],
     "group": null
    },
    {
     "kind": "worker",
-    "main": "Prober thread:vault",
+    "main": "Prober thread:depot",
     "sub": "",
     "code": false,
-    "full": "PROBER THREAD:vault",
+    "full": "PROBER THREAD:depot",
     "details": [],
     "notes": [],
     "group": null
    },
    {
     "kind": "worker",
-    "main": "Prober thread:archive",
+    "main": "Prober thread:toolbox",
     "sub": "",
     "code": false,
-    "full": "PROBER THREAD:archive",
+    "full": "PROBER THREAD:toolbox",
     "details": [],
     "notes": [],
     "group": null
@@ -602,7 +602,7 @@
   ],
   "groups": []
  },
- "sp-v1-01": {
+ "lendshed-v1-01": {
   "quality": 0.7210526315789474,
   "dangling": 2,
   "nodes": [
@@ -624,10 +624,10 @@
    },
    {
     "kind": "edge",
-    "main": "api.cinedise.com",
+    "main": "lendshed.example",
     "sub": "cloudflared tunnel",
     "code": false,
-    "full": "api.cinedise.com (cloudflared tunnel)",
+    "full": "lendshed.example (cloudflared tunnel)",
     "details": [
      "• NOT reachable except via tunnel",
      "• axum backend"
@@ -647,7 +647,7 @@
      "(CSPRNG, 60s TTL, 1x use)"
     ],
     "notes": [],
-    "group": "Auth middleware"
+    "group": "Pass middleware"
    },
    {
     "kind": "data",
@@ -661,14 +661,14 @@
     "notes": [
      "hard-panics at startup if bound to tunnel interface"
     ],
-    "group": "Auth middleware"
+    "group": "Pass middleware"
    },
    {
     "kind": "client",
     "main": "Browser",
-    "sub": "studio member",
+    "sub": "tool borrower",
     "code": false,
-    "full": "BROWSER (studio member)",
+    "full": "BROWSER (tool borrower)",
     "details": [],
     "notes": [],
     "group": null
@@ -684,7 +684,7 @@
      "delete-on-use)"
     ],
     "notes": [],
-    "group": "Auth middleware"
+    "group": "Pass middleware"
    },
    {
     "kind": "channel",
@@ -696,7 +696,7 @@
      "consumes ticket"
     ],
     "notes": [],
-    "group": "Auth middleware"
+    "group": "Pass middleware"
    }
   ],
   "edges": [
@@ -752,7 +752,7 @@
   ],
   "groups": [
    {
-    "main": "Auth middleware",
+    "main": "Pass middleware",
     "sub": "axum",
     "details": [
      "check",
@@ -828,7 +828,7 @@
   ],
   "groups": []
  },
- "sp-v1-04": {
+ "lendshed-v1-04": {
   "quality": 0.9690982776089159,
   "dangling": 2,
   "nodes": [
@@ -907,14 +907,14 @@
    },
    {
     "kind": "worker",
-    "main": "jobs::executors::rclone",
+    "main": "jobs::executors::shedcp",
     "sub": "",
     "code": true,
-    "full": "jobs::executors::rclone",
+    "full": "jobs::executors::shedcp",
     "details": [
      "POST sync/copy (or sync/move)",
      "to the ONE supervised",
-     "`rclone rcd` daemon,",
+     "`shedcp rcd` daemon,",
      "_async=true, _group=job/{id}"
     ],
     "notes": [],
@@ -1015,7 +1015,7 @@
     "code": false,
     "full": "verification step, if applicable (D-05/D-11/D-13)",
     "details": [
-     "rclone: operations/check   |   rsync: verify-then-delete pass"
+     "shedcp: operations/check   |   rsync: verify-then-delete pass"
     ],
     "notes": [],
     "group": null
@@ -1093,7 +1093,7 @@
     "code": false,
     "full": "For rsync-tagged rows: check /proc/{pid}/cmdline against the persisted argv — a real orphan gets killed",
     "details": [
-     "For rclone-tagged rows: no live process can exist (the rcd daemon itself died with the backend) — DB row alone is truth"
+     "For shedcp-tagged rows: no live process can exist (the rcd daemon itself died with the backend) — DB row alone is truth"
     ],
     "notes": [],
     "group": null
@@ -1138,7 +1138,7 @@
    {
     "from": 5,
     "to": 7,
-    "label": "dest/source touches a `cloud:` remote · neither side touches `cloud:`",
+    "label": "dest/source touches a `annex:` remote · neither side touches `annex:`",
     "directed": true,
     "implied": true
    },
@@ -1243,7 +1243,7 @@
   ],
   "groups": []
  },
- "sp-01": {
+ "lendshed-p01": {
   "quality": 0.9338959212376934,
   "dangling": 1,
   "nodes": [
@@ -1254,10 +1254,10 @@
     "code": false,
     "full": "Browser",
     "details": [
-     "1. GET /browse/stage"
+     "1. GET /browse/front"
     ],
     "notes": [
-     "(portal_session cookie attached automatically)"
+     "(member_session cookie attached automatically)"
     ],
     "group": null
    },
@@ -1268,7 +1268,7 @@
     "code": false,
     "full": "Vercel edge — Next.js proxy.ts (route gate, D-09/D-10)",
     "details": [
-     "reads portal_session cookie",
+     "reads member_session cookie",
      "2. validates cookie against backend ─────────────",
      "(short timeout; fail-closed → /login, D-11)"
     ],
@@ -1356,10 +1356,10 @@
    },
    {
     "kind": "external",
-    "main": "filesystem / rclone",
+    "main": "filesystem / shedcp",
     "sub": "",
     "code": false,
-    "full": "filesystem / rclone",
+    "full": "filesystem / shedcp",
     "details": [],
     "notes": [],
     "group": null
@@ -1422,16 +1422,16 @@
     "full": "INSERT INTO sessions (...)",
     "details": [],
     "notes": [
-     "(HttpOnly; Secure; SameSite=Lax; Domain=.cinedise.com)"
+     "(HttpOnly; Secure; SameSite=Lax; Domain=lendshed.test)"
     ],
     "group": null
    },
    {
     "kind": "step",
     "main": "Set-Cookie",
-    "sub": "portal_session=...",
+    "sub": "member_session=...",
     "code": false,
-    "full": "Set-Cookie: portal_session=...",
+    "full": "Set-Cookie: member_session=...",
     "details": [],
     "notes": [],
     "group": null
@@ -1539,7 +1539,7 @@
   ],
   "groups": []
  },
- "sp-02": {
+ "lendshed-p02": {
   "quality": 0.9498843484965305,
   "dangling": 0,
   "nodes": [
@@ -1550,7 +1550,7 @@
     "code": false,
     "full": "Browser (member)",
     "details": [
-     "1. every request carries `portal_session` cookie"
+     "1. every request carries `member_session` cookie"
     ],
     "notes": [],
     "group": null
@@ -1740,7 +1740,7 @@
   ],
   "groups": []
  },
- "sp-04": {
+ "lendshed-p04": {
   "quality": 0.9352791878172588,
   "dangling": 2,
   "nodes": [
@@ -1782,7 +1782,7 @@
     "full": "bounded recursive walk",
     "details": [
      "local: TierRoot read_dir/open_file",
-     "cloud: one rclone lsjson -R -- remote:path"
+     "annex: one shedcp lsjson -R -- /mnt/shared"
     ],
     "notes": [],
     "group": null
@@ -1809,10 +1809,10 @@
    },
    {
     "kind": "service",
-    "main": "stage avail >= conservative required bytes?",
+    "main": "front avail >= conservative required bytes?",
     "sub": "",
     "code": true,
-    "full": "stage avail >= conservative required bytes?",
+    "full": "front avail >= conservative required bytes?",
     "details": [],
     "notes": [],
     "group": null
@@ -1830,9 +1830,9 @@
    {
     "kind": "worker",
     "main": "existing worker + TierLocks",
-    "sub": "source, stage",
+    "sub": "source, front",
     "code": false,
-    "full": "existing worker + TierLocks(source, stage)",
+    "full": "existing worker + TierLocks(source, front)",
     "details": [],
     "notes": [],
     "group": null

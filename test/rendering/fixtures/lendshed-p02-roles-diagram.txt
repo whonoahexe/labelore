@@ -1,6 +1,6 @@
 Browser (member)
    |
-   |  1. every request carries `portal_session` cookie
+   |  1. every request carries `member_session` cookie
    v
 axum handler (browse / mint_dl_ticket / create_job / create_folder /
               cancel|retry|resume / audit / new admin routes)
