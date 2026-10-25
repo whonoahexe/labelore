@@ -16,6 +16,7 @@ import { toProjectPresentation } from '../../src/server/project-presentation.ts'
 import type { ProjectPresentation } from '../../src/server/project-presentation.ts';
 import { composeVerificationBoard } from '../../src/web/views/verification-board.ts';
 import type { ComposedVerificationBoard } from '../../src/web/views/verification-board.ts';
+import { FX_ROOT, fxPath, loadProject } from '../helpers/fixture-project.ts';
 import { SP_PLANNING, STUDIO_PORTAL_ROOT } from '../helpers/studio-portal.ts';
 
 const LB_ROOT = new URL('../..', import.meta.url).pathname.replace(/\/$/, '');
@@ -46,6 +47,7 @@ function walk(root: string): string[] {
 let lb: ProjectPresentation;
 let dense: ProjectPresentation;
 let sp: ProjectPresentation | null = null;
+let fx: ProjectPresentation;
 
 beforeAll(async () => {
   const load = async (root: string): Promise<ProjectPresentation> => {
@@ -55,6 +57,7 @@ beforeAll(async () => {
   lb = await load(LB_ROOT);
   dense = await load(DENSE);
   if (hasSp) sp = await load(STUDIO_PORTAL_ROOT);
+  fx = (await loadProject(FX_ROOT)).presentation;
 }, 60000);
 
 type Artifact = ProjectPresentation['artifacts'][number];
@@ -134,8 +137,9 @@ describe('VERIFICATION corpus - every file extracts and composes', () => {
     }
   });
 
-  it.runIf(hasSp)('studio-portal v1.0/04: passed with one frontmatter gap shows a C1 row', () => {
-    const m = compose(artifactAt(sp as ProjectPresentation, 'v1.0-phases/04-tier-to-tier-transfers/04-VERIFICATION.md'));
+  it('lendshed v1.0/04: passed with one frontmatter gap shows a C1 row', () => {
+    fxPath('milestones/v1.0-phases/04-shed-to-shed-transfers/04-VERIFICATION.md');
+    const m = compose(artifactAt(fx, 'v1.0-phases/04-shed-to-shed-transfers/04-VERIFICATION.md'));
     expect(m.rail.status?.label).toBe('Passed');
     expect(m.ledger.rows.map((r) => r.number)).toEqual(['C1']);
   });

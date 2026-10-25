@@ -5,6 +5,7 @@
 // chip signature, no 420px overflow), since the full sweep is too slow to run per change.
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
+import { FIXTURE_BASE_URL } from './fixture-root.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
@@ -116,6 +117,16 @@ test.describe('Verification page', () => {
     );
     expect(radii.length).toBeGreaterThan(5);
     expect(radii.every((r) => r === '0px')).toBe(true);
+  });
+
+  test('Lendshed v1.0/04 passed with one frontmatter gap', async ({ page }) => {
+    const url = await resolveFixtureUrl(FIXTURE_BASE_URL, 'v1.0-phases/04-shed-to-shed-transfers/04-VERIFICATION.md');
+    await openPage(page, FIXTURE_BASE_URL, url, 'light');
+    await expect(page.locator('h1')).toHaveCount(1);
+    await expect(page.locator('.view-verification-identity .eyebrow')).toHaveText('Verification · Phase 4');
+    await expect(page.locator('.view-verification-facts .status-chip')).toHaveText('Passed');
+    await expect(page.locator('.view-verification-gap')).toHaveCount(1);
+    await expect(page.locator('#verification-gap-c1')).toBeVisible();
   });
 
   test('LB v1.0/01 resolved checks', async ({ page, baseURL }) => {
