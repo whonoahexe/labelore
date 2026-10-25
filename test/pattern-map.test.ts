@@ -6,6 +6,7 @@
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import { fxPath } from './helpers/fixture-project.ts';
+import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
 import { extractPatternMap, splitRow } from '../src/planning-repo/handlers/pattern-map.ts';
 import { PatternsHandler } from '../src/planning-repo/handlers/patterns.ts';
 import type { ArtifactRef, RawArtifact } from '../src/planning-repo/types.ts';
@@ -175,16 +176,39 @@ describe('extractPatternMap — degrade', () => {
     expect(map.meta.title).toBe('Something else');
   });
 
-  it('a 1 MB body with one 200,000-character line extracts in under 250 ms', () => {
+  // A fixed millisecond budget flakes under parallel load and proves nothing about the shape of the cost
+  // (T-wfs-01, Pitfall 11). The same hostile shape (table rows, one very long cell line, filler prose) is
+  // built at size n and at 8n and timed with measureGrowth: a linear scan reads about 8, a quadratic one
+  // about 64. Inputs are built in make(), outside the timed region. The extractor clips every line to
+  // 8,000 characters, so the long line stops growing once it passes that; it is one line of a body that
+  // is mostly rows and filler, so the ratio still reflects the linear parts, and the original 1 MB shape
+  // stays below as a no-throw sentinel.
+  const hostileBody = (size: number): string => {
+    const scale = size / 1_170_000;
     const row = '| `src/a.ts` | service | transform | `src/b.ts` | exact |\n';
     const head = '## File Classification\n\n| File | Role | Data Flow | Closest Analog | Match Quality |\n|---|---|---|---|---|\n';
-    const longLine = '| ' + '`x` | '.repeat(40_000) + '\n';
-    const body = head + row.repeat(5_000) + longLine + 'filler line of prose\n'.repeat(30_000);
+    const longLine = '| ' + '`x` | '.repeat(Math.max(1, Math.floor(40_000 * scale))) + '\n';
+    return (
+      head +
+      row.repeat(Math.max(1, Math.floor(5_000 * scale))) +
+      longLine +
+      'filler line of prose\n'.repeat(Math.max(1, Math.floor(30_000 * scale)))
+    );
+  };
+
+  it('a 1 MB body with one 200,000-character line never throws and keeps its rows', () => {
+    const body = hostileBody(1_170_000);
     expect(body.length).toBeGreaterThan(1_000_000);
-    const started = performance.now();
     const map = extractPatternMap(body);
-    expect(performance.now() - started).toBeLessThan(250);
     expect(map.classification.length).toBeGreaterThan(1000);
+  });
+
+  it('the same hostile body grows no faster than linearly', () => {
+    const growth = measureGrowth({ make: hostileBody, run: (input) => void extractPatternMap(input) });
+    expect(
+      growth.ratio,
+      `pattern map: ${growth.t1.toFixed(2)}ms at ${growth.n} characters, ${growth.t2.toFixed(2)}ms at 8x`,
+    ).toBeLessThan(GROWTH_LIMIT);
   });
 });
 

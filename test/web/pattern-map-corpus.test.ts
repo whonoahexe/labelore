@@ -55,6 +55,12 @@ const PINNED: Record<string, Pinned> = {
   'LB:milestones/v1.0-phases/04-portability-degradation-hardening/04-PATTERNS.md': { rows: 16, exact: 11, role: 4, partial: 0, none: 1, groups: 0, shared: 6 },
   'LB:phases/06-trustworthy-tests-and-security-baseline/06-PATTERNS.md': { rows: 28, exact: 18, role: 7, partial: 1, none: 2, groups: 0, shared: 5, excerpts: 12 },
   'FX:milestones/v1.0-phases/02-shed-inventory-health/02-PATTERNS.md': { rows: 22, exact: 6, role: 4, partial: 4, none: 8, groups: 5, shared: 5, excerpts: 16 },
+  'FX:milestones/v1.0-phases/03-catalogue-browsing/03-PATTERNS.md': { rows: 9, exact: 5, role: 4, partial: 0, none: 0, groups: 0, shared: 4, excerpts: 2 },
+  'FX:milestones/v1.0-phases/04-shed-to-shed-transfers/04-PATTERNS.md': { rows: 13, exact: 6, role: 3, partial: 2, none: 2, groups: 0, shared: 4, excerpts: 2 },
+  'FX:phases/01-member-sign-in-sessions/01-PATTERNS.md': { rows: 12, exact: 6, role: 3, partial: 1, none: 2, groups: 0, shared: 4, excerpts: 4 },
+  'FX:phases/02-roles-and-permissions/02-PATTERNS.md': { rows: 11, exact: 8, role: 2, partial: 0, none: 1, groups: 0, shared: 4, excerpts: 3 },
+  'FX:phases/03-account-admin-and-sessions/03-PATTERNS.md': { rows: 10, exact: 7, role: 3, partial: 0, none: 0, groups: 0, shared: 3, excerpts: 3 },
+  'FX:phases/04-bulk-loan-export/04-PATTERNS.md': { rows: 14, exact: 11, role: 3, partial: 0, none: 0, groups: 0, shared: 3, excerpts: 2 },
 };
 
 const LB_FILES = walkPatterns(REPO_PLANNING);
@@ -70,7 +76,7 @@ function keyOf(file: string): string {
 describe('PATTERNS corpus guard', () => {
   it('finds the corpus', () => {
     expect(LB_FILES.length).toBeGreaterThanOrEqual(5);
-    expect(FX_FILES.length).toBeGreaterThanOrEqual(1);
+    expect(FX_FILES.length).toBeGreaterThanOrEqual(7);
   });
 
   it('every pinned entry was found by the walk', () => {
