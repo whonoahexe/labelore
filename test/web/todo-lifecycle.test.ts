@@ -4,7 +4,6 @@
 // sketch's own rendering and data.js, never from the composer's output. The clock is fixed at the
 // sketch's NOW (23 Oct 2026 12:00, Asia/Kolkata).
 process.env.TZ = 'Asia/Kolkata';
-import { existsSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router';
@@ -82,14 +81,14 @@ describe('head and chips', () => {
   const head: Record<string, [string, string, string, string, string | null]> = {
     // key: created, title, status label, weight text, area
     dcrop: ['24 Mar 2026', 'Add crop and round member avatars', 'Done', 'Minor · priority low', 'media'],
-    dsfx: ['20 Oct 2026', 'Add synthesised sound effects', 'Done', 'Cosmetic', 'ui'],
-    dcall: ['20 Oct 2026', 'Add call debug logging (WebRTC + TURN, no personal data)', 'Done', 'Major', 'calls'],
+    dsfx: ['23 Mar 2026', 'Add synthesised checkout sound cues', 'Done', 'Cosmetic', 'ui'],
+    dcall: ['23 Mar 2026', 'Add scanner debug logging (camera + serial, no personal data)', 'Done', 'Major', 'kiosk'],
     sretry: ['12 Oct 2026', 'Move filings that fail five retries into a dead-letter view brokers can see', 'Pending', 'Major', 'gateway'],
     srec: ['15 Oct 2026', "Export the reconciliation report as a PDF for the importer's records", 'Pending', 'Minor', 'reporting'],
     star: ['16 Oct 2026', "show the tariff schedule's own notes as tooltips on HS codes", 'Pending', 'P2', 'general'],
     sport: ['2 Oct 2026', 'Fill in the port timezone table for the eleven inland ports', 'Done', 'Minor', 'data'],
-    pcheck: ['23 Oct 2026', 'Pre-milestone: fix server Ethernet, fsck vault, clean up tiers', 'Pending', 'High', null],
-    pdev: ['23 Oct 2026', "Portal should detect when a tier's device has vanished under its mount", 'Done', 'Medium', null],
+    pcheck: ['26 Mar 2026', 'Pre-milestone: swap shed Ethernet, re-seat sensors, tidy the shelves', 'Pending', 'High', null],
+    pdev: ['26 Mar 2026', "Kiosk should detect when a shed's door sensor has vanished from its dock", 'Done', 'Medium', null],
     lfig: [
       '29 Sep 2026',
       'Use the lifted-diagram and clean-list-tree renderers for every ASCII diagram and directory tree in Labelore',
@@ -125,14 +124,14 @@ describe('the step strip', () => {
   type Step = [string, string, string, string];
   const steps: Record<string, [Step, Step, Step]> = {
     dcrop: [['noted', 'done', '24 Mar 09:20', '2 notes · last 24 Mar 09:20'], ['captured', 'done', '24 Mar 15:17', 'minor · media'], ['closed', 'done', 'quick 260326-m3d', '26 Mar 2026']],
-    dsfx: [['noted', 'done', '20 Oct 04:02', '1 note'], ['captured', 'done', '20 Oct 17:39', 'cosmetic · ui'], ['closed', 'done', 'quick 261022-4gf', '22 Oct 2026']],
-    dcall: [['noted', 'done', '20 Oct 02:47', '1 note'], ['captured', 'done', '20 Oct 17:39', 'major · calls'], ['closed', 'done', 'Done', 'No resolution written']],
+    dsfx: [['noted', 'done', '23 Mar 08:05', '1 note'], ['captured', 'done', '23 Mar 11:44', 'cosmetic · ui'], ['closed', 'done', 'quick 260325-q9v', '25 Mar 2026']],
+    dcall: [['noted', 'done', '23 Mar 07:12', '1 note'], ['captured', 'done', '23 Mar 13:18', 'major · kiosk'], ['closed', 'done', 'Done', 'No resolution written']],
     sretry: [['noted', 'none', 'No note', 'Captured straight as a todo'], ['captured', 'done', '12 Oct 15:11', 'major · gateway'], ['now', 'now', 'Open 11 days', 'Waiting in todos/pending/']],
     srec: [['noted', 'none', 'No note', 'Captured straight as a todo'], ['captured', 'done', '15 Oct 21:32', 'minor · reporting'], ['now', 'now', 'Open 8 days', 'Waiting in todos/pending/']],
     star: [['noted', 'done', '16 Oct 14:47', '1 note'], ['captured', 'done', '16 Oct', 'P2 · general'], ['now', 'now', 'Open 7 days', 'Waiting in todos/pending/']],
     sport: [['noted', 'none', 'No note', 'Captured straight as a todo'], ['captured', 'done', '2 Oct 15:30', 'minor · data'], ['closed', 'done', 'Done', 'No resolution written']],
-    pcheck: [['noted', 'done', '23 Oct', '1 note'], ['captured', 'done', '23 Oct', 'high'], ['now', 'now', 'Open less than a day', '0 of 4 done']],
-    pdev: [['noted', 'done', '23 Oct', '1 note'], ['captured', 'done', '23 Oct', 'medium'], ['closed', 'done', 'Done', 'No resolution written']],
+    pcheck: [['noted', 'done', '26 Mar', '1 note'], ['captured', 'done', '26 Mar', 'high'], ['now', 'now', 'Open 211 days', '0 of 4 done']],
+    pdev: [['noted', 'done', '26 Mar', '1 note'], ['captured', 'done', '26 Mar', 'medium'], ['closed', 'done', 'Done', 'No resolution written']],
     lfig: [['noted', 'none', 'No note', 'Captured straight as a todo'], ['captured', 'done', '29 Sep', 'medium'], ['now', 'now', 'Open 24 days', 'Waiting in todos/pending/']],
     ldrift: [['noted', 'done', '20 Sep', '1 note'], ['captured', 'done', '20 Sep', 'medium'], ['closed', 'done', 'quick 260920-mzr', '20 Sep 2026']],
   };
@@ -183,13 +182,13 @@ describe('the Noted and Captured stages', () => {
 
   it('the other notes: ways, titles and clamps', () => {
     expect(compose('dsfx').noted!.notes[0]).toMatchObject({ way: 'Listed in notes:', clamp: true });
-    expect(compose('dsfx').noted!.notes[0].text).toMatch(/^Sound effects\. Decided: all of these/);
-    expect(compose('dcall').noted!.notes[0].text).toMatch(/^Call debug logging \(WebRTC \+ TURN, no personal data\)\. Observed:/);
+    expect(compose('dsfx').noted!.notes[0].text).toMatch(/^Checkout sound cues\. Decided: all of these/);
+    expect(compose('dcall').noted!.notes[0].text).toMatch(/^Scanner debug logging \(camera \+ serial, no personal data\)\. Observed:/);
     const star = compose('star').noted!.notes[0];
     expect(star).toMatchObject({ way: 'Promoted word for word', clamp: false, title: null, kicker: 'Note · 16 Oct 14:47' });
     expect(star.text).toBe("show the tariff schedule's own notes as tooltips on HS codes");
     const pcheck = compose('pcheck').noted!.notes[0];
-    expect(pcheck).toMatchObject({ way: 'Mentioned in the text', clamp: false, title: 'Studio Media Workflow — next milestone brief', kicker: 'Note · 23 Oct' });
+    expect(pcheck).toMatchObject({ way: 'Mentioned in the text', clamp: false, title: 'Steward Desk — next milestone brief', kicker: 'Note · 26 Mar' });
     expect(compose('pdev').noted!.notes[0].way).toBe('Mentioned in the text');
     expect(compose('ldrift').noted!.notes[0]).toMatchObject({
       way: 'Linked in the text',
@@ -201,14 +200,14 @@ describe('the Noted and Captured stages', () => {
   const captured: Record<string, [number, string, string | null, string | null]> = {
     // key: number, kicker, lead label, plan label
     dcrop: [2, '24 Mar 15:17', 'Problem', 'Solution'],
-    dsfx: [2, '20 Oct 17:39', 'Problem', 'Solution'],
-    dcall: [2, '20 Oct 17:39', 'Problem', 'Solution'],
+    dsfx: [2, '23 Mar 11:44', 'Problem', 'Solution'],
+    dcall: [2, '23 Mar 13:18', 'Problem', 'Solution'],
     sretry: [1, '12 Oct 15:11', 'Problem', 'Solution'],
     srec: [1, '15 Oct 21:32', 'Problem', null],
     star: [2, '16 Oct · promoted from /gsd-note', 'Goal', null],
     sport: [1, '2 Oct 15:30', null, null],
-    pcheck: [2, '23 Oct', 'What it’s about', 'To do · 0 of 4'],
-    pdev: [2, '23 Oct', 'What it’s about', null],
+    pcheck: [2, '26 Mar', 'What it’s about', 'To do · 0 of 4'],
+    pdev: [2, '26 Mar', 'What it’s about', null],
     lfig: [1, '29 Sep', 'What it’s about', null],
     ldrift: [2, '20 Sep', 'What it’s about', null],
   };
@@ -267,7 +266,7 @@ describe('the end stage', () => {
     expect(compose('star').end).toMatchObject({ lead: 'Open 7 days.' });
     expect(compose('lfig').end).toMatchObject({ lead: 'Open 24 days.' });
     expect(compose('pcheck').end).toMatchObject({
-      lead: 'Open less than a day.',
+      lead: 'Open 211 days.',
       rest: 'Nothing has closed it yet — 0 of 4 items checked.',
     });
   });
@@ -454,7 +453,7 @@ describe('the view', () => {
     const markup = render(compose('pcheck'));
     expect(markup.match(/class="view-todo-check" data-done="false"/g)).toHaveLength(4);
     expect(markup).toContain('To do · 0 of 4');
-    expect(markup).toMatch(/<a class="view-todo-ref" href="[^"]*2026-10-23-studio-media-workflow-milestone-brief\.md[^"]*"[^>]*>notes\/2026-10-23-studio-media-workflow-milestone-brief\.md<\/a>/);
+    expect(markup).toMatch(/<a class="view-todo-ref" href="[^"]*2026-03-26-steward-desk-milestone-brief\.md[^"]*"[^>]*>notes\/2026-03-26-steward-desk-milestone-brief\.md<\/a>/);
     expect(markup).toContain('0 of 4 items checked.');
   });
 
@@ -616,11 +615,10 @@ describe('the view, more', () => {
   });
 });
 
-const LB001 = new URL('../../.planning/todos/pending/001-sketches-page-in-labelore.md', import.meta.url).pathname;
 describe("labelore's own promoted todo (001), checklist squares", () => {
-  it.runIf(existsSync(LB001))('renders its acceptance list as squares with some done', async () => {
+  it('renders its acceptance list as squares with some done', async () => {
     const project = await loadProject(LB_ROOT);
-    const path = '.planning/todos/pending/001-sketches-page-in-labelore.md';
+    const path = '.planning/todos/completed/001-sketches-page-in-labelore.md';
     const artifact = project.presentation.artifacts.find((candidate) => candidate.path === path)!;
     const model = composeTodoLifecycle(
       {
@@ -637,6 +635,8 @@ describe("labelore's own promoted todo (001), checklist squares", () => {
     const squares = markup.match(/class="view-todo-check" data-done="(true|false)"/g) ?? [];
     expect(squares.length).toBe(model.captured.plan!.checks!.total);
     expect(squares.filter((square) => square.includes('"true"')).length).toBe(model.captured.plan!.checks!.done);
+    expect(squares).toHaveLength(7);
+    expect(squares.filter((square) => square.includes('"true"'))).toHaveLength(5);
   });
 });
 
