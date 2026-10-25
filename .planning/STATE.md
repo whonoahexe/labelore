@@ -5,16 +5,16 @@ milestone_name: Wayfinding
 current_phase: 06
 current_phase_name: Trustworthy Tests and Security Baseline
 status: executing
-stopped_at: Completed 06-03-PLAN.md
-last_updated: "2026-10-25T13:56:34.684Z"
+stopped_at: Completed 06-04-PLAN.md
+last_updated: "2026-10-25T14:02:26.086Z"
 last_activity: 2026-10-25
 last_activity_desc: Phase 06 execution started
-state_head: 9e347d80bacec377738b689b8cc93eb86a79738d
+state_head: 38a2acc0ed8f30252bcf88507d4efea99808cc7f
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 22
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-10-25)
 ## Current Position
 
 Phase: 06 (Trustworthy Tests and Security Baseline) — EXECUTING
-Plan: 4 of 22
+Plan: 5 of 22
 Status: Ready to execute
 Last activity: 2026-10-25 — Phase 06 execution started
 
@@ -87,6 +87,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06 P01 | 10 min | 2 tasks | 22 files |
 | Phase 06 P02 | 24 min | 2 tasks | 8 files |
 | Phase 06 P03 | 25 min | 2 tasks | 9 files |
+| Phase 06 P04 | 4 min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -110,6 +111,8 @@ milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) a
 - [Phase 06]: 06-02: growth harness caps the big input near 256 KB, re-measures a reading at or above 24 (lowest of 3), and reports ratio 1 under a 1 ms floor; limit stays 24
 - [Phase 06]: 06-03: +N more outline row reuses li[data-overflow] under .document-outline, no new class name — Keeps docs/design-language.md vocabulary unchanged
 - [Phase 06]: 06-03: raw-HTML guard matches assignments only for innerHTML/outerHTML and asserts an exact one-entry allowlist — Reads in document-sections.ts are not injection; stale entries must fail
+- [Phase 06]: 06-04: config.json secret keys (brave_search, firecrawl, exa_search) are masked in JsonConfigHandler at read time; on/off values stay visible, other JSON files untouched
+- [Phase 06]: 06-04: an unparseable config.json has secret strings redacted in raw text by one linear regex, including a value cut off before its closing quote
 
 ### Pending Todos
 
@@ -152,8 +155,8 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-10-25T13:56:34.649Z
-Stopped at: Completed 06-03-PLAN.md
+Last session: 2026-10-25T14:02:26.049Z
+Stopped at: Completed 06-04-PLAN.md
 Resume file: None
 
 ## Operator Next Steps
