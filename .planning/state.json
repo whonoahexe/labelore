@@ -1,23 +1,63 @@
 {
   "contract": "1.0.0",
   "flavor": "core",
-  "milestone": "v2.1",
+  "milestone": "v2.1 — Wayfinding",
   "phases": [
     {
       "number": "1",
-      "name": "4 (v1.0)",
+      "name": "4",
       "status": "pending"
     },
     {
       "number": "5",
-      "name": "(v1.1)",
+      "name": null,
+      "status": "pending"
+    },
+    {
+      "number": "6",
+      "name": "Trustworthy Tests and Security Baseline",
+      "status": "pending"
+    },
+    {
+      "number": "7",
+      "name": "Recognised Files and Readable URLs",
+      "status": "pending"
+    },
+    {
+      "number": "8",
+      "name": "Several Projects and a Switcher",
+      "status": "pending"
+    },
+    {
+      "number": "9",
+      "name": "Review, Audit and Root Document Pages",
+      "status": "pending"
+    },
+    {
+      "number": "10",
+      "name": "Codebase Map, Specification and Check Pages",
+      "status": "pending"
+    },
+    {
+      "number": "11",
+      "name": "Exploration, Handoff, Report and Workstream Pages",
+      "status": "pending"
+    },
+    {
+      "number": "12",
+      "name": "Project Settings, Source Mode and Reading Polish",
+      "status": "pending"
+    },
+    {
+      "number": "13",
+      "name": "Search and Quick-Jump Palette",
       "status": "pending"
     }
   ],
   "next": {
-    "command": "/gsd-discuss-phase",
-    "label": "Discuss the first phase",
-    "reason": "Project initialized — plan your first phase"
+    "command": "/gsd-progress --next",
+    "label": "Advance to the next step",
+    "reason": "Phase 1 of 8 · 0% · executing"
   },
-  "updated_at": "2026-10-25T08:54:31.993Z"
+  "updated_at": "2026-10-25T12:57:09.946Z"
 }
