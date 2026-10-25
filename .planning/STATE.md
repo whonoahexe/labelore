@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v2.0
 status: Awaiting next milestone
 stopped_at: Milestone v2.0 complete
-last_updated: "2026-10-25T08:19:24.122Z"
+last_updated: "2026-10-25T08:23:06.946Z"
 last_activity: 2026-10-25
 last_activity_desc: Milestone v2.0 completed and archived
-state_head: 496d814ef0075a35a2782fafb4eaf53c9fa13aa6
+state_head: de6401c944c89d7ae5e44867c4eff493c9edfca5
 milestone_name: Fully Labelled
 current_phase: 05
 progress:
@@ -115,6 +115,7 @@ None.
 |---|-------------|------|--------|-----------|
 | 1 | Remove milestone documents from shipped milestones in the sidebar | 2026-10-25 | e5c4dfd | — |
 | 2 | Fix the 11 failing page tests | 2026-10-25 | 496d814 | — |
+| 3 | Fix the remaining 5 failing unit tests | 2026-10-25 | de6401c | — |
 
 ## Deferred Items
 
