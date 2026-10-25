@@ -1,8 +1,7 @@
 // quick-261017-k44: the REVIEW page's server join. buildReviewContext attaches the ROADMAP phase name
 // and the sibling REVIEW-FIX (path, in-app URL, fix-run frontmatter, parsed report) to a review from
 // the cached presentation alone; the served document carries it for a review and null for any other
-// document. The fixtures are in-memory projects holding sideby phase 2's real review pair.
-import { readFileSync } from 'node:fs';
+// document. The fixtures are in-memory projects holding the made-up Lendshed phase 2 review pair.
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router';
@@ -18,12 +17,12 @@ import type { ProjectPresentation } from '../../src/server/project-presentation.
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 import { composeReviewThreads } from '../../src/web/views/review-threads.ts';
 import { ReviewThreadsView } from '../../src/web/views/review-threads-components.tsx';
+import { fxRead } from '../helpers/fixture-project.ts';
 
 const ROOT = '/project';
 const DIR = '.planning/phases/02-container-docs';
 const REVIEW = `${DIR}/02-REVIEW.md`;
 const FIX = `${DIR}/02-REVIEW-FIX.md`;
-const FIXTURES = new URL('../fixtures/review/', import.meta.url).pathname;
 
 const ROADMAP = `# Roadmap: Demo
 
@@ -37,15 +36,15 @@ Plans:
 - [ ] 02-01: Dockerfile
 `;
 
-function fixture(name: string): string {
-  return readFileSync(`${FIXTURES}${name}`, 'utf8');
-}
+// The Lendshed phase 2 review and its fix report, read from the made-up project.
+const lendshedReview = (): string => fxRead('phases/02-roles-and-permissions/02-REVIEW.md');
+const lendshedFix = (): string => fxRead('phases/02-roles-and-permissions/02-REVIEW-FIX.md');
 
 function pairFiles(): Record<string, string> {
   return {
     '.planning/ROADMAP.md': ROADMAP,
-    [REVIEW]: fixture('sb02-REVIEW.md'),
-    [FIX]: fixture('sb02-REVIEW-FIX.md'),
+    [REVIEW]: lendshedReview(),
+    [FIX]: lendshedFix(),
   };
 }
 
@@ -86,7 +85,7 @@ describe('buildReviewContext', () => {
   it('ignores the REVIEW-FIX review_path and matches the sibling by exact path only', async () => {
     const files = pairFiles();
     // A fix report in another directory that names this review in its frontmatter is not a sibling.
-    files['.planning/phases/03-other/03-REVIEW-FIX.md'] = fixture('sb02-REVIEW-FIX.md');
+    files['.planning/phases/03-other/03-REVIEW-FIX.md'] = lendshedFix();
     delete files[FIX];
     const presentation = await presentationOf(files);
     expect(buildReviewContext(presentation, buildReferenceRegistry(presentation), REVIEW).fix).toBeNull();
@@ -164,14 +163,14 @@ describe('served end to end', () => {
       const row = markup.match(new RegExp(`<button[^>]*view-review-resolved[^>]*>(?:(?!</button>)[\\s\\S])*${id}[\\s\\S]*?</button>`));
       expect(row?.[0]).toContain('Fixed');
     }
-    expect(markup).toContain('fea7e47');
-    expect(markup).toContain('77a459a');
-    expect(markup).toContain('d1c6017');
+    expect(markup).toContain('e57f1b9');
+    expect(markup).toContain('3c9a7d0');
+    expect(markup).toContain('b81e4c2');
     expect(markup).toContain('Skipped on purpose');
     expect(markup).toContain('Intentionally skipped');
     expect(markup).toContain('Not attempted');
     const unfolded = render(['CR-01']);
-    expect(unfolded).toContain('Fixed in fea7e47');
+    expect(unfolded).toContain('Fixed in e57f1b9');
     expect(unfolded).toContain('Suggested change');
     expect(unfolded).toContain('Fold −');
   });

@@ -1,81 +1,90 @@
 // quick-261017-k44 (sketch 022 C): the REVIEW and REVIEW-FIX body extractors - pinned against the
-// nine copied reports (test/fixtures/review/), labelore's own reviews, the tolerant degrade paths
-// and the T-k44-02 timing bound. Pinned values come from the sketch's own data.js and grep over the
-// source files, independent of the extractor's output.
+// made-up Lendshed reviews (test/fixtures/lendshed), the clean review (test/fixtures/review), labelore's
+// own reviews, the tolerant degrade paths and the T-k44-02 growth bound. Pinned values come from grep
+// over the fixture files, independent of the extractor's output.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { extractReviewFixReport, extractReviewReport } from '../src/planning-repo/handlers/review-report.ts';
 import { tryParseFrontmatter } from '../src/planning-repo/frontmatter.ts';
+import { fxPath } from './helpers/fixture-project.ts';
+import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
 
 const FIXTURES = new URL('./fixtures/review/', import.meta.url).pathname;
+// Lendshed review files, by the shape each one carries.
+const MEMBERS_V1 = 'milestones/v1.0-phases/01-member-data-foundation/01-REVIEW.md'; // inline RESOLVED notes
+const ADMIN_P3 = 'phases/03-account-admin-and-sessions/03-REVIEW.md'; // Warning/Info buckets, extra block
+const ROLES_P2 = 'phases/02-roles-and-permissions/02-REVIEW.md'; // same-path references, fix pair
+const CATALOGUE_V3 = 'milestones/v1.0-phases/03-catalogue-browsing/03-REVIEW.md'; // the large report
+const ROLES_P2_FIX = 'phases/02-roles-and-permissions/02-REVIEW-FIX.md';
+const TRANSFERS_V4_FIX = 'milestones/v1.0-phases/04-shed-to-shed-transfers/04-REVIEW-FIX.md';
 const LB = new URL('../.planning/milestones/', import.meta.url).pathname;
 
 function bodyOf(path: string): string {
   return tryParseFrontmatter(readFileSync(path, 'utf8')).body;
 }
 
-const review = (key: string) => extractReviewReport(bodyOf(`${FIXTURES}${key}-REVIEW.md`));
-const fix = (key: string) => extractReviewFixReport(bodyOf(`${FIXTURES}${key}-REVIEW-FIX.md`));
+const lendshed = (rel: string) => extractReviewReport(bodyOf(fxPath(rel)));
+const lendshedFix = (rel: string) => extractReviewFixReport(bodyOf(fxPath(rel)));
 
-const sp01 = review('sp01');
-const sp03 = review('sp03');
-const sb02 = review('sb02');
-const dd01 = review('dd01');
-const clean = review('clean');
+const members = lendshed(MEMBERS_V1);
+const admin = lendshed(ADMIN_P3);
+const roles = lendshed(ROLES_P2);
+const catalogue = lendshed(CATALOGUE_V3);
+const clean = extractReviewReport(bodyOf(`${FIXTURES}clean-REVIEW.md`));
 const lb04 = extractReviewReport(bodyOf(`${LB}v1.0-phases/04-portability-degradation-hardening/04-REVIEW.md`));
 const textOf = (blocks: { kind: string; text?: string }[]): string => blocks.map((b) => b.text ?? '').join(' ');
 
 describe('the review report', () => {
-  it('reads studio-portal phase 1: summary, severities, references and the inline RESOLVED note', () => {
-    expect(sp01.h1).toBe('Phase 01: Code Review Report');
-    expect(sp01.summary?.blocks).toHaveLength(2);
-    expect(sp01.findings.map((f) => f.id)).toEqual([
+  it('reads the member-data phase: summary, severities, references and the inline RESOLVED note', () => {
+    expect(members.h1).toBe('Phase 01: Code Review Report');
+    expect(members.summary?.blocks).toHaveLength(2);
+    expect(members.findings.map((f) => f.id)).toEqual([
       'CR-01', 'WR-01', 'WR-02', 'WR-03', 'WR-04', 'WR-05', 'IN-01', 'IN-02', 'IN-03',
     ]);
-    const count = (s: string): number => sp01.findings.filter((f) => f.severity === s).length;
+    const count = (s: string): number => members.findings.filter((f) => f.severity === s).length;
     expect([count('critical'), count('warning'), count('info')]).toEqual([1, 5, 3]);
-    const cr01 = sp01.findings[0];
-    expect(cr01.title).toContain('D-10 dev-bypass hard-gate');
-    expect(cr01.refs).toEqual([{ path: 'backend/src/auth/mod.rs', spans: [{ from: 116, to: 134 }] }]);
-    expect(cr01.inlineResolved?.commit).toBe('0a20ed2');
-    expect(cr01.inlineResolved?.note.startsWith('Fixed as recommended below')).toBe(true);
+    const cr01 = members.findings[0];
+    expect(cr01.title).toContain('Handle uniqueness is checked case-sensitively');
+    expect(cr01.refs).toEqual([{ path: 'server/src/members/validate.ts', spans: [{ from: 74, to: 92 }] }]);
+    expect(cr01.inlineResolved?.commit).toBe('7e3b0d4');
+    expect(cr01.inlineResolved?.note.startsWith('Fixed as suggested below')).toBe(true);
     // The quote lines are left out of the problem; a code block survives inside it.
     expect(textOf(cr01.issue)).not.toContain('RESOLVED');
     expect(cr01.issue.some((b) => b.kind === 'code')).toBe(true);
-    expect(sp01.findings[1].refs).toHaveLength(4);
-    expect(sp01.findings[1].inlineResolved?.commit).toBe('3748536');
-    expect(sp01.reviewer).toBe('Claude (gsd-code-reviewer)');
+    expect(members.findings[1].refs).toHaveLength(4);
+    expect(members.findings[1].inlineResolved?.commit).toBe('c92a5e1');
+    expect(members.reviewer).toBe('Claude (gsd-code-reviewer)');
     // No footer line leaks into the last finding's suggested change.
-    const lastFix = JSON.stringify(sp01.findings[8].fix);
+    const lastFix = JSON.stringify(members.findings[8].fix);
     expect(lastFix).not.toContain('Reviewer');
     expect(lastFix).not.toContain('gsd-code-reviewer');
   });
 
   it('reads the Warning Findings / Info Findings buckets, an extra labelled block and the unhandled section', () => {
-    expect(sp03.h1).toBe('Phase 3 Code Review: Account Administration & Session Control');
-    const sev = (s: string): number => sp03.findings.filter((f) => f.severity === s).length;
+    expect(admin.h1).toBe('Phase 3 Code Review: Account Admin & Session Control');
+    const sev = (s: string): number => admin.findings.filter((f) => f.severity === s).length;
     expect([sev('warning'), sev('info')]).toEqual([3, 4]);
-    const wr03 = sp03.findings.find((f) => f.id === 'WR-03');
-    expect(wr03?.refs[0].path).toBe('backend/src/api/admin.rs');
+    const wr03 = admin.findings.find((f) => f.id === 'WR-03');
+    expect(wr03?.refs[0].path).toBe('server/src/api/desk.ts');
     expect(wr03?.refs[0].spans).toHaveLength(7);
-    expect(wr03?.refs[0].spans[0]).toEqual({ from: 297, to: 297 });
-    expect(sp03.findings.find((f) => f.id === 'WR-01')?.extra.map((e) => e.label)).toEqual(['Failure scenario']);
+    expect(wr03?.refs[0].spans[0]).toEqual({ from: 212, to: 212 });
+    expect(admin.findings.find((f) => f.id === 'WR-01')?.extra.map((e) => e.label)).toEqual(['Failure scenario']);
     // "Suggested fix" is the suggested change, not an extra block.
-    expect(sp03.findings.find((f) => f.id === 'WR-01')?.fix.length).toBeGreaterThan(0);
-    expect(sp03.sections.filter((s) => !s.handled && !s.none).map((s) => s.heading)).toEqual(['Areas Reviewed Clean']);
+    expect(admin.findings.find((f) => f.id === 'WR-01')?.fix.length).toBeGreaterThan(0);
+    expect(admin.sections.filter((s) => !s.handled && !s.none).map((s) => s.heading)).toEqual(['Areas Reviewed Clean']);
   });
 
   it('merges a finding\'s same-path references', () => {
-    const in02 = sb02.findings.find((f) => f.id === 'IN-02');
-    expect(in02?.refs).toEqual([{ path: 'CLAUDE.md', spans: [{ from: 71, to: 71 }] }]);
-    expect(sb02.findings.find((f) => f.id === 'CR-01')?.refs[0].path).toBe('lens.sideby.me/Dockerfile');
+    const in02 = roles.findings.find((f) => f.id === 'IN-02');
+    expect(in02?.refs).toEqual([{ path: 'docs/roles.md', spans: [{ from: 71, to: 71 }] }]);
+    expect(roles.findings.find((f) => f.id === 'CR-01')?.refs[0].path).toBe('server/migrations/0004_roles_and_grants.sql');
   });
 
-  it('counts the deid report: 26 findings, 4 critical', () => {
-    expect(dd01.findings).toHaveLength(26);
-    expect(dd01.findings.filter((f) => f.severity === 'critical')).toHaveLength(4);
-    const wr03 = dd01.findings.find((f) => f.id === 'WR-03');
-    expect(wr03?.refs[0].spans.map((s) => `${s.from}-${s.to}`)).toEqual(['79-96', '195-202']);
+  it('counts the catalogue report: 26 findings, 4 critical', () => {
+    expect(catalogue.findings).toHaveLength(26);
+    expect(catalogue.findings.filter((f) => f.severity === 'critical')).toHaveLength(4);
+    const wr03 = catalogue.findings.find((f) => f.id === 'WR-03');
+    expect(wr03?.refs[0].spans.map((s) => `${s.from}-${s.to}`)).toEqual(['62-81', '140-147']);
   });
 
   it('reads the empty narrative container as handled-or-blank and the reviewer', () => {
@@ -131,37 +140,37 @@ describe('the review report', () => {
 });
 
 describe('the fix report', () => {
-  const sb = fix('sb02');
-  const dd = fix('dd02');
+  const sb = lendshedFix(ROLES_P2_FIX);
+  const dd = lendshedFix(TRANSFERS_V4_FIX);
   const lb = extractReviewFixReport(bodyOf(`${LB}v1.0-phases/01-read-layer-domain-model/01-REVIEW-FIX.md`));
 
-  it('reads sideby phase 2: four fixed entries and three skipped', () => {
+  it('reads roles phase 2: four fixed entries and three skipped', () => {
     expect(sb.entries.filter((e) => e.outcome === 'fixed').map((e) => `${e.ids[0]} ${e.commit}`)).toEqual([
-      'CR-03 d1c6017', 'CR-02 77a459a', 'CR-01 fea7e47', 'WR-01 9896b11',
+      'CR-03 b81e4c2', 'CR-02 3c9a7d0', 'CR-01 e57f1b9', 'WR-01 24d6f08',
     ]);
     expect(sb.entries.filter((e) => e.outcome === 'skipped').map((e) => e.ids[0])).toEqual(['WR-02', 'WR-03', 'WR-04']);
-    expect(sb.entries[0].files).toEqual(['lens.sideby.me/Dockerfile']);
-    expect(textOf(sb.entries[0].note)).toContain('apt-get install -y curl ffmpeg');
+    expect(sb.entries[0].files).toEqual(['server/migrations/0004_roles_and_grants.sql']);
+    expect(textOf(sb.entries[0].note)).toContain('CHECK (allowed IN (0, 1))');
     expect(textOf(sb.entries[4].note).startsWith('Intentionally skipped')).toBe(true);
     expect(sb.deferred).toEqual([]);
   });
 
-  it('reads deid phase 2: combined headings, a commit note and the unhandled sections', () => {
+  it('reads transfers v1.0 phase 4: combined headings, a commit note and the unhandled sections', () => {
     expect(dd.entries).toHaveLength(9);
     expect(dd.entries.every((e) => e.outcome === 'fixed')).toBe(true);
     expect(dd.entries.map((e) => e.ids)).toEqual([
       ['WR-01'], ['WR-02'], ['WR-03'], ['WR-04', 'WR-05'], ['WR-06'], ['WR-07'], ['WR-08', 'WR-09'], ['WR-10'], ['WR-11'],
     ]);
     const wr10 = dd.entries.find((e) => e.ids[0] === 'WR-10');
-    expect(wr10?.commit).toBe('ce9ed8f');
-    expect(wr10?.commitNote).toBe('(folded into WR-01, as instructed)');
+    expect(wr10?.commit).toBe('4be07a2');
+    expect(wr10?.commitNote).toBe('(folded into WR-01, as planned)');
     // The narrative that follows a Commit line is the entry's note, not part of the commit.
     const wr01 = dd.entries[0];
-    expect(wr01.commit).toBe('ce9ed8f');
+    expect(wr01.commit).toBe('4be07a2');
     expect(wr01.commitNote).toBeNull();
     expect(textOf(wr01.note)).toContain('Moved both validations');
-    expect(dd.entries.find((e) => e.ids[0] === 'WR-04')?.commit).toBe('d76d768');
-    expect(dd.entries.find((e) => e.ids[0] === 'WR-08')?.commit).toBe('69538c9');
+    expect(dd.entries.find((e) => e.ids[0] === 'WR-04')?.commit).toBe('9d2c7e6');
+    expect(dd.entries.find((e) => e.ids[0] === 'WR-08')?.commit).toBe('c7f26a8');
     expect(dd.sections.filter((s) => !s.handled).map((s) => s.heading)).toContain('Discoveries recorded rather than fixed');
     expect(dd.sections.filter((s) => !s.handled).map((s) => s.heading)).toContain('Not touched (per the known-and-accepted list)');
     expect(dd.fixScope).toBeNull();
@@ -216,18 +225,24 @@ describe('degradation', () => {
     expect(extractReviewFixReport(inputs[6]).deferred.map((d) => d.ids[0])).toEqual(['IN-01', 'IN-02', 'IN-03']);
   });
 
-  it('extracts a 1 MB body holding a 200k-character hostile line within 250 ms (each)', () => {
-    const hostile = '`*|[**1. **'.repeat(20000);
-    const filler = 'x'.repeat(79) + '\n';
-    const body =
-      `# T\n\n## Summary\n\n${hostile}\n\n## Warnings\n\n### WR-01: ${hostile}\n\n**File:** ${hostile}\n\n**Issue:** ${hostile}\n\n**Fix:** ${hostile}\n\n` +
-      `## Fixed Issues\n\n### WR-01: ${hostile}\n\n**Commit:** ${hostile}\n\n**Files modified:** ${hostile}\n\n**Applied fix:** ${hostile}\n\n${filler.repeat(9000)}`;
-    expect(body.length).toBeGreaterThan(900_000);
-    for (const run of [extractReviewReport, extractReviewFixReport]) {
-      const started = performance.now();
-      run(body);
-      expect(performance.now() - started).toBeLessThan(250);
-    }
+  it('extracts a hostile body with 200k-character lines in time that grows linearly with its size', () => {
+    const growth = measureGrowth({
+      make: (n) => {
+        const hostile = '`*|[**1. **'.repeat(Math.max(1, Math.floor(n / 11)));
+        const filler = 'x'.repeat(79) + '\n';
+        return (
+          `# T\n\n## Summary\n\n${hostile}\n\n## Warnings\n\n### WR-01: ${hostile}\n\n**File:** ${hostile}\n\n**Issue:** ${hostile}\n\n**Fix:** ${hostile}\n\n` +
+          `## Fixed Issues\n\n### WR-01: ${hostile}\n\n**Commit:** ${hostile}\n\n**Files modified:** ${hostile}\n\n**Applied fix:** ${hostile}\n\n${filler.repeat(Math.floor(n / 22))}`
+        );
+      },
+      run: (body) => {
+        // Both extractors read the same body; a sound pass keeps a finding and the fix entry.
+        if (extractReviewReport(body).findings.length < 1) throw new Error('the review extraction lost its finding');
+        if (extractReviewFixReport(body).entries.length !== 1) throw new Error('the fix extraction lost its entry');
+      },
+      maxSize: 1 << 17,
+    });
+    expect(growth.ratio, `review extractors: ${growth.t1.toFixed(2)}ms at ${growth.n}, ${growth.t2.toFixed(2)}ms at 8x`).toBeLessThan(GROWTH_LIMIT);
   });
 
   it('caps the findings, the references and the spans', () => {

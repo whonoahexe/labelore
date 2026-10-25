@@ -1,15 +1,15 @@
 // quick-261017-k44: real-corpus guards over every REVIEW.md and REVIEW-FIX.md in this repo's
-// `.planning/`, the nine copied fixtures and (when present) the studio-portal checkout, built through
-// the real repository load so phase, archived-phase, quick and archived-quick reports reach the
-// handlers with the refs discovery gives them. Every report must carry `structured.review` /
-// `structured.reviewFix` and every review must compose to a non-null page with its sibling REVIEW-FIX
-// joined; the keyed reviews match the values pinned below, which come from the sketch's own data.js
-// and grep over the source files - never from the composer's output.
+// `.planning/`, the clean fixture and the made-up Lendshed project, built through the real repository
+// load so phase, archived-phase, quick and archived-quick reports reach the handlers with the refs
+// discovery gives them. Every report must carry `structured.review` / `structured.reviewFix` and every
+// review must compose to a non-null page with its sibling REVIEW-FIX joined; the keyed reviews match
+// the values pinned below, which come from grep over the fixture files - never from the composer's
+// output.
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { LocalFsPlanningFilesystem } from '../../src/planning-fs/local-fs.ts';
-import { ReviewFixHandler, ReviewHandler } from '../../src/planning-repo/handlers/review.ts';
+import { ReviewHandler } from '../../src/planning-repo/handlers/review.ts';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
 import type { ArtifactRef } from '../../src/planning-repo/types.ts';
 import { buildReferenceRegistry } from '../../src/presentation/references.ts';
@@ -120,17 +120,10 @@ describe('REVIEW corpus - every file extracts and composes', () => {
     }
   });
 
-  it('the nine fixtures parse and compose without throwing', () => {
-    for (const name of readdirSync(FIXTURES).filter((n) => n.endsWith('-REVIEW.md'))) {
-      expect(() => fixtureReview(name), name).not.toThrow();
-    }
-    for (const name of readdirSync(FIXTURES).filter((n) => n.endsWith('-REVIEW-FIX.md'))) {
-      const file = join(FIXTURES, name);
-      const content = readFileSync(file, 'utf8');
-      const ref: ArtifactRef = { path: file, kind: 'review-fix', location: 'phase', phaseIdentity: null, milestoneVersion: null, quickTaskId: null };
-      const parsed = ReviewFixHandler.parse({ path: file, content, mtimeMs: 0, size: content.length }, ref);
-      expect((parsed.structured as { reviewFix?: unknown }).reviewFix, name).toBeDefined();
-    }
+  it('the clean fixture parses and composes without throwing', () => {
+    const names = readdirSync(FIXTURES).filter((n) => n.endsWith('-REVIEW.md'));
+    expect(names).toContain('clean-REVIEW.md');
+    for (const name of names) expect(() => fixtureReview(name), name).not.toThrow();
   });
 
   it('serves the ROADMAP phase name as the title and joins the sibling fix report', () => {
@@ -151,21 +144,25 @@ describe('REVIEW corpus - every file extracts and composes', () => {
   });
 
   it('the fixtures match the pinned verdicts', () => {
+    expect(verdictText(fixtureReview('clean-REVIEW.md'))).toBe('Clean. Nothing to fix across 4 files.');
     const pins: [string, string][] = [
-      ['sp01-REVIEW.md', '2 of 9 fixed. 7 still in the code.'],
-      ['dd01-REVIEW.md', '26 findings, 4 critical. None fixed yet.'],
-      ['clean-REVIEW.md', 'Clean. Nothing to fix across 4 files.'],
-      ['sp03-REVIEW.md', '7 findings. None fixed yet.'],
-      ['sb14-REVIEW.md', '2 of 12 fixed. 10 still in the code.'],
+      ['milestones/v1.0-phases/01-member-data-foundation/01-REVIEW.md', '2 of 9 fixed. 7 still in the code.'],
+      ['milestones/v1.0-phases/03-catalogue-browsing/03-REVIEW.md', '26 findings, 4 critical. None fixed yet.'],
+      ['phases/03-account-admin-and-sessions/03-REVIEW.md', '7 findings. None fixed yet.'],
+      ['phases/04-bulk-loan-export/04-REVIEW.md', '2 of 12 fixed. 10 still in the code.'],
+      ['milestones/v1.0-phases/04-shed-to-shed-transfers/04-REVIEW.md', '11 of 18 fixed. 7 still in the code, 1 critical.'],
+      ['phases/02-roles-and-permissions/02-REVIEW.md', '4 of 10 fixed. 6 still in the code.'],
     ];
-    for (const [name, text] of pins) expect(verdictText(fixtureReview(name)), name).toBe(text);
+    for (const [path, text] of pins) expect(verdictText(compose(fx, artifactAt(fx, path))), path).toBe(text);
   });
 });
 
 describe('REVIEW corpus - Lendshed', () => {
   it('every report extracts and every review composes', () => {
     const reviews = fx.artifacts.filter((a) => isReview(a.path));
-    expect(reviews.length).toBeGreaterThanOrEqual(1);
+    // Seven made-up reviews and three fix reports: at least eight REVIEW-family files.
+    expect(reviews.length).toBeGreaterThanOrEqual(7);
+    expect(fx.artifacts.filter((a) => isReview(a.path) || isFix(a.path)).length).toBeGreaterThanOrEqual(8);
     for (const a of reviews) {
       expect(a.structured.review, a.path).toBeDefined();
       expect(() => compose(fx, a), a.path).not.toThrow();
