@@ -1,18 +1,23 @@
 {
   "contract": "1.0.0",
   "flavor": "core",
-  "milestone": "v2.0 \u2014 Fully Labelled",
+  "milestone": "v2.1",
   "phases": [
     {
+      "number": "1",
+      "name": "4 (v1.0)",
+      "status": "pending"
+    },
+    {
       "number": "5",
-      "name": "Per-Type Document Views",
-      "status": "complete"
+      "name": "(v1.1)",
+      "status": "pending"
     }
   ],
   "next": {
-    "command": "/gsd:progress",
-    "label": "Show progress",
-    "reason": "Unsure of state \u2014 showing progress"
+    "command": "/gsd-discuss-phase",
+    "label": "Discuss the first phase",
+    "reason": "Project initialized — plan your first phase"
   },
-  "updated_at": "2026-10-25T00:00:00.000Z"
+  "updated_at": "2026-10-25T08:54:31.993Z"
 }

@@ -46,21 +46,39 @@ The shipped app is a Vite 8 + React 19 SPA served by a Hono 4 Node server, start
 - requirements traceability
 - a single `refresh()` seam with an atomic derived-view swap
 
-It has about 158k lines of TypeScript/TSX/CSS (src and tests) and 3,329 tests across 176 files.
-At the v2.0 close, 59 tests in 20 files fail: corpus-pinned tests (note page, PATTERNS and
-similar) whose fixtures read other projects' live `.planning/` trees.
+It has about 158k lines of TypeScript/TSX/CSS (src and tests) and 3,361 tests across 176 files.
+After the post-close test fixes on 2026-10-25, one test fails: a security-register timing test that
+missed its 250 ms limit by a few milliseconds. The note, todo and debug corpus tests still walk
+every project's live `.planning/` tree on this machine, so they can break whenever another project
+changes.
 
-## Next Milestone Goals
+## Current Milestone: v2.1 Wayfinding
 
-Not yet defined — start with `/gsd-new-milestone`. The candidates carried in Active below fall into
-three groups, roughly in order of how ready they are:
+**Goal:** Every file GSD can write opens into a designed page, Labelore moves between projects, and
+URLs read like what they point to, with search that is quicker to use and easier to read.
 
-1. **Test health and leftovers** — get the 59 corpus-pinned test failures green or re-pinned, plus
-   the 05-SECURITY regression tests and 05-UI-REVIEW polish items still carried from v1.1.
-2. **Findability on top of the granular `kind`** — FIND-06 faceted search and NAV-08 command palette
-   both became practical once v1.1 gave every artifact a real kind.
-3. **Platform** — PLAT-01 live file-watching remains the strongest signal; the read layer, the
-   `refresh()` seam and the TanStack Query layer all still admit it without restructuring.
+**Target features:**
+- Sketch-built pages for every GSD file type that still lacks one: the root documents (project,
+  roadmap, requirements, state, milestones, retrospective, windows), milestone audit, review
+  disposition, coverage, review fix, spec, AI spec, eval review, user setup, browser check,
+  cross-AI reviews, the 7 codebase-map documents, spikes, seeds, threads, reports, intel, graphs,
+  forensics, workstreams, onboarding, handoff and continue-here. Discussion log and human UAT keep
+  their current pages.
+- Project settings: `config.json` becomes the project's read-only settings, reachable from anywhere
+  in the app, not a document page.
+- A redesigned Source mode.
+- Codebase-only projects (`.planning/codebase/` and nothing else, as `/gsd-map-codebase` leaves
+  them): the first screen is a "mapped, not started" overview built from the codebase documents.
+- Test health: the suite passes reliably, and corpus tests read fixtures copied into Labelore
+  instead of other projects' live `.planning/` trees.
+- The security regression tests v1.1 promised, and the v1.1 UI-review polish items.
+- Search grouped by milestone then phase, filters for phase, file type and requirement, and a
+  redesigned look.
+- A Cmd-K quick-jump palette over the search index.
+- Clean, readable URLs: `/labelore/v1.1/phase-5/plan-03`, `/labelore/quick/261024-qhq/summary`,
+  `/labelore/codebase/architecture`.
+- Project switching: several paths at start, scanning a folder such as `~/Work`, remembering opened
+  projects in Labelore's own settings, and adding a path or `ssh://` target from the switcher.
 
 ## Requirements
 
@@ -134,47 +152,50 @@ three groups, roughly in order of how ready they are:
 
 ### Active
 
-<!-- Candidates carried into the next milestone after the v2.0 close on 2026-10-25. Nothing here is scoped yet. -->
+<!-- v2.1 Wayfinding scope, defined 2026-10-25. REQUIREMENTS.md holds the REQ-IDs. -->
 
-**Document legibility — leftovers carried from v1.1**
+**Document legibility**
 
-- [ ] Sketch-built views for the types v2.0 did not reach (ROADMAP, REQUIREMENTS, MILESTONE-AUDIT)
-- [ ] Get the 59 corpus-pinned test failures green, or re-pin them to fixtures copied into `test/`
-      so they stop depending on other projects' live `.planning/` trees
-- [ ] Regression tests the Phase 5 threat register promised but never got: 5k-row / 10k-line
-      ReDoS timing tests for the section-projection and mention scanners, and a standing assertion
-      that `blocks.tsx` stays free of `dangerouslySetInnerHTML` (05-SECURITY audit notes 1–2)
-- [ ] Cap View-mode outline entries the way Source mode caps at 18, or amend T-05-11's mitigation
-      text (05-SECURITY audit note 3)
+- [ ] Sketch-built pages for every GSD file type that lacks one (root documents, milestone audit,
+      review disposition, coverage, review fix, spec, AI spec, eval review, user setup, browser
+      check, cross-AI reviews, codebase map, spikes, seeds, threads, reports, intel, graphs,
+      forensics, workstreams, onboarding, handoff, continue-here)
+- [ ] `config.json` shown as read-only project settings reachable from anywhere in the app
+- [ ] Redesigned Source mode
+- [ ] Codebase-only projects open on a "mapped, not started" overview
+
+**Test health and v1.1 leftovers**
+
+- [ ] The suite passes reliably; corpus tests read fixtures copied into `test/`, not other
+      projects' live `.planning/` trees
+- [ ] Regression tests the Phase 5 threat register promised: ReDoS timing tests for the
+      section-projection and mention scanners, a standing assertion that `blocks.tsx` stays free of
+      `dangerouslySetInnerHTML`, and a View-mode outline-entry cap (05-SECURITY audit notes 1–3)
 - [ ] UI-review polish: opaque narrow outline trigger, depth markers on the plan task index,
-      primary-coloured trigger chevron (05-UI-REVIEW, 22/24)
+      primary-coloured trigger chevron (05-UI-REVIEW), each re-checked against the v2.0 rebuilds
 
-**Findability enhancements — carried**
+**Findability**
 
-- [ ] BACK-01: Backlinks panel on requirements, decisions, and phases — "what else references this"
-- [ ] FIND-06: Faceted search — filter by requirement ID, phase, or artifact type. *Becomes
-      practical after v1.1: filtering by artifact type needs the granular `kind` this milestone
-      produces.*
+- [ ] FIND-06: Search filters by phase, file type and requirement
+- [ ] Search results grouped by milestone, then phase, with a redesigned look
 - [ ] NAV-08: Command palette (Cmd-K) quick-jump that reuses the search index
+- [ ] Clean, readable URLs in place of today's encoded tokens
 
-**Reading enhancements — carried**
+**Platform**
 
-- [ ] READ-08: Fuller plan-vs-outcome pairing, with every documented deviation shown against the task
-      it departed from. *Deliberately deferred from v1.1: PLAN and SUMMARY still get their own views
-      there as 2 of the 16 types, but the deviation-pairing feature is not in scope.*
+- [ ] PLAT-02: Multi-project switching — several paths at start, folder scan, remembered projects,
+      add a path or `ssh://` target from the switcher
 
-**Dashboard enhancements**
+**Later candidates — not in v2.1**
 
+- [ ] BACK-01: Backlinks panel on requirements, decisions, and phases
+- [ ] READ-08: Fuller plan-vs-outcome pairing with every deviation shown against its task
 - [ ] DASH-05: Static recent-activity strip from `STATE.md`'s decision log and quick-task table
-
-**Platform directions**
-
 - [ ] PLAT-01: Live file-watching with push updates (chokidar + Hono `streamSSE` →
       `queryClient.invalidateQueries()`)
-- [ ] PLAT-02: Multi-project registry and switcher
 - [ ] PLAT-03: Driving GSD commands from the UI
-- [ ] PLAT-04: Adopt `gsd-tools query` for structural facts, if the independent parser proves costly to
-      maintain
+- [ ] PLAT-04: Adopt `gsd-tools query` for structural facts, if the independent parser proves costly
+      to maintain
 
 ### Out of Scope
 
@@ -300,4 +321,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-25 after v2.0 milestone*
+*Last updated: 2026-10-25 after starting milestone v2.1 Wayfinding*
