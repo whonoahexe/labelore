@@ -2,19 +2,19 @@
 // and line count for quick notes, and the explore lifting (lede, sections, items, flags, figures, totals);
 // those pins come from running the sketch's own `quickModel` and `exploreModel` over its data.js. The `short`
 // title flag of the 028 A page is gone.
-// quick-261023-61l (sketch 028 A): the note body extractor - pinned against the eight sketch quick notes
-// (the committed fixture project plus the two synthetic files), labelore's own sketches note, and, when
-// present on this machine, the pyedge heartbeat note; plus the tolerant degrade paths and the T-61l-02
-// timing bound. Pinned values come from running the sketch's own `lift`, `refsOf` and `headings` over its
-// data.js, independent of the extractor's output; correction 1 (the first sentence is the title and the
-// rest of a multi-sentence lead becomes a "Then" row) is marked where it applies.
-import { existsSync, readFileSync } from 'node:fs';
+// quick-261023-61l (sketch 028 A): the note body extractor - pinned against the Lendshed quick notes (the
+// made-up fixture project, heartbeat note included), the two synthetic files and labelore's own sketches
+// note; plus the tolerant degrade paths and the growth bound on the input size. Pinned values are counted
+// in the fixture files themselves (grep, awk, wc), never copied from the extractor's output (D-02);
+// correction 1 (the first sentence is the title and the rest of a multi-sentence lead becomes a "Then"
+// row) is marked where it applies.
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { extractNote } from '../src/planning-repo/handlers/note-lift.ts';
 import type { NoteBody, NoteFigure, NoteRow, NoteRun, NoteSection } from '../src/planning-repo/handlers/note-lift.ts';
 import { tryParseFrontmatter } from '../src/planning-repo/frontmatter.ts';
-import { PY_NOTE, noteFile } from './helpers/note-corpus.ts';
-import { NOTE_FILES } from './helpers/note-corpus.ts';
+import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
+import { HEARTBEAT_NOTE, NOTE_FILES, noteFile } from './helpers/note-corpus.ts';
 
 /** The file's line count the way the handler counts it: a final newline does not start a line. */
 function lineCount(text: string): number {
@@ -44,46 +44,47 @@ const tones = (note: NoteBody): (string | null)[] => (note.rows ?? []).map((row)
 const mentionPaths = (note: NoteBody): string[] => (note.mentions ?? []).map((m) => m.path);
 
 describe('quick notes from the fixture project', () => {
-  it('dcrop: the first sentence is the title; Today, Decided, How, Preset constraint, Estimated, Batch follow', () => {
+  it('dcrop: the first sentence is the title; Today, Decided, How, Preset constraint, Batch follow', () => {
     const note = read('dcrop');
     expect(note.shape).toBe('quick');
-    expect(plain(note.title)).toBe('Crop for images before sending and for profile photos (she asked for it).');
-    expect(labels(note)).toEqual(['Today', 'Decided', 'How', 'Preset constraint', 'Estimated', 'Batch']);
-    expect(tones(note)).toEqual([null, 'complete', null, null, null, null]);
-    expect((note.rows as NoteRow[])[1].date).toBe('2026-10-21');
-    expect(mentionPaths(note)).toEqual(['server/src/media/image.ts']);
+    expect(plain(note.title)).toBe('Crop tool photos before they are posted, and crop member avatars as well (Teo asked for it).');
+    expect(labels(note)).toEqual(['Today', 'Decided', 'How', 'Preset constraint', 'Batch']);
+    expect(tones(note)).toEqual([null, 'complete', null, null, null]);
+    expect((note.rows as NoteRow[])[1].date).toBe('2026-03-24');
+    expect(mentionPaths(note)).toEqual(['api/src/photos/resize.ts']);
   });
 
   it('dcrop: an opener row keeps its whole sentence, a Label: row drops its label', () => {
     const rows = read('dcrop').rows as NoteRow[];
-    expect(plain(rows[0].runs)).toMatch(/^Today profile photos are centre-cropped automatically on the server \(server\/src\/media\/image\.ts, fit cover/);
-    expect(plain(rows[0].runs)).toMatch(/and images are sent uncropped\.$/);
-    expect(plain(rows[1].runs)).toMatch(/^images only \(no video trimming\), no rotate\. /);
-    expect(plain(rows[4].runs)).toBe('Estimated ~half a day of gesture work. Applies to camera-captured photos too (same preview flow).');
-    expect(plain(rows[5].runs)).toBe('Batch with the round-profile-photos note.');
+    expect(plain(rows[0].runs)).toMatch(/^Today the catalogue thumbnails are cut to the middle by the API \(api\/src\/photos\/resize\.ts, cover fit/);
+    expect(plain(rows[0].runs)).toMatch(/and tool photos go up uncropped\.$/);
+    expect(plain(rows[1].runs)).toMatch(/^photos only \(no clips\), no turning\. /);
+    expect(plain(rows[3].runs)).toMatch(/^the component kit has no cropper, /);
+    expect(plain(rows[3].runs)).toMatch(/Roughly half a day of gesture work\. Camera shots follow the same tray flow\.$/);
+    expect(plain(rows[4].runs)).toBe('Batch with the round-avatars note.');
     // The file reference in the opener row is one file run.
-    expect(rows[0].runs.filter((run) => run.kind === 'file').map((run) => run.text)).toEqual(['server/src/media/image.ts']);
+    expect(rows[0].runs.filter((run) => run.kind === 'file').map((run) => run.text)).toEqual(['api/src/photos/resize.ts']);
   });
 
   it('dround: Today, Want, Decided (dated), Batch; two mentions', () => {
     const note = read('dround');
-    expect(plain(note.title)).toBe('Round profile photos everywhere, including the notification icon.');
+    expect(plain(note.title)).toBe('Round member avatars everywhere, push icon included.');
     expect(labels(note)).toEqual(['Today', 'Want', 'Decided', 'Batch']);
     expect(tones(note)).toEqual([null, null, 'complete', null]);
-    expect(mentionPaths(note)).toEqual(['web/public/sw.js', 'server/src/media/image.ts']);
+    expect(mentionPaths(note)).toEqual(['web/public/push-worker.js', 'api/src/photos/resize.ts']);
   });
 
   it('dsfx: two Decided rows, a Suggested row, Limits', () => {
     const note = read('dsfx');
-    expect(plain(note.title)).toBe('Sound effects.');
+    expect(plain(note.title)).toBe('Checkout sound cues.');
     expect(labels(note)).toEqual(['Decided', 'Decided', 'Suggested', 'Limits']);
     expect(tones(note)).toEqual(['complete', 'complete', 'in-flight', null]);
-    expect(mentionPaths(note)).toEqual(['web/lib/call/tones.ts']);
+    expect(mentionPaths(note)).toEqual(['web/lib/kiosk/tones.ts']);
   });
 
   it('dcall: Observed (in-flight), Want, Off limits, Output; nothing to mention', () => {
     const note = read('dcall');
-    expect(plain(note.title)).toBe('Call debug logging (WebRTC + TURN, no personal data).');
+    expect(plain(note.title)).toBe('Scanner debug logging (camera + serial, no personal data).');
     expect(labels(note)).toEqual(['Observed', 'Want', 'Off limits', 'Output']);
     expect(tones(note)).toEqual(['in-flight', null, null, null]);
     expect(note.mentions).toEqual([]);
@@ -92,7 +93,7 @@ describe('quick notes from the fixture project', () => {
   it('dback: the Bug lead keeps its label in the title; Cause is in-flight, then Fix', () => {
     const note = read('dback');
     expect(plain(note.title)).toBe(
-      'Bug: on the Pixel, pressing Android back while a photo/video is open in the viewer closes the whole app instead of the viewer.',
+      'Bug: on the desk tablet, pressing Android back while an item photo is open in the lightbox closes the whole kiosk instead of the lightbox.',
     );
     expect(labels(note)).toEqual(['Cause', 'Fix']);
     expect(tones(note)).toEqual(['in-flight', null]);
@@ -101,19 +102,19 @@ describe('quick notes from the fixture project', () => {
 
   it('pcap: Today, Wanted, Known gap; two mentions with line numbers and five identifiers outside Mentions', () => {
     const note = read('pcap');
-    expect(plain(note.title)).toBe('Raise the single-file download cap to match the archive cap.');
+    expect(plain(note.title)).toBe('Raise the single-export size cap to match the bundle cap.');
     expect(labels(note)).toEqual(['Today', 'Wanted', 'Known gap']);
-    expect(mentionPaths(note)).toEqual(['backend/src/config.rs:121', 'download/mod.rs:75']);
+    expect(mentionPaths(note)).toEqual(['api/src/limits.ts:44', 'export/stream.ts:61']);
     const idents = (note.verbatim ?? []).filter((run) => run.kind === 'ident').map((run) => run.text);
     expect(idents).toEqual([
-      'MAX_DOWNLOAD_BYTES',
-      'MAX_ARCHIVE_BYTES',
-      'max_download_bytes_defaults_to_500_mib',
-      'max_archive_bytes_and_max_download_bytes_are_distinct_caps',
-      'CLOUD_DOWNLOAD_STREAM_DEADLINE',
+      'MAX_EXPORT_BYTES',
+      'MAX_BUNDLE_BYTES',
+      'export_bytes_defaults_to_250_mib',
+      'bundle_bytes_and_export_bytes_are_distinct_caps',
+      'EXPORT_STREAM_DEADLINE',
     ]);
     expect(mentionPaths(note).some((path) => idents.includes(path))).toBe(false);
-    expect(plain((note.rows as NoteRow[])[0].runs)).toMatch(/^Today MAX_DOWNLOAD_BYTES defaults to 500 MiB \(backend\/src\/config\.rs:121\) while /);
+    expect(plain((note.rows as NoteRow[])[0].runs)).toMatch(/^Today MAX_EXPORT_BYTES defaults to 250 MiB \(api\/src\/limits\.ts:44\) while /);
   });
 
   it('pbrief is an explore note (a titled document)', () => {
@@ -156,20 +157,20 @@ describe('labelore sketches note (correction 1)', () => {
   });
 });
 
-describe.runIf(existsSync(PY_NOTE))('pyedge heartbeat note', () => {
-  it('lifts Constraint, Today, Open check and counts hubcli.py twice', () => {
-    const fm = tryParseFrontmatter(readFileSync(PY_NOTE, 'utf8'));
+describe('Lendshed heartbeat note', () => {
+  it('lifts Constraint, Today, Open check and counts poller.py twice', () => {
+    const fm = tryParseFrontmatter(readFileSync(HEARTBEAT_NOTE, 'utf8'));
     const note = extractNote(fm.body, { titled: false });
     expect(plain(note.title)).toBe(
-      'EdgeCAN version in the heartbeat + on stack start (from 2026-10-14 monthly sync; Jeremiah/Raj/Rahul ask).',
+      'Kiosk app version in the heartbeat + on shed start (from 2026-03-11 steward sync; Maya/Teo/Ana ask).',
     );
     expect(labels(note)).toEqual(['Constraint', 'Today', 'Open check']);
     expect(note.mentions).toEqual([
-      { path: 'logs/ingress.log', count: 1 },
-      { path: 'src/can/hubcli.py', count: 1 },
-      { path: 'src/can/rhub_cli.py', count: 1 },
-      { path: 'hubcli.py', count: 2 },
-      { path: 'src/can/hub_sender.py', count: 1 },
+      { path: 'logs/access.log', count: 1 },
+      { path: 'src/kiosk/poller.py', count: 1 },
+      { path: 'src/kiosk/relay_client.py', count: 1 },
+      { path: 'poller.py', count: 2 },
+      { path: 'src/kiosk/report_sender.py', count: 1 },
     ]);
   });
 });
@@ -291,20 +292,20 @@ describe('degrade', () => {
     expect(long.capped).toBe(true);
     expect(plain(long.verbatim).length).toBeLessThanOrEqual(32000);
   });
-  it('lifts a 1 MB body with a 200k-character line in under 250 ms', () => {
-    const line = 'x'.repeat(200000);
+  it('lifts a body with one very long line in time that grows no faster than linearly with its size', () => {
     const filler = `${'Want: a sentence with src/a/b.ts and some_ident_name in it. '.repeat(20)}\n`;
-    const body = `Lead sentence.\n${line}\n${filler.repeat(Math.ceil(800000 / filler.length))}`;
-    expect(body.length).toBeGreaterThan(1_000_000);
-    const started = performance.now();
-    extractNote(body, { titled: false });
-    expect(performance.now() - started).toBeLessThan(250);
+    const growth = measureGrowth({
+      make: (n) => `Lead sentence.\n${'x'.repeat(Math.floor(n / 5))}\n${filler.repeat(Math.ceil((n * 4) / 5 / filler.length))}`,
+      run: (body) => void extractNote(body, { titled: false }),
+    });
+    expect(growth.ratio, `${growth.t1.toFixed(2)}ms at ${growth.n}, ${growth.t2.toFixed(2)}ms at 8x`).toBeLessThan(GROWTH_LIMIT);
   });
-  it('a hostile run of backticks and slashes stays fast', () => {
-    const body = `Lead. Want: ${'`a'.repeat(8000)} ${'a/'.repeat(3000)} ${'`` `'.repeat(2000)}`;
-    const started = performance.now();
-    extractNote(body, { titled: false });
-    expect(performance.now() - started).toBeLessThan(250);
+  it('a hostile run of backticks and slashes grows no faster than linearly', () => {
+    const growth = measureGrowth({
+      make: (n) => `Lead. Want: ${'`a'.repeat(Math.floor(n / 4))} ${'a/'.repeat(Math.floor(n / 8))} ${'`` `'.repeat(Math.floor(n / 16))}`,
+      run: (body) => void extractNote(body, { titled: false }),
+    });
+    expect(growth.ratio, `${growth.t1.toFixed(2)}ms at ${growth.n}, ${growth.t2.toFixed(2)}ms at 8x`).toBeLessThan(GROWTH_LIMIT);
   });
 });
 
@@ -317,8 +318,8 @@ describe('flat helper sanity', () => {
 describe('quick notes: groups, first sentences, words, the file-name title (sketch 029 A)', () => {
   const groups = (key: keyof typeof NOTE_FILES): string[] => (read(key).rows ?? []).map((row) => row.group);
 
-  it('dcrop: Today problem, Decided decided, How ask, three limits', () => {
-    expect(groups('dcrop')).toEqual(['problem', 'decided', 'ask', 'limit', 'limit', 'limit']);
+  it('dcrop: Today problem, Decided decided, How ask, two limits', () => {
+    expect(groups('dcrop')).toEqual(['problem', 'decided', 'ask', 'limit', 'limit']);
   });
   it('lsketch: Then other, Want ask, Open question open twice, Today problem, Suggested interim other', () => {
     expect(groups('lsk')).toEqual(['other', 'ask', 'open', 'open', 'problem', 'other']);
@@ -336,12 +337,12 @@ describe('quick notes: groups, first sentences, words, the file-name title (sket
   });
   it('words are counted across the body', () => {
     const words = (key: keyof typeof NOTE_FILES): number | undefined => read(key).words;
-    expect([words('dcrop'), words('dround'), words('dsfx'), words('dcall'), words('dback'), words('pcap')]).toEqual([228, 174, 131, 161, 109, 108]);
+    expect([words('dcrop'), words('dround'), words('dsfx'), words('dcall'), words('dback'), words('pcap')]).toEqual([254, 188, 178, 192, 115, 116]);
     expect([words('star'), words('sundo'), words('lsk')]).toEqual([11, 23, 240]);
   });
   it('the file-name title drops the date and .md, with spaces and a capital', () => {
-    expect(read('dcrop').fileTitle).toBe('Crop images and profile photos');
-    expect(read('dcall').fileTitle).toBe('Call debug logging webrtc turn');
+    expect(read('dcrop').fileTitle).toBe('Crop tool photos and member avatars');
+    expect(read('dcall').fileTitle).toBe('Scanner debug logging for checkout kiosk');
     expect(read('star').fileTitle).toBe('Tariff note tooltips');
     expect(read('lperkind').fileTitle).toBe('Per kind artifact rendering');
     expect(extractNote('One.', { titled: false })).not.toHaveProperty('fileTitle');
@@ -361,8 +362,8 @@ describe('quick notes: groups, first sentences, words, the file-name title (sket
       }
     }
     const rows = read('dcrop').rows as NoteRow[];
-    expect(plain(rows[1].first)).toBe('images only (no video trimming), no rotate.');
-    expect(plain(rows[2].first)).toMatch(/^the phone only picks the rectangle; it uploads the full-quality original plus the crop rect/);
+    expect(plain(rows[1].first)).toBe('photos only (no clips), no turning.');
+    expect(plain(rows[2].first)).toMatch(/^the browser only picks the rectangle; it uploads the full-size original together with the rectangle/);
     const then = (read('lsk').rows as NoteRow[])[0];
     expect(plain(then.first)).toMatch(/^`\.planning\/sketches\/` is a GSD artifact folder like any other/);
   });
@@ -383,38 +384,38 @@ describe('explore notes: lede, sections, items, flags, figures and totals (sketc
 
   it('pbrief: the boiler line, the summary, the totals and the figures in order', () => {
     expect(pbrief.lede).toBeUndefined();
-    expect(pbrief.boiler).toBe('Captured from an exploration session on 2026-10-23. Inputs from the studio team are included.');
-    expect(pbrief.summary).toBe('Three sections: 7 features, footage facts and 3 network facts.');
-    expect(pbrief.flagTotals).toEqual({ all: 5, decided: 1, openOrBlocked: 2 });
-    expect([pbrief.points, pbrief.tables, pbrief.lines]).toEqual([15, 1, 42]);
-    expect(figuresOf(pbrief)).toEqual(['370 GB', '10 GbE', '~180 MB/s', '~232 MB/s', 'around 110 MB/s', '67 times', '2.5 GbE']);
+    expect(pbrief.boiler).toBe('Captured from an exploration session on 2026-03-26. Inputs from the stewards are included.');
+    expect(pbrief.summary).toBe('Three sections: 7 features, loan facts and desk facts.');
+    expect(pbrief.flagTotals).toEqual({ all: 1, decided: 0, openOrBlocked: 1 });
+    expect([pbrief.points, pbrief.tables, pbrief.lines]).toEqual([14, 1, 40]);
+    expect(figuresOf(pbrief)).toEqual(['~1.1 GB', '~2.4 GB', 'around 60 %', '41 times']);
   });
-  it('pbrief: Features has seven items, the first four kept, and four flags', () => {
+  it('pbrief: Features has seven items, the first four kept, and one flag', () => {
     const features = sec(pbrief, 0);
     expect(features.heading).toBe('Features');
     expect(features.keyFrom).toBe('item');
-    expect(features.key).toBe('Projects: Created in the portal from a single template with optional folders (exact layout left to research/planning).');
-    expect(features.items.map((item) => item.term)).toEqual(['Projects', 'Ingest', 'Lifecycle', 'Grading locally, by vault check-out']);
+    expect(features.key).toBe('Member sign-in: Members sign in with a one-time code mailed to them; sessions last a week and can be ended from any device.');
+    expect(features.items.map((item) => item.term)).toEqual(['Member sign-in', 'Roles', 'Account admin', 'Bulk loan export']);
     expect(features.itemCount).toBe(7);
     expect(features.tableRows).toBeNull();
-    expect(flagsOf(features)).toEqual(['Decided:complete', 'Open question:missing', 'Rejected:quiet', 'Blocked:missing']);
-    expect(features.figures.map((figure) => `${figure.value} ${figure.unit}`)).toEqual(['370 GB', '10 GbE']);
+    expect(flagsOf(features)).toEqual(['Open question:missing']);
+    expect(features.figures).toEqual([]);
     expect(features.side).toEqual(['7 items']);
   });
   it('pbrief: the measured sections keep their heading note out of the short heading', () => {
     const footage = sec(pbrief, 1);
-    expect(footage.heading).toBe('Footage facts (measured 2026-10-23)');
-    expect(footage.short).toBe('Footage facts');
+    expect(footage.heading).toBe('Loan facts (measured 2026-03-26)');
+    expect(footage.short).toBe('Loan facts');
     expect(footage.keyFrom).toBe('para');
-    expect(footage.key).toBe('Camera: **Canon EOS C50**, Cinema RAW Light (`CRAW` codec in `.CRM`, firmware 02.10.00).');
+    expect(footage.key).toBe('Source: the March loan log, 1,284 loans across the four sheds, exported by hand.');
     expect(footage.itemCount).toBe(2);
     expect(footage.tableRows).toBe(2);
-    expect(footage.figures.map((figure) => `${figure.value} ${figure.unit}`)).toEqual(['~180 MB/s', '~232 MB/s']);
+    expect(footage.figures.map((figure) => `${figure.value} ${figure.unit}`)).toEqual(['~1.1 GB', '~2.4 GB', 'around 60 %']);
     expect(footage.side).toEqual(['2 items', 'table · 2 rows']);
     const network = sec(pbrief, 2);
-    expect(network.itemCount).toBe(3);
-    expect(flagsOf(network)).toEqual(['Rejected:quiet']);
-    expect(network.figures.map((figure) => `${figure.value} ${figure.unit}`)).toEqual(['around 110 MB/s', '67 times', '10 GbE', '2.5 GbE']);
+    expect(network.itemCount).toBe(2);
+    expect(flagsOf(network)).toEqual([]);
+    expect(network.figures.map((figure) => `${figure.value} ${figure.unit}`)).toEqual(['41 times']);
   });
   it('lperkind: the lede is kept whole when long and the summary is the shape', () => {
     expect(lperkind.boiler).toBeUndefined();
@@ -557,18 +558,21 @@ describe('explore notes degrade', () => {
     expect((note.sections?.[0].key ?? '').length).toBeLessThanOrEqual(601);
     expect((note.sections?.[0].figures[0]?.phrase ?? '').length).toBeLessThanOrEqual(140);
   });
-  it('lifts a titled 1 MB body with a 200k-character line in under 250 ms, as an explore and as a quick note', () => {
-    const line = 'x'.repeat(200000);
+  it('lifts a titled body with one very long line in time that grows no faster than linearly, as an explore and as a quick note', () => {
     const filler = `${'Want: a sentence with src/a/b.ts, 5 GB and some_ident_name in it. Decided: yes. '.repeat(10)}\n`;
-    const body = `Lead sentence.\n${line}\n${filler.repeat(Math.ceil(800000 / filler.length))}`;
-    expect(body.length).toBeGreaterThan(1_000_000);
-    for (const text of [body, `## One\n${line}\n- **t.** ${filler.repeat(Math.ceil(800000 / filler.length))}`]) {
-      const started = performance.now();
-      extractNote(text, { titled: true, path: '.planning/notes/a.md', lines: 100 });
-      expect(performance.now() - started).toBeLessThan(250);
+    const quick = (n: number): string => `Lead sentence.\n${'x'.repeat(Math.floor(n / 5))}\n${filler.repeat(Math.ceil((n * 4) / 5 / filler.length))}`;
+    const explore = (n: number): string => `## One\n${'x'.repeat(Math.floor(n / 5))}\n- **t.** ${filler.repeat(Math.ceil((n * 4) / 5 / filler.length))}`;
+    const cases: [string, (n: number) => string, boolean][] = [
+      ['quick, titled', quick, true],
+      ['explore, titled', explore, true],
+      ['quick, untitled', quick, false],
+    ];
+    for (const [label, make, titled] of cases) {
+      const growth = measureGrowth({
+        make,
+        run: (text) => void extractNote(text, { titled, path: '.planning/notes/a.md', lines: 100 }),
+      });
+      expect(growth.ratio, `${label}: ${growth.t1.toFixed(2)}ms at ${growth.n}, ${growth.t2.toFixed(2)}ms at 8x`).toBeLessThan(GROWTH_LIMIT);
     }
-    const started = performance.now();
-    extractNote(body, { titled: false, path: '.planning/notes/a.md', lines: 100 });
-    expect(performance.now() - started).toBeLessThan(250);
   });
 });

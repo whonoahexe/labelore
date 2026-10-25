@@ -24,7 +24,7 @@ import type { ViewInput } from '../../src/web/views/manifest.ts';
 import { composeNotePage, dropLeadingH1, sectionHtml } from '../../src/web/views/note-page.ts';
 import type { ComposedNotePage } from '../../src/web/views/note-page.ts';
 import { NotePageView } from '../../src/web/views/note-page-components.tsx';
-import { NOTE_FILES, NOTES_FIXTURE_ROOT, combinedFiles, loadCombined, notesAndTodos } from '../helpers/note-corpus.ts';
+import { FX_ROOT, NOTE_FILES, combinedFiles, loadCombined, notesAndTodos } from '../helpers/note-corpus.ts';
 import type { LoadedProject } from '../helpers/todo-corpus.ts';
 
 let project: LoadedProject;
@@ -91,83 +91,83 @@ describe('the rail of a quick note', () => {
     const model = page('dcrop');
     expect(model.shape).toBe('quick');
     expect(model.rail.eyebrow).toBe('Note');
-    expect(model.rail.title).toBe('Crop images and profile photos');
+    expect(model.rail.title).toBe('Crop tool photos and member avatars');
     expect(model.rail.context).toBeNull();
     expect(model.rail.stage).toEqual({ key: 'done', text: 'Shipped' });
     expect(model.rail.big).toEqual({
-      value: '6',
+      value: '5',
       label: 'things it says, after the gist',
-      sub: '1 decided · 1 ask · 1 problem · 3 limits',
+      sub: '1 decided · 1 ask · 1 problem · 2 limits',
       stage: 'done',
     });
     expect(statsOf(model)).toEqual([
-      ['Noted', '21 Oct 2026 · 15:58', null],
-      ['Age', '2 days', null],
+      ['Noted', '24 Mar 2026 · 09:20', null],
+      ['Age', '213 days', null],
       ['Promoted', 'Yes', null],
       ['Todo', 'Done', 'complete'],
-      ['Note → shipped', '2 days', null],
+      ['Note → shipped', '3 days', null],
       ['Mentions', '1', null],
-      ['Words', '228', null],
+      ['Words', '254', null],
     ]);
   });
   it('the other shipped notes: counts, ages, mentions and words', () => {
     const dround = page('dround');
     expect([dround.rail.title, dround.rail.stage.text, dround.rail.big.value, dround.rail.big.sub]).toEqual([
-      'Round profile photos',
+      'Round member avatars',
       'Shipped',
       '4',
       '1 decided · 1 ask · 1 problem · 1 limit',
     ]);
     expect(statsOf(dround)).toEqual([
-      ['Noted', '21 Oct 2026 · 15:58', null],
-      ['Age', '2 days', null],
+      ['Noted', '24 Mar 2026 · 09:20', null],
+      ['Age', '213 days', null],
       ['Promoted', 'Yes', null],
       ['Todo', 'Done', 'complete'],
-      ['Note → shipped', '2 days', null],
+      ['Note → shipped', '3 days', null],
       ['Mentions', '2', null],
-      ['Words', '174', null],
+      ['Words', '188', null],
     ]);
     const dsfx = page('dsfx');
     expect([dsfx.rail.title, dsfx.rail.big.value, dsfx.rail.big.sub, dsfx.gist.line]).toEqual([
-      'Sound effects',
+      'Checkout sound cues',
       '4',
       '2 decided · 1 ask · 1 limit',
       'Became a todo and shipped.',
     ]);
     expect(statsOf(dsfx).map(([label]) => label)).toEqual(['Noted', 'Age', 'Promoted', 'Todo', 'Mentions', 'Words']);
     expect(statsOf(dsfx).filter(([label]) => ['Age', 'Mentions', 'Words'].includes(label))).toEqual([
-      ['Age', '3 days', null],
+      ['Age', '214 days', null],
       ['Mentions', '1', null],
-      ['Words', '131', null],
+      ['Words', '178', null],
     ]);
     const dcall = page('dcall');
-    expect([dcall.rail.title, dcall.rail.big.value, dcall.rail.big.sub]).toEqual(['Call debug logging webrtc turn', '4', '2 asks · 1 problem · 1 limit']);
+    expect([dcall.rail.title, dcall.rail.big.value, dcall.rail.big.sub]).toEqual(['Scanner debug logging for checkout kiosk', '4', '2 asks · 1 problem · 1 limit']);
     expect(statsOf(dcall).filter(([label]) => ['Age', 'Mentions', 'Words'].includes(label))).toEqual([
-      ['Age', '3 days', null],
+      ['Age', '214 days', null],
       ['Mentions', '0', null],
-      ['Words', '161', null],
+      ['Words', '192', null],
     ]);
   });
   it('dcrop: the gist said large and where the note went', () => {
     const model = page('dcrop');
-    expect(firstText(model.gist.runs)).toBe('Crop for images before sending and for profile photos (she asked for it).');
+    expect(firstText(model.gist.runs)).toBe('Crop tool photos before they are posted, and crop member avatars as well (Teo asked for it).');
     expect(model.gist.text).toBeNull();
     expect(model.gist.long).toBe(false);
-    expect(model.gist.line).toBe('Became a todo and shipped 22 Oct 2026.');
+    expect(model.gist.line).toBe('Became a todo and shipped 26 Mar 2026.');
   });
   it('dback and pcap are untraced: Promoted, no todo, the untraced sentence', () => {
     const dback = page('dback');
     expect(dback.rail.stage).toEqual({ key: 'untraced', text: 'Untraced' });
     expect([dback.rail.big.value, dback.rail.big.sub, dback.gist.line]).toEqual(['2', '1 ask · 1 problem', 'Promoted, but no todo carries it.']);
-    expect(firstText(dback.gist.runs).startsWith('Bug: on the Pixel, pressing Android back')).toBe(true);
+    expect(firstText(dback.gist.runs).startsWith('Bug: on the desk tablet, pressing Android back')).toBe(true);
     expect(statsOf(dback).map(([label]) => label)).toEqual(['Noted', 'Age', 'Promoted', 'Mentions', 'Words']);
-    expect(statsOf(dback).find(([label]) => label === 'Words')).toEqual(['Words', '109', null]);
+    expect(statsOf(dback).find(([label]) => label === 'Words')).toEqual(['Words', '115', null]);
     const pcap = page('pcap');
     expect([pcap.rail.stage.text, pcap.rail.big.value, pcap.rail.big.sub]).toEqual(['Untraced', '3', '1 ask · 1 problem · 1 limit']);
     expect(statsOf(pcap).filter(([label]) => ['Age', 'Mentions', 'Words'].includes(label))).toEqual([
-      ['Age', '2 days', null],
+      ['Age', '213 days', null],
       ['Mentions', '2', null],
-      ['Words', '108', null],
+      ['Words', '116', null],
     ]);
   });
   it('lsk: the completed todo makes it Shipped, the ledger has two missing Open question rows and the age is under a day', () => {
@@ -188,23 +188,22 @@ describe('the rail of a quick note', () => {
 });
 
 describe('the ledger of a quick note', () => {
-  it('dcrop: six numbered rows, the Decided date label, the index marks and the first sentence split out', () => {
+  it('dcrop: five numbered rows, the Decided date label, the index marks and the first sentence split out', () => {
     const model = page('dcrop');
-    expect(model.ledger).toEqual({ title: 'What it says', kicker: '1 decided · 1 ask · 1 problem · 3 limits' });
+    expect(model.ledger).toEqual({ title: 'What it says', kicker: '1 decided · 1 ask · 1 problem · 2 limits' });
     expect(model.toggle).toBe(true);
     expect(model.oneLine).toBeNull();
     expect(model.rows.map((row) => [row.index, row.label, row.tone, row.mark])).toEqual([
       ['01', 'Today', null, 'in-flight'],
-      ['02', 'Decided · 21 Oct 2026', 'complete', 'complete'],
+      ['02', 'Decided · 24 Mar 2026', 'complete', 'complete'],
       ['03', 'How', null, null],
       ['04', 'Preset constraint', null, null],
-      ['05', 'Estimated', null, null],
-      ['06', 'Batch', null, null],
+      ['05', 'Batch', null, null],
     ]);
     expect(model.rows.every((row) => !row.then)).toBe(true);
-    expect(firstText(model.rows[1].first)).toBe('images only (no video trimming), no rotate.');
-    expect(firstText(model.rows[1].rest).startsWith('One shared crop screen used in two places')).toBe(true);
-    expect(model.mentions).toEqual([{ path: 'server/src/media/image.ts', count: 1 }]);
+    expect(firstText(model.rows[1].first)).toBe('photos only (no clips), no turning.');
+    expect(firstText(model.rows[1].rest).startsWith('One shared crop sheet, used in two places')).toBe(true);
+    expect(model.mentions).toEqual([{ path: 'api/src/photos/resize.ts', count: 1 }]);
     expect(model.verbatim?.capped).toBe(false);
     expect(model.also).toEqual([{ label: 'Frontmatter', targetId: null }]);
     expect(model.cardsInRail).toBe(true);
@@ -299,11 +298,11 @@ describe('the todo cards and the empty states', () => {
     expect(card.statusKey).toBe('done');
     expect(card.weight).toEqual({ text: 'Minor', level: 'low', title: 'severity: minor' });
     expect(card.area).toBe('media');
-    expect(card.title).toBe('Add crop and round profile photos');
+    expect(card.title).toBe('Add crop and round member avatars');
     expect(card.via).toBe('Names this note in notes:');
-    expect(card.resolution?.startsWith('Done in quick task 261022-m25 (2026-10-22). What shipped:')).toBe(true);
+    expect(card.resolution?.startsWith('Done in quick task 260326-m3d (2026-03-26). What shipped:')).toBe(true);
     expect(card.batched).toHaveLength(1);
-    expect(card.batched[0].text.startsWith('21 Oct 2026 · 15:58 · Round profile photos everywhere')).toBe(true);
+    expect(card.batched[0].text.startsWith('24 Mar 2026 · 09:20 · Round member avatars everywhere')).toBe(true);
     expect(card.batched[0].url).toEqual(expect.any(String));
     expect(card.url).toEqual(expect.any(String));
   });
@@ -414,31 +413,31 @@ describe('degrade', () => {
 });
 
 describe('static markup of a quick note', () => {
-  it('dcrop renders the rail, the gist, the toggle, six rows, the reference, the card, the mentions and the Also row', () => {
+  it('dcrop renders the rail, the gist, the toggle, five rows, the reference, the card, the mentions and the Also row', () => {
     const html = render(page('dcrop'));
     expect(count(html, '<h1')).toBe(1);
     expect(html).toContain('<header class="view-note-rail">');
-    expect(html).toContain('<h1 class="view-note-title">Crop images and profile photos</h1>');
+    expect(html).toContain('<h1 class="view-note-title">Crop tool photos and member avatars</h1>');
     expect(html).toContain('>Note</p>');
     expect(html).toContain('<span class="view-note-stage" data-stage="done"><i aria-hidden="true"></i>Shipped</span>');
     expect(html).toContain('<div class="view-note-big" data-stage="done">');
-    expect(html).toContain('<b>6</b>');
+    expect(html).toContain('<b>5</b>');
     expect(html).toContain('things it says, after the gist');
-    expect(html).toContain('1 decided · 1 ask · 1 problem · 3 limits');
-    expect(html).toContain('<dt>Noted</dt><dd>21 Oct 2026 · 15:58</dd>');
+    expect(html).toContain('1 decided · 1 ask · 1 problem · 2 limits');
+    expect(html).toContain('<dt>Noted</dt><dd>24 Mar 2026 · 09:20</dd>');
     expect(html).toContain('<dt>Todo</dt><dd data-tone="complete">Done</dd>');
-    expect(html).toContain('<dt>Words</dt><dd>228</dd>');
-    expect(html).toContain('<p class="view-note-say" data-long="false">Crop for images before sending and for profile photos (she asked for it).</p>');
-    expect(html).toContain('<p class="view-note-line">Became a todo and shipped 22 Oct 2026.</p>');
+    expect(html).toContain('<dt>Words</dt><dd>254</dd>');
+    expect(html).toContain('<p class="view-note-say" data-long="false">Crop tool photos before they are posted, and crop member avatars as well (Teo asked for it).</p>');
+    expect(html).toContain('<p class="view-note-line">Became a todo and shipped 26 Mar 2026.</p>');
     expect(html).toContain('<div class="view-note-toggle" role="group" aria-label="Note view"><button type="button" aria-pressed="true">Lifted</button>');
     expect(html).toContain('<h2>What it says</h2>');
-    expect(count(html, 'class="view-note-row"')).toBe(6);
-    expect(html).toContain('<span class="view-note-label" data-tone="complete">Decided · 21 Oct 2026</span>');
+    expect(count(html, 'class="view-note-row"')).toBe(5);
+    expect(html).toContain('<span class="view-note-label" data-tone="complete">Decided · 24 Mar 2026</span>');
     expect(html).toContain('<span class="view-note-index">01</span>');
-    expect(html).toContain('<span class="view-note-first">images only (no video trimming), no rotate.</span>');
+    expect(html).toContain('<span class="view-note-first">photos only (no clips), no turning.</span>');
     // The text holds one reference button; Mentions holds its own row button.
     expect(count(html, 'class="view-note-ref"')).toBe(1);
-    expect(html).toContain('title="Copy server/src/media/image.ts"');
+    expect(html).toContain('title="Copy api/src/photos/resize.ts"');
     // The card sits in the rail.
     expect(html.indexOf('view-note-todo')).toBeLessThan(html.indexOf('view-note-main'));
     expect(html).toContain('<article class="view-note-todo" data-status="done">');
@@ -446,9 +445,9 @@ describe('static markup of a quick note', () => {
     expect(html).toContain('<span class="status-chip" data-tone="complete">Done</span>');
     expect(html).toContain('<span class="view-note-weight" data-level="low" title="severity: minor"><i aria-hidden="true"></i>Minor</span>');
     expect(html).toContain('<span class="status-chip" data-tone="quiet">media</span>');
-    expect(html).toContain('Add crop and round profile photos');
+    expect(html).toContain('Add crop and round member avatars');
     expect(html).toContain('Names this note in notes:');
-    expect(html).toContain('Done in quick task 261022-m25');
+    expect(html).toContain('Done in quick task 260326-m3d');
     expect(count(html, 'class="view-note-sibling"')).toBe(1);
     expect(html).toContain('Open todo ↗');
     expect(count(html, '<a class="view-note-open"')).toBe(1);
@@ -573,58 +572,54 @@ describe('an explore note', () => {
     const { model } = await composed('pbrief');
     expect(model.shape).toBe('document');
     expect(model.rail.eyebrow).toBe('Explore note');
-    expect(model.rail.title).toBe('Studio Media Workflow — next milestone brief');
+    expect(model.rail.title).toBe('Steward Desk — next milestone brief');
     expect(model.rail.context).toBe('/gsd-explore session; input for /gsd-new-milestone');
     expect(model.rail.stage).toEqual({ key: 'open', text: '3 sections' });
     expect(model.rail.big).toEqual({
-      value: '7',
+      value: '4',
       label: 'measured figures',
-      sub: '15 points across 3 sections · 5 calls flagged',
+      sub: '14 points across 3 sections · 1 call flagged',
       stage: 'untraced',
     });
     expect(statsOf(model)).toEqual([
-      ['Noted', '23 Oct 2026', null],
+      ['Noted', '26 Mar 2026', null],
       ['Sections', '3', null],
-      ['Points', '15', null],
+      ['Points', '14', null],
       ['Tables', '1', null],
-      ['Decided', '1', 'complete'],
-      ['Open / blocked', '2', 'missing'],
-      ['Lines', '42', null],
+      ['Decided', '0', 'complete'],
+      ['Open / blocked', '1', 'missing'],
+      ['Lines', '40', null],
     ]);
     expect(model.gist).toEqual({
       runs: [],
-      text: 'Three sections: 7 features, footage facts and 3 network facts.',
+      text: 'Three sections: 7 features, loan facts and desk facts.',
       long: false,
-      line: 'Captured from an exploration session on 2026-10-23. Inputs from the studio team are included.',
+      line: 'Captured from an exploration session on 2026-03-26. Inputs from the stewards are included.',
     });
-    expect(model.ledger).toEqual({ title: 'Section by section', kicker: '15 points · 7 figures' });
+    expect(model.ledger).toEqual({ title: 'Section by section', kicker: '14 points · 4 figures' });
     expect(model.toggle).toBe(true);
     expect(model.todos.map((card) => card.kicker)).toEqual(['Related todo', 'Related todo']);
     expect(model.todos.map((card) => card.statusKey)).toEqual(['done', 'pending']);
   });
 
-  it('pbrief: Features shows four items and +3 more, the Decided flag is dropped as a repeat, and two figure chips', async () => {
+  it('pbrief: Features shows four items and +3 more, with one flag and no figure chips', async () => {
     const { model } = await composed('pbrief');
     const [features, footage, network] = model.parts;
     expect(features.index).toBe('01');
     expect(features.heading).toBe('Features');
     expect(features.key).toBeNull();
-    expect(features.items.map((item) => item.term)).toEqual(['Projects', 'Ingest', 'Lifecycle', 'Grading locally, by vault check-out']);
+    expect(features.items.map((item) => item.term)).toEqual(['Member sign-in', 'Roles', 'Account admin', 'Bulk loan export']);
     expect(features.more).toBe(3);
-    expect(features.flags.map((flag) => [flag.label, flag.tone])).toEqual([
-      ['Open question', 'missing'],
-      ['Rejected', 'quiet'],
-      ['Blocked', 'missing'],
-    ]);
-    expect(features.figures.map((figure) => `${figure.value} ${figure.unit}`)).toEqual(['370 GB', '10 GbE']);
+    expect(features.flags.map((flag) => [flag.label, flag.tone])).toEqual([['Open question', 'missing']]);
+    expect(features.figures).toEqual([]);
     expect(features.moreFigures).toBe(0);
     expect(features.side).toEqual(['7 items']);
-    expect(footage.key).toBe('Camera: **Canon EOS C50**, Cinema RAW Light (`CRAW` codec in `.CRM`, firmware 02.10.00).');
+    expect(footage.key).toBe('Source: the March loan log, 1,284 loans across the four sheds, exported by hand.');
     expect(footage.flags).toEqual([]);
     expect(footage.side).toEqual(['2 items', 'table · 2 rows']);
     expect(network.key).toBeNull();
     expect(network.flags).toEqual([]);
-    expect(network.figures).toHaveLength(4);
+    expect(network.figures).toHaveLength(1);
   });
 
   it('lperkind: the long lede is the gist, set long, the summary sits under it, and five parts pair to heading ids', async () => {
@@ -719,19 +714,17 @@ describe('an explore note', () => {
     expect(html.indexOf('view-note-todo')).toBeLessThan(html.indexOf('view-note-main'));
   });
 
-  it('pbrief row 01 renders four items, +3 more, three flags and two figure chips', async () => {
+  it('pbrief row 01 renders four items, +3 more, one flag and no figure chips', async () => {
     const { model, served } = await composed('pbrief');
     const html = render(model, { documentHtml: served.document.html });
     const first = html.slice(html.indexOf('<article class="view-note-part"'), html.indexOf('</article>', html.indexOf('<article class="view-note-part"')));
     expect(count(first, '<li><b class="view-note-term">')).toBe(4);
     expect(first).toContain('<li class="view-note-more">+3 more</li>');
-    expect(count(first, '<span class="view-note-label"')).toBe(3);
+    expect(count(first, '<span class="view-note-label"')).toBe(1);
     expect(first).toContain('data-tone="missing">Open question</span>');
-    expect(first).toContain('data-tone="quiet">Rejected</span>');
-    expect(first).toContain('data-tone="missing">Blocked</span>');
-    expect(count(first, 'class="view-note-figure"')).toBe(2);
+    expect(count(first, 'class="view-note-figure"')).toBe(0);
     expect(first).toContain('<span>7 items</span>');
-    expect(html).toContain('<p class="view-note-line">Captured from an exploration session on 2026-10-23.');
+    expect(html).toContain('<p class="view-note-line">Captured from an exploration session on 2026-03-26.');
   });
 
   it('lsurvey renders the No todo points here card', async () => {
@@ -863,7 +856,7 @@ describe('end to end from files on disk', () => {
   it('a temp project served through createApp composes dcrop and leaves a phase notes.md alone', async () => {
     dir = await mkdtemp(join(tmpdir(), 'note-e2e-'));
     await write(dir, {
-      ...notesAndTodos(NOTES_FIXTURE_ROOT),
+      ...notesAndTodos(FX_ROOT),
       '.planning/phases/01-a/notes.md': 'Decided: nothing special here.\n',
       '.planning/ROADMAP.md': '# Roadmap\n',
     });
@@ -896,7 +889,7 @@ describe('end to end from files on disk', () => {
     expect(count(html, '<h1')).toBe(1);
     expect(html).toContain('Became a todo');
     expect(html).toContain('Names this note in notes:');
-    expect(count(html, 'class="view-note-row"')).toBe(6);
+    expect(count(html, 'class="view-note-row"')).toBe(5);
 
     const phaseNotes = await documentOf('.planning/phases/01-a/notes.md');
     expect(phaseNotes.artifact.kind).toBe('unknown');

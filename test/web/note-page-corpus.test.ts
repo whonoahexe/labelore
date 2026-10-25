@@ -1,10 +1,9 @@
-// quick-261023-61l (QCORP) and quick-261023-u13 (sketch 029 A): real-corpus guards over every note on this machine - labelore's own
-// `.planning/notes/`, the dashboard's synthetic fixture, the committed fixture project and each sibling
-// project that has a notes folder (resoundant and resoundant/pyedge today) - built through the real
-// repository load so each file reaches the handler with the ref discovery gives it, served through
-// createApp (so an explore note carries its real headings) and joined with the server's note context.
-// These are live projects, so the test asserts invariants for every file and pins values only for the
-// files named in the sketch, using the numbers from the sketch's rendering and data - never the
+// quick-261023-61l (QCORP) and quick-261023-u13 (sketch 029 A): real-corpus guards over every note in the
+// three note roots - labelore's own `.planning/notes/`, the dashboard's synthetic fixture and Lendshed (the
+// made-up fixture project) - built through the real repository load so each file reaches the handler
+// with the ref discovery gives it, served through createApp (so an explore note carries its real
+// headings) and joined with the server's note context. The test asserts invariants for every file and
+// pins values only for the files the sketch names, counted in the fixture files themselves - never the
 // composer's output. It also proves the NOTE page and the TODO page agree on every todo-note link.
 process.env.TZ = 'Asia/Kolkata';
 import { createElement } from 'react';
@@ -19,7 +18,7 @@ import type { ProjectPresentation } from '../../src/server/project-presentation.
 import { composeNotePage } from '../../src/web/views/note-page.ts';
 import type { ComposedNotePage } from '../../src/web/views/note-page.ts';
 import { NotePageView } from '../../src/web/views/note-page-components.tsx';
-import { NOTE_FILES, NOTE_ROOTS, NOTE_HOME, loadCombined } from '../helpers/note-corpus.ts';
+import { FX_ROOT, LB_ROOT, NOTE_FILES, NOTE_HOME, NOTE_ROOTS, SYNTHETIC_ROOT, loadCombined } from '../helpers/note-corpus.ts';
 import { loadProject } from '../helpers/todo-corpus.ts';
 import type { LoadedProject } from '../helpers/todo-corpus.ts';
 
@@ -108,10 +107,13 @@ const find = (key: keyof typeof NOTE_FILES): Entry => {
   return entry;
 };
 
-describe('every note on this machine', () => {
-  it('reads at least twelve notes, so an empty walk cannot pass', () => {
-    console.log(`note corpus: ${entries.length} notes from ${NOTE_ROOTS.length} projects`);
-    expect(entries.length).toBeGreaterThanOrEqual(12);
+describe('every note in the note roots', () => {
+  it('reads at least the Labelore, synthetic and Lendshed notes, so an empty walk cannot pass', () => {
+    const inRoot = (root: string): number => entries.filter((entry) => entry.root === root).length;
+    expect(inRoot(LB_ROOT)).toBeGreaterThanOrEqual(3);
+    expect(inRoot(SYNTHETIC_ROOT)).toBeGreaterThanOrEqual(2);
+    expect(inRoot(FX_ROOT)).toBeGreaterThanOrEqual(9);
+    expect(entries.length).toBeGreaterThanOrEqual(14);
   });
 
   it('each has kind note and a structured.note, and composes unless it is an empty quick note', () => {
@@ -199,30 +201,32 @@ describe('the sketch notes keep the sketch values', () => {
   const titleOf = (key: keyof typeof NOTE_FILES): string | null | undefined => find(key).model?.rail.title;
 
   it('row labels, in reading order', () => {
-    expect(labelsOf('dcrop')).toEqual(['Today', 'Decided · 21 Oct 2026', 'How', 'Preset constraint', 'Estimated', 'Batch']);
-    expect(labelsOf('dround')).toEqual(['Today', 'Want', 'Decided · 21 Oct 2026', 'Batch']);
+    expect(labelsOf('dcrop')).toEqual(['Today', 'Decided · 24 Mar 2026', 'How', 'Preset constraint', 'Batch']);
+    expect(labelsOf('dround')).toEqual(['Today', 'Want', 'Decided · 24 Mar 2026', 'Batch']);
     expect(labelsOf('dsfx')).toEqual(['Decided', 'Decided', 'Suggested', 'Limits']);
     expect(labelsOf('dcall')).toEqual(['Observed', 'Want', 'Off limits', 'Output']);
     expect(labelsOf('dback')).toEqual(['Cause', 'Fix']);
     expect(labelsOf('pcap')).toEqual(['Today', 'Wanted', 'Known gap']);
+    expect(labelsOf('heartbeat')).toEqual(['Constraint', 'Today', 'Open check']);
     expect(labelsOf('star')).toEqual([]);
     expect(labelsOf('sundo')).toEqual([]);
     expect(labelsOf('lsk')).toEqual([null, 'Want', 'Open question', 'Open question', 'Today', 'Suggested interim']);
   });
 
   it('titles from the file names, the big numbers and the stages', () => {
-    expect(titleOf('dcrop')).toBe('Crop images and profile photos');
-    expect(titleOf('dround')).toBe('Round profile photos');
-    expect(titleOf('dsfx')).toBe('Sound effects');
-    expect(titleOf('dcall')).toBe('Call debug logging webrtc turn');
-    expect(titleOf('dback')).toBe('Back button closes app');
-    expect(titleOf('pcap')).toBe('Raise single file download cap');
+    expect(titleOf('dcrop')).toBe('Crop tool photos and member avatars');
+    expect(titleOf('dround')).toBe('Round member avatars');
+    expect(titleOf('dsfx')).toBe('Checkout sound cues');
+    expect(titleOf('dcall')).toBe('Scanner debug logging for checkout kiosk');
+    expect(titleOf('dback')).toBe('Back button closes the kiosk');
+    expect(titleOf('pcap')).toBe('Raise single export size cap');
+    expect(titleOf('heartbeat')).toBe('Kiosk version heartbeat on start');
     expect(titleOf('star')).toBe('Tariff note tooltips');
     expect(titleOf('sundo')).toBe('Brokers want undo');
     expect(titleOf('lsk')).toBe('Sketches page in labelore');
     const big = (key: keyof typeof NOTE_FILES): string | undefined => find(key).model?.rail.big.value;
     expect(['dcrop', 'dround', 'dsfx', 'dcall', 'dback', 'pcap', 'star', 'sundo', 'lsk'].map((key) => big(key as keyof typeof NOTE_FILES))).toEqual([
-      '6', '4', '4', '4', '2', '3', '1', '1', '6',
+      '5', '4', '4', '4', '2', '3', '1', '1', '6',
     ]);
     const stage = (key: keyof typeof NOTE_FILES): string | undefined => find(key).model?.rail.stage.text;
     expect(['dcrop', 'dround', 'dsfx', 'dcall', 'dback', 'pcap', 'star', 'sundo', 'lsk'].map((key) => stage(key as keyof typeof NOTE_FILES))).toEqual([
@@ -231,8 +235,15 @@ describe('the sketch notes keep the sketch values', () => {
   });
 
   it('mentions and the stats rows', () => {
-    expect(find('pcap').model?.mentions.map((m) => m.path)).toEqual(['backend/src/config.rs:121', 'download/mod.rs:75']);
-    expect(find('dround').model?.mentions.map((m) => m.path)).toEqual(['web/public/sw.js', 'server/src/media/image.ts']);
+    expect(find('pcap').model?.mentions.map((m) => m.path)).toEqual(['api/src/limits.ts:44', 'export/stream.ts:61']);
+    expect(find('dround').model?.mentions.map((m) => m.path)).toEqual(['web/public/push-worker.js', 'api/src/photos/resize.ts']);
+    expect(find('heartbeat').model?.mentions.map((m) => [m.path, m.count])).toEqual([
+      ['logs/access.log', 1],
+      ['src/kiosk/poller.py', 1],
+      ['src/kiosk/relay_client.py', 1],
+      ['poller.py', 2],
+      ['src/kiosk/report_sender.py', 1],
+    ]);
     expect(find('lsk').model?.mentions.map((m) => m.path)).toEqual(['sketches/MANIFEST.md', 'README.md', 'data.js']);
     const promoted = (key: keyof typeof NOTE_FILES) => find(key).model?.rail.stats.find((stat) => stat.label === 'Promoted');
     expect(promoted('sundo')).toMatchObject({ value: 'No', tone: 'missing' });
@@ -245,7 +256,7 @@ describe('the sketch notes keep the sketch values', () => {
     expect(find('pbrief').model?.parts).toHaveLength(3);
     expect(find('lperkind').model?.parts).toHaveLength(5);
     expect(find('lsurvey').model?.parts).toHaveLength(6);
-    expect([find('pbrief'), find('lperkind'), find('lsurvey')].map((entry) => entry.model?.rail.big.value)).toEqual(['7', '3', '8']);
+    expect([find('pbrief'), find('lperkind'), find('lsurvey')].map((entry) => entry.model?.rail.big.value)).toEqual(['4', '3', '8']);
     expect([find('pbrief'), find('lperkind'), find('lsurvey')].map((entry) => entry.model?.rail.stage.text)).toEqual(['3 sections', '5 sections', '6 sections']);
     expect(find('lperkind').model?.gist.text).toContain('Dashboard, Roadmap and Traceability');
     expect(find('lperkind').model?.gist.long).toBe(true);
