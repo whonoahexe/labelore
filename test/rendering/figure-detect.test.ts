@@ -7,6 +7,7 @@ import {
   classifyFence,
   normalizeFenceLang,
 } from '../../src/rendering/figure-detect.ts';
+import { GROWTH_LIMIT, measureGrowth } from '../helpers/growth.ts';
 
 const fixture = (name: string): string =>
   readFileSync(new URL(`./fixtures/${name}`, import.meta.url), 'utf8');
@@ -70,12 +71,33 @@ describe('classifyFence', () => {
     expect(classifyFence('mermaid', 'graph TD\n  A --> B')).toBeNull();
   });
 
-  it('never inspects text over the size cap', () => {
+  // Below the cap the detector scans the text, so the 8x step stays strictly below FIGURE_MAX_CHARS.
+  it('classifying a tree grows no faster than linearly with the text length below the size cap', () => {
+    const line = '├── file.ts\n';
+    const { ratio } = measureGrowth<string>({
+      maxSize: FIGURE_MAX_CHARS - 1,
+      make: (chars) => line.repeat(Math.ceil(chars / line.length)).slice(0, chars),
+      run: (text) => {
+        expect(classifyFence(undefined, text)).toBe('tree');
+      },
+    });
+    expect(ratio).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  // Past the cap the detector returns before reading the text, so an input 8x larger costs the same.
+  it('never inspects text over the size cap: an 8x larger input costs the same', () => {
     const huge = '├── file.ts\n'.repeat(Math.ceil((300 * 1024) / 11));
     expect(huge.length).toBeGreaterThan(FIGURE_MAX_CHARS);
-    const started = performance.now();
     expect(classifyFence(undefined, huge)).toBeNull();
-    expect(performance.now() - started).toBeLessThan(100);
+    const { ratio } = measureGrowth<string>({
+      startSize: huge.length,
+      maxSize: huge.length * 16,
+      make: (chars) => huge.repeat(Math.ceil(chars / huge.length)),
+      run: (text) => {
+        expect(classifyFence(undefined, text)).toBeNull();
+      },
+    });
+    expect(ratio).toBeLessThan(3);
   });
 });
 

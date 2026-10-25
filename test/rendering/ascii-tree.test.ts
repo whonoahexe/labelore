@@ -11,9 +11,11 @@ import {
   collapseFolderChains,
   isDirectoryTree,
   parseTree,
+  TREE_MAX_ROWS,
   treeCounts,
 } from '../../src/rendering/ascii-tree.ts';
 import type { TreeRow } from '../../src/rendering/ascii-tree.ts';
+import { GROWTH_LIMIT, measureGrowth } from '../helpers/growth.ts';
 
 const REPO = new URL('../../', import.meta.url);
 
@@ -83,11 +85,24 @@ describe('parseTree', () => {
     expect(() => parseTree('#'.repeat(50_000))).not.toThrow();
   });
 
-  it('a 100,000-line tree is capped and parses quickly', () => {
-    const started = performance.now();
+  it('a 100,000-line tree is capped at the row limit', () => {
     const rows = parseTree(Array.from({ length: 100_000 }, (_, i) => `├── file${i}.ts # note`).join('\n'));
-    expect(rows.length).toBeLessThanOrEqual(2000);
-    expect(performance.now() - started).toBeLessThan(250);
+    expect(rows).toHaveLength(TREE_MAX_ROWS);
+  });
+
+  // The parser stops at TREE_MAX_ROWS rows, so the 8x step stays strictly below that cap: past it the
+  // ratio would time the stop, not the parse (growth.ts, rule 2).
+  it('parsing grows no faster than linearly with the line count below the row cap', () => {
+    const { ratio } = measureGrowth<string>({
+      startSize: 20,
+      maxSize: TREE_MAX_ROWS - 1,
+      floorMs: 0,
+      make: (lines) => Array.from({ length: lines }, (_, i) => `├── file${i}.ts # note`).join('\n'),
+      run: (text) => {
+        expect(parseTree(text).length).toBeGreaterThan(0);
+      },
+    });
+    expect(ratio).toBeLessThan(GROWTH_LIMIT);
   });
 });
 
@@ -226,12 +241,19 @@ describe('collapseFolderChains', () => {
     expect(collapseFolderChains(parseTree(SP_TREE))).toHaveLength(14);
   });
 
-  it('a 100,000-row single chain collapses within 250 ms', () => {
-    const chain: TreeRow[] = Array.from({ length: 100_000 }, (_, i) => treeRow(`d${i}/`, i === 0 ? null : i - 1, i));
-    chain.push(treeRow('leaf.ts', 99_999, 100_000));
-    const started = performance.now();
-    const rows = collapseFolderChains(chain);
-    expect(performance.now() - started).toBeLessThan(250);
-    expect(rows.map((r) => r.depth)).toEqual([0, 1]);
+  it('collapsing a single chain grows no faster than linearly with the row count', () => {
+    const chainOf = (rows: number): TreeRow[] => {
+      const chain: TreeRow[] = Array.from({ length: rows }, (_, i) => treeRow(`d${i}/`, i === 0 ? null : i - 1, i));
+      chain.push(treeRow('leaf.ts', rows - 1, rows));
+      return chain;
+    };
+    const { ratio } = measureGrowth<TreeRow[]>({
+      make: chainOf,
+      run: (chain) => {
+        expect(collapseFolderChains(chain)).toHaveLength(2);
+      },
+    });
+    expect(ratio).toBeLessThan(GROWTH_LIMIT);
+    expect(collapseFolderChains(chainOf(100_000)).map((r) => r.depth)).toEqual([0, 1]);
   });
 });
