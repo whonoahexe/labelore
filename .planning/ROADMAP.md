@@ -91,7 +91,7 @@ any page is built to show them.
    raw file, on its file page and in search results and snippets. The full value never reaches the
    search index, so every page built later inherits the masking. *(SEC-04)*
 
-**Plans**: 4/22 plans executed
+**Plans**: 5/22 plans executed
 
 Plans:
 **Wave 1**
@@ -101,7 +101,7 @@ Plans:
 - [x] 06-04-PLAN.md — config.json secrets masked at read time for presentation, file page and search
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 06-05-PLAN.md — CONTEXT family on Lendshed
+- [x] 06-05-PLAN.md — CONTEXT family on Lendshed
 - [ ] 06-06-PLAN.md — Discussion-log and validation families on Lendshed
 - [ ] 06-07-PLAN.md — Pattern-map family on Lendshed, Labelore phase 6 PATTERNS re-pinned
 - [ ] 06-08-PLAN.md — Research-briefing family on Lendshed, embedded research excerpts made up
@@ -371,7 +371,7 @@ file, ID or project.
 | 1–4 | v1.0 | 30/30 | Archived | 2026-09-10 |
 | 5 | v1.1 | 6/6 | Archived | 2026-09-21 |
 | quick tasks | v2.0 | 40/40 | Archived | 2026-10-25 |
-| 6. Trustworthy Tests and Security Baseline | v2.1 | 4/22 | In Progress | - |
+| 6. Trustworthy Tests and Security Baseline | v2.1 | 5/22 | In Progress | - |
 | 7. Recognised Files and Readable URLs | v2.1 | 0/TBD | Not started | - |
 | 8. Several Projects and a Switcher | v2.1 | 0/TBD | Not started | - |
 | 9. Review, Audit and Root Document Pages | v2.1 | 0/TBD | Not started | - |
