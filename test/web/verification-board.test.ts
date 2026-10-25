@@ -101,7 +101,7 @@ describe('composeVerificationBoard - the rail', () => {
 
   it('names a quick task and falls back to the slug title', () => {
     const quick = board(
-      `${LB}quick/260923-lju-context-page-per-sketch-006-d1/260923-lju-VERIFICATION.md`,
+      `${LB}milestones/v2.0-quick/260923-lju-context-page-per-sketch-006-d1/260923-lju-VERIFICATION.md`,
       { location: 'quick', quickTaskId: '260923-lju' },
     );
     expect(quick.rail.eyebrow).toBe('Quick verification · 260923-lju');
@@ -109,7 +109,7 @@ describe('composeVerificationBoard - the rail', () => {
     expect(dense.rail.eyebrow).toBe('Verification · Phase 1');
     expect(dense.rail.title).toBe('Identity slice');
     const mp6 = board(
-      `${LB}quick/260930-mp6-build-sketch-012-b-lanes-by-kind-as-the-/260930-mp6-VERIFICATION.md`,
+      `${LB}milestones/v2.0-quick/260930-mp6-build-sketch-012-b-lanes-by-kind-as-the-/260930-mp6-VERIFICATION.md`,
       { location: 'quick', quickTaskId: '260930-mp6' },
     );
     expect(mp6.rail.eyebrow).toBe('Quick verification · 260930-mp6');
@@ -430,7 +430,7 @@ describe('the Requirement board', () => {
 
   it('has no board without a Requirements Coverage table', () => {
     const none = board(
-      `${LB}quick/261003-527-build-sketch-017-d-as-the-security-page-view-use-gsd-browser/261003-527-VERIFICATION.md`,
+      `${LB}milestones/v2.0-quick/261003-527-build-sketch-017-d-as-the-security-page-view-use-gsd-browser/261003-527-VERIFICATION.md`,
       { location: 'quick', quickTaskId: '261003-527' },
     );
     expect(none.requirements).toBeNull();

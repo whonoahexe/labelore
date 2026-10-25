@@ -33,7 +33,7 @@ import type { ViewInput } from '../../src/web/views/manifest.ts';
 
 const LB = '.planning';
 const P0501 = `${LB}/milestones/v1.1-phases/05-per-type-document-views/05-01-SUMMARY.md`;
-const P3US = `${LB}/quick/260922-3us-build-sketch-004-b3-folded-chapters-docu/260922-3us-SUMMARY.md`;
+const P3US = `${LB}/milestones/v2.0-quick/260922-3us-build-sketch-004-b3-folded-chapters-docu/260922-3us-SUMMARY.md`;
 const SP0406 = `${SP_PLANNING}/phases/04-bulk-archive-downloads/04-06-SUMMARY.md`;
 const SP0101 = `${SP_PLANNING}/phases/01-portal-owned-identity-sessions/01-01-SUMMARY.md`;
 const hasSp = existsSync(SP_PLANNING);
