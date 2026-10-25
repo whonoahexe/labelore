@@ -1,19 +1,15 @@
-// The SECURITY console e2e (quick-261003-527, sketch 017 winner D): real corpus files, never a
-// fixture mock. Fixtures resolve by path against the live `/api/presentation` payload (the
-// uat-page.spec.ts idiom) so an archival/rename fails loudly instead of silently skipping. The
-// labelore v1.1/05 test always runs; the studio-portal test runs against the read-only server on
-// port 4198 (playwright.config.ts, present only when ~/studio-portal/.planning exists) and skips
-// itself otherwise. This spec asserts the foundation sweep's key invariants itself (one h1, an
-// eyebrow, squared corners, one chip signature, no 420px overflow), since the full sweep is too
-// slow to run per change. Run once post-merge: npx playwright test test/e2e/security-page.spec.ts -g "security page"
-import { existsSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { join } from 'node:path';
+// The SECURITY console e2e (quick-261003-527, sketch 017 winner D): real files, never a mock. Fixtures
+// resolve by path against the live `/api/presentation` payload (the uat-page.spec.ts idiom) so an
+// archival/rename fails loudly instead of silently skipping. The Labelore v1.1/05 test runs against the
+// repo's own server on port 4199; the two Lendshed tests run against the read-only server on the made-up
+// Lendshed project (port 4198, FIXTURE_BASE_URL; playwright.config.ts always starts it and throws at load
+// when the fixture tree is missing). Nothing in this file skips. This spec asserts the foundation sweep's
+// key invariants itself (one h1, an eyebrow, squared corners, one chip signature, no 420px overflow),
+// since the full sweep is too slow to run per change.
+// Run once post-merge: npx playwright test test/e2e/security-page.spec.ts -g "security page"
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
-
-const STUDIO_PORTAL_AVAILABLE = existsSync(join(homedir(), 'studio-portal', '.planning'));
-const SP_BASE_URL = 'http://127.0.0.1:4198';
+import { FIXTURE_BASE_URL } from './fixture-root.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
@@ -145,16 +141,15 @@ test.describe('SECURITY page', () => {
     expect(layout.mainScroll).toBeLessThanOrEqual(layout.mainClient + 1);
   });
 
-  test('SP P1 security page', async ({ page }) => {
-    test.skip(!STUDIO_PORTAL_AVAILABLE, 'studio-portal checkout not present');
-    const url = await resolveFixtureUrl(SP_BASE_URL, '/phases/01-portal-owned-identity-sessions/01-SECURITY.md');
-    await page.goto(`${SP_BASE_URL}${url}`);
+  test('Lendshed P1 security page', async ({ page }) => {
+    const url = await resolveFixtureUrl(FIXTURE_BASE_URL, '/phases/01-member-sign-in-sessions/01-SECURITY.md');
+    await page.goto(`${FIXTURE_BASE_URL}${url}`);
     await page.locator('.view-security-board').waitFor({ state: 'visible' });
 
-    // Trust boundaries: Backend (2 ways in), the six single crossings, then the at-rest block.
+    // Trust boundaries: API (2 ways in), the six single crossings, then the at-rest block.
     const dests = page.locator('.view-security-dest');
     await expect(dests).toHaveCount(3);
-    await expect(dests.first()).toContainText('Backend');
+    await expect(dests.first()).toContainText('API');
     await expect(dests.first()).toContainText('2 ways in');
     await expect(dests.nth(1)).toContainText('Other crossings');
     await expect(dests.nth(1).locator('.view-security-crossing')).toHaveCount(6);
@@ -170,8 +165,8 @@ test.describe('SECURITY page', () => {
     await expect(page.locator('.view-security-residual')).toHaveCount(3);
 
     // The ref chip picks the threat's square and brings the detail panel into view.
-    await page.locator('#security-residuals').getByRole('button', { name: 'T-01-07', exact: true }).click();
-    await expect(page.locator('.view-security-square[data-threat="T-01-07"]')).toHaveAttribute('aria-pressed', 'true');
+    await page.locator('#security-residuals').getByRole('button', { name: 'T-01-06', exact: true }).click();
+    await expect(page.locator('.view-security-square[data-threat="T-01-06"]')).toHaveAttribute('aria-pressed', 'true');
     await expect.poll(() => inViewport(page, page.locator('#security-detail'))).toBe(true);
     await expect(page.locator('#security-detail')).toContainText('1 residual observation');
 
@@ -193,15 +188,14 @@ test.describe('SECURITY page', () => {
     }
   });
 
-  test('SP P3 security page', async ({ page }) => {
-    test.skip(!STUDIO_PORTAL_AVAILABLE, 'studio-portal checkout not present');
-    const url = await resolveFixtureUrl(SP_BASE_URL, '/phases/03-account-administration-session-control/03-SECURITY.md');
-    await page.goto(`${SP_BASE_URL}${url}`);
+  test('Lendshed P3 security page', async ({ page }) => {
+    const url = await resolveFixtureUrl(FIXTURE_BASE_URL, '/phases/03-account-admin-and-sessions/03-SECURITY.md');
+    await page.goto(`${FIXTURE_BASE_URL}${url}`);
     await page.locator('.view-security-board').waitFor({ state: 'visible' });
 
-    await expect(page.locator('.view-security-square')).toHaveCount(42);
-    await expect(page.locator('.view-security-square[data-accepted="true"]')).toHaveCount(11);
-    await expect(page.locator('.view-security-waiver')).toHaveCount(11);
+    await expect(page.locator('.view-security-square')).toHaveCount(30);
+    await expect(page.locator('.view-security-square[data-accepted="true"]')).toHaveCount(8);
+    await expect(page.locator('.view-security-waiver')).toHaveCount(8);
     await expect(page.locator('.view-security-gauge')).toContainText('nothing blocking');
     await expect(page.locator('.view-security-stamp')).toContainText('Signed off');
     // Ten single-crossing destinations gather into one "Crossings · 10" block, one source toned.

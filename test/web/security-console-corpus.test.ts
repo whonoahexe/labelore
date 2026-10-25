@@ -1,16 +1,17 @@
-// quick-261003-527 (Q527-09): real-corpus guards over every SECURITY.md in this repo's `.planning/`
-// (excluding the sketches), fixtures/dense and `~/studio-portal/.planning/`, plus the sketch's
-// synthetic open-threats doc built in-test from studio-portal's phase 03 — the uat-session-corpus
-// idiom (a missing studio-portal checkout skips its files). Every file must extract without
-// throwing, compose to a non-null console through the real handler, and match the counts pinned
-// below. The pinned counts were independently confirmed with awk over the source files (`| T-`
-// rows and their Status / Severity / Disposition / Category cells inside `## Threat Register`,
-// `| R-` / `| AR-` rows inside `## Accepted Risks Log`, dated rows inside `## Security Audit
-// Trail`, `- [` lines inside `## Sign-Off`) — never copied from the extractor's own output.
+// quick-261003-527 (Q527-09): corpus guards over every SECURITY.md in this repo's `.planning/` (excluding the
+// sketches), fixtures/dense and the made-up Lendshed project, plus the sketch's synthetic open-threats doc
+// built in-test from Lendshed's phase 03 register — the uat-session-corpus idiom. Keys: LB: Labelore's own
+// files, DN: the in-repo dense fixture, FX: Lendshed (walked from FX_PLANNING, so a missing fixture throws
+// instead of skipping), SYN: the synthetic doc. Every file must extract without throwing, compose to a
+// non-null console through the real handler, and match the counts pinned below. The Lendshed counts were
+// made by awk over the made-up files themselves (`| T-` rows and their Status / Severity / Disposition /
+// Category cells inside `## Threat Register`, `| R-` / `| AR-` rows inside `## Accepted Risks Log`, dated
+// rows inside `## Security Audit Trail`, `- [` lines inside `## Sign-Off`) — never copied from the
+// extractor's own output.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { SP_PLANNING } from '../helpers/studio-portal.ts';
+import { FX_PLANNING, fxPath } from '../helpers/fixture-project.ts';
 import { synthesize } from '../helpers/security-synthetic.ts';
 import { SecurityHandler } from '../../src/planning-repo/handlers/security.ts';
 import { extractSecurityRegister } from '../../src/planning-repo/handlers/security-register.ts';
@@ -22,7 +23,7 @@ const REPO_PLANNING = new URL('../../.planning', import.meta.url).pathname;
 const DENSE_PLANNING = new URL('../../fixtures/dense/.planning', import.meta.url).pathname;
 
 function walkSecurity(root: string): string[] {
-  if (!existsSync(root)) return [];
+  if (!existsSync(root)) throw new Error(`SECURITY corpus root missing: ${root}`);
   const found: string[] = [];
   const stack = [root];
   while (stack.length > 0) {
@@ -65,26 +66,26 @@ interface Pinned {
   status: string;
 }
 
-const SEV_HIGH_MED_LOW = { critical: 0, high: 25, medium: 9, low: 8 };
-const SP3_COLS = { S: 4, T: 10, R: 5, I: 12, D: 4, E: 7 };
+const SEV_HIGH_MED_LOW = { critical: 0, high: 18, medium: 5, low: 7 };
+const FX3_COLS = { S: 2, T: 6, R: 5, I: 8, D: 3, E: 6 };
 
 /** Keyed by `<repo>:<path suffix>`. */
 const PINNED: Record<string, Pinned> = {
   'SYN:synthetic': {
-    rows: 42, open: 2, openLow: 0, closed: 40, severity: SEV_HIGH_MED_LOW,
-    disposition: { mitigate: 31, accept: 11 }, columns: SP3_COLS, boundaries: 10, destinations: 0, singles: 10,
-    stores: 0, risks: 11, audit: 2, signoff: [0, 4], extras: [], grouped: false, status: 'open',
+    rows: 30, open: 2, openLow: 0, closed: 28, severity: SEV_HIGH_MED_LOW,
+    disposition: { mitigate: 22, accept: 8 }, columns: FX3_COLS, boundaries: 10, destinations: 0, singles: 10,
+    stores: 0, risks: 8, audit: 2, signoff: [0, 4], extras: [], grouped: false, status: 'open',
   },
-  'SP:phases/01-portal-owned-identity-sessions/01-SECURITY.md': {
-    rows: 44, open: 0, openLow: 0, closed: 44, severity: { critical: 2, high: 20, medium: 11, low: 11 },
-    disposition: { mitigate: 34, accept: 9, transfer: 1 }, columns: { S: 9, T: 7, R: 2, I: 8, D: 9, E: 9 },
-    boundaries: 10, destinations: 1, singles: 6, stores: 2, risks: 9, audit: 1, signoff: [4, 4], extras: [],
+  'FX:phases/01-member-sign-in-sessions/01-SECURITY.md': {
+    rows: 27, open: 0, openLow: 0, closed: 27, severity: { critical: 2, high: 14, medium: 4, low: 7 },
+    disposition: { mitigate: 20, accept: 6, transfer: 1 }, columns: { S: 6, T: 4, R: 2, I: 5, D: 3, E: 7 },
+    boundaries: 10, destinations: 1, singles: 6, stores: 2, risks: 6, audit: 1, signoff: [4, 4], extras: [],
     residuals: 3, grouped: false, status: 'verified',
   },
-  'SP:phases/03-account-administration-session-control/03-SECURITY.md': {
-    rows: 42, open: 0, openLow: 0, closed: 42, severity: SEV_HIGH_MED_LOW,
-    disposition: { mitigate: 31, accept: 11 }, columns: SP3_COLS, boundaries: 10, destinations: 0, singles: 10,
-    stores: 0, risks: 11, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
+  'FX:phases/03-account-admin-and-sessions/03-SECURITY.md': {
+    rows: 30, open: 0, openLow: 0, closed: 30, severity: SEV_HIGH_MED_LOW,
+    disposition: { mitigate: 22, accept: 8 }, columns: FX3_COLS, boundaries: 10, destinations: 0, singles: 10,
+    stores: 0, risks: 8, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
   },
   'LB:milestones/v1.1-phases/05-per-type-document-views/05-SECURITY.md': {
     rows: 19, open: 0, openLow: 1, closed: 18, severity: { high: 4, medium: 5, low: 10 },
@@ -113,7 +114,7 @@ const PINNED: Record<string, Pinned> = {
     disposition: { mitigate: 17, accept: 4 }, columns: { T: 10, R: 1, I: 4, D: 6 }, boundaries: 4,
     destinations: 0, singles: 4, stores: 0, risks: 4, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
   },
-  'FX:phases/01-identity-slice/01-SECURITY.md': {
+  'DN:phases/01-identity-slice/01-SECURITY.md': {
     rows: 1, open: 1, openLow: 0, closed: 0, severity: { medium: 1 }, disposition: { mitigate: 1 },
     columns: { T: 1 }, boundaries: 1, destinations: 0, singles: 1, stores: 0, risks: 0, audit: 1, signoff: [1, 4], extras: [],
     grouped: false, status: 'draft',
@@ -131,15 +132,13 @@ function load(): Loaded[] {
     files.push({ key: `LB:${relative(REPO_PLANNING, abs)}`, content: readFileSync(abs, 'utf8') });
   }
   for (const abs of walkSecurity(DENSE_PLANNING)) {
-    files.push({ key: `FX:${relative(DENSE_PLANNING, abs)}`, content: readFileSync(abs, 'utf8') });
+    files.push({ key: `DN:${relative(DENSE_PLANNING, abs)}`, content: readFileSync(abs, 'utf8') });
   }
-  for (const abs of walkSecurity(SP_PLANNING)) {
-    const rel = relative(SP_PLANNING, abs);
-    if (!rel.startsWith('phases/')) continue;
-    files.push({ key: `SP:${rel}`, content: readFileSync(abs, 'utf8') });
+  for (const abs of walkSecurity(FX_PLANNING)) {
+    files.push({ key: `FX:${relative(FX_PLANNING, abs)}`, content: readFileSync(abs, 'utf8') });
   }
-  const sp3 = `${SP_PLANNING}/phases/03-account-administration-session-control/03-SECURITY.md`;
-  if (existsSync(sp3)) files.push({ key: 'SYN:synthetic', content: synthesize(readFileSync(sp3, 'utf8')) });
+  const fx3 = fxPath('phases/03-account-admin-and-sessions/03-SECURITY.md');
+  files.push({ key: 'SYN:synthetic', content: synthesize(readFileSync(fx3, 'utf8')) });
   return files;
 }
 
@@ -173,20 +172,17 @@ function tally<T>(items: T[], key: (item: T) => string): Record<string, number> 
 describe('security console corpus (Q527-09)', () => {
   const files = load();
 
-  it('finds the corpus', () => {
-    expect(files.some((f) => f.key.startsWith('LB:'))).toBe(true);
-    expect(files.some((f) => f.key.startsWith('FX:'))).toBe(true);
+  it('finds at least the minimum of each corpus', () => {
+    expect(files.filter((f) => f.key.startsWith('LB:')).length).toBeGreaterThanOrEqual(5);
+    expect(files.filter((f) => f.key.startsWith('FX:')).length).toBeGreaterThanOrEqual(2);
+    expect(files.filter((f) => f.key.startsWith('DN:')).length).toBeGreaterThanOrEqual(1);
+    expect(files.filter((f) => f.key === 'SYN:synthetic')).toHaveLength(1);
   });
 
   it('every corpus file is pinned, and every pinned file that exists is walked', () => {
     const keys = files.map((f) => f.key);
     for (const key of keys) expect(Object.keys(PINNED), `unpinned: ${key}`).toContain(key);
-    for (const key of Object.keys(PINNED)) {
-      if (key.startsWith('SP:') || key.startsWith('SYN:')) {
-        if (!existsSync(SP_PLANNING)) continue;
-      }
-      expect(keys, `not walked: ${key}`).toContain(key);
-    }
+    for (const key of Object.keys(PINNED)) expect(keys, `not walked: ${key}`).toContain(key);
   });
 
   for (const file of files) {
@@ -234,10 +230,10 @@ describe('security console corpus (Q527-09)', () => {
 
   it('the synthetic doc reads two blocking threats and its first audit open cell as written', () => {
     const syn = files.find((f) => f.key === 'SYN:synthetic');
-    if (!syn) return;
-    const model = composeSecurityConsole(inputFor(syn.content));
-    expect(model?.gauge).toMatchObject({ open: 2, alarm: true, verdict: 'blocking sign-off', closedLine: '40 of 42 closed' });
-    expect(model?.threats.filter((t) => t.status === 'open').map((t) => t.ref)).toEqual(['T-03-03', 'T-03-09']);
+    expect(syn).toBeDefined();
+    const model = composeSecurityConsole(inputFor((syn as Loaded).content));
+    expect(model?.gauge).toMatchObject({ open: 2, alarm: true, verdict: 'blocking sign-off', closedLine: '28 of 30 closed' });
+    expect(model?.threats.filter((t) => t.status === 'open').map((t) => t.ref)).toEqual(['T-03-03', 'T-03-11']);
     expect(model?.audit?.runs[0].openText).toBe('3 (2 blocking)');
     expect(model?.stamp).toMatchObject({ signed: false, approval: 'pending — two high threats open' });
   });

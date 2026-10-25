@@ -1,11 +1,12 @@
 // quick-261003-527: composeSecurityConsole, built from literal ViewInput objects and from the real
 // corpus docs (test/security-register.test.ts covers the server extractor; the narrow e2e spec
 // covers the page end to end), plus the static markup of SecurityConsoleView.
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { SP_PLANNING } from '../helpers/studio-portal.ts';
+import { fxPath } from '../helpers/fixture-project.ts';
+import { GROWTH_LIMIT, measureGrowth } from '../helpers/growth.ts';
 import { synthesize } from '../helpers/security-synthetic.ts';
 import { SecurityHandler } from '../../src/planning-repo/handlers/security.ts';
 import type { ArtifactRef, RawArtifact } from '../../src/planning-repo/types.ts';
@@ -24,7 +25,7 @@ import type { ComposedSecurityConsole } from '../../src/web/views/security-conso
 import { SecurityConsoleView } from '../../src/web/views/security-console-components.tsx';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 
-const FX = new URL('../../fixtures/dense/.planning/phases/01-identity-slice/01-SECURITY.md', import.meta.url);
+const DN = new URL('../../fixtures/dense/.planning/phases/01-identity-slice/01-SECURITY.md', import.meta.url);
 const LB05 = new URL(
   '../../.planning/milestones/v1.1-phases/05-per-type-document-views/05-SECURITY.md',
   import.meta.url,
@@ -37,8 +38,8 @@ const LB04 = new URL(
   '../../.planning/milestones/v1.0-phases/04-portability-degradation-hardening/04-SECURITY.md',
   import.meta.url,
 );
-const SP1 = `${SP_PLANNING}/phases/01-portal-owned-identity-sessions/01-SECURITY.md`;
-const SP3 = `${SP_PLANNING}/phases/03-account-administration-session-control/03-SECURITY.md`;
+const FX1 = fxPath('phases/01-member-sign-in-sessions/01-SECURITY.md');
+const FX3 = fxPath('phases/03-account-admin-and-sessions/03-SECURITY.md');
 
 const HEADINGS = [{ id: 'threat-register', text: 'Threat Register', depth: 2 }];
 
@@ -108,7 +109,7 @@ describe('security console tone maps', () => {
 });
 
 describe('composeSecurityConsole — dense fixture', () => {
-  const model = composed(FX);
+  const model = composed(DN);
 
   it('reads the rail from the frontmatter', () => {
     expect(model.intro).toMatchObject({
@@ -361,42 +362,61 @@ describe('composeSecurityConsole — trust boundaries by destination', () => {
     expect(render(withNote as ComposedSecurityConsole)).toContain('dominant threat classes');
   });
 
-  it.runIf(existsSync(SP1))('SP P1: Backend (2), the other six crossings in document order, then at rest (2)', () => {
-    const sp = composed(SP1).boundaries?.destinations ?? [];
+  it('Lendshed P1: API (2), the other six crossings in document order, then at rest (2)', () => {
+    const sp = composed(FX1).boundaries?.destinations ?? [];
     expect(sp.map((b) => [b.label, b.countText, b.kind])).toEqual([
-      ['Backend', '2 ways in', 'shared'],
+      ['API', '2 ways in', 'shared'],
       ['Other crossings', '6', 'single'],
       [AT_REST_LABEL, '2', 'at-rest'],
     ]);
     expect(sp[0].crossings.map((c) => [c.source, c.qualifier])).toEqual([
-      ['browser', 'via Cloudflare tunnel'],
-      ['Vercel edge', 'session validation'],
+      ['browser', 'via tunnel'],
+      ['Edge', 'session check'],
     ]);
     expect(sp[1].crossings.map((c) => c.destination)).toEqual([
-      '`POST /api/login`',
+      '`POST /api/sign-in`',
       'Every handler',
-      'Filesystem',
-      'Vercel edge',
-      '`backstage` process',
+      'Printer spool',
+      'Web host',
+      '`shedctl` process',
       'Build',
     ]);
     expect(sp[1].crossings[3].qualifier).toBe('route gate');
     expect(sp.flatMap((b) => b.crossings).filter((c) => c.tone === 'in-flight').map((c) => c.source)).toEqual([
-      'unauthenticated caller',
+      'anonymous caller',
     ]);
   });
 
-  it.runIf(existsSync(SP3))('SP P3: one "Crossings · 10" block and one toned source', () => {
-    const sp = composed(SP3).boundaries?.destinations ?? [];
+  it('Lendshed P3: one "Crossings · 10" block and one toned source', () => {
+    const sp = composed(FX3).boundaries?.destinations ?? [];
     expect(sp.map((b) => [b.label, b.countText, b.kind])).toEqual([['Crossings', '10', 'single']]);
-    expect(sp[0].crossings.filter((c) => c.tone === 'in-flight').map((c) => c.source)).toEqual(['unauthenticated browser']);
+    expect(sp[0].crossings.filter((c) => c.tone === 'in-flight').map((c) => c.source)).toEqual(['anonymous browser']);
   });
 
-  it('composes a pathological destination and source in well under 250 ms without throwing', () => {
-    const started = performance.now();
+  it('composes a pathological destination and source without throwing', () => {
     const huge = composeSecurityConsole(boundaryDoc([[`${'x'.repeat(100_000)} → ${'('.repeat(100_000)}`, 'd', 'k']]));
-    expect(performance.now() - started).toBeLessThan(250);
     expect(huge?.boundaries?.destinations).toHaveLength(1);
+  });
+
+  it('composes a growing source and an unclosed destination no faster than linearly', () => {
+    // Built by hand: the extractor clips every line, so only a hand-built row reaches the composer at size.
+    const base = boundaryDoc([['x → y', 'd', 'k']]);
+    const security = base.structured.security as Record<string, unknown>;
+    const growth = measureGrowth({
+      make: (n): ViewInput => ({
+        ...base,
+        structured: {
+          security: {
+            ...security,
+            boundaries: { rows: [{ name: 'n', from: 'x'.repeat(n), to: '('.repeat(n), description: 'd', data: 'k' }], note: [] },
+          },
+        },
+      }),
+      run: (input) => {
+        composeSecurityConsole(input);
+      },
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
   });
 });
 
@@ -468,9 +488,8 @@ describe('composeSecurityConsole — residual observations', () => {
     expect(none?.residuals).toBeNull();
   });
 
-  it('composes pathological titles and ref lists quickly, capping refs at 20 per item', () => {
+  it('composes pathological titles and ref lists without throwing, capping refs at 20 per item', () => {
     const refs = Array.from({ length: 50_000 }, (_, i) => `T-${i}`).join(', ');
-    const started = performance.now();
     // Built by hand: the extractor already caps a line at 8000 characters, but the composer must
     // not depend on that.
     const base = residualDoc('x');
@@ -492,26 +511,56 @@ describe('composeSecurityConsole — residual observations', () => {
         },
       },
     });
-    expect(performance.now() - started).toBeLessThan(250);
     expect(huge?.residuals?.items).toHaveLength(2);
     expect(huge?.residuals?.items[1].refs).toHaveLength(20);
   });
 
-  it.runIf(existsSync(SP1))('SP P1: three observations, two of them wired to register rows', () => {
-    const sp = composed(SP1);
+  it('composes growing titles and ref lists no faster than linearly', () => {
+    const base = residualDoc('x');
+    const security = base.structured.security as Record<string, unknown>;
+    const growth = measureGrowth({
+      make: (n): ViewInput => {
+        const refs = Array.from({ length: Math.max(1, Math.floor(n / 8)) }, (_, i) => `T-${i}`).join(', ');
+        return {
+          ...base,
+          structured: {
+            security: {
+              ...security,
+              extras: [
+                {
+                  heading: 'Residual Observations',
+                  blocks: [
+                    { kind: 'paragraph', text: `**${'('.repeat(n)}** body` },
+                    { kind: 'paragraph', text: `**x (relates to ${refs})** y` },
+                  ],
+                },
+              ],
+            },
+          },
+        };
+      },
+      run: (input) => {
+        composeSecurityConsole(input);
+      },
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('Lendshed P1: three observations, two of them wired to register rows', () => {
+    const sp = composed(FX1);
     expect(sp.residuals?.label).toBe('Residual observations · 3');
     expect(sp.residuals?.items.map((i) => i.title)).toEqual([
-      '`AUTH_MODE=dev` guard scope',
-      '`Cf-Connecting-Ip` tunnel dependency',
-      'Unobserved fault windows',
+      'Dev-mode guard scope',
+      'Client-address header and the tunnel',
+      'Unwatched fault cases',
     ]);
-    expect(sp.residuals?.items.map((i) => i.refs.map((r) => r.text))).toEqual([['T-01-07'], ['T-01-24'], []]);
+    expect(sp.residuals?.items.map((i) => i.refs.map((r) => r.text))).toEqual([['T-01-06'], ['T-01-17'], []]);
     expect(sp.residuals?.items.flatMap((i) => i.refs).every((r) => r.threatIndex !== null)).toBe(true);
-    expect(JSON.stringify(sp.residuals?.lead[0])).toContain('Not open threats — no register entry is unmitigated.');
+    expect(JSON.stringify(sp.residuals?.lead[0])).toContain('every register row has a closed status');
     expect(sp.extras).toEqual([]);
     const index = (ref: string): number => sp.threats.findIndex((t) => t.ref === ref);
-    expect(sp.threats[index('T-01-07')].residualIndexes).toEqual([0]);
-    expect(sp.threats[index('T-01-24')].residualIndexes).toEqual([1]);
+    expect(sp.threats[index('T-01-06')].residualIndexes).toEqual([0]);
+    expect(sp.threats[index('T-01-17')].residualIndexes).toEqual([1]);
   });
 });
 
@@ -546,25 +595,25 @@ describe('SecurityConsoleView — residual observations markup', () => {
     expect(render(composed(LB05), { initialPick: 0 })).not.toContain('residual observation');
   });
 
-  it.runIf(existsSync(SP1))('SP P1: closed toggle with 3 items when open, T-01-07 reverse link, no <details>', () => {
-    const model = composed(SP1);
+  it('Lendshed P1: closed toggle with 3 items when open, T-01-06 reverse link, no <details>', () => {
+    const model = composed(FX1);
     expect(count(render(model), '<details>')).toBe(0);
     const closed = render(model);
     expect(closed).toContain('Residual observations · 3');
-    expect(closed).toContain('Not open threats — no register entry is unmitigated.');
+    expect(closed).toContain('every register row has a closed status');
     expect(closed).not.toContain('id="security-residual-0"');
     const open = render(model, { initialOpen: ['residuals'] });
     expect(count(open, 'class="view-security-residual"')).toBe(3);
     const list = open.slice(open.indexOf('id="security-residuals-list"'));
     expect(count(list, 'class="view-security-ref">T-01-')).toBe(2);
-    const at = model.threats.findIndex((t) => t.ref === 'T-01-07');
+    const at = model.threats.findIndex((t) => t.ref === 'T-01-06');
     expect(render(model, { initialPick: at })).toContain('1 residual observation');
   });
 });
 
 describe('SecurityConsoleView — static markup', () => {
   it('renders the dense fixture as the blocking console', () => {
-    const html = render(composed(FX));
+    const html = render(composed(DN));
     expect(count(html, '<h1>')).toBe(1);
     expect(html).toContain('<h1>Identity slice</h1>');
     expect(html).toContain('Security · Phase 1');
@@ -613,23 +662,23 @@ describe('SecurityConsoleView — static markup', () => {
   });
 
   it('LB v1.0/04 and the fixture render the notice instead of a ledger', () => {
-    for (const path of [LB04, FX]) {
+    for (const path of [LB04, DN]) {
       const html = render(composed(path));
       expect(html).toContain('class="notice view-security-notice"');
       expect(count(html, 'class="view-security-waiver"')).toBe(0);
     }
   });
 
-  it.runIf(existsSync(SP1))('SP P1: three blocks, descriptions always visible, one toned source', () => {
-    const html = render(composed(SP1));
+  it('Lendshed P1: three blocks, descriptions always visible, one toned source', () => {
+    const html = render(composed(FX1));
     expect(count(html, '<div id="security-dest-')).toBe(3);
     expect(html).toContain('id="security-dest-0"');
     expect(html).toContain('id="security-dest-2"');
     expect(html).not.toContain('id="security-dest-3"');
     const first = html.slice(html.indexOf('id="security-dest-0"'), html.indexOf('id="security-dest-1"'));
-    expect(first).toContain('Backend');
+    expect(first).toContain('API');
     expect(first).toContain(' · 2 ways in');
-    expect(first).toContain('via Cloudflare tunnel');
+    expect(first).toContain('via tunnel');
     expect(html).toContain(' · 6');
     expect(html).toContain('Other crossings');
     expect(html).toContain('At rest / in-process');
@@ -659,7 +708,7 @@ describe('SecurityConsoleView — static markup', () => {
     expect(count(signed, 'data-done="true"')).toBe(4);
     expect(signed).toContain('Signed off');
     expect(signed).toContain('verified 2026-09-21');
-    const unsigned = render(composed(FX));
+    const unsigned = render(composed(DN));
     expect(count(unsigned, 'data-done="true"')).toBe(1);
     expect(count(unsigned, 'data-done="false"')).toBe(3);
     expect(unsigned).toContain('Not signed off');
@@ -679,8 +728,8 @@ describe('SecurityConsoleView — static markup', () => {
     expect(on).toContain('Audit notes');
   });
 
-  it.runIf(existsSync(SP3))('the synthetic open-threats doc renders two runs when the audit is on', () => {
-    const model = composeSecurityConsole(inputOf(synthesize(readFileSync(SP3, 'utf8'))));
+  it('the synthetic open-threats doc renders two runs when the audit is on', () => {
+    const model = composeSecurityConsole(inputOf(synthesize(readFileSync(FX3, 'utf8'))));
     expect(model).not.toBeNull();
     if (!model) return;
     const html = render(model, { initialAudit: true });
