@@ -12,6 +12,7 @@ import { dirname, join, relative } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { VIEW_LOCAL_PREFIXES } from '../../src/web/views/kinds.ts';
 import { checkTokens, loadVocabulary, viewLocalPattern } from '../helpers/design-vocabulary.ts';
+import { blankComments } from '../helpers/source-scan.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(__dirname, '..', '..');
@@ -26,34 +27,6 @@ const PREFIX_MARKER = '\u0000PREFIX';
 // ---------------------------------------------------------------------------
 // Source scanner — no AST, text/regex only (per plan prohibition)
 // ---------------------------------------------------------------------------
-
-/** Blanks `//` line comments and `/* … *\/` block comments with equal-length whitespace so
- * offsets/line counts are preserved and quoted strings inside comments are never scanned. */
-function blankComments(source: string): string {
-  let out = '';
-  let i = 0;
-  const n = source.length;
-  while (i < n) {
-    if (source[i] === '/' && source[i + 1] === '/') {
-      let j = i;
-      while (j < n && source[j] !== '\n') j++;
-      out += ' '.repeat(j - i);
-      i = j;
-      continue;
-    }
-    if (source[i] === '/' && source[i + 1] === '*') {
-      let j = i + 2;
-      while (j < n && !(source[j] === '*' && source[j + 1] === '/')) j++;
-      j = Math.min(j + 2, n);
-      out += source.slice(i, j).replace(/[^\n]/g, ' ');
-      i = j;
-      continue;
-    }
-    out += source[i];
-    i++;
-  }
-  return out;
-}
 
 /** Walks from an opening `{` at `openIndex` to its matching `}`, returning that index (or -1). */
 function findMatchingBrace(source: string, openIndex: number): number {
