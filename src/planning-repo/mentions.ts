@@ -221,7 +221,9 @@ function scanArtifact(artifact: ParsedArtifact): Mention[] {
 export function scanMentions(artifacts: ParsedArtifact[]): MentionIndex {
   const all: Mention[] = [];
   for (const artifact of artifacts) {
-    all.push(...scanArtifact(artifact));
+    // A loop, not `all.push(...found)`: spreading one huge document's mentions as call arguments
+    // overflows the stack (RangeError) once a single body yields on the order of 100k mentions.
+    for (const mention of scanArtifact(artifact)) all.push(mention);
   }
   // Deterministic ordering so goldens are stable — by artifact path, then position within it.
   all.sort((a, b) => a.artifactPath.localeCompare(b.artifactPath) || a.position.offset - b.position.offset);

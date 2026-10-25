@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
+import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
 import { SP_PLANNING } from './helpers/studio-portal.ts';
 import {
   extractDiscussionLog,
@@ -591,28 +592,29 @@ describe('extractDiscussionLog — S4 (compact Question | Options | Selected tab
   });
 });
 
-describe('extractDiscussionLog — timing (T-jxp-02: bounded regexes, no ReDoS)', () => {
-  it('runs a 100k-character hostile single line through in under 200ms', () => {
-    const hostile = `## Topic\n\n### Q1\n\n${'|'.repeat(1000)}${'*'.repeat(50000)}✓${'*'.repeat(49000)}\n`;
-    const start = performance.now();
-    extractDiscussionLog(hostile);
-    const elapsed = performance.now() - start;
-    expect(elapsed).toBeLessThan(200);
+describe('extractDiscussionLog — growth (T-jxp-02: bounded regexes, no ReDoS)', () => {
+  it('stays linear on a hostile single line of pipes and asterisks around a check mark', () => {
+    const growth = measureGrowth({
+      make: (n) => `## Topic\n\n### Q1\n\n${'|'.repeat(n / 100)}${'*'.repeat(n / 2)}✓${'*'.repeat(n / 2)}\n`,
+      run: (body) => void extractDiscussionLog(body),
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
   });
 
-  it('runs a hostile S4 row (100k-character Options cell, 50k-asterisk Selected cell) in under 200ms', () => {
-    const hostile = [
-      '## Topic',
-      '',
-      '| Question | Options | Selected |',
-      '|---|---|---|',
-      `| Q | ${'a / '.repeat(25000)}a | ${'*'.repeat(50000)} |`,
-      '',
-    ].join('\n');
-    const start = performance.now();
-    extractDiscussionLog(hostile);
-    const elapsed = performance.now() - start;
-    expect(elapsed).toBeLessThan(200);
+  it('stays linear on a hostile S4 row (long Options cell, long Selected cell)', () => {
+    const growth = measureGrowth({
+      make: (n) =>
+        [
+          '## Topic',
+          '',
+          '| Question | Options | Selected |',
+          '|---|---|---|',
+          `| Q | ${'a / '.repeat(n / 4)}a | ${'*'.repeat(n / 2)} |`,
+          '',
+        ].join('\n'),
+      run: (body) => void extractDiscussionLog(body),
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
   });
 });
 
