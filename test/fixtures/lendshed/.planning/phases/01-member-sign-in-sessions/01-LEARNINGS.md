@@ -112,15 +112,15 @@ Not after.
 ---
 
 ### `retryAfter` rides in the JSON body only, not in a CORS expose-headers entry
-The plan offered this as an explicit either/or.
+The plan listed it as one of two options.
 
-**Rationale:** The simpler of the two, and the one the frontend plan was already written against.
+**Rationale:** It was the smaller change, and the frontend plan had already been drafted around it.
 **Source:** 01-04-SUMMARY.md
 
 ---
 
 ### `gate.ts` forwards the session cookie through an explicitly rebuilt `Cookie` header
-Not `credentials: "include"` alone.
+Not just `credentials: "include"`.
 
 **Rationale:** A server-side fetch has no cookie jar to include. `credentials: "include"` stays only because it is this codebase's fetch convention; the real signal is the hand-forwarded header.
 **Source:** 01-05-SUMMARY.md
@@ -129,7 +129,7 @@ Not `credentials: "include"` alone.
 
 ## Lessons
 
-### Cutover preconditions are load-bearing, not ceremony
+### Preconditions before a cutover do real work
 Task 3's step-1 `shedctl list` — a routine check — showed the phase had never been deployed. The live build was from 2026-03-02, older than every Phase 1 server commit; it held no `session_cookie` references at all; the live database had no `members` or `sessions` tables; **31 commits were unpushed** because the path-filtered deploy job had never run.
 
 **Context:** Removing the kiosk route then would have exposed an unguarded app with no replacement sign-in and no way to create an account. The check cost seconds.
@@ -145,7 +145,7 @@ Task 3's step-1 `shedctl list` — a routine check — showed the phase had neve
 
 ---
 
-### Verify a deploy by artifact, not by its green check
+### Check a deploy against the artifact, not the green tick
 A 20-second successful job was confirmed afterward by reading the binary's strings, the migration state, and the process start time.
 
 **Context:** The job had been "passing" by never running. A green check says the job exited 0, not that what you built is what is running.
@@ -203,7 +203,7 @@ A ticket minted while a session was live stays redeemable for the rest of its 45
 
 ## Patterns
 
-### Source-scanning regression test as a guard against re-introduction
+### Source-scanning test that stops a removed thing coming back
 A test that greps the project's own source for a forbidden string (the edge-proxy identity header) and fails the build if it returns.
 
 **When to use:** When what you must prevent is invisible to the type system — a deleted code path that could come back, a header that must never be read again. Used twice here.
