@@ -7,7 +7,7 @@
 **Phase:** 3-Account Admin & Sessions
 **Areas discussed:** Password handoff, Disable blast radius, Delete & lockout guards, Sessions view & log rows
 
-Each of the four gray areas put forward was chosen for discussion.
+All four gray areas that were offered got selected for discussion.
 
 ---
 
