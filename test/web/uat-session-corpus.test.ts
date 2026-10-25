@@ -79,6 +79,9 @@ const PINNED: Record<string, Pinned> = {
   'LB:milestones/v1.0-phases/03-search-browsing-traceability/03-UAT.md': { ...DONE, tests: 4, pass: 4 },
   'LB:milestones/v1.0-phases/04-portability-degradation-hardening/04-UAT.md': { ...DONE, tests: 9, pass: 9 },
   'LB:milestones/v1.1-phases/05-per-type-document-views/05-UAT.md': { ...DONE, tests: 4, pass: 4, extras: ['Deferred Follow-Ups'] },
+  'FX:phases/01-member-sign-in-sessions/01-UAT.md': { ...DONE, tests: 7, pass: 6, skipped: 1, extras: ['Notes'] },
+  'FX:phases/02-roles-and-permissions/02-UAT.md': { ...DONE, tests: 3, pass: 3, gaps: 4, mode: 'prose' },
+  'FX:phases/03-account-admin-and-sessions/03-UAT.md': { ...DONE, tests: 5, pass: 5, gaps: 1, mode: 'items' },
   'FX:milestones/v1.0-phases/03-catalogue-browsing/03-UAT.md': { ...DONE, tests: 6, pass: 6, gaps: 6, mode: 'items' },
 };
 
@@ -119,7 +122,7 @@ describe('UAT corpus', () => {
     const present = new Set(FILES.map((f) => f.key));
     for (const key of Object.keys(PINNED)) expect(present.has(key), key).toBe(true);
     expect(FILES.filter((f) => f.key.startsWith('LB:')).length).toBeGreaterThanOrEqual(5);
-    expect(FILES.filter((f) => f.key.startsWith('FX:')).length).toBeGreaterThanOrEqual(1);
+    expect(FILES.filter((f) => f.key.startsWith('FX:')).length).toBeGreaterThanOrEqual(4);
     // Nothing unpinned: a new UAT in the corpus must be pinned here on purpose.
     for (const file of FILES) expect(PINNED[file.key], `unpinned ${file.key}`).toBeDefined();
   });
