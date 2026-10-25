@@ -2,12 +2,12 @@
 // synthetic doc / corpus extractions (test/ui-review-audit.test.ts covers the server extractor; the
 // narrow e2e spec covers the page end to end), the radar geometry, the keyboard helper, and the
 // static markup of the view.
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
-import { SP_PLANNING } from '../helpers/studio-portal.ts';
+import { fxPath } from '../helpers/fixture-project.ts';
 import { UiReviewHandler } from '../../src/planning-repo/handlers/ui-review.ts';
 import type { ArtifactRef, RawArtifact } from '../../src/planning-repo/types.ts';
 import {
@@ -31,7 +31,7 @@ const LB04 = new URL(
   '../../.planning/milestones/v1.0-phases/04-portability-degradation-hardening/04-UI-REVIEW.md',
   import.meta.url,
 );
-const SP03 = `${SP_PLANNING}/phases/03-account-administration-session-control/03-UI-REVIEW.md`;
+const FX03 = fxPath('phases/03-account-admin-and-sessions/03-UI-REVIEW.md');
 
 const HEADINGS: ViewInput['headings'] = [
   { id: 'pillar-scores', text: 'Pillar Scores', depth: 2 },
@@ -193,9 +193,9 @@ describe('composeUiReview — corpus docs', () => {
     expect(review.sourceOnly[2].targetId).toBe('detailed-findings');
   });
 
-  it.runIf(existsSync(SP03))('studio-portal 03', () => {
-    const review = compose(SP03, { number: '03', slug: 'account-administration-session-control' });
-    expect(review.intro.title).toBe('Account administration session control');
+  it('lendshed 03', () => {
+    const review = compose(FX03, { number: '03', slug: 'account-admin-and-sessions' });
+    expect(review.intro.title).toBe('Account admin and sessions');
     expect(review.fixes.map((f) => f.n)).toEqual([1, 2]);
     expect(review.verdict.fixesLine).toBe('2 fixes asked for.');
     expect(review.method.shots).toMatchObject({ label: 'Code only · not seen in a browser', tone: 'in-flight' });
@@ -269,10 +269,10 @@ describe('UiReviewView static markup', () => {
     expect(markup(lb05, { initialPillar: 1 })).not.toContain('id="ui-review-fix-1"');
   });
 
-  it.runIf(existsSync(SP03))('studio-portal Typography: the ref chip and the more toggle', () => {
-    const sp = compose(SP03, { number: '03', slug: 'account-administration-session-control' });
+  it('lendshed Typography: the ref chip and the more toggle', () => {
+    const sp = compose(FX03, { number: '03', slug: 'account-admin-and-sessions' });
     const html = markup(sp);
-    expect(html).toContain('frontend/components/destructive-confirm-dialog.tsx:182');
+    expect(html).toContain('frontend/components/confirm-danger-dialog.tsx:174');
     expect(html).toContain('aria-expanded="false"');
     expect(html).toContain('>more<');
   });
@@ -300,8 +300,8 @@ describe('UiReviewView static markup', () => {
     expect(markup(lb04).match(/class="view-ui-review-files-group"/g)).toHaveLength(3);
   });
 
-  it.runIf(existsSync(SP03))('folds the correction note into a bold line, never a literal hash', () => {
-    const sp = compose(SP03, { number: '03', slug: 'account-administration-session-control' });
+  it('folds the correction note into a bold line, never a literal hash', () => {
+    const sp = compose(FX03, { number: '03', slug: 'account-admin-and-sessions' });
     const html = markup(sp);
     expect(html).toContain('Correction note');
     expect(html).not.toContain('###');

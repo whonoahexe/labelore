@@ -1,15 +1,16 @@
 // quick-261003-528 (QK528-08): real-corpus guards over every UI-REVIEW.md in this repo's `.planning/`
-// (excluding the sketches), fixtures/dense and `~/studio-portal/.planning/`, plus the sketch's
-// synthetic doc named explicitly — the uat-session-corpus.test.ts idiom (a missing studio-portal
-// checkout skips its files). Every file must extract without throwing, compose to a non-null review
+// (excluding the sketches, keyed LB:) and the made-up Lendshed project (keyed FX:, walked through
+// FX_PLANNING; a missing fixture throws, nothing skips), plus the sketch's synthetic doc named
+// explicitly. Labelore's live planning files are re-pinned to today's content (D-18). Every file must extract without throwing, compose to a non-null review
 // through the real handler, and match the values pinned below. The pinned values were independently
 // confirmed with grep / awk over the source files (pillar rows, ❌ / ✗ and ⚠ lines inside each
 // `### Pillar` section, "See Priority Fix" lines, `- \`` lines inside `## Files Audited`) — never
 // copied from the extractor's own output.
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { SP_PLANNING } from '../helpers/studio-portal.ts';
+import { GROWTH_LIMIT, measureGrowth } from '../helpers/growth.ts';
+import { FX_PLANNING } from '../helpers/fixture-project.ts';
 import { UiReviewHandler } from '../../src/planning-repo/handlers/ui-review.ts';
 import type { UiReviewAudit } from '../../src/planning-repo/handlers/ui-review-audit.ts';
 import type { ArtifactRef, RawArtifact } from '../../src/planning-repo/types.ts';
@@ -18,11 +19,9 @@ import type { ComposedUiReview } from '../../src/web/views/ui-review.ts';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 
 const REPO_PLANNING = new URL('../../.planning', import.meta.url).pathname;
-const DENSE_PLANNING = new URL('../../fixtures/dense/.planning', import.meta.url).pathname;
 const SYNTHETIC = new URL('../../.planning/sketches/018-ui-review-page/synthetic-UI-REVIEW.md', import.meta.url).pathname;
 
 function walk(root: string): string[] {
-  if (!existsSync(root)) return [];
   const found: string[] = [];
   const stack = [root];
   while (stack.length > 0) {
@@ -85,7 +84,7 @@ const PINNED: Record<string, Pinned> = {
     verdict: '2 points lost, in Color and Experience Design.',
     facts: '21 Sep 2026|5|3',
   },
-  'SP:phases/03-account-administration-session-control/03-UI-REVIEW.md': {
+  'FX:phases/03-account-admin-and-sessions/03-UI-REVIEW.md': {
     overall: [22, 24],
     scores: [4, 4, 4, 3, 3, 4],
     fails: [0, 0, 0, 1, 1, 0],
@@ -95,9 +94,9 @@ const PINNED: Record<string, Pinned> = {
     back: ['Files Audited', 'Summary'],
     fileEntries: 12,
     initial: 'Typography',
-    title: 'Account administration session control',
+    title: 'Account admin and sessions',
     verdict: '2 points lost, in Typography and Spacing.',
-    facts: '21 Aug 2026|3|2',
+    facts: '14 Apr 2026|3|2',
   },
   'LB:milestones/v1.0-phases/03-search-browsing-traceability/03-UI-REVIEW.md': {
     overall: [24, 24],
@@ -131,8 +130,7 @@ const PINNED: Record<string, Pinned> = {
 
 const FILES: { key: string; path: string }[] = [
   ...walk(REPO_PLANNING).map((path) => ({ key: `LB:${relative(REPO_PLANNING, path)}`, path })),
-  ...walk(DENSE_PLANNING).map((path) => ({ key: `FX:${relative(DENSE_PLANNING, path)}`, path })),
-  ...walk(SP_PLANNING).map((path) => ({ key: `SP:${relative(SP_PLANNING, path)}`, path })),
+  ...walk(FX_PLANNING).map((path) => ({ key: `FX:${relative(FX_PLANNING, path)}`, path })),
   { key: 'SYN:synthetic', path: SYNTHETIC },
 ];
 
@@ -166,12 +164,11 @@ function parse(path: string): { audit: UiReviewAudit; input: ViewInput } {
 }
 
 describe('UI-REVIEW corpus', () => {
-  it('finds the pinned documents (a missing studio-portal checkout drops its one)', () => {
+  it('finds the pinned documents', () => {
     const present = new Set(FILES.map((f) => f.key));
-    for (const key of Object.keys(PINNED)) {
-      if (key.startsWith('SP:') && !existsSync(SP_PLANNING)) continue;
-      expect(present.has(key), key).toBe(true);
-    }
+    expect(FILES.filter((f) => f.key.startsWith('FX:')).length).toBeGreaterThanOrEqual(1);
+    expect(FILES.filter((f) => f.key.startsWith('LB:')).length).toBeGreaterThanOrEqual(3);
+    for (const key of Object.keys(PINNED)) expect(present.has(key), key).toBe(true);
     // Nothing unpinned: a new UI-REVIEW in the corpus must be pinned here on purpose.
     for (const file of FILES) expect(PINNED[file.key], `unpinned ${file.key}`).toBeDefined();
   });
@@ -208,8 +205,19 @@ describe('UI-REVIEW corpus', () => {
     for (const body of ['', '\u0000\u0001', '| | |\n|---|\n', '## Pillar Scores\n\n| 1. x | y |', '```\n## Pillar Scores']) {
       expect(() => extractUiReview(body)).not.toThrow();
     }
-    const started = performance.now();
-    extractUiReview(`${'.'.repeat(200_000)}\n${'/'.repeat(500_000)}\n${'a/b.ts '.repeat(40_000)}`);
-    expect(performance.now() - started).toBeLessThan(250);
+  });
+
+  // A fixed millisecond budget flakes under parallel load (Pitfall 11): the same pathological shape
+  // (a run of dots, a run of slashes, a run of path-like tokens) is built at size n and at 8n and timed
+  // with measureGrowth, where a linear extractor reads about 8 and a quadratic one about 64.
+  it('a pathological body grows no faster than linearly', async () => {
+    const { extractUiReview } = await import('../../src/planning-repo/handlers/ui-review-audit.ts');
+    const shape = (size: number): string =>
+      `${'.'.repeat(Math.floor(size * 0.2))}\n${'/'.repeat(Math.floor(size * 0.5))}\n${'a/b.ts '.repeat(Math.floor(size * 0.04))}`;
+    const growth = measureGrowth({ make: shape, run: (input) => void extractUiReview(input) });
+    expect(
+      growth.ratio,
+      `ui-review corpus: ${growth.t1.toFixed(2)}ms at ${growth.n} characters, ${growth.t2.toFixed(2)}ms at 8x`,
+    ).toBeLessThan(GROWTH_LIMIT);
   });
 });

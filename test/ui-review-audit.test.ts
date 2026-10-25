@@ -1,10 +1,11 @@
 // quick-261003-528: extractUiReview on the sketch's synthetic doc, the real corpus rows, and the
 // degrade cases (empty body, no Overall line, an unclosed fence, a pillar heading with no score, a
 // Top 3 section with prose only, an orphan "See Priority Fix 9", and a 1 MB body holding one
-// 200k-character line within 250 ms).
-import { existsSync, readFileSync } from 'node:fs';
+// 200k-character line that must grow no faster than linearly).
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { SP_PLANNING } from './helpers/studio-portal.ts';
+import { fxPath } from './helpers/fixture-project.ts';
+import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
 import { tryParseFrontmatter } from '../src/planning-repo/frontmatter.ts';
 import { classify, extractUiReview, fileRefs } from '../src/planning-repo/handlers/ui-review-audit.ts';
 
@@ -19,7 +20,7 @@ const LB04 = new URL(
   '../.planning/milestones/v1.0-phases/04-portability-degradation-hardening/04-UI-REVIEW.md',
   import.meta.url,
 );
-const SP03 = `${SP_PLANNING}/phases/03-account-administration-session-control/03-UI-REVIEW.md`;
+const FX03 = fxPath('phases/03-account-admin-and-sessions/03-UI-REVIEW.md');
 
 describe('classify and fileRefs', () => {
   it('classes a line by its mark', () => {
@@ -112,8 +113,8 @@ describe('extractUiReview — corpus rows', () => {
     expect(files?.groups.reduce((n, g) => n + g.other.length, 0)).toBe(1);
   });
 
-  it.runIf(existsSync(SP03))('studio-portal 03: no frontmatter, a dropped third fix, a lead sentence, a correction note', () => {
-    const audit = extractUiReview(bodyOf(SP03));
+  it('lendshed 03: no frontmatter, a dropped third fix, a lead sentence, a correction note', () => {
+    const audit = extractUiReview(bodyOf(FX03));
     expect(audit.h1Phase).toBe('03');
     expect(audit.fixes[2].none).toBe(true);
     expect(audit.fixes.filter((f) => !f.none).map((f) => f.pillars)).toEqual([['Typography'], ['Spacing']]);
@@ -185,12 +186,27 @@ describe('extractUiReview — degrade', () => {
     expect(audit.pillars[0].fixes).toEqual([]);
   });
 
-  it('extracts a 1 MB body with one 200k-character line within 250 ms', () => {
-    const body = `## Pillar Scores\n| 1. A | 3/4 | k |\n${'./'.repeat(100_000)}\n${'x'.repeat(800_000)}\n`;
-    const started = performance.now();
-    const audit = extractUiReview(body);
-    expect(performance.now() - started).toBeLessThan(250);
+  // A fixed millisecond budget flakes under parallel load (Pitfall 11). The same hostile shape (a long
+  // run of "./" pairs and a long plain line behind a pillar row) is built at size n and at 8n and timed
+  // with measureGrowth: a linear extractor reads about 8, a quadratic one about 64.
+  const hostileBody = (size: number): string => {
+    const scale = size / 1_000_000;
+    const dots = './'.repeat(Math.max(1, Math.floor(100_000 * scale)));
+    const plain = 'x'.repeat(Math.max(1, Math.floor(800_000 * scale)));
+    return `## Pillar Scores\n| 1. A | 3/4 | k |\n${dots}\n${plain}\n`;
+  };
+
+  it('extracts a 1 MB body with one 200k-character line without throwing', () => {
+    const audit = extractUiReview(hostileBody(1_000_000));
     expect(audit.pillars).toHaveLength(1);
+  });
+
+  it('the same hostile body grows no faster than linearly', () => {
+    const growth = measureGrowth({ make: hostileBody, run: (input) => void extractUiReview(input) });
+    expect(
+      growth.ratio,
+      `ui-review: ${growth.t1.toFixed(2)}ms at ${growth.n} characters, ${growth.t2.toFixed(2)}ms at 8x`,
+    ).toBeLessThan(GROWTH_LIMIT);
   });
 });
 
