@@ -4,7 +4,7 @@
 // the sketch's own reference algorithm.
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
-import { SP02_SHAPE } from '../helpers/research-fixtures.ts';
+import { LS02_SHAPE } from '../helpers/research-fixtures.ts';
 import { extractResearchBriefing } from '../../src/planning-repo/handlers/research-briefing.ts';
 import {
   changedOnlySet,
@@ -24,7 +24,7 @@ async function treeOf(path: string): Promise<string> {
   return tree;
 }
 
-const SP_TREE = extractResearchBriefing(SP02_SHAPE).architecture?.structure?.text ?? '';
+const SP_TREE = extractResearchBriefing(LS02_SHAPE).architecture?.structure?.text ?? '';
 
 describe('parseTree', () => {
   it('studio-portal v1.0/02: 14 rows (10 files, 4 folders) with NEW / EXTEND / EXISTING badges', () => {
