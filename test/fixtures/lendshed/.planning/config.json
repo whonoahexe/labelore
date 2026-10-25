@@ -1,0 +1,17 @@
+{
+  "mode": "interactive",
+  "granularity": "standard",
+  "model_profile": "adaptive",
+  "commit_docs": true,
+  "parallelization": true,
+  "brave_search": false,
+  "firecrawl": false,
+  "exa_search": false,
+  "workflow": {
+    "research": true,
+    "plan_check": true,
+    "verifier": true,
+    "nyquist_validation": true,
+    "ui_phase": true
+  }
+}
