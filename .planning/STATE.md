@@ -5,16 +5,16 @@ milestone_name: Wayfinding
 current_phase: 06
 current_phase_name: Trustworthy Tests and Security Baseline
 status: executing
-stopped_at: Completed 06-11-PLAN.md
-last_updated: "2026-10-25T21:35:32.572Z"
+stopped_at: Completed 06-12-PLAN.md
+last_updated: "2026-10-25T21:40:14.496Z"
 last_activity: 2026-10-26
 last_activity_desc: Phase 06 execution started
-state_head: 9a1f63af8ff94672949a11f52ffab65f1e1e0d4a
+state_head: 943c7352ef1ce346d298432514a378c358c22507
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 22
-  completed_plans: 11
+  completed_plans: 12
   percent: 0
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-10-25)
 ## Current Position
 
 Phase: 06 (Trustworthy Tests and Security Baseline) — EXECUTING
-Plan: 9 of 22
+Plan: 10 of 22
 Status: Ready to execute
 Last activity: 2026-10-26 — Phase 06 execution started
 
@@ -92,6 +92,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06 P06 | 23 min | 3 tasks | 22 files |
 | Phase 06 P07 | 13 min | 2 tasks | 11 files |
 | Phase 06 P11 | 35min | 3 tasks | 14 files |
+| Phase 06 P12 | ~25min | 3 tasks | 20 files |
 
 ## Accumulated Context
 
@@ -125,6 +126,7 @@ milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) a
 - [Phase 06]: 06-07: hostile-body and glob timing in the pattern-map tests are growth ratios through measureGrowth; the extractor's 8,000-character line clip is noted in the test instead of hidden — A fixed 250 ms budget flaked under load and proved nothing about the cost shape
 - [Phase 06]: Wave 2 batch 1 UI safety gate (no UI-SPEC for Phase 06) passed over by the orchestrator during the user's unattended run: 06-08/06-09/06-16 changed no file under src/ (git diff 3ddd910 -- src/ is empty), only tests and fixtures; the user asked for the run to continue without stopping.
 - [Phase 06]: 06-11: Lendshed security phase 01 register has 27 threats, phase 03 has 30; both keep ten crossings; synthetic open-threats doc reopens T-03-03 and T-03-11
+- [Phase 06]: 06-12: UI-SPEC corpus keys are LB: (Labelore), DN: (dense fixture), FX: (Lendshed); UI-review corpus drops the dense walk
 
 ### Pending Todos
 
@@ -167,8 +169,8 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-10-25T21:35:32.533Z
-Stopped at: Completed 06-11-PLAN.md
+Last session: 2026-10-25T21:40:14.456Z
+Stopped at: Completed 06-12-PLAN.md
 Resume file: None
 
 ## Operator Next Steps
