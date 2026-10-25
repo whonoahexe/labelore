@@ -17,6 +17,8 @@ describe('measureGrowth', () => {
       startSize: 200,
       minBaseMs: 2,
       maxSize: 1 << 16,
+      attempts: 1,
+      floorMs: 0,
     });
     expect(growth.ratio).toBeGreaterThan(GROWTH_LIMIT);
   });
@@ -32,6 +34,17 @@ describe('measureGrowth', () => {
       startSize: 20_000,
     });
     expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('reports 1 for work too cheap to tell from cache effects, and the raw ratio when floorMs is 0', () => {
+    const options = {
+      make: (n: number) => n,
+      run: (n: number) => void (sink += n),
+      maxSize: 1 << 12,
+      attempts: 1,
+    };
+    expect(measureGrowth({ ...options, floorMs: 1000 }).ratio).toBe(1);
+    expect(measureGrowth({ ...options, floorMs: 0 }).ratio).toBeGreaterThan(0);
   });
 
   it('reports the base size and both timings', () => {

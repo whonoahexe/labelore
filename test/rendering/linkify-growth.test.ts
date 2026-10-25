@@ -15,7 +15,11 @@ const LEGACY_REFERENCE_TOKEN =
 function scan(pattern: RegExp, text: string): number {
   // A missing export would otherwise turn into the pattern /(?:)/ and read as linear.
   if (!(pattern instanceof RegExp) || !pattern.global) throw new Error('scan needs a global RegExp');
-  return Array.from(text.matchAll(pattern)).length;
+  // Count in a loop: collecting every match into an array adds allocation that itself grows faster
+  // than the input and would read as super-linear (measured: ratio 20 against 7 for a repeated Phase).
+  let count = 0;
+  for (const match of text.matchAll(pattern)) if (match) count += 1;
+  return count;
 }
 
 const HOSTILE_SHAPES: [string, (n: number) => string][] = [
@@ -36,6 +40,8 @@ describe('the pre-fix pattern (positive control)', () => {
       run: (text) => void scan(LEGACY_REFERENCE_TOKEN, text),
       minBaseMs: 2,
       maxSize: 1 << 15,
+      attempts: 1,
+      floorMs: 0,
     });
     expect(growth.ratio).toBeGreaterThan(GROWTH_LIMIT);
   });

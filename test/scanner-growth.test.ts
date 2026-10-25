@@ -4,7 +4,8 @@
 //
 // The scanners were measured linear before this file existed, so every test is expected to pass on its
 // first run. They still ship: a scanner that later turns quadratic must fail here. Inputs come from
-// make(n) so measureGrowth builds them outside the timed region, and every shape stays below the size
+// make(n) so measureGrowth builds them outside the timed region (n counts characters, so every shape
+// reaches the same few hundred kilobytes), and every shape stays below the size
 // caps the scanners enforce (the caps-are-not-growth rule in test/helpers/growth.ts).
 import { describe, expect, it } from 'vitest';
 import {
@@ -32,10 +33,10 @@ const TABLE_HEAD = '## Topic\n\n| Question | Options | Selected |\n|---|---|---|
 // The shapes every markdown scanner is run over: thousands of table rows, thousands of heading pairs,
 // one line of pipes then asterisks then a check mark, one very long line, and long capital/digit runs.
 const MARKDOWN_SHAPES: Shape[] = [
-  ['table rows', (n) => `${TABLE_HEAD}${'| Q | a / b / c | a |\n'.repeat(n)}`],
+  ['table rows', (n) => `${TABLE_HEAD}${'| Q | a / b / c | a |\n'.repeat(Math.ceil(n / 22))}`],
   [
     'heading pairs',
-    (n) => Array.from({ length: n }, (_, i) => `## Topic ${i}\n\n### Q${i}\n\n`).join(''),
+    (n) => Array.from({ length: Math.ceil(n / 24) }, (_, i) => `## Topic ${i}\n\n### Q${i}\n\n`).join(''),
   ],
   ['a pipe and asterisk line', (n) => `## Topic\n\n### Q1\n\n${'|'.repeat(n)}${'*'.repeat(2 * n)}✓\n`],
   ['one long line', (n) => `## Topic\n\n${'word '.repeat(n)}\n`],
@@ -65,7 +66,8 @@ describe('extractReviewWarnings growth', () => {
     ...MARKDOWN_SHAPES,
     [
       'warning subsections',
-      (n) => `## Warnings\n\n${Array.from({ length: n }, (_, i) => `### WR-${i}: title ${i}\n\ntext\n\n`).join('')}`,
+      (n) =>
+        `## Warnings\n\n${Array.from({ length: Math.ceil(n / 30) }, (_, i) => `### WR-${i}: title ${i}\n\ntext\n\n`).join('')}`,
     ],
   ];
   for (const [name, make] of REVIEW_SHAPES) {
@@ -81,7 +83,8 @@ describe('parseDecisionEntries growth', () => {
     ...MARKDOWN_SHAPES,
     [
       'decision bullets with continuation lines',
-      (n) => Array.from({ length: n }, (_, i) => `- **D-${i}:** choice ${i}\n  — **Reversibility:** easy\n`).join(''),
+      (n) =>
+        Array.from({ length: Math.ceil(n / 45) }, (_, i) => `- **D-${i}:** choice ${i}\n  — **Reversibility:** easy\n`).join(''),
     ],
   ];
   for (const [name, make] of DECISION_SHAPES) {
@@ -122,7 +125,7 @@ describe('parseMarkdownTable growth', () => {
 describe('parseChecklistItems growth', () => {
   const CHECKLIST_SHAPES: Shape[] = [
     ...MARKDOWN_SHAPES,
-    ['checklist items', (n) => '- [ ] open item\n- [x] done item\n'.repeat(n)],
+    ['checklist items', (n) => '- [ ] open item\n- [x] done item\n'.repeat(Math.ceil(n / 32))],
     ['a bracket run', (n) => `- ${'['.repeat(n)}\n`],
   ];
   for (const [name, make] of CHECKLIST_SHAPES) {
@@ -149,6 +152,7 @@ describe('extractSecurityRegister growth', () => {
       startSize: 20,
       minBaseMs: 0.25,
       maxSize: 3000,
+      floorMs: 0,
     });
     expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
     const largest = growth.n * 8;
@@ -188,11 +192,11 @@ describe('scanMentions on a single huge document', () => {
 
 describe('scanMentions growth', () => {
   const MENTION_SHAPES: Shape[] = [
-    ['repeated mentions', (n) => 'D-1 WR-01 REQ-01 01-02 Phase 3 '.repeat(n)],
+    ['repeated mentions', (n) => 'D-1 WR-01 REQ-01 01-02 Phase 3 '.repeat(Math.ceil(n / 31))],
     ['a capital run', (n) => 'A'.repeat(n)],
     ['a digit run', (n) => '1'.repeat(n)],
     ['a date-fragment run', (n) => '01-02-03-'.repeat(Math.ceil(n / 9))],
-    ['many short lines', (n) => 'line with D-1 and 01-02\n'.repeat(n)],
+    ['many short lines', (n) => 'line with D-1 and 01-02\n'.repeat(Math.ceil(n / 24))],
   ];
   for (const [name, make] of MENTION_SHAPES) {
     it(`stays linear on ${name}`, { timeout: TIMEOUT }, () => {
