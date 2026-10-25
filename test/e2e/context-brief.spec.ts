@@ -171,6 +171,29 @@ test.describe('CONTEXT brief — Lendshed fixture (4198)', () => {
 
     await expect(page.locator('.artifact-meta-row .source-note')).toContainText('SIGN-01');
   });
+
+  test('phase 04: Already-decided note is a collapsed 9-row aside, out-strip has 1 item, no extras', async ({
+    page,
+  }) => {
+    const url = await resolveFixtureUrl(FIXTURE_BASE_URL, '04-bulk-loan-export/04-CONTEXT.md');
+    await page.goto(`${FIXTURE_BASE_URL}${url}`);
+    await page.locator('#context-boundary').waitFor({ state: 'visible' });
+    await expect(page.locator('.view-context-out li')).toHaveCount(1);
+    const decided = page.locator('#boundary-note-1');
+    const decidedHead = decided.locator('.view-context-aside-toggle');
+    await expect(decidedHead).toContainText('Already decided');
+    await expect(decidedHead).toHaveAttribute('aria-expanded', 'false');
+    await decidedHead.click();
+    await expect(decided.locator('table tbody tr')).toHaveCount(9);
+    // The file's one boundary section holds no unrecognised extra: canonical references and existing
+    // code insights are claimed as back-matter aside rows (quick-260925-3ob). Phase 04 therefore yields
+    // 0 extras and three asides: the Already-decided note, references and code. Its
+    // `<blocking_amendments>` section ("One research recommendation is superseded") is a planner
+    // warning, not requirement amendments, so it is recognised and hidden.
+    await expect(page.locator('.view-context-extra')).toHaveCount(0);
+    await expect(page.locator('.view-context-aside')).toHaveCount(3);
+    await expect(page.locator('#context-amendments')).toHaveCount(0);
+  });
 });
 
 test.describe('CONTEXT brief — studio-portal fixtures (4198)', () => {
@@ -191,30 +214,6 @@ test.describe('CONTEXT brief — studio-portal fixtures (4198)', () => {
     await expect(target.locator('.view-context-detail')).toBeVisible();
 
     await expect(page.locator('.artifact-meta-row .source-note')).toContainText('AUTH-01');
-  });
-
-  test('SP 04: Locked-upstream note is a collapsed 9-row aside, out-strip has 1 item, no extras', async ({
-    page,
-  }) => {
-    const url = await resolveFixtureUrl(SP_BASE_URL, '04-bulk-archive-downloads/04-CONTEXT.md');
-    await page.goto(`${SP_BASE_URL}${url}`);
-    await page.locator('#context-boundary').waitFor({ state: 'visible' });
-    await expect(page.locator('.view-context-out li')).toHaveCount(1);
-    const locked = page.locator('#boundary-note-1');
-    const lockedHead = locked.locator('.view-context-aside-toggle');
-    await expect(lockedHead).toContainText('Locked upstream');
-    await expect(lockedHead).toHaveAttribute('aria-expanded', 'false');
-    await lockedHead.click();
-    await expect(locked.locator('table tbody tr')).toHaveCount(9);
-    // Updated 2026-09-25 (found stale while running quick-260925-3ug Task 3): this file's one
-    // `##` section stopped being an unrecognised "extra" in quick-260925-3ob, which taught the
-    // brief to claim canonical references and existing code insights as back-matter aside rows.
-    // SP 04 now yields 0 extras and three asides — the Locked-upstream note, references, code. Its
-    // `<blocking_amendments>` section ("One research recommendation is superseded") is a planner
-    // warning, not requirement amendments, so it is recognised and hidden.
-    await expect(page.locator('.view-context-extra')).toHaveCount(0);
-    await expect(page.locator('.view-context-aside')).toHaveCount(3);
-    await expect(page.locator('#context-amendments')).toHaveCount(0);
   });
 
   test('SP quick 2pr: .view-context-note count is 10', async ({ page }) => {

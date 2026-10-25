@@ -8,6 +8,7 @@ import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import { SP_PLANNING } from '../helpers/studio-portal.ts';
+import { fxPath } from '../helpers/fixture-project.ts';
 import { extractContextBrief, topSections, type ContextBrief } from '../../src/planning-repo/handlers/context-brief.ts';
 import { composeContextBrief } from '../../src/web/views/context-brief.ts';
 
@@ -22,6 +23,8 @@ interface CorpusCase {
   label: string;
   path: string;
   isRepoFile: boolean;
+  /** A Lendshed fixture file: always runs, and a missing file throws through fxPath. */
+  isFixture?: boolean;
   decisions: number;
   notes: number;
   open: number;
@@ -39,7 +42,7 @@ const CASES: CorpusCase[] = [
   { label: 'SP 01', path: `${SP_ROOT}/phases/01-portal-owned-identity-sessions/01-CONTEXT.md`, isRepoFile: false, decisions: 19, notes: 0, open: 3, amendments: 0 },
   { label: 'SP 02', path: `${SP_ROOT}/phases/02-roles-permission-enforcement/02-CONTEXT.md`, isRepoFile: false, decisions: 21, notes: 0, open: 0, amendments: 1 },
   { label: 'SP 03', path: `${SP_ROOT}/phases/03-account-administration-session-control/03-CONTEXT.md`, isRepoFile: false, decisions: 16, notes: 0, open: 0, amendments: 1 },
-  { label: 'SP 04', path: `${SP_ROOT}/phases/04-bulk-archive-downloads/04-CONTEXT.md`, isRepoFile: false, decisions: 14, notes: 0, open: 3, amendments: 1 },
+  { label: 'FX 04', path: fxPath('phases/04-bulk-loan-export/04-CONTEXT.md'), isRepoFile: false, isFixture: true, decisions: 8, notes: 0, open: 3, amendments: 1 },
   { label: 'SP quick 2pr', path: `${SP_ROOT}/quick/260803-2pr-we-should-implement-right-click-context-/260803-2pr-CONTEXT.md`, isRepoFile: false, decisions: 9, notes: 10, open: 0, amendments: 0 },
   { label: 'LB v1.0/01', path: '.planning/milestones/v1.0-phases/01-read-layer-domain-model/01-CONTEXT.md', isRepoFile: true, decisions: 16, notes: 0, open: 0, amendments: 0 },
   { label: 'LB v1.0/02', path: '.planning/milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-CONTEXT.md', isRepoFile: true, decisions: 17, notes: 0, open: 0, amendments: 0 },
@@ -66,7 +69,7 @@ function briefOf(rawContent: string): ContextBrief {
 
 describe('CONTEXT brief corpus guard (19 files)', () => {
   for (const testCase of CASES) {
-    const runner = testCase.isRepoFile ? it : it.runIf(existsSync(testCase.path));
+    const runner = testCase.isRepoFile || testCase.isFixture ? it : it.runIf(existsSync(testCase.path));
 
     runner(`${testCase.label}: composeContextBrief is non-null`, async () => {
       const body = await loadBody(testCase);

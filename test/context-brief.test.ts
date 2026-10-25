@@ -26,7 +26,6 @@ async function repoBody(relativePath: string): Promise<string> {
 const SP01_PATH = `${SP_ROOT}/phases/01-portal-owned-identity-sessions/01-CONTEXT.md`;
 const SP02_PATH = `${SP_ROOT}/phases/02-roles-permission-enforcement/02-CONTEXT.md`;
 const SP03_PATH = `${SP_ROOT}/phases/03-account-administration-session-control/03-CONTEXT.md`;
-const SP04_PATH = `${SP_ROOT}/phases/04-bulk-archive-downloads/04-CONTEXT.md`;
 const LB05_PATH = '.planning/milestones/v1.1-phases/05-per-type-document-views/05-CONTEXT.md';
 
 describe('extractContextBrief — SP phases/01 boundary', () => {
@@ -321,11 +320,20 @@ describe('extractContextBrief — canonical references and existing code insight
     expect(extractContextBrief(doc).resolved.map((a) => a.heading)).toEqual(['✅ Resolved open question: audit actor shape']);
   });
 
-  it.runIf(existsSync(SP04_PATH))('SP 04: <blocking_amendments> recognised by tag, not by heading text', async () => {
-    const body = await readFile(SP04_PATH, 'utf8');
+  it('Lendshed 04: <blocking_amendments> recognised by tag, not by heading text', async () => {
+    const body = await readFile(fxPath('phases/04-bulk-loan-export/04-CONTEXT.md'), 'utf8');
     const brief = extractContextBrief(body);
     expect(brief.amendments).toHaveLength(1);
     expect(brief.amendments[0].heading).not.toMatch(/requirement amendments/i);
+    // The locked-upstream-style table sits in the boundary as a collapsed aside, not in amendments.
+    expect(brief.boundary?.notes).toHaveLength(1);
+    expect(brief.boundary?.notes[0].title).toBe('Already decided — do not re-open, do not re-research');
+    const table = brief.boundary?.notes[0].blocks[0];
+    expect(table?.kind).toBe('table');
+    if (table?.kind === 'table') expect(table.rows).toHaveLength(9);
+    expect(brief.boundary?.outList).toHaveLength(1);
+    expect(brief.boundary?.extras).toHaveLength(0);
+    expect(brief.openQuestions[0].items).toHaveLength(3);
   });
 });
 
