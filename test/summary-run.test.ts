@@ -17,7 +17,7 @@ import { tryParseFrontmatter } from '../src/planning-repo/frontmatter.ts';
 const LB = new URL('../.planning/', import.meta.url).pathname;
 const LB0501 = `${LB}milestones/v1.1-phases/05-per-type-document-views/05-01-SUMMARY.md`;
 const LB0X4 = `${LB}milestones/v1.0-quick/260910-0x4-close-every-tech-debt-item-in-planning-v/260910-0x4-SUMMARY.md`;
-const LB3US = `${LB}quick/260922-3us-build-sketch-004-b3-folded-chapters-docu/260922-3us-SUMMARY.md`;
+const LB3US = `${LB}milestones/v2.0-quick/260922-3us-build-sketch-004-b3-folded-chapters-docu/260922-3us-SUMMARY.md`;
 const SP0406 = `${SP_PLANNING}/phases/04-bulk-archive-downloads/04-06-SUMMARY.md`;
 const SP0101 = `${SP_PLANNING}/phases/01-portal-owned-identity-sessions/01-01-SUMMARY.md`;
 const SP0106 = `${SP_PLANNING}/phases/01-portal-owned-identity-sessions/01-06-SUMMARY.md`;

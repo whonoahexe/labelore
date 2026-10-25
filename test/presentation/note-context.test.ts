@@ -88,7 +88,7 @@ describe('the notes that became a todo', () => {
     });
   });
 
-  it('star and lsk: promoted word for word - Became, pending, P2 / medium, general', () => {
+  it('star and lsk: promoted word for word - Became, P2 / medium, general; star pending, lsk done', () => {
     const star = contextOf('star').todos;
     expect(star).toHaveLength(1);
     expect(star[0]).toMatchObject({
@@ -108,10 +108,10 @@ describe('the notes that became a todo', () => {
     expect(lsk).toHaveLength(1);
     // The todo also mentions the note; promoted wins.
     expect(lsk[0]).toMatchObject({
-      path: `${TODO}pending/001-sketches-page-in-labelore.md`,
+      path: `${TODO}completed/001-sketches-page-in-labelore.md`,
       relation: 'became',
       via: 'promoted',
-      status: 'pending',
+      status: 'done',
       weight: 'P2',
       level: 'medium',
       area: 'general',
