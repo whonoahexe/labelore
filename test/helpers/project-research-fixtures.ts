@@ -1,12 +1,13 @@
-// Hand-written synthetic research files (quick-261024-k8u) reproducing the shapes Cinedise Portal's
-// `.planning/research/` drifts into, as the sketches' data.js captured them (the real Cinedise files
-// are not on every host, so the drift is pinned here). Labelore's own files are read from disk by the
-// tests that want the template shape.
+// Hand-written synthetic research files (quick-261024-k8u) for a made-up project, Lendshed (the tool
+// library in test/fixtures/lendshed). They reproduce the shapes a project's `.planning/research/`
+// drifts into, so the drift is pinned here without reading any real project. Every name, number and
+// phrase in them is invented. Labelore's own files are read from disk by the tests that want the
+// template shape.
 
 export const DRIFT_SUMMARY = `# Project Research Summary
 
-**Project:** Cinedise Portal, milestone v2.0 Vault Ingest
-**Domain:** Media vault ingest and review
+**Project:** Lendshed, milestone v2.0 Vault Ingest
+**Domain:** Loan ledger ingest and review
 **Researched:** 2026-07-30
 **Confidence:** MEDIUM-HIGH (several primary sources)
 
@@ -183,7 +184,7 @@ Things a vault must do.
 
 ## Competitor Feature Analysis
 
-| Feature | Frame.io (hosted review) | Dropbox (sync) | Resilio (peer to peer) | Our approach |
+| Feature | Lendhub (hosted review) | Syncbox (sync) | Peerlink (peer to peer) | Our approach |
 |---------|--------------------------|----------------|------------------------|--------------|
 | Review | Core | N/A | N/A | A queue |
 | Resume | Partial | Yes | Yes | Tokens |
@@ -287,7 +288,7 @@ The mount point degrades to an empty directory, so the probe reports the root fi
 ### Pitfall 2: Exit codes are a bitmask
 
 **What goes wrong:**
-smartctl exits non-zero on a failing disk.
+diskcheck exits non-zero on a failing disk.
 
 **How to avoid:**
 Decode the bits.
@@ -328,7 +329,7 @@ export const DRIFT_SCALING = `# Architecture Research
 
 A small studio; scale means data volume on one machine, not users.
 
-| Concern | Today | Per shoot (hundreds of GB) | Per year |
+| Concern | Today | Per season (hundreds of GB) | Per year |
 |---------|-------|----------------------------|----------|
 | \`ingest_rows\` | n/a | thousands | tens of thousands |
 | Write rate | low | per-file, far below limits | unchanged |

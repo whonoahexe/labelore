@@ -1,6 +1,7 @@
 // The Research page's view model (quick-261024-k8u): the frame, the findings, the numbers and the
-// no-source-links rule. Built from Labelore's own research files and the synthetic drift fixtures,
-// parsed through the real handler.
+// no-source-links rule. Built from Labelore's current research files, its archived v1.0 research (the
+// template shape today's files no longer use) and the synthetic drift fixtures, parsed through the
+// real handler.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -33,10 +34,12 @@ import {
 type Contents = Partial<Record<'SUMMARY' | 'STACK' | 'FEATURES' | 'ARCHITECTURE' | 'PITFALLS', string>>;
 
 const RESEARCH_DIR = join(import.meta.dirname, '..', '..', '.planning', 'research');
-const realContents = (): Contents =>
-  Object.fromEntries(
-    ['SUMMARY', 'STACK', 'FEATURES', 'ARCHITECTURE', 'PITFALLS'].map((name) => [name, readFileSync(join(RESEARCH_DIR, `${name}.md`), 'utf8')]),
-  );
+const contentsFrom = (dir: string): Contents =>
+  Object.fromEntries(['SUMMARY', 'STACK', 'FEATURES', 'ARCHITECTURE', 'PITFALLS'].map((name) => [name, readFileSync(join(dir, `${name}.md`), 'utf8')]));
+const realContents = (): Contents => contentsFrom(RESEARCH_DIR);
+// The v1.0 research, archived when v2.1 research began. Shipped, so it no longer changes.
+const ARCHIVE_DIR = join(import.meta.dirname, '..', '..', '.planning', 'milestones', 'v1.0-research');
+const archivedContents = (): Contents => contentsFrom(ARCHIVE_DIR);
 const driftContents = (): Contents => ({
   SUMMARY: DRIFT_SUMMARY,
   STACK: DRIFT_STACK,
@@ -90,8 +93,8 @@ describe('splitFinding', () => {
   });
 });
 
-describe('buildResearchViewModel on Labelore', () => {
-  const model = buildResearchViewModel(presentationOf(realContents()));
+describe("buildResearchViewModel on Labelore's archived v1.0 research", () => {
+  const model = buildResearchViewModel(presentationOf(archivedContents()));
 
   it('lays out five spines numbered 00 to 04 under the project name', () => {
     expect(model.available).toBe(true);
@@ -134,11 +137,157 @@ describe('buildResearchViewModel on Labelore', () => {
     expect(byKey.features.finding?.head).toBe('**11** things users expect, **7** that set it apart, and **9** worth refusing to build.');
     expect(byKey.features.moreLabel).toBeNull();
     expect(byKey.architecture.finding?.head).toMatch(/^System built as two clean layers/);
-    expect(byKey.pitfalls.finding?.head).toBe("The worst of 10: Building the parser against studio-portal's shape, not GSD's contract.");
+    expect(byKey.pitfalls.finding?.head).toMatch(/^The worst of 10: Building the parser against /);
   });
 
   it('takes a file confidence from the Summary table first', () => {
     expect(model.files.map((file) => file.confidence)).toEqual(['HIGH', 'HIGH', 'HIGH', 'HIGH', 'HIGH']);
+  });
+});
+
+describe("buildResearchViewModel on Labelore's current research", () => {
+  const model = buildResearchViewModel(presentationOf(realContents()));
+  const byKey = Object.fromEntries(model.files.map((file) => [file.key, file]));
+
+  it('lays out five spines numbered 00 to 04 under the project name', () => {
+    expect(model.available).toBe(true);
+    expect(model.title).toBe('Labelore');
+    expect(model.fileCount).toBe(5);
+    expect(model.files.map((file) => [file.number, file.key])).toEqual([
+      ['00', 'summary'],
+      ['01', 'stack'],
+      ['02', 'features'],
+      ['03', 'architecture'],
+      ['04', 'pitfalls'],
+    ]);
+    expect(model.researched).toBe('25 Oct 2026');
+    expect(model.confidence.level).toBe('HIGH');
+    expect(model.files.map((file) => file.confidence)).toEqual(['HIGH', 'HIGH', 'HIGH', 'HIGH', 'HIGH']);
+  });
+
+  it('numbers each file: no phases lifted, 8 stack entries, 23 features, 6 anti-patterns, 33 pitfalls', () => {
+    expect(byKey.summary.keyNumber).toEqual({ value: 0, label: 'phases suggested' });
+    expect(byKey.summary.nums).toEqual([
+      { value: 0, label: 'phases' },
+      { value: 9, label: 'gaps' },
+    ]);
+    expect(byKey.stack.keyNumber).toEqual({ value: 8, label: 'stack entries' });
+    expect(byKey.features.keyNumber).toEqual({ value: 23, label: 'features weighed' });
+    expect(byKey.architecture.keyNumber).toEqual({ value: 6, label: 'anti-patterns' });
+    expect(byKey.pitfalls.keyNumber).toEqual({ value: 33, label: 'critical pitfalls' });
+    expect(byKey.pitfalls.nums.map((stat) => stat.label)).toEqual(['critical pitfalls', 'warning signs', 'checks before done']);
+    expect(byKey.pitfalls.nums.map((stat) => stat.value)).toEqual([33, 52, 13]);
+  });
+
+  it('leads each file with its finding, or with none when the file has no headline', () => {
+    expect(byKey.summary.finding?.head).toBe('v2.1 is an integration milestone.');
+    expect(byKey.summary.finding?.more).toHaveLength(3);
+    expect(byKey.summary.moreLabel).toBe('Read the full summary');
+    expect(byKey.stack.finding).toBeNull();
+    expect(byKey.stack.moreLabel).toBeNull();
+    expect(byKey.features.finding?.head).toBe('**10** things users expect, **6** that set it apart, and **7** worth refusing to build.');
+    expect(byKey.features.moreLabel).toBeNull();
+    expect(byKey.architecture.finding?.head).toMatch(/^Current pipeline: CLI argument/);
+    expect(byKey.pitfalls.finding?.head).toMatch(/^The worst of 33: The URL is also the identity/);
+  });
+
+  it('the Summary panel has no phases, no entry gate and nine gaps', () => {
+    const summary = model.summary!;
+    expect(summary.phases).toEqual([]);
+    expect(summary.inspectors).toEqual([]);
+    expect(summary.tally).toBe('');
+    expect(summary.entryGate).toBeNull();
+    expect(summary.whyOrder).toEqual([]);
+    expect(summary.gaps).toHaveLength(9);
+  });
+
+  it('the Stack panel has no decision, two layers of 6 and 2 and nine alternatives', () => {
+    const stack = model.stack!;
+    expect(stack.reasons).toEqual([]);
+    expect(stack.layers.map((layer) => [layer.title, layer.items.length])).toEqual([
+      ['Core Technologies', 6],
+      ['Development Tools', 2],
+    ]);
+    expect(stack.stackTally).toBe('8 entries · 2 layers');
+    expect(byKey.stack.keyNumber.value).toBe(stack.layers.reduce((total, layer) => total + layer.items.length, 0));
+    expect(stack.alternatives?.label).toBe('Use it instead when');
+    expect(stack.alternatives?.tally).toBe('9 weighed');
+    expect(stack.alternatives?.rows).toHaveLength(9);
+  });
+
+  it('the Features panel reads 10, 6 and 7 with no groups and no competitor table', () => {
+    const features = model.features!;
+    expect(features.kinds.map((kind) => [kind.label, kind.count])).toEqual([
+      ['Expected', 10],
+      ['Differentiators', 6],
+      ['Not to build', 7],
+    ]);
+    expect(features.expected.groups).toEqual([]);
+    expect(features.differentiators.groups).toEqual([]);
+    expect(features.anti.items).toHaveLength(7);
+    expect(features.anti.items[0].details.map((detail) => detail.label)).toEqual(['Why it gets asked for', "Why it's a problem"]);
+    expect(features.competitors).toBeNull();
+  });
+
+  it('the Architecture panel has six anti-patterns and no build order, overview or structure', () => {
+    const architecture = model.architecture!;
+    expect(architecture.buildOrder).toBeNull();
+    expect(architecture.overview).toBeNull();
+    expect(architecture.structure).toBeNull();
+    expect(architecture.antiPatterns).toHaveLength(6);
+    expect(architecture.antiPatterns[0].details.map((detail) => detail.label)).toEqual(["Why it's wrong"]);
+    expect(architecture.antiTally).toBe('6 to avoid');
+  });
+
+  it('the Scaling section is a matrix of five concerns across three scales with no pinned bottleneck', () => {
+    const scaling = model.architecture!.scaling!;
+    expect(scaling.single).toBe(false);
+    expect(scaling.tally).toBe('3 scales · 5 concerns');
+    expect(scaling.tiers[0]).toEqual({ name: '1 project', sub: 'today' });
+    expect(scaling.tiers).toHaveLength(3);
+    expect(scaling.concerns.map((concern) => concern.name)).toEqual(['Memory', 'Startup', 'Search', 'Folder scan', 'Refresh']);
+    expect(scaling.bottlenecks).toEqual([]);
+    expect(scaling.notBottlenecks).toEqual([]);
+    expect(scaling.concerns.every((concern) => concern.cells.every((cell) => cell.pin === null))).toBe(true);
+  });
+
+  it('the Pitfalls panel starts at the URL-as-identity pitfall, with no how-likely meter and four signs', () => {
+    const panel = model.pitfalls!;
+    const first = panel.pitfalls[0];
+    expect(panel.pitfalls).toHaveLength(33);
+    expect(first.name).toBe('URL is identity');
+    expect(first.title).toMatch(/^The URL is also the identity/);
+    expect(first.meter).toBeNull();
+    expect(first.firstSign).toMatch(/^A payload contains both/);
+    expect(first.signs).toHaveLength(4);
+    expect(first.moreSigns).toBe(3);
+    expect(first.tabs.map((tab) => tab.key)).toEqual(['signs', 'avoid', 'why', 'verify']);
+    expect(first.wrong.head.length).toBeGreaterThan(0);
+    expect(panel.tally).toBe('33 · 52 warning signs');
+    expect(panel.checks).toHaveLength(13);
+    expect(panel.checksTally).toBe('13 checks before calling it done');
+  });
+
+  it('the performance, security and UX tables hold 7, 8 and 9 rows', () => {
+    const tables = model.pitfalls!.tables!;
+    expect(tables.tally).toBe('24 more to avoid');
+    expect(tables.kinds.map((kind) => [kind.label, kind.count, kind.itemLabel, kind.fixLabel])).toEqual([
+      ['Performance traps', 7, 'Trap', 'Prevention'],
+      ['Security mistakes', 8, 'Mistake', 'Prevention'],
+      ['UX pitfalls', 9, 'Pitfall', 'Better approach'],
+    ]);
+    const [performance, security, ux] = tables.kinds;
+    expect(performance.items[1]).toEqual({
+      bad: 'Loading all projects',
+      good: 'Lazy load plus LRU',
+      details: [
+        { label: 'Symptoms', text: 'Slow start, high memory' },
+        { label: 'When it breaks', text: 'A handful of 500-file projects' },
+      ],
+    });
+    expect(security.lead).toBeNull();
+    expect(security.items[0].details.map((detail) => detail.label)).toEqual(['Risk']);
+    expect(ux.items[0].details.map((detail) => detail.label)).toEqual(['User impact']);
   });
 });
 
@@ -150,8 +299,8 @@ describe('buildResearchViewModel on the drift fixtures', () => {
   });
 
   it('takes the project name when the line has no milestone, and the presentation name without a Summary', () => {
-    const plain = DRIFT_SUMMARY.replace('Cinedise Portal, milestone v2.0 Vault Ingest', 'Cinedise Portal');
-    expect(buildResearchViewModel(presentationOf({ SUMMARY: plain })).title).toBe('Cinedise Portal');
+    const plain = DRIFT_SUMMARY.replace('Lendshed, milestone v2.0 Vault Ingest', 'Lendshed');
+    expect(buildResearchViewModel(presentationOf({ SUMMARY: plain })).title).toBe('Lendshed');
     expect(buildResearchViewModel(presentationOf({ STACK: DRIFT_STACK }, 'Named By Folder')).title).toBe('Named By Folder');
   });
 
@@ -226,15 +375,21 @@ describe('the no-source-links rule', () => {
   it('carries no file name, .planning path, line number or artifact URL in the serialised view model', () => {
     // The drift fixtures never mention a research file by name, so any file name here would be the
     // view model's own. Labelore's files discuss other planning files in prose, which is content.
+    // Today's research quotes `/artifacts/` URLs in its prose (it is about replacing them), so for
+    // Labelore's files the view model may carry that text only as many times as the files do.
+    const occurrences = (text: string, needle: string): number => text.split(needle).length - 1;
     for (const [contents, strict] of [
       [driftContents(), true],
       [realContents(), false],
+      [archivedContents(), false],
     ] as const) {
       const json = JSON.stringify(buildResearchViewModel(presentationOf(contents)));
+      const prose = Object.values(contents).join('\n');
       expect(json).not.toMatch(/\.planning\/research/);
-      expect(json).not.toMatch(/\/artifacts\//);
+      expect(occurrences(json, '/artifacts/')).toBeLessThanOrEqual(occurrences(prose, '/artifacts/'));
       expect(json).not.toMatch(/"line(s|Number)?"/);
       if (!strict) continue;
+      expect(json).not.toMatch(/\/artifacts\//);
       expect(json).not.toMatch(/\.planning/);
       for (const name of ['SUMMARY.md', 'STACK.md', 'FEATURES.md', 'ARCHITECTURE.md', 'PITFALLS.md']) {
         expect(json).not.toContain(name);
@@ -302,7 +457,7 @@ describe('gates, tiles and the Summary panel', () => {
       sub: 'Before any phase writes to the vault',
       conditions: ['The vault is mounted read-write', 'A backup exists'],
     });
-    expect(buildResearchViewModel(presentationOf(realContents())).summary?.entryGate).toBeNull();
+    expect(buildResearchViewModel(presentationOf(archivedContents())).summary?.entryGate).toBeNull();
   });
 
   it('keeps the first plain preamble paragraph as the note', () => {
@@ -338,21 +493,21 @@ describe('gates, tiles and the Summary panel', () => {
   it('classifies the research flag', () => {
     expect(summary.inspectors[1].flag).toMatchObject({ kind: 'needs', label: 'Needs deeper research' });
     expect(summary.inspectors[0].flag).toMatchObject({ kind: 'standard', label: 'Standard patterns' });
-    const labelore = buildResearchViewModel(presentationOf(realContents())).summary!;
+    const labelore = buildResearchViewModel(presentationOf(archivedContents())).summary!;
     expect(labelore.inspectors[0].flag?.kind).toBe('standard');
     expect(labelore.tally).toBe('4 phases');
   });
 
   it('turns Avoids into pitfall chips: named and navigable with PITFALLS, plain without', () => {
-    const labelore = buildResearchViewModel(presentationOf(realContents())).summary!;
+    const labelore = buildResearchViewModel(presentationOf(archivedContents())).summary!;
     expect(labelore.inspectors[0].avoids.map((chip) => [chip.label, chip.navigable])).toEqual([
       ['01', true],
       ['03', true],
       ['04', true],
       ['09', true],
     ]);
-    expect(labelore.inspectors[0].avoids[0].short).toBe('Overfit to studio-portal');
-    const { PITFALLS: _dropped, ...rest } = realContents();
+    expect(labelore.inspectors[0].avoids[0].short).toMatch(/^Overfit to /);
+    const { PITFALLS: _dropped, ...rest } = archivedContents();
     void _dropped;
     const without = buildResearchViewModel(presentationOf(rest)).summary!;
     expect(without.inspectors[0].avoids.every((chip) => !chip.navigable && chip.short === null)).toBe(true);
@@ -363,7 +518,7 @@ describe('gates, tiles and the Summary panel', () => {
     expect(summary.inspectors[0].facets).toEqual([]);
     expect(summary.whyOrder).toHaveLength(2);
     expect(summary.gaps).toHaveLength(2);
-    const labelore = buildResearchViewModel(presentationOf(realContents())).summary!;
+    const labelore = buildResearchViewModel(presentationOf(archivedContents())).summary!;
     expect(labelore.inspectors[0].deliversCount).toBe(6);
     expect(labelore.whyOrder).toHaveLength(4);
     expect(labelore.gaps).toHaveLength(4);
@@ -371,8 +526,8 @@ describe('gates, tiles and the Summary panel', () => {
 });
 
 describe('the Stack panel', () => {
-  it("Labelore's decision has three reasons with bold leads, and the layers sum to the key number", () => {
-    const model = buildResearchViewModel(presentationOf(realContents()));
+  it("Labelore's archived decision has three reasons with bold leads, and the layers sum to the key number", () => {
+    const model = buildResearchViewModel(presentationOf(archivedContents()));
     const stack = model.stack!;
     expect(stack.reasons).toHaveLength(3);
     expect(stack.reasons[0].lead).toBe('A CLI-launched path argument is the primary entry point, every single time it runs');
@@ -410,8 +565,8 @@ describe('the Stack panel', () => {
 });
 
 describe('the Features panel', () => {
-  it("Labelore's kinds read 11, 7 and 9 with no groups, and nine swaps", () => {
-    const features = buildResearchViewModel(presentationOf(realContents())).features!;
+  it("Labelore's archived kinds read 11, 7 and 9 with no groups, and nine swaps", () => {
+    const features = buildResearchViewModel(presentationOf(archivedContents())).features!;
     expect(features.kinds.map((kind) => [kind.label, kind.count])).toEqual([
       ['Expected', 11],
       ['Differentiators', 7],
@@ -438,11 +593,11 @@ describe('the Features panel', () => {
 
   it('names our column after the project and splits each rival into a name over its parenthetical', () => {
     const features = buildResearchViewModel(presentationOf(driftContents())).features!;
-    expect(features.competitors?.ours).toEqual({ name: 'Cinedise Portal', sub: 'Our approach' });
+    expect(features.competitors?.ours).toEqual({ name: 'Lendshed', sub: 'Our approach' });
     expect(features.competitors?.rivals).toEqual([
-      { name: 'Frame.io', sub: 'hosted review' },
-      { name: 'Dropbox', sub: 'sync' },
-      { name: 'Resilio', sub: 'peer to peer' },
+      { name: 'Lendhub', sub: 'hosted review' },
+      { name: 'Syncbox', sub: 'sync' },
+      { name: 'Peerlink', sub: 'peer to peer' },
     ]);
     expect(features.competitors?.tally).toBe('2 features · 3 compared');
     expect(features.competitors?.note).toBe('The matrix says the gap is verification, not transfer.');
@@ -454,8 +609,8 @@ describe('the Features panel', () => {
 // Task 3: the Architecture and Pitfalls panels
 
 describe('the Architecture panel', () => {
-  it("Labelore's prose build order gives steps A to D with dependencies and the inverse", () => {
-    const architecture = buildResearchViewModel(presentationOf(realContents())).architecture!;
+  it("Labelore's archived prose build order gives steps A to D with dependencies and the inverse", () => {
+    const architecture = buildResearchViewModel(presentationOf(archivedContents())).architecture!;
     const order = architecture.buildOrder!;
     expect(order.steps.map((step) => step.id)).toEqual(['A', 'B', 'C', 'D']);
     expect(order.steps[1].depends).toEqual(['A']);
@@ -469,7 +624,7 @@ describe('the Architecture panel', () => {
   });
 
   it('parses anti-patterns into swaps in both spellings, with "What people do" only when present', () => {
-    const labelore = buildResearchViewModel(presentationOf(realContents())).architecture!;
+    const labelore = buildResearchViewModel(presentationOf(archivedContents())).architecture!;
     expect(labelore.antiPatterns).toHaveLength(3);
     expect(labelore.antiPatterns[0].details.map((detail) => detail.label)).toEqual(['What people do', "Why it's wrong"]);
     expect(labelore.antiTally).toBe('3 to avoid');
@@ -506,12 +661,12 @@ describe('the Architecture panel', () => {
 });
 
 describe('the Pitfalls panel', () => {
-  it("Labelore's first pitfall is Overfit to studio-portal, very high, with a first sign and its other signs counted", () => {
-    const panel = buildResearchViewModel(presentationOf(realContents())).pitfalls!;
+  it("Labelore's archived first pitfall is an overfit one, very high, with a first sign and its other signs counted", () => {
+    const panel = buildResearchViewModel(presentationOf(archivedContents())).pitfalls!;
     const first = panel.pitfalls[0];
     expect(panel.pitfalls).toHaveLength(10);
-    expect(first.name).toBe('Overfit to studio-portal');
-    expect(first.title).toMatch(/^Building the parser against studio-portal/);
+    expect(first.name).toMatch(/^Overfit to /);
+    expect(first.title).toMatch(/^Building the parser against /);
     expect(first.meter).toMatchObject({ cells: 4, filled: 4, text: 'Very high' });
     expect(first.firstSign!.length).toBeGreaterThan(0);
     expect(first.moreSigns).toBe(first.signs.length - 1);
@@ -557,7 +712,7 @@ describe('the Pitfalls panel', () => {
   });
 
   it('cuts a long avoid sentence at its dash and leads a bold avoid with its bold part', () => {
-    const labelore = buildResearchViewModel(presentationOf(realContents())).pitfalls!;
+    const labelore = buildResearchViewModel(presentationOf(archivedContents())).pitfalls!;
     expect(labelore.pitfalls.every((pitfall) => pitfall.avoid.every((avoid) => avoid.main.length > 0))).toBe(true);
     const panel = buildResearchViewModel(presentationOf({ PITFALLS: DRIFT_PITFALLS.replace('- Check mountinfo first', '- **Check mountinfo first.** Then trust nothing else') })).pitfalls!;
     expect(panel.pitfalls[0].avoid[0]).toEqual({ main: 'Check mountinfo first', rest: 'Then trust nothing else' });
@@ -565,8 +720,8 @@ describe('the Pitfalls panel', () => {
 });
 
 describe('the Scaling section (036 A)', () => {
-  it("Labelore: one bottleneck pinned at the second scale, its fix split off, the note kept aside", () => {
-    const scaling = buildResearchViewModel(presentationOf(realContents())).architecture!.scaling!;
+  it("Labelore's archived research: one bottleneck pinned at the second scale, its fix split off, the note kept aside", () => {
+    const scaling = buildResearchViewModel(presentationOf(archivedContents())).architecture!.scaling!;
     expect(scaling.single).toBe(true);
     expect(scaling.tally).toBe('3 scales · 1 bottleneck');
     expect(scaling.tiers[1]).toEqual({ name: 'A much larger single project', sub: 'thousands of files, tens of MB' });
@@ -588,7 +743,7 @@ describe('the Scaling section (036 A)', () => {
       ['holds', 'changes', 'holds'],
       ['holds', 'changes', 'changes'],
     ]);
-    expect(scaling.bottlenecks.map((b) => b.label)).toEqual(['First to break · at Per shoot · Archive disk', 'Second to break']);
+    expect(scaling.bottlenecks.map((b) => b.label)).toEqual(['First to break · at Per season · Archive disk', 'Second to break']);
     expect(scaling.bottlenecks[0].fix).toBe('Mitigation is policy, not code.');
     expect(scaling.concerns[2].cells[1].pin).toBe(0);
   });
@@ -607,8 +762,8 @@ describe('the Scaling section (036 A)', () => {
 });
 
 describe('the performance, security and UX tables (037 B)', () => {
-  it("Labelore: three kinds as swaps, the fix column as the swap's right side, the rest as details", () => {
-    const tables = buildResearchViewModel(presentationOf(realContents())).pitfalls!.tables!;
+  it("Labelore's archived research: three kinds as swaps, the fix column as the swap's right side, the rest as details", () => {
+    const tables = buildResearchViewModel(presentationOf(archivedContents())).pitfalls!.tables!;
     expect(tables.tally).toBe('11 more to avoid');
     expect(tables.kinds.map((kind) => [kind.label, kind.count, kind.itemLabel, kind.fixLabel])).toEqual([
       ['Performance traps', 3, 'Trap', 'Prevention'],
