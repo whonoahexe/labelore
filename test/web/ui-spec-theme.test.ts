@@ -3,11 +3,11 @@
 // compose step on literal ViewInputs: the document wins, the theme fills token-only swatches, a
 // token group splits per token, no theme leaves the output unchanged, and a hostile theme payload
 // is rejected client-side.
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { SP_PLANNING, STUDIO_PORTAL_ROOT } from '../helpers/studio-portal.ts';
+import { FX_ROOT, fxPath } from '../helpers/fixture-project.ts';
 import { InMemoryPlanningFilesystem } from '../../src/planning-fs/in-memory-fs.ts';
 import { LocalFsPlanningFilesystem } from '../../src/planning-fs/local-fs.ts';
 import { loadThemeTokens } from '../../src/planning-repo/theme-tokens.ts';
@@ -275,25 +275,21 @@ describe('UiSpecView — provenance of a stylesheet-painted swatch', () => {
   });
 });
 
-const SP_UI_SPEC = `${SP_PLANNING}/phases/01-portal-owned-identity-sessions/01-UI-SPEC.md`;
+const FX_UI_SPEC = fxPath('phases/01-member-sign-in-sessions/01-UI-SPEC.md');
 
-describe.runIf(existsSync(SP_UI_SPEC) && existsSync(`${STUDIO_PORTAL_ROOT}/frontend/app/globals.css`))(
-  'the studio-portal 01-UI-SPEC painted from its own globals.css',
-  () => {
-    it('every token-only role resolves and nothing is hatched', async () => {
-      const theme = await loadThemeTokens(new LocalFsPlanningFilesystem(STUDIO_PORTAL_ROOT));
-      expect(theme?.source).toBe('frontend/app/globals.css');
-      const spec = composed(readFileSync(SP_UI_SPEC, 'utf8'), theme);
+describe('the Lendshed 01-UI-SPEC painted from its own globals.css', () => {
+  it('every token-only role resolves and nothing is hatched', async () => {
+    const theme = await loadThemeTokens(new LocalFsPlanningFilesystem(FX_ROOT));
+    expect(theme?.source).toBe('frontend/app/globals.css');
+    const spec = composed(readFileSync(FX_UI_SPEC, 'utf8'), theme);
 
-      expect(roleOf(spec, 'Dominant').swatches[0]).toMatchObject({ light: 'oklch(1 0 0)', dark: 'oklch(0.145 0 0)' });
-      expect(roleOf(spec, 'Secondary').swatches.map((s) => s.tokens)).toEqual([['--card'], ['--border']]);
-      expect(roleOf(spec, 'Accent').swatches[0]).toMatchObject({ tokens: ['--primary'] });
-      expect(roleOf(spec, 'Accent').swatches[0].light).not.toBeNull();
-      expect(roleOf(spec, 'Destructive').swatches[0].light).not.toBeNull();
+    expect(roleOf(spec, 'Dominant').swatches[0]).toMatchObject({ light: 'oklch(0.982 0.014 92)', dark: 'oklch(0.204 0.027 150)' });
+    expect(roleOf(spec, 'Secondary').swatches.map((s) => s.tokens)).toEqual([['--card'], ['--border']]);
+    expect(roleOf(spec, 'Accent').swatches[0]).toMatchObject({ tokens: ['--primary'], light: 'oklch(0.468 0.106 152.4)' });
+    expect(roleOf(spec, 'Destructive').swatches[0].light).not.toBeNull();
 
-      const out = render(spec);
-      expect(out).not.toContain('Value not in doc');
-      expect(out).toContain('painted from frontend/app/globals.css');
-    });
-  },
-);
+    const out = render(spec);
+    expect(out).not.toContain('Value not in doc');
+    expect(out).toContain('painted from frontend/app/globals.css');
+  });
+});

@@ -1,9 +1,9 @@
 // quick-261002-li5: the project-stylesheet token resolver and its bounded loader. resolveThemeTokens
 // is the pure parser (light, dark, var chains, at-rule handling, hostile input); loadThemeTokens is
 // the read-only lookup (components.json pointer, fixed candidates, caps, never throws).
-import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { STUDIO_PORTAL_ROOT } from './helpers/studio-portal.ts';
+import { FX_ROOT } from './helpers/fixture-project.ts';
+import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
 import { InMemoryPlanningFilesystem } from '../src/planning-fs/in-memory-fs.ts';
 import { LocalFsPlanningFilesystem } from '../src/planning-fs/local-fs.ts';
 import type { PlanningFilesystem } from '../src/planning-fs/types.ts';
@@ -155,10 +155,20 @@ describe('resolveThemeTokens — walker robustness', () => {
   it('survives unbalanced braces, empty input and a large run of braces without hanging', () => {
     expect(resolve(':root { --a: #fff')?.light).toEqual({ '--a': '#fff' });
     expect(resolve('} } :root { --a: #fff }')?.light).toEqual({ '--a': '#fff' });
-    const started = Date.now();
     expect(resolve('{'.repeat(600 * 1024))).toBeNull();
     expect(resolve('}'.repeat(600 * 1024))).toBeNull();
-    expect(Date.now() - started).toBeLessThan(1000);
+  });
+
+  // A fixed millisecond budget flakes under parallel load; the walker is linear, so a run of braces at
+  // size n and at 8n must read about 8, never about 64 (Pitfall 11).
+  it('a run of braces grows no faster than linearly', () => {
+    for (const brace of ['{', '}']) {
+      const growth = measureGrowth({ make: (n) => brace.repeat(n), run: (input) => void resolve(input) });
+      expect(
+        growth.ratio,
+        `${brace}: ${growth.t1.toFixed(2)}ms at ${growth.n}, ${growth.t2.toFixed(2)}ms at 8x`,
+      ).toBeLessThan(GROWTH_LIMIT);
+    }
   });
 
   it('ignores blocks nested deeper than the depth cap', () => {
@@ -270,17 +280,15 @@ describe('loadThemeTokens', () => {
   });
 });
 
-const SP_CSS = `${STUDIO_PORTAL_ROOT}/frontend/app/globals.css`;
-
-describe.runIf(existsSync(SP_CSS))('loadThemeTokens — the real studio-portal stylesheet', () => {
+describe('loadThemeTokens — the Lendshed stylesheet', () => {
   it('resolves its light and dark tokens through components.json', async () => {
-    const t = await loadThemeTokens(new LocalFsPlanningFilesystem(STUDIO_PORTAL_ROOT));
+    const t = await loadThemeTokens(new LocalFsPlanningFilesystem(FX_ROOT));
     expect(t?.source).toBe('frontend/app/globals.css');
-    expect(t?.light['--background']).toBe('oklch(1 0 0)');
-    expect(t?.light['--primary']).toBe('oklch(0.553 0.195 38.402)');
-    expect(t?.dark['--background']).toBe('oklch(0.145 0 0)');
-    expect(t?.dark['--border']).toBe('oklch(1 0 0 / 10%)');
-    expect(t?.dark['--destructive']).toBe('oklch(0.704 0.191 22.216)');
+    expect(t?.light['--background']).toBe('oklch(0.982 0.014 92)');
+    expect(t?.light['--primary']).toBe('oklch(0.468 0.106 152.4)');
+    expect(t?.dark['--background']).toBe('oklch(0.204 0.027 150)');
+    expect(t?.dark['--border']).toBe('oklch(0.96 0.02 95 / 14%)');
+    expect(t?.dark['--destructive']).toBe('oklch(0.69 0.168 29.8)');
     expect(Object.keys(t?.light ?? {}).some((k) => k.startsWith('--color-'))).toBe(false);
     expect(Object.keys(t?.dark ?? {}).some((k) => k.startsWith('--color-'))).toBe(false);
   });
