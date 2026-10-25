@@ -12,7 +12,7 @@ const FIXTURE_NAMES = {
   'sp-v1-02': 'sp-v1-02-storage-health',
   'lab-v1-02': 'lb-v1-02-situational-awareness',
   'sp-v1-01': 'sp-v1-01-identity',
-  'sp-v1-03': 'sp-v1-03-file-browsing',
+  'lendshed-v1-03': 'lendshed-v1-03-catalogue',
   'sp-v1-04': 'sp-v1-04-transfers',
   'sp-01': 'sp-p01-identity-sessions',
   'sp-02': 'sp-p02-roles',
@@ -191,8 +191,8 @@ describe('buildDiagramGraph — the thin rule (K-fallback)', () => {
     expect(buildDiagramGraph(figure as NonNullable<typeof figure>).thin).toBe(true);
   });
 
-  it('a small figure draws when every card is joined: sp-v1-03 and lb-v1.1-05 (two cards, one link)', () => {
-    for (const id of ['sp-v1-03', 'lb-v1.1-05'] as const) expect(graphOf(id).thin, id).toBe(false);
+  it('a small figure draws when every card is joined: lendshed-v1-03 and lb-v1.1-05 (two cards, one link)', () => {
+    for (const id of ['lendshed-v1-03', 'lb-v1.1-05'] as const) expect(graphOf(id).thin, id).toBe(false);
   });
 
   it('a lone card, or a small figure with a card left unjoined, stays thin', () => {

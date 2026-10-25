@@ -761,7 +761,7 @@
    }
   ]
  },
- "sp-v1-03": {
+ "lendshed-v1-03": {
   "quality": 0.9654924514737598,
   "dangling": 0,
   "nodes": [
@@ -780,7 +780,7 @@
      "│             → dir.read_dir(relative_path)",
      "│             bridged onto a dedicated std::thread (D-16),",
      "│             awaited via a channel with a wall-clock deadline",
-     "│     Cloud:  bounded_proc::run_bounded(rclone lsjson ...)",
+     "│     Annex:  bounded_proc::run_bounded(shedcp lsjson ...)",
      "│             bridged the SAME way — never called inline in the",
      "│             async handler (it is a blocking, sleep-polling fn)",
      "├─ D-05 cruft/dotfile filter, D-08 sort, D-09 kind derivation",
@@ -788,13 +788,13 @@
      "POST /api/dl-ticket {tier, path}",
      "├─ VerifiedIdentity extractor",
      "├─ SAME tiers::scope::resolve() as browse — one implementation",
-     "├─ size-cap check (local: cap_std metadata; cloud: lsjson --stat)",
+     "├─ size-cap check (local: cap_std metadata; annex: lsjson --stat)",
      "└─ tickets.mint(..., TicketPurpose::Download { tier, path })",
      "GET /dl/{ticket}",
      "├─ tickets.consume(ticket, Download{..}) → (tier, path)",
      "├─ tiers::scope::resolve() AGAIN at serve time (defense in depth)",
      "├─ Local:  tokio::fs::File::from_std(cap_file) → ReaderStream",
-     "└─ Cloud:  tokio::process::Command(\"rclone\",\"cat\",...)",
+     "└─ Annex:  tokio::process::Command(\"shedcp\",\"cat\",...)",
      ".stdout(Stdio::piped()) → ReaderStream, streamed live",
      "into the response body — no temp file (D-12)"
     ],

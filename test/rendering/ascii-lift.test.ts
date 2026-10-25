@@ -2,11 +2,10 @@
 // liftModel + liftHTML. The corpus numbers (9 boxes / 1 widened / 46 rows on studio-portal v1.0/02,
 // 0 boxes / 23 nodes on labelore v1.0/02, 3 boxes on LB v1.0/01, 1 box on SP phases/03) were taken
 // by running the sketch's own reference algorithm over the source files, not this port.
-import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import { LS02_SHAPE } from '../helpers/research-fixtures.ts';
-import { SP_PLANNING } from '../helpers/studio-portal.ts';
+import { fxPath } from '../helpers/fixture-project.ts';
 import { extractResearchBriefing } from '../../src/planning-repo/handlers/research-briefing.ts';
 import { isLiftableDiagram, liftDiagram } from '../../src/rendering/ascii-lift.ts';
 import type { LiftCard, LiftFrame, LiftKind, LiftedFigure } from '../../src/rendering/ascii-lift.ts';
@@ -204,10 +203,9 @@ describe('liftDiagram — the corpus diagrams', () => {
     expect(must(liftDiagram(text)).cards.filter((c) => c.kind === 'box')).toHaveLength(3);
   });
 
-  const SP03 = `${SP_PLANNING}/milestones/v1.0-phases/03-file-browsing/03-RESEARCH.md`;
-  it.runIf(existsSync(SP03))('studio-portal v1.0/03 (real file): both ragged-edged boxes', async () => {
+  it('lendshed v1.0/03 (fixture file): both ragged-edged boxes', async () => {
     // The source draws 2 boxes whose right borders wander by a column; both must lift.
-    const text = await diagramOf(SP03);
+    const text = await diagramOf(fxPath('milestones/v1.0-phases/03-catalogue-browsing/03-RESEARCH.md'));
     expect(must(liftDiagram(text)).cards.filter((c) => c.kind === 'box')).toHaveLength(2);
   });
 
@@ -355,7 +353,7 @@ describe('liftDiagram — drifting and open-left boxes (JZT-M4, JZT-M5)', () => 
   });
 
   it('M5: the RUST/AXUM BACKEND box shows no right-edge │ fragment and keeps its tree guides', async () => {
-    const source = await fixture('sp-v1-03-file-browsing-diagram');
+    const source = await fixture('lendshed-v1-03-catalogue-diagram');
     const figure = must(liftDiagram(source));
     const boxes = figure.cards.filter((c) => c.kind === 'box');
     expect(boxes).toHaveLength(2);
