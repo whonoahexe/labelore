@@ -194,7 +194,7 @@ both orders, and teardown.
 **Issue:** The line "Working in the background — you can keep using the page." is shown for every stage,
 including the two that run on the main thread and block it.
 
-**Fix:** scope the claim to the stages where it is true.
+**Fix:** limit the claim to the hand-over steps where it actually holds.
 
 ## Info
 
