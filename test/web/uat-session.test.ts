@@ -1,11 +1,11 @@
 // quick-261001-qk7: composeUatSession, built from literal ViewInput objects and from the real
 // synthetic doc / corpus extractions (test/uat-session.test.ts covers the server extractor; the
 // narrow e2e spec covers the page end to end), plus the static markup of the view.
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { SP_PLANNING } from '../helpers/studio-portal.ts';
+import { fxPath } from '../helpers/fixture-project.ts';
 import { UatHandler } from '../../src/planning-repo/handlers/uat.ts';
 import type { ArtifactRef, RawArtifact } from '../../src/planning-repo/types.ts';
 import {
@@ -33,10 +33,10 @@ const LB02 = new URL(
   '../../.planning/milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-UAT.md',
   import.meta.url,
 );
-const SP103 = `${SP_PLANNING}/milestones/v1.0-phases/03-file-browsing/03-UAT.md`;
-const SP3 = `${SP_PLANNING}/phases/03-account-administration-session-control/03-UAT.md`;
-const SP1 = `${SP_PLANNING}/phases/01-portal-owned-identity-sessions/01-UAT.md`;
-const SP2 = `${SP_PLANNING}/phases/02-roles-permission-enforcement/02-UAT.md`;
+const FX103 = fxPath('milestones/v1.0-phases/03-catalogue-browsing/03-UAT.md');
+const FX3 = fxPath('phases/03-account-admin-and-sessions/03-UAT.md');
+const FX1 = fxPath('phases/01-member-sign-in-sessions/01-UAT.md');
+const FX2 = fxPath('phases/02-roles-and-permissions/02-UAT.md');
 
 function inputFor(path: URL | string, headings: ViewInput['headings'] = []): ViewInput {
   const content = readFileSync(path, 'utf8');
@@ -216,12 +216,12 @@ describe('composeUatSession — real documents', () => {
     expect(composed.extras).toHaveLength(4);
   });
 
-  it.runIf(existsSync(SP1))('studio-portal P1: no gap when updated precedes started', () => {
-    expect(compose(SP1).intro.gap).toBeNull();
+  it('Lendshed P1: no gap when updated precedes started', () => {
+    expect(compose(FX1).intro.gap).toBeNull();
   });
 
-  it.runIf(existsSync(SP2))('studio-portal P2: Passed, no mismatch, four cards, a resolution source-only entry', () => {
-    const composed = compose(SP2, [{ id: 'resolution', text: 'Resolution', depth: 2 }]);
+  it('Lendshed P2: Passed, no mismatch, four cards, a resolution source-only entry', () => {
+    const composed = compose(FX2, [{ id: 'resolution', text: 'Resolution', depth: 2 }]);
     expect(composed.intro.status).toEqual({ label: 'Passed', tone: 'complete' });
     expect(composed.mismatch).toBeNull();
     expect(composed.gaps.mode).toBe('cards');
@@ -232,19 +232,19 @@ describe('composeUatSession — real documents', () => {
     const [, second] = composed.tests;
     expect(second.rawResult).toContain('structurally unprovable');
     expect(composed.tests[2].rawResult).toContain('closed on unit-level proof');
-    expect(composed.tests[0].rawResult).toContain('operator-approved');
+    expect(composed.tests[0].rawResult).toContain('steward-approved');
   });
 
-  it.runIf(existsSync(SP103))('studio-portal v1.0/03: six resolved register rows with resolution strips', () => {
-    const composed = compose(SP103);
+  it('Lendshed v1.0/03: six resolved register rows with resolution strips', () => {
+    const composed = compose(FX103);
     expect(composed.gaps.mode).toBe('register');
     expect(composed.gaps.aside).toBe('6 · 0 open');
     expect(composed.gaps.items.every((g) => g.resolution !== null && g.missingDone)).toBe(true);
-    expect(composed.gaps.items[0].artifacts.map((a) => a.path)).toContain('backend/src/lib.rs:82');
+    expect(composed.gaps.items[0].artifacts.map((a) => a.path)).toContain('server/routes.ts:64');
   });
 
-  it.runIf(existsSync(SP3))('studio-portal P3: the strip carries reverified and the re-check text', () => {
-    const [gap] = compose(SP3).gaps.items;
+  it('Lendshed P3: the strip carries reverified and the re-check text', () => {
+    const [gap] = compose(FX3).gaps.items;
     expect(gap.resolution?.reverifiedAt).toBeTruthy();
     expect(gap.resolution?.reverify).toContain('Test 4');
   });
@@ -402,18 +402,18 @@ describe('UatSessionView — gaps, extras and the source-only strip', () => {
     expect(html).toContain('Root cause, artifacts and missing work fill in after diagnosis.');
   });
 
-  it.runIf(existsSync(SP103))('studio-portal v1.0/03: six rows; G-03-1 opens to a Resolved strip', () => {
-    const composed = compose(SP103);
+  it('Lendshed v1.0/03: six rows; G-CAT-1 opens to a Resolved strip', () => {
+    const composed = compose(FX103);
     expect(render(composed).match(/<tr[^>]*data-gap/g)).toHaveLength(6);
     const html = detail(composed, 0);
     expect(html).toContain('Resolved');
-    expect(html).toContain('2026-07-21');
+    expect(html).toContain('2026-02-24');
     expect(html).toContain('Direct fix.');
-    expect(html).toContain('backend/src/lib.rs:82');
+    expect(html).toContain('server/routes.ts:64');
   });
 
-  it.runIf(existsSync(SP3))('studio-portal P3: the strip shows reverified and the re-check text', () => {
-    const html = detail(compose(SP3), 0);
+  it('Lendshed P3: the strip shows reverified and the re-check text', () => {
+    const html = detail(compose(FX3), 0);
     expect(html).toContain('reverified');
     expect(html).toContain('Re-check:');
   });

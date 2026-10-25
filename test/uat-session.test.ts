@@ -1,9 +1,9 @@
 // quick-261001-qk7 (QK7-01, QK7-09): extractUatSession over the sketch's synthetic testing doc, real
-// corpus documents (a missing studio-portal checkout skips its files), degenerate input and the
-// T-qk7-01 timing guard. The corpus pins live in test/web/uat-session-corpus.test.ts.
-import { existsSync, readFileSync } from 'node:fs';
+// documents (Lendshed and Labelore's own), degenerate input and the T-qk7-01 growth guard. The corpus pins live in test/web/uat-session-corpus.test.ts.
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { SP_PLANNING } from './helpers/studio-portal.ts';
+import { fxPath } from './helpers/fixture-project.ts';
+import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
 import { tryParseFrontmatter } from '../src/planning-repo/frontmatter.ts';
 import { extractUatSession } from '../src/planning-repo/handlers/uat-session.ts';
 import type { UatSession } from '../src/planning-repo/handlers/uat-session.ts';
@@ -13,8 +13,8 @@ const LB02 = new URL(
   '../.planning/milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-UAT.md',
   import.meta.url,
 );
-const SP103 = `${SP_PLANNING}/milestones/v1.0-phases/03-file-browsing/03-UAT.md`;
-const SP2 = `${SP_PLANNING}/phases/02-roles-permission-enforcement/02-UAT.md`;
+const FX103 = fxPath('milestones/v1.0-phases/03-catalogue-browsing/03-UAT.md');
+const FX2 = fxPath('phases/02-roles-and-permissions/02-UAT.md');
 
 function sessionOf(path: URL | string): UatSession {
   return extractUatSession(tryParseFrontmatter(readFileSync(path, 'utf8')).body);
@@ -85,8 +85,8 @@ describe('extractUatSession — the synthetic testing doc', () => {
 });
 
 describe('extractUatSession — real documents', () => {
-  it.runIf(existsSync(SP103))('studio-portal v1.0/03: six resolved YAML gaps with their resolution fields', () => {
-    const session = sessionOf(SP103);
+  it('Lendshed v1.0/03: six resolved YAML gaps with their resolution fields', () => {
+    const session = sessionOf(FX103);
     expect(session.tests).toHaveLength(6);
     expect(session.tests.every((t) => t.result === 'pass')).toBe(true);
     expect(session.gaps.mode).toBe('items');
@@ -96,7 +96,7 @@ describe('extractUatSession — real documents', () => {
     expect(first.values.resolved_by).toBeTruthy();
     expect(first.values.fix).toBeTruthy();
     expect(first.values.fix_deployed).toBeTruthy();
-    expect(first.artifacts.map((a) => a.path)).toContain('backend/src/lib.rs:82');
+    expect(first.artifacts.map((a) => a.path)).toContain('server/routes.ts:64');
   });
 
   it('labelore v1.0/02: prose gap cards (one with a code block), four extras, the Result line', () => {
@@ -116,15 +116,15 @@ describe('extractUatSession — real documents', () => {
     expect(session.testsNote.length).toBeGreaterThan(0);
   });
 
-  it.runIf(existsSync(SP2))('studio-portal phases/02: the current test comes from Resolution; four bullet cards', () => {
-    const session = sessionOf(SP2);
+  it('Lendshed phases/02: the current test comes from Resolution; four bullet cards', () => {
+    const session = sessionOf(FX2);
     expect(session.currentLine?.startsWith('none')).toBe(true);
     expect(session.current?.fromSection).toBe('Resolution');
     expect(session.tests).toHaveLength(3);
     expect(session.gaps.mode).toBe('prose');
     expect(session.gaps.cards).toHaveLength(4);
     expect(session.gaps.cards.every((c) => c.title === null)).toBe(true);
-    expect(session.gaps.lead).toContain('Carried forward as real');
+    expect(session.gaps.lead).toContain('carried forward, accepted without being proven');
     expect(session.summary?.accepted).toBe('2');
   });
 });
@@ -191,15 +191,27 @@ describe('extractUatSession — degenerate input', () => {
     expect(test.fields[0].value).toContain('result: pass');
   });
 
-  it('a 1 MB body with one 200,000-character line extracts in under 250 ms', () => {
+  it('a 1 MB body with one 200,000-character line extracts without throwing', () => {
     const line = 'x'.repeat(200_000);
     const filler = 'expected: something plain\nresult: pass\n'.repeat(15_000);
     const body = `## Tests\n\n### 1. Big\nexpected: ${line}\nresult: pass\n\n${filler}\n## Gaps\n\n- truth: ${line}\n  status: failed\n`;
     expect(body.length).toBeGreaterThan(700_000);
-    const started = performance.now();
     const session = extractUatSession(body);
-    expect(performance.now() - started).toBeLessThan(250);
     expect(session.tests).toHaveLength(1);
+  });
+
+  it('the same shape grows no faster than linearly with its filler', () => {
+    const growth = measureGrowth({
+      make: (n) => {
+        const line = 'x'.repeat(Math.floor(n / 5));
+        const filler = 'expected: something plain\nresult: pass\n'.repeat(Math.max(1, Math.floor(n / 80)));
+        return `## Tests\n\n### 1. Big\nexpected: ${line}\nresult: pass\n\n${filler}\n## Gaps\n\n- truth: ${line}\n  status: failed\n`;
+      },
+      run: (body) => {
+        extractUatSession(body);
+      },
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
   });
 
   it('removes comments by a linear scan and counts them; an unterminated one is left alone', () => {

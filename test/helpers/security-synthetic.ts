@@ -1,6 +1,8 @@
-// The sketch-017 synthetic open-threats SECURITY doc, derived from studio-portal's phase 03 doc.
-/** The sketch's synthesize(), copied from `.planning/sketches/017-security-page/gen-data.mjs`: SP
- * P3 mid-audit — two high threats open (blocking), a second audit row, sign-off unticked. */
+// The sketch-017 synthetic open-threats SECURITY doc, derived from the made-up Lendshed phase 03
+// SECURITY register (test/fixtures/lendshed/.planning/phases/03-account-admin-and-sessions/03-SECURITY.md).
+/** The sketch's synthesize(), adapted to Lendshed phase 03: a mid-audit state with two high threats
+ * open (blocking), a second audit row and the sign-off unticked. The third and sixth high-severity
+ * mitigated rows are the ones reopened (T-03-03 and T-03-11 in the Lendshed file). */
 export function synthesize(text: string): string {
   let n = 0;
   return text
@@ -15,7 +17,7 @@ export function synthesize(text: string): string {
     )
     .replace(
       /(\| Audit Date[^\n]*\n\|[-| ]+\|\n)/,
-      '$1| 2026-08-19 | 42 | 39 | 3 (2 blocking) | /gsd-secure-phase (first pass) |\n',
+      '$1| 2026-03-17 | 30 | 27 | 3 (2 blocking) | /gsd-secure-phase (first pass) |\n',
     )
     .replace(/- \[x\]/g, '- [ ]')
     .replace(/\*\*Approval:\*\*.*/, '**Approval:** pending — two high threats open');
