@@ -154,13 +154,9 @@ function PhaseFiles({
 
 function MilestoneFiles({
   milestone,
-  pathname,
-  onNavigate,
   onSelect,
 }: {
   milestone: DrawerMilestonePlace;
-  pathname: string;
-  onNavigate: () => void;
   onSelect: (key: string) => void;
 }): React.JSX.Element {
   const name = stripEmoji(milestone.name);
@@ -174,10 +170,6 @@ function MilestoneFiles({
           {name === '' || name === milestone.version ? milestone.version : `${milestone.version} · ${name}`}
         </h3>
       </div>
-      {milestone.documents.length > 0 ? <Stage label="Milestone documents" /> : null}
-      {milestone.documents.map((row) => (
-        <FileRow key={row.key} row={row} pathname={pathname} onNavigate={onNavigate} />
-      ))}
       <Stage label="Phases" count={String(milestone.phases.length)} />
       {milestone.phases.map((phase) => (
         <button
@@ -406,12 +398,7 @@ export function PlanningPlaces({
           <PhaseFiles phase={place} pathname={pathname} onNavigate={onNavigate} />
         ) : null}
         {place?.kind === 'milestone' ? (
-          <MilestoneFiles
-            milestone={place}
-            pathname={pathname}
-            onNavigate={onNavigate}
-            onSelect={setSelectedKey}
-          />
+          <MilestoneFiles milestone={place} onSelect={setSelectedKey} />
         ) : null}
         {place?.kind === 'quick' ? (
           <QuickFiles
