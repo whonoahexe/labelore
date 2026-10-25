@@ -5,16 +5,16 @@ milestone_name: Wayfinding
 current_phase: 06
 current_phase_name: Trustworthy Tests and Security Baseline
 status: executing
-stopped_at: Completed 06-01-PLAN.md
-last_updated: "2026-10-25T13:17:49.250Z"
+stopped_at: Completed 06-02-PLAN.md
+last_updated: "2026-10-25T13:44:07.943Z"
 last_activity: 2026-10-25
 last_activity_desc: Phase 06 execution started
-state_head: db7c94598894d9145761417ad8397e17f98bba5b
+state_head: fd57059624572eabc15c6725db955db85d0d55f6
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 22
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-10-25)
 ## Current Position
 
 Phase: 06 (Trustworthy Tests and Security Baseline) — EXECUTING
-Plan: 2 of 22
+Plan: 3 of 22
 Status: Ready to execute
 Last activity: 2026-10-25 — Phase 06 execution started
 
@@ -85,6 +85,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 05 P05 | 235min | 3 tasks | 16 files |
 | Phase 05 P06 | 20min | 2 tasks | 6 files |
 | Phase 06 P01 | 10 min | 2 tasks | 22 files |
+| Phase 06 P02 | 24 min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -104,6 +105,8 @@ milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) a
 - [v2.1 roadmap]: Phase order follows research: test health and security first, then file recognition with the URL scheme (one phase, because the folder table drives both), then several projects, then page families most-seen first, then settings and Source mode, then search and the palette last. The codebase-only project requirement sits whole with the codebase-map pages, after the switcher, so a map-only project opens from the command line, the switcher and the folder scan at once. The made-up example rule lands with the spec and check pages, the first phase that builds types never seen on this machine. The three v1.1 UI-review items fold into the Source mode phase, which touches the same outline chrome. The roadmap is capped at eight phases at the user's request, so the page families are merged into three phases: review, audit and root documents (Phase 9); codebase map, specification and check pages (Phase 10); and exploration, handoff, report and workstream pages (Phase 11), with workstreams built last within it.
 - [Phase 06]: 06-01: Lendshed is the single made-up fixture project; tests and Playwright throw when it is missing and never fall back to another project
 - [Phase 06]: 06-01: test:gate fails on any failed, skipped or todo test, an empty run, or a non-zero vitest exit
+- [Phase 06]: 06-02: REFERENCE_TOKEN uses bounded quantifiers (31 and 16) not a lookbehind, which changed six corpus results
+- [Phase 06]: 06-02: growth harness caps the big input near 256 KB, re-measures a reading at or above 24 (lowest of 3), and reports ratio 1 under a 1 ms floor; limit stays 24
 
 ### Pending Todos
 
@@ -146,8 +149,8 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-10-25T13:17:49.214Z
-Stopped at: Completed 06-01-PLAN.md
+Last session: 2026-10-25T13:44:07.908Z
+Stopped at: Completed 06-02-PLAN.md
 Resume file: None
 
 ## Operator Next Steps
