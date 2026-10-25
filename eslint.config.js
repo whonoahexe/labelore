@@ -33,6 +33,7 @@ export default tseslint.config(
       'src/planning-repo/**/*.ts',
       'src/server/**/*.ts',
       'test/**/*.ts',
+      'test/**/*.mjs',
     ],
     languageOptions: {
       globals: {
