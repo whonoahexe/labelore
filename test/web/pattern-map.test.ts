@@ -1,11 +1,13 @@
 // quick-260930-wfs: composePatternMap, built from literal ViewInput objects and from the real
-// LB v1.1/05 and SP v1.0/02 extractions (test/pattern-map.test.ts covers the server extractor;
-// the narrow e2e spec covers the page end to end), plus the static markup of the view.
-import { existsSync, readFileSync } from 'node:fs';
+// LB v1.1/05 extraction plus the made-up Lendshed v1.0/02 one (test/pattern-map.test.ts covers the
+// server extractor; the narrow e2e spec covers the page end to end), plus the static markup of the
+// view. The Lendshed file is read through fxPath, which throws when it is missing: nothing skips.
+import { readFileSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { SP_PLANNING } from '../helpers/studio-portal.ts';
+import { fxPath } from '../helpers/fixture-project.ts';
+import { GROWTH_LIMIT, measureGrowth } from '../helpers/growth.ts';
 import { tryParseFrontmatter } from '../../src/planning-repo/frontmatter.ts';
 import { extractPatternMap } from '../../src/planning-repo/handlers/pattern-map.ts';
 import { PatternsHandler } from '../../src/planning-repo/handlers/patterns.ts';
@@ -33,7 +35,7 @@ const DENSE = new URL(
   '../../fixtures/dense/.planning/phases/01-identity-slice/01-PATTERNS.md',
   import.meta.url,
 );
-const SP02 = `${SP_PLANNING}/milestones/v1.0-phases/02-storage-health-status/02-PATTERNS.md`;
+const FX02 = fxPath('milestones/v1.0-phases/02-shed-inventory-health/02-PATTERNS.md');
 
 function inputOf(map: unknown, overrides: Partial<ViewInput> = {}): ViewInput {
   return {
@@ -81,10 +83,17 @@ describe('pattern matching helpers', () => {
       true,
     );
     expect(globMatch('a/*.ts', 'a/b.rs')).toBe(false);
-    // Adversarial input stays linear: no catastrophic backtracking.
-    const started = performance.now();
+    // Adversarial input stays linear: no catastrophic backtracking. Growth, not a millisecond budget:
+    // the same pattern against 'a' repeated n and 8n times must cost about 8x, not 64x or worse.
     expect(globMatch('*a*a*a*a*a*a*a*a*a*b', 'a'.repeat(5_000))).toBe(false);
-    expect(performance.now() - started).toBeLessThan(250);
+    const growth = measureGrowth({
+      make: (n) => 'a'.repeat(n),
+      run: (text) => void globMatch('*a*a*a*a*a*a*a*a*a*b', text),
+    });
+    expect(
+      growth.ratio,
+      `globMatch: ${growth.t1.toFixed(2)}ms at ${growth.n} characters, ${growth.t2.toFixed(2)}ms at 8x`,
+    ).toBeLessThan(GROWTH_LIMIT);
   });
 
   it('refMatches ties a ref to a path by tail, directory or base name, not by a shared base name alone', () => {
@@ -203,27 +212,25 @@ describe('composePatternMap — LB v1.1/05', () => {
   });
 });
 
-describe('composePatternMap — SP v1.0/02 (real file, when present)', () => {
-  it.runIf(existsSync(SP02))('the five doc groups, collector.rs partial, the reject rule', () => {
-    const composed = compose(SP02);
+describe('composePatternMap — Lendshed v1.0/02 (made-up file)', () => {
+  it('the five doc groups, reader.ts partial, the refuse-alike rule', () => {
+    const composed = compose(FX02);
     expect(composed.areas.map((a) => a.label)).toEqual([
-      'Backend — new modules (greenfield)',
-      'Backend — modified',
-      'Backend — tests & fixtures',
-      'Frontend',
-      'Ops artifacts',
+      'Server — fresh modules',
+      'Server — edits',
+      'Server — specs & sample feeds',
+      'Web',
+      'Ops notes',
     ]);
-    const collector = composed.rows.find((r) => r.name === 'collector.rs');
-    expect(collector?.quality).toBe('partial');
-    expect(collector?.tone).toBe('in-flight');
-    expect(collector?.qualifier).toBe('see divergence');
-    expect(collector?.guidance.length).toBeGreaterThan(0);
-    const reject = composed.rules.find((r) => r.name === 'Reject/fail identically');
-    expect(reject?.hits.length).toBeGreaterThan(0);
-    expect(composed.intro.counts).toEqual({ exact: 7, role: 3, partial: 5, none: 11 });
-    expect(composed.backMatter.map((b) => b.heading)).toContain(
-      'Cross-Cutting Notes for the Planner',
-    );
+    const reader = composed.rows.find((r) => r.name === 'reader.ts');
+    expect(reader?.quality).toBe('partial');
+    expect(reader?.tone).toBe('in-flight');
+    expect(reader?.qualifier).toBe('read the caveat');
+    expect(reader?.guidance.length).toBeGreaterThan(0);
+    const refuse = composed.rules.find((r) => r.name === 'Refuse alike');
+    expect(refuse?.hits.length).toBeGreaterThan(0);
+    expect(composed.intro.counts).toEqual({ exact: 6, role: 4, partial: 4, none: 8 });
+    expect(composed.backMatter.map((b) => b.heading)).toContain('Notes Spanning Several Files');
   });
 });
 
@@ -241,20 +248,17 @@ describe('PatternMapView static markup', () => {
     expect(nav).toContain('Metadata');
   });
 
-  it.runIf(existsSync(SP02))(
-    'SP v1.0/02: the note, six rule chips, the default panel, a closed back-matter details',
-    () => {
-      const html = render(compose(SP02));
-      expect(html).toContain('Mapper&#x27;s note');
-      const strip = html.slice(html.indexOf('House rules'), html.indexOf('view-patterns-grid'));
-      expect((strip.match(/<button/g) ?? []).length).toBe(6);
-      expect(html).toContain('Why nothing matches');
-      expect(html).toMatch(/<details><summary>Cross-Cutting Notes for the Planner/);
-      expect(html).not.toMatch(/<details open/);
-      expect(html).not.toContain('<pre');
-      expect(html).not.toContain('<code>fn ');
-    },
-  );
+  it('Lendshed v1.0/02: the note, five rule chips, the default panel, a closed back-matter details', () => {
+    const html = render(compose(FX02));
+    expect(html).toContain('Mapper&#x27;s note');
+    const strip = html.slice(html.indexOf('House rules'), html.indexOf('view-patterns-grid'));
+    expect((strip.match(/<button/g) ?? []).length).toBe(5);
+    expect(html).toContain('Why nothing matches');
+    expect(html).toMatch(/<details><summary>Notes Spanning Several Files/);
+    expect(html).not.toMatch(/<details open/);
+    expect(html).not.toContain('<pre');
+    expect(html).not.toContain('<code>export function ');
+  });
 
   it('the cover renders the facts, the four-entry meter key and the Searched line', () => {
     const composed = compose(LB05);
