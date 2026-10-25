@@ -91,7 +91,7 @@ any page is built to show them.
    raw file, on its file page and in search results and snippets. The full value never reaches the
    search index, so every page built later inherits the masking. *(SEC-04)*
 
-**Plans**: 21/22 plans executed
+**Plans**: 22/22 plans executed
 
 Plans:
 **Wave 1**
@@ -124,7 +124,7 @@ Plans:
 - [x] 06-20-PLAN.md — Diagram timing tests converted to growth under the size caps
 
 **Wave 5** *(blocked on Wave 4 completion)*
-- [ ] 06-22-PLAN.md — Standing leak and no-skips scans, ledgers, and the full-suite phase gate
+- [x] 06-22-PLAN.md — Standing leak and no-skips scans, ledgers, and the full-suite phase gate
 
 ### Phase 7: Recognised Files and Readable URLs
 
@@ -371,7 +371,7 @@ file, ID or project.
 | 1–4 | v1.0 | 30/30 | Archived | 2026-09-10 |
 | 5 | v1.1 | 6/6 | Archived | 2026-09-21 |
 | quick tasks | v2.0 | 40/40 | Archived | 2026-10-25 |
-| 6. Trustworthy Tests and Security Baseline | v2.1 | 21/22 | In Progress | - |
+| 6. Trustworthy Tests and Security Baseline | v2.1 | 22/22 | In Progress | - |
 | 7. Recognised Files and Readable URLs | v2.1 | 0/TBD | Not started | - |
 | 8. Several Projects and a Switcher | v2.1 | 0/TBD | Not started | - |
 | 9. Review, Audit and Root Document Pages | v2.1 | 0/TBD | Not started | - |

@@ -5,16 +5,16 @@ milestone_name: Wayfinding
 current_phase: 06
 current_phase_name: Trustworthy Tests and Security Baseline
 status: executing
-stopped_at: Completed 06-20-PLAN.md
-last_updated: "2026-10-25T22:46:24.594Z"
+stopped_at: Completed 06-22-PLAN.md
+last_updated: "2026-10-25T22:54:48.164Z"
 last_activity: 2026-10-26
 last_activity_desc: Phase 06 execution started
-state_head: b35548be95577330f27d9eda2ab6c6931195826e
+state_head: 6ac6c816a2fbbed683cfc0da7172934d5da8ee34
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 22
-  completed_plans: 21
+  completed_plans: 22
   percent: 0
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-10-25)
 ## Current Position
 
 Phase: 06 (Trustworthy Tests and Security Baseline) — EXECUTING
-Plan: 19 of 22
+Plan: 20 of 22
 Status: Ready to execute
 Last activity: 2026-10-26 — Phase 06 execution started
 
@@ -102,6 +102,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06 P18 | 40 min | 2 tasks | 20 files |
 | Phase 06 P19 | 20 min | 2 tasks | 30 files |
 | Phase 06 P20 | 20 min | 2 tasks | 5 files |
+| Phase 06 P22 | 12 min | 3 tasks | 17 files |
 
 ## Accumulated Context
 
@@ -149,6 +150,7 @@ milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) a
 - [Phase 06]: Wave 3 UI safety gate (no UI-SPEC for Phase 06) passed over by the orchestrator during the user's unattended run: wave 3 (06-10, 06-17, 06-18, 06-19) changed no file under src/, only tests and fixtures.
 - [Phase 06]: Diagram timing tests assert growth below each size cap; parseTree varied below its row cap, classifyFence also asserted flat above its cap
 - [Phase 06]: Wave 4 UI safety gate (no UI-SPEC for Phase 06) passed over by the orchestrator during the user's unattended run: 06-20 changed no file under src/, only tests.
+- [Phase 06]: 06-22: no-skips exemption list holds four entries (growth.ts has nothing to exempt); bestOf counts as a timing source; disguised-skip matches bare early returns only
 
 ### Pending Todos
 
@@ -191,8 +193,8 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-10-25T22:46:09.492Z
-Stopped at: Completed 06-20-PLAN.md
+Last session: 2026-10-25T22:54:48.121Z
+Stopped at: Completed 06-22-PLAN.md
 Resume file: None
 
 ## Operator Next Steps
