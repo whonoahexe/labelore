@@ -6,6 +6,7 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
+import { fxPath } from '../helpers/fixture-project.ts';
 import { SP_PLANNING } from '../helpers/studio-portal.ts';
 import {
   composeDocumentLayout,
@@ -27,6 +28,8 @@ interface LogCase {
   path: string;
   questionCount: number;
   isRepoFile: boolean;
+  /** True for a Lendshed fixture file: `path` is already absolute (read through fxPath). */
+  isFixture?: boolean;
 }
 
 const CASES: LogCase[] = [
@@ -85,10 +88,11 @@ const CASES: LogCase[] = [
     isRepoFile: false,
   },
   {
-    label: 'SP phases/01',
-    path: `${SP_ROOT}/phases/01-portal-owned-identity-sessions/01-DISCUSSION-LOG.md`,
+    label: 'FX phases/01',
+    path: fxPath('phases/01-member-sign-in-sessions/01-DISCUSSION-LOG.md'),
     questionCount: 19,
     isRepoFile: false,
+    isFixture: true,
   },
   {
     label: 'SP phases/02',
@@ -116,7 +120,7 @@ async function bodyOf(testCase: LogCase): Promise<string> {
 
 describe('discussion-log corpus — pinned question counts (JXP-05: no dropped question)', () => {
   for (const testCase of CASES) {
-    const run = testCase.isRepoFile ? it : it.runIf(existsSync(testCase.path));
+    const run = testCase.isRepoFile || testCase.isFixture ? it : it.runIf(existsSync(testCase.path));
     run(`${testCase.label} yields ${testCase.questionCount} questions`, async () => {
       const body = await bodyOf(testCase);
       const { questions } = extractDiscussionLog(body);
@@ -125,18 +129,16 @@ describe('discussion-log corpus — pinned question counts (JXP-05: no dropped q
   }
 });
 
-describe('SP phases/01 repro (JXP-05): the renamed CLI question', () => {
-  const path = `${SP_ROOT}/phases/01-portal-owned-identity-sessions/01-DISCUSSION-LOG.md`;
+describe('FX phases/01 repro (JXP-05): the renamed CLI question', () => {
+  const path = fxPath('phases/01-member-sign-in-sessions/01-DISCUSSION-LOG.md');
 
-  it.runIf(existsSync(path))('resolves chosen, chosenIndex 1, qualifier "renamed", userChoice containing "backstage"', async () => {
+  it('resolves chosen, chosenIndex 1, qualifier "renamed", userChoice containing "shedkeys"', async () => {
     const body = await readFile(path, 'utf8');
     const { questions } = extractDiscussionLog(body);
-    const q = questions.find((question) =>
-      question.question.startsWith('How does the very first account come into existence?'),
-    );
+    const q = questions.find((question) => question.question.startsWith('What brings the first sign-in account into being?'));
     expect(q).toBeDefined();
     expect(q).toMatchObject({ resolution: 'chosen', chosenIndex: 1, qualifier: 'renamed' });
-    expect(q!.userChoice).toContain('backstage');
+    expect(q!.userChoice).toContain('shedkeys');
   });
 });
 
@@ -169,6 +171,7 @@ interface CoverCase {
   label: string;
   path: string;
   isRepoFile: boolean;
+  isFixture?: boolean;
   discussedFact: string;
 }
 
@@ -186,9 +189,10 @@ const COVER_CASES: CoverCase[] = [
     discussedFact: '4 of 8 offered areas',
   },
   {
-    label: 'SP phases/01',
-    path: `${SP_ROOT}/phases/01-portal-owned-identity-sessions/01-DISCUSSION-LOG.md`,
+    label: 'FX phases/01',
+    path: fxPath('phases/01-member-sign-in-sessions/01-DISCUSSION-LOG.md'),
     isRepoFile: false,
+    isFixture: true,
     discussedFact: '4 of 4 offered areas',
   },
   {
@@ -207,7 +211,7 @@ const COVER_CASES: CoverCase[] = [
 
 describe('discussion-log corpus — cover numbers equal rendered counts (JXP-08)', () => {
   for (const testCase of COVER_CASES) {
-    const run = testCase.isRepoFile ? it : it.runIf(existsSync(testCase.path));
+    const run = testCase.isRepoFile || testCase.isFixture ? it : it.runIf(existsSync(testCase.path));
     run(`${testCase.label}: headline/pills/facts match rendered chapters and items`, async () => {
       const body = testCase.isRepoFile ? await repoBody(testCase.path) : await readFile(testCase.path, 'utf8');
       const layout = composedFor(body);

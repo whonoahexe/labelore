@@ -1,8 +1,7 @@
-import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
-import { SP_PLANNING } from './helpers/studio-portal.ts';
+import { fxPath } from './helpers/fixture-project.ts';
 import {
   extractDiscussionLog,
   extractReviewWarnings,
@@ -404,7 +403,7 @@ describe('extractDiscussionLog — S3 (bold **Q<n>:** lines)', () => {
     const body = [
       '## Cloud verification',
       '',
-      "Context presented: rclone already hash-verifies each file as it lands.",
+      "Context presented: the shed sync tool already checks each record as it lands.",
       '',
       '**Q1: Is verifying a visible job state?**',
       '',
@@ -924,24 +923,18 @@ describe('extractDiscussionLog — meta (date, areasDiscussed, offeredCount, dec
 });
 
 // ---------------------------------------------------------------------------
-// Corpus-anchored repro (JXP-05): SP phases/01's renamed Chosen answer with the user's words.
+// Corpus-anchored repro (JXP-05): Lendshed phase 01's renamed Chosen answer with the user's words.
 // ---------------------------------------------------------------------------
 
-describe('extractDiscussionLog — studio-portal repro (JXP-05)', () => {
-  const reproPath =
-    `${SP_PLANNING}/phases/01-portal-owned-identity-sessions/01-DISCUSSION-LOG.md`;
+describe('extractDiscussionLog — Lendshed repro (JXP-05)', () => {
+  const reproPath = fxPath('phases/01-member-sign-in-sessions/01-DISCUSSION-LOG.md');
 
-  it.runIf(existsSync(reproPath))(
-    'the Cutover & bootstrap admin CLI question resolves chosen, chosenIndex 1, qualifier "renamed", userChoice containing "backstage"',
-    async () => {
-      const body = await readFile(reproPath, 'utf8');
-      const { questions } = extractDiscussionLog(body);
-      const q = questions.find((question) =>
-        question.question.startsWith('How does the very first account come into existence?'),
-      );
-      expect(q).toBeDefined();
-      expect(q).toMatchObject({ resolution: 'chosen', chosenIndex: 1, qualifier: 'renamed' });
-      expect(q!.userChoice).toContain('backstage');
-    },
-  );
+  it('the Cutover & bootstrap CLI question resolves chosen, chosenIndex 1, qualifier "renamed", userChoice containing "shedkeys"', async () => {
+    const body = await readFile(reproPath, 'utf8');
+    const { questions } = extractDiscussionLog(body);
+    const q = questions.find((question) => question.question.startsWith('What brings the first sign-in account into being?'));
+    expect(q).toBeDefined();
+    expect(q).toMatchObject({ resolution: 'chosen', chosenIndex: 1, qualifier: 'renamed' });
+    expect(q!.userChoice).toContain('shedkeys');
+  });
 });
