@@ -1,24 +1,34 @@
 // The LEARNINGS page e2e (quick-261017-k45, sketch 024 winner E). Labelore's own `.planning` holds no
-// LEARNINGS file, so the spec starts a read-only server on a thin temp project (ports 5310-5319 only,
-// see learnings-fixture-server.ts) holding the synthetic phase 5 file, the studio-portal phase 1 file
-// and the dense project-root file, and resolves each page by path against its live
+// LEARNINGS file, so the spec starts the shared fixture server (ports 5310-5319 only, see
+// fixture-server.ts) on a thin temp project holding the synthetic phase 5 file, the Lendshed phase 1 file
+// and the dense project-root file, all in-repo placements, and resolves each page by path against its live
 // `/api/presentation` payload. It asserts the foundation sweep's key invariants itself (one h1, an
 // eyebrow, squared corners, one chip signature, no 420px overflow) since the full sweep is too slow to
 // run per change.
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
-import { startLearningsFixtureServer } from './learnings-fixture-server.ts';
-import type { LearningsFixtureServer } from './learnings-fixture-server.ts';
+import { startFixtureServer } from './fixture-server.ts';
+import type { FixtureServer } from './fixture-server.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
 }
 
-let server: LearningsFixtureServer;
+let server: FixtureServer;
 
 test.beforeAll(async () => {
   test.setTimeout(120_000);
-  server = await startLearningsFixtureServer();
+  server = await startFixtureServer([
+    {
+      from: 'test/fixtures/learnings/synthetic-LEARNINGS.md',
+      to: '.planning/phases/05-per-type-document-views/05-LEARNINGS.md',
+    },
+    {
+      from: 'test/fixtures/lendshed/.planning/phases/01-member-sign-in-sessions/01-LEARNINGS.md',
+      to: '.planning/phases/01-member-sign-in-sessions/01-LEARNINGS.md',
+    },
+    { from: 'fixtures/dense/.planning/LEARNINGS.md', to: '.planning/LEARNINGS.md' },
+  ]);
 });
 
 test.afterAll(async () => {
@@ -37,7 +47,7 @@ async function resolveKey(match: (path: string) => boolean): Promise<string> {
   return artifact.key;
 }
 
-const SP01 = (path: string): boolean => path.endsWith('01-portal-owned-identity-sessions/01-LEARNINGS.md');
+const LX01 = (path: string): boolean => path.endsWith('01-member-sign-in-sessions/01-LEARNINGS.md');
 const SYN = (path: string): boolean => path.endsWith('05-per-type-document-views/05-LEARNINGS.md');
 const ROOT = (path: string): boolean => path.endsWith('.planning/LEARNINGS.md');
 
@@ -72,12 +82,12 @@ async function checkInvariants(page: Page): Promise<void> {
 }
 
 test.describe('Learnings page', () => {
-  test('studio-portal phase 1', async ({ page }) => {
-    await openPage(page, await resolveKey(SP01), 'light');
+  test('Lendshed phase 1', async ({ page }) => {
+    await openPage(page, await resolveKey(LX01), 'light');
 
-    await expect(page.locator('h1')).toHaveText('Portal-Owned Identity & Sessions');
+    await expect(page.locator('h1')).toHaveText('Member Sign-In & Sessions');
     await expect(page.locator('.view-learnings-meta-left .eyebrow')).toHaveText('Learnings · Phase 1');
-    await expect(page.locator('.view-learnings-meta-left')).toContainText('Extracted 8 Aug 2026');
+    await expect(page.locator('.view-learnings-meta-left')).toContainText('Extracted 14 Mar 2026');
     await expect(page.locator('.view-learnings-lede')).toHaveText(
       '40 learnings from this phase: 14 decisions, 9 lessons, 10 patterns and 7 surprises, drawn from 10 artifacts.',
     );
@@ -86,7 +96,7 @@ test.describe('Learnings page', () => {
     await expect(page.locator('.view-learnings-tab b')).toHaveText(['14', '9', '10', '7']);
     await expect(tab(page, 'decision')).toHaveAttribute('aria-selected', 'true');
     await expect(page.locator('.view-learnings-entry')).toHaveCount(14);
-    await expect(entry(page, 1)).toContainText('All three AuthError variants render a byte-identical 401 body');
+    await expect(entry(page, 1)).toContainText('Every sign-in failure returns one identical 401 body');
 
     // Arrow keys move between tabs.
     await tab(page, 'decision').focus();
@@ -107,7 +117,7 @@ test.describe('Learnings page', () => {
     await expect(tab(page, 'surprise')).toHaveAttribute('aria-selected', 'true');
     await expect(page.locator('.view-learnings-count')).toHaveText('1 of 7');
     await expect(page.locator('.view-learnings-entry')).toHaveCount(1);
-    await expect(entry(page, 40)).toContainText('Two review findings survived to the verification pass');
+    await expect(entry(page, 40)).toContainText('Two review findings were still open at the verification pass');
     await page.getByRole('button', { name: 'Show all' }).click();
     await expect(page.locator('.view-learnings-tab:disabled')).toHaveCount(0);
     await expect(page.locator('.view-learnings-filterline')).toHaveCount(0);
@@ -157,7 +167,7 @@ test.describe('Learnings page', () => {
   for (const theme of ['light', 'dark'] as const) {
     test(`every learnings page fits 420px in ${theme}`, async ({ page }) => {
       await page.setViewportSize({ width: 420, height: 900 });
-      for (const match of [SP01, SYN, ROOT]) {
+      for (const match of [LX01, SYN, ROOT]) {
         const key = await resolveKey(match);
         await openPage(page, key, theme);
         await expect(page.locator('h1')).toHaveCount(1);

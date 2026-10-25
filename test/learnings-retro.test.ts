@@ -1,18 +1,20 @@
-// quick-261017-k45 (sketch 024 E): the LEARNINGS body extractor - pinned against the two copied files
-// (test/fixtures/learnings/), the dense fixture's two files, the tolerant degrade paths and the
-// T-k45-02 timing bound. Pinned values come from the sketch's own data.js and the source files,
+// quick-261017-k45 (sketch 024 E): the LEARNINGS body extractor - pinned against the synthetic file
+// (test/fixtures/learnings/), the made-up Lendshed phase 1 file, the dense fixture's two files, the
+// tolerant degrade paths and the T-k45-02 growth bound. Pinned values come from the sketch's own data.js and the source files,
 // independent of the extractor's output.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { extractLearningsRetro } from '../src/planning-repo/handlers/learnings-retro.ts';
 import { tryParseFrontmatter } from '../src/planning-repo/frontmatter.ts';
+import { fxPath } from './helpers/fixture-project.ts';
+import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
 
 const FIXTURES = new URL('./fixtures/learnings/', import.meta.url).pathname;
 const DENSE = new URL('../fixtures/dense/.planning/', import.meta.url).pathname;
 
 const bodyOf = (path: string): string => tryParseFrontmatter(readFileSync(path, 'utf8')).body;
 const syn = extractLearningsRetro(bodyOf(`${FIXTURES}synthetic-LEARNINGS.md`));
-const sp01 = extractLearningsRetro(bodyOf(`${FIXTURES}sp01-LEARNINGS.md`));
+const lx01 = extractLearningsRetro(bodyOf(fxPath('phases/01-member-sign-in-sessions/01-LEARNINGS.md')));
 const fx = extractLearningsRetro(bodyOf(`${DENSE}phases/01-identity-slice/01-LEARNINGS.md`));
 const fxp = extractLearningsRetro(bodyOf(`${DENSE}LEARNINGS.md`));
 
@@ -61,33 +63,33 @@ describe('the template file with graduation', () => {
   });
 });
 
-describe('the studio-portal phase 1 file', () => {
+describe('the Lendshed phase 1 file', () => {
   it('reads forty entries, each with its kind field', () => {
-    expect(sp01.entries).toHaveLength(40);
-    expect(counts(sp01)).toBe('14/9/10/7');
+    expect(lx01.entries).toHaveLength(40);
+    expect(counts(lx01)).toBe('14/9/10/7');
     const own = { decision: 'Rationale', lesson: 'Context', pattern: 'When to use', surprise: 'Impact' };
-    for (const e of sp01.entries) expect(e.fields.map((f) => f.label)).toContain(own[e.kind]);
-    expect(sp01.entries.every((e) => e.graduated === null)).toBe(true);
+    for (const e of lx01.entries) expect(e.fields.map((f) => f.label)).toContain(own[e.kind]);
+    expect(lx01.entries.every((e) => e.graduated === null)).toBe(true);
   });
 
   it('reads source notes without splitting a comma inside them', () => {
-    expect(sp01.entries[0].title).toBe('All three AuthError variants render a byte-identical 401 body');
-    expect(sp01.entries[0].sources).toEqual([{ artifact: '01-01-SUMMARY.md', note: null }]);
-    expect(sp01.entries[2].sources).toEqual([
+    expect(lx01.entries[0].title).toBe('Every sign-in failure returns one identical 401 body');
+    expect(lx01.entries[0].sources).toEqual([{ artifact: '01-01-SUMMARY.md', note: null }]);
+    expect(lx01.entries[2].sources).toEqual([
       { artifact: '01-02-SUMMARY.md', note: null },
       { artifact: '01-02-PLAN.md', note: 'RESEARCH Pattern 2 / Pitfall 4' },
     ]);
-    expect(sp01.entries[3].sources).toEqual([
-      { artifact: '01-04-SUMMARY.md', note: 'deviation 1, confirmed against axum 0.8.9 source' },
+    expect(lx01.entries[3].sources).toEqual([
+      { artifact: '01-04-SUMMARY.md', note: 'deviation 1, confirmed against router 4.2 source' },
     ]);
-    expect(sp01.entries[39].sources.map((s) => s.artifact)).toEqual(['01-REVIEW.md', '01-VERIFICATION.md', '01-REVIEW-FIX.md']);
+    expect(lx01.entries[39].sources.map((s) => s.artifact)).toEqual(['01-REVIEW.md', '01-VERIFICATION.md', '01-REVIEW-FIX.md']);
   });
 
   it('leaves the two pattern entries that go straight to a field with an empty body', () => {
-    const empty = sp01.entries.map((e, i) => (e.body.length === 0 ? i + 1 : 0)).filter(Boolean);
+    const empty = lx01.entries.map((e, i) => (e.body.length === 0 ? i + 1 : 0)).filter(Boolean);
     expect(empty).toEqual([26, 28]);
-    expect(sp01.entries[25].title).toBe('`route_layer`, never `layer`, for middleware scoped to specific routes in a merged router');
-    expect(sp01.entries[27].title).toBe('Distinct synthetic `cf-connecting-ip` per login call in any test driving `/api/login` repeatedly');
+    expect(lx01.entries[25].title).toBe('`use`, never `all`, for middleware scoped to specific routes in a merged router');
+    expect(lx01.entries[27].title).toBe('Distinct synthetic `x-client-ip` per sign-in call in any test driving `/api/sign-in` repeatedly');
   });
 });
 
@@ -159,17 +161,26 @@ describe('degrade paths', () => {
     ]);
   });
 
-  it('extracts a 1 MB body holding a 200k-character line within 250 ms', () => {
+  it('extracts a 1 MB body holding a 200k-character line', () => {
     const hostile = '`*|[**1. **('.repeat(20000);
     expect(hostile.length).toBeGreaterThanOrEqual(200000);
     const filler = 'x'.repeat(79) + '\n';
     const body = `# T\n\n## Decisions\n\n### ${hostile}\n**Rationale:** ${hostile}\n**Source:** ${hostile}\n\n- ${hostile}\n\n${filler.repeat(9000)}`;
     expect(body.length).toBeGreaterThan(900000);
-    const start = performance.now();
     const report = extractLearningsRetro(body);
-    const elapsed = performance.now() - start;
     expect(report.entries.length).toBeGreaterThan(0);
-    expect(elapsed).toBeLessThan(250);
+  });
+
+  it('the same hostile body grows no faster than linearly', () => {
+    const unit = '`*|[**1. **(';
+    const filler = 'x'.repeat(79) + '\n';
+    const make = (size: number): string => {
+      // Both sizes keep each hostile line under the line clip, so the ratio measures the scan, not the clip.
+      const hostile = unit.repeat(Math.max(1, Math.floor(size / unit.length / 80)));
+      return `# T\n\n## Decisions\n\n### ${hostile}\n**Rationale:** ${hostile}\n**Source:** ${hostile}\n\n- ${hostile}\n\n${filler.repeat(Math.max(1, Math.floor(size / 160)))}`;
+    };
+    const { ratio } = measureGrowth({ make, run: (body) => void extractLearningsRetro(body), startSize: 20000 });
+    expect(ratio).toBeLessThan(GROWTH_LIMIT);
   });
 
   it('caps hostile lists', () => {

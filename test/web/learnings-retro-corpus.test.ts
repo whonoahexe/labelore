@@ -1,10 +1,10 @@
-// quick-261017-k45 (QK45-07): real-corpus guards over every LEARNINGS file in this repo's `.planning/`
-// (none today; the sketches are skipped), the dense fixture's two files, the two copied fixtures and
-// (when present) the studio-portal checkout, built through the real repository load so phase and
+// quick-261017-k45 (QK45-07): corpus guards over every LEARNINGS file in this repo's `.planning/` (none
+// today; the sketches are skipped), the dense fixture's two files, the synthetic template and the
+// made-up Lendshed project (D-01, D-05, D-06), built through the real repository load so phase and
 // project-root files reach the handler with the refs discovery gives them. Every file must carry
 // `structured.learnings` and compose to a non-null page whose per-kind counts equal the frontmatter
-// `counts`; the four sketch files match the values pinned below, which come from the sketch's own
-// data.js and the source files - never from the composer's output.
+// `counts`; the Lendshed phase 1 file matches the values pinned below, each recounted by grep and awk in
+// the made-up file itself (R5) - never from the composer's output.
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -16,13 +16,12 @@ import { toProjectPresentation } from '../../src/server/project-presentation.ts'
 import type { ProjectPresentation } from '../../src/server/project-presentation.ts';
 import { composeLearningsRetro } from '../../src/web/views/learnings-retro.ts';
 import type { ComposedLearningsRetro } from '../../src/web/views/learnings-retro.ts';
-import { SP_PLANNING, STUDIO_PORTAL_ROOT } from '../helpers/studio-portal.ts';
+import { FX_PLANNING, FX_ROOT, fxPath, loadProject } from '../helpers/fixture-project.ts';
 
 const LB_ROOT = new URL('../..', import.meta.url).pathname.replace(/\/$/, '');
 const LB_PLANNING = join(LB_ROOT, '.planning');
 const DENSE = join(LB_ROOT, 'fixtures/dense');
 const FIXTURES = join(LB_ROOT, 'test/fixtures/learnings');
-const hasSp = existsSync(SP_PLANNING);
 
 function walk(root: string): string[] {
   if (!existsSync(root)) return [];
@@ -45,7 +44,7 @@ function walk(root: string): string[] {
 
 let lb: ProjectPresentation;
 let dense: ProjectPresentation;
-let sp: ProjectPresentation | null = null;
+let fx: ProjectPresentation;
 
 beforeAll(async () => {
   const load = async (root: string): Promise<ProjectPresentation> => {
@@ -54,7 +53,7 @@ beforeAll(async () => {
   };
   lb = await load(LB_ROOT);
   dense = await load(DENSE);
-  if (hasSp) sp = await load(STUDIO_PORTAL_ROOT);
+  fx = (await loadProject(FX_ROOT)).presentation;
 }, 60000);
 
 type Artifact = ProjectPresentation['artifacts'][number];
@@ -79,8 +78,7 @@ function compose(a: Artifact): ComposedLearningsRetro {
 
 const isLearnings = (path: string): boolean => path.endsWith('LEARNINGS.md') && !path.includes('/sketches/');
 
-function fixtureModel(name: string): ComposedLearningsRetro {
-  const file = join(FIXTURES, name);
+function fixtureModel(file: string): ComposedLearningsRetro {
   const content = readFileSync(file, 'utf8');
   const ref: ArtifactRef = { path: file, kind: 'learnings', location: 'phase', phaseIdentity: null, milestoneVersion: null, quickTaskId: null };
   const parsed = LearningsHandler.parse({ path: file, content, mtimeMs: 0, size: content.length }, ref);
@@ -91,7 +89,7 @@ function fixtureModel(name: string): ComposedLearningsRetro {
     groups: [],
     planSegments: [],
   });
-  if (model === null) throw new Error(`composed null: ${name}`);
+  if (model === null) throw new Error(`composed null: ${file}`);
   return model;
 }
 
@@ -105,14 +103,13 @@ function frontmatterCounts(a: Artifact): number[] {
 
 describe('every LEARNINGS file in the corpus', () => {
   it('extracts without throwing, composes non-null and matches its frontmatter counts', () => {
-    const presentations: [string, ProjectPresentation | null][] = [
+    const presentations: [string, ProjectPresentation][] = [
       ['labelore', lb],
       ['dense', dense],
-      ['studio-portal', sp],
+      ['lendshed', fx],
     ];
     let files = 0;
     for (const [name, presentation] of presentations) {
-      if (presentation === null) continue;
       for (const a of presentation.artifacts.filter((x) => isLearnings(x.path))) {
         files += 1;
         const label = `${name}: ${a.path}`;
@@ -123,14 +120,15 @@ describe('every LEARNINGS file in the corpus', () => {
       }
     }
     // The walk below proves the files exist on disk; the combined corpus can never be empty.
-    const onDisk = [...walk(LB_PLANNING), ...walk(join(DENSE, '.planning')), ...walk(FIXTURES), ...(hasSp ? walk(SP_PLANNING) : [])];
+    const onDisk = [...walk(LB_PLANNING), ...walk(join(DENSE, '.planning')), ...walk(FIXTURES), ...walk(FX_PLANNING)];
     expect(onDisk.length).toBeGreaterThanOrEqual(4);
+    expect(walk(FX_PLANNING).length).toBeGreaterThanOrEqual(1);
     expect(files).toBeGreaterThanOrEqual(2);
   });
 
-  it('parses the two copied fixtures with the sketch counts', () => {
-    expect(perKind(fixtureModel('synthetic-LEARNINGS.md'))).toEqual([3, 3, 3, 2]);
-    expect(perKind(fixtureModel('sp01-LEARNINGS.md'))).toEqual([14, 9, 10, 7]);
+  it('parses the synthetic file and the Lendshed phase 1 file with the pinned counts', () => {
+    expect(perKind(fixtureModel(join(FIXTURES, 'synthetic-LEARNINGS.md')))).toEqual([3, 3, 3, 2]);
+    expect(perKind(fixtureModel(fxPath('phases/01-member-sign-in-sessions/01-LEARNINGS.md')))).toEqual([14, 9, 10, 7]);
   });
 
   it('reads the dense fixture files with the sketch values', () => {
@@ -145,10 +143,10 @@ describe('every LEARNINGS file in the corpus', () => {
     expect(project.also.map((a) => a.label)).toEqual(['Frontmatter']);
   });
 
-  it.runIf(hasSp)('reads studio-portal phase 1 with the sketch values', () => {
-    const model = compose(artifactAt(sp as ProjectPresentation, 'phases/01-portal-owned-identity-sessions/01-LEARNINGS.md'));
+  it('reads Lendshed phase 1 with the pinned values', () => {
+    const model = compose(artifactAt(fx, 'phases/01-member-sign-in-sessions/01-LEARNINGS.md'));
     expect(perKind(model)).toEqual([14, 9, 10, 7]);
-    expect(model.head).toMatchObject({ eyebrow: 'Learnings · Phase 1', title: 'Portal-Owned Identity & Sessions', project: 'Cinedise Portal' });
+    expect(model.head).toMatchObject({ eyebrow: 'Learnings · Phase 1', title: 'Member Sign-In & Sessions', project: 'Lendshed' });
     expect(model.sources).toHaveLength(10);
     expect(model.also.map((a) => a.label)).toEqual(['Frontmatter']);
   });
