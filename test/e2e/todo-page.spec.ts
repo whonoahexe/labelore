@@ -1,26 +1,46 @@
 // The TODO page e2e (quick-261023-61k, sketch 027 C). The spec starts a read-only server on a thin temp
-// project (ports 5310-5319 only, see todo-fixture-server.ts) holding the todos and notes of the committed
-// fixture projects and the synthetic fixture, labelore's own promoted todo and the chrome-drift todo's
-// closing quick task SUMMARY, and resolves each page by path against its live `/api/presentation` payload.
-// The clock is fixed at the sketch's NOW (23 Oct 2026 12:00, Asia/Kolkata) so "Open N days" is stable. It
-// asserts the foundation sweep's key invariants itself (one h1, squared corners, one chip signature, no
-// 420px overflow) since the full sweep is too slow to run per change.
+// project built by the shared fixture server (ports 5310-5319 only, see fixture-server.ts) holding the
+// todos and notes of the made-up Lendshed project, the Labelore todo fixture and the synthetic fixture,
+// Labelore's own completed todo 001 with its note, and the chrome-drift todo's closing quick task SUMMARY.
+// Every source is required; there are no optional sources. Each page is resolved by path against the live
+// `/api/presentation` payload. The clock is fixed at the sketch's NOW (23 Oct 2026 12:00, Asia/Kolkata) so
+// "Open N days" is stable. It asserts the foundation sweep's key invariants itself (one h1, squared
+// corners, one chip signature, no 420px overflow) since the full sweep is too slow to run per change.
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
-import { startTodoFixtureServer } from './todo-fixture-server.ts';
-import type { TodoFixtureServer } from './todo-fixture-server.ts';
+import { relative } from 'node:path';
+import { FX_ROOT, planningFiles } from '../helpers/fixture-project.ts';
+import { LABELORE_FIXTURE_ROOT, LB_ROOT, SYNTHETIC_ROOT } from '../helpers/todo-corpus.ts';
+import { startFixtureServer } from './fixture-server.ts';
+import type { FixturePlacement, FixtureServer } from './fixture-server.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string; kind: string }[];
 }
 
-let server: TodoFixtureServer;
+let server: FixtureServer;
+
+/** The todos and notes of one in-repo project root, each placed at its path under `.planning`. */
+function todoAndNotePlacements(root: string): FixturePlacement[] {
+  return Object.keys(planningFiles(root))
+    .filter((path) => /^\.planning\/(todos|notes)\//.test(path))
+    .map((path) => ({ from: relative(LB_ROOT, `${root}/${path}`), to: path }));
+}
+
+const QUICK_SUMMARY = '.planning/milestones/v1.1-quick/260920-mzr-fix-document-page-chrome-drift-and-the-l/260920-mzr-SUMMARY.md';
+
+const PLACEMENTS: FixturePlacement[] = [
+  ...[FX_ROOT, LABELORE_FIXTURE_ROOT, SYNTHETIC_ROOT].flatMap(todoAndNotePlacements),
+  { from: '.planning/todos/completed/001-sketches-page-in-labelore.md', to: '.planning/todos/completed/001-sketches-page-in-labelore.md' },
+  { from: '.planning/notes/2026-10-23-sketches-page-in-labelore.md', to: '.planning/notes/2026-10-23-sketches-page-in-labelore.md' },
+  { from: QUICK_SUMMARY, to: QUICK_SUMMARY },
+];
 
 test.use({ timezoneId: 'Asia/Kolkata' });
 
 test.beforeAll(async () => {
   test.setTimeout(120_000);
-  server = await startTodoFixtureServer();
+  server = await startFixtureServer(PLACEMENTS);
 });
 
 test.afterAll(async () => {
@@ -39,12 +59,12 @@ async function resolveKey(suffix: string): Promise<string> {
   return artifact.key;
 }
 
-const DCROP = 'todos/completed/2026-10-21-add-crop-and-round-profile-photos.md';
+const DCROP = 'todos/completed/2026-03-24-add-crop-and-round-member-avatars.md';
 const SRETRY = 'todos/pending/2026-10-12-retry-queue-dead-letter.md';
-const PCHECK = 'todos/pending/pre-milestone-hardware-and-tier-cleanup.md';
+const PCHECK = 'todos/pending/pre-milestone-sensor-and-shed-cleanup.md';
 const LDRIFT = 'todos/done/artifact-chrome-drift.md';
 const SPORT = 'todos/completed/2026-10-02-port-timezone-table.md';
-const CROP_NOTE = 'notes/2026-10-21-crop-images-and-profile-photos.md';
+const CROP_NOTE = 'notes/2026-03-24-crop-tool-photos-and-member-avatars.md';
 
 async function openPage(page: Page, suffix: string, theme: 'light' | 'dark'): Promise<void> {
   const key = await resolveKey(suffix);
@@ -83,9 +103,9 @@ test.describe('Todo page', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await openPage(page, DCROP, 'light');
 
-    await expect(page.locator('main h1')).toHaveText('Add crop and round profile photos');
+    await expect(page.locator('main h1')).toHaveText('Add crop and round member avatars');
     await expect(page.locator('.view-todo-meta-left .eyebrow')).toHaveText('Todo');
-    await expect(page.locator('.view-todo-meta-left')).toContainText('Created 21 Oct 2026');
+    await expect(page.locator('.view-todo-meta-left')).toContainText('Created 24 Mar 2026');
     const chips = page.locator('.view-todo-chips');
     await expect(chips.locator('.status-chip').first()).toHaveText('Done');
     await expect(chips.locator('.status-chip').first()).toHaveAttribute('data-tone', 'complete');
@@ -93,9 +113,9 @@ test.describe('Todo page', () => {
     await expect(chips.locator('.view-todo-pip')).toHaveAttribute('data-severity', 'low');
     await expect(chips.locator('.status-chip:not(.view-todo-pip)').nth(1)).toHaveText('media');
 
-    expect(await stepTexts(page, 0)).toEqual(['Noted', '21 Oct 15:58', '2 notes · last 21 Oct 15:58']);
-    expect(await stepTexts(page, 1)).toEqual(['Captured', '21 Oct 16:01', 'minor · media']);
-    expect(await stepTexts(page, 2)).toEqual(['Closed', 'quick 261022-m25', '22 Oct 2026']);
+    expect(await stepTexts(page, 0)).toEqual(['Noted', '24 Mar 09:20', '2 notes · last 24 Mar 09:20']);
+    expect(await stepTexts(page, 1)).toEqual(['Captured', '24 Mar 15:17', 'minor · media']);
+    expect(await stepTexts(page, 2)).toEqual(['Closed', 'quick 260326-m3d', '26 Mar 2026']);
 
     // A step jumps to its stage: the Captured stage lands in the top quarter of the viewport.
     await step(page, 1).click();
@@ -123,13 +143,13 @@ test.describe('Todo page', () => {
     expect(Math.abs(a.y - b.y)).toBeLessThan(2);
     expect(b.x).toBeGreaterThan(a.x + a.width - 2);
     await expect(page.locator('.view-todo-files .view-todo-kicker')).toHaveText('Files · 5');
-    await expect(page.locator('.view-todo-close')).toContainText('Done in quick task 261022-m25');
-    await expect(page.locator('#todo-closed .view-todo-stage-head')).toContainText('quick 261022-m25 · 22 Oct 2026');
+    await expect(page.locator('.view-todo-close')).toContainText('Done in quick task 260326-m3d');
+    await expect(page.locator('#todo-closed .view-todo-stage-head')).toContainText('quick 260326-m3d · 26 Mar 2026');
 
     // The first note's link opens that note's page; back returns to the todo.
     const todoUrl = page.url();
     await cards.first().getByRole('link', { name: 'Open note ↗' }).click();
-    await expect(page).toHaveURL(new RegExp(encodeURIComponent('notes/2026-10-21-crop-images-and-profile-photos.md').replace(/\./g, '\\.')));
+    await expect(page).toHaveURL(new RegExp(encodeURIComponent('notes/2026-03-24-crop-tool-photos-and-member-avatars.md').replace(/\./g, '\\.')));
     await expect(page.locator('.view-todo-head')).toHaveCount(0);
     await page.goBack();
     await expect(page).toHaveURL(todoUrl);
@@ -171,9 +191,9 @@ test.describe('Todo page', () => {
     await expect(page.locator('.view-todo-check[data-done="false"]')).toHaveCount(4);
     await expect(page.locator('.view-todo-wait')).toContainText('— 0 of 4 items checked.');
     const link = page.locator('.view-todo-part').first().locator('a.view-todo-ref');
-    await expect(link).toHaveText('notes/2026-10-23-studio-media-workflow-milestone-brief.md');
+    await expect(link).toHaveText('notes/2026-03-26-steward-desk-milestone-brief.md');
     await link.click();
-    await expect(page).toHaveURL(/studio-media-workflow-milestone-brief\.md/);
+    await expect(page).toHaveURL(/steward-desk-milestone-brief\.md/);
     await expect(page.locator('.view-todo-head')).toHaveCount(0);
   });
 
