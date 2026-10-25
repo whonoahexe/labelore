@@ -81,7 +81,23 @@ refusal) belongs to Phase 8, and the settings page itself belongs to Phase 12.
   It is not clickable and does not jump anywhere. The sections still render in the document.
 - **D-15:** **Source mode is left alone** (no "+N more" line) until its redesign in Phase 12.
 
+### Plan-time decisions (from research open questions, 2026-10-25)
+- **D-16:** The D-08 leak test carries a **named exemption** for the made-up dense tree's deliberate
+  "studio-portal" mentions (`fixtures/dense/**`, `fixtures/README.md`, the dense golden): each exempt
+  path has a one-line reason, and the test fails if the exemption list grows. The dense tree and its
+  golden stay untouched (D-04).
+- **D-17:** Made-up rewrites **keep structure and trim prose**: every heading, table shape, frontmatter
+  key, malformed spot and formatting quirk stays; prose is cut to a few lines per section; pinned
+  numbers are recalculated on the trimmed files (D-02).
+- **D-18:** Tests that read Labelore's own `.planning/` (D-03) are **re-pinned to today's files**,
+  including the 24 failing live-drift tests. The user accepts that these pins will need updating as
+  planning continues.
+- **D-19:** Private text outside `test/` and `fixtures/` (`.planning/sketches/*/data.js`, archived
+  milestone folders, `.mcp.json` / `.claude/CLAUDE.md` home paths) is **out of scope** and recorded as a
+  follow-up. Tests that compare fixtures byte for byte against sketch data are deleted, not re-pinned.
+
 ### Claude's Discretion
+- Secret keys are masked at the top level of `config.json` only (mirrors GSD and D-09).
 - How the timing tests measure growth. Research recommends the best-of-several runs at n and 4n after a
   warm-up, asserting a ratio between linear (4) and quadratic (16), plus a planted quadratic positive
   control (`.planning/research/PITFALLS.md` Pitfall 11).
@@ -177,6 +193,9 @@ refusal) belongs to Phase 8, and the settings page itself belongs to Phase 12.
 - "+N more sections" line in Source mode: revisit during the Source mode redesign (Phase 12)
 - Name-pattern secret detection (`*key*`, `*token*`, `*password*`): considered and rejected for now. It
   would come back only if GSD adds integration keys faster than Labelore can mirror them
+- Private text outside the test folders (D-19): the raw copies in `.planning/sketches/*/data.js`, the
+  private project names in archived milestone folders, and the `/home/cinedise/...` paths in
+  `.mcp.json` and `.claude/CLAUDE.md`. Git history also still holds the private files deleted in this phase.
 
 </deferred>
 
