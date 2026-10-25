@@ -1,13 +1,14 @@
 // quick-261003-526: composeValidationStrategy, built from literal ViewInput objects and from the
 // real corpus extractions through ValidationHandler (test/validation-strategy.test.ts covers the
 // server extractor; the narrow e2e spec covers the page end to end), plus the static markup of the
-// view. A missing studio-portal checkout skips its documents.
-import { existsSync, readFileSync } from 'node:fs';
+// view. The documents are the made-up Lendshed files, read through fxPath (a missing file throws, never
+// skips); every pinned number was counted in the Lendshed file itself with grep/awk.
+import { readFileSync } from 'node:fs';
 import { createElement } from 'react';
 import { MemoryRouter } from 'react-router';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { SP_PLANNING } from '../helpers/studio-portal.ts';
+import { fxPath } from '../helpers/fixture-project.ts';
 import { ValidationHandler } from '../../src/planning-repo/handlers/validation.ts';
 import type { ArtifactRef, RawArtifact } from '../../src/planning-repo/types.ts';
 import {
@@ -30,13 +31,12 @@ const DENSE = new URL(
   '../../fixtures/dense/.planning/phases/01-identity-slice/01-VALIDATION.md',
   import.meta.url,
 ).pathname;
-const SP2 = `${SP_PLANNING}/phases/02-roles-permission-enforcement/02-VALIDATION.md`;
-const SP1 = `${SP_PLANNING}/phases/01-portal-owned-identity-sessions/01-VALIDATION.md`;
-const SP3 = `${SP_PLANNING}/phases/03-account-administration-session-control/03-VALIDATION.md`;
-const SP4 = `${SP_PLANNING}/phases/04-bulk-archive-downloads/04-VALIDATION.md`;
-const V102 = `${SP_PLANNING}/milestones/v1.0-phases/02-storage-health-status/02-VALIDATION.md`;
-const V103 = `${SP_PLANNING}/milestones/v1.0-phases/03-file-browsing/03-VALIDATION.md`;
-const hasSp = existsSync(SP_PLANNING);
+const FX2 = fxPath('phases/02-roles-and-permissions/02-VALIDATION.md');
+const FX1 = fxPath('phases/01-member-sign-in-sessions/01-VALIDATION.md');
+const FX3 = fxPath('phases/03-account-admin-and-sessions/03-VALIDATION.md');
+const FX4 = fxPath('phases/04-bulk-loan-export/04-VALIDATION.md');
+const V102 = fxPath('milestones/v1.0-phases/02-shed-inventory-health/02-VALIDATION.md');
+const V103 = fxPath('milestones/v1.0-phases/03-catalogue-browsing/03-VALIDATION.md');
 
 function inputOf(content: string, headings: ViewInput['headings'] = []): ViewInput {
   const ref: ArtifactRef = {
@@ -201,15 +201,15 @@ describe('composeValidationStrategy — degenerate input', () => {
   });
 });
 
-describe.runIf(hasSp)('composeValidationStrategy — studio-portal phase 2', () => {
-  const c = compose(SP2);
+describe('composeValidationStrategy — Lendshed phase 2', () => {
+  const c = compose(FX2);
 
   it('composes the cover', () => {
     expect(c.intro).toMatchObject({
       eyebrow: 'Validation strategy · Phase 2',
-      title: 'Roles permission enforcement',
+      title: 'Roles and permissions',
       status: { label: 'Draft', tone: 'in-flight' },
-      created: '8 Aug 2026',
+      created: '30 Mar 2026',
       reconciled: null,
       updated: null,
     });
@@ -221,21 +221,21 @@ describe.runIf(hasSp)('composeValidationStrategy — studio-portal phase 2', () 
 
   it('composes the three cells', () => {
     expect(c.cells.tasks.value).toBe('0');
-    expect(c.cells.tasks.note).toBe('of 33 green');
-    expect(c.cells.tasks.squares).toHaveLength(33);
+    expect(c.cells.tasks.note).toBe('of 15 green');
+    expect(c.cells.tasks.squares).toHaveLength(15);
     expect(c.cells.tasks.squares.every((s) => s.tone === 'quiet')).toBe(true);
-    expect(c.cells.human).toEqual({ count: 11, note: 'not yet observed', hasSection: true });
+    expect(c.cells.human).toEqual({ count: 6, note: 'not yet observed', hasSection: true });
     expect(c.cells.signoff).toMatchObject({ checked: 6, total: 6, stampLabel: 'Pending', stampTone: 'active' });
   });
 
-  it('composes the map: four lanes, ten plan groups, 11 files to create, glyph counts', () => {
+  it('composes the map: four lanes, six plan groups, 7 files to create, glyph counts', () => {
     const map = c.map;
     expect(map?.lanes.map((l) => l.wave)).toEqual(['1', '2', '3', '4']);
-    expect(map?.lanes.flatMap((l) => l.plans)).toHaveLength(10);
-    expect(map?.toCreate).toBe(11);
-    expect(map?.statuses).toEqual([{ status: 'pending', label: 'Pending', tone: 'quiet', count: 33 }]);
+    expect(map?.lanes.flatMap((l) => l.plans)).toHaveLength(6);
+    expect(map?.toCreate).toBe(7);
+    expect(map?.statuses).toEqual([{ status: 'pending', label: 'Pending', tone: 'quiet', count: 15 }]);
     const glyphs = Object.fromEntries((map?.filters.kinds ?? []).map((k) => [k.glyph, k.count]));
-    expect(glyphs).toEqual({ HUMAN: 5, INT: 6, UNIT: 12, BUILD: 10 });
+    expect(glyphs).toEqual({ HUMAN: 3, INT: 2, UNIT: 8, BUILD: 2 });
     expect(map?.tasks[0]).toMatchObject({
       shortId: '01-01',
       glyph: 'HUMAN',
@@ -243,8 +243,8 @@ describe.runIf(hasSp)('composeValidationStrategy — studio-portal phase 2', () 
       commandLabel: 'Checked by',
       anchorId: 'validation-task-0',
     });
-    expect(map?.tasks[1].reqLabel).toBe('ROLE-03 ROLE-07 +2');
-    expect(map?.tasks[1].copy).toBe('cd backend && cargo test --test authz_enforcement');
+    expect(map?.tasks[1].reqLabel).toBe('ROLE-03 ROLE-06 +2');
+    expect(map?.tasks[1].copy).toBe('cd server && npx vitest run test/guard-enforcement.test.ts');
   });
 
   it('numbers the sections present and lists the source-only entries', () => {
@@ -260,18 +260,18 @@ describe.runIf(hasSp)('composeValidationStrategy — studio-portal phase 2', () 
   it('renders the lanes, tiles, no pressed tile and an empty inspector', () => {
     const html = renderView(c);
     expect(count(html, 'class="view-validation-lane"')).toBe(4);
-    expect(count(html, 'class="view-validation-tile"')).toBe(33);
+    expect(count(html, 'class="view-validation-tile"')).toBe(15);
     expect(html).not.toContain('aria-pressed="true"');
     expect(html).toContain('Pick a task to see');
-    expect(html).toContain('11 need a file created');
+    expect(html).toContain('7 need a file created');
   });
 
   it('opens the inspector on an initial selection', () => {
     const html = renderView(c, { initialSelection: 1 });
-    expect(html).toContain('cargo test --test authz_enforcement');
+    expect(html).toContain('npx vitest run test/guard-enforcement.test.ts');
     expect(count(html, 'aria-pressed="true"')).toBe(1);
     expect(html).toContain('aria-label="Copy command"');
-    expect(html).toMatch(/<button[^>]*class="view-validation-ref"[^>]*>ROLE-07</);
+    expect(html).toMatch(/<button[^>]*class="view-validation-ref"[^>]*>ROLE-06</);
   });
 
   it('shows Checked by and the human link for a HUMAN task, and no copy button', () => {
@@ -282,15 +282,15 @@ describe.runIf(hasSp)('composeValidationStrategy — studio-portal phase 2', () 
     expect(inspector).not.toContain('aria-label="Copy command"');
   });
 
-  it('renders the cover: 33 squares, the verdict texts and a closed checklist', () => {
+  it('renders the cover: 15 squares, the verdict texts and a closed checklist', () => {
     const html = renderToStaticMarkup(createElement(ValidationIntroMeta, { intro: c.intro, cells: c.cells }));
-    expect(count(html, 'class="view-validation-square"')).toBe(33);
-    expect(html).toContain('of 33 green');
+    expect(count(html, 'class="view-validation-square"')).toBe(15);
+    expect(html).toContain('of 15 green');
     expect(html).toContain('not yet observed');
     expect(html).toContain('of 6 checks');
     expect(html).toContain('Go to checks ↓');
     expect(html).toContain('Show checks ▾');
-    expect(html).toContain('Created<b>8 Aug 2026</b>');
+    expect(html).toContain('Created<b>30 Mar 2026</b>');
     expect(html).not.toContain('view-validation-checklist');
     const open = renderToStaticMarkup(
       createElement(ValidationIntroMeta, { intro: c.intro, cells: c.cells, initialChecksOpen: true }),
@@ -299,7 +299,7 @@ describe.runIf(hasSp)('composeValidationStrategy — studio-portal phase 2', () 
     expect(open).toContain('Hide checks ▴');
   });
 
-  it('renders the rig: spec rows, two command lines each, runtime, cadence, 75% latency, no read-only tag', () => {
+  it('renders the rig: spec rows, two command lines each, runtime, cadence, 50% latency, no read-only tag', () => {
     const html = renderView(c);
     const rig = html.slice(html.indexOf('id="validation-rig"'), html.indexOf('id="validation-map"'));
     expect(count(rig, 'class="view-validation-spec-row"')).toBe(2);
@@ -312,16 +312,17 @@ describe.runIf(hasSp)('composeValidationStrategy — studio-portal phase 2', () 
     expect(count(full, 'class="view-validation-cmd"')).toBe(2);
     expect(rig).toContain('Runtime ·');
     expect(rig.match(/data-size="(\d)"/g)).toEqual(['data-size="0"', 'data-size="1"', 'data-size="2"']);
-    expect(rig).toContain('width:75%');
+    // 60 seconds of a 120-second scale.
+    expect(rig).toContain('width:50%');
     expect(html.toLowerCase()).not.toContain('read-only');
   });
 
   it('dims the tiles that lack the filtered requirement or threat', () => {
-    const html = renderView(c, { initialFilter: { ref: 'ROLE-07', kind: null, status: null } });
+    const html = renderView(c, { initialFilter: { ref: 'ROLE-06', kind: null, status: null } });
     const tiles = c.map?.tasks ?? [];
-    const lacking = tiles.filter((t) => !t.requirements.includes('ROLE-07') && !t.threats.includes('ROLE-07')).length;
-    expect(lacking).toBeGreaterThan(0);
-    expect(lacking).toBeLessThan(33);
+    const lacking = tiles.filter((t) => !t.requirements.includes('ROLE-06') && !t.threats.includes('ROLE-06')).length;
+    // 5 of the 15 rows name ROLE-06 (2-01-02, 2-01-03, 2-03-01, 2-06-01, 2-06-02), counted in the file.
+    expect(lacking).toBe(10);
     expect(count(html, 'data-dim="true"')).toBe(lacking);
     expect(html).toMatch(/data-filter="ref"[^>]*aria-pressed="true"/);
     expect(html).toContain('Clear');
@@ -329,36 +330,27 @@ describe.runIf(hasSp)('composeValidationStrategy — studio-portal phase 2', () 
 
   it('lists every distinct requirement as a chip with a count', () => {
     const reqs = c.map?.filters.requirements ?? [];
-    expect(reqs.map((r) => r.value)).toEqual([
-      'HARDEN-02',
-      'ROLE-01',
-      'ROLE-02',
-      'ROLE-03',
-      'ROLE-04',
-      'ROLE-05',
-      'ROLE-06',
-      'ROLE-07',
-    ]);
+    expect(reqs.map((r) => r.value)).toEqual(['ROLE-01', 'ROLE-02', 'ROLE-03', 'ROLE-04', 'ROLE-05', 'ROLE-06']);
     const html = renderView(c);
     expect(count(html, 'data-filter="ref"')).toBe(reqs.length);
   });
 
-  it('folds Wave 0 by default and opens to 9 items', () => {
+  it('folds Wave 0 by default and opens to 7 items', () => {
     const closed = renderView(c);
-    expect(closed).toContain('0 of 9 in place');
+    expect(closed).toContain('0 of 7 in place');
     expect(closed).toMatch(/id="validation-wave0"[\s\S]*?aria-expanded="false"/);
     expect(closed).not.toContain('view-validation-wave0-list');
     const open = renderView(c, { initialWave0Open: true });
-    expect(count(open, '<li data-done=')).toBeGreaterThanOrEqual(9);
+    expect(count(open, '<li data-done=')).toBeGreaterThanOrEqual(7);
     expect(open).toContain('aria-expanded="true"');
     // Wave 0 IDs that exist in the map become buttons.
     expect(open).toMatch(/<button[^>]*class="view-validation-ref"[^>]*>2-01-02</);
   });
 
-  it('renders 11 human cards awaiting a human, with a Backstop chip and the clause removed', () => {
+  it('renders 6 human cards awaiting a human, with a Backstop chip and the clause removed', () => {
     const html = renderView(c);
-    expect(count(html, '<article class="view-validation-card"')).toBe(11);
-    expect(count(html, 'Awaiting a human')).toBe(11);
+    expect(count(html, '<article class="view-validation-card"')).toBe(6);
+    expect(count(html, 'Awaiting a human')).toBe(6);
     expect(count(html, '>Backstop<')).toBe(2);
     expect(html).not.toContain('(**backstop**');
   });
@@ -381,16 +373,16 @@ describe.runIf(hasSp)('composeValidationStrategy — studio-portal phase 2', () 
   });
 });
 
-describe.runIf(hasSp)('composeValidationStrategy — the other studio-portal documents', () => {
-  it('phase 4: Ready, reconciled, no status column, six lanes and a prerequisite on every task', () => {
-    const c = compose(SP4);
+describe('composeValidationStrategy — the other Lendshed documents', () => {
+  it('phase 4: Ready, reconciled, no status column, five lanes and a prerequisite on every task', () => {
+    const c = compose(FX4);
     expect(c.intro.status).toEqual({ label: 'Ready', tone: 'active' });
-    expect(c.intro.reconciled).toBe('21 Aug 2026');
+    expect(c.intro.reconciled).toBe('9 Apr 2026');
     expect(c.cells.tasks.value).toBeNull();
-    expect(c.cells.tasks.note).toBe('15 tasks · no status column');
-    expect(c.map?.lanes).toHaveLength(6);
+    expect(c.cells.tasks.note).toBe('10 tasks · no status column');
+    expect(c.map?.lanes).toHaveLength(5);
     expect(c.map?.tasks.every((t) => t.file.label === 'Not recorded')).toBe(true);
-    expect(c.map?.tasks.filter((t) => t.prerequisite !== '')).toHaveLength(15);
+    expect(c.map?.tasks.filter((t) => t.prerequisite !== '')).toHaveLength(10);
     const html = renderView(c, { initialWave0Open: true, initialSelection: 0 });
     expect(html).toContain('Before it runs');
     expect(html).toContain('No status column');
@@ -400,39 +392,39 @@ describe.runIf(hasSp)('composeValidationStrategy — the other studio-portal doc
     const rig = html.slice(html.indexOf('id="validation-rig"'), html.indexOf('id="validation-map"'));
     const quick = rig.slice(rig.indexOf('data-run="quick"'), rig.indexOf('data-run="full"'));
     expect(count(quick, 'class="view-validation-cmd"')).toBe(2);
-    expect(quick).toContain('archive|download');
+    expect(quick).toContain('export|download');
     // 04-03-01 is a map task, so the Wave 0 reconciliation links it.
     expect(html).toMatch(/<button[^>]*class="view-validation-ref"[^>]*>04-03-01</);
   });
 
-  it('phase 3: every Quick and Full row is shown with its qualifier, and Wave 0 reads "5 notes"', () => {
-    const c = compose(SP3);
+  it('phase 3: every Quick and Full row is shown with its qualifier, and Wave 0 reads "4 notes"', () => {
+    const c = compose(FX3);
     const html = renderView(c);
     const rig = html.slice(html.indexOf('id="validation-rig"'), html.indexOf('id="validation-map"'));
     const quick = rig.slice(rig.indexOf('data-run="quick"'), rig.indexOf('data-run="full"'));
     expect(count(quick, 'class="view-validation-cmd"')).toBe(2);
-    expect(quick).toContain('>backend<');
-    expect(quick).toContain('>frontend<');
+    expect(quick).toContain('>server<');
+    expect(quick).toContain('>web<');
     const full = rig.slice(rig.indexOf('data-run="full"'));
     expect(count(full, 'class="view-validation-cmd"')).toBe(2);
     expect(count(rig, 'class="view-validation-spec-row"')).toBe(3);
-    expect(html).toContain('5 notes');
+    expect(html).toContain('4 notes');
   });
 
-  it('phase 1: 12 of 13 green, 3 observed, three Observed · pass footers and one Not observed', () => {
-    const c = compose(SP1);
+  it('phase 1: 8 of 9 green, 3 observed, three Observed · pass footers and one Not observed', () => {
+    const c = compose(FX1);
     expect(c.intro.dims).toEqual([
       { key: 'nyquist', glyph: '✗', label: 'Not Nyquist compliant', tone: 'in-flight' },
       { key: 'wave0', glyph: '✓', label: 'Wave 0 complete', tone: 'complete' },
     ]);
-    expect(c.intro.updated).toBe('5 Aug 2026');
-    expect(c.cells.tasks.value).toBe('12');
-    expect(c.cells.tasks.note).toBe('of 13 green');
+    expect(c.intro.updated).toBe('27 Mar 2026');
+    expect(c.cells.tasks.value).toBe('8');
+    expect(c.cells.tasks.note).toBe('of 9 green');
     expect(c.cells.human.note).toBe('3 observed');
     const html = renderView(c);
     expect(count(html, 'Observed · pass')).toBe(3);
     expect(count(html, 'Not observed')).toBe(1);
-    expect(html).toContain('10 of 10 in place');
+    expect(html).toContain('7 of 7 in place');
     // The suite state authored after the map table is still parsed, but the page no longer shows it.
     expect(c.map?.notes).toHaveLength(2);
     expect(count(html, 'view-validation-note')).toBe(0);
@@ -442,7 +434,7 @@ describe.runIf(hasSp)('composeValidationStrategy — the other studio-portal doc
     const c = compose(V102);
     expect(c.map?.lanes.map((l) => l.wave)).toEqual(['0', '5', 'TBD']);
     expect(c.sourceOnly.map((s) => s.label)).toContain('Map preface');
-    expect(c.wave0?.summary).toBe('3 of 7 in place');
+    expect(c.wave0?.summary).toBe('2 of 5 in place');
   });
 
   it('v1.0/03: the template map shows the notice, no tiles, and "map never filled in"', () => {

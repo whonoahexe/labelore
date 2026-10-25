@@ -1,21 +1,15 @@
-// The VALIDATION strategy page e2e (quick-261003-526, sketch 016 winner A): real corpus files, never
-// a fixture mock. Fixtures resolve by path against the live `/api/presentation` payload (the
-// uat-page.spec.ts idiom) so an archival/rename fails loudly instead of silently skipping. Every
-// test runs against the read-only studio-portal server on port 4198 (playwright.config.ts, present
-// only when ~/studio-portal/.planning exists) and skips itself otherwise. This spec asserts the
+// The VALIDATION strategy page e2e (quick-261003-526, sketch 016 winner A): real files, never a mock. Fixtures
+// resolve by path against the live `/api/presentation` payload (the uat-page.spec.ts idiom) so an
+// archival/rename fails loudly instead of silently skipping. Every test runs against the read-only server
+// on the made-up Lendshed project (port 4198, FIXTURE_BASE_URL; playwright.config.ts always starts it and
+// throws at load when the fixture tree is missing). Nothing in this file skips. This spec asserts the
 // foundation sweep's key invariants itself (one h1, an eyebrow, one chip signature, squared corners,
 // no 420px overflow) — it does not extend measure.ts — since the full sweep is too slow to run per
-// change. It was written in a parallel batch worktree where ports 4199/4198 collide, so it was only
-// typechecked there: run it once post-merge on master:
-//   npx playwright test test/e2e/validation-page.spec.ts -g "validation page"
-import { existsSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { join } from 'node:path';
+// change. Run it on its own:
+//   npx playwright test test/e2e/validation-page.spec.ts
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
-
-const STUDIO_PORTAL_AVAILABLE = existsSync(join(homedir(), 'studio-portal', '.planning'));
-const SP_BASE_URL = 'http://127.0.0.1:4198';
+import { FIXTURE_BASE_URL } from './fixture-root.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
@@ -38,62 +32,61 @@ async function inViewport(page: Page, locator: Locator): Promise<boolean> {
 }
 
 test.describe('VALIDATION strategy page', () => {
-  test('SP P2 validation page', async ({ page }) => {
-    test.skip(!STUDIO_PORTAL_AVAILABLE, 'studio-portal checkout not present');
-    const url = await resolveFixtureUrl(SP_BASE_URL, 'phases/02-roles-permission-enforcement/02-VALIDATION.md');
+  test('Lendshed phase 2 validation page', async ({ page }) => {
+    const url = await resolveFixtureUrl(FIXTURE_BASE_URL, 'phases/02-roles-and-permissions/02-VALIDATION.md');
     await page.addInitScript(() => window.localStorage.setItem('labelore-theme', 'light'));
-    await page.goto(`${SP_BASE_URL}${url}`);
+    await page.goto(`${FIXTURE_BASE_URL}${url}`);
     await page.locator('#validation-map').waitFor({ state: 'visible' });
 
     // Cover: no breadcrumb row, one h1, the eyebrow, the facts and the quiet dims.
     await expect(page.locator('.artifact-breadcrumbs')).toHaveCount(0);
     await expect(page.locator('h1')).toHaveCount(1);
-    await expect(page.locator('h1')).toHaveText('Roles permission enforcement');
+    await expect(page.locator('h1')).toHaveText('Roles and permissions');
     await expect(page.locator('.artifact-heading .eyebrow')).toHaveText('Validation strategy · Phase 2');
     const facts = page.locator('.view-validation-facts');
     await expect(facts).toContainText('Draft');
-    await expect(facts).toContainText('8 Aug 2026');
+    await expect(facts).toContainText('30 Mar 2026');
     const dims = page.locator('.view-validation-dims');
     await expect(dims).toContainText('Nyquist compliant');
     await expect(dims).toContainText('Wave 0 not complete');
 
     // The three verdict cells; Show checks expands the checklist in place.
-    await expect(page.locator('.view-validation-cell .view-validation-square')).toHaveCount(33);
+    await expect(page.locator('.view-validation-cell .view-validation-square')).toHaveCount(15);
     const cells = page.locator('.view-validation-cells');
-    await expect(cells).toContainText('of 33 green');
+    await expect(cells).toContainText('of 15 green');
     await expect(cells).toContainText('not yet observed');
     await expect(cells).toContainText('of 6 checks');
     await page.getByRole('button', { name: /Show checks/ }).click();
     await expect(page.locator('.view-validation-cover-checks li')).toHaveCount(6);
     await page.getByRole('button', { name: /Hide checks/ }).click();
 
-    // The map: four lanes, 33 tiles, the file strip, and a requirement filter that dims some tiles.
+    // The map: four lanes, 15 tiles, the file strip, and a requirement filter that dims some tiles.
     await expect(page.locator('.view-validation-lane')).toHaveCount(4);
-    await expect(page.locator('.view-validation-tile')).toHaveCount(33);
-    await expect(page.locator('#validation-map')).toContainText('11 need a file created');
-    await page.locator('.view-validation-filter[data-filter="ref"]', { hasText: 'ROLE-07' }).click();
+    await expect(page.locator('.view-validation-tile')).toHaveCount(15);
+    await expect(page.locator('#validation-map')).toContainText('7 need a file created');
+    await page.locator('.view-validation-filter[data-filter="ref"]', { hasText: 'ROLE-06' }).click();
     const dimmed = page.locator('.view-validation-tile[data-dim="true"]');
     expect(await dimmed.count()).toBeGreaterThan(0);
-    expect(await dimmed.count()).toBeLessThan(33);
+    expect(await dimmed.count()).toBeLessThan(15);
     await page.getByRole('button', { name: 'Clear', exact: true }).click();
     await expect(page.locator('.view-validation-tile[data-dim="true"]')).toHaveCount(0);
 
     // The inspector: a tile shows its command with a copy button; a HUMAN tile jumps to the checks.
     await page.locator('#validation-task-1').click();
     const inspector = page.locator('.view-validation-inspector');
-    await expect(inspector).toContainText('cargo test --test authz_enforcement');
+    await expect(inspector).toContainText('npx vitest run test/guard-enforcement.test.ts');
     await expect(inspector.getByRole('button', { name: 'Copy command' })).toBeVisible();
     await page.locator('#validation-task-0').click();
     await inspector.getByRole('button', { name: 'See the human checks ↓' }).click();
     await expect.poll(() => inViewport(page, page.locator('#validation-manual'))).toBe(true);
 
-    // Wave 0 is folded and opens to nine items; eleven human cards await a human; the stamp is Pending.
+    // Wave 0 is folded and opens to seven items; six human cards await a human; the stamp is Pending.
     const wave0 = page.locator('#validation-wave0 .view-validation-wave0-toggle');
     await expect(wave0).toHaveAttribute('aria-expanded', 'false');
     await wave0.click();
-    await expect(page.locator('.view-validation-wave0-list li')).toHaveCount(9);
-    await expect(page.locator('.view-validation-card')).toHaveCount(11);
-    await expect(page.locator('.view-validation-outcome', { hasText: 'Awaiting a human' })).toHaveCount(11);
+    await expect(page.locator('.view-validation-wave0-list li')).toHaveCount(7);
+    await expect(page.locator('.view-validation-card')).toHaveCount(6);
+    await expect(page.locator('.view-validation-outcome', { hasText: 'Awaiting a human' })).toHaveCount(6);
     await expect(page.locator('.view-validation-stamp')).toContainText('Pending');
 
     // Source-only: Status legend lands in Source mode at the map heading; View restores the page.
@@ -104,7 +97,7 @@ test.describe('VALIDATION strategy page', () => {
     const heading = page.locator('.artifact-document h2', { hasText: 'Per-Task Verification Map' });
     await expect.poll(() => inViewport(page, heading)).toBe(true);
     await page.getByRole('button', { name: 'View', exact: true }).click();
-    await expect(page.locator('.view-validation-tile')).toHaveCount(33);
+    await expect(page.locator('.view-validation-tile')).toHaveCount(15);
 
     // F-05: every status chip on the page measures the same (buttons and spans alike).
     const signatures = await page.evaluate(() =>
@@ -144,20 +137,19 @@ test.describe('VALIDATION strategy page', () => {
     expect(layout.scrollWidth).toBeLessThanOrEqual(layout.innerWidth + 1);
   });
 
-  test('SP P1 and template-only validation pages', async ({ page }) => {
-    test.skip(!STUDIO_PORTAL_AVAILABLE, 'studio-portal checkout not present');
-    const p1 = await resolveFixtureUrl(SP_BASE_URL, 'phases/01-portal-owned-identity-sessions/01-VALIDATION.md');
-    await page.goto(`${SP_BASE_URL}${p1}`);
+  test('Lendshed phase 1 and template-only validation pages', async ({ page }) => {
+    const p1 = await resolveFixtureUrl(FIXTURE_BASE_URL, 'phases/01-member-sign-in-sessions/01-VALIDATION.md');
+    await page.goto(`${FIXTURE_BASE_URL}${p1}`);
     await page.locator('#validation-map').waitFor({ state: 'visible' });
     const p1Cells = page.locator('.view-validation-cells');
-    await expect(p1Cells).toContainText('12');
-    await expect(p1Cells).toContainText('of 13 green');
+    await expect(p1Cells).toContainText('8');
+    await expect(p1Cells).toContainText('of 9 green');
     await expect(p1Cells).toContainText('3 observed');
     await expect(page.locator('.view-validation-outcome', { hasText: 'Observed · pass' })).toHaveCount(3);
     await expect(page.locator('.view-validation-outcome', { hasText: 'Not observed' })).toHaveCount(1);
 
-    const v103 = await resolveFixtureUrl(SP_BASE_URL, 'v1.0-phases/03-file-browsing/03-VALIDATION.md');
-    await page.goto(`${SP_BASE_URL}${v103}`);
+    const v103 = await resolveFixtureUrl(FIXTURE_BASE_URL, 'v1.0-phases/03-catalogue-browsing/03-VALIDATION.md');
+    await page.goto(`${FIXTURE_BASE_URL}${v103}`);
     await page.locator('#validation-map').waitFor({ state: 'visible' });
     await expect(page.locator('#validation-map')).toContainText('The map was never filled in.');
     await expect(page.locator('.view-validation-tile')).toHaveCount(0);
