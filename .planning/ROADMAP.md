@@ -94,27 +94,36 @@ any page is built to show them.
 **Plans**: 22 plans
 
 Plans:
+**Wave 1**
 - [ ] 06-01-PLAN.md — Tracer: the made-up Lendshed project, its throwing loader, the fail-loud 4198 browser server, the zero-skip gate and the shared fixture server, proven on one CONTEXT file
 - [ ] 06-02-PLAN.md — Growth harness, linear link scanner, growth tests for the section and mention scanners
 - [ ] 06-03-PLAN.md — View-mode outline capped at 18 with a "+N more sections" row; standing raw-HTML guard
 - [ ] 06-04-PLAN.md — config.json secrets masked at read time for presentation, file page and search
+
+**Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 06-05-PLAN.md — CONTEXT family on Lendshed
 - [ ] 06-06-PLAN.md — Discussion-log and validation families on Lendshed
 - [ ] 06-07-PLAN.md — Pattern-map family on Lendshed, Labelore phase 6 PATTERNS re-pinned
 - [ ] 06-08-PLAN.md — Research-briefing family on Lendshed, embedded research excerpts made up
 - [ ] 06-09-PLAN.md — Plan family on Lendshed, Labelore 528 drift fix
-- [ ] 06-10-PLAN.md — Summary family on Lendshed, Labelore summary-walker drift fix
 - [ ] 06-11-PLAN.md — UAT and security-register families on Lendshed
 - [ ] 06-12-PLAN.md — UI-SPEC, theme and UI-review families on Lendshed
 - [ ] 06-13-PLAN.md — Copied review fixtures replaced by made-up Lendshed reviews
 - [ ] 06-14-PLAN.md — Copied verification and learnings fixtures replaced, learnings server retired
 - [ ] 06-15-PLAN.md — Debug sessions on Lendshed, sibling helper and debug server deleted
 - [ ] 06-16-PLAN.md — Made-up todos and the notes they point at on Lendshed, todo unit tests repointed, provenance tests deleted
+- [ ] 06-21-PLAN.md — Labelore-own research and drawer tests re-pinned, last timing and tilde-path fixes
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [ ] 06-10-PLAN.md — Summary family on Lendshed, Labelore summary-walker drift fix
 - [ ] 06-17-PLAN.md — Todo browser spec on the shared fixture server, copied todo fixtures and the todo server deleted
 - [ ] 06-18-PLAN.md — Note family on Lendshed, committed notes copy deleted
 - [ ] 06-19-PLAN.md — Diagram fixtures rewritten column for column, sketch-012 golden regenerated
+
+**Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 06-20-PLAN.md — Diagram timing tests converted to growth under the size caps
-- [ ] 06-21-PLAN.md — Labelore-own research and drawer tests re-pinned, last timing and tilde-path fixes
+
+**Wave 5** *(blocked on Wave 4 completion)*
 - [ ] 06-22-PLAN.md — Standing leak and no-skips scans, ledgers, and the full-suite phase gate
 
 ### Phase 7: Recognised Files and Readable URLs
