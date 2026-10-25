@@ -18,12 +18,11 @@ import { toProjectPresentation } from '../../src/server/project-presentation.ts'
 import type { ProjectPresentation } from '../../src/server/project-presentation.ts';
 import { composeReviewThreads } from '../../src/web/views/review-threads.ts';
 import type { ComposedReviewThreads } from '../../src/web/views/review-threads.ts';
-import { SP_PLANNING, STUDIO_PORTAL_ROOT } from '../helpers/studio-portal.ts';
+import { FX_ROOT, loadProject } from '../helpers/fixture-project.ts';
 
 const LB_ROOT = new URL('../..', import.meta.url).pathname.replace(/\/$/, '');
 const LB_PLANNING = join(LB_ROOT, '.planning');
 const FIXTURES = join(LB_ROOT, 'test/fixtures/review');
-const hasSp = existsSync(SP_PLANNING);
 
 function walk(root: string): string[] {
   if (!existsSync(root)) return [];
@@ -47,7 +46,7 @@ function walk(root: string): string[] {
 }
 
 let lb: ProjectPresentation;
-let sp: ProjectPresentation | null = null;
+let fx: ProjectPresentation;
 
 beforeAll(async () => {
   const load = async (root: string): Promise<ProjectPresentation> => {
@@ -55,7 +54,7 @@ beforeAll(async () => {
     return toProjectPresentation(await repository.load());
   };
   lb = await load(LB_ROOT);
-  if (hasSp) sp = await load(STUDIO_PORTAL_ROOT);
+  fx = (await loadProject(FX_ROOT)).presentation;
 }, 60000);
 
 type Artifact = ProjectPresentation['artifacts'][number];
@@ -163,19 +162,19 @@ describe('REVIEW corpus - every file extracts and composes', () => {
   });
 });
 
-describe.runIf(hasSp)('REVIEW corpus - studio-portal', () => {
+describe('REVIEW corpus - Lendshed', () => {
   it('every report extracts and every review composes', () => {
-    const reviews = sp!.artifacts.filter((a) => isReview(a.path));
-    expect(reviews.length).toBeGreaterThanOrEqual(5);
+    const reviews = fx.artifacts.filter((a) => isReview(a.path));
+    expect(reviews.length).toBeGreaterThanOrEqual(1);
     for (const a of reviews) {
       expect(a.structured.review, a.path).toBeDefined();
-      expect(() => compose(sp!, a), a.path).not.toThrow();
+      expect(() => compose(fx, a), a.path).not.toThrow();
     }
-    for (const a of sp!.artifacts.filter((x) => isFix(x.path))) expect(a.structured.reviewFix, a.path).toBeDefined();
+    for (const a of fx.artifacts.filter((x) => isFix(x.path))) expect(a.structured.reviewFix, a.path).toBeDefined();
   });
 
   it('phases/01 joins its REVIEW-FIX: CR-01 and WR-01 fixed, IN-01, IN-02 and IN-03 skipped', () => {
-    const model = compose(sp!, artifactAt(sp!, 'phases/01-portal-owned-identity-sessions/01-REVIEW.md'));
+    const model = compose(fx, artifactAt(fx, 'phases/01-member-sign-in-sessions/01-REVIEW.md'));
     const stamps = new Map(model.threads.files.flatMap((f) => f.findings).map((f) => [f.id, f.stamp.outcome]));
     expect(stamps.get('CR-01')).toBe('fixed');
     expect(stamps.get('WR-01')).toBe('fixed');
