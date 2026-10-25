@@ -82,9 +82,9 @@ observed: |
 
   - `/live` and `/slip/{token}` take no member identity — correctly token-gated.
 
-  Noticed during review and consciously let through, NOT recorded as a gap: the `AUTH_MODE=dev` check
+  Noticed during review and consciously let through, NOT recorded as a gap: the `SHED_MODE=open` check
   (`server/auth/index.ts:197`) only refuses to start on a non-loopback bind. This host binds
-  `127.0.0.1:9120` behind a tunnel that connects over loopback, so putting `AUTH_MODE=dev` in `shed.env`
+  `127.0.0.1:9120` behind a tunnel that connects over loopback, so putting `SHED_MODE=open` in `shed.env`
   would start quietly and satisfy every gated row by injected identity. Live behaviour is fine
   today: an anonymous `GET /api/me` returns 401, which the dev bypass would not give.
 
