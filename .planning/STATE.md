@@ -5,16 +5,16 @@ milestone_name: Wayfinding
 current_phase: 06
 current_phase_name: Trustworthy Tests and Security Baseline
 status: executing
-stopped_at: Completed 06-15-PLAN.md
-last_updated: "2026-10-25T21:58:28.953Z"
+stopped_at: Completed 06-21-PLAN.md
+last_updated: "2026-10-25T22:12:03.516Z"
 last_activity: 2026-10-26
 last_activity_desc: Phase 06 execution started
-state_head: bdbb8c800c372f8f59e97bb8be9536e13786ed24
+state_head: 25a6ba70386179eadf8f9f197c7b0c57c203e42b
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 22
-  completed_plans: 15
+  completed_plans: 16
   percent: 0
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-10-25)
 ## Current Position
 
 Phase: 06 (Trustworthy Tests and Security Baseline) — EXECUTING
-Plan: 13 of 22
+Plan: 14 of 22
 Status: Ready to execute
 Last activity: 2026-10-26 — Phase 06 execution started
 
@@ -96,6 +96,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06 P13 | ~25min (resumed) | 3 tasks | 14 files |
 | Phase 06 P14 | 25min | 3 tasks | 19 files |
 | Phase 06 P15 | ~25min | 2 tasks | 11 files |
+| Phase 06 P21 | 40 min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -133,6 +134,7 @@ milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) a
 - [Phase 06]: 06-13: corpus guard asserts >=7 Lendshed reviews and >=8 review-family files, since only seven made-up REVIEW files exist
 - [Phase 06]: 06-14: Lendshed LEARNINGS keeps the original shape (14/9/10/7, 10 sources) so structural pins recalculate unchanged; verbatim headings reworded after a line-overlap check
 - [Phase 06]: 06-15: debug-family corpus walk covers only Labelore and Lendshed roots; pins recounted on the made-up sessions; fixed ms budgets converted to measureGrowth
+- [Phase 06]: 06-21: the old template-shape research coverage is kept by reading the archived v1.0 research; today's research is pinned separately, and the browser spec asserts absent sections draw nothing
 
 ### Pending Todos
 
@@ -175,8 +177,8 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-10-25T21:58:28.912Z
-Stopped at: Completed 06-15-PLAN.md
+Last session: 2026-10-25T22:12:03.474Z
+Stopped at: Completed 06-21-PLAN.md
 Resume file: None
 
 ## Operator Next Steps
