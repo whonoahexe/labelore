@@ -1,9 +1,8 @@
-// quick-261018-j5h (QJ5H-07): real-corpus guards over every debug session on this machine - labelore's
-// own `.planning/debug/`, each sibling project that has one (deid-ui, deid-template-studio, resoundant,
-// plan.sideby.me) and the copied synthetic session - built through the real repository load so each file
-// reaches the handler with the ref discovery gives it. These are live projects, so the test asserts
-// invariants for every file and pins values only for the four named sibling sketch files, using the
-// numbers from the sketch's own data.js - never the composer's output.
+// quick-261018-j5h (QJ5H-07): corpus guards over every debug session in the repository - labelore's own
+// `.planning/debug/`, the made-up Lendshed project's and the synthetic session - built through the real
+// repository load so each file reaches the handler with the ref discovery gives it. The test asserts
+// invariants for every file and pins values only for the four named Lendshed sessions, each counted in
+// its own file - never the composer's output.
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -15,12 +14,11 @@ import type { ProjectPresentation } from '../../src/server/project-presentation.
 import { composeDebugCase } from '../../src/web/views/debug-case.ts';
 import type { ComposedDebugCase } from '../../src/web/views/debug-case.ts';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
-import { DEBUG_SIBLING_ROOTS, SKETCH_FILES } from '../helpers/debug-corpus.ts';
 import { FX_ROOT, fxPath } from '../helpers/fixture-project.ts';
 
 const LB_ROOT = new URL('../..', import.meta.url).pathname.replace(/\/$/, '');
 const SYN = join(LB_ROOT, 'test/fixtures/debug/search-index-goes-stale.md');
-const ROOTS = [LB_ROOT, FX_ROOT, ...DEBUG_SIBLING_ROOTS];
+const ROOTS = [LB_ROOT, FX_ROOT];
 
 function walk(dir: string): string[] {
   if (!existsSync(dir)) return [];
@@ -115,9 +113,8 @@ function compose(s: Session): ComposedDebugCase | null {
 }
 
 describe('every debug session on this machine', () => {
-  it('reads at least labelore and the synthetic one', () => {
-    console.log(`debug corpus: ${sessions.length} sessions in ${ROOTS.length} projects`);
-    expect(sessions.length).toBeGreaterThanOrEqual(2);
+  it('reads labelore, the synthetic one and at least four Lendshed sessions', () => {
+    expect(sessions.length).toBeGreaterThanOrEqual(6);
     expect(sessions.some((s) => s.label === 'synthetic')).toBe(true);
     expect(sessions.some((s) => s.path.endsWith('resolved/loading-state-regression.md'))).toBe(true);
   });
@@ -179,16 +176,16 @@ describe('every debug session on this machine', () => {
   });
 });
 
-describe('the Lendshed sessions', () => {
-  const fxSession = (relative: string): Session => {
-    fxPath(`debug/${relative}`);
-    const hit = sessions.find((s) => s.label === `${FX_ROOT}:.planning/debug/${relative}`);
-    if (hit === undefined) throw new Error(`the corpus walk did not find Lendshed debug/${relative}`);
-    return hit;
-  };
+const fxSession = (relative: string): Session => {
+  fxPath(`debug/${relative}`);
+  const hit = sessions.find((s) => s.label === `${FX_ROOT}:.planning/debug/${relative}`);
+  if (hit === undefined) throw new Error(`the corpus walk did not find Lendshed debug/${relative}`);
+  return hit;
+};
 
-  it('finds at least one Lendshed session', () => {
-    expect(sessions.filter((s) => s.label.startsWith(`${FX_ROOT}:`)).length).toBeGreaterThanOrEqual(1);
+describe('the Lendshed sessions', () => {
+  it('finds at least four Lendshed sessions', () => {
+    expect(sessions.filter((s) => s.label.startsWith(`${FX_ROOT}:`)).length).toBeGreaterThanOrEqual(4);
   });
 
   it('loan history: awaiting a check', () => {
@@ -200,11 +197,9 @@ describe('the Lendshed sessions', () => {
   });
 });
 
-describe('the sibling sketch sessions', () => {
-  const find = (file: string): Session | undefined => sessions.find((s) => file.endsWith(s.path) && file.startsWith(s.label.split(':')[0]));
-
-  it.runIf(existsSync(SKETCH_FILES.sa))('sideby diagnosed', () => {
-    const m = compose(find(SKETCH_FILES.sa)!)!;
+describe('the other Lendshed sessions', () => {
+  it('receipt email: diagnosed', () => {
+    const m = compose(fxSession('receipt-email-never-sent.md'))!;
     expect([m.status.label, m.lead.variant, m.lead.fix?.label, m.head.updated]).toEqual([
       'Diagnosed · not fixed',
       'diagnosed',
@@ -215,20 +210,20 @@ describe('the sibling sketch sessions', () => {
     expect(m.evidence?.total).toBe(4);
   });
 
-  it.runIf(existsSync(SKETCH_FILES.rs))('resoundant resolved', () => {
-    const m = compose(find(SKETCH_FILES.rs)!)!;
+  it('door sensor: resolved and archived', () => {
+    const m = compose(fxSession('resolved/door-sensor-stops-after-wifi-drop.md'))!;
     expect([m.status.label, m.lead.variant, m.head.archived]).toEqual(['Resolved', 'resolved', true]);
-    expect(m.suspects.columns.map((c) => c.items.length)).toEqual([4, 3, 0]);
-    expect(m.evidence?.total).toBe(24);
+    expect(m.suspects.columns.map((c) => c.items.length)).toEqual([3, 3, 0]);
+    expect(m.evidence?.total).toBe(15);
     expect(m.lead.files?.items).toHaveLength(8);
     expect(m.trigger?.short).not.toBeNull();
   });
 
-  it.runIf(existsSync(SKETCH_FILES.sr))('sideby resolved over five rounds', () => {
-    const m = compose(find(SKETCH_FILES.sr)!)!;
+  it('reservation holds: resolved over five rounds', () => {
+    const m = compose(fxSession('reservation-holds-lost-on-reconnect.md'))!;
     expect([m.status.label, m.lead.variant, m.head.archived]).toEqual(['Resolved', 'resolved', false]);
     expect(m.suspects.columns.map((c) => c.items.length)).toEqual([1, 2, 0]);
-    expect(m.evidence?.total).toBe(25);
+    expect(m.evidence?.total).toBe(20);
     expect(m.facts.map((f) => f.label)).toContain('Rounds');
     expect(m.also).toHaveLength(12);
   });

@@ -1,12 +1,12 @@
-// quick-261018-j5h (sketch 023 A): the DEBUG composer and its view, pinned against the two files that
-// always exist (labelore's resolved session and the copied synthetic investigating one), the sibling
-// sketch sessions when present, and inline sessions for the branches those do not cover. ViewInput
+// quick-261018-j5h (sketch 023 A): the DEBUG composer and its view, pinned against labelore's resolved
+// session, the synthetic investigating one, the four made-up Lendshed sessions, and inline sessions for
+// the branches those do not cover. ViewInput
 // literals are built from the handler's real parse of each file; pinned values come from the sketch's
 // own data.js and model functions and the source files, never from the composer's output.
 process.env.TZ = 'Asia/Kolkata';
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
-import { existsSync, readFileSync } from 'node:fs';
-import { homedir, tmpdir } from 'node:os';
+import { readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -27,9 +27,9 @@ const LB = new URL('../../.planning/debug/resolved/loading-state-regression.md',
 const KB = new URL('../../.planning/debug/knowledge-base.md', import.meta.url).pathname;
 const SYN = new URL('../fixtures/debug/search-index-goes-stale.md', import.meta.url).pathname;
 const FX_DD = fxPath('debug/loan-history-picks-wrong-shed.md');
-const SA = join(homedir(), 'Work/Sideby/plan.sideby.me/.planning/debug/sfu-no-audio.md');
-const RS = join(homedir(), 'Work/Ibis/resoundant/.planning/debug/resolved/heartbeat-stops-after-net-drop.md');
-const SR = join(homedir(), 'Work/Sideby/plan.sideby.me/.planning/debug/sfu-reconnect-presence.md');
+const FX_RECEIPT = fxPath('debug/receipt-email-never-sent.md');
+const FX_HOLDS = fxPath('debug/reservation-holds-lost-on-reconnect.md');
+const FX_DOOR = fxPath('debug/resolved/door-sensor-stops-after-wifi-drop.md');
 
 function refOf(path: string, extra: Partial<ArtifactRef> = {}): ArtifactRef {
   return { path, kind: 'debug', location: 'other', phaseIdentity: null, milestoneVersion: null, quickTaskId: null, ...extra };
@@ -181,33 +181,33 @@ describe('the sibling sketch sessions, when present', () => {
     expect(m.head).toMatchObject({ title: 'Loan history picks wrong shed', opened: '24 Mar 2026', updated: '19:40' });
   });
 
-  it.runIf(existsSync(SA))('sideby: diagnosed with a suggestion', () => {
-    const m = page(SA);
+  it('receipt email: diagnosed with a suggestion', () => {
+    const m = page(FX_RECEIPT);
     expect(m.status).toEqual({ label: 'Diagnosed · not fixed', tone: 'in-flight' });
     expect([m.lead.variant, m.lead.kicker]).toEqual(['diagnosed', 'Root cause found · not fixed yet']);
     expect(m.lead.causes?.items.map((c) => c.label)).toEqual(['PRIMARY', 'SECONDARY']);
     expect(m.lead.fix?.label).toBe('Suggested fix · not applied');
     expect(m.lead.verification).toBeNull();
-    expect(m.head.title).toBe('Sfu no audio');
+    expect(m.head.title).toBe('Receipt email never sent');
     expect(m.head.updated).toBeNull();
   });
 
-  it.runIf(existsSync(RS))('resoundant: archived, long trigger folded, a literal local-time-free stamp', () => {
-    const m = page(RS);
-    expect(m.head).toMatchObject({ title: 'Heartbeat stops after net drop', opened: '3 Oct 2026', updated: '12 Oct 2026 · 22:10', archived: true });
-    expect(m.trigger?.text).toHaveLength(366);
+  it('door sensor: archived, long trigger folded, a literal local-time-free stamp', () => {
+    const m = page(FX_DOOR);
+    expect(m.head).toMatchObject({ title: 'Door sensor stops after wifi drop', opened: '3 Mar 2026', updated: '18 Mar 2026 · 22:10', archived: true });
+    expect(m.trigger?.text).toHaveLength(387);
     expect(m.trigger?.short).not.toBeNull();
     expect(m.trigger?.short?.endsWith(' …')).toBe(true);
     expect(m.facts[0]).toEqual({ label: 'Bug class', value: 'Mandelbug' });
     expect(m.lead.causes?.items.map((c) => c.label)).toEqual(['Cause 1', 'Cause 2', 'Cause 3']);
-    expect(m.lead.fix?.text).toBe('APPLIED 2026-10-06 — Option A only (user decision).');
+    expect(m.lead.fix?.text).toBe('APPLIED 2026-03-12 — Options A and C (steward decision).');
     expect(m.lead.files?.items).toHaveLength(8);
   });
 
-  it.runIf(existsSync(SR))('sideby: five rounds, a sentence for the verification', () => {
-    const m = page(SR);
-    expect(m.facts.map((f) => `${f.label} ${f.value}`)).toEqual(['Evidence 25', 'Ruled out 2', 'Rounds 5']);
-    expect(m.trigger?.text).toHaveLength(265);
+  it('reservation holds: five rounds, a sentence for the verification', () => {
+    const m = page(FX_HOLDS);
+    expect(m.facts.map((f) => `${f.label} ${f.value}`)).toEqual(['Evidence 20', 'Ruled out 2', 'Rounds 5']);
+    expect(m.trigger?.text).toHaveLength(324);
     expect(m.trigger?.short).not.toBeNull();
     expect(m.lead.causes?.items.map((c) => [c.label, c.cut])).toEqual([
       ['Cause 1', true],
@@ -217,9 +217,9 @@ describe('the sibling sketch sessions, when present', () => {
     expect(m.lead.verification).toEqual({
       kicker: 'Verified',
       chips: null,
-      text: 'Round 1 VERIFIED (media-sdk v0.2.0 published, watch fc9a8f4 bumped to ^0.2.0).',
+      text: 'First pass verified (feed-client 0.4.0 published, desk bumped to ^0.4.0).',
     });
-    expect(m.head).toMatchObject({ opened: '29 Jun 2026', updated: '30 Jun 2026' });
+    expect(m.head).toMatchObject({ opened: '9 Mar 2026', updated: '12 Mar 2026' });
   });
 });
 
@@ -422,12 +422,12 @@ describe('Suspects', () => {
     expect(columnCounts(page(FX_DD))).toBe('2 / 4 / 0');
   });
 
-  it.runIf(existsSync(SA) && existsSync(RS) && existsSync(SR))('matches the sibling sessions', () => {
-    expect(columnCounts(page(SA))).toBe('1 / 2 / 0');
-    expect(page(SA).suspects.columns[0].items[0].kind).toBe('root cause');
-    expect(columnCounts(page(RS))).toBe('4 / 3 / 0');
-    expect(columnCounts(page(SR))).toBe('1 / 2 / 0');
-    expect(page(SR).suspects.columns[0].items[0].kind).toBe('root cause');
+  it('matches the other Lendshed sessions', () => {
+    expect(columnCounts(page(FX_RECEIPT))).toBe('1 / 2 / 0');
+    expect(page(FX_RECEIPT).suspects.columns[0].items[0].kind).toBe('root cause');
+    expect(columnCounts(page(FX_DOOR))).toBe('3 / 3 / 0');
+    expect(columnCounts(page(FX_HOLDS))).toBe('1 / 2 / 0');
+    expect(page(FX_HOLDS).suspects.columns[0].items[0].kind).toBe('root cause');
   });
 
   it('renders None. for an empty column and the ruled-out reason', () => {
@@ -467,8 +467,8 @@ describe('Evidence log', () => {
     expect(roundBreaks(dd, 'confirms').has(6)).toBe(true);
   });
 
-  it.runIf(existsSync(SR))('marks round dividers across five rounds', () => {
-    expect(roundBreaks(page(SR).evidence!, 'all').size).toBe(5);
+  it('marks round dividers across five rounds', () => {
+    expect([...roundBreaks(page(FX_HOLDS).evidence!, 'all').keys()]).toEqual([1, 9, 12, 16, 19]);
   });
 
   it('renders the pressed filter and only matching cards, with the card parts', () => {
@@ -516,22 +516,22 @@ describe('Also in this session', () => {
     expect(render(m!)).not.toContain('Also in this session');
   });
 
-  it.runIf(existsSync(SR) && existsSync(RS))('uses distinct short names for the long sessions', () => {
-    expect(page(SR).also.map((a) => a.label)).toEqual([
-      'Confirmed root-cause chain',
-      'Secondary watch defects',
-      'Cross-repo release note',
-      'Round 2',
-      'Round 2 deployment state',
-      'Round 3 — UAT evidence',
-      'Round 3 — Validation against code',
-      'Round 3 — Fixes applied',
-      'Round 3 deployment state',
-      'Round 4',
-      'Round 4 UAT',
+  it('uses distinct short names for the long sessions', () => {
+    expect(page(FX_HOLDS).also.map((a) => a.label)).toEqual([
+      'Suspected cause chain',
+      'Secondary kiosk defects',
+      'Cross-service release note',
+      'Second pass',
+      'Second-pass deployment state',
+      'Third pass — UAT evidence',
+      'Third pass — checking the code',
+      'Third pass — fixes applied',
+      'Third pass deployment state',
+      'Fourth pass',
+      'Fourth pass UAT',
       'Frontmatter',
     ]);
-    expect(page(RS).also.map((a) => a.label)).toEqual([
+    expect(page(FX_DOOR).also.map((a) => a.label)).toEqual([
       'Context',
       'Answers to open questions',
       'Follow-up hook points',
@@ -539,6 +539,6 @@ describe('Also in this session', () => {
       'Reasoning checkpoint',
       'Frontmatter',
     ]);
-    expect(page(RS).also[2].title).toContain('NOT implemented');
+    expect(page(FX_DOOR).also[2].title).toContain('NOT implemented');
   });
 });

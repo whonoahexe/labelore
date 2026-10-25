@@ -1,23 +1,34 @@
 // The DEBUG page e2e (quick-261018-j5h, sketch 023 A). The spec starts a read-only server on a thin temp
-// project (ports 5310-5319 only, see debug-fixture-server.ts) holding the synthetic investigating
-// session, labelore's own resolved session and knowledge base and a copy of each sibling sketch session
-// present on this machine, and resolves each page by path against its live `/api/presentation` payload.
+// project (ports 5310-5319 only, see fixture-server.ts) holding the synthetic investigating session,
+// labelore's own resolved session and knowledge base and the four made-up Lendshed sessions - every
+// placement is an in-repo file, so every page below is asserted, never skipped - and resolves each page
+// by path against its live `/api/presentation` payload.
 // It asserts the foundation sweep's key invariants itself (one h1, squared corners, one chip signature,
 // no 420px overflow) since the full sweep is too slow to run per change.
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
-import { startDebugFixtureServer } from './debug-fixture-server.ts';
-import type { DebugFixtureServer } from './debug-fixture-server.ts';
+import { startFixtureServer } from './fixture-server.ts';
+import type { FixtureServer } from './fixture-server.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
 }
 
-let server: DebugFixtureServer;
+const LENDSHED_DEBUG = 'test/fixtures/lendshed/.planning/debug';
+
+let server: FixtureServer;
 
 test.beforeAll(async () => {
   test.setTimeout(120_000);
-  server = await startDebugFixtureServer();
+  server = await startFixtureServer([
+    { from: 'test/fixtures/debug/search-index-goes-stale.md', to: '.planning/debug/search-index-goes-stale.md' },
+    { from: '.planning/debug/resolved/loading-state-regression.md', to: '.planning/debug/resolved/loading-state-regression.md' },
+    { from: '.planning/debug/knowledge-base.md', to: '.planning/debug/knowledge-base.md' },
+    { from: `${LENDSHED_DEBUG}/loan-history-picks-wrong-shed.md`, to: '.planning/debug/loan-history-picks-wrong-shed.md' },
+    { from: `${LENDSHED_DEBUG}/receipt-email-never-sent.md`, to: '.planning/debug/receipt-email-never-sent.md' },
+    { from: `${LENDSHED_DEBUG}/reservation-holds-lost-on-reconnect.md`, to: '.planning/debug/reservation-holds-lost-on-reconnect.md' },
+    { from: `${LENDSHED_DEBUG}/resolved/door-sensor-stops-after-wifi-drop.md`, to: '.planning/debug/resolved/door-sensor-stops-after-wifi-drop.md' },
+  ]);
 });
 
 test.afterAll(async () => {
@@ -35,8 +46,10 @@ async function resolveKey(suffix: string): Promise<string> {
 const LB = 'debug/resolved/loading-state-regression.md';
 const SYN = 'debug/search-index-goes-stale.md';
 const KB = 'debug/knowledge-base.md';
-const DD = 'debug/mr-series-selection-picks-dwi.md';
-const SA = 'debug/sfu-no-audio.md';
+const AWAITING = 'debug/loan-history-picks-wrong-shed.md';
+const DIAGNOSED = 'debug/receipt-email-never-sent.md';
+const FIVE_ROUNDS = 'debug/reservation-holds-lost-on-reconnect.md';
+const ARCHIVED = 'debug/resolved/door-sensor-stops-after-wifi-drop.md';
 
 async function openPage(page: Page, suffix: string, theme: 'light' | 'dark'): Promise<void> {
   const key = await resolveKey(suffix);
@@ -179,9 +192,8 @@ test.describe('Debug page', () => {
     await checkInvariants(page);
   });
 
-  test('deid session waiting on a check', async ({ page }) => {
-    test.skip(!server.placed.includes('dd'), 'the deid session is not on this machine');
-    await openPage(page, DD, 'light');
+  test('loan history session waiting on a check', async ({ page }) => {
+    await openPage(page, AWAITING, 'light');
     await expect(page.locator('.view-debug-status')).toHaveText('Waiting on you');
     await expect(page.locator('.view-debug-lead')).toContainText('Fixed, waiting on your check');
     await expect(page.locator('.view-debug-lead > *').nth(1)).toContainText('What you need to check');
@@ -191,13 +203,32 @@ test.describe('Debug page', () => {
     await checkInvariants(page);
   });
 
-  test('sideby diagnosed session', async ({ page }) => {
-    test.skip(!server.placed.includes('sa'), 'the sideby session is not on this machine');
-    await openPage(page, SA, 'light');
+  test('receipt email diagnosed session', async ({ page }) => {
+    await openPage(page, DIAGNOSED, 'light');
     await expect(page.locator('.view-debug-status')).toHaveText('Diagnosed · not fixed');
     await expect(page.locator('.view-debug-lead')).toContainText('Root cause found · not fixed yet');
     await expect(page.locator('.view-debug-lead')).toContainText('Suggested fix · not applied');
     await expect(page.locator('.view-debug-meta-left')).not.toContainText('Updated');
+    await checkInvariants(page);
+  });
+
+  test('reservation holds session over five rounds', async ({ page }) => {
+    await openPage(page, FIVE_ROUNDS, 'light');
+    await expect(page.locator('.view-debug-status')).toHaveText('Resolved');
+    await expect(page.locator('.view-debug-meta-left .status-chip', { hasText: 'Archived' })).toHaveCount(0);
+    await expect(page.locator('.view-debug-facts')).toContainText('Rounds');
+    await filter(page, 'All').click();
+    await expect(page.locator('.view-debug-ev')).toHaveCount(20);
+    await expect(page.locator('.view-debug-round')).toHaveCount(5);
+    await checkInvariants(page);
+  });
+
+  test('door sensor session under resolved is archived', async ({ page }) => {
+    await openPage(page, ARCHIVED, 'dark');
+    await expect(page.locator('.view-debug-status')).toHaveText('Resolved');
+    await expect(page.locator('.view-debug-meta-left .status-chip', { hasText: 'Archived' })).toHaveCount(1);
+    await expect(page.locator('.view-debug-lead .view-debug-file')).toHaveCount(8);
+    await expect(page.locator('.view-debug-lead .view-debug-vchip')).toHaveCount(5);
     await checkInvariants(page);
   });
 
@@ -211,7 +242,7 @@ test.describe('Debug page', () => {
   for (const theme of ['light', 'dark'] as const) {
     test(`every debug page fits 420px in ${theme}`, async ({ page }) => {
       await page.setViewportSize({ width: 420, height: 900 });
-      for (const suffix of [LB, SYN, ...(server.placed.includes('dd') ? [DD] : []), ...(server.placed.includes('sa') ? [SA] : [])]) {
+      for (const suffix of [LB, SYN, AWAITING, DIAGNOSED, FIVE_ROUNDS, ARCHIVED]) {
         await openPage(page, suffix, theme);
         await expect(page.locator('main h1')).toHaveCount(1);
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
