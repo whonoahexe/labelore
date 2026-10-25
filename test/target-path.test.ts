@@ -2,10 +2,10 @@
 // <behavior> block. Symlink/permission/missing-path cases build inside a per-test temp directory
 // under the OS temp dir and tear it down afterward — never inside fixtures/, which stays
 // committable and reproducible.
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { mkdtempSync, rmSync, symlinkSync, chmodSync, mkdirSync, writeFileSync } from 'node:fs';
-import { tmpdir, homedir } from 'node:os';
-import { join, resolve, relative, sep } from 'node:path';
+import { tmpdir } from 'node:os';
+import { join, resolve, relative } from 'node:path';
 import { resolveTargetPath } from '../src/cli/target-path.ts';
 import { LocalFsPlanningFilesystem } from '../src/planning-fs/local-fs.ts';
 import { PlanningRepository } from '../src/planning-repo/snapshot.ts';
@@ -16,6 +16,7 @@ const IS_ROOT = typeof process.getuid === 'function' && process.getuid() === 0;
 const cleanupPaths: string[] = [];
 
 afterEach(() => {
+  vi.unstubAllEnvs();
   while (cleanupPaths.length) {
     const p = cleanupPaths.pop();
     if (!p) continue;
@@ -48,18 +49,22 @@ describe('resolveTargetPath — path targeting contract', () => {
     expect(relResult).toEqual(absResult);
   });
 
-  it('resolves a tilde-prefixed path when the fixture is reachable from $HOME', () => {
-    const rel = relative(homedir(), FIXTURE_ROOT);
-    if (rel.startsWith('..')) {
-      // Fixture isn't reachable from $HOME on this machine — skip, per the plan's own wording.
-      return;
-    }
-    const tildePath = `~/${rel.split(sep).join('/')}`;
-    const result = resolveTargetPath(tildePath);
+  it('resolves a tilde-prefixed path under a stubbed home folder, on every machine', () => {
+    // The home folder is built here, so the test never depends on where the checkout lives. It holds a
+    // link to the fixture; the tilde path goes through the link and must come out as the real root.
+    const home = mkdtempSync(join(tmpdir(), 'labelore-home-'));
+    cleanupPaths.push(home);
+    symlinkSync(FIXTURE_ROOT, join(home, 'project'), 'dir');
+    vi.stubEnv('HOME', home);
+    vi.stubEnv('USERPROFILE', home);
+    const result = resolveTargetPath('~/project');
     expect('status' in result).toBe(false);
     if (!('status' in result)) {
       expect(result.rootPath).toBe(FIXTURE_ROOT);
     }
+    // The bare tilde is the stubbed home itself, which holds no .planning of its own.
+    const bare = resolveTargetPath('~');
+    expect('status' in bare ? bare.status : 'ok').not.toBe('ok');
   });
 
   it("resolves a symlinked root to the symlink's target, not the link path", () => {

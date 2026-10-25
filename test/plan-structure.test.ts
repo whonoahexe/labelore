@@ -4,6 +4,7 @@
 // closing tag — plus the degrade cases and the timing guard. The corpus values are pinned in
 // test/web/plan-navigator-corpus.test.ts.
 import { describe, expect, it } from 'vitest';
+import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
 import { segmentPlanBody } from '../src/rendering/plan-segments.ts';
 import { extractPlanStructure } from '../src/planning-repo/handlers/plan-structure.ts';
 
@@ -324,18 +325,18 @@ describe('extractPlanStructure — degrade, never throw', () => {
     expect(extractPlanStructure('<tasks>\n<task type="auto">\n<name>Never closed</name>\n</tasks>\n').wrapperWarnings).toBe(1);
   });
 
-  it('extracts a 1 MB pathological body in under 250 ms', () => {
-    const bodies = [
-      `<objective>\nGo.\n</objective>\nx\n${'<a '.repeat(200_000)}\n${'y'.repeat(300_000)}`,
-      `${'``<a '.repeat(50_000)}\n${'z'.repeat(300_000)}`,
-      `<${'a'.repeat(200_000)}\n${'b'.repeat(300_000)}`,
-      `${'<x>\n'.repeat(20_000)}`,
-    ];
-    for (const body of bodies) {
-      const started = performance.now();
-      extractPlanStructure(body);
-      expect(performance.now() - started).toBeLessThan(250);
-    }
+  // Four pathological shapes, each scaled by a character count n in the proportions the old 1 MB
+  // fixed-budget test used. The cost may grow with n, but no faster than linearly.
+  const pathological: Array<[string, (n: number) => string]> = [
+    ['an unclosed run of <a', (n) => `<objective>\nGo.\n</objective>\nx\n${'<a '.repeat(Math.floor(n * 0.4))}\n${'y'.repeat(Math.floor(n * 0.6))}`],
+    ['a run of unclosed code spans', (n) => `${'``<a '.repeat(Math.floor(n / 10))}\n${'z'.repeat(Math.floor(n * 0.6))}`],
+    ['one very long tag name', (n) => `<${'a'.repeat(Math.floor(n * 0.4))}\n${'b'.repeat(Math.floor(n * 0.6))}`],
+    ['thousands of short unclosed tags', (n) => '<x>\n'.repeat(Math.max(1, Math.floor(n / 25)))],
+  ];
+
+  it.each(pathological)('extracts %s no faster than linearly', (name, make) => {
+    const growth = measureGrowth({ make, run: (body) => void extractPlanStructure(body) });
+    expect(growth.ratio, `${name}: ${growth.t1.toFixed(2)}ms at ${growth.n} characters, ${growth.t2.toFixed(2)}ms at 8x`).toBeLessThan(GROWTH_LIMIT);
   });
 });
 

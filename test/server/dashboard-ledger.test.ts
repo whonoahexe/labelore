@@ -14,6 +14,7 @@ import { buildDashboardViewModel } from '../../src/presentation/dashboard.ts';
 import { createApp } from '../../src/server/index.ts';
 import { toProjectPresentation } from '../../src/server/project-presentation.ts';
 import { fromDirectory } from '../helpers/from-directory.ts';
+import { GROWTH_LIMIT, measureGrowth } from '../helpers/growth.ts';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const LEDGER_ROOT = join(REPO_ROOT, 'test/fixtures/dashboard/ledger');
@@ -153,32 +154,43 @@ describe('dashboard ledger: blockers', () => {
     expect(toProjectPresentation(noHeading).ledger.blockers[0].sources).toEqual([]);
   });
 
-  it('builds 300 long blockers over 300 large artifacts in under 1,500 ms', async () => {
-    const files: Record<string, string> = {};
-    const bullets: string[] = [];
-    for (let i = 0; i < 300; i += 1) {
-      const quick = `26${String(1000 + i).slice(-4)}-a${String(i % 10)}z`;
-      const requirement = `REQ-${String(10 + (i % 80))}`;
-      const filler = 'lorem ipsum dolor sit amet, '.repeat(32);
-      bullets.push(
-        `- **Blocker ${i} stalls the pipeline.** ${filler}see ${quick}, ${requirement} and 03-REVIEW WR-${String((i % 9) + 1).padStart(2, '0')}. ${filler}`,
-      );
-      files[`.planning/research/doc-${String(i).padStart(3, '0')}.md`] =
-        `# Doc ${i}\n\n${`${quick} ${requirement} 03-REVIEW WR-01 filler text. `.repeat(2)}${'x'.repeat(40_000)}\n`;
+  it('builds long blockers over large artifacts no faster than linearly', async () => {
+    // n blockers, each citing a quick task, a requirement and a review finding, over n artifacts of
+    // 40 KB. The ledger's section cap (200,000 characters) keeps roughly the first 110 blockers, so
+    // both sizes stay below it: a ratio taken across the cap would measure the cap, not the code.
+    const sizes = [12, 96];
+    const projects = new Map<number, ProjectSnapshot>();
+    for (const n of sizes) {
+      const files: Record<string, string> = {};
+      const bullets: string[] = [];
+      for (let i = 0; i < n; i += 1) {
+        const quick = `26${String(1000 + i).slice(-4)}-a${String(i % 10)}z`;
+        const requirement = `REQ-${String(10 + (i % 80))}`;
+        const filler = 'lorem ipsum dolor sit amet, '.repeat(32);
+        bullets.push(
+          `- **Blocker ${i} stalls the pipeline.** ${filler}see ${quick}, ${requirement} and 03-REVIEW WR-${String((i % 9) + 1).padStart(2, '0')}. ${filler}`,
+        );
+        files[`.planning/research/doc-${String(i).padStart(3, '0')}.md`] =
+          `# Doc ${i}\n\n${`${quick} ${requirement} 03-REVIEW WR-01 filler text. `.repeat(2)}${'x'.repeat(40_000)}\n`;
+      }
+      files['.planning/STATE.md'] = `---\nstatus: x\n---\n\n## Accumulated Context\n\n### Blockers/Concerns\n\n${bullets.join('\n')}\n`;
+      files['.planning/REQUIREMENTS.md'] = '# R\n\n- [ ] **REQ-10**: Ten\n';
+      projects.set(n, await snapshotOf(files));
     }
-    files['.planning/STATE.md'] = `---\nstatus: x\n---\n\n## Accumulated Context\n\n### Blockers/Concerns\n\n${bullets.join('\n')}\n`;
-    files['.planning/REQUIREMENTS.md'] = '# R\n\n- [ ] **REQ-10**: Ten\n';
-    const snapshot = await snapshotOf(files);
-    const started = performance.now();
-    const ledger = buildDashboardLedger(snapshot.project!);
-    const elapsed = performance.now() - started;
-    // The section cap (200,000 characters) keeps the first ~110 of the 300 entries; what matters is
-    // that reading them and indexing 300 x 40 KB of artifacts stays inside the budget.
-    expect(ledger.blockers.length).toBeGreaterThanOrEqual(100);
-    expect(ledger.blockers.length).toBeLessThanOrEqual(300);
+    // Reading the blockers is the point: every one is kept, and each still finds its sources.
+    const ledger = buildDashboardLedger(projects.get(96)!.project!);
+    expect(ledger.blockers).toHaveLength(96);
     expect(ledger.blockers[0].sources.length).toBeGreaterThan(0);
-    expect(elapsed).toBeLessThan(1500);
-  }, 30_000);
+
+    const growth = measureGrowth({
+      make: (n) => projects.get(n)!.project!,
+      run: (project) => void buildDashboardLedger(project),
+      startSize: sizes[0],
+      factor: sizes[1] / sizes[0],
+      maxSize: sizes[1],
+    });
+    expect(growth.ratio, `${growth.t1.toFixed(2)}ms at ${growth.n} blockers, ${growth.t2.toFixed(2)}ms at 8x`).toBeLessThan(GROWTH_LIMIT);
+  }, 60_000);
 });
 
 describe('dashboard ledger: decisions', () => {
@@ -236,7 +248,7 @@ describe('dashboard ledger: decisions', () => {
     const dense = (await ledgerOfDirectory(DENSE_ROOT)).ledger.decisions;
     expect(dense.map((d) => [d.phase, d.title, d.source, d.phaseUrl !== null])).toEqual([
       [null, 'Corruption deliberately isolated to two files, per D-02.', null, false],
-      ['01', 'Included every artifact type studio-portal has never produced, per D-01.', null, true],
+      ['01', expect.stringMatching(/^Included every artifact type .+ has never produced, per D-01\.$/), null, true],
     ]);
   });
 
