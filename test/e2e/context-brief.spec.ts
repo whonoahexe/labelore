@@ -1,17 +1,11 @@
-// The CONTEXT brief e2e (quick-260923-lju, sketch-006 D1): real corpus files, never a fixture
-// mock. Fixtures resolve by path against the live `/api/presentation` payload (the
-// document-layout.spec.ts `resolveFixtureUrl` pattern) so an archival/rename fails loudly here
-// instead of silently skipping. Studio-portal fixtures run against the read-only server on port
-// 4198 (playwright.config.ts, present only when ~/studio-portal/.planning exists) and
-// test.skip themselves otherwise — this file's own repo-only tracer tests always run.
-import { existsSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { join } from 'node:path';
+// The CONTEXT brief e2e (quick-260923-lju, sketch-006 D1): real files, never a mock. Fixtures resolve by
+// path against the live `/api/presentation` payload (the document-layout.spec.ts `resolveFixtureUrl`
+// pattern) so an archival/rename fails loudly here instead of silently skipping. Labelore's own files run
+// against the default server on port 4199; the nine made-up Lendshed CONTEXT files run against the
+// read-only server on port 4198 (playwright.config.ts always starts it and throws at load when the
+// fixture tree is missing). Nothing in this file skips.
 import { expect, test } from '@playwright/test';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
-
-const STUDIO_PORTAL_AVAILABLE = existsSync(join(homedir(), 'studio-portal', '.planning'));
-const SP_BASE_URL = 'http://127.0.0.1:4198';
 
 interface ArtifactDtoLite {
   key: string;
@@ -188,57 +182,38 @@ test.describe('CONTEXT brief — Lendshed fixture (4198)', () => {
     // The file's one boundary section holds no unrecognised extra: canonical references and existing
     // code insights are claimed as back-matter aside rows (quick-260925-3ob). Phase 04 therefore yields
     // 0 extras and three asides: the Already-decided note, references and code. Its
-    // `<blocking_amendments>` section ("One research recommendation is superseded") is a planner
+    // `<blocking_amendments>` section ("A research recommendation no longer applies") is a planner
     // warning, not requirement amendments, so it is recognised and hidden.
     await expect(page.locator('.view-context-extra')).toHaveCount(0);
     await expect(page.locator('.view-context-aside')).toHaveCount(3);
     await expect(page.locator('#context-amendments')).toHaveCount(0);
   });
-});
 
-test.describe('CONTEXT brief — studio-portal fixtures (4198)', () => {
-  test.skip(!STUDIO_PORTAL_AVAILABLE, 'studio-portal not present locally');
-
-  test('SP 01: attention panel with 3 rows; clicking a blocks-D chip jumps to and expands the decision', async ({
-    page,
-  }) => {
-    const url = await resolveFixtureUrl(SP_BASE_URL, '01-portal-owned-identity-sessions/01-CONTEXT.md');
-    await page.goto(`${SP_BASE_URL}${url}`);
-    await page.locator('#context-open').waitFor({ state: 'visible' });
-    await expect(page.locator('.view-context-open-list li')).toHaveCount(3);
-
-    const blocksChip = page.locator('#question-open-01 button', { hasText: 'blocks D-09' });
-    await blocksChip.click();
-    const target = page.locator('#decision-d-09');
-    await expect(target).toBeFocused();
-    await expect(target.locator('.view-context-detail')).toBeVisible();
-
-    await expect(page.locator('.artifact-meta-row .source-note')).toContainText('AUTH-01');
-  });
-
-  test('SP quick 2pr: .view-context-note count is 10', async ({ page }) => {
+  test('quick k2p: .view-context-note count is 10', async ({ page }) => {
     const url = await resolveFixtureUrl(
-      SP_BASE_URL,
-      '260803-2pr-we-should-implement-right-click-context-/260803-2pr-CONTEXT.md',
+      FIXTURE_BASE_URL,
+      '260403-k2p-add-right-click-menu-to-catalogue-grid/260403-k2p-CONTEXT.md',
     );
-    await page.goto(`${SP_BASE_URL}${url}`);
+    await page.goto(`${FIXTURE_BASE_URL}${url}`);
     await page.locator('#context-decisions').waitFor({ state: 'visible' });
     await expect(page.locator('.view-context-note')).toHaveCount(10);
   });
 
-  test('SP 01 + 03: ideas grouped by fate (sketch 007 C)', async ({ page }) => {
-    const sp01 = await resolveFixtureUrl(SP_BASE_URL, '01-portal-owned-identity-sessions/01-CONTEXT.md');
-    await page.goto(`${SP_BASE_URL}${sp01}`);
+  test('phase 01 + 03: ideas grouped by fate (sketch 007 C)', async ({ page }) => {
+    const fx01 = await resolveFixtureUrl(FIXTURE_BASE_URL, '01-member-sign-in-sessions/01-CONTEXT.md');
+    await page.goto(`${FIXTURE_BASE_URL}${fx01}`);
     await page.locator('#context-specifics').waitFor({ state: 'visible' });
 
-    await expect(page.locator('#context-specifics .view-context-idea')).toHaveCount(3);
-    await expect(page.locator('#context-specifics .view-context-idea[data-kind="rule"]')).toHaveCount(2);
+    // Phase 01 holds two specific ideas, one rule and one leaning (counted in the file's specifics bullets).
+    await expect(page.locator('#context-specifics .view-context-idea')).toHaveCount(2);
+    await expect(page.locator('#context-specifics .view-context-idea[data-kind="rule"]')).toHaveCount(1);
     await expect(page.locator('#context-specifics .view-context-idea[data-kind="leaning"]')).toHaveCount(1);
 
+    // Three deferred ideas fall into two fate groups: one handed on, two passed over.
     const groups = page.locator('#context-deferred .view-context-fate');
     await expect(groups).toHaveCount(2);
     await expect(groups.first()).toHaveAttribute('data-fate', 'handed');
-    await expect(groups.first().locator('.view-context-idea').first()).toContainText('→ Phase 3 · ADMIN-03');
+    await expect(groups.first().locator('.view-context-idea').first()).toContainText('→ Phase 3 · ADMN-03');
 
     // Groups start collapsed; the header expands and re-collapses its own items.
     const passed = page.locator('.view-context-fate[data-fate="passed"]');
@@ -252,16 +227,17 @@ test.describe('CONTEXT brief — studio-portal fixtures (4198)', () => {
     await expect(passedHead).toHaveAttribute('aria-expanded', 'false');
     await expect(passed.locator('.view-context-idea').first()).toBeHidden();
 
-    const sp03 = await resolveFixtureUrl(SP_BASE_URL, '03-account-administration-session-control/03-CONTEXT.md');
-    await page.goto(`${SP_BASE_URL}${sp03}`);
+    const fx03 = await resolveFixtureUrl(FIXTURE_BASE_URL, '03-account-admin-and-sessions/03-CONTEXT.md');
+    await page.goto(`${FIXTURE_BASE_URL}${fx03}`);
     await page.locator('#context-deferred').waitFor({ state: 'visible' });
 
+    // Phase 03: ten deferred ideas, eight declined (five with a revisit trigger), one out, one carried.
     const declined = page.locator('.view-context-fate[data-fate="declined"]');
     await expect(declined.locator('.view-context-idea')).toHaveCount(8);
     await expect(declined.locator('.view-context-revisit')).toHaveCount(5);
     await expect(page.locator('.view-context-fate[data-fate="out"] .view-context-idea')).toHaveCount(1);
     await expect(page.locator('.view-context-fate[data-fate="carried"] .view-context-idea')).toHaveCount(1);
-    await expect(declined.locator('.view-context-fate-body').first()).toContainText('Offered as D-01');
+    await expect(declined.locator('.view-context-fate-body').first()).toContainText("D-01's first option");
   });
 });
 

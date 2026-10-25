@@ -1,30 +1,26 @@
-// quick-260923-lju (LJU-07, C-1): real-corpus guards over every CONTEXT.md in this repo's
-// `.planning/` plus `~/studio-portal/.planning/` (19 files total) — the discussion-log-corpus.test.ts
-// idiom (it.runIf(existsSync(...)) for studio-portal fixtures, always-on for this repo's own).
-// Every pinned count below was independently confirmed against the source file (grep -c
-// '^- \*\*D-[0-9]' for decision counts, direct reading for open/notes counts) before being pinned
-// here — never copied from the extractor's own output.
-import { existsSync } from 'node:fs';
+// quick-260923-lju (LJU-07, C-1): real-corpus guards over every pinned CONTEXT.md. Two corpora, keyed by
+// prefix: `LB:` for this repo's own archived `.planning/` files (read from the checkout) and `FX:` for the
+// nine made-up Lendshed files (read through fxPath, which throws on a missing file; nothing here skips
+// or looks anywhere else on the machine). 19 files in all: 10 LB and 9 FX.
+// Every pinned count below was counted in the file itself (grep -c '^- \*\*D-[0-9]' between the decisions
+// tags for decision counts, direct reading for open/notes counts) before being pinned here, never copied
+// from the extractor's own output. Pins are per file, never a total over a corpus (README rule R6).
+import { readdirSync, statSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
+import { join, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { SP_PLANNING } from '../helpers/studio-portal.ts';
-import { fxPath } from '../helpers/fixture-project.ts';
+import { FX_PLANNING, fxPath } from '../helpers/fixture-project.ts';
 import { extractContextBrief, topSections, type ContextBrief } from '../../src/planning-repo/handlers/context-brief.ts';
 import { composeContextBrief } from '../../src/web/views/context-brief.ts';
 
-const REPO_ROOT = new URL('../../', import.meta.url);
-const SP_ROOT = SP_PLANNING;
-
-async function repoBody(relativePath: string): Promise<string> {
-  return await readFile(new URL(relativePath, REPO_ROOT), 'utf8');
-}
+const LB_PLANNING = fileURLToPath(new URL('../../.planning', import.meta.url));
 
 interface CorpusCase {
+  /** Short label used in test titles. */
   label: string;
-  path: string;
-  isRepoFile: boolean;
-  /** A Lendshed fixture file: always runs, and a missing file throws through fxPath. */
-  isFixture?: boolean;
+  /** `LB:<path under .planning>` or `FX:<path under the Lendshed .planning>`. */
+  key: string;
   decisions: number;
   notes: number;
   open: number;
@@ -34,30 +30,41 @@ interface CorpusCase {
   amendments: number;
 }
 
-const CASES: CorpusCase[] = [
-  { label: 'SP v1.0/01', path: `${SP_ROOT}/milestones/v1.0-phases/01-identity-persistence-foundation/01-CONTEXT.md`, isRepoFile: false, decisions: 11, notes: 0, open: 0, amendments: 0 },
-  { label: 'SP v1.0/02', path: `${SP_ROOT}/milestones/v1.0-phases/02-storage-health-status/02-CONTEXT.md`, isRepoFile: false, decisions: 24, notes: 1, open: 0, amendments: 0 },
-  { label: 'SP v1.0/03', path: `${SP_ROOT}/milestones/v1.0-phases/03-file-browsing/03-CONTEXT.md`, isRepoFile: false, decisions: 16, notes: 0, open: 0, amendments: 0 },
-  { label: 'SP v1.0/04', path: `${SP_ROOT}/milestones/v1.0-phases/04-tier-to-tier-transfers/04-CONTEXT.md`, isRepoFile: false, decisions: 26, notes: 0, open: 0, amendments: 0 },
-  { label: 'SP 01', path: `${SP_ROOT}/phases/01-portal-owned-identity-sessions/01-CONTEXT.md`, isRepoFile: false, decisions: 19, notes: 0, open: 3, amendments: 0 },
-  { label: 'SP 02', path: `${SP_ROOT}/phases/02-roles-permission-enforcement/02-CONTEXT.md`, isRepoFile: false, decisions: 21, notes: 0, open: 0, amendments: 1 },
-  { label: 'SP 03', path: `${SP_ROOT}/phases/03-account-administration-session-control/03-CONTEXT.md`, isRepoFile: false, decisions: 16, notes: 0, open: 0, amendments: 1 },
-  { label: 'FX 04', path: fxPath('phases/04-bulk-loan-export/04-CONTEXT.md'), isRepoFile: false, isFixture: true, decisions: 8, notes: 0, open: 3, amendments: 1 },
-  { label: 'SP quick 2pr', path: `${SP_ROOT}/quick/260803-2pr-we-should-implement-right-click-context-/260803-2pr-CONTEXT.md`, isRepoFile: false, decisions: 9, notes: 10, open: 0, amendments: 0 },
-  { label: 'LB v1.0/01', path: '.planning/milestones/v1.0-phases/01-read-layer-domain-model/01-CONTEXT.md', isRepoFile: true, decisions: 16, notes: 0, open: 0, amendments: 0 },
-  { label: 'LB v1.0/02', path: '.planning/milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-CONTEXT.md', isRepoFile: true, decisions: 17, notes: 0, open: 0, amendments: 0 },
-  { label: 'LB v1.0/03', path: '.planning/milestones/v1.0-phases/03-search-browsing-traceability/03-CONTEXT.md', isRepoFile: true, decisions: 16, notes: 0, open: 0, amendments: 0 },
-  { label: 'LB v1.0/04', path: '.planning/milestones/v1.0-phases/04-portability-degradation-hardening/04-CONTEXT.md', isRepoFile: true, decisions: 17, notes: 0, open: 0, amendments: 0 },
-  { label: 'LB v1.1/05', path: '.planning/milestones/v1.1-phases/05-per-type-document-views/05-CONTEXT.md', isRepoFile: true, decisions: 15, notes: 0, open: 0, amendments: 0 },
-  { label: 'lfi', path: '.planning/milestones/v1.1-quick/260912-lfi-scroll-to-blocker-in-project-state-from-/260912-lfi-CONTEXT.md', isRepoFile: true, decisions: 6, notes: 0, open: 0, amendments: 0 },
-  { label: 'oae', path: '.planning/milestones/v1.1-quick/260912-oae-revamp-progress-panel-to-show-phase-and-/260912-oae-CONTEXT.md', isRepoFile: true, decisions: 9, notes: 0, open: 0, amendments: 0 },
-  { label: 'o2o', path: '.planning/milestones/v1.1-quick/260916-o2o-remove-all-the-loading-state-text-keep-t/260916-o2o-CONTEXT.md', isRepoFile: true, decisions: 6, notes: 0, open: 0, amendments: 0 },
-  { label: 'ns4', path: '.planning/milestones/v1.1-quick/260917-ns4-redesign-the-traceability-page-s-ui-ux-c/260917-ns4-CONTEXT.md', isRepoFile: true, decisions: 3, notes: 0, open: 0, amendments: 0 },
-  { label: 'jxp', path: '.planning/milestones/v2.0-quick/260923-jxp-discussion-log-page-review-fixes-on-the-/260923-jxp-CONTEXT.md', isRepoFile: true, decisions: 15, notes: 0, open: 0, amendments: 0 },
+function absolutePath(key: string): string {
+  if (key.startsWith('FX:')) return fxPath(key.slice(3));
+  if (key.startsWith('LB:')) return join(LB_PLANNING, key.slice(3));
+  throw new Error(`context-brief-corpus: unknown corpus prefix in ${key}`);
+}
+
+const LB_CASES: CorpusCase[] = [
+  { label: 'LB v1.0/01', key: 'LB:milestones/v1.0-phases/01-read-layer-domain-model/01-CONTEXT.md', decisions: 16, notes: 0, open: 0, amendments: 0 },
+  { label: 'LB v1.0/02', key: 'LB:milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-CONTEXT.md', decisions: 17, notes: 0, open: 0, amendments: 0 },
+  { label: 'LB v1.0/03', key: 'LB:milestones/v1.0-phases/03-search-browsing-traceability/03-CONTEXT.md', decisions: 16, notes: 0, open: 0, amendments: 0 },
+  { label: 'LB v1.0/04', key: 'LB:milestones/v1.0-phases/04-portability-degradation-hardening/04-CONTEXT.md', decisions: 17, notes: 0, open: 0, amendments: 0 },
+  { label: 'LB v1.1/05', key: 'LB:milestones/v1.1-phases/05-per-type-document-views/05-CONTEXT.md', decisions: 15, notes: 0, open: 0, amendments: 0 },
+  { label: 'lfi', key: 'LB:milestones/v1.1-quick/260912-lfi-scroll-to-blocker-in-project-state-from-/260912-lfi-CONTEXT.md', decisions: 6, notes: 0, open: 0, amendments: 0 },
+  { label: 'oae', key: 'LB:milestones/v1.1-quick/260912-oae-revamp-progress-panel-to-show-phase-and-/260912-oae-CONTEXT.md', decisions: 9, notes: 0, open: 0, amendments: 0 },
+  { label: 'o2o', key: 'LB:milestones/v1.1-quick/260916-o2o-remove-all-the-loading-state-text-keep-t/260916-o2o-CONTEXT.md', decisions: 6, notes: 0, open: 0, amendments: 0 },
+  { label: 'ns4', key: 'LB:milestones/v1.1-quick/260917-ns4-redesign-the-traceability-page-s-ui-ux-c/260917-ns4-CONTEXT.md', decisions: 3, notes: 0, open: 0, amendments: 0 },
+  { label: 'jxp', key: 'LB:milestones/v2.0-quick/260923-jxp-discussion-log-page-review-fixes-on-the-/260923-jxp-CONTEXT.md', decisions: 15, notes: 0, open: 0, amendments: 0 },
 ];
 
+const FX_CASES: CorpusCase[] = [
+  { label: 'FX v1.0/01', key: 'FX:milestones/v1.0-phases/01-member-data-foundation/01-CONTEXT.md', decisions: 8, notes: 0, open: 0, amendments: 0 },
+  { label: 'FX v1.0/02', key: 'FX:milestones/v1.0-phases/02-shed-inventory-health/02-CONTEXT.md', decisions: 11, notes: 1, open: 0, amendments: 0 },
+  { label: 'FX v1.0/03', key: 'FX:milestones/v1.0-phases/03-catalogue-browsing/03-CONTEXT.md', decisions: 8, notes: 0, open: 0, amendments: 0 },
+  { label: 'FX v1.0/04', key: 'FX:milestones/v1.0-phases/04-shed-to-shed-transfers/04-CONTEXT.md', decisions: 10, notes: 0, open: 0, amendments: 0 },
+  { label: 'FX 01', key: 'FX:phases/01-member-sign-in-sessions/01-CONTEXT.md', decisions: 19, notes: 0, open: 3, amendments: 0 },
+  { label: 'FX 02', key: 'FX:phases/02-roles-and-permissions/02-CONTEXT.md', decisions: 12, notes: 0, open: 0, amendments: 1 },
+  { label: 'FX 03', key: 'FX:phases/03-account-admin-and-sessions/03-CONTEXT.md', decisions: 12, notes: 0, open: 0, amendments: 1 },
+  { label: 'FX 04', key: 'FX:phases/04-bulk-loan-export/04-CONTEXT.md', decisions: 8, notes: 0, open: 3, amendments: 1 },
+  { label: 'FX quick k2p', key: 'FX:quick/260403-k2p-add-right-click-menu-to-catalogue-grid/260403-k2p-CONTEXT.md', decisions: 9, notes: 10, open: 0, amendments: 0 },
+];
+
+const CASES: CorpusCase[] = [...FX_CASES, ...LB_CASES];
+
 async function loadBody(testCase: CorpusCase): Promise<string> {
-  return testCase.isRepoFile ? await repoBody(testCase.path) : await readFile(testCase.path, 'utf8');
+  return await readFile(absolutePath(testCase.key), 'utf8');
 }
 
 /** CONTEXT.md carries no YAML frontmatter (context.ts's own module comment) — the raw file
@@ -67,11 +74,54 @@ function briefOf(rawContent: string): ContextBrief {
   return extractContextBrief(rawContent);
 }
 
+/** Every `*-CONTEXT.md` under a `.planning/` root, as `/`-separated paths relative to it. */
+function walkContextFiles(planningRoot: string): string[] {
+  const out: string[] = [];
+  const walk = (dir: string): void => {
+    for (const entry of readdirSync(dir).sort()) {
+      if (entry === '.cache' || entry === 'node_modules') continue;
+      const abs = join(dir, entry);
+      if (statSync(abs).isDirectory()) walk(abs);
+      else if (entry.endsWith('-CONTEXT.md')) out.push(relative(planningRoot, abs).split('\\').join('/'));
+    }
+  };
+  walk(planningRoot);
+  return out;
+}
+
+// Smallest corpus sizes the guard accepts (README rule R8): at least the ten LB files this guard pinned
+// before the Lendshed fixture existed, and all nine Lendshed CONTEXT files. A walk that finds fewer
+// means a tree moved or the walker broke, and must fail rather than pass over nothing.
+const MIN_LB_FILES = 10;
+const MIN_FX_FILES = 9;
+
+describe('CONTEXT brief corpus walk (LB: and FX:)', () => {
+  const lbFiles = walkContextFiles(LB_PLANNING).map((rel) => `LB:${rel}`);
+  const fxFiles = walkContextFiles(FX_PLANNING).map((rel) => `FX:${rel}`);
+
+  it(`finds at least ${MIN_LB_FILES} Labelore CONTEXT files`, () => {
+    expect(lbFiles.length).toBeGreaterThanOrEqual(MIN_LB_FILES);
+  });
+
+  it(`finds at least ${MIN_FX_FILES} Lendshed CONTEXT files`, () => {
+    expect(fxFiles.length).toBeGreaterThanOrEqual(MIN_FX_FILES);
+  });
+
+  it('every pinned case names a file the walk found', () => {
+    const found = new Set([...lbFiles, ...fxFiles]);
+    const missing = CASES.filter((c) => !found.has(c.key)).map((c) => c.key);
+    expect(missing).toEqual([]);
+  });
+
+  it(`pins at least ${MIN_LB_FILES} LB cases and ${MIN_FX_FILES} FX cases`, () => {
+    expect(LB_CASES.length).toBeGreaterThanOrEqual(MIN_LB_FILES);
+    expect(FX_CASES.length).toBeGreaterThanOrEqual(MIN_FX_FILES);
+  });
+});
+
 describe('CONTEXT brief corpus guard (19 files)', () => {
   for (const testCase of CASES) {
-    const runner = testCase.isRepoFile || testCase.isFixture ? it : it.runIf(existsSync(testCase.path));
-
-    runner(`${testCase.label}: composeContextBrief is non-null`, async () => {
+    it(`${testCase.label}: composeContextBrief is non-null`, async () => {
       const body = await loadBody(testCase);
       const brief = briefOf(body);
       const composed = composeContextBrief({
@@ -84,7 +134,7 @@ describe('CONTEXT brief corpus guard (19 files)', () => {
       expect(composed).not.toBeNull();
     });
 
-    runner(`${testCase.label}: pinned decision/note/open/amendments counts`, async () => {
+    it(`${testCase.label}: pinned decision/note/open/amendments counts`, async () => {
       const body = await loadBody(testCase);
       const brief = briefOf(body);
       const decisionCount = brief.areas.reduce(
@@ -102,7 +152,7 @@ describe('CONTEXT brief corpus guard (19 files)', () => {
     // sketch-007 C (quick-260925-3ug): an enum/arithmetic guard rather than per-file pinned kinds
     // — every file's specifics and deferred must classify into the two enums, and no deferred item
     // may be lost or duplicated by the composer's fate grouping.
-    runner(`${testCase.label}: idea kinds and fates stay in their enums, group counts sum`, async () => {
+    it(`${testCase.label}: idea kinds and fates stay in their enums, group counts sum`, async () => {
       const body = await loadBody(testCase);
       const brief = briefOf(body);
       const kinds = new Set(['rule', 'leaning', 'note']);
@@ -125,7 +175,7 @@ describe('CONTEXT brief corpus guard (19 files)', () => {
       if (brief.deferred.length > 0) expect(composed?.deferred?.count).toBe(brief.deferred.length);
     });
 
-    runner(`${testCase.label}: nothing dropped (word-coverage guard)`, async () => {
+    it(`${testCase.label}: nothing dropped (word-coverage guard)`, async () => {
       const body = await loadBody(testCase);
       const brief = briefOf(body);
 
@@ -149,7 +199,7 @@ describe('CONTEXT brief corpus guard (19 files)', () => {
       );
     });
 
-    runner(`${testCase.label}: aside prose not dropped`, async () => {
+    it(`${testCase.label}: aside prose not dropped`, async () => {
       const body = await loadBody(testCase);
       const brief = briefOf(body);
 

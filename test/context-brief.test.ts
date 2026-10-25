@@ -1,11 +1,12 @@
 // quick-260923-lju: extractContextBrief / firstSentence / parseBlocks, against the plan's pinned
-// examples plus the T-lju-02 ReDoS timing guard. Uses the real SP phases/01 and LB v1.1/05 CONTEXT
-// bodies (read from disk) as the primary fixtures — the same files the corpus guard (Task 2) pins.
-import { existsSync } from 'node:fs';
+// examples plus the T-lju-02 ReDoS growth guard. Reads the made-up Lendshed CONTEXT files (through
+// fxPath, which throws on a missing file) and Labelore's own archived v1.1/05 CONTEXT as the primary
+// fixtures: the same files the corpus guard (test/web/context-brief-corpus.test.ts) pins. Every pinned
+// number below was counted in the Lendshed file itself (grep/awk), never copied from the extractor.
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
-import { SP_PLANNING } from './helpers/studio-portal.ts';
 import { fxPath } from './helpers/fixture-project.ts';
+import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
 import {
   classifyDeferred,
   classifySpecific,
@@ -17,20 +18,25 @@ import {
 } from '../src/planning-repo/handlers/context-brief.ts';
 
 const REPO_ROOT = new URL('../', import.meta.url);
-const SP_ROOT = SP_PLANNING;
 
 async function repoBody(relativePath: string): Promise<string> {
   return await readFile(new URL(relativePath, REPO_ROOT), 'utf8');
 }
 
-const SP01_PATH = `${SP_ROOT}/phases/01-portal-owned-identity-sessions/01-CONTEXT.md`;
-const SP02_PATH = `${SP_ROOT}/phases/02-roles-permission-enforcement/02-CONTEXT.md`;
-const SP03_PATH = `${SP_ROOT}/phases/03-account-administration-session-control/03-CONTEXT.md`;
+/** The text of a Lendshed CONTEXT file, read through fxPath (a missing file throws, never skips). */
+async function fxBody(relativeToPlanning: string): Promise<string> {
+  return await readFile(fxPath(relativeToPlanning), 'utf8');
+}
+
+const FX01 = 'phases/01-member-sign-in-sessions/01-CONTEXT.md';
+const FX02 = 'phases/02-roles-and-permissions/02-CONTEXT.md';
+const FX03 = 'phases/03-account-admin-and-sessions/03-CONTEXT.md';
+const FX04 = 'phases/04-bulk-loan-export/04-CONTEXT.md';
 const LB05_PATH = '.planning/milestones/v1.1-phases/05-per-type-document-views/05-CONTEXT.md';
 
-describe('extractContextBrief — SP phases/01 boundary', () => {
+describe('extractContextBrief — Lendshed phases/01 boundary', () => {
   it('parses statement, inList, outList and drift (Lendshed fixture)', async () => {
-    const body = await readFile(fxPath('phases/01-member-sign-in-sessions/01-CONTEXT.md'), 'utf8');
+    const body = await fxBody(FX01);
     const brief = extractContextBrief(body);
     expect(brief.boundary?.statement).toBe(
       'Members sign in to Lendshed with a username and password Lendshed itself holds, and stay signed in across server restarts and power cuts.',
@@ -47,10 +53,11 @@ describe('extractContextBrief — SP phases/01 boundary', () => {
     expect(brief.boundary?.drift).toBe(true);
   });
 
-  it.runIf(existsSync(SP01_PATH))('parses decision bullets, reversibility and untagged decisions in source order', async () => {
-    const body = await readFile(SP01_PATH, 'utf8');
+  it('parses decision bullets, reversibility and untagged decisions in source order', async () => {
+    const body = await fxBody(FX01);
     const brief = extractContextBrief(body);
     const decisions = brief.areas.flatMap((a) => a.entries).filter((e) => e.kind === 'decision');
+    // 19: D-01..D-19, counted with grep on the decision bullets between the decisions tags.
     expect(decisions).toHaveLength(19);
     const d04 = decisions.find((d) => d.kind === 'decision' && d.tag === 'D-04');
     expect(d04?.kind).toBe('decision');
@@ -61,8 +68,8 @@ describe('extractContextBrief — SP phases/01 boundary', () => {
     }
   });
 
-  it.runIf(existsSync(SP01_PATH))('parses open questions with blocks tags', async () => {
-    const body = await readFile(SP01_PATH, 'utf8');
+  it('parses open questions with blocks tags', async () => {
+    const body = await fxBody(FX01);
     const brief = extractContextBrief(body);
     expect(brief.openQuestions).toHaveLength(1);
     const items = brief.openQuestions[0].items;
@@ -72,15 +79,15 @@ describe('extractContextBrief — SP phases/01 boundary', () => {
     expect(items[2]).toMatchObject({ tag: 'OPEN-03', blocks: [] });
   });
 
-  it.runIf(existsSync(SP01_PATH))('parses a single colon-list discretion paragraph into 5 items', async () => {
-    const body = await readFile(SP01_PATH, 'utf8');
+  it('parses a single colon-list discretion paragraph into 5 items', async () => {
+    const body = await fxBody(FX01);
     const brief = extractContextBrief(body);
     expect(brief.discretion?.items).toHaveLength(5);
     expect(brief.discretion?.lead).toHaveLength(1);
   });
 });
 
-describe('extractContextBrief — LB v1.1/05 prose boundary', () => {
+describe('extractContextBrief — Labelore v1.1/05 prose boundary', () => {
   it('splits a multi-clause "This phase does not…" paragraph into 4 verbatim items', async () => {
     const body = await repoBody(LB05_PATH);
     const brief = extractContextBrief(body);
@@ -129,29 +136,53 @@ describe('firstSentence', () => {
   });
 });
 
-describe('T-lju-02: ReDoS timing guard', () => {
-  it('finishes a 200,000-character pathological boundary line under 250ms and never throws', () => {
-    const pathological = '**'.repeat(2000) + '`'.repeat(2000) + ', does not'.repeat(2000) + '('.repeat(2000);
-    const body = `# Phase 1: X - Context\n\n<domain>\n## Phase Boundary\n\n${pathological}\n\n</domain>\n`;
-    const start = Date.now();
-    expect(() => extractContextBrief(body)).not.toThrow();
-    expect(Date.now() - start).toBeLessThan(250);
-  });
+describe('T-lju-02: ReDoS growth guard', () => {
+  // A fixed millisecond budget flakes under parallel load and proves nothing about the shape of the cost
+  // (Pitfall 11). Each hostile shape is timed at size n and at 8n with measureGrowth: a linear scanner
+  // reads about 8, a quadratic one about 64, and GROWTH_LIMIT sits between them. Inputs are built in
+  // make(), outside the timed region.
+  const sentinel = (build: (size: number) => string, size: number): void => {
+    expect(() => extractContextBrief(build(size))).not.toThrow();
+  };
 
-  it('finishes a ~200,000-character pathological ideas section under 250ms and never throws', () => {
-    // Every scanner the ideas path adds, fed its own worst case at once: unterminated bold leads,
-    // `if ` for revisitTrigger, `Phase 1 ` for the destination scan, `D-01` for the from scan, and
-    // unbalanced `(` for topLevelCutoff's depth tracking.
-    const item = '**' + 'if '.repeat(4000) + 'Phase 1 '.repeat(4000) + 'D-01'.repeat(4000) + '('.repeat(4000);
-    const body =
+  const boundaryBody = (size: number): string => {
+    // '**' + '`' + ', does not' + '(' repeated: unterminated bold, code and paren leads in one line.
+    const k = Math.max(1, Math.floor(size / 14));
+    const pathological = '**'.repeat(k) + '`'.repeat(k) + ', does not'.repeat(k) + '('.repeat(k);
+    return `# Phase 1: X - Context\n\n<domain>\n## Phase Boundary\n\n${pathological}\n\n</domain>\n`;
+  };
+
+  // Every scanner the ideas path adds, fed its own worst case at once: unterminated bold leads, `if ` for
+  // revisitTrigger, `Phase 1 ` for the destination scan, `D-01` for the from scan, and unbalanced `(` for
+  // topLevelCutoff's depth tracking.
+  const ideasBody = (size: number): string => {
+    const k = Math.max(1, Math.floor(size / 16));
+    const item = '**' + 'if '.repeat(k) + 'Phase 1 '.repeat(k) + 'D-01'.repeat(k) + '('.repeat(k);
+    return (
       '# Phase 1: X - Context\n\n<specifics>\n## Specific Ideas\n\n' +
       item +
       '\n\n</specifics>\n\n<deferred>\n## Deferred Ideas\n\n' +
       item +
-      '\n\n</deferred>\n';
-    const start = Date.now();
-    expect(() => extractContextBrief(body)).not.toThrow();
-    expect(Date.now() - start).toBeLessThan(250);
+      '\n\n</deferred>\n'
+    );
+  };
+
+  it('grows no faster than linearly on a 200,000-character pathological boundary line and never throws', () => {
+    sentinel(boundaryBody, 200_000);
+    const growth = measureGrowth({ make: boundaryBody, run: (body) => void extractContextBrief(body) });
+    expect(
+      growth.ratio,
+      `boundary line: ${growth.t1.toFixed(2)}ms at ${growth.n} characters, ${growth.t2.toFixed(2)}ms at 8x`,
+    ).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('grows no faster than linearly on a ~200,000-character pathological ideas section and never throws', () => {
+    sentinel(ideasBody, 200_000);
+    const growth = measureGrowth({ make: ideasBody, run: (body) => void extractContextBrief(body) });
+    expect(
+      growth.ratio,
+      `ideas section: ${growth.t1.toFixed(2)}ms at ${growth.n} characters, ${growth.t2.toFixed(2)}ms at 8x`,
+    ).toBeLessThan(GROWTH_LIMIT);
   });
 });
 
@@ -268,8 +299,8 @@ describe('extractContextBrief — canonical references and existing code insight
     expect(brief.codeInsights).toEqual([]);
   });
 
-  it.runIf(existsSync(SP02_PATH))('SP 02: pinned amendments/references/codeInsights shape', async () => {
-    const body = await readFile(SP02_PATH, 'utf8');
+  it('Lendshed 02: pinned amendments/references/codeInsights shape', async () => {
+    const body = await fxBody(FX02);
     const brief = extractContextBrief(body);
 
     expect(brief.amendments).toHaveLength(1);
@@ -278,14 +309,16 @@ describe('extractContextBrief — canonical references and existing code insight
     expect(brief.amendments[0].groups[0].title).toBeNull();
     const tableBlock = brief.amendments[0].groups[0].blocks.find((b) => b.kind === 'table');
     expect(tableBlock?.kind).toBe('table');
+    // 6: the table in the amendments section has six body rows (ROLE-01, ROLE-02, ROLE-05, two PROJECT.md
+    // lines and the ROADMAP.md line).
     if (tableBlock?.kind === 'table') expect(tableBlock.rows).toHaveLength(6);
 
     expect(brief.references).toHaveLength(1);
     expect(brief.references[0].groups.map((g) => g.title)).toEqual([
       null,
       'Milestone-level context',
-      'v2.0 research (load-bearing for this phase)',
-      'Phase 1 output — read before touching the auth seam',
+      'Research that bears on this phase',
+      'Phase 1 output — read before touching the sign-in seam',
       'Code this phase modifies or depends on',
       'v1.0 precedent worth reading before deciding shape',
     ]);
@@ -295,19 +328,19 @@ describe('extractContextBrief — canonical references and existing code insight
       'Reusable Assets',
       'Established Patterns',
       'Integration Points',
-      'Constraints this architecture imposes',
+      'Constraints this design imposes',
     ]);
   });
 
-  it.runIf(existsSync(SP03_PATH))('SP 03: <blocking_amendments> recognised by tag, not by heading text', async () => {
-    const body = await readFile(SP03_PATH, 'utf8');
+  it('Lendshed 03: <blocking_amendments> recognised by tag, not by heading text', async () => {
+    const body = await fxBody(FX03);
     const brief = extractContextBrief(body);
     expect(brief.amendments).toHaveLength(1);
     expect(brief.amendments[0].heading).not.toMatch(/requirement amendments/i);
   });
 
-  it.runIf(existsSync(SP03_PATH))('SP 03: <resolved_open_question> becomes a resolved aside, not an extra', async () => {
-    const body = await readFile(SP03_PATH, 'utf8');
+  it('Lendshed 03: <resolved_open_question> becomes a resolved aside, not an extra', async () => {
+    const body = await fxBody(FX03);
     const brief = extractContextBrief(body);
     expect(brief.resolved).toHaveLength(1);
     expect(brief.resolved[0].heading).toMatch(/already answered/);
@@ -321,11 +354,11 @@ describe('extractContextBrief — canonical references and existing code insight
   });
 
   it('Lendshed 04: <blocking_amendments> recognised by tag, not by heading text', async () => {
-    const body = await readFile(fxPath('phases/04-bulk-loan-export/04-CONTEXT.md'), 'utf8');
+    const body = await fxBody(FX04);
     const brief = extractContextBrief(body);
     expect(brief.amendments).toHaveLength(1);
     expect(brief.amendments[0].heading).not.toMatch(/requirement amendments/i);
-    // The locked-upstream-style table sits in the boundary as a collapsed aside, not in amendments.
+    // The decided-beforehand table sits in the boundary as a collapsed aside, not in amendments.
     expect(brief.boundary?.notes).toHaveLength(1);
     expect(brief.boundary?.notes[0].title).toBe('Already decided — do not re-open, do not re-research');
     const table = brief.boundary?.notes[0].blocks[0];
@@ -345,38 +378,38 @@ describe('ideas — specifics (sketch 007 C)', () => {
   describe('splitIdeaLead', () => {
     it('splits a lead ending in its own period, inside the bold span', () => {
       const { title, body } = splitIdeaLead(
-        '**The CLI must be called `backstage`.** The user rejected the proposed `cinedise-portal` name outright and specified `backstage`.',
+        '**The CLI must be called `shedkeys`.** The user rejected the proposed `lendshed-admin` name outright and specified `shedkeys`.',
       );
-      expect(title).toBe('The CLI must be called `backstage`.');
+      expect(title).toBe('The CLI must be called `shedkeys`.');
       expect(body).toBe(
-        'The user rejected the proposed `cinedise-portal` name outright and specified `backstage`.',
+        'The user rejected the proposed `lendshed-admin` name outright and specified `shedkeys`.',
       );
     });
 
     it('joins a short first sentence of the tail onto the title with no inserted space', () => {
       const { title, body } = splitIdeaLead(
-        '**UI work must use shadcn theme preset `b3Dqcuo4na`**, strictly. This held across all four v1.0 phases without drift.',
+        '**UI work must use the `lendshed` token set**, strictly. This held across all four v1.0 phases without drift.',
       );
-      expect(title).toBe('UI work must use shadcn theme preset `b3Dqcuo4na`, strictly.');
+      expect(title).toBe('UI work must use the `lendshed` token set, strictly.');
       expect(body).toBe('This held across all four v1.0 phases without drift.');
     });
 
     it('consumes an em-dash separator directly after the bold, and the colon/period separators produce the same split', () => {
-      const dash = splitIdeaLead('**Live-socket teardown on logout** — server-side closing of an already-open socket.');
-      expect(dash).toEqual({ title: 'Live-socket teardown on logout', body: 'server-side closing of an already-open socket.' });
+      const dash = splitIdeaLead('**Live-socket teardown on sign-out** — server-side closing of an already-open socket.');
+      expect(dash).toEqual({ title: 'Live-socket teardown on sign-out', body: 'server-side closing of an already-open socket.' });
 
-      const colon = splitIdeaLead('**Live-socket teardown on logout**: server-side closing of an already-open socket.');
+      const colon = splitIdeaLead('**Live-socket teardown on sign-out**: server-side closing of an already-open socket.');
       expect(colon).toEqual(dash);
 
-      const period = splitIdeaLead('**Live-socket teardown on logout**. server-side closing of an already-open socket.');
+      const period = splitIdeaLead('**Live-socket teardown on sign-out**. server-side closing of an already-open socket.');
       expect(period).toEqual(dash);
     });
 
     it('lifts a leading parenthetical into the body only when a separator follows it', () => {
       const { title, body } = splitIdeaLead(
-        "**What the `sessions` table stores for Phase 3's ADMIN-05 to read** (device / user-agent, IP, login time) — offered and passed over.",
+        "**What the `sessions` table stores for Phase 3's ADMN-05 to read** (device / user-agent, IP, login time) — offered and passed over.",
       );
-      expect(title).toBe("What the `sessions` table stores for Phase 3's ADMIN-05 to read");
+      expect(title).toBe("What the `sessions` table stores for Phase 3's ADMN-05 to read");
       expect(body).toBe('device / user-agent, IP, login time — offered and passed over.');
     });
 
@@ -391,7 +424,7 @@ describe('ideas — specifics (sketch 007 C)', () => {
 
   describe('classifySpecific', () => {
     it('classifies must/strictly/verbatim language as rule', () => {
-      expect(classifySpecific('The CLI must be called `backstage`.', 'Use it verbatim.')).toBe('rule');
+      expect(classifySpecific('The CLI must be called `shedkeys`.', 'Use it verbatim.')).toBe('rule');
       expect(classifySpecific(null, 'This is a standing project rule, not a per-phase preference.')).toBe('rule');
     });
 
@@ -416,27 +449,29 @@ describe('ideas — specifics (sketch 007 C)', () => {
     });
   });
 
-  it.runIf(existsSync(SP01_PATH))('SP 01: kinds rule/rule/leaning, with pinned titles and body prefixes', async () => {
-    const body = await readFile(SP01_PATH, 'utf8');
+  it('Lendshed 01: kinds rule/leaning, with pinned titles and body prefixes', async () => {
+    const body = await fxBody(FX01);
     const brief = extractContextBrief(body);
-    expect(brief.specifics).toHaveLength(3);
-    expect(brief.specifics.map((s) => s.kind)).toEqual(['rule', 'rule', 'leaning']);
-    expect(brief.specifics[0].title).toBe('The CLI must be called `backstage`.');
+    // 2: the specifics section holds two bullets (the `shedkeys` name and the recorded preference).
+    expect(brief.specifics).toHaveLength(2);
+    expect(brief.specifics.map((s) => s.kind)).toEqual(['rule', 'leaning']);
+    expect(brief.specifics[0].title).toBe('The CLI must be called `shedkeys`.');
     expect(brief.specifics[0].body.startsWith('The user rejected the proposed')).toBe(true);
-    expect(brief.specifics[1].title).toBe('UI work must use shadcn theme preset `b3Dqcuo4na`, strictly.');
-    expect(brief.specifics[1].body.startsWith('This held across')).toBe(true);
+    expect(brief.specifics[1].title).toBeNull();
+    expect(brief.specifics[1].body.startsWith('The user consistently chose the tighter')).toBe(true);
   });
 
-  it.runIf(existsSync(SP03_PATH))('SP 03: kinds leaning/note/rule/rule/rule, with pinned titles and body prefixes', async () => {
-    const body = await readFile(SP03_PATH, 'utf8');
+  it('Lendshed 03: kinds leaning/note/rule/rule/rule, with pinned titles and body prefixes', async () => {
+    const body = await fxBody(FX03);
     const brief = extractContextBrief(body);
+    // 5: the specifics section holds five bullets.
     expect(brief.specifics).toHaveLength(5);
     expect(brief.specifics.map((s) => s.kind)).toEqual(['leaning', 'note', 'rule', 'rule', 'rule']);
     expect(brief.specifics[0].title).toBe(
-      'The user consistently chose the smaller surface over the stricter one — except where lockout is at stake.',
+      'The steward lead leaned toward the lighter option every time, except where a lockout was possible.',
     );
-    expect(brief.specifics[0].body.startsWith("This phase reproduces Phase 2's recorded through-line")).toBe(true);
-    expect(brief.specifics[3].title).toBe('UI work must use shadcn theme preset `b3Dqcuo4na`, strictly.');
+    expect(brief.specifics[0].body.startsWith("This phase repeats Phase 2's recorded through-line")).toBe(true);
+    expect(brief.specifics[3].title).toBe('UI work must use the Lendshed design tokens, strictly.');
     expect(brief.specifics[3].body.startsWith('Standing project rule')).toBe(true);
   });
 });
@@ -489,7 +524,7 @@ describe('ideas — deferred (sketch 007 C)', () => {
     });
 
     it('falls back to `handed` when only a destination is present, then to `other`', () => {
-      expect(classifyDeferred(null, "Left to Phase 3's ADMIN-03 work.", '1').fate).toBe('handed');
+      expect(classifyDeferred(null, "Left to Phase 3's ADMN-03 work.", '1').fate).toBe('handed');
       const other = classifyDeferred(null, 'Something with no recognisable outcome at all.', '1');
       expect(other).toEqual({ fate: 'other', from: null, dest: null, revisit: null });
     });
@@ -500,45 +535,45 @@ describe('ideas — deferred (sketch 007 C)', () => {
     });
 
     it('pairs the destination with the first REQ-ID in that same sentence, skipping WR-/OPEN-', () => {
-      expect(classifyDeferred(null, "Handed to Phase 3's ADMIN-03 work.", '1').dest).toBe('Phase 3 · ADMIN-03');
+      expect(classifyDeferred(null, "Handed to Phase 3's ADMN-03 work.", '1').dest).toBe('Phase 3 · ADMN-03');
       expect(classifyDeferred(null, 'Handed to Phase 3, see WR-02.', '1').dest).toBe('Phase 3');
     });
   });
 
-  it.runIf(existsSync(SP01_PATH))('SP 01: 5 deferred items, pinned fate/from/dest/revisit', async () => {
-    const body = await readFile(SP01_PATH, 'utf8');
+  it('Lendshed 01: 3 deferred items, pinned fate/from/dest/revisit', async () => {
+    const body = await fxBody(FX01);
     const brief = extractContextBrief(body);
+    // 3: the deferred section holds three bullets; fate, from and destination were read off each item's
+    // own wording (a "left to Phase 3" hand-off, then two "offered and passed over" items).
     expect(brief.deferred.map((d) => [d.fate, d.from, d.dest, d.revisit])).toEqual([
-      ['handed', 'D-04', 'Phase 3 · ADMIN-03', null],
+      ['handed', 'D-04', 'Phase 3 · ADMN-03', null],
       ['passed', null, null, null],
-      ['passed', 'D-01', 'Phase 3 · ADMIN-05', null],
-      ['passed', null, null, null],
-      ['passed', null, 'Phase 3 · ADMIN-06', null],
+      ['passed', 'D-01', 'Phase 3 · ADMN-05', null],
     ]);
-    expect(brief.deferred[2].title).toBe("What the `sessions` table stores for Phase 3's ADMIN-05 to read");
-    expect(brief.deferred[2].body.startsWith('device / user-agent, IP, login time — offered and passed over')).toBe(
-      true,
-    );
+    expect(brief.deferred[2].title).toBe("What the `sessions` table stores for Phase 3's ADMN-05 to read");
+    expect(brief.deferred[2].body.startsWith('offered and passed over; D-01 commits to `last_seen` only')).toBe(true);
   });
 
-  it.runIf(existsSync(SP03_PATH))('SP 03: 8 declined, 1 out, 1 carried, with pinned revisit triggers', async () => {
-    const body = await readFile(SP03_PATH, 'utf8');
+  it('Lendshed 03: 8 declined, 1 out, 1 carried, with pinned revisit triggers', async () => {
+    const body = await fxBody(FX03);
     const brief = extractContextBrief(body);
+    // 10 items: eight options declined (from D-01, D-02, D-04, D-04, D-06, D-10, D-11, D-12), one already out
+    // of scope by REQUIREMENTS.md, one carried from Phase 2; five of the declined carry an "if" trigger.
     expect(brief.deferred.map((d) => [d.fate, d.from, d.dest, d.revisit])).toEqual([
-      ['declined', 'D-01', null, 'a weak admin-typed password ever causes trouble'],
-      ['declined', 'D-04', null, 'typo-driven delete-and-recreate becomes annoying'],
-      ['declined', 'D-06', null, null],
-      ['declined', 'D-06', null, "D-06's silence proves surprising"],
-      ['declined', 'D-09', null, 'a departure-and-replacement ever actually collides'],
-      ['declined', 'D-13', null, null],
-      ['declined', 'D-15', null, 'the compound-`target` grammar starts causing renderer bugs'],
-      ['declined', 'D-16', null, null],
+      ['declined', 'D-01', null, 'a weak steward-typed password ever causes a break-in'],
+      ['declined', 'D-02', null, 'members keep asking to fix typos'],
+      ['declined', 'D-04', null, null],
+      ['declined', 'D-04', null, 'the silence in D-04 proves surprising'],
+      ['declined', 'D-06', null, 'a departed member and a newcomer ever end up with the same handle'],
+      ['declined', 'D-10', null, null],
+      ['declined', 'D-11', null, 'the compound `target` format keeps breaking the renderer'],
+      ['declined', 'D-12', null, null],
       ['out', 'REQUIREMENTS.md', null, null],
       ['carried', 'Phase 2', null, null],
     ]);
-    // Deliberate deviation from the sketch's hand data, following the sketch's own stated rule:
-    // #10's trailing parenthetical is lifted out of the title and into the body.
-    expect(brief.deferred[9].title).toBe('`admin` split into finer bits');
-    expect(brief.deferred[9].body.startsWith('`manage_users` / `view_audit` — carried from Phase 2')).toBe(true);
+    // The last item's trailing parenthetical is lifted out of the title and into the body, following the
+    // sketch's own stated rule.
+    expect(brief.deferred[9].title).toBe('The `steward` bit split in two');
+    expect(brief.deferred[9].body.startsWith('`edit_members` / `read_log` — carried over from Phase 2')).toBe(true);
   });
 });
