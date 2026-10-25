@@ -126,6 +126,38 @@ test.describe('UI-SPEC page', () => {
     expect(layout.wrapScrolls).toBe(true);
   });
 
+  test('FX v1.0/04 UI-SPEC page', async ({ page }) => {
+    const url = await resolveFixtureUrl(FIXTURE_BASE_URL, 'v1.0-phases/04-shed-to-shed-transfers/04-UI-SPEC.md');
+    await page.addInitScript(() => window.localStorage.setItem('labelore-theme', 'light'));
+    await page.goto(`${FIXTURE_BASE_URL}${url}`);
+    await page.locator('#ui-spec-considerations').waitFor({ state: 'visible' });
+
+    await expect(page.locator('h1')).toHaveText('Shed to shed transfers');
+    await expect(page.locator('.artifact-heading .eyebrow')).toHaveText('UI design contract · Phase 04');
+    await expect(page.locator('.view-ui-spec-signoff')).toHaveText('Signed off 6/6');
+    await expect(page.locator('.view-ui-spec-choice')).toHaveCount(4);
+
+    // The meter counts 31 / 3 / 0 / 11 and the matrix holds 6 elements.
+    const keyCount = async (status: string): Promise<string | null> =>
+      page.locator(`.view-ui-spec-meter-key [data-status="${status}"] b`).textContent();
+    expect([
+      await keyCount('covered'),
+      await keyCount('backstop'),
+      await keyCount('unresolved'),
+      await keyCount('dismissed'),
+    ]).toEqual(['31', '3', '0', '11']);
+    await expect(page.locator('.view-ui-spec-matrix tbody tr')).toHaveCount(6);
+
+    // The phase-specific chapters list first, then Copywriting Contract.
+    const labels = await page.locator('#ui-spec-source-only button').allTextContents();
+    expect(labels.slice(0, 4)).toEqual([
+      'Layout',
+      'Motion & Reduced-Motion Contract',
+      'Screen-Reader / Live-Region Contract',
+      'Copywriting Contract',
+    ]);
+  });
+
   test('LB v1.0/02 UI-SPEC page', async ({ page, baseURL }) => {
     const base = baseURL ?? 'http://127.0.0.1:4199';
     const url = await resolveFixtureUrl(base, '02-situational-awareness-artifact-reading/02-UI-SPEC.md');

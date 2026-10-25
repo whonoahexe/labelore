@@ -16,6 +16,8 @@ const LB02 = '.planning/milestones/v1.0-phases/02-situational-awareness-artifact
 const LB05 = '.planning/milestones/v1.1-phases/05-per-type-document-views/05-UI-SPEC.md';
 const DENSE = 'fixtures/dense/.planning/phases/01-identity-slice/01-UI-SPEC.md';
 const FX01 = 'phases/01-member-sign-in-sessions/01-UI-SPEC.md';
+const FX_V04 = 'milestones/v1.0-phases/04-shed-to-shed-transfers/04-UI-SPEC.md';
+const FX_P3 = 'phases/03-account-admin-and-sessions/03-UI-SPEC.md';
 
 async function repoText(path: string): Promise<string> {
   return await readFile(new URL(path, REPO_ROOT), 'utf8');
@@ -72,6 +74,69 @@ describe('extractUiSpec — Lendshed phase 01 (hard)', () => {
     const unclaimed = spec.sections.filter((s) => !s.claimed).map((s) => s.heading);
     expect(unclaimed).toEqual(['Visual Hierarchy', 'Copywriting Contract', 'Sign-In Interaction Contract', 'Top Bar Addition']);
     expect(spec.sections.find((s) => s.heading === 'Registry Safety')?.claimed).toBe(true);
+  });
+});
+
+describe('extractUiSpec — Lendshed v1.0/04 (the longest document)', () => {
+  it('reads the frontmatter as written, the sign-off, the scales and the registry', async () => {
+    const spec = extractUiSpec(await readFile(fxPath(FX_V04), 'utf8'));
+    expect(spec.meta).toEqual({
+      phase: '04',
+      slug: 'shed-to-shed-transfers',
+      status: 'approved',
+      created: '2026-03-05',
+      shadcnInitialized: 'true',
+      preset: 'k7Tmw2Qe9x',
+    });
+    expect(spec.title).toBe('Phase 04 — UI Design Contract');
+    expect(spec.tagline).toContain('gsd-ui-researcher');
+    expect(spec.signoff?.dims).toHaveLength(6);
+    expect(spec.signoff?.dims.every((d) => d.verdict === 'PASS')).toBe(true);
+    expect(spec.signoff?.approval).toMatch(/^APPROVED/);
+    expect(spec.signoff?.hasNotes).toBe(true);
+    expect(spec.spacing?.rows).toHaveLength(6);
+    expect(spec.typography?.rows).toHaveLength(4);
+    expect(spec.color?.rows).toHaveLength(4);
+    expect(spec.registry?.rows).toHaveLength(1);
+    expect(spec.designSystem?.map((r) => r.key)).toEqual(['Tool', 'Preset', 'Component library', 'Icon library', 'Font']);
+    expect(spec.reserved.accent?.length).toBe(6);
+    expect(spec.reserved.destructive?.length).toBe(5);
+  });
+
+  it('groups 45 considerations into 6 elements, 31 / 3 / 0 / 11', async () => {
+    const spec = extractUiSpec(await readFile(fxPath(FX_V04), 'utf8'));
+    expect(counts(spec)).toEqual({ elements: 6, rows: 45, split: [31, 3, 0, 11] });
+    expect(spec.considerations?.elements.map((e) => e.key)).toEqual(Array.from({ length: 6 }, (_, i) => `E${i + 1}`));
+    expect(spec.considerations?.coverage).toMatch(/^45 applicable/);
+    expect(spec.considerations?.quote).toContain('ui-phase UI-consideration probe');
+    expect(spec.considerations?.comments.length).toBe(1);
+    const e2 = spec.considerations?.elements[1];
+    const longText = e2?.rows.find((r) => r.cats.includes('long-text'));
+    expect(longText?.status).toBe('backstop');
+    expect(e2?.rows.find((r) => r.tag === 'P-01')?.cats).toEqual(['loading']);
+  });
+
+  it('marks the phase-specific chapters and the copywriting contract unclaimed', async () => {
+    const spec = extractUiSpec(await readFile(fxPath(FX_V04), 'utf8'));
+    const unclaimed = spec.sections.filter((s) => !s.claimed).map((s) => s.heading);
+    expect(unclaimed).toEqual([
+      'Layout',
+      'Motion & Reduced-Motion Contract',
+      'Screen-Reader / Live-Region Contract',
+      'Copywriting Contract',
+    ]);
+    expect(spec.sections.find((s) => s.heading === 'Registry Safety')?.claimed).toBe(true);
+  });
+});
+
+describe('extractUiSpec — Lendshed phases/03 (the Element | Kinds trap)', () => {
+  it('reads 5 elements and 35 rows, taking kinds from the table and none of its rows as considerations', async () => {
+    const spec = extractUiSpec(await readFile(fxPath(FX_P3), 'utf8'));
+    expect(counts(spec)).toEqual({ elements: 5, rows: 35, split: [29, 3, 0, 3] });
+    const e2 = spec.considerations?.elements.find((e) => e.key === 'E2');
+    expect(e2?.kinds).toBe('form, interactive-control');
+    expect(e2?.name).toBe('Reset-password dialog');
+    expect(spec.considerations?.coverage).toMatch(/^35 applicable/);
   });
 });
 
