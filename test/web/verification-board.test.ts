@@ -1,7 +1,7 @@
-// quick-261017-18a (sketch 021 E): the VERIFICATION composer and its view, pinned against the five
-// sketch reports and the dense fixture. ViewInput literals are built from the handler's real parse of
-// each file; pinned values come from the sketch's own data.js and the source files, never from the
-// composer's output.
+// quick-261017-18a (sketch 021 E): the VERIFICATION composer and its view, pinned against the synthetic
+// template report, three made-up Lendshed reports (D-01, D-06) and the dense fixture. ViewInput literals are
+// built from the handler's real parse of each file; every Lendshed pin was recounted by grep and awk in the
+// made-up file itself (R5), never copied from the composer's output.
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -19,6 +19,7 @@ import { composeVerificationBoard } from '../../src/web/views/verification-board
 import type { ComposedVerificationBoard } from '../../src/web/views/verification-board.ts';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 import { VerificationBoardView } from '../../src/web/views/verification-board-components.tsx';
+import { fxPath } from '../helpers/fixture-project.ts';
 
 const FIXTURES = new URL('../fixtures/verification/', import.meta.url).pathname;
 const LB = new URL('../../.planning/', import.meta.url).pathname;
@@ -52,9 +53,12 @@ function board(file: string, ref: Partial<ArtifactRef> = {}, headings: ViewInput
 }
 
 const syn = board(`${FIXTURES}synthetic-VERIFICATION.md`);
-const sp04 = board(`${FIXTURES}sp04-VERIFICATION.md`);
-const sb04 = board(`${FIXTURES}sb04-VERIFICATION.md`);
-const dd01 = board(`${FIXTURES}dd01-VERIFICATION.md`);
+const FX04 = 'phases/04-bulk-loan-export/04-VERIFICATION.md';
+const FX03 = 'phases/03-account-admin-and-sessions/03-VERIFICATION.md';
+const FX01 = 'milestones/v1.0-phases/01-member-data-foundation/01-VERIFICATION.md';
+const lx04 = board(fxPath(FX04));
+const lx03 = board(fxPath(FX03));
+const lx01 = board(fxPath(FX01));
 const lb05 = board(`${LB}milestones/v1.1-phases/05-per-type-document-views/05-VERIFICATION.md`);
 const dense = board(DENSE, phase('01', 'identity-slice'));
 
@@ -84,15 +88,16 @@ describe('composeVerificationBoard - the rail', () => {
     expect(syn.rail.title).toBe('Live File Watching');
     expect(syn.rail.status).toEqual({ label: 'Gaps found', tone: 'missing' });
     expect(syn.rail.verified).toBe('14 Oct 2026 · 15:42');
-    expect(sp04.rail.eyebrow).toBe('Verification · Phase 4');
-    expect(sp04.rail.title).toBe('Bulk Archive Downloads');
-    expect(sp04.rail.verified).toBe('29 Aug 2026 · 16:20');
-    expect(sb04.rail.title).toBe('Camera Strip UI, Controls & Netflix Coexistence');
-    expect(sb04.rail.status).toEqual({ label: 'Human needed', tone: 'in-flight' });
-    expect(sb04.rail.verified).toBe('5 Jul 2026 · 23:30');
-    expect(dd01.rail.eyebrow).toBe('Verification · Phase 1');
-    expect(dd01.rail.title).toBe('Volume Acquisition + Fast Volume-Render');
-    expect(dd01.rail.verified).toBe('6 Aug 2026 · 17:05');
+    expect(lx04.rail.eyebrow).toBe('Verification · Phase 4');
+    expect(lx04.rail.title).toBe('Bulk Loan Export');
+    expect(lx04.rail.status).toEqual({ label: 'Gaps found', tone: 'missing' });
+    expect(lx04.rail.verified).toBe('12 Apr 2026 · 14:05');
+    expect(lx03.rail.title).toBe('Account Admin & Sessions');
+    expect(lx03.rail.status).toEqual({ label: 'Human needed', tone: 'in-flight' });
+    expect(lx03.rail.verified).toBe('9 Apr 2026 · 21:10');
+    expect(lx01.rail.eyebrow).toBe('Verification · Phase 1');
+    expect(lx01.rail.title).toBe('Member Data Foundation');
+    expect(lx01.rail.verified).toBe('20 Feb 2026 · 11:30');
     expect(lb05.rail.eyebrow).toBe('Verification · Phase 5');
     expect(lb05.rail.title).toBe('Per-Type Document Views');
     expect(lb05.rail.status).toEqual({ label: 'Passed', tone: 'complete' });
@@ -117,9 +122,9 @@ describe('composeVerificationBoard - the rail', () => {
 
   it('pins the big-number frame', () => {
     expect(syn.rail.big).toEqual({ value: '2', label: 'gaps block the goal', sub: '2 more can wait · 6 of 10 truths hold', tone: 'missing' });
-    expect(sp04.rail.big).toEqual({ value: '7', label: 'gaps block the goal', sub: '19 of 39 truths hold', tone: 'missing' });
-    expect(sb04.rail.big).toEqual({ value: '5', label: 'checks left for a person', sub: 'machine checks done · 11 of 15', tone: 'in-flight' });
-    expect(dd01.rail.big).toEqual({ value: '2', label: 'checks left for a person', sub: 'machine checks done · 14 of 14', tone: 'in-flight' });
+    expect(lx04.rail.big).toEqual({ value: '7', label: 'gaps block the goal', sub: '8 of 21 truths hold', tone: 'missing' });
+    expect(lx03.rail.big).toEqual({ value: '4', label: 'checks left for a person', sub: 'machine checks done · 4 of 6', tone: 'in-flight' });
+    expect(lx01.rail.big).toEqual({ value: '2', label: 'checks left for a person', sub: 'machine checks done · 8 of 8', tone: 'in-flight' });
     expect(lb05.rail.big).toEqual({ value: '5/7', label: 'truths hold · goal achieved', sub: '4 human checks recorded', tone: 'complete' });
     expect(dense.rail.big).toEqual({ value: '2/2', label: 'truths hold · goal achieved', sub: 'nothing left for a person', tone: 'complete' });
   });
@@ -134,18 +139,18 @@ describe('composeVerificationBoard - the rail', () => {
       ['Took', '6 min', null],
     ]);
     expect(stat(syn, 'automated')?.target).toBeNull();
-    expect(sp04.rail.stats.map((s) => [s.label, s.value])).toEqual([
-      ['Truths', '19/39'], ['Requirements', '4/10'], ['Anti-patterns', '4 blocking · 7'],
-      ['Spot-checks', '8 ✓ · 0 ✗ · 1 skip'], ['Approach', 'Initial verification'],
+    expect(lx04.rail.stats.map((s) => [s.label, s.value])).toEqual([
+      ['Truths', '8/21'], ['Requirements', '3/6'], ['Anti-patterns', '4 blocking · 7'],
+      ['Spot-checks', '7 ✓ · 0 ✗ · 1 skip'], ['Approach', 'Initial verification'],
     ]);
-    expect(stat(sp04, 'spot-checks')?.target).toBe('spot-checks');
-    expect(sb04.rail.stats.map((s) => [s.label, s.value])).toEqual([
-      ['Truths', '2/5'], ['Requirements', '11/15'], ['Anti-patterns', '0'],
+    expect(stat(lx04, 'spot-checks')?.target).toBe('spot-checks');
+    expect(lx03.rail.stats.map((s) => [s.label, s.value])).toEqual([
+      ['Truths', '2/5'], ['Requirements', '4/6'], ['Anti-patterns', '0'],
       ['Spot-checks', '5 ✓ · 0 ✗ · 1 skip'], ['Approach', 'Initial verification'],
     ]);
-    expect(dd01.rail.stats.map((s) => [s.label, s.value])).toEqual([
-      ['Truths', '14/14'], ['Requirements', '9/9'], ['Anti-patterns', '0 blocking · 5'],
-      ['Spot-checks', '8 ✓ · 0 ✗ · 1 skip'], ['Approach', 'Re-verification'],
+    expect(lx01.rail.stats.map((s) => [s.label, s.value])).toEqual([
+      ['Truths', '8/8'], ['Requirements', '5/5'], ['Anti-patterns', '0 blocking · 5'],
+      ['Spot-checks', '6 ✓ · 0 ✗ · 1 skip'], ['Approach', 'Re-verification'],
     ]);
     expect(lb05.rail.stats.map((s) => [s.label, s.value])).toEqual([
       ['Truths', '5/7'], ['Requirements', '10/11'], ['Anti-patterns', '0 blocking · 3'],
@@ -160,10 +165,12 @@ describe('composeVerificationBoard - the rail', () => {
     expect(syn.rail.slips[0].title).toBe('Burst saves across two windows');
     expect(syn.rail.slips[0].anchorId).toBe('verification-check-1');
     expect(syn.rail.slips[0].preview.length).toBeLessThanOrEqual(91);
-    expect(sb04.rail.slipsLabel).toBe('For a person');
-    expect(sb04.rail.slips.map((s) => s.title)[0]).toBe('CALL-04 local speaking ring lights own avatar');
-    expect(sb04.rail.slips).toHaveLength(5);
-    expect(dd01.rail.slips).toHaveLength(2);
+    expect(lx03.rail.slipsLabel).toBe('For a person');
+    expect(lx03.rail.slips.map((s) => s.title)[0]).toBe("ADMN-03 disabled member's open page stops at once");
+    expect(lx03.rail.slips).toHaveLength(4);
+    expect(lx04.rail.slipsLabel).toBe('For a person · after the gaps');
+    expect(lx04.rail.slips).toHaveLength(3);
+    expect(lx01.rail.slips).toHaveLength(2);
     expect(lb05.rail.slips).toHaveLength(4);
     expect(dense.rail.slips).toEqual([]);
   });
@@ -221,36 +228,36 @@ describe('composeVerificationBoard - the ledger', () => {
     expect(n1.fixLabel).toBe('Recommendation');
   });
 
-  it('reads studio-portal 04 gaps from the frontmatter with the prose closure shape', () => {
-    const { ledger } = sp04;
+  it('reads Lendshed phase 4 gaps from the frontmatter with the prose closure shape', () => {
+    const { ledger } = lx04;
     expect(ledger.aside).toBe('7 critical · 0 can wait');
     expect(ledger.fixShape).toBe('prose');
     expect(ledger.rows).toHaveLength(7);
     const chip = (i: number): string[] => ledger.rows[i].chips.map((c) => `${c.prefix}: ${c.text}`);
-    expect(chip(0)).toEqual(['Backend: Wire HTTP cancellation']);
-    expect(chip(1)).toEqual(['Capability-honesty: Implement cloud archive reads or fail closed before insertion']);
-    expect(chip(2)).toEqual(['Backend: Fix full-coverage deletion']);
-    expect(chip(3)).toEqual(['Backend: Enforce reopen/cumulative sizes']);
-    expect(chip(4)).toEqual(['Frontend: Complete four native interop results']);
-    expect(chip(5)).toEqual(['Frontend: Execute the exact production archive journey']);
-    expect(chip(6)).toEqual(['Frontend: Retain/refresh live terminal jobs']);
+    expect(chip(0)).toEqual(['Server: Wire HTTP cancellation']);
+    expect(chip(1)).toEqual(['Capability-honesty: Read counter-fed loans or refuse before any job row']);
+    expect(chip(2)).toEqual(['Server: Fix whole-file removal']);
+    expect(chip(3)).toEqual(['Server: Enforce row counts when rewriting']);
+    expect(chip(4)).toEqual(['Web: Complete four desktop archive results']);
+    expect(chip(5)).toEqual(['Web: Run the built-export journey over the member route']);
+    expect(chip(6)).toEqual(['Web: Keep finished live jobs']);
     expect(ledger.unmapped.map((u) => u.text)).toEqual([
-      'Make sweep/omission persistence failures explicit',
-      'With an end-to-end cloud test',
-      'Add atomic explicit-collection gating',
-      'Run the browser checkpoint',
+      'Make sweep and skipped-loan write failures explicit',
+      'With an end-to-end Depot test',
+      'Gate explicit fetches atomically',
+      'Run the browser check',
     ]);
     for (const row of ledger.rows) expect(row.scope).toEqual({ label: 'Scope not stated', filled: 0 });
     const c1 = ledger.rows[0].columns;
     expect(c1.why).toMatchObject({ kind: 'truth' });
     expect(c1.fix).toMatchObject({ kind: 'list' });
-    expect(ledger.rows[0].columns.why).toMatchObject({ where: [{ file: 'jobs.rs' }] });
+    expect(ledger.rows[0].columns.why).toMatchObject({ where: [{ file: 'jobs.ts' }] });
     const truthOf = (i: number): string | null => {
       const index = ledger.rows[i].truthIndex;
-      return index === null ? null : `${sp04.truths?.details[index].group} #${sp04.truths?.details[index].n}`;
+      return index === null ? null : `${lx04.truths?.details[index].group} #${lx04.truths?.details[index].n}`;
     };
-    expect(truthOf(4)).toBe('Plan 04-07 #2');
-    expect(truthOf(5)).toBe('Roadmap success criteria #R5');
+    expect(truthOf(4)).toBe('Roadmap success criteria #R4');
+    expect(truthOf(0)).toBeNull();
   });
 
   it('shows the calm empty state for a report with no gaps', () => {
@@ -258,7 +265,8 @@ describe('composeVerificationBoard - the ledger', () => {
     expect(lb05.ledger.empty).toBe('No blocking gaps.');
     expect(lb05.ledger.aside).toBe('none');
     expect(dense.ledger.empty).toBe('No gaps found.');
-    expect(sb04.ledger.empty).toBe('**No blocking gaps.**');
+    expect(lx03.ledger.empty).toBe('**No blocking gaps.**');
+    expect(lx01.ledger.empty).toBe('**No gaps.**');
   });
 
   it('keeps the ledger sourceId from the heading list', () => {
@@ -360,13 +368,11 @@ describe('the Truth board', () => {
     expect(truths?.rows.map((r) => r.filled)).toEqual([1, 1, 3]);
   });
 
-  it('lays studio-portal 04 out across eight columns', () => {
-    const truths = sp04.truths;
-    expect(truths?.groups.map((g) => g.label)).toEqual([
-      'Roadmap', 'Plan 04-01', 'Plan 04-02', 'Plan 04-03', 'Plan 04-04', 'Plan 04-05', 'Plan 04-06', 'Plan 04-07',
-    ]);
-    expect(truths?.rows.map((r) => r.count)).toEqual([9, 11, 19]);
-    const html = render(sp04);
+  it('lays Lendshed phase 4 out across five columns', () => {
+    const truths = lx04.truths;
+    expect(truths?.groups.map((g) => g.label)).toEqual(['Roadmap', 'Plan 04-01', 'Plan 04-02', 'Plan 04-03', 'Plan 04-04']);
+    expect(truths?.rows.map((r) => r.count)).toEqual([6, 7, 8]);
+    const html = render(lx04);
     expect(html.match(/data-empty="true"/g)?.length).toBeGreaterThan(0);
   });
 
@@ -392,10 +398,10 @@ describe('the Truth board', () => {
   });
 
   it('shows the status cell as written when it is not a standard form', () => {
-    const insufficient = sp04.truths?.details.find((d) => d.raw !== null);
+    const insufficient = lx04.truths?.details.find((d) => d.raw !== null);
     expect(insufficient?.raw).toContain('insufficient_spec');
     expect(syn.truths?.details[3].raw).toBeNull();
-    expect(render(sp04, { initialTruth: sp04.truths?.details.indexOf(insufficient as never) })).toContain('As written');
+    expect(render(lx04, { initialTruth: lx04.truths?.details.indexOf(insufficient as never) })).toContain('As written');
   });
 
   it('omits the board when no truth was parsed', () => {
@@ -418,14 +424,15 @@ describe('the Requirement board', () => {
     expect(html).toContain('SearchIndex.update');
   });
 
-  it('lists the sideby requirements and the caveat state', () => {
-    const squares = sb04.requirements?.rows.flatMap((r) => r.squares) ?? [];
-    expect(squares).toHaveLength(15);
-    expect(sb04.requirements?.rows.map((r) => [r.label, r.count])).toEqual([
-      ['Needs a person', 4], ['With a caveat', 2], ['Satisfied', 9],
+  it('lists the Lendshed 03 requirements and the caveat state', () => {
+    const squares = lx03.requirements?.rows.flatMap((r) => r.squares) ?? [];
+    expect(squares).toHaveLength(6);
+    expect(lx03.requirements?.rows.map((r) => [r.label, r.count])).toEqual([
+      ['Needs a person', 2], ['With a caveat', 1], ['Satisfied', 3],
     ]);
-    const partial = sb04.requirements?.rows.find((r) => r.state === 'partial')?.squares[0].id as string;
-    expect(render(sb04, { initialRequirement: partial })).toContain('With a caveat');
+    const partial = lx03.requirements?.rows.find((r) => r.state === 'partial')?.squares[0].id as string;
+    expect(partial).toBe('ADMN-04');
+    expect(render(lx03, { initialRequirement: partial })).toContain('With a caveat');
   });
 
   it('has no board without a Requirements Coverage table', () => {
@@ -473,15 +480,15 @@ describe('anti-patterns', () => {
     expect(html.match(/class="view-verification-anti-row"/g)).toHaveLength(2);
   });
 
-  it('shows rows only for deid, with the clear row quiet', () => {
-    expect(dd01.anti?.blockers).toEqual([]);
-    expect(dd01.anti?.rows.map((r) => r.severity)).toEqual(['clear', 'warning', 'warning', 'info', 'info']);
-    expect(render(dd01)).toContain('data-severity="clear"');
+  it('shows rows only for Lendshed v1.0/01, with the clear row quiet', () => {
+    expect(lx01.anti?.blockers).toEqual([]);
+    expect(lx01.anti?.rows.map((r) => r.severity)).toEqual(['clear', 'warning', 'warning', 'info', 'info']);
+    expect(render(lx01)).toContain('data-severity="clear"');
   });
 
   it('shows the section prose when there are no rows, and nothing without a section', () => {
-    expect(sb04.anti?.empty).toContain('None.');
-    expect(sb04.anti?.empty?.length).toBeLessThanOrEqual(261);
+    expect(lx03.anti?.empty).toContain('None.');
+    expect(lx03.anti?.empty?.length).toBeLessThanOrEqual(261);
     expect(dense.anti).toBeNull();
   });
 });
@@ -491,15 +498,15 @@ describe('Also in this report, the footer and the spot-check modal', () => {
 
   it('lists exactly the unhandled sections in order', () => {
     expect(labels(syn)).toEqual(['Required Artifacts', 'Key Link Verification']);
-    expect(labels(sp04)).toEqual([
+    expect(labels(lx04)).toEqual([
       'Verifier’s gap summary', 'Required Artifacts', 'Key Link Verification', 'Data-Flow Trace', 'Behavioral Spot-Checks',
       'Probe Execution', 'Prohibitions', 'Test Quality Audit', 'Decision Coverage', 'Next Action',
     ]);
-    expect(labels(sb04)).toEqual([
-      'VU-meter note (CALL-04 / SC1) — user-approved reinterpretation, not a gap',
+    expect(labels(lx03)).toEqual([
+      'Session-count note (ADMN-05 / SC4) — steward-approved reinterpretation, not a gap',
       'Required Artifacts', 'Key Link Verification', 'Data-Flow Trace', 'Behavioral Spot-Checks',
     ]);
-    expect(labels(dd01)).toEqual([
+    expect(labels(lx01)).toEqual([
       'Closed since last verification · 4', 'Re-verification note', 'Data-Blocked Items', 'Required Artifacts',
       'Key Link Verification', 'Data-Flow Trace', 'Behavioral Spot-Checks', 'Probe Execution',
     ]);
@@ -512,7 +519,7 @@ describe('Also in this report, the footer and the spot-check modal', () => {
       { id: 'required-artifacts', text: 'Required Artifacts', depth: 2 },
       { id: 'data-flow-trace-level-4', text: 'Data-Flow Trace (Level 4)', depth: 2 },
     ];
-    const model = board(`${FIXTURES}dd01-VERIFICATION.md`, {}, headings);
+    const model = board(fxPath(FX01), {}, headings);
     expect(model.also[0].targetId).toBeNull();
     expect(model.also.find((a) => a.label === 'Required Artifacts')?.targetId).toBe('required-artifacts');
     expect(model.also.find((a) => a.label === 'Data-Flow Trace')?.targetId).toBe('data-flow-trace-level-4');
@@ -532,11 +539,11 @@ describe('Also in this report, the footer and the spot-check modal', () => {
   });
 
   it('opens the spot-check list only where there are rows', () => {
-    expect(sp04.spotChecks?.rows).toHaveLength(9);
+    expect(lx04.spotChecks?.rows).toHaveLength(8);
     expect(lb05.spotChecks?.rows).toHaveLength(12);
     expect(syn.spotChecks).toBeNull();
     expect(stat(syn, 'automated')?.target).toBeNull();
     const headings = [{ id: 'behavioral-spot-checks', text: 'Behavioral Spot-Checks', depth: 2 }];
-    expect(board(`${FIXTURES}sp04-VERIFICATION.md`, {}, headings).spotChecks?.sourceId).toBe('behavioral-spot-checks');
+    expect(board(fxPath(FX04), {}, headings).spotChecks?.sourceId).toBe('behavioral-spot-checks');
   });
 });
