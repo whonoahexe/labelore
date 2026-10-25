@@ -1,23 +1,19 @@
-// Where the todo corpus lives, for the tests that read real todo files (quick-261023-61k): the made-up
-// Lendshed project, the dashboard's synthetic fixture, the committed Labelore fixture and labelore's own
-// `.planning/`. Every project here is committed to this repository; nothing is read from the machine.
+// Where the todo corpus lives, for the tests that read todo files (quick-261023-61k): the made-up Lendshed
+// project, the Labelore todo fixture, the dashboard's synthetic fixture and Labelore's own `.planning/`
+// folder, nothing else. Every project here is committed to this repository; there is no root that points
+// at another project or at the machine's home directory (D-05).
 import { readFileSync } from 'node:fs';
-import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { FX_ROOT } from './fixture-project.ts';
 
 export const LB_ROOT = new URL('../..', import.meta.url).pathname.replace(/\/$/, '');
 const FIXTURES = join(LB_ROOT, 'test/fixtures/todos');
 
-export const DUET_ROOT = join(FIXTURES, 'duet');
-export const PORTAL_ROOT = join(FIXTURES, 'portal');
 export const LABELORE_FIXTURE_ROOT = join(FIXTURES, 'labelore');
 export const SYNTHETIC_ROOT = join(LB_ROOT, 'test/fixtures/dashboard/synthetic');
 
 /** The committed fixture projects and the synthetic one. */
 export const FIXTURE_ROOTS: string[] = [FX_ROOT, LABELORE_FIXTURE_ROOT, SYNTHETIC_ROOT];
-
-export const RESOUNDANT_ROOT = join(homedir(), 'Work/Ibis/resoundant');
 
 export interface KeyedFile {
   root: string;
