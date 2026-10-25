@@ -380,7 +380,7 @@ describe('buildPlanManualChecks — UI-SPEC backstops, Read first, the resume si
     expect(entryOf(before, 2).groups.map((group) => group.key)).not.toContain('uat');
   });
 
-  it('renders the full panel for the studio-portal shape', async () => {
+  it('renders the full panel for the multi-phase shape', async () => {
     const snapshot = await snapshotOf(fullFiles());
     const app = createApp({ getSnapshot: () => snapshot }, true, '.');
     const presentation = (await (await app.request('/api/presentation')).json()) as ProjectPresentation;

@@ -16,14 +16,14 @@ function remote(raw: string): RemoteTarget {
 
 describe('parseRemoteTarget: URL forms', () => {
   it('parses the reported sftp address', () => {
-    const address = 'sftp://rhgpu.taile250fc.ts.net/mnt/REACH/deid-template-studio';
+    const address = 'sftp://box.lendshed.example/srv/lendshed-template';
     const target = remote(address);
     expect(target).toMatchObject({
       scheme: 'sftp',
-      host: 'rhgpu.taile250fc.ts.net',
+      host: 'box.lendshed.example',
       user: null,
       port: null,
-      remoteRoot: '/mnt/REACH/deid-template-studio',
+      remoteRoot: '/srv/lendshed-template',
       label: address,
     });
   });
@@ -52,11 +52,11 @@ describe('parseRemoteTarget: URL forms', () => {
 
 describe('parseRemoteTarget: scp-style', () => {
   it('parses host:/abs/path', () => {
-    const address = 'rhgpu.taile250fc.ts.net:/mnt/REACH/deid-template-studio';
+    const address = 'box.lendshed.example:/srv/lendshed-template';
     expect(remote(address)).toMatchObject({
       scheme: 'scp',
       port: null,
-      remoteRoot: '/mnt/REACH/deid-template-studio',
+      remoteRoot: '/srv/lendshed-template',
       label: address,
     });
   });
@@ -179,7 +179,7 @@ describe('buildMirrorCommands', () => {
 });
 
 describe('classifyMirrorResult', () => {
-  const target = remote('sftp://rhgpu.example/srv/proj');
+  const target = remote('sftp://box.lendshed.example/srv/proj');
   const base: MirrorRunResult = {
     sshExit: 0,
     tarExit: 0,
@@ -210,7 +210,7 @@ describe('classifyMirrorResult', () => {
   it('maps ssh failures', () => {
     expect(failed({ sshExit: 255, sshStderr: 'Permission denied (publickey).' }).status).toBe('permission-denied');
     expect(failed({ sshExit: 255, sshStderr: 'Host key verification failed.' }).status).toBe('permission-denied');
-    const unreachable = failed({ sshExit: 255, sshStderr: 'ssh: Could not resolve hostname rhgpu.example' });
+    const unreachable = failed({ sshExit: 255, sshStderr: 'ssh: Could not resolve hostname box.lendshed.example' });
     expect(unreachable.status).toBe('path-not-found');
     expect(unreachable.message).toContain('Could not resolve hostname');
   });

@@ -23,9 +23,9 @@ describe('stripMarkdown', () => {
 
   it('handles the real blocker string without leaving asterisks or backticks', () => {
     const raw =
-      '**Vercel TLS cert for `studio.cinedise.com` expires 2026-10-14, and renewal will fail silently.** Cloudflare Access gates the ACME challenge path, so the automated renewal cannot complete. Add an Access bypass policy for `/.well-known/acme-challenge/*` on `studio.cinedise.com` before then. This is the single highest-consequence open item — the portal goes dark if it lapses.';
+      '**Vercel TLS cert for `app.lendshed.example` expires 2026-10-14, and renewal will fail silently.** Cloudflare Access gates the ACME challenge path, so the automated renewal cannot complete. Add an Access bypass policy for `/.well-known/acme-challenge/*` on `app.lendshed.example` before then. This is the single highest-consequence open item — the portal goes dark if it lapses.';
     const expected =
-      'Vercel TLS cert for studio.cinedise.com expires 2026-10-14, and renewal will fail silently. Cloudflare Access gates the ACME challenge path, so the automated renewal cannot complete. Add an Access bypass policy for /.well-known/acme-challenge/* on studio.cinedise.com before then. This is the single highest-consequence open item — the portal goes dark if it lapses.';
+      'Vercel TLS cert for app.lendshed.example expires 2026-10-14, and renewal will fail silently. Cloudflare Access gates the ACME challenge path, so the automated renewal cannot complete. Add an Access bypass policy for /.well-known/acme-challenge/* on app.lendshed.example before then. This is the single highest-consequence open item — the portal goes dark if it lapses.';
     expect(stripMarkdown(raw)).toBe(expected);
   });
 

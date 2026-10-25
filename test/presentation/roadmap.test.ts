@@ -235,7 +235,7 @@ describe('buildRoadmapViewModel', () => {
           phase('01', {
             plans,
             // ROADMAP.md only has the first plan's checkbox ticked, even though both
-            // plans' SUMMARY.md files exist on disk (the exact studio-portal 01-06 case).
+            // plans' SUMMARY.md files exist on disk (the exact 01-06 case).
             formalPlanProgress: { completed: 1, total: 2, sourcePath: '.planning/ROADMAP.md' },
           }),
         ]),

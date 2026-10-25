@@ -204,7 +204,7 @@ describe('RoadmapHandler', () => {
   });
 
   it('parses a description-less checklist line as its own entry with no description, never stealing the next line', () => {
-    // Real GSD shape (studio-portal v1.0 Phase 4): some plan lines carry no
+    // Real GSD shape (another project, v1.0 Phase 4): some plan lines carry no
     // trailing description at all. \s* around the separator previously matched
     // \n, and a bare hyphen counted as a valid separator, so a description-less
     // line's match would backtrack across the newline and swallow the *next*
