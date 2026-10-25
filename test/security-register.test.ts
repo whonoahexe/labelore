@@ -3,6 +3,7 @@
 // unclosed fence, header without a separator, a 1 MB body holding one 200k-character line).
 import { describe, expect, it } from 'vitest';
 import { extractSecurityRegister } from '../src/planning-repo/handlers/security-register.ts';
+import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
 
 const MINI = `# Phase 7 — Security
 
@@ -228,14 +229,23 @@ describe('extractSecurityRegister — degrade', () => {
     expect(r.extras.map((e) => e.heading)).toEqual(['Notes']);
   });
 
-  it('extracts a 1 MB body holding one 200k-character line within 250 ms', () => {
-    const filler = `| T-9-9 | Spoofing | x | high | mitigate | ${'m '.repeat(10)} | closed |\n`.repeat(2000);
-    const body = `# T\n\n${'x'.repeat(200_000)}\n\n## Threat Register\n\n| Threat ID | Category | Component | Severity | Disposition | Mitigation | Status |\n|---|---|---|---|---|---|---|\n${filler}\n## Sign-Off\n\n${'\n'.repeat(400_000)}`;
-    expect(body.length).toBeGreaterThan(600_000);
-    const started = performance.now();
-    const r = extractSecurityRegister(body);
-    const elapsed = performance.now() - started;
-    expect(r.register?.rows.length).toBe(2000);
-    expect(elapsed).toBeLessThan(250);
+  it('stays linear on register rows after one 200k-character line', () => {
+    // The register handler keeps at most 3000 rows, so both sizes stay below that cap and the largest
+    // input must still yield exactly its own rows.
+    const head =
+      '| Threat ID | Category | Component | Severity | Disposition | Mitigation | Status |\n|---|---|---|---|---|---|---|\n';
+    const row = `| T-9-9 | Spoofing | x | high | mitigate | ${'m '.repeat(10)} | closed |\n`;
+    const make = (rows: number): string =>
+      `# T\n\n${'x'.repeat(200_000)}\n\n## Threat Register\n\n${head}${row.repeat(rows)}\n## Sign-Off\n\n- [ ] reviewed\n`;
+    const growth = measureGrowth({
+      make,
+      run: (body) => void extractSecurityRegister(body),
+      startSize: 20,
+      minBaseMs: 0.25,
+      maxSize: 3000,
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
+    const largest = growth.n * 8;
+    expect(extractSecurityRegister(make(largest)).register?.rows).toHaveLength(largest);
   });
 });
