@@ -1,9 +1,7 @@
-// Where the todo corpus lives, for the tests that read real todo files (quick-261023-61k): the three
-// committed fixture projects (copied byte for byte from the sketch's data), the dashboard's synthetic
-// fixture, labelore's own `.planning/` and each sibling project that has a `.planning/todos` folder on
-// this machine. The sibling projects are only ever read; a machine without the checkouts skips the tests
-// that need them (their own `it.runIf(existsSync(...))` gates).
-import { existsSync, readFileSync } from 'node:fs';
+// Where the todo corpus lives, for the tests that read real todo files (quick-261023-61k): the made-up
+// Lendshed project, the dashboard's synthetic fixture, the committed Labelore fixture and labelore's own
+// `.planning/`. Every project here is committed to this repository; nothing is read from the machine.
+import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { FX_ROOT } from './fixture-project.ts';
@@ -17,17 +15,7 @@ export const LABELORE_FIXTURE_ROOT = join(FIXTURES, 'labelore');
 export const SYNTHETIC_ROOT = join(LB_ROOT, 'test/fixtures/dashboard/synthetic');
 
 /** The committed fixture projects and the synthetic one. */
-export const FIXTURE_ROOTS: string[] = [FX_ROOT, DUET_ROOT, PORTAL_ROOT, LABELORE_FIXTURE_ROOT, SYNTHETIC_ROOT];
-
-const SIBLINGS = [
-  join(homedir(), 'Work/Ibis/resoundant'),
-  join(homedir(), 'Work/Cinedise/studio-portal'),
-  join(homedir(), 'Work/Ibis/deid/deid-ui'),
-  join(homedir(), 'Work/Sideby/plan.sideby.me'),
-];
-
-/** The sibling project roots that hold a `.planning/todos` directory. */
-export const TODO_SIBLING_ROOTS: string[] = SIBLINGS.filter((root) => existsSync(join(root, '.planning', 'todos')));
+export const FIXTURE_ROOTS: string[] = [FX_ROOT, LABELORE_FIXTURE_ROOT, SYNTHETIC_ROOT];
 
 export const RESOUNDANT_ROOT = join(homedir(), 'Work/Ibis/resoundant');
 
@@ -40,14 +28,14 @@ export interface KeyedFile {
 /** The eleven sketch todos by the sketch's own keys. */
 export const TODO_KEYS: Record<string, KeyedFile> = {
   dcrop: { root: FX_ROOT, path: '.planning/todos/completed/2026-03-24-add-crop-and-round-member-avatars.md' },
-  dsfx: { root: DUET_ROOT, path: '.planning/todos/completed/2026-10-20-sound-effects.md' },
-  dcall: { root: DUET_ROOT, path: '.planning/todos/completed/2026-10-20-call-debug-logging.md' },
+  dsfx: { root: FX_ROOT, path: '.planning/todos/completed/2026-03-23-checkout-sound-cues.md' },
+  dcall: { root: FX_ROOT, path: '.planning/todos/completed/2026-03-23-scanner-debug-logging.md' },
   sretry: { root: SYNTHETIC_ROOT, path: '.planning/todos/pending/2026-10-12-retry-queue-dead-letter.md' },
   srec: { root: SYNTHETIC_ROOT, path: '.planning/todos/pending/2026-10-15-reconcile-report-pdf.md' },
   star: { root: SYNTHETIC_ROOT, path: '.planning/todos/pending/004-tariff-note-tooltips.md' },
   sport: { root: SYNTHETIC_ROOT, path: '.planning/todos/completed/2026-10-02-port-timezone-table.md' },
-  pcheck: { root: PORTAL_ROOT, path: '.planning/todos/pending/pre-milestone-hardware-and-tier-cleanup.md' },
-  pdev: { root: PORTAL_ROOT, path: '.planning/todos/completed/portal-detect-vanished-tier-device.md' },
+  pcheck: { root: FX_ROOT, path: '.planning/todos/pending/pre-milestone-sensor-and-shed-cleanup.md' },
+  pdev: { root: FX_ROOT, path: '.planning/todos/completed/kiosk-detect-vanished-shed-sensor.md' },
   lfig: { root: LABELORE_FIXTURE_ROOT, path: '.planning/todos/pending/lifted-figures-everywhere.md' },
   ldrift: { root: LABELORE_FIXTURE_ROOT, path: '.planning/todos/done/artifact-chrome-drift.md' },
 };
@@ -56,31 +44,15 @@ export const TODO_KEYS: Record<string, KeyedFile> = {
 export const NOTE_KEYS: Record<string, KeyedFile> = {
   dcrop: { root: FX_ROOT, path: '.planning/notes/2026-03-24-crop-tool-photos-and-member-avatars.md' },
   dround: { root: FX_ROOT, path: '.planning/notes/2026-03-24-round-member-avatars.md' },
-  dsfx: { root: DUET_ROOT, path: '.planning/notes/2026-10-20-sound-effects.md' },
-  dcall: { root: DUET_ROOT, path: '.planning/notes/2026-10-20-call-debug-logging-webrtc-turn.md' },
-  dback: { root: DUET_ROOT, path: '.planning/notes/2026-10-20-back-button-closes-app.md' },
-  pcap: { root: PORTAL_ROOT, path: '.planning/notes/2026-10-21-raise-single-file-download-cap.md' },
-  pbrief: { root: PORTAL_ROOT, path: '.planning/notes/2026-10-23-studio-media-workflow-milestone-brief.md' },
+  dsfx: { root: FX_ROOT, path: '.planning/notes/2026-03-23-checkout-sound-cues.md' },
+  dcall: { root: FX_ROOT, path: '.planning/notes/2026-03-23-scanner-debug-logging-for-checkout-kiosk.md' },
+  dback: { root: FX_ROOT, path: '.planning/notes/2026-03-23-back-button-closes-the-kiosk.md' },
+  pcap: { root: FX_ROOT, path: '.planning/notes/2026-03-24-raise-single-export-size-cap.md' },
+  pbrief: { root: FX_ROOT, path: '.planning/notes/2026-03-26-steward-desk-milestone-brief.md' },
   star: { root: SYNTHETIC_ROOT, path: '.planning/notes/2026-10-16-tariff-note-tooltips.md' },
   sundo: { root: SYNTHETIC_ROOT, path: '.planning/notes/2026-10-08-brokers-want-undo.md' },
   lperkind: { root: LABELORE_FIXTURE_ROOT, path: '.planning/notes/per-kind-artifact-rendering.md' },
 };
-
-/** The sketch's data.js payload (`window.DATA = {…};`) parsed as JSON. */
-function sketchData(file: string): Record<string, { raw: string }> {
-  const text = readFileSync(join(LB_ROOT, '.planning/sketches', file), 'utf8');
-  return JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1)) as Record<string, { raw: string }>;
-}
-
-/** The todo file as the sketch read it. */
-export function sketchTodoRaw(key: string): string {
-  return sketchData('027-todo-page/data.js')[key].raw;
-}
-
-/** The note file as the sketch read it. */
-export function sketchNoteRaw(key: string): string {
-  return sketchData('028-note-page/data.js')[key].raw;
-}
 
 export function readKeyed(file: KeyedFile): string {
   return readFileSync(join(file.root, file.path), 'utf8');

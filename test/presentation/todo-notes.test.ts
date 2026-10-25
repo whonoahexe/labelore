@@ -1,12 +1,14 @@
 // quick-261023-61k: the one todo<->note relation and the TODO page's server join. The relation facts come
-// from the sketch's own data (what each todo's notes are, and which todos each note became), checked in
+// from the fixture files (what each todo's notes are, and which todos each note became), checked in
 // both directions over the committed fixture projects; precedence, existence and junk cases run on small
-// in-memory projects; the 500 x 500 case checks the build stays fast.
+// in-memory projects; the 500 x 500 case checks the build grows linearly.
 import { describe, expect, it } from 'vitest';
 import { buildTodoContext } from '../../src/presentation/todo-context.ts';
 import { buildTodoNoteIndex, collapseSpace, isNoteArtifactPath, isTodoArtifactPath } from '../../src/presentation/todo-notes.ts';
 import type { ProjectPresentation } from '../../src/server/project-presentation.ts';
-import { DUET_ROOT, LABELORE_FIXTURE_ROOT, NOTE_KEYS, PORTAL_ROOT, SYNTHETIC_ROOT, TODO_KEYS, loadFiles, loadProject, planningFiles } from '../helpers/todo-corpus.ts';
+import { GROWTH_LIMIT, measureGrowth } from '../helpers/growth.ts';
+import { FX_ROOT } from '../helpers/fixture-project.ts';
+import { LABELORE_FIXTURE_ROOT, NOTE_KEYS, SYNTHETIC_ROOT, TODO_KEYS, loadFiles, loadProject, planningFiles } from '../helpers/todo-corpus.ts';
 
 const T = (key: string): string => TODO_KEYS[key].path;
 const N = (key: string): string => NOTE_KEYS[key].path;
@@ -31,8 +33,8 @@ describe('path predicates', () => {
 });
 
 describe('the relation over the fixture projects', () => {
-  it('duet: each todo comes from the notes it lists; the back-button note became nothing', async () => {
-    const { presentation, bodyOf } = await loadProject(DUET_ROOT);
+  it('lendshed: each todo comes from the notes it lists; the back-button note became nothing', async () => {
+    const { presentation, bodyOf } = await loadProject(FX_ROOT);
     const index = buildTodoNoteIndex(presentation, bodyOf);
     expect(index.notesOf(T('dcrop'))).toEqual([
       { notePath: N('dcrop'), via: 'listed', exists: true },
@@ -45,8 +47,8 @@ describe('the relation over the fixture projects', () => {
     expect(index.todosOf(N('dback'))).toEqual([]);
   });
 
-  it('portal: two todos mention the brief, completed before pending; the download-cap note became nothing', async () => {
-    const { presentation, bodyOf } = await loadProject(PORTAL_ROOT);
+  it('lendshed: two todos mention the brief, completed before pending; the export-cap note became nothing', async () => {
+    const { presentation, bodyOf } = await loadProject(FX_ROOT);
     const index = buildTodoNoteIndex(presentation, bodyOf);
     expect(index.notesOf(T('pcheck'))).toEqual([{ notePath: N('pbrief'), via: 'mentioned', exists: true }]);
     expect(index.notesOf(T('pdev'))).toEqual([{ notePath: N('pbrief'), via: 'mentioned', exists: true }]);
@@ -75,10 +77,10 @@ describe('the relation over the fixture projects', () => {
   });
 
   it('answers nothing for a path that is neither a todo nor a note', async () => {
-    const { presentation, bodyOf } = await loadProject(DUET_ROOT);
+    const { presentation, bodyOf } = await loadProject(FX_ROOT);
     const index = buildTodoNoteIndex(presentation, bodyOf);
     expect(index.notesOf('.planning/STATE.md')).toEqual([]);
-    expect(index.todosOf('.planning/todos/completed/2026-10-20-sound-effects.md')).toEqual([]);
+    expect(index.todosOf('.planning/todos/completed/2026-03-23-checkout-sound-cues.md')).toEqual([]);
   });
 });
 
@@ -189,57 +191,63 @@ describe('junk', () => {
     }
   });
 
-  it('builds 500 todos against 500 notes in under 250 ms', () => {
-    const artifacts: unknown[] = [];
-    const bodies = new Map<string, string>();
-    for (let i = 0; i < 500; i += 1) {
-      const note = `.planning/notes/n${String(i).padStart(3, '0')}.md`;
-      bodies.set(note, `Note number ${i} says something.\n\nIt has a second paragraph.`);
-      artifacts.push({ path: note, kind: 'unknown', structured: {} });
-    }
-    for (let i = 0; i < 500; i += 1) {
-      const pad = (n: number): string => String((n + 500) % 500).padStart(3, '0');
-      artifacts.push({
-        path: `.planning/todos/pending/t${String(i).padStart(3, '0')}.md`,
-        kind: 'todo',
-        structured: {
-          todo: {
-            noteRefs: {
-              listed: [`.planning/notes/n${pad(i)}.md`, `.planning/notes/n${pad(i + 1)}.md`, `.planning/notes/n${pad(i + 2)}.md`],
-              wiki: [`n${pad(i + 3)}`],
-              mentioned: [],
-              promotedText: `Note number ${(i + 7) % 500} says something.   It has a second paragraph.`,
+  it('builds todos against notes in time that grows linearly with their count', () => {
+    const growth = measureGrowth({
+      startSize: 64,
+      maxSize: 1 << 14,
+      make: (count) => {
+        const artifacts: unknown[] = [];
+        const bodies = new Map<string, string>();
+        const pad = (n: number): string => String((n + count) % count).padStart(6, '0');
+        for (let i = 0; i < count; i += 1) {
+          const note = `.planning/notes/n${pad(i)}.md`;
+          bodies.set(note, `Note number ${i} says something.\n\nIt has a second paragraph.`);
+          artifacts.push({ path: note, kind: 'unknown', structured: {} });
+        }
+        for (let i = 0; i < count; i += 1) {
+          artifacts.push({
+            path: `.planning/todos/pending/t${pad(i)}.md`,
+            kind: 'todo',
+            structured: {
+              todo: {
+                noteRefs: {
+                  listed: [`.planning/notes/n${pad(i)}.md`, `.planning/notes/n${pad(i + 1)}.md`, `.planning/notes/n${pad(i + 2)}.md`],
+                  wiki: [`n${pad(i + 3)}`],
+                  mentioned: [],
+                  promotedText: `Note number ${(i + 7) % count} says something.   It has a second paragraph.`,
+                },
+              },
             },
-          },
-        },
-      });
-    }
-    const presentation = { artifacts } as unknown as ProjectPresentation;
-    const started = performance.now();
-    const index = buildTodoNoteIndex(presentation, (path) => bodies.get(path) ?? null);
-    const first = index.notesOf('.planning/todos/pending/t000.md');
-    const reverse = index.todosOf('.planning/notes/n007.md');
-    const elapsed = performance.now() - started;
-    expect(first.map((link) => link.via)).toEqual(['listed', 'listed', 'listed', 'wiki', 'promoted']);
-    expect(reverse.map((link) => link.via)).toContain('promoted');
-    expect(elapsed).toBeLessThan(250);
+          });
+        }
+        return { presentation: { artifacts } as unknown as ProjectPresentation, bodies };
+      },
+      run: ({ presentation, bodies }) => {
+        const index = buildTodoNoteIndex(presentation, (path) => bodies.get(path) ?? null);
+        const first = index.notesOf('.planning/todos/pending/t000000.md');
+        const reverse = index.todosOf('.planning/notes/n000007.md');
+        if (first.map((link) => link.via).join() !== 'listed,listed,listed,wiki,promoted') throw new Error('the first todo lost its note links');
+        if (!reverse.map((link) => link.via).includes('promoted')) throw new Error('the reverse lookup lost its promoted link');
+      },
+    });
+    expect(growth.ratio, `buildTodoNoteIndex: ${growth.t1.toFixed(2)}ms at ${growth.n} todos, ${growth.t2.toFixed(2)}ms at 8x`).toBeLessThan(GROWTH_LIMIT);
   });
 });
 
 describe('buildTodoContext', () => {
   it('carries each source note in listed order with its page url, date, text and promoted flag', async () => {
-    const { presentation, registry, bodyOf } = await loadProject(DUET_ROOT);
+    const { presentation, registry, bodyOf } = await loadProject(FX_ROOT);
     const context = buildTodoContext(presentation, registry, bodyOf, T('dcrop'));
     expect(context.notes.map((note) => note.path)).toEqual([N('dcrop'), N('dround')]);
     for (const note of context.notes) {
       const key = presentation.artifacts.find((artifact) => artifact.path === note.path)?.key;
       expect(note.url).toBe(key);
-      expect(note).toMatchObject({ via: 'listed', exists: true, date: '2026-10-21 15:58', promoted: true, title: null, cut: false });
+      expect(note).toMatchObject({ via: 'listed', exists: true, date: '2026-03-24 09:20', promoted: true, title: null, cut: false });
       expect(note.text).toBe((bodyOf(note.path) ?? '').trim());
       expect(note.text).not.toBe('');
     }
-    expect(context.notes[0].text).toMatch(/^Crop for images before sending/);
-    expect(context.closedBy).toEqual({ id: '261022-m25', label: 'quick 261022-m25', url: null });
+    expect(context.notes[0].text).toMatch(/^Crop tool photos before they are posted/);
+    expect(context.closedBy).toEqual({ id: '260326-m3d', label: 'quick 260326-m3d', url: null });
   });
 
   it("gives the chrome-drift todo its note's title and way, and its quick task a link only when the project has it", async () => {
@@ -289,7 +297,7 @@ describe('buildTodoContext', () => {
   });
 
   it('gives an empty context for a non-todo path and for junk, without throwing', async () => {
-    const { presentation, registry, bodyOf } = await loadProject(DUET_ROOT);
+    const { presentation, registry, bodyOf } = await loadProject(FX_ROOT);
     const empty = { notes: [], closedBy: null };
     expect(buildTodoContext(presentation, registry, bodyOf, N('dcrop'))).toEqual(empty);
     expect(buildTodoContext(presentation, registry, bodyOf, '.planning/todos/nope.md')).toEqual(empty);
