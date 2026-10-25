@@ -5,16 +5,16 @@ milestone_name: Wayfinding
 current_phase: 06
 current_phase_name: Trustworthy Tests and Security Baseline
 status: executing
-stopped_at: Completed 06-18-PLAN.md
-last_updated: "2026-10-25T22:36:05.910Z"
+stopped_at: Completed 06-19-PLAN.md
+last_updated: "2026-10-25T22:41:14.620Z"
 last_activity: 2026-10-26
 last_activity_desc: Phase 06 execution started
-state_head: daa42beabf5a3b816b348d47bfec62ca40457aa9
+state_head: 8a6088223f1e7b46a37ca225f8235a2b80e57fee
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 22
-  completed_plans: 19
+  completed_plans: 20
   percent: 0
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-10-25)
 ## Current Position
 
 Phase: 06 (Trustworthy Tests and Security Baseline) — EXECUTING
-Plan: 17 of 22
+Plan: 18 of 22
 Status: Ready to execute
 Last activity: 2026-10-26 — Phase 06 execution started
 
@@ -100,6 +100,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06 P10 | 20 min | 2 tasks | 9 files |
 | Phase 06 P17 | 2 min | 2 tasks | 16 files |
 | Phase 06 P18 | 40 min | 2 tasks | 20 files |
+| Phase 06 P19 | 20 min | 2 tasks | 30 files |
 
 ## Accumulated Context
 
@@ -143,6 +144,7 @@ milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) a
 - [Phase 06]: 06-10: Labelore summary walker skips research and *-research folders (D-18); minimums re-pinned to 110 summaries and 154 resolved IDs
 - [Phase 06]: 06-17: todo browser spec placements built from planningFiles of Lendshed, Labelore fixture and synthetic, plus Labelore 001, its note and the chrome-drift quick SUMMARY; every source required
 - [Phase 06]: 06-18: note corpus reads only Lendshed, synthetic and Labelore notes; per-root minimum counts replace the machine-wide walk; note spec placements built from in-repo notes/todos with every source required
+- [Phase 06]: 06-19: diagram fixtures use same-length made-up words (tiers front/depot/toolbox/annex, tool shedcp); p04 keeps /mnt/shared so its step node stays external
 
 ### Pending Todos
 
@@ -185,8 +187,8 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-10-25T22:36:05.868Z
-Stopped at: Completed 06-18-PLAN.md
+Last session: 2026-10-25T22:41:14.577Z
+Stopped at: Completed 06-19-PLAN.md
 Resume file: None
 
 ## Operator Next Steps
