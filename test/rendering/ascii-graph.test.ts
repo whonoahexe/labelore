@@ -5,6 +5,9 @@
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import { liftDiagram } from '../../src/rendering/ascii-lift.ts';
+import type { LiftedFigure } from '../../src/rendering/ascii-lift.ts';
+import { GRID_MAX_CELLS, GRID_SHAPES, gridOfCells } from '../helpers/diagram-grids.ts';
+import { GROWTH_LIMIT, measureGrowth } from '../helpers/growth.ts';
 import { buildDiagramGraph, MAX_GRAPH_NODES } from '../../src/rendering/ascii-graph.ts';
 import type { DiagramGraph } from '../../src/rendering/ascii-graph.ts';
 
@@ -220,20 +223,32 @@ describe('buildDiagramGraph — the thin rule (K-fallback)', () => {
 });
 
 describe('buildDiagramGraph — cost bounds (T-mp6-01)', () => {
-  const grids: [string, string][] = [
-    ['┌─ grid', Array.from({ length: 250 }, () => '┌─'.repeat(150)).join('\n')],
-    ['┌┐ over ││ rows', Array.from({ length: 250 }, (_, i) => (i % 2 === 0 ? '┌┐'.repeat(150) : '││'.repeat(150))).join('\n')],
-    ['"ab  " runs', Array.from({ length: 250 }, () => 'ab  '.repeat(75)).join('\n')],
-    ['open-left tops', Array.from({ length: 250 }, (_, i) => (i % 2 === 0 ? '┌─┐ '.repeat(75) : '  │ '.repeat(75))).join('\n')],
-  ];
-  for (const [name, grid] of grids) {
-    it(`${name}: a lifted figure builds its graph in under 250 ms`, () => {
-      const figure = liftDiagram(grid);
+  // The graph builder returns an empty graph before any scan once a figure holds more than
+  // MAX_GRAPH_NODES nodes, so every grid here lifts to a figure with fewer cards than that
+  // cap, and make() checks it: a figure past the cap would time the rejection, not the scan.
+  for (const shape of GRID_SHAPES) {
+    it(`${shape.name}: building the graph grows no faster than linearly with the grid area`, () => {
+      const { ratio } = measureGrowth<LiftedFigure>({
+        startSize: 1000,
+        maxSize: GRID_MAX_CELLS,
+        floorMs: 0,
+        make: (cells) => {
+          const figure = liftDiagram(gridOfCells(shape, cells));
+          if (figure === null) throw new Error(`${shape.name}: ${cells} cells did not lift`);
+          expect(figure.cards.length).toBeLessThan(MAX_GRAPH_NODES);
+          return figure;
+        },
+        run: (figure) => {
+          buildDiagramGraph(figure);
+        },
+      });
+      expect(ratio).toBeLessThan(GROWTH_LIMIT);
+    });
+
+    it(`${shape.name}: the largest grid still lifts and comes back thin`, () => {
+      const figure = liftDiagram(gridOfCells(shape, GRID_MAX_CELLS));
       if (figure === null) return;
-      const started = performance.now();
-      const graph = buildDiagramGraph(figure);
-      expect(performance.now() - started).toBeLessThan(250);
-      expect(graph.thin).toBe(true);
+      expect(buildDiagramGraph(figure).thin).toBe(true);
     });
   }
 });
