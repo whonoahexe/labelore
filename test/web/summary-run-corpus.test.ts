@@ -1,10 +1,9 @@
-// quick-261006-iz7 (QIZ7-08): real-corpus guards over every SUMMARY.md in this repo's `.planning/`
-// and in `~/studio-portal/.planning/` (a missing studio-portal checkout skips its files), built
-// through the real repository load so quick, archived and archived-quick summaries reach the
-// handler with the refs discovery gives them. Every summary must carry `structured.summary` and
-// compose to a non-null page, and the five sketch docs plus six harder ones match the values
-// pinned below. The pinned values were confirmed with grep / awk over the source files and with the
-// sketch's own data.js — never copied from the composer's own output.
+// quick-261006-iz7 (QIZ7-08): real-corpus guards over every SUMMARY.md in this repo's `.planning/` and in
+// the made-up Lendshed project (test/fixtures/lendshed), built through the real repository load so quick,
+// archived and archived-quick summaries reach the handler with the refs discovery gives them. Every
+// summary must carry `structured.summary` and compose to a non-null page, and the sketch docs plus the
+// harder ones match the values pinned below. The pinned values were confirmed with grep / awk over the
+// source files and with the sketch's own data.js — never copied from the composer's own output.
 import { existsSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -14,12 +13,10 @@ import { toProjectPresentation } from '../../src/server/project-presentation.ts'
 import type { ProjectPresentation } from '../../src/server/project-presentation.ts';
 import { composeSummaryRun, requirementPreviews } from '../../src/web/views/summary-run.ts';
 import type { ComposedSummaryRun } from '../../src/web/views/summary-run.ts';
-import { SP_PLANNING, STUDIO_PORTAL_ROOT } from '../helpers/studio-portal.ts';
-import { FX_ROOT } from '../helpers/fixture-project.ts';
+import { FX_ROOT, fxPath } from '../helpers/fixture-project.ts';
 
 const LB_ROOT = new URL('../..', import.meta.url).pathname.replace(/\/$/, '');
 const LB_PLANNING = join(LB_ROOT, '.planning');
-const hasSp = existsSync(SP_PLANNING);
 
 /** A folder holding research, not a summary run: `research`, or an archived `v1.0-research` style folder. */
 function isResearchFolder(name: string): boolean {
@@ -46,7 +43,6 @@ function walk(root: string): string[] {
 }
 
 let lb: ProjectPresentation;
-let sp: ProjectPresentation | null = null;
 let fx: ProjectPresentation;
 
 beforeAll(async () => {
@@ -56,7 +52,6 @@ beforeAll(async () => {
   };
   lb = await load(LB_ROOT);
   fx = await load(FX_ROOT);
-  if (hasSp) sp = await load(STUDIO_PORTAL_ROOT);
 }, 60000);
 
 function artifactAt(presentation: ProjectPresentation, suffix: string): ProjectPresentation['artifacts'][number] {
@@ -95,9 +90,16 @@ describe('SUMMARY corpus — every file extracts and composes', () => {
     }
   });
 
-  it.runIf(hasSp)('studio-portal: structured.summary on every file and a non-null page', () => {
-    const files = (sp as ProjectPresentation).artifacts.filter((x) => isSummary(x.path));
-    expect(files.length).toBeGreaterThanOrEqual(81);
+  it('finds the same files on disk and in the presentation (Lendshed)', () => {
+    const onDisk = walk(join(FX_ROOT, '.planning')).map((p) => relative(FX_ROOT, p)).sort();
+    const loaded = fx.artifacts.filter((a) => isSummary(a.path)).map((a) => a.path).sort();
+    expect(loaded).toEqual(onDisk);
+    expect(loaded.length).toBeGreaterThanOrEqual(6);
+  });
+
+  it('Lendshed: structured.summary on every file and a non-null page', () => {
+    const files = fx.artifacts.filter((x) => isSummary(x.path));
+    expect(files.length).toBeGreaterThanOrEqual(6);
     for (const a of files) {
       expect(a.structured.summary, a.path).toBeDefined();
       expect(() => compose(a), a.path).not.toThrow();
@@ -119,16 +121,32 @@ describe('SUMMARY corpus — every file extracts and composes', () => {
     expect(found).toBeGreaterThanOrEqual(154);
   });
 
-  it.runIf(hasSp)('studio-portal: 158 of 166 requirement IDs resolve to a REQUIREMENTS item', () => {
+  // Counted by hand from the frontmatter of exactly these six files, so a summary another plan adds
+  // cannot move it (README R6). Found against the Lendshed REQUIREMENTS files:
+  //   01-01  SIGN-01, SIGN-05, SIGN-06                  3 of 3
+  //   04-06  EXPT-02, EXPT-04, EXPT-06 found, EXPT-09 absent   3 of 4
+  //   04-07  EXPT-05                                    1 of 1
+  //   01-06 (malformed YAML), 02-12 (no frontmatter) and the quick t8m cite none.
+  it('Lendshed: 7 of 8 requirement IDs resolve to a REQUIREMENTS item', () => {
+    const paths = [
+      'phases/01-member-sign-in-sessions/01-01-SUMMARY.md',
+      'phases/01-member-sign-in-sessions/01-06-SUMMARY.md',
+      'phases/04-bulk-loan-export/04-06-SUMMARY.md',
+      'phases/04-bulk-loan-export/04-07-SUMMARY.md',
+      'milestones/v1.0-phases/02-shed-inventory-health/02-12-SUMMARY.md',
+      'quick/260402-t8m-restyle-the-top-bar-to-match-the-brand/260402-t8m-SUMMARY.md',
+    ];
     let found = 0;
     let total = 0;
-    for (const a of (sp as ProjectPresentation).artifacts.filter((x) => isSummary(x.path))) {
+    for (const path of paths) {
+      fxPath(path);
+      const a = artifactAt(fx, path);
       const model = compose(a);
-      const previews = requirementPreviews(sp, a.path, model.modals.requirements, model.quick);
+      const previews = requirementPreviews(fx, a.path, model.modals.requirements, model.quick);
       total += Object.keys(previews).length;
       found += Object.values(previews).filter((p) => p.found).length;
     }
-    expect([found, total]).toEqual([158, 166]);
+    expect([found, total]).toEqual([7, 8]);
   });
 });
 
@@ -221,12 +239,12 @@ describe('sketch docs — Lendshed', () => {
   });
 });
 
-describe.runIf(hasSp)('sketch docs — studio-portal', () => {
+describe('sketch docs — Lendshed 04-06', () => {
   it('04-06: awaiting a checkpoint', () => {
-    const a = artifactAt(sp as ProjectPresentation, 'phases/04-bulk-archive-downloads/04-06-SUMMARY.md');
+    const a = artifactAt(fx, 'phases/04-bulk-loan-export/04-06-SUMMARY.md');
     const m = compose(a);
-    expect(m.head.eyebrow).toBe('Summary of 04-06 · Phase 4 · Bulk archive downloads');
-    expect(m.head.title).toBe('Archive Job Presentation, Auto-Collection & Omission Disclosure');
+    expect(m.head.eyebrow).toBe('Summary of 04-06 · Phase 4 · Bulk loan export');
+    expect(m.head.title).toBe('Export Row Presentation, Auto-Collection & Skipped-Loan Disclosure');
     expect(m.head.status).toEqual({ label: 'Awaiting checkpoint', tone: 'in-flight' });
     expect([m.head.completed, m.head.duration, m.head.started, m.head.type]).toEqual([null, null, null, 'Frontend']);
     expect(m.triggers).toEqual({ tasks: { label: 'Tasks', count: 2 }, files: { count: 11 }, requirements: { done: 0, pending: 4 } });
@@ -236,10 +254,10 @@ describe.runIf(hasSp)('sketch docs — studio-portal', () => {
     expect(m.decisions.items).toHaveLength(6);
     expect(m.patterns?.items).toHaveLength(3);
     expect(m.waits.map((s) => s.title)).toEqual(['Task 3 — Pending Human Verification']);
-    const previews = requirementPreviews(sp, a.path, m.modals.requirements, false);
-    expect(previews['DL-04']).toMatchObject({ found: true, status: 'Pending', phase: 'Phase 4 — Bulk Archive Downloads' });
+    const previews = requirementPreviews(fx, a.path, m.modals.requirements, false);
+    expect(previews['EXPT-02']).toMatchObject({ found: true, status: 'Pending', phase: 'Phase 4' });
+    expect(previews['EXPT-09']).toMatchObject({ found: false });
   });
-
 });
 
 describe('harder summaries', () => {
@@ -257,31 +275,31 @@ describe('harder summaries', () => {
     expect(m.head.title).toBe('UI-REVIEW scorecard (sketch 018 B)');
   });
 
-  it.runIf(hasSp)('sp v1.0 04-07: seven Rule deviations', () => {
-    const m = compose(artifactAt(sp as ProjectPresentation, 'v1.0-phases/04-tier-to-tier-transfers/04-07-SUMMARY.md'));
+  it('Lendshed 04-07: seven Rule deviations', () => {
+    const m = compose(artifactAt(fx, 'phases/04-bulk-loan-export/04-07-SUMMARY.md'));
     expect(m.run.cards).toHaveLength(7);
   });
 
-  it.runIf(hasSp)('sp 04-07: awaiting a checkpoint with a pending requirement', () => {
-    const m = compose(artifactAt(sp as ProjectPresentation, 'phases/04-bulk-archive-downloads/04-07-SUMMARY.md'));
+  it('Lendshed 04-07: awaiting a checkpoint with a pending requirement', () => {
+    const m = compose(artifactAt(fx, 'phases/04-bulk-loan-export/04-07-SUMMARY.md'));
     expect(m.head.status.tone).toBe('in-flight');
-    expect(m.modals.requirements).toEqual([{ id: 'DL-06', state: 'pending' }]);
+    expect(m.modals.requirements).toEqual([{ id: 'EXPT-05', state: 'pending' }]);
     expect(m.triggers.requirements).toEqual({ done: 0, pending: 1 });
   });
 
-  it.runIf(hasSp)('sp 01-06 (malformed YAML): composes from the body with a real title and the Warning in the artifact', () => {
-    const a = artifactAt(sp as ProjectPresentation, 'phases/01-portal-owned-identity-sessions/01-06-SUMMARY.md');
+  it('Lendshed 01-06 (malformed YAML): composes from the body with a real title and the Warning in the artifact', () => {
+    const a = artifactAt(fx, 'phases/01-member-sign-in-sessions/01-06-SUMMARY.md');
     expect(a.warnings.length).toBeGreaterThan(0);
     const m = compose(a);
-    expect(m.head.title).toBe('Change-password, NavShell identity, Access cutover');
+    expect(m.head.title).toBe('Set-password screen, top bar identity, passcode prompt removal');
     expect(m.head.status).toEqual({ label: '—', tone: 'quiet' });
     expect(m.triggers.tasks.count).toBe(3);
   });
 
-  it.runIf(hasSp)('sp v1.0 02-12 (no frontmatter): status and tasks come from the preamble', () => {
-    const m = compose(artifactAt(sp as ProjectPresentation, 'v1.0-phases/02-storage-health-status/02-12-SUMMARY.md'));
+  it('Lendshed v1.0 02-12 (no frontmatter): status and tasks come from the preamble', () => {
+    const m = compose(artifactAt(fx, 'v1.0-phases/02-shed-inventory-health/02-12-SUMMARY.md'));
     expect(m.head.status).toEqual({ label: 'Complete', tone: 'complete' });
-    expect(m.modals.tasks.rows.map((t) => t.hashes[0])).toEqual(['b711c0c', 'b7ae802']);
-    expect(m.head.eyebrow).toBe('Summary · Phase 2 · Storage health status');
+    expect(m.modals.tasks.rows.map((t) => t.hashes[0])).toEqual(['e5a40b8', '91cd7f3']);
+    expect(m.head.eyebrow).toBe('Summary · Phase 2 · Shed inventory health');
   });
 });

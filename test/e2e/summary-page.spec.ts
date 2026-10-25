@@ -1,20 +1,13 @@
 // The SUMMARY page e2e (quick-261006-iz7, sketch 020 winner D): real corpus files, never a fixture
 // mock. Fixtures resolve by path against the live `/api/presentation` payload (the uat-page.spec.ts
 // idiom) so an archival/rename fails loudly instead of silently skipping. The labelore tests run on
-// port 4199; the studio-portal tests run against the read-only server on port 4198
-// (playwright.config.ts, present only when ~/studio-portal/.planning exists) and skip themselves
-// otherwise. This spec asserts the foundation sweep's key invariants itself (one h1, an eyebrow,
-// squared corners, one chip signature, no 420px overflow), since the full sweep is too slow to run
-// per change. Run once post-merge: npx playwright test test/e2e/summary-page.spec.ts -g "summary page"
-import { existsSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { join } from 'node:path';
+// port 4199; the Lendshed tests run against the in-repo made-up project on port 4198
+// (playwright.config.ts, always started). This spec asserts the foundation sweep's key invariants
+// itself (one h1, an eyebrow, squared corners, one chip signature, no 420px overflow), since the full
+// sweep is too slow to run per change. Run once post-merge: npx playwright test test/e2e/summary-page.spec.ts -g "summary page"
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
-
-const STUDIO_PORTAL_AVAILABLE = existsSync(join(homedir(), 'studio-portal', '.planning'));
-const SP_BASE_URL = 'http://127.0.0.1:4198';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
@@ -170,10 +163,9 @@ test.describe('Summary page', () => {
     await expect(page.locator('.reference-preview')).toContainText('.planning/REQUIREMENTS.md');
   });
 
-  test('SP 04-06 summary page', async ({ page }) => {
-    test.skip(!STUDIO_PORTAL_AVAILABLE, 'studio-portal checkout not present');
-    const url = await resolveFixtureUrl(SP_BASE_URL, 'phases/04-bulk-archive-downloads/04-06-SUMMARY.md');
-    await openPage(page, SP_BASE_URL, url, 'light');
+  test('FX 04-06 summary page', async ({ page }) => {
+    const url = await resolveFixtureUrl(FIXTURE_BASE_URL, 'phases/04-bulk-loan-export/04-06-SUMMARY.md');
+    await openPage(page, FIXTURE_BASE_URL, url, 'light');
 
     await expect(page.locator('.view-summary-metrics')).toContainText('Awaiting checkpoint');
     await expect(page.locator('.view-summary-outcome')).toHaveCount(0);

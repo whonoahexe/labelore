@@ -3,12 +3,11 @@
 // lineage lookups, and the static markup of the view (modal bodies and the preview card are
 // rendered directly — Base UI portals draw nothing in static markup). The narrow e2e spec covers
 // the page end to end.
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
-import { SP_PLANNING } from '../helpers/studio-portal.ts';
 import { fxPath } from '../helpers/fixture-project.ts';
 import { buildArtifactUrl, buildPhaseUrl } from '../../src/presentation/routes.ts';
 import { SummaryHandler } from '../../src/planning-repo/handlers/summary.ts';
@@ -35,9 +34,8 @@ import type { ViewInput } from '../../src/web/views/manifest.ts';
 const LB = '.planning';
 const P0501 = `${LB}/milestones/v1.1-phases/05-per-type-document-views/05-01-SUMMARY.md`;
 const P3US = `${LB}/milestones/v2.0-quick/260922-3us-build-sketch-004-b3-folded-chapters-docu/260922-3us-SUMMARY.md`;
-const SP0406 = `${SP_PLANNING}/phases/04-bulk-archive-downloads/04-06-SUMMARY.md`;
+const FX0406 = fxPath('phases/04-bulk-loan-export/04-06-SUMMARY.md');
 const FX0101 = fxPath('phases/01-member-sign-in-sessions/01-01-SUMMARY.md');
-const hasSp = existsSync(SP_PLANNING);
 
 function inputOf(
   file: URL | string,
@@ -522,20 +520,9 @@ describe('Lendshed summaries through the real handler', () => {
     expect(html).toContain('New dependencies · 5');
     expect(html).toContain('<b>5</b> things shipped');
   });
-});
 
-describe.runIf(hasSp)('studio-portal summaries through the real handler', () => {
-  function sp(path: string, rel: string, slug: string, number: string): ComposedSummaryRun {
-    const input = inputOf(path, {
-      path: `.planning/phases/${rel}`,
-      location: 'phase',
-      phaseIdentity: { milestoneVersion: null, number, projectCode: null, slug },
-    });
-    return composeSummaryRun(input) as ComposedSummaryRun;
-  }
-
-  it('0406: awaiting a checkpoint, no outcome, +4 pending, a wait stop and Also in document order', () => {
-    const model = sp(SP0406, '04-bulk-archive-downloads/04-06-SUMMARY.md', 'bulk-archive-downloads', '04');
+  it('04-06: awaiting a checkpoint, no outcome, +4 pending, a wait stop and Also in document order', () => {
+    const model = fx(FX0406, '04-bulk-loan-export/04-06-SUMMARY.md', 'bulk-loan-export', '04');
     expect(model.head.status).toEqual({ label: 'Awaiting checkpoint', tone: 'in-flight' });
     expect(model.head.completed).toBeNull();
     expect(model.head.duration).toBeNull();
@@ -546,19 +533,18 @@ describe.runIf(hasSp)('studio-portal summaries through the real handler', () => 
     expect(model.run.stops.find((s) => s.kind === 'task' && s.n === 1)?.deviations).toHaveLength(1);
     expect(model.run.stops.find((s) => s.kind === 'task' && s.n === 2)?.deviations).toHaveLength(1);
     expect(model.run.stops[model.run.stops.length - 1].label).toBe('Not completed yet');
-    expect(model.sourceOnly.map((s) => s.label)).toEqual(expect.arrayContaining(['What Was Built', 'Verification', 'Flagged Conflict — D-04 vs. D-14/D-16 — RESOLVED (E1, 2026-08-25)']));
+    expect(model.sourceOnly.map((s) => s.label)).toEqual(expect.arrayContaining(['What Was Built', 'Verification', 'Flagged Conflict — D-03 vs. D-09 — RESOLVED (E1, 2026-04-15)']));
     expect(model.waits.map((s) => s.title)).toEqual(['Task 3 — Pending Human Verification']);
     expect(model.run.extras.map((e) => e.title)).toHaveLength(2);
     expect(model.lineage?.requires).toHaveLength(2);
     expect(model.lineage?.affects).toHaveLength(2);
     expect(model.next).toBeNull();
-    const html = view(model, '.planning/phases/04-bulk-archive-downloads/04-06-SUMMARY.md');
+    const html = view(model, '.planning/phases/04-bulk-loan-export/04-06-SUMMARY.md');
     expect(html).toContain('+4 pending');
     expect(html).toContain('Not completed yet');
     expect(html).not.toContain('id="summary-outcome"');
     expect(html).toContain('Waits on a human');
   });
-
 });
 
 describe('3us (quick, labelore)', () => {

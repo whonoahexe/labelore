@@ -1,12 +1,11 @@
-// quick-261006-iz7 (sketch 020 D): the SUMMARY body extractor — pinned against the five sketch docs
-// (read from this repo and, when present, the studio-portal checkout; a missing checkout skips its
-// files), the headline rule, the task / deviation shapes the corpus uses, the tolerant degrade
-// paths, and the T-iz7-01 timing bound. Pinned values were taken from the source files with grep /
-// awk, independent of the extractor's own output.
-import { existsSync, readFileSync } from 'node:fs';
+// quick-261006-iz7 (sketch 020 D): the SUMMARY body extractor — pinned against the labelore sketch docs
+// and the made-up Lendshed summaries under test/fixtures/lendshed, the headline rule, the task /
+// deviation shapes the corpus uses, the tolerant degrade paths, and the T-iz7-01 growth bound. Pinned
+// values were taken from the source files with grep / awk, independent of the extractor's own output.
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { SP_PLANNING } from './helpers/studio-portal.ts';
 import { fxPath } from './helpers/fixture-project.ts';
+import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
 import { extractSummaryRun, isNoneText, splitHeadline } from '../src/planning-repo/handlers/summary-run.ts';
 import { assembleDomainModel } from '../src/planning-repo/assemble.ts';
 import { discover } from '../src/planning-repo/discovery.ts';
@@ -19,10 +18,10 @@ const LB = new URL('../.planning/', import.meta.url).pathname;
 const LB0501 = `${LB}milestones/v1.1-phases/05-per-type-document-views/05-01-SUMMARY.md`;
 const LB0X4 = `${LB}milestones/v1.0-quick/260910-0x4-close-every-tech-debt-item-in-planning-v/260910-0x4-SUMMARY.md`;
 const LB3US = `${LB}milestones/v2.0-quick/260922-3us-build-sketch-004-b3-folded-chapters-docu/260922-3us-SUMMARY.md`;
-const SP0406 = `${SP_PLANNING}/phases/04-bulk-archive-downloads/04-06-SUMMARY.md`;
+const FX0406 = fxPath('phases/04-bulk-loan-export/04-06-SUMMARY.md');
 const FX0101 = fxPath('phases/01-member-sign-in-sessions/01-01-SUMMARY.md');
-const SP0106 = `${SP_PLANNING}/phases/01-portal-owned-identity-sessions/01-06-SUMMARY.md`;
-const SP_V10212 = `${SP_PLANNING}/milestones/v1.0-phases/02-storage-health-status/02-12-SUMMARY.md`;
+const FX0106 = fxPath('phases/01-member-sign-in-sessions/01-06-SUMMARY.md');
+const FX_V10212 = fxPath('milestones/v1.0-phases/02-shed-inventory-health/02-12-SUMMARY.md');
 
 function bodyOf(path: string): string {
   return tryParseFrontmatter(readFileSync(path, 'utf8')).body;
@@ -158,14 +157,12 @@ describe('extractSummaryRun — Lendshed shapes', () => {
     expect(devs[0].others.map((o) => o.label)).toEqual(['Verification']);
     expect(run.others.map((o) => o.title)).toEqual(['Issues Encountered']);
   });
-});
 
-describe.runIf(existsSync(SP_PLANNING))('extractSummaryRun — studio-portal shapes', () => {
-  it('0406: a task table, two deviations, extras, a pending human section', () => {
-    const run = extractSummaryRun(bodyOf(SP0406));
-    expect(run.tasks.map((t) => [t.n, t.hashes[0]])).toEqual([[1, '07006bf'], [2, '251b946']]);
+  it('04-06 (Lendshed): a task table, two deviations, extras, a pending human section', () => {
+    const run = extractSummaryRun(bodyOf(FX0406));
+    expect(run.tasks.map((t) => [t.n, t.hashes[0]])).toEqual([[1, 'a41c7e9'], [2, '5d08b36']]);
     expect(run.deviations?.items).toHaveLength(2);
-    expect(run.deviations?.extras.map((e) => e.title)).toEqual(["Files touched outside the plan's declared list", 'New copy not in the UI-SPEC']);
+    expect(run.deviations?.extras.map((e) => e.title)).toEqual(["Files changed beyond the plan's file list", 'New copy missing from the UI-SPEC']);
     const titles = run.others.map((o) => o.title);
     expect(titles).toContain('What Was Built');
     expect(titles).toContain('Task 3 — Pending Human Verification');
@@ -173,15 +170,14 @@ describe.runIf(existsSync(SP_PLANNING))('extractSummaryRun — studio-portal sha
   });
 
   it('01-06: the malformed frontmatter block is skipped so the H1 is the real title', () => {
-    const run = extractSummaryRun(rawBodyOf(SP0106));
-    expect(run.h1).toBe('Phase 01 Plan 06: Change-password, NavShell identity, Access cutover — Summary');
+    const run = extractSummaryRun(rawBodyOf(FX0106));
+    expect(run.h1).toBe('Phase 01 Plan 06: Set-password screen, top bar identity, passcode prompt removal — Summary');
   });
 
   it('02-12 (no frontmatter): preamble facts give the status and the commits as tasks', () => {
-    if (!existsSync(SP_V10212)) return;
-    const run = extractSummaryRun(rawBodyOf(SP_V10212));
+    const run = extractSummaryRun(rawBodyOf(FX_V10212));
     expect(run.preamble.find((f) => f.key === 'Status')?.value).toBe('Complete. 2/2 tasks.');
-    expect(run.tasks.map((t) => [t.n, t.hashes[0]])).toEqual([[1, 'b711c0c'], [2, 'b7ae802']]);
+    expect(run.tasks.map((t) => [t.n, t.hashes[0]])).toEqual([[1, 'e5a40b8'], [2, '91cd7f3']]);
     expect(run.taskSource).toBe('preamble');
   });
 });
@@ -312,17 +308,28 @@ describe('extractSummaryRun — degrade paths', () => {
     expect(run.deviations?.items).toEqual([]);
   });
 
-  it('extracts a 1 MB body holding a 200k-character hostile line within 250 ms', () => {
-    const hostile = '`*[Rule '.repeat(25000);
-    expect(hostile.length).toBeGreaterThanOrEqual(200000);
+  // A fixed millisecond budget flakes under parallel load and says nothing about the shape of the cost
+  // (Pitfall 11). The hostile body is built at size n and at 8n, outside the timed region, and timed with
+  // measureGrowth: a linear extractor reads about 8, a quadratic one about 64. The proportions are the
+  // original 1 MB body scaled by n / 1,000,000: three hostile lines of 15% each and 55% filler.
+  const hostileBody = (n: number): string => {
+    const hostile = '`*[Rule '.repeat(Math.max(1, Math.floor((n * 0.15) / 8)));
     const filler = 'x'.repeat(79) + '\n';
-    const body = `# T\n\n## Accomplishments\n\n- ${hostile}\n\n## Deviations from Plan\n\n**1. [Rule 1 - ${hostile}**\n\n## Task Commits\n\n1. **${hostile}** \`abc1234\`\n\n${filler.repeat(9000)}`;
+    return `# T\n\n## Accomplishments\n\n- ${hostile}\n\n## Deviations from Plan\n\n**1. [Rule 1 - ${hostile}**\n\n## Task Commits\n\n1. **${hostile}** \`abc1234\`\n\n${filler.repeat(Math.floor((n * 0.55) / 80))}`;
+  };
+
+  it('extracts a hostile body with no faster than linear growth', () => {
+    const growth = measureGrowth({ make: hostileBody, run: (body) => void extractSummaryRun(body) });
+    expect(
+      growth.ratio,
+      `extractSummaryRun: ${growth.t1.toFixed(2)}ms at ${growth.n} characters, ${growth.t2.toFixed(2)}ms at 8x`,
+    ).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('still reads the original 1 MB hostile body as three sections', () => {
+    const body = hostileBody(1_300_000);
     expect(body.length).toBeGreaterThan(900000);
-    const start = performance.now();
-    const run = extractSummaryRun(body);
-    const elapsed = performance.now() - start;
-    expect(run.sections.length).toBe(3);
-    expect(elapsed).toBeLessThan(250);
+    expect(extractSummaryRun(body).sections.length).toBe(3);
   });
 
   it('caps a hostile list so the model cannot grow without bound', () => {
