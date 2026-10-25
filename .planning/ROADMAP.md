@@ -91,7 +91,7 @@ any page is built to show them.
    raw file, on its file page and in search results and snippets. The full value never reaches the
    search index, so every page built later inherits the masking. *(SEC-04)*
 
-**Plans**: 10/22 plans executed
+**Plans**: 11/22 plans executed
 
 Plans:
 **Wave 1**
@@ -106,7 +106,7 @@ Plans:
 - [x] 06-07-PLAN.md — Pattern-map family on Lendshed, Labelore phase 6 PATTERNS re-pinned
 - [x] 06-08-PLAN.md — Research-briefing family on Lendshed, embedded research excerpts made up
 - [x] 06-09-PLAN.md — Plan family on Lendshed, Labelore 528 drift fix
-- [ ] 06-11-PLAN.md — UAT and security-register families on Lendshed
+- [x] 06-11-PLAN.md — UAT and security-register families on Lendshed
 - [ ] 06-12-PLAN.md — UI-SPEC, theme and UI-review families on Lendshed
 - [ ] 06-13-PLAN.md — Copied review fixtures replaced by made-up Lendshed reviews
 - [ ] 06-14-PLAN.md — Copied verification and learnings fixtures replaced, learnings server retired
@@ -371,7 +371,7 @@ file, ID or project.
 | 1–4 | v1.0 | 30/30 | Archived | 2026-09-10 |
 | 5 | v1.1 | 6/6 | Archived | 2026-09-21 |
 | quick tasks | v2.0 | 40/40 | Archived | 2026-10-25 |
-| 6. Trustworthy Tests and Security Baseline | v2.1 | 10/22 | In Progress | - |
+| 6. Trustworthy Tests and Security Baseline | v2.1 | 11/22 | In Progress | - |
 | 7. Recognised Files and Readable URLs | v2.1 | 0/TBD | Not started | - |
 | 8. Several Projects and a Switcher | v2.1 | 0/TBD | Not started | - |
 | 9. Review, Audit and Root Document Pages | v2.1 | 0/TBD | Not started | - |
