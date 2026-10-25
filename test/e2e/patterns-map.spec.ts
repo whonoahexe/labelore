@@ -1,18 +1,13 @@
-// The PATTERNS pattern-map e2e (quick-260930-wfs, sketch 013 B): real corpus files, never a fixture
-// mock. Fixtures resolve by path against the live `/api/presentation` payload (the
-// research-briefing.spec.ts idiom) so an archival/rename fails loudly instead of silently
-// skipping. The labelore v1.1/05 test always runs; the studio-portal test runs against the
-// read-only server on port 4198 (playwright.config.ts, present only when ~/studio-portal/.planning
-// exists) and skips itself otherwise. This spec asserts the foundation sweep's key invariants
-// itself (one h1, an eyebrow, squared corners, one chip signature, no 420px overflow), since the
-// full sweep is too slow to run per change.
-import { existsSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { join } from 'node:path';
+// The PATTERNS pattern-map e2e (quick-260930-wfs, sketch 013 B): real files, never a mock. Fixtures
+// resolve by path against the live `/api/presentation` payload (the research-briefing.spec.ts idiom)
+// so an archival/rename fails loudly instead of silently skipping. The Labelore v1.1/05 test runs
+// against the repo's own server on port 4199; the Lendshed v1.0/02 test runs against the read-only
+// server on the made-up Lendshed project (port 4198, FIXTURE_BASE_URL; playwright.config.ts always
+// starts it and throws at load when the fixture tree is missing). Nothing in this file skips. This
+// spec asserts the foundation sweep's key invariants itself (one h1, an eyebrow, squared corners,
+// one chip signature, no 420px overflow), since the full sweep is too slow to run per change.
 import { expect, test } from '@playwright/test';
-
-const STUDIO_PORTAL_AVAILABLE = existsSync(join(homedir(), 'studio-portal', '.planning'));
-const SP_BASE_URL = 'http://127.0.0.1:4198';
+import { FIXTURE_BASE_URL } from './fixture-root.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
@@ -135,40 +130,39 @@ test.describe('PATTERNS pattern map', () => {
     expect(layout.panelTop).toBeGreaterThan(layout.lastRowTop);
   });
 
-  test('SP v1.0/02 pattern map', async ({ page }) => {
-    test.skip(!STUDIO_PORTAL_AVAILABLE, 'studio-portal checkout not present');
-    const url = await resolveFixtureUrl(SP_BASE_URL, 'v1.0-phases/02-storage-health-status/02-PATTERNS.md');
-    await page.goto(`${SP_BASE_URL}${url}`);
+  test('Lendshed v1.0/02 pattern map', async ({ page }) => {
+    const url = await resolveFixtureUrl(FIXTURE_BASE_URL, 'v1.0-phases/02-shed-inventory-health/02-PATTERNS.md');
+    await page.goto(`${FIXTURE_BASE_URL}${url}`);
     await page.locator('#pattern-file-map').waitFor({ state: 'visible' });
 
     // The doc's own five groups, in order.
     await expect(page.locator('.view-patterns-label')).toHaveText([
-      /^Backend — new modules \(greenfield\)\s*7$/,
-      /^Backend — modified\s*4$/,
-      /^Backend — tests & fixtures\s*5$/,
-      /^Frontend\s*8$/,
-      /^Ops artifacts\s*2$/,
+      /^Server — fresh modules\s*5$/,
+      /^Server — edits\s*3$/,
+      /^Server — specs & sample feeds\s*5$/,
+      /^Web\s*7$/,
+      /^Ops notes\s*2$/,
     ]);
 
-    // Meter 7 / 3 / 5 / 11.
+    // Meter 6 / 4 / 4 / 8.
     const counts = await page
       .locator('.view-patterns-meter-key b')
       .evaluateAll((els) => els.map((el) => el.textContent));
-    expect(counts).toEqual(['7', '3', '5', '11']);
+    expect(counts).toEqual(['6', '4', '4', '8']);
 
     // The mapper's note is visible.
     await expect(page.locator('.view-patterns-note')).toBeVisible();
-    await expect(page.locator('.view-patterns-note')).toContainText('Verification note');
+    await expect(page.locator('.view-patterns-note')).toContainText('Check note');
 
-    // collector.rs: partial, see divergence, with its copy-from.
-    await page.locator('.view-patterns-row', { hasText: 'collector.rs' }).click();
+    // reader.ts: partial, read the caveat, with its copy-from.
+    await page.locator('.view-patterns-row', { hasText: 'reader.ts' }).click();
     const panel = page.locator('.view-patterns-panel');
     await expect(panel).toContainText('Partial');
-    await expect(panel).toContainText('see divergence');
+    await expect(panel).toContainText('read the caveat');
     await expect(panel).toContainText('Copy from');
 
     // Planner notes sit collapsed in back matter.
-    const notes = page.locator('.view-patterns-back details', { hasText: 'Cross-Cutting Notes for the Planner' });
+    const notes = page.locator('.view-patterns-back details', { hasText: 'Notes Spanning Several Files' });
     await expect(notes).toHaveCount(1);
     await expect(notes).not.toHaveAttribute('open', '');
   });

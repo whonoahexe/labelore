@@ -1,18 +1,18 @@
 // quick-260930-wfs: extractPatternMap (the PATTERNS.md pattern-map projection) against the two
-// anchor documents read from disk, degenerate input, and the T-wfs-01 timing guard; plus the
-// PatternsHandler's match and structured.map. Anchor counts were independently confirmed with awk
-// against the source tables (never copied from the extractor's own output).
-import { existsSync } from 'node:fs';
+// anchor documents read from disk (Labelore's own v1.1/05 map and the made-up Lendshed v1.0/02 map),
+// degenerate input, and the T-wfs-01 timing guard; plus the PatternsHandler's match and
+// structured.map. Anchor counts were independently confirmed with awk against the source tables
+// (never copied from the extractor's own output). A missing Lendshed file throws through fxPath.
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
-import { SP_PLANNING } from './helpers/studio-portal.ts';
+import { fxPath } from './helpers/fixture-project.ts';
 import { extractPatternMap, splitRow } from '../src/planning-repo/handlers/pattern-map.ts';
 import { PatternsHandler } from '../src/planning-repo/handlers/patterns.ts';
 import type { ArtifactRef, RawArtifact } from '../src/planning-repo/types.ts';
 
 const REPO_ROOT = new URL('../', import.meta.url);
 const LB05 = '.planning/milestones/v1.1-phases/05-per-type-document-views/05-PATTERNS.md';
-const SP02 = `${SP_PLANNING}/milestones/v1.0-phases/02-storage-health-status/02-PATTERNS.md`;
+const FX02 = 'milestones/v1.0-phases/02-shed-inventory-health/02-PATTERNS.md';
 const DENSE = 'fixtures/dense/.planning/phases/01-identity-slice/01-PATTERNS.md';
 
 async function repoBody(path: string): Promise<string> {
@@ -74,33 +74,33 @@ describe('extractPatternMap — LB v1.1/05 (repo file)', () => {
   });
 });
 
-describe('extractPatternMap — SP v1.0/02 (real file, when present)', () => {
-  it.runIf(existsSync(SP02))('reads the five doc groups, nine no-analog entries and the planner notes', async () => {
-    const map = extractPatternMap(await readFile(SP02, 'utf8'));
+describe('extractPatternMap — Lendshed v1.0/02 (made-up file)', () => {
+  it('reads the five doc groups, seven no-analog entries and the planner notes', async () => {
+    const map = extractPatternMap(await readFile(fxPath(FX02), 'utf8'));
     expect(map.meta.phase).toBe('2');
-    expect(map.meta.title).toBe('Storage Health & Status');
-    expect(map.classification).toHaveLength(26);
+    expect(map.meta.title).toBe('Shed Inventory Health');
+    expect(map.classification).toHaveLength(22);
     const groups: string[] = [];
     for (const row of map.classification) if (!groups.includes(row.group ?? '')) groups.push(row.group ?? '');
     expect(groups).toEqual([
-      'Backend — new modules (greenfield)',
-      'Backend — modified',
-      'Backend — tests & fixtures',
-      'Frontend',
-      'Ops artifacts',
+      'Server — fresh modules',
+      'Server — edits',
+      'Server — specs & sample feeds',
+      'Web',
+      'Ops notes',
     ]);
-    expect(map.shared).toHaveLength(6);
-    expect(map.noAnalog).toHaveLength(9);
+    expect(map.shared).toHaveLength(5);
+    expect(map.noAnalog).toHaveLength(7);
     expect(map.noAnalogNote.length).toBeGreaterThan(0);
-    expect(map.other.map((o) => o.heading)).toEqual(['Cross-Cutting Notes for the Planner']);
-    expect(map.excerpts).toBe(39);
-    const collector = map.assignments.find((a) => a.heading.includes('collector.rs'));
-    expect(collector?.guidance.length).toBeGreaterThan(0);
+    expect(map.other.map((o) => o.heading)).toEqual(['Notes Spanning Several Files']);
+    expect(map.excerpts).toBe(16);
+    const reader = map.assignments.find((a) => a.heading.includes('stock/reader.ts'));
+    expect(reader?.guidance.length).toBeGreaterThan(0);
     for (const assignment of map.assignments) {
       for (const block of assignment.guidance) expect(block.kind).not.toBe('code');
     }
     // `**Analog: NONE.**` is an Analog field, not guidance.
-    expect(map.assignments.find((a) => a.heading.includes('ws/bus.rs'))?.analog?.startsWith('NONE')).toBe(true);
+    expect(map.assignments.find((a) => a.heading.includes('feed/bus.ts'))?.analog?.startsWith('NONE')).toBe(true);
   });
 });
 

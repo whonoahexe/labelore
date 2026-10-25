@@ -1,14 +1,17 @@
 // quick-260930-wfs (WFS-09): real-corpus guards over every PATTERNS.md in this repo's `.planning/`
-// plus `~/studio-portal/.planning/` — the research-corpus.test.ts idiom (a missing studio-portal
-// checkout skips its files). Every file must extract without throwing, compose to a non-null map,
-// and match the classified row count and quality split pinned below. The pinned counts were
+// (keyed LB:) plus the made-up Lendshed project (keyed FX:, walked through FX_PLANNING; a missing
+// fixture throws, nothing skips). Every file must extract without throwing, compose to a non-null
+// map, and match the classified row count and quality split pinned below. The pinned counts were
 // independently confirmed with awk over the last cell of each File Classification row (never
-// copied from the extractor's own output). Every No Analog entry and every Pattern Assignment is
-// either merged into a file row or present as an unplaced row.
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+// copied from the extractor's own output) and with grep over the fence lines; the Lendshed pins are
+// recounted in the made-up files themselves. Labelore's live planning files are re-pinned to
+// today's content (D-18): when planning changes one, or a new PATTERNS file lands, update its entry
+// here. Every No Analog entry and every Pattern Assignment is either merged into a file row or
+// present as an unplaced row.
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { SP_PLANNING } from '../helpers/studio-portal.ts';
+import { FX_PLANNING } from '../helpers/fixture-project.ts';
 import { tryParseFrontmatter } from '../../src/planning-repo/frontmatter.ts';
 import { extractPatternMap } from '../../src/planning-repo/handlers/pattern-map.ts';
 import { composePatternMap } from '../../src/web/views/pattern-map.ts';
@@ -16,7 +19,6 @@ import { composePatternMap } from '../../src/web/views/pattern-map.ts';
 const REPO_PLANNING = new URL('../../.planning', import.meta.url).pathname;
 
 function walkPatterns(root: string): string[] {
-  if (!existsSync(root)) return [];
   const found: string[] = [];
   const stack = [root];
   while (stack.length > 0) {
@@ -45,33 +47,35 @@ interface Pinned {
   excerpts?: number;
 }
 
-/** Keyed by `<repo>:<path suffix>`. */
+/** Keyed by `<corpus>:<path suffix>` — LB: Labelore's own `.planning/`, FX: the Lendshed fixture. */
 const PINNED: Record<string, Pinned> = {
-  'SP:milestones/v1.0-phases/02-storage-health-status/02-PATTERNS.md': { rows: 26, exact: 7, role: 3, partial: 5, none: 11, groups: 5, shared: 6, excerpts: 39 },
-  'SP:phases/04-bulk-archive-downloads/04-PATTERNS.md': { rows: 30, exact: 25, role: 5, partial: 0, none: 0, groups: 0, shared: 4, excerpts: 19 },
-  'SP:phases/01-portal-owned-identity-sessions/01-PATTERNS.md': { rows: 16, exact: 7, role: 4, partial: 1, none: 4, groups: 0, shared: 7, excerpts: 17 },
   'LB:milestones/v1.1-phases/05-per-type-document-views/05-PATTERNS.md': { rows: 17, exact: 8, role: 8, partial: 0, none: 1, groups: 0, shared: 7, excerpts: 26 },
   'LB:milestones/v1.0-phases/02-situational-awareness-artifact-reading/02-PATTERNS.md': { rows: 35, exact: 14, role: 10, partial: 0, none: 11, groups: 0, shared: 7 },
   'LB:milestones/v1.0-phases/03-search-browsing-traceability/03-PATTERNS.md': { rows: 18, exact: 12, role: 6, partial: 0, none: 0, groups: 0, shared: 7 },
   'LB:milestones/v1.0-phases/04-portability-degradation-hardening/04-PATTERNS.md': { rows: 16, exact: 11, role: 4, partial: 0, none: 1, groups: 0, shared: 6 },
-  'SP:milestones/v1.0-phases/03-file-browsing/03-PATTERNS.md': { rows: 16, exact: 10, role: 6, partial: 0, none: 0, groups: 0, shared: 7 },
-  'SP:milestones/v1.0-phases/04-tier-to-tier-transfers/04-PATTERNS.md': { rows: 26, exact: 12, role: 9, partial: 3, none: 2, groups: 0, shared: 9 },
-  'SP:phases/02-roles-permission-enforcement/02-PATTERNS.md': { rows: 22, exact: 16, role: 4, partial: 0, none: 2, groups: 0, shared: 9 },
-  'SP:phases/03-account-administration-session-control/03-PATTERNS.md': { rows: 24, exact: 19, role: 5, partial: 0, none: 0, groups: 0, shared: 7 },
+  'LB:phases/06-trustworthy-tests-and-security-baseline/06-PATTERNS.md': { rows: 28, exact: 18, role: 7, partial: 1, none: 2, groups: 0, shared: 5, excerpts: 12 },
+  'FX:milestones/v1.0-phases/02-shed-inventory-health/02-PATTERNS.md': { rows: 22, exact: 6, role: 4, partial: 4, none: 8, groups: 5, shared: 5, excerpts: 16 },
 };
 
-const FILES = [...walkPatterns(REPO_PLANNING), ...walkPatterns(SP_PLANNING)];
+const LB_FILES = walkPatterns(REPO_PLANNING);
+const FX_FILES = walkPatterns(FX_PLANNING);
+const FILES = [...LB_FILES, ...FX_FILES];
 
 function keyOf(file: string): string {
   return file.startsWith(REPO_PLANNING)
     ? `LB:${relative(REPO_PLANNING, file)}`
-    : `SP:${relative(SP_PLANNING, file)}`;
+    : `FX:${relative(FX_PLANNING, file)}`;
 }
 
 describe('PATTERNS corpus guard', () => {
   it('finds the corpus', () => {
-    expect(FILES.filter((f) => f.startsWith(REPO_PLANNING)).length).toBeGreaterThanOrEqual(4);
-    if (existsSync(SP_PLANNING)) expect(FILES.length).toBeGreaterThanOrEqual(11);
+    expect(LB_FILES.length).toBeGreaterThanOrEqual(5);
+    expect(FX_FILES.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('every pinned entry was found by the walk', () => {
+    const found = new Set(FILES.map(keyOf));
+    for (const key of Object.keys(PINNED)) expect(found.has(key), `${key} is pinned but not found`).toBe(true);
   });
 
   for (const file of FILES) {
