@@ -18,7 +18,7 @@ import {
 } from '../../src/web/views/research-briefing.ts';
 import type { ComposedResearchBriefing } from '../../src/web/views/research-briefing.ts';
 import { AuditBlock } from '../../src/web/views/research-briefing-components.tsx';
-import { NA_AUDIT, SP02_SHAPE, SYNTHETIC_SLOP } from '../helpers/research-fixtures.ts';
+import { NA_AUDIT, LS02_SHAPE, SYNTHETIC_SLOP } from '../helpers/research-fixtures.ts';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 import type { DocumentSectionGroup } from '../../src/web/views/document-sections.ts';
 
@@ -298,8 +298,8 @@ describe('composeResearchBriefing — stack, alternatives and lanes', () => {
     expect(lanes?.ok.items.filter((i) => i.dashed)).toHaveLength(0);
   });
 
-  it('SP02_SHAPE: alternative verdict chips, pinned / host-binary badges, dashed approvals', () => {
-    const stack = chapterOf(composeFrom(SP02_SHAPE), 'stack');
+  it('LS02_SHAPE: alternative verdict chips, pinned / host-binary badges, dashed approvals', () => {
+    const stack = chapterOf(composeFrom(LS02_SHAPE), 'stack');
     expect(stack.alternatives.map((a) => a.verdictLabel)).toEqual([
       'viable alternative',
       'rejected',
@@ -338,7 +338,7 @@ describe('composeResearchBriefing — stack, alternatives and lanes', () => {
 
 describe('composeResearchBriefing — pitfalls, questions, environment, sources', () => {
   it('pitfall chips: severity tone, then code; the What goes wrong row is the visible one', () => {
-    const pitfalls = chapterOf(composeFrom(SP02_SHAPE), 'pitfalls').pitfalls;
+    const pitfalls = chapterOf(composeFrom(LS02_SHAPE), 'pitfalls').pitfalls;
     expect(pitfalls[0].number).toBe('01');
     expect(pitfalls[0].chips).toEqual([
       { label: 'critical', tone: 'missing' },
@@ -353,13 +353,13 @@ describe('composeResearchBriefing — pitfalls, questions, environment, sources'
   it('question chips: resolved is quiet, open is in-flight', () => {
     const lb = chapterOf(composeResearchBriefing(inputOf(lb02())) as ComposedResearchBriefing, 'questions');
     expect(lb.items.every((i) => i.chip.tone === 'quiet' && i.chip.label === 'resolved')).toBe(true);
-    const sp = chapterOf(composeFrom(SP02_SHAPE), 'questions');
+    const sp = chapterOf(composeFrom(LS02_SHAPE), 'questions');
     expect(sp.items.every((i) => i.chip.tone === 'in-flight' && i.chip.label === 'open')).toBe(true);
     expect(sp.items[0].number).toBe('Q1');
   });
 
   it('environment: a blocking fallback keeps its remaining text', () => {
-    const environment = chapterOf(composeFrom(SP02_SHAPE), 'environment');
+    const environment = chapterOf(composeFrom(LS02_SHAPE), 'environment');
     const blocking = environment.rows.filter((r) => r.blocking);
     expect(blocking).toHaveLength(3);
     expect(blocking[0].fallbackRest.startsWith('The grant is a new artifact')).toBe(true);
@@ -396,8 +396,8 @@ describe('composeResearchBriefing — At a glance and back matter', () => {
     ]);
   });
 
-  it('SP02_SHAPE glance: the severity split and the blocking suffix', () => {
-    const glance = composeFrom(SP02_SHAPE).glance;
+  it('LS02_SHAPE glance: the severity split and the blocking suffix', () => {
+    const glance = composeFrom(LS02_SHAPE).glance;
     expect(glance.find((r) => r.targetId === 'research-pitfalls')?.label).toBe(
       'Pitfalls · 3 critical, 2 high, 3 medium',
     );
@@ -440,7 +440,7 @@ describe('composeResearchBriefing — At a glance and back matter', () => {
 
 describe('tidyConfidenceText — the confidence modal text', () => {
   it('drops a leading level, a leftover "confidence —", and repairs a dangling **', () => {
-    expect(tidyConfidenceText('MEDIUM-HIGH — the rclone rc API', { dropLevel: true })).toBe('The rclone rc API');
+    expect(tidyConfidenceText('MEDIUM-HIGH — the hubctl rc API', { dropLevel: true })).toBe('The hubctl rc API');
     expect(tidyConfidenceText('HIGH', { dropLevel: true })).toBe('');
     expect(tidyConfidenceText('confidence — numeric thresholds', { dropLevel: false })).toBe('Numeric thresholds');
     expect(
@@ -504,8 +504,8 @@ describe('AuditBlock render (sketch 010 B)', () => {
     return renderToStaticMarkup(createElement(AuditBlock, { audit }));
   }
 
-  it('SP02_SHAPE: keeps the lane tone copy, the caret toggle, tight notes and chipped code', () => {
-    const html = render(composeFrom(SP02_SHAPE));
+  it('LS02_SHAPE: keeps the lane tone copy, the caret toggle, tight notes and chipped code', () => {
+    const html = render(composeFrom(LS02_SHAPE));
     expect(html).toContain('class="view-research-sub view-research-audit"');
     expect(html).toContain('Nothing removed.');
     expect(html).toContain('Nothing flagged.');
