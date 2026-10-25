@@ -40,7 +40,7 @@ const STYLESHEET = `
   --background: oklch(1 0 0);
   --card: var(--background);
   --border: oklch(0.922 0 0);
-  --primary: oklch(0.553 0.195 38.402);
+  --primary: oklch(0.47 0.11 152);
 }
 .dark {
   --background: oklch(0.145 0 0);
@@ -95,8 +95,8 @@ function render(spec: ComposedUiSpec): string {
 
 const THEME = {
   source: 'app/globals.css',
-  light: { '--background': 'oklch(1 0 0)', '--card': 'oklch(1 0 0)', '--border': 'oklch(0.922 0 0)', '--primary': 'oklch(0.553 0.195 38.402)' },
-  dark: { '--background': 'oklch(0.145 0 0)', '--card': 'oklch(0.145 0 0)', '--border': 'oklch(1 0 0 / 10%)', '--primary': 'oklch(0.553 0.195 38.402)' },
+  light: { '--background': 'oklch(1 0 0)', '--card': 'oklch(1 0 0)', '--border': 'oklch(0.922 0 0)', '--primary': 'oklch(0.47 0.11 152)' },
+  dark: { '--background': 'oklch(0.145 0 0)', '--card': 'oklch(0.145 0 0)', '--border': 'oklch(1 0 0 / 10%)', '--primary': 'oklch(0.47 0.11 152)' },
 };
 
 describe('the tracer: stylesheet -> repository -> composer -> markup', () => {
@@ -170,7 +170,7 @@ describe('composeColour with a theme', () => {
     const spec = composed(SPEC, THEME);
     expect(roleOf(spec, 'Dominant').swatches[0]).toMatchObject({ tokens: ['--background'], resolvedFrom: 'app/globals.css' });
     expect(roleOf(spec, 'Secondary').swatches).toHaveLength(2);
-    expect(roleOf(spec, 'Accent').swatches[0]).toMatchObject({ light: 'oklch(0.553 0.195 38.402)' });
+    expect(roleOf(spec, 'Accent').swatches[0]).toMatchObject({ light: 'oklch(0.47 0.11 152)' });
   });
 
   it('a group where no token resolves stays one hatched swatch', () => {
