@@ -16,9 +16,16 @@ import {
 // BACK-02: `D-\d+` is a dedicated alternative because the single-letter `D` prefix does not
 // satisfy the `[A-Z][A-Z0-9]+-\d+` alternative below (that shape requires two-or-more prefix
 // characters). `WR-\d+` needs no separate alternative — `WR` already has two prefix characters, so
-// it is already captured by `[A-Z][A-Z0-9]+-\d+` and typed by `tokenIdentity` downstream.
-const REFERENCE_TOKEN =
-  /\.planning\/\S*[^\s.,;:!?)\]}'"]|D-\d+|Phase\s+[\p{Letter}\p{Number}.]+|[A-Z][A-Z0-9]+-\d+|\d+(?:\.\d+)?-\d+/gu;
+// it is already captured by the capital-prefix alternative below and typed by `tokenIdentity`
+// downstream.
+//
+// SEC-01: the capital-prefix and numeric alternatives restart at every position, so an unbounded run
+// of capitals or digits made the scan quadratic. Capping the prefix at 31 further characters and each
+// numeric part at 16 digits makes the scan linear. A lookbehind guard instead of bounds was rejected:
+// it changed six results across the repo corpus, because the caller rejects a token after consuming
+// it and a lookbehind does not.
+export const REFERENCE_TOKEN =
+  /\.planning\/\S*[^\s.,;:!?)\]}'"]|D-\d+|Phase\s+[\p{Letter}\p{Number}.]+|[A-Z][A-Z0-9]{1,31}-\d+|\d{1,16}(?:\.\d{1,16})?-\d+/gu;
 const IDENTIFIER_EDGE = /[\p{Letter}\p{Number}_-]/u;
 
 interface ReferenceRenderContext {
