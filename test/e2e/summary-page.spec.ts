@@ -11,6 +11,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
+import { FIXTURE_BASE_URL } from './fixture-root.ts';
 
 const STUDIO_PORTAL_AVAILABLE = existsSync(join(homedir(), 'studio-portal', '.planning'));
 const SP_BASE_URL = 'http://127.0.0.1:4198';
@@ -150,23 +151,23 @@ test.describe('Summary page', () => {
     expect(layout.scrollWidth).toBeLessThanOrEqual(layout.innerWidth + 1);
   });
 
-  test('SP 01-01 summary page', async ({ page }) => {
-    test.skip(!STUDIO_PORTAL_AVAILABLE, 'studio-portal checkout not present');
-    const url = await resolveFixtureUrl(SP_BASE_URL, 'phases/01-portal-owned-identity-sessions/01-01-SUMMARY.md');
-    await openPage(page, SP_BASE_URL, url, 'light');
+  test('FX 01-01 summary page', async ({ page }) => {
+    const url = await resolveFixtureUrl(FIXTURE_BASE_URL, 'phases/01-member-sign-in-sessions/01-01-SUMMARY.md');
+    await openPage(page, FIXTURE_BASE_URL, url, 'light');
 
-    await expect(page.locator('h1')).toHaveText('Portal-Owned Password Sessions');
+    await expect(page.locator('h1')).toHaveText('Member Password Sessions');
     // Five deviation margin cards: four under Task 1 and one under Task 3.
     const stops = page.locator('.view-summary-stop[data-kind="task"]');
     await expect(stops).toHaveCount(3);
     await expect(stops.nth(0).locator('.view-summary-fix')).toHaveCount(4);
     await expect(stops.nth(1).locator('.view-summary-fix')).toHaveCount(0);
     await expect(stops.nth(2).locator('.view-summary-fix')).toHaveCount(1);
-    await expect(page.locator('.view-summary-added')).toContainText('New dependencies · 6');
+    await expect(page.locator('.view-summary-added')).toContainText('New dependencies · 5');
 
     await openRequirements(page);
-    await page.locator('.view-summary-req', { hasText: 'AUTH-01' }).hover();
-    await expect(page.locator('.reference-preview')).toContainText('Phase 1 — Portal-Owned Identity & Sessions');
+    await page.locator('.view-summary-req', { hasText: 'SIGN-01' }).hover();
+    await expect(page.locator('.reference-preview')).toContainText('without the kiosk passcode');
+    await expect(page.locator('.reference-preview')).toContainText('.planning/REQUIREMENTS.md');
   });
 
   test('SP 04-06 summary page', async ({ page }) => {

@@ -15,10 +15,16 @@ import type { ProjectPresentation } from '../../src/server/project-presentation.
 import { composeSummaryRun, requirementPreviews } from '../../src/web/views/summary-run.ts';
 import type { ComposedSummaryRun } from '../../src/web/views/summary-run.ts';
 import { SP_PLANNING, STUDIO_PORTAL_ROOT } from '../helpers/studio-portal.ts';
+import { FX_ROOT } from '../helpers/fixture-project.ts';
 
 const LB_ROOT = new URL('../..', import.meta.url).pathname.replace(/\/$/, '');
 const LB_PLANNING = join(LB_ROOT, '.planning');
 const hasSp = existsSync(SP_PLANNING);
+
+/** A folder holding research, not a summary run: `research`, or an archived `v1.0-research` style folder. */
+function isResearchFolder(name: string): boolean {
+  return name === 'research' || name.endsWith('-research');
+}
 
 function walk(root: string): string[] {
   if (!existsSync(root)) return [];
@@ -29,7 +35,7 @@ function walk(root: string): string[] {
     for (const entry of readdirSync(dir)) {
       const abs = join(dir, entry);
       if (statSync(abs).isDirectory()) {
-        if (entry === 'sketches' || entry === 'node_modules' || entry === 'worktrees' || entry === 'research' || entry === '.cache') continue;
+        if (entry === 'sketches' || entry === 'node_modules' || entry === 'worktrees' || isResearchFolder(entry) || entry === '.cache') continue;
         stack.push(abs);
       } else if (entry.endsWith('SUMMARY.md')) {
         found.push(abs);
@@ -41,6 +47,7 @@ function walk(root: string): string[] {
 
 let lb: ProjectPresentation;
 let sp: ProjectPresentation | null = null;
+let fx: ProjectPresentation;
 
 beforeAll(async () => {
   const load = async (root: string): Promise<ProjectPresentation> => {
@@ -48,6 +55,7 @@ beforeAll(async () => {
     return toProjectPresentation(await repository.load());
   };
   lb = await load(LB_ROOT);
+  fx = await load(FX_ROOT);
   if (hasSp) sp = await load(STUDIO_PORTAL_ROOT);
 }, 60000);
 
@@ -69,14 +77,15 @@ function compose(a: ProjectPresentation['artifacts'][number]): ComposedSummaryRu
   return model;
 }
 
-const isSummary = (path: string): boolean => path.endsWith('SUMMARY.md') && !path.includes('/research/') && !path.includes('/sketches/');
+const isSummary = (path: string): boolean =>
+  path.endsWith('SUMMARY.md') && !path.split('/').slice(0, -1).some(isResearchFolder) && !path.includes('/sketches/');
 
 describe('SUMMARY corpus — every file extracts and composes', () => {
   it('finds the same files on disk and in the presentation (labelore)', () => {
     const onDisk = walk(LB_PLANNING).map((p) => relative(LB_ROOT, p)).sort();
     const loaded = lb.artifacts.filter((a) => isSummary(a.path)).map((a) => a.path).sort();
     expect(loaded).toEqual(onDisk);
-    expect(loaded.length).toBeGreaterThanOrEqual(73);
+    expect(loaded.length).toBeGreaterThanOrEqual(110);
   });
 
   it('labelore: structured.summary on every file and a non-null page', () => {
@@ -107,7 +116,7 @@ describe('SUMMARY corpus — every file extracts and composes', () => {
       const previews = requirementPreviews(lb, a.path, model.modals.requirements, model.quick);
       found += Object.values(previews).filter((p) => p.found).length;
     }
-    expect(found).toBeGreaterThanOrEqual(134);
+    expect(found).toBeGreaterThanOrEqual(154);
   });
 
   it.runIf(hasSp)('studio-portal: 158 of 166 requirement IDs resolve to a REQUIREMENTS item', () => {
@@ -184,6 +193,34 @@ describe('sketch docs — labelore', () => {
   });
 });
 
+describe('sketch docs — Lendshed', () => {
+  it('01-01: deps added, five rule-tagged deviations', () => {
+    const a = artifactAt(fx, 'phases/01-member-sign-in-sessions/01-01-SUMMARY.md');
+    const m = compose(a);
+    expect(m.head.eyebrow).toBe('Summary of 01-01 · Phase 1 · Member sign in sessions');
+    expect(m.head.title).toBe('Member Password Sessions');
+    expect([m.head.completed, m.head.duration, m.head.started, m.head.type]).toEqual(['25 Mar 2026', '41min', '09:12', 'Auth']);
+    expect(m.triggers).toEqual({ tasks: { label: 'Tasks', count: 3 }, files: { count: 13 }, requirements: { done: 3, pending: 0 } });
+    expect(m.run.stops.filter((s) => s.kind === 'task').map((s) => s.deviations.length)).toEqual([4, 0, 1]);
+    expect(m.run.aside).toBe('3 tasks · 5 fixed on the way');
+    expect(m.proof?.map((p) => [p.id, p.human])).toEqual([['D1', false], ['D2', false], ['D3', false], ['D4', true], ['D5', false]]);
+    expect(m.outcome?.rows.map((r) => r.pills.map((p) => p.id))).toEqual([['D1'], ['D2'], ['D3'], ['D4'], ['D5']]);
+    expect(m.patterns?.added).toHaveLength(5);
+    expect(m.patterns?.items.filter((p) => p.kind === 'convention')).toHaveLength(2);
+    expect(m.lineage?.requires).toEqual([]);
+    expect(m.lineage?.affects).toHaveLength(5);
+    expect(m.next).not.toBeNull();
+    const previews = requirementPreviews(fx, a.path, m.modals.requirements, false);
+    expect(previews['SIGN-01']).toMatchObject({
+      found: true,
+      text: 'A member can sign in with a username and password, without the kiosk passcode',
+      status: 'Complete',
+      location: '.planning/REQUIREMENTS.md',
+      phase: 'Phase 1',
+    });
+  });
+});
+
 describe.runIf(hasSp)('sketch docs — studio-portal', () => {
   it('04-06: awaiting a checkpoint', () => {
     const a = artifactAt(sp as ProjectPresentation, 'phases/04-bulk-archive-downloads/04-06-SUMMARY.md');
@@ -203,31 +240,6 @@ describe.runIf(hasSp)('sketch docs — studio-portal', () => {
     expect(previews['DL-04']).toMatchObject({ found: true, status: 'Pending', phase: 'Phase 4 — Bulk Archive Downloads' });
   });
 
-  it('01-01: deps added, five rule-tagged deviations', () => {
-    const a = artifactAt(sp as ProjectPresentation, 'phases/01-portal-owned-identity-sessions/01-01-SUMMARY.md');
-    const m = compose(a);
-    expect(m.head.eyebrow).toBe('Summary of 01-01 · Phase 1 · Portal owned identity sessions');
-    expect(m.head.title).toBe('Portal-Owned Password Sessions');
-    expect([m.head.completed, m.head.duration, m.head.started, m.head.type]).toEqual(['3 Aug 2026', '36min', '16:50', 'Auth']);
-    expect(m.triggers).toEqual({ tasks: { label: 'Tasks', count: 3 }, files: { count: 16 }, requirements: { done: 3, pending: 0 } });
-    expect(m.run.stops.filter((s) => s.kind === 'task').map((s) => s.deviations.length)).toEqual([4, 0, 1]);
-    expect(m.run.aside).toBe('3 tasks · 5 fixed on the way');
-    expect(m.proof?.map((p) => [p.id, p.human])).toEqual([['D1', false], ['D2', false], ['D3', false], ['D4', true], ['D5', false]]);
-    expect(m.outcome?.rows.map((r) => r.pills.map((p) => p.id))).toEqual([['D1'], ['D2'], ['D3'], ['D4'], ['D5']]);
-    expect(m.patterns?.added).toHaveLength(6);
-    expect(m.patterns?.items.filter((p) => p.kind === 'convention')).toHaveLength(2);
-    expect(m.lineage?.requires).toEqual([]);
-    expect(m.lineage?.affects).toHaveLength(5);
-    expect(m.next).not.toBeNull();
-    const previews = requirementPreviews(sp, a.path, m.modals.requirements, false);
-    expect(previews['AUTH-01']).toMatchObject({
-      found: true,
-      text: 'A member can log in to the portal with a username and password, without Cloudflare Access',
-      status: 'Complete',
-      location: '.planning/REQUIREMENTS.md',
-      phase: 'Phase 1 — Portal-Owned Identity & Sessions',
-    });
-  });
 });
 
 describe('harder summaries', () => {

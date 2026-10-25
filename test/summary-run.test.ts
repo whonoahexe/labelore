@@ -6,6 +6,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { SP_PLANNING } from './helpers/studio-portal.ts';
+import { fxPath } from './helpers/fixture-project.ts';
 import { extractSummaryRun, isNoneText, splitHeadline } from '../src/planning-repo/handlers/summary-run.ts';
 import { assembleDomainModel } from '../src/planning-repo/assemble.ts';
 import { discover } from '../src/planning-repo/discovery.ts';
@@ -19,7 +20,7 @@ const LB0501 = `${LB}milestones/v1.1-phases/05-per-type-document-views/05-01-SUM
 const LB0X4 = `${LB}milestones/v1.0-quick/260910-0x4-close-every-tech-debt-item-in-planning-v/260910-0x4-SUMMARY.md`;
 const LB3US = `${LB}milestones/v2.0-quick/260922-3us-build-sketch-004-b3-folded-chapters-docu/260922-3us-SUMMARY.md`;
 const SP0406 = `${SP_PLANNING}/phases/04-bulk-archive-downloads/04-06-SUMMARY.md`;
-const SP0101 = `${SP_PLANNING}/phases/01-portal-owned-identity-sessions/01-01-SUMMARY.md`;
+const FX0101 = fxPath('phases/01-member-sign-in-sessions/01-01-SUMMARY.md');
 const SP0106 = `${SP_PLANNING}/phases/01-portal-owned-identity-sessions/01-06-SUMMARY.md`;
 const SP_V10212 = `${SP_PLANNING}/milestones/v1.0-phases/02-storage-health-status/02-12-SUMMARY.md`;
 
@@ -141,23 +142,25 @@ describe('extractSummaryRun — labelore quick shapes', () => {
   });
 });
 
-describe.runIf(existsSync(SP_PLANNING))('extractSummaryRun — studio-portal shapes', () => {
-  it('0101: a three-kind task, three tasks, five rule-tagged deviations with Verification fields', () => {
-    const run = extractSummaryRun(bodyOf(SP0101));
+describe('extractSummaryRun — Lendshed shapes', () => {
+  it('01-01 (Lendshed): a three-kind task, three tasks, five rule-tagged deviations with Verification fields', () => {
+    const run = extractSummaryRun(bodyOf(FX0101));
     expect(run.tasks.map((t) => [t.n, t.hashes, t.kinds])).toEqual([
-      [1, ['dd2cb83'], ['feat', 'tracer', 'tdd']],
-      [2, ['ab6c6cb'], ['test']],
-      [3, ['c5b6960'], ['test']],
+      [1, ['3f9a1c2'], ['feat', 'tracer', 'tdd']],
+      [2, ['b84e07d'], ['test']],
+      [3, ['6c02ae5'], ['test']],
     ]);
     const devs = run.deviations?.items ?? [];
     expect(devs.map((d) => d.rule)).toEqual([3, 1, 3, 2, 3]);
     expect(devs.map((d) => d.found?.split(',')[0])).toEqual(['Task 1', 'Task 1', 'Task 1', 'Task 1', 'Task 3']);
-    expect(devs[0].fix).toContain('rand_core');
-    expect(devs[0].commit).toBe('dd2cb83');
+    expect(devs[0].fix).toContain('hash.ts');
+    expect(devs[0].commit).toBe('3f9a1c2');
     expect(devs[0].others.map((o) => o.label)).toEqual(['Verification']);
     expect(run.others.map((o) => o.title)).toEqual(['Issues Encountered']);
   });
+});
 
+describe.runIf(existsSync(SP_PLANNING))('extractSummaryRun — studio-portal shapes', () => {
   it('0406: a task table, two deviations, extras, a pending human section', () => {
     const run = extractSummaryRun(bodyOf(SP0406));
     expect(run.tasks.map((t) => [t.n, t.hashes[0]])).toEqual([[1, '07006bf'], [2, '251b946']]);

@@ -9,6 +9,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { SP_PLANNING } from '../helpers/studio-portal.ts';
+import { fxPath } from '../helpers/fixture-project.ts';
 import { buildArtifactUrl, buildPhaseUrl } from '../../src/presentation/routes.ts';
 import { SummaryHandler } from '../../src/planning-repo/handlers/summary.ts';
 import type { ArtifactRef, RawArtifact } from '../../src/planning-repo/types.ts';
@@ -35,7 +36,7 @@ const LB = '.planning';
 const P0501 = `${LB}/milestones/v1.1-phases/05-per-type-document-views/05-01-SUMMARY.md`;
 const P3US = `${LB}/milestones/v2.0-quick/260922-3us-build-sketch-004-b3-folded-chapters-docu/260922-3us-SUMMARY.md`;
 const SP0406 = `${SP_PLANNING}/phases/04-bulk-archive-downloads/04-06-SUMMARY.md`;
-const SP0101 = `${SP_PLANNING}/phases/01-portal-owned-identity-sessions/01-01-SUMMARY.md`;
+const FX0101 = fxPath('phases/01-member-sign-in-sessions/01-01-SUMMARY.md');
 const hasSp = existsSync(SP_PLANNING);
 
 function inputOf(
@@ -494,6 +495,35 @@ describe('requirementPreviews / lineageLinks', () => {
   });
 });
 
+describe('Lendshed summaries through the real handler', () => {
+  function fx(path: string, rel: string, slug: string, number: string): ComposedSummaryRun {
+    const input = inputOf(path, {
+      path: `.planning/phases/${rel}`,
+      location: 'phase',
+      phaseIdentity: { milestoneVersion: null, number, projectCode: null, slug },
+    });
+    return composeSummaryRun(input) as ComposedSummaryRun;
+  }
+
+  it('01-01: five deviations, four under Task 1 and one under Task 3, five new dependencies, a starting point', () => {
+    const model = fx(FX0101, '01-member-sign-in-sessions/01-01-SUMMARY.md', 'member-sign-in-sessions', '01');
+    const tasks = model.run.stops.filter((s) => s.kind === 'task');
+    expect(tasks.map((s) => s.deviations.length)).toEqual([4, 0, 1]);
+    expect(tasks[0].label).toBe('Task 1 · feat, tracer, tdd');
+    expect(model.patterns?.added).toHaveLength(5);
+    expect(model.patterns?.items).toHaveLength(6);
+    expect(model.outcome?.rows.map((r) => r.pills.map((p) => p.id))).toEqual([['D1'], ['D2'], ['D3'], ['D4'], ['D5']]);
+    expect(model.outcome?.rows[3].pills[0].human).toBe(true);
+    expect([model.outcome?.shipped, model.outcome?.proven, model.outcome?.human, model.outcome?.fixed]).toEqual([5, 5, 1, 5]);
+    expect(model.run.aside).toBe('3 tasks · 5 fixed on the way');
+    expect(model.lineage?.requires).toEqual([]);
+    const html = view(model, '.planning/phases/01-member-sign-in-sessions/01-01-SUMMARY.md');
+    expect(html).toContain('Nothing — a starting point');
+    expect(html).toContain('New dependencies · 5');
+    expect(html).toContain('<b>5</b> things shipped');
+  });
+});
+
 describe.runIf(hasSp)('studio-portal summaries through the real handler', () => {
   function sp(path: string, rel: string, slug: string, number: string): ComposedSummaryRun {
     const input = inputOf(path, {
@@ -529,23 +559,6 @@ describe.runIf(hasSp)('studio-portal summaries through the real handler', () => 
     expect(html).toContain('Waits on a human');
   });
 
-  it('0101: five deviations, four under Task 1 and one under Task 3, six new dependencies, a starting point', () => {
-    const model = sp(SP0101, '01-portal-owned-identity-sessions/01-01-SUMMARY.md', 'portal-owned-identity-sessions', '01');
-    const tasks = model.run.stops.filter((s) => s.kind === 'task');
-    expect(tasks.map((s) => s.deviations.length)).toEqual([4, 0, 1]);
-    expect(tasks[0].label).toBe('Task 1 · feat, tracer, tdd');
-    expect(model.patterns?.added).toHaveLength(6);
-    expect(model.patterns?.items).toHaveLength(6);
-    expect(model.outcome?.rows.map((r) => r.pills.map((p) => p.id))).toEqual([['D1'], ['D2'], ['D3'], ['D4'], ['D5']]);
-    expect(model.outcome?.rows[3].pills[0].human).toBe(true);
-    expect([model.outcome?.shipped, model.outcome?.proven, model.outcome?.human, model.outcome?.fixed]).toEqual([5, 5, 1, 5]);
-    expect(model.run.aside).toBe('3 tasks · 5 fixed on the way');
-    expect(model.lineage?.requires).toEqual([]);
-    const html = view(model, '.planning/phases/01-portal-owned-identity-sessions/01-01-SUMMARY.md');
-    expect(html).toContain('Nothing — a starting point');
-    expect(html).toContain('New dependencies · 6');
-    expect(html).toContain('<b>5</b> things shipped');
-  });
 });
 
 describe('3us (quick, labelore)', () => {
