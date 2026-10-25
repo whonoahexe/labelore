@@ -1,6 +1,7 @@
 // SEC-04: the masking rules in isolation. Same display form as GSD's own secrets.cjs; unlike GSD,
 // on/off values stay visible (D-10).
 import { describe, expect, it } from 'vitest';
+import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
 import { SECRET_CONFIG_KEYS, maskConfig, maskSecret, redactSecretText } from '../src/planning-repo/secret-mask.ts';
 
 describe('maskSecret', () => {
@@ -95,11 +96,17 @@ describe('redactSecretText', () => {
     expect(redactSecretText(raw)).toBe(raw);
   });
 
-  it('runs in linear time on a long unterminated string', () => {
-    const raw = `{"brave_search": "${'a\\"'.repeat(200_000)}`;
-    const started = performance.now();
-    redactSecretText(raw);
-    expect(performance.now() - started).toBeLessThan(2000);
+  it('grows no faster than linearly on a long unterminated string', () => {
+    // Growth ratio, not a millisecond budget (Pitfall 11): the unterminated string is built at size n and
+    // at 8n outside the timed region; a linear scan reads about 8, a quadratic one about 64.
+    const growth = measureGrowth({
+      make: (n) => `{"brave_search": "${'a\\"'.repeat(Math.ceil(n / 3))}`,
+      run: (raw) => void redactSecretText(raw),
+    });
+    expect(
+      growth.ratio,
+      `redactSecretText: ${growth.t1.toFixed(2)}ms at ${growth.n} characters, ${growth.t2.toFixed(2)}ms at 8x`,
+    ).toBeLessThan(GROWTH_LIMIT);
   });
 });
 
