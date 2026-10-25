@@ -44,7 +44,26 @@ Full detail: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
   3. After signing in, the live-status socket connects and an export download starts; after signing out, both are refused (SIGN-03, SIGN-04)
   4. Repeated wrong-password attempts are throttled, and a wrong username is indistinguishable from a wrong password (SIGN-05)
 
-**Plans**: 4/4 plans executed
+**Plans**: 6/6 plans executed
+
+Plans:
+**Wave 1**
+
+- [x] 01-01-PLAN.md — Tracer: one member signs in end to end (credential table, hashing, cookie, request check) and the kiosk passcode check is retired
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [x] 01-02-PLAN.md — Session lifecycle: sign-out, the forced new-password gate, socket tickets, route list
+- [x] 01-03-PLAN.md — The `lendctl` account tool (create, list, reset) and its first-steward proof
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [x] 01-04-PLAN.md — Sign-in throttling on two self-clearing counters, and the same-answer-for-wrong-name proof
+- [x] 01-05-PLAN.md — Router guard, bare frame and the `/sign-in` screen
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [x] 01-06-PLAN.md — `/set-password`, top bar name and sign-out, and the router change
 
 ### Phase 2: Roles & Permissions
 
@@ -58,6 +77,21 @@ Full detail: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
   3. Borrow, adjust and transfer are refused with a 403 where the member lacks the matching permission (ROLE-04)
 
 **Plans**: 5/5 plans executed
+
+Plans:
+**Wave 1**
+
+- [x] 02-01-PLAN.md — Tracer: one permission check end to end (migration, `access` gate, session gains role and grants, shed listing) behind a one-way schema decision gate
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [x] 02-02-PLAN.md — Shed-scoped enforcement across the remaining handlers and the transfer direction rule
+- [x] 02-03-PLAN.md — Steward API: member list, role switch, grant and revoke, and the last-steward guard
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [x] 02-04-PLAN.md — Page foundations: pure affordance rules and the client who-am-I provider
+- [x] 02-05-PLAN.md — The `/stewards` shell with the member list, role switch and permission grid
 
 ### Phase 3: Account Admin & Sessions
 
@@ -86,3 +120,18 @@ Full detail: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
   4. A loan that vanishes mid-export is reported by name rather than leaving a silently short file (EXPT-06)
 
 **Plans**: 2/5 plans executed
+
+Plans:
+**Wave 1**
+
+- [x] 04-01-PLAN.md — Prove a large download survives the tunnel and resumes after a drop.
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [x] 04-02-PLAN.md — Save and pre-check bounded, owner-scoped export lists.
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 04-03-PLAN.md — Build the single export file with cancel and exact skip reporting.
+- [ ] 04-04-PLAN.md — Deliver, recover and expire finished exports for their owner.
+- [ ] 04-05-PLAN.md — Add the loan log button, progress strip and failure notice.

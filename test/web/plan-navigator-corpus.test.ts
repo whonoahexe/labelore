@@ -1,13 +1,13 @@
 // quick-261006-iz6 (QKIZ6-10): real-corpus guards over every PLAN.md in this repo's `.planning/`
-// (excluding the sketches), fixtures/dense and `~/studio-portal/.planning/` — the ui-review-corpus idiom
-// (a missing studio-portal checkout skips its files). Every file must extract without throwing and
-// compose through the real handler; the rows pinned below match values independently confirmed with
-// grep / awk / git over the source files (task and list counts read by hand, dates from
-// `git log --diff-filter=A --follow --format=%aI`) — never copied from the extractor's own output.
+// (excluding the sketches), fixtures/dense and the made-up Lendshed project (D-01, D-05). A pinned row
+// whose file is missing throws, never skips (R7). Every file must extract without throwing and compose
+// through the real handler; the rows pinned below match values independently confirmed with grep / awk
+// over the source files (task and list counts read by hand; Lendshed dates are the ROWS entry's own
+// addedAt, never git history) — never copied from the extractor's own output.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { basename, join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { SP_PLANNING } from '../helpers/studio-portal.ts';
+import { FX_PLANNING, fxPath } from '../helpers/fixture-project.ts';
 import { PlanHandler } from '../../src/planning-repo/handlers/plan.ts';
 import type { ArtifactLocation, ArtifactRef, RawArtifact } from '../../src/planning-repo/types.ts';
 import { composePlanNavigator } from '../../src/web/views/plan-navigator.ts';
@@ -105,7 +105,6 @@ interface Row {
 }
 
 const LB = REPO_PLANNING;
-const SP = SP_PLANNING;
 
 const ROWS: Row[] = [
   {
@@ -170,19 +169,19 @@ const ROWS: Row[] = [
   },
   {
     key: '0106',
-    root: SP,
-    file: 'phases/01-portal-owned-identity-sessions/01-06-PLAN.md',
-    addedAt: '2026-08-03T22:12:52+05:30',
+    root: FX_PLANNING,
+    file: 'phases/01-member-sign-in-sessions/01-06-PLAN.md',
+    addedAt: '2026-03-27T09:00:00+00:00',
     expect: {
-      eyebrow: 'Plan 01-06 · Phase 1 · Portal owned identity sessions',
-      title: 'Close the loop',
+      eyebrow: 'Plan 01-06 · Phase 1 · Member sign in sessions',
+      title: 'Seal the handover',
       chips: ['Execute', '1 checkpoint', 'Executed'],
-      triggers: [3, 8, 3],
-      stats: ['3', 'low', '54k'],
+      triggers: [3, 7, 3],
+      stats: ['3', 'low', '48k'],
       types: ['auto', 'auto', 'checkpoint:human-action'],
       gates: [null, null, 'blocking'],
       tdd: [true, false, false],
-      done: [4, 3],
+      done: [3, 4],
       strip: [
         'Must-haves',
         'Threat model',
@@ -198,20 +197,20 @@ const ROWS: Row[] = [
         ['Pre-condition', 'Read first'],
         ['Read first', 'Resume signal', 'After resume'],
       ],
-      planned: '3 Aug 2026',
+      planned: '27 Mar 2026',
       plannedSource: 'git',
       objectiveRows: [true, true, true],
-      restStarts: 'Give a temporary-password holder',
+      restStarts: 'Give a member holding',
     },
   },
   {
     key: '0402',
-    root: SP,
-    file: 'phases/04-bulk-archive-downloads/04-02-PLAN.md',
-    addedAt: '2026-08-21T10:00:00+05:30',
+    root: FX_PLANNING,
+    file: 'phases/04-bulk-loan-export/04-02-PLAN.md',
+    addedAt: '2026-04-06T09:00:00+00:00',
     expect: {
-      eyebrow: 'Plan 04-02 · Phase 4 · Bulk archive downloads',
-      title: 'Persist the irreversible ordered-manifest contract and enforce authoritative preflight',
+      eyebrow: 'Plan 04-02 · Phase 4 · Bulk loan export',
+      title: 'Save the one-way ordered-list contract and enforce a server-side pre-check',
       chips: ['Execute', '1 checkpoint', 'Executed'],
       triggers: [1, 8, 2],
       stats: ['2', '—', '—'],
@@ -230,19 +229,19 @@ const ROWS: Row[] = [
         'Frontmatter',
       ],
       sourceRows: [['Read first', 'Resume signal'], ['Read first']],
-      planned: '21 Aug 2026',
+      planned: '6 Apr 2026',
       plannedSource: 'git',
       objectiveRows: [false, true, true],
     },
   },
   {
-    key: 'sya',
-    root: SP,
-    file: 'quick/260802-sya-improve-navbar-visual-design-to-match-br/260802-sya-PLAN.md',
+    key: 't8m',
+    root: FX_PLANNING,
+    file: 'quick/260402-t8m-restyle-the-top-bar-to-match-the-brand/260402-t8m-PLAN.md',
     sibling: true,
     expect: {
-      eyebrow: 'Quick plan 260802-sya',
-      title: 'Make the header stop reading as undesigned chrome, using only the design language already present in this codebase',
+      eyebrow: 'Quick plan 260402-t8m',
+      title: 'Make the top bar stop looking like unfinished chrome, using only the visual language already in this codebase',
       chips: ['Execute', '1 checkpoint', 'Executed'],
       triggers: [0, 1, 1],
       stats: ['3', 'low', '40k'],
@@ -252,7 +251,7 @@ const ROWS: Row[] = [
       done: [6, 7],
       strip: ['Must-haves', 'Threat model', 'Context files', 'Execution context', 'Constraints', 'Output', 'Wrapper warnings · 2', 'Frontmatter'],
       sourceRows: [['Read first'], ['Read first'], ['Resume signal']],
-      planned: '2 Aug 2026',
+      planned: '2 Apr 2026',
       plannedSource: 'quick-id',
       objectiveRows: [true, true, true],
     },
@@ -260,7 +259,7 @@ const ROWS: Row[] = [
   {
     key: 'q528',
     root: LB,
-    file: 'quick/261003-528-build-sketch-018-b-as-the-ui-review-page-view-use-gsd-browse/261003-528-PLAN.md',
+    file: 'milestones/v2.0-quick/261003-528-build-sketch-018-b-as-the-ui-review-page-view-use-gsd-browse/261003-528-PLAN.md',
     sibling: true,
     expect: {
       eyebrow: 'Quick plan 261003-528',
@@ -330,6 +329,7 @@ const ROWS: Row[] = [
 
 function compose(row: Row): { plan: ComposedPlanNavigator; built: Built } {
   const abs = join(row.root, row.file);
+  if (!existsSync(abs)) throw new Error(`PLAN corpus row ${row.key}: file missing at ${abs}`);
   const built = refFor(row.root, abs) as Built;
   const content = readFileSync(abs, 'utf8');
   const raw: RawArtifact = { path: built.path, content, mtimeMs: 0, size: content.length };
@@ -355,8 +355,7 @@ function compose(row: Row): { plan: ComposedPlanNavigator; built: Built } {
 
 describe('PLAN corpus — pinned rows', () => {
   for (const row of ROWS) {
-    const available = existsSync(join(row.root, row.file));
-    it.runIf(available)(`${row.key} composes with the pinned values`, () => {
+    it(`${row.key} composes with the pinned values`, () => {
       const { plan } = compose(row);
       const want = row.expect;
       expect(plan.intro.eyebrow).toBe(want.eyebrow);
@@ -379,62 +378,64 @@ describe('PLAN corpus — pinned rows', () => {
     });
   }
 
-  it.runIf(existsSync(join(LB, ROWS[0].file)))('0501 counts its files and acceptance items per task', () => {
+  it('0501 counts its files and acceptance items per task', () => {
     const { plan } = compose(ROWS[0]);
     expect(plan.tasks.map((task) => task.sub)).toEqual(['T1 · Tracer · 13 files', 'T2 · Auto · 6 files']);
     expect(plan.tasks.map((task) => task.tabs.find((tab) => tab.key === 'side')?.count)).toEqual([10, 6]);
   });
 
-  it.runIf(existsSync(join(SP, ROWS[2].file)))('0106 reads Done when from the top-level verification, and T3 reads as an Action checkpoint', () => {
+  it('0106 reads Done when from the top-level verification, and T3 reads as an Action checkpoint', () => {
     const { plan } = compose(ROWS[2]);
-    expect(plan.doneWhen?.checks.items).toHaveLength(3);
+    expect(plan.doneWhen?.checks.items).toHaveLength(4);
     expect(plan.tasks[2].sub).toBe('T3 · Action · waits');
     expect(plan.tasks[2].tabs.map((tab) => tab.label)).toEqual(['Action', 'Afterwards']);
   });
 
-  it.runIf(existsSync(join(SP, ROWS[3].file)))('04-02 reads its inline options as two cards and keeps no Objective row', () => {
+  it('04-02 reads its inline options as two cards and keeps no Objective row', () => {
     const { plan } = compose(ROWS[3]);
     const options = plan.tasks[0].sections.main.find((section) => section.kind === 'options');
     expect(options).toMatchObject({ kind: 'options' });
     expect((options as { options: { name: string | null }[] }).options.map((option) => option.name)).toEqual([
-      expect.stringContaining('Proceed'),
-      expect.stringContaining('Stop'),
+      expect.stringContaining('Go ahead'),
+      expect.stringContaining('Hold'),
     ]);
     expect(plan.objective.rest).toBeNull();
     expect(plan.tasks[0].sub).toBe('T1 · Decision · waits');
   });
 
-  it.runIf(existsSync(join(SP, ROWS[4].file)))('sya derives the name of its human-verify task from what-built', () => {
+  it('t8m derives the name of its human-verify task from what-built', () => {
     const { plan } = compose(ROWS[4]);
-    expect(plan.tasks[2].name.startsWith('A visual pass over')).toBe(true);
+    expect(plan.tasks[2].name.startsWith('A hands-on check of')).toBe(true);
   });
 
-  it.runIf(existsSync(join(SP, 'phases/02-roles-permission-enforcement/02-01-PLAN.md')))(
-    'a decision checkpoint with structured <option> children reads name / pros / cons',
-    () => {
-      const abs = join(SP, 'phases/02-roles-permission-enforcement/02-01-PLAN.md');
-      const built = refFor(SP, abs) as Built;
-      const content = readFileSync(abs, 'utf8');
-      const parsed = PlanHandler.parse({ path: built.path, content, mtimeMs: 0, size: content.length }, built.ref);
-      const tasks = (parsed.structured as { plan: { tasks: { type: string; fields: { options: { items: { name: string | null; pros: string | null; cons: string | null }[] } | null } }[] } }).plan.tasks;
-      const decision = tasks.find((task) => task.type === 'checkpoint:decision');
-      expect(decision?.fields.options?.items.length).toBeGreaterThanOrEqual(2);
-      expect(decision?.fields.options?.items[0].name).toContain('Proceed as planned');
-      expect(decision?.fields.options?.items[0].pros).toBeTruthy();
-      expect(decision?.fields.options?.items[0].cons).toBeTruthy();
-    },
-  );
+  it('a decision checkpoint with structured <option> children reads name / pros / cons', () => {
+    const rel = 'phases/02-roles-and-permissions/02-01-PLAN.md';
+    const abs = fxPath(rel);
+    const built = refFor(FX_PLANNING, abs) as Built;
+    const content = readFileSync(abs, 'utf8');
+    const parsed = PlanHandler.parse({ path: built.path, content, mtimeMs: 0, size: content.length }, built.ref);
+    const tasks = (parsed.structured as { plan: { tasks: { type: string; fields: { options: { items: { name: string | null; pros: string | null; cons: string | null }[] } | null } }[] } }).plan.tasks;
+    const decision = tasks.find((task) => task.type === 'checkpoint:decision');
+    expect(decision?.fields.options?.items.length).toBe(2);
+    expect(decision?.fields.options?.items[0].name).toContain('Go ahead as drafted');
+    expect(decision?.fields.options?.items[0].pros).toBeTruthy();
+    expect(decision?.fields.options?.items[0].cons).toBeTruthy();
+  });
 });
 
 describe('PLAN corpus — every plan extracts and composes', () => {
   const files: { planning: string; abs: string }[] = [
     ...walk(REPO_PLANNING).map((abs) => ({ planning: REPO_PLANNING, abs })),
     ...walk(DENSE_PLANNING).map((abs) => ({ planning: DENSE_PLANNING, abs })),
-    ...walk(SP_PLANNING).map((abs) => ({ planning: SP_PLANNING, abs })),
+    ...walk(FX_PLANNING).map((abs) => ({ planning: FX_PLANNING, abs })),
   ];
 
   it('finds a real corpus', () => {
-    expect(files.length).toBeGreaterThan(20);
+    // Per corpus, so a sibling plan adding Lendshed files cannot move a pin (README R6, R8).
+    const under = (root: string): number => files.filter((file) => file.planning === root).length;
+    expect(under(FX_PLANNING)).toBeGreaterThanOrEqual(5);
+    expect(under(REPO_PLANNING)).toBeGreaterThanOrEqual(20);
+    expect(under(DENSE_PLANNING)).toBeGreaterThanOrEqual(1);
   });
 
   it('never throws, and composes whenever the file holds a task', () => {
