@@ -170,12 +170,60 @@ Which phases cover which requirements. Filled in when the roadmap is created.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
+| TEST-01 | Phase 6 | Pending |
+| TEST-02 | Phase 6 | Pending |
+| TEST-03 | Phase 6 | Pending |
+| TEST-04 | Phase 6 | Pending |
+| SEC-01 | Phase 6 | Pending |
+| SEC-02 | Phase 6 | Pending |
+| SEC-03 | Phase 6 | Pending |
+| SEC-04 | Phase 6 | Pending |
+| SEC-05 | Phase 8 | Pending |
+| DATA-07 | Phase 7 | Pending |
+| DATA-08 | Phase 7 | Pending |
+| VIEW-07 | Phase 9 | Pending |
+| VIEW-08 | Phase 9 | Pending |
+| VIEW-09 | Phase 9 | Pending |
+| VIEW-10 | Phase 9 | Pending |
+| VIEW-11 | Phase 10 | Pending |
+| VIEW-12 | Phase 10 | Pending |
+| VIEW-13 | Phase 10 | Pending |
+| VIEW-14 | Phase 11 | Pending |
+| VIEW-15 | Phase 11 | Pending |
+| VIEW-16 | Phase 11 | Pending |
+| VIEW-17 | Phase 11 | Pending |
+| VIEW-18 | Phase 11 | Pending |
+| VIEW-19 | Phase 11 | Pending |
+| VIEW-20 | Phase 11 | Pending |
+| VIEW-21 | Phase 10 | Pending |
+| SET-01 | Phase 12 | Pending |
+| SRC-01 | Phase 12 | Pending |
+| SRC-02 | Phase 12 | Pending |
+| TGT-09 | Phase 10 | Pending |
+| NAV-09 | Phase 7 | Pending |
+| NAV-10 | Phase 7 | Pending |
+| NAV-11 | Phase 7 | Pending |
+| NAV-08 | Phase 13 | Pending |
+| NAV-12 | Phase 13 | Pending |
+| NAV-13 | Phase 13 | Pending |
+| FIND-06 | Phase 13 | Pending |
+| FIND-07 | Phase 13 | Pending |
+| FIND-08 | Phase 13 | Pending |
+| FIND-09 | Phase 13 | Pending |
+| PLAT-02 | Phase 8 | Pending |
+| PLAT-05 | Phase 8 | Pending |
+| PLAT-06 | Phase 8 | Pending |
+| PLAT-07 | Phase 8 | Pending |
+| PLAT-08 | Phase 8 | Pending |
+| UI-07 | Phase 12 | Pending |
+| UI-08 | Phase 12 | Pending |
+| UI-09 | Phase 12 | Pending |
 
 **Coverage:**
 - v2.1 requirements: 48 total
-- Mapped to phases: 0
-- Unmapped: 48
+- Mapped to phases: 48
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-10-25*
-*Last updated: 2026-10-25 after initial definition*
+*Last updated: 2026-10-25 after v2.1 roadmap revision (8 phases, Phases 6-13)*

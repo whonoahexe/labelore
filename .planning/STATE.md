@@ -2,11 +2,13 @@
 gsd_state_version: "1.0"
 milestone: v2.1
 milestone_name: Wayfinding
+current_phase: 6
 status: planning
-last_updated: "2026-10-25T08:54:31.991Z"
+last_updated: "2026-10-25T09:31:08.000Z"
 last_activity: 2026-10-25
+last_activity_desc: Roadmap for milestone v2.1 Wayfinding revised to 8 phases (Phases 6-13)
 progress:
-  total_phases: 0
+  total_phases: 8
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,14 +22,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-25)
 
 **Core value:** Open the dashboard on a GSD project and immediately know where the work stands and where any planning artifact lives — without reading a single file by hand.
-**Current focus:** Planning next milestone (`/gsd-new-milestone`) — candidates in PROJECT.md Active
+**Current focus:** Milestone v2.1 Wayfinding, Phases 6-13 (8 phases). Next up: Phase 6, Trustworthy Tests and Security Baseline
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-10-25 — Milestone v2.1 started
+Phase: 6 (Trustworthy Tests and Security Baseline)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-10-25 — Roadmap for v2.1 revised to 8 phases (6-13), 48/48 requirements mapped
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -93,17 +97,23 @@ milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) a
 - [Phase 05]: 05-04: pickActiveEntry + useActiveSection (single IntersectionObserver) drive one active outline entry; below 58rem a document-outline-trigger Popover replaces the old in-flow rule (RESEARCH Pitfall 5). — One pure picker + one hook seam, shared by Source and View modes (D-11); D-12's narrow disclosure reuses the wide column's own <ol> markup via an extracted OutlineList so the two presentations cannot drift.
 - [Phase 05]: 05-05: fallback pattern for unregistered kinds (VIEW-06) — resolveViewFor folds fallback.ts's synthesized structural-read manifest into the one dispatch path ArtifactPage calls; resolveView stays registry-only for 05-06's completeness test. — An unrecognized artifact.kind still gets a real ViewManifest (nested frontmatter -> headed sections -> full document), never a null branch, so the page has exactly one render path and a quiet, honest 'Unrecognized type' marker rather than a silent fallback to the old source reader.
 - [Phase 05]: 05-06: Registered the remaining 15 view manifests (all 18 VIEW_KINDS complete) with a bidirectional registry-completeness test, ran the UI-06 conformance sweep, and fixed a CommonMark HTML-block bug in ContextHandler where the four underscore-free CONTEXT.md wrapper tags (domain/decisions/specifics/deferred) swallowed the immediately-following heading line — the context manifest's own promotion order (Implementation Decisions first) now proves out against the real corpus.
+- [v2.1 roadmap]: Phase order follows research: test health and security first, then file recognition with the URL scheme (one phase, because the folder table drives both), then several projects, then page families most-seen first, then settings and Source mode, then search and the palette last. The codebase-only project requirement sits whole with the codebase-map pages, after the switcher, so a map-only project opens from the command line, the switcher and the folder scan at once. The made-up example rule lands with the spec and check pages, the first phase that builds types never seen on this machine. The three v1.1 UI-review items fold into the Source mode phase, which touches the same outline chrome. The roadmap is capped at eight phases at the user's request, so the page families are merged into three phases: review, audit and root documents (Phase 9); codebase map, specification and check pages (Phase 10); and exploration, handoff, report and workstream pages (Phase 11), with workstreams built last within it.
 
 ### Pending Todos
 
 - Per-type surface polish, one quick task per artifact type against the Phase 5 view registry (05-UAT deferred follow-up)
-- ReDoS timing tests for section-projection and mention scanners; standing `dangerouslySetInnerHTML` guard on `blocks.tsx` (05-SECURITY notes 1–2)
-- Cap View-mode outline entries or amend T-05-11 (05-SECURITY note 3)
-- UI-review polish: opaque narrow outline trigger, depth markers on plan task index, primary-coloured trigger chevron (05-UI-REVIEW)
+- ReDoS timing tests for section-projection and mention scanners; standing `dangerouslySetInnerHTML` guard on `blocks.tsx` (05-SECURITY notes 1–2) — now Phase 6 (SEC-01, SEC-02)
+- Cap View-mode outline entries or amend T-05-11 (05-SECURITY note 3) — now Phase 6 (SEC-03)
+- UI-review polish: opaque narrow outline trigger, depth markers on plan task index, primary-coloured trigger chevron (05-UI-REVIEW) — now Phase 12 (UI-07, UI-08, UI-09)
 
 ### Blockers/Concerns
 
-None.
+None blocking. Open scope and policy questions from research, to settle during the named phase's discussion:
+
+- Workstreams, intel, graphs, reports and forensics have no real example on this machine; research recommended deferring them. They stay in scope in Phase 11, the last page phase, with workstreams built last within it, so they can be cut cleanly.
+- Slug identity: research recommends persisting each project's URL name and deduplicating by canonical path (Phase 8).
+- Loaded-project limit: research suggests lazy loading with a bounded cache starting at five projects, decided by a memory test (Phase 8).
+- Folder scan: research recommends depth 3, continuing below a found project, and skipping fixture, worktree and build folders (Phase 8).
 
 ### Quick Tasks Completed
 
@@ -130,10 +140,10 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-09-25
-Stopped at: Quick task 260925-3ug complete (all 3 tasks committed; human visual check of the six screenshots pending) — awaiting /gsd-new-milestone
+Last session: 2026-10-25
+Stopped at: v2.1 roadmap revised to 8 phases (Phases 6-13); ready to plan Phase 6
 Resume file: None
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- Discuss or plan Phase 6 with /gsd-discuss-phase 6 or /gsd-plan-phase 6
