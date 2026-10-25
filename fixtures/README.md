@@ -158,6 +158,18 @@ proven against (per CONTEXT.md D-01, "reversibility: costly").
 
 ---
 
+## `test/fixtures/lendshed/` — the made-up project most tests read
+
+Authored across phase 06 and kept outside `fixtures/` because tests (and the Playwright server on port
+4198) read it as a whole project. Every file is made up (a neighbourhood tool library, `lendshed.example`);
+its README holds the fiction, the authoring rules R1-R9 and a quirk ledger with one row per file naming
+the shape it stands for and the quirks a test relies on. The rule that no committed test reads a real
+project on this machine (manual smoke only, never a test input) is enforced by `test/no-skips.test.ts`
+(home-directory calls, real-project paths, skips) and `test/fixture-leak.test.ts` (private names, hosts
+and file names in fixtures, tests and the app source). See `test/fixtures/lendshed/README.md`.
+
+---
+
 ## Deliberate Defect Register (D-02)
 
 Three deliberate corruptions sit inside `fixtures/dense/`, among healthy files, so isolation is
