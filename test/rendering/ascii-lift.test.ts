@@ -9,6 +9,8 @@ import { fxPath } from '../helpers/fixture-project.ts';
 import { extractResearchBriefing } from '../../src/planning-repo/handlers/research-briefing.ts';
 import { isLiftableDiagram, liftDiagram } from '../../src/rendering/ascii-lift.ts';
 import type { LiftCard, LiftFrame, LiftKind, LiftedFigure } from '../../src/rendering/ascii-lift.ts';
+import { GRID_MAX_CELLS, GRID_SHAPES, gridOfCells } from '../helpers/diagram-grids.ts';
+import { GROWTH_LIMIT, measureGrowth } from '../helpers/growth.ts';
 
 const REPO = new URL('../../', import.meta.url);
 
@@ -156,12 +158,9 @@ describe('liftDiagram — caps and cost (T-3x3-02)', () => {
     expect(liftDiagram(Array.from({ length: 250 }, () => 'x'.repeat(300)).join('\n'))).not.toBeNull();
   });
 
-  it('a 250×300 grid of ┌─ runs lifts in under 250 ms', () => {
-    const grid = Array.from({ length: 250 }, () => '┌─'.repeat(150)).join('\n');
-    const started = performance.now();
-    const figure = liftDiagram(grid);
-    expect(performance.now() - started).toBeLessThan(250);
-    expect(figure).not.toBeNull();
+  it('the largest ┌─ grid inside the caps still lifts', () => {
+    expect(liftDiagram(gridOfCells(GRID_SHAPES[0], GRID_MAX_CELLS))).not.toBeNull();
+    expect(liftDiagram(Array.from({ length: 250 }, () => '┌─'.repeat(150)).join('\n'))).not.toBeNull();
   });
 
   it('a grid of tiny boxes past the box cap renders as plain text (null)', () => {
@@ -527,28 +526,27 @@ describe('liftDiagram — box-less step cards (JZT-D1)', () => {
   });
 });
 
+// Every grid is sized by cell count and kept inside LIFT_MAX_ROWS by LIFT_MAX_COLS, so the 8x step times
+// the walks themselves and never the cap that returns null before any walk (growth.ts, rule 2).
 describe('liftDiagram — cost bounds on the new walks (T-jzt-01)', () => {
-  it('a grid of ┌┐ rows over ││ rows (heavy on edge walks) returns within 250 ms', () => {
-    const grid = Array.from({ length: 250 }, (_, i) => (i % 2 === 0 ? '┌┐'.repeat(150) : '││'.repeat(150))).join('\n');
-    const started = performance.now();
-    liftDiagram(grid);
-    expect(performance.now() - started).toBeLessThan(250);
-  });
+  for (const shape of GRID_SHAPES) {
+    it(`${shape.name}: lifting grows no faster than linearly with the grid area`, () => {
+      const { ratio } = measureGrowth<string>({
+        startSize: 1000,
+        maxSize: GRID_MAX_CELLS,
+        floorMs: 0,
+        make: (cells) => gridOfCells(shape, cells),
+        run: (grid) => {
+          liftDiagram(grid);
+        },
+      });
+      expect(ratio).toBeLessThan(GROWTH_LIMIT);
+    });
+  }
 
-  it('a 250×300 grid of "ab  " runs returns within 250 ms', () => {
-    const grid = Array.from({ length: 250 }, () => 'ab  '.repeat(75)).join('\n');
-    const started = performance.now();
-    liftDiagram(grid);
-    expect(performance.now() - started).toBeLessThan(250);
-  });
-
-  it('open-left tops that never close cost a bounded walk', () => {
-    const grid = Array.from({ length: 250 }, (_, i) =>
-      i % 2 === 0 ? '┌─┐ '.repeat(75) : '  │ '.repeat(75),
-    ).join('\n');
-    const started = performance.now();
-    liftDiagram(grid);
-    expect(performance.now() - started).toBeLessThan(250);
+  it('the 250×300 grids at the caps still return', () => {
+    const tops = Array.from({ length: 250 }, (_, i) => (i % 2 === 0 ? '┌─┐ '.repeat(75) : '  │ '.repeat(75))).join('\n');
+    expect(() => liftDiagram(tops)).not.toThrow();
   });
 });
 
