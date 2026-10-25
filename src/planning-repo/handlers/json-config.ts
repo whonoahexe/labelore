@@ -7,13 +7,14 @@
 // Secrets (SEC-04, D-09..D-12): config.json only. The values of brave_search, firecrawl and
 // exa_search are masked here, at read time, in both the parsed data and the body, so the raw file
 // view, the file page, the presentation payload and the search index (which indexes this body)
-// only ever see the masked form. A config.json that holds none of those keys as strings is left
+// only ever see the masked form. A config.json that fails to parse has those keys' string values
+// redacted in its raw text instead. A config.json that holds none of those keys as strings is left
 // exactly as read. HANDOFF.json and estimation-calibration.json are returned unchanged: the
 // decision scopes masking to config.json. Nothing is written back to the target.
 import { basename } from 'node:path';
 import type { ArtifactHandler, RawArtifact, ArtifactRef } from '../types.ts';
 import { tryParseJson } from '../frontmatter.ts';
-import { maskConfig } from '../secret-mask.ts';
+import { maskConfig, redactSecretText } from '../secret-mask.ts';
 
 const JSON_ARTIFACT_NAMES = new Set(['config.json', 'HANDOFF.json', 'estimation-calibration.json']);
 
@@ -24,7 +25,11 @@ export const JsonConfigHandler: ArtifactHandler = {
     const result = tryParseJson(raw.content);
     let frontmatter = result.data;
     let body = raw.content;
-    if (basename(ref.path) === 'config.json') {
+    if (basename(ref.path) === 'config.json' && result.warning) {
+      // The file did not parse, so there is no object to mask: redact the secret keys' string
+      // values in the raw text instead. The frontmatter stays empty and the warning is kept.
+      body = redactSecretText(raw.content);
+    } else if (basename(ref.path) === 'config.json') {
       const masked = maskConfig(result.data);
       if (masked.masked) {
         frontmatter = masked.data as Record<string, unknown>;
