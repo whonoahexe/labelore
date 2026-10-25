@@ -170,17 +170,17 @@ describe('the rail of a quick note', () => {
       ['Words', '108', null],
     ]);
   });
-  it('lsk: the real todo makes it Todo open, the ledger has two missing Open question rows and the age is under a day', () => {
+  it('lsk: the completed todo makes it Shipped, the ledger has two missing Open question rows and the age is under a day', () => {
     const model = page('lsk');
     expect(model.rail.title).toBe('Sketches page in labelore');
-    expect(model.rail.stage).toEqual({ key: 'open', text: 'Todo open' });
+    expect(model.rail.stage).toEqual({ key: 'done', text: 'Shipped' });
     expect([model.rail.big.value, model.rail.big.sub]).toEqual(['6', '1 ask · 1 problem · 2 open questions · 2 other']);
-    expect(model.gist.line).toBe('Became a todo, still open.');
+    expect(model.gist.line).toBe('Became a todo and shipped.');
     expect(statsOf(model)).toEqual([
       ['Noted', '23 Oct 2026 · 03:11', null],
       ['Age', 'less than a day', null],
       ['Promoted', 'Yes', null],
-      ['Todo', 'Pending', 'in-flight'],
+      ['Todo', 'Done', 'complete'],
       ['Mentions', '3', null],
       ['Words', '240', null],
     ]);
@@ -471,7 +471,7 @@ describe('static markup of a quick note', () => {
     expect(html).toContain('<code>.planning/sketches/</code>');
     expect(count(html, '<span class="view-note-label" data-tone="missing">Open question</span>')).toBe(2);
     expect(count(html, '<div class="view-note-row" data-tone="missing">')).toBe(2);
-    expect(html).toContain('<span class="view-note-stage" data-stage="open"><i aria-hidden="true"></i>Todo open</span>');
+    expect(html).toContain('<span class="view-note-stage" data-stage="done"><i aria-hidden="true"></i>Shipped</span>');
   });
 
   it('star: the whole-note line, a Where it went ledger holding the card, no toggle and no card in the rail', () => {

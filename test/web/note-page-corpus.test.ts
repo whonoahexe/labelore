@@ -226,7 +226,7 @@ describe('the sketch notes keep the sketch values', () => {
     ]);
     const stage = (key: keyof typeof NOTE_FILES): string | undefined => find(key).model?.rail.stage.text;
     expect(['dcrop', 'dround', 'dsfx', 'dcall', 'dback', 'pcap', 'star', 'sundo', 'lsk'].map((key) => stage(key as keyof typeof NOTE_FILES))).toEqual([
-      'Shipped', 'Shipped', 'Shipped', 'Shipped', 'Untraced', 'Untraced', 'Todo open', 'Still a note', 'Todo open',
+      'Shipped', 'Shipped', 'Shipped', 'Shipped', 'Untraced', 'Untraced', 'Todo open', 'Still a note', 'Shipped',
     ]);
   });
 

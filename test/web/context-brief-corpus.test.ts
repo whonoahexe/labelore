@@ -50,7 +50,7 @@ const CASES: CorpusCase[] = [
   { label: 'oae', path: '.planning/milestones/v1.1-quick/260912-oae-revamp-progress-panel-to-show-phase-and-/260912-oae-CONTEXT.md', isRepoFile: true, decisions: 9, notes: 0, open: 0, amendments: 0 },
   { label: 'o2o', path: '.planning/milestones/v1.1-quick/260916-o2o-remove-all-the-loading-state-text-keep-t/260916-o2o-CONTEXT.md', isRepoFile: true, decisions: 6, notes: 0, open: 0, amendments: 0 },
   { label: 'ns4', path: '.planning/milestones/v1.1-quick/260917-ns4-redesign-the-traceability-page-s-ui-ux-c/260917-ns4-CONTEXT.md', isRepoFile: true, decisions: 3, notes: 0, open: 0, amendments: 0 },
-  { label: 'jxp', path: '.planning/quick/260923-jxp-discussion-log-page-review-fixes-on-the-/260923-jxp-CONTEXT.md', isRepoFile: true, decisions: 15, notes: 0, open: 0, amendments: 0 },
+  { label: 'jxp', path: '.planning/milestones/v2.0-quick/260923-jxp-discussion-log-page-review-fixes-on-the-/260923-jxp-CONTEXT.md', isRepoFile: true, decisions: 15, notes: 0, open: 0, amendments: 0 },
 ];
 
 async function loadBody(testCase: CorpusCase): Promise<string> {
