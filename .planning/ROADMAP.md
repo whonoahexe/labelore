@@ -91,13 +91,13 @@ any page is built to show them.
    raw file, on its file page and in search results and snippets. The full value never reaches the
    search index, so every page built later inherits the masking. *(SEC-04)*
 
-**Plans**: 2/22 plans executed
+**Plans**: 3/22 plans executed
 
 Plans:
 **Wave 1**
 - [x] 06-01-PLAN.md — Tracer: the made-up Lendshed project, its throwing loader, the fail-loud 4198 browser server, the zero-skip gate and the shared fixture server, proven on one CONTEXT file
 - [x] 06-02-PLAN.md — Growth harness, linear link scanner, growth tests for the section and mention scanners
-- [ ] 06-03-PLAN.md — View-mode outline capped at 18 with a "+N more sections" row; standing raw-HTML guard
+- [x] 06-03-PLAN.md — View-mode outline capped at 18 with a "+N more sections" row; standing raw-HTML guard
 - [ ] 06-04-PLAN.md — config.json secrets masked at read time for presentation, file page and search
 
 **Wave 2** *(blocked on Wave 1 completion)*
@@ -371,7 +371,7 @@ file, ID or project.
 | 1–4 | v1.0 | 30/30 | Archived | 2026-09-10 |
 | 5 | v1.1 | 6/6 | Archived | 2026-09-21 |
 | quick tasks | v2.0 | 40/40 | Archived | 2026-10-25 |
-| 6. Trustworthy Tests and Security Baseline | v2.1 | 2/22 | In Progress | - |
+| 6. Trustworthy Tests and Security Baseline | v2.1 | 3/22 | In Progress | - |
 | 7. Recognised Files and Readable URLs | v2.1 | 0/TBD | Not started | - |
 | 8. Several Projects and a Switcher | v2.1 | 0/TBD | Not started | - |
 | 9. Review, Audit and Root Document Pages | v2.1 | 0/TBD | Not started | - |

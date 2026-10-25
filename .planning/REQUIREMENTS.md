@@ -26,9 +26,9 @@ v1.0 and v1.1; new categories start at 01.
 - [x] **SEC-01**: Timing tests show the section scanner, the mention scanner and the link scanner stay linear on
       huge or hostile input (thousands of table rows, very long lines, long runs of capitals or digits), and the
       link scanner is fixed so it does
-- [ ] **SEC-02**: A standing test fails if web code injects raw HTML anywhere other than the one allowlisted
+- [x] **SEC-02**: A standing test fails if web code injects raw HTML anywhere other than the one allowlisted
       rendering site
-- [ ] **SEC-03**: View mode caps the number of outline entries the way Source mode does
+- [x] **SEC-03**: View mode caps the number of outline entries the way Source mode does
 - [ ] **SEC-04**: Secrets in `config.json` (API keys and similar) are masked everywhere Labelore shows or indexes
       it: the settings page, the raw file and search
 - [ ] **SEC-05**: Endpoints that accept a path, an `ssh://` target or a settings change refuse requests from other
@@ -175,8 +175,8 @@ Which phases cover which requirements. Filled in when the roadmap is created.
 | TEST-03 | Phase 6 | Pending |
 | TEST-04 | Phase 6 | Pending |
 | SEC-01 | Phase 6 | Complete |
-| SEC-02 | Phase 6 | Pending |
-| SEC-03 | Phase 6 | Pending |
+| SEC-02 | Phase 6 | Complete |
+| SEC-03 | Phase 6 | Complete |
 | SEC-04 | Phase 6 | Pending |
 | SEC-05 | Phase 8 | Pending |
 | DATA-07 | Phase 7 | Pending |

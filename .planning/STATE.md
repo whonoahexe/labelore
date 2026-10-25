@@ -5,16 +5,16 @@ milestone_name: Wayfinding
 current_phase: 06
 current_phase_name: Trustworthy Tests and Security Baseline
 status: executing
-stopped_at: Completed 06-02-PLAN.md
-last_updated: "2026-10-25T13:44:07.943Z"
+stopped_at: Completed 06-03-PLAN.md
+last_updated: "2026-10-25T13:56:34.684Z"
 last_activity: 2026-10-25
 last_activity_desc: Phase 06 execution started
-state_head: fd57059624572eabc15c6725db955db85d0d55f6
+state_head: 9e347d80bacec377738b689b8cc93eb86a79738d
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 22
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-10-25)
 ## Current Position
 
 Phase: 06 (Trustworthy Tests and Security Baseline) — EXECUTING
-Plan: 3 of 22
+Plan: 4 of 22
 Status: Ready to execute
 Last activity: 2026-10-25 — Phase 06 execution started
 
@@ -86,6 +86,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 05 P06 | 20min | 2 tasks | 6 files |
 | Phase 06 P01 | 10 min | 2 tasks | 22 files |
 | Phase 06 P02 | 24 min | 2 tasks | 8 files |
+| Phase 06 P03 | 25 min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -107,6 +108,8 @@ milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) a
 - [Phase 06]: 06-01: test:gate fails on any failed, skipped or todo test, an empty run, or a non-zero vitest exit
 - [Phase 06]: 06-02: REFERENCE_TOKEN uses bounded quantifiers (31 and 16) not a lookbehind, which changed six corpus results
 - [Phase 06]: 06-02: growth harness caps the big input near 256 KB, re-measures a reading at or above 24 (lowest of 3), and reports ratio 1 under a 1 ms floor; limit stays 24
+- [Phase 06]: 06-03: +N more outline row reuses li[data-overflow] under .document-outline, no new class name — Keeps docs/design-language.md vocabulary unchanged
+- [Phase 06]: 06-03: raw-HTML guard matches assignments only for innerHTML/outerHTML and asserts an exact one-entry allowlist — Reads in document-sections.ts are not injection; stale entries must fail
 
 ### Pending Todos
 
@@ -149,8 +152,8 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-10-25T13:44:07.908Z
-Stopped at: Completed 06-02-PLAN.md
+Last session: 2026-10-25T13:56:34.649Z
+Stopped at: Completed 06-03-PLAN.md
 Resume file: None
 
 ## Operator Next Steps
