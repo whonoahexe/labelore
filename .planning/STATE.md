@@ -6,10 +6,10 @@ current_phase: 06
 current_phase_name: Trustworthy Tests and Security Baseline
 status: executing
 stopped_at: Completed 06-04-PLAN.md
-last_updated: "2026-10-25T14:02:26.086Z"
+last_updated: "2026-10-25T17:56:22.043Z"
 last_activity: 2026-10-25
 last_activity_desc: Phase 06 execution started
-state_head: 38a2acc0ed8f30252bcf88507d4efea99808cc7f
+state_head: 097694afd001269726647b483a2002675f9a305f
 progress:
   total_phases: 8
   completed_phases: 0
@@ -113,6 +113,7 @@ milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) a
 - [Phase 06]: 06-03: raw-HTML guard matches assignments only for innerHTML/outerHTML and asserts an exact one-entry allowlist — Reads in document-sections.ts are not injection; stale entries must fail
 - [Phase 06]: 06-04: config.json secret keys (brave_search, firecrawl, exa_search) are masked in JsonConfigHandler at read time; on/off values stay visible, other JSON files untouched
 - [Phase 06]: 06-04: an unparseable config.json has secret strings redacted in raw text by one linear regex, including a value cut off before its closing quote
+- [Phase 06]: Wave 1 UI safety gate (no UI-SPEC for Phase 06) overridden by the user: the only UI change was 06-03's muted '+N more sections' outline row, verified in the browser with Playwright (18 entries, +7 row, no Source-mode row, 390px popover). Later waves still run the gate.
 
 ### Pending Todos
 
