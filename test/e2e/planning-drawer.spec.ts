@@ -81,7 +81,8 @@ test.describe('planning files drawer', () => {
   test('keeps every quick task in one place, grouped by milestone, each row opening its plan with a Plan / Summary switch', async ({ page, baseURL }) => {
     const model = await fetchDrawer(baseURL!);
     const quick = model.quick;
-    test.skip(quick.count === 0, 'this corpus has no quick tasks');
+    // This repository holds the shipped v2.0 quick tasks, so the quick-task place is never empty here.
+    expect(quick.count).toBeGreaterThan(0);
 
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto('/');
@@ -96,14 +97,16 @@ test.describe('planning files drawer', () => {
     mkdirSync(SHOTS, { recursive: true });
     await page.screenshot({ path: join(SHOTS, 'desktop-quick.png') });
 
-    const task = quick.groups.flatMap((group) => group.tasks).find(
-      (candidate) =>
-        candidate.files.some((file) => file.label === 'Plan') &&
-        candidate.files.some((file) => file.label === 'Summary'),
-    );
-    test.skip(task === undefined, 'no quick task has both a plan and a summary');
-    const planFile = task!.files.find((file) => file.label === 'Plan')!;
-    const summaryFile = task!.files.find((file) => file.label === 'Summary')!;
+    // A quick task's file labels carry its id ("<date> <id> plan"), so a file is matched by its last word.
+    const fileNamed = (candidate: DrawerQuickTask, word: string) =>
+      candidate.files.find((file) => file.label.toLowerCase().endsWith(` ${word}`));
+    const task = quick.groups
+      .flatMap((group) => group.tasks)
+      .find((candidate) => fileNamed(candidate, 'plan') && fileNamed(candidate, 'summary'));
+    // This repository's shipped v2.0 quick tasks each hold a plan and a summary.
+    expect(task, 'a quick task with both a plan and a summary').toBeDefined();
+    const planFile = fileNamed(task!, 'plan')!;
+    const summaryFile = fileNamed(task!, 'summary')!;
     await page.locator('.places-quick-task').filter({ has: page.locator(`[title="${task!.key}"]`) }).click();
 
     await expect(page).toHaveURL(new RegExp(`${planFile.url}$`));
@@ -120,7 +123,7 @@ test.describe('planning files drawer', () => {
   }) => {
     const model = await fetchDrawer(baseURL!);
     const shippedGroup = model.quick.groups.find((group) => !group.current);
-    test.skip(shippedGroup === undefined, 'no shipped milestone has quick tasks');
+    expect(shippedGroup, 'a shipped milestone with quick tasks').toBeDefined();
     const task: DrawerQuickTask = shippedGroup!.tasks[0];
 
     await page.setViewportSize({ width: 1280, height: 900 });

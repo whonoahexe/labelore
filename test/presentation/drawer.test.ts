@@ -481,14 +481,23 @@ describe('buildDrawerViewModel — coverage', () => {
     expect([...placed].sort()).toEqual([...expectedPaths(model, presentation)].sort());
   });
 
-  it("opens this repository's own corpus on the newest shipped milestone", async () => {
+  it("opens this repository's own corpus on its current milestone, with v2.0 the newest shipped one", async () => {
     const model = buildDrawerViewModel(await diskPresentation(resolve('.')));
-    expect(model.current.phases).toEqual([]);
-    expect(model.quick.groups.some((group) => group.current)).toBe(false);
-    expect(model.defaultPlaceKey).toBe(model.shipped[0].key);
+    // v2.1 is the milestone in progress, so the drawer opens on one of its phases, not on a shipped place.
+    expect(model.current.version).toBe('v2.1');
+    expect(model.current.phases.length).toBeGreaterThan(0);
+    expect(model.current.phases.map((phase) => phase.key)).toContain(model.defaultPlaceKey);
+    expect(model.shipped.map((milestone) => milestone.key)).not.toContain(model.defaultPlaceKey);
+    // The shipped milestones, newest first, and what the drawer lists for each. The v2.0 folder holds
+    // quick tasks and no phases; v1.0 and v1.1 are archived and no longer change.
     expect(model.shipped.map((milestone) => milestone.version)).toEqual(['v2.0', 'v1.1', 'v1.0']);
-    // v2.0 was a quick-task milestone, so it has no phases of its own.
     expect(model.shipped.map((milestone) => milestone.phases.length)).toEqual([0, 1, 4]);
     for (const milestone of model.shipped) expect(milestone.shippedLabel).not.toBeNull();
+    const shippedQuick = model.quick.groups.filter((group) => !group.current);
+    expect(shippedQuick.map((group) => [group.version, group.tasks.length])).toEqual([
+      ['v2.0', 40],
+      ['v1.1', 13],
+      ['v1.0', 5],
+    ]);
   });
 });
