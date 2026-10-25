@@ -154,7 +154,7 @@ Verdicts from `gsd-tools query package-legitimacy check --ecosystem npm`, cross-
 
 ```
                         ┌──────────────────────────────────────┐
-  SHED COUNTERS / FLAGS │                                      │
+  DESK KERNEL / DEVICES │                                      │
                         │  /var/feeds/door.json   (fs log —    │
                         │       0.09 ms, NEVER stalls)         │
                         │  /srv/{canal,ridge,orchard} (counter │
