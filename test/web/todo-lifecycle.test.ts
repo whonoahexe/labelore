@@ -81,7 +81,7 @@ function render(model: ComposedTodoLifecycle, extra: Partial<Parameters<typeof T
 describe('head and chips', () => {
   const head: Record<string, [string, string, string, string, string | null]> = {
     // key: created, title, status label, weight text, area
-    dcrop: ['21 Oct 2026', 'Add crop and round profile photos', 'Done', 'Minor · priority low', 'media'],
+    dcrop: ['24 Mar 2026', 'Add crop and round member avatars', 'Done', 'Minor · priority low', 'media'],
     dsfx: ['20 Oct 2026', 'Add synthesised sound effects', 'Done', 'Cosmetic', 'ui'],
     dcall: ['20 Oct 2026', 'Add call debug logging (WebRTC + TURN, no personal data)', 'Done', 'Major', 'calls'],
     sretry: ['12 Oct 2026', 'Move filings that fail five retries into a dead-letter view brokers can see', 'Pending', 'Major', 'gateway'],
@@ -124,7 +124,7 @@ describe('head and chips', () => {
 describe('the step strip', () => {
   type Step = [string, string, string, string];
   const steps: Record<string, [Step, Step, Step]> = {
-    dcrop: [['noted', 'done', '21 Oct 15:58', '2 notes · last 21 Oct 15:58'], ['captured', 'done', '21 Oct 16:01', 'minor · media'], ['closed', 'done', 'quick 261022-m25', '22 Oct 2026']],
+    dcrop: [['noted', 'done', '24 Mar 09:20', '2 notes · last 24 Mar 09:20'], ['captured', 'done', '24 Mar 15:17', 'minor · media'], ['closed', 'done', 'quick 260326-m3d', '26 Mar 2026']],
     dsfx: [['noted', 'done', '20 Oct 04:02', '1 note'], ['captured', 'done', '20 Oct 17:39', 'cosmetic · ui'], ['closed', 'done', 'quick 261022-4gf', '22 Oct 2026']],
     dcall: [['noted', 'done', '20 Oct 02:47', '1 note'], ['captured', 'done', '20 Oct 17:39', 'major · calls'], ['closed', 'done', 'Done', 'No resolution written']],
     sretry: [['noted', 'none', 'No note', 'Captured straight as a todo'], ['captured', 'done', '12 Oct 15:11', 'major · gateway'], ['now', 'now', 'Open 11 days', 'Waiting in todos/pending/']],
@@ -150,9 +150,9 @@ describe('the step strip', () => {
 
   it('reads the Captured step in the viewer zone for an instant, and the Noted step as written', () => {
     const utc = compose('dcrop', { now: NOW, timeZone: 'UTC' });
-    expect(utc.steps[1].value).toBe('21 Oct 10:31');
-    expect(utc.steps[0].value).toBe('21 Oct 15:58');
-    expect(utc.head.created).toBe('21 Oct 2026');
+    expect(utc.steps[1].value).toBe('24 Mar 09:47');
+    expect(utc.steps[0].value).toBe('24 Mar 09:20');
+    expect(utc.head.created).toBe('24 Mar 2026');
   });
 });
 
@@ -160,7 +160,7 @@ describe('the Noted and Captured stages', () => {
   it('numbers the stages and words the Noted kicker', () => {
     const dcrop = compose('dcrop');
     expect(dcrop.noted).toMatchObject({ number: 1, kicker: '2 notes · the todo was made from these' });
-    expect(dcrop.captured).toMatchObject({ number: 2, kicker: '21 Oct 16:01' });
+    expect(dcrop.captured).toMatchObject({ number: 2, kicker: '24 Mar 15:17' });
     expect(dcrop.end.number).toBe(3);
     expect(compose('dsfx').noted?.kicker).toBe('1 note · the todo was made from this');
     const sretry = compose('sretry');
@@ -172,11 +172,11 @@ describe('the Noted and Captured stages', () => {
   it('dcrop: two listed cards, both clamped', () => {
     const cards = compose('dcrop').noted!.notes;
     expect(cards.map((card) => [card.kicker, card.way, card.title, card.clamp, card.missing])).toEqual([
-      ['Note · 21 Oct 15:58', 'Listed in notes:', null, true, false],
-      ['Note · 21 Oct 15:58', 'Listed in notes:', null, true, false],
+      ['Note · 24 Mar 09:20', 'Listed in notes:', null, true, false],
+      ['Note · 24 Mar 09:20', 'Listed in notes:', null, true, false],
     ]);
-    expect(cards[0].text).toMatch(/^Crop for images before sending and for profile photos/);
-    expect(cards[1].text).toMatch(/^Round profile photos everywhere, including the notification icon\./);
+    expect(cards[0].text).toMatch(/^Crop tool photos before they are posted/);
+    expect(cards[1].text).toMatch(/^Round member avatars everywhere, push icon included\./);
     const key = projects.get(TODO_KEYS.dcrop.root)!.presentation.artifacts.find((artifact) => artifact.path === NOTE_KEYS.dcrop.path)?.key;
     expect(cards[0].url).toBe(key);
   });
@@ -200,7 +200,7 @@ describe('the Noted and Captured stages', () => {
 
   const captured: Record<string, [number, string, string | null, string | null]> = {
     // key: number, kicker, lead label, plan label
-    dcrop: [2, '21 Oct 16:01', 'Problem', 'Solution'],
+    dcrop: [2, '24 Mar 15:17', 'Problem', 'Solution'],
     dsfx: [2, '20 Oct 17:39', 'Problem', 'Solution'],
     dcall: [2, '20 Oct 17:39', 'Problem', 'Solution'],
     sretry: [1, '12 Oct 15:11', 'Problem', 'Solution'],
@@ -224,7 +224,7 @@ describe('the Noted and Captured stages', () => {
 
   it('files, folds and the empty state', () => {
     expect(compose('dcrop').captured.files?.count).toBe(5);
-    expect(compose('dcrop').captured.files?.rows[0]).toMatchObject({ dir: 'server/src/media/', name: 'image.ts', range: null });
+    expect(compose('dcrop').captured.files?.rows[0]).toMatchObject({ dir: 'api/src/photos/', name: 'resize.ts', range: null });
     expect(compose('sretry').captured.files?.rows[0]).toMatchObject({ dir: 'src/gateway/', name: 'retry-queue.ts', range: 'L88–140' });
     expect(compose('dcrop').captured.extras).toEqual([]);
     expect(compose('ldrift').captured.extras.map((extra) => extra.heading)).toEqual([
@@ -244,7 +244,7 @@ describe('the Noted and Captured stages', () => {
 describe('the end stage', () => {
   it('closed with a resolution, a callout and commits', () => {
     const dcrop = compose('dcrop').end;
-    expect(dcrop).toMatchObject({ kind: 'closed', title: 'Closed', kicker: 'quick 261022-m25 · 22 Oct 2026', note: null, commits: [] });
+    expect(dcrop).toMatchObject({ kind: 'closed', title: 'Closed', kicker: 'quick 260326-m3d · 26 Mar 2026', note: null, commits: [] });
     const ldrift = compose('ldrift').end;
     expect(ldrift).toMatchObject({ kind: 'closed', kicker: 'quick 260920-mzr · 20 Sep 2026', commits: ['cc92a07', '4934254', '84c402d'], note: null });
     expect(ldrift.kind === 'closed' && ldrift.closing?.[0]).toMatchObject({ kind: 'paragraph' });
@@ -416,7 +416,7 @@ describe('the view', () => {
     const markup = render(compose('dcrop'), { path: TODO_KEYS.dcrop.path });
     expect(markup.match(/<h1/g)).toHaveLength(1);
     expect(markup).toContain('>Todo</p>');
-    expect(markup).toContain('Created <b>21 Oct 2026</b>');
+    expect(markup).toContain('Created <b>24 Mar 2026</b>');
     expect(markup).toMatch(/<span class="status-chip" data-tone="complete">Done<\/span>/);
     expect(markup).toMatch(/<span class="status-chip view-todo-pip" data-severity="low"/);
     expect(markup).toContain('Minor');
@@ -431,8 +431,8 @@ describe('the view', () => {
     expect(markup).toContain('Done in quick task');
     const hrefs = [...markup.matchAll(/<a class="view-todo-link" href="([^"]+)"[^>]*>Open note ↗/g)].map((match) => decodeURIComponent(match[1]));
     expect(hrefs).toEqual([
-      expect.stringContaining('2026-10-21-crop-images-and-profile-photos.md'),
-      expect.stringContaining('2026-10-21-round-profile-photos.md'),
+      expect.stringContaining('2026-03-24-crop-tool-photos-and-member-avatars.md'),
+      expect.stringContaining('2026-03-24-round-member-avatars.md'),
     ]);
     expect(markup).toContain('aria-label="Also in this file"');
     expect(markup.match(/>Frontmatter</g)).toHaveLength(1);
@@ -689,7 +689,7 @@ describe('served end to end', () => {
     const model = composeTodoLifecycle(input, KOLKATA);
     expect(model).not.toBeNull();
     expect(model!.noted!.notes.map((note) => note.url)).toEqual([key(NOTE_KEYS.dcrop.path), key(NOTE_KEYS.dround.path)]);
-    expect(model!.steps.map((step) => step.value)).toEqual(['21 Oct 15:58', '21 Oct 16:01', 'quick 261022-m25']);
+    expect(model!.steps.map((step) => step.value)).toEqual(['24 Mar 09:20', '24 Mar 15:17', 'quick 260326-m3d']);
     const markup = render(model!);
     expect(markup.match(/<h1/g)).toHaveLength(1);
     expect(markup.match(/Open note ↗/g)).toHaveLength(2);
