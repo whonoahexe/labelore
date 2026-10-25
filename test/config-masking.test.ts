@@ -1,0 +1,100 @@
+// SEC-04: a secret key in the target's config.json is masked at the one point Labelore reads it, so
+// the presentation payload, the file page response, the search index and every snippet only ever
+// see the masked form. Drives the real PlanningRepository over an in-memory project through
+// createApp + app.request, the same idiom test/server/refresh.test.ts uses.
+import { describe, expect, it } from 'vitest';
+import { InMemoryPlanningFilesystem } from '../src/planning-fs/in-memory-fs.ts';
+import { PlanningRepository } from '../src/planning-repo/snapshot.ts';
+import { createApp } from '../src/server/index.ts';
+import type { CommitLog } from '../src/server/commit-times.ts';
+import type { ProjectPresentation } from '../src/server/project-presentation.ts';
+
+const SECRET = 'BSAplantedsecretvalue1234567890wxyz';
+const FRAGMENT = 'plantedsecret';
+const MASKED = '****wxyz';
+
+const PROJECT_MD = '# Masking Fixture\n\nA made-up project for the secret-masking tests.\n';
+
+const NO_COMMITS: CommitLog = { load: async () => null, reset: () => undefined };
+
+function configText(): string {
+  return `{\n  "model_profile": "adaptive",\n  "brave_search": "${SECRET}",\n  "firecrawl": true,\n  "exa_search": false\n}\n`;
+}
+
+async function appFor(files: Record<string, string>) {
+  const repo = new PlanningRepository(
+    new InMemoryPlanningFilesystem({ '.planning/PROJECT.md': PROJECT_MD, ...files }),
+    '/p',
+    { loadTheme: null },
+  );
+  await repo.load();
+  const app = createApp(repo, true, '.', NO_COMMITS);
+  return { app, repo };
+}
+
+type App = Awaited<ReturnType<typeof appFor>>['app'];
+
+async function textOf(app: App, url: string, init?: RequestInit): Promise<string> {
+  const response = await app.request(url, init);
+  return response.text();
+}
+
+async function keyFor(app: App, artifactPath: string): Promise<string> {
+  const presentation = (await (await app.request('/api/presentation')).json()) as ProjectPresentation;
+  const dto = presentation.artifacts.find((candidate) => candidate.path === artifactPath);
+  if (!dto) throw new Error(`No artifact dto found for ${artifactPath}`);
+  return dto.key;
+}
+
+/** The file page's payload, asked for through both routes that serve a single artifact. */
+async function pagePayload(app: App, key: string): Promise<string> {
+  const viaDocuments = await textOf(app, `/api/documents?route=${encodeURIComponent(key)}`);
+  const viaArtifacts = await textOf(app, `/api${key}`);
+  return `${viaDocuments}\n${viaArtifacts}`;
+}
+
+function settled(): Promise<void> {
+  return new Promise((resolve) => setImmediate(resolve));
+}
+
+/** What search answers for a query: its hits and groups, without the echoed query (which is the
+ * caller's own text and would hold a searched-for fragment by construction). */
+async function search(app: App, query: string): Promise<string> {
+  await settled();
+  const body = JSON.parse(await textOf(app, `/api/search?q=${encodeURIComponent(query)}`)) as {
+    status: string;
+    results: unknown;
+    groups: unknown;
+  };
+  expect(body.status).toBe('ready');
+  return JSON.stringify({ results: body.results, groups: body.groups });
+}
+
+describe('config.json secret masking, end to end (SEC-04)', () => {
+  it('never lets the planted value reach presentation, the file page or search, and shows the last four', async () => {
+    const { app } = await appFor({ '.planning/config.json': configText() });
+
+    const presentation = await textOf(app, '/api/presentation');
+    expect(presentation).not.toContain(SECRET);
+    expect(presentation).toContain(MASKED);
+
+    const key = await keyFor(app, '.planning/config.json');
+    const page = await pagePayload(app, key);
+    expect(page).not.toContain(SECRET);
+    expect(page).toContain(MASKED);
+    const pageJson = JSON.parse(await textOf(app, `/api/documents?route=${encodeURIComponent(key)}`)) as { artifact: { frontmatter: Record<string, unknown> } };
+    expect(pageJson.artifact.frontmatter.brave_search).toBe(MASKED);
+    expect(pageJson.artifact.frontmatter.firecrawl).toBe(true);
+    expect(pageJson.artifact.frontmatter.exa_search).toBe(false);
+
+    for (const query of ['brave_search', FRAGMENT, 'BSAplanted', SECRET]) {
+      const found = await search(app, query);
+      expect(found).not.toContain(SECRET);
+      expect(found).not.toContain(FRAGMENT);
+    }
+    // The config file itself is still found, with the masked form in its snippet.
+    const byKey = await search(app, 'brave_search');
+    expect(byKey).toContain('.planning/config.json');
+    expect(byKey).toContain(MASKED);
+  });
+});
