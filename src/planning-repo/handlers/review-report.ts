@@ -856,7 +856,7 @@ export function extractReviewFixReport(rawBody: string): ReviewFixReportBody {
       if (model.entries.length >= MAX_ITEMS) break;
       const read = readFields(subsection.body);
       // Commit and Files modified are one-paragraph fields: anything after their first blank line
-      // is the entry's own prose (the deid fix reports write the narrative straight after them).
+      // is the entry's own prose (some fix reports write the narrative straight after them).
       const spill: string[] = [];
       const fields = read.fields.map((field): Field => {
         if (!SHORT_FIX_KEYS.includes(field.key)) return field;

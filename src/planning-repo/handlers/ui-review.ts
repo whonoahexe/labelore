@@ -2,7 +2,7 @@
 // through to the generic markdown handler; this one lifts frontmatter the same way and adds
 // `structured.uiReview` (quick-261003-528, sketch 018 B): the tolerant UI-REVIEW audit projection
 // `composeUiReview` reads client-side, plus `pathPhase` — the phase number and directory slug from
-// the artifact's own location, which the client cannot see (a UI-REVIEW from studio-portal carries
+// the artifact's own location, which the client cannot see (a UI-REVIEW from another repo carries
 // no frontmatter). The extraction is guarded by a try/catch so a throw only omits `uiReview` — the
 // page then falls back to the pre-existing promoted-block view and the title, body and frontmatter
 // survive (T-528-04).

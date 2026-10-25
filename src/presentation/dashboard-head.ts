@@ -77,7 +77,7 @@ function paragraphs(body: string): string[] {
     .filter((paragraph) => paragraph && !/^\*[^*]/.test(paragraph) && paragraph !== '---');
 }
 
-/** Sentence split that ignores full stops inside code spans and in names like "sideby.me". */
+/** Sentence split that ignores full stops inside code spans and in names like "lendshed.example". */
 function sentences(paragraph: string): string[] {
   const codes: string[] = [];
   const masked = paragraph.replace(/`[^`]*`/g, (code) => {

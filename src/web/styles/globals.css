@@ -18,7 +18,7 @@
   font-display: swap;
 }
 
-/* Authorized local adaptation of Studio Portal preset b3Dqcuo4na (base-sera). */
+/* Authorized local adaptation of the reference theme preset b3Dqcuo4na (base-sera). */
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -4324,7 +4324,7 @@ a.todo-title:hover {
   text-decoration: none;
 }
 
-/* UAT polish: restrained Studio Portal typography, hierarchy, and reader treatment. */
+/* UAT polish: restrained reference-theme typography, hierarchy, and reader treatment. */
 :where(a, button, summary):focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 3px;

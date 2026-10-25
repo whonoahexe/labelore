@@ -3,7 +3,7 @@
 // typed structures the Research page reads.
 //
 // Sections are found by ROLE (a title regex) at any heading depth, never by position, so a project
-// whose headings drift from the GSD template (Cinedise's "Headline" for "The Decision, Stated Once",
+// whose headings drift from the GSD template (one project's "Headline" for "The Decision, Stated Once",
 // `####` groups under Table Stakes, "Gaps to Address" as a `###`) degrades instead of breaking.
 // Anything the lift does not recognise is simply left out.
 //

@@ -1,5 +1,6 @@
 // Phase 06 standing guard (D-08, D-16, D-19, TEST-03): no private project name, host, tool tell or
-// private-looking file name may live in a fixture, a test source or (scope C) the app source.
+// private-looking file name may live in a fixture (scope A), a test source (scope B) or the app
+// source and every other tracked file (scope C).
 // The deny list is committed in plain text by decision (D-08): the guard has to name what it forbids.
 //
 // Every text file git would commit is scanned (git ls-files --cached --others --exclude-standard), so a
@@ -74,7 +75,14 @@ const SOURCE_EXEMPTIONS: Exemption[] = [
   },
 ];
 
-type Scope = 'fixture' | 'test' | 'none';
+/** D-19: planning content, agent instructions and a local tool config stay out of this phase's reach. */
+const OUT_OF_SCOPE: Exemption[] = [
+  { path: '.planning/', reason: 'planning content, never edited by this phase (D-19)' },
+  { path: '.claude/', reason: 'agent instructions holding the reference-project paths and name (D-19)' },
+  { path: '.mcp.json', reason: 'a local tool path (D-19)' },
+];
+
+type Scope = 'fixture' | 'test' | 'source' | 'none';
 type Kind = 'word' | 'host' | 'tool' | 'name';
 interface Finding {
   path: string;
@@ -88,12 +96,14 @@ const FIXTURE_PREFIXES = ['fixtures/', 'test/fixtures/', 'test/__golden__/', 'te
 const ANCHORS: Record<Exclude<Scope, 'none'>, string[]> = {
   fixture: ['fixtures/README.md'],
   test: ['test/fixture-leak.test.ts'],
+  source: ['src/server/index.ts', 'index.html'],
 };
 
 function scopeOf(rel: string): Scope {
+  if (OUT_OF_SCOPE.some((e) => (e.path.endsWith('/') ? rel.startsWith(e.path) : rel === e.path))) return 'none';
   if (FIXTURE_PREFIXES.some((prefix) => rel.startsWith(prefix))) return 'fixture';
   if (rel.startsWith('test/') || rel === 'playwright.config.ts') return 'test';
-  return 'none';
+  return 'source';
 }
 
 function wordRegex(word: string, flags: string): RegExp {
@@ -131,7 +141,9 @@ function scanFiles(root: string, paths: string[]): Finding[] {
     const terms: [Kind, string[]][] = [
       ['word', DENY_WORDS],
       ['host', HOST_TELLS],
-      ['tool', TOOL_TELLS],
+      // Scope C skips tool tells: src/rendering/ascii-graph.ts uses a public tool name as a working
+      // word in its external-node classifier, which is behaviour, not a leak.
+      ...(scope === 'source' ? [] : ([['tool', TOOL_TELLS]] as [Kind, string[]][])),
     ];
     for (const [kind, list] of terms) {
       for (const term of list) {
@@ -167,7 +179,7 @@ function trackedFiles(): string[] {
   return [...new Set(out.split('\0').filter(Boolean))].sort();
 }
 
-describe('fixture and test-source leak guard (D-08, D-16, TEST-03)', () => {
+describe('fixture, test-source and app-source leak guard (D-08, D-16, D-19, TEST-03)', () => {
   const tracked = trackedFiles();
   const findings = scanFiles(REPO_ROOT, tracked);
   const planted: string[] = [];
@@ -180,6 +192,8 @@ describe('fixture and test-source leak guard (D-08, D-16, TEST-03)', () => {
     expect(FIXTURE_EXEMPTIONS.every((e) => e.word === 'studio-portal' && e.reason.length > 0)).toBe(true);
     expect(SOURCE_EXEMPTIONS).toHaveLength(3);
     expect(SOURCE_EXEMPTIONS.every((e) => e.reason.length > 0)).toBe(true);
+    expect(OUT_OF_SCOPE.map((e) => e.path)).toEqual(['.planning/', '.claude/', '.mcp.json']);
+    expect(OUT_OF_SCOPE.every((e) => e.reason.includes('D-19'))).toBe(true);
   });
 
   it('has each scope anchor in git file list, so an empty list cannot pass', () => {
@@ -195,6 +209,11 @@ describe('fixture and test-source leak guard (D-08, D-16, TEST-03)', () => {
 
   it('finds no private word, host, tool tell or file name in the test sources', () => {
     const offenders = findings.filter((f) => f.scope === 'test' && !sourceExempt(f));
+    expect(offenders.map(describeFinding)).toEqual([]);
+  });
+
+  it('finds no private word, host or file name anywhere else git would commit, the app source included', () => {
+    const offenders = findings.filter((f) => f.scope === 'source');
     expect(offenders.map(describeFinding)).toEqual([]);
   });
 
@@ -231,6 +250,9 @@ describe('fixture and test-source leak guard (D-08, D-16, TEST-03)', () => {
       files['test/tool.md'] = 'smartctl output pasted here\n';
       files['test/sp01-REVIEW.md'] = 'harmless body\n';
       files['test/clean.ts'] = 'const nodeId = 1;\n';
+      files['src/comment.ts'] = '// the cinedise checkout drifted this heading\nexport const a = 1;\n';
+      files['src/host.ts'] = "// reachable at rhgpu\nexport const b = 2;\n";
+      files['src/tool.ts'] = '/** classifies rclone mounts as external */\nexport const c = /rclone/;\n';
       const root = plant(files);
       const found = scanFiles(root, Object.keys(files));
       const byPath = (p: string) => found.filter((f) => f.path === p);
@@ -244,6 +266,11 @@ describe('fixture and test-source leak guard (D-08, D-16, TEST-03)', () => {
       expect(byPath('test/tool.md').map((f) => f.kind)).toContain('tool');
       expect(byPath('test/sp01-REVIEW.md').map((f) => f.kind)).toContain('name');
       expect(byPath('test/clean.ts')).toEqual([]);
+      expect(byPath('src/comment.ts').map((f) => [f.scope, f.kind, f.term])).toEqual([['source', 'word', 'cinedise']]);
+      expect(byPath('src/host.ts').map((f) => [f.scope, f.kind])).toEqual([['source', 'host']]);
+      expect(byPath('src/tool.ts')).toEqual([]);
+      const moved = plant({ 'test/tool-copy.ts': files['src/tool.ts'] });
+      expect(scanFiles(moved, ['test/tool-copy.ts']).map((f) => f.kind)).toEqual(['tool']);
     });
 
     it('skips a binary file and a listed path that is absent', () => {
