@@ -6,15 +6,15 @@ current_phase: 06
 current_phase_name: Trustworthy Tests and Security Baseline
 status: executing
 stopped_at: Completed 06-07-PLAN.md
-last_updated: "2026-10-25T21:15:43.608Z"
+last_updated: "2026-10-25T21:32:20.123Z"
 last_activity: 2026-10-26
 last_activity_desc: Phase 06 execution started
-state_head: 3ddd91079034ac0944116277f693b2742751b023
+state_head: 1071fac0341fbac1e453bed3502339de795d8dcf
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 22
-  completed_plans: 7
+  completed_plans: 10
   percent: 0
 ---
 
@@ -122,6 +122,7 @@ milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) a
 - [Phase 06]: Lendshed validation fixtures use fewer map rows than the reference (15, 9, 12, 10) and shifted threat IDs; every pin is a Lendshed count recounted by grep/awk — Trim rule (D-17) and D-06: no carried-over numbers or prose; the extractor agreed with the hand counts on the first run
 - [Phase 06]: 06-07: PATTERNS corpus guard keyed LB: and FX: pins thirteen files, asserts at least 5 Labelore and 7 Lendshed files and that every pin was found; Labelore's own 06-PATTERNS.md is pinned under LB: (D-18) — Pins are per file (R6) and counted by awk/grep in the made-up files; the Lendshed maps use different row and quality counts than the reference so no number is carried over
 - [Phase 06]: 06-07: hostile-body and glob timing in the pattern-map tests are growth ratios through measureGrowth; the extractor's 8,000-character line clip is noted in the test instead of hidden — A fixed 250 ms budget flaked under load and proved nothing about the cost shape
+- [Phase 06]: Wave 2 batch 1 UI safety gate (no UI-SPEC for Phase 06) passed over by the orchestrator during the user's unattended run: 06-08/06-09/06-16 changed no file under src/ (git diff 3ddd910 -- src/ is empty), only tests and fixtures; the user asked for the run to continue without stopping.
 
 ### Pending Todos
 
