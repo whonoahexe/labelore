@@ -87,6 +87,11 @@ const PINNED: Record<string, Pinned> = {
     disposition: { mitigate: 22, accept: 8 }, columns: FX3_COLS, boundaries: 10, destinations: 0, singles: 10,
     stores: 0, risks: 8, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
   },
+  'LB:phases/06-trustworthy-tests-and-security-baseline/06-SECURITY.md': {
+    rows: 34, open: 0, openLow: 0, closed: 34, severity: { high: 25, medium: 7, low: 2 },
+    disposition: { mitigate: 33, accept: 1 }, columns: { T: 3, R: 4, I: 24, D: 3 }, boundaries: 5,
+    destinations: 0, singles: 5, stores: 0, risks: 2, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
+  },
   'LB:milestones/v1.1-phases/05-per-type-document-views/05-SECURITY.md': {
     rows: 19, open: 0, openLow: 1, closed: 18, severity: { high: 4, medium: 5, low: 10 },
     disposition: { mitigate: 11, accept: 8 }, columns: { S: 1, T: 8, I: 3, D: 6, E: 1 }, boundaries: 8,
