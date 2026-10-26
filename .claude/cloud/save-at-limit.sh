@@ -42,5 +42,14 @@ if [ -n "$changed" ] && [ -d .planning ]; then
 fi
 
 git add -A && git commit -q -m "chore(pause): save work at usage limit" >/dev/null 2>&1
-git push -q -u origin HEAD >/dev/null 2>&1
+
+# Land the work on master. If master has moved on and the rebase conflicts, keep the work on the
+# session branch instead so nothing is lost.
+target=${LABELORE_PAUSE_BRANCH:-master}
+if git fetch -q origin "$target" && git rebase -q "origin/$target" >/dev/null 2>&1; then
+  git push -q origin "HEAD:$target" >/dev/null 2>&1
+else
+  git rebase --abort >/dev/null 2>&1
+  git push -q -u origin HEAD >/dev/null 2>&1
+fi
 exit 0

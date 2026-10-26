@@ -59,13 +59,16 @@ if (trip.done) process.exit(0);
 
 const pct = Math.floor(peak.pct);
 const event = input.hook_event_name;
+const target = process.env.LABELORE_PAUSE_BRANCH || 'master';
 const pauseSteps =
   `Labelore usage guard (.claude/cloud/usage-guard.mjs): plan usage is at ${pct}% of the ${peak.window} limit, ` +
   `past this project's ${threshold}% pause threshold for cloud sessions. The project's rule at this point is to ` +
   `pause before the limit runs out: stop the current task at the nearest safe point without starting new steps ` +
   `or agents; run the gsd-pause-work skill without asking the user questions (record open questions in the ` +
   `handoff); commit all remaining changes with \`git add -A && git commit -m "chore(pause): auto-pause at ${pct}% ` +
-  `usage"\`; push with \`git push -u origin HEAD\`; then end the turn.`;
+  `usage"\`; put the work on ${target} with \`git fetch origin ${target} && git rebase origin/${target} && git ` +
+  `push origin HEAD:${target}\` (if the rebase conflicts, run \`git rebase --abort\`, push the session branch ` +
+  `with \`git push -u origin HEAD\` instead and say so); then end the turn.`;
 
 function emit(output) {
   process.stdout.write(JSON.stringify(output));
@@ -80,28 +83,43 @@ function git(args, cwd) {
   }).trim();
 }
 
-/** What still stands between the session and a completed pause. */
-function missingPauseSteps(cwd) {
+/** What still stands between the session and a completed pause, and where the work landed. */
+function pauseProgress(cwd) {
   const missing = [];
   let root;
   try {
     root = git(['rev-parse', '--show-toplevel'], cwd);
   } catch {
-    return ['the session directory is not a git repository'];
+    return { missing: ['the session directory is not a git repository'] };
   }
   const handoff = path.join(root, '.planning', 'HANDOFF.json');
   if (!fs.existsSync(handoff) || fs.statSync(handoff).mtimeMs < trip.at) {
     missing.push('gsd-pause-work has not written .planning/HANDOFF.json since the guard tripped');
   }
   if (git(['status', '--porcelain'], root)) missing.push('there are uncommitted changes');
-  try {
-    git(['rev-parse', '--abbrev-ref', '@{u}'], root);
-    const ahead = Number(git(['rev-list', '--count', '@{u}..HEAD'], root));
-    if (ahead > 0) missing.push(`${ahead} commit(s) are not pushed`);
-  } catch {
-    missing.push('the branch has no upstream yet, so nothing is pushed');
+  if (!gitOk(['fetch', '-q', 'origin', target], root)) {
+    missing.push(`origin/${target} could not be fetched to confirm the push`);
+    return { missing };
   }
-  return missing;
+  if (gitOk(['merge-base', '--is-ancestor', 'HEAD', `origin/${target}`], root)) {
+    return { missing, landedOn: target };
+  }
+  // The session branch is the fallback only when the work can't go onto the target cleanly.
+  const conflicts = !gitOk(['merge-tree', '--write-tree', `origin/${target}`, 'HEAD'], root);
+  if (conflicts && gitOk(['merge-base', '--is-ancestor', 'HEAD', '@{u}'], root)) {
+    return { missing, landedOn: `the session branch, because it conflicts with ${target}` };
+  }
+  missing.push(`the work is not pushed to ${target}`);
+  return { missing };
+}
+
+function gitOk(args, cwd) {
+  try {
+    git(args, cwd);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 if (event === 'UserPromptSubmit' || event === 'PostToolUse') {
@@ -113,11 +131,11 @@ if (event === 'UserPromptSubmit' || event === 'PostToolUse') {
 }
 
 if (event === 'Stop') {
-  const missing = missingPauseSteps(input.cwd || process.cwd());
+  const { missing, landedOn } = pauseProgress(input.cwd || process.cwd());
   if (missing.length === 0) {
     writeJson(tripFile, { ...trip, done: true });
     emit({
-      systemMessage: `Auto-paused at ${pct}% usage: handoff written, all changes committed and pushed.`,
+      systemMessage: `Auto-paused at ${pct}% usage: handoff written, all changes committed and pushed to ${landedOn}.`,
     });
   }
   if (trip.stopBlocks >= MAX_STOP_BLOCKS) {
