@@ -45,7 +45,7 @@ Quick-task index: [milestones/v2.0-quick/README.md](milestones/v2.0-quick/README
 projects, and URLs read like what they point to, with search that is quicker to use and easier to
 read.
 
-- [ ] **Phase 6: Trustworthy Tests and Security Baseline** - The suite passes every run on made-up fixtures, and the promised security checks and secret masking are in place
+- [x] **Phase 6: Trustworthy Tests and Security Baseline** - The suite passes every run on made-up fixtures, and the promised security checks and secret masking are in place (completed 2026-10-26)
 - [ ] **Phase 7: Recognised Files and Readable URLs** - Every GSD file is recognised by where it lives and has one readable address starting with the project's name
 - [ ] **Phase 8: Several Projects and a Switcher** - One run holds several projects, remembers them, and moves between them without mixing their data
 - [ ] **Phase 9: Review, Audit and Root Document Pages** - The root documents, milestone audits, coverage files and the review ledger open into designed pages
@@ -91,7 +91,7 @@ any page is built to show them.
    raw file, on its file page and in search results and snippets. The full value never reaches the
    search index, so every page built later inherits the masking. *(SEC-04)*
 
-**Plans**: 22/22 plans executed
+**Plans**: 22/22 plans complete
 
 Plans:
 **Wave 1**
@@ -371,7 +371,7 @@ file, ID or project.
 | 1–4 | v1.0 | 30/30 | Archived | 2026-09-10 |
 | 5 | v1.1 | 6/6 | Archived | 2026-09-21 |
 | quick tasks | v2.0 | 40/40 | Archived | 2026-10-25 |
-| 6. Trustworthy Tests and Security Baseline | v2.1 | 22/22 | In Progress | - |
+| 6. Trustworthy Tests and Security Baseline | v2.1 | 22/22 | Complete    | 2026-10-26 |
 | 7. Recognised Files and Readable URLs | v2.1 | 0/TBD | Not started | - |
 | 8. Several Projects and a Switcher | v2.1 | 0/TBD | Not started | - |
 | 9. Review, Audit and Root Document Pages | v2.1 | 0/TBD | Not started | - |

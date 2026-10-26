@@ -12,13 +12,13 @@ v1.0 and v1.1; new categories start at 01.
 
 ### Test health
 
-- [ ] **TEST-01**: The full unit suite passes with zero failures and zero skipped tests on a normal run, and timing
+- [x] **TEST-01**: The full unit suite passes with zero failures and zero skipped tests on a normal run, and timing
       tests assert how cost grows with input size rather than an absolute millisecond budget
-- [ ] **TEST-02**: Corpus tests (notes, todos, debug sessions, patterns and similar) read made-up fixtures committed
+- [x] **TEST-02**: Corpus tests (notes, todos, debug sessions, patterns and similar) read made-up fixtures committed
       in this repository, never other projects' live `.planning/` trees
-- [ ] **TEST-03**: Fixtures already committed under `test/` and `fixtures/` are audited, and any content copied from
+- [x] **TEST-03**: Fixtures already committed under `test/` and `fixtures/` are audited, and any content copied from
       private work projects is replaced with made-up content, because the repository is public
-- [ ] **TEST-04**: Browser tests run against a fixture inside the repository instead of `~/studio-portal`, and fail
+- [x] **TEST-04**: Browser tests run against a fixture inside the repository instead of `~/studio-portal`, and fail
       rather than skip when their target is missing
 
 ### Security
@@ -170,10 +170,10 @@ Which phases cover which requirements. Filled in when the roadmap is created.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TEST-01 | Phase 6 | Pending |
-| TEST-02 | Phase 6 | Pending |
-| TEST-03 | Phase 6 | Pending |
-| TEST-04 | Phase 6 | Pending |
+| TEST-01 | Phase 6 | Complete |
+| TEST-02 | Phase 6 | Complete |
+| TEST-03 | Phase 6 | Complete |
+| TEST-04 | Phase 6 | Complete |
 | SEC-01 | Phase 6 | Complete |
 | SEC-02 | Phase 6 | Complete |
 | SEC-03 | Phase 6 | Complete |
