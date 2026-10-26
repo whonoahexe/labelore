@@ -6,7 +6,7 @@
 // and the theme tokens; the parse-degradation tones never appear on document content.
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, Maximize2 } from 'lucide-react';
-import { Link } from 'react-router';
+import { Link } from '../nav.tsx';
 import type { Block } from '../../planning-repo/handlers/context-brief.ts';
 import { tokenizeInline } from './inline-markdown.ts';
 import type { InlineToken } from './inline-markdown.ts';

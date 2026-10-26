@@ -14,7 +14,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PreviewCard } from '@base-ui/react/preview-card';
 import { ArrowUpRight } from 'lucide-react';
-import { Link } from 'react-router';
+import { Link } from '../nav.tsx';
 import { CopyPathButton, copyText } from '../components/copy-path-button.tsx';
 import { DocumentViewToggle } from '../components/document-view-toggle.tsx';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog.tsx';

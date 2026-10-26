@@ -12,7 +12,7 @@
 // document content. States are `data-*` attributes (data-outcome, data-severity, data-tone), never
 // new class names.
 import { useCallback, useState } from 'react';
-import { Link } from 'react-router';
+import { Link } from '../nav.tsx';
 import { CopyPathButton } from '../components/copy-path-button.tsx';
 import { DocumentViewToggle } from '../components/document-view-toggle.tsx';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog.tsx';

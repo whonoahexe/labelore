@@ -20,7 +20,7 @@
 // The Lifted | As written toggle, the opened sections, the highlighted reference and the Copied note live in
 // component state only: nothing touches the URL, and the Copied timer is cleared on unmount.
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router';
+import { Link } from '../nav.tsx';
 import { CopyPathButton, copyText } from '../components/copy-path-button.tsx';
 import { DocumentViewToggle } from '../components/document-view-toggle.tsx';
 import type { NoteRun } from '../../planning-repo/handlers/note-lift.ts';
