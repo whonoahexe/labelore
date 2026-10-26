@@ -137,6 +137,17 @@ function byPath(left: { path: string }, right: { path: string }): number {
   return left.path.localeCompare(right.path);
 }
 
+function byFileName(left: { path: string }, right: { path: string }): number {
+  return lastSegment(left.path).localeCompare(lastSegment(right.path));
+}
+
+// A phase folder's After stage lists the known post-plan documents first (ranks 0..5 from
+// POST_PLAN_ARTIFACT_ORDER), then the recognised unprefixed files, each group alphabetical by file name.
+// These ranks sit past every post-plan rank.
+const UNPREFIXED_RANK = 1_000;
+// Unprefixed files GSD leaves in a phase folder; the label is the sentence-case of the kind.
+const UNPREFIXED_KINDS: ReadonlySet<string> = new Set(['coverage', 'deferred-items', 'skeleton', 'continue-here']);
+
 function fileRowOf(artifact: ArtifactDto): DrawerFileRow {
   return {
     key: artifact.path,
@@ -214,10 +225,14 @@ function phasePlaceOf(phase: PhaseDto, artifactsByPhase: ReadonlyMap<string, Art
         after.push({ row, rank: postIndex });
         continue;
       }
+    } else if (UNPREFIXED_KINDS.has(artifact.kind)) {
+      after.push({ row: { ...row, label: sentenceCase(artifact.kind) }, rank: UNPREFIXED_RANK });
+      continue;
     }
     other.push(row);
   }
-  const byRank = (left: PlacedFile, right: PlacedFile) => left.rank - right.rank || byPath(left.row, right.row);
+  const byRank = (left: PlacedFile, right: PlacedFile) =>
+    left.rank - right.rank || (left.rank >= UNPREFIXED_RANK ? byFileName : byPath)(left.row, right.row);
 
   return {
     kind: 'phase',

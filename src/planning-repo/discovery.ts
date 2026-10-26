@@ -7,15 +7,12 @@ import type { ArtifactRef, ArtifactLocation, DiscoveryExclusion } from './types.
 import type { PhaseIdentity } from '../domain/model.ts';
 import {
   parsePhaseDirName,
-  parsePlanFileName,
-  parsePhaseArtifactName,
   parseQuickDirName,
-  parseQuickArtifactName,
   parseMilestoneFileName,
   parseMilestonePhasesDirName,
-  isCanonicalRootFile,
   comparePhaseNumbers,
 } from './naming.ts';
+import { kindOfPath } from './folders.ts';
 import { classifyFile, isInternalPath, needsHeadSniff, INTERNAL_EXCLUSION_REASON, SNIFF_BYTES } from './file-class.ts';
 
 const PLANNING_DIR = '.planning';
@@ -56,27 +53,6 @@ function resolvePhaseDirIdentity(dirName: string, milestoneVersion: string | nul
   const parsed = parsePhaseDirName(dirName, 'sequential');
   if (!parsed.matched) return null;
   return { milestoneVersion, number: parsed.number, projectCode: parsed.projectCode, slug: parsed.slug };
-}
-
-/** Derives an open-string artifact kind from a filename alone — never from content (DATA-02). */
-function deriveKind(fileName: string): string {
-  const milestoneFile = parseMilestoneFileName(fileName);
-  if (milestoneFile.matched) return milestoneFile.document.toLowerCase();
-
-  if (isCanonicalRootFile(fileName)) {
-    return fileName.replace(/\.(md|json|lock)$/i, '').toLowerCase();
-  }
-
-  const plan = parsePlanFileName(fileName);
-  if (plan.matched) return plan.kind;
-
-  const artifact = parsePhaseArtifactName(fileName);
-  if (artifact.matched) return artifact.artifact.toLowerCase();
-
-  const quickArtifact = parseQuickArtifactName(fileName);
-  if (quickArtifact.matched) return quickArtifact.artifact.toLowerCase();
-
-  return 'unknown';
 }
 
 // The directory-position half of the dispatch signal named in this module's header: GSD's `/gsd-debug`
@@ -237,7 +213,7 @@ export async function discover(fs: PlanningFilesystem): Promise<DiscoveryResult>
         const fileClass = classifyFile({ name: entry.name, size: entry.size, head });
         refs.push({
           path: childRel,
-          kind: isDebugSessionPath(childRelUnderPlanning) ? 'debug' : (positionKind(childRelUnderPlanning) ?? deriveKind(entry.name)),
+          kind: isDebugSessionPath(childRelUnderPlanning) ? 'debug' : (positionKind(childRelUnderPlanning) ?? kindOfPath(childRelUnderPlanning, classification.location)),
           location: classification.location,
           phaseIdentity: classification.phaseIdentity,
           milestoneVersion: classification.milestoneVersion,
