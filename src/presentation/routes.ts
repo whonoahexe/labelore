@@ -10,9 +10,26 @@
 //     and every test stay green until 07-06 flips them. Their opaque key encoders moved to identity-keys.ts
 //     (re-exported below, unchanged) and the old token parser moved to legacy-routes.ts.
 import type { PhaseIdentity } from '../domain/model.ts';
-import { parsePhaseArtifactName, parsePlanFileName } from '../planning-repo/naming.ts';
+import { EXACT_NAME_KINDS, folderRuleOf } from '../planning-repo/folders.ts';
+import type { ExactNameWhere, NameRule } from '../planning-repo/folders.ts';
+import {
+  parseMilestoneFileName,
+  parseMilestonePhasesDirName,
+  parseMilestoneQuickDirName,
+  parsePhaseArtifactName,
+  parsePlanFileName,
+  parseQuickArtifactName,
+  parseQuickDirName,
+} from '../planning-repo/naming.ts';
 import { artifactTokenOf, assertNonEmpty, encodePart, milestoneKeyOf, phaseKeyOf } from './identity-keys.ts';
-import { GSD_VERSION_PATTERN, PROJECT_PAGES } from './reserved.ts';
+import {
+  GSD_VERSION_PATTERN,
+  LEGACY_FIRST_SEGMENTS,
+  MILESTONE_SCOPE_RESERVED,
+  PROJECT_PAGES,
+  RESERVED_SEGMENT_PREFIXES,
+  ROOT_TOKEN_RESERVED,
+} from './reserved.ts';
 
 export { artifactTokenOf, milestoneKeyOf, phaseKeyOf } from './identity-keys.ts';
 // The old parser and its types keep their old names for every current importer; legacy-routes.ts owns them.
@@ -168,10 +185,17 @@ export function phaseSegmentOf(address: PhaseAddress | PhaseIdentity): string {
   return encodePart(`phase-${code}${normalizePhaseNumber(address.number)}`);
 }
 
-/** The URL segment of a milestone version. A GSD-shaped version (`v1.1`) is its own segment. */
+const MILESTONE_ESCAPE = 'milestone-';
+
+/**
+ * The URL segment of a milestone version. A GSD-shaped version (`v1.1`, `v2.0.3`) is its own segment. Any
+ * other version (`v1.0 / 旧`, or a word the parser reserves such as `roadmap` or `phase-2`) gets exactly one
+ * `milestone-` prefix and its encoded text, so it can never be read as a page, a phase or a document; the
+ * parser strips exactly one prefix and decodes the rest.
+ */
 export function milestoneSegmentOf(version: string): string {
   assertNonEmpty(version, 'Milestone version');
-  return encodePart(version);
+  return GSD_VERSION_PATTERN.test(version) ? version : `${MILESTONE_ESCAPE}${encodePart(version)}`;
 }
 
 const PLANNING_PREFIX = '.planning/';
@@ -204,11 +228,10 @@ export function buildUrl(route: Route): string {
       return route.milestone === null ? '/overview' : `/${milestoneSegmentOf(route.milestone)}/overview`;
     case 'phase':
       return withHeading(scopeUrl(route.milestone, route.phase), route.heading ?? undefined);
-    case 'plan':
-      return withHeading(
-        `${scopeUrl(route.milestone, route.phase)}/plan-${route.planNumber}${route.doc === 'summary' ? '/summary' : ''}`,
-        route.heading ?? undefined,
-      );
+    case 'plan': {
+      const planUrl = `${scopeUrl(route.milestone, route.phase)}/plan-${route.planNumber}`;
+      return withHeading(route.doc === 'summary' ? `${planUrl}/summary` : planUrl, route.heading ?? undefined);
+    }
     case 'document':
       return withHeading(route.url, route.heading ?? undefined);
     case 'legacy':
@@ -218,6 +241,35 @@ export function buildUrl(route: Route): string {
 
 // --- Path to address -------------------------------------------------------------------------------------
 
+const isDotName = (token: string): boolean => token === '' || token === '.' || token === '..';
+const startsWithReservedPrefix = (token: string): boolean =>
+  RESERVED_SEGMENT_PREFIXES.some((prefix) => token.startsWith(prefix));
+
+/** Drops a trailing `.md`; a name that would become '', '.' or '..' keeps its full file name, so the
+ * browser can never collapse the segment. */
+function dropMarkdown(name: string): string {
+  const token = name.replace(/\.md$/i, '');
+  return isDotName(token) ? name : token;
+}
+
+/** The URL token of a file name under a folder's name rule (see NameRule in folders.ts). */
+function tokenOfName(name: string, rule: NameRule): string {
+  if (rule === 'keep-all') return name;
+  return dropMarkdown(rule === 'gsd-lower' ? name.toLowerCase() : name);
+}
+
+/** `a/b/name` as encoded url text, the last segment through the name rule and the directories as written. */
+function encodedTail(segments: readonly string[], rule: NameRule): string {
+  const last = segments[segments.length - 1];
+  return [...segments.slice(0, -1), tokenOfName(last, rule)].map(encodePart).join('/');
+}
+
+/** The lower-cased kind token of a recognised unprefixed file (COVERAGE.md, deferred-items.md,
+ * SKELETON.md, .continue-here.md), where its exact-name row applies, else null. */
+function exactNameToken(name: string, wheres: readonly ExactNameWhere[]): string | null {
+  return EXACT_NAME_KINDS.find((row) => row.name === name && wheres.includes(row.where))?.kind ?? null;
+}
+
 /** The segments after the phase folder when `rel` (a path under `.planning/`) sits inside one, else null:
  * `phases/<dir>/...` or `milestones/<vX.Y-phases>/<dir>/...`. */
 function phaseFolderRest(rel: readonly string[]): string[] | null {
@@ -226,34 +278,142 @@ function phaseFolderRest(rel: readonly string[]): string[] | null {
   return null;
 }
 
+const PLAN_LIKE = /^plan-\d+$/i;
+
 /** A file inside a phase folder, or null when it takes the `file/` address. */
 function phaseFileAddress(owner: PhaseIdentity, rest: readonly string[]): string | null {
   const base = scopeUrl(owner.milestoneVersion, owner);
-  if (rest.length !== 1) return null;
-  const name = rest[0];
-  const samePhase = (filePhase: string): boolean =>
-    normalizePhaseNumber(filePhase) === normalizePhaseNumber(owner.number);
+  if (rest.length === 1) {
+    const name = rest[0];
+    const samePhase = (filePhase: string): boolean =>
+      normalizePhaseNumber(filePhase) === normalizePhaseNumber(owner.number);
 
-  const plan = parsePlanFileName(name);
-  if (plan.matched) {
-    if (!samePhase(plan.phase)) return null;
-    return `${base}/plan-${plan.plan}${plan.kind === 'summary' ? '/summary' : ''}`;
+    const plan = parsePlanFileName(name);
+    if (plan.matched) {
+      if (!samePhase(plan.phase)) return null;
+      return `${base}/plan-${plan.plan}${plan.kind === 'summary' ? '/summary' : ''}`;
+    }
+    const artifact = parsePhaseArtifactName(name);
+    if (artifact.matched) {
+      // D-06: a numeric prefix that is not the folder's own number takes the file/ address.
+      if (!samePhase(artifact.phase)) return null;
+      return `${base}/${encodePart(artifact.artifact.toLowerCase())}`;
+    }
+    const exact = exactNameToken(name, ['phase-or-quick', 'any']);
+    if (exact !== null) return `${base}/${encodePart(exact)}`;
   }
-  const artifact = parsePhaseArtifactName(name);
-  if (artifact.matched) {
-    // D-06: a numeric prefix that is not the folder's own number takes the file/ address.
-    if (!samePhase(artifact.phase)) return null;
-    return `${base}/${encodePart(artifact.artifact.toLowerCase())}`;
-  }
-  return null;
+  // Free-form: keep case, drop .md. A name that touches plan-<digits> could shadow a plan or its summary.
+  const tail = [...rest.slice(0, -1), dropMarkdown(rest[rest.length - 1])];
+  if (PLAN_LIKE.test(tail[0])) return null;
+  return `${base}/${tail.map(encodePart).join('/')}`;
 }
 
-/** A root file: its lower-cased name without `.md`. */
+/** A file in a quick task folder (live `quick/<dir>/...` or archived `milestones/vX.Y-quick/<dir>/...`):
+ * `segments` start at the task folder. The URL carries the task ID, never the folder slug (D-07). */
+function quickAddress(segments: readonly string[]): string | null {
+  if (segments.length < 2) return null;
+  const dir = parseQuickDirName(segments[0]);
+  if (!dir.matched) return null;
+  const id = `${dir.date}-${dir.timeToken}`;
+  const base = `/quick/${encodePart(id)}`;
+  const rest = segments.slice(1);
+  if (rest.length === 1) {
+    const artifact = parseQuickArtifactName(rest[0]);
+    if (artifact.matched) {
+      if (artifact.quickId !== id) return null;
+      if (artifact.artifact === 'PLAN') return base;
+      if (artifact.artifact === 'SUMMARY') return `${base}/summary`;
+      return `${base}/${encodePart(artifact.artifact.toLowerCase())}`;
+    }
+    const exact = exactNameToken(rest[0], ['phase-or-quick', 'any']);
+    if (exact !== null) return `${base}/${encodePart(exact)}`;
+  }
+  const tail = [...rest.slice(0, -1), dropMarkdown(rest[rest.length - 1])];
+  // A free-form `summary` would shadow the task's SUMMARY address.
+  if (tail[0] === 'summary') return null;
+  return `${base}/${tail.map(encodePart).join('/')}`;
+}
+
+/** A milestone's own document (`vX.Y-<token>.md`, at the root or in milestones/): `/<v>/<token>`. */
+function milestoneDocumentAddress(version: string, document: string): string | null {
+  const token = document.toUpperCase() === 'MILESTONE-AUDIT' ? 'audit' : document.toLowerCase();
+  if (isDotName(token) || MILESTONE_SCOPE_RESERVED.has(token) || startsWithReservedPrefix(token)) return null;
+  return `/${milestoneSegmentOf(version)}/${encodePart(token)}`;
+}
+
+/** Another archived folder of a milestone (`milestones/vX.Y-<name>/...`): `/<v>/<name>/<rest>` under the
+ * matching folder row's name rule, else keep-case. */
+function milestoneFolderAddress(version: string, name: string, rest: readonly string[]): string | null {
+  const row = folderRuleOf(`${name}/${rest[0]}`);
+  if (row?.folder === 'workstreams') return null;
+  const segment = row?.urlSegment ?? name;
+  const lower = segment.toLowerCase();
+  if (isDotName(segment) || MILESTONE_SCOPE_RESERVED.has(lower) || startsWithReservedPrefix(lower)) return null;
+  return `/${milestoneSegmentOf(version)}/${encodePart(segment)}/${encodedTail(rest, row?.nameRule ?? 'keep-case')}`;
+}
+
+function milestonesAddress(rel: readonly string[], owner: AddressOwner): string | null {
+  if (rel.length === 2) {
+    const file = parseMilestoneFileName(rel[1]);
+    return file.matched ? milestoneDocumentAddress(file.version, file.document) : null;
+  }
+  const dir = rel[1];
+  if (parseMilestonePhasesDirName(dir).matched) {
+    const rest = owner === null ? null : phaseFolderRest(rel);
+    return owner !== null && rest !== null ? phaseFileAddress(owner.phase, rest) : null;
+  }
+  if (parseMilestoneQuickDirName(dir).matched) return quickAddress(rel.slice(2));
+  // `vX.Y-<name>` read through the one milestone-name grammar by giving it the shape of a document name.
+  const folder = parseMilestoneFileName(`${dir}.md`);
+  return folder.matched ? milestoneFolderAddress(folder.version, folder.document, rel.slice(2)) : null;
+}
+
+/** A file under a top-level folder of the folder table: `/<urlSegment>/<path>` under its name rule. */
+function folderAddress(rel: readonly string[]): string | null {
+  const rule = folderRuleOf(rel.join('/'));
+  if (rule === null || rule.folder === 'workstreams') return null;
+  return `/${encodePart(rule.urlSegment)}/${encodedTail(rel.slice(1), rule.nameRule)}`;
+}
+
+/** A file directly under `.planning/`: its lower-cased name without `.md` or `.json`. */
 function rootFileAddress(name: string): string | null {
-  if (!name.toLowerCase().endsWith('.md')) return null;
-  const token = name.slice(0, -'.md'.length).toLowerCase();
-  if (token === '' || token === '.' || token === '..') return null;
+  if (name === 'config.json') return '/settings';
+  const exact = exactNameToken(name, ['any']);
+  if (exact !== null) return `/${encodePart(exact)}`;
+  const milestoneFile = parseMilestoneFileName(name);
+  if (milestoneFile.matched) return milestoneDocumentAddress(milestoneFile.version, milestoneFile.document);
+
+  const lower = name.toLowerCase();
+  const token = lower.replace(/\.(md|json)$/, '');
+  if (isDotName(token)) return `/${encodePart(lower)}`;
+  const isPageWord = (PROJECT_PAGES as readonly string[]).includes(token);
+  // ROADMAP.md IS the roadmap page; any other file that lands on a page word, the settings or overview
+  // address, a version shape or a reserved prefix would shadow something.
+  if (
+    GSD_VERSION_PATTERN.test(token) ||
+    startsWithReservedPrefix(token) ||
+    ROOT_TOKEN_RESERVED.has(token) ||
+    (isPageWord && name !== 'ROADMAP.md')
+  ) {
+    return null;
+  }
   return `/${encodePart(token)}`;
+}
+
+function addressInScope(rel: readonly string[], owner: AddressOwner): string | null {
+  if (rel.length === 1) return rootFileAddress(rel[0]);
+  switch (rel[0]) {
+    case 'phases': {
+      const rest = owner === null ? null : phaseFolderRest(rel);
+      return owner !== null && rest !== null ? phaseFileAddress(owner.phase, rest) : null;
+    }
+    case 'quick':
+      return quickAddress(rel.slice(1));
+    case 'milestones':
+      return milestonesAddress(rel, owner);
+    default:
+      return folderAddress(rel);
+  }
 }
 
 /**
@@ -262,11 +422,7 @@ function rootFileAddress(name: string): string | null {
  * the route table groups by this address and sends every file but one to `file/`.
  */
 export function addressOfPath(path: string, owner: AddressOwner): string {
-  const rel = underPlanning(path).split('/');
-  if (rel.length === 1) return rootFileAddress(rel[0]) ?? fileUrlOf(path);
-  const phaseRest = owner === null ? null : phaseFolderRest(rel);
-  if (owner !== null && phaseRest !== null) return phaseFileAddress(owner.phase, phaseRest) ?? fileUrlOf(path);
-  return fileUrlOf(path);
+  return addressInScope(underPlanning(path).split('/'), owner) ?? fileUrlOf(path);
 }
 
 // --- Address to route ------------------------------------------------------------------------------------
@@ -282,12 +438,29 @@ function parsePhaseSegment(segment: string): PhaseAddress | null {
   return rest.length === 0 ? null : { projectCode: null, number: normalizePhaseNumber(rest) };
 }
 
+/** A decoded segment as a milestone version: a GSD-shaped version as is, or the text after exactly one
+ * `milestone-` prefix. `'malformed'` is a bare prefix with nothing after it; null is not a milestone. */
+function milestoneOfSegment(segment: string): { version: string } | 'malformed' | null {
+  if (GSD_VERSION_PATTERN.test(segment)) return { version: segment };
+  if (!segment.startsWith(MILESTONE_ESCAPE)) return null;
+  const version = segment.slice(MILESTONE_ESCAPE.length);
+  return version.length === 0 ? 'malformed' : { version };
+}
+
 function documentUrl(segments: readonly string[]): string {
   return `/${segments.map(encodePart).join('/')}`;
 }
 
 function isPage(segment: string): segment is PageName {
   return (PROJECT_PAGES as readonly string[]).includes(segment);
+}
+
+/** True for the old `/milestones/m~...` and `/artifacts/a~...` shapes, decided from the raw first two
+ * segments only (`split` with a limit stops after three pieces, so a hostile path costs nothing). */
+function isLegacyPath(path: string): boolean {
+  const [, first, second] = path.split('/', 3);
+  if (second === undefined || !(LEGACY_FIRST_SEGMENTS as readonly string[]).includes(first)) return false;
+  return first === 'milestones' ? second === 'current' || second.startsWith('m~') : second.startsWith('a~');
 }
 
 /**
@@ -302,9 +475,14 @@ function isPage(segment: string): segment is PageName {
  *
  * A `#heading` fragment becomes `heading`. One trailing slash is ignored; any other empty segment is an
  * error. A `document` route carries the canonical re-encoding of its once-decoded segments, so `%7E` and
- * `~` (or `%41` and `A`) give the same url.
+ * `~` (or `%41` and `A`) give the same url. The old encoded shapes come back as a `legacy` route holding
+ * the input untouched, for the redirect path to decode.
  */
 export function parseRoutePath(input: string): RouteParseResult {
+  const hashIndex = input.indexOf('#');
+  if (isLegacyPath(hashIndex < 0 ? input : input.slice(0, hashIndex))) {
+    return { ok: true, route: { kind: 'legacy', pathname: input } };
+  }
   const headingResult = parseHeading(input);
   if (!headingResult.ok) return headingResult.result;
   const { path, heading } = headingResult;
@@ -323,14 +501,24 @@ export function parseRoutePath(input: string): RouteParseResult {
     segments.push(decoded);
   }
 
-  if (segments.length === 1 && isPage(segments[0])) {
-    return { ok: true, route: { kind: 'page', page: segments[0] } };
+  if (segments.length === 1) {
+    const only = segments[0];
+    if (isPage(only)) return { ok: true, route: { kind: 'page', page: only } };
+    if (only === 'overview') return { ok: true, route: { kind: 'overview', milestone: null } };
   }
 
-  // An optional milestone segment, then a phase scope.
-  const hasMilestone = segments.length > 1 && GSD_VERSION_PATTERN.test(segments[0]);
-  const milestone = hasMilestone ? segments[0] : null;
-  const scoped = hasMilestone ? segments.slice(1) : segments;
+  // An optional leading milestone segment, then the scope it opens.
+  const leading = milestoneOfSegment(segments[0]);
+  if (leading === 'malformed') return failure('malformed-token', 'Milestone token is malformed', segments[0]);
+  if (leading !== null && segments.length === 1) {
+    return { ok: true, route: { kind: 'milestone', milestone: leading.version } };
+  }
+  const milestone = leading === null ? null : leading.version;
+  const scoped = leading === null ? segments : segments.slice(1);
+
+  if (milestone !== null && scoped.length === 1 && scoped[0] === 'overview') {
+    return { ok: true, route: { kind: 'overview', milestone } };
+  }
   if (scoped[0].startsWith('phase-')) {
     const phase = parsePhaseSegment(scoped[0]);
     if (phase === null) return failure('malformed-token', 'Phase token is malformed', scoped[0]);
@@ -338,13 +526,11 @@ export function parseRoutePath(input: string): RouteParseResult {
     if (tail.length === 0) return { ok: true, route: { kind: 'phase', milestone, phase, heading } };
     const planMatch = tail[0].match(PLAN_SEGMENT);
     if (planMatch && (tail.length === 1 || (tail.length === 2 && tail[1] === 'summary'))) {
-      return {
-        ok: true,
-        route: { kind: 'plan', milestone, phase, planNumber: planMatch[1], doc: tail.length === 1 ? 'plan' : 'summary', heading },
-      };
+      const doc = tail.length === 1 ? 'plan' : 'summary';
+      return { ok: true, route: { kind: 'plan', milestone, phase, planNumber: planMatch[1], doc, heading } };
     }
-    const base = scopeUrl(milestone, phase);
-    return { ok: true, route: { kind: 'document', url: `${base}${documentUrl(tail)}`, heading } };
+    return { ok: true, route: { kind: 'document', url: `${scopeUrl(milestone, phase)}${documentUrl(tail)}`, heading } };
   }
-  return { ok: true, route: { kind: 'document', url: documentUrl(segments), heading } };
+  const url = milestone === null ? documentUrl(segments) : `/${milestoneSegmentOf(milestone)}${documentUrl(scoped)}`;
+  return { ok: true, route: { kind: 'document', url, heading } };
 }
