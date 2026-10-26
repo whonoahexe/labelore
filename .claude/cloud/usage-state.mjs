@@ -1,7 +1,7 @@
 // Plan usage for the cloud usage guard. Hooks receive no usage data, so it comes from one of two
 // places: the figures statusline.mjs records from the status line input (local sessions; cloud
 // sessions run no status line), or Claude Code's own usage endpoint, called with the session's
-// claude.ai token and cached for a minute.
+// token and cached for a minute.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -50,6 +50,12 @@ export function peakUsage(rateLimits) {
 /** Where a claude.ai token can come from, in the order they are tried. */
 export function tokenSources() {
   const sources = [];
+  // Cloud sessions hold no claude.ai login; their session token answers the usage endpoint.
+  const ingressFile = process.env.CLAUDE_SESSION_INGRESS_TOKEN_FILE;
+  const ingressToken =
+    ingressFile && fs.existsSync(ingressFile) && fs.readFileSync(ingressFile, 'utf8').trim();
+  if (ingressToken)
+    sources.push({ name: 'CLAUDE_SESSION_INGRESS_TOKEN_FILE', token: ingressToken });
   if (process.env.CLAUDE_CODE_OAUTH_TOKEN) {
     sources.push({ name: 'CLAUDE_CODE_OAUTH_TOKEN', token: process.env.CLAUDE_CODE_OAUTH_TOKEN });
   }
