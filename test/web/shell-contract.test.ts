@@ -57,6 +57,7 @@ describe('authorized Studio Portal shell contract', () => {
       source('src/web/styles/globals.css'),
     ]);
     expect(files[0]).toContain("import './styles/globals.css'");
+    expect(files[1]).toContain("from '../nav.tsx'");
     expect(files[1]).toContain('presentationRoutePatterns.dashboard');
     expect(files[1]).toContain('presentationRoutePatterns.roadmap');
     expect(files[2]).toContain('rounded-none');

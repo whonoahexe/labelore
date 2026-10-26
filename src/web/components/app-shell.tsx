@@ -1,12 +1,13 @@
 import { Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChartLine, LayoutDashboard, ListChecks, Map, PencilRuler } from 'lucide-react';
-import { NavLink, Outlet } from 'react-router';
+import { Outlet } from 'react-router';
 import { formatProjectMeta, projectDisplayName } from '../../presentation/shell-header.ts';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import { projectHasResearch } from '../../presentation/project-research-files.ts';
 import { projectHasSketches } from '../../presentation/sketches.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
+import { NavLink } from '../nav.tsx';
 import { LabeloreMark } from './labelore-mark.tsx';
 import { RouteFallback, RouteProgress } from './route-progress.tsx';
 import { SearchDialog } from './search-field.tsx';
@@ -26,7 +27,8 @@ function navigationClass({ isActive }: { isActive: boolean }): string {
   return isActive ? 'shell-nav-link active' : 'shell-nav-link';
 }
 
-export function AppShell(): React.JSX.Element {
+/** `children` takes the Outlet's place (the router gate uses it for the wrong-project page). */
+export function AppShell({ children }: { children?: React.ReactNode } = {}): React.JSX.Element {
   const presentation = useQuery({ queryKey: ['presentation'], queryFn: fetchPresentation });
 
   const displayName = projectDisplayName(
@@ -124,7 +126,7 @@ export function AppShell(): React.JSX.Element {
                 precisely so it can also paint during transition-driven navigations, when React
                 never renders this fallback at all. */}
             <Suspense fallback={<RouteFallback />}>
-              <Outlet />
+              {children ?? <Outlet />}
             </Suspense>
           </div>
         </div>

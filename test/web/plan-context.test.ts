@@ -78,6 +78,7 @@ function presentation(overrides: Partial<ProjectPresentation> = {}): ProjectPres
     readAt: '2026-10-07T00:00:00.000Z',
     loadStatus: { status: 'ok' },
     rootPath: '/project',
+    projectSlug: 'project',
     projectName: 'p',
     config: {},
     state: null,

@@ -96,6 +96,7 @@ function presentation(): ProjectPresentation {
     readAt: '2026-08-27T04:00:00.000Z',
     loadStatus: { status: 'ok' },
     rootPath: '/project',
+    projectSlug: 'project',
     projectName: 'Reference fixture',
     config: {},
     state: null,
@@ -496,6 +497,7 @@ describe('BACK-02 — decision/warning mentions, phase-local-then-corpus resolut
       readAt: '2026-09-20T00:00:00.000Z',
       loadStatus: { status: 'ok' },
       rootPath: '/project',
+      projectSlug: 'project',
       projectName: 'BACK-02 fixture',
       config: {},
       state: null,
@@ -770,8 +772,8 @@ describe('sanitized metadata to controlled React preview bridge', () => {
     expect(artifactPage.match(/dangerouslySetInnerHTML/g)).toHaveLength(1);
     expect(artifactPage).toContain('handleDocumentReferenceActivation<HTMLElement>');
     expect(activation).toContain("'[data-reference-key]'");
-    expect(router).toContain('presentationRoutePatterns.plan, element: <PlanPairPage />');
-    expect(router).toContain('presentationRoutePatterns.artifact, element: <ArtifactPage />');
+    expect(router).toContain('relative(presentationRoutePatterns.plan), element: <PlanPairPage />');
+    expect(router).toContain('relative(presentationRoutePatterns.artifact), element: <ArtifactPage />');
     expect(css).toMatch(/\.reference-preview-positioner\s*\{[^}]*z-index:\s*(?:2[1-9]|[3-9]\d|\d{3,})/s);
     expect(css).toMatch(/\.reference-preview\s*\{[^}]*width:\s*min\(24rem, calc\(100vw - 2rem\)\)/s);
     expect(css).not.toMatch(/\.reference-preview\s*\{[^}]*z-index:/s);

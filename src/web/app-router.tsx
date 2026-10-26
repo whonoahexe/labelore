@@ -1,10 +1,21 @@
 import { lazy } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { createBrowserRouter, isRouteErrorResponse, Link, useRouteError } from 'react-router';
+import {
+  createBrowserRouter,
+  isRouteErrorResponse,
+  Navigate,
+  useLocation,
+  useParams,
+  useRouteError,
+  type RouteObject,
+} from 'react-router';
 import { presentationRoutePatterns } from '../presentation/routes.ts';
 import { AppShell, fetchPresentation } from './components/app-shell.tsx';
 import { trackRouteChunk } from './components/route-chunk-store.ts';
+import { Link, ProjectSlugProvider } from './nav.tsx';
 import { InvalidProjectScreen } from './pages/invalid-project-screen.tsx';
+import { NotFoundPage } from './pages/not-found-page.tsx';
+import { decodeAddress, projectGateOutcome } from './project-path.ts';
 
 // Every routed page is lazy()-loaded, and every factory goes through `trackRouteChunk` so the
 // shell's top bar can show during navigations as well as on the initial load — a bare Suspense
@@ -68,18 +79,31 @@ function RouteError(): React.JSX.Element {
   );
 }
 
-function NotFound(): React.JSX.Element {
+/** The `*` child of the project route: an address under the open project that no page matches.
+ * Renders only once the presentation payload has resolved, so the page never flashes ahead of the
+ * shell's own Reading snapshot state; when the request fails the shell's notice shows instead. */
+function NotFoundRoute(): React.JSX.Element | null {
+  const presentation = useQuery({ queryKey: ['presentation'], queryFn: fetchPresentation });
+  const location = useLocation();
+  if (!presentation.data) return null;
   return (
-    <main className="page-stack">
-      <p className="eyebrow">Not found</p>
-      <h1>This local route does not exist.</h1>
-      <section className="notice">
-        <h2>Nothing is mapped here</h2>
-        <p>The address is outside the current Labelore route tree.</p>
-        <Link to={presentationRoutePatterns.dashboard}>Return to the dashboard</Link>
-      </section>
-    </main>
+    <NotFoundPage
+      address={decodeAddress(location.pathname)}
+      openSlug={presentation.data.projectSlug}
+    />
   );
+}
+
+/** `/`: lands on the open project's dashboard once its slug is known, replacing the history entry
+ * so Back does not return to a bare `/`. While the payload loads (or fails) the shell shows its
+ * own Reading snapshot and notice states. */
+function RootRedirect(): React.JSX.Element {
+  const presentation = useQuery({ queryKey: ['presentation'], queryFn: fetchPresentation });
+  if (presentation.data && presentation.data.loadStatus.status !== 'ok') {
+    return <InvalidProjectScreen loadStatus={presentation.data.loadStatus} />;
+  }
+  if (presentation.data) return <Navigate replace to={`/${presentation.data.projectSlug}`} />;
+  return <AppShell />;
 }
 
 /**
@@ -92,30 +116,56 @@ function NotFound(): React.JSX.Element {
  * "Reading snapshot…" and shell-notice states — no new loading screen is added here.
  */
 function ProjectGate(): React.JSX.Element {
+  const { project = '' } = useParams();
+  const location = useLocation();
   const presentation = useQuery({ queryKey: ['presentation'], queryFn: fetchPresentation });
+  const outcome = projectGateOutcome(project, presentation.data);
   if (presentation.data && presentation.data.loadStatus.status !== 'ok') {
     return <InvalidProjectScreen loadStatus={presentation.data.loadStatus} />;
+  }
+  if (presentation.data && outcome === 'wrong-project') {
+    // NAV-09: the first segment is not this project's name. The shell's own links lead into the
+    // project that is open, not the name that was typed.
+    return (
+      <ProjectSlugProvider value={presentation.data.projectSlug}>
+        <AppShell>
+          <NotFoundPage
+            address={decodeAddress(location.pathname)}
+            openSlug={presentation.data.projectSlug}
+            wrongProject
+          />
+        </AppShell>
+      </ProjectSlugProvider>
+    );
   }
   return <AppShell />;
 }
 
-export const appRouter = createBrowserRouter([
+// Children are today's page patterns made relative to `/:project`, so every page still opens under
+// the slug. 07-06 and 07-07 replace the encoded patterns with the readable grammar.
+const relative = (pattern: string): string => pattern.replace(/^\//, '');
+
+export const appRoutes: RouteObject[] = [
+  { path: '/', element: <RootRedirect />, errorElement: <RouteError /> },
   {
+    path: '/:project',
     element: <ProjectGate />,
     errorElement: <RouteError />,
     children: [
-      { path: presentationRoutePatterns.dashboard, element: <DashboardPage /> },
-      { path: presentationRoutePatterns.roadmap, element: <RoadmapPage /> },
-      { path: presentationRoutePatterns.search, element: <SearchPage /> },
-      { path: presentationRoutePatterns.traceability, element: <TraceabilityPage /> },
-      { path: presentationRoutePatterns.sketches, element: <SketchesPage /> },
-      { path: presentationRoutePatterns.research, element: <ResearchPage /> },
-      { path: presentationRoutePatterns.milestone, element: <RoadmapPage /> },
-      { path: presentationRoutePatterns.phase, element: <RoadmapPage /> },
-      { path: presentationRoutePatterns.plan, element: <PlanPairPage /> },
-      { path: presentationRoutePatterns.phaseArtifact, element: <ArtifactPage /> },
-      { path: presentationRoutePatterns.artifact, element: <ArtifactPage /> },
-      { path: '*', element: <NotFound /> },
+      { index: true, element: <DashboardPage /> },
+      { path: relative(presentationRoutePatterns.roadmap), element: <RoadmapPage /> },
+      { path: relative(presentationRoutePatterns.search), element: <SearchPage /> },
+      { path: relative(presentationRoutePatterns.traceability), element: <TraceabilityPage /> },
+      { path: relative(presentationRoutePatterns.sketches), element: <SketchesPage /> },
+      { path: relative(presentationRoutePatterns.research), element: <ResearchPage /> },
+      { path: relative(presentationRoutePatterns.milestone), element: <RoadmapPage /> },
+      { path: relative(presentationRoutePatterns.phase), element: <RoadmapPage /> },
+      { path: relative(presentationRoutePatterns.plan), element: <PlanPairPage /> },
+      { path: relative(presentationRoutePatterns.phaseArtifact), element: <ArtifactPage /> },
+      { path: relative(presentationRoutePatterns.artifact), element: <ArtifactPage /> },
+      { path: '*', element: <NotFoundRoute /> },
     ],
   },
-]);
+];
+
+export const appRouter = createBrowserRouter(appRoutes);
