@@ -153,11 +153,11 @@ to the same clean URLs, and none of them needs to change again.
    such as `v1.1`. *(NAV-10)*
 5. An old-style encoded link or bookmark redirects to its new readable URL. *(NAV-11)*
 
-**Plans**: 10 plans
+**Plans**: 1/10 plans executed
 
 Plans:
 **Wave 1**
-- [ ] 07-01-PLAN.md — Tracer: file classes (text, image, binary, large) decided before any read, GSD internal files kept out of everything, the made-up Shapes fixture
+- [x] 07-01-PLAN.md — Tracer: file classes (text, image, binary, large) decided before any read, GSD internal files kept out of everything, the made-up Shapes fixture
 
 **Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 07-02-PLAN.md — Folder table and position-gated name recognition; recognised unprefixed and non-text files in the drawer's After stage
@@ -397,7 +397,7 @@ file, ID or project.
 | 5 | v1.1 | 6/6 | Archived | 2026-09-21 |
 | quick tasks | v2.0 | 40/40 | Archived | 2026-10-25 |
 | 6. Trustworthy Tests and Security Baseline | v2.1 | 22/22 | Complete    | 2026-10-26 |
-| 7. Recognised Files and Readable URLs | v2.1 | 0/TBD | Not started | - |
+| 7. Recognised Files and Readable URLs | v2.1 | 1/10 | In Progress | - |
 | 8. Several Projects and a Switcher | v2.1 | 0/TBD | Not started | - |
 | 9. Review, Audit and Root Document Pages | v2.1 | 0/TBD | Not started | - |
 | 10. Codebase Map, Specification and Check Pages | v2.1 | 0/TBD | Not started | - |

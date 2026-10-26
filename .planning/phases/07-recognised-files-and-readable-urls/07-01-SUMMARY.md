@@ -198,7 +198,7 @@ Tracer `<verify>` is automated-only (`npx vitest run test/recognition-classes.te
 
 `git diff 8764ab1 -- test/__golden__` read in full. Allowed changes only:
 
-- `fileClass` and `sizeBytes` keys added on every artifact: 147 of each (dense 58+... across the artifact maps; sparse-empty 1 artifact file entry set; sparse-started 5), every `fileClass` is `"text"`.
+- `fileClass` and `sizeBytes` keys added on every artifact: 147 of each (dense 129, sparse-empty 3, sparse-started 15), every `fileClass` is `"text"`.
 - One file moved from artifacts to exclusions in `dense.json`: `.planning/estimation-calibration.json` (25 removed lines, replaced by an exclusion with reason `GSD internal file, kept out of the index (D-11)`).
 - No other line changed.
 

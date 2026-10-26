@@ -2,19 +2,19 @@
 gsd_state_version: "1.0"
 milestone: v2.1
 milestone_name: Wayfinding
-current_phase: 7
+current_phase: 07
 current_phase_name: Recognised Files and Readable URLs
 status: executing
-stopped_at: Phase 7 UI-SPEC approved
-last_updated: "2026-10-26T18:53:37.307Z"
+stopped_at: Completed 07-01-PLAN.md
+last_updated: "2026-10-26T19:50:48.902Z"
 last_activity: 2026-10-26
-last_activity_desc: Phase 06 complete, transitioned to Phase 7
-state_head: 97ce9979201bb5e364ed17deea8646b25a7620b7
+last_activity_desc: Phase 07 execution started
+state_head: 622ab5129215c4c7073c3b6df6e27367700cd509
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 32
-  completed_plans: 22
+  completed_plans: 23
   percent: 13
 ---
 
@@ -25,14 +25,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-26)
 
 **Core value:** Open the dashboard on a GSD project and immediately know where the work stands and where any planning artifact lives — without reading a single file by hand.
-**Current focus:** Phase 7 — Recognised Files and Readable URLs
+**Current focus:** Phase 07 — Recognised Files and Readable URLs
 
 ## Current Position
 
-Phase: 7 (Recognised Files and Readable URLs) — READY TO EXECUTE
-Plan: Not started
+Phase: 07 (Recognised Files and Readable URLs) — EXECUTING
+Plan: 2 of 10
 Status: Ready to execute
-Last activity: 2026-10-26 — Phase 06 complete, transitioned to Phase 7
+Last activity: 2026-10-26 — Phase 07 execution started
 
 Progress: [█░░░░░░░░░] 13%
 
@@ -104,6 +104,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 06 P19 | 20 min | 2 tasks | 30 files |
 | Phase 06 P20 | 20 min | 2 tasks | 5 files |
 | Phase 06 P22 | 12 min | 3 tasks | 17 files |
+| Phase 07 P01 | 30 min | 3 tasks | 95 files |
 
 ## Accumulated Context
 
@@ -153,6 +154,8 @@ milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) a
 - [Phase 06]: Wave 4 UI safety gate (no UI-SPEC for Phase 06) passed over by the orchestrator during the user's unattended run: 06-20 changed no file under src/, only tests.
 - [Phase 06]: 06-22: no-skips exemption list holds four entries (growth.ts has nothing to exempt); bestOf counts as a timing source; disguised-skip matches bare early returns only
 - [Phase 06]: Wave 5 UI safety gate (no UI-SPEC for Phase 06) passed over by the orchestrator during the user's unattended run: 06-22's only src/ edits were seven comment lines naming no private project; no rendered UI changed.
+- [Phase 07]: 07-01: classifyFile head-sniffs only names whose extension decides nothing; root internal names are byte-equal while the .lock/.tmp suffix rule is case-insensitive at any depth
+- [Phase 07]: 07-01: estimation-calibration.json is GSD-internal (assumption A4, reversible); the dense fixture's copy moved from artifacts to exclusions and the Shapes project carries one example of each class
 
 ### Pending Todos
 
@@ -198,9 +201,9 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-10-26T17:45:00.000Z
-Stopped at: Session resumed, proceeding to /gsd-plan-phase 7 (Add more plans: 07-09, 07-10)
-Resume file: .planning/phases/07-recognised-files-and-readable-urls/.continue-here.md
+Last session: 2026-10-26T19:50:48.704Z
+Stopped at: Completed 07-01-PLAN.md
+Resume file: None
 
 ## Operator Next Steps
 
