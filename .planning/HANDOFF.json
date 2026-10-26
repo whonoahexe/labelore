@@ -1,0 +1,41 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-10-26T17:09:00.225Z",
+  "phase": "07",
+  "phase_name": "Recognised Files and Readable URLs",
+  "phase_dir": ".planning/phases/07-recognised-files-and-readable-urls",
+  "plan": null,
+  "task": null,
+  "total_tasks": null,
+  "status": "paused",
+  "stage": "plan-phase (planner checkpoint; 8 of 10 plans written; checker not yet run)",
+  "completed_tasks": [
+    {"id": 1, "name": "Pre-planning gates (context-drift, UI gate, codebase-drift skipped: no map), edge probe (17 unresolved items)", "status": "done"},
+    {"id": 2, "name": "Pattern map 07-PATTERNS.md", "status": "done", "commit": "f71ec79"},
+    {"id": 3, "name": "Plans 07-01..07-08 written (structure + frontmatter validate)", "status": "done"}
+  ],
+  "remaining_tasks": [
+    {"id": 4, "name": "Write 07-09-PLAN.md (wave 6, after 07-07): image page, binary/large info card, GET/HEAD /api/files?route= image bytes route (DATA-08 UI, D-08, D-09)", "status": "not_started"},
+    {"id": 5, "name": "Write 07-10-PLAN.md (wave 7, after 07-08 + 07-09): deep-reload proof for every URL class (NAV-10)", "status": "not_started"},
+    {"id": 6, "name": "ROADMAP.md Phase 7: Plans: 10 plans + wave-grouped list", "status": "not_started"},
+    {"id": 7, "name": "Plan checker + revision loop (max 3), requirements/decision coverage gates, state.planned-phase, roadmap.annotate-dependencies, commit", "status": "not_started"}
+  ],
+  "blockers": [
+    {"description": "Paused by the usage guard at 95% of the 5-hour limit", "type": "external", "workaround": "Resume after the limit resets"}
+  ],
+  "async_jobs": [],
+  "human_actions_pending": [
+    {"action": "Decide whether the usage guard's push-to-master step should run; this session pushed to its own branch claude/chat-session-04pnx2 instead", "context": "Session instructions forbid pushing to another branch without explicit permission", "blocking": false},
+    {"action": "Playwright deep-reload spec planned in 07-10 is a human check (no Chromium on the planner's machine)", "context": "07-10", "blocking": false}
+  ],
+  "decisions": [
+    {"decision": "No reversibility checkpoint for the URL scheme", "rationale": "Scheme already locked in 07-CONTEXT.md; 07-04 and 07-06 tag it costly", "phase": "07"},
+    {"decision": "Interim state between 07-06 and 07-07: server emits new URLs before the web can route them", "rationale": "Stated in 07-06; unit gates stay green", "phase": "07"}
+  ],
+  "uncommitted_files": [
+    "?? .planning/phases/07-recognised-files-and-readable-urls/07-01-PLAN.md", "?? .planning/phases/07-recognised-files-and-readable-urls/07-02-PLAN.md", "?? .planning/phases/07-recognised-files-and-readable-urls/07-03-PLAN.md", "?? .planning/phases/07-recognised-files-and-readable-urls/07-04-PLAN.md",
+    "?? .planning/phases/07-recognised-files-and-readable-urls/07-05-PLAN.md", "?? .planning/phases/07-recognised-files-and-readable-urls/07-06-PLAN.md", "?? .planning/phases/07-recognised-files-and-readable-urls/07-07-PLAN.md", "?? .planning/phases/07-recognised-files-and-readable-urls/07-08-PLAN.md"
+  ],
+  "next_action": "Run /gsd-plan-phase 7, choose 'Add more plans'; the planner reads the 8 existing plans and the remaining-work brief in .planning/phases/07-recognised-files-and-readable-urls/.continue-here.md, writes 07-09 and 07-10, updates ROADMAP.md, then the checker runs.",
+  "context_notes": "Plans committed at pause time (they were untracked). See .continue-here.md for the full 07-09/07-10 brief."
+}
