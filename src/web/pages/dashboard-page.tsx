@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { CircleDot } from 'lucide-react';
-import { Link } from 'react-router';
+import { Link } from '../nav.tsx';
 import type { DashboardViewModel } from '../../presentation/dashboard.ts';
 import type { DashboardHead } from '../../presentation/dashboard-head.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';

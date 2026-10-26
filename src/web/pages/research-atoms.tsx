@@ -4,7 +4,7 @@
 // stays plain text. The page never links back to the source files.
 import { Fragment, useMemo, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
-import { useNavigate } from 'react-router';
+import { useProjectNavigate } from '../nav.tsx';
 import type { PitfallChip, SwapItem } from '../../presentation/project-research-panels.ts';
 import { tokenizeInline } from '../views/inline-markdown.ts';
 import type { InlineToken } from '../views/inline-markdown.ts';
@@ -200,7 +200,7 @@ export function SwapRows({ items }: { items: readonly SwapItem[] }): React.JSX.E
 /** A pitfall's number as a chip. A navigable one opens that pitfall on the Pitfalls spine (a pushed
  * history entry, so Back returns to the chip); an inert one is a plain span. */
 export function PitfallChipView({ chip, withName = false }: { chip: PitfallChip; withName?: boolean }): React.JSX.Element {
-  const navigate = useNavigate();
+  const navigate = useProjectNavigate();
   const text = withName && chip.short ? `${chip.label} \u00b7 ${chip.short}` : chip.label;
   if (!chip.navigable) return <span className="research-pf-chip">{text}</span>;
   const name = chip.short ? `Pitfall ${chip.label}: ${chip.short}` : `Pitfall ${chip.label}`;

@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
-import { Link, useLocation, useSearchParams } from 'react-router';
+import { useSearchParams } from 'react-router';
+import { Link, useProjectPathname } from '../nav.tsx';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
 import { PairSwitch } from '../components/pair-switch.tsx';
@@ -59,12 +60,12 @@ async function loadPair(route: string, queryClient: QueryClient): Promise<PlanPa
 }
 
 export function PlanPairPage(): React.JSX.Element {
-  const location = useLocation();
+  const pathname = useProjectPathname();
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const query = useQuery({
-    queryKey: ['plan-pair', location.pathname],
-    queryFn: () => loadPair(location.pathname, queryClient),
+    queryKey: ['plan-pair', pathname],
+    queryFn: () => loadPair(pathname, queryClient),
     staleTime: Number.POSITIVE_INFINITY,
   });
 
@@ -108,5 +109,5 @@ export function PlanPairPage(): React.JSX.Element {
   // navigator, the run view), keyed by route so View/Source mode resets between them.
   if (active === 'summary' && pair.summaryRoute)
     return <ArtifactPage key="summary" route={pair.summaryRoute} switcher={switcher} />;
-  return <ArtifactPage key="plan" route={location.pathname} switcher={switcher} />;
+  return <ArtifactPage key="plan" route={pathname} switcher={switcher} />;
 }

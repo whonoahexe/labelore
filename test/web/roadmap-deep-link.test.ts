@@ -138,7 +138,7 @@ describe('roadmap-deep-link module purity', () => {
 describe('roadmap-page wiring source contract', () => {
   it('reads the matched route and resolves a deep-link target', async () => {
     const page = await source('src/web/pages/roadmap-page.tsx');
-    expect(page).toContain('useLocation');
+    expect(page).toContain('useProjectPathname');
     expect(page).toContain('resolveRoadmapDeepLink');
     expect(page).toContain('milestoneContainsDeepLink');
     expect(page).toContain('data-deep-link-target');

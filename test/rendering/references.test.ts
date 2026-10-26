@@ -767,7 +767,8 @@ describe('sanitized metadata to controlled React preview bridge', () => {
       /<Popover\.Positioner[\s\S]*className="reference-preview-positioner"[\s\S]*anchor=\{anchor\}[\s\S]*sideOffset=\{8\}[\s\S]*align="start"[\s\S]*positionMethod="fixed"/,
     );
     expect(preview).toContain('finalFocus={() => state.trigger}');
-    expect(preview).toContain('href={preview.url}');
+    expect(preview).toContain('useProjectHref(state?.preview.url');
+    expect(preview).toContain('href={href}');
     expect(preview).toContain('Open');
     expect(artifactPage.match(/dangerouslySetInnerHTML/g)).toHaveLength(1);
     expect(artifactPage).toContain('handleDocumentReferenceActivation<HTMLElement>');

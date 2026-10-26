@@ -1,4 +1,5 @@
-import { Link, type To } from 'react-router';
+import { type To } from 'react-router';
+import { Link } from '../nav.tsx';
 import { buttonVariants } from './ui/button.tsx';
 
 /** The Plan / Summary switch, first in whichever page each half of the pair mounts. A phase plan's

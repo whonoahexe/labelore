@@ -9,7 +9,7 @@ import {
   History,
   Link2,
 } from 'lucide-react';
-import { Link, useLocation } from 'react-router';
+import { Link, useProjectPathname } from '../nav.tsx';
 import { EmptyState } from '../components/empty-state.tsx';
 import { LeadText } from '../components/lead-tokens.tsx';
 import type {
@@ -384,7 +384,7 @@ function HistoryMilestone({
 }
 
 export function RoadmapPage(): React.JSX.Element {
-  const { pathname } = useLocation();
+  const pathname = useProjectPathname();
   const target = useMemo(() => resolveRoadmapDeepLink(pathname), [pathname]);
   const roadmap = useQuery({ queryKey: ['roadmap'], queryFn: fetchRoadmap });
   const [retrospective, setRetrospective] = useState<RetrospectiveTarget | null>(null);

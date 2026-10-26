@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Combobox } from '@base-ui/react/combobox';
 import { Dialog } from '@base-ui/react/dialog';
 import { Search } from 'lucide-react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useProjectNavigate } from '../nav.tsx';
 import { isEditableTarget, isSearchShortcut, shortcutHintFor } from '../../presentation/shell-header.ts';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import type { SearchApiResponse, SearchHit } from '../../server/search-index.ts';
@@ -27,7 +27,7 @@ async function fetchSearch(query: string, signal: AbortSignal): Promise<SearchAp
  * that opens a large centred @base-ui/react Dialog over a full-screen scrim, wrapping an inline
  * Combobox. Keeps every Phase-3 query behaviour (D-01 through D-04) unchanged. */
 export function SearchDialog(): React.JSX.Element {
-  const navigate = useNavigate();
+  const navigate = useProjectNavigate();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [debounced, setDebounced] = useState('');
