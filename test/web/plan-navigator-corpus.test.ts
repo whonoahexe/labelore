@@ -69,7 +69,7 @@ function refFor(planningRoot: string, abs: string): Built | null {
     phaseIdentity = { milestoneVersion: version, number: phaseDir.slice(0, dash), projectCode: null, slug: phaseDir.slice(dash + 1) };
   }
   const quickTaskId = location === 'quick' ? name.slice(0, name.indexOf('-PLAN.md')) : null;
-  return { path, ref: { path, kind: 'plan', location, phaseIdentity, milestoneVersion: version, quickTaskId } };
+  return { path, ref: { path, kind: 'plan', location, phaseIdentity, milestoneVersion: version, quickTaskId, fileClass: 'text', sizeBytes: 0 } };
 }
 
 interface Row {

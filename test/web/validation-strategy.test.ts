@@ -42,6 +42,8 @@ function inputOf(content: string, headings: ViewInput['headings'] = []): ViewInp
   const ref: ArtifactRef = {
     path: '.planning/phases/01-x/01-VALIDATION.md',
     kind: 'validation',
+    fileClass: 'text',
+    sizeBytes: 0,
     location: 'phase',
     phaseIdentity: null,
     milestoneVersion: null,

@@ -16,6 +16,7 @@ import {
   isCanonicalRootFile,
   comparePhaseNumbers,
 } from './naming.ts';
+import { classifyFile, isInternalPath, INTERNAL_EXCLUSION_REASON } from './file-class.ts';
 
 const PLANNING_DIR = '.planning';
 const SKIPPED_DIRS = new Set(['research/.cache']);
@@ -212,10 +213,18 @@ export async function discover(fs: PlanningFilesystem): Promise<DiscoveryResult>
         exclusions.push({ path: childRel, reason: 'Matches the research/.cache/ exclusion rule' });
         continue;
       }
+      // D-11: GSD's own bookkeeping never becomes a ref (nor is an internal folder walked); each one
+      // is recorded once, so nothing is silently invisible. Decided before any read.
+      if (isInternalPath(childRelUnderPlanning, entry.isDirectory)) {
+        exclusions.push({ path: childRel, reason: INTERNAL_EXCLUSION_REASON });
+        continue;
+      }
       if (entry.isDirectory) {
         await walk(childRel, depth + 1);
       } else {
         const classification = classify(childRelUnderPlanning);
+        const sizeBytes = entry.size ?? 0;
+        const fileClass = classifyFile({ name: entry.name, size: entry.size, head: undefined });
         refs.push({
           path: childRel,
           kind: isDebugSessionPath(childRelUnderPlanning) ? 'debug' : (positionKind(childRelUnderPlanning) ?? deriveKind(entry.name)),
@@ -223,6 +232,8 @@ export async function discover(fs: PlanningFilesystem): Promise<DiscoveryResult>
           phaseIdentity: classification.phaseIdentity,
           milestoneVersion: classification.milestoneVersion,
           quickTaskId: classification.quickTaskId,
+          fileClass,
+          sizeBytes,
         });
       }
     }

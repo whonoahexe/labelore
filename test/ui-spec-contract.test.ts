@@ -242,7 +242,7 @@ describe('extractUiSpec — degrade', () => {
 
 describe('UiSpecHandler', () => {
   function refOf(path: string): ArtifactRef {
-    return { path, kind: 'ui-spec', location: 'phase', phaseIdentity: null, milestoneVersion: null, quickTaskId: null };
+    return { path, kind: 'ui-spec', location: 'phase', phaseIdentity: null, milestoneVersion: null, quickTaskId: null, fileClass: 'text', sizeBytes: 0 };
   }
 
   it('matches phase UI-SPEC files only', () => {

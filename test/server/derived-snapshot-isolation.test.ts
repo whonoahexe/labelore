@@ -16,6 +16,8 @@ function makeArtifact(overrides: Partial<Artifact> & { path: string }): Artifact
   return {
     id: overrides.path,
     kind: 'context',
+    fileClass: 'text',
+    sizeBytes: 0,
     location: 'root',
     frontmatter: {},
     title: overrides.path,

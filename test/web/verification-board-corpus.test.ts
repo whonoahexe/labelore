@@ -80,7 +80,7 @@ const isVerification = (path: string): boolean => path.endsWith('VERIFICATION.md
 function fixtureBoard(name: string): ComposedVerificationBoard {
   const file = join(FIXTURES, name);
   const content = readFileSync(file, 'utf8');
-  const ref: ArtifactRef = { path: file, kind: 'verification', location: 'phase', phaseIdentity: null, milestoneVersion: null, quickTaskId: null };
+  const ref: ArtifactRef = { path: file, kind: 'verification', location: 'phase', phaseIdentity: null, milestoneVersion: null, quickTaskId: null, fileClass: 'text', sizeBytes: 0 };
   const parsed = VerificationHandler.parse({ path: file, content, mtimeMs: 0, size: content.length }, ref);
   const model = composeVerificationBoard({
     kind: 'verification',

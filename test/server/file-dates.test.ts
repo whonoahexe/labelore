@@ -141,6 +141,8 @@ describe('the document response', () => {
     return {
       id: path,
       kind: 'plan',
+      fileClass: 'text',
+      sizeBytes: 0,
       location: 'phase',
       frontmatter: {},
       title: path,

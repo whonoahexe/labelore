@@ -5,6 +5,8 @@
 export interface DirEntry {
   name: string;
   isDirectory: boolean;
+  /** Size in bytes; set for files, absent for directories (and for a file whose stat failed). */
+  size?: number;
 }
 
 export interface FileRead {
@@ -53,6 +55,11 @@ export interface PlanningFilesystem {
    * `write?`, so test doubles that implement the interface keep compiling.
    */
   readBytesWithin?(baseRelDir: string, relPath: string): Promise<FileBytes>;
+  /**
+   * Reads at most `maxBytes` from the start of one regular file, through the same containment guard
+   * as `read()`; never writes. Optional so test doubles keep compiling.
+   */
+  readHead?(relPath: string, maxBytes: number): Promise<Uint8Array>;
   /** Not implemented by anybody in v1. Declared so a future watcher can be added without a signature change. */
   watch?(relPath: string, onChange: (event: unknown) => void): () => void;
   /** Not implemented by anybody in v1. Declared so future write-back can be added without a signature change. */

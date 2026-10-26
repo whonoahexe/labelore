@@ -7,7 +7,7 @@ import type { ArtifactRef, RawArtifact } from '../src/planning-repo/types.ts';
 const content = '---\ntitle: Make it faster\nseverity: major\ncreated: 2026-10-01\n---\n\n## Problem\n\nIt is slow.\n\n## Solution\n\nCache it.\n';
 
 function refOf(path: string, extra: Partial<ArtifactRef> = {}): ArtifactRef {
-  return { path, kind: 'todo', location: 'other', phaseIdentity: null, milestoneVersion: null, quickTaskId: null, ...extra };
+  return { path, kind: 'todo', location: 'other', phaseIdentity: null, milestoneVersion: null, quickTaskId: null, fileClass: 'text', sizeBytes: 0, ...extra };
 }
 
 function rawOf(path: string): RawArtifact {

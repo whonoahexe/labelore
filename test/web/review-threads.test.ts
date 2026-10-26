@@ -32,7 +32,7 @@ const EXPORT = 'phases/04-bulk-loan-export/04-REVIEW.md'; // blockers_resolved
 const LB = new URL('../../.planning/milestones/', import.meta.url).pathname;
 
 function refOf(path: string, kind: string): ArtifactRef {
-  return { path, kind, location: 'phase', phaseIdentity: null, milestoneVersion: null, quickTaskId: null };
+  return { path, kind, location: 'phase', phaseIdentity: null, milestoneVersion: null, quickTaskId: null, fileClass: 'text', sizeBytes: 0 };
 }
 
 function parse(handler: typeof ReviewHandler, file: string, kind: string) {

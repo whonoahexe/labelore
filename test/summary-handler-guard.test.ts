@@ -10,6 +10,8 @@ function refOf(path: string, location: ArtifactRef['location'], extra: Partial<A
   return {
     path,
     kind: 'summary',
+    fileClass: 'text',
+    sizeBytes: 0,
     location,
     phaseIdentity: null,
     milestoneVersion: null,

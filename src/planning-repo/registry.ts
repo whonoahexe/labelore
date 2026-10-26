@@ -14,6 +14,22 @@ export async function parseWithRegistry(
   ref: ArtifactRef,
   warnings: WarningCollector,
 ): Promise<ParsedArtifact> {
+  // D-10: only a text-class file is ever read. Images, binaries and oversized text keep the empty-body
+  // shape, titled with their file name, and raise no warning - being unreadable as text is not a fault.
+  if (ref.fileClass !== 'text') {
+    return {
+      ref,
+      title: ref.path.slice(ref.path.lastIndexOf('/') + 1),
+      frontmatter: {},
+      body: '',
+      bodyLength: 0,
+      bodyHash: bodyHashOf(''),
+      mtimeMs: 0,
+      warnings: [],
+      structured: {},
+    };
+  }
+
   let raw;
   try {
     raw = await fs.read(ref.path);

@@ -1,6 +1,6 @@
 // Layer B types. The LoadStatus union and ParseWarning shape are the load-bearing contracts
 // D-11/D-12 fix — every consumer of PlanningRepository handles exactly these shapes.
-import type { ArtifactLocation, PhaseIdentity } from '../domain/model.ts';
+import type { ArtifactLocation, FileClass, PhaseIdentity } from '../domain/model.ts';
 
 /** D-12: load()/refresh() never throw. Every failure is one of these four named states. */
 export type LoadStatus =
@@ -49,6 +49,10 @@ export interface ArtifactRef {
   milestoneVersion: string | null;
   /** Set when `location` is 'quick' and the owning directory name parses as a quick-task id. */
   quickTaskId: string | null;
+  /** Decided by discovery before any read (file-class.ts); anything but 'text' is never read. */
+  fileClass: FileClass;
+  /** Bytes as the filesystem port reported them; 0 when the port reports no size. */
+  sizeBytes: number;
 }
 
 /** D-11 records a path + reason for every deliberate skip (research/.cache/, a runaway walk depth simulating a symlink cycle) so no exclusion is ever silently invisible. */

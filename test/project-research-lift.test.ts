@@ -420,6 +420,8 @@ describe('ProjectResearchHandler', () => {
   const ref = (path: string, location: ArtifactRef['location'] = 'research'): ArtifactRef => ({
     path,
     kind: 'unknown',
+    fileClass: 'text',
+    sizeBytes: 0,
     location,
     phaseIdentity: null,
     milestoneVersion: null,

@@ -15,6 +15,8 @@ describe('UatHandler extractor guard', () => {
     const ref: ArtifactRef = {
       path: '.planning/phases/01-x/01-UAT.md',
       kind: 'uat',
+      fileClass: 'text',
+      sizeBytes: 0,
       location: 'phase',
       phaseIdentity: null,
       milestoneVersion: null,

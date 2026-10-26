@@ -2,6 +2,7 @@ import { basename } from 'node:path';
 import type {
   Artifact,
   ArtifactLocation,
+  FileClass,
   MentionIndex,
   PhaseIdentity,
   Project,
@@ -157,6 +158,10 @@ export interface ArtifactDto {
    * the body-survived ('warning') vs. nothing-salvageable ('unreadable') tone, rather than a prose
    * match against a warning's own `salvage` string. */
   bodyLength: number;
+  /** Artifact.fileClass, passed through (Phase 7): anything but 'text' has an empty body. */
+  fileClass: FileClass;
+  /** Artifact.sizeBytes, passed through (Phase 7): the byte length the filesystem port reported. */
+  sizeBytes: number;
 }
 
 export interface ProjectPresentation {
@@ -558,6 +563,8 @@ function artifactDtos(project: Project): ArtifactDto[] {
         phaseKey: owner?.phaseKey ?? null,
         warnings: artifact.warnings,
         bodyLength: artifact.bodyLength,
+        fileClass: artifact.fileClass,
+        sizeBytes: artifact.sizeBytes,
       };
     })
     .sort((left, right) => left.path.localeCompare(right.path));

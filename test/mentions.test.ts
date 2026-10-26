@@ -4,7 +4,7 @@ import type { ParsedArtifact } from '../src/planning-repo/types.ts';
 
 function artifact(path: string, kind: string, body: string): ParsedArtifact {
   return {
-    ref: { path, kind, location: 'phase', phaseIdentity: null, milestoneVersion: null, quickTaskId: null },
+    ref: { path, kind, location: 'phase', phaseIdentity: null, milestoneVersion: null, quickTaskId: null, fileClass: 'text', sizeBytes: 0 },
     title: '',
     frontmatter: {},
     body,

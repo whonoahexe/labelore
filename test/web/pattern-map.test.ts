@@ -279,6 +279,8 @@ describe('PatternMapView static markup', () => {
       phaseIdentity: null,
       milestoneVersion: null,
       quickTaskId: null,
+      fileClass: 'text' as const,
+      sizeBytes: 0,
     };
     const parsed = PatternsHandler.parse(
       { path: ref.path, content, mtimeMs: 0, size: content.length },

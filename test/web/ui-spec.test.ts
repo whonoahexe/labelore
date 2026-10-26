@@ -153,6 +153,8 @@ describe('composeUiSpec — Lendshed v1.0/04', () => {
     const ref: ArtifactRef = {
       path: '.planning/milestones/v1.0-phases/04-shed-to-shed-transfers/04-UI-SPEC.md',
       kind: 'ui-spec',
+      fileClass: 'text',
+      sizeBytes: 0,
       location: 'phase',
       phaseIdentity: null,
       milestoneVersion: null,

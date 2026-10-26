@@ -26,7 +26,7 @@ const LB = new URL('../../.planning/', import.meta.url).pathname;
 const DENSE = new URL('../../fixtures/dense/.planning/phases/01-identity-slice/01-VERIFICATION.md', import.meta.url).pathname;
 
 function refOf(path: string, extra: Partial<ArtifactRef> = {}): ArtifactRef {
-  return { path, kind: 'verification', location: 'phase', phaseIdentity: null, milestoneVersion: null, quickTaskId: null, ...extra };
+  return { path, kind: 'verification', location: 'phase', phaseIdentity: null, milestoneVersion: null, quickTaskId: null, fileClass: 'text', sizeBytes: 0, ...extra };
 }
 
 export function inputOf(file: string, ref: Partial<ArtifactRef> = {}, headings: ViewInput['headings'] = []): ViewInput {

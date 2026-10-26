@@ -166,6 +166,8 @@ function mentionArtifact(body: string): ParsedArtifact {
     ref: {
       path: '.planning/phases/01-example/01-CONTEXT.md',
       kind: 'context',
+      fileClass: 'text',
+      sizeBytes: 0,
       location: 'phase',
       phaseIdentity: null,
       milestoneVersion: null,

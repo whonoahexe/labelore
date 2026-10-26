@@ -10,7 +10,7 @@ import { noteFile } from './helpers/note-corpus.ts';
 const content = '---\ndate: "2026-10-21 15:58"\npromoted: true\n---\n\nShow it. Want: that.\n';
 
 function refOf(path: string, extra: Partial<ArtifactRef> = {}): ArtifactRef {
-  return { path, kind: 'note', location: 'other', phaseIdentity: null, milestoneVersion: null, quickTaskId: null, ...extra };
+  return { path, kind: 'note', location: 'other', phaseIdentity: null, milestoneVersion: null, quickTaskId: null, fileClass: 'text', sizeBytes: 0, ...extra };
 }
 
 function rawOf(path: string, text: string = content): RawArtifact {

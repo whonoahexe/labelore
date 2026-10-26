@@ -89,7 +89,7 @@ beforeAll(async () => {
   const path = '.planning/debug/search-index-goes-stale.md';
   const parsed = DebugHandler.parse(
     { path, content, mtimeMs: 0, size: content.length },
-    { path, kind: 'debug', location: 'other', phaseIdentity: null, milestoneVersion: null, quickTaskId: null },
+    { path, kind: 'debug', location: 'other', phaseIdentity: null, milestoneVersion: null, quickTaskId: null, fileClass: 'text', sizeBytes: 0 },
   );
   sessions.push({
     label: 'synthetic',

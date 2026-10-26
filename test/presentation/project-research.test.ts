@@ -51,7 +51,7 @@ const driftContents = (): Contents => ({
 function presentationOf(contents: Contents, projectName: string | null = 'Fallback Name') {
   const artifacts = Object.entries(contents).map(([name, content]) => {
     const path = `.planning/research/${name}.md`;
-    const ref = { path, kind: 'unknown', location: 'research' as const, phaseIdentity: null, milestoneVersion: null, quickTaskId: null };
+    const ref = { path, kind: 'unknown', location: 'research' as const, phaseIdentity: null, milestoneVersion: null, quickTaskId: null, fileClass: 'text' as const, sizeBytes: 0 };
     const parsed = ProjectResearchHandler.parse({ path, content: content ?? '', mtimeMs: 0, size: (content ?? '').length }, ref);
     return { path, location: 'research' as const, structured: parsed.structured };
   });

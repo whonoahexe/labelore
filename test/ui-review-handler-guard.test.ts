@@ -10,6 +10,8 @@ function refOf(path: string, phase: boolean): ArtifactRef {
   return {
     path,
     kind: 'ui-review',
+    fileClass: 'text',
+    sizeBytes: 0,
     location: phase ? 'phase' : 'quick',
     phaseIdentity: phase ? { milestoneVersion: null, number: '01', projectCode: null, slug: 'color-pass' } : null,
     milestoneVersion: null,
