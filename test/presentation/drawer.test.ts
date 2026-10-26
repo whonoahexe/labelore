@@ -359,24 +359,22 @@ describe('buildDrawerViewModel — quick tasks', () => {
     expect(paths.some((path) => /readme\.md$/i.test(path))).toBe(false);
   });
 
-  it('lists a group newest first, with unparseable names last and undated', async () => {
-    const model = buildDrawerViewModel(
-      await presentationOf({
-        '.planning/quick/260901-aaa-first/260901-aaa-PLAN.md': 'a',
-        '.planning/quick/261002-bbb-second/261002-bbb-PLAN.md': 'b',
-        '.planning/quick/261003-ccc-third/261003-ccc-PLAN.md': 'c',
-        '.planning/quick/stray-dir/notes.md': 'd',
-        '.planning/quick/loose-note.md': 'e',
-      }),
-    );
+  it('lists a group newest first and leaves strays that are not dated task folders out of it', async () => {
+    // Only a folder named {date}-{time}-{slug} is a quick task (DATA-07): a stray folder or a loose note
+    // under quick/ keeps a model entry at location other, so it is not a task row in the drawer.
+    const presentation = await presentationOf({
+      '.planning/quick/260901-aaa-first/260901-aaa-PLAN.md': 'a',
+      '.planning/quick/261002-bbb-second/261002-bbb-PLAN.md': 'b',
+      '.planning/quick/261003-ccc-third/261003-ccc-PLAN.md': 'c',
+      '.planning/quick/stray-dir/notes.md': 'd',
+      '.planning/quick/loose-note.md': 'e',
+    });
+    const model = buildDrawerViewModel(presentation);
     const [group] = model.quick.groups;
-    expect(group.tasks.slice(0, 3).map((task) => task.label)).toEqual(['Third', 'Second', 'First']);
-    const undated = group.tasks.slice(3);
-    expect(undated.map((task) => task.dateBadge)).toEqual([null, null]);
-    expect(undated.flatMap((task) => task.files.map((row) => row.path)).sort()).toEqual([
-      '.planning/quick/loose-note.md',
-      '.planning/quick/stray-dir/notes.md',
-    ]);
+    expect(group.tasks.map((task) => task.label)).toEqual(['Third', 'Second', 'First']);
+    for (const path of ['.planning/quick/stray-dir/notes.md', '.planning/quick/loose-note.md']) {
+      expect(presentation.artifacts.find((artifact) => artifact.path === path)?.location, path).toBe('other');
+    }
   });
 
   it('puts a milestone-root file under another vX.Y-name directory into that milestone documents', async () => {
