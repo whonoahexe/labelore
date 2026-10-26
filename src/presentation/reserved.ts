@@ -48,3 +48,22 @@ export const RESERVED_SEGMENT_PREFIXES = ['phase-', 'milestone-'] as const;
 /** The version shape GSD writes (`v1.1`, `v2.0.3`): a milestone version in this shape is its own URL
  * segment; any other version gets the `milestone-` escape. Case-insensitive, like the naming grammar. */
 export const GSD_VERSION_PATTERN = /^v\d+\.\d+(?:\.\d+)?$/i;
+
+/** Root-file tokens a file may not take (the file takes its `file/` address instead): the pages a
+ * project owns, the settings address (only config.json has it) and the milestone overview word. The
+ * version shape and the reserved prefixes are checked beside this set. */
+export const ROOT_TOKEN_RESERVED: ReadonlySet<string> = new Set([
+  'search',
+  'traceability',
+  'research',
+  'sketches',
+  'settings',
+  'overview',
+]);
+
+/** Words reserved inside a milestone (D-04): `/<v>/overview` is the milestone page and no file takes it. */
+export const MILESTONE_SCOPE_RESERVED: ReadonlySet<string> = new Set(['overview']);
+
+/** First segments the old encoded URLs began with (`/milestones/m~...`, `/artifacts/a~...`); a path that
+ * starts this way AND has the old second-segment shape is a legacy route, not a document. */
+export const LEGACY_FIRST_SEGMENTS = ['milestones', 'artifacts'] as const;
