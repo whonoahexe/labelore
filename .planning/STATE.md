@@ -5,16 +5,16 @@ milestone_name: Wayfinding
 current_phase: 07
 current_phase_name: Recognised Files and Readable URLs
 status: executing
-stopped_at: Completed 07-02-PLAN.md
-last_updated: "2026-10-26T20:14:22.917Z"
+stopped_at: Completed 07-03-PLAN.md
+last_updated: "2026-10-26T20:38:21.840Z"
 last_activity: 2026-10-26
 last_activity_desc: Phase 07 execution started
-state_head: 52102f5103a495ccc3507f4929c197ca436ab933
+state_head: 91ff54edeb388a4d6a65d242fb7cccacb081545d
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 32
-  completed_plans: 24
+  completed_plans: 25
   percent: 13
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-10-26)
 ## Current Position
 
 Phase: 07 (Recognised Files and Readable URLs) — EXECUTING
-Plan: 3 of 10
+Plan: 4 of 10
 Status: Ready to execute
 Last activity: 2026-10-26 — Phase 07 execution started
 
@@ -106,6 +106,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 06 P22 | 12 min | 3 tasks | 17 files |
 | Phase 07 P01 | 30 min | 3 tasks | 95 files |
 | Phase 07 P02 | 21 min | 3 tasks | 31 files |
+| Phase 07 P03 | 35min | 3 tasks | 51 files |
 
 ## Accumulated Context
 
@@ -160,6 +161,8 @@ milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) a
 - [Phase 07]: 07-02: filename grammars and exact names are gated by position; the folder table (FOLDER_RULES) is consulted after them, then unknown — The same name means different things in different folders; a ROADMAP.md or STATE.md below the root must not take a root document's kind (T-07-04)
 - [Phase 07]: 07-02: only a {date}-{time}-{slug} folder under quick/ is a quick task; strays under phases/, milestones/vX.Y-phases/ and quick/ stay in the model at location other — quick/README.md must not mint a task id, and nothing the walk finds may drop out of the model; stray quick/ entries are no longer drawer task rows
 - [Phase 07]: 07-02: research/ keeps its NN-TOKEN, plan and quick-artifact kinds but not root-document names — Honours 'keep exactly the kinds they have' for real files without letting research/STATE.md take the state kind
+- [Phase 07]: 07-03: ProjectSlugProvider context in nav.tsx overrides the :project route parameter so a wrong-project page links into the open project — The typed first segment is not the open project's name; the shell tabs and Return to the dashboard must lead into the open one
+- [Phase 07]: 07-03: DOM.Iterable added to tsconfig.server.json; route test stubs createBrowserRouter — A test importing app-router.tsx reaches the web layer under the server tsconfig and has no document
 
 ### Pending Todos
 
@@ -205,8 +208,8 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-10-26T20:14:22.630Z
-Stopped at: Completed 07-02-PLAN.md
+Last session: 2026-10-26T20:38:21.653Z
+Stopped at: Completed 07-03-PLAN.md
 Resume file: None
 
 ## Operator Next Steps
