@@ -3,14 +3,17 @@
 // A PNG is listed as an image with its size and an empty body and is never read or indexed; GSD's own
 // bookkeeping file at the root is absent from the payload and recorded once as an exclusion.
 import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { InMemoryPlanningFilesystem } from '../src/planning-fs/in-memory-fs.ts';
 import { LocalFsPlanningFilesystem } from '../src/planning-fs/local-fs.ts';
-import type { FileRead } from '../src/planning-fs/types.ts';
+import type { DirEntry, FileRead, FsCapabilities, PlanningFilesystem } from '../src/planning-fs/types.ts';
 import { INTERNAL_EXCLUSION_REASON } from '../src/planning-repo/file-class.ts';
 import { PlanningRepository } from '../src/planning-repo/snapshot.ts';
 import { createApp } from '../src/server/index.ts';
 import type { ProjectPresentation } from '../src/server/project-presentation.ts';
 import { SHAPES_ROOT, shapesPath } from './helpers/shapes-project.ts';
+import { blankComments, walkSource } from './helpers/source-scan.ts';
 
 /** A real filesystem port that records every read() path: proof that non-text refs are never read. */
 class SpyLocalFs extends LocalFsPlanningFilesystem {
@@ -133,5 +136,68 @@ describe('recognition classes across the Shapes project', () => {
     const sketchState = artifacts.find((artifact) => artifact.path === '.planning/sketches/001-shelf-board/state.json');
     expect(sketchState?.fileClass).toBe('text');
     expect(sketchState?.bodyLength).toBeGreaterThan(0);
+  });
+});
+
+/** A port whose backing contents can be swapped between load() and refresh(), the way a project changes on disk. */
+class SwappableFs implements PlanningFilesystem {
+  readonly capabilities: FsCapabilities = { watch: false, write: false };
+  private inner: InMemoryPlanningFilesystem;
+  constructor(contents: Record<string, string | Uint8Array>) {
+    this.inner = new InMemoryPlanningFilesystem(contents);
+  }
+  swap(contents: Record<string, string | Uint8Array>): void {
+    this.inner = new InMemoryPlanningFilesystem(contents);
+  }
+  list(relDir: string): Promise<DirEntry[]> {
+    return this.inner.list(relDir);
+  }
+  read(relPath: string): Promise<FileRead> {
+    return this.inner.read(relPath);
+  }
+  exists(relPath: string): Promise<boolean> {
+    return this.inner.exists(relPath);
+  }
+  readHead(relPath: string, maxBytes: number): Promise<Uint8Array> {
+    return this.inner.readHead(relPath, maxBytes);
+  }
+}
+
+describe('refresh re-runs discovery and classification from scratch', () => {
+  it('reclassifies an extension-less file by its new head and drops a new internal file, leaving the first snapshot untouched', async () => {
+    const project = '# Swap\n\n## What This Is\nA swapped project.\n';
+    const fs = new SwappableFs({ '.planning/PROJECT.md': project, '.planning/notes/entry': 'plain words' });
+    const repo = new PlanningRepository(fs, '/swap-sniff');
+    const first = await repo.load();
+    expect(first.project?.artifacts['.planning/notes/entry']?.fileClass).toBe('text');
+    const firstJson = JSON.stringify(first);
+
+    fs.swap({ '.planning/PROJECT.md': project, '.planning/notes/entry': Uint8Array.from([0x61, 0x00, 0x62]), '.planning/state.json': '{}' });
+    const second = await repo.refresh();
+    expect(second.project?.artifacts['.planning/notes/entry']?.fileClass).toBe('binary');
+    expect(second.project?.artifacts['.planning/notes/entry']?.bodyLength).toBe(0);
+    expect(second).not.toBe(first);
+    expect(second.project?.artifacts['.planning/state.json']).toBeUndefined();
+    expect(second.exclusions.map((exclusion) => exclusion.path)).toEqual(['.planning/state.json']);
+    expect(JSON.stringify(first)).toBe(firstJson);
+  });
+});
+
+/** True when code (comments blanked) names discovery exclusions: the web must never render them (D-11). */
+function namesExclusions(source: string): boolean {
+  return /\bexclusions\b/i.test(blankComments(source));
+}
+
+describe('the web layer never renders discovery exclusions (D-11 prohibition)', () => {
+  it('finds the word "exclusions" nowhere in src/web', () => {
+    const offenders = walkSource(['src/web'], ['.ts', '.tsx']).filter((file) =>
+      namesExclusions(readFileSync(join(process.cwd(), file), 'utf8')),
+    );
+    expect(offenders).toEqual([]);
+  });
+
+  it('would notice it: a planted use is reported and a comment mention is not', () => {
+    expect(namesExclusions('const hidden = presentation.exclusions.length;')).toBe(true);
+    expect(namesExclusions('// exclusions are never shown\nconst x = 1;')).toBe(false);
   });
 });
