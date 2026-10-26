@@ -52,3 +52,13 @@ Milestones:
 | `.planning/state.json` | GSD internal state at the root: excluded as internal (D-11) | 07-01 |
 | `.planning/phases/01-kiln-bookings/01-CONTEXT.md` | phase context with the six wrapper tags | 07-01 |
 | `.planning/phases/01-kiln-bookings/kiln-floor.png` | a 1x1 PNG in a phase folder: class image, never read, never indexed | 07-01 |
+| `.planning/milestone.lock` | GSD lock file at the root: internal by name (D-11) | 07-01 |
+| `.planning/estimation-calibration.json` | executor token samples: internal by the planner's assumption A4, reversible (D-11) | 07-01 |
+| `.planning/tmp/agent-result.json` | a file inside the tmp/ subtree: the whole folder is one internal exclusion (D-11) | 07-01 |
+| `.planning/async-jobs/job-01.json` | a file inside the async-jobs/ subtree: the whole folder is one internal exclusion (D-11) | 07-01 |
+| `.planning/phases/01-kiln-bookings/firing-sheet.pdf` | a PDF stub (`%PDF-1.4`, one line, `%%EOF`): binary by extension, never read | 07-01 |
+| `.planning/ui-reviews/screenshots/glaze-panel.png` | the same 1x1 PNG one folder deeper: image, extension kept in its URL later | 07-01 |
+| `.planning/ui-reviews/kiln-map.svg` | a 24x12 SVG with a rect and an inline script holding the made-up word `kilnsprite`: image, never indexed | 07-01 |
+| `.planning/notes/kiln-curve.dat` | unknown extension with NUL bytes in its head: binary by the 8000-byte sniff | 07-01 |
+| `.planning/notes/kiln-log` | no extension, NUL bytes in its head: binary by the sniff | 07-01 |
+| `.planning/sketches/001-shelf-board/state.json` | a state.json that is user content one level down: stays a visible text artifact (position-scoped rule) | 07-01 |
