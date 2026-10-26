@@ -5,8 +5,11 @@
 // can report what an accident tree produced. Built once per derived bundle, so a refresh swaps the whole
 // table atomically (D-05 of v1.0); pure: the input is the assembled Project and nothing else.
 import type { Artifact, PhaseIdentity, Project } from '../domain/model.ts';
-import { addressOfPath, fileUrlOf } from './routes.ts';
+import { addressOfPath, buildUrl, fileUrlOf, milestoneSegmentOf } from './routes.ts';
 import type { AddressOwner } from './routes.ts';
+
+const ROOT_ROADMAP = '.planning/ROADMAP.md';
+const ROOT_REQUIREMENTS = '.planning/REQUIREMENTS.md';
 
 /** A clean address several files wanted: `paths` is every claimant, sorted, the first of which kept it. */
 export interface RouteConflict {
@@ -17,6 +20,10 @@ export interface RouteConflict {
 export interface RouteTable {
   readonly urlByPath: ReadonlyMap<string, string>;
   readonly pathByUrl: ReadonlyMap<string, string>;
+  /** D-03: the live milestone's own addresses for its roadmap and requirements (`/v1.1/roadmap`), each
+   * mapped to the one address those files really have (`/roadmap`). An alias is not a file address, so it
+   * is not in `pathByUrl`; the dispatcher redirects it. */
+  readonly aliases: ReadonlyMap<string, string>;
   readonly conflicts: readonly RouteConflict[];
   /** The number of files in the table. */
   readonly size: number;
@@ -24,6 +31,13 @@ export interface RouteTable {
   urlOf(path: string): string | null;
   /** The file at an address, or null when no file has it. */
   pathOf(url: string): string | null;
+  /** The address an alias redirects to, or null when `url` is not an alias. */
+  aliasOf(url: string): string | null;
+  /**
+   * D-02: where a bare milestone address leads. An archived milestone's own ROADMAP copy, the root roadmap
+   * (`/roadmap`) for the live milestone, and the milestone's `/overview` page when no such file exists.
+   */
+  milestoneRoadmapUrl(version: string | null): string;
 }
 
 /** Code-unit order, so the same files sort the same way on every machine and locale. */
@@ -45,8 +59,43 @@ function ownedArtifacts(project: Project): Map<string, AddressOwner> {
   return owners;
 }
 
+/** The live milestone's version, or null when the project has none (or no live milestone at all). */
+function liveVersionOf(project: Project | null): string | null {
+  return project?.milestones.find((milestone) => !milestone.archived)?.version ?? null;
+}
+
+/** The directories of phases that share a phase address: two folders of one milestone whose phase
+ * segments are equal (`05-a` and `5-b`), keyed by that address. Roadmap-only phases have no folder. */
+function phaseAddressClaims(project: Project): Map<string, string[]> {
+  const claims = new Map<string, string[]>();
+  for (const phase of project.phases) {
+    if (phase.dirPath === null) continue;
+    const url = buildUrl({
+      kind: 'phase',
+      milestone: phase.identity.milestoneVersion,
+      phase: { projectCode: phase.identity.projectCode, number: phase.identity.number },
+      heading: null,
+    });
+    const dirs = claims.get(url);
+    if (dirs) dirs.push(phase.dirPath);
+    else claims.set(url, [phase.dirPath]);
+  }
+  return claims;
+}
+
 export function buildRouteTable(project: Project | null): RouteTable {
   const owners = project === null ? new Map<string, AddressOwner>() : ownedArtifacts(project);
+  const liveVersion = liveVersionOf(project);
+
+  // D-03: the live milestone's roadmap and requirements have one address, the root file's. The
+  // milestone-scoped address is an alias, so a file that wants it (a stray milestones/<live>-ROADMAP.md)
+  // cannot keep it.
+  const aliasSources = new Map<string, string>();
+  if (liveVersion !== null) {
+    const scope = `/${milestoneSegmentOf(liveVersion)}`;
+    if (owners.has(ROOT_ROADMAP)) aliasSources.set(`${scope}/roadmap`, ROOT_ROADMAP);
+    if (owners.has(ROOT_REQUIREMENTS)) aliasSources.set(`${scope}/requirements`, ROOT_REQUIREMENTS);
+  }
 
   const claimants = new Map<string, string[]>();
   for (const [path, owner] of owners) {
@@ -60,10 +109,24 @@ export function buildRouteTable(project: Project | null): RouteTable {
   const conflicts: RouteConflict[] = [];
   for (const [url, group] of claimants) {
     const paths = group.slice().sort(byCodeUnit);
+    if (aliasSources.has(url)) {
+      // An alias owns this address outright: every claimant is demoted and reported.
+      conflicts.push({ url, paths });
+      for (const loser of paths) urlByPath.set(loser, fileUrlOf(loser));
+      continue;
+    }
     urlByPath.set(paths[0], url);
     if (paths.length > 1) {
       conflicts.push({ url, paths });
       for (const loser of paths.slice(1)) urlByPath.set(loser, fileUrlOf(loser));
+    }
+  }
+
+  // Two phase folders of one milestone with the same phase address: the first folder keeps the phase
+  // page, the other is reachable through its files' addresses, and the clash is reported.
+  if (project !== null) {
+    for (const [url, dirs] of phaseAddressClaims(project)) {
+      if (dirs.length > 1) conflicts.push({ url, paths: dirs.slice().sort(byCodeUnit) });
     }
   }
   conflicts.sort((a, b) => byCodeUnit(a.url, b.url));
@@ -71,12 +134,30 @@ export function buildRouteTable(project: Project | null): RouteTable {
   const pathByUrl = new Map<string, string>();
   for (const [path, url] of urlByPath) pathByUrl.set(url, path);
 
+  const aliases = new Map<string, string>();
+  for (const [aliasUrl, sourcePath] of aliasSources) {
+    const target = urlByPath.get(sourcePath);
+    if (target !== undefined) aliases.set(aliasUrl, target);
+  }
+
+  const milestoneRoadmapUrl = (version: string | null): string => {
+    const overview = buildUrl({ kind: 'overview', milestone: version });
+    if (version === null || version === liveVersion) {
+      return urlByPath.get(ROOT_ROADMAP) ?? overview;
+    }
+    const archived = `/${milestoneSegmentOf(version)}/roadmap`;
+    return pathByUrl.has(archived) ? archived : overview;
+  };
+
   return Object.freeze({
     urlByPath,
     pathByUrl,
+    aliases,
     conflicts,
     size: urlByPath.size,
     urlOf: (path: string): string | null => urlByPath.get(path) ?? null,
     pathOf: (url: string): string | null => pathByUrl.get(url) ?? null,
+    aliasOf: (url: string): string | null => aliases.get(url) ?? null,
+    milestoneRoadmapUrl,
   });
 }
