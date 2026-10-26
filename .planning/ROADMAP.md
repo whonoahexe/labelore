@@ -153,7 +153,7 @@ to the same clean URLs, and none of them needs to change again.
    such as `v1.1`. *(NAV-10)*
 5. An old-style encoded link or bookmark redirects to its new readable URL. *(NAV-11)*
 
-**Plans**: 3/10 plans executed
+**Plans**: 4/10 plans executed
 
 Plans:
 **Wave 1**
@@ -164,7 +164,7 @@ Plans:
 - [x] 07-03-PLAN.md — Project slug, nav.tsx as the one slug-prefixing point, the /:project gate and the not-found page naming the address
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 07-04-PLAN.md — Readable URL grammar and route table: one URL per file, file/ fallback, collision audit over every fixture
+- [x] 07-04-PLAN.md — Readable URL grammar and route table: one URL per file, file/ fallback, collision audit over every fixture
 - [ ] 07-05-PLAN.md — Playwright URL helper, spec sweep and the standing URL contract scan
 
 **Wave 4** *(blocked on Wave 3 completion)*
@@ -397,7 +397,7 @@ file, ID or project.
 | 5 | v1.1 | 6/6 | Archived | 2026-09-21 |
 | quick tasks | v2.0 | 40/40 | Archived | 2026-10-25 |
 | 6. Trustworthy Tests and Security Baseline | v2.1 | 22/22 | Complete    | 2026-10-26 |
-| 7. Recognised Files and Readable URLs | v2.1 | 3/10 | In Progress | - |
+| 7. Recognised Files and Readable URLs | v2.1 | 4/10 | In Progress | - |
 | 8. Several Projects and a Switcher | v2.1 | 0/TBD | Not started | - |
 | 9. Review, Audit and Root Document Pages | v2.1 | 0/TBD | Not started | - |
 | 10. Codebase Map, Specification and Check Pages | v2.1 | 0/TBD | Not started | - |
