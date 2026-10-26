@@ -34,6 +34,7 @@ export default tseslint.config(
       'src/server/**/*.ts',
       'test/**/*.ts',
       'test/**/*.mjs',
+      '.claude/cloud/*.mjs',
     ],
     languageOptions: {
       globals: {
