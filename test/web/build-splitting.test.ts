@@ -46,7 +46,11 @@ describe('route-level code splitting (entry chunk fix)', () => {
     // loading feedback moved OUT of the boundary to <RouteProgress />, because React never renders
     // a fallback for an already-mounted boundary during react-router's transition-driven
     // navigations — see loading-state-contract.test.ts for the full contract.
-    expect(shell).toMatch(/<Suspense fallback=\{<RouteFallback \/>\}>\s*<Outlet \/>\s*<\/Suspense>/);
+    // NAV-09: the router gate may hand the shell a page of its own (the wrong-project not-found
+    // page) in the Outlet's place; the Suspense boundary and its fallback are unchanged.
+    expect(shell).toMatch(
+      /<Suspense fallback=\{<RouteFallback \/>\}>\s*\{children \?\? <Outlet \/>\}\s*<\/Suspense>/,
+    );
     expect(shell).toContain(
       "import { RouteFallback, RouteProgress } from './route-progress.tsx';",
     );

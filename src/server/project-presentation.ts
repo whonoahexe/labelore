@@ -17,6 +17,7 @@ import {
   milestoneKeyOf,
   phaseKeyOf,
 } from '../presentation/routes.ts';
+import { slugOf } from '../presentation/project-slug.ts';
 import { projectPlanCheckpoints } from '../rendering/plan-segments.ts';
 import { buildDashboardLedger, emptyLedger, type DashboardLedgerDto } from './dashboard-ledger.ts';
 
@@ -168,6 +169,8 @@ export interface ProjectPresentation {
   readAt: string;
   loadStatus: LoadStatus;
   rootPath: string;
+  /** NAV-09: the first URL segment of every page of this project, from slugOf(rootPath). */
+  projectSlug: string;
   projectName: string | null;
   config: Record<string, unknown>;
   state: ProjectStateDto | null;
@@ -575,6 +578,7 @@ function emptyPresentation(snapshot: ProjectSnapshot): ProjectPresentation {
     readAt: snapshot.readAt,
     loadStatus: snapshot.loadStatus,
     rootPath: snapshot.rootPath,
+    projectSlug: slugOf(snapshot.rootPath),
     projectName: null,
     config: {},
     state: null,
@@ -724,6 +728,7 @@ export function toProjectPresentation(snapshot: ProjectSnapshot): ProjectPresent
     readAt: snapshot.readAt,
     loadStatus: snapshot.loadStatus,
     rootPath: snapshot.rootPath,
+    projectSlug: slugOf(snapshot.rootPath),
     projectName: project.name,
     config: jsonRecord(project.config),
     state,

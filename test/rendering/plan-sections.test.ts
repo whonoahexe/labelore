@@ -25,6 +25,7 @@ function basePresentation(overrides: Partial<ProjectPresentation> = {}): Project
     readAt: '2026-08-30T00:00:00.000Z',
     loadStatus: { status: 'ok' },
     rootPath: '/project',
+    projectSlug: 'project',
     projectName: 'fixture',
     config: {},
     state: null,

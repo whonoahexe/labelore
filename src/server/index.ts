@@ -19,6 +19,7 @@ import type { NoteContext } from '../presentation/note-context.ts';
 import { buildRoadmapViewModel } from '../presentation/roadmap.ts';
 import { buildReferenceRegistry } from '../presentation/references.ts';
 import { parsePresentationUrl } from '../presentation/routes.ts';
+import { isServerOwnedUrl } from '../presentation/reserved.ts';
 import { buildTraceabilityViewModel } from '../presentation/traceability.ts';
 import { buildSearchGroups, extractSnippets } from '../presentation/search.ts';
 import { buildResearchViewModel } from '../presentation/project-research.ts';
@@ -58,7 +59,7 @@ interface SnapshotSource {
 /** True for the URLs the Hono app owns (the API and the sketch files). In dev mode everything else
  * goes to Vite; the bare /sketches stays the client page. */
 export function routesToApp(url: string | undefined): boolean {
-  return url !== undefined && (url.startsWith('/api/') || url.startsWith('/sketches/'));
+  return isServerOwnedUrl(url);
 }
 
 interface ServerOptions {

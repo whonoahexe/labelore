@@ -60,6 +60,7 @@ function presentationWith(requirements: RequirementDto[], phases: PhaseDto[] = [
     readAt: '2026-09-02T00:00:00.000Z',
     loadStatus: { status: 'ok' },
     rootPath: '/project',
+    projectSlug: 'project',
     projectName: 'Test project',
     config: {},
     state: null,
