@@ -17,10 +17,11 @@ import {
   shippedOwnerOf,
 } from '../../src/presentation/drawer-route.ts';
 import { toProjectPresentation, type ProjectPresentation } from '../../src/server/project-presentation.ts';
+import { loadShapesProject } from '../helpers/shapes-project.ts';
 
 const ROOT = '/project';
 
-async function presentationOf(files: Record<string, string>): Promise<ProjectPresentation> {
+async function presentationOf(files: Record<string, string | Uint8Array>): Promise<ProjectPresentation> {
   const repository = new PlanningRepository(new InMemoryPlanningFilesystem(files), ROOT);
   return toProjectPresentation(await repository.load());
 }
@@ -291,6 +292,95 @@ const QUICK_FIXTURE = {
 function everyQuickTask(model: DrawerViewModel) {
   return model.quick.groups.flatMap((group) => group.tasks);
 }
+
+describe('buildDrawerViewModel — the After stage (DATA-07, DATA-08)', () => {
+  const PNG = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0x0d, 0x49, 0x48, 0x44, 0x52]);
+  const PDF = new TextEncoder().encode('%PDF-1.4\n%%EOF\n');
+
+  it('orders post-plan documents, then recognised unprefixed files, then non-text files, each by file name', async () => {
+    const model = buildDrawerViewModel(
+      await presentationOf({
+        '.planning/phases/01-first/01-CONTEXT.md': '# Context',
+        '.planning/phases/01-first/01-01-PLAN.md': '# Plan one',
+        '.planning/phases/01-first/kiln-floor.png': PNG,
+        '.planning/phases/01-first/firing-sheet.pdf': PDF,
+        '.planning/phases/01-first/deferred-items.md': '# Deferred',
+        '.planning/phases/01-first/COVERAGE.md': '# Coverage',
+        '.planning/phases/01-first/01-VERIFICATION.md': '# Verification',
+        '.planning/phases/01-first/.continue-here.md': '# Continue',
+        '.planning/phases/01-first/01-REVIEW.md': '# Review',
+        '.planning/phases/01-first/SKELETON.md': '# Skeleton',
+      }),
+    );
+    const [phase] = model.current.phases;
+    expect(phase.after.map((row) => row.label)).toEqual([
+      'Review',
+      'Verification',
+      'Continue here',
+      'Coverage',
+      'Deferred items',
+      'Skeleton',
+      'firing-sheet.pdf',
+      'kiln-floor.png',
+    ]);
+  });
+
+  it('gives every non-text row its fileClass and size, and every text row the text class', async () => {
+    const model = buildDrawerViewModel(
+      await presentationOf({
+        '.planning/phases/01-first/01-CONTEXT.md': '# Context',
+        '.planning/phases/01-first/COVERAGE.md': '# Coverage',
+        '.planning/phases/01-first/kiln-floor.png': PNG,
+        '.planning/phases/01-first/firing-sheet.pdf': PDF,
+      }),
+    );
+    const [phase] = model.current.phases;
+    const byLabel = new Map(phaseFiles(phase).map((row) => [row.label, row]));
+    expect(byLabel.get('kiln-floor.png')).toMatchObject({ fileClass: 'image', sizeBytes: PNG.length });
+    expect(byLabel.get('firing-sheet.pdf')).toMatchObject({ fileClass: 'binary', sizeBytes: PDF.length });
+    expect(byLabel.get('Coverage')?.fileClass).toBe('text');
+    expect(byLabel.get('Context')).toMatchObject({ fileClass: 'text', sizeBytes: '# Context'.length });
+  });
+
+  it('shows no After rows for a phase whose only extra files are internal or plain text', async () => {
+    const model = buildDrawerViewModel(
+      await presentationOf({
+        '.planning/phases/01-first/01-CONTEXT.md': '# Context',
+        '.planning/phases/01-first/work.tmp': 'scratch',
+        '.planning/phases/01-first/agent.lock': '123',
+        '.planning/phases/01-first/data.txt': 'plain text, not a recognised file',
+      }),
+    );
+    const [phase] = model.current.phases;
+    expect(phase.after).toEqual([]);
+    expect(phase.other).toEqual([]);
+    expect(phaseFiles(phase).map((row) => row.path)).toEqual(['.planning/phases/01-first/01-CONTEXT.md']);
+  });
+
+  it('keeps a quick task and a milestone place markdown-only', async () => {
+    const model = buildDrawerViewModel(
+      await presentationOf({
+        '.planning/quick/260901-aaa-first/260901-aaa-PLAN.md': 'a',
+        '.planning/quick/260901-aaa-first/diagram.png': PNG,
+        '.planning/milestones/v1.0-ROADMAP.md': '# Roadmap',
+        '.planning/milestones/v1.0-research/chart.png': PNG,
+      }),
+    );
+    const [group] = model.quick.groups;
+    expect(group.tasks[0].files.map((row) => row.path)).toEqual(['.planning/quick/260901-aaa-first/260901-aaa-PLAN.md']);
+    const [milestone] = model.shipped;
+    expect(milestone.documents.map((row) => row.path)).toEqual(['.planning/milestones/v1.0-ROADMAP.md']);
+  });
+
+  it('lists the Shapes phase 01 picture and PDF in its After stage, by file name', async () => {
+    const { presentation } = await loadShapesProject();
+    const phase = buildDrawerViewModel(presentation).current.phases.find((place) => place.number === '01');
+    expect(phase?.after.map((row) => [row.label, row.fileClass])).toEqual([
+      ['firing-sheet.pdf', 'binary'],
+      ['kiln-floor.png', 'image'],
+    ]);
+  });
+});
 
 describe('buildDrawerViewModel — quick tasks', () => {
   it('puts every quick task in one place, grouped by milestone with the current ones first', async () => {

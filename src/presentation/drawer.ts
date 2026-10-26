@@ -11,6 +11,7 @@ import {
   parsePhaseArtifactName,
   parseQuickArtifactName,
 } from '../planning-repo/naming.ts';
+import type { FileClass } from '../domain/model.ts';
 import type { ArtifactDto, MilestoneDto, PhaseDto, ProjectPresentation } from '../server/project-presentation.ts';
 import { artifactWarningTone, type ArtifactWarningTone } from './artifact-warning-tone.ts';
 import { activityDateLabel, headPhaseOf } from './dashboard-head.ts';
@@ -32,6 +33,10 @@ export interface DrawerFileRow {
   path: string;
   url: string;
   warningTone: ArtifactWarningTone;
+  /** Text, image, binary or large: the view reads it to mark a file that has no readable body. */
+  fileClass: FileClass;
+  /** The file's size on disk in bytes. */
+  sizeBytes: number;
 }
 
 export interface DrawerPlanRow {
@@ -142,9 +147,10 @@ function byFileName(left: { path: string }, right: { path: string }): number {
 }
 
 // A phase folder's After stage lists the known post-plan documents first (ranks 0..5 from
-// POST_PLAN_ARTIFACT_ORDER), then the recognised unprefixed files, each group alphabetical by file name.
-// These ranks sit past every post-plan rank.
+// POST_PLAN_ARTIFACT_ORDER), then the recognised unprefixed files, then the non-text files (images,
+// binaries, large files), each group alphabetical by file name. These ranks sit past every post-plan rank.
 const UNPREFIXED_RANK = 1_000;
+const NON_TEXT_RANK = 2_000;
 // Unprefixed files GSD leaves in a phase folder; the label is the sentence-case of the kind.
 const UNPREFIXED_KINDS: ReadonlySet<string> = new Set(['coverage', 'deferred-items', 'skeleton', 'continue-here']);
 
@@ -155,6 +161,8 @@ function fileRowOf(artifact: ArtifactDto): DrawerFileRow {
     path: artifact.path,
     url: artifact.key,
     warningTone: artifactWarningTone(artifact),
+    fileClass: artifact.fileClass,
+    sizeBytes: artifact.sizeBytes,
   };
 }
 
@@ -227,6 +235,11 @@ function phasePlaceOf(phase: PhaseDto, artifactsByPhase: ReadonlyMap<string, Art
       }
     } else if (UNPREFIXED_KINDS.has(artifact.kind)) {
       after.push({ row: { ...row, label: sentenceCase(artifact.kind) }, rank: UNPREFIXED_RANK });
+      continue;
+    }
+    if (artifact.fileClass !== 'text') {
+      // An image, binary or large file reads by its full file name, extension included.
+      after.push({ row: { ...row, label: lastSegment(artifact.path) }, rank: NON_TEXT_RANK });
       continue;
     }
     other.push(row);
@@ -323,10 +336,13 @@ function quickTasksOf(filesByTask: ReadonlyMap<string, ArtifactDto[]>): DrawerQu
 export function buildDrawerViewModel(presentation: ProjectPresentation): DrawerViewModel {
   const markdown = presentation.artifacts.filter(isMarkdown);
 
+  // A phase folder lists its markdown and every file that has no readable body; quick-task and milestone
+  // places keep the markdown-only filter.
   const artifactsByPhase = new Map<string, ArtifactDto[]>();
-  for (const artifact of markdown) {
+  for (const artifact of presentation.artifacts) {
     if (artifact.location !== 'phase' && artifact.location !== 'archived-phase') continue;
     if (artifact.phaseKey === null) continue;
+    if (!isMarkdown(artifact) && artifact.fileClass === 'text') continue;
     const list = artifactsByPhase.get(artifact.phaseKey) ?? [];
     list.push(artifact);
     artifactsByPhase.set(artifact.phaseKey, list);
