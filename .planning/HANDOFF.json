@@ -1,0 +1,39 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-10-26T21:08:07.486Z",
+  "phase": "07",
+  "phase_name": "Recognised Files and Readable URLs",
+  "phase_dir": ".planning/phases/07-recognised-files-and-readable-urls",
+  "plan": 5,
+  "task": 0,
+  "total_tasks": 10,
+  "status": "paused",
+  "completed_tasks": [
+    {"id": 1, "name": "07-01 file classes and GSD-internal exclusions, Shapes fixture", "status": "done", "commit": "3558f07"},
+    {"id": 2, "name": "07-02 folder table and name recognition", "status": "done", "commit": "b3c5655"},
+    {"id": 3, "name": "07-03 project slug, nav.tsx, /:project gate", "status": "done", "commit": "b765549"},
+    {"id": 4, "name": "07-04 URL grammar and route table", "status": "done", "commit": "79e52e8"}
+  ],
+  "remaining_tasks": [
+    {"id": 5, "name": "07-05 Playwright appUrl helper and spec sweep (wave 3)", "status": "not_started"},
+    {"id": 6, "name": "07-06 server switch to the new URLs (wave 4)", "status": "not_started"},
+    {"id": 7, "name": "07-07 web switch (wave 5)", "status": "not_started"},
+    {"id": 8, "name": "07-08 isolated legacy redirector (wave 6)", "status": "not_started"},
+    {"id": 9, "name": "07-09 image page, info card, image-bytes route (wave 6)", "status": "not_started"},
+    {"id": 10, "name": "07-10 deep-reload proof for every URL (wave 7)", "status": "not_started"}
+  ],
+  "blockers": [
+    {"description": "Usage guard pause at 97% of the 5-hour limit", "type": "external", "workaround": "Resume after the window resets with /gsd-execute-phase 7"}
+  ],
+  "async_jobs": [],
+  "human_actions_pending": [
+    {"action": "Browser walkthrough for 07-03: / lands on /labelore, drawer and tabs keep the prefix, /someone-else/roadmap shows the wrong-project page", "context": "Recorded in 07-03-SUMMARY as human_judgment; not run", "blocking": false}
+  ],
+  "decisions": [
+    {"decision": "Executors run sequentially on the main tree (isolation none)", "rationale": "worktree.base-check reports fork-ref-unknown (origin/HEAD unresolved) and auto-degrades; re-run `dispatch-isolation --force-isolation none` before each dispatch because the sentinel gets re-resolved to harness-worktree", "phase": "07"},
+    {"decision": "Three baseline test failures are pre-existing, not caused by phase 7 plans", "rationale": "pattern-map-corpus and ui-spec-corpus want pinned entries for 07-PATTERNS.md and 07-UI-SPEC.md; fix before the end-of-phase post-merge gate", "phase": "07"}
+  ],
+  "uncommitted_files": [" M .planning/state.json"],
+  "next_action": "Run /gsd-execute-phase 7; it skips 07-01..07-04 (SUMMARY present) and dispatches 07-05 first",
+  "context_notes": "Wave gates (schema drift, codebase drift, UI safety) passed after waves 1-2; run them again after wave 3. Playwright specs still visit un-prefixed paths until 07-05 and 07-08 land. NAV-09/NAV-10 not yet marked complete; sibling plans still pending."
+}
