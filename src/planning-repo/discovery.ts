@@ -110,6 +110,8 @@ interface Classification {
   quickTaskId: string | null;
 }
 
+const OTHER_LOCATION: Classification = { location: 'other', phaseIdentity: null, milestoneVersion: null, quickTaskId: null };
+
 /** Classifies a path (relative to `.planning/`, forward-slash separated) by position alone. */
 function classify(relPathUnderPlanning: string): Classification {
   const segments = relPathUnderPlanning.split('/');
@@ -119,17 +121,26 @@ function classify(relPathUnderPlanning: string): Classification {
 
   const [top, ...rest] = segments;
 
+  // Position keeps a stray where it falls instead of dropping it: a file directly under phases/, or in a
+  // folder that is not a phase directory, is location 'other' with no identity, so it stays in the model.
   if (top === 'phases') {
-    const phaseDirName = rest[0];
+    const phaseDirName = rest.length >= 2 ? rest[0] : null;
     const phaseIdentity = phaseDirName ? resolvePhaseDirIdentity(phaseDirName, null) : null;
-    return { location: 'phase', phaseIdentity, milestoneVersion: null, quickTaskId: null };
+    return phaseIdentity
+      ? { location: 'phase', phaseIdentity, milestoneVersion: null, quickTaskId: null }
+      : OTHER_LOCATION;
   }
 
   if (top === 'quick') {
-    const quickDirName = rest[0];
-    const parsedQuick = quickDirName ? parseQuickDirName(quickDirName) : { matched: false as const };
-    const quickTaskId = parsedQuick.matched ? `${parsedQuick.date}-${parsedQuick.timeToken}` : (quickDirName ?? null);
-    return { location: 'quick', phaseIdentity: null, milestoneVersion: null, quickTaskId };
+    // Only a directory whose name is `{date}-{time}-{slug}` is a quick task; quick/README.md is not one.
+    const parsedQuick = rest.length >= 2 ? parseQuickDirName(rest[0]) : { matched: false as const };
+    if (!parsedQuick.matched) return OTHER_LOCATION;
+    return {
+      location: 'quick',
+      phaseIdentity: null,
+      milestoneVersion: null,
+      quickTaskId: `${parsedQuick.date}-${parsedQuick.timeToken}`,
+    };
   }
 
   if (top === 'milestones') {
@@ -145,9 +156,11 @@ function classify(relPathUnderPlanning: string): Classification {
     }
     const phasesMatch = parseMilestonePhasesDirName(rest[0]);
     if (phasesMatch.matched) {
-      const phaseDirName = rest[1];
+      const phaseDirName = rest.length >= 3 ? rest[1] : null;
       const phaseIdentity = phaseDirName ? resolvePhaseDirIdentity(phaseDirName, phasesMatch.version) : null;
-      return { location: 'archived-phase', phaseIdentity, milestoneVersion: phasesMatch.version, quickTaskId: null };
+      return phaseIdentity
+        ? { location: 'archived-phase', phaseIdentity, milestoneVersion: phasesMatch.version, quickTaskId: null }
+        : OTHER_LOCATION;
     }
     return { location: 'milestone-root', phaseIdentity: null, milestoneVersion: null, quickTaskId: null };
   }
@@ -156,7 +169,7 @@ function classify(relPathUnderPlanning: string): Classification {
     return { location: 'research', phaseIdentity: null, milestoneVersion: null, quickTaskId: null };
   }
 
-  return { location: 'other', phaseIdentity: null, milestoneVersion: null, quickTaskId: null };
+  return OTHER_LOCATION;
 }
 
 export async function discover(fs: PlanningFilesystem): Promise<DiscoveryResult> {
