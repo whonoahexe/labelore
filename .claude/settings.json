@@ -48,6 +48,18 @@
           }
         ]
       }
+    ],
+    "StopFailure": [
+      {
+        "matcher": "rate_limit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/cloud/save-at-limit.sh\"",
+            "timeout": 120
+          }
+        ]
+      }
     ]
   }
 }

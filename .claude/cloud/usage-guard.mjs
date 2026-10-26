@@ -5,19 +5,47 @@
 // turn going until the handoff exists, the tree is clean and the branch is pushed.
 //
 // Runs only when CLAUDE_CODE_REMOTE=true, or locally with LABELORE_USAGE_GUARD=1 for testing.
+// `node .claude/cloud/usage-guard.mjs --check` reports whether usage can be read here at all.
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { peakUsage, readJson, tripPath, usagePath, writeJson } from './usage-state.mjs';
+import {
+  currentRateLimits,
+  fetchRateLimits,
+  peakUsage,
+  readJson,
+  tokenSources,
+  tripPath,
+  writeJson,
+} from './usage-state.mjs';
 
 const MAX_STOP_BLOCKS = 3;
+
+if (process.argv[2] === '--check') {
+  const names = Object.keys(process.env).filter((name) =>
+    /OAUTH|TOKEN|AUTH|ANTHROPIC|CLAUDE/i.test(name),
+  );
+  console.log(`CLAUDE_CODE_REMOTE=${process.env.CLAUDE_CODE_REMOTE ?? ''}`);
+  console.log(`related environment variable names: ${names.join(', ') || 'none'}`);
+  for (const { name, token } of [...tokenSources(), { name: 'no token', token: null }]) {
+    try {
+      const { status, rateLimits } = await fetchRateLimits(token);
+      console.log(
+        `usage endpoint with ${name}: HTTP ${status} ${JSON.stringify(rateLimits ?? {})}`,
+      );
+    } catch (error) {
+      console.log(`usage endpoint with ${name}: ${error.message}`);
+    }
+  }
+  process.exit(0);
+}
 
 if (process.env.CLAUDE_CODE_REMOTE !== 'true' && process.env.LABELORE_USAGE_GUARD !== '1')
   process.exit(0);
 
 const input = JSON.parse(fs.readFileSync(0, 'utf8') || '{}');
 const threshold = Number(process.env.LABELORE_USAGE_PAUSE_AT) || 95;
-const peak = peakUsage(readJson(usagePath(input.session_id))?.rate_limits);
+const peak = peakUsage(await currentRateLimits(input.session_id));
 const tripFile = tripPath(input.session_id);
 
 if (!peak || peak.pct < threshold) {
