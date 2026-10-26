@@ -60,7 +60,7 @@ describe('recognition tracer: one PNG and one internal state.json, disk to paylo
   it('keeps root state.json out of the payload and records it once as an exclusion', async () => {
     const { app } = await openShapes();
     const presentation = await presentationOf(app);
-    expect(presentation.artifacts.some((artifact) => artifact.path.endsWith('/state.json'))).toBe(false);
+    expect(presentation.artifacts.some((artifact) => artifact.path === '.planning/state.json')).toBe(false);
     const matching = presentation.exclusions.filter((exclusion) => exclusion.path === '.planning/state.json');
     expect(matching).toEqual([{ path: '.planning/state.json', reason: INTERNAL_EXCLUSION_REASON }]);
   });
@@ -76,5 +76,62 @@ describe('recognition tracer: one PNG and one internal state.json, disk to paylo
     const controlBody = (await control.json()) as { status: string; results: { path: string }[] };
     expect(controlBody.status).toBe('ready');
     expect(controlBody.results.map((hit) => hit.path)).toContain('.planning/phases/01-kiln-bookings/01-CONTEXT.md');
+  });
+});
+
+describe('recognition classes across the Shapes project', () => {
+  it('classes the PDF stub and both NUL stubs as binary, the SVG and the second PNG as images', async () => {
+    const { app } = await openShapes();
+    const { artifacts } = await presentationOf(app);
+    const classOf = (path: string) => artifacts.find((artifact) => artifact.path === path)?.fileClass;
+    expect(classOf('.planning/phases/01-kiln-bookings/firing-sheet.pdf')).toBe('binary');
+    expect(classOf('.planning/notes/kiln-curve.dat')).toBe('binary');
+    expect(classOf('.planning/notes/kiln-log')).toBe('binary');
+    expect(classOf('.planning/ui-reviews/kiln-map.svg')).toBe('image');
+    expect(classOf('.planning/ui-reviews/screenshots/glaze-panel.png')).toBe('image');
+    for (const path of ['firing-sheet.pdf', 'kiln-curve.dat', 'kiln-log', 'kiln-map.svg', 'glaze-panel.png']) {
+      const artifact = artifacts.find((entry) => entry.path.endsWith(`/${path}`));
+      expect(artifact?.bodyLength, path).toBe(0);
+    }
+  });
+
+  it('returns no hit for a word that only appears inside the SVG script', async () => {
+    const { app } = await openShapes();
+    const response = await app.request('/api/search?q=kilnsprite');
+    const body = (await response.json()) as { status: string; total: number; results: unknown[] };
+    expect(body.status).toBe('ready');
+    expect(body.total).toBe(0);
+    expect(body.results).toEqual([]);
+  });
+
+  it('keeps every internal fixture path out of the payload and records each once as an exclusion', async () => {
+    const { app } = await openShapes();
+    const presentation = await presentationOf(app);
+    const internalRoots = [
+      '.planning/state.json',
+      '.planning/milestone.lock',
+      '.planning/estimation-calibration.json',
+      '.planning/tmp',
+      '.planning/async-jobs',
+    ];
+    for (const root of internalRoots) {
+      expect(presentation.exclusions.filter((exclusion) => exclusion.path === root), root).toEqual([
+        { path: root, reason: INTERNAL_EXCLUSION_REASON },
+      ]);
+      expect(presentation.artifacts.some((artifact) => artifact.path === root || artifact.path.startsWith(`${root}/`)), root).toBe(false);
+    }
+    expect(presentation.exclusions.some((exclusion) => exclusion.path.startsWith('.planning/tmp/'))).toBe(false);
+    expect(presentation.exclusions.some((exclusion) => exclusion.path.startsWith('.planning/async-jobs/'))).toBe(false);
+  });
+
+  it('keeps config.json in the index and a state.json one level down as a visible text artifact', async () => {
+    const { app } = await openShapes();
+    const { artifacts } = await presentationOf(app);
+    const config = artifacts.find((artifact) => artifact.path === '.planning/config.json');
+    expect(config?.kind).toBe('config');
+    expect(config?.fileClass).toBe('text');
+    const sketchState = artifacts.find((artifact) => artifact.path === '.planning/sketches/001-shelf-board/state.json');
+    expect(sketchState?.fileClass).toBe('text');
+    expect(sketchState?.bodyLength).toBeGreaterThan(0);
   });
 });
