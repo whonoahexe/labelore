@@ -8,8 +8,9 @@
 // exa_search are masked here, at read time, in both the parsed data and the body, so the raw file
 // view, the file page, the presentation payload and the search index (which indexes this body)
 // only ever see the masked form. A config.json that fails to parse has those keys' string values
-// redacted in its raw text instead. A config.json that holds none of those keys as strings is left
-// exactly as read. HANDOFF.json and estimation-calibration.json are returned unchanged: the
+// redacted in its raw text instead, and the raw text is redacted even when the file parses, so a
+// secret shadowed by a later duplicate key cannot leak. A config.json that holds none of those keys
+// as strings is left exactly as read. HANDOFF.json and estimation-calibration.json are returned unchanged: the
 // decision scopes masking to config.json. Nothing is written back to the target.
 import { basename } from 'node:path';
 import type { ArtifactHandler, RawArtifact, ArtifactRef } from '../types.ts';
@@ -25,16 +26,18 @@ export const JsonConfigHandler: ArtifactHandler = {
     const result = tryParseJson(raw.content);
     let frontmatter = result.data;
     let body = raw.content;
-    if (basename(ref.path) === 'config.json' && result.warning) {
-      // The file did not parse, so there is no object to mask: redact the secret keys' string
-      // values in the raw text instead. The frontmatter stays empty and the warning is kept.
+    if (basename(ref.path) === 'config.json') {
+      // Always redact the raw text: JSON.parse keeps only the last of a duplicated key, so a secret
+      // string that a later duplicate shadows is invisible to the parsed object but still sits in
+      // the raw body. This also covers a file that did not parse (no object to mask at all).
       body = redactSecretText(raw.content);
-    } else if (basename(ref.path) === 'config.json') {
-      const masked = maskConfig(result.data);
-      if (masked.masked) {
-        frontmatter = masked.data as Record<string, unknown>;
-        // A re-formatted view: the masked object, two-space indented, with a trailing newline.
-        body = `${JSON.stringify(masked.data, null, 2)}\n`;
+      if (!result.warning) {
+        const masked = maskConfig(result.data);
+        if (masked.masked) {
+          frontmatter = masked.data as Record<string, unknown>;
+          // A re-formatted view: the masked object, two-space indented, with a trailing newline.
+          body = `${JSON.stringify(masked.data, null, 2)}\n`;
+        }
       }
     }
     return {
