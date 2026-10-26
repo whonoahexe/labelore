@@ -22,10 +22,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-10-25)
+See: .planning/PROJECT.md (updated 2026-10-26)
 
 **Core value:** Open the dashboard on a GSD project and immediately know where the work stands and where any planning artifact lives — without reading a single file by hand.
-**Current focus:** Phase 06 — Trustworthy Tests and Security Baseline
+**Current focus:** Phase 7 — Recognised Files and Readable URLs
 
 ## Current Position
 
@@ -169,6 +169,9 @@ None blocking. Open scope and policy questions from research, to settle during t
 - Slug identity: research recommends persisting each project's URL name and deduplicating by canonical path (Phase 8).
 - Loaded-project limit: research suggests lazy loading with a bounded cache starting at five projects, decided by a memory test (Phase 8).
 - Folder scan: research recommends depth 3, continuing below a found project, and skipping fixture, worktree and build folders (Phase 8).
+- [Phase 6] `.mcp.json` and Labelore's own `.planning/` and `.claude/` still name private projects and paths (327 files, listed in 06-22-SUMMARY); the leak test leaves these three locations out until they are cleaned.
+- [Phase 6] The research page shows the last PITFALLS rows with names like "to 33 Minor" — a heading-parsing bug to fix in code, not in the file.
+- [Phase 6] Five test-hygiene review warnings stay open (06-REVIEW-DISPOSITION.md); WR-02, the no-skips scan's comment blanker hiding test headers after `//` in strings, is the one worth fixing first.
 
 ### Quick Tasks Completed
 
@@ -195,10 +198,10 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-10-25T22:54:48.121Z
+Last session: 2026-10-26
 Stopped at: Phase 06 complete, ready to plan Phase 7
 Resume file: None
 
 ## Operator Next Steps
 
-- Discuss or plan Phase 6 with /gsd-discuss-phase 6 or /gsd-plan-phase 6
+- Discuss or plan Phase 7 with /gsd-discuss-phase 7 or /gsd-plan-phase 7

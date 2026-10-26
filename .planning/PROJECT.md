@@ -150,6 +150,16 @@ URLs read like what they point to, with search that is quicker to use and easier
 - ✓ Remote targets: `ssh://` / `sftp://` paths mirror the remote `.planning/` read-only over the
   system ssh client — v2.0
 
+**Test health and security baseline**
+
+- ✓ The suite passes reliably with zero skips; corpus and browser tests read the made-up Lendshed
+  project committed under `test/fixtures/lendshed`, never other projects' live `.planning/` trees
+  (TEST-01–04) — Phase 6
+- ✓ Phase 5 threat-register regressions: linear-growth tests for the section, mention and link
+  scanners, a standing raw-HTML sink guard, and a View-mode outline cap (SEC-01–03) — Phase 6
+- ✓ Secrets in `config.json` masked at read time, before presentation, routes or search see them,
+  including duplicate-key and unparseable files (SEC-04) — Phase 6
+
 ### Active
 
 <!-- v2.1 Wayfinding scope, defined 2026-10-25. REQUIREMENTS.md holds the REQ-IDs. -->
@@ -164,13 +174,8 @@ URLs read like what they point to, with search that is quicker to use and easier
 - [ ] Redesigned Source mode
 - [ ] Codebase-only projects open on a "mapped, not started" overview
 
-**Test health and v1.1 leftovers**
+**v1.1 leftovers**
 
-- [ ] The suite passes reliably; corpus tests read fixtures copied into `test/`, not other
-      projects' live `.planning/` trees
-- [ ] Regression tests the Phase 5 threat register promised: ReDoS timing tests for the
-      section-projection and mention scanners, a standing assertion that `blocks.tsx` stays free of
-      `dangerouslySetInnerHTML`, and a View-mode outline-entry cap (05-SECURITY audit notes 1–3)
 - [ ] UI-review polish: opaque narrow outline trigger, depth markers on the plan task index,
       primary-coloured trigger chevron (05-UI-REVIEW), each re-checked against the v2.0 rebuilds
 
@@ -302,6 +307,9 @@ in Active. R-02-01 from v1.0 stays an accepted medium risk.
 | A milestone made of quick tasks, no roadmap phases (v2.0) | Per-type polish was many small, independent, design-led changes; a phase per type would have been ceremony. | ✓ Good — 40 directory quick tasks shipped; the cost is no phase verification or requirements trail at close |
 | Sketch first, then build the winner, then screenshot against the sketch | Design choices were made on throwaway HTML, so builds had a concrete target and a visual check. | ✓ Good — the loop behind every v2.0 view |
 | Phase 5 ships the seam, not the polish | Each type's surface gets its own quick task against the registry; folding all 18 into the phase would have made it a restyle marathon with no shared contract. | ✓ Good — recorded as a deferred follow-up in 05-UAT, carried into Active |
+| One made-up fixture project (Lendshed) replaces every private copy (Phase 6) | The repo is public; copies of private planning trees leaked names, hosts and paths, and tests that read sibling checkouts skipped on other machines. One invented project with the same shapes keeps every pin. | ✓ Good — 108 files with a per-file quirk ledger; a standing leak test guards it |
+| Timing tests assert growth ratios, never millisecond budgets (Phase 6) | Fixed budgets flaked under load and hid real regressions; a growth ratio below each cap measures the algorithm, not the machine. | ✓ Good — standing no-skips scan fails any absolute budget |
+| Mask `config.json` secrets in the handler, in memory only (Phase 6) | Masking at parse time means presentation, routes and search can only ever see the masked body; the read-only boundary forbids touching the file. | ✓ Good — raw-text redaction always runs, closing the duplicate-key leak the phase review found |
 
 ## Evolution
 
@@ -321,4 +329,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-25 after starting milestone v2.1 Wayfinding*
+*Last updated: 2026-10-26 after Phase 6*
