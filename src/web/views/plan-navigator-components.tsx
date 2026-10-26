@@ -9,7 +9,7 @@
 // `Link` to the in-app URL the presentation generated, the fixed traceability route (T-iz6-03) and a
 // What to check file reference whose URL the server took from the presentation (T-ujo-02).
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router';
+import { Link } from '../nav.tsx';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog.tsx';
 import { ResearchBlocks, ResearchInline } from './research-briefing-components.tsx';

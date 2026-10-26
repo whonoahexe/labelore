@@ -51,4 +51,30 @@ export default tseslint.config(
     },
     ...reactHooks.configs.flat.recommended,
   },
+  {
+    // NAV-09: the project slug is prefixed in exactly one place. A router link, navigate call or
+    // location reader imported straight from react-router would skip it, so the web layer takes
+    // them from nav.tsx. (A `type To` import and useSearchParams stay allowed.)
+    files: ['src/web/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'react-router',
+              importNames: ['Link', 'NavLink', 'useNavigate', 'useLocation'],
+              message: 'Use src/web/nav.tsx so the project slug is prefixed in one place.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    // The two modules that own the prefixing: the wrappers themselves, and the router, which
+    // builds the slug-free route tree and the gate in front of it.
+    files: ['src/web/nav.tsx', 'src/web/app-router.tsx'],
+    rules: { 'no-restricted-imports': 'off' },
+  },
 );

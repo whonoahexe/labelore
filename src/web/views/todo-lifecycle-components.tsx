@@ -14,7 +14,7 @@
 // aria attributes, never new class names. The unfold state lives in component state only: nothing
 // touches the URL.
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link } from '../nav.tsx';
 import { CopyPathButton } from '../components/copy-path-button.tsx';
 import { DocumentViewToggle } from '../components/document-view-toggle.tsx';
 import { FencedCode } from '../components/fenced-figure.tsx';

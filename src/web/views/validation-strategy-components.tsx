@@ -11,7 +11,7 @@
 // `validation-strategy.ts`) and the theme tokens; the parse-degradation tones never appear on
 // document content.
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router';
+import { Link } from '../nav.tsx';
 import { Check, Copy } from 'lucide-react';
 import { copyText } from '../components/copy-path-button.tsx';
 import type { ValidationRowStatus, ValidationTestKind } from '../../planning-repo/handlers/validation-strategy.ts';

@@ -8,7 +8,7 @@
 // content. The only link is the baseline chip's `Link` to the sibling UI-SPEC route, whose target
 // the server generated (T-528-03).
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router';
+import { Link } from '../nav.tsx';
 import { copyText } from '../components/copy-path-button.tsx';
 import { ResearchBlocks, ResearchInline } from './research-briefing-components.tsx';
 import { FencedCode } from '../components/fenced-figure.tsx';
