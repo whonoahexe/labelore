@@ -198,9 +198,9 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-10-26T16:08:02.082Z
-Stopped at: Phase 7 UI-SPEC approved
-Resume file: .planning/phases/07-recognised-files-and-readable-urls/07-UI-SPEC.md
+Last session: 2026-10-26T17:45:00.000Z
+Stopped at: Session resumed, proceeding to /gsd-plan-phase 7 (Add more plans: 07-09, 07-10)
+Resume file: .planning/phases/07-recognised-files-and-readable-urls/.continue-here.md
 
 ## Operator Next Steps
 
