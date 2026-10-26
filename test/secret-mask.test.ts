@@ -110,6 +110,31 @@ describe('redactSecretText', () => {
   });
 });
 
+describe('redactSecretText on unusual quoting (WR-01)', () => {
+  it('masks a key spelled with a JSON escape', () => {
+    const out = redactSecretText('{"brave\\u005fsearch":"SECRETSECRET1234",}');
+    expect(out).not.toContain('SECRETSECRET1234');
+    expect(out).toBe('{"brave\\u005fsearch":"****1234",}');
+  });
+
+  it('masks single-quoted JSON5-style keys and values', () => {
+    const out = redactSecretText("{'brave_search': 'SECRETSECRET1234',}");
+    expect(out).toBe("{'brave_search': '****1234',}");
+  });
+
+  it('masks a mix of quote styles and leaves other keys alone', () => {
+    expect(redactSecretText(`{"firecrawl": 'SECRETSECRET1234', 'other': 'plain', 'exa_search': "SECRETSECRET5678"}`)).toBe(
+      `{"firecrawl": '****1234', 'other': 'plain', 'exa_search': "****5678"}`,
+    );
+  });
+
+  it('keeps sync after an apostrophe inside a double-quoted value', () => {
+    expect(redactSecretText(`{"note": "it's", "brave_search": 'SECRETSECRET1234'}`)).toBe(
+      `{"note": "it's", "brave_search": '****1234'}`,
+    );
+  });
+});
+
 describe('redactSecretText on truncated text', () => {
   it('masks a value cut off before its closing quote, so the part that is there does not leak', () => {
     expect(redactSecretText('{"brave_search": "abcdefghij')).toBe('{"brave_search": "****ghij');

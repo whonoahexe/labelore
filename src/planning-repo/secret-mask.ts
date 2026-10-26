@@ -54,21 +54,33 @@ export function maskConfig(data: unknown): { data: unknown; masked: boolean } {
   return { data: out, masked };
 }
 
-// A quoted secret key name, a colon, then a quoted string. The string body is the unambiguous
-// alternation "not a quote or backslash" or "a backslash and the character it escapes", so every
-// character can be consumed in exactly one way and the match is linear, never catastrophic. The
-// closing quote is optional at the very end of the text: a file cut off inside the value must not
-// leak the part that is there.
-const SECRET_STRING_ENTRY = new RegExp(
-  `("(?:${[...SECRET_CONFIG_KEYS].join('|')})"\\s*:\\s*)"((?:[^"\\\\]|\\\\[\\s\\S])*)("|$)`,
+// A quoted key, a colon, then a quoted string, in either quote style (hand-edited, broken files are
+// where JSON5-style single quotes turn up). The key is matched as any quoted string and decoded
+// before it is compared with the secret key names, so an escaped spelling such as "brave_search"
+// does not evade the match. Every quoted body is the unambiguous alternation "not the quote or a
+// backslash" or "a backslash and the character it escapes", so every character can be consumed in
+// exactly one way and the match is linear, never catastrophic. The closing quote of the value is
+// optional at the very end of the text: a file cut off inside the value must not leak the part that
+// is there.
+const DOUBLE_BODY = String.raw`(?:[^"\\]|\\[\s\S])*`;
+const SINGLE_BODY = String.raw`(?:[^'\\]|\\[\s\S])*`;
+const QUOTED_ENTRY = new RegExp(
+  String.raw`((?:"(${DOUBLE_BODY})"|'(${SINGLE_BODY})')\s*:\s*)(?:"(${DOUBLE_BODY})("|$)|'(${SINGLE_BODY})('|$))`,
   'g',
 );
 
-function unescapeJsonString(content: string): string {
+/** Decodes the text between two quotes: JSON escapes, plus `\'` and a bare `"` inside single quotes. */
+function unescapeQuoted(content: string, quote: '"' | "'"): string {
+  const json =
+    quote === "'"
+      ? content.replace(/\\([\s\S])|"/g, (match: string, escaped: string | undefined) =>
+          escaped === undefined ? '\\"' : escaped === "'" ? "'" : match,
+        )
+      : content;
   try {
-    return JSON.parse(`"${content}"`) as string;
+    return JSON.parse(`"${json}"`) as string;
   } catch {
-    // Not valid JSON string content (a bad escape, a raw newline): mask the text as it stands.
+    // Not valid JSON string content (a bad escape, a raw newline): use the text as it stands.
     return content;
   }
 }
@@ -77,7 +89,21 @@ function unescapeJsonString(content: string): string {
  * parse and so cannot go through maskConfig. Everything else in the text stays byte-identical. */
 export function redactSecretText(raw: string): string {
   return raw.replace(
-    SECRET_STRING_ENTRY,
-    (_match, head: string, content: string, close: string) => `${head}"${maskSecret(unescapeJsonString(content))}${close}`,
+    QUOTED_ENTRY,
+    (
+      match: string,
+      head: string,
+      doubleKey: string | undefined,
+      singleKey: string | undefined,
+      doubleValue: string | undefined,
+      doubleClose: string | undefined,
+      singleValue: string | undefined,
+      singleClose: string | undefined,
+    ) => {
+      const key = doubleKey !== undefined ? unescapeQuoted(doubleKey, '"') : unescapeQuoted(singleKey ?? '', "'");
+      if (!SECRET_CONFIG_KEYS.has(key)) return match;
+      if (doubleValue !== undefined) return `${head}"${maskSecret(unescapeQuoted(doubleValue, '"'))}${doubleClose ?? ''}`;
+      return `${head}'${maskSecret(unescapeQuoted(singleValue ?? '', "'"))}${singleClose ?? ''}`;
+    },
   );
 }
