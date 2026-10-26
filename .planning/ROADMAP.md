@@ -153,7 +153,32 @@ to the same clean URLs, and none of them needs to change again.
    such as `v1.1`. *(NAV-10)*
 5. An old-style encoded link or bookmark redirects to its new readable URL. *(NAV-11)*
 
-**Plans**: TBD
+**Plans**: 10 plans
+
+Plans:
+**Wave 1**
+- [ ] 07-01-PLAN.md — Tracer: file classes (text, image, binary, large) decided before any read, GSD internal files kept out of everything, the made-up Shapes fixture
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 07-02-PLAN.md — Folder table and position-gated name recognition; recognised unprefixed and non-text files in the drawer's After stage
+- [ ] 07-03-PLAN.md — Project slug, nav.tsx as the one slug-prefixing point, the /:project gate and the not-found page naming the address
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [ ] 07-04-PLAN.md — Readable URL grammar and route table: one URL per file, file/ fallback, collision audit over every fixture
+- [ ] 07-05-PLAN.md — Playwright URL helper, spec sweep and the standing URL contract scan
+
+**Wave 4** *(blocked on Wave 3 completion)*
+- [ ] 07-06-PLAN.md — Server switch: builders emit readable URLs, table-backed /api/documents, milestone overview and roadmap URLs
+
+**Wave 5** *(blocked on Wave 4 completion)*
+- [ ] 07-07-PLAN.md — Web switch: one /:project/* route and dispatcher, plan pair tabs by path, milestone redirects, overview page
+
+**Wave 6** *(blocked on Wave 5 completion)*
+- [ ] 07-08-PLAN.md — Isolated legacy redirector for old encoded links (removed at v2.1 close)
+- [ ] 07-09-PLAN.md — Image page, File details card for binary and large files, images-only bytes route, drawer type-and-size badge
+
+**Wave 7** *(blocked on Wave 6 completion)*
+- [ ] 07-10-PLAN.md — Every URL class survives a hard reload in the dev server, the built app and Chromium; full phase gate
 
 ### Phase 8: Several Projects and a Switcher
 
