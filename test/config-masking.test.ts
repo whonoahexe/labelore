@@ -123,6 +123,22 @@ describe('config.json masking edge cases (SEC-04)', () => {
     }
   });
 
+  it('masks a secret that a later duplicate key shadows in a config.json that parses (CR-01)', async () => {
+    const shadowed = `{"brave_search": "${SECRET}", "brave_search": true}\n`;
+    const { app } = await appFor({ '.planning/config.json': shadowed });
+
+    const key = await keyFor(app, '.planning/config.json');
+    const page = await pagePayload(app, key);
+    expect(page).not.toContain(SECRET);
+    expect(page).not.toContain(FRAGMENT);
+    expect(await textOf(app, '/api/presentation')).not.toContain(SECRET);
+    for (const query of ['brave_search', FRAGMENT]) {
+      const found = await search(app, query);
+      expect(found).not.toContain(SECRET);
+      expect(found).not.toContain(FRAGMENT);
+    }
+  });
+
   it('returns HANDOFF.json and estimation-calibration.json exactly as before (D-09 scopes masking to config.json)', async () => {
     const handoff = `{"brave_search": "${SECRET}", "note": "handoff"}\n`;
     const calibration = `{"firecrawl": "${SECRET}"}\n`;

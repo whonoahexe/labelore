@@ -501,6 +501,18 @@ describe('JsonConfigHandler', () => {
     expect(result.warning).toBeUndefined();
   });
 
+  it('redacts a secret that a later duplicate key shadows in a config.json that parses (CR-01)', () => {
+    const content = '{"brave_search":"SECRETSECRET1234","brave_search":true}';
+    const result = JsonConfigHandler.parse(
+      raw('.planning/config.json', content),
+      ref('.planning/config.json', { kind: 'config' }),
+    );
+    expect(result.warning).toBeUndefined();
+    expect(result.body).not.toContain('SECRETSECRET1234');
+    expect(result.body).toContain('****1234');
+    expect(JSON.stringify(result.frontmatter)).not.toContain('SECRETSECRET1234');
+  });
+
   it('a HANDOFF.json with a trailing comma yields a structured-extraction warning, retains the raw text, and never throws', () => {
     const content = '{"version": "1.0", "phase": "01",}';
     expect(() =>
