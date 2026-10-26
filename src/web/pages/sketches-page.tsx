@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router';
+import { useSearchParams } from 'react-router';
+import { Link } from '../nav.tsx';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import type { SketchRow, SketchesViewModel } from '../../presentation/sketches.ts';
 import { EmptyState } from '../components/empty-state.tsx';

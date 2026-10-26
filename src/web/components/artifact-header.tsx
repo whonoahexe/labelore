@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { Link } from 'react-router';
+import { Link } from '../nav.tsx';
 import { CopyPathButton } from './copy-path-button.tsx';
 
 export interface ArtifactCrumb {

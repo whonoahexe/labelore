@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft } from 'lucide-react';
-import { Link, useLocation } from 'react-router';
+import { Link, useProjectPathname } from '../nav.tsx';
 import type {
   DrawerFileRow,
   DrawerMilestonePlace,
@@ -251,7 +251,7 @@ export function PlanningPlaces({
   open: boolean;
   onNavigate: () => void;
 }): React.JSX.Element | null {
-  const { pathname } = useLocation();
+  const pathname = useProjectPathname();
   const query = useDrawerQuery();
   const navRef = useRef<HTMLElement | null>(null);
   const model = query.data;

@@ -5,7 +5,7 @@
 // built from a discovered file.
 import { useState } from 'react';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
-import { Link } from 'react-router';
+import { Link } from '../nav.tsx';
 import {
   activityWindow,
   dayMark,

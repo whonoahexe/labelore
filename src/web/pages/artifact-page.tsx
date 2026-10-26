@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useLocation } from 'react-router';
+import { Link, useProjectLocation } from '../nav.tsx';
 import type { PhaseIdentity } from '../../domain/model.ts';
 import type { ParseWarning } from '../../planning-repo/types.ts';
 import { ArtifactHeader, type ArtifactCrumb } from '../components/artifact-header.tsx';
@@ -260,7 +260,7 @@ export function DocumentView({
   const [runtimeWarnings, setRuntimeWarnings] = useState<string[]>([]);
   const [referenceState, setReferenceState] = useState<ReferencePreviewState | null>(null);
   const [referenceOpen, setReferenceOpen] = useState(false);
-  const { hash } = useLocation();
+  const { hash } = useProjectLocation();
   const previews = useMemo(
     () => new Map((document.references ?? []).map((preview) => [preview.key, preview])),
     [document.references],
@@ -624,8 +624,8 @@ export function ArtifactPage({
   route: routeOverride,
   switcher: pairSwitcher = null,
 }: { route?: string; switcher?: React.ReactNode } = {}): React.JSX.Element {
-  const location = useLocation();
-  const route = routeOverride ?? location.pathname;
+  const { pathname: locationPath } = useProjectLocation();
+  const route = routeOverride ?? locationPath;
   const query = useQuery({
     queryKey: ['artifact-document', route],
     queryFn: () => loadDocument(route),

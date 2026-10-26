@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronRight, History } from 'lucide-react';
-import { Link } from 'react-router';
+import { Link } from '../nav.tsx';
 import { EmptyState } from '../components/empty-state.tsx';
 import { LeadText } from '../components/lead-tokens.tsx';
 import type {

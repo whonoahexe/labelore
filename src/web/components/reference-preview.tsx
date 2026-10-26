@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Popover } from '@base-ui/react/popover';
 import { ArrowUpRight, X } from 'lucide-react';
 import type { ReferencePreviewDto } from '../../presentation/references.ts';
+import { useProjectHref } from '../nav.tsx';
 
 export interface ReferencePreviewState {
   trigger: HTMLElement;
@@ -33,6 +34,9 @@ export function ReferencePreview({
     () => (trigger ? { getBoundingClientRect: () => trigger.getBoundingClientRect() } : null),
     [trigger],
   );
+
+  // The preview's url is project-relative; the anchor needs the slug in front of it (NAV-09).
+  const href = useProjectHref(state?.preview.url ?? '/');
 
   // Hooks must run before this guard, so it sits below them rather than at the top.
   if (!state || !anchor) return null;
@@ -83,7 +87,7 @@ export function ReferencePreview({
                 <dd>{preview.detail.value}</dd>
               </div>
             </dl>
-            <a className="reference-preview-open" href={preview.url}>
+            <a className="reference-preview-open" href={href}>
               Open
               <ArrowUpRight aria-hidden="true" />
             </a>

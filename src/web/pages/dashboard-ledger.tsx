@@ -12,7 +12,7 @@ import {
   Search,
   TriangleAlert,
 } from 'lucide-react';
-import { Link } from 'react-router';
+import { Link } from '../nav.tsx';
 import {
   NO_PHASE,
   blockerGroups,
