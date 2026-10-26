@@ -17,9 +17,17 @@
 import { readdirSync, statSync, readFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { InMemoryPlanningFilesystem } from '../../src/planning-fs/in-memory-fs.ts';
+import { BINARY_EXTENSIONS, IMAGE_EXTENSIONS, SNIFF_BYTES, extensionOf } from '../../src/planning-repo/file-class.ts';
+
+/** True for a file whose bytes must survive unchanged: an image or binary extension, or a NUL in its head. */
+function keepsBytes(name: string, buffer: Buffer): boolean {
+  const ext = extensionOf(name);
+  if (ext !== null && (IMAGE_EXTENSIONS.has(ext) || BINARY_EXTENSIONS.has(ext))) return true;
+  return buffer.subarray(0, SNIFF_BYTES).includes(0);
+}
 
 export async function fromDirectory(rootPath: string): Promise<InMemoryPlanningFilesystem> {
-  const contents: Record<string, string> = {};
+  const contents: Record<string, string | Uint8Array> = {};
   let latestMtime = 0;
 
   function walk(dir: string): void {
@@ -32,7 +40,10 @@ export async function fromDirectory(rootPath: string): Promise<InMemoryPlanningF
         const relPath = relative(rootPath, abs).split(sep).join('/');
         const stat = statSync(abs);
         latestMtime = Math.max(latestMtime, stat.mtimeMs);
-        contents[relPath] = readFileSync(abs, 'utf8');
+        // Read as bytes first: decoding an image or a NUL-bearing file as UTF-8 would corrupt it and
+        // break size parity with the real filesystem (fs-equivalence.test.ts).
+        const buffer = readFileSync(abs);
+        contents[relPath] = keepsBytes(entry.name, buffer) ? new Uint8Array(buffer) : buffer.toString('utf8');
       }
     }
   }

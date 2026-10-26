@@ -332,7 +332,7 @@ describe('assembleDomainModel — D-11 reachable-equals-discovered (fixtures/den
     return { refs, project: snapshot.project };
   }
 
-  it('makes the set of reachable artifact paths exactly equal the set of discovered paths — 52 members', async () => {
+  it('makes the set of reachable artifact paths exactly equal the set of discovered paths — 51 members', async () => {
     const { refs, project } = await loadDense();
     const discoveredPaths = new Set(refs.map((ref) => ref.path));
     const reachablePaths = new Set([
@@ -340,13 +340,14 @@ describe('assembleDomainModel — D-11 reachable-equals-discovered (fixtures/den
       ...project.phases.flatMap((phase) => Object.keys(phase.artifacts)),
       ...project.quickTasks.flatMap((quickTask) => Object.keys(quickTask.artifacts)),
     ]);
-    expect(discoveredPaths.size).toBe(52);
+    // 52 files minus estimation-calibration.json, which is GSD-internal and never becomes a ref (D-11).
+    expect(discoveredPaths.size).toBe(51);
     expect(reachablePaths).toEqual(discoveredPaths);
   });
 
-  it('gives project.artifacts 23 entries for fixtures/dense, including research/milestone-root/other paths', async () => {
+  it('gives project.artifacts 22 entries for fixtures/dense, including research/milestone-root/other paths', async () => {
     const { project } = await loadDense();
-    expect(Object.keys(project.artifacts)).toHaveLength(23);
+    expect(Object.keys(project.artifacts)).toHaveLength(22);
     expect(project.artifacts['.planning/research/STACK.md']).toBeDefined();
     expect(project.artifacts['.planning/milestones/v1.0-ROADMAP.md']).toBeDefined();
     expect(project.artifacts['.planning/ui-reviews/.gitignore']).toBeDefined();
@@ -403,7 +404,7 @@ describe('assembleDomainModel — D-11 reachable-equals-discovered (fixtures/den
     };
     // buildSearchDocuments must reach the same corpus collectReachableArtifacts (createSearchIndexState)
     // does — proven directly here, not just implied by the count above.
-    expect(buildSearchDocuments(snapshot).length).toBe(52);
+    expect(buildSearchDocuments(snapshot).length).toBe(51);
     const search = createSearchIndexState();
     search.buildFrom(snapshot);
     await waitForBuild();

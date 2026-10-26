@@ -337,7 +337,9 @@ coverage_results:
     expect(json).not.toContain('$circularRef');
     expect(JSON.parse(json)).toEqual(presentation);
     expect(presentation.exclusions).toBe(snapshot.exclusions);
+    // estimation-calibration.json is GSD bookkeeping (D-11): one exclusion, sorted ahead of research/.cache.
     expect(presentation.exclusions).toEqual([
+      expect.objectContaining({ path: '.planning/estimation-calibration.json' }),
       expect.objectContaining({ path: '.planning/research/.cache' }),
     ]);
     expect(

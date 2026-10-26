@@ -2,6 +2,9 @@
 // Node filesystem module (DATA-01's boundary — enforced by an acceptance-criteria grep, not just
 // convention).
 import {
+  openSync,
+  closeSync,
+  readSync,
   readdirSync,
   readFileSync,
   statSync,
@@ -78,6 +81,23 @@ export class LocalFsPlanningFilesystem implements PlanningFilesystem {
     const abs = this.resolveContained(relPath);
     const stat = statSync(abs);
     return { content: readFileSync(abs, 'utf8'), mtimeMs: stat.mtimeMs, size: stat.size };
+  }
+
+  /**
+   * Reads at most `maxBytes` from the start of one regular file, through the same containment guard as
+   * read(). The file is opened read-only and closed in a finally block; the returned array holds only
+   * the bytes actually read.
+   */
+  async readHead(relPath: string, maxBytes: number): Promise<Uint8Array> {
+    const abs = this.resolveContained(relPath);
+    const fd = openSync(abs, 'r');
+    try {
+      const buffer = Buffer.alloc(Math.max(0, maxBytes));
+      const bytesRead = readSync(fd, buffer, 0, buffer.length, 0);
+      return new Uint8Array(buffer.subarray(0, bytesRead));
+    } finally {
+      closeSync(fd);
+    }
   }
 
   /**
