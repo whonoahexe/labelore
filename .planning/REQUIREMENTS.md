@@ -36,7 +36,7 @@ v1.0 and v1.1; new categories start at 01.
 
 ### Recognising files
 
-- [ ] **DATA-07**: Every file type GSD writes is recognised by where it lives as well as by its name, including
+- [x] **DATA-07**: Every file type GSD writes is recognised by where it lives as well as by its name, including
       files GSD names without a phase prefix (`COVERAGE.md`), `HANDOFF.json` and `.continue-here.md`, and GSD's
       internal files (temporary folders, locks, `state.json`) are kept out of the drawer and search
 - [ ] **DATA-08**: Images and other binary files are recognised as such and never read or indexed as text
@@ -179,7 +179,7 @@ Which phases cover which requirements. Filled in when the roadmap is created.
 | SEC-03 | Phase 6 | Complete |
 | SEC-04 | Phase 6 | Complete |
 | SEC-05 | Phase 8 | Pending |
-| DATA-07 | Phase 7 | Pending |
+| DATA-07 | Phase 7 | Complete |
 | DATA-08 | Phase 7 | Pending |
 | VIEW-07 | Phase 9 | Pending |
 | VIEW-08 | Phase 9 | Pending |

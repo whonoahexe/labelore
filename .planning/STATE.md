@@ -5,16 +5,16 @@ milestone_name: Wayfinding
 current_phase: 07
 current_phase_name: Recognised Files and Readable URLs
 status: executing
-stopped_at: Completed 07-01-PLAN.md
-last_updated: "2026-10-26T19:50:48.902Z"
+stopped_at: Completed 07-02-PLAN.md
+last_updated: "2026-10-26T20:14:22.917Z"
 last_activity: 2026-10-26
 last_activity_desc: Phase 07 execution started
-state_head: 622ab5129215c4c7073c3b6df6e27367700cd509
+state_head: 52102f5103a495ccc3507f4929c197ca436ab933
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 32
-  completed_plans: 23
+  completed_plans: 24
   percent: 13
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-10-26)
 ## Current Position
 
 Phase: 07 (Recognised Files and Readable URLs) — EXECUTING
-Plan: 2 of 10
+Plan: 3 of 10
 Status: Ready to execute
 Last activity: 2026-10-26 — Phase 07 execution started
 
@@ -105,6 +105,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 06 P20 | 20 min | 2 tasks | 5 files |
 | Phase 06 P22 | 12 min | 3 tasks | 17 files |
 | Phase 07 P01 | 30 min | 3 tasks | 95 files |
+| Phase 07 P02 | 21 min | 3 tasks | 31 files |
 
 ## Accumulated Context
 
@@ -156,6 +157,9 @@ milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) a
 - [Phase 06]: Wave 5 UI safety gate (no UI-SPEC for Phase 06) passed over by the orchestrator during the user's unattended run: 06-22's only src/ edits were seven comment lines naming no private project; no rendered UI changed.
 - [Phase 07]: 07-01: classifyFile head-sniffs only names whose extension decides nothing; root internal names are byte-equal while the .lock/.tmp suffix rule is case-insensitive at any depth
 - [Phase 07]: 07-01: estimation-calibration.json is GSD-internal (assumption A4, reversible); the dense fixture's copy moved from artifacts to exclusions and the Shapes project carries one example of each class
+- [Phase 07]: 07-02: filename grammars and exact names are gated by position; the folder table (FOLDER_RULES) is consulted after them, then unknown — The same name means different things in different folders; a ROADMAP.md or STATE.md below the root must not take a root document's kind (T-07-04)
+- [Phase 07]: 07-02: only a {date}-{time}-{slug} folder under quick/ is a quick task; strays under phases/, milestones/vX.Y-phases/ and quick/ stay in the model at location other — quick/README.md must not mint a task id, and nothing the walk finds may drop out of the model; stray quick/ entries are no longer drawer task rows
+- [Phase 07]: 07-02: research/ keeps its NN-TOKEN, plan and quick-artifact kinds but not root-document names — Honours 'keep exactly the kinds they have' for real files without letting research/STATE.md take the state kind
 
 ### Pending Todos
 
@@ -201,8 +205,8 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-10-26T19:50:48.704Z
-Stopped at: Completed 07-01-PLAN.md
+Last session: 2026-10-26T20:14:22.630Z
+Stopped at: Completed 07-02-PLAN.md
 Resume file: None
 
 ## Operator Next Steps
