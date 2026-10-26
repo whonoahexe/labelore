@@ -141,7 +141,8 @@ function collectReachableArtifacts(snapshot: ProjectSnapshot): ReachableArtifact
       out.push({ artifact, phaseIdentity: null });
     }
   }
-  return out;
+  // D-10: only text-class artifacts are ever indexed; images, binaries and oversized text have no body.
+  return out.filter(({ artifact }) => artifact.fileClass === 'text');
 }
 
 /** Flattens frontmatter keys and scalar values (deeply) into one searchable string — never

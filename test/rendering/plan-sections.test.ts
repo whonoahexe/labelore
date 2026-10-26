@@ -104,6 +104,8 @@ function registryWithRead05(): ReferenceRegistry {
           key: `root:${READ05_ARTIFACT}`,
           path: READ05_ARTIFACT,
           kind: 'project',
+          fileClass: 'text',
+          sizeBytes: 0,
           title: 'Project',
           location: 'root',
           frontmatter: {},

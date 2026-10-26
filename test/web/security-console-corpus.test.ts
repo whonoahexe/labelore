@@ -151,6 +151,8 @@ function inputFor(content: string): ViewInput {
   const ref: ArtifactRef = {
     path: '.planning/phases/01-x/01-SECURITY.md',
     kind: 'security',
+    fileClass: 'text',
+    sizeBytes: 0,
     location: 'phase',
     phaseIdentity: null,
     milestoneVersion: null,

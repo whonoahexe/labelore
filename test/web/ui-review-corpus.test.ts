@@ -143,6 +143,8 @@ function parse(path: string): { audit: UiReviewAudit; input: ViewInput } {
   const ref: ArtifactRef = {
     path: `.planning/phases/${number}-${slug}/${number}-UI-REVIEW.md`,
     kind: 'ui-review',
+    fileClass: 'text',
+    sizeBytes: 0,
     location: 'phase',
     phaseIdentity: path === SYNTHETIC ? { milestoneVersion: null, number: '06', projectCode: null, slug: 'run-sheet-views' } : { milestoneVersion: null, number, projectCode: null, slug },
     milestoneVersion: null,

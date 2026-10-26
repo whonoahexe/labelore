@@ -80,7 +80,7 @@ const isLearnings = (path: string): boolean => path.endsWith('LEARNINGS.md') && 
 
 function fixtureModel(file: string): ComposedLearningsRetro {
   const content = readFileSync(file, 'utf8');
-  const ref: ArtifactRef = { path: file, kind: 'learnings', location: 'phase', phaseIdentity: null, milestoneVersion: null, quickTaskId: null };
+  const ref: ArtifactRef = { path: file, kind: 'learnings', location: 'phase', phaseIdentity: null, milestoneVersion: null, quickTaskId: null, fileClass: 'text', sizeBytes: 0 };
   const parsed = LearningsHandler.parse({ path: file, content, mtimeMs: 0, size: content.length }, ref);
   const model = composeLearningsRetro({
     kind: 'learnings',

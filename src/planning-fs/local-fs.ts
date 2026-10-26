@@ -59,10 +59,19 @@ export class LocalFsPlanningFilesystem implements PlanningFilesystem {
 
   async list(relDir: string): Promise<DirEntry[]> {
     const abs = this.resolveContained(relDir);
-    return readdirSync(abs, { withFileTypes: true }).map((d) => ({
-      name: d.name,
-      isDirectory: d.isDirectory(),
-    }));
+    return readdirSync(abs, { withFileTypes: true }).map((d) => {
+      const entry: DirEntry = { name: d.name, isDirectory: d.isDirectory() };
+      if (!entry.isDirectory) {
+        // The size comes from the same containment guard as read(): a child that escapes the root
+        // (or cannot be stat'd) gets no size, and today's read-time warning path still applies.
+        try {
+          entry.size = statSync(this.resolveContained(join(relDir, d.name))).size;
+        } catch {
+          // leave size undefined
+        }
+      }
+      return entry;
+    });
   }
 
   async read(relPath: string): Promise<FileRead> {

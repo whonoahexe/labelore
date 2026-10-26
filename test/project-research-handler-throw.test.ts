@@ -14,7 +14,7 @@ describe('ProjectResearchHandler when the lift throws', () => {
   it('keeps the title, body and frontmatter and omits projectResearch', () => {
     const result = ProjectResearchHandler.parse(
       { path: '.planning/research/STACK.md', content: '# Stack Research\n\nbody text', mtimeMs: 0, size: 26 },
-      { path: '.planning/research/STACK.md', kind: 'unknown', location: 'research', phaseIdentity: null, milestoneVersion: null, quickTaskId: null },
+      { path: '.planning/research/STACK.md', kind: 'unknown', location: 'research', phaseIdentity: null, milestoneVersion: null, quickTaskId: null, fileClass: 'text', sizeBytes: 0 },
     );
     expect(result.title).toBe('Stack Research');
     expect(result.body).toContain('body text');

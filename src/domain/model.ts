@@ -12,11 +12,23 @@
  */
 export type ArtifactLocation = 'root' | 'phase' | 'archived-phase' | 'quick' | 'milestone-root' | 'research' | 'other';
 
+/**
+ * How a file is treated before any read (Phase 7, D-09/D-10): `text` is read and indexed, `image`
+ * is listed with its size and never read, `binary` is a known-binary or NUL-bearing file, `large`
+ * is text above the size cap. Decided from position, extension, size and a bounded head sniff,
+ * never from parsed content.
+ */
+export type FileClass = 'text' | 'image' | 'binary' | 'large';
+
 /** The universal base shape every parsed artifact carries, regardless of type. */
 export interface Artifact {
   id: string;
   path: string;
   kind: string;
+  /** The file class decided before any read; every class except `text` carries an empty body. */
+  fileClass: FileClass;
+  /** Size in bytes as the filesystem port reported it (0 when it reported none). */
+  sizeBytes: number;
   /** D-11: every reachable artifact carries the location discovery classified it under, so no
    * consumer re-derives it by string-matching a path prefix. */
   location: ArtifactLocation;

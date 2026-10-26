@@ -32,7 +32,7 @@ const FX_HOLDS = fxPath('debug/reservation-holds-lost-on-reconnect.md');
 const FX_DOOR = fxPath('debug/resolved/door-sensor-stops-after-wifi-drop.md');
 
 function refOf(path: string, extra: Partial<ArtifactRef> = {}): ArtifactRef {
-  return { path, kind: 'debug', location: 'other', phaseIdentity: null, milestoneVersion: null, quickTaskId: null, ...extra };
+  return { path, kind: 'debug', location: 'other', phaseIdentity: null, milestoneVersion: null, quickTaskId: null, fileClass: 'text', sizeBytes: 0, ...extra };
 }
 
 export function inputOf(content: string, path: string, headings: ViewInput['headings'] = []): ViewInput {

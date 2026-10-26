@@ -24,6 +24,8 @@ function refOf(path: string): ArtifactRef {
   return {
     path,
     kind: 'patterns',
+    fileClass: 'text',
+    sizeBytes: 0,
     location: 'phase',
     phaseIdentity: null,
     milestoneVersion: null,

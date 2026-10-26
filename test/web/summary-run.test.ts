@@ -45,6 +45,8 @@ function inputOf(
   const content = readFileSync(file, 'utf8');
   const full: ArtifactRef = {
     kind: 'summary',
+    fileClass: 'text',
+    sizeBytes: 0,
     phaseIdentity: null,
     milestoneVersion: null,
     quickTaskId: null,

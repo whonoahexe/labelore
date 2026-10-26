@@ -691,6 +691,8 @@ describe('archivedMilestones (quick-261022-ms1)', () => {
       key: `artifact:${path}`,
       path,
       kind: 'requirements',
+      fileClass: 'text',
+      sizeBytes: 0,
       title: `${version} Requirements`,
       location: 'milestone-root',
       frontmatter: {},

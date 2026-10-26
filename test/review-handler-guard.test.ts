@@ -11,7 +11,7 @@ const content =
   '---\nstatus: issues_found\nphase: "01-x"\n---\n\n# Phase 1: Thing Code Review Report\n\n## Warnings\n\n### WR-01: A thing\n\n**File:** `src/a.ts:3`\n\n**Issue:** bad\n';
 
 function refOf(path: string, location: ArtifactRef['location'], extra: Partial<ArtifactRef> = {}): ArtifactRef {
-  return { path, kind: 'review', location, phaseIdentity: null, milestoneVersion: null, quickTaskId: null, ...extra };
+  return { path, kind: 'review', location, phaseIdentity: null, milestoneVersion: null, quickTaskId: null, fileClass: 'text', sizeBytes: 0, ...extra };
 }
 
 function rawOf(path: string, text: string = content): RawArtifact {

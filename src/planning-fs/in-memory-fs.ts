@@ -31,18 +31,18 @@ export class InMemoryPlanningFilesystem implements PlanningFilesystem {
   async list(relDir: string): Promise<DirEntry[]> {
     const dir = normalizeRelPath(relDir);
     const prefix = dir === '.' ? '' : `${dir}/`;
-    const seen = new Map<string, boolean>();
-    for (const filePath of this.files.keys()) {
+    const seen = new Map<string, DirEntry>();
+    for (const [filePath, content] of this.files) {
       if (dir !== '.' && !filePath.startsWith(prefix)) continue;
       const rest = dir === '.' ? filePath : filePath.slice(prefix.length);
       if (rest === '') continue;
       const [first, ...restParts] = rest.split('/');
       const isDirectory = restParts.length > 0;
-      if (!seen.has(first)) seen.set(first, isDirectory);
+      if (!seen.has(first)) {
+        seen.set(first, isDirectory ? { name: first, isDirectory } : { name: first, isDirectory, size: Buffer.byteLength(content, 'utf8') });
+      }
     }
-    return [...seen.entries()]
-      .map(([name, isDirectory]) => ({ name, isDirectory }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
   }
 
   async read(relPath: string): Promise<FileRead> {

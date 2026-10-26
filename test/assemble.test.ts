@@ -29,6 +29,8 @@ function makeRef(path: string, overrides: Partial<ArtifactRef> = {}): ArtifactRe
   return {
     path,
     kind: 'unknown',
+    fileClass: 'text',
+    sizeBytes: 0,
     location: 'root',
     phaseIdentity: null,
     milestoneVersion: null,

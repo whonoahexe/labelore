@@ -115,6 +115,8 @@ function inputOf(overrides: Partial<ViewInput> = {}, path = PATH, extraRef: Part
   const ref: ArtifactRef = {
     path,
     kind: 'plan',
+    fileClass: 'text',
+    sizeBytes: 0,
     location: 'phase',
     phaseIdentity: { milestoneVersion: null, number: '01', projectCode: null, slug: 'demo-phase' },
     milestoneVersion: null,

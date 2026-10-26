@@ -87,7 +87,7 @@ function compose(presentation: ProjectPresentation, a: Artifact): ComposedReview
 function fixtureReview(name: string): ComposedReviewThreads {
   const file = join(FIXTURES, name);
   const content = readFileSync(file, 'utf8');
-  const ref: ArtifactRef = { path: file, kind: 'review', location: 'phase', phaseIdentity: null, milestoneVersion: null, quickTaskId: null };
+  const ref: ArtifactRef = { path: file, kind: 'review', location: 'phase', phaseIdentity: null, milestoneVersion: null, quickTaskId: null, fileClass: 'text', sizeBytes: 0 };
   const parsed = ReviewHandler.parse({ path: file, content, mtimeMs: 0, size: content.length }, ref);
   const model = composeReviewThreads({
     kind: 'review',

@@ -26,6 +26,8 @@ function refOf(path: string, location: ArtifactLocation, extra: Partial<Artifact
   return {
     path,
     kind: 'plan',
+    fileClass: 'text',
+    sizeBytes: 0,
     location,
     phaseIdentity: null,
     milestoneVersion: null,

@@ -42,6 +42,8 @@ function artifact(overrides: Partial<ArtifactDto> & Pick<ArtifactDto, 'path' | '
   return {
     key: `a~${overrides.path}`,
     kind: 'markdown',
+    fileClass: 'text',
+    sizeBytes: 0,
     title: overrides.path,
     frontmatter: {},
     structured: {},
@@ -470,6 +472,8 @@ function makeArtifact(overrides: Partial<Artifact> & { path: string }): Artifact
   return {
     id: overrides.path,
     kind: 'context',
+    fileClass: 'text',
+    sizeBytes: 0,
     location: 'phase',
     frontmatter: {},
     title: overrides.path,

@@ -8,7 +8,7 @@ const content =
   '---\nphase: "01"\ngenerated: "2026-06-10"\ncounts:\n  decisions: 1\n---\n\n# Phase 1 Learnings: Thing\n\n## Decisions\n\n- Do the thing (D-01).\n';
 
 function refOf(path: string, location: ArtifactRef['location'], extra: Partial<ArtifactRef> = {}): ArtifactRef {
-  return { path, kind: 'learnings', location, phaseIdentity: null, milestoneVersion: null, quickTaskId: null, ...extra };
+  return { path, kind: 'learnings', location, phaseIdentity: null, milestoneVersion: null, quickTaskId: null, fileClass: 'text', sizeBytes: 0, ...extra };
 }
 
 function rawOf(path: string): RawArtifact {

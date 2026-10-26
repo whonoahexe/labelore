@@ -8,7 +8,7 @@ const content =
   '---\nstatus: passed\nphase: "01-x"\nscore: "1/1"\n---\n\n# Phase 1: Thing Verification Report\n\n**Phase Goal:** Do a thing.\n\n## Gaps Summary\n\nNo gaps.\n';
 
 function refOf(path: string, location: ArtifactRef['location'], extra: Partial<ArtifactRef> = {}): ArtifactRef {
-  return { path, kind: 'verification', location, phaseIdentity: null, milestoneVersion: null, quickTaskId: null, ...extra };
+  return { path, kind: 'verification', location, phaseIdentity: null, milestoneVersion: null, quickTaskId: null, fileClass: 'text', sizeBytes: 0, ...extra };
 }
 
 function rawOf(path: string): RawArtifact {

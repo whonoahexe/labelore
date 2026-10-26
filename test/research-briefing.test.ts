@@ -388,6 +388,8 @@ describe('robustness (T-3x3-02, T-3x3-04)', () => {
     const ref: ArtifactRef = {
       path: '.planning/phases/01-x/01-RESEARCH.md',
       kind: 'research',
+      fileClass: 'text',
+      sizeBytes: 0,
       location: 'phase',
       phaseIdentity: null,
       milestoneVersion: null,
@@ -404,6 +406,8 @@ describe('robustness (T-3x3-02, T-3x3-04)', () => {
     const ref: ArtifactRef = {
       path: '.planning/phases/01-x/01-RESEARCH.md',
       kind: 'research',
+      fileClass: 'text',
+      sizeBytes: 0,
       location: 'phase',
       phaseIdentity: null,
       milestoneVersion: null,

@@ -47,6 +47,8 @@ function toDomainArtifact(parsed: ParsedArtifact): Artifact {
     id: parsed.ref.path,
     path: parsed.ref.path,
     kind: parsed.ref.kind,
+    fileClass: parsed.ref.fileClass,
+    sizeBytes: parsed.ref.sizeBytes,
     location: parsed.ref.location,
     frontmatter: parsed.frontmatter,
     title: parsed.title,

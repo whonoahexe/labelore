@@ -48,6 +48,8 @@ function inputFor(
   const ref: ArtifactRef = {
     path: '.planning/phases/01-x/01-UI-REVIEW.md',
     kind: 'ui-review',
+    fileClass: 'text',
+    sizeBytes: 0,
     location: 'phase',
     phaseIdentity: identity ? { milestoneVersion: null, projectCode: null, ...identity } : null,
     milestoneVersion: null,

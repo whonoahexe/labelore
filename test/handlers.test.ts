@@ -22,6 +22,8 @@ function ref(path: string, overrides: Partial<ArtifactRef> = {}): ArtifactRef {
   return {
     path,
     kind: 'unknown',
+    fileClass: 'text',
+    sizeBytes: 0,
     location: 'root',
     phaseIdentity: null,
     milestoneVersion: null,

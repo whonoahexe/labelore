@@ -31,7 +31,7 @@ const FIXTURES = new URL('../fixtures/learnings/', import.meta.url).pathname;
 const DENSE = new URL('../../fixtures/dense/.planning/', import.meta.url).pathname;
 
 function refOf(path: string, extra: Partial<ArtifactRef> = {}): ArtifactRef {
-  return { path, kind: 'learnings', location: 'phase', phaseIdentity: null, milestoneVersion: null, quickTaskId: null, ...extra };
+  return { path, kind: 'learnings', location: 'phase', phaseIdentity: null, milestoneVersion: null, quickTaskId: null, fileClass: 'text', sizeBytes: 0, ...extra };
 }
 
 const phase = (number: string, slug: string): Partial<ArtifactRef> => ({

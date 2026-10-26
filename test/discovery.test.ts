@@ -18,6 +18,8 @@ describe('discover — position-aware classification', () => {
         phaseIdentity: null,
         milestoneVersion: null,
         quickTaskId: null,
+        fileClass: 'text',
+        sizeBytes: 7,
       },
     ]);
   });
