@@ -513,6 +513,15 @@ describe('JsonConfigHandler', () => {
     expect(JSON.stringify(result.frontmatter)).not.toContain('SECRETSECRET1234');
   });
 
+  it('redacts a shadowed secret whose key is spelled with an escape (CR-01)', () => {
+    const content = '{"brave\\u005fsearch":"SECRETSECRET1234","brave_search":false}';
+    const result = JsonConfigHandler.parse(
+      raw('.planning/config.json', content),
+      ref('.planning/config.json', { kind: 'config' }),
+    );
+    expect(result.body).not.toContain('SECRETSECRET1234');
+  });
+
   it('a HANDOFF.json with a trailing comma yields a structured-extraction warning, retains the raw text, and never throws', () => {
     const content = '{"version": "1.0", "phase": "01",}';
     expect(() =>
