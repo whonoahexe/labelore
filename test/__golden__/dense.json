@@ -91,7 +91,7 @@
       ".planning/HANDOFF.json": {
         "id": ".planning/HANDOFF.json",
         "path": ".planning/HANDOFF.json",
-        "kind": "unknown",
+        "kind": "handoff",
         "fileClass": "text",
         "sizeBytes": 953,
         "location": "root",
@@ -22273,7 +22273,7 @@
             "scheme": "phase",
             "id": "02",
             "artifactPath": ".planning/HANDOFF.json",
-            "artifactKind": "unknown",
+            "artifactKind": "handoff",
             "position": {
               "line": 22,
               "offset": 859
@@ -23960,7 +23960,7 @@
           "scheme": "phase",
           "id": "02",
           "artifactPath": ".planning/HANDOFF.json",
-          "artifactKind": "unknown",
+          "artifactKind": "handoff",
           "position": {
             "line": 22,
             "offset": 859

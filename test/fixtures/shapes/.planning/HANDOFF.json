@@ -1,0 +1,9 @@
+{
+  "paused_at": "2026-05-09T16:40:00.000Z",
+  "phase": "02",
+  "phase_name": "Glaze recipes",
+  "task": 2,
+  "total_tasks": 5,
+  "status": "paused",
+  "next_action": "Wire the cone field into the recipe form, then rerun the form tests"
+}

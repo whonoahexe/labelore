@@ -164,8 +164,9 @@ describe('buildDrawerViewModel — a phase through its lifecycle', () => {
       ['Plan 01', '01-01', true],
       ['Plan 02', '01-02', false],
     ]);
-    expect(phase.after.map((row) => row.label)).toEqual(['Review', 'Verification']);
-    expect(phase.other.map((row) => row.label)).toEqual(['UI review', 'Deferred items']);
+    // deferred-items.md is a recognised unprefixed file (DATA-07): it follows the known post-plan documents.
+    expect(phase.after.map((row) => row.label)).toEqual(['Review', 'Verification', 'Deferred items']);
+    expect(phase.other.map((row) => row.label)).toEqual(['UI review']);
     expect(phase.done).toBe(1);
     expect(phase.total).toBe(2);
     expect(phase.status).toEqual({ label: 'In progress', tone: 'active' });

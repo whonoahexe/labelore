@@ -14,8 +14,8 @@ import type { ArtifactRef } from '../types.ts';
  * quick-260923-lju: an archived quick task under `milestones/vX.Y-quick/<id>/` has no dedicated
  * `ArtifactLocation` of its own — `discovery.ts`'s `classify()` has no branch for a `vX.Y-quick`
  * top segment (only `vX.Y-phases`), so it falls through to the generic `'milestone-root'` case.
- * `deriveKind()` (also in discovery.ts) already tries `parseQuickArtifactName` unconditionally,
- * regardless of location, which is why the wire `kind` reads correctly as e.g. `'context'` — this
+ * `kindOfPath()` (folders.ts) applies `parseQuickArtifactName` to a path inside `milestones/vX.Y-quick/`,
+ * which is why the wire `kind` reads correctly as e.g. `'context'` — this
  * mirrors that same unconditional fallback here, so structural parsing (ContextHandler and every
  * other handler dispatching through this token) actually engages for those files too, not just
  * kind labeling. Phase-style and quick-style filename grammars never overlap (one requires a

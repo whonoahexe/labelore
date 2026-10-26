@@ -62,3 +62,7 @@ Milestones:
 | `.planning/notes/kiln-curve.dat` | unknown extension with NUL bytes in its head: binary by the 8000-byte sniff | 07-01 |
 | `.planning/notes/kiln-log` | no extension, NUL bytes in its head: binary by the sniff | 07-01 |
 | `.planning/sketches/001-shelf-board/state.json` | a state.json that is user content one level down: stays a visible text artifact (position-scoped rule) | 07-01 |
+| `.planning/HANDOFF.json` | a small paused-work record at the root: recognised by exact name as kind handoff | 07-02 |
+| `.planning/phases/02-glaze-recipes/02-CONTEXT.md` | phase context that gives the Glaze recipes folder its phase identity | 07-02 |
+| `.planning/phases/02-glaze-recipes/COVERAGE.md` | an unprefixed coverage table in a phase folder: recognised by position as kind coverage | 07-02 |
+| `.planning/sketches/001-shelf-board/synthetic-planning/ROADMAP.md` | a roadmap a sketch uses as sample data: a root-document name one folder deeper, so kind unknown | 07-02 |
