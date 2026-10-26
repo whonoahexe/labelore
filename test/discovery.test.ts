@@ -139,12 +139,50 @@ describe('discover — position-aware classification', () => {
     expect(by('phases/not-a-phase-dir/notes.md')?.kind).toBe('unknown');
   });
 
-  it('still discovers files inside a subdirectory whose name does not match the phase grammar', async () => {
+  it('keeps a file inside a subdirectory whose name does not match the phase grammar, at location other with no identity', async () => {
     const fs = fsFrom({ '.planning/phases/not-a-phase-dir/notes.md': '# notes' });
     const { refs } = await discover(fs);
     expect(refs).toHaveLength(1);
-    expect(refs[0].location).toBe('phase');
+    expect(refs[0].location).toBe('other');
     expect(refs[0].phaseIdentity).toBeNull();
+  });
+
+  it('keeps a file directly under phases/ or milestones/vX.Y-phases/ at location other with no identity', async () => {
+    const fs = fsFrom({
+      '.planning/phases/README.md': '# phases',
+      '.planning/phases/not-a-phase-dir/notes.md': '# notes',
+      '.planning/milestones/v1.0-phases/README.md': '# archived',
+      '.planning/milestones/v1.0-phases/not-a-phase-dir/notes.md': '# notes',
+      '.planning/phases/01-a/01-CONTEXT.md': '# c',
+    });
+    const { refs } = await discover(fs);
+    const by = (path: string) => refs.find((r) => r.path === `.planning/${path}`);
+    for (const path of [
+      'phases/README.md',
+      'phases/not-a-phase-dir/notes.md',
+      'milestones/v1.0-phases/README.md',
+      'milestones/v1.0-phases/not-a-phase-dir/notes.md',
+    ]) {
+      expect(by(path), path).toMatchObject({ location: 'other', phaseIdentity: null, milestoneVersion: null, kind: 'unknown' });
+    }
+    expect(by('phases/01-a/01-CONTEXT.md')).toMatchObject({ location: 'phase', kind: 'context' });
+  });
+
+  it('does not take quick/README.md for a quick task (quickTaskId null, location other)', async () => {
+    const fs = fsFrom({
+      '.planning/quick/README.md': '# quick',
+      '.planning/quick/notes/a.md': '# a',
+      '.planning/quick/260310-a7c-fix-label/260310-a7c-PLAN.md': '# plan',
+    });
+    const { refs } = await discover(fs);
+    const by = (path: string) => refs.find((r) => r.path === `.planning/${path}`);
+    expect(by('quick/README.md')).toMatchObject({ location: 'other', quickTaskId: null });
+    expect(by('quick/notes/a.md')).toMatchObject({ location: 'other', quickTaskId: null });
+    expect(by('quick/260310-a7c-fix-label/260310-a7c-PLAN.md')).toMatchObject({
+      location: 'quick',
+      quickTaskId: '260310-a7c',
+      kind: 'plan',
+    });
   });
 });
 

@@ -66,3 +66,19 @@ Milestones:
 | `.planning/phases/02-glaze-recipes/02-CONTEXT.md` | phase context that gives the Glaze recipes folder its phase identity | 07-02 |
 | `.planning/phases/02-glaze-recipes/COVERAGE.md` | an unprefixed coverage table in a phase folder: recognised by position as kind coverage | 07-02 |
 | `.planning/sketches/001-shelf-board/synthetic-planning/ROADMAP.md` | a roadmap a sketch uses as sample data: a root-document name one folder deeper, so kind unknown | 07-02 |
+| `.planning/.continue-here.md` | a resume note at the root: matched by exact basename, kind continue-here | 07-02 |
+| `.planning/PATTERNS.md` | graduated patterns at the root: kind graduated-patterns, never patterns | 07-02 |
+| `.planning/phases/README.md` | a folder note directly under phases/: not a phase, kept in the model at location other | 07-02 |
+| `.planning/phases/02-glaze-recipes/deferred-items.md` | an unprefixed deferred-items note in a phase folder: kind deferred-items | 07-02 |
+| `.planning/phases/02-glaze-recipes/SKELETON.md` | an unprefixed skeleton in a phase folder: kind skeleton | 07-02 |
+| `.planning/phases/02-glaze-recipes/.continue-here.md` | a resume note in a phase folder: kind continue-here at depth | 07-02 |
+| `.planning/quick/README.md` | a folder note directly under quick/: not a quick task, no quickTaskId | 07-02 |
+| `.planning/codebase/ARCHITECTURE.md` | a GSD codebase map document in its uppercase name: kind codebase-architecture | 07-02 |
+| `.planning/codebase/STACK.md` | a GSD codebase map document: kind codebase-stack | 07-02 |
+| `.planning/codebase/CONVENTIONS.md` | a GSD codebase map document: kind codebase-conventions | 07-02 |
+| `.planning/spikes/MANIFEST.md` | the spikes manifest: kind spikes-manifest | 07-02 |
+| `.planning/spikes/CONVENTIONS.md` | the basename collision with codebase/CONVENTIONS.md: kind spikes-conventions, never the codebase document | 07-02 |
+| `.planning/spikes/001-kiln-sensor/README.md` | one spike's README: kind spike | 07-02 |
+| `.planning/seeds/SEED-001-glaze-library.md` | a planted seed: kind seed | 07-02 |
+| `.planning/threads/kiln-vendor-call.md` | a context thread: kind thread | 07-02 |
+| `.planning/sketches/001-shelf-board/synthetic-planning/STATE.md` | a state file a sketch uses as sample data, one folder deeper than the root STATE.md: kind unknown | 07-02 |
