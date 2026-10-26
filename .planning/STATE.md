@@ -5,11 +5,11 @@ milestone_name: Wayfinding
 current_phase: 7
 current_phase_name: Recognised Files and Readable URLs
 status: planning
-stopped_at: Phase 7 context gathered
-last_updated: "2026-10-26T14:58:35.516Z"
+stopped_at: Phase 7 UI-SPEC approved
+last_updated: "2026-10-26T16:08:02.219Z"
 last_activity: 2026-10-26
 last_activity_desc: Phase 06 complete, transitioned to Phase 7
-state_head: e961d281516cd6658179f1d9e2dac00b948eddc0
+state_head: f9c0a6b57c2ee0664dded5f17813457b75bdca1c
 progress:
   total_phases: 8
   completed_phases: 1
@@ -198,9 +198,9 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-10-26T14:58:35.290Z
-Stopped at: Phase 7 context gathered
-Resume file: .planning/phases/07-recognised-files-and-readable-urls/07-CONTEXT.md
+Last session: 2026-10-26T16:08:02.082Z
+Stopped at: Phase 7 UI-SPEC approved
+Resume file: .planning/phases/07-recognised-files-and-readable-urls/07-UI-SPEC.md
 
 ## Operator Next Steps
 
