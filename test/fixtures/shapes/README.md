@@ -26,6 +26,7 @@ Milestones:
 - Live milestone **v1.1 "Firing Board"**, folders under `phases/` in order: `01-kiln-bookings`, then the
   folders later plans add.
 - Shipped milestone **v1.0 "Kiln Basics"**, folders under `milestones/v1.0-phases/` (added by plan 07-04).
+- Quick tasks: live `261020-k4m-shelf-tags` and archived `260310-a7c-fix-kiln-label` (added by plan 07-04).
 
 ## Authoring rules every plan follows
 
@@ -82,3 +83,29 @@ Milestones:
 | `.planning/seeds/SEED-001-glaze-library.md` | a planted seed: kind seed | 07-02 |
 | `.planning/threads/kiln-vendor-call.md` | a context thread: kind thread | 07-02 |
 | `.planning/sketches/001-shelf-board/synthetic-planning/STATE.md` | a state file a sketch uses as sample data, one folder deeper than the root STATE.md: kind unknown | 07-02 |
+| `.planning/MILESTONES.md` | a root file listing v1.0 as shipped: root token milestones, the one root address that is also a legacy first segment | 07-04 |
+| `.planning/phases/02-glaze-recipes/02-01-PLAN.md` | a plan in the live glaze phase: url plan-01 | 07-04 |
+| `.planning/phases/02-glaze-recipes/02-01-SUMMARY.md` | the summary beside it: url plan-01/summary | 07-04 |
+| `.planning/phases/02-glaze-recipes/03-RESEARCH.md` | a number prefix (03) that is not its folder's (02): takes the file/ address (D-06) | 07-04 |
+| `.planning/phases/02-glaze-recipes/plan-01.md` | a free-form name that looks like a plan address: takes the file/ address so it cannot shadow plan-01 | 07-04 |
+| `.planning/phases/02-glaze-recipes/scratch/mixing order.md` | a nested free-form file with a space in its name: encoded once, slashes kept | 07-04 |
+| `.planning/phases/02.1-glaze-hotfix/02.1-CONTEXT.md` | a decimal phase folder: segment phase-2.1 | 07-04 |
+| `.planning/phases/02.1-glaze-hotfix/02.1-01-PLAN.md` | a plan in the decimal phase: url plan-01 | 07-04 |
+| `.planning/phases/02.1-glaze-hotfix/02.1-01-SUMMARY.md` | the summary beside it | 07-04 |
+| `.planning/phases/KR-03-firing-calendar/03-CONTEXT.md` | a project-coded phase folder: segment phase-kr-3 | 07-04 |
+| `.planning/phases/KR-03-firing-calendar/03-01-PLAN.md` | a plan in the project-coded phase | 07-04 |
+| `.planning/milestones/v1.0-ROADMAP.md` | the archived roadmap of the shipped milestone: url /v1.0/roadmap | 07-04 |
+| `.planning/milestones/v1.0-REQUIREMENTS.md` | the archived requirements: url /v1.0/requirements | 07-04 |
+| `.planning/milestones/v1.0-MILESTONE-AUDIT.md` | an audit with a made-up verdict: url /v1.0/audit | 07-04 |
+| `.planning/milestones/v1.0-phases/01-studio-accounts/01-CONTEXT.md` | an archived phase document: milestone segment kept after the milestone closes (D-01) | 07-04 |
+| `.planning/milestones/v1.0-phases/01-studio-accounts/01-01-PLAN.md` | an archived plan | 07-04 |
+| `.planning/milestones/v1.0-phases/01-studio-accounts/01-01-SUMMARY.md` | an archived summary: url plan-01/summary | 07-04 |
+| `.planning/milestones/v1.0-quick/260310-a7c-fix-kiln-label/260310-a7c-PLAN.md` | an archived quick task plan: shares the /quick/<id> space with live tasks | 07-04 |
+| `.planning/milestones/v1.0-quick/260310-a7c-fix-kiln-label/260310-a7c-SUMMARY.md` | the archived quick task summary | 07-04 |
+| `.planning/milestones/v1.0-research/STACK.md` | an archived folder of a milestone: url /v1.0/research/stack | 07-04 |
+| `.planning/quick/261020-k4m-shelf-tags/261020-k4m-PLAN.md` | a live quick task plan: url /quick/261020-k4m, the task id and not the folder slug (D-07) | 07-04 |
+| `.planning/quick/261020-k4m-shelf-tags/261020-k4m-SUMMARY.md` | the live quick task summary | 07-04 |
+| `.planning/quick/261020-k4m-shelf-tags/261020-k4m-CONTEXT.md` | a live quick task context: lower-cased token | 07-04 |
+| `.planning/notes/kiln % notes.md` | a note with a percent sign and spaces: encoded once, decoded once | 07-04 |
+| `.planning/notes/glaze #2.md` | a note with a hash sign: must not start a fragment | 07-04 |
+| `.planning/notes/über-glaze.md` | a note with a non-ASCII letter: percent-encoded as UTF-8 | 07-04 |
