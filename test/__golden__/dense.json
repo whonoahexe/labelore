@@ -88,33 +88,6 @@
         "warnings": [],
         "structured": {}
       },
-      ".planning/estimation-calibration.json": {
-        "id": ".planning/estimation-calibration.json",
-        "path": ".planning/estimation-calibration.json",
-        "kind": "unknown",
-        "fileClass": "text",
-        "sizeBytes": 157,
-        "location": "root",
-        "frontmatter": {
-          "schema_version": 1,
-          "samples": [
-            {
-              "estimateTokens": 42000,
-              "actualTokens": 37242
-            },
-            {
-              "estimateTokens": 60000,
-              "actualTokens": 71830
-            }
-          ]
-        },
-        "title": "estimation-calibration.json",
-        "bodyLength": 157,
-        "bodyHash": "b6907a052eccd775f123f00ac32ee850276550d0d46c24811d1f7d34016b820e",
-        "mtimeMs": 0,
-        "warnings": [],
-        "structured": {}
-      },
       ".planning/HANDOFF.json": {
         "id": ".planning/HANDOFF.json",
         "path": ".planning/HANDOFF.json",
@@ -25662,6 +25635,10 @@
     }
   ],
   "exclusions": [
+    {
+      "path": ".planning/estimation-calibration.json",
+      "reason": "GSD internal file, kept out of the index (D-11)"
+    },
     {
       "path": ".planning/research/.cache",
       "reason": "Matches the research/.cache/ exclusion rule"

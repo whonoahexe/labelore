@@ -139,7 +139,7 @@ describe('config.json masking edge cases (SEC-04)', () => {
     }
   });
 
-  it('returns HANDOFF.json and estimation-calibration.json exactly as before (D-09 scopes masking to config.json)', async () => {
+  it('returns HANDOFF.json exactly as before (D-09 scopes masking to config.json) and keeps the GSD-internal estimation-calibration.json out of the index (D-11)', async () => {
     const handoff = `{"brave_search": "${SECRET}", "note": "handoff"}\n`;
     const calibration = `{"firecrawl": "${SECRET}"}\n`;
     const { repo } = await appFor({
@@ -147,11 +147,13 @@ describe('config.json masking edge cases (SEC-04)', () => {
       '.planning/HANDOFF.json': handoff,
       '.planning/estimation-calibration.json': calibration,
     });
-    const project = repo.getSnapshot().project;
+    const snapshot = repo.getSnapshot();
+    const project = snapshot.project;
     expect(project?.artifacts['.planning/HANDOFF.json'].body).toBe(handoff);
     expect(project?.artifacts['.planning/HANDOFF.json'].frontmatter.brave_search).toBe(SECRET);
-    expect(project?.artifacts['.planning/estimation-calibration.json'].body).toBe(calibration);
-    expect(project?.artifacts['.planning/estimation-calibration.json'].frontmatter.firecrawl).toBe(SECRET);
+    // Internal files never become artifacts, so their content is never read, indexed or shown.
+    expect(project?.artifacts['.planning/estimation-calibration.json']).toBeUndefined();
+    expect(snapshot.exclusions.map((exclusion) => exclusion.path)).toContain('.planning/estimation-calibration.json');
     // The config.json beside them is still masked.
     expect(project?.artifacts['.planning/config.json'].frontmatter.brave_search).toBe(MASKED);
   });

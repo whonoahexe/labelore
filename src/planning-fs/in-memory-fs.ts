@@ -17,13 +17,22 @@ function normalizeRelPath(relPath: string): string {
   return stripped === '' ? '.' : stripped;
 }
 
+function bytesOf(content: string | Uint8Array): Uint8Array {
+  return typeof content === 'string' ? new Uint8Array(Buffer.from(content, 'utf8')) : content;
+}
+
+function byteLengthOf(content: string | Uint8Array): number {
+  return typeof content === 'string' ? Buffer.byteLength(content, 'utf8') : content.length;
+}
+
 export class InMemoryPlanningFilesystem implements PlanningFilesystem {
   readonly capabilities: FsCapabilities = { watch: false, write: false };
 
-  private readonly files: Map<string, string>;
+  private readonly files: Map<string, string | Uint8Array>;
   private readonly mtimeMs: number;
 
-  constructor(contents: Record<string, string>, mtimeMs = 0) {
+  /** A file's content is text (a string) or raw bytes (a Uint8Array, for images and binaries). */
+  constructor(contents: Record<string, string | Uint8Array>, mtimeMs = 0) {
     this.files = new Map(Object.entries(contents).map(([p, c]) => [normalizeRelPath(p), c]));
     this.mtimeMs = mtimeMs;
   }
@@ -39,7 +48,7 @@ export class InMemoryPlanningFilesystem implements PlanningFilesystem {
       const [first, ...restParts] = rest.split('/');
       const isDirectory = restParts.length > 0;
       if (!seen.has(first)) {
-        seen.set(first, isDirectory ? { name: first, isDirectory } : { name: first, isDirectory, size: Buffer.byteLength(content, 'utf8') });
+        seen.set(first, isDirectory ? { name: first, isDirectory } : { name: first, isDirectory, size: byteLengthOf(content) });
       }
     }
     return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
@@ -53,7 +62,18 @@ export class InMemoryPlanningFilesystem implements PlanningFilesystem {
       err.code = 'ENOENT';
       throw err;
     }
-    return { content, mtimeMs: this.mtimeMs, size: Buffer.byteLength(content, 'utf8') };
+    return { content: typeof content === 'string' ? content : new TextDecoder().decode(content), mtimeMs: this.mtimeMs, size: byteLengthOf(content) };
+  }
+
+  async readHead(relPath: string, maxBytes: number): Promise<Uint8Array> {
+    const key = normalizeRelPath(relPath);
+    const content = this.files.get(key);
+    if (content === undefined) {
+      const err = new Error(`ENOENT: no such file: ${relPath}`) as NodeJS.ErrnoException;
+      err.code = 'ENOENT';
+      throw err;
+    }
+    return bytesOf(content).slice(0, Math.max(0, maxBytes));
   }
 
   async readBytesWithin(baseRelDir: string, relPath: string): Promise<FileBytes> {
@@ -65,7 +85,7 @@ export class InMemoryPlanningFilesystem implements PlanningFilesystem {
     }
     const content = this.files.get(key);
     if (content !== undefined) {
-      const bytes = new Uint8Array(Buffer.from(content, 'utf8'));
+      const bytes = bytesOf(content).slice();
       return { bytes, mtimeMs: this.mtimeMs, size: bytes.length };
     }
     const prefix = `${key}/`;

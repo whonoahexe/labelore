@@ -16,7 +16,7 @@ import {
   isCanonicalRootFile,
   comparePhaseNumbers,
 } from './naming.ts';
-import { classifyFile, isInternalPath, INTERNAL_EXCLUSION_REASON } from './file-class.ts';
+import { classifyFile, isInternalPath, needsHeadSniff, INTERNAL_EXCLUSION_REASON, SNIFF_BYTES } from './file-class.ts';
 
 const PLANNING_DIR = '.planning';
 const SKIPPED_DIRS = new Set(['research/.cache']);
@@ -224,7 +224,17 @@ export async function discover(fs: PlanningFilesystem): Promise<DiscoveryResult>
       } else {
         const classification = classify(childRelUnderPlanning);
         const sizeBytes = entry.size ?? 0;
-        const fileClass = classifyFile({ name: entry.name, size: entry.size, head: undefined });
+        // D-09: only a name whose extension decides nothing is head-sniffed, and only SNIFF_BYTES bytes.
+        // A head the port cannot read leaves the file text, so today's read-time warning path applies.
+        let head: Uint8Array | undefined;
+        if (fs.readHead && needsHeadSniff(entry.name)) {
+          try {
+            head = await fs.readHead(childRel, SNIFF_BYTES);
+          } catch {
+            head = undefined;
+          }
+        }
+        const fileClass = classifyFile({ name: entry.name, size: entry.size, head });
         refs.push({
           path: childRel,
           kind: isDebugSessionPath(childRelUnderPlanning) ? 'debug' : (positionKind(childRelUnderPlanning) ?? deriveKind(entry.name)),
