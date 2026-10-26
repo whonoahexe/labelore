@@ -1,8 +1,31 @@
+// The presentation URL grammar. Two things live here for now (07-04, additive until 07-06):
+//
+//  1. The READABLE grammar (D-01 to D-07): a `Route` union, `buildUrl`, the total `parseRoutePath` and
+//     `addressOfPath`, which turns a file's path under `.planning/` into the one clean address it would
+//     like (`/v1.1/phase-5/plan-03`, `/quick/261024-qhq/summary`, `/codebase/architecture`). Every address
+//     here is project-relative: nav.tsx prepends the project slug in one place. The route table
+//     (route-table.ts) decides which file actually gets a clean address and gives every other file its
+//     lossless `file/` address, so no two files ever share a URL.
+//  2. The OLD encoded builders (`buildPhaseUrl`, `buildPlanUrl`, ...), kept with today's output so the app
+//     and every test stay green until 07-06 flips them. Their opaque key encoders moved to identity-keys.ts
+//     (re-exported below, unchanged) and the old token parser moved to legacy-routes.ts.
 import type { PhaseIdentity } from '../domain/model.ts';
+import { parsePhaseArtifactName, parsePlanFileName } from '../planning-repo/naming.ts';
+import { artifactTokenOf, assertNonEmpty, encodePart, milestoneKeyOf, phaseKeyOf } from './identity-keys.ts';
+import { GSD_VERSION_PATTERN, PROJECT_PAGES } from './reserved.ts';
 
-const MILESTONE_PREFIX = 'm~';
-const PHASE_PREFIX = 'p~';
-const ARTIFACT_PREFIX = 'a~';
+export { artifactTokenOf, milestoneKeyOf, phaseKeyOf } from './identity-keys.ts';
+// The old parser and its types keep their old names for every current importer; legacy-routes.ts owns them.
+export { parseLegacyUrl as parsePresentationUrl } from './legacy-routes.ts';
+export type {
+  LegacyRoute as PresentationRoute,
+  LegacyRouteErrorCode as PresentationRouteErrorCode,
+  LegacyRouteParseResult as PresentationRouteParseResult,
+} from './legacy-routes.ts';
+
+// ---------------------------------------------------------------------------------------------------------
+// The old encoded builders (output unchanged until 07-06)
+// ---------------------------------------------------------------------------------------------------------
 
 export const presentationRoutePatterns = {
   dashboard: '/',
@@ -18,141 +41,8 @@ export const presentationRoutePatterns = {
   artifact: '/artifacts/:artifactToken',
 } as const;
 
-export type PresentationRoute =
-  | { kind: 'dashboard' }
-  | { kind: 'roadmap' }
-  | { kind: 'search' }
-  | { kind: 'traceability' }
-  | { kind: 'sketches' }
-  | { kind: 'research' }
-  | { kind: 'milestone'; milestoneVersion: string | null }
-  | {
-      kind: 'phase';
-      milestoneVersion: string | null;
-      phaseIdentity: PhaseIdentity;
-      heading?: string;
-    }
-  | {
-      kind: 'plan';
-      milestoneVersion: string | null;
-      phaseIdentity: PhaseIdentity;
-      planId: string;
-      heading: string | null;
-    }
-  | {
-      kind: 'artifact';
-      milestoneVersion: string | null;
-      phaseIdentity: PhaseIdentity | null;
-      artifactToken: string;
-      artifactPath: string;
-      heading: string | null;
-    };
-
-export type PresentationRouteErrorCode =
-  'malformed-token' | 'truncated' | 'duplicate-token' | 'empty-token' | 'unsupported-route';
-
-export type PresentationRouteParseResult =
-  | { ok: true; route: PresentationRoute }
-  | {
-      ok: false;
-      error: { code: PresentationRouteErrorCode; message: string; token?: string };
-    };
-
-function failure(
-  code: PresentationRouteErrorCode,
-  message: string,
-  token?: string,
-): PresentationRouteParseResult {
-  return { ok: false, error: { code, message, ...(token === undefined ? {} : { token }) } };
-}
-
-function encodePart(value: string): string {
-  return encodeURIComponent(value).replaceAll('~', '%7E');
-}
-
-function decodePart(token: string): string | null {
-  if (token.length === 0) return null;
-  try {
-    return decodeURIComponent(token);
-  } catch {
-    return null;
-  }
-}
-
-function nullablePart(value: string | null): string {
-  return value === null ? 'n' : `v${encodePart(value)}`;
-}
-
-function parseNullablePart(token: string): { ok: true; value: string | null } | { ok: false } {
-  if (token === 'n') return { ok: true, value: null };
-  if (!token.startsWith('v')) return { ok: false };
-  const decoded = decodePart(token.slice(1));
-  return decoded === null ? { ok: false } : { ok: true, value: decoded };
-}
-
-function assertNonEmpty(value: string, label: string): void {
-  if (value.length === 0) throw new TypeError(`${label} must not be empty`);
-}
-
-export function milestoneKeyOf(version: string | null): string {
-  if (version === null) return 'current';
-  assertNonEmpty(version, 'Milestone version');
-  return `${MILESTONE_PREFIX}${encodePart(version)}`;
-}
-
-function milestoneVersionOf(key: string): { ok: true; value: string | null } | { ok: false } {
-  if (key === 'current') return { ok: true, value: null };
-  if (!key.startsWith(MILESTONE_PREFIX)) return { ok: false };
-  const decoded = decodePart(key.slice(MILESTONE_PREFIX.length));
-  return decoded === null || decoded.length === 0 ? { ok: false } : { ok: true, value: decoded };
-}
-
-export function phaseKeyOf(identity: PhaseIdentity): string {
-  assertNonEmpty(identity.number, 'Phase number');
-  return [
-    'p',
-    nullablePart(identity.milestoneVersion),
-    nullablePart(identity.projectCode),
-    `v${encodePart(identity.number)}`,
-    `v${encodePart(identity.slug)}`,
-  ].join('~');
-}
-
-function phaseIdentityOf(key: string): { ok: true; value: PhaseIdentity } | { ok: false } {
-  if (!key.startsWith(PHASE_PREFIX)) return { ok: false };
-  const parts = key.split('~');
-  if (parts.length !== 5 || parts[0] !== 'p') return { ok: false };
-  const milestone = parseNullablePart(parts[1]);
-  const projectCode = parseNullablePart(parts[2]);
-  if (!milestone.ok || !projectCode.ok || !parts[3].startsWith('v') || !parts[4].startsWith('v')) {
-    return { ok: false };
-  }
-  const number = decodePart(parts[3].slice(1));
-  const slug = decodePart(parts[4].slice(1));
-  if (number === null || number.length === 0 || slug === null) return { ok: false };
-  return {
-    ok: true,
-    value: {
-      milestoneVersion: milestone.value,
-      projectCode: projectCode.value,
-      number,
-      slug,
-    },
-  };
-}
-
-export function artifactTokenOf(path: string): string {
-  assertNonEmpty(path, 'Artifact path');
-  return `${ARTIFACT_PREFIX}${encodePart(path)}`;
-}
-
-function artifactPathOf(token: string): { ok: true; value: string } | { ok: false } {
-  if (!token.startsWith(ARTIFACT_PREFIX)) return { ok: false };
-  const path = decodePart(token.slice(ARTIFACT_PREFIX.length));
-  return path === null || path.length === 0 ? { ok: false } : { ok: true, value: path };
-}
-
-function withHeading(path: string, heading?: string): string {
+/** Appends a `#heading` fragment (leading hashes dropped, the rest encoded once). */
+export function withHeading(path: string, heading?: string): string {
   if (heading === undefined) return path;
   const clean = heading.replace(/^#+/, '');
   assertNonEmpty(clean, 'Heading');
@@ -186,11 +76,62 @@ export function buildArtifactUrl(
   return withHeading(path, heading);
 }
 
+// ---------------------------------------------------------------------------------------------------------
+// The readable grammar
+// ---------------------------------------------------------------------------------------------------------
+
+export type PageName = (typeof PROJECT_PAGES)[number];
+
+/** A phase as a URL names it: the project code lower-cased and the number normalised (`05` is `5`). */
+export interface PhaseAddress {
+  projectCode: string | null;
+  number: string;
+}
+
+/** Who owns a file when its address is computed: its phase, or null for everything else. A live phase's
+ * identity carries the live milestone's version (STATE.md owns it), which a path alone cannot know. */
+export type AddressOwner = { phase: PhaseIdentity } | null;
+
+export type Route =
+  | { kind: 'dashboard' }
+  | { kind: 'page'; page: PageName }
+  | { kind: 'milestone'; milestone: string }
+  | { kind: 'overview'; milestone: string | null }
+  | { kind: 'phase'; milestone: string | null; phase: PhaseAddress; heading: string | null }
+  | {
+      kind: 'plan';
+      milestone: string | null;
+      phase: PhaseAddress;
+      planNumber: string;
+      doc: 'plan' | 'summary';
+      heading: string | null;
+    }
+  | { kind: 'document'; url: string; heading: string | null }
+  | { kind: 'legacy'; pathname: string };
+
+export type RouteErrorCode =
+  'malformed-token' | 'truncated' | 'duplicate-token' | 'empty-token' | 'unsupported-route';
+
+export type RouteParseResult =
+  | { ok: true; route: Route }
+  | { ok: false; error: { code: RouteErrorCode; message: string; token?: string } };
+
+function failure(code: RouteErrorCode, message: string, token?: string): RouteParseResult {
+  return { ok: false, error: { code, message, ...(token === undefined ? {} : { token }) } };
+}
+
+function decodePart(token: string): string | null {
+  if (token.length === 0) return null;
+  try {
+    return decodeURIComponent(token);
+  } catch {
+    return null;
+  }
+}
+
 function parseHeading(
   input: string,
-):
-  | { ok: true; path: string; heading: string | null }
-  | { ok: false; result: PresentationRouteParseResult } {
+): { ok: true; path: string; heading: string | null } | { ok: false; result: RouteParseResult } {
   const hashIndex = input.indexOf('#');
   if (hashIndex < 0) return { ok: true, path: input, heading: null };
   const path = input.slice(0, hashIndex);
@@ -200,141 +141,210 @@ function parseHeading(
   }
   const heading = decodePart(rawHeading);
   if (heading === null || heading.length === 0) {
-    return {
-      ok: false,
-      result: failure('malformed-token', 'Heading token is malformed', rawHeading),
-    };
+    return { ok: false, result: failure('malformed-token', 'Heading token is malformed', rawHeading) };
   }
   return { ok: true, path, heading };
 }
 
-function duplicateReservedSegment(segments: string[]): string | null {
-  for (const reserved of ['milestones', 'phases', 'plans', 'artifacts']) {
-    if (segments.filter((segment) => segment === reserved).length > 1) return reserved;
+/**
+ * A phase number as a URL carries it, on the grammar `comparePhaseNumbers` reads: the base without leading
+ * zeros, the variant letter lower-cased, each dotted part without leading zeros (`05` is `5`, `02.1` is
+ * `2.1`, `12A` is `12a`). A value outside that grammar is lower-cased and nothing more. The text is NOT
+ * percent-encoded here: `phaseSegmentOf` encodes the whole segment exactly once.
+ */
+export function normalizePhaseNumber(raw: string): string {
+  const match = raw.match(/^(\d+)([A-Za-z]?)((?:\.\d+)*)$/);
+  if (!match) return raw.toLowerCase();
+  const stripZeros = (digits: string): string => digits.replace(/^0+(?=\d)/, '');
+  const dotted = match[3] === '' ? '' : match[3].slice(1).split('.').map((part) => `.${stripZeros(part)}`).join('');
+  return `${stripZeros(match[1])}${match[2].toLowerCase()}${dotted}`;
+}
+
+/** The URL segment of a phase: `phase-` + the lower-cased project code and `-` when present + the
+ * normalised number, percent-encoded once. */
+export function phaseSegmentOf(address: PhaseAddress | PhaseIdentity): string {
+  assertNonEmpty(address.number, 'Phase number');
+  const code = address.projectCode ? `${address.projectCode.toLowerCase()}-` : '';
+  return encodePart(`phase-${code}${normalizePhaseNumber(address.number)}`);
+}
+
+/** The URL segment of a milestone version. A GSD-shaped version (`v1.1`) is its own segment. */
+export function milestoneSegmentOf(version: string): string {
+  assertNonEmpty(version, 'Milestone version');
+  return encodePart(version);
+}
+
+const PLANNING_PREFIX = '.planning/';
+
+function underPlanning(path: string): string {
+  return path.startsWith(PLANNING_PREFIX) ? path.slice(PLANNING_PREFIX.length) : path;
+}
+
+/** The lossless address of any file: `/file/` + each segment of its path under `.planning/`, encoded once. */
+export function fileUrlOf(path: string): string {
+  return `/file/${underPlanning(path).split('/').map(encodePart).join('/')}`;
+}
+
+function scopeUrl(milestone: string | null, phase: PhaseAddress | PhaseIdentity): string {
+  const phaseSegment = phaseSegmentOf(phase);
+  return milestone === null ? `/${phaseSegment}` : `/${milestoneSegmentOf(milestone)}/${phaseSegment}`;
+}
+
+const PLAN_SEGMENT = /^plan-(\d+)$/;
+
+export function buildUrl(route: Route): string {
+  switch (route.kind) {
+    case 'dashboard':
+      return '/';
+    case 'page':
+      return `/${route.page}`;
+    case 'milestone':
+      return `/${milestoneSegmentOf(route.milestone)}`;
+    case 'overview':
+      return route.milestone === null ? '/overview' : `/${milestoneSegmentOf(route.milestone)}/overview`;
+    case 'phase':
+      return withHeading(scopeUrl(route.milestone, route.phase), route.heading ?? undefined);
+    case 'plan':
+      return withHeading(
+        `${scopeUrl(route.milestone, route.phase)}/plan-${route.planNumber}${route.doc === 'summary' ? '/summary' : ''}`,
+        route.heading ?? undefined,
+      );
+    case 'document':
+      return withHeading(route.url, route.heading ?? undefined);
+    case 'legacy':
+      return route.pathname;
+  }
+}
+
+// --- Path to address -------------------------------------------------------------------------------------
+
+/** The segments after the phase folder when `rel` (a path under `.planning/`) sits inside one, else null:
+ * `phases/<dir>/...` or `milestones/<vX.Y-phases>/<dir>/...`. */
+function phaseFolderRest(rel: readonly string[]): string[] | null {
+  if (rel[0] === 'phases' && rel.length >= 3) return rel.slice(2);
+  if (rel[0] === 'milestones' && rel.length >= 4) return rel.slice(3);
+  return null;
+}
+
+/** A file inside a phase folder, or null when it takes the `file/` address. */
+function phaseFileAddress(owner: PhaseIdentity, rest: readonly string[]): string | null {
+  const base = scopeUrl(owner.milestoneVersion, owner);
+  if (rest.length !== 1) return null;
+  const name = rest[0];
+  const samePhase = (filePhase: string): boolean =>
+    normalizePhaseNumber(filePhase) === normalizePhaseNumber(owner.number);
+
+  const plan = parsePlanFileName(name);
+  if (plan.matched) {
+    if (!samePhase(plan.phase)) return null;
+    return `${base}/plan-${plan.plan}${plan.kind === 'summary' ? '/summary' : ''}`;
+  }
+  const artifact = parsePhaseArtifactName(name);
+  if (artifact.matched) {
+    // D-06: a numeric prefix that is not the folder's own number takes the file/ address.
+    if (!samePhase(artifact.phase)) return null;
+    return `${base}/${encodePart(artifact.artifact.toLowerCase())}`;
   }
   return null;
 }
 
-export function parsePresentationUrl(input: string): PresentationRouteParseResult {
+/** A root file: its lower-cased name without `.md`. */
+function rootFileAddress(name: string): string | null {
+  if (!name.toLowerCase().endsWith('.md')) return null;
+  const token = name.slice(0, -'.md'.length).toLowerCase();
+  if (token === '' || token === '.' || token === '..') return null;
+  return `/${encodePart(token)}`;
+}
+
+/**
+ * The one clean address a file would like, from its path (starting `.planning/`) and its owner. Pure and
+ * total: anything that fits no clean pattern gets `fileUrlOf(path)`. This does NOT guarantee uniqueness;
+ * the route table groups by this address and sends every file but one to `file/`.
+ */
+export function addressOfPath(path: string, owner: AddressOwner): string {
+  const rel = underPlanning(path).split('/');
+  if (rel.length === 1) return rootFileAddress(rel[0]) ?? fileUrlOf(path);
+  const phaseRest = owner === null ? null : phaseFolderRest(rel);
+  if (owner !== null && phaseRest !== null) return phaseFileAddress(owner.phase, phaseRest) ?? fileUrlOf(path);
+  return fileUrlOf(path);
+}
+
+// --- Address to route ------------------------------------------------------------------------------------
+
+const PHASE_SEGMENT = /^phase-(?:([a-z][a-z0-9_]*)-)?(\d+[a-z]?(?:\.\d+)*)$/;
+
+/** A `phase-...` segment (already decoded) as a phase address, or null when nothing follows the prefix. */
+function parsePhaseSegment(segment: string): PhaseAddress | null {
+  const lower = segment.toLowerCase();
+  const match = lower.match(PHASE_SEGMENT);
+  if (match) return { projectCode: match[1] ?? null, number: normalizePhaseNumber(match[2]) };
+  const rest = lower.slice('phase-'.length);
+  return rest.length === 0 ? null : { projectCode: null, number: normalizePhaseNumber(rest) };
+}
+
+function documentUrl(segments: readonly string[]): string {
+  return `/${segments.map(encodePart).join('/')}`;
+}
+
+function isPage(segment: string): segment is PageName {
+  return (PROJECT_PAGES as readonly string[]).includes(segment);
+}
+
+/**
+ * Parses a project-relative path (what follows the slug) into a Route. Total: every input gives a Route or
+ * a structured error, never a throw.
+ *
+ * Feed it the RAW pathname, never react-router's splat parameter: the router decodes the splat, so a
+ * `%252F` would be decoded twice. This splits the raw text on `/` and decodes each segment exactly once.
+ * A parsed Route is only a lookup key: nothing here, and no consumer, joins a Route field into a filesystem
+ * path (the server looks a document up by url in the route table). A segment that decodes to `.` or `..` is
+ * refused, so no parsed address can walk anywhere.
+ *
+ * A `#heading` fragment becomes `heading`. One trailing slash is ignored; any other empty segment is an
+ * error. A `document` route carries the canonical re-encoding of its once-decoded segments, so `%7E` and
+ * `~` (or `%41` and `A`) give the same url.
+ */
+export function parseRoutePath(input: string): RouteParseResult {
   const headingResult = parseHeading(input);
   if (!headingResult.ok) return headingResult.result;
+  const { path, heading } = headingResult;
+  if (!path.startsWith('/')) return failure('unsupported-route', 'Route must start with a slash');
+  if (path === '/') return { ok: true, route: { kind: 'dashboard' } };
 
-  let pathname: string;
-  try {
-    pathname = new URL(headingResult.path, 'http://labelore.local').pathname;
-  } catch {
-    return failure('malformed-token', 'URL could not be parsed');
-  }
-  if (pathname === '/') return { ok: true, route: { kind: 'dashboard' } };
-  const segments = pathname.slice(1).split('/');
-  if (segments.some((segment) => segment.length === 0)) {
-    return failure('empty-token', 'Route contains an empty token');
-  }
-  const duplicate = duplicateReservedSegment(segments);
-  if (duplicate)
-    return failure('duplicate-token', `Route repeats reserved token: ${duplicate}`, duplicate);
-  if (segments.length === 1 && segments[0] === 'roadmap') {
-    return { ok: true, route: { kind: 'roadmap' } };
-  }
-  if (segments.length === 1 && segments[0] === 'search') {
-    return { ok: true, route: { kind: 'search' } };
-  }
-  if (segments.length === 1 && segments[0] === 'traceability') {
-    return { ok: true, route: { kind: 'traceability' } };
-  }
-  if (segments.length === 1 && segments[0] === 'sketches') {
-    return { ok: true, route: { kind: 'sketches' } };
-  }
-  if (segments.length === 1 && segments[0] === 'research') {
-    return { ok: true, route: { kind: 'research' } };
-  }
-
-  if (segments[0] === 'artifacts') {
-    if (segments.length < 2) return failure('truncated', 'Artifact route is truncated');
-    if (segments.length !== 2)
-      return failure('unsupported-route', 'Artifact route has extra tokens');
-    const artifact = artifactPathOf(segments[1]);
-    if (!artifact.ok) return failure('malformed-token', 'Artifact token is malformed', segments[1]);
-    return {
-      ok: true,
-      route: {
-        kind: 'artifact',
-        milestoneVersion: null,
-        phaseIdentity: null,
-        artifactToken: segments[1],
-        artifactPath: artifact.value,
-        heading: headingResult.heading,
-      },
-    };
-  }
-
-  if (segments[0] !== 'milestones') {
-    return failure('unsupported-route', 'URL is outside the presentation route tree');
-  }
-  if (segments.length < 2) return failure('truncated', 'Milestone route is truncated');
-  const milestone = milestoneVersionOf(segments[1]);
-  if (!milestone.ok) return failure('malformed-token', 'Milestone token is malformed', segments[1]);
-  if (segments.length === 2) {
-    return { ok: true, route: { kind: 'milestone', milestoneVersion: milestone.value } };
-  }
-  if (segments.length < 4 && segments[2] === 'phases') {
-    return failure('truncated', 'Phase route is truncated');
-  }
-  if (segments[2] !== 'phases') {
-    return failure('unsupported-route', 'Milestone child route is unsupported');
-  }
-  const phase = phaseIdentityOf(segments[3]);
-  if (!phase.ok) return failure('malformed-token', 'Phase token is malformed', segments[3]);
-  if (phase.value.milestoneVersion !== milestone.value) {
-    return failure(
-      'malformed-token',
-      'Phase key does not belong to the milestone route',
-      segments[3],
-    );
-  }
-  if (segments.length === 4) {
-    const route: PresentationRoute = {
-      kind: 'phase',
-      milestoneVersion: milestone.value,
-      phaseIdentity: phase.value,
-      ...(headingResult.heading === null ? {} : { heading: headingResult.heading }),
-    };
-    return { ok: true, route };
-  }
-  if (segments.length < 6) return failure('truncated', 'Nested phase route is truncated');
-  if (segments.length > 6)
-    return failure('unsupported-route', 'Nested phase route has extra tokens');
-
-  if (segments[4] === 'plans') {
-    const planId = decodePart(segments[5]);
-    if (planId === null || planId.length === 0) {
-      return failure('malformed-token', 'Plan token is malformed', segments[5]);
+  const rawSegments = path.slice(1).split('/');
+  if (rawSegments.length > 1 && rawSegments[rawSegments.length - 1] === '') rawSegments.pop();
+  const segments: string[] = [];
+  for (const raw of rawSegments) {
+    if (raw.length === 0) return failure('empty-token', 'Route contains an empty token');
+    const decoded = decodePart(raw);
+    if (decoded === null || decoded === '.' || decoded === '..') {
+      return failure('malformed-token', 'Route token is malformed', raw);
     }
-    return {
-      ok: true,
-      route: {
-        kind: 'plan',
-        milestoneVersion: milestone.value,
-        phaseIdentity: phase.value,
-        planId,
-        heading: headingResult.heading,
-      },
-    };
+    segments.push(decoded);
   }
-  if (segments[4] === 'artifacts') {
-    const artifact = artifactPathOf(segments[5]);
-    if (!artifact.ok) return failure('malformed-token', 'Artifact token is malformed', segments[5]);
-    return {
-      ok: true,
-      route: {
-        kind: 'artifact',
-        milestoneVersion: milestone.value,
-        phaseIdentity: phase.value,
-        artifactToken: segments[5],
-        artifactPath: artifact.value,
-        heading: headingResult.heading,
-      },
-    };
+
+  if (segments.length === 1 && isPage(segments[0])) {
+    return { ok: true, route: { kind: 'page', page: segments[0] } };
   }
-  return failure('unsupported-route', 'Nested phase route is unsupported');
+
+  // An optional milestone segment, then a phase scope.
+  const hasMilestone = segments.length > 1 && GSD_VERSION_PATTERN.test(segments[0]);
+  const milestone = hasMilestone ? segments[0] : null;
+  const scoped = hasMilestone ? segments.slice(1) : segments;
+  if (scoped[0].startsWith('phase-')) {
+    const phase = parsePhaseSegment(scoped[0]);
+    if (phase === null) return failure('malformed-token', 'Phase token is malformed', scoped[0]);
+    const tail = scoped.slice(1);
+    if (tail.length === 0) return { ok: true, route: { kind: 'phase', milestone, phase, heading } };
+    const planMatch = tail[0].match(PLAN_SEGMENT);
+    if (planMatch && (tail.length === 1 || (tail.length === 2 && tail[1] === 'summary'))) {
+      return {
+        ok: true,
+        route: { kind: 'plan', milestone, phase, planNumber: planMatch[1], doc: tail.length === 1 ? 'plan' : 'summary', heading },
+      };
+    }
+    const base = scopeUrl(milestone, phase);
+    return { ok: true, route: { kind: 'document', url: `${base}${documentUrl(tail)}`, heading } };
+  }
+  return { ok: true, route: { kind: 'document', url: documentUrl(segments), heading } };
 }

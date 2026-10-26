@@ -36,3 +36,15 @@ export const RESERVED_SLUGS: ReadonlySet<string> = new Set([
   'research',
   'settings',
 ]);
+
+/** The pages that live at a fixed address inside a project (`/roadmap`, `/search`, ...). Each is also a
+ * reserved word, so no file can take one of these addresses except ROADMAP.md, which IS the roadmap page. */
+export const PROJECT_PAGES = ['roadmap', 'search', 'traceability', 'research', 'sketches'] as const;
+
+/** Segment prefixes that mean something to the URL parser, so no file or version may start a segment
+ * with one unescaped: `phase-5` is a phase and `milestone-x` is an escaped milestone version. */
+export const RESERVED_SEGMENT_PREFIXES = ['phase-', 'milestone-'] as const;
+
+/** The version shape GSD writes (`v1.1`, `v2.0.3`): a milestone version in this shape is its own URL
+ * segment; any other version gets the `milestone-` escape. Case-insensitive, like the naming grammar. */
+export const GSD_VERSION_PATTERN = /^v\d+\.\d+(?:\.\d+)?$/i;
