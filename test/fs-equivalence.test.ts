@@ -18,6 +18,7 @@ import { PlanningRepository } from '../src/planning-repo/snapshot.ts';
 import { normalizeForGolden } from '../src/planning-repo/serialize.ts';
 import type { DirEntry, FileRead, FsCapabilities, PlanningFilesystem } from '../src/planning-fs/types.ts';
 import { fromDirectory } from './helpers/from-directory.ts';
+import { SHAPES_ROOT } from './helpers/shapes-project.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -34,6 +35,27 @@ describe.each(FIXTURES)('fs-equivalence — %s', (fixtureName) => {
     const inMemoryResult = normalizeForGolden(snapshot, fixtureRoot, { stable: true, withBodies: false });
 
     expect(JSON.stringify(inMemoryResult, null, 2)).toBe(JSON.stringify(localResult, null, 2));
+  });
+});
+
+// Phase 7: the Shapes project holds binary contents (PNG, PDF, NUL stubs), so the byte-for-byte proof now
+// covers sizes, classes and ordering as well. fromDirectory keeps those files as bytes; if it decoded them
+// as text the sizes would drift and this comparison would fail.
+describe('fs-equivalence - shapes', () => {
+  it('produces byte-identical stable JSON, sizes, classes and ordering included, through both ports', async () => {
+    const localResult = await buildSnapshotJson(SHAPES_ROOT, { stable: true, withBodies: false });
+
+    const inMemoryFs = await fromDirectory(SHAPES_ROOT);
+    const repo = new PlanningRepository(inMemoryFs, SHAPES_ROOT);
+    const snapshot = await repo.load();
+    const inMemoryResult = normalizeForGolden(snapshot, SHAPES_ROOT, { stable: true, withBodies: false });
+
+    const local = JSON.stringify(localResult, null, 2);
+    expect(JSON.stringify(inMemoryResult, null, 2)).toBe(local);
+    // The comparison is only meaningful if it saw the non-text files: pin that they are in it.
+    expect(local).toContain('"fileClass": "image"');
+    expect(local).toContain('"fileClass": "binary"');
+    expect(local).toContain('GSD internal file, kept out of the index (D-11)');
   });
 });
 
