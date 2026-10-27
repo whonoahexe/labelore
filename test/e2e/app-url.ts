@@ -28,6 +28,12 @@ function presentationAt(base: string): Promise<PresentationLite> {
   return cached;
 }
 
+/** Drops what was cached for `base`. A server that stops takes its payload with it: the next server may
+ * be started on the same port (the fixture server reuses 5310 for every spec) with a different project. */
+export function forgetPresentation(base: string): void {
+  presentations.delete(base);
+}
+
 /** The project slug the server at `base` reports on /api/presentation. */
 export async function projectSlugAt(base: string): Promise<string> {
   const { projectSlug } = await presentationAt(base);
