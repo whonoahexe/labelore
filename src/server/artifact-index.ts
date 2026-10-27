@@ -1,6 +1,7 @@
 import type { Artifact, PhaseIdentity } from '../domain/model.ts';
 import type { ProjectSnapshot } from '../planning-repo/types.ts';
-import { buildPlanUrl, type PresentationRoute } from '../presentation/routes.ts';
+import { buildRouteTable, type RouteTable } from '../presentation/route-table.ts';
+import { buildUrl, type Route } from '../presentation/routes.ts';
 
 export interface IndexedArtifact {
   artifact: Artifact;
@@ -19,7 +20,7 @@ export type ArtifactLookupResult =
 export interface ArtifactIndex {
   readonly size: number;
   lookup(artifactPath: string): ArtifactLookupResult;
-  lookupRoute(route: PresentationRoute): ArtifactLookupResult;
+  lookupRoute(route: Route): ArtifactLookupResult;
 }
 
 const NOT_FOUND_WARNING = 'Artifact is not present in the loaded project snapshot.';
@@ -27,10 +28,13 @@ const NOT_FOUND_WARNING = 'Artifact is not present in the loaded project snapsho
 /**
  * Builds the only artifact lookup table used by HTTP request handling. Request text can select an
  * already-indexed canonical path, but it never crosses back into PlanningFilesystem or node:path.
+ * `routeTable` is the table the same bundle's presentation and search state were built from (T-07-15).
  */
-export function buildArtifactIndex(snapshot: ProjectSnapshot): ArtifactIndex {
+export function buildArtifactIndex(
+  snapshot: ProjectSnapshot,
+  routeTable: RouteTable = buildRouteTable(snapshot.project),
+): ArtifactIndex {
   const entries = new Map<string, IndexedArtifact>();
-  const planRoutes = new Map<string, IndexedArtifact>();
   const project = snapshot.project;
 
   if (project) {
@@ -41,10 +45,6 @@ export function buildArtifactIndex(snapshot: ProjectSnapshot): ArtifactIndex {
       for (const artifact of Object.values(phase.artifacts)) {
         const indexed = { artifact, phaseIdentity: phase.identity };
         entries.set(artifact.path, indexed);
-      }
-      for (const plan of phase.plans) {
-        const indexed = entries.get(plan.path);
-        if (indexed) planRoutes.set(buildPlanUrl(phase.identity, plan.id), indexed);
       }
     }
     // D-11: quick tasks carry no phase identity of their own.
@@ -70,15 +70,21 @@ export function buildArtifactIndex(snapshot: ProjectSnapshot): ArtifactIndex {
         ? { found: true, artifact: indexed.artifact, phaseIdentity: indexed.phaseIdentity }
         : missing(artifactPath);
     },
-    lookupRoute(route: PresentationRoute): ArtifactLookupResult {
-      if (route.kind === 'artifact') return this.lookup(route.artifactPath);
-      if (route.kind === 'plan') {
-        const indexed = planRoutes.get(buildPlanUrl(route.phaseIdentity, route.planId));
-        return indexed
-          ? { found: true, artifact: indexed.artifact, phaseIdentity: indexed.phaseIdentity }
-          : missing(route.planId);
+    lookupRoute(route: Route): ArtifactLookupResult {
+      // Request text only ever selects a path the table already holds: the canonical URL (heading
+      // dropped) is looked up in the table, an alias follows to its target, and only an indexed path is
+      // read. A file/ URL of an internal file has no table entry, so it is a miss.
+      let canonical: string;
+      if (route.kind === 'document' || route.kind === 'plan') {
+        canonical = buildUrl({ ...route, heading: null });
+      } else if (route.kind === 'page') {
+        canonical = buildUrl(route);
+      } else {
+        return missing(route.kind);
       }
-      return missing(route.kind);
+      const url = routeTable.aliasOf(canonical) ?? canonical;
+      const path = routeTable.pathOf(url);
+      return path === null ? missing(route.kind) : this.lookup(path);
     },
   });
 }

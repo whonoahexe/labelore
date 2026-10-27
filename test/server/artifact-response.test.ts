@@ -1,5 +1,5 @@
 // Pins the D-12/TGT-06 gap-closure fix: the single-artifact response served by GET /api/documents
-// and GET /api/artifacts/* now forwards `artifact.bodyLength`, the input artifactWarningTone()
+// now forwards `artifact.bodyLength`, the input artifactWarningTone()
 // needs to compute the same tone the tree and search rows already show for that same file. Reuses
 // the createApp() + app.request(...) idiom from test/server/refresh.test.ts.
 import { describe, expect, it } from 'vitest';
@@ -123,7 +123,7 @@ describe('single-artifact response carries bodyLength (D-12, TGT-06)', () => {
     expect(artifactWarningTone(payload.artifact)).toBeNull();
   });
 
-  it('GET /api/artifacts/* returns the same bodyLength as GET /api/documents for the same artifact', async () => {
+  it('GET /api/documents returns the stored bodyLength for a warned artifact', async () => {
     const artifact = makeArtifact({
       path: '.planning/PROJECT.md',
       bodyLength: 42,
@@ -135,11 +135,7 @@ describe('single-artifact response carries bodyLength (D-12, TGT-06)', () => {
     const documentResponse = await app.request(`/api/documents?route=${encodeURIComponent(route)}`);
     const documentPayload = (await documentResponse.json()) as ArtifactDocumentPayload;
 
-    const artifactsResponse = await app.request(`/api${route}`);
-    const artifactsPayload = (await artifactsResponse.json()) as ArtifactDocumentPayload;
-
-    expect(artifactsResponse.status).toBe(200);
-    expect(artifactsPayload.artifact.bodyLength).toBe(documentPayload.artifact.bodyLength);
-    expect(artifactsPayload.artifact.bodyLength).toBe(42);
+    expect(documentResponse.status).toBe(200);
+    expect(documentPayload.artifact.bodyLength).toBe(42);
   });
 });

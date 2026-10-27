@@ -8,6 +8,7 @@ import MiniSearch from 'minisearch';
 import type { Artifact, PhaseIdentity } from '../domain/model.ts';
 import type { ProjectSnapshot } from '../planning-repo/types.ts';
 import type { SearchResultGroup } from '../presentation/search.ts';
+import { buildRouteTable, type RouteTable } from '../presentation/route-table.ts';
 import { buildArtifactUrl, milestoneKeyOf, phaseKeyOf } from '../presentation/routes.ts';
 import { segmentPlanBody } from '../rendering/plan-segments.ts';
 
@@ -54,6 +55,8 @@ export type SearchIndexState =
       index: MiniSearch<SearchDocument>;
       documents: Map<string, SearchDocument>;
       owners: Map<string, PhaseIdentity | null>;
+      /** path -> the file's readable URL from the bundle's route table. */
+      urls: Map<string, string>;
       builtAt: string;
     }
   | { status: 'error'; message: string };
@@ -242,14 +245,14 @@ function buildMiniSearchIndex(documents: SearchDocument[]): MiniSearch<SearchDoc
  */
 export function createSearchIndexState(): {
   state(): SearchIndexState;
-  buildFrom(snapshot: ProjectSnapshot): void;
+  buildFrom(snapshot: ProjectSnapshot, routeTable?: RouteTable): void;
 } {
   let current: SearchIndexState = { status: 'building' };
   return {
     state(): SearchIndexState {
       return current;
     },
-    buildFrom(snapshot: ProjectSnapshot): void {
+    buildFrom(snapshot: ProjectSnapshot, routeTable: RouteTable = buildRouteTable(snapshot.project)): void {
       setImmediate(() => {
         try {
           const reachable = collectReachableArtifacts(snapshot);
@@ -257,6 +260,11 @@ export function createSearchIndexState(): {
           const owners = new Map<string, PhaseIdentity | null>(
             reachable.map(({ artifact, phaseIdentity }) => [artifact.path, phaseIdentity]),
           );
+          const urls = new Map<string, string>();
+          for (const { artifact } of reachable) {
+            const url = routeTable.urlOf(artifact.path);
+            if (url !== null) urls.set(artifact.path, url);
+          }
           const index = buildMiniSearchIndex(documents);
           const documentsByPath = new Map(documents.map((doc) => [doc.path, doc]));
           current = {
@@ -264,6 +272,7 @@ export function createSearchIndexState(): {
             index,
             documents: documentsByPath,
             owners,
+            urls,
             builtAt: new Date().toISOString(),
           };
         } catch (error) {
@@ -302,7 +311,7 @@ export function searchIndex(state: SearchIndexState, query: string): SearchHit[]
       path: doc.path,
       title: doc.title,
       kind: doc.kind,
-      url: buildArtifactUrl(phaseIdentity, doc.path),
+      url: state.urls.get(doc.path) ?? buildArtifactUrl(phaseIdentity, doc.path),
       phaseKey: phaseIdentity ? phaseKeyOf(phaseIdentity) : null,
       milestoneKey: phaseIdentity ? milestoneKeyOf(phaseIdentity.milestoneVersion) : null,
       score: result.score,

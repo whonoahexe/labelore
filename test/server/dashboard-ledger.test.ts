@@ -11,6 +11,7 @@ import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
 import type { ProjectSnapshot } from '../../src/planning-repo/types.ts';
 import { buildDashboardLedger, emptyLedger } from '../../src/server/dashboard-ledger.ts';
 import { buildDashboardViewModel } from '../../src/presentation/dashboard.ts';
+import { buildPhaseUrl } from '../../src/presentation/routes.ts';
 import { createApp } from '../../src/server/index.ts';
 import { toProjectPresentation } from '../../src/server/project-presentation.ts';
 import { fromDirectory } from '../helpers/from-directory.ts';
@@ -225,9 +226,13 @@ describe('dashboard ledger: decisions', () => {
       phases.find((p) => p.identity.milestoneVersion === version && p.identity.number === number)?.key;
     const urlOfPhase = (key: string | undefined) => presentation.milestones.flatMap((m) => m.phases).find((p) => p.key === key);
     expect(decisions.map((d) => d.phaseUrl !== null)).toEqual([false, true, true, false, true, true]);
-    expect(decisions[1].phaseUrl).toContain(phaseKey('v1.0', '02'));
-    expect(decisions[2].phaseUrl).toContain(phaseKey('v2.0', '03'));
-    expect(decisions[5].phaseUrl).toContain(phaseKey('v1.0', '01'));
+    const phaseUrl = (version: string, number: string) => {
+      const phase = phases.find((p) => p.identity.milestoneVersion === version && p.identity.number === number);
+      return phase ? buildPhaseUrl(phase.identity) : undefined;
+    };
+    expect(decisions[1].phaseUrl).toBe(phaseUrl('v1.0', '02'));
+    expect(decisions[2].phaseUrl).toBe(phaseUrl('v2.0', '03'));
+    expect(decisions[5].phaseUrl).toBe(phaseUrl('v1.0', '01'));
     expect(urlOfPhase(phaseKey('v1.0', '02'))).toBeDefined();
     // The plan source links to the plan's page; the others to the artifact page.
     const plan0301 = phases.flatMap((p) => p.plans).find((p) => p.id === '03-01');
@@ -512,7 +517,7 @@ describe('dashboard ledger: the queue', () => {
     const plan32 = phases.flatMap((p) => p.plans).find((p) => p.id === '03-02');
     expect(view.onDeck.queue[0].url).toBe(plan32?.key);
     const phase4 = phases.find((p) => p.identity.number === '4');
-    expect(view.onDeck.queue[2].url).toContain(phase4!.key);
+    expect(view.onDeck.queue[2].url).toBe(buildPhaseUrl(phase4!.identity));
     expect(view.onDeck.todosDone).toBe(1);
     expect(view.onDeck.notes.map((n) => n.promoted)).toEqual([false, false, false, true]);
     expect(view.recent).toHaveLength(7);
