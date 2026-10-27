@@ -133,7 +133,7 @@ describe('ImageView', () => {
 
 describe('FigureFrame defaultFit', () => {
   const frame = (props: { defaultFit?: boolean }) =>
-    render(createElement(FigureFrame, { title: 'Figure', ...props }, () => createElement('span', null, 'x')));
+    render(createElement(FigureFrame, { title: 'Figure', ...props, children: () => createElement('span', null, 'x') }));
 
   it('keeps Actual size and an unpressed first chip without the prop', () => {
     expect(frame({})).toContain('aria-pressed="false">Actual size</button>');
