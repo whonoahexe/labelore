@@ -9,19 +9,20 @@
 // Run once post-merge: npx playwright test test/e2e/security-page.spec.ts -g "security page"
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
+import { BASE_URL, artifactUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
 }
 
-async function resolveFixtureUrl(baseURL: string, pathIncludes: string): Promise<string> {
+async function resolveFixturePath(baseURL: string, pathIncludes: string): Promise<string> {
   const response = await fetch(`${baseURL}/api/presentation`);
   if (!response.ok) throw new Error(`security-page.spec: /api/presentation responded ${response.status}`);
   const data = (await response.json()) as PresentationLite;
   const artifact = data.artifacts.find((entry) => entry.path.includes(pathIncludes));
   if (!artifact) throw new Error(`security-page.spec: no artifact with path including "${pathIncludes}"`);
-  return artifact.key;
+  return artifact.path;
 }
 
 /** True once the locator's box sits inside the current viewport (polled by the caller). */
@@ -33,8 +34,8 @@ async function inViewport(page: Page, locator: Locator): Promise<boolean> {
 
 test.describe('SECURITY page', () => {
   test('LB v1.1/05 security page', async ({ page, baseURL }) => {
-    const base = baseURL ?? 'http://127.0.0.1:4199';
-    const url = await resolveFixtureUrl(base, 'v1.1-phases/05-per-type-document-views/05-SECURITY.md');
+    const base = baseURL ?? BASE_URL;
+    const url = await artifactUrl(base, await resolveFixturePath(base, 'v1.1-phases/05-per-type-document-views/05-SECURITY.md'));
     await page.addInitScript(() => window.localStorage.setItem('labelore-theme', 'light'));
     await page.goto(url);
     await page.locator('.view-security-board').waitFor({ state: 'visible' });
@@ -142,8 +143,8 @@ test.describe('SECURITY page', () => {
   });
 
   test('Lendshed P1 security page', async ({ page }) => {
-    const url = await resolveFixtureUrl(FIXTURE_BASE_URL, '/phases/01-member-sign-in-sessions/01-SECURITY.md');
-    await page.goto(`${FIXTURE_BASE_URL}${url}`);
+    const url = await artifactUrl(FIXTURE_BASE_URL, await resolveFixturePath(FIXTURE_BASE_URL, '/phases/01-member-sign-in-sessions/01-SECURITY.md'));
+    await page.goto(url);
     await page.locator('.view-security-board').waitFor({ state: 'visible' });
 
     // Trust boundaries: API (2 ways in), the six single crossings, then the at-rest block.
@@ -189,8 +190,8 @@ test.describe('SECURITY page', () => {
   });
 
   test('Lendshed P3 security page', async ({ page }) => {
-    const url = await resolveFixtureUrl(FIXTURE_BASE_URL, '/phases/03-account-admin-and-sessions/03-SECURITY.md');
-    await page.goto(`${FIXTURE_BASE_URL}${url}`);
+    const url = await artifactUrl(FIXTURE_BASE_URL, await resolveFixturePath(FIXTURE_BASE_URL, '/phases/03-account-admin-and-sessions/03-SECURITY.md'));
+    await page.goto(url);
     await page.locator('.view-security-board').waitFor({ state: 'visible' });
 
     await expect(page.locator('.view-security-square')).toHaveCount(30);

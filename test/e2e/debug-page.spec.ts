@@ -7,6 +7,7 @@
 // no 420px overflow) since the full sweep is too slow to run per change.
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
+import { artifactUrl } from './app-url.ts';
 import { startFixtureServer } from './fixture-server.ts';
 import type { FixtureServer } from './fixture-server.ts';
 
@@ -35,12 +36,12 @@ test.afterAll(async () => {
   await server?.stop();
 });
 
-async function resolveKey(suffix: string): Promise<string> {
+async function resolveArtifactPath(suffix: string): Promise<string> {
   const response = await fetch(`${server.base}/api/presentation`);
   if (!response.ok) throw new Error(`debug-page.spec: /api/presentation responded ${response.status}`);
   const artifact = ((await response.json()) as PresentationLite).artifacts.find((entry) => entry.path.endsWith(suffix));
   if (!artifact) throw new Error(`debug-page.spec: fixture artifact not found: ${suffix}`);
-  return artifact.key;
+  return artifact.path;
 }
 
 const LB = 'debug/resolved/loading-state-regression.md';
@@ -52,9 +53,9 @@ const FIVE_ROUNDS = 'debug/reservation-holds-lost-on-reconnect.md';
 const ARCHIVED = 'debug/resolved/door-sensor-stops-after-wifi-drop.md';
 
 async function openPage(page: Page, suffix: string, theme: 'light' | 'dark'): Promise<void> {
-  const key = await resolveKey(suffix);
+  const path = await resolveArtifactPath(suffix);
   await page.addInitScript((value) => window.localStorage.setItem('labelore-theme', value), theme);
-  await page.goto(`${server.base}${key}`);
+  await page.goto(await artifactUrl(server.base, path));
   await page.locator('.view-debug-head').waitFor({ state: 'visible' });
 }
 
@@ -233,8 +234,8 @@ test.describe('Debug page', () => {
   });
 
   test('the knowledge base is not a debug page', async ({ page }) => {
-    const key = await resolveKey(KB);
-    await page.goto(`${server.base}${key}`);
+    const path = await resolveArtifactPath(KB);
+    await page.goto(await artifactUrl(server.base, path));
     await page.locator('main h1').first().waitFor({ state: 'visible' });
     await expect(page.locator('.view-debug-head')).toHaveCount(0);
   });

@@ -8,19 +8,20 @@
 // per change. Run once post-merge: npx playwright test test/e2e/ui-review-page.spec.ts -g "ui-review page"
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
+import { BASE_URL, artifactUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
 }
 
-async function resolveFixtureUrl(baseURL: string, pathIncludes: string): Promise<string> {
+async function resolveFixturePath(baseURL: string, pathIncludes: string): Promise<string> {
   const response = await fetch(`${baseURL}/api/presentation`);
   if (!response.ok) throw new Error(`ui-review-page.spec: /api/presentation responded ${response.status}`);
   const data = (await response.json()) as PresentationLite;
   const artifact = data.artifacts.find((entry) => entry.path.includes(pathIncludes));
   if (!artifact) throw new Error(`ui-review-page.spec: no artifact with path including "${pathIncludes}"`);
-  return artifact.key;
+  return artifact.path;
 }
 
 /** True once the locator's box sits inside the current viewport (polled by the caller). */
@@ -30,17 +31,17 @@ async function inViewport(page: Page, locator: Locator): Promise<boolean> {
   return box !== null && box.y >= 0 && box.y < height;
 }
 
-async function openPage(page: Page, url: string, theme: 'light' | 'dark'): Promise<void> {
+async function openPage(page: Page, base: string, path: string, theme: 'light' | 'dark'): Promise<void> {
   await page.addInitScript((value) => window.localStorage.setItem('labelore-theme', value), theme);
-  await page.goto(url);
+  await page.goto(await artifactUrl(base, path));
   await page.locator('#ui-review-inspector').waitFor({ state: 'visible' });
 }
 
 test.describe('UI review page', () => {
   test('LB v1.1/05 ui-review page', async ({ page, baseURL }) => {
-    const base = baseURL ?? 'http://127.0.0.1:4199';
-    const url = await resolveFixtureUrl(base, '05-per-type-document-views/05-UI-REVIEW.md');
-    await openPage(page, url, 'light');
+    const base = baseURL ?? BASE_URL;
+    const path = await resolveFixturePath(base, '05-per-type-document-views/05-UI-REVIEW.md');
+    await openPage(page, base, path, 'light');
 
     // Header and page invariants.
     await expect(page.locator('h1')).toHaveCount(1);
@@ -143,9 +144,9 @@ test.describe('UI review page', () => {
   });
 
   test('LB v1.0/03 ui-review page', async ({ page, baseURL }) => {
-    const base = baseURL ?? 'http://127.0.0.1:4199';
-    const url = await resolveFixtureUrl(base, '03-search-browsing-traceability/03-UI-REVIEW.md');
-    await openPage(page, url, 'light');
+    const base = baseURL ?? BASE_URL;
+    const path = await resolveFixturePath(base, '03-search-browsing-traceability/03-UI-REVIEW.md');
+    await openPage(page, base, path, 'light');
 
     const side = page.locator('.view-ui-review-side');
     await expect(side).toContainText('Full marks. Nothing to fix.');
@@ -157,9 +158,9 @@ test.describe('UI review page', () => {
   });
 
   test('FX 03 ui-review page', async ({ page }) => {
-    const url = await resolveFixtureUrl(FIXTURE_BASE_URL, 'phases/03-account-admin-and-sessions/03-UI-REVIEW.md');
+    const url = await artifactUrl(FIXTURE_BASE_URL, await resolveFixturePath(FIXTURE_BASE_URL, 'phases/03-account-admin-and-sessions/03-UI-REVIEW.md'));
     await page.addInitScript(() => window.localStorage.setItem('labelore-theme', 'light'));
-    await page.goto(`${FIXTURE_BASE_URL}${url}`);
+    await page.goto(url);
     await page.locator('#ui-review-inspector').waitFor({ state: 'visible' });
 
     await expect(page.locator('h1')).toHaveText('Account admin and sessions');
