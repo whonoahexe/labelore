@@ -762,7 +762,7 @@ export function toProjectPresentation(
     coverageWaits,
     mentions: project.mentions,
     exclusions: snapshot.exclusions,
-    ledger: buildDashboardLedger(project),
+    ledger: buildDashboardLedger(project, routeTable),
     routeAliases: Object.fromEntries(routeTable.aliases),
     urlConflicts: routeTable.conflicts.map((conflict) => ({
       url: conflict.url,

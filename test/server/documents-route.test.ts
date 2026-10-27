@@ -243,4 +243,27 @@ describe('the route audit on the payload', () => {
     expect(viaAlias.status).toBe(200);
     expect(((await viaAlias.json()) as FoundBody).artifact.path).toBe('.planning/ROADMAP.md');
   });
+
+  it('links a collision loser from search at its own file/ address, never the winner\'s', async () => {
+    const repository = new PlanningRepository(
+      new InMemoryPlanningFilesystem({ '.planning/PROJECT.md': '# P\n', '.planning/STATE.md': STATE, ...CLASHES }),
+      '/p',
+      { loadTheme: null },
+    );
+    await repository.load();
+    const app = createApp(repository, true, '.', NO_COMMITS);
+    await new Promise((resolve) => setImmediate(resolve));
+    const presentation = await presentationOf(app);
+    const keyOf = (path: string): string | undefined =>
+      presentation.artifacts.find((artifact) => artifact.path === path)?.key;
+    const body = (await (await app.request('/api/search?q=Lower')).json()) as {
+      status: string;
+      results: { path: string; url: string }[];
+    };
+    expect(body.status).toBe('ready');
+    const hit = body.results.find((result) => result.path === '.planning/research/foo.md');
+    expect(hit?.url).toBe('/file/research/foo.md');
+    expect(hit?.url).toBe(keyOf('.planning/research/foo.md'));
+    expect(keyOf('.planning/research/Foo.md')).toBe('/research/foo');
+  });
 });

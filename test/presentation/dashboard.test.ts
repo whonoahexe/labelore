@@ -354,6 +354,34 @@ describe('buildDashboardViewModel', () => {
     if (parsed.ok) expect(parsed.route.kind).toBe('document');
   });
 
+  it('takes the blocker link from the source artifact key the payload reports, not from a stateless address', () => {
+    const view = buildDashboardViewModel(
+      presentation({
+        artifacts: [
+          {
+            key: '/file/STATE.md',
+            path: '.planning/STATE.md',
+            kind: 'state',
+            title: 'State',
+            location: 'root',
+            frontmatter: {},
+            structured: {},
+            milestoneKey: null,
+            phaseKey: null,
+            warnings: [],
+            bodyLength: 1,
+            fileClass: 'text',
+            sizeBytes: 1,
+          },
+        ],
+        blockers: [
+          { key: 'state:blocker', sourcePath: '.planning/STATE.md', heading: 'Blockers', text: 'Authored blocker' },
+        ],
+      }),
+    );
+    expect(view.next.immediate?.url).toBe('/file/STATE.md#blockers');
+  });
+
   it('does not promote placeholder blocker copy as recommended work', () => {
     const view = buildDashboardViewModel(
       presentation({

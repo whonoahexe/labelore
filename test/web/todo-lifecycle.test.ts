@@ -430,8 +430,8 @@ describe('the view', () => {
     expect(markup).toContain('Done in quick task');
     const hrefs = [...markup.matchAll(/<a class="view-todo-link" href="([^"]+)"[^>]*>Open note ↗/g)].map((match) => decodeURIComponent(match[1]));
     expect(hrefs).toEqual([
-      expect.stringContaining('2026-03-24-crop-tool-photos-and-member-avatars.md'),
-      expect.stringContaining('2026-03-24-round-member-avatars.md'),
+      '/notes/2026-03-24-crop-tool-photos-and-member-avatars',
+      '/notes/2026-03-24-round-member-avatars',
     ]);
     expect(markup).toContain('aria-label="Also in this file"');
     expect(markup.match(/>Frontmatter</g)).toHaveLength(1);
@@ -453,7 +453,7 @@ describe('the view', () => {
     const markup = render(compose('pcheck'));
     expect(markup.match(/class="view-todo-check" data-done="false"/g)).toHaveLength(4);
     expect(markup).toContain('To do · 0 of 4');
-    expect(markup).toMatch(/<a class="view-todo-ref" href="[^"]*2026-03-26-steward-desk-milestone-brief\.md[^"]*"[^>]*>notes\/2026-03-26-steward-desk-milestone-brief\.md<\/a>/);
+    expect(markup).toMatch(/<a class="view-todo-ref" href="\/notes\/2026-03-26-steward-desk-milestone-brief"[^>]*>notes\/2026-03-26-steward-desk-milestone-brief\.md<\/a>/);
     expect(markup).toContain('0 of 4 items checked.');
   });
 

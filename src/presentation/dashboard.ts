@@ -4,7 +4,7 @@ import type {
   ProjectBlockerDto,
   ProjectPresentation,
 } from '../server/project-presentation.ts';
-import { buildArtifactUrl, buildPhaseUrl } from './routes.ts';
+import { buildArtifactUrl, buildPhaseUrl, withHeading } from './routes.ts';
 import { buildDashboardHead, type DashboardHead } from './dashboard-head.ts';
 import { stableSlug } from '../rendering/slug.ts';
 import type {
@@ -46,6 +46,11 @@ export function provenanceLabel(provenance: SourceProvenance): string {
  * `NextWorkItem.url`. Only `state` and `roadmap` provenance kinds
  * name an on-disk markdown source that can be linked to; `summary` and `derived` provenance
  * never produce a second navigable link (G2-07: the two destinations must never be conflated).
+ *
+ * The inputs are the root STATE.md and ROADMAP.md references. A root file's stateless address is its
+ * route-table address (`/state`, `/roadmap`), because the table gives a root document its clean address
+ * unless an alias or another file claims it, and neither can claim a root document's own name; so this
+ * keeps its signature and needs no table.
  */
 export function sourceDestination(provenance: SourceProvenance): string | null {
   if (!['state', 'roadmap'].includes(provenance.kind)) return null;
@@ -370,12 +375,15 @@ function checkpointWork(
   };
 }
 
-function blockerUrl(blocker: ProjectBlockerDto): string {
-  return buildArtifactUrl(
-    null,
-    blocker.sourcePath,
-    blocker.heading ? stableSlug(blocker.heading) : undefined,
-  );
+/** The blocker's source file at the address the server reports for it (its artifact key), with the
+ * blocker heading as the fragment. A root file the payload does not list falls back to the stateless
+ * builder, which is the table address for a root document. */
+function blockerUrl(presentation: ProjectPresentation, blocker: ProjectBlockerDto): string {
+  const heading = blocker.heading ? stableSlug(blocker.heading) : undefined;
+  const key = presentation.artifacts.find((artifact) => artifact.path === blocker.sourcePath)?.key;
+  return key === undefined
+    ? buildArtifactUrl(null, blocker.sourcePath, heading)
+    : withHeading(key, heading);
 }
 
 function blockerWork(
@@ -391,7 +399,7 @@ function blockerWork(
     planKey: null,
     title: 'Resolve the active blocker',
     description: blocker.text,
-    url: blockerUrl(blocker),
+    url: blockerUrl(presentation, blocker),
   };
 }
 

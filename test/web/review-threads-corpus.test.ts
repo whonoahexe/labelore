@@ -131,7 +131,7 @@ describe('REVIEW corpus - every file extracts and composes', () => {
     expect(lb01.head.title).toBe('Read Layer & Domain Model');
     expect(verdictText(lb01)).toBe('5 of 7 fixed. 2 still in the code.');
     expect(lb01.also[0].label).toBe('Fix report · All fixed');
-    expect(lb01.also[0].url).toContain('01-REVIEW-FIX.md');
+    expect(lb01.also[0].url).toBe('/v1.0/phase-1/review-fix');
     const lb04 = compose(lb, artifactAt(lb, '04-portability-degradation-hardening/04-REVIEW.md'));
     expect(lb04.head.title).toBe('Portability & Degradation Hardening');
     expect(verdictText(lb04)).toBe('5 findings, 2 critical. None fixed yet.');
