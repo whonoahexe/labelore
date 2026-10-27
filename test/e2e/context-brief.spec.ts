@@ -1,10 +1,11 @@
 // The CONTEXT brief e2e (quick-260923-lju, sketch-006 D1): real files, never a mock. Fixtures resolve by
-// path against the live `/api/presentation` payload (the document-layout.spec.ts `resolveFixtureUrl`
+// path against the live `/api/presentation` payload (the document-layout.spec.ts `resolveFixturePath`
 // pattern) so an archival/rename fails loudly here instead of silently skipping. Labelore's own files run
 // against the default server on port 4199; the nine made-up Lendshed CONTEXT files run against the
 // read-only server on port 4198 (playwright.config.ts always starts it and throws at load when the
 // fixture tree is missing). Nothing in this file skips.
 import { expect, test } from '@playwright/test';
+import { BASE_URL, artifactUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
 
 interface ArtifactDtoLite {
@@ -16,7 +17,7 @@ interface PresentationLite {
   artifacts: ArtifactDtoLite[];
 }
 
-async function resolveFixtureUrl(baseURL: string, pathIncludes: string): Promise<string> {
+async function resolveFixturePath(baseURL: string, pathIncludes: string): Promise<string> {
   const response = await fetch(`${baseURL}/api/presentation`);
   if (!response.ok) {
     throw new Error(`context-brief.spec: /api/presentation responded ${response.status}`);
@@ -26,7 +27,7 @@ async function resolveFixtureUrl(baseURL: string, pathIncludes: string): Promise
   if (!artifact) {
     throw new Error(`context-brief.spec: no artifact found with path including "${pathIncludes}"`);
   }
-  return artifact.key;
+  return artifact.path;
 }
 
 test.describe('CONTEXT brief — LB v1.1/05 (tracer)', () => {
@@ -34,7 +35,7 @@ test.describe('CONTEXT brief — LB v1.1/05 (tracer)', () => {
     page,
     baseURL,
   }) => {
-    const url = await resolveFixtureUrl(baseURL ?? 'http://127.0.0.1:4199', '05-per-type-document-views/05-CONTEXT.md');
+    const url = await artifactUrl(baseURL ?? BASE_URL, await resolveFixturePath(baseURL ?? BASE_URL, '05-per-type-document-views/05-CONTEXT.md'));
     await page.goto(url);
 
     await expect(page.locator('.document-cover')).toHaveCount(0);
@@ -62,7 +63,7 @@ test.describe('CONTEXT brief — LB v1.1/05 (tracer)', () => {
   });
 
   test('the artifact-meta-row holds a status chip and the copy-path button', async ({ page, baseURL }) => {
-    const url = await resolveFixtureUrl(baseURL ?? 'http://127.0.0.1:4199', '05-per-type-document-views/05-CONTEXT.md');
+    const url = await artifactUrl(baseURL ?? BASE_URL, await resolveFixturePath(baseURL ?? BASE_URL, '05-per-type-document-views/05-CONTEXT.md'));
     await page.goto(url);
     const metaRow = page.locator('.artifact-meta-row');
     await expect(metaRow.locator('.status-chip')).toBeVisible();
@@ -71,7 +72,7 @@ test.describe('CONTEXT brief — LB v1.1/05 (tracer)', () => {
   });
 
   test('toggling to Source shows the full document and back restores the brief', async ({ page, baseURL }) => {
-    const url = await resolveFixtureUrl(baseURL ?? 'http://127.0.0.1:4199', '05-per-type-document-views/05-CONTEXT.md');
+    const url = await artifactUrl(baseURL ?? BASE_URL, await resolveFixturePath(baseURL ?? BASE_URL, '05-per-type-document-views/05-CONTEXT.md'));
     await page.goto(url);
     await page.locator('#context-boundary').waitFor({ state: 'visible' });
     const viewBlocksBefore = await page.locator('.view-block').count();
@@ -89,7 +90,7 @@ test.describe('CONTEXT brief — LB v1.1/05 (tracer)', () => {
     page,
     baseURL,
   }) => {
-    const url = await resolveFixtureUrl(baseURL ?? 'http://127.0.0.1:4199', '05-per-type-document-views/05-CONTEXT.md');
+    const url = await artifactUrl(baseURL ?? BASE_URL, await resolveFixturePath(baseURL ?? BASE_URL, '05-per-type-document-views/05-CONTEXT.md'));
     await page.goto(url);
     await page.locator('#context-boundary').waitFor({ state: 'visible' });
 
@@ -105,7 +106,7 @@ test.describe('CONTEXT brief — LB v1.1/05 (tracer)', () => {
 
 test.describe('CONTEXT brief — repo fixtures', () => {
   test('LB v1.0/01: label-prose out (1 item), discretion lead + bullets + trailer', async ({ page, baseURL }) => {
-    const url = await resolveFixtureUrl(baseURL ?? 'http://127.0.0.1:4199', '01-read-layer-domain-model/01-CONTEXT.md');
+    const url = await artifactUrl(baseURL ?? BASE_URL, await resolveFixturePath(baseURL ?? BASE_URL, '01-read-layer-domain-model/01-CONTEXT.md'));
     await page.goto(url);
     await page.locator('#context-boundary').waitFor({ state: 'visible' });
     await expect(page.locator('.document-cover')).toHaveCount(0);
@@ -114,10 +115,7 @@ test.describe('CONTEXT brief — repo fixtures', () => {
   });
 
   test('quick oae: 9 untagged rows across 3 areas, no out-strip, no discretion panel', async ({ page, baseURL }) => {
-    const url = await resolveFixtureUrl(
-      baseURL ?? 'http://127.0.0.1:4199',
-      '260912-oae-revamp-progress-panel-to-show-phase-and-/260912-oae-CONTEXT.md',
-    );
+    const url = await artifactUrl(baseURL ?? BASE_URL, await resolveFixturePath(baseURL ?? BASE_URL, '260912-oae-revamp-progress-panel-to-show-phase-and-/260912-oae-CONTEXT.md'));
     await page.goto(url);
     await page.locator('#context-boundary').waitFor({ state: 'visible' });
     await expect(page.locator('.view-context-decision')).toHaveCount(9);
@@ -130,10 +128,7 @@ test.describe('CONTEXT brief — repo fixtures', () => {
     page,
     baseURL,
   }) => {
-    const url = await resolveFixtureUrl(
-      baseURL ?? 'http://127.0.0.1:4199',
-      '260923-jxp-discussion-log-page-review-fixes-on-the-/260923-jxp-CONTEXT.md',
-    );
+    const url = await artifactUrl(baseURL ?? BASE_URL, await resolveFixturePath(baseURL ?? BASE_URL, '260923-jxp-discussion-log-page-review-fixes-on-the-/260923-jxp-CONTEXT.md'));
     await page.goto(url);
     await page.locator('#context-boundary').waitFor({ state: 'visible' });
     await expect(page.locator('.view-context-out li')).toHaveCount(1);
@@ -141,7 +136,7 @@ test.describe('CONTEXT brief — repo fixtures', () => {
   });
 
   test('every repo fixture: View mode renders no "More in this document" disclosure', async ({ page, baseURL }) => {
-    const url = await resolveFixtureUrl(baseURL ?? 'http://127.0.0.1:4199', '05-per-type-document-views/05-CONTEXT.md');
+    const url = await artifactUrl(baseURL ?? BASE_URL, await resolveFixturePath(baseURL ?? BASE_URL, '05-per-type-document-views/05-CONTEXT.md'));
     await page.goto(url);
     await page.locator('#context-boundary').waitFor({ state: 'visible' });
     await expect(page.locator('#view-remainder')).toHaveCount(0);
@@ -152,8 +147,8 @@ test.describe('CONTEXT brief — Lendshed fixture (4198)', () => {
   test('phase 01: attention panel with 3 rows; clicking a blocks-D chip jumps to and expands the decision', async ({
     page,
   }) => {
-    const url = await resolveFixtureUrl(FIXTURE_BASE_URL, '01-member-sign-in-sessions/01-CONTEXT.md');
-    await page.goto(`${FIXTURE_BASE_URL}${url}`);
+    const url = await artifactUrl(FIXTURE_BASE_URL, await resolveFixturePath(FIXTURE_BASE_URL, '01-member-sign-in-sessions/01-CONTEXT.md'));
+    await page.goto(url);
     await page.locator('#context-open').waitFor({ state: 'visible' });
     await expect(page.locator('.view-context-open-list li')).toHaveCount(3);
 
@@ -169,8 +164,8 @@ test.describe('CONTEXT brief — Lendshed fixture (4198)', () => {
   test('phase 04: Already-decided note is a collapsed 9-row aside, out-strip has 1 item, no extras', async ({
     page,
   }) => {
-    const url = await resolveFixtureUrl(FIXTURE_BASE_URL, '04-bulk-loan-export/04-CONTEXT.md');
-    await page.goto(`${FIXTURE_BASE_URL}${url}`);
+    const url = await artifactUrl(FIXTURE_BASE_URL, await resolveFixturePath(FIXTURE_BASE_URL, '04-bulk-loan-export/04-CONTEXT.md'));
+    await page.goto(url);
     await page.locator('#context-boundary').waitFor({ state: 'visible' });
     await expect(page.locator('.view-context-out li')).toHaveCount(1);
     const decided = page.locator('#boundary-note-1');
@@ -190,18 +185,15 @@ test.describe('CONTEXT brief — Lendshed fixture (4198)', () => {
   });
 
   test('quick k2p: .view-context-note count is 10', async ({ page }) => {
-    const url = await resolveFixtureUrl(
-      FIXTURE_BASE_URL,
-      '260403-k2p-add-right-click-menu-to-catalogue-grid/260403-k2p-CONTEXT.md',
-    );
-    await page.goto(`${FIXTURE_BASE_URL}${url}`);
+    const url = await artifactUrl(FIXTURE_BASE_URL, await resolveFixturePath(FIXTURE_BASE_URL, '260403-k2p-add-right-click-menu-to-catalogue-grid/260403-k2p-CONTEXT.md'));
+    await page.goto(url);
     await page.locator('#context-decisions').waitFor({ state: 'visible' });
     await expect(page.locator('.view-context-note')).toHaveCount(10);
   });
 
   test('phase 01 + 03: ideas grouped by fate (sketch 007 C)', async ({ page }) => {
-    const fx01 = await resolveFixtureUrl(FIXTURE_BASE_URL, '01-member-sign-in-sessions/01-CONTEXT.md');
-    await page.goto(`${FIXTURE_BASE_URL}${fx01}`);
+    const fx01 = await artifactUrl(FIXTURE_BASE_URL, await resolveFixturePath(FIXTURE_BASE_URL, '01-member-sign-in-sessions/01-CONTEXT.md'));
+    await page.goto(fx01);
     await page.locator('#context-specifics').waitFor({ state: 'visible' });
 
     // Phase 01 holds two specific ideas, one rule and one leaning (counted in the file's specifics bullets).
@@ -227,8 +219,8 @@ test.describe('CONTEXT brief — Lendshed fixture (4198)', () => {
     await expect(passedHead).toHaveAttribute('aria-expanded', 'false');
     await expect(passed.locator('.view-context-idea').first()).toBeHidden();
 
-    const fx03 = await resolveFixtureUrl(FIXTURE_BASE_URL, '03-account-admin-and-sessions/03-CONTEXT.md');
-    await page.goto(`${FIXTURE_BASE_URL}${fx03}`);
+    const fx03 = await artifactUrl(FIXTURE_BASE_URL, await resolveFixturePath(FIXTURE_BASE_URL, '03-account-admin-and-sessions/03-CONTEXT.md'));
+    await page.goto(fx03);
     await page.locator('#context-deferred').waitFor({ state: 'visible' });
 
     // Phase 03: ten deferred ideas, eight declined (five with a revisit trigger), one out, one carried.
@@ -251,7 +243,7 @@ test.describe('CONTEXT brief — 420px overflow (no horizontal scroll)', () => {
         window.localStorage.setItem('labelore-theme', t);
       }, theme);
       await page.setViewportSize({ width: 420, height: 900 });
-      const url = await resolveFixtureUrl(baseURL ?? 'http://127.0.0.1:4199', '05-per-type-document-views/05-CONTEXT.md');
+      const url = await artifactUrl(baseURL ?? BASE_URL, await resolveFixturePath(baseURL ?? BASE_URL, '05-per-type-document-views/05-CONTEXT.md'));
       await page.goto(url);
       await page.locator('#context-boundary').waitFor({ state: 'visible' });
 
