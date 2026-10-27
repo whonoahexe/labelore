@@ -1,7 +1,8 @@
 ---
 phase: "08"
 slug: several-projects-and-a-switcher
-status: draft
+status: approved
+reviewed_at: "2026-10-27"
 shadcn_initialized: true
 preset: b7WOYcsqY
 created: "2026-10-27"
@@ -301,7 +302,7 @@ reversible by re-adding the path (same slug only if still free, D-10), so no typ
 
 ## UI Considerations
 
-Applicable state considerations resolved: 17 covered, 2 backstop, 0 unresolved.
+Applicable state considerations resolved: 16 covered, 2 backstop, 0 unresolved.
 
 | Category | Element(s) | Status | Resolution / Reason |
 |----------|------------|--------|---------------------|
@@ -311,14 +312,15 @@ Applicable state considerations resolved: 17 covered, 2 backstop, 0 unresolved.
 | loading | list-collection (project list) | ✅ covered | The list comes from the cheap `GET /api/projects`, so it renders a `quiet-state` "Loading projects…" only while that single request is in flight |
 | loading | nav (header switcher on switch) | ✅ covered | The header shows the new name at once with an empty meta line, the body shows "Opening {name}…", and the previous project's data is never rendered |
 | loading | interactive-control (add and scan submits) | ✅ covered | Submits show "Adding…" / "Scanning…", are disabled while pending, and a second scan cannot start |
-| error | list-collection (list request fails) | ✅ covered | A `notice destructive` with the server-unreachable copy and a "Try again" `outline` button |
+| error | list-collection (list request fails) | ✅ covered | A `notice destructive` with the server-unreachable copy and a "Retry loading projects" `outline` button |
 | error | form (add dialog) | ✅ covered | A `notice destructive` with the server's invalid-target wording and "Path checked: {path}"; typed value kept; field `aria-invalid` |
 | error | interactive-control (cross-origin refusal, 403) | ✅ covered | Every path, ssh, scan and settings-change form shows the "Request refused" copy; no state changes |
 | error | nav (project fails to load) | ✅ covered | The existing invalid-target screen with the reason and the path checked, plus a "Choose another project" link |
 | error | list-collection (settings unreadable, entry skipped, write fails) | ✅ covered | Settings copy rows above; the landing page shows them in a `notice`; a bad entry is reported, never thrown |
+| loading / error | interactive-control (forget confirm) | ✅ covered | While the forget request is pending, "Forget project" is disabled and the row stays listed; on a settings write failure the row stays, focus returns to "Forget project", and the settings write-failure copy above is shown in a `notice` (no optimistic removal) |
 | partial | list-collection (project not yet loaded) | ✅ covered | A listed-but-unloaded project shows name and path only, with no milestone, phase or progress (D-02) |
 | partial | list-collection (unavailable project) | ✅ covered | The row keeps its place, shows the `missing` "Unavailable" chip and the server's reason, and its link opens the invalid-target screen |
-| overflow | nav (switcher trigger and popup) | ✅ covered | Name and meta truncate with ellipsis in the trigger; the popup scrolls inside `min(28rem, 70vh)` |
+| overflow | nav (switcher trigger and popup) | ✅ covered | Name and meta truncate with ellipsis in the trigger; the popup scrolls inside `min(calc(var(--space-28) * 4), 70vh)` |
 | overflow | list-collection (scan results beyond the cap) | ✅ covered | The cap notice "Showing the first {cap} projects found…" replaces silent truncation |
 | zero-one-many | list-collection (project lists) | ✅ covered | One project still shows the landing page and a one-row popup; counts use "project" / "projects" correctly in the legend and the Add button |
 | long-text | static-content (names, paths, ssh targets) | ✅ covered | Names wrap to two lines then clamp; paths and targets end-ellipsis on one line with the full value in `title`; the forget confirm wraps freely |
@@ -351,12 +353,12 @@ next open); no RTL or i18n work (English only, as the rest of the app).
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
-- [ ] Dimension 7 Inventory Provenance: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
+- [x] Dimension 7 Inventory Provenance: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-10-27 (revision 1; checker FLAGs on typography step width noted — existing scale reused on purpose)
