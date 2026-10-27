@@ -207,7 +207,27 @@ target or a settings change refuses requests from other websites.
 5. A request from another website to any endpoint that accepts a path, an `ssh://` target or a
    settings change is refused. *(SEC-05)*
 
-**Plans**: TBD
+**Plans**: 9 plans
+
+Plans:
+**Wave 1**
+- [ ] 08-01-PLAN.md — Tracer: one runtime per project behind a slug-keyed registry at /api/projects/:slug, the request guard (Host allowlist, same-origin and JSON, LABELORE_ALLOWED_HOSTS) and an LRU of five
+- [ ] 08-02-PLAN.md — Sketches 039 (header switcher) and 040 (projects landing), three variants each, and the user's choice of winners (blocking decision)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 08-03-PLAN.md — Labelore's own settings file (second node:fs importer, atomic, never inside a target), add, forget, open stamps, CLI remembering, titles and last-opened order
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [ ] 08-04-PLAN.md — startServer serves the guarded registry for every CLI path; sketch files under the project API; probes and Playwright servers on /api/projects with their own settings directories
+- [ ] 08-05-PLAN.md — The web follows the slug: landing list at /, ProjectLayout keyed by slug with the opening body, unknown-project page, slug-scoped fetch and keys for shell and dashboard
+- [ ] 08-06-PLAN.md — Folder scan inside $HOME (depth 2, no symlinks, capped) and add-many without loading
+
+**Wave 4** *(blocked on Wave 3 completion)*
+- [ ] 08-07-PLAN.md — Every remaining page fetches its own project's data; the plan-pair cache collision closed; standing key, API-literal and previous-data scans
+- [ ] 08-08-PLAN.md — Header switcher, add dialog and landing add form, inline forget confirm, scan checklist, built from the winning sketches
+
+**Wave 5** *(blocked on Wave 4 completion)*
+- [ ] 08-09-PLAN.md — Phase gate in Chromium: no flash on switch, restart and bookmarks, unavailable rows, refusal from another website, screenshot check against the winners
 **UI hint**: yes
 
 ### Phase 9: Review, Audit and Root Document Pages
@@ -398,7 +418,7 @@ file, ID or project.
 | quick tasks | v2.0 | 40/40 | Archived | 2026-10-25 |
 | 6. Trustworthy Tests and Security Baseline | v2.1 | 22/22 | Complete    | 2026-10-26 |
 | 7. Recognised Files and Readable URLs | v2.1 | 4/10 | In Progress | - |
-| 8. Several Projects and a Switcher | v2.1 | 0/TBD | Not started | - |
+| 8. Several Projects and a Switcher | v2.1 | 0/9 | Not started | - |
 | 9. Review, Audit and Root Document Pages | v2.1 | 0/TBD | Not started | - |
 | 10. Codebase Map, Specification and Check Pages | v2.1 | 0/TBD | Not started | - |
 | 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 0/TBD | Not started | - |
