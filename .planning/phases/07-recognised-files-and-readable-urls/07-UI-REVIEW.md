@@ -56,15 +56,15 @@ overall_score: 20
 
 ## Top 3 Priority Fixes
 
-1. **The not-found link reads as plain text.** In `src/web/pages/not-found-page.tsx`, "Return to the dashboard" has no class and renders like body text, so the way back is hard to spot. Fix: give the `Link` the existing `text-link` vocabulary class. No new class is needed.
-2. **The populated image states are unverified.** These were not seen, because the fixture PNG is 1x1 and the SVG is 24x12:
+1. **Visuals: the not-found link reads as plain text.** In `src/web/pages/not-found-page.tsx`, "Return to the dashboard" has no class and renders like body text, so the way back is hard to spot. Fix: give the `Link` the existing `text-link` vocabulary class. No new class is needed.
+2. **Experience Design: the populated image states are unverified.** These were not seen, because the fixture PNG is 1x1 and the SVG is 24x12:
    - Fit to width on a wide image
    - Actual size scrolling horizontally inside `.figure-frame-body`
    - Grid over a transparent PNG
    - Expand at actual size
 
    The code (`figure-frame.tsx` and the `.figure-frame-body img` rules) looks correct. Confirm it in the end-of-phase walkthrough with a scratch copy of the fixture that has a wide PNG and a transparent PNG.
-3. **Inherited off-contract type and spacing remain on the new pages.** This is the third weight on `.places-badge` and the 11.2px / 10px / 12px values on the info card. The contract accepts them and forbids copying them, so track this as known debt, not a fix for this phase.
+3. **Typography and Spacing: inherited off-contract values remain on the new pages.** This is the third weight on `.places-badge` and the 11.2px / 10px / 12px values on the info card. The contract accepts them and forbids copying them, so track this as known debt, not a fix for this phase.
 
 ---
 
