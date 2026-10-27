@@ -8,6 +8,12 @@
 // an internal file's `file/` address included, is `not-found`, so a miss never hints that a file
 // exists (D-11). A redirect target is always a value taken from the payload (T-07-17).
 import {
+  legacyQueryRedirect,
+  parseLegacyUrl,
+  resolveLegacyTarget,
+  resolveUnprefixedAddress,
+} from '../presentation/legacy-routes.ts';
+import {
   buildPhaseUrl,
   buildUrl,
   parseRoutePath,
@@ -32,6 +38,15 @@ const NOT_FOUND: RouteOutcome = { kind: 'not-found' };
 function redirectTo(target: string): RouteOutcome {
   if (!target.startsWith('/') || target.startsWith('//') || target.startsWith('/\\')) return NOT_FOUND;
   return { kind: 'redirect', to: target };
+}
+
+/** An old encoded address (`/milestones/m~...`, `/artifacts/a~...`): a redirect to the readable address it
+ * stands for, or the not-found outcome when the payload has nothing there (D-13). */
+function legacyOutcome(pathname: string, search: string, presentation: ProjectPresentation): RouteOutcome {
+  const parsed = parseLegacyUrl(pathname);
+  if (!parsed.ok) return NOT_FOUND;
+  const target = resolveLegacyTarget(parsed.route, search, presentation);
+  return target === null ? NOT_FOUND : redirectTo(target);
 }
 
 /** The document outcome of an address some artifact carries as its key, else null. */
@@ -82,18 +97,32 @@ function planOutcome(
 }
 
 /**
+ * Decides what an address typed WITHOUT the project slug becomes (`/roadmap`, `/search?q=kiln`,
+ * `/artifacts/a~...`): a redirect to the same address under the slug, or the not-found outcome. `path` is
+ * the whole raw pathname. The gate calls this only for an old top-level page word or a legacy first segment.
+ */
+export function resolveUnprefixedRoute(
+  path: string,
+  search: string,
+  presentation: ProjectPresentation,
+): RouteOutcome {
+  const target = resolveUnprefixedAddress(path, search, presentation);
+  return target === null ? NOT_FOUND : redirectTo(target);
+}
+
+/**
  * Decides the page for a project-relative address. `path` is the raw pathname minus the project slug
- * (`/`, `/v1.1/phase-2/plan-01/summary`), `presentation` the loaded payload. `_search` is reserved for
- * the legacy `?doc=` redirects (07-08); no current address reads a query.
+ * (`/`, `/v1.1/phase-2/plan-01/summary`), `presentation` the loaded payload. `search` is read only by the
+ * old-link redirects: `?doc=summary` on a plan address (D-05) and on an old `/plans/<id>` link.
  */
 export function resolveProjectRoute(
   path: string,
-  _search: string,
+  search: string,
   presentation: ProjectPresentation,
 ): RouteOutcome {
   const parsed = parseRoutePath(path);
-  // A malformed address and an old encoded shape (07-08 redirects those) are both misses here.
-  if (!parsed.ok || parsed.route.kind === 'legacy') return NOT_FOUND;
+  if (!parsed.ok) return NOT_FOUND;
+  if (parsed.route.kind === 'legacy') return legacyOutcome(parsed.route.pathname, search, presentation);
   const route = parsed.route;
 
   const simple = pageOrOverviewOutcome(route, presentation);
@@ -107,8 +136,11 @@ export function resolveProjectRoute(
         .some((phase) => buildPhaseUrl(phase.identity) === url);
       return exists ? { kind: 'phase', url } : (documentOutcome(url, presentation) ?? NOT_FOUND);
     }
-    case 'plan':
-      return planOutcome(route, presentation);
+    case 'plan': {
+      // D-05: an old `?doc=summary` on a plan address becomes the plan's /summary address.
+      const summary = legacyQueryRedirect(route, search, presentation);
+      return summary === null ? planOutcome(route, presentation) : redirectTo(summary);
+    }
     case 'document': {
       // D-03: a live alias has one address, the file's own.
       const alias = Object.hasOwn(presentation.routeAliases, route.url)
