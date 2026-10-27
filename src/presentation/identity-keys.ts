@@ -3,7 +3,7 @@
 // these encoders; none of them is navigation. They keep their `m~` / `p~` / `a~` shapes unchanged so those
 // joins and the dense golden do not churn when the readable URL grammar replaces the encoded URLs.
 // routes.ts re-exports the three key functions, so every importer keeps working. The decoders for the same
-// shapes live in legacy-routes.ts, which is deleted at v2.1 close (D-14); this module stays.
+// shapes live in the legacy module, which is deleted at v2.1 close (D-14); this module stays.
 import type { PhaseIdentity } from '../domain/model.ts';
 
 export const MILESTONE_PREFIX = 'm~';
