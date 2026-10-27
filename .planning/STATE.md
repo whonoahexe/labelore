@@ -5,16 +5,16 @@ milestone_name: Wayfinding
 current_phase: 07
 current_phase_name: Recognised Files and Readable URLs
 status: executing
-stopped_at: Completed 07-04-PLAN.md
-last_updated: "2026-10-27T05:37:35.877Z"
+stopped_at: Completed 07-05-PLAN.md
+last_updated: "2026-10-27T05:59:26.579Z"
 last_activity: 2026-10-27
 last_activity_desc: Phase 07 execution started
-state_head: 80716f5e4c1e1c3548d2adb83b4b8377ff501dd9
+state_head: 6d7f87ac2a020094f0a998f878dcd50862c008bd
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 32
-  completed_plans: 26
+  completed_plans: 27
   percent: 13
 ---
 
@@ -30,8 +30,8 @@ See: .planning/PROJECT.md (updated 2026-10-26)
 ## Current Position
 
 Phase: 07 (Recognised Files and Readable URLs) — EXECUTING
-Plan: 5 of 10
-Status: Executing Phase 07
+Plan: 6 of 10
+Status: Ready to execute
 Last activity: 2026-10-27 — Phase 07 execution started
 
 Progress: [█░░░░░░░░░] 13%
@@ -108,6 +108,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 07 P02 | 21 min | 3 tasks | 31 files |
 | Phase 07 P03 | 35min | 3 tasks | 51 files |
 | Phase 07 P04 | 26min | 3 tasks | 35 files |
+| Phase 07 P05 | 75 min | 2 tasks | 24 files |
 
 ## Accumulated Context
 
@@ -167,6 +168,7 @@ milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) a
 - [Phase 07]: 07-04: normalizePhaseNumber returns unencoded text; phaseSegmentOf encodes the whole segment once
 - [Phase 07]: 07-04: parseRoutePath canonicalises zero-padded phases and milestone- prefixed GSD versions, and a legacy Route keeps the raw input including its fragment
 - [Phase 07]: 07-04: every claimant of an alias address (stray milestones/<live>-ROADMAP.md) is demoted to file/ and reported; a phase-page clash is reported with both folder paths
+- [Phase 07]: 07-05: browser specs open every address via test/e2e/app-url.ts (projectUrl/artifactUrl) and assert with DTO-key addresses; test/e2e-url-contract.test.ts keeps raw URLs out
 
 ### Pending Todos
 
@@ -212,8 +214,8 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-10-26T21:07:25.034Z
-Stopped at: Completed 07-04-PLAN.md
+Last session: 2026-10-27T05:59:26.490Z
+Stopped at: Completed 07-05-PLAN.md
 Resume file: None
 
 ## Operator Next Steps
