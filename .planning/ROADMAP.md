@@ -46,7 +46,7 @@ projects, and URLs read like what they point to, with search that is quicker to 
 read.
 
 - [x] **Phase 6: Trustworthy Tests and Security Baseline** - The suite passes every run on made-up fixtures, and the promised security checks and secret masking are in place (completed 2026-10-26)
-- [ ] **Phase 7: Recognised Files and Readable URLs** - Every GSD file is recognised by where it lives and has one readable address starting with the project's name
+- [x] **Phase 7: Recognised Files and Readable URLs** - Every GSD file is recognised by where it lives and has one readable address starting with the project's name (completed 2026-10-27)
 - [ ] **Phase 8: Several Projects and a Switcher** - One run holds several projects, remembers them, and moves between them without mixing their data
 - [ ] **Phase 9: Review, Audit and Root Document Pages** - The root documents, milestone audits, coverage files and the review ledger open into designed pages
 - [ ] **Phase 10: Codebase Map, Specification and Check Pages** - Codebase maps, map-only projects, and the documents a phase is specified and checked with get pages, built on labelled made-up examples where none exists
@@ -153,7 +153,7 @@ to the same clean URLs, and none of them needs to change again.
    such as `v1.1`. *(NAV-10)*
 5. An old-style encoded link or bookmark redirects to its new readable URL. *(NAV-11)*
 
-**Plans**: 10/10 plans executed
+**Plans**: 10/10 plans complete
 
 Plans:
 **Wave 1**
@@ -397,7 +397,7 @@ file, ID or project.
 | 5 | v1.1 | 6/6 | Archived | 2026-09-21 |
 | quick tasks | v2.0 | 40/40 | Archived | 2026-10-25 |
 | 6. Trustworthy Tests and Security Baseline | v2.1 | 22/22 | Complete    | 2026-10-26 |
-| 7. Recognised Files and Readable URLs | v2.1 | 10/10 | In Progress | - |
+| 7. Recognised Files and Readable URLs | v2.1 | 10/10 | Complete    | 2026-10-27 |
 | 8. Several Projects and a Switcher | v2.1 | 0/TBD | Not started | - |
 | 9. Review, Audit and Root Document Pages | v2.1 | 0/TBD | Not started | - |
 | 10. Codebase Map, Specification and Check Pages | v2.1 | 0/TBD | Not started | - |

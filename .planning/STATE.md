@@ -2,45 +2,45 @@
 gsd_state_version: "1.0"
 milestone: v2.1
 milestone_name: Wayfinding
-current_phase: 07
-current_phase_name: Recognised Files and Readable URLs
-status: Awaiting human verification
-stopped_at: Phase 07 executed and verified (human_needed); 6 UAT checks pending in 07-UAT.md
-last_updated: "2026-10-27T11:25:49.360Z"
+current_phase: 8
+current_phase_name: Several Projects and a Switcher
+status: planning
+stopped_at: Phase 07 complete, ready to plan Phase 8
+last_updated: "2026-10-27T14:02:06.228Z"
 last_activity: 2026-10-27
-last_activity_desc: Phase 07 execution started
-state_head: 2c3b502dd635fc6e22f293fa9c4365c518a3dc91
+last_activity_desc: Phase 07 complete, transitioned to Phase 8
+state_head: 2787e8baf08198b70268fe1ccc2c82b23d68aa54
 progress:
   total_phases: 8
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 32
   completed_plans: 32
-  percent: 13
+  percent: 20
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-10-26)
+See: .planning/PROJECT.md (updated 2026-10-27)
 
 **Core value:** Open the dashboard on a GSD project and immediately know where the work stands and where any planning artifact lives — without reading a single file by hand.
-**Current focus:** Phase 07 — Recognised Files and Readable URLs
+**Current focus:** Phase 8 — Several Projects and a Switcher
 
 ## Current Position
 
-Phase: 07 (Recognised Files and Readable URLs) — EXECUTING
-Plan: 10 of 10
-Status: Awaiting human verification
-Last activity: 2026-10-27 — Phase 07 execution started
+Phase: 8 — Several Projects and a Switcher
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-10-27 — Phase 07 complete, transitioned to Phase 8
 
-Progress: [█░░░░░░░░░] 13%
+Progress: [██░░░░░░░░] 20%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 58
+- Total plans completed: 68
 - Average duration: —
 - Total execution time: 0.0 hours
 
@@ -54,6 +54,7 @@ Progress: [█░░░░░░░░░] 13%
 | 04 | 6 | - | - |
 | 05 | 6 | - | - |
 | 06 | 22 | - | - |
+| 07 | 10 | - | - |
 
 **Recent Trend:**
 
@@ -223,10 +224,10 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-10-27T08:21:34.662Z
-Stopped at: Phase 07 executed and verified (human_needed); 6 UAT checks pending in 07-UAT.md
+Last session: 2026-10-27T14:05:00Z
+Stopped at: Phase 07 complete, ready to plan Phase 8
 Resume file: None
 
 ## Operator Next Steps
 
-- Run /gsd-verify-work 7 to walk the six human checks in 07-UAT.md; the phase completes when they pass
+- Phase 07 UAT passed 6/6; run /gsd-discuss-phase 8 (or /gsd-plan-phase 8) to start Several Projects and a Switcher

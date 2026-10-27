@@ -1,7 +1,7 @@
 ---
 phase: 07-recognised-files-and-readable-urls
 verified: 2026-10-27T11:40:00Z
-status: human_needed
+status: passed
 score: "5/5 roadmap success criteria verified; all plan truths verified except 3 backstop (screenshot) truths routed to human"
 covered_files:
   - ".planning/phases/07-recognised-files-and-readable-urls/07-01-PLAN.md"

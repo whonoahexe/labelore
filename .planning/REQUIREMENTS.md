@@ -39,7 +39,7 @@ v1.0 and v1.1; new categories start at 01.
 - [x] **DATA-07**: Every file type GSD writes is recognised by where it lives as well as by its name, including
       files GSD names without a phase prefix (`COVERAGE.md`), `HANDOFF.json` and `.continue-here.md`, and GSD's
       internal files (temporary folders, locks, `state.json`) are kept out of the drawer and search
-- [ ] **DATA-08**: Images and other binary files are recognised as such and never read or indexed as text
+- [x] **DATA-08**: Images and other binary files are recognised as such and never read or indexed as text
 
 ### Pages for every GSD file type
 
@@ -87,7 +87,7 @@ Each page is sketched first, then built and screenshot-checked against the winni
       `/labelore/notes/per-kind-artifact-rendering` and `/labelore/roadmap`
 - [x] **NAV-10**: Every file has exactly one URL, including files that fit no clean pattern, no two files share
       one, and opening or reloading any URL directly lands on the right page
-- [ ] **NAV-11**: Old-style encoded links redirect to their new readable URL
+- [x] **NAV-11**: Old-style encoded links redirect to their new readable URL
 
 ### Command palette
 
@@ -180,7 +180,7 @@ Which phases cover which requirements. Filled in when the roadmap is created.
 | SEC-04 | Phase 6 | Complete |
 | SEC-05 | Phase 8 | Pending |
 | DATA-07 | Phase 7 | Complete |
-| DATA-08 | Phase 7 | Pending |
+| DATA-08 | Phase 7 | Complete |
 | VIEW-07 | Phase 9 | Pending |
 | VIEW-08 | Phase 9 | Pending |
 | VIEW-09 | Phase 9 | Pending |
@@ -202,7 +202,7 @@ Which phases cover which requirements. Filled in when the roadmap is created.
 | TGT-09 | Phase 10 | Pending |
 | NAV-09 | Phase 7 | Complete |
 | NAV-10 | Phase 7 | Complete |
-| NAV-11 | Phase 7 | Pending |
+| NAV-11 | Phase 7 | Complete |
 | NAV-08 | Phase 13 | Pending |
 | NAV-12 | Phase 13 | Pending |
 | NAV-13 | Phase 13 | Pending |
