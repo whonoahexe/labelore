@@ -7,6 +7,7 @@ import { presentationRoutePatterns } from '../../src/presentation/routes.ts';
 import type { ProjectPresentation } from '../../src/server/project-presentation.ts';
 import { resolveProjectRoute, type RouteOutcome } from '../../src/web/route-dispatch.ts';
 import { FX_ROOT, loadProject } from '../helpers/fixture-project.ts';
+import { legacyArtifactUrl } from '../helpers/legacy-urls.ts';
 import { SHAPES_ROOT } from '../helpers/shapes-project.ts';
 
 const shapes: ProjectPresentation = (await loadProject(SHAPES_ROOT)).presentation;
@@ -173,6 +174,21 @@ describe('redirect targets that are not a project-relative path (T-07-17)', () =
   it('does not read an inherited property as an alias', () => {
     expect(resolve('/constructor')).toEqual({ kind: 'not-found' });
     expect(resolve('/__proto__')).toEqual({ kind: 'not-found' });
+  });
+});
+
+describe('an old artifact link (NAV-11, tracer)', () => {
+  it("redirects to the file's readable address", () => {
+    expect(resolveProjectRoute(legacyArtifactUrl('.planning/STATE.md'), '', shapes)).toEqual({
+      kind: 'redirect',
+      to: '/state',
+    });
+  });
+
+  it('is not-found when the payload has no such file, never a parent page (D-13)', () => {
+    expect(resolveProjectRoute(legacyArtifactUrl('.planning/no-such-file.md'), '', shapes)).toEqual({
+      kind: 'not-found',
+    });
   });
 });
 

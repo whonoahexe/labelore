@@ -5,7 +5,9 @@
 // below are copies of the ones the readable grammar owns in routes.ts, so deleting this module takes them
 // with it.
 import type { PhaseIdentity } from '../domain/model.ts';
+import type { ProjectPresentation } from '../server/project-presentation.ts';
 import { ARTIFACT_PREFIX, MILESTONE_PREFIX } from './identity-keys.ts';
+import { parseRoutePath } from './routes.ts';
 
 const PHASE_PREFIX = 'p~';
 
@@ -256,4 +258,47 @@ export function parseLegacyUrl(input: string): LegacyRouteParseResult {
     };
   }
   return failure('unsupported-route', 'Nested phase route is unsupported');
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// The redirect path (NAV-11): an old address becomes the readable one it stands for
+// ---------------------------------------------------------------------------------------------------------
+
+/** A redirect target is a project-relative path: one leading '/', never '//host' or '/\host' (which a
+ * browser reads as another origin), and it must parse as a live route, never as another legacy shape, so a
+ * redirect can neither leave the app nor loop (T-07-20, T-07-21). The query of a target is not part of the
+ * route text. Anything else is null. */
+function safeTarget(value: string | null): string | null {
+  if (value === null || !value.startsWith('/')) return null;
+  if (value.startsWith('//') || value.startsWith('/\\')) return null;
+  const cut = value.search(/[?#]/);
+  const parsed = parseRoutePath(cut < 0 ? value : value.slice(0, cut));
+  return parsed.ok && parsed.route.kind !== 'legacy' ? value : null;
+}
+
+function artifactTarget(artifactPath: string, presentation: ProjectPresentation): string | null {
+  return presentation.artifacts.find((artifact) => artifact.path === artifactPath)?.key ?? null;
+}
+
+function legacyTargetOf(route: LegacyRoute, presentation: ProjectPresentation): string | null {
+  switch (route.kind) {
+    case 'artifact':
+      return artifactTarget(route.artifactPath, presentation);
+    default:
+      return null;
+  }
+}
+
+/**
+ * The readable address an old encoded address stands for, taken only from the loaded payload (artifact keys,
+ * plan keys, phase identities, milestone overview addresses), or null when the payload has nothing there.
+ * Null is a miss: the caller renders the not-found page, never a parent. `search` is the old link's query
+ * (`?doc=summary` picks a plan's summary).
+ */
+export function resolveLegacyTarget(
+  route: LegacyRoute,
+  _search: string,
+  presentation: ProjectPresentation,
+): string | null {
+  return safeTarget(legacyTargetOf(route, presentation));
 }
