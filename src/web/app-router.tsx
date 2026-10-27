@@ -9,6 +9,7 @@ import {
   useRouteError,
   type RouteObject,
 } from 'react-router';
+import { LEGACY_FIRST_SEGMENTS, PROJECT_PAGES } from '../presentation/reserved.ts';
 import { presentationRoutePatterns } from '../presentation/routes.ts';
 import type { ProjectPresentation } from '../server/project-presentation.ts';
 import { AppShell, fetchPresentation } from './components/app-shell.tsx';
@@ -17,7 +18,7 @@ import { Link, ProjectSlugProvider } from './nav.tsx';
 import { InvalidProjectScreen } from './pages/invalid-project-screen.tsx';
 import { NotFoundPage } from './pages/not-found-page.tsx';
 import { decodeAddress, projectGateOutcome, splitProjectPath, withProjectSlug } from './project-path.ts';
-import { resolveProjectRoute } from './route-dispatch.ts';
+import { resolveProjectRoute, resolveUnprefixedRoute } from './route-dispatch.ts';
 
 // Every routed page is lazy()-loaded, and every factory goes through `trackRouteChunk` so the
 // shell's top bar can show during navigations as well as on the initial load — a bare Suspense
@@ -152,6 +153,41 @@ function RootRedirect(): React.JSX.Element {
   return <AppShell />;
 }
 
+const UNPREFIXED_WORDS: ReadonlySet<string> = new Set([...PROJECT_PAGES, ...LEGACY_FIRST_SEGMENTS]);
+
+/** True for a first segment that names an old top-level page or an old encoded shape, not a project. */
+function isUnprefixedLegacyWord(first: string): boolean {
+  return UNPREFIXED_WORDS.has(first);
+}
+
+/**
+ * NAV-11: an old address typed without the project slug. The dispatcher either redirects it, silently and
+ * replacing the history entry, to the same address under the open project (the old #heading kept), or it
+ * is a miss and the normal not-found page names the old pathname (D-13). Renders nothing of its own.
+ */
+function UnprefixedLegacy({
+  presentation,
+}: {
+  presentation: ProjectPresentation;
+}): React.JSX.Element {
+  const location = useLocation();
+  const outcome = resolveUnprefixedRoute(location.pathname, location.search, presentation);
+  return (
+    <ProjectSlugProvider value={presentation.projectSlug}>
+      <AppShell>
+        {outcome.kind === 'redirect' ? (
+          <Navigate replace to={redirectLocation(presentation.projectSlug, outcome.to, location.hash)} />
+        ) : (
+          <NotFoundPage
+            address={decodeAddress(location.pathname)}
+            openSlug={presentation.projectSlug}
+          />
+        )}
+      </AppShell>
+    </ProjectSlugProvider>
+  );
+}
+
 /**
  * D-14: gates the entire routed tree on a valid project. Runs the same `['presentation']` query
  * and imported `fetchPresentation` fetcher `AppShell` uses (no second request, no second
@@ -168,6 +204,10 @@ function ProjectGate(): React.JSX.Element {
   const outcome = projectGateOutcome(project, presentation.data);
   if (presentation.data && presentation.data.loadStatus.status !== 'ok') {
     return <InvalidProjectScreen loadStatus={presentation.data.loadStatus} />;
+  }
+  if (presentation.data && outcome === 'wrong-project' && isUnprefixedLegacyWord(project)) {
+    // NAV-11: an address from before the slug existed (`/roadmap`, `/search?q=...`, `/artifacts/a~...`).
+    return <UnprefixedLegacy presentation={presentation.data} />;
   }
   if (presentation.data && outcome === 'wrong-project') {
     // NAV-09: the first segment is not this project's name. The shell's own links lead into the
