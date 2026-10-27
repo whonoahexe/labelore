@@ -9,7 +9,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { fxPath } from '../helpers/fixture-project.ts';
-import { buildArtifactUrl, buildPhaseUrl } from '../../src/presentation/routes.ts';
+import { buildPhaseUrl } from '../../src/presentation/routes.ts';
 import { SummaryHandler } from '../../src/planning-repo/handlers/summary.ts';
 import type { ArtifactRef, RawArtifact } from '../../src/planning-repo/types.ts';
 import {
@@ -443,13 +443,14 @@ describe('modal bodies and the preview card', () => {
 });
 
 describe('requirementPreviews / lineageLinks', () => {
-  const file = (path: string, items: unknown[], traceability: unknown[] = []) => ({ path, structured: { items, outOfScope: [], traceability } });
+  // The key is deliberately not what a path would build (`/v1.1/requirements`): the preview must read it.
+  const file = (path: string, items: unknown[], traceability: unknown[] = []) => ({ key: `/key-of/${path}`, path, structured: { items, outOfScope: [], traceability } });
   const presentation: SummaryPresentation = {
     artifacts: [
       file('.planning/REQUIREMENTS.md', [{ id: 'ROOT-01', text: 'Root text', checked: false }, { id: 'BOTH-01', text: 'Root both', checked: true }], [{ requirementId: 'ROOT-01', phase: 'Phase 6 — Six', status: 'Pending' }]),
       file('.planning/milestones/v1.1-REQUIREMENTS.md', [{ id: 'VIEW-01', text: 'View one', checked: true }, { id: 'BOTH-01', text: 'v1.1 both', checked: true }], [{ requirementId: 'VIEW-01', phase: 'Phase 5', status: 'Complete' }]),
       file('.planning/milestones/v1.0-REQUIREMENTS.md', [{ id: 'OLD-01', text: 'Old one', checked: null }, { id: 'BOTH-01', text: 'v1.0 both', checked: true }]),
-      { path: '.planning/milestones/v1.1-MILESTONE-AUDIT.md', structured: {} },
+      { key: '/v1.1/audit', path: '.planning/milestones/v1.1-MILESTONE-AUDIT.md', structured: {} },
     ],
     milestones: [
       { phases: [{ identity: { milestoneVersion: 'v1.0', number: '02', projectCode: null, slug: 'situational-awareness' } }] },
@@ -461,7 +462,7 @@ describe('requirementPreviews / lineageLinks', () => {
   it('prefers the summary’s own milestone file, then the root, then the archives newest first', () => {
     const own = requirementPreviews(presentation, '.planning/milestones/v1.1-phases/05-x/05-01-SUMMARY.md', refs('VIEW-01', 'BOTH-01'), false);
     expect(own['VIEW-01']).toMatchObject({ found: true, text: 'View one', status: 'Complete', location: '.planning/milestones/v1.1-REQUIREMENTS.md', phase: 'Phase 5' });
-    expect(own['VIEW-01'].url).toBe(buildArtifactUrl(null, '.planning/milestones/v1.1-REQUIREMENTS.md'));
+    expect(own['VIEW-01'].url).toBe('/key-of/.planning/milestones/v1.1-REQUIREMENTS.md');
     expect(own['BOTH-01'].text).toBe('v1.1 both');
     const live = requirementPreviews(presentation, '.planning/phases/06-y/06-01-SUMMARY.md', refs('ROOT-01', 'BOTH-01', 'OLD-01', 'VIEW-01'), false);
     expect(live['ROOT-01']).toMatchObject({ status: 'Pending', phase: 'Phase 6 — Six', location: '.planning/REQUIREMENTS.md' });
