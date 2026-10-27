@@ -4,17 +4,17 @@ milestone: v2.1
 milestone_name: Wayfinding
 current_phase: 07
 current_phase_name: Recognised Files and Readable URLs
-status: executing
-stopped_at: Completed 07-07-PLAN.md
-last_updated: "2026-10-27T07:03:39.826Z"
+status: verifying
+stopped_at: Completed 07-10-PLAN.md
+last_updated: "2026-10-27T08:21:34.786Z"
 last_activity: 2026-10-27
 last_activity_desc: Phase 07 execution started
-state_head: 352583fe08ae58cda084b630f12b5c6331e5ddc4
+state_head: 9542dca8afe0f3194e048136b4e7b1b35a5768d1
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 32
-  completed_plans: 31
+  completed_plans: 32
   percent: 13
 ---
 
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-10-26)
 
 Phase: 07 (Recognised Files and Readable URLs) — EXECUTING
 Plan: 10 of 10
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-10-27 — Phase 07 execution started
 
 Progress: [█░░░░░░░░░] 13%
@@ -111,6 +111,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 07 P05 | 75 min | 2 tasks | 24 files |
 | Phase 07 P06 | 17 min | 3 tasks | 33 files |
 | Phase 07 P07 | 23 min | 3 tasks | 18 files |
+| Phase 07 P10 | 78 min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -175,6 +176,8 @@ milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) a
 - [Phase 07]: 07-06: payload carries MilestoneDto.overviewUrl/roadmapUrl, routeAliases and urlConflicts; the drawer shipped-milestone header links straight to roadmapUrl, roadmap rows keep the overview URL
 - [Phase 07]: 07-07: a phase or plan address with no DTO still opens as a document when an artifact carries that key; otherwise not-found
 - [Phase 07]: 07-07: redirects keep the location hash; redirect targets come only from roadmapUrl and routeAliases and must start with a single slash
+- [Phase 07]: Vite's dev WebSocket shares the dev server's own HTTP server (server.ws.server) because Vite 8 ignores server.hmr:false and binds the fixed port 24678
+- [Phase 07]: The 4197 development and 4196 build-then-start Shapes servers are unconditional in playwright.config.ts, matching the fail-loud 4198 rule
 
 ### Pending Todos
 
@@ -220,8 +223,8 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-10-27T06:43:06.867Z
-Stopped at: Completed 07-07-PLAN.md
+Last session: 2026-10-27T08:21:34.662Z
+Stopped at: Completed 07-10-PLAN.md
 Resume file: None
 
 ## Operator Next Steps
