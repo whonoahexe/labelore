@@ -54,6 +54,7 @@ const PINNED: Record<string, Pinned> = {
   'LB:milestones/v1.0-phases/03-search-browsing-traceability/03-PATTERNS.md': { rows: 18, exact: 12, role: 6, partial: 0, none: 0, groups: 0, shared: 7 },
   'LB:milestones/v1.0-phases/04-portability-degradation-hardening/04-PATTERNS.md': { rows: 16, exact: 11, role: 4, partial: 0, none: 1, groups: 0, shared: 6 },
   'LB:phases/06-trustworthy-tests-and-security-baseline/06-PATTERNS.md': { rows: 28, exact: 18, role: 7, partial: 1, none: 2, groups: 0, shared: 5, excerpts: 12 },
+  'LB:phases/07-recognised-files-and-readable-urls/07-PATTERNS.md': { rows: 27, exact: 18, role: 5, partial: 3, none: 1, groups: 0, shared: 7, excerpts: 12 },
   'FX:milestones/v1.0-phases/02-shed-inventory-health/02-PATTERNS.md': { rows: 22, exact: 6, role: 4, partial: 4, none: 8, groups: 5, shared: 5, excerpts: 16 },
   'FX:milestones/v1.0-phases/03-catalogue-browsing/03-PATTERNS.md': { rows: 9, exact: 5, role: 4, partial: 0, none: 0, groups: 0, shared: 4, excerpts: 2 },
   'FX:milestones/v1.0-phases/04-shed-to-shed-transfers/04-PATTERNS.md': { rows: 13, exact: 6, role: 3, partial: 2, none: 2, groups: 0, shared: 4, excerpts: 2 },
