@@ -38,6 +38,7 @@ import { createFileDates } from './file-dates.ts';
 import { jsonRecord, toProjectPresentation } from './project-presentation.ts';
 import { createSearchIndexState, searchIndex } from './search-index.ts';
 import { createSketchFileMiddleware } from './sketch-files.ts';
+import { createFileBytesHandler } from './file-bytes.ts';
 
 const DEFAULT_PORT = 4173;
 const HOSTNAME = '127.0.0.1';
@@ -365,6 +366,9 @@ export function createApp(
       }),
     );
   });
+  // D-08: the images-only bytes route; the bundle is captured inside the handler, and the filesystem is
+  // called as a method on `source` (never an extracted reference), so `this` survives.
+  app.all('/api/files', createFileBytesHandler(() => derived, () => source.planningFilesystem?.() ?? null));
   app.all('/api/*', (c) => c.json({ error: 'API route not found' }, 404));
   // Called as a method on `source` (never an extracted reference), so `this` survives.
   app.use('/sketches/*', createSketchFileMiddleware(() => source.planningFilesystem?.() ?? null));

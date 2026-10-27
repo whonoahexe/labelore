@@ -17,6 +17,7 @@ import {
   quickTaskKeyForPath,
   shippedOwnerOf,
 } from '../../presentation/drawer-route.ts';
+import { fileBadgeOf, fileNameOf } from '../../presentation/file-facts.ts';
 import { stripEmoji } from '../pages/strip-emoji.ts';
 
 async function fetchDrawer(): Promise<DrawerViewModel> {
@@ -50,7 +51,10 @@ function WarningIndicator({
   );
 }
 
-function FileRow({
+/** One file in the drawer. A non-text file (image, binary, large text) carries `data-file-class` and a
+ * quiet type-and-size badge: `{EXT} · {size}` for the eye (aria-hidden) and `, {Type}, {size}` for a
+ * screen reader. No tone, no icon, no accent: the mark is information, not status (Phase 7, D-09). */
+export function FileRow({
   row,
   pathname,
   onNavigate,
@@ -60,11 +64,13 @@ function FileRow({
   onNavigate: () => void;
 }): React.JSX.Element {
   const active = row.url === pathname;
+  const badge = row.fileClass === 'text' ? null : fileBadgeOf(fileNameOf(row.path), row.fileClass, row.sizeBytes);
   return (
     <Link
       to={row.url}
       className="places-file-row"
       data-active={active ? 'true' : undefined}
+      data-file-class={row.fileClass === 'text' ? undefined : row.fileClass}
       aria-current={active ? 'page' : undefined}
       onClick={onNavigate}
     >
@@ -72,6 +78,14 @@ function FileRow({
       <span className="places-label" title={row.path}>
         {row.label}
       </span>
+      {badge ? (
+        <>
+          <span className="places-badge" aria-hidden="true">
+            {badge.visible}
+          </span>
+          <span className="sr-only">{badge.spoken}</span>
+        </>
+      ) : null}
       <WarningIndicator warningTone={row.warningTone} />
     </Link>
   );
