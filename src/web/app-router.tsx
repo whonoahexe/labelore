@@ -71,7 +71,14 @@ const PAGES = {
   research: ResearchPage,
 } as const;
 
-function RouteError(): React.JSX.Element {
+/** A redirect's address under the project slug. The old link's #heading rides along unless the target
+ * carries a heading of its own; a target's own query (an un-prefixed `/search?q=kiln`) is kept. */
+function redirectLocation(slug: string, target: string, hash: string): string {
+  const prefixed = withProjectSlug(slug, target);
+  return prefixed.includes('#') ? prefixed : `${prefixed}${hash}`;
+}
+
+function RouteError():React.JSX.Element {
   const error = useRouteError();
   const message = isRouteErrorResponse(error)
     ? `${error.status} ${error.statusText}`
@@ -120,13 +127,7 @@ function ProjectRouteSwitch({
       return <DocumentRoute url={outcome.url} />;
     case 'redirect':
       return (
-        <Navigate
-          replace
-          to={{
-            pathname: withProjectSlug(presentation.projectSlug, outcome.to),
-            hash: location.hash,
-          }}
-        />
+        <Navigate replace to={redirectLocation(presentation.projectSlug, outcome.to, location.hash)} />
       );
     case 'not-found':
       break;

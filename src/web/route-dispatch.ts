@@ -7,6 +7,7 @@
 // A parsed address is only ever a lookup key into the payload. An address no payload entry answers,
 // an internal file's `file/` address included, is `not-found`, so a miss never hints that a file
 // exists (D-11). A redirect target is always a value taken from the payload (T-07-17).
+import { parseLegacyUrl, resolveLegacyTarget } from '../presentation/legacy-routes.ts';
 import {
   buildPhaseUrl,
   buildUrl,
@@ -32,6 +33,15 @@ const NOT_FOUND: RouteOutcome = { kind: 'not-found' };
 function redirectTo(target: string): RouteOutcome {
   if (!target.startsWith('/') || target.startsWith('//') || target.startsWith('/\\')) return NOT_FOUND;
   return { kind: 'redirect', to: target };
+}
+
+/** An old encoded address (`/milestones/m~...`, `/artifacts/a~...`): a redirect to the readable address it
+ * stands for, or the not-found outcome when the payload has nothing there (D-13). */
+function legacyOutcome(pathname: string, search: string, presentation: ProjectPresentation): RouteOutcome {
+  const parsed = parseLegacyUrl(pathname);
+  if (!parsed.ok) return NOT_FOUND;
+  const target = resolveLegacyTarget(parsed.route, search, presentation);
+  return target === null ? NOT_FOUND : redirectTo(target);
 }
 
 /** The document outcome of an address some artifact carries as its key, else null. */
@@ -88,12 +98,12 @@ function planOutcome(
  */
 export function resolveProjectRoute(
   path: string,
-  _search: string,
+  search: string,
   presentation: ProjectPresentation,
 ): RouteOutcome {
   const parsed = parseRoutePath(path);
-  // A malformed address and an old encoded shape (07-08 redirects those) are both misses here.
-  if (!parsed.ok || parsed.route.kind === 'legacy') return NOT_FOUND;
+  if (!parsed.ok) return NOT_FOUND;
+  if (parsed.route.kind === 'legacy') return legacyOutcome(parsed.route.pathname, search, presentation);
   const route = parsed.route;
 
   const simple = pageOrOverviewOutcome(route, presentation);
