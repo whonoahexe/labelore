@@ -43,7 +43,8 @@ export type {
   RouteParseResult as PresentationRouteParseResult,
 };
 
-/** Route patterns of the web's interim router; 07-07 replaces them with the readable dispatcher. */
+/** The six page paths, used as link targets. Every other address is decided by the web's dispatcher
+ * (`resolveProjectRoute`) from the payload, never from a router pattern. */
 export const presentationRoutePatterns = {
   dashboard: '/',
   roadmap: '/roadmap',
@@ -51,11 +52,6 @@ export const presentationRoutePatterns = {
   traceability: '/traceability',
   sketches: '/sketches',
   research: '/research',
-  milestone: '/milestones/:milestoneKey',
-  phase: '/milestones/:milestoneKey/phases/:phaseKey',
-  plan: '/milestones/:milestoneKey/phases/:phaseKey/plans/:planId',
-  phaseArtifact: '/milestones/:milestoneKey/phases/:phaseKey/artifacts/:artifactToken',
-  artifact: '/artifacts/:artifactToken',
 } as const;
 
 /** Appends a `#heading` fragment (leading hashes dropped, the rest encoded once). */
