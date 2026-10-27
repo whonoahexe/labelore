@@ -97,6 +97,19 @@ write to a target's `.planning/`.
   re-read before each change. It is written by a second, explicitly allow-listed `node:fs` importer
   whose path is fixed at construction. A test proves it can never resolve inside a target root.
   `local-fs.ts` stays read-only.
+- **D-20:** The D-18 Host allowlist also accepts the hosts in an opt-in **`LABELORE_ALLOWED_HOSTS`**
+  environment variable (comma-separated, empty by default), so a reverse-proxy or tunnel deployment
+  such as `labelore.brkn.me` keeps working. Origin is checked by comparing `new URL(origin).host`
+  with the request's Host. With the variable unset, only `127.0.0.1`/`localhost` on the server's port
+  are accepted. (Decided at plan time, answering research Open Question 1.)
+
+### Display and startup (decided at plan time, from research open questions)
+- **D-21:** The switcher and landing rows show the project's **`PROJECT.md` title** as the display
+  name, falling back to the folder basename when there is no readable title. The title is read
+  cheaply for the list, without loading the project. The slug still comes from the basename (D-11),
+  so editing the title never changes a URL.
+- **D-22:** A **CLI path that fails validation** at startup is listed with its reason **for that run
+  only** and is **not persisted** to `settings.json`. Only paths that open are remembered by D-09.
 
 ### Claude's Discretion
 - **Memory policy for loaded projects:** keep every loaded runtime for the run, or an LRU of the few
