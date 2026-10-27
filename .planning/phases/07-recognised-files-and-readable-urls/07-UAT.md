@@ -1,18 +1,14 @@
 ---
-status: testing
+status: complete
 phase: 07-recognised-files-and-readable-urls
 source: [07-VERIFICATION.md]
 started: 2026-10-27T11:24:30Z
-updated: 2026-10-27T14:01:23Z
+updated: 2026-10-27T14:01:47.150Z
 ---
 
 ## Current Test
 
-number: 6
-name: 07-08 walkthrough: open an old bookmark such as /milestones/m~v1.1/phases/<old key> and /artifacts/<old token>
-expected: |
-  The address switches to the readable URL with no notice, and Back does not return to the old address
-awaiting: user response
+[testing complete]
 
 ## Tests
 
@@ -38,14 +34,14 @@ result: pass
 
 ### 6. 07-08 walkthrough: open an old bookmark such as /milestones/m~v1.1/phases/<old key> and /artifacts/<old token>
 expected: The address switches to the readable URL with no notice, and Back does not return to the old address
-result: [pending]
+result: pass
 
 ## Summary
 
 total: 6
-passed: 5
+passed: 6
 issues: 0
-pending: 1
+pending: 0
 skipped: 0
 blocked: 0
 
