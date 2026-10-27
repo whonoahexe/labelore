@@ -4,7 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useProjectLocation } from '../nav.tsx';
 import type { PhaseIdentity } from '../../domain/model.ts';
 import type { ParseWarning } from '../../planning-repo/types.ts';
-import { ArtifactHeader, type ArtifactCrumb } from '../components/artifact-header.tsx';
+import { ArtifactHeader } from '../components/artifact-header.tsx';
+import { documentCrumbsOf } from './document-crumbs.ts';
 import {
   artifactWarningTone,
   type ArtifactWarningTone,
@@ -12,8 +13,6 @@ import {
 import { artifactWarningSummary } from '../../presentation/artifact-warning-summary.ts';
 import {
   buildArtifactUrl,
-  buildMilestoneUrl,
-  buildPhaseUrl,
   presentationRoutePatterns,
 } from '../../presentation/routes.ts';
 import { buildFrontmatterPanels } from '../../rendering/frontmatter-views.ts';
@@ -909,7 +908,7 @@ export function ArtifactPage({
     );
   }
 
-  const { artifact, phaseIdentity, document } = query.data;
+  const { artifact, document } = query.data;
   // D-10/D-11/D-12: one shared derivation of the damaged-artifact tone — the same function
   // tree.ts and search.ts call — computed from both warning arrays (a document-level warning
   // also earns a badge, per D-10) and the artifact's own bodyLength.
@@ -1093,20 +1092,7 @@ export function ArtifactPage({
       </main>
     );
   }
-  const crumbs: ArtifactCrumb[] = [
-    { label: 'Dashboard', to: presentationRoutePatterns.dashboard },
-    { label: 'Roadmap', to: presentationRoutePatterns.roadmap },
-    ...(phaseIdentity
-      ? [
-          {
-            label: phaseIdentity.milestoneVersion ?? 'Current milestone',
-            to: buildMilestoneUrl(phaseIdentity.milestoneVersion),
-          },
-          { label: `Phase ${phaseIdentity.number}`, to: buildPhaseUrl(phaseIdentity) },
-        ]
-      : []),
-    { label: artifact.title },
-  ];
+  const crumbs = documentCrumbsOf(presentationQuery.data, artifact.path, artifact.title);
   // quick-261006-iz6 (sketch-019 B): the PLAN task navigator opens straight on its own header (no
   // breadcrumb row, manifest lead or metadata disclosure) and replaces the page in View mode. Unlike
   // the other views, a plan carrying a parse warning keeps the navigator — wrapper warnings are common
