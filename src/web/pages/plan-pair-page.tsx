@@ -1,6 +1,5 @@
 import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router';
-import { Link, useProjectPathname } from '../nav.tsx';
+import { Link } from '../nav.tsx';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
 import { PairSwitch } from '../components/pair-switch.tsx';
@@ -33,24 +32,24 @@ async function fetchJson<T>(url: string): Promise<T> {
   return (await response.json()) as T;
 }
 
-async function loadPair(route: string, queryClient: QueryClient): Promise<PlanPairResponse> {
+async function loadPair(planUrl: string, queryClient: QueryClient): Promise<PlanPairResponse> {
   const presentation = await fetchJson<ProjectPresentation>('/api/presentation');
   const plan = presentation.milestones
     .flatMap((milestone) => milestone.phases)
     .flatMap((phase) => phase.plans)
-    .find((candidate) => candidate.key === route);
+    .find((candidate) => candidate.key === planUrl);
   if (!plan) throw new Error('This plan is not present in the current snapshot.');
   const planDocument = await fetchJson<DocumentResponse>(
-    `/api/documents?route=${encodeURIComponent(route)}`,
+    `/api/documents?route=${encodeURIComponent(planUrl)}`,
   );
   // The same `/api/documents` payload ArtifactPage queries for, so the tab it mounts opens without
   // a second request.
-  queryClient.setQueryData(['artifact-document', route], planDocument);
+  queryClient.setQueryData(['artifact-document', planUrl], planDocument);
   const meta = { id: plan.id, description: plan.description };
   if (!plan.summary) return { plan: planDocument, summary: null, meta };
-  const summaryRoute = presentation.artifacts.find(
-    (artifact) => artifact.path === plan.summary?.path,
-  )?.key;
+  const summaryRoute =
+    presentation.artifacts.find((artifact) => artifact.path === plan.summary?.path)?.key ??
+    plan.summary.key;
   if (!summaryRoute) return { plan: planDocument, summary: null, meta };
   const summaryDocument = await fetchJson<DocumentResponse>(
     `/api/documents?route=${encodeURIComponent(summaryRoute)}`,
@@ -59,13 +58,19 @@ async function loadPair(route: string, queryClient: QueryClient): Promise<PlanPa
   return { plan: planDocument, summary: summaryDocument, meta, summaryRoute };
 }
 
-export function PlanPairPage(): React.JSX.Element {
-  const pathname = useProjectPathname();
-  const [searchParams] = useSearchParams();
+/** D-05: the pair is two addresses, the plan's and its `/summary`; `planUrl` and `active` come from the
+ * dispatcher's plan-pair outcome, and the tabs are links between the two paths. */
+export function PlanPairPage({
+  planUrl,
+  active: requested,
+}: {
+  planUrl: string;
+  active: 'plan' | 'summary';
+}): React.JSX.Element {
   const queryClient = useQueryClient();
   const query = useQuery({
-    queryKey: ['plan-pair', pathname],
-    queryFn: () => loadPair(pathname, queryClient),
+    queryKey: ['plan-pair', planUrl],
+    queryFn: () => loadPair(planUrl, queryClient),
     staleTime: Number.POSITIVE_INFINITY,
   });
 
@@ -95,13 +100,13 @@ export function PlanPairPage(): React.JSX.Element {
     );
 
   const pair = query.data;
-  const active = searchParams.get('doc') === 'summary' && pair.summaryRoute ? 'summary' : 'plan';
+  const active = requested === 'summary' && pair.summaryRoute ? 'summary' : 'plan';
   const switcher = (
     <PairSwitch
       label={`Plan ${pair.meta.id} documents`}
       active={active}
-      planTo={{ search: '' }}
-      summaryTo={pair.summaryRoute ? { search: '?doc=summary' } : null}
+      planTo={planUrl}
+      summaryTo={pair.summaryRoute ?? null}
     />
   );
 
@@ -109,5 +114,5 @@ export function PlanPairPage(): React.JSX.Element {
   // navigator, the run view), keyed by route so View/Source mode resets between them.
   if (active === 'summary' && pair.summaryRoute)
     return <ArtifactPage key="summary" route={pair.summaryRoute} switcher={switcher} />;
-  return <ArtifactPage key="plan" route={pathname} switcher={switcher} />;
+  return <ArtifactPage key="plan" route={planUrl} switcher={switcher} />;
 }

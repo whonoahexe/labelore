@@ -11,7 +11,6 @@ vi.mock('react-router', async (importOriginal) => ({
 }));
 
 const { appRoutes } = await import('../../src/web/app-router.tsx');
-const { presentationRoutePatterns } = await import('../../src/presentation/routes.ts');
 const { projectGateOutcome } = await import('../../src/web/project-path.ts');
 
 function leafOf(pathname: string): RouteObject | undefined {
@@ -19,31 +18,24 @@ function leafOf(pathname: string): RouteObject | undefined {
 }
 
 describe('appRoutes', () => {
-  it('has a root redirect route and one /:project route', () => {
-    expect(appRoutes.map((route) => route.path)).toEqual(['/', '/:project']);
+  it('has exactly two entries: the root redirect and one splat route under the project', () => {
+    expect(appRoutes.map((route) => route.path)).toEqual(['/', '/:project/*']);
+    expect(appRoutes.every((route) => route.children === undefined)).toBe(true);
   });
 
-  it('maps the project root to the index child', () => {
-    expect(leafOf('/lendshed')?.index).toBe(true);
-    expect(leafOf('/lendshed/')?.index).toBe(true);
-  });
-
-  it('maps each page path to its own child', () => {
-    for (const key of ['roadmap', 'search', 'traceability', 'sketches', 'research'] as const) {
-      expect(leafOf(`/lendshed/${key}`)?.path).toBe(key);
+  it('sends every address under the slug to the one splat route', () => {
+    for (const path of [
+      '/lendshed',
+      '/lendshed/',
+      '/lendshed/roadmap',
+      '/lendshed/v1.1/overview',
+      '/lendshed/v1.1/phase-2.1/plan-01/summary',
+      '/lendshed/quick/261024-qhq/summary',
+      '/lendshed/file/state.json',
+      '/lendshed/no/such',
+    ]) {
+      expect(leafOf(path)?.path, path).toBe('/:project/*');
     }
-  });
-
-  it('maps the encoded milestone, phase and artifact urls under the slug', () => {
-    expect(leafOf('/lendshed/milestones/m~v1.1/phases/x')?.path).toBe(
-      presentationRoutePatterns.phase.slice(1),
-    );
-    expect(leafOf('/lendshed/milestones/m~v1.1')?.path).toBe(
-      presentationRoutePatterns.milestone.slice(1),
-    );
-    expect(leafOf('/lendshed/artifacts/a~x')?.path).toBe(
-      presentationRoutePatterns.artifact.slice(1),
-    );
   });
 
   it('hands the slug to the route as the project parameter', () => {
@@ -51,15 +43,11 @@ describe('appRoutes', () => {
     expect(matches?.[0].params.project).toBe('lendshed');
   });
 
-  it('sends an unmapped address under the slug to the * child', () => {
-    expect(leafOf('/lendshed/no/such')?.path).toBe('*');
-  });
-
   it('answers a bare un-prefixed page address as a project named after it', () => {
     // /roadmap alone reads as the project "roadmap"; the gate then finds it is not the open project.
     const matches = matchRoutes(appRoutes, '/roadmap');
     expect(matches?.[0].params.project).toBe('roadmap');
-    expect(leafOf('/roadmap')?.index).toBe(true);
+    expect(leafOf('/roadmap')?.path).toBe('/:project/*');
   });
 
   it('mounts / on its own route', () => {

@@ -18,7 +18,7 @@ describe('route-level code splitting (entry chunk fix)', () => {
       'roadmap-page.tsx',
       'search-page.tsx',
       'traceability-page.tsx',
-      'artifact-page.tsx',
+      'document-route.tsx',
       'plan-pair-page.tsx',
       'sketches-page.tsx',
       'research-page.tsx',
