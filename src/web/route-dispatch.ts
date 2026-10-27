@@ -7,7 +7,12 @@
 // A parsed address is only ever a lookup key into the payload. An address no payload entry answers,
 // an internal file's `file/` address included, is `not-found`, so a miss never hints that a file
 // exists (D-11). A redirect target is always a value taken from the payload (T-07-17).
-import { parseLegacyUrl, resolveLegacyTarget } from '../presentation/legacy-routes.ts';
+import {
+  legacyQueryRedirect,
+  parseLegacyUrl,
+  resolveLegacyTarget,
+  resolveUnprefixedAddress,
+} from '../presentation/legacy-routes.ts';
 import {
   buildPhaseUrl,
   buildUrl,
@@ -92,9 +97,23 @@ function planOutcome(
 }
 
 /**
+ * Decides what an address typed WITHOUT the project slug becomes (`/roadmap`, `/search?q=kiln`,
+ * `/artifacts/a~...`): a redirect to the same address under the slug, or the not-found outcome. `path` is
+ * the whole raw pathname. The gate calls this only for an old top-level page word or a legacy first segment.
+ */
+export function resolveUnprefixedRoute(
+  path: string,
+  search: string,
+  presentation: ProjectPresentation,
+): RouteOutcome {
+  const target = resolveUnprefixedAddress(path, search, presentation);
+  return target === null ? NOT_FOUND : redirectTo(target);
+}
+
+/**
  * Decides the page for a project-relative address. `path` is the raw pathname minus the project slug
- * (`/`, `/v1.1/phase-2/plan-01/summary`), `presentation` the loaded payload. `_search` is reserved for
- * the legacy `?doc=` redirects (07-08); no current address reads a query.
+ * (`/`, `/v1.1/phase-2/plan-01/summary`), `presentation` the loaded payload. `search` is read only by the
+ * old-link redirects: `?doc=summary` on a plan address (D-05) and on an old `/plans/<id>` link.
  */
 export function resolveProjectRoute(
   path: string,
@@ -117,8 +136,11 @@ export function resolveProjectRoute(
         .some((phase) => buildPhaseUrl(phase.identity) === url);
       return exists ? { kind: 'phase', url } : (documentOutcome(url, presentation) ?? NOT_FOUND);
     }
-    case 'plan':
-      return planOutcome(route, presentation);
+    case 'plan': {
+      // D-05: an old `?doc=summary` on a plan address becomes the plan's /summary address.
+      const summary = legacyQueryRedirect(route, search, presentation);
+      return summary === null ? planOutcome(route, presentation) : redirectTo(summary);
+    }
     case 'document': {
       // D-03: a live alias has one address, the file's own.
       const alias = Object.hasOwn(presentation.routeAliases, route.url)

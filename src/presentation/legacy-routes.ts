@@ -5,9 +5,15 @@
 // below are copies of the ones the readable grammar owns in routes.ts, so deleting this module takes them
 // with it.
 import type { PhaseIdentity } from '../domain/model.ts';
-import type { ProjectPresentation } from '../server/project-presentation.ts';
+import { comparePhaseNumbers } from '../planning-repo/naming.ts';
+import type {
+  MilestoneDto,
+  PhaseDto,
+  ProjectPresentation,
+} from '../server/project-presentation.ts';
 import { ARTIFACT_PREFIX, MILESTONE_PREFIX } from './identity-keys.ts';
-import { parseRoutePath } from './routes.ts';
+import { LEGACY_FIRST_SEGMENTS, PROJECT_PAGES } from './reserved.ts';
+import { buildPhaseUrl, buildUrl, parseRoutePath, type Route } from './routes.ts';
 
 const PHASE_PREFIX = 'p~';
 
@@ -280,11 +286,82 @@ function artifactTarget(artifactPath: string, presentation: ProjectPresentation)
   return presentation.artifacts.find((artifact) => artifact.path === artifactPath)?.key ?? null;
 }
 
-function legacyTargetOf(route: LegacyRoute, presentation: ProjectPresentation): string | null {
+/** The milestone an old `m~` / `current` key names. `current` (a null version) is the live milestone: the
+ * one that carries no version, else the first one not archived. */
+function milestoneOf(
+  version: string | null,
+  presentation: ProjectPresentation,
+): MilestoneDto | null {
+  const { milestones } = presentation;
+  if (version !== null) return milestones.find((candidate) => candidate.version === version) ?? null;
+  return (
+    milestones.find((candidate) => candidate.version === null) ??
+    milestones.find((candidate) => !candidate.archived) ??
+    null
+  );
+}
+
+function phaseOf(
+  milestoneVersion: string | null,
+  identity: PhaseIdentity,
+  presentation: ProjectPresentation,
+): PhaseDto | null {
+  const milestone = milestoneOf(milestoneVersion, presentation);
+  if (milestone === null) return null;
+  return (
+    milestone.phases.find(
+      (phase) =>
+        phase.identity.projectCode === identity.projectCode &&
+        phase.identity.slug === identity.slug &&
+        comparePhaseNumbers(phase.identity.number, identity.number) === 0,
+    ) ?? null
+  );
+}
+
+function planTarget(
+  route: Extract<LegacyRoute, { kind: 'plan' }>,
+  search: string,
+  presentation: ProjectPresentation,
+): string | null {
+  const phase = phaseOf(route.milestoneVersion, route.phaseIdentity, presentation);
+  const plan = phase?.plans.find((candidate) => candidate.id === route.planId);
+  if (plan === undefined) return null;
+  return wantsSummary(search) ? (plan.summary?.key ?? plan.key) : plan.key;
+}
+
+/** True for a query that carries `doc=summary` (the old way to open a plan's summary tab). */
+function wantsSummary(search: string): boolean {
+  return new URLSearchParams(search).get('doc') === 'summary';
+}
+
+/** The query of an old link, kept only when it is a plain `?...` string. */
+function queryOf(search: string): string {
+  return search.startsWith('?') && search.length > 1 ? search : '';
+}
+
+function legacyTargetOf(
+  route: LegacyRoute,
+  search: string,
+  presentation: ProjectPresentation,
+): string | null {
   switch (route.kind) {
     case 'artifact':
       return artifactTarget(route.artifactPath, presentation);
-    default:
+    case 'milestone':
+      return milestoneOf(route.milestoneVersion, presentation)?.overviewUrl ?? null;
+    case 'phase': {
+      const phase = phaseOf(route.milestoneVersion, route.phaseIdentity, presentation);
+      return phase === null ? null : buildPhaseUrl(phase.identity);
+    }
+    case 'plan':
+      return planTarget(route, search, presentation);
+    case 'roadmap':
+    case 'search':
+    case 'traceability':
+    case 'sketches':
+    case 'research':
+      return `/${route.kind}${queryOf(search)}`;
+    case 'dashboard':
       return null;
   }
 }
@@ -297,8 +374,47 @@ function legacyTargetOf(route: LegacyRoute, presentation: ProjectPresentation): 
  */
 export function resolveLegacyTarget(
   route: LegacyRoute,
-  _search: string,
+  search: string,
   presentation: ProjectPresentation,
 ): string | null {
-  return safeTarget(legacyTargetOf(route, presentation));
+  return safeTarget(legacyTargetOf(route, search, presentation));
+}
+
+/**
+ * The summary address of a new-form plan URL that still carries the old `?doc=summary` query (D-05), or
+ * null when `route` is not a plan on its Plan tab, the query does not ask for the summary, or the plan has
+ * no summary of the payload. Null means: open the page the address already names.
+ */
+export function legacyQueryRedirect(
+  route: Route,
+  search: string,
+  presentation: ProjectPresentation,
+): string | null {
+  if (route.kind !== 'plan' || route.doc !== 'plan' || !wantsSummary(search)) return null;
+  const planUrl = buildUrl({ ...route, doc: 'plan', heading: null });
+  const plan = presentation.milestones
+    .flatMap((milestone) => milestone.phases)
+    .flatMap((phase) => phase.plans)
+    .find((candidate) => candidate.key === planUrl);
+  return safeTarget(plan?.summary?.key ?? null);
+}
+
+const UNPREFIXED_PAGES: ReadonlySet<string> = new Set(PROJECT_PAGES);
+const UNPREFIXED_LEGACY: ReadonlySet<string> = new Set(LEGACY_FIRST_SEGMENTS);
+
+/**
+ * The slug-prefixed-form target of an address typed without the project slug, the way links were before
+ * the slug existed: the old top-level pages (`/roadmap`, `/search?q=kiln`, ...) keep their query, and the
+ * old `/milestones/...` and `/artifacts/...` shapes resolve as their slug-prefixed forms do. `path` is the
+ * raw pathname. Any other first segment, or an address that resolves to nothing, is null.
+ */
+export function resolveUnprefixedAddress(
+  path: string,
+  search: string,
+  presentation: ProjectPresentation,
+): string | null {
+  const first = path.split('/', 2)[1] ?? '';
+  if (!UNPREFIXED_PAGES.has(first) && !UNPREFIXED_LEGACY.has(first)) return null;
+  const parsed = parseLegacyUrl(path);
+  return parsed.ok ? resolveLegacyTarget(parsed.route, search, presentation) : null;
 }
