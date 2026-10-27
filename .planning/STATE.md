@@ -5,7 +5,7 @@ milestone_name: Wayfinding
 current_phase: 8
 current_phase_name: Several Projects and a Switcher
 status: planning
-stopped_at: Phase 06 complete, ready to plan Phase 8
+stopped_at: Phase 06 re-verified and complete, ready to plan Phase 8
 last_updated: "2026-10-27T21:37:05.085Z"
 last_activity: 2026-10-27
 last_activity_desc: Phase 06 complete, transitioned to Phase 8
@@ -25,7 +25,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-27)
 
 **Core value:** Open the dashboard on a GSD project and immediately know where the work stands and where any planning artifact lives — without reading a single file by hand.
-**Current focus:** Phase 06 — Trustworthy Tests and Security Baseline
+**Current focus:** Phase 8 — Several Projects and a Switcher
 
 ## Current Position
 
@@ -224,8 +224,8 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-10-27T14:05:00Z
-Stopped at: Phase 06 complete, ready to plan Phase 8
+Last session: 2026-10-27T21:37:32Z
+Stopped at: Phase 06 re-verified and complete, ready to plan Phase 8
 Resume file: None
 
 ## Operator Next Steps
