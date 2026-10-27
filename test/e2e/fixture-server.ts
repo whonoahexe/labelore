@@ -15,6 +15,7 @@ import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { forgetPresentation } from './app-url.ts';
 import { resolveFixtureRoot } from './fixture-root.ts';
 
 const REPO = fileURLToPath(new URL('../..', import.meta.url)).replace(/[\\/]$/, '');
@@ -87,6 +88,8 @@ export async function startFixtureServer(placements?: FixturePlacement[]): Promi
 
   const port = await firstFreePort();
   const base = `http://127.0.0.1:${port}`;
+  // A payload cached for this port by an earlier server (another spec's project) must not be read.
+  forgetPresentation(base);
   const child: ChildProcess = spawn('node', ['src/server/index.ts', root, '--port', String(port)], {
     cwd: REPO,
     stdio: 'ignore',
@@ -105,6 +108,7 @@ export async function startFixtureServer(placements?: FixturePlacement[]): Promi
       await exited;
       clearTimeout(timer);
     }
+    forgetPresentation(base);
     if (tempDir !== undefined) rmSync(tempDir, { recursive: true, force: true });
   };
 

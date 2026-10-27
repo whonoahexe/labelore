@@ -60,7 +60,9 @@ describe.each([
       }
     }
     expect(failures).toEqual([]);
-  });
+    // Each request asks git for the file's added date over the whole history (git log --follow), which
+    // takes seconds for a project with many files once the repository is not a shallow clone.
+  }, 60_000);
 
   it('gives every artifact a distinct key, none of them an opaque token', async () => {
     const presentation = await presentationOf(await appOver(root));
