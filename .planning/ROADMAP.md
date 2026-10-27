@@ -153,7 +153,7 @@ to the same clean URLs, and none of them needs to change again.
    such as `v1.1`. *(NAV-10)*
 5. An old-style encoded link or bookmark redirects to its new readable URL. *(NAV-11)*
 
-**Plans**: 6/10 plans executed
+**Plans**: 7/10 plans executed
 
 Plans:
 **Wave 1**
@@ -171,7 +171,7 @@ Plans:
 - [x] 07-06-PLAN.md — Server switch: builders emit readable URLs, table-backed /api/documents, milestone overview and roadmap URLs
 
 **Wave 5** *(blocked on Wave 4 completion)*
-- [ ] 07-07-PLAN.md — Web switch: one /:project/* route and dispatcher, plan pair tabs by path, milestone redirects, overview page
+- [x] 07-07-PLAN.md — Web switch: one /:project/* route and dispatcher, plan pair tabs by path, milestone redirects, overview page
 
 **Wave 6** *(blocked on Wave 5 completion)*
 - [ ] 07-08-PLAN.md — Isolated legacy redirector for old encoded links (removed at v2.1 close)
@@ -397,7 +397,7 @@ file, ID or project.
 | 5 | v1.1 | 6/6 | Archived | 2026-09-21 |
 | quick tasks | v2.0 | 40/40 | Archived | 2026-10-25 |
 | 6. Trustworthy Tests and Security Baseline | v2.1 | 22/22 | Complete    | 2026-10-26 |
-| 7. Recognised Files and Readable URLs | v2.1 | 6/10 | In Progress | - |
+| 7. Recognised Files and Readable URLs | v2.1 | 7/10 | In Progress | - |
 | 8. Several Projects and a Switcher | v2.1 | 0/TBD | Not started | - |
 | 9. Review, Audit and Root Document Pages | v2.1 | 0/TBD | Not started | - |
 | 10. Codebase Map, Specification and Check Pages | v2.1 | 0/TBD | Not started | - |

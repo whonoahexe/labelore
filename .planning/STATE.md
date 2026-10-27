@@ -5,16 +5,16 @@ milestone_name: Wayfinding
 current_phase: 07
 current_phase_name: Recognised Files and Readable URLs
 status: executing
-stopped_at: Completed 07-06-PLAN.md
-last_updated: "2026-10-27T06:18:45.156Z"
+stopped_at: Completed 07-07-PLAN.md
+last_updated: "2026-10-27T06:43:06.960Z"
 last_activity: 2026-10-27
 last_activity_desc: Phase 07 execution started
-state_head: 0d6983eac4c9ca602e10731bb9018e82acb1eefa
+state_head: f673785b6f5be2d7c824e046075a38a643a98064
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 32
-  completed_plans: 28
+  completed_plans: 29
   percent: 13
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-10-26)
 ## Current Position
 
 Phase: 07 (Recognised Files and Readable URLs) — EXECUTING
-Plan: 7 of 10
+Plan: 8 of 10
 Status: Ready to execute
 Last activity: 2026-10-27 — Phase 07 execution started
 
@@ -110,6 +110,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 07 P04 | 26min | 3 tasks | 35 files |
 | Phase 07 P05 | 75 min | 2 tasks | 24 files |
 | Phase 07 P06 | 17 min | 3 tasks | 33 files |
+| Phase 07 P07 | 23 min | 3 tasks | 18 files |
 
 ## Accumulated Context
 
@@ -172,6 +173,8 @@ milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) a
 - [Phase 07]: 07-05: browser specs open every address via test/e2e/app-url.ts (projectUrl/artifactUrl) and assert with DTO-key addresses; test/e2e-url-contract.test.ts keeps raw URLs out
 - [Phase 07]: 07-06: buildUrl percent-encodes the plan number segment so a hostile plan id stays one inert segment; the token-path artifact endpoint is deleted and /api/documents?route= resolves only through the per-bundle route table
 - [Phase 07]: 07-06: payload carries MilestoneDto.overviewUrl/roadmapUrl, routeAliases and urlConflicts; the drawer shipped-milestone header links straight to roadmapUrl, roadmap rows keep the overview URL
+- [Phase 07]: 07-07: a phase or plan address with no DTO still opens as a document when an artifact carries that key; otherwise not-found
+- [Phase 07]: 07-07: redirects keep the location hash; redirect targets come only from roadmapUrl and routeAliases and must start with a single slash
 
 ### Pending Todos
 
@@ -217,8 +220,8 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-10-27T06:18:45.064Z
-Stopped at: Completed 07-06-PLAN.md
+Last session: 2026-10-27T06:43:06.867Z
+Stopped at: Completed 07-07-PLAN.md
 Resume file: None
 
 ## Operator Next Steps

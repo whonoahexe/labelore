@@ -82,7 +82,7 @@ Each page is sketched first, then built and screenshot-checked against the winni
 
 ### URLs
 
-- [ ] **NAV-09**: Every page has a readable URL that starts with the project's name, such as
+- [x] **NAV-09**: Every page has a readable URL that starts with the project's name, such as
       `/labelore/v1.1/phase-5/plan-03`, `/labelore/quick/261024-qhq/summary`, `/labelore/codebase/architecture`,
       `/labelore/notes/per-kind-artifact-rendering` and `/labelore/roadmap`
 - [ ] **NAV-10**: Every file has exactly one URL, including files that fit no clean pattern, no two files share
@@ -200,7 +200,7 @@ Which phases cover which requirements. Filled in when the roadmap is created.
 | SRC-01 | Phase 12 | Pending |
 | SRC-02 | Phase 12 | Pending |
 | TGT-09 | Phase 10 | Pending |
-| NAV-09 | Phase 7 | Pending |
+| NAV-09 | Phase 7 | Complete |
 | NAV-10 | Phase 7 | Pending |
 | NAV-11 | Phase 7 | Pending |
 | NAV-08 | Phase 13 | Pending |
