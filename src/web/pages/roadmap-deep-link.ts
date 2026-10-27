@@ -2,7 +2,7 @@
 // milestone containment matching against that target. Mirrors the seam
 // document-reference-activation.ts already establishes for extracted web logic: no `document`,
 // `window`, or React import, so vitest can exercise it directly with no jsdom.
-import { buildMilestoneUrl, buildPhaseUrl, parsePresentationUrl } from '../../presentation/routes.ts';
+import { buildMilestoneUrl, buildUrl, parseRoutePath } from '../../presentation/routes.ts';
 
 export interface RoadmapDeepLinkTarget {
   kind: 'phase' | 'milestone';
@@ -11,27 +11,28 @@ export interface RoadmapDeepLinkTarget {
 }
 
 /**
- * Resolves a pathname into a roadmap deep-link target. Returns `null` on any non-ok parse result
- * or any route kind other than `'phase'`/`'milestone'` — never throws. Rebuilds the target through
- * `buildPhaseUrl`/`buildMilestoneUrl` (rather than comparing raw path segments) so the comparison
- * is encoding-proof against the same builders that produce every rendered row's `url` field.
+ * Resolves a project-relative pathname into a roadmap deep-link target: `/v1.1/phase-2` targets that
+ * phase, `/v1.1/overview` targets that milestone. Returns `null` on any non-ok parse result or any route
+ * kind other than a phase or a milestone overview - never throws. Rebuilds the target through
+ * `buildUrl`/`buildMilestoneUrl` (rather than comparing raw path segments) so the comparison is
+ * encoding-proof against the same builders that produce every rendered row's `url` field.
  */
 export function resolveRoadmapDeepLink(pathname: string): RoadmapDeepLinkTarget | null {
-  const result = parsePresentationUrl(pathname);
+  const result = parseRoutePath(pathname);
   if (!result.ok) return null;
   const route = result.route;
   if (route.kind === 'phase') {
     return {
       kind: 'phase',
-      phaseUrl: buildPhaseUrl(route.phaseIdentity),
-      milestoneUrl: buildMilestoneUrl(route.milestoneVersion),
+      phaseUrl: buildUrl({ ...route, heading: null }),
+      milestoneUrl: buildMilestoneUrl(route.milestone),
     };
   }
-  if (route.kind === 'milestone') {
+  if (route.kind === 'overview') {
     return {
       kind: 'milestone',
       phaseUrl: null,
-      milestoneUrl: buildMilestoneUrl(route.milestoneVersion),
+      milestoneUrl: buildMilestoneUrl(route.milestone),
     };
   }
   return null;

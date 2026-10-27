@@ -39,6 +39,8 @@ function basePresentation(overrides: Partial<ProjectPresentation> = {}): Project
     mentions: { byId: {}, all: [] },
     exclusions: [],
     ledger: emptyLedger(),
+    routeAliases: {},
+    urlConflicts: [],
     ...overrides,
   };
 }
@@ -87,6 +89,8 @@ function registryWithRead05(): ReferenceRegistry {
           version: READ05_IDENTITY.milestoneVersion,
           name: 'Fixture milestone',
           archived: false,
+          overviewUrl: '/overview',
+          roadmapUrl: '/roadmap',
           phases: [phase],
         },
       ],

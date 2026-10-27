@@ -434,7 +434,8 @@ export function buildDrawerViewModel(presentation: ProjectPresentation): DrawerV
     return {
       kind: 'milestone',
       key,
-      url: buildMilestoneUrl(version),
+      // UI-SPEC section 6: a milestone named as a destination links to its roadmap with no redirect hop.
+      url: milestone?.roadmapUrl ?? buildMilestoneUrl(version),
       version,
       name: entry?.name || milestone?.name || version,
       shippedLabel: activityDateLabel(entry?.shipped ?? null, presentation.readAt),

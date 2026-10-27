@@ -37,7 +37,7 @@ async function presentationOf(app: App): Promise<ProjectPresentation> {
   return (await (await app.request('/api/presentation')).json()) as ProjectPresentation;
 }
 
-function documentRequest(app: App, route: string): Promise<Response> {
+async function documentRequest(app: App, route: string): Promise<Response> {
   return app.request(`/api/documents?route=${encodeURIComponent(route)}`);
 }
 
@@ -69,6 +69,24 @@ describe.each([
     for (const key of keys) {
       expect(key.startsWith('/')).toBe(true);
       expect(key).not.toMatch(/^\/(?:artifacts|milestones)\/[am]~/);
+    }
+  });
+
+  it('reports no URL conflicts and no alias gaps for a committed fixture', async () => {
+    const presentation = await presentationOf(await appOver(root));
+    expect(presentation.urlConflicts).toEqual([]);
+    for (const [alias, target] of Object.entries(presentation.routeAliases)) {
+      const served = await documentRequest(await appOver(root), alias);
+      expect(served.status, alias).toBe(200);
+      expect(presentation.artifacts.some((artifact) => artifact.key === target), target).toBe(true);
+    }
+  });
+
+  it('gives every milestone its overview and roadmap addresses', async () => {
+    const presentation = await presentationOf(await appOver(root));
+    for (const milestone of presentation.milestones) {
+      expect(milestone.overviewUrl.endsWith('/overview') || milestone.overviewUrl === '/overview').toBe(true);
+      expect(milestone.roadmapUrl.startsWith('/')).toBe(true);
     }
   });
 
@@ -170,5 +188,59 @@ describe('/api/documents resolves only through the route table', () => {
       .find((line) => line.length > 0 && !line.startsWith('//'));
     expect(firstStatement).toBe('const activeDerived = derived;');
     expect(handler).toContain('parseRoutePath(');
+  });
+});
+
+describe('the route audit on the payload', () => {
+  const STATE = '---\nmilestone: v1.1\n---\n# State\n';
+
+  async function presentationFor(files: Record<string, string>): Promise<ProjectPresentation> {
+    const repository = new PlanningRepository(
+      new InMemoryPlanningFilesystem({ '.planning/PROJECT.md': '# P\n', '.planning/STATE.md': STATE, ...files }),
+      '/p',
+      { loadTheme: null },
+    );
+    await repository.load();
+    return presentationOf(createApp(repository, true, '.', NO_COMMITS));
+  }
+
+  const CLASHES = {
+    '.planning/ROADMAP.md': '# Roadmap\n',
+    '.planning/phases/01-a/01-CONTEXT.md': '# Context\n',
+    '.planning/research/Foo.md': '# Upper\n',
+    '.planning/research/foo.md': '# Lower\n',
+    '.planning/milestones/v1.1-ROADMAP.md': '# Stray copy\n',
+  };
+
+  it('lists conflicts sorted by URL with the paths inside each sorted, and the live aliases', async () => {
+    const presentation = await presentationFor(CLASHES);
+    expect(presentation.urlConflicts).toEqual([
+      { url: '/research/foo', paths: ['.planning/research/Foo.md', '.planning/research/foo.md'] },
+      { url: '/v1.1/roadmap', paths: ['.planning/milestones/v1.1-ROADMAP.md'] },
+    ]);
+    expect(presentation.routeAliases).toEqual({ '/v1.1/roadmap': '/roadmap' });
+  });
+
+  it('is identical on every load, whatever order the files arrive in', async () => {
+    const first = await presentationFor(CLASHES);
+    const second = await presentationFor(Object.fromEntries(Object.entries(CLASHES).reverse()));
+    expect(second.urlConflicts).toEqual(first.urlConflicts);
+    expect(second.routeAliases).toEqual(first.routeAliases);
+  });
+
+  it('serves a loser at its file/ address and answers the alias through the table', async () => {
+    const repository = new PlanningRepository(
+      new InMemoryPlanningFilesystem({ '.planning/PROJECT.md': '# P\n', '.planning/STATE.md': STATE, ...CLASHES }),
+      '/p',
+      { loadTheme: null },
+    );
+    await repository.load();
+    const app = createApp(repository, true, '.', NO_COMMITS);
+    const lower = await documentRequest(app, '/file/research/foo.md');
+    expect(lower.status).toBe(200);
+    expect(((await lower.json()) as FoundBody).artifact.path).toBe('.planning/research/foo.md');
+    const viaAlias = await documentRequest(app, '/v1.1/roadmap');
+    expect(viaAlias.status).toBe(200);
+    expect(((await viaAlias.json()) as FoundBody).artifact.path).toBe('.planning/ROADMAP.md');
   });
 });

@@ -368,7 +368,7 @@ describe('snapshot-only artifact lookup', () => {
     const plan = phase?.plans[0];
     if (!phase || !plan) throw new Error('Fixture plan was not assembled');
 
-    const documentRoute = (route: string): Promise<Response> =>
+    const documentRoute = async (route: string): Promise<Response> =>
       app.request(`/api/documents?route=${encodeURIComponent(route)}`);
     const canonical = await documentRoute(buildPlanUrl(phase.identity, plan.id));
     const traversal = await documentRoute('/file/../../etc/passwd');

@@ -66,7 +66,17 @@ function presentationWith(requirements: RequirementDto[], phases: PhaseDto[] = [
     state: null,
     milestones:
       phases.length > 0
-        ? [{ key: 'current', version: null, name: 'Current milestone', archived: false, phases }]
+        ? [
+            {
+              key: 'current',
+              version: null,
+              name: 'Current milestone',
+              archived: false,
+              overviewUrl: '/overview',
+              roadmapUrl: '/roadmap',
+              phases,
+            },
+          ]
         : [],
     requirements,
     artifacts: [],
@@ -77,6 +87,8 @@ function presentationWith(requirements: RequirementDto[], phases: PhaseDto[] = [
     mentions: { byId: {}, all: [] },
     exclusions: [],
     ledger: emptyLedger(),
+    routeAliases: {},
+    urlConflicts: [],
   };
 }
 
@@ -222,7 +234,10 @@ describe('buildTraceabilityViewModel', () => {
   it('parsePresentationUrl(\'/traceability\') resolves and a production GET of /traceability returns the SPA entry document (routes/deep-links integration)', async () => {
     const { parsePresentationUrl, presentationRoutePatterns } = await import('../../src/presentation/routes.ts');
     expect(presentationRoutePatterns.traceability).toBe('/traceability');
-    expect(parsePresentationUrl('/traceability')).toEqual({ ok: true, route: { kind: 'traceability' } });
+    expect(parsePresentationUrl('/traceability')).toEqual({
+      ok: true,
+      route: { kind: 'page', page: 'traceability' },
+    });
   });
 
   it('GET /api/traceability against fixtures/dense returns HTTP 200 with a groups array and a deferredRows array', async () => {
@@ -561,7 +576,7 @@ describe('matchesTraceabilityFilter (Task 3)', () => {
         {
           raw: 'Phase 1',
           phaseKey: 'p1',
-          url: '/milestones/current/phases/p1',
+          url: '/phase-1',
           resolved: true,
           phaseName: 'Phase One',
           phaseDiskStatus: 'in_progress',
@@ -806,6 +821,8 @@ describe('archivedMilestones (quick-261022-ms1)', () => {
           version: 'v1.0',
           name: 'v1.0 First Milestone',
           archived: true,
+          overviewUrl: '/v1.0/overview',
+          roadmapUrl: '/v1.0/roadmap',
           phases: [archivedPhase('v1.0', archivedKey)],
         },
         {
@@ -813,6 +830,8 @@ describe('archivedMilestones (quick-261022-ms1)', () => {
           version: 'v0.9',
           name: 'v0.9',
           archived: false,
+          overviewUrl: '/v0.9/overview',
+          roadmapUrl: '/roadmap',
           phases: [
             phase({
               key: liveKey,

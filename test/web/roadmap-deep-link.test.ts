@@ -20,8 +20,9 @@ const identity: PhaseIdentity = {
 };
 
 describe('resolveRoadmapDeepLink', () => {
-  it('resolves a phase url into a phase target carrying the same phase url and its milestone url', () => {
+  it('resolves a phase url into a phase target carrying the same phase url and its milestone overview url', () => {
     const phaseUrl = buildPhaseUrl(identity);
+    expect(phaseUrl).toBe('/v1.0/phase-2');
     expect(resolveRoadmapDeepLink(phaseUrl)).toEqual({
       kind: 'phase',
       phaseUrl,
@@ -29,12 +30,53 @@ describe('resolveRoadmapDeepLink', () => {
     });
   });
 
-  it('resolves a milestone url into a milestone target with a null phase url', () => {
-    const milestoneUrl = buildMilestoneUrl('v1.0');
-    expect(resolveRoadmapDeepLink(milestoneUrl)).toEqual({
+  it('resolves a milestone overview url into a milestone target with a null phase url', () => {
+    expect(resolveRoadmapDeepLink('/v1.1/overview')).toEqual({
       kind: 'milestone',
       phaseUrl: null,
-      milestoneUrl,
+      milestoneUrl: '/v1.1/overview',
+    });
+    expect(resolveRoadmapDeepLink(buildMilestoneUrl('v1.0'))).toEqual({
+      kind: 'milestone',
+      phaseUrl: null,
+      milestoneUrl: '/v1.0/overview',
+    });
+  });
+
+  it('reads /v1.1/phase-2 as that phase of that milestone', () => {
+    expect(resolveRoadmapDeepLink('/v1.1/phase-2')).toEqual({
+      kind: 'phase',
+      phaseUrl: '/v1.1/phase-2',
+      milestoneUrl: '/v1.1/overview',
+    });
+  });
+
+  it('drops a heading, so a deep link to a section targets the phase', () => {
+    expect(resolveRoadmapDeepLink('/v1.1/phase-2#Goal')).toEqual({
+      kind: 'phase',
+      phaseUrl: '/v1.1/phase-2',
+      milestoneUrl: '/v1.1/overview',
+    });
+  });
+
+  it('canonicalises a zero-padded phase number to the url the roadmap rows carry', () => {
+    expect(resolveRoadmapDeepLink('/v1.1/phase-02')?.phaseUrl).toBe(buildPhaseUrl({ ...identity, milestoneVersion: 'v1.1' }));
+  });
+
+  it('resolves an archived phase to the archived milestone', () => {
+    const archived: PhaseIdentity = { ...identity, milestoneVersion: 'v0.9', number: '11' };
+    expect(resolveRoadmapDeepLink(buildPhaseUrl(archived))).toEqual({
+      kind: 'phase',
+      phaseUrl: '/v0.9/phase-11',
+      milestoneUrl: '/v0.9/overview',
+    });
+  });
+
+  it('resolves an unversioned /phase-2 against the unversioned milestone', () => {
+    expect(resolveRoadmapDeepLink('/phase-2')).toEqual({
+      kind: 'phase',
+      phaseUrl: '/phase-2',
+      milestoneUrl: '/overview',
     });
   });
 
@@ -46,26 +88,29 @@ describe('resolveRoadmapDeepLink', () => {
     expect(resolveRoadmapDeepLink('/')).toBeNull();
   });
 
-  it('returns null (never throws) for a malformed phase token', () => {
-    expect(resolveRoadmapDeepLink('/milestones/m~v1.0/phases/not-a-phase-token')).toBeNull();
+  it('returns null for a route that is neither a phase nor a milestone overview', () => {
+    for (const pathname of ['/v1.1', '/v1.1/phase-2/plan-01', '/v1.1/phase-2/context', '/v1.1/roadmap', '/state']) {
+      expect(resolveRoadmapDeepLink(pathname), pathname).toBeNull();
+    }
   });
 
-  it('returns null for a phase key that does not belong to its milestone segment', () => {
-    expect(
-      resolveRoadmapDeepLink('/milestones/m~v1.0/phases/p~vv2.0~n~v02~vother'),
-    ).toBeNull();
+  it('returns null (never throws) for malformed input', () => {
+    for (const pathname of ['', 'v1.1/phase-2', '/v1.1/phase-', '/v1.1//phase-2', '/v1.1/%E0%A4%A', '/v1.1/phase-2#', '/%2e%2e/phase-2']) {
+      expect(() => resolveRoadmapDeepLink(pathname), pathname).not.toThrow();
+      expect(resolveRoadmapDeepLink(pathname), pathname).toBeNull();
+    }
   });
 
-  it('round-trips a phase url whose slug contains a space and a tilde', () => {
-    const spacedIdentity: PhaseIdentity = {
+  it('round-trips a phase url whose project code and number are unusual', () => {
+    const coded: PhaseIdentity = {
       milestoneVersion: 'v1.0',
-      number: '02',
-      projectCode: null,
+      number: '02.1',
+      projectCode: 'KR',
       slug: 'a b~c',
     };
-    const phaseUrl = buildPhaseUrl(spacedIdentity);
-    const resolved = resolveRoadmapDeepLink(phaseUrl);
-    expect(resolved?.phaseUrl).toBe(phaseUrl);
+    const phaseUrl = buildPhaseUrl(coded);
+    expect(phaseUrl).toBe('/v1.0/phase-kr-2.1');
+    expect(resolveRoadmapDeepLink(phaseUrl)?.phaseUrl).toBe(phaseUrl);
   });
 });
 
@@ -83,7 +128,7 @@ describe('milestoneContainsDeepLink', () => {
   it('is false when no phase url matches the target phase url', () => {
     expect(
       milestoneContainsDeepLink(
-        { url: milestoneUrl, phases: [{ url: '/milestones/m~v1.0/phases/other' }] },
+        { url: milestoneUrl, phases: [{ url: '/v1.0/phase-9' }] },
         target,
       ),
     ).toBe(false);
