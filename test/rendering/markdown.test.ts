@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { Artifact } from '../../src/domain/model.ts';
 import { InMemoryPlanningFilesystem } from '../../src/planning-fs/in-memory-fs.ts';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
-import { artifactTokenOf, buildPlanUrl } from '../../src/presentation/routes.ts';
+import { buildPlanUrl } from '../../src/presentation/routes.ts';
 import { buildFrontmatterPanels } from '../../src/rendering/frontmatter-views.ts';
 import { createArtifactRenderer } from '../../src/rendering/markdown.ts';
 import { stableSlug } from '../../src/rendering/slug.ts';
@@ -352,7 +352,7 @@ describe('snapshot-only artifact lookup', () => {
     });
   });
 
-  it('serves finalized documents from the artifact API and fails closed for traversal tokens', async () => {
+  it('serves finalized documents from the documents API and fails closed for traversal and malformed routes', async () => {
     const repository = new PlanningRepository(
       new InMemoryPlanningFilesystem({
         '.planning/PROJECT.md': '# API project',
@@ -368,30 +368,22 @@ describe('snapshot-only artifact lookup', () => {
     const plan = phase?.plans[0];
     if (!phase || !plan) throw new Error('Fixture plan was not assembled');
 
-    const response = await app.request(`/api/artifacts/${artifactTokenOf(artifactPath)}`);
-    const canonical = await app.request(
-      `/api/documents?route=${encodeURIComponent(buildPlanUrl(phase.identity, plan.id))}`,
-    );
-    const missing = await app.request(`/api/artifacts/${artifactTokenOf('../../etc/passwd')}`);
-    const malformed = await app.request('/api/artifacts/not-a-token');
+    const documentRoute = (route: string): Promise<Response> =>
+      app.request(`/api/documents?route=${encodeURIComponent(route)}`);
+    const canonical = await documentRoute(buildPlanUrl(phase.identity, plan.id));
+    const traversal = await documentRoute('/file/../../etc/passwd');
+    const encodedDots = await documentRoute('/file/%2e%2e/%2e%2e/etc/passwd');
+    const malformed = await documentRoute('/file/%E0%A4%A');
 
-    expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({
-      status: 'found',
-      artifact: { path: artifactPath, kind: 'plan' },
-      document: { empty: false },
-    });
     expect(canonical.status).toBe(200);
     expect(await canonical.json()).toMatchObject({
       status: 'found',
       artifact: { path: artifactPath, kind: 'plan' },
+      document: { empty: false },
     });
-    expect(missing.status).toBe(404);
-    expect(await missing.json()).toMatchObject({
-      status: 'not-found',
-      artifactPath: '../../etc/passwd',
-    });
-    expect(malformed.status).toBe(404);
-    expect(await malformed.json()).toMatchObject({ status: 'not-found' });
+    for (const response of [traversal, encodedDots, malformed]) {
+      expect(response.status).toBe(404);
+      expect(await response.json()).toMatchObject({ found: false, status: 'not-found' });
+    }
   });
 });

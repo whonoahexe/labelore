@@ -18,7 +18,9 @@ import { buildNoteContext } from '../presentation/note-context.ts';
 import type { NoteContext } from '../presentation/note-context.ts';
 import { buildRoadmapViewModel } from '../presentation/roadmap.ts';
 import { buildReferenceRegistry } from '../presentation/references.ts';
-import { parsePresentationUrl } from '../presentation/routes.ts';
+import { buildRouteTable } from '../presentation/route-table.ts';
+import type { RouteTable } from '../presentation/route-table.ts';
+import { parseRoutePath } from '../presentation/routes.ts';
 import { isServerOwnedUrl } from '../presentation/reserved.ts';
 import { buildTraceabilityViewModel } from '../presentation/traceability.ts';
 import { buildSearchGroups, extractSnippets } from '../presentation/search.ts';
@@ -71,8 +73,11 @@ interface ServerOptions {
 }
 
 /** D-05: every read handler serves from one of these bundles, built together from a single
- * snapshot, and replaced together in one assignment - never mutated field by field. */
+ * snapshot, and replaced together in one assignment - never mutated field by field. The route table is
+ * built first and shared by the presentation, the artifact index and the search state, so a URL is never
+ * resolved by one bundle's table against another bundle's index. */
 interface DerivedViews {
+  routeTable: RouteTable;
   presentation: ReturnType<typeof toProjectPresentation>;
   artifactIndex: ReturnType<typeof buildArtifactIndex>;
   referenceRegistry: ReturnType<typeof buildReferenceRegistry>;
@@ -95,15 +100,16 @@ export function createApp(
   // function remains the file's only presentation-building call site, whichever way `snapshot`
   // was obtained.
   function buildDerivedViews(snapshot: ProjectSnapshot = source.getSnapshot()): DerivedViews {
-    const presentation = toProjectPresentation(snapshot);
-    const artifactIndex = buildArtifactIndex(snapshot);
+    const routeTable = buildRouteTable(snapshot.project);
+    const presentation = toProjectPresentation(snapshot, routeTable);
+    const artifactIndex = buildArtifactIndex(snapshot, routeTable);
     const referenceRegistry = buildReferenceRegistry(presentation);
     // D-04/FIND-05: constructing the state object is synchronous and cheap (just a status flag);
     // the actual MiniSearch build is scheduled off this path inside buildFrom - callers never wait
     // on index readiness.
     const searchIndexState = createSearchIndexState();
-    searchIndexState.buildFrom(snapshot);
-    return { presentation, artifactIndex, referenceRegistry, searchIndexState };
+    searchIndexState.buildFrom(snapshot, routeTable);
+    return { routeTable, presentation, artifactIndex, referenceRegistry, searchIndexState };
   }
 
   // Replacing `derived` with a freshly built bundle in one assignment is the atomic swap D-05
@@ -261,36 +267,18 @@ export function createApp(
       groups,
     });
   });
-  app.get('/api/artifacts/*', async (c) => {
-    // D-05: capture the bundle as the first statement, before URL parsing and before the lookup,
-    // so this request's whole response is built from exactly one bundle — never the module-level
-    // `derived` binding re-read after an await, which a concurrently completing refresh could swap.
-    const activeDerived = derived;
-    const pathname = new URL(c.req.url).pathname;
-    const rawToken = pathname.slice('/api/artifacts/'.length);
-    const route = parsePresentationUrl(`/artifacts/${rawToken}`);
-    if (!route.ok || route.route.kind !== 'artifact') {
-      return c.json(
-        {
-          found: false,
-          status: 'not-found' as const,
-          artifactPath: '',
-          warning: route.ok ? 'Artifact token is invalid.' : route.error.message,
-        },
-        404,
-      );
-    }
-
-    const lookup = activeDerived.artifactIndex.lookup(route.route.artifactPath);
-    if (!lookup.found) return c.json(lookup, 404);
-    return c.json(await artifactResponse(lookup, activeDerived));
-  });
   app.get('/api/documents', async (c) => {
-    // D-05: same single-bundle capture as /api/artifacts/* above.
+    // D-05: capture the bundle as the first statement, before URL parsing and before the lookup, so this
+    // request's whole response is built from exactly one bundle (its table, its index, its registry) -
+    // never the module-level `derived` binding re-read after an await, which a concurrently completing
+    // refresh could swap.
     const activeDerived = derived;
     const routeInput = c.req.query('route') ?? '';
-    const route = parsePresentationUrl(routeInput);
-    if (!route.ok || (route.route.kind !== 'artifact' && route.route.kind !== 'plan')) {
+    const route = parseRoutePath(routeInput);
+    if (
+      !route.ok ||
+      (route.route.kind !== 'document' && route.route.kind !== 'plan' && route.route.kind !== 'page')
+    ) {
       return c.json(
         {
           found: false,
