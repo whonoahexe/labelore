@@ -82,7 +82,9 @@ function presentation(overrides: Partial<ProjectPresentation> = {}): ProjectPres
     projectName: 'p',
     config: {},
     state: null,
-    milestones: [{ key: 'm', version: null, name: 'Current', archived: false, phases: [PHASE] }],
+    milestones: [
+      { key: 'm', version: null, name: 'Current', archived: false, overviewUrl: '/overview', roadmapUrl: '/roadmap', phases: [PHASE] },
+    ],
     requirements: [{ id: 'AUTH-01', category: 'Auth', text: 'Live text', tier: 'v1', checked: null, coveringPhases: [] }],
     artifacts: [
       requirements('.planning/milestones/v1.1-REQUIREMENTS.md', [
@@ -101,6 +103,8 @@ function presentation(overrides: Partial<ProjectPresentation> = {}): ProjectPres
     mentions: { byId: {}, all: [] },
     exclusions: [],
     ledger: emptyLedger(),
+    routeAliases: {},
+    urlConflicts: [],
     ...overrides,
   };
 }

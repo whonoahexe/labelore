@@ -1,18 +1,45 @@
-// The old encoded-URL cases of routes.test.ts, copied to call parseLegacyUrl directly. routes.test.ts itself stays
-// untouched (it still reaches the decoder through routes.ts's re-export); this file leaves with legacy-routes.ts at v2.1 close.
+// The old encoded-URL cases of routes.test.ts, calling parseLegacyUrl directly. routes.test.ts moved to the
+// readable grammar in 07-06; this file leaves with legacy-routes.ts at v2.1 close.
 import { describe, expect, it } from 'vitest';
 import type { PhaseIdentity } from '../../src/domain/model.ts';
 import {
   artifactTokenOf,
-  buildArtifactUrl,
-  buildMilestoneUrl,
-  buildPhaseUrl,
-  buildPlanUrl,
+  assertNonEmpty,
+  encodePart,
   milestoneKeyOf,
   phaseKeyOf,
-  presentationRoutePatterns,
-} from '../../src/presentation/routes.ts';
+} from '../../src/presentation/identity-keys.ts';
+import { presentationRoutePatterns } from '../../src/presentation/routes.ts';
 import { parseLegacyUrl } from '../../src/presentation/legacy-routes.ts';
+
+// The pre-v2.1 encoded builders, kept test-local: routes.ts now emits the readable grammar, and the decoder
+// under test must keep reading what the old builders wrote (the redirect path turns those links into
+// readable ones). They leave with legacy-routes.ts at v2.1 close.
+function withHeading(path: string, heading?: string): string {
+  if (heading === undefined) return path;
+  const clean = heading.replace(/^#+/, '');
+  assertNonEmpty(clean, 'Heading');
+  return `${path}#${encodePart(clean)}`;
+}
+
+function buildMilestoneUrl(version: string | null): string {
+  return `/milestones/${milestoneKeyOf(version)}`;
+}
+
+function buildPhaseUrl(identity: PhaseIdentity, heading?: string): string {
+  return withHeading(`${buildMilestoneUrl(identity.milestoneVersion)}/phases/${phaseKeyOf(identity)}`, heading);
+}
+
+function buildPlanUrl(identity: PhaseIdentity, planId: string, heading?: string): string {
+  assertNonEmpty(planId, 'Plan id');
+  return withHeading(`${buildPhaseUrl(identity)}/plans/${encodePart(planId)}`, heading);
+}
+
+function buildArtifactUrl(identity: PhaseIdentity | null, artifactPath: string, heading?: string): string {
+  const token = artifactTokenOf(artifactPath);
+  const path = identity === null ? `/artifacts/${token}` : `${buildPhaseUrl(identity)}/artifacts/${token}`;
+  return withHeading(path, heading);
+}
 
 const active: PhaseIdentity = {
   milestoneVersion: null,

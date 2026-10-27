@@ -35,7 +35,14 @@ function phase(overrides: Partial<PhaseDto> & Pick<PhaseDto, 'key' | 'milestoneK
 }
 
 function milestone(overrides: Partial<MilestoneDto> & Pick<MilestoneDto, 'key' | 'archived'>): MilestoneDto {
-  return { version: null, name: overrides.key, phases: [], ...overrides };
+  return {
+    version: null,
+    name: overrides.key,
+    overviewUrl: '/overview',
+    roadmapUrl: '/roadmap',
+    phases: [],
+    ...overrides,
+  };
 }
 
 function artifact(overrides: Partial<ArtifactDto> & Pick<ArtifactDto, 'path' | 'location'>): ArtifactDto {
@@ -59,7 +66,7 @@ function hit(overrides: Partial<SearchHitLike> & Pick<SearchHitLike, 'path'>): S
   return {
     title: overrides.path,
     kind: 'markdown',
-    url: `/artifacts/${overrides.path}`,
+    url: `/${overrides.path}`,
     phaseKey: null,
     milestoneKey: null,
     score: 1,
@@ -87,6 +94,8 @@ function presentation(overrides: Partial<ProjectPresentation> = {}): ProjectPres
     mentions: { byId: {}, all: [] },
     exclusions: [],
     ledger: emptyLedger(),
+    routeAliases: {},
+    urlConflicts: [],
     ...overrides,
   };
 }

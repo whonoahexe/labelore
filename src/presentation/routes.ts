@@ -33,14 +33,15 @@ import {
 
 export { artifactTokenOf, milestoneKeyOf, phaseKeyOf } from './identity-keys.ts';
 
-// The old parser and its types keep their old names for the web's interim router until 07-07; 07-06 task 2
-// points them at the readable grammar.
-export { parseLegacyUrl as parsePresentationUrl } from './legacy-routes.ts';
+// The pre-07 names of the parser and its types, kept so importers do not churn; they are the readable
+// grammar's own parser and types. The legacy parser is imported from legacy-routes.ts by its own test and
+// by the redirect path only.
+export { parseRoutePath as parsePresentationUrl };
 export type {
-  LegacyRoute as PresentationRoute,
-  LegacyRouteErrorCode as PresentationRouteErrorCode,
-  LegacyRouteParseResult as PresentationRouteParseResult,
-} from './legacy-routes.ts';
+  Route as PresentationRoute,
+  RouteErrorCode as PresentationRouteErrorCode,
+  RouteParseResult as PresentationRouteParseResult,
+};
 
 /** Route patterns of the web's interim router; 07-07 replaces them with the readable dispatcher. */
 export const presentationRoutePatterns = {
@@ -201,7 +202,8 @@ export function buildUrl(route: Route): string {
     case 'phase':
       return withHeading(scopeUrl(route.milestone, route.phase), route.heading ?? undefined);
     case 'plan': {
-      const planUrl = `${scopeUrl(route.milestone, route.phase)}/plan-${route.planNumber}`;
+      // Digits in every real plan id; encoded so a hostile id can never add a segment or a scope.
+      const planUrl = `${scopeUrl(route.milestone, route.phase)}/plan-${encodePart(route.planNumber)}`;
       return withHeading(route.doc === 'summary' ? `${planUrl}/summary` : planUrl, route.heading ?? undefined);
     }
     case 'document':

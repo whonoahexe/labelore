@@ -13,6 +13,7 @@ import { parseMilestoneFileName } from '../planning-repo/naming.ts';
 import { buildRouteTable, type RouteTable } from '../presentation/route-table.ts';
 import {
   buildArtifactUrl,
+  buildMilestoneUrl,
   buildPlanSummaryUrl,
   buildPlanUrl,
   milestoneKeyOf,
@@ -128,6 +129,10 @@ export interface MilestoneDto {
   version: string | null;
   name: string;
   archived: boolean;
+  /** D-04: the milestone's own `/<v>/overview` page. */
+  overviewUrl: string;
+  /** D-02: where the milestone's name leads: its roadmap file's address, or its overview when it has none. */
+  roadmapUrl: string;
   phases: PhaseDto[];
 }
 
@@ -193,6 +198,12 @@ export interface ProjectPresentation {
    * notes, recent tasks, the queue), built server-side from the snapshot so the page never reads
    * a file. */
   ledger: DashboardLedgerDto;
+  /** D-03: the live milestone's own addresses for its roadmap and requirements, each mapped to the
+   * address those files really have. The web redirects an alias to its target. */
+  routeAliases: Record<string, string>;
+  /** The route audit: every address several files wanted (and the phase folders that share a phase
+   * address), sorted by URL with the paths inside each sorted. Empty for a project without clashes. */
+  urlConflicts: { url: string; paths: string[] }[];
 }
 
 interface PassingEvidence {
@@ -593,6 +604,8 @@ function emptyPresentation(snapshot: ProjectSnapshot): ProjectPresentation {
     mentions: { byId: {}, all: [] },
     exclusions: snapshot.exclusions,
     ledger: emptyLedger(),
+    routeAliases: {},
+    urlConflicts: [],
   };
 }
 
@@ -611,6 +624,8 @@ export function toProjectPresentation(
     version: milestone.version,
     name: milestone.name,
     archived: milestone.archived,
+    overviewUrl: buildMilestoneUrl(milestone.version),
+    roadmapUrl: routeTable.milestoneRoadmapUrl(milestone.version),
     phases: milestone.phases.map((phase) => {
       const phaseKey = phaseKeyOf(phase.identity);
       const roadmap = roadmapPhaseRecord(project, phase.identity, phase.archived);
@@ -748,5 +763,10 @@ export function toProjectPresentation(
     mentions: project.mentions,
     exclusions: snapshot.exclusions,
     ledger: buildDashboardLedger(project),
+    routeAliases: Object.fromEntries(routeTable.aliases),
+    urlConflicts: routeTable.conflicts.map((conflict) => ({
+      url: conflict.url,
+      paths: [...conflict.paths],
+    })),
   };
 }

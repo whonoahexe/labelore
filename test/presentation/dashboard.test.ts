@@ -7,6 +7,7 @@ import type {
 } from '../../src/server/project-presentation.ts';
 import { buildDashboardViewModel, sourceDestination } from '../../src/presentation/dashboard.ts';
 import {
+  buildMilestoneUrl,
   buildPhaseUrl,
   milestoneKeyOf,
   parsePresentationUrl,
@@ -114,6 +115,8 @@ function presentation(
         version: 'v2.0',
         name: 'Milestone 雪',
         archived: false,
+        overviewUrl: buildMilestoneUrl('v2.0'),
+        roadmapUrl: buildMilestoneUrl('v2.0'),
         phases: [currentPhase],
       },
     ],
@@ -126,6 +129,8 @@ function presentation(
     mentions: { byId: {}, all: [] },
     exclusions: [],
     ledger: emptyLedger(),
+    routeAliases: {},
+    urlConflicts: [],
     ...overrides,
   };
 }
@@ -322,7 +327,8 @@ describe('buildDashboardViewModel', () => {
     if (parsed.ok) {
       expect(parsed.route.kind).toBe('phase');
       if (parsed.route.kind === 'phase') {
-        expect(phaseKeyOf(parsed.route.phaseIdentity)).toBe(LATER_PHASE_KEY);
+        expect(parsed.route.milestone).toBe(LATER_IDENTITY.milestoneVersion);
+        expect(parsed.route.phase.number).toBe('2');
       }
     }
   });
@@ -342,10 +348,10 @@ describe('buildDashboardViewModel', () => {
     );
     expect(view.next.immediate).toMatchObject({ kind: 'blocker' });
     const url = view.next.immediate?.url ?? '';
-    expect(url).toBe('/artifacts/a~.planning%2FSTATE.md#blockers');
+    expect(url).toBe('/state#blockers');
     const parsed = parsePresentationUrl(url);
     expect(parsed.ok).toBe(true);
-    if (parsed.ok) expect(parsed.route.kind).toBe('artifact');
+    if (parsed.ok) expect(parsed.route.kind).toBe('document');
   });
 
   it('does not promote placeholder blocker copy as recommended work', () => {
@@ -382,10 +388,10 @@ describe('buildDashboardViewModel', () => {
     const view = buildDashboardViewModel(source);
     expect(view.next.immediate).toMatchObject({ kind: 'blocker' });
     const url = view.next.immediate?.url ?? '';
-    expect(url).toBe('/artifacts/a~.planning%2FSTATE.md#blockers');
+    expect(url).toBe('/state#blockers');
     const parsed = parsePresentationUrl(url);
     expect(parsed.ok).toBe(true);
-    if (parsed.ok) expect(parsed.route.kind).toBe('artifact');
+    if (parsed.ok) expect(parsed.route.kind).toBe('document');
   });
 
   it('makes a pending human verification the typed next action ahead of routine plan work', () => {
@@ -487,10 +493,10 @@ describe('buildDashboardViewModel', () => {
   it('sourceDestination preserves heading hash anchors on state and roadmap provenance (LFI-01)', () => {
     expect(
       sourceDestination({ kind: 'state', ref: '.planning/STATE.md#blockersconcerns' }),
-    ).toBe('/artifacts/a~.planning%2FSTATE.md#blockersconcerns');
+    ).toBe('/state#blockersconcerns');
     expect(
       sourceDestination({ kind: 'roadmap', ref: '.planning/ROADMAP.md#phase-01' }),
-    ).toBe('/artifacts/a~.planning%2FROADMAP.md#phase-01');
+    ).toBe('/roadmap#phase-01');
   });
 
   it('old/new snapshot isolation: repeated builds are deterministic and do not mix readAt values', () => {

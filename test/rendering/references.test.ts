@@ -85,6 +85,8 @@ function milestone(version: string, archived: boolean, phaseDto: PhaseDto): Mile
     version,
     name: archived ? 'Archive v1.0' : 'Current v2.0',
     archived,
+    overviewUrl: `/${version}/overview`,
+    roadmapUrl: `/${version}/roadmap`,
     phases: [phaseDto],
   };
 }
@@ -165,6 +167,8 @@ function presentation(): ProjectPresentation {
     mentions: { byId: {}, all: [] },
     exclusions: [],
     ledger: emptyLedger(),
+    routeAliases: {},
+    urlConflicts: [],
   };
 }
 
@@ -507,6 +511,8 @@ describe('BACK-02 — decision/warning mentions, phase-local-then-corpus resolut
           version: 'v2.0',
           name: 'Current v2.0',
           archived: false,
+          overviewUrl: '/v2.0/overview',
+          roadmapUrl: '/roadmap',
           phases: [phase1Dto, phase2Dto],
         },
       ],
@@ -569,6 +575,8 @@ describe('BACK-02 — decision/warning mentions, phase-local-then-corpus resolut
       mentions: { byId: {}, all: [] },
       exclusions: [],
       ledger: emptyLedger(),
+      routeAliases: {},
+      urlConflicts: [],
     };
   }
 
