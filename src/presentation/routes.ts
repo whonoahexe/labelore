@@ -8,7 +8,7 @@
 // The four builders every importer already uses (`buildArtifactUrl`, `buildPhaseUrl`, `buildPlanUrl`,
 // `buildMilestoneUrl`) keep their names and signatures and emit this grammar (07-06). The opaque key
 // encoders live in identity-keys.ts (re-exported below, unchanged); the old token parser lives in
-// legacy-routes.ts and serves only the redirect path.
+// the legacy module and serves only the redirect path.
 import type { PhaseIdentity } from '../domain/model.ts';
 import { EXACT_NAME_KINDS, folderRuleOf } from '../planning-repo/folders.ts';
 import type { ExactNameWhere, NameRule } from '../planning-repo/folders.ts';
@@ -34,7 +34,7 @@ import {
 export { artifactTokenOf, milestoneKeyOf, phaseKeyOf } from './identity-keys.ts';
 
 // The pre-07 names of the parser and its types, kept so importers do not churn; they are the readable
-// grammar's own parser and types. The legacy parser is imported from legacy-routes.ts by its own test and
+// grammar's own parser and types. The legacy parser is imported from the legacy module by its own test and
 // by the redirect path only.
 export { parseRoutePath as parsePresentationUrl };
 export type {
