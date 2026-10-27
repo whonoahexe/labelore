@@ -5,11 +5,11 @@ milestone_name: Wayfinding
 current_phase: 07
 current_phase_name: Recognised Files and Readable URLs
 status: executing
-stopped_at: Completed 07-04-PLAN.md
-last_updated: "2026-10-26T21:07:25.213Z"
+stopped_at: Phase 8 context gathered
+last_updated: "2026-10-27T14:21:48.658Z"
 last_activity: 2026-10-26
 last_activity_desc: Phase 07 execution started
-state_head: a9417782d2adea6cef1d2a34bbcf813f8e375839
+state_head: c686dd88e19224df7d14f6603903a6b256cd3743
 progress:
   total_phases: 8
   completed_phases: 1
@@ -212,9 +212,9 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-10-26T21:07:25.034Z
-Stopped at: Completed 07-04-PLAN.md
-Resume file: None
+Last session: 2026-10-27T14:21:47.984Z
+Stopped at: Phase 8 context gathered
+Resume file: .planning/phases/08-several-projects-and-a-switcher/08-CONTEXT.md
 
 ## Operator Next Steps
 
