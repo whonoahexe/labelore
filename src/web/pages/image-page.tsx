@@ -51,9 +51,24 @@ export function ImageView({
         path={artifact.path}
         meta={<span className="source-note">{facts}</span>}
       />
-      <FigureFrame title="Preview">
-        {() => <img alt={name} src={imageBytesUrl(artifact.key)} onLoad={onLoad} onError={onError} />}
-      </FigureFrame>
+      {status.kind === 'failed' ? (
+        <section className="notice render-issue" role="status">
+          <h2>This image could not be shown</h2>
+          <p>The file is listed in the project, but your browser could not display it.</p>
+        </section>
+      ) : (
+        <FigureFrame title="Preview" defaultFit>
+          {(fit) => (
+            <img
+              alt={name}
+              src={imageBytesUrl(artifact.key)}
+              data-fit={fit ? 'true' : undefined}
+              onLoad={onLoad}
+              onError={onError}
+            />
+          )}
+        </FigureFrame>
+      )}
     </main>
   );
 }
