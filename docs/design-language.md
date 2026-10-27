@@ -254,6 +254,10 @@ element is actually written, regardless of class name:
   eyebrow/h1/lede/path fields plus the headline/glance/chapter-index cells — never a second header.
   The path is offered as a copy-path icon button (`.artifact-path-copy`, quick-260923-jxp), not
   printed — see `artifact-path-copy` above.
+- **File-class marks are quiet.** (Phase 7, D-08, D-09) The drawer's type-and-size badge, the image
+  page and the File details card use no tone and no `--primary`, and add no class name: they reuse
+  the places badge, the figure frame, the source note and the metadata panel as they are. Images
+  and binaries have no View/Source toggle until Phase 12 (SRC-02).
 - **CONTEXT uses the sketch-006 D1 brief layout, not B3.** (quick-260923-lju) The `context` kind's
   manifest declares a `brief` hook (`composeContextBrief`) instead of opting into `layout`
   (`DocumentLayoutSpec`) — a boundary hero, a quiet out-strip, an amber open-questions panel, a

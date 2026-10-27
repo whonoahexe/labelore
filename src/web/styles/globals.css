@@ -10509,6 +10509,17 @@ div.view-research-note:has(> .figure-frame) > :not(.figure-frame) {
   background-size: var(--space-6) var(--space-6);
 }
 
+/* Phase 7, the image page: an image shows at actual size and scrolls inside the frame; Fit to width caps it at the column. */
+.figure-frame-body img {
+  display: block;
+  max-width: none;
+  height: auto;
+}
+
+.figure-frame-body img[data-fit='true'] {
+  max-width: 100%;
+}
+
 .figure-frame-caption {
   padding: var(--space-3);
   border-top: 1px dashed var(--border);
