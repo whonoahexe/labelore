@@ -1,6 +1,6 @@
 ---
 phase: 06-trustworthy-tests-and-security-baseline
-verified: 2026-10-26T08:00:00Z
+verified: 2026-10-27T21:40:00Z
 status: passed
 score: 5/5 must-haves verified
 covered_files:
@@ -54,16 +54,16 @@ covered_files:
   - "src/web/views/manifest.ts"
   - "test/config-masking.test.ts"
   - "test/scanner-growth.test.ts"
-covered_digest: "v3:sha256:83d78daed37d85176c7b37120f10b9fdd6c93f6481339514f9269148983b29a8"
+covered_digest: "v3:sha256:7e698ca3ff701c49dc70fd5bebecc91b70b2f86f86d336f19e919ca3450a89ed"
 behavior_unverified: 0
 ---
 
 # Phase 6: Trustworthy Tests and Security Baseline Verification Report
 
 **Phase Goal:** The test suite passes on every normal run and reads only made-up data committed in this public repository; the v1.1 threat-register security checks are in place; secrets in a project's settings file are masked at read time, before any page is built.
-**Verified:** 2026-10-26
+**Verified:** 2026-10-27
 **Status:** passed
-**Re-verification:** No, initial verification
+**Re-verification:** Yes, after phase 07 commit 329918e changed a covered file (`test/config-masking.test.ts`); previous status passed, 5/5, no gaps
 
 ## Goal Achievement
 
@@ -129,7 +129,17 @@ No `TBD/FIXME/XXX` debt markers were introduced in the files checked. None of th
 | `test/server/remote-source.test.ts:280` asserts `< 3000` ms after a kill-on-timeout | Info | A hang guard rather than a perf budget (the child sleeps 5s). It is the one absolute-time assertion left, and the no-skips scan does not flag it. |
 | `.mcp.json` names `/home/cinedise/...` | Info | Tooling config outside tests, outside TEST-03. Consider removing it before making the repo public. |
 
-### Bookkeeping Discrepancy
+### Re-verification note (2026-10-27)
+
+Phase 07 commit 329918e removed the second `/api${key}` artifact request from the `pagePayload` helper in `test/config-masking.test.ts`, because phase 07 deleted that token-path endpoint. Checked on disk at HEAD 2d1569f:
+
+- `src/server/index.ts` now registers only `/api/documents` (line 271) as the single-artifact route. `/api/files` serves image bytes only and answers 404 for any non-image, so it cannot return `config.json`. A request to the old `/api/<key>` path falls into the `/api/*` catch-all 404 at line 372. The helper now covers every route that can return a single artifact, so the SEC-04 guarantee loses no coverage.
+- The test still asserts, through `/api/documents`, `/api/presentation`, `/api/search` and `/api/refresh`, that the planted value and a fragment of it never appear, that the masked form `****wxyz` does, and that on-disk bytes and mtime are untouched. It still covers the duplicate-key (CR-01) and unparseable-file cases. The masking code itself (`json-config.ts`, `secret-mask.ts`) is unchanged and still redacts the raw body and masks the parsed object at read time.
+- Ran the phase guard tests: 9 files, 172 tests passed (config-masking, secret-mask, no-skips, fixture-leak, raw-html-guard, outline-cap, scanner-growth, linkify-growth, playwright-config). The orchestrator's full run at HEAD is 4465/4465 over 208 files with no failures. A grep for skip, todo, only and fixme markers in `test/` and `src/` finds none outside the scanner and gate helpers themselves. `npm run typecheck` exits 0.
+- The other four truths were regression-checked on disk: the bounded `REFERENCE_TOKEN` is intact, the single `dangerouslySetInnerHTML` site is still `artifact-page.tsx:242` (the line moved from 245 with later edits), `capOutline` is wired at `artifact-page.tsx:512`, `playwright.config.ts` still uses `resolveFixtureRoot` and `reuseExistingServer: false`, and the remaining "studio-portal" and home-path hits are the frozen, reasoned exemptions in `test/fixture-leak.test.ts` or generic example paths.
+- `06-SECURITY.md` reports `threats_open: 0`. `REQUIREMENTS.md` now marks TEST-01 to TEST-04 and SEC-01 to SEC-04 Complete, which closes the earlier bookkeeping discrepancy. The earlier counts (3596 tests, 187 files) are superseded by the current 4465 tests in 208 files. The git history was squashed at 59a54e5, so phase 06 task commits cannot be looked up and judgement rests on the code on disk.
+
+### Bookkeeping Discrepancy (superseded)
 
 `.planning/REQUIREMENTS.md` still shows TEST-01 to TEST-04 as unchecked (`[ ]`) and "Pending" in the traceability table, while SEC-01 to SEC-04 are marked Complete. The code evidence above shows TEST-01 to TEST-04 are met, so the orchestrator should update that file when it closes the phase. I did not edit it. `deferred-items.md` entries are still marked `open`, but the tests they cite (the research-lift, project-research, drawer, summary-run-corpus and ascii-graph tests) all pass in the full run.
 
@@ -143,5 +153,5 @@ No gaps. The phase goal is achieved: the suite passes cleanly and repeatably wit
 
 ---
 
-_Verified: 2026-10-26_
+_Verified: 2026-10-27_
 _Verifier: Claude (gsd-verifier)_
