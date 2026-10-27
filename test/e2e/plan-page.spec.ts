@@ -9,6 +9,7 @@
 // per change. Run once post-merge: npx playwright test test/e2e/plan-page.spec.ts -g "plan page"
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
+import { BASE_URL, artifactUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
 
 interface PresentationLite {
@@ -21,11 +22,11 @@ async function presentationOf(baseURL: string): Promise<PresentationLite> {
   return (await response.json()) as PresentationLite;
 }
 
-async function resolveFixtureUrl(baseURL: string, pathIncludes: string): Promise<string> {
+async function resolveFixturePath(baseURL: string, pathIncludes: string): Promise<string> {
   const data = await presentationOf(baseURL);
   const artifact = data.artifacts.find((entry) => entry.path.includes(pathIncludes));
   if (!artifact) throw new Error(`plan-page.spec: no artifact with path including "${pathIncludes}"`);
-  return artifact.key;
+  return artifact.path;
 }
 
 /** True once the locator's box sits inside the current viewport (polled by the caller). */
@@ -35,26 +36,26 @@ async function inViewport(page: Page, locator: Locator): Promise<boolean> {
   return box !== null && box.y >= 0 && box.y < height;
 }
 
-async function openPage(page: Page, url: string, theme: 'light' | 'dark', width = 1440): Promise<void> {
+async function openPage(page: Page, base: string, path: string, theme: 'light' | 'dark', width = 1440): Promise<void> {
   await page.setViewportSize({ width, height: 1000 });
   await page.addInitScript((value) => window.localStorage.setItem('labelore-theme', value), theme);
-  await page.goto(url);
+  await page.goto(await artifactUrl(base, path));
   await page.locator('#plan-task-workspace').waitFor({ state: 'visible' });
 }
 
 async function openFx(page: Page, pathIncludes: string): Promise<void> {
-  const key = await resolveFixtureUrl(FIXTURE_BASE_URL, pathIncludes);
-  await openPage(page, `${FIXTURE_BASE_URL}${key}`, 'light');
+  const path = await resolveFixturePath(FIXTURE_BASE_URL, pathIncludes);
+  await openPage(page, FIXTURE_BASE_URL, path, 'light');
 }
 
 const tab = (page: Page, n: number): Locator => page.locator(`#plan-task-list [role="tab"][data-task="${n}"]`);
 
 test.describe('Plan page', () => {
   test('LB v1.1/05-01 plan page', async ({ page, baseURL }) => {
-    const base = baseURL ?? 'http://127.0.0.1:4199';
+    const base = baseURL ?? BASE_URL;
     const presentation = await presentationOf(base);
-    const url = await resolveFixtureUrl(base, '05-per-type-document-views/05-01-PLAN.md');
-    await openPage(page, url, 'light');
+    const path = await resolveFixturePath(base, '05-per-type-document-views/05-01-PLAN.md');
+    await openPage(page, base, path, 'light');
 
     // Header: one h1 (the objective's first sentence), the eyebrow with the plan id, the Planned fact.
     await expect(page.locator('h1')).toHaveCount(1);
@@ -173,9 +174,9 @@ test.describe('Plan page', () => {
   });
 
   test('LB 0x4 plan page', async ({ page, baseURL }) => {
-    const base = baseURL ?? 'http://127.0.0.1:4199';
-    const url = await resolveFixtureUrl(base, '260910-0x4-PLAN.md');
-    await openPage(page, url, 'light');
+    const base = baseURL ?? BASE_URL;
+    const path = await resolveFixturePath(base, '260910-0x4-PLAN.md');
+    await openPage(page, base, path, 'light');
 
     await expect(page.locator('.artifact-heading .eyebrow')).toHaveText('Quick plan 260910-0x4');
     await expect(page.locator('.artifact-meta-row')).toContainText('Planned 10 Sep 2026');
@@ -187,9 +188,9 @@ test.describe('Plan page', () => {
   });
 
   test('LB 02-17 plan page', async ({ page, baseURL }) => {
-    const base = baseURL ?? 'http://127.0.0.1:4199';
-    const url = await resolveFixtureUrl(base, '02-situational-awareness-artifact-reading/02-17-PLAN.md');
-    await openPage(page, url, 'light');
+    const base = baseURL ?? BASE_URL;
+    const path = await resolveFixturePath(base, '02-situational-awareness-artifact-reading/02-17-PLAN.md');
+    await openPage(page, base, path, 'light');
 
     await expect(page.locator('#plan-task-list [role="tab"]')).toHaveCount(1);
     await expect(page.locator('.view-plan-nav-tabs button')).toHaveText([/^What to check/, 'Verify', 'Context']);

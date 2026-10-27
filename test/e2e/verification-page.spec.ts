@@ -5,19 +5,20 @@
 // chip signature, no 420px overflow), since the full sweep is too slow to run per change.
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
+import { BASE_URL, artifactUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
 }
 
-async function resolveFixtureUrl(baseURL: string, pathIncludes: string): Promise<string> {
+async function resolveFixturePath(baseURL: string, pathIncludes: string): Promise<string> {
   const response = await fetch(`${baseURL}/api/presentation`);
   if (!response.ok) throw new Error(`verification-page.spec: /api/presentation responded ${response.status}`);
   const data = (await response.json()) as PresentationLite;
   const artifact = data.artifacts.find((entry) => entry.path.includes(pathIncludes));
   if (!artifact) throw new Error(`verification-page.spec: no artifact with path including "${pathIncludes}"`);
-  return artifact.key;
+  return artifact.path;
 }
 
 async function inViewport(page: Page, locator: Locator): Promise<boolean> {
@@ -26,9 +27,9 @@ async function inViewport(page: Page, locator: Locator): Promise<boolean> {
   return box !== null && box.y >= 0 && box.y < height;
 }
 
-async function openPage(page: Page, base: string, url: string, theme: 'light' | 'dark'): Promise<void> {
+async function openPage(page: Page, base: string, path: string, theme: 'light' | 'dark'): Promise<void> {
   await page.addInitScript((value) => window.localStorage.setItem('labelore-theme', value), theme);
-  await page.goto(`${base}${url}`);
+  await page.goto(await artifactUrl(base, path));
   await page.locator('.view-verification-rail').waitFor({ state: 'visible' });
 }
 
@@ -37,9 +38,9 @@ const stat = (page: Page, label: string): Locator =>
 
 test.describe('Verification page', () => {
   test('LB v1.1/05 verification page', async ({ page, baseURL }) => {
-    const base = baseURL ?? 'http://127.0.0.1:4199';
-    const url = await resolveFixtureUrl(base, 'v1.1-phases/05-per-type-document-views/05-VERIFICATION.md');
-    await openPage(page, base, url, 'light');
+    const base = baseURL ?? BASE_URL;
+    const path = await resolveFixturePath(base, 'v1.1-phases/05-per-type-document-views/05-VERIFICATION.md');
+    await openPage(page, base, path, 'light');
 
     // Rail.
     await expect(page.locator('h1')).toHaveCount(1);
@@ -120,8 +121,8 @@ test.describe('Verification page', () => {
   });
 
   test('Lendshed v1.0/04 passed with one frontmatter gap', async ({ page }) => {
-    const url = await resolveFixtureUrl(FIXTURE_BASE_URL, 'v1.0-phases/04-shed-to-shed-transfers/04-VERIFICATION.md');
-    await openPage(page, FIXTURE_BASE_URL, url, 'light');
+    const path = await resolveFixturePath(FIXTURE_BASE_URL, 'v1.0-phases/04-shed-to-shed-transfers/04-VERIFICATION.md');
+    await openPage(page, FIXTURE_BASE_URL, path, 'light');
     await expect(page.locator('h1')).toHaveCount(1);
     await expect(page.locator('.view-verification-identity .eyebrow')).toHaveText('Verification · Phase 4');
     await expect(page.locator('.view-verification-facts .status-chip')).toHaveText('Passed');
@@ -130,18 +131,18 @@ test.describe('Verification page', () => {
   });
 
   test('LB v1.0/01 resolved checks', async ({ page, baseURL }) => {
-    const base = baseURL ?? 'http://127.0.0.1:4199';
-    const url = await resolveFixtureUrl(base, 'v1.0-phases/01-read-layer-domain-model/01-VERIFICATION.md');
-    await openPage(page, base, url, 'light');
+    const base = baseURL ?? BASE_URL;
+    const path = await resolveFixturePath(base, 'v1.0-phases/01-read-layer-domain-model/01-VERIFICATION.md');
+    await openPage(page, base, path, 'light');
     await expect(page.locator('#verification-human h2')).toHaveText('Checked by a person');
     await expect(page.locator('.view-verification-resolved')).toContainText('Resolved · 01-UAT.md (23/23 pass, 0 issues)');
     await expect(page.locator('.view-verification-slip')).toHaveCount(0);
   });
 
   test('LB quick 260923-lju verification page', async ({ page, baseURL }) => {
-    const base = baseURL ?? 'http://127.0.0.1:4199';
-    const url = await resolveFixtureUrl(base, '260923-lju-VERIFICATION.md');
-    await openPage(page, base, url, 'light');
+    const base = baseURL ?? BASE_URL;
+    const path = await resolveFixturePath(base, '260923-lju-VERIFICATION.md');
+    await openPage(page, base, path, 'light');
     await expect(page.locator('.view-verification-identity .eyebrow')).toHaveText('Quick verification · 260923-lju');
     await expect(page.locator('.view-verification-big-number')).toHaveText('2');
     await expect(page.locator('.view-verification-big-label')).toHaveText('checks left for a person');
@@ -149,17 +150,17 @@ test.describe('Verification page', () => {
 
   for (const theme of ['light', 'dark'] as const) {
     test(`every verification page fits 420px in ${theme}`, async ({ page, baseURL }) => {
-      const base = baseURL ?? 'http://127.0.0.1:4199';
+      const base = baseURL ?? BASE_URL;
       const response = await fetch(`${base}/api/presentation`);
       const data = (await response.json()) as PresentationLite;
-      const keys = data.artifacts.filter((a) => a.path.endsWith('VERIFICATION.md') && !a.path.includes('sketches')).map((a) => a.key);
-      expect(keys.length).toBeGreaterThanOrEqual(12);
+      const paths = data.artifacts.filter((a) => a.path.endsWith('VERIFICATION.md') && !a.path.includes('sketches')).map((a) => a.path);
+      expect(paths.length).toBeGreaterThanOrEqual(12);
       await page.setViewportSize({ width: 420, height: 900 });
-      for (const key of keys) {
-        await openPage(page, base, key, theme);
+      for (const path of paths) {
+        await openPage(page, base, path, theme);
         await expect(page.locator('h1')).toHaveCount(1);
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-        expect(overflow, key).toBeLessThanOrEqual(0);
+        expect(overflow, path).toBeLessThanOrEqual(0);
       }
     });
   }

@@ -8,21 +8,22 @@
 // lift tests in test/project-research-lift.test.ts, which read the archived v1.0 research.
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { BASE_URL, exactUrl, projectUrl } from './app-url.ts';
 
 async function openResearch(page: Page, query = ''): Promise<void> {
   await page.addInitScript(() => window.localStorage.setItem('labelore-theme', 'light'));
-  await page.goto(`/research${query}`);
+  await page.goto(await projectUrl(BASE_URL, `/research${query}`));
   await page.locator('.research-spines').waitFor({ state: 'visible' });
 }
 
 test.describe('Research page: the frame', () => {
   test('the Research link sits between Roadmap and Traceability and opens /research', async ({ page }) => {
     await page.addInitScript(() => window.localStorage.setItem('labelore-theme', 'light'));
-    await page.goto('/');
+    await page.goto(await projectUrl(BASE_URL, '/'));
     const nav = page.getByRole('navigation', { name: 'Primary navigation' });
     await expect(nav.locator('a')).toContainText(['Dashboard', 'Roadmap', 'Research', 'Traceability', 'Sketches']);
     await nav.getByRole('link', { name: 'Research' }).click();
-    await expect(page).toHaveURL(/\/research$/);
+    await expect(page).toHaveURL(exactUrl(await projectUrl(BASE_URL, '/research')));
     await expect(page.locator('.research-spines')).toBeVisible();
   });
 
@@ -77,7 +78,7 @@ test.describe('Research page: the frame', () => {
   test('?open= restores a spine and an unknown key opens the first', async ({ page }) => {
     await openResearch(page, '?open=pitfalls');
     await expect(page.locator('.research-leaf')).toHaveAttribute('aria-label', 'Pitfalls');
-    await page.goto('/research?open=nonsense');
+    await page.goto(await projectUrl(BASE_URL, '/research?open=nonsense'));
     await expect(page.locator('.research-leaf')).toHaveAttribute('aria-label', 'Summary');
   });
 
@@ -291,7 +292,7 @@ test.describe('Research page: every spine at 390px and in the dark theme', () =>
         if (message.type() === 'error' && !unrelated.test(message.text())) errors.push(message.text());
       });
       await page.addInitScript(() => window.localStorage.setItem('labelore-theme', 'dark'));
-      await page.goto(`/research?open=${key}`);
+      await page.goto(await projectUrl(BASE_URL, `/research?open=${key}`));
       await page.locator('.research-leaf').waitFor({ state: 'visible' });
       expect(await page.evaluate(() => document.documentElement.classList.contains('dark'))).toBe(true);
       expect(errors).toEqual([]);

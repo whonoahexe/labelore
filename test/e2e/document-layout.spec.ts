@@ -5,6 +5,7 @@
 // plus the foundation-sweep updates) build on — Task 3 appends fixtures here rather than
 // duplicating the checks. Uses plain `expect` throughout.
 import { expect, test, type Page } from '@playwright/test';
+import { BASE_URL, artifactUrl, projectUrl } from './app-url.ts';
 
 interface Fixture {
   id: string;
@@ -49,7 +50,7 @@ interface PresentationLite {
 /** Resolves a fixture's route by matching `path` against `/api/presentation`'s live artifact
  * list — never a hardcoded URL, so an archival/rename never silently starts skipping a fixture
  * (it fails loudly here instead). */
-async function resolveFixtureUrl(baseURL: string, pathIncludes: string): Promise<string> {
+async function resolveFixturePath(baseURL: string, pathIncludes: string): Promise<string> {
   const response = await fetch(`${baseURL}/api/presentation`);
   if (!response.ok) {
     throw new Error(`document-layout.spec: /api/presentation responded ${response.status}`);
@@ -59,7 +60,7 @@ async function resolveFixtureUrl(baseURL: string, pathIncludes: string): Promise
   if (!artifact) {
     throw new Error(`document-layout.spec: no artifact found with path including "${pathIncludes}"`);
   }
-  return artifact.key;
+  return artifact.path;
 }
 
 async function setTheme(page: Page, theme: 'light' | 'dark'): Promise<void> {
@@ -86,12 +87,12 @@ async function runFullBehaviorChecks(
   baseURL: string,
   fixture: Fixture,
 ): Promise<void> {
-  const url = await resolveFixtureUrl(baseURL, fixture.pathIncludes);
+  const url = await artifactUrl(baseURL, await resolveFixturePath(baseURL, fixture.pathIncludes));
 
   await setTheme(page, 'light');
   await page.setViewportSize({ width: 1280, height: 900 });
 
-  await page.goto('/roadmap');
+  await page.goto(await projectUrl(baseURL, '/roadmap'));
   await page.locator('.page-intro h1').first().waitFor({ state: 'visible' });
   const refFontSize = await page
     .locator('.page-intro h1')
@@ -253,7 +254,7 @@ async function runFullBehaviorChecks(
 test.describe('document layout — sketch-004 B3 (quick-260922-3us)', () => {
   for (const fixture of DISCUSSION_LOG_FIXTURES) {
     test(fixture.id, async ({ page, baseURL }) => {
-      await runFullBehaviorChecks(page, baseURL ?? 'http://127.0.0.1:4199', fixture);
+      await runFullBehaviorChecks(page, baseURL ?? BASE_URL, fixture);
     });
   }
 
@@ -261,10 +262,7 @@ test.describe('document layout — sketch-004 B3 (quick-260922-3us)', () => {
     page,
     baseURL,
   }) => {
-    const url = await resolveFixtureUrl(
-      baseURL ?? 'http://127.0.0.1:4199',
-      '05-per-type-document-views/05-DISCUSSION-LOG.md',
-    );
+    const url = await artifactUrl(baseURL ?? BASE_URL, await resolveFixturePath(baseURL ?? BASE_URL, '05-per-type-document-views/05-DISCUSSION-LOG.md'));
     await setTheme(page, 'light');
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(url);
@@ -296,10 +294,7 @@ test.describe('discussion-log review fixes (quick-260923-jxp)', () => {
     page,
     baseURL,
   }) => {
-    const url = await resolveFixtureUrl(
-      baseURL ?? 'http://127.0.0.1:4199',
-      '05-per-type-document-views/05-DISCUSSION-LOG.md',
-    );
+    const url = await artifactUrl(baseURL ?? BASE_URL, await resolveFixturePath(baseURL ?? BASE_URL, '05-per-type-document-views/05-DISCUSSION-LOG.md'));
     await setTheme(page, 'light');
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(url);
@@ -374,7 +369,7 @@ test.describe('discussion-log review fixes (quick-260923-jxp)', () => {
 
   for (const fixture of GHOST_FIXTURES) {
     test(`ghosts and cover facts: ${fixture.pathIncludes}`, async ({ page, baseURL }) => {
-      const url = await resolveFixtureUrl(baseURL ?? 'http://127.0.0.1:4199', fixture.pathIncludes);
+      const url = await artifactUrl(baseURL ?? BASE_URL, await resolveFixturePath(baseURL ?? BASE_URL, fixture.pathIncludes));
       await setTheme(page, 'light');
       await page.setViewportSize({ width: 1280, height: 900 });
       await page.goto(url);
@@ -400,10 +395,7 @@ test.describe('discussion-log review fixes (quick-260923-jxp)', () => {
     page,
     baseURL,
   }) => {
-    const url = await resolveFixtureUrl(
-      baseURL ?? 'http://127.0.0.1:4199',
-      '05-per-type-document-views/05-DISCUSSION-LOG.md',
-    );
+    const url = await artifactUrl(baseURL ?? BASE_URL, await resolveFixturePath(baseURL ?? BASE_URL, '05-per-type-document-views/05-DISCUSSION-LOG.md'));
     await setTheme(page, 'light');
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(url);
@@ -426,7 +418,7 @@ test.describe('discussion-log review fixes (quick-260923-jxp)', () => {
 
   for (const pathIncludes of COVER_NUMBER_FIXTURES) {
     test(`cover numbers equal rendered counts: ${pathIncludes}`, async ({ page, baseURL }) => {
-      const url = await resolveFixtureUrl(baseURL ?? 'http://127.0.0.1:4199', pathIncludes);
+      const url = await artifactUrl(baseURL ?? BASE_URL, await resolveFixturePath(baseURL ?? BASE_URL, pathIncludes));
       await setTheme(page, 'light');
       await page.setViewportSize({ width: 1280, height: 900 });
       await page.goto(url);
@@ -476,10 +468,7 @@ test.describe('discussion-log review fixes (quick-260923-jxp)', () => {
 // once by the shared detector on the server and hydrated on the client; Source shows the plain code.
 test.describe('rendered figures (quick-261024-o3h)', () => {
   test('rendered figures: project research ARCHITECTURE.md', async ({ page, baseURL }) => {
-    const url = await resolveFixtureUrl(
-      baseURL ?? 'http://127.0.0.1:4199',
-      '.planning/research/ARCHITECTURE.md',
-    );
+    const url = await artifactUrl(baseURL ?? BASE_URL, await resolveFixturePath(baseURL ?? BASE_URL, '.planning/research/ARCHITECTURE.md'));
     await setTheme(page, 'light');
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(url);

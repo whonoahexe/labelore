@@ -5,6 +5,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DrawerPhasePlace, DrawerQuickTask, DrawerViewModel } from '../../src/presentation/drawer.ts';
+import { artifactUrl, exactUrl, projectUrl } from './app-url.ts';
 import { SCREENSHOT_ROOT } from './pages.ts';
 
 const SHOTS = join(SCREENSHOT_ROOT, 'vty');
@@ -51,7 +52,7 @@ test.describe('planning files drawer', () => {
     const plan = phase.plans[0];
 
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto(plan.url);
+    await page.goto(await projectUrl(baseURL!, plan.url));
     await openDrawer(page);
 
     await expect(page.locator('.places-where')).toHaveText(`${version} · Phase ${phase.number}`);
@@ -85,7 +86,7 @@ test.describe('planning files drawer', () => {
     expect(quick.count).toBeGreaterThan(0);
 
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto('/');
+    await page.goto(await projectUrl(baseURL!, '/'));
     await openDrawer(page);
     // One Quick tasks row in the whole places column, none under Current or a shipped milestone.
     await expect(page.locator('.places-list .places-row', { hasText: 'Quick tasks' })).toHaveCount(1);
@@ -109,11 +110,11 @@ test.describe('planning files drawer', () => {
     const summaryFile = fileNamed(task!, 'summary')!;
     await page.locator('.places-quick-task').filter({ has: page.locator(`[title="${task!.key}"]`) }).click();
 
-    await expect(page).toHaveURL(new RegExp(`${planFile.url}$`));
+    await expect(page).toHaveURL(exactUrl(await artifactUrl(baseURL!, planFile.path)));
     const pairSwitch = page.locator('.plan-pair-switch');
     await expect(pairSwitch.locator('a[aria-current="page"]')).toHaveText('Plan');
     await pairSwitch.locator('a', { hasText: 'Summary' }).click();
-    await expect(page).toHaveURL(new RegExp(`${summaryFile.url}$`));
+    await expect(page).toHaveURL(exactUrl(await artifactUrl(baseURL!, summaryFile.path)));
     await expect(page.locator('.plan-pair-switch a[aria-current="page"]')).toHaveText('Summary');
   });
 
@@ -127,7 +128,7 @@ test.describe('planning files drawer', () => {
     const task: DrawerQuickTask = shippedGroup!.tasks[0];
 
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto(task.url);
+    await page.goto(await projectUrl(baseURL!, task.url));
     await openDrawer(page);
 
     const selected = page.locator('.places-row[data-selected="true"]');
@@ -150,7 +151,7 @@ test.describe('planning files drawer', () => {
 
     mkdirSync(SHOTS, { recursive: true });
     await page.setViewportSize({ width: 375, height: 812 });
-    await page.goto(phase.plans[0].url);
+    await page.goto(await projectUrl(baseURL!, phase.plans[0].url));
     await openDrawer(page);
 
     const list = page.locator('.places-list');
@@ -196,7 +197,7 @@ test.describe('planning files drawer', () => {
     const model = await fetchDrawer(baseURL!);
     const { phase } = firstShippedPhaseWithPlans(model);
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto(phase.plans[0].url);
+    await page.goto(await projectUrl(baseURL!, phase.plans[0].url));
     await openDrawer(page);
     await expect(page.locator('.places-list')).toBeVisible();
     await expect(page.locator('.places-files')).toBeVisible();
@@ -210,7 +211,7 @@ test.describe('planning files drawer', () => {
       mkdirSync(SHOTS, { recursive: true });
       await setTheme(page, theme);
       await page.setViewportSize({ width: 1280, height: 900 });
-      await page.goto(phase.plans[0].url);
+      await page.goto(await projectUrl(baseURL!, phase.plans[0].url));
       await openDrawer(page);
       await page.screenshot({ path: join(SHOTS, `desktop-${theme}.png`) });
     });

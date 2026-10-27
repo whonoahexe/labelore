@@ -7,19 +7,20 @@
 // sweep is too slow to run per change. Run once post-merge: npx playwright test test/e2e/summary-page.spec.ts -g "summary page"
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
+import { BASE_URL, artifactUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
 }
 
-async function resolveFixtureUrl(baseURL: string, pathIncludes: string): Promise<string> {
+async function resolveFixturePath(baseURL: string, pathIncludes: string): Promise<string> {
   const response = await fetch(`${baseURL}/api/presentation`);
   if (!response.ok) throw new Error(`summary-page.spec: /api/presentation responded ${response.status}`);
   const data = (await response.json()) as PresentationLite;
   const artifact = data.artifacts.find((entry) => entry.path.includes(pathIncludes));
   if (!artifact) throw new Error(`summary-page.spec: no artifact with path including "${pathIncludes}"`);
-  return artifact.key;
+  return artifact.path;
 }
 
 /** True once the locator's box sits inside the current viewport (polled by the caller). */
@@ -29,9 +30,9 @@ async function inViewport(page: Page, locator: Locator): Promise<boolean> {
   return box !== null && box.y >= 0 && box.y < height;
 }
 
-async function openPage(page: Page, base: string, url: string, theme: 'light' | 'dark'): Promise<void> {
+async function openPage(page: Page, base: string, path: string, theme: 'light' | 'dark'): Promise<void> {
   await page.addInitScript((value) => window.localStorage.setItem('labelore-theme', value), theme);
-  await page.goto(`${base}${url}`);
+  await page.goto(await artifactUrl(base, path));
   await page.locator('.view-summary-head').waitFor({ state: 'visible' });
 }
 
@@ -42,9 +43,9 @@ async function openRequirements(page: Page): Promise<void> {
 
 test.describe('Summary page', () => {
   test('LB v1.1/05-01 summary page', async ({ page, baseURL }) => {
-    const base = baseURL ?? 'http://127.0.0.1:4199';
-    const url = await resolveFixtureUrl(base, '05-per-type-document-views/05-01-SUMMARY.md');
-    await openPage(page, base, url, 'light');
+    const base = baseURL ?? BASE_URL;
+    const path = await resolveFixturePath(base, '05-per-type-document-views/05-01-SUMMARY.md');
+    await openPage(page, base, path, 'light');
 
     // Header.
     await expect(page.locator('h1')).toHaveCount(1);
@@ -145,8 +146,8 @@ test.describe('Summary page', () => {
   });
 
   test('FX 01-01 summary page', async ({ page }) => {
-    const url = await resolveFixtureUrl(FIXTURE_BASE_URL, 'phases/01-member-sign-in-sessions/01-01-SUMMARY.md');
-    await openPage(page, FIXTURE_BASE_URL, url, 'light');
+    const path = await resolveFixturePath(FIXTURE_BASE_URL, 'phases/01-member-sign-in-sessions/01-01-SUMMARY.md');
+    await openPage(page, FIXTURE_BASE_URL, path, 'light');
 
     await expect(page.locator('h1')).toHaveText('Member Password Sessions');
     // Five deviation margin cards: four under Task 1 and one under Task 3.
@@ -164,8 +165,8 @@ test.describe('Summary page', () => {
   });
 
   test('FX 04-06 summary page', async ({ page }) => {
-    const url = await resolveFixtureUrl(FIXTURE_BASE_URL, 'phases/04-bulk-loan-export/04-06-SUMMARY.md');
-    await openPage(page, FIXTURE_BASE_URL, url, 'light');
+    const path = await resolveFixturePath(FIXTURE_BASE_URL, 'phases/04-bulk-loan-export/04-06-SUMMARY.md');
+    await openPage(page, FIXTURE_BASE_URL, path, 'light');
 
     await expect(page.locator('.view-summary-metrics')).toContainText('Awaiting checkpoint');
     await expect(page.locator('.view-summary-outcome')).toHaveCount(0);
@@ -178,9 +179,9 @@ test.describe('Summary page', () => {
   });
 
   test('LB quick 3us summary page', async ({ page, baseURL }) => {
-    const base = baseURL ?? 'http://127.0.0.1:4199';
-    const url = await resolveFixtureUrl(base, '260922-3us-SUMMARY.md');
-    await openPage(page, base, url, 'light');
+    const base = baseURL ?? BASE_URL;
+    const path = await resolveFixturePath(base, '260922-3us-SUMMARY.md');
+    await openPage(page, base, path, 'light');
 
     await expect(page.locator('.view-summary-meta .eyebrow')).toHaveText('Quick summary · 260922-3us');
     await expect(page.locator('.view-summary-trigger').nth(0)).toContainText('Tasks 3');

@@ -10,6 +10,7 @@ import type { Page } from '@playwright/test';
 import { relative } from 'node:path';
 import { FX_ROOT, planningFiles } from '../helpers/fixture-project.ts';
 import { LB_ROOT, SYNTHETIC_ROOT } from '../helpers/todo-corpus.ts';
+import { artifactUrl, hrefOf } from './app-url.ts';
 import { startFixtureServer } from './fixture-server.ts';
 import type { FixturePlacement, FixtureServer } from './fixture-server.ts';
 
@@ -45,10 +46,10 @@ async function presentation(): Promise<PresentationLite> {
   return (await response.json()) as PresentationLite;
 }
 
-async function resolveKey(suffix: string): Promise<string> {
+async function resolveArtifactPath(suffix: string): Promise<string> {
   const artifact = (await presentation()).artifacts.find((entry) => entry.path.endsWith(suffix));
   if (!artifact) throw new Error(`note-page.spec: fixture artifact not found: ${suffix}`);
-  return artifact.key;
+  return artifact.path;
 }
 
 const DCROP = 'notes/2026-03-24-crop-tool-photos-and-member-avatars.md';
@@ -61,9 +62,9 @@ const LSURVEY = 'notes/artifact-structure-survey.md';
 const PBRIEF = 'notes/2026-03-26-steward-desk-milestone-brief.md';
 
 async function openPage(page: Page, suffix: string, theme: 'light' | 'dark'): Promise<void> {
-  const key = await resolveKey(suffix);
+  const path = await resolveArtifactPath(suffix);
   await page.addInitScript((value) => window.localStorage.setItem('labelore-theme', value), theme);
-  await page.goto(`${server.base}${key}`);
+  await page.goto(await artifactUrl(server.base, path));
   await page.locator('.view-note-rail').waitFor({ state: 'visible' });
 }
 
@@ -140,7 +141,10 @@ test.describe('Note page', () => {
     await expect(card.locator('.view-note-via')).toHaveText('Names this note in notes:');
     await expect(card.locator('.view-note-resolution')).toContainText('Done in quick task 260326-m3d');
     await expect(card.locator('.view-note-sibling')).toHaveCount(1);
-    await expect(card.getByRole('link', { name: 'Open todo ↗' })).toHaveAttribute('href', /add-crop-and-round-member-avatars\.md/);
+    await expect(card.getByRole('link', { name: 'Open todo ↗' })).toHaveAttribute(
+      'href',
+      hrefOf(await artifactUrl(server.base, await resolveArtifactPath('add-crop-and-round-member-avatars.md'))),
+    );
 
     // Mentions: a click copies the path, presses the row and the in-text reference, and says Copied.
     await expect(page.locator('.view-note-mentions .view-note-kicker')).toHaveText('Mentions · 1');

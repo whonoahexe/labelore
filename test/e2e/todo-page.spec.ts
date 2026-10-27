@@ -11,6 +11,7 @@ import type { Locator, Page } from '@playwright/test';
 import { relative } from 'node:path';
 import { FX_ROOT, planningFiles } from '../helpers/fixture-project.ts';
 import { LABELORE_FIXTURE_ROOT, LB_ROOT, SYNTHETIC_ROOT } from '../helpers/todo-corpus.ts';
+import { artifactUrl, exactUrl, hrefOf } from './app-url.ts';
 import { startFixtureServer } from './fixture-server.ts';
 import type { FixturePlacement, FixtureServer } from './fixture-server.ts';
 
@@ -53,10 +54,10 @@ async function presentation(): Promise<PresentationLite> {
   return (await response.json()) as PresentationLite;
 }
 
-async function resolveKey(suffix: string): Promise<string> {
+async function resolveArtifactPath(suffix: string): Promise<string> {
   const artifact = (await presentation()).artifacts.find((entry) => entry.path.endsWith(suffix));
   if (!artifact) throw new Error(`todo-page.spec: fixture artifact not found: ${suffix}`);
-  return artifact.key;
+  return artifact.path;
 }
 
 const DCROP = 'todos/completed/2026-03-24-add-crop-and-round-member-avatars.md';
@@ -67,10 +68,10 @@ const SPORT = 'todos/completed/2026-10-02-port-timezone-table.md';
 const CROP_NOTE = 'notes/2026-03-24-crop-tool-photos-and-member-avatars.md';
 
 async function openPage(page: Page, suffix: string, theme: 'light' | 'dark'): Promise<void> {
-  const key = await resolveKey(suffix);
+  const path = await resolveArtifactPath(suffix);
   await page.clock.setFixedTime(new Date('2026-10-23T12:00:00+05:30'));
   await page.addInitScript((value) => window.localStorage.setItem('labelore-theme', value), theme);
-  await page.goto(`${server.base}${key}`);
+  await page.goto(await artifactUrl(server.base, path));
   await page.locator('.view-todo-head').waitFor({ state: 'visible' });
 }
 
@@ -148,8 +149,9 @@ test.describe('Todo page', () => {
 
     // The first note's link opens that note's page; back returns to the todo.
     const todoUrl = page.url();
+    const cropNoteUrl = await artifactUrl(server.base, await resolveArtifactPath('notes/2026-03-24-crop-tool-photos-and-member-avatars.md'));
     await cards.first().getByRole('link', { name: 'Open note ↗' }).click();
-    await expect(page).toHaveURL(new RegExp(encodeURIComponent('notes/2026-03-24-crop-tool-photos-and-member-avatars.md').replace(/\./g, '\\.')));
+    await expect(page).toHaveURL(exactUrl(cropNoteUrl));
     await expect(page.locator('.view-todo-head')).toHaveCount(0);
     await page.goBack();
     await expect(page).toHaveURL(todoUrl);
@@ -192,8 +194,9 @@ test.describe('Todo page', () => {
     await expect(page.locator('.view-todo-wait')).toContainText('— 0 of 4 items checked.');
     const link = page.locator('.view-todo-part').first().locator('a.view-todo-ref');
     await expect(link).toHaveText('notes/2026-03-26-steward-desk-milestone-brief.md');
+    const briefUrl = await artifactUrl(server.base, await resolveArtifactPath('notes/2026-03-26-steward-desk-milestone-brief.md'));
     await link.click();
-    await expect(page).toHaveURL(/steward-desk-milestone-brief\.md/);
+    await expect(page).toHaveURL(exactUrl(briefUrl));
     await expect(page.locator('.view-todo-head')).toHaveCount(0);
   });
 
@@ -207,9 +210,10 @@ test.describe('Todo page', () => {
     await expect(page.locator('.view-todo-close')).toContainText('Closed 2026-09-20.');
     const quick = page.locator('#todo-closed .view-todo-stage-head a', { hasText: 'quick 260920-mzr' });
     await expect(quick).toHaveCount(1);
-    await expect(quick).toHaveAttribute('href', /260920-mzr-SUMMARY\.md/);
+    const quickSummary = await artifactUrl(server.base, await resolveArtifactPath('260920-mzr-SUMMARY.md'));
+    await expect(quick).toHaveAttribute('href', hrefOf(quickSummary));
     await quick.click();
-    await expect(page).toHaveURL(/260920-mzr-SUMMARY\.md/);
+    await expect(page).toHaveURL(exactUrl(quickSummary));
     await expect(page.locator('.view-todo-head')).toHaveCount(0);
   });
 
@@ -220,8 +224,8 @@ test.describe('Todo page', () => {
   });
 
   test('a note is not a todo page', async ({ page }) => {
-    const key = await resolveKey(CROP_NOTE);
-    await page.goto(`${server.base}${key}`);
+    const path = await resolveArtifactPath(CROP_NOTE);
+    await page.goto(await artifactUrl(server.base, path));
     await page.locator('main h1').first().waitFor({ state: 'visible' });
     await expect(page.locator('.view-todo-head')).toHaveCount(0);
   });

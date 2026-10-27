@@ -7,6 +7,7 @@
 // run per change.
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
+import { artifactUrl } from './app-url.ts';
 import { startFixtureServer } from './fixture-server.ts';
 import type { FixtureServer } from './fixture-server.ts';
 
@@ -41,19 +42,19 @@ async function artifactKeys(): Promise<PresentationLite['artifacts']> {
   return ((await response.json()) as PresentationLite).artifacts;
 }
 
-async function resolveKey(match: (path: string) => boolean): Promise<string> {
+async function resolveArtifactPath(match: (path: string) => boolean): Promise<string> {
   const artifact = (await artifactKeys()).find((entry) => match(entry.path));
   if (!artifact) throw new Error('learnings-page.spec: fixture artifact not found');
-  return artifact.key;
+  return artifact.path;
 }
 
 const LX01 = (path: string): boolean => path.endsWith('01-member-sign-in-sessions/01-LEARNINGS.md');
 const SYN = (path: string): boolean => path.endsWith('05-per-type-document-views/05-LEARNINGS.md');
 const ROOT = (path: string): boolean => path.endsWith('.planning/LEARNINGS.md');
 
-async function openPage(page: Page, key: string, theme: 'light' | 'dark'): Promise<void> {
+async function openPage(page: Page, path: string, theme: 'light' | 'dark'): Promise<void> {
   await page.addInitScript((value) => window.localStorage.setItem('labelore-theme', value), theme);
-  await page.goto(`${server.base}${key}`);
+  await page.goto(await artifactUrl(server.base, path));
   await page.locator('.view-learnings-head').waitFor({ state: 'visible' });
 }
 
@@ -83,7 +84,7 @@ async function checkInvariants(page: Page): Promise<void> {
 
 test.describe('Learnings page', () => {
   test('Lendshed phase 1', async ({ page }) => {
-    await openPage(page, await resolveKey(LX01), 'light');
+    await openPage(page, await resolveArtifactPath(LX01), 'light');
 
     await expect(page.locator('h1')).toHaveText('Member Sign-In & Sessions');
     await expect(page.locator('.view-learnings-meta-left .eyebrow')).toHaveText('Learnings · Phase 1');
@@ -141,7 +142,7 @@ test.describe('Learnings page', () => {
   });
 
   test('synthetic phase 5, dark', async ({ page }) => {
-    await openPage(page, await resolveKey(SYN), 'dark');
+    await openPage(page, await resolveArtifactPath(SYN), 'dark');
     await expect(page.locator('.view-learnings-meta-left .eyebrow')).toHaveText('Learnings · Phase 5');
     await expect(page.locator('.view-learnings-missing')).toHaveText(
       'Extracted without 05-UAT.md — learnings from it are not here.',
@@ -153,7 +154,7 @@ test.describe('Learnings page', () => {
   });
 
   test('project-root file', async ({ page }) => {
-    await openPage(page, await resolveKey(ROOT), 'light');
+    await openPage(page, await resolveArtifactPath(ROOT), 'light');
     await expect(page.locator('.view-learnings-meta-left .eyebrow')).toHaveText('Learnings · Project');
     await expect(page.locator('h1')).toHaveText('Dense Fixture Project');
     await expect(page.locator('.view-learnings-segment')).toHaveCount(2);
@@ -168,11 +169,11 @@ test.describe('Learnings page', () => {
     test(`every learnings page fits 420px in ${theme}`, async ({ page }) => {
       await page.setViewportSize({ width: 420, height: 900 });
       for (const match of [LX01, SYN, ROOT]) {
-        const key = await resolveKey(match);
-        await openPage(page, key, theme);
+        const path = await resolveArtifactPath(match);
+        await openPage(page, path, theme);
         await expect(page.locator('h1')).toHaveCount(1);
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-        expect(overflow, key).toBeLessThanOrEqual(0);
+        expect(overflow, path).toBeLessThanOrEqual(0);
       }
     });
   }
