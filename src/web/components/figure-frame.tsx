@@ -15,6 +15,7 @@ export function FigureFrame({
   caption,
   tools,
   scalable = true,
+  defaultFit = false,
 }: {
   title: string;
   children: (fit: boolean) => React.ReactNode;
@@ -23,8 +24,10 @@ export function FigureFrame({
   tools?: React.ReactNode;
   /** False for a figure that does not scale (a tree): no Fit / Actual size and no Grid chips. */
   scalable?: boolean;
+  /** Opens in Fit to width (the image page, where screenshots are wider than the column). */
+  defaultFit?: boolean;
 }): React.JSX.Element {
-  const [fit, setFit] = useState(false);
+  const [fit, setFit] = useState(defaultFit);
   const [grid, setGrid] = useState(false);
   const [open, setOpen] = useState(false);
   const gridAttribute = grid ? 'true' : undefined;
