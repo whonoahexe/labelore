@@ -3,7 +3,7 @@
 // first, the live root next and the other archives newest first, the dates passed through, and the
 // null / empty cases.
 import { describe, expect, it } from 'vitest';
-import { buildArtifactUrl, buildPlanUrl } from '../../src/presentation/routes.ts';
+import { buildPlanUrl } from '../../src/presentation/routes.ts';
 import type { ArtifactDto, PhaseDto, PlanDto, ProjectPresentation } from '../../src/server/project-presentation.ts';
 import { findPlanContext } from '../../src/web/views/plan-context.ts';
 import { emptyLedger } from '../../src/server/dashboard-ledger.ts';
@@ -115,8 +115,8 @@ describe('findPlanContext', () => {
   it('resolves dependencies to titles, completion and in-app URLs', () => {
     const context = findPlanContext(presentation(), ARTIFACT, IDENTITY);
     expect(context?.dependencies).toEqual([
-      { raw: '01-03', id: '01-03', title: 'The `backstage` account CLI', complete: true, url: buildArtifactUrl(IDENTITY, PLAN_03.path) },
-      { raw: '01-04', id: '01-04', title: null, complete: false, url: buildArtifactUrl(IDENTITY, PLAN_04.path) },
+      { raw: '01-03', id: '01-03', title: 'The `backstage` account CLI', complete: true, url: PLAN_03.key },
+      { raw: '01-04', id: '01-04', title: null, complete: false, url: PLAN_04.key },
       { raw: '01-99', id: '01-99', title: null, complete: false, url: null },
     ]);
   });

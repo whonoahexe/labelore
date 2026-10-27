@@ -6,9 +6,8 @@
 // with empty lookups. Requirement texts are keyed by the plan's own milestone first (archived
 // milestones reuse IDs such as AUTH-01), then the live root REQUIREMENTS.md, then every other
 // requirements archive newest first. T-iz6-03: nothing here builds an href from document text — the
-// URLs come from `buildArtifactUrl` over presentation paths.
+// URLs are the presentation's own keys (a plan's `key`).
 import type { PhaseIdentity } from '../../domain/model.ts';
-import { buildArtifactUrl } from '../../presentation/routes.ts';
 import type { ArtifactDto, PlanDto, ProjectPresentation } from '../../server/project-presentation.ts';
 
 export interface PlanDependency {
@@ -160,7 +159,7 @@ export function findPlanContext(
       id: dependency.raw,
       title: target.plan.description ?? objectiveTitleOf(byPath.get(target.plan.path)),
       complete: target.plan.complete,
-      url: buildArtifactUrl(target.identity, target.plan.path),
+      url: target.plan.key,
     };
   });
 

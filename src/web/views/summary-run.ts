@@ -25,7 +25,7 @@ import type {
   SummaryTask,
 } from '../../planning-repo/handlers/summary-run.ts';
 import type { PhaseIdentity } from '../../domain/model.ts';
-import { buildArtifactUrl, buildPhaseUrl } from '../../presentation/routes.ts';
+import { buildPhaseUrl } from '../../presentation/routes.ts';
 import type { ViewInput } from './manifest.ts';
 import { normalizeHeading } from './pattern-map.ts';
 import { formatStamp } from './uat-session.ts';
@@ -1112,7 +1112,7 @@ export function composeSummaryRun(input: ViewInput): ComposedSummaryRun | null {
 /** The slice of `ProjectPresentation` the lookups read — a structural subset, so a literal works
  * in a test and the real presentation satisfies it. */
 export interface SummaryPresentation {
-  artifacts: { path: string; structured: Record<string, unknown> }[];
+  artifacts: { key: string; path: string; structured: Record<string, unknown> }[];
   milestones: { phases: { identity: PhaseIdentity }[] }[];
 }
 
@@ -1127,7 +1127,7 @@ export interface RequirementPreview {
   /** The REQUIREMENTS file path, or "—". */
   location: string;
   phase: string;
-  /** `buildArtifactUrl(null, path)`, or null when not found. */
+  /** The requirements file's key in the payload (its one URL), or null when not found. */
   url: string | null;
 }
 
@@ -1150,6 +1150,7 @@ function newestFirst(a: number[], b: number[]): number {
 }
 
 interface RequirementsFile {
+  key: string;
   path: string;
   items: { id: string; text: string; checked: boolean | null }[];
   traceability: { requirementId: string; phase: string; status: string }[];
@@ -1164,6 +1165,7 @@ function requirementsFiles(presentation: SummaryPresentation, summaryPath: strin
     const version = versionOf(artifact.path);
     if (artifact.path !== ROOT_REQUIREMENTS && version === null) continue;
     const file: RequirementsFile = {
+      key: artifact.key,
       path: artifact.path,
       items,
       traceability: arr<{ requirementId: string; phase: string; status: string }>(artifact.structured.traceability),
@@ -1209,7 +1211,7 @@ export function requirementPreviews(
         status: row && row.status !== '' ? row.status : checkbox,
         location: file.path,
         phase: row && row.phase !== '' ? row.phase : '—',
-        url: buildArtifactUrl(null, file.path),
+        url: file.key,
       };
       break;
     }

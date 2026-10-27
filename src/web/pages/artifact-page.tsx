@@ -12,7 +12,6 @@ import {
 } from '../../presentation/artifact-warning-tone.ts';
 import { artifactWarningSummary } from '../../presentation/artifact-warning-summary.ts';
 import {
-  buildArtifactUrl,
   presentationRoutePatterns,
 } from '../../presentation/routes.ts';
 import { buildFrontmatterPanels } from '../../rendering/frontmatter-views.ts';
@@ -145,7 +144,6 @@ function findPhaseRequirementIds(
 function findSiblingArtifacts(
   presentation: ProjectPresentation | undefined,
   path: string | undefined,
-  phaseIdentity: PhaseIdentity | null | undefined,
 ): NonNullable<ViewInput['siblingArtifacts']> {
   if (!presentation || !path) return [];
   const directory = path.slice(0, path.lastIndexOf('/') + 1);
@@ -156,7 +154,7 @@ function findSiblingArtifacts(
     siblings.push({
       kind: artifact.kind,
       path: artifact.path,
-      url: buildArtifactUrl(phaseIdentity ?? null, artifact.path),
+      url: artifact.key,
       frontmatter: artifact.frontmatter,
     });
   }
@@ -665,7 +663,7 @@ export function ArtifactPage({
   );
   const siblingArtifacts = useMemo(
     () =>
-      findSiblingArtifacts(presentationQuery.data, query.data?.artifact.path, query.data?.phaseIdentity),
+      findSiblingArtifacts(presentationQuery.data, query.data?.artifact.path),
     [presentationQuery.data, query.data],
   );
   const switcher =
