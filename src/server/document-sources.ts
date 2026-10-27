@@ -10,6 +10,7 @@
 // pass per artifact body, never one scan per token per file.
 // T-4tb-04 (spoofing): a source exists only when the id resolves to an artifact the reader found.
 import type { Artifact, Phase, Project, QuickTask } from '../domain/model.ts';
+import { buildRouteTable, type RouteTable } from '../presentation/route-table.ts';
 import { buildArtifactUrl, buildPhaseUrl, buildPlanUrl } from '../presentation/routes.ts';
 
 const PLANNING_PREFIX = '.planning/';
@@ -101,7 +102,10 @@ const PHASE_DOCUMENT_KINDS: Record<string, string> = {
   PATTERNS: 'Patterns',
 };
 
-export function createSourceResolver(project: Project): SourceResolver {
+export function createSourceResolver(
+  project: Project,
+  routeTable: RouteTable = buildRouteTable(project),
+): SourceResolver {
   // Every artifact the reader found, once each, with the phase that owns it (if any).
   const entryByPath = new Map<string, Entry>();
   const add = (artifact: Artifact, phase: Phase | null) => {
@@ -134,9 +138,11 @@ export function createSourceResolver(project: Project): SourceResolver {
   const quickArtifact = (quick: QuickTask, suffix: string): Artifact | null =>
     Object.values(quick.artifacts).find((artifact) => baseName(artifact.path).endsWith(suffix)) ?? null;
 
+  // The route table is the authority for the address a file really has (a collision loser lives at its
+  // file/ address); the owner-aware stateless builder is only the fallback for a path the table lacks.
   const urlOf = (path: string): string => {
     const entry = entryByPath.get(path);
-    return buildArtifactUrl(entry?.phase?.identity ?? null, path);
+    return routeTable.urlOf(path) ?? buildArtifactUrl(entry?.phase?.identity ?? null, path);
   };
 
   const phaseArtifacts = (phase: Phase): Artifact[] => Object.values(phase.artifacts);
@@ -190,7 +196,7 @@ export function createSourceResolver(project: Project): SourceResolver {
       meta: `${done ? 'Has a summary' : 'No summary yet'}${where ? ` · ${where}` : ''}`,
       detail: objectiveOf(plan.path),
       path: plan.path,
-      url: buildPlanUrl(phase.identity, plan.id),
+      url: routeTable.urlOf(plan.path) ?? buildPlanUrl(phase.identity, plan.id),
     };
   };
 

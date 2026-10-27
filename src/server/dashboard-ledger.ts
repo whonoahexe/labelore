@@ -10,6 +10,7 @@
 import type { Artifact, Phase, Project } from '../domain/model.ts';
 import { fileTitleOf, sentencesOf } from '../planning-repo/handlers/note-lift.ts';
 import { parseDuration } from '../presentation/dashboard-pace.ts';
+import { buildRouteTable, type RouteTable } from '../presentation/route-table.ts';
 import { buildPhaseUrl, buildPlanUrl } from '../presentation/routes.ts';
 import {
   createSourceResolver,
@@ -540,7 +541,7 @@ function recentOf(project: Project, resolver: ReturnType<typeof createSourceReso
 /** Unfinished plans from the current phase on, then phases that are not finished and have no plan
  * queued. The reader does not parse ROADMAP's checklist bullets, so "unchecked" reads as "not
  * finished": a live phase that is not complete. */
-function queueOf(project: Project): LedgerQueueItemDto[] {
+function queueOf(project: Project, resolver: ReturnType<typeof createSourceResolver>): LedgerQueueItemDto[] {
   const state = Object.values(project.artifacts).find((artifact) => artifact.kind === 'state');
   const current = parseFloat(String(state?.frontmatter.current_phase ?? ''));
   if (Number.isNaN(current)) return [];
@@ -564,7 +565,7 @@ function queueOf(project: Project): LedgerQueueItemDto[] {
         label: plan.id,
         title: objectiveSentence(body) ?? objectiveText(body) ?? baseName(plan.path),
         detail: null,
-        url: buildPlanUrl(phase.identity, plan.id),
+        url: resolver.artifactUrl(plan.path) ?? buildPlanUrl(phase.identity, plan.id),
       });
     }
   }
@@ -579,8 +580,11 @@ function queueOf(project: Project): LedgerQueueItemDto[] {
   return queue;
 }
 
-export function buildDashboardLedger(project: Project): DashboardLedgerDto {
-  const resolver = createSourceResolver(project);
+export function buildDashboardLedger(
+  project: Project,
+  routeTable: RouteTable = buildRouteTable(project),
+): DashboardLedgerDto {
+  const resolver = createSourceResolver(project, routeTable);
   const blockersBody = sectionBody(project, 'blockersConcerns');
   const blockers = blockersBody
     ? readBullets(blockersBody).map((bullet, index): LedgerBlockerDto => {
@@ -618,6 +622,6 @@ export function buildDashboardLedger(project: Project): DashboardLedgerDto {
     todos: todosOf(project, resolver),
     notes: notesOf(project, resolver),
     recent: recentOf(project, resolver),
-    queue: queueOf(project),
+    queue: queueOf(project, resolver),
   };
 }
