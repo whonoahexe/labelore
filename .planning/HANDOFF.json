@@ -1,39 +1,213 @@
 {
   "version": "1.0",
-  "timestamp": "2026-10-26T21:08:07.486Z",
-  "phase": "07",
-  "phase_name": "Recognised Files and Readable URLs",
-  "phase_dir": ".planning/phases/07-recognised-files-and-readable-urls",
-  "plan": 5,
-  "task": 0,
-  "total_tasks": 10,
+  "timestamp": "2026-10-27T17:52:33.840Z",
+  "phase": "08",
+  "phase_name": "Several Projects and a Switcher",
+  "phase_dir": ".planning/phases/08-several-projects-and-a-switcher",
+  "plan": 0,
+  "task": 1,
+  "total_tasks": 3,
   "status": "paused",
+  "activity": "plan-phase (revision loop iteration 1 of 3), not execution",
   "completed_tasks": [
-    {"id": 1, "name": "07-01 file classes and GSD-internal exclusions, Shapes fixture", "status": "done", "commit": "3558f07"},
-    {"id": 2, "name": "07-02 folder table and name recognition", "status": "done", "commit": "b3c5655"},
-    {"id": 3, "name": "07-03 project slug, nav.tsx, /:project gate", "status": "done", "commit": "b765549"},
-    {"id": 4, "name": "07-04 URL grammar and route table", "status": "done", "commit": "79e52e8"}
+    {
+      "id": 1,
+      "name": "Research 08-RESEARCH.md",
+      "status": "done",
+      "commit": "24f759b"
+    },
+    {
+      "id": 2,
+      "name": "Plan-time decisions D-20..D-22",
+      "status": "done",
+      "commit": "7df59e3"
+    },
+    {
+      "id": 3,
+      "name": "Pattern map 08-PATTERNS.md",
+      "status": "done",
+      "commit": "c09f297"
+    },
+    {
+      "id": 4,
+      "name": "Draft plans 08-01..08-09 (failed plan-check: 5 blockers)",
+      "status": "done",
+      "commit": "f0dacb3"
+    },
+    {
+      "id": 5,
+      "name": "Revision: 08-01, 08-02 revised, new 08-03 request guard",
+      "status": "in_progress",
+      "progress": "3 of 14 target plans written",
+      "commit": "bdc1cd7"
+    }
   ],
   "remaining_tasks": [
-    {"id": 5, "name": "07-05 Playwright appUrl helper and spec sweep (wave 3)", "status": "not_started"},
-    {"id": 6, "name": "07-06 server switch to the new URLs (wave 4)", "status": "not_started"},
-    {"id": 7, "name": "07-07 web switch (wave 5)", "status": "not_started"},
-    {"id": 8, "name": "07-08 isolated legacy redirector (wave 6)", "status": "not_started"},
-    {"id": 9, "name": "07-09 image page, info card, image-bytes route (wave 6)", "status": "not_started"},
-    {"id": 10, "name": "07-10 deep-reload proof for every URL (wave 7)", "status": "not_started"}
+    {
+      "id": 6,
+      "name": "Write 08-04..08-14 per target map in .continue-here.md; fix checker issues 1 (RESEARCH open questions RESOLVED) and 9 (PATTERNS analogs); update ROADMAP Phase 8 to 14 plans",
+      "status": "not_started"
+    },
+    {
+      "id": 7,
+      "name": "Re-run gsd-plan-checker (iteration 2/3)",
+      "status": "not_started"
+    },
+    {
+      "id": 8,
+      "name": "Plan-phase gates 13-13d: requirements + decision coverage, state.planned-phase, roadmap.annotate-dependencies, commit",
+      "status": "not_started"
+    }
   ],
   "blockers": [
-    {"description": "Usage guard pause at 97% of the 5-hour limit", "type": "external", "workaround": "Resume after the window resets with /gsd-execute-phase 7"}
+    {
+      "description": "Phase dir has mixed plan numbering: 08-01..03 revised, 08-04..09 are OLD plans; old 08-03 (settings) only in f0dacb3",
+      "type": "technical",
+      "workaround": "git show f0dacb3:.planning/phases/08-several-projects-and-a-switcher/08-0N-PLAN.md"
+    },
+    {
+      "description": "Usage guard pause at 97% of the 5-hour limit",
+      "type": "external",
+      "workaround": "Resume after the window resets"
+    },
+    {
+      "description": "Phase 8 cannot execute until Phase 7 finishes (07-10-SUMMARY.md)",
+      "type": "technical",
+      "workaround": "Resume Phase 7 execution first; see phase_07_execution_pause"
+    }
   ],
   "async_jobs": [],
   "human_actions_pending": [
-    {"action": "Browser walkthrough for 07-03: / lands on /labelore, drawer and tabs keep the prefix, /someone-else/roadmap shows the wrong-project page", "context": "Recorded in 07-03-SUMMARY as human_judgment; not run", "blocking": false}
+    {
+      "action": "Choose winning sketch variants for 039/040 at plan 08-02 checkpoint",
+      "context": "blocking-human decision during Phase 8 execution",
+      "blocking": true
+    }
   ],
   "decisions": [
-    {"decision": "Executors run sequentially on the main tree (isolation none)", "rationale": "worktree.base-check reports fork-ref-unknown (origin/HEAD unresolved) and auto-degrades; re-run `dispatch-isolation --force-isolation none` before each dispatch because the sentinel gets re-resolved to harness-worktree", "phase": "07"},
-    {"decision": "Three baseline test failures are pre-existing, not caused by phase 7 plans", "rationale": "pattern-map-corpus and ui-spec-corpus want pinned entries for 07-PATTERNS.md and 07-UI-SPEC.md; fix before the end-of-phase post-merge gate", "phase": "07"}
+    {
+      "decision": "D-20 opt-in LABELORE_ALLOWED_HOSTS",
+      "rationale": "keep Cloudflare tunnel deployment working",
+      "phase": "08"
+    },
+    {
+      "decision": "D-21 PROJECT.md title as display name, basename fallback",
+      "rationale": "user choice; slug still from basename",
+      "phase": "08"
+    },
+    {
+      "decision": "D-22 failed CLI path listed for run only",
+      "rationale": "user choice",
+      "phase": "08"
+    },
+    {
+      "decision": "assumption-delta: promote slug-keyed registry to primary identity",
+      "rationale": "phase turns one project per run into several",
+      "phase": "08"
+    }
   ],
-  "uncommitted_files": [" M .planning/state.json"],
-  "next_action": "Run /gsd-execute-phase 7; it skips 07-01..07-04 (SUMMARY present) and dispatches 07-05 first",
-  "context_notes": "Wave gates (schema drift, codebase drift, UI safety) passed after waves 1-2; run them again after wave 3. Playwright specs still visit un-prefixed paths until 07-05 and 07-08 land. NAV-09/NAV-10 not yet marked complete; sibling plans still pending."
+  "uncommitted_files": [],
+  "next_action": "Resume Phase 7 execution (/gsd-execute-phase 7, see phase_07_execution_pause). Separately, resume Phase 8 planning from .planning/phases/08-several-projects-and-a-switcher/.continue-here.md: spawn gsd-planner in revision mode to write 08-04..08-14, then re-run the plan checker.",
+  "context_notes": "This handoff records the Phase 8 PLANNING pause. The earlier Phase 7 EXECUTION pause is preserved verbatim under phase_07_execution_pause and remains the first thing to resume.",
+  "phase_07_execution_pause": {
+    "version": "1.0",
+    "timestamp": "2026-10-26T21:08:07.486Z",
+    "phase": "07",
+    "phase_name": "Recognised Files and Readable URLs",
+    "phase_dir": ".planning/phases/07-recognised-files-and-readable-urls",
+    "plan": 5,
+    "task": 0,
+    "total_tasks": 10,
+    "status": "paused",
+    "completed_tasks": [
+      {
+        "id": 1,
+        "name": "07-01 file classes and GSD-internal exclusions, Shapes fixture",
+        "status": "done",
+        "commit": "3558f07"
+      },
+      {
+        "id": 2,
+        "name": "07-02 folder table and name recognition",
+        "status": "done",
+        "commit": "b3c5655"
+      },
+      {
+        "id": 3,
+        "name": "07-03 project slug, nav.tsx, /:project gate",
+        "status": "done",
+        "commit": "b765549"
+      },
+      {
+        "id": 4,
+        "name": "07-04 URL grammar and route table",
+        "status": "done",
+        "commit": "79e52e8"
+      }
+    ],
+    "remaining_tasks": [
+      {
+        "id": 5,
+        "name": "07-05 Playwright appUrl helper and spec sweep (wave 3)",
+        "status": "not_started"
+      },
+      {
+        "id": 6,
+        "name": "07-06 server switch to the new URLs (wave 4)",
+        "status": "not_started"
+      },
+      {
+        "id": 7,
+        "name": "07-07 web switch (wave 5)",
+        "status": "not_started"
+      },
+      {
+        "id": 8,
+        "name": "07-08 isolated legacy redirector (wave 6)",
+        "status": "not_started"
+      },
+      {
+        "id": 9,
+        "name": "07-09 image page, info card, image-bytes route (wave 6)",
+        "status": "not_started"
+      },
+      {
+        "id": 10,
+        "name": "07-10 deep-reload proof for every URL (wave 7)",
+        "status": "not_started"
+      }
+    ],
+    "blockers": [
+      {
+        "description": "Usage guard pause at 97% of the 5-hour limit",
+        "type": "external",
+        "workaround": "Resume after the window resets with /gsd-execute-phase 7"
+      }
+    ],
+    "async_jobs": [],
+    "human_actions_pending": [
+      {
+        "action": "Browser walkthrough for 07-03: / lands on /labelore, drawer and tabs keep the prefix, /someone-else/roadmap shows the wrong-project page",
+        "context": "Recorded in 07-03-SUMMARY as human_judgment; not run",
+        "blocking": false
+      }
+    ],
+    "decisions": [
+      {
+        "decision": "Executors run sequentially on the main tree (isolation none)",
+        "rationale": "worktree.base-check reports fork-ref-unknown (origin/HEAD unresolved) and auto-degrades; re-run `dispatch-isolation --force-isolation none` before each dispatch because the sentinel gets re-resolved to harness-worktree",
+        "phase": "07"
+      },
+      {
+        "decision": "Three baseline test failures are pre-existing, not caused by phase 7 plans",
+        "rationale": "pattern-map-corpus and ui-spec-corpus want pinned entries for 07-PATTERNS.md and 07-UI-SPEC.md; fix before the end-of-phase post-merge gate",
+        "phase": "07"
+      }
+    ],
+    "uncommitted_files": [
+      " M .planning/state.json"
+    ],
+    "next_action": "Run /gsd-execute-phase 7; it skips 07-01..07-04 (SUMMARY present) and dispatches 07-05 first",
+    "context_notes": "Wave gates (schema drift, codebase drift, UI safety) passed after waves 1-2; run them again after wave 3. Playwright specs still visit un-prefixed paths until 07-05 and 07-08 land. NAV-09/NAV-10 not yet marked complete; sibling plans still pending."
+  }
 }
