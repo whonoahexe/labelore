@@ -467,8 +467,8 @@ test.describe('discussion-log review fixes (quick-260923-jxp)', () => {
 // quick-261024-o3h: every diagram and directory tree in a rendered document is a figure, decided
 // once by the shared detector on the server and hydrated on the client; Source shows the plain code.
 test.describe('rendered figures (quick-261024-o3h)', () => {
-  test('rendered figures: project research ARCHITECTURE.md', async ({ page, baseURL }) => {
-    const url = await artifactUrl(baseURL ?? BASE_URL, await resolveFixturePath(baseURL ?? BASE_URL, '.planning/research/ARCHITECTURE.md'));
+  test('rendered figures: archived v1.0 research ARCHITECTURE.md', async ({ page, baseURL }) => {
+    const url = await artifactUrl(baseURL ?? BASE_URL, await resolveFixturePath(baseURL ?? BASE_URL, '.planning/milestones/v1.0-research/ARCHITECTURE.md'));
     await setTheme(page, 'light');
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(url);
