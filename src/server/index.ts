@@ -469,10 +469,6 @@ export async function startServer(rawPath: string, options: ServerOptions = {}):
   }
 
   const { createServer: createViteServer } = await import('vite');
-  const vite = await createViteServer({
-    appType: 'spa',
-    server: { middlewareMode: true, hmr: false },
-  });
   const appListener = getRequestListener(app.fetch, { hostname: HOSTNAME });
   const server = createHttpServer((request, response) => {
     if (routesToApp(request.url)) {
@@ -480,10 +476,19 @@ export async function startServer(rawPath: string, options: ServerOptions = {}):
       return;
     }
 
+    // Requests only arrive once the server listens, which is after `vite` below is assigned.
     vite.middlewares(request, response, (error?: unknown) => {
       response.statusCode = error ? 500 : 404;
       response.end(error instanceof Error ? error.message : 'Not found');
     });
+  });
+  // Vite 8 ignores `server.hmr: false` and, in middleware mode, opens its own WebSocket on the fixed port
+  // 24678. A second dev server on the machine cannot bind it, so its pages connect to the first server's
+  // socket, are refused, and raise an uncaught "WebSocket closed without opened." in the browser. Sharing
+  // this server's own HTTP server gives each instance a socket on its own port.
+  const vite = await createViteServer({
+    appType: 'spa',
+    server: { middlewareMode: true, ws: { server } },
   });
   server.on('close', () => void vite.close());
   registerDisposal(source, server);

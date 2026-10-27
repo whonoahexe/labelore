@@ -1,11 +1,15 @@
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { PhaseIdentity } from '../../src/domain/model.ts';
 import type { ProjectSnapshot } from '../../src/planning-repo/types.ts';
 import { buildArtifactUrl, buildPhaseUrl, buildPlanUrl } from '../../src/presentation/routes.ts';
-import { createApp } from '../../src/server/index.ts';
+import { LocalFsPlanningFilesystem } from '../../src/planning-fs/local-fs.ts';
+import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
+import { createApp, startServer } from '../../src/server/index.ts';
+import { SHAPES_ROOT } from '../helpers/shapes-project.ts';
 
 const snapshot: ProjectSnapshot = {
   loadStatus: { status: 'ok' },
@@ -97,5 +101,71 @@ describe('production SPA deep-link delivery', () => {
     });
     expect(payloads[2]).toMatchObject({ active: null, history: [] });
     expect(payloads[3]).toMatchObject({ history: [] });
+  });
+});
+
+const SHAPES_PLAN_PATH = '.planning/phases/02.1-glaze-hotfix/02.1-01-PLAN.md';
+
+interface PresentationLite {
+  projectSlug: string;
+  artifacts: { key: string; path: string }[];
+}
+
+/** The address (slug included) of the decimal-phase plan, from a served /api/presentation payload. */
+function shapesPlanAddress(presentation: PresentationLite): string {
+  const artifact = presentation.artifacts.find((entry) => entry.path === SHAPES_PLAN_PATH);
+  if (artifact === undefined) throw new Error(`Shapes payload has no ${SHAPES_PLAN_PATH}`);
+  return `/${presentation.projectSlug}${artifact.key}`;
+}
+
+describe('Shapes: a dotted decimal-phase plan address in production', () => {
+  let staticRoot = '';
+  const shell = '<!doctype html><html><body><div id="root">Labelore shell</div></body></html>';
+
+  beforeAll(async () => {
+    staticRoot = await mkdtemp(join(tmpdir(), 'labelore-deep-links-shapes-'));
+    await writeFile(join(staticRoot, 'index.html'), shell);
+  });
+
+  afterAll(async () => {
+    await rm(staticRoot, { recursive: true, force: true });
+  });
+
+  it('answers the shell, not an API route, for a direct GET', async () => {
+    const repository = new PlanningRepository(new LocalFsPlanningFilesystem(SHAPES_ROOT), SHAPES_ROOT);
+    await repository.load();
+    const app = createApp(repository, true, staticRoot);
+
+    const presentation = (await (await app.request('/api/presentation')).json()) as PresentationLite;
+    const address = shapesPlanAddress(presentation);
+    expect(address).toContain('phase-2.1');
+
+    const response = await app.request(address);
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe(shell);
+  });
+});
+
+describe('Shapes: a dotted decimal-phase plan address on the development server', () => {
+  let server: Awaited<ReturnType<typeof startServer>>;
+  let base = '';
+
+  beforeAll(async () => {
+    server = await startServer(SHAPES_ROOT, { port: 0, production: false });
+    base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  }, 60_000);
+
+  afterAll(async () => {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  });
+
+  it('answers the Vite-served shell for a direct GET with Accept text/html', async () => {
+    const presentation = (await (await fetch(`${base}/api/presentation`)).json()) as PresentationLite;
+    const response = await fetch(`${base}${shapesPlanAddress(presentation)}`, {
+      headers: { Accept: 'text/html' },
+    });
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toContain('text/html');
+    expect(await response.text()).toContain('<div id="root">');
   });
 });
