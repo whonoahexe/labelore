@@ -15,3 +15,5 @@ playwright-report/
 
 # GSD per-session lock
 .planning/milestone.lock
+# Agent worktrees created by Claude Code isolation
+.claude/worktrees/
