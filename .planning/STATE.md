@@ -4,12 +4,12 @@ milestone: v2.1
 milestone_name: Wayfinding
 current_phase: 07
 current_phase_name: Recognised Files and Readable URLs
-status: verifying
-stopped_at: Completed 07-10-PLAN.md
-last_updated: "2026-10-27T08:21:34.786Z"
+status: Awaiting human verification
+stopped_at: Phase 07 executed and verified (human_needed); 6 UAT checks pending in 07-UAT.md
+last_updated: "2026-10-27T11:25:49.360Z"
 last_activity: 2026-10-27
 last_activity_desc: Phase 07 execution started
-state_head: 9542dca8afe0f3194e048136b4e7b1b35a5768d1
+state_head: 2c3b502dd635fc6e22f293fa9c4365c518a3dc91
 progress:
   total_phases: 8
   completed_phases: 1
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-10-26)
 
 Phase: 07 (Recognised Files and Readable URLs) — EXECUTING
 Plan: 10 of 10
-Status: Phase complete — ready for verification
+Status: Awaiting human verification
 Last activity: 2026-10-27 — Phase 07 execution started
 
 Progress: [█░░░░░░░░░] 13%
@@ -224,9 +224,9 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 ## Session Continuity
 
 Last session: 2026-10-27T08:21:34.662Z
-Stopped at: Completed 07-10-PLAN.md
+Stopped at: Phase 07 executed and verified (human_needed); 6 UAT checks pending in 07-UAT.md
 Resume file: None
 
 ## Operator Next Steps
 
-- Discuss or plan Phase 7 with /gsd-discuss-phase 7 or /gsd-plan-phase 7
+- Run /gsd-verify-work 7 to walk the six human checks in 07-UAT.md; the phase completes when they pass
