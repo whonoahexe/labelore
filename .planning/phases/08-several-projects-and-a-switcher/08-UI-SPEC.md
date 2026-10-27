@@ -91,7 +91,7 @@ Row vertical padding is `--space-3` (12px, a multiple of 4).
 
 Exceptions:
 - The forget action is a 36px square (`Button` size `icon-sm`) on fine pointers and 40px (`icon`) under `@media (pointer: coarse)`; the row itself is at least 48px tall at that width, so the combined target is never smaller than 40px.
-- Popup width is `min(28rem, 100vw - 2rem)` and height `min(28rem, 70vh)`, scrolling inside (the list may hold dozens of projects). At the 42rem breakpoint already used by the shell it spans the viewport width under the header.
+- Popup size caps are written over tokens, so no literal `rem` enters new CSS: width `min(calc(var(--space-28) * 4), calc(100vw - var(--space-8)))` (448px, or the viewport less 32px) and height `min(calc(var(--space-28) * 4), 70vh)`, scrolling inside (the list may hold dozens of projects). The add dialog width is `min(calc(var(--space-8) * 16), calc(100vw - var(--space-8)))` (512px). Viewport units (`vh`, `vw`) are the one declared exception to "token-only": they are viewport fractions, not spacing. At the 42rem breakpoint already used by the shell (an existing media query, not new CSS) the popup spans the viewport width under the header.
 
 ---
 
@@ -106,9 +106,11 @@ Exactly four sizes and two weights, all existing scale steps. Nothing new enters
 | Body (project display name, input text, dialog and notice copy) | 13.12px (`--fs-4`) | 600 for the project name, 500 otherwise | 1.55 (`--lh-normal`) |
 | Heading (landing `h1`, unknown-slug `h1`, dialog title) | 20.8px (`--fs-7`) | 600 (`--fw-semibold`) | 1.2 (`--lh-tight`) |
 
-Reused as is, not re-declared: the landing lede uses `.lede` (its own fluid size and 48ch cap); the
-existing `.brand-project-name` (13.12px, 600) and `.brand-meta` (11.2px mono) keep their rules inside
-the switcher trigger. `Button` keeps its own 12px uppercase label. No `--fw-bold`.
+Four sizes is the whole set; no other size appears in this phase's UI:
+- The landing lede uses `.lede` for colour, line height and its 48ch cap, but its fluid size is overridden to Body (`--fs-4`) by the rule `.projects-page .lede`, so the lede is not a fifth size.
+- Every `Button` in this phase's UI sets its label size to Meta (`--fs-3`, 12.16px) through a className override, replacing the Button default of 12px (`text-xs`). Uppercase and `tracking-widest` stay.
+- The existing `.brand-project-name` (13.12px, 600 = Body) and `.brand-meta` (11.2px mono = Label) keep their rules inside the switcher trigger.
+- No `--fw-bold`.
 
 ---
 
@@ -121,15 +123,18 @@ Tokens only. No literal colour anywhere; every rule checked in `:root` and `.dar
 | Dominant (60%) | `--background` (light `oklch(1 0 0)`, dark `oklch(0.125 0 0)`) | Landing page surface, dialog and popup interiors sit on `--popover` (`oklch(1 0 0)` / `oklch(0.205 0 0)`) |
 | Secondary (30%) | `--card` / `--muted` / `--secondary`, row hover `--state-hover`, header `--chrome-veil` | Row dividers on `--border-faint`, popup border `--border`, scan result cards on `--card`, the "Already added" disabled row on `--muted` |
 | Accent (10%) | `--primary` (light `oklch(0.553 0.195 38.402)`, dark `oklch(0.47 0.157 37.304)`) | Reserved list below |
-| Destructive | `--destructive` | Not used by this phase. Forget is reversible (D-10) and is never red. A failed add or load uses the existing `notice destructive` left rule only for a genuine read failure. |
+| Destructive | `--destructive` | Not used by this phase's controls. Forgetting a project is the one destructive-in-name control, and it is kept neutral on purpose: it only edits Labelore's own settings file, touches nothing in the project, and is undone by re-adding the path (D-10), so its button and confirm are `outline` / `ghost`, never red. A failed add or load uses the existing `notice destructive` left rule only for a genuine read failure. |
 
-Accent reserved for, in this phase's new UI, exactly:
+Accent reserved for, in this phase's new UI, exactly these five:
 1. The current-project marker in a project list: the row's 2px left rule and its `Check` icon (the row for the slug in the URL; absent on the landing page, which has no current project).
-2. The "Add project" submit in the add dialog and the "Add N projects" button under the scan checklist (`Button` variant `default`).
+2. The "Add project" submit (landing form and add dialog) and the "Add N projects" button under the scan checklist (`Button` variant `default`). They are the phase's only primary actions. "Scan folder" and the forget buttons are `outline`, since scanning only searches and forgetting is neutral. The landing add submit and the dialog submit use the same variant on purpose: one verb, one look.
 3. The keyboard focus ring (`--ring` is `--primary`, already global).
 4. The landing page's `.eyebrow` (existing rule reused verbatim).
+5. The checked fill of a scan-checklist checkbox (`--primary`; the standard control state, counted here so the list stays honest).
 
-Not accent: the switcher trigger (neutral, `--foreground` on the header), row names, paths, load marks, links (`.source-link` / `.text-link` as they stand), the checkboxes' unchecked border. A checked checkbox fills with `--primary`; that is the only extra use and it is the standard control state.
+Not accent: the switcher trigger (neutral, `--foreground` on the header), row names, paths, load marks, links (`.source-link` / `.text-link` as they stand), the checkboxes' unchecked border.
+
+Focal point: in the switcher popup the eye lands on the current-project row (the accent rule and `Check`); with no current project, on the first row. On the landing page it lands on the first row of the list (the most recently opened project); with zero projects, on the "Add project" field and its accent submit.
 
 Load-state marks use the shared chip tones, nothing new in the palette:
 
@@ -175,8 +180,9 @@ invalid-target screen with the reason (D-07). It is not disabled, so the user ca
 
 **Forget flow (D-10), inline, no modal:** pressing the forget button replaces the row's content with a
 confirm line in place — "Forget {name}? Labelore only removes it from this list. The project's files
-are not touched." — with buttons "Forget project" (`outline`) and "Keep" (`ghost`). Focus moves to
-"Keep" (the safe default). Escape or "Keep" restores the row. Forgetting the current project, when
+are not touched." — with buttons "Forget project" (`outline`) and "Keep project" (`ghost`). Focus moves to
+"Keep project" (the safe default). Escape or "Keep project" restores the row. This is the one
+destructive-in-name control, kept neutral on purpose (see Color). Forgetting the current project, when
 confirmed, navigates to `/`. A write failure shows the settings-error copy in the row and keeps the row.
 
 ### 3. Switching and loading (D-06, D-07, D-08)
@@ -189,17 +195,17 @@ confirmed, navigates to `/`. A write failure shows the settings-error copy in th
 ### 4. Projects landing page `/` (D-01, D-03, D-13; provisional layout: sketch 040 A)
 
 - Header: the mark and wordmark linking to `/`, no project name, no shell tabs, no drawer trigger, no search, no snapshot status; the theme toggle at the right. The page is a `page-stack` `<main>`.
-- `page-intro`: `.eyebrow` "Projects", `h1` "Projects", `.lede` below. One `h1` per page.
+- `page-intro`: `.eyebrow` "Projects", `h1` "Projects", `.lede` below (size overridden to Body by `.projects-page .lede`; the `<main>` carries `page-stack projects-page`). One `h1` per page.
 - Section 1, the list: the same `project-list` rows, full width, with last-opened time. No cards, no milestone, phase or progress (D-02, D-03).
-- Section 2, "Add a project" (`section-heading`): one text field and an `outline` submit "Add project". Runs `resolveTargetPath` / `parseRemoteTarget` once on the server (D-17).
+- Section 2, "Add a project" (`section-heading`): one text field and a `default` (accent) submit "Add project", the same variant as the dialog's. Runs `resolveTargetPath` / `parseRemoteTarget` once on the server (D-17).
 - Section 3, "Scan a folder" (`section-heading`): folder field + `outline` submit "Scan folder", then the checklist (below).
 - `/` never redirects (D-01), including when exactly one project is loaded.
 - Zero projects: the list is replaced by `empty-flow` (see Copywriting) and sections 2 and 3 stay.
 
 ### 5. Add dialog (D-13, D-17)
 
-- Opened from the switcher's "Add or scan…" entry. Base UI Dialog via `ui/dialog.tsx`, modal, width `min(32rem, 100vw - 2rem)`. Focus starts in the field.
-- Contents: title, description, one labelled field (accepts a local path, a `~` path, or an `ssh://` target), an inline error region, footer with "Cancel" (`ghost`) and "Add project" (`default`, accent), and below the footer a `text-link` "Scan a folder instead" to `/` (closes the dialog).
+- Opened from the switcher's "Add or scan…" entry. Base UI Dialog via `ui/dialog.tsx`, modal, width as declared in Spacing. Focus starts in the field.
+- Contents: title, description, one labelled field (accepts a local path, a `~` path, or an `ssh://` target), an inline error region, footer with "Close without adding" (`ghost`) and "Add project" (`default`, accent), and below the footer a `text-link` "Scan a folder instead" to `/` (closes the dialog).
 - Submit: the button shows "Adding…" and is disabled; on success the dialog closes and the app navigates to the new project's dashboard (adding at runtime opens and remembers it, D-09). Adding a path already in the list does not duplicate: it shows the duplicate message with a link to the existing row's project.
 - Failure keeps the dialog open, keeps the typed value, and shows a `notice destructive` with the server's invalid-target wording and the exact path checked (reusing the `InvalidProjectScreen` message source, never re-worded client-side). `aria-invalid` on the field and `role="alert"` on the notice.
 - The same add form on the landing page is the dialog's form inline (one component, two hosts).
@@ -210,7 +216,7 @@ confirmed, navigates to `/`. A write failure shows the settings-error copy in th
 - While scanning: the submit reads "Scanning…" and is disabled; a `quiet-state` row "Scanning {folder}…" with `role="status"`. A second scan cannot start until the first ends.
 - Result: a `<fieldset>` whose `<legend>` reads "Found {n} project(s) in {folder}". Each item is a Base UI Checkbox with the display name (Body, 600) and the home-shortened path (Meta, mono). Items are listed in path order. Checked state is local; nothing is saved until "Add N projects".
 - A project already in the list is shown disabled, unchecked, with the quiet chip "Already added", and is excluded from the count.
-- Controls above the list: a text button "Select all" / "Select none" (`link` variant is accent-coloured, so use `.text-link` styling instead, not `Button link`).
+- Controls above the list: a text button "Select all projects" / "Clear selection" (`link` variant is accent-coloured, so use `.text-link` styling instead, not `Button link`).
 - "Add N projects" (`default`, accent) is disabled at N = 0 and reads "Add projects" then. On success it remembers the picked ones **without loading them**, marks those items "Already added", moves focus to the status line, and the list above gains the new rows (no navigation).
 - Cap: at most the server's result cap (planner chooses; the number appears in the copy through `{cap}`); when reached, a `notice` states it. Refused folders and failures use the Copywriting rows. Results are cleared by a new scan or by leaving the page.
 
@@ -238,7 +244,7 @@ definition site, token-only spacing, both themes:
 
 `project-switcher-trigger`, `project-switcher-popup`, `project-switcher-footer`, `project-list`,
 `project-row`, `project-row-name`, `project-row-path`, `project-row-meta`, `project-row-actions`,
-`project-row-confirm`, `project-add-form`, `project-scan-results`, `project-scan-item`.
+`project-row-confirm`, `project-add-form`, `project-scan-results`, `project-scan-item`, `projects-page`.
 
 The `missing` Tones row gains the unavailable-project use (see Color). The `data-current="true"`
 attribute on `project-row` marks the current project.
@@ -269,19 +275,19 @@ re-worded in the client.
 | Unknown slug body | "Labelore does not know a project by this name. It may have been forgotten, or the link came from another run." |
 | Add dialog title / description | "Add a project" / "Enter a folder on this machine or an ssh:// target. Labelore reads it and never changes it." |
 | Add field label / placeholder | "Project location" / "/home/you/Work/portal or ssh://host/path" |
-| Add dialog buttons / link | "Add project", "Adding…", "Cancel" / "Scan a folder instead" |
+| Add dialog buttons / link | "Add project", "Adding…", "Close without adding" / "Scan a folder instead" |
 | Add error | "Could not add this project." then the server's message, then "Path checked: {path}" |
 | Add duplicate | "{name} is already in your list." with link "Open {name}" |
 | Scan field label / placeholder / hint | "Folder to scan" / "~/Work" / "Looks two levels down inside your home folder. Hidden folders, node_modules and symlinks are skipped." |
 | Scan in progress | "Scanning {folder}…" |
 | Scan legend | "Found {n} project(s) in {folder}" (singular "Found 1 project in {folder}") |
-| Scan none found | "No GSD projects found in {folder}." / "Labelore looked two levels down." |
+| Scan none found | "No GSD projects found in {folder}." / "Labelore looked two levels down. Try a folder one level up, or add a project by its location above." |
 | Scan capped | "Showing the first {cap} projects found. Scan a narrower folder to see the rest." |
 | Scan refused (outside home) | "{folder} is outside your home folder. Labelore only scans folders inside it." |
 | Scan done | "Added {n} projects. They open the first time you choose them." |
-| Select controls | "Select all" / "Select none" |
+| Select controls | "Select all projects" / "Clear selection" |
 | Forget (action name) | "Forget this project" (tooltip), `aria-label` "Forget {name}" |
-| Destructive confirmation | Forget project: "Forget {name}? Labelore only removes it from this list. The project's files are not touched." buttons "Forget project" / "Keep" |
+| Destructive confirmation | Forget project: "Forget {name}? Labelore only removes it from this list. The project's files are not touched." buttons "Forget project" / "Keep project" |
 | Settings could not be read | "Labelore's settings could not be read, so the list started empty. The old file was kept as settings.json.bak." |
 | Saved entry skipped | "A saved project was skipped: {reason}." |
 | Settings could not be saved | "Could not save the project list: {reason}. The change lasts only until Labelore restarts." |
