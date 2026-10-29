@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 040 — projects landing page</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+/* Sketch 040: the projects landing page at `/`, three ways. Rows, tokens, theme handling and the
+   variant switch are carried over from sketch 039 so both sketches agree. Every name, path and host
+   is made up (the repository is public). Tokens come from ../themes/default.css; the few the app
+   defines elsewhere are copied verbatim from src/web/styles/globals.css in the alias block. Class
+   names follow 08-UI-SPEC section 9. Four sizes (--fs-2, --fs-3, --fs-4, --fs-7), weights 500 and
+   600, squared corners, token spacing. */
+:root {
+  --popover: oklch(1 0 0);
+  --primary-foreground: oklch(0.98 0.016 73.684);
+  --border-faint: color-mix(in oklch, var(--border) 55%, transparent);
+  --chrome-veil: color-mix(in oklch, var(--background) 90%, transparent);
+  --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border));
+  --missing-border: color-mix(in oklch, var(--missing-fill) 50%, var(--border));
+  --font-heading: var(--font-sans);
+  --icon: var(--space-4);
+  --s36: calc(var(--space-8) + var(--space-1));
+  --s40: var(--space-10);
+  --s48: calc(var(--space-10) + var(--space-2));
+  --page: calc(var(--space-8) * 40);
+  --side: calc(var(--space-8) * 14);
+  --form: calc(var(--space-28) * 5);
+}
+.dark { --popover: oklch(0.205 0 0); }
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-4); font-weight: var(--fw-medium); line-height: var(--lh-normal); }
+h1, h2, h3, p, ul, ol, dl, dd, fieldset { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; border-radius: 0; }
+a { color: inherit; text-decoration: none; }
+[hidden] { display: none !important; }
+svg.i { width: var(--icon); height: var(--icon); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 1s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+
+/* ---------- sketch chrome (not part of the app) ---------- */
+#sketch-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); background: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+#sketch-bar .lbl { color: var(--muted-foreground); white-space: nowrap; }
+#sketch-bar .grp { display: flex; gap: var(--space-1); align-items: center; }
+#sketch-bar .grp + .grp { padding-left: var(--space-3); border-left: 1px solid var(--border); }
+#sketch-bar .grp.line { flex-basis: 100%; padding-left: 0; border-left: 0; }
+#sketch-bar a, #sketch-bar button { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; color: var(--muted-foreground); white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; }
+#sketch-bar a:hover, #sketch-bar button:hover { color: var(--foreground); background: var(--state-hover); }
+#sketch-bar .on { color: var(--foreground); border-color: var(--border); background: var(--state-hover); }
+#sketch-bar .name { color: var(--muted-foreground); padding-inline: var(--space-1); }
+@media (max-width: 42rem) { #sketch-bar { flex-wrap: nowrap; overflow-x: auto; } #sketch-bar .grp.line { flex-basis: auto; } }
+#toast { position: fixed; left: 50%; bottom: var(--space-4); transform: translateX(-50%); z-index: 99; max-width: 90vw; padding: var(--space-2) var(--space-3); background: var(--foreground); color: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); opacity: 0; pointer-events: none; transition: opacity 0.15s; }
+#toast.on { opacity: 1; }
+
+/* buttons and shared bits (same as 039) */
+.btn { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1-5); height: var(--s40); padding-inline: var(--space-6); border: 1px solid transparent; font-size: var(--fs-3); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.btn.sm { height: var(--s36); padding-inline: var(--space-4); }
+.btn.icon-sm { padding: 0; width: var(--s36); height: var(--s36); }
+.btn.default { background: var(--primary); color: var(--primary-foreground); }
+.btn.default:hover { background: color-mix(in oklch, var(--primary) 80%, transparent); }
+.btn.outline { border-color: var(--border); }
+.btn.outline:hover, .btn.ghost:hover { background: var(--muted); }
+.btn:disabled { opacity: 0.5; pointer-events: none; }
+.text-link { display: inline-flex; gap: var(--space-2); align-items: center; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.text-link:hover { color: var(--foreground); text-decoration: underline; }
+.text-link:disabled { opacity: 0.5; pointer-events: none; }
+.micro-label { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+.status-chip { display: inline-flex; gap: var(--space-1); align-items: center; width: fit-content; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: color-mix(in oklch, var(--muted) 55%, transparent); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; white-space: nowrap; }
+.status-chip[data-tone='quiet'] { color: var(--muted-foreground); }
+.status-chip[data-tone='missing'] { border-color: var(--missing-border); color: var(--missing-fill); }
+.status-chip svg { width: var(--space-3); height: var(--space-3); }
+.source-note { min-width: 0; overflow-wrap: anywhere; color: var(--muted-foreground); font-size: var(--fs-3); line-height: var(--lh-normal); }
+.field { display: grid; gap: var(--space-2); }
+.field label { font-weight: var(--fw-semibold); }
+.field input { height: var(--s40); padding-inline: var(--space-3); border: 1px solid var(--border); background: transparent; color: var(--foreground); font: inherit; font-size: var(--fs-4); font-weight: var(--fw-medium); border-radius: 0; }
+.field input::placeholder { color: var(--muted-foreground); }
+.field input[aria-invalid='true'] { border-color: var(--destructive); }
+.field .hint { color: var(--muted-foreground); font-size: var(--fs-3); }
+.notice { display: grid; gap: var(--space-1-5); justify-items: start; padding: var(--space-3) var(--space-4); border: 1px solid var(--border); background: var(--card); }
+.notice.destructive { border-left: 3px solid var(--destructive); }
+.notice strong { font-weight: var(--fw-semibold); }
+.notice p:not(.source-note) { overflow-wrap: anywhere; }
+.quiet-state { display: flex; gap: var(--space-3); align-items: flex-start; padding: var(--space-6) 0; color: var(--muted-foreground); }
+.quiet-state svg { color: var(--muted-foreground); }
+.quiet-state p { font-size: var(--fs-4); }
+
+/* ---------- the plain landing header: mark and wordmark to /, theme toggle at right ---------- */
+.landing-header { display: flex; align-items: stretch; justify-content: space-between; border-bottom: 1px solid var(--border); background: var(--chrome-veil); }
+.brand { display: flex; align-items: center; gap: var(--space-2-5); margin: var(--space-3) var(--space-4); }
+.brand-mark { display: grid; width: var(--s36); height: var(--s36); place-items: center; background: var(--primary); color: var(--primary-foreground); }
+.brand-mark svg { width: var(--space-5); height: var(--space-5); fill: currentColor; }
+.brand-wordmark { font-size: var(--fs-3); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+.theme-toggle { align-self: center; margin-right: var(--space-3); }
+.dark .moon, .sun { display: none; }
+.dark .sun { display: block; }
+
+/* ---------- the page (page-stack projects-page) ---------- */
+.page-stack { display: grid; gap: var(--space-6); align-content: start; width: min(var(--page), 100%); margin: 0 auto; padding: var(--space-fluid-14) var(--space-fluid-8) var(--space-28); }
+.page-intro { display: grid; gap: var(--space-3); margin-bottom: var(--space-2); }
+.eyebrow { display: flex; gap: var(--space-2); align-items: center; color: var(--primary); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+.page-intro h1 { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.projects-page .lede { max-width: 48ch; color: var(--muted-foreground); font-size: var(--fs-4); line-height: var(--lh-relaxed); }
+.project-section { display: grid; gap: var(--space-4); align-content: start; min-width: 0; }
+.section-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border); }
+.section-heading h2 { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+.project-add-form, .project-scan-form { display: grid; gap: var(--space-4); max-width: var(--form); justify-items: start; }
+.project-add-form > *, .project-scan-form > * { max-width: 100%; }
+.project-add-form .field, .project-scan-form .field { width: 100%; }
+.project-add-form .notice, .project-scan-form .notice { width: 100%; }
+.landing-cols { display: grid; grid-template-columns: minmax(0, 1fr) var(--side); gap: var(--space-fluid-9); align-items: start; }
+.landing-main, .landing-side { display: grid; gap: var(--space-6); align-content: start; min-width: 0; }
+.landing-side .project-add-form, .landing-side .project-scan-form { max-width: none; }
+@media (max-width: 62rem) { .landing-cols { grid-template-columns: minmax(0, 1fr); } }
+
+/* folded sections (variant C) */
+.fold { border-top: 1px solid var(--border); }
+.fold:last-of-type { border-bottom: 1px solid var(--border); }
+.fold h2 { font-size: inherit; }
+.fold-trigger { display: flex; align-items: center; gap: var(--space-2); width: 100%; min-height: var(--s48); text-align: left; font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+.fold-trigger:hover { background: var(--state-hover); }
+.fold-trigger svg { transition: transform 140ms ease; }
+.fold-trigger[aria-expanded='true'] svg { transform: rotate(90deg); }
+.fold-body { display: grid; gap: var(--space-4); padding-bottom: var(--space-6); }
+.fold-body[hidden] { display: none; }
+
+/* ---------- project rows (same as 039, full width, with last-opened time) ---------- */
+.project-list { display: block; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.project-row { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; border-bottom: 1px solid var(--border-faint); }
+.project-row:last-child { border-bottom: 0; }
+.project-row:hover, .project-row:focus-within { background: var(--state-hover); }
+.project-row-link { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'name mark' 'path meta' 'reason reason'; column-gap: var(--space-6); row-gap: var(--space-1); align-items: center; min-width: 0; padding: var(--space-3) var(--space-2) var(--space-3) var(--space-4); }
+.project-row-head { grid-area: name; display: flex; align-items: flex-start; gap: var(--space-2); min-width: 0; }
+.project-row-name { min-width: 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; font-size: var(--fs-4); font-weight: var(--fw-semibold); line-height: var(--lh-normal); }
+.project-row-path { grid-area: path; display: flex; align-items: center; gap: var(--space-1); min-width: 0; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-3); font-weight: var(--fw-medium); }
+.project-row-path > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.project-row-mark { grid-area: mark; justify-self: end; }
+.project-row-reason { grid-area: reason; }
+.project-row-meta { grid-area: meta; justify-self: end; color: var(--muted-foreground); font-size: var(--fs-3); white-space: nowrap; }
+.project-row-actions { display: flex; align-items: center; gap: var(--space-2); padding-right: var(--space-2); }
+.forget { opacity: 0; }
+.project-row:hover .forget, .project-row:focus-within .forget, .show-forget .forget { opacity: 1; }
+.forget::after { content: attr(data-tip); position: absolute; top: 50%; right: calc(100% + var(--space-1)); transform: translateY(-50%); display: none; padding: var(--space-1) var(--space-2); background: var(--foreground); color: var(--background); font-size: var(--fs-2); font-weight: var(--fw-medium); letter-spacing: normal; text-transform: none; white-space: nowrap; z-index: 5; }
+.forget:hover::after, .forget:focus-visible::after { display: block; }
+@media (pointer: coarse) { .forget { opacity: 1; } .project-row { min-height: var(--s48); } .btn.icon-sm { width: var(--s40); height: var(--s40); } }
+@media (max-width: 42rem) {
+  .forget { opacity: 1; } .project-row { min-height: var(--s48); } .btn.icon-sm { width: var(--s40); height: var(--s40); }
+  .project-row-link { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'name mark' 'path path' 'meta meta' 'reason reason'; }
+  .project-row-meta { justify-self: start; }
+  .brand-mark { margin: 0; }
+}
+.project-row-confirm { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-3); padding: var(--space-3) var(--space-4); background: color-mix(in oklch, var(--muted) 55%, transparent); }
+.project-row-confirm p { overflow-wrap: anywhere; }
+.confirm-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+/* empty-flow: the zero-projects state */
+.empty-flow { display: flex; gap: var(--space-3); align-items: flex-start; padding: var(--space-5); border: 1px dashed var(--border); color: var(--muted-foreground); }
+.empty-flow svg { margin-top: var(--space-0-5); }
+.empty-flow h3 { color: var(--foreground); font-size: var(--fs-4); font-weight: var(--fw-semibold); margin-bottom: var(--space-1); }
+.empty-flow p { font-size: var(--fs-4); max-width: 60ch; }
+
+/* ---------- scan checklist ---------- */
+.project-scan-results { display: grid; gap: 0; min-width: 0; width: 100%; padding: 0; border: 1px solid var(--border); }
+.project-scan-results legend { padding: var(--space-1) var(--space-2); margin-left: var(--space-3); }
+.scan-controls { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-faint); }
+.scan-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-4); padding: var(--space-3) var(--space-4); border-top: 1px solid var(--border); }
+.project-scan-item label { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--space-3); align-items: center; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-faint); cursor: pointer; }
+.project-scan-item:last-child label { border-bottom: 0; }
+.project-scan-item[data-disabled='true'] label { background: var(--muted); color: var(--muted-foreground); cursor: default; }
+.project-scan-item input { appearance: none; display: grid; place-content: center; flex: none; width: var(--space-4); height: var(--space-4); margin: 0; border: 1px solid var(--muted-foreground); background: transparent; border-radius: 0; }
+.project-scan-item input:checked { border-color: var(--primary); background: var(--primary); }
+.project-scan-item input:checked::after { content: ''; width: var(--space-2); height: var(--space-1); border-left: 2px solid var(--primary-foreground); border-bottom: 2px solid var(--primary-foreground); transform: translateY(-1px) rotate(-45deg); }
+.project-scan-item input:disabled { opacity: 0.5; }
+.project-scan-text { display: grid; gap: var(--space-1); min-width: 0; }
+.project-scan-text .project-row-name, .project-scan-text .project-row-path { grid-area: auto; }
+.scan-status { color: var(--muted-foreground); }
+</style>
+</head>
+<body>
+<nav id="sketch-bar" aria-label="Sketch controls">
+  <span class="lbl">040 landing</span>
+  <span class="grp" id="tabs">
+    <a data-tab="a" href="#a">A: Stacked</a>
+    <a data-tab="b" href="#b">B: Side column</a>
+    <a data-tab="c" href="#c">C: Folded</a>
+  </span>
+  <span class="grp">
+    <button data-theme="light">Light</button>
+    <button data-theme="dark">Dark</button>
+    <button id="forget-toggle" aria-pressed="false">Reveal forget</button>
+  </span>
+  <span class="grp line" data-group="page"><span class="name">Page</span>
+    <button data-set="page:populated">Populated</button><button data-set="page:empty">Empty</button><button data-set="page:loading">Loading</button><button data-set="page:error">List error</button><button data-set="page:notices">Settings notices</button><button data-set="forget:portal">Forget confirm</button></span>
+  <span class="grp line" data-group="add"><span class="name">Add</span>
+    <button data-set="add:idle">Idle</button><button data-set="add:adding">Adding…</button><button data-set="add:error">Error</button><button data-set="add:duplicate">Duplicate</button></span>
+  <span class="grp line" data-group="scan"><span class="name">Scan</span>
+    <button data-set="scan:idle">Idle</button><button data-set="scan:scanning">Scanning</button><button data-set="scan:results">Results</button><button data-set="scan:capped">Capped</button><button data-set="scan:none">None found</button><button data-set="scan:refused">Refused</button><button data-set="scan:done">Done</button></span>
+</nav>
+
+<section data-variant="a" class="variant"></section>
+<section data-variant="b" class="variant" hidden></section>
+<section data-variant="c" class="variant" hidden></section>
+<div id="toast" role="status"></div>
+
+<script>
+// ---------- icons (lucide paths, 24px grid) ----------
+const ICON = {
+  folder: '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+  server: '<rect width="20" height="8" x="2" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 6h.01M6 18h.01"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  loader: '<path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/>',
+  moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  chevr: '<path d="m9 6 6 6-6 6"/>',
+  folderplus: '<path d="M12 10v6"/><path d="M9 13h6"/><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+};
+const svg = (n, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// ---------- made-up data only: the repository is public ----------
+const BASE = [
+  { slug: 'lendshed', name: 'Lendshed', path: '~/Work/acme/lendshed', kind: 'local', status: 'loaded', opened: 'Opened 3 hours ago', when: 'Oct 29, 2026, 09:12' },
+  { slug: 'portal', name: 'Portal', path: '~/Work/acme/portal', kind: 'local', status: 'loading', opened: 'Opened yesterday', when: 'Oct 28, 2026, 16:40' },
+  { slug: 'kiln', name: 'Kiln', path: 'ssh://build-box/srv/kiln', kind: 'ssh', status: 'loaded', opened: 'Opened 3 days ago', when: 'Oct 26, 2026, 11:05' },
+  { slug: 'portal-2', name: 'portal', path: '~/Work/beta/portal', kind: 'local', status: 'unavailable', reason: 'No such path: ~/Work/beta/portal (resolved: /home/you/Work/beta/portal)', opened: 'Opened last week', when: 'Oct 21, 2026, 18:22' },
+  { slug: 'shapes', name: 'Shapes', path: '~/Work/acme/shapes', kind: 'local', status: 'never', opened: 'Not opened yet', when: '' },
+];
+const FOUND = [
+  { name: 'Lendshed', path: '~/Work/acme/lendshed', added: true },
+  { name: 'Quarry', path: '~/Work/acme/quarry' },
+  { name: 'Harbor', path: '~/Work/beta/harbor' },
+  { name: 'Ledger', path: '~/Work/beta/ledger' },
+];
+const CAP_BASE = ['Atlas', 'Beacon', 'Quarry', 'Harbor', 'Ledger', 'Loom', 'Mosaic', 'Orchard', 'Pylon', 'Relay'];
+function capped() {
+  return Array.from({ length: 100 }, (_, i) => {
+    const n = `${CAP_BASE[i % 10]} ${String(Math.floor(i / 10) + 1).padStart(2, '0')}`;
+    return { name: n, path: `~/Work/group-${String(Math.floor(i / 10) + 1).padStart(2, '0')}/${CAP_BASE[i % 10].toLowerCase()}`, added: i === 0 };
+  });
+}
+const scanItems = () => (S.scan === 'capped' ? capped() : FOUND);
+const scanFolder = () => (S.scan === 'none' ? '~/Work/empty' : S.scan === 'refused' ? '/etc' : '~/Work');
+
+// ---------- state ----------
+const params = new URLSearchParams(location.search);
+const S = {
+  page: params.get('page') || 'populated', add: params.get('add') || 'idle', scan: params.get('scan') || 'idle',
+  forget: params.get('forget') || null, reveal: false, fold: { add: params.get('add') ? true : false, scan: params.get('scan') ? true : false },
+  checked: null,
+};
+let theme = params.get('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+function resetChecked() { S.checked = new Set(scanItems().map((x, i) => (x.added ? null : i)).filter((i) => i !== null)); }
+resetChecked();
+
+function projects() {
+  if (S.scan !== 'done') return BASE;
+  const extra = FOUND.filter((f) => !f.added).map((f) => ({ slug: f.name.toLowerCase(), name: f.name, path: f.path, kind: 'local', status: 'never', opened: 'Not opened yet', when: '' }));
+  return [...BASE, ...extra];
+}
+
+// ---------- rows (carried over from sketch 039, plus last-opened) ----------
+function rowHtml(p, confirm) {
+  if (confirm) {
+    return `<li class="project-row project-row-confirm" data-slug="${p.slug}">
+      <p role="alert">Forget ${esc(p.name)}? Labelore only removes it from this list. The project's files are not touched.</p>
+      <div class="confirm-actions"><button class="btn outline sm" data-act="forget-yes">Forget project</button><button class="btn ghost sm" data-act="forget-no" data-autofocus>Keep project</button></div></li>`;
+  }
+  const mark = p.status === 'loading'
+    ? `<span class="status-chip project-row-mark" data-tone="quiet">${svg('loader', 'spin')}Opening…</span>`
+    : p.status === 'unavailable' ? `<span class="status-chip project-row-mark" data-tone="missing">Unavailable</span>` : '';
+  const reason = p.status === 'unavailable' ? `<span class="source-note project-row-reason">${esc(p.reason)}</span>` : '';
+  return `<li class="project-row" data-slug="${p.slug}">
+    <a class="project-row-link" href="#${pickVariant()}" data-act="open" data-slug="${p.slug}">
+      <span class="project-row-head"><span class="project-row-name">${esc(p.name)}</span></span>
+      <span class="project-row-path" title="${esc(p.path)}">${svg(p.kind === 'ssh' ? 'server' : 'folder')}<span>${esc(p.path)}</span></span>
+      ${mark}${reason}
+      <span class="project-row-meta" ${p.when ? `title="${esc(p.when)}"` : ''}>${esc(p.opened)}</span>
+    </a>
+    <div class="project-row-actions"><button class="btn ghost icon-sm forget" data-act="forget" data-slug="${p.slug}" data-tip="Forget this project" aria-label="Forget ${esc(p.name)}">${svg('x')}</button></div>
+  </li>`;
+}
+
+// ---------- page pieces ----------
+function headerHtml() {
+  return `<header class="landing-header">
+    <a class="brand" href="#${pickVariant()}" aria-label="Labelore — Projects"><span class="brand-mark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h5v18H3Z M10 10h5v5h-5Z M10 16h11v5H10Z"/></svg></span><strong class="brand-wordmark">Labelore</strong></a>
+    <button class="btn ghost icon-sm theme-toggle" data-theme="toggle" aria-label="Toggle theme">${svg('moon', 'moon')}${svg('sun', 'sun')}</button>
+  </header>`;
+}
+const intro = () => `<div class="page-intro"><p class="eyebrow">Projects</p><h1>Projects</h1><p class="lede">Open a GSD project to see where its work stands. Labelore only reads them and never changes them.</p></div>`;
+function notices() {
+  if (S.page !== 'notices') return '';
+  return `<div class="notice destructive" role="alert"><p>Labelore's settings could not be read, so the list started empty. The old file was kept as settings.json.bak.</p></div>
+    <div class="notice" role="status"><p>A saved project was skipped: its slug "API" is not a valid project name.</p></div>`;
+}
+function listBlock() {
+  if (S.page === 'loading') return `<div class="quiet-state" role="status">${svg('loader', 'spin')}<p>Loading projects…</p></div>`;
+  if (S.page === 'error') return `<div class="notice destructive" role="alert"><p>Labelore could not be reached. Check that it is still running, then try again.</p><button class="btn outline sm" data-act="retry">Retry loading projects</button></div>`;
+  if (S.page === 'empty') return `<div class="empty-flow" data-tone="quiet">${svg('folderplus')}<div><h3>No projects yet.</h3><p>Add a folder or an ssh:// target above, or scan a folder such as ~/Work to find GSD projects.</p></div></div>`;
+  return `<ul class="project-list">${projects().map((p) => rowHtml(p, S.forget === p.slug)).join('')}</ul>`;
+}
+
+function addForm() {
+  const v = S.add;
+  const val = v === 'adding' ? '~/Work/acme/atlas' : v === 'error' ? '~/Work/portl' : v === 'duplicate' ? '~/Work/acme/shapes' : '';
+  const msg = v === 'error'
+    ? `<div class="notice destructive" id="add-err" role="alert"><p><strong>Could not add this project.</strong></p><p>No such path: ~/Work/portl (resolved: /home/you/Work/portl)</p><p class="source-note">Path checked: /home/you/Work/portl</p></div>`
+    : v === 'duplicate' ? `<div class="notice" role="status"><p>Shapes is already in your list.</p><a class="text-link" href="#${pickVariant()}" data-act="open" data-slug="shapes">Open Shapes</a></div>` : '';
+  return `<form class="project-add-form" onsubmit="return false">
+    <div class="field"><label for="add-loc">Project location</label>
+      <input id="add-loc" type="text" placeholder="/home/you/Work/portal or ssh://host/path" value="${esc(val)}"${v === 'error' ? ' aria-invalid="true" aria-describedby="add-err"' : ''}${v === 'adding' ? ' readonly' : ''}></div>
+    ${msg}
+    <button class="btn default" type="submit" data-act="add-submit"${v === 'adding' ? ' disabled' : ''}>${v === 'adding' ? 'Adding…' : 'Add project'}</button>
+  </form>`;
+}
+
+function scanForm() {
+  const v = S.scan;
+  const busy = v === 'scanning';
+  const val = v === 'idle' ? '' : scanFolder();
+  let out = `<form class="project-scan-form" onsubmit="return false">
+    <div class="field"><label for="scan-folder">Folder to scan</label>
+      <input id="scan-folder" type="text" placeholder="~/Work" value="${esc(val)}"${v === 'refused' ? ' aria-invalid="true" aria-describedby="scan-refused"' : ''}${busy ? ' readonly' : ''}>
+      <span class="hint">Looks two levels down inside your home folder. Hidden folders, node_modules and symlinks are skipped.</span></div>
+    <button class="btn outline" type="submit" data-act="scan-submit"${busy ? ' disabled' : ''}>${busy ? 'Scanning…' : 'Scan folder'}</button>
+  </form>`;
+  if (busy) out += `<div class="quiet-state" role="status">${svg('loader', 'spin')}<p>Scanning ~/Work…</p></div>`;
+  if (v === 'refused') out += `<div class="notice" id="scan-refused" role="alert"><p>/etc is outside your home folder. Labelore only scans folders inside it.</p></div>`;
+  if (v === 'none') out += `<div class="empty-flow" data-tone="quiet" role="status">${svg('folder')}<div><h3>No GSD projects found in ~/Work/empty.</h3><p>Labelore looked two levels down. Try a folder one level up, or add a project by its location above.</p></div></div>`;
+  if (v === 'results' || v === 'capped' || v === 'done') out += scanResults();
+  return out;
+}
+function scanResults() {
+  const items = scanItems();
+  const done = S.scan === 'done';
+  const n = done ? 0 : S.checked.size;
+  const addable = items.filter((x) => !x.added).length;
+  const legend = `Found ${items.length} ${items.length === 1 ? 'project' : 'projects'} in ~/Work`;
+  const btn = done ? '' : `<button class="btn default" type="button" data-act="scan-add"${n === 0 ? ' disabled' : ''}>${n === 0 ? 'Add projects' : `Add ${n} ${n === 1 ? 'project' : 'projects'}`}</button>`;
+  return `${S.scan === 'capped' ? '<div class="notice" role="status"><p>Showing the first 100 projects found. Scan a narrower folder to see the rest.</p></div>' : ''}
+    ${done ? '<p class="scan-status" role="status" tabindex="-1">Added 3 projects. They open the first time you choose them.</p>' : ''}
+    <fieldset class="project-scan-results"><legend class="micro-label" aria-live="polite">${legend}</legend>
+      <div class="scan-controls"><button class="text-link" type="button" data-act="sel-all"${done || n === addable ? ' disabled' : ''}>Select all projects</button><button class="text-link" type="button" data-act="sel-none"${done || n === 0 ? ' disabled' : ''}>Clear selection</button></div>
+      <ul>${items.map((x, i) => {
+        const off = done || x.added;
+        return `<li class="project-scan-item" data-disabled="${off}"><label><input type="checkbox" data-item="${i}" ${off ? 'disabled' : S.checked.has(i) ? 'checked' : ''}>
+          <span class="project-scan-text"><span class="project-row-name">${esc(x.name)}</span><span class="project-row-path" title="${esc(x.path)}">${svg('folder')}<span>${esc(x.path)}</span></span></span>
+          ${off ? '<span class="status-chip" data-tone="quiet">Already added</span>' : ''}</label></li>`;
+      }).join('')}</ul>
+      ${btn ? `<div class="scan-foot">${btn}</div>` : ''}
+    </fieldset>`;
+}
+
+// ---------- section wrappers for the three variants ----------
+const section = (kind) => `<section class="project-section" aria-labelledby="h-${kind}"><div class="section-heading"><h2 id="h-${kind}">${kind === 'add' ? 'Add a project' : 'Scan a folder'}</h2></div>${kind === 'add' ? addForm() : scanForm()}</section>`;
+function folded(kind) {
+  const open = S.fold[kind] || S.page === 'empty';
+  return `<section class="fold" aria-labelledby="h-${kind}"><h2 id="h-${kind}"><button class="fold-trigger" data-act="fold" data-kind="${kind}" aria-expanded="${open}" aria-controls="b-${kind}">${svg('chevr')}${kind === 'add' ? 'Add a project' : 'Scan a folder'}</button></h2>
+    <div class="fold-body" id="b-${kind}"${open ? '' : ' hidden'}>${kind === 'add' ? addForm() : scanForm()}</div></section>`;
+}
+function bodyFor(v) {
+  if (v === 'b') return `<div class="landing-cols"><div class="landing-main">${notices()}${listBlock()}</div><aside class="landing-side">${section('add')}${section('scan')}</aside></div>`;
+  if (v === 'c') return `${notices()}${listBlock()}<div>${folded('add')}${folded('scan')}</div>`;
+  return `${notices()}${listBlock()}${section('add')}${section('scan')}`;
+}
+
+function pickVariant() { const h = location.hash.slice(1); return ['a', 'b', 'c'].includes(h) ? h : 'a'; }
+function render(keepFocus) {
+  const v = pickVariant();
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  document.querySelectorAll('[data-variant]').forEach((el) => { el.hidden = el.dataset.variant !== v; if (el.dataset.variant !== v) el.innerHTML = ''; });
+  document.querySelector(`[data-variant="${v}"]`).innerHTML = `<div class="app${S.reveal ? ' show-forget' : ''}">${headerHtml()}<main class="page-stack projects-page" id="main-content">${intro()}${bodyFor(v)}</main></div>`;
+  document.querySelectorAll('#tabs a').forEach((a) => a.classList.toggle('on', a.dataset.tab === v));
+  document.querySelectorAll('#sketch-bar [data-theme]').forEach((b) => b.classList.toggle('on', b.dataset.theme === theme));
+  document.querySelectorAll('#sketch-bar [data-set]').forEach((b) => { const [k, val] = b.dataset.set.split(':'); b.classList.toggle('on', k === 'forget' ? S.forget === val : S[k] === val); });
+  const fb = document.getElementById('forget-toggle'); fb.classList.toggle('on', S.reveal); fb.setAttribute('aria-pressed', S.reveal);
+  if (keepFocus) { const el = document.querySelector(keepFocus); if (el) el.focus({ preventScroll: true }); }
+  else if (S.forget) { const k = document.querySelector('[data-autofocus]'); if (k) k.focus({ preventScroll: true }); }
+}
+let toastTimer;
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1800); }
+
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act], [data-set], [data-theme], #forget-toggle');
+  if (!el) return;
+  if (el.id === 'forget-toggle') { S.reveal = !S.reveal; return render(); }
+  if (el.dataset.theme) { theme = el.dataset.theme === 'toggle' ? (theme === 'dark' ? 'light' : 'dark') : el.dataset.theme; return render(); }
+  if (el.dataset.set) {
+    const [k, val] = el.dataset.set.split(':');
+    if (k === 'forget') S.forget = val; else { S[k] = val; if (k !== 'page') S.forget = S.forget; }
+    if (k === 'forget') S.page = S.page === 'populated' || S.page === 'notices' ? S.page : 'populated';
+    if (k === 'add') S.fold.add = true;
+    if (k === 'scan') { S.fold.scan = true; resetChecked(); }
+    if (k === 'page' && val !== 'populated' && val !== 'notices') S.forget = null;
+    return render();
+  }
+  const act = el.dataset.act;
+  if (act === 'open') { e.preventDefault(); toast(`Opens /${el.dataset.slug}`); return; }
+  if (act === 'forget') { S.forget = el.dataset.slug; return render(); }
+  if (act === 'forget-no') { S.forget = null; return render(); }
+  if (act === 'forget-yes') { toast('Sketch only: nothing is forgotten'); S.forget = null; return render(); }
+  if (act === 'retry') { toast('Retries GET /api/projects'); S.page = 'loading'; render(); return; }
+  if (act === 'fold') { S.fold[el.dataset.kind] = !(S.fold[el.dataset.kind] || S.page === 'empty'); return render(`[data-kind="${el.dataset.kind}"]`); }
+  if (act === 'add-submit') { e.preventDefault(); S.add = S.add === 'idle' ? 'adding' : S.add === 'adding' ? 'error' : S.add === 'error' ? 'duplicate' : 'idle'; return render(); }
+  if (act === 'scan-submit') { e.preventDefault(); S.scan = S.scan === 'idle' ? 'scanning' : S.scan === 'scanning' ? 'results' : 'idle'; resetChecked(); return render(); }
+  if (act === 'sel-all') { S.checked = new Set(scanItems().map((x, i) => (x.added ? null : i)).filter((i) => i !== null)); return render('[data-act="sel-none"]'); }
+  if (act === 'sel-none') { S.checked = new Set(); return render('[data-act="sel-all"]'); }
+  if (act === 'scan-add') { S.scan = 'done'; S.checked = new Set(); render(); const st = document.querySelector('.scan-status'); if (st) st.focus({ preventScroll: true }); return; }
+});
+document.addEventListener('change', (e) => {
+  const i = e.target.dataset && e.target.dataset.item;
+  if (i === undefined) return;
+  e.target.checked ? S.checked.add(Number(i)) : S.checked.delete(Number(i));
+  render(`[data-item="${i}"]`);
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.forget) { S.forget = null; render(); } });
+window.addEventListener('hashchange', () => render());
+render();
+</script>
+</body>
+</html>
