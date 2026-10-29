@@ -539,19 +539,27 @@ v8.setFlagsFromString('--expose_gc'); const gc = vm.runInNewContext('gc') as () 
 | A10 | JSON bodies for add and scan are tiny; cap at about 4 KB with `hono/body-limit` | Pattern 5 | A pathological but valid ssh target above the cap is refused |
 | A11 | Vitest `setupFiles` can set `LABELORE_CONFIG_DIR` before any test module reads it | Pitfall 6 | A module that reads the env at import time before setup would see it unset; the `VITEST` throw makes that fail loudly rather than silently |
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+All five questions are answered. Each item below keeps its original text and ends with a
+**RESOLVED** line naming the decision or plan that settles it.
 
 1. **Host allowlist versus the Cloudflare tunnel (needs the user).**
    - What we know: D-18 is locked as "127.0.0.1/localhost with the server's port"; the user's own notes describe `labelore.brkn.me` through a Cloudflare tunnel; code comments in `src/server/index.ts` record that the tunnel origin runs the server.
    - What's unclear: whether that tunnel is still in use and whether it rewrites the Host header.
    - Recommendation: implement D-18 as written, plus an opt-in `LABELORE_ALLOWED_HOSTS` (default empty) and the Origin-host comparison in the guard sketch. Ask the user in the plan checkpoint whether to keep the escape hatch or drop it.
+   - **RESOLVED:** the user kept the escape hatch as D-20 (opt-in `LABELORE_ALLOWED_HOSTS`, empty by default, Origin compared by `new URL(origin).host` against the validated Host). Plan 08-03 builds it in `src/server/request-guard.ts` (`createHostPolicy`, `parseAllowedHosts`).
 2. **Display name in the switcher: folder name or PROJECT.md title?**
    - What we know: UI-SPEC takes the trigger name from `GET /api/projects`, not from the presentation query; D-02 says listing never loads; today's header uses the PROJECT.md title.
    - What's unclear: whether the name may change after the project loads.
    - Recommendation: folder basename for every row (stable, no flip, no load needed). If the title is wanted later, persist a `name` hint in the settings entry (the schema tolerates added fields).
+   - **RESOLVED:** the user chose the PROJECT.md title with a folder-basename fallback (D-21), read cheaply without loading the project; the slug still comes from the basename (D-11). Plan 08-04 builds `readProjectTitle` in `src/server/project-title.ts` and persists an ssh name hint through `setNameHint`. Assumption A6 is superseded.
 3. **Scan copy gaps.** UI-SPEC has no copy for a scan that stops early (visited-directory valve) or for a scan folder that does not exist inside `$HOME`. Recommendation: reuse "{folder} is outside your home folder…" for outside, and add one row for a missing folder; use only the result cap (no time budget) at depth 2, with a silent visited-directory valve mapped to the existing cap notice. The planner should add the missing copy rows to the Copywriting contract.
+   - **RESOLVED:** plan 08-07 defines `SCAN_MESSAGES` in `src/server/folder-scan.ts` (outside home, missing folder, not a folder, unreadable, empty field), with a result cap of 100 and a silent visited-folder valve of 5,000 that shows the existing capped notice; plan 08-13 records the new rows in the 08-UI-SPEC.md Copywriting Contract.
 4. **Add-from-settings-inside-project refusal copy.** If a target's `.planning` contains the settings directory the add must be refused; no copy exists. Recommendation: one named message, shown in the add error region.
+   - **RESOLVED:** plan 08-04 adds the settings-inside message to the registry's add path ("Labelore keeps its own settings inside this project ({settings dir}), so it will not add it. Set LABELORE_CONFIG_DIR to a folder outside the project and restart."), shown in the add error region; plan 08-13 records it in the 08-UI-SPEC.md Copywriting Contract together with the other plan-time rows. The related startup case, a CLI path that fails validation, is D-22 (listed for the run only, never persisted), also built in 08-04.
 5. **Phase 7 completion.** STATE.md says Phase 7 plan 5 of 10; plans 05-10 are unexecuted. Phase 8 tasks that edit `app-router.tsx`, `routes.ts`, `plan-pair-page.tsx`, `artifact-page.tsx` and the DTO urls should cite Phase 7's plan outputs, and Phase 8 execution must wait for Phase 7 to finish.
+   - **RESOLVED:** Phase 7 is complete (07-10-SUMMARY.md and 07-VERIFICATION.md exist). Plans 08-01, 08-05, 08-06 and 08-08 each carry a runnable precondition, `test -f .planning/phases/07-recognised-files-and-readable-urls/07-10-SUMMARY.md`, on their first task, and their read_first lists name the files as Phase 7 left them.
 
 ## Environment Availability
 

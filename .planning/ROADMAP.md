@@ -207,27 +207,37 @@ target or a settings change refuses requests from other websites.
 5. A request from another website to any endpoint that accepts a path, an `ssh://` target or a
    settings change is refused. *(SEC-05)*
 
-**Plans**: 9 plans
+**Plans**: 15 plans
 
 Plans:
 **Wave 1**
-- [ ] 08-01-PLAN.md — Tracer: one runtime per project behind a slug-keyed registry at /api/projects/:slug, the request guard (Host allowlist, same-origin and JSON, LABELORE_ALLOWED_HOSTS) and an LRU of five
+- [ ] 08-01-PLAN.md — Tracer: one runtime per project behind a slug-keyed registry at /api/projects/:slug, the cheap project list and an LRU of five, with the first registry slot kept for the guard
 - [ ] 08-02-PLAN.md — Sketches 039 (header switcher) and 040 (projects landing), three variants each, and the user's choice of winners (blocking decision)
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 08-03-PLAN.md — Labelore's own settings file (second node:fs importer, atomic, never inside a target), add, forget, open stamps, CLI remembering, titles and last-opened order
+- [ ] 08-03-PLAN.md — The request guard before any write endpoint: Host allowlist on every /api request, same-origin and JSON on every mutation, LABELORE_ALLOWED_HOSTS, and a refusal test over every registered route
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 08-04-PLAN.md — startServer serves the guarded registry for every CLI path; sketch files under the project API; probes and Playwright servers on /api/projects with their own settings directories
-- [ ] 08-05-PLAN.md — The web follows the slug: landing list at /, ProjectLayout keyed by slug with the opening body, unknown-project page, slug-scoped fetch and keys for shell and dashboard
-- [ ] 08-06-PLAN.md — Folder scan inside $HOME (depth 2, no symlinks, capped) and add-many without loading
+- [ ] 08-04-PLAN.md — Labelore's own settings file (second node:fs importer, atomic, never inside a target), add, forget, open stamps, CLI remembering, PROJECT.md titles and last-opened order
+- [ ] 08-05-PLAN.md — The projects landing page at /: api.ts, the query-key factory, project rows, plain header, last-opened times, AppLink and the unknown-project page
 
 **Wave 4** *(blocked on Wave 3 completion)*
-- [ ] 08-07-PLAN.md — Every remaining page fetches its own project's data; the plan-pair cache collision closed; standing key, API-literal and previous-data scans
-- [ ] 08-08-PLAN.md — Header switcher, add dialog and landing add form, inline forget confirm, scan checklist, built from the winning sketches
+- [ ] 08-06-PLAN.md — startServer serves the guarded registry for every CLI path; the in-handler refresh check goes; probes, Playwright servers and the e2e URL helper on /api/projects with their own settings directories
+- [ ] 08-07-PLAN.md — Folder scan inside $HOME (depth 2, no symlinks, capped) and add-many without loading
+- [ ] 08-08-PLAN.md — ProjectLayout keyed by slug with the opening body, the open stamp and the unknown-slug page; slug-scoped fetch and keys for the shell, dashboard and document pages
 
 **Wave 5** *(blocked on Wave 4 completion)*
-- [ ] 08-09-PLAN.md — Phase gate in Chromium: no flash on switch, restart and bookmarks, unavailable rows, refusal from another website, screenshot check against the winners
+- [ ] 08-09-PLAN.md — Switch states: refresh scoped to one project, "Choose another project" on a failed load, one not-found page, no slug override
+- [ ] 08-10-PLAN.md — The plan-pair cache collision closed; drawer, search, research, roadmap and traceability on their project's API; four browser specs on the e2e helper
+- [ ] 08-11-PLAN.md — Header switcher, add dialog and landing add form, inline forget confirm, built from the winning sketches
+- [ ] 08-14-PLAN.md — The remaining thirteen browser test files read their project through the e2e helper
+
+**Wave 6** *(blocked on Wave 5 completion)*
+- [ ] 08-12-PLAN.md — Sketch files under the project API with the sketches page that frames them; image bytes per project; standing key, API-literal and previous-data scans
+- [ ] 08-13-PLAN.md — Scan checklist on the landing page, and the plan-time copy rows recorded in the UI contract
+
+**Wave 7** *(blocked on Wave 6 completion)*
+- [ ] 08-15-PLAN.md — Phase gate in Chromium: no flash on switch, restart and bookmarks, unavailable rows, refusal from another website, screenshot check against the winners, the full browser suite
 **UI hint**: yes
 
 ### Phase 9: Review, Audit and Root Document Pages
@@ -418,7 +428,7 @@ file, ID or project.
 | quick tasks | v2.0 | 40/40 | Archived | 2026-10-25 |
 | 6. Trustworthy Tests and Security Baseline | v2.1 | 22/22 | Complete    | 2026-10-26 |
 | 7. Recognised Files and Readable URLs | v2.1 | 10/10 | Complete    | 2026-10-27 |
-| 8. Several Projects and a Switcher | v2.1 | 0/9 | Not started | - |
+| 8. Several Projects and a Switcher | v2.1 | 0/15 | Not started | - |
 | 9. Review, Audit and Root Document Pages | v2.1 | 0/TBD | Not started | - |
 | 10. Codebase Map, Specification and Check Pages | v2.1 | 0/TBD | Not started | - |
 | 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 0/TBD | Not started | - |
