@@ -178,17 +178,19 @@ describe('/api/documents resolves only through the route table', () => {
   });
 
   it('captures the derived bundle as the documents handler first statement (source pin, T-07-15)', async () => {
-    const source = await readFile(new URL('../../src/server/index.ts', import.meta.url), 'utf8');
-    const start = source.indexOf("app.get('/api/documents'");
+    // The handler moved from createApp into the shared project API (08-01); the pin follows it.
+    const source = await readFile(new URL('../../src/server/project-api.ts', import.meta.url), 'utf8');
+    const start = source.indexOf("api.get('/documents'");
     expect(start).toBeGreaterThan(-1);
-    const end = source.indexOf("app.post('/api/refresh'", start);
+    const end = source.indexOf("api.post('/refresh'", start);
     const handler = source.slice(start, end);
     const body = handler.slice(handler.indexOf('{', handler.indexOf('async (c) =>')) + 1);
-    const firstStatement = body
+    const statements = body
       .split('\n')
       .map((line) => line.trim())
-      .find((line) => line.length > 0 && !line.startsWith('//'));
-    expect(firstStatement).toBe('const activeDerived = derived;');
+      .filter((line) => line.length > 0 && !line.startsWith('//'));
+    // The runtime comes from this request's own context, then its bundle is captured at once.
+    expect(statements.slice(0, 2)).toEqual(["const runtime = c.get('runtime');", 'const activeDerived = runtime.derived;']);
     expect(handler).toContain('parseRoutePath(');
   });
 });

@@ -585,12 +585,12 @@ function artifactDtos(project: Project, routeTable: RouteTable): ArtifactDto[] {
     .sort((left, right) => left.path.localeCompare(right.path));
 }
 
-function emptyPresentation(snapshot: ProjectSnapshot): ProjectPresentation {
+function emptyPresentation(snapshot: ProjectSnapshot, slug: string): ProjectPresentation {
   return {
     readAt: snapshot.readAt,
     loadStatus: snapshot.loadStatus,
     rootPath: snapshot.rootPath,
-    projectSlug: slugOf(snapshot.rootPath),
+    projectSlug: slug,
     projectName: null,
     config: {},
     state: null,
@@ -609,12 +609,15 @@ function emptyPresentation(snapshot: ProjectSnapshot): ProjectPresentation {
   };
 }
 
+/** `slug` is the registry's persisted slug for this project (Pitfall 10); it defaults to the one derived
+ * from the root path, which is what every caller without a registry wants. */
 export function toProjectPresentation(
   snapshot: ProjectSnapshot,
+  slug: string = slugOf(snapshot.rootPath),
   routeTable: RouteTable = buildRouteTable(snapshot.project),
 ): ProjectPresentation {
   const project = snapshot.project;
-  if (!project) return emptyPresentation(snapshot);
+  if (!project) return emptyPresentation(snapshot, slug);
   const evidence = passingEvidenceOf(project);
   const allCheckpoints: PlanCheckpointDto[] = [];
   const coverageWaits: CoverageWaitDto[] = [];
@@ -749,7 +752,7 @@ export function toProjectPresentation(
     readAt: snapshot.readAt,
     loadStatus: snapshot.loadStatus,
     rootPath: snapshot.rootPath,
-    projectSlug: slugOf(snapshot.rootPath),
+    projectSlug: slug,
     projectName: project.name,
     config: jsonRecord(project.config),
     state,

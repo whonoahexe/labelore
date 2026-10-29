@@ -2,7 +2,7 @@
 // the server's routing split, and reaches the web on the presentation payload.
 import { describe, expect, it } from 'vitest';
 import { RESERVED_SLUGS, SERVER_OWNED_PREFIXES, isServerOwnedUrl } from '../../src/presentation/reserved.ts';
-import { slugOf } from '../../src/presentation/project-slug.ts';
+import { SLUG_PATTERN, allocateSlug, isValidSlug, slugOf } from '../../src/presentation/project-slug.ts';
 import { createApp, routesToApp } from '../../src/server/index.ts';
 import { loadFixtureProject } from '../helpers/fixture-project.ts';
 
@@ -46,6 +46,40 @@ describe('slugOf', () => {
       const word = prefix.replaceAll('/', '');
       expect(slugOf(`/work/${word}`)).not.toBe(word);
     }
+  });
+});
+
+describe('allocateSlug', () => {
+  it('answers the base when it is free', () => {
+    expect(allocateSlug('portal', new Set())).toBe('portal');
+    expect(allocateSlug('portal', new Set(['other']))).toBe('portal');
+  });
+
+  it('answers base-2 when the base is taken', () => {
+    expect(allocateSlug('portal', new Set(['portal']))).toBe('portal-2');
+  });
+
+  it('answers base-3 when the base and base-2 are taken', () => {
+    expect(allocateSlug('portal', new Set(['portal', 'portal-2']))).toBe('portal-3');
+  });
+
+  it('fills a gap left by a forgotten project', () => {
+    expect(allocateSlug('portal', new Set(['portal', 'portal-3']))).toBe('portal-2');
+  });
+});
+
+describe('isValidSlug', () => {
+  it.each(['Portal', 'a--b', '-a', 'a-', 'api', 'settings', '', 'a b', 'ü'])('rejects %j', (slug) => {
+    expect(isValidSlug(slug)).toBe(false);
+  });
+
+  it.each(['portal', 'portal-2', 'a1', 'api-gateway'])('accepts %j', (slug) => {
+    expect(isValidSlug(slug)).toBe(true);
+  });
+
+  it('exports the pattern the check uses', () => {
+    expect(SLUG_PATTERN.test('portal-2')).toBe(true);
+    expect(SLUG_PATTERN.test('Portal')).toBe(false);
   });
 });
 

@@ -230,8 +230,8 @@ describe('note view contract - the real sources', () => {
     expect(text).toContain("ref.kind === 'note'");
   });
 
-  it('server/index.ts builds the context inside a try block', async () => {
-    const text = await source('src/server/index.ts');
+  it('server/project-api.ts builds the context inside a try block', async () => {
+    const text = await source('src/server/project-api.ts');
     const call = text.indexOf('buildNoteContext(activeDerived.presentation');
     expect(call).toBeGreaterThan(-1);
     expect(text.lastIndexOf('try {', call)).toBeGreaterThan(text.lastIndexOf('const noteContext', call));
