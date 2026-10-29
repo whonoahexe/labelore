@@ -207,11 +207,11 @@ target or a settings change refuses requests from other websites.
 5. A request from another website to any endpoint that accepts a path, an `ssh://` target or a
    settings change is refused. *(SEC-05)*
 
-**Plans**: 17 plans
+**Plans**: 1/17 plans executed
 
 Plans:
 **Wave 1**
-- [ ] 08-01-PLAN.md — Tracer: one runtime per project behind a slug-keyed registry at /api/projects/:slug, the cheap project list and an LRU of five, with the first registry slot kept for the guard
+- [x] 08-01-PLAN.md — Tracer: one runtime per project behind a slug-keyed registry at /api/projects/:slug, the cheap project list and an LRU of five, with the first registry slot kept for the guard
 - [ ] 08-02-PLAN.md — Sketches 039 (header switcher) and 040 (projects landing), three variants each, and the user's choice of winners (blocking decision)
 
 **Wave 2** *(blocked on Wave 1 completion)*
@@ -242,6 +242,7 @@ Plans:
 
 **Wave 8** *(blocked on Wave 7 completion)*
 - [ ] 08-15-PLAN.md — Phase gate in Chromium: no flash on switch, restart and bookmarks, unavailable rows, refusal from another website, screenshot check against the winners, the full browser suite
+
 **UI hint**: yes
 
 ### Phase 9: Review, Audit and Root Document Pages
@@ -432,7 +433,7 @@ file, ID or project.
 | quick tasks | v2.0 | 40/40 | Archived | 2026-10-25 |
 | 6. Trustworthy Tests and Security Baseline | v2.1 | 22/22 | Complete    | 2026-10-26 |
 | 7. Recognised Files and Readable URLs | v2.1 | 10/10 | Complete    | 2026-10-27 |
-| 8. Several Projects and a Switcher | v2.1 | 0/17 | Not started | - |
+| 8. Several Projects and a Switcher | v2.1 | 1/17 | In Progress | - |
 | 9. Review, Audit and Root Document Pages | v2.1 | 0/TBD | Not started | - |
 | 10. Codebase Map, Specification and Check Pages | v2.1 | 0/TBD | Not started | - |
 | 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 0/TBD | Not started | - |

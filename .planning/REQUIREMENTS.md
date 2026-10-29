@@ -106,12 +106,12 @@ Each page is sketched first, then built and screenshot-checked against the winni
 
 ### Projects
 
-- [ ] **PLAT-02**: Starting Labelore with several paths opens all of them, with a switcher to move between them
+- [x] **PLAT-02**: Starting Labelore with several paths opens all of them, with a switcher to move between them
 - [ ] **PLAT-05**: The user can scan a folder such as `~/Work` and pick from the GSD projects found inside it
 - [ ] **PLAT-06**: Projects the user has opened are remembered between runs in Labelore's own settings file, never
       inside a project
 - [ ] **PLAT-07**: The user can add a local path or an `ssh://` target from the switcher
-- [ ] **PLAT-08**: Switching project never shows the previous project's data, each project keeps the same URL name
+- [x] **PLAT-08**: Switching project never shows the previous project's data, each project keeps the same URL name
       across runs, and a project that can no longer be opened is listed with the reason
 
 ### UI-review polish carried from v1.1
@@ -210,11 +210,11 @@ Which phases cover which requirements. Filled in when the roadmap is created.
 | FIND-07 | Phase 13 | Pending |
 | FIND-08 | Phase 13 | Pending |
 | FIND-09 | Phase 13 | Pending |
-| PLAT-02 | Phase 8 | Pending |
+| PLAT-02 | Phase 8 | Complete |
 | PLAT-05 | Phase 8 | Pending |
 | PLAT-06 | Phase 8 | Pending |
 | PLAT-07 | Phase 8 | Pending |
-| PLAT-08 | Phase 8 | Pending |
+| PLAT-08 | Phase 8 | Complete |
 | UI-07 | Phase 12 | Pending |
 | UI-08 | Phase 12 | Pending |
 | UI-09 | Phase 12 | Pending |
