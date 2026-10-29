@@ -1,0 +1,45 @@
+// The served app (PLAT-02, PLAT-08): the project list at GET /api/projects, every project's read API
+// at /api/projects/:slug/*, and the production static block. A request reaches a project only
+// through the slug in its own URL - the registry holds no "active project" a tab could change for
+// another (D-08).
+//
+// No Access-Control-* header is set anywhere: the API is same-origin only.
+import { serveStatic } from '@hono/node-server/serve-static';
+import { Hono } from 'hono';
+import { createProjectApi } from './project-api.ts';
+import type { ProjectRegistry } from './project-registry.ts';
+
+export interface RegistryAppOptions {
+  production?: boolean;
+  staticRoot?: string;
+}
+
+export function createRegistryApp(registry: ProjectRegistry, options: RegistryAppOptions = {}): Hono {
+  const production = options.production ?? process.env.NODE_ENV === 'production';
+  const staticRoot = options.staticRoot ?? './dist';
+  const app = new Hono();
+
+  // GUARD SLOT (08-03): the request guard and the body limit are registered here, as the first
+  // registrations of this app, so they run before every route below and before the /api 404, and
+  // therefore before any write endpoint (08-16) can exist. Leave this position free.
+
+  app.get('/api/projects', async (c) => c.json(await registry.list()));
+  // The raw prefix handed to mountPrefix is this request's URL up to the slug segment
+  // (`/api/projects/<raw slug segment>`), never the decoded parameter, so a link built from it names
+  // exactly the segment the client sent.
+  const projectApi = createProjectApi(
+    (c) => registry.runtime(c.req.param('slug') ?? ''),
+    (c) => c.req.path.split('/').slice(0, 4).join('/'),
+  );
+  app.route('/api/projects/:slug', projectApi);
+  app.all('/api/*', (c) => c.json({ error: 'API route not found' }, 404));
+
+  if (production) {
+    app.use('/assets/*', serveStatic({ root: staticRoot }));
+    app.get('/assets/*', (c) => c.text('Static asset not found', 404));
+    app.use('*', serveStatic({ root: staticRoot }));
+    app.get('*', serveStatic({ root: staticRoot, path: 'index.html' }));
+  }
+
+  return app;
+}

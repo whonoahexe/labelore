@@ -246,14 +246,21 @@ function buildMiniSearchIndex(documents: SearchDocument[]): MiniSearch<SearchDoc
 export function createSearchIndexState(): {
   state(): SearchIndexState;
   buildFrom(snapshot: ProjectSnapshot, routeTable?: RouteTable): void;
+  /** Stops a scheduled build from ever running (a disposed runtime); `state()` stays 'building'. */
+  cancel(): void;
 } {
   let current: SearchIndexState = { status: 'building' };
+  let cancelled = false;
   return {
     state(): SearchIndexState {
       return current;
     },
+    cancel(): void {
+      cancelled = true;
+    },
     buildFrom(snapshot: ProjectSnapshot, routeTable: RouteTable = buildRouteTable(snapshot.project)): void {
       setImmediate(() => {
+        if (cancelled) return;
         try {
           const reachable = collectReachableArtifacts(snapshot);
           const documents = reachable.map(({ artifact }) => toSearchDocument(artifact));

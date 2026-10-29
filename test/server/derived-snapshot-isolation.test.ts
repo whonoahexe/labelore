@@ -115,12 +115,13 @@ describe('a GET racing a completing refresh renders against the bundle captured 
   });
 
   it('reads the registry from the captured-bundle parameter, never the module-level binding, and the documents handler captures that bundle before its lookup (source, region-scoped)', async () => {
-    const source = await readFile(new URL('../../src/server/index.ts', import.meta.url), 'utf8');
+    // The handlers moved from createApp into the shared project API (08-01); the pin follows them.
+    const source = await readFile(new URL('../../src/server/project-api.ts', import.meta.url), 'utf8');
 
     const artifactResponseStart = source.indexOf('const artifactResponse');
     expect(artifactResponseStart).toBeGreaterThan(-1);
     const afterArtifactResponse = source.slice(artifactResponseStart);
-    const nextRouteRegistration = afterArtifactResponse.match(/\n\s*app\.(get|post|use|all)\(/);
+    const nextRouteRegistration = afterArtifactResponse.match(/\n\s*api\.(get|post|use|all)\(/);
     expect(nextRouteRegistration?.index).toBeGreaterThan(-1);
     const region = afterArtifactResponse.slice(0, nextRouteRegistration!.index);
 
@@ -129,15 +130,15 @@ describe('a GET racing a completing refresh renders against the bundle captured 
     // parameter, whose capital D never matches this pattern) must not be property-accessed here.
     expect(region).not.toMatch(/\bderived\./);
 
-    const documentsHandlerStart = source.indexOf("app.get('/api/documents'");
+    const documentsHandlerStart = source.indexOf("api.get('/documents'");
     expect(documentsHandlerStart).toBeGreaterThan(-1);
 
-    const documentsHandlerEnd = source.indexOf("app.post('/api/refresh'");
+    const documentsHandlerEnd = source.indexOf("api.post('/refresh'");
     const documentsHandler = source.slice(documentsHandlerStart, documentsHandlerEnd);
 
-    const captureIndex = documentsHandler.indexOf('const activeDerived = derived;');
+    const captureIndex = documentsHandler.indexOf('const activeDerived = runtime.derived;');
     const lookupIndex = documentsHandler.search(/const lookup = activeDerived\.artifactIndex\./);
-    const forwardIndex = documentsHandler.indexOf('artifactResponse(lookup, activeDerived)');
+    const forwardIndex = documentsHandler.indexOf('artifactResponse(lookup, activeDerived, runtime)');
     expect(captureIndex).toBeGreaterThan(-1);
     expect(lookupIndex).toBeGreaterThan(captureIndex);
     expect(forwardIndex).toBeGreaterThan(lookupIndex);
