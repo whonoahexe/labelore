@@ -26,6 +26,8 @@ import { RemoteSnapshotSource } from './remote-source.ts';
 import type { MirrorRunner } from './remote-source.ts';
 
 const DEFAULT_MAX_LOADED = 5;
+/** How long a folder check made by list() is trusted before the next list() looks again. */
+const DEFAULT_VALIDATE_TTL_MS = 10_000;
 
 export function failedSource(status: FailedLoadStatus): SnapshotSource {
   const snapshot: ProjectSnapshot = {
@@ -76,6 +78,8 @@ export interface ProjectRegistryOptions {
   remoteRunner?: MirrorRunner;
   /** Milliseconds clock (default Date.now). */
   now?: () => number;
+  /** How long list() trusts a folder check of an unloaded local entry (default 10 000 ms). */
+  validateTtlMs?: number;
 }
 
 export type RegisterOutcome =
@@ -95,6 +99,9 @@ interface RegistryEntry {
   failure: FailedLoadStatus | null;
   runtime: ProjectRuntime | null;
   loading: Promise<ProjectRuntime | null> | null;
+  /** list()'s last folder check of this entry while it is unloaded and local: when, and what it found. */
+  validatedAt: number | null;
+  validation: FailedLoadStatus | null;
 }
 
 /** The ssh identity ignores the scheme (ssh://, sftp:// and scp forms to one place are one project),
@@ -108,7 +115,10 @@ export class ProjectRegistry {
   private readonly maxLoaded: number;
   private readonly home: string;
   private readonly now: () => number;
+  private readonly validateTtlMs: number;
   private readonly entries: Map<string, RegistryEntry>;
+  /** Slugs of the ready runtimes, least recently used first. */
+  private readonly recency: Set<string>;
   private nextOrder: number;
   private closed: boolean;
 
@@ -119,7 +129,9 @@ export class ProjectRegistry {
     this.maxLoaded = options.maxLoaded ?? DEFAULT_MAX_LOADED;
     this.home = options.home ?? homedir();
     this.now = options.now ?? Date.now;
+    this.validateTtlMs = options.validateTtlMs ?? DEFAULT_VALIDATE_TTL_MS;
     this.entries = new Map();
+    this.recency = new Set();
     this.nextOrder = 0;
     this.closed = false;
   }
@@ -159,27 +171,47 @@ export class ProjectRegistry {
       failure: null,
       runtime: null,
       loading: null,
+      validatedAt: null,
+      validation: null,
     });
     this.nextOrder += 1;
     return { ok: true, slug, duplicate: false };
   }
 
-  /** The project list, built from memory only (D-02): no source is created and nothing is read. */
+  /** The project list, built without loading anything (D-02): no source is created. An unloaded local
+   * entry has its folder looked at again at most once per validateTtlMs, so a deleted folder lists as
+   * unavailable with the server's own message; ssh entries are never probed. */
   async list(): Promise<ProjectListResponse> {
     const ordered = orderProjects([...this.entries.values()]);
-    const projects: ProjectListEntry[] = ordered.map((entry) => ({
-      slug: entry.slug,
-      name: projectDisplayName(null, entry.target),
-      kind: entry.kind,
-      target: entry.target,
-      displayPath: homeShortened(entry.target, this.home),
-      state: entry.state,
-      reason: entry.state === 'unavailable' ? (entry.failure?.message ?? null) : null,
-      pathChecked: entry.state === 'unavailable' ? (entry.failure?.pathChecked ?? null) : null,
-      lastOpened: entry.lastOpened,
-      sessionOnly: false,
-    }));
+    const projects: ProjectListEntry[] = ordered.map((entry) => {
+      const failure = entry.state === 'unavailable' ? entry.failure : this.revalidated(entry);
+      return {
+        slug: entry.slug,
+        name: projectDisplayName(null, entry.target),
+        kind: entry.kind,
+        target: entry.target,
+        displayPath: homeShortened(entry.target, this.home),
+        state: failure ? 'unavailable' : entry.state,
+        reason: failure?.message ?? null,
+        pathChecked: failure?.pathChecked ?? null,
+        lastOpened: entry.lastOpened,
+        sessionOnly: false,
+      };
+    });
     return { projects, notices: [] };
+  }
+
+  /** The failure found by looking at an unloaded local entry's folder, memoised for validateTtlMs;
+   * null when the folder is fine or the entry is not one that is looked at. */
+  private revalidated(entry: RegistryEntry): FailedLoadStatus | null {
+    if (entry.kind !== 'local' || entry.state !== 'unloaded') return null;
+    const at = this.now();
+    if (entry.validatedAt === null || at - entry.validatedAt >= this.validateTtlMs) {
+      const resolved = resolveTargetPath(entry.target);
+      entry.validation = 'rootPath' in resolved ? null : resolved;
+      entry.validatedAt = at;
+    }
+    return entry.validation;
   }
 
   /**
@@ -193,7 +225,10 @@ export class ProjectRegistry {
     const entry = this.entries.get(slug);
     if (!entry) return null;
     if (entry.loading) return entry.loading;
-    if (entry.runtime && !(entry.state === 'unavailable' && options.retryFailed === true)) return entry.runtime;
+    if (entry.runtime && !(entry.state === 'unavailable' && options.retryFailed === true)) {
+      if (entry.state === 'ready') this.touch(slug);
+      return entry.runtime;
+    }
     if (entry.runtime) {
       entry.runtime.dispose();
       entry.runtime = null;
@@ -222,9 +257,13 @@ export class ProjectRegistry {
       }
       const { loadStatus } = runtime.derived.presentation;
       entry.runtime = runtime;
+      entry.validatedAt = null;
+      entry.validation = null;
       if (loadStatus.status === 'ok') {
         entry.state = 'ready';
         entry.failure = null;
+        this.touch(entry.slug);
+        this.evictOverCap(entry);
       } else {
         entry.state = 'unavailable';
         entry.failure = loadStatus;
@@ -235,6 +274,30 @@ export class ProjectRegistry {
     });
     entry.loading = loading;
     return loading;
+  }
+
+  /** Marks a ready runtime as the most recently used. */
+  private touch(slug: string): void {
+    this.recency.delete(slug);
+    this.recency.add(slug);
+  }
+
+  /** While more than maxLoaded runtimes are ready, disposes the least recently used one that has no
+   * request in flight and is not the one just loaded; its entry returns to unloaded. When every
+   * candidate is busy the registry stays over the cap until the next load (Pitfall 9). */
+  private evictOverCap(justLoaded: RegistryEntry): void {
+    for (const slug of [...this.recency]) {
+      if (this.loadedCount() <= this.maxLoaded) return;
+      if (slug === justLoaded.slug) continue;
+      const candidate = this.entries.get(slug);
+      if (!candidate?.runtime || candidate.state !== 'ready' || candidate.loading) continue;
+      if (candidate.runtime.inFlightRequests > 0) continue;
+      candidate.runtime.dispose();
+      candidate.runtime = null;
+      candidate.failure = null;
+      candidate.state = 'unloaded';
+      this.recency.delete(slug);
+    }
   }
 
   /** How many runtimes are loaded and serving (failed ones are not counted). */
@@ -248,6 +311,7 @@ export class ProjectRegistry {
   dispose(): void {
     if (this.closed) return;
     this.closed = true;
+    this.recency.clear();
     for (const entry of this.entries.values()) {
       entry.runtime?.dispose();
       entry.runtime = null;
