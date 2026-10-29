@@ -144,7 +144,9 @@ describe('buildTreeViewModel — fixtures/dense', () => {
       }
       expect(file.url).toBe(keyByPath.get(file.path));
       expect(file.url).toBeTruthy();
-      expect(file.url?.startsWith('/artifacts/') || file.url?.startsWith('/milestones/')).toBe(true);
+      // A readable address (D-01): rooted, never an opaque a~/m~ token.
+      expect(file.url?.startsWith('/')).toBe(true);
+      expect(file.url).not.toMatch(/\/[am]~/);
     }
   });
 

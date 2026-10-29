@@ -21,7 +21,7 @@
     {
       "number": "7",
       "name": "Recognised Files and Readable URLs",
-      "status": "in_progress"
+      "status": "complete"
     },
     {
       "number": "8",
@@ -56,8 +56,8 @@
   ],
   "next": {
     "command": "/gsd-progress --next",
-    "label": "Advance to the next step",
-    "reason": "Phase 2 of 8 · 13% · executing"
+    "label": "Advance to the next step (plan phase 8)",
+    "reason": "Phase 3 of 8 — needs a plan"
   },
-  "updated_at": "2026-10-26T21:07:22.589Z"
+  "updated_at": "2026-10-27T21:37:05.104Z"
 }

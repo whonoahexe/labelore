@@ -10,9 +10,11 @@ import type {
 } from '../domain/model.ts';
 import type { DiscoveryExclusion, LoadStatus, ProjectSnapshot } from '../planning-repo/types.ts';
 import { parseMilestoneFileName } from '../planning-repo/naming.ts';
+import { buildRouteTable, type RouteTable } from '../presentation/route-table.ts';
 import {
-  artifactTokenOf,
   buildArtifactUrl,
+  buildMilestoneUrl,
+  buildPlanSummaryUrl,
   buildPlanUrl,
   milestoneKeyOf,
   phaseKeyOf,
@@ -127,6 +129,10 @@ export interface MilestoneDto {
   version: string | null;
   name: string;
   archived: boolean;
+  /** D-04: the milestone's own `/<v>/overview` page. */
+  overviewUrl: string;
+  /** D-02: where the milestone's name leads: its roadmap file's address, or its overview when it has none. */
+  roadmapUrl: string;
   phases: PhaseDto[];
 }
 
@@ -192,6 +198,12 @@ export interface ProjectPresentation {
    * notes, recent tasks, the queue), built server-side from the snapshot so the page never reads
    * a file. */
   ledger: DashboardLedgerDto;
+  /** D-03: the live milestone's own addresses for its roadmap and requirements, each mapped to the
+   * address those files really have. The web redirects an alias to its target. */
+  routeAliases: Record<string, string>;
+  /** The route audit: every address several files wanted (and the phase folders that share a phase
+   * address), sorted by URL with the paths inside each sorted. Empty for a project without clashes. */
+  urlConflicts: { url: string; paths: string[] }[];
 }
 
 interface PassingEvidence {
@@ -541,7 +553,7 @@ function projectRequirement(requirement: Requirement): RequirementDto {
   };
 }
 
-function artifactDtos(project: Project): ArtifactDto[] {
+function artifactDtos(project: Project, routeTable: RouteTable): ArtifactDto[] {
   const context = new Map<string, { identity: PhaseIdentity; phaseKey: string }>();
   for (const phase of project.phases) {
     for (const artifact of Object.values(phase.artifacts)) {
@@ -555,7 +567,7 @@ function artifactDtos(project: Project): ArtifactDto[] {
     .map((artifact) => {
       const owner = context.get(artifact.path) ?? null;
       return {
-        key: buildArtifactUrl(owner?.identity ?? null, artifact.path),
+        key: routeTable.urlOf(artifact.path) ?? buildArtifactUrl(owner?.identity ?? null, artifact.path),
         path: artifact.path,
         kind: artifact.kind,
         title: artifact.title,
@@ -592,10 +604,15 @@ function emptyPresentation(snapshot: ProjectSnapshot): ProjectPresentation {
     mentions: { byId: {}, all: [] },
     exclusions: snapshot.exclusions,
     ledger: emptyLedger(),
+    routeAliases: {},
+    urlConflicts: [],
   };
 }
 
-export function toProjectPresentation(snapshot: ProjectSnapshot): ProjectPresentation {
+export function toProjectPresentation(
+  snapshot: ProjectSnapshot,
+  routeTable: RouteTable = buildRouteTable(snapshot.project),
+): ProjectPresentation {
   const project = snapshot.project;
   if (!project) return emptyPresentation(snapshot);
   const evidence = passingEvidenceOf(project);
@@ -607,11 +624,13 @@ export function toProjectPresentation(snapshot: ProjectSnapshot): ProjectPresent
     version: milestone.version,
     name: milestone.name,
     archived: milestone.archived,
+    overviewUrl: buildMilestoneUrl(milestone.version),
+    roadmapUrl: routeTable.milestoneRoadmapUrl(milestone.version),
     phases: milestone.phases.map((phase) => {
       const phaseKey = phaseKeyOf(phase.identity);
       const roadmap = roadmapPhaseRecord(project, phase.identity, phase.archived);
       const plans: PlanDto[] = phase.plans.map((plan) => {
-        const planKey = buildPlanUrl(phase.identity, plan.id);
+        const planKey = routeTable.urlOf(plan.path) ?? buildPlanUrl(phase.identity, plan.id);
         const planArtifact = phase.artifacts[plan.path];
         const syntax = planArtifact ? projectPlanCheckpoints(planArtifact.body) : [];
         const siblingNames = syntax.map((checkpoint) => checkpoint.name);
@@ -679,7 +698,8 @@ export function toProjectPresentation(snapshot: ProjectSnapshot): ProjectPresent
           complete: isComplete,
           summary: plan.summary
             ? {
-                key: artifactTokenOf(plan.summary.path),
+                key:
+                  routeTable.urlOf(plan.summary.path) ?? buildPlanSummaryUrl(phase.identity, plan.id),
                 path: plan.summary.path,
                 frontmatter: jsonRecord(plan.summary.frontmatter),
               }
@@ -687,7 +707,8 @@ export function toProjectPresentation(snapshot: ProjectSnapshot): ProjectPresent
           dependsOn: plan.dependsOnRefs.map((reference) => ({
             raw: reference.raw,
             targetPlanKey: reference.resolved
-              ? buildPlanUrl(phase.identity, reference.resolved.id)
+              ? (routeTable.urlOf(reference.resolved.path) ??
+                buildPlanUrl(phase.identity, reference.resolved.id))
               : null,
           })),
           checkpoints,
@@ -734,13 +755,18 @@ export function toProjectPresentation(snapshot: ProjectSnapshot): ProjectPresent
     state,
     milestones,
     requirements: project.requirements.map(projectRequirement),
-    artifacts: artifactDtos(project),
+    artifacts: artifactDtos(project, routeTable),
     blockers: blockersOf(state),
     decisions: decisionsOf(state),
     checkpoints: allCheckpoints,
     coverageWaits,
     mentions: project.mentions,
     exclusions: snapshot.exclusions,
-    ledger: buildDashboardLedger(project),
+    ledger: buildDashboardLedger(project, routeTable),
+    routeAliases: Object.fromEntries(routeTable.aliases),
+    urlConflicts: routeTable.conflicts.map((conflict) => ({
+      url: conflict.url,
+      paths: [...conflict.paths],
+    })),
   };
 }

@@ -9,13 +9,16 @@ import {
   useRouteError,
   type RouteObject,
 } from 'react-router';
+import { LEGACY_FIRST_SEGMENTS, PROJECT_PAGES } from '../presentation/reserved.ts';
 import { presentationRoutePatterns } from '../presentation/routes.ts';
+import type { ProjectPresentation } from '../server/project-presentation.ts';
 import { AppShell, fetchPresentation } from './components/app-shell.tsx';
 import { trackRouteChunk } from './components/route-chunk-store.ts';
 import { Link, ProjectSlugProvider } from './nav.tsx';
 import { InvalidProjectScreen } from './pages/invalid-project-screen.tsx';
 import { NotFoundPage } from './pages/not-found-page.tsx';
-import { decodeAddress, projectGateOutcome } from './project-path.ts';
+import { decodeAddress, projectGateOutcome, splitProjectPath, withProjectSlug } from './project-path.ts';
+import { resolveProjectRoute, resolveUnprefixedRoute } from './route-dispatch.ts';
 
 // Every routed page is lazy()-loaded, and every factory goes through `trackRouteChunk` so the
 // shell's top bar can show during navigations as well as on the initial load — a bare Suspense
@@ -48,9 +51,9 @@ const ResearchPage = lazy(
     import('./pages/research-page.tsx').then((m) => ({ default: m.ResearchPage })),
   ),
 );
-const ArtifactPage = lazy(
+const DocumentRoute = lazy(
   trackRouteChunk(() =>
-    import('./pages/artifact-page.tsx').then((m) => ({ default: m.ArtifactPage })),
+    import('./pages/document-route.tsx').then((m) => ({ default: m.DocumentRoute })),
   ),
 );
 const PlanPairPage = lazy(
@@ -59,7 +62,24 @@ const PlanPairPage = lazy(
   ),
 );
 
-function RouteError(): React.JSX.Element {
+// The pages that have a fixed address of their own; the dispatcher names one of these.
+const PAGES = {
+  dashboard: DashboardPage,
+  roadmap: RoadmapPage,
+  search: SearchPage,
+  traceability: TraceabilityPage,
+  sketches: SketchesPage,
+  research: ResearchPage,
+} as const;
+
+/** A redirect's address under the project slug. The old link's #heading rides along unless the target
+ * carries a heading of its own; a target's own query (an un-prefixed `/search?q=kiln`) is kept. */
+function redirectLocation(slug: string, target: string, hash: string): string {
+  const prefixed = withProjectSlug(slug, target);
+  return prefixed.includes('#') ? prefixed : `${prefixed}${hash}`;
+}
+
+function RouteError():React.JSX.Element {
   const error = useRouteError();
   const message = isRouteErrorResponse(error)
     ? `${error.status} ${error.statusText}`
@@ -79,17 +99,44 @@ function RouteError(): React.JSX.Element {
   );
 }
 
-/** The `*` child of the project route: an address under the open project that no page matches.
- * Renders only once the presentation payload has resolved, so the page never flashes ahead of the
- * shell's own Reading snapshot state; when the request fails the shell's notice shows instead. */
-function NotFoundRoute(): React.JSX.Element | null {
-  const presentation = useQuery({ queryKey: ['presentation'], queryFn: fetchPresentation });
+/**
+ * Everything under `/:project/`. Reads the raw pathname (never the router's splat parameter, which
+ * is already decoded), takes the slug off it, and renders whatever `resolveProjectRoute` decides:
+ * a page, a redirect (replacing the history entry, so Back skips it) or the one not-found page.
+ * It renders only once the presentation payload has resolved, so a link and its page appear
+ * together and there is no link-level loading state.
+ */
+function ProjectRouteSwitch({
+  presentation,
+}: {
+  presentation: ProjectPresentation;
+}): React.JSX.Element {
   const location = useLocation();
-  if (!presentation.data) return null;
+  const { rest } = splitProjectPath(location.pathname);
+  const outcome = resolveProjectRoute(rest, location.search, presentation);
+  switch (outcome.kind) {
+    case 'page': {
+      const Page = PAGES[outcome.page];
+      return <Page />;
+    }
+    case 'overview':
+    case 'phase':
+      return <RoadmapPage />;
+    case 'plan-pair':
+      return <PlanPairPage planUrl={outcome.planUrl} active={outcome.active} />;
+    case 'document':
+      return <DocumentRoute url={outcome.url} />;
+    case 'redirect':
+      return (
+        <Navigate replace to={redirectLocation(presentation.projectSlug, outcome.to, location.hash)} />
+      );
+    case 'not-found':
+      break;
+  }
   return (
     <NotFoundPage
       address={decodeAddress(location.pathname)}
-      openSlug={presentation.data.projectSlug}
+      openSlug={presentation.projectSlug}
     />
   );
 }
@@ -104,6 +151,41 @@ function RootRedirect(): React.JSX.Element {
   }
   if (presentation.data) return <Navigate replace to={`/${presentation.data.projectSlug}`} />;
   return <AppShell />;
+}
+
+const UNPREFIXED_WORDS: ReadonlySet<string> = new Set([...PROJECT_PAGES, ...LEGACY_FIRST_SEGMENTS]);
+
+/** True for a first segment that names an old top-level page or an old encoded shape, not a project. */
+function isUnprefixedLegacyWord(first: string): boolean {
+  return UNPREFIXED_WORDS.has(first);
+}
+
+/**
+ * NAV-11: an old address typed without the project slug. The dispatcher either redirects it, silently and
+ * replacing the history entry, to the same address under the open project (the old #heading kept), or it
+ * is a miss and the normal not-found page names the old pathname (D-13). Renders nothing of its own.
+ */
+function UnprefixedLegacy({
+  presentation,
+}: {
+  presentation: ProjectPresentation;
+}): React.JSX.Element {
+  const location = useLocation();
+  const outcome = resolveUnprefixedRoute(location.pathname, location.search, presentation);
+  return (
+    <ProjectSlugProvider value={presentation.projectSlug}>
+      <AppShell>
+        {outcome.kind === 'redirect' ? (
+          <Navigate replace to={redirectLocation(presentation.projectSlug, outcome.to, location.hash)} />
+        ) : (
+          <NotFoundPage
+            address={decodeAddress(location.pathname)}
+            openSlug={presentation.projectSlug}
+          />
+        )}
+      </AppShell>
+    </ProjectSlugProvider>
+  );
 }
 
 /**
@@ -123,6 +205,10 @@ function ProjectGate(): React.JSX.Element {
   if (presentation.data && presentation.data.loadStatus.status !== 'ok') {
     return <InvalidProjectScreen loadStatus={presentation.data.loadStatus} />;
   }
+  if (presentation.data && outcome === 'wrong-project' && isUnprefixedLegacyWord(project)) {
+    // NAV-11: an address from before the slug existed (`/roadmap`, `/search?q=...`, `/artifacts/a~...`).
+    return <UnprefixedLegacy presentation={presentation.data} />;
+  }
   if (presentation.data && outcome === 'wrong-project') {
     // NAV-09: the first segment is not this project's name. The shell's own links lead into the
     // project that is open, not the name that was typed.
@@ -138,34 +224,21 @@ function ProjectGate(): React.JSX.Element {
       </ProjectSlugProvider>
     );
   }
+  if (presentation.data && outcome === 'open') {
+    return (
+      <AppShell>
+        <ProjectRouteSwitch presentation={presentation.data} />
+      </AppShell>
+    );
+  }
   return <AppShell />;
 }
 
-// Children are today's page patterns made relative to `/:project`, so every page still opens under
-// the slug. 07-06 and 07-07 replace the encoded patterns with the readable grammar.
-const relative = (pattern: string): string => pattern.replace(/^\//, '');
-
+// NAV-10: two entries. `/` finds the open project's slug; `/:project/*` is every address under it, and
+// ProjectRouteSwitch decides the page from the raw pathname.
 export const appRoutes: RouteObject[] = [
   { path: '/', element: <RootRedirect />, errorElement: <RouteError /> },
-  {
-    path: '/:project',
-    element: <ProjectGate />,
-    errorElement: <RouteError />,
-    children: [
-      { index: true, element: <DashboardPage /> },
-      { path: relative(presentationRoutePatterns.roadmap), element: <RoadmapPage /> },
-      { path: relative(presentationRoutePatterns.search), element: <SearchPage /> },
-      { path: relative(presentationRoutePatterns.traceability), element: <TraceabilityPage /> },
-      { path: relative(presentationRoutePatterns.sketches), element: <SketchesPage /> },
-      { path: relative(presentationRoutePatterns.research), element: <ResearchPage /> },
-      { path: relative(presentationRoutePatterns.milestone), element: <RoadmapPage /> },
-      { path: relative(presentationRoutePatterns.phase), element: <RoadmapPage /> },
-      { path: relative(presentationRoutePatterns.plan), element: <PlanPairPage /> },
-      { path: relative(presentationRoutePatterns.phaseArtifact), element: <ArtifactPage /> },
-      { path: relative(presentationRoutePatterns.artifact), element: <ArtifactPage /> },
-      { path: '*', element: <NotFoundRoute /> },
-    ],
-  },
+  { path: '/:project/*', element: <ProjectGate />, errorElement: <RouteError /> },
 ];
 
 export const appRouter = createBrowserRouter(appRoutes);

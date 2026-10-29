@@ -46,7 +46,7 @@ projects, and URLs read like what they point to, with search that is quicker to 
 read.
 
 - [x] **Phase 6: Trustworthy Tests and Security Baseline** - The suite passes every run on made-up fixtures, and the promised security checks and secret masking are in place (completed 2026-10-26)
-- [ ] **Phase 7: Recognised Files and Readable URLs** - Every GSD file is recognised by where it lives and has one readable address starting with the project's name
+- [x] **Phase 7: Recognised Files and Readable URLs** - Every GSD file is recognised by where it lives and has one readable address starting with the project's name (completed 2026-10-27)
 - [ ] **Phase 8: Several Projects and a Switcher** - One run holds several projects, remembers them, and moves between them without mixing their data
 - [ ] **Phase 9: Review, Audit and Root Document Pages** - The root documents, milestone audits, coverage files and the review ledger open into designed pages
 - [ ] **Phase 10: Codebase Map, Specification and Check Pages** - Codebase maps, map-only projects, and the documents a phase is specified and checked with get pages, built on labelled made-up examples where none exists
@@ -153,7 +153,7 @@ to the same clean URLs, and none of them needs to change again.
    such as `v1.1`. *(NAV-10)*
 5. An old-style encoded link or bookmark redirects to its new readable URL. *(NAV-11)*
 
-**Plans**: 4/10 plans executed
+**Plans**: 10/10 plans complete
 
 Plans:
 **Wave 1**
@@ -165,20 +165,20 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 - [x] 07-04-PLAN.md — Readable URL grammar and route table: one URL per file, file/ fallback, collision audit over every fixture
-- [ ] 07-05-PLAN.md — Playwright URL helper, spec sweep and the standing URL contract scan
+- [x] 07-05-PLAN.md — Playwright URL helper, spec sweep and the standing URL contract scan
 
 **Wave 4** *(blocked on Wave 3 completion)*
-- [ ] 07-06-PLAN.md — Server switch: builders emit readable URLs, table-backed /api/documents, milestone overview and roadmap URLs
+- [x] 07-06-PLAN.md — Server switch: builders emit readable URLs, table-backed /api/documents, milestone overview and roadmap URLs
 
 **Wave 5** *(blocked on Wave 4 completion)*
-- [ ] 07-07-PLAN.md — Web switch: one /:project/* route and dispatcher, plan pair tabs by path, milestone redirects, overview page
+- [x] 07-07-PLAN.md — Web switch: one /:project/* route and dispatcher, plan pair tabs by path, milestone redirects, overview page
 
 **Wave 6** *(blocked on Wave 5 completion)*
-- [ ] 07-08-PLAN.md — Isolated legacy redirector for old encoded links (removed at v2.1 close)
-- [ ] 07-09-PLAN.md — Image page, File details card for binary and large files, images-only bytes route, drawer type-and-size badge
+- [x] 07-08-PLAN.md — Isolated legacy redirector for old encoded links (removed at v2.1 close)
+- [x] 07-09-PLAN.md — Image page, File details card for binary and large files, images-only bytes route, drawer type-and-size badge
 
 **Wave 7** *(blocked on Wave 6 completion)*
-- [ ] 07-10-PLAN.md — Every URL class survives a hard reload in the dev server, the built app and Chromium; full phase gate
+- [x] 07-10-PLAN.md — Every URL class survives a hard reload in the dev server, the built app and Chromium; full phase gate
 
 ### Phase 8: Several Projects and a Switcher
 
@@ -417,7 +417,7 @@ file, ID or project.
 | 5 | v1.1 | 6/6 | Archived | 2026-09-21 |
 | quick tasks | v2.0 | 40/40 | Archived | 2026-10-25 |
 | 6. Trustworthy Tests and Security Baseline | v2.1 | 22/22 | Complete    | 2026-10-26 |
-| 7. Recognised Files and Readable URLs | v2.1 | 4/10 | In Progress | - |
+| 7. Recognised Files and Readable URLs | v2.1 | 10/10 | Complete    | 2026-10-27 |
 | 8. Several Projects and a Switcher | v2.1 | 0/9 | Not started | - |
 | 9. Review, Audit and Root Document Pages | v2.1 | 0/TBD | Not started | - |
 | 10. Codebase Map, Specification and Check Pages | v2.1 | 0/TBD | Not started | - |

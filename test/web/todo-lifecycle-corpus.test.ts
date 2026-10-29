@@ -169,7 +169,7 @@ describe('the corpus', () => {
     for (const entry of entries) {
       for (const note of entry.model!.noted?.notes ?? []) {
         expect(note.path.startsWith('.planning/notes/'), entry.label).toBe(true);
-        if (note.url !== null) expect(note.url.startsWith('/artifacts/'), entry.label).toBe(true);
+        if (note.url !== null) expect(note.url.startsWith('/notes/'), entry.label).toBe(true);
       }
       expect(entry.noteUrlsMatch, entry.label).toBe(true);
     }

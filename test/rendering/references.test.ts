@@ -85,6 +85,8 @@ function milestone(version: string, archived: boolean, phaseDto: PhaseDto): Mile
     version,
     name: archived ? 'Archive v1.0' : 'Current v2.0',
     archived,
+    overviewUrl: `/${version}/overview`,
+    roadmapUrl: `/${version}/roadmap`,
     phases: [phaseDto],
   };
 }
@@ -165,6 +167,8 @@ function presentation(): ProjectPresentation {
     mentions: { byId: {}, all: [] },
     exclusions: [],
     ledger: emptyLedger(),
+    routeAliases: {},
+    urlConflicts: [],
   };
 }
 
@@ -507,6 +511,8 @@ describe('BACK-02 — decision/warning mentions, phase-local-then-corpus resolut
           version: 'v2.0',
           name: 'Current v2.0',
           archived: false,
+          overviewUrl: '/v2.0/overview',
+          roadmapUrl: '/roadmap',
           phases: [phase1Dto, phase2Dto],
         },
       ],
@@ -569,6 +575,8 @@ describe('BACK-02 — decision/warning mentions, phase-local-then-corpus resolut
       mentions: { byId: {}, all: [] },
       exclusions: [],
       ledger: emptyLedger(),
+      routeAliases: {},
+      urlConflicts: [],
     };
   }
 
@@ -773,8 +781,8 @@ describe('sanitized metadata to controlled React preview bridge', () => {
     expect(artifactPage.match(/dangerouslySetInnerHTML/g)).toHaveLength(1);
     expect(artifactPage).toContain('handleDocumentReferenceActivation<HTMLElement>');
     expect(activation).toContain("'[data-reference-key]'");
-    expect(router).toContain('relative(presentationRoutePatterns.plan), element: <PlanPairPage />');
-    expect(router).toContain('relative(presentationRoutePatterns.artifact), element: <ArtifactPage />');
+    expect(router).toContain('<PlanPairPage planUrl={outcome.planUrl} active={outcome.active} />');
+    expect(router).toContain('<DocumentRoute url={outcome.url} />');
     expect(css).toMatch(/\.reference-preview-positioner\s*\{[^}]*z-index:\s*(?:2[1-9]|[3-9]\d|\d{3,})/s);
     expect(css).toMatch(/\.reference-preview\s*\{[^}]*width:\s*min\(24rem, calc\(100vw - 2rem\)\)/s);
     expect(css).not.toMatch(/\.reference-preview\s*\{[^}]*z-index:/s);

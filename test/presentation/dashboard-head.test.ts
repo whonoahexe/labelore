@@ -73,7 +73,7 @@ describe('dashboard head', () => {
       text: 'Phase 1 hardening task committed',
     });
     expect(head.next?.step).toMatchObject({ kind: 'execute', title: 'Execute phase 2', plan: { id: '02-01' } });
-    expect(head.next?.step?.plan?.url).toContain('/plans/02-01');
+    expect(head.next?.step?.plan?.url).toMatch(/\/phase-2\/plan-01$/);
   });
 
   it('splits a tagline off the title, and asks to discuss a phase with no folder yet', async () => {

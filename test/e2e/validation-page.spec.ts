@@ -9,19 +9,20 @@
 //   npx playwright test test/e2e/validation-page.spec.ts
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
+import { artifactUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
 }
 
-async function resolveFixtureUrl(baseURL: string, pathIncludes: string): Promise<string> {
+async function resolveFixturePath(baseURL: string, pathIncludes: string): Promise<string> {
   const response = await fetch(`${baseURL}/api/presentation`);
   if (!response.ok) throw new Error(`validation-page.spec: /api/presentation responded ${response.status}`);
   const data = (await response.json()) as PresentationLite;
   const artifact = data.artifacts.find((entry) => entry.path.includes(pathIncludes));
   if (!artifact) throw new Error(`validation-page.spec: no artifact with path including "${pathIncludes}"`);
-  return artifact.key;
+  return artifact.path;
 }
 
 /** True once the locator's box sits inside the current viewport (polled by the caller). */
@@ -33,9 +34,9 @@ async function inViewport(page: Page, locator: Locator): Promise<boolean> {
 
 test.describe('VALIDATION strategy page', () => {
   test('Lendshed phase 2 validation page', async ({ page }) => {
-    const url = await resolveFixtureUrl(FIXTURE_BASE_URL, 'phases/02-roles-and-permissions/02-VALIDATION.md');
+    const url = await artifactUrl(FIXTURE_BASE_URL, await resolveFixturePath(FIXTURE_BASE_URL, 'phases/02-roles-and-permissions/02-VALIDATION.md'));
     await page.addInitScript(() => window.localStorage.setItem('labelore-theme', 'light'));
-    await page.goto(`${FIXTURE_BASE_URL}${url}`);
+    await page.goto(url);
     await page.locator('#validation-map').waitFor({ state: 'visible' });
 
     // Cover: no breadcrumb row, one h1, the eyebrow, the facts and the quiet dims.
@@ -138,8 +139,8 @@ test.describe('VALIDATION strategy page', () => {
   });
 
   test('Lendshed phase 1 and template-only validation pages', async ({ page }) => {
-    const p1 = await resolveFixtureUrl(FIXTURE_BASE_URL, 'phases/01-member-sign-in-sessions/01-VALIDATION.md');
-    await page.goto(`${FIXTURE_BASE_URL}${p1}`);
+    const p1 = await artifactUrl(FIXTURE_BASE_URL, await resolveFixturePath(FIXTURE_BASE_URL, 'phases/01-member-sign-in-sessions/01-VALIDATION.md'));
+    await page.goto(p1);
     await page.locator('#validation-map').waitFor({ state: 'visible' });
     const p1Cells = page.locator('.view-validation-cells');
     await expect(p1Cells).toContainText('8');
@@ -148,8 +149,8 @@ test.describe('VALIDATION strategy page', () => {
     await expect(page.locator('.view-validation-outcome', { hasText: 'Observed · pass' })).toHaveCount(3);
     await expect(page.locator('.view-validation-outcome', { hasText: 'Not observed' })).toHaveCount(1);
 
-    const v103 = await resolveFixtureUrl(FIXTURE_BASE_URL, 'v1.0-phases/03-catalogue-browsing/03-VALIDATION.md');
-    await page.goto(`${FIXTURE_BASE_URL}${v103}`);
+    const v103 = await artifactUrl(FIXTURE_BASE_URL, await resolveFixturePath(FIXTURE_BASE_URL, 'v1.0-phases/03-catalogue-browsing/03-VALIDATION.md'));
+    await page.goto(v103);
     await page.locator('#validation-map').waitFor({ state: 'visible' });
     await expect(page.locator('#validation-map')).toContainText('The map was never filled in.');
     await expect(page.locator('.view-validation-tile')).toHaveCount(0);

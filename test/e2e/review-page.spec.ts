@@ -5,23 +5,24 @@
 // one chip signature, no 420px overflow), since the full sweep is too slow to run per change.
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { BASE_URL, artifactUrl, exactUrl } from './app-url.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
 }
 
-async function resolveFixtureUrl(baseURL: string, pathIncludes: string): Promise<string> {
+async function resolveFixturePath(baseURL: string, pathIncludes: string): Promise<string> {
   const response = await fetch(`${baseURL}/api/presentation`);
   if (!response.ok) throw new Error(`review-page.spec: /api/presentation responded ${response.status}`);
   const data = (await response.json()) as PresentationLite;
   const artifact = data.artifacts.find((entry) => entry.path.includes(pathIncludes));
   if (!artifact) throw new Error(`review-page.spec: no artifact with path including "${pathIncludes}"`);
-  return artifact.key;
+  return artifact.path;
 }
 
-async function openPage(page: Page, base: string, url: string, theme: 'light' | 'dark'): Promise<void> {
+async function openPage(page: Page, base: string, path: string, theme: 'light' | 'dark'): Promise<void> {
   await page.addInitScript((value) => window.localStorage.setItem('labelore-theme', value), theme);
-  await page.goto(`${base}${url}`);
+  await page.goto(await artifactUrl(base, path));
   await page.locator('.view-review-page').waitFor({ state: 'visible' });
 }
 
@@ -31,9 +32,9 @@ const LB05 = 'v1.1-phases/05-per-type-document-views/05-REVIEW.md';
 
 test.describe('Review page', () => {
   test('LB v1.0/01: the fixed review with its fix report', async ({ page, baseURL }) => {
-    const base = baseURL ?? 'http://127.0.0.1:4199';
-    const url = await resolveFixtureUrl(base, LB01);
-    await openPage(page, base, url, 'light');
+    const base = baseURL ?? BASE_URL;
+    const path = await resolveFixturePath(base, LB01);
+    await openPage(page, base, path, 'light');
 
     // Head and hero.
     await expect(page.locator('h1')).toHaveCount(1);
@@ -113,17 +114,18 @@ test.describe('Review page', () => {
   });
 
   test('LB v1.0/01: the fix report chip opens the REVIEW-FIX page', async ({ page, baseURL }) => {
-    const base = baseURL ?? 'http://127.0.0.1:4199';
-    const url = await resolveFixtureUrl(base, LB01);
-    await openPage(page, base, url, 'light');
+    const base = baseURL ?? BASE_URL;
+    const path = await resolveFixturePath(base, LB01);
+    await openPage(page, base, path, 'light');
+    const fixUrl = await artifactUrl(base, await resolveFixturePath(base, 'v1.0-phases/01-read-layer-domain-model/01-REVIEW-FIX.md'));
     await page.locator('.view-review-also').getByRole('link', { name: 'Fix report · All fixed' }).click();
-    await expect(page).toHaveURL(/01-REVIEW-FIX\.md/);
+    await expect(page).toHaveURL(exactUrl(fixUrl));
   });
 
   test('LB v1.1/05: the small review with no fix report', async ({ page, baseURL }) => {
-    const base = baseURL ?? 'http://127.0.0.1:4199';
-    const url = await resolveFixtureUrl(base, LB05);
-    await openPage(page, base, url, 'dark');
+    const base = baseURL ?? BASE_URL;
+    const path = await resolveFixturePath(base, LB05);
+    await openPage(page, base, path, 'dark');
     await expect(page.locator('h1')).toHaveText('Per-Type Document Views');
     await expect(page.locator('.view-review-verdict')).toHaveText('3 findings. None fixed yet.');
     await expect(page.locator('.view-review-tally > div')).toHaveText([/Critical\s*0/, /Warning\s*1/, /Info\s*2/, /Total\s*3/]);
@@ -147,9 +149,9 @@ test.describe('Review page', () => {
   });
 
   test('LB v1.0/04: criticals lead and the empty narrative container adds no chip', async ({ page, baseURL }) => {
-    const base = baseURL ?? 'http://127.0.0.1:4199';
-    const url = await resolveFixtureUrl(base, LB04);
-    await openPage(page, base, url, 'light');
+    const base = baseURL ?? BASE_URL;
+    const path = await resolveFixturePath(base, LB04);
+    await openPage(page, base, path, 'light');
     await expect(page.locator('h1')).toHaveText('Portability & Degradation Hardening');
     await expect(page.locator('.view-review-verdict')).toHaveText('5 findings, 2 critical. None fixed yet.');
     await expect(page.locator('.view-review-also')).not.toContainText('Narrative Findings');
@@ -158,19 +160,19 @@ test.describe('Review page', () => {
 
   for (const theme of ['light', 'dark'] as const) {
     test(`every review page fits 420px in ${theme}`, async ({ page, baseURL }) => {
-      const base = baseURL ?? 'http://127.0.0.1:4199';
+      const base = baseURL ?? BASE_URL;
       const response = await fetch(`${base}/api/presentation`);
       const data = (await response.json()) as PresentationLite;
-      const keys = data.artifacts
+      const paths = data.artifacts
         .filter((a) => a.path.endsWith('-REVIEW.md') && !a.path.endsWith('-UI-REVIEW.md') && !a.path.includes('sketches'))
-        .map((a) => a.key);
-      expect(keys.length).toBeGreaterThanOrEqual(5);
+        .map((a) => a.path);
+      expect(paths.length).toBeGreaterThanOrEqual(5);
       await page.setViewportSize({ width: 420, height: 900 });
-      for (const key of keys) {
-        await openPage(page, base, key, theme);
+      for (const path of paths) {
+        await openPage(page, base, path, theme);
         await expect(page.locator('h1')).toHaveCount(1);
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-        expect(overflow, key).toBeLessThanOrEqual(0);
+        expect(overflow, path).toBeLessThanOrEqual(0);
       }
     });
   }

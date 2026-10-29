@@ -7,26 +7,27 @@
 // foundation sweep's key invariants itself (one h1, an eyebrow, squared corners, one chip signature,
 // no 420px overflow), since the full sweep is too slow to run per change.
 import { expect, test } from '@playwright/test';
+import { BASE_URL, artifactUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
 }
 
-async function resolveFixtureUrl(baseURL: string, pathIncludes: string): Promise<string> {
+async function resolveFixturePath(baseURL: string, pathIncludes: string): Promise<string> {
   const response = await fetch(`${baseURL}/api/presentation`);
   if (!response.ok) throw new Error(`ui-spec-page.spec: /api/presentation responded ${response.status}`);
   const data = (await response.json()) as PresentationLite;
   const artifact = data.artifacts.find((entry) => entry.path.includes(pathIncludes));
   if (!artifact) throw new Error(`ui-spec-page.spec: no artifact with path including "${pathIncludes}"`);
-  return artifact.key;
+  return artifact.path;
 }
 
 test.describe('UI-SPEC page', () => {
   test('FX phase 01 UI-SPEC page', async ({ page }) => {
-    const url = await resolveFixtureUrl(FIXTURE_BASE_URL, 'phases/01-member-sign-in-sessions/01-UI-SPEC.md');
+    const url = await artifactUrl(FIXTURE_BASE_URL, await resolveFixturePath(FIXTURE_BASE_URL, 'phases/01-member-sign-in-sessions/01-UI-SPEC.md'));
     await page.addInitScript(() => window.localStorage.setItem('labelore-theme', 'light'));
-    await page.goto(`${FIXTURE_BASE_URL}${url}`);
+    await page.goto(url);
     await page.locator('#ui-spec-considerations').waitFor({ state: 'visible' });
 
     // The cover: one h1, the eyebrow, the sign-off chip, Created, and no Status (it is approved).
@@ -127,9 +128,9 @@ test.describe('UI-SPEC page', () => {
   });
 
   test('FX v1.0/04 UI-SPEC page', async ({ page }) => {
-    const url = await resolveFixtureUrl(FIXTURE_BASE_URL, 'v1.0-phases/04-shed-to-shed-transfers/04-UI-SPEC.md');
+    const url = await artifactUrl(FIXTURE_BASE_URL, await resolveFixturePath(FIXTURE_BASE_URL, 'v1.0-phases/04-shed-to-shed-transfers/04-UI-SPEC.md'));
     await page.addInitScript(() => window.localStorage.setItem('labelore-theme', 'light'));
-    await page.goto(`${FIXTURE_BASE_URL}${url}`);
+    await page.goto(url);
     await page.locator('#ui-spec-considerations').waitFor({ state: 'visible' });
 
     await expect(page.locator('h1')).toHaveText('Shed to shed transfers');
@@ -159,8 +160,8 @@ test.describe('UI-SPEC page', () => {
   });
 
   test('LB v1.0/02 UI-SPEC page', async ({ page, baseURL }) => {
-    const base = baseURL ?? 'http://127.0.0.1:4199';
-    const url = await resolveFixtureUrl(base, '02-situational-awareness-artifact-reading/02-UI-SPEC.md');
+    const base = baseURL ?? BASE_URL;
+    const url = await artifactUrl(base, await resolveFixturePath(base, '02-situational-awareness-artifact-reading/02-UI-SPEC.md'));
     await page.addInitScript(() => window.localStorage.setItem('labelore-theme', 'light'));
     await page.goto(url);
     await page.locator('#ui-spec-considerations').waitFor({ state: 'visible' });

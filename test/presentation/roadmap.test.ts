@@ -6,7 +6,7 @@ import type {
   PlanDto,
   ProjectPresentation,
 } from '../../src/server/project-presentation.ts';
-import { buildPhaseUrl, buildPlanUrl } from '../../src/presentation/routes.ts';
+import { buildMilestoneUrl, buildPhaseUrl, buildPlanUrl } from '../../src/presentation/routes.ts';
 import { buildRoadmapViewModel } from '../../src/presentation/roadmap.ts';
 import { emptyLedger } from '../../src/server/dashboard-ledger.ts';
 
@@ -19,7 +19,7 @@ function plan(
     phaseKey?: string;
   } = {},
 ): PlanDto {
-  const phaseKey = options.phaseKey ?? '/milestones/m~v2.0/phases/current';
+  const phaseKey = options.phaseKey ?? 'p~current';
   return {
     key: `${phaseKey}/plans/${id}`,
     id,
@@ -79,12 +79,20 @@ function milestone(
   phases: PhaseDto[],
   name = archived ? `Archive ${version}` : `Milestone ${version}`,
 ): MilestoneDto {
-  return { key: `milestone:${version}`, version, name, archived, phases };
+  return {
+    key: `milestone:${version}`,
+    version,
+    name,
+    archived,
+    overviewUrl: buildMilestoneUrl(version),
+    roadmapUrl: buildMilestoneUrl(version),
+    phases,
+  };
 }
 
 function milestonesArtifact(entries: unknown[]): ArtifactDto {
   return {
-    key: '/artifacts/a~.planning%2FMILESTONES.md',
+    key: '/milestones',
     path: '.planning/MILESTONES.md',
     kind: 'milestones',
     fileClass: 'text',
@@ -136,6 +144,8 @@ function presentation(milestones: MilestoneDto[]): ProjectPresentation {
     mentions: { byId: {}, all: [] },
     exclusions: [],
     ledger: emptyLedger(),
+    routeAliases: {},
+    urlConflicts: [],
   };
 }
 
@@ -377,7 +387,7 @@ describe('buildRoadmapViewModel', () => {
     ];
     source.artifacts = [
       {
-        key: '/artifacts/requirements',
+        key: '/requirements',
         path: '.planning/REQUIREMENTS.md',
         kind: 'requirements',
         fileClass: 'text',
@@ -398,7 +408,7 @@ describe('buildRoadmapViewModel', () => {
         id: 'REQ-02',
         text: 'Open the actual authored requirement.',
         checked: false,
-        url: '/artifacts/requirements#requirement-req-02',
+        url: '/requirements#requirement-req-02',
       },
     ]);
   });
@@ -466,7 +476,7 @@ describe('buildRoadmapViewModel', () => {
     const points = (text: string) => [{ lead: null, text }];
     const retrospectiveArtifact: ArtifactDto = {
       ...milestonesArtifact([]),
-      key: '/artifacts/a~.planning%2FRETROSPECTIVE.md',
+      key: '/retrospective',
       path: '.planning/RETROSPECTIVE.md',
       kind: 'retrospective',
       title: 'Project Retrospective',

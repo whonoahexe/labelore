@@ -79,6 +79,8 @@ const PINNED: Record<string, Pinned> = {
   'LB:milestones/v1.0-phases/03-search-browsing-traceability/03-UAT.md': { ...DONE, tests: 4, pass: 4 },
   'LB:milestones/v1.0-phases/04-portability-degradation-hardening/04-UAT.md': { ...DONE, tests: 9, pass: 9 },
   'LB:milestones/v1.1-phases/05-per-type-document-views/05-UAT.md': { ...DONE, tests: 4, pass: 4, extras: ['Deferred Follow-Ups'] },
+  // Session completed by /gsd-verify-work 07 (D-18).
+  'LB:phases/07-recognised-files-and-readable-urls/07-UAT.md': { ...DONE, tests: 6, pass: 6 },
   'FX:phases/01-member-sign-in-sessions/01-UAT.md': { ...DONE, tests: 7, pass: 6, skipped: 1, extras: ['Notes'] },
   'FX:phases/02-roles-and-permissions/02-UAT.md': { ...DONE, tests: 3, pass: 3, gaps: 4, mode: 'prose' },
   'FX:phases/03-account-admin-and-sessions/03-UAT.md': { ...DONE, tests: 5, pass: 5, gaps: 1, mode: 'items' },

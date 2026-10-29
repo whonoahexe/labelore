@@ -61,5 +61,8 @@
         ]
       }
     ]
+  },
+  "worktree": {
+    "baseRef": "head"
   }
 }

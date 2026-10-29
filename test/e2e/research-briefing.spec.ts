@@ -8,6 +8,7 @@
 // sweep is too slow to run per change.
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
+import { BASE_URL, artifactUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
 import { SCREENSHOT_ROOT } from './pages.ts';
 
@@ -15,19 +16,19 @@ interface PresentationLite {
   artifacts: { key: string; path: string }[];
 }
 
-async function resolveFixtureUrl(baseURL: string, pathIncludes: string): Promise<string> {
+async function resolveFixturePath(baseURL: string, pathIncludes: string): Promise<string> {
   const response = await fetch(`${baseURL}/api/presentation`);
   if (!response.ok) throw new Error(`research-briefing.spec: /api/presentation responded ${response.status}`);
   const data = (await response.json()) as PresentationLite;
   const artifact = data.artifacts.find((entry) => entry.path.includes(pathIncludes));
   if (!artifact) throw new Error(`research-briefing.spec: no artifact with path including "${pathIncludes}"`);
-  return artifact.key;
+  return artifact.path;
 }
 
 test.describe('RESEARCH briefing', () => {
   test('LB v1.0/02 briefing', async ({ page, baseURL }) => {
-    const base = baseURL ?? 'http://127.0.0.1:4199';
-    const url = await resolveFixtureUrl(base, '02-situational-awareness-artifact-reading/02-RESEARCH.md');
+    const base = baseURL ?? BASE_URL;
+    const url = await artifactUrl(base, await resolveFixturePath(base, '02-situational-awareness-artifact-reading/02-RESEARCH.md'));
     await page.addInitScript(() => window.localStorage.setItem('labelore-theme', 'light'));
     await page.goto(url);
     await page.locator('#research-summary').waitFor({ state: 'visible' });
@@ -126,8 +127,8 @@ test.describe('RESEARCH briefing', () => {
   });
 
   test('FX v1.0/02 briefing', async ({ page }) => {
-    const url = await resolveFixtureUrl(FIXTURE_BASE_URL, 'v1.0-phases/02-shed-inventory-health/02-RESEARCH.md');
-    await page.goto(`${FIXTURE_BASE_URL}${url}`);
+    const url = await artifactUrl(FIXTURE_BASE_URL, await resolveFixturePath(FIXTURE_BASE_URL, 'v1.0-phases/02-shed-inventory-health/02-RESEARCH.md'));
+    await page.goto(url);
     await page.locator('#research-summary').waitFor({ state: 'visible' });
 
     // Shed inventory health draws as nine nodes in six kind lanes; Shown as drawn is the nine lifted boxes.
@@ -146,8 +147,8 @@ test.describe('RESEARCH briefing', () => {
 // (the as-drawn view must close around it with no stray bars).
 test.describe('RESEARCH briefing figures', () => {
   test('LB v1.0/01 architecture figures', async ({ page, baseURL }) => {
-    const base = baseURL ?? 'http://127.0.0.1:4199';
-    const url = await resolveFixtureUrl(base, '01-read-layer-domain-model/01-RESEARCH.md');
+    const base = baseURL ?? BASE_URL;
+    const url = await artifactUrl(base, await resolveFixturePath(base, '01-read-layer-domain-model/01-RESEARCH.md'));
     await page.addInitScript(() => window.localStorage.setItem('labelore-theme', 'light'));
     await page.goto(url);
     await page.locator('#research-summary').waitFor({ state: 'visible' });
@@ -182,8 +183,8 @@ test.describe('RESEARCH briefing figures', () => {
     page,
     baseURL,
   }) => {
-    const base = baseURL ?? 'http://127.0.0.1:4199';
-    const url = await resolveFixtureUrl(base, '01-read-layer-domain-model/01-RESEARCH.md');
+    const base = baseURL ?? BASE_URL;
+    const url = await artifactUrl(base, await resolveFixturePath(base, '01-read-layer-domain-model/01-RESEARCH.md'));
     await page.addInitScript(() => window.localStorage.setItem('labelore-theme', 'light'));
     await page.goto(url);
     await page.locator('#research-summary').waitFor({ state: 'visible' });

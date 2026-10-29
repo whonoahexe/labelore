@@ -3,6 +3,7 @@
 // (discussion log, PLAN), a plain-header page (SUMMARY) and a plan-pair page. Fixtures resolved
 // from `/api/presentation`, never hardcoded URLs — same discipline as document-layout.spec.ts.
 import { expect, test, type Page } from '@playwright/test';
+import { BASE_URL, artifactUrl, projectUrl } from './app-url.ts';
 import { buildPageMatrix } from './pages.ts';
 
 interface ArtifactDtoLite {
@@ -28,7 +29,7 @@ async function resolveArtifact(
   if (!artifact) {
     throw new Error(`artifact-header.spec: no artifact found with path including "${pathIncludes}"`);
   }
-  return { url: artifact.key, path: artifact.path };
+  return { url: await artifactUrl(baseURL, artifact.path), path: artifact.path };
 }
 
 async function findFirstSummaryArtifact(baseURL: string): Promise<{ url: string; path: string }> {
@@ -38,7 +39,7 @@ async function findFirstSummaryArtifact(baseURL: string): Promise<{ url: string;
   if (!artifact) {
     throw new Error('artifact-header.spec: no summary artifact found in this corpus');
   }
-  return { url: artifact.key, path: artifact.path };
+  return { url: await artifactUrl(baseURL, artifact.path), path: artifact.path };
 }
 
 async function setTheme(page: Page, theme: 'light' | 'dark'): Promise<void> {
@@ -86,7 +87,7 @@ test.describe('artifact-header copy-path button (quick-260923-jxp)', () => {
 
   test('cover-layout discussion log: copy button present, no raw path caption', async ({ page, baseURL }) => {
     const { url, path } = await resolveArtifact(
-      baseURL ?? 'http://127.0.0.1:4199',
+      baseURL ?? BASE_URL,
       '01-read-layer-domain-model/01-DISCUSSION-LOG.md',
     );
     await setTheme(page, 'light');
@@ -100,7 +101,7 @@ test.describe('artifact-header copy-path button (quick-260923-jxp)', () => {
   // contract is unchanged.
   test('navigator PLAN: copy button present, no raw path caption', async ({ page, baseURL }) => {
     const { url, path } = await resolveArtifact(
-      baseURL ?? 'http://127.0.0.1:4199',
+      baseURL ?? BASE_URL,
       '01-read-layer-domain-model/01-01-PLAN.md',
     );
     await setTheme(page, 'light');
@@ -111,7 +112,7 @@ test.describe('artifact-header copy-path button (quick-260923-jxp)', () => {
   });
 
   test('plain-header SUMMARY: copy button present, no raw path caption', async ({ page, baseURL }) => {
-    const { url, path } = await findFirstSummaryArtifact(baseURL ?? 'http://127.0.0.1:4199');
+    const { url, path } = await findFirstSummaryArtifact(baseURL ?? BASE_URL);
     await setTheme(page, 'light');
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(url);
@@ -124,12 +125,12 @@ test.describe('artifact-header copy-path button (quick-260923-jxp)', () => {
     page,
     baseURL,
   }) => {
-    const matrix = await buildPageMatrix(baseURL ?? 'http://127.0.0.1:4199');
+    const matrix = await buildPageMatrix(baseURL ?? BASE_URL);
     const planPair = matrix.pages.find((p) => p.family === 'plan-pair');
     expect(planPair, 'expected a plan-pair fixture in this corpus').toBeDefined();
     await setTheme(page, 'light');
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto(planPair!.url);
+    await page.goto(await projectUrl(baseURL ?? BASE_URL, planPair!.url));
     // The pair opens on its Plan tab: the PLAN's own per-type page with the pair switch first.
     await page.locator('.plan-pair-switch').first().waitFor({ state: 'visible' });
     await page.locator('.artifact-heading').first().waitFor({ state: 'visible' });
@@ -151,7 +152,7 @@ test.describe('artifact-header copy-path button (quick-260923-jxp)', () => {
     const context = await browser.newContext();
     const page = await context.newPage();
     const { url } = await resolveArtifact(
-      baseURL ?? 'http://127.0.0.1:4199',
+      baseURL ?? BASE_URL,
       '01-read-layer-domain-model/01-DISCUSSION-LOG.md',
     );
     await setTheme(page, 'light');
@@ -170,7 +171,7 @@ test.describe('artifact-header copy-path button (quick-260923-jxp)', () => {
     baseURL,
   }) => {
     const { url } = await resolveArtifact(
-      baseURL ?? 'http://127.0.0.1:4199',
+      baseURL ?? BASE_URL,
       '01-read-layer-domain-model/01-DISCUSSION-LOG.md',
     );
     for (const theme of ['light', 'dark'] as const) {

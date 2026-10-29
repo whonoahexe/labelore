@@ -160,6 +160,14 @@ URLs read like what they point to, with search that is quicker to use and easier
 - ✓ Secrets in `config.json` masked at read time, before presentation, routes or search see them,
   including duplicate-key and unparseable files (SEC-04) — Phase 6
 
+**Recognised files and readable URLs**
+
+- ✓ Every GSD file is recognised by where it lives as well as by its name; images, PDFs and other
+  binary files are recognised as such and never read or indexed as text, opening on an image page
+  or a File details card (DATA-07, DATA-08) — Phase 7
+- ✓ Every page has one readable URL starting with the project's name, files that fit no clean
+  pattern included, and old encoded links redirect to the new address (NAV-09–11) — Phase 7
+
 ### Active
 
 <!-- v2.1 Wayfinding scope, defined 2026-10-25. REQUIREMENTS.md holds the REQ-IDs. -->
@@ -184,7 +192,6 @@ URLs read like what they point to, with search that is quicker to use and easier
 - [ ] FIND-06: Search filters by phase, file type and requirement
 - [ ] Search results grouped by milestone, then phase, with a redesigned look
 - [ ] NAV-08: Command palette (Cmd-K) quick-jump that reuses the search index
-- [ ] Clean, readable URLs in place of today's encoded tokens
 
 **Platform**
 
@@ -310,6 +317,8 @@ in Active. R-02-01 from v1.0 stays an accepted medium risk.
 | One made-up fixture project (Lendshed) replaces every private copy (Phase 6) | The repo is public; copies of private planning trees leaked names, hosts and paths, and tests that read sibling checkouts skipped on other machines. One invented project with the same shapes keeps every pin. | ✓ Good — 108 files with a per-file quirk ledger; a standing leak test guards it |
 | Timing tests assert growth ratios, never millisecond budgets (Phase 6) | Fixed budgets flaked under load and hid real regressions; a growth ratio below each cap measures the algorithm, not the machine. | ✓ Good — standing no-skips scan fails any absolute budget |
 | Mask `config.json` secrets in the handler, in memory only (Phase 6) | Masking at parse time means presentation, routes and search can only ever see the masked body; the read-only boundary forbids touching the file. | ✓ Good — raw-text redaction always runs, closing the duplicate-key leak the phase review found |
+| Recognise files by folder as well as name, in one folder table (Phase 7) | The same name means different things in different folders; a ROADMAP.md below the root must not take a root document's kind. One table drives both recognition and the URL scheme. | ✓ Good — nothing the walk finds drops out of the model; strays keep a location of `other` |
+| One readable URL per file, prefixed with the project's name, with old links redirected (Phase 7) | Encoded tokens were unreadable and unshareable; the project prefix is the seam several projects (Phase 8) needs. | ✓ Good — the token endpoint is gone; redirects replace history so Back skips them |
 
 ## Evolution
 
@@ -329,4 +338,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-26 after Phase 6*
+*Last updated: 2026-10-27 after Phase 7*

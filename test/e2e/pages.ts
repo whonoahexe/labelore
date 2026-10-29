@@ -15,6 +15,8 @@ export const SCREENSHOT_ROOT = join(__dirname, 'screenshots');
 
 export interface PageSpec {
   id: string;
+  /** Project-relative: a DTO key or a reference page path, never a full address. The spec that
+   * opens it prefixes the slug through `projectUrl` in app-url.ts. */
   url: string;
   family: 'reference' | 'artifact' | 'plan-pair';
   kind: string | null;

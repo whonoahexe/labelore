@@ -1,14 +1,14 @@
-// The presentation URL grammar. Two things live here for now (07-04, additive until 07-06):
+// The presentation URL grammar (D-01 to D-07): a `Route` union, `buildUrl`, the total `parseRoutePath` and
+// `addressOfPath`, which turns a file's path under `.planning/` into the one clean address it would like
+// (`/v1.1/phase-5/plan-03`, `/quick/261024-qhq/summary`, `/codebase/architecture`). Every address here is
+// project-relative: nav.tsx prepends the project slug in one place. The route table (route-table.ts)
+// decides which file actually gets a clean address and gives every other file its lossless `file/` address,
+// so no two files ever share a URL.
 //
-//  1. The READABLE grammar (D-01 to D-07): a `Route` union, `buildUrl`, the total `parseRoutePath` and
-//     `addressOfPath`, which turns a file's path under `.planning/` into the one clean address it would
-//     like (`/v1.1/phase-5/plan-03`, `/quick/261024-qhq/summary`, `/codebase/architecture`). Every address
-//     here is project-relative: nav.tsx prepends the project slug in one place. The route table
-//     (route-table.ts) decides which file actually gets a clean address and gives every other file its
-//     lossless `file/` address, so no two files ever share a URL.
-//  2. The OLD encoded builders (`buildPhaseUrl`, `buildPlanUrl`, ...), kept with today's output so the app
-//     and every test stay green until 07-06 flips them. Their opaque key encoders moved to identity-keys.ts
-//     (re-exported below, unchanged) and the old token parser moved to legacy-routes.ts.
+// The four builders every importer already uses (`buildArtifactUrl`, `buildPhaseUrl`, `buildPlanUrl`,
+// `buildMilestoneUrl`) keep their names and signatures and emit this grammar (07-06). The opaque key
+// encoders live in identity-keys.ts (re-exported below, unchanged); the old token parser lives in
+// the legacy module and serves only the redirect path.
 import type { PhaseIdentity } from '../domain/model.ts';
 import { EXACT_NAME_KINDS, folderRuleOf } from '../planning-repo/folders.ts';
 import type { ExactNameWhere, NameRule } from '../planning-repo/folders.ts';
@@ -21,7 +21,7 @@ import {
   parseQuickArtifactName,
   parseQuickDirName,
 } from '../planning-repo/naming.ts';
-import { artifactTokenOf, assertNonEmpty, encodePart, milestoneKeyOf, phaseKeyOf } from './identity-keys.ts';
+import { assertNonEmpty, encodePart } from './identity-keys.ts';
 import {
   GSD_VERSION_PATTERN,
   LEGACY_FIRST_SEGMENTS,
@@ -32,18 +32,19 @@ import {
 } from './reserved.ts';
 
 export { artifactTokenOf, milestoneKeyOf, phaseKeyOf } from './identity-keys.ts';
-// The old parser and its types keep their old names for every current importer; legacy-routes.ts owns them.
-export { parseLegacyUrl as parsePresentationUrl } from './legacy-routes.ts';
+
+// The pre-07 names of the parser and its types, kept so importers do not churn; they are the readable
+// grammar's own parser and types. The legacy parser is imported from the legacy module by its own test and
+// by the redirect path only.
+export { parseRoutePath as parsePresentationUrl };
 export type {
-  LegacyRoute as PresentationRoute,
-  LegacyRouteErrorCode as PresentationRouteErrorCode,
-  LegacyRouteParseResult as PresentationRouteParseResult,
-} from './legacy-routes.ts';
+  Route as PresentationRoute,
+  RouteErrorCode as PresentationRouteErrorCode,
+  RouteParseResult as PresentationRouteParseResult,
+};
 
-// ---------------------------------------------------------------------------------------------------------
-// The old encoded builders (output unchanged until 07-06)
-// ---------------------------------------------------------------------------------------------------------
-
+/** The six page paths, used as link targets. Every other address is decided by the web's dispatcher
+ * (`resolveProjectRoute`) from the payload, never from a router pattern. */
 export const presentationRoutePatterns = {
   dashboard: '/',
   roadmap: '/roadmap',
@@ -51,11 +52,6 @@ export const presentationRoutePatterns = {
   traceability: '/traceability',
   sketches: '/sketches',
   research: '/research',
-  milestone: '/milestones/:milestoneKey',
-  phase: '/milestones/:milestoneKey/phases/:phaseKey',
-  plan: '/milestones/:milestoneKey/phases/:phaseKey/plans/:planId',
-  phaseArtifact: '/milestones/:milestoneKey/phases/:phaseKey/artifacts/:artifactToken',
-  artifact: '/artifacts/:artifactToken',
 } as const;
 
 /** Appends a `#heading` fragment (leading hashes dropped, the rest encoded once). */
@@ -64,33 +60,6 @@ export function withHeading(path: string, heading?: string): string {
   const clean = heading.replace(/^#+/, '');
   assertNonEmpty(clean, 'Heading');
   return `${path}#${encodePart(clean)}`;
-}
-
-export function buildMilestoneUrl(version: string | null): string {
-  return `/milestones/${milestoneKeyOf(version)}`;
-}
-
-export function buildPhaseUrl(identity: PhaseIdentity, heading?: string): string {
-  return withHeading(
-    `${buildMilestoneUrl(identity.milestoneVersion)}/phases/${phaseKeyOf(identity)}`,
-    heading,
-  );
-}
-
-export function buildPlanUrl(identity: PhaseIdentity, planId: string, heading?: string): string {
-  assertNonEmpty(planId, 'Plan id');
-  return withHeading(`${buildPhaseUrl(identity)}/plans/${encodePart(planId)}`, heading);
-}
-
-export function buildArtifactUrl(
-  identity: PhaseIdentity | null,
-  artifactPath: string,
-  heading?: string,
-): string {
-  const token = artifactTokenOf(artifactPath);
-  const path =
-    identity === null ? `/artifacts/${token}` : `${buildPhaseUrl(identity)}/artifacts/${token}`;
-  return withHeading(path, heading);
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -229,7 +198,8 @@ export function buildUrl(route: Route): string {
     case 'phase':
       return withHeading(scopeUrl(route.milestone, route.phase), route.heading ?? undefined);
     case 'plan': {
-      const planUrl = `${scopeUrl(route.milestone, route.phase)}/plan-${route.planNumber}`;
+      // Digits in every real plan id; encoded so a hostile id can never add a segment or a scope.
+      const planUrl = `${scopeUrl(route.milestone, route.phase)}/plan-${encodePart(route.planNumber)}`;
       return withHeading(route.doc === 'summary' ? `${planUrl}/summary` : planUrl, route.heading ?? undefined);
     }
     case 'document':
@@ -533,4 +503,60 @@ export function parseRoutePath(input: string): RouteParseResult {
   }
   const url = milestone === null ? documentUrl(segments) : `/${milestoneSegmentOf(milestone)}${documentUrl(scoped)}`;
   return { ok: true, route: { kind: 'document', url, heading } };
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// The builders (names and signatures unchanged since v1.1; output is the readable grammar)
+// ---------------------------------------------------------------------------------------------------------
+
+/** D-04: a milestone's `/<v>/overview` page (`/overview` for the unversioned project). */
+export function buildMilestoneUrl(version: string | null): string {
+  return buildUrl({ kind: 'overview', milestone: version });
+}
+
+/** D-01: a phase page; the milestone segment is always present for a phase that has a milestone. */
+export function buildPhaseUrl(identity: PhaseIdentity, heading?: string): string {
+  return buildUrl({
+    kind: 'phase',
+    milestone: identity.milestoneVersion,
+    phase: { projectCode: identity.projectCode, number: identity.number },
+    heading: heading ?? null,
+  });
+}
+
+function planRouteOf(
+  identity: PhaseIdentity,
+  planId: string,
+  doc: 'plan' | 'summary',
+  heading?: string,
+): Route {
+  assertNonEmpty(planId, 'Plan id');
+  return {
+    kind: 'plan',
+    milestone: identity.milestoneVersion,
+    phase: { projectCode: identity.projectCode, number: identity.number },
+    planNumber: planId.slice(planId.lastIndexOf('-') + 1),
+    doc,
+    heading: heading ?? null,
+  };
+}
+
+/** The plan page of a plan id (`07-06`): `/v1.1/phase-7/plan-06`. */
+export function buildPlanUrl(identity: PhaseIdentity, planId: string, heading?: string): string {
+  return buildUrl(planRouteOf(identity, planId, 'plan', heading));
+}
+
+/** D-05: the summary page of a plan id: `/v1.1/phase-7/plan-06/summary`. */
+export function buildPlanSummaryUrl(identity: PhaseIdentity, planId: string): string {
+  return buildUrl(planRouteOf(identity, planId, 'summary'));
+}
+
+/** The address a file would like given its owner (`addressOfPath`); the route table is the authority for
+ * the address a file really has, and server code that holds a table reads it from there. */
+export function buildArtifactUrl(
+  identity: PhaseIdentity | null,
+  artifactPath: string,
+  heading?: string,
+): string {
+  return withHeading(addressOfPath(artifactPath, identity ? { phase: identity } : null), heading);
 }

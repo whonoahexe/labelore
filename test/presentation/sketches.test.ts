@@ -26,7 +26,7 @@ Somewhere.
 `;
 
 function ref(path: string, frontmatter: Record<string, unknown> = {}): SketchArtifactRef {
-  return { path, key: `/artifacts/${encodeURIComponent(path)}`, title: path, frontmatter };
+  return { path, key: `/${encodeURIComponent(path)}`, title: path, frontmatter };
 }
 
 describe('parseSketchManifest', () => {

@@ -50,11 +50,9 @@ async function keyFor(app: App, artifactPath: string): Promise<string> {
   return dto.key;
 }
 
-/** The file page's payload, asked for through both routes that serve a single artifact. */
+/** The file page's payload, from the one endpoint that serves a single artifact. */
 async function pagePayload(app: App, key: string): Promise<string> {
-  const viaDocuments = await textOf(app, `/api/documents?route=${encodeURIComponent(key)}`);
-  const viaArtifacts = await textOf(app, `/api${key}`);
-  return `${viaDocuments}\n${viaArtifacts}`;
+  return textOf(app, `/api/documents?route=${encodeURIComponent(key)}`);
 }
 
 function settled(): Promise<void> {

@@ -7,25 +7,26 @@
 // spec asserts the foundation sweep's key invariants itself (one h1, an eyebrow, squared corners,
 // one chip signature, no 420px overflow), since the full sweep is too slow to run per change.
 import { expect, test } from '@playwright/test';
+import { BASE_URL, artifactUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
 }
 
-async function resolveFixtureUrl(baseURL: string, pathIncludes: string): Promise<string> {
+async function resolveFixturePath(baseURL: string, pathIncludes: string): Promise<string> {
   const response = await fetch(`${baseURL}/api/presentation`);
   if (!response.ok) throw new Error(`patterns-map.spec: /api/presentation responded ${response.status}`);
   const data = (await response.json()) as PresentationLite;
   const artifact = data.artifacts.find((entry) => entry.path.includes(pathIncludes));
   if (!artifact) throw new Error(`patterns-map.spec: no artifact with path including "${pathIncludes}"`);
-  return artifact.key;
+  return artifact.path;
 }
 
 test.describe('PATTERNS pattern map', () => {
   test('LB v1.1/05 pattern map', async ({ page, baseURL }) => {
-    const base = baseURL ?? 'http://127.0.0.1:4199';
-    const url = await resolveFixtureUrl(base, '05-per-type-document-views/05-PATTERNS.md');
+    const base = baseURL ?? BASE_URL;
+    const url = await artifactUrl(base, await resolveFixturePath(base, '05-per-type-document-views/05-PATTERNS.md'));
     await page.addInitScript(() => window.localStorage.setItem('labelore-theme', 'light'));
     await page.goto(url);
     await page.locator('#pattern-file-map').waitFor({ state: 'visible' });
@@ -131,8 +132,8 @@ test.describe('PATTERNS pattern map', () => {
   });
 
   test('Lendshed v1.0/02 pattern map', async ({ page }) => {
-    const url = await resolveFixtureUrl(FIXTURE_BASE_URL, 'v1.0-phases/02-shed-inventory-health/02-PATTERNS.md');
-    await page.goto(`${FIXTURE_BASE_URL}${url}`);
+    const url = await artifactUrl(FIXTURE_BASE_URL, await resolveFixturePath(FIXTURE_BASE_URL, 'v1.0-phases/02-shed-inventory-health/02-PATTERNS.md'));
+    await page.goto(url);
     await page.locator('#pattern-file-map').waitFor({ state: 'visible' });
 
     // The doc's own five groups, in order.

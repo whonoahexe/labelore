@@ -12,3 +12,8 @@ playwright-report/
 # every agent dispatch. Runtime state, not project content.
 .gsd/
 .playwright-mcp/
+
+# GSD per-session lock
+.planning/milestone.lock
+# Agent worktrees created by Claude Code isolation
+.claude/worktrees/

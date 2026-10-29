@@ -2,45 +2,45 @@
 gsd_state_version: "1.0"
 milestone: v2.1
 milestone_name: Wayfinding
-current_phase: 07
-current_phase_name: Recognised Files and Readable URLs
-status: executing
-stopped_at: Phase 8 UI-SPEC approved
-last_updated: "2026-10-27T16:18:16.071Z"
-last_activity: 2026-10-26
-last_activity_desc: Phase 07 execution started
-state_head: 64119f3f0739f88f34f5f6549c8cc94bffd00db9
+current_phase: 8
+current_phase_name: Several Projects and a Switcher
+status: planning
+stopped_at: Phase 8 planning paused mid-revision (9 plans drafted, pending plan-check)
+last_updated: "2026-10-27T21:37:05.085Z"
+last_activity: 2026-10-27
+last_activity_desc: Phase 06 complete, transitioned to Phase 8
+state_head: 2d1569fd613755ac260af3ca759a3c81879a9ca8
 progress:
   total_phases: 8
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 32
-  completed_plans: 26
-  percent: 13
+  completed_plans: 32
+  percent: 20
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-10-26)
+See: .planning/PROJECT.md (updated 2026-10-27)
 
 **Core value:** Open the dashboard on a GSD project and immediately know where the work stands and where any planning artifact lives — without reading a single file by hand.
-**Current focus:** Phase 07 — Recognised Files and Readable URLs
+**Current focus:** Phase 8 — Several Projects and a Switcher
 
 ## Current Position
 
-Phase: 07 (Recognised Files and Readable URLs) — EXECUTING
-Plan: 5 of 10
-Status: Ready to execute
-Last activity: 2026-10-26 — Phase 07 execution started
+Phase: 8 — Several Projects and a Switcher
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-10-27 — Phase 06 complete, transitioned to Phase 8
 
-Progress: [█░░░░░░░░░] 13%
+Progress: [██░░░░░░░░] 20%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 58
+- Total plans completed: 68
 - Average duration: —
 - Total execution time: 0.0 hours
 
@@ -54,6 +54,7 @@ Progress: [█░░░░░░░░░] 13%
 | 04 | 6 | - | - |
 | 05 | 6 | - | - |
 | 06 | 22 | - | - |
+| 07 | 10 | - | - |
 
 **Recent Trend:**
 
@@ -108,6 +109,10 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 07 P02 | 21 min | 3 tasks | 31 files |
 | Phase 07 P03 | 35min | 3 tasks | 51 files |
 | Phase 07 P04 | 26min | 3 tasks | 35 files |
+| Phase 07 P05 | 75 min | 2 tasks | 24 files |
+| Phase 07 P06 | 17 min | 3 tasks | 33 files |
+| Phase 07 P07 | 23 min | 3 tasks | 18 files |
+| Phase 07 P10 | 78 min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -167,6 +172,13 @@ milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) a
 - [Phase 07]: 07-04: normalizePhaseNumber returns unencoded text; phaseSegmentOf encodes the whole segment once
 - [Phase 07]: 07-04: parseRoutePath canonicalises zero-padded phases and milestone- prefixed GSD versions, and a legacy Route keeps the raw input including its fragment
 - [Phase 07]: 07-04: every claimant of an alias address (stray milestones/<live>-ROADMAP.md) is demoted to file/ and reported; a phase-page clash is reported with both folder paths
+- [Phase 07]: 07-05: browser specs open every address via test/e2e/app-url.ts (projectUrl/artifactUrl) and assert with DTO-key addresses; test/e2e-url-contract.test.ts keeps raw URLs out
+- [Phase 07]: 07-06: buildUrl percent-encodes the plan number segment so a hostile plan id stays one inert segment; the token-path artifact endpoint is deleted and /api/documents?route= resolves only through the per-bundle route table
+- [Phase 07]: 07-06: payload carries MilestoneDto.overviewUrl/roadmapUrl, routeAliases and urlConflicts; the drawer shipped-milestone header links straight to roadmapUrl, roadmap rows keep the overview URL
+- [Phase 07]: 07-07: a phase or plan address with no DTO still opens as a document when an artifact carries that key; otherwise not-found
+- [Phase 07]: 07-07: redirects keep the location hash; redirect targets come only from roadmapUrl and routeAliases and must start with a single slash
+- [Phase 07]: Vite's dev WebSocket shares the dev server's own HTTP server (server.ws.server) because Vite 8 ignores server.hmr:false and binds the fixed port 24678
+- [Phase 07]: The 4197 development and 4196 build-then-start Shapes servers are unconditional in playwright.config.ts, matching the fail-loud 4198 rule
 
 ### Pending Todos
 
@@ -212,10 +224,10 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-10-27T16:18:15.806Z
-Stopped at: Phase 8 UI-SPEC approved
-Resume file: .planning/phases/08-several-projects-and-a-switcher/08-UI-SPEC.md
+Last session: 2026-10-27T21:37:32Z
+Stopped at: Phase 8 planning paused mid-revision (9 plans drafted, pending plan-check)
+Resume file: .planning/phases/08-several-projects-and-a-switcher/.continue-here.md
 
 ## Operator Next Steps
 
-- Discuss or plan Phase 7 with /gsd-discuss-phase 7 or /gsd-plan-phase 7
+- Phase 07 UAT passed 6/6; run /gsd-discuss-phase 8 (or /gsd-plan-phase 8) to start Several Projects and a Switcher

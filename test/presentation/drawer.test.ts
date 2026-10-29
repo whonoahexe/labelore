@@ -16,6 +16,7 @@ import {
   quickTaskKeyForPath,
   shippedOwnerOf,
 } from '../../src/presentation/drawer-route.ts';
+import { buildPlanSummaryUrl, buildPlanUrl } from '../../src/presentation/routes.ts';
 import { toProjectPresentation, type ProjectPresentation } from '../../src/server/project-presentation.ts';
 import { loadShapesProject } from '../helpers/shapes-project.ts';
 
@@ -186,6 +187,34 @@ describe('buildDrawerViewModel — a phase through its lifecycle', () => {
       keyOf('.planning/phases/01-first/01-01-SUMMARY.md'),
     ]);
     expect(notDone.matchUrls).toEqual([keyOf('.planning/phases/01-first/01-02-PLAN.md')]);
+  });
+
+  it('marks one plan row active on either page: matchUrls are the plan page and the summary page (D-05)', async () => {
+    const presentation = await presentationOf(LIFECYCLE_FIXTURE);
+    const [done, notDone] = buildDrawerViewModel(presentation).current.phases[0].plans;
+    const identity = presentation.milestones[0].phases[0].identity;
+    expect(done.matchUrls).toEqual([buildPlanUrl(identity, '01-01'), buildPlanSummaryUrl(identity, '01-01')]);
+    expect(done.url).toBe(done.matchUrls[0]);
+    expect(done.matchUrls[1]).toBe(`${done.url}/summary`);
+    expect(notDone.matchUrls).toEqual([buildPlanUrl(identity, '01-02')]);
+  });
+
+  it('links a shipped milestone straight to its roadmap page, and to its overview when it has no roadmap (D-02, D-04)', async () => {
+    const presentation = await presentationOf({
+      '.planning/STATE.md': '---\nmilestone: v2.0\n---\n# State',
+      '.planning/milestones/v1.0-ROADMAP.md': '# Roadmap',
+      '.planning/milestones/v1.0-phases/01-first/01-01-PLAN.md': '# Plan',
+      '.planning/milestones/v0.9-phases/01-older/01-01-PLAN.md': '# Plan',
+    });
+    const model = buildDrawerViewModel(presentation);
+    const withRoadmap = model.shipped.find((place) => place.version === 'v1.0');
+    const withoutRoadmap = model.shipped.find((place) => place.version === 'v0.9');
+    const dtoOf = (version: string) => presentation.milestones.find((milestone) => milestone.version === version);
+    expect(dtoOf('v1.0')?.roadmapUrl).toBe('/v1.0/roadmap');
+    expect(withRoadmap?.url).toBe(dtoOf('v1.0')?.roadmapUrl);
+    expect(withoutRoadmap?.url).toBe(dtoOf('v0.9')?.roadmapUrl);
+    expect(withoutRoadmap?.url).toBe('/v0.9/overview');
+    expect(dtoOf('v1.0')?.overviewUrl).toBe('/v1.0/overview');
   });
 
   it('keeps a summary with no plan as an other file', async () => {

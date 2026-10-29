@@ -40,10 +40,10 @@ describe('sketches page contract', () => {
 
   it('routes /sketches to the page and gates the nav tab', async () => {
     const router = await source('src/web/app-router.tsx');
-    // NAV-09: the page is a relative child of /:project, so the pattern loses its leading slash.
-    expect(router).toMatch(
-      /relative\(presentationRoutePatterns\.sketches\),\s*element:\s*<SketchesPage \/>/,
-    );
+    // NAV-10: the dispatcher names the page and the router's page table renders it.
+    expect(router).toMatch(/sketches:\s*SketchesPage,/);
+    const dispatch = await source('src/web/route-dispatch.ts');
+    expect(dispatch).toContain("case 'page':");
     const shell = await source('src/web/components/app-shell.tsx');
     expect(shell).toMatch(/\{showSketches \? \(\s*<NavLink[^>]*presentationRoutePatterns\.sketches/);
   });
