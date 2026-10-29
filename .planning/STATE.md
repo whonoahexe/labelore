@@ -4,18 +4,18 @@ milestone: v2.1
 milestone_name: Wayfinding
 current_phase: 8
 current_phase_name: Several Projects and a Switcher
-status: planning
-stopped_at: Phase 8 planning paused mid-revision (9 plans drafted, pending plan-check)
-last_updated: "2026-10-27T21:37:05.085Z"
-last_activity: 2026-10-27
-last_activity_desc: Phase 06 complete, transitioned to Phase 8
-state_head: 2d1569fd613755ac260af3ca759a3c81879a9ca8
+status: executing
+stopped_at: Phase 8 planned (17 plans), ready to execute
+last_updated: "2026-10-29T17:14:51.809Z"
+last_activity: 2026-10-29
+last_activity_desc: Phase 8 planned, 17 plans in 8 waves
+state_head: 7e96dc9d9c0bd7085f24e7e96df1cf2b981d266f
 progress:
   total_phases: 8
   completed_phases: 2
-  total_plans: 32
+  total_plans: 49
   completed_plans: 32
-  percent: 20
+  percent: 25
 ---
 
 # Project State
@@ -29,12 +29,12 @@ See: .planning/PROJECT.md (updated 2026-10-27)
 
 ## Current Position
 
-Phase: 8 — Several Projects and a Switcher
+Phase: 8 (Several Projects and a Switcher) — READY TO EXECUTE
 Plan: Not started
-Status: Ready to plan
-Last activity: 2026-10-27 — Phase 06 complete, transitioned to Phase 8
+Status: Ready to execute
+Last activity: 2026-10-29 — Phase 8 planned: 17 plans in 8 waves, plan-check passed with 7 accepted file-count warnings
 
-Progress: [██░░░░░░░░] 20%
+Progress: [███░░░░░░░] 25%
 
 ## Performance Metrics
 
@@ -225,9 +225,9 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 ## Session Continuity
 
 Last session: 2026-10-29
-Stopped at: Session resumed, proceeding to finish Phase 8 plan revision (iteration 1 of 3)
-Resume file: .planning/phases/08-several-projects-and-a-switcher/.continue-here.md
+Stopped at: Phase 8 planned (17 plans), ready to execute
+Resume file: None
 
 ## Operator Next Steps
 
-- Phase 07 UAT passed 6/6; run /gsd-discuss-phase 8 (or /gsd-plan-phase 8) to start Several Projects and a Switcher
+- Run /gsd-execute-phase 8. Plan 08-02 stops for you to pick the winning sketches for 039 and 040 (blocking). The app is partly broken between waves 3 and 7; only the 08-15 gate runs the full browser suite.
