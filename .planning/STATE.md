@@ -2,14 +2,14 @@
 gsd_state_version: "1.0"
 milestone: v2.1
 milestone_name: Wayfinding
-current_phase: 8
+current_phase: 08
 current_phase_name: Several Projects and a Switcher
 status: executing
 stopped_at: Phase 8 planned (17 plans), ready to execute
-last_updated: "2026-10-29T17:14:51.809Z"
+last_updated: "2026-10-29T17:35:29.697Z"
 last_activity: 2026-10-29
-last_activity_desc: Phase 8 planned, 17 plans in 8 waves
-state_head: 7e96dc9d9c0bd7085f24e7e96df1cf2b981d266f
+last_activity_desc: Phase 08 execution started
+state_head: 54b4d7a3dbe992907011b11c1989c4634304448a
 progress:
   total_phases: 8
   completed_phases: 2
@@ -25,14 +25,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-27)
 
 **Core value:** Open the dashboard on a GSD project and immediately know where the work stands and where any planning artifact lives — without reading a single file by hand.
-**Current focus:** Phase 8 — Several Projects and a Switcher
+**Current focus:** Phase 08 — Several Projects and a Switcher
 
 ## Current Position
 
-Phase: 8 (Several Projects and a Switcher) — READY TO EXECUTE
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-10-29 — Phase 8 planned: 17 plans in 8 waves, plan-check passed with 7 accepted file-count warnings
+Phase: 08 (Several Projects and a Switcher) — EXECUTING
+Plan: 1 of 17
+Status: Executing Phase 08
+Last activity: 2026-10-29 — Phase 08 execution started
 
 Progress: [███░░░░░░░] 25%
 
