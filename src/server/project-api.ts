@@ -55,8 +55,12 @@ export function createProjectApi(
   const renderer = createArtifactRenderer();
 
   api.use('*', async (c, next) => {
-    const runtime = await resolve(c);
-    if (!runtime) return c.json({ error: 'Unknown project' }, 404);
+    let runtime = await resolve(c);
+    // A runtime the registry evicted between its answer and this continuation is already disposed;
+    // ask again (the registry reloads it) rather than serve from a released source. The check and the
+    // in-flight increment below run in the same synchronous step, so nothing can evict it after.
+    for (let attempt = 0; attempt < 3 && runtime?.disposed; attempt += 1) runtime = await resolve(c);
+    if (!runtime || runtime.disposed) return c.json({ error: 'Unknown project' }, 404);
     c.set('runtime', runtime);
     c.set('mountPrefix', mountPrefix(c));
     runtime.inFlightRequests += 1;
