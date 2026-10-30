@@ -15,6 +15,7 @@ import {
   mkdtempSync,
   rmSync,
 } from 'node:fs';
+import { readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, relative, sep } from 'node:path';
 import { PathEscapeError } from './types.ts';
@@ -171,6 +172,31 @@ export function statPathSync(absPath: string): StatOutcome | null {
   try {
     const stat = statSync(absPath);
     return { isDirectory: stat.isDirectory() };
+  } catch {
+    return null;
+  }
+}
+
+export interface ChildEntry {
+  name: string;
+  isDirectory: boolean;
+  isSymlink: boolean;
+}
+
+/**
+ * Lists the entries of one directory, read-only, without following anything: the type of each entry
+ * comes from the directory listing itself, so a symbolic link is reported as a symlink and never as a
+ * directory. Any failure (missing, unreadable, not a directory) is null, never a throw. This is the
+ * one listing primitive the folder scan walks through (PLAT-05); it adds no capability to the class.
+ */
+export async function listChildEntries(absDir: string): Promise<ChildEntry[] | null> {
+  try {
+    const entries = await readdir(absDir, { withFileTypes: true });
+    return entries.map((entry) => ({
+      name: entry.name,
+      isDirectory: entry.isDirectory(),
+      isSymlink: entry.isSymbolicLink(),
+    }));
   } catch {
     return null;
   }

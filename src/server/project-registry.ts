@@ -9,10 +9,15 @@
 // goes through the SettingsStore (PLAT-06): store.mutate re-reads the file first, so two Labelore
 // instances never mint the same slug (D-11). Nothing here ever writes inside a target project (SEC-05).
 import { homedir } from 'node:os';
-import { resolve, sep } from 'node:path';
+import { basename, resolve, sep } from 'node:path';
 import { resolveTargetPath, LOAD_STATUS_MESSAGES } from '../cli/target-path.ts';
 import { parseRemoteTarget } from '../cli/remote-target.ts';
-import { LocalFsPlanningFilesystem, canonicalizePath } from '../planning-fs/local-fs.ts';
+import {
+  LocalFsPlanningFilesystem,
+  canonicalizePath,
+  listChildEntries,
+  statPathSync,
+} from '../planning-fs/local-fs.ts';
 import { PlanningRepository } from '../planning-repo/snapshot.ts';
 import type { FailedLoadStatus, ProjectSnapshot } from '../planning-repo/types.ts';
 import { homeShortened, orderProjects } from '../presentation/project-list.ts';
@@ -24,6 +29,14 @@ import type {
 } from '../presentation/project-list.ts';
 import { allocateSlug, slugOf } from '../presentation/project-slug.ts';
 import { projectDisplayName } from '../presentation/shell-header.ts';
+import {
+  SCAN_DIRECTORY_VALVE,
+  SCAN_MAX_DEPTH,
+  SCAN_RESULT_CAP,
+  resolveScanFolder,
+  scanForProjects,
+} from './folder-scan.ts';
+import type { ScanListing } from './folder-scan.ts';
 import { ProjectRuntime } from './project-runtime.ts';
 import type { SnapshotSource } from './project-runtime.ts';
 import { readProjectTitle } from './project-title.ts';
@@ -128,6 +141,31 @@ export function settingsInsideMessage(settingsDir: string): string {
     `Labelore keeps its own settings inside this project (${settingsDir}), so it will not add it. ` +
     'Set LABELORE_CONFIG_DIR to a folder outside the project and restart.'
   );
+}
+
+export interface ScanFound {
+  /** The canonical path of the project folder. */
+  path: string;
+  displayPath: string;
+  name: string;
+  alreadyAdded: boolean;
+}
+
+export type ScanOutcome =
+  | { ok: false; error: string }
+  | { ok: true; folder: string; found: ScanFound[]; capped: boolean; cap: number };
+
+export interface AddManyResult {
+  target: string;
+  slug?: string;
+  duplicate?: boolean;
+  error?: string;
+}
+
+export interface AddManyOutcome {
+  /** How many targets became new entries (a duplicate adds nothing). */
+  added: number;
+  results: AddManyResult[];
 }
 
 interface RegistryEntry {
@@ -352,6 +390,63 @@ export class ProjectRegistry {
     const core = this.addNow(rawTarget);
     if (!core.ok) return core.failure;
     return { ok: true, slug: core.entry.slug, name: await this.displayName(core.entry), duplicate: core.duplicate };
+  }
+
+  /**
+   * Adds each target through add(), in order: one parse and one folder check per target (D-17), nothing
+   * loaded. A target that cannot be added carries the server's own message in its result and the others
+   * are still added. The caller bounds the number of targets.
+   */
+  async addMany(targets: readonly string[]): Promise<AddManyOutcome> {
+    const results: AddManyResult[] = [];
+    let added = 0;
+    for (const target of targets) {
+      const outcome = await this.add(target);
+      if (outcome.ok) {
+        results.push({ target, slug: outcome.slug, duplicate: outcome.duplicate });
+        if (!outcome.duplicate) added += 1;
+      } else if (outcome.code === 'invalid-target') {
+        results.push({ target, error: outcome.status.message });
+      } else {
+        results.push({ target, error: outcome.error });
+      }
+    }
+    return { added, results };
+  }
+
+  /**
+   * Looks for GSD projects under a folder the user typed (PLAT-05, D-15). Only a request calls this
+   * (D-16). The folder is resolved and confined to home by resolveScanFolder; the walk goes through the
+   * read-only listing. Each result says whether the registry already holds it, by identity.
+   */
+  async scan(rawFolder: unknown, options: { home?: string; list?: ScanListing } = {}): Promise<ScanOutcome> {
+    const home = options.home ?? this.home;
+    const resolved = resolveScanFolder(rawFolder, {
+      home,
+      canonicalize: canonicalizePath,
+      stat: statPathSync,
+    });
+    if (!resolved.ok) return { ok: false, error: resolved.error };
+
+    const walked = await scanForProjects({
+      root: resolved.folder,
+      list: options.list ?? listChildEntries,
+      maxDepth: SCAN_MAX_DEPTH,
+      cap: SCAN_RESULT_CAP,
+      valve: SCAN_DIRECTORY_VALVE,
+    });
+    const found = await Promise.all(
+      walked.found.map(async (path): Promise<ScanFound> => {
+        const shortened = homeShortened(path, resolved.canonicalHome);
+        return {
+          path,
+          displayPath: shortened === path ? homeShortened(path, home) : shortened,
+          name: (await readProjectTitle(path)) ?? basename(path),
+          alreadyAdded: this.findByIdentity(path) !== null,
+        };
+      }),
+    );
+    return { ok: true, folder: resolved.display, found, capped: walked.capped, cap: SCAN_RESULT_CAP };
   }
 
   private addNow(rawTarget: string): AddCore {
