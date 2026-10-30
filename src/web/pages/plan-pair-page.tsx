@@ -1,9 +1,10 @@
 import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
-import { Link } from '../nav.tsx';
+import { Link, useProjectSlug } from '../nav.tsx';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
-import type { ProjectPresentation } from '../../server/project-presentation.ts';
+import { fetchPresentation } from '../api.ts';
+import { projectKey } from '../query-keys.ts';
 import { PairSwitch } from '../components/pair-switch.tsx';
-import { ArtifactPage, DocumentView } from './artifact-page.tsx';
+import { ArtifactPage, DocumentView, fetchDocument } from './artifact-page.tsx';
 
 interface DocumentResponse {
   found: true;
@@ -26,35 +27,29 @@ interface PlanPairResponse {
   summaryRoute?: string;
 }
 
-async function fetchJson<T>(url: string): Promise<T> {
-  const response = await fetch(url, { headers: { Accept: 'application/json' } });
-  if (!response.ok) throw new Error(`Plan pair request failed (${response.status})`);
-  return (await response.json()) as T;
-}
-
-async function loadPair(planUrl: string, queryClient: QueryClient): Promise<PlanPairResponse> {
-  const presentation = await fetchJson<ProjectPresentation>('/api/presentation');
+export async function loadPair(
+  slug: string,
+  planUrl: string,
+  queryClient: QueryClient,
+): Promise<PlanPairResponse> {
+  const presentation = await fetchPresentation(slug);
   const plan = presentation.milestones
     .flatMap((milestone) => milestone.phases)
     .flatMap((phase) => phase.plans)
     .find((candidate) => candidate.key === planUrl);
   if (!plan) throw new Error('This plan is not present in the current snapshot.');
-  const planDocument = await fetchJson<DocumentResponse>(
-    `/api/documents?route=${encodeURIComponent(planUrl)}`,
-  );
-  // The same `/api/documents` payload ArtifactPage queries for, so the tab it mounts opens without
-  // a second request.
-  queryClient.setQueryData(['artifact-document', planUrl], planDocument);
+  const planDocument = (await fetchDocument(slug, planUrl)) as DocumentResponse;
+  // The same document payload ArtifactPage queries for, under the same project-scoped key, so the
+  // tab it mounts opens without a second request.
+  queryClient.setQueryData(projectKey(slug, 'document', planUrl), planDocument);
   const meta = { id: plan.id, description: plan.description };
   if (!plan.summary) return { plan: planDocument, summary: null, meta };
   const summaryRoute =
     presentation.artifacts.find((artifact) => artifact.path === plan.summary?.path)?.key ??
     plan.summary.key;
   if (!summaryRoute) return { plan: planDocument, summary: null, meta };
-  const summaryDocument = await fetchJson<DocumentResponse>(
-    `/api/documents?route=${encodeURIComponent(summaryRoute)}`,
-  );
-  queryClient.setQueryData(['artifact-document', summaryRoute], summaryDocument);
+  const summaryDocument = (await fetchDocument(slug, summaryRoute)) as DocumentResponse;
+  queryClient.setQueryData(projectKey(slug, 'document', summaryRoute), summaryDocument);
   return { plan: planDocument, summary: summaryDocument, meta, summaryRoute };
 }
 
@@ -68,9 +63,10 @@ export function PlanPairPage({
   active: 'plan' | 'summary';
 }): React.JSX.Element {
   const queryClient = useQueryClient();
+  const slug = useProjectSlug() ?? '';
   const query = useQuery({
-    queryKey: ['plan-pair', planUrl],
-    queryFn: () => loadPair(planUrl, queryClient),
+    queryKey: projectKey(slug, 'plan-pair', planUrl),
+    queryFn: () => loadPair(slug, planUrl, queryClient),
     staleTime: Number.POSITIVE_INFINITY,
   });
 
