@@ -207,7 +207,7 @@ target or a settings change refuses requests from other websites.
 5. A request from another website to any endpoint that accepts a path, an `ssh://` target or a
    settings change is refused. *(SEC-05)*
 
-**Plans**: 9/17 plans executed
+**Plans**: 13/17 plans executed
 
 Plans:
 **Wave 1**
@@ -228,10 +228,10 @@ Plans:
 - [x] 08-08-PLAN.md — ProjectLayout keyed by slug with the opening body, the open stamp and the unknown-slug page; slug-scoped fetch and keys for the shell, dashboard and document pages
 
 **Wave 5** *(blocked on Wave 4 completion)*
-- [ ] 08-09-PLAN.md — Switch states: refresh scoped to one project, "Choose another project" on a failed load, one not-found page, no slug override
-- [ ] 08-10-PLAN.md — The plan-pair cache collision closed; drawer, search, research, roadmap and traceability on their project's API; four browser specs on the e2e helper
-- [ ] 08-11-PLAN.md — Header switcher built from the winning 039 sketch: trigger, project list, switching to a dashboard, every switcher state and the browser server helper
-- [ ] 08-14-PLAN.md — The remaining thirteen browser test files read their project through the e2e helper
+- [x] 08-09-PLAN.md — Switch states: refresh scoped to one project, "Choose another project" on a failed load, one not-found page, no slug override
+- [x] 08-10-PLAN.md — The plan-pair cache collision closed; drawer, search, research, roadmap and traceability on their project's API; four browser specs on the e2e helper
+- [x] 08-11-PLAN.md — Header switcher built from the winning 039 sketch: trigger, project list, switching to a dashboard, every switcher state and the browser server helper
+- [x] 08-14-PLAN.md — The remaining thirteen browser test files read their project through the e2e helper
 
 **Wave 6** *(blocked on Wave 5 completion)*
 - [ ] 08-17-PLAN.md — Add dialog from the switcher footer and the landing add form, and the inline forget confirm on every row, built from the winning sketches
@@ -433,7 +433,7 @@ file, ID or project.
 | quick tasks | v2.0 | 40/40 | Archived | 2026-10-25 |
 | 6. Trustworthy Tests and Security Baseline | v2.1 | 22/22 | Complete    | 2026-10-26 |
 | 7. Recognised Files and Readable URLs | v2.1 | 10/10 | Complete    | 2026-10-27 |
-| 8. Several Projects and a Switcher | v2.1 | 9/17 | In Progress | - |
+| 8. Several Projects and a Switcher | v2.1 | 13/17 | In Progress | - |
 | 9. Review, Audit and Root Document Pages | v2.1 | 0/TBD | Not started | - |
 | 10. Codebase Map, Specification and Check Pages | v2.1 | 0/TBD | Not started | - |
 | 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 0/TBD | Not started | - |
