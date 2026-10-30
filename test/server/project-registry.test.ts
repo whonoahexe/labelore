@@ -15,6 +15,7 @@ import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
 import { ProjectRegistry, identityOfTarget } from '../../src/server/project-registry.ts';
 import { ProjectRuntime } from '../../src/server/project-runtime.ts';
 import type { SnapshotSource } from '../../src/server/project-runtime.ts';
+import { readProjectTitle } from '../../src/server/project-title.ts';
 import type { MirrorRunner } from '../../src/server/remote-source.ts';
 import { emptySettings, saveFailedNotice, skippedNotice } from '../../src/server/settings-model.ts';
 import type { SettingsState } from '../../src/server/settings-model.ts';
@@ -605,6 +606,302 @@ describe('(h) a project added through the registry is remembered', () => {
     expect(await registry.add('ssh://dev:secret@fixture-host/srv/other')).toMatchObject({ ok: false, code: 'invalid-target' });
     expect(double.createSource).not.toHaveBeenCalled();
     expect((await settingsFile(dir)).projects).toHaveLength(1);
+    registry.dispose();
+  });
+});
+
+describe('(i) command-line targets (D-09, D-22)', () => {
+  it('remembers a valid path and lists a failing one for this run only, with its reason', async () => {
+    const dir = await freshSettingsDir();
+    const missing = join(parent, 'cli-missing-folder');
+    const registry = new ProjectRegistry({ store: fileStore(dir) });
+    await registry.registerCliTargets([SHAPES_ROOT, missing, SHAPES_ROOT, missing]);
+
+    const { projects } = await registry.list();
+    expect(projects.map((project) => project.slug)).toEqual(['shapes', 'cli-missing-folder']);
+    const [valid, broken] = projects;
+    expect(valid).toMatchObject({ sessionOnly: false, state: 'unloaded' });
+    expect(broken).toMatchObject({ sessionOnly: true, state: 'unavailable', pathChecked: missing });
+    expect(broken.reason).toBe(`No such path: ${missing} (resolved: ${missing})`);
+
+    const saved = await settingsFile(dir);
+    expect(saved.projects.map((project) => project.slug)).toEqual(['shapes']);
+    registry.dispose();
+
+    const next = new ProjectRegistry({ store: fileStore(dir) });
+    expect((await next.list()).projects.map((project) => project.slug)).toEqual(['shapes']);
+    next.dispose();
+  });
+
+  it('gives a session-only entry a slug that no other entry holds', async () => {
+    const registry = new ProjectRegistry({});
+    await registry.register(await makeFolder('taken'));
+    await registry.registerCliTargets([join(parent, 'taken-gone', 'taken')]);
+    expect((await registry.list()).projects.map((project) => project.slug)).toEqual(['taken', 'taken-2']);
+    registry.dispose();
+  });
+});
+
+/** Every file and folder under `root` with the file's bytes (null for a folder): what "byte-identical" compares. */
+async function treeOf(root: string): Promise<Record<string, string | null>> {
+  const out: Record<string, string | null> = {};
+  for (const entry of (await readdir(root, { recursive: true, withFileTypes: true })).sort((left, right) =>
+    join(left.parentPath, left.name).localeCompare(join(right.parentPath, right.name)),
+  )) {
+    const full = join(entry.parentPath, entry.name);
+    out[full.slice(root.length)] = entry.isDirectory() ? null : await readFile(full, 'utf8');
+  }
+  return out;
+}
+
+describe('(j) order, open and forget (D-04, D-08, D-10)', () => {
+  async function five(registry: ProjectRegistry): Promise<Record<'a' | 'b' | 'c' | 'd' | 'e', string>> {
+    const slugs: string[] = [];
+    for (const name of ['ord-a', 'ord-b', 'ord-c', 'ord-d', 'ord-e']) {
+      const outcome = await registry.add(await makeFolder(name));
+      if (!outcome.ok) throw new Error('fixture folder was refused');
+      slugs.push(outcome.slug);
+    }
+    return { a: slugs[0], b: slugs[1], c: slugs[2], d: slugs[3], e: slugs[4] };
+  }
+
+  it('lists last opened first, then never-opened in added order, keeping equal stamps and unavailable places', async () => {
+    const dir = await freshSettingsDir();
+    const double = lendshedDouble();
+    let clock = Date.parse('2026-03-01T10:00:00.000Z');
+    const registry = new ProjectRegistry({ store: fileStore(dir), createSource: double.createSource, now: () => clock });
+    const slug = await five(registry);
+
+    await registry.open(slug.a);
+    clock += 60_000;
+    const t2 = clock;
+    await registry.open(slug.b);
+    await registry.open(slug.c); // the same instant as b: added order breaks the tie
+    clock += 60_000;
+    const t3 = clock;
+    await registry.open(slug.a);
+
+    const listed = (await registry.list()).projects;
+    expect(listed.map((project) => project.slug)).toEqual([slug.a, slug.b, slug.c, slug.d, slug.e]);
+    expect(listed.map((project) => project.lastOpened)).toEqual([
+      new Date(t3).toISOString(),
+      new Date(t2).toISOString(),
+      new Date(t2).toISOString(),
+      null,
+      null,
+    ]);
+
+    // d is a never-opened project whose folder disappears: it is shown unavailable in the same place.
+    const before = listed.map((project) => project.slug);
+    await rm(join(parent, 'ord-d'), { recursive: true, force: true });
+    clock += 60_000;
+    const after = (await registry.list()).projects;
+    expect(after.map((project) => project.slug)).toEqual(before);
+    expect(after[3]).toMatchObject({ slug: slug.d, state: 'unavailable' });
+
+    // The order is remembered across a restart.
+    registry.dispose();
+    const restarted = new ProjectRegistry({ store: fileStore(dir), now: () => clock });
+    expect((await restarted.list()).projects.map((project) => project.slug)).toEqual(before);
+    restarted.dispose();
+  });
+
+  it('orders an older open below a newer one even when the older project was added later', async () => {
+    let clock = Date.parse('2026-05-05T05:05:05.000Z');
+    const registry = new ProjectRegistry({ createSource: lendshedDouble().createSource, now: () => clock });
+    const slug = await five(registry);
+    await registry.open(slug.e);
+    clock += 1_000;
+    await registry.open(slug.b);
+    expect((await registry.list()).projects.map((project) => project.slug)).toEqual([slug.b, slug.e, slug.a, slug.c, slug.d]);
+    registry.dispose();
+  });
+
+  it('opens one entry only: stamps its lastOpened and lastActive and leaves the others as they were', async () => {
+    const dir = await freshSettingsDir();
+    const double = lendshedDouble();
+    const clock = Date.parse('2026-04-02T08:30:00.000Z');
+    const registry = new ProjectRegistry({ store: fileStore(dir), createSource: double.createSource, now: () => clock });
+    const slug = await five(registry);
+
+    const outcome = await registry.open(slug.c);
+    expect(outcome).toEqual({ slug: slug.c, state: 'loading' });
+    expect(await registry.open('nope')).toBeNull();
+    await registry.runtime(slug.c);
+
+    const saved = await settingsFile(dir);
+    expect(saved.lastActive).toBe(slug.c);
+    for (const row of saved.projects) {
+      expect(row.lastOpened, String(row.slug)).toBe(row.slug === slug.c ? '2026-04-02T08:30:00.000Z' : null);
+    }
+    expect(double.createSource).toHaveBeenCalledTimes(1);
+    registry.dispose();
+  });
+
+  it('retries a folder that was missing at its first load and has been restored', async () => {
+    const dir = await freshSettingsDir();
+    const registry = new ProjectRegistry({ store: fileStore(dir) });
+    const root = await makeFolder('restorable');
+    const added = await registry.add(root);
+    if (!added.ok) throw new Error('fixture folder was refused');
+
+    await rm(root, { recursive: true, force: true });
+    await registry.runtime(added.slug);
+    expect((await registry.list()).projects[0].state).toBe('unavailable');
+
+    await makeFolder('restorable');
+    const opened = await registry.open(added.slug);
+    expect(opened?.state).toBe('loading');
+    await registry.runtime(added.slug);
+    expect((await registry.list()).projects[0]).toMatchObject({ state: 'ready', reason: null });
+    registry.dispose();
+  });
+
+  it('forgets by editing the settings file only: runtime disposed, folder byte-identical, slug back on re-add', async () => {
+    const dir = await freshSettingsDir();
+    const double = lendshedDouble();
+    const registry = new ProjectRegistry({ store: fileStore(dir), createSource: double.createSource });
+    const root = await makeFolder('forgettable');
+    await writeFile(join(root, '.planning', 'PROJECT.md'), '# Forgettable\n');
+    const added = await registry.add(root);
+    if (!added.ok) throw new Error('fixture folder was refused');
+    await registry.runtime(added.slug);
+    const before = await treeOf(root);
+    expect(Object.keys(before).length).toBeGreaterThan(0);
+
+    expect(await registry.forget(added.slug)).toEqual({ ok: true });
+    expect(double.disposals[0].dispose).toHaveBeenCalledTimes(1);
+    expect((await registry.list()).projects).toEqual([]);
+    expect((await settingsFile(dir)).projects).toEqual([]);
+    expect(await treeOf(root)).toEqual(before);
+    expect(await registry.runtime(added.slug)).toBeNull();
+    expect(await registry.forget(added.slug)).toEqual({ ok: false, code: 'unknown' });
+
+    expect(await registry.add(root)).toMatchObject({ ok: true, slug: added.slug, duplicate: false });
+    registry.dispose();
+  });
+
+  it('gives a re-added project its old slug back while that slug is free, even when the base is free too', async () => {
+    const registry = new ProjectRegistry({});
+    const first = await registry.add(await makeFolder('twin'));
+    const nested = join(parent, 'elsewhere', 'twin');
+    await mkdir(join(nested, '.planning'), { recursive: true });
+    const second = await registry.add(nested);
+    expect([first, second].map((outcome) => (outcome.ok ? outcome.slug : null))).toEqual(['twin', 'twin-2']);
+
+    await registry.forget('twin');
+    await registry.forget('twin-2');
+    expect(await registry.add(nested)).toMatchObject({ ok: true, slug: 'twin-2' });
+    registry.dispose();
+  });
+
+  it('keeps the entry and answers the save-failed copy when the write fails', async () => {
+    const dir = await freshSettingsDir();
+    const inner = fileStore(dir);
+    let failing = false;
+    const store: SettingsStore = {
+      location: () => inner.location(),
+      read: () => inner.read(),
+      mutate: (update) =>
+        failing ? { ok: false, state: update(inner.read().state), reason: 'EROFS' } : inner.mutate(update),
+    };
+    const registry = new ProjectRegistry({ store });
+    const added = await registry.add(await makeFolder('stays'));
+    if (!added.ok) throw new Error('fixture folder was refused');
+
+    failing = true;
+    expect(await registry.forget(added.slug)).toEqual({
+      ok: false,
+      code: 'save-failed',
+      error: 'Could not save the project list: EROFS. The change lasts only until Labelore restarts.',
+    });
+    expect((await registry.list()).projects.map((project) => project.slug)).toEqual([added.slug]);
+    expect((await settingsFile(dir)).projects).toHaveLength(1);
+    registry.dispose();
+  });
+
+  it('removes a session-only entry from memory without touching the settings file', async () => {
+    const dir = await freshSettingsDir();
+    const registry = new ProjectRegistry({ store: fileStore(dir) });
+    await registry.registerCliTargets([join(parent, 'session-gone')]);
+    expect(await registry.forget('session-gone')).toEqual({ ok: true });
+    expect((await registry.list()).projects).toEqual([]);
+    expect(existsSync(join(dir, 'settings.json'))).toBe(false);
+    registry.dispose();
+  });
+});
+
+describe('(k) names from PROJECT.md (D-21)', () => {
+  async function titled(name: string, projectMd: string | null): Promise<string> {
+    const root = await makeFolder(name);
+    if (projectMd !== null) await writeFile(join(root, '.planning', 'PROJECT.md'), projectMd);
+    return root;
+  }
+
+  it('names rows by frontmatter title, else the first heading, else the folder; an edit changes the name, not the slug', async () => {
+    let clock = 5_000_000;
+    const registry = new ProjectRegistry({ now: () => clock });
+    const front = await titled('title-front', '---\ntitle: Kiln Board\n---\n\n# Ignored heading\n');
+    const heading = await titled('title-heading', '# Pottery Booking\n\nBody.\n');
+    const none = await titled('title-none', null);
+    for (const root of [front, heading, none]) await registry.add(root);
+
+    const names = async (): Promise<string[]> => (await registry.list()).projects.map((project) => project.name);
+    expect(await names()).toEqual(['Kiln Board', 'Pottery Booking', 'title-none']);
+
+    await writeFile(join(heading, '.planning', 'PROJECT.md'), '# Renamed Booking\n');
+    expect(await names()).toEqual(['Kiln Board', 'Pottery Booking', 'title-none']); // inside the memo window
+    clock += 10_001;
+    const after = (await registry.list()).projects;
+    expect(after.map((project) => project.name)).toEqual(['Kiln Board', 'Renamed Booking', 'title-none']);
+    expect(after.map((project) => project.slug)).toEqual(['title-front', 'title-heading', 'title-none']);
+    registry.dispose();
+  });
+
+  it('reads at most 16384 bytes, trims, cuts to 200 characters and never throws', async () => {
+    const late = await titled('title-late', `${'filler line\n'.repeat(2000)}# Too Late\n`);
+    expect(await readProjectTitle(late)).toBeNull();
+    const long = await titled('title-long', `#   ${'x'.repeat(400)}   \n`);
+    expect(await readProjectTitle(long)).toBe('x'.repeat(200));
+    const broken = await titled('title-broken', '---\ntitle: [unclosed\n---\n# After Broken\n');
+    expect(await readProjectTitle(broken)).toBe('After Broken');
+    expect(await readProjectTitle(join(parent, 'no-such-folder'))).toBeNull();
+  });
+
+  it('names an ssh row by the title remembered from its last successful load, else its folder name', async () => {
+    const dir = await freshSettingsDir();
+    const when = new Date(0).toISOString();
+    const row = (target: string, slug: string, name?: string): Record<string, unknown> => ({
+      target,
+      slug,
+      addedAt: when,
+      lastOpened: null,
+      ...(name === undefined ? {} : { name }),
+    });
+    await writeFile(
+      join(dir, 'settings.json'),
+      JSON.stringify({
+        version: 1,
+        projects: [
+          row('sftp://dev@fixture-host/srv/remembered', 'remembered', 'Remote Title'),
+          row('sftp://dev@fixture-host/srv/plain', 'plain'),
+        ],
+        lastActive: null,
+      }),
+    );
+    const registry = new ProjectRegistry({ store: fileStore(dir) });
+    expect((await registry.list()).projects.map((project) => project.name)).toEqual(['Remote Title', 'plain']);
+    registry.dispose();
+  });
+
+  it('remembers the title a successful load found', async () => {
+    const dir = await freshSettingsDir();
+    const double = lendshedDouble();
+    const registry = new ProjectRegistry({ store: fileStore(dir), createSource: double.createSource });
+    const added = await registry.add(await makeFolder('hint-source'));
+    if (!added.ok) throw new Error('fixture folder was refused');
+    await registry.runtime(added.slug);
+    expect((await settingsFile(dir)).projects[0].name).toBe('Lendshed');
     registry.dispose();
   });
 });
