@@ -207,7 +207,7 @@ target or a settings change refuses requests from other websites.
 5. A request from another website to any endpoint that accepts a path, an `ssh://` target or a
    settings change is refused. *(SEC-05)*
 
-**Plans**: 13/17 plans executed
+**Plans**: 14/17 plans executed
 
 Plans:
 **Wave 1**
@@ -234,7 +234,7 @@ Plans:
 - [x] 08-14-PLAN.md — The remaining thirteen browser test files read their project through the e2e helper
 
 **Wave 6** *(blocked on Wave 5 completion)*
-- [ ] 08-17-PLAN.md — Add dialog from the switcher footer and the landing add form, and the inline forget confirm on every row, built from the winning sketches
+- [x] 08-17-PLAN.md — Add dialog from the switcher footer and the landing add form, and the inline forget confirm on every row, built from the winning sketches
 
 **Wave 7** *(blocked on Wave 6 completion)*
 - [ ] 08-12-PLAN.md — Sketch files under the project API with the sketches page that frames them; image bytes per project; standing key, API-literal and previous-data scans
@@ -433,7 +433,7 @@ file, ID or project.
 | quick tasks | v2.0 | 40/40 | Archived | 2026-10-25 |
 | 6. Trustworthy Tests and Security Baseline | v2.1 | 22/22 | Complete    | 2026-10-26 |
 | 7. Recognised Files and Readable URLs | v2.1 | 10/10 | Complete    | 2026-10-27 |
-| 8. Several Projects and a Switcher | v2.1 | 13/17 | In Progress | - |
+| 8. Several Projects and a Switcher | v2.1 | 14/17 | In Progress | - |
 | 9. Review, Audit and Root Document Pages | v2.1 | 0/TBD | Not started | - |
 | 10. Codebase Map, Specification and Check Pages | v2.1 | 0/TBD | Not started | - |
 | 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 0/TBD | Not started | - |
