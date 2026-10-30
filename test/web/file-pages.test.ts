@@ -5,7 +5,7 @@
 import { readFile } from 'node:fs/promises';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, expect, it, vi } from 'vitest';
 import { MAX_IMAGE_BYTES } from '../../src/planning-repo/file-class.ts';
@@ -20,7 +20,6 @@ import type { ArtifactDto, ProjectPresentation } from '../../src/server/project-
 import { FigureFrame } from '../../src/web/components/figure-frame.tsx';
 import { FileRow } from '../../src/web/components/planning-places.tsx';
 import { documentCrumbsOf } from '../../src/web/pages/document-crumbs.ts';
-import { ProjectSlugProvider } from '../../src/web/nav.tsx';
 import { DocumentRoute } from '../../src/web/pages/document-route.tsx';
 import { FileDetailsPage } from '../../src/web/pages/file-details-page.tsx';
 import type { FileDetailsVariant } from '../../src/web/pages/file-details-page.tsx';
@@ -210,8 +209,12 @@ describe('DocumentRoute', () => {
         { client },
         createElement(
           MemoryRouter,
-          null,
-          createElement(ProjectSlugProvider, { value: 'shapes' }, createElement(DocumentRoute, { url })),
+          { initialEntries: ['/shapes/roadmap'] },
+          createElement(
+            Routes,
+            null,
+            createElement(Route, { path: '/:project/*', element: createElement(DocumentRoute, { url }) }),
+          ),
         ),
       ),
     );

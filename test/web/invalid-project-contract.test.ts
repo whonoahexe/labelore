@@ -47,12 +47,20 @@ describe('invalid-project screen contract', () => {
     expect(screen).toContain('Resolved to');
   });
 
-  it('offers a copyable restart command and no in-app project switcher (D-17)', async () => {
+  it('offers a copyable restart command and one way back to the project list (D-07, D-17)', async () => {
     const screen = await source('src/web/pages/invalid-project-screen.tsx');
     expect(screen).toContain('npm run dev -- /path/to/your/project');
     expect(screen).toContain('Restart with a corrected path');
     expect(screen).not.toContain('navigate(');
     expect(screen).not.toMatch(/picker/i);
+
+    // Exactly one AppLink to '/', carrying the fixed copy, and it comes before the restart field.
+    expect(screen.match(/<AppLink\b/g)).toHaveLength(1);
+    expect(screen).toMatch(/<AppLink\b[^>]*\bto="\/"[^>]*>\s*Choose another project\s*<\/AppLink>/);
+    expect(screen.match(/Choose another project/g)).toHaveLength(1);
+    expect(screen.indexOf('Choose another project')).toBeLessThan(
+      screen.indexOf('label="Restart with a corrected path"'),
+    );
   });
 
   it('copies to the clipboard via a silent try/catch mirroring copyHeadingUrl, and raises no toast', async () => {

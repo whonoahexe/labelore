@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { ProjectListEntry, ProjectListResponse } from '../../src/presentation/project-list.ts';
 import { ProjectRegistry } from '../../src/server/project-registry.ts';
@@ -19,7 +19,7 @@ import {
   fetchProjects,
   projectUrl,
 } from '../../src/web/api.ts';
-import { AppLink, ProjectSlugProvider } from '../../src/web/nav.tsx';
+import { AppLink } from '../../src/web/nav.tsx';
 import { formatOpenedAgo, openedTitle } from '../../src/web/opened-ago.ts';
 import { ProjectsListSection, ProjectsPage } from '../../src/web/pages/projects-page.tsx';
 import { UnknownProjectPage } from '../../src/web/pages/unknown-project-page.tsx';
@@ -400,7 +400,11 @@ describe('AppLink', () => {
       createElement(
         MemoryRouter,
         { initialEntries: ['/lendshed/roadmap'] },
-        createElement(ProjectSlugProvider, { value: 'lendshed' }, createElement(AppLink, { to }, 'x')),
+        createElement(
+          Routes,
+          null,
+          createElement(Route, { path: '/:project/*', element: createElement(AppLink, { to }, 'x') }),
+        ),
       ),
     );
 

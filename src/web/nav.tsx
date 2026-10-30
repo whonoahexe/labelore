@@ -1,15 +1,16 @@
 // NAV-09: the single place the project slug is prefixed. Every Link, NavLink, navigate call,
 // pathname reader and raw href in the web goes through this module; ESLint (no-restricted-imports)
-// and test/web/nav-contract.test.ts fail on a router link anywhere else. Phase 8 swaps the slug
-// source (useProjectSlug) here and nowhere else.
+// and test/web/nav-contract.test.ts fail on a router link anywhere else.
 //
-// Link, NavLink and useProjectNavigate prefix the current slug, for links inside a project. AppLink
+// The slug comes only from the URL (D-08): useProjectSlug reads the `:project` route parameter and
+// nothing else, so no context can make one tab's links point into a project its address does not
+// name. Link, NavLink and useProjectNavigate prefix that slug, for links inside a project. AppLink
 // and useAppNavigate are the one way to reach '/' or another project: they never take the current
 // slug, and a target that is not '/' or '/' plus a valid slug collapses to '/'.
 //
 // Everything below the router speaks project-relative paths ('/roadmap', '/milestones/...'): the
 // wrappers add the slug on the way out, and the location hooks take it off on the way in.
-import { createContext, forwardRef, useCallback, useContext } from 'react';
+import { forwardRef, useCallback } from 'react';
 import {
   Link as RouterLink,
   NavLink as RouterNavLink,
@@ -23,19 +24,12 @@ import {
 } from 'react-router';
 import { projectRootPath, splitProjectPath, withProjectSlug } from './project-path.ts';
 
-/** Overrides the route parameter. The router gate provides the open project's slug here when the
- * address named another project, so the shell's links still lead into the project that is open. */
-const ProjectSlugContext = createContext<string | null>(null);
-
-export const ProjectSlugProvider = ProjectSlugContext.Provider;
-
-/** The open project's slug: the override above, else the `:project` route parameter, else null (a
- * component rendered outside the project route, such as in a bare MemoryRouter, stays unprefixed).
- * Deliberately no react-query here, so those components keep rendering without a QueryClient. */
+/** The open project's slug: the `:project` route parameter, else null (a component rendered outside
+ * the project route, such as in a bare MemoryRouter, stays unprefixed). Deliberately no react-query
+ * here, so those components keep rendering without a QueryClient. */
 export function useProjectSlug(): string | null {
-  const override = useContext(ProjectSlugContext);
   const params = useParams();
-  return override ?? params.project ?? null;
+  return params.project ?? null;
 }
 
 /** Search-only and hash-only targets stay on the current page, so they pass through unprefixed. */
