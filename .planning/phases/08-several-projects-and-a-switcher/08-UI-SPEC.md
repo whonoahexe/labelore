@@ -267,7 +267,7 @@ re-worded in the client.
 | Landing lede | "Open a GSD project to see where its work stands. Labelore only reads them and never changes them." |
 | Landing section headings | "Add a project" / "Scan a folder" |
 | Empty state heading | "No projects yet." |
-| Empty state body | "Add a folder or an ssh:// target above, or scan a folder such as ~/Work to find GSD projects." |
+| Empty state body | "Add a folder or an ssh:// target beside, or scan a folder such as ~/Work to find GSD projects." ("beside", not "above": sketch 040 B won, so the add and scan sections sit in a side column next to the list; changed at build time by 08-17, recorded by 08-13) |
 | Row last-opened | "Opened {relative time}" / "Not opened yet" |
 | Load marks | "Opening…" / "Unavailable" (+ the server's reason on the next line) / "Already added" |
 | Loading body | "Opening {name}…" |
@@ -294,6 +294,21 @@ re-worded in the client.
 | Settings could not be saved | "Could not save the project list: {reason}. The change lasts only until Labelore restarts." |
 | Request refused (403) | "Labelore refused this request because it did not come from its own page. Reload the page and try again." |
 | Server unreachable | "Labelore could not be reached. Check that it is still running, then try again." |
+| Scan none found, "above" | The "add a project by its location above" wording stays: in the 040 B side column "Add a project" sits above "Scan a folder", so it is correct as built (added at plan time, research Open Questions 3 and 4) |
+| Scan folder missing | "There is no folder at {folder}." (added at plan time, research Open Questions 3 and 4) |
+| Scan folder is a file | "{folder} is a file, not a folder." (added at plan time, research Open Questions 3 and 4) |
+| Scan folder unreadable | "Labelore cannot read {folder}: permission denied." (added at plan time, research Open Questions 3 and 4) |
+| Scan field empty | "Enter a folder to scan." (added at plan time, research Open Questions 3 and 4) |
+| Scan cap value | 100 projects (`SCAN_RESULT_CAP`); the capped notice fills `{cap}` with it, and a silent 5,000-folder valve shows the same notice (added at plan time, research Open Questions 3 and 4) |
+| Add field empty | "Enter a folder path or an ssh:// target." (the server's message, shown in the add error region and never re-worded) (added at plan time, research Open Questions 3 and 4) |
+| Add-many over the cap | "Choose up to 100 projects to add." (400 from the bulk add; the checklist cannot send more than the scan can find) (added at plan time, research Open Questions 3 and 4) |
+| Settings inside the project | "Labelore keeps its own settings inside this project ({settings dir}), so it will not add it. Set LABELORE_CONFIG_DIR to a folder outside the project and restart." (shown in the add error region) (added at plan time, research Open Questions 3 and 4) |
+| Settings from a newer version | "Labelore's settings were written by a newer version of Labelore, so changes made here are not saved." (a settings notice above the list) (added at plan time, research Open Questions 3 and 4) |
+| Request too large | "That request was too large for Labelore to read." (413 from the request guard's body limit) (added at plan time, research Open Questions 3 and 4) |
+| Forget outcome | "{name} was removed from this list." (polite live region, owned by the list) (added at plan time, research Open Questions 3 and 4) |
+| Failed CLI path (D-22) | A path given on the command line that fails validation is listed for this run only, with the "Unavailable" mark and the server's own reason on the next line; it is never written to settings.json, so it is gone after a restart (added at plan time, research Open Questions 3 and 4) |
+| Scan done, one project | "Added 1 project. It opens the first time you choose it." (added at build time by 08-13: the contract gives only the plural, and the zero-one-many rule needs the singular) |
+| Add-many partial failure | Each target the server could not add shows its own message verbatim in a `notice destructive` with `role="alert"` above the checklist; the others are added and marked "Already added" (added at build time by 08-13) |
 
 Destructive actions in this phase: one only, forgetting a project. Inline two-step confirm as above;
 reversible by re-adding the path (same slug only if still free, D-10), so no typed confirmation.
