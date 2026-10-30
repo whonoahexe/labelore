@@ -207,7 +207,7 @@ target or a settings change refuses requests from other websites.
 5. A request from another website to any endpoint that accepts a path, an `ssh://` target or a
    settings change is refused. *(SEC-05)*
 
-**Plans**: 6/17 plans executed
+**Plans**: 9/17 plans executed
 
 Plans:
 **Wave 1**
@@ -223,9 +223,9 @@ Plans:
 - [x] 08-05-PLAN.md — The projects landing page at /: api.ts, the query-key factory, project rows, plain header, last-opened times, AppLink and the unknown-project page
 
 **Wave 4** *(blocked on Wave 3 completion)*
-- [ ] 08-06-PLAN.md — startServer serves the guarded registry for every CLI path; the in-handler refresh check goes; probes, Playwright servers and the e2e URL helper on /api/projects with their own settings directories
-- [ ] 08-07-PLAN.md — Folder scan inside $HOME (depth 2, no symlinks, capped) and add-many without loading
-- [ ] 08-08-PLAN.md — ProjectLayout keyed by slug with the opening body, the open stamp and the unknown-slug page; slug-scoped fetch and keys for the shell, dashboard and document pages
+- [x] 08-06-PLAN.md — startServer serves the guarded registry for every CLI path; the in-handler refresh check goes; probes, Playwright servers and the e2e URL helper on /api/projects with their own settings directories
+- [x] 08-07-PLAN.md — Folder scan inside $HOME (depth 2, no symlinks, capped) and add-many without loading
+- [x] 08-08-PLAN.md — ProjectLayout keyed by slug with the opening body, the open stamp and the unknown-slug page; slug-scoped fetch and keys for the shell, dashboard and document pages
 
 **Wave 5** *(blocked on Wave 4 completion)*
 - [ ] 08-09-PLAN.md — Switch states: refresh scoped to one project, "Choose another project" on a failed load, one not-found page, no slug override
@@ -433,7 +433,7 @@ file, ID or project.
 | quick tasks | v2.0 | 40/40 | Archived | 2026-10-25 |
 | 6. Trustworthy Tests and Security Baseline | v2.1 | 22/22 | Complete    | 2026-10-26 |
 | 7. Recognised Files and Readable URLs | v2.1 | 10/10 | Complete    | 2026-10-27 |
-| 8. Several Projects and a Switcher | v2.1 | 6/17 | In Progress | - |
+| 8. Several Projects and a Switcher | v2.1 | 9/17 | In Progress | - |
 | 9. Review, Audit and Root Document Pages | v2.1 | 0/TBD | Not started | - |
 | 10. Codebase Map, Specification and Check Pages | v2.1 | 0/TBD | Not started | - |
 | 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 0/TBD | Not started | - |
