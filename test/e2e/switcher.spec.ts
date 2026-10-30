@@ -3,7 +3,7 @@
 // literals, so the spec follows whatever the fixtures hold. 08-17 adds the add and forget cases and
 // 08-13 the scan cases to this file.
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { projectUrl } from './app-url.ts';
@@ -281,4 +281,75 @@ test.describe('a long project name', () => {
       expect(await sidewaysOverflow(page)).toBeLessThanOrEqual(0);
     });
   }
+});
+
+// Phase 8 (08-17): adding and forgetting projects from the switcher and the landing page. The server
+// starts on Lendshed alone with a settings directory of its own; folders added here are copies of the
+// Shapes fixture in throwaway directories, so the repository's fixtures are never part of a write path.
+// The tests share the server and run in order: each one starts from the list the one before left.
+test.describe('adding a project', () => {
+  test.describe.configure({ mode: 'serial' });
+
+  let server: ProjectsServer;
+  let lendshed: ListedProject;
+  const copies: string[] = [];
+
+  function copyShapes(): string {
+    const copy = mkdtempSync(join(tmpdir(), 'switcher-add-'));
+    cpSync(SHAPES_FIXTURE_ROOT, copy, { recursive: true });
+    copies.push(copy);
+    return realpathSync(copy);
+  }
+
+  function savedTargets(): string[] {
+    const saved = JSON.parse(readFileSync(join(server.configDir, 'settings.json'), 'utf8')) as {
+      projects: { target: string }[];
+    };
+    return saved.projects.map((entry) => entry.target);
+  }
+
+  test.beforeAll(async () => {
+    test.setTimeout(120_000);
+    server = await startProjectsServer({ paths: [FIXTURE_ROOT] });
+    const found = (await listProjects(server.base)).find((entry) => entry.target === FIXTURE_ROOT);
+    if (!found) throw new Error('switcher.spec: the Lendshed fixture is not in the list');
+    lendshed = found;
+  });
+
+  test.afterAll(async () => {
+    await server?.stop();
+    for (const copy of copies) rmSync(copy, { recursive: true, force: true });
+  });
+
+  test("adds a folder from the switcher's 'Add or scan…' dialog and lands on its dashboard", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto(await projectUrl(server.base, '/', lendshed.slug));
+    const folder = copyShapes();
+
+    const popup = await openSwitcher(page, lendshed);
+    await popup.getByRole('button', { name: 'Add or scan…' }).click();
+
+    // The list closes and the modal dialog opens with focus in the field.
+    await expect(projectsDialog(page)).toBeHidden();
+    const dialog = page.getByRole('dialog', { name: 'Add a project' });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText('Enter a folder on this machine or an ssh:// target.')).toBeVisible();
+    const field = dialog.getByLabel('Project location');
+    await expect(field).toBeFocused();
+    await expect(field).toHaveAttribute('placeholder', '/home/you/Work/portal or ssh://host/path');
+    await expect(dialog.getByRole('button', { name: 'Close without adding' })).toBeVisible();
+    await expect(dialog.getByRole('link', { name: 'Scan a folder instead' })).toHaveAttribute('href', '/');
+
+    await field.fill(folder);
+    await dialog.getByRole('button', { name: 'Add project' }).click();
+
+    // The app opens the new project: its slug is the URL, its dashboard shows, and it is remembered.
+    await expect(dialog).toBeHidden();
+    const added = (await listProjects(server.base)).find((entry) => entry.target === folder);
+    if (!added) throw new Error('switcher.spec: the added folder is not in the project list');
+    await expect(page).toHaveURL(new RegExp(`/${added.slug}$`));
+    await expect(page.locator('#project-name-heading')).toBeVisible();
+    await expect(triggerFor(page, added)).toBeVisible();
+    expect(savedTargets()).toContain(folder);
+  });
 });

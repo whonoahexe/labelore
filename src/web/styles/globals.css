@@ -25920,3 +25920,122 @@ button.research-step-chip:hover {
     min-height: calc(var(--space-10) + var(--space-2));
   }
 }
+
+/* Phase 8 (08-17): the add form and the add dialog. One form, two hosts: the landing page's "Add a
+   project" section and the switcher's modal dialog (D-13). Sizes are the UI-SPEC four (Label, Meta,
+   Body, Heading), tokens only; the viewport units in the dialog width are the declared exception. */
+.project-add-form {
+  display: grid;
+  gap: var(--space-4);
+  justify-items: start;
+}
+
+.project-add-form > * {
+  max-width: 100%;
+}
+
+.project-add-form > div:first-child,
+.project-add-form > .notice {
+  width: 100%;
+}
+
+.project-add-form > div:first-child {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.project-add-form label {
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-normal);
+}
+
+.project-add-form input {
+  width: 100%;
+  min-width: 0;
+  height: var(--space-10);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+  color: var(--foreground);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+}
+
+.project-add-form input::placeholder {
+  color: var(--muted-foreground);
+}
+
+.project-add-form input:focus-visible {
+  border-color: var(--ring);
+  outline: 2px solid color-mix(in oklch, var(--ring) 30%, transparent);
+}
+
+.project-add-form input[aria-invalid='true'] {
+  border-color: var(--destructive);
+}
+
+.project-add-form .notice {
+  display: grid;
+  gap: var(--space-1);
+  margin-top: 0;
+  padding: var(--space-3) var(--space-4);
+}
+
+.project-add-form .notice p {
+  margin: 0;
+  font-size: var(--fs-4);
+  overflow-wrap: anywhere;
+}
+
+.project-add-form .notice p:not(.source-note) {
+  color: var(--foreground);
+}
+
+.project-add-form .notice .source-note {
+  font-family: var(--font-mono);
+  font-size: var(--fs-3);
+}
+
+.project-add-form .notice .text-link {
+  font-size: var(--fs-3);
+}
+
+/* The action row: buttons label at Meta size (the UI-SPEC sets every button in this phase there). */
+.project-add-form > div:last-child {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.project-add-form button {
+  font-size: var(--fs-3);
+}
+
+.project-switcher-footer button {
+  font-size: var(--fs-3);
+}
+
+.project-add-dialog {
+  width: min(calc(var(--space-8) * 16), calc(100vw - var(--space-8)));
+  max-width: none;
+}
+
+.project-add-dialog [data-slot='dialog-title'] {
+  font-size: var(--fs-7);
+  line-height: var(--lh-tight);
+}
+
+.project-add-dialog [data-slot='dialog-description'] {
+  font-size: var(--fs-4);
+}
+
+.project-add-dialog .project-add-form > div:last-child {
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.project-add-dialog > .text-link {
+  font-size: var(--fs-3);
+}

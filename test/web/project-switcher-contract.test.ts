@@ -16,6 +16,8 @@ function source(path: string): string {
   return readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 }
 
+const onAddOrScan = (): void => undefined;
+
 function entry(slug: string, name: string, overrides: Partial<ProjectListEntry> = {}): ProjectListEntry {
   return {
     slug,
@@ -77,7 +79,7 @@ describe('the switcher list', () => {
   it('holds the Projects head, an All projects link to /, then the rows and the footer region, in that order', () => {
     const lendshed = entry('lendshed', 'Lendshed');
     const shapes = entry('shapes', 'Shapes');
-    const markup = render(createElement(ProjectSwitcherPanel, { currentSlug: 'lendshed' }), [lendshed, shapes]);
+    const markup = render(createElement(ProjectSwitcherPanel, { currentSlug: 'lendshed', onAddOrScan }), [lendshed, shapes]);
 
     const head = markup.indexOf('<p>Projects</p>');
     const allProjects = markup.indexOf('All projects');
@@ -93,7 +95,7 @@ describe('the switcher list', () => {
 
   it('keeps the order the server sends and marks only the current project (accent rule, check, Current)', () => {
     const projects = [entry('shapes', 'Shapes'), entry('lendshed', 'Lendshed'), entry('kiln', 'Kiln')];
-    const markup = render(createElement(ProjectSwitcherPanel, { currentSlug: 'lendshed' }), projects);
+    const markup = render(createElement(ProjectSwitcherPanel, { currentSlug: 'lendshed', onAddOrScan }), projects);
 
     const positions = ['/shapes', '/lendshed', '/kiln'].map((href) => markup.indexOf(`href="${href}"`));
     expect([...positions].sort((a, b) => a - b)).toEqual(positions);
@@ -107,7 +109,7 @@ describe('the switcher list', () => {
   });
 
   it('shows one row, marked current, for a one-project list', () => {
-    const markup = render(createElement(ProjectSwitcherPanel, { currentSlug: 'lendshed' }), [
+    const markup = render(createElement(ProjectSwitcherPanel, { currentSlug: 'lendshed', onAddOrScan }), [
       entry('lendshed', 'Lendshed'),
     ]);
 
@@ -117,7 +119,7 @@ describe('the switcher list', () => {
   });
 
   it('shows "No projects yet." before the footer, and no row, for an empty list', () => {
-    const markup = render(createElement(ProjectSwitcherPanel, { currentSlug: 'lendshed' }), []);
+    const markup = render(createElement(ProjectSwitcherPanel, { currentSlug: 'lendshed', onAddOrScan }), []);
 
     const note = markup.indexOf('<div class="empty-note">No projects yet.</div>');
     const footer = markup.indexOf('class="project-switcher-footer"');
@@ -127,8 +129,24 @@ describe('the switcher list', () => {
     expect(markup).toContain('All projects');
   });
 
+  it('ends with the "Add or scan…" button in the footer, the last control in the list (039 A fact 4)', () => {
+    const markup = render(createElement(ProjectSwitcherPanel, { currentSlug: 'lendshed', onAddOrScan }), [
+      entry('lendshed', 'Lendshed'),
+    ]);
+
+    const footer = markup.indexOf('class="project-switcher-footer"');
+    const button = markup.indexOf('Add or scan…');
+    expect(footer).toBeGreaterThanOrEqual(0);
+    expect(button).toBeGreaterThan(footer);
+    expect(markup).toContain('lucide-plus');
+    // Nothing focusable follows the footer's button.
+    expect(markup.slice(button)).not.toMatch(/<(a|button|input)\b/);
+    // The footer holds a button, not a link: the list stays open until the dialog takes over.
+    expect(markup.slice(footer, button)).toMatch(/<button\b/);
+  });
+
   it('never shows an empty-list note while the list has not arrived', () => {
-    const markup = render(createElement(ProjectSwitcherPanel, { currentSlug: 'lendshed' }), null);
+    const markup = render(createElement(ProjectSwitcherPanel, { currentSlug: 'lendshed', onAddOrScan }), null);
     expect(markup).not.toContain('No projects yet.');
     expect(markup).toContain('Loading projects…');
   });
@@ -138,7 +156,7 @@ describe('the switcher list', () => {
       entry('lendshed', 'Lendshed'),
       entry('gone', 'Gone', { state: 'unavailable', reason: 'The folder is missing.' }),
     ];
-    const markup = render(createElement(ProjectSwitcherPanel, { currentSlug: 'lendshed' }), projects);
+    const markup = render(createElement(ProjectSwitcherPanel, { currentSlug: 'lendshed', onAddOrScan }), projects);
 
     expect(markup).toContain('Unavailable');
     expect(markup).toContain('The folder is missing.');
