@@ -1,11 +1,11 @@
 // The CONTEXT brief e2e (quick-260923-lju, sketch-006 D1): real files, never a mock. Fixtures resolve by
-// path against the live `/api/presentation` payload (the document-layout.spec.ts `resolveFixturePath`
+// path against the project's live presentation payload (the document-layout.spec.ts `resolveFixturePath`
 // pattern) so an archival/rename fails loudly here instead of silently skipping. Labelore's own files run
 // against the default server on port 4199; the nine made-up Lendshed CONTEXT files run against the
 // read-only server on port 4198 (playwright.config.ts always starts it and throws at load when the
 // fixture tree is missing). Nothing in this file skips.
 import { expect, test } from '@playwright/test';
-import { BASE_URL, artifactUrl } from './app-url.ts';
+import { BASE_URL, artifactUrl, projectApiUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
 
 interface ArtifactDtoLite {
@@ -18,9 +18,9 @@ interface PresentationLite {
 }
 
 async function resolveFixturePath(baseURL: string, pathIncludes: string): Promise<string> {
-  const response = await fetch(`${baseURL}/api/presentation`);
+  const response = await fetch(await projectApiUrl(baseURL, '/presentation'));
   if (!response.ok) {
-    throw new Error(`context-brief.spec: /api/presentation responded ${response.status}`);
+    throw new Error(`context-brief.spec: the project's presentation payload responded ${response.status}`);
   }
   const data = (await response.json()) as PresentationLite;
   const artifact = data.artifacts.find((entry) => entry.path.includes(pathIncludes));

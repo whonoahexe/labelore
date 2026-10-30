@@ -1,9 +1,9 @@
 // quick-260923-jxp Task 3 (JXP-09): the copy-path icon button on every artifact page — no raw
 // path caption, one working `.artifact-path-copy` button per page, on a cover-layout page
 // (discussion log, PLAN), a plain-header page (SUMMARY) and a plan-pair page. Fixtures resolved
-// from `/api/presentation`, never hardcoded URLs — same discipline as document-layout.spec.ts.
+// from the project's presentation payload, never hardcoded URLs — same discipline as document-layout.spec.ts.
 import { expect, test, type Page } from '@playwright/test';
-import { BASE_URL, artifactUrl, projectUrl } from './app-url.ts';
+import { BASE_URL, artifactUrl, projectApiUrl, projectUrl } from './app-url.ts';
 import { buildPageMatrix } from './pages.ts';
 
 interface ArtifactDtoLite {
@@ -20,9 +20,9 @@ async function resolveArtifact(
   baseURL: string,
   pathIncludes: string,
 ): Promise<{ url: string; path: string }> {
-  const response = await fetch(`${baseURL}/api/presentation`);
+  const response = await fetch(await projectApiUrl(baseURL, '/presentation'));
   if (!response.ok) {
-    throw new Error(`artifact-header.spec: /api/presentation responded ${response.status}`);
+    throw new Error(`artifact-header.spec: the project's presentation payload responded ${response.status}`);
   }
   const data = (await response.json()) as PresentationLite;
   const artifact = data.artifacts.find((entry) => entry.path.includes(pathIncludes));
@@ -33,7 +33,7 @@ async function resolveArtifact(
 }
 
 async function findFirstSummaryArtifact(baseURL: string): Promise<{ url: string; path: string }> {
-  const response = await fetch(`${baseURL}/api/presentation`);
+  const response = await fetch(await projectApiUrl(baseURL, '/presentation'));
   const data = (await response.json()) as PresentationLite;
   const artifact = data.artifacts.find((entry) => entry.kind === 'summary');
   if (!artifact) {

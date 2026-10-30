@@ -12,7 +12,7 @@ import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { legacyArtifactUrl } from '../helpers/legacy-urls.ts';
-import { artifactUrl, exactUrl, projectUrl } from './app-url.ts';
+import { artifactUrl, exactUrl, projectApiUrl, projectUrl } from './app-url.ts';
 import { SHAPES_BASE_URL, SHAPES_BUILT_BASE_URL, SHAPES_FIXTURE_ROOT } from './fixture-root.ts';
 
 interface ServerMode {
@@ -87,8 +87,9 @@ const presentations = new Map<string, Promise<PresentationLite>>();
 function presentationOf(base: string): Promise<PresentationLite> {
   let cached = presentations.get(base);
   if (cached === undefined) {
-    cached = fetch(`${base}/api/presentation`).then(async (response) => {
-      if (!response.ok) throw new Error(`deep-reload.spec: ${base}/api/presentation responded ${response.status}`);
+    cached = projectApiUrl(base, '/presentation').then(async (url) => {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`deep-reload.spec: the project's presentation payload responded ${response.status}`);
       return (await response.json()) as PresentationLite;
     });
     presentations.set(base, cached);
