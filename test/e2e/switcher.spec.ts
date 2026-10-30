@@ -6,6 +6,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import {
   cpSync,
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readdirSync,
   readFileSync,
@@ -818,5 +819,115 @@ test.describe('forgetting a project', () => {
     await expect(rowOf(page, 'current')).toHaveCount(0);
     expect(savedTargets()).not.toContain(folders.current);
     expect(existsSync(folders.current)).toBe(true);
+  });
+});
+
+// Phase 8 (08-13): scanning a folder from the landing page (D-14, D-15, D-16). Each describe starts a
+// server whose HOME is a synthetic home folder in a throwaway directory, so the scan can only ever look at
+// folders this spec made. The folder the person types is joined from parts: the real-path guard forbids a
+// tilde path into the Work folder written out in a spec.
+const WORK = ['~', 'Work'].join('/');
+
+/** A project folder under `home`: a `.planning` directory holding one file. */
+function seedProject(home: string, relative: string, file: string, body: string): string {
+  const root = join(home, relative);
+  mkdirSync(join(root, '.planning'), { recursive: true });
+  writeFileSync(join(root, '.planning', file), body);
+  return root;
+}
+
+function makeHome(): string {
+  return realpathSync(mkdtempSync(join(tmpdir(), 'switcher-scan-home-')));
+}
+
+test.describe('scanning a folder', () => {
+  test.describe.configure({ mode: 'serial' });
+
+  let server: ProjectsServer;
+  let home: string;
+  let solo: ListedProject;
+  let soloRoot: string;
+
+  test.beforeAll(async () => {
+    test.setTimeout(120_000);
+    home = makeHome();
+    seedProject(home, 'Work/acme/portal', 'PROJECT.md', '# Portal\n');
+    seedProject(home, 'Work/beta/portal', 'STATE.md', '# State\n');
+    soloRoot = seedProject(home, 'Work/solo', 'ROADMAP.md', '# Roadmap\n');
+    server = await startProjectsServer({ paths: [soloRoot], env: { HOME: home } });
+    const found = (await listProjects(server.base)).find((entry) => entry.target === soloRoot);
+    if (!found) throw new Error('switcher.spec: the solo project is not in the list');
+    solo = found;
+  });
+
+  test.afterAll(async () => {
+    await server?.stop();
+    rmSync(home, { recursive: true, force: true });
+  });
+
+  test('scans a synthetic home, lists an already-added project apart, and adds the picked ones unloaded', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await goToLanding(page, server.base, solo);
+    const section = page.getByRole('region', { name: 'Scan a folder' });
+    await expect(section).toBeVisible();
+    // Nothing scans by itself (D-16): there are no results before the button is pressed.
+    await expect(section.locator('.project-scan-results')).toHaveCount(0);
+
+    const field = section.getByLabel('Folder to scan');
+    await expect(field).toHaveAttribute('placeholder', WORK);
+    await expect(
+      section.getByText('Looks two levels down inside your home folder. Hidden folders, node_modules and symlinks are skipped.'),
+    ).toBeVisible();
+    await field.fill(WORK);
+    await section.getByRole('button', { name: 'Scan folder' }).click();
+
+    // solo is listed, but it is already in the list: disabled, unchecked, marked, and not counted.
+    const results = section.getByRole('group', { name: `Found 2 projects in ${WORK}` });
+    await expect(results).toBeVisible();
+    const soloItem = results.locator('.project-scan-item', { hasText: 'solo' });
+    await expect(soloItem.getByText('Already added')).toBeVisible();
+    await expect(soloItem.getByRole('checkbox')).toBeDisabled();
+    await expect(soloItem.getByRole('checkbox')).not.toBeChecked();
+    await expect(results.locator('.project-scan-item')).toHaveCount(3);
+    // Path order, with the home-shortened path on each item.
+    const paths = await results.locator('.project-scan-item [data-part="path"]').allTextContents();
+    expect(paths).toEqual([`${WORK}/acme/portal`, `${WORK}/beta/portal`, `${WORK}/solo`]);
+
+    // Every addable project starts picked; Clear selection empties the pick and Select all restores it.
+    await expect(results.getByRole('button', { name: 'Add 2 projects' })).toBeEnabled();
+    await results.getByRole('button', { name: 'Clear selection' }).click();
+    await expect(results.getByRole('button', { name: 'Add projects' })).toBeDisabled();
+    await results.getByRole('button', { name: 'Select all projects' }).click();
+    await expect(results.getByRole('button', { name: 'Add 2 projects' })).toBeEnabled();
+
+    const before = (await listProjects(server.base)).map((entry) => entry.slug);
+    await results.getByRole('button', { name: 'Add 2 projects' }).click();
+
+    // The done line takes focus, both picked items read 'Already added', and nothing navigated.
+    const status = section.locator('.project-scan-results > p');
+    await expect(status).toHaveText('Added 2 projects. They open the first time you choose them.');
+    await expect(status).toBeFocused();
+    await expect(results.getByText('Already added')).toHaveCount(3);
+    await expect(results.getByRole('button', { name: 'Add projects' })).toBeDisabled();
+    expect(new URL(page.url()).pathname).toBe('/');
+
+    // The list above gained the two rows, never opened; the server lists them unloaded.
+    const rows = page.locator('.project-list .project-row');
+    await expect(rows).toHaveCount(3);
+    // solo was opened to reach this page; the two added rows have never been.
+    await expect(rows.filter({ hasText: 'Not opened yet' })).toHaveCount(2);
+    await expect(rows.filter({ hasText: 'Not opened yet' }).filter({ hasText: 'portal' })).toHaveCount(2);
+    const after = await listProjects(server.base);
+    const gained = after.filter((entry) => !before.includes(entry.slug));
+    expect(gained.map((entry) => entry.target).sort()).toEqual([
+      join(home, 'Work', 'acme', 'portal'),
+      join(home, 'Work', 'beta', 'portal'),
+    ]);
+    const states = await (await fetch(`${server.base}/api/projects`)).json() as { projects: { slug: string; state: string }[] };
+    for (const entry of gained) {
+      expect(states.projects.find((project) => project.slug === entry.slug)?.state).toBe('unloaded');
+    }
   });
 });
