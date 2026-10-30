@@ -42,11 +42,16 @@ export interface ProjectsServerOptions {
   settings?: unknown;
   /** Extra environment for the server process, such as HOME. */
   env?: Record<string, string>;
+  /** An existing settings directory to run on instead of a new one: a spec that stops a server and starts
+   * another on the same directory sees what the first remembered. The directory is the caller's: `stop()`
+   * leaves it (and its settings.json) in place. Leave `settings` out on a restart, so the file the first
+   * server wrote is the file the second reads. */
+  configDir?: string;
 }
 
 export interface ProjectsServer {
   base: string;
-  /** The server's own settings directory (LABELORE_CONFIG_DIR); removed by `stop()`. */
+  /** The server's own settings directory (LABELORE_CONFIG_DIR); removed by `stop()` unless the caller passed it in. */
   configDir: string;
   stop(): Promise<void>;
 }
@@ -56,7 +61,8 @@ export async function startProjectsServer(options: ProjectsServerOptions): Promi
   const base = `http://127.0.0.1:${port}`;
   // A payload cached for this port by an earlier server must not be read.
   forgetPresentation(base);
-  const configDir = mkdtempSync(join(tmpdir(), 'projects-server-config-'));
+  const reused = options.configDir !== undefined;
+  const configDir = options.configDir ?? mkdtempSync(join(tmpdir(), 'projects-server-config-'));
   if (options.settings !== undefined) {
     const text = typeof options.settings === 'string' ? options.settings : JSON.stringify(options.settings, null, 2);
     writeFileSync(join(configDir, 'settings.json'), text);
@@ -72,7 +78,9 @@ export async function startProjectsServer(options: ProjectsServerOptions): Promi
     ['src/server/index.ts', ...options.paths, '--port', String(port)],
     { cwd: REPO, stdio: 'ignore', env },
   );
-  const removeConfigDir = (): void => rmSync(configDir, { recursive: true, force: true });
+  const removeConfigDir = (): void => {
+    if (!reused) rmSync(configDir, { recursive: true, force: true });
+  };
   const kill = (): void => {
     if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
     removeConfigDir();
