@@ -9,7 +9,9 @@ import {
   History,
   Link2,
 } from 'lucide-react';
-import { Link, useProjectPathname } from '../nav.tsx';
+import { Link, useProjectPathname, useProjectSlug } from '../nav.tsx';
+import { apiFetch, projectUrl } from '../api.ts';
+import { projectKey } from '../query-keys.ts';
 import { EmptyState } from '../components/empty-state.tsx';
 import { LeadText } from '../components/lead-tokens.tsx';
 import type {
@@ -35,10 +37,8 @@ import { stripEmoji } from './strip-emoji.ts';
 
 const REQUIREMENT_PAGE_SIZE = 4;
 
-async function fetchRoadmap(): Promise<RoadmapViewModel> {
-  const response = await fetch('/api/roadmap', { headers: { Accept: 'application/json' } });
-  if (!response.ok) throw new Error(`Roadmap request failed (${response.status})`);
-  return (await response.json()) as RoadmapViewModel;
+function fetchRoadmap(slug: string): Promise<RoadmapViewModel> {
+  return apiFetch<RoadmapViewModel>(projectUrl(slug, '/roadmap'));
 }
 
 function PhaseFlow({
@@ -386,7 +386,8 @@ function HistoryMilestone({
 export function RoadmapPage(): React.JSX.Element {
   const pathname = useProjectPathname();
   const target = useMemo(() => resolveRoadmapDeepLink(pathname), [pathname]);
-  const roadmap = useQuery({ queryKey: ['roadmap'], queryFn: fetchRoadmap });
+  const slug = useProjectSlug() ?? '';
+  const roadmap = useQuery({ queryKey: projectKey(slug, 'roadmap'), queryFn: () => fetchRoadmap(slug) });
   const [retrospective, setRetrospective] = useState<RetrospectiveTarget | null>(null);
 
   if (roadmap.isPending) {

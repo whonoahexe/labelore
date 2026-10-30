@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft } from 'lucide-react';
-import { Link, useProjectPathname } from '../nav.tsx';
+import { Link, useProjectPathname, useProjectSlug } from '../nav.tsx';
+import { apiFetch, projectUrl } from '../api.ts';
+import { projectKey } from '../query-keys.ts';
 import type {
   DrawerFileRow,
   DrawerMilestonePlace,
@@ -20,15 +22,15 @@ import {
 import { fileBadgeOf, fileNameOf } from '../../presentation/file-facts.ts';
 import { stripEmoji } from '../pages/strip-emoji.ts';
 
-async function fetchDrawer(): Promise<DrawerViewModel> {
-  const response = await fetch('/api/drawer', { headers: { Accept: 'application/json' } });
-  if (!response.ok) throw new Error(`Drawer request failed (${response.status})`);
-  return (await response.json()) as DrawerViewModel;
+function fetchDrawer(slug: string): Promise<DrawerViewModel> {
+  return apiFetch<DrawerViewModel>(projectUrl(slug, '/drawer'));
 }
 
-/** The drawer's data: the places and their files, projected server-side from the real reader. */
+/** The drawer's data: the places and their files, projected server-side from the real reader, for the
+ * project the URL names. */
 export function useDrawerQuery() {
-  return useQuery({ queryKey: ['drawer'], queryFn: fetchDrawer });
+  const slug = useProjectSlug() ?? '';
+  return useQuery({ queryKey: projectKey(slug, 'drawer'), queryFn: () => fetchDrawer(slug) });
 }
 
 /** The drawer half of the shared Warning/Unreadable vocabulary — same tones and labels as the

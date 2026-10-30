@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronRight, History } from 'lucide-react';
-import { Link } from '../nav.tsx';
+import { Link, useProjectSlug } from '../nav.tsx';
+import { apiFetch, projectUrl } from '../api.ts';
+import { projectKey } from '../query-keys.ts';
 import { EmptyState } from '../components/empty-state.tsx';
 import { LeadText } from '../components/lead-tokens.tsx';
 import type {
@@ -37,10 +39,8 @@ export {
 };
 export type { TraceabilityFilterState, TraceabilityStatusFilter } from './traceability-filter.ts';
 
-async function fetchTraceability(): Promise<TraceabilityViewModel> {
-  const response = await fetch('/api/traceability', { headers: { Accept: 'application/json' } });
-  if (!response.ok) throw new Error(`Traceability request failed (${response.status})`);
-  return (await response.json()) as TraceabilityViewModel;
+function fetchTraceability(slug: string): Promise<TraceabilityViewModel> {
+  return apiFetch<TraceabilityViewModel>(projectUrl(slug, '/traceability'));
 }
 
 /** The phase name/link half of a covering-phase entry, one quiet line per phase in the row body
@@ -297,7 +297,11 @@ function isFilterEngaged(filter: TraceabilityFilterState): boolean {
 }
 
 export function TraceabilityPage(): React.JSX.Element {
-  const traceability = useQuery({ queryKey: ['traceability'], queryFn: fetchTraceability });
+  const slug = useProjectSlug() ?? '';
+  const traceability = useQuery({
+    queryKey: projectKey(slug, 'traceability'),
+    queryFn: () => fetchTraceability(slug),
+  });
   const [filter, setFilter] = useState<TraceabilityFilterState>(DEFAULT_TRACEABILITY_FILTER);
 
   // Carries `coverage` through unchanged from the source group — the category bar always reads

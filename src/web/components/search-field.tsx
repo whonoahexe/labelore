@@ -3,7 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Combobox } from '@base-ui/react/combobox';
 import { Dialog } from '@base-ui/react/dialog';
 import { Search } from 'lucide-react';
-import { Link, useProjectNavigate } from '../nav.tsx';
+import { Link, useProjectNavigate, useProjectSlug } from '../nav.tsx';
+import { apiFetch, projectUrl } from '../api.ts';
+import { projectKey } from '../query-keys.ts';
 import { isEditableTarget, isSearchShortcut, shortcutHintFor } from '../../presentation/shell-header.ts';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import type { SearchApiResponse, SearchHit } from '../../server/search-index.ts';
@@ -14,13 +16,8 @@ const DEBOUNCE_MS = 160;
 // D-01: the dropdown is a compact preview, not the full results list — /search carries the rest.
 const DROPDOWN_LIMIT = 8;
 
-async function fetchSearch(query: string, signal: AbortSignal): Promise<SearchApiResponse> {
-  const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`, {
-    headers: { Accept: 'application/json' },
-    signal,
-  });
-  if (!response.ok) throw new Error(`Search request failed (${response.status})`);
-  return (await response.json()) as SearchApiResponse;
+function fetchSearch(slug: string, query: string, signal: AbortSignal): Promise<SearchApiResponse> {
+  return apiFetch<SearchApiResponse>(projectUrl(slug, `/search?q=${encodeURIComponent(query)}`), { signal });
 }
 
 /** NAV-04 (quick-260911-243): the header search surface — an icon trigger with a ⌘K/Ctrl K hint
@@ -28,6 +25,7 @@ async function fetchSearch(query: string, signal: AbortSignal): Promise<SearchAp
  * Combobox. Keeps every Phase-3 query behaviour (D-01 through D-04) unchanged. */
 export function SearchDialog(): React.JSX.Element {
   const navigate = useProjectNavigate();
+  const slug = useProjectSlug() ?? '';
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [debounced, setDebounced] = useState('');
@@ -41,12 +39,12 @@ export function SearchDialog(): React.JSX.Element {
   }, [query]);
 
   const trimmed = debounced.trim();
-  // D-02: the stale-response guard is TanStack Query's own AbortSignal, keyed on the debounced
-  // query — never a hand-rolled request counter. An in-flight response for an earlier query is
-  // aborted (or its result discarded) the instant a newer query supersedes it.
+  // D-02: the stale-response guard is TanStack Query's own AbortSignal, keyed on the project's slug
+  // and the debounced query — never a hand-rolled request counter. An in-flight response for an
+  // earlier query is aborted (or its result discarded) the instant a newer query supersedes it.
   const search = useQuery({
-    queryKey: ['search', 'dropdown', trimmed],
-    queryFn: ({ signal }) => fetchSearch(trimmed, signal),
+    queryKey: projectKey(slug, 'search', 'dropdown', trimmed),
+    queryFn: ({ signal }) => fetchSearch(slug, trimmed, signal),
     enabled: trimmed.length > 0,
     // D-04: while the index is building, poll until it resolves so a query typed mid-build
     // resolves itself automatically — never a dropped query.

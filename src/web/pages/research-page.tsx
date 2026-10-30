@@ -2,6 +2,9 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { useQuery } from '@tanstack/react-query';
 import { ChartLine, ChevronRight, Layers, ListChecks, Network, TriangleAlert } from 'lucide-react';
 import { useSearchParams } from 'react-router';
+import { useProjectSlug } from '../nav.tsx';
+import { apiFetch, projectUrl } from '../api.ts';
+import { projectKey } from '../query-keys.ts';
 import type { ResearchFileKey } from '../../presentation/project-research-files.ts';
 import type { ResearchFileModel, ResearchViewModel } from '../../presentation/project-research.ts';
 import { EmptyState } from '../components/empty-state.tsx';
@@ -12,10 +15,8 @@ import { FeaturesPanelBody } from './research-features-panel.tsx';
 import { StackPanelBody, StackReasons } from './research-stack-panel.tsx';
 import { SummaryPanelBody } from './research-summary-panel.tsx';
 
-async function fetchResearch(): Promise<ResearchViewModel> {
-  const response = await fetch('/api/research', { headers: { Accept: 'application/json' } });
-  if (!response.ok) throw new Error(`Research request failed (${response.status})`);
-  return (await response.json()) as ResearchViewModel;
+function fetchResearch(slug: string): Promise<ResearchViewModel> {
+  return apiFetch<ResearchViewModel>(projectUrl(slug, '/research'));
 }
 
 /** The icon on a spine's vertical title. These sit on spine titles only, never as list markers. */
@@ -123,7 +124,8 @@ function Leaf({
  * Every value is a React text node - research text is never turned into markup, and the page links to
  * none of the source files. */
 export function ResearchPage(): React.JSX.Element {
-  const research = useQuery({ queryKey: ['research'], queryFn: fetchResearch });
+  const slug = useProjectSlug() ?? '';
+  const research = useQuery({ queryKey: projectKey(slug, 'research'), queryFn: () => fetchResearch(slug) });
   const [searchParams, setSearchParams] = useSearchParams();
   const offset = useShellOffset();
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
