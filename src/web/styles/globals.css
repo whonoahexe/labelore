@@ -26039,3 +26039,39 @@ button.research-step-chip:hover {
 .project-add-dialog > .text-link {
   font-size: var(--fs-3);
 }
+
+/* The landing page's side column (sketch 040 B): the add form now, the scan form after it (08-13). The
+   headings are Label-size mono under a top rule; the forms are capped at 560px when the column stacks
+   under the list. */
+.projects-page > aside {
+  display: grid;
+  gap: var(--space-6);
+  align-content: start;
+  min-width: 0;
+}
+
+.projects-page > aside section {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+  min-width: 0;
+}
+
+.projects-page > aside .section-heading {
+  align-items: center;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.projects-page > aside .section-heading h2 {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+.projects-page > aside .project-add-form {
+  max-width: calc(var(--space-28) * 5);
+}

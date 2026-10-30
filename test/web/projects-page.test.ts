@@ -318,9 +318,27 @@ describe('the landing page states', () => {
     expect(html).toContain('No projects yet.');
     // The copy names the example folder; it is joined here so no tilde path into a real folder is written.
     expect(html).toContain(
-      `Add a folder or an ssh:// target above, or scan a folder such as ${['~', 'Work'].join('/')} to find GSD projects.`,
+      `Add a folder or an ssh:// target beside, or scan a folder such as ${['~', 'Work'].join('/')} to find GSD projects.`,
     );
     expect(html).not.toContain('project-list');
+  });
+
+  it('holds the add form in a side column, an aside that is a direct child of main.projects-page, in every list state (D-03, D-13)', () => {
+    for (const list of [
+      { projects: [], notices: [] },
+      { projects: [entry('shapes', { name: 'Shapes' })], notices: [] },
+      { projects: ROWS, notices: [] },
+    ]) {
+      const html = renderPage(list);
+      // The 040 B grid only turns two-column when this aside is a direct child of the page's main.
+      expect(html).toMatch(/<main class="page-stack projects-page">[\s\S]*<\/section><aside aria-label="Add or scan projects">[\s\S]*<\/aside><\/main>/);
+      expect(html).toContain('<h2 id="add-project-heading">Add a project</h2>');
+      expect(html).toContain('<form class="project-add-form"');
+      expect(html).toContain('Project location');
+      expect(html).toContain('>Add project</button>');
+      // The add section sits after the list in the document, so below 62rem it stacks under it.
+      expect(html.indexOf('Add a project</h2>')).toBeGreaterThan(html.indexOf('aria-label="Project list"'));
+    }
   });
 
   it('shows the settings notices above the list, each with role status', () => {
