@@ -2,7 +2,7 @@
 // project built by the shared fixture server (ports 5310-5319 only, see fixture-server.ts) holding the
 // notes and todos of the made-up Lendshed project, the synthetic fixture and this repo's own `.planning/`
 // (every source is required, none is optional), and resolves each page by path against its live
-// `/api/presentation` payload. It asserts the foundation sweep's key invariants itself
+// project's presentation payload. It asserts the foundation sweep's key invariants itself
 // (one h1, squared corners, one chip signature, no 420px overflow) since the full sweep is too slow to run
 // per change. The browser context is granted clipboard access so copying a file reference can be read back.
 import { expect, test } from '@playwright/test';
@@ -10,7 +10,7 @@ import type { Page } from '@playwright/test';
 import { relative } from 'node:path';
 import { FX_ROOT, planningFiles } from '../helpers/fixture-project.ts';
 import { LB_ROOT, SYNTHETIC_ROOT } from '../helpers/todo-corpus.ts';
-import { artifactUrl, hrefOf } from './app-url.ts';
+import { artifactUrl, hrefOf, projectApiUrl } from './app-url.ts';
 import { startFixtureServer } from './fixture-server.ts';
 import type { FixturePlacement, FixtureServer } from './fixture-server.ts';
 
@@ -41,8 +41,8 @@ test.afterAll(async () => {
 });
 
 async function presentation(): Promise<PresentationLite> {
-  const response = await fetch(`${server.base}/api/presentation`);
-  if (!response.ok) throw new Error(`note-page.spec: /api/presentation responded ${response.status}`);
+  const response = await fetch(await projectApiUrl(server.base, '/presentation'));
+  if (!response.ok) throw new Error(`note-page.spec: the project's presentation payload responded ${response.status}`);
   return (await response.json()) as PresentationLite;
 }
 

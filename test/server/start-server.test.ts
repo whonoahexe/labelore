@@ -200,7 +200,7 @@ describe('parseCli (D-16)', () => {
   });
 
   it('refuses any other option by name, so there is no --scan', () => {
-    expect(() => parseCli(['--scan', '~/Work'])).toThrow('Unknown option: --scan (supported: --port, --smoke)');
+    expect(() => parseCli(['--scan', 'some-folder'])).toThrow('Unknown option: --scan (supported: --port, --smoke)');
     expect(() => parseCli(['-x'])).toThrow('Unknown option: -x');
   });
 

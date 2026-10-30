@@ -2,12 +2,12 @@
 // LEARNINGS file, so the spec starts the shared fixture server (ports 5310-5319 only, see
 // fixture-server.ts) on a thin temp project holding the synthetic phase 5 file, the Lendshed phase 1 file
 // and the dense project-root file, all in-repo placements, and resolves each page by path against its live
-// `/api/presentation` payload. It asserts the foundation sweep's key invariants itself (one h1, an
+// project's presentation payload. It asserts the foundation sweep's key invariants itself (one h1, an
 // eyebrow, squared corners, one chip signature, no 420px overflow) since the full sweep is too slow to
 // run per change.
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
-import { artifactUrl } from './app-url.ts';
+import { artifactUrl, projectApiUrl } from './app-url.ts';
 import { startFixtureServer } from './fixture-server.ts';
 import type { FixtureServer } from './fixture-server.ts';
 
@@ -37,8 +37,8 @@ test.afterAll(async () => {
 });
 
 async function artifactKeys(): Promise<PresentationLite['artifacts']> {
-  const response = await fetch(`${server.base}/api/presentation`);
-  if (!response.ok) throw new Error(`learnings-page.spec: /api/presentation responded ${response.status}`);
+  const response = await fetch(await projectApiUrl(server.base, '/presentation'));
+  if (!response.ok) throw new Error(`learnings-page.spec: the project's presentation payload responded ${response.status}`);
   return ((await response.json()) as PresentationLite).artifacts;
 }
 

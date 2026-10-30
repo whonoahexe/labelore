@@ -3,7 +3,7 @@
 // todos and notes of the made-up Lendshed project, the Labelore todo fixture and the synthetic fixture,
 // Labelore's own completed todo 001 with its note, and the chrome-drift todo's closing quick task SUMMARY.
 // Every source is required; there are no optional sources. Each page is resolved by path against the live
-// `/api/presentation` payload. The clock is fixed at the sketch's NOW (23 Oct 2026 12:00, Asia/Kolkata) so
+// project's presentation payload. The clock is fixed at the sketch's NOW (23 Oct 2026 12:00, Asia/Kolkata) so
 // "Open N days" is stable. It asserts the foundation sweep's key invariants itself (one h1, squared
 // corners, one chip signature, no 420px overflow) since the full sweep is too slow to run per change.
 import { expect, test } from '@playwright/test';
@@ -11,7 +11,7 @@ import type { Locator, Page } from '@playwright/test';
 import { relative } from 'node:path';
 import { FX_ROOT, planningFiles } from '../helpers/fixture-project.ts';
 import { LABELORE_FIXTURE_ROOT, LB_ROOT, SYNTHETIC_ROOT } from '../helpers/todo-corpus.ts';
-import { artifactUrl, exactUrl, hrefOf } from './app-url.ts';
+import { artifactUrl, exactUrl, hrefOf, projectApiUrl } from './app-url.ts';
 import { startFixtureServer } from './fixture-server.ts';
 import type { FixturePlacement, FixtureServer } from './fixture-server.ts';
 
@@ -49,8 +49,8 @@ test.afterAll(async () => {
 });
 
 async function presentation(): Promise<PresentationLite> {
-  const response = await fetch(`${server.base}/api/presentation`);
-  if (!response.ok) throw new Error(`todo-page.spec: /api/presentation responded ${response.status}`);
+  const response = await fetch(await projectApiUrl(server.base, '/presentation'));
+  if (!response.ok) throw new Error(`todo-page.spec: the project's presentation payload responded ${response.status}`);
   return (await response.json()) as PresentationLite;
 }
 

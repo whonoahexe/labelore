@@ -2,12 +2,12 @@
 // project (ports 5310-5319 only, see fixture-server.ts) holding the synthetic investigating session,
 // labelore's own resolved session and knowledge base and the four made-up Lendshed sessions - every
 // placement is an in-repo file, so every page below is asserted, never skipped - and resolves each page
-// by path against its live `/api/presentation` payload.
+// by path against the project's live presentation payload.
 // It asserts the foundation sweep's key invariants itself (one h1, squared corners, one chip signature,
 // no 420px overflow) since the full sweep is too slow to run per change.
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
-import { artifactUrl } from './app-url.ts';
+import { artifactUrl, projectApiUrl } from './app-url.ts';
 import { startFixtureServer } from './fixture-server.ts';
 import type { FixtureServer } from './fixture-server.ts';
 
@@ -37,8 +37,8 @@ test.afterAll(async () => {
 });
 
 async function resolveArtifactPath(suffix: string): Promise<string> {
-  const response = await fetch(`${server.base}/api/presentation`);
-  if (!response.ok) throw new Error(`debug-page.spec: /api/presentation responded ${response.status}`);
+  const response = await fetch(await projectApiUrl(server.base, '/presentation'));
+  if (!response.ok) throw new Error(`debug-page.spec: the project's presentation payload responded ${response.status}`);
   const artifact = ((await response.json()) as PresentationLite).artifacts.find((entry) => entry.path.endsWith(suffix));
   if (!artifact) throw new Error(`debug-page.spec: fixture artifact not found: ${suffix}`);
   return artifact.path;
