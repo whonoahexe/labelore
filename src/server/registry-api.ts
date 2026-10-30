@@ -8,6 +8,7 @@
 import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
+import { SCAN_MESSAGES, SCAN_RESULT_CAP } from './folder-scan.ts';
 import { createProjectApi } from './project-api.ts';
 import { INVALID_INPUT_MESSAGE } from './project-registry.ts';
 import type { ProjectRegistry } from './project-registry.ts';
@@ -60,6 +61,39 @@ export function createRegistryApp(registry: ProjectRegistry, options: RegistryAp
       return c.json({ error: outcome.error, status: { pathChecked: outcome.pathChecked } }, 422);
     }
     return c.json({ error: outcome.status.message, status: outcome.status }, 422);
+  });
+  // The folder scan and the bulk add. Both are POST behind the guard (a cross-site page cannot use the
+  // scan as a directory-listing oracle, SEC-05) and both sit before the :slug mount.
+  app.post('/api/projects/scan', async (c) => {
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: SCAN_MESSAGES.empty }, 400);
+    }
+    const folder = typeof body === 'object' && body !== null ? (body as { folder?: unknown }).folder : undefined;
+    if (typeof folder !== 'string') return c.json({ error: SCAN_MESSAGES.empty }, 400);
+    const outcome = await registry.scan(folder);
+    if (!outcome.ok) return c.json({ error: outcome.error }, 422);
+    return c.json(outcome);
+  });
+  app.post('/api/projects/add-many', async (c) => {
+    const tooMany = { error: `Choose up to ${SCAN_RESULT_CAP} projects to add.` };
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json(tooMany, 400);
+    }
+    const targets = typeof body === 'object' && body !== null ? (body as { targets?: unknown }).targets : undefined;
+    if (
+      !Array.isArray(targets) ||
+      targets.length > SCAN_RESULT_CAP ||
+      !targets.every((target): target is string => typeof target === 'string')
+    ) {
+      return c.json(tooMany, 400);
+    }
+    return c.json(await registry.addMany(targets));
   });
   app.delete('/api/projects/:slug', async (c) => {
     const slug = c.req.param('slug');

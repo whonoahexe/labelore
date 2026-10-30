@@ -33,11 +33,13 @@ export const LOAD_STATUS_MESSAGES: Readonly<Record<LoadStatus['status'], (ctx: M
   'permission-denied': ({ pathChecked }) => `Cannot read ${pathChecked}: permission denied`,
 };
 
-function expandTilde(raw: string): string {
+/** Expands a leading `~` or `~/`. Exported because the folder scan reuses it (one tilde parser, not two);
+ * `home` is injectable so tests can name a synthetic home. */
+export function expandTilde(raw: string, home: string = homedir()): string {
   // Node does not expand `~` itself, and the argument arrives through `npm run --` and through
   // Vitest without a guaranteed shell pass.
-  if (raw === '~') return homedir();
-  if (raw.startsWith('~/')) return join(homedir(), raw.slice(2));
+  if (raw === '~') return home;
+  if (raw.startsWith('~/')) return join(home, raw.slice(2));
   return raw;
 }
 

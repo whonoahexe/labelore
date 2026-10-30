@@ -409,12 +409,15 @@ describe('Node filesystem module import boundary (DATA-01, quick-260910-0x4 item
       // The two temp-directory helpers (createTempDirSync / removeTempDirSync) back the remote mirror only.
       'mkdtempSync',
       'rmSync',
+      // The scan's directory listing (listChildEntries, from node:fs/promises): read-only.
+      'readdir',
     ]);
     const source = stripCommentsForFsGate(await readFile(join(REPO_ROOT, LOCAL_FS), 'utf8'));
     const importClause = /import\s*\{([^}]*)\}\s*from\s*['"](?:node:)?fs['"]/.exec(source);
     expect(importClause, 'local-fs.ts should import named members from node:fs').not.toBeNull();
-    const names = (importClause?.[1] ?? '')
-      .split(',')
+    // Every named import from node:fs or node:fs/promises is held to the same read-side list.
+    const names = [...source.matchAll(/import\s*\{([^}]*)\}\s*from\s*['"](?:node:)?fs(?:\/promises)?['"]/g)]
+      .flatMap((match) => (match[1] ?? '').split(','))
       .map((name) => name.trim())
       .filter((name) => name.length > 0);
     expect(names.length).toBeGreaterThan(0);
