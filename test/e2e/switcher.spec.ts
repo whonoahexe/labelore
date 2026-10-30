@@ -931,3 +931,154 @@ test.describe('scanning a folder', () => {
     }
   });
 });
+
+// Every other state of the scan: what a person sees for one project, a capped folder, a folder outside
+// home, a folder with nothing in it, a refused request, and a scan that is still running. A second synthetic
+// home and server, so the cases above and these never share a list. The capped folder runs last: adding its
+// hundred projects puts a hundred rows in this server's list.
+test.describe('scan states', () => {
+  test.describe.configure({ mode: 'serial' });
+
+  let server: ProjectsServer;
+  let home: string;
+  let portal: ListedProject;
+
+  async function scanFrom(page: Page, folder: string): Promise<Locator> {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await goToLanding(page, server.base, portal);
+    const section = page.getByRole('region', { name: 'Scan a folder' });
+    await section.getByLabel('Folder to scan').fill(folder);
+    await section.getByRole('button', { name: 'Scan folder' }).click();
+    return section;
+  }
+
+  test.beforeAll(async () => {
+    test.setTimeout(120_000);
+    home = makeHome();
+    const portalRoot = seedProject(home, 'Work/acme/portal', 'PROJECT.md', '# Portal\n');
+    seedProject(home, 'Work/acme/kiln', 'STATE.md', '# State\n');
+    for (let n = 1; n <= 105; n++) seedProject(home, `Work/many/p${String(n).padStart(3, '0')}`, 'STATE.md', '# State\n');
+    mkdirSync(join(home, 'Work', 'empty'), { recursive: true });
+    writeFileSync(join(home, 'Work', 'note.txt'), 'not a folder\n');
+    server = await startProjectsServer({ paths: [portalRoot], env: { HOME: home } });
+    const found = (await listProjects(server.base)).find((entry) => entry.target === portalRoot);
+    if (!found) throw new Error('switcher.spec: the portal project is not in the list');
+    portal = found;
+  });
+
+  test.afterAll(async () => {
+    await server?.stop();
+    rmSync(home, { recursive: true, force: true });
+  });
+
+  test('counts only the projects that can still be added, and an unpicked one leaves nothing to add', async ({ page }) => {
+    const section = await scanFrom(page, `${WORK}/acme`);
+    // portal is already in the list: shown, marked and not counted. kiln is the one project.
+    const results = section.getByRole('group', { name: `Found 1 project in ${WORK}/acme` });
+    await expect(results).toBeVisible();
+    await expect(results.locator('.project-scan-item', { hasText: 'portal' }).getByText('Already added')).toBeVisible();
+    await expect(results.getByRole('button', { name: 'Add 1 project' })).toBeEnabled();
+    // Everything is picked, so Select all has nothing to do.
+    await expect(results.getByRole('button', { name: 'Select all projects' })).toBeDisabled();
+
+    await results.getByRole('checkbox', { name: 'kiln' }).click();
+    await expect(results.getByRole('checkbox', { name: 'kiln' })).not.toBeChecked();
+    await expect(results.getByRole('button', { name: 'Add projects' })).toBeDisabled();
+    await expect(results.getByRole('button', { name: 'Clear selection' })).toBeDisabled();
+    await expect(results.getByRole('button', { name: 'Select all projects' })).toBeEnabled();
+  });
+
+  test('a running scan reads Scanning, cannot be started twice, and shows the folder', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await goToLanding(page, server.base, portal);
+    const section = page.getByRole('region', { name: 'Scan a folder' });
+    let posts = 0;
+    let release: () => void = () => undefined;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    await page.route('**/api/projects/scan', async (route) => {
+      posts += 1;
+      await held;
+      await route.continue();
+    });
+
+    const field = section.getByLabel('Folder to scan');
+    await field.fill(`${WORK}/acme`);
+    await field.press('Enter');
+    const button = section.getByRole('button', { name: 'Scanning…' });
+    await expect(button).toBeDisabled();
+    await expect(section.getByRole('status').filter({ hasText: `Scanning ${WORK}/acme…` })).toBeVisible();
+    // Enter again while the first scan runs: no second request.
+    await field.press('Enter');
+    release();
+    await expect(section.getByRole('group', { name: `Found 1 project in ${WORK}/acme` })).toBeVisible();
+    await expect(section.getByRole('button', { name: 'Scan folder' })).toBeEnabled();
+    expect(posts).toBe(1);
+  });
+
+  test("shows the server's words for a folder outside home, a missing folder, a file and an empty field", async ({
+    page,
+  }) => {
+    const section = await scanFrom(page, '/etc');
+    const field = section.getByLabel('Folder to scan');
+    const alert = section.getByRole('alert');
+    await expect(alert).toHaveText('/etc is outside your home folder. Labelore only scans folders inside it.');
+    await expect(alert).toHaveClass(/destructive/);
+    await expect(field).toHaveAttribute('aria-invalid', 'true');
+    await expect(section.locator('.project-scan-results')).toHaveCount(0);
+
+    await field.fill(`${WORK}/nowhere`);
+    await section.getByRole('button', { name: 'Scan folder' }).click();
+    await expect(alert).toHaveText(`There is no folder at ${WORK}/nowhere.`);
+
+    await field.fill(`${WORK}/note.txt`);
+    await section.getByRole('button', { name: 'Scan folder' }).click();
+    await expect(alert).toHaveText(`${WORK}/note.txt is a file, not a folder.`);
+
+    await field.fill('');
+    await section.getByRole('button', { name: 'Scan folder' }).click();
+    await expect(alert).toHaveText('Enter a folder to scan.');
+  });
+
+  test('a folder with no GSD project says so and offers nothing to add', async ({ page }) => {
+    const section = await scanFrom(page, `${WORK}/empty`);
+    await expect(section.getByRole('heading', { level: 3, name: `No GSD projects found in ${WORK}/empty.` })).toBeVisible();
+    await expect(
+      section.getByText('Labelore looked two levels down. Try a folder one level up, or add a project by its location above.'),
+    ).toBeVisible();
+    await expect(section.getByRole('button', { name: /^Add/ })).toHaveCount(0);
+    await expect(section.getByRole('group')).toHaveCount(0);
+  });
+
+  test('a refused scan shows the refusal copy and no results', async ({ page }) => {
+    await page.route('**/api/projects/scan', async (route) => {
+      await route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ error: 'no' }) });
+    });
+    const section = await scanFrom(page, `${WORK}/acme`);
+    await expect(section.getByRole('alert')).toHaveText(
+      'Labelore refused this request because it did not come from its own page. Reload the page and try again.',
+    );
+    // The refusal is about the request, not the text: the field is not marked invalid.
+    await expect(section.getByLabel('Folder to scan')).not.toHaveAttribute('aria-invalid', 'true');
+    await expect(section.locator('.project-scan-results')).toHaveCount(0);
+  });
+
+  test('a capped folder says so, and all hundred picked projects are added in one request', async ({ page }) => {
+    const section = await scanFrom(page, `${WORK}/many`);
+    const results = section.getByRole('group', { name: `Found 100 projects in ${WORK}/many` });
+    await expect(results).toBeVisible();
+    await expect(
+      section.getByText('Showing the first 100 projects found. Scan a narrower folder to see the rest.'),
+    ).toBeVisible();
+    await expect(results.locator('.project-scan-item')).toHaveCount(100);
+    await expect(results.getByRole('button', { name: 'Add 100 projects' })).toBeEnabled();
+
+    await results.getByRole('button', { name: 'Add 100 projects' }).click();
+    await expect(section.locator('.project-scan-results > p')).toHaveText(
+      'Added 100 projects. They open the first time you choose them.',
+    );
+    await expect(page.locator('.project-list .project-row')).toHaveCount(101);
+    expect(await listProjects(server.base)).toHaveLength(101);
+  });
+});

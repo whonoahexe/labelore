@@ -10,6 +10,7 @@ import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import type { ProjectListEntry } from '../../src/presentation/project-list.ts';
 import { ProjectList, ProjectRowConfirm } from '../../src/web/components/project-row.tsx';
+import { ProjectScan, addedCopy, scanCopy } from '../../src/web/components/project-scan.tsx';
 import { ProjectSwitcher, ProjectSwitcherPanel } from '../../src/web/components/project-switcher.tsx';
 import { projectsKey } from '../../src/web/query-keys.ts';
 
@@ -290,5 +291,49 @@ describe('the forget action', () => {
     expect(row).toContain("Labelore only removes it from this list. The project's files are not touched.");
     expect(row).toContain('Forget this project');
     expect(row).toContain('`Forget ${entry.name}`');
+  });
+});
+
+// The scan checklist (D-14): the pure copy helper and what the form shows before anything has been scanned.
+// The result states need a request, so they are covered in the browser (test/e2e/switcher.spec.ts).
+describe('the scan checklist', () => {
+  // Joined so no tilde path into the Work folder is written out in a test (the real-path guard).
+  const work = ['~', 'Work'].join('/');
+
+  it('words the legend and the add button for zero, one and many projects', () => {
+    expect(scanCopy(0, work)).toEqual({ legend: `Found 0 projects in ${work}`, add: 'Add projects' });
+    expect(scanCopy(1, work)).toEqual({ legend: `Found 1 project in ${work}`, add: 'Add 1 project' });
+    expect(scanCopy(3, work)).toEqual({ legend: `Found 3 projects in ${work}`, add: 'Add 3 projects' });
+  });
+
+  it('words the done line for one and many projects', () => {
+    expect(addedCopy(2)).toBe('Added 2 projects. They open the first time you choose them.');
+    expect(addedCopy(1)).toBe('Added 1 project. It opens the first time you choose it.');
+  });
+
+  it('shows only the folder form before a scan: nothing is scanned by rendering it (D-16)', () => {
+    const markup = render(createElement(ProjectScan), null);
+    expect(markup).toContain('Folder to scan');
+    expect(markup).toContain(`placeholder="${work}"`);
+    expect(markup).toContain('Looks two levels down inside your home folder. Hidden folders, node_modules and symlinks are skipped.');
+    expect(markup).toContain('Scan folder');
+    expect(markup).not.toContain('project-scan-results');
+    expect(markup).not.toContain('<fieldset');
+    expect(markup).not.toContain('role="alert"');
+  });
+
+  it('goes through api.ts and projectsKey only, builds on Base UI, and writes text through React (source pins)', () => {
+    const scan = source('src/web/components/project-scan.tsx');
+    // No request URL and no hand-built query key: one module holds every /api/ address, one the keys.
+    expect(scan).not.toContain('/api/');
+    expect(scan).not.toMatch(/queryKey:\s*\[/);
+    expect(scan).toContain('queryKey: projectsKey');
+    expect(scan).toContain('scanFolder(');
+    expect(scan).toContain('addProjects(');
+    expect(scan).toContain("from '@base-ui/react/checkbox'");
+    expect(scan).toContain("from '@base-ui/react/field'");
+    expect(scan).not.toContain('dangerouslySetInnerHTML');
+    // Only the checked, not-yet-added projects are sent.
+    expect(scan).toContain('picked.map((project) => project.path)');
   });
 });
