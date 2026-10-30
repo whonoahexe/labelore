@@ -1,7 +1,8 @@
 // NAV-09: pure helpers for the project slug that opens every address. No React, no router: the
 // hooks that apply them live in nav.tsx, the only module that prefixes the slug, and the router
-// gate in app-router.tsx reads projectGateOutcome. Phase 8 changes where the slug comes from, not
-// anything in this file.
+// gate in app-router.tsx reads projectGateOutcome. Phase 8 adds projectRootPath, the address of a
+// project by slug alone (landing rows, 'See all projects').
+import { isValidSlug } from '../presentation/project-slug.ts';
 
 /** Prefixes a project-relative target with the project slug. A null slug (no project route yet,
  * as in a bare MemoryRouter) leaves the target unchanged. The target must start with a single
@@ -16,6 +17,13 @@ export function withProjectSlug(slug: string | null, to: string): string {
   const pathPart = cut < 0 ? to : to.slice(0, cut);
   const tail = cut < 0 ? '' : to.slice(cut);
   return pathPart === '/' ? `${root}${tail}` : `${root}${pathPart}${tail}`;
+}
+
+/** The address of a project by slug alone: '/' plus the slug when it is a valid slug, else '/'.
+ * Built for links that name another project (or none) and so are never prefixed with the current
+ * slug; a crafted value ('API', '//evil', an empty string) can never leave the app (T-08-21). */
+export function projectRootPath(slug: string): string {
+  return isValidSlug(slug) ? `/${slug}` : '/';
 }
 
 /** Splits a pathname into its first raw segment (the project slug position) and the remainder,
