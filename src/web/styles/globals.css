@@ -466,6 +466,7 @@
 }
 
 .brand,
+.brand-lockup,
 .shell-nav,
 .shell-controls,
 .snapshot-status {
@@ -476,15 +477,20 @@
 
 /* The left margin mirrors .shell-controls' gap: the drawer trigger sits as far from the brand
    mark as the theme toggle sits from the search trigger. Margin rather than padding, and sized to
-   its content, so only the mark, wordmark and project name are the home link — not the empty rest
-   of the brand column. */
-.brand {
+   its content, so only the mark and wordmark are the home link and only the project name is the
+   switcher (Phase 8, 08-11) — not the empty rest of the brand column. The lockup holds both
+   siblings in the one `brand` grid area: a link may not contain the switcher's button. */
+.brand-lockup {
   grid-area: brand;
   justify-self: start;
   align-self: center;
   gap: var(--space-2-5);
   margin: var(--space-3) var(--space-fluid-4) var(--space-3) var(--space-2);
-  min-width: 0;
+}
+
+.brand {
+  flex: none;
+  gap: var(--space-2-5);
   text-decoration: none;
 }
 
@@ -3875,7 +3881,7 @@ a.todo-title:hover {
     position: relative;
   }
 
-  .brand {
+  .brand-lockup {
     margin: var(--space-3) var(--space-4) var(--space-3) var(--space-2);
   }
 
@@ -25524,6 +25530,137 @@ button.research-step-chip:hover {
 
   .research-bo-big {
     grid-column: 1;
+  }
+}
+
+/* Phase 8 (08-11): the header project switcher, the winner of sketch 039 (A, a popover under the name
+   trigger). The trigger is a neutral button (never accent) beside the brand link; the popup is a
+   non-modal popover on the --popover surface whose head and footer stay in view while the list
+   scrolls. Sizes are the UI-SPEC four (Label, Meta, Body, Heading), tokens only. */
+.project-switcher-trigger {
+  display: flex;
+  min-width: 0;
+  /* As tall as the brand mark whether or not the meta line has arrived, so the trigger (and the popup
+     anchored to it) does not move when the project's presentation lands. */
+  min-height: calc(var(--space-8) + var(--space-1));
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-2);
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 150ms ease;
+}
+
+.project-switcher-trigger:hover {
+  background: var(--state-hover);
+}
+
+.project-switcher-trigger[aria-expanded='true'] {
+  background: var(--state-hover);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.project-switcher-trigger > svg {
+  flex: none;
+  width: var(--space-4);
+  height: var(--space-4);
+  color: var(--muted-foreground);
+}
+
+/* The meta line keeps its shipped rule but sets at Label size here (the UI-SPEC four-size set). */
+.project-switcher-trigger .brand-meta {
+  font-size: var(--fs-2);
+  line-height: var(--lh-snug);
+}
+
+.project-switcher-positioner {
+  z-index: 60;
+}
+
+/* The switcher moves focus to the main content landmark after a switch; the region takes focus for
+   that and is no control, so it shows no ring of its own. */
+.shell-outlet:focus {
+  outline: none;
+}
+
+.project-switcher-popup {
+  display: flex;
+  flex-direction: column;
+  /* The UI-SPEC size caps, over tokens: 448px wide (or the viewport less 32px) and 448px or 70vh
+     tall, whichever is less; the list scrolls inside while the head and the footer stay in view. */
+  width: min(calc(var(--space-28) * 4), calc(100vw - var(--space-8)));
+  max-height: min(calc(var(--space-28) * 4), 70vh);
+  border: 1px solid var(--border);
+  background: var(--popover);
+  color: var(--foreground);
+  box-shadow: var(--shadow-popover);
+}
+
+.project-switcher-popup > header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.project-switcher-popup > header p {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-heading);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+.project-switcher-popup > div:not(.project-switcher-footer) {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.project-switcher-popup .project-list {
+  border: 0;
+}
+
+.project-switcher-popup .empty-note {
+  padding: var(--space-4);
+}
+
+.project-switcher-footer {
+  flex: none;
+  padding: var(--space-2);
+  border-top: 1px solid var(--border);
+}
+
+.project-switcher-footer:empty {
+  display: none;
+}
+
+/* Below the shell's 42rem breakpoint the popup spans the viewport directly under the header (it
+   is positioned to start at the left edge, with no padding from it) and the trigger is a full
+   40px target; its name and meta keep truncating with an ellipsis inside the trigger. */
+@media (max-width: 42rem) {
+  .project-switcher-trigger {
+    min-height: var(--space-10);
+  }
+
+  .project-switcher-popup {
+    width: 100vw;
+    border-inline: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-switcher-trigger {
+    transition: none;
   }
 }
 

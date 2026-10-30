@@ -66,9 +66,11 @@ export async function projectApiUrl(base: string, path: string): Promise<string>
   return `${base}/api/projects/${encodeURIComponent(await slugAt(base))}${path}`;
 }
 
-/** The full address of a project-relative target (a page path or a DTO key) on the server at `base`. */
-export async function projectUrl(base: string, projectRelative: string): Promise<string> {
-  return `${base}${withProjectSlug(await projectSlugAt(base), projectRelative)}`;
+/** The full address of a project-relative target (a page path or a DTO key) on the server at `base`.
+ * `slug` names the project on a server that lists several (the switcher specs, 08-11); without it the
+ * server must list exactly one project, which is the one addressed. */
+export async function projectUrl(base: string, projectRelative: string, slug?: string): Promise<string> {
+  return `${base}${withProjectSlug(slug ?? (await projectSlugAt(base)), projectRelative)}`;
 }
 
 /** The full address of the artifact whose project-relative path is `path` on the server at `base`. */

@@ -54,6 +54,11 @@ describe('e2e app-url helper against a live server', () => {
     expect(await response.text()).toBe(SHELL);
   });
 
+  it('composes the address of a named project, without asking which one the server lists', async () => {
+    expect(await projectUrl(base, '/', 'shapes')).toBe(`${base}/shapes`);
+    expect(await projectUrl(base, '/roadmap', 'shapes')).toBe(`${base}/shapes/roadmap`);
+  });
+
   it('composes an artifact address from its DTO key, under the slug, that the server answers', async () => {
     const url = await artifactUrl(base, '.planning/phases/01-member-sign-in-sessions/01-CONTEXT.md');
     expect(url.startsWith(`${base}/lendshed/`)).toBe(true);
