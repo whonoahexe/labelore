@@ -15,6 +15,7 @@ import { LocalFsPlanningFilesystem } from '../../src/planning-fs/local-fs.ts';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
 import { createApp, startServer } from '../../src/server/index.ts';
 import type { ProjectPresentation } from '../../src/server/project-presentation.ts';
+import { MemorySettingsStore } from '../../src/server/settings-store.ts';
 import { legacyArtifactUrl, legacyPlanUrl } from '../helpers/legacy-urls.ts';
 import { SHAPES_ROOT } from '../helpers/shapes-project.ts';
 
@@ -187,8 +188,12 @@ describe('the Shapes URL set', () => {
   });
 });
 
-/** The /api/* guard, run against either mode through one fetch function. */
-function apiGuardTests(fetchPath: (path: string, init?: RequestInit) => Promise<Response>): void {
+/** The /api/* guard, run against either app through one fetch function. `projectApi` is where the
+ * project's own routes live: /api on the test-only wrapper, /api/projects/shapes on the served registry app. */
+function apiGuardTests(
+  fetchPath: (path: string, init?: RequestInit) => Promise<Response>,
+  projectApi: string,
+): void {
   it('answers 404 JSON for an unknown API route, with and without Accept text/html', async () => {
     for (const headers of [undefined, { Accept: 'text/html' }]) {
       const response = await fetchPath('/api/not-real', { headers });
@@ -197,14 +202,14 @@ function apiGuardTests(fetchPath: (path: string, init?: RequestInit) => Promise<
     }
   });
 
-  it('answers /api/files with no route 404 Not found, never the shell', async () => {
-    const response = await fetchPath('/api/files', { headers: { Accept: 'text/html' } });
+  it('answers the files route with no route 404 Not found, never the shell', async () => {
+    const response = await fetchPath(`${projectApi}/files`, { headers: { Accept: 'text/html' } });
     expect(response.status).toBe(404);
     expect(await response.text()).toBe('Not found');
   });
 
   it('answers the PNG bytes route with image/png for GET and HEAD', async () => {
-    const path = `/api/files?route=${encodeURIComponent(PNG_KEY)}`;
+    const path = `${projectApi}/files?route=${encodeURIComponent(PNG_KEY)}`;
     for (const method of ['GET', 'HEAD']) {
       const response = await fetchPath(path, { method });
       expect(response.status).toBe(200);
@@ -212,8 +217,8 @@ function apiGuardTests(fetchPath: (path: string, init?: RequestInit) => Promise<
     }
   });
 
-  it('answers /api/presentation as JSON carrying the slug', async () => {
-    const response = await fetchPath('/api/presentation', { headers: { Accept: 'text/html' } });
+  it('answers the presentation route as JSON carrying the slug', async () => {
+    const response = await fetchPath(`${projectApi}/presentation`, { headers: { Accept: 'text/html' } });
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toContain('application/json');
     expect(((await response.json()) as { projectSlug: string }).projectSlug).toBe('shapes');
@@ -242,7 +247,7 @@ describe('Shapes: every URL in production', () => {
   });
 
   describe('the /api/* guard', () => {
-    apiGuardTests((path, init) => Promise.resolve(app.request(path, init)));
+    apiGuardTests((path, init) => Promise.resolve(app.request(path, init)), '/api');
   });
 });
 
@@ -251,7 +256,7 @@ describe('Shapes: every URL on the development server', () => {
   let base = '';
 
   beforeAll(async () => {
-    server = await startServer(SHAPES_ROOT, { port: 0, production: false });
+    server = await startServer([SHAPES_ROOT], { port: 0, production: false, settings: new MemorySettingsStore() });
     base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
   }, 60_000);
 
@@ -267,6 +272,7 @@ describe('Shapes: every URL on the development server', () => {
   });
 
   describe('the /api/* guard', () => {
-    apiGuardTests((path, init) => fetch(`${base}${path}`, init));
+    // 127.0.0.1:<port> is the Host fetch sends, which the request guard allows once the server is listening.
+    apiGuardTests((path, init) => fetch(`${base}${path}`, init), '/api/projects/shapes');
   });
 });

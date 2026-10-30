@@ -265,15 +265,7 @@ export function createProjectApi(
   });
   api.post('/refresh', async (c) => {
     const runtime = c.get('runtime');
-    // T-04-01-01/02: same-origin gate before touching the filesystem. An absent header (curl, the
-    // smoke probe, and every test in this suite) passes - only a present, non-same-origin value is
-    // rejected. 08-03 adds the shared guard in front of the registry app and 08-06 deletes this
-    // in-handler check once startServer serves only the guarded app.
-    const fetchSite = c.req.header('sec-fetch-site');
-    if (fetchSite && fetchSite !== 'same-origin') {
-      return c.json({ refreshed: false, reason: 'cross-site' as const }, 403);
-    }
-
+    // Same-origin is enforced by request-guard.ts in front of the registry app (the only app startServer serves).
     const outcome = await runtime.refresh();
     switch (outcome.kind) {
       case 'unsupported':

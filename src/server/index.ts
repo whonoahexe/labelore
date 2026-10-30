@@ -5,13 +5,19 @@ import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';
 import type { ProjectSnapshot } from '../planning-repo/types.ts';
 import { isServerOwnedUrl } from '../presentation/reserved.ts';
+import type { ProjectListResponse } from '../presentation/project-list.ts';
 import { slugOf } from '../presentation/project-slug.ts';
 import { parseRemoteTarget } from '../cli/remote-target.ts';
 import type { CommitLog } from './commit-times.ts';
 import { createProjectApi } from './project-api.ts';
-import { createSnapshotSource } from './project-registry.ts';
+import { ProjectRegistry, identityOfTarget } from './project-registry.ts';
 import { ProjectRuntime } from './project-runtime.ts';
 import type { SnapshotSource } from './project-runtime.ts';
+import { createRegistryApp } from './registry-api.ts';
+import type { MirrorRunner } from './remote-source.ts';
+import { createHostPolicy, parseAllowedHosts } from './request-guard.ts';
+import { FileSettingsStore, MemorySettingsStore, defaultSettingsDir } from './settings-store.ts';
+import type { SettingsStore } from './settings-store.ts';
 import { createSketchFileMiddleware } from './sketch-files.ts';
 
 const DEFAULT_PORT = 4173;
@@ -31,14 +37,22 @@ interface ServerOptions {
    * second instance on another project just starts. An explicit `--port` never moves. */
   autoPort?: boolean;
   production?: boolean;
+  /** Where the remembered project list lives (default: settings.json in defaultSettingsDir()). A smoke
+   * run and the tests pass a MemorySettingsStore so nothing is written (D-09). */
+  settings?: SettingsStore;
+  /** Extra Host values the request guard accepts (default: LABELORE_ALLOWED_HOSTS). */
+  allowedHosts?: readonly string[];
+  /** Builds the source for a target (tests only; default: the real local or ssh source). */
+  createSource?: (target: string) => Promise<SnapshotSource>;
+  /** The ssh mirror runner (tests only). */
+  remoteRunner?: MirrorRunner;
 }
 
 /**
  * A guard-free, single-runtime, TEST-ONLY wrapper: one fixed runtime answers the whole project API at
  * /api (the old single-project URLs), so the existing server tests keep running against the very same
  * handlers the registry app serves at /api/projects/:slug. It has no request guard and no project list.
- * startServer still serves it in this plan; 08-06 switches startServer to createRegistryApp and adds the
- * source scan that keeps startServer from ever constructing it again.
+ * startServer never constructs it (test/server/start-server.test.ts scans for that).
  */
 export function createApp(
   source: SnapshotSource,
@@ -70,26 +84,32 @@ export function createApp(
   return app;
 }
 
-/** Releases the source's resources at most once, on close, exit, SIGINT and SIGTERM. */
-function registerDisposal(source: SnapshotSource, server: Server): void {
-  if (!source.dispose) return;
-  const dispose = source.dispose.bind(source);
+/** Releases a resource at most once, on close, exit, SIGINT and SIGTERM. */
+function registerDisposal(disposable: { dispose(): void }, server: Server): void {
   let disposed = false;
   const disposeOnce = (): void => {
     if (disposed) return;
     disposed = true;
-    dispose();
+    disposable.dispose();
   };
-  server.on('close', disposeOnce);
-  process.once('exit', disposeOnce);
-  process.once('SIGINT', () => {
+  const onSigint = (): void => {
     disposeOnce();
     process.exit(130);
-  });
-  process.once('SIGTERM', () => {
+  };
+  const onSigterm = (): void => {
     disposeOnce();
     process.exit(143);
+  };
+  server.on('close', () => {
+    disposeOnce();
+    // A closed server no longer needs the process hooks; dropping them keeps repeated starts (tests) leak-free.
+    process.off('exit', disposeOnce);
+    process.off('SIGINT', onSigint);
+    process.off('SIGTERM', onSigterm);
   });
+  process.once('exit', disposeOnce);
+  process.once('SIGINT', onSigint);
+  process.once('SIGTERM', onSigterm);
 }
 
 async function listen(server: Server, port: number, autoPort: boolean): Promise<void> {
@@ -110,18 +130,38 @@ async function listen(server: Server, port: number, autoPort: boolean): Promise<
   }
 }
 
-export async function startServer(rawPath: string, options: ServerOptions = {}): Promise<Server> {
+/** The port the socket is really bound to (port 0 and auto-port starts differ from the requested one). */
+function boundPort(server: Server, requested: number): number {
+  const address = server.address();
+  return typeof address === 'object' && address ? address.port : requested;
+}
+
+/**
+ * Starts the program: opens every path as a project, remembers them, and serves the guarded registry
+ * app on one port. It always serves createRegistryApp with the request guard (SEC-05); createApp above
+ * is the test-only wrapper and is never constructed here. The Host policy learns the real port once the
+ * socket is listening, including when an auto-port start moved off the default.
+ */
+export async function startServer(rawPaths: readonly string[], options: ServerOptions = {}): Promise<Server> {
   const production = options.production ?? process.env.NODE_ENV === 'production';
   const port = options.port ?? DEFAULT_PORT;
-  const source = await createSnapshotSource(rawPath);
-  const app = createApp(source, production);
+  const store = options.settings ?? new FileSettingsStore(defaultSettingsDir(), identityOfTarget);
+  const registry = new ProjectRegistry({
+    store,
+    ...(options.createSource ? { createSource: options.createSource } : {}),
+    ...(options.remoteRunner ? { remoteRunner: options.remoteRunner } : {}),
+  });
+  await registry.registerCliTargets(rawPaths);
+  const policy = createHostPolicy(options.allowedHosts ?? parseAllowedHosts(process.env.LABELORE_ALLOWED_HOSTS));
+  const app = createRegistryApp(registry, { policy, production, staticRoot: './dist' });
 
   const autoPort = options.autoPort ?? false;
 
   if (production) {
     const server = createAdaptorServer({ fetch: app.fetch, hostname: HOSTNAME }) as Server;
-    registerDisposal(source, server);
+    registerDisposal(registry, server);
     await listen(server, port, autoPort);
+    policy.setPort(boundPort(server, port));
     return server;
   }
 
@@ -148,21 +188,23 @@ export async function startServer(rawPath: string, options: ServerOptions = {}):
     server: { middlewareMode: true, ws: { server } },
   });
   server.on('close', () => void vite.close());
-  registerDisposal(source, server);
+  registerDisposal(registry, server);
   await listen(server, port, autoPort);
+  policy.setPort(boundPort(server, port));
   return server;
 }
 
 interface CliOptions {
-  rawPath: string;
+  /** Every positional argument in order; the working directory when there is none. */
+  rawPaths: string[];
   port: number;
   /** True unless `--port` was given. */
   autoPort: boolean;
   smoke: boolean;
 }
 
-function parseCli(args: string[]): CliOptions {
-  let rawPath = process.cwd();
+export function parseCli(args: string[]): CliOptions {
+  const rawPaths: string[] = [];
   let port = DEFAULT_PORT;
   let autoPort = true;
   let smoke = false;
@@ -180,24 +222,30 @@ function parseCli(args: string[]): CliOptions {
     } else if (arg.startsWith('--port=')) {
       port = Number(arg.slice('--port='.length));
       autoPort = false;
-    } else if (!arg.startsWith('-')) {
-      rawPath = arg;
+    } else if (arg.startsWith('-')) {
+      // D-16: there is no --scan. A flag Labelore does not know stops the start instead of being read as a path.
+      throw new Error(`Unknown option: ${arg} (supported: --port, --smoke)`);
+    } else {
+      rawPaths.push(arg);
     }
   }
 
   if (!Number.isInteger(port) || port < 0 || port > 65_535) {
     throw new Error(`Invalid port: ${port}`);
   }
-  return { rawPath, port: smoke && port === DEFAULT_PORT ? 0 : port, autoPort, smoke };
+  if (rawPaths.length === 0) rawPaths.push(process.cwd());
+  return { rawPaths, port: smoke && port === DEFAULT_PORT ? 0 : port, autoPort, smoke };
 }
 
 async function runCli(): Promise<void> {
   const options = parseCli(process.argv.slice(2));
   const production = process.env.NODE_ENV === 'production';
-  const server = await startServer(options.rawPath, {
+  const server = await startServer(options.rawPaths, {
     port: options.port,
     autoPort: options.autoPort,
     production,
+    // A smoke run writes no settings file (D-09).
+    ...(options.smoke ? { settings: new MemorySettingsStore() } : {}),
   });
   const address = server.address();
   const port = typeof address === 'object' && address ? address.port : options.port;
@@ -205,8 +253,11 @@ async function runCli(): Promise<void> {
 
   if (options.smoke) {
     try {
+      const list = await fetch(`${baseUrl}/api/projects`);
+      const first = list.ok ? ((await list.json()) as ProjectListResponse).projects[0] : undefined;
+      if (!first) throw new Error('Smoke response contract failed');
       const [dashboard, root] = await Promise.all([
-        fetch(`${baseUrl}/api/dashboard`),
+        fetch(`${baseUrl}/api/projects/${encodeURIComponent(first.slug)}/dashboard`),
         fetch(`${baseUrl}/`),
       ]);
       const payload = (await dashboard.json()) as {
@@ -216,19 +267,24 @@ async function runCli(): Promise<void> {
       if (!dashboard.ok || !root.ok || !payload.readAt || !payload.loadStatus) {
         throw new Error('Smoke response contract failed');
       }
-      console.log(`Labelore smoke passed for ${options.rawPath} (load status: ${payload.loadStatus.status})`);
+      console.log(
+        `Labelore smoke passed for ${options.rawPaths.join(', ')} (load status: ${payload.loadStatus.status})`,
+      );
     } finally {
       server.close();
     }
     return;
   }
 
-  console.log(`Labelore is reading ${options.rawPath}`);
-  const remoteParse = parseRemoteTarget(options.rawPath);
-  if (remoteParse.kind === 'remote') {
-    console.log(
-      `Remote target ${remoteParse.target.label}: .planning mirrored read-only over ssh; Refresh pulls it again`,
-    );
+  const listing = (await (await fetch(`${baseUrl}/api/projects`)).json()) as ProjectListResponse;
+  for (const project of listing.projects) {
+    console.log(`Labelore is reading ${project.slug}: ${project.displayPath}`);
+    const remoteParse = parseRemoteTarget(project.target);
+    if (remoteParse.kind === 'remote') {
+      console.log(
+        `Remote target ${remoteParse.target.label}: .planning mirrored read-only over ssh; Refresh pulls it again`,
+      );
+    }
   }
   // debug/loading-state-regression: the tunnel origin had been running this file with NODE_ENV
   // unset since Sep 15, silently serving the Vite dev middleware. Over a ~150 ms-RTT tunnel that
