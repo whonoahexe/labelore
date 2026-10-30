@@ -1307,6 +1307,16 @@ Sketch 038 C (quick-261024-vty): places on the left, the chosen place's files on
 | `research-verify` | Research | How to verify: a mono label and the check over an accent (`--primary`) left rule, with no tick icon |
 | `research-ledger` | Research | "Looks done but isn't": a numbered two-column ledger (one column under 62rem), each check with the pitfalls it names as chips |
 
+### Projects
+
+| Class | Surface | Note |
+|---|---|---|
+| `projects-page` | Projects | The `<main>` of the projects landing page (`projects-page.tsx`) and of the unknown-project page; its `.lede` is set to Body size and a direct-child `<aside>` becomes the side column from 62rem (globals.css, Phase 8 projects block) |
+| `project-list` | Projects | The `<ul>` of project rows, ruled top and bottom; shared by the landing page, the unknown-project page and the switcher (globals.css, Phase 8 projects block) |
+| `project-row` | Projects | One project: name over path on the left, load mark over last-opened time on the right, an unavailable project's reason on its own line; `data-current="true"` marks the current project (globals.css, Phase 8 projects block) |
+| `project-row-name` | Projects | The row's name link, stretched over the whole row; Body size, semibold, clamped at two lines (globals.css, Phase 8 projects block) |
+| `project-row-path` | Projects | The row's folder or `ssh://` target in mono with a Folder or Server icon, one line with an end ellipsis; the full value is its `title` (globals.css, Phase 8 projects block) |
+
 ## How to extend
 
 1. **New shared name** — a new class two or more views/pages will use identically: add a row to

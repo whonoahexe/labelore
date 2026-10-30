@@ -1,4 +1,4 @@
-import { lazy } from 'react';
+import { lazy, Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   createBrowserRouter,
@@ -13,6 +13,7 @@ import { LEGACY_FIRST_SEGMENTS, PROJECT_PAGES } from '../presentation/reserved.t
 import { presentationRoutePatterns } from '../presentation/routes.ts';
 import type { ProjectPresentation } from '../server/project-presentation.ts';
 import { AppShell, fetchPresentation } from './components/app-shell.tsx';
+import { RouteFallback, RouteProgress } from './components/route-progress.tsx';
 import { trackRouteChunk } from './components/route-chunk-store.ts';
 import { Link, ProjectSlugProvider } from './nav.tsx';
 import { InvalidProjectScreen } from './pages/invalid-project-screen.tsx';
@@ -59,6 +60,11 @@ const DocumentRoute = lazy(
 const PlanPairPage = lazy(
   trackRouteChunk(() =>
     import('./pages/plan-pair-page.tsx').then((m) => ({ default: m.PlanPairPage })),
+  ),
+);
+const ProjectsPage = lazy(
+  trackRouteChunk(() =>
+    import('./pages/projects-page.tsx').then((m) => ({ default: m.ProjectsPage })),
   ),
 );
 
@@ -141,16 +147,17 @@ function ProjectRouteSwitch({
   );
 }
 
-/** `/`: lands on the open project's dashboard once its slug is known, replacing the history entry
- * so Back does not return to a bare `/`. While the payload loads (or fails) the shell shows its
- * own Reading snapshot and notice states. */
-function RootRedirect(): React.JSX.Element {
-  const presentation = useQuery({ queryKey: ['presentation'], queryFn: fetchPresentation });
-  if (presentation.data && presentation.data.loadStatus.status !== 'ok') {
-    return <InvalidProjectScreen loadStatus={presentation.data.loadStatus} />;
-  }
-  if (presentation.data) return <Navigate replace to={`/${presentation.data.projectSlug}`} />;
-  return <AppShell />;
+/** `/`: the projects landing page, for any number of projects and never a redirect (D-01). It has no
+ * shell around it, so it brings the route progress bar and the Suspense boundary its lazy chunk needs. */
+function ProjectsRoute(): React.JSX.Element {
+  return (
+    <>
+      <RouteProgress />
+      <Suspense fallback={<RouteFallback />}>
+        <ProjectsPage />
+      </Suspense>
+    </>
+  );
 }
 
 const UNPREFIXED_WORDS: ReadonlySet<string> = new Set([...PROJECT_PAGES, ...LEGACY_FIRST_SEGMENTS]);
@@ -234,10 +241,10 @@ function ProjectGate(): React.JSX.Element {
   return <AppShell />;
 }
 
-// NAV-10: two entries. `/` finds the open project's slug; `/:project/*` is every address under it, and
-// ProjectRouteSwitch decides the page from the raw pathname.
+// NAV-10: two entries. `/` is the projects landing page; `/:project/*` is every address under a project,
+// and ProjectRouteSwitch decides the page from the raw pathname.
 export const appRoutes: RouteObject[] = [
-  { path: '/', element: <RootRedirect />, errorElement: <RouteError /> },
+  { path: '/', element: <ProjectsRoute />, errorElement: <RouteError /> },
   { path: '/:project/*', element: <ProjectGate />, errorElement: <RouteError /> },
 ];
 

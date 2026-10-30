@@ -3,6 +3,10 @@
 // and test/web/nav-contract.test.ts fail on a router link anywhere else. Phase 8 swaps the slug
 // source (useProjectSlug) here and nowhere else.
 //
+// Link, NavLink and useProjectNavigate prefix the current slug, for links inside a project. AppLink
+// and useAppNavigate are the one way to reach '/' or another project: they never take the current
+// slug, and a target that is not '/' or '/' plus a valid slug collapses to '/'.
+//
 // Everything below the router speaks project-relative paths ('/roadmap', '/milestones/...'): the
 // wrappers add the slug on the way out, and the location hooks take it off on the way in.
 import { createContext, forwardRef, useCallback, useContext } from 'react';
@@ -17,7 +21,7 @@ import {
   type NavigateOptions,
   type To,
 } from 'react-router';
-import { splitProjectPath, withProjectSlug } from './project-path.ts';
+import { projectRootPath, splitProjectPath, withProjectSlug } from './project-path.ts';
 
 /** Overrides the route parameter. The router gate provides the open project's slug here when the
  * address named another project, so the shell's links still lead into the project that is open. */
@@ -58,6 +62,31 @@ export const NavLink = forwardRef<HTMLAnchorElement, NavLinkProps>(function NavL
   const slug = useProjectSlug();
   return <RouterNavLink ref={ref} to={prefixTo(slug, to)} {...props} />;
 });
+
+/** A target that names the landing page or one project, checked again here: '/' passes, '/' plus a
+ * valid slug passes, anything else (a query, a path below a project, '//evil') is '/'. */
+function appTarget(to: string): string {
+  return to.startsWith('/') ? projectRootPath(to.slice(1)) : '/';
+}
+
+/** A link to '/' or to another project's root. Never prefixed with the current project's slug. */
+export const AppLink = forwardRef<HTMLAnchorElement, Omit<LinkProps, 'to'> & { to: string }>(function AppLink(
+  { to, ...props },
+  ref,
+) {
+  return <RouterLink ref={ref} to={appTarget(to)} {...props} />;
+});
+
+/** navigate() for '/' or another project's root, under the same rule as AppLink. */
+export function useAppNavigate(): (to: string, options?: NavigateOptions) => void {
+  const navigate = useNavigate();
+  return useCallback(
+    (to, options) => {
+      void navigate(appTarget(to), options);
+    },
+    [navigate],
+  );
+}
 
 /** navigate() with the slug prefixed; a number (history delta) passes through. */
 export function useProjectNavigate(): (to: To | number, options?: NavigateOptions) => void {
