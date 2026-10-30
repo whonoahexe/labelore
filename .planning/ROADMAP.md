@@ -207,7 +207,7 @@ target or a settings change refuses requests from other websites.
 5. A request from another website to any endpoint that accepts a path, an `ssh://` target or a
    settings change is refused. *(SEC-05)*
 
-**Plans**: 4/17 plans executed
+**Plans**: 6/17 plans executed
 
 Plans:
 **Wave 1**
@@ -219,8 +219,8 @@ Plans:
 - [x] 08-04-PLAN.md — Labelore's own settings file: pure model, atomic store at a fixed path (second node:fs importer), corrupt, newer and hand-edited files, the two-importer gate and per-worker test settings
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 08-16-PLAN.md — The remembered list on the settings store: add over the guarded API, CLI remembering, forget, open stamps, PROJECT.md titles, last-opened order, and the proof it never writes inside a target
-- [ ] 08-05-PLAN.md — The projects landing page at /: api.ts, the query-key factory, project rows, plain header, last-opened times, AppLink and the unknown-project page
+- [x] 08-16-PLAN.md — The remembered list on the settings store: add over the guarded API, CLI remembering, forget, open stamps, PROJECT.md titles, last-opened order, and the proof it never writes inside a target
+- [x] 08-05-PLAN.md — The projects landing page at /: api.ts, the query-key factory, project rows, plain header, last-opened times, AppLink and the unknown-project page
 
 **Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 08-06-PLAN.md — startServer serves the guarded registry for every CLI path; the in-handler refresh check goes; probes, Playwright servers and the e2e URL helper on /api/projects with their own settings directories
@@ -433,7 +433,7 @@ file, ID or project.
 | quick tasks | v2.0 | 40/40 | Archived | 2026-10-25 |
 | 6. Trustworthy Tests and Security Baseline | v2.1 | 22/22 | Complete    | 2026-10-26 |
 | 7. Recognised Files and Readable URLs | v2.1 | 10/10 | Complete    | 2026-10-27 |
-| 8. Several Projects and a Switcher | v2.1 | 4/17 | In Progress | - |
+| 8. Several Projects and a Switcher | v2.1 | 6/17 | In Progress | - |
 | 9. Review, Audit and Root Document Pages | v2.1 | 0/TBD | Not started | - |
 | 10. Codebase Map, Specification and Check Pages | v2.1 | 0/TBD | Not started | - |
 | 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 0/TBD | Not started | - |
