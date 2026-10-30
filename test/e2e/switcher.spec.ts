@@ -58,6 +58,14 @@ async function sidewaysOverflow(page: Page): Promise<number> {
   return await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 }
 
+/** Opens the landing page the way a person does: from a project, through the switcher's 'All projects'. */
+async function goToLanding(page: Page, base: string, from: ListedProject): Promise<void> {
+  await page.goto(await projectUrl(base, '/', from.slug));
+  const popup = await openSwitcher(page, from);
+  await popup.getByRole('link', { name: 'All projects' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toBeVisible();
+}
+
 test.describe('header project switcher', () => {
   let server: ProjectsServer;
   let lendshed: ListedProject;
@@ -301,6 +309,11 @@ test.describe('adding a project', () => {
     return realpathSync(copy);
   }
 
+  /** The slugs in the list: the list's last-opened times move whenever a page is opened. */
+  async function listSlugs(): Promise<string[]> {
+    return (await listProjects(server.base)).map((entry) => entry.slug);
+  }
+
   function savedTargets(): string[] {
     const saved = JSON.parse(readFileSync(join(server.configDir, 'settings.json'), 'utf8')) as {
       projects: { target: string }[];
@@ -350,6 +363,128 @@ test.describe('adding a project', () => {
     await expect(page).toHaveURL(new RegExp(`/${added.slug}$`));
     await expect(page.locator('#project-name-heading')).toBeVisible();
     await expect(triggerFor(page, added)).toBeVisible();
+    expect(savedTargets()).toContain(folder);
+  });
+
+  test('a path that is not there keeps the dialog open with the typed text and the server\'s words', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto(await projectUrl(server.base, '/', lendshed.slug));
+    const before = savedTargets();
+    const missing = join(tmpdir(), 'switcher-add-no-such-folder');
+
+    const popup = await openSwitcher(page, lendshed);
+    await popup.getByRole('button', { name: 'Add or scan…' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Add a project' });
+    const field = dialog.getByLabel('Project location');
+    await field.fill(missing);
+    await dialog.getByRole('button', { name: 'Add project' }).click();
+
+    // The notice is an alert: the heading, the server's message, then the path it checked.
+    const notice = dialog.getByRole('alert');
+    await expect(notice).toBeVisible();
+    await expect(notice).toContainText('Could not add this project.');
+    await expect(notice).toContainText('No such path:');
+    await expect(notice).toContainText('Path checked:');
+    await expect(dialog).toBeVisible();
+    await expect(field).toHaveValue(missing);
+    await expect(field).toHaveAttribute('aria-invalid', 'true');
+    await expect(field).toHaveAttribute('aria-describedby', (await notice.getAttribute('id')) ?? '');
+    await expect(dialog.getByRole('button', { name: 'Add project' })).toBeEnabled();
+    expect(savedTargets()).toEqual(before);
+
+    // Typing again takes the stale notice away.
+    await field.fill(`${missing}-2`);
+    await expect(notice).toBeHidden();
+    await expect(field).not.toHaveAttribute('aria-invalid', 'true');
+  });
+
+  test('an empty submit shows the server\'s message and adds nothing', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto(await projectUrl(server.base, '/', lendshed.slug));
+    const before = savedTargets();
+
+    const popup = await openSwitcher(page, lendshed);
+    await popup.getByRole('button', { name: 'Add or scan…' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Add a project' });
+    await dialog.getByRole('button', { name: 'Add project' }).click();
+
+    await expect(dialog.getByRole('alert')).toContainText('Enter a folder path or an ssh:// target.');
+    await expect(dialog.getByLabel('Project location')).toHaveAttribute('aria-invalid', 'true');
+    expect(savedTargets()).toEqual(before);
+  });
+
+  test('a project already in the list is named with a link to it, and nothing is created', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto(await projectUrl(server.base, '/', lendshed.slug));
+    const before = savedTargets();
+    const listed = await listSlugs();
+
+    const popup = await openSwitcher(page, lendshed);
+    await popup.getByRole('button', { name: 'Add or scan…' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Add a project' });
+    await dialog.getByLabel('Project location').fill(FIXTURE_ROOT);
+    await dialog.getByRole('button', { name: 'Add project' }).click();
+
+    await expect(dialog.getByText(`${lendshed.name} is already in your list.`)).toBeVisible();
+    const open = dialog.getByRole('link', { name: `Open ${lendshed.name}` });
+    await expect(open).toHaveAttribute('href', `/${lendshed.slug}`);
+    expect(await listSlugs()).toEqual(listed);
+    expect(savedTargets()).toEqual(before);
+
+    // Following the link leaves the dialog behind.
+    await open.click();
+    await expect(dialog).toBeHidden();
+    await expect(page).toHaveURL(new RegExp(`/${lendshed.slug}$`));
+  });
+
+  test('a refused request (403) shows the refusal copy and changes nothing', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto(await projectUrl(server.base, '/', lendshed.slug));
+    const before = savedTargets();
+    const listed = await listSlugs();
+    await page.route('**/api/projects', async (route) => {
+      if (route.request().method() === 'POST') {
+        await route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ error: 'no' }) });
+        return;
+      }
+      await route.continue();
+    });
+
+    const popup = await openSwitcher(page, lendshed);
+    await popup.getByRole('button', { name: 'Add or scan…' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Add a project' });
+    const field = dialog.getByLabel('Project location');
+    await field.fill(copyShapes());
+    await dialog.getByRole('button', { name: 'Add project' }).click();
+
+    await expect(dialog.getByRole('alert')).toHaveText(
+      'Labelore refused this request because it did not come from its own page. Reload the page and try again.',
+    );
+    // The refusal is about the request, not the text: the field is not marked invalid.
+    await expect(field).not.toHaveAttribute('aria-invalid', 'true');
+    expect(await listSlugs()).toEqual(listed);
+    expect(savedTargets()).toEqual(before);
+  });
+
+  test('the landing page holds the same form beside the list and adds a second copy', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await goToLanding(page, server.base, lendshed);
+    const section = page.getByRole('region', { name: 'Add a project' });
+    await expect(section).toBeVisible();
+    await expect(section.getByLabel('Project location')).toBeVisible();
+    // Beside the list at 1280px (sketch 040 B): the side column starts to the right of the list column.
+    const listBox = await box(page.locator('.projects-page > section').first());
+    const sideBox = await box(page.locator('.projects-page > aside'));
+    expect(sideBox.x).toBeGreaterThan(listBox.x + listBox.width);
+
+    const folder = copyShapes();
+    await section.getByLabel('Project location').fill(folder);
+    await section.getByRole('button', { name: 'Add project' }).click();
+
+    const added = (await listProjects(server.base)).find((entry) => entry.target === folder);
+    if (!added) throw new Error('switcher.spec: the second copy is not in the project list');
+    await expect(page).toHaveURL(new RegExp(`/${added.slug}$`));
+    await expect(page.locator('#project-name-heading')).toBeVisible();
     expect(savedTargets()).toContain(folder);
   });
 });
