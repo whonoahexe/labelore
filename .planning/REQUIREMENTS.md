@@ -31,7 +31,7 @@ v1.0 and v1.1; new categories start at 01.
 - [x] **SEC-03**: View mode caps the number of outline entries the way Source mode does
 - [x] **SEC-04**: Secrets in `config.json` (API keys and similar) are masked everywhere Labelore shows or indexes
       it: the settings page, the raw file and search
-- [ ] **SEC-05**: Endpoints that accept a path, an `ssh://` target or a settings change refuse requests from other
+- [x] **SEC-05**: Endpoints that accept a path, an `ssh://` target or a settings change refuse requests from other
       websites, and Labelore's settings file can never be written inside a target project
 
 ### Recognising files
@@ -178,7 +178,7 @@ Which phases cover which requirements. Filled in when the roadmap is created.
 | SEC-02 | Phase 6 | Complete |
 | SEC-03 | Phase 6 | Complete |
 | SEC-04 | Phase 6 | Complete |
-| SEC-05 | Phase 8 | Pending |
+| SEC-05 | Phase 8 | Complete |
 | DATA-07 | Phase 7 | Complete |
 | DATA-08 | Phase 7 | Complete |
 | VIEW-07 | Phase 9 | Pending |
