@@ -1,11 +1,12 @@
 // The page matrix: the four reference pages, one
 // artifact per `artifact.kind` present in the corpus (picked deterministically, never
-// hardcoded), and one plan-pair page. Built once per run from the live `/api/presentation`
+// hardcoded), and one plan-pair page. Built once per run from the live project presentation
 // payload — never from a fixture list — so it always reflects this repo's own
 // `.planning/` corpus.
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { VIEW_KINDS } from '../../src/web/views/kinds.ts';
+import { projectApiUrl } from './app-url.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -76,9 +77,9 @@ const REFERENCE_SPECS: PageSpec[] = [
 ];
 
 export async function buildPageMatrix(baseURL: string): Promise<PageMatrix> {
-  const response = await fetch(`${baseURL}/api/presentation`);
+  const response = await fetch(await projectApiUrl(baseURL, '/presentation'));
   if (!response.ok) {
-    throw new Error(`buildPageMatrix: /api/presentation responded ${response.status}`);
+    throw new Error(`buildPageMatrix: the project's presentation payload responded ${response.status}`);
   }
   const presentation = (await response.json()) as ProjectPresentation;
 
