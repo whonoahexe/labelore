@@ -25706,6 +25706,25 @@ button.research-step-chip:hover {
   line-height: var(--lh-normal);
 }
 
+.project-row-meta {
+  grid-area: meta;
+  justify-self: end;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-normal);
+  white-space: nowrap;
+}
+
+.projects-page .notice button {
+  font-size: var(--fs-3);
+}
+
+.projects-page .quiet-state svg {
+  animation: project-row-spin 1s linear infinite;
+}
+
 @keyframes project-row-spin {
   to {
     transform: rotate(360deg);
@@ -25713,7 +25732,8 @@ button.research-step-chip:hover {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .project-row > .status-chip[data-tone='quiet'] svg {
+  .project-row > .status-chip[data-tone='quiet'] svg,
+  .projects-page .quiet-state svg {
     animation: none;
   }
 }
