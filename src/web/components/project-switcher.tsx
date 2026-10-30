@@ -7,13 +7,15 @@
 // AppLink, which never takes the current slug (T-08-41).
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronsUpDown } from 'lucide-react';
+import { ChevronsUpDown, Plus } from 'lucide-react';
 import { Popover } from '@base-ui/react/popover';
 import type { ProjectListEntry } from '../../presentation/project-list.ts';
 import { fetchProjects } from '../api.ts';
 import { AppLink } from '../nav.tsx';
 import { projectsKey } from '../query-keys.ts';
+import { ProjectAddDialog } from './project-add-dialog.tsx';
 import { ProjectList } from './project-row.tsx';
+import { Button } from './ui/button.tsx';
 
 /** Set when a row of another project is chosen: the switcher that mounts in that project's shell
  * focuses the main content once, then clears it. The whole shell is keyed by slug, so the switcher
@@ -32,15 +34,22 @@ function focusMainContent(): void {
   mainContent()?.focus({ preventScroll: true });
 }
 
-/** What the person chose in the list: a project row, 'All projects', or nothing yet. */
-type Choice = 'project' | 'all' | null;
+/** What the person chose in the list: a project row, 'All projects', the add dialog, or nothing yet. */
+type Choice = 'project' | 'all' | 'add' | null;
 
 /**
  * The inside of the list: the 'Projects' head with its 'All projects' link, the rows (or the empty
- * note) and the footer region 08-17 fills with its 'Add or scan…' entry. The list query lives here, so
- * it is observed, and therefore refetched (staleTime 0), only while the list is open.
+ * note) and the footer with its 'Add or scan…' entry. The list query lives here, so it is observed,
+ * and therefore refetched (staleTime 0), only while the list is open.
  */
-export function ProjectSwitcherPanel({ currentSlug }: { currentSlug: string }): React.JSX.Element {
+export function ProjectSwitcherPanel({
+  currentSlug,
+  onAddOrScan,
+}: {
+  currentSlug: string;
+  /** The footer entry was pressed: the host closes the list and opens the add dialog. */
+  onAddOrScan(): void;
+}): React.JSX.Element {
   const list = useQuery({ queryKey: projectsKey, queryFn: fetchProjects, staleTime: 0 });
   const entries = list.data?.projects ?? [];
 
@@ -64,7 +73,12 @@ export function ProjectSwitcherPanel({ currentSlug }: { currentSlug: string }): 
         </AppLink>
       </header>
       <div>{body}</div>
-      <div className="project-switcher-footer" />
+      <div className="project-switcher-footer">
+        <Button onClick={onAddOrScan} type="button" variant="ghost">
+          <Plus aria-hidden="true" />
+          Add or scan…
+        </Button>
+      </div>
     </>
   );
 }
@@ -77,6 +91,7 @@ export function ProjectSwitcher({
   meta: string | null;
 }): React.JSX.Element {
   const [open, setOpen] = useState(false);
+  const [adding, setAdding] = useState(false);
   // The popup hangs under the header, not just under the trigger (the trigger sits in the header's
   // first row, and below 42rem the tabs sit in a second row the list must not cover).
   const [sideOffset, setSideOffset] = useState(4);
@@ -116,44 +131,55 @@ export function ProjectSwitcher({
     [current.slug],
   );
 
+  // 'Add or scan…' is a button, not a link, so the popup does not close for it by itself: close the list
+  // and open the add dialog together, and leave focus to the dialog (it hands it back to the trigger).
+  const onAddOrScan = useCallback(() => {
+    choice.current = 'add';
+    setOpen(false);
+    setAdding(true);
+  }, []);
+
   return (
-    <Popover.Root open={open} onOpenChange={onOpenChange}>
-      <Popover.Trigger
-        ref={triggerRef}
-        className="project-switcher-trigger"
-        aria-label={`Switch project. Current project: ${current.name}`}
-        aria-haspopup="dialog"
-        title={current.target}
-      >
-        <span className="brand-project">
-          <span className="brand-project-name">{current.name}</span>
-          {meta ? <small className="brand-meta">{meta}</small> : null}
-        </span>
-        <ChevronsUpDown aria-hidden="true" />
-      </Popover.Trigger>
-      <Popover.Portal>
-        <Popover.Positioner
-          className="project-switcher-positioner"
-          sideOffset={sideOffset}
-          align="start"
-          collisionPadding={0}
-          positionMethod="fixed"
+    <>
+      <Popover.Root open={open} onOpenChange={onOpenChange}>
+        <Popover.Trigger
+          ref={triggerRef}
+          className="project-switcher-trigger"
+          aria-label={`Switch project. Current project: ${current.name}`}
+          aria-haspopup="dialog"
+          title={current.target}
         >
-          <Popover.Popup
-            className="project-switcher-popup"
-            aria-label="Projects"
-            initialFocus
-            finalFocus={() => {
-              if (choice.current === 'project') return mainContent();
-              if (choice.current === 'all') return false;
-              return triggerRef.current;
-            }}
-            onClick={onPopupClick}
+          <span className="brand-project">
+            <span className="brand-project-name">{current.name}</span>
+            {meta ? <small className="brand-meta">{meta}</small> : null}
+          </span>
+          <ChevronsUpDown aria-hidden="true" />
+        </Popover.Trigger>
+        <Popover.Portal>
+          <Popover.Positioner
+            className="project-switcher-positioner"
+            sideOffset={sideOffset}
+            align="start"
+            collisionPadding={0}
+            positionMethod="fixed"
           >
-            <ProjectSwitcherPanel currentSlug={current.slug} />
-          </Popover.Popup>
-        </Popover.Positioner>
-      </Popover.Portal>
-    </Popover.Root>
+            <Popover.Popup
+              className="project-switcher-popup"
+              aria-label="Projects"
+              initialFocus
+              finalFocus={() => {
+                if (choice.current === 'project') return mainContent();
+                if (choice.current === 'all' || choice.current === 'add') return false;
+                return triggerRef.current;
+              }}
+              onClick={onPopupClick}
+            >
+              <ProjectSwitcherPanel currentSlug={current.slug} onAddOrScan={onAddOrScan} />
+            </Popover.Popup>
+          </Popover.Positioner>
+        </Popover.Portal>
+      </Popover.Root>
+      <ProjectAddDialog open={adding} onOpenChange={setAdding} finalFocus={triggerRef} />
+    </>
   );
 }

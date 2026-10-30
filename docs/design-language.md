@@ -1322,6 +1322,8 @@ Sketch 038 C (quick-261024-vty): places on the left, the chosen place's files on
 | `project-switcher-positioner` | Projects | The `Popover.Positioner` wrapper around the switcher popup; only layers it above the header (globals.css, Phase 8 switcher block) |
 | `project-switcher-popup` | Projects | The switcher's non-modal popup: the `--popover` surface with a Projects head, the scrolling project list and the footer region; at most 448px wide and min(448px, 70vh) tall, the full viewport width under the header below 42rem (globals.css, Phase 8 switcher block) |
 | `project-switcher-footer` | Projects | The switcher popup's footer region, ruled on top and hidden while empty; it holds the "Add or scan…" entry (globals.css, Phase 8 switcher block) |
+| `project-add-form` | Projects | The add form: the "Project location" field, its notice (a destructive alert for a failed add, a plain status for a duplicate) and the action row ending in the accent "Add project"; one component (`add-project-form.tsx`) hosted by the landing page's side column and by the add dialog (globals.css, Phase 8 add block) |
+| `project-add-dialog` | Projects | The modal "Add a project" dialog opened from the switcher footer; width `min(calc(var(--space-8) * 16), calc(100vw - var(--space-8)))`, title at Heading size (`project-add-dialog.tsx`, globals.css, Phase 8 add block) |
 
 ## How to extend
 
