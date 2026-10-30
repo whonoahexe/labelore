@@ -1,8 +1,9 @@
-// NAV-09: the pure slug helpers behind src/web/nav.tsx and the router gate.
+// NAV-09: the pure slug helpers behind src/web/nav.tsx and the project layout.
 import { describe, expect, it } from 'vitest';
 import {
   decodeAddress,
-  projectGateOutcome,
+  projectLayoutOutcome,
+  projectRootPath,
   splitProjectPath,
   withProjectSlug,
 } from '../../src/web/project-path.ts';
@@ -87,19 +88,38 @@ describe('decodeAddress', () => {
   });
 });
 
-describe('projectGateOutcome', () => {
-  const ok = { projectSlug: 'kilnrow', loadStatus: { status: 'ok' } };
+describe('projectRootPath', () => {
+  it('is the slug under a slash when it is a valid slug, else the landing page', () => {
+    expect(projectRootPath('kilnrow')).toBe('/kilnrow');
+    expect(projectRootPath('API')).toBe('/');
+    expect(projectRootPath('//evil')).toBe('/');
+    expect(projectRootPath('')).toBe('/');
+  });
+});
+
+describe('projectLayoutOutcome', () => {
+  const list = [{ slug: 'kilnrow' }, { slug: 'lendshed' }];
+  const ok = { loadStatus: { status: 'ok' } };
+  const missing = { loadStatus: { status: 'missing' } };
 
   it.each([
-    ['kilnrow', undefined, 'loading'],
-    ['anything', undefined, 'loading'],
-    ['kilnrow', { projectSlug: 'kilnrow', loadStatus: { status: 'missing' } }, 'invalid'],
-    ['other', { projectSlug: 'kilnrow', loadStatus: { status: 'missing' } }, 'invalid'],
-    ['other', ok, 'wrong-project'],
-    ['', ok, 'wrong-project'],
-    ['Kilnrow', ok, 'wrong-project'],
-    ['kilnrow', ok, 'open'],
-  ] as const)('first=%j with %j is %s', (first, presentation, outcome) => {
-    expect(projectGateOutcome(first, presentation)).toBe(outcome);
-  });
+    ['kilnrow', 'pending', undefined, 'pending', undefined, 'loading-list'],
+    ['kilnrow', 'success', undefined, 'pending', undefined, 'loading-list'],
+    ['kilnrow', 'error', undefined, 'pending', undefined, 'list-error'],
+    ['other', 'success', list, 'pending', undefined, 'unknown'],
+    ['', 'success', list, 'pending', undefined, 'unknown'],
+    ['Kilnrow', 'success', list, 'pending', undefined, 'unknown'],
+    ['kilnrow ', 'success', list, 'pending', undefined, 'unknown'],
+    ['kilnrow', 'success', [], 'pending', undefined, 'unknown'],
+    ['kilnrow', 'success', list, 'pending', undefined, 'opening'],
+    ['kilnrow', 'success', list, 'success', undefined, 'opening'],
+    ['kilnrow', 'success', list, 'error', undefined, 'presentation-error'],
+    ['kilnrow', 'success', list, 'success', missing, 'invalid'],
+    ['kilnrow', 'success', list, 'success', ok, 'open'],
+  ] as const)(
+    'slug %j, list %s %j, presentation %s %j is %s',
+    (slug, listStatus, projects, presentationStatus, presentation, outcome) => {
+      expect(projectLayoutOutcome({ slug, listStatus, projects, presentationStatus, presentation })).toBe(outcome);
+    },
+  );
 });
