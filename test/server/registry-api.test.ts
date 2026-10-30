@@ -5,7 +5,7 @@
 // guardedRequest, so it carries the Host the request guard (SEC-05) allows; the guard's own refusals
 // are proven at the bottom of this file.
 import { existsSync, realpathSync } from 'node:fs';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it, vi } from 'vitest';
@@ -523,6 +523,119 @@ describe('POST /api/projects', () => {
     const { registry } = makeRegistry();
     const app = createRegistryApp(registry, { policy: testPolicy() });
     expect(enumerateApiRoutes(app).map((route) => route.key)).toContain('POST /api/projects');
+    registry.dispose();
+  });
+});
+
+describe('DELETE /api/projects/:slug', () => {
+  it('forgets a project by editing settings.json only and answers 200 with the slug', async () => {
+    const { registry, app, settingsText } = await rememberingRegistry();
+    await post(app, '/api/projects', { target: SHAPES_ROOT });
+    await post(app, '/api/projects', { target: FX_ROOT });
+    const treeBefore = await readdir(SHAPES, { recursive: true });
+
+    const response = await guardedRequest(app, '/api/projects/shapes', { method: 'DELETE' });
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ forgotten: 'shapes' });
+
+    const saved = JSON.parse((await settingsText()) ?? '{}') as { projects: { slug: string }[] };
+    expect(saved.projects.map((project) => project.slug)).toEqual(['lendshed']);
+    const listed = (await (await guardedRequest(app, '/api/projects')).json()) as ProjectListResponse;
+    expect(listed.projects.map((project) => project.slug)).toEqual(['lendshed']);
+    expect(await readdir(SHAPES, { recursive: true })).toEqual(treeBefore);
+    registry.dispose();
+  });
+
+  it('answers 404 Unknown project for an unknown slug, and a slug is forgotten only once', async () => {
+    const { registry, app } = await rememberingRegistry();
+    await post(app, '/api/projects', { target: SHAPES_ROOT });
+
+    const unknown = await guardedRequest(app, '/api/projects/nope', { method: 'DELETE' });
+    expect(unknown.status).toBe(404);
+    expect(await unknown.json()).toEqual({ error: 'Unknown project' });
+
+    expect((await guardedRequest(app, '/api/projects/shapes', { method: 'DELETE' })).status).toBe(200);
+    expect((await guardedRequest(app, '/api/projects/shapes', { method: 'DELETE' })).status).toBe(404);
+    registry.dispose();
+  });
+
+  it('answers 500 with the save-failed copy and keeps the entry when the write fails', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'labelore-registry-api-'));
+    settingsDirs.push(dir);
+    const inner = new FileSettingsStore(dir, identityOfTarget);
+    let failing = false;
+    const registry = new ProjectRegistry({
+      store: {
+        location: () => inner.location(),
+        read: () => inner.read(),
+        mutate: (update) =>
+          failing ? { ok: false, state: update(inner.read().state), reason: 'EROFS' } : inner.mutate(update),
+      },
+    });
+    const app = createRegistryApp(registry, { policy: testPolicy() });
+    await post(app, '/api/projects', { target: SHAPES_ROOT });
+
+    failing = true;
+    const response = await guardedRequest(app, '/api/projects/shapes', { method: 'DELETE' });
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({
+      error: 'Could not save the project list: EROFS. The change lasts only until Labelore restarts.',
+    });
+    const listed = (await (await guardedRequest(app, '/api/projects')).json()) as ProjectListResponse;
+    expect(listed.projects.map((project) => project.slug)).toEqual(['shapes']);
+    registry.dispose();
+  });
+});
+
+describe('POST /api/projects/:slug/open', () => {
+  it('stamps that project only and answers its slug and state', async () => {
+    const { registry, app, settingsText } = await rememberingRegistry();
+    await post(app, '/api/projects', { target: SHAPES_ROOT });
+    await post(app, '/api/projects', { target: FX_ROOT });
+
+    const response = await post(app, '/api/projects/lendshed/open', {});
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ slug: 'lendshed', state: 'loading' });
+
+    const saved = JSON.parse((await settingsText()) ?? '{}') as {
+      projects: { slug: string; lastOpened: string | null }[];
+      lastActive: string | null;
+    };
+    const stamps = Object.fromEntries(saved.projects.map((project) => [project.slug, project.lastOpened]));
+    expect(stamps.shapes).toBeNull();
+    expect(stamps.lendshed).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+    expect(saved.lastActive).toBe('lendshed');
+
+    // Opening shapes afterwards changes nothing for lendshed (D-08): no server-side active project.
+    await post(app, '/api/projects/shapes/open', {});
+    const after = JSON.parse((await settingsText()) ?? '{}') as { projects: { slug: string; lastOpened: string | null }[] };
+    expect(after.projects.find((project) => project.slug === 'lendshed')?.lastOpened).toBe(stamps.lendshed);
+    expect(after.projects.find((project) => project.slug === 'shapes')?.lastOpened).not.toBeNull();
+    registry.dispose();
+  });
+
+  it('starts the load, and the project then answers from its own runtime', async () => {
+    const { registry, app } = await rememberingRegistry();
+    await post(app, '/api/projects', { target: SHAPES_ROOT });
+    await post(app, '/api/projects/shapes/open', {});
+    await registry.runtime('shapes');
+    const listed = (await (await guardedRequest(app, '/api/projects')).json()) as ProjectListResponse;
+    expect(listed.projects[0]).toMatchObject({ slug: 'shapes', state: 'ready', name: 'Kilnrow' });
+    registry.dispose();
+  });
+
+  it('answers 404 Unknown project for an unknown slug', async () => {
+    const { registry, app } = await rememberingRegistry();
+    const response = await post(app, '/api/projects/nope/open', {});
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: 'Unknown project' });
+    registry.dispose();
+  });
+
+  it('keeps the route-enumeration table equal to the full route set, the new routes included', () => {
+    const { registry } = makeRegistry();
+    const keys = enumerateApiRoutes(createRegistryApp(registry, { policy: testPolicy() })).map((route) => route.key);
+    expect(keys).toEqual(expect.arrayContaining(['POST /api/projects', 'DELETE /api/projects/:slug', 'POST /api/projects/:slug/open']));
     registry.dispose();
   });
 });
