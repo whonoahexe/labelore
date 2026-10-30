@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { filePageKindOf } from '../../presentation/file-facts.ts';
-import { fetchPresentation } from '../components/app-shell.tsx';
+import { fetchPresentation } from '../api.ts';
+import { useProjectSlug } from '../nav.tsx';
+import { projectKey } from '../query-keys.ts';
 import { ArtifactPage } from './artifact-page.tsx';
 import { FileDetailsPage } from './file-details-page.tsx';
 import { ImagePage } from './image-page.tsx';
@@ -10,7 +12,11 @@ import { ImagePage } from './image-page.tsx';
  * page, a binary, a large text file or an over-cap image opens the File details card, and text (or
  * an address the payload does not hold) opens as an ArtifactPage. */
 export function DocumentRoute({ url }: { url: string }): React.JSX.Element {
-  const presentationQuery = useQuery({ queryKey: ['presentation'], queryFn: fetchPresentation });
+  const slug = useProjectSlug() ?? '';
+  const presentationQuery = useQuery({
+    queryKey: projectKey(slug, 'presentation'),
+    queryFn: () => fetchPresentation(slug),
+  });
   const presentation = presentationQuery.data;
   const artifact = presentation?.artifacts.find((candidate) => candidate.key === url);
   if (presentation && artifact) {

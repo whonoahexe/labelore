@@ -1,7 +1,7 @@
 // NAV-09: pure helpers for the project slug that opens every address. No React, no router: the
 // hooks that apply them live in nav.tsx, the only module that prefixes the slug, and the router
-// gate in app-router.tsx reads projectGateOutcome. Phase 8 adds projectRootPath, the address of a
-// project by slug alone (landing rows, 'See all projects').
+// layout in pages/project-layout.tsx reads projectLayoutOutcome. Phase 8 adds projectRootPath, the
+// address of a project by slug alone (landing rows, 'See all projects').
 import { isValidSlug } from '../presentation/project-slug.ts';
 
 /** Prefixes a project-relative target with the project slug. A null slug (no project route yet,
@@ -50,15 +50,31 @@ export function decodeAddress(pathname: string): string {
     .join('/');
 }
 
-export type ProjectGateOutcome = 'loading' | 'invalid' | 'wrong-project' | 'open';
+export type QueryStatusName = 'pending' | 'error' | 'success';
 
-/** What the router does with an address once it knows the first segment: wait for the payload,
- * show the invalid-project screen, show the not-found page for another project's name, or open. */
-export function projectGateOutcome(
-  first: string,
-  presentation: { projectSlug: string; loadStatus: { status: string } } | undefined,
-): ProjectGateOutcome {
-  if (presentation === undefined) return 'loading';
-  if (presentation.loadStatus.status !== 'ok') return 'invalid';
-  return first === presentation.projectSlug ? 'open' : 'wrong-project';
+export type ProjectLayoutOutcome =
+  | 'loading-list'
+  | 'list-error'
+  | 'unknown'
+  | 'opening'
+  | 'presentation-error'
+  | 'invalid'
+  | 'open';
+
+/** What the project layout shows for the first URL segment. The slug is looked up in the list by exact
+ * string equality (no case folding, no trimming), so `/Portal` is not `portal`. Only a listed slug can
+ * reach a presentation: an unknown one stops at `unknown`, and nothing is requested for it. */
+export function projectLayoutOutcome(input: {
+  slug: string;
+  listStatus: QueryStatusName;
+  projects: ReadonlyArray<{ slug: string }> | undefined;
+  presentationStatus: QueryStatusName;
+  presentation: { loadStatus: { status: string } } | undefined;
+}): ProjectLayoutOutcome {
+  if (input.listStatus === 'error') return 'list-error';
+  if (input.listStatus === 'pending' || input.projects === undefined) return 'loading-list';
+  if (!input.projects.some((entry) => entry.slug === input.slug)) return 'unknown';
+  if (input.presentationStatus === 'error') return 'presentation-error';
+  if (input.presentationStatus === 'pending' || input.presentation === undefined) return 'opening';
+  return input.presentation.loadStatus.status === 'ok' ? 'open' : 'invalid';
 }

@@ -12,13 +12,17 @@ import {
 import { LEGACY_FIRST_SEGMENTS, PROJECT_PAGES } from '../presentation/reserved.ts';
 import { presentationRoutePatterns } from '../presentation/routes.ts';
 import type { ProjectPresentation } from '../server/project-presentation.ts';
-import { AppShell, fetchPresentation } from './components/app-shell.tsx';
+import type { ProjectListEntry } from '../presentation/project-list.ts';
+import { fetchPresentation, fetchProjects } from './api.ts';
+import { AppShell } from './components/app-shell.tsx';
 import { RouteFallback, RouteProgress } from './components/route-progress.tsx';
 import { trackRouteChunk } from './components/route-chunk-store.ts';
 import { Link, ProjectSlugProvider } from './nav.tsx';
 import { InvalidProjectScreen } from './pages/invalid-project-screen.tsx';
 import { NotFoundPage } from './pages/not-found-page.tsx';
-import { decodeAddress, projectGateOutcome, splitProjectPath, withProjectSlug } from './project-path.ts';
+import { ProjectLayout } from './pages/project-layout.tsx';
+import { decodeAddress, splitProjectPath, withProjectSlug } from './project-path.ts';
+import { projectKey, projectsKey } from './query-keys.ts';
 import { resolveProjectRoute, resolveUnprefixedRoute } from './route-dispatch.ts';
 
 // Every routed page is lazy()-loaded, and every factory goes through `trackRouteChunk` so the
@@ -173,15 +177,17 @@ function isUnprefixedLegacyWord(first: string): boolean {
  * is a miss and the normal not-found page names the old pathname (D-13). Renders nothing of its own.
  */
 function UnprefixedLegacy({
+  project,
   presentation,
 }: {
+  project: ProjectListEntry;
   presentation: ProjectPresentation;
 }): React.JSX.Element {
   const location = useLocation();
   const outcome = resolveUnprefixedRoute(location.pathname, location.search, presentation);
   return (
     <ProjectSlugProvider value={presentation.projectSlug}>
-      <AppShell>
+      <AppShell project={project}>
         {outcome.kind === 'redirect' ? (
           <Navigate replace to={redirectLocation(presentation.projectSlug, outcome.to, location.hash)} />
         ) : (
@@ -196,56 +202,43 @@ function UnprefixedLegacy({
 }
 
 /**
- * D-14: gates the entire routed tree on a valid project. Runs the same `['presentation']` query
- * and imported `fetchPresentation` fetcher `AppShell` uses (no second request, no second
- * fetcher) and, on a non-ok `loadStatus`, returns `InvalidProjectScreen` instead of `AppShell` —
- * rendering no `<Outlet />` means no child route ever mounts, so hiding navigation, search, and
- * the tree is structural rather than conditional styling. While the query is pending or on a
- * query error, this falls through to `AppShell` unchanged, preserving its existing
- * "Reading snapshot…" and shell-notice states — no new loading screen is added here.
+ * An old address typed without a slug resolves against the most recently opened project: the first row
+ * of the list (the server orders it last opened first). With no projects there is nothing to resolve
+ * against, so it goes to the landing page. Reversible: this is the one branch that knows the rule.
  */
-function ProjectGate(): React.JSX.Element {
+function LegacyRoute(): React.JSX.Element {
+  const list = useQuery({ queryKey: projectsKey, queryFn: fetchProjects, staleTime: 0 });
+  const first = list.data?.projects[0];
+  const presentation = useQuery({
+    queryKey: projectKey(first?.slug ?? '', 'presentation'),
+    queryFn: () => fetchPresentation(first?.slug ?? ''),
+    enabled: first !== undefined,
+  });
+  if (list.isError || (list.data && first === undefined)) return <Navigate replace to="/" />;
+  if (first === undefined) return <RouteFallback />;
+  const loaded = presentation.data;
+  if (loaded && loaded.loadStatus.status !== 'ok') {
+    return <InvalidProjectScreen loadStatus={loaded.loadStatus} />;
+  }
+  if (loaded) return <UnprefixedLegacy project={first} presentation={loaded} />;
+  return <AppShell project={first} busy />;
+}
+
+/** `/:project/*`: an old un-prefixed address, or a project by its slug (D-06, D-07). */
+function ProjectRoute(): React.JSX.Element {
   const { project = '' } = useParams();
-  const location = useLocation();
-  const presentation = useQuery({ queryKey: ['presentation'], queryFn: fetchPresentation });
-  const outcome = projectGateOutcome(project, presentation.data);
-  if (presentation.data && presentation.data.loadStatus.status !== 'ok') {
-    return <InvalidProjectScreen loadStatus={presentation.data.loadStatus} />;
-  }
-  if (presentation.data && outcome === 'wrong-project' && isUnprefixedLegacyWord(project)) {
-    // NAV-11: an address from before the slug existed (`/roadmap`, `/search?q=...`, `/artifacts/a~...`).
-    return <UnprefixedLegacy presentation={presentation.data} />;
-  }
-  if (presentation.data && outcome === 'wrong-project') {
-    // NAV-09: the first segment is not this project's name. The shell's own links lead into the
-    // project that is open, not the name that was typed.
-    return (
-      <ProjectSlugProvider value={presentation.data.projectSlug}>
-        <AppShell>
-          <NotFoundPage
-            address={decodeAddress(location.pathname)}
-            openSlug={presentation.data.projectSlug}
-            wrongProject
-          />
-        </AppShell>
-      </ProjectSlugProvider>
-    );
-  }
-  if (presentation.data && outcome === 'open') {
-    return (
-      <AppShell>
-        <ProjectRouteSwitch presentation={presentation.data} />
-      </AppShell>
-    );
-  }
-  return <AppShell />;
+  // Every such word is a reserved slug, so no listed project can carry it.
+  if (isUnprefixedLegacyWord(project)) return <LegacyRoute />;
+  return (
+    <ProjectLayout>{(presentation) => <ProjectRouteSwitch presentation={presentation} />}</ProjectLayout>
+  );
 }
 
 // NAV-10: two entries. `/` is the projects landing page; `/:project/*` is every address under a project,
 // and ProjectRouteSwitch decides the page from the raw pathname.
 export const appRoutes: RouteObject[] = [
   { path: '/', element: <ProjectsRoute />, errorElement: <RouteError /> },
-  { path: '/:project/*', element: <ProjectGate />, errorElement: <RouteError /> },
+  { path: '/:project/*', element: <ProjectRoute />, errorElement: <RouteError /> },
 ];
 
 export const appRouter = createBrowserRouter(appRoutes);

@@ -20,11 +20,13 @@ import type { ArtifactDto, ProjectPresentation } from '../../src/server/project-
 import { FigureFrame } from '../../src/web/components/figure-frame.tsx';
 import { FileRow } from '../../src/web/components/planning-places.tsx';
 import { documentCrumbsOf } from '../../src/web/pages/document-crumbs.ts';
+import { ProjectSlugProvider } from '../../src/web/nav.tsx';
 import { DocumentRoute } from '../../src/web/pages/document-route.tsx';
 import { FileDetailsPage } from '../../src/web/pages/file-details-page.tsx';
 import type { FileDetailsVariant } from '../../src/web/pages/file-details-page.tsx';
 import { ImageView } from '../../src/web/pages/image-page.tsx';
 import type { ImageStatus } from '../../src/web/pages/image-page.tsx';
+import { projectKey } from '../../src/web/query-keys.ts';
 import { loadProject } from '../helpers/fixture-project.ts';
 import { SHAPES_ROOT } from '../helpers/shapes-project.ts';
 
@@ -201,12 +203,16 @@ describe('FileDetailsPage', () => {
 describe('DocumentRoute', () => {
   function route(url: string): string {
     const client = new QueryClient();
-    client.setQueryData(['presentation'], shapes);
+    client.setQueryData(projectKey('shapes', 'presentation'), shapes);
     return renderToStaticMarkup(
       createElement(
         QueryClientProvider,
         { client },
-        createElement(MemoryRouter, null, createElement(DocumentRoute, { url })),
+        createElement(
+          MemoryRouter,
+          null,
+          createElement(ProjectSlugProvider, { value: 'shapes' }, createElement(DocumentRoute, { url })),
+        ),
       ),
     );
   }

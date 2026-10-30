@@ -11,14 +11,14 @@ vi.mock('react-router', async (importOriginal) => ({
 }));
 
 const { appRoutes } = await import('../../src/web/app-router.tsx');
-const { projectGateOutcome } = await import('../../src/web/project-path.ts');
+const { projectLayoutOutcome } = await import('../../src/web/project-path.ts');
 
 function leafOf(pathname: string): RouteObject | undefined {
   return matchRoutes(appRoutes, pathname)?.at(-1)?.route;
 }
 
 describe('appRoutes', () => {
-  it('has exactly two entries: the root redirect and one splat route under the project', () => {
+  it('has exactly two entries: the landing page and one splat route under the project', () => {
     expect(appRoutes.map((route) => route.path)).toEqual(['/', '/:project/*']);
     expect(appRoutes.every((route) => route.children === undefined)).toBe(true);
   });
@@ -44,7 +44,7 @@ describe('appRoutes', () => {
   });
 
   it('answers a bare un-prefixed page address as a project named after it', () => {
-    // /roadmap alone reads as the project "roadmap"; the gate then finds it is not the open project.
+    // /roadmap alone reads as the project "roadmap"; the route then treats it as an old address.
     const matches = matchRoutes(appRoutes, '/roadmap');
     expect(matches?.[0].params.project).toBe('roadmap');
     expect(leafOf('/roadmap')?.path).toBe('/:project/*');
@@ -55,16 +55,23 @@ describe('appRoutes', () => {
   });
 });
 
-describe('projectGateOutcome on the routed first segment', () => {
-  const open = { projectSlug: 'lendshed', loadStatus: { status: 'ok' } };
+describe('projectLayoutOutcome on the routed first segment', () => {
+  const projects = [{ slug: 'lendshed' }, { slug: 'portal' }];
+  const ok = { loadStatus: { status: 'ok' } };
 
   it.each([
-    ['lendshed', undefined, 'loading'],
-    ['lendshed', open, 'open'],
-    ['someone-else', open, 'wrong-project'],
-    ['roadmap', open, 'wrong-project'],
-    ['lendshed', { projectSlug: 'lendshed', loadStatus: { status: 'path-not-found' } }, 'invalid'],
-  ] as const)('%s with %j is %s', (first, presentation, outcome) => {
-    expect(projectGateOutcome(first, presentation)).toBe(outcome);
+    ['lendshed', 'pending', undefined, 'pending', undefined, 'loading-list'],
+    ['lendshed', 'error', undefined, 'pending', undefined, 'list-error'],
+    ['someone-else', 'success', projects, 'pending', undefined, 'unknown'],
+    ['roadmap', 'success', projects, 'pending', undefined, 'unknown'],
+    ['Portal', 'success', projects, 'pending', undefined, 'unknown'],
+    ['lendshed', 'success', projects, 'pending', undefined, 'opening'],
+    ['lendshed', 'success', projects, 'error', undefined, 'presentation-error'],
+    ['lendshed', 'success', projects, 'success', { loadStatus: { status: 'path-not-found' } }, 'invalid'],
+    ['lendshed', 'success', projects, 'success', ok, 'open'],
+  ] as const)('%s with list %s, presentation %s is %s', (slug, listStatus, list, presentationStatus, presentation, outcome) => {
+    expect(
+      projectLayoutOutcome({ slug, listStatus, projects: list, presentationStatus, presentation }),
+    ).toBe(outcome);
   });
 });

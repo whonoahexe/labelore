@@ -2,12 +2,14 @@ import { Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChartLine, LayoutDashboard, ListChecks, Map, PencilRuler } from 'lucide-react';
 import { Outlet } from 'react-router';
-import { formatProjectMeta, projectDisplayName } from '../../presentation/shell-header.ts';
+import type { ProjectListEntry } from '../../presentation/project-list.ts';
+import { formatProjectMeta } from '../../presentation/shell-header.ts';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
 import { projectHasResearch } from '../../presentation/project-research-files.ts';
 import { projectHasSketches } from '../../presentation/sketches.ts';
-import type { ProjectPresentation } from '../../server/project-presentation.ts';
+import { fetchPresentation } from '../api.ts';
 import { NavLink } from '../nav.tsx';
+import { projectKey } from '../query-keys.ts';
 import { LabeloreMark } from './labelore-mark.tsx';
 import { RouteFallback, RouteProgress } from './route-progress.tsx';
 import { SearchDialog } from './search-field.tsx';
@@ -16,25 +18,31 @@ import { SnapshotStatus } from './snapshot-status.tsx';
 import { ThemeToggle } from './theme-toggle.tsx';
 import { ToastProvider } from './ui/toast.tsx';
 
-// Plan 04-02 reuses this fetcher; no second fetcher for the same endpoint.
-export async function fetchPresentation(): Promise<ProjectPresentation> {
-  const response = await fetch('/api/presentation', { headers: { Accept: 'application/json' } });
-  if (!response.ok) throw new Error(`Presentation request failed (${response.status})`);
-  return (await response.json()) as ProjectPresentation;
-}
-
 function navigationClass({ isActive }: { isActive: boolean }): string {
   return isActive ? 'shell-nav-link active' : 'shell-nav-link';
 }
 
-/** `children` takes the Outlet's place (the router gate uses it for the wrong-project page). */
-export function AppShell({ children }: { children?: React.ReactNode } = {}): React.JSX.Element {
-  const presentation = useQuery({ queryKey: ['presentation'], queryFn: fetchPresentation });
+/**
+ * The shell of one project, named by its list entry so the header is right at once. Everything it reads
+ * of the project (the meta line, the tabs) comes from this slug's own presentation query, so nothing of
+ * another project can show here; the layout keys it by slug, so a switch remounts the whole subtree.
+ * `children` takes the Outlet's place; `busy` marks the outlet while the project's data is on its way.
+ */
+export function AppShell({
+  project,
+  busy = false,
+  children,
+}: {
+  project: ProjectListEntry;
+  busy?: boolean;
+  children?: React.ReactNode;
+}): React.JSX.Element {
+  const presentation = useQuery({
+    queryKey: projectKey(project.slug, 'presentation'),
+    queryFn: () => fetchPresentation(project.slug),
+  });
 
-  const displayName = projectDisplayName(
-    presentation.data?.projectName ?? null,
-    presentation.data?.rootPath ?? '',
-  );
+  const displayName = project.name;
   const projectMeta = formatProjectMeta(presentation.data?.state ?? null);
   // The Research tab appears only for a project with at least one of the five research files.
   const showResearch = projectHasResearch(presentation.data?.artifacts ?? []);
@@ -57,8 +65,8 @@ export function AppShell({ children }: { children?: React.ReactNode } = {}): Rea
           <NavLink
             className="brand"
             to={presentationRoutePatterns.dashboard}
-            title={presentation.data?.rootPath}
-            aria-label={`Labelore — ${displayName}`}
+            title={project.target}
+            aria-label={`Labelore — ${project.name}`}
           >
             <span className="brand-mark" aria-hidden="true">
               <LabeloreMark />
@@ -117,7 +125,7 @@ export function AppShell({ children }: { children?: React.ReactNode } = {}): Rea
           </div>
         ) : null}
         <div className="shell-content">
-          <div className="shell-outlet" id="main-content">
+          <div className="shell-outlet" id="main-content" aria-busy={busy ? true : undefined}>
             {/* quick-260910-0x4 item 10: every routed page is now React.lazy()-loaded
                 (app-router.tsx), so this is the one Suspense boundary its fallback needs. A
                 single shared boundary here (not one per route) since every lazy element renders
