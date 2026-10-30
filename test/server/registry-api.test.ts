@@ -257,3 +257,157 @@ describe('the request guard in front of the registry app', () => {
     registry.dispose();
   });
 });
+
+/** Every /api route the registry app registers, one entry per method a request could reach it with.
+ * Middleware and the 404 fallback register as ALL on a wildcard path and are skipped; an ALL route on a
+ * concrete path (the images-only /files route) is a real route that any method reaches, so it is
+ * tested as a GET and as a POST. */
+function enumerateApiRoutes(app: ReturnType<typeof createRegistryApp>): { key: string; method: string; url: string }[] {
+  const seen = new Map<string, { key: string; method: string; url: string }>();
+  for (const route of app.routes) {
+    if (!route.path.startsWith('/api/')) continue;
+    if (route.method === 'ALL' && route.path.endsWith('*')) continue;
+    const methods = route.method === 'ALL' ? ['GET', 'POST'] : [route.method];
+    const url = route.path
+      .replace(':slug', 'lendshed')
+      .replace(/:\w+(\{[^}]*\})?/g, 'x')
+      .replace(/\*/g, 'x');
+    for (const method of methods) {
+      const key = `${method} ${route.path}`;
+      seen.set(key, { key, method, url });
+    }
+  }
+  return [...seen.values()];
+}
+
+describe('the refusal table over every registered /api route', () => {
+  const host = `127.0.0.1:${TEST_PORT}`;
+  const foreign = `evil.example:${TEST_PORT}`;
+  const accessControl = (response: Response) =>
+    [...response.headers.keys()].filter((name) => name.startsWith('access-control-'));
+
+  function guardedRegistry() {
+    const refreshSpy = vi.fn();
+    const createSource = vi.fn(async (target: string) => {
+      const inner = await createSnapshotSource(target);
+      return {
+        getSnapshot: () => inner.getSnapshot(),
+        refresh: async () => {
+          refreshSpy();
+          return inner.refresh ? inner.refresh() : inner.getSnapshot();
+        },
+        planningFilesystem: () => inner.planningFilesystem?.() ?? null,
+        dispose: () => inner.dispose?.(),
+      };
+    });
+    const registry = new ProjectRegistry({ createSource });
+    const app = createRegistryApp(registry, { policy: testPolicy() });
+    return { registry, app, createSource, refreshSpy };
+  }
+
+  it('enumerates the routes it is meant to cover, so an empty table cannot pass', () => {
+    const { registry, app } = guardedRegistry();
+    const keys = enumerateApiRoutes(app).map((route) => route.key);
+    expect(keys).toContain('GET /api/projects');
+    expect(keys).toContain('POST /api/projects/:slug/refresh');
+    expect(keys).toContain('GET /api/projects/:slug/presentation');
+    expect(keys.length).toBeGreaterThanOrEqual(GET_ROUTES.length + 2);
+    registry.dispose();
+  });
+
+  it('refuses a foreign Host on every route, and every mutation without same-origin proof or JSON, with no side effect', async () => {
+    const { registry, app, createSource, refreshSpy } = guardedRegistry();
+    await registerBoth(registry);
+    const before = await (await guardedRequest(app, '/api/projects')).json();
+    const routes = enumerateApiRoutes(app);
+    const covered = new Set<string>();
+    const exercised = new Map<string, string[]>();
+    const note = (key: string, check: string) => exercised.set(key, [...(exercised.get(key) ?? []), check]);
+
+    for (const { key, method, url } of routes) {
+      const body = method === 'GET' || method === 'HEAD' ? {} : { body: '{}' };
+      const write = { Host: host, 'Content-Type': 'application/json' };
+
+      // 1) a foreign Host is refused before the route, GETs included.
+      const foreignHost = await app.request(url, {
+        method,
+        ...body,
+        headers: { Host: foreign, 'Sec-Fetch-Site': 'same-origin', 'Content-Type': 'application/json' },
+      });
+      expect(foreignHost.status, `${key} with a foreign Host`).toBe(403);
+      expect(await foreignHost.json()).toEqual({ error: 'refused', reason: 'host' });
+      expect(accessControl(foreignHost), `${key} foreign Host headers`).toEqual([]);
+      note(key, 'host');
+
+      // 2) a mutation without proof of same origin, or without JSON, is refused.
+      if (method !== 'GET' && method !== 'HEAD') {
+        const variants: [string, Record<string, string>, number[]][] = [
+          ['cross-site', { ...write, 'Sec-Fetch-Site': 'cross-site' }, [403]],
+          ['origin-null', { ...write, Origin: 'null' }, [403]],
+          ['no-proof', { ...write }, [403]],
+          ['text-plain', { ...write, 'Sec-Fetch-Site': 'same-origin', 'Content-Type': 'text/plain' }, [403, 415]],
+        ];
+        for (const [label, headers, allowedStatuses] of variants) {
+          const response = await app.request(url, { method, ...body, headers });
+          expect(allowedStatuses, `${key} ${label} answered ${response.status}`).toContain(response.status);
+          expect(accessControl(response), `${key} ${label} headers`).toEqual([]);
+          note(key, label);
+        }
+      }
+      covered.add(key);
+    }
+
+    // A refused request changed nothing: no source was created, refresh never ran, the list is the same.
+    expect(createSource).not.toHaveBeenCalled();
+    expect(refreshSpy).not.toHaveBeenCalled();
+    expect(registry.loadedCount()).toBe(0);
+    expect(await (await guardedRequest(app, '/api/projects')).json()).toEqual(before);
+
+    // Coverage cannot drift: the table was built from the registered routes, and each one ran every check.
+    expect([...covered].sort()).toEqual(enumerateApiRoutes(app).map((route) => route.key).sort());
+    for (const { key, method } of routes) {
+      const expected = method === 'GET' || method === 'HEAD' ? ['host'] : ['host', 'cross-site', 'origin-null', 'no-proof', 'text-plain'];
+      expect(exercised.get(key), `${key} ran every refusal check`).toEqual(expected);
+    }
+    registry.dispose();
+  });
+
+  it('lets a request with the right Host, same-origin proof and JSON reach every route', async () => {
+    const { registry, app } = guardedRegistry();
+    await registerBoth(registry);
+    for (const { key, method, url } of enumerateApiRoutes(app)) {
+      const response = await guardedRequest(app, url, { method });
+      expect([403, 415], `${key} passes the guard`).not.toContain(response.status);
+      expect(accessControl(response), `${key} headers`).toEqual([]);
+    }
+    registry.dispose();
+  });
+
+  it('sets no Access-Control-Allow-Origin header on any /api/projects answer, refused or not', async () => {
+    const { registry, app } = guardedRegistry();
+    await registerBoth(registry);
+    const answers = [
+      await guardedRequest(app, '/api/projects'),
+      await guardedRequest(app, '/api/projects', { headers: { Host: foreign, Origin: 'http://evil.example' } }),
+      await guardedRequest(app, '/api/projects/lendshed/refresh', { method: 'POST' }),
+    ];
+    for (const response of answers) expect(response.headers.get('access-control-allow-origin')).toBeNull();
+    registry.dispose();
+  });
+
+  it('answers a body above the limit 413 with the too-large copy, and a foreign Host 403 first', async () => {
+    const { registry, app } = guardedRegistry();
+    await registerBoth(registry);
+    const big = JSON.stringify({ text: 'x'.repeat(5000) });
+    const tooLarge = await guardedRequest(app, '/api/projects/lendshed/refresh', { method: 'POST', body: big });
+    expect(tooLarge.status).toBe(413);
+    expect(await tooLarge.json()).toEqual({ error: 'That request was too large for Labelore to read.' });
+    const foreignBig = await guardedRequest(app, '/api/projects/lendshed/refresh', {
+      method: 'POST',
+      body: big,
+      headers: { Host: foreign },
+    });
+    expect(foreignBig.status).toBe(403);
+    registry.dispose();
+  });
+});

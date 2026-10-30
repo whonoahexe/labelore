@@ -6,6 +6,10 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Artifact, Project } from '../../src/domain/model.ts';
 import type { ProjectSnapshot } from '../../src/planning-repo/types.ts';
 import { createApp } from '../../src/server/index.ts';
+import { ProjectRegistry } from '../../src/server/project-registry.ts';
+import { createRegistryApp } from '../../src/server/registry-api.ts';
+import { FX_ROOT } from '../helpers/fixture-project.ts';
+import { guardedHeaders, guardedRequest, testPolicy } from '../helpers/guarded-request.ts';
 
 function makeArtifact(overrides: Partial<Artifact> & { path: string }): Artifact {
   return {
@@ -268,21 +272,36 @@ describe('POST /api/refresh', () => {
     expect(restSecond).toEqual(restFirst);
   });
 
-  it('answers 403 and never calls refresh() when sec-fetch-site is present and not same-origin', async () => {
+  it('answers 403 and never calls refresh() on the registry app when sec-fetch-site is cross-site, or when there is no proof of same origin at all', async () => {
     const before = makeSnapshot('2026-09-01T00:00:00.000Z', []);
     const { source, refresh } = makeSpySource(before);
-    const app = createApp(source, true, '.');
+    const createSource = vi.fn(async () => source);
+    const registry = new ProjectRegistry({ createSource });
+    expect(await registry.register(FX_ROOT)).toEqual({ ok: true, slug: 'lendshed', duplicate: false });
+    const app = createRegistryApp(registry, { policy: testPolicy() });
 
-    const response = await app.request('/api/refresh', {
+    const crossSite = await guardedRequest(app, '/api/projects/lendshed/refresh', {
       method: 'POST',
       headers: { 'sec-fetch-site': 'cross-site' },
     });
+    expect(crossSite.status).toBe(403);
+    expect(await crossSite.json()).toEqual({ error: 'refused', reason: 'cross-site' });
 
-    expect(response.status).toBe(403);
+    // D-18 tightening: the legacy handler let an absent header through; the guard does not. This request
+    // carries the right Host and JSON but neither Sec-Fetch-Site nor Origin.
+    const noProof = await app.request('/api/projects/lendshed/refresh', {
+      method: 'POST',
+      body: '{}',
+      headers: { Host: guardedHeaders('read').Host, 'Content-Type': 'application/json' },
+    });
+    expect(noProof.status).toBe(403);
+
     expect(refresh).not.toHaveBeenCalled();
+    expect(createSource).not.toHaveBeenCalled();
+    registry.dispose();
   });
 
-  it('allows the refresh when sec-fetch-site is absent, matching curl and the smoke probe', async () => {
+  it('allows the refresh on the test-only createApp wrapper, which carries no request guard, when sec-fetch-site is absent', async () => {
     const before = makeSnapshot('2026-09-01T00:00:00.000Z', []);
     const after = makeSnapshot('2026-09-02T00:00:00.000Z', []);
     const { source, queueNext } = makeSpySource(before);
