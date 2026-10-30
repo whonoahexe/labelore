@@ -48,11 +48,11 @@ export function ProjectSwitcherPanel({ currentSlug }: { currentSlug: string }): 
   if (entries.length > 0) {
     body = <ProjectList entries={entries} currentSlug={currentSlug} variant="switcher" />;
   } else if (list.isPending) {
-    body = <p className="empty-note">Loading projects…</p>;
+    body = <div className="empty-note">Loading projects…</div>;
   } else if (list.isError) {
-    body = <p className="empty-note">Labelore could not be reached. Check that it is still running, then try again.</p>;
+    body = <div className="empty-note">Labelore could not be reached. Check that it is still running, then try again.</div>;
   } else {
-    body = <p className="empty-note">No projects yet.</p>;
+    body = <div className="empty-note">No projects yet.</div>;
   }
 
   return (
