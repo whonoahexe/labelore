@@ -84,9 +84,11 @@ describe('isValidSlug', () => {
 });
 
 describe('routesToApp - the one reserved-word constant', () => {
-  it('sends the API and the sketch files to the app and everything else to Vite', () => {
+  it('sends the API (sketch files included) to the app and everything else to Vite', () => {
     expect(routesToApp('/api/x')).toBe(true);
-    expect(routesToApp('/sketches/a')).toBe(true);
+    expect(routesToApp('/api/projects/lendshed/sketch-files/a/')).toBe(true);
+    expect(routesToApp('/sketches/a')).toBe(false);
+    expect(routesToApp('/lendshed/sketches/')).toBe(false);
     expect(routesToApp('/lendshed/sketches')).toBe(false);
     expect(routesToApp('/sketches')).toBe(false);
     expect(routesToApp('/lendshed')).toBe(false);

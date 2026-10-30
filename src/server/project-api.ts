@@ -31,6 +31,7 @@ import { createFileBytesHandler } from './file-bytes.ts';
 import { jsonRecord } from './project-presentation.ts';
 import type { DerivedViews, ProjectRuntime } from './project-runtime.ts';
 import { searchIndex } from './search-index.ts';
+import { SKETCH_FILES_SEGMENT, createSketchFileMiddleware } from './sketch-files.ts';
 
 export type ProjectApiEnv = {
   Variables: {
@@ -70,6 +71,17 @@ export function createProjectApi(
       runtime.inFlightRequests -= 1;
     }
   });
+
+  // SEC-05: sketch files are served inside the project API, so the registry's request guard covers
+  // them and the filesystem is this request's own runtime. Every response, errors and redirects
+  // included, carries the sandbox Content-Security-Policy (see sketch-files.ts).
+  api.use(
+    `${SKETCH_FILES_SEGMENT}*`,
+    createSketchFileMiddleware(
+      (c) => (c.get('runtime') as ProjectRuntime).planningFilesystem(),
+      (c) => (c.get('mountPrefix') as string) + SKETCH_FILES_SEGMENT,
+    ),
+  );
 
   const artifactResponse = async (
     lookup: ReturnType<DerivedViews['artifactIndex']['lookup']>,

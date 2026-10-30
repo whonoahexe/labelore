@@ -1,22 +1,24 @@
 // The read-only sketch file route (todo 001, quick-261023-4wn): serves a target project's
-// .planning/sketches/ tree at /sketches/<folder>/ so Labelore can replace the ad-hoc python file
-// server. Containment is the whole point: a request is served only when the file's canonical path
+// .planning/sketches/ tree at <project API>/sketch-files/<folder>/ so Labelore can replace the ad-hoc
+// python file server. The route lives inside the project API (PLAT-08, SEC-05), so the request guard's
+// Host check covers it and the runtime is the one the request's own slug resolved. Containment is the whole point: a request is served only when the file's canonical path
 // lies under .planning/sketches/ (enforced by PlanningFilesystem.readBytesWithin), there is no
 // directory listing, and only GET and HEAD are accepted.
 //
 // Sketches are author-controlled HTML and scripts. The page shows them in an iframe sandboxed to
 // scripts only; so that a sketch opened full size in its own tab is an opaque origin too (and cannot
-// call /api/* with the app's origin), EVERY /sketches/* response - success, redirect or error -
+// call /api/* with the app's origin), EVERY sketch file response - success, redirect or error -
 // carries `Content-Security-Policy: sandbox allow-scripts`.
 //
 // This file deliberately imports no Node module: the path work is plain string logic on forward
 // slashes, and every read goes through the PlanningFilesystem boundary.
-import type { MiddlewareHandler } from 'hono';
+import type { Context, MiddlewareHandler } from 'hono';
 import { PathEscapeError } from '../planning-fs/types.ts';
 import type { PlanningFilesystem } from '../planning-fs/types.ts';
 
 export const SKETCHES_RELDIR = '.planning/sketches';
-export const SKETCH_URL_PREFIX = '/sketches/';
+/** The path segment, inside a project API, under which sketch files are served. */
+export const SKETCH_FILES_SEGMENT = '/sketch-files/';
 
 const SECURITY_HEADERS: Record<string, string> = {
   'Content-Security-Policy': 'sandbox allow-scripts',
@@ -28,10 +30,12 @@ export type SketchRequestPath =
   | { ok: true; relPath: string; directoryRequest: boolean }
   | { ok: false; status: 403 | 404 };
 
-/** Turns a raw request pathname into a project-relative path under .planning/sketches/, or refuses it. */
-export function sketchRequestPath(pathname: string): SketchRequestPath {
-  if (!pathname.startsWith(SKETCH_URL_PREFIX)) return { ok: false, status: 404 };
-  const parts = pathname.slice(SKETCH_URL_PREFIX.length).split('/');
+/** Turns a raw request pathname into a project-relative path under .planning/sketches/, or refuses it.
+ * `prefix` is the raw URL prefix the sketch files are served under (the project API's mount prefix
+ * plus SKETCH_FILES_SEGMENT); a pathname outside it is a 404. */
+export function sketchRequestPath(pathname: string, prefix: string): SketchRequestPath {
+  if (!pathname.startsWith(prefix)) return { ok: false, status: 404 };
+  const parts = pathname.slice(prefix.length).split('/');
   const directoryRequest = parts[parts.length - 1] === '';
   const raw = directoryRequest ? parts.slice(0, -1) : parts;
   const segments: string[] = [];
@@ -126,19 +130,22 @@ function errorCode(error: unknown): string | undefined {
   return typeof error === 'object' && error !== null ? (error as { code?: string }).code : undefined;
 }
 
-export function createSketchFileMiddleware(getFilesystem: () => PlanningFilesystem | null): MiddlewareHandler {
-  return async (c, next) => {
+/** `getFilesystem` and `prefixOf` are read per request, so each request serves its own project's
+ * sketches under its own raw mount prefix. */
+export function createSketchFileMiddleware(
+  getFilesystem: (c: Context) => PlanningFilesystem | null,
+  prefixOf: (c: Context) => string,
+): MiddlewareHandler {
+  return async (c) => {
     const url = new URL(c.req.url);
-    // `app.use('/sketches/*')` also matches the bare /sketches; that is the client page route.
-    if (url.pathname === '/sketches') return next();
 
     if (c.req.method !== 'GET' && c.req.method !== 'HEAD') {
       return plain(405, 'Method not allowed', { Allow: 'GET, HEAD' });
     }
-    const parsed = sketchRequestPath(url.pathname);
+    const parsed = sketchRequestPath(url.pathname, prefixOf(c));
     if (!parsed.ok) return plain(parsed.status, parsed.status === 403 ? 'Forbidden' : 'Not found');
 
-    const fs = getFilesystem();
+    const fs = getFilesystem(c);
     if (!fs || !fs.readBytesWithin) return plain(404, 'Not found');
 
     try {
@@ -158,7 +165,7 @@ export function createSketchFileMiddleware(getFilesystem: () => PlanningFilesyst
       const code = errorCode(error);
       if (code === 'EISDIR') {
         if (parsed.directoryRequest) return plain(404, 'Not found');
-        // Built from the validated raw pathname (already starting with /sketches/), never from
+        // Built from the validated raw pathname (already starting with the sketch prefix), never from
         // decoded segments, so it is always a same-origin path.
         return new Response(null, {
           status: 308,

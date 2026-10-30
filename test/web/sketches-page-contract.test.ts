@@ -16,10 +16,21 @@ describe('sketches page contract', () => {
     for (const value of values) expect(value).toBe('allow-scripts');
   });
 
-  it('points the iframe at the sketch view URL', async () => {
+  it('points the iframe at the sketch view URL under the page project', async () => {
     const page = await source('src/web/pages/sketches-page.tsx');
     const iframe = page.slice(page.indexOf('<iframe'), page.indexOf('/>', page.indexOf('<iframe')));
-    expect(iframe).toMatch(/src=\{[^}]*viewUrl/);
+    expect(iframe).toMatch(/src=\{projectUrl\(slug, viewUrl\)\}/);
+  });
+
+  it('builds every sketch link from the project API base and holds no /api/ literal', async () => {
+    const page = await source('src/web/pages/sketches-page.tsx');
+    const anchors = [...page.matchAll(/<a\s[^>]*>/g)].map((m) => m[0]);
+    const sketchAnchors = anchors.filter((a) => /href=\{[^}]*viewUrl/.test(a));
+    expect(sketchAnchors.length).toBeGreaterThan(0);
+    for (const anchor of sketchAnchors) expect(anchor).toMatch(/href=\{projectUrl\(slug, (?:sketch\.)?viewUrl\)\}/);
+    expect(page).toContain("projectUrl(slug, '/sketches')");
+    expect(page).toContain("projectKey(slug, 'sketches')");
+    expect(page).not.toMatch(/['"`]\/api\//);
   });
 
   it('opens server sketch URLs with plain anchors, never router Links', async () => {

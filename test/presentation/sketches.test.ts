@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { isServerOwnedUrl } from '../../src/presentation/reserved.ts';
+import { routesToApp } from '../../src/server/index.ts';
 import {
   buildSketchesViewModel,
   parseSketchManifest,
@@ -106,7 +108,7 @@ describe('buildSketchesViewModel', () => {
     expect(model.sketches.map((s) => s.number)).toEqual(['005', '003', '002', '001']);
 
     const [five, three, two, one] = model.sketches;
-    expect(one.viewUrl).toBe('/sketches/001-alpha/');
+    expect(one.viewUrl).toBe('/sketch-files/001-alpha/');
     expect(one.readmeUrl).toBe(artifacts[1].key);
     expect(two.viewUrl).toBeNull();
     expect(two.readmeUrl).toBe(artifacts[3].key);
@@ -197,7 +199,14 @@ describe('buildSketchesViewModel', () => {
     expect(twice.sketches.filter((s) => s.folder === '001-alpha')).toHaveLength(1);
   });
 
+  it('routes sketch files to the app only under the project API', () => {
+    expect(routesToApp('/sketches/x/')).toBe(false);
+    expect(routesToApp('/api/projects/a/sketch-files/x/')).toBe(true);
+    expect(isServerOwnedUrl('/sketches/x/')).toBe(false);
+    expect(isServerOwnedUrl(`/api/projects/a${sketchViewUrl('x')}`)).toBe(true);
+  });
+
   it('encodes the folder in the view URL', () => {
-    expect(sketchViewUrl('001 a')).toBe('/sketches/001%20a/');
+    expect(sketchViewUrl('001 a')).toBe('/sketch-files/001%20a/');
   });
 });

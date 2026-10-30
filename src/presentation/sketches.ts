@@ -152,8 +152,10 @@ export function projectHasSketches(artifacts: readonly { path: string }[]): bool
   return artifacts.some((artifact) => artifact.path === SKETCH_MANIFEST_PATH || FOLDER_FILE.test(artifact.path));
 }
 
+/** The project-relative path of a sketch's index; the web prefixes the project's API base
+ * (`/api/projects/<slug>`) with projectUrl, so a sketch is only ever asked of its own project. */
 export function sketchViewUrl(folder: string): string {
-  return `/sketches/${encodeURIComponent(folder)}/`;
+  return `/sketch-files/${encodeURIComponent(folder)}/`;
 }
 
 // ---------------------------------------------------------------------------------------------

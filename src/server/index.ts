@@ -18,15 +18,14 @@ import type { MirrorRunner } from './remote-source.ts';
 import { createHostPolicy, parseAllowedHosts } from './request-guard.ts';
 import { FileSettingsStore, MemorySettingsStore, defaultSettingsDir } from './settings-store.ts';
 import type { SettingsStore } from './settings-store.ts';
-import { createSketchFileMiddleware } from './sketch-files.ts';
 
 const DEFAULT_PORT = 4173;
 const HOSTNAME = '127.0.0.1';
 /** How many consecutive ports an auto-port start tries before giving up (4173 → 4182). */
 const PORT_ATTEMPTS = 10;
 
-/** True for the URLs the Hono app owns (the API and the sketch files). In dev mode everything else
- * goes to Vite; the bare /sketches stays the client page. */
+/** True for the URLs the Hono app owns (the API, which includes the sketch files). In dev mode
+ * everything else goes to Vite, /sketches and /<slug>/sketches included. */
 export function routesToApp(url: string | undefined): boolean {
   return isServerOwnedUrl(url);
 }
@@ -71,8 +70,6 @@ export function createApp(
     ),
   );
   app.all('/api/*', (c) => c.json({ error: 'API route not found' }, 404));
-  // Called as a method on the runtime (never an extracted reference), so `this` survives.
-  app.use('/sketches/*', createSketchFileMiddleware(() => runtime.planningFilesystem()));
 
   if (production) {
     app.use('/assets/*', serveStatic({ root: staticRoot }));

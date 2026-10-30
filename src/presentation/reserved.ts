@@ -3,9 +3,10 @@
 // reads RESERVED_SLUGS so a project folder named like any of these words can never become a first
 // path segment that the server or the router would take for something else.
 
-/** URL prefixes the Hono app owns in dev mode: the JSON API and the read-only sketch files. The
- * bare `/sketches` is a client page, so only the trailing-slash form is server-owned. */
-export const SERVER_OWNED_PREFIXES = ['/api/', '/sketches/'] as const;
+/** URL prefixes the Hono app owns in dev mode: the API only. Sketch files are served inside it, under
+ * /api/projects/<slug>/sketch-files/, so the bare and trailing-slash sketches addresses
+ * (`/sketches`, `/sketches/`, `/<slug>/sketches`) are client pages only. */
+export const SERVER_OWNED_PREFIXES = ['/api/'] as const;
 
 /** True for a URL the Hono app answers itself (everything else goes to Vite in dev mode). */
 export function isServerOwnedUrl(url: string | undefined): boolean {
