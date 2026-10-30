@@ -6,7 +6,7 @@ import { describe, it, expect, afterEach, vi } from 'vitest';
 import { mkdtempSync, rmSync, symlinkSync, chmodSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, relative } from 'node:path';
-import { resolveTargetPath } from '../src/cli/target-path.ts';
+import { expandTilde, resolveTargetPath } from '../src/cli/target-path.ts';
 import { LocalFsPlanningFilesystem } from '../src/planning-fs/local-fs.ts';
 import { PlanningRepository } from '../src/planning-repo/snapshot.ts';
 
@@ -201,5 +201,24 @@ describe('inside-tree symlink escape', () => {
     expect(readWarning).toBeDefined();
     expect(readWarning?.salvage).toContain('nothing readable');
     expect(readWarning?.message).toContain('escape.md');
+  });
+});
+
+describe('expandTilde — the one tilde parser the CLI and the folder scan share', () => {
+  const home = join(tmpdir(), 'a-synthetic-home');
+
+  it('expands a bare tilde to the given home', () => {
+    expect(expandTilde('~', home)).toBe(home);
+  });
+
+  it('expands a leading tilde-slash against the given home', () => {
+    expect(expandTilde('~/x', home)).toBe(join(home, 'x'));
+    expect(expandTilde('~/Code/acme', home)).toBe(join(home, 'Code', 'acme'));
+  });
+
+  it('leaves a tilde that is not the first segment alone', () => {
+    expect(expandTilde('x~', home)).toBe('x~');
+    expect(expandTilde('~other/x', home)).toBe('~other/x');
+    expect(expandTilde('/abs/~/x', home)).toBe('/abs/~/x');
   });
 });

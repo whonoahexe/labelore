@@ -7,6 +7,7 @@
 // a foreign Host or a cross-site write before any route runs.
 import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';
+import type { Context } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { SCAN_MESSAGES, SCAN_RESULT_CAP } from './folder-scan.ts';
 import { createProjectApi } from './project-api.ts';
@@ -14,6 +15,10 @@ import { INVALID_INPUT_MESSAGE } from './project-registry.ts';
 import type { ProjectRegistry } from './project-registry.ts';
 import { GUARD_BODY_LIMIT, createRequestGuard } from './request-guard.ts';
 import type { HostPolicy } from './request-guard.ts';
+
+const ADD_MANY_PATH = '/api/projects/add-many';
+/** The most bytes add-many reads: 100 targets of up to 1024 characters, with room for UTF-8 and JSON. */
+const ADD_MANY_BODY_LIMIT = 262_144;
 
 export interface RegistryAppOptions {
   /** The Host allowlist every /api request is checked against (SEC-05); the server sets its port once listening. */
@@ -30,13 +35,12 @@ export function createRegistryApp(registry: ProjectRegistry, options: RegistryAp
   // The request guard and the body limit are the first registrations of this app, so they run before
   // every route below and before the /api 404, and therefore before any write endpoint (08-16) exists.
   app.use('/api/*', createRequestGuard(options.policy));
-  app.use(
-    '/api/*',
-    bodyLimit({
-      maxSize: GUARD_BODY_LIMIT,
-      onError: (c) => c.json({ error: 'That request was too large for Labelore to read.' }, 413),
-    }),
-  );
+  // Every route reads at most GUARD_BODY_LIMIT bytes, except add-many: up to 100 picked project paths
+  // (each up to 1024 characters) do not fit in 4 KB, so that one route reads up to ADD_MANY_BODY_LIMIT.
+  const tooLarge = (c: Context) => c.json({ error: 'That request was too large for Labelore to read.' }, 413);
+  const standardLimit = bodyLimit({ maxSize: GUARD_BODY_LIMIT, onError: tooLarge });
+  const addManyLimit = bodyLimit({ maxSize: ADD_MANY_BODY_LIMIT, onError: tooLarge });
+  app.use('/api/*', (c, next) => (c.req.path === ADD_MANY_PATH ? addManyLimit(c, next) : standardLimit(c, next)));
 
   app.get('/api/projects', async (c) => c.json(await registry.list()));
 
@@ -77,7 +81,7 @@ export function createRegistryApp(registry: ProjectRegistry, options: RegistryAp
     if (!outcome.ok) return c.json({ error: outcome.error }, 422);
     return c.json(outcome);
   });
-  app.post('/api/projects/add-many', async (c) => {
+  app.post(ADD_MANY_PATH, async (c) => {
     const tooMany = { error: `Choose up to ${SCAN_RESULT_CAP} projects to add.` };
     let body: unknown;
     try {
