@@ -2,8 +2,8 @@
 // of five loaded runtimes, disposal (ssh mirrors and scheduled index builds), and a heap that stays
 // bounded across repeated switching. Projects are made-up folders in a temp directory; where a test
 // needs a real load it builds Lendshed's files in memory behind a createSource double.
-import { cp, mkdir, mkdtemp, readdir, rm } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { cp, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { existsSync, realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import v8 from 'node:v8';
@@ -12,11 +12,16 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import type { MirrorRunResult } from '../../src/cli/remote-target.ts';
 import { InMemoryPlanningFilesystem } from '../../src/planning-fs/in-memory-fs.ts';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
-import { ProjectRegistry } from '../../src/server/project-registry.ts';
+import { ProjectRegistry, identityOfTarget } from '../../src/server/project-registry.ts';
 import { ProjectRuntime } from '../../src/server/project-runtime.ts';
 import type { SnapshotSource } from '../../src/server/project-runtime.ts';
 import type { MirrorRunner } from '../../src/server/remote-source.ts';
+import { emptySettings, saveFailedNotice, skippedNotice } from '../../src/server/settings-model.ts';
+import type { SettingsState } from '../../src/server/settings-model.ts';
+import { FileSettingsStore, MemorySettingsStore } from '../../src/server/settings-store.ts';
+import type { SettingsStore } from '../../src/server/settings-store.ts';
 import { FX_ROOT, planningFiles } from '../helpers/fixture-project.ts';
+import { SHAPES_ROOT } from '../helpers/shapes-project.ts';
 
 const FIXTURES = resolve(import.meta.dirname, '../../fixtures');
 const LENDSHED_FILES = planningFiles(FX_ROOT);
@@ -473,6 +478,133 @@ describe('a source that cannot be created', () => {
     const retried = await registry.runtime(slug, { retryFailed: true });
     expect(retried).not.toBe(runtime);
     expect(runtime!.disposed).toBe(true);
+    registry.dispose();
+  });
+});
+
+// ---- Remembered projects (PLAT-06, D-09, D-11, D-12) -------------------------------------------------
+
+const SHAPES = realpathSync(SHAPES_ROOT);
+const LENDSHED = realpathSync(FX_ROOT);
+
+async function freshSettingsDir(): Promise<string> {
+  return mkdtemp(join(parent, 'settings-'));
+}
+
+function fileStore(dir: string): FileSettingsStore {
+  return new FileSettingsStore(dir, identityOfTarget);
+}
+
+async function settingsFile(dir: string): Promise<{ projects: Record<string, unknown>[]; lastActive: string | null }> {
+  return JSON.parse(await readFile(join(dir, 'settings.json'), 'utf8')) as {
+    projects: Record<string, unknown>[];
+    lastActive: string | null;
+  };
+}
+
+describe('(h) a project added through the registry is remembered', () => {
+  it('lists the same slug and target again from a new registry over the same settings directory', async () => {
+    const dir = await freshSettingsDir();
+    const first = new ProjectRegistry({ store: fileStore(dir) });
+    expect(await first.add(SHAPES_ROOT)).toEqual({ ok: true, slug: 'shapes', name: 'Kilnrow', duplicate: false });
+    first.dispose();
+
+    const second = new ProjectRegistry({ store: fileStore(dir) });
+    const { projects, notices } = await second.list();
+    expect(projects.map((project) => [project.slug, project.target])).toEqual([['shapes', SHAPES]]);
+    expect(notices).toEqual([]);
+    second.dispose();
+  });
+
+  it('answers a repeat add, also through the .planning folder, as the same project', async () => {
+    const dir = await freshSettingsDir();
+    const registry = new ProjectRegistry({ store: fileStore(dir) });
+    await registry.add(SHAPES_ROOT);
+    expect(await registry.add(`${SHAPES_ROOT}/.planning`)).toMatchObject({ ok: true, slug: 'shapes', duplicate: true });
+    expect((await settingsFile(dir)).projects).toHaveLength(1);
+    registry.dispose();
+  });
+
+  it('keeps one entry when two simultaneous adds name one new target', async () => {
+    const dir = await freshSettingsDir();
+    const registry = new ProjectRegistry({ store: fileStore(dir) });
+    const [one, two] = await Promise.all([registry.add(SHAPES_ROOT), registry.add(SHAPES_ROOT)]);
+    expect([one, two].map((outcome) => (outcome.ok ? outcome.duplicate : null)).sort()).toEqual([false, true]);
+    expect((await registry.list()).projects).toHaveLength(1);
+    expect((await settingsFile(dir)).projects).toHaveLength(1);
+    registry.dispose();
+  });
+
+  it('allocates the slug against the latest file, so a second instance cannot mint the same slug', async () => {
+    const dir = await freshSettingsDir();
+    const early = new ProjectRegistry({ store: fileStore(dir) });
+    const late = new ProjectRegistry({ store: fileStore(dir) });
+    const copy = await makeFolder('shapes');
+    await mkdir(join(copy, '.planning'), { recursive: true });
+    expect(await early.add(SHAPES_ROOT)).toMatchObject({ slug: 'shapes' });
+    expect(await late.add(copy)).toMatchObject({ slug: 'shapes-2' });
+    early.dispose();
+    late.dispose();
+  });
+
+  it('uses a hand-edited slug as written and reports skipped entries as notices (D-12)', async () => {
+    const dir = await freshSettingsDir();
+    const when = new Date(0).toISOString();
+    const row = (target: string, slug: string): Record<string, unknown> => ({ target, slug, addedAt: when, lastOpened: null });
+    await writeFile(
+      join(dir, 'settings.json'),
+      JSON.stringify({ version: 1, projects: [row(SHAPES, 'kiln-board'), row(LENDSHED, 'api')], lastActive: null }),
+    );
+    const registry = new ProjectRegistry({ store: fileStore(dir) });
+    const { projects, notices } = await registry.list();
+    expect(projects.map((project) => project.slug)).toEqual(['kiln-board']);
+    expect(notices).toEqual([skippedNotice('its slug "api" is reserved')]);
+    registry.dispose();
+  });
+
+  it('keeps an entry whose write failed for this run and says so in the list notices', async () => {
+    const failing: SettingsStore = {
+      location: () => null,
+      read: () => new MemorySettingsStore().read(),
+      mutate: (update: (state: SettingsState) => SettingsState) => ({
+        ok: false,
+        state: update(emptySettings()),
+        reason: 'EACCES',
+      }),
+    };
+    const registry = new ProjectRegistry({ store: failing });
+    expect(await registry.add(SHAPES_ROOT)).toMatchObject({ ok: true, slug: 'shapes', duplicate: false });
+    const { projects, notices } = await registry.list();
+    expect(projects.map((project) => project.slug)).toEqual(['shapes']);
+    expect(notices).toEqual([saveFailedNotice('EACCES')]);
+    expect(saveFailedNotice('EACCES')).toBe(
+      'Could not save the project list: EACCES. The change lasts only until Labelore restarts.',
+    );
+    registry.dispose();
+  });
+
+  it('refuses a bad target with its own status and writes nothing', async () => {
+    const dir = await freshSettingsDir();
+    const registry = new ProjectRegistry({ store: fileStore(dir) });
+    const missing = join(parent, 'not-there');
+    const outcome = await registry.add(missing);
+    expect(outcome).toMatchObject({ ok: false, code: 'invalid-target', status: { status: 'path-not-found', pathChecked: missing } });
+    expect(await registry.add('')).toMatchObject({ ok: false, code: 'invalid-input' });
+    expect(await registry.add('a\0b')).toMatchObject({ ok: false, code: 'invalid-input' });
+    expect(await registry.add('x'.repeat(1025))).toMatchObject({ ok: false, code: 'invalid-input' });
+    expect(existsSync(join(dir, 'settings.json'))).toBe(false);
+    registry.dispose();
+  });
+
+  it('checks an ssh target for syntax only: it connects on first open', async () => {
+    const dir = await freshSettingsDir();
+    const double = lendshedDouble();
+    const registry = new ProjectRegistry({ store: fileStore(dir), createSource: double.createSource });
+    expect(await registry.add('sftp://dev@fixture-host/srv/proj')).toMatchObject({ ok: true, slug: 'proj', duplicate: false });
+    expect(await registry.add('dev@fixture-host:/srv/proj')).toMatchObject({ ok: true, slug: 'proj', duplicate: true });
+    expect(await registry.add('ssh://dev:secret@fixture-host/srv/other')).toMatchObject({ ok: false, code: 'invalid-target' });
+    expect(double.createSource).not.toHaveBeenCalled();
+    expect((await settingsFile(dir)).projects).toHaveLength(1);
     registry.dispose();
   });
 });

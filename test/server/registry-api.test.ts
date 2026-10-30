@@ -4,15 +4,19 @@
 // nothing, and no handler can exist only in the legacy wrapper. Every request goes through
 // guardedRequest, so it carries the Host the request guard (SEC-05) allows; the guard's own refusals
 // are proven at the bottom of this file.
-import { realpathSync } from 'node:fs';
-import { describe, expect, it, vi } from 'vitest';
+import { existsSync, realpathSync } from 'node:fs';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 import { LocalFsPlanningFilesystem } from '../../src/planning-fs/local-fs.ts';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
 import type { ProjectListResponse } from '../../src/presentation/project-list.ts';
 import { createApp } from '../../src/server/index.ts';
 import { createProjectApi } from '../../src/server/project-api.ts';
-import { ProjectRegistry, createSnapshotSource } from '../../src/server/project-registry.ts';
+import { ProjectRegistry, createSnapshotSource, identityOfTarget } from '../../src/server/project-registry.ts';
 import { createRegistryApp } from '../../src/server/registry-api.ts';
+import { FileSettingsStore } from '../../src/server/settings-store.ts';
 import { FX_ROOT } from '../helpers/fixture-project.ts';
 import { TEST_PORT, guardedRequest, testPolicy } from '../helpers/guarded-request.ts';
 import { SHAPES_ROOT } from '../helpers/shapes-project.ts';
@@ -408,6 +412,117 @@ describe('the refusal table over every registered /api route', () => {
       headers: { Host: foreign },
     });
     expect(foreignBig.status).toBe(403);
+    registry.dispose();
+  });
+});
+
+// ---- The write routes of the remembered list (PLAT-06, PLAT-07, SEC-05) ------------------------------
+
+const settingsDirs: string[] = [];
+
+afterAll(async () => {
+  await Promise.all(settingsDirs.map((dir) => rm(dir, { recursive: true, force: true })));
+});
+
+/** A registry over a settings file in its own temp directory, with a real source builder. */
+async function rememberingRegistry() {
+  const dir = await mkdtemp(join(tmpdir(), 'labelore-registry-api-'));
+  settingsDirs.push(dir);
+  const registry = new ProjectRegistry({ store: new FileSettingsStore(dir, identityOfTarget) });
+  const app = createRegistryApp(registry, { policy: testPolicy() });
+  const settingsText = async (): Promise<string | null> =>
+    existsSync(join(dir, 'settings.json')) ? readFile(join(dir, 'settings.json'), 'utf8') : null;
+  return { registry, app, dir, settingsText };
+}
+
+function post(app: ReturnType<typeof createRegistryApp>, path: string, body: unknown): Promise<Response> {
+  return guardedRequest(app, path, { method: 'POST', body: typeof body === 'string' ? body : JSON.stringify(body) });
+}
+
+describe('POST /api/projects', () => {
+  it('answers 201 with the slug for a new project and 200 duplicate for the same project again', async () => {
+    const { registry, app, settingsText } = await rememberingRegistry();
+
+    const created = await post(app, '/api/projects', { target: SHAPES_ROOT });
+    expect(created.status).toBe(201);
+    expect(await created.json()).toEqual({ slug: 'shapes', name: 'Kilnrow', duplicate: false });
+    const written = await settingsText();
+    expect(written).toContain('"slug": "shapes"');
+
+    const again = await post(app, '/api/projects', { target: `${SHAPES_ROOT}/.planning` });
+    expect(again.status).toBe(200);
+    expect(await again.json()).toEqual({ slug: 'shapes', name: 'Kilnrow', duplicate: true });
+    expect(await settingsText()).toBe(written);
+    registry.dispose();
+  });
+
+  it('answers 422 with the server own message and the exact path checked for a missing folder', async () => {
+    const { registry, app, settingsText } = await rememberingRegistry();
+    const missing = join(tmpdir(), 'labelore-no-such-project-folder');
+
+    const response = await post(app, '/api/projects', { target: missing });
+    expect(response.status).toBe(422);
+    const body = (await response.json()) as { error: string; status: { status: string; pathChecked: string } };
+    expect(body.status.status).toBe('path-not-found');
+    expect(body.status.pathChecked).toBe(missing);
+    expect(body.error).toContain('No such path');
+    expect(body.error).toContain(missing);
+    expect(await settingsText()).toBeNull();
+    registry.dispose();
+  });
+
+  it('answers 422 for an ssh address carrying a password and leaves settings.json unchanged', async () => {
+    const { registry, app, settingsText } = await rememberingRegistry();
+    await post(app, '/api/projects', { target: SHAPES_ROOT });
+    const before = await settingsText();
+
+    const response = await post(app, '/api/projects', { target: 'ssh://user:secret@host/path' });
+    expect(response.status).toBe(422);
+    const text = JSON.stringify(await response.json());
+    expect(text).not.toContain('secret');
+    expect(await settingsText()).toBe(before);
+    expect(before).not.toContain('secret');
+    registry.dispose();
+  });
+
+  it('checks an ssh target for syntax only and remembers it without connecting', async () => {
+    const { registry, app } = await rememberingRegistry();
+    const response = await post(app, '/api/projects', { target: 'sftp://dev@fixture-host/srv/never-reached' });
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({ slug: 'never-reached', duplicate: false });
+    expect(registry.loadedCount()).toBe(0);
+    registry.dispose();
+  });
+
+  it('answers 400 for a body that is not an object with a string target, or not JSON', async () => {
+    const { registry, app, settingsText } = await rememberingRegistry();
+    const message = { error: 'Enter a folder path or an ssh:// target.' };
+
+    for (const body of [{ target: 5 }, {}, [], 'null', 'not json at all', { target: '' }]) {
+      const response = await post(app, '/api/projects', body);
+      expect(response.status, JSON.stringify(body)).toBe(400);
+      expect(await response.json()).toEqual(message);
+    }
+    expect(await settingsText()).toBeNull();
+    registry.dispose();
+  });
+
+  it('leaves one entry when two simultaneous posts name one new target', async () => {
+    const { registry, app, settingsText } = await rememberingRegistry();
+    const answers = await Promise.all([
+      post(app, '/api/projects', { target: SHAPES_ROOT }),
+      post(app, '/api/projects', { target: SHAPES_ROOT }),
+    ]);
+    expect(answers.map((response) => response.status).sort()).toEqual([200, 201]);
+    expect((await (await guardedRequest(app, '/api/projects')).json() as ProjectListResponse).projects).toHaveLength(1);
+    expect(JSON.parse((await settingsText()) ?? '{}').projects).toHaveLength(1);
+    registry.dispose();
+  });
+
+  it('is covered by the route-enumeration refusal table without edits', () => {
+    const { registry } = makeRegistry();
+    const app = createRegistryApp(registry, { policy: testPolicy() });
+    expect(enumerateApiRoutes(app).map((route) => route.key)).toContain('POST /api/projects');
     registry.dispose();
   });
 });
