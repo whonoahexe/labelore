@@ -115,7 +115,8 @@ describe('authorized Studio Portal shell contract', () => {
     expect(triggerIndex).toBeLessThan(brandIndex);
 
     expect(shell).toContain('<div className="shell-content">');
-    expect(shell).toContain('<div className="shell-outlet" id="main-content">');
+    // 08-08: the outlet also carries aria-busy while a project's data is on its way.
+    expect(shell).toContain('<div className="shell-outlet" id="main-content"');
     expect(shell).toContain('href="#main-content"');
 
     expect(shell).not.toContain('data-sidebar');

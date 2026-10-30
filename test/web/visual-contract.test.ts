@@ -668,7 +668,7 @@ describe('planning-files drawer (quick-260911-vqe D-01..D-04, SB-04/SB-05)', () 
     const shell = await source('src/web/components/app-shell.tsx');
     expect(shell).toContain('<SidebarDrawer');
     expect(shell).toContain('href="#main-content"');
-    expect(shell).toMatch(/<div className="shell-outlet" id="main-content">/);
+    expect(shell).toMatch(/<div className="shell-outlet" id="main-content"[^>]*>/);
 
     const sidebarDrawer = await source('src/web/components/sidebar-drawer.tsx');
     expect(sidebarDrawer).toContain('<PlanningPlaces');
