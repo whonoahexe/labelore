@@ -11,6 +11,7 @@ import { ApiError, UNREACHABLE_COPY, fetchProjects } from '../api.ts';
 import { AddProjectForm } from '../components/add-project-form.tsx';
 import { PlainPage } from '../components/plain-header.tsx';
 import { ProjectList, forgottenAnnouncement } from '../components/project-row.tsx';
+import { ProjectScan } from '../components/project-scan.tsx';
 import { Button } from '../components/ui/button.tsx';
 import { useAppNavigate } from '../nav.tsx';
 import { projectRootPath } from '../project-path.ts';
@@ -95,6 +96,19 @@ export function AddProjectSection(): React.JSX.Element {
   );
 }
 
+/** The side column's "Scan a folder" section, under the add form: the folder field and, after a scan, the
+ * checklist of the projects found (D-14). Picked projects join the list above without opening (D-09). */
+export function ScanSection(): React.JSX.Element {
+  return (
+    <section aria-labelledby="scan-folder-heading">
+      <header className="section-heading">
+        <h2 id="scan-folder-heading">Scan a folder</h2>
+      </header>
+      <ProjectScan />
+    </section>
+  );
+}
+
 export function ProjectsPage(): React.JSX.Element {
   const projects = useQuery({ queryKey: projectsKey, queryFn: fetchProjects, staleTime: 0 });
   // Taken once, so a render stays pure and every row's relative time agrees.
@@ -123,6 +137,7 @@ export function ProjectsPage(): React.JSX.Element {
         <ProjectsListSection state={state} />
         <aside aria-label="Add or scan projects">
           <AddProjectSection />
+          <ScanSection />
         </aside>
       </main>
     </PlainPage>
