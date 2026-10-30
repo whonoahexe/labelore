@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { NotFoundPage } from '../../src/web/pages/not-found-page.tsx';
 import { decodeAddress } from '../../src/web/project-path.ts';
 
-function render(props: { address: string; openSlug: string; wrongProject?: boolean }): string {
+function render(props: { address: string; openSlug: string }): string {
   return renderToStaticMarkup(
     createElement(
       MemoryRouter,
@@ -33,19 +33,18 @@ describe('NotFoundPage', () => {
     expect(markup).toContain('<p class="artifact-path">/shapes/notes</p>');
   });
 
-  it('links back to the open project dashboard, whichever project the address named', () => {
+  it('links back to the open project dashboard', () => {
     expect(render({ address: '/shapes/notes', openSlug: 'shapes' })).toContain('href="/shapes"');
-    expect(render({ address: '/other/roadmap', openSlug: 'shapes', wrongProject: true })).toContain(
-      'href="/shapes"',
-    );
   });
 
-  it('says the project name differs when the first segment is wrong', () => {
-    const markup = render({ address: '/other/roadmap', openSlug: 'shapes', wrongProject: true });
-    expect(markup).toContain(
-      'This address starts with a different project name than the one that is open (shapes).',
-    );
-    expect(markup).not.toContain('Labelore looked for this address');
+  it('collapses a way back that is not a valid slug to the landing page (T-08-36)', () => {
+    expect(render({ address: '/x', openSlug: '//evil' })).toContain('href="/"');
+  });
+
+  it('carries no wrong-project sentence, whatever the first segment was', () => {
+    const markup = render({ address: '/other/roadmap', openSlug: 'shapes' });
+    expect(markup).not.toContain('different project name');
+    expect(markup).toContain('Labelore looked for this address and found no file or page there.');
     expect(markup).toContain('<p class="artifact-path">/other/roadmap</p>');
   });
 
