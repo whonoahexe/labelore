@@ -1,5 +1,5 @@
 // The PATTERNS pattern-map e2e (quick-260930-wfs, sketch 013 B): real files, never a mock. Fixtures
-// resolve by path against the live `/api/presentation` payload (the research-briefing.spec.ts idiom)
+// resolve by path against the project's live presentation payload (the research-briefing.spec.ts idiom)
 // so an archival/rename fails loudly instead of silently skipping. The Labelore v1.1/05 test runs
 // against the repo's own server on port 4199; the Lendshed v1.0/02 test runs against the read-only
 // server on the made-up Lendshed project (port 4198, FIXTURE_BASE_URL; playwright.config.ts always
@@ -7,7 +7,7 @@
 // spec asserts the foundation sweep's key invariants itself (one h1, an eyebrow, squared corners,
 // one chip signature, no 420px overflow), since the full sweep is too slow to run per change.
 import { expect, test } from '@playwright/test';
-import { BASE_URL, artifactUrl } from './app-url.ts';
+import { BASE_URL, artifactUrl, projectApiUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
 
 interface PresentationLite {
@@ -15,8 +15,8 @@ interface PresentationLite {
 }
 
 async function resolveFixturePath(baseURL: string, pathIncludes: string): Promise<string> {
-  const response = await fetch(`${baseURL}/api/presentation`);
-  if (!response.ok) throw new Error(`patterns-map.spec: /api/presentation responded ${response.status}`);
+  const response = await fetch(await projectApiUrl(baseURL, '/presentation'));
+  if (!response.ok) throw new Error(`patterns-map.spec: the project's presentation payload responded ${response.status}`);
   const data = (await response.json()) as PresentationLite;
   const artifact = data.artifacts.find((entry) => entry.path.includes(pathIncludes));
   if (!artifact) throw new Error(`patterns-map.spec: no artifact with path including "${pathIncludes}"`);
