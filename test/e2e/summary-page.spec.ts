@@ -1,5 +1,5 @@
 // The SUMMARY page e2e (quick-261006-iz7, sketch 020 winner D): real corpus files, never a fixture
-// mock. Fixtures resolve by path against the live `/api/presentation` payload (the uat-page.spec.ts
+// mock. Fixtures resolve by path against the project's live presentation payload (the uat-page.spec.ts
 // idiom) so an archival/rename fails loudly instead of silently skipping. The labelore tests run on
 // port 4199; the Lendshed tests run against the in-repo made-up project on port 4198
 // (playwright.config.ts, always started). This spec asserts the foundation sweep's key invariants
@@ -7,7 +7,7 @@
 // sweep is too slow to run per change. Run once post-merge: npx playwright test test/e2e/summary-page.spec.ts -g "summary page"
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
-import { BASE_URL, artifactUrl } from './app-url.ts';
+import { BASE_URL, artifactUrl, projectApiUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
 
 interface PresentationLite {
@@ -15,8 +15,8 @@ interface PresentationLite {
 }
 
 async function resolveFixturePath(baseURL: string, pathIncludes: string): Promise<string> {
-  const response = await fetch(`${baseURL}/api/presentation`);
-  if (!response.ok) throw new Error(`summary-page.spec: /api/presentation responded ${response.status}`);
+  const response = await fetch(await projectApiUrl(baseURL, '/presentation'));
+  if (!response.ok) throw new Error(`summary-page.spec: the project's presentation payload responded ${response.status}`);
   const data = (await response.json()) as PresentationLite;
   const artifact = data.artifacts.find((entry) => entry.path.includes(pathIncludes));
   if (!artifact) throw new Error(`summary-page.spec: no artifact with path including "${pathIncludes}"`);
