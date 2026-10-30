@@ -1,5 +1,5 @@
 // The image page (Phase 7: D-08): a plain document-style page that shows one image from the project.
-// The picture is always an img element whose src is the images-only bytes route; an SVG is shown the
+// The picture is always an img element whose src is the project's own images-only bytes route; an SVG is shown the
 // same way, so a script inside it never runs, and no markup from the file ever reaches the DOM. The
 // page offers no link, button or download to the bytes (D-09): the image is not a link.
 import { useState } from 'react';
@@ -10,6 +10,8 @@ import {
   imageBytesUrl,
   imageFactsLine,
 } from '../../presentation/file-facts.ts';
+import { projectUrl } from '../api.ts';
+import { useProjectSlug } from '../nav.tsx';
 import { ArtifactHeader } from '../components/artifact-header.tsx';
 import type { ArtifactCrumb } from '../components/artifact-header.tsx';
 import { FigureFrame } from '../components/figure-frame.tsx';
@@ -40,6 +42,7 @@ export function ImageView({
   onLoad: React.ReactEventHandler<HTMLImageElement>;
   onError: React.ReactEventHandler<HTMLImageElement>;
 }): React.JSX.Element {
+  const slug = useProjectSlug() ?? '';
   const name = fileNameOf(artifact.path);
   const facts = imageFactsLine(fileTypeLabel(name, artifact.fileClass), artifact.sizeBytes, dimensionsOf(status));
   return (
@@ -61,7 +64,7 @@ export function ImageView({
           {(fit) => (
             <img
               alt={name}
-              src={imageBytesUrl(artifact.key)}
+              src={projectUrl(slug, imageBytesUrl(artifact.key))}
               data-fit={fit ? 'true' : undefined}
               onLoad={onLoad}
               onError={onError}
