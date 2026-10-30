@@ -1,7 +1,9 @@
-// Pins the read-only sketch file route (todo 001, quick-261023-4wn): /sketches/<folder>/ serves
-// files from .planning/sketches/ only, never lists directories, never writes, and answers every
-// response with a sandbox Content-Security-Policy. Projects are built in temp directories, because
-// committed fixtures must trace to a gsd-core template.
+// Pins the read-only sketch file route (todo 001, quick-261023-4wn; PLAT-08, SEC-05): the project API
+// serves .planning/sketches/ at /api/projects/<slug>/sketch-files/<folder>/ (and the test wrapper at
+// /api/sketch-files/<folder>/) from .planning/sketches/ only, never lists directories, never writes,
+// and answers every response with a sandbox Content-Security-Policy. Nothing answers at /sketches/*
+// any more. Projects are built in temp directories, because committed fixtures must trace to a
+// gsd-core template.
 import { cp, mkdir, mkdtemp, readFile, readdir, realpath, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -11,12 +13,16 @@ import { LocalFsPlanningFilesystem } from '../../src/planning-fs/local-fs.ts';
 import { PathEscapeError } from '../../src/planning-fs/types.ts';
 import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
 import { createApp, routesToApp } from '../../src/server/index.ts';
+import { ProjectRegistry, createSnapshotSource } from '../../src/server/project-registry.ts';
+import { createRegistryApp } from '../../src/server/registry-api.ts';
 import {
+  SKETCH_FILES_SEGMENT,
   SKETCH_TOOLS_STYLE,
   sketchContentType,
   sketchRequestPath,
   withSketchToolsStyle,
 } from '../../src/server/sketch-files.ts';
+import { guardedRequest, testPolicy } from '../helpers/guarded-request.ts';
 
 const FIXTURES = resolve(import.meta.dirname, '../../fixtures');
 const TOOLS_HTML = '<!doctype html><head><title>t</title></head><body><div id="sketch-tools">Width</div></body>';
@@ -28,7 +34,10 @@ let root = '';
 let outsideDir = '';
 let staticRoot = '';
 let repo: PlanningRepository;
-let app: ReturnType<typeof createApp>;
+let wrapper: ReturnType<typeof createApp>;
+let registryApp: ReturnType<typeof createRegistryApp>;
+let registry: ProjectRegistry;
+let slug = '';
 
 async function listTree(dir: string, base = dir): Promise<Record<string, string>> {
   const out: Record<string, string> = {};
@@ -82,18 +91,47 @@ beforeAll(async () => {
 
   repo = new PlanningRepository(new LocalFsPlanningFilesystem(root), root);
   await repo.load();
-  app = createApp(repo, true, staticRoot);
+  wrapper = createApp(repo, true, staticRoot);
+
+  registry = new ProjectRegistry({ createSource: (target) => createSnapshotSource(target) });
+  const registered = await registry.register(root);
+  if (!registered.ok) throw new Error('the temporary project did not register');
+  slug = registered.slug;
+  registryApp = createRegistryApp(registry, { policy: testPolicy(), production: true, staticRoot });
 });
 
 afterAll(async () => {
+  registry.dispose();
   for (const dir of [root, outsideDir, staticRoot]) await rm(dir, { recursive: true, force: true });
 });
 
 const MARKERS = ['SKETCH-ALPHA-INDEX', 'ROOT-SECRET', 'OUTSIDE-SECRET', 'HIDDEN'];
 
-describe('GET /sketches/<folder>/', () => {
+interface Served {
+  name: string;
+  /** The raw sketch-files prefix of this app, without a trailing slash. */
+  base: () => string;
+  request: (path: string, init?: RequestInit) => Promise<Response>;
+}
+
+// The very same handlers answer in both: the registry app at /api/projects/<slug>, behind the request
+// guard, and the guard-free wrapper at /api.
+const SERVED: Served[] = [
+  {
+    name: 'registry app',
+    base: () => `/api/projects/${slug}/sketch-files`,
+    request: (path, init) => guardedRequest(registryApp, path, init),
+  },
+  {
+    name: 'test wrapper',
+    base: () => '/api/sketch-files',
+    request: async (path, init) => await wrapper.request(path, init),
+  },
+];
+
+describe.each(SERVED)('GET sketch files through the $name', ({ base, request }) => {
   it('serves a folder index with the security headers and no CORS grant', async () => {
-    const res = await app.request('/sketches/001-alpha/');
+    const res = await request(`${base()}/001-alpha/`);
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toBe('text/html; charset=utf-8');
     expect(await res.text()).toContain('SKETCH-ALPHA-INDEX');
@@ -104,27 +142,29 @@ describe('GET /sketches/<folder>/', () => {
   });
 
   it('ignores a ?v= query string', async () => {
-    const res = await app.request('/sketches/001-alpha/index.html?v=3');
+    const res = await request(`${base()}/001-alpha/index.html?v=3`);
     expect(res.status).toBe(200);
     expect(await res.text()).toContain('SKETCH-ALPHA-INDEX');
   });
 
   it('redirects a folder without the trailing slash, keeping the sandbox header', async () => {
-    const res = await app.request('/sketches/001-alpha?v=2', { redirect: 'manual' });
+    const res = await request(`${base()}/001-alpha?v=2`, { redirect: 'manual' });
     expect(res.status).toBe(308);
-    expect(res.headers.get('location')).toBe('/sketches/001-alpha/?v=2');
+    expect(res.headers.get('location')).toBe(`${base()}/001-alpha/?v=2`);
     expect(res.headers.get('content-security-policy')).toBe(CSP);
+    expect(res.headers.get('x-content-type-options')).toBe('nosniff');
+    expect(res.headers.get('cache-control')).toBe('no-cache');
   });
 
   it.each([
-    ['/sketches/001-alpha/data.js', 'text/javascript; charset=utf-8'],
-    ['/sketches/001-alpha/data.json', 'application/json; charset=utf-8'],
-    ['/sketches/001-alpha/pic.svg', 'image/svg+xml'],
-    ['/sketches/001-alpha/pic.png', 'image/png'],
-    ['/sketches/themes/default.css', 'text/css; charset=utf-8'],
-    ['/sketches/001-alpha/blob.xyz', 'application/octet-stream'],
-  ])('serves %s as %s', async (url, type) => {
-    const res = await app.request(url);
+    ['/001-alpha/data.js', 'text/javascript; charset=utf-8'],
+    ['/001-alpha/data.json', 'application/json; charset=utf-8'],
+    ['/001-alpha/pic.svg', 'image/svg+xml'],
+    ['/001-alpha/pic.png', 'image/png'],
+    ['/themes/default.css', 'text/css; charset=utf-8'],
+    ['/001-alpha/blob.xyz', 'application/octet-stream'],
+  ])('serves %s as %s', async (rest, type) => {
+    const res = await request(`${base()}${rest}`);
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toBe(type);
     expect(res.headers.get('content-security-policy')).toBe(CSP);
@@ -132,7 +172,7 @@ describe('GET /sketches/<folder>/', () => {
   });
 
   it('serves a font byte-for-byte, and only a font gets the CORS grant', async () => {
-    const res = await app.request('/sketches/themes/fonts/a.woff2');
+    const res = await request(`${base()}/themes/fonts/a.woff2`);
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toBe('font/woff2');
     expect(res.headers.get('access-control-allow-origin')).toBe('*');
@@ -142,43 +182,40 @@ describe('GET /sketches/<folder>/', () => {
   });
 
   it('serves a symlink that stays inside sketches/', async () => {
-    const res = await app.request('/sketches/001-alpha/alias.html');
+    const res = await request(`${base()}/001-alpha/alias.html`);
     expect(res.status).toBe(200);
     expect(await res.text()).toContain('SKETCH-ALPHA-INDEX');
   });
 
   it.each([
-    '/sketches/001-alpha/leak-state.md',
-    '/sketches/001-alpha/leak-root.txt',
-    '/sketches/001-alpha/leak-outside.txt',
-    '/sketches/linked/anything.txt',
-    '/sketches/001-alpha/..%2F..%2FSTATE.md',
-    '/sketches/..%2F..%2Fsecret.txt',
-    '/sketches/001-alpha/%2e%2e%2f%2e%2e%2fSTATE.md',
-    '/sketches/001-alpha/..%5C..%5Csecret.txt',
-    '/sketches/001-alpha/index.html%00.css',
-    '/sketches//etc/passwd',
-    '/sketches/%2Fetc%2Fpasswd',
-    '/sketches/001-alpha/.hidden',
-    '/sketches/001-alpha/%E0%A4%A',
-  ])('refuses %s with 403 and no bytes', async (url) => {
-    const res = await app.request(url);
+    '/001-alpha/leak-state.md',
+    '/001-alpha/leak-root.txt',
+    '/001-alpha/leak-outside.txt',
+    '/linked/anything.txt',
+    '/001-alpha/..%2F..%2FSTATE.md',
+    '/..%2F..%2Fsecret.txt',
+    '/001-alpha/%2e%2e%2f%2e%2e%2fSTATE.md',
+    '/001-alpha/..%5C..%5Csecret.txt',
+    '/001-alpha/index.html%00.css',
+    '//etc/passwd',
+    '/%2Fetc%2Fpasswd',
+    '/001-alpha/.hidden',
+    '/001-alpha/%E0%A4%A',
+  ])('refuses %s with 403 and no bytes', async (rest) => {
+    const res = await request(`${base()}${rest}`);
     expect(res.status).toBe(403);
     expect(res.headers.get('content-security-policy')).toBe(CSP);
     const body = await res.text();
     for (const marker of [...MARKERS, 'STATE']) expect(body).not.toContain(marker);
   });
 
-  it.each(['/sketches/../../secret.txt', '/sketches/%2e%2e/%2e%2e/secret.txt'])(
-    'never returns the root secret for %s',
-    async (url) => {
-      const res = await app.request(url);
-      expect(await res.text()).not.toContain('ROOT-SECRET');
-    },
-  );
+  it.each(['/../../secret.txt', '/%2e%2e/%2e%2e/secret.txt'])('never returns the root secret for %s', async (rest) => {
+    const res = await request(`${base()}${rest}`);
+    expect(await res.text()).not.toContain('ROOT-SECRET');
+  });
 
-  it.each(['/sketches/', '/sketches/themes/', '/sketches/001-alpha/missing.js'])('answers 404 for %s', async (url) => {
-    const res = await app.request(url);
+  it.each(['/', '/themes/', '/001-alpha/missing.js'])('answers 404 for %s', async (rest) => {
+    const res = await request(`${base()}${rest}`);
     expect(res.status).toBe(404);
     expect(res.headers.get('content-security-policy')).toBe(CSP);
     const body = await res.text();
@@ -186,34 +223,65 @@ describe('GET /sketches/<folder>/', () => {
     expect(body).not.toContain('themes');
   });
 
+  it('answers 404 with the sandbox header for the bare sketch-files address', async () => {
+    const res = await request(base());
+    expect(res.status).toBe(404);
+    expect(res.headers.get('content-security-policy')).toBe(CSP);
+  });
+
   it('answers HEAD with the headers and an empty body', async () => {
-    const res = await app.request('/sketches/001-alpha/', { method: 'HEAD' });
+    const res = await request(`${base()}/001-alpha/`, { method: 'HEAD' });
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toBe('text/html; charset=utf-8');
+    expect(res.headers.get('content-security-policy')).toBe(CSP);
     expect(await res.text()).toBe('');
   });
 
-  it('answers 404 when the source has no filesystem', async () => {
-    const bare = createApp({ getSnapshot: () => repo.getSnapshot() }, true, staticRoot);
-    const res = await bare.request('/sketches/001-alpha/');
-    expect(res.status).toBe(404);
-  });
-
-  it('leaves the bare /sketches path to the client page', async () => {
-    for (const url of ['/sketches', '/sketches?view=001-alpha']) {
-      const res = await app.request(url);
-      expect(res.status).toBe(200);
-      expect(await res.text()).toBe(SHELL);
+  it('answers no sketch file at the old /sketches/ address', async () => {
+    for (const url of ['/sketches/001-alpha/', '/sketches/001-alpha/index.html', '/sketches', '/sketches?view=001-alpha']) {
+      const res = await request(url);
+      const body = await res.text();
+      expect(body).not.toContain('SKETCH-ALPHA-INDEX');
+      expect(res.headers.get('content-security-policy')).toBeNull();
     }
   });
 });
 
-describe('write methods on /sketches/*', () => {
+describe('sketch files in the registry app only', () => {
+  it('refuses a foreign Host with 403 before the sketch middleware runs', async () => {
+    const res = await registryApp.request(`/api/projects/${slug}/sketch-files/001-alpha/`, {
+      headers: { Host: 'evil.example' },
+    });
+    expect(res.status).toBe(403);
+    expect(await res.text()).not.toContain('SKETCH-ALPHA-INDEX');
+  });
+
+  it('serves a sketch only under the project whose slug is in the URL', async () => {
+    const res = await guardedRequest(registryApp, '/api/projects/no-such-project/sketch-files/001-alpha/');
+    expect(res.status).toBe(404);
+    expect(await res.text()).not.toContain('SKETCH-ALPHA-INDEX');
+  });
+
+  it('redirects to the raw slug segment the client sent, as a same-origin path', async () => {
+    const res = await guardedRequest(registryApp, `/api/projects/${slug}/sketch-files/001-alpha`, {
+      redirect: 'manual',
+    });
+    expect(res.status).toBe(308);
+    const location = res.headers.get('location') ?? '';
+    expect(location).toBe(`/api/projects/${slug}/sketch-files/001-alpha/`);
+    expect(location.startsWith('//')).toBe(false);
+  });
+});
+
+describe.each(SERVED)('write methods on sketch files through the $name', ({ base, request }) => {
   it('answers 405 with Allow and leaves the tree byte-for-byte unchanged', async () => {
     const sketches = join(root, '.planning', 'sketches');
     const before = await listTree(sketches);
     for (const method of ['POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']) {
-      const res = await app.request('/sketches/001-alpha/index.html', { method, body: method === 'DELETE' || method === 'OPTIONS' ? undefined : 'x' });
+      const res = await request(`${base()}/001-alpha/index.html`, {
+        method,
+        body: method === 'DELETE' || method === 'OPTIONS' ? undefined : 'x',
+      });
       expect(res.status).toBe(405);
       expect(res.headers.get('allow')).toBe('GET, HEAD');
       expect(res.headers.get('content-security-policy')).toBe(CSP);
@@ -222,15 +290,17 @@ describe('write methods on /sketches/*', () => {
   });
 });
 
-describe('the sketch tools panel', () => {
+describe.each(SERVED)('the sketch tools panel through the $name', ({ base, request }) => {
   it('folds the panel in served HTML and leaves the file on disk unchanged', async () => {
-    const res = await app.request('/sketches/001-alpha/tools.html');
+    const res = await request(`${base()}/001-alpha/tools.html`);
     expect(res.status).toBe(200);
     expect(await res.text()).toBe(withSketchToolsStyle(TOOLS_HTML));
     const onDisk = await readFile(join(root, '.planning', 'sketches', '001-alpha', 'tools.html'), 'utf8');
     expect(onDisk).toBe(TOOLS_HTML);
   });
+});
 
+describe('withSketchToolsStyle', () => {
   it('puts the style before </head>, or first when there is no head, and skips HTML without the panel', () => {
     expect(withSketchToolsStyle(TOOLS_HTML)).toBe(TOOLS_HTML.replace('</head>', `${SKETCH_TOOLS_STYLE}</head>`));
     expect(withSketchToolsStyle('<div id="sketch-tools"></div>')).toBe(`${SKETCH_TOOLS_STYLE}<div id="sketch-tools"></div>`);
@@ -239,22 +309,26 @@ describe('the sketch tools panel', () => {
 });
 
 describe('routesToApp', () => {
-  it('sends /api/ and /sketches/ URLs to the app and nothing else', () => {
+  it('sends /api/ URLs to the app and nothing else, sketch addresses included', () => {
     expect(routesToApp('/api/x')).toBe(true);
-    expect(routesToApp('/sketches/001-alpha/?v=1')).toBe(true);
-    for (const url of ['/', '/sketches', '/sketches?view=a', '/sketchesx']) expect(routesToApp(url)).toBe(false);
+    expect(routesToApp(`/api/projects/shapes${SKETCH_FILES_SEGMENT}001-alpha/?v=1`)).toBe(true);
+    for (const url of ['/', '/sketches', '/sketches/', '/sketches/001-alpha/', '/shapes/sketches', '/sketches?view=a', '/sketchesx']) {
+      expect(routesToApp(url)).toBe(false);
+    }
     expect(routesToApp(undefined)).toBe(false);
   });
 });
 
+const PREFIX = `/api/projects/shapes${SKETCH_FILES_SEGMENT}`;
+
 describe('sketchRequestPath / sketchContentType', () => {
   it('maps a directory URL to its index.html', () => {
-    expect(sketchRequestPath('/sketches/001-alpha/')).toEqual({
+    expect(sketchRequestPath(`${PREFIX}001-alpha/`, PREFIX)).toEqual({
       ok: true,
       relPath: '.planning/sketches/001-alpha/index.html',
       directoryRequest: true,
     });
-    expect(sketchRequestPath('/sketches/001-alpha/a%20b.css')).toEqual({
+    expect(sketchRequestPath(`${PREFIX}001-alpha/a%20b.css`, PREFIX)).toEqual({
       ok: true,
       relPath: '.planning/sketches/001-alpha/a b.css',
       directoryRequest: false,
@@ -262,9 +336,14 @@ describe('sketchRequestPath / sketchContentType', () => {
   });
 
   it('refuses unsafe segments', () => {
-    expect(sketchRequestPath('/sketches/a/..%2Fb')).toMatchObject({ ok: false, status: 403 });
-    expect(sketchRequestPath('/sketches/a/.x')).toMatchObject({ ok: false, status: 403 });
-    expect(sketchRequestPath('/sketches/a//b')).toMatchObject({ ok: false, status: 403 });
+    expect(sketchRequestPath(`${PREFIX}a/..%2Fb`, PREFIX)).toMatchObject({ ok: false, status: 403 });
+    expect(sketchRequestPath(`${PREFIX}a/.x`, PREFIX)).toMatchObject({ ok: false, status: 403 });
+    expect(sketchRequestPath(`${PREFIX}a//b`, PREFIX)).toMatchObject({ ok: false, status: 403 });
+  });
+
+  it('is a 404 for a pathname outside the given prefix', () => {
+    expect(sketchRequestPath('/sketches/001-alpha/', PREFIX)).toEqual({ ok: false, status: 404 });
+    expect(sketchRequestPath('/api/projects/other/sketch-files/001-alpha/', PREFIX)).toEqual({ ok: false, status: 404 });
   });
 
   it('knows the extension map and falls back to octet-stream', () => {
@@ -368,7 +447,9 @@ describe('GET /api/sketches', () => {
 
     for (const sketch of model.sketches) {
       if (!sketch.viewUrl) continue;
-      expect((await freshApp.request(sketch.viewUrl)).status).toBe(200);
+      // The view URL is project-relative: the web prefixes the project's API base.
+      expect(sketch.viewUrl.startsWith('/sketch-files/')).toBe(true);
+      expect((await freshApp.request(`/api${sketch.viewUrl}`)).status).toBe(200);
     }
 
     const readmeUrl = model.sketches[1].readmeUrl ?? '';
