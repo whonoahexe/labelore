@@ -1,16 +1,16 @@
 // sketch-004 B3 "folded chapters" e2e coverage (quick-260922-3us Task 1). Fixtures are resolved by
-// path from the live `/api/presentation` payload (never hardcoded URLs) so the suite always
+// path from the project's live presentation payload (never hardcoded URLs) so the suite always
 // reflects this repo's own `.planning/` corpus. `runFullBehaviorChecks` is the shared behavior
 // helper Task 2 (plan/verification cover/glance smoke) and Task 3 (full coverage over every type,
 // plus the foundation-sweep updates) build on — Task 3 appends fixtures here rather than
 // duplicating the checks. Uses plain `expect` throughout.
 import { expect, test, type Page } from '@playwright/test';
-import { BASE_URL, artifactUrl, projectUrl } from './app-url.ts';
+import { BASE_URL, artifactUrl, projectApiUrl, projectUrl } from './app-url.ts';
 
 interface Fixture {
   id: string;
   /** A substring of the artifact's own `path`, unique enough in this repo's corpus to resolve to
-   * exactly one artifact via `/api/presentation`. */
+   * exactly one artifact via the project's presentation payload. */
   pathIncludes: string;
   glance: boolean;
 }
@@ -47,13 +47,13 @@ interface PresentationLite {
   artifacts: ArtifactDtoLite[];
 }
 
-/** Resolves a fixture's route by matching `path` against `/api/presentation`'s live artifact
+/** Resolves a fixture's route by matching `path` against the project's live presentation payload's artifact
  * list — never a hardcoded URL, so an archival/rename never silently starts skipping a fixture
  * (it fails loudly here instead). */
 async function resolveFixturePath(baseURL: string, pathIncludes: string): Promise<string> {
-  const response = await fetch(`${baseURL}/api/presentation`);
+  const response = await fetch(await projectApiUrl(baseURL, '/presentation'));
   if (!response.ok) {
-    throw new Error(`document-layout.spec: /api/presentation responded ${response.status}`);
+    throw new Error(`document-layout.spec: the project's presentation payload responded ${response.status}`);
   }
   const data = (await response.json()) as PresentationLite;
   const artifact = data.artifacts.find((entry) => entry.path.includes(pathIncludes));
