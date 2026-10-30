@@ -680,7 +680,8 @@ describe('planning-files drawer (quick-260911-vqe D-01..D-04, SB-04/SB-05)', () 
 
     const places = await source('src/web/components/planning-places.tsx');
     expect(places).toContain('export function useDrawerQuery');
-    expect(places).toContain("'/api/drawer'");
+    expect(places).toContain("projectUrl(slug, '/drawer')");
+    expect(places).not.toContain('/api/');
     expect(places).toContain('className="places-badge"');
     expect(places).toContain('title={row.path}');
     expect(places).toContain("scrollIntoView({ block: 'nearest' })");
