@@ -25540,6 +25540,9 @@ button.research-step-chip:hover {
 .project-switcher-trigger {
   display: flex;
   min-width: 0;
+  /* As tall as the brand mark whether or not the meta line has arrived, so the trigger (and the popup
+     anchored to it) does not move when the project's presentation lands. */
+  min-height: calc(var(--space-8) + var(--space-1));
   align-items: center;
   gap: var(--space-2);
   padding: 0 var(--space-2);
@@ -25547,6 +25550,7 @@ button.research-step-chip:hover {
   color: var(--foreground);
   cursor: pointer;
   text-align: left;
+  transition: background-color 150ms ease;
 }
 
 .project-switcher-trigger:hover {
@@ -25584,6 +25588,10 @@ button.research-step-chip:hover {
 .project-switcher-popup {
   display: flex;
   flex-direction: column;
+  /* The UI-SPEC size caps, over tokens: 448px wide (or the viewport less 32px) and 448px or 70vh
+     tall, whichever is less; the list scrolls inside while the head and the footer stay in view. */
+  width: min(calc(var(--space-28) * 4), calc(100vw - var(--space-8)));
+  max-height: min(calc(var(--space-28) * 4), 70vh);
   border: 1px solid var(--border);
   background: var(--popover);
   color: var(--foreground);
@@ -25614,6 +25622,8 @@ button.research-step-chip:hover {
 .project-switcher-popup > div:not(.project-switcher-footer) {
   flex: 1 1 auto;
   min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .project-switcher-popup .project-list {
@@ -25632,6 +25642,26 @@ button.research-step-chip:hover {
 
 .project-switcher-footer:empty {
   display: none;
+}
+
+/* Below the shell's 42rem breakpoint the popup spans the viewport directly under the header (it
+   is positioned to start at the left edge, with no padding from it) and the trigger is a full
+   40px target; its name and meta keep truncating with an ellipsis inside the trigger. */
+@media (max-width: 42rem) {
+  .project-switcher-trigger {
+    min-height: var(--space-10);
+  }
+
+  .project-switcher-popup {
+    width: 100vw;
+    border-inline: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-switcher-trigger {
+    transition: none;
+  }
 }
 
 /* Phase 8 (08-05): the projects landing page and the project row. The arrangement is the winner of
