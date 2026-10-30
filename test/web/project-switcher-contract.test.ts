@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import type { ProjectListEntry } from '../../src/presentation/project-list.ts';
+import { ProjectList, ProjectRowConfirm } from '../../src/web/components/project-row.tsx';
 import { ProjectSwitcher, ProjectSwitcherPanel } from '../../src/web/components/project-switcher.tsx';
 import { projectsKey } from '../../src/web/query-keys.ts';
 
@@ -201,5 +202,93 @@ describe('the switcher sources', () => {
     // The switcher is a sibling in the lockup, the one `brand` grid area.
     expect(shell.slice(linkEnd, switcherAt)).not.toContain('<NavLink');
     expect(shell.indexOf('<div className="brand-lockup">')).toBeLessThan(linkStart);
+  });
+
+  it('opens the add dialog from the footer button, and hands focus to the dialog rather than the trigger', () => {
+    expect(switcher).toContain('<ProjectAddDialog');
+    expect(switcher).toContain('onAddOrScan');
+    // The list closes without a focus return of its own: the dialog's finalFocus is the trigger.
+    expect(switcher).toContain("choice.current === 'all' || choice.current === 'add'");
+    expect(switcher).toContain('finalFocus={triggerRef}');
+  });
+});
+
+// Forgetting a project (D-10): the quiet action on every switcher and landing row and its inline confirm.
+// The confirm is a static render of ProjectRowConfirm (the row swaps to it on a press, which a static
+// render cannot do); the browser half is test/e2e/switcher.spec.ts.
+describe('the forget action', () => {
+  const lendshed = entry('lendshed', 'Lendshed');
+  const forgettable = (variant: 'switcher' | 'landing'): string =>
+    render(
+      variant === 'switcher'
+        ? createElement(ProjectList, { entries: [lendshed], variant, onForgotten: () => undefined })
+        : createElement(ProjectList, { entries: [lendshed], variant, now: Date.now(), onForgotten: () => undefined }),
+      null,
+    );
+
+  it('puts a ghost icon button named "Forget {name}" after the name link on a switcher and a landing row', () => {
+    for (const variant of ['switcher', 'landing'] as const) {
+      const markup = forgettable(variant);
+      expect(markup).toContain('<div class="project-row-actions">');
+      expect(markup).toContain('aria-label="Forget Lendshed"');
+      expect(markup).toContain('lucide-x');
+      // Tab order inside a row: the project link, then the forget button.
+      expect(markup.indexOf('href="/lendshed"')).toBeLessThan(markup.indexOf('aria-label="Forget Lendshed"'));
+      expect(markup).not.toContain('Forget project');
+    }
+  });
+
+  it('gives a list that cannot forget (no onForgotten) no forget action', () => {
+    const markup = render(createElement(ProjectList, { entries: [lendshed], variant: 'switcher' }), null);
+    expect(markup).not.toContain('project-row-actions');
+    expect(markup).not.toContain('Forget');
+  });
+
+  it('asks the UI-SPEC question with a neutral "Forget project" and "Keep project", in that order', () => {
+    const markup = render(
+      createElement(ProjectRowConfirm, { entry: lendshed, onKeep: () => undefined, onForgotten: () => undefined }),
+      null,
+    );
+    const question = "Forget Lendshed? Labelore only removes it from this list. The project's files are not touched.";
+    expect(markup).toContain(question.replace(/'/g, '&#x27;'));
+    expect(markup).toContain('class="project-row-confirm"');
+    const forget = markup.indexOf('>Forget project</button>');
+    const keep = markup.indexOf('>Keep project</button>');
+    expect(forget).toBeGreaterThan(0);
+    expect(keep).toBeGreaterThan(forget);
+    // Nothing deletes anything in the wording, and the buttons start enabled.
+    expect(markup).not.toMatch(/delete/i);
+    expect(markup).not.toMatch(/\sdisabled[\s=>]/);
+  });
+
+  it('renders a project name that looks like markup as text in the question (T-08-30)', () => {
+    const hostile = entry('hostile', '<img src=x onerror=alert(1)>');
+    const markup = render(
+      createElement(ProjectRowConfirm, { entry: hostile, onKeep: () => undefined, onForgotten: () => undefined }),
+      null,
+    );
+    expect(markup).not.toContain('<img');
+    expect(markup).toContain('Forget &lt;img src=x onerror=alert(1)&gt;?');
+  });
+
+  it('keeps forget neutral, sends nothing before the confirm, and waits for the server (source pins)', () => {
+    const row = source('src/web/components/project-row.tsx');
+    expect(row).not.toMatch(/destructive/i);
+    expect(row).not.toContain('dangerouslySetInnerHTML');
+    // The request lives in the confirm only: the quiet button just swaps the row to it.
+    const confirm = row.slice(
+      row.indexOf('export function ProjectRowConfirm'),
+      row.indexOf('export function ProjectRow('),
+    );
+    expect(confirm).toContain('forgetProject(entry.slug)');
+    expect(row.slice(row.indexOf('export function ProjectRow(')).match(/forgetProject\(/g)).toBeNull();
+    // No optimistic removal: the cache is only touched once the mutation has succeeded.
+    expect(row).not.toContain('onMutate');
+    expect(row).not.toContain('setQueryData');
+    expect(row).toContain('onSuccess');
+    // The wording is the UI-SPEC's, each line in one piece.
+    expect(row).toContain("Labelore only removes it from this list. The project's files are not touched.");
+    expect(row).toContain('Forget this project');
+    expect(row).toContain('`Forget ${entry.name}`');
   });
 });

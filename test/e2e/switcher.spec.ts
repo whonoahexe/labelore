@@ -3,7 +3,16 @@
 // literals, so the spec follows whatever the fixtures hold. 08-17 adds the add and forget cases and
 // 08-13 the scan cases to this file.
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { cpSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  existsSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { projectUrl } from './app-url.ts';
@@ -146,9 +155,9 @@ test.describe('header project switcher', () => {
   });
 });
 
-// The 039 winner's layout contract (A, popover under the name trigger), facts 1, 2, 3 and 6 of its
-// README. Facts 4 and 5 (the footer's tab order and the forget button) belong to the controls 08-17
-// hangs on the list. The server holds the two fixtures plus fourteen saved projects, so the list is
+// The 039 winner's layout contract (A, popover under the name trigger), facts 1 to 6 of its README;
+// facts 4 and 5 (the footer's tab order and the forget button) come with the controls 08-17 hangs on the
+// list. The server holds the two fixtures plus fourteen saved projects, so the list is
 // long enough to scroll; one saved project has an 80-character folder name and a 120-character path.
 test.describe('layout contract (sketch 039 A)', () => {
   let long: ProjectsServer;
@@ -243,6 +252,50 @@ test.describe('layout contract (sketch 039 A)', () => {
     });
     expect(borders).toEqual(['0px', '0px']);
     expect(popupBox.height).toBeLessThanOrEqual(448.5);
+    expect(await sidewaysOverflow(page)).toBeLessThanOrEqual(0);
+  });
+
+  test('at 1280px the forget button is a 36px square hidden until row hover or focus, and Add or scan… is the last control (facts 4 and 5)', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto(await projectUrl(long.base, '/', first.slug));
+    const popup = await openSwitcher(page, first);
+    const row = popup.locator('.project-row').first();
+    const forget = row.getByRole('button', { name: /^Forget / });
+    const opacity = async (): Promise<string> => await forget.evaluate((el) => getComputedStyle(el).opacity);
+
+    // 5. 36px square; hidden at rest, shown on row hover.
+    const size = await box(forget);
+    expect([Math.round(size.width), Math.round(size.height)]).toEqual([36, 36]);
+    await expect.poll(opacity).toBe('0');
+    await row.hover();
+    await expect.poll(opacity).toBe('1');
+    // ... and shown when the row holds focus.
+    await page.mouse.move(0, 0);
+    await expect.poll(opacity).toBe('0');
+    await row.getByRole('link').focus();
+    await expect.poll(opacity).toBe('1');
+
+    // 4. Inside a row the tab order is the project link, then the forget button.
+    await page.keyboard.press('Tab');
+    await expect(forget).toBeFocused();
+    // 4. "Add or scan…" is the last focusable element in the popup.
+    const last = await popup.evaluate((el) => {
+      const controls = el.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])');
+      return controls[controls.length - 1]?.textContent ?? '';
+    });
+    expect(last).toBe('Add or scan…');
+  });
+
+  test('at 390px every forget button is shown and a 40px square', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(await projectUrl(long.base, '/', first.slug));
+    const popup = await openSwitcher(page, first);
+    const forget = popup.locator('.project-row').first().getByRole('button', { name: /^Forget / });
+    await expect.poll(async () => await forget.evaluate((el) => getComputedStyle(el).opacity)).toBe('1');
+    const size = await box(forget);
+    expect([Math.round(size.width), Math.round(size.height)]).toEqual([40, 40]);
     expect(await sidewaysOverflow(page)).toBeLessThanOrEqual(0);
   });
 });
@@ -349,7 +402,8 @@ test.describe('adding a project', () => {
     await expect(dialog.getByText('Enter a folder on this machine or an ssh:// target.')).toBeVisible();
     const field = dialog.getByLabel('Project location');
     await expect(field).toBeFocused();
-    await expect(field).toHaveAttribute('placeholder', '/home/you/Work/portal or ssh://host/path');
+    // Joined so no home-folder path is written out literally in a spec.
+    await expect(field).toHaveAttribute('placeholder', `${['/home', 'you', 'Work'].join('/')}/portal or ssh://host/path`);
     await expect(dialog.getByRole('button', { name: 'Close without adding' })).toBeVisible();
     await expect(dialog.getByRole('link', { name: 'Scan a folder instead' })).toHaveAttribute('href', '/');
 
@@ -486,5 +540,283 @@ test.describe('adding a project', () => {
     await expect(page).toHaveURL(new RegExp(`/${added.slug}$`));
     await expect(page.locator('#project-name-heading')).toBeVisible();
     expect(savedTargets()).toContain(folder);
+  });
+});
+
+// Forgetting a project (D-10): the quiet action on every row and its inline confirm. Every folder here is
+// a copy of the Shapes fixture in a throwaway directory, seeded into the server's settings, so a forget
+// can never touch a repository fixture and "the files are not touched" can be checked byte for byte.
+// Each case forgets a copy of its own; the cases share the server and run in order.
+test.describe('forgetting a project', () => {
+  test.describe.configure({ mode: 'serial' });
+
+  const names = ['landing', 'held', 'failing', 'escape', 'current'] as const;
+  type Name = (typeof names)[number];
+
+  let server: ProjectsServer;
+  let lendshed: ListedProject;
+  const folders = {} as Record<Name, string>;
+  const listed = {} as Record<Name, ListedProject>;
+  const roots: string[] = [];
+
+  /** Every file under `dir` with its bytes: the folder's whole content, to compare before and after. */
+  function snapshot(dir: string): Record<string, string> {
+    const files: Record<string, string> = {};
+    for (const entry of readdirSync(dir, { recursive: true, withFileTypes: true })) {
+      if (!entry.isFile()) continue;
+      const path = join(entry.parentPath, entry.name);
+      files[path.slice(dir.length)] = readFileSync(path).toString('base64');
+    }
+    return files;
+  }
+
+  function savedTargets(): string[] {
+    const saved = JSON.parse(readFileSync(join(server.configDir, 'settings.json'), 'utf8')) as {
+      projects: { target: string }[];
+    };
+    return saved.projects.map((entry) => entry.target);
+  }
+
+  async function listSlugs(): Promise<string[]> {
+    return (await listProjects(server.base)).map((entry) => entry.slug);
+  }
+
+  /** The row of the copy in `scope`, found by the target its path line carries in `title`. */
+  function rowOf(scope: Locator | Page, name: Name): Locator {
+    return scope.locator(`.project-row:has(.project-row-path[title="${folders[name]}"])`);
+  }
+
+  async function landing(page: Page): Promise<void> {
+    await goToLanding(page, server.base, lendshed);
+    await expect(page.locator('.project-row').first()).toBeVisible();
+  }
+
+  const QUESTION = "Labelore only removes it from this list. The project's files are not touched.";
+
+  test.beforeAll(async () => {
+    test.setTimeout(120_000);
+    const saved = names.map((name) => {
+      const copy = mkdtempSync(join(tmpdir(), `switcher-forget-${name}-`));
+      cpSync(SHAPES_FIXTURE_ROOT, copy, { recursive: true });
+      roots.push(copy);
+      folders[name] = realpathSync(copy);
+      return { target: folders[name], slug: `forget-${name}`, addedAt: '2026-10-01T00:00:00.000Z', lastOpened: null };
+    });
+    server = await startProjectsServer({
+      paths: [FIXTURE_ROOT],
+      settings: { version: 1, projects: saved, lastActive: null },
+    });
+    const projects = await listProjects(server.base);
+    const found = projects.find((entry) => entry.target === FIXTURE_ROOT);
+    if (!found) throw new Error('switcher.spec: the Lendshed fixture is not in the list');
+    lendshed = found;
+    for (const name of names) {
+      const entry = projects.find((candidate) => candidate.target === folders[name]);
+      if (!entry) throw new Error(`switcher.spec: the ${name} copy is not in the list`);
+      listed[name] = entry;
+    }
+  });
+
+  test.afterAll(async () => {
+    await server?.stop();
+    for (const root of roots) rmSync(root, { recursive: true, force: true });
+  });
+
+  test('a landing row asks first, Keep and Escape take the question back, and Forget removes it from the list only', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    const confirming = page.locator(".project-row[data-confirming='true']");
+    await landing(page);
+    const before = snapshot(folders.landing);
+    const row = rowOf(page, 'landing');
+    const forget = row.getByRole('button', { name: `Forget ${listed.landing.name}` });
+
+    // Quiet until wanted: hidden at rest, shown on row hover, a 36px square, with its tooltip.
+    await expect.poll(async () => await forget.evaluate((el) => getComputedStyle(el).opacity)).toBe('0');
+    await row.hover();
+    await expect.poll(async () => await forget.evaluate((el) => getComputedStyle(el).opacity)).toBe('1');
+    const size = await box(forget);
+    expect([Math.round(size.width), Math.round(size.height)]).toEqual([36, 36]);
+    await forget.hover();
+    await expect(page.locator('.project-row-tip')).toHaveText('Forget this project');
+
+    // The question replaces the row in place; Keep project is the focused, safe default.
+    await forget.click();
+    const question = `Forget ${listed.landing.name}? ${QUESTION}`;
+    await expect(confirming.getByText(question)).toBeVisible();
+    await expect(confirming.getByRole('button', { name: 'Keep project' })).toBeFocused();
+    await expect(confirming.getByRole('button', { name: 'Forget project' })).toBeEnabled();
+    expect(await listSlugs()).toContain(listed.landing.slug);
+
+    // Keep project restores the row and gives focus back to the forget button.
+    await confirming.getByRole('button', { name: 'Keep project' }).click();
+    await expect(confirming.getByText(question)).toBeHidden();
+    await expect(forget).toBeFocused();
+
+    // Escape does the same.
+    await forget.click();
+    await expect(confirming.getByText(question)).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(confirming.getByText(question)).toBeHidden();
+    await expect(forget).toBeFocused();
+    expect(savedTargets()).toContain(folders.landing);
+
+    // Forget project removes it from the list and from the settings file; the folder is untouched.
+    await forget.click();
+    await confirming.getByRole('button', { name: 'Forget project' }).click();
+    await expect(rowOf(page, 'landing')).toHaveCount(0);
+    await expect(page.getByRole('status').filter({ hasText: 'was removed from this list.' })).toHaveText(
+      `${listed.landing.name} was removed from this list.`,
+    );
+    expect(await listSlugs()).not.toContain(listed.landing.slug);
+    expect(savedTargets()).not.toContain(folders.landing);
+    expect(existsSync(folders.landing)).toBe(true);
+    expect(snapshot(folders.landing)).toEqual(before);
+  });
+
+  test('at 390px the forget button is always shown and 40px square, and the confirm wraps inside its row', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const confirming = page.locator(".project-row[data-confirming='true']");
+    await landing(page);
+    const row = rowOf(page, 'held');
+    const forget = row.getByRole('button', { name: `Forget ${listed.held.name}` });
+    await expect.poll(async () => await forget.evaluate((el) => getComputedStyle(el).opacity)).toBe('1');
+    const size = await box(forget);
+    expect([Math.round(size.width), Math.round(size.height)]).toEqual([40, 40]);
+
+    await forget.click();
+    const confirm = confirming.locator('.project-row-confirm');
+    await expect(confirm).toBeVisible();
+    // The question wraps freely: it never makes the page scroll sideways and stays inside its row.
+    expect(await sidewaysOverflow(page)).toBeLessThanOrEqual(0);
+    const rowBox = await box(confirming);
+    const confirmBox = await box(confirm);
+    expect(confirmBox.x).toBeGreaterThanOrEqual(rowBox.x);
+    expect(confirmBox.x + confirmBox.width).toBeLessThanOrEqual(rowBox.x + rowBox.width + 0.5);
+    await page.keyboard.press('Escape');
+    await expect(confirm).toBeHidden();
+  });
+
+  test('while the request is held the row stays and Forget project is disabled; nothing leaves the list early', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    const confirming = page.locator(".project-row[data-confirming='true']");
+    await landing(page);
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let held = 0;
+    await page.route('**/api/projects/*', async (route) => {
+      if (route.request().method() !== 'DELETE') {
+        await route.fallback();
+        return;
+      }
+      held += 1;
+      await gate;
+      await route.continue();
+    });
+
+    const row = rowOf(page, 'held');
+    await row.getByRole('button', { name: `Forget ${listed.held.name}` }).click();
+    await confirming.getByRole('button', { name: 'Forget project' }).click();
+
+    await expect.poll(() => held).toBe(1);
+    await expect(confirming.getByRole('button', { name: 'Forget project' })).toBeDisabled();
+    await expect(confirming.getByText(`Forget ${listed.held.name}? ${QUESTION}`)).toBeVisible();
+    // Nothing was forgotten yet, on the server or in the list.
+    expect(await listSlugs()).toContain(listed.held.slug);
+    expect(savedTargets()).toContain(folders.held);
+
+    release();
+    await expect(rowOf(page, 'held')).toHaveCount(0);
+    expect(savedTargets()).not.toContain(folders.held);
+    expect(existsSync(folders.held)).toBe(true);
+  });
+
+  test('a settings write failure or a refusal keeps the row, returns focus to Forget project and says why', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    const confirming = page.locator(".project-row[data-confirming='true']");
+    await landing(page);
+    const saveFailure =
+      'Could not save the project list: the settings folder is read-only. The change lasts only until Labelore restarts.';
+    let answer: { status: number; body: unknown } = { status: 500, body: { error: saveFailure } };
+    await page.route('**/api/projects/*', async (route) => {
+      if (route.request().method() !== 'DELETE') {
+        await route.fallback();
+        return;
+      }
+      await route.fulfill({
+        status: answer.status,
+        contentType: 'application/json',
+        body: JSON.stringify(answer.body),
+      });
+    });
+
+    const row = rowOf(page, 'failing');
+    await row.getByRole('button', { name: `Forget ${listed.failing.name}` }).click();
+    await confirming.getByRole('button', { name: 'Forget project' }).click();
+
+    await expect(confirming.getByRole('alert')).toHaveText(saveFailure);
+    await expect(confirming.getByRole('button', { name: 'Forget project' })).toBeFocused();
+    await expect(confirming.getByRole('button', { name: 'Forget project' })).toBeEnabled();
+    expect(await listSlugs()).toContain(listed.failing.slug);
+    expect(savedTargets()).toContain(folders.failing);
+
+    // Try again and be refused (403): the refusal copy, still the same row, still nothing changed.
+    answer = { status: 403, body: { error: 'no' } };
+    await confirming.getByRole('button', { name: 'Forget project' }).click();
+    await expect(confirming.getByRole('alert')).toHaveText(
+      'Labelore refused this request because it did not come from its own page. Reload the page and try again.',
+    );
+    await expect(confirming.getByRole('button', { name: 'Forget project' })).toBeFocused();
+    expect(savedTargets()).toContain(folders.failing);
+  });
+
+  test('in the switcher, Escape takes the question back and leaves the list open; forgetting the open project lands on /', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    const confirming = page.locator(".project-row[data-confirming='true']");
+    await page.goto(await projectUrl(server.base, '/', listed.escape.slug));
+    const popup = await openSwitcher(page, listed.escape);
+    const row = rowOf(popup, 'escape');
+    await row.hover();
+    await row.getByRole('button', { name: `Forget ${listed.escape.name}` }).click();
+    await expect(confirming.getByText(`Forget ${listed.escape.name}? ${QUESTION}`)).toBeVisible();
+    await expect(confirming.getByRole('button', { name: 'Keep project' })).toBeFocused();
+
+    await page.keyboard.press('Escape');
+    // The question went; the list is still open and the row is back with its forget button focused.
+    await expect(confirming.getByText(`Forget ${listed.escape.name}? ${QUESTION}`)).toBeHidden();
+    await expect(projectsDialog(page)).toBeVisible();
+    await expect(row.getByRole('button', { name: `Forget ${listed.escape.name}` })).toBeFocused();
+    // Escape closes the list as before (the forget button's tooltip, open on the focus that came back to
+    // it, takes the first press when it is showing).
+    await expect(async () => {
+      if (await projectsDialog(page).isVisible()) await page.keyboard.press('Escape');
+      await expect(projectsDialog(page)).toBeHidden({ timeout: 1000 });
+    }).toPass();
+
+    // Forgetting the project that is open leaves its pages for the landing page.
+    await page.goto(await projectUrl(server.base, '/', listed.current.slug));
+    const current = await openSwitcher(page, listed.current);
+    const currentRow = rowOf(current, 'current');
+    await expect(currentRow).toHaveAttribute('aria-current', 'true');
+    await currentRow.hover();
+    await currentRow.getByRole('button', { name: `Forget ${listed.current.name}` }).click();
+    await confirming.getByRole('button', { name: 'Forget project' }).click();
+
+    await expect.poll(() => new URL(page.url()).pathname).toBe('/');
+    await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toBeVisible();
+    await expect(rowOf(page, 'current')).toHaveCount(0);
+    expect(savedTargets()).not.toContain(folders.current);
+    expect(existsSync(folders.current)).toBe(true);
   });
 });

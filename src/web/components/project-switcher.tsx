@@ -14,7 +14,7 @@ import { fetchProjects } from '../api.ts';
 import { AppLink } from '../nav.tsx';
 import { projectsKey } from '../query-keys.ts';
 import { ProjectAddDialog } from './project-add-dialog.tsx';
-import { ProjectList } from './project-row.tsx';
+import { ProjectList, forgottenAnnouncement } from './project-row.tsx';
 import { Button } from './ui/button.tsx';
 
 /** Set when a row of another project is chosen: the switcher that mounts in that project's shell
@@ -40,7 +40,8 @@ type Choice = 'project' | 'all' | 'add' | null;
 /**
  * The inside of the list: the 'Projects' head with its 'All projects' link, the rows (or the empty
  * note) and the footer with its 'Add or scan…' entry. The list query lives here, so it is observed,
- * and therefore refetched (staleTime 0), only while the list is open.
+ * and therefore refetched (staleTime 0), only while the list is open. Each row can be forgotten (D-10);
+ * the polite live region outside the rows announces the outcome, because the row itself is gone by then.
  */
 export function ProjectSwitcherPanel({
   currentSlug,
@@ -51,11 +52,19 @@ export function ProjectSwitcherPanel({
   onAddOrScan(): void;
 }): React.JSX.Element {
   const list = useQuery({ queryKey: projectsKey, queryFn: fetchProjects, staleTime: 0 });
+  const [announcement, setAnnouncement] = useState('');
   const entries = list.data?.projects ?? [];
 
   let body: React.ReactNode;
   if (entries.length > 0) {
-    body = <ProjectList entries={entries} currentSlug={currentSlug} variant="switcher" />;
+    body = (
+      <ProjectList
+        entries={entries}
+        currentSlug={currentSlug}
+        variant="switcher"
+        onForgotten={(name) => setAnnouncement(forgottenAnnouncement(name))}
+      />
+    );
   } else if (list.isPending) {
     body = <div className="empty-note">Loading projects…</div>;
   } else if (list.isError) {
@@ -73,6 +82,9 @@ export function ProjectSwitcherPanel({
         </AppLink>
       </header>
       <div>{body}</div>
+      <p aria-live="polite" className="sr-only" role="status">
+        {announcement}
+      </p>
       <div className="project-switcher-footer">
         <Button onClick={onAddOrScan} type="button" variant="ghost">
           <Plus aria-hidden="true" />

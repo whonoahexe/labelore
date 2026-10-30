@@ -10,7 +10,7 @@ import type { ProjectListResponse } from '../../presentation/project-list.ts';
 import { ApiError, UNREACHABLE_COPY, fetchProjects } from '../api.ts';
 import { AddProjectForm } from '../components/add-project-form.tsx';
 import { PlainPage } from '../components/plain-header.tsx';
-import { ProjectList } from '../components/project-row.tsx';
+import { ProjectList, forgottenAnnouncement } from '../components/project-row.tsx';
 import { Button } from '../components/ui/button.tsx';
 import { useAppNavigate } from '../nav.tsx';
 import { projectRootPath } from '../project-path.ts';
@@ -23,6 +23,8 @@ export type ProjectsListState =
   | { kind: 'ready'; response: ProjectListResponse; now: number };
 
 export function ProjectsListSection({ state }: { state: ProjectsListState }): React.JSX.Element {
+  // The outcome of a forget is announced from here, outside the rows: the row is gone by then.
+  const [announcement, setAnnouncement] = useState('');
   if (state.kind === 'pending') {
     return (
       <section aria-label="Project list">
@@ -65,8 +67,16 @@ export function ProjectsListSection({ state }: { state: ProjectsListState }): Re
           </div>
         </div>
       ) : (
-        <ProjectList entries={response.projects} variant="landing" now={now} />
+        <ProjectList
+          entries={response.projects}
+          variant="landing"
+          now={now}
+          onForgotten={(name) => setAnnouncement(forgottenAnnouncement(name))}
+        />
       )}
+      <p aria-live="polite" className="sr-only" role="status">
+        {announcement}
+      </p>
     </section>
   );
 }
