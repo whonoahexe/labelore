@@ -2,7 +2,7 @@
 // through apiFetch, so a refused or unreachable server reads the same everywhere, and every write
 // carries the JSON content type the server's request guard demands. The presentation, open and
 // refresh calls of one project live here (08-08); the add and forget calls are 08-17's, the scan
-// mutations 08-13's.
+// and bulk-add calls 08-13's.
 import type { ProjectListResponse } from '../presentation/project-list.ts';
 import type { ProjectPresentation } from '../server/project-presentation.ts';
 
@@ -142,4 +142,51 @@ export async function forgetProject(slug: string): Promise<ForgetProjectResponse
     method: 'DELETE',
     body: {},
   });
+}
+
+/** One GSD project a scan found (the server's `ScanFound`, restated here so the web imports no server module). */
+export interface ScannedProject {
+  /** The canonical path of the project folder: what add-many is sent. */
+  path: string;
+  /** The same path home-shortened, for display. */
+  displayPath: string;
+  name: string;
+  /** True when the list already holds this project: it is shown, not selectable. */
+  alreadyAdded: boolean;
+}
+
+export interface ScanFolderResponse {
+  /** The folder as the person will read it (home-shortened). */
+  folder: string;
+  found: ScannedProject[];
+  /** True when the scan stopped at the result cap. */
+  capped: boolean;
+  cap: number;
+}
+
+/** Looks for GSD projects two levels below a folder inside home (D-15). Runs only when called, never at
+ * startup (D-16). A folder the server refuses (outside home, missing, a file, unreadable, empty) is a 422
+ * or 400 `http` ApiError carrying the server's own message. */
+export async function scanFolder(folder: string): Promise<ScanFolderResponse> {
+  return await apiFetch<ScanFolderResponse>('/api/projects/scan', { method: 'POST', body: { folder } });
+}
+
+export interface AddProjectsResult {
+  target: string;
+  slug?: string;
+  duplicate?: boolean;
+  /** The server's own words when this one target could not be added. */
+  error?: string;
+}
+
+export interface AddProjectsResponse {
+  /** How many targets became new entries (a duplicate adds nothing). */
+  added: number;
+  results: AddProjectsResult[];
+}
+
+/** Remembers the picked projects without loading them (D-14). Each target goes through the server's one
+ * add path; the server refuses more than 100. */
+export async function addProjects(targets: readonly string[]): Promise<AddProjectsResponse> {
+  return await apiFetch<AddProjectsResponse>('/api/projects/add-many', { method: 'POST', body: { targets } });
 }
