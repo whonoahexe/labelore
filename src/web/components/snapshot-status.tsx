@@ -1,22 +1,17 @@
 import { useEffect, useId, useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { formatReadAt, formatRelativeReadAt } from '../../presentation/shell-header.ts';
+import { refreshProject } from '../api.ts';
+import { useProjectSlug } from '../nav.tsx';
+import { projectKey, projectsKey } from '../query-keys.ts';
 import { Button } from './ui/button.tsx';
 import { useToastManager } from './ui/toast.tsx';
 
-interface RefreshResponse {
-  refreshed: boolean;
-  readAt?: string;
-  loadStatus?: unknown;
-}
-
-async function postRefresh(): Promise<RefreshResponse> {
-  const response = await fetch('/api/refresh', {
-    method: 'POST',
-    headers: { Accept: 'application/json' },
-  });
-  if (!response.ok) throw new Error(`Refresh request failed (${response.status})`);
-  return (await response.json()) as RefreshResponse;
+/** What a successful refresh of one project marks invalid: that project's own queries, then the
+ * project list (its row carries the read time). Never another project's entries (D-08, PLAT-08). */
+export async function refreshInvalidations(queryClient: QueryClient, slug: string): Promise<void> {
+  await queryClient.invalidateQueries({ queryKey: projectKey(slug) });
+  await queryClient.invalidateQueries({ queryKey: projectsKey });
 }
 
 const RELATIVE_TICK_MS = 30_000;
@@ -35,15 +30,17 @@ export function SnapshotStatus({ readAt, phase }: SnapshotStatusProps): React.JS
   const queryClient = useQueryClient();
   const toastManager = useToastManager();
   const labelId = useId();
+  // The pill only renders inside a project's shell, so the slug is always the URL's.
+  const slug = useProjectSlug() ?? '';
 
   const mutation = useMutation({
-    mutationFn: postRefresh,
+    mutationFn: () => refreshProject(slug),
     onSuccess: async () => {
-      // Phase-4 D-05: one unfiltered invalidation is the entire client-side reaction to a
-      // successful refresh — never gated on comparing the returned readAt against the previous
-      // one, because two refreshes completing inside the same millisecond carry equal timestamps
-      // and must still repaint (TGT-08 adjacency edge).
-      await queryClient.invalidateQueries();
+      // Phase-4 D-05, scoped to this project (D-08): the one invalidation is the entire
+      // client-side reaction to a successful refresh — never gated on comparing the returned
+      // readAt against the previous one, because two refreshes completing inside the same
+      // millisecond carry equal timestamps and must still repaint (TGT-08 adjacency edge).
+      await refreshInvalidations(queryClient, slug);
       // Phase-4 D-03: preserve the current route, return to the top.
       window.scrollTo({ top: 0 });
     },

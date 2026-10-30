@@ -7,7 +7,10 @@
 // quick-260911-243 merged RefreshControl into SnapshotStatus (NAV-05): every guarantee below now
 // reads src/web/components/snapshot-status.tsx in place of the deleted refresh-control.tsx.
 import { readFile } from 'node:fs/promises';
+import { QueryClient } from '@tanstack/react-query';
 import { describe, expect, it } from 'vitest';
+import { refreshInvalidations } from '../../src/web/components/snapshot-status.tsx';
+import { projectKey, projectsKey } from '../../src/web/query-keys.ts';
 
 async function source(path: string): Promise<string> {
   return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
@@ -68,10 +71,33 @@ describe('refresh contract — D-01 through D-05 in the shell and control', () =
     expect(status).toContain('aria-label="Refresh the project snapshot"');
   });
 
-  it('invalidates the query cache unconditionally and scrolls to top on success (D-03, D-05)', async () => {
+  it('invalidates only this project and the list, then scrolls to top on success (D-03, D-05, D-08)', async () => {
     const status = await source('src/web/components/snapshot-status.tsx');
-    expect(status).toContain('invalidateQueries()');
+    expect(status).toContain('invalidateQueries({ queryKey: projectKey(slug) })');
+    expect(status).toContain('invalidateQueries({ queryKey: projectsKey })');
+    expect(status).not.toContain('invalidateQueries()');
     expect(status).toMatch(/window\.scrollTo\(\{\s*top:\s*0\s*\}\)/);
+  });
+
+  it('posts through refreshProject and holds no /api/ literal of its own (PLAT-08)', async () => {
+    const status = await source('src/web/components/snapshot-status.tsx');
+    expect(status).toContain('refreshProject(');
+    expect(status).not.toContain('/api/');
+  });
+
+  it('refreshing shapes marks shapes and the list invalid and leaves lendshed valid (T-08-35)', async () => {
+    const client = new QueryClient();
+    const lendshed = projectKey('lendshed', 'dashboard');
+    const shapes = projectKey('shapes', 'dashboard');
+    client.setQueryData(lendshed, { project: 'lendshed' });
+    client.setQueryData(shapes, { project: 'shapes' });
+    client.setQueryData(projectsKey, { projects: [] });
+
+    await refreshInvalidations(client, 'shapes');
+
+    expect(client.getQueryState(shapes)?.isInvalidated).toBe(true);
+    expect(client.getQueryState(projectsKey)?.isInvalidated).toBe(true);
+    expect(client.getQueryState(lendshed)?.isInvalidated).toBe(false);
   });
 
   it('never interpolates a fetch/server error into the toast, only the fixed copy (D-04)', async () => {
