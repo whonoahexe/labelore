@@ -1,19 +1,19 @@
 // The REVIEW page e2e (quick-261017-k44, sketch 022 winner C): real corpus files, never a fixture
-// mock. Fixtures resolve by path against the live `/api/presentation` payload (the
+// mock. Fixtures resolve by path against the project's live presentation payload (the
 // verification-page.spec.ts idiom) so an archival/rename fails loudly instead of silently skipping.
 // This spec asserts the foundation sweep's key invariants itself (one h1, an eyebrow, squared corners,
 // one chip signature, no 420px overflow), since the full sweep is too slow to run per change.
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { BASE_URL, artifactUrl, exactUrl } from './app-url.ts';
+import { BASE_URL, artifactUrl, exactUrl, projectApiUrl } from './app-url.ts';
 
 interface PresentationLite {
   artifacts: { key: string; path: string }[];
 }
 
 async function resolveFixturePath(baseURL: string, pathIncludes: string): Promise<string> {
-  const response = await fetch(`${baseURL}/api/presentation`);
-  if (!response.ok) throw new Error(`review-page.spec: /api/presentation responded ${response.status}`);
+  const response = await fetch(await projectApiUrl(baseURL, '/presentation'));
+  if (!response.ok) throw new Error(`review-page.spec: the project's presentation payload responded ${response.status}`);
   const data = (await response.json()) as PresentationLite;
   const artifact = data.artifacts.find((entry) => entry.path.includes(pathIncludes));
   if (!artifact) throw new Error(`review-page.spec: no artifact with path including "${pathIncludes}"`);
@@ -161,7 +161,7 @@ test.describe('Review page', () => {
   for (const theme of ['light', 'dark'] as const) {
     test(`every review page fits 420px in ${theme}`, async ({ page, baseURL }) => {
       const base = baseURL ?? BASE_URL;
-      const response = await fetch(`${base}/api/presentation`);
+      const response = await fetch(await projectApiUrl(base, '/presentation'));
       const data = (await response.json()) as PresentationLite;
       const paths = data.artifacts
         .filter((a) => a.path.endsWith('-REVIEW.md') && !a.path.endsWith('-UI-REVIEW.md') && !a.path.includes('sketches'))
