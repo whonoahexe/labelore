@@ -22,6 +22,7 @@ describe('route-level code splitting (entry chunk fix)', () => {
       'plan-pair-page.tsx',
       'sketches-page.tsx',
       'research-page.tsx',
+      'projects-page.tsx',
     ];
     for (const page of lazyPages) {
       // debug/loading-state-regression: each factory is now wrapped in `trackRouteChunk(...)` so
@@ -33,9 +34,13 @@ describe('route-level code splitting (entry chunk fix)', () => {
         ),
       );
     }
-    // InvalidProjectScreen deliberately stays eager: ProjectGate renders it directly (not through
-    // the lazy-loaded Outlet), and it's the fallback screen for an invalid target project — it
-    // must be available without waiting on a chunk fetch.
+    // InvalidProjectScreen deliberately stays eager: the project layout renders it directly (not
+    // through the lazy-loaded Outlet), and it's the fallback screen for an invalid target project —
+    // it must be available without waiting on a chunk fetch. project-layout.tsx imports it, and
+    // app-router.tsx imports the layout eagerly (the legacy branch renders the screen as well).
+    const layout = await source('src/web/pages/project-layout.tsx');
+    expect(layout).toMatch(/^import \{ InvalidProjectScreen \} from '\.\/invalid-project-screen\.tsx';$/m);
+    expect(router).toMatch(/^import \{ ProjectLayout \} from '\.\/pages\/project-layout\.tsx';$/m);
     expect(router).toMatch(/^import \{ InvalidProjectScreen \} from '\.\/pages\/invalid-project-screen\.tsx';$/m);
   });
 

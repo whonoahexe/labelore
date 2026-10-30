@@ -10,13 +10,46 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Loader } from 'lucide-react';
 import { useParams } from 'react-router';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
-import { fetchPresentation, fetchProjects, openProject } from '../api.ts';
+import { ApiError, UNREACHABLE_COPY, fetchPresentation, fetchProjects, openProject } from '../api.ts';
 import { AppShell } from '../components/app-shell.tsx';
 import { PlainPage } from '../components/plain-header.tsx';
+import { Button } from '../components/ui/button.tsx';
 import { projectLayoutOutcome } from '../project-path.ts';
 import { projectKey, projectsKey } from '../query-keys.ts';
 import { InvalidProjectScreen } from './invalid-project-screen.tsx';
 import { UnknownProjectPage } from './unknown-project-page.tsx';
+
+/** The shell-less screens of a layout that cannot yet name its project. Plain values, so each renders
+ * without a request (an errored query with no data re-fetches on mount, which a static render cannot show). */
+export function ProjectLayoutNotice({
+  kind,
+  message,
+  onRetry,
+}: {
+  kind: 'loading' | 'error';
+  message?: string;
+  onRetry?: () => void;
+}): React.JSX.Element {
+  return (
+    <PlainPage>
+      <main className="page-stack projects-page">
+        {kind === 'loading' ? (
+          <div className="quiet-state" role="status">
+            <Loader aria-hidden="true" />
+            <p>Loading projects…</p>
+          </div>
+        ) : (
+          <div className="notice destructive" role="alert">
+            <p>{message}</p>
+            <Button onClick={onRetry} size="sm" type="button" variant="outline">
+              Retry loading projects
+            </Button>
+          </div>
+        )}
+      </main>
+    </PlainPage>
+  );
+}
 
 export function ProjectLayout({
   children,
@@ -62,25 +95,14 @@ export function ProjectLayout({
 
   switch (outcome) {
     case 'loading-list':
-      return (
-        <PlainPage>
-          <main className="page-stack">
-            <div className="quiet-state" role="status">
-              <Loader aria-hidden="true" />
-              <p>Loading projects…</p>
-            </div>
-          </main>
-        </PlainPage>
-      );
+      return <ProjectLayoutNotice kind="loading" />;
     case 'list-error':
       return (
-        <PlainPage>
-          <main className="page-stack">
-            <div className="notice destructive" role="alert">
-              <p>{list.error?.message}</p>
-            </div>
-          </main>
-        </PlainPage>
+        <ProjectLayoutNotice
+          kind="error"
+          message={list.error instanceof ApiError ? list.error.message : UNREACHABLE_COPY}
+          onRetry={() => void list.refetch()}
+        />
       );
     case 'unknown':
       return <UnknownProjectPage slug={slug} projects={projects ?? []} />;

@@ -78,16 +78,3 @@ export function projectLayoutOutcome(input: {
   if (input.presentationStatus === 'pending' || input.presentation === undefined) return 'opening';
   return input.presentation.loadStatus.status === 'ok' ? 'open' : 'invalid';
 }
-
-export type ProjectGateOutcome = 'loading' | 'invalid' | 'wrong-project' | 'open';
-
-/** What the router does with an address once it knows the first segment: wait for the payload,
- * show the invalid-project screen, show the not-found page for another project's name, or open. */
-export function projectGateOutcome(
-  first: string,
-  presentation: { projectSlug: string; loadStatus: { status: string } } | undefined,
-): ProjectGateOutcome {
-  if (presentation === undefined) return 'loading';
-  if (presentation.loadStatus.status !== 'ok') return 'invalid';
-  return first === presentation.projectSlug ? 'open' : 'wrong-project';
-}
