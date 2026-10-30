@@ -12,12 +12,11 @@ import {
 import { LEGACY_FIRST_SEGMENTS, PROJECT_PAGES } from '../presentation/reserved.ts';
 import { presentationRoutePatterns } from '../presentation/routes.ts';
 import type { ProjectPresentation } from '../server/project-presentation.ts';
-import type { ProjectListEntry } from '../presentation/project-list.ts';
 import { fetchPresentation, fetchProjects } from './api.ts';
-import { AppShell } from './components/app-shell.tsx';
+import { PlainPage } from './components/plain-header.tsx';
 import { RouteFallback, RouteProgress } from './components/route-progress.tsx';
 import { trackRouteChunk } from './components/route-chunk-store.ts';
-import { Link, ProjectSlugProvider } from './nav.tsx';
+import { Link } from './nav.tsx';
 import { InvalidProjectScreen } from './pages/invalid-project-screen.tsx';
 import { NotFoundPage } from './pages/not-found-page.tsx';
 import { ProjectLayout } from './pages/project-layout.tsx';
@@ -173,31 +172,20 @@ function isUnprefixedLegacyWord(first: string): boolean {
 
 /**
  * NAV-11: an old address typed without the project slug. The dispatcher either redirects it, silently and
- * replacing the history entry, to the same address under the open project (the old #heading kept), or it
- * is a miss and the normal not-found page names the old pathname (D-13). Renders nothing of its own.
+ * replacing the history entry, to the same address under the most recently opened project (the old #heading
+ * kept), or it is a miss and the normal not-found page names the old pathname (D-13). A miss renders under
+ * the plain header with no shell: a shell's links come from the URL's first segment (D-08), and here that
+ * segment is the legacy word, so they would lead nowhere. The way back leads to the opened project.
  */
-function UnprefixedLegacy({
-  project,
-  presentation,
-}: {
-  project: ProjectListEntry;
-  presentation: ProjectPresentation;
-}): React.JSX.Element {
+function UnprefixedLegacy({ presentation }: { presentation: ProjectPresentation }): React.JSX.Element {
   const location = useLocation();
   const outcome = resolveUnprefixedRoute(location.pathname, location.search, presentation);
-  return (
-    <ProjectSlugProvider value={presentation.projectSlug}>
-      <AppShell project={project}>
-        {outcome.kind === 'redirect' ? (
-          <Navigate replace to={redirectLocation(presentation.projectSlug, outcome.to, location.hash)} />
-        ) : (
-          <NotFoundPage
-            address={decodeAddress(location.pathname)}
-            openSlug={presentation.projectSlug}
-          />
-        )}
-      </AppShell>
-    </ProjectSlugProvider>
+  return outcome.kind === 'redirect' ? (
+    <Navigate replace to={redirectLocation(presentation.projectSlug, outcome.to, location.hash)} />
+  ) : (
+    <PlainPage>
+      <NotFoundPage address={decodeAddress(location.pathname)} openSlug={presentation.projectSlug} />
+    </PlainPage>
   );
 }
 
@@ -220,8 +208,13 @@ function LegacyRoute(): React.JSX.Element {
   if (loaded && loaded.loadStatus.status !== 'ok') {
     return <InvalidProjectScreen loadStatus={loaded.loadStatus} />;
   }
-  if (loaded) return <UnprefixedLegacy project={first} presentation={loaded} />;
-  return <AppShell project={first} busy />;
+  if (loaded) return <UnprefixedLegacy presentation={loaded} />;
+  // Shell-less while the project's data is on its way, for the same reason as the miss above.
+  return (
+    <PlainPage>
+      <RouteFallback />
+    </PlainPage>
+  );
 }
 
 /** `/:project/*`: an old un-prefixed address, or a project by its slug (D-06, D-07). */

@@ -3,6 +3,7 @@ import { Check, Copy, ShieldAlert } from 'lucide-react';
 import type { FailedLoadStatus } from '../../planning-repo/types.ts';
 import { Button } from '../components/ui/button.tsx';
 import { ThemeToggle } from '../components/theme-toggle.tsx';
+import { AppLink } from '../nav.tsx';
 
 /**
  * D-17: the only restart affordance on this screen is copy-to-terminal. `package.json` declares
@@ -90,6 +91,11 @@ export function InvalidProjectScreen({
         ) : (
           <CopyField label="Path checked" value={loadStatus.pathChecked} />
         )}
+
+        {/* This screen has no switcher, so the way back to the project list is a link here (D-07). */}
+        <AppLink className="text-link" to="/">
+          Choose another project
+        </AppLink>
 
         <CopyField label="Restart with a corrected path" value={RESTART_COMMAND} />
       </section>
