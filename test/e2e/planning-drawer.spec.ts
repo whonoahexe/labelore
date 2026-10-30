@@ -1,11 +1,11 @@
 // quick-261024-vty: the two-column planning-files drawer (sketch 038 C). Every target, count and
-// label is resolved from `/api/drawer`, never hardcoded, so the spec follows whatever this repo's
+// label is resolved from the project's drawer payload, never hardcoded, so the spec follows whatever this repo's
 // own `.planning/` holds.
 import { expect, test, type Page } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DrawerPhasePlace, DrawerQuickTask, DrawerViewModel } from '../../src/presentation/drawer.ts';
-import { artifactUrl, exactUrl, projectUrl } from './app-url.ts';
+import { artifactUrl, exactUrl, projectApiUrl, projectUrl } from './app-url.ts';
 import { SCREENSHOT_ROOT } from './pages.ts';
 
 const SHOTS = join(SCREENSHOT_ROOT, 'vty');
@@ -17,8 +17,8 @@ async function setTheme(page: Page, theme: 'light' | 'dark'): Promise<void> {
 }
 
 async function fetchDrawer(baseURL: string): Promise<DrawerViewModel> {
-  const response = await fetch(`${baseURL}/api/drawer`);
-  if (!response.ok) throw new Error(`planning-drawer.spec: /api/drawer responded ${response.status}`);
+  const response = await fetch(await projectApiUrl(baseURL, '/drawer'));
+  if (!response.ok) throw new Error(`planning-drawer.spec: the project's drawer payload responded ${response.status}`);
   return (await response.json()) as DrawerViewModel;
 }
 
