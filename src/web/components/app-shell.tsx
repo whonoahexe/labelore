@@ -11,6 +11,7 @@ import { fetchPresentation } from '../api.ts';
 import { NavLink } from '../nav.tsx';
 import { projectKey } from '../query-keys.ts';
 import { LabeloreMark } from './labelore-mark.tsx';
+import { ProjectSwitcher } from './project-switcher.tsx';
 import { RouteFallback, RouteProgress } from './route-progress.tsx';
 import { SearchDialog } from './search-field.tsx';
 import { SidebarDrawer } from './sidebar-drawer.tsx';
@@ -42,7 +43,6 @@ export function AppShell({
     queryFn: () => fetchPresentation(project.slug),
   });
 
-  const displayName = project.name;
   const projectMeta = formatProjectMeta(presentation.data?.state ?? null);
   // The Research tab appears only for a project with at least one of the five research files.
   const showResearch = projectHasResearch(presentation.data?.artifacts ?? []);
@@ -62,24 +62,25 @@ export function AppShell({
               against a 120 KB /api/tree payload) — and the gate bought nothing, because
               PlanningPlaces already renders its own isPending/isError states inside the drawer. */}
           <SidebarDrawer />
-          <NavLink
-            className="brand"
-            to={presentationRoutePatterns.dashboard}
-            title={project.target}
-            aria-label={`Labelore — ${project.name}`}
-          >
-            <span className="brand-mark" aria-hidden="true">
-              <LabeloreMark />
-            </span>
-            <strong className="brand-wordmark">Labelore</strong>
-            <span className="brand-separator" aria-hidden="true">
-              /
-            </span>
-            <span className="brand-project">
-              <span className="brand-project-name">{displayName}</span>
-              {projectMeta ? <small className="brand-meta">{projectMeta}</small> : null}
-            </span>
-          </NavLink>
+          <div className="brand-lockup">
+            {/* A link may not contain a button: the mark, the wordmark and the separator are the
+                link to the open project's dashboard, and the project name beside it is the switcher. */}
+            <NavLink
+              className="brand"
+              to={presentationRoutePatterns.dashboard}
+              title={project.target}
+              aria-label={`Labelore — ${project.name}`}
+            >
+              <span className="brand-mark" aria-hidden="true">
+                <LabeloreMark />
+              </span>
+              <strong className="brand-wordmark">Labelore</strong>
+              <span className="brand-separator" aria-hidden="true">
+                /
+              </span>
+            </NavLink>
+            <ProjectSwitcher current={project} meta={projectMeta} />
+          </div>
 
           <nav className="shell-nav" aria-label="Primary navigation">
             <NavLink className={navigationClass} end to={presentationRoutePatterns.dashboard}>

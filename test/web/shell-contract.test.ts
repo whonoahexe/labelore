@@ -113,6 +113,11 @@ describe('authorized Studio Portal shell contract', () => {
     expect(brandIndex).toBeGreaterThan(headerIndex);
     expect(triggerIndex).toBeGreaterThan(headerIndex);
     expect(triggerIndex).toBeLessThan(brandIndex);
+    // 08-11: the brand link and the project switcher share one lockup that follows the drawer trigger.
+    const lockupIndex = shell.indexOf('<div className="brand-lockup">');
+    expect(lockupIndex).toBeGreaterThan(triggerIndex);
+    expect(lockupIndex).toBeLessThan(brandIndex);
+    expect(shell.indexOf('<ProjectSwitcher')).toBeGreaterThan(brandIndex);
 
     expect(shell).toContain('<div className="shell-content">');
     // 08-08: the outlet also carries aria-busy while a project's data is on its way.
