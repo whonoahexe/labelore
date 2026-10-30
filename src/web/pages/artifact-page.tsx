@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useProjectLocation } from '../nav.tsx';
+import { Link, useProjectLocation, useProjectSlug } from '../nav.tsx';
 import type { PhaseIdentity } from '../../domain/model.ts';
 import type { ParseWarning } from '../../planning-repo/types.ts';
 import { ArtifactHeader } from '../components/artifact-header.tsx';
@@ -49,7 +49,8 @@ import {
   FoldedChapters,
   useChapterFolds,
 } from '../views/layout-components.tsx';
-import { fetchPresentation } from '../components/app-shell.tsx';
+import { fetchPresentation } from '../api.ts';
+import { projectKey } from '../query-keys.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
 import type { ComposedContextBrief } from '../views/context-brief.ts';
 import { ContextBriefView, ContextIntroMeta } from '../views/context-brief-components.tsx';
@@ -628,10 +629,14 @@ export function ArtifactPage({
     queryFn: () => loadDocument(route),
     staleTime: Number.POSITIVE_INFINITY,
   });
-  // sketch-004 B3 (quick-260922-3us): the same cached ['presentation'] query app-shell.tsx already
-  // populates — matched by `path` below, generically, so this never adds a further per-kind
-  // branch (view-page-contract.test.ts caps that pattern's occurrence count).
-  const presentationQuery = useQuery({ queryKey: ['presentation'], queryFn: fetchPresentation });
+  // sketch-004 B3 (quick-260922-3us): the same cached presentation query app-shell.tsx already
+  // populates, keyed by this project's slug — matched by `path` below, generically, so this never adds
+  // a further per-kind branch (view-page-contract.test.ts caps that pattern's occurrence count).
+  const slug = useProjectSlug() ?? '';
+  const presentationQuery = useQuery({
+    queryKey: projectKey(slug, 'presentation'),
+    queryFn: () => fetchPresentation(slug),
+  });
   const panels = useMemo(
     () => (query.data ? buildFrontmatterPanels(query.data.artifact.frontmatter) : []),
     [query.data],

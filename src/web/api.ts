@@ -1,8 +1,10 @@
 // The module that holds an /api/ URL for the several-projects web (PLAT-08). Every request goes
 // through apiFetch, so a refused or unreachable server reads the same everywhere, and every write
-// carries the JSON content type the server's request guard demands. 08-08 moves the presentation,
-// open and refresh calls here; 08-17 and 08-13 add the add, forget and scan mutations.
+// carries the JSON content type the server's request guard demands. The presentation, open and
+// refresh calls of one project live here (08-08); 08-17 and 08-13 add the add, forget and scan
+// mutations.
 import type { ProjectListResponse } from '../presentation/project-list.ts';
+import type { ProjectPresentation } from '../server/project-presentation.ts';
 
 export const REFUSED_COPY =
   'Labelore refused this request because it did not come from its own page. Reload the page and try again.';
@@ -79,4 +81,31 @@ export async function apiFetch<T>(url: string, init: ApiInit = {}): Promise<T> {
 /** The registry's project list: every remembered project, in the order the server sends. */
 export function fetchProjects(): Promise<ProjectListResponse> {
   return apiFetch<ProjectListResponse>('/api/projects');
+}
+
+/** One project's presentation payload, read from that project's own API (never a shared route). */
+export async function fetchPresentation(slug: string): Promise<ProjectPresentation> {
+  return await apiFetch<ProjectPresentation>(projectUrl(slug, '/presentation'));
+}
+
+export interface OpenProjectResponse {
+  slug: string;
+  state: string;
+}
+
+export interface RefreshProjectResponse {
+  refreshed: boolean;
+  readAt?: string;
+  loadStatus?: unknown;
+}
+
+/** Stamps the project as opened now (D-08). The server keeps no active project: this only records
+ * when the project was last opened, so the list can order by it. */
+export function openProject(slug: string): Promise<OpenProjectResponse> {
+  return apiFetch<OpenProjectResponse>(projectUrl(slug, '/open'), { method: 'POST' });
+}
+
+/** Asks the server to re-read one project (08-09 wires it into the snapshot pill). */
+export function refreshProject(slug: string): Promise<RefreshProjectResponse> {
+  return apiFetch<RefreshProjectResponse>(projectUrl(slug, '/refresh'), { method: 'POST' });
 }

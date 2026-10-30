@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { CircleDot } from 'lucide-react';
-import { Link } from '../nav.tsx';
+import { apiFetch, projectUrl } from '../api.ts';
+import { Link, useProjectSlug } from '../nav.tsx';
+import { projectKey } from '../query-keys.ts';
 import type { DashboardViewModel } from '../../presentation/dashboard.ts';
 import type { DashboardHead } from '../../presentation/dashboard-head.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
@@ -15,10 +17,8 @@ type DashboardResponse = DashboardViewModel & {
   loadStatus: ProjectPresentation['loadStatus'];
 };
 
-async function fetchDashboard(): Promise<DashboardResponse> {
-  const response = await fetch('/api/dashboard', { headers: { Accept: 'application/json' } });
-  if (!response.ok) throw new Error(`Dashboard request failed (${response.status})`);
-  return (await response.json()) as DashboardResponse;
+export function fetchDashboard(slug: string): Promise<DashboardResponse> {
+  return apiFetch<DashboardResponse>(projectUrl(slug, '/dashboard'));
 }
 
 function ProjectNext({ next }: { next: DashboardHead['next'] }): React.JSX.Element {
@@ -141,7 +141,12 @@ function DashboardLoading(): React.JSX.Element {
 }
 
 export function DashboardPage(): React.JSX.Element {
-  const dashboard = useQuery({ queryKey: ['dashboard'], queryFn: fetchDashboard });
+  // A page under the project route always has a slug; '' only satisfies the type.
+  const slug = useProjectSlug() ?? '';
+  const dashboard = useQuery({
+    queryKey: projectKey(slug, 'dashboard'),
+    queryFn: () => fetchDashboard(slug),
+  });
 
   if (dashboard.isPending) return <DashboardLoading />;
   if (dashboard.isError) {
@@ -158,9 +163,9 @@ export function DashboardPage(): React.JSX.Element {
   }
 
   const view = dashboard.data;
-  // The router's ProjectGate already intercepts every failed load before this page renders; this
+  // The project layout already intercepts every failed load before this page renders; this
   // branch is a structural guard against reading fields off an empty presentation if this page is
-  // ever reached directly. It renders the same InvalidProjectScreen the gate uses, so there is
+  // ever reached directly. It renders the same InvalidProjectScreen the layout uses, so there is
   // exactly one visual design for this state reached from either place (D-15).
   if (view.loadStatus.status !== 'ok') {
     return <InvalidProjectScreen loadStatus={view.loadStatus} />;
