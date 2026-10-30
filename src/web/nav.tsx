@@ -63,20 +63,42 @@ function appTarget(to: string): string {
   return to.startsWith('/') ? projectRootPath(to.slice(1)) : '/';
 }
 
-/** A link to '/' or to another project's root. Never prefixed with the current project's slug. */
+/** A link to '/' or to another project's root. Never prefixed with the current project's slug.
+ *
+ * A plain click navigates with `flushSync`. React Router otherwise applies a navigation inside a
+ * transition: the address changes at once while the new page renders a few frames later, so the page
+ * just left stays on screen under the new project's address (D-07: no project's text may show once the
+ * address names another). A synchronous update commits the new project's shell in the same task that
+ * changes the address. Modified clicks and `target` links keep the browser's own behaviour. */
 export const AppLink = forwardRef<HTMLAnchorElement, Omit<LinkProps, 'to'> & { to: string }>(function AppLink(
-  { to, ...props },
+  { to, onClick, target, replace, ...props },
   ref,
 ) {
-  return <RouterLink ref={ref} to={appTarget(to)} {...props} />;
+  const navigate = useNavigate();
+  const location = useLocation();
+  const href = appTarget(to);
+
+  function handleClick(event: React.MouseEvent<HTMLAnchorElement>): void {
+    onClick?.(event);
+    const plain =
+      event.button === 0 && !event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey;
+    if (event.defaultPrevented || !plain || (target !== undefined && target !== '_self')) return;
+    event.preventDefault();
+    // Like Link: following a link to the page already open replaces its history entry.
+    const samePage = location.pathname === href && location.search === '' && location.hash === '';
+    void navigate(href, { replace: replace ?? samePage, flushSync: true });
+  }
+
+  return <RouterLink ref={ref} to={href} target={target} replace={replace} onClick={handleClick} {...props} />;
 });
 
-/** navigate() for '/' or another project's root, under the same rule as AppLink. */
+/** navigate() for '/' or another project's root, under the same rule as AppLink (including the
+ * synchronous update: a caller may still pass `flushSync: false` in `options`). */
 export function useAppNavigate(): (to: string, options?: NavigateOptions) => void {
   const navigate = useNavigate();
   return useCallback(
     (to, options) => {
-      void navigate(appTarget(to), options);
+      void navigate(appTarget(to), { flushSync: true, ...options });
     },
     [navigate],
   );
