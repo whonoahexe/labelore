@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router';
-import { Link } from '../nav.tsx';
+import { Link, useProjectSlug } from '../nav.tsx';
+import { apiFetch, projectUrl } from '../api.ts';
+import { projectKey } from '../query-keys.ts';
 import type {
   SearchHighlightRange,
   SearchResultGroup,
@@ -10,13 +12,8 @@ import type {
 } from '../../presentation/search.ts';
 import type { SearchApiResponse } from '../../server/search-index.ts';
 
-async function fetchSearchResults(query: string, signal: AbortSignal): Promise<SearchApiResponse> {
-  const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`, {
-    headers: { Accept: 'application/json' },
-    signal,
-  });
-  if (!response.ok) throw new Error(`Search request failed (${response.status})`);
-  return (await response.json()) as SearchApiResponse;
+function fetchSearchResults(slug: string, query: string, signal: AbortSignal): Promise<SearchApiResponse> {
+  return apiFetch<SearchApiResponse>(projectUrl(slug, `/search?q=${encodeURIComponent(query)}`), { signal });
 }
 
 // D-08: progressive reveal per group, mirroring the dashboard attention panel's existing
@@ -134,10 +131,11 @@ function SearchGroupSection({
 export function SearchPage(): React.JSX.Element {
   const [searchParams] = useSearchParams();
   const query = (searchParams.get('q') ?? '').trim();
+  const slug = useProjectSlug() ?? '';
 
   const search = useQuery({
-    queryKey: ['search', 'page', query],
-    queryFn: ({ signal }) => fetchSearchResults(query, signal),
+    queryKey: projectKey(slug, 'search', 'page', query),
+    queryFn: ({ signal }) => fetchSearchResults(slug, query, signal),
     enabled: query.length > 0,
     refetchInterval: (latest) => (latest.state.data?.status === 'building' ? 500 : false),
   });

@@ -36,6 +36,8 @@ export function projectUrl(slug: string, path: string): string {
 export interface ApiInit {
   method?: 'GET' | 'POST' | 'DELETE';
   body?: unknown;
+  /** Lets a caller abort the request (react-query hands one to every query function). */
+  signal?: AbortSignal;
 }
 
 async function readBody(response: Response): Promise<unknown> {
@@ -65,7 +67,12 @@ export async function apiFetch<T>(url: string, init: ApiInit = {}): Promise<T> {
 
   let response: Response;
   try {
-    response = await fetch(url, { method, headers, ...(body === undefined ? {} : { body }) });
+    response = await fetch(url, {
+      method,
+      headers,
+      ...(body === undefined ? {} : { body }),
+      ...(init.signal === undefined ? {} : { signal: init.signal }),
+    });
   } catch {
     throw new ApiError('unreachable', UNREACHABLE_COPY, null, null);
   }
