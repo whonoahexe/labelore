@@ -1,5 +1,5 @@
 // The UI-REVIEW scorecard e2e (quick-261003-528, sketch 018 winner B): real files, never a mock.
-// Files resolve by path against the live `/api/presentation` payload (the uat-page.spec.ts idiom) so
+// Files resolve by path against the project's live presentation payload (the uat-page.spec.ts idiom) so
 // an archival/rename fails loudly instead of silently skipping. The labelore tests run on port 4199;
 // the Lendshed test runs against the read-only server on the made-up Lendshed project (port 4198,
 // FIXTURE_BASE_URL; playwright.config.ts always starts it and throws at load when the fixture tree is
@@ -8,7 +8,7 @@
 // per change. Run once post-merge: npx playwright test test/e2e/ui-review-page.spec.ts -g "ui-review page"
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
-import { BASE_URL, artifactUrl } from './app-url.ts';
+import { BASE_URL, artifactUrl, projectApiUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
 
 interface PresentationLite {
@@ -16,8 +16,8 @@ interface PresentationLite {
 }
 
 async function resolveFixturePath(baseURL: string, pathIncludes: string): Promise<string> {
-  const response = await fetch(`${baseURL}/api/presentation`);
-  if (!response.ok) throw new Error(`ui-review-page.spec: /api/presentation responded ${response.status}`);
+  const response = await fetch(await projectApiUrl(baseURL, '/presentation'));
+  if (!response.ok) throw new Error(`ui-review-page.spec: the project's presentation payload responded ${response.status}`);
   const data = (await response.json()) as PresentationLite;
   const artifact = data.artifacts.find((entry) => entry.path.includes(pathIncludes));
   if (!artifact) throw new Error(`ui-review-page.spec: no artifact with path including "${pathIncludes}"`);
