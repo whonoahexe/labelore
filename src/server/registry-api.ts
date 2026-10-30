@@ -3,25 +3,38 @@
 // through the slug in its own URL - the registry holds no "active project" a tab could change for
 // another (D-08).
 //
-// No Access-Control-* header is set anywhere: the API is same-origin only.
+// No Access-Control-* header is set anywhere: the API is same-origin only, and request-guard.ts refuses
+// a foreign Host or a cross-site write before any route runs.
 import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 import { createProjectApi } from './project-api.ts';
 import type { ProjectRegistry } from './project-registry.ts';
+import { GUARD_BODY_LIMIT, createRequestGuard } from './request-guard.ts';
+import type { HostPolicy } from './request-guard.ts';
 
 export interface RegistryAppOptions {
+  /** The Host allowlist every /api request is checked against (SEC-05); the server sets its port once listening. */
+  policy: HostPolicy;
   production?: boolean;
   staticRoot?: string;
 }
 
-export function createRegistryApp(registry: ProjectRegistry, options: RegistryAppOptions = {}): Hono {
+export function createRegistryApp(registry: ProjectRegistry, options: RegistryAppOptions): Hono {
   const production = options.production ?? process.env.NODE_ENV === 'production';
   const staticRoot = options.staticRoot ?? './dist';
   const app = new Hono();
 
-  // GUARD SLOT (08-03): the request guard and the body limit are registered here, as the first
-  // registrations of this app, so they run before every route below and before the /api 404, and
-  // therefore before any write endpoint (08-16) can exist. Leave this position free.
+  // The request guard and the body limit are the first registrations of this app, so they run before
+  // every route below and before the /api 404, and therefore before any write endpoint (08-16) exists.
+  app.use('/api/*', createRequestGuard(options.policy));
+  app.use(
+    '/api/*',
+    bodyLimit({
+      maxSize: GUARD_BODY_LIMIT,
+      onError: (c) => c.json({ error: 'That request was too large for Labelore to read.' }, 413),
+    }),
+  );
 
   app.get('/api/projects', async (c) => c.json(await registry.list()));
   // The raw prefix handed to mountPrefix is this request's URL up to the slug segment
