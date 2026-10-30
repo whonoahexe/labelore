@@ -49,7 +49,7 @@ import {
   FoldedChapters,
   useChapterFolds,
 } from '../views/layout-components.tsx';
-import { fetchPresentation } from '../api.ts';
+import { ApiError, apiFetch, fetchPresentation, projectUrl } from '../api.ts';
 import { projectKey } from '../query-keys.ts';
 import type { ProjectPresentation } from '../../server/project-presentation.ts';
 import type { ComposedContextBrief } from '../views/context-brief.ts';
@@ -162,7 +162,7 @@ function findSiblingArtifacts(
   return siblings;
 }
 
-interface ArtifactDocumentResponse {
+export interface ArtifactDocumentResponse {
   found: true;
   status: 'found';
   artifact: {
@@ -567,13 +567,21 @@ function UnrecognizedNotice({ kind }: { kind: string }): React.JSX.Element {
   );
 }
 
-async function loadDocument(route: string): Promise<ArtifactDocumentResponse> {
-  const response = await fetch(`/api/documents?route=${encodeURIComponent(route)}`);
-  if (!response.ok) {
-    const payload = (await response.json().catch(() => null)) as { warning?: string } | null;
-    throw new Error(payload?.warning ?? `Document request failed (${response.status})`);
+/** One project's document for `route`, read from that project's own API. A 404 keeps its own warning
+ * text as the error message, which the page shows as its not-found state. */
+export async function fetchDocument(slug: string, route: string): Promise<ArtifactDocumentResponse> {
+  try {
+    return await apiFetch<ArtifactDocumentResponse>(
+      projectUrl(slug, `/documents?route=${encodeURIComponent(route)}`),
+    );
+  } catch (error) {
+    if (error instanceof ApiError && error.kind === 'http') {
+      const body = error.body as { warning?: unknown } | null;
+      const warning = typeof body?.warning === 'string' ? body.warning : null;
+      throw new Error(warning ?? `Document request failed (${error.status})`, { cause: error });
+    }
+    throw error;
   }
-  return (await response.json()) as ArtifactDocumentResponse;
 }
 
 /** A quick task's PLAN or SUMMARY file name (`261024-vty-PLAN.md`): the task id and which half. */
@@ -624,15 +632,15 @@ export function ArtifactPage({
 }: { route?: string; switcher?: React.ReactNode } = {}): React.JSX.Element {
   const { pathname: locationPath } = useProjectLocation();
   const route = routeOverride ?? locationPath;
+  const slug = useProjectSlug() ?? '';
   const query = useQuery({
-    queryKey: ['artifact-document', route],
-    queryFn: () => loadDocument(route),
+    queryKey: projectKey(slug, 'document', route),
+    queryFn: () => fetchDocument(slug, route),
     staleTime: Number.POSITIVE_INFINITY,
   });
   // sketch-004 B3 (quick-260922-3us): the same cached presentation query app-shell.tsx already
   // populates, keyed by this project's slug — matched by `path` below, generically, so this never adds
   // a further per-kind branch (view-page-contract.test.ts caps that pattern's occurrence count).
-  const slug = useProjectSlug() ?? '';
   const presentationQuery = useQuery({
     queryKey: projectKey(slug, 'presentation'),
     queryFn: () => fetchPresentation(slug),
