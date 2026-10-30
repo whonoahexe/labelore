@@ -2,7 +2,7 @@
 sketch: 039
 name: project-switcher
 question: "How does the header brand area open into a project list with load marks, a forget action and an \"Add or scan…\" entry?"
-winner: null
+winner: A
 tags: [header, switcher, projects, navigation, multi-project]
 ---
 
@@ -160,5 +160,7 @@ other two are kept for the record.
   Tooltip with the `aria-label` as the accessible name.
 
 ## Winner
-Pending: chosen at the 08-02 checkpoint (decision gate, success criterion 1 and D-05). The choice
-is recorded here, in the MANIFEST row and in `08-02-SUMMARY.md`.
+**A: Popover under the name trigger**, chosen by the user at the 08-02 checkpoint (decision gate,
+success criterion 1 and D-05). No synthesis note. 08-11 builds variant A to its layout contract
+above; 08-15 asserts it against the built switcher. Variants B and C are kept for the record. The
+choice is also recorded in the MANIFEST row and in `08-02-SUMMARY.md`.

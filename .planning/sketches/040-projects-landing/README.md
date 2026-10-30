@@ -2,7 +2,7 @@
 sketch: 040
 name: projects-landing
 question: "How do the same rows read full width with last-opened time, the add form, the scan form and the checklist?"
-winner: null
+winner: B
 tags: [landing, projects, scan, add, multi-project]
 ---
 
@@ -140,5 +140,9 @@ these and 08-15 asserts them against the built page. Facts for the winning varia
 - **Capped scan** draws 100 generated items to show the length; the cap notice sits above the list.
 
 ## Winner
-Pending: chosen at the 08-02 checkpoint (decision gate, success criterion 1 and D-05). The choice
-is recorded here, in the MANIFEST row and in `08-02-SUMMARY.md`.
+**B: Side column** (list left, add and scan in a side column), chosen by the user at the 08-02
+checkpoint (decision gate, success criterion 1 and D-05). No synthesis note. 08-05, 08-17 and 08-13
+build variant B to its layout contract above; 08-15 asserts it against the built page. Because B
+won, 08-17 changes the empty-state word "above" to "beside" and 08-13 updates the UI-SPEC row (see
+"Notes for the build"). Variants A and C are kept for the record. The choice is also recorded in the
+MANIFEST row and in `08-02-SUMMARY.md`.
