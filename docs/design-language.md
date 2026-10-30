@@ -1317,6 +1317,11 @@ Sketch 038 C (quick-261024-vty): places on the left, the chosen place's files on
 | `project-row-name` | Projects | The row's name link, stretched over the whole row; Body size, semibold, clamped at two lines (globals.css, Phase 8 projects block) |
 | `project-row-path` | Projects | The row's folder or `ssh://` target in mono with a Folder or Server icon, one line with an end ellipsis; the full value is its `title` (globals.css, Phase 8 projects block) |
 | `project-row-meta` | Projects | The landing row's "Opened 3 hours ago" / "Not opened yet" at Meta size, right-aligned under the load mark (under the path at 42rem); the absolute date is its `title` (globals.css, Phase 8 projects block) |
+| `brand-lockup` | Projects | The header's brand area: holds the mark-and-wordmark link and the project switcher trigger as siblings in the one `brand` grid area, because a link may not contain a button (globals.css, Phase 8 switcher block and the header block) |
+| `project-switcher-trigger` | Projects | The header button that shows the open project's name over its meta line with a chevrons icon and opens the switcher; neutral, never accent; at least 40px tall below 42rem (globals.css, Phase 8 switcher block) |
+| `project-switcher-positioner` | Projects | The `Popover.Positioner` wrapper around the switcher popup; only layers it above the header (globals.css, Phase 8 switcher block) |
+| `project-switcher-popup` | Projects | The switcher's non-modal popup: the `--popover` surface with a Projects head, the scrolling project list and the footer region; at most 448px wide and min(448px, 70vh) tall, the full viewport width under the header below 42rem (globals.css, Phase 8 switcher block) |
+| `project-switcher-footer` | Projects | The switcher popup's footer region, ruled on top and hidden while empty; it holds the "Add or scan…" entry (globals.css, Phase 8 switcher block) |
 
 ## How to extend
 

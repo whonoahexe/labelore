@@ -288,6 +288,22 @@ describe('Strata mark, brand lockup and tabs (D-01, D-02, NAV-01..03)', () => {
     expect(shell).toMatch(/aria-label=\{`Labelore — \$\{project\.name\}`\}/);
   });
 
+  it('splits the brand: the link holds the mark, wordmark and separator, and the project name is the switcher beside it, not inside it (PLAT-02)', async () => {
+    const shell = await source('src/web/components/app-shell.tsx');
+    expect(shell).toContain("import { ProjectSwitcher } from './project-switcher.tsx';");
+    expect(shell).toContain('<ProjectSwitcher current={project} meta={projectMeta} />');
+    const lockup = shell.slice(shell.indexOf('<div className="brand-lockup">'), shell.indexOf('<nav className="shell-nav"'));
+    const linkEnd = lockup.indexOf('</NavLink>');
+    expect(linkEnd).toBeGreaterThan(0);
+    const link = lockup.slice(0, linkEnd);
+    expect(link).toContain('brand-mark');
+    expect(link).toContain('brand-wordmark');
+    expect(link).toContain('brand-separator');
+    expect(link).not.toContain('brand-project');
+    expect(link).not.toContain('ProjectSwitcher');
+    expect(lockup.indexOf('<ProjectSwitcher')).toBeGreaterThan(linkEnd);
+  });
+
   it('takes NavLink from nav.tsx, so every tab and the brand carry the project slug (NAV-09)', async () => {
     const shell = await source('src/web/components/app-shell.tsx');
     expect(shell).toContain("import { NavLink } from '../nav.tsx';");
