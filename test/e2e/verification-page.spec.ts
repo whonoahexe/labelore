@@ -1,11 +1,11 @@
 // The VERIFICATION page e2e (quick-261017-18a, sketch 021 winner E): real corpus files, never a
-// fixture mock. Fixtures resolve by path against the live `/api/presentation` payload (the
+// fixture mock. Fixtures resolve by path against the project's live presentation payload (the
 // summary-page.spec.ts idiom) so an archival/rename fails loudly instead of silently skipping. This
 // spec asserts the foundation sweep's key invariants itself (one h1, an eyebrow, squared corners, one
 // chip signature, no 420px overflow), since the full sweep is too slow to run per change.
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
-import { BASE_URL, artifactUrl } from './app-url.ts';
+import { BASE_URL, artifactUrl, projectApiUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
 
 interface PresentationLite {
@@ -13,8 +13,8 @@ interface PresentationLite {
 }
 
 async function resolveFixturePath(baseURL: string, pathIncludes: string): Promise<string> {
-  const response = await fetch(`${baseURL}/api/presentation`);
-  if (!response.ok) throw new Error(`verification-page.spec: /api/presentation responded ${response.status}`);
+  const response = await fetch(await projectApiUrl(baseURL, '/presentation'));
+  if (!response.ok) throw new Error(`verification-page.spec: the project's presentation payload responded ${response.status}`);
   const data = (await response.json()) as PresentationLite;
   const artifact = data.artifacts.find((entry) => entry.path.includes(pathIncludes));
   if (!artifact) throw new Error(`verification-page.spec: no artifact with path including "${pathIncludes}"`);
@@ -151,7 +151,7 @@ test.describe('Verification page', () => {
   for (const theme of ['light', 'dark'] as const) {
     test(`every verification page fits 420px in ${theme}`, async ({ page, baseURL }) => {
       const base = baseURL ?? BASE_URL;
-      const response = await fetch(`${base}/api/presentation`);
+      const response = await fetch(await projectApiUrl(base, '/presentation'));
       const data = (await response.json()) as PresentationLite;
       const paths = data.artifacts.filter((a) => a.path.endsWith('VERIFICATION.md') && !a.path.includes('sketches')).map((a) => a.path);
       expect(paths.length).toBeGreaterThanOrEqual(12);
