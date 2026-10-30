@@ -1,5 +1,5 @@
 // The VALIDATION strategy page e2e (quick-261003-526, sketch 016 winner A): real files, never a mock. Fixtures
-// resolve by path against the live `/api/presentation` payload (the uat-page.spec.ts idiom) so an
+// resolve by path against the project's live presentation payload (the uat-page.spec.ts idiom) so an
 // archival/rename fails loudly instead of silently skipping. Every test runs against the read-only server
 // on the made-up Lendshed project (port 4198, FIXTURE_BASE_URL; playwright.config.ts always starts it and
 // throws at load when the fixture tree is missing). Nothing in this file skips. This spec asserts the
@@ -9,7 +9,7 @@
 //   npx playwright test test/e2e/validation-page.spec.ts
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
-import { artifactUrl } from './app-url.ts';
+import { artifactUrl, projectApiUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
 
 interface PresentationLite {
@@ -17,8 +17,8 @@ interface PresentationLite {
 }
 
 async function resolveFixturePath(baseURL: string, pathIncludes: string): Promise<string> {
-  const response = await fetch(`${baseURL}/api/presentation`);
-  if (!response.ok) throw new Error(`validation-page.spec: /api/presentation responded ${response.status}`);
+  const response = await fetch(await projectApiUrl(baseURL, '/presentation'));
+  if (!response.ok) throw new Error(`validation-page.spec: the project's presentation payload responded ${response.status}`);
   const data = (await response.json()) as PresentationLite;
   const artifact = data.artifacts.find((entry) => entry.path.includes(pathIncludes));
   if (!artifact) throw new Error(`validation-page.spec: no artifact with path including "${pathIncludes}"`);
