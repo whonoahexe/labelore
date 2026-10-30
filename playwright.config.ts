@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
 import { FIXTURE_ROOT, SHAPES_FIXTURE_ROOT, resolveFixtureRoot } from './test/e2e/fixture-root.ts';
 
@@ -13,8 +16,29 @@ import { FIXTURE_ROOT, SHAPES_FIXTURE_ROOT, resolveFixtureRoot } from './test/e2
 //        `npm start` (NODE_ENV=production serving the fresh ./dist), so the built leg of the deep-reload
 //        spec can never drive a stale bundle, and a failing build fails the run.
 // 4173 and 4174 belong to the user's running instances and are never touched.
+// Every server is ready when GET /api/projects answers (the registry app has no root-level project routes)
+// and runs with its own temporary LABELORE_CONFIG_DIR, so no browser run reads or writes the user's real
+// settings file (D-09). The main process removes the directories on exit; a worker that merely loads this
+// config leaves them alone.
 const fixtureRoot = resolveFixtureRoot(FIXTURE_ROOT);
 const shapesRoot = resolveFixtureRoot(SHAPES_FIXTURE_ROOT);
+
+const settingsDirs: string[] = [];
+if (process.env.TEST_WORKER_INDEX === undefined) {
+  process.on('exit', () => {
+    for (const dir of settingsDirs) rmSync(dir, { recursive: true, force: true });
+  });
+}
+
+/** The environment of the server on `port`: this process's own plus a settings directory of its own. */
+function serverEnv(port: number): Record<string, string> {
+  const dir = mkdtempSync(join(tmpdir(), `labelore-pw-${port}-`));
+  settingsDirs.push(dir);
+  const env: Record<string, string> = {};
+  for (const [name, value] of Object.entries(process.env)) if (value !== undefined) env[name] = value;
+  env.LABELORE_CONFIG_DIR = dir;
+  return env;
+}
 
 export default defineConfig({
   testDir: 'test/e2e',
@@ -40,7 +64,8 @@ export default defineConfig({
   webServer: [
     {
       command: 'node src/server/index.ts . --port 4199',
-      url: 'http://127.0.0.1:4199/api/dashboard',
+      url: 'http://127.0.0.1:4199/api/projects',
+      env: serverEnv(4199),
       reuseExistingServer: false,
       timeout: 90_000,
       stdout: 'ignore',
@@ -48,7 +73,8 @@ export default defineConfig({
     },
     {
       command: `node src/server/index.ts ${fixtureRoot} --port 4198`,
-      url: 'http://127.0.0.1:4198/api/dashboard',
+      url: 'http://127.0.0.1:4198/api/projects',
+      env: serverEnv(4198),
       reuseExistingServer: false,
       timeout: 90_000,
       stdout: 'ignore',
@@ -56,7 +82,8 @@ export default defineConfig({
     },
     {
       command: `node src/server/index.ts ${shapesRoot} --port 4197`,
-      url: 'http://127.0.0.1:4197/api/dashboard',
+      url: 'http://127.0.0.1:4197/api/projects',
+      env: serverEnv(4197),
       reuseExistingServer: false,
       timeout: 90_000,
       stdout: 'ignore',
@@ -64,7 +91,8 @@ export default defineConfig({
     },
     {
       command: `npm run build && npm start -- ${shapesRoot} --port 4196`,
-      url: 'http://127.0.0.1:4196/api/dashboard',
+      url: 'http://127.0.0.1:4196/api/projects',
+      env: serverEnv(4196),
       reuseExistingServer: false,
       // The build runs first inside the same command.
       timeout: 180_000,

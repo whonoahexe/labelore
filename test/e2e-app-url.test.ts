@@ -1,6 +1,6 @@
 // NAV-09: the browser specs' URL helper agrees with a real listening server about the project slug.
-// A live Hono app over the Lendshed fixture serves /api/presentation and the SPA shell; the helper's
-// output must open that shell with HTTP 200.
+// A live registry app over the Lendshed fixture serves /api/projects, the project's own API and the SPA
+// shell; the helper's output must open that shell with HTTP 200.
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
@@ -8,10 +8,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createAdaptorServer } from '@hono/node-server';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { LocalFsPlanningFilesystem } from '../src/planning-fs/local-fs.ts';
-import { PlanningRepository } from '../src/planning-repo/snapshot.ts';
-import { createApp } from '../src/server/index.ts';
-import { artifactUrl, projectSlugAt, projectUrl } from './e2e/app-url.ts';
+import { ProjectRegistry } from '../src/server/project-registry.ts';
+import { createRegistryApp } from '../src/server/registry-api.ts';
+import { createHostPolicy } from '../src/server/request-guard.ts';
+import { artifactUrl, projectApiUrl, projectSlugAt, projectUrl } from './e2e/app-url.ts';
 import { FIXTURE_ROOT } from './e2e/fixture-root.ts';
 
 const SHELL = '<!doctype html><html><body><div id="root">Labelore shell</div></body></html>';
@@ -19,21 +19,26 @@ const SHELL = '<!doctype html><html><body><div id="root">Labelore shell</div></b
 describe('e2e app-url helper against a live server', () => {
   let staticRoot = '';
   let server: Server;
+  let registry: ProjectRegistry;
   let base = '';
 
   beforeAll(async () => {
     staticRoot = await mkdtemp(join(tmpdir(), 'labelore-app-url-'));
     await writeFile(join(staticRoot, 'index.html'), SHELL);
-    const repository = new PlanningRepository(new LocalFsPlanningFilesystem(FIXTURE_ROOT), FIXTURE_ROOT);
-    await repository.load();
-    const app = createApp(repository, true, staticRoot);
+    registry = new ProjectRegistry();
+    await registry.register(FIXTURE_ROOT);
+    const policy = createHostPolicy([]);
+    const app = createRegistryApp(registry, { policy, production: true, staticRoot });
     server = createAdaptorServer({ fetch: app.fetch, hostname: '127.0.0.1' }) as Server;
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', () => resolve()));
-    base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+    const port = (server.address() as AddressInfo).port;
+    policy.setPort(port);
+    base = `http://127.0.0.1:${port}`;
   });
 
   afterAll(async () => {
     await new Promise<void>((resolve) => server.close(() => resolve()));
+    registry.dispose();
     await rm(staticRoot, { recursive: true, force: true });
   });
 
@@ -55,6 +60,18 @@ describe('e2e app-url helper against a live server', () => {
     const response = await fetch(url);
     expect(response.status).toBe(200);
     expect(await response.text()).toBe(SHELL);
+  });
+
+  it('composes the address of a project API route that answers with the project payload', async () => {
+    const url = await projectApiUrl(base, '/presentation');
+    expect(url).toBe(`${base}/api/projects/lendshed/presentation`);
+    const response = await fetch(url);
+    expect(response.status).toBe(200);
+    expect(((await response.json()) as { projectSlug: string }).projectSlug).toBe('lendshed');
+  });
+
+  it('refuses a project API path that does not start with a slash', async () => {
+    await expect(projectApiUrl(base, 'presentation')).rejects.toThrow("must start with '/'");
   });
 
   it('rejects an artifact path the project does not hold', async () => {
