@@ -1,8 +1,8 @@
 // The module that holds an /api/ URL for the several-projects web (PLAT-08). Every request goes
 // through apiFetch, so a refused or unreachable server reads the same everywhere, and every write
 // carries the JSON content type the server's request guard demands. The presentation, open and
-// refresh calls of one project live here (08-08); 08-17 and 08-13 add the add, forget and scan
-// mutations.
+// refresh calls of one project live here (08-08); the add and forget calls are 08-17's, the scan
+// mutations 08-13's.
 import type { ProjectListResponse } from '../presentation/project-list.ts';
 import type { ProjectPresentation } from '../server/project-presentation.ts';
 
@@ -115,4 +115,31 @@ export function openProject(slug: string): Promise<OpenProjectResponse> {
 /** Asks the server to re-read one project (08-09 wires it into the snapshot pill). */
 export function refreshProject(slug: string): Promise<RefreshProjectResponse> {
   return apiFetch<RefreshProjectResponse>(projectUrl(slug, '/refresh'), { method: 'POST' });
+}
+
+export interface AddProjectResponse {
+  slug: string;
+  name: string;
+  /** True when the target was already in the list: nothing was created. */
+  duplicate: boolean;
+}
+
+/** Adds a folder or an ssh:// target to the remembered list (D-09, D-13). The server validates it once
+ * (D-17): a target it cannot read is a 422 whose body keeps `{ error, status }`, an empty or malformed
+ * one a 400, and both reach the caller as an `http` ApiError carrying the server's own message. */
+export async function addProject(target: string): Promise<AddProjectResponse> {
+  return await apiFetch<AddProjectResponse>('/api/projects', { method: 'POST', body: { target } });
+}
+
+export interface ForgetProjectResponse {
+  forgotten: string;
+}
+
+/** Removes a project from Labelore's list only (D-10): the server edits its own settings file and
+ * touches nothing in the project. A settings write failure is a 500 carrying the save-failure copy. */
+export async function forgetProject(slug: string): Promise<ForgetProjectResponse> {
+  return await apiFetch<ForgetProjectResponse>('/api/projects/' + encodeURIComponent(slug), {
+    method: 'DELETE',
+    body: {},
+  });
 }
