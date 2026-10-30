@@ -6,7 +6,8 @@
 // Fixtures are copies in mkdtemp folders and a seeded settings file, so nothing in the repository is ever
 // a write path and no real home folder is read.
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { cpSync, mkdtempSync, mkdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { createServer, type RequestListener, type Server } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { projectUrl } from './app-url.ts';
@@ -365,5 +366,221 @@ test.describe('several projects in one browser', () => {
     await expect(tabA.locator('#project-name-heading')).toBeVisible();
     await tabA.close();
     await tabB.close();
+  });
+});
+
+// SEC-05 in a real browser (T-08-32): a page served from another website cannot add, scan or forget. The
+// "other website" is a plain node:http server on localhost, which a browser treats as a different site from
+// the 127.0.0.1 address Labelore is opened on, so it needs no second host name. It serves one page with a
+// text/plain form POST (the classic cross-site JSON trick), a no-cors fetch that posts the scan, and a
+// fetch that sends a DELETE with a JSON content type (the browser sends a preflight first). Labelore's own
+// settings file and project list are compared byte for byte before and after.
+const OTHER_FIRST_PORT = 5330;
+const OTHER_LAST_PORT = 5339;
+
+interface LocalSite {
+  origin: string;
+  stop(): Promise<void>;
+}
+
+/** A node:http server on the first free port of the range, bound to `host` (the address a browser then
+ * reaches it by, so the two kinds of site this spec needs differ only in this name). */
+async function startLocalSite(host: 'localhost' | '127.0.0.1', handler: RequestListener): Promise<LocalSite> {
+  for (let port = OTHER_FIRST_PORT; port <= OTHER_LAST_PORT; port++) {
+    const server: Server = createServer(handler);
+    const bound = await new Promise<boolean>((done) => {
+      server.once('error', () => done(false));
+      server.listen(port, host, () => done(true));
+    });
+    if (bound) {
+      return {
+        origin: `http://${host}:${port}`,
+        stop: () => new Promise<void>((done) => server.close(() => done())),
+      };
+    }
+  }
+  throw new Error(`projects.spec: no free port in ${OTHER_FIRST_PORT}-${OTHER_LAST_PORT}`);
+}
+
+/** What a browser sent to a server that only records it: the headers the real server's guard would read. */
+interface Echoed {
+  method: string;
+  siteHeader: string | undefined;
+  origin: string | undefined;
+  contentType: string | undefined;
+}
+
+interface Seen {
+  method: string;
+  path: string;
+  status: number;
+  siteHeader: string | undefined;
+}
+
+test.describe('another website', () => {
+  let server: ProjectsServer;
+  let home = '';
+  let evil = '';
+  let site: LocalSite;
+  let echo: LocalSite;
+  const echoed: Echoed[] = [];
+  let victim: ListedProject;
+
+  test.beforeAll(async () => {
+    test.setTimeout(120_000);
+    // A synthetic home, so a scan that got through could only ever list a folder this spec made.
+    home = realpathSync(mkdtempSync(join(tmpdir(), 'projects-spec-home-')));
+    // A folder Labelore would happily add, so refusal is the only thing standing between it and the list.
+    evil = join(home, 'evil-target');
+    cpSync(SHAPES_FIXTURE_ROOT, evil, { recursive: true });
+    server = await startProjectsServer({ paths: [FIXTURE_ROOT, SHAPES_FIXTURE_ROOT], env: { HOME: home } });
+    const found = (await listProjects(server.base)).find((entry) => entry.target === SHAPES_FIXTURE_ROOT);
+    if (!found) throw new Error('projects.spec: the Shapes fixture is not in the list');
+    victim = found;
+    const labelore = server.base;
+    // A server on the same address as Labelore that only records what the browser sends it, from the same
+    // page and in the same ways: it shows the headers Labelore's guard reads (Sec-Fetch-Site, Origin).
+    echo = await startLocalSite('127.0.0.1', (request, response) => {
+      echoed.push({
+        method: request.method ?? '',
+        siteHeader: request.headers['sec-fetch-site'] as string | undefined,
+        origin: request.headers.origin,
+        contentType: request.headers['content-type'],
+      });
+      response.writeHead(403, { 'content-type': 'application/json' });
+      response.end('{}');
+    });
+    const html = `<!doctype html>
+<meta charset="utf-8">
+<title>Another website</title>
+<form id="add-form" method="POST" action="${labelore}/api/projects" enctype="text/plain">
+  <input type="hidden" name='{"target":${JSON.stringify(evil).replaceAll("'", '&#39;')},"pad":"' value='"}'>
+  <button id="add" type="submit">Add</button>
+</form>
+<button id="scan" type="button">Scan</button>
+<button id="forget" type="button">Forget</button>
+<button id="echo" type="button">Echo</button>
+<pre id="result"></pre>
+<script>
+  const labelore = ${JSON.stringify(labelore)};
+  const note = (text) => { document.getElementById('result').textContent += text + '\\n'; };
+  document.getElementById('scan').addEventListener('click', async () => {
+    try {
+      await fetch(labelore + '/api/projects/scan', { method: 'POST', mode: 'no-cors', body: JSON.stringify({ folder: '~' }) });
+      note('scan: sent');
+    } catch { note('scan: blocked'); }
+  });
+  document.getElementById('echo').addEventListener('click', async () => {
+    const echo = ${JSON.stringify(echo.origin)};
+    await fetch(echo + '/probe', { method: 'POST', mode: 'no-cors', body: JSON.stringify({ folder: '~' }) }).catch(() => undefined);
+    await fetch(echo + '/probe', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => undefined);
+    note('echo: done');
+  });
+  document.getElementById('forget').addEventListener('click', async () => {
+    try {
+      await fetch(labelore + '/api/projects/${victim.slug}', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      note('forget: sent');
+    } catch { note('forget: blocked'); }
+  });
+</script>`;
+    site = await startLocalSite('localhost', (_request, response) => {
+      response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+      response.end(html);
+    });
+  });
+
+  test.afterAll(async () => {
+    await site?.stop();
+    await echo?.stop();
+    await server?.stop();
+    if (home !== '') rmSync(home, { recursive: true, force: true });
+  });
+
+  test('a text/plain form post, a no-cors scan and a preflighted forget are refused, and the settings file and the list are byte-identical afterwards', async ({
+    page,
+  }) => {
+    const settingsFile = join(server.configDir, 'settings.json');
+    const settingsBefore = readFileSync(settingsFile);
+    const listBefore = await (await fetch(`${server.base}/api/projects`)).text();
+
+    const seen: Seen[] = [];
+    const pending: Promise<void>[] = [];
+    page.on('response', (response) => {
+      if (!response.url().startsWith(server.base)) return;
+      pending.push(
+        response
+          .request()
+          .allHeaders()
+          .then((headers) => {
+            seen.push({
+              method: response.request().method(),
+              path: new URL(response.url()).pathname,
+              status: response.status(),
+              siteHeader: headers['sec-fetch-site'],
+            });
+          }),
+      );
+    });
+    const result = page.locator('#result');
+
+    // 1. The form: a cross-site navigation that posts text/plain to the add route.
+    await page.goto(site.origin);
+    await page.locator('#add').click();
+    await expect.poll(() => seen.some((entry) => entry.method === 'POST' && entry.path === '/api/projects')).toBe(true);
+
+    // 2. The no-cors scan: the page cannot read the answer, but the server still sees the request.
+    await page.goto(site.origin);
+    await page.locator('#scan').click();
+    await expect(result).toContainText('scan:');
+    await expect.poll(() => seen.some((entry) => entry.path === '/api/projects/scan')).toBe(true);
+
+    // 3. The forget: the browser asks first (a preflight) and, getting no permission, never sends the DELETE.
+    await page.locator('#forget').click();
+    await expect(result).toContainText('forget:');
+    await Promise.all(pending);
+
+    const attempts = seen.filter((entry) => entry.method !== 'GET');
+    expect(attempts.map((entry) => `${entry.method} ${entry.path}`)).toEqual(
+      expect.arrayContaining(['POST /api/projects', 'POST /api/projects/scan']),
+    );
+    for (const attempt of attempts) {
+      expect([403, 415], `${attempt.method} ${attempt.path}`).toContain(attempt.status);
+    }
+    expect(attempts.some((entry) => entry.method === 'DELETE' && entry.status < 400)).toBe(false);
+
+    // Which proof decides: Chromium sends Sec-Fetch-Site on a request to 127.0.0.1, and from another site it
+    // says cross-site, for the form and for both kinds of fetch. The server's check reads that header first,
+    // so the Origin fallback (for a browser that sends no Sec-Fetch-Site) is not what refuses these.
+    expect(attempts.find((entry) => entry.path === '/api/projects')?.siteHeader).toBe('cross-site');
+    await page.locator('#echo').click();
+    await expect(result).toContainText('echo: done');
+    expect(echoed.length).toBeGreaterThanOrEqual(2);
+    for (const request of echoed) {
+      expect(request.siteHeader, `${request.method} sent to a server on Labelore's address`).toBe('cross-site');
+      expect(request.origin).toBe(site.origin);
+    }
+    expect(echoed.map((request) => request.method)).toEqual(expect.arrayContaining(['POST', 'OPTIONS']));
+
+    // Whatever the browser did or did not send, the server refuses a preflight and a DELETE from another
+    // site (sent straight at it, with the headers a browser would add), and offers no CORS permission.
+    for (const [method, extra] of [
+      ['OPTIONS', { 'Access-Control-Request-Method': 'DELETE', 'Access-Control-Request-Headers': 'content-type' }],
+      ['DELETE', { 'Content-Type': 'application/json' }],
+    ] as const) {
+      const direct = await fetch(`${server.base}/api/projects/${victim.slug}`, {
+        method,
+        headers: { Origin: site.origin, 'Sec-Fetch-Site': 'cross-site', ...extra },
+        body: method === 'DELETE' ? '{}' : undefined,
+      });
+      expect([403, 415], `${method} straight at the server`).toContain(direct.status);
+      expect(direct.headers.get('access-control-allow-origin')).toBeNull();
+    }
+
+    // Nothing changed: not the settings file, not the list, and the folder the form named was never added.
+    expect(readFileSync(settingsFile).equals(settingsBefore)).toBe(true);
+    expect(await (await fetch(`${server.base}/api/projects`)).text()).toBe(listBefore);
+    const after = await listProjects(server.base);
+    expect(after.some((entry) => entry.target === evil)).toBe(false);
+    expect(after.some((entry) => entry.slug === victim.slug)).toBe(true);
   });
 });
