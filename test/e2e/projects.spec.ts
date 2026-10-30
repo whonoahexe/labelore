@@ -7,11 +7,11 @@
 // a write path and no real home folder is read.
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { cpSync, mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
-import { createServer, type RequestListener, type Server } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { projectUrl } from './app-url.ts';
 import { FIXTURE_ROOT, SHAPES_FIXTURE_ROOT } from './fixture-root.ts';
+import { startLocalSite, type LocalSite } from './other-site.ts';
 import { startProjectsServer, type ProjectsServer } from './projects-server.ts';
 
 interface ListedProject {
@@ -375,32 +375,6 @@ test.describe('several projects in one browser', () => {
 // text/plain form POST (the classic cross-site JSON trick), a no-cors fetch that posts the scan, and a
 // fetch that sends a DELETE with a JSON content type (the browser sends a preflight first). Labelore's own
 // settings file and project list are compared byte for byte before and after.
-const OTHER_FIRST_PORT = 5330;
-const OTHER_LAST_PORT = 5339;
-
-interface LocalSite {
-  origin: string;
-  stop(): Promise<void>;
-}
-
-/** A node:http server on the first free port of the range, bound to `host` (the address a browser then
- * reaches it by, so the two kinds of site this spec needs differ only in this name). */
-async function startLocalSite(host: 'localhost' | '127.0.0.1', handler: RequestListener): Promise<LocalSite> {
-  for (let port = OTHER_FIRST_PORT; port <= OTHER_LAST_PORT; port++) {
-    const server: Server = createServer(handler);
-    const bound = await new Promise<boolean>((done) => {
-      server.once('error', () => done(false));
-      server.listen(port, host, () => done(true));
-    });
-    if (bound) {
-      return {
-        origin: `http://${host}:${port}`,
-        stop: () => new Promise<void>((done) => server.close(() => done())),
-      };
-    }
-  }
-  throw new Error(`projects.spec: no free port in ${OTHER_FIRST_PORT}-${OTHER_LAST_PORT}`);
-}
 
 /** What a browser sent to a server that only records it: the headers the real server's guard would read. */
 interface Echoed {
@@ -524,12 +498,12 @@ test.describe('another website', () => {
     const result = page.locator('#result');
 
     // 1. The form: a cross-site navigation that posts text/plain to the add route.
-    await page.goto(site.origin);
+    await site.open(page);
     await page.locator('#add').click();
     await expect.poll(() => seen.some((entry) => entry.method === 'POST' && entry.path === '/api/projects')).toBe(true);
 
     // 2. The no-cors scan: the page cannot read the answer, but the server still sees the request.
-    await page.goto(site.origin);
+    await site.open(page);
     await page.locator('#scan').click();
     await expect(result).toContainText('scan:');
     await expect.poll(() => seen.some((entry) => entry.path === '/api/projects/scan')).toBe(true);
