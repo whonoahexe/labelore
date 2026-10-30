@@ -1,5 +1,6 @@
-// The deep-link probe (NAV-10): starts the real CLI as a child process on a project, then asks it for every
-// address the project's /api/presentation payload emits (plus the awkward hand-written classes) and checks
+// The deep-link probe (NAV-10): starts the real CLI as a child process on a project (with a settings
+// directory of its own, removed afterwards, so the user's real settings file is never touched), then asks it
+// for every address the project's presentation payload emits (plus the awkward hand-written classes) and checks
 // that each one answers 200 text/html with the app shell. `built` runs the production app (NODE_ENV=production
 // serving ./dist, so `npm run build` must have run) and compares each body with dist/index.html exactly;
 // `dev` runs the development server and looks for the root div. In both modes /api/* must never fall
@@ -9,7 +10,8 @@
 // Prints one line per failure and a final `deep-link-probe: mode=<mode> urls=<n> failed=<k>`; exits 1 on
 // any failure.
 import { spawn } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -34,6 +36,8 @@ if (mode === 'built' && !existsSync(distIndex)) {
 
 /** @type {import('node:child_process').ChildProcess | null} */
 let child = null;
+/** The server's own settings directory (D-09); created in startServer, removed in the finally block. */
+let configDir = null;
 
 function stopChild() {
   const running = child;
@@ -52,11 +56,13 @@ function stopChild() {
 // A synchronous last resort for any way out of this process that skips the finally block.
 process.on('exit', () => {
   if (child !== null && child.exitCode === null) child.kill('SIGKILL');
+  if (configDir !== null) rmSync(configDir, { recursive: true, force: true });
 });
 
 /** Spawns the CLI and resolves with its base URL once it prints `Open http://...`. */
 function startServer() {
-  const env = { ...process.env };
+  configDir = mkdtempSync(join(tmpdir(), 'deep-link-probe-config-'));
+  const env = { ...process.env, LABELORE_CONFIG_DIR: configDir };
   if (mode === 'built') env.NODE_ENV = 'production';
   else delete env.NODE_ENV;
   const started = spawn(process.execPath, ['src/server/index.ts', projectRoot, '--port', '0'], {
@@ -143,11 +149,17 @@ const failures = [];
 const fail = (message) => failures.push(message);
 
 async function probe(base) {
-  const presentationResponse = await fetch(`${base}/api/presentation`);
-  if (!presentationResponse.ok) throw new Error(`/api/presentation answered ${presentationResponse.status}`);
+  const listResponse = await fetch(`${base}/api/projects`);
+  if (!listResponse.ok) throw new Error(`/api/projects answered ${listResponse.status}`);
+  const { projects } = await listResponse.json();
+  if (projects.length !== 1) throw new Error(`/api/projects lists ${projects.length} projects, expected exactly 1`);
+  const api = `${base}/api/projects/${encodeURIComponent(projects[0].slug)}`;
+
+  const presentationResponse = await fetch(`${api}/presentation`);
+  if (!presentationResponse.ok) throw new Error(`${api}/presentation answered ${presentationResponse.status}`);
   const payload = await presentationResponse.json();
   if (typeof payload.projectSlug !== 'string' || payload.projectSlug === '') {
-    throw new Error('/api/presentation carries no projectSlug');
+    throw new Error(`${api}/presentation carries no projectSlug`);
   }
 
   const urls = buildUrlSet(payload);
@@ -190,10 +202,10 @@ async function probe(base) {
   if (png === undefined) {
     fail('the payload has no .png artifact to check the bytes route with');
   } else {
-    const response = await fetch(`${base}/api/files?route=${encodeURIComponent(png.key)}`);
+    const response = await fetch(`${api}/files?route=${encodeURIComponent(png.key)}`);
     const type = response.headers.get('content-type') ?? '';
     if (response.status !== 200 || type !== 'image/png') {
-      fail(`/api/files for ${png.key}: answered ${response.status} ${type}, expected 200 image/png`);
+      fail(`${api}/files for ${png.key}: answered ${response.status} ${type}, expected 200 image/png`);
     }
   }
 
@@ -208,6 +220,7 @@ try {
   fail(error instanceof Error ? error.message : String(error));
 } finally {
   await stopChild();
+  if (configDir !== null) rmSync(configDir, { recursive: true, force: true });
 }
 
 for (const line of failures) console.error(`deep-link-probe: FAIL ${line}`);
