@@ -25731,9 +25731,15 @@ button.research-step-chip:hover {
   }
 }
 
+/* The "Opening {name}…" body of a project that is on its way (08-08) turns like the landing page's. */
+.shell-outlet[aria-busy='true'] .quiet-state svg {
+  animation: project-row-spin 1s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .project-row > .status-chip[data-tone='quiet'] svg,
-  .projects-page .quiet-state svg {
+  .projects-page .quiet-state svg,
+  .shell-outlet[aria-busy='true'] .quiet-state svg {
     animation: none;
   }
 }
