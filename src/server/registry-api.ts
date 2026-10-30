@@ -9,6 +9,7 @@ import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { createProjectApi } from './project-api.ts';
+import { INVALID_INPUT_MESSAGE } from './project-registry.ts';
 import type { ProjectRegistry } from './project-registry.ts';
 import { GUARD_BODY_LIMIT, createRequestGuard } from './request-guard.ts';
 import type { HostPolicy } from './request-guard.ts';
@@ -37,6 +38,41 @@ export function createRegistryApp(registry: ProjectRegistry, options: RegistryAp
   );
 
   app.get('/api/projects', async (c) => c.json(await registry.list()));
+
+  // The three write routes of the remembered list. They sit before the :slug mount so the project API's
+  // resolver never runs for them, and behind the guard and body limit above (SEC-05).
+  app.post('/api/projects', async (c) => {
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: INVALID_INPUT_MESSAGE }, 400);
+    }
+    const target = typeof body === 'object' && body !== null ? (body as { target?: unknown }).target : undefined;
+    if (typeof target !== 'string') return c.json({ error: INVALID_INPUT_MESSAGE }, 400);
+    const outcome = await registry.add(target);
+    if (outcome.ok) {
+      const answer = { slug: outcome.slug, name: outcome.name, duplicate: outcome.duplicate };
+      return c.json(answer, outcome.duplicate ? 200 : 201);
+    }
+    if (outcome.code === 'invalid-input') return c.json({ error: outcome.error }, 400);
+    if (outcome.code === 'settings-inside') {
+      return c.json({ error: outcome.error, status: { pathChecked: outcome.pathChecked } }, 422);
+    }
+    return c.json({ error: outcome.status.message, status: outcome.status }, 422);
+  });
+  app.delete('/api/projects/:slug', async (c) => {
+    const slug = c.req.param('slug');
+    const outcome = await registry.forget(slug);
+    if (outcome.ok) return c.json({ forgotten: slug });
+    if (outcome.code === 'unknown') return c.json({ error: 'Unknown project' }, 404);
+    return c.json({ error: outcome.error }, 500);
+  });
+  app.post('/api/projects/:slug/open', async (c) => {
+    const opened = await registry.open(c.req.param('slug'));
+    if (!opened) return c.json({ error: 'Unknown project' }, 404);
+    return c.json(opened);
+  });
   // The raw prefix handed to mountPrefix is this request's URL up to the slug segment
   // (`/api/projects/<raw slug segment>`), never the decoded parameter, so a link built from it names
   // exactly the segment the client sent.
