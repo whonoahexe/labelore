@@ -130,7 +130,7 @@ describe('imageBytesUrl', () => {
   it('encodes a URL once more when it already holds a percent escape', () => {
     const url = '/notes/glaze%20%2312.png';
     const bytesUrl = imageBytesUrl(url);
-    expect(bytesUrl.startsWith('/api/files?route=')).toBe(true);
+    expect(bytesUrl.startsWith('/files?route=')).toBe(true);
     expect(new URL(bytesUrl, 'http://localhost').searchParams.get('route')).toBe(url);
   });
 });
