@@ -9,14 +9,20 @@ async function source(path: string): Promise<string> {
 }
 
 describe('invalid-project screen contract', () => {
-  it('is mounted by app-router.tsx above AppShell, reusing the shared fetchPresentation fetcher (D-14)', async () => {
+  it('is mounted by project-layout.tsx above AppShell, reading presentations only through api.ts (D-14)', async () => {
+    const layout = await source('src/web/pages/project-layout.tsx');
+    expect(layout).toContain('<InvalidProjectScreen loadStatus={loaded.loadStatus} />');
+    expect(layout).toContain("import { InvalidProjectScreen } from './invalid-project-screen.tsx';");
+    expect(layout).toContain('fetchPresentation');
+
     const router = await source('src/web/app-router.tsx');
-    expect(router).toContain('InvalidProjectScreen');
-    expect(router).toContain("import { AppShell, fetchPresentation } from './components/app-shell.tsx';");
-    expect(router).not.toContain('element: <AppShell />');
-    expect(router).toContain('element: <ProjectGate />');
-    // No second fetcher declared for the same endpoint in this file.
-    expect(router).not.toMatch(/async function fetchPresentation/);
+    expect(router).toContain('element: <ProjectRoute />');
+    expect(router).not.toContain('element: <AppShell');
+    expect(router).not.toContain('ProjectGate');
+    // No second fetcher declared for the same endpoint: it lives only in api.ts.
+    expect(router).not.toMatch(/function fetchPresentation/);
+    expect(await source('src/web/components/app-shell.tsx')).not.toMatch(/function fetchPresentation/);
+    expect(await source('src/web/api.ts')).toMatch(/export async function fetchPresentation\(slug: string\)/);
   });
 
   it('renders exactly one generic heading for every failure kind, never a per-status heading (D-15)', async () => {

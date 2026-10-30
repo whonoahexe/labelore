@@ -282,10 +282,10 @@ describe('Strata mark, brand lockup and tabs (D-01, D-02, NAV-01..03)', () => {
     expect(brandMarkBlock).toContain('<LabeloreMark');
   });
 
-  it('sets the brand title from rootPath and an aria-label starting with Labelore', async () => {
+  it('sets the brand title from the project target and an aria-label starting with Labelore and naming the project', async () => {
     const shell = await source('src/web/components/app-shell.tsx');
-    expect(shell).toMatch(/title=\{presentation\.data\?\.rootPath\}/);
-    expect(shell).toMatch(/aria-label=\{`Labelore/);
+    expect(shell).toMatch(/title=\{project\.target\}/);
+    expect(shell).toMatch(/aria-label=\{`Labelore — \$\{project\.name\}`\}/);
   });
 
   it('takes NavLink from nav.tsx, so every tab and the brand carry the project slug (NAV-09)', async () => {
