@@ -90,12 +90,18 @@ export async function startFixtureServer(placements?: FixturePlacement[]): Promi
   const base = `http://127.0.0.1:${port}`;
   // A payload cached for this port by an earlier server (another spec's project) must not be read.
   forgetPresentation(base);
+  // The server remembers the project it opens, so it gets a settings directory of its own and never
+  // reads or writes the user's real settings file (D-09).
+  const configDir = mkdtempSync(join(tmpdir(), 'fixture-server-config-'));
   const child: ChildProcess = spawn('node', ['src/server/index.ts', root, '--port', String(port)], {
     cwd: REPO,
     stdio: 'ignore',
+    env: { ...process.env, LABELORE_CONFIG_DIR: configDir },
   });
+  const removeConfigDir = (): void => rmSync(configDir, { recursive: true, force: true });
   const kill = (): void => {
     if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
+    removeConfigDir();
   };
   process.once('exit', kill);
 
@@ -109,6 +115,7 @@ export async function startFixtureServer(placements?: FixturePlacement[]): Promi
       clearTimeout(timer);
     }
     forgetPresentation(base);
+    removeConfigDir();
     if (tempDir !== undefined) rmSync(tempDir, { recursive: true, force: true });
   };
 
@@ -117,7 +124,7 @@ export async function startFixtureServer(placements?: FixturePlacement[]): Promi
   while (Date.now() < deadline && !ready) {
     if (child.exitCode !== null) break;
     try {
-      const response = await fetch(`${base}/api/dashboard`);
+      const response = await fetch(`${base}/api/projects`);
       ready = response.ok;
     } catch {
       /* not listening yet */

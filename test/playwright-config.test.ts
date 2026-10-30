@@ -3,7 +3,7 @@
 // home-directory route to another project exists. The missing-tree case uses a mkdtemp folder, never the repository.
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { isAbsolute, join, relative } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import config from '../playwright.config.ts';
 import {
@@ -63,21 +63,37 @@ describe('playwright.config.ts webServer shape', () => {
     for (const entry of servers) expect(entry.reuseExistingServer).toBe(false);
   });
 
+  it('waits for every server on the project list, the first route the registry app answers', () => {
+    expect(servers.map((entry) => entry.url)).toEqual([
+      'http://127.0.0.1:4199/api/projects',
+      'http://127.0.0.1:4198/api/projects',
+      'http://127.0.0.1:4197/api/projects',
+      'http://127.0.0.1:4196/api/projects',
+    ]);
+  });
+
   it('points the 4198 server at the Lendshed fixture root', () => {
     expect(servers[1].command).toContain(FIXTURE_ROOT);
-    expect(servers[1].url).toBe('http://127.0.0.1:4198/api/dashboard');
   });
 
   it('points the 4197 server at the Shapes root through the development server, without a build', () => {
     expect(servers[2].command).toContain(SHAPES_FIXTURE_ROOT);
     expect(servers[2].command).not.toContain('npm run build');
-    expect(servers[2].url).toBe('http://127.0.0.1:4197/api/dashboard');
   });
 
   it('builds first and then starts the built app on the Shapes root for 4196', () => {
     expect(servers[3].command?.startsWith('npm run build && npm start -- ')).toBe(true);
     expect(servers[3].command).toContain(SHAPES_FIXTURE_ROOT);
-    expect(servers[3].url).toBe('http://127.0.0.1:4196/api/dashboard');
     expect(servers[3].timeout).toBe(180_000);
+  });
+
+  it('gives every server its own temporary settings directory, so no run touches the real settings file (D-09)', () => {
+    const dirs = servers.map((entry) => entry.env?.LABELORE_CONFIG_DIR);
+    for (const dir of dirs) {
+      expect(typeof dir).toBe('string');
+      expect(isAbsolute(dir as string)).toBe(true);
+      expect(relative(tmpdir(), dir as string).startsWith('..')).toBe(false);
+    }
+    expect(new Set(dirs).size).toBe(servers.length);
   });
 });
