@@ -39,15 +39,27 @@ const artifactAt = (path: string): ArtifactDto => {
 
 const render = (node: React.ReactElement): string => renderToStaticMarkup(createElement(MemoryRouter, null, node));
 
+// The image page reads its project from the address (D-08), so it renders under a /:project route.
 function imageView(artifact: ArtifactDto, status: ImageStatus): string {
-  return render(
-    createElement(ImageView, {
-      artifact,
-      crumbs: documentCrumbsOf(shapes, artifact.path, fileNameOf(artifact.path)),
-      status,
-      onLoad: () => undefined,
-      onError: () => undefined,
-    }),
+  return renderToStaticMarkup(
+    createElement(
+      MemoryRouter,
+      { initialEntries: ['/shapes/file/glaze-panel.png'] },
+      createElement(
+        Routes,
+        null,
+        createElement(Route, {
+          path: '/:project/*',
+          element: createElement(ImageView, {
+            artifact,
+            crumbs: documentCrumbsOf(shapes, artifact.path, fileNameOf(artifact.path)),
+            status,
+            onLoad: () => undefined,
+            onError: () => undefined,
+          }),
+        }),
+      ),
+    ),
   );
 }
 
@@ -80,11 +92,14 @@ describe('ImageView', () => {
     expect(loading).not.toMatch(/skeleton|spinner/i);
   });
 
-  it('holds one img in a Preview frame whose src is the bytes route', () => {
+  it('holds one img in a Preview frame whose src is the project own bytes route', () => {
     expect(loading).toContain('<span class="figure-frame-title">Preview</span>');
     const images = loading.match(/<img\b[^>]*>/g) ?? [];
     expect(images).toHaveLength(1);
-    expect(images[0]).toContain(`src="${imageBytesUrl(PNG.key).replace(/&/g, '&amp;')}"`);
+    const expected = `/api/projects/shapes${imageBytesUrl(PNG.key)}`;
+    expect(imageBytesUrl(PNG.key).startsWith('/files?route=')).toBe(true);
+    expect(images[0]).toContain(`src="${expected.replace(/&/g, '&amp;')}"`);
+    expect(expected.startsWith('/api/projects/shapes/files?route=')).toBe(true);
     expect(images[0]).toContain('alt="glaze-panel.png"');
   });
 

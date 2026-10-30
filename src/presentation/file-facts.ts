@@ -101,9 +101,10 @@ export function imageFactsLine(
   return `${base} · ${dimensions.width} × ${dimensions.height} px`;
 }
 
-/** The image-bytes route for an artifact's readable URL (never a path). */
+/** The project-relative image-bytes route for an artifact's readable URL (never a path); the web
+ * prefixes the project's API base with projectUrl. */
 export function imageBytesUrl(url: string): string {
-  return `/api/files?route=${encodeURIComponent(url)}`;
+  return `/files?route=${encodeURIComponent(url)}`;
 }
 
 /** The longest extension the drawer badge writes; a longer one reads `FILE`. */
