@@ -25526,3 +25526,254 @@ button.research-step-chip:hover {
     grid-column: 1;
   }
 }
+
+/* Phase 8 (08-05): the projects landing page and the project row. The arrangement is the winner of
+   sketch 040 (B, side column): the list on the left and, from 62rem, a side column beside it. The
+   side column is the `<aside>` 08-17 adds as a direct child of `.projects-page`; until it exists the
+   list takes the full width. Row sizes follow 08-UI-SPEC (Label, Meta, Body, Heading), tokens only. */
+.projects-page {
+  --projects-side-width: calc(var(--space-8) * 14);
+  display: grid;
+  gap: var(--space-6);
+  align-content: start;
+}
+
+.projects-page .page-intro {
+  margin-bottom: 0;
+}
+
+.projects-page .page-intro > div {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.projects-page .eyebrow {
+  margin-bottom: 0;
+}
+
+.projects-page .page-intro h1 {
+  margin-bottom: 0;
+  font-size: var(--fs-7);
+  line-height: var(--lh-tight);
+}
+
+.projects-page .lede {
+  max-width: 48ch;
+  font-size: var(--fs-4);
+}
+
+.projects-page > section {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+  min-width: 0;
+}
+
+.projects-page .notice {
+  margin-top: 0;
+  padding: var(--space-3) var(--space-4);
+}
+
+.projects-page .notice p {
+  margin-bottom: 0;
+  font-size: var(--fs-4);
+}
+
+.projects-page .quiet-state svg {
+  color: var(--muted-foreground);
+}
+
+.projects-page .empty-flow {
+  margin-top: 0;
+}
+
+.project-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.project-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'name mark'
+    'path meta'
+    'reason reason';
+  column-gap: var(--space-6);
+  row-gap: var(--space-1);
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-faint);
+}
+
+.project-row:last-child {
+  border-bottom: 0;
+}
+
+.project-row:hover,
+.project-row:focus-within {
+  background: var(--state-hover);
+}
+
+.project-row[data-current='true'] {
+  box-shadow: inset 2px 0 0 var(--primary);
+}
+
+/* The whole row is the link: the name's box is stretched over the row, and a forget button (08-17)
+   sits above it. */
+.project-row-name {
+  grid-area: name;
+  display: -webkit-box;
+  min-width: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  color: inherit;
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-normal);
+  text-decoration: none;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.project-row-name::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+}
+
+.project-row[data-current='true'] .project-row-name {
+  padding-right: var(--space-6);
+}
+
+.project-row > svg {
+  grid-area: name;
+  align-self: start;
+  justify-self: end;
+  width: var(--space-4);
+  height: var(--space-4);
+  color: var(--primary);
+}
+
+.project-row-path {
+  grid-area: path;
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+  min-width: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-3);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-normal);
+}
+
+.project-row-path svg {
+  flex: none;
+  width: var(--space-4);
+  height: var(--space-4);
+}
+
+.project-row-path > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-row > .status-chip {
+  grid-area: mark;
+  justify-self: end;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  line-height: var(--lh-snug);
+  white-space: nowrap;
+}
+
+.project-row > .status-chip[data-tone='quiet'] svg {
+  animation: project-row-spin 1s linear infinite;
+}
+
+.project-row > .source-note {
+  grid-area: reason;
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-3);
+  line-height: var(--lh-normal);
+}
+
+.project-row-meta {
+  grid-area: meta;
+  justify-self: end;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-normal);
+  white-space: nowrap;
+}
+
+.projects-page .notice button {
+  font-size: var(--fs-3);
+}
+
+.projects-page .quiet-state svg {
+  animation: project-row-spin 1s linear infinite;
+}
+
+@keyframes project-row-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-row > .status-chip[data-tone='quiet'] svg,
+  .projects-page .quiet-state svg {
+    animation: none;
+  }
+}
+
+@media (min-width: 62rem) {
+  .projects-page:has(> aside) {
+    grid-template-columns: minmax(0, 1fr) var(--projects-side-width);
+    column-gap: var(--space-fluid-9);
+  }
+
+  .projects-page:has(> aside) > .page-intro {
+    grid-column: 1 / -1;
+  }
+
+  .projects-page:has(> aside) > section {
+    grid-column: 1;
+  }
+
+  .projects-page:has(> aside) > aside {
+    grid-column: 2;
+    grid-row: 2;
+  }
+}
+
+@media (max-width: 42rem) {
+  .project-row {
+    grid-template-areas:
+      'name mark'
+      'path path'
+      'meta meta'
+      'reason reason';
+  }
+
+  .project-row-meta {
+    justify-self: start;
+  }
+}
+
+@media (pointer: coarse) {
+  .project-row {
+    min-height: calc(var(--space-10) + var(--space-2));
+  }
+}
