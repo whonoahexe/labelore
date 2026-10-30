@@ -1,5 +1,5 @@
 // The PLAN task navigator e2e (quick-261006-iz6, sketch 019 winner B): real files, never a mock.
-// Fixtures resolve by path against the live `/api/presentation` payload (the ui-review-page.spec.ts
+// Fixtures resolve by path against the project's live presentation payload (the ui-review-page.spec.ts
 // idiom) so an archival/rename fails loudly instead of silently skipping. The labelore tests run on
 // port 4199 (the repo itself); the FX tests run against the made-up Lendshed project on port 4198
 // (playwright.config.ts always starts it, D-01, D-05). Nothing here skips. A phase plan's Planned date
@@ -9,7 +9,7 @@
 // per change. Run once post-merge: npx playwright test test/e2e/plan-page.spec.ts -g "plan page"
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
-import { BASE_URL, artifactUrl } from './app-url.ts';
+import { BASE_URL, artifactUrl, projectApiUrl } from './app-url.ts';
 import { FIXTURE_BASE_URL } from './fixture-root.ts';
 
 interface PresentationLite {
@@ -17,8 +17,8 @@ interface PresentationLite {
 }
 
 async function presentationOf(baseURL: string): Promise<PresentationLite> {
-  const response = await fetch(`${baseURL}/api/presentation`);
-  if (!response.ok) throw new Error(`plan-page.spec: /api/presentation responded ${response.status}`);
+  const response = await fetch(await projectApiUrl(baseURL, '/presentation'));
+  if (!response.ok) throw new Error(`plan-page.spec: the project's presentation payload responded ${response.status}`);
   return (await response.json()) as PresentationLite;
 }
 
