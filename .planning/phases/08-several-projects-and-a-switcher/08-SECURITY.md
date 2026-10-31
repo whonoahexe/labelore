@@ -19,38 +19,38 @@ created: "2026-10-31"
 
 | Boundary | Description | Data Crossing |
 |----------|-------------|---------------|
-| URL slug to registry | Any string in the first path segment after /api/projects selects a runtime | first named in 08-01 |
-| registry to target folders | Each runtime reads one project; nothing may cross between runtimes | first named in 08-01 |
-| repository to the public | Everything committed under .planning/sketches is published | first named in 08-02 |
-| any web page in the user's browser to 127.0.0.1 /api | Cross-site requests and DNS-rebinding requests reach the local server | first named in 08-03 |
-| a tunnel or reverse proxy to the local server | A public host name arrives in the Host header | first named in 08-03 |
-| settings.json on disk to the store | a hand-edited or corrupt file is untrusted input at startup | first named in 08-04 |
-| the store to the filesystem | the only write in the program; its path is fixed at construction | first named in 08-04 |
-| server DTO text to the DOM | names, paths, reasons and notices come from settings, PROJECT.md and error messages | first named in 08-05 |
-| slugs to links | row links and 'See all projects' are built from list entries | first named in 08-05 |
-| network socket to the Node server | the real Host header, Origin and Sec-Fetch-Site arrive here | first named in 08-06 |
-| test harnesses to the user's settings | Playwright, fixture servers, probes and smoke runs start real servers on this machine | first named in 08-06 |
-| command line to startServer | arguments decide which folders are opened and remembered | first named in 08-06 |
-| browser request body to the scan | the folder string is attacker-influenced until the guard and resolveScanFolder accept it | first named in 08-07 |
-| the user's home tree to the walk | symlinks and huge trees inside home are untrusted structure | first named in 08-07 |
-| address bar to the layout | any first segment reaches ProjectLayout | first named in 08-08 |
-| query cache across projects | one QueryClient serves every project in a tab | first named in 08-08 |
-| one tab's actions to the shared query cache | a refresh in one project runs in the same QueryClient as every other project in the tab | first named in 08-09 |
-| query cache across projects in one tab | relative URLs repeat across projects | first named in 08-10 |
-| server list to the DOM | project names come from PROJECT.md titles and folder names; meta lines and targets include user paths | first named in 08-11 |
-| switcher rows to the router | each row and 'All projects' leads to another URL in the app | first named in 08-11 |
-| sketch HTML to the app's API | author-controlled scripts in an opaque-origin frame or tab | first named in 08-12 |
-| user input to the scan form | the typed folder travels to the guarded scan route | first named in 08-13 |
-| server scan results to the DOM | found names and paths come from PROJECT.md titles and folder names | first named in 08-13 |
-| checklist selection to add-many | the picked targets are sent back to the server | first named in 08-13 |
-| browser specs to the server under test | each spec reads one project's payload to choose what to open | first named in 08-14 |
-| another origin's page to Labelore | the cross-site requests SEC-05 must refuse, now from a real browser | first named in 08-15 |
-| test fixtures to the public repository | copies and seeded settings are built in mkdtemp, never committed | first named in 08-15 |
-| browser request body to the registry | target strings in POST /api/projects are attacker-influenced until the guard and the parser accept them | first named in 08-16 |
-| settings.json entries to the registry | saved targets and slugs become registry entries at startup | first named in 08-16 |
-| Labelore process to target folders | the only write must never reach a target | first named in 08-16 |
-| user input to the add form | typed paths and targets travel to the guarded API | first named in 08-17 |
-| server messages to the DOM | invalid-target and save-failure messages include user paths | first named in 08-17 |
+| URL slug -> registry | Any string in the first path segment after /api/projects selects a runtime | see the 08-01 plan's threat model |
+| registry -> target folders | Each runtime reads one project; nothing may cross between runtimes | see the 08-01 plan's threat model |
+| repository -> the public | Everything committed under .planning/sketches is published | see the 08-02 plan's threat model |
+| any web page in the user's browser -> 127.0.0.1 /api | Cross-site requests and DNS-rebinding requests reach the local server | see the 08-03 plan's threat model |
+| a tunnel or reverse proxy -> the local server | A public host name arrives in the Host header | see the 08-03 plan's threat model |
+| settings.json on disk -> the store | a hand-edited or corrupt file is untrusted input at startup | see the 08-04 plan's threat model |
+| the store -> the filesystem | the only write in the program; its path is fixed at construction | see the 08-04 plan's threat model |
+| server DTO text -> the DOM | names, paths, reasons and notices come from settings, PROJECT.md and error messages | see the 08-05 plan's threat model |
+| slugs -> links | row links and 'See all projects' are built from list entries | see the 08-05 plan's threat model |
+| network socket -> the Node server | the real Host header, Origin and Sec-Fetch-Site arrive here | see the 08-06 plan's threat model |
+| test harnesses -> the user's settings | Playwright, fixture servers, probes and smoke runs start real servers on this machine | see the 08-06 plan's threat model |
+| command line -> startServer | arguments decide which folders are opened and remembered | see the 08-06 plan's threat model |
+| browser request body -> the scan | the folder string is attacker-influenced until the guard and resolveScanFolder accept it | see the 08-07 plan's threat model |
+| the user's home tree -> the walk | symlinks and huge trees inside home are untrusted structure | see the 08-07 plan's threat model |
+| address bar -> the layout | any first segment reaches ProjectLayout | see the 08-08 plan's threat model |
+| query cache across projects | one QueryClient serves every project in a tab | see the 08-08 plan's threat model |
+| one tab's actions -> the shared query cache | a refresh in one project runs in the same QueryClient as every other project in the tab | see the 08-09 plan's threat model |
+| query cache across projects in one tab | relative URLs repeat across projects | see the 08-10 plan's threat model |
+| server list -> the DOM | project names come from PROJECT.md titles and folder names; meta lines and targets include user paths | see the 08-11 plan's threat model |
+| switcher rows -> the router | each row and 'All projects' leads to another URL in the app | see the 08-11 plan's threat model |
+| sketch HTML -> the app's API | author-controlled scripts in an opaque-origin frame or tab | see the 08-12 plan's threat model |
+| user input -> the scan form | the typed folder travels to the guarded scan route | see the 08-13 plan's threat model |
+| server scan results -> the DOM | found names and paths come from PROJECT.md titles and folder names | see the 08-13 plan's threat model |
+| checklist selection -> add-many | the picked targets are sent back to the server | see the 08-13 plan's threat model |
+| browser specs -> the server under test | each spec reads one project's payload to choose what to open | see the 08-14 plan's threat model |
+| another origin's page -> Labelore | the cross-site requests SEC-05 must refuse, now from a real browser | see the 08-15 plan's threat model |
+| test fixtures -> the public repository | copies and seeded settings are built in mkdtemp, never committed | see the 08-15 plan's threat model |
+| browser request body -> the registry | target strings in POST /api/projects are attacker-influenced until the guard and the parser accept them | see the 08-16 plan's threat model |
+| settings.json entries -> the registry | saved targets and slugs become registry entries at startup | see the 08-16 plan's threat model |
+| Labelore process -> target folders | the only write must never reach a target | see the 08-16 plan's threat model |
+| user input -> the add form | typed paths and targets travel to the guarded API | see the 08-17 plan's threat model |
+| server messages -> the DOM | invalid-target and save-failure messages include user paths | see the 08-17 plan's threat model |
 
 ---
 

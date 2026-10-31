@@ -60,7 +60,7 @@ Evidence for the score:
 - Icon-only controls carry `aria-label` (forget button, `project-row.tsx` line 209). Load marks are text, not colour alone.
 - The header trigger is a `Popover.Trigger` with `aria-haspopup="dialog"` and a full-path `title` (`project-switcher.tsx` ~lines 158–168).
 
-Gap: no screenshot exists. Whether the winning sketch (039 A, 040 B) was matched, and whether rows read cleanly at 390px, cannot be confirmed from code. Capped at 3.
+Gap: no screenshot exists. Whether the winning sketch (039 A, 040 B) was matched, and whether rows read cleanly at 390px, cannot be confirmed from code. Capped at 3. See Priority Fix 1.
 
 ### Pillar 3: Color (4/4)
 
@@ -75,7 +75,7 @@ Gap: no screenshot exists. Whether the winning sketch (039 A, 040 B) was matched
 - Phase 8 block uses only `--fs-2`, `--fs-3`, `--fs-4`, `--fs-7`, and only `--fw-medium` and `--fw-semibold`. No bold, no ninth size.
 - Button label size is overridden to `--fs-3` for `.project-add-form button` (add form and scan form), `.project-switcher-footer button`, `.project-scan-results [data-part='foot'] button`, and `.project-row-confirm button`.
 
-**Finding T-1 (WARNING):** The "Retry loading projects" button in `projects-page.tsx` (line ~45) and `project-layout.tsx` (line ~45) is not covered by any of those selectors. It inherits the base Button `text-xs` (12px, `src/web/components/ui/button.tsx` line 11). This is a size outside the declared four-step scale. Fix as described in Top Fix 2.
+**Finding T-1 (WARNING):** The "Retry loading projects" button in `projects-page.tsx` (line ~45) and `project-layout.tsx` (line ~45) is not covered by any of those selectors. It inherits the base Button `text-xs` (12px, `src/web/components/ui/button.tsx` line 11). This is a size outside the declared four-step scale. See Priority Fix 2.
 
 ### Pillar 5: Spacing (3/4)
 
@@ -87,7 +87,7 @@ Gap: no screenshot exists. Whether the winning sketch (039 A, 040 B) was matched
 - `2px` in `box-shadow: inset 2px 0 0 var(--primary)` (line 225) and `outline: 2px solid` (lines 437, 592, 685).
 - `@media (min-width: 62rem)` (line 349). The UI-SPEC names only 42rem as the breakpoint. The 62rem side column is documented in `docs/design-language.md` (`projects-page` row) but not in the contract's Spacing exceptions.
 
-These are hairlines and focus rings, not spacing values, but the contract says "no literal `px` or `rem` in new CSS". Either the contract exceptions or the tokens need updating (Top Fix 3).
+These are hairlines and focus rings, not spacing values, but the contract says "no literal `px` or `rem` in new CSS". Either the contract exceptions or the tokens need updating. See Priority Fix 3.
 
 **Not verified:** the 40px minimum target on coarse pointers, and the forget button's 36px and 40px sizes, depend on rendered output.
 
