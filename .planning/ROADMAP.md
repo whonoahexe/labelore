@@ -207,7 +207,7 @@ target or a settings change refuses requests from other websites.
 5. A request from another website to any endpoint that accepts a path, an `ssh://` target or a
    settings change is refused. *(SEC-05)*
 
-**Plans**: 16/17 plans executed
+**Plans**: 17/18 plans executed
 
 Plans:
 **Wave 1**
@@ -241,7 +241,10 @@ Plans:
 - [x] 08-13-PLAN.md — Scan checklist on the landing page, and the plan-time copy rows recorded in the UI contract
 
 **Wave 8** *(blocked on Wave 7 completion)*
-- [ ] 08-15-PLAN.md — Phase gate in Chromium: no flash on switch, restart and bookmarks, unavailable rows, refusal from another website, screenshot check against the winners, the full browser suite
+- [x] 08-15-PLAN.md — Phase gate in Chromium: no flash on switch, restart and bookmarks, unavailable rows, refusal from another website, screenshot check against the winners, the full browser suite
+
+**Wave 9** *(gap closure, UAT G-08-2)*
+- [ ] 08-18-PLAN.md — The 390px header names the open project: sketch 039 A's 42rem header rules ported (the snapshot pill keeps only its dot, the read time stays in its title, description and live region), with browser checks of the name's visible width
 
 **UI hint**: yes
 
@@ -433,7 +436,7 @@ file, ID or project.
 | quick tasks | v2.0 | 40/40 | Archived | 2026-10-25 |
 | 6. Trustworthy Tests and Security Baseline | v2.1 | 22/22 | Complete    | 2026-10-26 |
 | 7. Recognised Files and Readable URLs | v2.1 | 10/10 | Complete    | 2026-10-27 |
-| 8. Several Projects and a Switcher | v2.1 | 16/17 | In Progress | - |
+| 8. Several Projects and a Switcher | v2.1 | 17/17 | In Progress | - |
 | 9. Review, Audit and Root Document Pages | v2.1 | 0/TBD | Not started | - |
 | 10. Codebase Map, Specification and Check Pages | v2.1 | 0/TBD | Not started | - |
 | 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 0/TBD | Not started | - |

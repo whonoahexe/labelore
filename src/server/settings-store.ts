@@ -124,7 +124,13 @@ export class FileSettingsStore implements SettingsStore {
         unreadable: reason,
       };
     }
-    const parsed = parseSettings(text, this.identityOf);
+    let parsed: Loaded;
+    try {
+      parsed = parseSettings(text, this.identityOf);
+    } catch {
+      // parseSettings is written never to throw; if a hand-edited file ever finds a way, it is corrupt (T-08-12).
+      parsed = { ...parseSettings(null, this.identityOf), condition: 'corrupt' };
+    }
     if (parsed.condition === 'corrupt') {
       try {
         renameSync(this.file, join(this.dir, BACKUP_FILE));
