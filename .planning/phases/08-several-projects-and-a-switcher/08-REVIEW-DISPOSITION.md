@@ -65,7 +65,7 @@ findings:
     title: "[C] The \"settings-store imports nothing from the planning reader\" check misses multi-line imports"
   - id: WR-16
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "[C] Corpus pins are hand-maintained against the live `.planning/`, so each new phase artifact turns the suite red"
   - id: WR-17
     severity: warning
@@ -131,7 +131,7 @@ findings:
     severity: info
     disposition: open
     title: "[C] Two small helper gaps"
-open: 32
+open: 31
 total: 32
 recorded: 2026-10-31T09:46:53.933Z
 ---
@@ -155,7 +155,7 @@ recorded: 2026-10-31T09:46:53.933Z
 | WR-13 | warning | open | - |
 | WR-14 | warning | open | - |
 | WR-15 | warning | open | - |
-| WR-16 | warning | open | - |
+| WR-16 | warning | fixed | Pinned 08-SECURITY.md, 08-UI-REVIEW.md (bf99183) and 08-UAT.md in their corpus guards; 08-REVIEW.md and 08-VERIFICATION.md pass theirs unpinned-free; test:gate 4817/0/0 |
 | WR-17 | warning | open | - |
 | IN-01 | info | open | - |
 | IN-02 | info | open | - |
