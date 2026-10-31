@@ -184,7 +184,7 @@ export function ProjectSwitcher({
                 if (choice.current === 'all' || choice.current === 'add') return false;
                 return triggerRef.current;
               }}
-              onClick={onPopupClick}
+              onClickCapture={onPopupClick}
             >
               <ProjectSwitcherPanel currentSlug={current.slug} onAddOrScan={onAddOrScan} />
             </Popover.Popup>
