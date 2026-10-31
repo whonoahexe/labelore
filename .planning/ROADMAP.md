@@ -207,7 +207,7 @@ target or a settings change refuses requests from other websites.
 5. A request from another website to any endpoint that accepts a path, an `ssh://` target or a
    settings change is refused. *(SEC-05)*
 
-**Plans**: 17/17 plans executed
+**Plans**: 17/18 plans executed
 
 Plans:
 **Wave 1**
@@ -242,6 +242,9 @@ Plans:
 
 **Wave 8** *(blocked on Wave 7 completion)*
 - [x] 08-15-PLAN.md — Phase gate in Chromium: no flash on switch, restart and bookmarks, unavailable rows, refusal from another website, screenshot check against the winners, the full browser suite
+
+**Wave 9** *(gap closure, UAT G-08-2)*
+- [ ] 08-18-PLAN.md — The 390px header names the open project: sketch 039 A's 42rem header rules ported (the snapshot pill keeps only its dot, the read time stays in its title, description and live region), with browser checks of the name's visible width
 
 **UI hint**: yes
 
