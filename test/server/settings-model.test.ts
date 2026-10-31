@@ -68,6 +68,18 @@ describe('parseSettings', () => {
     expect(parsed.notices).toEqual([NOTICE_UNREADABLE]);
   });
 
+  it('skips a slug that cannot become a string instead of throwing (T-08-12)', () => {
+    const hostile: unknown[] = [{ toString: 1 }, [{ toString: 1 }], { valueOf: 1, toString: 1 }];
+    for (const slug of hostile) {
+      const text = JSON.stringify({ version: 1, projects: [entry({ slug, target: '/a' }), entry({ slug: 'fine', target: '/b' })] });
+      const parsed = parseSettings(text);
+      expect(parsed.condition).toBe('ok');
+      expect(parsed.state.projects.map((p) => p.slug)).toEqual(['fine']);
+      expect(parsed.notices).toHaveLength(1);
+      expect(parsed.notices[0]).toMatch(/^A saved project was skipped: its slug .* is not a valid project name\.$/);
+    }
+  });
+
   it('reads a newer version as far as it validates and says so', () => {
     const parsed = parseSettings(file({ version: 2 }));
     expect(parsed.condition).toBe('too-new');

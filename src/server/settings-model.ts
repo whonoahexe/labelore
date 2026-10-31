@@ -67,6 +67,15 @@ function validTarget(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0 && value.length <= MAX_TARGET_LENGTH && !value.includes('\0');
 }
 
+/** Names a non-string slug for a skip notice; a value whose conversion throws is named by its type (T-08-12). */
+function slugLabel(value: unknown): string {
+  try {
+    return String(value);
+  } catch {
+    return Array.isArray(value) ? 'a list' : `a value of type ${typeof value}`;
+  }
+}
+
 /** Reads one saved entry; returns the entry, or the reason it is skipped. */
 function readEntry(
   raw: unknown,
@@ -76,7 +85,7 @@ function readEntry(
 ): { entry: SettingsEntry } | { reason: string } {
   if (!isRecord(raw)) return { reason: 'it has no location' };
   if (!validTarget(raw.target)) return { reason: 'it has no location' };
-  const slug = typeof raw.slug === 'string' ? raw.slug : String(raw.slug);
+  const slug = typeof raw.slug === 'string' ? raw.slug : slugLabel(raw.slug);
   if (typeof raw.slug !== 'string' || !SLUG_PATTERN.test(slug)) {
     return { reason: `its slug "${slug}" is not a valid project name` };
   }
