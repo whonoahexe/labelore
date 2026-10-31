@@ -5,10 +5,10 @@ milestone_name: Wayfinding
 current_phase: 08
 current_phase_name: Several Projects and a Switcher
 status: executing
-stopped_at: Phase 8 planned (17 plans), ready to execute
+stopped_at: 08-15 phase gate green (17/17 plans); verification gates next
 last_updated: "2026-10-29T17:35:29.697Z"
-last_activity: 2026-10-29
-last_activity_desc: Phase 08 execution started
+last_activity: 2026-10-31
+last_activity_desc: 08-15 gate failures fixed; full e2e 238 passed
 state_head: 54b4d7a3dbe992907011b11c1989c4634304448a
 progress:
   total_phases: 8
@@ -224,10 +224,11 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-10-29
-Stopped at: Phase 8 planned (17 plans), ready to execute
+Last session: 2026-10-31
+Stopped at: 08-15 phase gate green (unit 4813/4813, e2e 238/238); next: /gsd-execute-phase 8 for verify_phase_goal and phase.complete
 Resume file: None
 
 ## Operator Next Steps
 
+- Run /gsd-execute-phase 8: all 17 plans are summarized, so it goes straight to the verification gates (code review, regression gate, verifier) and phase.complete. Open questions from 08-06/08-15 (CLI-path list order, 390px switcher name, small sketch differences) are still unanswered.
 - Run /gsd-execute-phase 8. Plan 08-02 stops for you to pick the winning sketches for 039 and 040 (blocking). The app is partly broken between waves 3 and 7; only the 08-15 gate runs the full browser suite.
