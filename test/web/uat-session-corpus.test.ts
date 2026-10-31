@@ -80,6 +80,8 @@ const PINNED: Record<string, Pinned> = {
   'LB:milestones/v1.0-phases/04-portability-degradation-hardening/04-UAT.md': { ...DONE, tests: 9, pass: 9 },
   'LB:milestones/v1.1-phases/05-per-type-document-views/05-UAT.md': { ...DONE, tests: 4, pass: 4, extras: ['Deferred Follow-Ups'] },
   // Session completed by /gsd-verify-work 07 (D-18).
+  // Pinned while the session is open: two human checks pending. /gsd-verify-work 08 re-pins it when they resolve.
+  'LB:phases/08-several-projects-and-a-switcher/08-UAT.md': { ...DONE, tests: 2, pass: 0, pending: 2, live: true },
   'LB:phases/07-recognised-files-and-readable-urls/07-UAT.md': { ...DONE, tests: 6, pass: 6 },
   'FX:phases/01-member-sign-in-sessions/01-UAT.md': { ...DONE, tests: 7, pass: 6, skipped: 1, extras: ['Notes'] },
   'FX:phases/02-roles-and-permissions/02-UAT.md': { ...DONE, tests: 3, pass: 3, gaps: 4, mode: 'prose' },
