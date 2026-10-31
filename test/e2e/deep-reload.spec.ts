@@ -204,13 +204,15 @@ function missClass(name: string, page: string): UrlClass {
   };
 }
 
-/** The name a page shows from the payload, anywhere in its main region (D-04). */
+/** The name a page shows from the payload, anywhere in its main region (D-04). By role, not by tag:
+ * while a lazy route chunk suspends, React keeps the previous `<main>` (e.g. "Opening …") in the DOM
+ * hidden with display:none beside the Suspense fallback's `<main>`, and only one is exposed. */
 function namedPageClass(name: string, page: string, nameOf: (data: PresentationLite) => string): UrlClass {
   return {
     name,
     open: { page },
     check: async ({ page: browserPage, server }) => {
-      await expect(browserPage.locator('main')).toContainText(nameOf(await presentationOf(server.baseUrl)));
+      await expect(browserPage.getByRole('main')).toContainText(nameOf(await presentationOf(server.baseUrl)));
     },
   };
 }
