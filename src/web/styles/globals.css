@@ -3928,13 +3928,14 @@ a.todo-title:hover {
   /* G-08-2, sketch 039 A: the pill keeps only its dot. The label is hidden visually and not with
      display: none, because the pill's aria-describedby names it and the CR-02 guard keeps every
      .snapshot- rule rendered. The read time stays in the pill's title, its description and the
-     live region (TGT-08 trade, 08-18). */
+     live region (TGT-08 trade, 08-18). The declarations are .sr-only's without its negative margin,
+     which the token guard flags in a rule of its own (only .sr-only is allowlisted); the clip and
+     the 1px box hide the label either way. */
   .snapshot-label {
     position: absolute;
     width: 1px;
     height: 1px;
     padding: 0;
-    margin: -1px;
     overflow: hidden;
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
