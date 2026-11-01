@@ -212,6 +212,12 @@ const SWITCHER_CONTRACTS: Record<string, SwitcherAsserts> = {
       expect([Math.round(forgetBox.width), Math.round(forgetBox.height)]).toEqual([40, 40]);
       // 6. The trigger is at least 40px tall, and its name truncates with an ellipsis.
       expect(triggerBox.height).toBeGreaterThanOrEqual(40);
+      // ... and the name is on screen: Lendshed shows whole (G-08-2).
+      const wholeName = await trigger
+        .locator('.brand-project-name')
+        .evaluate((el) => ({ client: el.clientWidth, scroll: el.scrollWidth }));
+      expect(wholeName.client).toBeGreaterThan(0);
+      expect(wholeName.scroll).toBeLessThanOrEqual(wholeName.client);
       expect(await trigger.locator('.brand-project-name').evaluate((el) => getComputedStyle(el).textOverflow)).toBe(
         'ellipsis',
       );
@@ -422,6 +428,8 @@ test.describe('long text in the header', () => {
     await expect(name).toHaveText(title);
     expect(await name.evaluate((el) => getComputedStyle(el).textOverflow)).toBe('ellipsis');
     expect(await name.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
+    // The cut name still shows: at least 40px of it is on screen (G-08-2).
+    expect(await name.evaluate((el) => el.clientWidth)).toBeGreaterThanOrEqual(40);
     mkdirSync(SHOTS, { recursive: true });
     await page.screenshot({ path: join(SHOTS, 'long-text-390-light.png') });
   });
