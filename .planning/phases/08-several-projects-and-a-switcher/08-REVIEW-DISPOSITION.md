@@ -6,11 +6,23 @@ findings:
   - id: WR-01
     severity: warning
     disposition: open
-    title: "[A] Skipped settings entries are silently erased from the file on the next write"
+    title: "Snapshot pill drops to a ~26px-wide touch target at 42rem and below, and a test locks that in"
   - id: WR-02
     severity: warning
     disposition: open
-    title: "[A] `Access-Control-Allow-Origin: *` on sketch fonts contradicts the documented \"no CORS anywhere\" posture"
+    title: "Pill state is carried by colour alone for sighted touch users at 42rem and below"
+  - id: IN-01
+    severity: info
+    disposition: open
+    title: "The 320px assertion is too loose to catch a regression"
+  - id: IN-02
+    severity: info
+    disposition: open
+    title: "`expectWholeName` compares rounded integers, so it can flake by 1px"
+  - id: IN-03
+    severity: info
+    disposition: open
+    title: "The 08-UAT pin was inserted between a comment and the entry it describes"
   - id: WR-03
     severity: warning
     disposition: open
@@ -71,18 +83,6 @@ findings:
     severity: warning
     disposition: open
     title: "[C] The \"marks only the current project\" assertion cannot tell lendshed's row from the first row"
-  - id: IN-01
-    severity: info
-    disposition: open
-    title: "[A] `restore()` keeps a saved local target's identity as written, not as its realpath"
-  - id: IN-02
-    severity: info
-    disposition: open
-    title: "[A] `--port=` with an empty value silently picks a random port"
-  - id: IN-03
-    severity: info
-    disposition: open
-    title: "[A] Stale comment on `SketchRow.viewUrl`"
   - id: IN-04
     severity: info
     disposition: open
@@ -133,7 +133,7 @@ findings:
     title: "[C] Two small helper gaps"
 open: 31
 total: 32
-recorded: 2026-10-31T09:46:53.933Z
+recorded: 2026-11-01T18:53:58.613Z
 ---
 
 # Phase 08: Code Review Disposition
@@ -142,36 +142,37 @@ recorded: 2026-10-31T09:46:53.933Z
 |---------|----------|-------------|--------|
 | WR-01 | warning | open | - |
 | WR-02 | warning | open | - |
-| WR-03 | warning | open | - |
-| WR-04 | warning | open | - |
-| WR-05 | warning | open | - |
-| WR-06 | warning | open | - |
-| WR-07 | warning | open | - |
-| WR-08 | warning | open | - |
-| WR-09 | warning | open | - |
-| WR-10 | warning | open | - |
-| WR-11 | warning | open | - |
-| WR-12 | warning | open | - |
-| WR-13 | warning | open | - |
-| WR-14 | warning | open | - |
-| WR-15 | warning | open | - |
-| WR-16 | warning | fixed | Pinned 08-SECURITY.md, 08-UI-REVIEW.md (bf99183) and 08-UAT.md in their corpus guards; 08-REVIEW.md and 08-VERIFICATION.md pass theirs unpinned-free; test:gate 4817/0/0 |
-| WR-17 | warning | open | - |
 | IN-01 | info | open | - |
 | IN-02 | info | open | - |
 | IN-03 | info | open | - |
-| IN-04 | info | open | - |
-| IN-05 | info | open | - |
-| IN-06 | info | open | - |
-| IN-07 | info | open | - |
-| IN-08 | info | open | - |
-| IN-09 | info | open | - |
-| IN-10 | info | open | - |
-| IN-11 | info | open | - |
-| IN-12 | info | open | - |
-| IN-13 | info | open | - |
-| IN-14 | info | open | - |
-| IN-15 | info | open | - |
+| WR-03 | warning | open | - (not in the current review) |
+| WR-04 | warning | open | - (not in the current review) |
+| WR-05 | warning | open | - (not in the current review) |
+| WR-06 | warning | open | - (not in the current review) |
+| WR-07 | warning | open | - (not in the current review) |
+| WR-08 | warning | open | - (not in the current review) |
+| WR-09 | warning | open | - (not in the current review) |
+| WR-10 | warning | open | - (not in the current review) |
+| WR-11 | warning | open | - (not in the current review) |
+| WR-12 | warning | open | - (not in the current review) |
+| WR-13 | warning | open | - (not in the current review) |
+| WR-14 | warning | open | - (not in the current review) |
+| WR-15 | warning | open | - (not in the current review) |
+| WR-16 | warning | fixed | Pinned 08-SECURITY.md, 08-UI-REVIEW.md (bf99183) and 08-UAT.md in their corpus guards; 08-REVIEW.md and 08-VERIFICATION.md pass theirs unpinned-free; test:gate 4817/0/0 (not in the current review) |
+| WR-17 | warning | open | - (not in the current review) |
+| IN-04 | info | open | - (not in the current review) |
+| IN-05 | info | open | - (not in the current review) |
+| IN-06 | info | open | - (not in the current review) |
+| IN-07 | info | open | - (not in the current review) |
+| IN-08 | info | open | - (not in the current review) |
+| IN-09 | info | open | - (not in the current review) |
+| IN-10 | info | open | - (not in the current review) |
+| IN-11 | info | open | - (not in the current review) |
+| IN-12 | info | open | - (not in the current review) |
+| IN-13 | info | open | - (not in the current review) |
+| IN-14 | info | open | - (not in the current review) |
+| IN-15 | info | open | - (not in the current review) |
 
 Dispositions: `open` (recorded, not yet triaged), `fixed`, `skipped`, `deferred`.
 Set `deferred` by hand and put the reason in the Source cell; both are preserved. A `|` in the reason is kept as prose and escaped on the next run.
+Re-running the gate keeps every row it can. A row the current review no longer reports is kept and its Source cell flagged, so a finding does not leave this record silently. ONE exception: when a finding id is REUSED by a different finding, the earlier decision cannot keep a row — the id is taken — and it is dropped. A RECORDED decision (anything but `open`) is named on the console when that happens; a row still at `open` is replaced silently, because `open` records no decision to lose.
