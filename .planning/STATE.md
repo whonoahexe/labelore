@@ -2,45 +2,45 @@
 gsd_state_version: "1.0"
 milestone: v2.1
 milestone_name: Wayfinding
-current_phase: 08
-current_phase_name: Several Projects and a Switcher
-status: executing
-stopped_at: 08-15 phase gate green (17/17 plans); verification gates next
-last_updated: "2026-11-01T18:25:28.050Z"
-last_activity: 2026-11-01
-last_activity_desc: Phase 08 execution resumed (wave continue)
-state_head: d40f7076ba93ebed4e6e82bf59cce3914b2e090d
+current_phase: 9
+current_phase_name: Review, Audit and Root Document Pages
+status: planning
+stopped_at: Phase 08 complete, ready to plan Phase 9
+last_updated: "2026-11-01T19:21:05.051Z"
+last_activity: 2026-11-02
+last_activity_desc: Phase 08 complete, transitioned to Phase 9
+state_head: e03d5ace113fcc72d0e99920c05bc53dcb42be5a
 progress:
   total_phases: 8
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 50
-  completed_plans: 49
-  percent: 25
+  completed_plans: 50
+  percent: 38
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-10-27)
+See: .planning/PROJECT.md (updated 2026-11-02)
 
 **Core value:** Open the dashboard on a GSD project and immediately know where the work stands and where any planning artifact lives — without reading a single file by hand.
-**Current focus:** Phase 08 — Several Projects and a Switcher
+**Current focus:** Phase 9 — Review, Audit and Root Document Pages
 
 ## Current Position
 
-Phase: 08 (Several Projects and a Switcher) — EXECUTING
-Plan: 1 of 17
-Status: Executing Phase 08
-Last activity: 2026-11-01 — Phase 08 execution resumed (wave continue)
+Phase: 9 — Review, Audit and Root Document Pages
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-11-02 — Phase 08 complete, transitioned to Phase 9
 
-Progress: [███░░░░░░░] 25%
+Progress: [████░░░░░░] 38%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 68
+- Total plans completed: 86
 - Average duration: —
 - Total execution time: 0.0 hours
 
@@ -55,6 +55,7 @@ Progress: [███░░░░░░░] 25%
 | 05 | 6 | - | - |
 | 06 | 22 | - | - |
 | 07 | 10 | - | - |
+| 08 | 18 | - | - |
 
 **Recent Trend:**
 
@@ -179,6 +180,10 @@ milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) a
 - [Phase 07]: 07-07: redirects keep the location hash; redirect targets come only from roadmapUrl and routeAliases and must start with a single slash
 - [Phase 07]: Vite's dev WebSocket shares the dev server's own HTTP server (server.ws.server) because Vite 8 ignores server.hmr:false and binds the fixed port 24678
 - [Phase 07]: The 4197 development and 4196 build-then-start Shapes servers are unconditional in playwright.config.ts, matching the fail-loud 4198 rule
+- [Phase 08]: Header switcher is sketch 039 A (popover under the name trigger); the projects landing page is sketch 040 B (list left, add and scan in a side column)
+- [Phase 08]: Every mutating /api route refuses cross-site requests: a present non-same-origin Sec-Fetch-Site is refused even when Origin names the Host
+- [Phase 08]: Labelore's settings.json is never overwritten when it exists but cannot be read; a failed write keeps the change in memory until restart
+- [Phase 08]: At 42rem and below the snapshot pill collapses to a dot so the open project's name stays visible (TGT-08, 08-18); the read time stays in title, aria-describedby and the live region
 
 ### Pending Todos
 
@@ -192,9 +197,6 @@ milestone close. It is preserved in git history (`f107f0e:.planning/STATE.md`) a
 None blocking. Open scope and policy questions from research, to settle during the named phase's discussion:
 
 - Workstreams, intel, graphs, reports and forensics have no real example on this machine; research recommended deferring them. They stay in scope in Phase 11, the last page phase, with workstreams built last within it, so they can be cut cleanly.
-- Slug identity: research recommends persisting each project's URL name and deduplicating by canonical path (Phase 8).
-- Loaded-project limit: research suggests lazy loading with a bounded cache starting at five projects, decided by a memory test (Phase 8).
-- Folder scan: research recommends depth 3, continuing below a found project, and skipping fixture, worktree and build folders (Phase 8).
 - [Phase 6] `.mcp.json` and Labelore's own `.planning/` and `.claude/` still name private projects and paths (327 files, listed in 06-22-SUMMARY); the leak test leaves these three locations out until they are cleaned.
 - [Phase 6] The research page shows the last PITFALLS rows with names like "to 33 Minor" — a heading-parsing bug to fix in code, not in the file.
 - [Phase 6] Five test-hygiene review warnings stay open (06-REVIEW-DISPOSITION.md); WR-02, the no-skips scan's comment blanker hiding test headers after `//` in strings, is the one worth fixing first.
@@ -224,11 +226,10 @@ Two v1.1 close-time artifact-audit false positives, two v1.0 close-time verifica
 
 ## Session Continuity
 
-Last session: 2026-10-31
-Stopped at: 08-15 phase gate green (unit 4813/4813, e2e 238/238); next: /gsd-execute-phase 8 for verify_phase_goal and phase.complete
+Last session: 2026-11-02
+Stopped at: Phase 08 complete, ready to plan Phase 9
 Resume file: None
 
 ## Operator Next Steps
 
-- Run /gsd-execute-phase 8: all 17 plans are summarized, so it goes straight to the verification gates (code review, regression gate, verifier) and phase.complete. Open questions from 08-06/08-15 (CLI-path list order, 390px switcher name, small sketch differences) are still unanswered.
-- Run /gsd-execute-phase 8. Plan 08-02 stops for you to pick the winning sketches for 039 and 040 (blocking). The app is partly broken between waves 3 and 7; only the 08-15 gate runs the full browser suite.
+- Run /gsd-discuss-phase 9 (Review, Audit and Root Document Pages): Phase 8 passed UAT on 2026-11-02 after 08-18 closed G-08-2, and Phase 9 has no CONTEXT.md yet.

@@ -47,7 +47,7 @@ read.
 
 - [x] **Phase 6: Trustworthy Tests and Security Baseline** - The suite passes every run on made-up fixtures, and the promised security checks and secret masking are in place (completed 2026-10-26)
 - [x] **Phase 7: Recognised Files and Readable URLs** - Every GSD file is recognised by where it lives and has one readable address starting with the project's name (completed 2026-10-27)
-- [ ] **Phase 8: Several Projects and a Switcher** - One run holds several projects, remembers them, and moves between them without mixing their data
+- [x] **Phase 8: Several Projects and a Switcher** - One run holds several projects, remembers them, and moves between them without mixing their data (completed 2026-11-02)
 - [ ] **Phase 9: Review, Audit and Root Document Pages** - The root documents, milestone audits, coverage files and the review ledger open into designed pages
 - [ ] **Phase 10: Codebase Map, Specification and Check Pages** - Codebase maps, map-only projects, and the documents a phase is specified and checked with get pages, built on labelled made-up examples where none exists
 - [ ] **Phase 11: Exploration, Handoff, Report and Workstream Pages** - Spikes, seeds, threads, paused work, the rarer reports and indexes, and workstreams each open into a designed page
@@ -207,7 +207,7 @@ target or a settings change refuses requests from other websites.
 5. A request from another website to any endpoint that accepts a path, an `ssh://` target or a
    settings change is refused. *(SEC-05)*
 
-**Plans**: 18/18 plans executed
+**Plans**: 18/18 plans complete
 
 Plans:
 **Wave 1**
@@ -436,7 +436,7 @@ file, ID or project.
 | quick tasks | v2.0 | 40/40 | Archived | 2026-10-25 |
 | 6. Trustworthy Tests and Security Baseline | v2.1 | 22/22 | Complete    | 2026-10-26 |
 | 7. Recognised Files and Readable URLs | v2.1 | 10/10 | Complete    | 2026-10-27 |
-| 8. Several Projects and a Switcher | v2.1 | 18/18 | In Progress | - |
+| 8. Several Projects and a Switcher | v2.1 | 18/18 | Complete    | 2026-11-02 |
 | 9. Review, Audit and Root Document Pages | v2.1 | 0/TBD | Not started | - |
 | 10. Codebase Map, Specification and Check Pages | v2.1 | 0/TBD | Not started | - |
 | 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 0/TBD | Not started | - |

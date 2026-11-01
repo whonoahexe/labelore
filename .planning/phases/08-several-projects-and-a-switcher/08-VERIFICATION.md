@@ -1,7 +1,7 @@
 ---
 phase: 08-several-projects-and-a-switcher
 verified: 2026-11-02T00:35:00Z
-status: human_needed
+status: passed
 score: 6/6 must-haves verified
 covered_files:
   - ".planning/phases/08-several-projects-and-a-switcher/08-01-PLAN.md"

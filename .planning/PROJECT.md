@@ -168,6 +168,12 @@ URLs read like what they point to, with search that is quicker to use and easier
 - ✓ Every page has one readable URL starting with the project's name, files that fit no clean
   pattern included, and old encoded links redirect to the new address (NAV-09–11) — Phase 7
 
+**Several projects**
+
+- ✓ Several projects open at once from paths given at start, a folder scan, or a local path or
+  `ssh://` target added at runtime; remembered in Labelore's own settings and switched from the
+  header, with each project's name visible in the header down to phone width (PLAT-02) — Phase 8
+
 ### Active
 
 <!-- v2.1 Wayfinding scope, defined 2026-10-25. REQUIREMENTS.md holds the REQ-IDs. -->
@@ -192,11 +198,6 @@ URLs read like what they point to, with search that is quicker to use and easier
 - [ ] FIND-06: Search filters by phase, file type and requirement
 - [ ] Search results grouped by milestone, then phase, with a redesigned look
 - [ ] NAV-08: Command palette (Cmd-K) quick-jump that reuses the search index
-
-**Platform**
-
-- [ ] PLAT-02: Multi-project switching — several paths at start, folder scan, remembered projects,
-      add a path or `ssh://` target from the switcher
 
 **Later candidates — not in v2.1**
 
@@ -338,4 +339,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-27 after Phase 7*
+*Last updated: 2026-11-02 after Phase 8*
