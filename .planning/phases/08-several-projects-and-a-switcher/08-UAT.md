@@ -1,9 +1,9 @@
 ---
-status: diagnosed
+status: complete
 phase: 08-several-projects-and-a-switcher
 source: [08-VERIFICATION.md]
 started: 2026-10-31T09:59:12Z
-updated: 2026-10-31T12:30:00Z
+updated: 2026-11-01T19:20:41.808Z
 ---
 
 ## Current Test
@@ -23,6 +23,7 @@ expected: You can tell which project is current. In the build, the trigger at th
 result: issue
 reported: "At 390px the header trigger is a bare 40px chevron with a 0px name; nothing in the header says which project is open, so you have to open the switcher to find out. The sketch shows the name and meta at this width by collapsing the snapshot pill to a dot. Judged by Claude on 2026-10-31 at the user's request from test-results/phase-08/switcher-390-{light,dark}.png."
 severity: major
+recheck: "2026-11-02: live build at 390px on /cinedise-portal/ shows 'Cinedise Portal' (clientWidth 95, scrollWidth 95) and its meta line beside the mark and chevron."
 
 
 ## Summary
@@ -38,7 +39,9 @@ blocked: 0
 
 - gap_id: G-08-2
   truth: "At 390px wide with a project open, the header shows which project is current"
-  status: failed
+  status: resolved
+  resolved_by: 08-18-PLAN.md
+  resolved_at: 2026-11-02
   reason: "User reported: At 390px the header trigger is a bare 40px chevron with a 0px name; nothing in the header says which project is open, so you have to open the switcher to find out. The sketch shows the name and meta at this width by collapsing the snapshot pill to a dot. Judged by Claude on 2026-10-31 at the user's request from test-results/phase-08/switcher-390-{light,dark}.png."
   severity: major
   test: 2
