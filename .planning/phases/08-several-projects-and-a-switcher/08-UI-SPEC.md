@@ -161,7 +161,7 @@ phase's documentation work. `destructive` and `warning` stay reserved for artifa
 - **No stale header data.** The name shown in the trigger comes from the `GET /api/projects` entry for the slug in the URL, not from the per-project presentation query. The meta line (milestone, status) shows only when the presentation query for **that slug** has data; while it loads the meta line is empty. The previous project's name or meta is never visible after a switch (PLAT-08).
 - The popup, in order: a header row (uppercase label "Projects" at left, link "All projects" to `/` at right); the project list (`ul.project-list`, scrolls inside the popup); a footer row with one button "Add or scan…" (`ghost`, `Plus` icon) that opens the add dialog.
 - Choosing a row navigates to `/{slug}` (the target's dashboard, D-06), closes the popup, moves focus to the main content landmark. Escape closes the popup and returns focus to the trigger. Opening a project never leaves the popup showing a spinner: it closes at once and the body takes over.
-- The planning-files drawer, shell tabs, search, snapshot status and theme toggle are unchanged.
+- The planning-files drawer, shell tabs, search, snapshot status and theme toggle are unchanged. 08-18 (G-08-2) amends this below 42rem: there the snapshot pill keeps only its dot, as in sketch 039 A, and the read time stays in its title, description and live region.
 
 ### 2. The project row (one component, switcher and landing page, D-02/D-03)
 
@@ -234,7 +234,7 @@ as typed. It never loads or guesses a project.
 - Every icon-only control has an `aria-label`. Load marks are text, not colour alone. The trigger meets the 3:1 focus indicator via the global `--ring`.
 - Live regions (`aria-live="polite"`): scan result count, "Added N projects.", forget outcome. Errors use `role="alert"`.
 - Keyboard: Enter/Space opens the trigger; Escape closes popup, confirm and dialog; no new global shortcut (the Cmd-K palette is Phase 13).
-- Narrow widths: at 390px the wordmark is already hidden by the shell; the trigger truncates name and meta with ellipsis and stays tappable at 40px high or more.
+- Narrow widths: at 390px the wordmark is already hidden by the shell; the trigger truncates name and meta with ellipsis and stays tappable at 40px high or more, and its name keeps visible width at 390px (the whole name of a short project) (08-18).
 
 ### 9. New class vocabulary (to add to `docs/design-language.md` before the class-vocabulary test is run)
 
