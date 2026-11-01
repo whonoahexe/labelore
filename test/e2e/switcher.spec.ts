@@ -256,6 +256,46 @@ test.describe('layout contract (sketch 039 A)', () => {
     expect(await sidewaysOverflow(page)).toBeLessThanOrEqual(0);
   });
 
+  test('at 390px the trigger shows the whole open project name beside a dot-only snapshot pill, and the read time stays in its title, description and live region (G-08-2)', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(await projectUrl(long.base, '/', first.slug));
+    const trigger = triggerFor(page, first);
+    await expect(trigger).toBeVisible();
+    const pill = page.getByRole('button', { name: 'Refresh the project snapshot' });
+    await expect(pill).toHaveAttribute('data-state', 'ready');
+
+    // The trigger names the open project: the whole name is visible, not cut and not squeezed to 0.
+    const name = trigger.locator('.brand-project-name');
+    await expect(name).toHaveText(first.name);
+    const widths = await name.evaluate((el) => ({ client: el.clientWidth, scroll: el.scrollWidth }));
+    expect(widths.client).toBeGreaterThan(0);
+    expect(widths.scroll).toBeLessThanOrEqual(widths.client);
+
+    // The pill keeps only its dot: the label leaves the flow (sketch 039 A) ...
+    const label = pill.locator('.snapshot-label');
+    expect((await box(label)).width).toBeLessThanOrEqual(1);
+    const pillBox = await box(pill);
+    expect(pillBox.width).toBeLessThan(40);
+    // ... and sits inside the pill, not the header, so nothing is clipped away from the pill.
+    const labelBox = await box(label);
+    expect(labelBox.x).toBeGreaterThanOrEqual(pillBox.x - 2);
+    expect(labelBox.x).toBeLessThanOrEqual(pillBox.x + pillBox.width + 2);
+
+    // Where the read time went (TGT-08 trade, 08-18): the title, the description and the live region.
+    await expect(pill).toHaveAttribute('title', /^Snapshot read /);
+    await expect(pill).toHaveAccessibleDescription(/^Read /);
+    await expect(page.locator('.snapshot-status [aria-live="polite"]')).toHaveText(/^Snapshot read /);
+    expect(await sidewaysOverflow(page)).toBeLessThanOrEqual(0);
+
+    // At 1280px nothing changes: the label is visible and reads "Read {time}".
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await expect(label).toBeVisible();
+    expect((await box(label)).width).toBeGreaterThan(1);
+    await expect(label).toHaveText(/^Read /);
+  });
+
   test('at 1280px the forget button is a 36px square hidden until row hover or focus, and Add or scan… is the last control (facts 4 and 5)', async ({
     page,
   }) => {

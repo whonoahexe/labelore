@@ -3882,12 +3882,12 @@ a.todo-title:hover {
   }
 
   .brand-lockup {
-    margin: var(--space-3) var(--space-4) var(--space-3) var(--space-2);
+    margin: var(--space-3) var(--space-2) var(--space-3) var(--space-2);
   }
 
   /* Mirrors .shell-controls' padding-inline at this width. */
   .sidebar-trigger {
-    margin-left: var(--space-4);
+    margin-left: var(--space-2);
   }
 
   /* NAV-02: the wordmark and separator drop out at the narrowest width — the accessible name
@@ -3897,16 +3897,15 @@ a.todo-title:hover {
     display: none;
   }
 
-  /* CR-02/UI-03: at 320px, an absolutely positioned top-right overlay (the pre-fix layout) has no
-     bound on its own shrink-to-fit width once the compact snapshot-status is visible alongside
-     the search field and theme toggle - measured to risk pushing the body wider than the
-     viewport. Relaid out to flow as a normal, full-width row below the nav instead: bounded by
-     the grid column's own 1fr = 100% width, and flex-wrap as a second line of defense in case any
-     single child still cannot shrink far enough. */
+  /* G-08-2, sketch 039 A: the controls stay in row one beside the brand (quick-260911-vqe), in an
+     `auto` grid track that is sized to its content before the brand column takes the rest. So
+     whatever the controls need is taken from the project name. At this width the pill keeps only
+     its dot and the lockup, controls, pill and search trigger tighten to --space-2, which leaves
+     the brand column room for the name. flex-wrap stays as a second line of defence at 320px. */
   .shell-controls {
     flex-wrap: wrap;
     row-gap: var(--space-1-5);
-    padding: var(--space-2) var(--space-4);
+    padding: var(--space-2);
   }
 
   .shell-nav-link {
@@ -3919,6 +3918,27 @@ a.todo-title:hover {
      it fully operable and named for assistive tech. */
   .search-trigger-kbd {
     display: none;
+  }
+
+  .snapshot-pill {
+    position: relative;
+    padding-inline: var(--space-2);
+  }
+
+  /* G-08-2, sketch 039 A: the pill keeps only its dot. The label is hidden visually and not with
+     display: none, because the pill's aria-describedby names it and the CR-02 guard keeps every
+     .snapshot- rule rendered. The read time stays in the pill's title, its description and the
+     live region (TGT-08 trade, 08-18). */
+  .snapshot-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   .page-stack {
@@ -6037,6 +6057,14 @@ a.todo-title:hover {
   font-family: var(--font-mono);
   font-size: var(--fs-1);
   letter-spacing: var(--ls-normal);
+}
+
+/* Sits after the base .search-trigger rule it must beat; the other 42rem header rules are in the
+   shell block. */
+@media (max-width: 42rem) {
+  .search-trigger {
+    padding-inline: var(--space-2);
+  }
 }
 
 .search-dialog-backdrop {
