@@ -68,6 +68,21 @@ async function sidewaysOverflow(page: Page): Promise<number> {
   return await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 }
 
+/** The trigger's name element as the layout leaves it: how wide it is, and how wide its text wants to be. */
+async function nameWidths(trigger: Locator): Promise<{ client: number; scroll: number }> {
+  return await trigger
+    .locator('.brand-project-name')
+    .evaluate((el) => ({ client: el.clientWidth, scroll: el.scrollWidth }));
+}
+
+/** G-08-2: the trigger shows the whole name. A width of 0 is a name that is there in the DOM and
+ * nowhere on screen, which a check of the declared style alone cannot tell from a visible one. */
+async function expectWholeName(trigger: Locator): Promise<void> {
+  const widths = await nameWidths(trigger);
+  expect(widths.client).toBeGreaterThan(0);
+  expect(widths.scroll).toBeLessThanOrEqual(widths.client);
+}
+
 /** Opens the landing page the way a person does: from a project, through the switcher's 'All projects'. */
 async function goToLanding(page: Page, base: string, from: ListedProject): Promise<void> {
   await page.goto(await projectUrl(base, '/', from.slug));
@@ -237,6 +252,8 @@ test.describe('layout contract (sketch 039 A)', () => {
     await expect(trigger).toBeVisible();
     // 6. The trigger is at least 40px tall at 390px.
     expect((await box(trigger)).height).toBeGreaterThanOrEqual(40);
+    // ... and it shows the open project's name, whole (G-08-2): Lendshed fits.
+    await expectWholeName(trigger);
 
     await openSwitcher(page, first);
     const popup = page.locator('.project-switcher-popup');
@@ -253,6 +270,103 @@ test.describe('layout contract (sketch 039 A)', () => {
     });
     expect(borders).toEqual(['0px', '0px']);
     expect(popupBox.height).toBeLessThanOrEqual(448.5);
+    expect(await sidewaysOverflow(page)).toBeLessThanOrEqual(0);
+  });
+
+  test('at 390px the trigger shows the whole open project name beside a dot-only snapshot pill, and the read time stays in its title, description and live region (G-08-2)', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(await projectUrl(long.base, '/', first.slug));
+    const trigger = triggerFor(page, first);
+    await expect(trigger).toBeVisible();
+    const pill = page.getByRole('button', { name: 'Refresh the project snapshot' });
+    await expect(pill).toHaveAttribute('data-state', 'ready');
+
+    // The trigger names the open project: the whole name is visible, not cut and not squeezed to 0.
+    const name = trigger.locator('.brand-project-name');
+    await expect(name).toHaveText(first.name);
+    await expectWholeName(trigger);
+
+    // The pill keeps only its dot: the label leaves the flow (sketch 039 A) ...
+    const label = pill.locator('.snapshot-label');
+    expect((await box(label)).width).toBeLessThanOrEqual(1);
+    const pillBox = await box(pill);
+    expect(pillBox.width).toBeLessThan(40);
+    // ... and sits inside the pill, not the header, so nothing is clipped away from the pill.
+    const labelBox = await box(label);
+    expect(labelBox.x).toBeGreaterThanOrEqual(pillBox.x - 2);
+    expect(labelBox.x).toBeLessThanOrEqual(pillBox.x + pillBox.width + 2);
+
+    // Where the read time went (TGT-08 trade, 08-18): the title, the description and the live region.
+    await expect(pill).toHaveAttribute('title', /^Snapshot read /);
+    await expect(pill).toHaveAccessibleDescription(/^Read /);
+    await expect(page.locator('.snapshot-status [aria-live="polite"]')).toHaveText(/^Snapshot read /);
+    expect(await sidewaysOverflow(page)).toBeLessThanOrEqual(0);
+
+    // At 1280px nothing changes: the label is visible and reads "Read {time}".
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await expect(label).toBeVisible();
+    expect((await box(label)).width).toBeGreaterThan(1);
+    await expect(label).toHaveText(/^Read /);
+  });
+
+  test('at 390px the name stays whole while the snapshot is pending and after it fails (G-08-2, D-07)', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const isPresentation = (url: URL): boolean =>
+      url.pathname === `/api/projects/${encodeURIComponent(first.slug)}/presentation`;
+    const trigger = triggerFor(page, first);
+    const pill = page.getByRole('button', { name: 'Refresh the project snapshot' });
+    const label = pill.locator('.snapshot-label');
+
+    // Pending: the presentation request is held, so the wider "Reading snapshot…" label would be the
+    // one to take the name's room if the label were allowed to.
+    let release: () => void = () => {};
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    await page.route(isPresentation, async (route) => {
+      await held;
+      await route.continue();
+    });
+    await page.goto(await projectUrl(long.base, '/', first.slug));
+    await expect(trigger).toBeVisible();
+    await expect(pill).toHaveAttribute('data-state', 'pending');
+    await expectWholeName(trigger);
+    expect((await box(label)).width).toBeLessThanOrEqual(1);
+    expect(await sidewaysOverflow(page)).toBeLessThanOrEqual(0);
+    release();
+    await expect(pill).toHaveAttribute('data-state', 'ready');
+    await expectWholeName(trigger);
+
+    // Error: the request fails, the query retries once, and the pill settles on "Metadata unavailable".
+    await page.unroute(isPresentation);
+    await page.route(isPresentation, async (route) => {
+      await route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'made-up failure for the 08-18 check' }),
+      });
+    });
+    await page.reload();
+    await expect(pill).toHaveAttribute('data-state', 'error', { timeout: 10_000 });
+    await expectWholeName(trigger);
+    expect((await box(label)).width).toBeLessThanOrEqual(1);
+    expect(await sidewaysOverflow(page)).toBeLessThanOrEqual(0);
+  });
+
+  test('at 320px the trigger keeps a visible name and the page never scrolls sideways (G-08-2)', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 320, height: 700 });
+    await page.goto(await projectUrl(long.base, '/', first.slug));
+    const trigger = triggerFor(page, first);
+    await expect(trigger).toBeVisible();
+    // The debug measured 32px here before the drawer trigger's margin changed; the whole name of a
+    // short project may be cut at this width, but it has to show.
+    expect((await nameWidths(trigger)).client).toBeGreaterThanOrEqual(24);
     expect(await sidewaysOverflow(page)).toBeLessThanOrEqual(0);
   });
 
@@ -339,6 +453,8 @@ test.describe('a long project name', () => {
       await expect(name).toHaveText(title);
       expect(await name.evaluate((el) => getComputedStyle(el).textOverflow)).toBe('ellipsis');
       expect(await name.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
+      // The cut name is still on screen: at least 40px of it shows (G-08-2).
+      expect((await nameWidths(trigger)).client).toBeGreaterThanOrEqual(40);
       expect((await box(trigger)).height).toBeGreaterThanOrEqual(width === 390 ? 40 : 30);
       expect(await sidewaysOverflow(page)).toBeLessThanOrEqual(0);
     });
