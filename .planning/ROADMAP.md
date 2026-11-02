@@ -283,7 +283,41 @@ page.
    it. It still opens readably when the file is missing sections or has a shape the design did not
    expect. *(VIEW-07, VIEW-08, VIEW-09, VIEW-10)*
 
-**Plans**: TBD
+**Plans**: 12 plans
+
+Plans:
+**Wave 1**
+- [ ] 09-01-PLAN.md — Tracer: root documents open on their designed pages (STATE.md on the dashboard, REQUIREMENTS.md on traceability, MILESTONES.md and RETROSPECTIVE.md on History), the ?source=1 escape, the dashboard's STATE.md session lines, the search Source link
+- [ ] 09-02-PLAN.md — Traceability's requirement-state axis (?state= / ?milestone=), requirementStateCounts, the out-of-scope list and archive ship dates
+- [ ] 09-03-PLAN.md — Review files read correctly: suffixed fix files recognised at review-fix-<suffix>, widened finding IDs, plural commits, REVIEW-DISPOSITION parsed in three shapes, made-up fixtures
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 09-04-PLAN.md — Archived copies open on their live page at their milestone, highlighted and marked Shipped; the History landing and every MILESTONES.md field; the root-documents browser spec
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [ ] 09-05-PLAN.md — Project page from sketch 041 B: masthead, core value, goal and four traceability-backed tiles, the margin, and the shared status-square
+
+**Wave 4** *(blocked on Wave 3 completion)*
+- [ ] 09-06-PLAN.md — Project page decisions spine, jump strip and era markers, the dashboard's About link, and the build screenshotted beside sketch 041 B
+
+**Wave 5** *(blocked on Wave 4 completion)*
+- [ ] 09-07-PLAN.md — Windows ledger: open count first, open and waived by phase with reasons, folded fixed history, the counts-disagree notice
+
+**Wave 6** *(blocked on Wave 5 completion)*
+- [ ] 09-08-PLAN.md — Review ledger: tabs only for files that exist, the shared head, and the Fix tab with one section per fix file
+
+**Wave 7** *(blocked on Wave 6 completion)*
+- [ ] 09-09-PLAN.md — Review ledger: the Disposition tab, disposition-first totals and the stale-disposition mark on every tab
+
+**Wave 8** *(blocked on Wave 7 completion)*
+- [ ] 09-10-PLAN.md — Milestone audit page: verdict first, scores, gaps, tech debt by phase, Nyquist, unclaimed keys and the narrative
+
+**Wave 9** *(blocked on Wave 8 completion)*
+- [ ] 09-11-PLAN.md — Coverage page: the no-API card and the capability matrix
+
+**Wave 10** *(blocked on Wave 9 completion)*
+- [ ] 09-12-PLAN.md — Screenshot sweep of the analog-built pages for the user's review, hard reloads of the new addresses, and the phase gate
+
 **UI hint**: yes
 
 ### Phase 10: Codebase Map, Specification and Check Pages
@@ -437,7 +471,7 @@ file, ID or project.
 | 6. Trustworthy Tests and Security Baseline | v2.1 | 22/22 | Complete    | 2026-10-26 |
 | 7. Recognised Files and Readable URLs | v2.1 | 10/10 | Complete    | 2026-10-27 |
 | 8. Several Projects and a Switcher | v2.1 | 18/18 | Complete    | 2026-11-02 |
-| 9. Review, Audit and Root Document Pages | v2.1 | 0/TBD | Not started | - |
+| 9. Review, Audit and Root Document Pages | v2.1 | 0/12 | Not started | - |
 | 10. Codebase Map, Specification and Check Pages | v2.1 | 0/TBD | Not started | - |
 | 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 0/TBD | Not started | - |
 | 12. Project Settings, Source Mode and Reading Polish | v2.1 | 0/TBD | Not started | - |
