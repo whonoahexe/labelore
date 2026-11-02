@@ -1,0 +1,1131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 041 — project page (PROJECT.md)</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+/* Sketch 041: the project page (PROJECT.md as the charter), three page structures. Labelore's own
+   PROJECT.md (public repo) is the long input (27 decisions); Lendshed is the made-up fixture (4);
+   Kiln is made up here to show Reversed and Revisit outcomes. Requirement counts are the
+   traceability projection's (D-05), hard-coded for the sketch. Tokens only, squared corners,
+   tones only: Good → complete, Revisit → in-flight, Reversed → missing, Pending → quiet. */
+:root {
+  --primary-foreground: oklch(0.98 0.016 73.684);
+  --border-faint: color-mix(in oklch, var(--border) 55%, transparent);
+  --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border));
+  --missing-border: color-mix(in oklch, var(--missing-fill) 50%, var(--border));
+  --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border));
+  --font-heading: var(--font-sans);
+  --icon: var(--space-4);
+  --s40: var(--space-10);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-4); font-weight: var(--fw-medium); line-height: var(--lh-normal); }
+h1, h2, h3, p, ul, ol, dl, dd, blockquote, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; border-radius: 0; text-align: inherit; }
+a { color: inherit; text-decoration: none; }
+[hidden] { display: none !important; }
+code { font-family: var(--font-mono); font-size: 0.92em; padding: 0 var(--space-0-5); background: var(--muted); }
+svg.i { width: var(--icon); height: var(--icon); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+* { transition: background-color .15s ease, color .15s ease, border-color .15s ease; }
+
+/* ---------- sketch chrome (not part of the app) ---------- */
+#sketch-bar { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); background: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+#sketch-bar .lbl { color: var(--muted-foreground); white-space: nowrap; }
+#sketch-bar .grp { display: flex; gap: var(--space-1); align-items: center; }
+#sketch-bar .grp + .grp { padding-left: var(--space-3); border-left: 1px solid var(--border); }
+#sketch-bar button { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; color: var(--muted-foreground); white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; }
+#sketch-bar button:hover { color: var(--foreground); background: var(--state-hover); }
+#sketch-bar .on { color: var(--foreground); border-color: var(--border); background: var(--state-hover); }
+@media (max-width: 42rem) { #sketch-bar { flex-wrap: nowrap; overflow-x: auto; } }
+#toast { position: fixed; left: 50%; bottom: var(--space-4); transform: translateX(-50%); z-index: 99; max-width: 90vw; padding: var(--space-2) var(--space-3); background: var(--foreground); color: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); opacity: 0; pointer-events: none; transition: opacity .15s; }
+#toast.on { opacity: 1; }
+#frame { margin-inline: auto; container-type: inline-size; container-name: page; }
+#frame[data-w='768'] { max-width: 768px; border-inline: 1px dashed var(--border); }
+#frame[data-w='390'] { max-width: 390px; border-inline: 1px dashed var(--border); }
+
+/* ---------- app header (abridged, for context only) ---------- */
+.app-head { display: flex; align-items: center; gap: var(--space-4); height: 3.5rem; padding-inline: var(--space-fluid-3); border-bottom: 1px solid var(--border); }
+.app-brand { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-3); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+.app-brand i { width: var(--space-5); height: var(--space-5); background: var(--primary); }
+.app-brand span { color: var(--muted-foreground); font-weight: var(--fw-medium); }
+.app-nav { display: flex; gap: var(--space-1); margin-left: auto; overflow-x: auto; }
+.app-nav a { padding: var(--space-1-5) var(--space-2-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.app-nav a:hover { color: var(--foreground); background: var(--state-hover); }
+.app-nav a[aria-current] { color: var(--foreground); box-shadow: inset 0 -2px 0 var(--primary); }
+@container page (max-width: 42rem) { .app-nav { display: none; } }
+
+/* ---------- shared atoms ---------- */
+.micro-label { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+.accent { color: var(--primary); }
+.status-chip { display: inline-flex; gap: var(--space-1); align-items: center; width: fit-content; padding: var(--space-0-5) var(--space-2); border: 1px solid var(--border); background: color-mix(in oklch, var(--muted) 55%, transparent); font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; white-space: nowrap; }
+.status-chip[data-tone='complete'] { border-color: var(--primary-border); background: var(--primary-tint); color: var(--primary); }
+.status-chip[data-tone='in-flight'] { border-color: var(--in-flight-border); color: var(--in-flight-fill); }
+.status-chip[data-tone='missing'] { border-color: var(--missing-border); color: var(--missing-fill); }
+.status-chip[data-tone='quiet'] { color: var(--muted-foreground); border-style: dashed; }
+.sq { display: inline-block; width: 0.6rem; height: 0.6rem; flex: none; border: 1px solid var(--border); }
+.sq[data-tone='complete'] { background: var(--primary); border-color: var(--primary); }
+.sq[data-tone='in-flight'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.sq[data-tone='missing'] { background: transparent; border: 2px solid var(--missing-fill); }
+.sq[data-tone='quiet'] { background: transparent; border: 1px dashed var(--muted-foreground); }
+.text-link { display: inline-flex; gap: var(--space-1-5); align-items: center; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.text-link:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: 3px; }
+.source-note { color: var(--muted-foreground); font-size: var(--fs-3); }
+.tag { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.chev { transition: transform .15s ease; color: var(--muted-foreground); }
+[aria-expanded='true'] > .chev, [aria-expanded='true'] .chev { transform: rotate(90deg); }
+.why { display: grid; gap: var(--space-1); align-content: start; }
+.ok { display: inline-flex; align-items: center; gap: var(--space-1-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-1); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+.why dt { }
+.why dd { color: var(--foreground); font-size: var(--fs-4); line-height: var(--lh-relaxed); }
+.why-outcome dd { color: var(--muted-foreground); }
+
+/* =====================================================================
+   A — CHARTER: one centred reading column, said like a founding document
+   ===================================================================== */
+.ca { max-width: 46rem; margin-inline: auto; padding: var(--space-fluid-13) var(--space-fluid-3) var(--space-fluid-10); }
+.ca-head { display: grid; gap: var(--space-3); padding-bottom: var(--space-fluid-9); }
+.ca-name { font-size: var(--fs-display-3); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); font-weight: var(--fw-semibold); }
+.ca-what { color: var(--muted-foreground); font-size: var(--fs-fluid-1); line-height: var(--lh-relaxed); max-width: 40rem; }
+.ca-core { display: grid; gap: var(--space-3); padding: var(--space-fluid-9) 0; border-block: 1px solid var(--border); }
+.ca-core blockquote { font-size: var(--fs-fluid-4); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); font-weight: var(--fw-medium); text-wrap: balance; }
+.ca-core blockquote::before { content: '“'; color: var(--primary); margin-right: 0.05em; }
+.ca-core blockquote::after { content: '”'; color: var(--primary); }
+.ca-now { display: grid; gap: var(--space-4); padding: var(--space-fluid-9) 0; }
+.ca-now-line { font-size: var(--fs-fluid-1); line-height: var(--lh-snug); }
+.ca-now-line b { font-family: var(--font-mono); font-weight: var(--fw-semibold); font-size: 0.85em; letter-spacing: var(--ls-wider); text-transform: uppercase; margin-right: var(--space-2); }
+.ca-counts { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); font-size: var(--fs-4); color: var(--muted-foreground); }
+.ca-counts a { display: inline-flex; align-items: center; gap: var(--space-1-5); }
+.ca-counts a strong { color: var(--foreground); font-family: var(--font-mono); font-weight: var(--fw-semibold); }
+.ca-counts a:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: 3px; }
+.ca-art { padding: var(--space-fluid-9) 0 0; display: grid; gap: var(--space-5); }
+.ca-art-h { display: flex; align-items: baseline; gap: var(--space-3); padding-top: var(--space-3); border-top: 2px solid var(--foreground); }
+.ca-art-h h2 { font-size: var(--fs-7); letter-spacing: var(--ls-tight); font-weight: var(--fw-semibold); }
+.ca-art-h .source-note { margin-left: auto; }
+.ca-clauses { display: grid; gap: var(--space-4); }
+.ca-clause { display: grid; grid-template-columns: 2.5rem 1fr; gap: var(--space-3); }
+.ca-clause-n { font-family: var(--font-mono); font-size: var(--fs-3); color: var(--muted-foreground); padding-top: 0.15em; }
+.ca-clause p { line-height: var(--lh-relaxed); }
+.ca-clause strong { font-weight: var(--fw-semibold); }
+.ca-refuse .ca-clause strong { text-decoration: line-through; text-decoration-color: var(--muted-foreground); text-decoration-thickness: 1px; }
+.ca-log { display: grid; }
+.ca-tally { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); }
+.ca-tally span { display: inline-flex; align-items: center; gap: var(--space-1-5); font-size: var(--fs-3); color: var(--muted-foreground); }
+.ca-tally .text-link { margin-left: auto; }
+.ca-entry { border-bottom: 1px solid var(--border-faint); }
+.ca-entry-btn { display: grid; grid-template-columns: 2.5rem 1fr auto; gap: var(--space-3); align-items: baseline; width: 100%; padding: var(--space-3) 0; }
+.ca-entry-btn:hover { background: var(--state-hover); }
+.ca-entry-n { font-family: var(--font-mono); font-size: var(--fs-3); color: var(--muted-foreground); }
+.ca-entry-d { font-size: var(--fs-5); line-height: var(--lh-snug); }
+.ca-entry-d .tag { margin-left: var(--space-2); }
+.ca-entry-o { display: inline-flex; align-items: center; gap: var(--space-2); }
+.ca-entry-body { display: grid; gap: var(--space-3); padding: 0 0 var(--space-4) calc(2.5rem + var(--space-3)); }
+.ca-foot { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-5); align-items: center; margin-top: var(--space-fluid-10); padding-top: var(--space-4); border-top: 1px solid var(--border); }
+.ca-foot .source-note { margin-right: auto; }
+@container page (max-width: 42rem) {
+  .ca-entry-btn { grid-template-columns: 2rem 1fr; }
+  .ca-entry-o { grid-column: 2; }
+  .ca-entry-body { padding-left: calc(2rem + var(--space-3)); }
+  .ca-clause { grid-template-columns: 2rem 1fr; }
+}
+
+/* =====================================================================
+   B — MASTHEAD + SPINE: identity band across the page, decisions on a timeline spine,
+   the rules in a margin
+   ===================================================================== */
+.mb-mast { border-bottom: 1px solid var(--border); background: var(--card-veil); }
+.mb-mast-in { max-width: 80rem; margin-inline: auto; padding: var(--space-fluid-10) var(--space-fluid-3) var(--space-fluid-9); display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: var(--space-fluid-9); align-items: end; }
+.mb-id { display: grid; gap: var(--space-3); }
+.mb-name { font-size: var(--fs-display-3); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); font-weight: var(--fw-semibold); }
+.mb-what { color: var(--muted-foreground); line-height: var(--lh-relaxed); max-width: 38rem; }
+.mb-core { display: grid; gap: var(--space-3); padding: var(--space-5) var(--space-6); border: 1px solid var(--border); border-top: 3px solid var(--primary); background: var(--background); }
+.mb-core p:last-child { font-size: var(--fs-fluid-3); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); text-wrap: balance; }
+.mb-strip { max-width: 80rem; margin-inline: auto; padding: 0 var(--space-fluid-3); display: grid; grid-template-columns: minmax(0, 2fr) repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--border); }
+.mb-cell { display: grid; gap: var(--space-1-5); align-content: start; padding: var(--space-4) var(--space-4); border-left: 1px solid var(--border); }
+.mb-cell:first-child { border-left: 0; padding-left: 0; }
+a.mb-cell:hover { background: var(--state-hover); }
+.mb-cell-n { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-none); display: flex; align-items: center; gap: var(--space-2); }
+.mb-cell-l { font-size: var(--fs-3); color: var(--muted-foreground); }
+.mb-goal { font-size: var(--fs-4); line-height: var(--lh-snug); }
+.mb-body { max-width: 80rem; margin-inline: auto; padding: var(--space-fluid-9) var(--space-fluid-3) var(--space-fluid-10); display: grid; grid-template-columns: minmax(0, 1fr) 22rem; gap: var(--space-fluid-9); align-items: start; }
+.mb-sec-h { display: flex; align-items: baseline; gap: var(--space-3); margin-bottom: var(--space-4); }
+.mb-sec-h h2 { font-size: var(--fs-7); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tight); }
+.mb-sec-h .text-link { margin-left: auto; }
+.mb-squares { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: var(--space-2); }
+.mb-squares button { width: 0.85rem; height: 0.85rem; padding: 0; }
+.mb-squares button .sq { width: 100%; height: 100%; }
+.mb-squares button:hover .sq, .mb-squares button.hl .sq { outline: 2px solid var(--foreground); outline-offset: 1px; }
+.mb-legend { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); margin-bottom: var(--space-6); }
+.mb-legend span { display: inline-flex; align-items: center; gap: var(--space-1-5); font-size: var(--fs-3); color: var(--muted-foreground); }
+.mb-spine { position: relative; display: grid; }
+.mb-spine::before { content: ''; position: absolute; left: calc(0.45rem - 0.5px); top: var(--space-2); bottom: var(--space-2); width: 1px; background: var(--border); }
+.mb-era { position: relative; padding: var(--space-4) 0 var(--space-2) var(--space-8); }
+.mb-era::before { content: ''; position: absolute; left: 0.15rem; top: calc(var(--space-4) + 0.3rem); width: 0.6rem; height: 1px; background: var(--foreground); }
+.mb-node { position: relative; padding-left: var(--space-8); }
+.mb-node > .sq { position: absolute; left: 0.15rem; top: calc(var(--space-3) + 0.35rem); background-clip: padding-box; box-shadow: 0 0 0 3px var(--background); }
+.mb-node > .sq[data-tone='missing'], .mb-node > .sq[data-tone='quiet'] { background-color: var(--background); }
+.mb-node-btn { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); align-items: baseline; width: 100%; padding: var(--space-3) var(--space-3) var(--space-3) 0; }
+.mb-node-btn:hover { background: var(--state-hover); }
+.mb-node.flash .mb-node-btn { background: var(--primary-tint); }
+.mb-node-d { font-size: var(--fs-5); line-height: var(--lh-snug); }
+.mb-node-meta { display: inline-flex; gap: var(--space-2); align-items: center; }
+.mb-node-note { grid-column: 1 / -1; color: var(--muted-foreground); font-size: var(--fs-3); }
+.mb-node-body { display: grid; gap: var(--space-3); padding: 0 var(--space-3) var(--space-4) 0; }
+.mb-aside { position: sticky; top: 3.5rem; display: grid; gap: var(--space-8); }
+.mb-rules h2 { margin-bottom: var(--space-3); padding-bottom: var(--space-2); border-bottom: 1px solid var(--border); }
+.mb-rules dl { display: grid; gap: var(--space-3); }
+.mb-rules dt { font-size: var(--fs-4); font-weight: var(--fw-semibold); }
+.mb-rules dd { color: var(--muted-foreground); font-size: var(--fs-3); line-height: var(--lh-normal); }
+.mb-rules.refuse dt { text-decoration: line-through; text-decoration-thickness: 1px; text-decoration-color: var(--muted-foreground); }
+.mb-rules dd.clip { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mb-foot { display: grid; gap: var(--space-2); padding-top: var(--space-4); border-top: 1px solid var(--border); }
+@container page (max-width: 62rem) {
+  .mb-mast-in { grid-template-columns: 1fr; }
+  .mb-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mb-strip .mb-cell:first-child { grid-column: 1 / -1; padding: var(--space-4) 0; border-bottom: 1px solid var(--border); }
+  .mb-strip .mb-cell:nth-child(2), .mb-strip .mb-cell:nth-child(4) { border-left: 0; padding-left: 0; }
+  .mb-body { grid-template-columns: 1fr; }
+  .mb-aside { position: static; order: 2; }
+}
+
+/* =====================================================================
+   C — SPREAD: an open book. Left page the charter (sticky), right page the decision ledger.
+   ===================================================================== */
+.cs { max-width: 84rem; margin-inline: auto; padding: var(--space-fluid-9) var(--space-fluid-3) var(--space-fluid-10); display: grid; grid-template-columns: minmax(0, 27rem) minmax(0, 1fr); gap: 0; align-items: start; }
+.cs-left { position: sticky; top: 3.5rem; display: grid; gap: var(--space-6); padding: var(--space-6) var(--space-fluid-8) var(--space-6) 0; border-right: 1px solid var(--border); max-height: calc(100vh - 4rem); overflow-y: auto; }
+.cs-name { font-size: var(--fs-display-1); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); font-weight: var(--fw-semibold); }
+.cs-core { font-size: var(--fs-fluid-1); line-height: var(--lh-snug); font-weight: var(--fw-medium); padding-left: var(--space-4); border-left: 3px solid var(--primary); }
+.cs-what { color: var(--muted-foreground); font-size: var(--fs-3); line-height: var(--lh-relaxed); }
+.cs-block { display: grid; gap: var(--space-2-5); padding-top: var(--space-4); border-top: 1px solid var(--border); }
+.cs-goal { font-size: var(--fs-4); line-height: var(--lh-snug); }
+.cs-counts { display: grid; }
+.cs-counts a { display: grid; grid-template-columns: auto 1fr auto auto; gap: var(--space-2); align-items: center; padding: var(--space-1-5) 0; border-bottom: 1px dashed var(--border-faint); font-size: var(--fs-3); }
+.cs-counts a:hover { background: var(--state-hover); }
+.cs-counts a strong { font-family: var(--font-mono); font-weight: var(--fw-semibold); font-size: var(--fs-4); }
+.cs-counts a .i { width: var(--space-3); height: var(--space-3); color: var(--muted-foreground); }
+.cs-rules { display: grid; gap: var(--space-2); }
+.cs-rules li { font-size: var(--fs-3); line-height: var(--lh-normal); color: var(--muted-foreground); }
+.cs-rules li strong { color: var(--foreground); font-weight: var(--fw-semibold); }
+.cs-rules.refuse li strong { text-decoration: line-through; text-decoration-thickness: 1px; text-decoration-color: var(--muted-foreground); }
+.cs-more { justify-self: start; }
+.cs-right { padding: var(--space-6) 0 var(--space-6) var(--space-fluid-8); min-width: 0; }
+.cs-right-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-4); margin-bottom: var(--space-2); }
+.cs-right-h h2 { font-size: var(--fs-fluid-3); letter-spacing: var(--ls-tight); font-weight: var(--fw-semibold); }
+.cs-right-h .text-link { margin-left: auto; }
+.cs-sub { color: var(--muted-foreground); font-size: var(--fs-3); margin-bottom: var(--space-5); display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); }
+.cs-sub span { display: inline-flex; align-items: center; gap: var(--space-1-5); }
+.cs-cols { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr) 7.5rem; gap: var(--space-3); padding: 0 0 var(--space-2); border-bottom: 1px solid var(--foreground); }
+.cs-row { border-bottom: 1px solid var(--border-faint); }
+.cs-row-btn { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr) 7.5rem; gap: var(--space-3); align-items: baseline; width: 100%; padding: var(--space-2-5) 0; }
+.cs-row-btn:hover { background: var(--state-hover); }
+.cs-row[data-open='true'] { background: var(--card-veil); border-bottom-color: var(--border); }
+.cs-row[data-open='true'] .cs-row-btn { box-shadow: inset 2px 0 0 var(--primary); }
+.cs-row-n { font-family: var(--font-mono); font-size: var(--fs-3); color: var(--muted-foreground); padding-left: var(--space-2); }
+.cs-row-d { font-size: var(--fs-4); line-height: var(--lh-snug); }
+.cs-row-d .tag { margin-left: var(--space-2); }
+.cs-row-body { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--space-6); padding: var(--space-1) var(--space-4) var(--space-5) calc(2.25rem + var(--space-3)); }
+.cs-foot { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-5); align-items: center; margin-top: var(--space-8); }
+.cs-foot .source-note { margin-right: auto; }
+@container page (max-width: 62rem) {
+  .cs { grid-template-columns: 1fr; }
+  .cs-left { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--border); padding: 0 0 var(--space-6); }
+  .cs-right { padding: var(--space-6) 0; }
+}
+@container page (max-width: 42rem) {
+  .cs-cols { display: none; }
+  .cs-row-btn { grid-template-columns: 2rem minmax(0, 1fr); }
+  .cs-row-btn .status-chip { grid-column: 2; }
+  .cs-row-body { grid-template-columns: 1fr; padding-left: calc(2rem + var(--space-3)); }
+}
+
+/* =====================================================================
+   ROUND 2 — refinements of B (masthead → spine → margin). Shared: number gutter on the spine,
+   eras only for milestone/phase tags, a reading block for an opened reason, calmer count tiles.
+   ===================================================================== */
+.r-wrap { max-width: 78rem; margin-inline: auto; padding-inline: var(--space-fluid-3); }
+.r-mast { border-bottom: 1px solid var(--border); background: var(--card-veil); }
+.r-mast-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-fluid-9); align-items: end; padding-block: var(--space-fluid-9) var(--space-8); }
+.r-id { display: grid; gap: var(--space-3); }
+.r-eyebrow { display: flex; gap: var(--space-2); align-items: center; }
+.r-name { font-size: var(--fs-display-3); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); font-weight: var(--fw-semibold); }
+.r-what { color: var(--muted-foreground); line-height: var(--lh-relaxed); max-width: 36rem; }
+.r-core { display: grid; gap: var(--space-3); padding-left: var(--space-6); border-left: 3px solid var(--primary); }
+.r-core q { quotes: none; font-size: var(--fs-fluid-3); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); text-wrap: balance; }
+.r-strip { display: grid; grid-template-columns: minmax(0, 1.6fr) repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--border); }
+.r-cell { display: grid; gap: var(--space-1); align-content: start; padding: var(--space-4) var(--space-5); border-left: 1px solid var(--border); }
+.r-cell:first-child { border-left: 0; padding-left: 0; }
+a.r-cell:hover { background: var(--state-hover); }
+a.r-cell:hover .r-cell-l { color: var(--foreground); text-decoration: underline; text-underline-offset: 3px; }
+.r-cell-n { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-fluid-3); font-weight: var(--fw-semibold); line-height: var(--lh-none); }
+.r-cell-l { font-size: var(--fs-3); }
+.r-cell-s { font-family: var(--font-mono); font-size: var(--fs-1); color: var(--muted-foreground); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+.r-goal { font-size: var(--fs-4); line-height: var(--lh-snug); }
+
+/* B2: stacked masthead — name and what side by side, the core value across the page, a meter */
+.r2-top { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-fluid-9); align-items: end; padding-block: var(--space-fluid-9) var(--space-6); }
+.r2-top .r-what { max-width: 40rem; padding-bottom: var(--space-1); }
+.r2-core { display: grid; grid-template-columns: 10rem minmax(0, 1fr); gap: var(--space-6); padding-block: var(--space-6); border-top: 1px solid var(--border); }
+.r2-core q { quotes: none; font-size: var(--fs-display-1); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); text-wrap: balance; font-weight: var(--fw-medium); }
+.r2-core q::before { content: '“'; color: var(--primary); }
+.r2-core q::after { content: '”'; color: var(--primary); }
+.r2-now { display: grid; grid-template-columns: 10rem minmax(0, 1fr) minmax(0, 22rem); gap: var(--space-6); padding-block: var(--space-5) var(--space-6); border-top: 1px solid var(--border); align-items: start; }
+.r2-meter { display: grid; gap: var(--space-2); }
+.r2-bar { display: flex; height: 0.75rem; gap: 2px; }
+.r2-bar a { display: block; height: 100%; }
+.r2-bar a[data-tone='complete'] { background: var(--primary); }
+.r2-bar a[data-tone='quiet'] { border: 1px dashed var(--muted-foreground); }
+.r2-bar a:hover { outline: 2px solid var(--foreground); outline-offset: 1px; }
+.r2-keys { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); font-size: var(--fs-3); color: var(--muted-foreground); }
+.r2-keys a { display: inline-flex; align-items: center; gap: var(--space-1-5); }
+.r2-keys a strong { color: var(--foreground); font-family: var(--font-mono); font-weight: var(--fw-semibold); }
+.r2-keys a:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: 3px; }
+
+/* body */
+.r-body { display: grid; grid-template-columns: minmax(0, 1fr) 21rem; gap: var(--space-fluid-9); align-items: start; padding-block: var(--space-fluid-9) var(--space-fluid-10); }
+.r-sec-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-3); margin-bottom: var(--space-3); }
+.r-sec-h h2 { font-size: var(--fs-7); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tight); }
+.r-sec-h .text-link { margin-left: auto; }
+.r-overview { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-5); padding: var(--space-3) 0; margin-bottom: var(--space-2); border-block: 1px solid var(--border-faint); }
+.r-squares { display: flex; flex-wrap: wrap; gap: 3px; }
+.r-squares button { width: 0.75rem; height: 0.75rem; }
+.r-squares button .sq { width: 100%; height: 100%; }
+.r-squares button:hover .sq, .r-squares button.on .sq { outline: 2px solid var(--foreground); outline-offset: 1px; }
+.r-legend { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); }
+.r-legend span { display: inline-flex; align-items: center; gap: var(--space-1-5); font-size: var(--fs-3); color: var(--muted-foreground); }
+
+/* spine: [number][node][content] */
+.r-spine { position: relative; display: grid; }
+.r-spine::before { content: ''; position: absolute; left: calc(2.5rem + 0.6rem); top: var(--space-4); bottom: var(--space-4); width: 1px; background: var(--border); }
+.r-era { display: grid; grid-template-columns: 2.5rem 1.2rem 1fr; align-items: center; padding: var(--space-5) 0 var(--space-1); }
+.r-era i { justify-self: center; width: 0.7rem; height: 2px; background: var(--foreground); position: relative; }
+.r-era span { padding-left: var(--space-3); }
+.r-node { position: relative; }
+.r-node-btn { display: grid; grid-template-columns: 2.5rem 1.2rem minmax(0, 1fr) auto; align-items: baseline; width: 100%; padding: var(--space-2-5) var(--space-2) var(--space-2-5) 0; }
+.r-node-btn:hover { background: var(--state-hover); }
+.r-node.flash .r-node-btn { background: var(--primary-tint); }
+.r-node[data-sel='true'] .r-node-btn { background: var(--primary-tint); box-shadow: inset 2px 0 0 var(--primary); }
+.r-node-n { font-family: var(--font-mono); font-size: var(--fs-3); color: var(--muted-foreground); text-align: right; padding-right: var(--space-2); }
+.r-node-btn > .sq { justify-self: center; align-self: start; margin-top: 0.42em; position: relative; z-index: 1; box-shadow: 0 0 0 3px var(--background); }
+.r-node-btn > .sq[data-tone='missing'], .r-node-btn > .sq[data-tone='quiet'] { background-color: var(--background); }
+.r-node-txt { display: grid; gap: var(--space-0-5); padding-left: var(--space-3); }
+.r-node-d { font-size: var(--fs-5); line-height: var(--lh-snug); }
+.r-node-note { color: var(--muted-foreground); font-size: var(--fs-3); line-height: var(--lh-snug); }
+.r-node-o { padding-left: var(--space-3); }
+.r-read { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-6); margin: 0 0 var(--space-3) calc(3.7rem + var(--space-3)); padding: var(--space-4) var(--space-5); background: var(--card-veil); border: 1px solid var(--border-faint); border-left: 2px solid var(--primary); }
+
+/* margin */
+.r-aside { position: sticky; top: 4rem; display: grid; gap: var(--space-8); }
+.r-rules { display: grid; gap: var(--space-3); padding-top: var(--space-3); border-top: 2px solid var(--foreground); }
+.r-rules h2 { display: flex; justify-content: space-between; }
+.r-rules ol { display: grid; gap: var(--space-3); }
+.r-rules li { display: grid; grid-template-columns: 1.75rem 1fr; gap: var(--space-1); }
+.r-rules .n { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); padding-top: 0.2em; }
+.r-rules strong { display: block; font-size: var(--fs-4); font-weight: var(--fw-semibold); }
+.r-rules p { color: var(--muted-foreground); font-size: var(--fs-3); line-height: var(--lh-normal); }
+.r-rules p.clip { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.r-rules.refuse strong { text-decoration: line-through; text-decoration-thickness: 1px; text-decoration-color: var(--muted-foreground); }
+.r-foot { display: grid; gap: var(--space-2); padding-top: var(--space-4); border-top: 1px solid var(--border); }
+
+/* B3: rules as a band under the masthead, the margin becomes the decision reader */
+.r3-band { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-fluid-9); padding-block: var(--space-6); border-bottom: 1px solid var(--border); }
+.r3-band .r-rules ol { grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: var(--space-3) var(--space-5); }
+.r3-panel { position: sticky; top: 4rem; display: grid; gap: var(--space-5); padding: var(--space-6); border: 1px solid var(--border); border-top: 3px solid var(--primary); background: var(--card-veil); }
+.r3-panel-n { display: flex; align-items: center; gap: var(--space-3); }
+.r3-panel-n b { font-family: var(--font-mono); font-size: var(--fs-fluid-4); font-weight: var(--fw-semibold); line-height: var(--lh-none); }
+.r3-panel h3 { font-size: var(--fs-fluid-1); line-height: var(--lh-snug); font-weight: var(--fw-semibold); }
+.r3-nav { display: flex; justify-content: space-between; padding-top: var(--space-4); border-top: 1px solid var(--border); }
+.r3-nav button:disabled { opacity: .4; pointer-events: none; }
+
+@container page (max-width: 62rem) {
+  .r-mast-grid, .r2-top { grid-template-columns: 1fr; }
+  .r-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .r-strip .r-cell:first-child { grid-column: 1 / -1; padding: var(--space-4) 0; border-bottom: 1px solid var(--border); }
+  .r-strip .r-cell:nth-child(2), .r-strip .r-cell:nth-child(4) { border-left: 0; padding-left: 0; }
+  .r-strip .r-cell:nth-child(n+4) { border-top: 1px solid var(--border); }
+  .r2-core, .r2-now { grid-template-columns: 1fr; gap: var(--space-3); }
+  .r-body { grid-template-columns: 1fr; }
+  .r-aside { position: static; }
+  .r3-band { grid-template-columns: 1fr; }
+  .r3-panel { position: static; order: -1; }
+}
+@container page (max-width: 42rem) {
+  .r-spine::before { left: calc(2rem + 0.6rem); }
+  .r-era { grid-template-columns: 2rem 1.2rem 1fr; }
+  .r-node-btn { grid-template-columns: 2rem 1.2rem minmax(0, 1fr); }
+  .r-node-o { grid-column: 3; padding-top: var(--space-1); }
+  .r-read { grid-template-columns: 1fr; gap: var(--space-3); margin-left: calc(3.2rem + var(--space-3)); padding: var(--space-3) var(--space-4); }
+}
+</style>
+</head>
+<body>
+<nav id="sketch-bar" aria-label="Sketch controls">
+  <div class="grp"><span class="lbl">041</span>
+    <button data-v="a">A: Charter</button>
+    <button data-v="b">B: Masthead + spine ★ Selected</button>
+    <button data-v="c">C: Spread</button>
+  </div>
+  <div class="grp"><span class="lbl">Round 2 (not chosen)</span>
+    <button data-v="b1">B1: Refined</button>
+    <button data-v="b2">B2: Stacked</button>
+    <button data-v="b3">B3: Reader</button>
+  </div>
+  <div class="grp"><span class="lbl">Project</span>
+    <button data-p="labelore">Labelore · 27</button>
+    <button data-p="lendshed">Lendshed · 4</button>
+    <button data-p="kiln">Kiln · 9</button>
+  </div>
+  <div class="grp"><span class="lbl">Width</span>
+    <button data-w="full">Full</button><button data-w="768">768</button><button data-w="390">390</button>
+  </div>
+  <div class="grp"><button data-theme="light">Light</button><button data-theme="dark">Dark</button></div>
+</nav>
+<div id="frame"><div id="app"></div></div>
+<div id="toast" role="status"></div>
+
+<script>
+const PROJECTS = {
+ "labelore": {
+  "name": "Labelore",
+  "what": "Labelore is a read-only web dashboard that makes a GSD `.planning/` directory legible. It lives in its own repository, is started with a path argument pointing at any GSD-managed project, and renders that project's planning state: where the work stands, what every phase and plan contains, and where the accumulated decisions, learnings, and review findings are buried. It is a personal tool, built to replace opening `.planning/` files by hand in an editor.",
+  "core": "Open the dashboard on a GSD project and immediately know where the work stands and where any planning artifact lives — without reading a single file by hand.",
+  "milestone": "v2.1 Wayfinding",
+  "goal": "Every file GSD can write opens into a designed page, Labelore moves between projects, and URLs read like what they point to, with search that is quicker to use and easier to read.",
+  "constraints": [
+   {
+    "k": "Deployment",
+    "v": "Clone-and-run from its own repo at `~/labelore`, targeted with a path argument at startup — Not a per-project install, not a published CLI, not a hosted service. Keeps setup trivial."
+   },
+   {
+    "k": "Access",
+    "v": "Read-only filesystem access to the target `.planning/` — The tool must be incapable of damaging planning state it does not own. Enforced: `local-fs.ts` is the sole `src/` importer of `node:fs`, pinned by a test gate."
+   },
+   {
+    "k": "Compatibility",
+    "v": "Must read `.planning/` as produced by `@opengsd/gsd-core` — GSD's artifact set evolves, so unknown files must degrade rather than break."
+   },
+   {
+    "k": "Design",
+    "v": "Visual language inherited from studio-portal — oklch token palette, shadcn `base-sera`, `@base-ui/react`, lucide, squared corners, light and dark."
+   },
+   {
+    "k": "Dependencies",
+    "v": "No runtime, code, or data dependency on studio-portal — It is a reference and a theme source only."
+   },
+   {
+    "k": "Tech stack",
+    "v": "Resolved — Vite 8 + React 19 + Hono 4, `react-router` (library mode), TanStack Query, Tailwind v4. TypeScript is pinned to 5.9.3 because TS7 is outside `typescript-eslint@8.67.0`'s peer range."
+   },
+   {
+    "k": "Forward compatibility",
+    "v": "The `.planning/` reader sits behind a boundary that admits multi-project targeting, a file watcher, and eventually write-back. None of those shipped in v1.0, but the seam is built and tested."
+   }
+  ],
+  "outOfScope": [
+   {
+    "k": "Writing to `.planning/`",
+    "v": "Labelore is strictly read-only. All mutation stays inside Claude Code and the GSD slash commands, which own the invariants of these files. A viewer that writes can corrupt planning state; a viewer that cannot write can never do harm. *(Still valid after v1.0. PLAT-03 would revisit it deliberately, not by drift.)*"
+   },
+   {
+    "k": "Authentication, hosting, multi-user access",
+    "v": "it runs locally for one person on their own machine."
+   },
+   {
+    "k": "Any coupling to studio-portal",
+    "v": "studio-portal is the reference `.planning/` directory used to develop against and the source of the visual theme. Nothing else is shared: no code, no API, no data, no deployment. The dependency is one-directional and read-only."
+   },
+   {
+    "k": "Editing, authoring, or scaffolding GSD artifacts",
+    "v": "that is what GSD itself is for."
+   },
+   {
+    "k": "Publishing, packaging, or distribution",
+    "v": "this is a personal tool, not a released product. `package.json` deliberately declares no `bin` field."
+   }
+  ],
+  "decisions": [
+   {
+    "d": "Read-only in v1; no writes to `.planning/`",
+    "tag": "",
+    "r": "GSD owns these files' invariants. A viewer that cannot write cannot corrupt planning state. Driving GSD is a named future direction, not v1 scope.",
+    "tone": "good",
+    "mark": "Good",
+    "note": "read-only boundary with containment checks; `node:fs` confined to `local-fs.ts`"
+   },
+   {
+    "d": "One project per run, targeted by path argument",
+    "tag": "",
+    "r": "Simplest thing that satisfies \"works on any GSD project\" without registry, discovery, or persistence machinery.",
+    "tone": "good",
+    "mark": "Good",
+    "note": "absolute, relative, `~`-prefixed, and symlinked targets verified; invalid targets get a named-path screen"
+   },
+   {
+    "d": "Own repository, clone-and-run",
+    "tag": "",
+    "r": "Chosen over `npx`/global CLI: no packaging or distribution burden for a personal tool.",
+    "tone": "good",
+    "mark": "Good",
+    "note": "`npm run dev -- <path>`; no `bin` field"
+   },
+   {
+    "d": "Findability via full-text search *and* navigation/cross-linking",
+    "tag": "",
+    "r": "Chosen over curated per-type aggregate pages. Search covers the unknown-unknowns; navigation covers walking a known structure.",
+    "tone": "good",
+    "mark": "Good",
+    "note": "exact-token search, grouped snippets, complete tree, traceability"
+   },
+   {
+    "d": "studio-portal is a reference and theme source, nothing more",
+    "tag": "",
+    "r": "Explicit user instruction. Hardcoding to studio-portal would defeat the point.",
+    "tone": "good",
+    "mark": "Good",
+    "note": "sparse, dense, stripped, malformed, and invalid targets verified in both themes"
+   },
+   {
+    "d": "Live file-watching deferred, read layer built to allow it",
+    "tag": "",
+    "r": "Watching is real infrastructure. Deferring it is cheap only if the read layer is a seam from day one.",
+    "tone": "good",
+    "mark": "Good",
+    "note": "single `refresh()` seam plus atomic derived-view swap; PLAT-01 is now a candidate"
+   },
+   {
+    "d": "Tech stack deferred to research",
+    "tag": "",
+    "r": "A local read-only tool has different pressures than studio-portal's networked app.",
+    "tone": "good",
+    "mark": "Good",
+    "note": "research chose Vite + React + Hono over a Next.js custom server"
+   },
+   {
+    "d": "Vite + React SPA + Hono over Next.js",
+    "tag": "",
+    "r": "A CLI path argument and a handful of routes fit a thin Node server; Next's custom-server mode fights the framework.",
+    "tone": "good",
+    "mark": "Good",
+    "note": "small API surface, `streamSSE` available for PLAT-01"
+   },
+   {
+    "d": "Built for one user, no distribution concerns",
+    "tag": "",
+    "r": "Removes onboarding, docs, version-compatibility, and contribution surface from scope. Portability across GSD projects is still required.",
+    "tone": "good",
+    "mark": "Good",
+    "note": ""
+   },
+   {
+    "d": "Keep the domain model independent of filesystem and parser modules",
+    "tag": "",
+    "r": "Resolved references and mention indexes are shared contracts; zero-I/O domain types prevent dependency inversion.",
+    "tone": "good",
+    "mark": "Good",
+    "note": "one-way `planning-fs → planning-repo → domain` boundary"
+   },
+   {
+    "d": "Treat dangling references as data, not warnings",
+    "tag": "",
+    "r": "GSD prose routinely mentions identifiers that are not definitions. Warning on each would bury real parse failures.",
+    "tone": "good",
+    "mark": "Good",
+    "note": "`{raw, resolved: null}`, warnings stay high-signal"
+   },
+   {
+    "d": "Sanitize right after `rehype-raw`, before slug/link/Shiki plugins",
+    "tag": "",
+    "r": "Sanitizing after Shiki strips its highlighting. Sanitizing before trusted-markup injection keeps both safety and styling.",
+    "tone": "good",
+    "mark": "Good",
+    "note": ""
+   },
+   {
+    "d": "Keep disagreeing signals separate, never merged (roadmap vs disk, checkbox vs phase status)",
+    "tag": "",
+    "r": "A merged verdict hides exactly the disagreements a user needs to see.",
+    "tone": "good",
+    "mark": "Good",
+    "note": "applied in the dashboard (D-02) and traceability"
+   },
+   {
+    "d": "One captured derived-views bundle per request",
+    "tag": "",
+    "r": "Prevents a concurrent refresh from mixing pre- and post-refresh data in a single response.",
+    "tone": "good",
+    "mark": "Good",
+    "note": "closed D-05; regression-tested"
+   },
+   {
+    "d": "In-memory MiniSearch, rebuilt on start, non-blocking",
+    "tag": "",
+    "r": "A few hundred files index in well under a second; incremental `add`/`remove` fits a future watcher.",
+    "tone": "good",
+    "mark": "Good",
+    "note": "revisit only if corpus size grows substantially"
+   },
+   {
+    "d": "Pin TypeScript 5.9.3 rather than TS7",
+    "tag": "",
+    "r": "TS7 is outside `typescript-eslint@8.67.0`'s peer range.",
+    "tone": "revisit",
+    "mark": "Revisit",
+    "note": "when `typescript-eslint` supports TS7"
+   },
+   {
+    "d": "The per-type view is the page; Source is the escape hatch",
+    "tag": "D-01",
+    "r": "Promoting structure into a secondary panel would leave the generic reader as the primary surface — the thing v1.1 exists to replace.",
+    "tone": "good",
+    "mark": "Good",
+    "note": "one render path, proven across 18 kinds"
+   },
+   {
+    "d": "Extraction keys on where structure lives, not on document purpose",
+    "tag": "",
+    "r": "VERIFICATION and UAT share a purpose but store structure in different places; a purpose taxonomy would still need both paths.",
+    "tone": "good",
+    "mark": "Good",
+    "note": "3 strategies + 18 manifests, no template tier"
+   },
+   {
+    "d": "Design language is a documented allowlist enforced by a test, not a lint rule",
+    "tag": "",
+    "r": "The vocabulary is small and stable; a test that reads the doc's own table keeps the doc and the code from drifting apart.",
+    "tone": "good",
+    "mark": "Good",
+    "note": "every Phase 5 manifest was authored against it"
+   },
+   {
+    "d": "A milestone made of quick tasks, no roadmap phases",
+    "tag": "v2.0",
+    "r": "Per-type polish was many small, independent, design-led changes; a phase per type would have been ceremony.",
+    "tone": "good",
+    "mark": "Good",
+    "note": "40 directory quick tasks shipped; the cost is no phase verification or requirements trail at close"
+   },
+   {
+    "d": "Sketch first, then build the winner, then screenshot against the sketch",
+    "tag": "",
+    "r": "Design choices were made on throwaway HTML, so builds had a concrete target and a visual check.",
+    "tone": "good",
+    "mark": "Good",
+    "note": "the loop behind every v2.0 view"
+   },
+   {
+    "d": "Phase 5 ships the seam, not the polish",
+    "tag": "",
+    "r": "Each type's surface gets its own quick task against the registry; folding all 18 into the phase would have made it a restyle marathon with no shared contract.",
+    "tone": "good",
+    "mark": "Good",
+    "note": "recorded as a deferred follow-up in 05-UAT, carried into Active"
+   },
+   {
+    "d": "One made-up fixture project (Lendshed) replaces every private copy",
+    "tag": "Phase 6",
+    "r": "The repo is public; copies of private planning trees leaked names, hosts and paths, and tests that read sibling checkouts skipped on other machines. One invented project with the same shapes keeps every pin.",
+    "tone": "good",
+    "mark": "Good",
+    "note": "108 files with a per-file quirk ledger; a standing leak test guards it"
+   },
+   {
+    "d": "Timing tests assert growth ratios, never millisecond budgets",
+    "tag": "Phase 6",
+    "r": "Fixed budgets flaked under load and hid real regressions; a growth ratio below each cap measures the algorithm, not the machine.",
+    "tone": "good",
+    "mark": "Good",
+    "note": "standing no-skips scan fails any absolute budget"
+   },
+   {
+    "d": "Mask `config.json` secrets in the handler, in memory only",
+    "tag": "Phase 6",
+    "r": "Masking at parse time means presentation, routes and search can only ever see the masked body; the read-only boundary forbids touching the file.",
+    "tone": "good",
+    "mark": "Good",
+    "note": "raw-text redaction always runs, closing the duplicate-key leak the phase review found"
+   },
+   {
+    "d": "Recognise files by folder as well as name, in one folder table",
+    "tag": "Phase 7",
+    "r": "The same name means different things in different folders; a ROADMAP.md below the root must not take a root document's kind. One table drives both recognition and the URL scheme.",
+    "tone": "good",
+    "mark": "Good",
+    "note": "nothing the walk finds drops out of the model; strays keep a location of `other`"
+   },
+   {
+    "d": "One readable URL per file, prefixed with the project's name, with old links redirected",
+    "tag": "Phase 7",
+    "r": "Encoded tokens were unreadable and unshareable; the project prefix is the seam several projects (Phase 8) needs.",
+    "tone": "good",
+    "mark": "Good",
+    "note": "the token endpoint is gone; redirects replace history so Back skips them"
+   }
+  ],
+  "updated": "2026-11-02 after Phase 8",
+  "counts": {
+   "milestone": "v2.1",
+   "complete": 19,
+   "pending": 29,
+   "earlier": 56,
+   "earlierNote": "v1.0 45 · v1.1 11",
+   "oos": 5
+  }
+ },
+ "lendshed": {
+  "name": "Lendshed",
+  "what": "A web app for a neighbourhood tool library, reachable at `app.lendshed.example`. Members borrow tools from shared sheds, stewards keep each shed's inventory honest, and a loan can move from one shed to another. It replaces a shared spreadsheet and a paper sign-out sheet.",
+  "core": "A member can see what is on the shelf at every shed and borrow it without asking a steward to look it up.",
+  "milestone": "v1.1 Steward Desk",
+  "goal": "Lendshed owns its own sign-in, stewards manage members and permissions in the app, and a steward can export a month of loans as one file.",
+  "constraints": [
+   {
+    "k": "Tech stack",
+    "v": "a small Node server with a SQLite file; one process, one machine."
+   },
+   {
+    "k": "Security",
+    "v": "as of v1.1 the server both signs members in and decides what they may do."
+   },
+   {
+    "k": "Hardware",
+    "v": "runs on a spare mini PC at the Elm Street shed; power cuts happen, so every write is durable."
+   }
+  ],
+  "outOfScope": [
+   {
+    "k": "Payments and deposits",
+    "v": "the library is free; money handling is a different product."
+   },
+   {
+    "k": "Mobile app",
+    "v": "the web app is installable and that is enough for now."
+   }
+  ],
+  "decisions": [
+   {
+    "d": "SQLite file over a hosted database",
+    "tag": "",
+    "r": "One machine, one writer, nothing to operate",
+    "tone": "good",
+    "mark": "Good",
+    "note": ""
+   },
+   {
+    "d": "Shared kiosk passcode for v1.0",
+    "tag": "",
+    "r": "Four stewards, no accounts needed yet",
+    "tone": "good",
+    "mark": "Good",
+    "note": "Good for v1.0 — superseded in v1.1"
+   },
+   {
+    "d": "v1.1: Lendshed owns sign-in",
+    "tag": "",
+    "r": "Per-member permissions need an identity the app holds",
+    "tone": "pending",
+    "mark": "Pending",
+    "note": ""
+   },
+   {
+    "d": "Transfers are tracked rows, not edits",
+    "tag": "",
+    "r": "A tool in transit must still be findable",
+    "tone": "good",
+    "mark": "Good",
+    "note": ""
+   }
+  ],
+  "updated": "2026-04-09 after Phase 3 — Account Admin & Sessions",
+  "counts": {
+   "milestone": "v1.1",
+   "complete": 18,
+   "pending": 6,
+   "earlier": 4,
+   "earlierNote": "v1.0 4",
+   "oos": 2
+  }
+ },
+ "kiln": {
+  "name": "Kiln",
+  "what": "A booking board for a shared pottery studio: members book space on a firing, the kiln tech loads and logs each firing, and finished pieces are tracked until pickup. It replaces the whiteboard by the kiln room door.",
+  "core": "A member knows when their piece will be fired and when it is ready to collect, without asking the kiln tech.",
+  "milestone": "v0.3 Glaze Runs",
+  "goal": "Glaze firings get their own queue with cone and atmosphere, and the kiln tech can record a failed firing and rebook every piece that was on it.",
+  "constraints": [
+   {
+    "k": "Hosting",
+    "v": "one small VPS the studio already pays for; no second service."
+   },
+   {
+    "k": "Devices",
+    "v": "the kiln room tablet is the only device the tech uses, and the room has patchy wifi."
+   },
+   {
+    "k": "Budget",
+    "v": "no paid third-party services beyond email."
+   }
+  ],
+  "outOfScope": [
+   {
+    "k": "Payments",
+    "v": "firing fees stay on the studio membership."
+   },
+   {
+    "k": "Clay and glaze stock",
+    "v": "a different job, kept on the studio spreadsheet."
+   },
+   {
+    "k": "Public gallery",
+    "v": "members share their own work elsewhere."
+   }
+  ],
+  "decisions": [
+   {
+    "d": "Postgres over SQLite",
+    "tag": "",
+    "r": "Two writers (members booking and the tablet logging) at once from the start.",
+    "tone": "good",
+    "mark": "Good",
+    "note": ""
+   },
+   {
+    "d": "Book by firing slot, not by shelf space",
+    "tag": "v0.1",
+    "r": "Slots were simple to explain to members.",
+    "tone": "reversed",
+    "mark": "Reversed",
+    "note": "in v0.2 — shelf space was the real limit; bookings now count shelf units"
+   },
+   {
+    "d": "Magic-link sign-in, no passwords",
+    "tag": "",
+    "r": "Members sign in a few times a month; nobody remembers a password that rarely.",
+    "tone": "good",
+    "mark": "Good",
+    "note": ""
+   },
+   {
+    "d": "The kiln tech logs firings on the room tablet",
+    "tag": "",
+    "r": "The tech is at the kiln, not a desk.",
+    "tone": "good",
+    "mark": "Good",
+    "note": "offline queue added in v0.2"
+   },
+   {
+    "d": "One queue for bisque and glaze",
+    "tag": "v0.1",
+    "r": "Fewer screens for the first release.",
+    "tone": "reversed",
+    "mark": "Reversed",
+    "note": "glaze needs its own cone and atmosphere; split in v0.3"
+   },
+   {
+    "d": "Email for ready-to-collect, no push",
+    "tag": "",
+    "r": "No app install, and email is already paid for.",
+    "tone": "revisit",
+    "mark": "Revisit",
+    "note": "members miss the emails; consider SMS"
+   },
+   {
+    "d": "Every piece gets a photo at drop-off",
+    "tag": "v0.2",
+    "r": "Unlabelled pieces were the most common pickup mix-up.",
+    "tone": "good",
+    "mark": "Good",
+    "note": ""
+   },
+   {
+    "d": "Rebook every piece on a failed firing automatically",
+    "tag": "v0.3",
+    "r": "A failed firing today means a dozen manual rebookings.",
+    "tone": "pending",
+    "mark": "Pending",
+    "note": ""
+   },
+   {
+    "d": "Times shown in the studio time zone only",
+    "tag": "",
+    "r": "Everyone books in person or from nearby.",
+    "tone": "good",
+    "mark": "Good",
+    "note": ""
+   }
+  ],
+  "updated": "2026-10-30 after Phase 2",
+  "counts": {
+   "milestone": "v0.3",
+   "complete": 3,
+   "pending": 9,
+   "earlier": 14,
+   "earlierNote": "v0.1 6 · v0.2 8",
+   "oos": 3
+  }
+ }
+};
+
+
+const ICON = {
+  chev: '<path d="m9 6 6 6-6 6"/>',
+  arrow: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  code: '<path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/>',
+};
+const svg = (n, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const md = (s) => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*([^*]+)\*/g, '<em>$1</em>');
+const TONE = { good: 'complete', revisit: 'in-flight', reversed: 'missing', pending: 'quiet' };
+const MARK_ORDER = ['good', 'revisit', 'reversed', 'pending'];
+const pad = (n) => String(n).padStart(2, '0');
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+
+const params = new URLSearchParams(location.search);
+const VARIANTS = ['a', 'b', 'c', 'b1', 'b2', 'b3'];
+const S = { sel: null, v: VARIANTS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'b', p: params.get('p') || 'labelore', w: 'full', open: new Set(), all: false, rules: false };
+let theme = params.get('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('on'), 1800); }
+const chip = (d) => `<span class="status-chip" data-tone="${TONE[d.tone]}">${d.mark}</span>`;
+// Good is the common case, so it stays quiet (a square and a muted word); only the other outcomes get a chip.
+const outcome = (d) => d.tone === 'good' ? `<span class="ok"><span class="sq" data-tone="complete"></span>Good</span>` : chip(d);
+const tally = (P) => MARK_ORDER.map((t) => [t, P.decisions.filter((d) => d.tone === t).length]).filter(([, n]) => n);
+const markName = { good: 'good', revisit: 'to revisit', reversed: 'reversed', pending: 'pending' };
+const isOpen = (i) => S.all || S.open.has(i);
+const route = (q) => `/${S.p}/traceability${q}`;
+function counts(P) {
+  const c = P.counts;
+  return [
+    { n: c.complete, l: `complete in ${c.milestone}`, tone: 'complete', q: `?milestone=${c.milestone}&state=complete` },
+    { n: c.pending, l: `pending in ${c.milestone}`, tone: 'quiet', q: `?milestone=${c.milestone}&state=pending` },
+    { n: c.earlier, l: 'shipped before', tone: 'complete', q: '?state=validated', note: c.earlierNote },
+    { n: c.oos, l: 'out of scope', tone: 'quiet', q: '?state=out-of-scope' },
+  ];
+}
+const whyBlock = (d) => `<dl class="why"><dt class="micro-label">Why</dt><dd>${md(d.r)}</dd></dl>
+  <dl class="why why-outcome"><dt class="micro-label">How it turned out</dt><dd>${d.note ? md(d.note[0].toUpperCase() + d.note.slice(1)) : d.tone === 'pending' ? 'Not settled yet.' : 'No note — marked ' + d.mark + '.'}</dd></dl>`;
+const appHead = (P) => `<header class="app-head"><span class="app-brand"><i></i>Labelore <span>/ ${esc(P.name)}</span></span>
+  <nav class="app-nav"><a href="#" data-go="dashboard">Dashboard</a><a href="#" aria-current="page">Project</a><a href="#" data-go="roadmap">Roadmap</a><a href="#" data-go="traceability">Requirements</a><a href="#" data-go="research">Research</a><a href="#" data-go="search">Search</a></nav></header>`;
+const foot = (P, cls) => `<footer class="${cls}"><span class="source-note">Last updated ${esc(P.updated || '—')}</span>
+  <a class="text-link" href="#" data-go="dashboard">Where the work is now ${svg('arrow')}</a>
+  <a class="text-link" href="#" data-go="source">${svg('code')}Source</a></footer>`;
+
+/* ---------- A: charter ---------- */
+function variantA(P) {
+  const decisions = P.decisions.map((d, i) => `<li class="ca-entry">
+    <button class="ca-entry-btn" data-toggle="${i}" aria-expanded="${isOpen(i)}">
+      <span class="ca-entry-n">${pad(i + 1)}</span>
+      <span class="ca-entry-d">${md(d.d)}${d.tag ? `<span class="tag">${esc(d.tag)}</span>` : ''}</span>
+      <span class="ca-entry-o">${outcome(d)}${svg('chev', 'chev')}</span>
+    </button>
+    ${isOpen(i) ? `<div class="ca-entry-body">${whyBlock(d)}</div>` : ''}</li>`).join('');
+  return `<main class="ca">
+    <header class="ca-head"><p class="micro-label accent">Project charter</p><h1 class="ca-name">${esc(P.name)}</h1><p class="ca-what">${md(P.what)}</p></header>
+    <section class="ca-core"><p class="micro-label">Core value</p><blockquote>${md(P.core)}</blockquote></section>
+    <section class="ca-now">
+      <p class="ca-now-line"><b class="accent">Now building ${esc(P.milestone)}</b>${md(P.goal)}</p>
+      <p class="ca-counts">${counts(P).map((c) => `<a href="#" data-q="${c.q}" title="${esc(c.note || '')}"><span class="sq" data-tone="${c.tone}"></span><strong>${c.n}</strong> ${c.l}</a>`).join('')}</p>
+    </section>
+    <section class="ca-art"><div class="ca-art-h"><h2>Bound by</h2><span class="source-note">${P.constraints.length} constraints</span></div>
+      <ol class="ca-clauses">${P.constraints.map((c, i) => `<li class="ca-clause"><span class="ca-clause-n">${ROMAN[i]}.</span><p><strong>${md(c.k)}</strong> — ${md(c.v)}</p></li>`).join('')}</ol></section>
+    <section class="ca-art ca-refuse"><div class="ca-art-h"><h2>Will not do</h2><span class="source-note">${P.outOfScope.length} out of scope</span></div>
+      <ol class="ca-clauses">${P.outOfScope.map((c, i) => `<li class="ca-clause"><span class="ca-clause-n">${ROMAN[i]}.</span><p><strong>${md(c.k)}</strong> — ${md(c.v)}</p></li>`).join('')}</ol></section>
+    <section class="ca-art"><div class="ca-art-h"><h2>Decisions</h2><span class="source-note">${P.decisions.length}, in the order they were made</span></div>
+      <div class="ca-tally">${tally(P).map(([t, n]) => `<span><span class="sq" data-tone="${TONE[t]}"></span>${n} ${markName[t]}</span>`).join('')}
+        <button class="text-link" data-all>${S.all ? 'Hide every reason' : 'Show every reason'}</button></div>
+      <ol class="ca-log">${decisions}</ol></section>
+    ${foot(P, 'ca-foot')}</main>`;
+}
+
+/* ---------- B: masthead + spine ---------- */
+function variantB(P) {
+  let lastTag = null;
+  const nodes = P.decisions.map((d, i) => {
+    // An era marker where the author's own tag changes (untagged rows stay in the run they follow).
+    let era = '';
+    if (d.tag && d.tag !== lastTag) { era = `<li class="mb-era micro-label">${esc(d.tag)}</li>`; lastTag = d.tag; }
+    return `${era}<li class="mb-node" id="b-${i}"><span class="sq" data-tone="${TONE[d.tone]}"></span>
+      <button class="mb-node-btn" data-toggle="${i}" aria-expanded="${isOpen(i)}">
+        <span class="mb-node-d">${md(d.d)}</span>
+        <span class="mb-node-meta"><span class="tag">${pad(i + 1)}</span>${d.tone === 'good' ? '' : chip(d)}${svg('chev', 'chev')}</span>
+        ${d.note && !isOpen(i) ? `<span class="mb-node-note">${md(d.note)}</span>` : ''}
+      </button>
+      ${isOpen(i) ? `<div class="mb-node-body">${whyBlock(d)}</div>` : ''}</li>`;
+  }).join('');
+  const rules = (list) => list.map((c) => `<div><dt>${md(c.k)}</dt><dd class="${S.rules ? '' : 'clip'}">${md(c.v)}</dd></div>`).join('');
+  return `<section class="mb-mast"><div class="mb-mast-in">
+      <div class="mb-id"><p class="micro-label accent">Project</p><h1 class="mb-name">${esc(P.name)}</h1><p class="mb-what">${md(P.what)}</p></div>
+      <div class="mb-core"><p class="micro-label">Core value</p><p>${md(P.core)}</p></div>
+    </div>
+    <div class="mb-strip">
+      <div class="mb-cell"><span class="micro-label">Now building ${esc(P.milestone)}</span><p class="mb-goal">${md(P.goal)}</p></div>
+      ${counts(P).map((c) => `<a class="mb-cell" href="#" data-q="${c.q}"><span class="mb-cell-n"><span class="sq" data-tone="${c.tone}"></span>${c.n}</span><span class="mb-cell-l">${c.l}${c.note ? ` · ${esc(c.note)}` : ''}</span></a>`).join('')}
+    </div></section>
+    <div class="mb-body">
+      <section>
+        <div class="mb-sec-h"><h2>Decisions</h2><span class="source-note">${P.decisions.length}, oldest first</span><button class="text-link" data-all>${S.all ? 'Hide every reason' : 'Show every reason'}</button></div>
+        <div class="mb-squares" aria-label="Every decision in order">${P.decisions.map((d, i) => `<button data-jump="${i}" title="${pad(i + 1)} · ${esc(d.d)} — ${d.mark}"><span class="sq" data-tone="${TONE[d.tone]}"></span></button>`).join('')}</div>
+        <div class="mb-legend">${tally(P).map(([t, n]) => `<span><span class="sq" data-tone="${TONE[t]}"></span>${n} ${markName[t]}</span>`).join('')}</div>
+        <ol class="mb-spine">${nodes}</ol>
+      </section>
+      <aside class="mb-aside">
+        <section class="mb-rules"><h2 class="micro-label">Bound by · ${P.constraints.length}</h2><dl>${rules(P.constraints)}</dl></section>
+        <section class="mb-rules refuse"><h2 class="micro-label">Will not do · ${P.outOfScope.length}</h2><dl>${rules(P.outOfScope)}</dl></section>
+        <button class="text-link" data-rules style="justify-self:start">${S.rules ? 'Shorten' : 'Read in full'}</button>
+        <div class="mb-foot"><span class="source-note">Last updated ${esc(P.updated || '—')}</span>
+          <a class="text-link" href="#" data-go="dashboard">Where the work is now ${svg('arrow')}</a>
+          <a class="text-link" href="#" data-go="source">${svg('code')}Source</a></div>
+      </aside>
+    </div>`;
+}
+
+/* ---------- C: spread ---------- */
+function variantC(P) {
+  const rows = P.decisions.map((d, i) => `<li class="cs-row" data-open="${isOpen(i)}">
+    <button class="cs-row-btn" data-toggle="${i}" aria-expanded="${isOpen(i)}">
+      <span class="cs-row-n">${pad(i + 1)}</span>
+      <span class="cs-row-d">${md(d.d)}${d.tag ? `<span class="tag">${esc(d.tag)}</span>` : ''}</span>
+      ${outcome(d)}
+    </button>
+    ${isOpen(i) ? `<div class="cs-row-body">${whyBlock(d)}</div>` : ''}</li>`).join('');
+  // First clause only (up to " — ", ". " or "; "), unless "Read in full" is on.
+  const short = (s) => { const m = s.slice(12).search(/ — |\. |; /); return m < 0 ? s : s.slice(0, m + 12) + ' …'; };
+  const rule = (c) => `<li><strong>${md(c.k)}</strong> — ${md(S.rules ? c.v : short(c.v))}</li>`;
+  return `<main class="cs">
+    <aside class="cs-left">
+      <div style="display:grid;gap:var(--space-2)"><p class="micro-label accent">Project</p><h1 class="cs-name">${esc(P.name)}</h1></div>
+      <p class="cs-core">${md(P.core)}</p>
+      <p class="cs-what">${md(P.what)}</p>
+      <div class="cs-block"><p class="micro-label">Now building ${esc(P.milestone)}</p><p class="cs-goal">${md(P.goal)}</p></div>
+      <div class="cs-block"><p class="micro-label">Requirements</p><div class="cs-counts">${counts(P).map((c) => `<a href="#" data-q="${c.q}"><span class="sq" data-tone="${c.tone}"></span><span>${c.l}</span><strong>${c.n}</strong>${svg('arrow')}</a>`).join('')}</div></div>
+      <div class="cs-block"><p class="micro-label">Bound by · ${P.constraints.length}</p><ul class="cs-rules">${P.constraints.map(rule).join('')}</ul></div>
+      <div class="cs-block"><p class="micro-label">Will not do · ${P.outOfScope.length}</p><ul class="cs-rules refuse">${P.outOfScope.map(rule).join('')}</ul>
+        <button class="text-link cs-more" data-rules>${S.rules ? 'Shorten' : 'Read in full'}</button></div>
+    </aside>
+    <section class="cs-right">
+      <div class="cs-right-h"><h2>Decision log</h2><button class="text-link" data-all>${S.all ? 'Hide every reason' : 'Show every reason'}</button></div>
+      <p class="cs-sub"><span>${P.decisions.length} decisions, oldest first</span>${tally(P).map(([t, n]) => `<span><span class="sq" data-tone="${TONE[t]}"></span>${n} ${markName[t]}</span>`).join('')}</p>
+      <div class="cs-cols micro-label"><span>#</span><span>Decision</span><span>Outcome</span></div>
+      <ol>${rows}</ol>
+      ${foot(P, 'cs-foot')}
+    </section></main>`;
+}
+
+/* ---------- round 2: refinements of B ---------- */
+const isEra = (t) => /^(v\d|Phase )/.test(t);
+const legend = (P) => `<div class="r-legend">${tally(P).map(([t, n]) => `<span><span class="sq" data-tone="${TONE[t]}"></span>${n} ${markName[t]}</span>`).join('')}</div>`;
+const squares = (P) => `<div class="r-squares" aria-label="Every decision in order">${P.decisions.map((d, i) => `<button class="${S.v === 'b3' && S.sel === i ? 'on' : ''}" data-jump="${i}" title="${pad(i + 1)} · ${esc(d.d)} — ${d.mark}"><span class="sq" data-tone="${TONE[d.tone]}"></span></button>`).join('')}</div>`;
+const rcounts = (P) => {
+  const c = P.counts;
+  return [
+    { n: c.complete, l: 'complete', s: `in ${c.milestone}`, tone: 'complete', q: `?milestone=${c.milestone}&state=complete` },
+    { n: c.pending, l: 'pending', s: `in ${c.milestone}`, tone: 'quiet', q: `?milestone=${c.milestone}&state=pending` },
+    { n: c.earlier, l: 'shipped before', s: c.earlierNote, tone: 'complete', q: '?state=validated' },
+    { n: c.oos, l: 'out of scope', s: 'by choice', tone: 'quiet', q: '?state=out-of-scope' },
+  ];
+};
+function rSpine(P, mode) {
+  let era = null;
+  return `<ol class="r-spine">${P.decisions.map((d, i) => {
+    let marker = '';
+    if (d.tag && isEra(d.tag) && d.tag !== era) { era = d.tag; marker = `<li class="r-era" aria-hidden="true"><span></span><i></i><span class="micro-label">${esc(d.tag)}</span></li>`; }
+    const open = mode === 'inline' && isOpen(i);
+    const sel = mode === 'panel' && S.sel === i;
+    return `${marker}<li class="r-node" id="r-${i}" data-sel="${sel}">
+      <button class="r-node-btn" data-${mode === 'panel' ? 'pick' : 'toggle'}="${i}" ${mode === 'panel' ? `aria-pressed="${sel}"` : `aria-expanded="${open}"`}>
+        <span class="r-node-n">${pad(i + 1)}</span><span class="sq" data-tone="${TONE[d.tone]}"></span>
+        <span class="r-node-txt"><span class="r-node-d">${md(d.d)}${d.tag && !isEra(d.tag) ? `<span class="tag" style="margin-left:var(--space-2)">${esc(d.tag)}</span>` : ''}</span>${d.note && !open ? `<span class="r-node-note">${md(d.note)}</span>` : ''}</span>
+        <span class="r-node-o">${d.tone === 'good' ? '' : chip(d)}</span>
+      </button>
+      ${open ? `<div class="r-read">${whyBlock(d)}</div>` : ''}</li>`;
+  }).join('')}</ol>`;
+}
+const rRules = (title, list, refuse, wide) => `<section class="r-rules${refuse ? ' refuse' : ''}"><h2 class="micro-label"><span>${title}</span><span>${list.length}</span></h2>
+  <ol>${list.map((c, i) => `<li><span class="n">${ROMAN[i]}</span><div><strong>${md(c.k)}</strong><p class="${S.rules ? '' : 'clip'}">${md(c.v)}</p></div></li>`).join('')}</ol></section>`;
+const rFoot = (P) => `<div class="r-foot"><span class="source-note">Last updated ${esc(P.updated || '—')}</span>
+  <a class="text-link" href="#" data-go="dashboard">Where the work is now ${svg('arrow')}</a><a class="text-link" href="#" data-go="source">${svg('code')}Source</a></div>`;
+const rDecHead = (P, mode) => `<div class="r-sec-h"><h2>Decisions</h2><span class="source-note">${P.decisions.length}, oldest first</span>${mode === 'inline' ? `<button class="text-link" data-all>${S.all ? 'Hide every reason' : 'Show every reason'}</button>` : ''}</div>
+  <div class="r-overview">${squares(P)}${legend(P)}</div>`;
+const rSplitMast = (P) => `<section class="r-mast"><div class="r-wrap">
+    <div class="r-mast-grid"><div class="r-id"><p class="r-eyebrow micro-label accent">Project</p><h1 class="r-name">${esc(P.name)}</h1><p class="r-what">${md(P.what)}</p></div>
+      <div class="r-core"><p class="micro-label">Core value</p><q>${md(P.core)}</q></div></div>
+    <div class="r-strip"><div class="r-cell"><span class="micro-label">Now building ${esc(P.milestone)}</span><p class="r-goal">${md(P.goal)}</p></div>
+      ${rcounts(P).map((c) => `<a class="r-cell" href="#" data-q="${c.q}"><span class="r-cell-n"><span class="sq" data-tone="${c.tone}"></span>${c.n}</span><span class="r-cell-l">${c.l}</span><span class="r-cell-s">${esc(c.s)}</span></a>`).join('')}</div>
+  </div></section>`;
+const rMargin = (P) => `<aside class="r-aside">${rRules('Bound by', P.constraints)}${rRules('Will not do', P.outOfScope, true)}
+  <button class="text-link" data-rules style="justify-self:start">${S.rules ? 'Shorten' : 'Read in full'}</button>${rFoot(P)}</aside>`;
+
+function variantB1(P) {
+  return rSplitMast(P) + `<div class="r-wrap r-body"><section>${rDecHead(P, 'inline')}${rSpine(P, 'inline')}</section>${rMargin(P)}</div>`;
+}
+function variantB2(P) {
+  const c = P.counts, tot = c.complete + c.pending;
+  return `<section class="r-mast"><div class="r-wrap">
+    <div class="r2-top"><div class="r-id"><p class="micro-label accent">Project</p><h1 class="r-name">${esc(P.name)}</h1></div><p class="r-what">${md(P.what)}</p></div>
+    <div class="r2-core"><p class="micro-label">Core value</p><q>${md(P.core)}</q></div>
+    <div class="r2-now"><p class="micro-label">Now building<br>${esc(P.milestone)}</p><p class="r-goal">${md(P.goal)}</p>
+      <div class="r2-meter"><div class="r2-bar">
+        <a href="#" data-q="?milestone=${c.milestone}&state=complete" data-tone="complete" style="flex:${c.complete}" title="${c.complete} complete"></a>
+        <a href="#" data-q="?milestone=${c.milestone}&state=pending" data-tone="quiet" style="flex:${c.pending}" title="${c.pending} pending"></a></div>
+        <div class="r2-keys"><a href="#" data-q="?milestone=${c.milestone}&state=complete"><span class="sq" data-tone="complete"></span><strong>${c.complete}</strong> of ${tot} complete</a><a href="#" data-q="?milestone=${c.milestone}&state=pending"><span class="sq" data-tone="quiet"></span><strong>${c.pending}</strong> pending</a></div>
+        <div class="r2-keys"><a href="#" data-q="?state=validated" title="${esc(c.earlierNote)}"><strong>${c.earlier}</strong> shipped before</a><a href="#" data-q="?state=out-of-scope"><strong>${c.oos}</strong> out of scope</a></div>
+      </div></div>
+  </div></section><div class="r-wrap r-body"><section>${rDecHead(P, 'inline')}${rSpine(P, 'inline')}</section>${rMargin(P)}</div>`;
+}
+function variantB3(P) {
+  const n = P.decisions.length;
+  if (S.sel == null || S.sel >= n) S.sel = n - 1;
+  const d = P.decisions[S.sel];
+  return rSplitMast(P) + `<div class="r-wrap"><div class="r3-band">${rRules('Bound by', P.constraints)}${rRules('Will not do', P.outOfScope, true)}</div>
+    <button class="text-link" data-rules style="margin-top:var(--space-2)">${S.rules ? 'Shorten' : 'Read the rules in full'}</button></div>
+    <div class="r-wrap r-body"><section>${rDecHead(P, 'panel')}${rSpine(P, 'panel')}</section>
+      <aside class="r3-panel" aria-live="polite">
+        <div class="r3-panel-n"><b>${pad(S.sel + 1)}</b><span class="source-note">of ${n}</span><span style="margin-left:auto">${d.tone === 'good' ? outcome(d) : chip(d)}</span></div>
+        <h3>${md(d.d)}${d.tag ? ` <span class="tag">${esc(d.tag)}</span>` : ''}</h3>
+        ${whyBlock(d)}
+        <div class="r3-nav"><button class="text-link" data-pick="${S.sel - 1}" ${S.sel === 0 ? 'disabled' : ''}>← Earlier</button><button class="text-link" data-pick="${S.sel + 1}" ${S.sel === n - 1 ? 'disabled' : ''}>Later →</button></div>
+      </aside></div>
+    <div class="r-wrap" style="padding-bottom:var(--space-fluid-10)">${rFoot(P)}</div>`;
+}
+
+function render() {
+  const P = PROJECTS[S.p];
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  document.getElementById('frame').dataset.w = S.w;
+  document.getElementById('app').innerHTML = appHead(P) + ({ a: variantA, b: variantB, c: variantC, b1: variantB1, b2: variantB2, b3: variantB3 })[S.v](P);
+  document.querySelectorAll('#sketch-bar [data-v]').forEach((b) => b.classList.toggle('on', b.dataset.v === S.v));
+  document.querySelectorAll('#sketch-bar [data-p]').forEach((b) => b.classList.toggle('on', b.dataset.p === S.p));
+  document.querySelectorAll('#sketch-bar [data-w]').forEach((b) => b.classList.toggle('on', b.dataset.w === S.w));
+  document.querySelectorAll('#sketch-bar [data-theme]').forEach((b) => b.classList.toggle('on', b.dataset.theme === theme));
+}
+
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('button, a');
+  if (!t) return;
+  const d = t.dataset;
+  if (d.v) { S.v = d.v; S.open.clear(); history.replaceState(null, '', '#' + d.v); render(); return; }
+  if (d.p) { S.p = d.p; S.open.clear(); S.all = false; S.sel = null; render(); return; }
+  if (d.w) { S.w = d.w; render(); return; }
+  if (d.theme) { theme = d.theme; render(); return; }
+  if (d.toggle !== undefined) { const i = +d.toggle; if (S.all) { S.all = false; S.open = new Set(PROJECTS[S.p].decisions.map((_, k) => k)); } S.open.has(i) ? S.open.delete(i) : S.open.add(i); render(); document.querySelector(`[data-toggle="${i}"]`)?.focus(); return; }
+  if (d.all !== undefined) { S.all = !S.all; S.open.clear(); render(); return; }
+  if (d.rules !== undefined) { S.rules = !S.rules; render(); return; }
+  if (d.pick !== undefined) { S.sel = +d.pick; render(); document.getElementById('r-' + S.sel)?.scrollIntoView({ block: 'nearest' }); return; }
+  if (d.jump !== undefined && S.v === 'b3') { S.sel = +d.jump; render(); document.getElementById('r-' + S.sel).scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+  if (d.jump !== undefined) {
+    const pre = S.v === 'b' ? 'b-' : 'r-';
+    const n = document.getElementById(pre + d.jump); n.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    n.classList.add('flash'); setTimeout(() => n.classList.remove('flash'), 900); return;
+  }
+  if (d.q) { e.preventDefault(); toast('→ ' + route(d.q)); return; }
+  if (d.go) { e.preventDefault(); toast(d.go === 'source' ? 'Source mode: PROJECT.md as written' : `→ /${S.p}/${d.go === 'dashboard' ? '' : d.go}`); return; }
+});
+addEventListener('hashchange', () => { const h = location.hash.slice(1); if (VARIANTS.includes(h)) { S.v = h; render(); } });
+addEventListener('keydown', (e) => { if (S.v !== 'b3' || !['ArrowLeft', 'ArrowRight'].includes(e.key) || e.target.closest('input')) return; const n = PROJECTS[S.p].decisions.length; S.sel = Math.max(0, Math.min(n - 1, (S.sel ?? n - 1) + (e.key === 'ArrowRight' ? 1 : -1))); render(); document.getElementById('r-' + S.sel)?.scrollIntoView({ block: 'nearest' }); });
+render();
+</script>
+</body>
+</html>
