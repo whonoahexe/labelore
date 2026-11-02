@@ -37,6 +37,12 @@ files and workstreams (Phase 11), `config.json` settings page and Source mode (P
 - **D-03:** The planner must confirm each redirect target actually shows what its file holds (e.g.
   that the dashboard covers STATE.md's position, blockers and session line). A real gap found here is
   filled on the target page, not by building a second page for the file.
+  *Amended 2026-11-02 after research (user decision):* the gaps filled are the STATE.md session line
+  (Session Continuity, Deferred Items, Operator Next Steps) on the dashboard and the remaining
+  MILESTONES fields in the roadmap History panel. Accepted gaps, not built this phase: retrospective
+  seeding (the RETROSPECTIVE.md redirect lands on the retrospective view without picking an entry)
+  and the unshown retrospective sections (What Was Built, Cost Observations, Cross-Milestone Trends,
+  versions with no History block).
 
 ### Project page (PROJECT.md)
 - **D-04:** `PROJECT.md` gets a **new designed project page**: what the project is, core value, the

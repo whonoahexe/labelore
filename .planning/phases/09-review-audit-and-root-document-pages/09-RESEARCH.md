@@ -436,7 +436,7 @@ return documentOutcome(route.url, presentation) ?? NOT_FOUND;
 | A7 | Fixed-row detail falls back to the disposition's Source/Note text before "Commit not recorded" | Pitfall 6 | Minor copy deviation from UI-SPEC |
 | A8 | The five redirected kinds are exempted from the unrecognised-type notice on their Source escape page | Pitfall 1 | Otherwise the "no dedicated view" notice appears (SC1) |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Contract conflicts to resolve before planning (two)**
    - What we know: UI-SPEC 4.2 (head totals over REVIEW findings) and UI-SPEC section 2 (Source via `file/`) both fail against real data/code (Pitfalls 1-2).
@@ -524,3 +524,6 @@ UI-SPEC where noted.
 | Open Question 3: D-03 gaps | **Fill:** (a) the STATE.md session line on the dashboard (Session Continuity, with Deferred Items and Operator Next Steps); (b) the remaining MILESTONES fields (accomplishments, stats, phases and the extra fields) in `MilestoneRecordPanel`. **Do not build:** retrospective seeding (no `?retrospective=` mechanism; the RETROSPECTIVE.md redirect lands on the retrospective view without picking an entry) and the unshown retrospective sections (What Was Built, Cost Observations, Cross-Milestone Trends, and versions with no History block). Record both as accepted gaps against D-03. |
 | A4 | Taken as recommended: `*-REVIEW-shard-*` files stay unrecognised this phase (recorded decision). |
 | A5, A6, A7 | Taken as recommended. |
+| Open Question 4: fixed-window grouping | Taken as recommended: group by the verbatim phase string, so mixed strings (`03-04`, `quick/260727-3mo`) form separate groups. The screenshot review may revisit it. |
+| UI-SPEC §6: orphan archived copy (checker W3) | **Keep the notice.** An archived root document with no matching History block falls back to the generic document view **with** its existing "no dedicated view" notice, as UI-SPEC §6 says. The notice exemption for the redirected kinds applies only to the `?source=1` escape page, not to every view. |
+| ROADMAP SC5 vs D-13 (checker W1) | **Keep D-13.** Only the project page is sketched (041 B). The other four pages are built from analogs and screenshot-checked. ROADMAP SC5 was reworded to match. |
