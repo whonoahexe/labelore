@@ -88,7 +88,8 @@ Declared values (all multiples of 4), applied through existing tokens:
 | 3xl | 64px | Masthead vertical padding only, through `--space-fluid-10` |
 
 Exceptions:
-- Sketch-locked sub-grid values on the project page, kept because the sketch was approved with them: the spine rail and node geometry (`0.15rem`/`0.45rem` offsets that centre a `.sq` on a 1px rail), the 3px gap between jump-strip squares, and the square sizes (`0.6rem` node squares, `0.85rem` jump-strip squares). They are decoration geometry, not layout spacing. The planner writes them as `calc()` over `--space-*` tokens where an exact token exists and otherwise as one named custom property per page (`--view-project-node-offset`) so no bare `px`/`rem` appears in a rule.
+- Sketch-locked sub-grid values on the project page, kept because the sketch was approved with them: the spine rail and node geometry (`0.15rem`/`0.45rem` offsets that centre a `.sq` on a 1px rail), the square sizes (`0.6rem` node squares, `0.85rem` jump-strip squares). They are decoration geometry, not layout spacing. The planner writes them as `calc()` over `--space-*` tokens where an exact token exists and otherwise as one named custom property per page (`--view-project-node-offset`) so no bare `px`/`rem` appears in a rule.
+- The gap between jump-strip squares is 4px (`--space-1`), rounded up from the sketch's 3px so every gap is a scale value; the difference is invisible at 0.85rem squares.
 - The jump-strip squares have a hit area of at least 24px square under `@media (pointer: coarse)` (padding around the visible square); fine pointers keep the visible 0.85rem square.
 - Tab links (`xs` button) are 28px high; on coarse pointers the ledger tab strip rises to 40px (`Button` size `sm`).
 
@@ -96,20 +97,29 @@ Exceptions:
 
 ## Typography
 
-Four base roles, two weights, all existing scale steps. Nothing new enters the scale.
+Four sizes for every page this phase adds, two weights, all existing scale steps. Nothing new enters the scale.
 
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Label (uppercase micro-labels: "Core value", "Bound by", group labels, chip text, tab counts) | 11.2px (`--fs-2`), `--font-mono`, `--ls-widest` | 600 (`--fw-semibold`) | 1.4 (`--lh-snug`) |
 | Meta (notes under a row, reasons, dates, source notes, file paths, legend) | 12.16px (`--fs-3`) | 500 (`--fw-medium`) | 1.55 (`--lh-normal`) |
-| Body (row titles, finding titles, gap text, decision text, constraints) | 13.12px (`--fs-4`) to 14.4px (`--fs-5`, decision statements on the spine only) | 500; 600 for names and bold leads | 1.4 (`--lh-snug`) for titles, 1.55 for prose |
-| Heading (section `h2`, tile numerals, windows and ledger lead numbers) | 20.8px (`--fs-7`) | 600 (`--fw-semibold`) | 1.2 (`--lh-tight`) |
+| Body (row titles, finding titles, gap text, decision text, constraints, goal text; one step, `--fs-4`) | 13.12px (`--fs-4`) | 500; 600 for names and bold leads | 1.4 (`--lh-snug`) for titles, 1.55 for prose |
+| Heading (section `h2`, tile numerals, and the lead numbers on the windows, audit and review heads: open count, score, open-of-total) | 20.8px (`--fs-7`); numerals in `--font-mono` | 600 (`--fw-semibold`) | 1.2 (`--lh-tight`) |
 
-Sketch-locked display exceptions (project page masthead only, copied from sketch 041 B, each an
-existing token): the project name uses `--fs-display-3` at weight 600, `--lh-display`, `--ls-tighter`;
-the core value uses `--fs-fluid-3` at `--lh-tight`, `--ls-tight`, balanced wrap. The ledger lead numbers
-on the windows, audit and review heads use `--fs-fluid-4` in `--font-mono` at 600 so the first number
-on the page is the largest thing on it. No other page element exceeds Heading.
+The windows, review-ledger, audit and coverage pages declare exactly these four and nothing else. The
+lead numbers are Heading size (the earlier `--fs-fluid-4` step is dropped: those pages are not sketched,
+so there is nothing to preserve). Page-level furniture that every document page already renders through
+shared classes (`h1` in `ArtifactHeader`, `.eyebrow`, `.lede`, `.status-chip`, `.text-link`) keeps the
+size its class sets and is not redeclared here.
+
+**Project page (sketch 041 B, locked "as drawn").** It uses the four sizes above plus three
+sketch-locked steps, each an existing token copied from the sketch: the project name at
+`--fs-display-3` (weight 600, `--lh-display`, `--ls-tighter`); the core value at `--fs-fluid-3`
+(`--lh-tight`, `--ls-tight`, balanced wrap); and the decision statements on the spine at `--fs-5`
+(14.4px, `--lh-snug`). The first two are user-locked display sizes. That makes seven on this one page,
+which exceeds the four-size cap; the count is held open for the user to rule on rather than being
+reduced by editing the sketch (see the revision conflict raised with this contract). No other element
+on any page exceeds Heading.
 
 - Weights are `--fw-medium` and `--fw-semibold` only. No `--fw-bold`.
 - Every `Button`/tab label sets its size to Meta (`--fs-3`) through a className override.
@@ -159,6 +169,8 @@ of meaning: it always sits beside a word or has an `aria-label`/`title`.
 4. The archived-milestone arrival highlight: the target block's `--primary-tint` background and 2px `--primary` left rule (`data-target="true"`), present until the user navigates away.
 5. The keyboard focus ring (`--ring` is `--primary`, already global).
 
+Expected density: on every page except the project page, accent shows as the eyebrow plus a handful of `complete` squares or chips, well under a tenth of the visible area. On the project page the Good decision squares are the densest accent: on Labelore's own PROJECT.md roughly two thirds of 27 decisions are Good, so about 18 spine squares plus 18 jump-strip squares are filled `--primary`. This is justified because the squares are 0.6rem and 0.85rem marks on a mostly `--background` page (area stays well under 10%), the sketch was approved with them, and each carries a word or `aria-label`, so the accent marks a state and never decorates. The 10% rule binds area, not count.
+
 Not accent: links (`.text-link` / `.source-link` as they stand), the pressed ledger tab (the `secondary` button variant), chips other than `complete`, severity pips, headings, numerals, the spine rail, the count tiles' borders, the jump-strip hover outline (`--foreground`).
 
 Focal point per page: project page, the core-value card (accent top rule) beside the project name; windows, the lead count; review ledger, the open-of-total number in the shared head; audit, the verdict chip; coverage, the integrated-versus-opted-out split.
@@ -190,12 +202,12 @@ View mode, top to bottom:
      | 4 | out of scope | "out of scope" | "by choice" | traceability, state out-of-scope |
 
    - Counts come only from the traceability projection (D-05), never from PROJECT.md's bullets. With no REQUIREMENTS.md/projection the four tiles are omitted and the goal cell spans the strip. A count of 0 is shown as `0` (dashed square), not hidden.
-   - **Gap to close in the plan:** the traceability page's filter is "local component state only — never URL state" (`traceability-filter.ts`), and the tile links need a filtered target. The plan adds a `?milestone=` and `?state=` read to the traceability page as initial filter state (read once on arrival; the page keeps its in-page controls). This is a change to an existing page, and is the only one this phase makes to traceability besides the archived highlight (section 6).
+   - **Gap to close in the plan:** the traceability page's filter is "local component state only — never URL state" (`traceability-filter.ts`), and the tile links need a filtered target. The contract locks the read: the traceability page reads `?milestone=` (a milestone slug such as `v2.0`; absent means the current milestone) and `?state=` (one of `complete`, `pending`, `validated`, `out-of-scope`) once on arrival and seeds a new `state` axis in the filter state beside the existing `status` axis, then keeps its in-page controls and never writes the address back. An unrecognised value is ignored silently and the page opens unfiltered. Tile 3 sends `?state=validated` with no `milestone`. This is a change to an existing page, and is the only one this phase makes to traceability besides the archived highlight (section 6).
 3. **Body**: two columns, `minmax(0,1fr)` and a 22rem margin (single column under 42rem, margin content after the spine, not sticky).
    - **Decisions** (main column). Heading row: `h2` "Decisions", muted "{n}, oldest first" (`source-note`), right-aligned `text-link` "Show every reason" / "Hide every reason". Below it the **jump strip**: one square button per decision in the author's order, each `aria-label="{nn} {decision}: {outcome}"` and `title`, activating scrolls to and briefly marks the row (`data-flash`, a `--primary-tint` background, no animation). Then the tally legend (square + "{n} good", "{n} revisit", "{n} reversed", "{n} pending"; a zero tally is omitted).
    - **Spine**: an `<ol>` with a 1px `--border` rail. Each row: an outcome `status-square` on the rail; the decision statement (Body, `--fs-5`, wraps); on the right a meta cluster (the decision's own trailing tag lifted out as a `quiet` chip, then an outcome chip for Revisit/Reversed/Pending only; Good has no chip); the **outcome note** under the row in Meta, muted, clamped to 2 lines. The row is a `<button>` with `aria-expanded`; opening it reveals "Why" and "How it turned out" blocks (label + text, `--fs-4`) below the row. Keyboard: Enter/Space toggles; Tab walks rows; no custom arrow keys (round 2's reader is rejected).
    - **Era markers**: a short horizontal tick on the rail plus a mono `Label` (`v2.0`, `Phase 6`) where the author's milestone or phase tag changes (`/^(v\d|Phase )/`). Other tags (`D-01`, `(quick)`) stay as the inline `quiet` chip only. Markers are `aria-hidden`.
-   - **Margin** (sticky at `top` under the shell header, `align-self: start`): "Bound by · {n}" (`h2` as Label) with a `<dl>`: constraint name in `dt` (Body, 600), its text in `dd` (Meta, muted) clamped to 2 lines; "Will not do · {n}" with the same list, `dt` struck through (1px, `--muted-foreground`). One `text-link` "Read in full" / "Shorten" un-clamps both lists (page-local state, default clamped). Footer: `source-note` "Last updated {date}" and `text-link` "Where the work is now" with an arrow icon, linking to the dashboard.
+   - **Margin** (sticky at `top` under the shell header, `align-self: start`): "Bound by · {n}" (`h2` as Label) with a `<dl>`: constraint name in `dt` (Body, 600), its text in `dd` (Meta, muted) clamped to 2 lines; "Will not do · {n}" with the same list, `dt` struck through (1px, `--muted-foreground`). One `text-link` "Read in full" / "Shorten lists" un-clamps both lists (page-local state, default clamped). Footer: `source-note` "Last updated {date}" and `text-link` "Where the work is now" with an arrow icon, linking to the dashboard.
 4. Not shown in View mode (stay behind Source): Current State, Context, the requirement bullets (Validated/Active/Out of Scope), and any section the page does not claim. An "In the source only" strip is not added: the View/Source toggle is the way back, and the strip would repeat prose the intake asked to hide.
 
 Dashboard side (D-04): `dashboard-head.ts` gains one `text-link` "About this project" with an arrow icon, after the What This Is lead. It is the page's only new control there. The project page's footer link closes the pair.
@@ -218,12 +230,15 @@ No new visual surface. The route table redirects the live root document addresse
 | PROJECT.md | project page (section 1) |
 
 Drawer entries and search results for these files lead to the same place. Because a redirect leaves
-the raw text unreachable, **the planner picks one mechanism and records it**: recommended is a quiet
-`Source` icon button (`aria-label="View source of STATE.md"`, `title` "View source") on the drawer
-and search entry for each redirected file, which opens the file in Source mode through the existing
-`file/` fallback address. Pages do not name their source file (the dashboard rule from sketch 026
-stays true). This is the one place the contract defers a mechanism; it must not be left unresolved
-in the plan, and Phase 12 (SRC-02) refines the Source address.
+the raw text unreachable, **the mechanism is locked** (CONTEXT D-01, "Source mode stays reachable"): every
+drawer entry and search result for a redirected file carries a quiet `Source` icon button
+(`aria-label="View source of STATE.md"`, `title` "View source", lucide `FileText`, `ghost` `xs`
+`Button`) beside the link. It opens the file at the existing `file/` fallback address, which is the
+generic document page and is not in the redirect table; there the header's View/Source toggle reaches
+the raw text. Pre-selecting Source from the address is not added here (Phase 12, SRC-02, refines the
+Source address). Pages do not name their source file (the dashboard rule from sketch 026 stays true).
+The plan's only open item is the exact `file/` address form, which it confirms against
+`route-dispatch.ts`.
 
 D-03 gap check (a plan task, not a design): compare each redirect target with what its file holds.
 STATE.md position, blockers, session line and last activity versus the dashboard; MILESTONES.md rows
@@ -235,7 +250,7 @@ never by a second page for the file.
 
 Route: `/{project}/windows`. `.eyebrow` "Broken windows", the `h1` "Broken windows ledger", `lede` "Defects that were deferred, waived or not yet checked, across every phase."
 
-1. **Lead (always, D-06).** A `page-intro`-weight band: the open count in the lead number style (`--fs-fluid-4`, mono) beside the word "open", a tone chip (`complete` "0 open" when zero, `in-flight` otherwise), then one muted line: "{f} fixed, last on {date}" (when any fixed with a resolved date), "{w} waived" (when any), "{t} in total". With zero open the sentence is "Nothing open. {f} fixed, last on {date}." The page keeps the same shape whether or not anything is open: lead, then Open, then Waived, then Fixed history, with an empty group shown as one `empty-note` line ("Nothing open." / "Nothing waived.").
+1. **Lead (always, D-06).** A `page-intro`-weight band: the open count in the lead number style (Heading size, `--fs-7`, mono) beside the word "open", a tone chip (`complete` "0 open" when zero, `in-flight` otherwise), then one muted line: "{f} fixed, last on {date}" (when any fixed with a resolved date), "{w} waived" (when any), "{t} in total". With zero open the sentence is "Nothing open. {f} fixed, last on {date}." The page keeps the same shape whether or not anything is open: lead, then Open, then Waived, then Fixed history, with an empty group shown as one `empty-note` line ("Nothing open." / "Nothing waived.").
 2. **Open and Waived**, one section each, rows grouped by phase (group head: phase label in `Label`, then a count; groups in the order phases first appear; `quick/260727-3mo`-style values are shown verbatim). A row: `status-square`, the id in mono (`#8`), a `quiet` kind chip, the description (Body, clamped to 3 lines with "Read more" `text-link` when longer), then Meta: file path in mono (`file:line`, line omitted when empty, end-ellipsis, full value in `title`) and "Recorded {date}". A waived row adds the **reason** beneath in a left-ruled note (3px `--muted-foreground` rule on `--card`, the TODO note-card treatment) labelled "Waived because"; a waived row with no reason shows the dashed `quiet` line "No reason recorded".
 3. **Fixed history**: one `<details>` per phase (`history-*` family), all collapsed, summary "{phase} · {n} fixed" with a trailing count; the body lists the rows as above with the resolved date. When there are none the section is omitted (the lead already says it).
 4. **Source of truth (planner picks per CONTEXT).** Read the fenced JSON block first, then the table, then the frontmatter counts. If the counts in the frontmatter disagree with the rows actually listed, show a `notice` (plain, no `destructive`) above the lead: "This file's counts disagree with its rows: it says {a} open, the ledger lists {b}. The rows are shown." The two numbers are never merged.
@@ -254,6 +269,7 @@ quick-task and archived-phase equivalents; each opens the same page on its own t
 3. **Review tab**: the existing review threads page, unchanged, below the head.
 4. **Disposition tab (D-10).** Groups in this fixed order, an empty group omitted: **Open** (`in-flight`), **Deferred** (`quiet`), **Skipped** (`quiet`, dashed square), **Fixed** (`complete`). Group head: `status-square`, name (Label), count. Each row: severity pip with the finding id, the finding title, and then Meta: for Deferred and Skipped the **reason** in full (never clamped to less than 3 lines; "Read more" beyond that); for Fixed the commit (mono, taken from the fix file where one exists, else "Commit not recorded" in `quiet`). Unknown disposition values go to a final "Other" group with their value shown verbatim.
 5. **Fix tab (D-09).** One section per fix file, each an `<section id="fix-{suffix}">` with a labelled heading: the suffix title-cased ("Backend", "Frontend"), muted file name in mono beside it; a single unsuffixed file has no section heading. Section lead: its own status/counts from frontmatter ("2 fixed, 0 skipped" and the fixed-at date). Rows grouped Fixed, Skipped, Deferred; each row: finding id pip, title, files modified as mono chips (capped at 3 then "+N"), commit (mono), and for Skipped/Deferred the reason. Shared head totals across every fix file. The tab link opens at the first section; a section anchor is shareable.
+5a. A fix file whose body lists no entries still gets its section and lead, and under it one `empty-note` line: "No fixes listed for this file."
 6. A finding id that appears in one file and not the others still shows on its own tab; a fix-file entry with an id the review does not hold is listed under a final "Not in the review" `quiet` group.
 7. Live phases, archived phases and quick tasks follow the same rules.
 
@@ -318,7 +334,7 @@ is shown verbatim through the existing inline tokenizer and never re-worded.
 | Project page eyebrow / h1 | "Project" / the project name |
 | Project labels | "Core value" / "Now building {milestone}" / "Decisions" / "{n}, oldest first" / "Bound by · {n}" / "Will not do · {n}" |
 | Count tiles | "complete" · "in {milestone}" / "pending" · "in {milestone}" / "shipped before" · "{v1.0 45 · v1.1 11}" / "out of scope" · "by choice" |
-| Decision controls | "Show every reason" / "Hide every reason"; margin: "Read in full" / "Shorten"; reveal labels "Why" / "How it turned out" |
+| Decision controls | "Show every reason" / "Hide every reason"; margin: "Read in full" / "Shorten lists"; reveal labels "Why" / "How it turned out" |
 | Project footer | "Last updated {date}" / "Where the work is now" |
 | Windows eyebrow / h1 / lede | "Broken windows" / "Broken windows ledger" / "Defects that were deferred, waived or not yet checked, across every phase." |
 | Windows lead | "{n} open" with the sentence "{f} fixed, last on {date}" (zero open: "Nothing open. {f} fixed, last on {date}.") |
@@ -330,7 +346,7 @@ is shown verbatim through the existing inline tokenizer and never re-worded.
 | Review head | "{open}" over "of {total} findings"; severity rows "{open} of {total} open"; disagreement line "{n} open here are marked fixed in the fix report" |
 | Disagreement mark | "Fixed in {commit}, disposition not updated" |
 | Disposition groups | "Open" / "Deferred" / "Skipped" / "Fixed" / "Other"; missing commit: "Commit not recorded" |
-| Fix sections | "{Suffix}" with the file name beside it; sub-groups "Fixed" / "Skipped" / "Deferred"; stray ids: "Not in the review" |
+| Fix sections | "{Suffix}" with the file name beside it; sub-groups "Fixed" / "Skipped" / "Deferred"; stray ids: "Not in the review"; a fix file with no entries: "No fixes listed for this file." |
 | Audit eyebrow / verdicts | "Milestone audit" / "Passed", "Tech debt only", "Gaps found", "Verdict not stated" |
 | Audit sections | "Scores" / "Gaps" / "Tech debt" / "Audit narrative" |
 | Audit empty gap group | "No gaps" |
@@ -340,7 +356,7 @@ is shown verbatim through the existing inline tokenizer and never re-worded.
 | Coverage one-line card | heading "No external API in this phase" with the file's reason beneath |
 | Coverage matrix | "{n} integrated, {m} opted out" / groups "Integrated", "Opted out", "Other" / chips "Integrate", "Opt out" / missing reason "No reason given" |
 | Read more | "Read more" / "Read less" (inline `text-link`, in place) |
-| Empty state heading | Per page, quiet one-liners above ("Nothing open.", "No gaps", "No external API in this phase"). Absence is otherwise silent; the shared string "Nothing here yet." is used only where a visible absence surface is genuinely needed (an empty Fix tab section). |
+| Empty state heading | Per page, quiet one-liners above ("Nothing open.", "No gaps", "No external API in this phase"). Absence is otherwise silent; where a visible absence surface is genuinely needed, the copy names the specific absence ("No fixes listed for this file." for an empty Fix tab section). No generic "nothing here" string is used anywhere. |
 | Empty state body | None beyond the one-liner; the Source toggle is the way to the raw text. |
 | Error state | A file the page cannot shape opens the generic document view with the existing warning chip and notice ("This file has a shape this page did not expect, so it is shown as a plain document."); no new error screen. A partly readable file shows what it can and leaves out the rest silently. |
 | Destructive confirmation | None. This phase has no destructive or writing action. |
@@ -396,9 +412,8 @@ reduced motion (nothing animates); no optimistic UI and no state held anywhere b
 only client state is "Show every reason", "Read in full", disclosure open state and the ledger tab,
 all local and lost on reload, as for every other view); the read-only guarantee (no control writes,
 no form, no mutation); public repository (all fixtures are made up and labelled, D-15; real files on
-this machine are read for shape only); English only; and the two findings the contract
-asks the planner to settle rather than assume: the redirected files' Source mechanism (section 2) and
-the traceability `?state=` deep link (section 1).
+this machine are read for shape only); English only; and the one finding the contract
+asks the planner to confirm rather than assume: the exact `file/` address form for the Source button (section 2).
 
 ---
 
