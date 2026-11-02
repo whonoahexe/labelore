@@ -97,7 +97,7 @@ Exceptions:
 
 ## Typography
 
-Four sizes for every page this phase adds, two weights, all existing scale steps. Nothing new enters the scale.
+The cap is **four font sizes per page**, two weights, all existing scale steps. Nothing new enters the scale.
 
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
@@ -106,20 +106,27 @@ Four sizes for every page this phase adds, two weights, all existing scale steps
 | Body (row titles, finding titles, gap text, decision text, constraints, goal text; one step, `--fs-4`) | 13.12px (`--fs-4`) | 500; 600 for names and bold leads | 1.4 (`--lh-snug`) for titles, 1.55 for prose |
 | Heading (section `h2`, tile numerals, and the lead numbers on the windows, audit and review heads: open count, score, open-of-total) | 20.8px (`--fs-7`); numerals in `--font-mono` | 600 (`--fw-semibold`) | 1.2 (`--lh-tight`) |
 
-The windows, review-ledger, audit and coverage pages declare exactly these four and nothing else. The
-lead numbers are Heading size (the earlier `--fs-fluid-4` step is dropped: those pages are not sketched,
+Declared sizes per page:
+
+| Page | Sizes declared | Count |
+|------|----------------|-------|
+| Windows ledger | `--fs-2`, `--fs-3`, `--fs-4`, `--fs-7` | 4 |
+| Review ledger (Review, Disposition, Fix) | `--fs-2`, `--fs-3`, `--fs-4`, `--fs-7` | 4 |
+| Milestone audit | `--fs-2`, `--fs-3`, `--fs-4`, `--fs-7` | 4 |
+| Coverage | `--fs-2`, `--fs-3`, `--fs-4`, `--fs-7` | 4 |
+| Project page | `--fs-2`, `--fs-3`, `--fs-4`, `--fs-7`, `--fs-5`, `--fs-fluid-3`, `--fs-display-3` | 7 (exception below) |
+
+The lead numbers are Heading size (the earlier `--fs-fluid-4` step is dropped: those pages are not sketched,
 so there is nothing to preserve). Page-level furniture that every document page already renders through
 shared classes (`h1` in `ArtifactHeader`, `.eyebrow`, `.lede`, `.status-chip`, `.text-link`) keeps the
 size its class sets and is not redeclared here.
 
-**Project page (sketch 041 B, locked "as drawn").** It uses the four sizes above plus three
-sketch-locked steps, each an existing token copied from the sketch: the project name at
-`--fs-display-3` (weight 600, `--lh-display`, `--ls-tighter`); the core value at `--fs-fluid-3`
-(`--lh-tight`, `--ls-tight`, balanced wrap); and the decision statements on the spine at `--fs-5`
-(14.4px, `--lh-snug`). The first two are user-locked display sizes. That makes seven on this one page,
-which exceeds the four-size cap; the count is held open for the user to rule on rather than being
-reduced by editing the sketch (see the revision conflict raised with this contract). No other element
-on any page exceeds Heading.
+**Project page exception: user-approved 2026-11-02 (Alternative A), sketch-locked.** Sketch 041 B is
+locked "as drawn" and itself uses seven sizes. The page uses the four above plus three sketch-locked
+steps, each an existing token copied from the sketch: the project name at `--fs-display-3` (weight 600,
+`--lh-display`, `--ls-tighter`); the core value at `--fs-fluid-3` (`--lh-tight`, `--ls-tight`, balanced
+wrap); and the decision statements on the spine at `--fs-5` (14.4px, `--lh-snug`). No other element on
+any page exceeds Heading.
 
 - Weights are `--fw-medium` and `--fw-semibold` only. No `--fw-bold`.
 - Every `Button`/tab label sets its size to Meta (`--fs-3`) through a className override.
