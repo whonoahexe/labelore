@@ -56,7 +56,7 @@ rule. Spacing is token-only (`--space-*`, `--space-fluid-*`). No motion anywhere
 Enumerated by `ls src/web/components/ui/*.tsx | wc -l` — 3 components — @base-ui/react@1.7.0 (resolved from node_modules; 83 package exports via `node -p "Object.keys(require('@base-ui/react/package.json').exports || {}).length"`) — 2026-11-02.
 Mismatch: `npx shadcn info` reported "No components installed", filesystem has 3 (the primitives were hand-authored; the CLI does not track them).
 
-This table is a **non-exhaustive** list of known-good components, never a closed allowlist. The
+The first three rows are the enumerated `ui` primitives; PairSwitch and ArtifactHeader are app components under `src/web/components`, and the `<details>`, Popover, Tooltip and Collapsible rows are not part of the count (native element and package exports). This table is a **non-exhaustive** list of known-good components, never a closed allowlist. The
 executor may use any `@base-ui/react` export; checking for one outside the table is the expected path.
 
 | Component | Import path | Notes |
@@ -97,39 +97,59 @@ Exceptions:
 
 ## Typography
 
-The cap is **four font sizes per page**, two weights, all existing scale steps. Nothing new enters the scale.
+The cap is **four font sizes per page, counting everything that renders on the page** (ArtifactHeader,
+its breadcrumbs and buttons, chips, links, notes, details summaries), two weights, all existing scale
+steps. Nothing new enters the scale. The app shell (top navigation, drawer) sits outside the page and is
+not counted.
 
-| Role | Size | Weight | Line Height |
-|------|------|--------|-------------|
-| Label (uppercase micro-labels: "Core value", "Bound by", group labels, chip text, tab counts) | 11.2px (`--fs-2`), `--font-mono`, `--ls-widest` | 600 (`--fw-semibold`) | 1.4 (`--lh-snug`) |
-| Meta (notes under a row, reasons, dates, source notes, file paths, legend) | 12.16px (`--fs-3`) | 500 (`--fw-medium`) | 1.55 (`--lh-normal`) |
-| Body (row titles, finding titles, gap text, decision text, constraints, goal text; one step, `--fs-4`) | 13.12px (`--fs-4`) | 500; 600 for names and bold leads | 1.4 (`--lh-snug`) for titles, 1.55 for prose |
-| Heading (section `h2`, tile numerals, and the lead numbers on the windows, audit and review heads: open count, score, open-of-total) | 20.8px (`--fs-7`); numerals in `--font-mono` | 600 (`--fw-semibold`) | 1.2 (`--lh-tight`) |
+### Non-project pages (windows ledger, review ledger Disposition and Fix tabs with their shared head, milestone audit, coverage)
 
-Declared sizes per page:
+Exactly these four sizes. Roles keep their names so the layout sections below read the same; on these
+pages Meta and Body are one size and differ by colour and weight only.
 
-| Page | Sizes declared | Count |
-|------|----------------|-------|
-| Windows ledger | `--fs-2`, `--fs-3`, `--fs-4`, `--fs-7` | 4 |
-| Review ledger (Review, Disposition, Fix) | `--fs-2`, `--fs-3`, `--fs-4`, `--fs-7` | 4 |
-| Milestone audit | `--fs-2`, `--fs-3`, `--fs-4`, `--fs-7` | 4 |
-| Coverage | `--fs-2`, `--fs-3`, `--fs-4`, `--fs-7` | 4 |
-| Project page | `--fs-2`, `--fs-3`, `--fs-4`, `--fs-7`, `--fs-5`, `--fs-fluid-3`, `--fs-display-3` | 7 (exception below) |
+| Role | Size | Weight | Line Height | Renders |
+|------|------|--------|-------------|---------|
+| Display | 44.8px to 92px, fluid (`--fs-display-3`) | 600, `--lh-display`, `--ls-tighter` | 0.9 | Only the `h1`, from `ArtifactHeader`, unmodified |
+| Heading | 20.8px (`--fs-7`) | 600 (`--fw-semibold`) | 1.2 (`--lh-tight`) | Section `h2`, ledger group heads (`h3`), the lead numbers (open count, open-of-total, score), the audit verdict chip text |
+| Body and Meta | 13.12px (`--fs-4`) | 500; 600 for names, ids-as-titles and bold leads | 1.4 (`--lh-snug`) titles, 1.55 (`--lh-normal`) prose | Row titles, finding titles, gap and debt text, reasons, notes, dates, legends, `source-note`, `empty-note`, `notice` text, `quiet-state` text; Meta is the same size in `--muted-foreground` |
+| Label | 11.2px (`--fs-2`) | 600 (`--fw-semibold`); `--font-mono` for ids, commits, paths, line numbers, counts | 1.4 (`--lh-snug`) | `.eyebrow`, breadcrumbs, `.text-link`, `.status-chip`, `Button` and tab labels (View/Source toggle, copy path, ledger tabs), `view-review-sev` pips, group labels, `<summary>` lines, tab counts |
 
-The lead numbers are Heading size (the earlier `--fs-fluid-4` step is dropped: those pages are not sketched,
-so there is nothing to preserve). Page-level furniture that every document page already renders through
-shared classes (`h1` in `ArtifactHeader`, `.eyebrow`, `.lede`, `.status-chip`, `.text-link`) keeps the
-size its class sets and is not redeclared here.
+Where a shared class sets a size outside this set, the page takes it inside with a **page-scoped rule**
+in the existing precedent (`.artifact-page:has(.view-<kind>-…) <selector> { font-size: … }`, as the plan
+page already does for `.artifact-heading h1`). No shared class is edited, so the vocabulary is not forked:
 
-**Project page exception: user-approved 2026-11-02 (Alternative A), sketch-locked.** Sketch 041 B is
-locked "as drawn" and itself uses seven sizes. The page uses the four above plus three sketch-locked
-steps, each an existing token copied from the sketch: the project name at `--fs-display-3` (weight 600,
-`--lh-display`, `--ls-tighter`); the core value at `--fs-fluid-3` (`--lh-tight`, `--ls-tight`, balanced
-wrap); and the decision statements on the spine at `--fs-5` (14.4px, `--lh-snug`). No other element on
-any page exceeds Heading.
+| Shared class | Shared size | On these pages |
+|--------------|-------------|----------------|
+| `.status-chip` (and `.formal-status`) | `--fs-1` | `--fs-2`; the audit verdict chip `--fs-7` |
+| `.source-note` | `--fs-1` | `--fs-4` |
+| `.empty-note` | `--fs-3` | `--fs-4` |
+| `.history-milestone > summary small`, any `small` | `--fs-1` | not used; summary text is `--fs-2` and descendants inherit |
+| `Button` base (`text-xs`, 12px, uppercase) | 12px | `--fs-2` through the className/page-scoped override, including the header's View/Source toggle and copy-path |
+| `.notice h2` | `--fs-6` | not used: a notice here is a `p` only (Windows counts-disagree line) |
+| `.lede`, `.artifact-lead` | `--fs-fluid-1` | not used: no page passes `lead` to `ArtifactHeader` or renders a `.lede`. The Windows explanation sentence is a `source-note` line (Body size) under the lead |
+| `.page-intro h1` | `--fs-display-3` | not used; `ArtifactHeader`'s `h1` is the same size |
+
+Mono items (ids, commits, file paths, line numbers, counts) are Label size even where a layout line files them under "Meta" or "Body"; the prose beside them is Body and Meta size.
+
+Per page, the full rendered set is `--fs-display-3`, `--fs-7`, `--fs-4`, `--fs-2`: **4** on the windows
+ledger, the Disposition and Fix tabs with the shared head, the milestone audit, and the coverage page.
+
+**Review tab (scope note).** The Review tab renders the shipped review threads page (sketch 022, Phase 5)
+unmodified, as the "Review tab: the existing page" rule requires and as a lone REVIEW already does today.
+That shipped view is outside this phase's cap; this contract adds no size to it. Everything Phase 9 adds
+to the review page (strip, shared head, Disposition, Fix) is inside the four.
+
+### Project page exception: user-approved 2026-11-02 (Alternative A), sketch-locked
+
+Sketch 041 B is locked "as drawn" and itself uses seven sizes: `--fs-2`, `--fs-3`, `--fs-4`, `--fs-7`,
+`--fs-5`, `--fs-fluid-3`, `--fs-display-3`, each an existing token copied from the sketch. Roles on this
+page: Label `--fs-2`; Meta `--fs-3` (notes, legend, source notes, `dd` text); Body `--fs-4` (goal, `dt`,
+reveal text); Heading `--fs-7` (section `h2`, tile numerals); decision statements on the spine `--fs-5`
+(`--lh-snug`); the project name `--fs-display-3` (weight 600, `--lh-display`, `--ls-tighter`); the core
+value `--fs-fluid-3` (`--lh-tight`, `--ls-tight`, balanced wrap). Shared chips on this page keep their
+own `--fs-1`, as drawn. No other element on any page exceeds the sizes named for it.
 
 - Weights are `--fw-medium` and `--fw-semibold` only. No `--fw-bold`.
-- Every `Button`/tab label sets its size to Meta (`--fs-3`) through a className override.
 - Mono is for ids (`WR-03`, `INT-W1`, `#8`), commits, file paths and line numbers, counts, and micro-labels. Prose is Space Grotesk.
 
 ---
@@ -255,9 +275,9 @@ never by a second page for the file.
 
 ### 3. Windows ledger (WINDOWS.md; analogs: todo lifecycle 027, UAT lists)
 
-Route: `/{project}/windows`. `.eyebrow` "Broken windows", the `h1` "Broken windows ledger", `lede` "Defects that were deferred, waived or not yet checked, across every phase."
+Route: `/{project}/windows`. `.eyebrow` "Broken windows", the `h1` "Broken windows ledger", then one `source-note` line (Body size, no `.lede`): "Defects that were deferred, waived or not yet checked, across every phase."
 
-1. **Lead (always, D-06).** A `page-intro`-weight band: the open count in the lead number style (Heading size, `--fs-7`, mono) beside the word "open", a tone chip (`complete` "0 open" when zero, `in-flight` otherwise), then one muted line: "{f} fixed, last on {date}" (when any fixed with a resolved date), "{w} waived" (when any), "{t} in total". With zero open the sentence is "Nothing open. {f} fixed, last on {date}." The page keeps the same shape whether or not anything is open: lead, then Open, then Waived, then Fixed history, with an empty group shown as one `empty-note` line ("Nothing open." / "Nothing waived.").
+1. **Lead (always, D-06).** A band under the header (no second `h1`): the open count in the lead number style (Heading size, `--fs-7`, mono) beside the word "open", a tone chip (`complete` "0 open" when zero, `in-flight` otherwise), then one muted line: "{f} fixed, last on {date}" (when any fixed with a resolved date), "{w} waived" (when any), "{t} in total". With zero open the sentence is "Nothing open. {f} fixed, last on {date}." The page keeps the same shape whether or not anything is open: lead, then Open, then Waived, then Fixed history, with an empty group shown as one `empty-note` line ("Nothing open." / "Nothing waived.").
 2. **Open and Waived**, one section each, rows grouped by phase (group head: phase label in `Label`, then a count; groups in the order phases first appear; `quick/260727-3mo`-style values are shown verbatim). A row: `status-square`, the id in mono (`#8`), a `quiet` kind chip, the description (Body, clamped to 3 lines with "Read more" `text-link` when longer), then Meta: file path in mono (`file:line`, line omitted when empty, end-ellipsis, full value in `title`) and "Recorded {date}". A waived row adds the **reason** beneath in a left-ruled note (3px `--muted-foreground` rule on `--card`, the TODO note-card treatment) labelled "Waived because"; a waived row with no reason shows the dashed `quiet` line "No reason recorded".
 3. **Fixed history**: one `<details>` per phase (`history-*` family), all collapsed, summary "{phase} · {n} fixed" with a trailing count; the body lists the rows as above with the resolved date. When there are none the section is omitted (the lead already says it).
 4. **Source of truth (planner picks per CONTEXT).** Read the fenced JSON block first, then the table, then the frontmatter counts. If the counts in the frontmatter disagree with the rows actually listed, show a `notice` (plain, no `destructive`) above the lead: "This file's counts disagree with its rows: it says {a} open, the ledger lists {b}. The rows are shown." The two numbers are never merged.
@@ -269,7 +289,7 @@ Routes (Phase 7 D-06): `/{project}/phase-N/review`, `.../review-disposition`, `.
 quick-task and archived-phase equivalents; each opens the same page on its own tab. The page uses
 `ArtifactHeader`, then:
 
-1. **Tab strip, only when a second file exists (D-11).** A `nav` (`aria-label="Review files"`) of `Link`s styled as `PairSwitch` is: Review, Disposition, Fix, with the pressed tab `aria-current="page"` (`secondary` variant, others `ghost`). A tab appears only for a file that exists; no disabled or "missing" tab. With a lone REVIEW the page is byte-for-byte today's review page: no strip, no shared head. Several fix files are one "Fix" tab. A tab's trailing count is the number of findings that file speaks to, in Label type.
+1. **Tab strip, only when a second file exists (D-11).** A `nav` (`aria-label="Review files"`) of `Link`s styled as `PairSwitch` is: Review, Disposition, Fix, with the pressed tab `aria-current="page"` (`secondary` variant, others `ghost`). A tab appears only for a file that exists; no disabled or "missing" tab. With a lone REVIEW the page is byte-for-byte today's review page: no strip, no shared head. Several fix files are one "Fix" tab. A tab's trailing count is the number of findings that file speaks to, in Label size.
 2. **Shared head (appears with the strip).** The open-of-total number: open count in the lead number style over "of {total} findings" (Meta). Beside it one row per severity present, in this order: critical, warning, info. Each row: the severity pip (the existing `view-review-sev`), the severity word, "{open} of {total} open", and a segmented bar of `status-square`s (one per finding, filled for fixed, otherwise by severity tone). A severity with no findings is omitted. Totals are over the REVIEW findings; if there is no REVIEW file, over the disposition's findings, else the fix files'.
    - **Open comes from the disposition (D-08).** A finding the disposition leaves `open` is counted open even when a fix file says fixed. With no disposition file the head shows no open count: it shows the total and "{n} fixed in the fix report" only, and the REVIEW tab keeps its existing outcome tally logic.
    - **The disagreement mark (D-08).** Where a fix file says a finding was fixed and the disposition still says `open`, the finding carries a `quiet` chip "Fixed in {commit}, disposition not updated" (commit as a 7-character mono hash, full value in `title`), wherever the finding appears (Review thread header, Disposition Open group, Fix section). The two signals are never merged: the head counts it as open, and the head's muted line says "{n} open here are marked fixed in the fix report" when n > 0.
@@ -284,7 +304,7 @@ quick-task and archived-phase equivalents; each opens the same page on its own t
 
 Route: the audit's own file address under its milestone (`/{project}/v2.0/audit`; planner confirms against the route table). Cover, then ledgers:
 
-1. **Cover.** `.eyebrow` "Milestone audit", `h1` "{milestone_name or milestone}" (falls back to the title, then the file name), meta row: the **verdict chip** (large; text "Passed" / "Tech debt only" / "Gaps found" / the raw status verbatim; "Verdict not stated" `quiet` when absent) and "Audited {date}". The verdict is the first thing on the page.
+1. **Cover.** `.eyebrow` "Milestone audit", `h1` "{milestone_name or milestone}" (falls back to the title, then the file name), meta row: the **verdict chip** (large: `--fs-7`, weight 600; text "Passed" / "Tech debt only" / "Gaps found" / the raw status verbatim; "Verdict not stated" `quiet` when absent) and "Audited {date}". The verdict is the first thing on the page.
 2. **Scores.** A row of tiles, one per key under `scores` in the author's order (`requirements`, `phases`, `integration`, `flows`, any other verbatim): label, then `34/34` in the lead number style, then a segmented bar (one segment per unit when the denominator is at most 24, otherwise a proportional bar). Values `n/m`, `{n: , m:}`, a percentage or a bare number are all accepted; a value the page cannot read is shown verbatim as text with no bar. No `scores` key: the row is omitted (silent).
 3. **Gaps.** Three groups in this order, from `gaps` frontmatter (`requirements`, `integration`, `flows`; any other key appended): each a head with `status-square`, name and count. Empty reads **"No gaps"** in the `complete` tone, one line, never a blank section. A gap row: id in mono (extracted when the text starts with one), the gap statement, and its **evidence** (Meta, muted, clamped to 3 lines with "Read more"); an object-shaped gap prints its known fields (`id`, `description`, `evidence`, `status`) and shows unknown fields as a labelled `dl`.
 4. **Tech debt by phase.** One group per `tech_debt` entry, in file order: head = phase (verbatim, with the mono phase number split from its slug when it has one) and "{n} items". Rows: an extracted leading id (`INT-W1`, `WR-03`, `IN-01`, `AUTH-06`) as a mono chip, an extracted status word in parentheses (`deferred`, `open`, `advisory`, `skipped by design`) as a `quiet` chip, then the text (Body, clamped to 3 lines, "Read more" in place). `cross-phase (integration)` and `planning-docs` are valid group names and render verbatim. A total ("{n} items across {m} phases") sits in the section head.
@@ -307,7 +327,7 @@ Route: the phase `coverage` address (Phase 7 grammar). `ArtifactHeader` eyebrow 
 
 ### 8. New class vocabulary (to add to `docs/design-language.md` before the class-vocabulary test is run)
 
-Reuse before inventing: `page-stack`, `page-intro`, `eyebrow`, `lede`, `section-heading`, `status-chip`, `notice`, `empty-note`, `quiet-state`, `source-note`, `text-link`, `source-link`, `sr-only`, `min-w-0`, `artifact-page`, `artifact-document`, `artifact-metadata`, `history-*`, `plan-pair-switch` (the ledger switch reuses its look) need no new rows.
+Reuse before inventing: `page-stack`, `page-intro`, `eyebrow`, `section-heading`, `status-chip`, `notice`, `empty-note`, `quiet-state`, `source-note`, `text-link`, `source-link`, `sr-only`, `min-w-0`, `artifact-page`, `artifact-document`, `artifact-metadata`, `history-*`, `plan-pair-switch` (the ledger switch reuses its look) need no new rows.
 
 - **One new shared name:** `status-square` (the four-tone square, `data-tone`). Row text: "A square mark; the tone says finished, waiting, missing or neutral. Never the only carrier of meaning."
 - **View-local names (no table row; add each kind to `VIEW_LOCAL_PREFIXES` through `VIEW_KINDS`):** `view-project-*` (masthead, core card, strip, tile, spine, node, era, jump, margin, rules), `view-windows-*` (lead, group, row, reason), `view-milestone-audit-*` (cover, score, gap, debt, nyquist), `view-coverage-*` (card, matrix, row). The review ledger stays inside the existing `view-review-*` namespace (`view-review-ledger-*`, `view-review-head`, `view-review-group`), because the three files are one page.
@@ -343,7 +363,7 @@ is shown verbatim through the existing inline tokenizer and never re-worded.
 | Count tiles | "complete" · "in {milestone}" / "pending" · "in {milestone}" / "shipped before" · "{v1.0 45 · v1.1 11}" / "out of scope" · "by choice" |
 | Decision controls | "Show every reason" / "Hide every reason"; margin: "Read in full" / "Shorten lists"; reveal labels "Why" / "How it turned out" |
 | Project footer | "Last updated {date}" / "Where the work is now" |
-| Windows eyebrow / h1 / lede | "Broken windows" / "Broken windows ledger" / "Defects that were deferred, waived or not yet checked, across every phase." |
+| Windows eyebrow / h1 / note | "Broken windows" / "Broken windows ledger" / "Defects that were deferred, waived or not yet checked, across every phase." (a `source-note` line, not a `lede`) |
 | Windows lead | "{n} open" with the sentence "{f} fixed, last on {date}" (zero open: "Nothing open. {f} fixed, last on {date}.") |
 | Windows empty groups | "Nothing open." / "Nothing waived." |
 | Windows waived | label "Waived because"; missing reason: "No reason recorded" |
