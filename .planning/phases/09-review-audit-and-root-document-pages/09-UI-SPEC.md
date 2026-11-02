@@ -1,7 +1,7 @@
 ---
 phase: "09"
 slug: review-audit-and-root-document-pages
-status: draft
+status: approved
 shadcn_initialized: true
 preset: b7WOYcsqY
 created: "2026-11-02"
@@ -392,7 +392,7 @@ is shown verbatim through the existing inline tokenizer and never re-worded.
 
 ## UI Considerations
 
-Applicable state considerations resolved: 24 covered, 6 backstop, 0 unresolved.
+Applicable state considerations resolved: 25 covered, 6 backstop, 0 unresolved.
 
 | Category | Element(s) | Status | Resolution / Reason |
 |----------|------------|--------|---------------------|
@@ -405,6 +405,7 @@ Applicable state considerations resolved: 24 covered, 6 backstop, 0 unresolved.
 | loading | nav (archived-copy arrival) | ✅ covered | The scroll to the milestone block waits for layout through the existing `scroll-settle` helper before highlighting, as the roadmap deep link does |
 | error | static-content (unreadable or odd file) | ✅ covered | Falls back to the generic document view with the existing warning chip and notice (Copywriting, Error state); no page throws |
 | error | list-collection (windows counts disagree) | ✅ covered | A plain `notice` states both numbers; the rows are shown; nothing is merged |
+| error | nav (archived copy with no History block) | ✅ covered | An archive file whose milestone the roadmap does not list falls back to the generic document view with its existing notice (section 6); no blank highlight target |
 | error | list-collection (traceability projection missing) | ✅ covered | The four project count tiles are omitted and the goal cell spans the strip; no zero is invented |
 | partial | list-collection (disposition vs fix disagree) | ✅ covered | The "Fixed in {commit}, disposition not updated" `quiet` chip, and the head still counts the finding open (D-08) |
 | partial | static-content (audit frontmatter fields missing) | ✅ covered | Each missing field falls back to prose, then to silence; no scores row without `scores`; "Verdict not stated" without a status |
@@ -455,12 +456,12 @@ asks the planner to confirm rather than assume: the exact `file/` address form f
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
-- [ ] Dimension 7 Inventory Provenance: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: BLOCK — force-approved by the user 2026-11-02 after 2 revisions. Accepted: (a) the project page's sketch-locked exception (Alternative A); (b) the milestone audit's folded "Audit narrative" renders the shared `artifact-document` body at its own sizes, like every other document; (c) the shipped Review tab is out of scope. Planner note: do not use `.section-heading h2` (`--fs-fluid-3`) on the new non-project pages; use the declared Heading role.
+- [x] Dimension 5 Spacing: FLAG (accepted — sketch-locked rail/square geometry; `--space-fluid-*` resolve between their clamp endpoints)
+- [x] Dimension 6 Registry Safety: PASS
+- [x] Dimension 7 Inventory Provenance: PASS
 
-**Approval:** pending
+**Approval:** force-approved 2026-11-02 (FLAGs accepted)
