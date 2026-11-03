@@ -70,7 +70,23 @@
               "Rationale": "Proves `roadmapComplete` and observed disk state can legitimately disagree even when there is no milestone at all",
               "Outcome": "— Pending"
             }
-          ]
+          ],
+          "project": {
+            "milestone": null,
+            "constraints": [
+              {
+                "name": "Fixture",
+                "text": "Deliberately minimal — one phase, no history, no milestones/."
+              }
+            ],
+            "outOfScope": [
+              {
+                "name": "",
+                "text": "Everything beyond the first slice — this fixture exists to prove one narrow code path."
+              }
+            ],
+            "lastUpdated": "2026-08-22 after initialization"
+          }
         }
       },
       ".planning/REQUIREMENTS.md": {

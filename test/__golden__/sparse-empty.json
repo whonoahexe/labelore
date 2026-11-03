@@ -48,7 +48,23 @@
               "Rationale": "Proves the null-milestone, no-structure code path",
               "Outcome": "— Pending"
             }
-          ]
+          ],
+          "project": {
+            "milestone": null,
+            "constraints": [
+              {
+                "name": "Fixture",
+                "text": "Deliberately minimal — no ROADMAP.md, no phases/, no milestones/."
+              }
+            ],
+            "outOfScope": [
+              {
+                "name": "",
+                "text": "Everything else — this fixture exists to be sparse."
+              }
+            ],
+            "lastUpdated": "2026-08-21 after initialization"
+          }
         }
       },
       ".planning/REQUIREMENTS.md": {
