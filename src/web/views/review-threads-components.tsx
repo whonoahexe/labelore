@@ -23,6 +23,7 @@ import type {
   ComposedReviewFinding,
   ComposedReviewStamp,
   ComposedReviewThreads,
+  ComposedStaleMark,
 } from './review-threads.ts';
 
 // ---------------------------------------------------------------------------
@@ -34,6 +35,18 @@ function Stamp({ stamp }: { stamp: ComposedReviewStamp }): React.JSX.Element {
     <span className="status-chip view-review-stamp" data-tone={stamp.tone} data-outcome={stamp.outcome}>
       {stamp.label}
       {stamp.commit !== null ? <span className="view-review-commit">{stamp.commit}</span> : null}
+    </span>
+  );
+}
+
+/** The quiet disagreement chip: the fix file says fixed, the disposition still says open (D-08). Deliberately not
+ * the `complete` tone - it is a note about two records parting ways, not a result. */
+function StaleMark({ mark }: { mark: ComposedStaleMark }): React.JSX.Element {
+  return (
+    <span className="status-chip view-review-stale" data-tone={mark.tone} title={mark.commit !== null ? mark.commit.full : undefined}>
+      {mark.commit !== null
+        ? `Fixed in ${mark.commit.short}, disposition not updated`
+        : 'Fixed in the fix report, disposition not updated'}
     </span>
   );
 }
@@ -103,6 +116,7 @@ function Thread({
             <ResearchInline text={finding.title} />
           </h3>
           <Stamp stamp={finding.stamp} />
+          {finding.staleMark !== null ? <StaleMark mark={finding.staleMark} /> : null}
           {canFold ? (
             <button type="button" className="view-review-link" title="Fold this fixed thread" onClick={() => onFold(finding.id)}>
               Fold −
@@ -158,7 +172,10 @@ function ResolvedRow({ finding, onUnfold }: { finding: ComposedReviewFinding; on
       <span className="view-review-resolved-text">
         <span className="view-review-mono">{finding.id}</span> · <ResearchInline text={finding.title} />
       </span>
-      <Stamp stamp={finding.stamp} />
+      <span className="view-review-resolved-marks">
+        <Stamp stamp={finding.stamp} />
+        {finding.staleMark !== null ? <StaleMark mark={finding.staleMark} /> : null}
+      </span>
     </button>
   );
 }
