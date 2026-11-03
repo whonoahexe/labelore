@@ -97,6 +97,11 @@ const PINNED: Record<string, Pinned> = {
     disposition: { mitigate: 41, accept: 17 }, columns: { S: 8, T: 32, I: 12, D: 4, E: 2 }, boundaries: 32,
     destinations: 3, singles: 22, stores: 2, risks: 0, audit: 2, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
   },
+  'LB:phases/09-review-audit-and-root-document-pages/09-SECURITY.md': {
+    rows: 48, open: 0, openLow: 0, closed: 48, severity: { medium: 18, low: 30 },
+    disposition: { mitigate: 32, accept: 16 }, columns: { S: 4, T: 29, R: 2, I: 4, D: 9 }, boundaries: 20,
+    destinations: 5, singles: 10, stores: 0, risks: 0, audit: 1, signoff: [4, 4], extras: [], grouped: false, status: 'verified',
+  },
   'LB:phases/07-recognised-files-and-readable-urls/07-SECURITY.md': {
     rows: 43, open: 0, openLow: 0, closed: 43, severity: { high: 9, medium: 17, low: 17 },
     disposition: { mitigate: 31, accept: 12 }, columns: { S: 6, T: 19, R: 2, I: 10, D: 5, E: 1 }, boundaries: 18,
