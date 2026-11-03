@@ -27722,6 +27722,59 @@ button.research-step-chip:hover {
   background: transparent;
 }
 
+/* The Disposition tab (09-13): a deferral's or skip's reason is clamped to 3 lines with an in-place
+   "Read more"; Deferred's square is a solid quiet outline, Skipped's the shared dashed one. */
+.view-review-ledger-reason-block {
+  display: grid;
+  gap: var(--space-1);
+  justify-items: start;
+  min-width: 0;
+}
+
+.view-review-ledger-reason[data-clamped='true'] {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.view-review-ledger-more-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.view-review-ledger-more-button:hover {
+  color: var(--primary);
+}
+
+.view-review-group-square[data-dashed='false'] {
+  border-style: solid;
+}
+
+/* The stale-disposition chip (09-13) sits beside the outcome stamp on the review thread's header and its folded
+   row, and on the ledger's Open and Fix rows; it wraps rather than overflows. */
+.view-review-resolved-marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.view-review-stale {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 42rem) {
   .view-review-ledger-head,
   .view-review-ledger-row {

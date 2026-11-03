@@ -9,15 +9,18 @@ import { readFileSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { ReviewFixHandler, ReviewHandler } from '../../src/planning-repo/handlers/review.ts';
 import type { ArtifactRef, RawArtifact } from '../../src/planning-repo/types.ts';
 import type { ReviewContext } from '../../src/presentation/review-context.ts';
+import { buildLedgerContext } from '../../src/presentation/review-ledger.ts';
+import type { LedgerContext } from '../../src/presentation/review-ledger.ts';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 import { composeReviewThreads } from '../../src/web/views/review-threads.ts';
 import type { ComposedReviewFinding, ComposedReviewThreads } from '../../src/web/views/review-threads.ts';
 import { ReviewThreadsView } from '../../src/web/views/review-threads-components.tsx';
-import { fxPath } from '../helpers/fixture-project.ts';
+import { fxPath, loadFixtureProject } from '../helpers/fixture-project.ts';
+import type { LoadedProject } from '../helpers/fixture-project.ts';
 
 const FIXTURES = new URL('../fixtures/review/', import.meta.url).pathname;
 // Lendshed review files, by the shape each one carries.
@@ -571,5 +574,65 @@ describe('quiet files, the files dialog, the Also row and the footer', () => {
     expect(markupOf(catalogue)).not.toContain('Show fixed threads');
     expect(markupOf(lb05)).not.toContain('Show fixed threads');
     expect(markupOf(roles).match(/href=/g)).toHaveLength(1);
+  });
+});
+
+// Phase 9 (09-13): the quiet "Fixed in {commit}, disposition not updated" mark comes from the ledger context.
+describe('the stale-disposition mark', () => {
+  const REVIEW_01 = 'phases/01-member-sign-in-sessions/01-REVIEW.md';
+  const FIX_01 = 'phases/01-member-sign-in-sessions/01-REVIEW-FIX.md';
+  const REVIEW_03 = 'phases/03-account-admin-and-sessions/03-REVIEW.md';
+  let lendshed: LoadedProject;
+  beforeAll(async () => {
+    lendshed = await loadFixtureProject();
+  });
+
+  const ledgerOf = (path: string): LedgerContext =>
+    buildLedgerContext(lendshed.presentation, lendshed.registry, `.planning/${path}`)!;
+  const marked = (model: ComposedReviewThreads): string[] =>
+    model.threads.files.flatMap((file) =>
+      file.findings.filter((finding) => finding.staleMark !== null).map((finding) => finding.id),
+    );
+
+  it('puts a mark on CR-01 and WR-01 only, with their fix commits, on a review whose disposition leaves them open', () => {
+    const input: ViewInput = { ...inputOf(L(REVIEW_01), contextOf(L(FIX_01))), ledgerContext: ledgerOf(REVIEW_01) };
+    const model = composeReviewThreads(input)!;
+    expect(marked(model).sort()).toEqual(['CR-01', 'WR-01']);
+    expect(findingOf(model, 'CR-01').staleMark).toEqual({ tone: 'quiet', commit: { short: 'c41e9d7', full: 'c41e9d7' } });
+    expect(findingOf(model, 'WR-01').staleMark).toEqual({ tone: 'quiet', commit: { short: '5ab20f3', full: '5ab20f3' } });
+    expect(findingOf(model, 'IN-01').staleMark).toBeNull();
+  });
+
+  it('gives no finding a mark without a disposition, without a ledger context, or with junk in its place', () => {
+    const base = inputOf(L(REVIEW_03), null);
+    expect(marked(composeReviewThreads({ ...base, ledgerContext: ledgerOf(REVIEW_03) })!)).toEqual([]);
+    expect(marked(composeReviewThreads(base)!)).toEqual([]);
+    for (const junk of [null, 7, 'x', [], { marks: 5 }, { marks: { 'CR-01': 5 } }]) {
+      const model = composeReviewThreads({
+        ...inputOf(L(REVIEW_01), contextOf(L(FIX_01))),
+        ledgerContext: junk as never,
+      })!;
+      expect(marked(model)).toEqual([]);
+    }
+  });
+
+  it('draws the chip quiet with the 7-character commit and the full value in title, on the folded row and the header', () => {
+    const input: ViewInput = { ...inputOf(L(REVIEW_01), contextOf(L(FIX_01))), ledgerContext: ledgerOf(REVIEW_01) };
+    const model = composeReviewThreads(input)!;
+    const folded = markupOf(model);
+    expect(folded).toContain('data-tone="quiet" title="c41e9d7">Fixed in c41e9d7, disposition not updated</span>');
+    const unfolded = markupOf(model, ['CR-01']);
+    expect(unfolded.match(/disposition not updated/g)!.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('draws a mark with no commit as "Fixed in the fix report, disposition not updated"', () => {
+    const context = ledgerOf(REVIEW_01);
+    const noCommit: LedgerContext = { ...context, marks: { 'CR-01': { commit: null } } };
+    const model = composeReviewThreads({
+      ...inputOf(L(REVIEW_01), contextOf(L(FIX_01))),
+      ledgerContext: noCommit,
+    })!;
+    expect(findingOf(model, 'CR-01').staleMark).toEqual({ tone: 'quiet', commit: null });
+    expect(markupOf(model)).toContain('Fixed in the fix report, disposition not updated');
   });
 });

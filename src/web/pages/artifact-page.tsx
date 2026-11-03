@@ -89,7 +89,7 @@ import { UiReviewIntroMeta, UiReviewView } from '../views/ui-review-components.t
 import type { ReviewContext } from '../../presentation/review-context.ts';
 import type { LedgerContext } from '../../presentation/review-ledger.ts';
 import type { ComposedReviewLedger } from '../views/review-ledger.ts';
-import { FixTabView, fixHeaderProps, ledgerSwitcher } from '../views/review-ledger-components.tsx';
+import { LedgerTabView, ledgerHeaderProps, ledgerSwitcher } from '../views/review-ledger-components.tsx';
 import type { TodoContext } from '../../presentation/todo-context.ts';
 import type { NoteContext } from '../../presentation/note-context.ts';
 import type { ProjectContext } from '../../presentation/project-context.ts';
@@ -814,7 +814,7 @@ export function ArtifactPage({
     if (!manifest || !viewInput) return null;
     return manifest.reviewThreads?.(viewInput) ?? null;
   }, [manifest, viewInput]);
-  // Phase 9 (09-12): the review ledger's Fix tab, when the resolved manifest opts into one - `null` for every
+  // Phase 9 (09-12, 09-13): the review ledger's Fix or Disposition tab, when the resolved manifest opts into one - `null` for every
   // other kind and for a payload from a server that predates `ledgerContext` (the promoted-block view then
   // renders).
   const reviewLedger = useMemo<ComposedReviewLedger | null>(() => {
@@ -1232,13 +1232,13 @@ export function ArtifactPage({
   // The WINDOWS ledger's header override rides the same one-prop spread, and its lead band carries the
   // counts the metadata disclosure would repeat, so View mode hides the disclosure for it.
   const windowsCover = windowsLedger && mode === 'view' ? windowsLedger : null;
-  // The Fix tab's header override rides the same one-prop spread; its sections carry the counts the
+  // The Fix and Disposition tabs' header override rides the same one-prop spread; its sections carry the counts the
   // metadata disclosure would repeat, so View mode hides the disclosure for it.
   const fixCover = reviewLedger && mode === 'view' ? reviewLedger : null;
   const headerOverride =
     validationHeader ??
     (windowsCover ? windowsHeaderProps(windowsCover, artifact.title) : null) ??
-    (fixCover ? fixHeaderProps(fixCover, artifact.title) : null);
+    (fixCover ? ledgerHeaderProps(fixCover, artifact.title) : null);
   return (
     <main className="artifact-page page-stack">
         {switcher}
@@ -1418,7 +1418,7 @@ export function ArtifactPage({
       ) : windowsCover ? (
         <WindowsLedgerView key={artifact.path} model={windowsCover} />
       ) : fixCover ? (
-        <FixTabView key={artifact.path} model={fixCover} />
+        <LedgerTabView key={artifact.path} model={fixCover} />
       ) : viewAvailable && mode === 'view' && composed && shown ? (
         <ViewReader title={artifact.title} composed={composed} shown={shown} />
       ) : (
