@@ -64,7 +64,9 @@ import { DebugCaseView } from '../views/debug-case-components.tsx';
 import type { ComposedTodoLifecycle } from '../views/todo-lifecycle.ts';
 import { TodoLifecycleView } from '../views/todo-lifecycle-components.tsx';
 import type { ComposedNotePage } from '../views/note-page.ts';
+import type { ComposedProjectPage } from '../views/project-page.ts';
 import { NotePageView } from '../views/note-page-components.tsx';
+import { ProjectPageView } from '../views/project-page-components.tsx';
 import type { ComposedPlanNavigator } from '../views/plan-navigator.ts';
 import { PlanIntroMeta, PlanNavigatorView } from '../views/plan-navigator-components.tsx';
 import { findPlanContext } from '../views/plan-context.ts';
@@ -85,6 +87,7 @@ import { UiReviewIntroMeta, UiReviewView } from '../views/ui-review-components.t
 import type { ReviewContext } from '../../presentation/review-context.ts';
 import type { TodoContext } from '../../presentation/todo-context.ts';
 import type { NoteContext } from '../../presentation/note-context.ts';
+import type { ProjectContext } from '../../presentation/project-context.ts';
 import type { ComposedReviewThreads } from '../views/review-threads.ts';
 import { ReviewThreadsView } from '../views/review-threads-components.tsx';
 import type { ComposedUiSpec } from '../views/ui-spec.ts';
@@ -194,6 +197,8 @@ export interface ArtifactDocumentResponse {
   todoContext?: TodoContext | null;
   /** quick-261023-61l: the todos a note became or is related to (null for every other document). */
   noteContext?: NoteContext | null;
+  /** Phase 9 (09-07): the project page's name, lead, core value and requirement counts (null for every other document). */
+  projectContext?: ProjectContext | null;
 }
 
 const WARNING_DISCLOSURE_LABELS: Record<Exclude<ArtifactWarningTone, null>, string> = {
@@ -699,6 +704,7 @@ export function ArtifactPage({
       manualChecks: query.data.manualChecks ?? null,
       todoContext: query.data.todoContext ?? null,
       noteContext: query.data.noteContext ?? null,
+      projectContext: query.data.projectContext ?? null,
     };
   }, [query.data, groups, planSegments, planProgress, planContext, phaseRequirementIds, shown, siblingArtifacts]);
   // VIEW-06: a registered manifest, or fallback.ts's synthesized structural-read manifest — one
@@ -839,6 +845,13 @@ export function ArtifactPage({
     if (!manifest || !viewInput) return null;
     return manifest.notePage?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // Phase 9 (09-07, sketch 041 B): the PROJECT.md charter page, when the resolved manifest opts into one -
+  // `null` for every other kind, for a file with no recognised section and for a payload from a server
+  // that predates `projectContext` (the promoted-block view then renders).
+  const projectPage = useMemo<ComposedProjectPage | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.projectPage?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // "In the source only" entries switch to Source mode, then scroll to the named heading once the
   // source document has mounted. The pending id lives in a ref and is cleared only when the frame
   // callback fires, so a re-run of the effect (StrictMode) still lands on it.
@@ -891,6 +904,7 @@ export function ArtifactPage({
     debugCase !== null ||
     todoLifecycle !== null ||
     notePage !== null ||
+    projectPage !== null ||
     (composed !== null && composed.blocks.length > 0);
 
   if (query.isPending) {
@@ -1034,6 +1048,25 @@ export function ArtifactPage({
           mode={mode}
           onModeChange={setMode}
           onShowSource={showSource}
+          chip={<WarningChip tone={warningTone} />}
+        />
+      </main>
+    );
+  }
+  // Phase 9 (09-07): the PROJECT page opens on its own masthead (eyebrow, the project name, what it is, the
+  // core value card and the requirement counts) with no breadcrumb row, manifest lead or Document metadata
+  // disclosure in View mode - the toggle and copy path sit in the masthead, and a parse warning shows as its
+  // chip there. Source mode falls through to the unchanged page below.
+  if (projectPage && mode === 'view') {
+    return (
+      <main className="artifact-page page-stack">
+        {switcher}
+        <ProjectPageView
+          key={artifact.path}
+          model={projectPage}
+          path={artifact.path}
+          mode={mode}
+          onModeChange={setMode}
           chip={<WarningChip tone={warningTone} />}
         />
       </main>

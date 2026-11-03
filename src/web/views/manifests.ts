@@ -17,6 +17,7 @@ import { composeLearningsRetro } from './learnings-retro.ts';
 import { composeDebugCase } from './debug-case.ts';
 import { composeTodoLifecycle } from './todo-lifecycle.ts';
 import { composeNotePage } from './note-page.ts';
+import { composeProjectPage } from './project-page.ts';
 import { composePlanNavigator } from './plan-navigator.ts';
 import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
@@ -369,6 +370,19 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
     // The annotated page is the View-mode render path; `promote` above is the fallback when it composes
     // nothing (quick-261023-61l).
     notePage: composeNotePage,
+  },
+  project: {
+    kind: 'project',
+    lead: 'What the project is, what it values, and the decisions that shaped it.',
+    // The sections the charter page draws from, the fallback when the page composes nothing.
+    promote: [
+      { type: 'section', heading: /^what this is\b/i },
+      { type: 'section', heading: /^core value\b/i },
+      { type: 'section', heading: /^key decisions\b/i },
+    ],
+    // The charter page is the View-mode render path; `promote` above is the fallback when it composes
+    // nothing (Phase 9, 09-07, sketch-041 B).
+    projectPage: composeProjectPage,
   },
 });
 
