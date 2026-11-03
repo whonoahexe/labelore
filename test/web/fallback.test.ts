@@ -83,7 +83,7 @@ describe('resolveViewFor', () => {
   });
 
   it('falls back to the unrecognized manifest for an unregistered kind', () => {
-    const resolved = resolveViewFor('windows', input());
+    const resolved = resolveViewFor('not-a-real-kind', input());
     expect(resolved.recognized).toBe(false);
     expect(resolved.manifest.kind).toBe(UNRECOGNIZED_KIND);
   });
