@@ -12,6 +12,7 @@ import type { LedgerContext } from '../../presentation/review-ledger.ts';
 import { LedgerSwitch } from '../components/ledger-switch.tsx';
 import { ResearchInline } from '../pages/research-atoms.tsx';
 import { scrollWhenSettled } from '../pages/scroll-settle.ts';
+import type { ComposedStaleMark } from './review-threads.ts';
 import { composeLedgerHead } from './review-ledger.ts';
 import type {
   ComposedDispositionGroup,
@@ -106,6 +107,22 @@ export function ledgerSwitcher(context: LedgerContext | null): React.ReactNode {
   );
 }
 
+/** The quiet disagreement chip: the fix file says fixed, the disposition still says open (D-08). Deliberately not
+ * the `complete` tone - it is a note about two records parting ways, not a result. */
+function StaleMark({ mark }: { mark: ComposedStaleMark }): React.JSX.Element {
+  return (
+    <span
+      className="status-chip view-review-stale"
+      data-tone={mark.tone}
+      title={mark.commit !== null ? mark.commit.full : undefined}
+    >
+      {mark.commit !== null
+        ? `Fixed in ${mark.commit.short}, disposition not updated`
+        : 'Fixed in the fix report, disposition not updated'}
+    </span>
+  );
+}
+
 function FixRow({ row }: { row: ComposedFixRow }): React.JSX.Element {
   return (
     <li className="view-review-ledger-row">
@@ -120,6 +137,7 @@ function FixRow({ row }: { row: ComposedFixRow }): React.JSX.Element {
             <ResearchInline text={row.title} />
           </span>
         ) : null}
+        {row.mark !== null ? <StaleMark mark={row.mark} /> : null}
       </div>
       {row.files.length > 0 || row.commits.length > 0 ? (
         <div className="view-review-ledger-row-meta">
@@ -270,6 +288,7 @@ function DispositionRowView({ row }: { row: ComposedDispositionRow }): React.JSX
             {row.raw}
           </span>
         ) : null}
+        {row.mark !== null ? <StaleMark mark={row.mark} /> : null}
       </div>
       {row.reason !== null ? <Reason text={row.reason} long={row.long} /> : null}
       {row.commit !== null ? (
@@ -298,9 +317,9 @@ function DispositionGroupView({ group }: { group: ComposedDispositionGroup }): R
     <div className="view-review-group" data-group={group.key} data-tone={group.tone}>
       <h3 className="view-review-group-head">
         <i
-          className="status-square"
+          className="status-square view-review-group-square"
           data-tone={group.tone}
-          data-dashed={group.dashed ? 'true' : undefined}
+          data-dashed={group.dashed ? 'true' : 'false'}
           aria-hidden="true"
         />
         <span>{group.label}</span>

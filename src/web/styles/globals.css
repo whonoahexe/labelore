@@ -27755,8 +27755,24 @@ button.research-step-chip:hover {
   color: var(--primary);
 }
 
-.view-review-group[data-group='deferred'] .status-square {
+.view-review-group-square[data-dashed='false'] {
   border-style: solid;
+}
+
+/* The stale-disposition chip (09-13) sits beside the outcome stamp on the review thread's header and its folded
+   row, and on the ledger's Open and Fix rows; it wraps rather than overflows. */
+.view-review-resolved-marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.view-review-stale {
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 42rem) {
