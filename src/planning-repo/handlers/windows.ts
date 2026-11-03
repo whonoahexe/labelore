@@ -54,6 +54,9 @@ export interface WindowsStructure {
   rows: WindowRow[];
   source: WindowsSource;
   stated: WindowsStated;
+  /** Set when the frontmatter states an open count that differs from the open rows the ledger lists: both
+   * numbers, never merged. Null when they agree, when no open count is stated or when there are no rows. */
+  disagreement: { stated: number; listed: number } | null;
 }
 
 /** The length of the leading backtick run of a trimmed line, or 0 when the line is not a fence line
@@ -160,11 +163,19 @@ function buildWindows(
   };
   // The fenced JSON first, then the table, then the frontmatter counts alone (Pitfall 8).
   const fromJson = jsonRows !== null && jsonRows.length > 0 ? normaliseRows(jsonRows) : [];
-  if (fromJson.length > 0) return { rows: fromJson, source: 'json', stated };
+  if (fromJson.length > 0) return withDisagreement({ rows: fromJson, source: 'json', stated });
   const fromTable = tableRows.length > 0 ? normaliseRows(tableRows) : [];
-  if (fromTable.length > 0) return { rows: fromTable, source: 'table', stated };
+  if (fromTable.length > 0) return withDisagreement({ rows: fromTable, source: 'table', stated });
   const anyStated = Object.values(stated).some((count) => count !== null);
-  return { rows: [], source: anyStated ? 'frontmatter' : 'none', stated };
+  return { rows: [], source: anyStated ? 'frontmatter' : 'none', stated, disagreement: null };
+}
+
+/** Compares the stated open count with the open rows listed. The page leads with the rows; a difference is
+ * carried as both numbers so it can be said, never merged (T-09-21). */
+function withDisagreement(reading: Omit<WindowsStructure, 'disagreement'>): WindowsStructure {
+  const listed = reading.rows.filter((row) => row.status === 'open').length;
+  const stated = reading.stated.open;
+  return { ...reading, disagreement: stated !== null && stated !== listed ? { stated, listed } : null };
 }
 
 export const WindowsHandler: ArtifactHandler = {

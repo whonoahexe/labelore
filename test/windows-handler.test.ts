@@ -5,6 +5,7 @@ import type { ArtifactRef, RawArtifact } from '../src/planning-repo/types.ts';
 import { WindowsHandler } from '../src/planning-repo/handlers/windows.ts';
 import type { WindowsStructure } from '../src/planning-repo/handlers/windows.ts';
 import { fxRead } from './helpers/fixture-project.ts';
+import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
 
 const PATH = '.planning/WINDOWS.md';
 
@@ -154,5 +155,111 @@ describe('structured.windows', () => {
       vi.doUnmock('../src/planning-repo/frontmatter.ts');
       vi.resetModules();
     }
+  });
+});
+
+describe('the counts-disagree reading', () => {
+  const rowsOf = (...statuses: string[]): string =>
+    `\`\`\`json\n${JSON.stringify(statuses.map((status, index) => ({ id: index + 1, phase: '01', kind: 'stub', status })))}\n\`\`\`\n`;
+
+  it('records both numbers when the stated open count differs from the open rows listed', () => {
+    const content = `---\nopen_count: 3\n---\n\n${rowsOf('open', 'open', 'fixed')}`;
+    expect(windowsOf(content)).toMatchObject({ source: 'json', disagreement: { stated: 3, listed: 2 } });
+  });
+
+  it('has no disagreement when the counts match', () => {
+    const content = `---\nopen_count: 2\n---\n\n${rowsOf('open', 'open', 'fixed')}`;
+    expect(windowsOf(content).disagreement).toBeNull();
+  });
+
+  it('has no disagreement when the file states no open count', () => {
+    expect(windowsOf(rowsOf('open')).disagreement).toBeNull();
+    expect(windowsOf(`---\nopen_count: lots\n---\n\n${rowsOf('open')}`).disagreement).toBeNull();
+  });
+
+  it('reads the Lendshed ledger as agreeing with itself', () => {
+    expect(windowsOf(fxRead('WINDOWS.md')).disagreement).toBeNull();
+  });
+
+  it('leans on the frontmatter alone when there is neither a fence nor a table', () => {
+    const windows = windowsOf('---\nopen_count: 1\nfixed_count: 4\ntotal_count: 5\n---\n\n# Broken Windows Ledger\n');
+    expect(windows).toEqual({
+      rows: [],
+      source: 'frontmatter',
+      stated: { open: 1, waived: null, fixed: 4, total: 5 },
+      disagreement: null,
+    });
+  });
+
+  it('reads a file with nothing to read as source none', () => {
+    expect(windowsOf('# Broken Windows Ledger\n\nNothing yet.\n')).toMatchObject({ rows: [], source: 'none' });
+  });
+});
+
+describe('windows fence and table growth', () => {
+  const fenced = (rows: number, description: string): string => {
+    const list = Array.from({ length: rows }, (_, index) => ({
+      id: index + 1,
+      phase: '01',
+      kind: 'stub',
+      status: index % 3 === 0 ? 'open' : 'fixed',
+      description,
+    }));
+    return `---\nopen_count: 1\n---\n\n\`\`\`\`json\n${JSON.stringify(list, null, 2)}\n\`\`\`\`\n`;
+  };
+
+  it('keeps the first 2000 rows and cuts a 200k-character description to 4000', () => {
+    expect(windowsOf(fenced(2500, 'x')).rows).toHaveLength(2000);
+    expect(windowsOf(fenced(2, 'y'.repeat(200_000))).rows[0].description).toHaveLength(4000);
+  });
+
+  it('a fence scan grows no faster than linearly with its rows', () => {
+    // Up to about 1600 rows only: the 2000-row cap would turn the ratio into a measurement of the cap.
+    const growth = measureGrowth({
+      make: (n) => fenced(Math.max(1, Math.floor(n / 40)), 'a description of ordinary length'),
+      run: (content) => {
+        parse(content);
+      },
+      maxSize: 40 * 1600,
+      floorMs: 0,
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('a table scan grows no faster than linearly with its rows', () => {
+    const growth = measureGrowth({
+      make: (n) => {
+        const rows = Math.max(1, Math.floor(n / 40));
+        const lines = Array.from({ length: rows }, (_, index) => `| ${index} | 01 | stub | open |`);
+        return `${TABLE.split('\n').slice(0, 2).join('\n')}\n${lines.join('\n')}\n`;
+      },
+      run: (content) => {
+        parse(content);
+      },
+      maxSize: 40 * 1600,
+      floorMs: 0,
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('long backtick runs grow no faster than linearly', () => {
+    const growth = measureGrowth({
+      make: (n) =>
+        `\`\`\`\`json\n[{"id": 1, "description": "${'`'.repeat(n)}"}]\n\`\`\`\`\n${'`'.repeat(n)}\n${'`'.repeat(n)}json\n`,
+      run: (content) => {
+        parse(content);
+      },
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('a description far past the cap costs a constant slice, not growth', () => {
+    const growth = measureGrowth({
+      make: (n) => fenced(1, 'z'.repeat(n)),
+      run: (content) => {
+        parse(content);
+      },
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
   });
 });
