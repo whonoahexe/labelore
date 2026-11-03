@@ -3,7 +3,9 @@
 // frontmatter states). It decides the intro (eyebrow, h1 and the one source-note line) and the lead band
 // that always comes first: the open count, its tone and the one muted line under it. The lead counts the
 // rows the file lists; only a file with no rows at all (source `frontmatter`) leads with its stated counts,
-// since there is nothing to count. The lists (open, waived, fixed history) arrive in 09-11.
+// since there is nothing to count. Under the lead sit the lists (09-11): Open (with any row whose status is
+// neither open, waived nor fixed, under its raw status), Waived (each with its reason) and the Fixed history,
+// each grouped by the verbatim phase string in first-appearance order ('No phase' when a row has none).
 // No DOM, no filesystem access, no rendering - `windows-ledger-components.tsx` is the only consumer. The
 // module imports types and `formatStamp` only. Returns `null` when the projection is missing or holds
 // nothing to lead with, so a WINDOWS.md the handler could not shape keeps the generic document view and
@@ -36,16 +38,65 @@ export interface ComposedWindowsLead {
   sentence: string;
 }
 
+export type WindowsRowTone = 'in-flight' | 'quiet' | 'complete';
+
+export interface ComposedWindowsRow {
+  /** The id as written; empty when the row has none. */
+  id: string;
+  /** The kind chip text: the kind verbatim, or the raw status for a row that is neither open, waived nor fixed. */
+  chip: string;
+  description: string;
+  /** True when the description is long enough to need the 3-line clamp and its "Read more". */
+  long: boolean;
+  /** "file:line" (line omitted when empty), or null when the row names no file. */
+  place: string | null;
+  /** "Recorded" day, or null. */
+  recorded: string | null;
+  /** "Fixed" day for a fixed row, or null. */
+  resolved: string | null;
+  /** True for a waived row (its reason, or the line saying there is none, is shown). */
+  waived: boolean;
+  /** A waived row's reason; null when it states none. Always null for other rows. */
+  reason: string | null;
+  tone: WindowsRowTone;
+}
+
+export interface ComposedWindowsGroup {
+  /** The phase string verbatim, or 'No phase'. */
+  phase: string;
+  rows: ComposedWindowsRow[];
+}
+
+export interface ComposedWindowsList {
+  groups: ComposedWindowsGroup[];
+  /** Rows listed across the groups. */
+  count: number;
+  /** The one empty-note line when no row is listed ("Nothing open."), else null. */
+  empty: string | null;
+}
+
+export interface ComposedWindowsFixed {
+  groups: ComposedWindowsGroup[];
+  count: number;
+}
+
 export interface ComposedWindowsLedger {
   intro: ComposedWindowsIntro;
   lead: ComposedWindowsLead;
   /** The counts-disagree line shown above the lead, or null. */
   notice: string | null;
-  /** The Open list, the Waived list and the Fixed history (09-11). */
-  open: null;
-  waived: null;
-  fixed: null;
+  /** Open rows, plus any row whose status is neither open, waived nor fixed. */
+  open: ComposedWindowsList;
+  waived: ComposedWindowsList;
+  /** The Fixed history, folded by phase; null when the ledger lists no fixed row. */
+  fixed: ComposedWindowsFixed | null;
 }
+
+export const NO_PHASE = 'No phase';
+export const NO_KIND = 'No kind';
+export const NO_STATUS = 'No status';
+/** A description longer than this (or holding a line break) gets the 3-line clamp and its "Read more". */
+export const LONG_DESCRIPTION = 160;
 
 export const WINDOWS_NOTE = 'Defects that were deferred, waived or not yet checked, across every phase.';
 
@@ -122,6 +173,62 @@ function sentenceOf(lead: Omit<ComposedWindowsLead, 'sentence'>): string {
   return [fixed, waived, `${lead.total} in total`].filter((part): part is string => part !== null).join(' · ');
 }
 
+/** The day of a stamp ("2026-06-02T09:14:03Z" -> "2 Jun 2026"); the text as written when it is no date. */
+function dayText(text: string | null): string | null {
+  if (text === null || text.trim() === '') return null;
+  return formatStamp(isDay(text) ? text.slice(0, 10) : text);
+}
+
+function rowOf(row: WindowRow, tone: WindowsRowTone): ComposedWindowsRow {
+  const file = row.file !== null && row.file.trim() !== '' ? row.file : null;
+  const kind = row.status === 'other' ? row.statusRaw.trim() || NO_STATUS : row.kind.trim() || NO_KIND;
+  const reason = row.status === 'waived' && row.reason !== null && row.reason.trim() !== '' ? row.reason : null;
+  return {
+    id: row.id,
+    chip: kind,
+    description: row.description,
+    long: row.description.length > LONG_DESCRIPTION || row.description.includes('\n'),
+    place: file === null ? null : row.line === null ? file : `${file}:${row.line}`,
+    recorded: dayText(row.recordedAt),
+    resolved: row.status === 'fixed' ? dayText(row.resolvedAt) : null,
+    waived: row.status === 'waived',
+    reason,
+    tone,
+  };
+}
+
+/** Rows grouped by the verbatim phase string, groups in the order each phase first appears. */
+function groupsOf(rows: readonly WindowRow[], toneOf: (row: WindowRow) => WindowsRowTone): ComposedWindowsGroup[] {
+  const groups: ComposedWindowsGroup[] = [];
+  const byPhase = new Map<string, ComposedWindowsGroup>();
+  for (const row of rows) {
+    const phase = row.phase !== null && row.phase.trim() !== '' ? row.phase : NO_PHASE;
+    let group = byPhase.get(phase);
+    if (group === undefined) {
+      group = { phase, rows: [] };
+      byPhase.set(phase, group);
+      groups.push(group);
+    }
+    group.rows.push(rowOf(row, toneOf(row)));
+  }
+  return groups;
+}
+
+function listOf(rows: readonly WindowRow[], toneOf: (row: WindowRow) => WindowsRowTone, empty: string): ComposedWindowsList {
+  return { groups: groupsOf(rows, toneOf), count: rows.length, empty: rows.length === 0 ? empty : null };
+}
+
+function listsOf(rows: readonly WindowRow[]): Pick<ComposedWindowsLedger, 'open' | 'waived' | 'fixed'> {
+  const openRows = rows.filter((row) => row.status === 'open' || row.status === 'other');
+  const waivedRows = rows.filter((row) => row.status === 'waived');
+  const fixedRows = rows.filter((row) => row.status === 'fixed');
+  return {
+    open: listOf(openRows, (row) => (row.status === 'open' ? 'in-flight' : 'quiet'), 'Nothing open.'),
+    waived: listOf(waivedRows, () => 'quiet', 'Nothing waived.'),
+    fixed: fixedRows.length === 0 ? null : { groups: groupsOf(fixedRows, () => 'complete'), count: fixedRows.length },
+  };
+}
+
 function leadOf(reading: WindowsReading): ComposedWindowsLead | null {
   if (reading.source === 'frontmatter') {
     const { open, waived, fixed, total } = reading.stated;
@@ -152,6 +259,23 @@ function leadOf(reading: WindowsReading): ComposedWindowsLead | null {
   return { ...base, sentence: sentenceOf(base) };
 }
 
+export const NOT_LISTED = 'The file states this count but lists no rows.';
+
+/** A file with counts and no rows leads with its stated numbers; an empty group under a stated count above zero
+ * says the rows are not listed, rather than "Nothing open." beside a lead that says otherwise. */
+function unlistedCounts(
+  lists: Pick<ComposedWindowsLedger, 'open' | 'waived' | 'fixed'>,
+  reading: WindowsReading,
+  lead: ComposedWindowsLead,
+): Pick<ComposedWindowsLedger, 'open' | 'waived' | 'fixed'> {
+  if (reading.source !== 'frontmatter') return lists;
+  return {
+    ...lists,
+    open: lead.open > 0 ? { ...lists.open, empty: NOT_LISTED } : lists.open,
+    waived: lead.waived > 0 ? { ...lists.waived, empty: NOT_LISTED } : lists.waived,
+  };
+}
+
 export function composeWindowsLedger(input: ViewInput): ComposedWindowsLedger | null {
   const reading = readingOf(input.structured);
   if (reading === null) return null;
@@ -161,8 +285,6 @@ export function composeWindowsLedger(input: ViewInput): ComposedWindowsLedger | 
     intro: { eyebrow: 'Broken windows', title: 'Broken windows ledger', note: WINDOWS_NOTE },
     lead,
     notice: reading.disagreement === null ? null : disagreementNotice(reading.disagreement),
-    open: null,
-    waived: null,
-    fixed: null,
+    ...unlistedCounts(listsOf(reading.rows), reading, lead),
   };
 }

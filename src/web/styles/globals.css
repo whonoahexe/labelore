@@ -27218,4 +27218,231 @@ button.research-step-chip:hover {
   line-height: var(--lh-normal);
   overflow-wrap: anywhere;
 }
+
+/* The lists under the lead (09-11): Open, Waived and the folded Fixed history. A section is an h2 (Heading
+   size, mono count beside it), then phase groups whose heads are Label-size mono, then the rows. */
+.view-windows-section {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+}
+
+.view-windows-heading {
+  display: flex;
+  gap: var(--space-3);
+  align-items: baseline;
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+}
+
+.view-windows-heading-count,
+.view-windows-group-count {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.view-windows-group {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.view-windows-group-head {
+  display: flex;
+  gap: var(--space-3);
+  align-items: baseline;
+  min-width: 0;
+  margin: 0;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+}
+
+/* A phase string is a mono token: it never wraps mid-token, it ends in an ellipsis and its full value is in title. */
+.view-windows-group-label {
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.view-windows-rows {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-windows-row {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.view-windows-row-head {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  min-width: 0;
+}
+
+.view-windows-id {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+}
+
+.view-windows-row-head .status-chip {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.view-windows-description {
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-normal);
+  overflow-wrap: anywhere;
+}
+
+.view-windows-description code,
+.view-windows-reason-text code {
+  font-size: var(--fs-2);
+}
+
+.view-windows-description[data-clamped='true'] {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.view-windows-more {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.view-windows-more:hover {
+  color: var(--primary);
+}
+
+.view-windows-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  align-items: baseline;
+  min-width: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-snug);
+}
+
+/* The file path is a mono token: one line, end-ellipsis, the full value in title. */
+.view-windows-place {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A waiver's reason: the TODO note-card treatment, a 3px --muted-foreground rule on --card. */
+.view-windows-reason {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-left: 3px solid var(--muted-foreground);
+  background: var(--card);
+}
+
+.view-windows-reason-label {
+  color: var(--muted-foreground);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+}
+
+.view-windows-reason-text {
+  margin: 0;
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-normal);
+  overflow-wrap: anywhere;
+}
+
+/* A waiver with no reason: one dashed quiet line. */
+.view-windows-reason-none {
+  border: 1px dashed var(--border);
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-snug);
+}
+
+/* The Fixed history: the shared history-* disclosure family, folded per phase, kept inside the page's sizes. */
+.view-windows-history {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: 0;
+  padding: var(--space-5);
+}
+
+.view-windows-history-list {
+  margin-top: 0;
+}
+
+.view-windows-history .view-windows-summary {
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  text-transform: none;
+}
+
+.view-windows-history .view-windows-summary strong {
+  font-family: var(--font-mono);
+  font-weight: var(--fw-semibold);
+}
+
+.view-windows-history-body {
+  opacity: 1;
+}
+
+@media (max-width: 42rem) {
+  .view-windows-row {
+    padding: var(--space-3);
+  }
+
+  .view-windows-history {
+    padding: var(--space-3);
+  }
+}
 /* phase-09-windows-ledger:end */
