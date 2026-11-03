@@ -9,7 +9,9 @@
 // reports as REVIEW / REVIEW-FIX: a phase, an archived phase, a live quick task and an archived
 // quick task. Each extraction is guarded by its own try/catch so a throw only omits its key - the
 // page then falls back to the promoted-section view and the title, body, frontmatter and the
-// warnings projection survive (T-k44-04).
+// warnings projection survive (T-k44-04). Phase 9 adds REVIEW-DISPOSITION.md: `structured.disposition`
+// is the tolerant row model of its three real shapes (review-disposition.ts), kept exactly as
+// written, and the same omit-the-key rule applies.
 import { basename } from 'node:path';
 import type { ArtifactHandler, RawArtifact, ArtifactRef } from '../types.ts';
 import { tryParseFrontmatter } from '../frontmatter.ts';
@@ -17,6 +19,7 @@ import { deriveTitle } from './title.ts';
 import { parseQuickArtifactName } from '../naming.ts';
 import { artifactTokenOf } from './artifact-token.ts';
 import { extractReviewFixReport, extractReviewReport } from './review-report.ts';
+import { extractReviewDisposition } from './review-disposition.ts';
 import { extractReviewWarnings } from './section-projection.ts';
 
 function quickIdOf(ref: ArtifactRef): string | null {
@@ -71,6 +74,28 @@ export const ReviewFixHandler: ArtifactHandler = {
       body: fm.body,
       warning: fm.warning,
       structured: report === undefined ? {} : { reviewFix: report },
+    };
+  },
+};
+
+export const ReviewDispositionHandler: ArtifactHandler = {
+  kind: 'review-disposition',
+  match: (ref) => artifactTokenOf(ref) === 'REVIEW-DISPOSITION',
+  parse(raw: RawArtifact, ref: ArtifactRef) {
+    const fm = tryParseFrontmatter(raw.content);
+    const title = deriveTitle(fm.data, fm.body, ref.path);
+    let disposition;
+    try {
+      disposition = extractReviewDisposition(fm.data, fm.body);
+    } catch {
+      disposition = undefined;
+    }
+    return {
+      title,
+      frontmatter: fm.data,
+      body: fm.body,
+      warning: fm.warning,
+      structured: disposition === undefined ? {} : { disposition },
     };
   },
 };

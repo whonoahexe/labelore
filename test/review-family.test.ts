@@ -36,3 +36,20 @@ describe('suffixed review fix files (Lendshed phase 3)', () => {
     }
   });
 });
+
+type DispositionStructured = { rows: unknown[] };
+
+describe('review disposition files (Lendshed phase 1)', () => {
+  const path = 'phases/01-member-sign-in-sessions/01-REVIEW-DISPOSITION.md';
+
+  it('has kind review-disposition and the key /v1.1/phase-1/review-disposition', () => {
+    const artifact = artifactAt(path);
+    expect(artifact.kind).toBe('review-disposition');
+    expect(artifact.key).toBe('/v1.1/phase-1/review-disposition');
+  });
+
+  it('carries six structured.disposition rows', () => {
+    const disposition = artifactAt(path).structured.disposition as DispositionStructured | undefined;
+    expect(disposition?.rows).toHaveLength(6);
+  });
+});

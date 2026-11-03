@@ -26,6 +26,7 @@ export const VIEW_KINDS = [
   'learnings',
   'context',
   'review-fix',
+  'review-disposition',
   'findings',
   'todo',
   'note',
