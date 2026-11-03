@@ -67,6 +67,8 @@ import type { ComposedNotePage } from '../views/note-page.ts';
 import type { ComposedProjectPage } from '../views/project-page.ts';
 import { NotePageView } from '../views/note-page-components.tsx';
 import { ProjectPageView } from '../views/project-page-components.tsx';
+import type { ComposedWindowsLedger } from '../views/windows-ledger.ts';
+import { WindowsLedgerView, windowsHeaderProps } from '../views/windows-ledger-components.tsx';
 import type { ComposedPlanNavigator } from '../views/plan-navigator.ts';
 import { PlanIntroMeta, PlanNavigatorView } from '../views/plan-navigator-components.tsx';
 import { findPlanContext } from '../views/plan-context.ts';
@@ -852,6 +854,13 @@ export function ArtifactPage({
     if (!manifest || !viewInput) return null;
     return manifest.projectPage?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // Phase 9 (09-10): the WINDOWS.md broken-windows ledger, when the resolved manifest opts into one - `null`
+  // for every other kind, for a file with neither rows nor stated counts and for a payload from a server
+  // that predates `structured.windows` (the generic document view then renders).
+  const windowsLedger = useMemo<ComposedWindowsLedger | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.windowsLedger?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // "In the source only" entries switch to Source mode, then scroll to the named heading once the
   // source document has mounted. The pending id lives in a ref and is cleared only when the frame
   // callback fires, so a re-run of the effect (StrictMode) still lands on it.
@@ -905,6 +914,7 @@ export function ArtifactPage({
     todoLifecycle !== null ||
     notePage !== null ||
     projectPage !== null ||
+    windowsLedger !== null ||
     (composed !== null && composed.blocks.length > 0);
 
   if (query.isPending) {
@@ -1201,6 +1211,10 @@ export function ArtifactPage({
     validationStrategy && mode === 'view' ? validationHeaderProps(validationStrategy, artifact.title) : null;
   const specCover = uiSpec && mode === 'view' ? uiSpec : null;
   const uatCover = uatSession && mode === 'view' ? uatSession : null;
+  // The WINDOWS ledger's header override rides the same one-prop spread, and its lead band carries the
+  // counts the metadata disclosure would repeat, so View mode hides the disclosure for it.
+  const windowsCover = windowsLedger && mode === 'view' ? windowsLedger : null;
+  const headerOverride = validationHeader ?? (windowsCover ? windowsHeaderProps(windowsCover, artifact.title) : null);
   return (
     <main className="artifact-page page-stack">
         {switcher}
@@ -1272,7 +1286,7 @@ export function ArtifactPage({
             {layout ? <CoverStatusChip status={layout.cover.status} /> : null}
           </>
         }
-        {...(validationHeader ?? {})}
+        {...(headerOverride ?? {})}
       >
         {viewAvailable ? <DocumentViewToggle mode={mode} onChange={setMode} /> : null}
       </ArtifactHeader>
@@ -1282,7 +1296,7 @@ export function ArtifactPage({
         // Winner lists the frontmatter as source-only — View mode hides the disclosure (Source
         // mode keeps it). The UAT page's cover carries its facts and its "In the source only"
         // strip names the frontmatter, so it hides the disclosure the same way.
-        specCover || uatCover ? null : (
+        specCover || uatCover || windowsCover ? null : (
           <details className="artifact-metadata">
             <summary>
               Document metadata <span>{panels.length} sections</span>
@@ -1377,6 +1391,8 @@ export function ArtifactPage({
         <UiSpecView key={artifact.path} spec={uiSpec} onShowSource={showSource} title={artifact.title} />
       ) : uatSession && mode === 'view' ? (
         <UatSessionView key={artifact.path} session={uatSession} onShowSource={showSource} title={artifact.title} />
+      ) : windowsCover ? (
+        <WindowsLedgerView key={artifact.path} model={windowsCover} />
       ) : viewAvailable && mode === 'view' && composed && shown ? (
         <ViewReader title={artifact.title} composed={composed} shown={shown} />
       ) : (

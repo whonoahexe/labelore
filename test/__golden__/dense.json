@@ -892,7 +892,45 @@
               "resolved_at": null
             }
           ],
-          "rowSource": "json"
+          "rowSource": "json",
+          "windows": {
+            "rows": [
+              {
+                "id": "1",
+                "phase": "01",
+                "kind": "unrun-verify",
+                "file": "phases/01-identity-slice/01-02-PLAN.md",
+                "line": 42,
+                "description": "Task 2's <verify> command was not run before the commit that closed it",
+                "status": "open",
+                "statusRaw": "open",
+                "reason": null,
+                "recordedAt": "2026-08-20T12:00:00.000Z",
+                "resolvedAt": null
+              },
+              {
+                "id": "2",
+                "phase": "02",
+                "kind": "deviation",
+                "file": "phases/02-transport-layer/02-01-PLAN.md",
+                "line": null,
+                "description": "Frontmatter carries a deliberately tab-indented key for the fixture's own corruption test",
+                "status": "open",
+                "statusRaw": "open",
+                "reason": null,
+                "recordedAt": "2026-08-21T08:00:00.000Z",
+                "resolvedAt": null
+              }
+            ],
+            "source": "json",
+            "stated": {
+              "open": 2,
+              "waived": 0,
+              "fixed": 0,
+              "total": 2
+            },
+            "disagreement": null
+          }
         }
       },
       ".planning/milestones/v1.0-MILESTONE-AUDIT.md": {

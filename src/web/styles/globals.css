@@ -27132,3 +27132,90 @@ button.research-step-chip:hover {
   }
 }
 /* phase-09-project-page:end */
+
+/* phase-09-windows-ledger:start */
+/* Phase 9 (09-10): the windows ledger. The page renders four font sizes: the h1 as ArtifactHeader draws it
+   (--fs-display-3), the lead number (--fs-7), Body and Meta (--fs-4) and Label (--fs-2). Where a shared
+   class sets a size outside that set, the page takes it inside with a page-scoped rule below, so no
+   shared class is edited. */
+.view-windows-page {
+  display: grid;
+  gap: var(--space-fluid-6);
+  min-width: 0;
+}
+
+.view-windows-page > * {
+  min-width: 0;
+}
+
+.artifact-page:has(.view-windows-page) .status-chip,
+.artifact-page:has(.view-windows-page) .document-view-toggle button {
+  font-size: var(--fs-2);
+}
+
+.artifact-page:has(.view-windows-page) .source-note,
+.artifact-page:has(.view-windows-page) .empty-note {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+/* The one explanation sentence under the header is a source-note line, not a lede. */
+.view-windows-note {
+  margin: 0;
+}
+
+/* A plain notice, one paragraph, no destructive tone: a file whose counts disagree with its rows. */
+.view-windows-notice {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-normal);
+  overflow-wrap: anywhere;
+}
+
+/* The lead band: the open count, the word, the tone chip, then one muted line. It keeps the same place and
+   shape whether or not anything is open. */
+.view-windows-lead {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--border);
+  background: var(--card-veil);
+}
+
+.view-windows-count {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: baseline;
+}
+
+.view-windows-number {
+  font-family: var(--font-mono);
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  font-variant-numeric: tabular-nums;
+}
+
+.view-windows-word {
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+}
+
+.view-windows-count .status-chip {
+  align-self: center;
+}
+
+.view-windows-sentence {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-normal);
+  overflow-wrap: anywhere;
+}
+/* phase-09-windows-ledger:end */
