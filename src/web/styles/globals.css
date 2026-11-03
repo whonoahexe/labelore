@@ -23297,6 +23297,26 @@ a.view-note-open:hover {
   .shell-nav:has(> :nth-child(4)) .shell-nav-link {
     padding-inline: var(--space-1);
   }
+
+  /* Five tabs (Research and Sketches both present) still overrun 390px with the icons gone, so the
+     labels ran together and Dashboard was clipped: wrap to two rows, three tabs over two. */
+  .shell-nav:has(> :nth-child(5)) {
+    flex-wrap: wrap;
+  }
+
+  .shell-nav:has(> :nth-child(5)) .shell-nav-link {
+    flex: 1 1 30%;
+    height: auto;
+  }
+
+  .shell-nav:has(> :nth-child(5)) .shell-nav-link:nth-child(n + 4) {
+    flex-basis: 45%;
+    border-top: 1px solid var(--border);
+  }
+
+  .shell-nav:has(> :nth-child(5)) .shell-nav-link:nth-child(4) {
+    border-left: 0;
+  }
 }
 
 /* ==========================================================================================
