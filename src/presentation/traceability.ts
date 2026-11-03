@@ -113,9 +113,51 @@ export interface TraceabilityArchivedMilestone {
   groups: TraceabilityArchivedCategory[];
 }
 
+/** The requirement states traceability can be opened on (D-05). `complete` and `pending` read the
+ * active tier's own checkboxes; `validated` is every previous milestone's requirements; and
+ * `out-of-scope` is the rows of REQUIREMENTS.md's Out of Scope table. */
+export const REQUIREMENT_STATES = ['complete', 'pending', 'validated', 'out-of-scope'] as const;
+
+export type RequirementState = (typeof REQUIREMENT_STATES)[number];
+
+/** Exact match against the fixed state list — anything else (including a different case) is null,
+ * so an address value is never trusted beyond that list (T-09-03). */
+export function parseRequirementState(value: string | null): RequirementState | null {
+  if (value === null) return null;
+  return REQUIREMENT_STATES.find((state) => state === value) ?? null;
+}
+
+/** The one predicate the state axis and every state count share: a requirement's own checkbox
+ * says complete or pending, and a row with no checkbox is neither. */
+export function requirementStateOf(row: TraceabilityRow): 'complete' | 'pending' | null {
+  if (row.requirementStatus === true) return 'complete';
+  if (row.requirementStatus === false) return 'pending';
+  return null;
+}
+
+/** The address a count tile links to: traceability opened on one state, optionally narrowed to one
+ * milestone. The milestone comes first, then the state. */
+export function traceabilityStateUrl(state: RequirementState, milestone?: string | null): string {
+  const params = new URLSearchParams();
+  if (milestone) params.set('milestone', milestone);
+  params.set('state', state);
+  return `/traceability?${params.toString()}`;
+}
+
+/** One row of REQUIREMENTS.md's Out of Scope table: the feature and the reason it was left out. */
+export interface TraceabilityOutOfScopeRow {
+  feature: string;
+  reason: string;
+}
+
 export interface TraceabilityViewModel {
   /** The lead of PROJECT.md's Core Value section — the page's lede — or null without one. */
   coreValue: string | null;
+  /** The version of the first milestone that is not archived — the one the active tier belongs
+   * to — or null when there is none or it names no version. */
+  currentMilestone: string | null;
+  /** REQUIREMENTS.md's Out of Scope rows in file order, rows with a blank feature dropped. */
+  outOfScope: TraceabilityOutOfScopeRow[];
   groups: TraceabilityGroup[];
   deferredRows: TraceabilityRow[];
   deferredTiers: TraceabilityDeferredTier[];
@@ -376,6 +418,28 @@ function archivedMilestonesOf(
   );
 }
 
+function currentMilestoneOf(presentation: ProjectPresentation): string | null {
+  return presentation.milestones.find((milestone) => !milestone.archived)?.version ?? null;
+}
+
+const OUT_OF_SCOPE_ROW_CAP = 200;
+
+function outOfScopeOf(presentation: ProjectPresentation): TraceabilityOutOfScopeRow[] {
+  const artifact = presentation.artifacts.find(
+    (candidate) => candidate.kind === 'requirements' && candidate.location === 'root',
+  );
+  const raw = artifact?.structured.outOfScope;
+  const rows: TraceabilityOutOfScopeRow[] = [];
+  for (const entry of Array.isArray(raw) ? raw : []) {
+    if (typeof entry !== 'object' || entry === null) continue;
+    const { feature, reason } = entry as Partial<TraceabilityOutOfScopeRow>;
+    if (typeof feature !== 'string' || feature.trim().length === 0) continue;
+    rows.push({ feature: feature.trim(), reason: typeof reason === 'string' ? reason.trim() : '' });
+    if (rows.length === OUT_OF_SCOPE_ROW_CAP) break;
+  }
+  return rows;
+}
+
 export function buildTraceabilityViewModel(
   presentation: ProjectPresentation,
 ): TraceabilityViewModel {
@@ -431,6 +495,8 @@ export function buildTraceabilityViewModel(
   const allRows = groups.flatMap((group) => group.rows);
   return {
     coreValue: projectSectionLead(presentation, /^core value\b/i),
+    currentMilestone: currentMilestoneOf(presentation),
+    outOfScope: outOfScopeOf(presentation),
     groups,
     deferredRows,
     deferredTiers,
