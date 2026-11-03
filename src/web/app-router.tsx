@@ -135,7 +135,7 @@ function ProjectRouteSwitch({
       return outcome.page === 'roadmap' ? (
         <RoadmapPage archiveVersion={outcome.version} />
       ) : (
-        <TraceabilityPage />
+        <TraceabilityPage archiveVersion={outcome.version} />
       );
     case 'plan-pair':
       return <PlanPairPage planUrl={outcome.planUrl} active={outcome.active} />;

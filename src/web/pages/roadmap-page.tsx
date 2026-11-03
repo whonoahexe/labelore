@@ -397,7 +397,7 @@ function HistoryMilestone({
       <summary>
         <ChevronRight aria-hidden="true" />
         <span>
-          <span className="history-milestone-title">
+          <span className="milestone-title-line">
             <strong>{stripEmoji(title)}</strong>
             <span className="status-chip" data-tone="complete">
               {shippedChipText(milestone, title)}
