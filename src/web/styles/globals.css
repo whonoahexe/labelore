@@ -27321,6 +27321,11 @@ button.research-step-chip:hover {
   overflow-wrap: anywhere;
 }
 
+.view-windows-description code,
+.view-windows-reason-text code {
+  font-size: var(--fs-2);
+}
+
 .view-windows-description[data-clamped='true'] {
   display: -webkit-box;
   overflow: hidden;
@@ -27412,17 +27417,17 @@ button.research-step-chip:hover {
   padding: var(--space-5);
 }
 
-.view-windows-history .history-list {
+.view-windows-history-list {
   margin-top: 0;
 }
 
-.view-windows-history .history-milestone > summary {
+.view-windows-history .view-windows-summary {
   font-size: var(--fs-2);
   font-weight: var(--fw-semibold);
   text-transform: none;
 }
 
-.view-windows-history .history-milestone > summary strong {
+.view-windows-history .view-windows-summary strong {
   font-family: var(--font-mono);
   font-weight: var(--fw-semibold);
 }

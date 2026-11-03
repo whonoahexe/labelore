@@ -129,10 +129,10 @@ function FixedHistory({ fixed }: { fixed: ComposedWindowsFixed }): React.JSX.Ele
         Fixed
         <span className="view-windows-heading-count">{fixed.count}</span>
       </h2>
-      <div className="history-list">
+      <div className="history-list view-windows-history-list">
         {fixed.groups.map((group) => (
           <details className="history-milestone" key={group.phase}>
-            <summary>
+            <summary className="view-windows-summary">
               <ChevronRight aria-hidden="true" />
               <span>
                 <strong title={group.phase}>
