@@ -26466,14 +26466,10 @@ button.research-step-chip:hover {
   background: var(--primary-tint);
 }
 
-.history-milestone-title {
+.milestone-title-line {
   display: flex;
   min-width: 0;
   flex-wrap: wrap;
   gap: var(--space-2) var(--space-2-5);
   align-items: center;
-}
-
-.history-milestone-title > strong {
-  min-width: 0;
 }

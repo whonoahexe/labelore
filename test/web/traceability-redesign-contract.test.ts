@@ -185,7 +185,8 @@ function stripCssComments(css: string): string {
 // Measured against the stylesheet immediately before this task's edits (git blame:
 // quick-260917-ns4 Task 2 commit) — Task 3 adds no history-prefixed CSS rule at all, reusing
 // every one of roadmap-page.tsx's existing global, un-scoped .history-* rules verbatim.
-const HISTORY_SELECTOR_LINE_COUNT_BEFORE_TASK_3 = 21;
+// 21 before the History restyle, +1 for the 09-06 archived-copy arrival rule `.history-milestone[data-target='true']`.
+const HISTORY_SELECTOR_LINE_COUNT_BEFORE_TASK_3 = 22;
 
 describe('traceability redesign — deferred tiers under the reused History treatment (NS4-03, NS4-04, D-03, Task 3)', () => {
   it('imports History and ChevronRight from lucide and renders all four history class names', async () => {
@@ -610,11 +611,12 @@ describe('traceability — previous milestones (quick-261022-ms1)', () => {
     expect(body).toContain('<TraceabilityRowList rows={group.rows}');
     expect(body).toContain('className="history-milestone"');
     expect(body).not.toMatch(/\.open\s*=/);
-    // Closed unless the Shipped before state opens it (09-02): the only open attribute is the prop,
-    // and the prop defaults to false.
+    // Closed unless the Shipped before state (09-02) or an archived copy's address (09-06) opens it: the
+    // only open attribute is the props, and both default to false.
     expect(body).toContain('open = false');
-    expect(body).toContain('<details className="history-milestone" open={open}>');
-    expect(body).not.toMatch(/<details[^>]*\sopen(?!=\{open\})/);
+    expect(body).toContain('arrival = false');
+    expect(body).toMatch(/<details[^>]*className="history-milestone"[^>]*open=\{open \|\| arrival\}/);
+    expect(body).not.toMatch(/<details[^>]*\sopen(?!=\{open \|\| arrival\})/);
   });
 
   it('between milestones the summary is not rendered and a note replaces the empty state', async () => {

@@ -885,7 +885,7 @@ plan's "no AST tooling" constraint.
 | `history-tree` | Roadmap | shared with Traceability |
 | `milestone-flow` | Roadmap | |
 | `milestone-version` | Roadmap | |
-| `history-milestone-title` | Roadmap | a History or Previous milestones block's title and its Shipped chip on one line, shared with Traceability |
+| `milestone-title-line` | Roadmap | a History or Previous milestones block's title and its Shipped chip on one line, shared with Traceability |
 | `milestone-delivered` | Roadmap | a History milestone's MILESTONES.md Delivered line in its summary, at the card's full width |
 | `milestone-record` | Roadmap | a History milestone's MILESTONES.md entry, above its phase tree |
 | `milestone-record-facts` | Roadmap | Git range and What's next, as hairline-divided cells |
