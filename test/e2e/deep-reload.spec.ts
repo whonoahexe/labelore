@@ -266,6 +266,27 @@ const URL_CLASSES: UrlClass[] = [
   redirectClass('the live milestone redirects to the roadmap', { page: '/v1.1' }, { page: '/roadmap' }, 'Roadmap'),
   redirectClass('the live milestone roadmap redirects to the roadmap', { page: '/v1.1/roadmap' }, { page: '/roadmap' }, 'Roadmap'),
   {
+    // Phase 9 (D-01, D-02): STATE.md has no page of its own, so its address redirects to the dashboard.
+    name: 'a redirected root document lands on the dashboard',
+    open: { artifact: '.planning/STATE.md' },
+    lands: { page: '/' },
+    check: async ({ page }) => {
+      await expect(page.locator('p.eyebrow').first()).toHaveText(/project overview/i);
+      await expect(page.locator('h1').first()).toBeVisible();
+    },
+  },
+  {
+    // An archived copy opens the live page at its own milestone's block: open, highlighted, on its own address.
+    name: 'an archived requirements copy opens traceability at its milestone',
+    open: { artifact: '.planning/milestones/v1.0-REQUIREMENTS.md' },
+    check: async ({ page }) => {
+      await expect(page.locator('h1').first()).toHaveText('Traceability');
+      const block = page.locator('.history-milestone[data-target="true"]');
+      await expect(block).toHaveCount(1);
+      await expect(block).toHaveAttribute('open', '');
+    },
+  },
+  {
     name: 'an old encoded link redirects to the file readable URL',
     open: { page: legacyArtifactUrl(OLD_LINK_TARGET) },
     lands: { artifact: OLD_LINK_TARGET },
