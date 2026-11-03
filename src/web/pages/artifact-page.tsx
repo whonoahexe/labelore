@@ -71,6 +71,8 @@ import type { ComposedWindowsLedger } from '../views/windows-ledger.ts';
 import { WindowsLedgerView, windowsHeaderProps } from '../views/windows-ledger-components.tsx';
 import type { ComposedMilestoneAudit } from '../views/milestone-audit.ts';
 import { MilestoneAuditView, auditHeaderProps } from '../views/milestone-audit-components.tsx';
+import type { ComposedCoverage } from '../views/coverage-matrix.ts';
+import { CoverageView, coverageHeaderProps } from '../views/coverage-matrix-components.tsx';
 import type { ComposedPlanNavigator } from '../views/plan-navigator.ts';
 import { PlanIntroMeta, PlanNavigatorView } from '../views/plan-navigator-components.tsx';
 import { findPlanContext } from '../views/plan-context.ts';
@@ -887,6 +889,14 @@ export function ArtifactPage({
     if (!manifest || !viewInput) return null;
     return manifest.milestoneAudit?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // Phase 9 (09-15): the API coverage page, when the resolved manifest opts into one - `null` for every other
+  // kind, for a coverage file that is neither a "no external API" declaration nor an integration matrix, and for
+  // a payload from a server that predates `structured.coverage` (the promoted-section view then renders). The
+  // composer is pure, so two coverage pages open at once each compose from their own response.
+  const coverage = useMemo<ComposedCoverage | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.coverageMatrix?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // "In the source only" entries switch to Source mode, then scroll to the named heading once the
   // source document has mounted. The pending id lives in a ref and is cleared only when the frame
   // callback fires, so a re-run of the effect (StrictMode) still lands on it.
@@ -943,6 +953,7 @@ export function ArtifactPage({
     projectPage !== null ||
     windowsLedger !== null ||
     milestoneAudit !== null ||
+    coverage !== null ||
     (composed !== null && composed.blocks.length > 0);
 
   if (query.isPending) {
@@ -1245,6 +1256,9 @@ export function ArtifactPage({
   // The milestone audit's header override rides the same one-prop spread (the verdict and the audited date sit
   // in the meta row), and its frontmatter is the page, so View mode hides the metadata disclosure for it.
   const auditCover = milestoneAudit && mode === 'view' ? milestoneAudit : null;
+  // The API coverage page's header override rides the same spread; its frontmatter is empty or one author line,
+  // so View mode hides the metadata disclosure for it.
+  const coverageCover = coverage && mode === 'view' ? coverage : null;
   // The Fix and Disposition tabs' header override rides the same one-prop spread; its sections carry the counts the
   // metadata disclosure would repeat, so View mode hides the disclosure for it.
   const fixCover = reviewLedger && mode === 'view' ? reviewLedger : null;
@@ -1252,6 +1266,7 @@ export function ArtifactPage({
     validationHeader ??
     (windowsCover ? windowsHeaderProps(windowsCover, artifact.title) : null) ??
     (auditCover ? auditHeaderProps(auditCover, artifact.title) : null) ??
+    (coverageCover ? coverageHeaderProps(coverageCover) : null) ??
     (fixCover ? ledgerHeaderProps(fixCover, artifact.title) : null);
   return (
     <main className="artifact-page page-stack">
@@ -1334,7 +1349,7 @@ export function ArtifactPage({
         // Winner lists the frontmatter as source-only — View mode hides the disclosure (Source
         // mode keeps it). The UAT page's cover carries its facts and its "In the source only"
         // strip names the frontmatter, so it hides the disclosure the same way.
-        specCover || uatCover || windowsCover || auditCover || fixCover ? null : (
+        specCover || uatCover || windowsCover || auditCover || coverageCover || fixCover ? null : (
           <details className="artifact-metadata">
             <summary>
               Document metadata <span>{panels.length} sections</span>
@@ -1437,6 +1452,8 @@ export function ArtifactPage({
           model={auditCover}
           narrative={shown ? renderHtml(shown.html) : null}
         />
+      ) : coverageCover ? (
+        <CoverageView key={artifact.path} model={coverageCover} />
       ) : fixCover ? (
         <LedgerTabView key={artifact.path} model={fixCover} />
       ) : viewAvailable && mode === 'view' && composed && shown ? (
