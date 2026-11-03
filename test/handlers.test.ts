@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import type { ArtifactRef, RawArtifact } from '../src/planning-repo/types.ts';
 import { HANDLERS } from '../src/planning-repo/handlers/index.ts';
 import { GenericMarkdownHandler } from '../src/planning-repo/handlers/generic.ts';
+import { MilestoneAuditHandler } from '../src/planning-repo/handlers/milestone-audit.ts';
 import { StateHandler } from '../src/planning-repo/handlers/state.ts';
 import { RoadmapHandler } from '../src/planning-repo/handlers/roadmap.ts';
 import { RequirementsHandler } from '../src/planning-repo/handlers/requirements.ts';
@@ -266,7 +267,7 @@ describe('RoadmapHandler', () => {
   // 0YP-01 negative: other milestone-root document tokens (REQUIREMENTS, MILESTONE-AUDIT) are not
   // claimed by RoadmapHandler. quick-261006-iz7: the REQUIREMENTS snapshot now resolves to
   // RequirementsHandler (a read-only lookup for the SUMMARY page's requirement previews); the
-  // MILESTONE-AUDIT file still falls through to GenericMarkdownHandler.
+  // MILESTONE-AUDIT file falls to MilestoneAuditHandler (Phase 9, 09-14), still not the roadmap's.
   it('does not claim milestone-root REQUIREMENTS or MILESTONE-AUDIT files for the roadmap', () => {
     const reqRef = ref('.planning/milestones/v1.0-REQUIREMENTS.md', {
       location: 'milestone-root',
@@ -281,7 +282,7 @@ describe('RoadmapHandler', () => {
     expect(RoadmapHandler.match(reqRef)).toBe(false);
     expect(RoadmapHandler.match(auditRef)).toBe(false);
     expect(HANDLERS.find((h) => h.match(reqRef))).toBe(RequirementsHandler);
-    expect(HANDLERS.find((h) => h.match(auditRef))).toBe(GenericMarkdownHandler);
+    expect(HANDLERS.find((h) => h.match(auditRef))).toBe(MilestoneAuditHandler);
   });
 });
 

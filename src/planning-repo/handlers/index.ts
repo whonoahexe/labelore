@@ -29,6 +29,7 @@ import { VerificationHandler } from './verification.ts';
 import { FrontmatterOnlyHandler } from './frontmatter-only.ts';
 import { JsonConfigHandler } from './json-config.ts';
 import { WindowsHandler } from './windows.ts';
+import { MilestoneAuditHandler } from './milestone-audit.ts';
 import { GenericMarkdownHandler } from './generic.ts';
 
 export const HANDLERS: ArtifactHandler[] = [
@@ -60,5 +61,6 @@ export const HANDLERS: ArtifactHandler[] = [
   FrontmatterOnlyHandler,
   JsonConfigHandler,
   WindowsHandler,
+  MilestoneAuditHandler,
   GenericMarkdownHandler,
 ];
