@@ -84,6 +84,30 @@ describe('addressOfPath - phase folders (D-05, D-06)', () => {
   });
 });
 
+describe('addressOfPath - suffixed review fix reports', () => {
+  it('reads a suffixed fix file as review-fix-<suffix> and keeps the plain fix address', () => {
+    const owner = owned('v1.1', '03');
+    expect(
+      addressOfPath('.planning/phases/03-account-admin-and-sessions/03-REVIEW-FIX-backend.md', owner),
+    ).toBe('/v1.1/phase-3/review-fix-backend');
+    expect(addressOfPath('.planning/phases/03-x/03-REVIEW-FIX-Web-UI.md', owner)).toBe('/v1.1/phase-3/review-fix-web-ui');
+    expect(addressOfPath('.planning/phases/01-x/01-REVIEW-FIX.md', owned('v1.1', '01'))).toBe('/v1.1/phase-1/review-fix');
+  });
+
+  it('gives a foreign phase prefix the file/ address', () => {
+    const path = '.planning/phases/03-x/04-REVIEW-FIX-backend.md';
+    expect(addressOfPath(path, owned('v1.1', '03'))).toBe(fileUrlOf(path));
+  });
+
+  it('reads the quick-task form under the task id', () => {
+    expect(addressOfPath('.planning/quick/261024-qhq-some-slug/261024-qhq-REVIEW-FIX-api.md', null)).toBe(
+      '/quick/261024-qhq/review-fix-api',
+    );
+    const foreign = '.planning/quick/261024-qhq-some-slug/261020-zzz-REVIEW-FIX-api.md';
+    expect(addressOfPath(foreign, null)).toBe(fileUrlOf(foreign));
+  });
+});
+
 describe('addressOfPath - quick tasks (D-07)', () => {
   it.each<[string, string]>([
     ['.planning/quick/261024-qhq-some-slug/261024-qhq-PLAN.md', '/quick/261024-qhq'],

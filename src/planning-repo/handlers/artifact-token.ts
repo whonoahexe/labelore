@@ -3,7 +3,7 @@
 // ...). Every typed handler that dispatches on this token calls through here rather than
 // re-deriving it, keeping naming.ts the single grammar module (DATA-02).
 import { basename } from 'node:path';
-import { parsePhaseArtifactName, parseQuickArtifactName } from '../naming.ts';
+import { parsePhaseArtifactName, parseQuickArtifactName, parseReviewFixName } from '../naming.ts';
 import type { ArtifactRef } from '../types.ts';
 
 /**
@@ -25,10 +25,15 @@ import type { ArtifactRef } from '../types.ts';
 export function artifactTokenOf(ref: ArtifactRef): string | null {
   const name = basename(ref.path);
   if (ref.location === 'phase' || ref.location === 'archived-phase') {
+    // A suffixed fix report (`03-REVIEW-FIX-backend.md`) is a REVIEW-FIX file; ReviewFixHandler claims it.
+    const fix = parseReviewFixName(name);
+    if (fix.matched && fix.prefixKind === 'phase') return 'REVIEW-FIX';
     const parsed = parsePhaseArtifactName(name);
     return parsed.matched ? parsed.artifact : null;
   }
   if (ref.location === 'quick' || ref.location === 'milestone-root') {
+    const fix = parseReviewFixName(name);
+    if (fix.matched && fix.prefixKind === 'quick') return 'REVIEW-FIX';
     const parsed = parseQuickArtifactName(name);
     return parsed.matched ? parsed.artifact : null;
   }
