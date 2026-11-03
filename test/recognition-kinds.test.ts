@@ -3,6 +3,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { LocalFsPlanningFilesystem } from '../src/planning-fs/local-fs.ts';
 import { discover } from '../src/planning-repo/discovery.ts';
+import { kindOfPath } from '../src/planning-repo/folders.ts';
 import { buildDrawerViewModel } from '../src/presentation/drawer.ts';
 import { loadProject } from './helpers/fixture-project.ts';
 import type { LoadedProject } from './helpers/fixture-project.ts';
@@ -90,5 +91,22 @@ describe.each(ALL_FIXTURE_ROOTS.map((root) => [root]))('the walk and the model a
     const walked = refs.map((ref) => ref.path).sort();
     const modelled = presentation.artifacts.map((artifact) => artifact.path).sort();
     expect(modelled).toEqual(walked);
+  });
+});
+
+describe('suffixed review fix reports are review-fix wherever a fix report can sit', () => {
+  it.each<[string, 'phase' | 'archived-phase' | 'quick' | 'milestone-root']>([
+    ['phases/03-x/03-REVIEW-FIX-backend.md', 'phase'],
+    ['milestones/v1.0-phases/03-x/03-REVIEW-FIX-frontend.md', 'archived-phase'],
+    ['quick/260726-unp-some-task/260726-unp-REVIEW-FIX-api.md', 'quick'],
+    ['milestones/v1.0-quick/260726-unp-some-task/260726-unp-REVIEW-FIX-api.md', 'milestone-root'],
+  ])('%s is review-fix', (path, location) => {
+    expect(kindOfPath(path, location)).toBe('review-fix');
+  });
+
+  it('keeps the plain fix file review-fix and leaves a shard review unknown', () => {
+    expect(kindOfPath('phases/06-x/06-REVIEW-FIX.md', 'phase')).toBe('review-fix');
+    expect(kindOfPath('phases/06-x/06-REVIEW-shard-A.md', 'phase')).toBe('unknown');
+    expect(kindOfPath('phases/06-x/06-REVIEW-FIX-backend.md', 'quick')).not.toBe('review-fix');
   });
 });

@@ -20,6 +20,7 @@ import {
   parsePlanFileName,
   parseQuickArtifactName,
   parseQuickDirName,
+  parseReviewFixName,
 } from '../planning-repo/naming.ts';
 import { assertNonEmpty, encodePart } from './identity-keys.ts';
 import {
@@ -263,6 +264,12 @@ function phaseFileAddress(owner: PhaseIdentity, rest: readonly string[]): string
       if (!samePhase(plan.phase)) return null;
       return `${base}/plan-${plan.plan}${plan.kind === 'summary' ? '/summary' : ''}`;
     }
+    // A suffixed fix report: `03-REVIEW-FIX-backend.md` reads as `<phase>/review-fix-backend`.
+    const reviewFix = parseReviewFixName(name);
+    if (reviewFix.matched && reviewFix.prefixKind === 'phase') {
+      if (!samePhase(reviewFix.prefix)) return null;
+      return `${base}/review-fix-${encodePart(reviewFix.suffix.toLowerCase())}`;
+    }
     const artifact = parsePhaseArtifactName(name);
     if (artifact.matched) {
       // D-06: a numeric prefix that is not the folder's own number takes the file/ address.
@@ -288,6 +295,11 @@ function quickAddress(segments: readonly string[]): string | null {
   const base = `/quick/${encodePart(id)}`;
   const rest = segments.slice(1);
   if (rest.length === 1) {
+    const reviewFix = parseReviewFixName(rest[0]);
+    if (reviewFix.matched && reviewFix.prefixKind === 'quick') {
+      if (reviewFix.prefix !== id) return null;
+      return `${base}/review-fix-${encodePart(reviewFix.suffix.toLowerCase())}`;
+    }
     const artifact = parseQuickArtifactName(rest[0]);
     if (artifact.matched) {
       if (artifact.quickId !== id) return null;

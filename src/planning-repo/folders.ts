@@ -13,6 +13,7 @@ import {
   parsePhaseArtifactName,
   parsePlanFileName,
   parseQuickArtifactName,
+  parseReviewFixName,
 } from './naming.ts';
 
 /** Where an exact-name row applies: only at the `.planning/` root, only inside a phase or quick-task
@@ -238,10 +239,15 @@ function grammarKindOf(segments: readonly string[], location: ArtifactLocation):
   if (location === 'phase' || location === 'archived-phase') {
     const plan = parsePlanFileName(name);
     if (plan.matched) return plan.kind;
+    // A suffixed fix report (`03-REVIEW-FIX-backend.md`): the generic artifact grammar cannot read it.
+    const reviewFix = parseReviewFixName(name);
+    if (reviewFix.matched && reviewFix.prefixKind === 'phase') return 'review-fix';
     const artifact = parsePhaseArtifactName(name);
     if (artifact.matched) return artifact.artifact.toLowerCase();
   }
   if (location === 'quick' || isArchivedQuickPath(segments)) {
+    const quickReviewFix = parseReviewFixName(name);
+    if (quickReviewFix.matched && quickReviewFix.prefixKind === 'quick') return 'review-fix';
     const quickArtifact = parseQuickArtifactName(name);
     if (quickArtifact.matched) return quickArtifact.artifact.toLowerCase();
   }

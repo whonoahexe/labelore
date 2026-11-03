@@ -149,6 +149,36 @@ export function parseQuickArtifactName(fileName: string): QuickArtifactNameResul
   return { matched: true, quickId: m[1], artifact: m[2] };
 }
 
+export interface ReviewFixNameMatch {
+  matched: true;
+  /** The phase number (prefixKind 'phase') or the `{date}-{timeToken}` quick id (prefixKind 'quick'), as written. */
+  prefix: string;
+  prefixKind: 'phase' | 'quick';
+  /** The part after `REVIEW-FIX-`, as written: letters, digits and hyphens, at most 40 characters. */
+  suffix: string;
+}
+export type ReviewFixNameResult = ReviewFixNameMatch | NameNoMatch;
+
+// A fix run scoped to one shard of a review writes `NN-REVIEW-FIX-<suffix>.md` (phase) or
+// `<id>-REVIEW-FIX-<suffix>.md` (quick task), e.g. `03-REVIEW-FIX-backend.md`. Labelore-side grammar:
+// the generic phase-artifact grammar cannot read it (its artifact token has no lower case), so the file
+// would fall to the unrecognised-file address. The plain `NN-REVIEW-FIX.md` keeps matching the generic
+// grammar, and `NN-REVIEW-shard-<x>.md` stays unrecognised on purpose. The suffix is bounded (40) and
+// both patterns are anchored, so the match is linear in the name.
+const REVIEW_FIX_SUFFIX_SOURCE = '([A-Za-z0-9][A-Za-z0-9-]{0,39})';
+// Quick form: ^(\d{6}-[0-9a-z]{3})-REVIEW-FIX-([A-Za-z0-9][A-Za-z0-9-]{0,39})\.md$
+const QUICK_REVIEW_FIX_RE = new RegExp(`^(\\d{6}-[0-9a-z]{3})-REVIEW-FIX-${REVIEW_FIX_SUFFIX_SOURCE}\\.md$`);
+// Phase form: ^(\d+[A-Z]?(?:\.\d+)*)-REVIEW-FIX-([A-Za-z0-9][A-Za-z0-9-]{0,39})\.md$
+const PHASE_REVIEW_FIX_RE = new RegExp(`^(${PHASE_NUMBER_TOKEN_SOURCE})-REVIEW-FIX-${REVIEW_FIX_SUFFIX_SOURCE}\\.md$`);
+
+export function parseReviewFixName(fileName: string): ReviewFixNameResult {
+  const quick = fileName.match(QUICK_REVIEW_FIX_RE);
+  if (quick) return { matched: true, prefix: quick[1], prefixKind: 'quick', suffix: quick[2] };
+  const phase = fileName.match(PHASE_REVIEW_FIX_RE);
+  if (phase) return { matched: true, prefix: phase[1], prefixKind: 'phase', suffix: phase[2] };
+  return { matched: false };
+}
+
 export interface MilestoneFileNameMatch {
   matched: true;
   /** e.g. 'v1.0' — the version segment, verbatim. */
