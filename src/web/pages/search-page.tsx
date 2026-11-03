@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router';
+import { FileText } from 'lucide-react';
 import { Link, useProjectSlug } from '../nav.tsx';
+import { buttonVariants } from '../components/ui/button.tsx';
 import { apiFetch, projectUrl } from '../api.ts';
 import { projectKey } from '../query-keys.ts';
 import type {
@@ -36,12 +38,23 @@ function highlightedSnippetNodes(text: string, highlights: SearchHighlightRange[
 }
 
 function SnippetLink({ row, snippet }: { row: SearchResultRow; snippet: SearchSnippet }): React.JSX.Element {
-  const to = snippet.anchor ? `${row.url}#${encodeURIComponent(snippet.anchor)}` : row.url;
+  // 09 D-01: a snippet's heading lives in the file, not on the designed page a root document opens on,
+  // so a snippet with an anchor leads into the source when the row has one.
+  const to = snippet.anchor
+    ? `${row.sourceUrl ?? row.url}#${encodeURIComponent(snippet.anchor)}`
+    : row.url;
   return (
     <Link className="search-snippet" to={to}>
       {highlightedSnippetNodes(snippet.text, snippet.highlights)}
     </Link>
   );
+}
+
+// The quiet Source link: the same ghost xs look as the View/Source toggle (UI-SPEC section 2).
+const sourceLinkClass = buttonVariants({ variant: 'ghost', size: 'xs' });
+
+function fileNameOf(path: string): string {
+  return path.slice(path.lastIndexOf('/') + 1);
 }
 
 function SearchRow({ row }: { row: SearchResultRow }): React.JSX.Element {
@@ -65,6 +78,16 @@ function SearchRow({ row }: { row: SearchResultRow }): React.JSX.Element {
             <span className="status-chip" data-tone={row.warningTone === 'unreadable' ? 'destructive' : 'warning'}>
               {row.warningTone === 'unreadable' ? 'Unreadable' : 'Warning'}
             </span>
+          ) : null}
+          {row.sourceUrl ? (
+            <Link
+              className={sourceLinkClass}
+              to={row.sourceUrl}
+              aria-label={`View source of ${fileNameOf(row.path)}`}
+              title="View source"
+            >
+              <FileText aria-hidden="true" />
+            </Link>
           ) : null}
         </header>
         <span className="search-result-path">{row.path}</span>
