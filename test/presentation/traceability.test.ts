@@ -545,7 +545,7 @@ function traceabilityRow(overrides: Partial<TraceabilityRow> = {}): Traceability
 }
 
 function filterState(overrides: Partial<TraceabilityFilterState> = {}): TraceabilityFilterState {
-  return { query: '', status: 'all', includeHistory: false, ...overrides };
+  return { ...DEFAULT_TRACEABILITY_FILTER, ...overrides };
 }
 
 describe('matchesTraceabilityFilter (Task 3)', () => {

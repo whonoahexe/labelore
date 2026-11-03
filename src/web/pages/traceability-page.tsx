@@ -1,23 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronRight, History } from 'lucide-react';
-import { Link, useProjectSlug } from '../nav.tsx';
+import { Link, useProjectLocation, useProjectSlug } from '../nav.tsx';
 import { apiFetch, projectUrl } from '../api.ts';
 import { projectKey } from '../query-keys.ts';
 import { EmptyState } from '../components/empty-state.tsx';
 import { LeadText } from '../components/lead-tokens.tsx';
-import type {
-  TraceabilityArchivedMilestone,
-  TraceabilityCoverage,
-  TraceabilityCoveringPhase,
-  TraceabilityDeferredTier,
-  TraceabilityRow,
-  TraceabilityViewModel,
+import {
+  requirementStateOf,
+  type RequirementState,
+  type TraceabilityArchivedMilestone,
+  type TraceabilityCoverage,
+  type TraceabilityCoveringPhase,
+  type TraceabilityDeferredTier,
+  type TraceabilityRow,
+  type TraceabilityViewModel,
 } from '../../presentation/traceability.ts';
 import {
   DEFAULT_TRACEABILITY_FILTER,
   matchesDeferredTraceabilityFilter,
   matchesTraceabilityFilter,
+  seedTraceabilityFilter,
   type TraceabilityFilterState,
 } from './traceability-filter.ts';
 import {
@@ -293,7 +296,27 @@ function ArchivedMilestoneDisclosure({
  * it did reach them, so the unfiltered-tiers note (E1/E2) only appears when there's something to
  * warn about. */
 function isFilterEngaged(filter: TraceabilityFilterState): boolean {
-  return filter.status !== 'all' || filter.query.trim().length > 0;
+  return filter.status !== 'all' || filter.state !== 'all' || filter.query.trim().length > 0;
+}
+
+/** The state buttons, in the order the strip shows them. `validated` is labelled for what it
+ * holds — the previous milestones' requirements. */
+const STATE_BUTTONS: Array<{ state: RequirementState; label: string }> = [
+  { state: 'complete', label: 'Complete' },
+  { state: 'pending', label: 'Pending' },
+  { state: 'validated', label: 'Shipped before' },
+  { state: 'out-of-scope', label: 'Out of scope' },
+];
+
+/** How many rows each state button opens on, from the same predicates the filter uses. */
+function stateButtonCounts(view: TraceabilityViewModel): Record<RequirementState, number> {
+  const rows = view.groups.flatMap((group) => group.rows);
+  return {
+    complete: rows.filter((row) => requirementStateOf(row) === 'complete').length,
+    pending: rows.filter((row) => requirementStateOf(row) === 'pending').length,
+    validated: view.archivedMilestones.reduce((sum, archive) => sum + archive.total, 0),
+    'out-of-scope': view.outOfScope.length,
+  };
 }
 
 export function TraceabilityPage(): React.JSX.Element {
@@ -302,7 +325,23 @@ export function TraceabilityPage(): React.JSX.Element {
     queryKey: projectKey(slug, 'traceability'),
     queryFn: () => fetchTraceability(slug),
   });
-  const [filter, setFilter] = useState<TraceabilityFilterState>(DEFAULT_TRACEABILITY_FILTER);
+  const { search } = useProjectLocation();
+  // The user's own choice, held with the address it was made under. Until a control changes it the
+  // effective filter is the seed read from the address, so a link such as ?state=pending opens
+  // already narrowed (no flash of unfiltered rows) and the page never writes the address back.
+  const [choice, setChoice] = useState<{ search: string; filter: TraceabilityFilterState } | null>(
+    null,
+  );
+  const seeded = useMemo(
+    () =>
+      traceability.data
+        ? seedTraceabilityFilter(search, traceability.data)
+        : DEFAULT_TRACEABILITY_FILTER,
+    [search, traceability.data],
+  );
+  const filter = choice !== null && choice.search === search ? choice.filter : seeded;
+  const setFilter = (update: (current: TraceabilityFilterState) => TraceabilityFilterState): void =>
+    setChoice({ search, filter: update(filter) });
 
   // Carries `coverage` through unchanged from the source group — the category bar always reads
   // this unfiltered figure, never the filtered row subset the section happens to be showing, so
@@ -343,6 +382,7 @@ export function TraceabilityPage(): React.JSX.Element {
   }
 
   const view = traceability.data;
+  const stateCounts = stateButtonCounts(view);
   // No current requirements but at least one archive: the project is between milestones, so the
   // 0% headline over nothing is replaced by a note pointing at the previous milestones below.
   const betweenMilestones = view.groups.length === 0 && view.archivedMilestones.length > 0;
@@ -445,6 +485,28 @@ export function TraceabilityPage(): React.JSX.Element {
               >
                 Status mismatch
               </button>
+            </div>
+            <div className="trace-status-filters" role="group" aria-label="Filter by state">
+              <button
+                type="button"
+                className="trace-filter-button"
+                data-active={filter.state === 'all' ? 'true' : undefined}
+                onClick={() => setFilter((current) => ({ ...current, state: 'all', milestone: null }))}
+              >
+                All
+              </button>
+              {STATE_BUTTONS.map(({ state, label }) => (
+                <button
+                  key={state}
+                  type="button"
+                  className="trace-filter-button"
+                  data-active={filter.state === state ? 'true' : undefined}
+                  disabled={stateCounts[state] === 0}
+                  onClick={() => setFilter((current) => ({ ...current, state, milestone: null }))}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
             <button
               type="button"
