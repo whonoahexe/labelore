@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { CircleDot } from 'lucide-react';
+import { ArrowRight, CircleDot } from 'lucide-react';
 import { apiFetch, projectUrl } from '../api.ts';
 import { Link, useProjectSlug } from '../nav.tsx';
 import { projectKey } from '../query-keys.ts';
@@ -162,6 +162,12 @@ function ProjectHead({ head }: { head: DashboardHead }): React.JSX.Element {
             <p className="project-lead">
               <LeadText text={stripEmoji(head.lead)} />
             </p>
+          ) : null}
+          {head.projectUrl ? (
+            <Link className="text-link" to={head.projectUrl}>
+              About this project
+              <ArrowRight aria-hidden="true" />
+            </Link>
           ) : null}
         </div>
         {now ? (
