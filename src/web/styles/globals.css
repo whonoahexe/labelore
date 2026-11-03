@@ -28207,4 +28207,135 @@ button.research-step-chip:hover {
   margin: 0;
   overflow-wrap: anywhere;
 }
+
+/* The matrix head: the summary in the lead number style, a two-segment bar sized by the two counts (complete,
+   then quiet) and the file's lead lines as a caption. */
+.view-coverage-head {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.view-coverage-summary {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.view-coverage-bar {
+  display: flex;
+  gap: var(--space-0-5);
+  height: 0.6rem;
+}
+
+.view-coverage-bar > i {
+  display: block;
+  flex: 1 1 0;
+  min-width: 0;
+  border: 1px solid var(--muted-foreground);
+  background: var(--muted);
+}
+
+.view-coverage-bar > i[data-tone='complete'] {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.view-coverage-lead {
+  display: grid;
+  gap: var(--space-1);
+  padding-left: var(--space-3);
+  border-left: 1px solid var(--border);
+  color: var(--muted-foreground);
+}
+
+.view-coverage-lead-line {
+  margin: 0;
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+  overflow-wrap: anywhere;
+}
+
+/* Groups: a Label-size head with a bottom hairline and a mono count, then one row per capability. */
+.view-coverage-group {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.view-coverage-group-head {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+}
+
+.view-coverage-group-count {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.view-coverage-rows {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A row: square, the capability (mono, wrapping), the decision chip, then the reason in Meta under the capability. */
+.view-coverage-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--space-1) var(--space-3);
+  align-items: baseline;
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.view-coverage-capability {
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+}
+
+.view-coverage-row-reason {
+  grid-column: 2 / -1;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+  overflow-wrap: anywhere;
+}
+
+/* An opt-out that gives no reason says so on a dashed quiet line. */
+.view-coverage-no-reason {
+  justify-self: start;
+  padding: var(--space-1) var(--space-3);
+  border: 1px dashed var(--border);
+}
+
+@media (max-width: 42rem) {
+  .view-coverage-row {
+    padding: var(--space-3);
+  }
+}
 /* phase-09-coverage:end */
