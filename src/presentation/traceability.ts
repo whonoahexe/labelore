@@ -110,6 +110,8 @@ export interface TraceabilityArchivedMilestone {
   title: string;
   sourcePath: string;
   total: number;
+  /** MILESTONES.md's ship date for this version as a short label, or null when it records none. */
+  shipped: string | null;
   groups: TraceabilityArchivedCategory[];
 }
 
@@ -325,21 +327,34 @@ function isTraceabilityCell(value: unknown): value is TraceabilityCellLike {
   return typeof entry.requirementId === 'string' && typeof entry.phase === 'string';
 }
 
+/** The checkbox requirement items an archive artifact carries (rows without a checkbox are
+ * deferred-tier rows, never part of a milestone's own requirements). */
+function archiveItemsOf(artifact: ArtifactDto): RequirementItem[] {
+  const rawItems = artifact.structured.items;
+  return (Array.isArray(rawItems) ? rawItems : [])
+    .filter(isRequirementItem)
+    .filter((entry) => entry.checked !== null);
+}
+
+/** The version a `milestones/vX.Y-REQUIREMENTS.md` artifact is projected under, or null when it is
+ * not such an archive or holds no checkbox requirement. The one predicate the archives list and the
+ * state counts share, so a counted archive is always a listed one. */
+export function projectedArchiveVersion(artifact: ArtifactDto): string | null {
+  if (artifact.kind !== 'requirements' || artifact.location !== 'milestone-root') return null;
+  const parsed = parseMilestoneFileName(artifact.path.split('/').pop() ?? '');
+  if (!parsed.matched || parsed.document.toUpperCase() !== 'REQUIREMENTS') return null;
+  return archiveItemsOf(artifact).length > 0 ? parsed.version : null;
+}
+
 function archivedMilestoneOf(
   artifact: ArtifactDto,
   presentation: ProjectPresentation,
   phaseByKey: Map<string, PhaseDto>,
   records: ReturnType<typeof milestoneRecords>,
 ): TraceabilityArchivedMilestone | null {
-  const parsed = parseMilestoneFileName(artifact.path.split('/').pop() ?? '');
-  if (!parsed.matched || parsed.document.toUpperCase() !== 'REQUIREMENTS') return null;
-  const version = parsed.version;
-
-  const rawItems = artifact.structured.items;
-  const items = (Array.isArray(rawItems) ? rawItems : [])
-    .filter(isRequirementItem)
-    .filter((entry) => entry.checked !== null);
-  if (items.length === 0) return null;
+  const version = projectedArchiveVersion(artifact);
+  if (version === null) return null;
+  const items = archiveItemsOf(artifact);
 
   // A live milestone is never used: its "Phase 1" is the current work, not this archive's.
   const milestone =
@@ -396,6 +411,7 @@ function archivedMilestoneOf(
     title,
     sourcePath: artifact.path,
     total: items.length,
+    shipped: record?.shipped ?? null,
     groups: categoryOrder.map((category) => ({ category, rows: rowsByCategory.get(category) ?? [] })),
   };
 }
@@ -409,7 +425,6 @@ function archivedMilestonesOf(
   const records = milestoneRecords(presentation);
   const archives: TraceabilityArchivedMilestone[] = [];
   for (const artifact of presentation.artifacts) {
-    if (artifact.kind !== 'requirements' || artifact.location !== 'milestone-root') continue;
     const archive = archivedMilestoneOf(artifact, presentation, phaseByKey, records);
     if (archive) archives.push(archive);
   }
@@ -507,5 +522,45 @@ export function buildTraceabilityViewModel(
     },
     coverage: coverageOf(allRows),
     archivedMilestones: archivedMilestonesOf(presentation, phaseByKey),
+  };
+}
+
+/** What the project page's four count tiles show (D-05), all from this projection and nothing
+ * from PROJECT.md's own bullets. `complete` and `pending` count the active tier's own checkboxes;
+ * `validated` counts every checkbox row of the projected archives (checked or not), broken down
+ * newest first; `outOfScope` counts REQUIREMENTS.md's Out of Scope rows. */
+export interface RequirementStateCounts {
+  milestone: string | null;
+  complete: number;
+  pending: number;
+  validated: number;
+  validatedByMilestone: { version: string; count: number }[];
+  outOfScope: number;
+}
+
+/** The counts behind the state tiles, through the same predicates the traceability page's state
+ * axis uses so a tile and the rows it opens can never disagree. Null when there is nothing to
+ * count at all. */
+export function requirementStateCounts(
+  presentation: ProjectPresentation,
+): RequirementStateCounts | null {
+  const view = buildTraceabilityViewModel(presentation);
+  const states = view.groups.flatMap((group) => group.rows).map(requirementStateOf);
+  const complete = states.filter((state) => state === 'complete').length;
+  const pending = states.filter((state) => state === 'pending').length;
+  const validatedByMilestone = view.archivedMilestones.map((archive) => ({
+    version: archive.version,
+    count: archive.total,
+  }));
+  const validated = validatedByMilestone.reduce((sum, entry) => sum + entry.count, 0);
+  const outOfScope = view.outOfScope.length;
+  if (complete + pending + validated + outOfScope === 0) return null;
+  return {
+    milestone: view.currentMilestone,
+    complete,
+    pending,
+    validated,
+    validatedByMilestone,
+    outOfScope,
   };
 }

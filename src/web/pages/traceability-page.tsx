@@ -258,12 +258,17 @@ function DeferredTierDisclosure({
  * never counted in the summary. */
 function ArchivedMilestoneDisclosure({
   archive,
+  open = false,
 }: {
   archive: TraceabilityArchivedMilestone;
+  /** The details element's open state: true when the Shipped before state is opened on this
+   * milestone (or on every previous one). Changing it opens or closes the disclosure; the user's own
+   * toggling in between is left alone. */
+  open?: boolean;
 }): React.JSX.Element {
   const versionSlug = archive.version.replaceAll(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
   return (
-    <details className="history-milestone">
+    <details className="history-milestone" open={open}>
       <summary>
         <ChevronRight aria-hidden="true" />
         <span>
@@ -553,6 +558,29 @@ export function TraceabilityPage(): React.JSX.Element {
         <p className="empty-note">No active-tier requirements match the current filter.</p>
       )}
 
+      {filter.state === 'out-of-scope' && view.outOfScope.length > 0 ? (
+        <section className="history-section" aria-labelledby="trace-out-of-scope-heading">
+          <header className="section-heading">
+            <div>
+              <p className="eyebrow">By choice</p>
+              <h2 id="trace-out-of-scope-heading">Out of scope</h2>
+            </div>
+          </header>
+          <ul className="trace-out-of-scope">
+            {view.outOfScope.map((row, index) => (
+              <li key={`${index}-${row.feature}`}>
+                <strong>{stripEmoji(row.feature)}</strong>
+                {row.reason ? (
+                  <span className="source-note">
+                    <LeadText text={stripEmoji(row.reason)} />
+                  </span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       {view.deferredTiers.length > 0 ? (
         <section className="history-section" aria-labelledby="trace-deferred-heading">
           <header className="section-heading">
@@ -586,7 +614,14 @@ export function TraceabilityPage(): React.JSX.Element {
           </header>
           <div className="history-list">
             {view.archivedMilestones.map((archive) => (
-              <ArchivedMilestoneDisclosure key={archive.sourcePath} archive={archive} />
+              <ArchivedMilestoneDisclosure
+                key={archive.sourcePath}
+                archive={archive}
+                open={
+                  filter.state === 'validated' &&
+                  (filter.milestone === null || filter.milestone === archive.version)
+                }
+              />
             ))}
           </div>
         </section>
