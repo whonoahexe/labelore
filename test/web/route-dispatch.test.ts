@@ -14,6 +14,7 @@ import {
   resolveUnprefixedRoute,
   type RouteOutcome,
 } from '../../src/web/route-dispatch.ts';
+import { ROOT_DOCUMENT_TARGETS, rootDocumentRedirect } from '../../src/presentation/root-redirects.ts';
 import { FX_ROOT, loadProject } from '../helpers/fixture-project.ts';
 import {
   legacyArtifactUrl,
@@ -117,11 +118,93 @@ describe('resolveProjectRoute over the Lendshed payload', () => {
   });
 });
 
+describe('root documents designed elsewhere (09 D-01)', () => {
+  const withSearch = (path: string, search: string, presentation = lendshed): RouteOutcome =>
+    resolveProjectRoute(path, search, presentation);
+
+  it('redirects the root documents to the page that shows them', () => {
+    expect(resolve('/state', lendshed)).toEqual({ kind: 'redirect', to: '/' });
+    expect(resolve('/requirements', lendshed)).toEqual({ kind: 'redirect', to: '/traceability' });
+    expect(resolve('/milestones', lendshed)).toEqual({ kind: 'redirect', to: '/roadmap#history' });
+  });
+
+  it('keeps /roadmap the roadmap page', () => {
+    expect(resolve('/roadmap', lendshed)).toEqual({ kind: 'page', page: 'roadmap' });
+  });
+
+  it('opens the file itself on ?source=1, for every redirected row of the table', () => {
+    const opened: string[] = [];
+    for (const row of ROOT_DOCUMENT_TARGETS) {
+      if (row.fileName === 'ROADMAP.md') continue;
+      const artifact = lendshed.artifacts
+        .concat(shapes.artifacts)
+        .find((candidate) => candidate.location === 'root' && candidate.path.endsWith(`/${row.fileName}`));
+      if (artifact === undefined) continue;
+      const presentation = lendshed.artifacts.includes(artifact) ? lendshed : shapes;
+      expect(withSearch(artifact.key, '?source=1', presentation), row.fileName).toEqual({
+        kind: 'document',
+        url: artifact.key,
+        artifactPath: artifact.path,
+      });
+      opened.push(row.fileName);
+    }
+    expect(opened).toContain('STATE.md');
+  });
+
+  it('opens ROADMAP.md itself on /roadmap?source=1, and only there', () => {
+    expect(withSearch('/roadmap', '')).toEqual({ kind: 'page', page: 'roadmap' });
+    expect(withSearch('/roadmap', '?source=1')).toMatchObject({
+      kind: 'document',
+      url: '/roadmap',
+      artifactPath: expect.stringMatching(/ROADMAP\.md$/),
+    });
+    expect(withSearch('/roadmap', '?source=0')).toEqual({ kind: 'page', page: 'roadmap' });
+    expect(withSearch('/search', '?source=1')).toEqual({ kind: 'page', page: 'search' });
+    expect(withSearch('/traceability', '?source=1')).toEqual({ kind: 'page', page: 'traceability' });
+  });
+
+  it('falls back to the roadmap page when the payload carries no ROADMAP.md artifact', () => {
+    const bare: ProjectPresentation = {
+      ...lendshed,
+      artifacts: lendshed.artifacts.filter((artifact) => artifact.key !== '/roadmap'),
+    };
+    expect(withSearch('/roadmap', '?source=1', bare)).toEqual({ kind: 'page', page: 'roadmap' });
+  });
+
+  it('ignores a flag value other than 1', () => {
+    expect(withSearch('/state', '?source=0')).toEqual({ kind: 'redirect', to: '/' });
+  });
+
+  it('is still not-found for an address no artifact carries, flag or not', () => {
+    expect(withSearch('/nope', '?source=1')).toEqual({ kind: 'not-found' });
+    expect(withSearch('/file/state.json', '?source=1')).toEqual({ kind: 'not-found' });
+  });
+
+  it('does not redirect a STATE.md that is not at the root', () => {
+    const nested: ProjectPresentation = {
+      ...lendshed,
+      artifacts: [
+        ...lendshed.artifacts,
+        {
+          ...lendshed.artifacts[0]!,
+          key: '/research/state',
+          path: '.planning/research/STATE.md',
+          location: 'research',
+        },
+      ],
+    };
+    expect(withSearch('/research/state', '', nested)).toMatchObject({
+      kind: 'document',
+      url: '/research/state',
+    });
+  });
+});
+
 describe.each([
   ['Shapes', shapes],
   ['Lendshed', lendshed],
 ])('every address the %s payload emits', (_name, presentation) => {
-  it('opens a page: no artifact key and no plan key is a miss', () => {
+  it('opens a page (or, for a root document designed elsewhere, redirects to one): no artifact key and no plan key is a miss', () => {
     const misses: string[] = [];
     for (const artifact of presentation.artifacts) {
       const outcome = resolve(artifact.key, presentation);
@@ -129,7 +212,9 @@ describe.each([
         outcome.kind === 'document' ||
         outcome.kind === 'plan-pair' ||
         // ROADMAP.md IS the roadmap page.
-        (outcome.kind === 'page' && artifact.key === '/roadmap');
+        (outcome.kind === 'page' && artifact.key === '/roadmap') ||
+        // 09 D-01: a root document designed elsewhere redirects to the page that shows it.
+        (outcome.kind === 'redirect' && outcome.to === rootDocumentRedirect(artifact));
       if (!ok) misses.push(`${artifact.key} -> ${outcome.kind}`);
     }
     for (const plan of presentation.milestones.flatMap((m) => m.phases).flatMap((p) => p.plans)) {
@@ -310,7 +395,15 @@ describe('every legacy shape and query (NAV-11, D-12, D-13)', () => {
         expect(target.startsWith('/') && !target.startsWith('//') && !target.startsWith('/\\'), target).toBe(true);
         const parsed = parseRoutePath(target);
         expect(parsed.ok && parsed.route.kind !== 'legacy', target).toBe(true);
-        expect(outcomeOf(target).kind, target).not.toBe('redirect');
+        const next = outcomeOf(target);
+        if (next.kind !== 'redirect') continue;
+        // 09 D-01 (updated expectation): an old link to a root document designed elsewhere is a legacy
+        // hop followed by exactly one more, to the page that shows it, and that page is never a redirect.
+        expect(
+          ROOT_DOCUMENT_TARGETS.some((row) => row.to === next.to),
+          `${target} -> ${next.to}`,
+        ).toBe(true);
+        expect(outcomeOf(next.to).kind, next.to).not.toBe('redirect');
       }
     });
   });

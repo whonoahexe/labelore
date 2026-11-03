@@ -12,6 +12,7 @@
 import { parseMilestoneFileName } from '../planning-repo/naming.ts';
 import type { ArtifactDto, ProjectPresentation } from '../server/project-presentation.ts';
 import { artifactWarningTone, type ArtifactWarningTone } from './artifact-warning-tone.ts';
+import { rootDocumentRedirect, sourceUrlOf } from './root-redirects.ts';
 import { stableSlug } from '../rendering/slug.ts';
 
 /** Structurally mirrors src/server/search-index.ts's `SearchHit` — redeclared, not imported (see
@@ -52,6 +53,9 @@ export interface SearchResultRow extends SearchHitLike {
   /** D-12: the row's damaged-artifact tone, from the same shared `artifactWarningTone()` the tree
    * uses — the row still renders either way (degrade, don't hide) rather than being dropped. */
   warningTone: ArtifactWarningTone;
+  /** 09 D-01: the address that opens the file itself (`/state?source=1`) for a root document whose title
+   * leads to a designed page, else null. A snippet's heading lives in the file, so snippets lead here. */
+  sourceUrl: string | null;
 }
 
 export type SearchGroupKind = 'phase' | 'root' | 'research' | 'quick' | 'archived-milestone' | 'other';
@@ -81,6 +85,9 @@ function compareHits(left: SearchHitLike, right: SearchHitLike): number {
 function toRow(hit: SearchHitLike, artifact: ArtifactDto | undefined): SearchResultRow {
   return {
     ...hit,
+    // 09 D-01: a root document designed elsewhere leads to that page directly, with no redirect hop.
+    url: rootDocumentRedirect(artifact) ?? hit.url,
+    sourceUrl: sourceUrlOf(artifact),
     snippets: [],
     matchCount: 0,
     // D-13: the tone is presentation metadata attached after `compareHits` has already ordered
