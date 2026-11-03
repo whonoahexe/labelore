@@ -27446,3 +27446,286 @@ button.research-step-chip:hover {
   }
 }
 /* phase-09-windows-ledger:end */
+
+/* phase-09-review-ledger:start */
+/* Phase 9 (09-12): the review ledger strip, shared head and Fix tab. The strip reuses the plan-pair switch's
+   look; the shared head and the Fix tab render four font sizes: the h1 as ArtifactHeader draws it
+   (--fs-display-3), the lead numbers and section h2 (--fs-7), Body and Meta (--fs-4) and Label (--fs-2).
+   Where a shared class sets a size outside that set, the head and the Fix tab take it inside with a rule
+   scoped to their own classes, so no shared class is edited. Tokens only; both themes. */
+.plan-pair-switch[data-ledger='true'] > * {
+  gap: var(--space-2);
+  font-size: var(--fs-2);
+}
+
+.view-review-ledger-count {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (pointer: coarse) {
+  .plan-pair-switch[data-ledger='true'] > * {
+    min-height: 40px;
+  }
+}
+
+.view-review-ledger-head {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--border);
+  background: var(--card-veil);
+}
+
+.view-review-ledger-total {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: baseline;
+}
+
+.view-review-ledger-number {
+  font-family: var(--font-mono);
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  font-variant-numeric: tabular-nums;
+}
+
+.view-review-ledger-word {
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-snug);
+}
+
+.view-review-ledger-severities {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-review-ledger-severity {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+  min-width: 0;
+}
+
+.view-review-ledger-head .view-review-sev,
+.view-review-ledger-page .view-review-sev {
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+}
+
+.view-review-ledger-head .view-review-sev {
+  min-width: 5.5rem;
+}
+
+.view-review-ledger-fixed {
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-snug);
+}
+
+.view-review-ledger-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-0-5);
+  align-items: center;
+  min-width: 0;
+}
+
+.view-review-ledger-note {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-normal);
+}
+
+/* The Fix tab. */
+.artifact-page:has(.view-review-ledger-page) .status-chip,
+.artifact-page:has(.view-review-ledger-page) .document-view-toggle button {
+  font-size: var(--fs-2);
+}
+
+.artifact-page:has(.view-review-ledger-page) .source-note,
+.artifact-page:has(.view-review-ledger-page) .empty-note {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+.view-review-ledger-page {
+  display: grid;
+  gap: var(--space-fluid-6);
+  min-width: 0;
+}
+
+.view-review-ledger-section {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+  min-width: 0;
+  scroll-margin-top: var(--space-22);
+}
+
+.view-review-ledger-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.view-review-ledger-heading {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  overflow-wrap: anywhere;
+}
+
+/* A file name is a mono token: one line, end-ellipsis, the full value in title. */
+.view-review-ledger-file {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.view-review-ledger-lead {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-snug);
+}
+
+.view-review-group {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.view-review-group-head {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-review-group-count {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.view-review-ledger-rows {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-review-ledger-row {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.view-review-ledger-row-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.view-review-ledger-title {
+  flex: 1 1 16rem;
+  min-width: 0;
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+}
+
+.view-review-ledger-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  min-width: 0;
+}
+
+.view-review-ledger-chip,
+.view-review-ledger-commit,
+.view-review-ledger-more {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.view-review-ledger-chip {
+  padding: 0 var(--space-1-5);
+  background: var(--code-veil);
+}
+
+.view-review-ledger-commit,
+.view-review-ledger-more {
+  color: var(--muted-foreground);
+}
+
+.view-review-ledger-reason {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-normal);
+  overflow-wrap: anywhere;
+}
+
+.view-review-group[data-group='not-in-review'] .view-review-ledger-row {
+  border-style: dashed;
+  background: transparent;
+}
+
+@media (max-width: 42rem) {
+  .view-review-ledger-head,
+  .view-review-ledger-row {
+    padding: var(--space-3);
+  }
+}
+/* phase-09-review-ledger:end */
