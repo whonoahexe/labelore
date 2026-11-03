@@ -26457,3 +26457,23 @@ button.research-step-chip:hover {
   color: var(--foreground);
   font-weight: var(--fw-medium);
 }
+
+/* Phase 9 (09-06): the archived-milestone arrival highlight and the Shipped mark. The highlight is
+   arrival-only (data-target is set when the address names the block); the Shipped chip is always present
+   and sits on the title line. */
+.history-milestone[data-target='true'] {
+  border-left: 2px solid var(--primary);
+  background: var(--primary-tint);
+}
+
+.history-milestone-title {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-2-5);
+  align-items: center;
+}
+
+.history-milestone-title > strong {
+  min-width: 0;
+}
