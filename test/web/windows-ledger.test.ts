@@ -12,6 +12,7 @@ import { WindowsLedgerView, windowsHeaderProps } from '../../src/web/views/windo
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 
 const LB_PLANNING = new URL('../../.planning/', import.meta.url);
+const SHAPES_PLANNING = new URL('../fixtures/shapes/.planning/', import.meta.url);
 
 function inputOf(content: string): ViewInput {
   const ref: ArtifactRef = {
@@ -339,5 +340,89 @@ describe('the Open and Waived markup', () => {
     expect(hostile).not.toContain('<img');
     expect(hostile).not.toContain('<a href');
     expect(hostile).not.toContain('onerror=alert(1)>');
+  });
+});
+
+describe('the Fixed history', () => {
+  it("folds Lendshed's fixed rows by phase in first-appearance order", () => {
+    expect(phasesOf(lendshed?.fixed)).toEqual(['01', 'quick/260402-t8m']);
+    expect(lendshed?.fixed?.count).toBe(2);
+    const row = lendshed!.fixed!.groups[1].rows[0];
+    expect(row).toMatchObject({ id: '6', tone: 'complete', recorded: '12 Jun 2026', resolved: '18 Jun 2026', waived: false });
+  });
+
+  it('draws one collapsed details element per phase with the summary "{phase} · {n} fixed"', () => {
+    const html = renderToStaticMarkup(createElement(WindowsLedgerView, { model: lendshed! }));
+    expect(html.split('<details').length - 1).toBe(2);
+    expect(html).not.toContain('<details open');
+    expect(html).toContain('01 · 1 fixed');
+    expect(html).toContain('quick/260402-t8m · 1 fixed');
+    expect(html).toContain('Fixed 18 Jun 2026');
+    expect(html).toContain('<i class="status-square" data-tone="complete" aria-hidden="true"></i>');
+    expect(html.indexOf('>Waived<')).toBeLessThan(html.indexOf('view-windows-history'));
+  });
+
+  it('is omitted when the ledger lists no fixed row', () => {
+    const ledger = composeWindowsLedger(inputOf(plantedLedger([{ id: 1, phase: '01', status: 'open' }])));
+    expect(ledger?.fixed).toBeNull();
+    const html = renderToStaticMarkup(createElement(WindowsLedgerView, { model: ledger! }));
+    expect(html).not.toContain('<details');
+    expect(html).not.toContain('view-windows-history');
+  });
+
+  it('shows a fixed row with no resolved date without a Fixed date', () => {
+    const ledger = composeWindowsLedger(inputOf(plantedLedger([{ id: 1, phase: '01', status: 'fixed' }])));
+    expect(ledger?.fixed?.groups[0].rows[0].resolved).toBeNull();
+  });
+
+  it('keeps the page the same shape with nothing open', () => {
+    const html = renderToStaticMarkup(
+      createElement(WindowsLedgerView, {
+        model: composeWindowsLedger(inputOf(plantedLedger([{ id: 1, phase: '01', status: 'fixed' }])))!,
+      }),
+    );
+    const order = ['view-windows-lead', '>Open<', '>Waived<', 'view-windows-history'].map((part) => html.indexOf(part));
+    expect(order.every((at) => at > -1)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+  });
+});
+
+describe('the Shapes ledger (zero open, D-15)', () => {
+  const shapes = composeWindowsLedger(inputOf(readFileSync(new URL('WINDOWS.md', SHAPES_PLANNING), 'utf8')));
+
+  it('leads with Nothing open. and the last fix, in the complete tone', () => {
+    expect(shapes?.lead).toMatchObject({ open: 0, fixed: 2, waived: 0, total: 2, tone: 'complete' });
+    expect(shapes?.lead.sentence).toBe('Nothing open. 2 fixed, last on 22 Oct 2026.');
+    expect(shapes?.notice).toBeNull();
+  });
+
+  it('shows Open and Waived as their empty-note lines above the Fixed history', () => {
+    expect(shapes?.open).toEqual({ groups: [], count: 0, empty: 'Nothing open.' });
+    expect(shapes?.waived).toEqual({ groups: [], count: 0, empty: 'Nothing waived.' });
+    expect(phasesOf(shapes?.fixed)).toEqual(['01', '02']);
+    const html = renderToStaticMarkup(createElement(WindowsLedgerView, { model: shapes! }));
+    expect(html).toContain('<span class="status-chip" data-tone="complete">0 open</span>');
+    expect(html).toContain('<p class="empty-note">Nothing open.</p>');
+    expect(html).toContain('<p class="empty-note">Nothing waived.</p>');
+    expect(html).toContain('01 · 1 fixed');
+  });
+});
+
+describe("this repo's own WINDOWS.md - the history", () => {
+  const own = composeWindowsLedger(inputOf(readFileSync(new URL('WINDOWS.md', LB_PLANNING), 'utf8')));
+
+  it('composes its fixed rows into the history, none open and none waived', () => {
+    expect(own?.fixed?.count).toBeGreaterThanOrEqual(9);
+    const rows = own!.fixed!.groups.flatMap((group) => group.rows);
+    expect(rows.length).toBe(own!.fixed!.count);
+    expect(rows.every((row) => row.tone === 'complete')).toBe(true);
+    expect(own?.open.empty).toBe('Nothing open.');
+    expect(own?.waived.empty).toBe('Nothing waived.');
+  });
+
+  it('groups by the verbatim phase string, so quick tasks keep their own group', () => {
+    const phases = phasesOf(own?.fixed);
+    expect(phases.slice(0, 3)).toEqual(['01', '03', '04']);
+    expect(phases).toContain('quick-260909-ogb');
   });
 });
