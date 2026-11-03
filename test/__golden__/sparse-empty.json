@@ -63,7 +63,19 @@
                 "text": "Everything else — this fixture exists to be sparse."
               }
             ],
-            "lastUpdated": "2026-08-21 after initialization"
+            "lastUpdated": "2026-08-21 after initialization",
+            "decisions": [
+              {
+                "n": 1,
+                "decision": "Keep this fixture sparse",
+                "tag": null,
+                "era": null,
+                "rationale": "Proves the null-milestone, no-structure code path",
+                "outcome": "pending",
+                "outcomeLabel": "Pending",
+                "note": ""
+              }
+            ]
           }
         }
       },
