@@ -40,13 +40,17 @@ function Stamp({ stamp }: { stamp: ComposedReviewStamp }): React.JSX.Element {
 }
 
 /** The quiet disagreement chip: the fix file says fixed, the disposition still says open (D-08). Deliberately not
- * the `complete` tone - it is a note about two records parting ways, not a result. */
-function StaleMark({ mark }: { mark: ComposedStaleMark }): React.JSX.Element {
+ * the `complete` tone - it is a note about two records parting ways, not a result. Beside a stamp that already
+ * says "Fixed {commit}" it says only what the stamp does not. */
+function StaleMark({ mark, stamp }: { mark: ComposedStaleMark; stamp: ComposedReviewStamp }): React.JSX.Element {
+  const repeatsStamp = stamp.outcome === 'fixed' && (mark.commit === null || stamp.commit === mark.commit.short);
   return (
     <span className="status-chip view-review-stale" data-tone={mark.tone} title={mark.commit !== null ? mark.commit.full : undefined}>
-      {mark.commit !== null
-        ? `Fixed in ${mark.commit.short}, disposition not updated`
-        : 'Fixed in the fix report, disposition not updated'}
+      {repeatsStamp
+        ? 'Disposition not updated'
+        : mark.commit !== null
+          ? `Fixed in ${mark.commit.short}, disposition not updated`
+          : 'Fixed in the fix report, disposition not updated'}
     </span>
   );
 }
@@ -116,7 +120,7 @@ function Thread({
             <ResearchInline text={finding.title} />
           </h3>
           <Stamp stamp={finding.stamp} />
-          {finding.staleMark !== null ? <StaleMark mark={finding.staleMark} /> : null}
+          {finding.staleMark !== null ? <StaleMark mark={finding.staleMark} stamp={finding.stamp} /> : null}
           {canFold ? (
             <button type="button" className="view-review-link" title="Fold this fixed thread" onClick={() => onFold(finding.id)}>
               Fold −
@@ -174,7 +178,7 @@ function ResolvedRow({ finding, onUnfold }: { finding: ComposedReviewFinding; on
       </span>
       <span className="view-review-resolved-marks">
         <Stamp stamp={finding.stamp} />
-        {finding.staleMark !== null ? <StaleMark mark={finding.staleMark} /> : null}
+        {finding.staleMark !== null ? <StaleMark mark={finding.staleMark} stamp={finding.stamp} /> : null}
       </span>
     </button>
   );

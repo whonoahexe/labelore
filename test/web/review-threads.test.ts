@@ -616,16 +616,16 @@ describe('the stale-disposition mark', () => {
     }
   });
 
-  it('draws the chip quiet with the 7-character commit and the full value in title, on the folded row and the header', () => {
+  it('draws the chip quiet with the full commit in title and no second copy of the stamp\'s commit, on the folded row and the header', () => {
     const input: ViewInput = { ...inputOf(L(REVIEW_01), contextOf(L(FIX_01))), ledgerContext: ledgerOf(REVIEW_01) };
     const model = composeReviewThreads(input)!;
     const folded = markupOf(model);
-    expect(folded).toContain('data-tone="quiet" title="c41e9d7">Fixed in c41e9d7, disposition not updated</span>');
+    expect(folded).toContain('data-tone="quiet" title="c41e9d7">Disposition not updated</span>');
     const unfolded = markupOf(model, ['CR-01']);
-    expect(unfolded.match(/disposition not updated/g)!.length).toBeGreaterThanOrEqual(2);
+    expect(unfolded.match(/disposition not updated/gi)!.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('draws a mark with no commit as "Fixed in the fix report, disposition not updated"', () => {
+  it('draws a mark with no commit beside a fixed stamp as "Disposition not updated"', () => {
     const context = ledgerOf(REVIEW_01);
     const noCommit: LedgerContext = { ...context, marks: { 'CR-01': { commit: null } } };
     const model = composeReviewThreads({
@@ -633,6 +633,6 @@ describe('the stale-disposition mark', () => {
       ledgerContext: noCommit,
     })!;
     expect(findingOf(model, 'CR-01').staleMark).toEqual({ tone: 'quiet', commit: null });
-    expect(markupOf(model)).toContain('Fixed in the fix report, disposition not updated');
+    expect(markupOf(model)).toContain('>Disposition not updated</span>');
   });
 });
