@@ -5,11 +5,18 @@
 // head shows the total and the fixed counts only (D-08; the disposition-first numbers land in 09-13).
 // `composeReviewLedger` is the Fix tab: one section per fix file, each with its own counts and fixed-at
 // date, the entries grouped Fixed, Skipped, Deferred, and a final quiet group for entries naming a finding
-// the review does not hold (D-09). No DOM, no filesystem, no rendering - `review-ledger-components.tsx` is
+// the review does not hold (D-09). `composeReviewLedger` returns the Disposition tab instead when the opened
+// member is the REVIEW-DISPOSITION (09-13): rows grouped Open, Deferred, Skipped, Fixed and Other by what became
+// of each finding, with the reason of a deferral or skip, the commit (or the file's own source text) of a fix
+// (D-10). The head takes open and total from the disposition when one exists (D-08). No DOM, no filesystem, no rendering - `review-ledger-components.tsx` is
 // the only consumer. Every string is author text the components render as React text; no url is built from
 // it (the only links are the member urls the server resolved), and file paths stay chips.
 // Dates are formatted by hand in UTC (via `formatStamp`) so Node and the browser agree.
-import type { ReviewFixDeferred, ReviewFixEntry } from '../../planning-repo/handlers/review-report.ts';
+import type {
+  ReviewFixDeferred,
+  ReviewFixEntry,
+} from '../../planning-repo/handlers/review-report.ts';
+import type { DispositionRow } from '../../planning-repo/handlers/review-disposition.ts';
 import type { LedgerContext, LedgerFix } from '../../presentation/review-ledger.ts';
 import type { ViewInput } from './manifest.ts';
 import { SEVERITY_LABEL, SEVERITY_ORDER, SEVERITY_TONE } from './review-threads.ts';
@@ -36,8 +43,17 @@ export interface ComposedLedgerHead {
   open: number | null;
   total: number;
   severities: ComposedLedgerHeadSeverity[];
-  /** "{n} fixed in the fix report". */
-  note: string;
+  /** "{n} fixed in the fix report", or "{n} open here are marked fixed in the fix report" (D-08). */
+  note: string | null;
+}
+
+/** The one muted line: the disagreement count when a disposition and a fix file part ways, else (without a
+ * disposition) the fixed count, else nothing (D-08). */
+function headNote(context: LedgerContext): string | null {
+  if (context.head.markedFixed > 0)
+    return `${context.head.markedFixed} open here are marked fixed in the fix report`;
+  if (context.head.open === null) return `${context.head.fixedInReport} fixed in the fix report`;
+  return null;
 }
 
 /** The head over a ledger of two or more files; null for a lone file (D-11) or a missing context. */
@@ -52,13 +68,20 @@ export function composeLedgerHead(context: LedgerContext | null): ComposedLedger
     for (let index = 0; index < row.total; index += 1) {
       squares.push(index < fixed ? 'complete' : SEVERITY_TONE[severity]);
     }
-    severities.push({ severity, label: SEVERITY_LABEL[severity], open: row.open, total: row.total, fixed, squares });
+    severities.push({
+      severity,
+      label: SEVERITY_LABEL[severity],
+      open: row.open,
+      total: row.total,
+      fixed,
+      squares,
+    });
   }
   return {
     open: context.head.open,
     total: context.head.total,
     severities,
-    note: `${context.head.fixedInReport} fixed in the fix report`,
+    note: headNote(context),
   };
 }
 
@@ -117,13 +140,53 @@ export interface ComposedFixSection {
   empty: boolean;
 }
 
-export interface ComposedReviewLedger {
+export interface ComposedFixLedger {
+  tab: 'fix';
   /** The review's title, else null (the page then falls back to the artifact title). */
   title: string | null;
   sections: ComposedFixSection[];
   /** The id of the section the opened file's own URL names, else null. */
   scrollTo: string | null;
 }
+
+export type DispositionGroupKey = 'open' | 'deferred' | 'skipped' | 'fixed' | 'other';
+
+export interface ComposedDispositionRow {
+  id: string;
+  /** The row's own severity, else the id's token; null when neither names one (the pip is then neutral). */
+  severity: ReviewSeverityKey | null;
+  /** The row's own title, else the review finding's title by id, else null. */
+  title: string | null;
+  /** Deferred and skipped: the reason in full; null elsewhere and when none is written. */
+  reason: string | null;
+  /** True when the reason is long enough to need the 3-line clamp and its "Read more". */
+  long: boolean;
+  /** Fixed: the first fix entry naming the id (first 7 characters, full in `full`); else null. */
+  commit: ComposedFixCommit | null;
+  /** Fixed with no commit: the disposition's own Source or Note text verbatim; else null. */
+  sourceText: string | null;
+  /** Fixed with neither a commit nor a source text: the row says "Commit not recorded". */
+  missingCommit: boolean;
+  /** Other: the disposition value as written. */
+  raw: string | null;
+}
+
+export interface ComposedDispositionGroup {
+  key: DispositionGroupKey;
+  label: string;
+  tone: ReviewTone;
+  /** True for Skipped: its square is dashed, Deferred's is a solid quiet outline. */
+  dashed: boolean;
+  rows: ComposedDispositionRow[];
+}
+
+export interface ComposedDispositionLedger {
+  tab: 'disposition';
+  title: string | null;
+  groups: ComposedDispositionGroup[];
+}
+
+export type ComposedReviewLedger = ComposedFixLedger | ComposedDispositionLedger;
 
 const HEADING_CAP = 24;
 
@@ -141,7 +204,12 @@ function clamp(text: string, cap: number): string {
 
 function asNumber(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value) && value >= 0) return Math.floor(value);
-  if (typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value)) && Number(value) >= 0) {
+  if (
+    typeof value === 'string' &&
+    value.trim() !== '' &&
+    Number.isFinite(Number(value)) &&
+    Number(value) >= 0
+  ) {
     return Math.floor(Number(value));
   }
   return null;
@@ -182,7 +250,8 @@ function deferredOf(fix: LedgerFix): ReviewFixDeferred[] {
 function countOutcome(entries: ReviewFixEntry[], outcome: 'fixed' | 'skipped'): number {
   let count = 0;
   for (const entry of entries) {
-    if (entry.outcome === outcome) count += Array.isArray(entry.ids) && entry.ids.length > 0 ? entry.ids.length : 1;
+    if (entry.outcome === outcome)
+      count += Array.isArray(entry.ids) && entry.ids.length > 0 ? entry.ids.length : 1;
   }
   return count;
 }
@@ -208,13 +277,15 @@ function composeSection(
   const rowOf = (entry: ReviewFixEntry): ComposedFixRow => {
     const ids = idsOf(entry.ids, context.severityById);
     const files = Array.isArray(entry.files) ? entry.files : [];
-    const commits = (Array.isArray(entry.commits) && entry.commits.length > 0
-      ? entry.commits
-      : entry.commit !== null && entry.commit !== undefined
-        ? [entry.commit]
-        : []
+    const commits = (
+      Array.isArray(entry.commits) && entry.commits.length > 0
+        ? entry.commits
+        : entry.commit !== null && entry.commit !== undefined
+          ? [entry.commit]
+          : []
     ).map((full) => ({ short: full.slice(0, 7), full }));
-    const entryTitle = typeof entry.title === 'string' && entry.title.trim() !== '' ? entry.title.trim() : null;
+    const entryTitle =
+      typeof entry.title === 'string' && entry.title.trim() !== '' ? entry.title.trim() : null;
     return {
       ids,
       title: entryTitle ?? (ids.length > 0 ? (titleOf.get(ids[0].id) ?? null) : null),
@@ -226,9 +297,12 @@ function composeSection(
   };
 
   const known = (entry: ReviewFixEntry): boolean =>
-    reviewIds.size === 0 || (Array.isArray(entry.ids) && entry.ids.some((entryId) => reviewIds.has(entryId)));
+    reviewIds.size === 0 ||
+    (Array.isArray(entry.ids) && entry.ids.some((entryId) => reviewIds.has(entryId)));
   const fixedRows = entries.filter((entry) => entry.outcome === 'fixed' && known(entry)).map(rowOf);
-  const skippedRows = entries.filter((entry) => entry.outcome === 'skipped' && known(entry)).map(rowOf);
+  const skippedRows = entries
+    .filter((entry) => entry.outcome === 'skipped' && known(entry))
+    .map(rowOf);
   const strayRows = entries.filter((entry) => !known(entry)).map(rowOf);
   const deferredRows: ComposedFixRow[] = deferred.map((item) => {
     const ids = idsOf(item.ids, context.severityById);
@@ -243,10 +317,19 @@ function composeSection(
   });
 
   const groups: ComposedFixGroup[] = [];
-  if (fixedRows.length > 0) groups.push({ key: 'fixed', label: 'Fixed', tone: 'complete', rows: fixedRows });
-  if (skippedRows.length > 0) groups.push({ key: 'skipped', label: 'Skipped', tone: 'quiet', rows: skippedRows });
-  if (deferredRows.length > 0) groups.push({ key: 'deferred', label: 'Deferred', tone: 'quiet', rows: deferredRows });
-  if (strayRows.length > 0) groups.push({ key: 'not-in-review', label: 'Not in the review', tone: 'quiet', rows: strayRows });
+  if (fixedRows.length > 0)
+    groups.push({ key: 'fixed', label: 'Fixed', tone: 'complete', rows: fixedRows });
+  if (skippedRows.length > 0)
+    groups.push({ key: 'skipped', label: 'Skipped', tone: 'quiet', rows: skippedRows });
+  if (deferredRows.length > 0)
+    groups.push({ key: 'deferred', label: 'Deferred', tone: 'quiet', rows: deferredRows });
+  if (strayRows.length > 0)
+    groups.push({
+      key: 'not-in-review',
+      label: 'Not in the review',
+      tone: 'quiet',
+      rows: strayRows,
+    });
 
   const headingFull = fix.suffix === null ? null : titleCase(fix.suffix);
   return {
@@ -262,22 +345,118 @@ function composeSection(
   };
 }
 
-/** The Fix tab: null without a ledger context or without a fix file in it. */
+// ---------------------------------------------------------------------------
+// The Disposition tab
+// ---------------------------------------------------------------------------
+
+/** A reason or note longer than this (or holding a line break) gets the 3-line clamp and its "Read more". */
+export const LONG_REASON = 160;
+
+const GROUPS: { key: DispositionGroupKey; label: string; tone: ReviewTone; dashed: boolean }[] = [
+  { key: 'open', label: 'Open', tone: 'in-flight', dashed: false },
+  { key: 'deferred', label: 'Deferred', tone: 'quiet', dashed: false },
+  { key: 'skipped', label: 'Skipped', tone: 'quiet', dashed: true },
+  { key: 'fixed', label: 'Fixed', tone: 'complete', dashed: false },
+  { key: 'other', label: 'Other', tone: 'quiet', dashed: false },
+];
+
+/** What a two-column disposition cell says after its leading word: "fixed (see 04-REVIEW-FIX.md)" gives
+ * "(see 04-REVIEW-FIX.md)", "deferred: harmless until..." gives "harmless until...". Null when nothing follows. */
+function afterWord(raw: string): string | null {
+  const text = raw.trim();
+  let end = 0;
+  while (end < text.length && text[end] !== ' ' && text[end] !== ':' && text[end] !== '(') end += 1;
+  let rest = text.slice(end);
+  while (
+    rest.length > 0 &&
+    (rest[0] === ':' || rest[0] === ' ' || rest[0] === '-' || rest[0] === '\u2014')
+  )
+    rest = rest.slice(1);
+  rest = rest.trim();
+  return rest === '' ? null : rest;
+}
+
+function dispositionRowOf(
+  row: DispositionRow,
+  group: DispositionGroupKey,
+  context: LedgerContext,
+  titleOf: ReadonlyMap<string, string>,
+): ComposedDispositionRow {
+  const note = typeof row.note === 'string' && row.note.trim() !== '' ? row.note.trim() : null;
+  const raw = typeof row.dispositionRaw === 'string' ? row.dispositionRaw : '';
+  const severity = row.severity ?? context.severityById[row.id] ?? null;
+  let reason: string | null = null;
+  if (group === 'deferred' || group === 'skipped') reason = note ?? afterWord(raw);
+  let commit: ComposedFixCommit | null = null;
+  let sourceText: string | null = null;
+  let missingCommit = false;
+  if (group === 'fixed') {
+    const full = context.fixedCommits[row.id] ?? null;
+    if (full !== null) commit = { short: full.slice(0, 7), full };
+    else {
+      sourceText = note ?? afterWord(raw);
+      missingCommit = sourceText === null;
+    }
+  }
+  const rowTitle =
+    typeof row.title === 'string' && row.title.trim() !== '' ? row.title.trim() : null;
+  return {
+    id: row.id,
+    severity,
+    title: rowTitle ?? titleOf.get(row.id) ?? null,
+    reason,
+    long: reason !== null && (reason.length > LONG_REASON || reason.includes('\n')),
+    commit,
+    sourceText,
+    missingCommit,
+    raw: group === 'other' ? (raw === '' ? null : raw) : null,
+  };
+}
+
+function composeDispositionTab(context: LedgerContext): ComposedDispositionLedger | null {
+  const rows = context.disposition?.rows ?? [];
+  if (rows.length === 0) return null;
+  const titleOf = new Map<string, string>();
+  for (const finding of context.review?.findings ?? [])
+    if (finding.title !== '') titleOf.set(finding.id, finding.title);
+  const groups: ComposedDispositionGroup[] = [];
+  for (const group of GROUPS) {
+    const members = rows.filter((row) => row.disposition === group.key);
+    if (members.length === 0) continue;
+    groups.push({
+      ...group,
+      rows: members.map((row) => dispositionRowOf(row, group.key, context, titleOf)),
+    });
+  }
+  return { tab: 'disposition', title: context.review?.title ?? null, groups };
+}
+
+/** The ledger's tab body: the Disposition tab when the opened member is the disposition, else the Fix tab; null
+ * without a ledger context or without the opened tab's file in it. */
 export function composeReviewLedger(input: ViewInput): ComposedReviewLedger | null {
   const context = input.ledgerContext ?? null;
+  if (context !== null && context.active === 'disposition') return composeDispositionTab(context);
+  return composeFixTab(context);
+}
+
+function composeFixTab(context: LedgerContext | null): ComposedFixLedger | null {
   if (context === null || !Array.isArray(context.fixes) || context.fixes.length === 0) return null;
   const reviewFindings = context.review?.findings ?? [];
   const reviewIds = new Set(reviewFindings.map((finding) => finding.id));
   const titleOf = new Map<string, string>();
-  for (const finding of reviewFindings) if (finding.title !== '') titleOf.set(finding.id, finding.title);
+  for (const finding of reviewFindings)
+    if (finding.title !== '') titleOf.set(finding.id, finding.title);
   const usedIds = new Set<string>();
-  const sections = context.fixes.map((fix) => composeSection(fix, context, reviewIds, titleOf, usedIds));
+  const sections = context.fixes.map((fix) =>
+    composeSection(fix, context, reviewIds, titleOf, usedIds),
+  );
   let scrollTo: string | null = null;
   if (context.activeSuffix !== null) {
     const index = context.fixes.findIndex(
-      (fix) => fix.suffix !== null && fix.suffix.toLowerCase() === context.activeSuffix?.toLowerCase(),
+      (fix) =>
+        fix.suffix !== null && fix.suffix.toLowerCase() === context.activeSuffix?.toLowerCase(),
     );
     if (index >= 0) scrollTo = sections[index].id;
   }
-  return { title: context.review?.title ?? null, sections, scrollTo };
+  return { tab: 'fix', title: context.review?.title ?? null, sections, scrollTo };
 }
