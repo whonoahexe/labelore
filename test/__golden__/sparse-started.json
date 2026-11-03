@@ -85,7 +85,19 @@
                 "text": "Everything beyond the first slice — this fixture exists to prove one narrow code path."
               }
             ],
-            "lastUpdated": "2026-08-22 after initialization"
+            "lastUpdated": "2026-08-22 after initialization",
+            "decisions": [
+              {
+                "n": 1,
+                "decision": "Keep this fixture at \"structure but no history\"",
+                "tag": null,
+                "era": null,
+                "rationale": "Proves `roadmapComplete` and observed disk state can legitimately disagree even when there is no milestone at all",
+                "outcome": "pending",
+                "outcomeLabel": "Pending",
+                "note": ""
+              }
+            ]
           }
         }
       },
