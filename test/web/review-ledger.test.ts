@@ -1,8 +1,9 @@
 // Phase 9 (09-12): the review ledger's composers and static markup. composeLedgerHead and the strip over
 // Lendshed phase 3 (a review and two shard fix reports) and a lone phase 4 review; composeReviewLedger and
 // the Fix tab's markup over the same project and planted folders for the shapes it does not hold (many
-// files modified, a fix file with no entries, a suffix longer than 24 characters). The ledger's view
-// contract test lands in 09-13, once all three tab bodies exist.
+// files modified, a fix file with no entries, a suffix longer than 24 characters); 09-13 adds the Disposition
+// tab, the disposition-first head and the stale-disposition marks. The ledger's view contract is in
+// review-ledger-view-contract.test.ts.
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router';
@@ -11,8 +12,18 @@ import { buildLedgerContext } from '../../src/presentation/review-ledger.ts';
 import type { LedgerContext } from '../../src/presentation/review-ledger.ts';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 import { composeLedgerHead, composeReviewLedger } from '../../src/web/views/review-ledger.ts';
-import type { ComposedFixSection, ComposedReviewLedger } from '../../src/web/views/review-ledger.ts';
-import { FixTabView, fixHeaderProps, ledgerSwitcher } from '../../src/web/views/review-ledger-components.tsx';
+import type {
+  ComposedDispositionLedger,
+  ComposedFixLedger,
+  ComposedFixSection,
+} from '../../src/web/views/review-ledger.ts';
+import {
+  DispositionTabView,
+  FixTabView,
+  LedgerTabView,
+  ledgerHeaderProps,
+  ledgerSwitcher,
+} from '../../src/web/views/review-ledger-components.tsx';
 import { fxRead, loadFiles, loadFixtureProject } from '../helpers/fixture-project.ts';
 import type { LoadedProject } from '../helpers/fixture-project.ts';
 
@@ -50,21 +61,37 @@ describe('composeLedgerHead', () => {
       ...context,
       head: {
         ...context.head,
-        bySeverity: [{ severity: 'critical', open: null, total: 3, fixed: 1, ids: ['CR-01', 'CR-02', 'CR-03'] }],
+        bySeverity: [
+          {
+            severity: 'critical',
+            open: null,
+            total: 3,
+            fixed: 1,
+            ids: ['CR-01', 'CR-02', 'CR-03'],
+          },
+        ],
       },
     };
-    expect(composeLedgerHead(partial)!.severities[0].squares).toEqual(['complete', 'missing', 'missing']);
+    expect(composeLedgerHead(partial)!.severities[0].squares).toEqual([
+      'complete',
+      'missing',
+      'missing',
+    ]);
   });
 
   it('is null for a lone file and for no context (D-11)', () => {
-    expect(composeLedgerHead(contextOf('.planning/phases/04-bulk-loan-export/04-REVIEW.md'))).toBeNull();
+    expect(
+      composeLedgerHead(contextOf('.planning/phases/04-bulk-loan-export/04-REVIEW.md')),
+    ).toBeNull();
     expect(composeLedgerHead(null)).toBeNull();
   });
 });
 
 describe('ledgerSwitcher', () => {
   it('returns null for a one-member context and for no context: a lone REVIEW draws no strip and no head', () => {
-    expect(ledgerSwitcher(contextOf('.planning/phases/04-bulk-loan-export/04-REVIEW.md'))).toBeNull();
+    expect(
+      ledgerSwitcher(contextOf('.planning/phases/04-bulk-loan-export/04-REVIEW.md')),
+    ).toBeNull();
     expect(ledgerSwitcher(null)).toBeNull();
   });
 
@@ -77,7 +104,9 @@ describe('ledgerSwitcher', () => {
     expect(html).toContain('href="/v1.1/phase-3/review-fix-backend"');
     // Only the Fix tab is pressed.
     expect(html.match(/aria-current="page"/g)).toHaveLength(1);
-    expect(html).toMatch(/aria-current="page"[^>]*>Fix<span class="view-review-ledger-count">5<\/span>/);
+    expect(html).toMatch(
+      /aria-current="page"[^>]*>Fix<span class="view-review-ledger-count">5<\/span>/,
+    );
     expect(html).toContain('>Review<span class="view-review-ledger-count">7</span>');
     // The head: total over the word, a row per severity and the muted line.
     expect(html).toContain('view-review-ledger-head');
@@ -115,7 +144,15 @@ const fixInput = (project: LoadedProject, path: string): ViewInput => ({
   ledgerContext: buildLedgerContext(project.presentation, project.registry, path),
 });
 
-const sectionOf = (model: ComposedReviewLedger, id: string): ComposedFixSection => {
+/** The Fix tab model; throws when the composer returned the other tab or nothing. */
+const fixLedger = (input: ViewInput): ComposedFixLedger | null => {
+  const model = composeReviewLedger(input);
+  if (model === null) return null;
+  if (model.tab !== 'fix') throw new Error('expected the Fix tab');
+  return model;
+};
+
+const sectionOf = (model: ComposedFixLedger, id: string): ComposedFixSection => {
   const section = model.sections.find((candidate) => candidate.id === id);
   if (!section) throw new Error(`no section ${id}`);
   return section;
@@ -156,13 +193,15 @@ const EMPTY_FIX = [
 ].join('\n');
 
 describe('composeReviewLedger - Lendshed phase 3', () => {
-  let model: ComposedReviewLedger;
+  let model: ComposedFixLedger;
   beforeAll(() => {
-    model = composeReviewLedger(fixInput(lendshed, `${PHASE_03}/03-REVIEW-FIX-frontend.md`))!;
+    model = fixLedger(fixInput(lendshed, `${PHASE_03}/03-REVIEW-FIX-frontend.md`))!;
   });
 
   it('has one section per fix file: fix-backend titled Backend and fix-frontend titled Frontend, with the file name', () => {
-    expect(model.sections.map((section) => [section.id, section.heading, section.fileName])).toEqual([
+    expect(
+      model.sections.map((section) => [section.id, section.heading, section.fileName]),
+    ).toEqual([
       ['fix-backend', 'Backend', '03-REVIEW-FIX-backend.md'],
       ['fix-frontend', 'Frontend', '03-REVIEW-FIX-frontend.md'],
     ]);
@@ -173,23 +212,36 @@ describe('composeReviewLedger - Lendshed phase 3', () => {
     const backend = sectionOf(model, 'fix-backend');
     const frontend = sectionOf(model, 'fix-frontend');
     expect([backend.counts, backend.fixedAt]).toEqual(['2 fixed, 0 skipped', '9 Apr 2026 · 09:12']);
-    expect([frontend.counts, frontend.fixedAt]).toEqual(['2 fixed, 1 skipped', '9 Apr 2026 · 10:03']);
+    expect([frontend.counts, frontend.fixedAt]).toEqual([
+      '2 fixed, 1 skipped',
+      '9 Apr 2026 · 10:03',
+    ]);
     expect(backend.groups.map((group) => group.key)).toEqual(['fixed']);
-    expect(frontend.groups.map((group) => group.key)).toEqual(['fixed', 'skipped', 'not-in-review']);
+    expect(frontend.groups.map((group) => group.key)).toEqual([
+      'fixed',
+      'skipped',
+      'not-in-review',
+    ]);
     expect(frontend.groups.map((group) => group.tone)).toEqual(['complete', 'quiet', 'quiet']);
   });
 
   it('shows both commits of WR-03 from the plural field, and the skipped reason', () => {
-    const wr03 = sectionOf(model, 'fix-backend').groups[0].rows.find((row) => row.ids[0].id === 'WR-03')!;
+    const wr03 = sectionOf(model, 'fix-backend').groups[0].rows.find(
+      (row) => row.ids[0].id === 'WR-03',
+    )!;
     expect(wr03.commits.map((commit) => commit.short)).toEqual(['a1b2c3d', 'e4f5a6b']);
     expect(wr03.ids[0].severity).toBe('warning');
-    const skipped = sectionOf(model, 'fix-frontend').groups.find((group) => group.key === 'skipped')!.rows[0];
+    const skipped = sectionOf(model, 'fix-frontend').groups.find(
+      (group) => group.key === 'skipped',
+    )!.rows[0];
     expect(skipped.ids[0].id).toBe('IN-03');
     expect(skipped.reason).toContain('passcode rules module is being reworked');
   });
 
   it('lists IN-09, fixed in the frontend file but absent from the review, under "Not in the review"', () => {
-    const stray = sectionOf(model, 'fix-frontend').groups.find((group) => group.key === 'not-in-review')!;
+    const stray = sectionOf(model, 'fix-frontend').groups.find(
+      (group) => group.key === 'not-in-review',
+    )!;
     expect(stray.label).toBe('Not in the review');
     expect(stray.rows.map((row) => row.ids[0].id)).toEqual(['IN-09']);
     const fixed = sectionOf(model, 'fix-frontend').groups.find((group) => group.key === 'fixed')!;
@@ -198,13 +250,17 @@ describe('composeReviewLedger - Lendshed phase 3', () => {
 
   it("scrolls to the opened shard's section when the opened file is a suffixed one", () => {
     expect(model.scrollTo).toBe('fix-frontend');
-    expect(composeReviewLedger(fixInput(lendshed, `${PHASE_03}/03-REVIEW-FIX-backend.md`))!.scrollTo).toBe('fix-backend');
+    expect(fixLedger(fixInput(lendshed, `${PHASE_03}/03-REVIEW-FIX-backend.md`))!.scrollTo).toBe(
+      'fix-backend',
+    );
   });
 });
 
 describe('composeReviewLedger - the other shapes', () => {
   it('gives a phase with one plain fix file one section with no heading (Lendshed phase 1)', () => {
-    const one = composeReviewLedger(fixInput(lendshed, '.planning/phases/01-member-sign-in-sessions/01-REVIEW-FIX.md'))!;
+    const one = fixLedger(
+      fixInput(lendshed, '.planning/phases/01-member-sign-in-sessions/01-REVIEW-FIX.md'),
+    )!;
     expect(one.sections).toHaveLength(1);
     expect(one.sections[0].id).toBe('fix');
     expect(one.sections[0].heading).toBeNull();
@@ -217,11 +273,13 @@ describe('composeReviewLedger - the other shapes', () => {
       [`${PHASE_03}/03-REVIEW.md`]: fxRead('phases/03-account-admin-and-sessions/03-REVIEW.md'),
       [`${PHASE_03}/03-REVIEW-FIX.md`]: PLANTED_FIX,
     });
-    const model = composeReviewLedger(fixInput(project, `${PHASE_03}/03-REVIEW-FIX.md`))!;
+    const model = fixLedger(fixInput(project, `${PHASE_03}/03-REVIEW-FIX.md`))!;
     const row = model.sections[0].groups[0].rows[0];
     expect(row.files).toEqual(['a.ts', 'b.ts', 'c.ts']);
     expect(row.moreFiles).toBe(2);
-    expect(row.commits.map((commit) => [commit.short, commit.full])).toEqual([['abc1234', 'abc1234def']]);
+    expect(row.commits.map((commit) => [commit.short, commit.full])).toEqual([
+      ['abc1234', 'abc1234def'],
+    ]);
     expect(row.title).toContain('lagging feed receiver');
   });
 
@@ -231,7 +289,7 @@ describe('composeReviewLedger - the other shapes', () => {
       [`${PHASE_03}/03-REVIEW-FIX-backend.md`]: PLANTED_FIX,
       [`${PHASE_03}/03-REVIEW-FIX-empty.md`]: EMPTY_FIX,
     });
-    const model = composeReviewLedger(fixInput(project, `${PHASE_03}/03-REVIEW-FIX-empty.md`))!;
+    const model = fixLedger(fixInput(project, `${PHASE_03}/03-REVIEW-FIX-empty.md`))!;
     const empty = sectionOf(model, 'fix-empty');
     expect(empty.empty).toBe(true);
     expect(empty.groups).toEqual([]);
@@ -248,7 +306,7 @@ describe('composeReviewLedger - the other shapes', () => {
       [`${PHASE_03}/03-REVIEW-FIX-an-extremely-long-shard-name.md`]: PLANTED_FIX,
       [`${PHASE_03}/03-REVIEW-FIX-web.md`]: PLANTED_FIX,
     });
-    const model = composeReviewLedger(fixInput(project, `${PHASE_03}/03-REVIEW-FIX-web.md`))!;
+    const model = fixLedger(fixInput(project, `${PHASE_03}/03-REVIEW-FIX-web.md`))!;
     const long = sectionOf(model, 'fix-an-extremely-long-shard-name');
     expect(long.headingFull).toBe('An Extremely Long Shard Name');
     expect(long.heading!.length).toBe(24);
@@ -259,25 +317,233 @@ describe('composeReviewLedger - the other shapes', () => {
   });
 
   it('is null without a ledger context', () => {
-    expect(composeReviewLedger({ kind: 'review-fix', frontmatter: {}, structured: {}, groups: [], planSegments: [] })).toBeNull();
+    expect(
+      composeReviewLedger({
+        kind: 'review-fix',
+        frontmatter: {},
+        structured: {},
+        groups: [],
+        planSegments: [],
+      }),
+    ).toBeNull();
   });
 
   it('draws the Fix tab as text: severity pips with ids, chips for files, mono commits, no link and no raw HTML', () => {
-    const model = composeReviewLedger(fixInput(lendshed, `${PHASE_03}/03-REVIEW-FIX-backend.md`))!;
+    const model = fixLedger(fixInput(lendshed, `${PHASE_03}/03-REVIEW-FIX-backend.md`))!;
     const html = renderToStaticMarkup(createElement(FixTabView, { model }));
     expect(html).toContain('id="fix-backend"');
     expect(html).toContain('id="fix-frontend"');
     expect(html).toContain('<h2 class="view-review-ledger-heading" title="Backend">Backend</h2>');
     expect(html).toContain('<span class="view-review-sev" data-severity="warning">WR-01</span>');
-    expect(html).toContain('<code class="view-review-ledger-chip" title="server/src/socket/index.ts">');
+    expect(html).toContain(
+      '<code class="view-review-ledger-chip" title="server/src/socket/index.ts">',
+    );
     expect(html).toContain('title="a1b2c3d');
     expect(html).toContain('Not in the review');
     expect(html).not.toContain('<a ');
   });
 
   it('headers the page "Review fix" with the review title', () => {
-    const model = composeReviewLedger(fixInput(lendshed, `${PHASE_03}/03-REVIEW-FIX-backend.md`))!;
-    expect(fixHeaderProps(model, 'fallback')).toEqual({ eyebrow: 'Review fix', title: model.title, lead: null });
-    expect(fixHeaderProps({ ...model, title: null }, 'fallback').title).toBe('fallback');
+    const model = fixLedger(fixInput(lendshed, `${PHASE_03}/03-REVIEW-FIX-backend.md`))!;
+    expect(ledgerHeaderProps(model, 'fallback')).toEqual({
+      eyebrow: 'Review fix',
+      title: model.title,
+      lead: null,
+    });
+    expect(ledgerHeaderProps({ ...model, title: null }, 'fallback').title).toBe('fallback');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The Disposition tab (09-13)
+// ---------------------------------------------------------------------------
+
+const dispositionInput = (project: LoadedProject, path: string): ViewInput => ({
+  kind: 'review-disposition',
+  frontmatter: {},
+  structured: {},
+  groups: [],
+  planSegments: [],
+  ledgerContext: buildLedgerContext(project.presentation, project.registry, path),
+});
+
+/** The Disposition tab model; throws when the composer returned the other tab or nothing. */
+const dispositionLedger = (project: LoadedProject, path: string): ComposedDispositionLedger => {
+  const model = composeReviewLedger(dispositionInput(project, path));
+  if (model === null || model.tab !== 'disposition')
+    throw new Error(`no disposition tab for ${path}`);
+  return model;
+};
+
+const PHASE_01 = '.planning/phases/01-member-sign-in-sessions';
+const PHASE_02 = '.planning/phases/02-roles-and-permissions';
+const ARCHIVED_04 = '.planning/milestones/v1.0-phases/04-shed-to-shed-transfers';
+
+describe('composeReviewLedger - the Disposition tab', () => {
+  it('Lendshed phase 1: one Open group of six rows, and no other group', () => {
+    const model = dispositionLedger(lendshed, `${PHASE_01}/01-REVIEW-DISPOSITION.md`);
+    expect(
+      model.groups.map((group) => [group.key, group.label, group.tone, group.rows.length]),
+    ).toEqual([['open', 'Open', 'in-flight', 6]]);
+    const first = model.groups[0].rows[0];
+    expect([first.id, first.severity]).toEqual(['CR-01', 'critical']);
+    expect(first.title).toContain('Cookie signing falls back');
+    expect([first.reason, first.commit, first.sourceText, first.missingCommit]).toEqual([
+      null,
+      null,
+      null,
+      false,
+    ]);
+  });
+
+  it('Lendshed phase 2: Open, Deferred, Skipped, Fixed and Other in that order, Other verbatim', () => {
+    const model = dispositionLedger(lendshed, `${PHASE_02}/02-REVIEW-DISPOSITION.md`);
+    expect(
+      model.groups.map((group) => [group.key, group.tone, group.dashed, group.rows.length]),
+    ).toEqual([
+      ['open', 'in-flight', false, 1],
+      ['deferred', 'quiet', false, 1],
+      ['skipped', 'quiet', true, 1],
+      ['fixed', 'complete', false, 1],
+      ['other', 'quiet', false, 2],
+    ]);
+    const other = model.groups[4].rows;
+    expect(other.map((row) => [row.id, row.raw])).toEqual([
+      ['WR-03', 'Accepted'],
+      ['IN-01', 'Wont-fix'],
+    ]);
+  });
+
+  it('shows a deferral and a skip with the reason from the Note column', () => {
+    const model = dispositionLedger(lendshed, `${PHASE_02}/02-REVIEW-DISPOSITION.md`);
+    const deferred = model.groups.find((group) => group.key === 'deferred')!.rows[0];
+    expect(deferred.reason).toBe('Waits for the capability list to move into code (phase 3)');
+    const skipped = model.groups.find((group) => group.key === 'skipped')!.rows[0];
+    expect(skipped.reason).toContain('Revoked rows are the audit trail');
+    expect(skipped.long).toBe(false);
+  });
+
+  it('takes the commit of a fixed row from the fix file where it names the id', () => {
+    const fixed = dispositionLedger(lendshed, `${PHASE_02}/02-REVIEW-DISPOSITION.md`).groups.find(
+      (group) => group.key === 'fixed',
+    )!.rows[0];
+    expect(fixed.id).toBe('CR-01');
+    expect(fixed.commit).toEqual({ short: 'e57f1b9', full: 'e57f1b9' });
+    expect(fixed.sourceText).toBeNull();
+    expect(fixed.missingCommit).toBe(false);
+  });
+
+  it("archived phase 4: fixed rows take the fix file's commit, and CR-01, which that file does not name, shows the '(see ...)' text", () => {
+    const model = dispositionLedger(lendshed, `${ARCHIVED_04}/04-REVIEW-DISPOSITION.md`);
+    expect(model.groups.map((group) => [group.key, group.rows.length])).toEqual([
+      ['open', 1],
+      ['deferred', 1],
+      ['fixed', 5],
+    ]);
+    const fixed = model.groups.find((group) => group.key === 'fixed')!.rows;
+    expect(fixed.map((row) => [row.id, row.commit?.short ?? null, row.sourceText])).toEqual([
+      ['CR-01', null, '(see 04-REVIEW-FIX.md)'],
+      ['WR-01', '4be07a2', null],
+      ['WR-02', 'a19c3d5', null],
+      ['WR-03', '0f6e8b1', null],
+      ['WR-06', 'e8a41f3', null],
+    ]);
+    // The two-column shape keeps a deferral's reason in the cell after the word.
+    const deferred = model.groups.find((group) => group.key === 'deferred')!.rows[0];
+    expect(deferred.reason).toBe('harmless until the next refactor of the timeline');
+  });
+
+  it("a fixed row with no commit and no text of its own says 'Commit not recorded'", async () => {
+    const dir = '.planning/phases/05-planted';
+    const project = await loadFiles({
+      [`${dir}/05-REVIEW-DISPOSITION.md`]: [
+        '| Finding | Disposition |',
+        '|---------|-------------|',
+        '| CR-01: Something broke | fixed |',
+        '',
+      ].join('\n'),
+    });
+    const model = dispositionLedger(project, `${dir}/05-REVIEW-DISPOSITION.md`);
+    const row = model.groups[0].rows[0];
+    expect([row.commit, row.sourceText, row.missingCommit]).toEqual([null, null, true]);
+    const html = renderToStaticMarkup(createElement(DispositionTabView, { model }));
+    expect(html).toContain('Commit not recorded');
+  });
+
+  it('clamps a long reason to the 3-line form with Read more, and not a short one', async () => {
+    const dir = '.planning/phases/05-planted';
+    const long = 'Because the capability list must move into code first. '.repeat(6).trim();
+    const project = await loadFiles({
+      [`${dir}/05-REVIEW-DISPOSITION.md`]: [
+        '| ID | Severity | Finding | Disposition | Note |',
+        '|----|----------|---------|-------------|------|',
+        `| WR-01 | Warning | Long one | Deferred | ${long} |`,
+        '| WR-02 | Warning | Short one | Skipped | Not worth it |',
+        '',
+      ].join('\n'),
+    });
+    const model = dispositionLedger(project, `${dir}/05-REVIEW-DISPOSITION.md`);
+    const rows = model.groups.flatMap((group) => group.rows);
+    expect(rows.map((row) => [row.id, row.long])).toEqual([
+      ['WR-01', true],
+      ['WR-02', false],
+    ]);
+    const html = renderToStaticMarkup(createElement(DispositionTabView, { model }));
+    expect(html.match(/Read more/g)).toHaveLength(1);
+    expect(html).toContain('data-clamped="true"');
+    expect(html).toContain('aria-expanded="false"');
+  });
+
+  it('draws the groups as text: a square and count per group head, a severity pip with the id, no link, no raw HTML', () => {
+    const model = dispositionLedger(lendshed, `${PHASE_02}/02-REVIEW-DISPOSITION.md`);
+    const html = renderToStaticMarkup(createElement(DispositionTabView, { model }));
+    expect(html).toContain(
+      '<h3 class="view-review-group-head"><i class="status-square" data-tone="in-flight" aria-hidden="true"></i><span>Open</span>',
+    );
+    expect(html).toContain('data-dashed="true"');
+    expect(html).toContain('<span class="view-review-sev" data-severity="critical">CR-02</span>');
+    expect(html).toContain('Wont-fix');
+    expect(html).toContain('title="e57f1b9"');
+    expect(html).not.toContain('<a ');
+    expect(renderToStaticMarkup(createElement(LedgerTabView, { model }))).toBe(html);
+  });
+
+  it('headers the page "Review disposition" with the review title', () => {
+    const model = dispositionLedger(lendshed, `${PHASE_02}/02-REVIEW-DISPOSITION.md`);
+    expect(ledgerHeaderProps(model, 'fallback')).toEqual({
+      eyebrow: 'Review disposition',
+      title: model.title,
+      lead: null,
+    });
+    expect(ledgerHeaderProps({ ...model, title: null }, 'fallback').title).toBe('fallback');
+  });
+
+  it('is null for a disposition that holds no rows, so the promoted table shows', async () => {
+    const dir = '.planning/phases/05-planted';
+    const project = await loadFiles({
+      [`${dir}/05-REVIEW-DISPOSITION.md`]: '# Nothing here\n\nNo table.\n',
+    });
+    expect(
+      composeReviewLedger(dispositionInput(project, `${dir}/05-REVIEW-DISPOSITION.md`)),
+    ).toBeNull();
+  });
+
+  it('the strip over a phase with a disposition reads Review, Disposition, Fix with the Disposition tab pressed', () => {
+    const html = markup(ledgerSwitcher(contextOf(`${PHASE_01}/01-REVIEW-DISPOSITION.md`)));
+    expect(html.indexOf('>Review<')).toBeLessThan(html.indexOf('>Disposition<'));
+    expect(html.indexOf('>Disposition<')).toBeLessThan(html.indexOf('>Fix<'));
+    expect(html).toContain('href="/v1.1/phase-1/review-disposition"');
+    expect(html.match(/aria-current="page"/g)).toHaveLength(1);
+    expect(html).toMatch(
+      /aria-current="page"[^>]*>Disposition<span class="view-review-ledger-count">6<\/span>/,
+    );
+  });
+
+  it('the head over Lendshed 01 reads open of total in the lead number style', () => {
+    const html = markup(ledgerSwitcher(contextOf(`${PHASE_01}/01-REVIEW.md`)));
+    expect(html).toContain('>6</span><span class="view-review-ledger-word">of 6 findings</span>');
+    expect(html).toContain('1 of 1 open');
+    expect(html).toContain('2 of 2 open');
+    expect(html).toContain('3 of 3 open');
   });
 });

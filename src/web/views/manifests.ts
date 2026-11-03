@@ -321,12 +321,13 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
     kind: 'review-disposition',
     lead: 'What became of each review finding, and why.',
     // The disposition table is the page: a file with no facts and no such section composes to zero
-    // blocks and shows the full document with the toggle hidden (the VIEW-01 empty rule). 09-13 turns
-    // this manifest into the review ledger's Disposition tab.
+    // blocks and shows the full document with the toggle hidden (the VIEW-01 empty rule). From 09-13 the
+    // ledger's Disposition tab is what the page renders when the file has rows; `promote` is the fallback.
     promote: [
       factsBlock('disposition-facts', 'Disposition', ['open', 'total']),
       { type: 'section', heading: /disposition|findings/i, all: true },
     ],
+    reviewLedger: composeReviewLedger,
   },
   findings: {
     kind: 'findings',
