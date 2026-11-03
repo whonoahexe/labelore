@@ -733,6 +733,15 @@ element is actually written, regardless of class name:
   mono sub-line. Every number comes from the traceability projection (`requirementStateCounts`), never from PROJECT.md's bullets, so
   a tile and the rows it opens cannot disagree. Hover is `--state-hover`; nothing animates. Current State, Context and the
   requirement bullets stay behind Source. The classes are in the reserved `view-project-` namespace.
+  The decisions run on a spine (09-09): an `ol` with a 1px `--border` rail, every Key Decisions row in the author's order with an
+  outcome `status-square` on the rail (Good `complete`, Revisit `in-flight`, Reversed `missing`, Pending and any unrecognised
+  outcome `quiet`), the statement at `--fs-5`, the decision's own trailing tag as a quiet `status-chip`, an outcome chip for
+  Revisit, Reversed and Pending only (Good has none), and the outcome note under the row clamped to 2 lines. Era markers (a
+  `--foreground` tick and a mono label) sit on the rail where a milestone or phase tag changes; `D-NN` and quick tags stay inline
+  chips. Each row is a button with `aria-expanded` that opens Why and How it turned out; "Show every reason" is `aria-pressed`.
+  The jump strip is one square button per decision (a 24px hit area on coarse pointers); activating one scrolls to the row and sets
+  `data-flash`, a `--primary-tint` background with no transition or animation. A density note: on a long PROJECT.md the Good
+  squares are the accent's largest use on the page, so the accent stays on squares and never on text or chips.
 - **An archived milestone document opens on its live page (D-02).** (Phase 9) `milestones/v1.0-ROADMAP.md` opens
   on the roadmap and `milestones/v1.0-REQUIREMENTS.md` on traceability, at that milestone's block, which is
   opened and scrolled into view once layout settles. `data-target="true"` on `.history-milestone` is the

@@ -1,5 +1,5 @@
 // The sketches under .planning/sketches/ as the browser specs meet them: the winning variant is read from
-// the sketch's own README (its `winner:` frontmatter line), never written into a spec, and a sketch page is
+// the sketch's own README (its `winner:` frontmatter line, the letter optionally quoted), never written into a spec, and a sketch page is
 // opened from disk at the variant, theme and state a comparison needs. This is a helper, not a spec
 // (testMatch is *.spec.ts); the sketches are static files, so opening one is not an app address and is not
 // part of the project-URL contract that test/e2e-url-contract.test.ts holds the specs to.
@@ -13,7 +13,8 @@ const SKETCHES = fileURLToPath(new URL('../../.planning/sketches', import.meta.u
 /** The winning variant letter ('A', 'B' or 'C') the sketch's README names in its frontmatter. */
 export function sketchWinner(sketch: string): 'A' | 'B' | 'C' {
   const readme = readFileSync(join(SKETCHES, sketch, 'README.md'), 'utf8');
-  const winner = /^winner:\s*([A-C])\s*$/m.exec(readme)?.[1];
+  // The letter may be quoted (`winner: B` or `winner: "B"`).
+  const winner = /^winner:\s*["']?([A-C])["']?\s*$/m.exec(readme)?.[1];
   if (winner !== 'A' && winner !== 'B' && winner !== 'C') {
     throw new Error(`${sketch}/README.md names no winner (A, B or C) in its frontmatter`);
   }

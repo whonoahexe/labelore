@@ -28,12 +28,34 @@ export interface ProjectBullet {
   text: string;
 }
 
+/** How a Key Decisions row turned out: the first word of its Outcome cell, or `other` for anything else. */
+export type ProjectDecisionOutcome = 'good' | 'revisit' | 'reversed' | 'pending' | 'other';
+
+/** One Key Decisions row, in the author's order (09-09, sketch 041 B). */
+export interface ProjectDecision {
+  /** 1-based position in the table. */
+  n: number;
+  /** The Decision cell minus a trailing tag. */
+  decision: string;
+  /** The trailing parenthetical when it is a tag (`v2.0`, `Phase 6`, `D-01`, `quick ...`), else null. */
+  tag: string | null;
+  /** The tag when it names a milestone or phase (`v` + digit, or `Phase `), else null. */
+  era: string | null;
+  rationale: string;
+  outcome: ProjectDecisionOutcome;
+  /** Good / Revisit / Reversed / Pending, or null for `other`. */
+  outcomeLabel: string | null;
+  /** What follows the outcome word, or the whole Outcome cell for `other`. */
+  note: string;
+}
+
 /** The project page's structured projection of PROJECT.md. */
 export interface ProjectStructure {
   milestone: ProjectMilestone | null;
   constraints: ProjectBullet[];
   outOfScope: ProjectBullet[];
   lastUpdated: string | null;
+  decisions: ProjectDecision[];
 }
 
 /** Longest string any field carries. */
@@ -46,6 +68,8 @@ const MAX_LINE_CHARS = 2400;
 const MAX_BULLETS = 40;
 /** Most sections (or subsections) searched for a heading. */
 const MAX_HEADINGS = 400;
+/** Most Key Decisions rows kept (T-09-18). */
+const MAX_DECISIONS = 500;
 
 function cap(text: string): string {
   return text.length > MAX_TEXT ? text.slice(0, MAX_TEXT).trimEnd() : text;
@@ -200,13 +224,107 @@ function lastUpdatedOf(body: string): string | null {
   return null;
 }
 
-export function extractProject(body: string, sections: MarkdownSection[]): ProjectStructure {
+function isDigit(char: string | undefined): boolean {
+  return char !== undefined && char >= '0' && char <= '9';
+}
+
+function isLetter(char: string): boolean {
+  return char.toLowerCase() !== char.toUpperCase();
+}
+
+/** True when a trailing parenthetical's text is a tag: `v` + digit, `Phase ` + digit, `D-` + digit, or `quick`. */
+function isTag(inner: string): boolean {
+  if (inner.startsWith('v') && isDigit(inner[1])) return true;
+  if (inner.startsWith('Phase ') && isDigit(inner[6])) return true;
+  if (inner.startsWith('D-') && isDigit(inner[2])) return true;
+  return inner.toLowerCase().startsWith('quick');
+}
+
+/** A milestone or phase tag: `v` + digit, or `Phase `. */
+function isEra(tag: string): boolean {
+  return (tag.startsWith('v') && isDigit(tag[1])) || tag.startsWith('Phase ');
+}
+
+/** The Decision cell split into its text and the trailing tag; `(roadmap vs disk, ...)` stays text. */
+function splitTag(cell: string): { decision: string; tag: string | null } {
+  const text = cell.trim();
+  if (!text.endsWith(')')) return { decision: text, tag: null };
+  const open = text.lastIndexOf('(');
+  if (open < 0) return { decision: text, tag: null };
+  const inner = text.slice(open + 1, -1).trim();
+  const head = text.slice(0, open).trimEnd();
+  if (inner === '' || head === '' || inner.includes('(') || !isTag(inner)) return { decision: text, tag: null };
+  return { decision: head, tag: inner };
+}
+
+const OUTCOME_WORDS: Record<string, [ProjectDecisionOutcome, string]> = {
+  good: ['good', 'Good'],
+  revisit: ['revisit', 'Revisit'],
+  reversed: ['reversed', 'Reversed'],
+  pending: ['pending', 'Pending'],
+};
+
+/** Classifies an Outcome cell by its first word after leading symbols (Pitfall 10); a character scan, no pattern. */
+function outcomeOf(cell: string): { outcome: ProjectDecisionOutcome; outcomeLabel: string | null; note: string } {
+  const text = cell.trim();
+  let start = 0;
+  while (start < text.length && !isLetter(text[start])) start += 1;
+  let end = start;
+  while (end < text.length && isLetter(text[end])) end += 1;
+  const hit = end > start ? OUTCOME_WORDS[text.slice(start, end).toLowerCase()] : undefined;
+  if (hit === undefined) return { outcome: 'other', outcomeLabel: null, note: cap(text) };
+  let at = end;
+  while (at < text.length && (text[at] === ' ' || text[at] === '-' || text[at] === '–' || text[at] === '—' || text[at] === ':')) {
+    at += 1;
+  }
+  return { outcome: hit[0], outcomeLabel: hit[1], note: cap(text.slice(at).trim()) };
+}
+
+function cellOf(row: Record<string, string>, names: string[], position: number): string {
+  const keys = Object.keys(row);
+  for (const key of keys) {
+    const lower = key.trim().toLowerCase();
+    for (const name of names) if (lower.startsWith(name)) return row[key] ?? '';
+  }
+  const key = keys[position];
+  return key === undefined ? '' : (row[key] ?? '');
+}
+
+/** The Key Decisions rows in file order (at most 500), each cell capped. */
+function decisionsOf(rows: Record<string, string>[]): ProjectDecision[] {
+  const decisions: ProjectDecision[] = [];
+  const limit = Math.min(rows.length, MAX_DECISIONS);
+  for (let i = 0; i < limit; i += 1) {
+    const row = rows[i];
+    const cell = cellOf(row, ['decision'], 0);
+    const rationale = cellOf(row, ['rationale', 'why'], 1);
+    const outcomeCell = cellOf(row, ['outcome', 'result'], 2);
+    if (cell.trim() === '' && rationale.trim() === '' && outcomeCell.trim() === '') continue;
+    const { decision, tag } = splitTag(cell);
+    decisions.push({
+      n: decisions.length + 1,
+      decision: cap(decision),
+      tag: tag === null ? null : cap(tag),
+      era: tag !== null && isEra(tag) ? cap(tag) : null,
+      rationale: cap(rationale.trim()),
+      ...outcomeOf(outcomeCell),
+    });
+  }
+  return decisions;
+}
+
+export function extractProject(
+  body: string,
+  sections: MarkdownSection[],
+  keyDecisions: Record<string, string>[] = [],
+): ProjectStructure {
   const constraints = findSection(sections, 'constraints');
   return {
     milestone: milestoneOf(sections),
     constraints: constraints ? bulletsOf(constraints.body) : [],
     outOfScope: outOfScopeOf(sections),
     lastUpdated: lastUpdatedOf(body),
+    decisions: decisionsOf(keyDecisions),
   };
 }
 
@@ -218,9 +336,10 @@ export const ProjectHandler: ArtifactHandler = {
     const title = deriveTitle(fm.data, fm.body, ref.path);
     const sections = splitSections(fm.body);
     const keyDecisionsSection = sections.find((s) => /key decisions/i.test(s.heading));
+    const keyDecisions = keyDecisionsSection ? parseMarkdownTable(keyDecisionsSection.body) : [];
     let project: ProjectStructure | undefined;
     try {
-      project = extractProject(fm.body, sections);
+      project = extractProject(fm.body, sections, keyDecisions);
     } catch {
       project = undefined;
     }
@@ -232,7 +351,7 @@ export const ProjectHandler: ArtifactHandler = {
       warning: fm.warning,
       structured: {
         sections,
-        keyDecisions: keyDecisionsSection ? parseMarkdownTable(keyDecisionsSection.body) : [],
+        keyDecisions,
         ...(project === undefined ? {} : { project }),
       },
     };

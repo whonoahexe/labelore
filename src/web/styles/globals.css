@@ -26866,4 +26866,269 @@ button.research-step-chip:hover {
     position: static;
   }
 }
+/* The decision spine (09-09, sketch 041 B): every Key Decisions row in the author's order on an ordered list
+   with a 1px rail, an outcome status-square on the rail, the statement at --fs-5, the tag and outcome chips,
+   and the note under the row clamped to 2 lines. The jump strip holds one square button per decision and
+   wraps for any number of them; the spine renders every row, with no pagination. data-flash tints the row
+   the jump landed on in --primary-tint, with no transition or animation. */
+.view-project-decisions {
+  --view-project-rail-x: calc(0.45rem - 0.5px);
+  --view-project-era-drop: 0.3rem;
+  --view-project-node-x: 0.15rem;
+  --view-project-node-gutter: var(--space-8);
+  --view-project-node-drop: 0.35rem;
+  --view-project-jump-size: 0.85rem;
+  --view-project-jump-hit: 1.5rem;
+
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.view-project-decisions-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  align-items: baseline;
+}
+
+.view-project-decisions-h {
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+}
+
+.view-project-all {
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.view-project-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.view-project-jump-sq {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--view-project-jump-size);
+  height: var(--view-project-jump-size);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.view-project-jump-sq .status-square {
+  --status-square-size: 100%;
+}
+
+.view-project-jump-sq:hover .status-square,
+.view-project-jump-sq:focus-visible .status-square {
+  outline: 2px solid var(--foreground);
+  outline-offset: 1px;
+}
+
+@media (pointer: coarse) {
+  .view-project-jump-sq {
+    min-width: var(--view-project-jump-hit);
+    min-height: var(--view-project-jump-hit);
+  }
+
+  .view-project-jump-sq .status-square {
+    --status-square-size: var(--view-project-jump-size);
+  }
+}
+
+.view-project-tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin: 0 0 var(--space-3);
+}
+
+.view-project-tally-item {
+  display: inline-flex;
+  gap: var(--space-1-5);
+  align-items: center;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.view-project-spine {
+  position: relative;
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-project-spine::before {
+  content: '';
+  position: absolute;
+  top: var(--space-2);
+  bottom: var(--space-2);
+  left: var(--view-project-rail-x);
+  width: 1px;
+  background: var(--border);
+}
+
+.view-project-era {
+  position: relative;
+  padding: var(--space-4) 0 var(--space-2) var(--view-project-node-gutter);
+}
+
+.view-project-era-tick {
+  position: absolute;
+  top: calc(var(--space-4) + var(--view-project-era-drop));
+  left: var(--view-project-node-x);
+  width: 0.6rem;
+  height: 1px;
+  background: var(--foreground);
+}
+
+.view-project-era-label {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+.view-project-node {
+  position: relative;
+  min-width: 0;
+  padding-left: var(--view-project-node-gutter);
+}
+
+.view-project-node-square {
+  position: absolute;
+  top: calc(var(--space-3) + var(--view-project-node-drop));
+  left: var(--view-project-node-x);
+  background-clip: padding-box;
+  box-shadow: 0 0 0 3px var(--background);
+}
+
+.view-project-node-square[data-tone='missing'],
+.view-project-node-square[data-tone='quiet'] {
+  background-color: var(--background);
+}
+
+.view-project-node-btn {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-1) var(--space-3);
+  align-items: baseline;
+  width: 100%;
+  padding: var(--space-3) var(--space-3) var(--space-3) 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.view-project-node-btn:hover {
+  background: var(--state-hover);
+}
+
+.view-project-node[data-flash='true'] .view-project-node-btn {
+  background: var(--primary-tint);
+}
+
+.view-project-node-d {
+  min-width: 0;
+  font-size: var(--fs-5);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+}
+
+.view-project-node-meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.view-project-node-n {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-wider);
+}
+
+.view-project-chev {
+  width: 1em;
+  height: 1em;
+  color: var(--muted-foreground);
+}
+
+.view-project-node-btn[aria-expanded='true'] .view-project-chev {
+  transform: rotate(90deg);
+}
+
+.view-project-node-note {
+  display: -webkit-box;
+  grid-column: 1 / -1;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.view-project-reveal {
+  display: grid;
+  gap: var(--space-3);
+  padding: 0 var(--space-3) var(--space-4) 0;
+}
+
+.view-project-why {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+}
+
+.view-project-why-label {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+.view-project-why-text {
+  margin: 0;
+  font-size: var(--fs-4);
+  line-height: var(--lh-relaxed);
+  overflow-wrap: anywhere;
+}
+
+.view-project-why[data-outcome='true'] .view-project-why-text {
+  color: var(--muted-foreground);
+}
+
+@media (max-width: 42rem) {
+  .view-project-node-btn {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .view-project-node-meta {
+    justify-content: flex-start;
+  }
+}
 /* phase-09-project-page:end */

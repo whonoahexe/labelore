@@ -131,7 +131,7 @@ describe('project view contract - the real sources', () => {
     const code = stripSourceComments(await source('src/web/views/project-page-components.tsx'));
     for (const expression of toneExpressions(code)) {
       if (expression.startsWith('"')) expect(TONES, expression).toContain(expression.slice(1, -1));
-      else expect(expression, expression).toBe('{tile.tone}');
+      else expect(['{tile.tone}', '{row.tone}', '{entry.tone}'], expression).toContain(expression);
     }
   });
 
@@ -180,13 +180,13 @@ describe('project view contract - the real sources', () => {
 
   it('project.ts runs the extraction inside a try block of its own', async () => {
     const text = await source('src/planning-repo/handlers/project.ts');
-    const call = text.indexOf('extractProject(fm.body, sections)');
+    const call = text.indexOf('extractProject(fm.body, sections, keyDecisions)');
     expect(call).toBeGreaterThan(-1);
     const tryAt = text.lastIndexOf('try {', call);
     expect(tryAt).toBeGreaterThan(-1);
     expect(text.indexOf('catch', call)).toBeGreaterThan(call);
     // sections and keyDecisions are computed before, outside the try.
-    expect(text.indexOf('const keyDecisionsSection')).toBeLessThan(tryAt);
+    expect(text.indexOf('const keyDecisions =')).toBeLessThan(tryAt);
   });
 });
 
