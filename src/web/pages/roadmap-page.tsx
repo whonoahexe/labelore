@@ -9,7 +9,7 @@ import {
   History,
   Link2,
 } from 'lucide-react';
-import { Link, useProjectPathname, useProjectSlug } from '../nav.tsx';
+import { Link, useProjectLocation, useProjectPathname, useProjectSlug } from '../nav.tsx';
 import { apiFetch, projectUrl } from '../api.ts';
 import { projectKey } from '../query-keys.ts';
 import { EmptyState } from '../components/empty-state.tsx';
@@ -338,18 +338,25 @@ function RecordText({ text, items }: { text: string; items: string[] }): React.J
 }
 
 function MilestoneRecordPanel({ record }: { record: MilestoneRecord }): React.JSX.Element | null {
+  // Every field the entry holds, in the order the file reads: what shipped, the numbers, the phases, each
+  // other labelled field, then where it sits in git and what comes next. Empty fields are left out.
+  type Fact = { label: string; text: string; items: string[] };
   const facts = [
+    { label: 'Accomplishments', text: '', items: record.accomplishments },
+    record.stats ? { label: 'Stats', text: record.stats.text, items: record.stats.items } : null,
+    record.phases ? { label: 'Phases', text: record.phases, items: [] } : null,
+    ...record.extra.map((field) => ({ label: field.label, text: field.text, items: field.items })),
     record.gitRange ? { label: 'Git range', text: record.gitRange, items: [] } : null,
     record.whatsNext ? { label: "What's next", text: record.whatsNext, items: [] } : null,
-  ].filter((fact) => fact !== null);
+  ].filter((fact): fact is Fact => fact !== null && (fact.text !== '' || fact.items.length > 0));
   // An entry with only a Delivered line has nothing for the panel; Delivered sits in the summary.
   if (facts.length === 0) return null;
 
   return (
     <div className="milestone-record">
       <dl className="milestone-record-facts">
-        {facts.map((fact) => (
-          <div key={fact.label}>
+        {facts.map((fact, index) => (
+          <div key={`${index}-${fact.label}`}>
             <dt>{fact.label}</dt>
             <dd>
               <RecordText text={fact.text} items={fact.items} />
@@ -436,6 +443,12 @@ export function RoadmapPage({ archiveVersion }: { archiveVersion?: string } = {}
   const slug = useProjectSlug() ?? '';
   const roadmap = useQuery({ queryKey: projectKey(slug, 'roadmap'), queryFn: () => fetchRoadmap(slug) });
   const [retrospective, setRetrospective] = useState<RetrospectiveTarget | null>(null);
+  // 09 D-01: /milestones and /retrospective land on /roadmap#history. The hash is read once, on mount (and
+  // never rewritten), and the History section scrolls into view once the roadmap has rendered.
+  const { hash } = useProjectLocation();
+  const [landOnHistory] = useState(() => hash === '#history');
+  const historyRef = useRef<HTMLElement | null>(null);
+  useSettledScrollIntoView(historyRef, landOnHistory && roadmap.data !== undefined);
 
   if (roadmap.isPending) {
     return (
@@ -497,7 +510,12 @@ export function RoadmapPage({ archiveVersion }: { archiveVersion?: string } = {}
         )}
       </section>
 
-      <section className="history-section" aria-labelledby="history-heading">
+      <section
+        className="history-section"
+        id="history"
+        aria-labelledby="history-heading"
+        ref={historyRef}
+      >
         <header className="section-heading">
           <div>
             <p className="eyebrow">Reference, not current state</p>

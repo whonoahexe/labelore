@@ -26464,6 +26464,12 @@ button.research-step-chip:hover {
 .history-milestone[data-target='true'] {
   border-left: 2px solid var(--primary);
   background: var(--primary-tint);
+  /* Clear the sticky header, so the title and the chip are what the scroll lands on. */
+  scroll-margin-top: var(--space-22);
+}
+
+#history {
+  scroll-margin-top: var(--space-22);
 }
 
 .milestone-title-line {
