@@ -152,6 +152,19 @@ class is edited. `.status-chip` (shared `--fs-1`) reads `--fs-2` on these pages;
 (`--fs-1`) and `.empty-note` (`--fs-3`) read `--fs-4`; `Button` (12px) reads `--fs-2`; `.lede` and
 `.artifact-lead` are not used (a page that wants one explanatory sentence uses a `source-note` line).
 
+**Document outline (every page in this phase).** The shared `document-outline` renders its links at
+`--fs-3` (and its "+N more sections" line at `--fs-3`, its "On this page" label at `--fs-1`), which would
+be a fifth and a sixth size against the cap. The design language does not make the outline an exception
+(it documents the outline only as "`--fs-3` links"; it is not a figure and no page-level rule exempts it),
+so it is **counted and mapped inside the scale** by a page-scoped rule: on these pages the outline's links
+and its "+N more sections" line read `--fs-2` (Label: a navigation link, the same step as `.text-link` and
+breadcrumbs) and its "On this page" label reads `--fs-2`, all at weight `--fw-medium`/`--fw-semibold` as
+today. Selector shape, one rule per kind:
+`.artifact-page:has(.view-<kind>-…) :is(.document-outline a, .document-outline li[data-overflow='true'], .document-outline > p) { font-size: var(--fs-2); }`
+(the plan confirms the outline's ancestor in `document-page.tsx` and scopes the rule to it if it sits
+outside `.artifact-page`). `--fs-2` is chosen over `--fs-4` so the outline stays visibly secondary to the
+body. No shared class is edited, and the outline is not excluded from the count.
+
 **Exception route (Codebase page only).** The Codebase page also starts from the four-size cap. Its
 frame is modelled on Research 031 (large panel numbers, a verdict sentence set large, mono tallies),
 which may need more than four sizes; the route below is taken only if its winning sketch does. If so, the plan lists the exact existing tokens it uses, per role, and the user approves
@@ -191,7 +204,7 @@ Reuse it. A square is never the only carrier of meaning: it always sits beside a
 
 ### Page-by-page tone use (default mapping; a sketch may refine within these four tones only)
 
-- **Codebase page and head.** "Complete" map readiness `complete`; "Fast" `in-flight` ("a partial map; complete map still needed"); a document missing from the folder: `quiet` dashed, "Not mapped". Concerns: counts per section are plain numerals (Heading, mono) on a neutral square; the **Security** section's count carries `in-flight` when above zero and `complete` ("0") when zero; no concern section is ever `missing` or `destructive` (a concern is a finding about code, shown as content). Stack chips (languages, frameworks, runtime) are untoned `status-chip`s with the version in mono; the `NEW / EXTEND / MODIFIED / EXISTING` tree badges keep their existing mapping when the Structure panel shows a tree. The "Last mapped" commit stamp is a mono `quiet` chip.
+- **Codebase page and head.** "Complete" map readiness `complete`; "Fast" and "Partial" `in-flight` ("a partial map; complete map still needed"); a document missing from the folder: `quiet` dashed, "Not mapped". Concerns: counts per section are plain numerals (Heading, mono) on a neutral square; the **Security** section's count carries `in-flight` when above zero and `complete` ("0") when zero; no concern section is ever `missing` or `destructive` (a concern is a finding about code, shown as content). Stack chips (languages, frameworks, runtime) are untoned `status-chip`s with the version in mono; the `NEW / EXTEND / MODIFIED / EXISTING` tree badges keep their existing mapping when the Structure panel shows a tree. The "Last mapped" commit stamp is a mono `quiet` chip.
 - **Spec.** Ambiguity score against the gate (GSD's gate: score ≤ 0.20): at or below the gate `complete` "Locked enough to plan"; above the gate `in-flight` "Not locked yet"; a score the page cannot read `quiet` "Ambiguity not stated" (score shown verbatim when present). Requirement rows: Current / Target / Acceptance are labelled fields, not toned; a requirement missing its Acceptance line shows a `quiet` dashed chip "No acceptance stated". Boundaries: In scope `complete` square, Out of scope `quiet` square.
 - **AI spec.** Checklist item done `complete`, not done `quiet` (dashed). A section that is still the template's placeholder text: `quiet` chip "Template slot" (never `in-flight`, never `missing`: an unfilled slot is an absence of authoring, not a failure). The lead line counts them ("3 of 8 sections are still template slots"). System type, framework and evaluation-dimension names are untoned chips.
 - **User setup.** Step done `complete`; step pending `in-flight` (waiting on a person); a step the page cannot classify `quiet`. A variable row carries a `quiet` "Value not shown" mark. Nothing here is `missing`.
@@ -240,7 +253,7 @@ Integrations, Concerns) unless the project is map-only, where it is the mapped-n
 **Must show (page level):**
 - The page title and a facts line: how many of the seven documents exist ("7 of 7 mapped", "4 of 7 mapped"), **map readiness** as a chip (Complete / Fast, see below), and when the map was made.
 - The panel list: seven entries in the fixed order above, each with its number, name and one key number (see below). A document missing from the folder shows as **"Not mapped"** (`quiet`, dashed square, not a link), never hidden. The order does not follow the mapper's file order.
-- Map readiness follows GSD's `map_readiness` exactly (`onboard-projection.cjs`): **complete** when all seven documents are present; **fast** when STACK, INTEGRATIONS, ARCHITECTURE and STRUCTURE are present but not all seven; otherwise **none**, which the page words as "Partial map" with the list of present documents and no readiness claim beyond that when at least one of the seven is present, and with no readiness chip at all (facts line "No map documents found") when none is (GSD itself treats `none` as "the required map is missing" and sends the person to `/gsd-map-codebase`; the next-step table in section 3 mirrors this for both). The page states which, once, in the facts line.
+- Map readiness follows GSD's `map_readiness` exactly (`onboard-projection.cjs`): **complete** when all seven documents are present; **fast** when STACK, INTEGRATIONS, ARCHITECTURE and STRUCTURE are present but not all seven; otherwise **none**, which the page words as "Partial map" with the list of present documents and no readiness claim beyond that (GSD itself treats `none` as "the required map is missing" and sends the person to `/gsd-map-codebase`; the next-step table in section 3 mirrors this). The Codebase page is only reached with at least one of the seven documents present (its routes are the seven documents' addresses), so a zero-document readiness state does not exist on this page. The page states which readiness, once, in the facts line.
 - "When the map was made": from frontmatter `last_mapped_at`; else the older `**Analysis Date:**`; else `*Last updated:*`; else an `<!-- refreshed: DATE -->` comment; else nothing (silent). The commit stamp (`last_mapped_commit`) is shown **as text only** in a mono `quiet` chip (the read-only filesystem cannot compare it against HEAD, and the page does not claim the map is fresh or stale).
 
 **Panels.** Each panel lifts what it can by **fuzzy heading match** (D-02): case-insensitive, tolerant of a leading emoji or number, of `&` against `and`, of plural/singular, and of an added word ("Languages & Runtimes", "API Architecture"). What matches is rendered in the panel's designed form below; **every section that matches no known heading renders as a plain readable section after the lifted part**, with its own heading, in document order. The generic `artifact-document` rendering is the plain form. A panel with no recognised heading at all is that plain rendering in full (so the page never reads worse than the generic document).
@@ -281,20 +294,25 @@ Codebase page with no mapped-not-started head.
 ### 3. Mapped, not started (TGT-09; D-04 to D-09)
 
 **When.** The project's first screen is the mapped-not-started screen when `.planning/codebase/` exists
-and there is **no `ROADMAP.md` and no phases** (D-04). Stray extras (a `CHANGELOG-*.md`, `ui-reviews/`, a
-lone `PROJECT.md`) do not stop it and stay reachable from the drawer. Once a roadmap appears, the normal
-dashboard and tabs return. A `.planning/` with neither a map nor a roadmap is out of scope and unchanged
-(D-08).
+**and holds at least one of the seven recognised map documents** (`STACK`, `ARCHITECTURE`, `STRUCTURE`,
+`CONVENTIONS`, `TESTING`, `INTEGRATIONS`, `CONCERNS`), and there is **no `ROADMAP.md` and no phases**.
+Stray extras (a `CHANGELOG-*.md`, `ui-reviews/`, a lone `PROJECT.md`) do not stop it and stay reachable
+from the drawer. Once a roadmap appears, the normal dashboard and tabs return.
+
+**Narrowing of D-04 (explicit, for the planner).** D-04 as written says "`.planning/codebase/` exists and
+there is no roadmap". This contract narrows that entry condition by user decision on 2026-11-03: D-08
+governs. A `codebase/` folder holding **zero** of the seven recognised documents counts as **no map**, so
+the `.planning/` is a "neither a map nor a roadmap" case. That case is out of scope per D-08 (and listed in
+Deferred), keeps today's behaviour unchanged, and gets no head, no "Not started" wording and no next-step
+row from this phase. The entry test must count recognised documents, not merely test that the folder exists.
 
 **One page, nothing rendered twice (D-05).** The first screen is a **short head over the Codebase
 page's panels on the same screen**; the head is not a second page and the panels are not copied into it.
 
 **Head must show, in a sketch-decided order and arrangement:**
-1. The head words and one sentence, **worded from the count of recognised map documents** (the entry trigger above is unchanged; only the words follow the count, so the screen never asserts a map that its own facts line says is absent):
-   - **One to seven documents present:** the words **"Mapped, not started"** (the eyebrow or the title's lead, the sketch decides) and "This project has a codebase map and no roadmap yet."
-   - **None of the seven present** (a `codebase/` folder holding only stray files): the words **"Not started"** in the same place and "This project has a codebase folder with no recognised map documents and no roadmap yet." The words "Mapped" and "codebase map" do not appear anywhere on this variant. The readiness chip, the stack and the concerns (items 3 to 5) are omitted silently; the facts line reads "No map documents found"; the panel list (item 7) shows seven "Not mapped" entries.
+1. The head words and one sentence: the words **"Mapped, not started"** (the eyebrow or the title's lead, the sketch decides) and "This project has a codebase map and no roadmap yet." There is one variant only: the entry trigger guarantees one to seven recognised documents are present. The zero-document case (a `codebase/` folder with none of the seven) is out of scope per D-08, by user decision on 2026-11-03; it has no head here and keeps today's behaviour.
 2. When the map was made and, where the map carries one, the commit stamp, as text (section 2 rules).
-3. **Fast or complete**, as the readiness chip from section 2.
+3. **Fast, partial or complete**, as the readiness chip from section 2.
 4. The **stack lifted**: languages, runtime and frameworks as chips with versions (from the Stack panel's lift; nothing new is parsed for the head).
 5. The **concerns lifted**: the counts per section, Security first (from the Concerns panel's lift).
 6. **GSD's suggested next step as a copyable command** (D-06), see below.
@@ -306,20 +324,20 @@ page's panels on the same screen**; the head is not a second page and the panels
 |-----------|---------------|--------------------|
 | Readiness **fast** | `/gsd-map-codebase` | "Finish the map. A fast map is enough to look around, but project setup needs the complete one." |
 | Readiness **none**, at least one of the seven documents present (the "Partial map" chip) | `/gsd-map-codebase` | "This map is partial. Some of the seven documents are missing, so map the codebase before setting the project up." |
-| Readiness **none**, **none** of the seven documents present (no readiness chip; facts line "No map documents found") | `/gsd-map-codebase` | "No map documents were found, so map the codebase before setting the project up." |
 | Readiness **complete**, and ADR / PRD / SPEC / RFC documents are visible in the target's `.planning/` | `/gsd-ingest-docs` | "Existing decision or spec documents were found. Import them before setting the project up." |
 | Readiness **complete**, no such documents | `/gsd-new-project` | "The map is complete. Next, set the project up." |
 
 The last two rows apply to readiness `complete` only; "The map is complete" is never shown for `fast`
-or `none`. Both `none` rows mirror `onboard-projection.cjs`, where a missing required map sends the person
-to `/gsd-map-codebase` whatever the document count (`nextAction` returns `map-codebase` for a missing
-required map; the ingest-docs and new-project rules apply only once a map is in place). The zero-document
-row therefore shows the command too; there is no row without a command.
+or `none`. The `none` (partial) row mirrors `onboard-projection.cjs`, where a missing required map sends
+the person to `/gsd-map-codebase` (`nextAction` returns `map-codebase` for a missing required map; the
+ingest-docs and new-project rules apply only once a map is in place). There is no row without a command.
+There is no zero-document row: that case is not an entry condition (section 3, "When").
 
 Recorded narrowing of the mirror: `nextAction` returns `map-codebase` only when the repository is
 brownfield (code or a package file found) and the map is missing. Labelore reads only the target's
 `.planning/` (and the same over `ssh://`) and cannot scan the repository outside it, so it treats a project
-that has a `codebase/` folder as brownfield by construction (someone ran the mapper there). Labelore also
+that has a `codebase/` folder holding at least one recognised map document as brownfield by construction
+(someone ran the mapper there). Labelore also
 has no fast-mode flag, so it never shows the `--fast` form of the command (`map_codebase_fast`) or the
 `complete-map-before-new-project` kind's wording; the fast row above is its own wording of that case.
 
@@ -479,14 +497,13 @@ reviewer text) is shown verbatim and never re-worded. Button and chip copy is wr
 | Element | Copy |
 |---------|------|
 | Primary CTA (phase) | "Copy command" — the one affordance the phase adds: the head's next-step command. Read-only otherwise; Labelore never runs the command. |
-| Mapped-not-started words | One to seven documents present: "Mapped, not started" / "This project has a codebase map and no roadmap yet." None of the seven present: "Not started" / "This project has a codebase folder with no recognised map documents and no roadmap yet." |
+| Mapped-not-started words | "Mapped, not started" / "This project has a codebase map and no roadmap yet." (one variant; the zero-document case is out of scope per D-08, user decision 2026-11-03) |
 | Map readiness chips | "Complete map" / "Fast map" (title/tooltip: "A fast map covers stack, integrations, architecture and structure; project setup needs the complete one.") / "Partial map" (title/tooltip: "Some of the four core documents are missing; the map is not complete.") |
 | Map facts line | "{n} of 7 documents mapped" / "Mapped {date}" / "Commit {short-sha}" (mono, `quiet`) |
 | Missing map document | "Not mapped" (panel list entry, `quiet`, dashed square, not a link) |
-| Next-step reasons | Fast: "Finish the map. A fast map is enough to look around, but project setup needs the complete one." / Partial (`none`, at least one document): "This map is partial. Some of the seven documents are missing, so map the codebase before setting the project up." / No documents (`none`, zero of seven): "No map documents were found, so map the codebase before setting the project up." / Complete and ADR-PRD-SPEC found: "Existing decision or spec documents were found. Import them before setting the project up." / Complete and none found: "The map is complete. Next, set the project up." (shown for readiness `complete` only) |
+| Next-step reasons | Fast: "Finish the map. A fast map is enough to look around, but project setup needs the complete one." / Partial (`none`, at least one document): "This map is partial. Some of the seven documents are missing, so map the codebase before setting the project up." / Complete and ADR-PRD-SPEC found: "Existing decision or spec documents were found. Import them before setting the project up." / Complete and none found: "The map is complete. Next, set the project up." (shown for readiness `complete` only) |
 | Never-runs note | "Labelore does not run commands. Paste it in your terminal." |
 | Copy confirmation | "Copied" (the existing toast) |
-| No map documents | "No map documents found" (facts line); the command `/gsd-map-codebase` is shown with the zero-document reason above; no readiness chip |
 | Concerns head | "{n} concerns" over per-section counts; "Security" first; a section with none: "0" |
 | Concerns pull line (if used) | label "Most dangerous", the item verbatim, muted |
 | Where to add code | label "Where to add new code" |
@@ -521,7 +538,7 @@ Applicable state considerations resolved: 29 covered, 6 backstop, 0 unresolved.
 | Category | Element(s) | Status | Resolution / Reason |
 |----------|------------|--------|---------------------|
 | empty | list-collection (panel list, partial map) | ✅ covered | A document missing from the folder shows as "Not mapped" (`quiet`, non-link) in its place; the page states "{n} of 7 documents mapped" |
-| empty | static-content (map folder with none of the seven) | ✅ covered | Head reads "Not started" with no mention of a map; facts line reads "No map documents found"; `/gsd-map-codebase` is shown as the next step; the drawer still lists whatever is there |
+| empty | static-content (map folder with none of the seven) | ✅ covered | Out of scope per D-08, by user decision on 2026-11-03: the mapped-not-started trigger needs at least one recognised map document, so a `codebase/` folder with none counts as "no map" and keeps today's behaviour, unchanged; no head, wording or next step is added for it |
 | empty | list-collection (concerns section with no items) | ✅ covered | Shows `0` with a dashed square, not hidden |
 | empty | list-collection (checklist, steps, requirements) | ✅ covered | An empty list shows the specific absence from the Copywriting Contract or nothing; no blank section scaffolding |
 | loading | static-content (all pages) | ✅ covered | Pages mount inside the existing document loading state (route chunk store, `RouteProgress`); the map-only first screen mounts inside the project layout's opening body (Phase 8), so no previous project's data flashes |
