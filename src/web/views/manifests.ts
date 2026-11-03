@@ -28,6 +28,7 @@ import { composeSummaryRun } from './summary-run.ts';
 import { composeVerificationBoard } from './verification-board.ts';
 import { composeUiReview } from './ui-review.ts';
 import { composeReviewThreads } from './review-threads.ts';
+import { composeReviewLedger } from './review-ledger.ts';
 import { composeUiSpec } from './ui-spec.ts';
 import { composeUatSession } from './uat-session.ts';
 
@@ -314,6 +315,7 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
       { type: 'section', heading: /^skipped issues/i },
       { type: 'section', heading: /^deferred/i },
     ],
+    reviewLedger: composeReviewLedger,
   },
   'review-disposition': {
     kind: 'review-disposition',

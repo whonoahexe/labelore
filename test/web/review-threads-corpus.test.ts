@@ -148,7 +148,8 @@ describe('REVIEW corpus - every file extracts and composes', () => {
     const pins: [string, string][] = [
       ['milestones/v1.0-phases/01-member-data-foundation/01-REVIEW.md', '2 of 9 fixed. 7 still in the code.'],
       ['milestones/v1.0-phases/03-catalogue-browsing/03-REVIEW.md', '26 findings, 4 critical. None fixed yet.'],
-      ['phases/03-account-admin-and-sessions/03-REVIEW.md', '7 findings. None fixed yet.'],
+      // 09-12: the review context merges both shard fix reports, so three of the seven are fixed (it was none while only a plain fix file was read).
+      ['phases/03-account-admin-and-sessions/03-REVIEW.md', '3 of 7 fixed. 4 still in the code.'],
       ['phases/04-bulk-loan-export/04-REVIEW.md', '2 of 12 fixed. 10 still in the code.'],
       ['milestones/v1.0-phases/04-shed-to-shed-transfers/04-REVIEW.md', '11 of 18 fixed. 7 still in the code, 1 critical.'],
       ['phases/02-roles-and-permissions/02-REVIEW.md', '4 of 10 fixed. 6 still in the code.'],
