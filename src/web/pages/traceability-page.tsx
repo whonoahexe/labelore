@@ -29,6 +29,7 @@ import {
   coveringRollup,
   isResolvedCovering,
 } from './traceability-rollup.ts';
+import { scrollWhenSettled } from './scroll-settle.ts';
 import { stripEmoji } from './strip-emoji.ts';
 
 // Re-exported so the filter predicate stays reachable directly from the page module (its natural
@@ -259,20 +260,58 @@ function DeferredTierDisclosure({
 function ArchivedMilestoneDisclosure({
   archive,
   open = false,
+  arrival = false,
 }: {
   archive: TraceabilityArchivedMilestone;
   /** The details element's open state: true when the Shipped before state is opened on this
    * milestone (or on every previous one). Changing it opens or closes the disclosure; the user's own
    * toggling in between is left alone. */
   open?: boolean;
+  /** True when an archived copy's address (`/v1.0/requirements`) names this milestone (09 D-02): the
+   * block opens, carries the arrival highlight and is scrolled into view once layout settles. */
+  arrival?: boolean;
 }): React.JSX.Element {
   const versionSlug = archive.version.replaceAll(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
+  const detailsRef = useRef<HTMLDetailsElement | null>(null);
+  const scrolledRef = useRef(false);
+
+  useEffect(() => {
+    if (!arrival || scrolledRef.current) return;
+    scrolledRef.current = true;
+    return scrollWhenSettled({
+      measure: () => {
+        const element = detailsRef.current;
+        if (!element) return null;
+        return (
+          window.scrollY +
+          element.getBoundingClientRect().top +
+          document.documentElement.scrollHeight
+        );
+      },
+      scroll: () => {
+        detailsRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      },
+      schedule: (callback) => requestAnimationFrame(callback),
+      cancel: (handle) => cancelAnimationFrame(handle),
+    });
+  }, [arrival]);
+
   return (
-    <details className="history-milestone" open={open}>
+    <details
+      className="history-milestone"
+      open={open || arrival}
+      data-target={arrival ? 'true' : undefined}
+      ref={detailsRef}
+    >
       <summary>
         <ChevronRight aria-hidden="true" />
         <span>
-          <strong>{stripEmoji(archive.title)}</strong>
+          <span className="milestone-title-line">
+            <strong>{stripEmoji(archive.title)}</strong>
+            <span className="status-chip" data-tone="complete">
+              {archive.shipped ? `Shipped ${archive.version} · ${archive.shipped}` : `Shipped ${archive.version}`}
+            </span>
+          </span>
           <small>
             {archive.total} {archive.total === 1 ? 'requirement' : 'requirements'} ·{' '}
             {archive.sourcePath.split('/').pop()}
@@ -324,7 +363,7 @@ function stateButtonCounts(view: TraceabilityViewModel): Record<RequirementState
   };
 }
 
-export function TraceabilityPage(): React.JSX.Element {
+export function TraceabilityPage({ archiveVersion }: { archiveVersion?: string } = {}): React.JSX.Element {
   const slug = useProjectSlug() ?? '';
   const traceability = useQuery({
     queryKey: projectKey(slug, 'traceability'),
@@ -617,6 +656,10 @@ export function TraceabilityPage(): React.JSX.Element {
               <ArchivedMilestoneDisclosure
                 key={archive.sourcePath}
                 archive={archive}
+                arrival={
+                  archiveVersion !== undefined &&
+                  archive.version.toLowerCase() === archiveVersion.toLowerCase()
+                }
                 open={
                   filter.state === 'validated' &&
                   (filter.milestone === null || filter.milestone === archive.version)

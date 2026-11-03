@@ -13,7 +13,7 @@ import {
   resolveLegacyTarget,
   resolveUnprefixedAddress,
 } from '../presentation/legacy-routes.ts';
-import { hasSourceFlag, rootDocumentRedirect } from '../presentation/root-redirects.ts';
+import { archivedCopyTarget, hasSourceFlag, rootDocumentRedirect } from '../presentation/root-redirects.ts';
 import {
   buildPhaseUrl,
   buildUrl,
@@ -29,6 +29,7 @@ export type RouteOutcome =
   | { kind: 'phase'; url: string }
   | { kind: 'plan-pair'; planUrl: string; active: 'plan' | 'summary' }
   | { kind: 'document'; url: string; artifactPath: string }
+  | { kind: 'archive-block'; page: 'roadmap' | 'traceability'; version: string }
   | { kind: 'redirect'; to: string }
   | { kind: 'not-found' };
 
@@ -168,6 +169,10 @@ export function resolveProjectRoute(
         const artifact = presentation.artifacts.find((candidate) => candidate.key === route.url);
         const designed = rootDocumentRedirect(artifact);
         if (designed !== null) return redirectTo(designed);
+        // 09 D-02: an archived milestone copy opens on its live page at its milestone's block. The page
+        // and version come from the payload, never the address (T-09-12); the outcome carries no URL.
+        const archived = artifact === undefined ? null : archivedCopyTarget(artifact, presentation);
+        if (archived !== null) return { kind: 'archive-block', ...archived };
       }
       // D-11: only an artifact has a document page. An internal file, a bare folder and an unknown
       // address have no key, so they all end at the same miss.

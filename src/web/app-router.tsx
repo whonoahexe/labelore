@@ -131,6 +131,12 @@ function ProjectRouteSwitch({
     case 'overview':
     case 'phase':
       return <RoadmapPage />;
+    case 'archive-block':
+      return outcome.page === 'roadmap' ? (
+        <RoadmapPage archiveVersion={outcome.version} />
+      ) : (
+        <TraceabilityPage archiveVersion={outcome.version} />
+      );
     case 'plan-pair':
       return <PlanPairPage planUrl={outcome.planUrl} active={outcome.active} />;
     case 'document':
