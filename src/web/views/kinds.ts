@@ -7,7 +7,7 @@
 // `debug` is discovery's directory-position kind for GSD debug sessions under `.planning/debug/`
 // (quick-261018-j5h). `todo` is discovery's directory-position kind for files under `.planning/todos/`
 // (quick-261023-61k). `note` is discovery's directory-position kind for GSD notes under `.planning/notes/`
-// (quick-261023-61l).
+// (quick-261023-61l). `project` is the root PROJECT.md (Phase 9, 09-07).
 export const VIEW_KINDS = [
   'discussion-log',
   'verification',
@@ -25,6 +25,7 @@ export const VIEW_KINDS = [
   'coverage',
   'learnings',
   'context',
+  'project',
   'review-fix',
   'review-disposition',
   'findings',

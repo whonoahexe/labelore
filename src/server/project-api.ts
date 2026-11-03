@@ -11,6 +11,8 @@ import { Hono } from 'hono';
 import { buildDashboardViewModel } from '../presentation/dashboard.ts';
 import { buildPlanManualChecks } from '../presentation/manual-checks.ts';
 import type { PlanManualChecks } from '../presentation/manual-checks.ts';
+import { buildProjectContext } from '../presentation/project-context.ts';
+import type { ProjectContext } from '../presentation/project-context.ts';
 import { buildReviewContext } from '../presentation/review-context.ts';
 import type { ReviewContext } from '../presentation/review-context.ts';
 import { buildTodoContext } from '../presentation/todo-context.ts';
@@ -139,6 +141,19 @@ export function createProjectApi(
         return null;
       }
     })();
+    // Phase 9 (09-07): the project page's name, lead, core value and requirement-state counts, from this
+    // request's own bundle - built only for the root PROJECT.md (null elsewhere).
+    const projectContext = ((): ProjectContext | null => {
+      try {
+        const isRootProject = activeDerived.presentation.artifacts.some(
+          (candidate) =>
+            candidate.path === lookup.artifact.path && candidate.kind === 'project' && candidate.location === 'root',
+        );
+        return isRootProject ? buildProjectContext(activeDerived.presentation) : null;
+      } catch {
+        return null;
+      }
+    })();
     const document = await (
       await renderer
     ).render(lookup.artifact, { referenceRegistry: activeDerived.referenceRegistry });
@@ -166,6 +181,7 @@ export function createProjectApi(
       document,
       todoContext,
       noteContext,
+      projectContext,
       manualChecks,
       reviewContext,
     };

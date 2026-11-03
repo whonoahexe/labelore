@@ -26479,3 +26479,211 @@ button.research-step-chip:hover {
   gap: var(--space-2) var(--space-2-5);
   align-items: center;
 }
+
+/* Phase 9 (09-07): the project page, sketch 041 B, and the shared status-square. */
+
+/* The shared status-square: a square mark whose tone says finished, waiting, missing or neutral. It
+   always sits beside a word or carries an aria-label. The size is one custom property. */
+.status-square {
+  --status-square-size: 0.6rem;
+
+  display: inline-block;
+  flex: none;
+  width: var(--status-square-size);
+  height: var(--status-square-size);
+  border: 1px solid var(--border);
+}
+
+.status-square[data-tone='complete'] {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.status-square[data-tone='in-flight'] {
+  border-color: var(--in-flight-fill);
+  background: var(--in-flight-fill);
+}
+
+.status-square[data-tone='missing'] {
+  border: 2px solid var(--missing-fill);
+  background: transparent;
+}
+
+.status-square[data-tone='quiet'] {
+  border: 1px dashed var(--muted-foreground);
+  background: transparent;
+}
+
+/* The project page draws its own head: a full-width masthead on the card veil with a bottom hairline,
+   identity on the left and the core value in a framed card on the right (one column under 42rem).
+   Page-scoped typography uses the sketch-locked sizes only: Label --fs-2, Meta --fs-3, Body --fs-4,
+   Heading --fs-7, the core value --fs-fluid-3 and the name --fs-display-3. */
+.view-project-page {
+  --view-project-core-rule: 3px;
+  --view-project-core-max: 38rem;
+
+  display: grid;
+  gap: var(--space-fluid-9);
+  min-width: 0;
+}
+
+.view-project-page > * {
+  min-width: 0;
+}
+
+.view-project-masthead {
+  border-bottom: 1px solid var(--border);
+  background: var(--card-veil);
+}
+
+.view-project-masthead-in {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: var(--space-fluid-9);
+  align-items: end;
+  padding: var(--space-fluid-10) var(--space-fluid-3) var(--space-fluid-9);
+}
+
+@media (max-width: 42rem) {
+  .view-project-masthead-in {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.view-project-id {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+/* The global eyebrow's bottom margin would double the column's own gap. */
+.view-project-id .eyebrow {
+  margin: 0;
+}
+
+.view-project-name {
+  margin: 0;
+  font-size: var(--fs-display-3);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tighter);
+  line-height: var(--lh-display);
+  overflow-wrap: anywhere;
+}
+
+.view-project-what {
+  max-width: var(--view-project-core-max);
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  line-height: var(--lh-relaxed);
+}
+
+.view-project-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-4);
+  align-items: center;
+}
+
+.view-project-core {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-5) var(--space-6);
+  border: 1px solid var(--border);
+  border-top: var(--view-project-core-rule) solid var(--primary);
+  background: var(--background);
+}
+
+.view-project-core-label {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+.view-project-core-value {
+  margin: 0;
+  font-size: var(--fs-fluid-3);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+/* The project page's strip, inside the masthead under a top hairline: the goal cell (09-08) and the four
+   count tiles. With no goal cell the four tiles share the row equally; under 42rem they form a 2 by 2 grid.
+   Each tile is a link: a status-square, the numeral (mono, Heading size), a label and a mono sub-line. */
+.view-project-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0 var(--space-fluid-3);
+  border-top: 1px solid var(--border);
+}
+
+.view-project-strip[data-goal='true'] {
+  grid-template-columns: minmax(0, 2fr) repeat(4, minmax(0, 1fr));
+}
+
+.view-project-tile {
+  display: grid;
+  gap: var(--space-1-5);
+  align-content: start;
+  min-width: 0;
+  padding: var(--space-4);
+  border-left: 1px solid var(--border);
+  color: var(--foreground);
+  text-decoration: none;
+}
+
+.view-project-tile:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.view-project-tile:hover {
+  background: var(--state-hover);
+}
+
+.view-project-tile-count {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-none);
+}
+
+.view-project-tile-label {
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.view-project-tile-sub {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 42rem) {
+  .view-project-strip,
+  .view-project-strip[data-goal='true'] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .view-project-tile:first-child {
+    padding-left: var(--space-4);
+    border-left: 1px solid var(--border);
+  }
+
+  .view-project-tile:nth-child(odd) {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
