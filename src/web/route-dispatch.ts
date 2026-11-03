@@ -56,12 +56,23 @@ function documentOutcome(url: string, presentation: ProjectPresentation): RouteO
   return artifact ? { kind: 'document', url, artifactPath: artifact.path } : null;
 }
 
-function pageOrOverviewOutcome(route: Route, presentation: ProjectPresentation): RouteOutcome | null {
+function pageOrOverviewOutcome(
+  route: Route,
+  search: string,
+  presentation: ProjectPresentation,
+): RouteOutcome | null {
   switch (route.kind) {
     case 'dashboard':
       return { kind: 'page', page: 'dashboard' };
-    case 'page':
+    case 'page': {
+      // 09 D-01: `/roadmap?source=1` opens ROADMAP.md itself. Only the roadmap page has a file behind it,
+      // and only when the payload carries that artifact; every other page ignores the flag.
+      if (route.page === 'roadmap' && hasSourceFlag(search)) {
+        const roadmap = documentOutcome('/roadmap', presentation);
+        if (roadmap !== null) return roadmap;
+      }
       return { kind: 'page', page: route.page };
+    }
     case 'milestone': {
       // D-02: a bare milestone sends the reader to that milestone's roadmap, silently.
       const milestone = presentation.milestones.find((candidate) => candidate.version === route.milestone);
@@ -115,7 +126,7 @@ export function resolveUnprefixedRoute(
  * Decides the page for a project-relative address. `path` is the raw pathname minus the project slug
  * (`/`, `/v1.1/phase-2/plan-01/summary`), `presentation` the loaded payload. `search` is read only by the
  * old-link redirects (`?doc=summary` on a plan address, D-05, and on an old `/plans/<id>` link) and by
- * the `?source=1` flag on a root document's address (09 D-01).
+ * the `?source=1` flag on a root document's address and on `/roadmap` (09 D-01).
  */
 export function resolveProjectRoute(
   path: string,
@@ -127,7 +138,7 @@ export function resolveProjectRoute(
   if (parsed.route.kind === 'legacy') return legacyOutcome(parsed.route.pathname, search, presentation);
   const route = parsed.route;
 
-  const simple = pageOrOverviewOutcome(route, presentation);
+  const simple = pageOrOverviewOutcome(route, search, presentation);
   if (simple !== null) return simple;
 
   switch (route.kind) {

@@ -151,6 +151,26 @@ describe('root documents designed elsewhere (09 D-01)', () => {
     expect(opened).toContain('STATE.md');
   });
 
+  it('opens ROADMAP.md itself on /roadmap?source=1, and only there', () => {
+    expect(withSearch('/roadmap', '')).toEqual({ kind: 'page', page: 'roadmap' });
+    expect(withSearch('/roadmap', '?source=1')).toMatchObject({
+      kind: 'document',
+      url: '/roadmap',
+      artifactPath: expect.stringMatching(/ROADMAP\.md$/),
+    });
+    expect(withSearch('/roadmap', '?source=0')).toEqual({ kind: 'page', page: 'roadmap' });
+    expect(withSearch('/search', '?source=1')).toEqual({ kind: 'page', page: 'search' });
+    expect(withSearch('/traceability', '?source=1')).toEqual({ kind: 'page', page: 'traceability' });
+  });
+
+  it('falls back to the roadmap page when the payload carries no ROADMAP.md artifact', () => {
+    const bare: ProjectPresentation = {
+      ...lendshed,
+      artifacts: lendshed.artifacts.filter((artifact) => artifact.key !== '/roadmap'),
+    };
+    expect(withSearch('/roadmap', '?source=1', bare)).toEqual({ kind: 'page', page: 'roadmap' });
+  });
+
   it('ignores a flag value other than 1', () => {
     expect(withSearch('/state', '?source=0')).toEqual({ kind: 'redirect', to: '/' });
   });
