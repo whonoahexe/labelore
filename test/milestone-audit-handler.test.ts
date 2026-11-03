@@ -331,6 +331,16 @@ describe('extractMilestoneAudit - ids and statuses', () => {
     expect(debtOf('thing (deferred) and more')).toMatchObject({ text: 'thing and more', status: 'deferred' });
     expect(debtOf('thing (deferred to v2)')).toMatchObject({ text: 'thing (deferred to v2)', status: null });
   });
+
+  it('drops the separator and space the lifted status leaves behind', () => {
+    expect(debtOf('WR-01 (deferred): the reservation applies')).toMatchObject({
+      id: 'WR-01',
+      text: 'the reservation applies',
+      status: 'deferred',
+    });
+    expect(debtOf('UI review 17/24 (advisory).')).toMatchObject({ text: 'UI review 17/24.', status: 'advisory' });
+    expect(debtOf('a (open), then b')).toMatchObject({ text: 'a, then b', status: 'open' });
+  });
 });
 
 describe('extractMilestoneAudit growth', () => {
