@@ -16,6 +16,7 @@ import {
   sectionLead,
 } from '../../src/presentation/dashboard-head.ts';
 import { fromDirectory } from '../helpers/from-directory.ts';
+import { loadFixtureProject } from '../helpers/fixture-project.ts';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const fixture = (name: string) => readFileSync(join(REPO_ROOT, 'test/fixtures/dashboard', name), 'utf8');
@@ -131,7 +132,7 @@ describe('dashboard head', () => {
 
   it('shows just the name for a project with a bare PROJECT.md', async () => {
     const head = await headOf({ '.planning/PROJECT.md': fixture('sparse-PROJECT.md') });
-    expect(head).toEqual({ name: 'Untitled Spike', tagline: null, lead: null, now: null, next: null });
+    expect(head).toEqual({ name: 'Untitled Spike', tagline: null, lead: null, now: null, next: null, session: null });
   });
 
   it('never throws on malformed STATE frontmatter', async () => {
@@ -250,5 +251,18 @@ describe('dashboard head extractors', () => {
     expect(activityDateLabel('2026-08-22', '2026-10-17T00:00:00.000Z')).toBe('22 Aug');
     expect(activityDateLabel('2026-08-22', '2027-01-02T00:00:00.000Z')).toBe('22 Aug 2026');
     expect(activityDateLabel('not a date', '2026-10-17T00:00:00.000Z')).toBeNull();
+  });
+});
+
+describe('dashboard head session lines', () => {
+  it('attaches the STATE.md session for Lendshed and null for a project without a STATE.md', async () => {
+    const { presentation } = await loadFixtureProject();
+    const head = buildDashboardHead(presentation);
+    expect(head.session?.stoppedAt).toBe('Phase 04 UI-SPEC reviewed, export wave 2 next');
+    expect(head.session?.deferredCount).toBe(3);
+    expect(head.session?.operatorSteps).toHaveLength(2);
+
+    const bare = await headOf({ '.planning/PROJECT.md': '# Bare\n' });
+    expect(bare.session).toBeNull();
   });
 });
