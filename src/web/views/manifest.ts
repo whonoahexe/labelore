@@ -40,6 +40,10 @@ import type { ComposedUiReview } from './ui-review.ts';
 import type { ComposedReviewThreads } from './review-threads.ts';
 // Type-only import — the review context is built server-side (quick-261017-k44).
 import type { ReviewContext } from '../../presentation/review-context.ts';
+// Type-only import — same reason as `brief` above (Phase 9, 09-12, the review ledger's Fix tab).
+import type { ComposedReviewLedger } from './review-ledger.ts';
+// Type-only import — the review ledger's members, head and fix sections are built server-side (Phase 9, 09-12).
+import type { LedgerContext } from '../../presentation/review-ledger.ts';
 // Type-only import — the todo context is built server-side (quick-261023-61k).
 import type { TodoContext } from '../../presentation/todo-context.ts';
 // Type-only import — the note context is built server-side (quick-261023-61l).
@@ -172,6 +176,11 @@ export interface ViewManifest {
    * `structured.review`), and the page falls back to the promoted-block view, which the manifest
    * keeps as `promote`. */
   reviewThreads?: (input: ViewInput) => ComposedReviewThreads | null;
+  /** Phase 9 (09-12): the review ledger's Fix tab a manifest opts into in View mode - currently only
+   * `review-fix`. Returns `null` when the input can't compose one (no `ledgerContext`, or none of the
+   * phase's fix files in it), and the page falls back to the promoted-block view, which the manifest keeps
+   * as `promote`. */
+  reviewLedger?: (input: ViewInput) => ComposedReviewLedger | null;
   /** quick-261001-qk6 (sketch-014 winner): the UI-SPEC contract page a manifest opts into instead of
    * `promote` — currently only `ui-spec`. Returns `null` when the input can't compose one (no
    * `structured.uiSpec`, or a contract with none of the recognised sections), and the page falls
@@ -216,6 +225,10 @@ export interface ViewInput {
    * frontmatter, parsed report), built server-side and passed through from the document response —
    * `null`/absent when the artifact is not a REVIEW. */
   reviewContext?: ReviewContext | null;
+  /** Phase 9 (09-12): the review ledger of a REVIEW or REVIEW-FIX - its members, tabs, the review's findings,
+   * every fix file's frontmatter and report and the shared head totals - built server-side and passed
+   * through from the document response; `null`/absent when the artifact is not part of a review ledger. */
+  ledgerContext?: LedgerContext | null;
   /** quick-261023-61k: a todo's source notes (url, date, title, text) and its closing quick task link, built
    * server-side and passed through from the document response - `null`/absent when the artifact is not a
    * todo. */

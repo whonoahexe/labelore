@@ -15,6 +15,8 @@ import { buildProjectContext } from '../presentation/project-context.ts';
 import type { ProjectContext } from '../presentation/project-context.ts';
 import { buildReviewContext } from '../presentation/review-context.ts';
 import type { ReviewContext } from '../presentation/review-context.ts';
+import { buildLedgerContext } from '../presentation/review-ledger.ts';
+import type { LedgerContext } from '../presentation/review-ledger.ts';
 import { buildTodoContext } from '../presentation/todo-context.ts';
 import type { TodoContext } from '../presentation/todo-context.ts';
 import { buildNoteContext } from '../presentation/note-context.ts';
@@ -111,6 +113,18 @@ export function createProjectApi(
         return null;
       }
     })();
+    // Phase 9 (09-12): the review ledger's members, head and fix sections for a REVIEW, a REVIEW-FIX and (09-13)
+    // a REVIEW-DISPOSITION, from this request's own bundle (null elsewhere).
+    const ledgerContext = ((): LedgerContext | null => {
+      try {
+        const kind = lookup.artifact.kind;
+        return kind === 'review' || kind === 'review-fix' || kind === 'review-disposition'
+          ? buildLedgerContext(activeDerived.presentation, activeDerived.referenceRegistry, lookup.artifact.path)
+          : null;
+      } catch {
+        return null;
+      }
+    })();
     // quick-261023-61k: a todo's source notes (url, date, title, text) and its closing quick task link, from
     // this request's own bundle (null elsewhere). Note bodies come from the artifact index, not the disk.
     const todoContext = ((): TodoContext | null => {
@@ -181,6 +195,7 @@ export function createProjectApi(
       document,
       todoContext,
       noteContext,
+      ledgerContext,
       projectContext,
       manualChecks,
       reviewContext,
