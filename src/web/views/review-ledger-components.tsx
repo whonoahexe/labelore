@@ -9,6 +9,7 @@
 // document content, and a critical finding is `missing`, never destructive.
 import { useEffect, useState } from 'react';
 import type { LedgerContext } from '../../presentation/review-ledger.ts';
+import { ArtifactBreadcrumbs, type ArtifactCrumb } from '../components/artifact-header.tsx';
 import { LedgerSwitch } from '../components/ledger-switch.tsx';
 import { ResearchInline } from '../pages/research-atoms.tsx';
 import { scrollWhenSettled } from '../pages/scroll-settle.ts';
@@ -92,15 +93,18 @@ export function LedgerHead({ head }: { head: ComposedLedgerHead }): React.JSX.El
 
 /** The strip and head, first in the page; null while the folder holds fewer than two review-family files (D-11).
  * A tab whose route did not resolve is drawn only when it is the open one - no disabled or missing tab. */
-export function ledgerSwitcher(context: LedgerContext | null): React.ReactNode {
+export function ledgerSwitcher(context: LedgerContext | null, crumbs: ArtifactCrumb[] = []): React.ReactNode {
   if (context === null || !Array.isArray(context.members) || context.members.length < 2)
     return null;
   const tabs = context.tabs
     .filter((tab) => tab.url !== null || tab.tab === context.active)
     .map((tab) => ({ key: tab.tab, label: tab.label, to: tab.url, count: tab.count }));
   const head = composeLedgerHead(context);
+  // The breadcrumbs lead, so every tab opens on the same wayfinding row above the strip; the tab's own
+  // header then drops its copy (the Review tab's own head never had one).
   return (
     <>
+      {crumbs.length > 0 ? <ArtifactBreadcrumbs crumbs={crumbs} /> : null}
       <LedgerSwitch label="Review files" tabs={tabs} active={context.active} />
       {head !== null ? <LedgerHead head={head} /> : null}
     </>

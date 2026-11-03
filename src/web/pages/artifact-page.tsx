@@ -698,10 +698,16 @@ export function ArtifactPage({
   );
   // Phase 9 (09-12): a review-family file draws the ledger's tab strip and shared head first in the page, only
   // once a second file exists (D-11); a plan pair keeps its own switch.
-  const switcher =
-    pairSwitcher ??
-    quickPairSwitch(query.data?.artifact.path, route, siblingArtifacts) ??
-    ledgerSwitcher(query.data?.ledgerContext ?? null);
+  const otherSwitcher = pairSwitcher ?? quickPairSwitch(query.data?.artifact.path, route, siblingArtifacts);
+  const ledgerTop = otherSwitcher
+    ? null
+    : ledgerSwitcher(
+        query.data?.ledgerContext ?? null,
+        query.data ? documentCrumbsOf(presentationQuery.data, query.data.artifact.path, query.data.artifact.title) : [],
+      );
+  // The ledger's top draws the breadcrumbs itself, above its tabs, so the header below must not repeat them.
+  const ledgerOwnsCrumbs = ledgerTop !== null;
+  const switcher = otherSwitcher ?? ledgerTop;
   const viewInput = useMemo<ViewInput | null>(() => {
     if (!query.data) return null;
     return {
@@ -1273,7 +1279,7 @@ export function ArtifactPage({
         {switcher}
       <ArtifactHeader
         crumbs={crumbs}
-        hideCrumbs={Boolean(specCover || uatCover)}
+        hideCrumbs={Boolean(specCover || uatCover) || ledgerOwnsCrumbs}
         eyebrow={
           brief
             ? brief.intro.eyebrow
