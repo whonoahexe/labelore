@@ -1,7 +1,7 @@
 ---
 phase: "10"
 slug: codebase-map-specification-and-check-pages
-status: draft
+status: approved
 shadcn_initialized: true
 preset: b7WOYcsqY
 created: "2026-11-03"
@@ -251,7 +251,7 @@ first mapped panel in the page's order (Stack, Architecture, Structure, Conventi
 Integrations, Concerns) unless the project is map-only, where it is the mapped-not-started screen (section 3).
 
 **Must show (page level):**
-- The page title and a facts line: how many of the seven documents exist ("7 of 7 mapped", "4 of 7 mapped"), **map readiness** as a chip (Complete / Fast, see below), and when the map was made.
+- The page title and a facts line: how many of the seven documents exist ("7 of 7 mapped", "4 of 7 mapped"), **map readiness** as a chip (Complete / Fast / Partial, see below), and when the map was made.
 - The panel list: seven entries in the fixed order above, each with its number, name and one key number (see below). A document missing from the folder shows as **"Not mapped"** (`quiet`, dashed square, not a link), never hidden. The order does not follow the mapper's file order.
 - Map readiness follows GSD's `map_readiness` exactly (`onboard-projection.cjs`): **complete** when all seven documents are present; **fast** when STACK, INTEGRATIONS, ARCHITECTURE and STRUCTURE are present but not all seven; otherwise **none**, which the page words as "Partial map" with the list of present documents and no readiness claim beyond that (GSD itself treats `none` as "the required map is missing" and sends the person to `/gsd-map-codebase`; the next-step table in section 3 mirrors this). The Codebase page is only reached with at least one of the seven documents present (its routes are the seven documents' addresses), so a zero-document readiness state does not exist on this page. The page states which readiness, once, in the facts line.
 - "When the map was made": from frontmatter `last_mapped_at`; else the older `**Analysis Date:**`; else `*Last updated:*`; else an `<!-- refreshed: DATE -->` comment; else nothing (silent). The commit stamp (`last_mapped_commit`) is shown **as text only** in a mono `quiet` chip (the read-only filesystem cannot compare it against HEAD, and the page does not claim the map is fresh or stale).
@@ -357,7 +357,7 @@ The dashboard route for a map-only project is this screen. The drawer still list
 
 **Opening (D-09).** A map-only project opens from the project path **or** the `.planning` path, from the
 CLI, the switcher and the folder scan. Today `hasProjectMarker` demands `PROJECT.md` or `STATE.md` when
-pointed at `.planning`; a `codebase/` folder must also qualify there, through the same single resolver
+pointed at `.planning`; a `codebase/` folder holding at least one of the seven recognised map documents must also qualify there (an empty or unrecognised `codebase/` folder does not — D-08), through the same single resolver
 (Phase 8 D-17: no second parser). The switcher row and the scan checklist item for a map-only project use
 their existing markup; the project name comes from the folder name when there is no PROJECT.md title.
 No new switcher state is added.
@@ -438,10 +438,10 @@ cannot be built or verified without it and it binds every later type with no rea
    ```yaml
    made_up_example: true
    derived_from: gsd-core/templates/spec.md    # the GSD template or writer it follows
-   gsd_core_version: 1.11.0                    # the installed @opengsd/gsd-core version, read at the time of writing
+   gsd_core_version: 1.19.0                    # the installed @opengsd/gsd-core version, read at the time of writing
    ```
    For a file with no frontmatter (the codebase maps), the first line is an HTML comment carrying the same
-   three facts: `<!-- made-up example · derived from gsd-core/templates/codebase/stack.md · gsd-core 1.11.0 -->`.
+   three facts: `<!-- made-up example · derived from gsd-core/templates/codebase/stack.md · gsd-core 1.19.0 -->`.
    The version is read from the installed package at writing time, never recalled. In View mode the
    frontmatter keys appear as ordinary fields in the "Document metadata" disclosure like any key; no
    chip, banner or special style is added for them.
@@ -518,7 +518,7 @@ reviewer text) is shown verbatim and never re-worded. Button and chip copy is wr
 | User setup variable | name (mono), "Goes in {file}", "Get it from {where}", mark "Value not shown" |
 | Eval review | "Score" / "Verdict" (value verbatim: "PRODUCTION READY" etc.) / "Dimension coverage" / "Remediation plan" / states "Covered" "Partial" "Missing" / "Verdict not stated" |
 | Browser check outcomes | "Verified" / "Nothing to report" / "Could not look" |
-| Browser check reasons | `could_not_look`/`target_unreachable`: "Could not look: nothing was serving the target." / `nothing_to_report`/`no_criteria`: "Nothing to report: this wave had no UI acceptance criteria." / any other reason: its raw value verbatim in mono |
+| Browser check reasons | `could_not_look`/`target_unreachable`: "Could not look: nothing was serving the target. Start it, then rerun the browser check." / `nothing_to_report`/`no_criteria`: "Nothing to report: this wave had no UI acceptance criteria." / any other reason: its raw value verbatim in mono |
 | Browser check counts | "Passed" / "Failed" / "Needs review"; not applicable: "No criteria were checked." |
 | Reviews groups | "Reviewers" / "Agreed" / "Disagreements" / "Reviewers disagree" (chip) / "Consensus summary, as the file wrote it" |
 | Reviews reviewer meta | "{name}" / "{model}" / "Overall risk: {LOW\|MEDIUM\|HIGH}" (verbatim; absent: omit) |
@@ -601,12 +601,12 @@ Open items the plan must confirm rather than assume (none blocks the contract):
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
-- [ ] Dimension 7 Inventory Provenance: PASS
+- [x] Dimension 1 Copywriting: FLAG (resolved inline)
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: FLAG (fluid --space-fluid-* tokens off the 4px grid at most widths; the page plan names the ones it uses)
+- [x] Dimension 6 Registry Safety: PASS
+- [x] Dimension 7 Inventory Provenance: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-11-03
