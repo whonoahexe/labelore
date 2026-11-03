@@ -81,6 +81,7 @@ rule. Spacing is token-only (`--space-*`, `--space-fluid-*`). No motion anywhere
 
 Enumerated by `ls src/web/components/ui/*.tsx | wc -l` — 3 components — @base-ui/react@1.7.0 (resolved from `node_modules`; 83 package exports via `node -p "Object.keys(require('@base-ui/react/package.json').exports || {}).length"`) — 2026-11-03.
 Mismatch: `npx shadcn info` reported "No components installed", filesystem has 3 (the primitives were hand-authored; the CLI does not track them).
+The count of 3 is of the local `src/web/components/ui/` folder, not of the `@base-ui/react` package (whose 83 exports are the separate figure in the provenance line).
 
 This table is a **non-exhaustive** list of known-good components, never a closed allowlist. The
 executor may use any `@base-ui/react` export; checking for one outside the table is the expected path.
@@ -239,7 +240,7 @@ Integrations, Concerns) unless the project is map-only, where it is the mapped-n
 **Must show (page level):**
 - The page title and a facts line: how many of the seven documents exist ("7 of 7 mapped", "4 of 7 mapped"), **map readiness** as a chip (Complete / Fast, see below), and when the map was made.
 - The panel list: seven entries in the fixed order above, each with its number, name and one key number (see below). A document missing from the folder shows as **"Not mapped"** (`quiet`, dashed square, not a link), never hidden. The order does not follow the mapper's file order.
-- Map readiness follows GSD's `map_readiness` exactly (`onboard-projection.cjs`): **complete** when all seven documents are present; **fast** when STACK, INTEGRATIONS, ARCHITECTURE and STRUCTURE are present but not all seven; otherwise **none**, which the page words as "Partial map" with the list of present documents and no readiness claim beyond that (GSD itself treats `none` as "the required map is missing" and sends the person to `/gsd-map-codebase`; the next-step table in section 3 mirrors this). The page states which, once, in the facts line.
+- Map readiness follows GSD's `map_readiness` exactly (`onboard-projection.cjs`): **complete** when all seven documents are present; **fast** when STACK, INTEGRATIONS, ARCHITECTURE and STRUCTURE are present but not all seven; otherwise **none**, which the page words as "Partial map" with the list of present documents and no readiness claim beyond that when at least one of the seven is present, and with no readiness chip at all (facts line "No map documents found") when none is (GSD itself treats `none` as "the required map is missing" and sends the person to `/gsd-map-codebase`; the next-step table in section 3 mirrors this for both). The page states which, once, in the facts line.
 - "When the map was made": from frontmatter `last_mapped_at`; else the older `**Analysis Date:**`; else `*Last updated:*`; else an `<!-- refreshed: DATE -->` comment; else nothing (silent). The commit stamp (`last_mapped_commit`) is shown **as text only** in a mono `quiet` chip (the read-only filesystem cannot compare it against HEAD, and the page does not claim the map is fresh or stale).
 
 **Panels.** Each panel lifts what it can by **fuzzy heading match** (D-02): case-insensitive, tolerant of a leading emoji or number, of `&` against `and`, of plural/singular, and of an added word ("Languages & Runtimes", "API Architecture"). What matches is rendered in the panel's designed form below; **every section that matches no known heading renders as a plain readable section after the lifted part**, with its own heading, in document order. The generic `artifact-document` rendering is the plain form. A panel with no recognised heading at all is that plain rendering in full (so the page never reads worse than the generic document).
@@ -289,7 +290,9 @@ dashboard and tabs return. A `.planning/` with neither a map nor a roadmap is ou
 page's panels on the same screen**; the head is not a second page and the panels are not copied into it.
 
 **Head must show, in a sketch-decided order and arrangement:**
-1. The words **"Mapped, not started"** (the eyebrow or the title's lead, the sketch decides) and one sentence: "This project has a codebase map and no roadmap yet."
+1. The head words and one sentence, **worded from the count of recognised map documents** (the entry trigger above is unchanged; only the words follow the count, so the screen never asserts a map that its own facts line says is absent):
+   - **One to seven documents present:** the words **"Mapped, not started"** (the eyebrow or the title's lead, the sketch decides) and "This project has a codebase map and no roadmap yet."
+   - **None of the seven present** (a `codebase/` folder holding only stray files): the words **"Not started"** in the same place and "This project has a codebase folder with no recognised map documents and no roadmap yet." The words "Mapped" and "codebase map" do not appear anywhere on this variant. The readiness chip, the stack and the concerns (items 3 to 5) are omitted silently; the facts line reads "No map documents found"; the panel list (item 7) shows seven "Not mapped" entries.
 2. When the map was made and, where the map carries one, the commit stamp, as text (section 2 rules).
 3. **Fast or complete**, as the readiness chip from section 2.
 4. The **stack lifted**: languages, runtime and frameworks as chips with versions (from the Stack panel's lift; nothing new is parsed for the head).
@@ -303,17 +306,25 @@ page's panels on the same screen**; the head is not a second page and the panels
 |-----------|---------------|--------------------|
 | Readiness **fast** | `/gsd-map-codebase` | "Finish the map. A fast map is enough to look around, but project setup needs the complete one." |
 | Readiness **none**, at least one of the seven documents present (the "Partial map" chip) | `/gsd-map-codebase` | "This map is partial. Some of the seven documents are missing, so map the codebase before setting the project up." |
+| Readiness **none**, **none** of the seven documents present (no readiness chip; facts line "No map documents found") | `/gsd-map-codebase` | "No map documents were found, so map the codebase before setting the project up." |
 | Readiness **complete**, and ADR / PRD / SPEC / RFC documents are visible in the target's `.planning/` | `/gsd-ingest-docs` | "Existing decision or spec documents were found. Import them before setting the project up." |
 | Readiness **complete**, no such documents | `/gsd-new-project` | "The map is complete. Next, set the project up." |
 
 The last two rows apply to readiness `complete` only; "The map is complete" is never shown for `fast`
-or `none`. The `none` row mirrors `onboard-projection.cjs`, where a missing required map sends the person to
-`/gsd-map-codebase` (the ingest-docs and new-project rules apply only once a map is in place).
+or `none`. Both `none` rows mirror `onboard-projection.cjs`, where a missing required map sends the person
+to `/gsd-map-codebase` whatever the document count (`nextAction` returns `map-codebase` for a missing
+required map; the ingest-docs and new-project rules apply only once a map is in place). The zero-document
+row therefore shows the command too; there is no row without a command.
 
-Labelore reads only the target's `.planning/` (and the same over `ssh://`), so "documents exist" means
-documents Labelore can see there; it does not scan the repository outside `.planning/`. The plan
-confirms this reading against D-06 and records it. A map with none of the seven recognised documents
-shows no command (nothing to anchor a recommendation to) and the facts line says "No map documents found".
+Recorded narrowing of the mirror: `nextAction` returns `map-codebase` only when the repository is
+brownfield (code or a package file found) and the map is missing. Labelore reads only the target's
+`.planning/` (and the same over `ssh://`) and cannot scan the repository outside it, so it treats a project
+that has a `codebase/` folder as brownfield by construction (someone ran the mapper there). Labelore also
+has no fast-mode flag, so it never shows the `--fast` form of the command (`map_codebase_fast`) or the
+`complete-map-before-new-project` kind's wording; the fast row above is its own wording of that case.
+
+"Documents exist" for the ingest-docs rule likewise means documents Labelore can see in `.planning/`. The
+plan confirms this reading against D-06 and records it.
 
 The command is **text with a copy button**: a mono block that wraps rather than truncates, then an icon+label
 button reading "Copy command" (`Copy` lucide icon) that copies exactly the command text and raises the
@@ -468,14 +479,14 @@ reviewer text) is shown verbatim and never re-worded. Button and chip copy is wr
 | Element | Copy |
 |---------|------|
 | Primary CTA (phase) | "Copy command" — the one affordance the phase adds: the head's next-step command. Read-only otherwise; Labelore never runs the command. |
-| Mapped-not-started words | "Mapped, not started" / "This project has a codebase map and no roadmap yet." |
+| Mapped-not-started words | One to seven documents present: "Mapped, not started" / "This project has a codebase map and no roadmap yet." None of the seven present: "Not started" / "This project has a codebase folder with no recognised map documents and no roadmap yet." |
 | Map readiness chips | "Complete map" / "Fast map" (title/tooltip: "A fast map covers stack, integrations, architecture and structure; project setup needs the complete one.") / "Partial map" (title/tooltip: "Some of the four core documents are missing; the map is not complete.") |
 | Map facts line | "{n} of 7 documents mapped" / "Mapped {date}" / "Commit {short-sha}" (mono, `quiet`) |
 | Missing map document | "Not mapped" (panel list entry, `quiet`, dashed square, not a link) |
-| Next-step reasons | Fast: "Finish the map. A fast map is enough to look around, but project setup needs the complete one." / Partial (`none`, at least one document): "This map is partial. Some of the seven documents are missing, so map the codebase before setting the project up." / Complete and ADR-PRD-SPEC found: "Existing decision or spec documents were found. Import them before setting the project up." / Complete and none found: "The map is complete. Next, set the project up." (shown for readiness `complete` only) |
+| Next-step reasons | Fast: "Finish the map. A fast map is enough to look around, but project setup needs the complete one." / Partial (`none`, at least one document): "This map is partial. Some of the seven documents are missing, so map the codebase before setting the project up." / No documents (`none`, zero of seven): "No map documents were found, so map the codebase before setting the project up." / Complete and ADR-PRD-SPEC found: "Existing decision or spec documents were found. Import them before setting the project up." / Complete and none found: "The map is complete. Next, set the project up." (shown for readiness `complete` only) |
 | Never-runs note | "Labelore does not run commands. Paste it in your terminal." |
 | Copy confirmation | "Copied" (the existing toast) |
-| No map documents | "No map documents found" (facts line); no command shown |
+| No map documents | "No map documents found" (facts line); the command `/gsd-map-codebase` is shown with the zero-document reason above; no readiness chip |
 | Concerns head | "{n} concerns" over per-section counts; "Security" first; a section with none: "0" |
 | Concerns pull line (if used) | label "Most dangerous", the item verbatim, muted |
 | Where to add code | label "Where to add new code" |
@@ -510,7 +521,7 @@ Applicable state considerations resolved: 29 covered, 6 backstop, 0 unresolved.
 | Category | Element(s) | Status | Resolution / Reason |
 |----------|------------|--------|---------------------|
 | empty | list-collection (panel list, partial map) | ✅ covered | A document missing from the folder shows as "Not mapped" (`quiet`, non-link) in its place; the page states "{n} of 7 documents mapped" |
-| empty | static-content (map folder with none of the seven) | ✅ covered | Facts line reads "No map documents found"; no command is shown; the drawer still lists whatever is there |
+| empty | static-content (map folder with none of the seven) | ✅ covered | Head reads "Not started" with no mention of a map; facts line reads "No map documents found"; `/gsd-map-codebase` is shown as the next step; the drawer still lists whatever is there |
 | empty | list-collection (concerns section with no items) | ✅ covered | Shows `0` with a dashed square, not hidden |
 | empty | list-collection (checklist, steps, requirements) | ✅ covered | An empty list shows the specific absence from the Copywriting Contract or nothing; no blank section scaffolding |
 | loading | static-content (all pages) | ✅ covered | Pages mount inside the existing document loading state (route chunk store, `RouteProgress`); the map-only first screen mounts inside the project layout's opening body (Phase 8), so no previous project's data flashes |
@@ -566,7 +577,7 @@ Open items the plan must confirm rather than assume (none blocks the contract):
 
 | Registry | Blocks Used | Safety Gate |
 |----------|-------------|-------------|
-| shadcn official | Button (installed); no new block | not required |
+| shadcn official | None added. Local hand-authored primitives already in `src/web/components/ui/`: Button, Dialog, Toast (installed from no registry block). No new block | not required |
 | third-party | none | not applicable — no third-party registry declared (`components.json` `registries` is `{}`) |
 
 ---
