@@ -53,3 +53,16 @@ describe('review disposition files (Lendshed phase 1)', () => {
     expect(disposition?.rows).toHaveLength(6);
   });
 });
+
+describe('review disposition files in the other two shapes', () => {
+  it.each([
+    ['phases/02-roles-and-permissions/02-REVIEW-DISPOSITION.md', '/v1.1/phase-2/review-disposition', 6],
+    ['milestones/v1.0-phases/04-shed-to-shed-transfers/04-REVIEW-DISPOSITION.md', '/v1.0/phase-4/review-disposition', 7],
+  ])('%s has kind review-disposition, the key %s and %i rows', (path, key, count) => {
+    const artifact = artifactAt(path);
+    expect(artifact.kind).toBe('review-disposition');
+    expect(artifact.key).toBe(key);
+    const disposition = artifact.structured.disposition as DispositionStructured | undefined;
+    expect(disposition?.rows).toHaveLength(count);
+  });
+});
