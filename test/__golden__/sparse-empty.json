@@ -50,7 +50,20 @@
             }
           ],
           "project": {
-            "milestone": null
+            "milestone": null,
+            "constraints": [
+              {
+                "name": "Fixture",
+                "text": "Deliberately minimal — no ROADMAP.md, no phases/, no milestones/."
+              }
+            ],
+            "outOfScope": [
+              {
+                "name": "",
+                "text": "Everything else — this fixture exists to be sparse."
+              }
+            ],
+            "lastUpdated": "2026-08-21 after initialization"
           }
         }
       },
