@@ -13,6 +13,7 @@ import {
   resolveLegacyTarget,
   resolveUnprefixedAddress,
 } from '../presentation/legacy-routes.ts';
+import { hasSourceFlag, rootDocumentRedirect } from '../presentation/root-redirects.ts';
 import {
   buildPhaseUrl,
   buildUrl,
@@ -55,12 +56,23 @@ function documentOutcome(url: string, presentation: ProjectPresentation): RouteO
   return artifact ? { kind: 'document', url, artifactPath: artifact.path } : null;
 }
 
-function pageOrOverviewOutcome(route: Route, presentation: ProjectPresentation): RouteOutcome | null {
+function pageOrOverviewOutcome(
+  route: Route,
+  search: string,
+  presentation: ProjectPresentation,
+): RouteOutcome | null {
   switch (route.kind) {
     case 'dashboard':
       return { kind: 'page', page: 'dashboard' };
-    case 'page':
+    case 'page': {
+      // 09 D-01: `/roadmap?source=1` opens ROADMAP.md itself. Only the roadmap page has a file behind it,
+      // and only when the payload carries that artifact; every other page ignores the flag.
+      if (route.page === 'roadmap' && hasSourceFlag(search)) {
+        const roadmap = documentOutcome('/roadmap', presentation);
+        if (roadmap !== null) return roadmap;
+      }
       return { kind: 'page', page: route.page };
+    }
     case 'milestone': {
       // D-02: a bare milestone sends the reader to that milestone's roadmap, silently.
       const milestone = presentation.milestones.find((candidate) => candidate.version === route.milestone);
@@ -113,7 +125,8 @@ export function resolveUnprefixedRoute(
 /**
  * Decides the page for a project-relative address. `path` is the raw pathname minus the project slug
  * (`/`, `/v1.1/phase-2/plan-01/summary`), `presentation` the loaded payload. `search` is read only by the
- * old-link redirects: `?doc=summary` on a plan address (D-05) and on an old `/plans/<id>` link.
+ * old-link redirects (`?doc=summary` on a plan address, D-05, and on an old `/plans/<id>` link) and by
+ * the `?source=1` flag on a root document's address and on `/roadmap` (09 D-01).
  */
 export function resolveProjectRoute(
   path: string,
@@ -125,7 +138,7 @@ export function resolveProjectRoute(
   if (parsed.route.kind === 'legacy') return legacyOutcome(parsed.route.pathname, search, presentation);
   const route = parsed.route;
 
-  const simple = pageOrOverviewOutcome(route, presentation);
+  const simple = pageOrOverviewOutcome(route, search, presentation);
   if (simple !== null) return simple;
 
   switch (route.kind) {
@@ -147,6 +160,15 @@ export function resolveProjectRoute(
         ? presentation.routeAliases[route.url]
         : undefined;
       if (alias !== undefined) return redirectTo(alias);
+      // 09 D-01: a root document with a designed page redirects there (replacing the history entry),
+      // unless its own address carries `?source=1`. The target is a value of the fixed table in
+      // root-redirects.ts and passes redirectTo (T-09-01). The flag only skips the redirect for an
+      // address an artifact already carries; documentOutcome still answers not-found for anything else.
+      if (!hasSourceFlag(search)) {
+        const artifact = presentation.artifacts.find((candidate) => candidate.key === route.url);
+        const designed = rootDocumentRedirect(artifact);
+        if (designed !== null) return redirectTo(designed);
+      }
       // D-11: only an artifact has a document page. An internal file, a bare folder and an unknown
       // address have no key, so they all end at the same miss.
       return documentOutcome(route.url, presentation) ?? NOT_FOUND;

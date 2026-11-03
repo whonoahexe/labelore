@@ -271,6 +271,42 @@ describe('buildSearchGroups', () => {
     expect(groups[0].rows[0].warningTone).toBe('warning');
   });
 
+  describe('root documents designed elsewhere (09 D-01)', () => {
+    const view = presentation({
+      artifacts: [
+        artifact({ path: '.planning/STATE.md', location: 'root', kind: 'state', key: '/state' }),
+        artifact({ path: '.planning/ROADMAP.md', location: 'root', kind: 'roadmap', key: '/roadmap' }),
+        artifact({ path: '.planning/research/STATE.md', location: 'research', kind: 'state', key: '/research/state' }),
+        artifact({ path: 'phases/a/01-CONTEXT.md', location: 'phase', kind: 'context', key: '/v1.0/phase-1/context' }),
+      ],
+    });
+    const rowFor = (path: string, url: string) =>
+      buildSearchGroups([hit({ path, url })], view)
+        .flatMap((group) => group.rows)
+        .find((row) => row.path === path)!;
+
+    it('leads a STATE.md hit to the dashboard and carries the Source address', () => {
+      const row = rowFor('.planning/STATE.md', '/state');
+      expect(row.url).toBe('/');
+      expect(row.sourceUrl).toBe('/state?source=1');
+    });
+
+    it('keeps the roadmap row on its own address and still offers its Source', () => {
+      const row = rowFor('.planning/ROADMAP.md', '/roadmap');
+      expect(row.url).toBe('/roadmap');
+      expect(row.sourceUrl).toBe('/roadmap?source=1');
+    });
+
+    it('leaves every other file alone: own url, no Source address', () => {
+      const context = rowFor('phases/a/01-CONTEXT.md', '/v1.0/phase-1/context');
+      expect(context.url).toBe('/v1.0/phase-1/context');
+      expect(context.sourceUrl).toBeNull();
+      const nested = rowFor('.planning/research/STATE.md', '/research/state');
+      expect(nested.url).toBe('/research/state');
+      expect(nested.sourceUrl).toBeNull();
+    });
+  });
+
   it('a warning does not change row order — a warned and an unwarned row sort identically to two clean rows (D-13)', () => {
     const activePhase = phase({ key: 'p~a', milestoneKey: 'm~current', name: 'Phase A' });
     const buildView = (warned: boolean) =>

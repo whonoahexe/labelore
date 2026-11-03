@@ -88,3 +88,34 @@ describe('resolveViewFor', () => {
     expect(resolved.manifest.kind).toBe(UNRECOGNIZED_KIND);
   });
 });
+
+describe('resolveViewFor sourceEscape (09 D-01)', () => {
+  it('recognizes a root document on its ?source=1 page and leads with a plain sentence', () => {
+    const resolved = resolveViewFor('state', input(), { sourceEscape: true });
+    expect(resolved.recognized).toBe(true);
+    expect(resolved.manifest.lead).toBe('The file behind the dashboard, as written.');
+    expect(resolved.manifest.lead).not.toContain('dedicated view');
+  });
+
+  it.each(['state', 'roadmap', 'requirements', 'milestones', 'retrospective'])(
+    'keeps %s unrecognized with the usual notice when reached without the flag (an orphan archived copy)',
+    (kind) => {
+      for (const options of [undefined, { sourceEscape: false }]) {
+        const resolved = resolveViewFor(kind, input(), options);
+        expect(resolved.recognized, kind).toBe(false);
+        expect(resolved.manifest.kind).toBe(UNRECOGNIZED_KIND);
+        expect(resolved.manifest.lead).toContain("doesn't yet have a dedicated view");
+      }
+    },
+  );
+
+  it('does not extend the exemption to any other kind', () => {
+    const resolved = resolveViewFor('handoff', input(), { sourceEscape: true });
+    expect(resolved.recognized).toBe(false);
+    expect(resolved.manifest.lead).toContain("doesn't yet have a dedicated view");
+  });
+
+  it('leaves a registered kind alone', () => {
+    expect(resolveViewFor('discussion-log', input(), { sourceEscape: true }).recognized).toBe(true);
+  });
+});
