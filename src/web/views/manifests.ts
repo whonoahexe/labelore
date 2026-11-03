@@ -19,6 +19,7 @@ import { composeTodoLifecycle } from './todo-lifecycle.ts';
 import { composeNotePage } from './note-page.ts';
 import { composeProjectPage } from './project-page.ts';
 import { composeWindowsLedger } from './windows-ledger.ts';
+import { composeMilestoneAudit } from './milestone-audit.ts';
 import { composePlanNavigator } from './plan-navigator.ts';
 import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
@@ -169,6 +170,9 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
       { type: 'section', heading: /^requirements coverage/i },
       { type: 'section', heading: /^tech debt/i },
     ],
+    // The audit page is the View-mode render path; `promote` above is the fallback when it composes
+    // nothing (Phase 9, 09-14).
+    milestoneAudit: composeMilestoneAudit,
   },
   research: {
     kind: 'research',
