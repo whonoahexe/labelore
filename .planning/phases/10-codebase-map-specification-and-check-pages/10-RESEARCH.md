@@ -597,7 +597,7 @@ The Lendshed AI feature must be invented (the project is a tool library); keep i
 | A9 | Treating a full-sha-with-letters as a string and a numeric `last_mapped_commit` as "no commit" is acceptable | Pitfall 3 | A hand-made all-digit sha is not shown; real HEAD shas virtually never parse as numbers |
 | A10 | The Lendshed AI feature can be invented inside an existing phase folder without a ROADMAP edit | Coverage section | Some pinned total breaks; fixed by running the gate |
 
-## Open Questions (RESOLVED)
+## Open Questions (RESOLVED; Q1 DEFERRED to 10-03)
 
 Resolution markers added at plan time (revision 1, 2026-11-04). Five are RESOLVED by a plan or decision; Q1 is DEFERRED to a named checkpoint with its resume condition.
 
