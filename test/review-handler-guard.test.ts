@@ -97,6 +97,45 @@ describe('ReviewHandler', () => {
   });
 });
 
+describe('ReviewDispositionHandler', () => {
+  const diffPath = '.planning/phases/01-x/01-REVIEW-DISPOSITION.md';
+  const diffText =
+    '---\nphase: 01\nfindings:\n  - id: WR-01\n    severity: warning\n    disposition: open\n    title: "A thing"\nopen: 1\ntotal: 1\n---\n\n# Phase 01: Code Review Disposition\n';
+
+  it('claims REVIEW-DISPOSITION files only, and carries structured.disposition', async () => {
+    vi.resetModules();
+    const { ReviewDispositionHandler, ReviewHandler, ReviewFixHandler } = await import('../src/planning-repo/handlers/review.ts');
+    expect(ReviewDispositionHandler.match(refOf(diffPath, 'phase'))).toBe(true);
+    expect(
+      ReviewDispositionHandler.match(refOf('.planning/milestones/v1.0-phases/01-x/01-REVIEW-DISPOSITION.md', 'archived-phase')),
+    ).toBe(true);
+    expect(ReviewDispositionHandler.match(refOf('.planning/phases/01-x/01-REVIEW.md', 'phase'))).toBe(false);
+    expect(ReviewDispositionHandler.match(refOf('.planning/phases/01-x/01-REVIEW-FIX.md', 'phase'))).toBe(false);
+    expect(ReviewHandler.match(refOf(diffPath, 'phase'))).toBe(false);
+    expect(ReviewFixHandler.match(refOf(diffPath, 'phase'))).toBe(false);
+    const result = ReviewDispositionHandler.parse(rawOf(diffPath, diffText), refOf(diffPath, 'phase'));
+    const parsed = result.structured as { disposition: { source: string; rows: { id: string }[] } };
+    expect(parsed.disposition.source).toBe('frontmatter');
+    expect(parsed.disposition.rows.map((r) => r.id)).toEqual(['WR-01']);
+  });
+
+  it('omits disposition when the extractor throws and keeps the rest', async () => {
+    vi.resetModules();
+    vi.doMock('../src/planning-repo/handlers/review-disposition.ts', () => ({
+      extractReviewDisposition: () => {
+        throw new Error('boom');
+      },
+    }));
+    const { ReviewDispositionHandler } = await import('../src/planning-repo/handlers/review.ts');
+    const result = ReviewDispositionHandler.parse(rawOf(diffPath, diffText), refOf(diffPath, 'phase'));
+    expect(result.title).toBe('Phase 01: Code Review Disposition');
+    expect(result.body).toContain('# Phase 01');
+    expect(result.frontmatter.phase).toBe(1);
+    expect(result.structured).toEqual({});
+    vi.doUnmock('../src/planning-repo/handlers/review-disposition.ts');
+  });
+});
+
 describe('ReviewFixHandler', () => {
   it('carries structured.reviewFix', async () => {
     vi.resetModules();

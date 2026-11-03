@@ -36,3 +36,33 @@ describe('suffixed review fix files (Lendshed phase 3)', () => {
     }
   });
 });
+
+type DispositionStructured = { rows: unknown[] };
+
+describe('review disposition files (Lendshed phase 1)', () => {
+  const path = 'phases/01-member-sign-in-sessions/01-REVIEW-DISPOSITION.md';
+
+  it('has kind review-disposition and the key /v1.1/phase-1/review-disposition', () => {
+    const artifact = artifactAt(path);
+    expect(artifact.kind).toBe('review-disposition');
+    expect(artifact.key).toBe('/v1.1/phase-1/review-disposition');
+  });
+
+  it('carries six structured.disposition rows', () => {
+    const disposition = artifactAt(path).structured.disposition as DispositionStructured | undefined;
+    expect(disposition?.rows).toHaveLength(6);
+  });
+});
+
+describe('review disposition files in the other two shapes', () => {
+  it.each([
+    ['phases/02-roles-and-permissions/02-REVIEW-DISPOSITION.md', '/v1.1/phase-2/review-disposition', 6],
+    ['milestones/v1.0-phases/04-shed-to-shed-transfers/04-REVIEW-DISPOSITION.md', '/v1.0/phase-4/review-disposition', 7],
+  ])('%s has kind review-disposition, the key %s and %i rows', (path, key, count) => {
+    const artifact = artifactAt(path);
+    expect(artifact.kind).toBe('review-disposition');
+    expect(artifact.key).toBe(key);
+    const disposition = artifact.structured.disposition as DispositionStructured | undefined;
+    expect(disposition?.rows).toHaveLength(count);
+  });
+});

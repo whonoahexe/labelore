@@ -13,7 +13,7 @@ import { MilestonesHandler } from './milestones.ts';
 import { RetrospectiveHandler } from './retrospective.ts';
 import { ProjectResearchHandler } from './project-research.ts';
 import { UiReviewHandler } from './ui-review.ts';
-import { ReviewHandler, ReviewFixHandler } from './review.ts';
+import { ReviewHandler, ReviewFixHandler, ReviewDispositionHandler } from './review.ts';
 import { ContextHandler } from './context.ts';
 import { ResearchHandler } from './research.ts';
 import { SecurityHandler } from './security.ts';
@@ -44,6 +44,7 @@ export const HANDLERS: ArtifactHandler[] = [
   UiReviewHandler,
   ReviewHandler,
   ReviewFixHandler,
+  ReviewDispositionHandler,
   ContextHandler,
   ResearchHandler,
   SecurityHandler,
