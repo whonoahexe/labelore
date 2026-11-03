@@ -362,8 +362,12 @@ function takeStatus(text: string): { text: string; status: string | null } {
     const inner = text.slice(open + 1, close).trim().toLowerCase();
     if (DEBT_STATUS_WORDS.includes(inner)) {
       const before = text.slice(0, open).trimEnd();
-      const after = text.slice(close + 1).trimStart();
-      return { text: before === '' ? after : after === '' ? before : `${before} ${after}`, status: inner };
+      let after = text.slice(close + 1).trimStart();
+      // "WR-01 (deferred): text" leaves ": text"; the separator belonged to the lifted status.
+      if (before === '') after = after.replace(/^[:\-–—]\s*/, '');
+      // "17/24 (advisory)." joins without a space before the closing punctuation.
+      const glue = /^[.,;:!?]/.test(after) ? '' : ' ';
+      return { text: before === '' ? after : after === '' ? before : `${before}${glue}${after}`, status: inner };
     }
     end = open;
   }
