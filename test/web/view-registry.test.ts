@@ -17,8 +17,8 @@ const KNOWN_COMPONENTS: readonly BlockComponentKey[] = [
 ];
 
 describe('view registry completeness (VIEW-05)', () => {
-  it('VIEW_KINDS has exactly 22 members', () => {
-    expect(VIEW_KINDS.length).toBe(22);
+  it('VIEW_KINDS has exactly 23 members', () => {
+    expect(VIEW_KINDS.length).toBe(23);
   });
 
   it('VIEW_MANIFESTS keys and VIEW_KINDS are the same set, both directions', () => {
