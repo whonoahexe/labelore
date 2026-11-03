@@ -1,4 +1,4 @@
-import { cp, mkdtemp, rm } from 'node:fs/promises';
+import { appendFile, cp, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -8,7 +8,13 @@ import { PlanningRepository } from '../../src/planning-repo/snapshot.ts';
 import { toProjectPresentation } from '../../src/server/project-presentation.ts';
 import { createApp } from '../../src/server/index.ts';
 import { buildPhaseUrl, phaseKeyOf } from '../../src/presentation/routes.ts';
-import { buildTraceabilityViewModel, type TraceabilityGroup, type TraceabilityRow } from '../../src/presentation/traceability.ts';
+import {
+  buildTraceabilityViewModel,
+  projectedArchiveVersion,
+  requirementStateCounts,
+  type TraceabilityGroup,
+  type TraceabilityRow,
+} from '../../src/presentation/traceability.ts';
 import {
   DEFAULT_TRACEABILITY_FILTER,
   matchesDeferredTraceabilityFilter,
@@ -889,5 +895,144 @@ describe('archivedMilestones (quick-261022-ms1)', () => {
     expect(v09.groups[0].rows[0].coveringPhases[0]).toMatchObject({ raw: 'Phase 1', resolved: false, phaseKey: null });
     expect(view.archivedMilestones[0].groups[0].rows[0].uncovered).toBe(true);
     expect(view.coverage.total).toBe(0);
+  });
+});
+
+describe('requirement states, counts and ship dates (09-02)', () => {
+  const LENDSHED_ROOT = resolve(import.meta.dirname, '../fixtures/lendshed');
+  const tempRoots: string[] = [];
+
+  afterAll(async () => {
+    for (const root of tempRoots) await rm(root, { recursive: true, force: true });
+  });
+
+  async function presentationOf(root: string): Promise<ProjectPresentation> {
+    const repo = new PlanningRepository(new LocalFsPlanningFilesystem(root), root);
+    return toProjectPresentation(await repo.load());
+  }
+
+  function requirementsArtifact(
+    path: string,
+    location: ArtifactDto['location'],
+    structured: Record<string, unknown>,
+  ): ArtifactDto {
+    return {
+      key: `artifact:${path}`,
+      path,
+      kind: 'requirements',
+      fileClass: 'text',
+      sizeBytes: 0,
+      title: 'Requirements',
+      location,
+      frontmatter: {},
+      structured,
+      milestoneKey: null,
+      phaseKey: null,
+      warnings: [],
+      bodyLength: 1,
+    };
+  }
+
+  it('Lendshed: complete + pending equal the active rows, validated the v1.0 archive, out of scope the table', async () => {
+    const presentation = await presentationOf(LENDSHED_ROOT);
+    const view = buildTraceabilityViewModel(presentation);
+    const counts = requirementStateCounts(presentation);
+
+    expect(counts).not.toBeNull();
+    expect(counts!.milestone).toBe('v1.1');
+    expect(counts!.complete + counts!.pending).toBe(view.groups.flatMap((group) => group.rows).length);
+    expect(counts!.complete).toBe(18);
+    expect(counts!.pending).toBe(6);
+    expect(counts!.validated).toBe(view.archivedMilestones[0].total);
+    expect(counts!.validatedByMilestone).toEqual([{ version: 'v1.0', count: view.archivedMilestones[0].total }]);
+    expect(counts!.outOfScope).toBe(2);
+    expect(view.outOfScope.map((row) => row.feature)).toEqual(['Self-service sign-up', 'Streamed exports']);
+    expect(view.outOfScope[0].reason).toContain('Stewards create every account');
+  });
+
+  it('gives null when there are no requirements, no projected archive and no out-of-scope rows', () => {
+    expect(requirementStateCounts(presentationWith([]))).toBeNull();
+  });
+
+  it('planting PROJECT.md Validated, Active and Out of Scope bullets changes none of the counts', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'labelore-0902-'));
+    tempRoots.push(root);
+    await cp(LENDSHED_ROOT, root, { recursive: true });
+    const before = requirementStateCounts(await presentationOf(root));
+    await appendFile(
+      join(root, '.planning', 'PROJECT.md'),
+      '\n## Requirements\n\n### Validated\n\n- ✓ Planted one — v9\n- ✓ Planted two — v9\n\n### Active\n\n- [ ] Planted three\n- [ ] Planted four\n\n### Out of Scope\n\n- **Planted five** — nope\n',
+    );
+    const after = requirementStateCounts(await presentationOf(root));
+    expect(after).toEqual(before);
+  });
+
+  it('projectedArchiveVersion names a checkbox archive and nothing else', () => {
+    const items = [{ id: 'A-01', category: 'Core', text: 'x', tier: 'v1', checked: true }];
+    expect(
+      projectedArchiveVersion(requirementsArtifact('.planning/milestones/v1.0-REQUIREMENTS.md', 'milestone-root', { items })),
+    ).toBe('v1.0');
+    expect(
+      projectedArchiveVersion(
+        requirementsArtifact('.planning/milestones/v1.0-REQUIREMENTS.md', 'milestone-root', {
+          items: [{ ...items[0], checked: null }],
+        }),
+      ),
+    ).toBeNull();
+    expect(
+      projectedArchiveVersion(requirementsArtifact('.planning/milestones/v1.0-REQUIREMENTS.md', 'milestone-root', {})),
+    ).toBeNull();
+    expect(
+      projectedArchiveVersion(requirementsArtifact('.planning/REQUIREMENTS.md', 'root', { items })),
+    ).toBeNull();
+  });
+
+  it('each archived milestone carries MILESTONES.md ship date as shipped, or null', async () => {
+    const view = buildTraceabilityViewModel(await presentationOf(LENDSHED_ROOT));
+    expect(view.archivedMilestones.map((archive) => [archive.version, archive.shipped])).toEqual([
+      ['v1.0', '20 Mar 2026'],
+    ]);
+
+    const base = presentationWith([]);
+    const bare = buildTraceabilityViewModel({
+      ...base,
+      artifacts: [
+        requirementsArtifact('.planning/milestones/v3.0-REQUIREMENTS.md', 'milestone-root', {
+          items: [{ id: 'A-01', category: 'Core', text: 'x', tier: 'v1', checked: true }],
+        }),
+      ],
+    });
+    expect(bare.archivedMilestones[0].shipped).toBeNull();
+  });
+
+  it('outOfScope keeps file order, drops blank features and caps at 200', () => {
+    const rows = [
+      { feature: 'Third', reason: 'c' },
+      { feature: '   ', reason: 'blank' },
+      { feature: '', reason: 'empty' },
+      { feature: 'First', reason: 'a' },
+    ];
+    const base = presentationWith([]);
+    const view = buildTraceabilityViewModel({
+      ...base,
+      artifacts: [requirementsArtifact('.planning/REQUIREMENTS.md', 'root', { outOfScope: rows })],
+    });
+    expect(view.outOfScope).toEqual([
+      { feature: 'Third', reason: 'c' },
+      { feature: 'First', reason: 'a' },
+    ]);
+
+    const many = Array.from({ length: 250 }, (_, index) => ({ feature: `F${index}`, reason: 'r' }));
+    const capped = buildTraceabilityViewModel({
+      ...base,
+      artifacts: [requirementsArtifact('.planning/REQUIREMENTS.md', 'root', { outOfScope: many })],
+    });
+    expect(capped.outOfScope).toHaveLength(200);
+    expect(capped.outOfScope[0].feature).toBe('F0');
+  });
+
+  it('currentMilestone is the first non-archived milestone version, else null', async () => {
+    expect(buildTraceabilityViewModel(await presentationOf(LENDSHED_ROOT)).currentMilestone).toBe('v1.1');
+    expect(buildTraceabilityViewModel(presentationWith([])).currentMilestone).toBeNull();
   });
 });
