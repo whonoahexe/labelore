@@ -610,7 +610,11 @@ describe('traceability — previous milestones (quick-261022-ms1)', () => {
     expect(body).toContain('<TraceabilityRowList rows={group.rows}');
     expect(body).toContain('className="history-milestone"');
     expect(body).not.toMatch(/\.open\s*=/);
-    expect(body).not.toMatch(/<details[^>]*\sopen\b/);
+    // Closed unless the Shipped before state opens it (09-02): the only open attribute is the prop,
+    // and the prop defaults to false.
+    expect(body).toContain('open = false');
+    expect(body).toContain('<details className="history-milestone" open={open}>');
+    expect(body).not.toMatch(/<details[^>]*\sopen(?!=\{open\})/);
   });
 
   it('between milestones the summary is not rendered and a note replaces the empty state', async () => {

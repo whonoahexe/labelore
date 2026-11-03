@@ -110,12 +110,56 @@ export interface TraceabilityArchivedMilestone {
   title: string;
   sourcePath: string;
   total: number;
+  /** MILESTONES.md's ship date for this version as a short label, or null when it records none. */
+  shipped: string | null;
   groups: TraceabilityArchivedCategory[];
+}
+
+/** The requirement states traceability can be opened on (D-05). `complete` and `pending` read the
+ * active tier's own checkboxes; `validated` is every previous milestone's requirements; and
+ * `out-of-scope` is the rows of REQUIREMENTS.md's Out of Scope table. */
+export const REQUIREMENT_STATES = ['complete', 'pending', 'validated', 'out-of-scope'] as const;
+
+export type RequirementState = (typeof REQUIREMENT_STATES)[number];
+
+/** Exact match against the fixed state list — anything else (including a different case) is null,
+ * so an address value is never trusted beyond that list (T-09-03). */
+export function parseRequirementState(value: string | null): RequirementState | null {
+  if (value === null) return null;
+  return REQUIREMENT_STATES.find((state) => state === value) ?? null;
+}
+
+/** The one predicate the state axis and every state count share: a requirement's own checkbox
+ * says complete or pending, and a row with no checkbox is neither. */
+export function requirementStateOf(row: TraceabilityRow): 'complete' | 'pending' | null {
+  if (row.requirementStatus === true) return 'complete';
+  if (row.requirementStatus === false) return 'pending';
+  return null;
+}
+
+/** The address a count tile links to: traceability opened on one state, optionally narrowed to one
+ * milestone. The milestone comes first, then the state. */
+export function traceabilityStateUrl(state: RequirementState, milestone?: string | null): string {
+  const params = new URLSearchParams();
+  if (milestone) params.set('milestone', milestone);
+  params.set('state', state);
+  return `/traceability?${params.toString()}`;
+}
+
+/** One row of REQUIREMENTS.md's Out of Scope table: the feature and the reason it was left out. */
+export interface TraceabilityOutOfScopeRow {
+  feature: string;
+  reason: string;
 }
 
 export interface TraceabilityViewModel {
   /** The lead of PROJECT.md's Core Value section — the page's lede — or null without one. */
   coreValue: string | null;
+  /** The version of the first milestone that is not archived — the one the active tier belongs
+   * to — or null when there is none or it names no version. */
+  currentMilestone: string | null;
+  /** REQUIREMENTS.md's Out of Scope rows in file order, rows with a blank feature dropped. */
+  outOfScope: TraceabilityOutOfScopeRow[];
   groups: TraceabilityGroup[];
   deferredRows: TraceabilityRow[];
   deferredTiers: TraceabilityDeferredTier[];
@@ -283,21 +327,34 @@ function isTraceabilityCell(value: unknown): value is TraceabilityCellLike {
   return typeof entry.requirementId === 'string' && typeof entry.phase === 'string';
 }
 
+/** The checkbox requirement items an archive artifact carries (rows without a checkbox are
+ * deferred-tier rows, never part of a milestone's own requirements). */
+function archiveItemsOf(artifact: ArtifactDto): RequirementItem[] {
+  const rawItems = artifact.structured.items;
+  return (Array.isArray(rawItems) ? rawItems : [])
+    .filter(isRequirementItem)
+    .filter((entry) => entry.checked !== null);
+}
+
+/** The version a `milestones/vX.Y-REQUIREMENTS.md` artifact is projected under, or null when it is
+ * not such an archive or holds no checkbox requirement. The one predicate the archives list and the
+ * state counts share, so a counted archive is always a listed one. */
+export function projectedArchiveVersion(artifact: ArtifactDto): string | null {
+  if (artifact.kind !== 'requirements' || artifact.location !== 'milestone-root') return null;
+  const parsed = parseMilestoneFileName(artifact.path.split('/').pop() ?? '');
+  if (!parsed.matched || parsed.document.toUpperCase() !== 'REQUIREMENTS') return null;
+  return archiveItemsOf(artifact).length > 0 ? parsed.version : null;
+}
+
 function archivedMilestoneOf(
   artifact: ArtifactDto,
   presentation: ProjectPresentation,
   phaseByKey: Map<string, PhaseDto>,
   records: ReturnType<typeof milestoneRecords>,
 ): TraceabilityArchivedMilestone | null {
-  const parsed = parseMilestoneFileName(artifact.path.split('/').pop() ?? '');
-  if (!parsed.matched || parsed.document.toUpperCase() !== 'REQUIREMENTS') return null;
-  const version = parsed.version;
-
-  const rawItems = artifact.structured.items;
-  const items = (Array.isArray(rawItems) ? rawItems : [])
-    .filter(isRequirementItem)
-    .filter((entry) => entry.checked !== null);
-  if (items.length === 0) return null;
+  const version = projectedArchiveVersion(artifact);
+  if (version === null) return null;
+  const items = archiveItemsOf(artifact);
 
   // A live milestone is never used: its "Phase 1" is the current work, not this archive's.
   const milestone =
@@ -354,6 +411,7 @@ function archivedMilestoneOf(
     title,
     sourcePath: artifact.path,
     total: items.length,
+    shipped: record?.shipped ?? null,
     groups: categoryOrder.map((category) => ({ category, rows: rowsByCategory.get(category) ?? [] })),
   };
 }
@@ -367,13 +425,34 @@ function archivedMilestonesOf(
   const records = milestoneRecords(presentation);
   const archives: TraceabilityArchivedMilestone[] = [];
   for (const artifact of presentation.artifacts) {
-    if (artifact.kind !== 'requirements' || artifact.location !== 'milestone-root') continue;
     const archive = archivedMilestoneOf(artifact, presentation, phaseByKey, records);
     if (archive) archives.push(archive);
   }
   return archives.sort((left, right) =>
     right.version.localeCompare(left.version, undefined, { numeric: true }),
   );
+}
+
+function currentMilestoneOf(presentation: ProjectPresentation): string | null {
+  return presentation.milestones.find((milestone) => !milestone.archived)?.version ?? null;
+}
+
+const OUT_OF_SCOPE_ROW_CAP = 200;
+
+function outOfScopeOf(presentation: ProjectPresentation): TraceabilityOutOfScopeRow[] {
+  const artifact = presentation.artifacts.find(
+    (candidate) => candidate.kind === 'requirements' && candidate.location === 'root',
+  );
+  const raw = artifact?.structured.outOfScope;
+  const rows: TraceabilityOutOfScopeRow[] = [];
+  for (const entry of Array.isArray(raw) ? raw : []) {
+    if (typeof entry !== 'object' || entry === null) continue;
+    const { feature, reason } = entry as Partial<TraceabilityOutOfScopeRow>;
+    if (typeof feature !== 'string' || feature.trim().length === 0) continue;
+    rows.push({ feature: feature.trim(), reason: typeof reason === 'string' ? reason.trim() : '' });
+    if (rows.length === OUT_OF_SCOPE_ROW_CAP) break;
+  }
+  return rows;
 }
 
 export function buildTraceabilityViewModel(
@@ -431,6 +510,8 @@ export function buildTraceabilityViewModel(
   const allRows = groups.flatMap((group) => group.rows);
   return {
     coreValue: projectSectionLead(presentation, /^core value\b/i),
+    currentMilestone: currentMilestoneOf(presentation),
+    outOfScope: outOfScopeOf(presentation),
     groups,
     deferredRows,
     deferredTiers,
@@ -441,5 +522,45 @@ export function buildTraceabilityViewModel(
     },
     coverage: coverageOf(allRows),
     archivedMilestones: archivedMilestonesOf(presentation, phaseByKey),
+  };
+}
+
+/** What the project page's four count tiles show (D-05), all from this projection and nothing
+ * from PROJECT.md's own bullets. `complete` and `pending` count the active tier's own checkboxes;
+ * `validated` counts every checkbox row of the projected archives (checked or not), broken down
+ * newest first; `outOfScope` counts REQUIREMENTS.md's Out of Scope rows. */
+export interface RequirementStateCounts {
+  milestone: string | null;
+  complete: number;
+  pending: number;
+  validated: number;
+  validatedByMilestone: { version: string; count: number }[];
+  outOfScope: number;
+}
+
+/** The counts behind the state tiles, through the same predicates the traceability page's state
+ * axis uses so a tile and the rows it opens can never disagree. Null when there is nothing to
+ * count at all. */
+export function requirementStateCounts(
+  presentation: ProjectPresentation,
+): RequirementStateCounts | null {
+  const view = buildTraceabilityViewModel(presentation);
+  const states = view.groups.flatMap((group) => group.rows).map(requirementStateOf);
+  const complete = states.filter((state) => state === 'complete').length;
+  const pending = states.filter((state) => state === 'pending').length;
+  const validatedByMilestone = view.archivedMilestones.map((archive) => ({
+    version: archive.version,
+    count: archive.total,
+  }));
+  const validated = validatedByMilestone.reduce((sum, entry) => sum + entry.count, 0);
+  const outOfScope = view.outOfScope.length;
+  if (complete + pending + validated + outOfScope === 0) return null;
+  return {
+    milestone: view.currentMilestone,
+    complete,
+    pending,
+    validated,
+    validatedByMilestone,
+    outOfScope,
   };
 }
