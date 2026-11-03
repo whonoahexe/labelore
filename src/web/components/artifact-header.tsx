@@ -8,6 +8,24 @@ export interface ArtifactCrumb {
   to?: string;
 }
 
+/** The breadcrumb row on its own, for a page that draws something (the review ledger's tabs) above its header. */
+export function ArtifactBreadcrumbs({ crumbs }: { crumbs: ArtifactCrumb[] }): React.JSX.Element {
+  return (
+    <nav className="artifact-breadcrumbs" aria-label="Breadcrumb">
+      {crumbs.map((crumb, index) => (
+        <Fragment key={`${index}-${crumb.label}`}>
+          {index > 0 ? <span aria-hidden="true">/</span> : null}
+          {crumb.to ? (
+            <Link to={crumb.to}>{crumb.label}</Link>
+          ) : (
+            <span aria-current="page">{crumb.label}</span>
+          )}
+        </Fragment>
+      ))}
+    </nav>
+  );
+}
+
 /**
  * The breadcrumb and heading block every document-style page opens with. ArtifactPage and
  * PlanPairPage each hand-wrote this markup; it lives here so the two cannot drift apart again and
@@ -53,20 +71,7 @@ export function ArtifactHeader({
   /** Drops the breadcrumb row — the UI-SPEC and UAT pages open straight on their cover. */
   hideCrumbs?: boolean;
 }): React.JSX.Element {
-  const breadcrumbs = hideCrumbs ? null : (
-    <nav className="artifact-breadcrumbs" aria-label="Breadcrumb">
-      {crumbs.map((crumb, index) => (
-        <Fragment key={`${index}-${crumb.label}`}>
-          {index > 0 ? <span aria-hidden="true">/</span> : null}
-          {crumb.to ? (
-            <Link to={crumb.to}>{crumb.label}</Link>
-          ) : (
-            <span aria-current="page">{crumb.label}</span>
-          )}
-        </Fragment>
-      ))}
-    </nav>
-  );
+  const breadcrumbs = hideCrumbs ? null : <ArtifactBreadcrumbs crumbs={crumbs} />;
 
   if (!cover) {
     return (

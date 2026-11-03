@@ -117,6 +117,16 @@ describe('ledgerSwitcher', () => {
     expect(html).not.toContain('Disposition');
   });
 
+  it('leads with the breadcrumb row, above the strip and the head, when crumbs are given', () => {
+    const crumbs = [{ label: 'Dashboard', to: '/' }, { label: 'Phase 03: Code Review Fix' }];
+    const html = markup(ledgerSwitcher(contextOf(`${PHASE_03}/03-REVIEW-FIX-backend.md`), crumbs));
+    const nav = html.indexOf('aria-label="Breadcrumb"');
+    expect(nav).toBeGreaterThanOrEqual(0);
+    expect(nav).toBeLessThan(html.indexOf('aria-label="Review files"'));
+    expect(html.indexOf('aria-label="Review files"')).toBeLessThan(html.indexOf('view-review-ledger-head'));
+    expect(markup(ledgerSwitcher(contextOf(`${PHASE_03}/03-REVIEW-FIX-backend.md`)))).not.toContain('Breadcrumb');
+  });
+
   it('draws no tab for a file that does not exist: a ledger with only fix files has no Review tab', () => {
     const context = contextOf(`${PHASE_03}/03-REVIEW.md`);
     const fixOnly: LedgerContext = {
