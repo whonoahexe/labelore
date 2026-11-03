@@ -96,6 +96,25 @@ export interface ComposedReviewReply {
   quiet: string | null;
 }
 
+/** A finding the fix file marks fixed while the disposition leaves it open: the commit (first 7 characters, full
+ * value in `full`) the fix names, or null when it names none. Shared with the review ledger's tabs. */
+export interface ComposedStaleMark {
+  /** Always `quiet`: a disagreement note, deliberately not the `complete` of a result. */
+  tone: ReviewTone;
+  commit: { short: string; full: string } | null;
+}
+
+/** The stale-disposition mark of one finding id from the ledger context's `marks`, or null. */
+export function staleMarkOf(ledgerContext: unknown, id: string): ComposedStaleMark | null {
+  const context = rec(ledgerContext);
+  const marks = context === null ? null : rec(context.marks);
+  if (marks === null || !Object.hasOwn(marks, id)) return null;
+  const mark = rec(marks[id]);
+  if (mark === null) return null;
+  const full = strOrNull(mark.commit);
+  return { tone: 'quiet', commit: full === null ? null : { short: full.slice(0, 7), full } };
+}
+
 export interface ComposedReviewFinding {
   id: string;
   anchorId: string;
@@ -112,6 +131,9 @@ export interface ComposedReviewFinding {
   fix: Block[];
   extra: { label: string; blocks: Block[] }[];
   reply: ComposedReviewReply;
+  /** The quiet "Fixed in {commit}, disposition not updated" mark: the fix file says fixed while the disposition
+   * still says open (D-08). Null without a ledger context, without a disposition, and when they agree. */
+  staleMark: ComposedStaleMark | null;
   /** A fixed finding starts as a one-line resolved row. */
   defaultFolded: boolean;
   /** "L116" for the resolved row, or ''. */
@@ -994,6 +1016,7 @@ export function composeReviewThreads(input: ViewInput): ComposedReviewThreads | 
         fix: finding.fix,
         extra: finding.extra,
         reply: replyOf(outcome),
+        staleMark: staleMarkOf(input.ledgerContext, finding.id),
         defaultFolded: outcome.kind === 'fixed',
         firstLine: firstRef !== undefined && firstRef.spans[0] !== undefined ? `L${firstRef.spans[0].from}` : '',
         locations: finding.refs.slice(1).map((ref) => ({ name: baseName(ref.path), spans: spanText(ref.spans), dir: dirName(ref.path) })),

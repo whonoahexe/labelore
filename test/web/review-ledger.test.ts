@@ -405,7 +405,7 @@ describe('composeReviewLedger - the Disposition tab', () => {
       ['deferred', 'quiet', false, 1],
       ['skipped', 'quiet', true, 1],
       ['fixed', 'complete', false, 1],
-      ['other', 'quiet', false, 2],
+      ['other', 'quiet', true, 2],
     ]);
     const other = model.groups[4].rows;
     expect(other.map((row) => [row.id, row.raw])).toEqual([
@@ -498,7 +498,7 @@ describe('composeReviewLedger - the Disposition tab', () => {
     const model = dispositionLedger(lendshed, `${PHASE_02}/02-REVIEW-DISPOSITION.md`);
     const html = renderToStaticMarkup(createElement(DispositionTabView, { model }));
     expect(html).toContain(
-      '<h3 class="view-review-group-head"><i class="status-square" data-tone="in-flight" aria-hidden="true"></i><span>Open</span>',
+      '<h3 class="view-review-group-head"><i class="status-square view-review-group-square" data-tone="in-flight" data-dashed="false" aria-hidden="true"></i><span>Open</span>',
     );
     expect(html).toContain('data-dashed="true"');
     expect(html).toContain('<span class="view-review-sev" data-severity="critical">CR-02</span>');
@@ -545,5 +545,140 @@ describe('composeReviewLedger - the Disposition tab', () => {
     expect(html).toContain('1 of 1 open');
     expect(html).toContain('2 of 2 open');
     expect(html).toContain('3 of 3 open');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Disposition-first totals and the stale-disposition mark (09-13, D-08)
+// ---------------------------------------------------------------------------
+
+describe('composeLedgerHead - the disposition decides what is open', () => {
+  it('Lendshed 01: 6 of 6 open per severity from the rows, and the note names the two the fix report calls fixed', () => {
+    const head = composeLedgerHead(contextOf(`${PHASE_01}/01-REVIEW.md`))!;
+    expect([head.open, head.total]).toEqual([6, 6]);
+    expect(head.severities.map((row) => [row.severity, row.open, row.total])).toEqual([
+      ['critical', 1, 1],
+      ['warning', 2, 2],
+      ['info', 3, 3],
+    ]);
+    expect(head.note).toBe('2 open here are marked fixed in the fix report');
+  });
+
+  it('counts a finding the fix report calls fixed as open, never as fixed (T-09-26)', () => {
+    const context = contextOf(`${PHASE_01}/01-REVIEW.md`);
+    expect(context.head.open).toBe(6);
+    expect(context.head.fixedInReport).toBe(2);
+    expect(composeLedgerHead(context)!.open).toBe(6);
+  });
+
+  it('Lendshed 02: one open of six, and a note naming the one fixed in the report', () => {
+    const head = composeLedgerHead(contextOf(`${PHASE_02}/02-REVIEW.md`))!;
+    expect([head.open, head.total]).toEqual([1, 6]);
+    expect(head.note).toBe('1 open here are marked fixed in the fix report');
+  });
+
+  it('Lendshed 03 (no disposition): no open count and the fixed note, as in 09-12', () => {
+    const head = composeLedgerHead(contextOf(`${PHASE_03}/03-REVIEW.md`))!;
+    expect(head.open).toBeNull();
+    expect(head.note).toBe('4 fixed in the fix report');
+  });
+
+  it('says nothing when the disposition and the fix report agree', async () => {
+    const dir = '.planning/phases/05-agree';
+    const project = await loadFiles({
+      [`${dir}/05-REVIEW.md`]: fxRead('phases/01-member-sign-in-sessions/01-REVIEW.md'),
+      [`${dir}/05-REVIEW-FIX.md`]: fxRead('phases/01-member-sign-in-sessions/01-REVIEW-FIX.md'),
+      [`${dir}/05-REVIEW-DISPOSITION.md`]: fxRead(
+        'phases/01-member-sign-in-sessions/01-REVIEW-DISPOSITION.md',
+      )
+        .replace('disposition: open\n    title: "Cookie', 'disposition: fixed\n    title: "Cookie')
+        .replace(
+          'disposition: open\n    title: "Signing',
+          'disposition: fixed\n    title: "Signing',
+        )
+        .split('| CR-01 | critical | open |')
+        .join('| CR-01 | critical | fixed |')
+        .split('| WR-01 | warning | open |')
+        .join('| WR-01 | warning | fixed |'),
+    });
+    const context = buildLedgerContext(
+      project.presentation,
+      project.registry,
+      `${dir}/05-REVIEW.md`,
+    )!;
+    expect(context.head.open).toBe(4);
+    expect(context.head.markedFixed).toBe(0);
+    expect(composeLedgerHead(context)!.note).toBeNull();
+  });
+
+  it('draws the open-of-total number and a muted line, and the note is absent when there is none', () => {
+    const html = markup(ledgerSwitcher(contextOf(`${PHASE_01}/01-REVIEW.md`)));
+    expect(html).toContain('2 open here are marked fixed in the fix report');
+    const context = contextOf(`${PHASE_01}/01-REVIEW.md`);
+    const head = composeLedgerHead(context)!;
+    const none = markup(
+      createElement(
+        'div',
+        null,
+        ledgerSwitcher({ ...context, head: { ...context.head, markedFixed: 0 } }),
+      ),
+    );
+    expect(head.note).not.toBeNull();
+    expect(none).not.toContain('view-review-ledger-note');
+  });
+});
+
+describe('the stale-disposition mark on the ledger tabs', () => {
+  it('marks CR-01 and WR-01 in the Disposition tab Open group with the fix commit, and no other row', () => {
+    const model = dispositionLedger(lendshed, `${PHASE_01}/01-REVIEW-DISPOSITION.md`);
+    const rows = model.groups[0].rows;
+    expect(
+      rows.filter((row) => row.mark !== null).map((row) => [row.id, row.mark?.commit?.short]),
+    ).toEqual([
+      ['CR-01', 'c41e9d7'],
+      ['WR-01', '5ab20f3'],
+    ]);
+    const html = renderToStaticMarkup(createElement(DispositionTabView, { model }));
+    expect(html).toContain('title="c41e9d7">Fixed in c41e9d7, disposition not updated</span>');
+    expect(html).toContain('title="5ab20f3">Fixed in 5ab20f3, disposition not updated</span>');
+    expect(html.match(/disposition not updated/g)).toHaveLength(2);
+    expect(html).toContain('data-tone="quiet"');
+  });
+
+  it('marks the same findings on the Fix tab rows', () => {
+    const model = fixLedger(fixInput(lendshed, `${PHASE_01}/01-REVIEW-FIX.md`))!;
+    const fixed = model.sections[0].groups.find((group) => group.key === 'fixed')!;
+    expect(fixed.rows.map((row) => [row.ids[0].id, row.mark?.commit?.short])).toEqual([
+      ['CR-01', 'c41e9d7'],
+      ['WR-01', '5ab20f3'],
+    ]);
+    const skipped = model.sections[0].groups.find((group) => group.key === 'skipped')!;
+    expect(skipped.rows.every((row) => row.mark === null)).toBe(true);
+    const html = renderToStaticMarkup(createElement(FixTabView, { model }));
+    expect(html.match(/disposition not updated/g)).toHaveLength(2);
+  });
+
+  it('shows no mark and no chip anywhere without a disposition, or on a lone REVIEW (D-11)', () => {
+    const fix = fixLedger(fixInput(lendshed, `${PHASE_03}/03-REVIEW-FIX-backend.md`))!;
+    expect(renderToStaticMarkup(createElement(FixTabView, { model: fix }))).not.toContain(
+      'disposition not updated',
+    );
+    expect(
+      fix.sections
+        .flatMap((section) => section.groups.flatMap((group) => group.rows))
+        .every((row) => row.mark === null),
+    ).toBe(true);
+    const lone = markup(
+      ledgerSwitcher(contextOf('.planning/phases/04-bulk-loan-export/04-REVIEW.md')),
+    );
+    expect(lone).not.toContain('disposition not updated');
+  });
+
+  it('marks the one finding Lendshed 02 leaves open that the fix report fixed, and none of the Fixed or Other rows', () => {
+    const model = dispositionLedger(lendshed, `${PHASE_02}/02-REVIEW-DISPOSITION.md`);
+    const marked = model.groups.flatMap((group) =>
+      group.rows.filter((row) => row.mark !== null).map((row) => [group.key, row.id]),
+    );
+    expect(marked).toEqual([['open', 'CR-02']]);
   });
 });

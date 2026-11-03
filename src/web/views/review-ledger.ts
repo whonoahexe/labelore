@@ -19,8 +19,8 @@ import type {
 import type { DispositionRow } from '../../planning-repo/handlers/review-disposition.ts';
 import type { LedgerContext, LedgerFix } from '../../presentation/review-ledger.ts';
 import type { ViewInput } from './manifest.ts';
-import { SEVERITY_LABEL, SEVERITY_ORDER, SEVERITY_TONE } from './review-threads.ts';
-import type { ReviewSeverityKey, ReviewTone } from './review-threads.ts';
+import { SEVERITY_LABEL, SEVERITY_ORDER, SEVERITY_TONE, staleMarkOf } from './review-threads.ts';
+import type { ComposedStaleMark, ReviewSeverityKey, ReviewTone } from './review-threads.ts';
 import { formatStamp } from './uat-session.ts';
 
 // ---------------------------------------------------------------------------
@@ -108,6 +108,8 @@ export interface ComposedFixRow {
   title: string | null;
   /** The first three files modified. */
   files: string[];
+  /** The quiet disagreement chip on a fixed entry whose disposition row still says open (D-08); null elsewhere. */
+  mark: ComposedStaleMark | null;
   /** How many files modified follow the first three ("+N"). */
   moreFiles: number;
   commits: ComposedFixCommit[];
@@ -167,6 +169,8 @@ export interface ComposedDispositionRow {
   sourceText: string | null;
   /** Fixed with neither a commit nor a source text: the row says "Commit not recorded". */
   missingCommit: boolean;
+  /** Open while a fix file marks the id fixed: the quiet "Fixed in {commit}, disposition not updated" chip. */
+  mark: ComposedStaleMark | null;
   /** Other: the disposition value as written. */
   raw: string | null;
 }
@@ -175,7 +179,7 @@ export interface ComposedDispositionGroup {
   key: DispositionGroupKey;
   label: string;
   tone: ReviewTone;
-  /** True for Skipped: its square is dashed, Deferred's is a solid quiet outline. */
+  /** True for the quiet groups drawn with the shared dashed square (Skipped, Other); Deferred's is a solid quiet outline. */
   dashed: boolean;
   rows: ComposedDispositionRow[];
 }
@@ -256,6 +260,15 @@ function countOutcome(entries: ReviewFixEntry[], outcome: 'fixed' | 'skipped'): 
   return count;
 }
 
+/** The first stale-disposition mark among a fix entry's ids, or null. */
+function firstMark(context: LedgerContext, ids: ComposedFixId[]): ComposedStaleMark | null {
+  for (const { id } of ids) {
+    const mark = staleMarkOf(context, id);
+    if (mark !== null) return mark;
+  }
+  return null;
+}
+
 function composeSection(
   fix: LedgerFix,
   context: LedgerContext,
@@ -293,6 +306,7 @@ function composeSection(
       moreFiles: Math.max(0, files.length - 3),
       commits,
       reason: entry.outcome === 'skipped' ? blocksText(entry.note) : null,
+      mark: entry.outcome === 'fixed' ? firstMark(context, ids) : null,
     };
   };
 
@@ -312,6 +326,7 @@ function composeSection(
       files: [],
       moreFiles: 0,
       commits: [],
+      mark: null,
       reason: typeof item.note === 'string' && item.note.trim() !== '' ? item.note.trim() : null,
     };
   });
@@ -357,7 +372,7 @@ const GROUPS: { key: DispositionGroupKey; label: string; tone: ReviewTone; dashe
   { key: 'deferred', label: 'Deferred', tone: 'quiet', dashed: false },
   { key: 'skipped', label: 'Skipped', tone: 'quiet', dashed: true },
   { key: 'fixed', label: 'Fixed', tone: 'complete', dashed: false },
-  { key: 'other', label: 'Other', tone: 'quiet', dashed: false },
+  { key: 'other', label: 'Other', tone: 'quiet', dashed: true },
 ];
 
 /** What a two-column disposition cell says after its leading word: "fixed (see 04-REVIEW-FIX.md)" gives
@@ -409,6 +424,7 @@ function dispositionRowOf(
     commit,
     sourceText,
     missingCommit,
+    mark: group === 'open' ? staleMarkOf(context, row.id) : null,
     raw: group === 'other' ? (raw === '' ? null : raw) : null,
   };
 }

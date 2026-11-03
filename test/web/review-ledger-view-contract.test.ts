@@ -177,7 +177,7 @@ describe('review ledger view contract - the real sources', () => {
 
   it('every data-tone the components write is the documented quiet tone or comes from the composed model', async () => {
     const code = stripSourceComments(await source('src/web/views/review-ledger-components.tsx'));
-    const allowed = new Set(['"quiet"', '{tone}', '{group.tone}']);
+    const allowed = new Set(['"quiet"', '{tone}', '{group.tone}', '{mark.tone}']);
     const expressions = toneExpressions(code);
     expect(expressions.length).toBeGreaterThan(0);
     for (const expression of expressions) expect(allowed.has(expression), expression).toBe(true);
@@ -253,6 +253,6 @@ describe('review ledger view contract - the real sources', () => {
     expect(block).toContain('.view-review-ledger-head');
     expect(block).toContain('.view-review-ledger-page');
     expect(block).toContain(".view-review-ledger-reason[data-clamped='true']");
-    expect(block).toContain(".view-review-group[data-group='deferred'] .status-square");
+    expect(block).toContain(".view-review-group-square[data-dashed='false']");
   });
 });
