@@ -4,12 +4,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   DESIGNED_ELSEWHERE_KINDS,
+  archivedCopyTarget,
   ROOT_DOCUMENT_TARGETS,
   designedElsewhereLead,
   hasSourceFlag,
   rootDocumentRedirect,
   sourceUrlOf,
 } from '../../src/presentation/root-redirects.ts';
+import { FX_ROOT, loadProject } from '../helpers/fixture-project.ts';
 
 type Address = NonNullable<Parameters<typeof rootDocumentRedirect>[0]>;
 
@@ -86,5 +88,43 @@ describe('designedElsewhereLead', () => {
   it('is null for any other kind', () => {
     expect(designedElsewhereLead('handoff')).toBeNull();
     expect(designedElsewhereLead('unknown')).toBeNull();
+  });
+});
+
+const lendshed = (await loadProject(FX_ROOT)).presentation;
+
+describe('archivedCopyTarget (09 D-02)', () => {  const artifactAt = (path: string) => lendshed.artifacts.find((artifact) => artifact.path.endsWith(path))!;
+
+  it('sends the archived roadmap to the roadmap at its version', () => {
+    expect(archivedCopyTarget(artifactAt('milestones/v1.0-ROADMAP.md'), lendshed)).toEqual({
+      page: 'roadmap',
+      version: 'v1.0',
+    });
+  });
+
+  it('sends the archived requirements to traceability when the projection shows them', () => {
+    expect(archivedCopyTarget(artifactAt('milestones/v1.0-REQUIREMENTS.md'), lendshed)).toEqual({
+      page: 'traceability',
+      version: 'v1.0',
+    });
+  });
+
+  it('is null for an archived roadmap whose milestone has no History block', () => {
+    const planted = { ...artifactAt('milestones/v1.0-ROADMAP.md'), path: '.planning/milestones/v9.9-ROADMAP.md' };
+    expect(archivedCopyTarget(planted, lendshed)).toBeNull();
+  });
+
+  it('is null for a root ROADMAP.md, an undefined artifact and a nested file', () => {
+    expect(archivedCopyTarget(artifactAt('.planning/ROADMAP.md'), lendshed)).toBeNull();
+    expect(archivedCopyTarget(undefined, lendshed)).toBeNull();
+    const nested = { ...artifactAt('milestones/v1.0-ROADMAP.md'), path: '.planning/milestones/x/v1.0-ROADMAP.md' };
+    expect(archivedCopyTarget(nested, lendshed)).toBeNull();
+  });
+
+  it('gives an archived copy a Source address when the payload is supplied', () => {
+    const copy = artifactAt('milestones/v1.0-ROADMAP.md');
+    expect(sourceUrlOf(copy, lendshed)).toBe(`${copy.key}?source=1`);
+    expect(sourceUrlOf(copy)).toBeNull();
+    expect(sourceUrlOf(artifactAt('milestones/v1.0-ROADMAP.md'), { ...lendshed, milestones: [] })).toBeNull();
   });
 });

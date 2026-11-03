@@ -33,12 +33,39 @@ import {
   RetrospectiveDialog,
   type RetrospectiveTarget,
 } from './roadmap-retrospective.tsx';
+import { buildMilestoneUrl } from '../../presentation/routes.ts';
 import { stripEmoji } from './strip-emoji.ts';
 
 const REQUIREMENT_PAGE_SIZE = 4;
 
 function fetchRoadmap(slug: string): Promise<RoadmapViewModel> {
   return apiFetch<RoadmapViewModel>(projectUrl(slug, '/roadmap'));
+}
+
+/** Scrolls the element to the top of the view once, after its layout has stopped moving. Runs once per
+ * mount, the first time `enabled` is true. */
+function useSettledScrollIntoView(ref: React.RefObject<HTMLElement | null>, enabled: boolean): void {
+  const scrolledRef = useRef(false);
+  useEffect(() => {
+    if (!enabled || scrolledRef.current) return;
+    scrolledRef.current = true;
+    return scrollWhenSettled({
+      measure: () => {
+        const element = ref.current;
+        if (!element) return null;
+        return (
+          window.scrollY +
+          element.getBoundingClientRect().top +
+          document.documentElement.scrollHeight
+        );
+      },
+      scroll: () => {
+        ref.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      },
+      schedule: (callback) => requestAnimationFrame(callback),
+      cancel: (handle) => cancelAnimationFrame(handle),
+    });
+  }, [enabled, ref]);
 }
 
 function PhaseFlow({
@@ -64,23 +91,8 @@ function PhaseFlow({
     if (!targeted || openedRef.current) return;
     openedRef.current = true;
     if (detailsRef.current) detailsRef.current.open = true;
-    return scrollWhenSettled({
-      measure: () => {
-        const element = articleRef.current;
-        if (!element) return null;
-        return (
-          window.scrollY +
-          element.getBoundingClientRect().top +
-          document.documentElement.scrollHeight
-        );
-      },
-      scroll: () => {
-        articleRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
-      },
-      schedule: (callback) => requestAnimationFrame(callback),
-      cancel: (handle) => cancelAnimationFrame(handle),
-    });
   }, [targeted]);
+  useSettledScrollIntoView(articleRef, targeted);
 
   return (
     <article
@@ -287,13 +299,25 @@ function plural(count: number, noun: string): string {
   return `${count} ${noun}${count === 1 ? '' : 's'}`;
 }
 
-/** The line under the milestone's title: when it shipped, how long it took, how many phases. */
-function historyCaption(milestone: MilestoneFlow): string {
+/** The line under the milestone's title: when it shipped, how long it took, how many phases. A block that
+ * carries the Shipped chip (`chipCarriesShipped`) leaves the date to the chip. */
+function historyCaption(milestone: MilestoneFlow, chipCarriesShipped = false): string {
   const record = milestone.record;
-  const parts = [record?.shipped ? `Shipped ${record.shipped}` : (record?.status ?? 'Archived')];
+  const parts: string[] = [];
+  if (record?.shipped) {
+    if (!chipCarriesShipped) parts.push(`Shipped ${record.shipped}`);
+  } else {
+    parts.push(record?.status ?? 'Archived');
+  }
   if (record?.days != null) parts.push(plural(record.days, 'day'));
   parts.push(plural(milestone.phases.length, 'phase'));
   return parts.join(' · ');
+}
+
+/** 09 D-02: the Shipped mark on a History block, "Shipped v1.0 · 20 Mar 2026" ("Shipped v1.0" without a date). */
+function shippedChipText(milestone: MilestoneFlow, title: string): string {
+  const label = `Shipped ${milestone.version ?? title}`;
+  return milestone.record?.shipped ? `${label} · ${milestone.record.shipped}` : label;
 }
 
 function RecordText({ text, items }: { text: string; items: string[] }): React.JSX.Element {
@@ -340,10 +364,13 @@ function MilestoneRecordPanel({ record }: { record: MilestoneRecord }): React.JS
 function HistoryMilestone({
   milestone,
   target,
+  arrival,
   onOpenRetrospective,
 }: {
   milestone: MilestoneFlow;
   target: RoadmapDeepLinkTarget | null;
+  /** True when an archived copy's address (`/v1.0/roadmap`) names this milestone (09 D-02). */
+  arrival: boolean;
   onOpenRetrospective: () => void;
 }): React.JSX.Element {
   const detailsRef = useRef<HTMLDetailsElement | null>(null);
@@ -358,13 +385,25 @@ function HistoryMilestone({
     if (detailsRef.current) detailsRef.current.open = true;
   }, [contained]);
 
+  // The arrival scrolls once, after layout settles, as the phase deep link does.
+  useSettledScrollIntoView(detailsRef, arrival);
+
   return (
-    <details className="history-milestone" ref={detailsRef}>
+    <details
+      className="history-milestone"
+      data-target={arrival ? 'true' : undefined}
+      ref={detailsRef}
+    >
       <summary>
         <ChevronRight aria-hidden="true" />
         <span>
-          <strong>{stripEmoji(title)}</strong>
-          <small>{historyCaption(milestone)}</small>
+          <span className="history-milestone-title">
+            <strong>{stripEmoji(title)}</strong>
+            <span className="status-chip" data-tone="complete">
+              {shippedChipText(milestone, title)}
+            </span>
+          </span>
+          <small>{historyCaption(milestone, true)}</small>
           {record?.delivered ? (
             <span className="milestone-delivered">
               <LeadText text={record.delivered} />
@@ -383,9 +422,17 @@ function HistoryMilestone({
   );
 }
 
-export function RoadmapPage(): React.JSX.Element {
+export function RoadmapPage({ archiveVersion }: { archiveVersion?: string } = {}): React.JSX.Element {
   const pathname = useProjectPathname();
-  const target = useMemo(() => resolveRoadmapDeepLink(pathname), [pathname]);
+  // 09 D-02: an archived copy's address targets that milestone's History block instead of a pathname
+  // deep link, so the block opens through the same containment rule.
+  const target = useMemo<RoadmapDeepLinkTarget | null>(
+    () =>
+      archiveVersion === undefined
+        ? resolveRoadmapDeepLink(pathname)
+        : { kind: 'milestone', phaseUrl: null, milestoneUrl: buildMilestoneUrl(archiveVersion) },
+    [pathname, archiveVersion],
+  );
   const slug = useProjectSlug() ?? '';
   const roadmap = useQuery({ queryKey: projectKey(slug, 'roadmap'), queryFn: () => fetchRoadmap(slug) });
   const [retrospective, setRetrospective] = useState<RetrospectiveTarget | null>(null);
@@ -465,6 +512,10 @@ export function RoadmapPage(): React.JSX.Element {
                 key={milestone.key}
                 milestone={milestone}
                 target={target}
+                arrival={
+                  archiveVersion !== undefined &&
+                  milestone.version?.toLowerCase() === archiveVersion.toLowerCase()
+                }
                 onOpenRetrospective={() => setRetrospective({ key: milestone.key, tab: null })}
               />
             ))}
@@ -475,7 +526,7 @@ export function RoadmapPage(): React.JSX.Element {
         <RetrospectiveDialog
           milestones={view.history}
           target={retrospective}
-          caption={historyCaption}
+          caption={(milestone) => historyCaption(milestone)}
           onChange={setRetrospective}
         />
       </section>
