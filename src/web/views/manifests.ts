@@ -18,6 +18,7 @@ import { composeDebugCase } from './debug-case.ts';
 import { composeTodoLifecycle } from './todo-lifecycle.ts';
 import { composeNotePage } from './note-page.ts';
 import { composeProjectPage } from './project-page.ts';
+import { composeWindowsLedger } from './windows-ledger.ts';
 import { composePlanNavigator } from './plan-navigator.ts';
 import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
@@ -383,6 +384,15 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
     // The charter page is the View-mode render path; `promote` above is the fallback when it composes
     // nothing (Phase 9, 09-07, sketch-041 B).
     projectPage: composeProjectPage,
+  },
+  windows: {
+    kind: 'windows',
+    lead: 'Defects deferred, waived or not yet checked, across every phase.',
+    // The headed sections of the file, the fallback when the ledger page composes nothing.
+    promote: [{ type: 'section', heading: /\S/, all: true }],
+    // The ledger page is the View-mode render path; `promote` above is the fallback when it composes
+    // nothing (Phase 9, 09-10).
+    windowsLedger: composeWindowsLedger,
   },
 });
 

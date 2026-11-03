@@ -48,6 +48,8 @@ import type { NoteContext } from '../../presentation/note-context.ts';
 import type { ComposedProjectPage } from './project-page.ts';
 // Type-only import — the project context is built server-side (Phase 9, 09-07).
 import type { ProjectContext } from '../../presentation/project-context.ts';
+// Type-only import — same reason as `brief` above (Phase 9, 09-10, the windows ledger).
+import type { ComposedWindowsLedger } from './windows-ledger.ts';
 // Type-only import — same reason as `brief` above (quick-261001-qk6, sketch-014 winner).
 import type { ComposedUiSpec } from './ui-spec.ts';
 // Type-only import — same reason as `brief` above (quick-261001-qk7, sketch-015 winner).
@@ -125,6 +127,11 @@ export interface ViewManifest {
    * file with no recognised section), and the page falls back to the promoted-block view, which the
    * manifest keeps as `promote`. */
   projectPage?: (input: ViewInput) => ComposedProjectPage | null;
+  /** Phase 9 (09-10): the WINDOWS.md broken-windows ledger a manifest opts into in View mode - currently
+   * only `windows`. Returns `null` when the input can't compose one (no `structured.windows`, or a file
+   * with neither rows nor stated counts), and the page falls back to the generic document view, which the
+   * manifest keeps as `promote`. */
+  windowsLedger?: (input: ViewInput) => ComposedWindowsLedger | null;
   /** quick-261006-iz6 (sketch-019 B): the PLAN task navigator a manifest opts into instead of
    * `layout` — currently only `plan`. Returns `null` when the input can't compose one (no
    * `structured.plan`, or a plan with no task), and the page falls back to the B3 `layout` / the
