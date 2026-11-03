@@ -123,7 +123,9 @@ Exceptions:
   `calc()` over `--space-*` tokens where an exact token exists, otherwise as one named custom property per
   view (the Phase 9 `--view-project-node-offset` precedent). No bare `px` or `rem` in a rule (design language: token-only spacing).
 - Copy-command button, panel switch controls and tab links keep a hit area of at least 40px high under
-  `@media (pointer: coarse)` (the `Button` size `sm` step); fine pointers keep the `xs` 28px.
+  `@media (pointer: coarse)` (the `Button` size `sm` step); fine pointers keep the `xs` height. Both
+  are existing tokens, not literals: coarse is `min-height: var(--space-10)` (40px), fine is
+  `var(--space-7)` (28px).
 - A mono command or path never sets the height of its row: it ends in an ellipsis on one line with the
   full value in `title`, except the copyable command, which wraps (see Layout 2).
 
@@ -149,9 +151,9 @@ class is edited. `.status-chip` (shared `--fs-1`) reads `--fs-2` on these pages;
 (`--fs-1`) and `.empty-note` (`--fs-3`) read `--fs-4`; `Button` (12px) reads `--fs-2`; `.lede` and
 `.artifact-lead` are not used (a page that wants one explanatory sentence uses a `source-note` line).
 
-**Exception route (Codebase page only).** The Codebase page's frame is modelled on Research 031 (large
-panel numbers, a verdict sentence set large, mono tallies) and may need more than four sizes. If its
-winning sketch does, the plan lists the exact existing tokens it uses, per role, and the user approves
+**Exception route (Codebase page only).** The Codebase page also starts from the four-size cap. Its
+frame is modelled on Research 031 (large panel numbers, a verdict sentence set large, mono tallies),
+which may need more than four sizes; the route below is taken only if its winning sketch does. If so, the plan lists the exact existing tokens it uses, per role, and the user approves
 the exception in the plan review (the Phase 9 project page precedent: "user-approved ... Alternative A,
 sketch-locked"). No exception is pre-approved here. The six spec/check pages take the four-size cap
 without an exception route.
@@ -237,7 +239,7 @@ Integrations, Concerns) unless the project is map-only, where it is the mapped-n
 **Must show (page level):**
 - The page title and a facts line: how many of the seven documents exist ("7 of 7 mapped", "4 of 7 mapped"), **map readiness** as a chip (Complete / Fast, see below), and when the map was made.
 - The panel list: seven entries in the fixed order above, each with its number, name and one key number (see below). A document missing from the folder shows as **"Not mapped"** (`quiet`, dashed square, not a link), never hidden. The order does not follow the mapper's file order.
-- Map readiness follows GSD's `map_readiness` exactly (`onboard-projection.cjs`): **complete** when all seven documents are present; **fast** when STACK, INTEGRATIONS, ARCHITECTURE and STRUCTURE are present but not all seven; otherwise **none**, which the page words as "Partial map" with the list of present documents and no readiness claim beyond that. The page states which, once, in the facts line.
+- Map readiness follows GSD's `map_readiness` exactly (`onboard-projection.cjs`): **complete** when all seven documents are present; **fast** when STACK, INTEGRATIONS, ARCHITECTURE and STRUCTURE are present but not all seven; otherwise **none**, which the page words as "Partial map" with the list of present documents and no readiness claim beyond that (GSD itself treats `none` as "the required map is missing" and sends the person to `/gsd-map-codebase`; the next-step table in section 3 mirrors this). The page states which, once, in the facts line.
 - "When the map was made": from frontmatter `last_mapped_at`; else the older `**Analysis Date:**`; else `*Last updated:*`; else an `<!-- refreshed: DATE -->` comment; else nothing (silent). The commit stamp (`last_mapped_commit`) is shown **as text only** in a mono `quiet` chip (the read-only filesystem cannot compare it against HEAD, and the page does not claim the map is fresh or stale).
 
 **Panels.** Each panel lifts what it can by **fuzzy heading match** (D-02): case-insensitive, tolerant of a leading emoji or number, of `&` against `and`, of plural/singular, and of an added word ("Languages & Runtimes", "API Architecture"). What matches is rendered in the panel's designed form below; **every section that matches no known heading renders as a plain readable section after the lifted part**, with its own heading, in document order. The generic `artifact-document` rendering is the plain form. A panel with no recognised heading at all is that plain rendering in full (so the page never reads worse than the generic document).
@@ -299,9 +301,14 @@ page's panels on the same screen**; the head is not a second page and the panels
 
 | Condition | Command shown | Reason line (Meta) |
 |-----------|---------------|--------------------|
-| Map is **fast** (not complete) | `/gsd-map-codebase` | "Finish the map. A fast map is enough to look around, but project setup needs the complete one." |
-| Else, ADR / PRD / SPEC / RFC documents are visible in the target's `.planning/` | `/gsd-ingest-docs` | "Existing decision or spec documents were found. Import them before setting the project up." |
-| Else (complete map, no such documents) | `/gsd-new-project` | "The map is complete. Next, set the project up." |
+| Readiness **fast** | `/gsd-map-codebase` | "Finish the map. A fast map is enough to look around, but project setup needs the complete one." |
+| Readiness **none**, at least one of the seven documents present (the "Partial map" chip) | `/gsd-map-codebase` | "This map is partial. Some of the seven documents are missing, so map the codebase before setting the project up." |
+| Readiness **complete**, and ADR / PRD / SPEC / RFC documents are visible in the target's `.planning/` | `/gsd-ingest-docs` | "Existing decision or spec documents were found. Import them before setting the project up." |
+| Readiness **complete**, no such documents | `/gsd-new-project` | "The map is complete. Next, set the project up." |
+
+The last two rows apply to readiness `complete` only; "The map is complete" is never shown for `fast`
+or `none`. The `none` row mirrors `onboard-projection.cjs`, where a missing required map sends the person to
+`/gsd-map-codebase` (the ingest-docs and new-project rules apply only once a map is in place).
 
 Labelore reads only the target's `.planning/` (and the same over `ssh://`), so "documents exist" means
 documents Labelore can see there; it does not scan the repository outside `.planning/`. The plan
@@ -462,10 +469,10 @@ reviewer text) is shown verbatim and never re-worded. Button and chip copy is wr
 |---------|------|
 | Primary CTA (phase) | "Copy command" — the one affordance the phase adds: the head's next-step command. Read-only otherwise; Labelore never runs the command. |
 | Mapped-not-started words | "Mapped, not started" / "This project has a codebase map and no roadmap yet." |
-| Map readiness chips | "Complete map" / "Fast map" (title/tooltip: "A fast map covers stack, integrations, architecture and structure; project setup needs the complete one.") / "Partial map" |
+| Map readiness chips | "Complete map" / "Fast map" (title/tooltip: "A fast map covers stack, integrations, architecture and structure; project setup needs the complete one.") / "Partial map" (title/tooltip: "Some of the four core documents are missing; the map is not complete.") |
 | Map facts line | "{n} of 7 documents mapped" / "Mapped {date}" / "Commit {short-sha}" (mono, `quiet`) |
 | Missing map document | "Not mapped" (panel list entry, `quiet`, dashed square, not a link) |
-| Next-step reasons | Fast: "Finish the map. A fast map is enough to look around, but project setup needs the complete one." / ADR-PRD-SPEC found: "Existing decision or spec documents were found. Import them before setting the project up." / otherwise: "The map is complete. Next, set the project up." |
+| Next-step reasons | Fast: "Finish the map. A fast map is enough to look around, but project setup needs the complete one." / Partial (`none`, at least one document): "This map is partial. Some of the seven documents are missing, so map the codebase before setting the project up." / Complete and ADR-PRD-SPEC found: "Existing decision or spec documents were found. Import them before setting the project up." / Complete and none found: "The map is complete. Next, set the project up." (shown for readiness `complete` only) |
 | Never-runs note | "Labelore does not run commands. Paste it in your terminal." |
 | Copy confirmation | "Copied" (the existing toast) |
 | No map documents | "No map documents found" (facts line); no command shown |
