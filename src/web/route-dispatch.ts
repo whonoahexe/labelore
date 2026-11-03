@@ -13,6 +13,7 @@ import {
   resolveLegacyTarget,
   resolveUnprefixedAddress,
 } from '../presentation/legacy-routes.ts';
+import { hasSourceFlag, rootDocumentRedirect } from '../presentation/root-redirects.ts';
 import {
   buildPhaseUrl,
   buildUrl,
@@ -113,7 +114,8 @@ export function resolveUnprefixedRoute(
 /**
  * Decides the page for a project-relative address. `path` is the raw pathname minus the project slug
  * (`/`, `/v1.1/phase-2/plan-01/summary`), `presentation` the loaded payload. `search` is read only by the
- * old-link redirects: `?doc=summary` on a plan address (D-05) and on an old `/plans/<id>` link.
+ * old-link redirects (`?doc=summary` on a plan address, D-05, and on an old `/plans/<id>` link) and by
+ * the `?source=1` flag on a root document's address (09 D-01).
  */
 export function resolveProjectRoute(
   path: string,
@@ -147,6 +149,15 @@ export function resolveProjectRoute(
         ? presentation.routeAliases[route.url]
         : undefined;
       if (alias !== undefined) return redirectTo(alias);
+      // 09 D-01: a root document with a designed page redirects there (replacing the history entry),
+      // unless its own address carries `?source=1`. The target is a value of the fixed table in
+      // root-redirects.ts and passes redirectTo (T-09-01). The flag only skips the redirect for an
+      // address an artifact already carries; documentOutcome still answers not-found for anything else.
+      if (!hasSourceFlag(search)) {
+        const artifact = presentation.artifacts.find((candidate) => candidate.key === route.url);
+        const designed = rootDocumentRedirect(artifact);
+        if (designed !== null) return redirectTo(designed);
+      }
       // D-11: only an artifact has a document page. An internal file, a bare folder and an unknown
       // address have no key, so they all end at the same miss.
       return documentOutcome(route.url, presentation) ?? NOT_FOUND;
