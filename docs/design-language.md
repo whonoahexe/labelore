@@ -940,6 +940,7 @@ plan's "no AST tooling" constraint.
 | `trace-filter-input` | Traceability | |
 | `trace-filters` | Traceability | |
 | `trace-marker` | Traceability | |
+| `trace-out-of-scope` | Traceability | the Out of scope state's hairline-ruled list; feature, then reason |
 | `trace-row` | Traceability | |
 | `trace-row-body` | Traceability | |
 | `trace-row-flags` | Traceability | |

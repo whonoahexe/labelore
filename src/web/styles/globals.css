@@ -26430,3 +26430,30 @@ button.research-step-chip:hover {
     transition: none;
   }
 }
+
+/* Phase 9 (09-02): the traceability state axis and the out-of-scope list. The list is the
+   trace-category rhythm without a coverage bar: one hairline between siblings, the feature as the
+   primary line and the reason quiet beneath it. Shown only under the Out of scope state. */
+.trace-out-of-scope {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.trace-out-of-scope li {
+  display: grid;
+  gap: var(--space-1);
+  background: var(--card);
+  padding: var(--space-3-5) var(--space-4);
+}
+
+.trace-out-of-scope li + li {
+  border-top: 1px solid var(--border);
+}
+
+.trace-out-of-scope strong {
+  color: var(--foreground);
+  font-weight: var(--fw-medium);
+}
