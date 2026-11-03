@@ -369,7 +369,58 @@ testing such pages against made-up examples that are clearly labelled as made up
    and falls back to a readable generic page when a real file differs from what the design expected.
    *(VIEW-21, VIEW-11, VIEW-12, VIEW-13)*
 
-**Plans**: TBD
+**Plans**: 23 plans
+
+Plans:
+**Wave 1**
+- [ ] 10-01-PLAN.md — Tracer: a map-only project opens from its project or .planning path through the one resolver; Roadmap and Traceability tabs hidden; its dashboard address opens the first map document
+- [ ] 10-02-PLAN.md — The made-up example rule as a test (marker, index, planted controls) and Tidemark, the made-up map-only fixture
+- [ ] 10-03-PLAN.md — Fresh real maps (user runs /gsd-map-codebase in three repositories) read for shape; the concern-counting rule settled
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 10-04-PLAN.md — Made-up spec, AI spec and user setup examples on Lendshed
+- [ ] 10-05-PLAN.md — Codebase handler: fence-aware sections, fuzzy headings, map stamp, stack chips and concern counts
+- [ ] 10-06-PLAN.md — Sketch 042: the Codebase frame and the "Mapped, not started" head (user picks the winner)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [ ] 10-07-PLAN.md — Made-up eval review, browser check and cross-AI review examples on Lendshed
+- [ ] 10-08-PLAN.md — Codebase page frame from 042: one view kind, panels by address, Not mapped entries, readiness, the bare /codebase redirect, the screenshot helper
+- [ ] 10-09-PLAN.md — Sketches 043 (Architecture and Structure) and 044 (Concerns) (user picks the winners)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+- [ ] 10-10-PLAN.md — The map-only head from 042: state, stamp, readiness, stack and concerns lifted, GSD's next step as a copyable command
+- [ ] 10-11-PLAN.md — Sketches 045 (Stack and Integrations) and 046 (Conventions and Testing) (user picks the winners)
+
+**Wave 5** *(blocked on Wave 4 completion)*
+- [ ] 10-12-PLAN.md — Architecture, Structure and Concerns panels from 043 and 044
+- [ ] 10-13-PLAN.md — Sketches 047 (Spec) and 048 (AI spec) (user picks the winners)
+
+**Wave 6** *(blocked on Wave 5 completion)*
+- [ ] 10-14-PLAN.md — Stack, Integrations (values withheld), Conventions and Testing panels from 045 and 046
+- [ ] 10-15-PLAN.md — Sketches 049 (User setup) and 050 (Eval review) (user picks the winners)
+
+**Wave 7** *(blocked on Wave 6 completion)*
+- [ ] 10-16-PLAN.md — Spec page from 047: locked enough to plan, requirements as current, target and acceptance
+- [ ] 10-17-PLAN.md — Sketches 051 (Browser check) and 052 (Cross-AI reviews) (user picks the winners)
+
+**Wave 8** *(blocked on Wave 7 completion)*
+- [ ] 10-18-PLAN.md — AI spec page from 048: system, framework, dimensions, checklist progress and template slots; the shared status-meter
+
+**Wave 9** *(blocked on Wave 8 completion)*
+- [ ] 10-19-PLAN.md — User setup page from 049: steps done and where each variable goes, never its value
+
+**Wave 10** *(blocked on Wave 9 completion)*
+- [ ] 10-20-PLAN.md — Eval review page from 050: score and verdict first, dimension coverage, infrastructure, ordered remediation
+
+**Wave 11** *(blocked on Wave 10 completion)*
+- [ ] 10-21-PLAN.md — Browser check page from 051: could not look, nothing to report and verified told apart; counts and criteria
+
+**Wave 12** *(blocked on Wave 11 completion)*
+- [ ] 10-22-PLAN.md — Cross-AI reviews page from 052: reviewers with models, agreed concerns first, disagreements side by side
+
+**Wave 13** *(blocked on Wave 12 completion)*
+- [ ] 10-23-PLAN.md — Phase gate in Chromium: map-only entry paths, the copy command, hard reloads, the screenshot sweep, the full suite
+
 **UI hint**: yes
 
 ### Phase 11: Exploration, Handoff, Report and Workstream Pages
@@ -481,7 +532,7 @@ file, ID or project.
 | 7. Recognised Files and Readable URLs | v2.1 | 10/10 | Complete    | 2026-10-27 |
 | 8. Several Projects and a Switcher | v2.1 | 18/18 | Complete    | 2026-11-02 |
 | 9. Review, Audit and Root Document Pages | v2.1 | 16/16 | In Progress | - |
-| 10. Codebase Map, Specification and Check Pages | v2.1 | 0/TBD | Not started | - |
+| 10. Codebase Map, Specification and Check Pages | v2.1 | 0/23 | Planned | - |
 | 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 0/TBD | Not started | - |
 | 12. Project Settings, Source Mode and Reading Polish | v2.1 | 0/TBD | Not started | - |
 | 13. Search and Quick-Jump Palette | v2.1 | 0/TBD | Not started | - |
