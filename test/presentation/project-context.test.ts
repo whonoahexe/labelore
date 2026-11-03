@@ -46,6 +46,18 @@ describe('buildProjectContext', () => {
     expect(context.coreValue).toBeNull();
   });
 
+  it('keeps the What This Is first paragraph whole beside the dashboard lead', async () => {
+    const project = await loadFiles({
+      '.planning/PROJECT.md':
+        '# Kiln\n\n## What This Is\n\nBook kiln time. Members see **every** firing in `board.example`, and the tech logs each one. Pieces are tracked to pickup.\n\nSecond paragraph.\n',
+    });
+    const context = buildProjectContext(project.presentation);
+    expect(context.about).toBe(
+      'Book kiln time. Members see every firing in `board.example`, and the tech logs each one. Pieces are tracked to pickup.',
+    );
+    expect(context.lead).not.toBe(context.about);
+  });
+
   it('a payload without PROJECT.md never throws and names the project from its folder', async () => {
     const project = await loadFiles({ '.planning/STATE.md': '---\nstatus: planning\n---\n' });
     const context = buildProjectContext(project.presentation);

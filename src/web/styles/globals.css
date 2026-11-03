@@ -26657,14 +26657,10 @@ button.research-step-chip:hover {
 }
 
 .view-project-goal-text {
-  display: -webkit-box;
   margin: 0;
-  overflow: hidden;
   font-size: var(--fs-4);
   line-height: var(--lh-snug);
   overflow-wrap: anywhere;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
 }
 
 .view-project-tile {
@@ -27079,14 +27075,10 @@ button.research-step-chip:hover {
 }
 
 .view-project-node-note {
-  display: -webkit-box;
   grid-column: 1 / -1;
-  overflow: hidden;
   color: var(--muted-foreground);
   font-size: var(--fs-3);
   overflow-wrap: anywhere;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
 }
 
 .view-project-reveal {
@@ -27122,15 +27114,6 @@ button.research-step-chip:hover {
   color: var(--muted-foreground);
 }
 
-@media (max-width: 42rem) {
-  .view-project-node-btn {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .view-project-node-meta {
-    justify-content: flex-start;
-  }
-}
 /* phase-09-project-page:end */
 
 /* phase-09-windows-ledger:start */
