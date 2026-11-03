@@ -26614,3 +26614,76 @@ button.research-step-chip:hover {
   text-wrap: balance;
   overflow-wrap: anywhere;
 }
+
+/* The project page's strip, inside the masthead under a top hairline: the goal cell (09-08) and the four
+   count tiles. With no goal cell the four tiles share the row equally; under 42rem they form a 2 by 2 grid.
+   Each tile is a link: a status-square, the numeral (mono, Heading size), a label and a mono sub-line. */
+.view-project-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0 var(--space-fluid-3);
+  border-top: 1px solid var(--border);
+}
+
+.view-project-strip[data-goal='true'] {
+  grid-template-columns: minmax(0, 2fr) repeat(4, minmax(0, 1fr));
+}
+
+.view-project-tile {
+  display: grid;
+  gap: var(--space-1-5);
+  align-content: start;
+  min-width: 0;
+  padding: var(--space-4);
+  border-left: 1px solid var(--border);
+  color: var(--foreground);
+  text-decoration: none;
+}
+
+.view-project-tile:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.view-project-tile:hover {
+  background: var(--state-hover);
+}
+
+.view-project-tile-count {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-none);
+}
+
+.view-project-tile-label {
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+}
+
+.view-project-tile-sub {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 42rem) {
+  .view-project-strip,
+  .view-project-strip[data-goal='true'] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .view-project-tile:first-child {
+    padding-left: var(--space-4);
+    border-left: 1px solid var(--border);
+  }
+
+  .view-project-tile:nth-child(odd) {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
