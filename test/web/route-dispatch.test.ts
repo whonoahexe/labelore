@@ -14,7 +14,11 @@ import {
   resolveUnprefixedRoute,
   type RouteOutcome,
 } from '../../src/web/route-dispatch.ts';
-import { ROOT_DOCUMENT_TARGETS, rootDocumentRedirect } from '../../src/presentation/root-redirects.ts';
+import {
+  ROOT_DOCUMENT_TARGETS,
+  archivedCopyTarget,
+  rootDocumentRedirect,
+} from '../../src/presentation/root-redirects.ts';
 import { FX_ROOT, loadProject } from '../helpers/fixture-project.ts';
 import {
   legacyArtifactUrl,
@@ -72,8 +76,8 @@ describe('resolveProjectRoute over the Shapes payload', () => {
     expect(resolve('/v1.1/roadmap')).toEqual({ kind: 'redirect', to: '/roadmap' });
   });
 
-  it('opens an archived roadmap and a root file as documents', () => {
-    expect(resolve('/v1.0/roadmap')).toMatchObject({ kind: 'document', url: '/v1.0/roadmap' });
+  it('opens an archived roadmap on the roadmap page (09 D-02) and a root file as a document', () => {
+    expect(resolve('/v1.0/roadmap')).toEqual({ kind: 'archive-block', page: 'roadmap', version: 'v1.0' });
     expect(resolve('/settings')).toMatchObject({ kind: 'document', url: '/settings' });
   });
 
@@ -200,6 +204,68 @@ describe('root documents designed elsewhere (09 D-01)', () => {
   });
 });
 
+describe('archived milestone copies (09 D-02)', () => {
+  const withSearch = (path: string, search: string, presentation = lendshed): RouteOutcome =>
+    resolveProjectRoute(path, search, presentation);
+
+  it('opens the archived roadmap on the live roadmap at its milestone block', () => {
+    expect(resolve('/v1.0/roadmap', lendshed)).toEqual({
+      kind: 'archive-block',
+      page: 'roadmap',
+      version: 'v1.0',
+    });
+  });
+
+  it('opens the archived requirements on traceability at its milestone block', () => {
+    expect(resolve('/v1.0/requirements', lendshed)).toEqual({
+      kind: 'archive-block',
+      page: 'traceability',
+      version: 'v1.0',
+    });
+  });
+
+  it('carries no URL in the outcome: the target page and version come from the payload', () => {
+    const outcome = resolve('/v1.0/roadmap', lendshed);
+    expect(Object.keys(outcome).sort()).toEqual(['kind', 'page', 'version']);
+  });
+
+  it('opens the file itself on ?source=1', () => {
+    expect(withSearch('/v1.0/roadmap', '?source=1')).toMatchObject({
+      kind: 'document',
+      url: '/v1.0/roadmap',
+    });
+    expect(withSearch('/v1.0/requirements', '?source=1')).toMatchObject({
+      kind: 'document',
+      url: '/v1.0/requirements',
+    });
+  });
+
+  it('still redirects a bare milestone to its roadmap, which now lands on the block', () => {
+    expect(resolve('/v1.0', lendshed)).toEqual({ kind: 'redirect', to: '/v1.0/roadmap' });
+  });
+
+  it('keeps an archived copy with no History block a plain document, never archive-block', () => {
+    const orphan = lendshed.artifacts.find((artifact) => artifact.key === '/v1.0/roadmap')!;
+    const planted: ProjectPresentation = {
+      ...lendshed,
+      artifacts: [
+        ...lendshed.artifacts,
+        { ...orphan, key: '/v9.9/roadmap', path: '.planning/milestones/v9.9-ROADMAP.md' },
+      ],
+    };
+    expect(resolve('/v9.9/roadmap', planted)).toMatchObject({ kind: 'document', url: '/v9.9/roadmap' });
+  });
+
+  it('adds no page component for archived documents: the outcome names a live page', () => {
+    const pages = new Set<string>();
+    for (const address of ['/v1.0/roadmap', '/v1.0/requirements']) {
+      const outcome = resolve(address, lendshed);
+      if (outcome.kind === 'archive-block') pages.add(outcome.page);
+    }
+    expect([...pages].sort()).toEqual(['roadmap', 'traceability']);
+  });
+});
+
 describe.each([
   ['Shapes', shapes],
   ['Lendshed', lendshed],
@@ -214,7 +280,9 @@ describe.each([
         // ROADMAP.md IS the roadmap page.
         (outcome.kind === 'page' && artifact.key === '/roadmap') ||
         // 09 D-01: a root document designed elsewhere redirects to the page that shows it.
-        (outcome.kind === 'redirect' && outcome.to === rootDocumentRedirect(artifact));
+        (outcome.kind === 'redirect' && outcome.to === rootDocumentRedirect(artifact)) ||
+        // 09 D-02: an archived milestone copy opens on its live page, at its block.
+        (outcome.kind === 'archive-block' && archivedCopyTarget(artifact, presentation) !== null);
       if (!ok) misses.push(`${artifact.key} -> ${outcome.kind}`);
     }
     for (const plan of presentation.milestones.flatMap((m) => m.phases).flatMap((p) => p.plans)) {
