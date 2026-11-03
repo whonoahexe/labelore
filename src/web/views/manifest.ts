@@ -56,6 +56,8 @@ import type { ProjectContext } from '../../presentation/project-context.ts';
 import type { ComposedWindowsLedger } from './windows-ledger.ts';
 // Type-only import — same reason as `brief` above (Phase 9, 09-14, the milestone audit).
 import type { ComposedMilestoneAudit } from './milestone-audit.ts';
+// Type-only import — same reason as `brief` above (Phase 9, 09-15, the coverage page).
+import type { ComposedCoverage } from './coverage-matrix.ts';
 // Type-only import — same reason as `brief` above (quick-261001-qk6, sketch-014 winner).
 import type { ComposedUiSpec } from './ui-spec.ts';
 // Type-only import — same reason as `brief` above (quick-261001-qk7, sketch-015 winner).
@@ -142,6 +144,11 @@ export interface ViewManifest {
    * `milestone-audit`. Returns `null` when the input can't compose one (no `structured.audit`), and the page
    * falls back to the promoted-block view, which the manifest keeps as `promote`. */
   milestoneAudit?: (input: ViewInput) => ComposedMilestoneAudit | null;
+  /** Phase 9 (09-15): the API coverage page a manifest opts into in View mode - currently only `coverage`.
+   * Returns `null` when the input can't compose one (no `structured.coverage`, or a file with neither a
+   * "no external API" paragraph nor an integration matrix), and the page falls back to the promoted-block
+   * view, which the manifest keeps as `promote`. */
+  coverageMatrix?: (input: ViewInput) => ComposedCoverage | null;
   /** quick-261006-iz6 (sketch-019 B): the PLAN task navigator a manifest opts into instead of
    * `layout` — currently only `plan`. Returns `null` when the input can't compose one (no
    * `structured.plan`, or a plan with no task), and the page falls back to the B3 `layout` / the

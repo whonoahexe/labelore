@@ -28155,3 +28155,56 @@ button.research-step-chip:hover {
   }
 }
 /* phase-09-milestone-audit:end */
+
+/* phase-09-coverage:start */
+/* Phase 9 (09-15): the coverage page. The page renders four font sizes: the h1 as ArtifactHeader draws it
+   (--fs-display-3), the card heading and the matrix summary (--fs-7), Body and Meta (--fs-4) and Label
+   (--fs-2). Where a shared class sets a size outside that set, the page takes it inside with a page-scoped
+   rule below, so no shared class is edited. */
+.view-coverage-page {
+  display: grid;
+  gap: var(--space-fluid-6);
+  min-width: 0;
+}
+
+.view-coverage-page > * {
+  min-width: 0;
+}
+
+.artifact-page:has(.view-coverage-page) .status-chip,
+.artifact-page:has(.view-coverage-page) .document-view-toggle button {
+  font-size: var(--fs-2);
+}
+
+/* The "No external API in this phase" card: the shared quiet-state icon rule, a hairline frame, the heading at
+   the Heading size and the reason in Meta beneath it. */
+.view-coverage-card {
+  align-items: flex-start;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.view-coverage-card svg {
+  margin-top: var(--space-1);
+}
+
+.view-coverage-card-body {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.view-coverage-card-heading {
+  margin: 0;
+  color: var(--foreground);
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+}
+
+.view-coverage-reason {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+/* phase-09-coverage:end */

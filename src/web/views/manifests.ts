@@ -20,6 +20,7 @@ import { composeNotePage } from './note-page.ts';
 import { composeProjectPage } from './project-page.ts';
 import { composeWindowsLedger } from './windows-ledger.ts';
 import { composeMilestoneAudit } from './milestone-audit.ts';
+import { composeCoverage } from './coverage-matrix.ts';
 import { composePlanNavigator } from './plan-navigator.ts';
 import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
@@ -267,13 +268,16 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
   },
   coverage: {
     kind: 'coverage',
-    lead: "Which edges and cases this phase's plan actually accounted for.",
+    lead: 'Which capabilities of an external API this phase integrates, and which it opts out of.',
     // A degenerate COVERAGE.md with no `##` sections at all composes to zero blocks — the page
     // falls back to the full document with the toggle hidden (documented VIEW-01 empty rule).
     promote: [
       { type: 'section', heading: /coverage/i, all: true },
       { type: 'section', heading: /^decisions?/i },
     ],
+    // The coverage page is the View-mode render path; `promote` above is the fallback when it composes
+    // nothing (Phase 9, 09-15).
+    coverageMatrix: composeCoverage,
   },
   learnings: {
     kind: 'learnings',
