@@ -77,3 +77,10 @@ Lendshed-owned authentication replaces the shared kiosk passcode.
 
 ---
 *Defined: 2026-03-24*
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| Self-service sign-up | Stewards create every account by hand; the four-steward desk has no use for open registration |
+| Streamed exports | An export is built by a durable job and downloaded whole, so a power cut never leaves half a file |
