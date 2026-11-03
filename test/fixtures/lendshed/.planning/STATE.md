@@ -46,3 +46,24 @@ Full record: `.planning/MILESTONES.md`
 ## Blockers/Concerns
 
 - The Elm Street mini PC loses power about twice a month; the export job must resume after a cold start.
+
+## Deferred Items
+
+Items acknowledged and deferred at milestone close:
+
+| Category | Item | Status | Deferred At |
+|----------|------|--------|-------------|
+| ui | Dark-mode contrast pass on the shed map | Deferred past v1.1 | 2026-04-10 |
+| ops | Cold-start resume for the nightly export | Acknowledged | 2026-04-12 |
+| docs | Steward handbook screenshots | Deferred past v1.1 | 2026-04-13 |
+
+## Session Continuity
+
+Last session: 2026-04-14T10:20:00.000Z
+Stopped at: Phase 04 UI-SPEC reviewed, export wave 2 next
+Resume file: .planning/phases/04-bulk-loan-export/04-UI-SPEC.md
+
+## Operator Next Steps
+
+- Run /gsd-execute-phase 4 to continue the bulk loan export waves.
+- Check the Elm Street mini PC power log before the next export test.

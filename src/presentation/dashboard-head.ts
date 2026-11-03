@@ -9,6 +9,7 @@ import type {
   ProjectStateDto,
 } from '../server/project-presentation.ts';
 import { projectDisplayName } from './shell-header.ts';
+import { buildStateSession, type StateSession } from './state-session.ts';
 
 const MAX_SECTION_CHARS = 20000;
 const MAX_PARAGRAPH_CHARS = 2000;
@@ -47,6 +48,10 @@ export interface DashboardHead {
   now: DashboardHeadNow | null;
   /** Null exactly when the project has no STATE.md. */
   next: DashboardHeadNext | null;
+  /** What STATE.md holds that no other page shows; null when it has none of those sections. */
+  session: StateSession | null;
+  /** The address of the root PROJECT.md (the project page); null when the project has none. */
+  projectUrl: string | null;
 }
 
 /** Splits a PROJECT.md title at its first spaced dash into a name and a tagline. A missing title,
@@ -325,5 +330,7 @@ export function buildDashboardHead(presentation: ProjectPresentation): Dashboard
     lead: projectSectionLead(presentation, /^what this is\b/i),
     now: nowOf(presentation.state, phase),
     next: nextOf(presentation, phase),
+    session: buildStateSession(presentation),
+    projectUrl: project?.key ?? null,
   };
 }
