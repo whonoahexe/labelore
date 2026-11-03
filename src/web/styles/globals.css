@@ -27782,3 +27782,59 @@ button.research-step-chip:hover {
   }
 }
 /* phase-09-review-ledger:end */
+
+/* phase-09-milestone-audit:start */
+/* Phase 9 (09-14): the milestone audit. The page renders four font sizes: the h1 as ArtifactHeader draws it
+   (--fs-display-3), the verdict chip and the section headings and score numbers (--fs-7), Body and Meta
+   (--fs-4) and Label (--fs-2). Where a shared class sets a size outside that set, the page takes it inside
+   with a page-scoped rule below, so no shared class is edited. The Audit narrative renders the shared
+   artifact-document body at its own sizes, like every other document. */
+.view-milestone-audit-page {
+  display: grid;
+  gap: var(--space-fluid-6);
+  min-width: 0;
+}
+
+.view-milestone-audit-page > * {
+  min-width: 0;
+}
+
+.artifact-page:has(.view-milestone-audit-page) .status-chip,
+.artifact-page:has(.view-milestone-audit-page) .document-view-toggle button {
+  font-size: var(--fs-2);
+}
+
+/* The verdict is the first thing on the page: its chip is the one place a chip takes the Heading size. */
+.artifact-page:has(.view-milestone-audit-page) .status-chip.view-milestone-audit-verdict {
+  padding: var(--space-1-5) var(--space-3);
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+}
+
+.view-milestone-audit-cover {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-4);
+  align-items: center;
+  min-width: 0;
+}
+
+.view-milestone-audit-audited {
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-snug);
+}
+
+/* The narrative disclosure: the artifact-metadata look, its summary kept to the Label size. */
+.view-milestone-audit-narrative > summary {
+  font-size: var(--fs-2);
+}
+
+.view-milestone-audit-narrative-body {
+  min-width: 0;
+  padding: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+/* phase-09-milestone-audit:end */
