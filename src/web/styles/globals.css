@@ -27837,4 +27837,321 @@ button.research-step-chip:hover {
   padding: var(--space-4);
   border-top: 1px solid var(--border);
 }
+
+.artifact-page:has(.view-milestone-audit-page) .source-note {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+/* Sections: an h2 at the Heading size with a mono count beside it, then groups whose heads are Label-size. */
+.view-milestone-audit-section {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+}
+
+.view-milestone-audit-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  align-items: baseline;
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+}
+
+.view-milestone-audit-heading-quiet {
+  color: var(--muted-foreground);
+}
+
+.view-milestone-audit-heading-count,
+.view-milestone-audit-group-count {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Scores: a row of tiles, each a label, the value in the lead number style and a segmented or proportional bar. */
+.view-milestone-audit-scores {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-milestone-audit-score {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.view-milestone-audit-score-label {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  min-width: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wide);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+.view-milestone-audit-score-value {
+  font-family: var(--font-mono);
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* A value this reader could not read is shown as written, at Body size, with no bar. */
+.view-milestone-audit-score-value[data-read='false'] {
+  font-family: var(--font-heading);
+  font-size: var(--fs-4);
+  line-height: var(--lh-snug);
+}
+
+.view-milestone-audit-segments {
+  display: flex;
+  gap: var(--space-0-5);
+}
+
+.view-milestone-audit-segments > i {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 0.6rem;
+  border: 1px solid var(--missing-fill);
+  background: transparent;
+}
+
+.view-milestone-audit-segments > i[data-tone='complete'] {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.view-milestone-audit-segments > i[data-tone='in-flight'] {
+  border-color: var(--in-flight-fill);
+  background: var(--in-flight-fill);
+}
+
+.view-milestone-audit-meter {
+  display: block;
+  height: 0.6rem;
+  border: 1px solid var(--border);
+  background: var(--muted);
+}
+
+.view-milestone-audit-meter > i {
+  display: block;
+  height: 100%;
+  background: var(--muted-foreground);
+}
+
+.view-milestone-audit-meter > i[data-tone='complete'] {
+  background: var(--primary);
+}
+
+.view-milestone-audit-meter > i[data-tone='in-flight'] {
+  background: var(--in-flight-fill);
+}
+
+/* Groups (gap kinds, debt phases, unclaimed keys): a Label-size head with a bottom hairline, then rows. */
+.view-milestone-audit-group {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.view-milestone-audit-group-head {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+}
+
+/* A phase name or key is one line with an end-ellipsis; its full value is in title. */
+.view-milestone-audit-group-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.view-milestone-audit-phase-number,
+.view-milestone-audit-id {
+  flex: none;
+  padding: var(--space-0-5) var(--space-2);
+  border: 1px solid var(--border);
+  background: var(--code-veil);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  white-space: nowrap;
+}
+
+.view-milestone-audit-id {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* "No gaps": one line in the complete tone, never a blank section. */
+.view-milestone-audit-none {
+  margin: 0;
+  color: var(--primary);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+}
+
+.view-milestone-audit-rows {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-milestone-audit-row {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.view-milestone-audit-row-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  align-items: center;
+  min-width: 0;
+}
+
+.view-milestone-audit-text,
+.view-milestone-audit-evidence,
+.view-milestone-audit-field-value {
+  font-size: var(--fs-4);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-normal);
+  overflow-wrap: anywhere;
+}
+
+.view-milestone-audit-evidence {
+  color: var(--muted-foreground);
+}
+
+.view-milestone-audit-text code,
+.view-milestone-audit-evidence code,
+.view-milestone-audit-field-value code,
+.view-milestone-audit-reason code {
+  font-size: var(--fs-2);
+}
+
+.view-milestone-audit-text[data-clamped='true'],
+.view-milestone-audit-evidence[data-clamped='true'],
+.view-milestone-audit-field-value[data-clamped='true'] {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.view-milestone-audit-more {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.view-milestone-audit-more:hover {
+  color: var(--primary);
+}
+
+/* Labelled fields: a gap's or debt item's extra fields and every unclaimed frontmatter key. */
+.view-milestone-audit-fields {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.view-milestone-audit-field {
+  display: grid;
+  grid-template-columns: minmax(6rem, 10rem) minmax(0, 1fr);
+  gap: var(--space-1) var(--space-3);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.view-milestone-audit-field > dt {
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+}
+
+.view-milestone-audit-field > dd {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  margin: 0;
+}
+
+/* Nyquist: one chip row; the phase lists are mono. */
+.view-milestone-audit-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-milestone-audit-chip-phases {
+  margin-left: var(--space-2);
+  font-family: var(--font-mono);
+}
+
+.view-milestone-audit-reason {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 42rem) {
+  .view-milestone-audit-row {
+    padding: var(--space-3);
+  }
+
+  .view-milestone-audit-field {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 /* phase-09-milestone-audit:end */

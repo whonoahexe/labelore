@@ -946,7 +946,24 @@
         "bodyHash": "fe6f5f77dd23a1f0b97891d3d5db7992d6026ba1cdf73ce874688a58858112fd",
         "mtimeMs": 0,
         "warnings": [],
-        "structured": {}
+        "structured": {
+          "audit": {
+            "milestone": null,
+            "milestoneName": null,
+            "verdict": {
+              "status": "passed",
+              "raw": null,
+              "source": "prose"
+            },
+            "audited": "2025-11-01",
+            "claimed": [],
+            "scores": [],
+            "gaps": null,
+            "techDebt": null,
+            "nyquist": null,
+            "extras": []
+          }
+        }
       },
       ".planning/milestones/v1.0-REQUIREMENTS.md": {
         "id": ".planning/milestones/v1.0-REQUIREMENTS.md",
@@ -1039,7 +1056,24 @@
         "bodyHash": "a49b44a2f58a1312f9f03310b975a8c70e5db839a1a4da305062087af6523901",
         "mtimeMs": 0,
         "warnings": [],
-        "structured": {}
+        "structured": {
+          "audit": {
+            "milestone": null,
+            "milestoneName": null,
+            "verdict": {
+              "status": "passed",
+              "raw": null,
+              "source": "prose"
+            },
+            "audited": "2026-03-15",
+            "claimed": [],
+            "scores": [],
+            "gaps": null,
+            "techDebt": null,
+            "nyquist": null,
+            "extras": []
+          }
+        }
       },
       ".planning/milestones/v2.0-REQUIREMENTS.md": {
         "id": ".planning/milestones/v2.0-REQUIREMENTS.md",
