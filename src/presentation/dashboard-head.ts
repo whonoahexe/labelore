@@ -50,6 +50,8 @@ export interface DashboardHead {
   next: DashboardHeadNext | null;
   /** What STATE.md holds that no other page shows; null when it has none of those sections. */
   session: StateSession | null;
+  /** The address of the root PROJECT.md (the project page); null when the project has none. */
+  projectUrl: string | null;
 }
 
 /** Splits a PROJECT.md title at its first spaced dash into a name and a tagline. A missing title,
@@ -329,5 +331,6 @@ export function buildDashboardHead(presentation: ProjectPresentation): Dashboard
     now: nowOf(presentation.state, phase),
     next: nextOf(presentation, phase),
     session: buildStateSession(presentation),
+    projectUrl: project?.key ?? null,
   };
 }
