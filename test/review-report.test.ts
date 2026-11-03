@@ -4,7 +4,12 @@
 // over the fixture files, independent of the extractor's output.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { extractReviewFixReport, extractReviewReport } from '../src/planning-repo/handlers/review-report.ts';
+import {
+  extractReviewFixReport,
+  extractReviewReport,
+  leadingFindingId,
+  severityOfId,
+} from '../src/planning-repo/handlers/review-report.ts';
 import { tryParseFrontmatter } from '../src/planning-repo/frontmatter.ts';
 import { fxPath } from './helpers/fixture-project.ts';
 import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
@@ -254,5 +259,166 @@ describe('degradation', () => {
     expect(model.findings[0].refs).toHaveLength(20);
     const only = extractReviewReport(`## Warnings\n\n### WR-01: a\n\n**File:** \`src/g.ts:${spans}\`\n`);
     expect(only.findings[0].refs[0].spans).toHaveLength(20);
+  });
+});
+
+describe('finding IDs with shard tags and phase segments', () => {
+  const review = (...headings: string[]) =>
+    extractReviewReport(`# R\n\n## Findings\n\n${headings.map((h) => `### ${h}: x\n\n**File:** \`a.ts:1\`\n`).join('\n')}`);
+
+  it('reads tagged and phase-segment IDs in review headings, with severity from the token', () => {
+    const model = review('A-WR-01', 'C-CR-02', 'FL-CR-01', 'D-IN-03', 'WR-P1-01');
+    expect(model.findings.map((f) => [f.id, f.severity])).toEqual([
+      ['A-WR-01', 'warning'],
+      ['C-CR-02', 'critical'],
+      ['FL-CR-01', 'critical'],
+      ['D-IN-03', 'info'],
+      ['WR-P1-01', 'warning'],
+    ]);
+    expect(model.findings.every((f) => f.title === 'x')).toBe(true);
+  });
+
+  it('keeps the plain IDs and their severities as before', () => {
+    const model = review('CR-01', 'BL-02', 'WR-03', 'IN-04');
+    expect(model.findings.map((f) => [f.id, f.severity])).toEqual([
+      ['CR-01', 'critical'],
+      ['BL-02', 'critical'],
+      ['WR-03', 'warning'],
+      ['IN-04', 'info'],
+    ]);
+  });
+
+  it('reads every ID of a combined fix heading', () => {
+    const fix = extractReviewFixReport(
+      '## Fixed Issues\n\n### C-WR-08 / D-WR-01: both\n\n**Commit:** `abc1234`\n\n### WR-04 / WR-05: pair\n\n**Commit:** `def5678`\n',
+    );
+    expect(fix.entries.map((e) => e.ids)).toEqual([['C-WR-08', 'D-WR-01'], ['WR-04', 'WR-05']]);
+  });
+
+  it('does not read W-01, ABCDE-01, WR-01a, A-B-01 or WR-P-01 as IDs', () => {
+    for (const bad of ['W-01', 'ABCDE-01', 'WR-01a', 'A-B-01', 'WR-P-01', 'WR-P1234-01', 'WR-12345']) {
+      expect(leadingFindingId(`${bad}: x`), bad).toBeNull();
+      expect(review(bad).findings, bad).toEqual([]);
+    }
+  });
+
+  it('gives severityOfId the token severity or null', () => {
+    expect(severityOfId('CR-01')).toBe('critical');
+    expect(severityOfId('BL-01')).toBe('critical');
+    expect(severityOfId('WR-01')).toBe('warning');
+    expect(severityOfId('IN-01')).toBe('info');
+    expect(severityOfId('FL-CR-01')).toBe('critical');
+    expect(severityOfId('A-WR-01')).toBe('warning');
+    expect(severityOfId('WR-P1-01')).toBe('warning');
+    expect(severityOfId('SEC-01')).toBeNull();
+    expect(severityOfId('AB-CD-01')).toBeNull();
+  });
+
+  it('exports leadingFindingId with the title after the ID', () => {
+    expect(leadingFindingId('A-WR-01: Title here')).toEqual({ id: 'A-WR-01', title: 'Title here' });
+    expect(leadingFindingId('WR-02 — dash title')).toEqual({ id: 'WR-02', title: 'dash title' });
+    expect(leadingFindingId('IN-03')).toEqual({ id: 'IN-03', title: null });
+    expect(leadingFindingId('no id')).toBeNull();
+  });
+
+  it('falls back to the section for an ID whose token names no severity', () => {
+    const model = extractReviewReport('## Warnings\n\n### AB-CD-01: x\n\n**File:** `a.ts:1`\n');
+    expect(model.findings[0].severity).toBe('warning');
+  });
+});
+
+describe('fix entry commits', () => {
+  const entryOf = (field: string) =>
+    extractReviewFixReport(`## Fixed Issues\n\n### WR-01: x\n\n${field}\n\n**Applied fix:** done\n`).entries[0];
+
+  it('records every hash of a plural Commits field in order, commit first', () => {
+    const entry = entryOf('**Commits:** 9790a0b, eeb3f45');
+    expect(entry.commit).toBe('9790a0b');
+    expect(entry.commits).toEqual(['9790a0b', 'eeb3f45']);
+    expect(entry.commitNote).toBeNull();
+  });
+
+  it('keeps the singular field behaviour and adds the later hash', () => {
+    const entry = entryOf('**Commit:** abc1234 (lint cleanup in def5678)');
+    expect(entry.commit).toBe('abc1234');
+    expect(entry.commits).toEqual(['abc1234', 'def5678']);
+    expect(entry.commitNote).toBe('(lint cleanup in def5678)');
+    const plain = entryOf('**Commit:** `c41e9d7`');
+    expect(plain.commits).toEqual(['c41e9d7']);
+    expect(plain.commitNote).toBeNull();
+  });
+
+  it('gives an empty list and the note when the field holds no hash', () => {
+    const entry = entryOf('**Commit:** none yet');
+    expect(entry.commit).toBeNull();
+    expect(entry.commits).toEqual([]);
+    expect(entry.commitNote).toBe('none yet');
+    expect(extractReviewFixReport('## Fixed Issues\n\n### WR-01: x\n\n**Applied fix:** done\n').entries[0].commits).toEqual([]);
+  });
+
+  it('keeps at most 8 hashes', () => {
+    const hashes = Array.from({ length: 30 }, (_, i) => `a1b2c3${i}`).join(', ');
+    const entry = entryOf(`**Commits:** ${hashes}`);
+    expect(entry.commits).toHaveLength(8);
+    expect(entry.commit).toBe('a1b2c30');
+  });
+});
+
+describe('finding id scan growth', () => {
+  // Caps are not growth (test/helpers/growth.ts): no line may reach the line cap of 8000.
+  const underLineCap = (text: string, name: string) => {
+    for (const line of text.split('\n')) expect(line.length, `${name}: a line reached the cap`).toBeLessThan(7000);
+  };
+
+  it('reads long runs of capitals and hyphens as heading lines in time that grows linearly', () => {
+    const growth = measureGrowth({
+      make: (n) => {
+        const lines = Math.max(1, Math.floor(n / 100));
+        const body = Array.from({ length: lines }, () => `### ${'AB-'.repeat(32)}\n\n- **${'A-'.repeat(48)}** x\n`).join('\n');
+        const text = `## Warnings\n\n${body}\n## Fixed Issues\n\n${body}`;
+        underLineCap(text, 'AB runs');
+        return text;
+      },
+      run: (text) => {
+        extractReviewReport(text);
+        extractReviewFixReport(text);
+      },
+      maxSize: 1 << 17,
+    });
+    expect(growth.ratio, `id scan: ${growth.t1.toFixed(2)}ms at ${growth.n}, ${growth.t2.toFixed(2)}ms at 8x`).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('reads one 200k-character heading line in the time of a line cut at the cap', () => {
+    const line = (n: number) => `### ${'AB-'.repeat(Math.floor(n / 3))}\n`;
+    const started = performance.now();
+    extractReviewReport(`## Warnings\n\n${line(8000)}`);
+    const capMs = performance.now() - started;
+    const big = performance.now();
+    const model = extractReviewReport(`## Warnings\n\n${line(200_000)}`);
+    const bigMs = performance.now() - big;
+    expect(model.findings).toEqual([]);
+    // The 25x longer line is cut to the same cap first, so the cost stays flat rather than growing 25x.
+    expect(bigMs).toBeLessThan(Math.max(capMs * 24, 50));
+  });
+
+  it('reads fix entries with long comma-separated hash lists in time that grows linearly', () => {
+    const growth = measureGrowth({
+      make: (n) => {
+        const entries = Math.max(1, Math.floor(n / 2000));
+        const hashes = Array.from({ length: 200 }, (_, i) => `a1b2c3${i}`).join(', ');
+        const text = `## Fixed Issues\n\n${Array.from(
+          { length: entries },
+          (_, i) => `### WR-${String(i + 1).padStart(2, '0')}: x\n\n**Commits:** ${hashes}\n\n**Applied fix:** done\n`,
+        ).join('\n')}`;
+        underLineCap(text, 'hash lists');
+        return text;
+      },
+      run: (text) => {
+        const model = extractReviewFixReport(text);
+        if (model.entries.length < 1 || model.entries[0].commits.length !== 8) throw new Error('the commit list was lost');
+      },
+      maxSize: 1 << 17,
+    });
+    expect(growth.ratio, `commits: ${growth.t1.toFixed(2)}ms at ${growth.n}, ${growth.t2.toFixed(2)}ms at 8x`).toBeLessThan(GROWTH_LIMIT);
   });
 });

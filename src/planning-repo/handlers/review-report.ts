@@ -77,8 +77,10 @@ export interface ReviewFixEntry {
   ids: string[];
   title: string;
   outcome: 'fixed' | 'skipped';
-  /** The first 6-40 character hex token of the Commit field, or null. */
+  /** The first 6-40 character hex token of the Commit (or Commits) field, or null. */
   commit: string | null;
+  /** Every 6-40 character hex token of the Commit or Commits field in order, at most 8; `commit` is the first. */
+  commits: string[];
   /** The rest of the Commit field after the hash, backticks dropped, or null. */
   commitNote: string | null;
   /** The backticked paths of the Files modified (or File) field. */
@@ -114,6 +116,7 @@ const MAX_ITEMS = 500;
 const MAX_REFS = 20;
 const MAX_SPANS = 20;
 const MAX_IDS = 20;
+const MAX_COMMITS = 8;
 const MAX_BLOCKS = 200;
 const MAX_SECTIONS = 500;
 const MAX_TEXT = 6000;
@@ -305,25 +308,55 @@ function blocksOf(lines: string[]): Block[] {
 // IDs
 // ---------------------------------------------------------------------------
 
-/** Two to four capitals, a hyphen, one to four digits at `pos`; the end index or -1. */
-function idEndAt(text: string, pos: number): number {
+/** The tail of a finding ID at `pos`: a severity token of two to four capitals and a hyphen, then
+ * optionally `P`, one to three digits and a hyphen (a phase segment), then one to four digits not
+ * followed by a letter or digit. The end index or -1. Every loop is bounded by a token length. */
+function idTailAt(text: string, pos: number): number {
   let i = pos;
   while (i < text.length && i - pos < 5 && isUpper(text[i])) i += 1;
   const letters = i - pos;
   if (letters < 2 || letters > 4 || text[i] !== '-') return -1;
   i += 1;
+  if (text[i] === 'P') {
+    i += 1;
+    const phaseFrom = i;
+    while (i < text.length && i - phaseFrom < 4 && isDigit(text[i])) i += 1;
+    const phaseDigits = i - phaseFrom;
+    if (phaseDigits < 1 || phaseDigits > 3 || text[i] !== '-') return -1;
+    i += 1;
+  }
   const digitsFrom = i;
-  while (i < text.length && isDigit(text[i])) i += 1;
+  while (i < text.length && i - digitsFrom < 5 && isDigit(text[i])) i += 1;
   const digits = i - digitsFrom;
   if (digits < 1 || digits > 4) return -1;
   if (isAlnum(text[i])) return -1;
   return i;
 }
 
+/** A finding ID at `pos`: `WR-01`, `WR-P1-01`, or either behind a one-or-two-capital shard tag
+ * (`A-WR-01`, `FL-CR-01`). The tag is taken only when another capital follows its hyphen, and only
+ * after the plain reading failed, so at most two bounded attempts run. The end index or -1. */
+function idEndAt(text: string, pos: number): number {
+  const plain = idTailAt(text, pos);
+  if (plain !== -1) return plain;
+  let i = pos;
+  while (i < text.length && i - pos < 3 && isUpper(text[i])) i += 1;
+  const tag = i - pos;
+  if (tag < 1 || tag > 2 || text[i] !== '-' || !isUpper(text[i + 1])) return -1;
+  return idTailAt(text, i + 1);
+}
+
 /** The finding ID the text starts with, else null. */
 function leadingId(text: string): { id: string; end: number } | null {
   const end = idEndAt(text, 0);
   return end === -1 ? null : { id: text.slice(0, end), end };
+}
+
+/** The finding ID a line of text starts with and the title after it (":" or a dash), else null. For
+ * the disposition reader, which reads the same ID grammar. */
+export function leadingFindingId(text: string): { id: string; title: string | null } | null {
+  const lead = leadingId(text);
+  return lead === null ? null : { id: lead.id, title: titleAfter(text, lead.end) };
 }
 
 /** After an ID: ":" " — " " – " " - " (or a bare space for the fix-report bullets), the rest. */
@@ -365,11 +398,25 @@ function leadingIds(text: string): { ids: string[]; end: number } {
   return { ids, end: pos };
 }
 
+/** The severity an ID's token names: CR and BL critical, WR warning, IN info, anything else null. The
+ * token is the run after a shard tag when the ID has one (`FL-CR-01`), else the first run (`WR-P1-01`). */
+export function severityOfId(id: string): ReviewSeverity | null {
+  const parts = id.split('-', 4);
+  let token = parts[0];
+  if (parts.length >= 3 && parts[1].length >= 2) {
+    let letters = true;
+    for (const ch of parts[1]) if (!isUpper(ch)) letters = false;
+    if (letters) token = parts[1];
+  }
+  if (token === 'CR' || token === 'BL') return 'critical';
+  if (token === 'WR') return 'warning';
+  if (token === 'IN') return 'info';
+  return null;
+}
+
 function severityOf(id: string, section: string): ReviewSeverity {
-  const prefix = id.slice(0, id.indexOf('-'));
-  if (prefix === 'CR' || prefix === 'BL') return 'critical';
-  if (prefix === 'WR') return 'warning';
-  if (prefix === 'IN') return 'info';
+  const byToken = severityOfId(id);
+  if (byToken !== null) return byToken;
   const s = norm(section);
   if (s.includes('critical') || s.includes('blocker')) return 'critical';
   if (s.includes('warning')) return 'warning';
@@ -544,12 +591,23 @@ function refsOf(text: string): ReviewRef[] {
 // Hash tokens
 // ---------------------------------------------------------------------------
 
-/** The first token of 6 to 40 lowercase hex characters that holds a digit (so "decade" is not a
- * commit), with the text before and after it. */
-function hexTokenIn(text: string): { token: string; before: string; after: string } | null {
+/** True for a 6 to 40 character lowercase hex token that holds a digit (so "decade" is not a commit). */
+function isHashToken(token: string): boolean {
+  if (token.length < 6 || token.length > 40) return false;
+  let digit = false;
+  for (const ch of token) {
+    if (!isHex(ch)) return false;
+    if (isDigit(ch)) digit = true;
+  }
+  return digit;
+}
+
+/** The first `limit` hash tokens of the capped text, in order, with their offsets. One pass. */
+function hexTokensIn(text: string, limit: number): { token: string; from: number; to: number }[] {
   const source = cap(text, MAX_TEXT);
+  const found: { token: string; from: number; to: number }[] = [];
   let i = 0;
-  while (i < source.length) {
+  while (i < source.length && found.length < limit) {
     if (!isAlnum(source[i])) {
       i += 1;
       continue;
@@ -557,21 +615,41 @@ function hexTokenIn(text: string): { token: string; before: string; after: strin
     let j = i;
     while (j < source.length && isAlnum(source[j])) j += 1;
     const token = source.slice(i, j);
-    if (token.length >= 6 && token.length <= 40) {
-      let hex = true;
-      let digit = false;
-      for (const ch of token) {
-        if (!isHex(ch)) {
-          hex = false;
-          break;
-        }
-        if (isDigit(ch)) digit = true;
-      }
-      if (hex && digit) return { token, before: source.slice(0, i), after: source.slice(j) };
-    }
+    if (isHashToken(token)) found.push({ token, from: i, to: j });
     i = j;
   }
-  return null;
+  return found;
+}
+
+/** The first token of 6 to 40 lowercase hex characters that holds a digit, with the text before and
+ * after it. */
+function hexTokenIn(text: string): { token: string; before: string; after: string } | null {
+  const source = cap(text, MAX_TEXT);
+  const first = hexTokensIn(source, 1)[0];
+  return first === undefined
+    ? null
+    : { token: first.token, before: source.slice(0, first.from), after: source.slice(first.to) };
+}
+
+/** True when the text holds nothing but hash tokens and the separators between them (commas, `/`, `&`,
+ * semicolons, "and", "or"), so a Commits list leaves no note behind. One pass over the capped text. */
+function isHashList(text: string): boolean {
+  const source = cap(text, MAX_TEXT);
+  let i = 0;
+  while (i < source.length) {
+    const ch = source[i];
+    if (!isAlnum(ch)) {
+      if (ch !== ' ' && ch !== ',' && ch !== ';' && ch !== '&' && ch !== '/' && ch !== '\n') return false;
+      i += 1;
+      continue;
+    }
+    let j = i;
+    while (j < source.length && isAlnum(source[j])) j += 1;
+    const token = source.slice(i, j);
+    if (!isHashToken(token) && token !== 'and' && token !== 'or') return false;
+    i = j;
+  }
+  return true;
 }
 
 function stripNoteLead(text: string): string {
@@ -744,7 +822,7 @@ export function extractReviewReport(rawBody: string): ReviewReportBody {
 // REVIEW-FIX.md
 // ---------------------------------------------------------------------------
 
-const SHORT_FIX_KEYS = ['commit', 'files modified', 'files', 'file'];
+const SHORT_FIX_KEYS = ['commit', 'commits', 'files modified', 'files', 'file'];
 
 type FixMode = 'fixed' | 'skipped' | 'deferred' | null;
 
@@ -866,15 +944,18 @@ export function extractReviewFixReport(rawBody: string): ReviewFixReportBody {
         return { ...field, lines: field.lines.slice(0, blank) };
       });
       const pick = (...keys: string[]): Field | undefined => fields.find((f) => keys.includes(f.key));
-      const commitField = pick('commit');
+      const commitField = pick('commit', 'commits');
       let commit: string | null = null;
       let commitNote: string | null = null;
+      let commits: string[] = [];
       if (commitField !== undefined) {
         const text = fieldText(commitField).split('`').join('');
         const found = hexTokenIn(text);
         if (found !== null) {
           commit = found.token;
-          const note = squash(`${found.before} ${found.after}`);
+          commits = hexTokensIn(text, MAX_COMMITS).map((hit) => hit.token);
+          // A plain list of hashes leaves no note; any other wording keeps today's note.
+          const note = isHashList(text) ? '' : squash(`${found.before} ${found.after}`);
           commitNote = note === '' ? null : note;
         } else {
           const note = squash(text);
@@ -889,6 +970,7 @@ export function extractReviewFixReport(rawBody: string): ReviewFixReportBody {
         title: cap(title, 400),
         outcome: mode,
         commit,
+        commits,
         commitNote,
         files,
         note: noteField === undefined ? blocksOf([...read.lead, ...spill]) : blocksOf(noteField.lines),
