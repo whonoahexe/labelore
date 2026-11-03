@@ -378,7 +378,10 @@
               "Rationale": "The highest-severity project risk is overfitting to `~/studio-portal`'s shape",
               "Outcome": "— Pending"
             }
-          ]
+          ],
+          "project": {
+            "milestone": null
+          }
         }
       },
       ".planning/REQUIREMENTS.md": {

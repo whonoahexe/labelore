@@ -26616,8 +26616,10 @@ button.research-step-chip:hover {
 }
 
 /* The project page's strip, inside the masthead under a top hairline: the goal cell (09-08) and the four
-   count tiles. With no goal cell the four tiles share the row equally; under 42rem they form a 2 by 2 grid.
-   Each tile is a link: a status-square, the numeral (mono, Heading size), a label and a mono sub-line. */
+   count tiles. With no goal cell the four tiles share the row equally; with one the goal takes twice a
+   tile's width, and with no tiles the goal spans the strip. Under 42rem the goal cell takes a row and the
+   tiles form a 2 by 2 grid. Each tile is a link: a status-square, the numeral (mono, Heading size), a label
+   and a mono sub-line. */
 .view-project-strip {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -26627,6 +26629,41 @@ button.research-step-chip:hover {
 
 .view-project-strip[data-goal='true'] {
   grid-template-columns: minmax(0, 2fr) repeat(4, minmax(0, 1fr));
+}
+
+.view-project-strip[data-tiles='false'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* The goal cell is the strip's first child, so no tile is a :first-child while it is present. */
+.view-project-goal {
+  display: grid;
+  gap: var(--space-1-5);
+  align-content: start;
+  min-width: 0;
+  padding: var(--space-4) var(--space-4) var(--space-4) 0;
+}
+
+.view-project-goal-label {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+.view-project-goal-text {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  font-size: var(--fs-4);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
 .view-project-tile {
@@ -26677,12 +26714,32 @@ button.research-step-chip:hover {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .view-project-strip[data-tiles='false'] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .view-project-goal {
+    grid-column: 1 / -1;
+    padding: var(--space-4) 0;
+    border-bottom: 1px solid var(--border);
+  }
+
   .view-project-tile:first-child {
     padding-left: var(--space-4);
     border-left: 1px solid var(--border);
   }
 
   .view-project-tile:nth-child(odd) {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .view-project-strip[data-goal='true'] .view-project-tile:nth-child(odd) {
+    padding-left: var(--space-4);
+    border-left: 1px solid var(--border);
+  }
+
+  .view-project-strip[data-goal='true'] .view-project-tile:nth-child(even) {
     padding-left: 0;
     border-left: 0;
   }

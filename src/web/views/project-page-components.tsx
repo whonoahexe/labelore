@@ -2,8 +2,9 @@
 // its own head, like the REVIEW, TODO and NOTE pages (docs/design-language.md records the deviation from
 // ArtifactHeader's cover slot). A full-width masthead on the card veil: identity on the left (the eyebrow,
 // the one h1, what the project is, the shared warning chip and the page tools - View / Source and copy
-// path) and the core value in a framed card on the right, then the strip under it with the four count
-// tiles, each a link into traceability on exactly the rows it counts.
+// path) and the core value in a framed card on the right, then the strip under it: the goal cell first
+// ("Now building {milestone}" and the Current Milestone's goal, 09-08), then the four count tiles, each a
+// link into traceability on exactly the rows it counts.
 // Every string derived from the document renders only through `LeadText` (tokenizeInline output mapped to
 // React nodes) or as plain React text - never React's raw-HTML injection prop (T-09-14). The only `Link`
 // targets are urls the server's `projectContext` built from the fixed state list (T-09-15). The squares
@@ -73,12 +74,21 @@ export function ProjectPageView({ model, path, mode, onModeChange, chip }: Proje
         {strip !== null ? (
           <nav
             className="view-project-strip"
-            aria-label="Requirements by state"
-            data-goal={strip.goal !== null ? 'true' : 'false'}
+            aria-label="Milestone goal and requirements by state"
+            data-goal={strip.goalLabel !== null ? 'true' : 'false'}
+            data-tiles={strip.tiles !== null ? 'true' : 'false'}
           >
-            {strip.tiles.map((tile) => (
-              <Tile key={tile.state} tile={tile} />
-            ))}
+            {strip.goalLabel !== null ? (
+              <div className="view-project-goal">
+                <p className="view-project-goal-label">{strip.goalLabel}</p>
+                {strip.goal !== null ? (
+                  <p className="view-project-goal-text">
+                    <LeadText text={strip.goal} />
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+            {strip.tiles?.map((tile) => <Tile key={tile.state} tile={tile} />)}
           </nav>
         ) : null}
       </header>
