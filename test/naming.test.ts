@@ -4,6 +4,7 @@ import {
   parsePlanFileName,
   parsePhaseArtifactName,
   parseQuickDirName,
+  parseReviewFixName,
   parseMilestoneFileName,
   parseMilestonePhasesDirName,
   parseMilestoneQuickDirName,
@@ -84,6 +85,43 @@ describe('parsePhaseArtifactName', () => {
       phase: '01',
       artifact: 'ROUTE-INVENTORY',
     });
+  });
+});
+
+describe('parseReviewFixName', () => {
+  it('parses a suffixed phase fix file, keeping the suffix as written', () => {
+    expect(parseReviewFixName('03-REVIEW-FIX-backend.md')).toEqual({
+      matched: true,
+      prefix: '03',
+      prefixKind: 'phase',
+      suffix: 'backend',
+    });
+    expect(parseReviewFixName('12A-REVIEW-FIX-Web-UI.md')).toEqual({
+      matched: true,
+      prefix: '12A',
+      prefixKind: 'phase',
+      suffix: 'Web-UI',
+    });
+    expect(parseReviewFixName('2.1-REVIEW-FIX-api.md')).toMatchObject({ prefix: '2.1', prefixKind: 'phase' });
+  });
+
+  it('parses the quick-task form', () => {
+    expect(parseReviewFixName('260726-unp-REVIEW-FIX-frontend.md')).toEqual({
+      matched: true,
+      prefix: '260726-unp',
+      prefixKind: 'quick',
+      suffix: 'frontend',
+    });
+  });
+
+  it('does not match the plain fix file, an empty suffix, an over-long suffix or a shard review', () => {
+    expect(parseReviewFixName('03-REVIEW-FIX.md')).toEqual({ matched: false });
+    expect(parseReviewFixName('03-REVIEW-FIX-.md')).toEqual({ matched: false });
+    expect(parseReviewFixName(`03-REVIEW-FIX-${'a'.repeat(41)}.md`)).toEqual({ matched: false });
+    expect(parseReviewFixName(`03-REVIEW-FIX-${'a'.repeat(40)}.md`)).toMatchObject({ matched: true });
+    expect(parseReviewFixName('03-REVIEW-shard-A.md')).toEqual({ matched: false });
+    expect(parseReviewFixName('03-REVIEW-FIX--x.md')).toEqual({ matched: false });
+    expect(parseReviewFixName('03-REVIEW-FIX-a_b.md')).toEqual({ matched: false });
   });
 });
 
