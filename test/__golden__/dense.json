@@ -380,7 +380,24 @@
             }
           ],
           "project": {
-            "milestone": null
+            "milestone": null,
+            "constraints": [
+              {
+                "name": "Fixture",
+                "text": "Every structural claim traces to a `gsd-core` template line or a `bin/lib/*.cjs` source, recorded in `fixtures/README.md` — never to a real project."
+              },
+              {
+                "name": "Fixture",
+                "text": "Deliberate corruption (a tab-broken YAML block, a trailing-comma JSON file) sits among healthy files, isolated per D-02."
+              }
+            ],
+            "outOfScope": [
+              {
+                "name": "",
+                "text": "Anything that requires a real backend — this fixture never runs code, it only exists to be parsed."
+              }
+            ],
+            "lastUpdated": "2026-08-22 after initialization"
           }
         }
       },

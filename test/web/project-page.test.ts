@@ -262,3 +262,89 @@ describe('ProjectPageView strip', () => {
     expect(out).not.toContain('view-project-strip');
   });
 });
+
+describe('composeProjectPage margin', () => {
+  it('Lendshed: three constraints, two exclusions, the last-updated line and the dashboard url', () => {
+    const context = buildProjectContext(lendshed.presentation);
+    const page = composeProjectPage(inputOf(context, lendshedStructured()))!;
+    expect(page.margin).not.toBeNull();
+    expect(page.margin!.constraints.map((c) => c.name)).toEqual(['Tech stack', 'Security', 'Hardware']);
+    expect(page.margin!.outOfScope.map((c) => c.name)).toEqual(['Payments and deposits', 'Mobile app']);
+    expect(page.margin!.lastUpdated).toBe('2026-04-09 after Phase 3 — Account Admin & Sessions');
+    expect(page.margin!.dashboardUrl).toBe('/');
+  });
+
+  it('is null when both lists are empty and lastUpdated is null', () => {
+    const context = buildProjectContext(lendshed.presentation);
+    const structured = { project: { milestone: null, constraints: [], outOfScope: [], lastUpdated: null } };
+    expect(composeProjectPage(inputOf(context, structured))!.margin).toBeNull();
+    expect(composeProjectPage(inputOf(context))!.margin).toBeNull();
+  });
+
+  it('a last-updated line alone still makes a margin', () => {
+    const context = buildProjectContext(lendshed.presentation);
+    const page = composeProjectPage(inputOf(context, { project: { constraints: [], outOfScope: [], lastUpdated: '2026-01-01' } }))!;
+    expect(page.margin).toEqual({ constraints: [], outOfScope: [], lastUpdated: '2026-01-01', dashboardUrl: '/' });
+  });
+
+  it('drops malformed entries, keeps a nameless one with its text', () => {
+    const context = buildProjectContext(lendshed.presentation);
+    const project = { constraints: [null, 4, { name: 1, text: 2 }, { name: '', text: 'Kept' }, { name: 'N', text: 'T' }] };
+    const page = composeProjectPage(inputOf(context, { project }))!;
+    expect(page.margin!.constraints).toEqual([
+      { name: '', text: 'Kept' },
+      { name: 'N', text: 'T' },
+    ]);
+  });
+
+  it('a PROJECT.md whose only recognised content is structured.project still composes', () => {
+    const nameOnly: ProjectContext = { name: 'Bare', tagline: null, lead: null, coreValue: null, counts: null, tiles: null, dashboardUrl: '/' };
+    const page = composeProjectPage(inputOf(nameOnly, { project: { outOfScope: [{ name: 'X', text: 'y' }] } }));
+    expect(page).not.toBeNull();
+    expect(page!.strip).toBeNull();
+    expect(page!.margin!.outOfScope).toEqual([{ name: 'X', text: 'y' }]);
+  });
+});
+
+describe('ProjectPageView margin', () => {
+  const page = (): ComposedProjectPage => composeProjectPage(inputOf(buildProjectContext(lendshed.presentation), lendshedStructured()))!;
+
+  it('lists "Bound by · 3" and "Will not do · 2" with names in dt and text in dd', () => {
+    const out = markup(page());
+    expect(out).toContain('>Bound by · 3</h2>');
+    expect(out).toContain('>Will not do · 2</h2>');
+    expect(out).toContain('<dt class="view-project-rule-name"><span>Tech stack</span></dt>');
+    expect(out).toContain('view-project-rule-text');
+    expect(out).toContain('data-refused="true"');
+  });
+
+  it('renders one aria-pressed toggle, closed by default, and the footer', () => {
+    const out = markup(page());
+    expect(out).toContain('aria-pressed="false"');
+    expect(out).toContain('>Read in full<');
+    expect(out).toContain('data-full="false"');
+    expect(out).toContain('Last updated 2026-04-09 after Phase 3');
+    expect(out).toContain('href="/"');
+    expect(out).toContain('Where the work is now');
+  });
+
+  it('puts the margin after the masthead, in the body', () => {
+    const out = markup(page());
+    expect(out.indexOf('view-project-masthead')).toBeLessThan(out.indexOf('view-project-body'));
+    expect(out.indexOf('view-project-body')).toBeLessThan(out.indexOf('view-project-margin"'));
+  });
+
+  it('omits the body and the margin when there is nothing to show', () => {
+    const out = markup(composeProjectPage(inputOf(buildProjectContext(lendshed.presentation)))!);
+    expect(out).not.toContain('view-project-body');
+    expect(out).not.toContain('Where the work is now');
+  });
+
+  it('renders a nameless constraint as its text alone', () => {
+    const context = buildProjectContext(lendshed.presentation);
+    const out = markup(composeProjectPage(inputOf(context, { project: { constraints: [{ name: '', text: 'Plain rule' }] } }))!);
+    expect(out).toContain('Plain rule');
+    expect(out).toContain('>Bound by · 1</h2>');
+    expect(out).not.toContain('Will not do');
+  });
+});

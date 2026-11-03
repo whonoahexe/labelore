@@ -26480,7 +26480,8 @@ button.research-step-chip:hover {
   align-items: center;
 }
 
-/* Phase 9 (09-07): the project page, sketch 041 B, and the shared status-square. */
+/* phase-09-project-page:start */
+/* Phase 9 (09-07, 09-08): the project page, sketch 041 B, and the shared status-square. */
 
 /* The shared status-square: a square mark whose tone says finished, waiting, missing or neutral. It
    always sits beside a word or carries an aria-label. The size is one custom property. */
@@ -26744,3 +26745,125 @@ button.research-step-chip:hover {
     border-left: 0;
   }
 }
+
+/* The project page's body (09-08, sketch 041 B): the main column (the decision spine, 09-09) and the margin
+   - what binds the project, what it will not do, when it was last updated and the way back to the
+   dashboard. The margin is 22rem and sticks under the shell header; under 42rem the body is one column and
+   the margin follows the main column, no longer sticky. Without a margin the main column fills the page. */
+.view-project-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22rem;
+  gap: var(--space-fluid-9);
+  align-items: start;
+  padding: 0 var(--space-fluid-3) var(--space-fluid-10);
+}
+
+.view-project-body[data-margin='false'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.view-project-main {
+  display: grid;
+  gap: var(--space-fluid-9);
+  min-width: 0;
+}
+
+.view-project-margin {
+  position: sticky;
+  top: var(--space-22);
+  display: grid;
+  gap: var(--space-8);
+  align-self: start;
+  min-width: 0;
+}
+
+.view-project-rules {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.view-project-rules-h {
+  margin: 0;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+.view-project-rules-list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.view-project-rule {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.view-project-rule-name {
+  margin: 0;
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+.view-project-rules[data-refused='true'] .view-project-rule-name {
+  text-decoration: line-through;
+  text-decoration-color: var(--muted-foreground);
+  text-decoration-thickness: 1px;
+}
+
+.view-project-rule-text {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: var(--fs-3);
+  line-height: var(--lh-normal);
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.view-project-margin[data-full='true'] .view-project-rule-text {
+  display: block;
+  overflow: visible;
+}
+
+.view-project-margin-toggle {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.view-project-foot {
+  display: grid;
+  gap: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.view-project-foot .text-link {
+  justify-self: start;
+}
+
+@media (max-width: 42rem) {
+  .view-project-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .view-project-margin {
+    position: static;
+  }
+}
+/* phase-09-project-page:end */
