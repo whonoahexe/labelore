@@ -8,6 +8,7 @@
 // `traceabilityStateUrl` from the fixed state list and the payload's own milestone version (T-09-15).
 import type { ProjectPresentation } from '../server/project-presentation.ts';
 import { projectSectionLead, splitProjectTitle } from './dashboard-head.ts';
+import { requirementStateCounts, traceabilityStateUrl } from './traceability.ts';
 import type { RequirementState, RequirementStateCounts } from './traceability.ts';
 
 /** One count tile: a requirement state, its number and the traceability address that lists those rows. */
@@ -38,19 +39,79 @@ export interface ProjectContext {
   dashboardUrl: '/';
 }
 
+/** A tile's tone: the numbered states take their documented tone, and a count of 0 is always quiet. */
+function toneOf(count: number, tone: ProjectTile['tone']): ProjectTile['tone'] {
+  return count === 0 ? 'quiet' : tone;
+}
+
+/** The shipped-before breakdown, oldest first ("v1.0 45 · v1.1 11"), or null when no milestone shipped. */
+function breakdownOf(counts: RequirementStateCounts): string | null {
+  if (counts.validatedByMilestone.length === 0) return null;
+  return [...counts.validatedByMilestone]
+    .sort((left, right) => left.version.localeCompare(right.version, undefined, { numeric: true }))
+    .map((entry) => `${entry.version} ${entry.count}`)
+    .join(' \u00b7 ');
+}
+
+/** The four count tiles (D-05): every number from `requirementStateCounts`, every link from
+ * `traceabilityStateUrl` with the milestone only on the two that describe the active tier. */
+function tilesOf(counts: RequirementStateCounts): ProjectTile[] {
+  const inMilestone = counts.milestone === null ? 'in the current milestone' : `in ${counts.milestone}`;
+  const breakdown = breakdownOf(counts);
+  return [
+    {
+      state: 'complete',
+      count: counts.complete,
+      label: 'complete',
+      sub: inMilestone,
+      title: null,
+      url: traceabilityStateUrl('complete', counts.milestone),
+      tone: toneOf(counts.complete, 'complete'),
+    },
+    {
+      state: 'pending',
+      count: counts.pending,
+      label: 'pending',
+      sub: inMilestone,
+      title: null,
+      url: traceabilityStateUrl('pending', counts.milestone),
+      tone: 'quiet',
+    },
+    {
+      state: 'validated',
+      count: counts.validated,
+      label: 'shipped before',
+      sub: breakdown ?? 'none yet',
+      title: breakdown,
+      url: traceabilityStateUrl('validated'),
+      tone: toneOf(counts.validated, 'complete'),
+    },
+    {
+      state: 'out-of-scope',
+      count: counts.outOfScope,
+      label: 'out of scope',
+      sub: 'by choice',
+      title: null,
+      url: traceabilityStateUrl('out-of-scope'),
+      tone: 'quiet',
+    },
+  ];
+}
+
 /** The context for the root PROJECT.md page. */
 export function buildProjectContext(presentation: ProjectPresentation): ProjectContext {
   const project = presentation.artifacts.find(
     (artifact) => artifact.kind === 'project' && artifact.location === 'root',
   );
   const { name, tagline } = splitProjectTitle(project ? presentation.projectName : null, presentation.rootPath);
+  const counts = requirementStateCounts(presentation);
   return {
     name,
     tagline,
     lead: projectSectionLead(presentation, /^what this is\b/i),
     coreValue: projectSectionLead(presentation, /^core value\b/i),
-    counts: null,
-    tiles: null,
+    counts,
+    tiles: counts === null ? null : tilesOf(counts),
     dashboardUrl: '/',
   };
 }
