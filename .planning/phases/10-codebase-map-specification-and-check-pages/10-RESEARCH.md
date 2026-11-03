@@ -597,27 +597,35 @@ The Lendshed AI feature must be invented (the project is a tool library); keep i
 | A9 | Treating a full-sha-with-letters as a string and a numeric `last_mapped_commit` as "no commit" is acceptable | Pitfall 3 | A hand-made all-digit sha is not shown; real HEAD shas virtually never parse as numbers |
 | A10 | The Lendshed AI feature can be invented inside an existing phase folder without a ROADMAP edit | Coverage section | Some pinned total breaks; fixed by running the gate |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Which concern-counting rule survives the real maps? (A1, C3)**
+Resolution markers added at plan time (revision 1, 2026-11-04). Five are RESOLVED by a plan or decision; Q1 is DEFERRED to a named checkpoint with its resume condition.
+
+1. **Which concern-counting rule survives the real maps? (A1, C3)** — **DEFERRED to the 10-03 checkpoint.**
    - What we know: the template shape; the UI-SPEC rule does not fit it.
    - What's unclear: how real LLM-authored CONCERNS vary (nested bullets, tables, `###`).
    - Recommendation: generate the three fresh maps first (D-03) and read them for shape before the Concerns lift is frozen; the plan should make the rule a data table with a fixture per shape.
+   - Resolution: DEFERRED. 10-03 Task 2 reads the three fresh maps and records the rule in 10-03-SUMMARY.md "Concern-counting rule" (confirmed as is, or the adjusted order). Resume condition: that section exists; 10-05 carries it as a precondition and implements it verbatim, pinned per section on the Tidemark fixture (10-24).
 
-2. **Who runs `/gsd-map-codebase` on labelore, cinedise-portal and duet, and when?**
+2. **Who runs `/gsd-map-codebase` on labelore, cinedise-portal and duet, and when?** — **RESOLVED.**
    - What we know: none of the three `.planning/codebase/` folders exists (checked), mapper agents are spawned by that command, and CONTEXT says the user accepted the writes.
    - What's unclear: ordering against `/gsd-plan-phase 10` and the first sketches.
    - Recommendation: a human-action checkpoint (or an explicit pre-plan step) at the start; never copy any output into a fixture. The labelore map also fills the "Architecture not yet mapped" gap in CLAUDE.md.
+   - Resolution: D-03; 10-03 Task 1 is a blocking-human `checkpoint:human-action` in wave 1 (the user runs the mapper in all three repositories), and 10-05, 10-06 and 10-24 depend on 10-03.
 
-3. **Sketch timing.**
+3. **Sketch timing.** — **RESOLVED.**
    - What we know: about 14 sketches (frame, up to 5 panels, six types); numbers start at 042; Phase 9 sketched one page before planning and built the rest from analogs.
    - Recommendation: plan the recognition, presentation, shell and fixture layers now (they do not depend on a sketch), and put one sketch checkpoint plus one build plan per page after them, each preceded by `/gsd-sketch` and followed by the beside-the-sketch screenshot check. Do not plan view internals for a page before its sketch winner exists.
+   - Resolution: D-14 and D-15, through the wave sequence. The fresh maps (10-03) and the made-up examples (10-24, 10-04, 10-07) come before the sketches that read them. The sketch plans 10-06, 10-09, 10-11, 10-13, 10-15 and 10-17 each end in a blocking-human winner choice, and every build plan depends on its sketch plan and checks its result beside the winner.
 
-4. **Reviewer agreement and disagreement rules (UI-SPEC open item 4).** Recommendation in Pitfall 13; the plan records the exact normalisation and tests it.
+4. **Reviewer agreement and disagreement rules (UI-SPEC open item 4).** — **RESOLVED.** Recommendation in Pitfall 13; the plan records the exact normalisation and tests it.
+   - Resolution: 10-22 Task 2 defines normaliseConcern and the agreement and stance rules, records them in 10-22-SUMMARY.md under "UI-SPEC open item 4", and pins them on the disagreeing 04-REVIEWS fixture.
 
-5. **Where a withheld value can leak (UI-SPEC open item 1).** Answer: Source mode (the raw file), search snippets and the index (raw body), and `/documents` HTML. Phase 6 masks only `config.json`. Record it as a follow-up; do not widen this phase.
+5. **Where a withheld value can leak (UI-SPEC open item 1).** — **RESOLVED** by the inline answer. Answer: Source mode (the raw file), search snippets and the index (raw body), and `/documents` HTML. Phase 6 masks only `config.json`. Record it as a follow-up; do not widen this phase.
+   - Resolution: as answered. For USER-SETUP, 10-08 (withholdDocumentInView) and 10-19 also keep the `/documents` HTML out of View mode, per D-11 as written. 10-19 records the remaining doors (Source mode, search) in its summary as a follow-up.
 
-6. **Should the made-up marker rule's kind set include the shapes map files and exclude `fixtures/dense`? (A8)** Recommend yes and yes.
+6. **Should the made-up marker rule's kind set include the shapes map files and exclude `fixtures/dense`? (A8)** — **RESOLVED.** Recommend yes and yes.
+   - Resolution: 10-02 marks Shapes' three map documents and exempts fixtures/dense (with its own ledger, fixtures/README.md, as its index) and this repository by name in EXEMPT_ROOTS (A8).
 
 ## Environment Availability
 
