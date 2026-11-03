@@ -15,6 +15,9 @@ async function source(path: string): Promise<string> {
 const RAW_HTML_PROP = 'dangerously' + 'SetInnerHTML';
 const START = '/* quick-261017-k44:start */';
 const END = '/* quick-261017-k44:end */';
+// Phase 9 (09-12): the review ledger's strip, shared head and Fix tab are the same page's later additive block.
+const LEDGER_START = '/* phase-09-review-ledger:start */';
+const LEDGER_END = '/* phase-09-review-ledger:end */';
 
 function usesRawHtmlProp(text: string): boolean {
   return text.includes(RAW_HTML_PROP);
@@ -72,6 +75,15 @@ function reviewBlock(css: string): string {
   const start = css.indexOf(START);
   const end = css.indexOf(END);
   expect(start).toBeGreaterThan(-1);
+  expect(end).toBeGreaterThan(start);
+  return css.slice(start, end);
+}
+
+function ledgerBlock(css: string): string {
+  expect(css.split(LEDGER_START).length - 1).toBe(1);
+  expect(css.split(LEDGER_END).length - 1).toBe(1);
+  const start = css.indexOf(LEDGER_START);
+  const end = css.indexOf(LEDGER_END);
   expect(end).toBeGreaterThan(start);
   return css.slice(start, end);
 }
@@ -200,7 +212,9 @@ describe('review view contract - the real sources', () => {
     expect(css.split(END).length - 1).toBe(1);
     const block = reviewBlock(css);
     expect(cssViolations(block)).toEqual([]);
-    const outside = css.replace(block, '');
+    const ledger = ledgerBlock(css);
+    expect(cssViolations(ledger)).toEqual([]);
+    const outside = css.replace(block, '').replace(ledger, '');
     expect(outside).not.toContain('.view-review-');
     expect(block).toContain('.view-review-page');
   });

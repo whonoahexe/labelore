@@ -87,6 +87,9 @@ import { VerificationBoardView } from '../views/verification-board-components.ts
 import type { ComposedUiReview } from '../views/ui-review.ts';
 import { UiReviewIntroMeta, UiReviewView } from '../views/ui-review-components.tsx';
 import type { ReviewContext } from '../../presentation/review-context.ts';
+import type { LedgerContext } from '../../presentation/review-ledger.ts';
+import type { ComposedReviewLedger } from '../views/review-ledger.ts';
+import { FixTabView, fixHeaderProps, ledgerSwitcher } from '../views/review-ledger-components.tsx';
 import type { TodoContext } from '../../presentation/todo-context.ts';
 import type { NoteContext } from '../../presentation/note-context.ts';
 import type { ProjectContext } from '../../presentation/project-context.ts';
@@ -195,6 +198,8 @@ export interface ArtifactDocumentResponse {
   manualChecks?: PlanManualChecks | null;
   /** quick-261017-k44: a REVIEW's phase name and sibling REVIEW-FIX (null for every other document). */
   reviewContext?: ReviewContext | null;
+  /** Phase 9 (09-12): the review ledger's members, head and fix sections (null for every document outside it). */
+  ledgerContext?: LedgerContext | null;
   /** quick-261023-61k: a todo's source notes and closing quick task link (null for every other document). */
   todoContext?: TodoContext | null;
   /** quick-261023-61l: the todos a note became or is related to (null for every other document). */
@@ -687,8 +692,12 @@ export function ArtifactPage({
       findSiblingArtifacts(presentationQuery.data, query.data?.artifact.path),
     [presentationQuery.data, query.data],
   );
+  // Phase 9 (09-12): a review-family file draws the ledger's tab strip and shared head first in the page, only
+  // once a second file exists (D-11); a plan pair keeps its own switch.
   const switcher =
-    pairSwitcher ?? quickPairSwitch(query.data?.artifact.path, route, siblingArtifacts);
+    pairSwitcher ??
+    quickPairSwitch(query.data?.artifact.path, route, siblingArtifacts) ??
+    ledgerSwitcher(query.data?.ledgerContext ?? null);
   const viewInput = useMemo<ViewInput | null>(() => {
     if (!query.data) return null;
     return {
@@ -703,6 +712,7 @@ export function ArtifactPage({
       headings: shown?.headings ?? [],
       siblingArtifacts,
       reviewContext: query.data.reviewContext ?? null,
+      ledgerContext: query.data.ledgerContext ?? null,
       manualChecks: query.data.manualChecks ?? null,
       todoContext: query.data.todoContext ?? null,
       noteContext: query.data.noteContext ?? null,
@@ -803,6 +813,13 @@ export function ArtifactPage({
   const reviewThreads = useMemo<ComposedReviewThreads | null>(() => {
     if (!manifest || !viewInput) return null;
     return manifest.reviewThreads?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
+  // Phase 9 (09-12): the review ledger's Fix tab, when the resolved manifest opts into one - `null` for every
+  // other kind and for a payload from a server that predates `ledgerContext` (the promoted-block view then
+  // renders).
+  const reviewLedger = useMemo<ComposedReviewLedger | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.reviewLedger?.(viewInput) ?? null;
   }, [manifest, viewInput]);
   // quick-261001-qk6 (sketch-014 winner): the UI-SPEC contract page, when the resolved manifest
   // opts into one — `null` for every other kind, and for a contract with none of the recognised
@@ -907,6 +924,7 @@ export function ArtifactPage({
     verificationBoard !== null ||
     uiReview !== null ||
     reviewThreads !== null ||
+    reviewLedger !== null ||
     uiSpec !== null ||
     uatSession !== null ||
     learningsRetro !== null ||
@@ -1214,7 +1232,13 @@ export function ArtifactPage({
   // The WINDOWS ledger's header override rides the same one-prop spread, and its lead band carries the
   // counts the metadata disclosure would repeat, so View mode hides the disclosure for it.
   const windowsCover = windowsLedger && mode === 'view' ? windowsLedger : null;
-  const headerOverride = validationHeader ?? (windowsCover ? windowsHeaderProps(windowsCover, artifact.title) : null);
+  // The Fix tab's header override rides the same one-prop spread; its sections carry the counts the
+  // metadata disclosure would repeat, so View mode hides the disclosure for it.
+  const fixCover = reviewLedger && mode === 'view' ? reviewLedger : null;
+  const headerOverride =
+    validationHeader ??
+    (windowsCover ? windowsHeaderProps(windowsCover, artifact.title) : null) ??
+    (fixCover ? fixHeaderProps(fixCover, artifact.title) : null);
   return (
     <main className="artifact-page page-stack">
         {switcher}
@@ -1296,7 +1320,7 @@ export function ArtifactPage({
         // Winner lists the frontmatter as source-only — View mode hides the disclosure (Source
         // mode keeps it). The UAT page's cover carries its facts and its "In the source only"
         // strip names the frontmatter, so it hides the disclosure the same way.
-        specCover || uatCover || windowsCover ? null : (
+        specCover || uatCover || windowsCover || fixCover ? null : (
           <details className="artifact-metadata">
             <summary>
               Document metadata <span>{panels.length} sections</span>
@@ -1393,6 +1417,8 @@ export function ArtifactPage({
         <UatSessionView key={artifact.path} session={uatSession} onShowSource={showSource} title={artifact.title} />
       ) : windowsCover ? (
         <WindowsLedgerView key={artifact.path} model={windowsCover} />
+      ) : fixCover ? (
+        <FixTabView key={artifact.path} model={fixCover} />
       ) : viewAvailable && mode === 'view' && composed && shown ? (
         <ViewReader title={artifact.title} composed={composed} shown={shown} />
       ) : (

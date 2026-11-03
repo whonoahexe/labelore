@@ -17,7 +17,7 @@ import type { ProjectPresentation } from '../../src/server/project-presentation.
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 import { composeReviewThreads } from '../../src/web/views/review-threads.ts';
 import { ReviewThreadsView } from '../../src/web/views/review-threads-components.tsx';
-import { fxRead } from '../helpers/fixture-project.ts';
+import { fxRead, loadFixtureProject } from '../helpers/fixture-project.ts';
 
 const ROOT = '/project';
 const DIR = '.planning/phases/02-container-docs';
@@ -98,6 +98,45 @@ describe('buildReviewContext', () => {
         buildReviewContext(presentation as unknown as ProjectPresentation, { artifactPreviews: new Map() } as never, REVIEW),
       ).not.toThrow();
     }
+  });
+});
+
+describe('buildReviewContext - the ledger\'s fix files (09-12)', () => {
+  const PHASE_03 = '.planning/phases/03-account-admin-and-sessions';
+
+  it('merges every shard fix report of Lendshed phase 3 into the one fix the review reads', async () => {
+    const { presentation, registry } = await loadFixtureProject();
+    const context = buildReviewContext(presentation, registry, `${PHASE_03}/03-REVIEW.md`);
+    // The first member's path, url and frontmatter; every member's entries and deferred items.
+    expect(context.fix?.path).toBe(`${PHASE_03}/03-REVIEW-FIX-backend.md`);
+    expect(context.fix?.url).toBe('/v1.1/phase-3/review-fix-backend');
+    expect(context.fix?.frontmatter).toMatchObject({ status: 'all_fixed', fixed: 2, skipped: 0 });
+    const entries = context.fix?.report?.entries ?? [];
+    expect(entries.flatMap((entry) => entry.ids)).toEqual(['WR-01', 'WR-03', 'WR-02', 'IN-09', 'IN-03']);
+    expect(entries.map((entry) => entry.outcome)).toEqual(['fixed', 'fixed', 'fixed', 'fixed', 'skipped']);
+  });
+
+  it('leaves a phase with one plain fix file exactly as it was: that file, unmerged', async () => {
+    const { presentation, registry } = await loadFixtureProject();
+    const path = '.planning/phases/01-member-sign-in-sessions';
+    const context = buildReviewContext(presentation, registry, `${path}/01-REVIEW.md`);
+    const fixArtifact = presentation.artifacts.find((artifact) => artifact.path === `${path}/01-REVIEW-FIX.md`);
+    expect(context.fix?.path).toBe(`${path}/01-REVIEW-FIX.md`);
+    expect(context.fix?.report).toEqual((fixArtifact?.structured as { reviewFix: unknown }).reviewFix);
+  });
+
+  it('serves ledgerContext on the review and on each of its fix files, and null elsewhere', async () => {
+    const snapshot = await new PlanningRepository(new InMemoryPlanningFilesystem(pairFiles()), ROOT).load();
+    const app = createApp({ getSnapshot: () => snapshot }, true, '.');
+    const presentation = (await (await app.request('/api/presentation')).json()) as ProjectPresentation;
+    const keyOf = (path: string): string => presentation.artifacts.find((artifact) => artifact.path === path)!.key;
+    const ledgerOf = async (path: string): Promise<{ members: { path: string }[] } | null> =>
+      ((await (await app.request(`/api/documents?route=${encodeURIComponent(keyOf(path))}`)).json()) as {
+        ledgerContext: { members: { path: string }[] } | null;
+      }).ledgerContext;
+    expect((await ledgerOf(REVIEW))?.members.map((member) => member.path)).toEqual([REVIEW, FIX]);
+    expect((await ledgerOf(FIX))?.members.map((member) => member.path)).toEqual([REVIEW, FIX]);
+    expect(await ledgerOf('.planning/ROADMAP.md')).toBeNull();
   });
 });
 
