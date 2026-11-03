@@ -68,8 +68,12 @@ export interface MilestoneRecord {
   /** Days from start to ship, or null when nothing in the entry or the file dates it. */
   days: number | null;
   delivered: string | null;
+  /** `Phases completed:` as the entry wrote it, or null. */
+  phases: string | null;
   accomplishments: string[];
   stats: { text: string; items: string[] } | null;
+  /** Every other labelled field of the entry, in document order. */
+  extra: Array<{ label: string; text: string; items: string[] }>;
   gitRange: string | null;
   whatsNext: string | null;
 }
@@ -309,8 +313,10 @@ export function milestoneRecords(presentation: ProjectPresentation): Map<string,
       // Newest first, so the milestone shipped before this one is the next entry with a date.
       days: milestoneDays(entry, valid.slice(index + 1).find((older) => older.shipped)?.shipped ?? null),
       delivered: entry.delivered,
+      phases: entry.phases,
       accomplishments: [...entry.accomplishments],
       stats: entry.stats ? { text: entry.stats.text, items: [...entry.stats.items] } : null,
+      extra: entry.extra.map((field) => ({ label: field.label, text: field.text, items: [...field.items] })),
       gitRange: entry.gitRange,
       whatsNext: entry.whatsNext,
     });

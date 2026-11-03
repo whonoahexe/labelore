@@ -542,3 +542,59 @@ describe('buildRoadmapViewModel', () => {
     expect(view.history.map((flow) => flow.record?.days)).toEqual([8, 11, 6, null]);
   });
 });
+
+describe('milestone record fields (09 D-03, amended 2026-11-02)', () => {
+  it('copies the phases line and every other labelled field from the entry', () => {
+    const source = {
+      ...presentation([milestone('v1.0', true, [phase('01', { milestoneVersion: 'v1.0', archived: true })])]),
+      artifacts: [
+        milestonesArtifact([
+          entry('v1.0', {
+            phases: '4 (Phases 1-4)',
+            stats: { text: '68 days', items: ['140 commits'] },
+            extra: [
+              { label: 'Known Deferred Items', text: '3 items', items: ['one', 'two'] },
+              { label: 'Archives', text: '`milestones/v1.0-ROADMAP.md`', items: [] },
+            ],
+          }),
+        ]),
+      ],
+    };
+
+    const record = buildRoadmapViewModel(source).history[0].record;
+
+    expect(record).toMatchObject({
+      phases: '4 (Phases 1-4)',
+      accomplishments: ['First'],
+      stats: { text: '68 days', items: ['140 commits'] },
+      extra: [
+        { label: 'Known Deferred Items', text: '3 items', items: ['one', 'two'] },
+        { label: 'Archives', text: '`milestones/v1.0-ROADMAP.md`', items: [] },
+      ],
+    });
+  });
+
+  it('does not share the entry arrays with the record', () => {
+    const items = ['one'];
+    const source = {
+      ...presentation([milestone('v1.0', true, [])]),
+      artifacts: [milestonesArtifact([entry('v1.0', { extra: [{ label: 'Notes', text: '', items }] })])],
+    };
+    const record = buildRoadmapViewModel(source).history[0].record;
+    expect(record?.extra[0].items).toEqual(['one']);
+    expect(record?.extra[0].items).not.toBe(items);
+  });
+
+  it('carries the Lendshed v1.0 entry through: its phases line and its labelled fields', async () => {
+    const { FX_ROOT, loadProject } = await import('../helpers/fixture-project.ts');
+    const view = buildRoadmapViewModel((await loadProject(FX_ROOT)).presentation);
+    const record = view.history.find((flow) => flow.version === 'v1.0')?.record;
+    expect(record?.phases).toContain('4 (Phases 1-4)');
+    expect(record?.extra.map((field) => field.label)).toEqual(['Timeline', 'Requirements', 'Archives']);
+    // The entry's "### Key Accomplishments" and "### Known Deferred Items" headings are not labelled
+    // fields, so the handler folds their text and bullets into the Requirements field: they stay visible.
+    const requirements = record?.extra.find((field) => field.label === 'Requirements');
+    expect(requirements?.text).toContain('Known Deferred Items');
+    expect(requirements?.items.length).toBeGreaterThan(0);
+  });
+});
