@@ -3,6 +3,7 @@
 // here is VIEW-01's "empty" case: `resolveView` returns `null` and `artifact-page.tsx` falls back
 // to the existing source reader with no toggle.
 import type { DiscussionTopic } from '../../planning-repo/handlers/section-projection.ts';
+import { DESIGNED_ELSEWHERE_KINDS, designedElsewhereLead } from '../../presentation/root-redirects.ts';
 import { factsBlock } from './facts.ts';
 import { planTaskIndexBlock } from './plan-task-index.ts';
 import { fallbackManifest } from './fallback.ts';
@@ -374,10 +375,18 @@ export function resolveView(kind: string): { manifest: ViewManifest | null; reco
 export function resolveViewFor(
   kind: string,
   input: ViewInput,
+  options?: { sourceEscape?: boolean },
 ): { manifest: ViewManifest; recognized: boolean } {
   const resolved = resolveView(kind);
   if (resolved.manifest) {
     return { manifest: resolved.manifest, recognized: true };
+  }
+  // 09 D-01: a root document reached on its `?source=1` escape address is a deliberate raw-file read, so it
+  // is recognised and leads with a plain sentence. Without the flag (an archived copy whose milestone has
+  // no History block) it stays unrecognised and keeps its chip and notice (UI-SPEC section 6).
+  if (options?.sourceEscape === true && DESIGNED_ELSEWHERE_KINDS.has(kind)) {
+    const lead = designedElsewhereLead(kind);
+    if (lead !== null) return { manifest: { ...fallbackManifest(kind, input), lead }, recognized: true };
   }
   return { manifest: fallbackManifest(kind, input), recognized: false };
 }

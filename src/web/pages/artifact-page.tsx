@@ -11,6 +11,7 @@ import {
   type ArtifactWarningTone,
 } from '../../presentation/artifact-warning-tone.ts';
 import { artifactWarningSummary } from '../../presentation/artifact-warning-summary.ts';
+import { hasSourceFlag } from '../../presentation/root-redirects.ts';
 import {
   presentationRoutePatterns,
 } from '../../presentation/routes.ts';
@@ -630,7 +631,7 @@ export function ArtifactPage({
   route: routeOverride,
   switcher: pairSwitcher = null,
 }: { route?: string; switcher?: React.ReactNode } = {}): React.JSX.Element {
-  const { pathname: locationPath } = useProjectLocation();
+  const { pathname: locationPath, search } = useProjectLocation();
   const route = routeOverride ?? locationPath;
   const slug = useProjectSlug() ?? '';
   const query = useQuery({
@@ -704,8 +705,9 @@ export function ArtifactPage({
   // dispatch path either way (`resolveView` itself stays registry-only, for 05-06's completeness
   // test).
   const resolved = useMemo(
-    () => (viewInput ? resolveViewFor(viewInput.kind, viewInput) : null),
-    [viewInput],
+    () =>
+      viewInput ? resolveViewFor(viewInput.kind, viewInput, { sourceEscape: hasSourceFlag(search) }) : null,
+    [viewInput, search],
   );
   const manifest = resolved?.manifest ?? null;
   const recognized = resolved?.recognized ?? true;
