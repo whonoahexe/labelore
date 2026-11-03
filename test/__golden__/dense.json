@@ -928,7 +928,8 @@
               "waived": 0,
               "fixed": 0,
               "total": 2
-            }
+            },
+            "disagreement": null
           }
         }
       },

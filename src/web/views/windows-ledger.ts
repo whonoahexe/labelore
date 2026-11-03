@@ -53,6 +53,12 @@ interface WindowsReading {
   rows: WindowRow[];
   source: WindowsSource;
   stated: WindowsStated;
+  disagreement: { stated: number; listed: number } | null;
+}
+
+/** The line above the lead when the file's stated open count differs from the open rows it lists. */
+export function disagreementNotice(disagreement: { stated: number; listed: number }): string {
+  return `This file's counts disagree with its rows: it says ${disagreement.stated} open, the ledger lists ${disagreement.listed}. The rows are shown.`;
 }
 
 function countOf(value: unknown): number | null {
@@ -63,15 +69,19 @@ function countOf(value: unknown): number | null {
 function readingOf(structured: Record<string, unknown>): WindowsReading | null {
   const windows = structured.windows;
   if (typeof windows !== 'object' || windows === null) return null;
-  const { rows, source, stated } = windows as Record<string, unknown>;
+  const { rows, source, stated, disagreement } = windows as Record<string, unknown>;
   if (!Array.isArray(rows)) return null;
   const known = source === 'json' || source === 'table' || source === 'frontmatter' || source === 'none';
   if (!known) return null;
   const s = (typeof stated === 'object' && stated !== null ? stated : {}) as Record<string, unknown>;
+  const d = (typeof disagreement === 'object' && disagreement !== null ? disagreement : {}) as Record<string, unknown>;
+  const said = countOf(d.stated);
+  const listed = countOf(d.listed);
   return {
     rows: rows.filter((row): row is WindowRow => typeof row === 'object' && row !== null),
     source,
     stated: { open: countOf(s.open), waived: countOf(s.waived), fixed: countOf(s.fixed), total: countOf(s.total) },
+    disagreement: said !== null && listed !== null ? { stated: said, listed } : null,
   };
 }
 
@@ -150,7 +160,7 @@ export function composeWindowsLedger(input: ViewInput): ComposedWindowsLedger | 
   return {
     intro: { eyebrow: 'Broken windows', title: 'Broken windows ledger', note: WINDOWS_NOTE },
     lead,
-    notice: null,
+    notice: reading.disagreement === null ? null : disagreementNotice(reading.disagreement),
     open: null,
     waived: null,
     fixed: null,

@@ -117,3 +117,68 @@ describe('the lead markup', () => {
     });
   });
 });
+
+describe('the counts-disagree notice', () => {
+  const planted = (openCount: string): string =>
+    `---\nopen_count: ${openCount}\n---\n\n\`\`\`json\n${JSON.stringify([
+      { id: 1, phase: '01', kind: 'stub', status: 'open' },
+      { id: 2, phase: '01', kind: 'stub', status: 'open' },
+      { id: 3, phase: '02', kind: 'stub', status: 'fixed', resolved_at: '2026-03-02T10:00:00.000Z' },
+    ])}\n\`\`\`\n`;
+
+  it('states both numbers, counts the rows in the lead and never merges them', () => {
+    const ledger = composeWindowsLedger(inputOf(planted('3')));
+    expect(ledger?.notice).toBe(
+      "This file's counts disagree with its rows: it says 3 open, the ledger lists 2. The rows are shown.",
+    );
+    expect(ledger?.lead).toMatchObject({ open: 2, fixed: 1, total: 3, tone: 'in-flight' });
+  });
+
+  it('shows no notice when the counts match', () => {
+    expect(composeWindowsLedger(inputOf(planted('2')))?.notice).toBeNull();
+  });
+
+  it('a stated zero against listed open rows still says so and leads with the rows', () => {
+    const ledger = composeWindowsLedger(inputOf(planted('0')));
+    expect(ledger?.notice).toContain('it says 0 open, the ledger lists 2');
+    expect(ledger?.lead.open).toBe(2);
+  });
+
+  it('renders the notice as a plain paragraph above the lead, never in the destructive tone', () => {
+    const html = renderToStaticMarkup(
+      createElement(WindowsLedgerView, { model: composeWindowsLedger(inputOf(planted('3')))! }),
+    );
+    expect(html).toContain('counts disagree with its rows: it says 3 open, the ledger lists 2.');
+    expect(html.indexOf('view-windows-notice')).toBeLessThan(html.indexOf('view-windows-lead'));
+    expect(html).toContain('<p class="notice view-windows-notice"');
+    expect(html).not.toContain('destructive');
+  });
+});
+
+describe('a ledger with only frontmatter counts', () => {
+  it('leads with the stated counts, since there are no rows to count', () => {
+    const ledger = composeWindowsLedger(
+      inputOf('---\nopen_count: 0\nwaived_count: 1\nfixed_count: 4\ntotal_count: 5\n---\n\n# Broken Windows Ledger\n'),
+    );
+    expect(ledger?.lead).toMatchObject({ open: 0, waived: 1, fixed: 4, total: 5, lastFixed: null, tone: 'complete' });
+    expect(ledger?.lead.sentence).toBe('Nothing open. 4 fixed. 1 waived.');
+    expect(ledger?.notice).toBeNull();
+  });
+
+  it('works out the open count from the others when only it is missing', () => {
+    const ledger = composeWindowsLedger(inputOf('---\nwaived_count: 1\nfixed_count: 2\ntotal_count: 5\n---\n'));
+    expect(ledger?.lead).toMatchObject({ open: 2, tone: 'in-flight' });
+  });
+
+  it('returns null when the open count cannot be known', () => {
+    expect(composeWindowsLedger(inputOf('---\nfixed_count: 2\n---\n'))).toBeNull();
+  });
+});
+
+describe('hostile ledgers', () => {
+  it('survives rows that are not objects, a 200k description and a pile of backticks', () => {
+    const content = `\`\`\`\`json\n[1, "two", null, [3], {"id": 1, "status": "open", "description": "${'`'.repeat(200_000)}"}]\n\`\`\`\`\n`;
+    const ledger = composeWindowsLedger(inputOf(content));
+    expect(ledger?.lead).toMatchObject({ open: 1, total: 1 });
+  });
+});
