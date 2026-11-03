@@ -397,7 +397,39 @@
                 "text": "Anything that requires a real backend — this fixture never runs code, it only exists to be parsed."
               }
             ],
-            "lastUpdated": "2026-08-22 after initialization"
+            "lastUpdated": "2026-08-22 after initialization",
+            "decisions": [
+              {
+                "n": 1,
+                "decision": "Three milestones, not two",
+                "tag": null,
+                "era": null,
+                "rationale": "Multi-milestone logic (`phase_numbering: restarts-per-milestone`) must not be validated only at N=2",
+                "outcome": "pending",
+                "outcomeLabel": "Pending",
+                "note": ""
+              },
+              {
+                "n": 2,
+                "decision": "Corruption lives inside the healthy tree, not beside it",
+                "tag": null,
+                "era": null,
+                "rationale": "Isolation is only meaningfully proven when a healthy majority surrounds the broken file",
+                "outcome": "pending",
+                "outcomeLabel": "Pending",
+                "note": ""
+              },
+              {
+                "n": 3,
+                "decision": "Unfamiliar artifact types (`SPEC.md`, `AI-SPEC.md`, `01-COST-MODEL.md`) are included",
+                "tag": null,
+                "era": null,
+                "rationale": "The highest-severity project risk is overfitting to `~/studio-portal`'s shape",
+                "outcome": "pending",
+                "outcomeLabel": "Pending",
+                "note": ""
+              }
+            ]
           }
         }
       },
