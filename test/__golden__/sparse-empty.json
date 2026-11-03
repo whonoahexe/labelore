@@ -48,7 +48,10 @@
               "Rationale": "Proves the null-milestone, no-structure code path",
               "Outcome": "— Pending"
             }
-          ]
+          ],
+          "project": {
+            "milestone": null
+          }
         }
       },
       ".planning/REQUIREMENTS.md": {

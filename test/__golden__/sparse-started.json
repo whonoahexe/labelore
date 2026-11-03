@@ -70,7 +70,10 @@
               "Rationale": "Proves `roadmapComplete` and observed disk state can legitimately disagree even when there is no milestone at all",
               "Outcome": "— Pending"
             }
-          ]
+          ],
+          "project": {
+            "milestone": null
+          }
         }
       },
       ".planning/REQUIREMENTS.md": {
