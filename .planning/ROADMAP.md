@@ -284,7 +284,7 @@ page.
    existing analogs and screenshot-checked with the user (Phase 9 D-13). Each page still opens readably when the file is missing sections or has a shape the design did not
    expect. *(VIEW-07, VIEW-08, VIEW-09, VIEW-10)*
 
-**Plans**: 7/16 plans executed
+**Plans**: 8/16 plans executed
 
 Plans:
 **Wave 1**
@@ -301,7 +301,7 @@ Plans:
 - [x] 09-07-PLAN.md — Project page from sketch 041 B: masthead, core value, the four traceability-backed tiles, and the shared status-square
 
 **Wave 4** *(blocked on Wave 3 completion)*
-- [ ] 09-08-PLAN.md — Project page: the milestone goal cell and the margin (bound by, will not do, last updated, way back to the dashboard)
+- [x] 09-08-PLAN.md — Project page: the milestone goal cell and the margin (bound by, will not do, last updated, way back to the dashboard)
 
 **Wave 5** *(blocked on Wave 4 completion)*
 - [ ] 09-09-PLAN.md — Project page decisions spine, jump strip and era markers, Shapes' Kiln decisions, and the build screenshotted beside sketch 041 B
@@ -480,7 +480,7 @@ file, ID or project.
 | 6. Trustworthy Tests and Security Baseline | v2.1 | 22/22 | Complete    | 2026-10-26 |
 | 7. Recognised Files and Readable URLs | v2.1 | 10/10 | Complete    | 2026-10-27 |
 | 8. Several Projects and a Switcher | v2.1 | 18/18 | Complete    | 2026-11-02 |
-| 9. Review, Audit and Root Document Pages | v2.1 | 7/16 | In Progress | - |
+| 9. Review, Audit and Root Document Pages | v2.1 | 8/16 | In Progress | - |
 | 10. Codebase Map, Specification and Check Pages | v2.1 | 0/TBD | Not started | - |
 | 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 0/TBD | Not started | - |
 | 12. Project Settings, Source Mode and Reading Polish | v2.1 | 0/TBD | Not started | - |
