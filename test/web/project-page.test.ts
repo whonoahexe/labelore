@@ -111,3 +111,61 @@ describe('ProjectPageView masthead', () => {
     expect(masthead).toContain('artifact-path-copy');
   });
 });
+
+describe('composeProjectPage strip', () => {
+  it('Lendshed: the strip holds the four tiles from the context and no goal yet', () => {
+    const context = buildProjectContext(lendshed.presentation);
+    const page = composeProjectPage(inputOf(context))!;
+    expect(page.strip).not.toBeNull();
+    expect(page.strip!.goal).toBeNull();
+    expect(page.strip!.tiles.map((tile) => tile.state)).toEqual(['complete', 'pending', 'validated', 'out-of-scope']);
+    expect(page.strip!.tiles.map((tile) => tile.count)).toEqual(context.tiles!.map((tile) => tile.count));
+  });
+
+  it('is null without tiles, and a page with only tiles still composes', () => {
+    const context = buildProjectContext(lendshed.presentation);
+    expect(composeProjectPage(inputOf({ ...context, tiles: null }))!.strip).toBeNull();
+    const onlyTiles = composeProjectPage(inputOf({ ...context, lead: null, coreValue: null }));
+    expect(onlyTiles).not.toBeNull();
+    expect(onlyTiles!.masthead.lead).toBeNull();
+    expect(onlyTiles!.strip).not.toBeNull();
+  });
+});
+
+describe('ProjectPageView strip', () => {
+  const html = (): string => markup(composeProjectPage(inputOf(buildProjectContext(lendshed.presentation)))!);
+
+  it('renders each tile as a link with a square, the numeral, the label and the sub-line', () => {
+    const out = html();
+    expect(out.match(/class="view-project-tile"/g)?.length).toBe(4);
+    expect(out).toContain('href="/traceability?milestone=v1.1&amp;state=complete"');
+    expect(out).toContain('href="/traceability?milestone=v1.1&amp;state=pending"');
+    expect(out).toContain('href="/traceability?state=validated"');
+    expect(out).toContain('href="/traceability?state=out-of-scope"');
+    expect(out).toContain('class="status-square" data-tone="complete" aria-hidden="true"');
+    expect(out).toContain('shipped before');
+    expect(out).toContain('by choice');
+  });
+
+  it('gives each tile an accessible name of its count, label and sub-line, and the breakdown a title', () => {
+    const out = html();
+    expect(out).toContain('aria-label="2 out of scope by choice"');
+    expect(out).toContain('title="v1.0 ');
+  });
+
+  it('a zero-count tile shows 0 with a quiet square', () => {
+    const context = buildProjectContext(lendshed.presentation);
+    const tiles = context.tiles!.map((tile) =>
+      tile.state === 'pending' ? { ...tile, count: 0, tone: 'quiet' as const } : tile,
+    );
+    const out = markup(composeProjectPage(inputOf({ ...context, tiles }))!);
+    expect(out).toContain('aria-label="0 pending in v1.1"');
+    expect(out).toContain('data-tone="quiet" aria-hidden="true"></i>0<');
+  });
+
+  it('omits the strip when there are no tiles', () => {
+    const context = buildProjectContext(lendshed.presentation);
+    const out = markup(composeProjectPage(inputOf({ ...context, tiles: null }))!);
+    expect(out).not.toContain('view-project-strip');
+  });
+});
