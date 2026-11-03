@@ -540,3 +540,22 @@ describe('ProjectPageView decisions', () => {
     expect(out).toContain('&lt;img');
   });
 });
+
+describe('composeProjectPage decisions on the Shapes fixture (the sketch\'s made-up Kiln decisions)', () => {
+  const shapes = readFileSync(join(new URL('../fixtures/shapes', import.meta.url).pathname, '.planning', 'PROJECT.md'), 'utf8');
+
+  it('nine rows drawing every outcome, with v0.1, v0.2 and v0.3 as eras', () => {
+    const decisions = pageOf(shapes).decisions!;
+    expect(decisions.count).toBe(9);
+    expect(decisions.tally.map((t) => [t.label, t.count])).toEqual([
+      ['good', 5],
+      ['revisit', 1],
+      ['reversed', 2],
+      ['pending', 1],
+    ]);
+    expect(decisions.eras.map((e) => e.label)).toEqual(['v0.1', 'v0.2', 'v0.3']);
+    expect(decisions.rows[1]).toMatchObject({ decision: 'Book by firing slot, not by shelf space', tag: 'v0.1', outcome: 'reversed' });
+    expect(decisions.rows[3].note).toBe('offline queue added in v0.2');
+    expect(decisions.rows[7]).toMatchObject({ outcome: 'pending', note: '' });
+  });
+});
