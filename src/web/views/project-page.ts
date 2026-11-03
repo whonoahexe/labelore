@@ -20,7 +20,7 @@ import type { ViewInput } from './manifest.ts';
 export interface ComposedProjectMasthead {
   eyebrow: 'Project';
   name: string;
-  /** What the project is, cut by the dashboard's lead rules, or null without that section. */
+  /** What the project is: the section's whole first paragraph (sketch 041 B), else the dashboard's lead, or null. */
   lead: string | null;
   /** The core-value card's text, or null (the card is then omitted silently). */
   coreValue: string | null;
@@ -202,7 +202,7 @@ function decisionsOf(value: unknown): ComposedDecisions | null {
 export function composeProjectPage(input: ViewInput): ComposedProjectPage | null {
   const context = input.projectContext;
   if (!context || typeof context.name !== 'string' || context.name.trim().length === 0) return null;
-  const lead = nonBlank(context.lead);
+  const lead = nonBlank(context.about) ?? nonBlank(context.lead);
   const coreValue = nonBlank(context.coreValue);
   const project = projectOf(input.structured);
   const strip = stripOf(context, project);

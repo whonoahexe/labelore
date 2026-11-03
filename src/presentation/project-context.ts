@@ -7,7 +7,7 @@
 // regular expression from document text. It never throws on presentation data. Every link is built by
 // `traceabilityStateUrl` from the fixed state list and the payload's own milestone version (T-09-15).
 import type { ProjectPresentation } from '../server/project-presentation.ts';
-import { projectSectionLead, splitProjectTitle } from './dashboard-head.ts';
+import { projectSectionLead, projectSectionParagraph, splitProjectTitle } from './dashboard-head.ts';
 import { requirementStateCounts, traceabilityStateUrl } from './traceability.ts';
 import type { RequirementState, RequirementStateCounts } from './traceability.ts';
 
@@ -29,6 +29,8 @@ export interface ProjectContext {
   tagline: string | null;
   /** The What This Is lead, cut by the dashboard's lead rules, or null without that section. */
   lead: string | null;
+  /** The What This Is section's whole first paragraph, or null without that section. */
+  about: string | null;
   /** The Core Value lead, cut by the same rules, or null without that section. */
   coreValue: string | null;
   /** The traceability projection's counts, or null when there is nothing to count. */
@@ -109,6 +111,7 @@ export function buildProjectContext(presentation: ProjectPresentation): ProjectC
     name,
     tagline,
     lead: projectSectionLead(presentation, /^what this is\b/i),
+    about: projectSectionParagraph(presentation, /^what this is\b/i),
     coreValue: projectSectionLead(presentation, /^core value\b/i),
     counts,
     tiles: counts === null ? null : tilesOf(counts),

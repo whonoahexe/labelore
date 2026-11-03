@@ -60,11 +60,13 @@ function markup(model: ComposedProjectPage): string {
 
 describe('composeProjectPage', () => {
   it('Lendshed: the masthead names the project, what it is and its core value', () => {
-    const page = composeProjectPage(inputOf(buildProjectContext(lendshed.presentation)));
+    const context = buildProjectContext(lendshed.presentation);
+    const page = composeProjectPage(inputOf(context));
     expect(page).not.toBeNull();
     expect(page!.masthead.eyebrow).toBe('Project');
     expect(page!.masthead.name).toBe('Lendshed');
     expect(page!.masthead.lead?.startsWith('A web app for a neighbourhood tool library')).toBe(true);
+    expect(page!.masthead.lead).toBe(context.about);
     expect(page!.masthead.coreValue).toBe(
       'A member can see what is on the shelf at every shed and borrow it without asking a steward to look it up.',
     );
@@ -79,6 +81,7 @@ describe('composeProjectPage', () => {
       name: 'Bare',
       tagline: null,
       lead: null,
+      about: null,
       coreValue: null,
       counts: null,
       tiles: null,
@@ -181,6 +184,7 @@ describe('composeProjectPage strip', () => {
       name: 'Bare',
       tagline: null,
       lead: null,
+      about: null,
       coreValue: null,
       counts: null,
       tiles: null,
@@ -195,7 +199,7 @@ describe('composeProjectPage strip', () => {
   it('is null without tiles, and a page with only tiles still composes', () => {
     const context = buildProjectContext(lendshed.presentation);
     expect(composeProjectPage(inputOf({ ...context, tiles: null }))!.strip).toBeNull();
-    const onlyTiles = composeProjectPage(inputOf({ ...context, lead: null, coreValue: null }));
+    const onlyTiles = composeProjectPage(inputOf({ ...context, lead: null, about: null, coreValue: null }));
     expect(onlyTiles).not.toBeNull();
     expect(onlyTiles!.masthead.lead).toBeNull();
     expect(onlyTiles!.strip).not.toBeNull();
@@ -298,7 +302,7 @@ describe('composeProjectPage margin', () => {
   });
 
   it('a PROJECT.md whose only recognised content is structured.project still composes', () => {
-    const nameOnly: ProjectContext = { name: 'Bare', tagline: null, lead: null, coreValue: null, counts: null, tiles: null, dashboardUrl: '/' };
+    const nameOnly: ProjectContext = { name: 'Bare', tagline: null, lead: null, about: null, coreValue: null, counts: null, tiles: null, dashboardUrl: '/' };
     const page = composeProjectPage(inputOf(nameOnly, { project: { outOfScope: [{ name: 'X', text: 'y' }] } }));
     expect(page).not.toBeNull();
     expect(page!.strip).toBeNull();
