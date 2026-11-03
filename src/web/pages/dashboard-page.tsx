@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { CircleDot } from 'lucide-react';
+import { ArrowRight, CircleDot } from 'lucide-react';
 import { apiFetch, projectUrl } from '../api.ts';
 import { Link, useProjectSlug } from '../nav.tsx';
 import { projectKey } from '../query-keys.ts';
@@ -21,7 +21,70 @@ export function fetchDashboard(slug: string): Promise<DashboardResponse> {
   return apiFetch<DashboardResponse>(projectUrl(slug, '/dashboard'));
 }
 
-function ProjectNext({ next }: { next: DashboardHead['next'] }): React.JSX.Element {
+function fileNameOf(path: string): string {
+  return path.slice(path.lastIndexOf('/') + 1) || path;
+}
+
+/** The Stopped, Resume, Then and Deferred lines: what STATE.md holds that no other page shows. Each line
+ * is omitted when its value is missing; every link is an artifact address or a STATE.md source anchor. */
+function SessionLines({ session }: { session: DashboardHead['session'] }): React.JSX.Element | null {
+  if (!session) return null;
+  const { stoppedAt, lastSessionLabel, resumeFile, operatorSteps, deferredCount } = session;
+  const [firstStep] = operatorSteps;
+  return (
+    <>
+      {stoppedAt ? (
+        <p className="project-next-last">
+          <span className="project-next-label">Stopped</span>
+          {stripMarkdown(stripEmoji(stoppedAt))}
+          {lastSessionLabel ? ` · ${lastSessionLabel}` : null}
+        </p>
+      ) : null}
+      {resumeFile ? (
+        <p className="project-next-last">
+          <span className="project-next-label">Resume</span>
+          {resumeFile.url ? (
+            <Link className="text-link" to={resumeFile.url}>
+              {fileNameOf(resumeFile.path)}
+            </Link>
+          ) : (
+            fileNameOf(resumeFile.path)
+          )}
+        </p>
+      ) : null}
+      {firstStep ? (
+        <p className="project-next-last">
+          <span className="project-next-label">Then</span>
+          <LeadText text={stripEmoji(firstStep)} />
+          {operatorSteps.length > 1 && session.stepsUrl ? (
+            <>
+              {' '}
+              <Link className="text-link" to={session.stepsUrl}>
+                {`+${operatorSteps.length - 1} more`}
+              </Link>
+            </>
+          ) : null}
+        </p>
+      ) : null}
+      {deferredCount && session.deferredUrl ? (
+        <p className="project-next-last">
+          <span className="project-next-label">Deferred</span>
+          <Link className="text-link" to={session.deferredUrl}>
+            {`${deferredCount} ${deferredCount === 1 ? 'item' : 'items'}`}
+          </Link>
+        </p>
+      ) : null}
+    </>
+  );
+}
+
+function ProjectNext({
+  next,
+  session,
+}: {
+  next: DashboardHead['next'];
+  session: DashboardHead['session'];
+}): React.JSX.Element {
   if (!next) {
     return (
       <aside className="immediate-work project-next" aria-labelledby="project-next-heading">
@@ -62,6 +125,7 @@ function ProjectNext({ next }: { next: DashboardHead['next'] }): React.JSX.Eleme
           {last.text ? stripMarkdown(stripEmoji(last.text)) : null}
         </p>
       ) : null}
+      <SessionLines session={session} />
       {step ? (
         <div className="project-next-step" data-done={step.kind === 'new-milestone'}>
           <strong>
@@ -99,6 +163,12 @@ function ProjectHead({ head }: { head: DashboardHead }): React.JSX.Element {
               <LeadText text={stripEmoji(head.lead)} />
             </p>
           ) : null}
+          {head.projectUrl ? (
+            <Link className="text-link" to={head.projectUrl}>
+              About this project
+              <ArrowRight aria-hidden="true" />
+            </Link>
+          ) : null}
         </div>
         {now ? (
           <div className="project-now">
@@ -120,7 +190,7 @@ function ProjectHead({ head }: { head: DashboardHead }): React.JSX.Element {
           </div>
         ) : null}
       </div>
-      <ProjectNext next={head.next} />
+      <ProjectNext next={head.next} session={head.session} />
     </section>
   );
 }
