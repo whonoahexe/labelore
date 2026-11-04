@@ -32,6 +32,7 @@ whose own ledger is `fixtures/README.md`) and this repository's own `.planning` 
 | test/fixtures/tidemark/.planning/codebase/CONVENTIONS.md | codebase-conventions | agents/gsd-codebase-mapper.md | 1.19.0 | map-only project: the older form with no frontmatter, only `**Analysis Date:**` and a `*Last updated:*` footer, marker as a first-line comment |
 | test/fixtures/tidemark/.planning/codebase/TESTING.md | codebase-testing | agents/gsd-codebase-mapper.md | 1.19.0 | map-only project: stamped (2026-10-28), a bash-fenced Run Commands block with a hash comment line before each command |
 | test/fixtures/tidemark/.planning/codebase/CONCERNS.md | codebase-concerns | agents/gsd-codebase-mapper.md | 1.19.0 | map-only project: stamped (2026-10-30), nine sections of unequal length in every counting shape, a None identified section and a Not detected section |
+| test/fixtures/lendshed/.planning/phases/01-member-sign-in-sessions/01-SPEC.md | spec | gsd-core/templates/spec.md | 1.19.0 | locked, at or below the gate: score 0.14 against a 0.20 gate, five requirements each with Current, Target and Acceptance, all four ambiguity dimensions met |
 
 ## For later phases
 
