@@ -301,6 +301,7 @@ describe('composeCodebase - the map-only head (10-10)', () => {
         ? {
             ...context,
             head: {
+              nextStep: { command: '/gsd-new-project', reason: 'The map is complete. Next, set the project up.' },
               stack: null,
               concerns: { total: 3, entries: [{ key: null, heading: 'Repository Hygiene', count: 3 }] },
             },
@@ -475,6 +476,16 @@ describe('codebase view contract - the real sources', () => {
     expect(code.indexOf('<Head head={model.head} />')).toBeLessThan(code.indexOf('<article'));
     const css = stripCssComments(codebaseBlock(await source('src/web/styles/globals.css')));
     expect(css).toContain('.view-codebase-head {\n    order: -1;');
+  });
+
+  it('the head\'s next step is the shared copy-command row, which imports no api module and never fetches', async () => {
+    const components = stripSourceComments(await source(COMPONENTS));
+    expect(components).toContain("import { CopyCommand } from '../components/copy-command.tsx';");
+    expect(components).toContain('<CopyCommand command={head.next.command} />');
+    const copy = stripSourceComments(await source('src/web/components/copy-command.tsx'));
+    expect(copy).not.toMatch(/from\s+['"]\.\.\/api\.ts['"]/);
+    expect(copy).not.toMatch(/\bfetch\b/);
+    expect(await source(COMPOSER)).toContain('Labelore does not run commands. Paste it in your terminal.');
   });
 
   it('the composer builds no regular expression, uses no regex literal and imports no filesystem module', async () => {

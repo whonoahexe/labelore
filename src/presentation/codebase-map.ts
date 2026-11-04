@@ -114,6 +114,116 @@ export function concernEntries(concerns: unknown): ConcernEntries | null {
   return { total, entries: ordered };
 }
 
+// --- the next step -----------------------------------------------------------------------------------------
+
+/** GSD's suggested next command and why (D-06). Both strings are constants: no file text ever reaches one,
+ * which is what makes the Copy command button safe (T-10-17). */
+export interface NextStep {
+  command: string;
+  reason: string;
+}
+
+export const COMMAND_MAP_CODEBASE = '/gsd-map-codebase';
+export const COMMAND_INGEST_DOCS = '/gsd-ingest-docs';
+export const COMMAND_NEW_PROJECT = '/gsd-new-project';
+
+const STEP_FAST: NextStep = Object.freeze({
+  command: COMMAND_MAP_CODEBASE,
+  reason: 'Finish the map. A fast map is enough to look around, but project setup needs the complete one.',
+});
+const STEP_PARTIAL: NextStep = Object.freeze({
+  command: COMMAND_MAP_CODEBASE,
+  reason:
+    'This map is partial. Some of the seven documents are missing, so map the codebase before setting the project up.',
+});
+const STEP_INGEST: NextStep = Object.freeze({
+  command: COMMAND_INGEST_DOCS,
+  reason: 'Existing decision or spec documents were found. Import them before setting the project up.',
+});
+const STEP_NEW_PROJECT: NextStep = Object.freeze({
+  command: COMMAND_NEW_PROJECT,
+  reason: 'The map is complete. Next, set the project up.',
+});
+
+/** The four steps there are (UI-SPEC section 3); `nextStep` only ever returns one of these. The `--fast` form
+ * of the map command is never one of them (D-06). */
+export const NEXT_STEPS: readonly NextStep[] = Object.freeze([STEP_FAST, STEP_PARTIAL, STEP_INGEST, STEP_NEW_PROJECT]);
+
+/**
+ * onboard-projection's rules as UI-SPEC section 3 narrows them: a fast or partial map goes back to
+ * `/gsd-map-codebase` with its own reason; only a complete map moves on, to `/gsd-ingest-docs` when decision or
+ * spec documents are visible in `.planning/` and `/gsd-new-project` otherwise. "The map is complete" is thus
+ * never shown for a fast or partial map. An unrecognised readiness falls to the partial step.
+ */
+export function nextStep(readiness: MapReadiness, hasDocCandidates: boolean): NextStep {
+  if (readiness === 'complete') return hasDocCandidates ? STEP_INGEST : STEP_NEW_PROJECT;
+  if (readiness === 'fast') return STEP_FAST;
+  return STEP_PARTIAL;
+}
+
+const PLANNING_PREFIX = '.planning/';
+const DOC_SEGMENTS: ReadonlySet<string> = new Set(['adr', 'adrs', 'prd', 'prds', 'spec', 'specs', 'rfc', 'rfcs']);
+const DOC_TOKENS: readonly string[] = ['adr', 'prd', 'spec', 'rfc'];
+
+function isDigit(ch: string | undefined): boolean {
+  return ch !== undefined && ch >= '0' && ch <= '9';
+}
+
+/** GSD's `(^|[-_ ])(ADR|PRD|SPEC|RFC)([-_ ]|\.)`, case-insensitive, as a character scan over a lower-cased name. */
+function hasDocToken(lower: string): boolean {
+  for (const token of DOC_TOKENS) {
+    let from = 0;
+    for (;;) {
+      const at = lower.indexOf(token, from);
+      if (at < 0) break;
+      const before = at === 0 ? '-' : lower[at - 1];
+      const after = lower[at + token.length];
+      if ((before === '-' || before === '_' || before === ' ') && (after === '-' || after === '_' || after === ' ' || after === '.')) {
+        return true;
+      }
+      from = at + 1;
+    }
+  }
+  return false;
+}
+
+/** GSD's `^\d{4}[-_].+\.md$` over a lower-cased name that already ends in `.md`. */
+function startsWithYearSeparator(lower: string): boolean {
+  if (lower.length < 4 + 1 + 1 + 3) return false;
+  for (let i = 0; i < 4; i += 1) if (!isDigit(lower[i])) return false;
+  return lower[4] === '-' || lower[4] === '_';
+}
+
+/** A phase's own `NN-SPEC.md` (digits and dots, then `-spec.md`): an ordinary GSD file, not an imported document. */
+function isPhaseSpecName(lower: string): boolean {
+  const suffix = '-spec.md';
+  if (!lower.endsWith(suffix) || lower.length === suffix.length) return false;
+  for (const ch of lower.slice(0, lower.length - suffix.length)) if (!isDigit(ch) && ch !== '.') return false;
+  return true;
+}
+
+function isPlanningDocPath(path: string): boolean {
+  if (!path.startsWith(PLANNING_PREFIX)) return false;
+  const segments = path.slice(PLANNING_PREFIX.length).split('/');
+  if (segments[0] === 'codebase') return false;
+  const lower = (segments[segments.length - 1] ?? '').toLowerCase();
+  if (!lower.endsWith('.md') || lower === 'requirements.md' || isPhaseSpecName(lower)) return false;
+  if (segments.slice(0, -1).some((segment) => DOC_SEGMENTS.has(segment.toLowerCase()))) return true;
+  return hasDocToken(lower) || startsWithYearSeparator(lower);
+}
+
+/**
+ * Whether ADR, PRD, SPEC or RFC documents are visible in the target's `.planning/` outside `codebase/`
+ * (UI-SPEC open item 2, RESEARCH A6). GSD's own name and segment rules, mirrored over markdown Labelore can
+ * see: a name holding ADR, PRD, SPEC or RFC as a whole token, a name starting with four digits and a
+ * separator, or a directory segment adr, adrs, prd, prds, spec, specs, rfc or rfcs. `REQUIREMENTS.md` and a
+ * phase's `NN-SPEC.md` are ordinary GSD files and do not count. Character scans only: no regular expression
+ * is built from, or run over, file text.
+ */
+export function hasPlanningDocCandidates(artifacts: readonly { path: string }[]): boolean {
+  return artifacts.some((artifact) => typeof artifact.path === 'string' && isPlanningDocPath(artifact.path));
+}
+
 // --- the map-only head --------------------------------------------------------------------------------------
 
 export interface CodebaseHeadChip {
@@ -134,6 +244,8 @@ export interface CodebaseHeadStack {
 export interface CodebaseHead {
   stack: CodebaseHeadStack | null;
   concerns: ConcernEntries | null;
+  /** GSD's suggested next command and its reason line (D-06). */
+  nextStep: NextStep;
 }
 
 /** One entry of the panel list. `url` is the document's address, or null for a document the folder lacks. */
@@ -283,6 +395,7 @@ export function buildCodebaseContext(
         ? {
             stack: stackArtifact === undefined ? null : readHeadStack(stackArtifact.structured),
             concerns: concernsArtifact === undefined ? null : readHeadConcerns(concernsArtifact.structured),
+            nextStep: nextStep(mapReadiness(present), hasPlanningDocCandidates(artifacts)),
           }
         : null,
     };

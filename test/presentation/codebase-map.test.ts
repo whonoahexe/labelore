@@ -168,7 +168,8 @@ describe('the map-only head on the context (10-10, TGT-09)', () => {
       ),
     };
     const head = buildCodebaseContext(odd, PATH('STACK.md'))?.head;
-    expect(head).toEqual({ stack: null, concerns: null });
+    expect(head).toMatchObject({ stack: null, concerns: null });
+    expect(head?.nextStep.command).toBe('/gsd-new-project');
   });
 });
 
