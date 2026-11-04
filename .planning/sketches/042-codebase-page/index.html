@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 042 — Codebase page and the "Mapped, not started" head</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+/* Sketch 042: the Codebase page frame (one page, a panel per map document) and the map-only
+   "Mapped, not started" head, three page structures. Text comes from Labelore's own public map
+   (.planning/codebase/); the other repositories' maps only set the shapes (longest documents,
+   heading variants, section counts). Tokens come from ../themes/default.css; nothing here defines
+   a colour of its own: every colour is a theme token or a colour-mix of tokens. Squared corners,
+   spacing from --space-* tokens, tones: complete / in-flight / quiet only (no failure tones:
+   nothing on this page is a failed read). */
+:root {
+  --border-faint: color-mix(in oklch, var(--border) 55%, transparent);
+  --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border));
+  --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border));
+  --veil: color-mix(in oklch, var(--muted) 55%, transparent);
+  --font-heading: var(--font-sans);
+  --icon: var(--space-4);
+  --sq: var(--space-2-5);
+  --page: calc(var(--space-8) * 40);
+  --rail: calc(var(--space-8) * 9);
+  --side: calc(var(--space-8) * 10);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-4); font-weight: var(--fw-medium); line-height: var(--lh-normal); }
+h1, h2, h3, p, ul, ol, dl, dd, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; border-radius: 0; text-align: inherit; }
+a { color: inherit; text-decoration: none; }
+code { font-family: var(--font-mono); font-size: inherit; }
+[hidden] { display: none !important; }
+svg.i { width: var(--icon); height: var(--icon); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.dark .moon, .sun { display: none; }
+.dark .sun { display: block; }
+
+/* ---------- sketch chrome (not part of the app) ---------- */
+#sketch-bar { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); background: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+#sketch-bar .lbl { color: var(--muted-foreground); white-space: nowrap; }
+#sketch-bar .grp { display: flex; flex: none; gap: var(--space-1); align-items: center; }
+#sketch-bar .grp + .grp { padding-left: var(--space-3); border-left: 1px solid var(--border); }
+#sketch-bar .grp.line { flex-basis: 100%; padding-left: 0; border-left: 0; }
+#sketch-bar a, #sketch-bar button { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; color: var(--muted-foreground); white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; }
+#sketch-bar a:hover, #sketch-bar button:hover { color: var(--foreground); background: var(--state-hover); }
+#sketch-bar .on { color: var(--foreground); border-color: var(--border); background: var(--state-hover); }
+#sketch-bar .name { color: var(--muted-foreground); padding-inline: var(--space-1); }
+@media (max-width: 42rem) { #sketch-bar { flex-wrap: nowrap; overflow-x: auto; } #sketch-bar .grp.line { flex-basis: auto; } }
+#toast { position: fixed; left: 50%; bottom: var(--space-4); transform: translateX(-50%); z-index: 99; max-width: 90vw; padding: var(--space-2) var(--space-3); background: var(--foreground); color: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); opacity: 0; pointer-events: none; }
+#toast.on { opacity: 1; }
+
+/* ---------- app shell header (outside the page, drawn as today) ---------- */
+.app-head { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-2) var(--space-fluid-3); border-bottom: 1px solid var(--border); }
+.app-brand { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-3); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.app-brand i { width: var(--space-5); height: var(--space-5); background: var(--primary); }
+.app-brand span { color: var(--muted-foreground); font-weight: var(--fw-medium); }
+.app-nav { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-left: auto; }
+.app-nav a { padding: var(--space-1-5) var(--space-2-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.app-nav a[aria-current] { color: var(--foreground); box-shadow: inset 0 -2px 0 var(--primary); }
+
+/* ---------- page atoms (all four sizes: display h1, heading fs-7, body fs-4, label fs-2) ---------- */
+.page { display: grid; gap: var(--space-6); align-content: start; width: min(var(--page), 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); }
+.crumbs { display: flex; flex-wrap: wrap; gap: var(--space-1-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.crumbs [aria-current] { color: var(--foreground); }
+.heading-block { display: grid; gap: var(--space-3); min-width: 0; }
+.eyebrow { display: flex; gap: var(--space-2); align-items: center; color: var(--primary); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h1 { font-size: var(--fs-display-3); font-weight: var(--fw-semibold); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); overflow-wrap: anywhere; }
+.meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); min-width: 0; }
+.micro-label, .grp-h { margin: 0; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+.btn-xs { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1-5); min-height: var(--space-7); padding-inline: var(--space-3); border: 1px solid var(--border); font-family: var(--font-sans); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.btn-xs:hover { background: var(--state-hover); }
+.btn-xs[aria-pressed='true'] { background: var(--muted); }
+.btn-xs.icon { padding-inline: 0; width: var(--space-7); }
+@media (pointer: coarse) { .btn-xs { min-height: var(--space-10); } .btn-xs.icon { width: var(--space-10); } }
+.seg { display: inline-flex; }
+.seg .btn-xs + .btn-xs { border-left: 0; }
+.text-link { display: inline-flex; gap: var(--space-1-5); align-items: center; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.text-link:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: var(--space-0-5); }
+.status-chip { display: inline-flex; gap: var(--space-1-5); align-items: center; width: fit-content; max-width: 100%; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: var(--veil); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; white-space: nowrap; }
+.status-chip[data-tone='complete'] { border-color: var(--primary-border); background: var(--primary-tint); color: var(--primary); }
+.status-chip[data-tone='in-flight'] { border-color: var(--in-flight-border); color: var(--in-flight-fill); }
+.status-chip[data-tone='quiet'] { color: var(--muted-foreground); border-style: dashed; }
+.sq { display: inline-block; width: var(--sq); height: var(--sq); flex: none; border: 1px solid var(--border); }
+.sq[data-tone='complete'] { background: var(--primary); border-color: var(--primary); }
+.sq[data-tone='in-flight'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.sq[data-tone='quiet'] { background: transparent; border: 1px dashed var(--muted-foreground); }
+.sq[data-tone='neutral'] { background: var(--muted); border-color: var(--muted-foreground); }
+.source-note { color: var(--muted-foreground); font-size: var(--fs-4); overflow-wrap: anywhere; }
+.facts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); min-width: 0; }
+.facts-count { font-weight: var(--fw-semibold); }
+.facts-date { color: var(--muted-foreground); }
+.status-chip.mono { text-transform: none; letter-spacing: var(--ls-wider); }
+
+/* ---------- the next step: selectable command + Copy command + the never-runs note ---------- */
+.next { display: grid; gap: var(--space-3); min-width: 0; align-content: start; }
+.next-reason { color: var(--muted-foreground); }
+.cmd-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); min-width: 0; }
+.cmd { flex: 1 1 auto; min-width: 0; padding: var(--space-2) var(--space-3); border: 1px solid var(--border); background: var(--muted); font-family: var(--font-mono); font-size: var(--fs-4); font-weight: var(--fw-semibold); overflow-wrap: anywhere; user-select: all; }
+.copy[data-copied='true'] { color: var(--primary); }
+
+/* ---------- stack chips and concern counts (the head's lifted parts) ---------- */
+.chip-set { display: grid; gap: var(--space-2); min-width: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.chip-plain { display: inline-flex; gap: var(--space-1-5); align-items: baseline; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: var(--veil); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); line-height: var(--lh-snug); overflow-wrap: anywhere; }
+.chip-plain code { color: var(--muted-foreground); font-weight: var(--fw-medium); }
+.concerns { display: grid; gap: var(--space-3); min-width: 0; }
+.concerns-total { display: flex; align-items: baseline; gap: var(--space-2); }
+.concerns-total b { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.counts { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--space-28) + var(--space-8)), 1fr)); gap: var(--space-1) var(--space-4); }
+.count { display: flex; align-items: center; gap: var(--space-2); min-width: 0; padding-block: var(--space-1); border-bottom: 1px solid var(--border-faint); }
+.count span:not(.sq) { flex: 1; min-width: 0; color: var(--muted-foreground); font-size: var(--fs-4); }
+.count b { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.count[data-first] span:not(.sq) { color: var(--foreground); font-weight: var(--fw-semibold); }
+
+/* ---------- the panel list (entries) ---------- */
+.list ol { display: grid; }
+.entry { position: relative; display: grid; align-items: center; min-width: 0; padding: var(--space-2-5) var(--space-3); border: 1px solid var(--border); background: transparent; }
+a.entry:hover { background: var(--state-hover); }
+.entry-li + .entry-li .entry { border-top-color: var(--border-faint); }
+.entry-no { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); color: var(--muted-foreground); }
+.entry-name { min-width: 0; font-weight: var(--fw-semibold); }
+.entry-gist { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted-foreground); }
+.entry-key { display: flex; align-items: baseline; gap: var(--space-1-5); min-width: 0; font-family: var(--font-mono); }
+.entry-key b { font-size: var(--fs-4); font-weight: var(--fw-semibold); }
+.entry-key i { font-style: normal; font-size: var(--fs-2); color: var(--muted-foreground); }
+.entry-ghost { display: inline-flex; align-items: center; gap: var(--space-1-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+[data-ghost='true'] .entry { border-style: dashed; color: var(--muted-foreground); }
+[data-ghost='true'] .entry-name { font-weight: var(--fw-medium); }
+.entry[aria-current='page'] { border-color: var(--primary-border); background: var(--primary-tint); }
+.entry[aria-current='page'] .entry-no { color: var(--primary); }
+
+/* ---------- the panel ---------- */
+.panel { display: grid; gap: var(--space-6); min-width: 0; align-content: start; }
+.panel-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-3); padding-bottom: var(--space-3); border-bottom: 1px solid var(--border); }
+.panel-no { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); color: var(--primary); }
+.panel-head h2 { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.panel-key { margin-left: auto; font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); color: var(--muted-foreground); text-transform: uppercase; }
+.lifted, .plain { display: grid; gap: var(--space-6); min-width: 0; }
+.lifted > .grp:first-child > .grp-h { padding-top: 0; border-top: 0; }
+.grp { display: grid; gap: var(--space-3); min-width: 0; align-content: start; }
+.grp-h { padding-top: var(--space-3); border-top: 1px solid var(--border); }
+.prose { max-width: 72ch; line-height: var(--lh-normal); overflow-wrap: anywhere; }
+.prose code, .leads code, .steps code, .rows code { padding: 0 var(--space-0-5); background: var(--muted); overflow-wrap: anywhere; }
+.leads { display: grid; gap: var(--space-2-5); max-width: 78ch; }
+.leads dt { font-weight: var(--fw-semibold); }
+.leads dd { color: var(--muted-foreground); overflow-wrap: anywhere; }
+.steps { display: grid; gap: var(--space-1-5); max-width: 78ch; padding-left: var(--space-5); list-style: decimal; }
+.steps li { overflow-wrap: anywhere; }
+.rows { display: grid; }
+.rows > li { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-0-5) var(--space-4); padding: var(--space-2) 0; border-bottom: 1px solid var(--border-faint); }
+.rows .r-name { font-family: var(--font-mono); font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.rows .r-body { color: var(--muted-foreground); overflow-wrap: anywhere; }
+.rows .r-file { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (min-width: 42rem) { .rows > li { grid-template-columns: minmax(0, 14rem) minmax(0, 1fr) minmax(0, 14rem); align-items: baseline; } .rows.two > li { grid-template-columns: minmax(0, 18rem) minmax(0, 1fr); } }
+.figure { border: 1px solid var(--border); min-width: 0; }
+.figure-bar { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); background: var(--veil); }
+.figure-title { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+.figure-act { display: flex; gap: var(--space-3); }
+.figure-body { max-height: calc(var(--space-28) * 4); overflow: auto; padding: var(--space-3); }
+.figure[data-expanded='true'] .figure-body { max-height: none; }
+.figure pre { margin: 0; font-family: var(--font-mono); font-size: var(--fs-2); line-height: var(--lh-snug); }
+.tree li { display: flex; gap: var(--space-3); align-items: baseline; padding-left: calc(var(--d) * var(--space-5)); font-family: var(--font-mono); min-width: 0; }
+.tree .t-name { font-weight: var(--fw-semibold); white-space: nowrap; }
+.tree .t-note { color: var(--muted-foreground); font-size: var(--fs-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.swaps { display: grid; gap: var(--space-3); }
+.swap { display: grid; gap: var(--space-1-5); padding: var(--space-3); border: 1px solid var(--border); }
+.swap s { color: var(--muted-foreground); }
+.swap .do { font-weight: var(--fw-semibold); }
+.swap .why { color: var(--muted-foreground); }
+.lookup { display: grid; }
+.lookup li { display: grid; gap: var(--space-1); padding: var(--space-2) 0; border-bottom: 1px solid var(--border-faint); }
+@media (min-width: 42rem) { .lookup li { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-4); } }
+.lookup .when { font-weight: var(--fw-semibold); }
+.cmdlist li { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-1-5) 0; border-bottom: 1px solid var(--border-faint); min-width: 0; }
+.cmdlist code { flex: 1; min-width: 0; font-weight: var(--fw-semibold); overflow-wrap: anywhere; user-select: all; }
+.plain-sec { display: grid; gap: var(--space-3); min-width: 0; align-content: start; }
+.csec { border-top: 1px solid var(--border); }
+.csec summary { display: flex; align-items: center; gap: var(--space-3); min-height: var(--space-10); cursor: pointer; list-style: none; }
+.csec summary::-webkit-details-marker { display: none; }
+.csec summary span.n { margin-left: auto; font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); }
+.csec summary .t { font-weight: var(--fw-semibold); }
+.csec ul { display: grid; gap: var(--space-3); padding-bottom: var(--space-4); }
+.csec li b { display: block; }
+.csec li p { color: var(--muted-foreground); max-width: 78ch; overflow-wrap: anywhere; }
+.pull { display: grid; gap: var(--space-1); padding: var(--space-3) var(--space-4); border-left: 2px solid var(--border); color: var(--muted-foreground); }
+
+/* =============== Variant A: rail + reading column =============== */
+.v-a .a-grid { display: grid; grid-template-columns: var(--rail) minmax(0, 1fr); gap: var(--space-fluid-9); align-items: start; }
+.v-a .a-rail { position: sticky; top: calc(var(--space-10) + var(--space-4)); display: grid; gap: var(--space-4); min-width: 0; max-height: calc(100vh - var(--space-28)); overflow-y: auto; }
+.v-a .facts { flex-direction: column; align-items: flex-start; gap: var(--space-2); padding-bottom: var(--space-4); border-bottom: 1px solid var(--border); }
+.v-a .entry { grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--space-1) var(--space-3); grid-template-areas: 'no name key'; }
+.v-a .entry-no { grid-area: no; } .v-a .entry-name { grid-area: name; } .v-a .entry-key { grid-area: key; }
+.v-a .entry-gist { display: none; }
+.v-a .entry-key i { display: none; }
+.v-a [data-ghost='true'] .entry { grid-template-areas: 'no name' '. ghost'; grid-template-columns: auto minmax(0, 1fr); }
+.v-a .entry-ghost { grid-area: ghost; }
+.v-a .a-main { display: grid; gap: var(--space-8); min-width: 0; }
+.v-a .a-head { display: grid; gap: var(--space-6); padding: var(--space-5) var(--space-6); border: 1px solid var(--border); background: var(--card-veil); }
+.v-a .a-head-sentence { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); max-width: 36ch; }
+.v-a .a-head-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
+.v-a .a-head .next { padding-top: var(--space-5); border-top: 1px solid var(--border); }
+@media (max-width: 62rem) {
+  .v-a .a-grid { grid-template-columns: minmax(0, 1fr); }
+  .v-a .a-rail { position: static; max-height: none; overflow: visible; }
+  .v-a .a-head-cols { grid-template-columns: minmax(0, 1fr); }
+  .v-a .a-main { display: contents; }
+  .v-a .a-head { order: -1; }
+  .v-a .panel { order: 2; }
+}
+@media (max-width: 42rem) {
+  .v-a .a-head { padding: var(--space-4); }
+}
+
+/* =============== Variant B: tile strip over a full-width panel =============== */
+.v-b .b-band { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr); border: 1px solid var(--border); }
+.v-b .b-band > div { display: grid; gap: var(--space-4); align-content: start; min-width: 0; padding: var(--space-5); }
+@media (min-width: 62.01rem) { .v-b .b-band[data-cells='2'] { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); } }
+.v-b .b-band > div + div { border-left: 1px solid var(--border); }
+.v-b .b-band .b-sentence { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.v-b .list ol { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.v-b .entry { align-content: start; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'no no' 'name name' 'key key'; gap: var(--space-1); height: 100%; padding: var(--space-3); border-width: 1px 0 0 1px; border-top-width: 2px; border-top-color: var(--border); }
+.v-b .entry-li:last-child .entry { border-right-width: 1px; }
+.v-b .entry-li { display: flex; }
+.v-b .entry-li > * { flex: 1; }
+.v-b .entry-no { grid-area: no; } .v-b .entry-name { grid-area: name; } .v-b .entry-key { grid-area: key; flex-direction: column; align-items: flex-start; gap: 0; padding-top: var(--space-2); }
+.v-b .entry-key b { font-size: var(--fs-fluid-3); line-height: var(--lh-tight); overflow-wrap: anywhere; }
+.v-b .entry-gist { display: none; }
+.v-b .entry[aria-current='page'] { border-top-color: var(--primary); }
+.v-b [data-ghost='true'] .entry { grid-template-areas: 'no no' 'name name' 'ghost ghost'; border-top-style: dashed; }
+.v-b .entry-ghost { grid-area: ghost; padding-top: var(--space-2); }
+.v-b .list { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.v-b .list ol { border-left: 0; }
+.v-b .lifted { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6) var(--space-fluid-9); align-items: start; }
+.v-b .lifted > .grp:has(.rows, .leads, .figure, .swaps, .csec, .counts, .lookup, .cmdlist, .concerns), .v-b .lifted > .concerns, .v-b .lifted > .csec, .v-b .lifted > .pull { grid-column: 1 / -1; }
+.v-b .plain { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6) var(--space-fluid-9); align-items: start; }
+@media (max-width: 62rem) {
+  .v-b .b-band { grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 62.01rem) { .v-b .b-band[data-cells='2'] { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); } }
+.v-b .b-band > div + div { border-left: 0; border-top: 1px solid var(--border); }
+  .v-b .list ol { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .v-b .lifted, .v-b .plain { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 42rem) {
+  .v-b .list ol { grid-template-columns: minmax(0, 1fr); }
+  .v-b .list { border-right: 0; border-bottom: 0; }
+  .v-b .entry { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: 'no name key'; border-width: 1px; border-top-width: 1px; align-items: center; }
+  .v-b .entry-key { flex-direction: row; align-items: baseline; gap: var(--space-1-5); padding-top: 0; }
+  .v-b .entry-key b { font-size: var(--fs-4); }
+  .v-b [data-ghost='true'] .entry { grid-template-areas: 'no name ghost'; grid-template-columns: auto minmax(0, 1fr) auto; }
+  .v-b .entry-ghost { padding-top: 0; }
+  .v-b .entry-li + .entry-li .entry { border-top-color: var(--border-faint); }
+  .v-b .b-band > div { padding: var(--space-4); }
+}
+
+/* =============== Variant C: bars that open in place + a facts sidebar =============== */
+.v-c .c-grid { display: grid; grid-template-columns: minmax(0, 1fr) var(--side); grid-template-areas: 'main side'; gap: var(--space-fluid-9); align-items: start; }
+.v-c .c-main { grid-area: main; min-width: 0; }
+.v-c .c-side { grid-area: side; display: grid; gap: var(--space-5); min-width: 0; align-content: start; align-self: start; padding: var(--space-4); border: 1px solid var(--border); background: var(--card-veil); }
+.v-c .c-count { display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
+.v-c .c-count b { font-family: var(--font-mono); font-size: var(--fs-display-1); font-weight: var(--fw-semibold); line-height: var(--lh-none); }
+.v-c .c-facts { display: grid; gap: var(--space-2); justify-items: start; }
+.v-c .c-head { display: grid; gap: var(--space-5); padding-top: var(--space-5); border-top: 1px solid var(--border); }
+.v-c .c-head h2 { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.v-c .counts { grid-template-columns: minmax(0, 1fr); }
+.v-c .list ol { border-top: 1px solid var(--border); }
+.v-c .entry-li { border-bottom: 1px solid var(--border); }
+.v-c .entry { grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-areas: 'no name key chev' '. gist key chev'; gap: 0 var(--space-4); padding: var(--space-3) var(--space-3); border: 0; min-height: var(--space-10); }
+.v-c .entry-no { grid-area: no; align-self: start; padding-top: var(--space-0-5); } .v-c .entry-name { grid-area: name; font-size: var(--fs-5); } .v-c .entry-gist { grid-area: gist; } .v-c .entry-key { grid-area: key; grid-row: 1 / span 2; align-self: center; flex-direction: column; align-items: flex-end; gap: 0; }
+.v-c .entry-key b { font-size: var(--fs-7); line-height: var(--lh-tight); }
+.v-c .chev { grid-area: chev; grid-row: 1 / span 2; align-self: center; color: var(--muted-foreground); }
+.v-c .entry[aria-current='page'] { border: 0; border-left: 2px solid var(--primary); background: var(--primary-tint); }
+.v-c [data-ghost='true'] .entry { border: 0; grid-template-areas: 'no name ghost'; grid-template-columns: auto minmax(0, 1fr) auto; }
+.v-c .entry-ghost { grid-area: ghost; }
+.v-c .c-open { padding: var(--space-6) var(--space-4) var(--space-8) calc(var(--space-4) + var(--space-3)); }
+.v-c .c-open .panel-head { display: none; }
+@media (max-width: 62rem) {
+  .v-c .c-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'side' 'main'; }
+}
+@media (max-width: 42rem) {
+  .v-c .entry { grid-template-columns: auto minmax(0, 1fr) auto auto; }
+  .v-c .c-open { padding: var(--space-5) var(--space-1) var(--space-6); }
+}
+</style>
+</head>
+<body>
+<nav id="sketch-bar" aria-label="Sketch controls">
+  <span class="lbl">042 codebase</span>
+  <span class="grp" id="tabs">
+    <a data-tab="a" href="#a">A: Rail + column ★ Selected</a>
+    <a data-tab="b" href="#b">B: Tile strip</a>
+    <a data-tab="c" href="#c">C: Bars in place</a>
+  </span>
+  <span class="grp">
+    <button data-theme="light">Light</button>
+    <button data-theme="dark">Dark</button>
+  </span>
+  <span class="grp line"><span class="name">State</span>
+    <button data-state="normal">Normal project</button><button data-state="new">Map only, complete</button><button data-state="fast">Map only, fast</button><button data-state="partial">Map only, partial</button><button data-state="ingest">Map only, with ADRs</button><button data-state="variant">Heading variants</button></span>
+</nav>
+
+<section data-variant="a" class="variant v-a"></section>
+<section data-variant="b" class="variant v-b" hidden></section>
+<section data-variant="c" class="variant v-c" hidden></section>
+<div id="toast" role="status"></div>
+
+<script>
+// ---------- icons (lucide paths, 24px grid) ----------
+const ICON = {
+  copy: '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  chevr: '<path d="m9 6 6 6-6 6"/>',
+  chevd: '<path d="m6 9 6 6 6-6"/>',
+  moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+};
+const svg = (n, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const rich = (s) => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>');
+const sq = (tone) => `<span class="sq" data-tone="${tone}" aria-hidden="true"></span>`;
+const chip = (tone, text, title) => `<span class="status-chip" data-tone="${tone}"${title ? ` title="${esc(title)}"` : ''}>${sq(tone)}${esc(text)}</span>`;
+
+// ---------- data: Labelore's own map (public). Numbers are the adjusted counting rule of 10-03. ----------
+const ALL = ['stack', 'architecture', 'structure', 'conventions', 'testing', 'integrations', 'concerns'];
+const CORE = ['stack', 'integrations', 'architecture', 'structure'];
+const DOC = {
+  stack: { name: 'Stack', key: '22', unit: 'tools', gist: 'TypeScript on Node 22, React 19, Hono, Vite' },
+  architecture: { name: 'Architecture', key: '24', unit: 'components', gist: 'A layered read-only pipeline over one filesystem port' },
+  structure: { name: 'Structure', key: '11', unit: 'directories', gist: 'One src/ tree for server and web, test/ beside it' },
+  conventions: { name: 'Conventions', key: '8', unit: 'rule groups', gist: 'Kebab-case files, named exports, load paths never throw' },
+  testing: { name: 'Testing', key: 'Vitest', unit: 'framework', gist: 'Vitest for unit and contract tests, Playwright for e2e' },
+  integrations: { name: 'Integrations', key: '3', unit: 'services', gist: 'An optional ssh mirror and git; no hosted services' },
+  concerns: { name: 'Concerns', key: '30', unit: 'concerns', gist: 'Six in Security; test gaps and oversized modules lead the rest' },
+};
+const STATES = {
+  normal: { mapped: ALL, head: false, panel: 'architecture', date: 'Nov 4, 2026', commit: '717c8d7' },
+  new: { mapped: ALL, head: true, panel: 'stack', date: 'Nov 4, 2026', commit: '717c8d7', cmd: '/gsd-new-project', reason: 'The map is complete. Next, set the project up.' },
+  fast: { mapped: ['stack', 'architecture', 'structure', 'integrations'], head: true, panel: 'stack', date: 'Nov 4, 2026', commit: '717c8d7', cmd: '/gsd-map-codebase', reason: 'Finish the map. A fast map is enough to look around, but project setup needs the complete one.' },
+  partial: { mapped: ['stack', 'architecture', 'conventions'], head: true, panel: 'stack', date: 'Nov 4, 2026', commit: null, cmd: '/gsd-map-codebase', reason: 'This map is partial. Some of the seven documents are missing, so map the codebase before setting the project up.' },
+  ingest: { mapped: ALL, head: true, panel: 'stack', date: 'Nov 4, 2026', commit: '717c8d7', cmd: '/gsd-ingest-docs', reason: 'Existing decision or spec documents were found. Import them before setting the project up.' },
+  variant: { mapped: ALL, head: false, panel: 'architecture', date: 'Oct 28, 2026', commit: null, variant: true },
+};
+const READY = {
+  complete: ['complete', 'Complete map', null],
+  fast: ['in-flight', 'Fast map', 'A fast map covers stack, integrations, architecture and structure; project setup needs the complete one.'],
+  partial: ['in-flight', 'Partial map', 'Some of the four core documents are missing; the map is not complete.'],
+};
+// Concern sections as counted by the rule in 10-03: [heading, label, tone for the square, concerns]. Security first.
+const C = (t, b) => [t, b];
+const CONCERNS = [
+  ['Security Considerations', 'Security', 'in-flight', [
+    C('Remote project mirroring copies the whole `.planning/` tree to local disk', 'The mirror holds the full planning tree, including `config.json` with its secret keys in plaintext. Masking happens only in memory at display time.'),
+    C('Mirror size and time are unbounded', 'The mirror has no size cap. Its only limit is a 120-second timeout, so a large tree can fill the local temp directory first.'),
+    C('Sketch HTML runs scripts from the target project', 'Sketch files are served with a sandbox directive, so their scripts run in an opaque origin, but they still execute code a project author wrote.'),
+    C('Raw HTML in planning markdown is sanitized with an extended schema', 'Correctness depends on sanitize running before every other plugin; the schema allows `className` on every element.'),
+    C('Secret masking uses a hard-coded key list', 'Three top-level keys are masked. A new secret key added by GSD would display in plaintext.'),
+    C('Host allowlist widens by environment variable', '`LABELORE_ALLOWED_HOSTS` adds accepted Host values. It is opt-in and rejects wildcards, which is correct.')]],
+  ['Tech Debt', 'Tech debt', 'neutral', [
+    C('Oversized modules', 'Several files have grown well past what a reader can hold in one pass; each mixes parsing, shaping and presentation.'),
+    C('One handler per artifact type, bespoke parsing each time', 'Section extraction, heading matching and regex parsing are reimplemented per handler.'),
+    C('Documentation drift in the project instructions', 'The instructions record the research-time stack while `package.json` pins different versions.'),
+    C('Deferred human verification recorded as "fixed"', 'The ledger reports nothing open, but two live visual checks were deferred and never run.'),
+    C('Regression tests recorded as debt and not written', 'A ReDoS timing test, a `dangerouslySetInnerHTML` guard and a view-mode outline cap were noted and carried forward.'),
+    C('Open test-hygiene warnings', 'Five review warnings from Phase 6 are still open; the no-skips scan can miss a skipped test whose header follows a `//` in a string.')]],
+  ['Known Bugs', 'Known bugs', 'neutral', [
+    C('Startup mode depends on `NODE_ENV`', 'Running the entry file without `NODE_ENV=production` serves the Vite dev middleware instead of `./dist`, and the first load is slow.')]],
+  ['Performance Bottlenecks', 'Performance', 'neutral', [
+    C('Full snapshot rebuilt per project load (inferred)', 'Loading reads and parses every `.planning/` file, then builds a search index and route table; there is no incremental path.'),
+    C('Synchronous filesystem calls on the server path', 'The settings store uses `*Sync` calls inside request handlers; 13 across `src/server/`.'),
+    C('Remote mirror runs on the request path', 'An ssh mirror can take up to 120 seconds inside the process that serves other projects.')]],
+  ['Fragile Areas', 'Fragile areas', 'neutral', [
+    C('Regex-driven parsing of free-form markdown', 'Patterns match prose that GSD generates; each is length-capped, but an edit to the source artifact can break them.'),
+    C('Source-text contract tests with an implicit oracle', 'They pass when the parts exist but are not wired together.'),
+    C('Frontmatter parsing', 'Every call must stay on `tryParseFrontmatter`; the cache behaviour is subtle.'),
+    C('Settings file write path', 'The `wx` flag and the realpath check together stop a symlink redirecting the write.')]],
+  ['Scaling Limits', 'Scaling limits', 'neutral', [
+    C('Project count and project size', 'Not measured. The full-read design grows linearly with the number of `.planning/` files.'),
+    C('Remote mirror size', 'A 120-second timeout and no byte cap; limited by local temp disk space.')]],
+  ['Dependencies at Risk', 'Dependencies at risk', 'neutral', [
+    C('TypeScript and tooling version split', 'The project pins 5.9.3 while research recorded 7.0.2 as latest; editor and lint tooling may lag.'),
+    C('`gray-matter` and `hast-util-sanitize` version coupling', 'A mismatch with the schema `rehype-sanitize` expects would silently change what the schema allows.')]],
+  ['Missing Critical Features', 'Missing features', 'neutral', [
+    C('No runtime guard that the reader stays read-only', 'The boundary is enforced by convention and by one test that holds the list of `node:fs` importers.'),
+    C('No health surface for a degraded snapshot', 'Warnings stay per project; there is no single place to see every warning.')]],
+  ['Test Coverage Gaps', 'Test coverage gaps', 'neutral', [
+    C('Markdown sanitizer end-to-end', 'Hostile raw HTML and `javascript:` URLs are not tested against the actual schema.'),
+    C('ReDoS timing on presentation regexes', 'Pathological input timing is untested for the presentation regexes.'),
+    C('Remote mirror failure paths', 'Missing `tar`, ssh exiting 255 mid-stream and a leftover temp directory are untested.'),
+    C('Settings symlink refusal', 'A symlink at `settings.json` or at the settings directory is untested.')]],
+];
+// The heading-variant state: no Missing Critical Features (a known section absent shows 0), plus an extra section.
+function concernRows() {
+  const rows = CONCERNS.map((r) => r.slice());
+  if (st().variant) {
+    const i = rows.findIndex((r) => r[0] === 'Missing Critical Features');
+    rows[i] = ['Missing Critical Features', 'Missing features', 'neutral', []];
+    rows.push(['Repository Hygiene', 'Repository hygiene', 'neutral', [
+      C('Generated output sits beside source', 'A build folder and two report folders are ignored by git but easy to mistake for source.'),
+      C('Scratch notes in the root', 'Two notes files were left from a past session.'),
+      C('A stale lockfile entry', 'One dependency entry no longer matches `package.json`.'),
+      C('Fixture folders without a readme', 'Two fixture folders have no description of what they cover.')]]);
+  }
+  return rows;
+}
+const concernTotal = () => concernRows().reduce((n, r) => n + r[3].length, 0);
+
+// ---------- state ----------
+const params = new URLSearchParams(location.search);
+const S = { state: STATES[params.get('state')] ? params.get('state') : 'new', panel: params.get('panel') || null, more: false };
+let theme = params.get('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+const st = () => STATES[S.state];
+const mapped = () => st().mapped;
+const readiness = () => (mapped().length === 7 ? 'complete' : CORE.every((k) => mapped().includes(k)) ? 'fast' : 'partial');
+const curPanel = () => (S.panel && mapped().includes(S.panel) ? S.panel : mapped().includes(st().panel) ? st().panel : mapped()[0]);
+const keyOf = (k) => (k === 'concerns' && st().variant ? String(concernTotal()) : DOC[k].key);
+
+// ---------- shared fragments ----------
+const crumbs = () => `<nav class="crumbs" aria-label="Breadcrumb"><span>Labelore</span><span aria-hidden="true">/</span><span aria-current="page">Codebase</span></nav>`;
+const copyPath = () => `<button class="btn-xs icon" type="button" data-act="noop" aria-label="Copy path" title="Copy path">${svg('copy')}</button>`;
+const viewSource = () => `<div class="seg" role="group" aria-label="Show"><button class="btn-xs" type="button" aria-pressed="true">View</button><button class="btn-xs" type="button" aria-pressed="false" data-act="noop">Source</button></div>`;
+const appHead = () => `<header class="app-head" data-shell><span class="app-brand"><i></i>Labelore <span>/ labelore</span></span>
+  <nav class="app-nav" aria-label="Project">${st().head
+    ? '<a href="#" data-act="noop" aria-current="page">Dashboard</a><a href="#" data-act="noop">Search</a>'
+    : '<a href="#" data-act="noop">Dashboard</a><a href="#" data-act="noop">Roadmap</a><a href="#" data-act="noop">Traceability</a><a href="#" data-act="noop">Search</a>'}</nav></header>`;
+function factsHtml() {
+  const s = st();
+  const [tone, label, title] = READY[readiness()];
+  return `<div class="facts"><span class="facts-count">${mapped().length} of 7 documents mapped</span>${chip(tone, label, title)}${s.date ? `<span class="facts-date">Mapped ${s.date}</span>` : ''}${s.commit ? `<span class="status-chip mono" data-tone="quiet" title="Commit the map was made at">Commit ${s.commit}</span>` : ''}</div>`;
+}
+const chipSet = (label, arr) => `<div class="chip-set"><p class="micro-label">${label}</p><ul class="chips">${arr.map(([n, v]) => `<li class="chip-plain"><span>${esc(n)}</span>${v ? `<code>${esc(v)}</code>` : ''}</li>`).join('')}</ul></div>`;
+const STACK = {
+  lang: [['TypeScript', '5.9.3'], ['CSS', ''], ['JavaScript', ''], ['Markdown', ''], ['JSON', '']],
+  run: [['Node.js', '>=22.18.0'], ['ESM only', '']],
+  fw: [['React', '19.2.8'], ['react-router', '8.3.0'], ['Hono', '4.13.4'], ['@hono/node-server', '2.1.1'], ['TanStack Query', '5.102.3'], ['@base-ui/react', '1.7.0']],
+  test: [['Vitest', '4.1.11'], ['Playwright', '1.63.0']],
+  build: [['Vite', '8.2.2'], ['Tailwind CSS', '4.3.3'], ['ESLint', '10.8.1'], ['Prettier', '3.9.6']],
+};
+const headStack = () => `<div class="chip-set-wrap" style="display:grid;gap:var(--space-3);min-width:0">${chipSet('Languages', STACK.lang.slice(0, 4))}${chipSet('Runtime', STACK.run)}${chipSet('Frameworks', [...STACK.fw.slice(0, 3), ...STACK.test.slice(0, 1), ...STACK.build.slice(0, 1)])}</div>`;
+function concernsBlock() {
+  if (!mapped().includes('concerns')) return '';
+  return `<div class="concerns"><p class="concerns-total"><b>${concernTotal()}</b><span>concerns</span></p>
+    <ul class="counts">${concernRows().map((r, i) => `<li class="count"${i === 0 ? ' data-first' : ''}>${sq(r[3].length === 0 ? 'quiet' : i === 0 ? 'in-flight' : 'neutral')}<span title="${esc(r[0])}">${esc(r[1])}</span><b>${r[3].length}</b></li>`).join('')}</ul></div>`;
+}
+function nextBlock() {
+  const s = st();
+  return `<div class="next"><p class="next-reason">${esc(s.reason)}</p>
+    <div class="cmd-row"><code class="cmd">${esc(s.cmd)}</code><button class="btn-xs copy" type="button" data-act="copy" data-cmd="${esc(s.cmd)}" aria-label="Copy command: ${esc(s.cmd)}">${svg('copy')}<span>Copy command</span></button></div>
+    <p class="source-note">Labelore does not run commands. Paste it in your terminal.</p></div>`;
+}
+
+// ---------- the panel list ----------
+function listHtml(inside) {
+  const cur = curPanel();
+  return `<nav class="list" aria-label="Codebase map"><ol>${ALL.map((k, i) => {
+    const d = DOC[k], no = String(i + 1).padStart(2, '0');
+    if (!mapped().includes(k)) return `<li class="entry-li" data-ghost="true"><div class="entry"><span class="entry-no">${no}</span><span class="entry-name">${d.name}</span><span class="entry-ghost">${sq('quiet')}Not mapped</span></div></li>`;
+    const on = k === cur;
+    return `<li class="entry-li"><a class="entry" href="#" data-act="panel" data-panel="${k}"${on ? ' aria-current="page"' : ''}><span class="entry-no">${no}</span><span class="entry-name">${d.name}</span><span class="entry-gist">${esc(d.gist)}</span><span class="entry-key"><b>${esc(keyOf(k))}</b><i>${d.unit}</i></span>${inside ? `<span class="chev">${svg(on ? 'chevd' : 'chevr')}</span>` : ''}</a>${inside && on ? inside(k) : ''}</li>`;
+  }).join('')}</ol></nav>`;
+}
+
+// ---------- panel bodies (stand-ins: 043 to 046 design the insides; this sketch only needs real content in them) ----------
+const grp = (h, body, cls = '') => `<section class="grp ${cls}"><h3 class="grp-h">${h}</h3>${body}</section>`;
+const plainSec = (h, body) => `<section class="plain-sec"><h3 class="grp-h">${esc(h)}</h3>${body}</section>`;
+const para = (t) => `<p class="prose">${rich(t)}</p>`;
+const leads = (items) => `<dl class="leads">${items.map(([t, b]) => `<div><dt>${rich(t)}</dt><dd>${rich(b)}</dd></div>`).join('')}</dl>`;
+const steps = (items) => `<ol class="steps">${items.map((s) => `<li>${rich(s)}</li>`).join('')}</ol>`;
+const rows = (items, cls = '') => `<ul class="rows ${cls}">${items.map(([a, b, c]) => `<li><span class="r-name">${rich(a)}</span><span class="r-body">${rich(b)}</span>${c ? `<span class="r-file" title="${esc(c)}">${esc(c)}</span>` : ''}</li>`).join('')}</ul>`;
+const figure = (title, inner) => `<figure class="figure"><div class="figure-bar"><span class="figure-title">${title}</span><span class="figure-act"><button class="text-link" type="button" data-act="noop">Fit</button><button class="text-link" type="button" data-act="expand">Expand</button></span></div><div class="figure-body">${inner}</div></figure>`;
+const cmdList = (cmds) => `<ul class="cmdlist">${cmds.map((c) => `<li><code>${esc(c)}</code><button class="btn-xs icon" type="button" data-act="copy" data-cmd="${esc(c)}" aria-label="Copy command: ${esc(c)}" title="Copy command">${svg('copy')}</button></li>`).join('')}</ul>`;
+
+function diagram() {
+  const W = 76, bar = '─'.repeat(W - 2), top = '┌' + bar + '┐', bot = '└' + bar + '┘';
+  const box = (t) => [top, '│ ' + t.padEnd(W - 4) + ' │', bot];
+  const pad = (n, t) => ' '.repeat(n) + t;
+  const L = [
+    ...box('Browser SPA (React 19 + react-router + TanStack Query)'),
+    pad(16, '│ fetch /api/projects[/:slug]/…  (apiFetch in `src/web/api.ts`)'), pad(16, '▼'),
+    ...box('HTTP server (Hono)  ·  request guard (Host + JSON content type)'),
+    pad(8, '│ /api/projects…                    │ /api/projects/:slug/*'), pad(8, '▼                                   ▼'),
+    '┌──────────────────────────┐   ┌────────────────────────────────────────────┐',
+    '│ ProjectRegistry          │──▶│ Per-project read API (project-api.ts)      │',
+    '│ settings + slug + scan   │   │ resolves one ProjectRuntime per request    │',
+    '└──────────┬───────────────┘   └───────────────────┬────────────────────────┘',
+    pad(11, '▼                                   ▼'),
+    ...box('ProjectRuntime · DerivedViews swapped as one bundle'),
+    pad(16, '│ SnapshotSource.getSnapshot() / refresh()'), pad(16, '▼'),
+    ...box('Parsing core (planning-repo): discover → parseWithRegistry → assemble'),
+    pad(16, '│ PlanningFilesystem port (planning-fs/types.ts)'), pad(16, '▼'),
+    ...box('Filesystem adapter local-fs.ts (only node:fs user) or ssh mirror'),
+  ];
+  return `<pre>${esc(L.join('\n'))}</pre>`;
+}
+const COMPONENTS = [
+  ['CLI / server entry', 'Parses argv, starts the Hono server, prints startup lines', 'src/server/index.ts'],
+  ['Target path resolution', 'Turns a CLI argument into a local folder or remote target', 'src/cli/target-path.ts'],
+  ['Project registry', 'Keeps the project list, allocates slugs, builds runtimes lazily', 'src/server/project-registry.ts'],
+  ['Settings store', 'Persists the project list outside any target project', 'src/server/settings-store.ts'],
+  ['Request guard', 'Host allow-list and JSON content-type check on `/api/*`', 'src/server/request-guard.ts'],
+  ['Project runtime', "Owns one project's `DerivedViews`, coalesces refreshes", 'src/server/project-runtime.ts'],
+];
+const MORE_COMPONENTS = [
+  ['Registry HTTP app', 'Mounts the guard, body limits and project list routes', 'src/server/registry-api.ts'],
+  ['Per-project API', 'Read-only JSON endpoints for every page', 'src/server/project-api.ts'],
+  ['Filesystem port', 'The interface every layer depends on; paths are project-relative', 'src/planning-fs/types.ts'],
+  ['Local filesystem adapter', 'Node-backed, containment-checked reads', 'src/planning-fs/local-fs.ts'],
+  ['Discovery', 'Finds artifacts by filename and directory position only', 'src/planning-repo/discovery.ts'],
+  ['Handler registry', 'Ordered typed parsers; generic markdown is the fallback', 'src/planning-repo/handlers/index.ts'],
+  ['Assembly', 'Builds the milestone-qualified domain graph', 'src/planning-repo/assemble.ts'],
+  ['Snapshot', 'Returns a new immutable `ProjectSnapshot`; never throws', 'src/planning-repo/snapshot.ts'],
+  ['Domain model', 'Shared entity types with no parsing imports', 'src/domain/model.ts'],
+  ['Presentation builders', 'Pure functions from domain model to view models', 'src/presentation/*.ts'],
+  ['Route table and URL grammar', 'One clean address per file; aliases redirect', 'src/presentation/route-table.ts'],
+  ['Rendering', 'unified pipeline, shiki highlighting, ASCII diagram lifting', 'src/rendering/markdown.ts'],
+  ['Search', 'MiniSearch index built per bundle, off the request path', 'src/server/search-index.ts'],
+  ['Web shell and routing', 'Root render, router, project layout, route dispatch', 'src/web/app-router.tsx'],
+  ['Client API', '`apiFetch`, typed fetchers, error kinds', 'src/web/api.ts'],
+  ['Pages', 'Route-level React components, lazy-loaded', 'src/web/pages/*.tsx'],
+  ['Views', 'Pure view composition paired with presentational React', 'src/web/views/*.ts'],
+  ['Snapshot source', 'Builds a source for a folder, or mirrors a remote `.planning/`', 'src/server/remote-source.ts'],
+];
+const TREE = [
+  [0, 'labelore/', ''], [1, 'src/', 'All application source, one tree for server and web'], [2, 'cli/', 'Target argument parsing'], [2, 'domain/', 'Shared entity types, no parsing imports'],
+  [2, 'planning-fs/', 'Filesystem port and the Node adapter'], [2, 'planning-repo/', 'Discovery, parsing, handlers, assembly, snapshot'], [3, 'handlers/', 'One parser per GSD artifact family (54 files)'],
+  [2, 'presentation/', 'Pure view-model builders and URL grammar'], [2, 'rendering/', 'Markdown to HTML, diagram lifting and layout'], [2, 'server/', 'Hono app, registry and runtime, search, settings'],
+  [2, 'web/', 'React SPA'], [3, 'components/', 'Shell, switcher, dialogs, shared widgets'], [3, 'pages/', 'Route-level components, lazy-loaded'], [3, 'views/', 'Pure composers and presenters'],
+  [1, 'test/', 'Vitest tests, goldens, e2e specs'], [1, 'fixtures/', 'Top-level fixture projects'], [1, 'docs/', 'design-language.md'],
+];
+const tree = () => `<ul class="tree">${TREE.map(([d, n, c]) => `<li style="--d:${d}"><span class="t-name">${esc(n)}</span>${c ? `<span class="t-note"># ${esc(c)}</span>` : ''}</li>`).join('')}</ul>`;
+
+const PANELS = {
+  stack() {
+    const v = st().variant;
+    return {
+      lifted: [
+        grp(v ? 'Languages' : 'Languages', chipSet('Primary', STACK.lang.slice(0, 1)) + chipSet('Secondary', STACK.lang.slice(1)) + (v ? '' : '')),
+        grp('Runtime', chipSet('Environment', STACK.run)),
+        grp('Frameworks', chipSet('Core', STACK.fw) + chipSet('Testing', STACK.test) + chipSet('Build and dev', STACK.build)),
+        grp('Key dependencies', rows([['unified', 'Processor core of the markdown pipeline', '11.0.5'], ['shiki', 'Syntax highlighting with vitesse themes', '4.4.3'], ['mermaid', 'Diagrams rendered client-side only', '11.17.1'], ['gray-matter', 'YAML frontmatter, always guarded', '4.0.3'], ['minisearch', 'In-memory full-text index', '7.2.0'], ['lucide-react', 'Icons', '1.34.0']])),
+        grp('Configuration', rows([['NODE_ENV', 'Selects production mode', ''], ['LABELORE_CONFIG_DIR', 'Directory holding the remembered project list', ''], ['XDG_CONFIG_HOME', 'Settings location when absolute', ''], ['LABELORE_ALLOWED_HOSTS', 'Extra Host values accepted by the request guard', ''], ['LABELORE_E2E_CHROME', 'Chrome binary for the screenshot helper', '']], 'two')),
+      ].join(''),
+      plain: [
+        plainSec('Platform Requirements', leads([['Development', 'Node.js 22.18 or newer; `npm install` from the lockfile; optional system Chrome for screenshots; optional `ssh` and `tar` for remote targets.'], ['Production', 'A local, single-user tool bound to `127.0.0.1`. Run `npm run build`, then `npm start`. Not deployed to a hosted platform.']])),
+      ].join(''),
+    };
+  },
+  architecture() {
+    const v = st().variant;
+    const more = S.more ? MORE_COMPONENTS : [];
+    return {
+      lifted: [
+        grp('System overview', figure('System overview', diagram())),
+        grp('Component responsibilities', rows([...COMPONENTS, ...more]) + `<p class="source-note">${S.more ? `All 24 components shown. ` : `6 of 24 components shown. `}<button class="text-link" type="button" data-act="more">${S.more ? 'Show fewer' : 'Show all 24'}</button></p>`),
+        grp('Pattern overview', para('Layered read-only pipeline with a filesystem port, a pure parse-and-assemble core, derived immutable view bundles per project, and a thin Hono JSON API consumed by a React SPA.') + leads([['Strictly read-only', 'No write paths exist. The `write?` and `watch?` hooks are declared for future use.'], ['One seam to disk', 'Only `local-fs.ts` imports `node:fs`.'], ['Derived views replaced atomically', 'Built from a single snapshot, assigned once per refresh.']])),
+        grp('Entry points', rows([['Server / CLI', 'Parses argv, registers targets, starts listening on 127.0.0.1', 'src/server/index.ts'], ['Browser', 'Shell rendering, lazy page loading, project switching', 'src/web/main.tsx'], ['Snapshot CLI', 'One-off read of a target to a snapshot', 'src/cli/snapshot.ts']])),
+        grp('Anti-patterns', `<div class="swaps">${[
+          ['Reading a project through a server-wide "active" pointer', 'One request could observe another project.', 'Resolve the runtime per request from the slug and read only `runtime.derived`.'],
+          ['Mutating a derived bundle field by field', 'URLs could point at the wrong files.', 'Build a whole new `DerivedViews` and assign `this.derived` once.'],
+          ['Calling `gray-matter` or handler parsers without a guard', 'One malformed file would fail the whole refresh.', 'Let the handler throw; `parseWithRegistry` turns it into a warning.'],
+          ['Importing `node:fs` outside the adapter', 'It bypasses containment checks and breaks the port.', 'Accept a `PlanningFilesystem` argument.'],
+        ].map(([a, w, d]) => `<div class="swap"><s>${rich(a)}</s><span class="why">${rich(w)}</span><span class="do">${rich(d)}</span></div>`).join('')}</div>`),
+      ].join(''),
+      plain: [
+        plainSec('Layers', leads([['Filesystem port and adapters', 'Read files under a project root, enforce containment, never write. `src/planning-fs/`'], ['Domain model', 'Shared vocabulary of entities and identities. `src/domain/model.ts`'], ['Parsing core', 'Turn a `.planning/` tree into a `ProjectSnapshot`. 54 handler files.'], ['Presentation', 'Build JSON-ready view models and the URL grammar for every page.'], ['Rendering', 'Convert artifact markdown to HTML once and cache by consumer.'], ['Server', 'HTTP, project lifecycle, caching of per-project state, search state.'], ['Web client', 'Render every page from the JSON API, with client routing and cache.']])),
+        plainSec('Data Flow', steps(['Browser requests `/<slug>/…`; the router matches `/:project/*` and renders the project layout.', '`fetchPresentation(slug)` calls `GET /api/projects/:slug/presentation` through `apiFetch`.', 'The request guard checks Host and content type, then the project API resolves the runtime for the slug.', 'The handler returns `runtime.derived.presentation`; the client runs `resolveProjectRoute` and mounts the page lazily.', 'On refresh, `PlanningRepository.refresh()` discovers, parses with the handler registry, assembles, and the runtime swaps `derived` in one assignment.'])),
+        plainSec('Key Abstractions', leads([['`PlanningFilesystem`', 'Read-only, project-relative file access with containment. Port and adapter.'], ['`ArtifactHandler`', 'Typed parser for one GSD artifact family; first match wins, the generic handler stays last.'], ['`SnapshotSource` and `ProjectRuntime`', 'Uniform source of a snapshot plus the derived view bundle served from it.'], ['`RouteTable`', 'Guarantees each file exactly one readable URL.']])),
+        plainSec('Architectural Constraints', leads([['Threading', 'Single Node event loop; heavy work is async and the search build is scheduled off the request path.'], ['Global state', 'A module-level `HANDLERS` array and `LOCATION_ORDER`.'], ['Dev/prod split', '`vite` is imported dynamically only in dev; production serves `./dist`.']])),
+        plainSec('Error Handling', para('Results and status values over thrown exceptions at the core; HTTP errors as JSON at the edge. `refresh()` resolves a `LoadStatus` and never throws; path escapes raise `PathEscapeError` and are caught as warnings.')),
+        plainSec('Cross-Cutting Concerns', leads([['Logging', '`console.log` and `console.warn` for startup lines only.'], ['Validation', 'Path validation in the adapter; Host allow-list, JSON type and a 4096-byte body limit at the guard.'], ['Authentication', 'None. The server binds to `127.0.0.1`.']])),
+        v ? plainSec('API Architecture', para('Every page reads from a small set of read-only JSON endpoints under `/api/projects/:slug`. The registry app owns the list routes and the per-project app owns the rest; both sit behind the same request guard.')) : '',
+      ].join(''),
+    };
+  },
+  structure() {
+    return {
+      lifted: [
+        grp('Directory structure', figure('Directory structure', tree())),
+        grp('Where to add new code', `<ul class="lookup">${[['A GSD file the app should understand', 'src/planning-repo/handlers/<name>.ts, then register it in HANDLERS'], ['A view model or page data', 'src/presentation/<name>.ts and an endpoint in src/server/project-api.ts'], ['A page', 'src/web/pages/<name>-page.tsx and a lazy route in app-router.tsx'], ['A composed UI section', 'src/web/views/<name>.ts with its -components.tsx presenter']].map(([w, p]) => `<li><span class="when">${esc(w)}</span><code>${esc(p)}</code></li>`).join('')}</ul>`),
+      ].join(''),
+      plain: [
+        plainSec('Directory Purposes', rows([['src/cli/', 'Turn raw CLI arguments into a local folder or remote target', '3 files'], ['src/domain/', 'Shared vocabulary; safe for any layer to import', '1 file'], ['src/planning-fs/', 'Read-only filesystem port', '3 files'], ['src/planning-repo/', 'Parse a `.planning/` tree into a `ProjectSnapshot`', '71 files']])),
+        plainSec('Naming Conventions', para('Kebab-case for every source file; pages end in `-page.tsx`; tests end in `.test.ts`, never `.test.tsx`.')),
+        plainSec('Special Directories', leads([['`dist/`', 'Vite production bundle served by `npm start`. Generated, not committed.'], ['`fixtures/` and `test/fixtures/`', 'Sample GSD projects used for tests and screenshots, never read by the app at runtime.']])),
+      ].join(''),
+    };
+  },
+  conventions() {
+    return {
+      lifted: grp('Rule groups', rows([['Naming Patterns', 'kebab-case files, camelCase functions, `create*` factories, `make*` test builders', '5 groups'], ['Code Style', 'ESM only, `.ts` extensions in imports, Prettier', ''], ['Import Organization', 'Type imports first; restricted imports enforced by tests', ''], ['Error Handling', 'Load and read paths never throw; handlers degrade per artifact', ''], ['Logging', '`console` only, startup lines only', ''], ['Comments', 'File headers state the layer boundary', ''], ['Function Design', 'Small helpers beside long parsers', ''], ['Module Design', 'Named exports, one concept per file, no barrel files', '']], 'two')),
+      plain: [
+        plainSec('Web (React) Conventions', leads([['Components', 'Function components with named exports; `forwardRef` only to forward refs.'], ['Styling vocabulary', 'Every class must appear in `docs/design-language.md`, or in the reserved `view-<kind>-<suffix>` namespace.'], ['State and data', 'Server state through `@tanstack/react-query`; local state with `useState`.']])),
+        plainSec('Server (Hono) Conventions', para('One Hono app per concern. Routes are thin; logic lives in `src/presentation/**` and `src/server/**`. Read-only is the rule: the only write is the app\'s own `settings.json`.')),
+        plainSec('Naming of Presentation Concepts', para('Route and URL helpers live in `src/presentation/routes.ts` and `route-table.ts`; add new URL grammar there, not inline in components.')),
+        plainSec('Where to Follow These Rules', steps(['New planning artifact type: add a handler and register it.', 'New server route: add it to the Hono app that owns the area.', 'New UI class: add the row to `docs/design-language.md` first.'])),
+      ].join(''),
+    };
+  },
+  testing() {
+    return {
+      lifted: [
+        grp('Test framework', chipSet('Runner', STACK.test) + para('No jsdom environment. Web code is tested as text and contract scans, not rendered in a DOM.')),
+        grp('Run commands', cmdList(['npm test', 'npm run test:gate', 'npm run typecheck', 'npm run lint', 'npx vitest run test/web/class-vocabulary.test.ts', 'npx playwright test -g "copy-path"'])),
+      ].join(''),
+      plain: [
+        plainSec('Test File Organization', para('Test files mirror the source area and end in `.test.ts`. Playwright specs end in `.spec.ts` and live in `test/e2e/`.')),
+        plainSec('Test Structure', para('`it(` with a full-sentence title that names the outcome; inputs from a local `make*` builder or a shared fixture.')),
+        plainSec('Test Types', leads([['Unit tests', 'Pure function in, value out; realistic and malformed documents both.'], ['HTTP / server tests', 'Build the real Hono app and drive it with `app.request(...)`; no socket is opened.']])),
+        plainSec('Mocking', para('Fakes, not mocks. In-memory implementations of the filesystem and settings boundaries are used; `vi` appears in 14 test files only.')),
+        plainSec('Fixtures and Factories', para('Each worker gets its own throwaway `LABELORE_CONFIG_DIR`, so no run touches the real settings file.')),
+        plainSec('Forbidden Test Constructs', para('Skips, todos, `.only`, disguised early returns, absolute machine paths and absolute millisecond timing budgets. The gate fails on any skip, todo, failure, or zero tests.')),
+        plainSec('Coverage', para('No coverage tool or script is configured; no coverage requirement is enforced.')),
+        plainSec('Test Types Summary', para('A second heading that prefix-matches Test Types; it falls through as a plain section and takes no second slot.')),
+        plainSec('Common Patterns', para('Async tests drive the app with `guardedHeaders()` and assert on status and body.')),
+        plainSec('Adding a Test: Checklist', steps(['Pick the mirror folder.', 'Use `it(` with a full-sentence title.', 'Build inputs with a `make*` builder or a shared fixture.', 'Never add `.skip`, `.todo` or an early `return`.', 'Run `npx vitest run <file>`, then `npm run test:gate -- <file>`.'])),
+      ].join(''),
+    };
+  },
+  integrations() {
+    return {
+      lifted: [
+        grp('APIs and external services', rows([['Remote project source over SSH', 'Optional, read-only. System `ssh` spawned with argument arrays; `tar` extracts into a fresh temp directory.', 'src/server/remote-source.ts'], ['Git', 'Optional, local. Run through `execFile` for file dates and commit history; absence degrades the dates.', 'src/server/file-dates.ts'], ['Language-model APIs', 'Not detected.', '']])),
+        grp('Data storage', rows([['Project data', 'Read-only. The filesystem `.planning/` of each registered project.', ''], ['App settings', 'The only file the app writes: `settings.json`, the remembered project list.', 'src/server/settings-store.ts'], ['Caching', 'In memory only: the search index and the project runtime cache.', '']])),
+        grp('Environment configuration', rows([['LABELORE_ALLOWED_HOSTS', 'Extra Host values accepted by the guard', ''], ['LABELORE_CONFIG_DIR', 'Settings location', ''], ['XDG_CONFIG_HOME', 'Settings location', ''], ['LABELORE_E2E_CHROME', 'Chrome binary for screenshots', ''], ['NODE_ENV', 'Production switch', '']], 'two')),
+      ].join(''),
+      plain: plainSec('File Watching', para('Not implemented in v1. No `chokidar` or `fs.watch` usage was found. Refresh happens on request and through the project runtime.')),
+    };
+  },
+  concerns() {
+    const rs = concernRows();
+    const first = rs[0][3][0];
+    return {
+      lifted: [
+        concernsBlock(),
+        first ? `<div class="pull"><p class="micro-label">Most dangerous</p><p>${rich(first[0])}</p></div>` : '',
+        rs.map((r, i) => `<details class="csec"${i === 0 ? ' open' : ''}><summary>${sq(r[3].length === 0 ? 'quiet' : i === 0 ? 'in-flight' : 'neutral')}<span class="t">${esc(r[0])}</span><span class="n">${r[3].length}</span></summary>${r[3].length ? `<ul>${r[3].map(([t, b]) => `<li><b>${rich(t)}</b><p>${rich(b)}</p></li>`).join('')}</ul>` : ''}</details>`).join(''),
+      ].join(''),
+      plain: '',
+    };
+  },
+};
+function panelHtml(opts = {}) {
+  const k = curPanel(), d = DOC[k], no = String(ALL.indexOf(k) + 1).padStart(2, '0');
+  const p = PANELS[k]();
+  return `<article class="panel" aria-labelledby="panel-h">
+    <header class="panel-head"><span class="panel-no">${no}</span><h2 id="panel-h">${d.name}</h2><span class="panel-key">${esc(keyOf(k))} ${d.unit}</span></header>
+    <div class="lifted">${p.lifted}</div>${p.plain ? `<div class="plain">${p.plain}</div>` : ''}</article>`;
+}
+
+// ---------- the three page structures ----------
+function viewA() {
+  const s = st();
+  const head = s.head ? `<section class="a-head" aria-label="Mapped, not started">
+      <p class="a-head-sentence">This project has a codebase map and no roadmap yet.</p>
+      <div class="a-head-cols">${headStack()}${concernsBlock()}</div>
+      ${nextBlock()}</section>` : '';
+  return `${appHead()}<main class="page">${crumbs()}
+    <header class="heading-block"><p class="eyebrow">${s.head ? 'Mapped, not started' : 'Codebase'}</p><h1>Codebase</h1><div class="meta-row">${copyPath()}${viewSource()}</div></header>
+    <div class="a-grid"><aside class="a-rail">${factsHtml()}${listHtml()}</aside><div class="a-main">${head}${panelHtml()}</div></div></main>`;
+}
+function viewB() {
+  const s = st();
+  const band = s.head ? `<section class="b-band" aria-label="Mapped, not started" data-cells="${concernsBlock() ? 3 : 2}">
+      <div><p class="b-sentence">This project has a codebase map and no roadmap yet.</p>${headStack()}</div>
+      ${concernsBlock() ? `<div>${concernsBlock()}</div>` : ''}
+      <div>${nextBlock()}</div></section>` : '';
+  return `${appHead()}<main class="page">${crumbs()}
+    <header class="heading-block"><p class="eyebrow">Codebase</p><h1>${s.head ? 'Mapped, not started' : 'Codebase'}</h1><div class="meta-row">${factsHtml()}${copyPath()}${viewSource()}</div></header>
+    ${band}${listHtml()}${panelHtml()}</main>`;
+}
+function viewC() {
+  const s = st();
+  const [tone, label, title] = READY[readiness()];
+  const side = `<aside class="c-side"><div class="c-facts"><p class="c-count"><b>${mapped().length}</b><span>of 7 documents mapped</span></p>${chip(tone, label, title)}${s.date ? `<span class="facts-date">Mapped ${s.date}</span>` : ''}${s.commit ? `<span class="status-chip mono" data-tone="quiet" title="Commit the map was made at">Commit ${s.commit}</span>` : ''}</div>
+    ${s.head ? `<div class="c-head"><h2>Mapped, not started</h2><p>This project has a codebase map and no roadmap yet.</p>${headStack()}${concernsBlock()}${nextBlock()}</div>` : ''}</aside>`;
+  return `${appHead()}<main class="page">${crumbs()}
+    <header class="heading-block"><p class="eyebrow">Codebase</p><h1>Codebase</h1><div class="meta-row">${copyPath()}${viewSource()}</div></header>
+    <div class="c-grid">${side}<div class="c-main">${listHtml((k) => `<div class="c-open">${panelHtml()}</div>`)}</div></div></main>`;
+}
+
+// ---------- render ----------
+const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c'].includes(h) ? h : 'a'; };
+function render() {
+  const v = pickVariant();
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  document.querySelectorAll('[data-variant]').forEach((el) => { el.hidden = el.dataset.variant !== v; if (el.dataset.variant !== v) el.innerHTML = ''; });
+  document.querySelector(`[data-variant="${v}"]`).innerHTML = v === 'a' ? viewA() : v === 'b' ? viewB() : viewC();
+  document.querySelectorAll('#tabs a').forEach((a) => a.classList.toggle('on', a.dataset.tab === v));
+  document.querySelectorAll('#sketch-bar [data-theme]').forEach((b) => b.classList.toggle('on', b.dataset.theme === theme));
+  document.querySelectorAll('#sketch-bar [data-state]').forEach((b) => b.classList.toggle('on', b.dataset.state === S.state));
+}
+let toastTimer;
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1600); }
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act], [data-state], [data-theme]');
+  if (!el) return;
+  if (el.dataset.theme) { theme = el.dataset.theme; return render(); }
+  if (el.dataset.state) { S.state = el.dataset.state; S.panel = null; S.more = false; return render(); }
+  const act = el.dataset.act;
+  if (act === 'panel') { e.preventDefault(); S.panel = el.dataset.panel; return render(); }
+  if (act === 'more') { S.more = !S.more; return render(); }
+  if (act === 'expand') { const f = el.closest('.figure'); const on = f.dataset.expanded !== 'true'; f.dataset.expanded = on; el.textContent = on ? 'Collapse' : 'Expand'; return; }
+  if (act === 'noop') { e.preventDefault(); toast('Sketch only'); return; }
+  if (act === 'copy') {
+    const cmd = el.dataset.cmd;
+    try { navigator.clipboard && navigator.clipboard.writeText(cmd); } catch (err) { /* sketch: the confirmation is the point */ }
+    const label = el.querySelector('span');
+    el.dataset.copied = 'true'; el.setAttribute('aria-label', `Copied: ${cmd}`);
+    if (label) label.textContent = 'Copied';
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.dataset.copied = 'false'; el.setAttribute('aria-label', `Copy command: ${cmd}`); if (label) label.textContent = 'Copy command'; }, 1800);
+  }
+});
+window.addEventListener('hashchange', render);
+render();
+</script>
+</body>
+</html>
