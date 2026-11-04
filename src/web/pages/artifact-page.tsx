@@ -21,6 +21,7 @@ import type { RenderedDocument } from '../../rendering/markdown.ts';
 import { ReferencePreview, type ReferencePreviewState } from '../components/reference-preview.tsx';
 import { mountFigureIslands } from '../components/fenced-figure.tsx';
 import { DocumentViewToggle } from '../components/document-view-toggle.tsx';
+import { EmptyState } from '../components/empty-state.tsx';
 import { PairSwitch } from '../components/pair-switch.tsx';
 import { DocumentOutline, type OutlineEntry } from '../components/document-outline.tsx';
 import { useActiveSection } from '../components/use-active-section.ts';
@@ -29,7 +30,7 @@ import { dropLeadingTitle, splitPhaseTitle } from './document-title.ts';
 import { toMermaidColor } from './mermaid-theme.ts';
 import { scrollWhenSettled } from './scroll-settle.ts';
 import { humanizeKind } from '../views/kinds.ts';
-import { resolveViewFor } from '../views/manifests.ts';
+import { documentHtmlAllowedInView, resolveViewFor } from '../views/manifests.ts';
 import { unrecognizedNotice } from '../views/fallback.ts';
 import {
   OUTLINE_ENTRY_CAP,
@@ -73,6 +74,8 @@ import type { ComposedMilestoneAudit } from '../views/milestone-audit.ts';
 import { MilestoneAuditView, auditHeaderProps } from '../views/milestone-audit-components.tsx';
 import type { ComposedCoverage } from '../views/coverage-matrix.ts';
 import { CoverageView, coverageHeaderProps } from '../views/coverage-matrix-components.tsx';
+import type { ComposedCodebase } from '../views/codebase-page.ts';
+import { CodebaseView, codebaseHeaderProps } from '../views/codebase-components.tsx';
 import type { ComposedPlanNavigator } from '../views/plan-navigator.ts';
 import { PlanIntroMeta, PlanNavigatorView } from '../views/plan-navigator-components.tsx';
 import { findPlanContext } from '../views/plan-context.ts';
@@ -97,6 +100,7 @@ import { LedgerTabView, ledgerHeaderProps, ledgerSwitcher } from '../views/revie
 import type { TodoContext } from '../../presentation/todo-context.ts';
 import type { NoteContext } from '../../presentation/note-context.ts';
 import type { ProjectContext } from '../../presentation/project-context.ts';
+import type { CodebaseContext } from '../../presentation/codebase-map.ts';
 import type { ComposedReviewThreads } from '../views/review-threads.ts';
 import { ReviewThreadsView } from '../views/review-threads-components.tsx';
 import type { ComposedUiSpec } from '../views/ui-spec.ts';
@@ -210,6 +214,8 @@ export interface ArtifactDocumentResponse {
   noteContext?: NoteContext | null;
   /** Phase 9 (09-07): the project page's name, lead, core value and requirement counts (null for every other document). */
   projectContext?: ProjectContext | null;
+  /** Phase 10 (10-08): a map document's seven-panel list, readiness and stamp (null for every other document). */
+  codebaseContext?: CodebaseContext | null;
 }
 
 const WARNING_DISCLOSURE_LABELS: Record<Exclude<ArtifactWarningTone, null>, string> = {
@@ -727,6 +733,7 @@ export function ArtifactPage({
       todoContext: query.data.todoContext ?? null,
       noteContext: query.data.noteContext ?? null,
       projectContext: query.data.projectContext ?? null,
+      codebaseContext: query.data.codebaseContext ?? null,
     };
   }, [query.data, groups, planSegments, planProgress, planContext, phaseRequirementIds, shown, siblingArtifacts]);
   // VIEW-06: a registered manifest, or fallback.ts's synthesized structural-read manifest — one
@@ -903,6 +910,14 @@ export function ArtifactPage({
     if (!manifest || !viewInput) return null;
     return manifest.coverageMatrix?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // Phase 10 (10-08, sketch 042 A): the Codebase page, when the resolved manifest opts into one - `null` for every
+  // other kind and for a map document the page cannot shape (no context or no `structured.codebase`), where the
+  // promoted-section view renders with no notice. The composer is pure, so two map pages open at once each compose
+  // from their own response.
+  const codebase = useMemo<ComposedCodebase | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.codebasePage?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // "In the source only" entries switch to Source mode, then scroll to the named heading once the
   // source document has mounted. The pending id lives in a ref and is cleared only when the frame
   // callback fires, so a re-run of the effect (StrictMode) still lands on it.
@@ -960,6 +975,8 @@ export function ArtifactPage({
     windowsLedger !== null ||
     milestoneAudit !== null ||
     coverage !== null ||
+    codebase !== null ||
+    !documentHtmlAllowedInView(manifest) ||
     (composed !== null && composed.blocks.length > 0);
 
   if (query.isPending) {
@@ -1265,6 +1282,12 @@ export function ArtifactPage({
   // The API coverage page's header override rides the same spread; its frontmatter is empty or one author line,
   // so View mode hides the metadata disclosure for it.
   const coverageCover = coverage && mode === 'view' ? coverage : null;
+  // The Codebase page's header override (eyebrow and h1 "Codebase", its own crumbs) rides the same spread; the facts
+  // line carries the stamp the metadata disclosure would repeat, so View mode hides the disclosure for it.
+  const codebaseCover = codebase && mode === 'view' ? codebase : null;
+  // T-10-49: a manifest that withholds its document (user-setup) shows no document HTML in View mode - neither its
+  // promoted sections nor the whole document - unless a composed model above has taken the page over.
+  const documentWithheld = mode === 'view' && !documentHtmlAllowedInView(manifest);
   // The Fix and Disposition tabs' header override rides the same one-prop spread; its sections carry the counts the
   // metadata disclosure would repeat, so View mode hides the disclosure for it.
   const fixCover = reviewLedger && mode === 'view' ? reviewLedger : null;
@@ -1273,6 +1296,7 @@ export function ArtifactPage({
     (windowsCover ? windowsHeaderProps(windowsCover, artifact.title) : null) ??
     (auditCover ? auditHeaderProps(auditCover, artifact.title) : null) ??
     (coverageCover ? coverageHeaderProps(coverageCover) : null) ??
+    (codebaseCover ? codebaseHeaderProps(codebaseCover) : null) ??
     (fixCover ? ledgerHeaderProps(fixCover, artifact.title) : null);
   return (
     <main className="artifact-page page-stack">
@@ -1355,7 +1379,7 @@ export function ArtifactPage({
         // Winner lists the frontmatter as source-only — View mode hides the disclosure (Source
         // mode keeps it). The UAT page's cover carries its facts and its "In the source only"
         // strip names the frontmatter, so it hides the disclosure the same way.
-        specCover || uatCover || windowsCover || auditCover || coverageCover || fixCover ? null : (
+        specCover || uatCover || windowsCover || auditCover || coverageCover || codebaseCover || fixCover ? null : (
           <details className="artifact-metadata">
             <summary>
               Document metadata <span>{panels.length} sections</span>
@@ -1460,8 +1484,12 @@ export function ArtifactPage({
         />
       ) : coverageCover ? (
         <CoverageView key={artifact.path} model={coverageCover} />
+      ) : codebaseCover ? (
+        <CodebaseView key={artifact.path} model={codebaseCover} renderHtml={renderHtml} />
       ) : fixCover ? (
         <LedgerTabView key={artifact.path} model={fixCover} />
+      ) : documentWithheld ? (
+        <EmptyState />
       ) : viewAvailable && mode === 'view' && composed && shown ? (
         <ViewReader title={artifact.title} composed={composed} shown={shown} />
       ) : (

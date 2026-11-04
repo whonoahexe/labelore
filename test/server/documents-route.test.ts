@@ -3,6 +3,7 @@
 // /api/presentation reports as its key; an unknown address, a traversal spelling, an internal file's
 // file/ address and a malformed percent sequence are all 404s with `found: false`.
 import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { createApp } from '../../src/server/index.ts';
 import type { ProjectPresentation } from '../../src/server/project-presentation.ts';
@@ -269,5 +270,70 @@ describe('the route audit on the payload', () => {
     expect(hit?.url).toBe('/file/research/foo.md');
     expect(hit?.url).toBe(keyOf('.planning/research/foo.md'));
     expect(keyOf('.planning/research/Foo.md')).toBe('/research/foo');
+  });
+});
+
+// Phase 10 (10-08): the Codebase page's seven-panel list rides the /documents response for a map document only.
+describe('/api/documents carries the codebase context for a map document', () => {
+  const TIDEMARK_ROOT = fileURLToPath(new URL('../fixtures/tidemark', import.meta.url)).replace(/[\\/]$/, '');
+
+  interface ContextBody {
+    found: true;
+    codebaseContext: {
+      panels: { key: string; label: string; url: string | null; mapped: boolean }[];
+      mappedCount: number;
+      readiness: string;
+      mappedAt: string | null;
+      commit: string | null;
+      activeKey: string;
+      mapOnly: boolean;
+    } | null;
+  }
+
+  it("gives Tidemark's STACK.md seven panels, readiness complete and the stack panel active", async () => {
+    const app = await appOver(TIDEMARK_ROOT);
+    const response = await documentRequest(app, '/codebase/stack');
+    expect(response.status).toBe(200);
+    const { codebaseContext } = (await response.json()) as ContextBody;
+    expect(codebaseContext).not.toBeNull();
+    expect(codebaseContext?.panels.map((panel) => panel.key)).toEqual([
+      'stack',
+      'architecture',
+      'structure',
+      'conventions',
+      'testing',
+      'integrations',
+      'concerns',
+    ]);
+    expect(codebaseContext?.panels.every((panel) => panel.mapped && panel.url !== null)).toBe(true);
+    expect(codebaseContext?.panels[0]?.url).toBe('/codebase/stack');
+    expect(codebaseContext?.mappedCount).toBe(7);
+    expect(codebaseContext?.readiness).toBe('complete');
+    expect(codebaseContext?.activeKey).toBe('stack');
+    expect(codebaseContext?.mapOnly).toBe(true);
+  });
+
+  it('is null for a document that is not one of the seven map documents', async () => {
+    const app = await appOver(FX_ROOT);
+    const presentation = await presentationOf(app);
+    const project = presentation.artifacts.find((artifact) => artifact.path === '.planning/PROJECT.md');
+    expect(project).toBeDefined();
+    const response = await documentRequest(app, project?.key ?? '');
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as ContextBody;
+    expect(body.codebaseContext).toBeNull();
+  });
+
+  it("marks the documents Shapes' codebase folder lacks as unmapped, with no address", async () => {
+    const app = await appOver(SHAPES_ROOT);
+    const presentation = await presentationOf(app);
+    const stack = presentation.artifacts.find((artifact) => artifact.path === '.planning/codebase/STACK.md');
+    expect(stack).toBeDefined();
+    const body = (await (await documentRequest(app, stack?.key ?? '')).json()) as ContextBody;
+    expect(body.codebaseContext?.mappedCount).toBe(3);
+    expect(body.codebaseContext?.readiness).toBe('none');
+    const testing = body.codebaseContext?.panels.find((panel) => panel.key === 'testing');
+    expect(testing).toMatchObject({ mapped: false, url: null });
+    expect(body.codebaseContext?.mapOnly).toBe(false);
   });
 });

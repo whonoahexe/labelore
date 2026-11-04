@@ -8,7 +8,10 @@
 // (quick-261018-j5h). `todo` is discovery's directory-position kind for files under `.planning/todos/`
 // (quick-261023-61k). `note` is discovery's directory-position kind for GSD notes under `.planning/notes/`
 // (quick-261023-61l). `project` is the root PROJECT.md (Phase 9, 09-07). `windows` is the root WINDOWS.md
-// ledger (Phase 9, 09-10).
+// ledger (Phase 9, 09-10). Phase 10 (10-08) adds `codebase` (one view kind for the seven map documents, reached
+// through `viewKindOf`, whose wire kinds are `codebase-stack` ... `codebase-concerns`) and registers the six
+// specification and check kinds (`spec`, `ai-spec`, `user-setup`, `eval-review`, `dom-verify`, `reviews`), each
+// with a lead and a promote fallback until its page plan adds a composer.
 export const VIEW_KINDS = [
   'discussion-log',
   'verification',
@@ -34,9 +37,24 @@ export const VIEW_KINDS = [
   'todo',
   'note',
   'debug',
+  'codebase',
+  'spec',
+  'ai-spec',
+  'user-setup',
+  'eval-review',
+  'dom-verify',
+  'reviews',
 ] as const;
 
 export type ViewKind = (typeof VIEW_KINDS)[number];
+
+const CODEBASE_KIND_PREFIX = 'codebase-';
+
+/** The view kind a wire `artifact.kind` is looked up under: every `codebase-*` kind (the seven map documents)
+ * shares the one `codebase` view, any other kind is its own view kind (Phase 10, RESEARCH C8). Pure. */
+export function viewKindOf(kind: string): string {
+  return kind.startsWith(CODEBASE_KIND_PREFIX) ? 'codebase' : kind;
+}
 
 /** The D-09 reserved view-local class-prefix namespace: every registered kind plus the literal
  * `unrecognized` fallback used by VIEW-06's unmanifested/unknown-shape marker. Consumed by the
