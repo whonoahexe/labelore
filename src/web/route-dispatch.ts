@@ -13,6 +13,7 @@ import {
   resolveLegacyTarget,
   resolveUnprefixedAddress,
 } from '../presentation/legacy-routes.ts';
+import { projectMapState } from '../presentation/project-map-state.ts';
 import { archivedCopyTarget, hasSourceFlag, rootDocumentRedirect } from '../presentation/root-redirects.ts';
 import {
   buildPhaseUrl,
@@ -57,14 +58,32 @@ function documentOutcome(url: string, presentation: ProjectPresentation): RouteO
   return artifact ? { kind: 'document', url, artifactPath: artifact.path } : null;
 }
 
+/** The address of the first map document the project holds (page order), taken from the payload artifact's
+ * key, never from the typed address (T-10-02). Null when the project holds no recognised map document. */
+function firstMapDocumentKey(presentation: ProjectPresentation): string | null {
+  const first = projectMapState(presentation.artifacts).present[0];
+  if (first === undefined) return null;
+  const path = `.planning/codebase/${first}`;
+  const artifact = presentation.artifacts.find((candidate) => candidate.path === path);
+  return artifact !== undefined && artifact.key !== '' ? artifact.key : null;
+}
+
 function pageOrOverviewOutcome(
   route: Route,
   search: string,
   presentation: ProjectPresentation,
 ): RouteOutcome | null {
   switch (route.kind) {
-    case 'dashboard':
+    case 'dashboard': {
+      // TGT-09: a project that holds only a codebase map opens on its first map document, not on an empty
+      // dashboard. An artifact with no key falls back to the dashboard page.
+      if (projectMapState(presentation.artifacts).mapOnly) {
+        const key = firstMapDocumentKey(presentation);
+        const document = key === null ? null : documentOutcome(key, presentation);
+        if (document !== null) return document;
+      }
       return { kind: 'page', page: 'dashboard' };
+    }
     case 'page': {
       // 09 D-01: `/roadmap?source=1` opens ROADMAP.md itself. Only the roadmap page has a file behind it,
       // and only when the payload carries that artifact; every other page ignores the flag.
@@ -156,6 +175,14 @@ export function resolveProjectRoute(
       return summary === null ? planOutcome(route, presentation) : redirectTo(summary);
     }
     case 'document': {
+      // C7: the bare /codebase has no file behind it. It sends the reader to the first present map document
+      // (the dashboard address for a map-only project, whose first screen is that document) and is
+      // not-found where the project has no map. The target is a payload key or the dashboard address.
+      if (route.url === '/codebase') {
+        if (projectMapState(presentation.artifacts).mapOnly) return redirectTo('/');
+        const key = firstMapDocumentKey(presentation);
+        return key === null ? NOT_FOUND : redirectTo(key);
+      }
       // D-03: a live alias has one address, the file's own.
       const alias = Object.hasOwn(presentation.routeAliases, route.url)
         ? presentation.routeAliases[route.url]
