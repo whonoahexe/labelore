@@ -35,6 +35,8 @@ export const NOT_MAPPED = 'Not mapped';
 /** The map-only head's words (UI-SPEC section 3): the eyebrow, then the one sentence under it. */
 export const MAPPED_NOT_STARTED = 'Mapped, not started';
 export const MAPPED_NOT_STARTED_LEAD = 'This project has a codebase map and no roadmap yet.';
+/** The one quiet line under the command (UI-SPEC section 3): the page never runs anything. */
+export const NEVER_RUNS_NOTE = 'Labelore does not run commands. Paste it in your terminal.';
 
 export interface ComposedCodebaseReadiness {
   key: MapReadiness;
@@ -106,6 +108,8 @@ export interface ComposedCodebaseHead {
     noun: 'concern' | 'concerns';
     counts: ComposedHeadConcernRow[];
   } | null;
+  /** GSD's next step: one of four constant commands, the reason line, and the never-runs note. */
+  next: { command: string; reason: string; note: string };
 }
 
 export type ComposedCodebaseLifted =
@@ -328,6 +332,7 @@ function composeHead(head: CodebaseHead | null | undefined): ComposedCodebaseHea
     lead: MAPPED_NOT_STARTED_LEAD,
     stack: headStack(head.stack),
     concerns: headConcerns(head.concerns),
+    next: { command: head.nextStep.command, reason: head.nextStep.reason, note: NEVER_RUNS_NOTE },
   };
 }
 

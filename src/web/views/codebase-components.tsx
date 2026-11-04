@@ -13,6 +13,7 @@
 // drawn missing or in a parse-degradation tone.
 import { Link } from '../nav.tsx';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
+import { CopyCommand } from '../components/copy-command.tsx';
 import { ResearchInline } from '../pages/research-atoms.tsx';
 import { stripLeadingHeading } from './document-sections.ts';
 import { NOT_MAPPED } from './codebase-page.ts';
@@ -183,6 +184,11 @@ function Head({ head }: { head: ComposedCodebaseHead }): React.JSX.Element {
           ) : null}
         </div>
       ) : null}
+      <div className="view-codebase-next">
+        <p className="view-codebase-next-reason">{head.next.reason}</p>
+        <CopyCommand command={head.next.command} />
+        <p className="source-note">{head.next.note}</p>
+      </div>
     </section>
   );
 }

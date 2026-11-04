@@ -89,7 +89,7 @@ describe('copy-command.tsx source contract', () => {
   });
 
   it('reuses copyText from copy-path-button and raises no toast', async () => {
-    const code = await read();
+    const code = (await read()).replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
     expect(code).toContain("from './copy-path-button.tsx'");
     expect(code).toMatch(/copyText\(/);
     expect(code).not.toMatch(/toast/i);

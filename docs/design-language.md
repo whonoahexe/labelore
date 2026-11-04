@@ -119,6 +119,9 @@ is always to add the missing name to this document, never to edit the reference 
 | `document-endnote-title` | An endnote subsection's small-caps heading | globals.css — discussion-log review fixes (quick-260923-jxp) |
 | `artifact-path-copy` | ArtifactHeader's copy-path icon button, replacing the printed file-path caption on every artifact page | globals.css — discussion-log review fixes (quick-260923-jxp) |
 | `artifact-meta-row` | ArtifactHeader's optional `meta` prop row (plain variant only) — holds the caller's meta content, then the copy-path button, then `children` | globals.css — CONTEXT brief (quick-260923-lju) |
+| `copy-command` | A command shown as selectable mono text with a copy button; the app never runs it. The row wraps: the command, then the "Copy command" button (10-10; the Codebase head, the Testing panel's run commands, and in Phase 11 the onboarding page) | globals.css — copy-command block after phase-10-codebase |
+| `copy-command-text` | The command itself in a mono `<code>` (Body size, semibold, `--muted` ground, wraps and never truncates, `user-select: all`), outside the button so it can be selected by hand | globals.css — copy-command block |
+| `copy-command-button` | The "Copy command" button (secondary, extra small, Label size): its `aria-label` names the command, it reads "Copied" with a Check icon after a copy (`data-copied="true"`, `--primary` text) and its hit area is `--space-10` on a coarse pointer | globals.css — copy-command block |
 | `figure-frame` | The titled figure wrapper (`<figure>`): bar, scrolling body, caption — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
 | `figure-frame-bar` | The frame's top bar — title left, the `tools` slot, then (when scalable) Fit / Actual size and Grid chips, and Expand — sketch-009 B figure, view-agnostic (quick-260929-3x3, quick-260930-jzt) | globals.css — quick-260929-3x3 block |
 | `figure-frame-title` | The frame bar's uppercase mono title — sketch-009 B figure, view-agnostic (quick-260929-3x3) | globals.css — quick-260929-3x3 block |
@@ -815,7 +818,7 @@ element is actually written, regardless of class name:
   else of this feature. No second page and no filtered mode exist for an archived copy.
 - **The Codebase page is one page with a panel per map document.** (Phase 10, 10-08, sketch 042 winner A, "Rail + column") All seven
   documents in `.planning/codebase/` open the same page and the address picks the panel (`/codebase/stack` ... `/codebase/concerns`); the
-  eyebrow and the h1 both read "Codebase". A sticky rail holds the facts line ("{n} of 7 documents mapped", the readiness chip, "Mapped
+  eyebrow and the h1 both read "Codebase" (a map-only project's eyebrow reads "Mapped, not started", below). A sticky rail holds the facts line ("{n} of 7 documents mapped", the readiness chip, "Mapped
   {date}" from the newest document stamp, the commit as a mono `quiet` chip, each of the last two left out silently when the map has none)
   over the seven-entry panel list in the fixed order Stack, Architecture, Structure, Conventions, Testing, Integrations, Concerns. An entry
   is a real link to its document (`aria-current="page"` on the current one: `--primary-border` and a `--primary-tint` ground, its number in
@@ -829,6 +832,22 @@ element is actually written, regardless of class name:
   font sizes (`--fs-display-3`, `--fs-7`, `--fs-4`, `--fs-2`) with no typography exception; shared classes that set another size
   (`.status-chip`, `.source-note`, the document outline's links) are taken inside the four by page-scoped
   `.artifact-page:has(.view-codebase-page)` rules. The classes are in the reserved `view-codebase-` namespace.
+- **A map-only project opens on the same page under a "Mapped, not started" head.** (Phase 10, 10-10, sketch 042 winner A) A project that
+  holds a map and no roadmap or phase shows, on the dashboard address and on every `/codebase/{doc}` address, a bordered block at the top
+  of the reading column (`--card-veil` ground): the sentence "This project has a codebase map and no roadmap yet." at Heading size, the
+  Stack chips with their versions in mono (Languages, Runtime, Frameworks, a few of each: the Stack panel holds them all) beside the
+  concern counts (the total in Heading size mono, then short labels - "Security", "Tech debt", "Performance" - Security first with the
+  `in-flight` square, a zero as a dashed square, the document's own heading as the title), then GSD's next step under a rule: the reason
+  line in Meta, the command in the shared `copy-command` row and "Labelore does not run commands. Paste it in your terminal." as a
+  `source-note`. The words "Mapped, not started" replace the eyebrow "Codebase" (the h1 stays); the facts line (readiness chip, date,
+  commit) and the panel list stay in the rail, so nothing is drawn twice. Under 62rem the head comes first, then the facts and entries,
+  then the panel. The next step is one of four constants chosen by readiness and by whether ADR, PRD, SPEC or RFC documents are visible in
+  `.planning/` outside `codebase/`: a fast or partial map goes to `/gsd-map-codebase` with its own reason, a complete map to
+  `/gsd-ingest-docs` or `/gsd-new-project`; "The map is complete" is shown only for a complete map. A project with a roadmap has no head.
+- **A copied command confirms inside its button, not in a toast.** (Phase 10, 10-10) `copy-command` reuses the copy-path clipboard writer
+  (`copyText`); on success the button reads "Copied" with a Check icon for 1.5 s and an `sr-only` `role="status"` says "Command copied".
+  The shared Toast is not used: it renders `destructive`, which no content in this phase uses. The component imports no api module and
+  issues no request; the copied text is always one of the constant commands, never text from a file.
 
 ## Surface-scoped registered names
 

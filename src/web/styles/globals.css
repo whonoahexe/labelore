@@ -28781,6 +28781,23 @@ a.view-codebase-entry:hover {
   min-width: 0;
 }
 
+/* The head's next step: GSD's command under a rule, its reason in Meta, and the never-runs note. */
+.view-codebase-next {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  min-width: 0;
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border);
+}
+
+.view-codebase-next-reason {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
 /* Under 62rem the rail stops following the scroll and the page is one column. A map-only project's head comes
    first (sketch 042 A, open point 3), then the facts and entries, then the panel. */
 @media (max-width: 62rem) {
@@ -28817,3 +28834,42 @@ a.view-codebase-entry:hover {
   }
 }
 /* phase-10-codebase:end */
+
+/* copy-command (10-10, shared): a command as selectable mono text that wraps, outside its Copy command button. The
+   confirmation is the button reading "Copied", never a toast. Used by the Codebase head, the Testing panel's run
+   commands and, in Phase 11, the onboarding page. */
+.copy-command {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  min-width: 0;
+}
+
+.copy-command-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.copy-command-button {
+  font-size: var(--fs-2);
+}
+
+.copy-command-button[data-copied='true'] {
+  color: var(--primary);
+}
+
+@media (pointer: coarse) {
+  .copy-command-button {
+    min-height: var(--space-10);
+  }
+}
