@@ -5,6 +5,7 @@
 // `promote` entry — and no manifest may exist for a kind that isn't a `VIEW_KINDS` member. Both
 // directions are asserted via a single sorted-keys `toEqual`, so a new kind added to either list
 // without a matching update on the other fails this suite immediately.
+import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import { VIEW_KINDS, viewKindOf } from '../../src/web/views/kinds.ts';
 import { VIEW_MANIFESTS, documentHtmlAllowedInView, resolveView, resolveViewFor } from '../../src/web/views/manifests.ts';
@@ -159,6 +160,17 @@ describe('view registry completeness (VIEW-05)', () => {
         expect(documentHtmlAllowedInView(VIEW_MANIFESTS[kind] ?? null), kind).toBe(true);
       }
       expect(documentHtmlAllowedInView(null)).toBe(true);
+    });
+
+    it('artifact-page.tsx asks documentHtmlAllowedInView before the document HTML branches and shows the empty note instead', async () => {
+      const page = await readFile(new URL('../../src/web/pages/artifact-page.tsx', import.meta.url), 'utf8');
+      expect(page).toContain("const documentWithheld = mode === 'view' && !documentHtmlAllowedInView(manifest);");
+      const withheld = page.indexOf(') : documentWithheld ? (');
+      expect(withheld).toBeGreaterThan(-1);
+      expect(page.indexOf('<WithheldDocumentNote />')).toBeGreaterThan(withheld);
+      // The note comes before both document-HTML renders (promoted sections and the whole document).
+      expect(withheld).toBeLessThan(page.indexOf('<ViewReader title={artifact.title}'));
+      expect(withheld).toBeLessThan(page.indexOf('<ArtifactReader\n          title={artifact.title}'));
     });
   });
 });

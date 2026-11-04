@@ -28705,7 +28705,7 @@ a.view-codebase-entry:hover {
 }
 
 /* A plain count (no tone) is a filled neutral square; a tone sets the shared status-square colours. */
-.view-codebase-count .status-square:not([data-tone]) {
+.view-codebase-square:not([data-tone]) {
   border-color: var(--muted-foreground);
   background: var(--muted);
 }

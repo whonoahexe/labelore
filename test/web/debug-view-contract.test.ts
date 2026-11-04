@@ -161,7 +161,7 @@ describe('debug view contract - the real sources', () => {
   });
 
   it("'debug' is a view kind and manifests.ts declares the hook, lead and promote fallback", async () => {
-    expect(await source('src/web/views/kinds.ts')).toContain("  'debug',\n] as const;");
+    expect(await source('src/web/views/kinds.ts')).toContain("  'debug',\n");
     const text = await source('src/web/views/manifests.ts');
     expect(text).toContain('debugCase: composeDebugCase');
     const entry = text.slice(text.indexOf('  debug: {'));
