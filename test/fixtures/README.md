@@ -39,6 +39,7 @@ whose own ledger is `fixtures/README.md`) and this repository's own `.planning` 
 | test/fixtures/lendshed/.planning/phases/04-bulk-loan-export/04-AI-SPEC.md | ai-spec | gsd-core/templates/AI-SPEC.md | 1.19.0 | half filled: System Type, Selected Framework and Version filled, Dimensions table with four rows, sections 4b, 6 and 7 left as template slots, 6 of 16 checklist items ticked |
 | test/fixtures/lendshed/.planning/phases/02-roles-and-permissions/02-USER-SETUP.md | user-setup | gsd-core/templates/user-setup.md | 1.19.0 | every step pending: two variables and one dashboard item, every box unticked, Status Incomplete |
 | test/fixtures/lendshed/.planning/phases/04-bulk-loan-export/04-USER-SETUP.md | user-setup | gsd-core/templates/user-setup.md | 1.19.0 | three of six steps done, a Status line (Complete) that disagrees with its boxes, a variable name with a planted placeholder value written beside it |
+| test/fixtures/lendshed/.planning/phases/01-member-sign-in-sessions/01-DOM-VERIFY.md | dom-verify | agents/gsd-dom-verifier.md | 1.19.0 | browser check that could not look: outcome `could_not_look`, reason `target_unreachable`, all four counts 0, a body stating what stopped it and what the operator would change |
 
 ## For later phases
 
