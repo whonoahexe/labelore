@@ -11,6 +11,7 @@ const REPO_ROOT: string = fileURLToPath(new URL('../..', import.meta.url)).repla
 const RELATIVE_ROOTS = [
   'test/fixtures/shapes',
   'test/fixtures/lendshed',
+  'test/fixtures/tidemark',
   'fixtures/dense',
   'fixtures/sparse-empty',
   'fixtures/sparse-started',
