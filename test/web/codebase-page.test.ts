@@ -8,7 +8,12 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { buildCodebaseContext } from '../../src/presentation/codebase-map.ts';
 import type { DocumentSectionGroup } from '../../src/web/views/document-sections.ts';
-import { NOT_MAPPED, composeCodebase } from '../../src/web/views/codebase-page.ts';
+import {
+  MAPPED_NOT_STARTED,
+  MAPPED_NOT_STARTED_LEAD,
+  NOT_MAPPED,
+  composeCodebase,
+} from '../../src/web/views/codebase-page.ts';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 import { loadProject } from '../helpers/fixture-project.ts';
 import { SHAPES_ROOT } from '../helpers/shapes-project.ts';
@@ -246,6 +251,69 @@ describe('composeCodebase - plain sections drop nothing', () => {
   });
 });
 
+describe('composeCodebase - the map-only head (10-10)', () => {
+  it('words the head with the two sentences verbatim', () => {
+    expect(MAPPED_NOT_STARTED).toBe('Mapped, not started');
+    expect(MAPPED_NOT_STARTED_LEAD).toBe('This project has a codebase map and no roadmap yet.');
+  });
+
+  it('gives a map-only project the head at every panel, and a project with a roadmap none', async () => {
+    for (const doc of ['STACK', 'ARCHITECTURE', 'CONCERNS', 'CONVENTIONS']) {
+      const head = composeCodebase(await inputFor(TIDEMARK_ROOT, doc))?.head;
+      expect(head?.eyebrow, doc).toBe('Mapped, not started');
+      expect(head?.lead, doc).toBe('This project has a codebase map and no roadmap yet.');
+    }
+    expect(composeCodebase(await inputFor(SHAPES_ROOT, 'STACK'))?.head).toBeNull();
+  });
+
+  it('lifts the stack into Languages, Runtime and Frameworks sets with versions, capped to a glance', async () => {
+    const head = composeCodebase(await inputFor(TIDEMARK_ROOT, 'ARCHITECTURE'))?.head;
+    expect(head?.stack.map((set) => set.label)).toEqual(['Languages', 'Runtime', 'Frameworks']);
+    expect(head?.stack[0].chips[0]).toEqual({ name: 'TypeScript', version: '5.6' });
+    for (const set of head?.stack ?? []) expect(set.chips.length).toBeGreaterThan(0);
+    expect(head?.stack[0].chips.length).toBeLessThanOrEqual(4);
+    expect(head?.stack[1].chips.length).toBeLessThanOrEqual(3);
+    expect(head?.stack[2].chips.length).toBeLessThanOrEqual(5);
+  });
+
+  it('counts the concerns with short labels, Security first, the heading as the title and a zero as a quiet row', async () => {
+    const concerns = composeCodebase(await inputFor(TIDEMARK_ROOT, 'STACK'))?.head?.concerns;
+    expect(concerns?.total).toBe(14);
+    expect(concerns?.noun).toBe('concerns');
+    expect(concerns?.counts[0]).toEqual({
+      label: 'Security',
+      title: 'Security Considerations',
+      count: 2,
+      tone: 'in-flight',
+    });
+    expect(concerns?.counts.map((row) => row.count)).toEqual([2, 3, 1, 2, 3, 2, 0, 1, 0]);
+    expect(concerns?.counts.find((row) => row.title === 'Tech Debt')?.label).toBe('Tech debt');
+    expect(concerns?.counts.find((row) => row.count === 0)?.tone).toBe('quiet');
+    expect(concerns?.counts.slice(1).every((row) => row.tone === null || row.tone === 'quiet')).toBe(true);
+  });
+
+  it('keeps a section the template does not know under its own heading', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'STACK');
+    const context = input.codebaseContext;
+    const model = composeCodebase({
+      ...input,
+      codebaseContext: context
+        ? {
+            ...context,
+            head: {
+              stack: null,
+              concerns: { total: 3, entries: [{ key: null, heading: 'Repository Hygiene', count: 3 }] },
+            },
+          }
+        : null,
+    });
+    expect(model?.head?.stack).toEqual([]);
+    expect(model?.head?.concerns?.counts).toEqual([
+      { label: 'Repository Hygiene', title: 'Repository Hygiene', count: 3, tone: null },
+    ]);
+  });
+});
+
 describe('composeCodebase - never throws, falls through silently, holds no state', () => {
   it('returns null without a context or without structured.codebase', async () => {
     const input = await inputFor(TIDEMARK_ROOT, 'STACK');
@@ -398,6 +466,15 @@ describe('codebase view contract - the real sources', () => {
     const code = stripSourceComments(await source(COMPONENTS));
     expect(code).toContain('renderHtml');
     expect(code).toContain('ResearchInline');
+  });
+
+  it('the head is one block over the panel in the reading column, and its words are the eyebrow', async () => {
+    const code = stripSourceComments(await source(COMPONENTS));
+    expect(code).toContain('model.head === null ? \'Codebase\' : model.head.eyebrow');
+    expect(code).toContain('<Head head={model.head} />');
+    expect(code.indexOf('<Head head={model.head} />')).toBeLessThan(code.indexOf('<article'));
+    const css = stripCssComments(codebaseBlock(await source('src/web/styles/globals.css')));
+    expect(css).toContain('.view-codebase-head {\n    order: -1;');
   });
 
   it('the composer builds no regular expression, uses no regex literal and imports no filesystem module', async () => {

@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import { CODEBASE_MAP_FILES } from '../../src/planning-repo/codebase-files.ts';
-import { CODEBASE_PANELS, buildCodebaseContext, mapReadiness } from '../../src/presentation/codebase-map.ts';
+import { CODEBASE_PANELS, buildCodebaseContext, concernEntries, mapReadiness } from '../../src/presentation/codebase-map.ts';
 import { loadProject } from '../helpers/fixture-project.ts';
 import { SHAPES_ROOT } from '../helpers/shapes-project.ts';
 
@@ -115,8 +115,78 @@ describe('buildCodebaseContext over Tidemark (complete map)', () => {
     const { presentation } = await loadProject(TIDEMARK_ROOT);
     const context = buildCodebaseContext(presentation, PATH('STACK.md'));
     expect(Object.keys(context ?? {}).sort()).toEqual(
-      ['activeKey', 'commit', 'mapOnly', 'mappedAt', 'mappedCount', 'panels', 'readiness'].sort(),
+      ['activeKey', 'commit', 'head', 'mapOnly', 'mappedAt', 'mappedCount', 'panels', 'readiness'].sort(),
     );
-    for (const key of Object.keys(context ?? {})) expect(key).not.toMatch(/fresh|stale|current|behind|head/i);
+    // `head` is the map-only head's content (10-10), not a git HEAD: it holds the Stack chips and the concern counts.
+    for (const key of Object.keys(context ?? {})) expect(key).not.toMatch(/fresh|stale|current|behind/i);
+  });
+});
+
+describe('the map-only head on the context (10-10, TGT-09)', () => {
+  it('is set for a map-only project and carries the Stack chips and the Concerns counts, Security first', async () => {
+    const { presentation } = await loadProject(TIDEMARK_ROOT);
+    const head = buildCodebaseContext(presentation, PATH('ARCHITECTURE.md'))?.head;
+    expect(head).not.toBeNull();
+    expect(head?.stack?.languages[0]).toMatchObject({ name: 'TypeScript', version: '5.6' });
+    expect(head?.stack?.runtime.length).toBeGreaterThan(0);
+    expect(head?.stack?.frameworks.length).toBeGreaterThan(0);
+    expect(head?.concerns?.entries[0]).toMatchObject({ key: 'security-considerations', count: 2 });
+    expect(head?.concerns?.total).toBe(14);
+    expect(head?.concerns?.entries.map((entry) => entry.count)).toEqual([2, 3, 1, 2, 3, 2, 0, 1, 0]);
+  });
+
+  it('is the same head at every panel address of the project', async () => {
+    const { presentation } = await loadProject(TIDEMARK_ROOT);
+    const heads = CODEBASE_PANELS.map((panel) => buildCodebaseContext(presentation, PATH(panel.file))?.head);
+    for (const head of heads) expect(head).toEqual(heads[0]);
+  });
+
+  it('is null for a project that has a roadmap', async () => {
+    const { presentation } = await loadProject(SHAPES_ROOT);
+    const context = buildCodebaseContext(presentation, PATH('STACK.md'));
+    expect(context?.mapOnly).toBe(false);
+    expect(context?.head).toBeNull();
+  });
+
+  it('leaves out a lift the map does not hold, without throwing', async () => {
+    const { presentation } = await loadProject(TIDEMARK_ROOT);
+    const odd = {
+      ...presentation,
+      artifacts: presentation.artifacts.map((artifact) =>
+        artifact.path === PATH('STACK.md') || artifact.path === PATH('CONCERNS.md')
+          ? { ...artifact, structured: { codebase: 'odd' } }
+          : artifact,
+      ),
+    };
+    const head = buildCodebaseContext(odd, PATH('STACK.md'))?.head;
+    expect(head).toEqual({ stack: null, concerns: null });
+  });
+});
+
+describe('concernEntries (one rule for the panel and the head)', () => {
+  it('puts Security first, keeps document order after it and adds a missing known section as 0', () => {
+    const found = concernEntries({
+      sections: [
+        { key: 'tech-debt', heading: 'Tech Debt', count: 2 },
+        { key: 'security-considerations', heading: 'Security Considerations', count: 1 },
+        { key: null, heading: 'Repository Hygiene', count: 3 },
+      ],
+      total: 6,
+      missing: ['known-bugs', 'tech-debt', 'not-a-section'],
+    });
+    expect(found?.entries.map((entry) => [entry.heading, entry.count])).toEqual([
+      ['Security Considerations', 1],
+      ['Tech Debt', 2],
+      ['Repository Hygiene', 3],
+      ['Known Bugs', 0],
+    ]);
+    expect(found?.total).toBe(6);
+  });
+
+  it('is null for anything that is not a lift with a section, and sums when the total is absent', () => {
+    expect(concernEntries(null)).toBeNull();
+    expect(concernEntries({ sections: 'no' })).toBeNull();
+    const sections = [{ heading: 'Tech Debt', key: 'tech-debt', count: 2 }, null, { heading: '', count: 1 }];
+    expect(concernEntries({ sections })?.total).toBe(2);
   });
 });
