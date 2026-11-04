@@ -317,33 +317,46 @@ describe('Strata mark, brand lockup and tabs (D-01, D-02, NAV-01..03)', () => {
 
   // The 260911-243 redesign decided "no new tabs" and scoped out a proposed Lore tab. Todo 001 /
   // quick-261023-4wn asks for a Sketches entry, shown only when the project has sketches, and
-  // quick-261024-k8u a Research entry, shown only when the project has research files. The header
-  // is three always-on tabs plus two gated ones - a project with neither sees exactly the original
-  // three. Research sits between Roadmap and Traceability.
-  it('renders Dashboard, Roadmap and Traceability unconditionally, plus a Research tab gated on projectHasResearch between Roadmap and Traceability and a Sketches tab gated on projectHasSketches (D-02)', async () => {
+  // quick-261024-k8u a Research entry, shown only when the project has research files. 10-01 (D-07) hides
+  // Roadmap and Traceability for a project that holds only a codebase map, since neither leads anywhere
+  // there: Dashboard is always shown, Roadmap and Traceability unless the project is map-only, and the
+  // two gated extras as before, so a normal project still sees the original three. Research sits between
+  // Roadmap and Traceability. No Codebase tab exists (RESEARCH C6): the map is reached from the drawer
+  // and from search.
+  it('renders Dashboard unconditionally, Roadmap and Traceability behind a mapOnly gate, a Research tab gated on projectHasResearch between them and a Sketches tab gated on projectHasSketches (D-02, D-07)', async () => {
     const shell = await source('src/web/components/app-shell.tsx');
     const navLinkMatches = shell.match(/<NavLink className=\{navigationClass\}/g) ?? [];
     expect(navLinkMatches).toHaveLength(5);
     expect(shell).toContain('projectHasResearch(presentation.data?.artifacts');
     expect(shell).toContain('projectHasSketches(presentation.data?.artifacts');
+    expect(shell).toContain('projectMapState(presentation.data?.artifacts');
     expect(shell).toContain('presentationRoutePatterns.research');
     expect(shell).toContain('presentationRoutePatterns.sketches');
+    const navOpen = shell.indexOf('<nav className="shell-nav"');
+    const dashboard = shell.indexOf('<LayoutDashboard');
     const roadmap = shell.indexOf('presentationRoutePatterns.roadmap}');
     const researchGate = shell.indexOf('{showResearch ?');
     const traceability = shell.indexOf('presentationRoutePatterns.traceability}');
     const sketchesGate = shell.indexOf('{showSketches ?');
-    expect(roadmap).toBeGreaterThan(0);
+    expect(navOpen).toBeGreaterThan(0);
+    expect(dashboard).toBeGreaterThan(navOpen);
+    expect(roadmap).toBeGreaterThan(dashboard);
     expect(researchGate).toBeGreaterThan(roadmap);
     expect(traceability).toBeGreaterThan(researchGate);
     expect(sketchesGate).toBeGreaterThan(traceability);
-    // The three original tabs sit outside both gates.
-    const ungated = shell.slice(0, researchGate).match(/<NavLink className=\{navigationClass\}/g) ?? [];
-    expect(ungated.length + 1).toBe(3);
+    // The Dashboard tab sits outside every gate: none opens between the nav and its link.
+    expect(shell.slice(navOpen, dashboard)).not.toMatch(/\{\s*(mapOnly|showResearch|showSketches)\s*\?/);
+    // Roadmap and Traceability each sit inside their own mapOnly gate.
+    const roadmapGate = shell.lastIndexOf('{mapOnly ?', roadmap);
+    const traceabilityGate = shell.lastIndexOf('{mapOnly ?', traceability);
+    expect(roadmapGate).toBeGreaterThan(dashboard);
+    expect(traceabilityGate).toBeGreaterThan(researchGate);
     expect(shell).toContain('Dashboard');
     expect(shell).toContain('Roadmap');
     expect(shell).toContain('Research');
     expect(shell).toContain('Traceability');
     expect(shell).not.toMatch(/>\s*Lore\s*</);
+    expect(shell).not.toMatch(/>\s*Codebase\s*</);
   });
 
   it('the active tab rule declares no background and references var(--primary)', async () => {

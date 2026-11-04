@@ -86,7 +86,6 @@ describe('resolveProjectRoute over the Shapes payload', () => {
       '/file/state.json',
       '/quick',
       '/notes',
-      '/codebase',
       '/v1.1/phase-99',
       '/v1.1/phase-2/plan-77',
       '/v1.1/phase-2/plan-01/summary/extra',
@@ -493,6 +492,73 @@ describe('resolveUnprefixedRoute (NAV-11)', () => {
     expect(unprefixed(legacyArtifactUrl('.planning/STATE.md'))).toEqual({ kind: 'redirect', to: '/state' });
     expect(unprefixed(legacyArtifactUrl('.planning/gone.md'))).toEqual({ kind: 'not-found' });
     expect(unprefixed('/someone-else')).toEqual({ kind: 'not-found' });
+  });
+});
+
+describe('a project that holds only a codebase map (TGT-09)', () => {
+  const isMapDocument = (artifact: ProjectPresentation['artifacts'][number]): boolean =>
+    artifact.path.startsWith('.planning/codebase/');
+  // The Shapes map holds STACK, ARCHITECTURE and CONVENTIONS, so STACK is first in page order. The
+  // map-only payload keeps just those documents; the fixture's own artifacts are all dropped.
+  const mapOnly: ProjectPresentation = { ...shapes, artifacts: shapes.artifacts.filter(isMapDocument) };
+  const stack = shapes.artifacts.find((artifact) => artifact.path === '.planning/codebase/STACK.md');
+  const noMap: ProjectPresentation = {
+    ...shapes,
+    artifacts: shapes.artifacts.filter((artifact) => !isMapDocument(artifact)),
+  };
+  const neither: ProjectPresentation = {
+    ...shapes,
+    artifacts: shapes.artifacts.filter(
+      (artifact) => !isMapDocument(artifact) && artifact.path !== '.planning/ROADMAP.md' && artifact.location !== 'phase',
+    ),
+  };
+
+  it('has a STACK.md artifact in the Shapes payload to stand on', () => {
+    expect(stack).toBeDefined();
+  });
+
+  it('opens the dashboard address on the first present map document, taken from the payload key', () => {
+    expect(resolve('/', mapOnly)).toEqual({
+      kind: 'document',
+      url: stack!.key,
+      artifactPath: '.planning/codebase/STACK.md',
+    });
+  });
+
+  it('opens the next document in page order when the first is missing', () => {
+    const noStack: ProjectPresentation = {
+      ...mapOnly,
+      artifacts: mapOnly.artifacts.filter((artifact) => artifact.path !== '.planning/codebase/STACK.md'),
+    };
+    expect(resolve('/', noStack)).toMatchObject({ kind: 'document', artifactPath: '.planning/codebase/ARCHITECTURE.md' });
+  });
+
+  it('keeps the dashboard page for a project with a roadmap', () => {
+    expect(resolve('/', shapes)).toEqual({ kind: 'page', page: 'dashboard' });
+    expect(resolve('/', lendshed)).toEqual({ kind: 'page', page: 'dashboard' });
+  });
+
+  it('keeps the dashboard page for a .planning with neither a map document nor a roadmap', () => {
+    expect(resolve('/', neither)).toEqual({ kind: 'page', page: 'dashboard' });
+    expect(resolve('/', { ...shapes, artifacts: [] })).toEqual({ kind: 'page', page: 'dashboard' });
+  });
+
+  it('redirects a bare /codebase to the first present map document in a normal project', () => {
+    expect(resolve('/codebase', shapes)).toEqual({ kind: 'redirect', to: stack!.key });
+  });
+
+  it('redirects a bare /codebase to the dashboard address in a map-only project', () => {
+    expect(resolve('/codebase', mapOnly)).toEqual({ kind: 'redirect', to: '/' });
+  });
+
+  it('keeps a bare /codebase not-found in a project with no map', () => {
+    expect(resolve('/codebase', noMap)).toEqual({ kind: 'not-found' });
+    expect(resolve('/codebase', lendshed)).toEqual({ kind: 'not-found' });
+  });
+
+  it('still opens each map document at its own address', () => {
+    expect(resolve(stack!.key, shapes)).toMatchObject({ kind: 'document', url: stack!.key });
+    expect(resolve(stack!.key, mapOnly)).toMatchObject({ kind: 'document', url: stack!.key });
   });
 });
 
