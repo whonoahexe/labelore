@@ -6,10 +6,11 @@ import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ArtifactRef, RawArtifact } from '../src/planning-repo/types.ts';
 import { CodebaseHandler } from '../src/planning-repo/handlers/codebase.ts';
-import { readMapStamp } from '../src/planning-repo/handlers/codebase-lift.ts';
+import { extractCodebase, readMapStamp } from '../src/planning-repo/handlers/codebase-lift.ts';
 import type { CodebaseBody } from '../src/planning-repo/handlers/codebase-lift.ts';
 import { HANDLERS } from '../src/planning-repo/handlers/index.ts';
 import { GenericMarkdownHandler } from '../src/planning-repo/handlers/generic.ts';
+import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
 
 const TIDEMARK = new URL('./fixtures/tidemark/.planning/codebase/', import.meta.url);
 
@@ -275,4 +276,41 @@ describe('the snapshot', () => {
       expect(body.sections.length).toBeGreaterThan(0);
     }
   });
+});
+
+// T-10-08: author text of any size costs a bounded, linear scan. Inputs come from make(n) (n counts
+// characters) and stay below the 250,000-character body cap (the caps-are-not-growth rule in
+// test/helpers/growth.ts), so the ratio measures the scan and not the cap.
+describe('growth', () => {
+  const TIMEOUT = 60_000;
+  const BELOW_CAP = 240_000;
+  type Shape = [name: string, doc: string, make: (n: number) => string];
+  const SHAPES: Shape[] = [
+    ['10,000 stack bullets', 'stack', (n) => `## Frameworks\n\n${'- Tool 1.0 - a note\n'.repeat(Math.ceil(n / 19))}`],
+    [
+      '10,000 concern bullets',
+      'concerns',
+      (n) => `## Fragile Areas\n\n${'- one more fragile thing\n'.repeat(Math.ceil(n / 25))}`,
+    ],
+    [
+      'bold-label concern groups',
+      'concerns',
+      (n) => `## Tech Debt\n\n${'**Group:**\n- Issue: a\n\n'.repeat(Math.ceil(n / 25))}`,
+    ],
+    ['2,000 headings', 'concerns', (n) => Array.from({ length: Math.ceil(n / 12) }, (_, i) => `## H${i}\n\n`).join('')],
+    ['one 200k-character line', 'stack', (n) => `## Languages\n\n- ${'word '.repeat(Math.ceil(n / 5))}\n`],
+    ['a 200k run of capitals', 'concerns', (n) => `## Tech Debt\n\n${'A'.repeat(n)}\n`],
+    ['a 200k run of capitals in a heading', 'stack', (n) => `## ${'A'.repeat(n)}\n`],
+    [
+      'a table of rows',
+      'concerns',
+      (n) => `## Scaling Limits\n\n| A | B |\n|---|---|\n${'| 1 | 2 |\n'.repeat(Math.ceil(n / 10))}`,
+    ],
+  ];
+  for (const [name, doc, make] of SHAPES) {
+    it(`stays linear on ${name}`, { timeout: TIMEOUT }, () => {
+      const growth = measureGrowth({ make, run: (body) => void extractCodebase(doc, {}, body), maxSize: BELOW_CAP });
+      expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
+    });
+  }
 });
