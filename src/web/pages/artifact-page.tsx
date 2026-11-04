@@ -21,7 +21,7 @@ import type { RenderedDocument } from '../../rendering/markdown.ts';
 import { ReferencePreview, type ReferencePreviewState } from '../components/reference-preview.tsx';
 import { mountFigureIslands } from '../components/fenced-figure.tsx';
 import { DocumentViewToggle } from '../components/document-view-toggle.tsx';
-import { EmptyState } from '../components/empty-state.tsx';
+import { WithheldDocumentNote } from '../views/withheld-document-note.tsx';
 import { PairSwitch } from '../components/pair-switch.tsx';
 import { DocumentOutline, type OutlineEntry } from '../components/document-outline.tsx';
 import { useActiveSection } from '../components/use-active-section.ts';
@@ -1285,7 +1285,7 @@ export function ArtifactPage({
   // The Codebase page's header override (eyebrow and h1 "Codebase", its own crumbs) rides the same spread; the facts
   // line carries the stamp the metadata disclosure would repeat, so View mode hides the disclosure for it.
   const codebaseCover = codebase && mode === 'view' ? codebase : null;
-  // T-10-49: a manifest that withholds its document (user-setup) shows no document HTML in View mode - neither its
+  // T-10-49: a manifest that sets withholdDocumentInView (user-setup) shows no document HTML in View mode - neither its
   // promoted sections nor the whole document - unless a composed model above has taken the page over.
   const documentWithheld = mode === 'view' && !documentHtmlAllowedInView(manifest);
   // The Fix and Disposition tabs' header override rides the same one-prop spread; its sections carry the counts the
@@ -1489,7 +1489,7 @@ export function ArtifactPage({
       ) : fixCover ? (
         <LedgerTabView key={artifact.path} model={fixCover} />
       ) : documentWithheld ? (
-        <EmptyState />
+        <WithheldDocumentNote />
       ) : viewAvailable && mode === 'view' && composed && shown ? (
         <ViewReader title={artifact.title} composed={composed} shown={shown} />
       ) : (

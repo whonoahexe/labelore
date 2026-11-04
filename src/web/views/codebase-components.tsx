@@ -139,7 +139,7 @@ function Lifted({ lifted }: { lifted: ComposedCodebaseLifted }): React.JSX.Eleme
         <ul className="view-codebase-counts">
           {lifted.counts.map((row, index) => (
             <li className="view-codebase-count" key={`${index}-${row.label}`} data-lead={index === 0 ? 'true' : undefined}>
-              <i className="status-square" data-tone={row.tone} aria-hidden="true" />
+              <i className="status-square view-codebase-square" data-tone={row.tone} aria-hidden="true" />
               <span title={row.label}>
                 <ResearchInline text={row.label} />
               </span>
