@@ -35,7 +35,7 @@ function walk(root: string): string[] {
       if (statSync(abs).isDirectory()) {
         if (['sketches', 'node_modules', 'worktrees', '.cache'].includes(entry)) continue;
         stack.push(abs);
-      } else if (entry.endsWith('-REVIEW.md') && !entry.endsWith('-UI-REVIEW.md')) {
+      } else if (entry.endsWith('-REVIEW.md') && !entry.endsWith('-UI-REVIEW.md') && !entry.endsWith('-EVAL-REVIEW.md')) {
         found.push(abs);
       } else if (entry.endsWith('-REVIEW-FIX.md')) {
         found.push(abs);
@@ -59,7 +59,7 @@ beforeAll(async () => {
 
 type Artifact = ProjectPresentation['artifacts'][number];
 
-const isReview = (path: string): boolean => path.endsWith('-REVIEW.md') && !path.endsWith('-UI-REVIEW.md') && !path.includes('/sketches/');
+const isReview = (path: string): boolean => path.endsWith('-REVIEW.md') && !path.endsWith('-UI-REVIEW.md') && !path.endsWith('-EVAL-REVIEW.md') && !path.includes('/sketches/');
 const isFix = (path: string): boolean => path.endsWith('-REVIEW-FIX.md') && !path.includes('/sketches/');
 
 function artifactAt(presentation: ProjectPresentation, suffix: string): Artifact {
