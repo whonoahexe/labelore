@@ -31,6 +31,7 @@ import { JsonConfigHandler } from './json-config.ts';
 import { WindowsHandler } from './windows.ts';
 import { MilestoneAuditHandler } from './milestone-audit.ts';
 import { CoverageHandler } from './coverage.ts';
+import { CodebaseHandler } from './codebase.ts';
 import { GenericMarkdownHandler } from './generic.ts';
 
 export const HANDLERS: ArtifactHandler[] = [
@@ -64,5 +65,6 @@ export const HANDLERS: ArtifactHandler[] = [
   WindowsHandler,
   MilestoneAuditHandler,
   CoverageHandler,
+  CodebaseHandler,
   GenericMarkdownHandler,
 ];

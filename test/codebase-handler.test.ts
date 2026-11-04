@@ -23,7 +23,7 @@ function ref(doc: string): ArtifactRef {
     kind: `codebase-${doc}`,
     fileClass: 'text',
     sizeBytes: 0,
-    location: 'codebase',
+    location: 'other',
     phaseIdentity: null,
     milestoneVersion: null,
     quickTaskId: null,
@@ -151,7 +151,7 @@ describe('the sections of a map document', () => {
       '## Monitoring & Observability Setup',
       '## CI/CD & Deployment',
       '## Environment Configuration',
-      '## Webhook & Callback',
+      '## Webhooks and Callback',
     ].join('\n');
     expect(codebaseOf('integrations', body).sections.map((s) => s.key)).toEqual([
       'external-services',
