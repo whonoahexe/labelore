@@ -85,6 +85,44 @@ describe('resolveTargetPath — path targeting contract', () => {
     expect(direct).toEqual(parent);
   });
 
+  describe('a .planning that holds only a codebase map (TGT-09)', () => {
+    function planningWithCodebase(setup: (codebaseDir: string) => void): { root: string; planning: string } {
+      const root = mkdtempSync(join(tmpdir(), 'labelore-maponly-'));
+      cleanupPaths.push(root);
+      const codebase = join(root, '.planning', 'codebase');
+      mkdirSync(codebase, { recursive: true });
+      setup(codebase);
+      return { root, planning: join(root, '.planning') };
+    }
+
+    it('opens from its .planning path to the same root as its project folder', () => {
+      const { root, planning } = planningWithCodebase((dir) => writeFileSync(join(dir, 'STACK.md'), '# Stack\n', 'utf8'));
+      const direct = resolveTargetPath(planning);
+      const parent = resolveTargetPath(root);
+      expect('status' in direct).toBe(false);
+      expect(direct).toEqual(parent);
+      if (!('status' in direct)) expect(direct.rootPath).toBe(root);
+    });
+
+    it('does not qualify when codebase/ is empty', () => {
+      const { planning } = planningWithCodebase(() => {});
+      const result = resolveTargetPath(planning);
+      expect('status' in result && result.status).toBe('not-a-gsd-project');
+    });
+
+    it('does not qualify when codebase/ holds only an unrecognised file', () => {
+      const { planning } = planningWithCodebase((dir) => writeFileSync(join(dir, 'notes.md'), '# Notes\n', 'utf8'));
+      const result = resolveTargetPath(planning);
+      expect('status' in result && result.status).toBe('not-a-gsd-project');
+    });
+
+    it('does not qualify when a recognised name is a directory', () => {
+      const { planning } = planningWithCodebase((dir) => mkdirSync(join(dir, 'STACK.md')));
+      const result = resolveTargetPath(planning);
+      expect('status' in result && result.status).toBe('not-a-gsd-project');
+    });
+  });
+
   it('returns path-not-found for a nonexistent path, without throwing', () => {
     const raw = '/definitely/not/a/real/path/xyz-does-not-exist';
     const result = resolveTargetPath(raw);

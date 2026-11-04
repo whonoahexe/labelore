@@ -8,6 +8,7 @@
 import { homedir } from 'node:os';
 import { join, resolve, basename, dirname } from 'node:path';
 import type { FailedLoadStatus, LoadStatus } from '../planning-repo/types.ts';
+import { CODEBASE_MAP_FILES } from '../planning-repo/codebase-files.ts';
 import { canonicalizePath, pathExistsSync, statPathSync, checkReadAccessSync } from '../planning-fs/local-fs.ts';
 
 export interface ResolvedTarget {
@@ -48,7 +49,16 @@ function looksLikePlanningDir(candidate: string): boolean {
 }
 
 function hasProjectMarker(planningDirAbs: string): boolean {
-  return pathExistsSync(join(planningDirAbs, 'PROJECT.md')) || pathExistsSync(join(planningDirAbs, 'STATE.md'));
+  if (pathExistsSync(join(planningDirAbs, 'PROJECT.md')) || pathExistsSync(join(planningDirAbs, 'STATE.md'))) {
+    return true;
+  }
+  // A project that holds only a codebase map (gsd-map-codebase run, nothing else yet) still opens: at
+  // least one recognised map document, as a file, under codebase/. A directory with that name, an empty
+  // codebase/ or an unrecognised file does not count (D-08).
+  return CODEBASE_MAP_FILES.some((name) => {
+    const stat = statPathSync(join(planningDirAbs, 'codebase', name));
+    return stat !== null && !stat.isDirectory;
+  });
 }
 
 /**
