@@ -28770,6 +28770,7 @@ a.view-codebase-entry:hover {
 .view-codebase-head-cols {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
   gap: var(--space-6);
   min-width: 0;
 }
@@ -28862,6 +28863,11 @@ a.view-codebase-entry:hover {
 
 .copy-command-button {
   font-size: var(--fs-2);
+}
+
+.copy-command-button svg {
+  width: var(--space-4);
+  height: var(--space-4);
 }
 
 .copy-command-button[data-copied='true'] {

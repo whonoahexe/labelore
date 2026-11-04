@@ -292,6 +292,48 @@ describe('composeCodebase - the map-only head (10-10)', () => {
     expect(concerns?.counts.slice(1).every((row) => row.tone === null || row.tone === 'quiet')).toBe(true);
   });
 
+  it('keeps named tools in the head and leaves lifted sentences to the Stack panel, trimming a long version to its first word', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'STACK');
+    const context = input.codebaseContext;
+    const chip = (name: string, version: string | null, group: string) => ({ name, version, group });
+    const model = composeCodebase({
+      ...input,
+      codebaseContext: context
+        ? {
+            ...context,
+            head: {
+              concerns: null,
+              nextStep: { command: '/gsd-new-project', reason: 'x' },
+              stack: {
+                languages: [
+                  chip('Module system: ESM only ("type": "module" in package.json)', null, 'primary'),
+                  chip('TypeScript', '5.9.3', 'primary'),
+                ],
+                runtime: [
+                  chip('Node.js', '>=22.18.0 (engines in package.json)', 'runtime'),
+                  chip('Deno', 'x'.repeat(40), 'runtime'),
+                  chip('Bun 1.2 (a long note that the lift could not split from the name)', null, 'runtime'),
+                  chip('Vite handles the client bundle and (in dev) serves the UI through Node', null, 'runtime'),
+                ],
+                frameworks: [],
+              },
+            },
+          }
+        : null,
+    });
+    expect(model?.head?.stack).toEqual([
+      { label: 'Languages', chips: [{ name: 'TypeScript', version: '5.9.3' }] },
+      {
+        label: 'Runtime',
+        chips: [
+          { name: 'Node.js', version: '>=22.18.0' },
+          { name: 'Deno', version: null },
+          { name: 'Bun', version: '1.2' },
+        ],
+      },
+    ]);
+  });
+
   it('keeps a section the template does not know under its own heading', async () => {
     const input = await inputFor(TIDEMARK_ROOT, 'STACK');
     const context = input.codebaseContext;
