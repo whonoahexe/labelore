@@ -28516,6 +28516,238 @@ a.view-codebase-entry:hover {
   text-transform: uppercase;
 }
 
+/* The facts line: the count, the readiness chip, the date and the commit as a mono quiet chip (never ellipsised
+   mid-token, and left out when the map has none). */
+.view-codebase-page {
+  --status-square-size: var(--space-2-5);
+}
+
+.view-codebase-facts-date {
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  line-height: var(--lh-snug);
+}
+
+.view-codebase-commit {
+  max-width: 100%;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  letter-spacing: var(--ls-wider);
+  text-overflow: ellipsis;
+  text-transform: none;
+}
+
+.view-codebase-entry-key {
+  font-family: var(--font-mono);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+}
+
+/* A document the folder lacks: dashed, quiet, not a link, its name over the words "Not mapped". */
+.view-codebase-entry[data-ghost='true'] {
+  grid-template-columns: auto minmax(0, 1fr);
+  border-style: dashed;
+  color: var(--muted-foreground);
+}
+
+.view-codebase-entry[data-ghost='true'] .view-codebase-entry-name {
+  font-weight: var(--fw-medium);
+}
+
+.view-codebase-entry-ghost {
+  grid-column: 2;
+  display: inline-flex;
+  gap: var(--space-1-5);
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+.view-codebase-panel-key {
+  margin-left: auto;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+}
+
+/* The lifted part: Stack chip sets and the Concerns counts, above the plain sections. */
+.view-codebase-lifted {
+  display: grid;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+.view-codebase-lifted > .view-codebase-group:first-child > .view-codebase-group-head {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.view-codebase-group {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  min-width: 0;
+}
+
+.view-codebase-chip-set {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.view-codebase-micro {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-widest);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+.view-codebase-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-codebase-chip {
+  display: inline-flex;
+  gap: var(--space-1-5);
+  align-items: baseline;
+  max-width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  background: var(--code-veil);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+}
+
+.view-codebase-chip code {
+  background: none;
+  color: var(--muted-foreground);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-medium);
+}
+
+.view-codebase-concerns {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.view-codebase-concerns-total {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  margin: 0;
+}
+
+.view-codebase-concerns-total b {
+  font-family: var(--font-mono);
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+}
+
+.view-codebase-concerns-total span {
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+}
+
+.view-codebase-counts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(calc(var(--space-28) + var(--space-8)), 1fr));
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-codebase-count {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  min-width: 0;
+  padding-block: var(--space-1);
+  border-bottom: 1px solid var(--border-faint);
+}
+
+.view-codebase-count > span {
+  flex: 1;
+  min-width: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  overflow-wrap: anywhere;
+}
+
+.view-codebase-count[data-lead='true'] > span {
+  color: var(--foreground);
+  font-weight: var(--fw-semibold);
+}
+
+.view-codebase-count b {
+  font-family: var(--font-mono);
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+}
+
+/* A plain count (no tone) is a filled neutral square; a tone sets the shared status-square colours. */
+.view-codebase-count .status-square:not([data-tone]) {
+  border-color: var(--muted-foreground);
+  background: var(--muted);
+}
+
+/* The plain sections render the shared document markup, whose own sizes are fluid and larger than this page's
+   scale. They are taken inside the four sizes here (Body for prose, lists, cells and code, Label for table
+   heads, figure text and the heading copy marks), so no shared document class is edited. */
+.view-codebase-plain-section .artifact-document {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+.view-codebase-plain-section .artifact-document > :first-child {
+  margin-top: 0;
+}
+
+.view-codebase-plain-section .artifact-document :is(h3, h4, h5, h6) {
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-2);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+}
+
+.view-codebase-plain-section .artifact-document :is(h3, h4, h5, h6) .heading-copy {
+  font-size: var(--fs-2);
+}
+
+.view-codebase-plain-section .artifact-document table,
+.view-codebase-plain-section .artifact-document pre:not([data-figure-island] *) {
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+.view-codebase-plain-section .artifact-document :not(pre) > code {
+  font-size: var(--fs-4);
+}
+
+.view-codebase-plain-section .artifact-document [data-figure-island] * {
+  font-size: var(--fs-2);
+}
+
 /* Under 62rem the rail stops following the scroll and the page is one column: facts and entries, then the panel. */
 @media (max-width: 62rem) {
   .view-codebase-page {
