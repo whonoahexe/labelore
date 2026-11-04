@@ -54,6 +54,88 @@ export function mapReadiness(present: readonly string[]): MapReadiness {
   return 'none';
 }
 
+// --- the concern entries the panel and the head share -----------------------------------------------------
+
+/** The Security section's key: it leads every list of concern counts (UI-SPEC sections 2 and 3). */
+export const SECURITY_KEY = 'security-considerations';
+
+/** The template heading of each known concern section, for a section the document lacks (shown as 0). */
+export const CONCERN_LABELS: ReadonlyMap<string, string> = new Map([
+  ['tech-debt', 'Tech Debt'],
+  ['known-bugs', 'Known Bugs'],
+  [SECURITY_KEY, 'Security Considerations'],
+  ['performance-bottlenecks', 'Performance Bottlenecks'],
+  ['fragile-areas', 'Fragile Areas'],
+  ['scaling-limits', 'Scaling Limits'],
+  ['dependencies-at-risk', 'Dependencies at Risk'],
+  ['missing-critical-features', 'Missing Critical Features'],
+  ['test-coverage-gaps', 'Test Coverage Gaps'],
+]);
+
+export interface ConcernEntry {
+  /** The known section key, or null for a section the template does not have. */
+  key: string | null;
+  heading: string;
+  count: number;
+}
+
+export interface ConcernEntries {
+  total: number;
+  /** Security first, then the rest in document order, then each known section the document lacks as 0. */
+  entries: ConcernEntry[];
+}
+
+/** The per-section counts out of a `structured.codebase.concerns` lift, tolerating any shape; null when the
+ * lift holds no section. One rule for the Concerns panel and the head: Security first, a missing known
+ * section a zero, the total the lift's own (else the sum). */
+export function concernEntries(concerns: unknown): ConcernEntries | null {
+  if (!isRecord(concerns)) return null;
+  const entries: ConcernEntry[] = (Array.isArray(concerns.sections) ? concerns.sections : [])
+    .filter(isRecord)
+    .flatMap((section) => {
+      const heading = typeof section.heading === 'string' ? section.heading.trim() : '';
+      const count = section.count;
+      if (heading === '' || typeof count !== 'number' || !Number.isFinite(count) || count < 0) return [];
+      return [{ key: typeof section.key === 'string' ? section.key : null, heading, count }];
+    });
+  const seen = new Set(entries.map((entry) => entry.key));
+  for (const key of Array.isArray(concerns.missing) ? concerns.missing : []) {
+    if (typeof key !== 'string' || seen.has(key)) continue;
+    const heading = CONCERN_LABELS.get(key);
+    if (heading !== undefined) entries.push({ key, heading, count: 0 });
+  }
+  if (entries.length === 0) return null;
+  const ordered = [
+    ...entries.filter((entry) => entry.key === SECURITY_KEY),
+    ...entries.filter((entry) => entry.key !== SECURITY_KEY),
+  ];
+  const sum = entries.reduce((total, entry) => total + entry.count, 0);
+  const total = typeof concerns.total === 'number' && Number.isFinite(concerns.total) ? concerns.total : sum;
+  return { total, entries: ordered };
+}
+
+// --- the map-only head --------------------------------------------------------------------------------------
+
+export interface CodebaseHeadChip {
+  name: string;
+  version: string | null;
+  /** The Stack lift's group (primary, secondary, runtime, core, testing, build-dev). */
+  group: string;
+}
+
+export interface CodebaseHeadStack {
+  languages: CodebaseHeadChip[];
+  runtime: CodebaseHeadChip[];
+  frameworks: CodebaseHeadChip[];
+}
+
+/** What the "Mapped, not started" head needs from the map's documents: the Stack lift's chips and the
+ * Concerns lift's counts (nothing new is parsed for the head). Set only for a map-only project. */
+export interface CodebaseHead {
+  stack: CodebaseHeadStack | null;
+  concerns: ConcernEntries | null;
+}
+
 /** One entry of the panel list. `url` is the document's address, or null for a document the folder lacks. */
 export interface CodebasePanelEntry {
   key: CodebasePanelKey;
@@ -80,6 +162,8 @@ export interface CodebaseContext {
   activeKey: CodebasePanelKey;
   /** True when the project holds a map and nothing else (no roadmap, no phase). */
   mapOnly: boolean;
+  /** The map-only head's content, or null for a project with a roadmap (D-05). */
+  head: CodebaseHead | null;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -107,6 +191,32 @@ function readPanel(structured: unknown): PanelRead {
     mappedAt: stamp ? stringOrNull(stamp.mappedAt) : null,
     commit: stamp ? stringOrNull(stamp.commit) : null,
   };
+}
+
+function chipsOf(value: unknown): CodebaseHeadChip[] {
+  return (Array.isArray(value) ? value : []).filter(isRecord).flatMap((chip) => {
+    const name = typeof chip.name === 'string' ? chip.name.trim() : '';
+    if (name === '') return [];
+    return [{ name, version: stringOrNull(chip.version), group: typeof chip.group === 'string' ? chip.group : '' }];
+  });
+}
+
+/** The head's Stack chips out of the Stack artifact's lift, or null when it carries none. */
+function readHeadStack(structured: unknown): CodebaseHeadStack | null {
+  const codebase = isRecord(structured) ? structured.codebase : null;
+  const stack = isRecord(codebase) && isRecord(codebase.stack) ? codebase.stack : null;
+  if (stack === null) return null;
+  const read = {
+    languages: chipsOf(stack.languages),
+    runtime: chipsOf(stack.runtime),
+    frameworks: chipsOf(stack.frameworks),
+  };
+  return read.languages.length + read.runtime.length + read.frameworks.length > 0 ? read : null;
+}
+
+function readHeadConcerns(structured: unknown): ConcernEntries | null {
+  const codebase = isRecord(structured) ? structured.codebase : null;
+  return isRecord(codebase) ? concernEntries(codebase.concerns) : null;
 }
 
 /**
@@ -158,6 +268,9 @@ export function buildCodebaseContext(
     }
 
     const present = panels.filter((panel) => panel.mapped).map((panel) => panel.file);
+    const mapOnly = projectMapState(artifacts).mapOnly;
+    const stackArtifact = artifacts.find((candidate) => candidate.path === `${MAP_DIR}STACK.md`);
+    const concernsArtifact = artifacts.find((candidate) => candidate.path === `${MAP_DIR}CONCERNS.md`);
     return {
       panels,
       mappedCount: present.length,
@@ -165,7 +278,13 @@ export function buildCodebaseContext(
       mappedAt,
       commit,
       activeKey: active.key,
-      mapOnly: projectMapState(artifacts).mapOnly,
+      mapOnly,
+      head: mapOnly
+        ? {
+            stack: stackArtifact === undefined ? null : readHeadStack(stackArtifact.structured),
+            concerns: concernsArtifact === undefined ? null : readHeadConcerns(concernsArtifact.structured),
+          }
+        : null,
     };
   } catch {
     return null;

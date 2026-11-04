@@ -1,6 +1,7 @@
 // The Codebase page's React surface (Phase 10, 10-08, sketch 042 winner A, "Rail + column"): the header
 // override (eyebrow and h1 "Codebase", the breadcrumb trail Dashboard / Codebase, no lead) and the page body -
-// a rail holding the facts line and the seven-entry panel list, and a reading column holding the active panel.
+// a rail holding the facts line and the seven-entry panel list, and a reading column holding the active panel
+// (under the "Mapped, not started" head of a map-only project, 10-10, whose eyebrow replaces "Codebase").
 // The panel list is navigation, not a tablist: each mapped entry is a real Link to that document's address
 // (aria-current="page" on the current one), so the back button and a deep link work; a document the folder lacks
 // is a "Not mapped" ghost entry that is not interactive.
@@ -17,10 +18,13 @@ import { stripLeadingHeading } from './document-sections.ts';
 import { NOT_MAPPED } from './codebase-page.ts';
 import type {
   ComposedCodebase,
+  ComposedCodebaseHead,
   ComposedCodebaseLifted,
   ComposedCodebasePanel,
   ComposedCodebasePlain,
+  ComposedConcernRow,
   ComposedStackGroup,
+  ComposedStackSet,
 } from './codebase-page.ts';
 
 /** Every field optional on purpose: the page spreads this over ArtifactHeader's own props. */
@@ -33,9 +37,10 @@ export type CodebaseHeaderProps = Partial<{
 
 /** The ArtifactHeader override View mode spreads over its props. The page is reached from the drawer and
  * search, never a Roadmap trail, so the crumbs name the dashboard and the page. */
-export function codebaseHeaderProps(_model: ComposedCodebase): CodebaseHeaderProps {
+export function codebaseHeaderProps(model: ComposedCodebase): CodebaseHeaderProps {
   return {
-    eyebrow: 'Codebase',
+    // A map-only project's eyebrow is the head's words (sketch 042 A); the h1 stays "Codebase".
+    eyebrow: model.head === null ? 'Codebase' : model.head.eyebrow,
     title: 'Codebase',
     lead: null,
     crumbs: [{ label: 'Dashboard', to: presentationRoutePatterns.dashboard }, { label: 'Codebase' }],
@@ -92,29 +97,92 @@ function Entry({ panel }: { panel: ComposedCodebasePanel }): React.JSX.Element {
   );
 }
 
+function ChipSet({ set }: { set: ComposedStackSet }): React.JSX.Element {
+  return (
+    <div className="view-codebase-chip-set">
+      <p className="view-codebase-micro">{set.label}</p>
+      <ul className="view-codebase-chips">
+        {set.chips.map((chip, index) => (
+          <li className="view-codebase-chip" key={`${index}-${chip.name}`} title={chip.name}>
+            <span>
+              <ResearchInline text={chip.name} />
+            </span>
+            {chip.version !== null ? (
+              <code>
+                <ResearchInline text={chip.version} />
+              </code>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function ChipGroup({ group }: { group: ComposedStackGroup }): React.JSX.Element {
   return (
     <section className="view-codebase-group">
       <h3 className="view-codebase-group-head">{group.label}</h3>
       {group.sets.map((set) => (
-        <div className="view-codebase-chip-set" key={set.label}>
-          <p className="view-codebase-micro">{set.label}</p>
-          <ul className="view-codebase-chips">
-            {set.chips.map((chip, index) => (
-              <li className="view-codebase-chip" key={`${index}-${chip.name}`} title={chip.name}>
-                <span>
-                  <ResearchInline text={chip.name} />
-                </span>
-                {chip.version !== null ? (
-                  <code>
-                    <ResearchInline text={chip.version} />
-                  </code>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        </div>
+        <ChipSet key={set.label} set={set} />
       ))}
+    </section>
+  );
+}
+
+/** The total and the per-section counts. The panel draws the document's headings; the head draws short labels
+ * with the heading as the title. */
+function Concerns({
+  total,
+  noun,
+  counts,
+}: {
+  total: number;
+  noun: string;
+  counts: (ComposedConcernRow & { title?: string })[];
+}): React.JSX.Element {
+  return (
+    <div className="view-codebase-concerns">
+      <p className="view-codebase-concerns-total">
+        <b>{total}</b>
+        <span>{noun}</span>
+      </p>
+      <ul className="view-codebase-counts">
+        {counts.map((row, index) => (
+          <li className="view-codebase-count" key={`${index}-${row.label}`} data-lead={index === 0 ? 'true' : undefined}>
+            <i className="status-square view-codebase-square" data-tone={row.tone} aria-hidden="true" />
+            <span title={row.title ?? row.label}>
+              <ResearchInline text={row.label} />
+            </span>
+            <b>{row.count}</b>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** The "Mapped, not started" head of a map-only project (sketch 042 A): a bordered block at the top of the
+ * reading column - the sentence, then the stack and the concern counts in two columns - above the panel. The
+ * words "Mapped, not started" are the page's eyebrow; the facts line and the panel list stay in the rail. */
+function Head({ head }: { head: ComposedCodebaseHead }): React.JSX.Element {
+  return (
+    <section className="view-codebase-head" aria-label={head.eyebrow}>
+      <p className="view-codebase-head-lead">{head.lead}</p>
+      {head.stack.length > 0 || head.concerns !== null ? (
+        <div className="view-codebase-head-cols">
+          {head.stack.length > 0 ? (
+            <div className="view-codebase-head-stack">
+              {head.stack.map((set) => (
+                <ChipSet key={set.label} set={set} />
+              ))}
+            </div>
+          ) : null}
+          {head.concerns !== null ? (
+            <Concerns total={head.concerns.total} noun={head.concerns.noun} counts={head.concerns.counts} />
+          ) : null}
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -131,23 +199,7 @@ function Lifted({ lifted }: { lifted: ComposedCodebaseLifted }): React.JSX.Eleme
   }
   return (
     <div className="view-codebase-lifted">
-      <div className="view-codebase-concerns">
-        <p className="view-codebase-concerns-total">
-          <b>{lifted.total}</b>
-          <span>{lifted.noun}</span>
-        </p>
-        <ul className="view-codebase-counts">
-          {lifted.counts.map((row, index) => (
-            <li className="view-codebase-count" key={`${index}-${row.label}`} data-lead={index === 0 ? 'true' : undefined}>
-              <i className="status-square view-codebase-square" data-tone={row.tone} aria-hidden="true" />
-              <span title={row.label}>
-                <ResearchInline text={row.label} />
-              </span>
-              <b>{row.count}</b>
-            </li>
-          ))}
-        </ul>
-      </div>
+      <Concerns total={lifted.total} noun={lifted.noun} counts={lifted.counts} />
     </div>
   );
 }
@@ -188,6 +240,7 @@ export function CodebaseView({
         </nav>
       </aside>
       <div className="view-codebase-main">
+        {model.head !== null ? <Head head={model.head} /> : null}
         <article className="view-codebase-panel" aria-labelledby="view-codebase-panel-title">
           <header className="view-codebase-panel-head">
             <span className="view-codebase-panel-no">{active.no}</span>
