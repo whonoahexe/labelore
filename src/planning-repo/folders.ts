@@ -4,7 +4,7 @@
 // `synthetic-planning/` is sample data), so every filename grammar below is gated by where the file sits.
 //
 // Every row and name cites the GSD 1.18 file that justifies it, the way naming.ts cites its regexes.
-// discovery.ts is the caller; this module imports only the grammar parsers in naming.ts.
+// discovery.ts is the caller; this module imports only the grammar parsers in naming.ts and the map-file list.
 import type { ArtifactLocation } from './types.ts';
 import {
   isCanonicalRootFile,
@@ -15,6 +15,7 @@ import {
   parseQuickArtifactName,
   parseReviewFixName,
 } from './naming.ts';
+import { CODEBASE_MAP_FILES } from './codebase-files.ts';
 
 /** Where an exact-name row applies: only at the `.planning/` root, only inside a phase or quick-task
  * folder (live or archived), or at any depth. */
@@ -103,9 +104,7 @@ const jsonKind =
 const unknownKind = (): string => UNKNOWN;
 
 // gsd-core/workflows/map-codebase.md writes exactly these seven UPPERCASE documents into .planning/codebase/.
-const CODEBASE_DOCUMENTS = new Set([
-  'STACK.md', 'ARCHITECTURE.md', 'STRUCTURE.md', 'CONVENTIONS.md', 'TESTING.md', 'INTEGRATIONS.md', 'CONCERNS.md',
-]);
+const CODEBASE_DOCUMENTS: ReadonlySet<string> = new Set(CODEBASE_MAP_FILES);
 
 function codebaseKind(segments: readonly string[]): string {
   const name = lastOf(segments);

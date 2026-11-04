@@ -5,6 +5,7 @@ import { Outlet } from 'react-router';
 import type { ProjectListEntry } from '../../presentation/project-list.ts';
 import { formatProjectMeta } from '../../presentation/shell-header.ts';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
+import { projectMapState } from '../../presentation/project-map-state.ts';
 import { projectHasResearch } from '../../presentation/project-research-files.ts';
 import { projectHasSketches } from '../../presentation/sketches.ts';
 import { fetchPresentation } from '../api.ts';
@@ -48,6 +49,9 @@ export function AppShell({
   const showResearch = projectHasResearch(presentation.data?.artifacts ?? []);
   // The Sketches tab appears only for a project that has sketches (todo 001).
   const showSketches = projectHasSketches(presentation.data?.artifacts ?? []);
+  // A project that holds only a codebase map has no roadmap and no requirements to lead to (D-07). While
+  // the presentation is still loading this is false, so a normal project's tabs never flicker.
+  const mapOnly = projectMapState(presentation.data?.artifacts ?? []).mapOnly;
 
   return (
     <ToastProvider>
@@ -87,20 +91,24 @@ export function AppShell({
               <LayoutDashboard aria-hidden="true" />
               Dashboard
             </NavLink>
-            <NavLink className={navigationClass} to={presentationRoutePatterns.roadmap}>
-              <Map aria-hidden="true" />
-              Roadmap
-            </NavLink>
+            {mapOnly ? null : (
+              <NavLink className={navigationClass} to={presentationRoutePatterns.roadmap}>
+                <Map aria-hidden="true" />
+                Roadmap
+              </NavLink>
+            )}
             {showResearch ? (
               <NavLink className={navigationClass} to={presentationRoutePatterns.research}>
                 <ChartLine aria-hidden="true" />
                 Research
               </NavLink>
             ) : null}
-            <NavLink className={navigationClass} to={presentationRoutePatterns.traceability}>
-              <ListChecks aria-hidden="true" />
-              Traceability
-            </NavLink>
+            {mapOnly ? null : (
+              <NavLink className={navigationClass} to={presentationRoutePatterns.traceability}>
+                <ListChecks aria-hidden="true" />
+                Traceability
+              </NavLink>
+            )}
             {showSketches ? (
               <NavLink className={navigationClass} to={presentationRoutePatterns.sketches}>
                 <PencilRuler aria-hidden="true" />
