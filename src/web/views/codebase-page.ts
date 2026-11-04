@@ -14,7 +14,15 @@
 // below are frozen constants): two codebase pages composed alternately each compose only from their own
 // input. Returns `null` when the context or the projection is missing, so the page keeps the promoted-section
 // view without any notice (RESEARCH C1).
-import type { MapReadiness } from '../../presentation/codebase-map.ts';
+import { SECURITY_KEY, concernEntries } from '../../presentation/codebase-map.ts';
+import type {
+  CodebaseHead,
+  CodebaseHeadChip,
+  CodebaseHeadStack,
+  ConcernEntries,
+  ConcernEntry,
+  MapReadiness,
+} from '../../presentation/codebase-map.ts';
 import type { ViewInput } from './manifest.ts';
 
 /** The three tones this page writes: nothing on it is a failed read. */
@@ -24,6 +32,11 @@ export const FAST_MAP_TITLE =
   'A fast map covers stack, integrations, architecture and structure; project setup needs the complete one.';
 export const PARTIAL_MAP_TITLE = 'Some of the four core documents are missing; the map is not complete.';
 export const NOT_MAPPED = 'Not mapped';
+/** The map-only head's words (UI-SPEC section 3): the eyebrow, then the one sentence under it. */
+export const MAPPED_NOT_STARTED = 'Mapped, not started';
+export const MAPPED_NOT_STARTED_LEAD = 'This project has a codebase map and no roadmap yet.';
+/** The one quiet line under the command (UI-SPEC section 3): the page never runs anything. */
+export const NEVER_RUNS_NOTE = 'Labelore does not run commands. Paste it in your terminal.';
 
 export interface ComposedCodebaseReadiness {
   key: MapReadiness;
@@ -79,6 +92,26 @@ export interface ComposedConcernRow {
   tone: 'in-flight' | 'quiet' | null;
 }
 
+/** A head concern row: the short label, with the document's own heading as its title. */
+export interface ComposedHeadConcernRow extends ComposedConcernRow {
+  title: string;
+}
+
+/** The "Mapped, not started" head of a map-only project (sketch 042 A): the words, the stack, the concern
+ * counts. The date, commit and readiness stay in the facts line the head's rail already carries. */
+export interface ComposedCodebaseHead {
+  eyebrow: string;
+  lead: string;
+  stack: ComposedStackSet[];
+  concerns: {
+    total: number;
+    noun: 'concern' | 'concerns';
+    counts: ComposedHeadConcernRow[];
+  } | null;
+  /** GSD's next step: one of four constant commands, the reason line, and the never-runs note. */
+  next: { command: string; reason: string; note: string };
+}
+
 export type ComposedCodebaseLifted =
   | { kind: 'stack'; groups: ComposedStackGroup[] }
   | { kind: 'concerns'; total: number; noun: 'concern' | 'concerns'; totalText: string; counts: ComposedConcernRow[] };
@@ -109,6 +142,8 @@ export interface ComposedCodebase {
   facts: ComposedCodebaseFacts;
   panels: ComposedCodebasePanel[];
   active: ComposedCodebaseActive;
+  /** The map-only head, or null for a project with a roadmap. */
+  head: ComposedCodebaseHead | null;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -213,58 +248,131 @@ function liftStack(codebase: Record<string, unknown>): ComposedCodebaseLifted | 
 
 // --- the Concerns lift ------------------------------------------------------------------------------------
 
-const SECURITY_KEY = 'security-considerations';
-
-/** The template heading of each known concern section, for a section the document lacks (shown as 0). */
-const CONCERN_LABELS: ReadonlyMap<string, string> = new Map([
-  ['tech-debt', 'Tech Debt'],
-  ['known-bugs', 'Known Bugs'],
-  [SECURITY_KEY, 'Security Considerations'],
-  ['performance-bottlenecks', 'Performance Bottlenecks'],
-  ['fragile-areas', 'Fragile Areas'],
-  ['scaling-limits', 'Scaling Limits'],
-  ['dependencies-at-risk', 'Dependencies at Risk'],
-  ['missing-critical-features', 'Missing Critical Features'],
-  ['test-coverage-gaps', 'Test Coverage Gaps'],
-]);
-
-interface ConcernEntry {
-  key: string | null;
-  label: string;
-  count: number;
+function concernTone(entry: ConcernEntry): ComposedConcernRow['tone'] {
+  if (entry.count === 0) return 'quiet';
+  return entry.key === SECURITY_KEY ? 'in-flight' : null;
 }
 
 function liftConcerns(codebase: Record<string, unknown>): ComposedCodebaseLifted | null {
-  const concerns = isRecord(codebase.concerns) ? codebase.concerns : null;
-  if (concerns === null) return null;
-  const entries: ConcernEntry[] = recordsOf(concerns.sections).flatMap((section) => {
-    const label = textOrNull(section.heading);
-    const count = section.count;
-    if (label === null || typeof count !== 'number' || !Number.isFinite(count) || count < 0) return [];
-    return [{ key: typeof section.key === 'string' ? section.key : null, label, count }];
-  });
-  const seen = new Set(entries.map((entry) => entry.key));
-  const missing = Array.isArray(concerns.missing) ? concerns.missing : [];
-  for (const key of missing) {
-    if (typeof key !== 'string' || seen.has(key)) continue;
-    const label = CONCERN_LABELS.get(key);
-    if (label !== undefined) entries.push({ key, label, count: 0 });
-  }
-  if (entries.length === 0) return null;
-  // Security first, then the rest in document order.
-  const ordered = [...entries.filter((entry) => entry.key === SECURITY_KEY), ...entries.filter((entry) => entry.key !== SECURITY_KEY)];
-  const sum = entries.reduce((total, entry) => total + entry.count, 0);
-  const total = typeof concerns.total === 'number' && Number.isFinite(concerns.total) ? concerns.total : sum;
+  const found = concernEntries(codebase.concerns);
+  if (found === null) return null;
+  const { total } = found;
   return {
     kind: 'concerns',
     total,
     noun: total === 1 ? 'concern' : 'concerns',
     totalText: `${total} ${total === 1 ? 'concern' : 'concerns'}`,
-    counts: ordered.map((entry) => ({
-      label: entry.label,
+    counts: found.entries.map((entry) => ({ label: entry.heading, count: entry.count, tone: concernTone(entry) })),
+  };
+}
+
+// --- the map-only head ------------------------------------------------------------------------------------
+
+/** The head's concern labels are short (sketch 042 winner A, open point 1); the panel keeps the document's own
+ * headings. A section the table does not know keeps its heading as written. */
+const HEAD_CONCERN_LABELS: ReadonlyMap<string, string> = new Map([
+  ['tech-debt', 'Tech debt'],
+  ['known-bugs', 'Known bugs'],
+  [SECURITY_KEY, 'Security'],
+  ['performance-bottlenecks', 'Performance'],
+  ['fragile-areas', 'Fragile areas'],
+  ['scaling-limits', 'Scaling limits'],
+  ['dependencies-at-risk', 'Dependencies at risk'],
+  ['missing-critical-features', 'Missing features'],
+  ['test-coverage-gaps', 'Test coverage gaps'],
+]);
+
+/** How many chips of each kind the head keeps: it is a glance, the Stack panel holds them all. */
+const HEAD_LANGUAGES = 4;
+const HEAD_RUNTIME = 3;
+const HEAD_FRAMEWORKS: readonly (readonly [group: string, keep: number])[] = [
+  ['core', 3],
+  ['testing', 1],
+  ['build-dev', 1],
+];
+
+/** The head shows named tools, not sentences: a lifted bullet whose name runs past this many characters is
+ * prose ("Module system: ESM only (...)") and stays in the Stack panel. A long version keeps its first word
+ * ("≥22.18.0 (engines in package.json)" shows "≥22.18.0") and is left out when that is still long. */
+const HEAD_CHIP_NAME_MAX = 28;
+const HEAD_VERSION_MAX = 20;
+
+function headVersion(version: string | null): string | null {
+  if (version === null || version.length <= HEAD_VERSION_MAX) return version;
+  const space = version.indexOf(' ');
+  const first = space < 0 ? version : version.slice(0, space);
+  return first.length > 0 && first.length <= HEAD_VERSION_MAX ? first : null;
+}
+
+/** A long bullet the lift could not split ("Node.js >=22.18.0 (engines in package.json)") is a name and a version
+ * when its second word starts like a version (a digit, or a comparator or caret before one); anything else is
+ * prose and has no chip in the head. A character scan, never a pattern over the text. */
+function startsLikeVersion(word: string): boolean {
+  const first = word[0];
+  return first !== undefined && ((first >= '0' && first <= '9') || '>=<^~≥≤'.includes(first));
+}
+
+function headChip(chip: CodebaseHeadChip): ComposedStackChip | null {
+  if (chip.name.length <= HEAD_CHIP_NAME_MAX) return { name: chip.name, version: headVersion(chip.version) };
+  if (chip.version !== null) return null;
+  const words = chip.name.split(' ');
+  const [name, version] = words;
+  if (name === undefined || version === undefined || name.length > HEAD_CHIP_NAME_MAX || !startsLikeVersion(version)) {
+    return null;
+  }
+  return { name, version: headVersion(version) };
+}
+
+function headChips(chips: readonly CodebaseHeadChip[], keep: number): ComposedStackChip[] {
+  return chips
+    .flatMap((chip) => {
+      const kept = headChip(chip);
+      return kept === null ? [] : [kept];
+    })
+    .slice(0, keep);
+}
+
+function headStack(stack: CodebaseHeadStack | null): ComposedStackSet[] {
+  if (stack === null) return [];
+  const sets: ComposedStackSet[] = [
+    { label: 'Languages', chips: headChips(stack.languages, HEAD_LANGUAGES) },
+    { label: 'Runtime', chips: headChips(stack.runtime, HEAD_RUNTIME) },
+    {
+      label: 'Frameworks',
+      chips: HEAD_FRAMEWORKS.flatMap(([group, keep]) =>
+        headChips(
+          stack.frameworks.filter((chip) => chip.group === group),
+          keep,
+        ),
+      ),
+    },
+  ];
+  return sets.filter((set) => set.chips.length > 0);
+}
+
+function headConcerns(concerns: ConcernEntries | null): ComposedCodebaseHead['concerns'] {
+  if (concerns === null) return null;
+  const { total } = concerns;
+  return {
+    total,
+    noun: total === 1 ? 'concern' : 'concerns',
+    counts: concerns.entries.map((entry) => ({
+      label: (entry.key === null ? undefined : HEAD_CONCERN_LABELS.get(entry.key)) ?? entry.heading,
+      title: entry.heading,
       count: entry.count,
-      tone: entry.count === 0 ? 'quiet' : entry.key === SECURITY_KEY ? 'in-flight' : null,
+      tone: concernTone(entry),
     })),
+  };
+}
+
+function composeHead(head: CodebaseHead | null | undefined): ComposedCodebaseHead | null {
+  if (!head) return null;
+  return {
+    eyebrow: MAPPED_NOT_STARTED,
+    lead: MAPPED_NOT_STARTED_LEAD,
+    stack: headStack(head.stack),
+    concerns: headConcerns(head.concerns),
+    next: { command: head.nextStep.command, reason: head.nextStep.reason, note: NEVER_RUNS_NOTE },
   };
 }
 
@@ -313,5 +421,6 @@ export function composeCodebase(input: ViewInput): ComposedCodebase | null {
       plain,
       plainSections: plain.flatMap((section) => (section.heading === null ? [] : [section.heading])),
     },
+    head: composeHead(context.head),
   };
 }

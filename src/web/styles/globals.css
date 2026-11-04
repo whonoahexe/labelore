@@ -28748,7 +28748,59 @@ a.view-codebase-entry:hover {
   font-size: var(--fs-2);
 }
 
-/* Under 62rem the rail stops following the scroll and the page is one column: facts and entries, then the panel. */
+/* The "Mapped, not started" head (10-10, sketch 042 A): a bordered block at the top of the reading column holding
+   the sentence at Heading size, then the stack and the concern counts in two columns. */
+.view-codebase-head {
+  display: grid;
+  gap: var(--space-6);
+  padding: var(--space-5) var(--space-6);
+  border: 1px solid var(--border);
+  background: var(--card-veil);
+  min-width: 0;
+}
+
+.view-codebase-head-lead {
+  max-width: 36ch;
+  margin: 0;
+  font-size: var(--fs-7);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+}
+
+.view-codebase-head-cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+.view-codebase-head-stack {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  min-width: 0;
+}
+
+/* The head's next step: GSD's command under a rule, its reason in Meta, and the never-runs note. */
+.view-codebase-next {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  min-width: 0;
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border);
+}
+
+.view-codebase-next-reason {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-4);
+  line-height: var(--lh-normal);
+}
+
+/* Under 62rem the rail stops following the scroll and the page is one column. A map-only project's head comes
+   first (sketch 042 A, open point 3), then the facts and entries, then the panel. */
 @media (max-width: 62rem) {
   .view-codebase-page {
     grid-template-columns: minmax(0, 1fr);
@@ -28759,5 +28811,71 @@ a.view-codebase-entry:hover {
     max-height: none;
     overflow: visible;
   }
+
+  .view-codebase-main {
+    display: contents;
+  }
+
+  .view-codebase-head {
+    order: -1;
+  }
+
+  .view-codebase-panel {
+    order: 2;
+  }
+
+  .view-codebase-head-cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 42rem) {
+  .view-codebase-head {
+    padding: var(--space-4);
+  }
 }
 /* phase-10-codebase:end */
+
+/* copy-command (10-10, shared): a command as selectable mono text that wraps, outside its Copy command button. The
+   confirmation is the button reading "Copied", never a toast. Used by the Codebase head, the Testing panel's run
+   commands and, in Phase 11, the onboarding page. */
+.copy-command {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  min-width: 0;
+}
+
+.copy-command-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.copy-command-button {
+  font-size: var(--fs-2);
+}
+
+.copy-command-button svg {
+  width: var(--space-4);
+  height: var(--space-4);
+}
+
+.copy-command-button[data-copied='true'] {
+  color: var(--primary);
+}
+
+@media (pointer: coarse) {
+  .copy-command-button {
+    min-height: var(--space-10);
+  }
+}
