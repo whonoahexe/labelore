@@ -2,7 +2,7 @@
 sketch: 042
 name: codebase-page
 question: "How do the seven codebase-map documents sit on one page with a panel each, and how does a map-only project's first screen put a short 'Mapped, not started' head over those panels?"
-winner: null
+winner: "A"
 tags: [codebase, map, panels, mapped-not-started, phase-10]
 ---
 
@@ -176,5 +176,10 @@ The four above plus **`--fs-5`, 14.4px**, for the bar names, and **`--fs-display
 All content is labelore's own public map or invented here. The repository is public.
 
 ## Winner
-<!-- winner: pending. Chosen at the 10-06 checkpoint. -->
-Not chosen yet.
+**A: Rail + column**, chosen by the user at the 10-06 checkpoint ("A seems good enough"), no synthesis.
+Build A as drawn: the sticky left rail with the facts line and the seven entries, the head as a bordered
+block at the top of the reading column, then the active panel; under 62rem the order is head, facts and
+bars, panel. A renders exactly four font sizes (display `--fs-display-3`, heading `--fs-7`, body `--fs-4`,
+label `--fs-2`), so the Codebase-page typography exception is not needed and not taken: the page keeps the
+four-size cap. The three open points above got no comment from the user and stay open for the build
+(10-08 frame, 10-10 head).
