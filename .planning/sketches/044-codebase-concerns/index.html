@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 044 — Concerns panel</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+/* Sketch 044: the Concerns panel inside the 042 frame, three arrangements.
+   Drawn inside the 042 A frame (Rail + column), which is identical in every variant. Text comes from
+   Labelore's own public map (.planning/codebase/) and from the made-up Tidemark fixture; the longest
+   real Architecture, Structure and Concerns documents set the shapes. Tokens come from ../themes/default.css;
+   nothing here defines a colour of its own: every colour is a theme token or a colour-mix of tokens.
+   Squared corners, spacing from --space-* tokens, four font sizes (display h1, --fs-7, --fs-4, --fs-2). */
+:root {
+  --border-faint: color-mix(in oklch, var(--border) 55%, transparent);
+  --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border));
+  --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border));
+  --veil: color-mix(in oklch, var(--muted) 55%, transparent);
+  --font-heading: var(--font-sans);
+  --icon: var(--space-4);
+  --sq: var(--space-2-5);
+  --page: calc(var(--space-8) * 40);
+  --rail: calc(var(--space-8) * 9);
+}
+:root {
+  --border-faint: color-mix(in oklch, var(--border) 55%, transparent);
+  --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border));
+  --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border));
+  --veil: color-mix(in oklch, var(--muted) 55%, transparent);
+  --font-heading: var(--font-sans);
+  --icon: var(--space-4);
+  --sq: var(--space-2-5);
+  --page: calc(var(--space-8) * 40);
+  --rail: calc(var(--space-8) * 9);
+  --side: calc(var(--space-8) * 10);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-4); font-weight: var(--fw-medium); line-height: var(--lh-normal); }
+h1, h2, h3, p, ul, ol, dl, dd, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; border-radius: 0; text-align: inherit; }
+a { color: inherit; text-decoration: none; }
+code { font-family: var(--font-mono); font-size: inherit; }
+[hidden] { display: none !important; }
+svg.i { width: var(--icon); height: var(--icon); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.dark .moon, .sun { display: none; }
+.dark .sun { display: block; }
+
+/* ---------- sketch chrome (not part of the app) ---------- */
+#sketch-bar { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); background: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+#sketch-bar .lbl { color: var(--muted-foreground); white-space: nowrap; }
+#sketch-bar .grp { display: flex; flex: none; gap: var(--space-1); align-items: center; }
+#sketch-bar .grp + .grp { padding-left: var(--space-3); border-left: 1px solid var(--border); }
+#sketch-bar .grp.line { flex-basis: 100%; padding-left: 0; border-left: 0; }
+#sketch-bar a, #sketch-bar button { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; color: var(--muted-foreground); white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; }
+#sketch-bar a:hover, #sketch-bar button:hover { color: var(--foreground); background: var(--state-hover); }
+#sketch-bar .on { color: var(--foreground); border-color: var(--border); background: var(--state-hover); }
+#sketch-bar .name { color: var(--muted-foreground); padding-inline: var(--space-1); }
+@media (max-width: 42rem) { #sketch-bar { flex-wrap: nowrap; overflow-x: auto; } #sketch-bar .grp.line { flex-basis: auto; } }
+#toast { position: fixed; left: 50%; bottom: var(--space-4); transform: translateX(-50%); z-index: 99; max-width: 90vw; padding: var(--space-2) var(--space-3); background: var(--foreground); color: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); opacity: 0; pointer-events: none; }
+#toast.on { opacity: 1; }
+
+/* ---------- app shell header (outside the page, drawn as today) ---------- */
+.app-head { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-2) var(--space-fluid-3); border-bottom: 1px solid var(--border); }
+.app-brand { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-3); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.app-brand i { width: var(--space-5); height: var(--space-5); background: var(--primary); }
+.app-brand span { color: var(--muted-foreground); font-weight: var(--fw-medium); }
+.app-nav { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-left: auto; }
+.app-nav a { padding: var(--space-1-5) var(--space-2-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.app-nav a[aria-current] { color: var(--foreground); box-shadow: inset 0 -2px 0 var(--primary); }
+
+/* ---------- page atoms (all four sizes: display h1, heading fs-7, body fs-4, label fs-2) ---------- */
+.page { display: grid; gap: var(--space-6); align-content: start; width: min(var(--page), 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); }
+.crumbs { display: flex; flex-wrap: wrap; gap: var(--space-1-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.crumbs [aria-current] { color: var(--foreground); }
+.heading-block { display: grid; gap: var(--space-3); min-width: 0; }
+.eyebrow { display: flex; gap: var(--space-2); align-items: center; color: var(--primary); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h1 { font-size: var(--fs-display-3); font-weight: var(--fw-semibold); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); overflow-wrap: anywhere; }
+.meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); min-width: 0; }
+.micro-label, .grp-h { margin: 0; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+.btn-xs { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1-5); min-height: var(--space-7); padding-inline: var(--space-3); border: 1px solid var(--border); font-family: var(--font-sans); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.btn-xs:hover { background: var(--state-hover); }
+.btn-xs[aria-pressed='true'] { background: var(--muted); }
+.btn-xs.icon { padding-inline: 0; width: var(--space-7); }
+@media (pointer: coarse) { .btn-xs { min-height: var(--space-10); } .btn-xs.icon { width: var(--space-10); } }
+.seg { display: inline-flex; }
+.seg .btn-xs + .btn-xs { border-left: 0; }
+.text-link { display: inline-flex; gap: var(--space-1-5); align-items: center; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.text-link:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: var(--space-0-5); }
+.status-chip { display: inline-flex; gap: var(--space-1-5); align-items: center; width: fit-content; max-width: 100%; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: var(--veil); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; white-space: nowrap; }
+.status-chip[data-tone='complete'] { border-color: var(--primary-border); background: var(--primary-tint); color: var(--primary); }
+.status-chip[data-tone='in-flight'] { border-color: var(--in-flight-border); color: var(--in-flight-fill); }
+.status-chip[data-tone='quiet'] { color: var(--muted-foreground); border-style: dashed; }
+.sq { display: inline-block; width: var(--sq); height: var(--sq); flex: none; border: 1px solid var(--border); }
+.sq[data-tone='complete'] { background: var(--primary); border-color: var(--primary); }
+.sq[data-tone='in-flight'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.sq[data-tone='quiet'] { background: transparent; border: 1px dashed var(--muted-foreground); }
+.sq[data-tone='neutral'] { background: var(--muted); border-color: var(--muted-foreground); }
+.source-note { color: var(--muted-foreground); font-size: var(--fs-4); overflow-wrap: anywhere; }
+.facts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); min-width: 0; }
+.facts-count { font-weight: var(--fw-semibold); }
+.facts-date { color: var(--muted-foreground); }
+.status-chip.mono { text-transform: none; letter-spacing: var(--ls-wider); }
+/* ---------- the panel list (entries) ---------- */
+.list ol { display: grid; }
+.entry { position: relative; display: grid; align-items: center; min-width: 0; padding: var(--space-2-5) var(--space-3); border: 1px solid var(--border); background: transparent; }
+a.entry:hover { background: var(--state-hover); }
+.entry-li + .entry-li .entry { border-top-color: var(--border-faint); }
+.entry-no { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); color: var(--muted-foreground); }
+.entry-name { min-width: 0; font-weight: var(--fw-semibold); }
+.entry-gist { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted-foreground); }
+.entry-key { display: flex; align-items: baseline; gap: var(--space-1-5); min-width: 0; font-family: var(--font-mono); }
+.entry-key b { font-size: var(--fs-4); font-weight: var(--fw-semibold); }
+.entry-key i { font-style: normal; font-size: var(--fs-2); color: var(--muted-foreground); }
+.entry-ghost { display: inline-flex; align-items: center; gap: var(--space-1-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+[data-ghost='true'] .entry { border-style: dashed; color: var(--muted-foreground); }
+[data-ghost='true'] .entry-name { font-weight: var(--fw-medium); }
+.entry[aria-current='page'] { border-color: var(--primary-border); background: var(--primary-tint); }
+.entry[aria-current='page'] .entry-no { color: var(--primary); }
+
+/* ---------- the panel ---------- */
+.panel { display: grid; gap: var(--space-6); min-width: 0; align-content: start; }
+.panel-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-3); padding-bottom: var(--space-3); border-bottom: 1px solid var(--border); }
+.panel-no { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-wider); color: var(--primary); }
+.panel-head h2 { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.panel-key { margin-left: auto; font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); color: var(--muted-foreground); text-transform: uppercase; }
+/* =============== Variant A: rail + reading column =============== */
+.fr .a-grid { display: grid; grid-template-columns: var(--rail) minmax(0, 1fr); gap: var(--space-fluid-9); align-items: start; }
+.fr .a-rail { position: sticky; top: calc(var(--space-10) + var(--space-4)); display: grid; gap: var(--space-4); min-width: 0; max-height: calc(100vh - var(--space-28)); overflow-y: auto; }
+.fr .facts { flex-direction: column; align-items: flex-start; gap: var(--space-2); padding-bottom: var(--space-4); border-bottom: 1px solid var(--border); }
+.fr .entry { grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--space-1) var(--space-3); grid-template-areas: 'no name key'; }
+.fr .entry-no { grid-area: no; } .fr .entry-name { grid-area: name; } .fr .entry-key { grid-area: key; }
+.fr .entry-gist { display: none; }
+.fr .entry-key i { display: none; }
+.fr [data-ghost='true'] .entry { grid-template-areas: 'no name' '. ghost'; grid-template-columns: auto minmax(0, 1fr); }
+.fr .entry-ghost { grid-area: ghost; }
+.fr .a-main { display: grid; gap: var(--space-8); min-width: 0; }
+
+@media (max-width: 62rem) {
+  .fr .a-grid { grid-template-columns: minmax(0, 1fr); }
+  .fr .a-rail { position: static; max-height: none; overflow: visible; }
+}
+
+/* ---------- panel atoms shared by the variants (four sizes only: fs-7, fs-4, fs-2 and the h1) ---------- */
+.lifted, .plain { display: grid; gap: var(--space-6); min-width: 0; }
+.lifted > .grp:first-child > .grp-h { padding-top: 0; border-top: 0; }
+.grp { display: grid; gap: var(--space-3); min-width: 0; align-content: start; }
+.grp-h { padding-top: var(--space-3); border-top: 1px solid var(--border); display: flex; align-items: baseline; gap: var(--space-2); }
+.grp-h .n { color: var(--foreground); }
+.prose { max-width: 72ch; line-height: var(--lh-normal); overflow-wrap: anywhere; }
+code { overflow-wrap: anywhere; }
+.prose code, .leads code, .steps code, .ledger code, .swap code, .lookup code, .bul code, .t-note code, .pick code, .ptable code { padding: 0 var(--space-0-5); background: var(--muted); }
+.lede { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); max-width: 46ch; overflow-wrap: anywhere; }
+.lede code { font-size: inherit; background: none; padding: 0; }
+.leads { display: grid; gap: var(--space-2-5); max-width: 78ch; }
+.leads dt { font-weight: var(--fw-semibold); }
+.leads dd { color: var(--muted-foreground); overflow-wrap: anywhere; }
+.steps { display: grid; gap: var(--space-1-5); max-width: 78ch; padding-left: var(--space-5); list-style: decimal; }
+.steps li { overflow-wrap: anywhere; }
+.steps ul { margin-top: var(--space-1); padding-left: var(--space-4); color: var(--muted-foreground); list-style: square; }
+.bul { display: grid; gap: var(--space-1-5); max-width: 78ch; }
+.bul > li { display: grid; grid-template-columns: var(--space-2-5) minmax(0, 1fr); gap: var(--space-2); align-items: baseline; overflow-wrap: anywhere; }
+.bul > li::before { content: ''; width: var(--space-1-5); height: var(--space-1-5); background: var(--muted-foreground); transform: translateY(-0.1em); justify-self: center; }
+.bul .f { color: var(--muted-foreground); font-weight: var(--fw-semibold); }
+.bul ul { grid-column: 2; margin-top: var(--space-1); color: var(--muted-foreground); display: grid; gap: var(--space-1); }
+.sub-h { font-weight: var(--fw-semibold); }
+.plain-sec { display: grid; gap: var(--space-3); min-width: 0; align-content: start; }
+.plain-sec .g-label { font-weight: var(--fw-semibold); }
+.plain-sec .g { display: grid; gap: var(--space-1-5); min-width: 0; }
+.ptable { width: 100%; border-collapse: collapse; }
+.ptable th { text-align: left; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; padding: var(--space-1-5) var(--space-3) var(--space-1-5) 0; border-bottom: 1px solid var(--border); }
+.ptable td { vertical-align: top; padding: var(--space-2) var(--space-3) var(--space-2) 0; border-bottom: 1px solid var(--border-faint); overflow-wrap: anywhere; }
+.tbl-scroll { overflow-x: auto; }
+pre.plain-pre { margin: 0; padding: var(--space-3); border: 1px solid var(--border); background: var(--muted); font-family: var(--font-mono); font-size: var(--fs-2); line-height: var(--lh-snug); overflow-x: auto; }
+
+/* the component / entry ledger */
+.ledger { display: grid; }
+.ledger > li { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-0-5) var(--space-4); padding: var(--space-2) 0; border-bottom: 1px solid var(--border-faint); }
+.ledger .l-name { font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.ledger .l-body { color: var(--muted-foreground); overflow-wrap: anywhere; }
+.ledger .l-file { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); overflow-wrap: anywhere; }
+@media (min-width: 42rem) { .ledger > li { grid-template-columns: minmax(0, 11rem) minmax(0, 1fr) minmax(0, 13rem); align-items: baseline; } }
+.more-row { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; color: var(--muted-foreground); }
+
+/* swaps: the mistake struck through, the fix beside it, the rest on open */
+.swaps { display: grid; }
+.swap { border-bottom: 1px solid var(--border-faint); }
+.swap > summary { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-1); padding: var(--space-3) 0; cursor: pointer; list-style: none; }
+.swap > summary::-webkit-details-marker { display: none; }
+.swap > summary:hover { background: var(--state-hover); }
+.swap s { color: var(--muted-foreground); overflow-wrap: anywhere; }
+.swap .do { font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.swap .arr { display: none; color: var(--muted-foreground); }
+@media (min-width: 42rem) {
+  .swap > summary { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.25fr); align-items: baseline; gap: var(--space-4); }
+  .swap .arr { display: block; }
+}
+.swap-more { display: grid; gap: var(--space-2); padding: 0 0 var(--space-4); max-width: 78ch; }
+.swap-more dt { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; color: var(--muted-foreground); }
+.swap-more dd { overflow-wrap: anywhere; }
+
+/* the figure frame (shipped FigureFrame: title, chips, body that scrolls inside the frame) */
+.figure-frame { border: 1px solid var(--border); min-width: 0; display: grid; }
+.ff-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); background: var(--veil); }
+.ff-title { margin-right: auto; font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; }
+.ff-bar button.status-chip { cursor: pointer; }
+.ff-bar button.status-chip[aria-pressed='true'] { background: var(--muted); }
+.ff-body { overflow: auto; padding: var(--space-4); min-width: 0; max-width: 100%; }
+.ff-note { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); margin: 0 0 var(--space-3); color: var(--muted-foreground); }
+.ff-cap { padding: var(--space-2) var(--space-3); border-top: 1px solid var(--border); color: var(--muted-foreground); }
+.lift { position: relative; width: max-content; font-family: var(--font-mono); font-size: var(--fs-2); line-height: 1.5; }
+.lift-card { position: absolute; left: calc((var(--c) + 0.5) * 1ch); top: calc((var(--r) + 0.5) * 1.5em); width: calc(var(--w) * 1ch); height: calc(var(--h) * 1.5em); border: 1px solid var(--border); background: color-mix(in oklch, var(--muted) 75%, transparent); }
+.lift-card[data-hot='true'] { border-color: var(--primary); background: var(--primary-tint); box-shadow: 0 0 0 1px var(--primary); }
+.lift pre { position: relative; margin: 0; font: inherit; white-space: pre; color: var(--foreground); }
+.plain-text { margin: 0; width: max-content; font-family: var(--font-mono); font-size: var(--fs-2); line-height: 1.5; white-space: pre; }
+
+/* the clean tree (shipped CleanTree: folder chains collapse, folders fold, notes in a second column) */
+.tree { display: grid; grid-template-columns: max-content max-content; justify-content: start; align-items: center; width: max-content; }
+.tree > li { display: contents; }
+.t-name { position: relative; display: flex; align-items: center; gap: var(--space-2); min-height: var(--space-6); padding-left: calc(var(--d) * var(--space-6)); font-family: var(--font-mono); white-space: nowrap; text-align: left; }
+.t-name::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--d) * var(--space-6)); background: repeating-linear-gradient(to right, var(--border-faint) 0 1px, transparent 1px var(--space-6)); pointer-events: none; }
+.t-name .nm { font-size: var(--fs-4); }
+.t-name[data-folder] .nm { font-weight: var(--fw-semibold); }
+.t-name svg { color: var(--muted-foreground); }
+.t-name[data-folder] svg { color: var(--primary); }
+.t-note { min-height: var(--space-6); display: flex; align-items: center; padding-left: var(--space-5); font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); white-space: nowrap; }
+button.t-name:hover .nm { text-decoration: underline; text-underline-offset: var(--space-0-5); }
+.t-name[data-hot='true'] .nm, .t-name[data-sel='true'] .nm { background: var(--primary-tint); outline: 1px solid var(--primary-border); outline-offset: 2px; }
+.counts-line { font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); color: var(--muted-foreground); text-transform: uppercase; }
+
+/* the lookup: Where to add new code */
+.lookup { display: grid; }
+.lookup > li { display: grid; gap: var(--space-1); padding: var(--space-3) 0; border-bottom: 1px solid var(--border-faint); }
+@media (min-width: 42rem) { .lookup > li { grid-template-columns: minmax(0, 13rem) minmax(0, 1fr); gap: var(--space-4); } }
+.lookup .when { font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.lookup .where { display: grid; gap: var(--space-1); min-width: 0; overflow-wrap: anywhere; }
+.lookup .where li { color: var(--muted-foreground); }
+.lookup .where li:first-child { color: var(--foreground); }
+
+/* ---------- 044 specifics ---------- */
+.source-note { color: var(--muted-foreground); overflow-wrap: anywhere; }
+.cn-top { display: grid; gap: var(--space-4); min-width: 0; }
+.concerns-total { display: flex; align-items: baseline; gap: var(--space-2); }
+.concerns-total b { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.pull { display: grid; gap: var(--space-1); padding: var(--space-3) var(--space-4); border-left: 2px solid var(--border); color: var(--muted-foreground); max-width: 78ch; overflow-wrap: anywhere; }
+
+/* one concern */
+.cn-list { display: grid; }
+.cn-item { display: grid; gap: var(--space-1-5); justify-items: start; padding: var(--space-3) 0; border-bottom: 1px solid var(--border-faint); min-width: 0; }
+.cn-title { font-weight: var(--fw-semibold); overflow-wrap: anywhere; max-width: 78ch; }
+.cn-title code, .cn-gist code, .cn-fields code { padding: 0 var(--space-0-5); background: var(--muted); }
+.cn-gist { color: var(--muted-foreground); max-width: 78ch; overflow-wrap: anywhere; }
+.cn-gist[data-clamp] { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cn-fields { display: grid; gap: var(--space-2); max-width: 78ch; width: 100%; }
+.cn-fields > div { display: grid; gap: var(--space-0-5); }
+.cn-fields dt { font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; color: var(--muted-foreground); }
+.cn-fields dd { overflow-wrap: anywhere; }
+@media (min-width: 42rem) { .cn-fields > div { grid-template-columns: minmax(0, 9rem) minmax(0, 1fr); gap: var(--space-4); align-items: baseline; } }
+.cn-none { padding: var(--space-3) var(--space-4); border: 1px dashed var(--border); }
+
+/* count cells: label over number */
+.cc-top { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+.cc-lab { color: var(--muted-foreground); overflow-wrap: anywhere; text-align: left; }
+.cc-n { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+
+/* A: count strip over collapsible sections */
+.cn-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); border: 1px solid var(--border); border-width: 1px 0 0 1px; }
+.cn-cell { display: grid; gap: var(--space-1-5); align-content: space-between; padding: var(--space-2-5) var(--space-3); border: 1px solid var(--border); border-width: 0 1px 1px 0; text-align: left; }
+.cn-cell:hover { background: var(--state-hover); }
+.cn-cell:first-child .cc-lab { color: var(--foreground); font-weight: var(--fw-semibold); }
+.cn-secs { display: grid; }
+.csec { border-top: 1px solid var(--border); scroll-margin-top: calc(var(--space-28) - var(--space-2)); }
+.csec:last-child { border-bottom: 1px solid var(--border); }
+.csec-sum { display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: var(--space-10); }
+.csec-sum:hover { background: var(--state-hover); }
+.csec-sum svg { color: var(--muted-foreground); }
+.csec-sum .t { font-weight: var(--fw-semibold); }
+.csec-sum .n { margin-left: auto; font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); }
+.csec .cn-list, .csec .cn-none { margin: 0 0 var(--space-4) calc(var(--space-4) + var(--space-3)); }
+.csec .cn-item:last-child { border-bottom: 0; }
+
+/* B: nine-cell grid that opens one section */
+.cn-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--border); border-width: 1px 0 0 1px; }
+.cn-gcell { display: grid; gap: var(--space-3); align-content: space-between; min-height: calc(var(--space-10) * 2); padding: var(--space-3); border: 1px solid var(--border); border-width: 0 1px 1px 0; text-align: left; }
+.cn-gcell:hover { background: var(--state-hover); }
+.cn-gcell .cc-lab { color: var(--foreground); font-weight: var(--fw-semibold); }
+.cn-gcell[aria-pressed='true'] { background: var(--primary-tint); box-shadow: inset 0 2px 0 var(--primary); }
+.cn-gcell[aria-pressed='true'] .cc-n { color: var(--primary); }
+
+/* C: ledger with the count in a gutter */
+.cl { display: grid; }
+.cl-sec { border-top: 1px solid var(--border); display: grid; grid-template-columns: var(--space-fluid-13) minmax(0, 1fr); gap: var(--space-4); }
+.cl-stick { position: sticky; top: calc(var(--space-28) - var(--space-2)); display: grid; justify-items: start; gap: var(--space-2); padding-top: var(--space-3); }
+.cl-stick b { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.cl-body { min-width: 0; }
+.cl-body .grp-h { border-top: 0; padding-top: var(--space-3); }
+.cl-body .cn-list { padding-bottom: var(--space-4); }
+.cl-body .cn-none { margin-top: var(--space-3); margin-bottom: var(--space-4); }
+.cl-sec:last-child .cl-body .cn-item:last-child { border-bottom: 0; }
+
+@media (max-width: 42rem) {
+  .cn-gcell { gap: var(--space-2); min-height: calc(var(--space-10) * 2); }
+  .cn-gcell .cc-top, .cn-cell .cc-top { flex-direction: column; align-items: flex-start; gap: var(--space-1-5); }
+  .cn-gcell .cc-lab, .cn-cell .cc-lab { font-size: var(--fs-2); overflow-wrap: break-word; hyphens: none; }
+}
+
+</style>
+</head>
+<body>
+<nav id="sketch-bar" aria-label="Sketch controls">
+  <span class="lbl">044 concerns</span>
+  <span class="grp" id="tabs">
+    <a data-tab="a" href="#a">A: Count strip</a>
+    <a data-tab="b" href="#b">B: Count grid</a>
+    <a data-tab="c" href="#c">C: Gutter ledger</a>
+  </span>
+  <span class="grp">
+    <button data-theme="light">Light</button>
+    <button data-theme="dark">Dark</button>
+  </span>
+  <span class="grp line"><span class="name">State</span>
+    <button data-state="labelore">Labelore</button><button data-state="tidemark">Tidemark</button><button data-state="debt">40 in Tech Debt</button><button data-state="nosec">No Security items</button></span>
+</nav>
+
+<section data-variant="a" class="variant fr"></section>
+<section data-variant="b" class="variant fr" hidden></section>
+<section data-variant="c" class="variant fr" hidden></section>
+<div id="toast" role="status"></div>
+
+<script>
+const CONCERNS_DATA = {"labelore":{"sections":[{"h":"Security Considerations","label":"Security","items":[{"title":"Remote project mirroring copies the whole `.planning/` tree to local disk","fields":[["Risk","`src/server/remote-source.ts` runs `tar -cf - .planning` over ssh and extracts it into a local temp directory, which holds the full planning tree, including `config.json` with its secret keys in plaintext. Secret masking happens only in memory at display time (`src/planning-repo/secret-mask.ts`). The temp copy is not masked."],["Files","`src/server/remote-source.ts` (mirror and cleanup), `src/cli/remote-target.ts` (`buildMirrorCommands`), `src/planning-fs/local-fs.ts` (`createTempDirSync`, `removeTempDirSync`), `src/planning-repo/secret-mask.ts`"],["Current mitigation","Temp directories are created mode 0700 under the OS temp dir. The remote side only runs a path check and `tar -c`, so the remote host is never written to. ssh runs with `BatchMode=yes` and no password, and remote paths are single-quoted."],["Recommendations","Document that a remote mirror leaves plaintext on local disk until the process exits. Check whether `removeTempDirSync` runs on process signals as well as on mirror replacement. A plausible cleanup gap is a crash or SIGKILL, which would leave the mirror behind. Consider masking secret keys in the mirror, or excluding `config.json` from the tar."]]},{"title":"Mirror size and time are unbounded","fields":[["Risk","The mirror has no size cap. Its only limit is a 120-second timeout (`DEFAULT_TIMEOUT_MS` in `src/server/remote-source.ts`). A large `.planning/` tree, or one containing large generated assets, can fill the local temp directory before the timeout fires."],["Files","`src/server/remote-source.ts` (line 29)"],["Current mitigation","Timeout only."],["Recommendations","Cap the tar stream by bytes, and surface a failure status when the cap is hit."]]},{"title":"Sketch HTML runs scripts from the target project","fields":[["Risk","Sketch files from a project's `.planning/` are served with `Content-Security-Policy: sandbox allow-scripts`, so their scripts run in an opaque origin. That keeps them away from the app's API, but they still execute code that a project author wrote, or that arrived through a cloned repository."],["Files","`src/server/sketch-files.ts` (`SECURITY_HEADERS`, lines 23-27; font CORS wildcard at line 157)"],["Current mitigation","Opaque origin under the sandbox directive. The `/api` request guard does not apply to these routes. Font responses are the only ones given `Access-Control-Allow-Origin: *`."],["Recommendations","Keep the opaque-origin sandbox. Add a test that asserts the header on every sketch response, including directory redirects and error responses."]]},{"title":"Raw HTML in planning markdown is sanitized with an extended schema","fields":[["Risk","The markdown pipeline runs `rehype-raw` and then `rehype-sanitize` with a schema extended from `defaultSchema`. The extension allows `className` on every element and `checked`, `disabled` and `type` on `input`. Correctness depends on sanitize running before any trusted plugin adds markup. That order is correct today (`src/rendering/markdown.ts`, lines 300-315), but nothing enforces it."],["Files","`src/rendering/markdown.ts`, `src/web/pages/artifact-page.tsx` (line 260)"],["Current mitigation","Sanitize runs before `rehypeResolvedReferences`, `rehypeSlug` and `trustedEnrichment`."],["Recommendations","Add a test that feeds `<img src=x onerror=...>`, `<a href=\"javascript:...\">` and `<script>` through the full pipeline and asserts that all three are removed. This is the regression test noted as debt above."]]},{"title":"Secret masking uses a hard-coded key list","fields":[["Risk","`SECRET_CONFIG_KEYS` in `src/planning-repo/secret-mask.ts` holds three top-level keys (`brave_search`, `firecrawl`, `exa_search`). A new secret key added by GSD would display in plaintext."],["Files","`src/planning-repo/secret-mask.ts`"],["Current mitigation","Keys are copied from GSD's own `secrets.cjs`. Nested values under a secret key are masked fail-closed."],["Recommendations","Add a test that compares the list against the GSD version the project pins, and warn in the settings page when `config.json` contains top-level keys that look like credentials but are not on the list."]]},{"title":"Host allowlist widens by environment variable","fields":[["Risk","`LABELORE_ALLOWED_HOSTS` adds extra accepted `Host` values. It is opt-in and rejects wildcards, which is correct. The API is read-only apart from settings, but a tunnel that is not intended to be public would still expose every project it can read."],["Files","`src/server/request-guard.ts` (`parseAllowedHosts`, `createHostPolicy`), `src/server/index.ts` (`HOSTNAME = '127.0.0.1'`, line 23)"],["Current mitigation","Loopback-only binding. DNS-rebinding protection on every request. No `Access-Control-*` headers."],["Recommendations","Nothing urgent. Make the server log a line at startup listing the extra hosts it accepts."]]}]},{"h":"Tech Debt","label":"Tech debt","items":[{"title":"Oversized modules","fields":[["Issue","Several files have grown well past what a reader can hold in one pass. Each mixes parsing, shaping and presentation concerns."],["Files","`src/planning-repo/handlers/research-briefing.ts` (1879 lines), `src/web/pages/artifact-page.tsx` (1476), `src/planning-repo/handlers/context-brief.ts` (1421), `src/planning-repo/handlers/project-research-lift.ts` (1227), `src/planning-repo/handlers/debug-session.ts` (1150), `src/planning-repo/handlers/ui-review-audit.ts` (1125), `src/planning-repo/handlers/verification-report.ts` (1105), `src/server/project-registry.ts` (761)"],["Impact","Changes to one artifact type are hard to review in isolation. Regex-heavy extraction in these files is difficult to audit (see Fragile Areas)."],["Fix approach","When touching one of these, extract the pure parsing step into a sibling module with its own unit tests before adding features. Do not refactor them wholesale."]]},{"title":"One handler per artifact type, bespoke parsing each time","fields":[["Issue","Each GSD artifact type has its own handler under `src/planning-repo/handlers/`. Frontmatter reading is shared (`src/planning-repo/frontmatter.ts`, `tryParseFrontmatter`), but section extraction, heading matching and regex parsing are reimplemented per handler."],["Files","`src/planning-repo/handlers/`, `src/planning-repo/frontmatter.ts`, `src/planning-repo/handlers/section-projection.ts`"],["Impact","A fix in one handler's heading or table parsing does not reach its siblings. Compatibility with GSD artifact drift (a stated project constraint) has to be fixed per file."],["Fix approach","Route new section-level parsing through `section-projection.ts` rather than adding another local regex."]]},{"title":"Documentation drift in the project instructions","fields":[["Issue","`.claude/CLAUDE.md` records the research-time stack (TypeScript 7.0.2, Hono 4.13.3, mermaid 11.17.0) and says \"Architecture not yet mapped\". `package.json` pins TypeScript 5.9.3, Hono 4.13.4 and mermaid 11.17.1."],["Files","`.claude/CLAUDE.md`, `package.json`"],["Impact","A planner or executor reading CLAUDE.md gets a stack that does not match the installed one."],["Fix approach","Regenerate the stack section from `package.json` and point the architecture section at `.planning/codebase/ARCHITECTURE.md`."]]},{"title":"Deferred human verification recorded as \"fixed\"","fields":[["Issue","`.planning/WINDOWS.md` reports `open_count: 0`, but entries 8 and 9 are `unrun-verify` items whose live visual or motion checks were deferred \"to end-of-phase human verification\". They are marked `fixed` on the strength of automated tests."],["Files","`.planning/WINDOWS.md` (rows 8 and 9), `src/web/components/route-progress.tsx`, `src/web/styles/globals.css`"],["Impact","The ledger suggests nothing is outstanding while two real-browser checks (reduced-motion behaviour of the route progress bar, and the scrollbar reveal in both themes) have never been run."],["Fix approach","Run the two checks on the live server and record the result, or reopen the entries."]]},{"title":"Regression tests recorded as debt and not written","fields":[["Issue","The v1.0 retrospective notes three regression tests that were \"noted rather than added\" and carried forward: a ReDoS timing test, a guard against `dangerouslySetInnerHTML` misuse, and a view-mode outline cap."],["Files","`.planning/RETROSPECTIVE.md` (lines 110-111, 137), `src/web/pages/artifact-page.tsx` (line 260 uses `dangerouslySetInnerHTML`)"],["Impact","The safety property the `dangerouslySetInnerHTML` guard would protect (only sanitized HTML reaches that prop) is currently held only by convention."],["Fix approach","Add the guard as a test that fails on any new `dangerouslySetInnerHTML` outside an allowlist of files."]]},{"title":"Open test-hygiene warnings","fields":[["Issue","`.planning/STATE.md` (line 202) lists five test-hygiene review warnings still open from Phase 6. WR-02 is the one it calls worth fixing first: the no-skips scan's comment blanker hides test headers that appear after `//` inside string literals."],["Files","`.planning/STATE.md`, `test/` (the no-skips scan lives in the test gate tooling, `test/helpers/vitest-gate.mjs`)"],["Impact","The no-skips gate can miss a skipped test whose header sits after a `//` in a string."],["Fix approach","Fix the blanker to tokenise string literals before stripping comments."]]}]},{"h":"Known Bugs","label":"Known bugs","items":[{"title":"Startup mode depends on `NODE_ENV`","fields":[["Symptoms","On a previous occasion the tunnel origin ran `node src/server/index.ts` with `NODE_ENV` unset. The server then served the Vite dev middleware instead of `./dist`, and the first page load took roughly 12 seconds over a 150 ms round trip."],["Files","`src/server/index.ts` (production flag is derived from `process.env.NODE_ENV === 'production'`), `package.json` (the `dev` script runs `node src/server/index.ts` directly)"],["Trigger","Running the entry file without `NODE_ENV=production` in any deployed or tunnelled context."],["Workaround","Use `npm start` (sets `NODE_ENV=production`). The root cause is recorded in `.planning/debug/knowledge-base.md` under `loading-state-regression`."],["Fix approach","Make the mode an explicit flag on the entry point, or refuse to serve the dev middleware when a non-loopback `LABELORE_ALLOWED_HOSTS` entry is set."]]}]},{"h":"Performance Bottlenecks","label":"Performance","items":[{"title":"Full snapshot rebuilt per project load (inferred)","fields":[["Problem","Loading a project reads and parses every `.planning/` file, then builds a search index and a route table. The code shape suggests this happens on each load and each refresh, with no incremental path."],["Files","`src/planning-repo/snapshot.ts`, `src/server/search-index.ts`, `src/server/artifact-index.ts`, `src/presentation/route-table.ts`"],["Cause","No file watcher ships in v1 (CLAUDE.md lists it as a future direction). Each load is a full read."],["Improvement path","Cache per-file parse results keyed by path and mtime. This would also be the seam the planned watcher needs. Measure first on a large real project; this has not been timed."]]},{"title":"Synchronous filesystem calls on the server path","fields":[["Problem","`src/server/settings-store.ts` uses `readFileSync`, `writeFileSync`, `renameSync` and `realpathSync` inside request handlers. There are 13 `*Sync` calls across `src/server/`."],["Files","`src/server/settings-store.ts`, `src/server/remote-source.ts`, `src/server/sketch-files.ts`"],["Cause","The settings file is small, so the block is short. It is still a block on the single event loop."],["Improvement path","Low priority. Move the settings read to `fs/promises` if settings grow."]]},{"title":"Remote mirror runs on the request path","fields":[["Problem","An ssh mirror of a remote project can take up to 120 seconds, and the mirror lives in the same process that serves other projects."],["Files","`src/server/remote-source.ts`"],["Cause","The mirror is awaited inside the project load."],["Improvement path","Show the cached snapshot while a refresh runs in the background, and report the refresh state separately."]]}]},{"h":"Fragile Areas","label":"Fragile areas","items":[{"title":"Regex-driven parsing of free-form markdown","fields":[["Files","`src/presentation/project-research.ts`, `src/presentation/project-research-panels.ts`, `src/rendering/plan-segments.ts`, `src/presentation/sketches.ts`, `src/presentation/references.ts`"],["Why fragile","Many patterns match prose that GSD generates, such as `Phase N` labels, `**Bold:**` leads, em-dash separated clauses and \"mitigated\" phrasing. Each is length-capped (`{1,200}`, `{40,}`), which limits backtracking, but an edit to the source artifact wording silently changes what gets extracted."],["Safe modification","Add a fixture-based test for each pattern before changing it. The fixtures live under `fixtures/`. Do not loosen a length cap without a timing test."],["Test coverage","Unit tests exist for the presentation layer. The ReDoS timing test named in the retrospective is missing."]]},{"title":"Source-text contract tests with an implicit oracle","fields":[["Files","`test/web/loading-state-contract.test.ts`, and others of the same kind"],["Why fragile","These tests assert that a file contains certain identifiers. They pass when the parts exist but are not wired together. The loading-state regression shipped while this suite was green, and the knowledge base records it (`.planning/debug/knowledge-base.md`)."],["Safe modification","Prefer behavioural tests that drive the unit with no DOM, as `test/web/route-chunk-store.test.ts` does. Do not add new source-text assertions where a behavioural test can be written."],["Test coverage","Behavioural coverage of the route chunk store is good. Source-text tests still carry the most weight in the loading and shell contracts."]]},{"title":"Frontmatter parsing","fields":[["Files","`src/planning-repo/frontmatter.ts`"],["Why fragile","`gray-matter` is called inside a try block, and the file explains that a pre-parse cache entry survives a throw. This is handled today, but the cache behaviour is subtle."],["Safe modification","Keep every call on `tryParseFrontmatter`. Do not call `matter()` directly outside that function."]]},{"title":"Settings file write path","fields":[["Files","`src/server/settings-store.ts`"],["Why fragile","Writes go to a temp file, then rename over `settings.json`, with a `.bak` copy made from the existing file. The `wx` flag and the realpath check are what prevent a symlink from redirecting the write. Either can be removed in a refactor without any test failing."],["Safe modification","Keep the realpath check and the `wx` flag together. Add a test that places a symlink at `settings.json` and asserts that the write is refused."]]}]},{"h":"Scaling Limits","label":"Scaling limits","items":[{"title":"Project count and project size","fields":[["Current capacity","Not measured. The fixture corpus (`fixtures/`) and the Labelore repository are the largest known inputs."],["Limit","Unknown. The full-read design (see Performance Bottlenecks) will grow linearly with the number of `.planning/` files."],["Scaling path","Per-file caching keyed on path and mtime, then the watcher."]]},{"title":"Remote mirror size","fields":[["Current capacity","120-second timeout, no byte cap."],["Limit","Local temp disk space, and the timeout for large trees."],["Scaling path","Byte cap, and a mirror that copies only the directories the reader needs."]]}]},{"h":"Dependencies at Risk","label":"Dependencies at risk","items":[{"title":"TypeScript and tooling version split","fields":[["Risk","The project pins `typescript` 5.9.3 while the research recorded TypeScript 7.0.2 as the dist-tag latest. Editor and lint tooling may lag if the project moves."],["Impact","Upgrading later means checking `typescript-eslint` and the editor integration together."],["Migration plan","Stay on 5.x until `typescript-eslint` has a stated 7.x support line, then upgrade both in one change."]]},{"title":"`gray-matter` and `hast-util-sanitize` version coupling","fields":[["Risk","`hast-util-sanitize` is a direct dependency and must match the schema shape that `rehype-sanitize` 6.0.0 expects. A mismatch would silently change what the schema allows."],["Impact","Sanitize could start accepting markup it currently strips."],["Migration plan","Bump the two together and run the sanitizer test (see Security Considerations) before accepting the change."]]}]},{"h":"Missing Critical Features","label":"Missing features","items":[{"title":"No runtime guard that the reader stays read-only","fields":[["Problem","The read-only boundary is enforced by convention and by `test/portability.test.ts`, which holds the list of `node:fs` importers to exactly `src/planning-fs/local-fs.ts` and `src/server/settings-store.ts`. Nothing stops a new importer from being added without that test being updated."],["Blocks","Write-back (a named future direction) will need this boundary to be explicit, not just tested."]]},{"title":"No health surface for a degraded snapshot","fields":[["Problem","Unknown or malformed GSD artifacts degrade to warnings in the snapshot (`src/planning-repo/warnings.ts`). The UI does not offer a single place to see every warning across projects."],["Blocks","Diagnosing GSD format drift across many projects requires opening each one."]]}]},{"h":"Test Coverage Gaps","label":"Test coverage gaps","items":[{"title":"Markdown sanitizer end-to-end","fields":[["What's not tested","The full pipeline's handling of hostile raw HTML and `javascript:` URLs, against the actual schema."],["Files","`src/rendering/markdown.ts`"],["Risk","A schema edit could re-enable script or event-handler attributes without any test failing."],["Priority","High"]]},{"title":"ReDoS timing on presentation regexes","fields":[["What's not tested","Pathological input timing for the regexes in `src/presentation/` and `src/rendering/plan-segments.ts`. Named as debt in `.planning/RETROSPECTIVE.md`."],["Files","`src/presentation/project-research-panels.ts`, `src/rendering/plan-segments.ts`"],["Risk","A long adversarial line in a planning file could stall the server's event loop."],["Priority","Medium"]]},{"title":"Remote mirror failure paths","fields":[["","What's not tested (not confirmed by a test search in this pass): Behaviour when `tar` is missing, when ssh exits 255 mid-stream, and when the temp directory is left behind after a crash."],["Files","`src/server/remote-source.ts`, `src/cli/remote-target.ts`"],["Risk","Leftover plaintext mirrors (see Security Considerations)."],["Priority","High"]]},{"title":"Settings symlink refusal","fields":[["","What's not tested (not confirmed by a test search in this pass): A symlink placed at `settings.json` or at the settings directory."],["Files","`src/server/settings-store.ts`"],["Risk","Writes could be redirected outside the settings directory."],["Priority","Medium"]]}]}],"intro":["Scope: the full repository, excluding `.claude/worktrees` and `node_modules`. Findings come from reading the source, the planning ledgers (`.planning/WINDOWS.md`, `.planning/RETROSPECTIVE.md`, `.planning/STATE.md`, `.planning/debug/knowledge-base.md`) and grep sweeps for risky APIs. No runtime or load testing was performed, so performance items are inferred from code shape and are marked as such."]},"tidemark":{"sections":[{"h":"Security Considerations","label":"Security","items":[{"title":"Emailed codes never expire early","fields":[["Risk","A sign-in code stays valid for a full day even after it has been used"],["Files","`server/berths/auth.ts`"],["Current mitigation","Codes are six digits and rate limited per address"],["Recommendations","Mark a code as spent on first use"]]},{"title":"Staff session cookie","fields":[["Risk","The cookie is not marked secure when the proxy terminates TLS"],["Files","`server/office/auth.ts`"],["Current mitigation","The proxy redirects every plain request"],["Recommendations","Read the forwarded protocol header and set the flag"]]}]},{"h":"Tech Debt","label":"Tech debt","items":[{"title":"Window rebuild on every refresh","fields":[["Issue","The tide job deletes and rewrites all windows instead of changing the ones that moved"],["Files","`server/tides/refresh.ts`, `server/store/index.ts`"],["Impact","A request checked during a refresh can see no window at all"],["Fix approach","Write the new windows in one transaction and swap them in"]]},{"title":"Two copies of the overlap rule","fields":[["Issue","The board repeats the clash check so it can grey out dates early"],["Files","`board/components/RequestForm/index.tsx`, `server/store/clash.ts`"],["Impact","A rule change must land in two places"],["Fix approach","Serve the blocked dates from the server and drop the copy"]]},{"title":"Staff login shared by the whole office","fields":[["Issue","One password is used by every member of staff"],["Files","`server/office/auth.ts`"],["Impact","No record of who confirmed a request"],["Fix approach","Give each staff member a code sign-in like the owners"]]}]},{"h":"Known Bugs","label":"Known bugs","items":[{"title":"Confirmation mail sent twice","fields":[["Symptoms","An owner receives two notes when the office confirms and then edits a request"],["Files","`server/office/routes.ts`"],["Trigger","Confirm a request, then change its dates within one minute"],["Workaround","Edit the dates first, then confirm"]]}]},{"h":"Performance Bottlenecks","label":"Performance","items":[{"title":"Berth list for a long date range","fields":[["Problem","A query for a whole season loads every request and filters in memory"],["Files","`server/berths/routes.ts`"],["Cause","The range filter runs after the load, not in the query"],["Improvement path","Push the range into the SQL where clause"]]},{"title":"Tide feed parse","fields":[["Problem","Each refresh parses the full feed, not only the next fourteen days"],["Files","`server/tides/feed.ts`"],["Cause","The feed has no date filter"],["Improvement path","Drop rows beyond the horizon before parsing"]]}]},{"h":"Fragile Areas","label":"Fragile areas","items":[{"title":"The window builder assumes the feed rows arrive sorted by time and has no check for it","fields":[]},{"title":"The clash check treats an overnight stay as ending at noon, and the board mirrors that guess","fields":[]},{"title":"The migration runner applies files by name order, so a misnamed file runs out of place","fields":[]}]},{"h":"Scaling Limits","label":"Scaling limits","items":[{"title":"Berths in the store","fields":[["Current capacity","120"],["Limit","About 2,000 before the berth list query slows down"]]},{"title":"Concurrent staff logins","fields":[["Current capacity","1"],["Limit","The shared login allows one session at a time"]]}]},{"h":"Dependencies at Risk","label":"Dependencies at risk","items":[]},{"h":"Missing Critical Features","label":"Missing features","items":[{"title":"Waiting list","fields":[["Problem","A refused owner cannot ask to be told when the berth frees up"],["Blocks","The office handles the queue by phone"]]}]},{"h":"Test Coverage Gaps","label":"Test coverage gaps","items":[]}],"intro":["Scope: the whole repository at the stamped commit. Nine sections follow, in template order."]},"handlers":["artifact-token","context-brief","context","coverage-body","coverage","debug-session","debug","frontmatter-only","json-config","learnings-retro","learnings","milestone-audit-body","milestone-audit","milestones","note-lift","note","pattern-map","patterns","plan-structure","plan","project-research-lift","project-research","project","requirements","research-briefing","research","retrospective","review-disposition","review-report","review","roadmap","security-register","security","state"]};
+// ---------- icons (lucide paths, 24px grid) ----------
+const ICON = {
+  copy: '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  chevr: '<path d="m9 6 6 6-6 6"/>',
+  chevd: '<path d="m6 9 6 6 6-6"/>',
+  arrow: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  folder: '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+  folderOpen: '<path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/>',
+  file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/>',
+};
+const svg = (n, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+// inline markdown: `code`, **bold**, *italic*. Code spans are lifted out first so their contents stay literal.
+const inline = (s) => {
+  const codes = [];
+  let t = String(s).replace(/`([^`]+)`/g, (_, c) => { codes.push(c); return `\u0000${codes.length - 1}\u0000`; });
+  t = esc(t).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/(^|[^*])\*([^*\s][^*]*)\*/g, '$1<i>$2</i>');
+  return t.replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${esc(codes[Number(i)])}</code>`);
+};
+const sq = (tone) => `<span class="sq" data-tone="${tone}" aria-hidden="true"></span>`;
+const chip = (tone, text, title) => `<span class="status-chip" data-tone="${tone}"${title ? ` title="${esc(title)}"` : ''}>${sq(tone)}${esc(text)}</span>`;
+
+// ---------- the seven documents (labelore's own counts, 10-03 rule) ----------
+const ALL = ['stack', 'architecture', 'structure', 'conventions', 'testing', 'integrations', 'concerns'];
+const DOC = {
+  stack: { name: 'Stack', key: '22' },
+  architecture: { name: 'Architecture', key: '24' },
+  structure: { name: 'Structure', key: '11' },
+  conventions: { name: 'Conventions', key: '8' },
+  testing: { name: 'Testing', key: 'Vitest' },
+  integrations: { name: 'Integrations', key: '3' },
+  concerns: { name: 'Concerns', key: '30' },
+};
+const PROJ = {
+  labelore: { name: 'labelore', date: 'Nov 4, 2026', commit: '717c8d7', keys: {} },
+  tidemark: { name: 'tidemark', date: 'Oct 30, 2026', commit: 'c4e91ab', keys: { architecture: '5', structure: '3', concerns: '14' } },
+};
+
+// ---------- state ----------
+const params = new URLSearchParams(location.search);
+let theme = params.get('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+const ACTS = {};
+const VIEWS = {};
+
+// ---------- the 042 A frame, drawn identically in every variant ----------
+const crumbs = () => `<nav class="crumbs" aria-label="Breadcrumb"><span>Labelore</span><span aria-hidden="true">/</span><span aria-current="page">Codebase</span></nav>`;
+const copyPath = () => `<button class="btn-xs icon" type="button" data-act="noop" aria-label="Copy path" title="Copy path">${svg('copy')}</button>`;
+const viewSource = () => `<div class="seg" role="group" aria-label="Show"><button class="btn-xs" type="button" aria-pressed="true">View</button><button class="btn-xs" type="button" aria-pressed="false" data-act="noop">Source</button></div>`;
+const appHead = (pname) => `<header class="app-head" data-shell><span class="app-brand"><i></i>Labelore <span>/ ${esc(pname)}</span></span>
+  <nav class="app-nav" aria-label="Project"><a href="#" data-act="noop" aria-current="page">Dashboard</a><a href="#" data-act="noop">Roadmap</a><a href="#" data-act="noop">Traceability</a><a href="#" data-act="noop">Search</a></nav></header>`;
+function factsHtml(proj) {
+  const p = PROJ[proj];
+  return `<div class="facts"><span class="facts-count">7 of 7 documents mapped</span>${chip('complete', 'Complete map')}<span class="facts-date">Mapped ${p.date}</span><span class="status-chip mono" data-tone="quiet" title="Commit the map was made at">Commit ${p.commit}</span></div>`;
+}
+const keyOf = (proj, k) => PROJ[proj].keys[k] ?? (proj === 'tidemark' ? '–' : DOC[k].key);
+function listHtml(proj, cur) {
+  return `<nav class="list" aria-label="Codebase map"><ol>${ALL.map((k, i) => {
+    const d = DOC[k], no = String(i + 1).padStart(2, '0');
+    const on = k === cur;
+    return `<li class="entry-li"><a class="entry" href="#" data-act="panel" data-panel="${k}"${on ? ' aria-current="page"' : ''}><span class="entry-no">${no}</span><span class="entry-name">${d.name}</span><span class="entry-key"><b>${esc(keyOf(proj, k))}</b></span></a></li>`;
+  }).join('')}</ol></nav>`;
+}
+function pageHtml(proj, cur, main) {
+  return `${appHead(PROJ[proj].name)}<main class="page">${crumbs()}
+    <header class="heading-block"><p class="eyebrow">Codebase</p><h1>Codebase</h1><div class="meta-row">${copyPath()}${viewSource()}</div></header>
+    <div class="a-grid"><aside class="a-rail">${factsHtml(proj)}${listHtml(proj, cur)}</aside><div class="a-main">${main}</div></div></main>`;
+}
+const panelHead = (k, proj, unit) => `<header class="panel-head"><span class="panel-no">${String(ALL.indexOf(k) + 1).padStart(2, '0')}</span><h2 id="panel-h">${DOC[k].name}</h2><span class="panel-key">${esc(keyOf(proj, k))} ${unit}</span></header>`;
+
+// ---------- generic readers for the plain form (what the app's generic document rendering shows) ----------
+const norm = (h) => h.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+const findSec = (doc, re) => doc.sections.find((s) => re.test(norm(s.h)));
+const splitField = (t) => { const m = String(t).match(/^([^:`]{1,48}):\s+([\s\S]*)$/); return m ? [m[1], m[2]] : ['', t]; };
+function ulHtml(items) {
+  return `<ul class="bul">${items.map((it) => {
+    const [f, v] = splitField(it.text);
+    return `<li><span>${f ? `<span class="f">${inline(f)}:</span> ${inline(v)}` : inline(it.text)}${it.sub.length ? `<ul>${it.sub.map((s) => `<li>${inline(s)}</li>`).join('')}</ul>` : ''}</span></li>`;
+  }).join('')}</ul>`;
+}
+function blocksHtml(blocks) {
+  const out = [];
+  let group = null;
+  const closeGroup = () => { if (group) { out.push(`<div class="g">${group.join('')}</div>`); group = null; } };
+  for (const b of blocks) {
+    if (b.t === 'label') { closeGroup(); group = [`<p class="g-label">${inline(b.text)}</p>`]; continue; }
+    const html = b.t === 'p' ? `<p class="prose">${inline(b.text)}</p>`
+      : b.t === 'h3' ? `<p class="sub-h">${inline(b.text)}</p>`
+      : b.t === 'ul' ? ulHtml(b.items)
+      : b.t === 'ol' ? `<ol class="steps">${b.items.map((it) => `<li>${inline(it.text)}${it.sub.length ? `<ul>${it.sub.map((s) => `<li>${inline(s)}</li>`).join('')}</ul>` : ''}</li>`).join('')}</ol>`
+      : b.t === 'table' ? `<div class="tbl-scroll"><table class="ptable"><thead><tr>${b.head.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${b.rows.map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`
+      : b.t === 'fence' ? `<pre class="plain-pre">${esc(b.text)}</pre>` : '';
+    if (group && (b.t === 'ul' || b.t === 'p' || b.t === 'ol')) group.push(html); else { closeGroup(); out.push(html); }
+  }
+  closeGroup();
+  return out.join('');
+}
+const plainSec = (h, blocks) => `<section class="plain-sec"><h3 class="grp-h">${esc(h)}</h3>${blocksHtml(blocks)}</section>`;
+const grp = (h, body, n) => `<section class="grp"><h3 class="grp-h">${esc(h)}${n != null ? `<span class="n">${esc(n)}</span>` : ''}</h3>${body}</section>`;
+const rowsHtml = (items, cls = '') => `<ul class="ledger ${cls}">${items.map(([a, b, c]) => `<li><span class="l-name">${inline(a)}</span><span class="l-body">${inline(b)}</span>${c ? `<span class="l-file">${inline(c)}</span>` : '<span></span>'}</li>`).join('')}</ul>`;
+
+// ---------- render orchestration ----------
+const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c'].includes(h) ? h : 'a'; };
+function render() {
+  const y = window.scrollY;
+  const v = pickVariant();
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  document.querySelectorAll('[data-variant]').forEach((el) => { el.hidden = el.dataset.variant !== v; if (el.dataset.variant !== v) el.innerHTML = ''; });
+  document.querySelector(`[data-variant="${v}"]`).innerHTML = VIEWS[v]();
+  document.querySelectorAll('#tabs a').forEach((a) => a.classList.toggle('on', a.dataset.tab === v));
+  document.querySelectorAll('#sketch-bar [data-theme]').forEach((b) => b.classList.toggle('on', b.dataset.theme === theme));
+  document.querySelectorAll('#sketch-bar [data-state]').forEach((b) => b.classList.toggle('on', b.dataset.state === S.state));
+  if (typeof afterRender === 'function') afterRender(v);
+  window.scrollTo(0, y);
+}
+let toastTimer;
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1600); }
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act], [data-state], [data-theme]');
+  if (!el) return;
+  if (el.dataset.theme) { theme = el.dataset.theme; return render(); }
+  if (el.dataset.state) { S.state = el.dataset.state; if (typeof onState === 'function') onState(); return render(); }
+  const act = el.dataset.act;
+  if (act === 'noop') { e.preventDefault(); toast('Sketch only'); return; }
+  if (ACTS[act]) { e.preventDefault(); ACTS[act](el, e); }
+});
+window.addEventListener('hashchange', render);
+
+// ---------- sketch 044 state ----------
+const STATES = {
+  labelore: { proj: 'labelore' },
+  tidemark: { proj: 'tidemark' },
+  debt: { proj: 'labelore', debt: true },
+  nosec: { proj: 'labelore', nosec: true },
+};
+const S = { state: STATES[params.get('state')] ? params.get('state') : 'labelore', openA: new Set([0]), sel: 0, expanded: new Set() };
+const st = () => STATES[S.state];
+const proj = () => st().proj;
+function onState() { S.openA = new Set([0]); S.sel = 0; S.expanded = new Set(); }
+
+// The sections for the current state. Security first, the rest in document order (the data is already in that order).
+function sections() {
+  const base = CONCERNS_DATA[proj()].sections.map((s) => ({ ...s, items: s.items.slice() }));
+  if (st().debt) {
+    base[1].items = base[1].items.concat(CONCERNS_DATA.handlers.map((h) => ({
+      title: `Heading matching reimplemented in \`${h}.ts\``,
+      fields: [
+        ['Issue', `\`${h}.ts\` carries its own heading matcher and bullet splitter instead of the shared section projection.`],
+        ['Files', `\`src/planning-repo/handlers/${h}.ts\``],
+        ['Impact', 'A fix to the shared matcher does not reach this handler, so GSD format drift has to be fixed here as well.'],
+        ['Fix approach', 'Route the section reads through `section-projection.ts` the next time this file is touched.'],
+      ],
+    })));
+  }
+  if (st().nosec) base[0].items = [];
+  return base;
+}
+const total = () => sections().reduce((n, s) => n + s.items.length, 0);
+const syncKeys = () => { if (proj() === 'labelore') PROJ.labelore.keys.concerns = String(total()); };
+const toneOf = (i, n) => (i === 0 ? (n > 0 ? 'in-flight' : 'complete') : n === 0 ? 'quiet' : 'neutral');
+function pullItem() {
+  const s = sections();
+  return (s[0].items[0] || (s.find((x) => x.label === 'Tech debt') || { items: [] }).items[0]) || null;
+}
+const pull = () => { const it = pullItem(); return it ? `<div class="pull"><p class="micro-label">Most dangerous</p><p>${inline(it.title)}</p></div>` : ''; };
+const intro = () => (CONCERNS_DATA[proj()].intro || []).map((t) => `<p class="prose source-note">${inline(t)}</p>`).join('');
+const totalLine = () => `<p class="concerns-total"><b>${total()}</b><span>concerns</span></p>`;
+
+ACTS.more = (el) => { const id = el.dataset.id; S.expanded.has(id) ? S.expanded.delete(id) : S.expanded.add(id); render(); };
+ACTS.sec = (el) => { const i = Number(el.dataset.i); S.openA.has(i) ? S.openA.delete(i) : S.openA.add(i); render(); };
+ACTS.jump = (el) => { const i = Number(el.dataset.i); S.openA.add(i); render(); const t = document.getElementById(`sec-${i}`); if (t) t.scrollIntoView({ block: 'start' }); };
+ACTS.select = (el) => { S.sel = Number(el.dataset.i); render(); };
+ACTS.panel = (el) => { if (el.dataset.panel !== 'concerns') toast('044 draws Concerns'); };
+
+// ---------- one concern: title, then the first field (clamped when it is long), Read more for the rest ----------
+function concern(si, ii, it) {
+  const id = `${si}:${ii}`, open = S.expanded.has(id);
+  const first = it.fields[0];
+  const needs = it.fields.length > 1 || (first && first[1].length > 130);
+  const fields = `<dl class="cn-fields">${it.fields.map(([k, v]) => `<div>${k ? `<dt>${esc(k)}</dt>` : ''}<dd>${inline(v)}</dd></div>`).join('')}</dl>`;
+  return `<li class="cn-item"><p class="cn-title">${inline(it.title)}</p>${open ? fields : first ? `<p class="cn-gist"${needs ? ' data-clamp' : ''}>${inline(first[1])}</p>` : ''}${needs ? `<button class="text-link" type="button" data-act="more" data-id="${id}" aria-expanded="${open}">${open ? 'Read less' : 'Read more'}</button>` : ''}</li>`;
+}
+const list = (si, s) => (s.items.length ? `<ul class="cn-list">${s.items.map((it, ii) => concern(si, ii, it)).join('')}</ul>` : `<p class="source-note cn-none">None under this heading.</p>`);
+const countCell = (s, i, cls, act) => `<button class="${cls}" type="button" data-act="${act}" data-i="${i}"${act === 'select' ? ` aria-pressed="${S.sel === i}"` : ''}><span class="cc-top">${sq(toneOf(i, s.items.length))}<span class="cc-lab">${esc(s.label)}</span></span><b class="cc-n">${s.items.length}</b></button>`;
+const head = () => `<header class="panel-head"><span class="panel-no">07</span><h2 id="panel-h">Concerns</h2><span class="panel-key">${total()} concerns</span></header>`;
+const art = (inner) => `<article class="panel" aria-labelledby="panel-h">${head()}${inner}</article>`;
+
+// A: a count strip over collapsible sections
+function viewA() {
+  const secs = sections();
+  return art(`<div class="lifted">
+    <div class="cn-top">${intro()}${totalLine()}
+      <div class="cn-strip">${secs.map((s, i) => countCell(s, i, 'cn-cell', 'jump')).join('')}</div>
+      ${pull()}</div>
+    <div class="cn-secs">${secs.map((s, i) => { const open = S.openA.has(i); return `<section class="csec" id="sec-${i}" data-open="${open}"><button class="csec-sum" type="button" data-act="sec" data-i="${i}" aria-expanded="${open}">${svg(open ? 'chevd' : 'chevr')}${sq(toneOf(i, s.items.length))}<span class="t">${esc(s.h)}</span><span class="n">${s.items.length}</span></button>${open ? list(i, s) : ''}</section>`; }).join('')}</div>
+  </div>`);
+}
+
+// B: a nine-cell count grid that opens one section
+function viewB() {
+  const secs = sections();
+  const s = secs[S.sel] || secs[0];
+  const i = secs.indexOf(s);
+  return art(`<div class="lifted">
+    <div class="cn-top">${intro()}${totalLine()}
+      <div class="cn-grid">${secs.map((x, k) => countCell(x, k, 'cn-gcell', 'select')).join('')}</div></div>
+    <section class="grp"><h3 class="grp-h">${esc(s.h)}<span class="n">${s.items.length}</span></h3>${list(i, s)}</section>
+  </div>`);
+}
+
+// C: one ledger, the count in a gutter beside each section
+function viewC() {
+  const secs = sections();
+  return art(`<div class="lifted">
+    <div class="cn-top">${intro()}${totalLine()}${pull()}</div>
+    <div class="cl">${secs.map((s, i) => `<section class="cl-sec" id="sec-${i}"><div class="cl-gut"><div class="cl-stick"><b>${s.items.length}</b>${sq(toneOf(i, s.items.length))}</div></div><div class="cl-body"><h3 class="grp-h">${esc(s.h)}</h3>${list(i, s)}</div></section>`).join('')}</div>
+  </div>`);
+}
+
+const wrap = (fn) => () => { syncKeys(); return pageHtml(proj(), 'concerns', fn()); };
+VIEWS.a = wrap(viewA); VIEWS.b = wrap(viewB); VIEWS.c = wrap(viewC);
+render();
+
+</script>
+</body>
+</html>
