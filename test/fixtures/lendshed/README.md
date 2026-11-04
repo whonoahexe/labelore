@@ -48,6 +48,13 @@ Shipped milestone **v1.0 "Shed Basics"**, folders under `milestones/v1.0-phases/
 - v1.0 work: January to March 2026; v1.0 shipped 2026-03-20
 - v1.1 work: March to April 2026
 
+## Made-up spec and check examples (Phase 10)
+
+Seven files in the phase folders have no real counterpart on this machine, so each is filled by hand from GSD's
+own template and carries a first-line "made-up example" comment: `01-SPEC.md`, `02-SPEC.md`, `03-SPEC.md`,
+`02-AI-SPEC.md`, `04-AI-SPEC.md`, `02-USER-SETUP.md` and `04-USER-SETUP.md`. The index of every made-up example
+and the hard shape each one covers is `test/fixtures/README.md`; the marker test reads it.
+
 ## Authoring rules every later plan follows
 
 - **R1** Keep every heading, table shape, frontmatter key set, malformed spot, wrapper tag and formatting
