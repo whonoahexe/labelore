@@ -1,0 +1,27 @@
+# Made-up examples
+
+Every document type with no real example on this machine is built and tested against a made-up example. The
+example is derived from GSD's own template or from the writer that produces the type, labelled as made up in
+the file itself, and listed in the table below. The rule is a test (`test/made-up-examples.test.ts`): it loads
+every fixture root through the real repository and fails when a file of a rule kind has no marker, when a
+marked file has no row here, or when a row names a file that does not exist. The UI never reads the marker.
+The rule binds every later type with no real example on this machine, Phase 11's included.
+
+Two marker forms, both carrying the same three facts (it is made up, the GSD source it was derived from, the
+gsd-core version it was derived at):
+
+- A file with frontmatter carries the keys `made_up_example: true`, `derived_from: <path under ~/.claude>`
+  and `gsd_core_version: <version>`.
+- A file with no frontmatter carries, as its first line, an HTML comment:
+  `<!-- made-up example · derived from <path under ~/.claude> · gsd-core <version> -->`.
+
+Two roots are exempt by name, each with a reason: `fixtures/dense` (a frozen golden, `test/__golden__/dense.json`,
+whose own ledger is `fixtures/README.md`) and this repository's own `.planning` (real planning files).
+
+## Index
+
+| Path | Type | Derived from | gsd-core | Hard shape covered |
+|---|---|---|---|---|
+| test/fixtures/shapes/.planning/codebase/STACK.md | codebase-stack | gsd-core/templates/codebase/stack.md | 1.19.0 | partial map: three of the seven documents present, no frontmatter |
+| test/fixtures/shapes/.planning/codebase/ARCHITECTURE.md | codebase-architecture | gsd-core/templates/codebase/architecture.md | 1.19.0 | partial map: a document whose title is the first heading below a comment line |
+| test/fixtures/shapes/.planning/codebase/CONVENTIONS.md | codebase-conventions | agents/gsd-codebase-mapper.md | 1.19.0 | partial map: a document name shared with the spikes folder's CONVENTIONS.md |
