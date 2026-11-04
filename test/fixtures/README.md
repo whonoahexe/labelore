@@ -25,3 +25,9 @@ whose own ledger is `fixtures/README.md`) and this repository's own `.planning` 
 | test/fixtures/shapes/.planning/codebase/STACK.md | codebase-stack | gsd-core/templates/codebase/stack.md | 1.19.0 | partial map: three of the seven documents present, no frontmatter |
 | test/fixtures/shapes/.planning/codebase/ARCHITECTURE.md | codebase-architecture | gsd-core/templates/codebase/architecture.md | 1.19.0 | partial map: a document whose title is the first heading below a comment line |
 | test/fixtures/shapes/.planning/codebase/CONVENTIONS.md | codebase-conventions | agents/gsd-codebase-mapper.md | 1.19.0 | partial map: a document name shared with the spikes folder's CONVENTIONS.md |
+
+## For later phases
+
+A new document type with no real example on this machine adds three things: its kind to `MADE_UP_EXAMPLE_KINDS` in
+`test/helpers/made-up-examples.ts`, a marker in each made-up example, and a row in the table above. The test fails,
+never skips, when any of the three is missing (D-13).
