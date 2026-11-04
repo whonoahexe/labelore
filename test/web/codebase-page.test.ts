@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { buildCodebaseContext } from '../../src/presentation/codebase-map.ts';
 import type { DocumentSectionGroup } from '../../src/web/views/document-sections.ts';
-import { composeCodebase } from '../../src/web/views/codebase-page.ts';
+import { NOT_MAPPED, composeCodebase } from '../../src/web/views/codebase-page.ts';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 import { loadProject } from '../helpers/fixture-project.ts';
 import { SHAPES_ROOT } from '../helpers/shapes-project.ts';
@@ -92,6 +92,10 @@ describe('composeCodebase - the facts line', () => {
 });
 
 describe('composeCodebase - the panel list', () => {
+  it('words a missing document "Not mapped"', () => {
+    expect(NOT_MAPPED).toBe('Not mapped');
+  });
+
   it('holds seven entries in the fixed order, each numbered, the active one current', async () => {
     const model = composeCodebase(await inputFor(TIDEMARK_ROOT, 'ARCHITECTURE'));
     expect(model?.panels.map((panel) => panel.label)).toEqual([
@@ -377,7 +381,7 @@ describe('codebase view contract - the real sources', () => {
     expect(code.includes(RAW_HTML_PROP)).toBe(false);
     expect(writesForbiddenTone(code)).toBe(false);
     for (const expression of toneExpressions(code)) {
-      expect(['"complete"', '"in-flight"', '"quiet"', '{tone}', '{row.tone}', '{facts.readiness.tone}'], expression).toContain(expression);
+      expect(['"complete"', '"in-flight"', '"quiet"', '{tone}', '{row.tone}', '{facts.readiness.tone}', '{readiness.tone}'], expression).toContain(expression);
     }
   });
 
@@ -387,7 +391,7 @@ describe('codebase view contract - the real sources', () => {
     expect(code).not.toMatch(/\bhref\s*=/);
     expect(code).not.toMatch(/<a[\s>]/);
     expect(code).toContain("data-ghost=\"true\"");
-    expect(code).toContain('Not mapped');
+    expect(code).toContain('{NOT_MAPPED}');
   });
 
   it('lifted text is React text through ResearchInline, and plain sections go through the page\'s renderHtml callback', async () => {
