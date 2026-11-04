@@ -5,7 +5,16 @@
 import { describe, expect, it } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import { CODEBASE_MAP_FILES } from '../../src/planning-repo/codebase-files.ts';
-import { CODEBASE_PANELS, buildCodebaseContext, concernEntries, mapReadiness } from '../../src/presentation/codebase-map.ts';
+import {
+  CODEBASE_PANELS,
+  NEXT_STEPS,
+  buildCodebaseContext,
+  concernEntries,
+  hasPlanningDocCandidates,
+  mapReadiness,
+  nextStep,
+} from '../../src/presentation/codebase-map.ts';
+import type { MapReadiness } from '../../src/presentation/codebase-map.ts';
 import { loadProject } from '../helpers/fixture-project.ts';
 import { SHAPES_ROOT } from '../helpers/shapes-project.ts';
 
@@ -188,5 +197,119 @@ describe('concernEntries (one rule for the panel and the head)', () => {
     expect(concernEntries({ sections: 'no' })).toBeNull();
     const sections = [{ heading: 'Tech Debt', key: 'tech-debt', count: 2 }, null, { heading: '', count: 1 }];
     expect(concernEntries({ sections })?.total).toBe(2);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------------------
+// The next step (D-06; UI-SPEC section 3), following onboard-projection's rules as narrowed there.
+// ---------------------------------------------------------------------------------------------------------
+const FAST_REASON = 'Finish the map. A fast map is enough to look around, but project setup needs the complete one.';
+const PARTIAL_REASON =
+  'This map is partial. Some of the seven documents are missing, so map the codebase before setting the project up.';
+const INGEST_REASON = 'Existing decision or spec documents were found. Import them before setting the project up.';
+const NEW_PROJECT_REASON = 'The map is complete. Next, set the project up.';
+
+describe('nextStep', () => {
+  it('sends a fast map to /gsd-map-codebase with its own reason, whether or not documents are visible', () => {
+    for (const docs of [false, true]) {
+      expect(nextStep('fast', docs)).toEqual({ command: '/gsd-map-codebase', reason: FAST_REASON });
+    }
+  });
+
+  it('sends a partial map (readiness none) to /gsd-map-codebase with the partial reason', () => {
+    for (const docs of [false, true]) {
+      expect(nextStep('none', docs)).toEqual({ command: '/gsd-map-codebase', reason: PARTIAL_REASON });
+    }
+  });
+
+  it('sends a complete map with visible documents to /gsd-ingest-docs', () => {
+    expect(nextStep('complete', true)).toEqual({ command: '/gsd-ingest-docs', reason: INGEST_REASON });
+  });
+
+  it('sends a complete map with none to /gsd-new-project: "The map is complete" appears only there', () => {
+    expect(nextStep('complete', false)).toEqual({ command: '/gsd-new-project', reason: NEW_PROJECT_REASON });
+    for (const readiness of ['fast', 'none'] as MapReadiness[]) {
+      for (const docs of [false, true]) expect(nextStep(readiness, docs).reason).not.toContain('The map is complete');
+    }
+  });
+
+  it('only ever returns one of the four constant steps, and never a --fast form', () => {
+    expect(NEXT_STEPS).toHaveLength(4);
+    for (const readiness of ['complete', 'fast', 'none'] as MapReadiness[]) {
+      for (const docs of [false, true]) {
+        const step = nextStep(readiness, docs);
+        expect(NEXT_STEPS).toContain(step);
+        expect(step.command).toMatch(/^\/gsd-(map-codebase|ingest-docs|new-project)$/);
+        expect(step.command).not.toContain('--');
+      }
+    }
+  });
+
+  it('an unknown readiness falls to the partial step rather than throwing', () => {
+    expect(nextStep('weird' as MapReadiness, false).command).toBe('/gsd-map-codebase');
+  });
+});
+
+describe('hasPlanningDocCandidates (UI-SPEC open item 2: name and segment rules over .planning/ outside codebase/)', () => {
+  const has = (...paths: string[]): boolean => hasPlanningDocCandidates(paths.map((path) => ({ path })));
+
+  it('finds an ADR, PRD, SPEC or RFC by directory segment or whole-token name', () => {
+    expect(has('.planning/adr/0001-store.md')).toBe(true);
+    expect(has('.planning/docs/PRD-loans.md')).toBe(true);
+    expect(has('.planning/rfcs/stores.md')).toBe(true);
+    expect(has('.planning/notes/api_spec.md')).toBe(true);
+    expect(has('.planning/RFC 12 tides.md')).toBe(true);
+  });
+
+  it('finds a document whose name starts with four digits and a separator', () => {
+    expect(has('.planning/2026-10-decision.md')).toBe(true);
+    expect(has('.planning/0007_tide-window.md')).toBe(true);
+  });
+
+  it('does not count REQUIREMENTS.md, a map document, a phase-scoped NN-SPEC.md or a look-alike word', () => {
+    expect(has('.planning/REQUIREMENTS.md')).toBe(false);
+    expect(has('.planning/codebase/SPECIAL.md')).toBe(false);
+    expect(has('.planning/codebase/adr/0001-x.md')).toBe(false);
+    expect(has('.planning/phases/01-x/01-SPEC.md')).toBe(false);
+    expect(has('.planning/notes/spectrum.md')).toBe(false);
+    expect(has('.planning/notes/prdigy.md')).toBe(false);
+    expect(has('.planning/CHANGELOG-2026-10.md')).toBe(false);
+    expect(has('.planning/202-notes.md')).toBe(false);
+  });
+
+  it('counts only markdown, and ignores a path outside .planning/', () => {
+    expect(has('.planning/adr/0001-store.txt')).toBe(false);
+    expect(has('docs/adr/0001-store.md')).toBe(false);
+  });
+
+  it('is false for no artifacts and for a Tidemark with its CHANGELOG only', async () => {
+    expect(hasPlanningDocCandidates([])).toBe(false);
+    const { presentation } = await loadProject(TIDEMARK_ROOT);
+    expect(hasPlanningDocCandidates(presentation.artifacts)).toBe(false);
+  });
+});
+
+describe('the head carries the next step (10-10)', () => {
+  it('gives Tidemark (complete, no documents) /gsd-new-project', async () => {
+    const { presentation } = await loadProject(TIDEMARK_ROOT);
+    const head = buildCodebaseContext(presentation, PATH('STACK.md'))?.head;
+    expect(head?.nextStep).toEqual({ command: '/gsd-new-project', reason: NEW_PROJECT_REASON });
+  });
+
+  it('gives a complete map with a visible ADR /gsd-ingest-docs', async () => {
+    const { presentation } = await loadProject(TIDEMARK_ROOT);
+    const adr = { ...presentation.artifacts[0], path: '.planning/adr/0001-store.md', location: 'root' as const };
+    const withAdr = { ...presentation, artifacts: [...presentation.artifacts, adr] };
+    expect(buildCodebaseContext(withAdr, PATH('STACK.md'))?.head?.nextStep.command).toBe('/gsd-ingest-docs');
+  });
+
+  it('gives a fast copy (three documents removed) /gsd-map-codebase with the fast reason', async () => {
+    const { presentation } = await loadProject(TIDEMARK_ROOT);
+    const gone = new Set([PATH('CONVENTIONS.md'), PATH('TESTING.md'), PATH('CONCERNS.md')]);
+    const fast = { ...presentation, artifacts: presentation.artifacts.filter((artifact) => !gone.has(artifact.path)) };
+    expect(buildCodebaseContext(fast, PATH('STACK.md'))?.head?.nextStep).toEqual({
+      command: '/gsd-map-codebase',
+      reason: FAST_REASON,
+    });
   });
 });
