@@ -369,13 +369,13 @@ testing such pages against made-up examples that are clearly labelled as made up
    and falls back to a readable generic page when a real file differs from what the design expected.
    *(VIEW-21, VIEW-11, VIEW-12, VIEW-13)*
 
-**Plans**: 24 plans
+**Plans**: 3/24 plans executed
 
 Plans:
 **Wave 1**
-- [ ] 10-01-PLAN.md — Tracer: a map-only project opens from its project or .planning path through the one resolver; Roadmap and Traceability tabs hidden; its dashboard address opens the first map document; the bare /codebase redirect; the screenshot helper
-- [ ] 10-02-PLAN.md — The made-up example rule as a test: marker, index, planted controls, Shapes' map documents marked
-- [ ] 10-03-PLAN.md — Fresh real maps (user runs /gsd-map-codebase in three repositories) read for shape; the concern-counting rule settled
+- [x] 10-01-PLAN.md — Tracer: a map-only project opens from its project or .planning path through the one resolver; Roadmap and Traceability tabs hidden; its dashboard address opens the first map document; the bare /codebase redirect; the screenshot helper
+- [x] 10-02-PLAN.md — The made-up example rule as a test: marker, index, planted controls, Shapes' map documents marked
+- [x] 10-03-PLAN.md — Fresh real maps (user runs /gsd-map-codebase in three repositories) read for shape; the concern-counting rule settled
 
 **Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 10-24-PLAN.md — Tidemark, the made-up map-only fixture, labelled and indexed, after the fresh maps
@@ -535,7 +535,7 @@ file, ID or project.
 | 7. Recognised Files and Readable URLs | v2.1 | 10/10 | Complete    | 2026-10-27 |
 | 8. Several Projects and a Switcher | v2.1 | 18/18 | Complete    | 2026-11-02 |
 | 9. Review, Audit and Root Document Pages | v2.1 | 16/16 | In Progress | - |
-| 10. Codebase Map, Specification and Check Pages | v2.1 | 0/24 | Planned | - |
+| 10. Codebase Map, Specification and Check Pages | v2.1 | 3/24 | In Progress | - |
 | 11. Exploration, Handoff, Report and Workstream Pages | v2.1 | 0/TBD | Not started | - |
 | 12. Project Settings, Source Mode and Reading Polish | v2.1 | 0/TBD | Not started | - |
 | 13. Search and Quick-Jump Palette | v2.1 | 0/TBD | Not started | - |
