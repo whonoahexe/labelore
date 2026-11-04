@@ -74,9 +74,9 @@ Milestones:
 | `.planning/phases/02-glaze-recipes/SKELETON.md` | an unprefixed skeleton in a phase folder: kind skeleton | 07-02 |
 | `.planning/phases/02-glaze-recipes/.continue-here.md` | a resume note in a phase folder: kind continue-here at depth | 07-02 |
 | `.planning/quick/README.md` | a folder note directly under quick/: not a quick task, no quickTaskId | 07-02 |
-| `.planning/codebase/ARCHITECTURE.md` | a GSD codebase map document in its uppercase name: kind codebase-architecture | 07-02 |
-| `.planning/codebase/STACK.md` | a GSD codebase map document: kind codebase-stack | 07-02 |
-| `.planning/codebase/CONVENTIONS.md` | a GSD codebase map document: kind codebase-conventions | 07-02 |
+| `.planning/codebase/ARCHITECTURE.md` | a GSD codebase map document in its uppercase name: kind codebase-architecture; marker added by 10-02 | 07-02 |
+| `.planning/codebase/STACK.md` | a GSD codebase map document: kind codebase-stack; marker added by 10-02 | 07-02 |
+| `.planning/codebase/CONVENTIONS.md` | a GSD codebase map document: kind codebase-conventions; marker added by 10-02 | 07-02 |
 | `.planning/spikes/MANIFEST.md` | the spikes manifest: kind spikes-manifest | 07-02 |
 | `.planning/spikes/CONVENTIONS.md` | the basename collision with codebase/CONVENTIONS.md: kind spikes-conventions, never the codebase document | 07-02 |
 | `.planning/spikes/001-kiln-sensor/README.md` | one spike's README: kind spike | 07-02 |
