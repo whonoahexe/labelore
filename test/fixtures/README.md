@@ -37,6 +37,8 @@ whose own ledger is `fixtures/README.md`) and this repository's own `.planning` 
 | test/fixtures/lendshed/.planning/phases/03-account-admin-and-sessions/03-SPEC.md | spec | gsd-core/templates/spec.md | 1.19.0 | long: nine requirements, the sixth with no Acceptance line, two long statements, a score of 0.18 with no gate in the header, no Edge Coverage or Prohibitions sections |
 | test/fixtures/lendshed/.planning/phases/02-roles-and-permissions/02-AI-SPEC.md | ai-spec | gsd-core/templates/AI-SPEC.md | 1.19.0 | every numbered section still an unfilled template slot: HTML-comment slots, empty numbered items, an empty dimension row, comment-only fenced blocks, 0 of 16 checklist items ticked |
 | test/fixtures/lendshed/.planning/phases/04-bulk-loan-export/04-AI-SPEC.md | ai-spec | gsd-core/templates/AI-SPEC.md | 1.19.0 | half filled: System Type, Selected Framework and Version filled, Dimensions table with four rows, sections 4b, 6 and 7 left as template slots, 6 of 16 checklist items ticked |
+| test/fixtures/lendshed/.planning/phases/02-roles-and-permissions/02-USER-SETUP.md | user-setup | gsd-core/templates/user-setup.md | 1.19.0 | every step pending: two variables and one dashboard item, every box unticked, Status Incomplete |
+| test/fixtures/lendshed/.planning/phases/04-bulk-loan-export/04-USER-SETUP.md | user-setup | gsd-core/templates/user-setup.md | 1.19.0 | three of six steps done, a Status line (Complete) that disagrees with its boxes, a variable name with a planted placeholder value written beside it |
 
 ## For later phases
 
