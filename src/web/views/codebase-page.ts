@@ -291,19 +291,59 @@ const HEAD_FRAMEWORKS: readonly (readonly [group: string, keep: number])[] = [
   ['build-dev', 1],
 ];
 
-function headChips(chips: readonly CodebaseHeadChip[]): ComposedStackChip[] {
-  return chips.map((chip) => ({ name: chip.name, version: chip.version }));
+/** The head shows named tools, not sentences: a lifted bullet whose name runs past this many characters is
+ * prose ("Module system: ESM only (...)") and stays in the Stack panel. A long version keeps its first word
+ * ("≥22.18.0 (engines in package.json)" shows "≥22.18.0") and is left out when that is still long. */
+const HEAD_CHIP_NAME_MAX = 28;
+const HEAD_VERSION_MAX = 20;
+
+function headVersion(version: string | null): string | null {
+  if (version === null || version.length <= HEAD_VERSION_MAX) return version;
+  const space = version.indexOf(' ');
+  const first = space < 0 ? version : version.slice(0, space);
+  return first.length > 0 && first.length <= HEAD_VERSION_MAX ? first : null;
+}
+
+/** A long bullet the lift could not split ("Node.js >=22.18.0 (engines in package.json)") is a name and a version
+ * when its second word starts like a version (a digit, or a comparator or caret before one); anything else is
+ * prose and has no chip in the head. A character scan, never a pattern over the text. */
+function startsLikeVersion(word: string): boolean {
+  const first = word[0];
+  return first !== undefined && ((first >= '0' && first <= '9') || '>=<^~≥≤'.includes(first));
+}
+
+function headChip(chip: CodebaseHeadChip): ComposedStackChip | null {
+  if (chip.name.length <= HEAD_CHIP_NAME_MAX) return { name: chip.name, version: headVersion(chip.version) };
+  if (chip.version !== null) return null;
+  const words = chip.name.split(' ');
+  const [name, version] = words;
+  if (name === undefined || version === undefined || name.length > HEAD_CHIP_NAME_MAX || !startsLikeVersion(version)) {
+    return null;
+  }
+  return { name, version: headVersion(version) };
+}
+
+function headChips(chips: readonly CodebaseHeadChip[], keep: number): ComposedStackChip[] {
+  return chips
+    .flatMap((chip) => {
+      const kept = headChip(chip);
+      return kept === null ? [] : [kept];
+    })
+    .slice(0, keep);
 }
 
 function headStack(stack: CodebaseHeadStack | null): ComposedStackSet[] {
   if (stack === null) return [];
   const sets: ComposedStackSet[] = [
-    { label: 'Languages', chips: headChips(stack.languages.slice(0, HEAD_LANGUAGES)) },
-    { label: 'Runtime', chips: headChips(stack.runtime.slice(0, HEAD_RUNTIME)) },
+    { label: 'Languages', chips: headChips(stack.languages, HEAD_LANGUAGES) },
+    { label: 'Runtime', chips: headChips(stack.runtime, HEAD_RUNTIME) },
     {
       label: 'Frameworks',
-      chips: headChips(
-        HEAD_FRAMEWORKS.flatMap(([group, keep]) => stack.frameworks.filter((chip) => chip.group === group).slice(0, keep)),
+      chips: HEAD_FRAMEWORKS.flatMap(([group, keep]) =>
+        headChips(
+          stack.frameworks.filter((chip) => chip.group === group),
+          keep,
+        ),
       ),
     },
   ];
