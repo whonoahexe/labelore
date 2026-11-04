@@ -10,6 +10,7 @@ import { fallbackManifest } from './fallback.ts';
 import { discussionLogLayout } from './layout-discussion-log.ts';
 import { planLayout } from './layout-plan.ts';
 import { verificationLayout } from './layout-verification.ts';
+import { viewKindOf } from './kinds.ts';
 import type { ViewKind } from './kinds.ts';
 import type { PromotedBlock, ViewInput, ViewManifest } from './manifest.ts';
 import { composeSecurityConsole } from './security-console.ts';
@@ -21,6 +22,7 @@ import { composeProjectPage } from './project-page.ts';
 import { composeWindowsLedger } from './windows-ledger.ts';
 import { composeMilestoneAudit } from './milestone-audit.ts';
 import { composeCoverage } from './coverage-matrix.ts';
+import { composeCodebase } from './codebase-page.ts';
 import { composePlanNavigator } from './plan-navigator.ts';
 import { composeContextBrief } from './context-brief.ts';
 import { composeResearchBriefing } from './research-briefing.ts';
@@ -405,7 +407,57 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
     // nothing (Phase 9, 09-10).
     windowsLedger: composeWindowsLedger,
   },
+  // Phase 10 (10-08, sketch-042 winner A): one view for the seven codebase-map documents, reached through
+  // `viewKindOf`. `promote` is the silent fallback when the page composes nothing (RESEARCH C1).
+  codebase: {
+    kind: 'codebase',
+    lead: 'The seven codebase-map documents on one page, a panel each, with what the map says first.',
+    promote: [{ type: 'section', heading: /\S/, all: true }],
+    codebasePage: composeCodebase,
+  },
+  // Phase 10 (10-08): the six specification and check kinds are registered here with a lead and the promoted
+  // sections as their fallback; each page plan (10-16 to 10-22) adds only its composer field.
+  spec: {
+    kind: 'spec',
+    lead: 'Whether this phase is specified well enough to plan, and what each requirement asks for.',
+    promote: [{ type: 'section', heading: /\S/, all: true }],
+  },
+  'ai-spec': {
+    kind: 'ai-spec',
+    lead: 'What kind of AI system this phase builds, how it will be evaluated, and which sections are still template slots.',
+    promote: [{ type: 'section', heading: /\S/, all: true }],
+  },
+  'user-setup': {
+    kind: 'user-setup',
+    lead: 'Which setup steps a person still has to do for this phase, and where each variable goes.',
+    promote: [{ type: 'section', heading: /\S/, all: true }],
+    // T-10-49: a USER-SETUP file can hold a pasted value, so its text never reaches View mode through the
+    // generic fallback until 10-19's page composes a model that withholds values.
+    withholdDocumentInView: true,
+  },
+  'eval-review': {
+    kind: 'eval-review',
+    lead: "How far this phase's AI evaluation is built: its score and verdict, what each dimension covers, and what to fix first.",
+    promote: [{ type: 'section', heading: /\S/, all: true }],
+  },
+  'dom-verify': {
+    kind: 'dom-verify',
+    lead: 'What a browser check of this phase found: whether it could look, and what passed, failed or needs a person.',
+    promote: [{ type: 'section', heading: /\S/, all: true }],
+  },
+  reviews: {
+    kind: 'reviews',
+    lead: "What each AI reviewer said about this phase's plans, where they agreed and where they disagreed.",
+    promote: [{ type: 'section', heading: /\S/, all: true }],
+  },
 });
+
+/** Phase 10 (10-08, T-10-49): whether View mode may show the document's own HTML for this manifest - through
+ * its promoted sections or the whole-document fallback. False only for a manifest that sets
+ * `withholdDocumentInView`; the page then shows the sanctioned empty note unless a composed model exists. */
+export function documentHtmlAllowedInView(manifest: ViewManifest | null): boolean {
+  return manifest?.withholdDocumentInView !== true;
+}
 
 /** Registered lookup only — VIEW-01's original "empty" case, kept for the registry-completeness
  * test in 05-06. `recognized: false` means `manifest` is `null`, never a synthesized fallback;
@@ -423,7 +475,8 @@ export function resolveViewFor(
   input: ViewInput,
   options?: { sourceEscape?: boolean },
 ): { manifest: ViewManifest; recognized: boolean } {
-  const resolved = resolveView(kind);
+  // Phase 10 (RESEARCH C8): the seven codebase-* kinds share the one `codebase` manifest.
+  const resolved = resolveView(viewKindOf(kind));
   if (resolved.manifest) {
     return { manifest: resolved.manifest, recognized: true };
   }

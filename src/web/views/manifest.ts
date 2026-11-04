@@ -62,6 +62,10 @@ import type { ComposedCoverage } from './coverage-matrix.ts';
 import type { ComposedUiSpec } from './ui-spec.ts';
 // Type-only import — same reason as `brief` above (quick-261001-qk7, sketch-015 winner).
 import type { ComposedUatSession } from './uat-session.ts';
+// Type-only import — same reason as `brief` above (Phase 10, 10-08, sketch-042 winner A, the Codebase page).
+import type { ComposedCodebase } from './codebase-page.ts';
+// Type-only import — the codebase context is built server-side (Phase 10, 10-08).
+import type { CodebaseContext } from '../../presentation/codebase-map.ts';
 
 /** Declared now so 05-05 can add components without widening this union a second time — only
  * `discussion-questions` has a real component in this plan (see `blocks.tsx`). */
@@ -149,6 +153,15 @@ export interface ViewManifest {
    * "no external API" paragraph nor an integration matrix), and the page falls back to the promoted-block
    * view, which the manifest keeps as `promote`. */
   coverageMatrix?: (input: ViewInput) => ComposedCoverage | null;
+  /** Phase 10 (10-08, sketch-042 winner A): the Codebase page a manifest opts into in View mode - the one
+   * `codebase` manifest, shared by the seven map documents. Returns `null` when the input can't compose one (no
+   * `codebaseContext`, or no `structured.codebase`), and the page falls back to the promoted-section view, which
+   * the manifest keeps as `promote`, with no notice (RESEARCH C1). */
+  codebasePage?: (input: ViewInput) => ComposedCodebase | null;
+  /** Phase 10 (10-08): true for a kind whose document text must never reach View mode through the generic
+   * fallback (promoted sections or the whole document) - `user-setup`, whose file can hold a pasted value
+   * (CONTEXT D-11). The Source toggle stays the way to the text. See `documentHtmlAllowedInView`. */
+  withholdDocumentInView?: boolean;
   /** quick-261006-iz6 (sketch-019 B): the PLAN task navigator a manifest opts into instead of
    * `layout` — currently only `plan`. Returns `null` when the input can't compose one (no
    * `structured.plan`, or a plan with no task), and the page falls back to the B3 `layout` / the
@@ -254,6 +267,10 @@ export interface ViewInput {
    * server-side and passed through from the document response - `null`/absent when the artifact is not
    * the root PROJECT.md. */
   projectContext?: ProjectContext | null;
+  /** Phase 10 (10-08): a codebase map document's seven-panel list, readiness, stamp and active panel, built
+   * server-side and passed through from the document response - `null`/absent when the artifact is not a map
+   * document. */
+  codebaseContext?: CodebaseContext | null;
 }
 
 export type ComposedBlock = { id: string; label: string } & (

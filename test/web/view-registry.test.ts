@@ -1,12 +1,14 @@
-// VIEW-05's registry-completeness test: every kind in `VIEW_KINDS` (21 total: UI-SPEC's own 16
+// VIEW-05's registry-completeness test: every kind in `VIEW_KINDS` (31 total: UI-SPEC's own 16
 // plus `review-fix`, `findings`, `debug`, `todo` and `note`, RESEARCH.md § Open Question 1's recommended corpus-grep
-// gap and discovery's directory-position kind) must have a registered `VIEW_MANIFESTS` entry with a non-empty `lead` and at least one
+// gap and discovery's directory-position kind, the Phase 9 kinds, and Phase 10's `codebase` plus the six specification
+// and check kinds) must have a registered `VIEW_MANIFESTS` entry with a non-empty `lead` and at least one
 // `promote` entry — and no manifest may exist for a kind that isn't a `VIEW_KINDS` member. Both
 // directions are asserted via a single sorted-keys `toEqual`, so a new kind added to either list
 // without a matching update on the other fails this suite immediately.
 import { describe, expect, it } from 'vitest';
-import { VIEW_KINDS } from '../../src/web/views/kinds.ts';
-import { VIEW_MANIFESTS, resolveView } from '../../src/web/views/manifests.ts';
+import { VIEW_KINDS, viewKindOf } from '../../src/web/views/kinds.ts';
+import { VIEW_MANIFESTS, documentHtmlAllowedInView, resolveView, resolveViewFor } from '../../src/web/views/manifests.ts';
+import type { ViewInput } from '../../src/web/views/manifest.ts';
 import type { BlockComponentKey } from '../../src/web/views/manifest.ts';
 
 const KNOWN_COMPONENTS: readonly BlockComponentKey[] = [
@@ -17,8 +19,8 @@ const KNOWN_COMPONENTS: readonly BlockComponentKey[] = [
 ];
 
 describe('view registry completeness (VIEW-05)', () => {
-  it('VIEW_KINDS has exactly 24 members', () => {
-    expect(VIEW_KINDS.length).toBe(24);
+  it('VIEW_KINDS has exactly 31 members', () => {
+    expect(VIEW_KINDS.length).toBe(31);
   });
 
   it('VIEW_MANIFESTS keys and VIEW_KINDS are the same set, both directions', () => {
@@ -94,6 +96,69 @@ describe('view registry completeness (VIEW-05)', () => {
       expect(VIEW_MANIFESTS.plan?.lead).toBe(
         'The task structure this plan commits to, in order, and which sections gate.',
       );
+    });
+  });
+
+  describe('Phase 10: the codebase view kind and the six specification and check kinds', () => {
+    const EMPTY_INPUT: ViewInput = { kind: '', frontmatter: {}, structured: {}, groups: [], planSegments: [] };
+
+    it('viewKindOf maps every codebase-* kind to codebase and leaves every other kind alone', () => {
+      for (const doc of ['stack', 'architecture', 'structure', 'conventions', 'testing', 'integrations', 'concerns']) {
+        expect(viewKindOf(`codebase-${doc}`)).toBe('codebase');
+      }
+      expect(viewKindOf('codebase')).toBe('codebase');
+      expect(viewKindOf('plan')).toBe('plan');
+      expect(viewKindOf('user-setup')).toBe('user-setup');
+      expect(viewKindOf('unknown')).toBe('unknown');
+    });
+
+    it('resolveViewFor gives the seven codebase-* kinds the one codebase manifest, recognised', () => {
+      for (const doc of ['stack', 'architecture', 'structure', 'conventions', 'testing', 'integrations', 'concerns']) {
+        const resolved = resolveViewFor(`codebase-${doc}`, { ...EMPTY_INPUT, kind: `codebase-${doc}` });
+        expect(resolved.recognized).toBe(true);
+        expect(resolved.manifest).toBe(VIEW_MANIFESTS.codebase);
+      }
+    });
+
+    it('the codebase manifest opts into the page and keeps a silent promote-every-section fallback', () => {
+      const manifest = VIEW_MANIFESTS.codebase;
+      expect(typeof manifest?.codebasePage).toBe('function');
+      expect(manifest?.lead).toBe(
+        'The seven codebase-map documents on one page, a panel each, with what the map says first.',
+      );
+      expect(manifest?.promote).toHaveLength(1);
+    });
+
+    it('the six specification and check kinds carry their verbatim lead and no composer yet', () => {
+      expect(VIEW_MANIFESTS.spec?.lead).toBe(
+        'Whether this phase is specified well enough to plan, and what each requirement asks for.',
+      );
+      expect(VIEW_MANIFESTS['ai-spec']?.lead).toBe(
+        'What kind of AI system this phase builds, how it will be evaluated, and which sections are still template slots.',
+      );
+      expect(VIEW_MANIFESTS['user-setup']?.lead).toBe(
+        'Which setup steps a person still has to do for this phase, and where each variable goes.',
+      );
+      expect(VIEW_MANIFESTS['eval-review']?.lead).toBe(
+        "How far this phase's AI evaluation is built: its score and verdict, what each dimension covers, and what to fix first.",
+      );
+      expect(VIEW_MANIFESTS['dom-verify']?.lead).toBe(
+        'What a browser check of this phase found: whether it could look, and what passed, failed or needs a person.',
+      );
+      expect(VIEW_MANIFESTS.reviews?.lead).toBe(
+        "What each AI reviewer said about this phase's plans, where they agreed and where they disagreed.",
+      );
+    });
+
+    it('only user-setup withholds its document HTML from View mode (T-10-49)', () => {
+      expect(VIEW_MANIFESTS['user-setup']?.withholdDocumentInView).toBe(true);
+      expect(documentHtmlAllowedInView(VIEW_MANIFESTS['user-setup'] ?? null)).toBe(false);
+      for (const kind of VIEW_KINDS) {
+        if (kind === 'user-setup') continue;
+        expect(VIEW_MANIFESTS[kind]?.withholdDocumentInView, kind).not.toBe(true);
+        expect(documentHtmlAllowedInView(VIEW_MANIFESTS[kind] ?? null), kind).toBe(true);
+      }
+      expect(documentHtmlAllowedInView(null)).toBe(true);
     });
   });
 });
