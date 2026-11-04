@@ -52,3 +52,27 @@ Labelore's codebase pages and its opening paths are built and tested against thi
 | `.planning/codebase/ARCHITECTURE.md` | stamped, 2026-10-30 (the newest date); refreshed comment line after the frontmatter; a `##` line inside the fenced diagram; an added `API Architecture` heading | 10-24 |
 | `.planning/codebase/STRUCTURE.md` | stamped, 2026-10-30; a fenced tree four levels deep; three `New ...:` groups under Where to Add New Code | 10-24 |
 | `.planning/codebase/INTEGRATIONS.md` | stamped, 2026-10-28; `TIDEMARK_TIDE_FEED_KEY=PLACEHOLDER-NOT-A-REAL-KEY` in the Required env vars list, a value the Integrations panel must withhold | 10-24 |
+| `.planning/codebase/CONVENTIONS.md` | the older map form: no frontmatter, first line a made-up comment marker, `**Analysis Date:**` 2026-10-27 and a `*Last updated: 2026-10-27*` footer | 10-24 |
+| `.planning/codebase/TESTING.md` | stamped, 2026-10-28; `Run Commands` in a bash fence with a one-hash comment line before each of three commands | 10-24 |
+| `.planning/codebase/CONCERNS.md` | stamped, 2026-10-30; nine sections, expected counts below | 10-24 |
+| `.planning/CHANGELOG-2026-10.md` | a stray extra with three lines: it must not stop the project being map-only; not a rule kind, so no index row | 10-24 |
+
+## Expected concern counts, per file
+
+Counted by hand in `CONCERNS.md` under the adjusted rule recorded in plan 10-03 (the shapes tried in order:
+`###` subsections, bold-label lines counted from one, top-level bullets without a field label, table rows; a
+section holding only None, Not detected or Not applicable counts 0). Per file, never a project total (R3).
+
+| Section | Shape | Count |
+|---|---|---|
+| Tech Debt | three bold-label groups of Issue, Files, Impact and Fix approach | 3 |
+| Known Bugs | one bold-label group | 1 |
+| Security Considerations | two bold-label groups of Risk, Files, Current mitigation and Recommendations | 2 |
+| Performance Bottlenecks | two `###` subsections | 2 |
+| Fragile Areas | three plain top-level bullets with no field label | 3 |
+| Scaling Limits | a table with two data rows | 2 |
+| Dependencies at Risk | the text "None identified." only | 0 |
+| Missing Critical Features | one bold-label group | 1 |
+| Test Coverage Gaps | the text "Not detected." only | 0 |
+
+The nine counts sum to 14. The file also has a one-paragraph preamble before the first `##` heading.
