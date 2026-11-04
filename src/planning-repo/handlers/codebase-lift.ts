@@ -1,0 +1,711 @@
+// The codebase-map lift (10-05, VIEW-13, TGT-09). The seven documents `/gsd-map-codebase` writes into
+// .planning/codebase/ arrive as a projection the Codebase page and the map-only head both read: when the map
+// was made (the stamp), the document's sections in file order with a key where a heading is recognised, and,
+// for Stack and Concerns, the chips and counts the panel list shows.
+//
+// Headings match by fuzzy normalisation (D-02), never by exact name, and a heading that matches nothing stays
+// a plain section: nothing in a document is dropped. Lookups use Maps only, so an author heading such as
+// `constructor` cannot reach an Object member (RESEARCH Pitfall 16).
+//
+// structured.codebase holds headings, keys, chips and counts, never a section body: the whole structured
+// record ships to the browser (T-10-10).
+import { eachLineOutsideFences, scanFencedLines, splitBodyLines } from './fenced-sections.ts';
+import type { FencedSection } from './fenced-sections.ts';
+
+// ---------------------------------------------------------------------------------------------------------
+// Heading normalisation and keys
+// ---------------------------------------------------------------------------------------------------------
+
+const LETTER = /\p{L}/u;
+const DIGIT = /\p{N}/u;
+
+/**
+ * The comparison form of a heading: leading emoji, digits and punctuation dropped, lower-cased, an ampersand
+ * read as "and", apostrophes removed, every other non-letter and non-digit read as a space, spaces collapsed,
+ * and one trailing plural "s" dropped (but not "ss"). "Languages & Runtimes" gives "languages and runtime".
+ * A character scan over a capped text; no regular expression over the whole text.
+ */
+export function normaliseHeading(text: string): string {
+  const lowered = (text.length > 400 ? text.slice(0, 400) : text).toLowerCase();
+  let out = '';
+  let started = false;
+  for (const ch of lowered) {
+    const letter = LETTER.test(ch);
+    if (!started) {
+      // Leading emoji, digits and punctuation are dropped; the text starts at its first letter.
+      if (!letter) continue;
+      started = true;
+    }
+    if (ch === '&') out += ' and ';
+    else if (ch === "'" || ch === '\u2019') continue;
+    else if (letter || DIGIT.test(ch)) out += ch;
+    else out += ' ';
+  }
+  let collapsed = '';
+  let lastSpace = true;
+  for (const ch of out) {
+    if (ch === ' ') {
+      if (!lastSpace) collapsed += ' ';
+      lastSpace = true;
+    } else {
+      collapsed += ch;
+      lastSpace = false;
+    }
+  }
+  if (collapsed.endsWith(' ')) collapsed = collapsed.slice(0, -1);
+  if (collapsed.length > 3 && collapsed.endsWith('s') && !collapsed.endsWith('ss')) collapsed = collapsed.slice(0, -1);
+  return collapsed;
+}
+
+/** [template heading, key id] per document, in the template's own order. Keys stay the full template texts:
+ * a short alias would capture a project's added section of the same first word (10-03 finding 2). */
+const KEY_TABLE: ReadonlyArray<readonly [doc: string, entries: ReadonlyArray<readonly [heading: string, key: string]>]> = [
+  [
+    'stack',
+    [
+      ['Languages', 'languages'],
+      ['Runtime', 'runtime'],
+      ['Frameworks', 'frameworks'],
+      ['Key Dependencies', 'key-dependencies'],
+      ['Configuration', 'configuration'],
+      ['Platform Requirements', 'platform-requirements'],
+    ],
+  ],
+  [
+    'architecture',
+    [
+      ['System Overview', 'system-overview'],
+      ['Component Responsibilities', 'component-responsibilities'],
+      ['Pattern Overview', 'pattern-overview'],
+      ['Layers', 'layers'],
+      ['Data Flow', 'data-flow'],
+      ['Key Abstractions', 'key-abstractions'],
+      ['Entry Points', 'entry-points'],
+      ['Architectural Constraints', 'architectural-constraints'],
+      ['Anti-Patterns', 'anti-patterns'],
+      ['Error Handling', 'error-handling'],
+      ['Cross-Cutting Concerns', 'cross-cutting-concerns'],
+    ],
+  ],
+  [
+    'structure',
+    [
+      ['Directory Layout', 'directory-layout'],
+      ['Directory Purposes', 'directory-purposes'],
+      ['Key File Locations', 'key-file-locations'],
+      ['Naming Conventions', 'naming-conventions'],
+      ['Where to Add New Code', 'where-to-add-new-code'],
+      ['Special Directories', 'special-directories'],
+    ],
+  ],
+  [
+    'conventions',
+    [
+      ['Naming Patterns', 'naming-patterns'],
+      ['Code Style', 'code-style'],
+      ['Import Organization', 'import-organization'],
+      ['Error Handling', 'error-handling'],
+      ['Logging', 'logging'],
+      ['Comments', 'comments'],
+      ['Function Design', 'function-design'],
+      ['Module Design', 'module-design'],
+    ],
+  ],
+  [
+    'testing',
+    [
+      ['Test Framework', 'test-framework'],
+      ['Test File Organization', 'test-file-organization'],
+      ['Test Structure', 'test-structure'],
+      ['Mocking', 'mocking'],
+      ['Fixtures and Factories', 'fixtures-and-factories'],
+      ['Coverage', 'coverage'],
+      ['Test Types', 'test-types'],
+      ['Common Patterns', 'common-patterns'],
+    ],
+  ],
+  [
+    'integrations',
+    [
+      ['APIs & External Services', 'external-services'],
+      ['Data Storage', 'data-storage'],
+      ['Authentication & Identity', 'authentication'],
+      ['Monitoring & Observability', 'monitoring'],
+      ['CI/CD & Deployment', 'ci-cd'],
+      ['Environment Configuration', 'environment-configuration'],
+      ['Webhooks & Callbacks', 'webhooks'],
+    ],
+  ],
+  [
+    'concerns',
+    [
+      ['Tech Debt', 'tech-debt'],
+      ['Known Bugs', 'known-bugs'],
+      ['Security Considerations', 'security-considerations'],
+      ['Performance Bottlenecks', 'performance-bottlenecks'],
+      ['Fragile Areas', 'fragile-areas'],
+      ['Scaling Limits', 'scaling-limits'],
+      ['Dependencies at Risk', 'dependencies-at-risk'],
+      ['Missing Critical Features', 'missing-critical-features'],
+      ['Test Coverage Gaps', 'test-coverage-gaps'],
+    ],
+  ],
+];
+
+/** One Map per document: normalised known heading to key id. */
+export const CODEBASE_KEYS: ReadonlyMap<string, ReadonlyMap<string, string>> = new Map(
+  KEY_TABLE.map(([doc, entries]) => [doc, new Map(entries.map(([heading, key]) => [normaliseHeading(heading), key]))]),
+);
+
+/** True when `rest` (the text after a matched prefix) begins a new word, or is the plural "s" of the last one. */
+function atWordBoundary(rest: string): boolean {
+  if (rest.length === 0 || rest.charCodeAt(0) === 32) return true;
+  return rest.charCodeAt(0) === 115 && (rest.length === 1 || rest.charCodeAt(1) === 32);
+}
+
+/**
+ * The key a heading matches in a document, or null. Equal beats prefix beats whole-word containment; among
+ * several keys of one tier the longest wins. Map lookups only.
+ */
+export function matchKey(doc: string, heading: string): string | null {
+  const keys = CODEBASE_KEYS.get(doc);
+  if (keys === undefined) return null;
+  const norm = normaliseHeading(heading);
+  if (norm.length === 0) return null;
+  const equal = keys.get(norm);
+  if (equal !== undefined) return equal;
+  let prefix: string | null = null;
+  let prefixLen = 0;
+  let contained: string | null = null;
+  let containedLen = 0;
+  const padded = ` ${norm} `;
+  for (const [text, key] of keys) {
+    if (text.length > prefixLen && norm.startsWith(text) && atWordBoundary(norm.slice(text.length))) {
+      prefix = key;
+      prefixLen = text.length;
+    }
+    if (text.length > containedLen && padded.includes(` ${text} `)) {
+      contained = key;
+      containedLen = text.length;
+    }
+  }
+  return prefix ?? contained;
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// The stamp
+// ---------------------------------------------------------------------------------------------------------
+
+export type StampSource = 'frontmatter' | 'analysis-date' | 'last-updated' | 'refreshed';
+
+export interface MapStamp {
+  /** A UTC calendar day, YYYY-MM-DD, or null. */
+  mappedAt: string | null;
+  /** The first seven characters of the stamped commit, or null. */
+  commit: string | null;
+  /** Where mappedAt came from; null when mappedAt is null. */
+  source: StampSource | null;
+}
+
+function validDay(year: number, month: number, day: number): boolean {
+  return year >= 1000 && month >= 1 && month <= 12 && day >= 1 && day <= 31;
+}
+
+/** A YYYY-MM-DD at the start of `text` (after optional whitespace), or null. A character scan. */
+function dayAt(text: string): string | null {
+  let i = 0;
+  while (i < text.length && (text.charCodeAt(i) === 32 || text.charCodeAt(i) === 9)) i += 1;
+  const digits = (from: number, n: number): number => {
+    let value = 0;
+    for (let k = 0; k < n; k += 1) {
+      const c = text.charCodeAt(from + k);
+      if (c < 48 || c > 57) return -1;
+      value = value * 10 + (c - 48);
+    }
+    return value;
+  };
+  const year = digits(i, 4);
+  const month = digits(i + 5, 2);
+  const day = digits(i + 8, 2);
+  if (year < 0 || month < 0 || day < 0) return null;
+  if (text.charCodeAt(i + 4) !== 45 || text.charCodeAt(i + 7) !== 45) return null;
+  return validDay(year, month, day) ? text.slice(i, i + 10) : null;
+}
+
+/** The first day found after `marker` on a line whose trimmed start is `lead`, scanning lines until one hits. */
+function dayAfterLead(lines: readonly string[], lead: string): string | null {
+  for (const line of lines) {
+    const trimmed = line.trimStart();
+    if (!trimmed.startsWith(lead)) continue;
+    // Skip to the colon, then any bold or italic closers, then read the day.
+    const rest = trimmed.slice(lead.length, lead.length + 80);
+    let i = 0;
+    while (i < rest.length && (rest.charCodeAt(i) === 58 || rest.charCodeAt(i) === 42 || rest.charCodeAt(i) === 32 || rest.charCodeAt(i) === 9)) {
+      i += 1;
+    }
+    const day = dayAt(rest.slice(i));
+    if (day !== null) return day;
+  }
+  return null;
+}
+
+function frontmatterDay(value: unknown): string | null {
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value.toISOString().slice(0, 10);
+  if (typeof value === 'string') return dayAt(value);
+  return null;
+}
+
+/**
+ * When the map document was made, and at which commit. Frontmatter `last_mapped_at` wins, read as a UTC
+ * calendar day (YAML parses an unquoted date to a Date at UTC midnight, so the day never moves with the
+ * machine's zone); then `**Analysis Date:**`, `*Last updated:*` and a `<!-- refreshed: DATE -->` comment.
+ * The commit is shown only when frontmatter gives a string of at least seven characters (an unquoted
+ * all-digit scalar arrives as a number and counts as no commit, RESEARCH A9). Nothing is invented.
+ */
+export function readMapStamp(
+  frontmatter: Record<string, unknown>,
+  body: string,
+  lines: readonly string[] = [],
+): MapStamp {
+  const commitRaw = frontmatter.last_mapped_commit;
+  const commit = typeof commitRaw === 'string' && commitRaw.trim().length >= 7 ? commitRaw.trim().slice(0, 7) : null;
+  const fromFrontmatter = frontmatterDay(frontmatter.last_mapped_at);
+  if (fromFrontmatter !== null) return { mappedAt: fromFrontmatter, commit, source: 'frontmatter' };
+  const bodyLines = lines.length > 0 ? lines : splitBodyLines(body);
+  const analysis = dayAfterLead(bodyLines, '**Analysis Date:');
+  if (analysis !== null) return { mappedAt: analysis, commit, source: 'analysis-date' };
+  const updated = dayAfterLead(bodyLines, '*Last updated');
+  if (updated !== null) return { mappedAt: updated, commit, source: 'last-updated' };
+  const refreshed = dayAfterLead(bodyLines, '<!-- refreshed');
+  if (refreshed !== null) return { mappedAt: refreshed, commit, source: 'refreshed' };
+  return { mappedAt: null, commit, source: null };
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// The projection
+// ---------------------------------------------------------------------------------------------------------
+
+export interface CodebaseSection {
+  heading: string;
+  level: 2 | 3;
+  /** The known key this heading matched, or null for a plain section. */
+  key: string | null;
+}
+
+export interface CodebaseBody {
+  /** The document name: stack, architecture, structure, conventions, testing, integrations or concerns. */
+  doc: string;
+  stamp: MapStamp;
+  /** Every H2 and H3 section in file order. */
+  sections: CodebaseSection[];
+  /** The number the panel list shows; null until a document's lift sets it. */
+  keyNumber: number | null;
+  /** Chips for the Stack panel (document stack only). */
+  stack?: StackLift;
+  /** Counts for the Concerns panel (document concerns only). */
+  concerns?: ConcernsLift;
+}
+
+/** A section with its range and the key it claimed. */
+export interface KeyedSection extends FencedSection {
+  key: string | null;
+}
+
+/** Keys the H2 sections of a document; the first heading to claim a key takes the slot and a later heading
+ * matching the same key falls through as a plain section (10-03 finding 1). H3 sections are never keyed. */
+export function keySections(doc: string, sections: readonly FencedSection[]): KeyedSection[] {
+  const claimed = new Set<string>();
+  return sections.map((section) => {
+    let key: string | null = null;
+    if (section.level === 2) {
+      const matched = matchKey(doc, section.heading);
+      if (matched !== null && !claimed.has(matched)) {
+        claimed.add(matched);
+        key = matched;
+      }
+    }
+    return { ...section, key };
+  });
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Line shapes shared by the Stack and Concerns lifts
+// ---------------------------------------------------------------------------------------------------------
+
+/** The most characters of one line the lifts read. */
+const LINE_CAP = 600;
+
+/** The label of a line that is only a bold run (`**Label:**`, `**Label**:`, `**Label (Low):**`), else null. */
+function boldLabel(line: string): string | null {
+  let indent = 0;
+  while (indent < line.length && line.charCodeAt(indent) === 32) indent += 1;
+  if (indent > 3) return null;
+  let t = (line.length > LINE_CAP ? line.slice(0, LINE_CAP) : line).trim();
+  if (t.length < 5 || !t.startsWith('**')) return null;
+  if (t.endsWith(':')) t = t.slice(0, -1);
+  if (!t.endsWith('**')) return null;
+  const inner = t.slice(2, -2);
+  if (inner.includes('**')) return null;
+  const label = (inner.endsWith(':') ? inner.slice(0, -1) : inner).trim();
+  return label.length === 0 ? null : label;
+}
+
+/** The text of a top-level list item (a marker at column 0), else null. */
+function topBullet(line: string): string | null {
+  const c = line.charCodeAt(0);
+  if ((c === 45 || c === 42 || c === 43) && line.charCodeAt(1) === 32) {
+    return (line.length > LINE_CAP ? line.slice(2, LINE_CAP) : line.slice(2)).trim();
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// The Stack lift
+// ---------------------------------------------------------------------------------------------------------
+
+export type StackChipGroup = 'primary' | 'secondary' | 'runtime' | 'core' | 'testing' | 'build-dev';
+
+export interface StackChip {
+  name: string;
+  /** The version as written (`5.9.3`, `>=22.18.0`, `^1.7.0`), or null when the bullet names none. */
+  version: string | null;
+  group: StackChipGroup;
+}
+
+export interface StackLift {
+  languages: StackChip[];
+  runtime: StackChip[];
+  frameworks: StackChip[];
+}
+
+/** The most chips the Stack lift keeps, across all three lists. */
+export const STACK_CHIP_CAP = 60;
+/** The longest chip name or version kept. */
+export const STACK_CHIP_TEXT_CAP = 120;
+
+const VERSION_TOKEN = /^[v^~<>=]*\d[\w.+-]*$/;
+
+/** The version a left-of-dash token names, or null. A token inside a parenthetical that opened earlier
+ * (`2024)` in "Rust (edition 2024)") is not a version. */
+function versionOf(token: string): string | null {
+  let core = token;
+  const opened = core.startsWith('(');
+  if (opened) core = core.slice(1);
+  if (core.endsWith(')')) {
+    if (!opened) return null;
+    core = core.slice(0, -1);
+  }
+  while (core.endsWith(',') || core.endsWith(';') || core.endsWith(':')) core = core.slice(0, -1);
+  return VERSION_TOKEN.test(core) ? core : null;
+}
+
+function firstSpacedDash(text: string): number {
+  let best = -1;
+  for (const dash of [' - ', ' – ', ' — ']) {
+    const at = text.indexOf(dash);
+    if (at >= 0 && (best < 0 || at < best)) best = at;
+  }
+  return best;
+}
+
+/** One "Name Version - purpose" bullet as a chip. The text splits at the first spaced dash; the version is
+ * the first digit-led token on the left after the first word. A bullet with no spaced dash is all name. */
+function chipOf(text: string, group: StackChipGroup): StackChip | null {
+  const clean = text.replaceAll('`', '').replaceAll('*', '').trim();
+  if (clean.length === 0) return null;
+  const dash = firstSpacedDash(clean);
+  if (dash < 0) return { name: clean.slice(0, STACK_CHIP_TEXT_CAP), version: null, group };
+  const left = clean.slice(0, dash).trim();
+  const tokens = left.split(' ').filter((t) => t.length > 0);
+  let depth = 0;
+  for (let i = 0; i < tokens.length; i += 1) {
+    const token = tokens[i];
+    // Anything inside a parenthetical that opened on an earlier token is a qualifier, not the version.
+    const inside = depth > 0;
+    for (let c = 0; c < token.length; c += 1) {
+      if (token.charCodeAt(c) === 40) depth += 1;
+      else if (token.charCodeAt(c) === 41 && depth > 0) depth -= 1;
+    }
+    if (i === 0 || inside) continue;
+    const version = versionOf(token);
+    if (version !== null) {
+      return {
+        name: tokens.slice(0, i).join(' ').slice(0, STACK_CHIP_TEXT_CAP),
+        version: version.slice(0, STACK_CHIP_TEXT_CAP),
+        group,
+      };
+    }
+  }
+  return { name: left.slice(0, STACK_CHIP_TEXT_CAP), version: null, group };
+}
+
+/**
+ * Languages, runtime and frameworks as chips. The Languages section's `Runtime` group (a combined
+ * "Languages & Runtimes" heading) and a Runtime section both feed the runtime list; a `Package Manager`
+ * group feeds nothing. Frameworks group by their bold label (core, testing, build and dev).
+ */
+export function liftStack(sections: readonly KeyedSection[], lines: readonly string[]): StackLift {
+  const lift: StackLift = { languages: [], runtime: [], frameworks: [] };
+  let total = 0;
+  for (const section of sections) {
+    if (section.level !== 2) continue;
+    const key = section.key;
+    if (key !== 'languages' && key !== 'runtime' && key !== 'frameworks') continue;
+    let group: StackChipGroup = key === 'languages' ? 'primary' : key === 'runtime' ? 'runtime' : 'core';
+    let target: StackChip[] | null =
+      key === 'frameworks' ? lift.frameworks : key === 'runtime' ? lift.runtime : lift.languages;
+    eachLineOutsideFences(lines, section.startLine + 1, section.endLine, (line) => {
+      const label = boldLabel(line);
+      if (label !== null) {
+        const norm = normaliseHeading(label);
+        if (norm.includes('package')) {
+          target = null;
+        } else if (key !== 'frameworks' && norm.includes('runtime')) {
+          target = lift.runtime;
+          group = 'runtime';
+        } else if (key === 'languages') {
+          target = lift.languages;
+          group = norm.includes('secondary') ? 'secondary' : 'primary';
+        } else if (key === 'runtime') {
+          target = lift.runtime;
+          group = 'runtime';
+        } else {
+          target = lift.frameworks;
+          group = norm.includes('test') ? 'testing' : norm.includes('build') || norm.includes('dev') ? 'build-dev' : 'core';
+        }
+        return;
+      }
+      if (target === null || total >= STACK_CHIP_CAP) return;
+      const bullet = topBullet(line);
+      if (bullet === null) return;
+      const chip = chipOf(bullet, group);
+      if (chip === null) return;
+      target.push(chip);
+      total += 1;
+    });
+  }
+  return lift;
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// The Concerns lift
+// ---------------------------------------------------------------------------------------------------------
+
+export interface ConcernCount {
+  /** The known key, or null for a section the template does not have. */
+  key: string | null;
+  heading: string;
+  count: number;
+}
+
+export interface ConcernsLift {
+  /** Known sections first in file order, then the others in file order. */
+  sections: ConcernCount[];
+  total: number;
+  /** The known keys the document has no section for; the page shows each as 0. */
+  missing: string[];
+}
+
+/** Field labels (the text before the first colon of a bullet), lower-cased: a bullet beginning with one is a
+ * field of a concern, not a concern (RESEARCH Pitfall 1, widened by 10-03). A label starting with
+ * "what's not tested" also counts. */
+const FIELD_LABELS: ReadonlySet<string> = new Set([
+  'issue',
+  'files',
+  'impact',
+  'fix approach',
+  'fix',
+  'symptoms',
+  'trigger',
+  'workaround',
+  'risk',
+  'current mitigation',
+  'mitigation',
+  'recommendations',
+  'recommendation',
+  'current behaviour',
+  'current behavior',
+  'concern',
+  'note',
+  'problem',
+  'cause',
+  'improvement path',
+  'why fragile',
+  'safe modification',
+  'test coverage',
+  'current capacity',
+  'limit',
+  'scaling path',
+  'migration plan',
+  'blocks',
+  'priority',
+]);
+
+function isFieldBullet(text: string): boolean {
+  const colon = text.indexOf(':');
+  if (colon <= 0 || colon > 80) return false;
+  const label = text.slice(0, colon).replaceAll('*', '').replaceAll('`', '').replaceAll('’', "'").trim().toLowerCase();
+  return FIELD_LABELS.has(label) || label.startsWith("what's not tested");
+}
+
+/** True when a field value says there is nothing: it begins with None, Not detected or Not applicable.
+ * "None of ..." is a sentence about something, not an empty marker. */
+function isEmptyMarker(value: string): boolean {
+  const v = value.trimStart().slice(0, 40).toLowerCase();
+  for (const prefix of ['none', 'not detected', 'not applicable']) {
+    if (!v.startsWith(prefix)) continue;
+    const next = v.charCodeAt(prefix.length);
+    if (Number.isNaN(next)) return true;
+    if (next >= 97 && next <= 122) continue;
+    return !v.startsWith('none of ');
+  }
+  return false;
+}
+
+/** The first field value of a unit: the text after the colon of its first bullet (the whole bullet when it
+ * has no colon near its start). */
+function firstFieldValue(text: string): string {
+  const colon = text.indexOf(':');
+  return colon >= 0 && colon <= 40 ? text.slice(colon + 1) : text;
+}
+
+interface BulletAt {
+  index: number;
+  text: string;
+}
+
+/** The first bullet whose line index is in [from, to), by binary search over the sorted list. */
+function firstBulletIn(bullets: readonly BulletAt[], from: number, to: number): BulletAt | null {
+  let lo = 0;
+  let hi = bullets.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (bullets[mid].index < from) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo < bullets.length && bullets[lo].index < to ? bullets[lo] : null;
+}
+
+function isTableSeparator(trimmed: string): boolean {
+  for (let i = 0; i < trimmed.length; i += 1) {
+    const c = trimmed.charCodeAt(i);
+    if (c !== 124 && c !== 45 && c !== 58 && c !== 32 && c !== 9) return false;
+  }
+  return true;
+}
+
+/** The first non-empty cell of a table row. */
+function firstCell(trimmed: string): string {
+  const cells = (trimmed.length > LINE_CAP ? trimmed.slice(0, LINE_CAP) : trimmed).split('|');
+  for (const cell of cells) {
+    if (cell.trim().length > 0) return cell.trim();
+  }
+  return '';
+}
+
+/**
+ * The concern count of one `##` section, by the rule 10-03-SUMMARY.md records (RESEARCH C3, adjusted):
+ * try `###` subsections, then bold-label lines (one or more), then top-level bullets that do not begin with
+ * a field label, then table rows, and use the first that yields a unit; a unit whose first field value is
+ * None, Not detected or Not applicable counts 0. A section with no unit counts 0 whatever prose it holds.
+ */
+function countSection(lines: readonly string[], sections: readonly KeyedSection[], at: number): number {
+  const section = sections[at];
+  const from = section.startLine + 1;
+  const to = section.endLine;
+  const subsections: FencedSection[] = [];
+  for (let i = at + 1; i < sections.length && sections[i].level === 3 && sections[i].startLine < to; i += 1) {
+    subsections.push(sections[i]);
+  }
+  const labels: number[] = [];
+  const bullets: BulletAt[] = [];
+  const rows: string[] = [];
+  let previousWasRow = false;
+  eachLineOutsideFences(lines, from, to, (line, index) => {
+    const label = boldLabel(line);
+    if (label !== null) {
+      labels.push(index);
+      previousWasRow = false;
+      return;
+    }
+    const bullet = topBullet(line);
+    if (bullet !== null) {
+      bullets.push({ index, text: bullet });
+      previousWasRow = false;
+      return;
+    }
+    const trimmed = line.trimStart();
+    if (trimmed.charCodeAt(0) === 124) {
+      // The first row of a block is the header; separator rows are never data.
+      const head = trimmed.length > LINE_CAP ? trimmed.slice(0, LINE_CAP) : trimmed;
+      if (previousWasRow && !isTableSeparator(head)) rows.push(firstCell(head));
+      previousWasRow = true;
+      return;
+    }
+    previousWasRow = false;
+  });
+
+  const zeroOf = (unitFrom: number, unitTo: number): boolean => {
+    const first = firstBulletIn(bullets, unitFrom, unitTo);
+    return first !== null && isEmptyMarker(firstFieldValue(first.text));
+  };
+
+  if (subsections.length > 0) {
+    return subsections.filter((s) => !zeroOf(s.startLine + 1, s.endLine)).length;
+  }
+  if (labels.length > 0) {
+    let count = 0;
+    for (let k = 0; k < labels.length; k += 1) {
+      const end = k + 1 < labels.length ? labels[k + 1] : to;
+      if (!zeroOf(labels[k] + 1, end)) count += 1;
+    }
+    return count;
+  }
+  const concernBullets = bullets.filter((b) => !isFieldBullet(b.text));
+  if (concernBullets.length > 0) return concernBullets.filter((b) => !isEmptyMarker(b.text)).length;
+  return rows.filter((cell) => !isEmptyMarker(cell)).length;
+}
+
+/** The ids of the nine known concern sections, in template order. */
+const CONCERN_KEY_IDS: readonly string[] = [...(CODEBASE_KEYS.get('concerns')?.values() ?? [])];
+
+/** Counts per concerns section: the known ones in file order, then any other `##` section by the same rule;
+ * the total includes both. */
+export function countConcerns(sections: readonly KeyedSection[], lines: readonly string[]): ConcernsLift {
+  const known: ConcernCount[] = [];
+  const extra: ConcernCount[] = [];
+  for (let i = 0; i < sections.length; i += 1) {
+    const section = sections[i];
+    if (section.level !== 2) continue;
+    const entry: ConcernCount = { key: section.key, heading: section.heading, count: countSection(lines, sections, i) };
+    (section.key === null ? extra : known).push(entry);
+  }
+  const present = new Set(known.map((k) => k.key));
+  const all = [...known, ...extra];
+  return {
+    sections: all,
+    total: all.reduce((sum, s) => sum + s.count, 0),
+    missing: CONCERN_KEY_IDS.filter((id) => !present.has(id)),
+  };
+}
+
+export function extractCodebase(doc: string, frontmatter: Record<string, unknown>, body: string): CodebaseBody {
+  const lines = splitBodyLines(body);
+  const keyed = keySections(doc, scanFencedLines(lines));
+  const result: CodebaseBody = {
+    doc,
+    stamp: readMapStamp(frontmatter, body, lines),
+    sections: keyed.map((s) => ({ heading: s.heading, level: s.level, key: s.key })),
+    keyNumber: null,
+  };
+  if (doc === 'stack') {
+    const stack = liftStack(keyed, lines);
+    result.stack = stack;
+    result.keyNumber = stack.languages.length + stack.frameworks.length;
+  } else if (doc === 'concerns') {
+    const concerns = countConcerns(keyed, lines);
+    result.concerns = concerns;
+    result.keyNumber = concerns.total;
+  }
+  return result;
+}
