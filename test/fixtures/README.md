@@ -33,6 +33,10 @@ whose own ledger is `fixtures/README.md`) and this repository's own `.planning` 
 | test/fixtures/tidemark/.planning/codebase/TESTING.md | codebase-testing | agents/gsd-codebase-mapper.md | 1.19.0 | map-only project: stamped (2026-10-28), a bash-fenced Run Commands block with a hash comment line before each command |
 | test/fixtures/tidemark/.planning/codebase/CONCERNS.md | codebase-concerns | agents/gsd-codebase-mapper.md | 1.19.0 | map-only project: stamped (2026-10-30), nine sections of unequal length in every counting shape, a None identified section and a Not detected section |
 | test/fixtures/lendshed/.planning/phases/01-member-sign-in-sessions/01-SPEC.md | spec | gsd-core/templates/spec.md | 1.19.0 | locked, at or below the gate: score 0.14 against a 0.20 gate, five requirements each with Current, Target and Acceptance, all four ambiguity dimensions met |
+| test/fixtures/lendshed/.planning/phases/02-roles-and-permissions/02-SPEC.md | spec | gsd-core/templates/spec.md | 1.19.0 | above the gate, written anyway: score 0.31 with the gate in its ASCII form (`<= 0.20`), one ambiguity dimension marked below minimum, an unresolved edge and prohibition, the planner-must-treat-as-assumption line |
+| test/fixtures/lendshed/.planning/phases/03-account-admin-and-sessions/03-SPEC.md | spec | gsd-core/templates/spec.md | 1.19.0 | long: nine requirements, the sixth with no Acceptance line, two long statements, a score of 0.18 with no gate in the header, no Edge Coverage or Prohibitions sections |
+| test/fixtures/lendshed/.planning/phases/02-roles-and-permissions/02-AI-SPEC.md | ai-spec | gsd-core/templates/AI-SPEC.md | 1.19.0 | every numbered section still an unfilled template slot: HTML-comment slots, empty numbered items, an empty dimension row, comment-only fenced blocks, 0 of 16 checklist items ticked |
+| test/fixtures/lendshed/.planning/phases/04-bulk-loan-export/04-AI-SPEC.md | ai-spec | gsd-core/templates/AI-SPEC.md | 1.19.0 | half filled: System Type, Selected Framework and Version filled, Dimensions table with four rows, sections 4b, 6 and 7 left as template slots, 6 of 16 checklist items ticked |
 
 ## For later phases
 
