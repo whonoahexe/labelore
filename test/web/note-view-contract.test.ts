@@ -247,7 +247,7 @@ describe('note view contract - the real sources', () => {
   });
 
   it("'note' is a view kind and manifests.ts declares the hook, lead and promote fallback", async () => {
-    expect(await source('src/web/views/kinds.ts')).toContain("  'note',\n  'debug',\n] as const;");
+    expect(await source('src/web/views/kinds.ts')).toContain("  'note',\n  'debug',\n");
     const text = await source('src/web/views/manifests.ts');
     expect(text).toContain('notePage: composeNotePage');
     const entry = text.slice(text.indexOf('  note: {'));

@@ -11,6 +11,8 @@ import { Hono } from 'hono';
 import { buildDashboardViewModel } from '../presentation/dashboard.ts';
 import { buildPlanManualChecks } from '../presentation/manual-checks.ts';
 import type { PlanManualChecks } from '../presentation/manual-checks.ts';
+import { buildCodebaseContext } from '../presentation/codebase-map.ts';
+import type { CodebaseContext } from '../presentation/codebase-map.ts';
 import { buildProjectContext } from '../presentation/project-context.ts';
 import type { ProjectContext } from '../presentation/project-context.ts';
 import { buildReviewContext } from '../presentation/review-context.ts';
@@ -168,6 +170,17 @@ export function createProjectApi(
         return null;
       }
     })();
+    // Phase 10 (10-08): the Codebase page's seven-panel list, readiness and stamp, from this request's own bundle
+    // - built only for a codebase-* map document (null elsewhere).
+    const codebaseContext = ((): CodebaseContext | null => {
+      try {
+        return lookup.artifact.kind.startsWith('codebase-')
+          ? buildCodebaseContext(activeDerived.presentation, lookup.artifact.path)
+          : null;
+      } catch {
+        return null;
+      }
+    })();
     const document = await (
       await renderer
     ).render(lookup.artifact, { referenceRegistry: activeDerived.referenceRegistry });
@@ -197,6 +210,7 @@ export function createProjectApi(
       noteContext,
       ledgerContext,
       projectContext,
+      codebaseContext,
       manualChecks,
       reviewContext,
     };
