@@ -119,6 +119,11 @@ describe('the Stack lift', () => {
     ]);
   });
 
+  it('does not read a version-looking token inside a parenthetical qualifier', () => {
+    const chips = stack('## Languages\n\n- CSS (Tailwind v4 CSS-first config) - styles\n')!.languages;
+    expect(chips).toEqual([{ name: 'CSS (Tailwind v4 CSS-first config)', version: null, group: 'primary' }]);
+  });
+
   it('does not read a digit-led first word as a version', () => {
     const chips = stack('## Languages\n\n- 3D shaders - the renderer\n')!.languages;
     expect(chips).toEqual([{ name: '3D shaders', version: null, group: 'primary' }]);
