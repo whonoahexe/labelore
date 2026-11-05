@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 050 — Eval review page</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+/* Sketch 050: the Eval review page (VIEW-12), three page structures, none of them the 018 scorecard or the 041 to
+   049 frames. Text is the made-up Lendshed EVAL-REVIEW files (test/fixtures/lendshed, 10-07), embedded verbatim
+   below and parsed in the page; scores and verdicts are shown as written, never recomputed. Tokens come from
+   ../themes/default.css; every colour is a theme token or a colour-mix of tokens. Squared corners, spacing from
+   --space-* tokens, four font sizes counting everything on the page: --fs-display-3 (h1 only), --fs-7 (score,
+   verdict, headings, counts), --fs-4 (body), --fs-2 (labels, chips, links). The sketch bar and the app shell are
+   outside the page. */
+:root {
+  --border-faint: color-mix(in oklch, var(--border) 55%, transparent);
+  --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border));
+  --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border));
+  --veil: color-mix(in oklch, var(--muted) 55%, transparent);
+  --neutral-fill: color-mix(in oklch, var(--muted-foreground) 70%, transparent);
+  --hatch: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px var(--space-1-5));
+  --font-heading: var(--font-sans);
+  --icon: var(--space-4);
+  --sq: var(--space-2-5);
+  --page: calc(var(--space-8) * 40);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-4); font-weight: var(--fw-medium); line-height: var(--lh-normal); }
+h1, h2, h3, h4, p, ul, ol, dl, dd, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; border-radius: 0; text-align: inherit; }
+a { color: inherit; text-decoration: none; }
+code { font-family: var(--font-mono); font-size: inherit; padding: 0 var(--space-0-5); background: var(--veil); overflow-wrap: anywhere; }
+[hidden] { display: none !important; }
+svg.i { width: var(--icon); height: var(--icon); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+/* ---------- sketch chrome (not part of the app) ---------- */
+#sketch-bar { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); background: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+#sketch-bar .lbl { color: var(--muted-foreground); white-space: nowrap; }
+#sketch-bar .grp { display: flex; flex: none; gap: var(--space-1); align-items: center; }
+#sketch-bar .grp + .grp { padding-left: var(--space-3); border-left: 1px solid var(--border); }
+#sketch-bar .grp.line { flex-basis: 100%; padding-left: 0; border-left: 0; }
+#sketch-bar a, #sketch-bar button { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; color: var(--muted-foreground); white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; }
+#sketch-bar a:hover, #sketch-bar button:hover { color: var(--foreground); background: var(--state-hover); }
+#sketch-bar .on { color: var(--foreground); border-color: var(--border); background: var(--state-hover); }
+#sketch-bar .name { color: var(--muted-foreground); padding-inline: var(--space-1); }
+@media (max-width: 42rem) { #sketch-bar { flex-wrap: nowrap; overflow-x: auto; } #sketch-bar .grp.line { flex-basis: auto; } }
+#toast { position: fixed; left: 50%; bottom: var(--space-4); transform: translateX(-50%); z-index: 99; max-width: 90vw; padding: var(--space-2) var(--space-3); background: var(--foreground); color: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); opacity: 0; pointer-events: none; }
+#toast.on { opacity: 1; }
+
+/* ---------- app shell header (outside the page, drawn as today) ---------- */
+.app-head { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-2) var(--space-fluid-3); border-bottom: 1px solid var(--border); }
+.app-brand { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-3); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.app-brand i { width: var(--space-5); height: var(--space-5); background: var(--primary); }
+.app-brand span { color: var(--muted-foreground); font-weight: var(--fw-medium); }
+.app-nav { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-left: auto; }
+.app-nav a { padding: var(--space-1-5) var(--space-2-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+@media (max-width: 42rem) { .app-nav { display: none; } }
+
+/* ---------- page atoms ---------- */
+.page { display: grid; gap: var(--space-8); align-content: start; width: min(var(--page), 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); min-width: 0; }
+.crumbs { display: flex; flex-wrap: wrap; gap: var(--space-1-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.crumbs [aria-current] { color: var(--foreground); }
+.heading-block { display: grid; gap: var(--space-3); min-width: 0; }
+.eyebrow { display: flex; gap: var(--space-2); align-items: center; color: var(--primary); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h1 { font-size: var(--fs-display-3); font-weight: var(--fw-semibold); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); overflow-wrap: anywhere; }
+.meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); min-width: 0; }
+.meta { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.micro-label { margin: 0; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h2.sh { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.btn-xs { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1-5); min-height: var(--space-7); padding-inline: var(--space-3); border: 1px solid var(--border); font-family: var(--font-sans); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.btn-xs:hover { background: var(--state-hover); }
+.btn-xs[aria-pressed='true'] { background: var(--muted); }
+.btn-xs.icon { padding-inline: 0; width: var(--space-7); }
+@media (pointer: coarse) { .btn-xs { min-height: var(--space-10); } .btn-xs.icon { width: var(--space-10); } }
+.seg { display: inline-flex; }
+.seg .btn-xs + .btn-xs { border-left: 0; }
+.text-link { display: inline-flex; gap: var(--space-1-5); align-items: center; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.text-link:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: var(--space-0-5); }
+.status-chip { display: inline-flex; gap: var(--space-1-5); align-items: center; width: fit-content; max-width: 100%; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: var(--veil); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; white-space: nowrap; }
+.status-chip[data-tone='complete'] { border-color: var(--primary-border); background: var(--primary-tint); color: var(--primary); }
+.status-chip[data-tone='in-flight'] { border-color: var(--in-flight-border); color: var(--in-flight-fill); }
+.status-chip[data-tone='quiet'] { color: var(--muted-foreground); border-style: dashed; background: transparent; }
+.sq { display: inline-block; width: var(--sq); height: var(--sq); flex: none; border: 1px solid var(--border); }
+.sq[data-tone='complete'] { background: var(--primary); border-color: var(--primary); }
+.sq[data-tone='in-flight'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.sq[data-tone='quiet'] { background: transparent; border: 1px dashed var(--muted-foreground); }
+.sq[data-tone='neutral'] { background: var(--neutral-fill); border-color: var(--muted-foreground); }
+.source-note { color: var(--muted-foreground); }
+.num { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.prose { max-width: 72ch; }
+.mono { font-family: var(--font-mono); }
+.vname { font-family: var(--font-mono); font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+
+/* the lead and the shared status meter (048's drawing, reused) */
+.lead-line { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.lead-line b { font-family: var(--font-mono); }
+.status-meter { display: grid; gap: var(--space-1-5); min-width: 0; }
+.status-meter .cells { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.status-meter .cells .sq { --sq: var(--space-5); }
+.status-meter .cap { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); letter-spacing: var(--ls-wider); }
+.status-meter .cap b { color: var(--foreground); }
+
+/* the disagreement: the file's Status line beside the box count, never merged; quiet, not an alarm */
+.disagree { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; border: 1px dashed var(--muted-foreground); min-width: 0; }
+.disagree > div { display: grid; gap: var(--space-1); align-content: start; padding: var(--space-3) var(--space-4); min-width: 0; }
+.disagree .ne { display: grid; place-items: center; padding: 0 var(--space-2); border-inline: 1px dashed var(--border); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-7); }
+.disagree .foot { grid-column: 1 / -1; padding: var(--space-2) var(--space-4); border-top: 1px dashed var(--border); color: var(--muted-foreground); }
+.disagree .val { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.agree { display: inline-flex; gap: var(--space-2); align-items: center; }
+
+/* the step dock (shared) */
+.dock { display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--border); background: var(--card); min-width: 0; }
+.dock-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.dock-head h3 { font-size: inherit; font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.dock-head .x { margin-left: auto; }
+.dock > h3 { font-size: inherit; font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.fields { display: grid; gap: var(--space-2); }
+.fields > div { display: grid; grid-template-columns: calc(var(--space-8) * 3.5) minmax(0, 1fr); gap: var(--space-3); }
+.fields dt { padding-top: var(--space-0-5); }
+.fields dd { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 42rem) { .fields > div { grid-template-columns: minmax(0, 1fr); gap: var(--space-0-5); } }
+.dock-empty { padding: var(--space-3) var(--space-4); border: 1px dashed var(--border); color: var(--muted-foreground); }
+.vfacts { display: grid; gap: var(--space-2); }
+.vfacts li { display: grid; grid-template-columns: var(--icon) minmax(0, 1fr); gap: var(--space-2); align-items: center; min-width: 0; overflow-wrap: anywhere; }
+.vfacts .i { color: var(--muted-foreground); }
+.cell .status-chip, .bar summary .status-chip, .tag .status-chip { white-space: normal; }
+.goes { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); align-items: baseline; }
+
+/* closed bars + the In the source only strip (shared) */
+.bars-wrap { display: grid; gap: var(--space-3); }
+.bars { display: grid; border-top: 1px solid var(--border); }
+.bar-group { display: flex; align-items: center; gap: var(--space-2); min-height: var(--space-8); padding: var(--space-3) var(--space-2) var(--space-1); border-bottom: 1px solid var(--border-faint); }
+.bar { border-bottom: 1px solid var(--border); }
+.bar > summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-height: var(--space-10); padding-inline: var(--space-2); cursor: pointer; list-style: none; font-weight: var(--fw-semibold); min-width: 0; }
+.bar > summary > span:not(.sq):not(.n) { min-width: 0; overflow-wrap: anywhere; }
+.bar > summary::-webkit-details-marker { display: none; }
+.bar > summary:hover { background: var(--state-hover); }
+.bar[open] > summary .chev { transform: rotate(90deg); }
+.bar > summary .n { margin-left: auto; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.bar-body { display: grid; gap: var(--space-3); padding: var(--space-2) var(--space-2) var(--space-6) calc(var(--icon) + var(--space-4)); min-width: 0; }
+@media (max-width: 42rem) { .bar-body { padding-left: var(--space-2); } }
+.only { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); padding: var(--space-3) var(--space-4); border: 1px dashed var(--border); }
+.only a { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; text-decoration: underline; text-underline-offset: var(--space-0-5); text-decoration-color: var(--border); }
+.blocks { display: grid; gap: var(--space-3); min-width: 0; }
+/* the shipped copy-command row (10-10): the command as selectable mono text, then the Copy command button */
+.copy-command { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); padding: var(--space-2) var(--space-3); border: 1px solid var(--border-faint); background: var(--veil); min-width: 0; }
+.copy-command code { flex: 1 1 16rem; background: none; padding: 0; font-size: var(--fs-2); line-height: var(--lh-snug); min-width: 0; }
+.cmd-note { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); }
+
+/* the missing tone (document content: the missing family only) */
+:root { --missing-border: color-mix(in oklch, var(--missing-fill) 55%, var(--border)); }
+.status-chip[data-tone='missing'] { border-color: var(--missing-border); color: var(--missing-fill); background: transparent; }
+.sq[data-tone='missing'] { background: transparent; border: 2px solid var(--missing-fill); }
+.status-chip.big { font-size: var(--fs-7); letter-spacing: var(--ls-tight); padding: var(--space-1-5) var(--space-3); }
+.status-chip.big .sq { --sq: var(--space-3); }
+.facts { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); }
+.facts span { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.facts b { color: var(--foreground); font-weight: var(--fw-semibold); }
+.score { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.word { font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.tgt { display: inline-flex; align-items: center; gap: var(--space-1-5); padding: 0 var(--space-1-5); border: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); white-space: nowrap; }
+.steps { display: grid; gap: var(--space-2); counter-reset: none; }
+.step { display: grid; grid-template-columns: var(--space-6) minmax(0, 1fr); gap: var(--space-2); align-items: baseline; min-width: 0; }
+.step .no { font-family: var(--font-mono); font-weight: var(--fw-semibold); color: var(--muted-foreground); }
+.step .tx { min-width: 0; overflow-wrap: anywhere; }
+.step .tx .tgt { margin-left: var(--space-1); }
+.zero { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--muted-foreground); }
+
+/* =====================================================================
+   A: Score waffle — 100 cells for the score, the verdict beside it, then two coverage ribbons and a runbook
+   ===================================================================== */
+.wa-hero { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-6) var(--space-10); align-items: center; padding: var(--space-6); border: 1px solid var(--border); background: var(--card-veil); }
+@media (max-width: 42rem) { .wa-hero { grid-template-columns: minmax(0, 1fr); padding: var(--space-4); } }
+.waffle { display: grid; grid-template-columns: repeat(10, var(--space-5)); gap: var(--space-1); }
+.waffle i { width: var(--space-5); height: var(--space-5); border: 1px solid var(--border); }
+.waffle i.on { background: var(--neutral-fill); border-color: var(--muted-foreground); }
+.waffle.none { place-items: center; width: calc(var(--space-5) * 10 + var(--space-1) * 9); height: calc(var(--space-5) * 10 + var(--space-1) * 9); border: 1px dashed var(--muted-foreground); background: var(--hatch); }
+@media (max-width: 42rem) { .waffle { grid-template-columns: repeat(10, minmax(0, 1fr)); width: 100%; max-width: calc(var(--space-8) * 9); } .waffle i { width: auto; height: auto; aspect-ratio: 1; } .waffle.none { width: 100%; height: auto; aspect-ratio: 1; max-width: calc(var(--space-8) * 9); } }
+.wa-side { display: grid; gap: var(--space-4); align-content: center; min-width: 0; }
+.wa-side .pair { display: grid; gap: var(--space-1-5); }
+.ribbon { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); border: 1px solid var(--border); min-width: 0; }
+.tile { display: grid; grid-template-rows: auto auto 1fr auto; gap: var(--space-1-5); padding: 0 var(--space-3) var(--space-3); text-align: left; min-width: 0; border-left: 1px solid var(--border); }
+.tile:first-child { border-left: 0; }
+.tile:hover { background: var(--state-hover); }
+.tile[aria-pressed='true'] { box-shadow: inset 0 0 0 2px var(--foreground); }
+.tile .band { height: var(--space-3); margin: 0 calc(var(--space-3) * -1) var(--space-1-5); background: var(--neutral-fill); }
+.tile .band[data-tone='complete'] { background: var(--primary); }
+.tile .band[data-tone='in-flight'] { background: var(--in-flight-fill); }
+.tile .band[data-tone='missing'] { background: var(--background); box-shadow: inset 0 0 0 2px var(--missing-fill); }
+.tile .band[data-tone='quiet'] { background: var(--hatch); }
+.tile .nm { font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.tile .st { display: flex; align-items: center; gap: var(--space-1-5); }
+.ribbon.small .tile .band { height: var(--space-1-5); }
+.ribbon.small .tile .nm { font-weight: var(--fw-medium); }
+@media (max-width: 42rem) { .ribbon { grid-template-columns: minmax(0, 1fr); } .tile { grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto; border-left: 0; border-top: 1px solid var(--border); padding: var(--space-2) var(--space-3) var(--space-2) var(--space-5); position: relative; } .tile:first-child { border-top: 0; } .tile .band { position: absolute; left: 0; top: 0; bottom: 0; width: var(--space-2); height: auto; margin: 0; } .ribbon.small .tile .band { width: var(--space-1); height: auto; } .tile .st { grid-row: 1; grid-column: 2; } }
+.tally { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--space-3) var(--space-6); }
+.runbook { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); }
+.lane { display: grid; align-content: start; gap: var(--space-3); padding: var(--space-3) var(--space-4) var(--space-4); border-top: 2px solid var(--foreground); background: var(--card-veil); min-width: 0; }
+.lane-h { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); }
+@media (max-width: 52rem) { .runbook { grid-template-columns: minmax(0, 1fr); } }
+
+/* =====================================================================
+   B: Gap → fix ledger — what the audit found on the left, the plan in the author's order on the right, wired
+   ===================================================================== */
+.lb-head { display: grid; gap: var(--space-3); padding-bottom: var(--space-5); border-bottom: 2px solid var(--foreground); }
+.lb-line { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); }
+.ledger { position: relative; display: grid; grid-template-columns: minmax(0, 5fr) calc(var(--space-8) * 3) minmax(0, 7fr); align-items: start; min-width: 0; }
+.ledger > svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.ledger path { fill: none; stroke: var(--border); stroke-width: 1.5; }
+.ledger path[data-tone='missing'] { stroke: var(--missing-fill); }
+.ledger path[data-tone='in-flight'] { stroke: var(--in-flight-fill); }
+.ledger path[data-tone='complete'] { stroke: var(--primary); }
+.ledger path[data-on='false'] { opacity: 0.35; }
+.ledger path[data-on='true'] { stroke-width: 2.5; }
+.lcol { display: grid; gap: var(--space-2); min-width: 0; }
+.frow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-1) var(--space-2); width: 100%; min-height: var(--space-10); padding: var(--space-2) var(--space-3); border: 1px solid var(--border); background: var(--card); text-align: left; min-width: 0; }
+.frow:hover { background: var(--state-hover); }
+.frow[aria-pressed='true'] { border-color: var(--foreground); }
+.frow .nm { font-weight: var(--fw-semibold); min-width: 0; overflow-wrap: anywhere; }
+.frow .sub { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); }
+.frow.small { min-height: var(--space-8); padding: var(--space-1-5) var(--space-3); background: transparent; }
+.frow.small .nm { font-weight: var(--fw-medium); }
+.frow .finding { grid-column: 1 / -1; padding-top: var(--space-2); border-top: 1px solid var(--border-faint); }
+.fix-group { display: grid; gap: var(--space-2); }
+.fix-group + .fix-group { margin-top: var(--space-4); }
+.fix { display: grid; grid-template-columns: var(--space-6) minmax(0, 1fr); gap: var(--space-2); width: 100%; padding: var(--space-2) var(--space-3); border-left: 2px solid var(--border); text-align: left; min-width: 0; }
+.fix:hover { background: var(--state-hover); }
+.fix[aria-pressed='true'] { border-left-color: var(--foreground); background: var(--state-hover); }
+.fix .no { font-family: var(--font-mono); font-weight: var(--fw-semibold); color: var(--muted-foreground); }
+.fix .tx { min-width: 0; overflow-wrap: anywhere; }
+.fix .tgt { margin-top: var(--space-1); }
+.fixrefs { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+@media (max-width: 52rem) { .ledger { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); } .ledger > svg { display: none; } .gut { display: none; } }
+
+/* =====================================================================
+   C: Reuse — 048 C's datasheet and meter, its matrix shape (measurement × state), 044 E's piles for the plan
+   ===================================================================== */
+.sheet { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 2px solid var(--foreground); }
+.cell { display: grid; gap: var(--space-2); align-content: start; padding: var(--space-4); min-width: 0; }
+.cell + .cell { border-left: 1px solid var(--border); }
+.cell .val { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); overflow-wrap: anywhere; }
+.cell .val.mono { font-family: var(--font-mono); }
+.cell[data-slot='true'] { background: var(--hatch); }
+.cell .status-chip { white-space: normal; }
+@media (max-width: 42rem) { .sheet { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cell:nth-child(3) { border-left: 0; } .cell:nth-child(n+3) { border-top: 1px solid var(--border); } }
+.mtx { display: grid; grid-template-columns: calc(var(--space-8) * 3) repeat(3, minmax(0, 1fr)); border: 1px solid var(--border); min-width: 0; }
+.mtx > * { padding: var(--space-3); border-top: 1px solid var(--border-faint); border-left: 1px solid var(--border-faint); min-width: 0; }
+.mtx > .hd { border-top: 0; background: var(--card-veil); display: flex; align-items: center; gap: var(--space-1-5); }
+.mtx > :nth-child(4n+1) { border-left: 0; }
+.mtx .mc { display: flex; flex-wrap: wrap; gap: var(--space-1-5); align-content: start; min-height: calc(var(--space-8) * 1.5); }
+.mtx button.status-chip { white-space: normal; text-align: left; }
+.mtx button.status-chip:hover { background: var(--state-hover); }
+.mtx button.status-chip[aria-pressed='true'] { box-shadow: inset 0 0 0 1px currentColor; }
+@media (max-width: 42rem) { .mtx { grid-template-columns: calc(var(--space-8) * 2.25) repeat(3, minmax(0, 1fr)); } .mtx > * { padding: var(--space-2) var(--space-1-5); } }
+.rc-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-8); align-items: start; }
+@media (max-width: 42rem) { .rc-row { grid-template-columns: minmax(0, 1fr); } }
+.big-meter .cells .sq { --sq: var(--space-6); }
+.istrip { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.istrip button { display: grid; gap: var(--space-1); padding: var(--space-2) var(--space-3); border: 1px solid var(--border); text-align: left; min-width: 0; max-width: 100%; }
+.istrip button:hover { background: var(--state-hover); }
+.istrip button[aria-pressed='true'] { border-color: var(--foreground); }
+.istrip .row1 { display: flex; align-items: center; gap: var(--space-1-5); font-weight: var(--fw-medium); overflow-wrap: anywhere; }
+.board { display: grid; border: 1px solid var(--border); min-width: 0; }
+.board-bar { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); background: var(--card-veil); }
+.board-body { padding: var(--space-4); min-width: 0; }
+.board-foot { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); padding: var(--space-2) var(--space-4); border-top: 1px solid var(--border); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); }
+.board-foot span { display: inline-flex; align-items: center; gap: var(--space-1-5); }
+.piles { display: grid; grid-template-columns: repeat(3, minmax(0, calc(var(--space-8) * 6))); grid-template-rows: calc(var(--space-8) * 3) auto; gap: var(--space-2) var(--space-4); }
+.pile-col { display: grid; grid-row: span 2; grid-template-rows: subgrid; gap: var(--space-2); min-width: 0; }
+.pile { display: flex; flex-direction: column-reverse; gap: var(--space-1); align-self: end; }
+.mk { display: block; width: 100%; height: var(--space-6); padding: 0; border: 1px solid var(--muted-foreground); background: var(--neutral-fill); cursor: pointer; }
+.mk[data-tone='complete'] { background: var(--primary); border-color: var(--primary); }
+.mk[data-tone='in-flight'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.mk[data-tone='missing'] { background: transparent; border: 2px solid var(--missing-fill); }
+.mk:hover { outline: 2px solid var(--border); outline-offset: 1px; }
+.mk[data-on='true'] { outline: 2px solid var(--foreground); outline-offset: 1px; }
+.pile-zero { height: var(--space-6); border: 1px dashed var(--muted-foreground); }
+.pile-lab { display: grid; gap: var(--space-1); align-content: start; padding: var(--space-1-5) var(--space-1) var(--space-1); border-top: 2px solid var(--foreground); min-width: 0; }
+.pile-lab .pl { font-size: var(--fs-2); color: var(--muted-foreground); line-height: 1.25; overflow-wrap: anywhere; }
+@media (max-width: 42rem) { .piles { grid-template-rows: calc(var(--space-8) * 2.5) auto; gap: var(--space-2); } .mk, .pile-zero { height: var(--space-4); } }
+</style>
+</head>
+<body>
+<nav id="sketch-bar" aria-label="Sketch controls">
+  <span class="lbl">050 eval review</span>
+  <span class="grp" id="tabs">
+    <a data-tab="a" href="#a">A: Score waffle</a>
+    <a data-tab="b" href="#b">B: Gap → fix ledger</a>
+    <a data-tab="c" href="#c">C: Reuse — datasheet, matrix, piles</a>
+  </span>
+  <span class="grp">
+    <button data-theme="light">Light</button>
+    <button data-theme="dark">Dark</button>
+  </span>
+  <span class="grp line"><span class="name">State</span>
+    <button data-state="04">04 Needs work</button><button data-state="03">03 Not implemented</button><button data-state="none">No score</button></span>
+</nav>
+
+<section data-variant="a" class="variant"></section>
+<section data-variant="b" class="variant" hidden></section>
+<section data-variant="c" class="variant" hidden></section>
+<div id="toast" role="status"></div>
+
+<script>
+// The made-up Lendshed EVAL-REVIEW files, verbatim (injected by the sketch's generator). "none" is 04 with its
+// Overall Score and Verdict lines removed (sketch-made).
+const SRC = /*DATA*/{"04":"<!-- made-up example · derived from agents/gsd-eval-auditor.md · gsd-core 1.19.0 -->\n# EVAL-REVIEW — Phase 4: Bulk Loan Export\n\n**Audit Date:** 2026-04-14\n**AI-SPEC Present:** Yes\n**Overall Score:** 64/100\n**Verdict:** NEEDS WORK\n\n## Dimension Coverage\n\n| Dimension | Status | Measurement | Finding |\n|-----------|--------|-------------|---------|\n| Totals match | COVERED | Code | `server/src/export/note/totals.test.ts` compares every figure in the drafted note with the saved batch totals across five saved months, including a month with zero loans. Runs in the unit suite. |\n| No member names | COVERED | Code | The same suite scans each draft for every handle and display name in the batch fixture; a planted handle fails the test, which was confirmed by running it. |\n| Draft shown before fetch | COVERED | Code | The export route refuses the archive fetch while the note's `reviewed_at` is empty; two route tests cover the refusal and the pass. |\n| Neutral tone | PARTIAL | LLM Judge | A judge prompt with the 1-5 rubric exists and was run by hand once on three drafts. It is not wired into any command, the pass mark of 4 is not enforced, and no run has been saved. |\n| Usable as sent | MISSING | Human | AI-SPEC asks the steward lead to label each draft pass or fail. No labelling sheet, no labels and no place to record them were found. |\n\n**Coverage Score:** 3/5 (60%)\n\n## Infrastructure Audit\n\n| Component | Status | Finding |\n|-----------|--------|---------|\n| Eval tooling (Vitest) | Installed | Listed in `package.json` and called by the totals and names suites. The judge prompt is not called by it. |\n| Reference dataset | Partial | Five saved months found, against twelve in AI-SPEC. The zero-loan month is there; the re-issued-tool months and the 500-loan months are not. No labels. |\n| CI/CD integration | Present | `npm test -- server/src/export/note` runs in the pull-request workflow. |\n| Online guardrails | Implemented | The request path strips handles before the totals reach the model and blocks the fetch until the note is reviewed. |\n| Tracing | Not found | No tracing tool is configured; draft calls are not recorded anywhere. |\n\n**Infrastructure Score:** 70/100\n\n## Critical Gaps\n\nNone. The one MISSING dimension, Usable as sent, is rated High in AI-SPEC, not Critical, and both Critical dimensions (Totals match, No member names) are COVERED.\n\n## Remediation Plan\n\n### Must fix before production:\n1. **Usable as sent:** add a labelling sheet (one row per saved month, pass or fail, one line of reason) and have the steward lead fill it for every month in the dataset. Record the pass rate beside the totals suite output.\n2. **Reference dataset:** grow the five saved months to the twelve AI-SPEC names by adding the three re-issued-tool months and the three months over 500 loans; keep the labels in the same file as the totals.\n\n### Should fix soon:\n1. **Neutral tone:** move the judge prompt into the suite, run it over the whole dataset, and fail the run when any draft scores under 4.\n2. **Neutral tone:** save each judge run's scores so a later change to the draft prompt can be compared with the last run.\n3. Pin the judge model name in the config so a silent model change does not move the scores.\n\n### Nice to have:\n1. Configure a tracing tool around the draft call and keep the last 50 drafts with their totals.\n2. Add a fifth guardrail test for a note over 600 characters; the field currently accepts any length.\n\n## Files Found\n\n- `server/src/export/note/totals.test.ts`\n- `server/src/export/note/names.test.ts`\n- `server/src/export/note/judge-prompt.md`\n- `server/src/export/note/fixtures/months/` (five saved months, `2026-01.json` through `2026-05.json`)\n- `server/src/routes/export-jobs.test.ts`\n- `.github/workflows/pull-request.yml`\n","03":"<!-- made-up example · derived from agents/gsd-eval-auditor.md · gsd-core 1.19.0 -->\n# EVAL-REVIEW — Phase 3: Account Admin & Sessions\n\n**Audit Date:** 2026-04-06\n**AI-SPEC Present:** No\n**Overall Score:** 12/100\n**Verdict:** NOT IMPLEMENTED\n\n## Dimension Coverage\n\n| Dimension | Status | Measurement | Finding |\n|-----------|--------|-------------|---------|\n| Output correctness | MISSING | Code | No AI-SPEC exists for this phase, so no planned rubric. No test compares any model output with an expected value. |\n| Guardrails on user input | MISSING | Code | No guardrail module, moderation call or content filter found anywhere under `server/src/`. |\n| Regression set | MISSING | Code | No saved examples, no `.jsonl` file and no eval config found. |\n| Reviewed by a person | MISSING | Human | No labelling step, sheet or sign-off recorded in any SUMMARY. |\n\n**Coverage Score:** 0/4 (0%)\n\n## Infrastructure Audit\n\n| Component | Status | Finding |\n|-----------|--------|---------|\n| Eval tooling | Not found | No eval library is installed or imported. |\n| Reference dataset | Partial | Two hand-written sample sessions sit in a unit-test fixture; they were not written for evaluation and carry no labels. |\n| CI/CD integration | Partial | The unit suite runs in CI; no eval command exists to run. |\n| Online guardrails | Partial | The disable dialog caps the reason field at 200 characters; nothing else in the request path is a guardrail. |\n| Tracing | Not configured | No tracing tool found. |\n\n**Infrastructure Score:** 30/100\n\n## Critical Gaps\n\n- Every dimension is MISSING. The phase has no AI-SPEC, so the audit ran against four default dimensions and the SUMMARY files mention no model call; the score reflects missing planning rather than failed work.\n\n## Remediation Plan\n\n### Must fix before production:\n1. Decide whether this phase has an AI component at all. If it does not, record that in the phase notes so the audit is not run again.\n2. If it does, run the AI-SPEC step first and name the dimensions to audit.\n3. Output correctness: add a test that compares one model output with an expected value, before anything else is built.\n\n### Should fix soon:\n\n### Nice to have:\n\n## Files Found\n\n- `server/src/routes/sessions.test.ts` (unit tests, no evaluation)\n- `server/src/test-fixtures/sessions.ts` (two sample sessions)\n","none":"<!-- made-up example · derived from agents/gsd-eval-auditor.md · gsd-core 1.19.0 -->\n# EVAL-REVIEW — Phase 4: Bulk Loan Export\n\n**Audit Date:** 2026-04-14\n**AI-SPEC Present:** Yes\n\n## Dimension Coverage\n\n| Dimension | Status | Measurement | Finding |\n|-----------|--------|-------------|---------|\n| Totals match | COVERED | Code | `server/src/export/note/totals.test.ts` compares every figure in the drafted note with the saved batch totals across five saved months, including a month with zero loans. Runs in the unit suite. |\n| No member names | COVERED | Code | The same suite scans each draft for every handle and display name in the batch fixture; a planted handle fails the test, which was confirmed by running it. |\n| Draft shown before fetch | COVERED | Code | The export route refuses the archive fetch while the note's `reviewed_at` is empty; two route tests cover the refusal and the pass. |\n| Neutral tone | PARTIAL | LLM Judge | A judge prompt with the 1-5 rubric exists and was run by hand once on three drafts. It is not wired into any command, the pass mark of 4 is not enforced, and no run has been saved. |\n| Usable as sent | MISSING | Human | AI-SPEC asks the steward lead to label each draft pass or fail. No labelling sheet, no labels and no place to record them were found. |\n\n**Coverage Score:** 3/5 (60%)\n\n## Infrastructure Audit\n\n| Component | Status | Finding |\n|-----------|--------|---------|\n| Eval tooling (Vitest) | Installed | Listed in `package.json` and called by the totals and names suites. The judge prompt is not called by it. |\n| Reference dataset | Partial | Five saved months found, against twelve in AI-SPEC. The zero-loan month is there; the re-issued-tool months and the 500-loan months are not. No labels. |\n| CI/CD integration | Present | `npm test -- server/src/export/note` runs in the pull-request workflow. |\n| Online guardrails | Implemented | The request path strips handles before the totals reach the model and blocks the fetch until the note is reviewed. |\n| Tracing | Not found | No tracing tool is configured; draft calls are not recorded anywhere. |\n\n**Infrastructure Score:** 70/100\n\n## Critical Gaps\n\nNone. The one MISSING dimension, Usable as sent, is rated High in AI-SPEC, not Critical, and both Critical dimensions (Totals match, No member names) are COVERED.\n\n## Remediation Plan\n\n### Must fix before production:\n1. **Usable as sent:** add a labelling sheet (one row per saved month, pass or fail, one line of reason) and have the steward lead fill it for every month in the dataset. Record the pass rate beside the totals suite output.\n2. **Reference dataset:** grow the five saved months to the twelve AI-SPEC names by adding the three re-issued-tool months and the three months over 500 loans; keep the labels in the same file as the totals.\n\n### Should fix soon:\n1. **Neutral tone:** move the judge prompt into the suite, run it over the whole dataset, and fail the run when any draft scores under 4.\n2. **Neutral tone:** save each judge run's scores so a later change to the draft prompt can be compared with the last run.\n3. Pin the judge model name in the config so a silent model change does not move the scores.\n\n### Nice to have:\n1. Configure a tracing tool around the draft call and keep the last 50 drafts with their totals.\n2. Add a fifth guardrail test for a note over 600 characters; the field currently accepts any length.\n\n## Files Found\n\n- `server/src/export/note/totals.test.ts`\n- `server/src/export/note/names.test.ts`\n- `server/src/export/note/judge-prompt.md`\n- `server/src/export/note/fixtures/months/` (five saved months, `2026-01.json` through `2026-05.json`)\n- `server/src/routes/export-jobs.test.ts`\n- `.github/workflows/pull-request.yml`\n"}/*END*/;
+
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const inline = (s) => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+
+// ---------- word tables (RESEARCH Pattern 7; never recompute, only map) ----------
+const VERDICT = { 'PRODUCTION READY': 'complete', 'NEEDS WORK': 'in-flight', 'SIGNIFICANT GAPS': 'missing', 'NOT IMPLEMENTED': 'missing' };
+const DIM = { COVERED: ['complete', 'Covered'], PARTIAL: ['in-flight', 'Partial'], MISSING: ['missing', 'Missing'] };
+const INFRA = { installed: 'complete', configured: 'complete', present: 'complete', implemented: 'complete', partial: 'in-flight', missing: 'missing', 'not found': 'missing', 'not configured': 'missing' };
+const MEASURES = ['Code', 'LLM Judge', 'Human'];
+
+// ---------- the EVAL-REVIEW reader ----------
+function table(lines) {
+  const rows = lines.filter((l) => /^\s*\|/.test(l)).map((l) => l.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim()));
+  return rows.length >= 2 ? { head: rows[0].map((h) => h.toLowerCase()), rows: rows.slice(2) } : null;
+}
+function parseEval(md) {
+  const d = { title: '', head: {}, sections: [], dims: [], infra: [], groups: [] };
+  let cur = null;
+  for (const line of md.split('\n')) {
+    if (/^<!-- made-up example/.test(line)) continue;
+    let m;
+    if (!cur && (m = line.match(/^# (.*)$/))) { d.title = m[1].trim(); continue; }
+    if ((m = line.match(/^## (.*)$/))) { cur = { h: m[1].trim(), lines: [] }; d.sections.push(cur); continue; }
+    if (cur) { cur.lines.push(line); continue; }
+    if ((m = line.match(/^\*\*([^*]+):\*\*\s*(.*)$/))) d.head[m[1].trim()] = m[2].trim();
+  }
+  const tm = d.title.match(/Phase\s+(\d+(?:\.\d+)*)\s*:\s*(.+)$/);
+  d.phaseNo = tm ? tm[1] : ''; d.name = tm ? tm[2] : d.title;
+  const sm = (d.head['Overall Score'] || '').match(/^(\d+(?:\.\d+)?)\s*\/\s*(\d+)/);
+  d.score = sm ? { n: Number(sm[1]), of: Number(sm[2]), raw: d.head['Overall Score'] } : null;
+  d.verdict = d.head.Verdict || null;
+  d.vtone = d.verdict && VERDICT[d.verdict.toUpperCase()] ? VERDICT[d.verdict.toUpperCase()] : null;
+  const line = (s, label) => { const l = s && s.lines.find((x) => x.startsWith(`**${label}:**`)); return l ? l.slice(label.length + 5).trim() : null; };
+  const dc = d.sections.find((s) => /^dimension coverage$/i.test(s.h));
+  if (dc) { const t = table(dc.lines); if (t) { const c = (k) => t.head.indexOf(k); d.dims = t.rows.map((r) => { const w = (r[c('status')] || '').toUpperCase(); const map = DIM[w] || ['quiet', r[c('status')] || 'Not stated']; return { kind: 'dim', name: r[c('dimension')], word: r[c('status')], tone: map[0], label: map[1], how: r[c('measurement')], finding: r[c('finding')] }; }); } dc.claimed = true; }
+  d.coverage = line(dc, 'Coverage Score');
+  const ia = d.sections.find((s) => /^infrastructure audit$/i.test(s.h));
+  if (ia) { const t = table(ia.lines); if (t) { const c = (k) => t.head.indexOf(k); d.infra = t.rows.map((r) => ({ kind: 'infra', name: r[c('component')], word: r[c('status')], tone: INFRA[(r[c('status')] || '').toLowerCase()] || 'quiet', finding: r[c('finding')] })); } ia.claimed = true; }
+  d.infraScore = line(ia, 'Infrastructure Score');
+  const rp = d.sections.find((s) => /^remediation plan$/i.test(s.h));
+  if (rp) {
+    let g = null;
+    for (const l of rp.lines) {
+      let m;
+      if ((m = l.match(/^###\s+(.*?):?\s*$/))) { g = { h: m[1].replace(/:$/, ''), items: [] }; d.groups.push(g); continue; }
+      if (g && (m = l.match(/^\s*(\d+)\.\s+(.*)$/))) g.items.push({ no: m[1], text: m[2].trim() });
+    }
+    rp.claimed = true;
+  }
+  // a step names its dimension (or infrastructure component) when it opens with that name and a colon
+  const targets = [...d.dims, ...d.infra];
+  const base = (n) => n.replace(/\s*\(.*\)\s*$/, '').toLowerCase();
+  let k = 0;
+  d.groups.forEach((g, gi) => g.items.forEach((it) => { it.k = k++; it.g = gi; const m = it.text.match(/^\*{0,2}([^:*]+):\*{0,2}\s/); it.target = m ? targets.find((t) => base(t.name) === m[1].trim().toLowerCase()) || null : null; }));
+  d.steps = d.groups.flatMap((g) => g.items);
+  targets.forEach((t, i) => { t.id = i; t.fixes = d.steps.filter((s) => s.target === t); });
+  d.tally = ['complete', 'in-flight', 'missing'].map((tone) => d.dims.filter((x) => x.tone === tone).length);
+  d.rest = d.sections.filter((s) => !s.claimed);
+  return d;
+}
+function blocksHtml(lines) {
+  const out = []; let para = [], list = null;
+  const fp = () => { if (para.length) { out.push(`<p class="prose">${inline(para.join(' '))}</p>`); para = []; } };
+  const fl = () => { if (list) { out.push(`<ul class="bul">${list.map((x) => `<li>${inline(x)}</li>`).join('')}</ul>`); list = null; } };
+  for (const l of lines) { let m; if (!l.trim()) { fp(); fl(); continue; } if ((m = l.match(/^\s*-\s+(.*)$/))) { fp(); (list = list || []).push(m[1]); continue; } fl(); para.push(l.trim()); }
+  fp(); fl();
+  return `<div class="blocks">${out.join('')}</div>`;
+}
+
+// ---------- state ----------
+const params = new URLSearchParams(location.search);
+let theme = params.get('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+const S = { state: params.get('state') || '04', sel: null, open: new Set() };
+const doc = () => parseEval(SRC[S.state]);
+const VIEWS = {}; const ACTS = {};
+
+// ---------- shared atoms ----------
+const ICON = { copy: '<rect x="9" y="9" width="13" height="13"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>', chevr: '<path d="m9 18 6-6-6-6"/>' };
+const svg = (k, cls = 'i') => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICON[k]}</svg>`;
+const sq = (tone, label) => `<span class="sq" data-tone="${tone}"${label ? ` role="img" aria-label="${esc(label)}"` : ' aria-hidden="true"'}></span>`;
+const chip = (tone, text, cls = '') => `<span class="status-chip ${cls}"${tone ? ` data-tone="${tone}"` : ''}>${tone ? sq(tone) : ''}${text}</span>`;
+const verdictChip = (d, cls = '') => d.vtone ? chip(d.vtone, esc(d.verdict), cls) : chip('quiet', 'Verdict not stated', cls);
+const scoreText = (d) => d.score ? `<span class="score">${d.score.n} of ${d.score.of}</span>` : '';
+const dimState = (x) => `<span class="st">${sq(x.tone)}<span class="word">${esc(x.label)}</span></span>`;
+const infraState = (x) => `<span class="st">${sq(x.tone)}<span class="word">${esc(x.word)}</span></span>`;
+const tgt = (t) => t ? `<span class="tgt">${sq(t.tone)}${esc(t.name.replace(/\s*\(.*\)$/, ''))}</span>` : '';
+const tallyText = (d) => `<p class="lead-line"><b>${d.tally[0]}</b> covered, <b>${d.tally[1]}</b> partial, <b>${d.tally[2]}</b> missing</p>`;
+const meter = (d, cls = '') => d.dims.length ? `<div class="status-meter ${cls}" role="img" aria-label="${d.tally[0]} of ${d.dims.length} dimensions covered"><span class="cap"><b>${d.tally[0]} of ${d.dims.length}</b> dimensions covered</span><span class="cells" aria-hidden="true">${d.dims.map((x) => `<span class="sq" data-tone="${x.tone}" title="${esc(x.name)}: ${esc(x.label)}"></span>`).join('')}</span></div>` : '';
+const facts = (d) => `<p class="facts">${d.coverage ? `<span>Coverage Score <b>${esc(d.coverage)}</b></span>` : ''}${d.infraScore ? `<span>Infrastructure Score <b>${esc(d.infraScore)}</b></span>` : ''}${d.head['AI-SPEC Present'] ? `<span>AI-SPEC present <b>${esc(d.head['AI-SPEC Present'])}</b></span>` : ''}</p>`;
+const appHead = () => `<header class="app-head"><span class="app-brand"><i></i>Labelore <span>/ Lendshed</span></span><nav class="app-nav" aria-label="Project"><a href="#" data-act="noop">Dashboard</a><a href="#" data-act="noop">Roadmap</a><a href="#" data-act="noop">Traceability</a><a href="#" data-act="noop">Search</a></nav></header>`;
+function header(d) {
+  return `<nav class="crumbs" aria-label="Breadcrumb"><span>Lendshed</span><span aria-hidden="true">/</span><span>Phase ${esc(d.phaseNo)}</span><span aria-hidden="true">/</span><span aria-current="page">Eval review</span></nav>
+  <header class="heading-block"><p class="eyebrow">Phase ${esc(d.phaseNo)} · Eval review</p><h1>${esc(d.name)}</h1>
+  <div class="meta-row">${d.head['Audit Date'] ? `<span class="meta">Audited ${esc(d.head['Audit Date'])}</span>` : ''}<button class="btn-xs icon" type="button" data-act="noop" aria-label="Copy path" title="Copy path">${svg('copy')}</button><div class="seg" role="group" aria-label="Show"><button class="btn-xs" type="button" aria-pressed="true">View</button><button class="btn-xs" type="button" aria-pressed="false" data-act="noop">Source</button></div></div></header>`;
+}
+const page = (d, inner) => `${appHead()}<main class="page">${header(d)}${inner}</main>`;
+const findTarget = (d, id) => [...d.dims, ...d.infra].find((t) => t.id === id);
+function targetDock(d) {
+  if (!S.sel || S.sel[0] !== 't') return '';
+  const t = findTarget(d, Number(S.sel.slice(1)));
+  return `<div class="dock"><div class="dock-head"><span class="micro-label">${t.kind === 'dim' ? 'Dimension' : 'Infrastructure'}</span><h3>${esc(t.name)}</h3>${t.kind === 'dim' ? chip(t.tone, esc(t.label)) : chip(t.tone, esc(t.word))}<button class="text-link x" type="button" data-act="close">Close</button></div>${t.how ? `<p class="meta">Measured by ${esc(t.how)}</p>` : ''}<p class="prose">${inline(t.finding || '')}</p>${t.fixes.length ? `<div class="fixrefs"><span class="micro-label">In the plan</span>${t.fixes.map((f) => `<span class="tgt">${esc(d.groups[f.g].h)} ${f.no}</span>`).join('')}</div>` : ''}</div>`;
+}
+function stepDock(d) {
+  if (!S.sel || S.sel[0] !== 's') return '';
+  const s = d.steps[Number(S.sel.slice(1))];
+  return `<div class="dock"><div class="dock-head"><span class="micro-label">${esc(d.groups[s.g].h)} · ${s.no}</span>${s.target ? tgt(s.target) : ''}<button class="text-link x" type="button" data-act="close">Close</button></div><p class="prose">${inline(s.text)}</p></div>`;
+}
+function stepsList(d, g) {
+  return g.items.length ? `<ol class="steps">${g.items.map((s) => `<li class="step"><span class="no">${s.no}.</span><span class="tx">${inline(s.text)}${s.target ? ` ${tgt(s.target)}` : ''}</span></li>`).join('')}</ol>` : `<p class="zero">${sq('quiet')}<span class="num">0</span></p>`;
+}
+function bars(d, withPlan = false) {
+  const plan = withPlan && d.groups.length ? `<details class="bar"${S.open.has('plan') ? ' open' : ''} data-k="plan"><summary>${svg('chevr', 'i chev')}<span>Remediation plan</span><span class="n">${d.steps.length} steps</span></summary><div class="bar-body">${d.groups.map((g) => `<p class="micro-label">${esc(g.h)}</p>${stepsList(d, g)}`).join('')}</div></details>` : '';
+  const rest = d.rest.map((s) => `<details class="bar"${S.open.has(s.h) ? ' open' : ''} data-k="${esc(s.h)}"><summary>${svg('chevr', 'i chev')}<span>${esc(s.h)}</span></summary><div class="bar-body">${blocksHtml(s.lines)}</div></details>`).join('');
+  return `<div class="bars">${plan}${rest}</div>`;
+}
+
+// =====================================================================================
+// A: Score waffle. A hero: the score as 100 cells beside the verdict and the file's own sub-scores; then the
+// dimensions as a ribbon of tiles, the infrastructure as a thinner ribbon, the plan as three lanes in order.
+// =====================================================================================
+VIEWS.a = function () {
+  const d = doc();
+  const waffle = d.score && d.score.of === 100 ? `<div class="waffle" role="img" aria-label="Score ${d.score.n} of 100">${Array.from({ length: 100 }, (_, i) => `<i${i < Math.round(d.score.n) ? ' class="on"' : ''}></i>`).join('')}</div>` : `<div class="waffle none" aria-hidden="true"></div>`;
+  const hero = `<section class="wa-hero" aria-label="Score and verdict">${waffle}<div class="wa-side">${d.score ? `<div class="pair"><span class="micro-label">Score</span>${scoreText(d)}</div>` : ''}<div class="pair">${d.vtone ? '<span class="micro-label">Verdict</span>' : ''}${verdictChip(d, 'big')}</div>${facts(d)}</div></section>`;
+  const sel = S.sel && S.sel[0] === 't' ? Number(S.sel.slice(1)) : null;
+  const tile = (x, small) => `<button class="tile" type="button" data-act="target" data-id="${x.id}" aria-pressed="${sel === x.id}"><span class="band" data-tone="${x.tone}" aria-hidden="true"></span><span class="nm">${esc(x.name)}</span>${small ? '' : `<span class="meta">${esc(x.how || '')}</span>`}${small ? infraState(x) : dimState(x)}</button>`;
+  const dims = `<section style="display:grid;gap:var(--space-3)" aria-labelledby="a-dc"><h2 class="sh" id="a-dc">Dimension coverage</h2><div class="tally">${tallyText(d)}${meter(d)}</div><div class="ribbon" style="--n:${d.dims.length}">${d.dims.map((x) => tile(x, false)).join('')}</div>${sel != null && findTarget(d, sel).kind === 'dim' ? targetDock(d) : ''}</section>`;
+  const infra = d.infra.length ? `<section style="display:grid;gap:var(--space-3)" aria-labelledby="a-ia"><div class="meta-row"><h2 class="sh" id="a-ia">Infrastructure audit</h2>${d.infraScore ? `<span class="meta">Infrastructure Score ${esc(d.infraScore)}</span>` : ''}</div><div class="ribbon small" style="--n:${d.infra.length}">${d.infra.map((x) => tile(x, true)).join('')}</div>${sel != null && findTarget(d, sel).kind === 'infra' ? targetDock(d) : ''}</section>` : '';
+  const plan = d.groups.length ? `<section style="display:grid;gap:var(--space-3)" aria-labelledby="a-rp"><h2 class="sh" id="a-rp">Remediation plan</h2><div class="runbook">${d.groups.map((g) => `<div class="lane"><div class="lane-h"><span class="micro-label">${esc(g.h)}</span><span class="num">${g.items.length}</span></div>${g.items.length ? stepsList(d, g) : ''}</div>`).join('')}</div></section>` : '';
+  return page(d, `${hero}${dims}${infra}${plan}${bars(d)}`);
+};
+
+// =====================================================================================
+// B: Gap → fix ledger. One ruled verdict line; then the findings (dimensions, then infrastructure, smaller) on the
+// left and the plan in the author's order on the right, each step wired to the row it names.
+// =====================================================================================
+VIEWS.b = function () {
+  const d = doc();
+  const head = `<section class="lb-head" aria-label="Score and verdict"><div class="lb-line">${d.score ? `<span class="micro-label">Score</span>${scoreText(d)}` : ''}${d.vtone ? '<span class="micro-label">Verdict</span>' : ''}${verdictChip(d, 'big')}</div><div class="tally">${tallyText(d)}${meter(d)}</div>${facts(d)}</section>`;
+  const sel = S.sel;
+  const row = (x, small) => { const on = sel === `t${x.id}`; return `<button class="frow${small ? ' small' : ''}" type="button" data-act="target" data-id="${x.id}" data-row="t${x.id}" aria-pressed="${on}" aria-expanded="${on}">${sq(x.tone)}<span class="nm">${esc(x.name)}</span>${small ? `<span class="word">${esc(x.word)}</span>` : `<span class="word">${esc(x.label)}</span>`}<span class="sub">${x.how ? `<span class="meta">${esc(x.how)}</span>` : ''}${x.fixes.length ? `<span class="meta">Fix: ${x.fixes.map((f) => `${esc(d.groups[f.g].h.split(' ')[0])} ${f.no}`).join(', ')}</span>` : ''}</span>${on ? `<span class="finding prose">${inline(x.finding || '')}</span>` : ''}</button>`; };
+  const left = `<div class="lcol"><p class="micro-label">Dimension coverage</p>${d.dims.map((x) => row(x, false)).join('')}${d.infra.length ? `<p class="micro-label" style="margin-top:var(--space-4)">Infrastructure audit${d.infraScore ? ` · ${esc(d.infraScore)}` : ''}</p>${d.infra.map((x) => row(x, true)).join('')}` : ''}</div>`;
+  const right = `<div class="lcol"><p class="micro-label">Remediation plan</p>${d.groups.map((g) => `<div class="fix-group"><p class="micro-label" style="color:var(--foreground)">${esc(g.h)} <span class="meta">${g.items.length}</span></p>${g.items.length ? g.items.map((s) => `<button class="fix" type="button" data-act="step" data-k="${s.k}" data-fix="s${s.k}" aria-pressed="${sel === `s${s.k}`}"><span class="no">${s.no}.</span><span class="tx">${inline(s.text)}${s.target ? `<br>${tgt(s.target)}` : ''}</span></button>`).join('') : `<p class="zero">${sq('quiet')}<span class="num">0</span></p>`}</div>`).join('')}</div>`;
+  const ledger = `<section aria-label="What the audit found, and the plan"><div class="ledger" id="ledger"><svg aria-hidden="true"></svg>${left}<div class="gut"></div>${right}</div></section>`;
+  return page(d, `${head}${ledger}${bars(d)}`);
+};
+function wire() {
+  const L = document.getElementById('ledger'); if (!L) return;
+  const s = L.querySelector('svg'); if (getComputedStyle(s).display === 'none') return;
+  const d = doc(); const box = L.getBoundingClientRect();
+  s.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
+  s.innerHTML = d.steps.filter((x) => x.target).map((x) => {
+    const a = L.querySelector(`[data-row="t${x.target.id}"]`).getBoundingClientRect(); const b = L.querySelector(`[data-fix="s${x.k}"]`).getBoundingClientRect();
+    const x1 = a.right - box.left, y1 = a.top + Math.min(a.height / 2, 20) - box.top, x2 = b.left - box.left, y2 = b.top + 18 - box.top, mx = (x1 + x2) / 2;
+    const on = S.sel ? (S.sel === `s${x.k}` || S.sel === `t${x.target.id}`) : null;
+    return `<path d="M${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}" data-tone="${x.target.tone}"${on === null ? '' : ` data-on="${on}"`}/>`;
+  }).join('');
+}
+
+// =====================================================================================
+// C: Reuse. 048 C's datasheet (Score, Verdict, the two sub-scores), the tally beside the large meter, 048 C's matrix
+// shape with the dimensions placed by measurement × state, the infrastructure as chips, 044 E's piles for the plan.
+// =====================================================================================
+VIEWS.c = function () {
+  const d = doc();
+  const cell = (label, v, slot = false) => `<div class="cell"${slot ? ' data-slot="true"' : ''}><span class="micro-label">${label}</span>${v}</div>`;
+  const sheet = `<section class="sheet" aria-label="Score and verdict">${cell('Score', d.score ? scoreText(d) : chip('quiet', 'Not stated'), !d.score)}${cell('Verdict', verdictChip(d), !d.vtone)}${cell('Coverage Score', d.coverage ? `<span class="val mono">${esc(d.coverage)}</span>` : chip('quiet', 'Not stated'), !d.coverage)}${cell('Infrastructure Score', d.infraScore ? `<span class="val mono">${esc(d.infraScore)}</span>` : chip('quiet', 'Not stated'), !d.infraScore)}</section>`;
+  const sel = S.sel;
+  const STATES = [['complete', 'Covered'], ['in-flight', 'Partial'], ['missing', 'Missing']];
+  const mtx = `<div class="mtx" role="table" aria-label="Dimensions by measurement and state"><span class="hd micro-label">Measured</span>${STATES.map(([t, w]) => `<span class="hd micro-label">${sq(t)}${w}</span>`).join('')}${MEASURES.map((h) => `<span class="micro-label">${h}</span>${STATES.map(([t]) => `<span class="mc">${d.dims.filter((x) => x.how === h && x.tone === t).map((x) => `<button class="status-chip" type="button" data-tone="${x.tone}" data-act="target" data-id="${x.id}" aria-pressed="${sel === `t${x.id}`}">${esc(x.name)}</button>`).join('')}</span>`).join('')}`).join('')}</div>`;
+  const dimDock = sel && sel[0] === 't' && findTarget(d, Number(sel.slice(1))).kind === 'dim' ? targetDock(d) : '';
+  const row = `<section class="rc-row" aria-labelledby="c-dc"><div style="display:grid;gap:var(--space-3)"><h2 class="sh" id="c-dc">Dimension coverage</h2>${tallyText(d)}</div><div style="display:grid;gap:var(--space-3)">${meter(d, 'big-meter')}</div></section>`;
+  const dims = `<section style="display:grid;gap:var(--space-3)" aria-label="Dimensions placed">${mtx}${dimDock}</section>`;
+  const infra = d.infra.length ? `<section style="display:grid;gap:var(--space-3)" aria-labelledby="c-ia"><h2 class="sh" id="c-ia">Infrastructure audit</h2><div class="istrip">${d.infra.map((x) => `<button type="button" data-act="target" data-id="${x.id}" aria-pressed="${sel === `t${x.id}`}"><span class="row1">${sq(x.tone)}${esc(x.name)}</span><span class="word">${esc(x.word)}</span></button>`).join('')}</div>${sel && sel[0] === 't' && findTarget(d, Number(sel.slice(1))).kind === 'infra' ? targetDock(d) : ''}</section>` : '';
+  const piles = d.groups.length ? `<section style="display:grid;gap:var(--space-3)" aria-labelledby="c-rp"><h2 class="sh" id="c-rp">Remediation plan</h2><figure class="board"><div class="board-bar"><span class="micro-label">One segment per step, in the author's order, toned by what it fixes</span></div><div class="board-body"><div class="piles">${d.groups.map((g) => `<div class="pile-col"><div class="pile">${g.items.length ? g.items.map((s) => `<button class="mk" type="button" data-act="step" data-k="${s.k}" data-tone="${s.target ? s.target.tone : 'neutral'}"${sel === `s${s.k}` ? ' data-on="true"' : ''} title="${esc(g.h)} ${s.no}" aria-label="${esc(g.h)} ${s.no}${s.target ? `: ${esc(s.target.name)}` : ''}"></button>`).join('') : '<span class="pile-zero" aria-hidden="true"></span>'}</div><div class="pile-lab"><span class="num">${g.items.length}</span><span class="pl">${esc(g.h)}</span></div></div>`).join('')}</div></div><div class="board-foot"><span>${sq('missing')}fixes a missing row</span><span>${sq('in-flight')}fixes a partial row</span><span>${sq('neutral')}names no row</span></div></figure>${stepDock(d)}</section>` : '';
+  return page(d, `${sheet}${row}${dims}${infra}${piles}${bars(d, true)}`);
+};
+
+ACTS.target = (el) => { const k = `t${el.dataset.id}`; S.sel = S.sel === k ? null : k; render(); };
+ACTS.step = (el) => { const k = `s${el.dataset.k}`; S.sel = S.sel === k ? null : k; render(); };
+ACTS.close = () => { S.sel = null; render(); };
+document.addEventListener('toggle', (e) => { const el = e.target; if (el.matches && el.matches('details.bar') && el.dataset.k) { if (el.open) S.open.add(el.dataset.k); else S.open.delete(el.dataset.k); } }, true);
+
+// ---------- render orchestration ----------
+const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c'].includes(h) ? h : 'a'; };
+function render() {
+  const y = window.scrollY; const v = pickVariant();
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  document.querySelectorAll('[data-variant]').forEach((el) => { el.hidden = el.dataset.variant !== v; if (el.dataset.variant !== v) el.innerHTML = ''; });
+  document.querySelector(`[data-variant="${v}"]`).innerHTML = VIEWS[v]();
+  document.querySelectorAll('#tabs a').forEach((a) => a.classList.toggle('on', a.dataset.tab === v));
+  document.querySelectorAll('#sketch-bar [data-theme]').forEach((b) => b.classList.toggle('on', b.dataset.theme === theme));
+  document.querySelectorAll('#sketch-bar [data-state]').forEach((b) => b.classList.toggle('on', b.dataset.state === S.state));
+  window.scrollTo(0, y);
+  wire();
+}
+let toastTimer;
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1600); }
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act], [data-state], [data-theme]');
+  if (!el) return;
+  if (el.dataset.theme) { theme = el.dataset.theme; return render(); }
+  if (el.dataset.state) { S.state = el.dataset.state; S.sel = null; S.open = new Set(); return render(); }
+  const act = el.dataset.act;
+  if (act === 'noop') { e.preventDefault(); toast('Sketch only'); return; }
+  if (ACTS[act]) { e.preventDefault(); ACTS[act](el, e); }
+});
+window.addEventListener('hashchange', () => { S.sel = null; render(); });
+window.addEventListener('resize', wire);
+if (document.fonts) document.fonts.ready.then(wire);
+render();
+</script>
+</body>
+</html>
