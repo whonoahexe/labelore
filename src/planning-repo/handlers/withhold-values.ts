@@ -55,6 +55,18 @@ function isPlaceholder(remainder: string): boolean {
  * flag, never the remainder; null when the text does not begin with an upper-snake token.
  */
 export function withholdValue(text: string): WithheldValue | null {
+  const lead = readLead(text);
+  return lead === null ? null : { name: lead.name, hadValue: lead.hadValue };
+}
+
+interface Lead extends WithheldValue {
+  /** How the value was written: after `=` or after `: `, or null when none was. */
+  form: '=' | ':' | null;
+  /** True when the name opened in backticks. */
+  ticked: boolean;
+}
+
+function readLead(text: string): Lead | null {
   const capped = text.length > SCAN_CAP ? text.slice(0, SCAN_CAP) : text;
   let at = 0;
   while (at < capped.length && (capped.charCodeAt(at) === 32 || capped.charCodeAt(at) === 9)) at += 1;
@@ -68,15 +80,16 @@ export function withholdValue(text: string): WithheldValue | null {
     rest = rest.slice(1);
     inside = false;
   }
-  let remainder: string | null = null;
-  if (rest.startsWith('=')) remainder = rest.slice(1);
-  else if (rest.startsWith(':') && (rest.length === 1 || rest.charCodeAt(1) === 32)) remainder = rest.slice(1);
-  if (remainder === null) return { name: token.name, hadValue: false };
+  let form: Lead['form'] = null;
+  if (rest.startsWith('=')) form = '=';
+  else if (rest.startsWith(':') && (rest.length === 1 || rest.charCodeAt(1) === 32)) form = ':';
+  if (form === null) return { name: token.name, hadValue: false, form, ticked };
+  let remainder = rest.slice(1);
   if (inside) {
     const close = remainder.indexOf('`');
     if (close >= 0) remainder = remainder.slice(0, close);
   }
-  return { name: token.name, hadValue: !isPlaceholder(remainder) };
+  return { name: token.name, hadValue: !isPlaceholder(remainder), form, ticked };
 }
 
 export interface WithheldText {
@@ -84,12 +97,25 @@ export interface WithheldText {
   hadValue: boolean;
 }
 
+/** The end of the value a `=` starts at `from`: the next space or tab, or the end of the text. */
+function valueEnd(text: string, from: number): number {
+  let end = from;
+  while (end < text.length && text[end] !== ' ' && text[end] !== '\t') end += 1;
+  return end;
+}
+
 /**
  * A line of prose with every value beside a variable name removed, the name kept: a backticked `NAME=value` span
- * becomes `NAME`, and a bare `NAME=value` word becomes `NAME`. A placeholder (`PORT=[your port]`) is kept as written.
+ * becomes `NAME`, a bare `NAME=value` word and `` `NAME`=value `` become `NAME`, and a line that opens with
+ * `NAME: value` becomes the name alone (the remainder is read as the value, as `withholdValue` reads it). A
+ * placeholder (`PORT=[your port]`) is kept as written.
  */
 export function withholdInText(text: string): WithheldText {
   const capped = text.length > SCAN_CAP ? text.slice(0, SCAN_CAP) : text;
+  const lead = readLead(capped);
+  if (lead !== null && lead.hadValue && lead.form === ':') {
+    return { text: lead.ticked ? `\`${lead.name}\`` : lead.name, hadValue: true };
+  }
   let out = '';
   let hadValue = false;
   let i = 0;
@@ -106,20 +132,27 @@ export function withholdInText(text: string): WithheldText {
       if (found !== null && found.hadValue) {
         out += `\`${found.name}\``;
         hadValue = true;
-      } else {
-        out += `\`${content}\``;
+        i = close + 1;
+        continue;
       }
+      out += `\`${content}\``;
       i = close + 1;
+      // A name in backticks with the value outside them: `NAME`=value.
+      if (found !== null && capped[i] === '=') {
+        const end = valueEnd(capped, i + 1);
+        if (!isPlaceholder(capped.slice(i + 1, end))) {
+          hadValue = true;
+          i = end;
+        }
+      }
       continue;
     }
     const before = i === 0 ? ' ' : capped[i - 1];
     if (isUpper(ch.charCodeAt(0)) && (before === ' ' || before === '(' || before === ',' || before === '\t')) {
       const token = tokenAt(capped, i);
       if (token !== null && capped[token.end] === '=') {
-        let end = token.end + 1;
-        while (end < capped.length && capped[end] !== ' ' && capped[end] !== '\t') end += 1;
-        const remainder = capped.slice(token.end + 1, end);
-        if (!isPlaceholder(remainder)) {
+        const end = valueEnd(capped, token.end + 1);
+        if (!isPlaceholder(capped.slice(token.end + 1, end))) {
           out += token.name;
           hadValue = true;
           i = end;

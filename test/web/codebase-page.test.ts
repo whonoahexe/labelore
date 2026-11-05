@@ -3,6 +3,9 @@
 // builds a ViewInput over the committed Tidemark (complete) and Shapes (three of seven) maps through the real
 // repository, with the section groups cut from the file's own `##` headings the way the page's splitter would.
 import { readFile } from 'node:fs/promises';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -15,6 +18,7 @@ import {
   composeCodebase,
   linkMapMentions,
 } from '../../src/web/views/codebase-page.ts';
+import { CodebaseView } from '../../src/web/views/codebase-components.tsx';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 import { loadProject } from '../helpers/fixture-project.ts';
 import { GROWTH_LIMIT, measureGrowth } from '../helpers/growth.ts';
@@ -197,6 +201,7 @@ describe('composeCodebase - the lifted part', () => {
       name: 'better-sqlite3',
       version: '11',
       purpose: 'the berth and booking store, opened once per process',
+      xref: ['Databases'],
     });
     expect(lifted.toolCount).toBe(9);
     expect(lifted.dependencyCount).toBe(4);
@@ -285,6 +290,137 @@ describe('composeCodebase - the lifted part', () => {
 
   it('lifts nothing for a panel with no designed form yet', async () => {
     expect(composeCodebase(await inputFor(TIDEMARK_ROOT, 'CONVENTIONS'))?.active.lifted).toBeNull();
+  });
+});
+
+const PLANTED = 'PLACEHOLDER-NOT-A-REAL-KEY';
+
+function renderPage(model: NonNullable<ReturnType<typeof composeCodebase>>): string {
+  return renderToStaticMarkup(
+    createElement(MemoryRouter, null, createElement(CodebaseView, { model, renderHtml: (html: string) => createElement('div', null, html) })),
+  );
+}
+
+describe('composeCodebase - the Integrations panel (10-14, sketch 045 C)', () => {
+  it('builds a graph of the app wired to one node per group in use, each in the lane its section names', async () => {
+    const lifted = composeCodebase(await inputFor(TIDEMARK_ROOT, 'INTEGRATIONS'))?.active.lifted;
+    if (lifted?.kind !== 'integrations') throw new Error('expected the integrations panel');
+    expect(lifted.inUse).toBe(5);
+    const graph = lifted.graph!;
+    expect(graph.nodes.map((n) => [n.label.main, n.kind])).toEqual([
+      ['This app', 'service'],
+      ['Tide data', 'external'],
+      ['Messaging', 'external'],
+      ['Databases', 'data'],
+      ['File Storage', 'data'],
+      ['Outgoing', 'channel'],
+    ]);
+    expect(graph.edges.map((e) => [e.from, e.to, e.label])).toEqual([
+      [0, 1, 'fetch'],
+      [0, 2, 'nodemailer'],
+      [0, 3, ''],
+      [0, 4, ''],
+      [0, 5, ''],
+    ]);
+    expect(graph.thin).toBe(false);
+  });
+
+  it('keeps the groups that say None as quiet chips, and each known section the document lacks as "not in this document"', async () => {
+    const lifted = composeCodebase(await inputFor(TIDEMARK_ROOT, 'INTEGRATIONS'))?.active.lifted;
+    if (lifted?.kind !== 'integrations') throw new Error('expected the integrations panel');
+    expect(lifted.quiet.map((q) => q.label)).toEqual([
+      'Data storage · Caching',
+      'Webhooks · Incoming',
+      'Authentication · not in this document',
+      'Monitoring · not in this document',
+      'CI/CD · not in this document',
+    ]);
+    expect(lifted.quiet[0].title).toBe('None');
+  });
+
+  it('lists the variable names with the value flag, and draws the Environment Configuration section itself', async () => {
+    const model = composeCodebase(await inputFor(TIDEMARK_ROOT, 'INTEGRATIONS'));
+    const lifted = model?.active.lifted;
+    if (lifted?.kind !== 'integrations') throw new Error('expected the integrations panel');
+    expect(lifted.variables.map((v) => [v.name, v.hadValue])).toEqual([
+      ['TIDEMARK_TIDE_FEED_KEY', true],
+      ['TIDEMARK_MAIL_TOKEN', false],
+      ['TIDEMARK_DB_PATH', false],
+    ]);
+    expect(lifted.environment?.groups).toEqual([
+      { label: 'Secrets location', lines: ['A `.env` file on the harbour office machine, outside the repository'] },
+    ]);
+    expect(model?.active.plainSections).not.toContain('Environment Configuration');
+    expect(model?.active.plainSections).toContain('Webhooks & Callbacks');
+  });
+
+  it('renders "Value not shown" beside the name and the planted value nowhere: not in the text, a title or an attribute', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'INTEGRATIONS');
+    const model = composeCodebase(input)!;
+    const html = renderPage(model);
+    expect(html).toContain('TIDEMARK_TIDE_FEED_KEY');
+    expect(html).toContain('Value not shown');
+    expect(html).not.toContain(PLANTED);
+    expect(JSON.stringify(model)).not.toContain(PLANTED);
+    expect(JSON.stringify(input.structured.codebase)).not.toContain(PLANTED);
+  });
+
+  it('renders the lifted rows alone free of the value too, when the plain sections are left out', async () => {
+    const model = composeCodebase(await inputFor(TIDEMARK_ROOT, 'INTEGRATIONS'))!;
+    const html = renderPage({ ...model, active: { ...model.active, plain: [], plainSections: [] } });
+    expect(html).toContain('Value not shown');
+    expect(html).not.toContain(PLANTED);
+    expect(html).not.toMatch(/(title|aria-label|data-[a-z-]+)="[^"]*PLACEHOLDER/);
+  });
+
+  it('shows the Environment section plain, as written, when it holds a fence the panel cannot draw', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'INTEGRATIONS');
+    const codebase = input.structured.codebase as { integrations: { environment: Record<string, unknown> } };
+    const model = composeCodebase({
+      ...input,
+      structured: {
+        ...input.structured,
+        codebase: { ...codebase, integrations: { ...codebase.integrations, environment: { ...codebase.integrations.environment, whole: false } } },
+      },
+    });
+    expect(model?.active.plainSections).toContain('Environment Configuration');
+    expect(model?.active.lifted?.kind === 'integrations' ? model.active.lifted.environment : 'x').toBeNull();
+  });
+
+  it('gives no graph, and no lifted panel, for a document with nothing in it', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'INTEGRATIONS');
+    const emptied = composeCodebase({
+      ...input,
+      structured: { ...input.structured, codebase: { doc: 'integrations', integrations: { groups: [], variables: [], environment: null, missing: [], services: 0 } } },
+    });
+    expect(emptied?.active.lifted).toBeNull();
+  });
+
+  it('keeps the Stack and Integrations cross-read to names both documents hold: better-sqlite3', async () => {
+    const stack = composeCodebase(await inputFor(TIDEMARK_ROOT, 'STACK'))?.active.lifted;
+    if (stack?.kind !== 'stack') throw new Error('expected the stack panel');
+    const crossed = stack.groups.flatMap((g) => g.sets.flatMap((s) => s.chips.filter((c) => c.xref !== undefined)));
+    expect(crossed.map((c) => [c.name, c.xref])).toEqual([['better-sqlite3', ['Databases']]]);
+    expect(stack.integrationsUrl).toMatch(/integrations/i);
+    const integrations = composeCodebase(await inputFor(TIDEMARK_ROOT, 'INTEGRATIONS'))?.active.lifted;
+    if (integrations?.kind !== 'integrations') throw new Error('expected the integrations panel');
+    expect(integrations.alsoInStack).toEqual([{ group: 'Databases', names: ['better-sqlite3'] }]);
+    expect(integrations.stackUrl).toMatch(/stack/i);
+  });
+
+  it('adds no cross-read link when the other document is not mapped', async () => {
+    const stack = composeCodebase(await inputFor(SHAPES_ROOT, 'STACK'))?.active.lifted;
+    if (stack?.kind !== 'stack') return;
+    expect(stack.integrationsUrl).toBeNull();
+    expect(stack.groups.every((g) => g.sets.every((s) => s.chips.every((c) => c.xref === undefined)))).toBe(true);
+  });
+
+  it('draws a lane diagram, the quiet chips and the name tags in the markup, linking only through the in-app Link', async () => {
+    const html = renderPage(composeCodebase(await inputFor(TIDEMARK_ROOT, 'INTEGRATIONS'))!);
+    expect(html).toContain('lane-diagram');
+    expect(html).toContain('Not used');
+    expect(html).toContain('Also in Stack');
+    expect(html).not.toContain('Environment Configuration</h3>');
   });
 });
 

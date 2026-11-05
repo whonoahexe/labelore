@@ -75,6 +75,12 @@ describe('withholdInText', () => {
     expect(found.text).not.toContain('abc999');
   });
 
+  it('reads a line that opens with NAME: value as the name alone, and `NAME`=value as the name', () => {
+    expect(withholdInText('API_TOKEN: sk-abc and more')).toEqual({ text: 'API_TOKEN', hadValue: true });
+    expect(withholdInText('`API_TOKEN`: sk-abc')).toEqual({ text: '`API_TOKEN`', hadValue: true });
+    expect(withholdInText('set `API_TOKEN`=sk-abc now')).toEqual({ text: 'set `API_TOKEN` now', hadValue: true });
+  });
+
   it('leaves text with no value untouched', () => {
     const found = withholdInText('Uses `NODE_ENV` and `LABELORE_CONFIG_DIR` - see src/server/settings-store.ts');
     expect(found).toEqual({ text: 'Uses `NODE_ENV` and `LABELORE_CONFIG_DIR` - see src/server/settings-store.ts', hadValue: false });
