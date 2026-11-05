@@ -12,8 +12,9 @@ export const STATUS_METER_MAX_CELLS = 40;
 export type StatusMeterTone = 'complete' | 'in-flight';
 
 /** One item's own state: `true` is done (the meter's tone), `false` is quiet, or a tone named outright (a page whose
- * items are done, pending and not stated draws `complete`, `in-flight` and `quiet`). */
-export type StatusMeterItem = boolean | StatusMeterTone | 'quiet';
+ * items are done, pending and not stated draws `complete`, `in-flight` and `quiet`; the Eval review page's dimensions
+ * also draw `missing`, the document-content tone for an expected item that has not appeared). */
+export type StatusMeterItem = boolean | StatusMeterTone | 'missing' | 'quiet';
 
 export interface StatusMeterProps {
   /** How many items are done, 0 to `total`. */
@@ -53,7 +54,7 @@ export function StatusMeter({
 }: StatusMeterProps): React.JSX.Element {
   const { cells, filledCells } = statusMeterCells(filled, total);
   const perItem = items !== undefined && items.length === total && total <= STATUS_METER_MAX_CELLS;
-  const toneAt = (index: number): StatusMeterTone | 'quiet' => {
+  const toneAt = (index: number): StatusMeterTone | 'missing' | 'quiet' => {
     if (!perItem) return index < filledCells ? tone : 'quiet';
     const item = items?.[index];
     if (typeof item === 'string') return item;

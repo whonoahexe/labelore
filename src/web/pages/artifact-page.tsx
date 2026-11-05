@@ -82,6 +82,8 @@ import type { ComposedAiSpec } from '../views/ai-spec-page.ts';
 import { AiSpecView, aiSpecHeaderProps } from '../views/ai-spec-page-components.tsx';
 import type { ComposedUserSetup } from '../views/user-setup-page.ts';
 import { UserSetupView, userSetupHeaderProps } from '../views/user-setup-page-components.tsx';
+import type { ComposedEvalReview } from '../views/eval-review-page.ts';
+import { EvalReviewView, evalReviewHeaderProps } from '../views/eval-review-page-components.tsx';
 import type { ComposedPlanNavigator } from '../views/plan-navigator.ts';
 import { PlanIntroMeta, PlanNavigatorView } from '../views/plan-navigator-components.tsx';
 import { findPlanContext } from '../views/plan-context.ts';
@@ -947,6 +949,13 @@ export function ArtifactPage({
     if (!manifest || !viewInput) return null;
     return manifest.userSetupPage?.(viewInput) ?? null;
   }, [manifest, viewInput]);
+  // Phase 10 (10-20, sketch 050 B): the Eval review page, when the resolved manifest opts into one - `null` for every other
+  // kind and for an eval review the page cannot shape (no `structured.evalReview`, or no score, known verdict, dimension,
+  // component or step), where the promoted-section view renders with no notice. The composer is pure.
+  const evalReviewPage = useMemo<ComposedEvalReview | null>(() => {
+    if (!manifest || !viewInput) return null;
+    return manifest.evalReviewPage?.(viewInput) ?? null;
+  }, [manifest, viewInput]);
   // "In the source only" entries switch to Source mode, then scroll to the named heading once the
   // source document has mounted. The pending id lives in a ref and is cleared only when the frame
   // callback fires, so a re-run of the effect (StrictMode) still lands on it.
@@ -1008,6 +1017,7 @@ export function ArtifactPage({
     specPage !== null ||
     aiSpecPage !== null ||
     userSetupPage !== null ||
+    evalReviewPage !== null ||
     !documentHtmlAllowedInView(manifest) ||
     (composed !== null && composed.blocks.length > 0);
 
@@ -1326,6 +1336,9 @@ export function ArtifactPage({
   // The User setup page's header override ("Phase N · User setup", the title after "Phase N:" as the h1, the generated date
   // and phase slug as meta) rides the same spread; the page carries what the metadata disclosure would repeat.
   const userSetupPageCover = userSetupPage && mode === 'view' ? userSetupPage : null;
+  // The Eval review page's header override ("Phase N · Eval review", the phase name as the h1, "Audited {date}" as meta)
+  // rides the same spread; its head carries what the metadata disclosure would repeat.
+  const evalReviewPageCover = evalReviewPage && mode === 'view' ? evalReviewPage : null;
   // T-10-49: a manifest that sets withholdDocumentInView (user-setup) shows no document HTML in View mode - neither its
   // promoted sections nor the whole document - unless a composed model above has taken the page over.
   const documentWithheld = mode === 'view' && !documentHtmlAllowedInView(manifest);
@@ -1341,6 +1354,7 @@ export function ArtifactPage({
     (specPageCover ? specHeaderProps(specPageCover, artifact.title) : null) ??
     (aiSpecPageCover ? aiSpecHeaderProps(aiSpecPageCover, artifact.title) : null) ??
     (userSetupPageCover ? userSetupHeaderProps(userSetupPageCover, artifact.title) : null) ??
+    (evalReviewPageCover ? evalReviewHeaderProps(evalReviewPageCover, artifact.title) : null) ??
     (fixCover ? ledgerHeaderProps(fixCover, artifact.title) : null);
   return (
     <main className="artifact-page page-stack">
@@ -1432,6 +1446,7 @@ export function ArtifactPage({
         specPageCover ||
         aiSpecPageCover ||
         userSetupPageCover ||
+        evalReviewPageCover ||
         fixCover ? null : (
           <details className="artifact-metadata">
             <summary>
@@ -1545,6 +1560,8 @@ export function ArtifactPage({
         <AiSpecView key={artifact.path} model={aiSpecPageCover} renderHtml={renderHtml} onShowSource={showSource} />
       ) : userSetupPageCover ? (
         <UserSetupView key={artifact.path} model={userSetupPageCover} onShowSource={showSource} />
+      ) : evalReviewPageCover ? (
+        <EvalReviewView key={artifact.path} model={evalReviewPageCover} renderHtml={renderHtml} />
       ) : fixCover ? (
         <LedgerTabView key={artifact.path} model={fixCover} />
       ) : documentWithheld ? (
