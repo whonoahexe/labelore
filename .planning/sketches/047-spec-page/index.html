@@ -334,7 +334,7 @@ h2.sh { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: va
   <span class="lbl">047 spec</span>
   <span class="grp" id="tabs">
     <a data-tab="a" href="#a">A: Gate gauge</a>
-    <a data-tab="b" href="#b">B: Lock matrix</a>
+    <a data-tab="b" href="#b">B: Lock matrix ★ Selected</a>
     <a data-tab="c" href="#c">C: Reuse — radar, tiles, strip, piles</a>
   </span>
   <span class="grp">
@@ -599,7 +599,7 @@ ACTS.pin = (el) => { const k = [Number(el.dataset.c), Number(el.dataset.i)]; S.p
 ACTS.unpin = () => { S.pin = null; render(); };
 
 // ---------- render orchestration ----------
-const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c'].includes(h) ? h : 'a'; };
+const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c'].includes(h) ? h : 'b'; };
 function render() {
   const y = window.scrollY;
   const v = pickVariant();

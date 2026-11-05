@@ -2,7 +2,7 @@
 sketch: 048
 name: ai-spec-page
 question: "How should the AI spec page show the system type, framework, evaluation dimensions and checklist progress as a picture, and say plainly which sections are still template slots, so an all-slots spec looks clearly unfilled rather than broken?"
-winner: null
+winner: "C"
 tags: [ai-spec, template-slots, checklist, phase-10]
 ---
 
@@ -146,3 +146,21 @@ variant (display 44.8px at 390).
 All text is the made-up Lendshed AI specs (test/fixtures/lendshed, 10-04) and GSD's own template, verbatim. The
 only exception is the Fully filled state's sections 4b, 6 and 7, which are made-up Lendshed words written for the
 sketch. The repository is public.
+
+## Winner
+**C: Datasheet + eval matrix**, chosen by the user at the 10-13 checkpoint: "B for 47 and C for 48". No synthesis.
+
+Build C as drawn in its tab (marked "★ Selected"; the sketch now opens on it):
+- **The datasheet:** a hard-ruled sheet of four field cells. System type, Framework (with Version in mono),
+  Stakes level, and Vendor lock-in (its first word, with the reason after the dash under it). A value that is
+  only template text makes a hatched cell with the quiet "Template slot" chip.
+- **The section row:** the lead "{n} of {m} sections are still template slots" at Heading size (omitted at
+  zero) over a strip of one square per numbered section, neutral when written and dashed for a slot. A square
+  opens that section's bar. Beside it sits "Checklist" with the large `status-meter`.
+- **The evaluation matrix:** the Dimensions table's rows placed as untoned chips by Priority (Critical, High,
+  Medium) × Measurement (Code, LLM Judge, Human). A chip opens its Rubric, Measurement and Priority in a dock.
+  With no dimension stated, the matrix is one hatched box with the chip.
+- **Below:** the numbered sections and the Checklist as closed bars. A slot is a dashed row with its heading,
+  the chip and a Source link, and nothing opens.
+- **At 390px:** the sheet becomes two by two, the strip squares shrink so all nine fit on one line, and the
+  matrix keeps its four columns with the chips wrapping.

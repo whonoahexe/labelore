@@ -259,7 +259,7 @@ button.ix-row:hover { background: var(--state-hover); }
   <span class="grp" id="tabs">
     <a data-tab="a" href="#a">A: Reuse — chips, piles, bars</a>
     <a data-tab="b" href="#b">B: Contents with fill bars</a>
-    <a data-tab="c" href="#c">C: Datasheet + eval matrix</a>
+    <a data-tab="c" href="#c">C: Datasheet + eval matrix ★ Selected</a>
   </span>
   <span class="grp">
     <button data-theme="light">Light</button>
@@ -544,7 +544,7 @@ ACTS.jump = (el) => { const no = el.dataset.no; S.open.add(no); render(); const 
 document.addEventListener('toggle', (e) => { const el = e.target; if (el.matches && el.matches('details.bar') && el.id) { const k = el.id.replace('sec-', ''); if (el.open) S.open.add(k); else S.open.delete(k); } }, true);
 
 // ---------- render orchestration ----------
-const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c'].includes(h) ? h : 'a'; };
+const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c'].includes(h) ? h : 'c'; };
 function render() {
   const y = window.scrollY;
   const v = pickVariant();
