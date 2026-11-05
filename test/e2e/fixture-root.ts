@@ -27,6 +27,13 @@ export const SHAPES_BASE_URL = `http://127.0.0.1:${SHAPES_PORT}`;
 export const SHAPES_BUILT_PORT = 4196;
 export const SHAPES_BUILT_BASE_URL = `http://127.0.0.1:${SHAPES_BUILT_PORT}`;
 
+/** The made-up Tidemark project (Phase 10): a map-only project, a codebase map and nothing else. Browser specs
+ * copy it into a mkdtemp folder and start their own server on the copy (no fixed port). */
+export const TIDEMARK_FIXTURE_ROOT: string = fileURLToPath(new URL('../fixtures/tidemark', import.meta.url)).replace(
+  /[\\/]$/,
+  '',
+);
+
 /** The fixture root, or a thrown error when its `.planning/` folder does not exist. */
 export function resolveFixtureRoot(root: string = FIXTURE_ROOT): string {
   if (!existsSync(join(root, '.planning'))) {
