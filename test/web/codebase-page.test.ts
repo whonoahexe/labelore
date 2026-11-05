@@ -547,7 +547,7 @@ describe('composeCodebase - the Concerns panel (10-12, sketch 044 E)', () => {
 
   it('writes no missing or destructive tone anywhere in the concerns markup', async () => {
     const components = await source(COMPONENTS);
-    const concernsPart = components.slice(components.indexOf('function ConcernsPanel'));
+    const concernsPart = components.slice(components.indexOf('function ConcernRow'));
     expect(concernsPart).not.toMatch(/data-tone=\{?["']?(missing|destructive|warning)/);
     expect(concernsPart).toContain('Read more');
     expect(concernsPart).toContain('Read less');

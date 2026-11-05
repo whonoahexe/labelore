@@ -216,7 +216,14 @@ describe('the Concerns lift', () => {
 
   it('counts a single bold-label group as one (the "two or more" rule would lose it)', () => {
     const result = concerns('## Dependencies at Risk\n\n**Old parser:**\n- Issue: unmaintained\n- Impact: low\n')!;
-    expect(result.sections).toEqual([{ key: 'dependencies-at-risk', heading: 'Dependencies at Risk', count: 1 }]);
+    expect(result.sections).toEqual([
+      {
+        key: 'dependencies-at-risk',
+        heading: 'Dependencies at Risk',
+        count: 1,
+        items: [{ label: 'Old parser', lines: ['- Issue: unmaintained', '- Impact: low'] }],
+      },
+    ]);
   });
 
   it('counts a group whose first field value is None, Not detected or Not applicable as zero', () => {
@@ -310,7 +317,12 @@ describe('the Concerns lift', () => {
   it('lets an unknown extra heading be a plain section with a count and no key', () => {
     const result = lift('concerns', '# C\n\n## Odd Heading\n\n**X:**\n- Issue: y\n');
     expect(result.sections).toEqual([{ heading: 'Odd Heading', level: 2, key: null }]);
-    expect(result.concerns?.sections[0]).toEqual({ key: null, heading: 'Odd Heading', count: 1 });
+    expect(result.concerns?.sections[0]).toEqual({
+      key: null,
+      heading: 'Odd Heading',
+      count: 1,
+      items: [{ label: 'X', lines: ['- Issue: y'] }],
+    });
   });
 
   it('never counts the single-star footer, a rule line or a preamble as a concern', () => {
@@ -324,7 +336,9 @@ describe('the Concerns lift', () => {
     const result = concerns(
       '## Tech Debt\n\n**Real:**\n- Issue: a\n\n```md\n**Fake:**\n## Fake section\n- not a concern\n```\n',
     )!;
-    expect(result.sections).toEqual([{ key: 'tech-debt', heading: 'Tech Debt', count: 1 }]);
+    expect(result.sections).toEqual([
+      { key: 'tech-debt', heading: 'Tech Debt', count: 1, items: [{ label: 'Real', lines: ['- Issue: a'] }] },
+    ]);
   });
 
   it('claims a repeated known heading once: the second is a plain section counted as an extra', () => {

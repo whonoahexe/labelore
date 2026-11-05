@@ -85,24 +85,41 @@ export interface ConcernEntries {
   entries: ConcernEntry[];
 }
 
-/** The per-section counts out of a `structured.codebase.concerns` lift, tolerating any shape; null when the
- * lift holds no section. One rule for the Concerns panel and the head: Security first, a missing known
+/** A concern section with the concerns the lift kept for it (10-12): the same order and counts the head reads. */
+export interface ConcernSectionEntry extends ConcernEntry {
+  items: unknown[];
+}
+
+export interface ConcernSections {
+  total: number;
+  entries: ConcernSectionEntry[];
+}
+
+/** The per-section counts and items out of a `structured.codebase.concerns` lift, tolerating any shape; null when
+ * the lift holds no section. One rule for the Concerns panel and the head: Security first, a missing known
  * section a zero, the total the lift's own (else the sum). */
-export function concernEntries(concerns: unknown): ConcernEntries | null {
+export function concernSections(concerns: unknown): ConcernSections | null {
   if (!isRecord(concerns)) return null;
-  const entries: ConcernEntry[] = (Array.isArray(concerns.sections) ? concerns.sections : [])
+  const entries: ConcernSectionEntry[] = (Array.isArray(concerns.sections) ? concerns.sections : [])
     .filter(isRecord)
     .flatMap((section) => {
       const heading = typeof section.heading === 'string' ? section.heading.trim() : '';
       const count = section.count;
       if (heading === '' || typeof count !== 'number' || !Number.isFinite(count) || count < 0) return [];
-      return [{ key: typeof section.key === 'string' ? section.key : null, heading, count }];
+      return [
+        {
+          key: typeof section.key === 'string' ? section.key : null,
+          heading,
+          count,
+          items: Array.isArray(section.items) ? section.items : [],
+        },
+      ];
     });
   const seen = new Set(entries.map((entry) => entry.key));
   for (const key of Array.isArray(concerns.missing) ? concerns.missing : []) {
     if (typeof key !== 'string' || seen.has(key)) continue;
     const heading = CONCERN_LABELS.get(key);
-    if (heading !== undefined) entries.push({ key, heading, count: 0 });
+    if (heading !== undefined) entries.push({ key, heading, count: 0, items: [] });
   }
   if (entries.length === 0) return null;
   const ordered = [
@@ -112,6 +129,13 @@ export function concernEntries(concerns: unknown): ConcernEntries | null {
   const sum = entries.reduce((total, entry) => total + entry.count, 0);
   const total = typeof concerns.total === 'number' && Number.isFinite(concerns.total) ? concerns.total : sum;
   return { total, entries: ordered };
+}
+
+/** The per-section counts alone, for the head. */
+export function concernEntries(concerns: unknown): ConcernEntries | null {
+  const found = concernSections(concerns);
+  if (found === null) return null;
+  return { total: found.total, entries: found.entries.map(({ key, heading, count }) => ({ key, heading, count })) };
 }
 
 // --- the next step -----------------------------------------------------------------------------------------
