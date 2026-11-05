@@ -32672,7 +32672,7 @@ button.view-codebase-mark:hover {
 
 .view-reviews-sq[data-done='true'] {
   border-color: var(--muted-foreground);
-  background: var(--muted);
+  background: var(--muted-foreground);
 }
 
 .view-reviews-prose {

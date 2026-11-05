@@ -10,6 +10,7 @@ import { HANDLERS } from '../src/planning-repo/handlers/index.ts';
 import { GenericMarkdownHandler } from '../src/planning-repo/handlers/generic.ts';
 import { tryParseFrontmatter } from '../src/planning-repo/frontmatter.ts';
 import { fxRead } from './helpers/fixture-project.ts';
+import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
 
 const PATH = '.planning/phases/01-member-sign-in-sessions/01-REVIEWS.md';
 
@@ -236,8 +237,54 @@ describe('extractReviews - odd shapes', () => {
     expect(file.plansReviewed).toEqual(['4']);
   });
 
+  it('caps the reviewers at 20, the concerns at 300 a reviewer and a concern at 2,000 characters', () => {
+    const many = Array.from({ length: 25 }, (_, i) => `## R${i} Review\n\n## 01-01\n\n### Concerns\n- **LOW:** c${i}\n`).join('\n');
+    expect(read(`---\nreviewers: [r0]\n---\n\n${many}`).reviewers).toHaveLength(20);
+    const concerns = Array.from({ length: 400 }, (_, i) => `- **LOW:** concern number ${i}`).join('\n');
+    expect(read(`## A Review\n\n## 01-01\n\n### Concerns\n${concerns}\n`).reviewers[0].concerns).toHaveLength(300);
+    const long = read(`## A Review\n\n## 01-01\n\n### Concerns\n- **LOW:** ${'x'.repeat(5000)}\n`);
+    expect(long.reviewers[0].concerns[0].text).toHaveLength(2000);
+  });
+
   it('does not count a severity word that opens a suggestion or a sentence', () => {
     const file = read('---\nreviewers: [claude]\n---\n\n## Claude Review\n\n## 01-01\n\n### Suggestions\n- Low-risk shortcuts exist here.\n- High: do it\n');
     expect(file.reviewers[0].concerns).toEqual([]);
+  });
+});
+
+describe('extractReviews - growth (T-10-42)', () => {
+  const head = '## Claude Review\n\n## 01-01\n\n### Concerns\n- **LOW:** a\n\n';
+
+  it('stays linear in the number of lines of one reviewer', () => {
+    const growth = measureGrowth<string>({
+      make: (n) => `${head}${'filler line of review text\n'.repeat(n)}`,
+      run: (body) => extractReviews({}, body),
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('stays linear across twenty reviewers', () => {
+    const growth = measureGrowth<string>({
+      make: (n) =>
+        Array.from({ length: 20 }, (_, r) => `## R${r} Review\n\n## 01-01\n\n### Concerns\n- **LOW:** a ${r}\n\n${'filler line\n'.repeat(Math.ceil(n / 20))}`).join('\n'),
+      run: (body) => extractReviews({}, body),
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('stays linear in the number of headings inside one reviewer, distinct plan ids included', () => {
+    const growth = measureGrowth<string>({
+      make: (n) => `## Claude Review\n\n${Array.from({ length: Math.ceil(n / 10) }, (_, i) => `## ${i}-${i}\n### Verdict\nok\n`).join('')}`,
+      run: (body) => extractReviews({}, body),
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('keeps a 500,000-character body and 2,000 headings inside one reviewer within the caps', () => {
+    const headings = Array.from({ length: 2000 }, (_, i) => `## ${i + 1}-1\n### Concerns\n- **LOW:** c${i}\n`).join('');
+    const file = extractReviews({}, `## Claude Review\n\n${headings}${'filler\n'.repeat(80_000)}`);
+    expect(file.reviewers).toHaveLength(1);
+    expect(file.reviewers[0].planIds.length).toBeLessThanOrEqual(200);
+    expect(file.reviewers[0].concerns.length).toBeLessThanOrEqual(300);
   });
 });

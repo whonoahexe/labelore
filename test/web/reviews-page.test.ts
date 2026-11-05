@@ -2,6 +2,7 @@
 // on the made-up Lendshed reviews (04 three reviewers who disagree and a failed lane, 01 one reviewer). The first screen says
 // who raised which concern; what the reviewers agreed on and where they disagree is derived from their own text, best-effort,
 // and a concern the page cannot match stays under its reviewer.
+import { readFile } from 'node:fs/promises';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
@@ -12,6 +13,7 @@ import type { ViewInput } from '../../src/web/views/manifest.ts';
 import { ReviewsHandler } from '../../src/planning-repo/handlers/reviews.ts';
 import type { ArtifactRef, RawArtifact } from '../../src/planning-repo/types.ts';
 import { fxRead } from '../helpers/fixture-project.ts';
+import { GROWTH_LIMIT, measureGrowth } from '../helpers/growth.ts';
 
 const ONE = fxRead('phases/01-member-sign-in-sessions/01-REVIEWS.md');
 const PATH = '.planning/phases/01-x/01-REVIEWS.md';
@@ -383,5 +385,255 @@ describe('composeReviews - four or more reviewers, and a file that cannot be spl
     const html = markup(model);
     expect(html).toContain('Claude');
     expect(html).not.toContain('Disagreements');
+  });
+});
+
+describe('composeReviews - growth and markup safety', () => {
+  it('composes twenty reviewers of 300 concerns each in linear time', () => {
+    const growth = measureGrowth<unknown>({
+      make: (n) => ({
+        reviewers: Array.from({ length: 20 }, (_, r) => ({
+          name: `R${r}`,
+          status: 'ok',
+          concerns: Array.from({ length: Math.min(300, Math.ceil(n / 20)) }, (_, c) => ({ severity: 'LOW', text: `concern number ${c} of reviewer ${r}`, planId: '01-01' })),
+          plans: [],
+          planIds: ['01-01'],
+          text: '',
+        })),
+        consensus: { concerns: [] },
+      }),
+      run: (structured) => composeReviews(inputOf(structured)),
+      startSize: 160,
+      maxSize: 6000,
+      minBaseMs: 0,
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('renders planted markup in a reviewer, a concern and the consensus as escaped text, and writes no link', () => {
+    const planted = '<img src=x onerror=alert(1)> `code` **bold**';
+    const model = composeFile(
+      `---\nreviewers: [a, b]\n---\n\n## A Review\n\n## 09-01\n\n### Concerns\n- **HIGH:** ${planted}\n\n## B Review\n\n${planted}\n\n## C Review\n\n## 09-01\n\n### Concerns\n- **LOW:** c c c c\n\n## D Review\n\n## 09-01\n\n### Concerns\n- **LOW:** d d d d\n\n## E Review\n\n## 09-01\n\n### Concerns\n- **LOW:** e e e e\n\n## Consensus Summary\n\n${planted}\n`,
+    )!;
+    // Five reviewers: the roster layout lists every concern as a row, so the planted text reaches the markup.
+    expect(model.layout).toBe('roster');
+    const html = markup(model);
+    expect(html).not.toContain('<img');
+    expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;');
+    expect(html).not.toContain('href=');
+  });
+
+  it('keeps a reviewer name of __proto__ or constructor harmless', () => {
+    const model = composeFile('---\nreviewers: [a]\n---\n\n## constructor Review\n\n## 01-01\n\n### Concerns\n- **LOW:** a b c d\n\n## __proto__ Review\n\n## 01-01\n\n### Concerns\n- **LOW:** a b c d\n')!;
+    expect(model.reviewers.map((r) => r.name)).toEqual(['constructor', '__proto__']);
+    expect(model.agreed).toHaveLength(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The view contract: source-text checks in the spec-view-contract idiom (no AST tooling). Comments are stripped before
+// every negative check.
+// ---------------------------------------------------------------------------
+
+async function source(path: string): Promise<string> {
+  return await readFile(new URL(`../../${path}`, import.meta.url), 'utf8');
+}
+
+const RAW_HTML_PROP = 'dangerously' + 'SetInnerHTML';
+const START = '/* phase-10-reviews:start */';
+const END = '/* phase-10-reviews:end */';
+const COMPOSER = 'src/web/views/reviews-page.ts';
+const COMPONENTS = 'src/web/views/reviews-page-components.tsx';
+const GEOMETRY = 'src/web/views/reviews-overlap.ts';
+const EXTRACTOR = 'src/planning-repo/handlers/reviews-body.ts';
+const HANDLER = 'src/planning-repo/handlers/reviews.ts';
+const ALLOWED_SIZES = ['var(--fs-2)', 'var(--fs-4)', 'var(--fs-7)', 'var(--fs-display-3)', 'inherit'];
+
+function stripSourceComments(text: string): string {
+  return text
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*\/\/.*$/gm, '')
+    .replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
+}
+
+function stripCssComments(text: string): string {
+  return text.replace(/\/\*[\s\S]*?\*\//g, '');
+}
+
+/** A tone this page must never write: the parse-degradation tones and the pass tone. */
+function writesForbiddenTone(text: string): boolean {
+  return (
+    /tone[A-Za-z]*\s*[:=]\s*['"](destructive|warning|complete)['"]/.test(text) ||
+    /data-tone="(destructive|warning|complete)"/.test(text) ||
+    /'(destructive|warning)'\s*\|/.test(text) ||
+    /\|\s*'(destructive|warning)'/.test(text)
+  );
+}
+
+function writesLink(text: string): boolean {
+  return /\bhref\s*[=:]/.test(text) || /\bto=/.test(text) || /<(a|Link|NavLink)[\s>]/.test(text);
+}
+
+function buildsRegExp(text: string): boolean {
+  return /new\s+RegExp\s*\(/.test(text) || /\bRegExp\s*\(/.test(text);
+}
+
+function usesRegexLiteral(text: string): boolean {
+  return /\.(test|exec|match|matchAll|replace|replaceAll|split|search)\(\s*\//.test(text);
+}
+
+function importsFilesystem(text: string): boolean {
+  return /from 'node:(fs|path)|from 'fs'/.test(text);
+}
+
+function hasModuleLevelLet(text: string): boolean {
+  return /^(export\s+)?let\s/m.test(text);
+}
+
+function cssViolations(block: string): string[] {
+  const found: string[] = [];
+  if (/--destructive|--warning/.test(block)) found.push('parse-degradation token');
+  if (/\boklch\(|\brgb\(|\bhsl\(/.test(block)) found.push('colour function');
+  if (/:[^;{}]*#[0-9a-fA-F]{3,8}\b/.test(block)) found.push('hex colour');
+  if (/radius\s*:/.test(block)) found.push('radius');
+  if (/color-mix\(/.test(block)) found.push('color-mix recipe');
+  if (/@keyframes/.test(block)) found.push('keyframes');
+  if (/\banimation\b/.test(block)) found.push('animation');
+  if (/\btransition\b/.test(block)) found.push('transition');
+  if (/:root/.test(block)) found.push(':root');
+  return found;
+}
+
+function fontSizes(block: string): string[] {
+  return [...block.matchAll(/font-size\s*:\s*([^;]+);/g)].map((m) => m[1].trim());
+}
+
+function reviewsBlock(css: string): string {
+  const start = css.indexOf(START);
+  const end = css.indexOf(END);
+  expect(start).toBeGreaterThan(-1);
+  expect(end).toBeGreaterThan(start);
+  return css.slice(start, end);
+}
+
+describe('cross-AI reviews view contract - helpers catch planted violations', () => {
+  it('flags each forbidden thing in an in-memory string', () => {
+    expect(writesForbiddenTone("const tone = 'destructive';")).toBe(true);
+    expect(writesForbiddenTone('<i data-tone="complete" />')).toBe(true);
+    expect(writesLink('<a href={ref}>x</a>')).toBe(true);
+    expect(buildsRegExp('const re = new RegExp(ref);')).toBe(true);
+    expect(usesRegexLiteral("text.replace(/a/g, '')")).toBe(true);
+    expect(importsFilesystem("import { readFileSync } from 'node:fs';")).toBe(true);
+    expect(hasModuleLevelLet('let cache = null;\nexport const x = 1;')).toBe(true);
+    expect(cssViolations('a { color: color-mix(in oklch, red, blue); }')).toContain('color-mix recipe');
+    expect(fontSizes('a { font-size: var(--fs-5); }')).toEqual(['var(--fs-5)']);
+  });
+
+  it('passes clean strings', () => {
+    expect(writesForbiddenTone("type ReviewsTone = 'missing' | 'in-flight' | 'quiet';")).toBe(false);
+    expect(writesLink('<button onClick={() => open()}>x</button>')).toBe(false);
+    expect(cssViolations('a { color: var(--primary); }')).toEqual([]);
+  });
+});
+
+describe('cross-AI reviews view contract - the real sources', () => {
+  it('the components render no raw HTML and no link, and write no destructive, warning or complete tone', async () => {
+    const code = stripSourceComments(await source(COMPONENTS));
+    expect(code.includes(RAW_HTML_PROP)).toBe(false);
+    expect(writesLink(code)).toBe(false);
+    expect(writesForbiddenTone(code)).toBe(false);
+    expect(code).toContain('aria-hidden="true"');
+  });
+
+  it('author text goes through ResearchInline as React text, never straight into markup', async () => {
+    const code = stripSourceComments(await source(COMPONENTS));
+    expect(code).toContain("from '../pages/research-atoms.tsx'");
+    expect(code).toContain('<ResearchInline text={concern.text} />');
+    expect(code).toContain('<ResearchInline text={agreed.text} />');
+    expect(code).toContain('<ResearchInline text={item} />');
+  });
+
+  it('the composer writes only three tones, holds the word tables as Maps and writes the copy rows', async () => {
+    const code = stripSourceComments(await source(COMPOSER));
+    expect(code).toContain("export type ReviewsTone = 'missing' | 'in-flight' | 'quiet';");
+    expect(writesForbiddenTone(code)).toBe(false);
+    expect(code).toContain('export const SEVERITY_TABLE');
+    expect(code).toContain('export const STANCE_WORDS');
+    expect(code).toContain('Reviewers disagree');
+    expect(code).toContain('Consensus summary, as the file wrote it');
+  });
+
+  it('holds no single overall verdict field: disagreeing reviewers are never merged', async () => {
+    const code = stripSourceComments(await source(COMPOSER));
+    const iface = code.slice(code.indexOf('export interface ComposedReviews {'), code.indexOf('function isRecord'));
+    expect(iface.toLowerCase()).not.toMatch(/verdict\s*:|overallrisk\s*:|consensus\w*\s*:\s*(string|ReviewSeverity)/);
+  });
+
+  it('the composer, the geometry, the extractor and the handler build no regular expression, use no regex literal and import no filesystem module', async () => {
+    for (const path of [COMPOSER, GEOMETRY, EXTRACTOR, HANDLER]) {
+      const code = stripSourceComments(await source(path));
+      expect(buildsRegExp(code), path).toBe(false);
+      expect(usesRegexLiteral(code), path).toBe(false);
+      expect(importsFilesystem(code), path).toBe(false);
+    }
+  });
+
+  it('the composer and the geometry hold no module-level mutable state', async () => {
+    for (const path of [COMPOSER, GEOMETRY]) {
+      const code = stripSourceComments(await source(path));
+      expect(hasModuleLevelLet(code), path).toBe(false);
+      expect(code, path).not.toMatch(/^(export\s+)?var\s/m);
+    }
+  });
+
+  it('the extractor is capped: the body, the reviewers, the concerns and every line', async () => {
+    const code = stripSourceComments(await source(EXTRACTOR));
+    expect(code).toContain('REVIEWS_BODY_CAP');
+    expect(code).toContain('REVIEWS_REVIEWER_CAP');
+    expect(code).toContain('REVIEWS_CONCERN_CAP');
+    expect(code).toContain('REVIEWS_TEXT_CAP');
+    expect(code).toContain('eachLineOutsideFences');
+  });
+
+  it('artifact-page.tsx draws this kind from the composed model in View mode, and the manifest keeps its lead and fallback', async () => {
+    const code = stripSourceComments(await source('src/web/pages/artifact-page.tsx'));
+    expect(code).toContain('<ReviewsView key={artifact.path} model={reviewsPageCover} />');
+    expect(code).toContain('manifest.reviewsPage?.(viewInput)');
+    const manifests = await source('src/web/views/manifests.ts');
+    expect(manifests.match(/reviewsPage: composeReviews/g)).toHaveLength(1);
+    expect(manifests).toContain("What each AI reviewer said about this phase's plans");
+    expect(manifests).toContain("promote: [{ type: 'section', heading: /\\S/, all: true }],\n    // The Cross-AI reviews page");
+  });
+
+  it('the CSS block holds the page and nothing else, with no colour recipe and only the four contracted font sizes', async () => {
+    const css = await source('src/web/styles/globals.css');
+    const block = reviewsBlock(css);
+    expect(cssViolations(stripCssComments(block))).toEqual([]);
+    expect(css.replace(block, '')).not.toMatch(/\.view-reviews-/);
+    expect(stripCssComments(block)).not.toMatch(/\.status-square/);
+    const sizes = fontSizes(stripCssComments(block));
+    expect(sizes.length).toBeGreaterThan(10);
+    for (const size of sizes) expect(ALLOWED_SIZES, size).toContain(size);
+    for (const selector of ['.view-reviews-page', '.view-reviews-row', '.view-reviews-fig', '.view-reviews-dis', '.view-reviews-bar']) {
+      expect(block, selector).toContain(selector);
+    }
+  });
+
+  it('keeps HIGH and MEDIUM apart by shape: an outline square and a filled one, and LOW dashed', async () => {
+    const block = stripCssComments(reviewsBlock(await source('src/web/styles/globals.css')));
+    expect(block).toMatch(/rect\[data-tone='missing'\]\s*\{[^}]*stroke-width: 2/);
+    expect(block).toMatch(/rect\[data-tone='in-flight'\]\s*\{[^}]*fill: var\(--in-flight-fill\)/);
+    expect(block).toMatch(/rect\[data-tone='quiet'\]\s*\{[^}]*stroke-dasharray/);
+  });
+
+  it('records the tone uses and the page bullet in design-language.md', async () => {
+    const doc = await source('docs/design-language.md');
+    expect(doc).toContain('The Cross-AI reviews page.');
+    expect(doc).toContain('(Phase 10, 10-22)');
+    for (const tone of ['in-flight', 'missing', 'quiet']) {
+      const row = doc.split('\n').find((line) => line.startsWith(`| \`${tone}\``))!;
+      expect(row, tone).toContain('(Phase 10, 10-22) on the Cross-AI reviews page');
+    }
+    expect(doc.split('\n').find((line) => line.startsWith('| `complete`'))!).not.toContain('Cross-AI reviews');
   });
 });
