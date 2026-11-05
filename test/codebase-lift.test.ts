@@ -5,6 +5,9 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { tryParseFrontmatter } from '../src/planning-repo/frontmatter.ts';
 import {
+  CONCERN_ITEM_CAP,
+  CONCERN_LINES_CAP,
+  CONCERN_LINE_CHARS,
   FIGURE_LINES_CAP,
   FIGURE_TEXT_CAP,
   extractCodebase,
@@ -332,9 +335,10 @@ describe('the Concerns lift', () => {
     ]);
   });
 
-  it('keeps the body out of the projection', () => {
+  it('keeps each concern its own lines and nothing else of the body', () => {
     const json = JSON.stringify(lift('concerns').concerns);
-    expect(json).not.toContain('tide job deletes');
+    expect(json).toContain('tide job deletes');
+    expect(json).not.toContain('Concerns audit');
   });
 
   it('gives a document with no sections zero and eight-plus missing keys', () => {
@@ -465,5 +469,78 @@ describe('the Structure lift (10-12)', () => {
   it('leaves a tree over the caps to the plain section, whole', () => {
     const tall = Array.from({ length: FIGURE_LINES_CAP + 5 }, (_, i) => `├── d${i}/`).join('\n');
     expect(structure(`## Directory Layout\n\n\`\`\`\nroot/\n${tall}\n\`\`\`\n`).structure?.tree).toBeNull();
+  });
+});
+
+describe('the Concerns items (10-12)', () => {
+  const lifted = lift('concerns').concerns!;
+  const section = (heading: string) => lifted.sections.find((entry) => entry.heading === heading)!;
+
+  it('lists every Tidemark concern in each section, so the items listed are exactly the ones counted', () => {
+    for (const entry of lifted.sections) expect(entry.items.length, entry.heading).toBe(entry.count);
+    expect(lifted.sections.reduce((sum, entry) => sum + entry.items.length, 0)).toBe(14);
+  });
+
+  it('keeps a ### subsection as a label over its own field lines', () => {
+    expect(section('Tech Debt').items[0]).toEqual({
+      label: 'Window rebuild on every refresh',
+      lines: [
+        '- Issue: The tide job deletes and rewrites all windows instead of changing the ones that moved',
+        '- Files: `server/tides/refresh.ts`, `server/store/index.ts`',
+        '- Impact: A request checked during a refresh can see no window at all',
+        '- Fix approach: Write the new windows in one transaction and swap them in',
+      ],
+    });
+  });
+
+  it('keeps a plain bullet as its own first line, with no label', () => {
+    const items = section('Fragile Areas').items;
+    expect(items).toHaveLength(3);
+    for (const item of items) expect(item.label).toBeNull();
+    expect(items[0].lines[0]).not.toMatch(/^- /);
+  });
+
+  it('keeps a table row as its first cell over header: cell lines', () => {
+    const items = section('Scaling Limits').items;
+    expect(items).toHaveLength(2);
+    expect(items[0].label).not.toBe('');
+    expect(items[0].lines.every((line) => line.includes(': '))).toBe(true);
+  });
+
+  it('lists nothing for a section that counts zero', () => {
+    expect(section('Dependencies at Risk').items).toEqual([]);
+    expect(section('Test Coverage Gaps').items).toEqual([]);
+  });
+
+  it('leaves out a group whose first field says None, as the count does', () => {
+    const result = concerns('## Tech Debt\n\n**Real:**\n- Issue: a\n\n**Empty:**\n- Issue: None\n')!;
+    expect(result.sections[0].count).toBe(1);
+    expect(result.sections[0].items.map((item) => item.label)).toEqual(['Real']);
+  });
+
+  it('lists all 40 items of a section with 40 groups', () => {
+    const body = `## Tech Debt\n\n${Array.from({ length: 40 }, (_, i) => `**Item ${i}:**\n- Issue: thing ${i}\n- Files: \`a/${i}.ts\`\n`).join('\n')}`;
+    const result = concerns(body)!;
+    expect(result.sections[0].count).toBe(40);
+    expect(result.sections[0].items).toHaveLength(40);
+    expect(result.sections[0].items[39]).toEqual({ label: 'Item 39', lines: ['- Issue: thing 39', '- Files: `a/39.ts`'] });
+  });
+
+  it('keeps at most 500 items a section and 60 lines of 2,000 characters a concern, the count staying true', () => {
+    const many = concerns(`## Fragile Areas\n\n${'- one more fragile thing\n'.repeat(600)}`)!;
+    expect(many.sections[0].count).toBe(600);
+    expect(many.sections[0].items).toHaveLength(CONCERN_ITEM_CAP);
+    const long = concerns(
+      `## Tech Debt\n\n**Big:**\n${Array.from({ length: 80 }, (_, i) => `- Note ${i}: ${'x'.repeat(2500)}`).join('\n')}\n`,
+    )!;
+    expect(long.sections[0].items[0].lines).toHaveLength(CONCERN_LINES_CAP);
+    expect(long.sections[0].items[0].lines[0].length).toBe(CONCERN_LINE_CHARS);
+  });
+
+  it('gives a continuation line to the concern it follows and ignores a bold line inside a fence for the count', () => {
+    const result = concerns('## Tech Debt\n\n**Real:**\n- Issue: a\n  and more\n\n```md\n**Fake:**\n```\n')!;
+    expect(result.sections[0].count).toBe(1);
+    expect(result.sections[0].items[0].lines[0]).toBe('- Issue: a');
+    expect(result.sections[0].items[0].lines).toContain('  and more');
   });
 });
