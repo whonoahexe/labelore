@@ -2,7 +2,7 @@
 sketch: 043
 name: codebase-architecture-structure
 question: "Inside 042's winning Rail + column frame, how should the Architecture and Structure panels arrange the system diagram, the component table, the anti-pattern swaps, the directory tree and the 'Where to add new code' lookup?"
-winner: null
+winner: "synthesis"
 tags: [codebase, architecture, structure, diagram, tree]
 ---
 
@@ -227,4 +227,28 @@ heading, `--fs-4` body, `--fs-2` label) in D, E and F. No exception needed.
 - For Structure only: treemap (D), territory tiles (E) or sunburst (F)?
 
 ## Winner
-Not chosen yet. Round 1 (A, B, C) was rejected; round 2 (D, E, F) is the 10-09 checkpoint choice, together with sketch 044.
+**Reuse, no new variant** (recorded as `synthesis` in the frontmatter so the plan's acceptance grep reads it; the
+decision is "reuse the shipped figures"). User, at the 10-09 checkpoint, after round 1 (A, B, C) was rejected as "plain
+boring wall of texts" and round 2 (D, E, F) was shown: "for 43, keep our original architecture diagrams that we have
+planned before, we already have a component for that." Round 1 and round 2 stay in this folder as the record; none of
+them is built.
+
+The Architecture and Structure panels are built from the components already shipped for the RESEARCH page, inside 042 A's
+frame (Rail + column):
+
+| Part of the panel | Shipped component to build against | Sketch it came from |
+|-------------------|------------------------------------|---------------------|
+| System Overview diagram | `LaneDiagramFigure({ text, title, caption })` in `src/web/components/lane-diagram.tsx` (lanes by kind, with its own "Shown as drawn" chip and fallback `AsDrawn`, which shows `LiftedDiagram` from `src/web/components/lifted-diagram.tsx`); framed by `FigureFrame` in `src/web/components/figure-frame.tsx`. `FencedFigure({ text, title, caption })` / `FigureFor` in `src/web/components/fenced-figure.tsx` choose diagram or tree from the fence text (`classifyFence` in `src/rendering/figure-detect.ts`) and fall back to `PlainDiagram` for a figure the lift rejects | 012 B (lane diagram), 009 B (lifted figure) |
+| Directory Layout tree, titled "Directory structure" | `CleanTreeFigure({ text, title, caption })` / `CleanTree` in `src/web/components/clean-tree.tsx` (model: `parseTree`, `collapseFolderChains`, `treeCounts` in `src/rendering/ascii-tree.ts`) | 009 B (clean list tree) |
+| Anti-Patterns as swaps | `SwapRows({ items })` in `src/web/pages/research-atoms.tsx`; items are `SwapItem { bad, good, details: [{label, text}] }` from `src/presentation/project-research-panels.ts` | 032 A (swaps) |
+
+Parts with **no shipped component** (component table, Entry Points, Pattern Overview, "Where to add new code", Directory
+Purposes, and the plain sections): they render as the 042 frame's plain or keyed sections (the generic document form
+and the lifted rows UI-SPEC section 2 names) unless 10-12's plan says otherwise. Nothing from round 1 or round 2 is a
+design for them.
+
+Checked against the repository at this commit: the components and exports above exist. `classifyFence('text', ...)` on
+Labelore's own System Overview returns `diagram`, `liftDiagram` lifts it to 7 nodes and `buildDiagramGraph` reports it
+not thin (quality 0.79); on the Tidemark fixture it lifts to 3 nodes, not thin (quality 0.77); Labelore's Directory
+Layout classifies as `tree`. Whether the lane diagram puts each Labelore box in a sensible lane is not checked here:
+its lane kinds come from keyword lists written for RESEARCH diagrams (open item for 10-12, see the SUMMARY).

@@ -2,7 +2,7 @@
 sketch: 044
 name: codebase-concerns
 question: "Inside 042's winning Rail + column frame, how should the Concerns panel show a count per section (Security first), keep every concern readable in full on demand, and decide whether one quiet 'Most dangerous' line earns its place?"
-winner: null
+winner: "E"
 tags: [codebase, concerns, counts, security]
 ---
 
@@ -199,5 +199,16 @@ for counts and headings, `--fs-4` body, `--fs-2` labels). No exception needed.
 - The "Most dangerous" decision: a ring (D, E), a callout with the title on the picture (F), or none.
 
 ## Winner
-Not chosen yet. Round 1 (A, B, C) was rejected; round 2 (D, E, F) is the 10-09 checkpoint choice, together with sketch
-043 and whether "Most dangerous" stays.
+**E: Risk piles**, chosen by the user at the 10-09 checkpoint after round 1 (A, B, C) was rejected as "plain boring wall of
+texts" and round 2 (D, E, F) was shown: "for 44, E seems fine." No synthesis.
+
+Build E as drawn in its tab (marked "★ Selected"): nine columns across the panel, one per section, Security first and the
+rest in the document's order; each concern one segment stacked from the baseline, so a dense section piles up; the
+count and the section's square tone under each column (Security `in-flight` above zero, `complete` at zero, a dashed
+`quiet` square and a dashed zero box for an empty section); a mark's opacity step follows its Priority field when it
+states one; selecting a segment opens that concern under the picture; the section chips filter the segments; the nine
+sections stay as closed accordion bars under the picture, each holding its concerns with every field. At 390px the
+columns stay nine and the column labels give way to the chips under the picture.
+
+**"Most dangerous": kept**, as E draws it: an accent ring on the mark (the first Security item, else the first Tech Debt
+item) and a key in the picture's foot, no sentence and no pull line. F's callout with the title is not built.
