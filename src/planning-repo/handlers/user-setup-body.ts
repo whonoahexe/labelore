@@ -13,7 +13,7 @@
 // document text. The body is capped at FENCED_BODY_CAP characters (250,000), steps and variables at 200, sections at
 // 200, lines per section at 2,000 and every cell, field and line at 400 characters (T-10-35).
 import { eachLineOutsideFences, scanFencedLines, splitBodyLines } from './fenced-sections.ts';
-import { withholdValue } from './withhold-values.ts';
+import { maskValues, withholdValue } from './withhold-values.ts';
 
 /** The most steps and the most variables kept. */
 export const USER_SETUP_STEP_CAP = 200;
@@ -83,9 +83,10 @@ export interface UserSetupBody {
   sections: UserSetupSection[];
 }
 
-/** Every stored string passes here: capped, then (10-19 Task 2) masked. */
+/** Every stored string passes here: capped, then masked, so no value a person pasted beside a variable's name is kept
+ * (T-10-33). A variable's name goes through `withholdValue` instead and keeps only the name. */
 function keep(text: string): string {
-  return text.length > USER_SETUP_CELL_CAP ? text.slice(0, USER_SETUP_CELL_CAP) : text;
+  return maskValues(text.length > USER_SETUP_CELL_CAP ? text.slice(0, USER_SETUP_CELL_CAP) : text);
 }
 
 /** The cells of a table row, the outer pipes dropped, each trimmed. */
@@ -162,10 +163,10 @@ function readVariableTable(lines: readonly string[], group: string, into: Collec
     const cells = splitCells(t);
     const cell = cells[iVariable] ?? '';
     const withheld = withholdValue(cell);
-    const name = withheld !== null ? withheld.name : keep(stripTicks(cell));
+    const name = withheld !== null ? withheld.name : stripTicks(keep(cell));
     const hadValue = withheld !== null && withheld.hadValue;
     const source = iSource >= 0 && (cells[iSource] ?? '') !== '' ? keep(cells[iSource]) : null;
-    const destination = iTo >= 0 && (cells[iTo] ?? '') !== '' ? keep(stripTicks(cells[iTo])) : null;
+    const destination = iTo >= 0 && (cells[iTo] ?? '') !== '' ? stripTicks(keep(cells[iTo])) : null;
     const hasStatus = iStatus >= 0;
     const done = hasStatus ? boxOf(cells[iStatus] ?? '') : null;
     const asStep = hasStatus && into.steps.length < USER_SETUP_STEP_CAP;
@@ -229,7 +230,7 @@ function readChecklist(lines: readonly string[], group: string, into: Collector)
     if (item !== null) {
       current = {
         kind: stepKindOf(group),
-        title: keep(itemTitle(item.text)),
+        title: itemTitle(keep(item.text)),
         done: item.done,
         group,
         hadValue: false,
@@ -282,23 +283,8 @@ function isHeadScaffold(line: string): boolean {
   return false;
 }
 
-/** Reads a USER-SETUP.md body. Never throws on text; bounded and linear. */
-export function extractUserSetup(body: string): UserSetupBody {
-  const lines = splitBodyLines(body);
-  const ranges = scanFencedLines(lines).filter((section) => section.level === 2);
-  const headEnd = ranges.length > 0 ? ranges[0].startLine : lines.length;
-
-  let generated: string | null = null;
-  let phase: string | null = null;
-  let status: string | null = null;
-  let hasIntro = false;
-  eachLineOutsideFences(lines, 0, headEnd, (line) => {
-    if (generated === null) generated = labelValue(line, 'Generated');
-    if (phase === null) phase = labelValue(line, 'Phase');
-    if (status === null) status = labelValue(line, 'Status');
-    if (!hasIntro && !isHeadScaffold(line)) hasIntro = true;
-  });
-
+/** The step reading of the sections: variables and checklist items. */
+function readSteps(lines: readonly string[], ranges: readonly { heading: string; startLine: number; endLine: number }[]): Collector {
   const collected: Collector = { variables: [], steps: [] };
   for (const range of ranges) {
     const group = keep(range.heading);
@@ -309,7 +295,14 @@ export function extractUserSetup(body: string): UserSetupBody {
     readVariableTable(outside, group, collected);
     readChecklist(outside, group, collected);
   }
+  return collected;
+}
 
+/** Every `##` section as masked lines. */
+function readSections(
+  lines: readonly string[],
+  ranges: readonly { heading: string; startLine: number; endLine: number }[],
+): UserSetupSection[] {
   const sections: UserSetupSection[] = [];
   for (const range of ranges) {
     if (sections.length >= USER_SETUP_SECTION_CAP) break;
@@ -317,6 +310,43 @@ export function extractUserSetup(body: string): UserSetupBody {
     const to = Math.min(range.endLine, range.startLine + 1 + USER_SETUP_LINE_CAP);
     for (let i = range.startLine + 1; i < to; i += 1) stored.push(keep(lines[i]));
     sections.push({ heading: keep(range.heading), lines: stored });
+  }
+  return sections;
+}
+
+/** Reads a USER-SETUP.md body. Never throws on text; bounded and linear. The step reading and the sections sit in their
+ * own guards, so a throw in one leaves the other: a file whose steps cannot be read still gives its masked sections. */
+export function extractUserSetup(body: string): UserSetupBody {
+  const lines = splitBodyLines(body);
+  const ranges = scanFencedLines(lines).filter((section) => section.level === 2);
+  const headEnd = ranges.length > 0 ? ranges[0].startLine : lines.length;
+
+  let generated: string | null = null;
+  let phase: string | null = null;
+  let status: string | null = null;
+  let hasIntro = false;
+  try {
+    eachLineOutsideFences(lines, 0, headEnd, (line) => {
+      if (generated === null) generated = labelValue(line, 'Generated');
+      if (phase === null) phase = labelValue(line, 'Phase');
+      if (status === null) status = labelValue(line, 'Status');
+      if (!hasIntro && !isHeadScaffold(line)) hasIntro = true;
+    });
+  } catch {
+    // The head is optional: the steps and sections below do not need it.
+  }
+
+  let collected: Collector = { variables: [], steps: [] };
+  try {
+    collected = readSteps(lines, ranges);
+  } catch {
+    collected = { variables: [], steps: [] };
+  }
+  let sections: UserSetupSection[] = [];
+  try {
+    sections = readSections(lines, ranges);
+  } catch {
+    sections = [];
   }
 
   const doneCount = collected.steps.filter((step) => step.done === true).length;
