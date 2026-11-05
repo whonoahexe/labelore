@@ -9,14 +9,20 @@
 // composed model carries and the theme tokens; nothing here is destructive, a warning or drawn missing: above the
 // gate is waiting (`in-flight`), not failure.
 import { useId, useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { ResearchInline } from '../pages/research-atoms.tsx';
 import { splitPhaseTitle } from '../pages/document-title.ts';
+import { stripLeadingHeading } from './document-sections.ts';
 import { NOT_SCORED_LABEL, NO_ACCEPTANCE_LABEL, UNSCORED_COLUMNS } from './spec-page.ts';
 import type {
   ComposedSpec,
+  ComposedSpecBar,
+  ComposedSpecBoundaries,
   ComposedSpecColumn,
   ComposedSpecField,
+  ComposedSpecMark,
   ComposedSpecRequirement,
+  ComposedSpecSourceOnly,
 } from './spec-page.ts';
 
 /** Every field optional on purpose: the page spreads this over ArtifactHeader's own props, and a Partial keeps
@@ -79,7 +85,7 @@ function VerdictCell({ model }: { model: ComposedSpec }): React.JSX.Element {
   return (
     <div className="view-spec-cell view-spec-lead">
       <span className="status-chip view-spec-verdict" data-tone={verdict.tone}>
-        <i className="status-square" data-tone={verdict.tone} aria-hidden="true" />
+        <i className="status-square view-spec-sq-m" data-tone={verdict.tone} aria-hidden="true" />
         {verdict.label}
       </span>
       {verdict.numbers !== null ? (
@@ -115,7 +121,7 @@ function DimensionCell({ column }: { column: ComposedSpecColumn }): React.JSX.El
         {column.statusLabel !== null ? (
           <span className="view-spec-status" data-tone={column.statusTone ?? undefined}>
             <i
-              className="status-square"
+              className="status-square view-spec-sq-s"
               data-tone={column.statusTone ?? undefined}
               role="img"
               aria-label={column.statusLabel}
@@ -202,7 +208,7 @@ function FieldCell({ field }: { field: ComposedSpecField }): React.JSX.Element {
     <span className="view-spec-field-cell" data-label={field.label}>
       {field.value !== null ? (
         <i
-          className="status-square view-spec-square"
+          className="status-square view-spec-square view-spec-sq-l"
           role="img"
           aria-label={`${field.label} stated`}
         />
@@ -210,7 +216,7 @@ function FieldCell({ field }: { field: ComposedSpecField }): React.JSX.Element {
         <NoAcceptanceChip />
       ) : (
         <i
-          className="status-square view-spec-square"
+          className="status-square view-spec-square view-spec-sq-l"
           data-tone="quiet"
           role="img"
           aria-label={`${field.label} not stated`}
@@ -269,10 +275,40 @@ function OpenRequirement({
   );
 }
 
+/** The marks one edge or prohibition table gives a requirement: a square each, or a dash when none names it. */
+function MarkCell({
+  marks,
+  label,
+}: {
+  marks: ComposedSpecMark[];
+  label: string;
+}): React.JSX.Element {
+  return (
+    <span className="view-spec-field-cell" data-label={label}>
+      {marks.length === 0 ? (
+        <span className="view-spec-meta">–</span>
+      ) : (
+        marks.map((mark, index) => (
+          <i
+            key={index}
+            className="status-square view-spec-sq-l"
+            data-tone={mark.tone}
+            role="img"
+            aria-label={`${mark.word}: ${mark.label}`}
+            title={`${mark.word} · ${mark.label}`}
+          />
+        ))
+      )}
+    </span>
+  );
+}
+
 function RequirementRow({
   requirement,
+  coverage,
 }: {
   requirement: ComposedSpecRequirement;
+  coverage: boolean;
 }): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const panelId = useId();
@@ -292,6 +328,12 @@ function RequirementRow({
         {requirement.fields.map((field) => (
           <FieldCell key={field.key} field={field} />
         ))}
+        {coverage ? (
+          <>
+            <MarkCell marks={requirement.edges} label="Edges" />
+            <MarkCell marks={requirement.prohibitions} label="Must-not" />
+          </>
+        ) : null}
       </button>
       {open ? <OpenRequirement requirement={requirement} id={panelId} /> : null}
     </li>
@@ -310,28 +352,62 @@ function Matrix({ model }: { model: ComposedSpec }): React.JSX.Element | null {
           <span className="view-spec-meta">{model.countLine}</span>
         ) : null}
       </div>
-      <div className="view-spec-matrix">
+      <div className="view-spec-matrix" data-coverage={model.hasCoverage ? 'true' : 'false'}>
         <div className="view-spec-matrix-head" aria-hidden="true">
           <span className="view-spec-key">#</span>
           <span className="view-spec-key">Requirement</span>
           <span className="view-spec-key">Current</span>
           <span className="view-spec-key">Target</span>
           <span className="view-spec-key">Acceptance</span>
+          {model.hasCoverage ? (
+            <>
+              <span className="view-spec-key">Edges</span>
+              <span className="view-spec-key">Must-not</span>
+            </>
+          ) : null}
         </div>
         <ol className="view-spec-items">
           {model.requirements.map((requirement, index) => (
-            <RequirementRow key={`${requirement.n}-${index}`} requirement={requirement} />
+            <RequirementRow
+              key={`${requirement.n}-${index}`}
+              requirement={requirement}
+              coverage={model.hasCoverage}
+            />
           ))}
         </ol>
         <div className="view-spec-matrix-key">
           <span>
-            <i className="status-square view-spec-square" aria-hidden="true" />
+            <i className="status-square view-spec-square view-spec-sq-s" aria-hidden="true" />
             field stated
           </span>
           <span>
-            <i className="status-square" data-tone="quiet" aria-hidden="true" />
+            <i className="status-square view-spec-sq-s" data-tone="quiet" aria-hidden="true" />
             not stated
           </span>
+          {model.hasCoverage ? (
+            <>
+              <span>
+                <i
+                  className="status-square view-spec-sq-s"
+                  data-tone="complete"
+                  aria-hidden="true"
+                />
+                edge or must-not covered, backstopped or resolved
+              </span>
+              <span>
+                <i
+                  className="status-square view-spec-sq-s"
+                  data-tone="in-flight"
+                  aria-hidden="true"
+                />
+                unresolved: the planner treats it as an assumption
+              </span>
+              <span>
+                <i className="status-square view-spec-sq-s" data-tone="quiet" aria-hidden="true" />
+                dismissed
+              </span>
+            </>
+          ) : null}
         </div>
       </div>
       {model.omittedNote !== null ? <p className="source-note">{model.omittedNote}</p> : null}
@@ -339,7 +415,116 @@ function Matrix({ model }: { model: ComposedSpec }): React.JSX.Element | null {
   );
 }
 
-export function SpecView({ model }: { model: ComposedSpec }): React.JSX.Element {
+/** The scope as a fence: In scope inside a hard-ruled box, Out of scope outside it with each reason kept. */
+function Fence({ boundaries }: { boundaries: ComposedSpecBoundaries }): React.JSX.Element {
+  return (
+    <section className="view-spec-block" aria-labelledby="view-spec-boundaries-h">
+      <h2 className="view-spec-h" id="view-spec-boundaries-h">
+        Boundaries
+      </h2>
+      <div className="view-spec-fence">
+        {boundaries.inScope.length > 0 ? (
+          <div className="view-spec-fence-in">
+            <span className="view-spec-fence-label view-spec-key">
+              <i className="status-square view-spec-sq-s" data-tone="complete" aria-hidden="true" />
+              In scope · {boundaries.inScope.length}
+            </span>
+            <ul className="view-spec-fence-tiles">
+              {boundaries.inScope.map((text, index) => (
+                <li key={index} className="view-spec-fence-tile">
+                  <ResearchInline text={text} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+        {boundaries.outOfScope.length > 0 ? (
+          <div className="view-spec-fence-out">
+            <span className="view-spec-fence-label view-spec-key">
+              <i className="status-square view-spec-sq-s" data-tone="quiet" aria-hidden="true" />
+              Out of scope · {boundaries.outOfScope.length}
+            </span>
+            <ul className="view-spec-fence-list">
+              {boundaries.outOfScope.map((item, index) => (
+                <li key={index}>
+                  <i
+                    className="status-square view-spec-sq-s"
+                    data-tone="quiet"
+                    aria-hidden="true"
+                  />
+                  <span>
+                    <ResearchInline text={item.item} />
+                  </span>
+                  {item.reason !== null ? (
+                    <span className="view-spec-why">
+                      — <ResearchInline text={item.reason} />
+                    </span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+/** A section the page does not draw: a closed native bar holding the section as the document renders it. */
+function Bar({
+  bar,
+  renderHtml,
+}: {
+  bar: ComposedSpecBar;
+  renderHtml: (html: string) => React.ReactNode;
+}): React.JSX.Element {
+  return (
+    <details className="view-spec-bar">
+      <summary className="view-spec-bar-sum">
+        <ChevronRight className="view-spec-bar-chev" aria-hidden="true" />
+        <span className="view-spec-bar-name">
+          <ResearchInline text={bar.heading} />
+        </span>
+      </summary>
+      <div className="view-spec-bar-body view-spec-plain-section">
+        {renderHtml(stripLeadingHeading(bar.html))}
+      </div>
+    </details>
+  );
+}
+
+function SourceOnly({
+  entries,
+  onShowSource,
+}: {
+  entries: ComposedSpecSourceOnly[];
+  onShowSource: (id: string | null) => void;
+}): React.JSX.Element {
+  return (
+    <nav className="view-spec-source-only" aria-label="In the source only">
+      <span className="view-spec-key">In the source only</span>
+      <ul>
+        {entries.map((entry, index) => (
+          <li key={`${entry.label}-${index}`}>
+            <button type="button" onClick={() => onShowSource(entry.targetId)}>
+              {entry.label}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+export function SpecView({
+  model,
+  renderHtml,
+  onShowSource,
+}: {
+  model: ComposedSpec;
+  renderHtml: (html: string) => React.ReactNode;
+  onShowSource: (id: string | null) => void;
+}): React.JSX.Element {
   return (
     <div className="view-spec-page">
       <Strip model={model} />
@@ -352,6 +537,17 @@ export function SpecView({ model }: { model: ComposedSpec }): React.JSX.Element 
         </section>
       ) : null}
       <Matrix model={model} />
+      {model.boundaries !== null ? <Fence boundaries={model.boundaries} /> : null}
+      {model.bars.length > 0 ? (
+        <div className="view-spec-bars">
+          {model.bars.map((bar, index) => (
+            <Bar key={`${bar.heading}-${index}`} bar={bar} renderHtml={renderHtml} />
+          ))}
+        </div>
+      ) : null}
+      {model.sourceOnly.length > 0 ? (
+        <SourceOnly entries={model.sourceOnly} onShowSource={onShowSource} />
+      ) : null}
     </div>
   );
 }

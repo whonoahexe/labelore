@@ -116,7 +116,7 @@ describe('extractSpec - 01-SPEC (locked)', () => {
     expect(spec.dimensions[0].notes).toBeNull();
   });
 
-  it('lists every ## heading in file order and claims Goal and Requirements', () => {
+  it('lists every ## heading in file order and claims Goal, Requirements and Boundaries', () => {
     expect(spec.sections.map((s) => s.heading)).toEqual([
       'Goal',
       'Background',
@@ -129,7 +129,7 @@ describe('extractSpec - 01-SPEC (locked)', () => {
       'Ambiguity Report',
       'Interview Log',
     ]);
-    expect(spec.sections.filter((s) => s.claimed).map((s) => s.heading)).toEqual(['Goal', 'Requirements']);
+    expect(spec.sections.filter((s) => s.claimed).map((s) => s.heading)).toEqual(['Goal', 'Requirements', 'Boundaries']);
   });
 });
 

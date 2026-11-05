@@ -1509,7 +1509,7 @@ export function ArtifactPage({
       ) : codebaseCover ? (
         <CodebaseView key={artifact.path} model={codebaseCover} renderHtml={renderHtml} />
       ) : specPageCover ? (
-        <SpecView key={artifact.path} model={specPageCover} />
+        <SpecView key={artifact.path} model={specPageCover} renderHtml={renderHtml} onShowSource={showSource} />
       ) : fixCover ? (
         <LedgerTabView key={artifact.path} model={fixCover} />
       ) : documentWithheld ? (
