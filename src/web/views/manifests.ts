@@ -22,6 +22,7 @@ import { composeProjectPage } from './project-page.ts';
 import { composeWindowsLedger } from './windows-ledger.ts';
 import { composeMilestoneAudit } from './milestone-audit.ts';
 import { composeCoverage } from './coverage-matrix.ts';
+import { composeSpec } from './spec-page.ts';
 import { composeCodebase } from './codebase-page.ts';
 import { composePlanNavigator } from './plan-navigator.ts';
 import { composeContextBrief } from './context-brief.ts';
@@ -421,6 +422,9 @@ export const VIEW_MANIFESTS: Readonly<Partial<Record<ViewKind, ViewManifest>>> =
     kind: 'spec',
     lead: 'Whether this phase is specified well enough to plan, and what each requirement asks for.',
     promote: [{ type: 'section', heading: /\S/, all: true }],
+    // The Spec page is the View-mode render path; `promote` above is the silent fallback when it composes nothing
+    // (Phase 10, 10-16, RESEARCH C1).
+    specPage: composeSpec,
   },
   'ai-spec': {
     kind: 'ai-spec',

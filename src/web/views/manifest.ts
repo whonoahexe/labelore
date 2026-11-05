@@ -66,6 +66,8 @@ import type { ComposedUatSession } from './uat-session.ts';
 import type { ComposedCodebase } from './codebase-page.ts';
 // Type-only import — the codebase context is built server-side (Phase 10, 10-08).
 import type { CodebaseContext } from '../../presentation/codebase-map.ts';
+// Type-only import — same reason as `brief` above (Phase 10, 10-16, sketch-047 winner B, the Spec page).
+import type { ComposedSpec } from './spec-page.ts';
 
 /** Declared now so 05-05 can add components without widening this union a second time — only
  * `discussion-questions` has a real component in this plan (see `blocks.tsx`). */
@@ -158,6 +160,11 @@ export interface ViewManifest {
    * `codebaseContext`, or no `structured.codebase`), and the page falls back to the promoted-section view, which
    * the manifest keeps as `promote`, with no notice (RESEARCH C1). */
   codebasePage?: (input: ViewInput) => ComposedCodebase | null;
+  /** Phase 10 (10-16, sketch-047 winner B): the Spec page a manifest opts into in View mode - currently only `spec`.
+   * Returns `null` when the input can't compose one (no `structured.spec`, or a file with no score, requirement,
+   * dimension, goal or scope), and the page falls back to the promoted-section view, which the manifest keeps as
+   * `promote`, with no notice (RESEARCH C1). */
+  specPage?: (input: ViewInput) => ComposedSpec | null;
   /** Phase 10 (10-08): true for a kind whose document text must never reach View mode through the generic
    * fallback (promoted sections or the whole document) - `user-setup`, whose file can hold a pasted value
    * (CONTEXT D-11). The Source toggle stays the way to the text. See `documentHtmlAllowedInView`. */
