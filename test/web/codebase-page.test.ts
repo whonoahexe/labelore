@@ -13,15 +13,18 @@ import {
   MAPPED_NOT_STARTED_LEAD,
   NOT_MAPPED,
   composeCodebase,
+  linkMapMentions,
 } from '../../src/web/views/codebase-page.ts';
 import type { ViewInput } from '../../src/web/views/manifest.ts';
 import { loadProject } from '../helpers/fixture-project.ts';
+import { GROWTH_LIMIT, measureGrowth } from '../helpers/growth.ts';
 import { SHAPES_ROOT } from '../helpers/shapes-project.ts';
 
 const TIDEMARK_ROOT = fileURLToPath(new URL('../fixtures/tidemark', import.meta.url)).replace(/[\\/]$/, '');
 const KINDS = new Map([
   ['STACK', 'codebase-stack'],
   ['ARCHITECTURE', 'codebase-architecture'],
+  ['STRUCTURE', 'codebase-structure'],
   ['CONCERNS', 'codebase-concerns'],
   ['CONVENTIONS', 'codebase-conventions'],
 ]);
@@ -31,7 +34,20 @@ function groupsOf(markdown: string): DocumentSectionGroup[] {
   const body = markdown.replace(/^---\n[\s\S]*?\n---\n/, '');
   const groups: DocumentSectionGroup[] = [];
   let lead = '';
-  for (const chunk of body.split(/^(?=## )/m)) {
+  // Cut at every `## ` line outside a fence (a diagram's `## label` line is not a heading).
+  const chunks: string[] = [];
+  let fenced = false;
+  let current = '';
+  for (const line of body.split('\n')) {
+    if (line.startsWith('```')) fenced = !fenced;
+    if (!fenced && line.startsWith('## ') && current !== '') {
+      chunks.push(current);
+      current = '';
+    }
+    current += `${line}\n`;
+  }
+  chunks.push(current);
+  for (const chunk of chunks) {
     if (chunk.startsWith('## ')) {
       const heading = chunk.slice(3, chunk.indexOf('\n')).trim();
       groups.push({ id: heading.toLowerCase().replace(/[^a-z0-9]+/g, '-'), heading, html: `<h2>${heading}</h2><p>${heading} text</p>` });
@@ -209,7 +225,364 @@ describe('composeCodebase - the lifted part', () => {
   });
 
   it('lifts nothing for a panel with no designed form yet', async () => {
-    expect(composeCodebase(await inputFor(TIDEMARK_ROOT, 'ARCHITECTURE'))?.active.lifted).toBeNull();
+    expect(composeCodebase(await inputFor(TIDEMARK_ROOT, 'CONVENTIONS'))?.active.lifted).toBeNull();
+  });
+});
+
+describe('composeCodebase - the Architecture panel (10-12)', () => {
+  it('lifts the Tidemark diagram for the shipped figure and the two anti-patterns as swap rows', async () => {
+    const model = composeCodebase(await inputFor(TIDEMARK_ROOT, 'ARCHITECTURE'));
+    const lifted = model?.active.lifted;
+    expect(lifted?.kind).toBe('architecture');
+    if (lifted?.kind !== 'architecture') return;
+    expect(lifted.diagram?.info).toBe('text');
+    expect(lifted.diagram?.text).toContain('Berth board (browser)');
+    expect(lifted.diagram?.text.split('\n').pop()).toBe('## the three route groups above share one process');
+    expect(lifted.swaps).toHaveLength(2);
+    expect(lifted.swaps[0]).toEqual({
+      bad: 'Reading the database from a route',
+      good: 'Ask the slot store for the clash check (`server/store/clash.ts`).',
+      details: [
+        { label: 'What happens', text: 'The office confirm route opens the database file directly to check a clash.' },
+        { label: "Why it's wrong", text: 'Two modules now know the table layout, and the clash rule exists twice.' },
+      ],
+    });
+    expect(model?.active.keyPhrase).toBe('5 components');
+  });
+
+  it('keeps every other section plain, API Architecture among them, and drops only the two it draws', async () => {
+    const model = composeCodebase(await inputFor(TIDEMARK_ROOT, 'ARCHITECTURE'));
+    const headings = model?.active.plainSections ?? [];
+    expect(headings).not.toContain('System Overview');
+    expect(headings).not.toContain('Anti-Patterns');
+    expect(headings).toEqual([
+      'Component Responsibilities',
+      'Pattern Overview',
+      'API Architecture',
+      'Data Flow',
+      'Key Abstractions',
+      'Entry Points',
+      'Error Handling',
+    ]);
+  });
+
+  it('leaves a System Overview that holds prose with its fence among the plain sections, drawn once', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'ARCHITECTURE');
+    const codebase = input.structured.codebase as { architecture: Record<string, unknown> };
+    const model = composeCodebase({
+      ...input,
+      structured: { codebase: { ...codebase, architecture: { ...codebase.architecture, diagram: null } } },
+    });
+    expect(model?.active.plainSections).toContain('System Overview');
+    expect(model?.active.lifted?.kind === 'architecture' ? model.active.lifted.diagram : 'x').toBeNull();
+  });
+
+  it('pairs the drawn sections to their groups by position, then by heading when the counts differ', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'ARCHITECTURE');
+    const renamed = input.groups.map((group) =>
+      group.heading === 'Anti-Patterns' ? { ...group, heading: 'Anti patterns (renderer text)' } : group,
+    );
+    expect(composeCodebase({ ...input, groups: renamed })?.active.plainSections).not.toContain('Anti patterns (renderer text)');
+    const extra = [{ id: 'x', heading: 'Added later', html: '<h2>Added later</h2><p>x</p>' }, ...renamed];
+    const byHeading = composeCodebase({ ...input, groups: extra })?.active.plainSections ?? [];
+    expect(byHeading).toContain('Anti patterns (renderer text)');
+    expect(byHeading).not.toContain('System Overview');
+  });
+
+  it('counts layers in words when the lift counted layers', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'ARCHITECTURE');
+    const codebase = input.structured.codebase as Record<string, unknown>;
+    const withLayers = (count: number) =>
+      composeCodebase({
+        ...input,
+        structured: { codebase: { ...codebase, keyUnit: 'layer' } },
+        codebaseContext: input.codebaseContext
+          ? {
+              ...input.codebaseContext,
+              panels: input.codebaseContext.panels.map((panel) =>
+                panel.key === 'architecture' ? { ...panel, keyNumber: count } : panel,
+              ),
+            }
+          : null,
+      })?.active.keyPhrase;
+    expect(withLayers(3)).toBe('3 layers');
+    expect(withLayers(1)).toBe('1 layer');
+  });
+
+  it('tolerates a lift of any shape', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'ARCHITECTURE');
+    for (const architecture of [null, 7, 'x', { diagram: 4, antiPatterns: 'no' }, { diagram: { text: 3 }, antiPatterns: [null, { name: 4 }] }]) {
+      const model = composeCodebase({ ...input, structured: { codebase: { doc: 'architecture', architecture } } });
+      expect(model?.active.lifted ?? null).toBeNull();
+    }
+  });
+});
+
+describe('composeCodebase - the Structure panel (10-12)', () => {
+  it('lifts the Tidemark tree for the shipped clean tree and counts directories', async () => {
+    const model = composeCodebase(await inputFor(TIDEMARK_ROOT, 'STRUCTURE'));
+    const lifted = model?.active.lifted;
+    expect(lifted?.kind).toBe('structure');
+    if (lifted?.kind !== 'structure') return;
+    expect(lifted.tree?.text.split('\n')[0]).toBe('tidemark/');
+    expect(model?.active.keyPhrase).toBe('11 directories');
+  });
+
+  it('draws only the Directory Layout and keeps every other section plain, Where to Add New Code included', async () => {
+    const model = composeCodebase(await inputFor(TIDEMARK_ROOT, 'STRUCTURE'));
+    expect(model?.active.plainSections).toEqual([
+      'Directory Purposes',
+      'Key File Locations',
+      'Naming Conventions',
+      'Where to Add New Code',
+      'Special Directories',
+    ]);
+  });
+
+  it('lifts nothing when the document has no tree to draw', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'STRUCTURE');
+    const model = composeCodebase({
+      ...input,
+      structured: { codebase: { doc: 'structure', sections: [], structure: { tree: null, directories: 0 } } },
+    });
+    expect(model?.active.lifted).toBeNull();
+    expect(model?.active.plainSections).toContain('Directory Layout');
+  });
+});
+
+describe('linkMapMentions - cross-links between map panels (10-12)', () => {
+  const urls = new Map([
+    ['STRUCTURE.md', '/p/codebase/structure'],
+    ['ARCHITECTURE.md', '/p/codebase/architecture'],
+  ]);
+
+  it('links a see-STRUCTURE.md mention to the mapped panel and leaves the rest as text', () => {
+    expect(linkMapMentions('Layout: see STRUCTURE.md for folders.', urls)).toEqual([
+      { text: 'Layout: see ', to: null },
+      { text: 'STRUCTURE.md', to: '/p/codebase/structure' },
+      { text: ' for folders.', to: null },
+    ]);
+  });
+
+  it('links a .planning/codebase path whole', () => {
+    expect(linkMapMentions('in .planning/codebase/ARCHITECTURE.md.', urls)).toEqual([
+      { text: 'in ', to: null },
+      { text: '.planning/codebase/ARCHITECTURE.md', to: '/p/codebase/architecture' },
+      { text: '.', to: null },
+    ]);
+  });
+
+  it('takes the backticks around a mention into the link, shown as code', () => {
+    expect(linkMapMentions('see `STRUCTURE.md`.', urls)).toEqual([
+      { text: 'see ', to: null },
+      { text: 'STRUCTURE.md', to: '/p/codebase/structure', code: true },
+      { text: '.', to: null },
+    ]);
+  });
+
+  it('stays text when the target is not mapped, for any of the seven names', () => {
+    expect(linkMapMentions('see TESTING.md and CONCERNS.md', urls)).toEqual([{ text: 'see TESTING.md and CONCERNS.md', to: null }]);
+    expect(linkMapMentions('see STRUCTURE.md', new Map())).toEqual([{ text: 'see STRUCTURE.md', to: null }]);
+  });
+
+  it('matches the seven exact names only, on a word edge, and builds no href from the text', () => {
+    expect(linkMapMentions('MYSTRUCTURE.md structure.md STRUCTURE.mdx ../STRUCTURE.md', urls).every((part) => part.to === null)).toBe(true);
+    const parts = linkMapMentions('STRUCTURE.md STRUCTURE.md', urls);
+    expect(parts.filter((part) => part.to !== null)).toHaveLength(2);
+    for (const part of parts) expect(part.to === null || [...urls.values()].includes(part.to)).toBe(true);
+    expect(linkMapMentions('', urls)).toEqual([]);
+  });
+});
+
+describe('composeCodebase - the Concerns panel (10-12, sketch 044 E)', () => {
+  async function concernsOf(input?: ViewInput) {
+    const model = composeCodebase(input ?? (await inputFor(TIDEMARK_ROOT, 'CONCERNS')));
+    const lifted = model?.active.lifted;
+    if (lifted?.kind !== 'concerns') throw new Error('not a concerns lift');
+    return { model, lifted };
+  }
+
+  it('leads with 14 concerns and Security first, with its 2, then the others in document order', async () => {
+    const { lifted } = await concernsOf();
+    expect(lifted.totalText).toBe('14 concerns');
+    expect(lifted.sections.map((entry) => [entry.heading, entry.count])).toEqual([
+      ['Security Considerations', 2],
+      ['Tech Debt', 3],
+      ['Known Bugs', 1],
+      ['Performance Bottlenecks', 2],
+      ['Fragile Areas', 3],
+      ['Scaling Limits', 2],
+      ['Dependencies at Risk', 0],
+      ['Missing Critical Features', 1],
+      ['Test Coverage Gaps', 0],
+    ]);
+    expect(lifted.sections[0].label).toBe('Security');
+    expect(lifted.sections[1].label).toBe('Tech debt');
+  });
+
+  it('tones Security in-flight above zero, a zero quiet (Security complete), and leaves the rest untoned', async () => {
+    const { lifted } = await concernsOf();
+    expect(lifted.sections.map((entry) => entry.tone)).toEqual([
+      'in-flight',
+      null,
+      null,
+      null,
+      null,
+      null,
+      'quiet',
+      null,
+      'quiet',
+    ]);
+    for (const entry of lifted.sections) expect([null, 'in-flight', 'complete', 'quiet']).toContain(entry.tone);
+    const input = await inputFor(TIDEMARK_ROOT, 'CONCERNS');
+    const codebase = input.structured.codebase as { concerns: { sections: { key: string; items: unknown[]; count: number }[] } };
+    const empty = {
+      ...input,
+      structured: {
+        codebase: {
+          ...codebase,
+          concerns: {
+            ...codebase.concerns,
+            sections: codebase.concerns.sections.map((entry) =>
+              entry.key === 'security-considerations' ? { ...entry, count: 0, items: [] } : entry,
+            ),
+          },
+        },
+      },
+    };
+    expect((await concernsOf(empty)).lifted.sections[0].tone).toBe('complete');
+  });
+
+  it('keeps each concern as a title over its field lines, with the Priority a mark reads', async () => {
+    const { lifted } = await concernsOf();
+    const security = lifted.sections[0];
+    expect(security.items).toHaveLength(2);
+    expect(security.items[0].id).toBe('0:0');
+    expect(security.items[0].title.length).toBeGreaterThan(0);
+    expect(security.items[0].fields.length).toBeGreaterThan(0);
+    const fragile = lifted.sections.find((entry) => entry.heading === 'Fragile Areas')!;
+    expect(fragile.items).toHaveLength(3);
+    expect(fragile.items.every((item) => item.fields.length === 0 && item.title.length > 0)).toBe(true);
+  });
+
+  it('reads Priority and splits fields from bullet lines and continuations', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'CONCERNS');
+    const codebase = input.structured.codebase as { concerns: Record<string, unknown> };
+    const one = (lines: string[]) => ({
+      ...input,
+      structured: {
+        codebase: {
+          ...codebase,
+          concerns: {
+            sections: [{ key: 'tech-debt', heading: 'Tech Debt', count: 1, items: [{ label: 'X', lines }] }],
+            total: 1,
+            missing: [],
+          },
+        },
+      },
+    });
+    const high = (await concernsOf(one(['- Issue: a thing', '  that goes on', '- Priority: High - soon', '- Files: `a.ts`']))).lifted.sections[0].items[0];
+    expect(high.priority).toBe('high');
+    expect(high.fields).toEqual([
+      { label: 'Issue', text: 'a thing that goes on' },
+      { label: 'Priority', text: 'High - soon' },
+      { label: 'Files', text: '`a.ts`' },
+    ]);
+    expect(high.gist).toBe('a thing that goes on');
+    expect((await concernsOf(one(['- Priority: Medium']))).lifted.sections[0].items[0].priority).toBe('med');
+    expect((await concernsOf(one(['- Priority: low']))).lifted.sections[0].items[0].priority).toBe('low');
+    expect((await concernsOf(one(['- Issue: x']))).lifted.sections[0].items[0].priority).toBe('');
+  });
+
+  it('lists all 40 items of a section, and says how many it left out when the lift kept fewer than it counted', async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'CONCERNS');
+    const codebase = input.structured.codebase as { concerns: Record<string, unknown> };
+    const items = Array.from({ length: 40 }, (_, i) => ({ label: `Item ${i}`, lines: [`- Issue: thing ${i}`] }));
+    const withItems = (count: number) => ({
+      ...input,
+      structured: {
+        codebase: {
+          ...codebase,
+          concerns: { sections: [{ key: 'tech-debt', heading: 'Tech Debt', count, items }], total: count, missing: [] },
+        },
+      },
+    });
+    const forty = (await concernsOf(withItems(40))).lifted.sections[0];
+    expect(forty.items).toHaveLength(40);
+    expect(forty.omitted).toBe(0);
+    expect((await concernsOf(withItems(600))).lifted.sections[0].omitted).toBe(560);
+  });
+
+  it('marks the first Security item as the most dangerous, else the first Tech Debt item', async () => {
+    const { lifted } = await concernsOf();
+    expect(lifted.top).toBe('0:0');
+    const input = await inputFor(TIDEMARK_ROOT, 'CONCERNS');
+    const codebase = input.structured.codebase as { concerns: { sections: { key: string; items: unknown[]; count: number }[] } };
+    const noSecurity = {
+      ...input,
+      structured: {
+        codebase: {
+          ...codebase,
+          concerns: {
+            ...codebase.concerns,
+            sections: codebase.concerns.sections.map((entry) =>
+              entry.key === 'security-considerations' ? { ...entry, count: 0, items: [] } : entry,
+            ),
+          },
+        },
+      },
+    };
+    const found = await concernsOf(noSecurity);
+    expect(found.lifted.top).toBe('1:0');
+    expect(found.lifted.sections[1].heading).toBe('Tech Debt');
+  });
+
+  it('draws every concerns section itself, keeping a zero section\'s own words and the text before the first heading', async () => {
+    const { model, lifted } = await concernsOf();
+    expect(model?.active.plainSections).toEqual([]);
+    const zero = lifted.sections.find((entry) => entry.heading === 'Dependencies at Risk')!;
+    expect(zero.fallbackHtml).toContain('Dependencies at Risk text');
+    expect(lifted.sections[0].fallbackHtml).toBeNull();
+  });
+
+  it('writes no missing or destructive tone anywhere in the concerns markup', async () => {
+    const components = await source(COMPONENTS);
+    const concernsPart = components.slice(components.indexOf('function ConcernRow'));
+    expect(concernsPart).not.toMatch(/data-tone=\{?["']?(missing|destructive|warning)/);
+    expect(concernsPart).toContain('Read more');
+    expect(concernsPart).toContain('Read less');
+    expect(concernsPart).toContain('aria-expanded');
+  });
+});
+
+describe('composeCodebase - growth (10-12)', () => {
+  it('stays linear on many concern sections of many items', { timeout: 60_000 }, async () => {
+    const input = await inputFor(TIDEMARK_ROOT, 'CONCERNS');
+    const growth = measureGrowth({
+      make: (n) => ({
+        ...input,
+        structured: {
+          codebase: {
+            doc: 'concerns',
+            concerns: {
+              sections: Array.from({ length: n }, (_, i) => ({
+                key: null,
+                heading: `S${i}`,
+                count: 20,
+                items: Array.from({ length: 20 }, (_, k) => ({ label: `C${k}`, lines: ['- Issue: a', '- Files: `b`'] })),
+              })),
+              total: n * 20,
+              missing: [],
+            },
+          },
+        },
+        groups: Array.from({ length: n }, (_, i) => ({ id: `s${i}`, heading: `S${i}`, html: `<h2>S${i}</h2><p>x</p>` })),
+      }),
+      run: (value) => void composeCodebase(value),
+      maxSize: 400,
+      startSize: 5,
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
   });
 });
 

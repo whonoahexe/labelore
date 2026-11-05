@@ -7,10 +7,13 @@
 // a plain section: nothing in a document is dropped. Lookups use Maps only, so an author heading such as
 // `constructor` cannot reach an Object member (RESEARCH Pitfall 16).
 //
-// structured.codebase holds headings, keys, chips and counts, never a section body: the whole structured
-// record ships to the browser (T-10-10).
-import { eachLineOutsideFences, scanFencedLines, splitBodyLines } from './fenced-sections.ts';
+// structured.codebase holds headings, keys, chips and counts, and (10-12) the few lifted parts a designed panel
+// draws itself: the System Overview and Directory Layout fences, the Anti-Patterns entries and each concern's
+// own lines. Each is capped (T-10-21). Every other section body stays out: the whole structured record ships to
+// the browser (T-10-10).
+import { eachLineOutsideFences, fenceMarker, scanFencedLines, splitBodyLines } from './fenced-sections.ts';
 import type { FencedSection } from './fenced-sections.ts';
+import { parseTree, treeCounts } from '../../rendering/ascii-tree.ts';
 
 // ---------------------------------------------------------------------------------------------------------
 // Heading normalisation and keys
@@ -304,6 +307,13 @@ export interface CodebaseBody {
   stack?: StackLift;
   /** Counts for the Concerns panel (document concerns only). */
   concerns?: ConcernsLift;
+  /** The System Overview diagram, the Anti-Patterns entries and the component count (document architecture only). */
+  architecture?: ArchitectureLift;
+  /** The Directory Layout tree and its directory count (document structure only). */
+  structure?: StructureLift;
+  /** What `keyNumber` counts when it is not the panel's usual unit: Architecture counts layers when the
+   * document has no component table. */
+  keyUnit?: 'layer';
 }
 
 /** A section with its range and the key it claimed. */
@@ -491,11 +501,27 @@ export function liftStack(sections: readonly KeyedSection[], lines: readonly str
 // The Concerns lift
 // ---------------------------------------------------------------------------------------------------------
 
+/** One concern, as the document wrote it: a bold label, a `###` heading or a table row's first cell as its
+ * label (null for a plain bullet, whose text is the first line), then its own lines (field bullets and
+ * continuations) so the panel can show it in full. Blank lines are left out. */
+export interface ConcernItem {
+  label: string | null;
+  lines: string[];
+}
+
+/** The most concerns kept per section; the count stays true when a section holds more. */
+export const CONCERN_ITEM_CAP = 500;
+/** The most lines kept per concern, and the most characters kept per line. */
+export const CONCERN_LINES_CAP = 60;
+export const CONCERN_LINE_CHARS = 2000;
+
 export interface ConcernCount {
   /** The known key, or null for a section the template does not have. */
   key: string | null;
   heading: string;
   count: number;
+  /** The concerns counted, in document order (at most CONCERN_ITEM_CAP); `items.length === count` below the cap. */
+  items: ConcernItem[];
 }
 
 export interface ConcernsLift {
@@ -594,22 +620,38 @@ function isTableSeparator(trimmed: string): boolean {
   return true;
 }
 
-/** The first non-empty cell of a table row. */
-function firstCell(trimmed: string): string {
-  const cells = (trimmed.length > LINE_CAP ? trimmed.slice(0, LINE_CAP) : trimmed).split('|');
-  for (const cell of cells) {
-    if (cell.trim().length > 0) return cell.trim();
-  }
-  return '';
+/** The non-blank lines of [from, to) outside fences, each capped, at most CONCERN_LINES_CAP of them. Fenced code
+ * in a concern stays in the Source view, as it stays out of the count. */
+function unitLines(lines: readonly string[], from: number, to: number): string[] {
+  const out: string[] = [];
+  eachLineOutsideFences(lines, from, to, (line) => {
+    if (out.length >= CONCERN_LINES_CAP || line.length === 0 || line.trim().length === 0) return;
+    out.push(line.length > CONCERN_LINE_CHARS ? line.slice(0, CONCERN_LINE_CHARS) : line.trimEnd());
+  });
+  return out;
+}
+
+/** The cells of one table row, outer pipes dropped, each trimmed and capped. */
+function rowCells(trimmed: string): string[] {
+  const cells = (trimmed.length > LINE_CAP ? trimmed.slice(0, LINE_CAP) : trimmed).split('|').map((cell) => cell.trim());
+  if (cells[0] === '') cells.shift();
+  if (cells.length > 0 && cells[cells.length - 1] === '') cells.pop();
+  return cells;
+}
+
+interface CountedUnits {
+  count: number;
+  items: ConcernItem[];
 }
 
 /**
- * The concern count of one `##` section, by the rule 10-03-SUMMARY.md records (RESEARCH C3, adjusted):
- * try `###` subsections, then bold-label lines (one or more), then top-level bullets that do not begin with
- * a field label, then table rows, and use the first that yields a unit; a unit whose first field value is
- * None, Not detected or Not applicable counts 0. A section with no unit counts 0 whatever prose it holds.
+ * The concerns of one `##` section, by the rule 10-03-SUMMARY.md records (RESEARCH C3, adjusted): try `###`
+ * subsections, then bold-label lines (one or more), then top-level bullets that do not begin with a field
+ * label, then table rows, and use the first that yields a unit; a unit whose first field value is None, Not
+ * detected or Not applicable counts 0. A section with no unit counts 0 whatever prose it holds. The count and
+ * the items come from the same pass, so the items listed are exactly the ones counted (to the item cap).
  */
-function countSection(lines: readonly string[], sections: readonly KeyedSection[], at: number): number {
+function sectionUnits(lines: readonly string[], sections: readonly KeyedSection[], at: number): CountedUnits {
   const section = sections[at];
   const from = section.startLine + 1;
   const to = section.endLine;
@@ -619,7 +661,8 @@ function countSection(lines: readonly string[], sections: readonly KeyedSection[
   }
   const labels: number[] = [];
   const bullets: BulletAt[] = [];
-  const rows: string[] = [];
+  const rows: { index: number; trimmed: string; header: string }[] = [];
+  let header = '';
   let previousWasRow = false;
   eachLineOutsideFences(lines, from, to, (line, index) => {
     const label = boldLabel(line);
@@ -638,7 +681,8 @@ function countSection(lines: readonly string[], sections: readonly KeyedSection[
     if (trimmed.charCodeAt(0) === 124) {
       // The first row of a block is the header; separator rows are never data.
       const head = trimmed.length > LINE_CAP ? trimmed.slice(0, LINE_CAP) : trimmed;
-      if (previousWasRow && !isTableSeparator(head)) rows.push(firstCell(head));
+      if (!previousWasRow) header = head;
+      else if (!isTableSeparator(head)) rows.push({ index, trimmed: head, header });
       previousWasRow = true;
       return;
     }
@@ -650,20 +694,54 @@ function countSection(lines: readonly string[], sections: readonly KeyedSection[
     return first !== null && isEmptyMarker(firstFieldValue(first.text));
   };
 
+  const items: ConcernItem[] = [];
+  let count = 0;
+  const keep = (make: () => ConcernItem): void => {
+    count += 1;
+    if (items.length < CONCERN_ITEM_CAP) items.push(make());
+  };
+
   if (subsections.length > 0) {
-    return subsections.filter((s) => !zeroOf(s.startLine + 1, s.endLine)).length;
+    for (const sub of subsections) {
+      if (zeroOf(sub.startLine + 1, sub.endLine)) continue;
+      keep(() => ({ label: sub.heading, lines: unitLines(lines, sub.startLine + 1, sub.endLine) }));
+    }
+    return { count, items };
   }
   if (labels.length > 0) {
-    let count = 0;
     for (let k = 0; k < labels.length; k += 1) {
       const end = k + 1 < labels.length ? labels[k + 1] : to;
-      if (!zeroOf(labels[k] + 1, end)) count += 1;
+      if (zeroOf(labels[k] + 1, end)) continue;
+      keep(() => ({ label: boldLabel(lines[labels[k]]), lines: unitLines(lines, labels[k] + 1, end) }));
     }
-    return count;
+    return { count, items };
   }
   const concernBullets = bullets.filter((b) => !isFieldBullet(b.text));
-  if (concernBullets.length > 0) return concernBullets.filter((b) => !isEmptyMarker(b.text)).length;
-  return rows.filter((cell) => !isEmptyMarker(cell)).length;
+  if (concernBullets.length > 0) {
+    for (let k = 0; k < concernBullets.length; k += 1) {
+      const bullet = concernBullets[k];
+      if (isEmptyMarker(bullet.text)) continue;
+      const end = k + 1 < concernBullets.length ? concernBullets[k + 1].index : to;
+      keep(() => ({ label: null, lines: [bullet.text.slice(0, CONCERN_LINE_CHARS), ...unitLines(lines, bullet.index + 1, end)] }));
+    }
+    return { count, items };
+  }
+  for (const row of rows) {
+    const cells = rowCells(row.trimmed);
+    if (isEmptyMarker(cells.find((cell) => cell.length > 0) ?? '')) continue;
+    keep(() => {
+      const names = rowCells(row.header);
+      const first = cells.findIndex((cell) => cell.length > 0);
+      const rest: string[] = [];
+      for (let c = 0; c < cells.length && rest.length < CONCERN_LINES_CAP; c += 1) {
+        if (c === first || cells[c].length === 0) continue;
+        const name = names[c] ?? '';
+        rest.push(name.length > 0 ? `${name}: ${cells[c]}` : cells[c]);
+      }
+      return { label: cells[first] ?? null, lines: rest };
+    });
+  }
+  return { count, items };
 }
 
 /** The ids of the nine known concern sections, in template order. */
@@ -677,7 +755,8 @@ export function countConcerns(sections: readonly KeyedSection[], lines: readonly
   for (let i = 0; i < sections.length; i += 1) {
     const section = sections[i];
     if (section.level !== 2) continue;
-    const entry: ConcernCount = { key: section.key, heading: section.heading, count: countSection(lines, sections, i) };
+    const { count, items } = sectionUnits(lines, sections, i);
+    const entry: ConcernCount = { key: section.key, heading: section.heading, count, items };
     (section.key === null ? extra : known).push(entry);
   }
   const present = new Set(known.map((k) => k.key));
@@ -687,6 +766,226 @@ export function countConcerns(sections: readonly KeyedSection[], lines: readonly
     total: all.reduce((sum, s) => sum + s.count, 0),
     missing: CONCERN_KEY_IDS.filter((id) => !present.has(id)),
   };
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// The Architecture and Structure lifts (10-12)
+// ---------------------------------------------------------------------------------------------------------
+
+/** A figure over this many characters or lines stays a plain section: the page renders it in full from the
+ * document, so nothing is cut and nothing is shipped twice. */
+export const FIGURE_TEXT_CAP = 20_000;
+export const FIGURE_LINES_CAP = 2_000;
+/** The most Anti-Patterns entries and the most characters of one part of an entry. */
+export const ANTI_PATTERN_CAP = 100;
+export const ANTI_PATTERN_TEXT_CAP = 2_000;
+
+/** One fenced block: its info string (lower-cased, first word, capped) and its text. */
+export interface FigureFence {
+  info: string;
+  text: string;
+}
+
+export interface AntiPatternLift {
+  name: string;
+  whatHappens: string | null;
+  whyWrong: string | null;
+  doInstead: string;
+  /** Any other labelled part the entry carries, so a part the page has no slot for is still shown. */
+  more: { label: string; text: string }[];
+}
+
+export interface ArchitectureLift {
+  /** The System Overview's fenced block, when that section holds nothing else; else null. */
+  diagram: FigureFence | null;
+  /** Rows of the Component Responsibilities table. */
+  components: number;
+  /** `###` entries (else bold-label groups) under Layers, or null. */
+  layers: number | null;
+  /** The Anti-Patterns entries, all of them or none: a section the swap shape cannot hold stays plain. */
+  antiPatterns: AntiPatternLift[];
+}
+
+export interface StructureLift {
+  /** The Directory Layout's fenced block, when that section holds nothing else; else null. */
+  tree: FigureFence | null;
+  /** Directories in that tree. */
+  directories: number;
+}
+
+function infoOf(line: string): string {
+  const marker = fenceMarker(line);
+  if (marker === null) return '';
+  const rest = line.trimStart().slice(marker.length).trim();
+  const space = rest.indexOf(' ');
+  return (space < 0 ? rest : rest.slice(0, space)).toLowerCase().slice(0, 20);
+}
+
+/** The info strings a fence may carry and still be a figure candidate (figure-detect's own list): a fence tagged
+ * with a real language stays code, and `mermaid` stays Mermaid, drawn by the document's own renderer. */
+const PLAIN_INFOS: ReadonlySet<string> = new Set(['', 'text', 'txt', 'plain', 'plaintext', 'ascii']);
+
+/** The section's one fenced block when it holds exactly one fence and nothing else but blank lines, within
+ * the figure caps; else null. A section with prose or a second fence stays a plain section, which already
+ * draws its fence as a figure. */
+function soleFence(lines: readonly string[], section: FencedSection): FigureFence | null {
+  let open: ReturnType<typeof fenceMarker> = null;
+  let info = '';
+  const body: string[] = [];
+  let chars = 0;
+  let fences = 0;
+  for (let i = section.startLine + 1; i < section.endLine; i += 1) {
+    const line = lines[i];
+    const marker = fenceMarker(line);
+    if (open !== null) {
+      if (marker !== null && marker.bare && marker.char === open.char && marker.length >= open.length) {
+        open = null;
+        continue;
+      }
+      chars += line.length + 1;
+      if (chars > FIGURE_TEXT_CAP || body.length >= FIGURE_LINES_CAP) return null;
+      body.push(line);
+      continue;
+    }
+    if (marker !== null) {
+      fences += 1;
+      if (fences > 1) return null;
+      open = marker;
+      info = infoOf(line);
+      if (!PLAIN_INFOS.has(info)) return null;
+      continue;
+    }
+    if (line.trim().length > 0) return null;
+  }
+  return fences === 1 && body.length > 0 ? { info, text: body.join('\n') } : null;
+}
+
+/** The rows of the first table in [from, to): every row after the header and its separator. */
+function countTableRows(lines: readonly string[], from: number, to: number): number {
+  let rows = 0;
+  let previousWasRow = false;
+  eachLineOutsideFences(lines, from, to, (line) => {
+    const trimmed = line.trimStart();
+    if (trimmed.charCodeAt(0) !== 124) {
+      previousWasRow = false;
+      return;
+    }
+    const head = trimmed.length > LINE_CAP ? trimmed.slice(0, LINE_CAP) : trimmed;
+    if (previousWasRow && !isTableSeparator(head)) rows += 1;
+    previousWasRow = true;
+  });
+  return rows;
+}
+
+/** A line that opens with a bold run (`**Label:** text`, `**Label**: text`): the label and the text after it. */
+function labelledLine(line: string): { label: string; text: string } | null {
+  let indent = 0;
+  while (indent < line.length && line.charCodeAt(indent) === 32) indent += 1;
+  if (indent > 3) return null;
+  const t = line.length > ANTI_PATTERN_TEXT_CAP + 200 ? line.slice(0, ANTI_PATTERN_TEXT_CAP + 200) : line;
+  if (t.charCodeAt(indent) !== 42 || t.charCodeAt(indent + 1) !== 42) return null;
+  const close = t.indexOf('**', indent + 2);
+  if (close < 0) return null;
+  const inner = t.slice(indent + 2, close).trim();
+  const label = (inner.endsWith(':') ? inner.slice(0, -1) : inner).trim();
+  if (label.length === 0) return null;
+  let rest = t.slice(close + 2).trimStart();
+  if (rest.charCodeAt(0) === 58) rest = rest.slice(1);
+  return { label, text: rest.trim() };
+}
+
+function clip(text: string): string {
+  return text.length > ANTI_PATTERN_TEXT_CAP ? text.slice(0, ANTI_PATTERN_TEXT_CAP) : text;
+}
+
+type AntiRole = 'what' | 'why' | 'instead';
+
+function antiRole(label: string): AntiRole | null {
+  const norm = normaliseHeading(label);
+  if (norm.includes('instead') || norm.startsWith('fix') || norm.startsWith('use ') || norm === 'prefer') return 'instead';
+  if (norm.includes('wrong') || norm.startsWith('why')) return 'why';
+  if (norm.includes('happen') || norm.includes('people do') || norm === 'problem') return 'what';
+  return null;
+}
+
+/** The Anti-Patterns entries: every `###` entry as a name, up to three recognised bold-label parts (what
+ * happens, why it is wrong, do this instead) and any other labelled part. All or nothing: prose before the
+ * first entry, a fence in an entry, or an entry with no "do this instead" leaves the section plain. */
+function liftAntiPatterns(lines: readonly string[], sections: readonly KeyedSection[], at: number): AntiPatternLift[] {
+  const section = sections[at];
+  const subs: FencedSection[] = [];
+  for (let i = at + 1; i < sections.length && sections[i].level === 3 && sections[i].startLine < section.endLine; i += 1) {
+    subs.push(sections[i]);
+  }
+  if (subs.length === 0 || subs.length > ANTI_PATTERN_CAP) return [];
+  for (let i = section.startLine + 1; i < subs[0].startLine; i += 1) {
+    if (lines[i].trim().length > 0) return [];
+  }
+  const out: AntiPatternLift[] = [];
+  for (const sub of subs) {
+    const parts: { label: string; text: string }[] = [];
+    for (let i = sub.startLine + 1; i < sub.endLine; i += 1) {
+      const line = lines[i];
+      if (line.trim().length === 0) continue;
+      if (fenceMarker(line) !== null) return [];
+      const labelled = labelledLine(line);
+      if (labelled !== null) {
+        parts.push(labelled);
+        continue;
+      }
+      const text = line.trim();
+      if (parts.length === 0) parts.push({ label: '', text });
+      else if (parts[parts.length - 1].text.length < ANTI_PATTERN_TEXT_CAP) parts[parts.length - 1].text += ` ${text}`;
+    }
+    const entry: AntiPatternLift = { name: sub.heading, whatHappens: null, whyWrong: null, doInstead: '', more: [] };
+    let instead: string | null = null;
+    for (const part of parts) {
+      const role = part.label === '' ? null : antiRole(part.label);
+      if (role === 'what' && entry.whatHappens === null) entry.whatHappens = clip(part.text);
+      else if (role === 'why' && entry.whyWrong === null) entry.whyWrong = clip(part.text);
+      else if (role === 'instead' && instead === null) instead = clip(part.text);
+      else entry.more.push({ label: part.label === '' ? 'Note' : part.label.slice(0, 80), text: clip(part.text) });
+    }
+    if (instead === null || instead.length === 0) return [];
+    entry.doInstead = instead;
+    out.push(entry);
+  }
+  return out;
+}
+
+/** The System Overview diagram, the component count, the layer count and the Anti-Patterns entries. */
+export function liftArchitecture(sections: readonly KeyedSection[], lines: readonly string[]): ArchitectureLift {
+  const lift: ArchitectureLift = { diagram: null, components: 0, layers: null, antiPatterns: [] };
+  sections.forEach((section, at) => {
+    if (section.level !== 2) return;
+    if (section.key === 'system-overview') lift.diagram = soleFence(lines, section);
+    else if (section.key === 'component-responsibilities') {
+      lift.components = countTableRows(lines, section.startLine + 1, section.endLine);
+    } else if (section.key === 'layers') {
+      let entries = 0;
+      for (let i = at + 1; i < sections.length && sections[i].level === 3 && sections[i].startLine < section.endLine; i += 1) {
+        entries += 1;
+      }
+      if (entries === 0) {
+        eachLineOutsideFences(lines, section.startLine + 1, section.endLine, (line) => {
+          if (boldLabel(line) !== null) entries += 1;
+        });
+      }
+      lift.layers = entries > 0 ? entries : null;
+    } else if (section.key === 'anti-patterns') lift.antiPatterns = liftAntiPatterns(lines, sections, at);
+  });
+  return lift;
+}
+
+/** The Directory Layout tree and how many directories it names. */
+export function liftStructure(sections: readonly KeyedSection[], lines: readonly string[]): StructureLift {
+  const lift: StructureLift = { tree: null, directories: 0 };
+  for (const section of sections) {
+    if (section.level !== 2 || section.key !== 'directory-layout') continue;
+    lift.tree = soleFence(lines, section);
+    if (lift.tree !== null) lift.directories = treeCounts(parseTree(lift.tree.text)).folders;
+  }
+  return lift;
 }
 
 export function extractCodebase(doc: string, frontmatter: Record<string, unknown>, body: string): CodebaseBody {
@@ -702,6 +1001,19 @@ export function extractCodebase(doc: string, frontmatter: Record<string, unknown
     const stack = liftStack(keyed, lines);
     result.stack = stack;
     result.keyNumber = stack.languages.length + stack.frameworks.length;
+  } else if (doc === 'architecture') {
+    const architecture = liftArchitecture(keyed, lines);
+    result.architecture = architecture;
+    if (architecture.components > 0) {
+      result.keyNumber = architecture.components;
+    } else if (architecture.layers !== null) {
+      result.keyNumber = architecture.layers;
+      result.keyUnit = 'layer';
+    }
+  } else if (doc === 'structure') {
+    const structure = liftStructure(keyed, lines);
+    result.structure = structure;
+    if (structure.tree !== null && structure.directories > 0) result.keyNumber = structure.directories;
   } else if (doc === 'concerns') {
     const concerns = countConcerns(keyed, lines);
     result.concerns = concerns;
