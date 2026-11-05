@@ -124,7 +124,7 @@ describe('buildCodebaseContext over Tidemark (complete map)', () => {
     const { presentation } = await loadProject(TIDEMARK_ROOT);
     const context = buildCodebaseContext(presentation, PATH('STACK.md'));
     expect(Object.keys(context ?? {}).sort()).toEqual(
-      ['activeKey', 'commit', 'head', 'mapOnly', 'mappedAt', 'mappedCount', 'panels', 'readiness'].sort(),
+      ['activeKey', 'commit', 'cross', 'head', 'mapOnly', 'mappedAt', 'mappedCount', 'panels', 'readiness'].sort(),
     );
     // `head` is the map-only head's content (10-10), not a git HEAD: it holds the Stack chips and the concern counts.
     for (const key of Object.keys(context ?? {})) expect(key).not.toMatch(/fresh|stale|current|behind/i);

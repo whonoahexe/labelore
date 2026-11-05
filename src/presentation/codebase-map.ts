@@ -281,8 +281,18 @@ export interface CodebasePanelEntry {
   mapped: boolean;
   /** The number the list shows (languages plus frameworks, concerns, ...), or null until the document's lift sets it. */
   keyNumber: number | null;
+  /** A word shown in place of the number where the panel's key is a name (Testing's framework), or null. */
+  keyLabel: string | null;
   /** This document's own stamp day (YYYY-MM-DD), or null. */
   mappedAt: string | null;
+}
+
+/** What the Stack and Integrations panels read of each other (10-14, D-01): the stack's tool names and the
+ * integration groups' cleaned lines (no variable value), so each can mark where the other names the same thing. Set
+ * only on those two panels. */
+export interface CodebaseCross {
+  stackNames: string[];
+  integrations: { label: string; text: string }[];
 }
 
 export interface CodebaseContext {
@@ -300,6 +310,8 @@ export interface CodebaseContext {
   mapOnly: boolean;
   /** The map-only head's content, or null for a project with a roadmap (D-05). */
   head: CodebaseHead | null;
+  /** The Stack and Integrations cross-read (10-14), or null on any other panel. */
+  cross: CodebaseCross | null;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -312,6 +324,7 @@ function stringOrNull(value: unknown): string | null {
 
 interface PanelRead {
   keyNumber: number | null;
+  keyLabel: string | null;
   mappedAt: string | null;
   commit: string | null;
 }
@@ -319,11 +332,12 @@ interface PanelRead {
 /** The stamp and key number out of an artifact's `structured.codebase`, tolerating any shape. */
 function readPanel(structured: unknown): PanelRead {
   const codebase = isRecord(structured) ? structured.codebase : null;
-  if (!isRecord(codebase)) return { keyNumber: null, mappedAt: null, commit: null };
+  if (!isRecord(codebase)) return { keyNumber: null, keyLabel: null, mappedAt: null, commit: null };
   const stamp = isRecord(codebase.stamp) ? codebase.stamp : null;
   const key = codebase.keyNumber;
   return {
     keyNumber: typeof key === 'number' && Number.isFinite(key) ? key : null,
+    keyLabel: stringOrNull(codebase.keyLabel),
     mappedAt: stamp ? stringOrNull(stamp.mappedAt) : null,
     commit: stamp ? stringOrNull(stamp.commit) : null,
   };
@@ -355,6 +369,40 @@ function readHeadConcerns(structured: unknown): ConcernEntries | null {
   return isRecord(codebase) ? concernEntries(codebase.concerns) : null;
 }
 
+const CROSS_NAME_CAP = 150;
+const CROSS_GROUP_CAP = 60;
+
+/** The Stack panel's tool names: every chip and key dependency name, once each. */
+function readStackNames(structured: unknown): string[] {
+  const codebase = isRecord(structured) ? structured.codebase : null;
+  const stack = isRecord(codebase) && isRecord(codebase.stack) ? codebase.stack : null;
+  if (stack === null) return [];
+  const names = new Set<string>();
+  for (const list of [stack.languages, stack.runtime, stack.frameworks]) {
+    for (const chip of chipsOf(list)) names.add(chip.name);
+  }
+  for (const set of Array.isArray(stack.keyDependencies) ? stack.keyDependencies : []) {
+    if (!isRecord(set)) continue;
+    for (const dep of chipsOf(set.deps)) names.add(dep.name);
+  }
+  return [...names].filter((name) => name.length <= 60).slice(0, CROSS_NAME_CAP);
+}
+
+/** The Integrations groups in use, each as its label and its cleaned lines joined. */
+function readIntegrationTexts(structured: unknown): CodebaseCross['integrations'] {
+  const codebase = isRecord(structured) ? structured.codebase : null;
+  const integrations = isRecord(codebase) && isRecord(codebase.integrations) ? codebase.integrations : null;
+  if (integrations === null) return [];
+  return (Array.isArray(integrations.groups) ? integrations.groups : [])
+    .filter(isRecord)
+    .flatMap((group) => {
+      const label = typeof group.label === 'string' ? group.label.trim() : '';
+      const lines = Array.isArray(group.lines) ? group.lines.filter((line): line is string => typeof line === 'string') : [];
+      return label === '' || group.inUse !== true ? [] : [{ label, text: lines.join(' ') }];
+    })
+    .slice(0, CROSS_GROUP_CAP);
+}
+
 /**
  * The page context for the map document at `activePath`, or null when that path is not one of the seven.
  * The newest stamp wins "Mapped {date}" (a day compares as text); on a tie the first document in the page's
@@ -374,7 +422,7 @@ export function buildCodebaseContext(
     const panels: CodebasePanelEntry[] = CODEBASE_PANELS.map((definition) => {
       const artifact = artifacts.find((candidate) => candidate.path === `${MAP_DIR}${definition.file}`);
       if (artifact === undefined) {
-        return { ...definition, url: null, mapped: false, keyNumber: null, mappedAt: null };
+        return { ...definition, url: null, mapped: false, keyNumber: null, keyLabel: null, mappedAt: null };
       }
       const read = readPanel(artifact.structured);
       reads.set(definition.key, read);
@@ -383,6 +431,7 @@ export function buildCodebaseContext(
         url: artifact.key,
         mapped: true,
         keyNumber: read.keyNumber,
+        keyLabel: read.keyLabel,
         mappedAt: read.mappedAt,
       };
     });
@@ -415,6 +464,15 @@ export function buildCodebaseContext(
       commit,
       activeKey: active.key,
       mapOnly,
+      cross:
+        active.key === 'stack' || active.key === 'integrations'
+          ? {
+              stackNames: readStackNames(artifacts.find((candidate) => candidate.path === `${MAP_DIR}STACK.md`)?.structured),
+              integrations: readIntegrationTexts(
+                artifacts.find((candidate) => candidate.path === `${MAP_DIR}INTEGRATIONS.md`)?.structured,
+              ),
+            }
+          : null,
       head: mapOnly
         ? {
             stack: stackArtifact === undefined ? null : readHeadStack(stackArtifact.structured),

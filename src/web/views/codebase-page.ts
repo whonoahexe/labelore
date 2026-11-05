@@ -24,6 +24,7 @@ import type {
   MapReadiness,
 } from '../../presentation/codebase-map.ts';
 import type { SwapItem } from '../../presentation/project-research-panels.ts';
+import type { DiagramEdge, DiagramGraph, DiagramKind, DiagramNode } from '../../rendering/ascii-graph.ts';
 import { stripLeadingHeading } from './document-sections.ts';
 import type { ViewInput } from './manifest.ts';
 
@@ -77,6 +78,8 @@ export interface ComposedStackChip {
   version: string | null;
   /** A Key Dependencies chip's purpose line, shown as its title (10-14). */
   purpose?: string;
+  /** The Integrations groups that name this tool (the cross-read, D-01); the chip carries a link to that panel. */
+  xref?: string[];
 }
 
 export interface ComposedStackSet {
@@ -100,6 +103,8 @@ export interface ComposedStack {
   /** Languages and frameworks (the key number, notes included), and the key dependencies. */
   toolCount: number;
   dependencyCount: number;
+  /** The Integrations panel's address for the cross-read links, or null when it is not mapped. */
+  integrationsUrl: string | null;
 }
 
 export interface ComposedConcernRow {
@@ -187,6 +192,7 @@ export interface ComposedConcerns {
 
 export type ComposedCodebaseLifted =
   | ComposedStack
+  | ComposedIntegrations
   | ComposedArchitecture
   | ComposedStructure
   | ComposedConcerns;
@@ -350,7 +356,11 @@ function dependencyGroup(stack: Record<string, unknown>): ComposedStackGroup | n
   return sets.length > 0 ? { label: 'Key Dependencies', sets } : null;
 }
 
-function liftStack(codebase: Record<string, unknown>): ComposedStack | null {
+function liftStack(
+  codebase: Record<string, unknown>,
+  urls: ReadonlyMap<string, string>,
+  context: ViewInput['codebaseContext'],
+): ComposedStack | null {
   const stack = isRecord(codebase.stack) ? codebase.stack : null;
   if (stack === null) return null;
   const groups = [
@@ -367,6 +377,19 @@ function liftStack(codebase: Record<string, unknown>): ComposedStack | null {
     dependencyGroup(stack),
   ].filter((group): group is ComposedStackGroup => group !== null);
   if (groups.length === 0) return null;
+  const integrationsUrl = urls.get('INTEGRATIONS.md') ?? null;
+  const texts = crossOf(context).integrations.map((group) => ({ label: group.label, text: crossText(group.text) }));
+  if (integrationsUrl !== null && texts.length > 0) {
+    for (const group of groups) {
+      for (const set of group.sets) {
+        if (set.ghost === true) continue;
+        for (const chip of set.chips) {
+          const labels = texts.filter((entry) => mentions(entry.text, chip.name)).map((entry) => withoutParenthetical(entry.label));
+          if (labels.length > 0) chip.xref = labels.slice(0, 4);
+        }
+      }
+    }
+  }
   const count = (label: ComposedStackGroup['label']): number =>
     groups
       .filter((group) => group.label === label)
@@ -379,6 +402,253 @@ function liftStack(codebase: Record<string, unknown>): ComposedStack | null {
     groups,
     toolCount: count('Languages') + count('Frameworks'),
     dependencyCount: count('Key Dependencies'),
+    integrationsUrl,
+  };
+}
+
+// --- the Integrations lift (10-14, sketch 045 winner C) ---------------------------------------------------------
+
+export interface ComposedVariable {
+  name: string;
+  /** True when the document writes a value beside the name: the page shows the quiet "Value not shown" mark. */
+  hadValue: boolean;
+  kind: 'required' | 'conditional' | 'optional' | 'named';
+}
+
+export interface ComposedQuietGroup {
+  label: string;
+  /** The group's own first line, or null for a known section the document lacks. */
+  title: string | null;
+}
+
+/** The Integrations panel (sketch 045 C): the shipped lane diagram given a graph built from the groups in use, the
+ * groups that say None as quiet chips, the variable names as tags with their values withheld. */
+export interface ComposedIntegrations {
+  kind: 'integrations';
+  /** The app wired to one node per group in use; null when nothing is in use. */
+  graph: DiagramGraph | null;
+  inUse: number;
+  quiet: ComposedQuietGroup[];
+  variables: ComposedVariable[];
+  /** The Environment Configuration section's own words, with every value removed, when the panel draws that section
+   * itself (it holds only lines and names); null when it stays a plain section. */
+  environment: { heading: string; groups: { label: string; lines: string[] }[] } | null;
+  /** Groups that name a tool the Stack panel lists, with those tool names. */
+  alsoInStack: { group: string; names: string[] }[];
+  /** The Stack panel's address, or null when the document is not mapped. */
+  stackUrl: string | null;
+}
+
+/** The lane each known section's groups sit in (sketch 045 C). A section the template does not have sits with the app. */
+const SECTION_LANES: ReadonlyMap<string, DiagramKind> = new Map([
+  ['external-services', 'external'],
+  ['data-storage', 'data'],
+  ['authentication', 'edge'],
+  ['monitoring', 'channel'],
+  ['ci-cd', 'worker'],
+  ['webhooks', 'channel'],
+]);
+
+const SECTION_SHORT: ReadonlyMap<string, string> = new Map([
+  ['external-services', 'External services'],
+  ['data-storage', 'Data storage'],
+  ['authentication', 'Authentication'],
+  ['monitoring', 'Monitoring'],
+  ['ci-cd', 'CI/CD'],
+  ['environment-configuration', 'Environment'],
+  ['webhooks', 'Webhooks'],
+]);
+
+/** The longest wire label (the lane layout's own cap). */
+const WIRE_LABEL_CAP = 24;
+const NODE_LABEL_CAP = 40;
+
+function withoutParenthetical(label: string): string {
+  const open = label.indexOf(' (');
+  return (open > 0 ? label.slice(0, open) : label).trim();
+}
+
+/** The first backticked name in `text` that is not a variable (a client or tool name), or null. */
+function firstToolName(text: string): string | null {
+  let from = 0;
+  for (;;) {
+    const open = text.indexOf('`', from);
+    if (open < 0) return null;
+    const close = text.indexOf('`', open + 1);
+    if (close < 0) return null;
+    const span = text.slice(open + 1, close).trim();
+    from = close + 1;
+    if (span.length === 0 || span.includes('/') || span === span.toUpperCase()) continue;
+    return span;
+  }
+}
+
+interface LiftedGroup {
+  section: string | null;
+  label: string;
+  inUse: boolean;
+  firstLine: string;
+  sdk: string | null;
+  lines: string[];
+}
+
+function groupsOfIntegrations(integrations: Record<string, unknown>): LiftedGroup[] {
+  return recordsOf(integrations.groups).flatMap((group): LiftedGroup[] => {
+    const label = textOrNull(group.label);
+    if (label === null) return [];
+    const lines = (Array.isArray(group.lines) ? group.lines : []).filter((line): line is string => typeof line === 'string');
+    const first = recordsOf(group.rows)[0];
+    return [
+      {
+        section: typeof group.section === 'string' ? group.section : null,
+        label,
+        inUse: group.inUse === true,
+        firstLine: typeof group.firstLine === 'string' ? group.firstLine : '',
+        sdk: first === undefined ? null : textOrNull(first.sdk),
+        lines,
+      },
+    ];
+  });
+}
+
+/** The app in the service lane, wired to one node per group in use. The kind comes from the group's section, not from
+ * the shared keyword classifier (which was written for Research diagrams). The app is the first layer and every group
+ * the second, so the lanes draw as a fan out of the app. */
+function integrationsGraph(groups: readonly LiftedGroup[]): DiagramGraph | null {
+  const live = groups.filter((group) => group.inUse);
+  if (live.length === 0) return null;
+  const nodes: DiagramNode[] = [
+    {
+      id: 0,
+      kind: 'service',
+      label: { main: 'This app', sub: 'the codebase', code: false, full: 'This app' },
+      details: [],
+      notes: [],
+      group: null,
+      row: 0,
+      col: 0,
+    },
+  ];
+  const edges: DiagramEdge[] = [];
+  live.forEach((group, index) => {
+    const id = index + 1;
+    const main = withoutParenthetical(group.label).slice(0, NODE_LABEL_CAP);
+    const sub = firstToolName(group.lines.join(' ')) ?? (group.section === null ? '' : (SECTION_SHORT.get(group.section) ?? ''));
+    nodes.push({
+      id,
+      kind: group.section === null ? 'service' : (SECTION_LANES.get(group.section) ?? 'service'),
+      label: { main, sub, code: false, full: group.firstLine === '' ? group.label : group.firstLine },
+      details: group.lines,
+      notes: [],
+      group: null,
+      row: 2,
+      col: index,
+    });
+    const wire = group.sdk === null ? null : firstToolName(group.sdk);
+    edges.push({ from: 0, to: id, label: wire === null ? '' : wire.slice(0, WIRE_LABEL_CAP), directed: true, implied: false });
+  });
+  return { nodes, edges, groups: [], quality: 1, dangling: 0, thin: false };
+}
+
+/** A line of prose as the cross-read compares it: lower-cased, a code span that is a path or a file name left out, the
+ * ticks of the others dropped. A character scan. */
+function crossText(text: string): string {
+  let out = '';
+  let from = 0;
+  for (;;) {
+    const open = text.indexOf('`', from);
+    const close = open < 0 ? -1 : text.indexOf('`', open + 1);
+    if (open < 0 || close < 0) {
+      out += text.slice(from);
+      break;
+    }
+    out += text.slice(from, open);
+    const span = text.slice(open + 1, close);
+    const dot = span.lastIndexOf('.');
+    const fileLike = dot > 0 && span.length - dot - 1 <= 5 && span.length - dot - 1 >= 1 && !span.includes(' ');
+    out += span.includes('/') || fileLike ? ' ' : ` ${span} `;
+    from = close + 1;
+  }
+  return out.toLowerCase();
+}
+
+function isNameChar(ch: string | undefined): boolean {
+  return ch !== undefined && ((ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch === '-');
+}
+
+/** True when `name` (one word, three characters or more) appears in the prepared `haystack` on word edges. */
+function mentions(haystack: string, name: string): boolean {
+  const word = (name.startsWith('@') ? name.slice(1) : name).toLowerCase();
+  if (word.length < 3 || word.includes(' ')) return false;
+  let from = 0;
+  for (;;) {
+    const at = haystack.indexOf(word, from);
+    if (at < 0) return false;
+    if (!isNameChar(haystack[at - 1]) && !isNameChar(haystack[at + word.length])) return true;
+    from = at + 1;
+  }
+}
+
+function crossOf(context: ViewInput['codebaseContext']): { stackNames: string[]; integrations: { label: string; text: string }[] } {
+  const cross = context?.cross;
+  return { stackNames: cross?.stackNames ?? [], integrations: cross?.integrations ?? [] };
+}
+
+function liftIntegrations(
+  codebase: Record<string, unknown>,
+  urls: ReadonlyMap<string, string>,
+  context: ViewInput['codebaseContext'],
+): ComposedIntegrations | null {
+  const integrations = isRecord(codebase.integrations) ? codebase.integrations : null;
+  if (integrations === null) return null;
+  const groups = groupsOfIntegrations(integrations);
+  const variables = recordsOf(integrations.variables).flatMap((variable): ComposedVariable[] => {
+    const name = textOrNull(variable.name);
+    if (name === null) return [];
+    const kind = variable.kind === 'required' || variable.kind === 'conditional' || variable.kind === 'optional' ? variable.kind : 'named';
+    return [{ name, hadValue: variable.hadValue === true, kind }];
+  });
+  const lifted = isRecord(integrations.environment) ? integrations.environment : null;
+  const environment =
+    lifted !== null && lifted.whole === true
+      ? {
+          heading: textOrNull(lifted.heading) ?? 'Environment Configuration',
+          groups: recordsOf(lifted.groups).flatMap((group) => {
+            const lines = (Array.isArray(group.lines) ? group.lines : []).filter((line): line is string => typeof line === 'string');
+            return lines.length === 0 ? [] : [{ label: textOrNull(group.label) ?? '', lines }];
+          }),
+        }
+      : null;
+  if (groups.length === 0 && variables.length === 0 && environment === null) return null;
+
+  const quiet: ComposedQuietGroup[] = groups
+    .filter((group) => !group.inUse)
+    .map((group) => ({
+      label: `${group.section === null ? group.label : `${SECTION_SHORT.get(group.section) ?? group.label} · ${group.label}`}`,
+      title: group.firstLine === '' ? null : group.firstLine,
+    }));
+  for (const key of Array.isArray(integrations.missing) ? integrations.missing : []) {
+    const short = typeof key === 'string' ? SECTION_SHORT.get(key) : undefined;
+    if (short !== undefined) quiet.push({ label: `${short} · not in this document`, title: null });
+  }
+
+  const { stackNames } = crossOf(context);
+  const alsoInStack = groups.flatMap((group) => {
+    if (!group.inUse) return [];
+    const text = crossText(group.lines.join(' '));
+    const names = stackNames.filter((name) => mentions(text, name)).slice(0, 6);
+    return names.length === 0 ? [] : [{ group: withoutParenthetical(group.label), names }];
+  });
+
+  return {
+    kind: 'integrations',
+    graph: integrationsGraph(groups),
+    inUse: groups.filter((group) => group.inUse).length,
+    quiet,
+    variables,
+    environment,
+    alsoInStack,
+    stackUrl: urls.get('STACK.md') ?? null,
   };
 }
 
@@ -667,8 +937,11 @@ function liftOf(
   codebase: Record<string, unknown>,
   groups: readonly { heading: string | null; html: string }[],
   drawn: Set<number>,
+  urls: ReadonlyMap<string, string>,
+  context: ViewInput['codebaseContext'],
 ): ComposedCodebaseLifted | null {
-  if (key === 'stack') return liftStack(codebase);
+  if (key === 'stack') return liftStack(codebase, urls, context);
+  if (key === 'integrations') return liftIntegrations(codebase, urls, context);
   if (key === 'architecture') return liftArchitecture(codebase);
   if (key === 'structure') return liftStructure(codebase);
   if (key === 'concerns') return liftConcerns(codebase, groups, drawn);
@@ -683,6 +956,7 @@ function consumedKeys(lifted: ComposedCodebaseLifted | null): ReadonlySet<string
     if (lifted.swaps.length > 0) keys.add('anti-patterns');
   }
   if (lifted?.kind === 'structure') keys.add('directory-layout');
+  if (lifted?.kind === 'integrations' && lifted.environment !== null) keys.add('environment-configuration');
   return keys;
 }
 
@@ -804,7 +1078,15 @@ export function composeCodebase(input: ViewInput): ComposedCodebase | null {
 
   // A lifted part that draws whole sections (Concerns) adds the groups it used to `drawn` itself.
   const drawn = new Set<number>();
-  const lifted = liftOf(current.key, codebase, input.groups, drawn);
+  // Another mapped panel's address by its file name (never the current one): the cross-read links read it.
+  const urls = new Map(
+    context.panels.flatMap((panel) =>
+      panel.mapped && panel.url !== null && panel.key !== context.activeKey
+        ? [[`${panel.key.toUpperCase()}.md`, panel.url] as const]
+        : [],
+    ),
+  );
+  const lifted = liftOf(current.key, codebase, input.groups, drawn, urls, context);
   for (const index of consumedGroups(input.groups, codebase, consumedKeys(lifted))) drawn.add(index);
   const plain: ComposedCodebasePlain[] = input.groups
     .filter((group, index) => group.html.trim() !== '' && !drawn.has(index))

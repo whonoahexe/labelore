@@ -273,6 +273,168 @@ describe('the Key Dependencies lift (10-14)', () => {
   });
 });
 
+const integrations = (body: string) => lift('integrations', `# External Integrations\n\n${body}`).integrations!;
+
+describe('the Integrations lift (10-14)', () => {
+  const lifted = lift('integrations').integrations!;
+
+  it('lists Tidemark groups by bold label, the section each sits in, and whether the group is in use', () => {
+    expect(lifted.groups.map((g) => [g.section, g.label, g.inUse])).toEqual([
+      ['external-services', 'Tide data', true],
+      ['external-services', 'Messaging', true],
+      ['data-storage', 'Databases', true],
+      ['data-storage', 'File Storage', true],
+      ['data-storage', 'Caching', false],
+      ['webhooks', 'Incoming', false],
+      ['webhooks', 'Outgoing', true],
+    ]);
+    expect(lifted.services).toBe(5);
+    expect(lift('integrations').keyNumber).toBe(5);
+    expect(lifted.missing).toEqual(['authentication', 'monitoring', 'ci-cd']);
+  });
+
+  it('reads a row as the service, its use, its client and its credential variable (a name only)', () => {
+    expect(lifted.groups[0].rows).toEqual([
+      {
+        service: 'Coastal tide feed',
+        use: 'hourly water heights for the harbour mouth',
+        sdk: 'none, plain `fetch` in `server/tides/feed.ts`',
+        authVariable: 'TIDEMARK_TIDE_FEED_KEY',
+      },
+    ]);
+    expect(lifted.groups[1].rows[0]).toMatchObject({ sdk: '`nodemailer` 6', authVariable: 'TIDEMARK_MAIL_TOKEN' });
+    expect(lifted.groups[2].rows[0]).toMatchObject({ service: 'SQLite file `data/tidemark.db`', sdk: '`TIDEMARK_DB_PATH`' });
+  });
+
+  it('lists TIDEMARK_TIDE_FEED_KEY with hadValue true and the other two names with false, all required', () => {
+    expect(lifted.variables).toEqual([
+      { name: 'TIDEMARK_TIDE_FEED_KEY', hadValue: true, kind: 'required' },
+      { name: 'TIDEMARK_MAIL_TOKEN', hadValue: false, kind: 'required' },
+      { name: 'TIDEMARK_DB_PATH', hadValue: false, kind: 'required' },
+    ]);
+  });
+
+  it('never holds the planted value anywhere in the structured record', () => {
+    expect(JSON.stringify(lift('integrations'))).not.toContain('PLACEHOLDER-NOT-A-REAL-KEY');
+  });
+
+  it('draws the Environment Configuration section whole when it holds only names and lines', () => {
+    expect(lifted.environment).toEqual({
+      heading: 'Environment Configuration',
+      groups: [
+        { label: 'Required env vars', names: ['TIDEMARK_TIDE_FEED_KEY', 'TIDEMARK_MAIL_TOKEN', 'TIDEMARK_DB_PATH'], lines: [] },
+        { label: 'Secrets location', names: [], lines: ['A `.env` file on the harbour office machine, outside the repository'] },
+      ],
+      whole: true,
+    });
+  });
+
+  it('leaves the section plain (whole false) when it holds a fence or a table', () => {
+    const fenced = integrations('## Environment Configuration\n\n**Required env vars:**\n- `A_KEY=abc123`\n\n```\nA_KEY=abc123\n```\n');
+    expect(fenced.environment?.whole).toBe(false);
+    expect(JSON.stringify(fenced)).not.toContain('abc123');
+    const table = integrations('## Environment Configuration\n\n| Name | Note |\n|---|---|\n| `A_KEY` | x |\n');
+    expect(table.environment?.whole).toBe(false);
+  });
+
+  it('removes a value in every place a name can sit: a backticked NAME=value, NAME: value, a bare word, a sub-bullet', () => {
+    const body = [
+      '## Environment Configuration',
+      '',
+      '**Required env vars:**',
+      '- `ONE_KEY=secret-one`',
+      '- TWO_KEY: secret-two',
+      '- `THREE_KEY`=secret-three',
+      '- FOUR_KEY=secret-four - used for x',
+      '  - note: set FIVE_KEY=secret-five before starting',
+      '',
+      '## APIs & External Services',
+      '',
+      '**Mail:**',
+      '- Relay - sends mail using `SIX_KEY=secret-six`',
+      '  - Auth: `SEVEN_KEY=secret-seven`',
+    ].join('\n');
+    const found = integrations(body);
+    const text = JSON.stringify(found);
+    for (const value of ['secret-one', 'secret-two', 'secret-three', 'secret-four', 'secret-five', 'secret-six', 'secret-seven']) {
+      expect(text).not.toContain(value);
+    }
+    expect(found.variables.filter((v) => v.hadValue).map((v) => v.name).sort()).toEqual(
+      ['FOUR_KEY', 'ONE_KEY', 'SEVEN_KEY', 'SIX_KEY', 'THREE_KEY', 'TWO_KEY'].sort(),
+    );
+    expect(found.groups[0].rows[0].authVariable).toBe('SEVEN_KEY');
+  });
+
+  it('keeps a placeholder as not a value', () => {
+    expect(integrations('## Environment Configuration\n\n**Optional env vars:**\n- `PORT=[your port]`\n').variables).toEqual([
+      { name: 'PORT', hadValue: false, kind: 'optional' },
+    ]);
+  });
+
+  it('counts a group whose first line says None, Not detected, Not hosted or No as not in use, and "None of" as in use', () => {
+    const found = integrations(
+      [
+        '## Monitoring & Observability',
+        '',
+        '**Error Tracking:**',
+        '- None. No Sentry client is installed.',
+        '**Logs:**',
+        '- Not detected.',
+        '**Analytics:**',
+        '- No analytics',
+        '**Alerts:**',
+        '- None of the alerts are paged - a pager rota exists',
+      ].join('\n'),
+    );
+    expect(found.groups.map((g) => [g.label, g.inUse])).toEqual([
+      ['Error Tracking', false],
+      ['Logs', false],
+      ['Analytics', false],
+      ['Alerts', true],
+    ]);
+  });
+
+  it('makes a group of bullets that follow no label, named by the section heading', () => {
+    const found = integrations('## File Watching\n\n- Not implemented in v1.\n');
+    expect(found.groups).toHaveLength(1);
+    expect(found.groups[0]).toMatchObject({ section: null, label: 'File Watching', inUse: false });
+  });
+
+  it('leaves out a line that names a path under a home folder', () => {
+    const found = integrations(
+      [
+        '## CI/CD & Deployment',
+        '',
+        '**MCP:**',
+        '- registers a stdio server (`/home/someone/.npm-global/bin/tool`)',
+        '',
+        '**Pipeline:**',
+        '- Hosted runner - runs the gate',
+        '  - Client: `act` at `/Users/someone/bin/act`',
+      ].join('\n'),
+    );
+    expect(found.groups.map((g) => g.label)).toEqual(['Pipeline']);
+    expect(JSON.stringify(found)).not.toContain('someone');
+  });
+
+  it('names a variable mentioned in another group, when it has an underscore', () => {
+    const found = integrations('## CI/CD & Deployment\n\n**Hooks:**\n- Reads `PAUSE_AT` and `CI` - hooks\n');
+    expect(found.variables).toEqual([{ name: 'PAUSE_AT', hadValue: false, kind: 'named' }]);
+  });
+
+  it('caps groups, rows, lines and variables and lifts nothing for another document', () => {
+    const many = Array.from({ length: 100 }, (_, i) => `**G${i}:**\n- svc ${i} - use`).join('\n');
+    expect(integrations(`## APIs & External Services\n\n${many}\n`).groups).toHaveLength(60);
+    const rows = Array.from({ length: 100 }, (_, i) => `- svc ${i} - use`).join('\n');
+    const group = integrations(`## APIs & External Services\n\n**G:**\n${rows}\n`).groups[0];
+    expect(group.rows).toHaveLength(30);
+    expect(group.lines).toHaveLength(12);
+    const names = Array.from({ length: 100 }, (_, i) => `- \`VAR_${i}\``).join('\n');
+    expect(integrations(`## Environment Configuration\n\n**Required:**\n${names}\n`).variables).toHaveLength(60);
+    expect(lift('stack').integrations).toBeUndefined();
+  });
+});
+
 describe('the Concerns lift', () => {
   it('counts Tidemark CONCERNS per section, in template order: 3, 1, 2, 2, 3, 2, 0, 1, 0', () => {
     const result = lift('concerns').concerns!;

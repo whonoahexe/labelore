@@ -14,6 +14,7 @@
 import { eachLineOutsideFences, fenceMarker, scanFencedLines, splitBodyLines } from './fenced-sections.ts';
 import type { FencedSection } from './fenced-sections.ts';
 import { parseTree, treeCounts } from '../../rendering/ascii-tree.ts';
+import { withholdInText, withholdValue } from './withhold-values.ts';
 
 // ---------------------------------------------------------------------------------------------------------
 // Heading normalisation and keys
@@ -311,6 +312,8 @@ export interface CodebaseBody {
   architecture?: ArchitectureLift;
   /** The Directory Layout tree and its directory count (document structure only). */
   structure?: StructureLift;
+  /** The groups, variable names and Environment Configuration (document integrations only). */
+  integrations?: IntegrationsLift;
   /** What `keyNumber` counts when it is not the panel's usual unit: Architecture counts layers when the
    * document has no component table. */
   keyUnit?: 'layer';
@@ -1124,6 +1127,326 @@ export function liftStructure(sections: readonly KeyedSection[], lines: readonly
   return lift;
 }
 
+// ---------------------------------------------------------------------------------------------------------
+// The Integrations lift (10-14)
+// ---------------------------------------------------------------------------------------------------------
+
+/** One service row of a group: the first bullet's words, and the lines under it that name its client and its
+ * credential variable. Only a variable's name is kept (T-10-24). */
+export interface IntegrationRow {
+  service: string;
+  use: string | null;
+  sdk: string | null;
+  authVariable: string | null;
+}
+
+export interface IntegrationGroup {
+  /** The known section key (external-services, data-storage, authentication, monitoring, ci-cd, webhooks), or null
+   * for a section the template does not have. */
+  section: string | null;
+  sectionHeading: string;
+  /** The bold label the group sits under; the section's heading for bullets that follow no label. */
+  label: string;
+  /** False when the group's first line says None, Not detected, Not applicable, Not implemented, Not hosted or No. */
+  inUse: boolean;
+  /** The group's first line, for a title on a quiet chip. */
+  firstLine: string;
+  rows: IntegrationRow[];
+  /** The group's bullets and sub-bullets with every variable value removed, for the node's details. */
+  lines: string[];
+}
+
+export type VariableKind = 'required' | 'conditional' | 'optional' | 'named';
+
+export interface IntegrationVariable {
+  name: string;
+  /** True when the document writes a value beside the name; the value is never kept. */
+  hadValue: boolean;
+  kind: VariableKind;
+}
+
+export interface EnvironmentGroup {
+  label: string;
+  names: string[];
+  /** The group's lines with every value removed. */
+  lines: string[];
+}
+
+export interface IntegrationsLift {
+  groups: IntegrationGroup[];
+  variables: IntegrationVariable[];
+  /** The Environment Configuration section as names and cleaned lines; `whole` when nothing in the section is left
+   * out (no fence, no table), so the page may draw it in place of the plain section. */
+  environment: { heading: string; groups: EnvironmentGroup[]; whole: boolean } | null;
+  /** The known section keys the document lacks. */
+  missing: string[];
+  /** Groups in use: the key number. */
+  services: number;
+}
+
+export const INTEGRATION_GROUP_CAP = 60;
+export const INTEGRATION_ROW_CAP = 30;
+export const INTEGRATION_LINE_CAP = 12;
+export const INTEGRATION_TEXT_CAP = 300;
+export const INTEGRATION_VARIABLE_CAP = 60;
+
+const INTEGRATION_KEYS: readonly string[] = [...(CODEBASE_KEYS.get('integrations')?.values() ?? [])];
+
+const ABSENT_OPENINGS: readonly string[] = ['none', 'not detected', 'not applicable', 'not implemented', 'not hosted', 'no'];
+
+/** True when a line opens with an absence marker as a whole word ("None.", "Not detected. No AI SDK ...", "No Sentry"). */
+function saysAbsent(text: string): boolean {
+  const lower = text.replaceAll('`', '').replaceAll('*', '').trimStart().slice(0, 40).toLowerCase();
+  for (const opening of ABSENT_OPENINGS) {
+    if (!lower.startsWith(opening)) continue;
+    const next = lower.charCodeAt(opening.length);
+    if (!Number.isNaN(next) && ((next >= 97 && next <= 122) || (next >= 48 && next <= 57))) continue;
+    if (lower.startsWith('none of ')) continue;
+    return true;
+  }
+  return false;
+}
+
+/** True when a line names a path under a person's home folder: a private detail the lifted rows leave out. */
+function hasHomePath(text: string): boolean {
+  return text.includes('/home/') || text.includes('/Users/') || text.includes(':\\Users\\') || text.includes('/root/');
+}
+
+/** The text of an indented list item (a marker after leading spaces), else null. */
+function nestedBullet(line: string): string | null {
+  let i = 0;
+  while (i < line.length && line.charCodeAt(i) === 32) i += 1;
+  if (i < 2) return null;
+  const c = line.charCodeAt(i);
+  if ((c === 45 || c === 42 || c === 43) && line.charCodeAt(i + 1) === 32) {
+    return (line.length > LINE_CAP ? line.slice(i + 2, LINE_CAP) : line.slice(i + 2)).trim();
+  }
+  return null;
+}
+
+/** The contents of every backtick span in `text`, in order. */
+function tickSpans(text: string): string[] {
+  const spans: string[] = [];
+  let from = 0;
+  for (;;) {
+    const open = text.indexOf('`', from);
+    if (open < 0) break;
+    const close = text.indexOf('`', open + 1);
+    if (close < 0) break;
+    spans.push(text.slice(open + 1, close));
+    from = close + 1;
+  }
+  return spans;
+}
+
+function cleanText(text: string): string {
+  const scrubbed = withholdInText(text).text;
+  return scrubbed.length > INTEGRATION_TEXT_CAP ? scrubbed.slice(0, INTEGRATION_TEXT_CAP) : scrubbed;
+}
+
+const KIND_RANK: Readonly<Record<VariableKind, number>> = { required: 3, conditional: 2, optional: 1, named: 0 };
+
+/** The variables found so far, by name: a repeat keeps a value flag once set and the strongest kind. */
+function addVariable(book: Map<string, IntegrationVariable>, name: string, hadValue: boolean, kind: VariableKind): void {
+  const found = book.get(name);
+  if (found === undefined) {
+    if (book.size < INTEGRATION_VARIABLE_CAP) book.set(name, { name, hadValue, kind });
+    return;
+  }
+  if (hadValue) found.hadValue = true;
+  if (KIND_RANK[kind] > KIND_RANK[found.kind]) found.kind = kind;
+}
+
+/** Variable names in one bullet: its leading token and every backticked span (on the left of the first spaced dash, for
+ * the Environment section; anywhere for a group's bullet, where only names with an underscore count). */
+function namesIn(text: string, needsUnderscore: boolean): { name: string; hadValue: boolean }[] {
+  // A group's bullet may name a variable anywhere in it; the Environment section names them on the left of the dash.
+  const dash = needsUnderscore ? -1 : firstSpacedDash(text);
+  const left = dash < 0 ? text : text.slice(0, dash);
+  const found: { name: string; hadValue: boolean }[] = [];
+  const keep = (name: string, hadValue: boolean): void => {
+    if (needsUnderscore && !name.includes('_')) return;
+    const known = found.find((entry) => entry.name === name);
+    if (known === undefined) found.push({ name, hadValue });
+    else if (hadValue) known.hadValue = true;
+  };
+  const lead = withholdValue(left);
+  if (lead !== null) keep(lead.name, lead.hadValue);
+  for (const span of tickSpans(left)) {
+    const read = withholdValue(span);
+    if (read !== null) keep(read.name, read.hadValue);
+  }
+  return found;
+}
+
+function variableKind(label: string, text: string): VariableKind {
+  const lower = `${label} ${text.slice(0, 40)}`.toLowerCase();
+  if (lower.includes('optional')) return 'optional';
+  if (lower.includes('conditional')) return 'conditional';
+  if (lower.includes('required')) return 'required';
+  return 'named';
+}
+
+function groupRow(top: string, subs: readonly string[]): IntegrationRow {
+  const dash = firstSpacedDash(top);
+  const service = cleanText(dash < 0 ? top : top.slice(0, dash)).slice(0, 120);
+  const use = dash < 0 ? null : cleanText(top.slice(dash + 3)) || null;
+  let sdk: string | null = null;
+  let authVariable: string | null = null;
+  for (const sub of subs) {
+    const colon = sub.indexOf(':');
+    if (colon <= 0 || colon > 20) continue;
+    const label = sub.slice(0, colon).replaceAll('*', '').trim().toLowerCase();
+    const value = sub.slice(colon + 1).trim();
+    if (sdk === null && (label === 'sdk/client' || label === 'client' || label === 'connection')) {
+      sdk = cleanText(value) || null;
+    } else if (authVariable === null && label === 'auth') {
+      for (const span of tickSpans(value)) {
+        const read = withholdValue(span);
+        if (read !== null) {
+          authVariable = read.name;
+          break;
+        }
+      }
+    }
+  }
+  return { service, use, sdk, authVariable };
+}
+
+/**
+ * The Integrations document as groups (one per bold label under a section, or per section when its bullets follow
+ * no label), the variable names and the Environment Configuration section. Every variable passes through
+ * `withholdValue` or `withholdInText`, so no value is stored; a line naming a path under a home folder is left out.
+ */
+export function liftIntegrations(sections: readonly KeyedSection[], lines: readonly string[]): IntegrationsLift {
+  const lift: IntegrationsLift = { groups: [], variables: [], environment: null, missing: [], services: 0 };
+  const book = new Map<string, IntegrationVariable>();
+  const present = new Set<string>();
+  for (const section of sections) {
+    if (section.level !== 2) continue;
+    if (section.key !== null) present.add(section.key);
+    if (section.key === 'environment-configuration') {
+      liftEnvironment(lines, section, lift, book);
+      continue;
+    }
+    const state: { group: IntegrationGroup | null; top: string | null; subs: string[] } = { group: null, top: null, subs: [] };
+    const finishRow = (): void => {
+      const { group, top } = state;
+      if (group !== null && top !== null && group.rows.length < INTEGRATION_ROW_CAP) {
+        group.rows.push(groupRow(top, state.subs));
+        if (group.lines.length < INTEGRATION_LINE_CAP) group.lines.push(cleanText(top));
+        for (const sub of state.subs) if (group.lines.length < INTEGRATION_LINE_CAP) group.lines.push(cleanText(sub));
+      }
+      state.top = null;
+      state.subs = [];
+    };
+    const finishGroup = (): void => {
+      finishRow();
+      if (state.group !== null && state.group.rows.length > 0 && lift.groups.length < INTEGRATION_GROUP_CAP) {
+        lift.groups.push(state.group);
+      }
+      state.group = null;
+    };
+    const startGroup = (label: string): IntegrationGroup => {
+      finishGroup();
+      const group: IntegrationGroup = {
+        section: section.key,
+        sectionHeading: section.heading,
+        label: label.replaceAll('`', '').replaceAll('*', '').slice(0, 120),
+        inUse: true,
+        firstLine: '',
+        rows: [],
+        lines: [],
+      };
+      state.group = group;
+      return group;
+    };
+    eachLineOutsideFences(lines, section.startLine + 1, section.endLine, (line) => {
+      const label = boldLabel(line);
+      if (label !== null) {
+        startGroup(label);
+        return;
+      }
+      const bullet = topBullet(line);
+      if (bullet !== null) {
+        for (const name of namesIn(bullet, true)) addVariable(book, name.name, name.hadValue, 'named');
+        finishRow();
+        const group = state.group ?? startGroup(section.heading);
+        if (group.firstLine === '') {
+          group.firstLine = cleanText(bullet);
+          group.inUse = !saysAbsent(bullet);
+        }
+        state.top = hasHomePath(bullet) ? null : bullet;
+        return;
+      }
+      const nested = nestedBullet(line);
+      if (nested !== null && state.top !== null) {
+        for (const name of namesIn(nested, true)) addVariable(book, name.name, name.hadValue, 'named');
+        if (!hasHomePath(nested)) state.subs.push(nested);
+      }
+    });
+    finishGroup();
+  }
+  lift.missing = INTEGRATION_KEYS.filter((key) => !present.has(key));
+  lift.variables = [...book.values()];
+  lift.services = lift.groups.filter((entry) => entry.inUse).length;
+  return lift;
+}
+
+function liftEnvironment(
+  lines: readonly string[],
+  section: KeyedSection,
+  lift: IntegrationsLift,
+  book: Map<string, IntegrationVariable>,
+): void {
+  const groups: EnvironmentGroup[] = [];
+  let current: EnvironmentGroup = { label: '', names: [], lines: [] };
+  let label = '';
+  let whole = true;
+  const flush = (): void => {
+    if (current.names.length > 0 || current.lines.length > 0) groups.push(current);
+  };
+  for (let i = section.startLine + 1; i < section.endLine; i += 1) {
+    const line = lines[i];
+    if (fenceMarker(line) !== null || line.trimStart().charCodeAt(0) === 124) whole = false;
+  }
+  eachLineOutsideFences(lines, section.startLine + 1, section.endLine, (line) => {
+    const bold = boldLabel(line);
+    if (bold !== null) {
+      flush();
+      label = bold.replaceAll('`', '').replaceAll('*', '').slice(0, 120);
+      current = { label, names: [], lines: [] };
+      return;
+    }
+    const text = topBullet(line) ?? nestedBullet(line);
+    if (text === null) {
+      const plain = line.trim();
+      const footer = plain.startsWith('*') && plain.endsWith('*');
+      if (plain.length > 0 && !plain.startsWith('---') && !footer && current.lines.length < INTEGRATION_LINE_CAP) {
+        current.lines.push(cleanText(plain));
+      }
+      return;
+    }
+    const names = namesIn(text, false);
+    const kind = variableKind(label, text);
+    for (const name of names) {
+      addVariable(book, name.name, name.hadValue, kind);
+      if (!current.names.includes(name.name)) current.names.push(name.name);
+    }
+    const rest = text
+      .split('`')
+      .filter((_, index) => index % 2 === 0)
+      .join('')
+      .replaceAll(',', '')
+      .trim();
+    if ((names.length === 0 || rest.length > 0) && !hasHomePath(text) && current.lines.length < INTEGRATION_LINE_CAP) {
+      current.lines.push(cleanText(text));
+    }
+  });
+  flush();
+  lift.environment = { heading: section.heading, groups, whole };
+}
+
 export function extractCodebase(doc: string, frontmatter: Record<string, unknown>, body: string): CodebaseBody {
   const lines = splitBodyLines(body);
   const keyed = keySections(doc, scanFencedLines(lines));
@@ -1150,6 +1473,10 @@ export function extractCodebase(doc: string, frontmatter: Record<string, unknown
     const structure = liftStructure(keyed, lines);
     result.structure = structure;
     if (structure.tree !== null && structure.directories > 0) result.keyNumber = structure.directories;
+  } else if (doc === 'integrations') {
+    const integrations = liftIntegrations(keyed, lines);
+    result.integrations = integrations;
+    result.keyNumber = integrations.services;
   } else if (doc === 'concerns') {
     const concerns = countConcerns(keyed, lines);
     result.concerns = concerns;
