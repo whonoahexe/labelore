@@ -1,0 +1,651 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 052 — Cross-AI reviews page</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+/* Sketch 052: the Cross-AI reviews page (VIEW-12), three page structures, none of them 022's review threads, 051's
+   three or the 041 to 050 frames. Text is the made-up Lendshed REVIEWS files (test/fixtures/lendshed, 10-07),
+   embedded verbatim below and parsed in the page; agreement and disagreement are derived best-effort and never merged
+   into one verdict. Tokens come from ../themes/default.css; every colour is a theme token or a colour-mix of tokens.
+   Squared corners, spacing from --space-* tokens, four font sizes counting everything on the page: --fs-display-3
+   (h1 only), --fs-7 (section headings, stance chips), --fs-4 (body), --fs-2 (labels, chips, models). The sketch bar
+   and the app shell are outside the page. The atoms below the first rule are 050's, verbatim. */
+:root {
+  --border-faint: color-mix(in oklch, var(--border) 55%, transparent);
+  --primary-border: color-mix(in oklch, var(--primary) 65%, var(--border));
+  --in-flight-border: color-mix(in oklch, var(--in-flight-fill) 50%, var(--border));
+  --veil: color-mix(in oklch, var(--muted) 55%, transparent);
+  --neutral-fill: color-mix(in oklch, var(--muted-foreground) 70%, transparent);
+  --hatch: repeating-linear-gradient(135deg, var(--border) 0 1px, transparent 1px var(--space-1-5));
+  --font-heading: var(--font-sans);
+  --icon: var(--space-4);
+  --sq: var(--space-2-5);
+  --page: calc(var(--space-8) * 40);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-4); font-weight: var(--fw-medium); line-height: var(--lh-normal); }
+h1, h2, h3, h4, p, ul, ol, dl, dd, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; border-radius: 0; text-align: inherit; }
+a { color: inherit; text-decoration: none; }
+code { font-family: var(--font-mono); font-size: inherit; padding: 0 var(--space-0-5); background: var(--veil); overflow-wrap: anywhere; }
+[hidden] { display: none !important; }
+svg.i { width: var(--icon); height: var(--icon); flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+/* ---------- sketch chrome (not part of the app) ---------- */
+#sketch-bar { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); background: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; }
+#sketch-bar .lbl { color: var(--muted-foreground); white-space: nowrap; }
+#sketch-bar .grp { display: flex; flex: none; gap: var(--space-1); align-items: center; }
+#sketch-bar .grp + .grp { padding-left: var(--space-3); border-left: 1px solid var(--border); }
+#sketch-bar .grp.line { flex-basis: 100%; padding-left: 0; border-left: 0; }
+#sketch-bar a, #sketch-bar button { padding: var(--space-1-5) var(--space-3); border: 1px solid transparent; color: var(--muted-foreground); white-space: nowrap; letter-spacing: inherit; text-transform: inherit; font-size: inherit; }
+#sketch-bar a:hover, #sketch-bar button:hover { color: var(--foreground); background: var(--state-hover); }
+#sketch-bar .on { color: var(--foreground); border-color: var(--border); background: var(--state-hover); }
+#sketch-bar .name { color: var(--muted-foreground); padding-inline: var(--space-1); }
+@media (max-width: 42rem) { #sketch-bar { flex-wrap: nowrap; overflow-x: auto; } #sketch-bar .grp.line { flex-basis: auto; } }
+#toast { position: fixed; left: 50%; bottom: var(--space-4); transform: translateX(-50%); z-index: 99; max-width: 90vw; padding: var(--space-2) var(--space-3); background: var(--foreground); color: var(--background); font-family: var(--font-mono); font-size: var(--fs-2); opacity: 0; pointer-events: none; }
+#toast.on { opacity: 1; }
+
+/* ---------- app shell header (outside the page, drawn as today) ---------- */
+.app-head { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-2) var(--space-fluid-3); border-bottom: 1px solid var(--border); }
+.app-brand { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--fs-3); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.app-brand i { width: var(--space-5); height: var(--space-5); background: var(--primary); }
+.app-brand span { color: var(--muted-foreground); font-weight: var(--fw-medium); }
+.app-nav { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-left: auto; }
+.app-nav a { padding: var(--space-1-5) var(--space-2-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+@media (max-width: 42rem) { .app-nav { display: none; } }
+
+/* ---------- page atoms ---------- */
+.page { display: grid; gap: var(--space-8); align-content: start; width: min(var(--page), 100%); margin: 0 auto; padding: var(--space-fluid-10) var(--space-fluid-8) var(--space-28); min-width: 0; }
+.crumbs { display: flex; flex-wrap: wrap; gap: var(--space-1-5); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.crumbs [aria-current] { color: var(--foreground); }
+.heading-block { display: grid; gap: var(--space-3); min-width: 0; }
+.eyebrow { display: flex; gap: var(--space-2); align-items: center; color: var(--primary); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h1 { font-size: var(--fs-display-3); font-weight: var(--fw-semibold); line-height: var(--lh-display); letter-spacing: var(--ls-tighter); overflow-wrap: anywhere; }
+.meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); min-width: 0; }
+.meta { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.micro-label { margin: 0; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; }
+h2.sh { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.btn-xs { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1-5); min-height: var(--space-7); padding-inline: var(--space-3); border: 1px solid var(--border); font-family: var(--font-sans); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); text-transform: uppercase; white-space: nowrap; }
+.btn-xs:hover { background: var(--state-hover); }
+.btn-xs[aria-pressed='true'] { background: var(--muted); }
+.btn-xs.icon { padding-inline: 0; width: var(--space-7); }
+@media (pointer: coarse) { .btn-xs { min-height: var(--space-10); } .btn-xs.icon { width: var(--space-10); } }
+.seg { display: inline-flex; }
+.seg .btn-xs + .btn-xs { border-left: 0; }
+.text-link { display: inline-flex; gap: var(--space-1-5); align-items: center; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.text-link:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: var(--space-0-5); }
+.status-chip { display: inline-flex; gap: var(--space-1-5); align-items: center; width: fit-content; max-width: 100%; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); background: var(--veil); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); letter-spacing: var(--ls-widest); line-height: var(--lh-snug); text-transform: uppercase; white-space: nowrap; }
+.status-chip[data-tone='complete'] { border-color: var(--primary-border); background: var(--primary-tint); color: var(--primary); }
+.status-chip[data-tone='in-flight'] { border-color: var(--in-flight-border); color: var(--in-flight-fill); }
+.status-chip[data-tone='quiet'] { color: var(--muted-foreground); border-style: dashed; background: transparent; }
+.sq { display: inline-block; width: var(--sq); height: var(--sq); flex: none; border: 1px solid var(--border); }
+.sq[data-tone='complete'] { background: var(--primary); border-color: var(--primary); }
+.sq[data-tone='in-flight'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.sq[data-tone='quiet'] { background: transparent; border: 1px dashed var(--muted-foreground); }
+.sq[data-tone='neutral'] { background: var(--neutral-fill); border-color: var(--muted-foreground); }
+.source-note { color: var(--muted-foreground); }
+.num { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.prose { max-width: 72ch; }
+.mono { font-family: var(--font-mono); }
+.vname { font-family: var(--font-mono); font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+
+/* the lead and the shared status meter (048's drawing, reused) */
+.lead-line { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); }
+.lead-line b { font-family: var(--font-mono); }
+.status-meter { display: grid; gap: var(--space-1-5); min-width: 0; }
+.status-meter .cells { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.status-meter .cells .sq { --sq: var(--space-5); }
+.status-meter .cap { font-family: var(--font-mono); font-size: var(--fs-2); color: var(--muted-foreground); letter-spacing: var(--ls-wider); }
+.status-meter .cap b { color: var(--foreground); }
+
+/* the disagreement: the file's Status line beside the box count, never merged; quiet, not an alarm */
+.disagree { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; border: 1px dashed var(--muted-foreground); min-width: 0; }
+.disagree > div { display: grid; gap: var(--space-1); align-content: start; padding: var(--space-3) var(--space-4); min-width: 0; }
+.disagree .ne { display: grid; place-items: center; padding: 0 var(--space-2); border-inline: 1px dashed var(--border); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-7); }
+.disagree .foot { grid-column: 1 / -1; padding: var(--space-2) var(--space-4); border-top: 1px dashed var(--border); color: var(--muted-foreground); }
+.disagree .val { font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.agree { display: inline-flex; gap: var(--space-2); align-items: center; }
+
+/* the step dock (shared) */
+.dock { display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--border); background: var(--card); min-width: 0; }
+.dock-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.dock-head h3 { font-size: inherit; font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.dock-head .x { margin-left: auto; }
+.dock > h3 { font-size: inherit; font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.fields { display: grid; gap: var(--space-2); }
+.fields > div { display: grid; grid-template-columns: calc(var(--space-8) * 3.5) minmax(0, 1fr); gap: var(--space-3); }
+.fields dt { padding-top: var(--space-0-5); }
+.fields dd { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 42rem) { .fields > div { grid-template-columns: minmax(0, 1fr); gap: var(--space-0-5); } }
+.dock-empty { padding: var(--space-3) var(--space-4); border: 1px dashed var(--border); color: var(--muted-foreground); }
+.vfacts { display: grid; gap: var(--space-2); }
+.vfacts li { display: grid; grid-template-columns: var(--icon) minmax(0, 1fr); gap: var(--space-2); align-items: center; min-width: 0; overflow-wrap: anywhere; }
+.vfacts .i { color: var(--muted-foreground); }
+.cell .status-chip, .bar summary .status-chip, .tag .status-chip { white-space: normal; }
+.goes { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); align-items: baseline; }
+
+/* closed bars + the In the source only strip (shared) */
+.bars-wrap { display: grid; gap: var(--space-3); }
+.bars { display: grid; border-top: 1px solid var(--border); }
+.bar-group { display: flex; align-items: center; gap: var(--space-2); min-height: var(--space-8); padding: var(--space-3) var(--space-2) var(--space-1); border-bottom: 1px solid var(--border-faint); }
+.bar { border-bottom: 1px solid var(--border); }
+.bar > summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); min-height: var(--space-10); padding-inline: var(--space-2); cursor: pointer; list-style: none; font-weight: var(--fw-semibold); min-width: 0; }
+.bar > summary > span:not(.sq):not(.n) { min-width: 0; overflow-wrap: anywhere; }
+.bar > summary::-webkit-details-marker { display: none; }
+.bar > summary:hover { background: var(--state-hover); }
+.bar[open] > summary .chev { transform: rotate(90deg); }
+.bar > summary .n { margin-left: auto; color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; white-space: nowrap; }
+.bar-body { display: grid; gap: var(--space-3); padding: var(--space-2) var(--space-2) var(--space-6) calc(var(--icon) + var(--space-4)); min-width: 0; }
+@media (max-width: 42rem) { .bar-body { padding-left: var(--space-2); } }
+.only { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); padding: var(--space-3) var(--space-4); border: 1px dashed var(--border); }
+.only a { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; text-decoration: underline; text-underline-offset: var(--space-0-5); text-decoration-color: var(--border); }
+.blocks { display: grid; gap: var(--space-3); min-width: 0; }
+/* the shipped copy-command row (10-10): the command as selectable mono text, then the Copy command button */
+.copy-command { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); padding: var(--space-2) var(--space-3); border: 1px solid var(--border-faint); background: var(--veil); min-width: 0; }
+.copy-command code { flex: 1 1 16rem; background: none; padding: 0; font-size: var(--fs-2); line-height: var(--lh-snug); min-width: 0; }
+.cmd-note { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); }
+
+/* the missing tone (document content: the missing family only) */
+:root { --missing-border: color-mix(in oklch, var(--missing-fill) 55%, var(--border)); }
+.status-chip[data-tone='missing'] { border-color: var(--missing-border); color: var(--missing-fill); background: transparent; }
+.sq[data-tone='missing'] { background: transparent; border: 2px solid var(--missing-fill); }
+.status-chip.big { font-size: var(--fs-7); letter-spacing: var(--ls-tight); padding: var(--space-1-5) var(--space-3); }
+.status-chip.big .sq { --sq: var(--space-3); }
+.facts { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); }
+.facts span { color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); }
+.facts b { color: var(--foreground); font-weight: var(--fw-semibold); }
+.score { font-family: var(--font-mono); font-size: var(--fs-7); font-weight: var(--fw-semibold); line-height: var(--lh-tight); }
+.word { font-family: var(--font-mono); font-size: var(--fs-2); letter-spacing: var(--ls-wider); text-transform: uppercase; color: var(--muted-foreground); }
+.tgt { display: inline-flex; align-items: center; gap: var(--space-1-5); padding: 0 var(--space-1-5); border: 1px solid var(--border); font-family: var(--font-mono); font-size: var(--fs-2); white-space: nowrap; }
+.steps { display: grid; gap: var(--space-2); counter-reset: none; }
+.step { display: grid; grid-template-columns: var(--space-6) minmax(0, 1fr); gap: var(--space-2); align-items: baseline; min-width: 0; }
+.step .no { font-family: var(--font-mono); font-weight: var(--fw-semibold); color: var(--muted-foreground); }
+.step .tx { min-width: 0; overflow-wrap: anywhere; }
+.step .tx .tgt { margin-left: var(--space-1); }
+.zero { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--muted-foreground); }
+
+/* ---------- 052 atoms ---------- */
+.bul { display: grid; gap: var(--space-1-5); padding-left: var(--space-4); list-style: square; }
+.plan-h { padding-top: var(--space-2); border-top: 1px solid var(--border-faint); font-weight: var(--fw-semibold); }
+.model { width: fit-content; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-2); color: var(--muted-foreground); }
+.rv { display: grid; gap: var(--space-1-5); align-content: start; padding: var(--space-3); border: 1px solid var(--border); background: var(--card); min-width: 0; }
+.rv[data-failed='true'] { border-style: dashed; background: transparent; }
+.rv-n { font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.rv-c { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.rv-c .status-chip { white-space: normal; }
+.cov { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); }
+.cov span { display: inline-flex; align-items: center; gap: var(--space-1); }
+.grp-sec { display: grid; gap: var(--space-3); min-width: 0; }
+h2.sh .meta { font-weight: var(--fw-medium); }
+.dis { display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px dashed var(--muted-foreground); min-width: 0; }
+.dis-h { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.dis-h h3 { font-size: inherit; font-weight: var(--fw-semibold); }
+.dis-row { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); border: 1px solid var(--border); min-width: 0; }
+.stance { display: grid; gap: var(--space-2); align-content: start; padding: var(--space-3); border-left: 1px solid var(--border); min-width: 0; }
+.stance:first-child { border-left: 0; }
+.stance.out { background: var(--hatch); }
+.stance.out .meta { width: fit-content; padding: 0 var(--space-1); background: var(--background); }
+.stance .status-chip.big { text-transform: none; }
+@media (max-width: 42rem) { .dis-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } .stance { border-top: 1px solid var(--border); } .stance:nth-child(-n + 2) { border-top: 0; } .stance:nth-child(odd) { border-left: 0; } }
+.side { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: var(--space-3); }
+.said { display: grid; gap: var(--space-2); align-content: start; padding: var(--space-3); border-top: 2px solid var(--foreground); background: var(--card-veil); min-width: 0; }
+.said-h { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+@media (max-width: 42rem) { .side { grid-template-columns: minmax(0, 1fr); } }
+.tgt { white-space: nowrap; }
+
+/* =====================================================================
+   A: Overlap — circles per reviewer, concerns placed in the overlaps; Agreed beside it
+   ===================================================================== */
+.ov-row { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--space-6) var(--space-8); align-items: start; }
+@media (max-width: 52rem) { .ov-row { grid-template-columns: minmax(0, 1fr); } }
+.ov { display: grid; border: 1px solid var(--border); min-width: 0; }
+.ov-draw { padding: var(--space-3); min-width: 0; }
+.ov-draw svg { display: block; width: 100%; overflow: visible; }
+.ov .vc { fill: var(--muted-foreground); fill-opacity: 0.09; stroke: var(--foreground); stroke-width: 1.5; }
+.ov .vc.failed { fill: none; stroke: var(--muted-foreground); stroke-dasharray: 4 4; }
+.ov .vl { fill: var(--foreground); font-family: var(--font-sans); font-size: var(--fs-4); font-weight: var(--fw-semibold); }
+.ov .vl.small { fill: var(--muted-foreground); font-size: var(--fs-2); font-family: var(--font-mono); font-weight: var(--fw-medium); }
+.ov .vn { fill: var(--foreground); font-family: var(--font-mono); font-size: var(--fs-2); font-weight: var(--fw-semibold); }
+.ov .vk { cursor: pointer; }
+.ov .vk rect { stroke: var(--muted-foreground); stroke-width: 1; fill: var(--neutral-fill); }
+.ov .vk rect[data-tone='in-flight'] { fill: var(--in-flight-fill); stroke: var(--in-flight-fill); }
+.ov .vk rect[data-tone='missing'] { fill: var(--background); stroke: var(--missing-fill); stroke-width: 2; }
+.ov .vk rect[data-tone='quiet'] { fill: var(--background); stroke: var(--muted-foreground); stroke-dasharray: 3 2; }
+.ov .vk:hover rect, .ov .vk:focus-visible rect { outline: none; stroke-width: 3; }
+.ov .vk[data-on='true'] rect { stroke: var(--foreground); stroke-width: 3; }
+.ov-key { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-8) * 5)), 1fr)); gap: var(--space-2); padding: var(--space-3); border-top: 1px solid var(--border); background: var(--card-veil); }
+.ov-foot { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); padding: var(--space-2) var(--space-3); border-top: 1px solid var(--border); color: var(--muted-foreground); font-family: var(--font-mono); font-size: var(--fs-2); }
+.ov-foot span { display: inline-flex; align-items: center; gap: var(--space-1-5); }
+.ov-side { display: grid; gap: var(--space-3); align-content: start; min-width: 0; }
+.ag-list { display: grid; gap: var(--space-2); }
+.ag { display: grid; grid-template-columns: var(--space-8) minmax(0, 1fr); gap: var(--space-2) var(--space-3); width: 100%; padding: var(--space-3); border: 1px solid var(--border); background: var(--card); text-align: left; min-width: 0; }
+.ag:hover { background: var(--state-hover); }
+.ag[aria-pressed='true'] { border-color: var(--foreground); }
+.ag-no { font-family: var(--font-mono); font-weight: var(--fw-semibold); }
+.ag-t { min-width: 0; overflow-wrap: anywhere; font-weight: var(--fw-semibold); }
+.ag-m { grid-column: 2; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); }
+
+/* =====================================================================
+   B: Where each stands — a position board, LOW / MEDIUM / HIGH columns, one lane for the roster and one per plan
+   ===================================================================== */
+.ws { container-type: inline-size; display: grid; border: 1px solid var(--foreground); min-width: 0; }
+.ws-head, .ws-lane { display: grid; grid-template-columns: calc(var(--space-8) * 3.5) repeat(4, minmax(0, 1fr)); min-width: 0; }
+.ws-head { background: var(--card-veil); border-bottom: 1px solid var(--border); }
+.ws-head > span { display: flex; align-items: center; gap: var(--space-1-5); padding: var(--space-2) var(--space-3); border-left: 1px solid var(--border); }
+.ws-head > span:first-child { border-left: 0; }
+.ws-lane + .ws-lane { border-top: 1px solid var(--border); }
+.ws-l { padding: var(--space-3); color: var(--foreground); white-space: nowrap; }
+.ws-z { display: grid; gap: var(--space-2); align-content: start; padding: var(--space-3); border-left: 1px solid var(--border); min-height: calc(var(--space-8) * 2); min-width: 0; }
+.ws-z[data-z='out'] { background: var(--hatch); }
+.ws-z .zl { display: none; }
+.rv.mini { padding: var(--space-2-5); }
+.tagr { display: grid; gap: var(--space-1); justify-items: start; padding: var(--space-2) var(--space-2-5); border: 1px solid var(--border); background: var(--card); min-width: 0; }
+.tagr.out { border-style: dashed; background: var(--background); }
+.tagr .status-chip { text-transform: none; }
+@container (max-width: 48rem) {
+  .ws-head { display: none; }
+  .ws-lane { grid-template-columns: minmax(0, 1fr); }
+  .ws-l { border-bottom: 1px solid var(--border); background: var(--card-veil); }
+  .ws-z { grid-template-columns: calc(var(--space-8) * 2.5) minmax(0, 1fr); align-items: start; min-height: 0; border-left: 0; border-top: 1px solid var(--border-faint); }
+  .ws-z:empty, .ws-z:not(:has(.rv, .tagr)) { display: none; }
+  .ws-z .zl { display: flex; align-items: center; gap: var(--space-1-5); grid-column: 1; grid-row: 1; }
+  .ws-z > :not(.zl) { grid-column: 2; }
+}
+.agb { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2) var(--space-6); align-items: center; width: 100%; padding: var(--space-3) var(--space-4); border: 1px solid var(--border); background: var(--card); text-align: left; min-width: 0; }
+.agb:hover { background: var(--state-hover); }
+.agb[aria-pressed='true'] { border-color: var(--foreground); }
+.agb-t { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-3); min-width: 0; font-weight: var(--fw-semibold); overflow-wrap: anywhere; }
+.slots { display: grid; grid-template-columns: repeat(var(--n), calc(var(--space-8) * 2.5)); gap: var(--space-1); }
+.slot { display: grid; justify-items: center; gap: var(--space-1); padding: var(--space-1-5) var(--space-1); border: 1px solid var(--border); }
+.slot .sq { --sq: var(--space-4); }
+.slot.empty { border-style: dashed; }
+.slot.empty i { width: var(--space-4); height: var(--space-4); }
+@media (max-width: 42rem) { .agb { grid-template-columns: minmax(0, 1fr); } .slots { grid-template-columns: repeat(var(--n), minmax(0, 1fr)); } }
+.one { display: grid; gap: var(--space-2); }
+.one-r { display: grid; grid-template-columns: calc(var(--space-8) * 3) minmax(0, 1fr); align-items: center; gap: var(--space-3); padding-bottom: var(--space-2); border-bottom: 1px solid var(--border-faint); }
+.one-sq { display: flex; flex-wrap: wrap; gap: var(--space-1-5); }
+.osq { width: var(--space-6); height: var(--space-6); border: 1px solid var(--muted-foreground); background: var(--neutral-fill); }
+.osq[data-tone='in-flight'] { background: var(--in-flight-fill); border-color: var(--in-flight-fill); }
+.osq[data-tone='missing'] { background: transparent; border: 2px solid var(--missing-fill); }
+.osq[data-tone='quiet'] { background: transparent; border: 1px dashed var(--muted-foreground); }
+.osq:hover { outline: 2px solid var(--border); outline-offset: 1px; }
+.osq[aria-pressed='true'] { outline: 2px solid var(--foreground); outline-offset: 1px; }
+
+/* =====================================================================
+   C: Reuse — 050 B's wire ledger: reviewers left, concerns right (Agreed first), a wire per raised concern
+   ===================================================================== */
+.ledger { position: relative; display: grid; grid-template-columns: minmax(0, 4fr) calc(var(--space-8) * 3) minmax(0, 8fr); align-items: start; min-width: 0; }
+.ledger > svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.ledger path { fill: none; stroke: var(--muted-foreground); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.ledger path[data-tone='missing'] { stroke: var(--missing-fill); stroke-dasharray: none; stroke-width: 2; }
+.ledger path[data-tone='in-flight'] { stroke: var(--in-flight-fill); stroke-dasharray: none; }
+.ledger path[data-on='false'] { opacity: 0.25; }
+.ledger path[data-on='true'] { stroke-width: 3; }
+.lcol { display: grid; gap: var(--space-2); min-width: 0; }
+.rvb { display: grid; text-align: left; cursor: pointer; }
+.rvb:hover .rv { background: var(--state-hover); }
+.rvb[aria-pressed='true'] .rv { border-color: var(--foreground); }
+.fix-group { display: grid; gap: var(--space-2); }
+.fix-group + .fix-group { margin-top: var(--space-4); }
+.crw { display: grid; gap: var(--space-1-5); width: 100%; padding: var(--space-2-5) var(--space-3); border: 1px solid var(--border); background: var(--card); text-align: left; min-width: 0; }
+.crw:hover { background: var(--state-hover); }
+.crw[aria-pressed='true'] { border-color: var(--foreground); }
+.crw-h { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); }
+.crw-t { min-width: 0; overflow-wrap: anywhere; }
+.crw-by { display: none; flex-wrap: wrap; gap: var(--space-1); }
+.crw-by.on { display: flex; }
+@media (max-width: 52rem) { .ledger { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); } .ledger > svg { display: none; } .gut { display: none; } .crw-by { display: flex; } }
+</style>
+</head>
+<body>
+<nav id="sketch-bar" aria-label="Sketch controls">
+  <span class="lbl">052 cross-ai reviews</span>
+  <span class="grp" id="tabs">
+    <a data-tab="a" href="#a">A: Overlap</a>
+    <a data-tab="b" href="#b">B: Where each stands</a>
+    <a data-tab="c" href="#c">C: Reuse — wire ledger</a>
+  </span>
+  <span class="grp">
+    <button data-theme="light">Light</button>
+    <button data-theme="dark">Dark</button>
+  </span>
+  <span class="grp line"><span class="name">State</span>
+    <button data-state="04">04 Three disagree, one failed</button><button data-state="01">01 One reviewer</button></span>
+</nav>
+
+<section data-variant="a" class="variant"></section>
+<section data-variant="b" class="variant" hidden></section>
+<section data-variant="c" class="variant" hidden></section>
+<div id="toast" role="status"></div>
+
+<script>
+// The made-up Lendshed REVIEWS files, verbatim (injected by the sketch's generator).
+const SRC = /*DATA*/{"04":"---\nphase: 4\nreviewers: [claude, codex, opencode, qwen]\nreviewed_at: 2026-04-09T10:42:17Z\nplans_reviewed: [04-02, 04-03]\nmodels:\n  claude: \"example-model-a (reasoning=high)\"\n  codex: \"unknown\"\n  opencode: \"example-model-b\"\n  qwen: \"example-model-c\"\nmodel_sources:\n  claude: \"config\"\n  codex: \"unknown\"\n  opencode: \"banner\"\n  qwen: \"config\"\nplan_coverage:\n  codex:\n    total: 2\n    missing: [\"04-03\"]\nmade_up_example: true\nderived_from: gsd-core/workflows/review.md\ngsd_core_version: 1.19.0\n---\n\n# Cross-AI Plan Review — Phase 4\n\n<!-- gsd:plan-revision-conflicts:begin -->\n## Plan-Revision Conflicts\n- [ ] REVISION_CONFLICT scope_reduction/04-02 — required_property: the month walk is bounded by a named deadline | conflicts with: D-13 (the pre-check never reads more than one month) | alternatives: keep the deadline and drop the second walk; or move the deadline into the request type\n<!-- gsd:plan-revision-conflicts:end -->\n\n## Claude Review\n\n## 04-02\n\n### Summary\nPlan 04-02 turns the one-way ordered-list decision into a migration and a single-transaction pre-check. The shape is sound: count, order and duplicate checks all run before any row is written, so a refusal leaves nothing behind. The weak spots are the cap and the deadline, which are named in the plan but tested only at their defaults.\n\n### Strengths\n- Every refusal path is stated to write zero rows, and the behavior block names each path (cap, timeout, empty month, duplicate, unknown loan).\n- The staging place is chosen by the server, so a member cannot point the export at a folder (`src/server/jobs/exports.ts`).\n- Lend on the source shed is the only permission the request needs, which matches `src/server/loans/select.ts`.\n\n### Concerns\n- **MEDIUM:** `Config.maxExportLoans` is read once at startup, so changing `MAX_EXPORT_LOANS` needs a restart and the plan's regression test only proves the default of 5,000.\n- **MEDIUM:** the named deadline on the month walk has no test that makes it fire, so the timeout refusal is claimed but never shown.\n- **LOW:** `ExportListEntry` carries a display name that the export does not need.\n\n### Suggestions\n- Add a second cap setting to the pre-check test and assert the refusal total is the real count.\n- Drive the deadline with an injected slow query and assert zero rows afterwards.\n\n### Risk Assessment\nLOW. The design closes the dangerous paths; the open items are test gaps, not design gaps.\n\n### Verdict\napprove\n\n## 04-03\n\n### Summary\nPlan 04-03 builds the archive from the saved list. It reads the saved ids, never the live loan table, so a re-run produces the same file.\n\n### Strengths\n- Reads only the saved rows, which keeps resume exact.\n- The skipped-loan table is written in the same transaction as the job.\n\n### Concerns\n- **LOW:** the archive file name embeds the month but not the shed.\n\n### Suggestions\n- Add the shed code to the file name.\n\n### Risk Assessment\nLOW.\n\n### Verdict\napprove\n\n## Codex Review\n\n## 04-02\n\nOverall this plan is workable but under-specified on failure. I checked `src/server/routes/export-jobs.ts` and `src/server/loans/count.ts` against the plan text.\n\nStrengths:\n- The request type is closed, so a malformed clash value is refused before anything runs.\n- Owner binding is explicit and tested.\n\nConcerns:\n- MEDIUM: the count and the list are read in two statements, so a loan added between them makes the stated total wrong by one. The plan does not say which one wins.\n- MEDIUM: the cap is checked after the month walk, so the walk itself is unbounded in time for a very large shed.\n- LOW: `OnClash` allows a value the migration has no column for.\n\nSuggestions:\n- Take the count and the list inside one read transaction.\n- Check the cap while walking, not after.\n\nRisk: MEDIUM. The unbounded walk is the one issue that could hurt a live shed.\n\n---\n\n## OpenCode Review\n\n## 04-02\n\n### Summary\nThe plan is careful about what gets written and careless about what gets read. Writing is one transaction; the reads before it are several separate queries that can disagree.\n\n### Strengths\n- Zero-write refusals are the right default and are stated for every path.\n- The decision checkpoint in Task 1 keeps the one-way choice with the steward lead.\n\n### Concerns\n- **HIGH:** the timeout result is not defined: the plan says \"a named deadline\" without naming it or saying what the member sees, so the refusal can only be guessed at by the tests.\n- **MEDIUM:** `Config.maxExportLoans` is read once at startup, so changing `MAX_EXPORT_LOANS` needs a restart and the regression test only proves the default of 5,000.\n- **MEDIUM:** duplicate-loan handling is listed as a flagged assumption and never settled, so two tasks later will build on a guess.\n\n### Suggestions\n- Name the deadline in config and in the refusal text.\n- Settle duplicate handling in the decision checkpoint, not in a test.\n\n### Risk Assessment\nHIGH. Three open definitions sit under a migration that cannot be reversed.\n\n## 04-03\n\n### Summary\nThe archive step trusts the saved list completely, which is right, but it never checks that the saved list still belongs to a shed the steward may read.\n\n### Strengths\n- Saved ids make resume exact.\n\n### Concerns\n- **HIGH:** a steward whose lend permission is removed between save and build still gets the archive.\n- **MEDIUM:** the skipped-loan table has no index on the job id.\n\n### Suggestions\n- Re-check the permission when the archive is built.\n\n### Risk Assessment\nHIGH.\n\n### Verdict\nrevise\n\n## Qwen Review\n\nqwen review failed or returned empty output. stderr:\nerror: request to http://127.0.0.1:11999/v1/chat/completions failed, reason: connect ECONNREFUSED 127.0.0.1:11999\n\nNothing was captured on stdout. Check the lane's configuration and run it again.\n\n---\n\n## Consensus Summary\n\nThree of four lanes returned a review; Qwen failed and counts for nothing here. Codex did not reach plan 04-03.\n\n### Agreed Strengths\n- Every refusal path writes zero rows (Claude, Codex, OpenCode).\n- The server chooses the staging place and the request type is closed (Claude, Codex).\n\n### Agreed Concerns\n- `MAX_EXPORT_LOANS` is read once at startup and the test only proves the default (Claude, OpenCode). Plan 04-02.\n- The month walk's deadline is unnamed or untested, so the timeout refusal is claimed but not shown (Claude, Codex, OpenCode). Plan 04-02.\n\n### Divergent Views\n- Overall risk: Claude LOW, Codex MEDIUM, OpenCode HIGH. The gap is mostly about whether the open definitions (deadline, duplicate handling) are test gaps or design gaps.\n- Plan 04-03: Claude approves; OpenCode calls for a revision because a removed permission is not re-checked at build time. Worth checking against `src/server/jobs/exports.ts` before 04-03 is executed.\n","01":"---\nphase: 1\nreviewers: [claude]\nreviewed_at: 2026-03-27T15:03:41Z\nplans_reviewed: [01-01]\nmodels:\n  claude: \"example-model-a\"\nmodel_sources:\n  claude: \"config\"\nmade_up_example: true\nderived_from: gsd-core/workflows/review.md\ngsd_core_version: 1.19.0\n---\n\n# Cross-AI Plan Review — Phase 1\n\n<!-- gsd:plan-revision-conflicts:begin -->\n## Plan-Revision Conflicts\n<!-- gsd:plan-revision-conflicts:end -->\n\n## Claude Review\n\n## 01-01\n\n### Summary\nPlan 01-01 lays the sign-in foundation: credential hashing, a session store and the passcode gate. The pieces are small and each has a test named.\n\n### Strengths\n- Hashing and the session store sit in separate files, so each can be tested alone.\n- The sign-in route returns the same message for an unknown handle and a wrong password.\n\n### Concerns\n- **MEDIUM:** the session store keeps sessions in memory, so every restart signs every member out; the plan does not say that is intended.\n- **LOW:** the passcode gate has no lockout after repeated misses.\n\n### Suggestions\n- State the restart behavior in the plan.\n- Count misses per handle and slow the response after five.\n\n### Risk Assessment\nLOW. Nothing here is hard to change later.\n\n---\n\n## Consensus Summary\n\nOne lane ran, so there is nothing to compare; the notes above are a single reviewer's view.\n\n### Agreed Strengths\nNone: a single reviewer.\n\n### Agreed Concerns\nNone: a single reviewer.\n\n### Divergent Views\nNone: a single reviewer.\n"};
+const PHASE = { 1: 'Member Sign-In & Sessions', 4: 'Bulk Loan Export' };
+
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const inline = (s) => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+
+// ---------- word tables (UI-SPEC Tone mapping, Cross-AI reviews: GSD's words) ----------
+const SEV = { HIGH: 'missing', MEDIUM: 'in-flight', LOW: 'quiet' };
+const RANK = { LOW: 1, MEDIUM: 2, HIGH: 3 };
+const STOP = new Set(['that', 'this', 'with', 'from', 'have', 'does', 'been', 'into', 'than', 'then', 'them', 'they', 'what', 'when', 'which', 'while', 'will', 'would', 'plan', 'plans', 'also', 'there', 'their', 'only']);
+
+// ---------- the REVIEWS reader ----------
+const unq = (v) => v.replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1');
+const yval = (v) => { v = v.trim(); return /^\[.*\]$/.test(v) ? v.slice(1, -1).split(',').map((x) => unq(x.trim())).filter(Boolean) : unq(v); };
+function yaml(lines) {
+  const root = {}; const stack = [{ ind: -1, obj: root }];
+  for (const l of lines) {
+    if (!l.trim()) continue;
+    const ind = l.match(/^ */)[0].length; const m = l.trim().match(/^([A-Za-z0-9_.-]+):\s*(.*)$/); if (!m) continue;
+    while (stack.length > 1 && ind <= stack[stack.length - 1].ind) stack.pop();
+    const parent = stack[stack.length - 1].obj;
+    if (m[2] === '') { parent[m[1]] = {}; stack.push({ ind, obj: parent[m[1]] }); } else parent[m[1]] = yval(m[2]);
+  }
+  return root;
+}
+const PLAN_ID = /^\d+(?:\.\d+)?-\d+$/;
+function parsePlan(id, lines) {
+  const p = { id, parts: {}, concerns: [], risk: null, verdict: null };
+  let part = 'Intro';
+  for (const l of lines) {
+    let m;
+    if ((m = l.match(/^###\s+(.*)$/))) { part = m[1].trim(); continue; }
+    if ((m = l.match(/^(Summary|Strengths|Concerns|Suggestions|Verdict):\s*$/i))) { part = m[1][0].toUpperCase() + m[1].slice(1).toLowerCase(); continue; }
+    if ((m = l.match(/^Risk(?: Assessment)?:\s*(.*)$/i))) { part = 'Risk Assessment'; (p.parts[part] = p.parts[part] || []).push(m[1]); continue; }
+    (p.parts[part] = p.parts[part] || []).push(l);
+  }
+  for (const l of p.parts.Concerns || []) { const m = l.match(/^\s*-\s+(?:\*\*)?(HIGH|MEDIUM|LOW):?(?:\*\*)?:?\s*(.*)$/); if (m) p.concerns.push({ sev: m[1], text: m[2].trim(), plan: id }); }
+  const first = (k) => (p.parts[k] || []).map((x) => x.trim()).find(Boolean) || '';
+  const rm = first('Risk Assessment').match(/^(LOW|MEDIUM|HIGH)\b/); p.risk = rm ? rm[1] : null;
+  p.verdict = first('Verdict') || null;
+  return p;
+}
+const words = (s) => new Set((s.toLowerCase().replace(/`/g, '').match(/[a-z0-9_']+/g) || []).map((w) => w.replace(/'s$/, '')).filter((w) => w.length >= 4 && !STOP.has(w)));
+const firstClause = (s) => s.toLowerCase().replace(/`/g, '').split(/[,;:]/)[0].replace(/[^a-z0-9_ ]/g, '').trim();
+function parseReviews(md) {
+  const d = { fm: {}, title: '', reviewers: [], other: [], consensus: null };
+  const lines = md.split('\n'); let i = 0;
+  if (lines[0] === '---') { const fm = []; for (i = 1; i < lines.length && lines[i] !== '---'; i++) fm.push(lines[i]); d.fm = yaml(fm); i++; }
+  const secs = []; let cur = null;
+  for (; i < lines.length; i++) {
+    const l = lines[i]; let m;
+    if (/^<!--.*-->$/.test(l.trim())) continue;
+    if ((m = l.match(/^# (.*)$/))) { d.title = m[1].trim(); continue; }
+    if ((m = l.match(/^## (.*)$/))) { cur = { h: m[1].trim(), lines: [] }; secs.push(cur); continue; }
+    if (cur) cur.lines.push(l);
+  }
+  let rv = null;
+  for (const s of secs) {
+    let m;
+    if ((m = s.h.match(/^(.+?) Review$/))) { rv = { name: m[1], key: m[1].toLowerCase().replace(/\s+/g, ''), plans: [], text: [...s.lines] }; d.reviewers.push(rv); continue; }
+    if (rv && PLAN_ID.test(s.h)) { rv.plans.push(parsePlan(s.h, s.lines)); rv.text.push(`§ ${s.h}`, ...s.lines); continue; }
+    rv = null;
+    if (/^consensus summary$/i.test(s.h)) d.consensus = s; else if (s.lines.some((x) => x.trim())) d.other.push(s);
+  }
+  const tm = d.title.match(/Phase\s+(\d+(?:\.\d+)*)/); d.phaseNo = tm ? tm[1] : String(d.fm.phase || '');
+  d.name = PHASE[d.phaseNo] || d.title;
+  const models = d.fm.models || {}; const cov = d.fm.plan_coverage || {};
+  d.plansReviewed = Array.isArray(d.fm.plans_reviewed) ? d.fm.plans_reviewed : [...new Set(d.reviewers.flatMap((r) => r.plans.map((p) => p.id)))];
+  let cid = 0;
+  d.reviewers.forEach((r, ri) => {
+    r.i = ri;
+    r.model = models[r.key] || null;
+    r.failed = !r.plans.length && /failed or returned empty output/i.test(r.text.join(' '));
+    r.status = r.failed ? 'Review failed' : null;
+    const risks = [...new Set(r.plans.map((p) => p.risk).filter(Boolean))];
+    r.risk = risks.length === 1 ? risks[0] : risks.length ? risks.sort((a, b) => RANK[b] - RANK[a])[0] : null;
+    r.missing = (cov[r.key] && Array.isArray(cov[r.key].missing)) ? cov[r.key].missing : [];
+    r.coverage = d.plansReviewed.map((id) => ({ id, done: r.plans.some((p) => p.id === id), stated: r.missing.includes(id) }));
+    r.concerns = r.plans.flatMap((p) => p.concerns.map((c) => ({ ...c, id: cid++, r })));
+  });
+  d.subs = d.reviewers.filter((r) => r.plans.length);
+  d.concerns = d.subs.flatMap((r) => r.concerns);
+  // ---- Agreed: concerns two or more reviewers raised (best-effort; never claimed without a match) ----
+  const parent = d.concerns.map((c) => c.id); const find = (x) => (parent[x] === x ? x : (parent[x] = find(parent[x]))); const join = (a, b) => { parent[find(a)] = find(b); };
+  const how = {}; const said = {};
+  for (const a of d.concerns) for (const b of d.concerns) if (a.id < b.id && a.r !== b.r && a.plan === b.plan && firstClause(a.text) === firstClause(b.text)) { join(a.id, b.id); how[a.id] = how[b.id] = 'words'; }
+  const agreedLines = [];
+  if (d.consensus) { let on = false; for (const l of d.consensus.lines) { if (/^###\s+/.test(l)) { on = /^###\s+Agreed Concerns/i.test(l); continue; } if (on && /^\s*-\s+/.test(l)) agreedLines.push(l.replace(/^\s*-\s+/, '').trim()); } }
+  for (const line of agreedLines) {
+    const m = line.match(/^(.*?)\s*\(([^)]+)\)\.?\s*(?:Plan\s+(\d+(?:\.\d+)?-\d+))?\.?\s*$/); if (!m) continue;
+    const names = m[2].split(',').map((x) => x.trim().toLowerCase().replace(/\s+/g, ''));
+    const w = words(m[1]); const picked = [];
+    for (const r of d.subs.filter((x) => names.includes(x.key))) {
+      const pool = r.concerns.filter((c) => !m[3] || c.plan === m[3]);
+      const best = pool.map((c) => ({ c, n: [...words(c.text)].filter((x) => w.has(x)).length })).sort((a, b) => b.n - a.n)[0];
+      if (best && best.n >= 2) picked.push(best.c);
+    }
+    if (new Set(picked.map((c) => c.r)).size >= 2) { picked.slice(1).forEach((c) => join(c.id, picked[0].id)); picked.forEach((c) => { how[c.id] = how[c.id] === 'words' ? 'both' : (how[c.id] || 'file'); said[c.id] = m[1]; }); }
+  }
+  const sets = {}; d.concerns.forEach((c) => { (sets[find(c.id)] = sets[find(c.id)] || []).push(c); });
+  d.agreed = Object.values(sets).filter((cs) => new Set(cs.map((c) => c.r)).size >= 2).map((cs) => {
+    const sev = cs.map((c) => c.sev).sort((a, b) => RANK[b] - RANK[a])[0];
+    const rs = [...new Set(cs.map((c) => c.r))].sort((a, b) => a.i - b.i);
+    const h = cs.map((c) => how[c.id]); const byFile = h.includes('file') || h.includes('both');
+    return { cs, rs, sev, text: cs.map((c) => said[c.id]).find(Boolean) || cs[0].text, how: byFile && h.some((x) => x === 'words' || x === 'both') ? 'both' : byFile ? 'file' : 'words', plan: cs[0].plan };
+  }).sort((a, b) => RANK[b.sev] - RANK[a.sev] || b.rs.length - a.rs.length);
+  d.agreed.forEach((a, k) => { a.k = k; a.no = `A${k + 1}`; a.cs.forEach((c) => { c.agreed = a; }); });
+  d.singles = d.concerns.filter((c) => !c.agreed);
+  // ---- Disagreements: a stance one reviewer states and another contradicts (risk level; approve / revise) ----
+  d.dis = [];
+  const withRisk = d.subs.filter((r) => r.risk);
+  if (new Set(withRisk.map((r) => r.risk)).size > 1) d.dis.push({ kind: 'risk', title: 'Overall risk', stances: withRisk.map((r) => ({ r, v: r.risk })), out: d.reviewers.filter((r) => r.failed).map((r) => ({ r, why: r.status })) });
+  for (const id of d.plansReviewed) {
+    const st = d.subs.map((r) => ({ r, p: r.plans.find((p) => p.id === id) })).filter((x) => x.p && x.p.verdict).map((x) => ({ r: x.r, v: x.p.verdict }));
+    if (new Set(st.map((x) => x.v.toLowerCase())).size > 1) d.dis.push({ kind: 'verdict', title: `Verdict on ${id}`, stances: st, out: d.reviewers.filter((r) => !st.some((x) => x.r === r)).map((r) => ({ r, why: r.failed ? r.status : r.missing.includes(id) ? 'Not reviewed' : r.plans.some((p) => p.id === id) ? 'No verdict stated' : 'Not reviewed' })) });
+  }
+  return d;
+}
+
+// ---------- state ----------
+const params = new URLSearchParams(location.search);
+let theme = params.get('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+const S = { state: params.get('state') || '04', sel: null, open: new Set() };
+const doc = () => parseReviews(SRC[S.state]);
+const VIEWS = {}; const ACTS = {}; const AFTER = [];
+
+// ---------- shared atoms ----------
+const ICON = { copy: '<rect x="9" y="9" width="13" height="13"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>', chevr: '<path d="m9 18 6-6-6-6"/>' };
+const svg = (k, cls = 'i') => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICON[k]}</svg>`;
+const sq = (tone, label) => `<span class="sq" data-tone="${tone}"${label ? ` role="img" aria-label="${esc(label)}"` : ' aria-hidden="true"'}></span>`;
+const chip = (tone, text, cls = '') => `<span class="status-chip ${cls}"${tone ? ` data-tone="${tone}"` : ''}>${tone ? sq(tone) : ''}${text}</span>`;
+const sevChip = (s, cls = '') => chip(SEV[s], esc(s), cls);
+const riskChip = (r) => r.risk ? chip(SEV[r.risk], `Overall risk: ${esc(r.risk)}`) : '';
+const disChip = () => chip('in-flight', 'Reviewers disagree');
+const model = (r) => r.model ? `<code class="model" title="${esc(r.model)}">${esc(r.model)}</code>` : '';
+const cover = (r) => `<span class="cov">${r.coverage.map((c) => `<span>${sq(c.done ? 'neutral' : 'quiet')}${esc(c.id)}${c.done ? '' : r.failed ? '' : ' not reviewed'}</span>`).join('')}</span>`;
+function rcard(r, cls = '') {
+  return `<div class="rv ${cls}" data-rv="${r.key}"${r.failed ? ' data-failed="true"' : ''}><p class="rv-n">${esc(r.name)}</p>${model(r)}<div class="rv-c">${riskChip(r)}${r.status ? chip('quiet', esc(r.status)) : ''}</div>${r.failed ? '' : cover(r)}</div>`;
+}
+const appHead = () => `<header class="app-head"><span class="app-brand"><i></i>Labelore <span>/ Lendshed</span></span><nav class="app-nav" aria-label="Project"><a href="#" data-act="noop">Dashboard</a><a href="#" data-act="noop">Roadmap</a><a href="#" data-act="noop">Traceability</a><a href="#" data-act="noop">Search</a></nav></header>`;
+function header(d) {
+  const at = d.fm.reviewed_at ? String(d.fm.reviewed_at).slice(0, 10) : '';
+  return `<nav class="crumbs" aria-label="Breadcrumb"><span>Lendshed</span><span aria-hidden="true">/</span><span>Phase ${esc(d.phaseNo)}</span><span aria-hidden="true">/</span><span aria-current="page">Cross-AI reviews</span></nav>
+  <header class="heading-block"><p class="eyebrow">Phase ${esc(d.phaseNo)} · Cross-AI reviews</p><h1>${esc(d.name)}</h1>
+  <div class="meta-row">${at ? `<span class="meta">Reviewed ${esc(at)}</span>` : ''}${d.plansReviewed.length ? `<span class="meta">Plans ${d.plansReviewed.map(esc).join(', ')}</span>` : ''}<span class="meta">${d.reviewers.length} ${d.reviewers.length === 1 ? 'reviewer' : 'reviewers'}</span><button class="btn-xs icon" type="button" data-act="noop" aria-label="Copy path" title="Copy path">${svg('copy')}</button><div class="seg" role="group" aria-label="Show"><button class="btn-xs" type="button" aria-pressed="true">View</button><button class="btn-xs" type="button" aria-pressed="false" data-act="noop">Source</button></div></div></header>`;
+}
+const page = (d, inner) => `${appHead()}<main class="page">${header(d)}${inner}${bars(d)}</main>`;
+const hasGroups = (d) => d.subs.length >= 2;
+// the selected concern or agreed concern, shown with each reviewer's own words side by side
+function concernDock(d) {
+  if (!S.sel) return '';
+  if (S.sel[0] === 'a') {
+    const a = d.agreed[Number(S.sel.slice(1))]; if (!a) return '';
+    return `<div class="dock"><div class="dock-head"><span class="micro-label">Agreed · ${a.no} · Plan ${esc(a.plan)}</span>${sevChip(a.sev)}<button class="text-link x" type="button" data-act="close">Close</button></div><p class="prose"><b>${inline(a.text)}</b></p><p class="meta">${a.how === 'words' ? 'Matched: the same words' : a.how === 'file' ? "Matched: named together in the file's consensus" : "Matched: the same words, and named together in the file's consensus"}</p><div class="side" style="--n:${a.cs.length}">${a.cs.map((c) => `<div class="said"><span class="said-h"><span class="vname">${esc(c.r.name)}</span>${sevChip(c.sev)}</span><p class="prose">${inline(c.text)}</p></div>`).join('')}</div></div>`;
+  }
+  const c = d.concerns.find((x) => x.id === Number(S.sel.slice(1))); if (!c) return '';
+  return `<div class="dock"><div class="dock-head"><span class="micro-label">${esc(c.r.name)} · Plan ${esc(c.plan)}</span>${sevChip(c.sev)}<button class="text-link x" type="button" data-act="close">Close</button></div><p class="prose">${inline(c.text)}</p></div>`;
+}
+function disagreements(d, cls = '') {
+  if (!hasGroups(d) || !d.dis.length) return '';
+  return `<section class="grp-sec ${cls}" aria-labelledby="h-dis"><h2 class="sh" id="h-dis">Disagreements <span class="meta">${d.dis.length}</span></h2>${d.dis.map((x) => `<div class="dis"><div class="dis-h"><h3>${esc(x.title)}</h3>${disChip()}</div><div class="dis-row" style="--n:${x.stances.length + x.out.length}">${x.stances.map((s) => `<div class="stance"><span class="vname">${esc(s.r.name)}</span>${x.kind === 'risk' ? sevChip(s.v, 'big') : `<span class="status-chip big">${esc(s.v)}</span>`}</div>`).join('')}${x.out.map((o) => `<div class="stance out"><span class="vname">${esc(o.r.name)}</span><span class="meta">${esc(o.why)}</span></div>`).join('')}</div></div>`).join('')}</section>`;
+}
+function blocksHtml(lines) {
+  const out = []; let para = [], list = null;
+  const fp = () => { if (para.length) { out.push(`<p class="prose">${inline(para.join(' '))}</p>`); para = []; } };
+  const fl = () => { if (list) { out.push(`<ul class="bul">${list.map((x) => `<li>${inline(x)}</li>`).join('')}</ul>`); list = null; } };
+  for (const l of lines) {
+    let m;
+    if (!l.trim() || /^---\s*$/.test(l)) { fp(); fl(); continue; }
+    if ((m = l.match(/^§ (.*)$/))) { fp(); fl(); out.push(`<p class="plan-h">Plan ${esc(m[1])}</p>`); continue; }
+    if ((m = l.match(/^###\s+(.*)$/)) || (m = l.match(/^(Summary|Strengths|Concerns|Suggestions|Verdict):\s*$/i))) { fp(); fl(); out.push(`<p class="micro-label">${esc(m[1])}</p>`); continue; }
+    if ((m = l.match(/^\s*-\s+(.*)$/))) { fp(); (list = list || []).push(m[1]); continue; }
+    fl(); para.push(l.trim());
+  }
+  fp(); fl();
+  return `<div class="blocks">${out.join('')}</div>`;
+}
+function bars(d) {
+  const bar = (k, title, n, body) => `<details class="bar"${S.open.has(k) ? ' open' : ''} data-k="${esc(k)}"><summary>${svg('chevr', 'i chev')}<span>${title}</span><span class="n">${n}</span></summary><div class="bar-body">${body}</div></details>`;
+  const rv = d.reviewers.map((r) => bar(`r-${r.key}`, `${esc(r.name)} Review`, r.failed ? 'review failed' : `${r.plans.length} ${r.plans.length === 1 ? 'plan' : 'plans'}`, blocksHtml(r.text))).join('');
+  const other = d.other.map((s) => bar(`o-${s.h}`, esc(s.h), `${s.lines.filter((l) => /^\s*-\s+/.test(l)).length} item`, blocksHtml(s.lines))).join('');
+  const cons = d.consensus ? bar('consensus', 'Consensus summary, as the file wrote it', 'the file’s own', blocksHtml(d.consensus.lines)) : '';
+  return `<div class="bars-wrap"><p class="micro-label">Each review as written</p><div class="bars">${rv}${other}${cons}</div></div>`;
+}
+
+// =====================================================================================
+// A: Overlap. The substantive reviewers as overlapping circles; each concern is a square placed in the region of the
+// reviewers who raised it, so agreed concerns sit in the overlaps (A1, A2) and single-reviewer ones at the edges; a
+// failed lane is a small dashed circle with nothing in it. The key under the circles is the reviewer roster. Beside
+// it, the Agreed group. Then the Disagreements, side by side. A square or an agreed row opens the words in a dock.
+// =====================================================================================
+VIEWS.a = function () {
+  const d = doc();
+  const agreedList = hasGroups(d) ? `<div class="ov-side"><h2 class="sh" id="h-ag">Agreed <span class="meta">${d.agreed.length}</span></h2>${d.agreed.length ? `<ol class="ag-list">${d.agreed.map((a) => `<li><button class="ag" type="button" data-act="sel" data-id="a${a.k}" aria-pressed="${S.sel === `a${a.k}`}"><span class="ag-no">${a.no}</span><span class="ag-t">${inline(a.text)}</span><span class="ag-m">${sevChip(a.sev)}<span class="meta">${a.rs.map((r) => esc(r.name)).join(', ')} · Plan ${esc(a.plan)}</span></span></button></li>`).join('')}</ol>` : `<p class="zero">${sq('quiet')}<span class="num">0</span></p>`}<p class="meta">${d.singles.length} raised by one reviewer, at the circles' edges</p></div>`
+    : `<div class="ov-side"><h2 class="sh">Concerns <span class="meta">${d.concerns.length}</span></h2><ol class="ag-list">${d.concerns.map((c) => `<li><button class="ag" type="button" data-act="sel" data-id="c${c.id}" aria-pressed="${S.sel === `c${c.id}`}"><span class="ag-no">${sq(SEV[c.sev])}</span><span class="ag-t">${inline(c.text)}</span><span class="ag-m">${sevChip(c.sev)}<span class="meta">${esc(c.r.name)} · Plan ${esc(c.plan)}</span></span></button></li>`).join('')}</ol></div>`;
+  const fig = `<figure class="ov" aria-label="Who raised which concern"><div class="ov-draw" id="venn"><svg aria-hidden="true"></svg></div><div class="ov-key">${d.reviewers.map((r) => rcard(r)).join('')}</div><div class="ov-foot"><span>${sq('missing')}HIGH</span><span>${sq('in-flight')}MEDIUM</span><span>${sq('quiet')}LOW</span><span>one square per concern${hasGroups(d) ? '; a large square is an agreed concern' : ''}</span></div></figure>`;
+  return page(d, `<section class="ov-row" aria-label="${hasGroups(d) ? 'Agreed' : 'Concerns'}">${fig}${agreedList}</section>${concernDock(d)}${disagreements(d)}`);
+};
+const VENN = {
+  1: { c: [[300, 215]], r: 170, lab: [[300, 26, 'middle']], at: { 1: [300, 215] } },
+  2: { c: [[225, 215], [375, 215]], r: 150, lab: [[150, 50, 'middle'], [450, 50, 'middle']], at: { 1: [140, 215], 2: [460, 215], 3: [300, 215] } },
+  3: { c: [[230, 180], [370, 180], [300, 300]], r: 140, lab: [[96, 40, 'start'], [504, 40, 'end'], [300, 464, 'middle']], at: { 1: [160, 140], 2: [440, 140], 4: [300, 385], 3: [300, 125], 5: [222, 278], 6: [378, 278], 7: [300, 222] } },
+};
+function drawVenn() {
+  const box = document.getElementById('venn'); if (!box) return;
+  const d = doc(); const subs = d.subs.slice(0, 3); const L = VENN[subs.length]; if (!L) return;
+  const W = box.clientWidth; const k = W / 600; const H = Math.round(480 * k);
+  const s = box.querySelector('svg'); s.setAttribute('viewBox', `0 0 ${W} ${H}`); s.setAttribute('height', H);
+  const P = (x) => x * k;
+  const mask = (rs) => rs.reduce((m, r) => m | (1 << subs.indexOf(r)), 0);
+  const regions = {};
+  d.agreed.forEach((a) => { (regions[mask(a.rs)] = regions[mask(a.rs)] || []).push({ a }); });
+  d.singles.forEach((c) => { (regions[mask([c.r])] = regions[mask([c.r])] || []).push({ c }); });
+  let out = L.c.map(([x, y]) => `<circle class="vc" cx="${P(x)}" cy="${P(y)}" r="${P(L.r)}"/>`).join('');
+  out += subs.map((r, i) => `<text class="vl" x="${P(L.lab[i][0])}" y="${P(L.lab[i][1])}" text-anchor="${L.lab[i][2]}">${esc(r.name)}</text>`).join('');
+  const failed = d.reviewers.filter((r) => r.failed);
+  failed.forEach((r, i) => { const x = P(548), y = P(392 - i * 90); out += `<circle class="vc failed" cx="${x}" cy="${y}" r="${P(34)}"/><text class="vl small" x="${x}" y="${y + 4}" text-anchor="middle">${esc(r.name)}</text>`; });
+  const big = Math.max(18, 28 * k), small = Math.max(12, 18 * k), gap = Math.max(5, 7 * k);
+  for (const [m, items] of Object.entries(regions)) {
+    const at = L.at[m]; if (!at) continue;
+    const sz = items.map((it) => (it.a ? big : small));
+    const perRow = 3; const rows = []; for (let i = 0; i < items.length; i += perRow) rows.push(items.slice(i, i + perRow));
+    rows.forEach((row, ri) => {
+      const rowW = row.reduce((w, it) => w + (it.a ? big : small) + gap, -gap) + (row.some((it) => it.a) ? 22 : 0) * row.filter((it) => it.a).length;
+      let x = P(at[0]) - rowW / 2; const y = P(at[1]) - (rows.length * (big + gap)) / 2 + ri * (big + gap);
+      for (const it of row) {
+        const s2 = it.a ? big : small; const tone = SEV[it.a ? it.a.sev : it.c.sev]; const id = it.a ? `a${it.a.k}` : `c${it.c.id}`;
+        const label = it.a ? `${it.a.no}, agreed, ${it.a.sev}: ${it.a.rs.map((r) => r.name).join(', ')}` : `${it.c.r.name}, ${it.c.sev}, plan ${it.c.plan}`;
+        out += `<g class="vk" data-act="sel" data-id="${id}" role="button" tabindex="0" aria-label="${esc(label)}"${S.sel === id ? ' data-on="true"' : ''}><rect x="${x}" y="${y + (big - s2) / 2}" width="${s2}" height="${s2}" data-tone="${tone}"/>${it.a ? `<text class="vn" x="${x + s2 + 4}" y="${y + big / 2 + 4}">${it.a.no}</text>` : ''}</g>`;
+        x += s2 + gap + (it.a ? 22 : 0);
+      }
+    });
+  }
+  s.innerHTML = out;
+}
+AFTER.push(drawVenn);
+
+// =====================================================================================
+// B: Where each stands. A position board: LOW, MEDIUM and HIGH as columns (and a "Not placed" column for a lane that
+// failed or a plan a reviewer did not reach). The first lane is the roster, each reviewer card placed at its overall
+// risk; then one lane per plan with each reviewer's verdict where it states one. Then Agreed: each agreed concern
+// with one slot per reviewer, filled where that reviewer raised it. Then the Disagreements.
+// =====================================================================================
+const ZONES = [['out', 'Not placed', null], ['LOW', 'LOW', 'quiet'], ['MEDIUM', 'MEDIUM', 'in-flight'], ['HIGH', 'HIGH', 'missing']];
+VIEWS.b = function () {
+  const d = doc();
+  const zl = (z) => `<span class="zl micro-label">${z[2] ? sq(z[2]) : ''}${z[1]}</span>`;
+  const lane = (label, place) => `<div class="ws-lane"><p class="ws-l micro-label">${label}</p>${ZONES.map((z) => `<div class="ws-z" data-z="${z[0]}">${zl(z)}${place(z[0])}</div>`).join('')}</div>`;
+  const roster = lane('Overall risk', (z) => d.reviewers.filter((r) => (z === 'out' ? !r.risk : r.risk === z)).map((r) => rcard(r, 'mini')).join(''));
+  const plans = d.plansReviewed.map((id) => lane(`Plan ${esc(id)}`, (z) => d.subs.map((r) => ({ r, p: r.plans.find((p) => p.id === id) })).filter((x) => (z === 'out' ? !x.p || !x.p.risk : x.p && x.p.risk === z)).map((x) => `<span class="tagr${x.p ? '' : ' out'}"><span class="vname">${esc(x.r.name)}</span>${x.p ? (x.p.verdict ? `<span class="status-chip">${esc(x.p.verdict)}</span>` : '') : `<span class="meta">${x.r.missing.includes(id) ? 'Not reviewed' : 'Not in the file'}</span>`}</span>`).join(''))).join('');
+  const board = `<figure class="ws" aria-label="Where each reviewer stands"><div class="ws-head"><span></span>${ZONES.map((z) => `<span class="micro-label">${z[2] ? sq(z[2]) : ''}${z[1]}</span>`).join('')}</div>${roster}${plans}</figure>`;
+  const slots = (a) => `<span class="slots" style="--n:${d.subs.length}">${d.subs.map((r) => { const c = a.cs.find((x) => x.r === r); return `<span class="slot${c ? '' : ' empty'}">${c ? sq(SEV[c.sev]) : '<i aria-hidden="true"></i>'}<span class="meta">${esc(r.name)}</span></span>`; }).join('')}</span>`;
+  const agreed = hasGroups(d) ? `<section class="grp-sec" aria-labelledby="h-ag"><h2 class="sh" id="h-ag">Agreed <span class="meta">${d.agreed.length}</span></h2>${d.agreed.length ? d.agreed.map((a) => `<button class="agb" type="button" data-act="sel" data-id="a${a.k}" aria-pressed="${S.sel === `a${a.k}`}"><span class="agb-t">${sevChip(a.sev)}<span>${inline(a.text)}</span></span>${slots(a)}</button>`).join('') : `<p class="zero">${sq('quiet')}<span class="num">0</span></p>`}${S.sel && S.sel[0] === 'a' ? concernDock(d) : ''}</section>` : '';
+  const singles = `<section class="grp-sec" aria-label="${hasGroups(d) ? 'Raised by one reviewer' : 'Concerns'}"><p class="micro-label">${hasGroups(d) ? 'Raised by one reviewer' : `Concerns · ${esc(d.subs[0] ? d.subs[0].name : '')}`}</p><div class="one">${d.subs.map((r) => { const cs = r.concerns.filter((c) => !c.agreed); return cs.length ? `<div class="one-r"><span class="vname">${esc(r.name)}</span><span class="one-sq">${cs.map((c) => `<button class="osq" type="button" data-act="sel" data-id="c${c.id}" data-tone="${SEV[c.sev]}" aria-pressed="${S.sel === `c${c.id}`}" aria-label="${esc(r.name)}, ${c.sev}, plan ${c.plan}" title="${c.sev} · Plan ${c.plan}"></button>`).join('')}</span></div>` : ''; }).join('')}</div>${S.sel && S.sel[0] === 'c' ? concernDock(d) : ''}</section>`;
+  return page(d, `${board}${agreed}${singles}${disagreements(d)}`);
+};
+
+// =====================================================================================
+// C: Reuse — 050 B's wire ledger. The reviewers on the left (card: name, model, overall risk, run status, plan
+// coverage); on the right, Agreed first, then the concerns raised by one reviewer, by plan; a wire runs from each
+// reviewer to every concern it raised, stroked by severity, so an agreed concern visibly takes two or three wires.
+// Selecting either end brings its wires forward. Then the Disagreements. Under 52rem: no wires, reviewer tags.
+// =====================================================================================
+VIEWS.c = function () {
+  const d = doc();
+  const sel = S.sel;
+  const left = `<div class="lcol"><p class="micro-label">Reviewers</p>${d.reviewers.map((r) => `<div class="rvb" role="button" tabindex="0" data-act="rv" data-id="${r.key}" aria-pressed="${sel === `r${r.key}`}" data-row="r${r.key}">${rcard(r)}</div>`).join('')}</div>`;
+  const row = (id, sev, text, rs, extra = '') => `<button class="crw" type="button" data-act="sel" data-id="${id}" data-fix="${id}" aria-pressed="${sel === id}"><span class="crw-h">${sevChip(sev)}${extra}</span><span class="crw-t">${inline(text)}</span><span class="crw-by${rs.length > 1 ? ' on' : ''}">${rs.map((r) => `<span class="tgt">${esc(r.name)}</span>`).join('')}</span></button>`;
+  const byPlan = d.plansReviewed.map((id) => ({ id, cs: d.singles.filter((c) => c.plan === id) })).filter((g) => g.cs.length);
+  const right = `<div class="lcol">${hasGroups(d) ? `<div class="fix-group"><p class="micro-label" style="color:var(--foreground)">Agreed <span class="meta">${d.agreed.length}</span></p>${d.agreed.map((a) => row(`a${a.k}`, a.sev, a.text, a.rs, `<span class="meta">${a.no} · Plan ${esc(a.plan)}</span>`)).join('') || `<p class="zero">${sq('quiet')}<span class="num">0</span></p>`}</div>` : ''}${byPlan.map((g) => `<div class="fix-group"><p class="micro-label">${hasGroups(d) ? 'Raised by one reviewer' : 'Concerns'} · Plan ${esc(g.id)} <span class="meta">${g.cs.length}</span></p>${g.cs.map((c) => row(`c${c.id}`, c.sev, c.text, [c.r])).join('')}</div>`).join('')}${concernDock(d)}</div>`;
+  return page(d, `<section aria-label="Reviewers and their concerns"><div class="ledger" id="ledger"><svg aria-hidden="true"></svg>${left}<div class="gut"></div>${right}</div></section>${disagreements(d)}`);
+};
+function wire() {
+  const L = document.getElementById('ledger'); if (!L) return;
+  const s = L.querySelector('svg'); if (getComputedStyle(s).display === 'none') return;
+  const d = doc(); const box = L.getBoundingClientRect();
+  s.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
+  const links = d.concerns.map((c) => ({ r: c.r, id: c.agreed ? `a${c.agreed.k}` : `c${c.id}`, sev: c.sev }));
+  s.innerHTML = links.map((x) => {
+    const a = L.querySelector(`[data-row="r${x.r.key}"]`).getBoundingClientRect(); const b = L.querySelector(`[data-fix="${x.id}"]`).getBoundingClientRect();
+    const x1 = a.right - box.left, y1 = a.top + Math.min(a.height / 2, 24) - box.top, x2 = b.left - box.left, y2 = b.top + 18 - box.top, mx = (x1 + x2) / 2;
+    const on = S.sel ? (S.sel === x.id || S.sel === `r${x.r.key}`) : null;
+    return `<path d="M${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}" data-tone="${SEV[x.sev]}"${on === null ? '' : ` data-on="${on}"`}/>`;
+  }).join('');
+}
+AFTER.push(wire);
+
+// ---------- render orchestration ----------
+ACTS.sel = (el) => { const id = el.dataset.id; S.sel = S.sel === id ? null : id; render(); };
+ACTS.rv = (el) => { const id = `r${el.dataset.id}`; S.sel = S.sel === id ? null : id; render(); };
+ACTS.close = () => { S.sel = null; render(); };
+const pickVariant = () => { const h = location.hash.slice(1); return ['a', 'b', 'c'].includes(h) ? h : 'a'; };
+function render() {
+  const y = window.scrollY; const v = pickVariant();
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  document.querySelectorAll('[data-variant]').forEach((el) => { el.hidden = el.dataset.variant !== v; if (el.dataset.variant !== v) el.innerHTML = ''; });
+  document.querySelector(`[data-variant="${v}"]`).innerHTML = VIEWS[v]();
+  document.querySelectorAll('#tabs a').forEach((a) => a.classList.toggle('on', a.dataset.tab === v));
+  document.querySelectorAll('#sketch-bar [data-theme]').forEach((b) => b.classList.toggle('on', b.dataset.theme === theme));
+  document.querySelectorAll('#sketch-bar [data-state]').forEach((b) => b.classList.toggle('on', b.dataset.state === S.state));
+  window.scrollTo(0, y);
+  AFTER.forEach((f) => f());
+}
+let toastTimer;
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 1600); }
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act], [data-state], [data-theme]');
+  if (!el) return;
+  if (el.dataset.theme) { theme = el.dataset.theme; return render(); }
+  if (el.dataset.state) { S.state = el.dataset.state; S.sel = null; S.open = new Set(); return render(); }
+  const act = el.dataset.act;
+  if (act === 'noop') { e.preventDefault(); toast('Sketch only'); return; }
+  if (ACTS[act]) { e.preventDefault(); ACTS[act](el, e); }
+});
+document.addEventListener('keydown', (e) => { const g = e.target.closest && e.target.closest('g.vk'); if (g && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); ACTS.sel(g); } });
+document.addEventListener('toggle', (e) => { const el = e.target; if (el.matches && el.matches('details.bar')) { if (el.open) S.open.add(el.dataset.k); else S.open.delete(el.dataset.k); AFTER.forEach((f) => f()); } }, true);
+window.addEventListener('hashchange', () => { S.sel = null; render(); });
+window.addEventListener('resize', () => AFTER.forEach((f) => f()));
+if (document.fonts) document.fonts.ready.then(() => AFTER.forEach((f) => f()));
+render();
+</script>
+</body>
+</html>
