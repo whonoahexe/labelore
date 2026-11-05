@@ -14,7 +14,7 @@
 import { eachLineOutsideFences, fenceMarker, scanFencedLines, splitBodyLines } from './fenced-sections.ts';
 import type { FencedSection } from './fenced-sections.ts';
 import { parseTree, treeCounts } from '../../rendering/ascii-tree.ts';
-import { withholdInText, withholdValue } from './withhold-values.ts';
+import { stripControlCharacters, withholdInText, withholdValue } from './withhold-values.ts';
 
 // ---------------------------------------------------------------------------------------------------------
 // Heading normalisation and keys
@@ -314,6 +314,12 @@ export interface CodebaseBody {
   structure?: StructureLift;
   /** The groups, variable names and Environment Configuration (document integrations only). */
   integrations?: IntegrationsLift;
+  /** The rule groups (document conventions only). */
+  conventions?: ConventionsLift;
+  /** The runner plates, run commands, test tree and test types (document testing only). */
+  testing?: TestingLift;
+  /** A word shown in place of the key number where the panel's key is a name: Testing's framework. */
+  keyLabel?: string;
   /** What `keyNumber` counts when it is not the panel's usual unit: Architecture counts layers when the
    * document has no component table. */
   keyUnit?: 'layer';
@@ -1447,6 +1453,307 @@ function liftEnvironment(
   lift.environment = { heading: section.heading, groups, whole };
 }
 
+// ---------------------------------------------------------------------------------------------------------
+// The Conventions lift (10-14)
+// ---------------------------------------------------------------------------------------------------------
+
+export interface ConventionsGroup {
+  heading: string;
+  /** The known key (naming-patterns, code-style, ...), or null for a section the template does not have. */
+  key: string | null;
+  /** How many rules the section holds; `rules` holds at most CONVENTION_RULE_CAP of them. */
+  count: number;
+  rules: string[];
+}
+
+export interface ConventionsLift {
+  groups: ConventionsGroup[];
+}
+
+export const CONVENTION_GROUP_CAP = 20;
+export const CONVENTION_RULE_CAP = 30;
+export const CONVENTION_RULE_CHARS = 400;
+
+function clipRule(text: string): string {
+  return text.length > CONVENTION_RULE_CHARS ? text.slice(0, CONVENTION_RULE_CHARS) : text;
+}
+
+/** A line that is only a list-item number ("1. Node built-ins"): a step of an ordered list, not a rule. */
+function isNumbered(line: string): boolean {
+  let i = 0;
+  while (i < line.length && line.charCodeAt(i) === 32) i += 1;
+  const start = i;
+  while (i < line.length && line.charCodeAt(i) >= 48 && line.charCodeAt(i) <= 57) i += 1;
+  return i > start && i - start <= 3 && line.charCodeAt(i) === 46 && line.charCodeAt(i + 1) === 32;
+}
+
+/**
+ * The rules of each `##` section, one group per section (at most 20): a top-level bullet is a rule (the bullets
+ * nested under it are part of it), a line that opens with a bold label and carries its value is the rule
+ * `Label: value`, and a plain line under a label is a rule. Ordered-list steps, table rows, the footer and fenced
+ * code are not rules (the section stays in the plain list as written).
+ */
+export function liftConventions(sections: readonly KeyedSection[], lines: readonly string[]): ConventionsLift {
+  const groups: ConventionsGroup[] = [];
+  for (const section of sections) {
+    if (section.level !== 2 || groups.length >= CONVENTION_GROUP_CAP) continue;
+    const group: ConventionsGroup = { heading: section.heading, key: section.key, count: 0, rules: [] };
+    const state: { label: string | null } = { label: null };
+    const add = (text: string): void => {
+      group.count += 1;
+      if (group.rules.length < CONVENTION_RULE_CAP) group.rules.push(clipRule(text));
+    };
+    eachLineOutsideFences(lines, section.startLine + 1, section.endLine, (line) => {
+      const bold = boldLabel(line);
+      if (bold !== null) {
+        state.label = bold;
+        return;
+      }
+      const trimmed = line.trim();
+      if (trimmed.length === 0 || trimmed.startsWith('---') || trimmed.charCodeAt(0) === 124 || isNumbered(line)) return;
+      const bullet = topBullet(line);
+      if (bullet !== null) {
+        add(bullet);
+        return;
+      }
+      const nested = nestedBullet(line);
+      if (nested !== null) {
+        const last = group.rules.length - 1;
+        if (last >= 0 && group.count <= CONVENTION_RULE_CAP) group.rules[last] = clipRule(`${group.rules[last]} ${nested}`);
+        return;
+      }
+      const labelled = labelledLine(line);
+      if (labelled !== null) {
+        state.label = labelled.label;
+        if (labelled.text.length > 0) add(`${labelled.label}: ${labelled.text}`);
+        return;
+      }
+      if (trimmed.charCodeAt(0) === 42 && trimmed.endsWith('*')) return;
+      if (state.label !== null && line.charCodeAt(0) !== 32) add(trimmed);
+    });
+    groups.push(group);
+  }
+  return { groups };
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// The Testing lift (10-14)
+// ---------------------------------------------------------------------------------------------------------
+
+/** One plate of the runner strip: a Test Framework label (Runner, E2E runner, Assertion Library), its name and
+ * version, and the config file its `Config:` bullet names. */
+export interface TestingPlate {
+  label: string;
+  name: string;
+  version: string | null;
+  config: string | null;
+}
+
+export interface TestingCommand {
+  /** The command as shown and copied: control characters removed, at most 400 characters. */
+  command: string;
+  /** The comment beside the command, or the `#` line above it. */
+  caption: string | null;
+}
+
+/** A Test Types label: its name ("Unit tests" gives "Unit") and the folders its parenthesis names. */
+export interface TestingType {
+  name: string;
+  paths: string[];
+}
+
+export interface TestingLift {
+  /** The first plate's name: the framework the document is about, or null. */
+  framework: string | null;
+  /** The plate labelled Runner (not the end-to-end one), or null. */
+  runner: string | null;
+  plates: TestingPlate[];
+  /** The Coverage requirement's first sentence, or null. */
+  coverage: string | null;
+  commands: TestingCommand[];
+  /** The Test File Organization structure fence, or null. */
+  tree: FigureFence | null;
+  types: TestingType[];
+}
+
+export const TESTING_PLATE_CAP = 8;
+export const TESTING_COMMAND_CAP = 30;
+export const TESTING_COMMAND_CHARS = 400;
+export const TESTING_TYPE_CAP = 12;
+
+interface FenceAt {
+  /** The bold label above the fence, or null. */
+  label: string | null;
+  info: string;
+  body: string[];
+}
+
+/** Every fenced block in [from, to) with the bold label that last preceded it. An unclosed fence runs to the end. */
+function fencesIn(lines: readonly string[], from: number, to: number): FenceAt[] {
+  const found: FenceAt[] = [];
+  let open: ReturnType<typeof fenceMarker> = null;
+  let current: FenceAt | null = null;
+  let label: string | null = null;
+  for (let i = from; i < to; i += 1) {
+    const line = lines[i];
+    const marker = fenceMarker(line);
+    if (open !== null && current !== null) {
+      if (marker !== null && marker.bare && marker.char === open.char && marker.length >= open.length) {
+        found.push(current);
+        open = null;
+        current = null;
+      } else if (current.body.length < FIGURE_LINES_CAP) {
+        current.body.push(line);
+      }
+      continue;
+    }
+    if (marker !== null) {
+      open = marker;
+      current = { label, info: infoOf(line), body: [] };
+      continue;
+    }
+    const bold = boldLabel(line);
+    if (bold !== null) label = bold;
+  }
+  if (current !== null) found.push(current);
+  return found;
+}
+
+/** The index where a shell comment starts in `line`: a `#` at the start or after whitespace, outside quotes. */
+function commentAt(line: string): number {
+  let quote = '';
+  for (let i = 0; i < line.length; i += 1) {
+    const ch = line[i];
+    if (quote !== '') {
+      if (ch === quote) quote = '';
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === '`') quote = ch;
+    else if (ch === '#' && (i === 0 || line[i - 1] === ' ' || line[i - 1] === '\t')) return i;
+  }
+  return -1;
+}
+
+const SHELL_INFOS: ReadonlySet<string> = new Set(['', 'bash', 'sh', 'shell', 'zsh', 'console', 'text']);
+
+/** The commands in a shell fence: every non-comment line, its trailing comment or the `#` line above it as the
+ * caption, each command passed through `stripControlCharacters`. A repeated command is kept once. */
+function commandsOf(body: readonly string[], into: TestingCommand[]): void {
+  let pending: string | null = null;
+  for (const raw of body) {
+    const line = raw.trim();
+    if (line.length === 0) continue;
+    if (line.charCodeAt(0) === 35) {
+      pending = stripControlCharacters(line.replace('#', '').trim()).slice(0, 200) || null;
+      continue;
+    }
+    const at = commentAt(line);
+    let command = (at < 0 ? line : line.slice(0, at)).trim();
+    if (command.startsWith('$ ')) command = command.slice(2).trim();
+    const beside = at < 0 ? null : stripControlCharacters(line.slice(at + 1).trim()).slice(0, 200) || null;
+    const caption = beside ?? pending;
+    pending = null;
+    command = stripControlCharacters(command).slice(0, TESTING_COMMAND_CHARS);
+    if (command.length === 0 || into.length >= TESTING_COMMAND_CAP) continue;
+    if (!into.some((entry) => entry.command === command)) into.push({ command, caption });
+  }
+}
+
+function firstSentence(text: string): string {
+  const clean = text.replaceAll('`', '').replaceAll('*', '').trim();
+  const stop = clean.indexOf('. ');
+  const sentence = stop >= 0 ? clean.slice(0, stop) : clean.endsWith('.') ? clean.slice(0, -1) : clean;
+  return sentence.slice(0, 120);
+}
+
+/** The name and version of a "Vitest 4.1.11 (`package.json` devDependencies)" bullet. */
+function plateOf(label: string, bullet: string): TestingPlate | null {
+  const dash = firstSpacedDash(bullet);
+  const dep = dependencyOf(dash < 0 ? bullet : bullet.slice(0, dash), null);
+  return dep === null ? null : { label: label.replaceAll('`', '').slice(0, 60), name: dep.name, version: dep.version, config: null };
+}
+
+function typeNameOf(label: string): string {
+  const open = label.indexOf(' (');
+  let name = (open > 0 ? label.slice(0, open) : label).replaceAll('`', '').trim();
+  for (const suffix of [' tests', ' Tests', ' test', ' Test']) {
+    if (name.endsWith(suffix)) {
+      name = name.slice(0, name.length - suffix.length);
+      break;
+    }
+  }
+  return name.slice(0, 40);
+}
+
+/**
+ * The Testing document as the runner plates (the Test Framework labels that name a runner or an assertion library),
+ * the run commands (the shell fences under a Run Commands label and in Coverage), the Coverage requirement, the
+ * Test File Organization tree and the Test Types with the folders they name.
+ */
+export function liftTesting(sections: readonly KeyedSection[], lines: readonly string[]): TestingLift {
+  const lift: TestingLift = { framework: null, runner: null, plates: [], coverage: null, commands: [], tree: null, types: [] };
+  for (const section of sections) {
+    if (section.level !== 2) continue;
+    if (section.key === 'test-framework') {
+      const state: { label: string | null; plate: TestingPlate | null } = { label: null, plate: null };
+      eachLineOutsideFences(lines, section.startLine + 1, section.endLine, (line) => {
+        const bold = boldLabel(line);
+        if (bold !== null) {
+          state.label = bold;
+          state.plate = null;
+          return;
+        }
+        const bullet = topBullet(line);
+        if (bullet === null || state.label === null) return;
+        const norm = normaliseHeading(state.label);
+        if (norm.includes('command')) return;
+        if (!norm.includes('runner') && !norm.includes('assertion') && !norm.includes('framework')) return;
+        if (state.plate === null) {
+          const made = plateOf(state.label, bullet);
+          if (made !== null && lift.plates.length < TESTING_PLATE_CAP) {
+            lift.plates.push(made);
+            state.plate = made;
+          }
+        } else if (state.plate.config === null && bullet.toLowerCase().startsWith('config:')) {
+          const span = tickSpans(bullet)[0];
+          state.plate.config = span === undefined ? null : span.slice(0, 80);
+        }
+      });
+    } else if (section.key === 'test-file-organization') {
+      for (const fence of fencesIn(lines, section.startLine + 1, section.endLine)) {
+        const text = fence.body.join('\n');
+        if (lift.tree === null && (text.includes('├') || text.includes('└')) && PLAIN_INFOS.has(fence.info) && text.length <= FIGURE_TEXT_CAP) {
+          lift.tree = { info: fence.info, text };
+        }
+      }
+    } else if (section.key === 'test-types') {
+      eachLineOutsideFences(lines, section.startLine + 1, section.endLine, (line) => {
+        const bold = boldLabel(line);
+        if (bold === null || lift.types.length >= TESTING_TYPE_CAP) return;
+        lift.types.push({ name: typeNameOf(bold), paths: tickSpans(bold).filter((span) => span.includes('/')).slice(0, 8) });
+      });
+    }
+    if (section.key === 'coverage') {
+      eachLineOutsideFences(lines, section.startLine + 1, section.endLine, (line) => {
+        const labelled = labelledLine(line);
+        if (labelled !== null && lift.coverage === null && normaliseHeading(labelled.label).startsWith('requirement')) {
+          lift.coverage = firstSentence(labelled.text) || null;
+        }
+      });
+    }
+    if (section.key === 'test-framework' || section.key === 'coverage') {
+      for (const fence of fencesIn(lines, section.startLine + 1, section.endLine)) {
+        const asksForCommands = section.key === 'coverage' || normaliseHeading(fence.label ?? '').includes('command');
+        if (asksForCommands && SHELL_INFOS.has(fence.info)) commandsOf(fence.body, lift.commands);
+      }
+    }
+  }
+  lift.framework = lift.plates[0]?.name ?? null;
+  const runner = lift.plates.find((plate) => normaliseHeading(plate.label).includes('runner') && !normaliseHeading(plate.label).includes('e2e'));
+  lift.runner = runner?.name ?? null;
+  return lift;
+}
+
 export function extractCodebase(doc: string, frontmatter: Record<string, unknown>, body: string): CodebaseBody {
   const lines = splitBodyLines(body);
   const keyed = keySections(doc, scanFencedLines(lines));
@@ -1473,6 +1780,14 @@ export function extractCodebase(doc: string, frontmatter: Record<string, unknown
     const structure = liftStructure(keyed, lines);
     result.structure = structure;
     if (structure.tree !== null && structure.directories > 0) result.keyNumber = structure.directories;
+  } else if (doc === 'conventions') {
+    const conventions = liftConventions(keyed, lines);
+    result.conventions = conventions;
+    result.keyNumber = conventions.groups.length;
+  } else if (doc === 'testing') {
+    const testing = liftTesting(keyed, lines);
+    result.testing = testing;
+    if (testing.framework !== null) result.keyLabel = testing.framework;
   } else if (doc === 'integrations') {
     const integrations = liftIntegrations(keyed, lines);
     result.integrations = integrations;

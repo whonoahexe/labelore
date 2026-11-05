@@ -24,7 +24,9 @@ import type {
   MapReadiness,
 } from '../../presentation/codebase-map.ts';
 import type { SwapItem } from '../../presentation/project-research-panels.ts';
+import { stripControlCharacters } from '../../planning-repo/handlers/withhold-values.ts';
 import type { DiagramEdge, DiagramGraph, DiagramKind, DiagramNode } from '../../rendering/ascii-graph.ts';
+import { parseTree } from '../../rendering/ascii-tree.ts';
 import { stripLeadingHeading } from './document-sections.ts';
 import type { ViewInput } from './manifest.ts';
 
@@ -193,6 +195,8 @@ export interface ComposedConcerns {
 export type ComposedCodebaseLifted =
   | ComposedStack
   | ComposedIntegrations
+  | ComposedConventions
+  | ComposedTesting
   | ComposedArchitecture
   | ComposedStructure
   | ComposedConcerns;
@@ -652,6 +656,227 @@ function liftIntegrations(
   };
 }
 
+// --- the Conventions lift (10-14, sketch 046 winner B) ----------------------------------------------------------
+
+/** How hard a rule reads: a hard rule says never, must, only, always, "do not" or a no/not before a name; an observed habit
+ * says observed, usually, common, rare or prefer; every other rule is plain. */
+export type RuleStrength = 'hard' | 'plain' | 'observed';
+
+export interface ComposedRule {
+  /** "{group}:{rule}", the position the mark and the dock share. */
+  id: string;
+  text: string;
+  strength: RuleStrength;
+  /** True when a test or the linter checks the rule: it names a test file, ESLint, "enforces" or "the compiler rejects". */
+  checked: boolean;
+}
+
+export interface ComposedRuleGroup {
+  key: string | null;
+  /** The short label under the column ("Naming"); the document's own heading when the template does not know it. */
+  label: string;
+  heading: string;
+  count: number;
+  rules: ComposedRule[];
+  /** Rules the group holds that the lift did not keep (its cap). */
+  omitted: number;
+}
+
+export interface ComposedConventions {
+  kind: 'conventions';
+  groups: ComposedRuleGroup[];
+  total: number;
+  hard: number;
+  checked: number;
+}
+
+const HARD_WORDS: readonly string[] = ['never', 'must', 'only', 'always'];
+const HARD_PREFIXES: readonly string[] = ['forbid'];
+const HARD_PHRASES: readonly string[] = ['do not', "don't", 'keep it that way', 'no `', 'not `'];
+const OBSERVED_WORDS: readonly string[] = ['observed', 'commonly', 'common', 'usually', 'rare', 'almost', 'prefer', 'often', 'mostly'];
+const CHECK_WORDS: readonly string[] = ['eslint'];
+const CHECK_PREFIXES: readonly string[] = ['lint', 'enforc'];
+const CHECK_PHRASES: readonly string[] = ['compiler rejects', 'checks this', 'npm run lint', 'npm run typecheck'];
+
+function isLetter(ch: string | undefined): boolean {
+  return ch !== undefined && ((ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9'));
+}
+
+/** True when `word` occurs in the lower-cased `text` with no letter before it; with `whole`, none after it either. */
+function hasWord(text: string, word: string, whole: boolean): boolean {
+  let from = 0;
+  for (;;) {
+    const at = text.indexOf(word, from);
+    if (at < 0) return false;
+    if (!isLetter(text[at - 1]) && (!whole || !isLetter(text[at + word.length]))) return true;
+    from = at + 1;
+  }
+}
+
+function hasAny(text: string, words: readonly string[], whole: boolean): boolean {
+  return words.some((word) => hasWord(text, word, whole));
+}
+
+/** The strength a rule's own words give it. */
+export function ruleStrength(text: string): RuleStrength {
+  const lower = text.toLowerCase();
+  if (hasAny(lower, HARD_WORDS, true) || hasAny(lower, HARD_PREFIXES, false) || HARD_PHRASES.some((phrase) => lower.includes(phrase))) {
+    return 'hard';
+  }
+  return hasAny(lower, OBSERVED_WORDS, true) ? 'observed' : 'plain';
+}
+
+/** True when a code span in `text` names a test file under `test/`. */
+function namesTestFile(text: string): boolean {
+  let from = 0;
+  for (;;) {
+    const open = text.indexOf('`', from);
+    const close = open < 0 ? -1 : text.indexOf('`', open + 1);
+    if (open < 0 || close < 0) return false;
+    const span = text.slice(open + 1, close);
+    if (span.startsWith('test/') && span.endsWith('.test.ts')) return true;
+    from = close + 1;
+  }
+}
+
+/** True when a test or the linter checks the rule. */
+export function ruleChecked(text: string): boolean {
+  const lower = text.toLowerCase();
+  return namesTestFile(text) || hasAny(lower, CHECK_WORDS, true) || hasAny(lower, CHECK_PREFIXES, false) || CHECK_PHRASES.some((phrase) => lower.includes(phrase));
+}
+
+const CONVENTION_LABELS: ReadonlyMap<string, string> = new Map([
+  ['naming-patterns', 'Naming'],
+  ['code-style', 'Code style'],
+  ['import-organization', 'Imports'],
+  ['error-handling', 'Errors'],
+  ['logging', 'Logging'],
+  ['comments', 'Comments'],
+  ['function-design', 'Functions'],
+  ['module-design', 'Modules'],
+]);
+
+/** The short column label: the known table's, else the heading without a trailing "Conventions". */
+function conventionLabel(key: string | null, heading: string): string {
+  const known = key === null ? undefined : CONVENTION_LABELS.get(key);
+  if (known !== undefined) return known;
+  const trimmed = heading.trim();
+  return trimmed.toLowerCase().endsWith(' conventions') ? trimmed.slice(0, -' conventions'.length) : trimmed;
+}
+
+function liftConventions(codebase: Record<string, unknown>): ComposedConventions | null {
+  const conventions = isRecord(codebase.conventions) ? codebase.conventions : null;
+  if (conventions === null) return null;
+  const groups = recordsOf(conventions.groups).flatMap((group, at): ComposedRuleGroup[] => {
+    const heading = textOrNull(group.heading);
+    if (heading === null) return [];
+    const key = typeof group.key === 'string' ? group.key : null;
+    const rules = (Array.isArray(group.rules) ? group.rules : []).flatMap((rule, index): ComposedRule[] => {
+      const text = textOrNull(rule);
+      return text === null ? [] : [{ id: `${at}:${index}`, text, strength: ruleStrength(text), checked: ruleChecked(text) }];
+    });
+    const count = typeof group.count === 'number' && Number.isFinite(group.count) ? Math.max(group.count, rules.length) : rules.length;
+    return [{ key, label: conventionLabel(key, heading), heading, count, rules, omitted: count - rules.length }];
+  });
+  if (groups.length === 0) return null;
+  const all = groups.flatMap((group) => group.rules);
+  return {
+    kind: 'conventions',
+    groups,
+    total: groups.reduce((sum, group) => sum + group.count, 0),
+    hard: all.filter((rule) => rule.strength === 'hard').length,
+    checked: all.filter((rule) => rule.checked).length,
+  };
+}
+
+// --- the Testing lift (10-14, sketch 046 winner B) --------------------------------------------------------------
+
+export interface ComposedTestPlate {
+  label: string;
+  name: string;
+  version: string | null;
+  config: string | null;
+}
+
+export interface ComposedRunCommand {
+  command: string;
+  caption: string | null;
+}
+
+/** The Testing panel: a strip of runner plates, the test folder as the shipped clean tree with a badge per test type,
+ * then each run command on the shared copy-command row. */
+export interface ComposedTesting {
+  kind: 'testing';
+  framework: string | null;
+  plates: ComposedTestPlate[];
+  /** The Coverage requirement's first sentence, or null. */
+  coverage: string | null;
+  commands: ComposedRunCommand[];
+  tree: { info: string; text: string } | null;
+  /** Folder path (as the tree draws it, "test/rendering/") to the test types that name it. */
+  badges: { path: string; labels: string[] }[];
+  /** Test types the tree has no row for (a folder it lacks, or a test type that names none). */
+  unplaced: string[];
+}
+
+/** The directory paths of a tree: each row's name joined to its ancestors', for folder rows only. */
+function treePaths(text: string): Set<string> {
+  const rows = parseTree(text);
+  const paths = new Array<string>(rows.length).fill('');
+  const dirs = new Set<string>();
+  rows.forEach((row, index) => {
+    paths[index] = `${row.parent === null ? '' : paths[row.parent]}${row.name}`;
+    if (row.dir) dirs.add(paths[index]);
+  });
+  return dirs;
+}
+
+function folderOf(path: string): string | null {
+  const bare = path.startsWith('./') ? path.slice(2) : path;
+  return bare.endsWith('/') && !bare.includes('*') ? bare : null;
+}
+
+function liftTesting(codebase: Record<string, unknown>): ComposedTesting | null {
+  const testing = isRecord(codebase.testing) ? codebase.testing : null;
+  if (testing === null) return null;
+  const plates = recordsOf(testing.plates).flatMap((plate): ComposedTestPlate[] => {
+    const name = textOrNull(plate.name);
+    return name === null ? [] : [{ label: textOrNull(plate.label) ?? '', name, version: textOrNull(plate.version), config: textOrNull(plate.config) }];
+  });
+  const commands = recordsOf(testing.commands).flatMap((entry): ComposedRunCommand[] => {
+    const command = typeof entry.command === 'string' ? stripControlCharacters(entry.command).trim() : '';
+    return command === '' ? [] : [{ command, caption: textOrNull(entry.caption) }];
+  });
+  const fence = isRecord(testing.tree) ? testing.tree : null;
+  const treeText = fence !== null && textOrNull(fence.text) !== null ? String(fence.text) : null;
+  const tree = treeText === null ? null : { info: typeof fence?.info === 'string' ? fence.info : '', text: treeText };
+  const dirs = treeText === null ? new Set<string>() : treePaths(treeText);
+  const badges = new Map<string, string[]>();
+  const unplaced: string[] = [];
+  for (const type of recordsOf(testing.types)) {
+    const name = textOrNull(type.name);
+    if (name === null) continue;
+    const placed = (Array.isArray(type.paths) ? type.paths : []).flatMap((path) => {
+      const folder = typeof path === 'string' ? folderOf(path) : null;
+      return folder !== null && dirs.has(folder) ? [folder] : [];
+    });
+    if (placed.length === 0) unplaced.push(name);
+    for (const folder of placed) badges.set(folder, [...(badges.get(folder) ?? []), name]);
+  }
+  const coverage = textOrNull(testing.coverage);
+  if (plates.length === 0 && commands.length === 0 && tree === null && coverage === null) return null;
+  return {
+    kind: 'testing',
+    framework: textOrNull(testing.framework),
+    plates,
+    coverage,
+    commands,
+    tree,
+    badges: [...badges].map(([path, labels]) => ({ path, labels })),
+    unplaced,
+  };
+}
+
 // --- the Concerns lift ------------------------------------------------------------------------------------
 
 function concernTone(entry: ConcernEntry): ComposedConcernRow['tone'] {
@@ -942,6 +1167,8 @@ function liftOf(
 ): ComposedCodebaseLifted | null {
   if (key === 'stack') return liftStack(codebase, urls, context);
   if (key === 'integrations') return liftIntegrations(codebase, urls, context);
+  if (key === 'conventions') return liftConventions(codebase);
+  if (key === 'testing') return liftTesting(codebase);
   if (key === 'architecture') return liftArchitecture(codebase);
   if (key === 'structure') return liftStructure(codebase);
   if (key === 'concerns') return liftConcerns(codebase, groups, drawn);
@@ -1073,7 +1300,7 @@ export function composeCodebase(input: ViewInput): ComposedCodebase | null {
     url: panel.mapped ? panel.url : null,
     ghost: !panel.mapped,
     current: panel.key === context.activeKey,
-    keyText: panel.mapped && typeof panel.keyNumber === 'number' ? String(panel.keyNumber) : null,
+    keyText: panel.mapped ? (typeof panel.keyNumber === 'number' ? String(panel.keyNumber) : (panel.keyLabel ?? null)) : null,
   }));
 
   // A lifted part that draws whole sections (Concerns) adds the groups it used to `drawn` itself.
@@ -1105,7 +1332,9 @@ export function composeCodebase(input: ViewInput): ComposedCodebase | null {
       label: current.label,
       no: panels[currentIndex].no,
       keyPhrase:
-        typeof current.keyNumber === 'number' ? keyPhrase(current.key, current.keyNumber, codebase.keyUnit) : null,
+        typeof current.keyNumber === 'number'
+          ? keyPhrase(current.key, current.keyNumber, codebase.keyUnit)
+          : (current.keyLabel ?? null),
       lifted,
       plain,
       plainSections: plain.flatMap((section) => (section.heading === null ? [] : [section.heading])),
