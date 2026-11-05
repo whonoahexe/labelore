@@ -2,7 +2,7 @@
 sketch: 052
 name: cross-ai-reviews-page
 question: "How should the Cross-AI reviews page show each reviewer (name, model, overall risk, run status), the concerns two or more reviewers agreed on first, then where they disagreed side by side, never merged into one verdict, with each review's full text on demand, as a picture?"
-winner: null
+winner: "A"
 tags: [reviews, cross-ai, agreement, disagreement, phase-10]
 ---
 
@@ -169,3 +169,32 @@ are outside the page): four sizes in every variant at state 04; at 390 the displ
 
 All text is the made-up Lendshed REVIEWS files (test/fixtures/lendshed, 10-07), verbatim; model ids are the made-up
 file's. The repository is public.
+
+## Winner
+**A: Overlap**, chosen by the user at the 10-17 checkpoint: "A looks good for both". No synthesis.
+
+Build A as drawn in its tab (marked "★ Selected"; the sketch opens on it):
+- **The figure and Agreed row** (two columns 7fr / 5fr; stacked under 52rem):
+  - The drawing: one circle per substantive reviewer (up to three), named on the drawing, `--muted-foreground` fill
+    at low opacity so overlaps darken, `--foreground` stroke. Each concern is a square in the region of the reviewers
+    who raised it: agreed concerns large and numbered (A1, A2) in the overlaps, single-reviewer concerns small at
+    each circle's own edge; fill and stroke by severity (HIGH outline `--missing-fill`, MEDIUM filled
+    `--in-flight-fill`, LOW dashed muted). A failed run is a small empty dashed circle off to the side. Geometry is
+    laid out at the figure's real width after layout so the labels keep the page's sizes at 390.
+  - The key under the drawing is the reviewer roster: one untoned card per reviewer (name, model verbatim in mono,
+    "Overall risk: {word}" chip, a dashed card with "Review failed" for a failed run, and plan coverage with
+    "{plan} not reviewed").
+  - Beside it, "Agreed" with its count: one row per agreed concern (number, text, highest-severity chip, reviewers,
+    plan), and a line counting the concerns raised by one reviewer.
+  - A square or an Agreed row opens a dock under the row: an agreed concern sets each reviewer's own words side by
+    side and says how it was matched.
+- **Disagreements:** one dashed `quiet` block per stance (Overall risk; Verdict on {plan}) with its title and the
+  `in-flight` "Reviewers disagree" chip, the stated stances side by side at Heading size, and hatched cells for
+  reviewers who did not state it ("Not reviewed", "Review failed"). Never merged.
+- **Below:** "Each review as written": one closed bar per reviewer, then any other section the page does not claim
+  (Plan-Revision Conflicts), then "Consensus summary, as the file wrote it".
+- **One reviewer:** one circle with its concerns, "Concerns" in place of Agreed, no Disagreements.
+- **Four or more substantive reviewers** (open item for 10-22): the overlap drawing only covers one to three
+  circles. With four or more, the build must not attempt a circle drawing; it shows the roster cards and the Agreed
+  list (each row naming its reviewers) without the drawing, and says so in one quiet line. The exact fallback
+  layout is 10-22's to state, not designed here.
