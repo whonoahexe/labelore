@@ -8,6 +8,7 @@ import type { AiSpecBody } from '../src/planning-repo/handlers/ai-spec.ts';
 import { HANDLERS } from '../src/planning-repo/handlers/index.ts';
 import { GenericMarkdownHandler } from '../src/planning-repo/handlers/generic.ts';
 import { fxRead } from './helpers/fixture-project.ts';
+import { GROWTH_LIMIT, measureGrowth } from './helpers/growth.ts';
 
 const PATH = '.planning/phases/04-bulk-loan-export/04-AI-SPEC.md';
 
@@ -144,5 +145,176 @@ describe('extractAiSpec - tolerance', () => {
   it('reads a label whose colon is outside the bold, and a lower-case label', () => {
     const spec = extractAiSpec('## 1. System\n\n**system type**: RAG\n');
     expect(spec.systemType).toBe('RAG');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The unfilled-slot rule (10-18, Task 2)
+// ---------------------------------------------------------------------------
+
+function slotsOf(body: string): Record<string, boolean> {
+  const out: Record<string, boolean> = {};
+  for (const section of extractAiSpec(body).sections) out[section.number] = section.slot;
+  return out;
+}
+
+describe('the unfilled-slot rule - GSD template body and the half-filled file', () => {
+  it('02-AI-SPEC (the template body): every numbered section is a slot with nothing written', () => {
+    const { sections } = extractAiSpec(TEMPLATE);
+    expect(sections).toHaveLength(9);
+    for (const section of sections) {
+      expect(section.slot, section.heading).toBe(true);
+      expect(section.written, section.heading).toBe(0);
+    }
+  });
+
+  it('04-AI-SPEC: exactly sections 4b, 6 and 7 are slots', () => {
+    const { sections } = extractAiSpec(HALF);
+    expect(sections.filter((s) => s.slot).map((s) => s.number)).toEqual(['4b', '6', '7']);
+    for (const section of sections.filter((s) => !s.slot)) {
+      expect(section.written, section.heading).toBeGreaterThan(0);
+    }
+  });
+
+  it('never lists the Checklist as a section, so it is never a slot', () => {
+    expect(extractAiSpec(TEMPLATE).sections.map((s) => s.heading.toLowerCase())).not.toContain(
+      'checklist',
+    );
+  });
+});
+
+describe('the unfilled-slot rule - what is scaffolding', () => {
+  it('a section of only a blockquote, a bare ### heading and an empty numbered list is a slot', () => {
+    expect(slotsOf('## 1. A\n\n> Researched by someone.\n\n### Sub heading\n\n1.\n2.\n3.\n')).toEqual({
+      '1': true,
+    });
+  });
+
+  it('the same section with one sentence of prose is filled', () => {
+    const spec = extractAiSpec(
+      '## 1. A\n\n> Researched by someone.\n\n### Sub heading\n\nOne real sentence.\n\n1.\n',
+    );
+    expect(spec.sections[0].slot).toBe(false);
+    expect(spec.sections[0].written).toBe(1);
+  });
+
+  it('a bold label alone is scaffolding and the same label with a value is not', () => {
+    expect(slotsOf('## 1. A\n\n**System Type:**\n\n**Description:** <!-- hint -->\n')).toEqual({
+      '1': true,
+    });
+    expect(slotsOf('## 1. A\n\n**System Type:** RAG\n')).toEqual({ '1': false });
+  });
+
+  it('a bare list marker, an HTML comment and a horizontal rule are scaffolding', () => {
+    expect(slotsOf('## 1. A\n\n-\n*\n<!-- a comment -->\n\n---\n')).toEqual({ '1': true });
+  });
+
+  it('table header and separator rows and rows whose cells are all empty are scaffolding', () => {
+    expect(
+      slotsOf('## 6. G\n\n| A | B |\n|---|---|\n| | |\n| <!-- e.g. --> | <!-- hint --> |\n'),
+    ).toEqual({ '6': true });
+  });
+
+  it('a table row with a cell of text is content', () => {
+    expect(slotsOf('## 6. G\n\n| A | B |\n|---|---|\n| Name | |\n')).toEqual({ '6': false });
+  });
+
+  it("the template's own option rows (Block / Escalate / Flag, Code / LLM Judge / Human) are scaffolding", () => {
+    expect(
+      slotsOf(
+        '## 6. G\n\n| Guardrail | Trigger | Intervention |\n|---|---|---|\n| | | Block / Escalate / Flag |\n',
+      ),
+    ).toEqual({ '6': true });
+    expect(
+      slotsOf(
+        '## 5. E\n\n| D | R | M | P |\n|---|---|---|---|\n| | | Code / LLM Judge / Human | Critical / High / Medium |\n',
+      ),
+    ).toEqual({ '5': true });
+  });
+
+  it("a fenced block of only '#' or '//' comment lines is scaffolding; one line of code is content", () => {
+    expect(
+      slotsOf('## 3. F\n\n```bash\n# Install command(s)\n```\n\n```ts\n// Key imports\n\n```\n'),
+    ).toEqual({ '3': true });
+    expect(slotsOf('## 3. F\n\n```bash\n# Install\nnpm install thing\n```\n')).toEqual({ '3': false });
+  });
+
+  it('a heading line inside a fence does not start a section', () => {
+    const spec = extractAiSpec('## 1. A\n\n```md\n## 2. Fake\n```\n');
+    expect(spec.sections.map((s) => s.number)).toEqual(['1']);
+    expect(spec.sections[0].slot).toBe(false);
+  });
+
+  it('a section holding only its heading is a slot', () => {
+    expect(slotsOf('## 1. A\n\n## 2. B\n\nWords.\n')).toEqual({ '1': true, '2': false });
+  });
+});
+
+describe('the unfilled-slot rule - an unterminated HTML comment', () => {
+  it('makes the rest of its own section a slot, not the rest of the file', () => {
+    expect(
+      slotsOf('## 1. A\n\n<!-- never closed\nFilled-looking words\n\n## 2. B\n\nReal prose.\n'),
+    ).toEqual({ '1': true, '2': false });
+  });
+
+  it('a comment closed on a later line hides only what is inside it', () => {
+    expect(slotsOf('## 1. A\n\n<!-- first\nsecond -->\nAfter the comment.\n')).toEqual({ '1': false });
+    expect(slotsOf('## 1. A\n\n<!-- first\nsecond -->\n')).toEqual({ '1': true });
+  });
+
+  it('reads a field value written after a comment closes on the same line', () => {
+    const spec = extractAiSpec('## 1. A\n\n**System Type:** <!-- RAG | Agent --> RAG\n');
+    expect(spec.systemType).toBe('RAG');
+  });
+});
+
+describe('the unfilled-slot rule - stays linear (T-10-31)', () => {
+  it('in a body of thousands of sections', () => {
+    const growth = measureGrowth({
+      make: (n: number) =>
+        Array.from({ length: n }, (_, i) => `## ${i + 1}. S\n\nWords.\n`).join('\n'),
+      run: (body: string) => {
+        extractAiSpec(body);
+      },
+      startSize: 625,
+      maxSize: 5_000,
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('in one 200,000-character comment', () => {
+    const growth = measureGrowth({
+      make: (n: number) => `## 1. A\n\n<!-- ${'x'.repeat(n)} -->\n`,
+      run: (body: string) => {
+        extractAiSpec(body);
+      },
+      startSize: 5_000,
+      maxSize: 200_000,
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('in 10,000 table rows', () => {
+    const growth = measureGrowth({
+      make: (n: number) => `## 5. E\n\n| A | B |\n|---|---|\n${'| a | b |\n'.repeat(n)}`,
+      run: (body: string) => {
+        extractAiSpec(body);
+      },
+      startSize: 1_250,
+      maxSize: 10_000,
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
+  });
+
+  it('over many comments opened on one line', () => {
+    const growth = measureGrowth({
+      make: (n: number) => `## 1. A\n\n${'<!-- a -->'.repeat(n)}\n`,
+      run: (body: string) => {
+        extractAiSpec(body);
+      },
+      startSize: 3_000,
+      maxSize: 20_000,
+    });
+    expect(growth.ratio).toBeLessThan(GROWTH_LIMIT);
   });
 });
