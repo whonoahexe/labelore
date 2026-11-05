@@ -11,7 +11,7 @@
 // in (its one server-sanitised document renderer), never a new raw-HTML site here. No href is built from
 // document text. Colour comes only from the tone a composed model carries and the theme tokens; nothing here is
 // drawn missing or in a parse-degradation tone.
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { Link } from '../nav.tsx';
 import { presentationRoutePatterns } from '../../presentation/routes.ts';
@@ -353,11 +353,26 @@ function MappedText({
   );
 }
 
+/** True from 42rem up. The lanes scale to the frame there (six lanes are a little wider than the reading column); on a
+ * narrow screen they keep their size and pan inside the frame, as the sketch draws them. */
+function useWideScreen(): boolean {
+  const [wide, setWide] = useState(true);
+  useEffect(() => {
+    const query = window.matchMedia('(min-width: 42rem)');
+    const update = (): void => setWide(query.matches);
+    update();
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
+  return wide;
+}
+
 /** The Integrations panel (10-14, sketch 045 winner C, "Reuse"): the shipped lane diagram, handed a graph built from the
  * groups in use (the app wired to one node each, the lane from the group's section); the groups that say None as quiet
  * chips under the lanes; the variable names as a strip of tags, a value the document wrote beside one shown only as the
  * quiet "Value not shown" mark. The page can only show a name: the lift never held the value. */
 function IntegrationsPanel({ lifted }: { lifted: ComposedIntegrations }): React.JSX.Element {
+  const wide = useWideScreen();
   return (
     <div className="view-codebase-lifted view-codebase-integrations">
       <figure className="view-codebase-pic">
@@ -370,7 +385,7 @@ function IntegrationsPanel({ lifted }: { lifted: ComposedIntegrations }): React.
         <div className="view-codebase-pic-body view-codebase-integrations-body">
           {lifted.graph !== null ? (
             <div className="view-codebase-lanes">
-              <LaneDiagram graph={lifted.graph} fit={false} label="Integrations" />
+              <LaneDiagram graph={lifted.graph} fit={wide} label="Integrations" />
             </div>
           ) : (
             <p className="source-note">Nothing in this document is in use.</p>
@@ -611,6 +626,7 @@ function PilePicture({
   filter,
   onFilter,
   foot,
+  squares = true,
 }: {
   title: string;
   countText: string;
@@ -620,6 +636,8 @@ function PilePicture({
   filter: number | null;
   onFilter: (at: number | null) => void;
   foot: React.ReactNode;
+  /** The square beside each count: Concerns' tone marks; Conventions draws none. */
+  squares?: boolean;
 }): React.JSX.Element {
   return (
     <figure className="view-codebase-pic">
@@ -670,7 +688,9 @@ function PilePicture({
                   onClick={() => onFilter(filter === at ? null : at)}
                 >
                   <b>{column.count}</b>
-                  <i className="status-square view-codebase-square" data-tone={tone} aria-hidden="true" />
+                  {squares ? (
+                    <i className="status-square view-codebase-square" data-tone={tone} aria-hidden="true" />
+                  ) : null}
                   <span className="view-codebase-pile-name">
                     <ResearchInline text={column.label} />
                   </span>
@@ -690,10 +710,12 @@ function PileChips({
   columns,
   filter,
   onFilter,
+  squares = true,
 }: {
   columns: PileColumn[];
   filter: number | null;
   onFilter: (at: number | null) => void;
+  squares?: boolean;
 }): React.JSX.Element {
   return (
     <div className="view-codebase-legend" role="group" aria-label="Sections">
@@ -707,7 +729,7 @@ function PileChips({
             aria-pressed={filter === at}
             onClick={() => onFilter(filter === at ? null : at)}
           >
-            <i className="status-square view-codebase-square" data-tone={tone} aria-hidden="true" />
+            {squares ? <i className="status-square view-codebase-square" data-tone={tone} aria-hidden="true" /> : null}
             <span>
               <ResearchInline text={column.label} />
             </span>
@@ -957,6 +979,7 @@ function ConventionsPanel({ lifted }: { lifted: ComposedConventions }): React.JS
         onSelect={setSelected}
         filter={filter}
         onFilter={setFilter}
+        squares={false}
         foot={
           <>
             <span className="view-codebase-key">
@@ -976,7 +999,7 @@ function ConventionsPanel({ lifted }: { lifted: ComposedConventions }): React.JS
           </>
         }
       />
-      <PileChips columns={columns} filter={filter} onFilter={setFilter} />
+      <PileChips columns={columns} filter={filter} onFilter={setFilter} squares={false} />
       {chosen !== null ? (
         <div className="view-codebase-dock" role="region" aria-label="Selected rule">
           <div className="view-codebase-dock-head">
