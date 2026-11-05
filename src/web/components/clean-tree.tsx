@@ -60,8 +60,7 @@ function isHidden(rows: TreeRow[], index: number, collapsed: ReadonlySet<number>
 
 /**
  * A row a page builds itself instead of parsing an ASCII tree (10-19): the shared tree's row-input path. `node` is a
- * leaf's own content, drawn in place of the file icon and name (an interactive leaf, say); `trail` is drawn in the
- * note column. A folder row is still drawn by the shared collapsible folder button. Rows are in draw order, each
+ * leaf's own content, drawn in place of the file icon and name (an interactive leaf, say). A folder row is still drawn by the shared collapsible folder button. Rows are in draw order, each
  * naming its nearest shallower row above as `parent` (null for a root), and are drawn as given: no folder chain is
  * joined, so the page joins the chains it wants joined.
  */
@@ -72,10 +71,9 @@ export interface CleanTreeRow {
   parent: number | null;
   note?: string;
   node?: React.ReactNode;
-  trail?: React.ReactNode;
 }
 
-type DrawnRow = TreeRow & { node?: React.ReactNode; trail?: React.ReactNode };
+type DrawnRow = TreeRow & { node?: React.ReactNode };
 
 function drawnRowsOf(rows: readonly CleanTreeRow[]): DrawnRow[] {
   return rows.map((row) => ({
@@ -87,7 +85,6 @@ function drawnRowsOf(rows: readonly CleanTreeRow[]): DrawnRow[] {
     badge: null,
     parent: row.parent,
     node: row.node,
-    trail: row.trail,
   }));
 }
 
@@ -185,7 +182,6 @@ export function CleanTree({
                   <NoteTokens tokens={tokenizeInline(row.note)} />
                 </span>
               ) : null}
-              {row.trail}
             </span>
           </li>
         );

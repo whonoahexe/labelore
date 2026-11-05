@@ -31185,8 +31185,7 @@ button.view-codebase-mark:hover {
 }
 
 .view-user-setup-tree .clean-tree-row {
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--space-2);
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
   min-height: var(--space-8);
   padding: 0;
@@ -31202,18 +31201,20 @@ button.view-codebase-mark:hover {
 
 .view-user-setup-tree .clean-tree-name svg {
   transform: none;
+  color: var(--muted-foreground);
 }
 
 .view-user-setup-tree .clean-tree-folder {
   color: var(--foreground);
-  font-weight: var(--fw-semibold);
   align-items: center;
 }
 
+.view-user-setup-tree .clean-tree-folder svg {
+  color: var(--muted-foreground);
+}
+
 .view-user-setup-tree .clean-tree-note {
-  align-items: center;
-  padding: 0 var(--space-3) 0 0;
-  font-size: var(--fs-2);
+  display: none;
 }
 
 .view-user-setup-leaf {
@@ -31556,5 +31557,95 @@ button.view-codebase-mark:hover {
   .view-user-setup-bar-body {
     padding-left: var(--space-2);
   }
+}
+/* The plain sections: Local Development, Verification and any other section with no step, as paragraphs and the shared
+   copy rows; a file with no recognisable step draws every section this way, as headed text. */
+.view-user-setup-plain {
+  display: grid;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.view-user-setup-blocks {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 72ch;
+  min-width: 0;
+}
+
+.view-user-setup-text {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-user-setup-text[data-bullet='true'] {
+  padding-left: var(--space-4);
+  text-indent: calc(-1 * var(--space-3));
+}
+
+.view-user-setup-text[data-bullet='true']::before {
+  content: '·';
+  display: inline-block;
+  width: var(--space-3);
+  color: var(--muted-foreground);
+  text-indent: 0;
+}
+
+.view-user-setup-subhead {
+  margin: 0;
+  font-size: inherit;
+  font-weight: var(--fw-semibold);
+}
+
+.view-user-setup-cmd {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  background: var(--muted);
+  min-width: 0;
+}
+
+.view-user-setup-cmd code {
+  background: none;
+  font-family: var(--font-mono);
+  font-size: var(--fs-4);
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+.view-user-setup-cmd-note {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+}
+
+/* "In the source only": what the page does not draw, each a way to Source. */
+.view-user-setup-only {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--border);
+}
+
+.view-user-setup-source {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2);
+  letter-spacing: var(--ls-wider);
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: var(--space-0-5);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.view-user-setup-source:hover {
+  color: var(--foreground);
 }
 /* phase-10-user-setup:end */

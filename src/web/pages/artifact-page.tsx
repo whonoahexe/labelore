@@ -1544,7 +1544,7 @@ export function ArtifactPage({
       ) : aiSpecPageCover ? (
         <AiSpecView key={artifact.path} model={aiSpecPageCover} renderHtml={renderHtml} onShowSource={showSource} />
       ) : userSetupPageCover ? (
-        <UserSetupView key={artifact.path} model={userSetupPageCover} />
+        <UserSetupView key={artifact.path} model={userSetupPageCover} onShowSource={showSource} />
       ) : fixCover ? (
         <LedgerTabView key={artifact.path} model={fixCover} />
       ) : documentWithheld ? (

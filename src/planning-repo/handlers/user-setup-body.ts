@@ -27,7 +27,8 @@ export const USER_SETUP_CELL_CAP = 400;
 export interface UserSetupField {
   /** The key as written ("URL", "Location", "Set to", "Notes", "Skip if"). */
   key: string;
-  value: string;
+  /** What follows the key, masked. */
+  text: string;
 }
 
 export interface UserSetupVariable {
@@ -214,7 +215,7 @@ function readFieldLine(line: string): UserSetupField | null {
   const rest = line.slice(at + 2);
   const colon = rest.indexOf(':');
   if (colon <= 0) return null;
-  return { key: keep(rest.slice(0, colon).trim()), value: keep(rest.slice(colon + 1).trim()) };
+  return { key: keep(rest.slice(0, colon).trim()), text: keep(rest.slice(colon + 1).trim()) };
 }
 
 function stepKindOf(group: string): UserSetupStepKind {
@@ -246,7 +247,7 @@ function readChecklist(lines: readonly string[], group: string, into: Collector)
     const field = readFieldLine(line);
     if (field !== null) {
       current.fields.push(field);
-      if (field.key.toLowerCase() === 'notes') current.notes.push(field.value);
+      if (field.key.toLowerCase() === 'notes') current.notes.push(field.text);
       continue;
     }
     if (line.trim() !== '' && line.charCodeAt(0) !== 32 && line.charCodeAt(0) !== 9) current = null;
@@ -281,6 +282,15 @@ function isHeadScaffold(line: string): boolean {
     }
   }
   return false;
+}
+
+/** `read()`, or `fallback` when it throws. */
+function guarded<T>(read: () => T, fallback: T): T {
+  try {
+    return read();
+  } catch {
+    return fallback;
+  }
 }
 
 /** The step reading of the sections: variables and checklist items. */
@@ -336,18 +346,8 @@ export function extractUserSetup(body: string): UserSetupBody {
     // The head is optional: the steps and sections below do not need it.
   }
 
-  let collected: Collector = { variables: [], steps: [] };
-  try {
-    collected = readSteps(lines, ranges);
-  } catch {
-    collected = { variables: [], steps: [] };
-  }
-  let sections: UserSetupSection[] = [];
-  try {
-    sections = readSections(lines, ranges);
-  } catch {
-    sections = [];
-  }
+  const collected = guarded(() => readSteps(lines, ranges), { variables: [], steps: [] });
+  const sections = guarded(() => readSections(lines, ranges), []);
 
   const doneCount = collected.steps.filter((step) => step.done === true).length;
   return {

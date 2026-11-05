@@ -4,31 +4,84 @@
 // the file's own Status line beside it (a plain chip when it agrees with the boxes, a quiet dashed pair when it does
 // not, never merged), then the map: "Get it from", every dashboard path as the shared clean tree with a clickable leaf
 // per step, beside "Goes in", one card per destination file with a numbered line per variable, and the selected step's
-// dock under the cards. Prose opens on demand: a step's bar below holds its fields as written. Every string is author
-// text the handler has already masked, rendered as plain React text - never React's raw-HTML injection prop - and the
-// document HTML is never read, so a value a person pasted into the file cannot reach this page (CONTEXT D-11,
-// T-10-33). No href is built from document text and no copy control carries a variable's value. Colour comes only from
-// the tone a composed model carries and the theme tokens; nothing here is destructive, a warning or drawn missing: a
-// step that is pending is `in-flight`, a step the page cannot classify is `quiet`, and the Status line that disagrees
-// with the boxes is a dashed note, never an alarm.
-import { useState } from 'react';
+// dock under the cards. Prose opens on demand: a step's bar below holds its fields as written. A file with no
+// recognisable step opens on the plain layout instead: the quiet "Steps not stated" chip over its masked sections as
+// headed text.
+//
+// Every string is text the handler has already masked, rendered as plain React text through `MaskedInline` - which draws
+// the handler's marker as the shared quiet "Value not shown" mark - never React's raw-HTML injection prop. The document
+// HTML is never read, so a value a person pasted into the file cannot reach this page (CONTEXT D-11, T-10-33). No href is
+// built from document text, no title or aria-label carries a value, and a command that held a value is plain text with
+// no copy control. Colour comes only from the tone a composed model carries and the theme tokens; nothing here is
+// destructive, a warning or drawn missing: a step that is pending is `in-flight`, a step the page cannot classify is
+// `quiet`, and the Status line that disagrees with the boxes is a dashed note, never an alarm.
+import { Fragment, useMemo, useState } from 'react';
 import { ArrowRight, ChevronRight, FileText, Lock, Server } from 'lucide-react';
-import { ResearchInline } from '../pages/research-atoms.tsx';
 import { splitPhaseTitle } from '../pages/document-title.ts';
 import { CleanTree } from '../components/clean-tree.tsx';
 import type { CleanTreeRow } from '../components/clean-tree.tsx';
+import { CopyCommand } from '../components/copy-command.tsx';
+import { EmptyState } from '../components/empty-state.tsx';
 import { StatusMeter } from '../components/status-meter.tsx';
 import { ValueNotShown } from '../components/value-not-shown.tsx';
+import { VALUE_NOT_SHOWN_MARK } from '../../planning-repo/handlers/withhold-values.ts';
+import { tokenizeInline } from './inline-markdown.ts';
+import type { InlineToken } from './inline-markdown.ts';
 import { NO_FILE_LABEL, NO_PLACE_LABEL, STEPS_NOT_STATED_LABEL } from './user-setup-page.ts';
 import type { SpecHeaderProps } from './spec-page-components.tsx';
 import type {
   ComposedBarGroup,
   ComposedFileCard,
+  ComposedPlainSection,
   ComposedStatusLine,
   ComposedUserSetup,
   ComposedUserSetupItem,
+  UserSetupBlock,
   UserSetupTone,
 } from './user-setup-page.ts';
+
+/** Plain text with the handler's marker drawn as the quiet "Value not shown" mark. */
+function Marked({ text }: { text: string }): React.JSX.Element {
+  const parts = text.split(VALUE_NOT_SHOWN_MARK);
+  return (
+    <>
+      {parts.map((part, index) => (
+        <Fragment key={index}>
+          {index > 0 ? <ValueNotShown /> : null}
+          {part}
+        </Fragment>
+      ))}
+    </>
+  );
+}
+
+function renderTokens(tokens: InlineToken[], prefix: string): React.ReactNode[] {
+  return tokens.map((token, index) => {
+    const key = `${prefix}${index}`;
+    switch (token.type) {
+      case 'text':
+      case 'ref':
+        return <Marked key={key} text={token.value} />;
+      case 'code':
+        return (
+          <code key={key}>
+            <Marked text={token.value} />
+          </code>
+        );
+      case 'strong':
+        return <strong key={key}>{renderTokens(token.value, `${key}.`)}</strong>;
+      case 'em':
+        return <em key={key}>{renderTokens(token.value, `${key}.`)}</em>;
+    }
+  });
+}
+
+/** The only path an author string reaches this page's DOM through: the inline tokens as React nodes, the marker as the
+ * quiet mark. Never markup, never a link. */
+export function MaskedInline({ text }: { text: string }): React.JSX.Element {
+  const tokens = useMemo(() => tokenizeInline(text), [text]);
+  return <>{renderTokens(tokens, '')}</>;
+}
 
 function UserSetupMeta({ model }: { model: ComposedUserSetup }): React.JSX.Element | null {
   if (model.generated === null && model.phase === null) return null;
@@ -78,7 +131,7 @@ function StatusPair({ status }: { status: ComposedStatusLine }): React.JSX.Eleme
       <p className="view-user-setup-agree">
         <span className="view-user-setup-key">Status line</span>
         <span className="status-chip">
-          <ResearchInline text={status.word} />
+          <MaskedInline text={status.word} />
         </span>
       </p>
     );
@@ -92,7 +145,7 @@ function StatusPair({ status }: { status: ComposedStatusLine }): React.JSX.Eleme
       <div>
         <span className="view-user-setup-key">The Status line says</span>
         <span className="view-user-setup-val">
-          <ResearchInline text={status.word} />
+          <MaskedInline text={status.word} />
         </span>
       </div>
       <span className="view-user-setup-ne" aria-hidden="true">
@@ -150,7 +203,10 @@ function Facts({ item }: { item: ComposedUserSetupItem }): React.JSX.Element | n
           <li>
             <FileText aria-hidden="true" />
             <span>
-              Goes in <code>{item.destination}</code>
+              Goes in{' '}
+              <code>
+                <Marked text={item.destination} />
+              </code>
             </span>
           </li>
         ) : null}
@@ -158,7 +214,7 @@ function Facts({ item }: { item: ComposedUserSetupItem }): React.JSX.Element | n
           <li>
             <Server aria-hidden="true" />
             <span>
-              Get it from <ResearchInline text={item.source} />
+              Get it from <MaskedInline text={item.source} />
             </span>
           </li>
         ) : null}
@@ -178,7 +234,7 @@ function Facts({ item }: { item: ComposedUserSetupItem }): React.JSX.Element | n
         <div key={`${field.key}-${index}`}>
           <dt className="view-user-setup-key">{field.key}</dt>
           <dd>
-            <ResearchInline text={field.value} />
+            <MaskedInline text={field.text} />
           </dd>
         </div>
       ))}
@@ -187,8 +243,14 @@ function Facts({ item }: { item: ComposedUserSetupItem }): React.JSX.Element | n
 }
 
 function ItemTitle({ item }: { item: ComposedUserSetupItem }): React.JSX.Element {
-  if (item.kind === 'variable') return <span className="view-user-setup-name">{item.title}</span>;
-  return <ResearchInline text={item.title} />;
+  if (item.kind === 'variable') {
+    return (
+      <span className="view-user-setup-name">
+        <Marked text={item.title} />
+      </span>
+    );
+  }
+  return <MaskedInline text={item.title} />;
 }
 
 function Dock({
@@ -207,7 +269,7 @@ function Dock({
     <div className="view-user-setup-dock" role="region" aria-label={`Step: ${item.title}`}>
       <div className="view-user-setup-dock-head">
         <span className="view-user-setup-key">
-          <ResearchInline text={item.group} />
+          <MaskedInline text={item.group} />
           {item.tone !== null ? ` · step ${item.index + 1} of ${model.total}` : ''}
         </span>
         <StateChip item={item} />
@@ -237,13 +299,20 @@ function Leaf({
   return (
     <button type="button" className="view-user-setup-leaf" aria-pressed={selected} onClick={onSelect}>
       <Square tone={toneOf(item)} />
-      {at !== null ? <span className="view-user-setup-at">{at}</span> : null}
+      {at !== null ? (
+        <span className="view-user-setup-at">
+          <Marked text={at} />
+        </span>
+      ) : null}
       <span className="view-user-setup-what">
         <ItemTitle item={item} />
       </span>
       {item.kind === 'variable' && item.destination !== null ? (
-        <span className="view-user-setup-to">→ {item.destination}</span>
+        <span className="view-user-setup-to">
+          → <Marked text={item.destination} />
+        </span>
       ) : null}
+      {item.word !== null ? <span className="view-user-setup-meta">{item.word}</span> : null}
     </button>
   );
 }
@@ -266,7 +335,6 @@ function Tree({
       dir: false,
       parent: row.parent,
       node: <Leaf item={item} at={row.at} selected={selected === item.index} onSelect={() => onSelect(item.index)} />,
-      trail: item.word !== null ? <span className="view-user-setup-meta">{item.word}</span> : undefined,
     };
   });
   return (
@@ -310,7 +378,9 @@ function FileCard({
     <div className="view-user-setup-filecard">
       <div className="view-user-setup-filecard-head">
         <FileText aria-hidden="true" />
-        <span className="view-user-setup-mono">{card.name ?? NO_FILE_LABEL}</span>
+        <span className="view-user-setup-mono">
+          <Marked text={card.name ?? NO_FILE_LABEL} />
+        </span>
         {card.setLabel !== null ? <span className="view-user-setup-meta">{card.setLabel}</span> : null}
       </div>
       {card.lines.map((index, n) => {
@@ -326,7 +396,7 @@ function FileCard({
             <span className="view-user-setup-ln">{n + 1}</span>
             <span className="view-user-setup-fname">
               <Square tone={toneOf(item)} />
-              <span className="view-user-setup-name">{item.title}</span>
+              <ItemTitle item={item} />
             </span>
             <span className="view-user-setup-fright">
               {item.hadValue ? <ValueNotShown /> : null}
@@ -402,6 +472,47 @@ function MapBlock({
   );
 }
 
+/** A plain section's blocks: paragraphs and list items, sub-headings, and the fenced commands as the shared copy rows. A
+ * command that held a value is drawn as plain text with the mark and no copy control. */
+function Blocks({ blocks }: { blocks: readonly UserSetupBlock[] }): React.JSX.Element {
+  return (
+    <div className="view-user-setup-blocks">
+      {blocks.map((block, index) => {
+        switch (block.kind) {
+          case 'text':
+            return (
+              <p key={index} className="view-user-setup-text" data-bullet={block.bullet ? 'true' : 'false'}>
+                <MaskedInline text={block.text} />
+              </p>
+            );
+          case 'heading':
+            return (
+              <h3 key={index} className="view-user-setup-subhead">
+                <MaskedInline text={block.text} />
+              </h3>
+            );
+          case 'note':
+            return (
+              <p key={index} className="view-user-setup-cmd-note">
+                <Marked text={block.text} />
+              </p>
+            );
+          case 'command':
+            return block.copyable ? (
+              <CopyCommand key={index} command={block.text} />
+            ) : (
+              <div key={index} className="view-user-setup-cmd">
+                <code>
+                  <Marked text={block.text} />
+                </code>
+              </div>
+            );
+        }
+      })}
+    </div>
+  );
+}
+
 function BarRow({
   item,
   open,
@@ -433,15 +544,32 @@ function BarRow({
   );
 }
 
+function PlainBar({ section }: { section: ComposedPlainSection }): React.JSX.Element {
+  return (
+    <details className="view-user-setup-bar">
+      <summary className="view-user-setup-bar-sum">
+        <ChevronRight className="view-user-setup-bar-chev" aria-hidden="true" />
+        <span className="view-user-setup-bar-name">
+          <MaskedInline text={section.heading} />
+        </span>
+      </summary>
+      <div className="view-user-setup-bar-body">
+        <Blocks blocks={section.blocks} />
+      </div>
+    </details>
+  );
+}
+
 function Bars({
   model,
-  groups,
+  onShowSource,
 }: {
   model: ComposedUserSetup;
-  groups: readonly ComposedBarGroup[];
+  onShowSource: (id: string | null) => void;
 }): React.JSX.Element | null {
   const [openKeys, setOpenKeys] = useState<ReadonlySet<number>>(() => new Set());
-  if (groups.length === 0) return null;
+  const barGroups: readonly ComposedBarGroup[] = model.bars;
+  if (barGroups.length === 0 && model.plain.length === 0) return null;
   const setOpen = (index: number, open: boolean): void => {
     setOpenKeys((current) => {
       if (current.has(index) === open) return current;
@@ -457,11 +585,11 @@ function Bars({
         Steps
       </h2>
       <div className="view-user-setup-bars">
-        {groups.map((group) => (
+        {barGroups.map((group) => (
           <div key={group.heading}>
             <div className="view-user-setup-bar-group">
               <span className="view-user-setup-key">
-                <ResearchInline text={group.heading} />
+                <MaskedInline text={group.heading} />
               </span>
               {group.count !== null ? <span className="view-user-setup-meta">{group.count}</span> : null}
             </div>
@@ -475,19 +603,85 @@ function Bars({
             ))}
           </div>
         ))}
+        {model.plain.map((section) => (
+          <PlainBar key={section.heading} section={section} />
+        ))}
       </div>
+      <SourceOnly model={model} onShowSource={onShowSource} />
     </section>
   );
 }
 
-export function UserSetupView({ model }: { model: ComposedUserSetup }): React.JSX.Element {
+/** "In the source only": what the page does not draw (the intro text, the template's footer), each a way to Source. */
+function SourceOnly({
+  model,
+  onShowSource,
+}: {
+  model: ComposedUserSetup;
+  onShowSource: (id: string | null) => void;
+}): React.JSX.Element | null {
+  if (!model.sourceOnly.intro && !model.sourceOnly.footer) return null;
+  return (
+    <p className="view-user-setup-only">
+      <span className="view-user-setup-key">In the source only</span>
+      {model.sourceOnly.intro ? (
+        <button type="button" className="view-user-setup-source" onClick={() => onShowSource(null)}>
+          Introduction
+        </button>
+      ) : null}
+      {model.sourceOnly.footer ? (
+        <button type="button" className="view-user-setup-source" onClick={() => onShowSource(null)}>
+          Once all items complete
+        </button>
+      ) : null}
+    </p>
+  );
+}
+
+/** The plain layout: the masked sections of a file with no recognisable step, as headed text. */
+function PlainLayout({ model }: { model: ComposedUserSetup }): React.JSX.Element {
+  if (model.plain.length === 0) return <EmptyState />;
+  return (
+    <div className="view-user-setup-plain">
+      {model.plain.map((section, index) => (
+        <section
+          key={section.heading}
+          className="view-user-setup-block"
+          aria-labelledby={`view-user-setup-plain-${index}`}
+        >
+          <h2 className="view-user-setup-h" id={`view-user-setup-plain-${index}`}>
+            <MaskedInline text={section.heading} />
+          </h2>
+          <Blocks blocks={section.blocks} />
+        </section>
+      ))}
+    </div>
+  );
+}
+
+export function UserSetupView({
+  model,
+  onShowSource = () => undefined,
+}: {
+  model: ComposedUserSetup;
+  onShowSource?: (id: string | null) => void;
+}): React.JSX.Element {
   const [selected, setSelected] = useState<number | null>(model.firstOpen);
   const select = (index: number): void => setSelected((current) => (current === index ? null : index));
   return (
     <div className="view-user-setup-page">
       <Head model={model} />
-      <MapBlock model={model} selected={selected} onSelect={select} onClose={() => setSelected(null)} />
-      <Bars model={model} groups={model.bars} />
+      {model.kind === 'designed' ? (
+        <>
+          <MapBlock model={model} selected={selected} onSelect={select} onClose={() => setSelected(null)} />
+          <Bars model={model} onShowSource={onShowSource} />
+        </>
+      ) : (
+        <>
+          <PlainLayout model={model} />
+          <SourceOnly model={model} onShowSource={onShowSource} />
+        </>
+      )}
     </div>
   );
 }
