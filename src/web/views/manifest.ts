@@ -68,6 +68,8 @@ import type { ComposedCodebase } from './codebase-page.ts';
 import type { CodebaseContext } from '../../presentation/codebase-map.ts';
 // Type-only import — same reason as `brief` above (Phase 10, 10-16, sketch-047 winner B, the Spec page).
 import type { ComposedSpec } from './spec-page.ts';
+// Type-only import - same reason as `specPage` above (Phase 10, 10-18, sketch-048 winner C, the AI spec page).
+import type { ComposedAiSpec } from './ai-spec-page.ts';
 
 /** Declared now so 05-05 can add components without widening this union a second time — only
  * `discussion-questions` has a real component in this plan (see `blocks.tsx`). */
@@ -165,6 +167,11 @@ export interface ViewManifest {
    * dimension, goal or scope), and the page falls back to the promoted-section view, which the manifest keeps as
    * `promote`, with no notice (RESEARCH C1). */
   specPage?: (input: ViewInput) => ComposedSpec | null;
+  /** Phase 10 (10-18, sketch-048 winner C): the AI spec page a manifest opts into in View mode - currently only
+   * `ai-spec`. Returns `null` when the input can't compose one (no `structured.aiSpec`, or a file with no numbered
+   * section, field, dimension or checklist item), and the page falls back to the promoted-section view, which the
+   * manifest keeps as `promote`, with no notice (RESEARCH C1). */
+  aiSpecPage?: (input: ViewInput) => ComposedAiSpec | null;
   /** Phase 10 (10-08): true for a kind whose document text must never reach View mode through the generic
    * fallback (promoted sections or the whole document) - `user-setup`, whose file can hold a pasted value
    * (CONTEXT D-11). The Source toggle stays the way to the text. See `documentHtmlAllowedInView`. */
