@@ -181,7 +181,7 @@ if (head !== null && indent <= firstHeadIndent) { ...new requirement... }
 ### WR-05: `stripControlCharacters` leaves invisible characters, so "what is copied is what is on screen" is not guaranteed
 
 **File:** `src/planning-repo/handlers/withhold-values.ts:179-191`, used by `src/planning-repo/handlers/codebase-lift.ts:1647-1656`
-**Issue:** The copied-command cleaner removes C0/C1 and bidi controls only. Zero-width space/joiners (U+200B-U+200D), U+2060, U+FEFF, soft hyphen (U+00AD) and the Unicode tag block (U+E0000-E007F, used for hidden-text smuggling) all pass through. Reproduced: `npm​ test⁠ \u{E0041}x­` is returned unchanged. A command with an invisible character inside a word is displayed identically but differs when pasted into a terminal. T-10-26 and the `CopyCommand` doc comment promise the visible text is what is copied.
+**Issue:** The copied-command cleaner removes C0/C1 and bidi controls only. Zero-width space/joiners (U+200B-U+200D), U+2060, U+FEFF, soft hyphen (U+00AD) and the Unicode tag block (U+E0000-E007F, used for hidden-text smuggling) all pass through. Reproduced: `npm\u200B test\u2060 \u{E0041}x\u00AD` is returned unchanged. A command with an invisible character inside a word is displayed identically but differs when pasted into a terminal. T-10-26 and the `CopyCommand` doc comment promise the visible text is what is copied.
 **Fix:** Also drop Unicode format characters (`\p{Cf}`), which covers all of the above, in addition to the control and bidi ranges:
 ```ts
 const FORMAT = /\p{Cf}/u;     // fixed pattern, no document text
